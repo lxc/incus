@@ -86,7 +86,11 @@ func getCPUMetrics(d *Daemon) (map[string]metrics.CPUMetrics, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(stats))
 
 	for scanner.Scan() {
-		fields := strings.Fields(scanner.Text())
+		line := scanner.Text()
+		fields := strings.Fields(line)
+		if len(fields) < 9 {
+			return nil, fmt.Errorf("Invalid /proc/stat content: %q", line)
+		}
 
 		// Only consider CPU info, skip everything else. Skip aggregated CPU stats since there will
 		// be stats for each individual CPU.
