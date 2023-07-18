@@ -1968,7 +1968,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 	// If we are removing the leader of a 2 node cluster, ensure the other node can be a leader.
 	if name == leaderInfo.Name && len(nodes) == 2 {
 		for i := range nodes {
-			if nodes[i].Address != leader && nodes[i].Role == db.RaftStandBy {
+			if nodes[i].Address != leader && nodes[i].Role != db.RaftVoter {
 				// Promote the remaining node.
 				nodes[i].Role = db.RaftVoter
 				err := changeMemberRole(s, r, nodes[i].Address, nodes)
