@@ -474,3 +474,8 @@ func (d *zfs) datasetHeader(vol Volume, snapshots []string) (*ZFSMetaDataHeader,
 func (d *zfs) randomVolumeName(vol Volume) string {
 	return fmt.Sprintf("%s_%s", vol.name, uuid.New())
 }
+
+// ZFSSupportsDelegation returns true if the ZFS version on the system supports user namespace delegation.
+func ZFSSupportsDelegation() bool {
+	return zfsDelegate
+}

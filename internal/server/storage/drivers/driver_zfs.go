@@ -28,6 +28,7 @@ var zfsLoaded bool
 var zfsDirectIO bool
 var zfsTrim bool
 var zfsRaw bool
+var zfsDelegate bool
 
 var zfsDefaultSettings = map[string]string{
 	"relatime":   "on",
@@ -99,6 +100,16 @@ func (d *zfs) load() error {
 		zfsDirectIO = true
 		zfsTrim = true
 		zfsRaw = true
+	}
+
+	// Detect support for ZFS delegation.
+	ver220, err := version.Parse("2.2.0")
+	if err != nil {
+		return err
+	}
+
+	if ourVer.Compare(ver220) >= 0 {
+		zfsDelegate = true
 	}
 
 	zfsLoaded = true
