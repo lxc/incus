@@ -8,6 +8,9 @@ test_storage_volume_snapshots() {
   INCUS_STORAGE_DIR=$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)
   chmod +x "${INCUS_STORAGE_DIR}"
   spawn_incus "${INCUS_STORAGE_DIR}" false
+  token="$(INCUS_DIR=${INCUS_DIR} incus config trust add foo -q)"
+  # shellcheck disable=2153
+  incus remote add test "${INCUS_ADDR}" --accept-certificate --token "${token}"
 
   # shellcheck disable=2039,3043
   local storage_pool storage_volume
@@ -113,6 +116,14 @@ test_storage_volume_snapshots() {
   incus delete -f "c1"
   incus storage volume delete "${storage_pool}" "vol2"
 
+  # Check snapshot copy (mode pull, remote).
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode pull
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool}" "vol2"
+
   # Check snapshot copy (mode push).
   incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --mode push
   incus launch testimage "c1"
@@ -121,8 +132,24 @@ test_storage_volume_snapshots() {
   incus delete -f "c1"
   incus storage volume delete "${storage_pool}" "vol2"
 
+  # Check snapshot copy (mode push, remote).
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode push
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool}" "vol2"
+
   # Check snapshot copy (mode relay).
   incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --mode relay
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool}" "vol2"
+
+  # Check snapshot copy (mode relay, remote).
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode relay
   incus launch testimage "c1"
   incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
   incus exec "c1" -- test -f /mnt/foo
@@ -139,9 +166,31 @@ test_storage_volume_snapshots() {
   incus storage volume delete "${storage_pool2}" "vol2"
   incus storage delete "${storage_pool2}"
 
+  # Check snapshot copy between pools (remote).
+  incus storage create "${storage_pool2}" dir
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool2}/vol2"
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool2}" "vol2"
+  incus storage volume copy "test:${storage_pool}/vol1/snap0" "${storage_pool2}/vol2"
+  incus launch testimage "c1"
+  incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
+  incus exec "c1" -- test -f /mnt/foo
+  incus delete -f "c1"
+  incus storage volume delete "${storage_pool2}" "vol2"
+  incus storage delete "${storage_pool2}"
+
   # Check snapshot volume only copy.
   ! incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --volume-only || false
   incus storage volume copy "${storage_pool}/vol1" "${storage_pool}/vol2" --volume-only
+  [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes/custom/vol2/snapshots" | jq "length == 0")" = "true" ]
+  incus storage volume delete "${storage_pool}" "vol2"
+
+  # Check snapshot volume only copy (remote).
+  ! incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --volume-only || false
+  incus storage volume copy "${storage_pool}/vol1" "test:${storage_pool}/vol2" --volume-only
   [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes/custom/vol2/snapshots" | jq "length == 0")" = "true" ]
   incus storage volume delete "${storage_pool}" "vol2"
 
@@ -150,15 +199,26 @@ test_storage_volume_snapshots() {
   incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --refresh
   incus storage volume delete "${storage_pool}" "vol2"
 
+  # Check snapshot refresh (remote).
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2"
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --refresh
+  incus storage volume delete "${storage_pool}" "vol2"
+
   # Check snapshot copy between projects.
   incus project create project1
   incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol1" --target-project project1
-  [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes?project=project1" | jq 'length == 1')" = "true" ]
+  [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes?project=project1" | jq "length == 1")" = "true" ]
+  incus storage volume delete "${storage_pool}" "vol1" --project project1
+
+  # Check snapshot copy between projects (remote).
+  incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol1" --target-project project1
+  [ "$(incus query "/1.0/storage-pools/${storage_pool}/volumes?project=project1" | jq "length == 1")" = "true" ]
   incus storage volume delete "${storage_pool}" "vol1" --project project1
 
   incus storage volume delete "${storage_pool}" "vol1"
   incus project delete "project1"
   incus storage delete "${storage_pool}"
+  incus remote remove "test"
 
   # shellcheck disable=SC2031,2269
   INCUS_DIR="${INCUS_DIR}"
