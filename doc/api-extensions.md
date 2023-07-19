@@ -2224,3 +2224,7 @@ This adds the possibility to list a LXD deployment's network allocations.
 Through the `lxc network list-allocations` command and the `--project <PROJECT> | --all-projects` flags,
 you can list all the used IP addresses, hardware addresses (for instances), resource URIs and whether it uses NAT for
 each `instance`, `network`, `network forward` and `network load-balancer`.
+
+## `zfs_delegate`
+This implements a new `zfs.delegate` volume Boolean for volumes on a ZFS storage driver.
+When enabled and a suitable system is in use (requires ZFS 2.2 or higher), the ZFS dataset will be delegated to the container, allowing for its use through the `zfs` command line tool.

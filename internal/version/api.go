@@ -372,6 +372,7 @@ var APIExtensions = []string{
 	"numa_cpu_placement",
 	"custom_volume_iso",
 	"network_allocations",
+	"zfs_delegate",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
