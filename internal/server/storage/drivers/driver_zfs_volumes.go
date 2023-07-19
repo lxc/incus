@@ -2280,6 +2280,41 @@ func (d *zfs) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 	return nil
 }
 
+// CanDelegateVolume checks whether the volume may be delegated.
+func (d *zfs) CanDelegateVolume(vol Volume) bool {
+	// Not applicable for block backed volumes.
+	if d.isBlockBacked(vol) {
+		return false
+	}
+
+	// Check that the volume has it enabled.
+	if util.IsFalseOrEmpty(vol.Config()["zfs.delegate"]) {
+		return false
+	}
+
+	return true
+}
+
+// DelegateVolume allows for the volume to be managed by the instance itself.
+func (d *zfs) DelegateVolume(vol Volume, pid int) error {
+	if !d.CanDelegateVolume(vol) {
+		return nil
+	}
+
+	// Check that the current ZFS version supports it.
+	if !zfsDelegate {
+		return fmt.Errorf("Local ZFS version doesn't support delegation")
+	}
+
+	// Set the property.
+	err := d.delegateDataset(vol, pid)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // MigrateVolume sends a volume for migration.
 func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	if !volSrcArgs.AllowInconsistent && vol.contentType == ContentTypeFS && vol.IsBlockBacked() {

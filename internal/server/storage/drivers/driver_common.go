@@ -385,6 +385,16 @@ func (d *common) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Ope
 	return false, ErrNotSupported
 }
 
+// CanDelegateVolume checks whether the volume can be delegated.
+func (d *common) CanDelegateVolume(vol Volume) bool {
+	return false
+}
+
+// DelegateVolume delegates a volume.
+func (d *common) DelegateVolume(vol Volume, pid int) error {
+	return nil
+}
+
 // RenameVolume renames the volume and all related filesystem entries.
 func (d *common) RenameVolume(vol Volume, newVolName string, op *operations.Operation) error {
 	return ErrNotSupported

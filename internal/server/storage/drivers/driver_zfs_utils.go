@@ -502,6 +502,15 @@ func (d *zfs) randomVolumeName(vol Volume) string {
 	return fmt.Sprintf("%s_%s", vol.name, uuid.New())
 }
 
+func (d *zfs) delegateDataset(vol Volume, pid int) error {
+	_, err := subprocess.RunCommand("zfs", "zone", fmt.Sprintf("/proc/%d/ns/user", pid), d.dataset(vol, false))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ZFSSupportsDelegation returns true if the ZFS version on the system supports user namespace delegation.
 func ZFSSupportsDelegation() bool {
 	return zfsDelegate
