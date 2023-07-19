@@ -570,7 +570,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 		return err
 	}
 
-	// Handle zfs send/receive migration.
+	// Handle rbd migration.
 	if len(volTargetArgs.Snapshots) > 0 {
 		// Create the parent directory.
 		err := createParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
