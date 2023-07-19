@@ -28,10 +28,44 @@ var HugePageSizeSuffix = [...]string{"64KB", "1MB", "2MB", "1GB"}
 
 // InstanceConfigKeysAny is a map of config key to validator. (keys applying to containers AND virtual machines).
 var InstanceConfigKeysAny = map[string]func(value string) error{
-	"boot.autostart":             validate.Optional(validate.IsBool),
-	"boot.autostart.delay":       validate.Optional(validate.IsInt64),
-	"boot.autostart.priority":    validate.Optional(validate.IsInt64),
-	"boot.stop.priority":         validate.Optional(validate.IsInt64),
+	// gendoc:generate(group=instance-boot, key=boot.autostart)
+	//
+	// ---
+	//  type: bool
+	//  liveupdate: no
+	//  shortdesc: Controls whether to always start the instance when LXD starts (if not set, restore the last state)
+	"boot.autostart": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-boot, key=boot.autostart.delay)
+	//
+	// ---
+	//  type: integer
+	//  default: 0
+	//  liveupdate: no
+	//  shortdesc: Number of seconds to wait after the instance started before starting the next one
+	"boot.autostart.delay": validate.Optional(validate.IsInt64),
+	// gendoc:generate(group=instance-boot, key=boot.autostart.priority)
+	//
+	// ---
+	//  type: integer
+	//  default: 0
+	//  liveupdate: no
+	//  shortdesc: What order to start the instances in (starting with the highest value)
+	"boot.autostart.priority": validate.Optional(validate.IsInt64),
+	// gendoc:generate(group=instance-boot, key=boot.stop.priority)
+	//
+	// ---
+	//  type: integer
+	//  default: 0
+	//  liveupdate: no
+	//  shortdesc: What order to shut down the instances in (starting with the highest value)
+	"boot.stop.priority": validate.Optional(validate.IsInt64),
+	// gendoc:generate(group=instance-boot, key=boot.host_shutdown_timeout)
+	//
+	// ---
+	//  type: integer
+	//  default: 30
+	//  liveupdate: yes
+	//  shortdesc: Seconds to wait for the instance to shut down before it is force-stopped
 	"boot.host_shutdown_timeout": validate.Optional(validate.IsInt64),
 
 	"cloud-init.network-config": validate.Optional(validate.IsYAML),
