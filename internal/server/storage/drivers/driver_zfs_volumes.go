@@ -507,6 +507,14 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 
 		// Re-apply the base mount options.
 		if v.contentType == ContentTypeFS {
+			if zfsDelegate {
+				// Unset the zoned property so the mountpoint property can be updated.
+				err := d.setDatasetProperties(d.dataset(v, false), "zoned=off")
+				if err != nil {
+					return nil, nil, err
+				}
+			}
+
 			err := d.setDatasetProperties(d.dataset(v, false), "mountpoint=legacy", "canmount=noauto")
 			if err != nil {
 				return nil, nil, err
@@ -1135,6 +1143,14 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 
 		if !d.isBlockBacked(vol) {
 			// Re-apply the base mount options.
+			if zfsDelegate {
+				// Unset the zoned property so the mountpoint property can be updated.
+				err := d.setDatasetProperties(d.dataset(vol, false), "zoned=off")
+				if err != nil {
+					return err
+				}
+			}
+
 			err = d.setDatasetProperties(d.dataset(vol, false), "mountpoint=legacy", "canmount=noauto")
 			if err != nil {
 				return err
@@ -1472,6 +1488,7 @@ func (d *zfs) commonVolumeRules() map[string]func(value string) error {
 		"zfs.remove_snapshots": validate.Optional(validate.IsBool),
 		"zfs.reserve_space":    validate.Optional(validate.IsBool),
 		"zfs.use_refquota":     validate.Optional(validate.IsBool),
+		"zfs.delegate":         validate.Optional(validate.IsBool),
 	}
 }
 
@@ -2025,6 +2042,13 @@ func (d *zfs) MountVolume(vol Volume, op *operations.Operation) error {
 				return err
 			}
 
+			if zfsDelegate && util.IsTrue(vol.config["zfs.delegate"]) {
+				err = d.setDatasetProperties(dataset, "zoned=on")
+				if err != nil {
+					return err
+				}
+			}
+
 			err = vol.EnsureMountPath()
 			if err != nil {
 				return err
@@ -2127,6 +2151,13 @@ func (d *zfs) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 			d.logger.Debug("Unmounted ZFS volume", logger.Ctx{"volName": vol.name, "dev": dataset, "path": mountPath})
 		} else {
 			d.logger.Debug("Unmounted ZFS dataset", logger.Ctx{"volName": vol.name, "dev": dataset, "path": mountPath})
+		}
+
+		if !blockBacked && zfsDelegate && util.IsTrue(vol.config["zfs.delegate"]) {
+			err = d.setDatasetProperties(dataset, "zoned=off")
+			if err != nil {
+				return false, err
+			}
 		}
 
 		if blockBacked && !keepBlockDev {
