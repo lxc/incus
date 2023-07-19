@@ -4,14 +4,7 @@ import (
 	"net/http"
 
 	"github.com/lxc/incus/internal/server/request"
-	"github.com/lxc/incus/shared/util"
 )
-
-// UserAccess struct for permission checks.
-type UserAccess struct {
-	Admin    bool
-	Projects []string
-}
 
 // UserIsAdmin checks whether the requestor is a global admin.
 func UserIsAdmin(r *http.Request) bool {
@@ -36,5 +29,6 @@ func UserHasPermission(r *http.Request, project string) bool {
 		return true
 	}
 
-	return util.ValueInSlice(project, ua.Projects)
+	_, ok := ua.Projects[project]
+	return ok
 }

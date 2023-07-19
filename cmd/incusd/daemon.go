@@ -493,7 +493,12 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 						projects, ok := certProjects[username]
 						if ok {
 							ua.Admin = false
-							ua.Projects = projects
+							projectMap := map[string][]string{}
+							for _, projectName := range projects {
+								projectMap[projectName] = nil
+							}
+
+							ua.Projects = projectMap
 						}
 					}
 
