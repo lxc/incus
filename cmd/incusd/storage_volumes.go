@@ -1172,7 +1172,12 @@ func storagePoolVolumeTypePostMigration(state *state.State, r *http.Request, req
 	}
 
 	resources := map[string][]api.URL{}
-	resources["storage_volumes"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", "custom", volumeName)}
+	srcVolParentName, srcVolSnapName, srcIsSnapshot := api.GetParentAndSnapshotName(volumeName)
+	if srcIsSnapshot {
+		resources["storage_volume_snapshots"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", "custom", srcVolParentName, "snapshots", srcVolSnapName)}
+	} else {
+		resources["storage_volumes"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", "custom", volumeName)}
+	}
 
 	run := func(op *operations.Operation) error {
 		return ws.DoStorage(state, projectName, poolName, volumeName, op)

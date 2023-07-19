@@ -552,6 +552,16 @@ func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Resp
 		return response.BadRequest(fmt.Errorf("Storage volume names may not contain slashes"))
 	}
 
+	// This is a migration request so send back requested secrets.
+	if req.Migration {
+		req := api.StorageVolumePost{
+			Name:   req.Name,
+			Target: req.Target,
+		}
+
+		return storagePoolVolumeTypePostMigration(s, r, projectParam(r), projectName, poolName, fullSnapshotName, req)
+	}
+
 	// Rename the snapshot.
 	snapshotRename := func(op *operations.Operation) error {
 		pool, err := storagePools.LoadByName(s, poolName)
