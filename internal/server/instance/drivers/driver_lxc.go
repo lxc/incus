@@ -804,6 +804,11 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		"/sys/kernel/tracing",
 	}
 
+	// Pass in /dev/zfs to the container if delegation is supported on the system.
+	if storageDrivers.ZFSSupportsDelegation() && util.PathExists("/dev/zfs") {
+		bindMounts = append(bindMounts, "/dev/zfs")
+	}
+
 	if d.IsPrivileged() && !d.state.OS.RunningInUserNS {
 		err = lxcSetConfigItem(cc, "lxc.mount.entry", "mqueue dev/mqueue mqueue rw,relatime,create=dir,optional 0 0")
 		if err != nil {
@@ -870,6 +875,10 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 			"c 5:2 rwm",    // /dev/ptmx
 			"c 10:229 rwm", // /dev/fuse
 			"c 10:200 rwm", // /dev/net/tun
+		}
+
+		if storageDrivers.ZFSSupportsDelegation() {
+			devices = append(devices, "c 10:249 rwm")
 		}
 
 		for _, dev := range devices {
