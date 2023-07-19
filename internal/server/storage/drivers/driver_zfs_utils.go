@@ -319,11 +319,38 @@ func (d *zfs) initialDatasets() []string {
 	return entries
 }
 
+func (d *zfs) needsRecursion(dataset string) bool {
+	// Ignore snapshots for the test.
+	dataset = strings.Split(dataset, "@")[0]
+
+	entries, err := d.getDatasets(dataset, "filesystem,volume")
+	if err != nil {
+		return false
+	}
+
+	if len(entries) == 0 {
+		return false
+	}
+
+	return true
+}
+
 func (d *zfs) sendDataset(dataset string, parent string, volSrcArgs *migration.VolumeSourceArgs, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTracker) error {
 	defer func() { _ = conn.Close() }()
 
 	// Assemble zfs send command.
 	args := []string{"send"}
+
+	// Check if nesting is required.
+	// We only want to use recursion (and possible raw) mode if required as it can interfere with ZFS encryption.
+	if d.needsRecursion(dataset) {
+		args = append(args, "-R")
+
+		if zfsRaw {
+			args = append(args, "-w")
+		}
+	}
+
 	if util.ValueInSlice("compress", volSrcArgs.MigrationType.Features) {
 		args = append(args, "-c")
 		args = append(args, "-L")
