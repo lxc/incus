@@ -68,9 +68,60 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Seconds to wait for the instance to shut down before it is force-stopped
 	"boot.host_shutdown_timeout": validate.Optional(validate.IsInt64),
 
+	// gendoc:generate(group=instance-cloud-init, key=cloud-init.network-config)
+	//
+	// ---
+	//  type: string
+	//  default: `DHCP on eth0`
+	//  liveupdate: no
+	//  condition: If supported by image
+	//  shortdesc: Network configuration for `cloud-init` (content is used as seed value)
 	"cloud-init.network-config": validate.Optional(validate.IsYAML),
-	"cloud-init.user-data":      validate.Optional(validate.IsCloudInitUserData),
-	"cloud-init.vendor-data":    validate.Optional(validate.IsCloudInitUserData),
+	// gendoc:generate(group=instance-cloud-init, key=cloud-init.user-data)
+	//
+	// ---
+	//  type: string
+	//  default: `#cloud-config`
+	//  liveupdate: no
+	//  condition: If supported by image
+	//  shortdesc: User data for `cloud-init` (content is used as seed value)
+	"cloud-init.user-data": validate.Optional(validate.IsCloudInitUserData),
+	// gendoc:generate(group=instance-cloud-init, key=cloud-init.vendor-data)
+	//
+	// ---
+	//  type: string
+	//  default: `#cloud-config`
+	//  liveupdate: no
+	//  condition: If supported by image
+	//  shortdesc: Vendor data for `cloud-init` (content is used as seed value)
+	"cloud-init.vendor-data": validate.Optional(validate.IsCloudInitUserData),
+
+	// gendoc:generate(group=instance-cloud-init, key=user.network-config)
+	//
+	// ---
+	//  type: string
+	//  default: `DHCP on eth0`
+	//  liveupdate: no
+	//  condition: If supported by image
+	//  shortdesc: Legacy version of `cloud-init.network-config`
+
+	// gendoc:generate(group=instance-cloud-init, key=user.user-data)
+	//
+	// ---
+	//  type: string
+	//  default: `#cloud-config`
+	//  liveupdate: no
+	//  condition: If supported by image
+	//  shortdesc: Legacy version of `cloud-init.user-data`
+
+	// gendoc:generate(group=instance-cloud-init, key=user.vendor-data)
+	//
+	// ---
+	//  type: string
+	//  default: `#cloud-config`
+	//  liveupdate: no
+	//  condition: If supported by image
+	//  shortdesc: Legacy version of `cloud-init.vendor-data`
 
 	// gendoc:generate(group=instance-miscellaneous, key=cluster.evacuate)
 	//
