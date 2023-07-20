@@ -49,6 +49,11 @@ test_migration() {
   if [ "${INCUS_BACKEND}" = "zfs" ]; then
     # Test that block mode zfs backends work fine with migration.
     for fs in "ext4" "btrfs" "xfs"; do
+      if ! command -v "mkfs.${fs}" >/dev/null 2>&1; then
+        echo "==> SKIP: Skipping block mode test on ${fs} due to missing tools."
+        continue
+      fi
+
       # shellcheck disable=2039,3043
       local storage_pool1 storage_pool2
       # shellcheck disable=2153

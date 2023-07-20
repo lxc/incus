@@ -1,4 +1,9 @@
 test_lxc_to_incus() {
+  if ! command -v "lxc-create" >/dev/null 2>&1; then
+    echo "==> SKIP: Skipping lxc-to-incus as system is missing LXC"
+    return
+  fi
+
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   LXC_DIR="${TEST_DIR}/lxc"

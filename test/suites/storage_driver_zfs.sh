@@ -74,6 +74,11 @@ do_zfs_cross_pool_copy() {
 do_storage_driver_zfs() {
   filesystem="$1"
 
+  if ! command -v "mkfs.${filesystem}" >/dev/null 2>&1; then
+    echo "==> SKIP: Skipping block mode test on ${filesystem} due to missing tools."
+    return
+  fi
+
   # shellcheck disable=2039,3043
   local INCUS_STORAGE_DIR incus_backend
 

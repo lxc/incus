@@ -280,6 +280,11 @@ EOF
 }
 
 test_bucket_recover() {
+  if ! command -v "minio" >/dev/null 2>&1; then
+    echo "==> SKIP: Skip bucket recovery test due to missing minio"
+    return
+  fi
+
   (
     set -e
 
