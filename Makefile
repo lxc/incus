@@ -52,12 +52,6 @@ incus-migrate:
 	CGO_ENABLED=0 $(GO) install -v -tags netgo ./cmd/incus-migrate
 	@echo "Incus migration tool built successfully"
 
-.PHONY: incus-doc
-incus-doc:
-	@$(GO) version > /dev/null 2>&1 || { echo "go is not installed for incus-doc installation."; exit 1; }
-	cd internal/server/config/generate && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/incus-doc
-	@echo "Incus documentation generator built successfully"
-
 .PHONY: deps
 deps:
 	@if [ ! -e "$(RAFT_PATH)" ]; then \
@@ -131,13 +125,18 @@ doc-setup:
 	. $(SPHINXENV) ; pip install --upgrade -r doc/.sphinx/requirements.txt
 	rm -Rf doc/html
 
+.PHONY: generate-config
+generate-config:
+	@echo "Generating golang documentation"
+	cd internal/server/config/generate && CGO_ENABLED=0 go build -o $(GOPATH)/bin/incus-doc
+	$(GOPATH)/bin/incus-doc . -y ./doc/config_options.yaml -t ./doc/config_options.txt
+
 .PHONY: doc
-doc: incus-doc doc-setup doc-incremental
+doc: doc-setup doc-incremental
 
 .PHONY: doc-incremental
 doc-incremental:
 	@echo "Build the documentation"
-	$(GOPATH)/bin/incus-doc ./cmd/incusd -y ./doc/config_options.yaml -t ./doc/config_options.txt
 	. $(SPHINXENV) ; sphinx-build -c doc/ -b dirhtml doc/ doc/html/ -w doc/.sphinx/warnings.txt
 
 .PHONY: doc-serve
