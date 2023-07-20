@@ -1214,15 +1214,21 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 
 // RefreshVolume updates an existing volume to match the state of another.
 func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, allowInconsistent bool, op *operations.Operation) error {
-	// Get target snapshots
-	targetSnapshots, err := vol.Snapshots(op)
-	if err != nil {
-		return fmt.Errorf("Failed to get target snapshots: %w", err)
-	}
+	var err error
+	var targetSnapshots []Volume
+	var srcSnapshotsAll []Volume
 
-	srcSnapshotsAll, err := srcVol.Snapshots(op)
-	if err != nil {
-		return fmt.Errorf("Failed to get source snapshots: %w", err)
+	if !srcVol.IsSnapshot() {
+		// Get target snapshots
+		targetSnapshots, err = vol.Snapshots(op)
+		if err != nil {
+			return fmt.Errorf("Failed to get target snapshots: %w", err)
+		}
+
+		srcSnapshotsAll, err = srcVol.Snapshots(op)
+		if err != nil {
+			return fmt.Errorf("Failed to get source snapshots: %w", err)
+		}
 	}
 
 	// If there are no target or source snapshots, perform a simple copy using zfs.
