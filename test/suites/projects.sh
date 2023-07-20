@@ -689,14 +689,16 @@ test_projects_limits() {
   inc profile device set default root size=100MiB
   inc config device add c2 root disk path="/" pool="${pool}" size=50MiB
 
-  # Can't set the project's disk limit because not all volumes have
-  # the "size" config defined.
-  pool1="inctest1-$(basename "${INCUS_DIR}")"
-  inc storage create "${pool1}" lvm size=1GiB
-  inc storage volume create "${pool1}" v1
-  ! inc project set p1 limits.disk 1GiB || false
-  inc storage volume delete "${pool1}" v1
-  inc storage delete "${pool1}"
+  if [ "${INCUS_BACKEND}" = "lvm" ]; then
+    # Can't set the project's disk limit because not all volumes have
+    # the "size" config defined.
+    pool1="inctest1-$(basename "${INCUS_DIR}")"
+    inc storage create "${pool1}" lvm size=1GiB
+    inc storage volume create "${pool1}" v1
+    ! inc project set p1 limits.disk 1GiB || false
+    inc storage volume delete "${pool1}" v1
+    inc storage delete "${pool1}"
+  fi
 
   # Create a custom volume without any size property defined.
   inc storage volume create "${pool}" v1
