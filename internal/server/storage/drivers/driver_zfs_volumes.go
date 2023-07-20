@@ -486,7 +486,7 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 		}
 
 		// Strip internal snapshots.
-		entries, err := d.getDatasets(d.dataset(v, false))
+		entries, err := d.getDatasets(d.dataset(v, false), "snapshot")
 		if err != nil {
 			return nil, nil, err
 		}
@@ -751,7 +751,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 		// Cleanup unexpected snapshots.
 		if len(snapshots) > 0 {
-			children, err := d.getDatasets(d.dataset(vol, false))
+			children, err := d.getDatasets(d.dataset(vol, false), "snapshot")
 			if err != nil {
 				return err
 			}
@@ -1081,7 +1081,7 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 	}
 
 	// Strip internal snapshots.
-	entries, err := d.getDatasets(d.dataset(vol, false))
+	entries, err := d.getDatasets(d.dataset(vol, false), "snapshot")
 	if err != nil {
 		return err
 	}
@@ -3056,7 +3056,7 @@ func (d *zfs) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (b
 // VolumeSnapshots returns a list of snapshots for the volume (in no particular order).
 func (d *zfs) VolumeSnapshots(vol Volume, op *operations.Operation) ([]string, error) {
 	// Get all children datasets.
-	entries, err := d.getDatasets(d.dataset(vol, false))
+	entries, err := d.getDatasets(d.dataset(vol, false), "snapshot")
 	if err != nil {
 		return nil, err
 	}
@@ -3077,7 +3077,7 @@ func (d *zfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 	snapVol := NewVolume(d, d.name, vol.volType, vol.contentType, fmt.Sprintf("%s/%s", vol.name, snapshotName), vol.config, vol.poolConfig)
 
 	// Get the list of snapshots.
-	entries, err := d.getDatasets(d.dataset(vol, false))
+	entries, err := d.getDatasets(d.dataset(vol, false), "snapshot")
 	if err != nil {
 		return err
 	}

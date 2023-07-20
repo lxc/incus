@@ -334,7 +334,7 @@ func (d *zfs) Create() error {
 		}
 
 		// Confirm that the existing pool/dataset is all empty.
-		datasets, err := d.getDatasets(d.config["zfs.pool_name"])
+		datasets, err := d.getDatasets(d.config["zfs.pool_name"], "all")
 		if err != nil {
 			return err
 		}
@@ -373,7 +373,7 @@ func (d *zfs) Delete(op *operations.Operation) error {
 	}
 
 	// Confirm that nothing's been left behind
-	datasets, err := d.getDatasets(d.config["zfs.pool_name"])
+	datasets, err := d.getDatasets(d.config["zfs.pool_name"], "all")
 	if err != nil {
 		return err
 	}

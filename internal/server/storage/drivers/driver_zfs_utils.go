@@ -175,8 +175,8 @@ func (d *zfs) getClones(dataset string) ([]string, error) {
 	return clones, nil
 }
 
-func (d *zfs) getDatasets(dataset string) ([]string, error) {
-	out, err := subprocess.RunCommand("zfs", "get", "-H", "-r", "-o", "name", "name", dataset)
+func (d *zfs) getDatasets(dataset string, types string) ([]string, error) {
+	out, err := subprocess.RunCommand("zfs", "get", "-H", "-r", "-o", "name", "-t", types, "name", dataset)
 	if err != nil {
 		return nil, err
 	}
