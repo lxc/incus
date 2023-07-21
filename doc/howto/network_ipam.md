@@ -16,22 +16,22 @@ By default, this command shows the IPAM information for the `default` project. Y
 The resulting output will look something like this:
 
 ```
-+----------------------+-------------------------------------------+----------+------+-------------------+
-|       USED BY        |                  ADDRESS                  |   TYPE   | NAT  | HARDWARE ADDRESS  |
-+----------------------+-------------------------------------------+----------+------+-------------------+
-| /1.0/networks/lxdbr0 | 10.6.105.1/24                             | network  | true |                   |
-+----------------------+-------------------------------------------+----------+------+-------------------+
-| /1.0/networks/lxdbr0 | fd42:3cce:990:a1fd::1/64                  | network  | true |                   |
-+----------------------+-------------------------------------------+----------+------+-------------------+
-| /1.0/instances/u1    | fd42:3cce:990:a1fd:216:3eff:fe04:f095/128 | instance | true | 00:16:3e:04:f0:95 |
-+----------------------+-------------------------------------------+----------+------+-------------------+
-| /1.0/instances/u1    | 10.6.105.160/32                           | instance | true | 00:16:3e:04:f0:95 |
-+----------------------+-------------------------------------------+----------+------+-------------------+
++----------------------+-----------------+----------+------+-------------------+
+|       USED BY        |      ADDRESS    |   TYPE   | NAT  | HARDWARE ADDRESS  |
++----------------------+-----------------+----------+------+-------------------+
+| /1.0/networks/lxdbr0 | 192.0.2.0/24    | network  | true |                   |
++----------------------+-----------------+----------+------+-------------------+
+| /1.0/networks/lxdbr0 | 2001:db8::/32   | network  | true |                   |
++----------------------+-----------------+----------+------+-------------------+
+| /1.0/instances/u1    | 2001:db8::1/128 | instance | true | 00:16:3e:04:f0:95 |
++----------------------+-----------------+----------+------+-------------------+
+| /1.0/instances/u1    | 192.0.2.2/32    | instance | true | 00:16:3e:04:f0:95 |
++----------------------+-----------------+----------+------+-------------------+
 
 ...
 ```
 
-Each listed entry represents an IP allocation of one of the following LXD entities: `network`, `network-forward`, `network-load-balancer`, and `instance`.
-An entry contains a list of IP addresses using the CIDR notation.
+Each listed entry lists the IP address (in CIDR notation) of one of the following LXD entities: `network`, `network-forward`, `network-load-balancer`, and `instance`.
+An entry contains an IP address using the CIDR notation.
 It also contains a LXD resource URI, the type of the entity, whether it is in NAT mode, and the hardware address (only for the `instance` entity).
 
