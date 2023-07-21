@@ -373,6 +373,7 @@ var APIExtensions = []string{
 	"custom_volume_iso",
 	"network_allocations",
 	"zfs_delegate",
+	"storage_api_remote_volume_snapshot_copy",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
