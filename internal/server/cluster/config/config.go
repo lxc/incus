@@ -274,9 +274,35 @@ func (c *Config) update(values map[string]string) (map[string]string, error) {
 
 // ConfigSchema defines available server configuration keys.
 var ConfigSchema = config.Schema{
-	"acme.ca_url":                    {},
-	"acme.domain":                    {},
-	"acme.email":                     {},
+	// gendoc:generate(group=server-acme, key=acme.ca_url)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  default: `https://acme-v02.api.letsencrypt.org/directory`
+	//  shortdesc: Agree to ACME terms of service
+	"acme.ca_url": {},
+	// gendoc:generate(group=server-acme, key=acme.domain)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Domain for which the certificate is issued
+	"acme.domain": {},
+	// gendoc:generate(group=server-acme, key=acme.email)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Email address used for the account registration
+	"acme.email": {},
+	// gendoc:generate(group=server-acme, key=acme.agree_tos)
+	//
+	// ---
+	//  type: bool
+	//  scope: global
+	//  default: `false`
+	//  shortdesc: Agree to ACME terms of service
 	"acme.agree_tos":                 {Type: config.Bool, Default: "false"},
 	"backups.compression_algorithm":  {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
 	"cluster.offline_threshold":      {Type: config.Int64, Default: offlineThresholdDefault(), Validator: offlineThresholdValidator},
