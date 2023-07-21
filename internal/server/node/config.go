@@ -228,6 +228,19 @@ var ConfigSchema = config.Schema{
 	"core.storage_buckets_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Storage volumes to store backups/images on
+
+	// gendoc:generate(group=server-miscellaneous, key=storage.backups_volume)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Volume to use to store the backup tarballs (syntax is `POOL/VOLUME`)
 	"storage.backups_volume": {},
-	"storage.images_volume":  {},
+	// gendoc:generate(group=server-miscellaneous, key=storage.images_volume)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Volume to use to store the image tarballs (syntax is `POOL/VOLUME`)
+	"storage.images_volume": {},
 }
