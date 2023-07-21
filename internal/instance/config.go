@@ -235,9 +235,35 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Prevents the instance from being deleted
 	"security.protection.delete": validate.Optional(validate.IsBool),
 
-	"snapshots.schedule":         validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly", "@startup", "@never"})),
+	// gendoc:generate(group=instance-snapshots, key=snapshots.schedule)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  shortdesc: Cron expression (`<minute> <hour> <dom> <month> <dow>`), a comma-separated list of schedule aliases (`@hourly`, `@daily`, `@midnight`, `@weekly`, `@monthly`, `@annually`, `@yearly`), or empty to disable automatic snapshots (the default)
+	"snapshots.schedule": validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly", "@startup", "@never"})),
+	// gendoc:generate(group=instance-snapshots, key=snapshots.schedule.stopped)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  shortdesc: Controls whether to automatically snapshot stopped instances
 	"snapshots.schedule.stopped": validate.Optional(validate.IsBool),
-	"snapshots.pattern":          validate.IsAny,
+	// gendoc:generate(group=instance-snapshots, key=snapshots.pattern)
+	//
+	// ---
+	//  type: string
+	//  default: `snap%d`
+	//  liveupdate: no
+	//  shortdesc: Pongo2 template string that represents the snapshot name (used for scheduled snapshots and unnamed snapshots); see {ref}`instance-options-snapshots-names`
+	"snapshots.pattern": validate.IsAny,
+	// gendoc:generate(group=instance-snapshots, key=snapshots.expiry)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  shortdesc: Controls when snapshots are to be deleted (expects an expression like `1M 2H 3d 4w 5m 6y`)
 	"snapshots.expiry": func(value string) error {
 		// Validate expression
 		_, err := GetExpiry(time.Time{}, value)
