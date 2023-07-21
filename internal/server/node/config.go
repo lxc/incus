@@ -148,27 +148,76 @@ func (c *Config) update(values map[string]string) (map[string]string, error) {
 // ConfigSchema defines available server configuration keys.
 var ConfigSchema = config.Schema{
 	// Network address for this server
+
+	// gendoc:generate(group=server-core, key=core.https_address)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Address to bind for the remote API (HTTPS)
 	"core.https_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Network address for cluster communication
 	"cluster.https_address": {Validator: validate.Optional(validate.IsListenAddress(true, false, false))},
 
 	// Network address for the BGP server
+
+	// gendoc:generate(group=server-core, key=core.bgp_address)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Address to bind the BGP server to (BGP)
 	"core.bgp_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Unique router ID for the BGP server
+
+	// gendoc:generate(group=server-core, key=core.bgp_routerid)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: A unique identifier for this BGP server (formatted as an IPv4 address)
 	"core.bgp_routerid": {Validator: validate.Optional(validate.IsNetworkAddressV4)},
 
 	// Network address for the debug server
+
+	// gendoc:generate(group=server-core, key=core.debug_address)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Address to bind the `pprof` debug server to (HTTP)
 	"core.debug_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Network address for the DNS server
+
+	// gendoc:generate(group=server-core, key=core.dns_address)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Address to bind the authoritative DNS server to (DNS)
 	"core.dns_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Network address for the metrics server
+
+	// gendoc:generate(group=server-core, key=core.metrics_address)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Address to bind the metrics server to (HTTPS)
 	"core.metrics_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Network address for the storage buckets server
+
+	// gendoc:generate(group=server-core, key=core.storage_buckets_address)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Address to bind the storage object server to (HTTPS)
 	"core.storage_buckets_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Storage volumes to store backups/images on

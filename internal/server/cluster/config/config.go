@@ -285,36 +285,116 @@ var ConfigSchema = config.Schema{
 	"cluster.join_token_expiry":      {Type: config.String, Default: "3H", Validator: expiryValidator},
 	"cluster.max_voters":             {Type: config.Int64, Default: "3", Validator: maxVotersValidator},
 	"cluster.max_standby":            {Type: config.Int64, Default: "2", Validator: maxStandByValidator},
-	"core.metrics_authentication":    {Type: config.Bool, Default: "true"},
-	"core.bgp_asn":                   {Type: config.Int64, Default: "0", Validator: validate.Optional(validate.IsInRange(0, 4294967294))},
-	"core.https_allowed_headers":     {},
-	"core.https_allowed_methods":     {},
-	"core.https_allowed_origin":      {},
+	// gendoc:generate(group=server-core, key=core.metrics_authentication)
+	//
+	// ---
+	//  type: bool
+	//  scope: global
+	//  default: `true`
+	//  shortdesc: Whether to enforce authentication on the metrics endpoint
+	"core.metrics_authentication": {Type: config.Bool, Default: "true"},
+	// gendoc:generate(group=server-core, key=core.bgp_asn)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: The BGP Autonomous System Number to use for the local server
+	"core.bgp_asn": {Type: config.Int64, Default: "0", Validator: validate.Optional(validate.IsInRange(0, 4294967294))},
+	// gendoc:generate(group=server-core, key=core.https_allowed_headers)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: `Access-Control-Allow-Headers` HTTP header value
+	"core.https_allowed_headers": {},
+	// gendoc:generate(group=server-core, key=core.https_allowed_methods)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: `Access-Control-Allow-Methods` HTTP header value
+	"core.https_allowed_methods": {},
+	// gendoc:generate(group=server-core, key=core.https_allowed_origin)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: `Access-Control-Allow-Origin` HTTP header value
+	"core.https_allowed_origin": {},
+	// gendoc:generate(group=server-core, key=core.https_allowed_credentials)
+	//
+	// ---
+	//  type: bool
+	//  scope: global
+	//  shortdesc: Whether to set the `Access-Control-Allow-Credentials` HTTP header value to `true`
 	"core.https_allowed_credentials": {Type: config.Bool},
-	"core.https_trusted_proxy":       {},
-	"core.proxy_http":                {},
-	"core.proxy_https":               {},
-	"core.proxy_ignore_hosts":        {},
-	"core.remote_token_expiry":       {Type: config.String, Validator: validate.Optional(expiryValidator)},
-	"core.shutdown_timeout":          {Type: config.Int64, Default: "5"},
-	"core.trust_ca_certificates":     {Type: config.Bool},
-	"images.auto_update_cached":      {Type: config.Bool, Default: "true"},
-	"images.auto_update_interval":    {Type: config.Int64, Default: "6"},
-	"images.compression_algorithm":   {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
-	"images.default_architecture":    {Validator: validate.Optional(validate.IsArchitecture)},
-	"images.remote_cache_expiry":     {Type: config.Int64, Default: "10"},
-	"instances.nic.host_name":        {Validator: validate.Optional(validate.IsOneOf("random", "mac"))},
-	"instances.placement.scriptlet":  {Validator: validate.Optional(scriptletLoad.InstancePlacementValidate)},
-	"loki.auth.username":             {},
-	"loki.auth.password":             {},
-	"loki.api.ca_cert":               {},
-	"loki.api.url":                   {},
-	"loki.labels":                    {},
-	"loki.loglevel":                  {Validator: logLevelValidator, Default: logrus.InfoLevel.String()},
-	"loki.types":                     {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging"))), Default: "lifecycle,logging"},
-	"oidc.client.id":                 {},
-	"oidc.issuer":                    {},
-	"oidc.audience":                  {},
+	// gendoc:generate(group=server-core, key=core.https_trusted_proxy)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Comma-separated list of IP addresses of trusted servers to provide the client’s address through the proxy connection header
+	"core.https_trusted_proxy": {},
+	// gendoc:generate(group=server-core, key=core.proxy_http)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: HTTP proxy to use, if any (falls back to `HTTP_PROXY` environment variable)
+	"core.proxy_http": {},
+	// gendoc:generate(group=server-core, key=core.proxy_https)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: HTTPS proxy to use, if any (falls back to `HTTPS_PROXY` environment variable)
+	"core.proxy_https": {},
+	// gendoc:generate(group=server-core, key=core.proxy_ignore_hosts)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Hosts that don’t need the proxy (similar format to `NO_PROXY`, for example, `1.2.3.4,1.2.3.5`, falls back to `NO_PROXY` environment variable)
+	"core.proxy_ignore_hosts": {},
+	// gendoc:generate(group=server-core, key=core.remote_token_expiry)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Time after which a remote add token expires (defaults to no expiry)
+	"core.remote_token_expiry": {Type: config.String, Validator: validate.Optional(expiryValidator)},
+	// gendoc:generate(group=server-core, key=core.shutdown_timeout)
+	//
+	// ---
+	//  type: integer
+	//  scope: global
+	//  default: `5`
+	//  shortdesc: Number of minutes to wait for running operations to complete before the LXD server shuts down
+	"core.shutdown_timeout": {Type: config.Int64, Default: "5"},
+	// gendoc:generate(group=server-core, key=core.trust_ca_certificates)
+	//
+	// ---
+	//  type: bool
+	//  scope: global
+	//  shortdesc: Whether to automatically trust clients signed by the CA
+	"core.trust_ca_certificates":    {Type: config.Bool},
+	"images.auto_update_cached":     {Type: config.Bool, Default: "true"},
+	"images.auto_update_interval":   {Type: config.Int64, Default: "6"},
+	"images.compression_algorithm":  {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
+	"images.default_architecture":   {Validator: validate.Optional(validate.IsArchitecture)},
+	"images.remote_cache_expiry":    {Type: config.Int64, Default: "10"},
+	"instances.nic.host_name":       {Validator: validate.Optional(validate.IsOneOf("random", "mac"))},
+	"instances.placement.scriptlet": {Validator: validate.Optional(scriptletLoad.InstancePlacementValidate)},
+	"loki.auth.username":            {},
+	"loki.auth.password":            {},
+	"loki.api.ca_cert":              {},
+	"loki.api.url":                  {},
+	"loki.labels":                   {},
+	"loki.loglevel":                 {Validator: logLevelValidator, Default: logrus.InfoLevel.String()},
+	"loki.types":                    {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging"))), Default: "lifecycle,logging"},
+	"oidc.client.id":                {},
+	"oidc.issuer":                   {},
+	"oidc.audience":                 {},
 
 	// OVN networking global keys.
 	"network.ovn.integration_bridge":    {Default: "br-int"},
