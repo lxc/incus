@@ -303,14 +303,56 @@ var ConfigSchema = config.Schema{
 	//  scope: global
 	//  default: `false`
 	//  shortdesc: Agree to ACME terms of service
-	"acme.agree_tos":                 {Type: config.Bool, Default: "false"},
-	"backups.compression_algorithm":  {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
-	"cluster.offline_threshold":      {Type: config.Int64, Default: offlineThresholdDefault(), Validator: offlineThresholdValidator},
+	"acme.agree_tos":                {Type: config.Bool, Default: "false"},
+	"backups.compression_algorithm": {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
+	// gendoc:generate(group=server-cluster, key=cluster.offline_threshold)
+	//
+	// ---
+	//  type: integer
+	//  scope: global
+	//  default: `20`
+	//  shortdesc: Number of seconds after which an unresponsive member is considered offline
+	"cluster.offline_threshold": {Type: config.Int64, Default: offlineThresholdDefault(), Validator: offlineThresholdValidator},
+	// gendoc:generate(group=server-cluster, key=cluster.images_minimal_replica)
+	//
+	// ---
+	//  type: integer
+	//  scope: global
+	//  default: `3`
+	//  shortdesc: Minimal number of cluster members with a copy of a particular image (set to `1` for no replication or to `-1` for all members)
 	"cluster.images_minimal_replica": {Type: config.Int64, Default: "3", Validator: imageMinimalReplicaValidator},
-	"cluster.healing_threshold":      {Type: config.Int64, Default: "0"},
-	"cluster.join_token_expiry":      {Type: config.String, Default: "3H", Validator: expiryValidator},
-	"cluster.max_voters":             {Type: config.Int64, Default: "3", Validator: maxVotersValidator},
-	"cluster.max_standby":            {Type: config.Int64, Default: "2", Validator: maxStandByValidator},
+	// gendoc:generate(group=server-cluster, key=cluster.healing_threshold)
+	//
+	// ---
+	//  type: integer
+	//  scope: global
+	//  default: `0`
+	//  shortdesc: Number of seconds after which an offline cluster member is to be evacuated (set to `0` to disable)
+	"cluster.healing_threshold": {Type: config.Int64, Default: "0"},
+	// gendoc:generate(group=server-cluster, key=cluster.join_token_expiry)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  default: `3H`
+	//  shortdesc: Time after which a cluster join token expires
+	"cluster.join_token_expiry": {Type: config.String, Default: "3H", Validator: expiryValidator},
+	// gendoc:generate(group=server-cluster, key=cluster.max_voters)
+	//
+	// ---
+	//  type: integer
+	//  scope: global
+	//  default: `3`
+	//  shortdesc: Maximum number of cluster members that are assigned the database voter role (must be an odd number >= `3`)
+	"cluster.max_voters": {Type: config.Int64, Default: "3", Validator: maxVotersValidator},
+	// gendoc:generate(group=server-cluster, key=cluster.max_standby)
+	//
+	// ---
+	//  type: integer
+	//  scope: global
+	//  default: `2`
+	//  shortdesc: Maximum number of cluster members that are assigned the database stand-by role (must be between `0` and `5`)
+	"cluster.max_standby": {Type: config.Int64, Default: "2", Validator: maxStandByValidator},
 	// gendoc:generate(group=server-core, key=core.metrics_authentication)
 	//
 	// ---

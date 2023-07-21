@@ -158,6 +158,13 @@ var ConfigSchema = config.Schema{
 	"core.https_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Network address for cluster communication
+
+	// gendoc:generate(group=server-cluster, key=cluster.https_address)
+	//
+	// ---
+	//  type: string
+	//  scope: local
+	//  shortdesc: Address to use for clustering traffic
 	"cluster.https_address": {Validator: validate.Optional(validate.IsListenAddress(true, false, false))},
 
 	// Network address for the BGP server
