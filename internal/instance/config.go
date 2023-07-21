@@ -218,7 +218,21 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Raw idmap configuration (for example, `both 1000 1000`)
 	"raw.idmap": validate.IsAny,
 
-	"security.guestapi":          validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.guestapi)
+	//
+	// ---
+	//  type: bool
+	//  default: `true`
+	//  liveupdate: no
+	//  shortdesc: Controls the presence of `/dev/incus` in the instance
+	"security.guestapi": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.protection.delete)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: yes
+	//  shortdesc: Prevents the instance from being deleted
 	"security.protection.delete": validate.Optional(validate.IsBool),
 
 	"snapshots.schedule":         validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly", "@startup", "@never"})),
@@ -455,34 +469,202 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Raw Seccomp configuration
 	"raw.seccomp": validate.IsAny,
 
+	// gendoc:generate(group=instance-security, key=security.guestapi.images)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls the availability of the `/1.0/images` API over `guestapi`
 	"security.guestapi.images": validate.Optional(validate.IsBool),
-
-	"security.idmap.base":     validate.Optional(validate.IsUint32),
+	// gendoc:generate(group=instance-security, key=security.idmap.base)
+	//
+	// ---
+	//  type: integer
+	//  liveupdate: no
+	//  condition: unprivileged container
+	//  shortdesc: The base host ID to use for the allocation (overrides auto-detection)
+	"security.idmap.base": validate.Optional(validate.IsUint32),
+	// gendoc:generate(group=instance-security, key=security.idmap.isolated)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: unprivileged container
+	//  shortdesc: Controls whether to use an idmap for this instance that is unique among instances with isolated set
 	"security.idmap.isolated": validate.Optional(validate.IsBool),
-	"security.idmap.size":     validate.Optional(validate.IsUint32),
+	// gendoc:generate(group=instance-security, key=security.idmap.size)
+	//
+	// ---
+	//  type: integer
+	//  liveupdate: no
+	//  condition: unprivileged container
+	//  shortdesc: The size of the idmap to use
+	"security.idmap.size": validate.Optional(validate.IsUint32),
 
-	"security.nesting":          validate.Optional(validate.IsBool),
-	"security.privileged":       validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.nesting)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: yes
+	//  condition: container
+	//  shortdesc: Controls whether to support running Incus (nested) inside the instance
+	"security.nesting": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.privileged)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to run the instance in privileged mode
+	"security.privileged": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.protection.shift)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: yes
+	//  condition: container
+	//  shortdesc: Prevents the instance’s file system from being UID/GID shifted on startup
 	"security.protection.shift": validate.Optional(validate.IsBool),
 
-	"security.syscalls.allow":                        validate.IsAny,
-	"security.syscalls.blacklist_default":            validate.Optional(validate.IsBool),
-	"security.syscalls.blacklist_compat":             validate.Optional(validate.IsBool),
-	"security.syscalls.blacklist":                    validate.IsAny,
-	"security.syscalls.deny_default":                 validate.Optional(validate.IsBool),
-	"security.syscalls.deny_compat":                  validate.Optional(validate.IsBool),
-	"security.syscalls.deny":                         validate.IsAny,
-	"security.syscalls.intercept.bpf":                validate.Optional(validate.IsBool),
-	"security.syscalls.intercept.bpf.devices":        validate.Optional(validate.IsBool),
-	"security.syscalls.intercept.mknod":              validate.Optional(validate.IsBool),
-	"security.syscalls.intercept.mount":              validate.Optional(validate.IsBool),
-	"security.syscalls.intercept.mount.allowed":      validate.IsAny,
-	"security.syscalls.intercept.mount.fuse":         validate.IsAny,
-	"security.syscalls.intercept.mount.shift":        validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.syscalls.allow)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: A `\n`-separated list of syscalls to allow (mutually exclusive with `security.syscalls.deny*`)
+	"security.syscalls.allow": validate.IsAny,
+	// gendoc:generate(group=instance-security, key=security.syscalls.blacklist_default)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: A `\n`-separated list of syscalls to allow (mutually exclusive with `security.syscalls.deny*`)
+	"security.syscalls.blacklist_default": validate.Optional(validate.IsBool),
+	"security.syscalls.blacklist_compat":  validate.Optional(validate.IsBool),
+	"security.syscalls.blacklist":         validate.IsAny,
+	// gendoc:generate(group=instance-security, key=security.syscalls.deny_default)
+	//
+	// ---
+	//  type: bool
+	//  default: `true`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to enable the default syscall deny
+	"security.syscalls.deny_default": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.syscalls.deny_compat)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: On `x86_64`, controls whether to block `compat_*` syscalls (no-op on other architectures)
+	"security.syscalls.deny_compat": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.syscalls.deny)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: A `\n`-separated list of syscalls to deny
+	"security.syscalls.deny": validate.IsAny,
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.bpf)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to handle the bpf system call
+	"security.syscalls.intercept.bpf": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.bpf.devices)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to allow bpf programs for the devices cgroup in the unified hierarchy to be loaded
+	"security.syscalls.intercept.bpf.devices": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mknod)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to handle the `mknod` and `mknodat` system calls (allows creation of a limited subset of char/block devices)
+	"security.syscalls.intercept.mknod": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mount)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to handle the `mount` system call
+	"security.syscalls.intercept.mount": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mount.allowed)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  condition: container
+	//  shortdesc: A comma-separated list of file systems that are safe to mount for processes inside the instance
+	"security.syscalls.intercept.mount.allowed": validate.IsAny,
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mount.fuse)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  condition: container
+	//  shortdesc: Mounts of a given file system that should be redirected to their FUSE implementation (for example, `ext4=fuse2fs`)
+	"security.syscalls.intercept.mount.fuse": validate.IsAny,
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mount.shift)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: yes
+	//  condition: container
+	//  shortdesc: Controls whether to mount `shiftfs` on top of file systems handled through mount syscall interception
+	"security.syscalls.intercept.mount.shift": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.sched_setcheduler)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to handle the `sched_setscheduler` system call (allows increasing process priority)
 	"security.syscalls.intercept.sched_setscheduler": validate.Optional(validate.IsBool),
-	"security.syscalls.intercept.setxattr":           validate.Optional(validate.IsBool),
-	"security.syscalls.intercept.sysinfo":            validate.Optional(validate.IsBool),
-	"security.syscalls.whitelist":                    validate.IsAny,
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.setxattr)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to handle the `setxattr` system call (allows setting a limited subset of restricted extended attributes)
+	"security.syscalls.intercept.setxattr": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.sysinfo)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to handle the `sysinfo` system call (to get cgroup-based resource usage information)
+	"security.syscalls.intercept.sysinfo": validate.Optional(validate.IsBool),
+	"security.syscalls.whitelist":         validate.IsAny,
 
 	"volatile.last_state.idmap": validate.IsAny,
 	"volatile.idmap.base":       validate.IsAny,
@@ -531,12 +713,68 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Addition/override to the generated `qemu.conf` file (see {ref}`instance-options-qemu`)
 	"raw.qemu.conf": validate.IsAny,
 
-	"security.agent.metrics":    validate.Optional(validate.IsBool),
-	"security.csm":              validate.Optional(validate.IsBool),
-	"security.secureboot":       validate.Optional(validate.IsBool),
-	"security.sev":              validate.Optional(validate.IsBool),
-	"security.sev.policy.es":    validate.Optional(validate.IsBool),
-	"security.sev.session.dh":   validate.Optional(validate.IsAny),
+	// gendoc:generate(group=instance-security, key=security.agent.metrics)
+	//
+	// ---
+	//  type: bool
+	//  default: `true`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Controls whether the `incus-agent` is queried for state information and metrics
+	"security.agent.metrics": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.csm)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Controls whether to use a firmware that supports UEFI-incompatible operating systems (when enabling this option, set `security.secureboot` to `false`)
+	"security.csm": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.secureboot)
+	//
+	// ---
+	//  type: bool
+	//  default: `true`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Controls whether UEFI secure boot is enabled with the default Microsoft keys (when disabling this option, consider enabling `security.csm`)
+	"security.secureboot": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.sev)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Controls whether AMD SEV (Secure Encrypted Virtualization) is enabled for this VM
+	"security.sev": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.sev.policy.es)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Controls whether AMD SEV-ES (SEV Encrypted State) is enabled for this VM
+	"security.sev.policy.es": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-security, key=security.sev.session.dh)
+	//
+	// ---
+	//  type: string
+	//  default: `true`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: The guest owner’s `base64`-encoded Diffie-Hellman key
+	"security.sev.session.dh": validate.Optional(validate.IsAny),
+	// gendoc:generate(group=instance-security, key=security.sev.session.data)
+	//
+	// ---
+	//  type: string
+	//  default: `true`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: The guest owner’s `base64`-encoded session blob
 	"security.sev.session.data": validate.Optional(validate.IsAny),
 
 	// gendoc:generate(group=instance-miscellaneous, key=user.*)
