@@ -16,7 +16,11 @@ See {ref}`live-migration-containers` for more information.
 When moving a virtual machine, you must either enable {ref}`live-migration-vms` or stop it first.
 ```
 
-You don't need to specify the source remote if it is your default remote, and you can leave out the target instance name if you want to use the same instance name.
+Alternatively, you can use the `lxc copy` command if you want to duplicate the instance:
+
+    lxc copy [<source_remote>:]<source_instance_name> <target_remote>:[<target_instance_name>]
+
+In both cases, you don't need to specify the source remote if it is your default remote, and you can leave out the target instance name if you want to use the same instance name.
 If you want to move the instance to a specific cluster member, specify it with the `--target` flag.
 In this case, do not specify the source and target remote.
 

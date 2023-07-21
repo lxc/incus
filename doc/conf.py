@@ -161,4 +161,5 @@ linkcheck_ignore = [
 
 # Setup redirects (https://documatt.gitlab.io/sphinx-reredirects/usage.html)
 redirects = {
+    "howto/instances_snapshots/index": "../instances_backup/",
 }

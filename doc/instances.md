@@ -8,7 +8,7 @@ explanation/instances.md
 Create instances <howto/instances_create.md>
 Manage instances <howto/instances_manage.md>
 Configure instances <howto/instances_configure.md>
-Create snapshots <howto/instances_snapshots.md>
+Back up instances <howto/instances_backup.md>
 Use profiles <profiles.md>
 Use cloud-init <cloud-init>
 Run commands <instance-exec.md>
