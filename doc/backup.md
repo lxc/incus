@@ -52,6 +52,21 @@ To restore your data, complete the following steps:
 1. If you are not using the snap, restore the `/etc/subuid` and `/etc/subgid` files.
 1. Restart LXD (for example, with `sudo snap start lxd` or by restarting your machine).
 
+### Export a snapshot
+
+If you are using the LXD snap, you can also create a full backup by exporting a snapshot of the snap:
+
+1. Create a snapshot:
+
+       sudo snap save lxd
+
+   Note down the ID of the snapshot (shown in the `Set` column).
+1. Export the snapshot to a file:
+
+       sudo snap export-snapshot <ID> <output_file>
+
+See [Snapshots](https://snapcraft.io/docs/snapshots) in the Snapcraft documentation for details.
+
 ## Partial backup
 
 If you decide to only back up specific entities, you have different options for how to do this.
