@@ -271,15 +271,51 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	},
 
 	// Volatile keys.
-	"volatile.apply_template":         validate.IsAny,
-	"volatile.base_image":             validate.IsAny,
+
+	// gendoc:generate(group=instance-volatile, key=volatile.apply_template)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: The name of a template hook that should be triggered upon next startup
+	"volatile.apply_template": validate.IsAny,
+	// gendoc:generate(group=instance-volatile, key=volatile.base_image)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: The hash of the image the instance was created from (if any)
+	"volatile.base_image": validate.IsAny,
+	// gendoc:generate(group=instance-volatile, key=volatile.cloud_init.instance-id)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: The `instance-id` (UUID) exposed to `cloud-init`
 	"volatile.cloud-init.instance-id": validate.Optional(validate.IsUUID),
-	"volatile.evacuate.origin":        validate.IsAny,
-	"volatile.last_state.power":       validate.IsAny,
-	"volatile.last_state.ready":       validate.IsBool,
-	"volatile.apply_quota":            validate.IsAny,
-	"volatile.uuid":                   validate.Optional(validate.IsUUID),
-	"volatile.uuid.generation":        validate.Optional(validate.IsUUID),
+	// gendoc:generate(group=instance-volatile, key=volatile.evacuate.origin)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: The origin (cluster member) of the evacuated instance
+	"volatile.evacuate.origin": validate.IsAny,
+	// gendoc:generate(group=instance-volatile, key=volatile.last_state.power)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Instance state as of last host shutdown
+	"volatile.last_state.power": validate.IsAny,
+	"volatile.last_state.ready": validate.IsBool,
+	"volatile.apply_quota":      validate.IsAny,
+	// gendoc:generate(group=instance-volatile, key=volatile.uuid)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Instance UUID (globally unique across all servers and projects)
+	"volatile.uuid": validate.Optional(validate.IsUUID),
+	// gendoc:generate(group=instance-volatile, key=volatile.uuid.generation)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Instance generation UUID that will change whenever the instance’s place in time moves backwards (globally unique across all servers and projects)
+	"volatile.uuid.generation": validate.Optional(validate.IsUUID),
 }
 
 // InstanceConfigKeysContainer is a map of config key to validator. (keys applying to containers only).
@@ -692,10 +728,30 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"security.syscalls.intercept.sysinfo": validate.Optional(validate.IsBool),
 	"security.syscalls.whitelist":         validate.IsAny,
 
+	// gendoc:generate(group=instance-volatile, key=volatile.last_state.idmap)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Serialized instance UID/GID map
 	"volatile.last_state.idmap": validate.IsAny,
-	"volatile.idmap.base":       validate.IsAny,
-	"volatile.idmap.current":    validate.IsAny,
-	"volatile.idmap.next":       validate.IsAny,
+	// gendoc:generate(group=instance-volatile, key=volatile.idmap.base)
+	//
+	// ---
+	//  type: integer
+	//  shortdesc: The first ID in the instance’s primary idmap range
+	"volatile.idmap.base": validate.IsAny,
+	// gendoc:generate(group=instance-volatile, key=volatile.idmap.current)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: The idmap currently in use by the instance
+	"volatile.idmap.current": validate.IsAny,
+	// gendoc:generate(group=instance-volatile, key=volatile.idmap.next)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: The idmap to use the next time the instance starts
+	"volatile.idmap.next": validate.IsAny,
 }
 
 // InstanceConfigKeysVM is a map of config key to validator. (keys applying to VM only).
@@ -820,8 +876,18 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Controls whether to set the name and MTU of the default network interfaces to be the same as the instance devices (this happens automatically for containers)
 	"agent.nic_config": validate.Optional(validate.IsBool),
 
+	// gendoc:generate(group=instance-volatile, key=volatile.apply_nvram)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Whether to regenerate VM NVRAM the next time the instance starts
 	"volatile.apply_nvram": validate.Optional(validate.IsBool),
-	"volatile.vsock_id":    validate.Optional(validate.IsInt64),
+	// gendoc:generate(group=instance-volatile, key=volatile.vsock_id)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Instance `vsock ID` used as of last start
+	"volatile.vsock_id": validate.Optional(validate.IsInt64),
 }
 
 // ConfigKeyChecker returns a function that will check whether or not
@@ -851,34 +917,86 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 	}
 
 	if strings.HasPrefix(key, ConfigVolatilePrefix) {
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.hwaddr)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Network device original MAC used when moving a physical device into an instance
+
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.hwaddr)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Network device MAC address (when no `hwaddr` property is set on the device itself)
+
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vf.hwaddr)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: SR-IOV virtual function original MAC used when moving a VF into an instance
 		if strings.HasSuffix(key, ".hwaddr") {
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vdpa.name)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: VDPA device name used when moving a VDPA device file descriptor into an instance
 		if strings.HasSuffix(key, ".name") {
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.host_name)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Network device name on the host
 		if strings.HasSuffix(key, ".host_name") {
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.mtu)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Network device original MTU used when moving a physical device into an instance
 		if strings.HasSuffix(key, ".mtu") {
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.created)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Whether the network device physical device was created (`true` or `false`)
 		if strings.HasSuffix(key, ".created") {
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vf.id)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: SR-IOV virtual function ID used when moving a VF into an instance
 		if strings.HasSuffix(key, ".id") {
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vf.vlan)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: SR-IOV virtual function original VLAN used when moving a VF into an instance
 		if strings.HasSuffix(key, ".vlan") {
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vf.spoofcheck)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: SR-IOV virtual function original spoof check setting used when moving a VF into an instance
 		if strings.HasSuffix(key, ".spoofcheck") {
 			return validate.IsAny, nil
 		}
@@ -887,14 +1005,29 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.ip_addresses)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Network device comma-separated list of last used IP addresses
 		if strings.HasSuffix(key, ".last_state.ip_addresses") {
 			return validate.IsListOf(validate.IsNetworkAddress), nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.apply_quota)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: Disk quota to be applied the next time the instance starts
 		if strings.HasSuffix(key, ".apply_quota") {
 			return validate.IsAny, nil
 		}
 
+		// gendoc:generate(group=instance-volatile, key=volatile.<name>.ceph_rbd)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: RBD device path for Ceph disk devices
 		if strings.HasSuffix(key, ".ceph_rbd") {
 			return validate.IsAny, nil
 		}
