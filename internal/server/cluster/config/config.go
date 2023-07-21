@@ -418,9 +418,27 @@ var ConfigSchema = config.Schema{
 	"loki.labels":                   {},
 	"loki.loglevel":                 {Validator: logLevelValidator, Default: logrus.InfoLevel.String()},
 	"loki.types":                    {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging"))), Default: "lifecycle,logging"},
-	"oidc.client.id":                {},
-	"oidc.issuer":                   {},
-	"oidc.audience":                 {},
+	// gendoc:generate(group=server-oidc, key=oidc.client.id)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: OpenID Connect client ID
+	"oidc.client.id": {},
+	// gendoc:generate(group=server-oidc, key=oidc.issuer)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: OpenID Connect Discovery URL for the provider
+	"oidc.issuer": {},
+	// gendoc:generate(group=server-oidc, key=oidc.audience)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Expected audience value for the application (required by some providers)
+	"oidc.audience": {},
 
 	// OVN networking global keys.
 	"network.ovn.integration_bridge":    {Default: "br-int"},
