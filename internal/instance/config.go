@@ -38,6 +38,13 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	"cloud-init.user-data":      validate.Optional(validate.IsCloudInitUserData),
 	"cloud-init.vendor-data":    validate.Optional(validate.IsCloudInitUserData),
 
+	// gendoc:generate(group=instance-miscellaneous, key=cluster.evacuate)
+	//
+	// ---
+	//  type: string
+	//  default: `auto`
+	//  liveupdate: no
+	//  shortdesc: Controls what to do when evacuating the instance (`auto`, `migrate`, `live-migrate`, or `stop`)
 	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "stop")),
 
 	"limits.cpu":           validate.Optional(validate.IsValidCPUSet),
@@ -148,6 +155,13 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"limits.memory.swap.priority": validate.Optional(validate.IsPriority),
 	"limits.processes":            validate.Optional(validate.IsInt64),
 
+	// gendoc:generate(group=instance-miscellaneous, key=linux.kernel_modules)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  condition: container
+	//  shortdesc: Comma-separated list of kernel modules to load before starting the instance
 	"linux.kernel_modules": validate.IsAny,
 
 	"migration.incremental.memory":            validate.Optional(validate.IsBool),
@@ -216,6 +230,21 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	"security.sev.session.dh":   validate.Optional(validate.IsAny),
 	"security.sev.session.data": validate.Optional(validate.IsAny),
 
+	// gendoc:generate(group=instance-miscellaneous, key=user.*)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  shortdesc: Free-form user key/value storage (can be used in search)
+
+	// gendoc:generate(group=instance-miscellaneous, key=agent.nic_config)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Controls whether to set the name and MTU of the default network interfaces to be the same as the instance devices (this happens automatically for containers)
 	"agent.nic_config": validate.Optional(validate.IsBool),
 
 	"volatile.apply_nvram": validate.Optional(validate.IsBool),

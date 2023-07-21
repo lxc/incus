@@ -1041,6 +1041,12 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup environment
 	for k, v := range d.expandedConfig {
+		// gendoc:generate(group=instance-miscellaneous, key=environment.*)
+		//
+		// ---
+		//  type: string
+		//  liveupdate: yes (exec)
+		//  shortdesc: Key/value environment variables to export to the instance and set for `incus exec`
 		if strings.HasPrefix(k, "environment.") {
 			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("%s=%s", strings.TrimPrefix(k, "environment."), v))
 			if err != nil {
@@ -1286,6 +1292,13 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup sysctls
 	for k, v := range d.expandedConfig {
+		// gendoc:generate(group=instance-miscellaneous, key=linux.sysctl.*)
+		//
+		// ---
+		//  type: string
+		//  liveupdate: no
+		//  condition: container
+		//  shortdesc: Value to override the corresponding `sysctl` setting in the container
 		if strings.HasPrefix(k, "linux.sysctl.") {
 			sysctlSuffix := strings.TrimPrefix(k, "linux.sysctl.")
 			sysctlKey := fmt.Sprintf("lxc.sysctl.%s", sysctlSuffix)
