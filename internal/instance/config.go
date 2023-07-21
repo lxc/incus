@@ -201,8 +201,22 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	"limits.network.priority": validate.Optional(validate.IsPriority),
 
 	// Caller is responsible for full validation of any raw.* value.
+
+	// gendoc:generate(group=instance-raw, key=raw.apparmor)
+	//
+	// ---
+	//  type: blob
+	//  liveupdate: yes
+	//  shortdesc: AppArmor profile entries to be appended to the generated profile
 	"raw.apparmor": validate.IsAny,
-	"raw.idmap":    validate.IsAny,
+	// gendoc:generate(group=instance-raw, key=raw.idmap)
+	//
+	// ---
+	//  type: blob
+	//  liveupdate: no
+	//  condition: unprivileged container
+	//  shortdesc: Raw idmap configuration (for example, `both 1000 1000`)
+	"raw.idmap": validate.IsAny,
 
 	"security.guestapi":          validate.Optional(validate.IsBool),
 	"security.protection.delete": validate.Optional(validate.IsBool),
@@ -423,7 +437,22 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"nvidia.require.driver": validate.IsAny,
 
 	// Caller is responsible for full validation of any raw.* value.
-	"raw.lxc":     validate.IsAny,
+
+	// gendoc:generate(group=instance-raw, key=raw.lxc)
+	//
+	// ---
+	//  type: blob
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Raw LXC configuration to be appended to the generated one
+	"raw.lxc": validate.IsAny,
+	// gendoc:generate(group=instance-raw, key=raw.seccomp)
+	//
+	// ---
+	//  type: blob
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Raw Seccomp configuration
 	"raw.seccomp": validate.IsAny,
 
 	"security.guestapi.images": validate.Optional(validate.IsBool),
@@ -484,7 +513,22 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	"migration.stateful": validate.Optional(validate.IsBool),
 
 	// Caller is responsible for full validation of any raw.* value.
-	"raw.qemu":      validate.IsAny,
+
+	// gendoc:generate(group=instance-raw, key=raw.qemu)
+	//
+	// ---
+	//  type: blob
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Raw QEMU configuration to be appended to the generated command line
+	"raw.qemu": validate.IsAny,
+	// gendoc:generate(group=instance-raw, key=raw.qemu.conf)
+	//
+	// ---
+	//  type: blob
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Addition/override to the generated `qemu.conf` file (see {ref}`instance-options-qemu`)
 	"raw.qemu.conf": validate.IsAny,
 
 	"security.agent.metrics":    validate.Optional(validate.IsBool),
