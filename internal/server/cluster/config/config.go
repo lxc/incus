@@ -445,11 +445,44 @@ var ConfigSchema = config.Schema{
 	//  type: bool
 	//  scope: global
 	//  shortdesc: Whether to automatically trust clients signed by the CA
-	"core.trust_ca_certificates":    {Type: config.Bool},
-	"images.auto_update_cached":     {Type: config.Bool, Default: "true"},
-	"images.auto_update_interval":   {Type: config.Int64, Default: "6"},
-	"images.compression_algorithm":  {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
-	"images.default_architecture":   {Validator: validate.Optional(validate.IsArchitecture)},
+	"core.trust_ca_certificates": {Type: config.Bool},
+	// gendoc:generate(group=server-images, key=images.auto_update_cached)
+	//
+	// ---
+	//  type: bool
+	//  scope: global
+	//  default: `true`
+	//  shortdesc: Whether to automatically update any image that LXD caches
+	"images.auto_update_cached": {Type: config.Bool, Default: "true"},
+	// gendoc:generate(group=server-images, key=images.auto_update_interval)
+	//
+	// ---
+	//  type: integer
+	//  scope: global
+	//  default: `6`
+	//  shortdesc: Interval (in hours) at which to look for updates to cached images (`0` to disable)
+	"images.auto_update_interval": {Type: config.Int64, Default: "6"},
+	// gendoc:generate(group=server-images, key=images.compression_algorithm)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  default: `gzip`
+	//  shortdesc: Compression algorithm to use for new images (`bzip2`, `gzip`, `lzma`, `xz` or `none`)
+	"images.compression_algorithm": {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
+	// gendoc:generate(group=server-images, key=images.default_architecture)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Default architecture to use in a mixed-architecture cluster
+	"images.default_architecture": {Validator: validate.Optional(validate.IsArchitecture)},
+	// gendoc:generate(group=server-images, key=images.remote_cache_expiry)
+	//
+	// ---
+	//  type: integer
+	//  scope: global
+	//  default: `10`
+	//  shortdesc: Number of days after which an unused cached remote image is flushed
 	"images.remote_cache_expiry":    {Type: config.Int64, Default: "10"},
 	"instances.nic.host_name":       {Validator: validate.Optional(validate.IsOneOf("random", "mac"))},
 	"instances.placement.scriptlet": {Validator: validate.Optional(scriptletLoad.InstancePlacementValidate)},
