@@ -486,13 +486,57 @@ var ConfigSchema = config.Schema{
 	"images.remote_cache_expiry":    {Type: config.Int64, Default: "10"},
 	"instances.nic.host_name":       {Validator: validate.Optional(validate.IsOneOf("random", "mac"))},
 	"instances.placement.scriptlet": {Validator: validate.Optional(scriptletLoad.InstancePlacementValidate)},
-	"loki.auth.username":            {},
-	"loki.auth.password":            {},
-	"loki.api.ca_cert":              {},
-	"loki.api.url":                  {},
-	"loki.labels":                   {},
-	"loki.loglevel":                 {Validator: logLevelValidator, Default: logrus.InfoLevel.String()},
-	"loki.types":                    {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging"))), Default: "lifecycle,logging"},
+	// gendoc:generate(group=server-loki, key=loki.auth.username)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: The user name used for authentication
+	"loki.auth.username": {},
+	// gendoc:generate(group=server-loki, key=loki.auth.password)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: The password used for authentication
+	"loki.auth.password": {Hidden: true},
+	// gendoc:generate(group=server-loki, key=loki.api.ca_cert)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: The CA certificate for the Loki server
+	"loki.api.ca_cert": {},
+	// gendoc:generate(group=server-loki, key=loki.api.url)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: The URL to the Loki server
+	"loki.api.url": {},
+	// gendoc:generate(group=server-loki, key=loki.labels)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Comma-separated list of values that should be used as labels for a Loki log entry
+	"loki.labels": {},
+	// gendoc:generate(group=server-loki, key=loki.loglevel)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  default: `info`
+	//  shortdesc: Minimum log level to send to the Loki server
+	"loki.loglevel": {Validator: logLevelValidator, Default: logrus.InfoLevel.String()},
+	// gendoc:generate(group=server-loki, key=loki.types)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  default: `lifecycle,logging`
+	//  shortdesc: Comma-separated list of events to send to the Loki server (`lifecycle` and/or `logging`)
+	"loki.types":   {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging"))), Default: "lifecycle,logging"},
 	// gendoc:generate(group=server-oidc, key=oidc.client.id)
 	//
 	// ---
