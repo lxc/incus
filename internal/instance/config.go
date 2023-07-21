@@ -387,10 +387,40 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Percentage of memory to have in sync before stopping the instance
 	"migration.incremental.memory.goal": validate.Optional(validate.IsUint32),
 
-	"nvidia.runtime":             validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-nvidia, key=nvidia.runtime)
+	//
+	// ---
+	//  type: bool
+	//  default: `false`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Controls whether to pass the host NVIDIA and CUDA runtime libraries into the instance
+	"nvidia.runtime": validate.Optional(validate.IsBool),
+	// gendoc:generate(group=instance-nvidia, key=nvidia.driver.capabilities)
+	//
+	// ---
+	//  type: string
+	//  default: `compute,utility`
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: What driver capabilities the instance needs (sets `libnvidia-container NVIDIA_DRIVER_CAPABILITIES`)
 	"nvidia.driver.capabilities": validate.IsAny,
-	"nvidia.require.cuda":        validate.IsAny,
-	"nvidia.require.driver":      validate.IsAny,
+	// gendoc:generate(group=instance-nvidia, key=nvidia.require.cuda)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Version expression for the required CUDA version (sets `libnvidia-container NVIDIA_REQUIRE_CUDA`)
+	"nvidia.require.cuda": validate.IsAny,
+	// gendoc:generate(group=instance-nvidia, key=nvidia.require.driver)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: container
+	//  shortdesc: Version expression for the required driver version (sets `libnvidia-container NVIDIA_REQUIRE_DRIVER`)
+	"nvidia.require.driver": validate.IsAny,
 
 	// Caller is responsible for full validation of any raw.* value.
 	"raw.lxc":     validate.IsAny,
