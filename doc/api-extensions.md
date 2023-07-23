@@ -2240,3 +2240,7 @@ This allows copying storage volume snapshots to and from remotes.
 
 This introduces support for the `all-projects` query parameter for the GET API calls to both `/1.0/operations` and `/1.0/operations?recursion=1`.
 This parameter allows bypassing the project name filter.
+
+## `metadata_configuration`
+Adds the `GET /1.0/metadata/configuration` API endpoint to retrieve the generated metadata configuration in a JSON format. The JSON structure adopts the structure ```"configs" > `ENTITY` > `ENTITY_SECTION` > "keys" > [<CONFIG_OPTION_0>, <CONFIG_OPTION_1>, ...]```.
+Check the list of {doc}`configuration options </config-options>` to see which configuration options are included.
