@@ -118,18 +118,18 @@ ifeq "$(INCUS_OFFLINE)" ""
 endif
 	swagger generate spec -o doc/rest-api.yaml -w ./cmd/incusd -m
 
+.PHONY: update-metadata
+update-metadata: build
+	@echo "Generating golang documentation metadata"
+	cd internal/server/config/generate && CGO_ENABLED=0 go build -o $(GOPATH)/bin/incus-doc
+	$(GOPATH)/bin/incus-doc . --json ./internal/server/metadata/configuration.json --txt ./doc/config_options.txt
+
 .PHONY: doc-setup
 doc-setup:
 	@echo "Setting up documentation build environment"
 	python3 -m venv doc/.sphinx/venv
 	. $(SPHINXENV) ; pip install --upgrade -r doc/.sphinx/requirements.txt
 	rm -Rf doc/html
-
-.PHONY: generate-config
-generate-config:
-	@echo "Generating golang documentation"
-	cd internal/server/config/generate && CGO_ENABLED=0 go build -o $(GOPATH)/bin/incus-doc
-	$(GOPATH)/bin/incus-doc . -y ./doc/config_options.yaml -t ./doc/config_options.txt
 
 .PHONY: doc
 doc: doc-setup doc-incremental
