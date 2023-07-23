@@ -39,9 +39,11 @@ var rootCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		err = writeDocFile(txtOutput, yaml)
-		if err != nil {
-			log.Fatal(err)
+		if txtOutput != "" {
+			err = writeDocFile(txtOutput, yaml)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	},
 }
@@ -49,7 +51,7 @@ var rootCmd = &cobra.Command{
 func main() {
 	rootCmd.Flags().StringSliceVarP(&exclude, "exclude", "e", []string{}, "Path to exclude from the process")
 	rootCmd.Flags().StringVarP(&yamlOutput, "yaml", "y", "incus-doc.yaml", "Output YAML file containing the generated documentation")
-	rootCmd.Flags().StringVarP(&txtOutput, "txt", "t", "incus-doc.txt", "Output TXT file containing the generated documentation")
+	rootCmd.Flags().StringVarP(&txtOutput, "txt", "t", "", "Output TXT file containing the generated documentation")
 	err := rootCmd.Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "incus-doc failed: %v", err)
