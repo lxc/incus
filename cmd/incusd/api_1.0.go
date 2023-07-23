@@ -74,6 +74,7 @@ var api10 = []APIEndpoint{
 	imageRefreshCmd,
 	imagesCmd,
 	imageSecretCmd,
+	metadataConfigurationCmd,
 	networkCmd,
 	networkLeasesCmd,
 	networksCmd,
