@@ -86,9 +86,27 @@ func stringToFloatHookFunc() mapstructure.DecodeHookFunc {
 // getFieldByJsonTag gets the value of a struct field by its JSON tag.
 func getFieldByJsonTag(obj any, tag string) (any, error) {
 	var res any
-	ok := false
-	v := reflect.ValueOf(obj).Elem()
+	v := reflect.ValueOf(obj)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("Expected a struct, got a %v", v.Kind())
+	}
+
+	ok, res := getFromStruct(v, tag)
+	if !ok {
+		return nil, fmt.Errorf("The property with tag %q does not exist", tag)
+	}
+
+	return res, nil
+}
+
+// getFromStruct scans a struct for a field with the given JSON tag, including fields of inline structs.
+func getFromStruct(v reflect.Value, tag string) (bool, any) {
 	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
 		jsonTag := v.Type().Field(i).Tag.Get("json")
 
 		// Ignore any options that might be specified after a comma in the tag.
@@ -98,16 +116,24 @@ func getFieldByJsonTag(obj any, tag string) (any, error) {
 		}
 
 		if strings.EqualFold(jsonTag, tag) {
-			res = v.Field(i).Interface()
-			ok = true
+			return true, field.Interface()
+		}
+
+		if v.Type().Field(i).Anonymous {
+			if field.Kind() == reflect.Ptr {
+				field = field.Elem()
+			}
+
+			if field.Kind() == reflect.Struct {
+				ok, res := getFromStruct(field, tag)
+				if ok {
+					return ok, res
+				}
+			}
 		}
 	}
 
-	if !ok {
-		return nil, fmt.Errorf("The property with tag %q does not exist", tag)
-	}
-
-	return res, nil
+	return false, nil
 }
 
 // setFieldByJsonTag sets the value of a struct field by its JSON tag.
