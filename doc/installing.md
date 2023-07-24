@@ -1,5 +1,5 @@
 ---
-discourse: 8178, 16551
+discourse: ubuntu:37214, 16551
 ---
 
 (installing)=
