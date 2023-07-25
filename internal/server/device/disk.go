@@ -964,6 +964,12 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				runConf.PostHooks = append(runConf.PostHooks, f.Close)
 				runConf.Revert = func() { _ = f.Close() } // Close file on VM start failure.
 
+				// Detect ISO files to set correct FSType before DevPath is encoded below.
+				// This is very important to support Windows ISO images (amongst other).
+				if strings.HasSuffix(mount.DevPath, ".iso") {
+					mount.FSType = "iso9660"
+				}
+
 				// Encode the file descriptor and original srcPath into the DevPath field.
 				mount.DevPath = fmt.Sprintf("%s:%d:%s", DiskFileDescriptorMountPrefix, f.Fd(), mount.DevPath)
 			}
