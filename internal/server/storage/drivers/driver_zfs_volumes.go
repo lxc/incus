@@ -3331,7 +3331,7 @@ func (d *zfs) FillVolumeConfig(vol Volume) error {
 
 	// Copy volume.* configuration options from pool.
 	// If vol has a source, ignore the block mode related config keys from the pool.
-	if vol.hasSource {
+	if vol.hasSource || vol.IsVMBlock() {
 		excludedKeys = []string{"zfs.block_mode", "block.filesystem", "block.mount_options"}
 	}
 
