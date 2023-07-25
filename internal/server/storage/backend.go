@@ -3240,15 +3240,23 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 	// If not we need to delete the existing cached image volume and re-create using new filesystem.
 	// We need to do this for VM block images too, as they create a filesystem based config volume too.
 	if imgDBVol != nil {
+		// Generate a temporary volume instance that represents how a new volume using pool defaults would
+		// be configured.
+		tmpImgVol := imgVol.Clone()
+		err := b.Driver().FillVolumeConfig(tmpImgVol)
+		if err != nil {
+			return err
+		}
+
 		// Add existing image volume's config to imgVol.
 		imgVol = b.GetVolume(drivers.VolumeTypeImage, contentType, fingerprint, imgDBVol.Config)
 
 		// Check if the volume's block backed mode differs from the pool's current setting for new volumes.
-		blockModeChanged := b.Driver().Info().BlockBacking != imgVol.IsBlockBacked()
+		blockModeChanged := tmpImgVol.IsBlockBacked() != imgVol.IsBlockBacked()
 
 		// Check if the volume is block backed and its filesystem is different from the pool's current
 		// setting for new volumes.
-		blockFSChanged := imgVol.IsBlockBacked() && imgVol.Config()["block.filesystem"] != b.poolBlockFilesystem()
+		blockFSChanged := imgVol.IsBlockBacked() && imgVol.Config()["block.filesystem"] != tmpImgVol.Config()["block.filesystem"]
 
 		// If the existing image volume no longer matches the pool's settings for new volumes then we need
 		// to delete and re-create it.
