@@ -120,7 +120,7 @@ type Pool interface {
 	DeleteCustomVolume(projectName string, volName string, op *operations.Operation) error
 	GetCustomVolumeDisk(projectName string, volName string) (string, error)
 	GetCustomVolumeUsage(projectName string, volName string) (*VolumeUsage, error)
-	MountCustomVolume(projectName string, volName string, op *operations.Operation) error
+	MountCustomVolume(projectName string, volName string, op *operations.Operation) (*MountInfo, error)
 	UnmountCustomVolume(projectName string, volName string, op *operations.Operation) (bool, error)
 	ImportCustomVolume(projectName string, poolVol *backupConfig.Config, op *operations.Operation) (revert.Hook, error)
 	RefreshCustomVolume(projectName string, srcProjectName string, volName, desc string, config map[string]string, srcPoolName, srcVolName string, snapshots bool, op *operations.Operation) error
