@@ -491,7 +491,7 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 			return nil, nil, err
 		}
 
-		// Filter only the snapshots.
+		// Remove only the internal snapshots.
 		for _, entry := range entries {
 			if strings.HasPrefix(entry, "@snapshot-") {
 				continue
