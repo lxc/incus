@@ -28,6 +28,7 @@ import (
 	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 var operationCmd = APIEndpoint{
@@ -449,8 +450,17 @@ func operationCancel(s *state.State, r *http.Request, projectName string, op *ap
 func operationsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := queryParam(r, "project")
+	allProjects := util.IsTrue(queryParam(r, "all-projects"))
 	recursion := localUtil.IsRecursionRequest(r)
+
+	if allProjects && projectName != "" {
+		return response.SmartError(
+			api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects"),
+		)
+	} else if !allProjects && projectName == "" {
+		projectName = project.Default
+	}
 
 	localOperationURLs := func() (jmap.Map, error) {
 		// Get all the operations.
@@ -460,7 +470,7 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 		body := jmap.Map{}
 
 		for _, v := range localOps {
-			if v.Project() != "" && v.Project() != projectName {
+			if !allProjects && v.Project() != "" && v.Project() != projectName {
 				continue
 			}
 
@@ -484,7 +494,7 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 		body := jmap.Map{}
 
 		for _, v := range localOps {
-			if v.Project() != "" && v.Project() != projectName {
+			if !allProjects && v.Project() != "" && v.Project() != projectName {
 				continue
 			}
 
@@ -560,7 +570,12 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		membersWithOps, err = tx.GetNodesWithOperations(ctx, projectName)
+		if allProjects {
+			membersWithOps, err = tx.GetAllNodesWithOperations(ctx)
+		} else {
+			membersWithOps, err = tx.GetNodesWithOperations(ctx, projectName)
+		}
+
 		if err != nil {
 			return fmt.Errorf("Failed getting members with operations: %w", err)
 		}
@@ -612,7 +627,13 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Get operation data.
-		ops, err := client.UseProject(projectName).GetOperations()
+		var ops []api.Operation
+		if allProjects {
+			ops, err = client.GetOperationsAllProjects()
+		} else {
+			ops, err = client.UseProject(projectName).GetOperations()
+		}
+
 		if err != nil {
 			logger.Warn("Failed getting operations from member", logger.Ctx{"address": memberAddress, "err": err})
 			continue
