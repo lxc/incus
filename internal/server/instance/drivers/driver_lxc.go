@@ -1876,6 +1876,8 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.IdmapSet, 
 
 // Start functions.
 func (d *lxc) startCommon() (string, []func() error, error) {
+	postStartHooks := []func() error{}
+
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -1918,10 +1920,22 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	d.stopForkfile(false)
 
 	// Mount instance root volume.
-	_, err = d.mount()
+	mountInfo, err := d.mount()
 	if err != nil {
 		return "", nil, err
 	}
+
+	// Handle post hooks.
+	postStartHooks = append(postStartHooks, func() error {
+		for _, hook := range mountInfo.PostHooks {
+			err := hook(d)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 
 	revert.Add(func() { _ = d.unmount() })
 
@@ -1996,7 +2010,6 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	}
 
 	// Create the devices
-	postStartHooks := []func() error{}
 	nicID := -1
 	nvidiaDevices := []string{}
 
