@@ -2677,6 +2677,21 @@ func (b *backend) MountInstance(inst instance.Instance, op *operations.Operation
 	}
 
 	revert.Success() // From here on it is up to caller to call UnmountInstance() when done.
+
+	// Handle delegation.
+	if b.driver.CanDelegateVolume(vol) {
+		mountInfo.PostHooks = append(mountInfo.PostHooks, func(inst instance.Instance) error {
+			pid := inst.InitPID()
+
+			// Only apply to running instances.
+			if pid < 1 {
+				return nil
+			}
+
+			return b.driver.DelegateVolume(vol, pid)
+		})
+	}
+
 	return mountInfo, nil
 }
 
@@ -5271,6 +5286,20 @@ func (b *backend) MountCustomVolume(projectName, volName string, op *operations.
 	err = b.driver.MountVolume(vol, op)
 	if err != nil {
 		return nil, err
+	}
+
+	// Handle delegation.
+	if b.driver.CanDelegateVolume(vol) {
+		mountInfo.PostHooks = append(mountInfo.PostHooks, func(inst instance.Instance) error {
+			pid := inst.InitPID()
+
+			// Only apply to running instances.
+			if pid < 1 {
+				return nil
+			}
+
+			return b.driver.DelegateVolume(vol, pid)
+		})
 	}
 
 	return mountInfo, nil
