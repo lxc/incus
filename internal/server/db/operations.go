@@ -10,6 +10,16 @@ import (
 	"github.com/lxc/incus/internal/server/db/query"
 )
 
+// GetAllNodesWithOperations returns a list of nodes that have operations in any project.
+func (c *ClusterTx) GetAllNodesWithOperations(ctx context.Context) ([]string, error) {
+	stmt := `
+SELECT DISTINCT nodes.address
+  FROM operations
+  JOIN nodes ON nodes.id = operations.node_id
+	`
+	return query.SelectStrings(ctx, c.tx, stmt)
+}
+
 // GetNodesWithOperations returns a list of nodes that have operations.
 func (c *ClusterTx) GetNodesWithOperations(ctx context.Context, project string) ([]string, error) {
 	stmt := `
