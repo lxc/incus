@@ -958,3 +958,37 @@ test_backup_volume_expiry() {
   # Cleanup.
   incus storage volume delete "${poolName}" vol1
 }
+
+test_backup_export_import_recover() {
+  (
+    set -e
+
+    poolName=$(incus profile device get default root pool)
+
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    # Create and export an instance.
+    incus launch testimage c1
+    incus export c1 "${INCUS_DIR}/c1.tar.gz"
+    incus rm -f c1
+
+    # Import instance and remove no longer required tarball.
+    incus import "${INCUS_DIR}/c1.tar.gz" c2
+    rm "${INCUS_DIR}/c1.tar.gz"
+
+    # Remove imported instance enteries from database.
+    incus admin sql global "delete from instances where name = 'c2'"
+    incus admin sql global "delete from storage_volumes where name = 'c2'"
+
+    # Recover removed instance.
+    cat <<EOF | incusd recover
+no
+yes
+yes
+EOF
+
+    # Remove recovered instance.
+    incus rm -f c2
+  )
+}
