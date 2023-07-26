@@ -26,7 +26,8 @@ type VolumeUsage struct {
 
 // MountInfo represents info about the result of a mount operation.
 type MountInfo struct {
-	DiskPath string // The location of the block disk (if supported).
+	DiskPath  string                               // The location of the block disk (if supported).
+	PostHooks []func(inst instance.Instance) error // Hooks to be called following a mount.
 }
 
 // Type represents an Incus storage pool type.
