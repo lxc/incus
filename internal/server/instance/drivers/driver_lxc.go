@@ -805,7 +805,8 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	// Pass in /dev/zfs to the container if delegation is supported on the system.
-	if storageDrivers.ZFSSupportsDelegation() && util.PathExists("/dev/zfs") {
+	// This is only done for unprivileged containers as delegation is tied to the user namespace.
+	if !d.IsPrivileged() && storageDrivers.ZFSSupportsDelegation() && util.PathExists("/dev/zfs") {
 		bindMounts = append(bindMounts, "/dev/zfs")
 	}
 
