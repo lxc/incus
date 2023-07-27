@@ -2235,3 +2235,8 @@ When enabled and a suitable system is in use (requires ZFS 2.2 or higher), the Z
 ## `storage_api_remote_volume_snapshot_copy`
 
 This allows copying storage volume snapshots to and from remotes.
+
+## `operations_get_query_all_projects`
+
+This introduces support for the `all-projects` query parameter for the GET API calls to both `/1.0/operations` and `/1.0/operations?recursion=1`.
+This parameter allows bypassing the project name filter.
