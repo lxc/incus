@@ -208,6 +208,8 @@ config:
 storage_pools:
 - name: default
   driver: dir
+- name: my-pool
+  driver: zfs
 networks:
 - name: lxdbr0
   type: bridge
@@ -216,7 +218,7 @@ profiles:
   devices:
     root:
       path: /
-      pool: default
+      pool: my-pool
       type: disk
     eth0:
       name: eth0
@@ -260,6 +262,15 @@ cluster:
     name: default
     key: source
     value: ""
+  - entity: storage-pool
+    name: my-pool
+    key: source
+    value: ""
+  - entity: storage-pool
+    name: my-pool
+    key: driver
+    value: "zfs"
+
 ```
 
 ````
