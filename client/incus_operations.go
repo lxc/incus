@@ -27,13 +27,43 @@ func (r *ProtocolIncus) GetOperationUUIDs() ([]string, error) {
 func (r *ProtocolIncus) GetOperations() ([]api.Operation, error) {
 	apiOperations := map[string][]api.Operation{}
 
-	// Fetch the raw value
+	// Fetch the raw value.
 	_, err := r.queryStruct("GET", "/operations?recursion=1", nil, "", &apiOperations)
 	if err != nil {
 		return nil, err
 	}
 
-	// Turn it into just a list of operations
+	// Turn it into a list of operations.
+	operations := []api.Operation{}
+	for _, v := range apiOperations {
+		operations = append(operations, v...)
+	}
+
+	return operations, nil
+}
+
+// GetOperationsAllProjects returns a list of operations from all projects.
+func (r *ProtocolIncus) GetOperationsAllProjects() ([]api.Operation, error) {
+	err := r.CheckExtension("operations_get_query_all_projects")
+	if err != nil {
+		return nil, err
+	}
+
+	apiOperations := map[string][]api.Operation{}
+
+	path := "/operations"
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("all-projects", "true")
+
+	// Fetch the raw value.
+	_, err = r.queryStruct("GET", fmt.Sprintf("%s?%s", path, v.Encode()), nil, "", &apiOperations)
+	if err != nil {
+		return nil, err
+	}
+
+	// Turn it into a list of operations.
 	operations := []api.Operation{}
 	for _, v := range apiOperations {
 		operations = append(operations, v...)
