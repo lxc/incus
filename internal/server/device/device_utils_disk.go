@@ -443,6 +443,8 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 			cmd = "/usr/lib/qemu/virtiofsd"
 		} else if util.PathExists("/usr/libexec/virtiofsd") {
 			cmd = "/usr/libexec/virtiofsd"
+		} else if util.PathExists("/usr/lib/virtiofsd") {
+			cmd = "/usr/lib/virtiofsd"
 		}
 	}
 
