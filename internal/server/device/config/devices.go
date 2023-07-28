@@ -44,8 +44,13 @@ func (device Device) Validate(rules map[string]func(value string) error) error {
 			continue
 		}
 
-		// Allow user.XYZ.
+		// Allow user.* configuration.
 		if strings.HasPrefix(k, "user.") {
+			continue
+		}
+
+		// Allow initial.* configuration.
+		if strings.HasPrefix(k, "initial.") {
 			continue
 		}
 
