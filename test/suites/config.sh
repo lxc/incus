@@ -266,7 +266,7 @@ test_config_profiles() {
 
 test_config_edit() {
     if ! tty -s; then
-        echo "==> SKIP: Test requires a terminal"
+        echo "==> SKIP: test_config_edit requires a terminal"
         return
     fi
 
@@ -398,7 +398,7 @@ test_container_metadata() {
 
 test_container_snapshot_config() {
     if ! tty -s; then
-        echo "==> SKIP: Test requires a terminal"
+        echo "==> SKIP: test_container_snapshot_config requires a terminal"
         return
     fi
 
