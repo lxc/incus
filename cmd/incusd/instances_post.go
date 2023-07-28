@@ -90,12 +90,14 @@ func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []
 	}
 
 	run := func(op *operations.Operation) error {
+		devices := deviceConfig.NewDevices(req.Devices)
+
 		args := db.InstanceArgs{
 			Project:     p.Name,
 			Config:      req.Config,
 			Type:        dbType,
 			Description: req.Description,
-			Devices:     deviceConfig.NewDevices(req.Devices),
+			Devices:     deviceConfig.ApplyDeviceInitialValues(devices, profiles),
 			Ephemeral:   req.Ephemeral,
 			Name:        req.Name,
 			Profiles:    profiles,
@@ -148,12 +150,14 @@ func createFromNone(s *state.State, r *http.Request, projectName string, profile
 		return response.BadRequest(err)
 	}
 
+	devices := deviceConfig.NewDevices(req.Devices)
+
 	args := db.InstanceArgs{
 		Project:     projectName,
 		Config:      req.Config,
 		Type:        dbType,
 		Description: req.Description,
-		Devices:     deviceConfig.NewDevices(req.Devices),
+		Devices:     deviceConfig.ApplyDeviceInitialValues(devices, profiles),
 		Ephemeral:   req.Ephemeral,
 		Name:        req.Name,
 		Profiles:    profiles,
