@@ -77,6 +77,7 @@ jobs:
       INCUS_CEPH_CLUSTER: "ceph"
       INCUS_CEPH_CEPHFS: "cephfs"
       INCUS_CEPH_CEPHOBJECT_RADOSGW: "http://127.0.0.1"
+      INCUS_CONCURRENT: "1"
       INCUS_VERBOSE: "1"
       INCUS_OFFLINE: "1"
       INCUS_TMPFS: "1"
@@ -160,6 +161,7 @@ jobs:
             btrfs-progs \
             busybox-static \
             dnsmasq-base \
+            easy-rsa \
             gettext \
             jq \
             lxc-utils \
