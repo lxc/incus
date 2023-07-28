@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/lxc/incus/shared/api"
 )
 
 // Device represents an instance device.
@@ -85,6 +87,35 @@ func NewDevices(nativeSet map[string]map[string]string) Devices {
 	}
 
 	return newDevices
+}
+
+// ApplyDeviceInitialValues applies a profile initial values to root disk devices.
+func ApplyDeviceInitialValues(devices Devices, profiles []api.Profile) Devices {
+	for _, p := range profiles {
+		for devName, devConfig := range p.Devices {
+			// Apply only root disk device from profile devices to instance devices.
+			if devConfig["type"] != "disk" || devConfig["path"] != "/" || devConfig["source"] != "" {
+				continue
+			}
+
+			// Skip profile devices that are already present in the map of devices
+			// because those devices should be already populated.
+			_, ok := devices[devName]
+			if ok {
+				continue
+			}
+
+			// If profile device contains an initial.* key, add it to the map of devices.
+			for k := range devConfig {
+				if strings.HasPrefix(k, "initial.") {
+					devices[devName] = devConfig
+					break
+				}
+			}
+		}
+	}
+
+	return devices
 }
 
 // Contains checks if a given device exists in the set and if it's identical to that provided.
