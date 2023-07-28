@@ -17,7 +17,6 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
@@ -836,7 +835,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 		apiNet.Description = n.Description()
 		apiNet.Type = n.Type()
 
-		if auth.UserIsAdmin(r) || auth.UserHasPermission(r, projectName) {
+		if s.Authorizer.UserIsAdmin(r) || s.Authorizer.UserHasPermission(r, projectName, "") {
 			// Only allow admins to see network config as sensitive info can be stored there.
 			apiNet.Config = n.Config()
 		}
@@ -879,7 +878,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 			return api.Network{}, err
 		}
 
-		apiNet.UsedBy = project.FilterUsedBy(r, usedBy)
+		apiNet.UsedBy = project.FilterUsedBy(s.Authorizer, r, usedBy)
 	}
 
 	if n != nil {

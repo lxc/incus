@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/events"
@@ -64,7 +63,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 	if len(types) == 1 && types[0] == "" {
 		types = []string{}
 		for _, entry := range eventTypes {
-			if !auth.UserIsAdmin(r) && util.ValueInSlice(entry, privilegedEventTypes) {
+			if !s.Authorizer.UserIsAdmin(r) && util.ValueInSlice(entry, privilegedEventTypes) {
 				continue
 			}
 
@@ -79,7 +78,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		}
 	}
 
-	if util.ValueInSlice(api.EventTypeLogging, types) && !auth.UserIsAdmin(r) {
+	if util.ValueInSlice(api.EventTypeLogging, types) && !s.Authorizer.UserIsAdmin(r) {
 		return api.StatusErrorf(http.StatusForbidden, "Forbidden")
 	}
 

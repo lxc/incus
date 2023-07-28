@@ -899,7 +899,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			// Check if the given target is allowed and try to resolve the right member or group
-			targetMemberInfo, targetGroupName, err = project.CheckTarget(ctx, r, tx, targetProject, target, allMembers)
+			targetMemberInfo, targetGroupName, err = project.CheckTarget(ctx, s.Authorizer, r, tx, targetProject, target, allMembers)
 			if err != nil {
 				return err
 			}

@@ -419,7 +419,7 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 				return response.SmartError(err)
 			}
 
-			vol.UsedBy = project.FilterUsedBy(r, volumeUsedBy)
+			vol.UsedBy = project.FilterUsedBy(s.Authorizer, r, volumeUsedBy)
 
 			tmp := &api.StorageVolumeSnapshot{}
 			tmp.Config = vol.Config

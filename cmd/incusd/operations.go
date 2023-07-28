@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/internal/jmap"
-	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
@@ -259,7 +258,7 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 			projectName = project.Default
 		}
 
-		if !auth.UserHasPermission(r, projectName) {
+		if !s.Authorizer.UserHasPermission(r, projectName, op.Permission()) {
 			return response.Forbidden(nil)
 		}
 

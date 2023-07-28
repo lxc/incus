@@ -18,7 +18,6 @@ import (
 
 	"github.com/lxc/incus/client"
 	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
@@ -526,7 +525,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Handle requests by non-admin users.
-	if !auth.UserIsAdmin(r) {
+	if !s.Authorizer.UserIsAdmin(r) {
 		// Non-admin cannot issue tokens.
 		if req.Token {
 			return response.Forbidden(nil)
@@ -964,7 +963,7 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 		// In order to prevent possible future security issues, the certificate information is
 		// reset in case a non-admin user is performing the update.
 		certProjects := req.Projects
-		if !auth.UserIsAdmin(r) {
+		if !s.Authorizer.UserIsAdmin(r) {
 			if r.TLS == nil {
 				response.Forbidden(fmt.Errorf("Cannot update certificate information"))
 			}
@@ -1109,7 +1108,7 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Non-admins are able to delete only their own certificate.
-		if !auth.UserIsAdmin(r) {
+		if !s.Authorizer.UserIsAdmin(r) {
 			if r.TLS == nil {
 				response.Forbidden(fmt.Errorf("Cannot delete certificate"))
 			}

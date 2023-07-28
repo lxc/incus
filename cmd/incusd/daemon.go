@@ -237,8 +237,10 @@ func allowAuthenticated(d *Daemon, r *http.Request) response.Response {
 // allowProjectPermission is a wrapper to check access against the project.
 func allowProjectPermission() func(d *Daemon, r *http.Request) response.Response {
 	return func(d *Daemon, r *http.Request) response.Response {
+		s := d.State()
+
 		// Shortcut for speed
-		if auth.UserIsAdmin(r) {
+		if s.Authorizer.UserIsAdmin(r) {
 			return response.EmptySyncResponse
 		}
 
@@ -246,7 +248,7 @@ func allowProjectPermission() func(d *Daemon, r *http.Request) response.Response
 		projectName := projectParam(r)
 
 		// Validate whether the user access to the project.
-		if !auth.UserHasPermission(r, projectName) {
+		if !s.Authorizer.UserHasPermission(r, projectName, "") {
 			return response.Forbidden(nil)
 		}
 
@@ -603,7 +605,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 				}
 			} else if !action.AllowUntrusted {
 				// Require admin privileges
-				if !auth.UserIsAdmin(r) {
+				if !d.authorizer.UserIsAdmin(r) {
 					return response.Forbidden(nil)
 				}
 			}

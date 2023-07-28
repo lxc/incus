@@ -23,7 +23,6 @@ import (
 	internalInstance "github.com/lxc/incus/internal/instance"
 	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/backup"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
@@ -446,7 +445,7 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 				return response.InternalError(err)
 			}
 
-			vol.UsedBy = project.FilterUsedBy(r, volumeUsedBy)
+			vol.UsedBy = project.FilterUsedBy(s.Authorizer, r, volumeUsedBy)
 			volumes = append(volumes, vol)
 		}
 
@@ -1046,7 +1045,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Check if user has access to effective storage target project
-		if !auth.UserHasPermission(r, targetProjectName) {
+		if !s.Authorizer.UserHasPermission(r, targetProjectName, "") {
 			return response.Forbidden(nil)
 		}
 	}
@@ -1403,7 +1402,7 @@ func storagePoolVolumeGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	dbVolume.UsedBy = project.FilterUsedBy(r, volumeUsedBy)
+	dbVolume.UsedBy = project.FilterUsedBy(s.Authorizer, r, volumeUsedBy)
 
 	etag := []any{volumeName, dbVolume.Type, dbVolume.Config}
 

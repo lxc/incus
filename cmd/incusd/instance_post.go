@@ -13,7 +13,6 @@ import (
 
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
-	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
@@ -215,7 +214,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 			var targetGroupName string
 
-			targetMemberInfo, targetGroupName, err = project.CheckTarget(ctx, r, tx, targetProject, target, allMembers)
+			targetMemberInfo, targetGroupName, err = project.CheckTarget(ctx, s.Authorizer, r, tx, targetProject, target, allMembers)
 			if err != nil {
 				return err
 			}
@@ -344,7 +343,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		// Server-side project migration.
 		if req.Project != "" {
 			// Check if user has access to target project
-			if !auth.UserHasPermission(r, req.Project) {
+			if !s.Authorizer.UserHasPermission(r, req.Project, "") {
 				return response.Forbidden(nil)
 			}
 
