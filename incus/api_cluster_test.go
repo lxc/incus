@@ -44,7 +44,7 @@ func TestCluster_Get(t *testing.T) {
 	daemon, cleanup := newTestDaemon(t)
 	defer cleanup()
 
-	client, err := lxd.ConnectLXDUnix(daemon.UnixSocket(), nil)
+	client, err := incus.ConnectLXDUnix(daemon.UnixSocket(), nil)
 	require.NoError(t, err)
 
 	cluster, _, err := client.GetCluster()
@@ -81,7 +81,7 @@ func TestCluster_RenameNode(t *testing.T) {
 // Test helper for cluster-related APIs.
 type clusterFixture struct {
 	t       *testing.T
-	clients map[*Daemon]lxd.InstanceServer
+	clients map[*Daemon]incus.InstanceServer
 }
 
 // Enable networking in the given daemon. The password is optional and can be
@@ -124,15 +124,15 @@ func (f *clusterFixture) EnableNetworkingWithClusterAddress(daemon *Daemon, pass
 
 // Get a client for the given daemon connected via UNIX socket, creating one if
 // needed.
-func (f *clusterFixture) ClientUnix(daemon *Daemon) lxd.InstanceServer {
+func (f *clusterFixture) ClientUnix(daemon *Daemon) incus.InstanceServer {
 	if f.clients == nil {
-		f.clients = make(map[*Daemon]lxd.InstanceServer)
+		f.clients = make(map[*Daemon]incus.InstanceServer)
 	}
 
 	client, ok := f.clients[daemon]
 	if !ok {
 		var err error
-		client, err = lxd.ConnectLXDUnix(daemon.UnixSocket(), nil)
+		client, err = incus.ConnectLXDUnix(daemon.UnixSocket(), nil)
 		require.NoError(f.t, err)
 	}
 

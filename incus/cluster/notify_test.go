@@ -46,7 +46,7 @@ func TestNewNotifier(t *testing.T) {
 	require.NoError(t, err)
 
 	peers := make(chan string, 2)
-	hook := func(client lxd.InstanceServer) error {
+	hook := func(client incus.InstanceServer) error {
 		server, _, err := client.GetServer()
 		require.NoError(t, err)
 		peers <- server.Config["cluster.https_address"].(string)
@@ -126,7 +126,7 @@ func TestNewNotify_NotifyAlive(t *testing.T) {
 	assert.NoError(t, err)
 
 	i := 0
-	hook := func(client lxd.InstanceServer) error {
+	hook := func(client incus.InstanceServer) error {
 		i++
 		return nil
 	}
@@ -222,7 +222,7 @@ func (h *notifyFixtures) Down(i int) {
 }
 
 // Returns a minimal stub for the LXD RESTful API server, just realistic
-// enough to make lxd.ConnectLXD succeed.
+// enough to make incus.ConnectLXD succeed.
 func newRestServer(cert *shared.CertInfo) *httptest.Server {
 	mux := http.NewServeMux()
 
