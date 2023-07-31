@@ -27,7 +27,7 @@ import (
 	"github.com/cyphar/incus/shared/version"
 )
 
-func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d lxd.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
+func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Initialize config
 	config := api.InitPreseed{}
 	config.Node.Config = map[string]any{}
@@ -106,7 +106,7 @@ func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d lxd.Instan
 	return &config, nil
 }
 
-func (c *cmdInit) askClustering(config *api.InitPreseed, d lxd.InstanceServer, server *api.Server) error {
+func (c *cmdInit) askClustering(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
 	clustering, err := cli.AskBool("Would you like to use LXD clustering? (yes/no) [default=no]: ", "no")
 	if err != nil {
 		return err
@@ -323,14 +323,14 @@ func (c *cmdInit) askClustering(config *api.InitPreseed, d lxd.InstanceServer, s
 			config.Cluster.ClusterPassword = ""
 
 			// Client parameters to connect to the target cluster member.
-			args := &lxd.ConnectionArgs{
+			args := &incus.ConnectionArgs{
 				TLSClientCert: string(serverCert.PublicKey()),
 				TLSClientKey:  string(serverCert.PrivateKey()),
 				TLSServerCert: string(config.Cluster.ClusterCertificate),
 				UserAgent:     version.UserAgent,
 			}
 
-			client, err := lxd.ConnectLXD(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), args)
+			client, err := incus.ConnectLXD(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), args)
 			if err != nil {
 				return err
 			}
@@ -366,7 +366,7 @@ func (c *cmdInit) askClustering(config *api.InitPreseed, d lxd.InstanceServer, s
 	return nil
 }
 
-func (c *cmdInit) askMAAS(config *api.InitPreseed, d lxd.InstanceServer) error {
+func (c *cmdInit) askMAAS(config *api.InitPreseed, d incus.InstanceServer) error {
 	maas, err := cli.AskBool("Would you like to connect to a MAAS server? (yes/no) [default=no]: ", "no")
 	if err != nil {
 		return err
@@ -398,7 +398,7 @@ func (c *cmdInit) askMAAS(config *api.InitPreseed, d lxd.InstanceServer) error {
 	return nil
 }
 
-func (c *cmdInit) askNetworking(config *api.InitPreseed, d lxd.InstanceServer) error {
+func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer) error {
 	var err error
 	localBridgeCreate := false
 
@@ -622,7 +622,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d lxd.InstanceServer) e
 	return nil
 }
 
-func (c *cmdInit) askStorage(config *api.InitPreseed, d lxd.InstanceServer, server *api.Server) error {
+func (c *cmdInit) askStorage(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
 	if config.Cluster != nil {
 		localStoragePool, err := cli.AskBool("Do you want to configure a new local storage pool? (yes/no) [default=yes]: ", "yes")
 		if err != nil {
@@ -663,7 +663,7 @@ func (c *cmdInit) askStorage(config *api.InitPreseed, d lxd.InstanceServer, serv
 	return c.askStoragePool(config, d, server, util.PoolTypeAny)
 }
 
-func (c *cmdInit) askStoragePool(config *api.InitPreseed, d lxd.InstanceServer, server *api.Server, poolType util.PoolType) error {
+func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer, server *api.Server, poolType util.PoolType) error {
 	// Figure out the preferred storage driver
 	availableBackends := util.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, poolType)
 
@@ -931,7 +931,7 @@ and make sure that your user can see and run the "thin_check" command before run
 	return nil
 }
 
-func (c *cmdInit) askDaemon(config *api.InitPreseed, d lxd.InstanceServer, server *api.Server) error {
+func (c *cmdInit) askDaemon(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
 	// Detect lack of uid/gid
 	idmapset, err := idmap.DefaultIdmapSet("", "")
 	if (err != nil || len(idmapset.Idmap) == 0 || idmapset.Usable() != nil) && shared.RunningInUserNS() {

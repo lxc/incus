@@ -25,8 +25,8 @@ package seccomp
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../include/lxd_bpf.h"
-#include "../include/lxd_seccomp.h"
+#include "../include/incus_bpf.h"
+#include "../include/incus_seccomp.h"
 #include "../include/memory_utils.h"
 #include "../include/process_utils.h"
 #include "../include/syscall_wrappers.h"

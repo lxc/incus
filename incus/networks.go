@@ -600,7 +600,7 @@ func networksPostCluster(s *state.State, projectName string, netInfo *api.Networ
 	}
 
 	// Notify other nodes to create the network.
-	err = notifier(func(client lxd.InstanceServer) error {
+	err = notifier(func(client incus.InstanceServer) error {
 		server, _, err := client.GetServer()
 		if err != nil {
 			return err
@@ -983,7 +983,7 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
-		err = notifier(func(client lxd.InstanceServer) error {
+		err = notifier(func(client incus.InstanceServer) error {
 			return client.UseProject(n.Project()).DeleteNetwork(n.Name())
 		})
 		if err != nil {

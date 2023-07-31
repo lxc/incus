@@ -750,7 +750,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 			},
 		}
 
-		err = notifier(func(client lxd.InstanceServer) error {
+		err = notifier(func(client incus.InstanceServer) error {
 			return client.CreateCertificate(req)
 		})
 		if err != nil {
@@ -1069,7 +1069,7 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 			return response.SmartError(err)
 		}
 
-		err = notifier(func(client lxd.InstanceServer) error {
+		err = notifier(func(client incus.InstanceServer) error {
 			return client.UpdateCertificate(dbCert.Fingerprint, req, "")
 		})
 		if err != nil {
@@ -1173,7 +1173,7 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
-		err = notifier(func(client lxd.InstanceServer) error {
+		err = notifier(func(client incus.InstanceServer) error {
 			return client.DeleteCertificate(certInfo.Fingerprint)
 		})
 		if err != nil {

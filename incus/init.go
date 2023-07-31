@@ -16,7 +16,7 @@ import (
 // It's used both by the 'lxd init' command and by the PUT /1.0/cluster API.
 //
 // In case of error, the returned function can be used to revert the changes.
-func initDataNodeApply(d lxd.InstanceServer, config api.InitLocalPreseed) (func(), error) {
+func initDataNodeApply(d incus.InstanceServer, config api.InitLocalPreseed) (func(), error) {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -384,7 +384,7 @@ func initDataNodeApply(d lxd.InstanceServer, config api.InitLocalPreseed) (func(
 // Helper to initialize LXD clustering.
 //
 // Used by the 'lxd init' command.
-func initDataClusterApply(d lxd.InstanceServer, config *api.InitClusterPreseed) error {
+func initDataClusterApply(d incus.InstanceServer, config *api.InitClusterPreseed) error {
 	if config == nil || !config.Enabled {
 		return nil
 	}

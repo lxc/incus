@@ -20,14 +20,14 @@ type cmdGlobal struct {
 	flagReportLabel string
 	flagVersion     bool
 
-	srv            lxd.ContainerServer
+	srv            incus.ContainerServer
 	report         *benchmark.CSVReport
 	reportDuration time.Duration
 }
 
 func (c *cmdGlobal) Run(cmd *cobra.Command, args []string) error {
 	// Connect to LXD
-	srv, err := lxd.ConnectLXDUnix("", nil)
+	srv, err := incus.ConnectLXDUnix("", nil)
 	if err != nil {
 		return err
 	}

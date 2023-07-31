@@ -615,10 +615,10 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 			}
 
 			var err error
-			var remote lxd.ImageServer
+			var remote incus.ImageServer
 			if shared.StringInSlice(req.Source.Protocol, []string{"", "lxd"}) {
 				// Remote LXD image server.
-				remote, err = lxd.ConnectPublicLXD(req.Source.Server, &lxd.ConnectionArgs{
+				remote, err = incus.ConnectPublicLXD(req.Source.Server, &incus.ConnectionArgs{
 					TLSServerCert: req.Source.Certificate,
 					UserAgent:     version.UserAgent,
 					Proxy:         s.Proxy,
@@ -630,7 +630,7 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 				}
 			} else if req.Source.Protocol == "simplestreams" {
 				// Remote simplestreams image server.
-				remote, err = lxd.ConnectSimpleStreams(req.Source.Server, &lxd.ConnectionArgs{
+				remote, err = incus.ConnectSimpleStreams(req.Source.Server, &incus.ConnectionArgs{
 					TLSServerCert: req.Source.Certificate,
 					UserAgent:     version.UserAgent,
 					Proxy:         s.Proxy,

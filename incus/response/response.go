@@ -481,13 +481,13 @@ func (r *fileResponse) String() string {
 }
 
 type forwardedResponse struct {
-	client  lxd.InstanceServer
+	client  incus.InstanceServer
 	request *http.Request
 }
 
 // ForwardedResponse takes a request directed to a node and forwards it to
 // another node, writing back the response it gegs.
-func ForwardedResponse(client lxd.InstanceServer, request *http.Request) Response {
+func ForwardedResponse(client incus.InstanceServer, request *http.Request) Response {
 	return &forwardedResponse{
 		client:  client,
 		request: request,

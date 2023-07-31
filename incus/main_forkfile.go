@@ -16,7 +16,7 @@ package main
 #include <unistd.h>
 #include <limits.h>
 
-#include "lxd.h"
+#include "incus.h"
 #include "memory_utils.h"
 
 void forkfile(void)

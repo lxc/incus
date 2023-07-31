@@ -1852,7 +1852,7 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 			}
 		}
 
-		createArgs := &lxd.ImageCreateArgs{}
+		createArgs := &incus.ImageCreateArgs{}
 		imageMetaPath := shared.VarPath("images", newImage.Fingerprint)
 		imageRootfsPath := shared.VarPath("images", newImage.Fingerprint+".rootfs")
 
@@ -2515,7 +2515,7 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			err = notifier(func(client lxd.InstanceServer) error {
+			err = notifier(func(client incus.InstanceServer) error {
 				op, err := client.UseProject(projectName).DeleteImage(imgInfo.Fingerprint)
 				if err != nil {
 					return fmt.Errorf("Failed to request to delete image from peer node: %w", err)
@@ -3858,7 +3858,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Connect to the target and push the image
-	args := &lxd.ConnectionArgs{
+	args := &incus.ConnectionArgs{
 		TLSServerCert: req.Certificate,
 		UserAgent:     version.UserAgent,
 		Proxy:         s.Proxy,
@@ -3867,15 +3867,15 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Setup LXD client
-	remote, err := lxd.ConnectLXD(req.Target, args)
+	remote, err := incus.ConnectLXD(req.Target, args)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	var imageCreateOp lxd.Operation
+	var imageCreateOp incus.Operation
 
 	run := func(op *operations.Operation) error {
-		createArgs := &lxd.ImageCreateArgs{}
+		createArgs := &incus.ImageCreateArgs{}
 		imageMetaPath := shared.VarPath("images", fingerprint)
 		imageRootfsPath := shared.VarPath("images", fingerprint+".rootfs")
 
@@ -3992,7 +3992,7 @@ func imageSecret(d *Daemon, r *http.Request) response.Response {
 	return createTokenResponse(d.State(), r, projectName, imgInfo.Fingerprint, nil)
 }
 
-func imageImportFromNode(imagesDir string, client lxd.InstanceServer, fingerprint string) error {
+func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerprint string) error {
 	// Prepare the temp files
 	buildDir, err := os.MkdirTemp(imagesDir, "lxd_build_")
 	if err != nil {
@@ -4015,7 +4015,7 @@ func imageImportFromNode(imagesDir string, client lxd.InstanceServer, fingerprin
 
 	defer func() { _ = rootfsFile.Close() }()
 
-	getReq := lxd.ImageFileRequest{
+	getReq := incus.ImageFileRequest{
 		MetaFile:   io.WriteSeeker(metaFile),
 		RootfsFile: io.WriteSeeker(rootfsFile),
 	}
@@ -4285,7 +4285,7 @@ func imageSyncBetweenNodes(s *state.State, r *http.Request, project string, fing
 	}
 
 	// Populate the copy arguments with properties from the source image.
-	args := lxd.ImageCopyArgs{
+	args := incus.ImageCopyArgs{
 		Type:   image.Type,
 		Public: image.Public,
 	}

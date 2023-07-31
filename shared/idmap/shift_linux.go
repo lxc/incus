@@ -20,12 +20,12 @@ package idmap
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "../../lxd/include/lxd_posix_acl_xattr.h"
-#include "../../lxd/include/memory_utils.h"
-#include "../../lxd/include/mount_utils.h"
-#include "../../lxd/include/process_utils.h"
-#include "../../lxd/include/syscall_numbers.h"
-#include "../../lxd/include/syscall_wrappers.h"
+#include "../../incus/include/incus_posix_acl_xattr.h"
+#include "../../incus/include/memory_utils.h"
+#include "../../incus/include/mount_utils.h"
+#include "../../incus/include/process_utils.h"
+#include "../../incus/include/syscall_numbers.h"
+#include "../../incus/include/syscall_wrappers.h"
 
 // Needs to be included at the end
 #include <sys/acl.h>

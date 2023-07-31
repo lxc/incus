@@ -14,7 +14,7 @@ import (
 	"github.com/cyphar/incus/shared/api"
 )
 
-func lxdIsConfigured(client lxd.InstanceServer) (bool, error) {
+func lxdIsConfigured(client incus.InstanceServer) (bool, error) {
 	// Look for networks.
 	networks, err := client.GetNetworkNames()
 	if err != nil {
@@ -40,7 +40,7 @@ func lxdIsConfigured(client lxd.InstanceServer) (bool, error) {
 	return true, nil
 }
 
-func lxdInitialConfiguration(client lxd.InstanceServer) error {
+func lxdInitialConfiguration(client incus.InstanceServer) error {
 	// Load current server config.
 	info, _, err := client.GetServer()
 	if err != nil {
@@ -172,7 +172,7 @@ func lxdSetupUser(uid uint32) error {
 	}
 
 	// Connect to LXD.
-	client, err := lxd.ConnectLXDUnix("", nil)
+	client, err := incus.ConnectLXDUnix("", nil)
 	if err != nil {
 		return fmt.Errorf("Unable to connect to LXD: %w", err)
 	}

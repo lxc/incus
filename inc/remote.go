@@ -106,7 +106,7 @@ Basic authentication can be used when combined with the "simplestreams" protocol
 	return cmd
 }
 
-func (c *cmdRemoteAdd) findProject(d lxd.InstanceServer, project string) (string, error) {
+func (c *cmdRemoteAdd) findProject(d incus.InstanceServer, project string) (string, error) {
 	if project == "" {
 		// Check if we can pull a list of projects.
 		if d.HasExtension("projects") {
@@ -398,7 +398,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	conf.Remotes[server] = config.Remote{Addr: addr, Protocol: c.flagProtocol, AuthType: c.flagAuthType, Domain: c.flagDomain}
 
 	// Attempt to connect
-	var d lxd.ImageServer
+	var d incus.ImageServer
 	if c.flagPublic {
 		d, err = conf.GetImageServer(server)
 	} else {
@@ -415,7 +415,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		remote.AuthType = "tls"
 
 		// Handle project.
-		project, err := c.findProject(d.(lxd.InstanceServer), c.flagProject)
+		project, err := c.findProject(d.(incus.InstanceServer), c.flagProject)
 		if err != nil {
 			return err
 		}
@@ -498,11 +498,11 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if c.flagAuthType == "candid" {
-		d.(lxd.InstanceServer).RequireAuthenticated(false)
+		d.(incus.InstanceServer).RequireAuthenticated(false)
 	}
 
 	// Get server information
-	srv, _, err := d.(lxd.InstanceServer).GetServer()
+	srv, _, err := d.(incus.InstanceServer).GetServer()
 	if err != nil {
 		return err
 	}
@@ -529,9 +529,9 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			d.(lxd.InstanceServer).RequireAuthenticated(false)
+			d.(incus.InstanceServer).RequireAuthenticated(false)
 
-			srv, _, err = d.(lxd.InstanceServer).GetServer()
+			srv, _, err = d.(incus.InstanceServer).GetServer()
 			if err != nil {
 				return err
 			}
@@ -579,16 +579,16 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 
 			req.Type = api.CertificateTypeClient
 
-			err = d.(lxd.InstanceServer).CreateCertificate(req)
+			err = d.(incus.InstanceServer).CreateCertificate(req)
 			if err != nil {
 				return err
 			}
 		} else {
-			d.(lxd.InstanceServer).RequireAuthenticated(true)
+			d.(incus.InstanceServer).RequireAuthenticated(true)
 		}
 
 		// And check if trusted now
-		srv, _, err = d.(lxd.InstanceServer).GetServer()
+		srv, _, err = d.(incus.InstanceServer).GetServer()
 		if err != nil {
 			return err
 		}
@@ -604,7 +604,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 
 	// Handle project.
 	remote = conf.Remotes[server]
-	project, err := c.findProject(d.(lxd.InstanceServer), c.flagProject)
+	project, err := c.findProject(d.(incus.InstanceServer), c.flagProject)
 	if err != nil {
 		return err
 	}

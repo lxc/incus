@@ -15,7 +15,7 @@ import (
 
 // Notifier is a function that invokes the given function against each node in
 // the cluster excluding the invoking one.
-type Notifier func(hook func(lxd.InstanceServer) error) error
+type Notifier func(hook func(incus.InstanceServer) error) error
 
 // NotifierPolicy can be used to tweak the behavior of NewNotifier in case of
 // some nodes are down.
@@ -35,7 +35,7 @@ func NewNotifier(state *state.State, networkCert *shared.CertInfo, serverCert *s
 
 	// Fast-track the case where we're not clustered at all.
 	if localClusterAddress == "" {
-		nullNotifier := func(func(lxd.InstanceServer) error) error { return nil }
+		nullNotifier := func(func(incus.InstanceServer) error) error { return nil }
 		return nullNotifier, nil
 	}
 
@@ -84,7 +84,7 @@ func NewNotifier(state *state.State, networkCert *shared.CertInfo, serverCert *s
 		peers = append(peers, member.Address)
 	}
 
-	notifier := func(hook func(lxd.InstanceServer) error) error {
+	notifier := func(hook func(incus.InstanceServer) error) error {
 		errs := make([]error, len(peers))
 		wg := sync.WaitGroup{}
 		wg.Add(len(peers))

@@ -72,11 +72,11 @@ func (c *cmdCallhook) Run(cmd *cobra.Command, args []string) error {
 		socket = filepath.Join(path, "unix.socket")
 	}
 
-	lxdArgs := lxd.ConnectionArgs{
+	lxdArgs := incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
 
-	d, err := lxd.ConnectLXDUnix(socket, &lxdArgs)
+	d, err := incus.ConnectLXDUnix(socket, &lxdArgs)
 	if err != nil {
 		return err
 	}

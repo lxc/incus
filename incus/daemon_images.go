@@ -61,7 +61,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	var err error
 	var ctxMap logger.Ctx
 
-	var remote lxd.ImageServer
+	var remote incus.ImageServer
 	var info *api.Image
 
 	// Default protocol is LXD. Copy so that local modifications aren't propgated to args.
@@ -78,7 +78,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 
 	// Attempt to resolve the alias
 	if shared.StringInSlice(protocol, []string{"lxd", "simplestreams"}) {
-		clientArgs := &lxd.ConnectionArgs{
+		clientArgs := &incus.ConnectionArgs{
 			TLSServerCert: args.Certificate,
 			UserAgent:     version.UserAgent,
 			Proxy:         s.Proxy,
@@ -88,18 +88,18 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 
 		if protocol == "lxd" {
 			// Setup LXD client
-			remote, err = lxd.ConnectPublicLXD(args.Server, clientArgs)
+			remote, err = incus.ConnectPublicLXD(args.Server, clientArgs)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to LXD server %q: %w", args.Server, err)
 			}
 
-			server, ok := remote.(lxd.InstanceServer)
+			server, ok := remote.(incus.InstanceServer)
 			if ok {
 				remote = server.UseProject(args.SourceProjectName)
 			}
 		} else {
 			// Setup simplestreams client
-			remote, err = lxd.ConnectSimpleStreams(args.Server, clientArgs)
+			remote, err = incus.ConnectSimpleStreams(args.Server, clientArgs)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to simple streams server %q: %w", args.Server, err)
 			}
@@ -353,8 +353,8 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		}
 
 		// Download the image
-		var resp *lxd.ImageFileResponse
-		request := lxd.ImageFileRequest{
+		var resp *incus.ImageFileResponse
+		request := incus.ImageFileRequest{
 			MetaFile:        io.WriteSeeker(dest),
 			RootfsFile:      io.WriteSeeker(destRootfs),
 			ProgressHandler: progress,

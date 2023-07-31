@@ -253,7 +253,7 @@ func (d *zone) Update(config *api.NetworkZonePut, clientType request.ClientType)
 			return err
 		}
 
-		err = notifier(func(client lxd.InstanceServer) error {
+		err = notifier(func(client incus.InstanceServer) error {
 			return client.UseProject(d.projectName).UpdateNetworkZone(d.info.Name, d.info.NetworkZonePut, "")
 		})
 		if err != nil {

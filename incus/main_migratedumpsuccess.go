@@ -48,11 +48,11 @@ func (c *cmdMigratedumpsuccess) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("This must be run as root")
 	}
 
-	lxdArgs := lxd.ConnectionArgs{
+	lxdArgs := incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
 
-	d, err := lxd.ConnectLXDUnix("", &lxdArgs)
+	d, err := incus.ConnectLXDUnix("", &lxdArgs)
 	if err != nil {
 		return err
 	}

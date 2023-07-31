@@ -95,7 +95,7 @@ func (c *cmdImport) Run(cmd *cobra.Command, args []string) error {
 		Quiet:  c.global.flagQuiet,
 	}
 
-	createArgs := lxd.InstanceBackupArgs{
+	createArgs := incus.InstanceBackupArgs{
 		BackupFile: &ioprogress.ProgressReader{
 			ReadCloser: file,
 			Tracker: &ioprogress.ProgressTracker{

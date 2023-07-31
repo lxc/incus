@@ -106,7 +106,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 	}
 
 	// Connect to the destination host
-	var dest lxd.InstanceServer
+	var dest incus.InstanceServer
 	if sourceRemote == destRemote {
 		// Source and destination are the same
 		dest = source
@@ -144,7 +144,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		return err
 	}
 
-	var op lxd.RemoteOperation
+	var op incus.RemoteOperation
 	var writable api.InstancePut
 	var start bool
 
@@ -154,7 +154,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		}
 
 		// Prepare the instance creation request
-		args := lxd.InstanceSnapshotCopyArgs{
+		args := incus.InstanceSnapshotCopyArgs{
 			Name: destName,
 			Mode: mode,
 			Live: stateful,
@@ -241,7 +241,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		}
 	} else {
 		// Prepare the instance creation request
-		args := lxd.InstanceCopyArgs{
+		args := incus.InstanceCopyArgs{
 			Name:              destName,
 			Live:              stateful,
 			InstanceOnly:      instanceOnly,

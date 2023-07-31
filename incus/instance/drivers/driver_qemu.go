@@ -1873,7 +1873,7 @@ func (d *qemu) advertiseVsockAddress() error {
 		return fmt.Errorf("Failed getting agent client handle: %w", err)
 	}
 
-	agent, err := lxd.ConnectLXDHTTP(nil, client)
+	agent, err := incus.ConnectLXDHTTP(nil, client)
 	if err != nil {
 		return fmt.Errorf("Failed connecting to lxd-agent: %w", err)
 	}
@@ -7034,7 +7034,7 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 		return nil, err
 	}
 
-	agent, err := lxd.ConnectLXDHTTP(nil, client)
+	agent, err := incus.ConnectLXDHTTP(nil, client)
 	if err != nil {
 		d.logger.Error("Failed to connect to lxd-agent", logger.Ctx{"err": err})
 		return nil, fmt.Errorf("Failed to connect to lxd-agent")
@@ -7061,7 +7061,7 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 		}
 	}
 
-	args := lxd.InstanceExecArgs{
+	args := incus.InstanceExecArgs{
 		Stdin:    stdin,
 		Stdout:   stdout,
 		Stderr:   stderr,
@@ -7336,7 +7336,7 @@ func (d *qemu) agentGetState() (*api.InstanceState, error) {
 		return nil, err
 	}
 
-	agent, err := lxd.ConnectLXDHTTP(nil, client)
+	agent, err := incus.ConnectLXDHTTP(nil, client)
 	if err != nil {
 		return nil, fmt.Errorf("Failed connecting to agent: %w", err)
 	}
@@ -7851,7 +7851,7 @@ func (d *qemu) devlxdEventSend(eventType string, eventMessage map[string]any) er
 		return err
 	}
 
-	agent, err := lxd.ConnectLXDHTTP(nil, client)
+	agent, err := incus.ConnectLXDHTTP(nil, client)
 	if err != nil {
 		d.logger.Error("Failed to connect to lxd-agent", logger.Ctx{"err": err})
 		return fmt.Errorf("Failed to connect to lxd-agent")
@@ -8143,7 +8143,7 @@ func (d *qemu) getAgentMetrics() (*metrics.MetricSet, error) {
 		return nil, err
 	}
 
-	agent, err := lxd.ConnectLXDHTTP(nil, client)
+	agent, err := incus.ConnectLXDHTTP(nil, client)
 	if err != nil {
 		d.logger.Error("Failed to connect to lxd-agent", logger.Ctx{"project": d.Project().Name, "instance": d.Name(), "err": err})
 		return nil, fmt.Errorf("Failed to connect to lxd-agent")

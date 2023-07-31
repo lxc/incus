@@ -21,13 +21,13 @@ import (
 	"github.com/cyphar/incus/shared/version"
 )
 
-// Connect is a convenience around lxd.ConnectLXD that configures the client
+// Connect is a convenience around incus.ConnectLXD that configures the client
 // with the correct parameters for node-to-node communication.
 //
 // If 'notify' switch is true, then the user agent will be set to the special
 // to the UserAgentNotifier value, which can be used in some cases to distinguish
 // between a regular client request and an internal cluster request.
-func Connect(address string, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request, notify bool) (lxd.InstanceServer, error) {
+func Connect(address string, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request, notify bool) (incus.InstanceServer, error) {
 	// Wait for a connection to the events API first for non-notify connections.
 	if !notify {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
@@ -38,7 +38,7 @@ func Connect(address string, networkCert *shared.CertInfo, serverCert *shared.Ce
 		}
 	}
 
-	args := &lxd.ConnectionArgs{
+	args := &incus.ConnectionArgs{
 		TLSServerCert: string(networkCert.PublicKey()),
 		TLSClientCert: string(serverCert.PublicKey()),
 		TLSClientKey:  string(serverCert.PrivateKey()),
@@ -73,13 +73,13 @@ func Connect(address string, networkCert *shared.CertInfo, serverCert *shared.Ce
 	}
 
 	url := fmt.Sprintf("https://%s", address)
-	return lxd.ConnectLXD(url, args)
+	return incus.ConnectLXD(url, args)
 }
 
 // ConnectIfInstanceIsRemote figures out the address of the cluster member which is running the instance with the
 // given name in the specified project. If it's not the local member will connect to it and return the connected
 // client (configured with the specified project), otherwise it will just return nil.
-func ConnectIfInstanceIsRemote(cluster *db.Cluster, projectName string, instName string, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request, instanceType instancetype.Type) (lxd.InstanceServer, error) {
+func ConnectIfInstanceIsRemote(cluster *db.Cluster, projectName string, instName string, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request, instanceType instancetype.Type) (incus.InstanceServer, error) {
 	var address string // Cluster member address.
 	err := cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
@@ -107,7 +107,7 @@ func ConnectIfInstanceIsRemote(cluster *db.Cluster, projectName string, instName
 // ConnectIfVolumeIsRemote figures out the address of the cluster member on which the volume with the given name is
 // defined. If it's not the local cluster member it will connect to it and return the connected client, otherwise
 // it just returns nil. If there is more than one cluster member with a matching volume name, an error is returned.
-func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string, volumeName string, volumeType int, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request) (lxd.InstanceServer, error) {
+func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string, volumeName string, volumeType int, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request) (incus.InstanceServer, error) {
 	localNodeID := s.DB.Cluster.GetNodeID()
 	var err error
 	var nodes []db.NodeInfo
@@ -190,12 +190,12 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 // already exists with a different name or type, then no error is returned.
 func SetupTrust(serverCert *shared.CertInfo, serverName string, targetAddress string, targetCert string, targetPassword string) error {
 	// Connect to the target cluster node.
-	args := &lxd.ConnectionArgs{
+	args := &incus.ConnectionArgs{
 		TLSServerCert: targetCert,
 		UserAgent:     version.UserAgent,
 	}
 
-	target, err := lxd.ConnectLXD(fmt.Sprintf("https://%s", targetAddress), args)
+	target, err := incus.ConnectLXD(fmt.Sprintf("https://%s", targetAddress), args)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to target cluster node %q: %w", targetAddress, err)
 	}
@@ -225,14 +225,14 @@ func SetupTrust(serverCert *shared.CertInfo, serverName string, targetAddress st
 // error is returned. And if the existing certificate is the correct type and name then nothing more is done.
 func UpdateTrust(serverCert *shared.CertInfo, serverName string, targetAddress string, targetCert string) error {
 	// Connect to the target cluster node.
-	args := &lxd.ConnectionArgs{
+	args := &incus.ConnectionArgs{
 		TLSClientCert: string(serverCert.PublicKey()),
 		TLSClientKey:  string(serverCert.PrivateKey()),
 		TLSServerCert: targetCert,
 		UserAgent:     version.UserAgent,
 	}
 
-	target, err := lxd.ConnectLXD(fmt.Sprintf("https://%s", targetAddress), args)
+	target, err := incus.ConnectLXD(fmt.Sprintf("https://%s", targetAddress), args)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to target cluster node %q: %w", targetAddress, err)
 	}

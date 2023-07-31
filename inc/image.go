@@ -109,7 +109,7 @@ hash or alias name (if one is set).`))
 	return cmd
 }
 
-func (c *cmdImage) dereferenceAlias(d lxd.ImageServer, imageType string, inName string) string {
+func (c *cmdImage) dereferenceAlias(d incus.ImageServer, imageType string, inName string) string {
 	if inName == "" {
 		inName = "default"
 	}
@@ -189,7 +189,7 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 	// by `--project` flag in `GetImageServer` method
 	remote := conf.Remotes[remoteName]
 	if remote.Protocol != "simplestream" && !remote.Public {
-		d, ok := sourceServer.(lxd.InstanceServer)
+		d, ok := sourceServer.(incus.InstanceServer)
 		if ok {
 			sourceServer = d.UseProject(remote.Project)
 		}
@@ -244,7 +244,7 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 		imgInfo.Fingerprint = name
 	}
 
-	copyArgs := lxd.ImageCopyArgs{
+	copyArgs := incus.ImageCopyArgs{
 		AutoUpdate: c.flagAutoUpdate,
 		Public:     c.flagPublic,
 		Type:       imageType,
@@ -559,7 +559,7 @@ func (c *cmdImageExport) Run(cmd *cobra.Command, args []string) error {
 		Quiet:  c.global.flagQuiet,
 	}
 
-	req := lxd.ImageFileRequest{
+	req := incus.ImageFileRequest{
 		MetaFile:        io.WriteSeeker(dest),
 		RootfsFile:      io.WriteSeeker(destRootfs),
 		ProgressHandler: progress.UpdateProgress,
@@ -745,7 +745,7 @@ func (c *cmdImageImport) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Only https:// is supported for remote image import"))
 	}
 
-	var createArgs *lxd.ImageCreateArgs
+	var createArgs *incus.ImageCreateArgs
 	image := api.ImagesPost{}
 	image.Public = c.flagPublic
 
@@ -821,7 +821,7 @@ func (c *cmdImageImport) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		createArgs = &lxd.ImageCreateArgs{
+		createArgs = &incus.ImageCreateArgs{
 			MetaFile:        meta,
 			MetaName:        filepath.Base(imageFile),
 			RootfsFile:      rootfs,

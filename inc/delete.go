@@ -51,8 +51,8 @@ func (c *cmdDelete) promptDelete(name string) error {
 	return nil
 }
 
-func (c *cmdDelete) doDelete(d lxd.InstanceServer, name string) error {
-	var op lxd.Operation
+func (c *cmdDelete) doDelete(d incus.InstanceServer, name string) error {
+	var op incus.Operation
 	var err error
 
 	if shared.IsSnapshot(name) {

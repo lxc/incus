@@ -98,7 +98,7 @@ func (c *cmdMonitor) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var listener *lxd.EventListener
+	var listener *incus.EventListener
 	if c.flagAllProjects {
 		listener, err = d.GetEventsAllProjects()
 	} else {

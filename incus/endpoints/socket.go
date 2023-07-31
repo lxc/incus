@@ -50,7 +50,7 @@ func CheckAlreadyRunning(path string) error {
 		return nil
 	}
 
-	_, err = lxd.ConnectLXDUnix(path, nil)
+	_, err = incus.ConnectLXDUnix(path, nil)
 
 	// If the connection succeeded it means there's another LXD running.
 	if err == nil {

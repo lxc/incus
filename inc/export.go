@@ -153,7 +153,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 		Quiet:  c.global.flagQuiet,
 	}
 
-	backupFileRequest := lxd.BackupFileRequest{
+	backupFileRequest := incus.BackupFileRequest{
 		BackupFile:      io.WriteSeeker(target),
 		ProgressHandler: progress.UpdateProgress,
 	}

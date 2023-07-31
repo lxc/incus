@@ -53,7 +53,7 @@ func (c *Config) ParseRemote(raw string) (string, string, error) {
 }
 
 // GetInstanceServer returns a InstanceServer struct for the remote.
-func (c *Config) GetInstanceServer(name string) (lxd.InstanceServer, error) {
+func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 	// Handle "local" on non-Linux
 	if name == "local" && runtime.GOOS != "linux" {
 		return nil, ErrNotLinux
@@ -78,7 +78,7 @@ func (c *Config) GetInstanceServer(name string) (lxd.InstanceServer, error) {
 
 	// Unix socket
 	if strings.HasPrefix(remote.Addr, "unix:") {
-		d, err := lxd.ConnectLXDUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
+		d, err := incus.ConnectLXDUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func (c *Config) GetInstanceServer(name string) (lxd.InstanceServer, error) {
 		return nil, fmt.Errorf("Missing TLS client certificate and key")
 	}
 
-	d, err := lxd.ConnectLXD(remote.Addr, args)
+	d, err := incus.ConnectLXD(remote.Addr, args)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (c *Config) GetInstanceServer(name string) (lxd.InstanceServer, error) {
 }
 
 // GetImageServer returns a ImageServer struct for the remote.
-func (c *Config) GetImageServer(name string) (lxd.ImageServer, error) {
+func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 	// Handle "local" on non-Linux
 	if name == "local" && runtime.GOOS != "linux" {
 		return nil, ErrNotLinux
@@ -136,7 +136,7 @@ func (c *Config) GetImageServer(name string) (lxd.ImageServer, error) {
 
 	// Unix socket
 	if strings.HasPrefix(remote.Addr, "unix:") {
-		d, err := lxd.ConnectLXDUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
+		d, err := incus.ConnectLXDUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func (c *Config) GetImageServer(name string) (lxd.ImageServer, error) {
 
 	// HTTPs (simplestreams)
 	if remote.Protocol == "simplestreams" {
-		d, err := lxd.ConnectSimpleStreams(remote.Addr, args)
+		d, err := incus.ConnectSimpleStreams(remote.Addr, args)
 		if err != nil {
 			return nil, err
 		}
@@ -164,7 +164,7 @@ func (c *Config) GetImageServer(name string) (lxd.ImageServer, error) {
 
 	// HTTPs (public LXD)
 	if remote.Public {
-		d, err := lxd.ConnectPublicLXD(remote.Addr, args)
+		d, err := incus.ConnectPublicLXD(remote.Addr, args)
 		if err != nil {
 			return nil, err
 		}
@@ -173,7 +173,7 @@ func (c *Config) GetImageServer(name string) (lxd.ImageServer, error) {
 	}
 
 	// HTTPs (private LXD)
-	d, err := lxd.ConnectLXD(remote.Addr, args)
+	d, err := incus.ConnectLXD(remote.Addr, args)
 	if err != nil {
 		return nil, err
 	}
@@ -193,9 +193,9 @@ func (c *Config) GetImageServer(name string) (lxd.ImageServer, error) {
 // It constructs the necessary connection arguments based on the remote's configuration, including authentication type,
 // authentication interactors, cookie jar, OIDC tokens, TLS certificates, and client key.
 // The function returns the connection arguments or an error if any configuration is missing or encounters a problem.
-func (c *Config) getConnectionArgs(name string) (*lxd.ConnectionArgs, error) {
+func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	remote := c.Remotes[name]
-	args := lxd.ConnectionArgs{
+	args := incus.ConnectionArgs{
 		UserAgent: c.UserAgent,
 		AuthType:  remote.AuthType,
 	}

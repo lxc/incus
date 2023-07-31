@@ -515,7 +515,7 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
-		err = notifier(func(client lxd.InstanceServer) error {
+		err = notifier(func(client incus.InstanceServer) error {
 			return client.UseProject(p.Name).UpdateProfile(name, profile.ProfilePut, "")
 		})
 		if err != nil {

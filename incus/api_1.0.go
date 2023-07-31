@@ -684,7 +684,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		return response.SmartError(err)
 	}
 
-	err = notifier(func(client lxd.InstanceServer) error {
+	err = notifier(func(client incus.InstanceServer) error {
 		server, etag, err := client.GetServer()
 		if err != nil {
 			return err

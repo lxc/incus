@@ -65,7 +65,7 @@ func (c *cmdMigrate) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 	// Connect to LXD
-	d, err := lxd.ConnectLXDUnix("", nil)
+	d, err := incus.ConnectLXDUnix("", nil)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func validateConfig(conf []string, container *liblxc.Container) error {
 	return nil
 }
 
-func convertContainer(d lxd.ContainerServer, container *liblxc.Container, storage string,
+func convertContainer(d incus.ContainerServer, container *liblxc.Container, storage string,
 	dryRun bool, rsyncArgs string, debug bool) error {
 	// Don't migrate running containers
 	if container.Running() {

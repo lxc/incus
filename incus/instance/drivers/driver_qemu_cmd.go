@@ -14,7 +14,7 @@ import (
 // Cmd represents a running command for an Qemu VM.
 type qemuCmd struct {
 	attachedChildPid int
-	cmd              lxd.Operation
+	cmd              incus.Operation
 	dataDone         chan bool
 	controlSendCh    chan api.InstanceExecControl
 	controlResCh     chan error

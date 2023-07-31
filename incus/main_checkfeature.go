@@ -23,9 +23,9 @@ package main
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
-#include "lxd.h"
+#include "incus.h"
 #include "compiler.h"
-#include "lxd_seccomp.h"
+#include "incus_seccomp.h"
 #include "memory_utils.h"
 #include "mount_utils.h"
 #include "process_utils.h"

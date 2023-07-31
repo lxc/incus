@@ -35,7 +35,7 @@ package main
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "include/lxd.h"
+#include "include/incus.h"
 #include "include/file_utils.h"
 #include "include/memory_utils.h"
 #include "include/mount_utils.h"

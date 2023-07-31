@@ -86,7 +86,7 @@ func (c *cmdActivateifneeded) Run(cmd *cobra.Command, args []string) error {
 	// Look for network socket
 	if localHTTPAddress != "" {
 		logger.Debugf("Daemon has core.https_address set, activating...")
-		_, err := lxd.ConnectLXDUnix("", nil)
+		_, err := incus.ConnectLXDUnix("", nil)
 		return err
 	}
 
@@ -123,13 +123,13 @@ func (c *cmdActivateifneeded) Run(cmd *cobra.Command, args []string) error {
 	for _, inst := range instances {
 		if instanceShouldAutoStart(inst) {
 			logger.Debugf("Daemon has auto-started instances, activating...")
-			_, err := lxd.ConnectLXDUnix("", nil)
+			_, err := incus.ConnectLXDUnix("", nil)
 			return err
 		}
 
 		if inst.IsRunning() {
 			logger.Debugf("Daemon has running instances, activating...")
-			_, err := lxd.ConnectLXDUnix("", nil)
+			_, err := incus.ConnectLXDUnix("", nil)
 			return err
 		}
 
@@ -137,7 +137,7 @@ func (c *cmdActivateifneeded) Run(cmd *cobra.Command, args []string) error {
 		config := inst.ExpandedConfig()
 		if config["snapshots.schedule"] != "" {
 			logger.Debugf("Daemon has scheduled instance snapshots, activating...")
-			_, err := lxd.ConnectLXDUnix("", nil)
+			_, err := incus.ConnectLXDUnix("", nil)
 			return err
 		}
 	}
@@ -159,7 +159,7 @@ func (c *cmdActivateifneeded) Run(cmd *cobra.Command, args []string) error {
 	for _, vol := range volumes {
 		if vol.Config["snapshots.schedule"] != "" {
 			logger.Debugf("Daemon has scheduled volume snapshots, activating...")
-			_, err := lxd.ConnectLXDUnix("", nil)
+			_, err := incus.ConnectLXDUnix("", nil)
 			return err
 		}
 	}

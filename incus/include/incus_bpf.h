@@ -9,7 +9,7 @@
 #define __LINUX_BPF_H__
 
 #include <linux/types.h>
-#include "lxd_bpf_common.h"
+#include "incus_bpf_common.h"
 
 /* Extended instruction set based on top of classic BPF */
 

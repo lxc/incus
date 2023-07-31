@@ -12,7 +12,7 @@ import (
 	"github.com/cyphar/incus/shared/api"
 )
 
-func (c *cmdInit) RunPreseed(cmd *cobra.Command, args []string, d lxd.InstanceServer) (*api.InitPreseed, error) {
+func (c *cmdInit) RunPreseed(cmd *cobra.Command, args []string, d incus.InstanceServer) (*api.InitPreseed, error) {
 	// Read the YAML
 	bytes, err := io.ReadAll(os.Stdin)
 	if err != nil {

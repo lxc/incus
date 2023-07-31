@@ -41,14 +41,14 @@ type devLxdHandler struct {
 	f func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse
 }
 
-func getVsockClient(d *Daemon) (lxd.InstanceServer, error) {
+func getVsockClient(d *Daemon) (incus.InstanceServer, error) {
 	// Try connecting to LXD server.
 	client, err := getClient(d.serverCID, int(d.serverPort), d.serverCertificate)
 	if err != nil {
 		return nil, err
 	}
 
-	server, err := lxd.ConnectLXDHTTP(nil, client)
+	server, err := incus.ConnectLXDHTTP(nil, client)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ var devlxdConfigKeyGet = devLxdHandler{"/1.0/config/{key}", func(d *Daemon, w ht
 }}
 
 var devlxdMetadataGet = devLxdHandler{"/1.0/meta-data", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
-	var client lxd.InstanceServer
+	var client incus.InstanceServer
 	var err error
 
 	for i := 0; i < 10; i++ {

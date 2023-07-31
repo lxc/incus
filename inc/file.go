@@ -42,7 +42,7 @@ type cmdFile struct {
 	flagRecursive bool
 }
 
-func fileGetWrapper(server lxd.InstanceServer, inst string, path string) (buf io.ReadCloser, resp *lxd.InstanceFileResponse, err error) {
+func fileGetWrapper(server incus.InstanceServer, inst string, path string) (buf io.ReadCloser, resp *incus.InstanceFileResponse, err error) {
 	// Signal handling
 	chSignal := make(chan os.Signal, 1)
 	signal.Notify(chSignal, os.Interrupt)
@@ -635,7 +635,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		// Transfer the files
-		args := lxd.InstanceFileArgs{
+		args := incus.InstanceFileArgs{
 			UID:  -1,
 			GID:  -1,
 			Mode: -1,
@@ -708,7 +708,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *cmdFile) recursivePullFile(d lxd.InstanceServer, inst string, p string, targetDir string) error {
+func (c *cmdFile) recursivePullFile(d incus.InstanceServer, inst string, p string, targetDir string) error {
 	buf, resp, err := d.GetInstanceFile(inst, p)
 	if err != nil {
 		return err
@@ -791,7 +791,7 @@ func (c *cmdFile) recursivePullFile(d lxd.InstanceServer, inst string, p string,
 	return nil
 }
 
-func (c *cmdFile) recursivePushFile(d lxd.InstanceServer, inst string, source string, target string) error {
+func (c *cmdFile) recursivePushFile(d incus.InstanceServer, inst string, source string, target string) error {
 	source = filepath.Clean(source)
 	sourceDir, _ := filepath.Split(source)
 	sourceLen := len(sourceDir)
@@ -809,7 +809,7 @@ func (c *cmdFile) recursivePushFile(d lxd.InstanceServer, inst string, source st
 		// Prepare for file transfer
 		targetPath := path.Join(target, filepath.ToSlash(p[sourceLen:]))
 		mode, uid, gid := shared.GetOwnerMode(fInfo)
-		args := lxd.InstanceFileArgs{
+		args := incus.InstanceFileArgs{
 			UID:  int64(uid),
 			GID:  int64(gid),
 			Mode: int(mode.Perm()),
@@ -893,7 +893,7 @@ func (c *cmdFile) recursivePushFile(d lxd.InstanceServer, inst string, source st
 	return filepath.Walk(source, sendFile)
 }
 
-func (c *cmdFile) recursiveMkdir(d lxd.InstanceServer, inst string, p string, mode *os.FileMode, uid int64, gid int64) error {
+func (c *cmdFile) recursiveMkdir(d incus.InstanceServer, inst string, p string, mode *os.FileMode, uid int64, gid int64) error {
 	/* special case, every instance has a /, we don't need to do anything */
 	if p == "/" {
 		return nil
@@ -933,7 +933,7 @@ func (c *cmdFile) recursiveMkdir(d lxd.InstanceServer, inst string, p string, mo
 			modeArg = int(mode.Perm())
 		}
 
-		args := lxd.InstanceFileArgs{
+		args := incus.InstanceFileArgs{
 			UID:  uid,
 			GID:  gid,
 			Mode: modeArg,

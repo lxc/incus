@@ -480,7 +480,7 @@ func storagePoolsPostCluster(s *state.State, pool *api.StoragePool, req api.Stor
 	}
 
 	// Notify all other nodes to create the pool.
-	err = notifier(func(client lxd.InstanceServer) error {
+	err = notifier(func(client incus.InstanceServer) error {
 		server, _, err := client.GetServer()
 		if err != nil {
 			return err
@@ -860,7 +860,7 @@ func doStoragePoolUpdate(s *state.State, pool storagePools.Pool, req api.Storage
 			sendPool.Config[k] = v
 		}
 
-		err = notifier(func(client lxd.InstanceServer) error {
+		err = notifier(func(client incus.InstanceServer) error {
 			return client.UpdateStoragePool(pool.Name(), sendPool, "")
 		})
 		if err != nil {
@@ -983,7 +983,7 @@ func storagePoolDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// If we are clustered, also notify all other nodes.
-	err = notifier(func(client lxd.InstanceServer) error {
+	err = notifier(func(client incus.InstanceServer) error {
 		_, _, err := client.GetServer()
 		if err != nil {
 			return err

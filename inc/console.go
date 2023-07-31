@@ -125,7 +125,7 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf(i18n.G("The --show-log flag is only supported for by 'console' output type"))
 		}
 
-		console := &lxd.InstanceConsoleLogArgs{}
+		console := &incus.InstanceConsoleLogArgs{}
 		log, err := d.GetInstanceConsoleLog(name, console)
 		if err != nil {
 			return err
@@ -143,7 +143,7 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 	return c.Console(d, name)
 }
 
-func (c *cmdConsole) Console(d lxd.InstanceServer, name string) error {
+func (c *cmdConsole) Console(d incus.InstanceServer, name string) error {
 	if c.flagType == "" {
 		c.flagType = "console"
 	}
@@ -158,7 +158,7 @@ func (c *cmdConsole) Console(d lxd.InstanceServer, name string) error {
 	return fmt.Errorf(i18n.G("Unknown console type %q"), c.flagType)
 }
 
-func (c *cmdConsole) console(d lxd.InstanceServer, name string) error {
+func (c *cmdConsole) console(d incus.InstanceServer, name string) error {
 	// Configure the terminal
 	cfd := int(os.Stdin.Fd())
 
@@ -190,7 +190,7 @@ func (c *cmdConsole) console(d lxd.InstanceServer, name string) error {
 	sendDisconnect := make(chan struct{})
 	defer close(sendDisconnect)
 
-	consoleArgs := lxd.InstanceConsoleArgs{
+	consoleArgs := incus.InstanceConsoleArgs{
 		Terminal: &readWriteCloser{stdinMirror{os.Stdin,
 			manualDisconnect, new(bool)}, os.Stdout},
 		Control:           handler,
@@ -223,7 +223,7 @@ func (c *cmdConsole) console(d lxd.InstanceServer, name string) error {
 	return nil
 }
 
-func (c *cmdConsole) vga(d lxd.InstanceServer, name string) error {
+func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 	var err error
 	conf := c.global.conf
 
@@ -243,7 +243,7 @@ func (c *cmdConsole) vga(d lxd.InstanceServer, name string) error {
 	chDisconnect := make(chan bool)
 	chViewer := make(chan struct{})
 
-	consoleArgs := lxd.InstanceConsoleArgs{
+	consoleArgs := incus.InstanceConsoleArgs{
 		Control:           handler,
 		ConsoleDisconnect: chDisconnect,
 	}

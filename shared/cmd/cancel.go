@@ -12,14 +12,14 @@ import (
 
 // CancelableWait waits for an operation and cancel it on SIGINT/SIGTERM.
 func CancelableWait(rawOp any, progress *ProgressRenderer) error {
-	var op lxd.Operation
-	var rop lxd.RemoteOperation
+	var op incus.Operation
+	var rop incus.RemoteOperation
 
 	// Check what type of operation we're dealing with
 	switch v := rawOp.(type) {
-	case lxd.Operation:
+	case incus.Operation:
 		op = v
-	case lxd.RemoteOperation:
+	case incus.RemoteOperation:
 		rop = v
 	default:
 		return fmt.Errorf("Invalid operation type for CancelableWait")

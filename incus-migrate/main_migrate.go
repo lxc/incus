@@ -110,7 +110,7 @@ func (c *cmdMigrateData) Render() string {
 	return string(out)
 }
 
-func (c *cmdMigrate) askServer() (lxd.InstanceServer, string, error) {
+func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 	// Server address
 	serverURL, err := cli.AskString("Please provide LXD server URL: ", "", nil)
 	if err != nil {
@@ -122,7 +122,7 @@ func (c *cmdMigrate) askServer() (lxd.InstanceServer, string, error) {
 		return nil, "", err
 	}
 
-	args := lxd.ConnectionArgs{
+	args := incus.ConnectionArgs{
 		UserAgent:          fmt.Sprintf("LXC-MIGRATE %s", version.Version),
 		InsecureSkipVerify: true,
 	}
@@ -145,7 +145,7 @@ func (c *cmdMigrate) askServer() (lxd.InstanceServer, string, error) {
 		return nil, "", fmt.Errorf("Server certificate rejected by user")
 	}
 
-	server, err := lxd.ConnectLXD(serverURL, &args)
+	server, err := incus.ConnectLXD(serverURL, &args)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed to connect to server: %w", err)
 	}
@@ -250,7 +250,7 @@ func (c *cmdMigrate) askServer() (lxd.InstanceServer, string, error) {
 	return connectTarget(serverURL, certPath, keyPath, authType, token)
 }
 
-func (c *cmdMigrate) RunInteractive(server lxd.InstanceServer) (cmdMigrateData, error) {
+func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData, error) {
 	var err error
 
 	config := cmdMigrateData{}
@@ -589,7 +589,7 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *cmdMigrate) askProfiles(server lxd.InstanceServer, config *cmdMigrateData) error {
+func (c *cmdMigrate) askProfiles(server incus.InstanceServer, config *cmdMigrateData) error {
 	profileNames, err := server.GetProfileNames()
 	if err != nil {
 		return err
@@ -648,7 +648,7 @@ func (c *cmdMigrate) askConfig(config *cmdMigrateData) error {
 	return nil
 }
 
-func (c *cmdMigrate) askStorage(server lxd.InstanceServer, config *cmdMigrateData) error {
+func (c *cmdMigrate) askStorage(server incus.InstanceServer, config *cmdMigrateData) error {
 	storagePools, err := server.GetStoragePoolNames()
 	if err != nil {
 		return err
@@ -689,7 +689,7 @@ func (c *cmdMigrate) askStorage(server lxd.InstanceServer, config *cmdMigrateDat
 	return nil
 }
 
-func (c *cmdMigrate) askNetwork(server lxd.InstanceServer, config *cmdMigrateData) error {
+func (c *cmdMigrate) askNetwork(server incus.InstanceServer, config *cmdMigrateData) error {
 	networks, err := server.GetNetworkNames()
 	if err != nil {
 		return err

@@ -40,7 +40,7 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Invalid arguments")
 	}
 
-	d, err := lxd.ConnectLXDUnix("", nil)
+	d, err := incus.ConnectLXDUnix("", nil)
 	if err != nil {
 		return err
 	}

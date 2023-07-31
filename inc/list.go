@@ -254,7 +254,7 @@ func (c *cmdList) evaluateShorthandFilter(key string, value string, inst *api.In
 	return false
 }
 
-func (c *cmdList) listInstances(conf *config.Config, d lxd.InstanceServer, instances []api.Instance, filters []string, columns []column) error {
+func (c *cmdList) listInstances(conf *config.Config, d incus.InstanceServer, instances []api.Instance, filters []string, columns []column) error {
 	threads := 10
 	if len(instances) < threads {
 		threads = len(instances)

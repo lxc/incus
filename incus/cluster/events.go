@@ -36,9 +36,9 @@ const EventModeHubClient EventMode = "hub-client"
 
 // eventListenerClient stores both the event listener and its associated client.
 type eventListenerClient struct {
-	*lxd.EventListener
+	*incus.EventListener
 
-	client        lxd.InstanceServer
+	client        incus.InstanceServer
 	hubPushCancel context.CancelFunc
 }
 

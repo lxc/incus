@@ -363,7 +363,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 
 		// Attempt to connect to the local server
 		runInit := true
-		d, err := lxd.ConnectLXDUnix("", nil)
+		d, err := incus.ConnectLXDUnix("", nil)
 		if err == nil {
 			// Check if server is initialized.
 			info, _, err := d.GetServer()
@@ -430,12 +430,12 @@ func (c *cmdGlobal) PostRun(cmd *cobra.Command, args []string) error {
 
 type remoteResource struct {
 	remote string
-	server lxd.InstanceServer
+	server incus.InstanceServer
 	name   string
 }
 
 func (c *cmdGlobal) ParseServers(remotes ...string) ([]remoteResource, error) {
-	servers := map[string]lxd.InstanceServer{}
+	servers := map[string]incus.InstanceServer{}
 	resources := []remoteResource{}
 
 	for _, remote := range remotes {

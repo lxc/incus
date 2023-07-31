@@ -164,7 +164,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			var op lxd.Operation
+			var op incus.Operation
 
 			if isSnapshot {
 				newdata := api.InstanceSnapshotPut{}
@@ -244,7 +244,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 				newdata := api.InstanceSnapshotPut{}
 				err = yaml.Unmarshal(content, &newdata)
 				if err == nil {
-					var op lxd.Operation
+					var op incus.Operation
 					op, err = resource.server.UpdateInstanceSnapshot(fields[0], fields[1],
 						newdata, etag)
 					if err == nil {
@@ -255,7 +255,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 				newdata := api.InstancePut{}
 				err = yaml.Unmarshal(content, &newdata)
 				if err == nil {
-					var op lxd.Operation
+					var op incus.Operation
 					op, err = resource.server.UpdateInstance(resource.name, newdata, etag)
 					if err == nil {
 						err = op.Wait()

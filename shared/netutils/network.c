@@ -20,8 +20,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "../../lxd/include/compiler.h"
-#include "../../lxd/include/macro.h"
+#include "../../incus/include/compiler.h"
+#include "../../incus/include/macro.h"
 
 #ifndef NETNS_RTA
 #define NETNS_RTA(r) \

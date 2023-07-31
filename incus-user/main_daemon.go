@@ -39,7 +39,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 
 	// Connect to LXD.
 	log.Debug("Connecting to LXD")
-	client, err := lxd.ConnectLXDUnix("", nil)
+	client, err := incus.ConnectLXDUnix("", nil)
 	if err != nil {
 		return fmt.Errorf("Unable to connect to LXD: %w", err)
 	}

@@ -284,7 +284,7 @@ func (c *cmdPublish) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		// Image copy arguments
-		args := lxd.ImageCopyArgs{
+		args := incus.ImageCopyArgs{
 			Public: c.flagMakePublic,
 		}
 

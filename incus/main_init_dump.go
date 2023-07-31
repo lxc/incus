@@ -10,7 +10,7 @@ import (
 	"github.com/cyphar/incus/shared/api"
 )
 
-func (c *cmdInit) RunDump(d lxd.InstanceServer) error {
+func (c *cmdInit) RunDump(d incus.InstanceServer) error {
 	currentServer, _, err := d.GetServer()
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve current server configuration: %w", err)

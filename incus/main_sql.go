@@ -87,11 +87,11 @@ func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Connect to LXD
-	lxdArgs := lxd.ConnectionArgs{
+	lxdArgs := incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
 
-	d, err := lxd.ConnectLXDUnix("", &lxdArgs)
+	d, err := incus.ConnectLXDUnix("", &lxdArgs)
 	if err != nil {
 		return err
 	}

@@ -40,7 +40,7 @@ func runBatch(names []string, action func(name string) error) []batchResult {
 }
 
 // Add a device to an instance.
-func instanceDeviceAdd(client lxd.InstanceServer, name string, devName string, dev map[string]string) error {
+func instanceDeviceAdd(client incus.InstanceServer, name string, devName string, dev map[string]string) error {
 	// Get the instance entry
 	inst, etag, err := client.GetInstance(name)
 	if err != nil {
@@ -64,7 +64,7 @@ func instanceDeviceAdd(client lxd.InstanceServer, name string, devName string, d
 }
 
 // Add a device to a profile.
-func profileDeviceAdd(client lxd.InstanceServer, name string, devName string, dev map[string]string) error {
+func profileDeviceAdd(client incus.InstanceServer, name string, devName string, dev map[string]string) error {
 	// Get the profile entry
 	profile, profileEtag, err := client.GetProfile(name)
 	if err != nil {
@@ -128,7 +128,7 @@ func IsAliasesSubset(a1 []api.ImageAlias, a2 []api.ImageAlias) bool {
 }
 
 // GetCommonAliases returns the common aliases between a list of aliases and all the existing ones.
-func GetCommonAliases(client lxd.InstanceServer, aliases ...api.ImageAlias) ([]api.ImageAliasesEntry, error) {
+func GetCommonAliases(client incus.InstanceServer, aliases ...api.ImageAlias) ([]api.ImageAliasesEntry, error) {
 	if len(aliases) == 0 {
 		return nil, nil
 	}
@@ -150,7 +150,7 @@ func GetCommonAliases(client lxd.InstanceServer, aliases ...api.ImageAlias) ([]a
 }
 
 // Create the specified image aliases, updating those that already exist.
-func ensureImageAliases(client lxd.InstanceServer, aliases []api.ImageAlias, fingerprint string) error {
+func ensureImageAliases(client incus.InstanceServer, aliases []api.ImageAlias, fingerprint string) error {
 	if len(aliases) == 0 {
 		return nil
 	}
@@ -318,7 +318,7 @@ func getServerSupportedFilters(filters []string, i interface{}) ([]string, []str
 }
 
 // guessImage checks that the image name (provided by the user) is correct given an instance remote and image remote.
-func guessImage(conf *config.Config, d lxd.InstanceServer, instRemote string, imgRemote string, imageRef string) (string, string) {
+func guessImage(conf *config.Config, d incus.InstanceServer, instRemote string, imgRemote string, imageRef string) (string, string) {
 	if instRemote != imgRemote {
 		return imgRemote, imageRef
 	}
@@ -350,8 +350,8 @@ func guessImage(conf *config.Config, d lxd.InstanceServer, instRemote string, im
 
 // getImgInfo returns an image server and image info for the given image name (given by a user)
 // an image remote and an instance remote.
-func getImgInfo(d lxd.InstanceServer, conf *config.Config, imgRemote string, instRemote string, imageRef string, source *api.InstanceSource) (lxd.ImageServer, *api.Image, error) {
-	var imgRemoteServer lxd.ImageServer
+func getImgInfo(d incus.InstanceServer, conf *config.Config, imgRemote string, instRemote string, imageRef string, source *api.InstanceSource) (incus.ImageServer, *api.Image, error) {
+	var imgRemoteServer incus.ImageServer
 	var imgInfo *api.Image
 	var err error
 

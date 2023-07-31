@@ -15,7 +15,7 @@ package main
 #include <unistd.h>
 #include <limits.h>
 
-#include "lxd.h"
+#include "incus.h"
 #include "file_utils.h"
 #include "macro.h"
 #include "memory_utils.h"

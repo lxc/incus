@@ -533,7 +533,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 	// Client parameters to connect to the target cluster node.
 	serverCert := s.ServerCert()
-	args := &lxd.ConnectionArgs{
+	args := &incus.ConnectionArgs{
 		TLSClientCert: string(serverCert.PublicKey()),
 		TLSClientKey:  string(serverCert.PrivateKey()),
 		TLSServerCert: string(req.ClusterCertificate),
@@ -561,7 +561,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		}
 
 		// Connect to the target cluster node.
-		client, err := lxd.ConnectLXD(fmt.Sprintf("https://%s", req.ClusterAddress), args)
+		client, err := incus.ConnectLXD(fmt.Sprintf("https://%s", req.ClusterAddress), args)
 		if err != nil {
 			return err
 		}
@@ -569,7 +569,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		// As ServerAddress field is required to be set it means that we're using the new join API
 		// introduced with the 'clustering_join' extension.
 		// Connect to ourselves to initialize storage pools and networks using the API.
-		localClient, err := lxd.ConnectLXDUnix(d.UnixSocket(), &lxd.ConnectionArgs{UserAgent: clusterRequest.UserAgentJoiner})
+		localClient, err := incus.ConnectLXDUnix(d.UnixSocket(), &incus.ConnectionArgs{UserAgent: clusterRequest.UserAgentJoiner})
 		if err != nil {
 			return fmt.Errorf("Failed to connect to local LXD: %w", err)
 		}
@@ -912,7 +912,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 // clusterInitMember initialises storage pools and networks on this member. We pass two LXD client instances, one
 // connected to ourselves (the joining member) and one connected to the target cluster member to join.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-func clusterInitMember(d lxd.InstanceServer, client lxd.InstanceServer, memberConfig []api.ClusterMemberConfigKey) (revert.Hook, error) {
+func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memberConfig []api.ClusterMemberConfigKey) (revert.Hook, error) {
 	data := api.InitLocalPreseed{}
 
 	// Fetch all pools currently defined in the cluster.
@@ -1041,7 +1041,7 @@ func clusterInitMember(d lxd.InstanceServer, client lxd.InstanceServer, memberCo
 // Perform a request to the /internal/cluster/accept endpoint to check if a new
 // node can be accepted into the cluster and obtain joining information such as
 // the cluster private certificate.
-func clusterAcceptMember(client lxd.InstanceServer, name string, address string, schema int, apiExt int, pools []api.StoragePool, networks []api.InitNetworksProjectPost) (*internalClusterPostAcceptResponse, error) {
+func clusterAcceptMember(client incus.InstanceServer, name string, address string, schema int, apiExt int, pools []api.StoragePool, networks []api.InitNetworksProjectPost) (*internalClusterPostAcceptResponse, error) {
 	architecture, err := osarch.ArchitectureGetLocalID()
 	if err != nil {
 		return nil, err
@@ -2252,7 +2252,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 			return err
 		}
 
-		var client lxd.InstanceServer
+		var client incus.InstanceServer
 
 		for i := range members {
 			member := members[i]
@@ -3375,7 +3375,7 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 			_ = evacuateClusterSetState(s, originName, db.ClusterMemberStateEvacuated)
 		})
 
-		var source lxd.InstanceServer
+		var source incus.InstanceServer
 		var sourceNode db.NodeInfo
 
 		metadata := make(map[string]any)

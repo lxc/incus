@@ -13,7 +13,7 @@ import (
 	"github.com/cyphar/incus/shared/api"
 )
 
-func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d lxd.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
+func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Quick checks.
 	if c.flagStorageBackend != "" && !shared.StringInSlice(c.flagStorageBackend, storageDrivers.AllDriverNames()) {
 		return nil, fmt.Errorf("The requested backend '%s' isn't supported by lxd init", c.flagStorageBackend)

@@ -5,7 +5,7 @@ import (
 	"github.com/cyphar/incus/shared/api"
 )
 
-func createContainer(c lxd.ContainerServer, fingerprint string, name string, privileged bool) error {
+func createContainer(c incus.ContainerServer, fingerprint string, name string, privileged bool) error {
 	config := map[string]string{}
 	if privileged {
 		config["security.privileged"] = "true"
@@ -31,7 +31,7 @@ func createContainer(c lxd.ContainerServer, fingerprint string, name string, pri
 	return op.Wait()
 }
 
-func startContainer(c lxd.ContainerServer, name string) error {
+func startContainer(c incus.ContainerServer, name string) error {
 	op, err := c.UpdateContainerState(
 		name, api.ContainerStatePut{Action: "start", Timeout: -1}, "")
 	if err != nil {
@@ -41,7 +41,7 @@ func startContainer(c lxd.ContainerServer, name string) error {
 	return op.Wait()
 }
 
-func stopContainer(c lxd.ContainerServer, name string) error {
+func stopContainer(c incus.ContainerServer, name string) error {
 	op, err := c.UpdateContainerState(
 		name, api.ContainerStatePut{Action: "stop", Timeout: -1, Force: true}, "")
 	if err != nil {
@@ -51,7 +51,7 @@ func stopContainer(c lxd.ContainerServer, name string) error {
 	return op.Wait()
 }
 
-func freezeContainer(c lxd.ContainerServer, name string) error {
+func freezeContainer(c incus.ContainerServer, name string) error {
 	op, err := c.UpdateContainerState(
 		name, api.ContainerStatePut{Action: "freeze", Timeout: -1}, "")
 	if err != nil {
@@ -61,7 +61,7 @@ func freezeContainer(c lxd.ContainerServer, name string) error {
 	return op.Wait()
 }
 
-func deleteContainer(c lxd.ContainerServer, name string) error {
+func deleteContainer(c incus.ContainerServer, name string) error {
 	op, err := c.DeleteContainer(name)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func deleteContainer(c lxd.ContainerServer, name string) error {
 	return op.Wait()
 }
 
-func copyImage(c lxd.ContainerServer, s lxd.ImageServer, image api.Image) error {
+func copyImage(c incus.ContainerServer, s incus.ImageServer, image api.Image) error {
 	op, err := c.CopyImage(s, image, nil)
 	if err != nil {
 		return err

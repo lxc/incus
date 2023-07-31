@@ -20,7 +20,7 @@ package main
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "lxd.h"
+#include "incus.h"
 #include "memory_utils.h"
 #include "mount_utils.h"
 #include "syscall_numbers.h"

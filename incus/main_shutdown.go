@@ -40,11 +40,11 @@ func (c *cmdShutdown) Command() *cobra.Command {
 }
 
 func (c *cmdShutdown) Run(cmd *cobra.Command, args []string) error {
-	connArgs := &lxd.ConnectionArgs{
+	connArgs := &incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
 
-	d, err := lxd.ConnectLXDUnix("", connArgs)
+	d, err := incus.ConnectLXDUnix("", connArgs)
 	if err != nil {
 		return err
 	}

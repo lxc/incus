@@ -187,7 +187,7 @@ func (c *cmdExec) Run(cmd *cobra.Command, args []string) error {
 		Cwd:         c.flagCwd,
 	}
 
-	execArgs := lxd.InstanceExecArgs{
+	execArgs := incus.InstanceExecArgs{
 		Stdin:    stdin,
 		Stdout:   stdout,
 		Stderr:   os.Stderr,

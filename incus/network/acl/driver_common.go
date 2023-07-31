@@ -671,7 +671,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 			return err
 		}
 
-		err = notifier(func(client lxd.InstanceServer) error {
+		err = notifier(func(client incus.InstanceServer) error {
 			return client.UseProject(d.projectName).UpdateNetworkACL(d.info.Name, d.info.NetworkACLPut, "")
 		})
 		if err != nil {
@@ -770,7 +770,7 @@ func (d *common) GetLog(clientType request.ClientType) (string, error) {
 		}
 
 		mu := sync.Mutex{}
-		err = notifier(func(client lxd.InstanceServer) error {
+		err = notifier(func(client incus.InstanceServer) error {
 			// Get the entries.
 			entries, err := client.UseProject(d.projectName).GetNetworkACLLogfile(d.info.Name)
 			if err != nil {

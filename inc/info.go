@@ -329,7 +329,7 @@ func (c *cmdInfo) renderCPU(cpu api.ResourcesCPUSocket, prefix string) {
 	}
 }
 
-func (c *cmdInfo) remoteInfo(d lxd.InstanceServer) error {
+func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 	// Targeting
 	if c.flagTarget != "" {
 		if !d.IsClustered() {
@@ -445,7 +445,7 @@ func (c *cmdInfo) remoteInfo(d lxd.InstanceServer) error {
 	return nil
 }
 
-func (c *cmdInfo) instanceInfo(d lxd.InstanceServer, remote config.Remote, name string, showLog bool) error {
+func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, name string, showLog bool) error {
 	// Quick checks.
 	if c.flagTarget != "" {
 		return fmt.Errorf(i18n.G("--target cannot be used with instances"))

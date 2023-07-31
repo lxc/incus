@@ -27,7 +27,7 @@ func NotifyUpgradeCompleted(state *state.State, networkCert *shared.CertInfo, se
 		return err
 	}
 
-	return notifier(func(client lxd.InstanceServer) error {
+	return notifier(func(client incus.InstanceServer) error {
 		info, err := client.GetConnectionInfo()
 		if err != nil {
 			return fmt.Errorf("failed to get connection info: %w", err)

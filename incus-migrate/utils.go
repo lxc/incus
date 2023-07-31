@@ -29,7 +29,7 @@ import (
 	"github.com/cyphar/incus/shared/ws"
 )
 
-func transferRootfs(ctx context.Context, dst lxd.InstanceServer, op lxd.Operation, rootfs string, rsyncArgs string, instanceType api.InstanceType) error {
+func transferRootfs(ctx context.Context, dst incus.InstanceServer, op incus.Operation, rootfs string, rsyncArgs string, instanceType api.InstanceType) error {
 	opAPI := op.Get()
 
 	// Connect to the websockets
@@ -147,8 +147,8 @@ func transferRootfs(ctx context.Context, dst lxd.InstanceServer, op lxd.Operatio
 	return nil
 }
 
-func connectTarget(url string, certPath string, keyPath string, authType string, token string) (lxd.InstanceServer, string, error) {
-	args := lxd.ConnectionArgs{
+func connectTarget(url string, certPath string, keyPath string, authType string, token string) (incus.InstanceServer, string, error) {
+	args := incus.ConnectionArgs{
 		AuthType: authType,
 	}
 
@@ -220,7 +220,7 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 
 	// Attempt to connect using the system CA
 	args.UserAgent = fmt.Sprintf("LXC-MIGRATE %s", version.Version)
-	c, err := lxd.ConnectLXD(url, &args)
+	c, err := incus.ConnectLXD(url, &args)
 
 	var certificate *x509.Certificate
 	if err != nil {
@@ -237,7 +237,7 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 		args.TLSServerCert = string(serverCrt)
 
 		// Setup a new connection, this time with the remote certificate
-		c, err = lxd.ConnectLXD(url, &args)
+		c, err = incus.ConnectLXD(url, &args)
 		if err != nil {
 			return nil, "", err
 		}

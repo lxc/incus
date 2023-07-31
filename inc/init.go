@@ -76,7 +76,7 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func (c *cmdInit) create(conf *config.Config, args []string) (lxd.InstanceServer, string, error) {
+func (c *cmdInit) create(conf *config.Config, args []string) (incus.InstanceServer, string, error) {
 	var name string
 	var image string
 	var remote string
@@ -418,7 +418,7 @@ func (c *cmdInit) create(conf *config.Config, args []string) (lxd.InstanceServer
 	return d, name, nil
 }
 
-func (c *cmdInit) checkNetwork(d lxd.InstanceServer, name string) {
+func (c *cmdInit) checkNetwork(d incus.InstanceServer, name string) {
 	ct, _, err := d.GetInstance(name)
 	if err != nil {
 		return
