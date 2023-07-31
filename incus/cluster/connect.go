@@ -9,16 +9,16 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/canonical/lxd/client"
-	clusterRequest "github.com/canonical/lxd/lxd/cluster/request"
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/lxd/request"
-	"github.com/canonical/lxd/lxd/state"
-	storagePools "github.com/canonical/lxd/lxd/storage"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/client"
+	clusterRequest "github.com/cyphar/incus/lxd/cluster/request"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/lxd/request"
+	"github.com/cyphar/incus/lxd/state"
+	storagePools "github.com/cyphar/incus/lxd/storage"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // Connect is a convenience around lxd.ConnectLXD that configures the client

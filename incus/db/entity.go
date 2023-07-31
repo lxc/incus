@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/db/cluster"
 )
 
 // ErrUnknownEntityID describes the unknown entity ID error.

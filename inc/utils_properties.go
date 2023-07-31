@@ -9,7 +9,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/canonical/lxd/shared/i18n"
+	"github.com/cyphar/incus/shared/i18n"
 )
 
 // stringToTimeHookFunc is a custom decoding hook that converts string values to time.Time using the given layout.

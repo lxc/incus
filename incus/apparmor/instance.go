@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/cgroup"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/sys"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/cgroup"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // Internal copy of the instance interface.

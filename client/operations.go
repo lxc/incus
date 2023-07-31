@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // The Operation type represents an ongoing LXD operation (asynchronous processing).

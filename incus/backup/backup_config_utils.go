@@ -8,15 +8,15 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/canonical/lxd/lxd/backup/config"
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/db/cluster"
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/osarch"
+	"github.com/cyphar/incus/lxd/backup/config"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/db/cluster"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/osarch"
 )
 
 // ConfigToInstanceDBArgs converts the instance config in the backup config to DB InstanceArgs.

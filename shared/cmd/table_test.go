@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/shared/api"
 )
 
 type tableSuite struct {

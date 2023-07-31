@@ -13,14 +13,14 @@ import (
 	"github.com/canonical/go-dqlite/app"
 	"github.com/canonical/go-dqlite/client"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/node"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/node"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // Bootstrap turns a non-clustered LXD instance into the first (and leader)

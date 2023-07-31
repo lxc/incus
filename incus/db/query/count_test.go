@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/canonical/lxd/lxd/db/query"
+	"github.com/cyphar/incus/lxd/db/query"
 )
 
 // Count returns the current number of rows.

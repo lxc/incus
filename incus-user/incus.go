@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
 )
 
 func lxdIsConfigured(client lxd.InstanceServer) (bool, error) {

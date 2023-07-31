@@ -3,10 +3,10 @@ package main
 import (
 	"net/http"
 
-	"github.com/canonical/lxd/lxd/cluster"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/lxd/state"
+	"github.com/cyphar/incus/lxd/cluster"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/lxd/state"
 )
 
 func forwardedResponseToNode(s *state.State, r *http.Request, memberName string) response.Response {

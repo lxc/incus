@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 // Action represents an action in filter.

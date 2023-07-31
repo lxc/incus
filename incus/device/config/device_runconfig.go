@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/canonical/lxd/lxd/revert"
+	"github.com/cyphar/incus/lxd/revert"
 )
 
 // MountOwnerShiftNone do not use owner shifting.

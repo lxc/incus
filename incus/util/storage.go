@@ -1,9 +1,9 @@
 package util
 
 import (
-	"github.com/canonical/lxd/lxd/storage/filesystem"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // PoolType represents a type of storage pool (local, remote or any).

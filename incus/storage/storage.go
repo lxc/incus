@@ -6,14 +6,14 @@ import (
 	"os"
 	"sort"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // InstancePath returns the directory of an instance or snapshot.

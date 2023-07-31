@@ -10,7 +10,7 @@ import (
 	"github.com/jaypipes/pcidb"
 	"golang.org/x/sys/unix"
 
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // GetPCI returns a filled api.ResourcesPCI struct ready for use by LXD.

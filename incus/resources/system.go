@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/shared/api"
 )
 
 var sysClassDMIID = "/sys/class/dmi/id"

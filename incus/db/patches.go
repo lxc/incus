@@ -6,7 +6,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/canonical/lxd/lxd/db/query"
+	"github.com/cyphar/incus/lxd/db/query"
 )
 
 // GetAppliedPatches returns the names of all patches currently applied on this node.

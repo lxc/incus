@@ -5,7 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // LoggingServer controls what server to use for messages coming from the logger.

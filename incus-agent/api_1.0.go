@@ -10,14 +10,14 @@ import (
 
 	"github.com/mdlayher/vsock"
 
-	"github.com/canonical/lxd/client"
-	agentAPI "github.com/canonical/lxd/lxd-agent/api"
-	"github.com/canonical/lxd/lxd/response"
-	lxdvsock "github.com/canonical/lxd/lxd/vsock"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/client"
+	agentAPI "github.com/cyphar/incus/lxd-agent/api"
+	"github.com/cyphar/incus/lxd/response"
+	lxdvsock "github.com/cyphar/incus/lxd/vsock"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/version"
 )
 
 var api10Cmd = APIEndpoint{

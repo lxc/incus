@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 // Map is a structured map of config keys to config values.

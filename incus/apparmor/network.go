@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/canonical/lxd/lxd/sys"
+	"github.com/cyphar/incus/lxd/sys"
 )
 
 // Internal copy of the network interface.

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 // A new key pair is generated if none exists and saved to the appropriate

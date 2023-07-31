@@ -11,15 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/lxd/locking"
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/lxd/storage/filesystem"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/units"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/locking"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/units"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // lvmBlockVolSuffix suffix used for block content type volumes.

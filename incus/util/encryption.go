@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/crypto/scrypt"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 // PasswordCheck validates the provided password against the encoded secret.

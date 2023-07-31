@@ -17,14 +17,14 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	cli "github.com/canonical/lxd/shared/cmd"
-	"github.com/canonical/lxd/shared/osarch"
-	"github.com/canonical/lxd/shared/units"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	cli "github.com/cyphar/incus/shared/cmd"
+	"github.com/cyphar/incus/shared/osarch"
+	"github.com/cyphar/incus/shared/units"
+	"github.com/cyphar/incus/shared/version"
 )
 
 type cmdMigrate struct {

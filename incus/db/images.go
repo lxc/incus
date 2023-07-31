@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/osarch"
+	"github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/osarch"
 )
 
 // ImageSourceProtocol maps image source protocol codes to human-readable names.

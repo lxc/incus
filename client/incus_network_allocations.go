@@ -1,7 +1,7 @@
 package incus
 
 import (
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // GetNetworkAllocations returns a list of Network allocations tied to one or several projects (e.g, for IPAM information for example).

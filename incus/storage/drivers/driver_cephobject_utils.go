@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // radosgwadmin wrapper around radosgw-admin command.

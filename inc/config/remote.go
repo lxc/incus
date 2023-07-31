@@ -16,8 +16,8 @@ import (
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 	schemaform "gopkg.in/juju/environschema.v1/form"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/shared"
 )
 
 // Remote holds details for communication with a remote daemon.

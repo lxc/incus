@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/canonical/lxd/lxd/response"
+	"github.com/cyphar/incus/lxd/response"
 )
 
 // APIEndpoint represents a URL in our API.

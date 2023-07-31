@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 var stdin = bufio.NewReader(os.Stdin)

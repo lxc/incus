@@ -11,12 +11,12 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/cancel"
-	"github.com/canonical/lxd/shared/ioprogress"
-	"github.com/canonical/lxd/shared/units"
-	"github.com/canonical/lxd/shared/ws"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/cancel"
+	"github.com/cyphar/incus/shared/ioprogress"
+	"github.com/cyphar/incus/shared/units"
+	"github.com/cyphar/incus/shared/ws"
 )
 
 // Container handling functions

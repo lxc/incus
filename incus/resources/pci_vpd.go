@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/shared/api"
 )
 
 func vpdKnownKey(name string) bool {

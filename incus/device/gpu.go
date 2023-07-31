@@ -3,9 +3,9 @@ package device
 import (
 	"fmt"
 
-	"github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/validate"
+	"github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/validate"
 )
 
 func gpuValidationRules(requiredFields []string, optionalFields []string) map[string]func(value string) error {

@@ -3,14 +3,14 @@ package main
 import (
 	"strings"
 
-	"github.com/canonical/lxd/lxd/backup"
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/state"
-	storagePools "github.com/canonical/lxd/lxd/storage"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/backup"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/state"
+	storagePools "github.com/cyphar/incus/lxd/storage"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/version"
 )
 
 var supportedVolumeTypes = []int{db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM, db.StoragePoolVolumeTypeCustom, db.StoragePoolVolumeTypeImage}

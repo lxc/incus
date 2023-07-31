@@ -1,8 +1,8 @@
 package simplestreams
 
 import (
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/osarch"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/osarch"
 )
 
 var nativeName, _ = osarch.ArchitectureGetLocal()

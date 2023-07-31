@@ -7,10 +7,10 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/osarch"
+	"github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/osarch"
 )
 
 // Code generation directives.

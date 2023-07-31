@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/shared/api"
 )
 
 var _ = api.ServerEnvironment{}

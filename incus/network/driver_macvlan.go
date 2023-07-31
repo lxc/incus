@@ -3,12 +3,12 @@ package network
 import (
 	"fmt"
 
-	"github.com/canonical/lxd/lxd/cluster/request"
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/validate"
+	"github.com/cyphar/incus/lxd/cluster/request"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/validate"
 )
 
 // macvlan represents a LXD macvlan network.

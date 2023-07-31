@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd/migration"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd/migration"
+	"github.com/cyphar/incus/shared/api"
 )
 
 func transferRootfs(dst lxd.ContainerServer, op lxd.Operation, rootfs string, rsyncArgs string) error {

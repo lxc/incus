@@ -12,8 +12,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/db/generate/lex"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/db/generate/lex"
+	"github.com/cyphar/incus/shared"
 )
 
 // Packages returns the AST packages in which to search for structs.

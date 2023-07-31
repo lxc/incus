@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 // deviceJoinPath joins together prefix and text delimited by a "." for device path generation.

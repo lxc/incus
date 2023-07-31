@@ -6,11 +6,11 @@ import (
 	"strings"
 	"sync"
 
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // UnixEvent represents the properties of a Unix device inotify event.

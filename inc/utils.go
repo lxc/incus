@@ -8,12 +8,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxc/config"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/i18n"
-	"github.com/canonical/lxd/shared/termios"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxc/config"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/i18n"
+	"github.com/cyphar/incus/shared/termios"
 )
 
 // Batch operations.

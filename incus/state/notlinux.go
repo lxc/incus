@@ -5,7 +5,7 @@ package state
 import (
 	"context"
 
-	"github.com/canonical/lxd/lxd/events"
+	"github.com/cyphar/incus/lxd/events"
 )
 
 // State here is just an empty shim to statisfy dependencies.

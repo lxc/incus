@@ -162,7 +162,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 var errNoDevice = fmt.Errorf("Couldn't find backing device for mountpoint")

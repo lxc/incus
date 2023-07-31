@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // Notifier is a function that invokes the given function against each node in

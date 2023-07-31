@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/lxd/lifecycle"
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/lifecycle"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // Instance represents the backup relevant subset of a LXD instance.

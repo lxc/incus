@@ -21,7 +21,7 @@ import (
 	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v2"
 
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/shared/api"
 )
 
 type devLxdDialer struct {

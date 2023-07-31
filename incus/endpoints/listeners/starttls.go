@@ -7,8 +7,8 @@ import (
 	"net"
 	"sync"
 
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
 )
 
 // StarttlsListener is a variation of the standard tls.Listener that supports

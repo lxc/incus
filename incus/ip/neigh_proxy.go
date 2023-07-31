@@ -4,7 +4,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 // NeighProxy represents arguments for neighbour proxy manipulation.

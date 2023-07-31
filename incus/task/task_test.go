@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/canonical/lxd/lxd/task"
+	"github.com/cyphar/incus/lxd/task"
 )
 
 // The given task is executed immediately by the scheduler.

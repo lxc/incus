@@ -14,13 +14,13 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/ioprogress"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/units"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/ioprogress"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/units"
 )
 
 // cephBlockVolSuffix suffix used for block content type volumes.

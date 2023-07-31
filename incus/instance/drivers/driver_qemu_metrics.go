@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/instance/drivers/qmp"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/lxd/metrics"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/units"
+	"github.com/cyphar/incus/lxd/instance/drivers/qmp"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/lxd/metrics"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/units"
 )
 
 func (d *qemu) getQemuMetrics() (*metrics.MetricSet, error) {

@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // GetNetworkZones returns the names of existing Network zones mapped to project name.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 func Example_parseIPRange() {

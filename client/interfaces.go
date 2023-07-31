@@ -9,9 +9,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/sftp"
 
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/cancel"
-	"github.com/canonical/lxd/shared/ioprogress"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/cancel"
+	"github.com/cyphar/incus/shared/ioprogress"
 )
 
 // The Operation type represents a currently running operation.

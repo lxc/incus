@@ -1,8 +1,8 @@
 package device
 
 import (
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/instance"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/instance"
 )
 
 type none struct {

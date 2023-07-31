@@ -6,8 +6,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // Code generation directives.

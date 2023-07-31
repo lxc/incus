@@ -11,16 +11,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/canonical/lxd/lxd/db"
-	dbCluster "github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/instance"
-	instanceDrivers "github.com/canonical/lxd/lxd/instance/drivers"
-	"github.com/canonical/lxd/lxd/locking"
-	"github.com/canonical/lxd/lxd/metrics"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/lxd/db"
+	dbCluster "github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/instance"
+	instanceDrivers "github.com/cyphar/incus/lxd/instance/drivers"
+	"github.com/cyphar/incus/lxd/locking"
+	"github.com/cyphar/incus/lxd/metrics"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 type metricsCacheEntry struct {

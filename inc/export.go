@@ -10,11 +10,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	cli "github.com/canonical/lxd/shared/cmd"
-	"github.com/canonical/lxd/shared/i18n"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	cli "github.com/cyphar/incus/shared/cmd"
+	"github.com/cyphar/incus/shared/i18n"
 )
 
 type cmdExport struct {

@@ -12,13 +12,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd/daemon"
-	"github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd/daemon"
+	"github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // DevLxdServer creates an http.Server capable of handling requests against the

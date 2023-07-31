@@ -3,7 +3,7 @@ package project_test
 import (
 	"fmt"
 
-	"github.com/canonical/lxd/lxd/project"
+	"github.com/cyphar/incus/lxd/project"
 )
 
 func ExampleInstance() {

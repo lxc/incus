@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/canonical/lxd/shared/filter"
+	"github.com/cyphar/incus/shared/filter"
 )
 
 func TestParse_Error(t *testing.T) {

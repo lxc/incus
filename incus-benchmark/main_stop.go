@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/canonical/lxd/lxd-benchmark/benchmark"
+	"github.com/cyphar/incus/lxd-benchmark/benchmark"
 )
 
 type cmdStop struct {

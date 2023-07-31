@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/metrics"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/lxd/storage/filesystem"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/lxd/metrics"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // These mountpoints are excluded as they are irrelevant for metrics.

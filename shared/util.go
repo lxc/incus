@@ -27,11 +27,11 @@ import (
 
 	"github.com/flosch/pongo2"
 
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/cancel"
-	"github.com/canonical/lxd/shared/ioprogress"
-	"github.com/canonical/lxd/shared/units"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/cancel"
+	"github.com/cyphar/incus/shared/ioprogress"
+	"github.com/cyphar/incus/shared/units"
 )
 
 const SnapshotDelimiter = "/"

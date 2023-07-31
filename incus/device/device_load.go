@@ -3,11 +3,11 @@ package device
 import (
 	"fmt"
 
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/device/nictype"
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/shared/validate"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/device/nictype"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/shared/validate"
 )
 
 // newByType returns a new unitialised device based of the type indicated by the project and device config.

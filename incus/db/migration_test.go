@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/lxd/project"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/lxd/project"
 )
 
 func TestLoadPreClusteringData(t *testing.T) {

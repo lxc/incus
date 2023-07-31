@@ -5,7 +5,7 @@ package db
 import (
 	"context"
 
-	"github.com/canonical/lxd/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/db/cluster"
 )
 
 // GetProject returns the project with the given key.

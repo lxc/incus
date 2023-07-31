@@ -8,13 +8,13 @@ import (
 	"github.com/canonical/go-dqlite"
 	"github.com/spf13/cobra"
 
-	"github.com/canonical/lxd/lxd/daemon"
-	"github.com/canonical/lxd/lxd/events"
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/lxd/rsync"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/daemon"
+	"github.com/cyphar/incus/lxd/events"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/lxd/rsync"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // Initialize the random number generator.

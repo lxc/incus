@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/db/generate/file"
-	"github.com/canonical/lxd/lxd/db/generate/lex"
+	"github.com/cyphar/incus/lxd/db/generate/file"
+	"github.com/cyphar/incus/lxd/db/generate/lex"
 )
 
 // Stmt generates a particular database query statement.

@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/osarch"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/osarch"
 )
 
 func getPlatformVersionStrings() []string {

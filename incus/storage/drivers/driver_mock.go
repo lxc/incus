@@ -3,12 +3,12 @@ package drivers
 import (
 	"io"
 
-	"github.com/canonical/lxd/lxd/backup"
-	"github.com/canonical/lxd/lxd/migration"
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/instancewriter"
+	"github.com/cyphar/incus/lxd/backup"
+	"github.com/cyphar/incus/lxd/migration"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/instancewriter"
 )
 
 type mock struct {

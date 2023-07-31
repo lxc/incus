@@ -10,13 +10,13 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	pcidev "github.com/canonical/lxd/lxd/device/pci"
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/lxd/resources"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	pcidev "github.com/cyphar/incus/lxd/device/pci"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/lxd/resources"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
 )
 
 const gpuDRIDevPath = "/dev/dri"

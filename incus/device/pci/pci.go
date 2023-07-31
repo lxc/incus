@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared"
 )
 
 // Device represents info about a PCI uevent device.

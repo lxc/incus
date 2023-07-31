@@ -11,8 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd/util"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd/util"
 )
 
 var mu sync.RWMutex

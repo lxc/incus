@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // GetCurrentAllocations returns the current resource utilization for a given project.

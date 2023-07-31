@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // Helper to initialize node-specific entities on a LXD instance using the

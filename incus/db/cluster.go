@@ -6,10 +6,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // ClusterGroupToAPI is a convenience to convert a ClusterGroup db struct into

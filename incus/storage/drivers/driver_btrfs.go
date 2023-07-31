@@ -9,15 +9,15 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/canonical/lxd/lxd/migration"
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/lxd/storage/filesystem"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/units"
-	"github.com/canonical/lxd/shared/validate"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/migration"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/units"
+	"github.com/cyphar/incus/shared/validate"
+	"github.com/cyphar/incus/shared/version"
 )
 
 var btrfsVersion string

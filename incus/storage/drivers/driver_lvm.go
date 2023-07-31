@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/units"
-	"github.com/canonical/lxd/shared/validate"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/units"
+	"github.com/cyphar/incus/shared/validate"
 )
 
 const lvmVgPoolMarker = "lxd_pool" // Indicator tag used to mark volume groups as in use by LXD.
@@ -691,7 +691,7 @@ func (d *lvm) Mount() (bool, error) {
 }
 
 // Unmount unmounts the storage pool (this does nothing).
-// LVM doesn't currently support unmounting, please see https://github.com/canonical/lxd/issues/9278
+// LVM doesn't currently support unmounting, please see https://github.com/cyphar/incus/issues/9278
 func (d *lvm) Unmount() (bool, error) {
 	return false, nil
 }

@@ -1,8 +1,8 @@
 package lifecycle
 
 import (
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // Internal copy of the network acl interface.

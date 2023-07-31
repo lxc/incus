@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/shared/api"
 )
 
 var httpResponseErrors = map[int][]error{

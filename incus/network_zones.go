@@ -8,15 +8,15 @@ import (
 
 	"github.com/gorilla/mux"
 
-	clusterRequest "github.com/canonical/lxd/lxd/cluster/request"
-	"github.com/canonical/lxd/lxd/lifecycle"
-	"github.com/canonical/lxd/lxd/network/zone"
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/request"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/version"
+	clusterRequest "github.com/cyphar/incus/lxd/cluster/request"
+	"github.com/cyphar/incus/lxd/lifecycle"
+	"github.com/cyphar/incus/lxd/network/zone"
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/request"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/version"
 )
 
 var networkZonesCmd = APIEndpoint{

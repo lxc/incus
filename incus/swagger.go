@@ -11,7 +11,7 @@
 //
 //	Version: 1.0
 //	License: Apache-2.0 https://www.apache.org/licenses/LICENSE-2.0
-//	Contact: LXD upstream <lxd@lists.canonical.com> https://github.com/canonical/lxd
+//	Contact: LXD upstream <lxd@lists.canonical.com> https://github.com/cyphar/incus
 //
 // swagger:meta
 package main

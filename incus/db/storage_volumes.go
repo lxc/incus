@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // GetStoragePoolVolumesWithType return a list of all volumes of the given type.

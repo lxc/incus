@@ -1,8 +1,8 @@
 package fsmonitor
 
 import (
-	"github.com/canonical/lxd/lxd/fsmonitor/drivers"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/lxd/fsmonitor/drivers"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 type fsMonitor struct {

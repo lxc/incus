@@ -10,8 +10,8 @@ import (
 	dqlite "github.com/canonical/go-dqlite"
 	client "github.com/canonical/go-dqlite/client"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/node"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/node"
 )
 
 // ListDatabaseNodes returns a list of database node names.

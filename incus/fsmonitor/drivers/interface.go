@@ -3,7 +3,7 @@ package drivers
 import (
 	"context"
 
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // driver is the extended internal interface.

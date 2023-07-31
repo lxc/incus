@@ -18,13 +18,13 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/sys/unix"
 
-	"github.com/canonical/lxd/lxd/db/operationtype"
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/ws"
+	"github.com/cyphar/incus/lxd/db/operationtype"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/ws"
 )
 
 const execWSControl = -1

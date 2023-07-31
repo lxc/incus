@@ -1,6 +1,6 @@
 // Package migration provides the primitives for migration in LXD.
 //
-// See https://github.com/canonical/lxd/blob/main/doc/migration.md for a complete
+// See https://github.com/cyphar/incus/blob/main/doc/migration.md for a complete
 // description.
 
 package main
@@ -15,12 +15,12 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/migration"
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/idmap"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/migration"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/idmap"
 )
 
 type migrationFields struct {

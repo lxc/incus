@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/response"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/response"
 )
 
 // The GetNetworksLocalConfigs method returns only node-specific config values.

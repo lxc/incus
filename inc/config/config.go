@@ -9,7 +9,7 @@ import (
 	"github.com/juju/persistent-cookiejar"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 // Config holds settings to be used by a client or daemon.

@@ -14,15 +14,15 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd/cluster"
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/node"
-	"github.com/canonical/lxd/lxd/sys"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	cli "github.com/canonical/lxd/shared/cmd"
-	"github.com/canonical/lxd/shared/termios"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd/cluster"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/node"
+	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	cli "github.com/cyphar/incus/shared/cmd"
+	"github.com/cyphar/incus/shared/termios"
 )
 
 type cmdCluster struct {

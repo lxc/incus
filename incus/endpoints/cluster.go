@@ -5,10 +5,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/canonical/lxd/lxd/endpoints/listeners"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/lxd/endpoints/listeners"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // ClusterAddress returns the cluster address of the cluster endpoint, or an

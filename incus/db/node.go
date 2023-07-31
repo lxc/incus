@@ -11,14 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/db/operationtype"
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/osarch"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/db/operationtype"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/osarch"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // ClusterRole represents the role of a member in a cluster.

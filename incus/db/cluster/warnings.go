@@ -5,8 +5,8 @@ package cluster
 import (
 	"time"
 
-	"github.com/canonical/lxd/lxd/db/warningtype"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/db/warningtype"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // Code generation directives.

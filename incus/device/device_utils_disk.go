@@ -13,14 +13,14 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/revert"
-	storageDrivers "github.com/canonical/lxd/lxd/storage/drivers"
-	"github.com/canonical/lxd/lxd/storage/filesystem"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/idmap"
-	"github.com/canonical/lxd/shared/osarch"
-	"github.com/canonical/lxd/shared/subprocess"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/revert"
+	storageDrivers "github.com/cyphar/incus/lxd/storage/drivers"
+	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/idmap"
+	"github.com/cyphar/incus/shared/osarch"
+	"github.com/cyphar/incus/shared/subprocess"
 )
 
 // RBDFormatPrefix is the prefix used in disk paths to identify RBD.

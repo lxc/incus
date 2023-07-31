@@ -3,7 +3,7 @@
 package cluster
 
 import (
-	"github.com/canonical/lxd/lxd/db/operationtype"
+	"github.com/cyphar/incus/lxd/db/operationtype"
 )
 
 // Code generation directives.

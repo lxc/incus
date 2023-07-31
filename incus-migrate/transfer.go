@@ -12,12 +12,12 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pborman/uuid"
 
-	"github.com/canonical/lxd/lxd/migration"
-	"github.com/canonical/lxd/lxd/rsync"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/linux"
-	"github.com/canonical/lxd/shared/ws"
+	"github.com/cyphar/incus/lxd/migration"
+	"github.com/cyphar/incus/lxd/rsync"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/linux"
+	"github.com/cyphar/incus/shared/ws"
 )
 
 // Send an rsync stream of a path over a websocket.

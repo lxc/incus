@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/sys"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/version"
 )
 
 const (

@@ -9,9 +9,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/shared"
 )
 
 // swagger:operation GET /1.0/instances/{name} instances instance_get

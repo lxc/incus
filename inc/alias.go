@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/canonical/lxd/shared/cmd"
-	"github.com/canonical/lxd/shared/i18n"
+	cli "github.com/cyphar/incus/shared/cmd"
+	"github.com/cyphar/incus/shared/i18n"
 )
 
 type cmdAlias struct {

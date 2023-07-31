@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/node"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/node"
 )
 
 // The raft identity (ID and address) of a node depends on the value of

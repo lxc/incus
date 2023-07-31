@@ -10,16 +10,16 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/lifecycle"
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/request"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/lxd/revert"
-	storagePools "github.com/canonical/lxd/lxd/storage"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/lifecycle"
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/request"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/lxd/revert"
+	storagePools "github.com/cyphar/incus/lxd/storage"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/version"
 )
 
 var storagePoolBucketsCmd = APIEndpoint{

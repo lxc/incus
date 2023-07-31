@@ -8,12 +8,12 @@ import (
 
 	"github.com/jochenvg/go-udev"
 
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/validate"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/validate"
 )
 
 // unixHotplugIsOurDevice indicates whether the unixHotplug device event qualifies as part of our device.

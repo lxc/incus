@@ -1,8 +1,8 @@
 package firewall
 
 import (
-	"github.com/canonical/lxd/lxd/firewall/drivers"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/lxd/firewall/drivers"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // New returns an appropriate firewall implementation.

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/shared"
 )
 
 // CGroup represents the main cgroup abstraction.

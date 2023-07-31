@@ -7,9 +7,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/canonical/lxd/lxd/sys"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
 )
 
 var forkdnsProfileTpl = template.Must(template.New("forkdnsProfile").Parse(`#include <tunables/global>

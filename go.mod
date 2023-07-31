@@ -1,4 +1,4 @@
-module github.com/canonical/lxd
+module github.com/cyphar/incus
 
 go 1.18
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/canonical/lxd/shared/osarch"
+	"github.com/cyphar/incus/shared/osarch"
 )
 
 func TestQemuConfigTemplates(t *testing.T) {

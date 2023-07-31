@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/lxd/db/schema"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/lxd/db/schema"
+	"github.com/cyphar/incus/shared"
 )
 
 // WriteTempFile creates a temp file with the specified content.

@@ -5,9 +5,9 @@ import (
 	"net"
 	"strings"
 
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/shared/api"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // IBDevPrefix Infiniband devices prefix.

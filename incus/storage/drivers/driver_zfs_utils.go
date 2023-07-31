@@ -10,11 +10,11 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/canonical/lxd/lxd/migration"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/ioprogress"
-	"github.com/canonical/lxd/shared/units"
+	"github.com/cyphar/incus/lxd/migration"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/ioprogress"
+	"github.com/cyphar/incus/shared/units"
 )
 
 const (

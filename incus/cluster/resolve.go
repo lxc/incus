@@ -3,8 +3,8 @@ package cluster
 import (
 	"context"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/state"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/state"
 )
 
 // ResolveTarget is a convenience for resolving a target member name to address.

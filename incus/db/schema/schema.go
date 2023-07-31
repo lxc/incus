@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/shared"
 )
 
 // Schema captures the schema of a database in terms of a series of ordered

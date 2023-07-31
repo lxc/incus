@@ -5,7 +5,7 @@ import (
 
 	"github.com/canonical/go-dqlite/client"
 
-	"github.com/canonical/lxd/lxd/db"
+	"github.com/cyphar/incus/lxd/db"
 )
 
 // DetermineRaftNode figures out what raft node ID and address we have, if any.

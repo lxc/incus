@@ -11,13 +11,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/canonical/lxd/lxd/cluster"
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/tcp"
+	"github.com/cyphar/incus/lxd/cluster"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/tcp"
 )
 
 // swagger:operation GET /1.0/instances/{name}/sftp instances instance_sftp

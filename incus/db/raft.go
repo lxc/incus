@@ -9,8 +9,8 @@ import (
 
 	"github.com/canonical/go-dqlite/client"
 
-	"github.com/canonical/lxd/lxd/db/query"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // RaftNode holds information about a single node in the dqlite raft cluster.

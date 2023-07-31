@@ -11,14 +11,14 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/canonical/lxd/lxd/db/operationtype"
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/lxd/task"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/db/operationtype"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/lxd/task"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/version"
 )
 
 type instanceType struct {

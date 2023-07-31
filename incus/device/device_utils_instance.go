@@ -1,7 +1,7 @@
 package device
 
 import (
-	"github.com/canonical/lxd/lxd/instance/instancetype"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
 )
 
 // instanceSupported is a helper function to check instance type is supported for validation.

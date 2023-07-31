@@ -5,14 +5,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/endpoints"
-	"github.com/canonical/lxd/lxd/events"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/endpoints"
+	"github.com/cyphar/incus/lxd/events"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // eventHubMinHosts is the minimum number of members that must have the event-hub role to trigger switching into

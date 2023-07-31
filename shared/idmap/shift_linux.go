@@ -348,9 +348,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	_ "github.com/canonical/lxd/lxd/include" // Used by cgo
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
+	_ "github.com/cyphar/incus/lxd/include" // Used by cgo
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // ShiftOwner updates uid and gid for a file when entering/exiting a namespace

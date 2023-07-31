@@ -16,8 +16,8 @@ import (
 	"github.com/pkg/xattr"
 	"golang.org/x/sys/unix"
 
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared/units"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared/units"
 )
 
 // --- pure Go functions ---

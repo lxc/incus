@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/network/acl"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/validate"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/network/acl"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/validate"
 )
 
 // nicValidationRules returns config validation rules for nic devices.

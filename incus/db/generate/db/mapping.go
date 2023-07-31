@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/canonical/lxd/lxd/db/generate/lex"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/db/generate/lex"
+	"github.com/cyphar/incus/shared"
 )
 
 // Mapping holds information for mapping database tables to a Go structure.

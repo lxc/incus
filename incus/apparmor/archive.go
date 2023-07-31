@@ -6,8 +6,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/canonical/lxd/lxd/sys"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/shared"
 )
 
 var archiveProfileTpl = template.Must(template.New("archiveProfile").Parse(`#include <tunables/global>

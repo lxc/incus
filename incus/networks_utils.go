@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/canonical/lxd/lxd/cluster"
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/network"
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/lxd/cluster"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/network"
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 var networkOVNChassis *bool

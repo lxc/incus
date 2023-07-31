@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/lxd-benchmark/benchmark"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/client"
+	"github.com/cyphar/incus/lxd-benchmark/benchmark"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/version"
 )
 
 type cmdGlobal struct {

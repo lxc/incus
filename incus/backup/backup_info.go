@@ -6,9 +6,9 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/canonical/lxd/lxd/backup/config"
-	"github.com/canonical/lxd/lxd/sys"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/backup/config"
+	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // Type indicates the type of backup.

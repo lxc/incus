@@ -1,8 +1,8 @@
 package endpoints
 
 import (
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
 )
 
 // New creates a new Endpoints instance without bringing it up.

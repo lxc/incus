@@ -460,20 +460,20 @@ import (
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
 
-	"github.com/canonical/lxd/lxd/cgroup"
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	_ "github.com/canonical/lxd/lxd/include" // Used by cgo
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/lxd/ucred"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/idmap"
-	"github.com/canonical/lxd/shared/linux"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/netutils"
-	"github.com/canonical/lxd/shared/osarch"
+	"github.com/cyphar/incus/lxd/cgroup"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	_ "github.com/cyphar/incus/lxd/include" // Used by cgo
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/lxd/ucred"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/idmap"
+	"github.com/cyphar/incus/shared/linux"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/netutils"
+	"github.com/cyphar/incus/shared/osarch"
 )
 
 const lxdSeccompNotifyMknod = C.LXD_SECCOMP_NOTIFY_MKNOD

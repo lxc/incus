@@ -5,8 +5,8 @@ package operations
 import (
 	"fmt"
 
-	"github.com/canonical/lxd/lxd/db/operationtype"
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/lxd/db/operationtype"
+	"github.com/cyphar/incus/shared/api"
 )
 
 func registerDBOperation(op *Operation, opType operationtype.Type) error {

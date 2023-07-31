@@ -12,15 +12,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/canonical/lxd/lxd/cluster"
-	clusterConfig "github.com/canonical/lxd/lxd/cluster/config"
-	"github.com/canonical/lxd/lxd/db"
-	dbCluster "github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/node"
-	"github.com/canonical/lxd/lxd/state"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/osarch"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/cluster"
+	clusterConfig "github.com/cyphar/incus/lxd/cluster/config"
+	"github.com/cyphar/incus/lxd/db"
+	dbCluster "github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/node"
+	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/osarch"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // After a heartbeat request is completed, the leader updates the heartbeat

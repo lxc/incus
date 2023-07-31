@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/db/warningtype"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/db/warningtype"
 )
 
 // ResolveWarningsByLocalNodeOlderThan resolves all warnings which are older than the provided time.

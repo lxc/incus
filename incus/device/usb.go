@@ -6,12 +6,12 @@ import (
 	"path"
 	"strings"
 
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/instance/instancetype"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/osarch"
-	"github.com/canonical/lxd/shared/validate"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/osarch"
+	"github.com/cyphar/incus/shared/validate"
 )
 
 // usbDevPath is the path where USB devices can be enumerated.

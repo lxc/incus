@@ -12,7 +12,7 @@ import (
 	"github.com/go-macaroon-bakery/macaroon-bakery/v3/bakery/identchecker"
 	"github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery"
 
-	"github.com/canonical/lxd/lxd/response"
+	"github.com/cyphar/incus/lxd/response"
 )
 
 // Verifier contains everything needed to verify a request.

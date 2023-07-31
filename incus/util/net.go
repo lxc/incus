@@ -7,8 +7,8 @@ import (
 	"net"
 	"os"
 
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // InMemoryNetwork creates a fully in-memory listener and dial function.

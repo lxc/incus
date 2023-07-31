@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"os"
 
-	deviceConfig "github.com/canonical/lxd/lxd/device/config"
-	"github.com/canonical/lxd/lxd/locking"
-	"github.com/canonical/lxd/lxd/operations"
-	"github.com/canonical/lxd/lxd/refcount"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/lxd/shared/units"
+	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/lxd/locking"
+	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/lxd/refcount"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/api"
+	"github.com/cyphar/incus/shared/units"
 )
 
 // tmpVolSuffix Suffix to use for any temporary volumes created by LXD.

@@ -10,15 +10,15 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/canonical/lxd/lxd/instance"
-	"github.com/canonical/lxd/lxd/lifecycle"
-	"github.com/canonical/lxd/lxd/project"
-	"github.com/canonical/lxd/lxd/request"
-	"github.com/canonical/lxd/lxd/response"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/lxd/storage"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/instance"
+	"github.com/cyphar/incus/lxd/lifecycle"
+	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/lxd/request"
+	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/lxd/storage"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/version"
 )
 
 var instanceLogCmd = APIEndpoint{

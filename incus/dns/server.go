@@ -5,10 +5,10 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/lxd/revert"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared/logger"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared/logger"
 )
 
 // ZoneRetriever is a function which fetches a DNS zone.

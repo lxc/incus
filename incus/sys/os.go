@@ -11,15 +11,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/canonical/lxd/lxd/cgroup"
-	"github.com/canonical/lxd/lxd/db/cluster"
-	"github.com/canonical/lxd/lxd/storage/filesystem"
-	"github.com/canonical/lxd/lxd/util"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/idmap"
-	"github.com/canonical/lxd/shared/logger"
-	"github.com/canonical/lxd/shared/osarch"
-	"github.com/canonical/lxd/shared/version"
+	"github.com/cyphar/incus/lxd/cgroup"
+	"github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/idmap"
+	"github.com/cyphar/incus/shared/logger"
+	"github.com/cyphar/incus/shared/osarch"
+	"github.com/cyphar/incus/shared/version"
 )
 
 // InotifyTargetInfo records the inotify information associated with a given

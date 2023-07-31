@@ -3,7 +3,7 @@ package incus
 import (
 	"fmt"
 
-	"github.com/canonical/lxd/shared/api"
+	"github.com/cyphar/incus/shared/api"
 )
 
 // GetCluster returns information about a cluster

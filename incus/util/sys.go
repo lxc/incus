@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/canonical/lxd/shared/osarch"
+	"github.com/cyphar/incus/shared/osarch"
 )
 
 // GetArchitectures returns the list of supported architectures.

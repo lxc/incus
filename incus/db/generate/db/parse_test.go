@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/canonical/lxd/lxd/db/generate/db"
+	"github.com/cyphar/incus/lxd/db/generate/db"
 )
 
 func TestPackages(t *testing.T) {

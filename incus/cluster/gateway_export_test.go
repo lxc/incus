@@ -1,8 +1,8 @@
 package cluster
 
 import (
-	"github.com/canonical/lxd/lxd/db"
-	"github.com/canonical/lxd/shared"
+	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/shared"
 )
 
 // IsLeader returns true if this node is the leader.

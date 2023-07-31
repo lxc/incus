@@ -13,11 +13,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/scrypt"
 
-	"github.com/canonical/lxd/lxd/config"
-	"github.com/canonical/lxd/lxd/db"
-	scriptletLoad "github.com/canonical/lxd/lxd/scriptlet/load"
-	"github.com/canonical/lxd/shared"
-	"github.com/canonical/lxd/shared/validate"
+	"github.com/cyphar/incus/lxd/config"
+	"github.com/cyphar/incus/lxd/db"
+	scriptletLoad "github.com/cyphar/incus/lxd/scriptlet/load"
+	"github.com/cyphar/incus/shared"
+	"github.com/cyphar/incus/shared/validate"
 )
 
 // Config holds cluster-wide configuration values.
