@@ -16,7 +16,7 @@ do_zfs_delegate() {
     return
   fi
 
-  if ! zfs --help | grep -q zone; then
+  if ! zfs --help | grep -q '^\s\+zone\b'; then
     echo "==> SKIP: Skipping ZFS delegation tests due as installed version doesn't support it"
     return
   fi
