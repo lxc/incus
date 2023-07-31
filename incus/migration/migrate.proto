@@ -1,6 +1,6 @@
 // silence the protobuf compiler warning by setting the default
 syntax = "proto2";
-option go_package = "lxd/migration";
+option go_package = "incus/migration";
 
 package migration;
 
