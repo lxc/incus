@@ -49,7 +49,7 @@ func ParsePackage(pkgPath string) (*ast.Package, error) {
 
 var defaultPackages = []string{
 	"shared/api",
-	"lxd/db",
+	"incus/db",
 }
 
 // FiltersFromStmt parses all filtering statement defined for the given entity. It
