@@ -10,7 +10,9 @@ import (
 // ErrUnknownDriver is the "Unknown driver" error.
 var ErrUnknownDriver = fmt.Errorf("Unknown driver")
 
-var authorizers = map[string]func() authorizer{}
+var authorizers = map[string]func() authorizer{
+	"tls": func() authorizer { return &tls{} },
+}
 
 type authorizer interface {
 	Authorizer
