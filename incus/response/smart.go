@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/incus/db"
 	"github.com/cyphar/incus/shared/api"
 )
 

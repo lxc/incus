@@ -1,7 +1,7 @@
 package lifecycle
 
 import (
-	"github.com/cyphar/incus/lxd/operations"
+	"github.com/cyphar/incus/incus/operations"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/version"
 )

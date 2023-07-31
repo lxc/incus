@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/util"
 )
 
 func Test_CompareConfigsMismatch(t *testing.T) {

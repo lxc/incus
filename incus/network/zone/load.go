@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/db/cluster"
-	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/db/cluster"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 )

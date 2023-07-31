@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cyphar/incus/lxd/db/cluster"
+	"github.com/cyphar/incus/incus/db/cluster"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"
 )

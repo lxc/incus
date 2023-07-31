@@ -3,8 +3,8 @@ package zone
 import (
 	"strings"
 
-	"github.com/cyphar/incus/lxd/cluster/request"
-	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/incus/cluster/request"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared/api"
 )
 

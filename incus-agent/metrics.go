@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cyphar/incus/lxd/metrics"
-	"github.com/cyphar/incus/lxd/response"
-	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/incus/metrics"
+	"github.com/cyphar/incus/incus/response"
+	"github.com/cyphar/incus/incus/storage/filesystem"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cyphar/incus/lxd/cgroup"
-	"github.com/cyphar/incus/lxd/instance/instancetype"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/sys"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/cgroup"
+	"github.com/cyphar/incus/incus/instance/instancetype"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/sys"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 )

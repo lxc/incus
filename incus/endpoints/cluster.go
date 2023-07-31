@@ -5,8 +5,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/cyphar/incus/lxd/endpoints/listeners"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/endpoints/listeners"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

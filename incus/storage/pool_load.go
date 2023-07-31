@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/response"
-	"github.com/cyphar/incus/lxd/state"
-	"github.com/cyphar/incus/lxd/storage/drivers"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/response"
+	"github.com/cyphar/incus/incus/state"
+	"github.com/cyphar/incus/incus/storage/drivers"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"
 )

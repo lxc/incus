@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/response"
 	"github.com/cyphar/incus/shared"
 )
 

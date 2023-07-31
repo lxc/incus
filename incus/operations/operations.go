@@ -9,11 +9,11 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/cyphar/incus/lxd/db/operationtype"
-	"github.com/cyphar/incus/lxd/events"
-	"github.com/cyphar/incus/lxd/request"
-	"github.com/cyphar/incus/lxd/response"
-	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/incus/db/operationtype"
+	"github.com/cyphar/incus/incus/events"
+	"github.com/cyphar/incus/incus/request"
+	"github.com/cyphar/incus/incus/response"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/cancel"

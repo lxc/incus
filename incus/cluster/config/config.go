@@ -13,9 +13,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/scrypt"
 
-	"github.com/cyphar/incus/lxd/config"
-	"github.com/cyphar/incus/lxd/db"
-	scriptletLoad "github.com/cyphar/incus/lxd/scriptlet/load"
+	"github.com/cyphar/incus/incus/config"
+	"github.com/cyphar/incus/incus/db"
+	scriptletLoad "github.com/cyphar/incus/incus/scriptlet/load"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/validate"
 )

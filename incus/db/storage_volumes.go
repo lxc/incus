@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/incus/db/query"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/version"

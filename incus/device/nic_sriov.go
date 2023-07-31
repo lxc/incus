@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/instance/instancetype"
-	"github.com/cyphar/incus/lxd/network"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/util"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/instance/instancetype"
+	"github.com/cyphar/incus/incus/network"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 )

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/revert"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 )

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/incus/sys"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/subprocess"
 )

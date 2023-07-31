@@ -7,13 +7,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/node"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/rsync"
-	"github.com/cyphar/incus/lxd/state"
-	storagePools "github.com/cyphar/incus/lxd/storage"
-	storageDrivers "github.com/cyphar/incus/lxd/storage/drivers"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/node"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/rsync"
+	"github.com/cyphar/incus/incus/state"
+	storagePools "github.com/cyphar/incus/incus/storage"
+	storageDrivers "github.com/cyphar/incus/incus/storage/drivers"
 	"github.com/cyphar/incus/shared"
 )
 

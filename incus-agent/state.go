@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/incus/response"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"

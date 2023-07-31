@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	backupConfig "github.com/cyphar/incus/lxd/backup/config"
-	"github.com/cyphar/incus/lxd/operations"
+	backupConfig "github.com/cyphar/incus/incus/backup/config"
+	"github.com/cyphar/incus/incus/operations"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/ioprogress"

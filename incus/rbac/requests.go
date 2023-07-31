@@ -3,7 +3,7 @@ package rbac
 import (
 	"net/http"
 
-	"github.com/cyphar/incus/lxd/request"
+	"github.com/cyphar/incus/incus/request"
 	"github.com/cyphar/incus/shared"
 )
 

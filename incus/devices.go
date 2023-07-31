@@ -43,13 +43,13 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/lxd/cgroup"
-	"github.com/cyphar/incus/lxd/device"
-	_ "github.com/cyphar/incus/lxd/include" // Used by cgo
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/instance/instancetype"
-	"github.com/cyphar/incus/lxd/resources"
-	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/incus/cgroup"
+	"github.com/cyphar/incus/incus/device"
+	_ "github.com/cyphar/incus/incus/include" // Used by cgo
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/instance/instancetype"
+	"github.com/cyphar/incus/incus/resources"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

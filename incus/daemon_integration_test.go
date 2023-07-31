@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/incus/sys"
 )
 
 // The daemon is started and a client can connect to it via unix socket.

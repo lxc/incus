@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/incus/storage/filesystem"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 )

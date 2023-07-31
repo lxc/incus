@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/lxd/migration"
+	"github.com/cyphar/incus/incus/migration"
 	"github.com/cyphar/incus/shared/api"
 )
 

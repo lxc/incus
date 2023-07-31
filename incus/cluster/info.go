@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/node"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/node"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

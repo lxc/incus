@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strconv"
 
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
-	pcidev "github.com/cyphar/incus/lxd/device/pci"
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/instance/instancetype"
-	"github.com/cyphar/incus/lxd/ip"
-	"github.com/cyphar/incus/lxd/resources"
-	"github.com/cyphar/incus/lxd/util"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
+	pcidev "github.com/cyphar/incus/incus/device/pci"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/instance/instancetype"
+	"github.com/cyphar/incus/incus/ip"
+	"github.com/cyphar/incus/incus/resources"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 )
 

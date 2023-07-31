@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/cyphar/incus/lxd/cluster"
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/network"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/incus/cluster"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/network"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared/logger"
 )
 

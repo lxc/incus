@@ -10,9 +10,9 @@ import (
 
 	driver "github.com/canonical/go-dqlite/driver"
 
-	"github.com/cyphar/incus/lxd/db/query"
-	"github.com/cyphar/incus/lxd/db/schema"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/db/query"
+	"github.com/cyphar/incus/incus/db/schema"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 	"github.com/cyphar/incus/shared/osarch"

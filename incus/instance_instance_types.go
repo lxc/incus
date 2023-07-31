@@ -11,11 +11,11 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/lxd/db/operationtype"
-	"github.com/cyphar/incus/lxd/operations"
-	"github.com/cyphar/incus/lxd/state"
-	"github.com/cyphar/incus/lxd/task"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/db/operationtype"
+	"github.com/cyphar/incus/incus/operations"
+	"github.com/cyphar/incus/incus/state"
+	"github.com/cyphar/incus/incus/task"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 	"github.com/cyphar/incus/shared/version"

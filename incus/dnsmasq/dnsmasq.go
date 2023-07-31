@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/storage/filesystem"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/subprocess"
 	"github.com/cyphar/incus/shared/version"

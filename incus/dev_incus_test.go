@@ -13,8 +13,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/lxd/sys"
-	"github.com/cyphar/incus/lxd/ucred"
+	"github.com/cyphar/incus/incus/sys"
+	"github.com/cyphar/incus/incus/ucred"
 )
 
 var testDir string

@@ -6,9 +6,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/db/cluster"
-	"github.com/cyphar/incus/lxd/db/operationtype"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/db/cluster"
+	"github.com/cyphar/incus/incus/db/operationtype"
 	"github.com/cyphar/incus/shared/api"
 )
 

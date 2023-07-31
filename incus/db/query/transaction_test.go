@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/incus/db/query"
 )
 
 // Any error happening when beginning the transaction will be propagated.

@@ -27,7 +27,7 @@ import (
 
 	"github.com/flosch/pongo2"
 
-	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/incus/revert"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/cancel"
 	"github.com/cyphar/incus/shared/ioprogress"

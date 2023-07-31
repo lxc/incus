@@ -6,8 +6,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/lxd/backup/config"
-	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/incus/backup/config"
+	"github.com/cyphar/incus/incus/sys"
 	"github.com/cyphar/incus/shared/api"
 )
 

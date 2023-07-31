@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cyphar/incus/lxd/db/query"
-	"github.com/cyphar/incus/lxd/db/schema"
+	"github.com/cyphar/incus/incus/db/query"
+	"github.com/cyphar/incus/incus/db/schema"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 	"github.com/cyphar/incus/shared/units"

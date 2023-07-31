@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/lxc/config"
+	"github.com/cyphar/incus/inc/config"
 	"github.com/cyphar/incus/shared"
 	cli "github.com/cyphar/incus/shared/cmd"
 	"github.com/cyphar/incus/shared/i18n"

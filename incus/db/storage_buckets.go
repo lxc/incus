@@ -12,7 +12,7 @@ import (
 
 	dqliteDriver "github.com/canonical/go-dqlite/driver"
 
-	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/incus/db/query"
 	"github.com/cyphar/incus/shared/api"
 )
 

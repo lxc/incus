@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cyphar/incus/lxd/db/cluster"
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
+	"github.com/cyphar/incus/incus/db/cluster"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
 	"github.com/cyphar/incus/shared/api"
 )
 

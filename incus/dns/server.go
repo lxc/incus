@@ -5,9 +5,9 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/revert"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/revert"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared/logger"
 )
 

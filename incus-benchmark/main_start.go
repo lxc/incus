@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cyphar/incus/lxd-benchmark/benchmark"
+	"github.com/cyphar/incus/incus-benchmark/benchmark"
 )
 
 type cmdStart struct {

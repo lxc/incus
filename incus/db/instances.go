@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/lxd/db/cluster"
-	"github.com/cyphar/incus/lxd/db/query"
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
-	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/incus/db/cluster"
+	"github.com/cyphar/incus/incus/db/query"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
+	"github.com/cyphar/incus/incus/instance/instancetype"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 )

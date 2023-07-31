@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cyphar/incus/lxd/archive"
-	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/incus/archive"
+	"github.com/cyphar/incus/incus/sys"
 	"github.com/cyphar/incus/shared"
 )
 

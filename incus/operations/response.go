@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cyphar/incus/lxd/response"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/response"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"
 	"github.com/cyphar/incus/shared/version"

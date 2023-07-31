@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/lxd/db/schema"
+	"github.com/cyphar/incus/incus/db/schema"
 	"github.com/cyphar/incus/shared"
 )
 

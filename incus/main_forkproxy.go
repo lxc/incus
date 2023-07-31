@@ -255,10 +255,10 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/lxd/daemon"
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
-	_ "github.com/cyphar/incus/lxd/include" // Used by cgo
-	"github.com/cyphar/incus/lxd/network"
+	"github.com/cyphar/incus/incus/daemon"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
+	_ "github.com/cyphar/incus/incus/include" // Used by cgo
+	"github.com/cyphar/incus/incus/network"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/netutils"
 )

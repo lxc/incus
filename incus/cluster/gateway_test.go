@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/lxd/cluster"
-	"github.com/cyphar/incus/lxd/db"
-	dbCluster "github.com/cyphar/incus/lxd/db/cluster"
-	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/incus/cluster"
+	"github.com/cyphar/incus/incus/db"
+	dbCluster "github.com/cyphar/incus/incus/db/cluster"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared"
 )
 

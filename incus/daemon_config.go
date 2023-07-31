@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 
-	clusterConfig "github.com/cyphar/incus/lxd/cluster/config"
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/node"
-	"github.com/cyphar/incus/lxd/state"
+	clusterConfig "github.com/cyphar/incus/incus/cluster/config"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/node"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared"
 )
 

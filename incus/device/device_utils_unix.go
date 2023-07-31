@@ -9,9 +9,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
-	"github.com/cyphar/incus/lxd/state"
-	"github.com/cyphar/incus/lxd/storage/filesystem"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
+	"github.com/cyphar/incus/incus/state"
+	"github.com/cyphar/incus/incus/storage/filesystem"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/idmap"
 	"github.com/cyphar/incus/shared/logger"

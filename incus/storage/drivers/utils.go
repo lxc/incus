@@ -13,8 +13,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/lxd/operations"
-	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/incus/operations"
+	"github.com/cyphar/incus/incus/storage/filesystem"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/idmap"

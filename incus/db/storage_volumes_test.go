@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/lxd/db"
+	"github.com/cyphar/incus/incus/db"
 )
 
 // Addresses of all nodes with matching volume name are returned.

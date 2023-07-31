@@ -13,9 +13,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/lxd/daemon"
-	"github.com/cyphar/incus/lxd/device/config"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/daemon"
+	"github.com/cyphar/incus/incus/device/config"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"

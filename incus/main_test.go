@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/db/cluster"
-	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/db/cluster"
+	"github.com/cyphar/incus/incus/sys"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/idmap"
 )

@@ -10,11 +10,11 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/cyphar/incus/lxd/migration"
-	"github.com/cyphar/incus/lxd/operations"
-	"github.com/cyphar/incus/lxd/state"
-	storagePools "github.com/cyphar/incus/lxd/storage"
-	storageDrivers "github.com/cyphar/incus/lxd/storage/drivers"
+	"github.com/cyphar/incus/incus/migration"
+	"github.com/cyphar/incus/incus/operations"
+	"github.com/cyphar/incus/incus/state"
+	storagePools "github.com/cyphar/incus/incus/storage"
+	storageDrivers "github.com/cyphar/incus/incus/storage/drivers"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"

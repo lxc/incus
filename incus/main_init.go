@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/lxd/revert"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/revert"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/version"

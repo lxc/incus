@@ -6,6 +6,6 @@ package db
 var Imports = []string{
 	"database/sql",
 	"fmt",
-	"github.com/cyphar/incus/lxd/db/query",
+	"github.com/cyphar/incus/incus/db/query",
 	"github.com/cyphar/incus/shared/api",
 }

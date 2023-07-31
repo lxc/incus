@@ -12,8 +12,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/lxd/apparmor"
-	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/incus/apparmor"
+	"github.com/cyphar/incus/incus/sys"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/ioprogress"
 	"github.com/cyphar/incus/shared/logger"

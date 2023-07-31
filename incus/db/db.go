@@ -17,9 +17,9 @@ import (
 
 	"github.com/canonical/go-dqlite/driver"
 
-	"github.com/cyphar/incus/lxd/db/cluster"
-	"github.com/cyphar/incus/lxd/db/node"
-	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/incus/db/cluster"
+	"github.com/cyphar/incus/incus/db/node"
+	"github.com/cyphar/incus/incus/db/query"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

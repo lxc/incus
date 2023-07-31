@@ -8,12 +8,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/lxd/lifecycle"
-	"github.com/cyphar/incus/lxd/network"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/request"
-	"github.com/cyphar/incus/lxd/response"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/lifecycle"
+	"github.com/cyphar/incus/incus/network"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/request"
+	"github.com/cyphar/incus/incus/response"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/version"
 )

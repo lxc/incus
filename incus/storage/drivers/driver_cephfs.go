@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cyphar/incus/lxd/migration"
-	"github.com/cyphar/incus/lxd/operations"
-	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/incus/migration"
+	"github.com/cyphar/incus/incus/operations"
+	"github.com/cyphar/incus/incus/storage/filesystem"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/validate"

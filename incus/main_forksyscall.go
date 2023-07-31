@@ -659,7 +659,7 @@ import (
 	"github.com/spf13/cobra"
 
 	// Used by cgo
-	_ "github.com/cyphar/incus/lxd/include"
+	_ "github.com/cyphar/incus/incus/include"
 )
 
 type cmdForksyscall struct {

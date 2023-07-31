@@ -11,8 +11,8 @@ import (
 	"github.com/canonical/go-dqlite/client"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

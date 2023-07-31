@@ -5,7 +5,7 @@ package db
 import (
 	"context"
 
-	"github.com/cyphar/incus/lxd/db/query"
+	"github.com/cyphar/incus/incus/db/query"
 )
 
 // Config fetches all LXD node-level config keys.

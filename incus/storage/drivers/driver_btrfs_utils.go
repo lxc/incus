@@ -18,8 +18,8 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/lxd/backup"
-	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/incus/backup"
+	"github.com/cyphar/incus/incus/revert"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/ioprogress"

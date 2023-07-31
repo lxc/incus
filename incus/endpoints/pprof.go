@@ -7,7 +7,7 @@ import (
 	_ "net/http/pprof" // pprof magic
 	"time"
 
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cyphar/incus/lxd/db/generate/lex"
+	"github.com/cyphar/incus/incus/db/generate/lex"
 	"github.com/cyphar/incus/shared"
 )
 

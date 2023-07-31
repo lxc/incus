@@ -13,10 +13,10 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/revert"
-	storageDrivers "github.com/cyphar/incus/lxd/storage/drivers"
-	"github.com/cyphar/incus/lxd/storage/filesystem"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/revert"
+	storageDrivers "github.com/cyphar/incus/incus/storage/drivers"
+	"github.com/cyphar/incus/incus/storage/filesystem"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/idmap"
 	"github.com/cyphar/incus/shared/osarch"

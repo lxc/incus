@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cyphar/incus/lxd/config"
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/config"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/validate"
 )

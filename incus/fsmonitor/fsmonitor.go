@@ -1,7 +1,7 @@
 package fsmonitor
 
 import (
-	"github.com/cyphar/incus/lxd/fsmonitor/drivers"
+	"github.com/cyphar/incus/incus/fsmonitor/drivers"
 	"github.com/cyphar/incus/shared/logger"
 )
 

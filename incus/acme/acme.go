@@ -16,8 +16,8 @@ import (
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/registration"
 
-	"github.com/cyphar/incus/lxd/state"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/state"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cyphar/incus/lxd/events"
-	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/incus/events"
+	"github.com/cyphar/incus/incus/response"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/ws"
 )

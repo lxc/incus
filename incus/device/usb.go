@@ -6,9 +6,9 @@ import (
 	"path"
 	"strings"
 
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/instance/instancetype"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/instance/instancetype"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/osarch"
 	"github.com/cyphar/incus/shared/validate"

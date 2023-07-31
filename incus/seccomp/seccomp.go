@@ -460,13 +460,13 @@ import (
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/lxd/cgroup"
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
-	_ "github.com/cyphar/incus/lxd/include" // Used by cgo
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/state"
-	"github.com/cyphar/incus/lxd/ucred"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/cgroup"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
+	_ "github.com/cyphar/incus/incus/include" // Used by cgo
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/state"
+	"github.com/cyphar/incus/incus/ucred"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/idmap"

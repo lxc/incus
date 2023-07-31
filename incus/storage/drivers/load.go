@@ -1,7 +1,7 @@
 package drivers
 
 import (
-	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared/logger"
 )
 

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/revert"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

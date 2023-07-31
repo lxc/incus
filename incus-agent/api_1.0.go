@@ -11,9 +11,9 @@ import (
 	"github.com/mdlayher/vsock"
 
 	"github.com/cyphar/incus/client"
-	agentAPI "github.com/cyphar/incus/lxd-agent/api"
-	"github.com/cyphar/incus/lxd/response"
-	lxdvsock "github.com/cyphar/incus/lxd/vsock"
+	agentAPI "github.com/cyphar/incus/incus-agent/api"
+	"github.com/cyphar/incus/incus/response"
+	lxdvsock "github.com/cyphar/incus/incus/vsock"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"

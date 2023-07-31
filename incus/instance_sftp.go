@@ -11,9 +11,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/lxd/cluster"
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/incus/cluster"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/response"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"

@@ -10,13 +10,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/lifecycle"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/request"
-	"github.com/cyphar/incus/lxd/response"
-	"github.com/cyphar/incus/lxd/revert"
-	"github.com/cyphar/incus/lxd/storage"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/lifecycle"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/request"
+	"github.com/cyphar/incus/incus/response"
+	"github.com/cyphar/incus/incus/revert"
+	"github.com/cyphar/incus/incus/storage"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/version"
 )

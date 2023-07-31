@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cyphar/incus/lxd/cluster/request"
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/revert"
-	"github.com/cyphar/incus/lxd/state"
-	storagePools "github.com/cyphar/incus/lxd/storage"
+	"github.com/cyphar/incus/incus/cluster/request"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/revert"
+	"github.com/cyphar/incus/incus/state"
+	storagePools "github.com/cyphar/incus/incus/storage"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"
 )

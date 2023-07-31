@@ -7,7 +7,7 @@ import (
 
 	"github.com/juju/gomaasapi"
 
-	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/incus/project"
 	"github.com/cyphar/incus/shared/api"
 )
 

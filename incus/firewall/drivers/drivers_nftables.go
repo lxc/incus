@@ -13,7 +13,7 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/incus/project"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/validate"
 	"github.com/cyphar/incus/shared/version"

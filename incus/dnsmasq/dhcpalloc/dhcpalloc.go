@@ -12,7 +12,7 @@ import (
 
 	"github.com/mdlayher/netx/eui64"
 
-	"github.com/cyphar/incus/lxd/dnsmasq"
+	"github.com/cyphar/incus/incus/dnsmasq"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/incus/project"
 	"github.com/cyphar/incus/shared/logger"
 )
 

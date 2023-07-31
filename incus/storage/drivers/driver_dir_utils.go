@@ -3,8 +3,8 @@ package drivers
 import (
 	"fmt"
 
-	"github.com/cyphar/incus/lxd/revert"
-	"github.com/cyphar/incus/lxd/storage/quota"
+	"github.com/cyphar/incus/incus/revert"
+	"github.com/cyphar/incus/incus/storage/quota"
 	"github.com/cyphar/incus/shared/logger"
 	"github.com/cyphar/incus/shared/units"
 )

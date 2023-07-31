@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/instance/instancetype"
 	"github.com/cyphar/incus/shared/api"
 )
 

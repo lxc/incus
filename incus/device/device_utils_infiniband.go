@@ -5,8 +5,8 @@ import (
 	"net"
 	"strings"
 
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
-	"github.com/cyphar/incus/lxd/state"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared/api"
 )
 

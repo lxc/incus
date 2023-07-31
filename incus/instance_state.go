@@ -10,10 +10,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/lxd/db/operationtype"
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/operations"
-	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/incus/db/operationtype"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/operations"
+	"github.com/cyphar/incus/incus/response"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/version"

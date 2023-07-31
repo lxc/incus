@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/lxd/project"
-	storageDrivers "github.com/cyphar/incus/lxd/storage/drivers"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/project"
+	storageDrivers "github.com/cyphar/incus/incus/storage/drivers"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 )

@@ -8,11 +8,11 @@ import (
 	"github.com/canonical/go-dqlite"
 	"github.com/spf13/cobra"
 
-	"github.com/cyphar/incus/lxd/daemon"
-	"github.com/cyphar/incus/lxd/events"
-	"github.com/cyphar/incus/lxd/operations"
-	"github.com/cyphar/incus/lxd/response"
-	"github.com/cyphar/incus/lxd/rsync"
+	"github.com/cyphar/incus/incus/daemon"
+	"github.com/cyphar/incus/incus/events"
+	"github.com/cyphar/incus/incus/operations"
+	"github.com/cyphar/incus/incus/response"
+	"github.com/cyphar/incus/incus/rsync"
 	"github.com/cyphar/incus/shared/logger"
 	"github.com/cyphar/incus/shared/version"
 )

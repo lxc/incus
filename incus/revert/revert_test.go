@@ -3,7 +3,7 @@ package revert_test
 import (
 	"fmt"
 
-	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/incus/revert"
 )
 
 func ExampleReverter_fail() {

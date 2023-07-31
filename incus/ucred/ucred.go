@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/lxd/endpoints/listeners"
-	"github.com/cyphar/incus/lxd/request"
+	"github.com/cyphar/incus/incus/endpoints/listeners"
+	"github.com/cyphar/incus/incus/request"
 )
 
 // ErrNotUnixSocket is returned when the underlying connection isn't a unix socket.

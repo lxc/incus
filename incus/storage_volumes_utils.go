@@ -3,11 +3,11 @@ package main
 import (
 	"strings"
 
-	"github.com/cyphar/incus/lxd/backup"
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/instance"
-	"github.com/cyphar/incus/lxd/state"
-	storagePools "github.com/cyphar/incus/lxd/storage"
+	"github.com/cyphar/incus/incus/backup"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/instance"
+	"github.com/cyphar/incus/incus/state"
+	storagePools "github.com/cyphar/incus/incus/storage"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/version"

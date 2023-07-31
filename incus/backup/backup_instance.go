@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/lxd/lifecycle"
-	"github.com/cyphar/incus/lxd/operations"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/state"
+	"github.com/cyphar/incus/incus/lifecycle"
+	"github.com/cyphar/incus/incus/operations"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/state"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 )

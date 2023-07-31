@@ -7,7 +7,7 @@ import (
 
 	"github.com/armon/go-proxyproto"
 
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 )
 

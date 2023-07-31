@@ -14,8 +14,8 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/response"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/response"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/ioprogress"

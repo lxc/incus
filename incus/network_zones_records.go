@@ -7,13 +7,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	clusterRequest "github.com/cyphar/incus/lxd/cluster/request"
-	"github.com/cyphar/incus/lxd/lifecycle"
-	"github.com/cyphar/incus/lxd/network/zone"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/request"
-	"github.com/cyphar/incus/lxd/response"
-	"github.com/cyphar/incus/lxd/util"
+	clusterRequest "github.com/cyphar/incus/incus/cluster/request"
+	"github.com/cyphar/incus/incus/lifecycle"
+	"github.com/cyphar/incus/incus/network/zone"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/request"
+	"github.com/cyphar/incus/incus/response"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/version"
 )

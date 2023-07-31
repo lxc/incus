@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/utils/inotify"
 
-	"github.com/cyphar/incus/lxd/network"
+	"github.com/cyphar/incus/incus/network"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/dnsutil"
 	"github.com/cyphar/incus/shared/logger"

@@ -11,8 +11,8 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/cyphar/incus/lxd/revert"
-	"github.com/cyphar/incus/lxd/sys"
+	"github.com/cyphar/incus/incus/revert"
+	"github.com/cyphar/incus/incus/sys"
 	"github.com/cyphar/incus/shared"
 )
 

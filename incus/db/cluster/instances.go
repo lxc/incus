@@ -7,8 +7,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/cyphar/incus/lxd/device/config"
-	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/incus/device/config"
+	"github.com/cyphar/incus/incus/instance/instancetype"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/osarch"
 )

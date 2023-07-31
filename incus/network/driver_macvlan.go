@@ -3,9 +3,9 @@ package network
 import (
 	"fmt"
 
-	"github.com/cyphar/incus/lxd/cluster/request"
-	"github.com/cyphar/incus/lxd/db"
-	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/incus/cluster/request"
+	"github.com/cyphar/incus/incus/db"
+	"github.com/cyphar/incus/incus/revert"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/logger"
 	"github.com/cyphar/incus/shared/validate"

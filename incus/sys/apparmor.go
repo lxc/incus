@@ -10,9 +10,9 @@ import (
 
 	"github.com/syndtr/gocapability/capability"
 
-	"github.com/cyphar/incus/lxd/db/cluster"
-	"github.com/cyphar/incus/lxd/db/warningtype"
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/db/cluster"
+	"github.com/cyphar/incus/incus/db/warningtype"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )

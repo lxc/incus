@@ -1,7 +1,7 @@
 package endpoints
 
 import (
-	"github.com/cyphar/incus/lxd/util"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 )
 

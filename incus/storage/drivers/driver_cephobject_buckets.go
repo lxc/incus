@@ -14,9 +14,9 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
-	"github.com/cyphar/incus/lxd/operations"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/revert"
+	"github.com/cyphar/incus/incus/operations"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/revert"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/units"

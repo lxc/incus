@@ -6,7 +6,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/lxd/project"
+	"github.com/cyphar/incus/incus/project"
 	"github.com/cyphar/incus/shared/api"
 )
 

@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/cyphar/incus/lxd/instance/instancetype"
+	"github.com/cyphar/incus/incus/instance/instancetype"
 	"github.com/cyphar/incus/shared"
 )
 

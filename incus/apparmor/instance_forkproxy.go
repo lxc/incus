@@ -7,10 +7,10 @@ import (
 	"strings"
 	"text/template"
 
-	deviceConfig "github.com/cyphar/incus/lxd/device/config"
-	"github.com/cyphar/incus/lxd/project"
-	"github.com/cyphar/incus/lxd/sys"
-	"github.com/cyphar/incus/lxd/util"
+	deviceConfig "github.com/cyphar/incus/incus/device/config"
+	"github.com/cyphar/incus/incus/project"
+	"github.com/cyphar/incus/incus/sys"
+	"github.com/cyphar/incus/incus/util"
 	"github.com/cyphar/incus/shared"
 )
 
