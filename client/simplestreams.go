@@ -1,4 +1,4 @@
-package lxd
+package incus
 
 import (
 	"fmt"
