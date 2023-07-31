@@ -836,15 +836,15 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 		apiNet.Description = n.Description()
 		apiNet.Type = n.Type()
 
-		if auth.UserIsAdmin(r) {
+		if auth.UserIsAdmin(r) || auth.UserHasPermission(r, projectName) {
 			// Only allow admins to see network config as sensitive info can be stored there.
 			apiNet.Config = n.Config()
+		}
 
-			// If no member is specified, we omit the node-specific fields.
-			if allNodes {
-				for _, key := range db.NodeSpecificNetworkConfig {
-					delete(apiNet.Config, key)
-				}
+		// If no member is specified, we omit the node-specific fields.
+		if allNodes {
+			for _, key := range db.NodeSpecificNetworkConfig {
+				delete(apiNet.Config, key)
 			}
 		}
 	} else if osInfo != nil && int(osInfo.Flags&net.FlagLoopback) > 0 {
