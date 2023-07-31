@@ -50,7 +50,7 @@ The naming for those (unless overridden by the user) is `ethX`, where `X` is an 
 
 LXD sets up a socket at `/dev/lxd/sock` that the root user in the container can use to communicate with LXD on the host.
 
-See {doc}`dev-lxd` for the API documentation.
+See {doc}`dev-incus` for the API documentation.
 
 ## Mounts
 

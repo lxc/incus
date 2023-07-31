@@ -67,7 +67,6 @@ With *instance*, we mean either a container or a virtual machine.
 See {ref}`containers-and-vms` for information about the difference between the two instance types.
 
 For managing instances, we use the LXD command line client `lxc`.
-See [About `lxd` and `lxc`](lxd-lxc) if you are confused about when to use the `lxc` command and when to use the `lxd` command.
 
 1. Launch a container called `first` using the Ubuntu 22.04 image:
 

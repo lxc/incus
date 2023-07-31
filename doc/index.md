@@ -10,8 +10,8 @@ LXD (<a href="#" title="Listen" onclick="document.getElementById('player').play(
 
 % Include content from [../README.md](../README.md)
 ```{include} ../README.md
-    :start-after: <!-- Include start LXD intro -->
-    :end-before: <!-- Include end LXD intro -->
+    :start-after: <!-- Include start Incus intro -->
+    :end-before: <!-- Include end Incus intro -->
 ```
 
 ## Security

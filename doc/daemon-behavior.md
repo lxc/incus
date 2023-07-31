@@ -1,7 +1,7 @@
 (daemon-behavior)=
 # Daemon behavior
 
-This specification covers some of the {ref}`lxd-daemon`'s behavior.
+This specification covers some of the Incus daemon's behavior.
 
 ## Startup
 
