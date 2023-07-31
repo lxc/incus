@@ -1,10 +1,10 @@
-DOMAIN=lxd
+DOMAIN=inc
 POFILES=$(wildcard po/*.po)
 MOFILES=$(patsubst %.po,%.mo,$(POFILES))
 LINGUAS=$(basename $(POFILES))
 POTFILE=po/$(DOMAIN).pot
 VERSION=$(shell grep "var Version" shared/version/flex.go | cut -d'"' -f2)
-ARCHIVE=lxd-$(VERSION).tar
+ARCHIVE=incus-$(VERSION).tar
 HASH := \#
 TAG_SQLITE3=$(shell printf "$(HASH)include <dqlite.h>\nvoid main(){dqlite_node_id n = 1;}" | $(CC) ${CGO_CFLAGS} -o /dev/null -xc - >/dev/null 2>&1 && echo "libsqlite3")
 GOPATH ?= $(shell go env GOPATH)
@@ -31,30 +31,30 @@ ifeq "$(TAG_SQLITE3)" ""
 endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
-	CGO_ENABLED=0 go install -v -tags netgo ./lxd-migrate
-	CGO_ENABLED=0 go install -v -tags agent,netgo ./lxd-agent
-	@echo "LXD built successfully"
+	CGO_ENABLED=0 go install -v -tags netgo ./incus-migrate
+	CGO_ENABLED=0 go install -v -tags agent,netgo ./incus-agent
+	@echo "Incus built successfully"
 
 .PHONY: client
 client:
-	go install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./lxc
-	@echo "LXD client built successfully"
+	go install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./inc
+	@echo "Incus client built successfully"
 
-.PHONY: lxd-agent
-lxd-agent:
-	CGO_ENABLED=0 go install -v -tags agent,netgo ./lxd-agent
-	@echo "LXD agent built successfully"
+.PHONY: incus-agent
+incus-agent:
+	CGO_ENABLED=0 go install -v -tags agent,netgo ./incus-agent
+	@echo "Incus agent built successfully"
 
-.PHONY: lxd-migrate
-lxd-migrate:
-	CGO_ENABLED=0 go install -v -tags netgo ./lxd-migrate
-	@echo "LXD-MIGRATE built successfully"
+.PHONY: incus-migrate
+incus-migrate:
+	CGO_ENABLED=0 go install -v -tags netgo ./incus-migrate
+	@echo "Incus migration tool built successfully"
 
-.PHONY: lxd-doc
-lxd-doc:
-	@go version > /dev/null 2>&1 || { echo "go is not installed for lxd-doc installation."; exit 1; }
-	cd lxd/config/generate && CGO_ENABLED=0 go build -o $(GOPATH)/bin/lxd-doc
-	@echo "LXD-DOC built successfully"
+.PHONY: incus-doc
+incus-doc:
+	@go version > /dev/null 2>&1 || { echo "go is not installed for incus-doc installation."; exit 1; }
+	cd incus/config/generate && CGO_ENABLED=0 go build -o $(GOPATH)/bin/incus-doc
+	@echo "Incus documentation generator built successfully"
 
 .PHONY: deps
 deps:
@@ -91,7 +91,7 @@ deps:
 
 .PHONY: update
 update:
-ifneq "$(LXD_OFFLINE)" ""
+ifneq "$(INCUS_OFFLINE)" ""
 	@echo "The update target cannot be run in offline mode."
 	exit 1
 endif
@@ -101,22 +101,22 @@ endif
 
 .PHONY: update-protobuf
 update-protobuf:
-	protoc --go_out=. ./lxd/migration/migrate.proto
+	protoc --go_out=. ./incus/migration/migrate.proto
 
 .PHONY: update-schema
 update-schema:
-	cd lxd/db/generate && go build -o $(GOPATH)/bin/lxd-generate -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
+	cd incus/db/generate && go build -o $(GOPATH)/bin/incus-generate -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
 	go generate ./...
-	gofmt -s -w ./lxd/db/
-	goimports -w ./lxd/db/
+	gofmt -s -w ./incus/db/
+	goimports -w ./incus/db/
 	@echo "Code generation completed"
 
 .PHONY: update-api
 update-api:
-ifeq "$(LXD_OFFLINE)" ""
+ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; go install -v -x github.com/go-swagger/go-swagger/cmd/swagger@latest)
 endif
-	swagger generate spec -o doc/rest-api.yaml -w ./lxd -m
+	swagger generate spec -o doc/rest-api.yaml -w ./incus -m
 
 .PHONY: doc-setup
 doc-setup:
@@ -126,12 +126,12 @@ doc-setup:
 	rm -Rf doc/html
 
 .PHONY: doc
-doc: lxd-doc doc-setup doc-incremental
+doc: incus-doc doc-setup doc-incremental
 
 .PHONY: doc-incremental
 doc-incremental:
 	@echo "Build the documentation"
-	$(GOPATH)/bin/lxd-doc ./lxd -y ./doc/config_options.yaml -t ./doc/config_options.txt
+	$(GOPATH)/bin/incus-doc ./incus -y ./doc/config_options.yaml -t ./doc/config_options.txt
 	. $(SPHINXENV) ; sphinx-build -c doc/ -b dirhtml doc/ doc/html/ -w doc/.sphinx/warnings.txt
 
 .PHONY: doc-serve
@@ -158,9 +158,9 @@ ifeq "$(TAG_SQLITE3)" ""
 endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -v -tags "$(TAG_SQLITE3) logdebug" $(DEBUG) ./...
-	CGO_ENABLED=0 go install -v -tags "netgo,logdebug" ./lxd-migrate
-	CGO_ENABLED=0 go install -v -tags "agent,netgo,logdebug" ./lxd-agent
-	@echo "LXD built successfully"
+	CGO_ENABLED=0 go install -v -tags "netgo,logdebug" ./incus-migrate
+	CGO_ENABLED=0 go install -v -tags "agent,netgo,logdebug" ./incus-agent
+	@echo "Incus built successfully"
 
 .PHONY: nocache
 nocache:
@@ -170,9 +170,9 @@ ifeq "$(TAG_SQLITE3)" ""
 endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -a -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
-	CGO_ENABLED=0 go install -a -v -tags netgo ./lxd-migrate
-	CGO_ENABLED=0 go install -a -v -tags agent,netgo ./lxd-agent
-	@echo "LXD built successfully"
+	CGO_ENABLED=0 go install -a -v -tags netgo ./incus-migrate
+	CGO_ENABLED=0 go install -a -v -tags agent,netgo ./incus-agent
+	@echo "Incus built successfully"
 
 race:
 ifeq "$(TAG_SQLITE3)" ""
@@ -181,13 +181,13 @@ ifeq "$(TAG_SQLITE3)" ""
 endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -race -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
-	CGO_ENABLED=0 go install -v -tags netgo ./lxd-migrate
-	CGO_ENABLED=0 go install -v -tags agent,netgo ./lxd-agent
-	@echo "LXD built successfully"
+	CGO_ENABLED=0 go install -v -tags netgo ./incus-migrate
+	CGO_ENABLED=0 go install -v -tags agent,netgo ./incus-agent
+	@echo "Incus built successfully"
 
 .PHONY: check
 check: default
-ifeq "$(LXD_OFFLINE)" ""
+ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; go install -v -x github.com/rogpeppe/godeps@latest)
 	(cd / ; go install -v -x github.com/tsenart/deadcode@latest)
 	(cd / ; go install -v -x golang.org/x/lint/golint@latest)
@@ -202,24 +202,24 @@ dist: doc
 
 	# Create build dir
 	$(eval TMP := $(shell mktemp -d))
-	git archive --prefix=lxd-$(VERSION)/ HEAD | tar -x -C $(TMP)
-	git show-ref HEAD | cut -d' ' -f1 > $(TMP)/lxd-$(VERSION)/.gitref
+	git archive --prefix=incus-$(VERSION)/ HEAD | tar -x -C $(TMP)
+	git show-ref HEAD | cut -d' ' -f1 > $(TMP)/incus-$(VERSION)/.gitref
 
 	# Download dependencies
-	(cd $(TMP)/lxd-$(VERSION) ; go mod vendor)
+	(cd $(TMP)/incus-$(VERSION) ; go mod vendor)
 
 	# Download the dqlite libraries
-	git clone --depth=1 https://github.com/canonical/dqlite $(TMP)/lxd-$(VERSION)/vendor/dqlite
-	(cd $(TMP)/lxd-$(VERSION)/vendor/dqlite ; git show-ref HEAD | cut -d' ' -f1 > .gitref)
+	git clone --depth=1 https://github.com/canonical/dqlite $(TMP)/incus-$(VERSION)/vendor/dqlite
+	(cd $(TMP)/incus-$(VERSION)/vendor/dqlite ; git show-ref HEAD | cut -d' ' -f1 > .gitref)
 
-	git clone --depth=1 https://github.com/canonical/raft $(TMP)/lxd-$(VERSION)/vendor/raft
-	(cd $(TMP)/lxd-$(VERSION)/vendor/raft ; git show-ref HEAD | cut -d' ' -f1 > .gitref)
+	git clone --depth=1 https://github.com/canonical/raft $(TMP)/incus-$(VERSION)/vendor/raft
+	(cd $(TMP)/incus-$(VERSION)/vendor/raft ; git show-ref HEAD | cut -d' ' -f1 > .gitref)
 
 	# Copy doc output
-	cp -r doc/html $(TMP)/lxd-$(VERSION)/doc/html/
+	cp -r doc/html $(TMP)/incus-$(VERSION)/doc/html/
 
 	# Assemble tarball
-	tar --exclude-vcs -C $(TMP) -zcf $(ARCHIVE).gz lxd-$(VERSION)/
+	tar --exclude-vcs -C $(TMP) -zcf $(ARCHIVE).gz incus-$(VERSION)/
 
 	# Cleanup
 	rm -Rf $(TMP)
@@ -242,10 +242,10 @@ update-po:
 
 .PHONY: update-pot
 update-pot:
-ifeq "$(LXD_OFFLINE)" ""
+ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; go install -v -x github.com/snapcore/snapd/i18n/xgettext-go@2.57.1)
 endif
-	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=lxd@lists.canonical.com --keyword=i18n.G --keyword-plural=i18n.NG lxc/*.go lxc/*/*.go
+	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=incus@example.net --keyword=i18n.G --keyword-plural=i18n.NG inc/*.go inc/*/*.go
 
 .PHONY: build-mo
 build-mo: $(MOFILES)
@@ -273,5 +273,5 @@ endif
 	run-parts --exit-on-error --regex '.sh' test/lint
 
 .PHONY: tags
-tags: *.go lxd/*.go shared/*.go lxc/*.go
+tags: *.go incus/*.go shared/*.go inc/*.go
 	find . -type f -name '*.go' | xargs gotags > tags
