@@ -9,10 +9,10 @@ import (
 // Return a new root command.
 func newRoot() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "lxd-generate",
+		Use:   "incus-generate",
 		Short: "Code generation tool for LXD development",
 		Long: `This is the entry point for all "go:generate" directives
-used in LXD's source code.`,
+used in Incus' source code.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Not implemented")
 		},

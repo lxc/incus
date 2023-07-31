@@ -4,7 +4,7 @@ import (
 	"github.com/cyphar/incus/shared/api"
 )
 
-//go:generate -command mapper lxd-generate db mapper -t cluster_groups.mapper.go
+//go:generate -command mapper incus-generate db mapper -t cluster_groups.mapper.go
 //go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
 //
 //go:generate mapper stmt -e cluster_group objects table=cluster_groups

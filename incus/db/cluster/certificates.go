@@ -14,7 +14,7 @@ import (
 
 // Code generation directives.
 //
-//go:generate -command mapper lxd-generate db mapper -t certificates.mapper.go
+//go:generate -command mapper incus-generate db mapper -t certificates.mapper.go
 //go:generate mapper reset -i -b "//go:build linux && cgo && !agent"
 //
 //go:generate mapper stmt -e certificate objects
