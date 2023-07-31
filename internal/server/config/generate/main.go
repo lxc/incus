@@ -34,13 +34,13 @@ var rootCmd = &cobra.Command{
 		}
 
 		path := args[0]
-		yaml, err := parse(path, yamlOutput, exclude)
+		_, err := parse(path, yamlOutput, exclude)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		if txtOutput != "" {
-			err = writeDocFile(txtOutput, yaml)
+			err = writeDocFile(yamlOutput, txtOutput)
 			if err != nil {
 				log.Fatal(err)
 			}
