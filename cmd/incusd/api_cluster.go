@@ -1733,11 +1733,12 @@ func clusterRolesChanged(oldRoles []db.ClusterRole, newRoles []db.ClusterRole) b
 func clusterValidateConfig(config map[string]string) error {
 	clusterConfigKeys := map[string]func(value string) error{
 		// gendoc:generate(group=cluster, key=scheduler.instance)
-		//
+		// Possible values are `all`, `manual`, and `group`. See
+		// {ref}`clustering-instance-placement` for more information.
 		// ---
 		//  type: string
 		//  default: `all`
-		//  shortdesc: Possible values are `all`, `manual` and `group`. See {ref}`clustering-instance-placement` for more information.
+		//  shortdesc: Controls how instances are scheduled to run on this member
 		"scheduler.instance": validate.Optional(validate.IsOneOf("all", "group", "manual")),
 	}
 
@@ -1745,10 +1746,10 @@ func clusterValidateConfig(config map[string]string) error {
 		// User keys are free for all.
 
 		// gendoc:generate(group=cluster, key=user.*)
-		//
+		// User keys can be used in search.
 		// ---
 		//  type: string
-		//  shortdesc: Free form user key/value storage (can be used in search).
+		//  shortdesc: Free form user key/value storage
 		if strings.HasPrefix(k, "user.") {
 			continue
 		}
