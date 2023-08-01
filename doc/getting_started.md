@@ -9,15 +9,12 @@ See the following sections for information on how to get started with LXD:
 ```{toctree}
 :maxdepth: 1
 
-tutorial/first_steps
-explanation/containers_and_vms
-requirements
-Install LXD <installing>
-Initialize LXD <howto/initialize>
-Access the UI <howto/access_ui>
-Frequently asked <faq>
-contributing
-support
+Access the documentation </howto/access_documentation>
+Access the UI </howto/access_ui>
+Contribute to LXD </contributing>
+Get support </support>
+Initialize LXD </howto/initialize>
+Install LXD </installing>
 ```
 
 In addition, the following clip gives a quick and easy introduction for standard use cases:
@@ -29,3 +26,20 @@ In addition, the following clip gives a quick and easy introduction for standard
 You can find a series of demos and tutorials on YouTube:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/videoseries?list=PLddduKsl-KEhleT9VTR4hbtlNdtMr6cFd" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Related topics
+
+```{toctree}
+:maxdepth: 1
+
+/tutorial/first_steps
+/explanation/containers_and_vms
+/requirements
+Install LXD </installing>
+Initialize LXD </howto/initialize>
+Access the UI </howto/access_ui>
+Access the documentation </howto/access_documentation>
+Frequently asked </faq>
+Contribute to LXD </contributing>
+Get support </support>
+```
