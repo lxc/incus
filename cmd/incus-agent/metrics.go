@@ -310,7 +310,12 @@ func getMemoryMetrics(d *Daemon) (metrics.MemoryMetrics, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(content))
 
 	for scanner.Scan() {
-		fields := strings.Fields(scanner.Text())
+		line := scanner.Text()
+		fields := strings.Fields(line)
+
+		if len(fields) < 2 {
+			return metrics.MemoryMetrics{}, fmt.Errorf("Invalid /proc/meminfo content: %q", line)
+		}
 
 		fields[0] = strings.TrimRight(fields[0], ":")
 
