@@ -144,12 +144,12 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 		_, err := exec.LookPath("xdelta3")
 		if err == nil && req.DeltaSourceRetriever != nil {
 			for filename, file := range files {
-				if !strings.HasPrefix(filename, "root.delta-") {
+				_, srcFingerprint, prefixFound := strings.Cut(filename, "root.delta-")
+				if !prefixFound {
 					continue
 				}
 
 				// Check if we have the source file for the delta
-				srcFingerprint := strings.Split(filename, "root.delta-")[1]
 				srcPath := req.DeltaSourceRetriever(srcFingerprint, "rootfs")
 				if srcPath == "" {
 					continue
