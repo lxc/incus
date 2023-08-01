@@ -264,7 +264,12 @@ func getFilesystemMetrics(d *Daemon) (map[string]metrics.FilesystemMetrics, erro
 	scanner := bufio.NewScanner(bytes.NewReader(mounts))
 
 	for scanner.Scan() {
-		fields := strings.Fields(scanner.Text())
+		line := scanner.Text()
+		fields := strings.Fields(line)
+
+		if len(fields) < 3 {
+			return nil, fmt.Errorf("Invalid /proc/mounts content: %q", line)
+		}
 
 		// Skip uninteresting mounts
 		if util.ValueInSlice(fields[2], defFSTypesExcluded) || defMountPointsExcluded.MatchString(fields[1]) {
