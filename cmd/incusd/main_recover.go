@@ -194,6 +194,13 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed parsing validation response: %w", err)
 		}
 
+		if len(unknownPools) > 0 {
+			fmt.Println("The following unknown storage pools have been found:")
+			for _, unknownPool := range unknownPools {
+				fmt.Printf(" - Storage pool %q of type %q\n", unknownPool.Name, unknownPool.Driver)
+			}
+		}
+
 		if len(res.UnknownVolumes) > 0 {
 			fmt.Println("The following unknown volumes have been found:")
 			for _, unknownVol := range res.UnknownVolumes {
@@ -203,15 +210,14 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 
 		if len(res.DependencyErrors) > 0 {
 			fmt.Println("You are currently missing the following:")
-
 			for _, depErr := range res.DependencyErrors {
 				fmt.Printf(" - %s\n", depErr)
 			}
 
 			_, _ = cli.AskString("Please create those missing entries and then hit ENTER: ", "", validate.Optional())
 		} else {
-			if len(res.UnknownVolumes) <= 0 {
-				fmt.Println("No unknown volumes found. Nothing to do.")
+			if len(unknownPools) == 0 && len(res.UnknownVolumes) == 0 {
+				fmt.Println("No unknown storage pools or volumes found. Nothing to do.")
 				return nil
 			}
 
