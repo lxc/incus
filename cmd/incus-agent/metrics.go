@@ -218,6 +218,10 @@ func getDiskMetrics(d *Daemon) (map[string]metrics.DiskMetrics, error) {
 		}
 
 		fields := strings.Fields(line)
+		if len(fields) < 10 {
+			return nil, fmt.Errorf("Invalid /proc/diskstats content: %q", line)
+		}
+
 		stats := metrics.DiskMetrics{}
 
 		stats.ReadsCompleted, err = strconv.ParseUint(fields[3], 10, 64)
