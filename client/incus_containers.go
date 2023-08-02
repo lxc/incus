@@ -114,7 +114,7 @@ func (r *ProtocolLXD) CreateContainerFromBackup(args ContainerBackupArgs) (Opera
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
-	req.Header.Set("X-LXD-pool", args.PoolName)
+	req.Header.Set("X-Incus-pool", args.PoolName)
 
 	// Send the request
 	resp, err := r.DoHTTP(req)
@@ -864,23 +864,23 @@ func (r *ProtocolLXD) CreateContainerFile(containerName string, path string, arg
 
 	// Set the various headers
 	if args.UID > -1 {
-		req.Header.Set("X-LXD-uid", fmt.Sprintf("%d", args.UID))
+		req.Header.Set("X-Incus-uid", fmt.Sprintf("%d", args.UID))
 	}
 
 	if args.GID > -1 {
-		req.Header.Set("X-LXD-gid", fmt.Sprintf("%d", args.GID))
+		req.Header.Set("X-Incus-gid", fmt.Sprintf("%d", args.GID))
 	}
 
 	if args.Mode > -1 {
-		req.Header.Set("X-LXD-mode", fmt.Sprintf("%04o", args.Mode))
+		req.Header.Set("X-Incus-mode", fmt.Sprintf("%04o", args.Mode))
 	}
 
 	if args.Type != "" {
-		req.Header.Set("X-LXD-type", args.Type)
+		req.Header.Set("X-Incus-type", args.Type)
 	}
 
 	if args.WriteMode != "" {
-		req.Header.Set("X-LXD-write", args.WriteMode)
+		req.Header.Set("X-Incus-write", args.WriteMode)
 	}
 
 	// Send the request
