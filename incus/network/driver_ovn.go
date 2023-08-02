@@ -802,7 +802,7 @@ func (n *ovn) getDomainName() string {
 		return n.config["dns.domain"]
 	}
 
-	return "lxd"
+	return "incus"
 }
 
 // getDNSSearchList returns OVN DHCP DNS search list. If no search list set returns getDomainName() as list.

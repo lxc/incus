@@ -1551,7 +1551,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Setup the dnsmasq domain.
 		dnsDomain := n.config["dns.domain"]
 		if dnsDomain == "" {
-			dnsDomain = "lxd"
+			dnsDomain = "incus"
 		}
 
 		if n.config["dns.mode"] != "none" {
@@ -1916,7 +1916,7 @@ func (n *bridge) spawnForkDNS(listenAddress string) error {
 	// Setup the dnsmasq domain
 	dnsDomain := n.config["dns.domain"]
 	if dnsDomain == "" {
-		dnsDomain = "lxd"
+		dnsDomain = "incus"
 	}
 
 	// Spawn the daemon using subprocess
