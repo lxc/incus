@@ -4,4 +4,3 @@ API:
 - shared/api/**/*
 Documentation:
 - doc/**/*
-- .sphinx/**/*
