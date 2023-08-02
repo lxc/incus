@@ -3,12 +3,12 @@ test_clustering_instance_placement_scriptlet() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # The random storage backend is not supported in clustering tests,
   # since we need to have the same storage driver on all nodes, so use the driver chosen for the standalone pool.
-  poolDriver=$(lxc storage show "$(lxc profile device get default root pool)" | awk '/^driver:/ {print $2}')
+  poolDriver=$(inc storage show "$(inc profile device get default root pool)" | awk '/^driver:/ {print $2}')
 
   # Spawn first node
   setup_clustering_netns 1
@@ -18,7 +18,7 @@ test_clustering_instance_placement_scriptlet() {
   spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   # The state of the preseeded storage pool shows up as CREATED
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage list | grep data | grep -q CREATED
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage list | grep data | grep -q CREATED
 
   # Add a newline at the end of each line. YAML has weird rules.
   cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
@@ -40,12 +40,12 @@ test_clustering_instance_placement_scriptlet() {
   INCUS_DIR="${INCUS_ONE_DIR}" ensure_import_testimage
 
   # Check only valid scriptlets are accepted.
-  ! lxc config set instances.placement.scriptlet=foo || false
+  ! inc config set instances.placement.scriptlet=foo || false
 
   # Set basic instance placement scriptlet that logs member info and statically targets to 2nd node.
   # And by extension checks each of the scriptlet environment functions are callable.
   # Also checks that the instance_resources are provided as expected.
-  cat << EOF | lxc config set instances.placement.scriptlet=-
+  cat << EOF | inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         instance_resources = get_instance_resources()
         log_info("instance placement started: ", request, ", ", instance_resources)
@@ -84,44 +84,44 @@ EOF
   # Send each request to a different cluster member to test scriptlet replication to other members.
 
   # Create instance with limits set on instance to appease intance_resources checks.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init testimage c1 -c limits.memory=512MiB -c limits.cpu=1 -d root,size=200MiB
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c1 -c limits.memory=512MiB -c limits.cpu=1 -d root,size=200MiB
 
   # Create instances with limits set on a profile to test expansion and to appease intance_resources checks.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc profile create foo
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc profile show default | lxc profile edit foo
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc profile set foo limits.cpu=1 limits.memory=512MiB
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc profile device set foo root size=200MiB
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc init testimage c2 -p foo
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc init testimage c3 -p foo
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c1 | grep -q "Location: node2"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c2 | grep -q "Location: node2"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c3 | grep -q "Location: node2"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc delete -f c1 c2 c3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc profile delete foo
+  INCUS_DIR="${INCUS_TWO_DIR}" inc profile create foo
+  INCUS_DIR="${INCUS_TWO_DIR}" inc profile show default | inc profile edit foo
+  INCUS_DIR="${INCUS_TWO_DIR}" inc profile set foo limits.cpu=1 limits.memory=512MiB
+  INCUS_DIR="${INCUS_TWO_DIR}" inc profile device set foo root size=200MiB
+  INCUS_DIR="${INCUS_TWO_DIR}" inc init testimage c2 -p foo
+  INCUS_DIR="${INCUS_THREE_DIR}" inc init testimage c3 -p foo
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c1 | grep -q "Location: node2"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c2 | grep -q "Location: node2"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c3 | grep -q "Location: node2"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc delete -f c1 c2 c3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc profile delete foo
 
   # Set instance placement scriptlet that returns an error and test instance creation fails.
-  cat << EOF | lxc config set instances.placement.scriptlet=-
+  cat << EOF | inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         log_error("instance placement not allowed") # Log placement error.
 
         fail("Instance not allowed") # Fail to prevent instance creation.
 EOF
 
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc init testimage c1 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c1 || false
 
   # Set instance placement scriptlet containing runtime error in it and test instance creation fails.
-  cat << EOF | lxc config set instances.placement.scriptlet=-
+  cat << EOF | inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         log_info("Accessing invalid field ", candidate_members[4])
 
         return
 EOF
 
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc init testimage c1 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c1 || false
 
   # Set instance placement scriptlet to one that sets an invalid cluster member target.
   # Check that instance placement uses LXD's built in logic instead (as if setTarget hadn't been called at all).
-  cat << EOF | lxc config set instances.placement.scriptlet=-
+  cat << EOF | inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         # Set invalid member target.
         result = set_target("foo")
@@ -130,11 +130,11 @@ def instance_placement(request, candidate_members):
         return
 EOF
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init testimage c1 -c cluster.evacuate=migrate
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c1 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c1 -c cluster.evacuate=migrate
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c1 | grep -q "Location: node1"
 
   # Set basic instance placement scriptlet that statically targets to 3rd member.
-  cat << EOF | lxc config set instances.placement.scriptlet=-
+  cat << EOF | inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         log_info("instance placement started: ", request)
 
@@ -154,19 +154,19 @@ def instance_placement(request, candidate_members):
 EOF
 
   # Evacuate member with instance and check its moved to 2nd member.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster evacuate node1 --force
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node1 | grep -q "status: Evacuated"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c1 | grep -q "Location: node3"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc delete -f c1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster evacuate node1 --force
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node1 | grep -q "status: Evacuated"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c1 | grep -q "Location: node3"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc delete -f c1
 
   # Delete the storage pool
-  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" lxc profile edit default
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage delete data
+  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" inc profile edit default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage delete data
 
   # Shut down cluster
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"

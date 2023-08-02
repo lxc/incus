@@ -3,7 +3,7 @@ test_clustering_move() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -32,37 +32,37 @@ test_clustering_move() {
   ensure_import_testimage
 
   # Preparation
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster group create foobar1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster group assign node1 foobar1,default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster group create foobar1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster group assign node1 foobar1,default
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster group create foobar2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster group assign node2 foobar2,default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster group create foobar2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster group assign node2 foobar2,default
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster group create foobar3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster group assign node3 foobar3,default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster group create foobar3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster group assign node3 foobar3,default
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init testimage c1 --target node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init testimage c2 --target node2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init testimage c3 --target node3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c1 --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c2 --target node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c3 --target node3
 
   # Perform default move tests falling back to the built in logic of choosing the node
   # with the least number of instances when targeting a cluster group.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target node2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target @foobar1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c1 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target @foobar1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c1 | grep -q "Location: node1"
 
   # c1 can be moved within the same cluster group if it has multiple members
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target=@default
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target=@default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target=@default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target=@default
 
   # c1 cannot be moved within the same cluster group if it has a single member
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target=@foobar3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c1 | grep -q "Location: node3"
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target=@foobar3 || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target=@foobar3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c1 | grep -q "Location: node3"
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target=@foobar3 || false
 
   # Perform standard move tests using the `scheduler.instance` cluster member setting.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster set node2 scheduler.instance=group
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster set node3 scheduler.instance=manual
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster set node2 scheduler.instance=group
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster set node3 scheduler.instance=manual
 
   # At this stage we have:
   # - node1 in group foobar1,default accepting all instances
@@ -73,35 +73,35 @@ test_clustering_move() {
   # - c3 is deployed on node3
 
   # c1 can be moved to node2 by group targeting.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target=@foobar2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c1 | grep -q "Location: node2"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target=@foobar2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c1 | grep -q "Location: node2"
 
   # c2 can be moved to node1 by manual targeting.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c2 --target=node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c2 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c2 --target=node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c2 | grep -q "Location: node1"
 
   # c1 cannot be moved to node3 by group targeting.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target=@foobar3 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target=@foobar3 || false
 
   # c2 can be moved to node2 by manual targeting.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c2 --target=node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c2 --target=node2
 
   # c3 can be moved to node1 by manual targeting.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c3 --target=node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c3 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c3 --target=node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c3 | grep -q "Location: node1"
 
   # c3 can be moved back to node by by manual targeting.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c3 --target=node3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c3 | grep -q "Location: node3"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c3 --target=node3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c3 | grep -q "Location: node3"
 
   # Clean up
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster unset node2 scheduler.instance
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster unset node3 scheduler.instance
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster unset node2 scheduler.instance
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster unset node3 scheduler.instance
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target node1
 
   # Perform extended scheduler tests involving the `instance.placement.scriptlet` global setting.
   # Start by statically targeting node3 (index 0).
-  cat << EOF | INCUS_DIR="${INCUS_ONE_DIR}" lxc config set instances.placement.scriptlet=-
+  cat << EOF | INCUS_DIR="${INCUS_ONE_DIR}" inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         if request.reason != "relocation":
                 return "Expecting reason relocation"
@@ -112,16 +112,16 @@ def instance_placement(request, candidate_members):
         return
 EOF
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target @foobar3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c1 | grep -q "Location: node3"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c2 --target @foobar3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c2 | grep -q "Location: node3"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target @foobar3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c1 | grep -q "Location: node3"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c2 --target @foobar3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c2 | grep -q "Location: node3"
 
   # Ensure that setting an invalid target won't interrupt the move and fall back to the built in behavior.
   # Equally distribute the instances beforehand so that node1 will get selected.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c2 --target node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c2 --target node2
 
-  cat << EOF | INCUS_DIR="${INCUS_ONE_DIR}" lxc config set instances.placement.scriptlet=-
+  cat << EOF | INCUS_DIR="${INCUS_ONE_DIR}" inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         # Set invalid member target.
         result = set_target("foo")
@@ -130,11 +130,11 @@ def instance_placement(request, candidate_members):
         return
 EOF
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target @foobar1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c1 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target @foobar1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c1 | grep -q "Location: node1"
 
   # If the scriptlet produces a runtime error, the move fails.
-  cat << EOF | INCUS_DIR="${INCUS_ONE_DIR}" lxc config set instances.placement.scriptlet=-
+  cat << EOF | INCUS_DIR="${INCUS_ONE_DIR}" inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         # Try to access an invalid index (non existing member)
         log_info("Accessing invalid field ", candidate_members[42])
@@ -142,20 +142,20 @@ def instance_placement(request, candidate_members):
         return
 EOF
 
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target @foobar2 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target @foobar2 || false
 
   # If the scriptlet intentionally runs into an error, the move fails.
-  cat << EOF | INCUS_DIR="${INCUS_ONE_DIR}" lxc config set instances.placement.scriptlet=-
+  cat << EOF | INCUS_DIR="${INCUS_ONE_DIR}" inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         log_error("instance placement not allowed") # Log placement error.
 
         fail("Instance not allowed") # Fail to prevent instance creation.
 EOF
 
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target @foobar2 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target @foobar2 || false
 
   # Cleanup
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config unset instances.placement.scriptlet
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config unset instances.placement.scriptlet
 
   # Perform project restriction tests.
   # At this stage we have:
@@ -166,25 +166,25 @@ EOF
   # - c2 is deployed on node2
   # - c3 is deployed on node3
   # - default project restricted to cluster groups foobar1,foobar2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project set default restricted=true
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project set default restricted.cluster.groups=foobar1,foobar2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project set default restricted=true
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project set default restricted.cluster.groups=foobar1,foobar2
 
   # Moving to a node that is not a member of foobar1 or foobar2 will fail.
   # The same applies for an unlisted group
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target @foobar3 || false
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc move c2 --target node3 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target @foobar3 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc move c2 --target node3 || false
 
   # Moving instances in between the restricted groups
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target node2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c2 --target @foobar1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c3 --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c2 --target @foobar1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c3 --target node1
 
   # Cleanup
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc delete -f c1 c2 c3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc delete -f c1 c2 c3
 
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"

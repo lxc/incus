@@ -12,27 +12,27 @@ test_clustering_enable() {
     # shellcheck disable=SC2034,SC2030
     INCUS_DIR=${INCUS_INIT_DIR}
 
-    lxc config show | grep "core.https_address" | grep -qE "127.0.0.1:[0-9]{4,5}$"
+    inc config show | grep "core.https_address" | grep -qE "127.0.0.1:[0-9]{4,5}$"
     # Launch a container.
     ensure_import_testimage
-    lxc storage create default dir
-    lxc profile device add default root disk path="/" pool="default"
-    lxc launch testimage c1
+    inc storage create default dir
+    inc profile device add default root disk path="/" pool="default"
+    inc launch testimage c1
 
     # Enable clustering.
-    lxc cluster enable node1
-    lxc cluster list | grep -q node1
+    inc cluster enable node1
+    inc cluster list | grep -q node1
 
     # The container is still there and now shows up as
     # running on node 1.
-    lxc list | grep c1 | grep -q node1
+    inc list | grep c1 | grep -q node1
 
     # Clustering can't be enabled on an already clustered instance.
-    ! lxc cluster enable node2 || false
+    ! inc cluster enable node2 || false
 
     # Delete the container
-    lxc stop c1 --force
-    lxc delete c1
+    inc stop c1 --force
+    inc delete c1
   )
 
   kill_incus "${INCUS_INIT_DIR}"
@@ -46,9 +46,9 @@ test_clustering_enable() {
     set -e
     # shellcheck disable=SC2034,SC2030
     INCUS_DIR=${INCUS_INIT_DIR}
-    lxc config set core.https_address ::
+    inc config set core.https_address ::
     # Enable clustering.
-    ! lxc cluster enable node1 || false
+    ! inc cluster enable node1 || false
   )
 
   kill_incus "${INCUS_INIT_DIR}"
@@ -62,10 +62,10 @@ test_clustering_enable() {
     set -e
     # shellcheck disable=SC2034,SC2030
     INCUS_DIR=${INCUS_INIT_DIR}
-    lxc config set core.https_address 127.0.0.1
+    inc config set core.https_address 127.0.0.1
     # Enable clustering.
-    lxc cluster enable node1
-    lxc cluster list | grep -q 127.0.0.1:8443
+    inc cluster enable node1
+    inc cluster list | grep -q 127.0.0.1:8443
   )
 
   kill_incus "${INCUS_INIT_DIR}"
@@ -79,11 +79,11 @@ test_clustering_enable() {
     set -e
     # shellcheck disable=SC2034,SC2030
     INCUS_DIR=${INCUS_INIT_DIR}
-    lxc config set core.https_address ::
-    lxc config set cluster.https_address 127.0.0.1:8443
+    inc config set core.https_address ::
+    inc config set cluster.https_address 127.0.0.1:8443
     # Enable clustering.
-    lxc cluster enable node1
-    lxc cluster list | grep -q 127.0.0.1:8443
+    inc cluster enable node1
+    inc cluster list | grep -q 127.0.0.1:8443
   )
 
   kill_incus "${INCUS_INIT_DIR}"
@@ -97,9 +97,9 @@ test_clustering_enable() {
     set -e
     # shellcheck disable=SC2034,SC2030
     INCUS_DIR=${INCUS_INIT_DIR}
-    lxc config unset core.https_address
+    inc config unset core.https_address
     # Enable clustering.
-    ! lxc cluster enable node1 || false
+    ! inc cluster enable node1 || false
   )
 
   kill_incus "${INCUS_INIT_DIR}"
@@ -113,11 +113,11 @@ test_clustering_enable() {
     set -e
     # shellcheck disable=SC2034,SC2030
     INCUS_DIR=${INCUS_INIT_DIR}
-    lxc config unset core.https_address
-    lxc config set cluster.https_address 127.0.0.1:8443
+    inc config unset core.https_address
+    inc config set cluster.https_address 127.0.0.1:8443
     # Enable clustering.
-    lxc cluster enable node1
-    lxc cluster list | grep -q 127.0.0.1:8443
+    inc cluster enable node1
+    inc cluster list | grep -q 127.0.0.1:8443
   )
 
   kill_incus "${INCUS_INIT_DIR}"
@@ -131,11 +131,11 @@ test_clustering_enable() {
     set -e
     # shellcheck disable=SC2034,SC2030
     INCUS_DIR=${INCUS_INIT_DIR}
-    lxc config unset core.https_address
-    lxc config set cluster.https_address 127.0.0.1
+    inc config unset core.https_address
+    inc config set cluster.https_address 127.0.0.1
     # Enable clustering.
-    lxc cluster enable node1
-    lxc cluster list | grep -q 127.0.0.1:8443
+    inc cluster enable node1
+    inc cluster list | grep -q 127.0.0.1:8443
   )
 
   kill_incus "${INCUS_INIT_DIR}"
@@ -149,11 +149,11 @@ test_clustering_enable() {
     set -e
     # shellcheck disable=SC2034,SC2030
     INCUS_DIR=${INCUS_INIT_DIR}
-    lxc config set core.https_address 127.0.0.1:8443
-    lxc config set cluster.https_address 127.0.0.1:8443
+    inc config set core.https_address 127.0.0.1:8443
+    inc config set cluster.https_address 127.0.0.1:8443
     # Enable clustering.
-    lxc cluster enable node1
-    lxc cluster list | grep -q 127.0.0.1:8443
+    inc cluster enable node1
+    inc cluster list | grep -q 127.0.0.1:8443
   )
 
   kill_incus "${INCUS_INIT_DIR}"
@@ -167,12 +167,12 @@ test_clustering_enable() {
     set -e
     # shellcheck disable=SC2034,SC2030
     INCUS_DIR=${INCUS_INIT_DIR}
-    lxc config set cluster.https_address 127.0.0.1:8443
-    kill -9 "$(cat "${INCUS_DIR}/lxd.pid")"
+    inc config set cluster.https_address 127.0.0.1:8443
+    kill -9 "$(cat "${INCUS_DIR}/incus.pid")"
     respawn_incus "${INCUS_DIR}" true
     # Enable clustering.
-    lxc cluster enable node1
-    lxc cluster list | grep -q 127.0.0.1:8443
+    inc cluster enable node1
+    inc cluster list | grep -q 127.0.0.1:8443
   )
 
   kill_incus "${INCUS_INIT_DIR}"
@@ -183,7 +183,7 @@ test_clustering_membership() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -203,9 +203,9 @@ test_clustering_membership() {
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
 
   # Configuration keys can be changed on any node.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc config set cluster.offline_threshold 11
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info | grep -q 'cluster.offline_threshold: "11"'
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info | grep -q 'cluster.offline_threshold: "11"'
+  INCUS_DIR="${INCUS_TWO_DIR}" inc config set cluster.offline_threshold 11
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info | grep -q 'cluster.offline_threshold: "11"'
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info | grep -q 'cluster.offline_threshold: "11"'
 
   # The preseeded network bridge exists on all nodes.
   ns1_pid="$(cat "${TEST_DIR}/ns/${ns1}/PID")"
@@ -216,8 +216,8 @@ test_clustering_membership() {
   # Create a pending network and pool, to show that they are not
   # considered when checking if the joining node has all the required
   # networks and pools.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 dir --target node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network create net1 --target node2
+  INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 dir --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network create net1 --target node2
 
   # Spawn a third node, using the non-leader node2 as join target.
   setup_clustering_netns 3
@@ -242,51 +242,51 @@ test_clustering_membership() {
 
   # List all nodes, using clients points to different nodes and
   # checking which are database nodes and which are database-standby nodes.
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster show node1 | grep -q "\- database-leader$"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster list | grep -Fc "database-standby" | grep -Fx 2
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxc cluster list | grep -Fc "database " | grep -Fx 3
+  INCUS_DIR="${INCUS_THREE_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster show node1 | grep -q "\- database-leader$"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc cluster list | grep -Fc "database-standby" | grep -Fx 2
+  INCUS_DIR="${INCUS_FIVE_DIR}" inc cluster list | grep -Fc "database " | grep -Fx 3
 
   # Show a single node
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster show node5 | grep -q "node5"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster show node5 | grep -q "node5"
 
   # Client certificate are shared across all nodes.
-  lxc remote add cluster 10.1.1.101:8443 --accept-certificate --password=sekret
-  lxc remote set-url cluster https://10.1.1.102:8443
-  lxc network list cluster: | grep -q "${bridge}"
-  lxc remote remove cluster
+  inc remote add cluster 10.1.1.101:8443 --accept-certificate --password=sekret
+  inc remote set-url cluster https://10.1.1.102:8443
+  inc network list cluster: | grep -q "${bridge}"
+  inc remote remove cluster
 
   # Check info for single node (from local and remote node).
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxc cluster info node5
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster info node5
+  INCUS_DIR="${INCUS_FIVE_DIR}" inc cluster info node5
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster info node5
 
   # Disable image replication
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set cluster.images_minimal_replica 1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set cluster.images_minimal_replica 1
 
   # Shutdown a database node, and wait a few seconds so it will be
   # detected as down.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set cluster.offline_threshold 11
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set cluster.offline_threshold 11
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
   sleep 12
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster show node3 | grep -q "status: Offline"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster show node3 | grep -q "status: Offline"
 
   # Gracefully remove a node and check trust certificate is removed.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep node4
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster remove node4
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep node4 || false
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4 || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep node4
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster remove node4
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep node4 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4 || false
 
   # The node isn't clustered anymore.
-  ! INCUS_DIR="${INCUS_FOUR_DIR}" lxc cluster list || false
+  ! INCUS_DIR="${INCUS_FOUR_DIR}" inc cluster list || false
 
   # Generate a join token for the sixth node.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
-  token=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster add node6 | tail -n 1)
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
+  token=$(INCUS_DIR="${INCUS_ONE_DIR}" inc cluster add node6 | tail -n 1)
 
   # Check token is associated to correct name.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list-tokens | grep node6 | grep "${token}"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list-tokens | grep node6 | grep "${token}"
 
   # Spawn a sixth node, using join token.
   setup_clustering_netns 6
@@ -300,27 +300,27 @@ test_clustering_membership() {
   unset INCUS_SECRET
 
   # Check token has been deleted after join.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list-tokens
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list-tokens | grep node6 || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list-tokens
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list-tokens | grep node6 || false
 
   # Generate a join token for a seventh node
-  token=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster add node7 | tail -n 1)
+  token=$(INCUS_DIR="${INCUS_ONE_DIR}" inc cluster add node7 | tail -n 1)
 
   # Check token is associated to correct name
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list-tokens | grep node7 | grep "${token}"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list-tokens | grep node7 | grep "${token}"
 
   # Revoke the token
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster revoke-token node7 | tail -n 1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster revoke-token node7 | tail -n 1
 
   # Check token has been deleted
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list-tokens
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list-tokens | grep node7 || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list-tokens
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list-tokens | grep node7 || false
 
   # Set cluster token expiry to 30 seconds
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set cluster.join_token_expiry=30S
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set cluster.join_token_expiry=30S
 
   # Generate a join token for an eigth and ninth node
-  token_valid=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster add node8 | tail -n 1)
+  token_valid=$(INCUS_DIR="${INCUS_ONE_DIR}" inc cluster add node8 | tail -n 1)
 
   # Spawn an eigth node, using join token.
   setup_clustering_netns 8
@@ -334,8 +334,8 @@ test_clustering_membership() {
   unset INCUS_SECRET
 
   # This will cause the token to expire
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set cluster.join_token_expiry=5S
-  token_expired=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster add node9 | tail -n 1)
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set cluster.join_token_expiry=5S
+  token_expired=$(INCUS_DIR="${INCUS_ONE_DIR}" inc cluster add node9 | tail -n 1)
   sleep 6
 
   # Spawn a ninth node, using join token.
@@ -350,15 +350,15 @@ test_clustering_membership() {
   unset INCUS_SECRET
 
   # Unset join_token_expiry which will set it to the default value of 3h
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config unset cluster.join_token_expiry
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config unset cluster.join_token_expiry
 
-  INCUS_DIR="${INCUS_NINE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_EIGHT_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_SIX_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_NINE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_EIGHT_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_SIX_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_FIVE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_NINE_DIR}/unix.socket"
   rm -f "${INCUS_EIGHT_DIR}/unix.socket"
@@ -387,7 +387,7 @@ test_clustering_containers() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -415,146 +415,146 @@ test_clustering_containers() {
 
   # Init a container on node2, using a client connected to node1
   INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node2 testimage foo
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node2 testimage foo
 
   # The container is visible through both nodes
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc list | grep foo | grep -q STOPPED
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc list | grep foo | grep -q node2
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc list | grep foo | grep -q STOPPED
+  INCUS_DIR="${INCUS_ONE_DIR}" inc list | grep foo | grep -q STOPPED
+  INCUS_DIR="${INCUS_ONE_DIR}" inc list | grep foo | grep -q node2
+  INCUS_DIR="${INCUS_TWO_DIR}" inc list | grep foo | grep -q STOPPED
 
   # A Location: field indicates on which node the container is running
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info foo | grep -q "Location: node2"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info foo | grep -q "Location: node2"
 
   # Start the container via node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc start foo
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info foo | grep -q "Status: RUNNING"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc list | grep foo | grep -q RUNNING
+  INCUS_DIR="${INCUS_ONE_DIR}" inc start foo
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info foo | grep -q "Status: RUNNING"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc list | grep foo | grep -q RUNNING
 
   # Trying to delete a node which has container results in an error
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster remove node2 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster remove node2 || false
 
   # Exec a command in the container via node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc exec foo ls / | grep -q proc
+  INCUS_DIR="${INCUS_ONE_DIR}" inc exec foo ls / | grep -q proc
 
   # Pull, push and delete files from the container via node1
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc file pull foo/non-existing-file "${TEST_DIR}/non-existing-file" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc file pull foo/non-existing-file "${TEST_DIR}/non-existing-file" || false
   mkdir "${TEST_DIR}/hello-world"
   echo "hello world" > "${TEST_DIR}/hello-world/text"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc file push "${TEST_DIR}/hello-world/text" foo/hello-world-text
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc file pull foo/hello-world-text "${TEST_DIR}/hello-world-text"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc file push "${TEST_DIR}/hello-world/text" foo/hello-world-text
+  INCUS_DIR="${INCUS_ONE_DIR}" inc file pull foo/hello-world-text "${TEST_DIR}/hello-world-text"
   grep -q "hello world" "${TEST_DIR}/hello-world-text"
   rm "${TEST_DIR}/hello-world-text"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc file push --recursive "${TEST_DIR}/hello-world" foo/
+  INCUS_DIR="${INCUS_ONE_DIR}" inc file push --recursive "${TEST_DIR}/hello-world" foo/
   rm -r "${TEST_DIR}/hello-world"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc file pull --recursive foo/hello-world "${TEST_DIR}"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc file pull --recursive foo/hello-world "${TEST_DIR}"
   grep -q "hello world" "${TEST_DIR}/hello-world/text"
   rm -r "${TEST_DIR}/hello-world"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc file delete foo/hello-world/text
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc file pull foo/hello-world/text "${TEST_DIR}/hello-world-text" || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc file delete foo/hello-world/text
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc file pull foo/hello-world/text "${TEST_DIR}/hello-world-text" || false
 
   # Stop the container via node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc stop foo --force
+  INCUS_DIR="${INCUS_ONE_DIR}" inc stop foo --force
 
   # Rename the container via node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc rename foo foo2
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc list | grep -q foo2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc rename foo2 foo
+  INCUS_DIR="${INCUS_ONE_DIR}" inc rename foo foo2
+  INCUS_DIR="${INCUS_TWO_DIR}" inc list | grep -q foo2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc rename foo2 foo
 
   # Show lxc.log via node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info --show-log foo | grep -q Log
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info --show-log foo | grep -q Log
 
   # Create, rename and delete a snapshot of the container via node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc snapshot foo foo-bak
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info foo | grep -q foo-bak
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc rename foo/foo-bak foo/foo-bak-2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc delete foo/foo-bak-2
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc info foo | grep -q foo-bak-2 || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc snapshot foo foo-bak
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info foo | grep -q foo-bak
+  INCUS_DIR="${INCUS_ONE_DIR}" inc rename foo/foo-bak foo/foo-bak-2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc delete foo/foo-bak-2
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc info foo | grep -q foo-bak-2 || false
 
   # Export from node1 the image that was imported on node2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image export testimage "${TEST_DIR}/testimage"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image export testimage "${TEST_DIR}/testimage"
   rm "${TEST_DIR}/testimage.tar.xz"
 
   # Create a container on node1 using the image that was stored on
   # node2.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc launch --target node1 testimage bar
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc stop bar --force
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc delete bar
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc list | grep -q bar || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc launch --target node1 testimage bar
+  INCUS_DIR="${INCUS_TWO_DIR}" inc stop bar --force
+  INCUS_DIR="${INCUS_ONE_DIR}" inc delete bar
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc list | grep -q bar || false
 
   # Create a container on node1 using a snapshot from node2.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc snapshot foo foo-bak
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc copy foo/foo-bak bar --target node1
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info bar | grep -q "Location: node1"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc delete bar
+  INCUS_DIR="${INCUS_ONE_DIR}" inc snapshot foo foo-bak
+  INCUS_DIR="${INCUS_TWO_DIR}" inc copy foo/foo-bak bar --target node1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info bar | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc delete bar
 
   # Copy the container on node2 to node3, using a client connected to
   # node1.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc copy foo bar --target node3
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info bar | grep -q "Location: node3"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc copy foo bar --target node3
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info bar | grep -q "Location: node3"
 
   # Move the container on node3 to node1, using a client connected to
   # node2 and a different container name than the original one. The
   # volatile.apply_template config key is preserved.
-  apply_template1=$(INCUS_DIR="${INCUS_TWO_DIR}" lxc config get bar volatile.apply_template)
+  apply_template1=$(INCUS_DIR="${INCUS_TWO_DIR}" inc config get bar volatile.apply_template)
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc move bar egg --target node2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info egg | grep -q "Location: node2"
-  apply_template2=$(INCUS_DIR="${INCUS_TWO_DIR}" lxc config get egg volatile.apply_template)
+  INCUS_DIR="${INCUS_TWO_DIR}" inc move bar egg --target node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info egg | grep -q "Location: node2"
+  apply_template2=$(INCUS_DIR="${INCUS_TWO_DIR}" inc config get egg volatile.apply_template)
   [ "${apply_template1}" =  "${apply_template2}" ] || false
 
   # Move back to node3 the container on node1, keeping the same name.
-  apply_template1=$(INCUS_DIR="${INCUS_TWO_DIR}" lxc config get egg volatile.apply_template)
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc move egg --target node3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info egg | grep -q "Location: node3"
-  apply_template2=$(INCUS_DIR="${INCUS_TWO_DIR}" lxc config get egg volatile.apply_template)
+  apply_template1=$(INCUS_DIR="${INCUS_TWO_DIR}" inc config get egg volatile.apply_template)
+  INCUS_DIR="${INCUS_TWO_DIR}" inc move egg --target node3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info egg | grep -q "Location: node3"
+  apply_template2=$(INCUS_DIR="${INCUS_TWO_DIR}" inc config get egg volatile.apply_template)
   [ "${apply_template1}" =  "${apply_template2}" ] || false
 
   if command -v criu >/dev/null 2>&1; then
     # If CRIU supported, then try doing a live move using same name,
     # as CRIU doesn't work when moving to a different name.
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc config set egg raw.lxc=lxc.console.path=none
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc start egg
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc exec egg -- umount /dev/.lxd-mounts
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc move egg --target node1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc info egg | grep -q "Location: node1"
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc move egg --target node3 --stateless
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc stop -f egg
+    INCUS_DIR="${INCUS_TWO_DIR}" inc config set egg raw.lxc=lxc.console.path=none
+    INCUS_DIR="${INCUS_TWO_DIR}" inc start egg
+    INCUS_DIR="${INCUS_TWO_DIR}" inc exec egg -- umount /dev/.incus-mounts
+    INCUS_DIR="${INCUS_TWO_DIR}" inc move egg --target node1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc info egg | grep -q "Location: node1"
+    INCUS_DIR="${INCUS_TWO_DIR}" inc move egg --target node3 --stateless
+    INCUS_DIR="${INCUS_TWO_DIR}" inc stop -f egg
   fi
 
   # Create backup and attempt to move container. Move should fail and container should remain on node1.
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc query -X POST --wait -d '{\"name\":\"foo\"}' /1.0/instances/egg/backups
-  ! INCUS_DIR="${INCUS_THREE_DIR}" lxc move egg --target node2 || false
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info egg | grep -q "Location: node3"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc query -X POST --wait -d '{\"name\":\"foo\"}' /1.0/instances/egg/backups
+  ! INCUS_DIR="${INCUS_THREE_DIR}" inc move egg --target node2 || false
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info egg | grep -q "Location: node3"
 
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc delete egg
+  INCUS_DIR="${INCUS_THREE_DIR}" inc delete egg
 
   # Delete the network now, since we're going to shutdown node2 and it
   # won't be possible afterwise.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc network delete "${bridge}"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc network delete "${bridge}"
 
   # Shutdown node 2, wait for it to be considered offline, and list
   # containers.
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc config set cluster.offline_threshold 11
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" inc config set cluster.offline_threshold 11
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
   sleep 12
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc list | grep foo | grep -q ERROR
+  INCUS_DIR="${INCUS_ONE_DIR}" inc list | grep foo | grep -q ERROR
 
   # Start a container without specifying any target. It will be placed
   # on node1 since node2 is offline and both node1 and node3 have zero
   # containers, but node1 has a lower node ID.
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc launch testimage bar
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info bar | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc launch testimage bar
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info bar | grep -q "Location: node1"
 
   # Start a container without specifying any target. It will be placed
   # on node3 since node2 is offline and node1 already has a container.
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc launch testimage egg
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info egg | grep -q "Location: node3"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc launch testimage egg
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info egg | grep -q "Location: node3"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc stop egg --force
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc stop bar --force
+  INCUS_DIR="${INCUS_ONE_DIR}" inc stop egg --force
+  INCUS_DIR="${INCUS_ONE_DIR}" inc stop bar --force
 
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -573,12 +573,12 @@ test_clustering_storage() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # The random storage backend is not supported in clustering tests,
   # since we need to have the same storage driver on all nodes, so use the driver chosen for the standalone pool.
-  poolDriver=$(lxc storage show "$(lxc profile device get default root pool)" | awk '/^driver:/ {print $2}')
+  poolDriver=$(inc storage show "$(inc profile device get default root pool)" | awk '/^driver:/ {print $2}')
 
   setup_clustering_netns 1
   INCUS_ONE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
@@ -587,7 +587,7 @@ test_clustering_storage() {
   spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   # The state of the preseeded storage pool shows up as CREATED
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage list | grep data | grep -q CREATED
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage list | grep data | grep -q CREATED
 
   # Add a newline at the end of each line. YAML as weird rules..
   cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
@@ -600,73 +600,73 @@ test_clustering_storage() {
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${poolDriver}"
 
   # The state of the preseeded storage pool is still CREATED
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage list | grep data | grep -q CREATED
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage list | grep data | grep -q CREATED
 
   # Check both nodes show preseeded storage pool created.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
   # Trying to pass config values other than 'source' results in an error
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 dir source=/foo size=123 --target node1 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 dir source=/foo size=123 --target node1 || false
 
   # Test storage pool node state tracking using a dir pool.
   if [ "${poolDriver}" = "dir" ]; then
     # Create pending nodes.
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" --target node1
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}" --target node2
-    INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" --target node1
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}" --target node2
+    INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
 
     # Modify first pending node with invalid config and check it fails and all nodes are pending.
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage set pool1 source=/tmp/not/exist --target node1
-    ! INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" || false
-    INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage set pool1 source=/tmp/not/exist --target node1
+    ! INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" || false
+    INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
 
     # Run create on second node, so it succeeds and then fails notifying first node.
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}" || false
-    INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}" || false
+    INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
     # Check we cannot update global config while in pending state.
-    ! INCUS_DIR="${INCUS_ONE_DIR}" lxc storage set pool1 rsync.bwlimit 10 || false
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage set pool1 rsync.bwlimit 10 || false
+    ! INCUS_DIR="${INCUS_ONE_DIR}" inc storage set pool1 rsync.bwlimit 10 || false
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage set pool1 rsync.bwlimit 10 || false
 
     # Check can delete pending pool and created nodes are cleaned up.
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage show pool1 --target=node2
-    INCUS_TWO_SOURCE="$(INCUS_DIR="${INCUS_TWO_DIR}" lxc storage get pool1 source --target=node2)"
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage show pool1 --target=node2
+    INCUS_TWO_SOURCE="$(INCUS_DIR="${INCUS_TWO_DIR}" inc storage get pool1 source --target=node2)"
     stat "${INCUS_TWO_SOURCE}/containers"
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage delete pool1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage delete pool1
     ! stat "${INCUS_TWO_SOURCE}/containers" || false
 
     # Create new partially created pool and check we can fix it.
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" source=/tmp/not/exist --target node1
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}" --target node2
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage show pool1 | grep status: | grep -q Pending
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}" || false
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage show pool1 | grep status: | grep -q Errored
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage unset pool1 source --target node1
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}" rsync.bwlimit=1000 || false # Check global config is rejected on re-create.
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}"
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}" || false # Check re-create after successful create is rejected.
-    INCUS_ONE_SOURCE="$(INCUS_DIR="${INCUS_ONE_DIR}" lxc storage get pool1 source --target=node1)"
-    INCUS_TWO_SOURCE="$(INCUS_DIR="${INCUS_TWO_DIR}" lxc storage get pool1 source --target=node2)"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" source=/tmp/not/exist --target node1
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}" --target node2
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage show pool1 | grep status: | grep -q Pending
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}" || false
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage show pool1 | grep status: | grep -q Errored
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage unset pool1 source --target node1
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}" rsync.bwlimit=1000 || false # Check global config is rejected on re-create.
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}"
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}" || false # Check re-create after successful create is rejected.
+    INCUS_ONE_SOURCE="$(INCUS_DIR="${INCUS_ONE_DIR}" inc storage get pool1 source --target=node1)"
+    INCUS_TWO_SOURCE="$(INCUS_DIR="${INCUS_TWO_DIR}" inc storage get pool1 source --target=node2)"
     stat "${INCUS_ONE_SOURCE}/containers"
     stat "${INCUS_TWO_SOURCE}/containers"
 
     # Check both nodes marked created.
-    INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
     # Check copying storage volumes works.
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume create pool1 vol1 --target=node1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume copy pool1/vol1 pool1/vol1 --target=node1 --destination-target=node2
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume copy pool1/vol1 pool1/vol1 --target=node1 --destination-target=node2 --refresh
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume create pool1 vol1 --target=node1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume copy pool1/vol1 pool1/vol1 --target=node1 --destination-target=node2
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume copy pool1/vol1 pool1/vol1 --target=node1 --destination-target=node2 --refresh
 
     # Delete pool and check cleaned up.
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume delete pool1 vol1 --target=node1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume delete pool1 vol1 --target=node2
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage delete pool1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume delete pool1 vol1 --target=node1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume delete pool1 vol1 --target=node2
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage delete pool1
     ! stat "${INCUS_ONE_SOURCE}/containers" || false
     ! stat "${INCUS_TWO_SOURCE}/containers" || false
   fi
@@ -698,44 +698,44 @@ test_clustering_storage() {
 
   if [ -n "${driver_config_node1}" ]; then
     # shellcheck disable=SC2086
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" ${driver_config_node1} --target node1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" ${driver_config_node1} --target node1
   else
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" --target node1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" --target node1
   fi
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc storage show pool1 | grep -q node1
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage show pool1 | grep -q node2 || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc storage show pool1 | grep -q node1
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage show pool1 | grep -q node2 || false
   if [ -n "${driver_config_node2}" ]; then
     # shellcheck disable=SC2086
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" ${driver_config_node2} --target node2
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" ${driver_config_node2} --target node2
   else
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" --target node2
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" --target node2
   fi
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage show pool1 | grep status: | grep -q Pending
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage show pool1 | grep status: | grep -q Pending
 
   # A container can't be created when associated with a pending pool.
   INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node2 -s pool1 testimage bar || false
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image delete testimage
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node2 -s pool1 testimage bar || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image delete testimage
 
   # The source config key is not legal for the final pool creation
   if [ "${poolDriver}" = "dir" ]; then
-    ! INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 dir source=/foo || false
+    ! INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 dir source=/foo || false
   fi
 
   # Create the storage pool
   if [ "${poolDriver}" = "lvm" ]; then
-      INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}" volume.size=25MiB
+      INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}" volume.size=25MiB
   elif [ "${poolDriver}" = "ceph" ]; then
-      INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}" volume.size=25MiB ceph.osd.pg_num=16
+      INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}" volume.size=25MiB ceph.osd.pg_num=16
   else
-      INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 "${poolDriver}"
+      INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 "${poolDriver}"
   fi
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage show pool1 | grep status: | grep -q Created
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage show pool1 | grep status: | grep -q Created
 
   # The 'source' config key is omitted when showing the cluster
   # configuration, and included when showing the node-specific one.
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage show pool1 | grep -q source || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage show pool1 | grep -q source || false
   source1="$(basename "${INCUS_ONE_DIR}")"
   source2="$(basename "${INCUS_TWO_DIR}")"
   if [ "${poolDriver}" = "ceph" ]; then
@@ -743,43 +743,43 @@ test_clustering_storage() {
     source1="incustest-$(basename "${TEST_DIR}")"
     source2="${source1}"
   fi
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage show pool1 --target node1 | grep source | grep -q "${source1}"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage show pool1 --target node2 | grep source | grep -q "${source2}"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage show pool1 --target node1 | grep source | grep -q "${source1}"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage show pool1 --target node2 | grep source | grep -q "${source2}"
 
   # Update the storage pool
   if [ "${poolDriver}" = "dir" ]; then
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage set pool1 rsync.bwlimit 10
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage show pool1 | grep rsync.bwlimit | grep -q 10
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage unset pool1 rsync.bwlimit
-    ! INCUS_DIR="${INCUS_ONE_DIR}" lxc storage show pool1 | grep -q rsync.bwlimit || false
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage set pool1 rsync.bwlimit 10
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage show pool1 | grep rsync.bwlimit | grep -q 10
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage unset pool1 rsync.bwlimit
+    ! INCUS_DIR="${INCUS_ONE_DIR}" inc storage show pool1 | grep -q rsync.bwlimit || false
   fi
 
   if [ "${poolDriver}" = "ceph" ]; then
     # Test migration of ceph-based containers
     INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc launch --target node2 -s pool1 testimage foo
+    INCUS_DIR="${INCUS_ONE_DIR}" inc launch --target node2 -s pool1 testimage foo
 
     # The container can't be moved if it's running
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc move foo --target node1 || false
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc move foo --target node1 || false
 
     # Stop the container and create a snapshot
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc stop foo --force
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc snapshot foo snap-test
+    INCUS_DIR="${INCUS_ONE_DIR}" inc stop foo --force
+    INCUS_DIR="${INCUS_ONE_DIR}" inc snapshot foo snap-test
 
     # Move the container to node1
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc move foo --target node1
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc info foo | grep -q "Location: node1"
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc info foo | grep -q "snap-test"
+    INCUS_DIR="${INCUS_TWO_DIR}" inc move foo --target node1
+    INCUS_DIR="${INCUS_TWO_DIR}" inc info foo | grep -q "Location: node1"
+    INCUS_DIR="${INCUS_TWO_DIR}" inc info foo | grep -q "snap-test"
 
     # Start and stop the container on its new node1 host
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc start foo
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc stop foo --force
+    INCUS_DIR="${INCUS_TWO_DIR}" inc start foo
+    INCUS_DIR="${INCUS_TWO_DIR}" inc stop foo --force
 
     # Init a new container on node2 using the snapshot on node1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc copy foo/snap-test egg --target node2
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc start egg
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc stop egg --force
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc delete egg
+    INCUS_DIR="${INCUS_ONE_DIR}" inc copy foo/snap-test egg --target node2
+    INCUS_DIR="${INCUS_TWO_DIR}" inc start egg
+    INCUS_DIR="${INCUS_ONE_DIR}" inc stop egg --force
+    INCUS_DIR="${INCUS_ONE_DIR}" inc delete egg
 
     # Spawn a third node
     setup_clustering_netns 3
@@ -789,135 +789,135 @@ test_clustering_storage() {
     spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${poolDriver}"
 
     # Move the container to node3, renaming it
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc move foo bar --target node3
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc info bar | grep -q "Location: node3"
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc info bar | grep -q "snap-test"
+    INCUS_DIR="${INCUS_TWO_DIR}" inc move foo bar --target node3
+    INCUS_DIR="${INCUS_TWO_DIR}" inc info bar | grep -q "Location: node3"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc info bar | grep -q "snap-test"
 
     # Shutdown node 3, and wait for it to be considered offline.
-    INCUS_DIR="${INCUS_THREE_DIR}" lxc config set cluster.offline_threshold 11
-    INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
+    INCUS_DIR="${INCUS_THREE_DIR}" inc config set cluster.offline_threshold 11
+    INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
     sleep 12
 
     # Move the container back to node2, even if node3 is offline
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc move bar --target node2
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc info bar | grep -q "Location: node2"
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc info bar | grep -q "snap-test"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc move bar --target node2
+    INCUS_DIR="${INCUS_ONE_DIR}" inc info bar | grep -q "Location: node2"
+    INCUS_DIR="${INCUS_TWO_DIR}" inc info bar | grep -q "snap-test"
 
     # Start and stop the container on its new node2 host
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc start bar
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc stop bar --force
+    INCUS_DIR="${INCUS_TWO_DIR}" inc start bar
+    INCUS_DIR="${INCUS_ONE_DIR}" inc stop bar --force
 
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster remove node3 --force --yes
+    INCUS_DIR="${INCUS_ONE_DIR}" inc cluster remove node3 --force --yes
 
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc delete bar
+    INCUS_DIR="${INCUS_ONE_DIR}" inc delete bar
 
     # Attach a custom volume to a container on node1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume create pool1 v1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node1 -s pool1 testimage baz
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume attach pool1 custom/v1 baz testDevice /opt
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume create pool1 v1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node1 -s pool1 testimage baz
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume attach pool1 custom/v1 baz testDevice /opt
 
     # Trying to attach a custom volume to a container on another node fails
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc init --target node2 -s pool1 testimage buz
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume attach pool1 custom/v1 buz testDevice /opt || false
+    INCUS_DIR="${INCUS_TWO_DIR}" inc init --target node2 -s pool1 testimage buz
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume attach pool1 custom/v1 buz testDevice /opt || false
 
     # Create an unrelated volume and rename it on a node which differs from the
     # one running the container (issue #6435).
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume create pool1 v2
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume rename pool1 v2 v2-renamed
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume delete pool1 v2-renamed
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume create pool1 v2
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume rename pool1 v2 v2-renamed
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume delete pool1 v2-renamed
 
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume detach pool1 v1 baz
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume detach pool1 v1 baz
 
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume delete pool1 v1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc delete baz
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc delete buz
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume delete pool1 v1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc delete baz
+    INCUS_DIR="${INCUS_ONE_DIR}" inc delete buz
 
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc image delete testimage
+    INCUS_DIR="${INCUS_ONE_DIR}" inc image delete testimage
   fi
 
   # Test migration of zfs/btrfs-based containers
   if [ "${poolDriver}" = "zfs" ] || [ "${poolDriver}" = "btrfs" ]; then
     # Launch a container on node2
     INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc launch --target node2 testimage foo
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc info foo | grep -q "Location: node2"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc launch --target node2 testimage foo
+    INCUS_DIR="${INCUS_ONE_DIR}" inc info foo | grep -q "Location: node2"
 
     # Stop the container and move it to node1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc stop foo --force
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc move foo bar --target node1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc info bar | grep -q "Location: node1"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc stop foo --force
+    INCUS_DIR="${INCUS_TWO_DIR}" inc move foo bar --target node1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc info bar | grep -q "Location: node1"
 
     # Start and stop the migrated container on node1
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc start bar
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc stop bar --force
+    INCUS_DIR="${INCUS_TWO_DIR}" inc start bar
+    INCUS_DIR="${INCUS_ONE_DIR}" inc stop bar --force
 
     # Rename the container locally on node1
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc rename bar foo
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc info foo | grep -q "Location: node1"
+    INCUS_DIR="${INCUS_TWO_DIR}" inc rename bar foo
+    INCUS_DIR="${INCUS_ONE_DIR}" inc info foo | grep -q "Location: node1"
 
     # Copy the container without specifying a target, it will be placed on node2
     # since it's the one with the least number of containers (0 vs 1)
     sleep 6 # Wait for pending operations to be removed from the database
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc copy foo bar
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc info bar | grep -q "Location: node2"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc copy foo bar
+    INCUS_DIR="${INCUS_ONE_DIR}" inc info bar | grep -q "Location: node2"
 
     # Start and stop the copied container on node2
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc start bar
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc stop bar --force
+    INCUS_DIR="${INCUS_TWO_DIR}" inc start bar
+    INCUS_DIR="${INCUS_ONE_DIR}" inc stop bar --force
 
     # Purge the containers
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc delete bar
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc delete foo
+    INCUS_DIR="${INCUS_ONE_DIR}" inc delete bar
+    INCUS_DIR="${INCUS_ONE_DIR}" inc delete foo
 
     # Delete the image too.
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc image delete testimage
+    INCUS_DIR="${INCUS_ONE_DIR}" inc image delete testimage
   fi
 
   # Delete the storage pool
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage delete pool1
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc storage list | grep -q pool1 || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage delete pool1
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc storage list | grep -q pool1 || false
 
   if [ "${poolDriver}" != "ceph" ]; then
     # Create a volume on node1
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume create data web
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume list data | grep web | grep -q node1
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume list data | grep web | grep -q node1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume create data web
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume list data | grep web | grep -q node1
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume list data | grep web | grep -q node1
 
     # Since the volume name is unique to node1, it's possible to show, rename,
     # get the volume without specifying the --target parameter.
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume show data web | grep -q "location: node1"
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume rename data web webbaz
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume rename data webbaz web
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume get data web size
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume show data web | grep -q "location: node1"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume rename data web webbaz
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume rename data webbaz web
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume get data web size
 
     # Create another volume on node2 with the same name of the one on
     # node1.
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume create --target node2 data web
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume create --target node2 data web
 
     # Trying to show, rename or delete the web volume without --target
     # fails, because it's not unique.
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume show data web || false
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume rename data web webbaz || false
-    ! INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume delete data web || false
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume show data web || false
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume rename data web webbaz || false
+    ! INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume delete data web || false
 
     # Specifying the --target parameter shows, renames and deletes the
     # proper volume.
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume show --target node1 data web | grep -q "location: node1"
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume show --target node2 data web | grep -q "location: node2"
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume rename --target node1 data web webbaz
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume rename --target node2 data web webbaz
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume delete --target node2 data webbaz
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume show --target node1 data web | grep -q "location: node1"
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume show --target node2 data web | grep -q "location: node2"
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume rename --target node1 data web webbaz
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume rename --target node2 data web webbaz
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume delete --target node2 data webbaz
 
     # Since now there's only one volume in the pool left named webbaz,
     # it's possible to delete it without specifying --target.
-    INCUS_DIR="${INCUS_TWO_DIR}" lxc storage volume delete data webbaz
+    INCUS_DIR="${INCUS_TWO_DIR}" inc storage volume delete data webbaz
   fi
 
-  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" lxc profile edit default
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc storage delete data
+  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" inc profile edit default
+  INCUS_DIR="${INCUS_TWO_DIR}" inc storage delete data
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -940,12 +940,12 @@ test_clustering_storage_single_node() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # The random storage backend is not supported in clustering tests,
   # since we need to have the same storage driver on all nodes, so use the driver chosen for the standalone pool.
-  poolDriver=$(lxc storage show "$(lxc profile device get default root pool)" | awk '/^driver:/ {print $2}')
+  poolDriver=$(inc storage show "$(inc profile device get default root pool)" | awk '/^driver:/ {print $2}')
 
   setup_clustering_netns 1
   INCUS_ONE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
@@ -971,33 +971,33 @@ test_clustering_storage_single_node() {
 
   if [ -n "${driver_config_node}" ]; then
     # shellcheck disable=SC2086
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" ${driver_config_node} --target node1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" ${driver_config_node} --target node1
   else
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" --target node1
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" --target node1
   fi
 
   # Finalize the storage pool creation
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage show pool1 | grep status: | grep -q Created
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage show pool1 | grep status: | grep -q Created
 
   # Delete the storage pool
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage delete pool1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage delete pool1
 
   # Create the storage pool directly, without the two-stage process.
   if [ -n "${driver_config_node}" ]; then
     # shellcheck disable=SC2086
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}" ${driver_config_node}
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}" ${driver_config_node}
   else
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 "${poolDriver}"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 "${poolDriver}"
   fi
 
   # Delete the storage pool
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage delete pool1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage delete pool1
 
-  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" lxc profile edit default
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage delete data
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" inc profile edit default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage delete data
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
 
@@ -1012,7 +1012,7 @@ test_clustering_network() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -1022,15 +1022,15 @@ test_clustering_network() {
   spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}"
 
   # The state of the preseeded network shows up as CREATED
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network list | grep "${bridge}" | grep -q CREATED
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network list | grep "${bridge}" | grep -q CREATED
 
   # Add a newline at the end of each line. YAML as weird rules..
   cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
 
   # Create a project with restricted.networks.subnets set to check the default networks are created before projects
   # when a member joins the cluster.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network set "${bridge}" ipv4.routes=192.0.2.0/24
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project create foo \
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network set "${bridge}" ipv4.routes=192.0.2.0/24
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project create foo \
     -c restricted=true \
     -c features.networks=true \
     -c restricted.networks.subnets="${bridge}":192.0.2.0/24
@@ -1043,157 +1043,157 @@ test_clustering_network() {
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
 
   # The state of the preseeded network is still CREATED
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network list| grep "${bridge}" | grep -q CREATED
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network list| grep "${bridge}" | grep -q CREATED
 
   # Check both nodes show network created.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
   # Trying to pass config values other than
   # 'bridge.external_interfaces' results in an error
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc network create foo ipv4.address=auto --target node1 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc network create foo ipv4.address=auto --target node1 || false
 
   net="${bridge}x"
 
   # Define networks on the two nodes
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" --target node1
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc network show  "${net}" | grep -q node1
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc network show "${net}" | grep -q node2 || false
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" --target node2
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" --target node2 || false
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network show "${net}" | grep status: | grep -q Pending
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" --target node1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc network show  "${net}" | grep -q node1
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc network show "${net}" | grep -q node2 || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" --target node2
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" --target node2 || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network show "${net}" | grep status: | grep -q Pending
 
   # A container can't be created when its NIC is associated with a pending network.
   INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node2 -n "${net}" testimage bar || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node2 -n "${net}" testimage bar || false
 
   # The bridge.external_interfaces config key is not legal for the final network creation
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" bridge.external_interfaces=foo || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" bridge.external_interfaces=foo || false
 
   # Create the network
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc network create "${net}"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network show "${net}" | grep status: | grep -q Created
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network show "${net}" --target node2 | grep status: | grep -q Created
+  INCUS_DIR="${INCUS_TWO_DIR}" inc network create "${net}"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network show "${net}" | grep status: | grep -q Created
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network show "${net}" --target node2 | grep status: | grep -q Created
 
   # FIXME: rename the network is not supported with clustering
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc network rename "${net}" "${net}-foo" || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc network rename "${net}" "${net}-foo" || false
 
   # Delete the networks
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc network delete "${net}"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc network delete "${bridge}"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc network delete "${net}"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc network delete "${bridge}"
 
-  INCUS_PID1="$(INCUS_DIR="${INCUS_ONE_DIR}" lxc query /1.0 | jq .environment.server_pid)"
-  INCUS_PID2="$(INCUS_DIR="${INCUS_TWO_DIR}" lxc query /1.0 | jq .environment.server_pid)"
+  INCUS_PID1="$(INCUS_DIR="${INCUS_ONE_DIR}" inc query /1.0 | jq .environment.server_pid)"
+  INCUS_PID2="$(INCUS_DIR="${INCUS_TWO_DIR}" inc query /1.0 | jq .environment.server_pid)"
 
   # Test network create partial failures.
   nsenter -n -t "${INCUS_PID1}" -- ip link add "${net}" type dummy # Create dummy interface to conflict with network.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" --target node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" --target node2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network show "${net}" | grep status: | grep -q Pending # Check has pending status.
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" --target node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network show "${net}" | grep status: | grep -q Pending # Check has pending status.
 
   # Run network create on other node1 (expect this to fail early due to existing interface).
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" || false
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network show "${net}" | grep status: | grep -q Errored # Check has errored status.
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network show "${net}" | grep status: | grep -q Errored # Check has errored status.
 
   # Check each node status (expect both node1 and node2 to be pending as local member running created failed first).
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
 
   # Run network create on other node2 (still excpect to fail on node1, but expect node2 create to succeed).
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc network create "${net}" || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc network create "${net}" || false
 
   # Check each node status (expect node1 to be pending and node2 to be created).
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
   # Check interfaces are expected types (dummy on node1 and bridge on node2).
   nsenter -n -t "${INCUS_PID1}" -- ip -details link show "${net}" | grep dummy
   nsenter -n -t "${INCUS_PID2}" -- ip -details link show "${net}" | grep bridge
 
   # Check we cannot update network global config while in pending state on either node.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc network set "${net}" ipv4.dhcp false || false
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc network set "${net}" ipv4.dhcp false || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc network set "${net}" ipv4.dhcp false || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc network set "${net}" ipv4.dhcp false || false
 
   # Check we can update node-specific config on the node that has been created (and that it is applied).
   nsenter -n -t "${INCUS_PID2}" -- ip link add "ext-${net}" type dummy # Create dummy interface to add to bridge.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc network set "${net}" bridge.external_interfaces "ext-${net}" --target node2
+  INCUS_DIR="${INCUS_TWO_DIR}" inc network set "${net}" bridge.external_interfaces "ext-${net}" --target node2
   nsenter -n -t "${INCUS_PID2}" -- ip link show "ext-${net}" | grep "master ${net}"
 
   # Check we can update node-specific config on the node that hasn't been created (and that only DB is updated).
   nsenter -n -t "${INCUS_PID1}" -- ip link add "ext-${net}" type dummy # Create dummy interface to add to bridge.
   nsenter -n -t "${INCUS_PID1}" -- ip address add 192.0.2.1/32 dev "ext-${net}" # Add address to prevent attach.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network set "${net}" bridge.external_interfaces "ext-${net}" --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network set "${net}" bridge.external_interfaces "ext-${net}" --target node1
   ! nsenter -n -t "${INCUS_PID1}" -- ip link show "ext-${net}" | grep "master ${net}" || false  # Don't expect to be attached.
 
   # Delete partially created network and check nodes that were created are cleaned up.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network delete "${net}"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network delete "${net}"
   ! nsenter -n -t "${INCUS_PID2}" -- ip link show "${net}" || false # Check bridge is removed.
   nsenter -n -t "${INCUS_PID2}" -- ip link show "ext-${net}" # Check external interface still exists.
   nsenter -n -t "${INCUS_PID1}" -- ip -details link show "${net}" | grep dummy # Check node1 conflict still exists.
 
   # Create new partially created network and check we can fix it.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" --target node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" --target node2
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" ipv4.address=192.0.2.1/24 ipv6.address=2001:db8::1/64|| false
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network show "${net}" | grep status: | grep -q Errored # Check has errored status.
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" --target node2
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" ipv4.address=192.0.2.1/24 ipv6.address=2001:db8::1/64|| false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network show "${net}" | grep status: | grep -q Errored # Check has errored status.
   nsenter -n -t "${INCUS_PID1}" -- ip link delete "${net}" # Remove conflicting interface.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" ipv4.dhcp=false || false # Check supplying global config on re-create is blocked.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" # Check re-create succeeds.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network show "${net}" | grep status: | grep -q Created # Check is created after fix.
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" ipv4.dhcp=false || false # Check supplying global config on re-create is blocked.
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" # Check re-create succeeds.
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network show "${net}" | grep status: | grep -q Created # Check is created after fix.
   nsenter -n -t "${INCUS_PID1}" -- ip -details link show "${net}" | grep bridge # Check bridge exists.
   nsenter -n -t "${INCUS_PID2}" -- ip -details link show "${net}" | grep bridge # Check bridge exists.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc network create "${net}" || false # Check re-create is blocked after success.
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc network create "${net}" || false # Check re-create is blocked after success.
 
   # Check both nodes marked created.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
   # Check instance can be connected to created network and assign static DHCP allocations.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network show "${net}"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node1 -n "${net}" testimage c1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config device set c1 eth0 ipv4.address=192.0.2.2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network show "${net}"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node1 -n "${net}" testimage c1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config device set c1 eth0 ipv4.address=192.0.2.2
 
   # Check cannot assign static IPv6 without stateful DHCPv6 enabled.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc config device set c1 eth0 ipv6.address=2001:db8::2 || false
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network set "${net}" ipv6.dhcp.stateful=true
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config device set c1 eth0 ipv6.address=2001:db8::2
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc config device set c1 eth0 ipv6.address=2001:db8::2 || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network set "${net}" ipv6.dhcp.stateful=true
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config device set c1 eth0 ipv6.address=2001:db8::2
 
   # Check duplicate static DHCP allocation detection is working for same server as c1.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node1 -n "${net}" testimage c2
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc config device set c2 eth0 ipv4.address=192.0.2.2 || false
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc config device set c2 eth0 ipv6.address=2001:db8::2 || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node1 -n "${net}" testimage c2
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc config device set c2 eth0 ipv4.address=192.0.2.2 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc config device set c2 eth0 ipv6.address=2001:db8::2 || false
 
   # Check duplicate static DHCP allocation is allowed for instance on a different server.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node2 -n "${net}" testimage c3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config device set c3 eth0 ipv4.address=192.0.2.2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config device set c3 eth0 ipv6.address=2001:db8::2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node2 -n "${net}" testimage c3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config device set c3 eth0 ipv4.address=192.0.2.2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config device set c3 eth0 ipv6.address=2001:db8::2
 
   # Check duplicate MAC address assignment detection is working using both network and parent keys.
-  c1MAC=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc config get c1 volatile.eth0.hwaddr)
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc config device set c2 eth0 hwaddr="${c1MAC}" || false
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config device set c3 eth0 hwaddr="${c1MAC}"
+  c1MAC=$(INCUS_DIR="${INCUS_ONE_DIR}" inc config get c1 volatile.eth0.hwaddr)
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc config device set c2 eth0 hwaddr="${c1MAC}" || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config device set c3 eth0 hwaddr="${c1MAC}"
 
   # Check duplicate static MAC assignment detection is working for same server as c1.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config device remove c2 eth0
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc config device add c2 eth0 nic hwaddr="${c1MAC}" nictype=bridged parent="${net}" || false
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config device remove c2 eth0
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc config device add c2 eth0 nic hwaddr="${c1MAC}" nictype=bridged parent="${net}" || false
 
   # Check duplicate static MAC assignment is allowed for instance on a different server.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config device remove c3 eth0
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config device add c3 eth0 nic hwaddr="${c1MAC}" nictype=bridged parent="${net}"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config device remove c3 eth0
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config device add c3 eth0 nic hwaddr="${c1MAC}" nictype=bridged parent="${net}"
 
   # Cleanup instances and image.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc delete -f c1 c2 c3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image delete testimage
+  INCUS_DIR="${INCUS_ONE_DIR}" inc delete -f c1 c2 c3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image delete testimage
 
   # Delete network.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network delete "${net}"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network delete "${net}"
   ! nsenter -n -t "${INCUS_PID1}" -- ip link show "${net}" || false # Check bridge is removed.
   ! nsenter -n -t "${INCUS_PID2}" -- ip link show "${net}" || false # Check bridge is removed.
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project delete foo
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project delete foo
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1212,7 +1212,7 @@ test_clustering_upgrade() {
   local INCUS_DIR INCUS_NETNS
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # First, test the upgrade with a 2-node cluster
@@ -1239,10 +1239,10 @@ test_clustering_upgrade() {
   INCUS_NETNS="${ns2}" respawn_incus "${INCUS_TWO_DIR}" false
 
   # The second daemon is blocked waiting for the other to be upgraded
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxd waitready --timeout=5 || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" incus waitready --timeout=5 || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node1 | grep -q "message: Fully operational"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "message: waiting for other nodes to be upgraded"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node1 | grep -q "message: Fully operational"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "message: waiting for other nodes to be upgraded"
 
   # Respawn the first node, so it matches the version the second node
   # believes to have.
@@ -1250,10 +1250,10 @@ test_clustering_upgrade() {
   INCUS_NETNS="${ns1}" respawn_incus "${INCUS_ONE_DIR}" true
 
   # The second daemon has now unblocked
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd waitready --timeout=30
+  INCUS_DIR="${INCUS_TWO_DIR}" incus waitready --timeout=30
 
   # The cluster is again operational
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep -q "OFFLINE" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep -q "OFFLINE" || false
 
   # Now spawn a third node and test the upgrade with a 3-node cluster.
   setup_clustering_netns 3
@@ -1270,11 +1270,11 @@ test_clustering_upgrade() {
 
   # The second daemon is blocked waiting for the other two to be
   # upgraded
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxd waitready --timeout=5 || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" incus waitready --timeout=5 || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node1 | grep -q "message: Fully operational"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "message: waiting for other nodes to be upgraded"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster show node3 | grep -q "message: Fully operational"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node1 | grep -q "message: Fully operational"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "message: waiting for other nodes to be upgraded"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc cluster show node3 | grep -q "message: Fully operational"
 
   # Respawn the first node and third node, so they match the version
   # the second node believes to have.
@@ -1284,11 +1284,11 @@ test_clustering_upgrade() {
   INCUS_NETNS="${ns3}" respawn_incus "${INCUS_THREE_DIR}" true
 
   # The cluster is again operational
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep -q "OFFLINE" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep -q "OFFLINE" || false
 
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -1308,7 +1308,7 @@ test_clustering_upgrade_large() {
   local INCUS_DIR INCUS_NETNS N
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   INCUS_CLUSTER_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
@@ -1340,11 +1340,11 @@ test_clustering_upgrade_large() {
     INCUS_NETNS="${prefix}${i}" respawn_incus "${INCUS_CLUSTER_DIR}/${i}" false
   done
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd waitready --timeout=10
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep -q "OFFLINE" || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus waitready --timeout=10
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep -q "OFFLINE" || false
 
   for i in $(seq "${N}" -1 1); do
-    INCUS_DIR="${INCUS_CLUSTER_DIR}/${i}" lxd shutdown
+    INCUS_DIR="${INCUS_CLUSTER_DIR}/${i}" incus shutdown
   done
   sleep 0.5
   for i in $(seq "${N}"); do
@@ -1364,7 +1364,7 @@ test_clustering_publish() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -1388,18 +1388,18 @@ test_clustering_publish() {
 
   # Init a container on node2, using a client connected to node1
   INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node2 testimage foo
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node2 testimage foo
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc publish foo --alias=foo-image
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image show foo-image | grep -q "public: false"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc image delete foo-image
+  INCUS_DIR="${INCUS_ONE_DIR}" inc publish foo --alias=foo-image
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image show foo-image | grep -q "public: false"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc image delete foo-image
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc snapshot foo backup
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc publish foo/backup --alias=foo-backup-image
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image show foo-backup-image | grep -q "public: false"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc snapshot foo backup
+  INCUS_DIR="${INCUS_ONE_DIR}" inc publish foo/backup --alias=foo-backup-image
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image show foo-backup-image | grep -q "public: false"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1416,7 +1416,7 @@ test_clustering_profiles() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -1436,14 +1436,14 @@ test_clustering_profiles() {
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
 
   # Create an empty profile.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc profile create web
+  INCUS_DIR="${INCUS_TWO_DIR}" inc profile create web
 
   # Launch two containers on the two nodes, using the above profile.
   INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
   # TODO: Fix known race in importing small images that complete before event listener is setup.
   sleep 2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch --target node1 -p default -p web testimage c1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch --target node2 -p default -p web testimage c2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch --target node1 -p default -p web testimage c1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch --target node2 -p default -p web testimage c2
 
   # Edit the profile.
   source=$(mktemp -d -p "${TEST_DIR}" XXX)
@@ -1464,16 +1464,16 @@ used_by:
 - /1.0/instances/c1
 - /1.0/instances/c2
 EOF
-  ) | INCUS_DIR="${INCUS_TWO_DIR}" lxc profile edit web
+  ) | INCUS_DIR="${INCUS_TWO_DIR}" inc profile edit web
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc exec c1 ls /mnt | grep -q hello
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc exec c2 ls /mnt | grep -q hello
+  INCUS_DIR="${INCUS_TWO_DIR}" inc exec c1 ls /mnt | grep -q hello
+  INCUS_DIR="${INCUS_TWO_DIR}" inc exec c2 ls /mnt | grep -q hello
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc stop c1 --force
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc stop c2 --force
+  INCUS_DIR="${INCUS_TWO_DIR}" inc stop c1 --force
+  INCUS_DIR="${INCUS_ONE_DIR}" inc stop c2 --force
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1490,7 +1490,7 @@ test_clustering_update_cert() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # Bootstrap a node to steal its certs
@@ -1508,7 +1508,7 @@ test_clustering_update_cert() {
   cp "${INCUS_ONE_DIR}/cluster.key" "${key_path}"
 
   # Tear down the instance
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   teardown_clustering_netns
@@ -1540,7 +1540,7 @@ test_clustering_update_cert() {
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
 
   # Send update request
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster update-cert "${cert_path}" "${key_path}" -q
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster update-cert "${cert_path}" "${key_path}" -q
 
   cmp -s "${INCUS_ONE_DIR}/cluster.crt" "${cert_path}" || false
   cmp -s "${INCUS_TWO_DIR}/cluster.crt" "${cert_path}" || false
@@ -1548,11 +1548,11 @@ test_clustering_update_cert() {
   cmp -s "${INCUS_ONE_DIR}/cluster.key" "${key_path}" || false
   cmp -s "${INCUS_TWO_DIR}/cluster.key" "${key_path}" || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info --target node2 | grep -q "server_name: node2"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info --target node2 | grep -q "server_name: node2"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info --target node1 | grep -q "server_name: node1"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1569,7 +1569,7 @@ test_clustering_update_cert_reversion() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # Bootstrap a node to steal its certs
@@ -1587,7 +1587,7 @@ test_clustering_update_cert_reversion() {
   cp "${INCUS_ONE_DIR}/cluster.key" "${key_path}"
 
   # Tear down the instance
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   teardown_clustering_netns
@@ -1626,13 +1626,13 @@ test_clustering_update_cert_reversion() {
   spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
 
   # Shutdown third node
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   kill_incus "${INCUS_THREE_DIR}"
 
   # Send update request
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster update-cert "${cert_path}" "${key_path}" -q || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster update-cert "${cert_path}" "${key_path}" -q || false
 
   ! cmp -s "${INCUS_ONE_DIR}/cluster.crt" "${cert_path}" || false
   ! cmp -s "${INCUS_TWO_DIR}/cluster.crt" "${cert_path}" || false
@@ -1640,13 +1640,13 @@ test_clustering_update_cert_reversion() {
   ! cmp -s "${INCUS_ONE_DIR}/cluster.key" "${key_path}" || false
   ! cmp -s "${INCUS_TWO_DIR}/cluster.key" "${key_path}" || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info --target node2 | grep -q "server_name: node2"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info --target node2 | grep -q "server_name: node2"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info --target node1 | grep -q "server_name: node1"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc warning list | grep -q "Unable to update cluster certificate"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc warning list | grep -q "Unable to update cluster certificate"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1663,7 +1663,7 @@ test_clustering_join_api() {
   local INCUS_DIR INCUS_NETNS
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -1680,13 +1680,13 @@ test_clustering_join_api() {
   ns2="${prefix}2"
   INCUS_NETNS="${ns2}" spawn_incus "${INCUS_TWO_DIR}" false
 
-  op=$(curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" -X PUT "lxd/1.0/cluster" -d "{\"server_name\":\"node2\",\"enabled\":true,\"member_config\":[{\"entity\": \"storage-pool\",\"name\":\"data\",\"key\":\"source\",\"value\":\"\"}],\"server_address\":\"10.1.1.102:8443\",\"cluster_address\":\"10.1.1.101:8443\",\"cluster_certificate\":\"${cert}\",\"cluster_password\":\"sekret\"}" | jq -r .operation)
-  curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" "lxd${op}/wait"
+  op=$(curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" -X PUT "incus/1.0/cluster" -d "{\"server_name\":\"node2\",\"enabled\":true,\"member_config\":[{\"entity\": \"storage-pool\",\"name\":\"data\",\"key\":\"source\",\"value\":\"\"}],\"server_address\":\"10.1.1.102:8443\",\"cluster_address\":\"10.1.1.101:8443\",\"cluster_certificate\":\"${cert}\",\"cluster_password\":\"sekret\"}" | jq -r .operation)
+  curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" "incus${op}/wait"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "message: Fully operational"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "message: Fully operational"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1703,7 +1703,7 @@ test_clustering_shutdown_nodes() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -1731,29 +1731,29 @@ test_clustering_shutdown_nodes() {
 
   # Init a container on node1, using a client connected to node1
   INCUS_DIR="${INCUS_ONE_DIR}" ensure_import_testimage
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch --target node1 testimage foo
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch --target node1 testimage foo
 
   # Get container PID
-  instance_pid=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc info foo | awk '/^PID:/ {print $2}')
+  instance_pid=$(INCUS_DIR="${INCUS_ONE_DIR}" inc info foo | awk '/^PID:/ {print $2}')
 
   # Get server PIDs
-  daemon_pid1=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc info | awk '/server_pid/{print $2}')
-  daemon_pid2=$(INCUS_DIR="${INCUS_TWO_DIR}" lxc info | awk '/server_pid/{print $2}')
-  daemon_pid3=$(INCUS_DIR="${INCUS_THREE_DIR}" lxc info | awk '/server_pid/{print $2}')
+  daemon_pid1=$(INCUS_DIR="${INCUS_ONE_DIR}" inc info | awk '/server_pid/{print $2}')
+  daemon_pid2=$(INCUS_DIR="${INCUS_TWO_DIR}" inc info | awk '/server_pid/{print $2}')
+  daemon_pid3=$(INCUS_DIR="${INCUS_THREE_DIR}" inc info | awk '/server_pid/{print $2}')
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
   wait "${daemon_pid2}"
 
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
   wait "${daemon_pid3}"
 
   # Wait for raft election to take place and become aware that quorum has been lost (should take 3-6s).
   sleep 10
 
   # Make sure the database is not available to the first node
-  ! INCUS_DIR="${INCUS_ONE_DIR}" timeout -k 5 5 lxc cluster ls || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" timeout -k 5 5 inc cluster ls || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
 
   # Wait for LXD to terminate, otherwise the db will not be empty, and the
   # cleanup code will fail
@@ -1775,7 +1775,7 @@ test_clustering_projects() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -1795,35 +1795,35 @@ test_clustering_projects() {
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
 
   # Create a test project
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project create p1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project switch p1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc profile device add default root disk path="/" pool="data"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project create p1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project switch p1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc profile device add default root disk path="/" pool="data"
 
   # Create a container in the project.
   INCUS_DIR="${INCUS_ONE_DIR}" deps/import-busybox --project p1 --alias testimage
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node2 testimage c1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node2 testimage c1
 
   # The container is visible through both nodes
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc list | grep -q c1
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc list | grep -q c1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc list | grep -q c1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc list | grep -q c1
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc delete -f c1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc delete -f c1
 
   # Remove the image file and DB record from node1.
   rm "${INCUS_ONE_DIR}"/images/*
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd sql global 'delete from images_nodes where node_id = 1'
+  INCUS_DIR="${INCUS_TWO_DIR}" incus sql global 'delete from images_nodes where node_id = 1'
 
   # Check image import from node2 by creating container on node1 in other project.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init --target node1 testimage c2 --project p1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc delete -f c2 --project p1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init --target node1 testimage c2 --project p1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc delete -f c2 --project p1
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image delete testimage
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image delete testimage
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project switch default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project switch default
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1840,7 +1840,7 @@ test_clustering_address() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -1852,14 +1852,14 @@ test_clustering_address() {
   spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}" "dir" "8444"
 
   # The bootstrap node appears in the list with its cluster-specific port
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep -q 8444
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node1 | grep -q "database: true"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep -q 8444
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node1 | grep -q "database: true"
 
   # Add a remote using the core.https_address of the bootstrap node, and check
   # that the REST API is exposed.
   url="https://10.1.1.101:8443"
-  lxc remote add cluster --password sekret --accept-certificate "${url}"
-  lxc storage list cluster: | grep -q data
+  inc remote add cluster --password sekret --accept-certificate "${url}"
+  inc storage list cluster: | grep -q data
 
   # Add a newline at the end of each line. YAML as weird rules..
   cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
@@ -1871,40 +1871,40 @@ test_clustering_address() {
   ns2="${prefix}2"
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "dir" "8444"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep -q node2
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster show node2 | grep -q "database: true"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep -q node2
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster show node2 | grep -q "database: true"
 
   # The new node appears with its custom cluster port
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep ^url | grep -q 8444
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep ^url | grep -q 8444
 
   # The core.https_address config value can be changed and the REST API is still
   # accessible.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set "core.https_address" 10.1.1.101:9999
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set "core.https_address" 10.1.1.101:9999
   url="https://10.1.1.101:9999"
-  lxc remote set-url cluster "${url}"
-  lxc storage list cluster:| grep -q data
+  inc remote set-url cluster "${url}"
+  inc storage list cluster:| grep -q data
 
   # The cluster.https_address config value can't be changed.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc config set "cluster.https_address" "10.1.1.101:8448" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc config set "cluster.https_address" "10.1.1.101:8448" || false
 
   # Create a container using the REST API exposed over core.https_address.
   INCUS_DIR="${INCUS_ONE_DIR}" deps/import-busybox --alias testimage
-  lxc init --target node2 testimage cluster:c1
-  lxc list cluster: | grep -q c1
+  inc init --target node2 testimage cluster:c1
+  inc list cluster: | grep -q c1
 
   # The core.https_address config value can be set to a wildcard address if
   # the port is the same as cluster.https_address.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set "core.https_address" "0.0.0.0:8444"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set "core.https_address" "0.0.0.0:8444"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc delete c1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc delete c1
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
 
-  lxc remote remove cluster
+  inc remote remove cluster
 
   teardown_clustering_netns
   teardown_clustering_bridge
@@ -1918,7 +1918,7 @@ test_clustering_image_replication() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -1938,8 +1938,8 @@ test_clustering_image_replication() {
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
 
   # Image replication will be performed across all nodes in the cluster by default
-  images_minimal_replica1=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc config get cluster.images_minimal_replica)
-  images_minimal_replica2=$(INCUS_DIR="${INCUS_TWO_DIR}" lxc config get cluster.images_minimal_replica)
+  images_minimal_replica1=$(INCUS_DIR="${INCUS_ONE_DIR}" inc config get cluster.images_minimal_replica)
+  images_minimal_replica2=$(INCUS_DIR="${INCUS_TWO_DIR}" inc config get cluster.images_minimal_replica)
   [ "$images_minimal_replica1" = "" ] || false
   [ "$images_minimal_replica2" = "" ] || false
 
@@ -1947,11 +1947,11 @@ test_clustering_image_replication() {
   INCUS_DIR="${INCUS_ONE_DIR}" ensure_import_testimage
 
   # The image is visible through both nodes
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image list | grep -q testimage
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc image list | grep -q testimage
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image list | grep -q testimage
+  INCUS_DIR="${INCUS_TWO_DIR}" inc image list | grep -q testimage
 
   # The image tarball is available on both nodes
-  fingerprint=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc image info testimage | awk '/^Fingerprint/ {print $2}')
+  fingerprint=$(INCUS_DIR="${INCUS_ONE_DIR}" inc image info testimage | awk '/^Fingerprint/ {print $2}')
   [ -f "${INCUS_ONE_DIR}/images/${fingerprint}" ] || false
   [ -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
 
@@ -1979,7 +1979,7 @@ test_clustering_image_replication() {
   fi
 
   # Delete the imported image
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image delete testimage
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image delete testimage
   [ ! -f "${INCUS_ONE_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_THREE_DIR}/images/${fingerprint}" ] || false
@@ -1988,81 +1988,81 @@ test_clustering_image_replication() {
   INCUS_DIR="${INCUS_THREE_DIR}" ensure_import_testimage
 
   # The image is visible through all three nodes
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image list | grep -q testimage
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc image list | grep -q testimage
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc image list | grep -q testimage
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image list | grep -q testimage
+  INCUS_DIR="${INCUS_TWO_DIR}" inc image list | grep -q testimage
+  INCUS_DIR="${INCUS_THREE_DIR}" inc image list | grep -q testimage
 
   # The image tarball is available on all three nodes
-  fingerprint=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc image info testimage | awk '/^Fingerprint/ {print $2}')
+  fingerprint=$(INCUS_DIR="${INCUS_ONE_DIR}" inc image info testimage | awk '/^Fingerprint/ {print $2}')
   [ -f "${INCUS_ONE_DIR}/images/${fingerprint}" ] || false
   [ -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
   [ -f "${INCUS_THREE_DIR}/images/${fingerprint}" ] || false
 
   # Delete the imported image
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image delete testimage
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image delete testimage
   [ ! -f "${INCUS_ONE_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_THREE_DIR}/images/${fingerprint}" ] || false
 
   # Import the image from the container
   INCUS_DIR="${INCUS_ONE_DIR}" ensure_import_testimage
-  lxc launch testimage c1
+  inc launch testimage c1
 
   # Modify the container's rootfs and create a new image from the container
-  lxc exec c1 -- touch /a
-  lxc stop c1 --force
-  lxc publish c1 --alias new-image
+  inc exec c1 -- touch /a
+  inc stop c1 --force
+  inc publish c1 --alias new-image
 
-  fingerprint=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc image info new-image | awk '/^Fingerprint/ {print $2}')
+  fingerprint=$(INCUS_DIR="${INCUS_ONE_DIR}" inc image info new-image | awk '/^Fingerprint/ {print $2}')
   [ -f "${INCUS_ONE_DIR}/images/${fingerprint}" ] || false
   [ -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
   [ -f "${INCUS_THREE_DIR}/images/${fingerprint}" ] || false
 
   # Delete the imported image
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc image delete new-image
+  INCUS_DIR="${INCUS_TWO_DIR}" inc image delete new-image
   [ ! -f "${INCUS_ONE_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_THREE_DIR}/images/${fingerprint}" ] || false
 
   # Delete the container
-  lxc delete c1
+  inc delete c1
 
   # Delete the imported image
-  fingerprint=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc image info testimage | awk '/^Fingerprint/ {print $2}')
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image delete testimage
+  fingerprint=$(INCUS_DIR="${INCUS_ONE_DIR}" inc image info testimage | awk '/^Fingerprint/ {print $2}')
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image delete testimage
   [ ! -f "${INCUS_ONE_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_THREE_DIR}/images/${fingerprint}" ] || false
 
   # Disable the image replication
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc config set cluster.images_minimal_replica 1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info | grep -q 'cluster.images_minimal_replica: "1"'
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info | grep -q 'cluster.images_minimal_replica: "1"'
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info | grep -q 'cluster.images_minimal_replica: "1"'
+  INCUS_DIR="${INCUS_TWO_DIR}" inc config set cluster.images_minimal_replica 1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info | grep -q 'cluster.images_minimal_replica: "1"'
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info | grep -q 'cluster.images_minimal_replica: "1"'
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info | grep -q 'cluster.images_minimal_replica: "1"'
 
   # Import the test image on node2
   INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
 
   # The image is visible through all three nodes
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc image list | grep -q testimage
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc image list | grep -q testimage
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc image list | grep -q testimage
+  INCUS_DIR="${INCUS_ONE_DIR}" inc image list | grep -q testimage
+  INCUS_DIR="${INCUS_TWO_DIR}" inc image list | grep -q testimage
+  INCUS_DIR="${INCUS_THREE_DIR}" inc image list | grep -q testimage
 
   # The image tarball is only available on node2
-  fingerprint=$(INCUS_DIR="${INCUS_TWO_DIR}" lxc image info testimage | awk '/^Fingerprint/ {print $2}')
+  fingerprint=$(INCUS_DIR="${INCUS_TWO_DIR}" inc image info testimage | awk '/^Fingerprint/ {print $2}')
   [ -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_ONE_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_THREE_DIR}/images/${fingerprint}" ] || false
 
   # Delete the imported image
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc image delete testimage
+  INCUS_DIR="${INCUS_TWO_DIR}" inc image delete testimage
   [ ! -f "${INCUS_ONE_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_THREE_DIR}/images/${fingerprint}" ] || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2084,8 +2084,8 @@ test_clustering_dns() {
   # instead we will just spawn forkdns directly and check DNS resolution.
 
   # shellcheck disable=SC2031
-  lxdDir="${INCUS_DIR}"
-  prefix="lxd$$"
+  incusDir="${INCUS_DIR}"
+  prefix="inc$$"
   ipRand=$(shuf -i 0-9 -n 1)
 
   # Create first dummy interface for forkdns
@@ -2094,10 +2094,10 @@ test_clustering_dns() {
   ip a add 127.0.1.1"${ipRand}"/32 dev "${prefix}1"
 
   # Create forkdns config directory
-  mkdir "${lxdDir}"/networks/inctest1/forkdns.servers -p
+  mkdir "${incusDir}"/networks/inctest1/forkdns.servers -p
 
   # Launch forkdns (we expect syslog error about missing servers.conf file)
-  lxd forkdns 127.0.1.1"${ipRand}":1053 lxd inctest1 &
+  incus forkdns 127.0.1.1"${ipRand}":1053 incus inctest1 &
   forkdns_pid1=$!
 
   # Create first dummy interface for forkdns
@@ -2106,44 +2106,44 @@ test_clustering_dns() {
   ip a add 127.0.1.2"${ipRand}"/32 dev "${prefix}2"
 
   # Create forkdns config directory
-  mkdir "${lxdDir}"/networks/inctest2/forkdns.servers -p
+  mkdir "${incusDir}"/networks/inctest2/forkdns.servers -p
 
   # Launch forkdns (we expect syslog error about missing servers.conf file)
-  lxd forkdns 127.0.1.2"${ipRand}":1053 lxd inctest2 &
+  incus forkdns 127.0.1.2"${ipRand}":1053 incus inctest2 &
   forkdns_pid2=$!
 
   # Let the processes come up
   sleep 1
 
   # Create servers list file for forkdns1 pointing at forkdns2 (should be live reloaded)
-  echo "127.0.1.2${ipRand}" > "${lxdDir}"/networks/inctest1/forkdns.servers/servers.conf.tmp
-  mv "${lxdDir}"/networks/inctest1/forkdns.servers/servers.conf.tmp "${lxdDir}"/networks/inctest1/forkdns.servers/servers.conf
+  echo "127.0.1.2${ipRand}" > "${incusDir}"/networks/inctest1/forkdns.servers/servers.conf.tmp
+  mv "${incusDir}"/networks/inctest1/forkdns.servers/servers.conf.tmp "${incusDir}"/networks/inctest1/forkdns.servers/servers.conf
 
   # Create fake DHCP lease file on forkdns2 network
-  echo "$(date +%s) 00:16:3e:98:05:40 10.140.78.145 test1 ff:2b:a8:0a:df:00:02:00:00:ab:11:36:ea:11:e5:37:e0:85:45" > "${lxdDir}"/networks/inctest2/dnsmasq.leases
+  echo "$(date +%s) 00:16:3e:98:05:40 10.140.78.145 test1 ff:2b:a8:0a:df:00:02:00:00:ab:11:36:ea:11:e5:37:e0:85:45" > "${incusDir}"/networks/inctest2/dnsmasq.leases
 
   # Test querying forkdns1 for A record that is on forkdns2 network
-  if ! dig @127.0.1.1"${ipRand}" -p1053 test1.lxd | grep "10.140.78.145" ; then
-    echo "test1.lxd A DNS resolution failed"
+  if ! dig @127.0.1.1"${ipRand}" -p1053 test1.incus | grep "10.140.78.145" ; then
+    echo "test1.incus A DNS resolution failed"
     false
   fi
 
   # Test querying forkdns1 for AAAA record when equivalent A record is on forkdns2 network
-  if ! dig @127.0.1.1"${ipRand}" -p1053 AAAA test1.lxd | grep "status: NOERROR" ; then
-    echo "test1.lxd empty AAAAA DNS resolution failed"
+  if ! dig @127.0.1.1"${ipRand}" -p1053 AAAA test1.incus | grep "status: NOERROR" ; then
+    echo "test1.incus empty AAAAA DNS resolution failed"
     false
   fi
 
   # Test querying forkdns1 for PTR record that is on forkdns2 network
-  if ! dig @127.0.1.1"${ipRand}" -p1053 -x 10.140.78.145 | grep "test1.lxd" ; then
+  if ! dig @127.0.1.1"${ipRand}" -p1053 -x 10.140.78.145 | grep "test1.incus" ; then
     echo "10.140.78.145 PTR DNS resolution failed"
     false
   fi
 
   # Test querying forkdns1 for A record that is on forkdns2 network with recursion disabled to
   # ensure request isn't relayed
-  if ! dig @127.0.1.1"${ipRand}" -p1053 +norecurse test1.lxd | grep "NXDOMAIN" ; then
-    echo "test1.lxd A norecurse didnt return NXDOMAIN"
+  if ! dig @127.0.1.1"${ipRand}" -p1053 +norecurse test1.incus | grep "NXDOMAIN" ; then
+    echo "test1.incus A norecurse didnt return NXDOMAIN"
     false
   fi
 
@@ -2166,7 +2166,7 @@ test_clustering_recover() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -2196,38 +2196,38 @@ test_clustering_recover() {
   sleep 5
 
   # Check the current database nodes
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster list-database | grep -q "10.1.1.101:8443"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster list-database | grep -q "10.1.1.102:8443"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster list-database | grep -q "10.1.1.103:8443"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list-database | grep -q "10.1.1.101:8443"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list-database | grep -q "10.1.1.102:8443"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list-database | grep -q "10.1.1.103:8443"
 
   # Create a test project, just to insert something in the database.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project create p1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project create p1
 
   # Trying to recover a running daemon results in an error.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster recover-from-quorum-loss || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster recover-from-quorum-loss || false
 
   # Shutdown all nodes.
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
 
   # Now recover the first node and restart it.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster recover-from-quorum-loss -q
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster recover-from-quorum-loss -q
   respawn_incus_cluster_member "${ns1}" "${INCUS_ONE_DIR}"
 
   # The project we had created is still there
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project list | grep -q p1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project list | grep -q p1
 
   # The database nodes have been updated
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster list-database | grep -q "10.1.1.101:8443"
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster list-database | grep -q "10.1.1.102:8443" || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list-database | grep -q "10.1.1.101:8443"
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list-database | grep -q "10.1.1.102:8443" || false
 
   # Cleanup the dead node.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster remove node2 --force --yes
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster remove node3 --force --yes
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster remove node2 --force --yes
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster remove node3 --force --yes
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2248,7 +2248,7 @@ test_clustering_handover() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -2289,28 +2289,28 @@ test_clustering_handover() {
 
   echo "Launched member 4"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list | grep -Fc "database-standby" | grep -Fx 1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list | grep -Fc "database-standby" | grep -Fx 1
 
   # Shutdown the first node.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
 
   echo "Stopped member 1"
 
   # The fourth node has been promoted, while the first one demoted.
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd sql local 'select * from raft_nodes'
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster ls
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster show node4
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster show node1
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster show node4 | grep -q "\- database$"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster show node1 | grep -q "database: false"
+  INCUS_DIR="${INCUS_THREE_DIR}" incus sql local 'select * from raft_nodes'
+  INCUS_DIR="${INCUS_THREE_DIR}" inc cluster ls
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster show node4
+  INCUS_DIR="${INCUS_THREE_DIR}" inc cluster show node1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster show node4 | grep -q "\- database$"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc cluster show node1 | grep -q "database: false"
 
   # Even if we shutdown one more node, the cluster is still available.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
 
   echo "Stopped member 2"
 
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster list
+  INCUS_DIR="${INCUS_THREE_DIR}" inc cluster list
 
   # Respawn the first node, which is now a spare, and the second node, which
   # is still a voter.
@@ -2322,9 +2322,9 @@ test_clustering_handover() {
 
   # Shutdown two voters concurrently.
   echo "Shutting down cluster members 2 and 3..."
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown &
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown &
   pid1="$!"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown &
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown &
   pid2="$!"
 
   wait "$pid1"
@@ -2339,11 +2339,11 @@ test_clustering_handover() {
 
   echo "Started member 2"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2366,7 +2366,7 @@ test_clustering_rebalance() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -2403,36 +2403,36 @@ test_clustering_rebalance() {
   sleep 5
 
   # Check there is one database-standby member.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list | grep -Fc "database-standby" | grep -Fx 1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list | grep -Fc "database-standby" | grep -Fx 1
 
   # Kill the second node.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set cluster.offline_threshold 11
-  kill -9 "$(cat "${INCUS_TWO_DIR}/lxd.pid")"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set cluster.offline_threshold 11
+  kill -9 "$(cat "${INCUS_TWO_DIR}/incus.pid")"
 
   # Wait for the second node to be considered offline and be replaced by the
   # fourth node.
   sleep 15
 
   # The second node is offline and has been demoted.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "status: Offline"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "database: false"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node4 | grep -q "status: Online"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node4 | grep -q "\- database$"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "status: Offline"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "database: false"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node4 | grep -q "status: Online"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node4 | grep -q "\- database$"
 
   # Respawn the second node. It won't be able to disrupt the current leader,
   # since dqlite uses pre-vote.
   respawn_incus_cluster_member "${ns2}" "${INCUS_TWO_DIR}"
   sleep 12
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "status: Online"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "database: true"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "status: Online"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "database: true"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2455,7 +2455,7 @@ test_clustering_remove_raft_node() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -2475,9 +2475,9 @@ test_clustering_remove_raft_node() {
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
 
   # Configuration keys can be changed on any node.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc config set cluster.offline_threshold 11
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info | grep -q 'cluster.offline_threshold: "11"'
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info | grep -q 'cluster.offline_threshold: "11"'
+  INCUS_DIR="${INCUS_TWO_DIR}" inc config set cluster.offline_threshold 11
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info | grep -q 'cluster.offline_threshold: "11"'
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info | grep -q 'cluster.offline_threshold: "11"'
 
   # The preseeded network bridge exists on all nodes.
   ns1_pid="$(cat "${TEST_DIR}/ns/${ns1}/PID")"
@@ -2488,8 +2488,8 @@ test_clustering_remove_raft_node() {
   # Create a pending network and pool, to show that they are not
   # considered when checking if the joining node has all the required
   # networks and pools.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc storage create pool1 dir --target node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc network create net1 --target node2
+  INCUS_DIR="${INCUS_TWO_DIR}" inc storage create pool1 dir --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc network create net1 --target node2
 
   # Spawn a third node, using the non-leader node2 as join target.
   setup_clustering_netns 3
@@ -2505,15 +2505,15 @@ test_clustering_remove_raft_node() {
   ns4="${prefix}4"
   spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
 
   # Kill the second node, to prevent it from transferring its database role at shutdown.
-  kill -9 "$(cat "${INCUS_TWO_DIR}/lxd.pid")"
+  kill -9 "$(cat "${INCUS_TWO_DIR}/incus.pid")"
 
   # Remove the second node from the database but not from the raft configuration.
   retries=10
   while [ "${retries}" != "0" ]; do
-    INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global "DELETE FROM nodes WHERE address = '10.1.1.102:8443'" && break
+    INCUS_DIR="${INCUS_ONE_DIR}" incus sql global "DELETE FROM nodes WHERE address = '10.1.1.102:8443'" && break
     sleep 0.5
     retries=$((retries-1))
   done
@@ -2527,35 +2527,35 @@ test_clustering_remove_raft_node() {
   sleep 12
 
   # The node does not appear anymore in the cluster list.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep -q "node2" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep -q "node2" || false
 
   # There are only 2 database nodes.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node1 | grep -q "\- database-leader$"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node3 | grep -q "\- database$"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node4 | grep -q "\- database$"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node1 | grep -q "\- database-leader$"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node3 | grep -q "\- database$"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node4 | grep -q "\- database$"
 
   # The second node is still in the raft_nodes table.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102"
 
   # Force removing the raft node.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster remove-raft-node -q "10.1.1.102"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster remove-raft-node -q "10.1.1.102"
 
   # Wait for a heartbeat to propagate and a rebalance to be performed.
   sleep 12
 
   # We're back to 3 database nodes.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node1 | grep -q "\- database-leader$"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node3 | grep -q "\- database$"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node4 | grep -q "\- database$"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node1 | grep -q "\- database-leader$"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node3 | grep -q "\- database$"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node4 | grep -q "\- database$"
 
   # The second node is gone from the raft_nodes_table.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxd sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102" || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2576,7 +2576,7 @@ test_clustering_failure_domains() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -2624,38 +2624,38 @@ test_clustering_failure_domains() {
   spawn_incus_and_join_cluster "${ns6}" "${bridge}" "${cert}" 6 4 "${INCUS_SIX_DIR}"
 
   # Default failure domain
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "failure_domain: default"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "failure_domain: default"
 
   # Set failure domains
 
   # shellcheck disable=SC2039
-  printf "roles: [\"database\"]\nfailure_domain: \"az1\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster edit node1
+  printf "roles: [\"database\"]\nfailure_domain: \"az1\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" inc cluster edit node1
   # shellcheck disable=SC2039
-  printf "roles: [\"database\"]\nfailure_domain: \"az2\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster edit node2
+  printf "roles: [\"database\"]\nfailure_domain: \"az2\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" inc cluster edit node2
   # shellcheck disable=SC2039
-  printf "roles: [\"database\"]\nfailure_domain: \"az3\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster edit node3
+  printf "roles: [\"database\"]\nfailure_domain: \"az3\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" inc cluster edit node3
   # shellcheck disable=SC2039
-  printf "roles: []\nfailure_domain: \"az1\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster edit node4
+  printf "roles: []\nfailure_domain: \"az1\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" inc cluster edit node4
   # shellcheck disable=SC2039
-  printf "roles: []\nfailure_domain: \"az2\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster edit node5
+  printf "roles: []\nfailure_domain: \"az2\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" inc cluster edit node5
   # shellcheck disable=SC2039
-  printf "roles: []\nfailure_domain: \"az3\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster edit node6
+  printf "roles: []\nfailure_domain: \"az3\"\ngroups: [\"default\"]" | INCUS_DIR="${INCUS_THREE_DIR}" inc cluster edit node6
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "failure_domain: az2"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "failure_domain: az2"
 
   # Shutdown a node in az2, its replacement is picked from az2.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
   sleep 3
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node2 | grep -q "database: false"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster show node5 | grep -q "database: true"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node2 | grep -q "database: false"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster show node5 | grep -q "database: true"
 
-  INCUS_DIR="${INCUS_SIX_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_SIX_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_FIVE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_SIX_DIR}/unix.socket"
   rm -f "${INCUS_FIVE_DIR}/unix.socket"
@@ -2680,12 +2680,12 @@ test_clustering_image_refresh() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # The random storage backend is not supported in clustering tests,
   # since we need to have the same storage driver on all nodes, so use the driver chosen for the standalone pool.
-  poolDriver=$(lxc storage show "$(lxc profile device get default root pool)" | awk '/^driver:/ {print $2}')
+  poolDriver=$(inc storage show "$(inc profile device get default root pool)" | awk '/^driver:/ {print $2}')
 
   # Spawn first node
   setup_clustering_netns 1
@@ -2694,11 +2694,11 @@ test_clustering_image_refresh() {
   ns1="${prefix}1"
   spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set cluster.images_minimal_replica 1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set images.auto_update_interval 1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set cluster.images_minimal_replica 1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set images.auto_update_interval 1
 
   # The state of the preseeded storage pool shows up as CREATED
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage list | grep data | grep -q CREATED
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage list | grep data | grep -q CREATED
 
   # Add a newline at the end of each line. YAML as weird rules..
   cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
@@ -2727,25 +2727,25 @@ test_clustering_image_refresh() {
   dir_configure "${INCUS_REMOTE_DIR}"
   INCUS_DIR="${INCUS_REMOTE_DIR}" deps/import-busybox --alias testimage --public
 
-  INCUS_DIR="${INCUS_REMOTE_DIR}" lxc config set core.https_address "10.1.1.104:8443"
+  INCUS_DIR="${INCUS_REMOTE_DIR}" inc config set core.https_address "10.1.1.104:8443"
 
   # Add remotes
-  lxc remote add public "https://10.1.1.104:8443" --accept-certificate --password foo --public
-  lxc remote add cluster "https://10.1.1.101:8443" --accept-certificate --password sekret
+  inc remote add public "https://10.1.1.104:8443" --accept-certificate --password foo --public
+  inc remote add cluster "https://10.1.1.101:8443" --accept-certificate --password sekret
 
-  INCUS_DIR="${INCUS_REMOTE_DIR}" lxc init testimage c1
+  INCUS_DIR="${INCUS_REMOTE_DIR}" inc init testimage c1
 
   # Create additional projects
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project create foo
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project create bar
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project create foo
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project create bar
 
   # Copy default profile to all projects (this includes the root disk)
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc profile show default | INCUS_DIR="${INCUS_ONE_DIR}" lxc profile edit default --project foo
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc profile show default | INCUS_DIR="${INCUS_ONE_DIR}" lxc profile edit default --project bar
+  INCUS_DIR="${INCUS_ONE_DIR}" inc profile show default | INCUS_DIR="${INCUS_ONE_DIR}" inc profile edit default --project foo
+  INCUS_DIR="${INCUS_ONE_DIR}" inc profile show default | INCUS_DIR="${INCUS_ONE_DIR}" inc profile edit default --project bar
 
   for project in default foo bar; do
     # Copy the public image to each project
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc image copy public:testimage local: --alias testimage --project "${project}"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc image copy public:testimage local: --alias testimage --project "${project}"
 
     # Diable autoupdate for testimage in project foo
     if [ "${project}" = "foo" ]; then
@@ -2754,33 +2754,33 @@ test_clustering_image_refresh() {
       auto_update=true
     fi
 
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc image show testimage --project "${project}" | sed -r "s/auto_update: .*/auto_update: ${auto_update}/g" | INCUS_DIR="${INCUS_ONE_DIR}" lxc image edit testimage --project "${project}"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc image show testimage --project "${project}" | sed -r "s/auto_update: .*/auto_update: ${auto_update}/g" | INCUS_DIR="${INCUS_ONE_DIR}" inc image edit testimage --project "${project}"
 
     # Create a container in each project
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc init testimage c1 --project "${project}"
+    INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c1 --project "${project}"
   done
 
   # Modify public testimage
-  old_fingerprint="$(INCUS_DIR="${INCUS_REMOTE_DIR}" lxc image ls testimage -c f --format csv)"
-  dd if=/dev/urandom count=32 | INCUS_DIR="${INCUS_REMOTE_DIR}" lxc file push - c1/foo
-  INCUS_DIR="${INCUS_REMOTE_DIR}" lxc publish c1 --alias testimage --reuse --public
-  new_fingerprint="$(INCUS_DIR="${INCUS_REMOTE_DIR}" lxc image ls testimage -c f --format csv)"
+  old_fingerprint="$(INCUS_DIR="${INCUS_REMOTE_DIR}" inc image ls testimage -c f --format csv)"
+  dd if=/dev/urandom count=32 | INCUS_DIR="${INCUS_REMOTE_DIR}" inc file push - c1/foo
+  INCUS_DIR="${INCUS_REMOTE_DIR}" inc publish c1 --alias testimage --reuse --public
+  new_fingerprint="$(INCUS_DIR="${INCUS_REMOTE_DIR}" inc image ls testimage -c f --format csv)"
 
   pids=""
 
   if [ "${poolDriver}" != "dir" ]; then
     # Check image storage volume records exist.
-    lxd sql global 'select name from storage_volumes'
+    incus sql global 'select name from storage_volumes'
     if [ "${poolDriver}" = "ceph" ]; then
-      lxd sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
+      incus sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
     else
-      lxd sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 3
+      incus sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 3
     fi
   fi
 
   # Trigger image refresh on all nodes
-  for lxd_dir in "${INCUS_ONE_DIR}" "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
-    INCUS_DIR="${lxd_dir}" lxc query /internal/testing/image-refresh &
+  for incus_dir in "${INCUS_ONE_DIR}" "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
+    INCUS_DIR="${incus_dir}" inc query /internal/testing/image-refresh &
     pids="$! ${pids}"
   done
 
@@ -2791,14 +2791,14 @@ test_clustering_image_refresh() {
   done
 
   if [ "${poolDriver}" != "dir" ]; then
-    lxd sql global 'select name from storage_volumes'
+    incus sql global 'select name from storage_volumes'
     # Check image storage volume records actually removed from relevant members and replaced with new fingerprint.
     if [ "${poolDriver}" = "ceph" ]; then
-      lxd sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 0
-      lxd sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 1
+      incus sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 0
+      incus sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 1
     else
-      lxd sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
-      lxd sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 2
+      incus sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
+      incus sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 2
     fi
   fi
 
@@ -2806,19 +2806,19 @@ test_clustering_image_refresh() {
   # while project foo should still have the old image.
   # Also, it should only show 1 entry for the old image and 2 entries
   # for the new one.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | grep "${old_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | grep "${old_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | grep "${new_fingerprint}"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | grep "${new_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | grep "${new_fingerprint}"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | grep "${new_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
 
   pids=""
 
   # Trigger image refresh on all nodes. This shouldn't do anything as the image
   # is already up-to-date.
-  for lxd_dir in "${INCUS_ONE_DIR}" "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
-    INCUS_DIR="${lxd_dir}" lxc query /internal/testing/image-refresh &
+  for incus_dir in "${INCUS_ONE_DIR}" "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
+    INCUS_DIR="${incus_dir}" inc query /internal/testing/image-refresh &
     pids="$! ${pids}"
   done
 
@@ -2828,23 +2828,23 @@ test_clustering_image_refresh() {
     wait "${pid}" || true
   done
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | grep "${old_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | grep "${old_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | grep "${new_fingerprint}"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | grep "${new_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | grep "${new_fingerprint}"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | grep "${new_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
 
   # Modify public testimage
-  dd if=/dev/urandom count=32 | INCUS_DIR="${INCUS_REMOTE_DIR}" lxc file push - c1/foo
-  INCUS_DIR="${INCUS_REMOTE_DIR}" lxc publish c1 --alias testimage --reuse --public
-  new_fingerprint="$(INCUS_DIR="${INCUS_REMOTE_DIR}" lxc image ls testimage -c f --format csv)"
+  dd if=/dev/urandom count=32 | INCUS_DIR="${INCUS_REMOTE_DIR}" inc file push - c1/foo
+  INCUS_DIR="${INCUS_REMOTE_DIR}" inc publish c1 --alias testimage --reuse --public
+  new_fingerprint="$(INCUS_DIR="${INCUS_REMOTE_DIR}" inc image ls testimage -c f --format csv)"
 
   pids=""
 
   # Trigger image refresh on all nodes
-  for lxd_dir in "${INCUS_ONE_DIR}" "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
-    INCUS_DIR="${lxd_dir}" lxc query /internal/testing/image-refresh &
+  for incus_dir in "${INCUS_ONE_DIR}" "${INCUS_TWO_DIR}" "${INCUS_THREE_DIR}"; do
+    INCUS_DIR="${incus_dir}" inc query /internal/testing/image-refresh &
     pids="$! ${pids}"
   done
 
@@ -2856,35 +2856,35 @@ test_clustering_image_refresh() {
 
   pids=""
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | grep "${old_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | grep "${old_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | grep "${new_fingerprint}"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | grep "${new_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" lxd sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | grep "${new_fingerprint}"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | grep "${new_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
 
   # Clean up everything
   for project in default foo bar; do
     # shellcheck disable=SC2046
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc image rm --project "${project}" $(INCUS_DIR="${INCUS_ONE_DIR}" lxc image ls --format csv --project "${project}" | cut -d, -f2)
+    INCUS_DIR="${INCUS_ONE_DIR}" inc image rm --project "${project}" $(INCUS_DIR="${INCUS_ONE_DIR}" inc image ls --format csv --project "${project}" | cut -d, -f2)
     # shellcheck disable=SC2046
-    INCUS_DIR="${INCUS_ONE_DIR}" lxc rm --project "${project}" $(INCUS_DIR="${INCUS_ONE_DIR}" lxc ls --format csv --project "${project}" | cut -d, -f1)
+    INCUS_DIR="${INCUS_ONE_DIR}" inc rm --project "${project}" $(INCUS_DIR="${INCUS_ONE_DIR}" inc ls --format csv --project "${project}" | cut -d, -f1)
   done
 
   # shellcheck disable=SC2046
-  INCUS_DIR="${INCUS_REMOTE_DIR}" lxc image rm $(INCUS_DIR="${INCUS_REMOTE_DIR}" lxc image ls --format csv | cut -d, -f2)
+  INCUS_DIR="${INCUS_REMOTE_DIR}" inc image rm $(INCUS_DIR="${INCUS_REMOTE_DIR}" inc image ls --format csv | cut -d, -f2)
   # shellcheck disable=SC2046
-  INCUS_DIR="${INCUS_REMOTE_DIR}" lxc rm $(INCUS_DIR="${INCUS_REMOTE_DIR}" lxc ls --format csv | cut -d, -f1)
+  INCUS_DIR="${INCUS_REMOTE_DIR}" inc rm $(INCUS_DIR="${INCUS_REMOTE_DIR}" inc ls --format csv | cut -d, -f1)
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project delete foo
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc project delete bar
-  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" lxc profile edit default
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage delete data
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project delete foo
+  INCUS_DIR="${INCUS_ONE_DIR}" inc project delete bar
+  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" inc profile edit default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage delete data
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_REMOTE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_REMOTE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2899,7 +2899,7 @@ test_clustering_image_refresh() {
   kill_incus "${INCUS_THREE_DIR}"
   kill_incus "${INCUS_REMOTE_DIR}"
 
-  lxc remote rm cluster
+  inc remote rm cluster
 
   # shellcheck disable=SC2034
   INCUS_NETNS=
@@ -2910,12 +2910,12 @@ test_clustering_evacuation() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # The random storage backend is not supported in clustering tests,
   # since we need to have the same storage driver on all nodes, so use the driver chosen for the standalone pool.
-  poolDriver=$(lxc storage show "$(lxc profile device get default root pool)" | awk '/^driver:/ {print $2}')
+  poolDriver=$(inc storage show "$(inc profile device get default root pool)" | awk '/^driver:/ {print $2}')
 
   # Spawn first node
   setup_clustering_netns 1
@@ -2925,7 +2925,7 @@ test_clustering_evacuation() {
   spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   # The state of the preseeded storage pool shows up as CREATED
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage list | grep data | grep -q CREATED
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage list | grep data | grep -q CREATED
 
   # Add a newline at the end of each line. YAML as weird rules..
   cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
@@ -2945,99 +2945,99 @@ test_clustering_evacuation() {
   spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${poolDriver}"
 
   # Create local pool
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 dir --target node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 dir --target node2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 dir --target node3
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage create pool1 dir
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 dir --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 dir --target node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 dir --target node3
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage create pool1 dir
 
   # Create local storage volume
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage volume create pool1 vol1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage volume create pool1 vol1
 
   INCUS_DIR="${INCUS_ONE_DIR}" ensure_import_testimage
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch testimage c1 --target=node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set c1 boot.host_shutdown_timeout=1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch testimage c1 --target=node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set c1 boot.host_shutdown_timeout=1
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch testimage c2 --target=node1 -c cluster.evacuate=auto -s pool1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set c2 boot.host_shutdown_timeout=1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch testimage c2 --target=node1 -c cluster.evacuate=auto -s pool1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set c2 boot.host_shutdown_timeout=1
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch testimage c3 --target=node1 -c cluster.evacuate=stop
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set c3 boot.host_shutdown_timeout=1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch testimage c3 --target=node1 -c cluster.evacuate=stop
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set c3 boot.host_shutdown_timeout=1
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch testimage c4 --target=node1 -c cluster.evacuate=migrate -s pool1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set c4 boot.host_shutdown_timeout=1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch testimage c4 --target=node1 -c cluster.evacuate=migrate -s pool1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set c4 boot.host_shutdown_timeout=1
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc init testimage c5 --target=node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set c5 boot.host_shutdown_timeout=1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c5 --target=node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set c5 boot.host_shutdown_timeout=1
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch testimage c6 --target=node2
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set c6 boot.host_shutdown_timeout=1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch testimage c6 --target=node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set c6 boot.host_shutdown_timeout=1
 
   # For debugging
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc list
+  INCUS_DIR="${INCUS_TWO_DIR}" inc list
 
   # Evacuate first node
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster evacuate node1 --force
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster evacuate node1 --force
 
   # Ensure the node is evacuated
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster show node1 | grep -q "status: Evacuated"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster show node1 | grep -q "status: Evacuated"
 
   # For debugging
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc list
+  INCUS_DIR="${INCUS_TWO_DIR}" inc list
 
   # Check instance status
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c1 | grep -q "Status: RUNNING"
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc info c1 | grep -q "Location: node1" || false
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c2 | grep -q "Status: RUNNING"
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc info c2 | grep -q "Location: node1" || false
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c3 | grep -q "Status: STOPPED"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c3 | grep -q "Location: node1"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c4 | grep -q "Status: RUNNING"
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc info c4 | grep -q "Location: node1" || false
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c5 | grep -q "Status: STOPPED"
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc info c5 | grep -q "Location: node1" || false
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c6 | grep -q "Status: RUNNING"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c6 | grep -q "Location: node2"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c1 | grep -q "Status: RUNNING"
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc info c1 | grep -q "Location: node1" || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c2 | grep -q "Status: RUNNING"
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc info c2 | grep -q "Location: node1" || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c3 | grep -q "Status: STOPPED"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c3 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c4 | grep -q "Status: RUNNING"
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc info c4 | grep -q "Location: node1" || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c5 | grep -q "Status: STOPPED"
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc info c5 | grep -q "Location: node1" || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c6 | grep -q "Status: RUNNING"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c6 | grep -q "Location: node2"
 
   # Ensure instances cannot be created on the evacuated node
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc launch testimage c7 --target=node1 || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc launch testimage c7 --target=node1 || false
 
   # Restore first node
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster restore node1 --force
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster restore node1 --force
 
   # For debugging
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc list
+  INCUS_DIR="${INCUS_TWO_DIR}" inc list
 
   # Ensure the instances were moved back to the origin
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c1 | grep -q "Status: RUNNING"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c1 | grep -q "Location: node1"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c2 | grep -q "Status: RUNNING"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c2 | grep -q "Location: node1"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c3 | grep -q "Status: RUNNING"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c3 | grep -q "Location: node1"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c4 | grep -q "Status: RUNNING"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c4 | grep -q "Location: node1"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c5 | grep -q "Status: STOPPED"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c5 | grep -q "Location: node1"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c6 | grep -q "Status: RUNNING"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info c6 | grep -q "Location: node2"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c1 | grep -q "Status: RUNNING"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c1 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c2 | grep -q "Status: RUNNING"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c2 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c3 | grep -q "Status: RUNNING"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c3 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c4 | grep -q "Status: RUNNING"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c4 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c5 | grep -q "Status: STOPPED"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c5 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c6 | grep -q "Status: RUNNING"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info c6 | grep -q "Location: node2"
 
   # Clean up
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc rm -f c1
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc rm -f c2
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc rm -f c3
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc rm -f c4
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc rm -f c5
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc rm -f c6
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc image rm testimage
+  INCUS_DIR="${INCUS_TWO_DIR}" inc rm -f c1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc rm -f c2
+  INCUS_DIR="${INCUS_TWO_DIR}" inc rm -f c3
+  INCUS_DIR="${INCUS_TWO_DIR}" inc rm -f c4
+  INCUS_DIR="${INCUS_TWO_DIR}" inc rm -f c5
+  INCUS_DIR="${INCUS_TWO_DIR}" inc rm -f c6
+  INCUS_DIR="${INCUS_TWO_DIR}" inc image rm testimage
 
-  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" lxc profile edit default
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc storage delete data
+  printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" inc profile edit default
+  INCUS_DIR="${INCUS_ONE_DIR}" inc storage delete data
 
   # Shut down cluster
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -3059,7 +3059,7 @@ test_clustering_edit_configuration() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # Bootstrap the first node
@@ -3104,15 +3104,15 @@ test_clustering_edit_configuration() {
   ns6="${prefix}6"
   spawn_incus_and_join_cluster "${ns6}" "${bridge}" "${cert}" 6 1 "${INCUS_SIX_DIR}"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set cluster.offline_threshold 11
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set cluster.offline_threshold 11
 
   # Ensure successful communication
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info --target node2 | grep -q "server_name: node2"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info --target node1 | grep -q "server_name: node1"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info --target node1 | grep -q "server_name: node1"
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxc info --target node1 | grep -q "server_name: node1"
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxc info --target node1 | grep -q "server_name: node1"
-  INCUS_DIR="${INCUS_SIX_DIR}" lxc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info --target node2 | grep -q "server_name: node2"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_FOUR_DIR}" inc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_FIVE_DIR}" inc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_SIX_DIR}" inc info --target node1 | grep -q "server_name: node1"
 
   # Shut down all nodes, de-syncing the roles tables
   shutdown_incus "${INCUS_ONE_DIR}"
@@ -3121,36 +3121,36 @@ test_clustering_edit_configuration() {
   shutdown_incus "${INCUS_FOUR_DIR}"
 
   # Force-kill the last two to prevent leadership loss.
-  daemon_pid=$(cat "${INCUS_FIVE_DIR}/lxd.pid")
+  daemon_pid=$(cat "${INCUS_FIVE_DIR}/incus.pid")
   kill -9 "${daemon_pid}" 2>/dev/null || true
-  daemon_pid=$(cat "${INCUS_SIX_DIR}/lxd.pid")
+  daemon_pid=$(cat "${INCUS_SIX_DIR}/incus.pid")
   kill -9 "${daemon_pid}" 2>/dev/null || true
 
   config=$(mktemp -p "${TEST_DIR}" XXX)
   # Update the cluster configuration with new port numbers
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster show > "${config}"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show > "${config}"
   sed -e "s/:8443/:9393/" -i "${config}"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd cluster edit < "${config}"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster edit < "${config}"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd cluster show > "${config}"
+  INCUS_DIR="${INCUS_TWO_DIR}" incus cluster show > "${config}"
   sed -e "s/:8443/:9393/" -i "${config}"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd cluster edit < "${config}"
+  INCUS_DIR="${INCUS_TWO_DIR}" incus cluster edit < "${config}"
 
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd cluster show > "${config}"
+  INCUS_DIR="${INCUS_THREE_DIR}" incus cluster show > "${config}"
   sed -e "s/:8443/:9393/" -i "${config}"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd cluster edit < "${config}"
+  INCUS_DIR="${INCUS_THREE_DIR}" incus cluster edit < "${config}"
 
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxd cluster show > "${config}"
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus cluster show > "${config}"
   sed -e "s/:8443/:9393/" -i "${config}"
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxd cluster edit < "${config}"
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus cluster edit < "${config}"
 
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxd cluster show > "${config}"
+  INCUS_DIR="${INCUS_FIVE_DIR}" incus cluster show > "${config}"
   sed -e "s/:8443/:9393/" -i "${config}"
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxd cluster edit < "${config}"
+  INCUS_DIR="${INCUS_FIVE_DIR}" incus cluster edit < "${config}"
 
-  INCUS_DIR="${INCUS_SIX_DIR}" lxd cluster show > "${config}"
+  INCUS_DIR="${INCUS_SIX_DIR}" incus cluster show > "${config}"
   sed -e "s/:8443/:9393/" -i "${config}"
-  INCUS_DIR="${INCUS_SIX_DIR}" lxd cluster edit < "${config}"
+  INCUS_DIR="${INCUS_SIX_DIR}" incus cluster edit < "${config}"
 
   # Respawn the nodes
   INCUS_NETNS="${ns1}" respawn_incus "${INCUS_ONE_DIR}" false
@@ -3165,13 +3165,13 @@ test_clustering_edit_configuration() {
   sleep 12
 
   # Ensure successful communication
-  INCUS_DIR="${INCUS_ONE_DIR}"   lxc info --target node2 | grep -q "server_name: node2"
-  INCUS_DIR="${INCUS_TWO_DIR}"   lxc info --target node1 | grep -q "server_name: node1"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info --target node1 | grep -q "server_name: node1"
-  INCUS_DIR="${INCUS_FOUR_DIR}"  lxc info --target node1 | grep -q "server_name: node1"
-  INCUS_DIR="${INCUS_FIVE_DIR}"  lxc info --target node1 | grep -q "server_name: node1"
-  INCUS_DIR="${INCUS_SIX_DIR}"   lxc info --target node1 | grep -q "server_name: node1"
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster ls | grep -q "No heartbeat" || false
+  INCUS_DIR="${INCUS_ONE_DIR}"   inc info --target node2 | grep -q "server_name: node2"
+  INCUS_DIR="${INCUS_TWO_DIR}"   inc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_FOUR_DIR}"  inc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_FIVE_DIR}"  inc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_SIX_DIR}"   inc info --target node1 | grep -q "server_name: node1"
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster ls | grep -q "No heartbeat" || false
 
   # Clean up
   shutdown_incus "${INCUS_ONE_DIR}"
@@ -3180,9 +3180,9 @@ test_clustering_edit_configuration() {
   shutdown_incus "${INCUS_FOUR_DIR}"
 
   # Force-kill the last two to prevent leadership loss.
-  daemon_pid=$(cat "${INCUS_FIVE_DIR}/lxd.pid")
+  daemon_pid=$(cat "${INCUS_FIVE_DIR}/incus.pid")
   kill -9 "${daemon_pid}" 2>/dev/null || true
-  daemon_pid=$(cat "${INCUS_SIX_DIR}/lxd.pid")
+  daemon_pid=$(cat "${INCUS_SIX_DIR}/incus.pid")
   kill -9 "${daemon_pid}" 2>/dev/null || true
 
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -3208,7 +3208,7 @@ test_clustering_remove_members() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # Bootstrap the first node
@@ -3229,18 +3229,18 @@ test_clustering_remove_members() {
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
 
   # Ensure successful communication
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info --target node2 | grep -q "server_name: node2"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info --target node2 | grep -q "server_name: node2"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info --target node1 | grep -q "server_name: node1"
 
   # Remove the leader, via the stand-by node
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster rm node1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster rm node1
 
   # Ensure the remaining node is working
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list | grep -q "node1" || false
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster list | grep -q "node2"
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list | grep -q "node1" || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster list | grep -q "node2"
 
   # Previous leader should no longer be clustered
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list || false
 
   # Spawn a third node, joining the cluster with node2
   setup_clustering_netns 3
@@ -3250,28 +3250,28 @@ test_clustering_remove_members() {
   spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}"
 
   # Ensure successful communication
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info --target node3 | grep -q "server_name: node3"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info --target node2 | grep -q "server_name: node2"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info --target node3 | grep -q "server_name: node3"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info --target node2 | grep -q "server_name: node2"
 
   # Remove the third node, via itself
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster rm node3
+  INCUS_DIR="${INCUS_THREE_DIR}" inc cluster rm node3
 
   # Ensure only node2 is left in the cluster
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster ls | grep -q node2
-  ! INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster ls -f csv | grep -qv node2 || false
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster ls | grep -q node2
+  ! INCUS_DIR="${INCUS_TWO_DIR}" inc cluster ls -f csv | grep -qv node2 || false
 
   # Ensure clustering is disabled (no output) on node1 and node3
-  ! INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster ls | grep -qv "." || false
-  ! INCUS_DIR="${INCUS_THREE_DIR}" lxc cluster ls | grep -qv "." || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" inc cluster ls | grep -qv "." || false
+  ! INCUS_DIR="${INCUS_THREE_DIR}" inc cluster ls | grep -qv "." || false
 
   # Clean up
-  daemon_pid1=$(cat "${INCUS_ONE_DIR}/lxd.pid")
+  daemon_pid1=$(cat "${INCUS_ONE_DIR}/incus.pid")
   shutdown_incus "${INCUS_ONE_DIR}"
 
-  daemon_pid2=$(cat "${INCUS_TWO_DIR}/lxd.pid")
+  daemon_pid2=$(cat "${INCUS_TWO_DIR}/incus.pid")
   shutdown_incus "${INCUS_TWO_DIR}"
 
-  daemon_pid3=$(cat "${INCUS_THREE_DIR}/lxd.pid")
+  daemon_pid3=$(cat "${INCUS_THREE_DIR}/incus.pid")
   shutdown_incus "${INCUS_THREE_DIR}"
 
   wait "${daemon_pid1}"
@@ -3295,7 +3295,7 @@ test_clustering_autotarget() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -3319,15 +3319,15 @@ test_clustering_autotarget() {
 
  # Spawn c1 on node2 from node1
  ensure_import_testimage
-  lxc init --target node2 testimage c1
- lxc ls | grep c1 | grep -q node2
+  inc init --target node2 testimage c1
+ inc ls | grep c1 | grep -q node2
 
  # Set node1 config to disable autotarget
- lxc cluster set node1 scheduler.instance manual
+ inc cluster set node1 scheduler.instance manual
 
  # Spawn another node, autotargeting node2 although it has more instances.
- lxc init testimage c2
- lxc ls | grep c2 | grep -q node2
+ inc init testimage c2
+ inc ls | grep c2 | grep -q node2
 
   shutdown_incus "${INCUS_ONE_DIR}"
   shutdown_incus "${INCUS_TWO_DIR}"
@@ -3347,7 +3347,7 @@ test_clustering_groups() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -3373,83 +3373,83 @@ test_clustering_groups() {
   ns3="${prefix}3"
   spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
 
-  lxc remote add cluster --password sekret --accept-certificate "https://10.1.1.101:8443"
+  inc remote add cluster --password sekret --accept-certificate "https://10.1.1.101:8443"
 
   # Initially, there is only the default group
-  lxc cluster group show cluster:default
-  [ "$(lxc query cluster:/1.0/cluster/groups | jq 'length')" -eq 1 ]
+  inc cluster group show cluster:default
+  [ "$(inc query cluster:/1.0/cluster/groups | jq 'length')" -eq 1 ]
 
   # All nodes initially belong to the default group
-  [ "$(lxc query cluster:/1.0/cluster/groups/default | jq '.members | length')" -eq 3 ]
+  [ "$(inc query cluster:/1.0/cluster/groups/default | jq '.members | length')" -eq 3 ]
 
   # Renaming the default group is not allowed
-  ! lxc cluster group rename cluster:default foobar || false
+  ! inc cluster group rename cluster:default foobar || false
 
-  lxc cluster list cluster:
+  inc cluster list cluster:
   # Nodes need to belong to at least one group, removing it from the default group should therefore fail
-  ! lxc cluster group remove cluster:node1 default || false
+  ! inc cluster group remove cluster:node1 default || false
 
   # Create new cluster group which should be empty
-  lxc cluster group create cluster:foobar
-  [ "$(lxc query cluster:/1.0/cluster/groups/foobar | jq '.members | length')" -eq 0 ]
+  inc cluster group create cluster:foobar
+  [ "$(inc query cluster:/1.0/cluster/groups/foobar | jq '.members | length')" -eq 0 ]
 
   # Copy both description and members from default group
-  lxc cluster group show cluster:default | lxc cluster group edit cluster:foobar
-  [ "$(lxc query cluster:/1.0/cluster/groups/foobar | jq '.description == "Default cluster group"')" = "true" ]
-  [ "$(lxc query cluster:/1.0/cluster/groups/foobar | jq '.members | length')" -eq 3 ]
+  inc cluster group show cluster:default | inc cluster group edit cluster:foobar
+  [ "$(inc query cluster:/1.0/cluster/groups/foobar | jq '.description == "Default cluster group"')" = "true" ]
+  [ "$(inc query cluster:/1.0/cluster/groups/foobar | jq '.members | length')" -eq 3 ]
 
   # Delete all members from new group
-  lxc cluster group remove cluster:node1 foobar
-  lxc cluster group remove cluster:node2 foobar
-  lxc cluster group remove cluster:node3 foobar
+  inc cluster group remove cluster:node1 foobar
+  inc cluster group remove cluster:node2 foobar
+  inc cluster group remove cluster:node3 foobar
 
   # Add second node to new group. Node2 will now belong to both groups.
-  lxc cluster group assign cluster:node2 default,foobar
-  [ "$(lxc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "default"; .)')" = "true" ]
-  [ "$(lxc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "foobar"; .)')" = "true" ]
+  inc cluster group assign cluster:node2 default,foobar
+  [ "$(inc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "default"; .)')" = "true" ]
+  [ "$(inc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "foobar"; .)')" = "true" ]
 
   # Deleting the "foobar" group should fail as it still has members
-  ! lxc cluster group delete cluster:foobar || false
+  ! inc cluster group delete cluster:foobar || false
 
   # Since node2 now belongs to two groups, it can be removed from the default group
-  lxc cluster group remove cluster:node2 default
-  lxc query cluster:/1.0/cluster/members/node2
+  inc cluster group remove cluster:node2 default
+  inc query cluster:/1.0/cluster/members/node2
 
-  [ "$(lxc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "default"; .)')" = "false" ]
-  [ "$(lxc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "foobar"; .)')" = "true" ]
+  [ "$(inc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "default"; .)')" = "false" ]
+  [ "$(inc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "foobar"; .)')" = "true" ]
 
   # Rename group "foobar" to "blah"
-  lxc cluster group rename cluster:foobar blah
-  [ "$(lxc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "blah"; .)')" = "true" ]
+  inc cluster group rename cluster:foobar blah
+  [ "$(inc query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "blah"; .)')" = "true" ]
 
-  lxc cluster group create cluster:foobar2
-  lxc cluster group assign cluster:node3 default,foobar2
+  inc cluster group create cluster:foobar2
+  inc cluster group assign cluster:node3 default,foobar2
 
   # Create a new group "newgroup"
-  lxc cluster group create cluster:newgroup
-  [ "$(lxc query cluster:/1.0/cluster/groups/newgroup | jq '.members | length')" -eq 0 ]
+  inc cluster group create cluster:newgroup
+  [ "$(inc query cluster:/1.0/cluster/groups/newgroup | jq '.members | length')" -eq 0 ]
 
   # Add node1 to the "newgroup" group
-  lxc cluster group add cluster:node1 newgroup
-  [ "$(lxc query cluster:/1.0/cluster/members/node1 | jq 'any(.groups[] == "newgroup"; .)')" = "true" ]
+  inc cluster group add cluster:node1 newgroup
+  [ "$(inc query cluster:/1.0/cluster/members/node1 | jq 'any(.groups[] == "newgroup"; .)')" = "true" ]
 
   # remove node1 from "newgroup"
-  lxc cluster group remove cluster:node1 newgroup
+  inc cluster group remove cluster:node1 newgroup
 
   # delete cluster group "newgroup"
-  lxc cluster group delete cluster:newgroup
+  inc cluster group delete cluster:newgroup
 
   # With these settings:
   # - node1 will receive instances unless a different node is directly targeted (not via group)
   # - node2 will receive instances if either targeted by group or directly
   # - node3 will only receive instances if targeted directly
-  lxc cluster set cluster:node2 scheduler.instance=group
-  lxc cluster set cluster:node3 scheduler.instance=manual
+  inc cluster set cluster:node2 scheduler.instance=group
+  inc cluster set cluster:node3 scheduler.instance=manual
 
   ensure_import_testimage
 
   # Cluster group "foobar" doesn't exist and should therefore fail
-  ! lxc init testimage cluster:c1 --target=@foobar || false
+  ! inc init testimage cluster:c1 --target=@foobar || false
 
   # At this stage we have:
   # - node1 in group default accepting all instances
@@ -3457,65 +3457,65 @@ test_clustering_groups() {
   # - node3 in group default accepting direct targeting only
 
   # c1 should go to node1
-  lxc init testimage cluster:c1
-  lxc info cluster:c1 | grep -q "Location: node1"
+  inc init testimage cluster:c1
+  inc info cluster:c1 | grep -q "Location: node1"
 
   # c2 should go to node2
-  lxc init testimage cluster:c2 --target=@blah
-  lxc info cluster:c2 | grep -q "Location: node2"
+  inc init testimage cluster:c2 --target=@blah
+  inc info cluster:c2 | grep -q "Location: node2"
 
   # c3 should go to node2 again
-  lxc init testimage cluster:c3 --target=@blah
-  lxc info cluster:c3 | grep -q "Location: node2"
+  inc init testimage cluster:c3 --target=@blah
+  inc info cluster:c3 | grep -q "Location: node2"
 
   # Direct targeting of node2 should work
-  lxc init testimage cluster:c4 --target=node2
-  lxc info cluster:c4 | grep -q "Location: node2"
+  inc init testimage cluster:c4 --target=node2
+  inc info cluster:c4 | grep -q "Location: node2"
 
   # Direct targeting of node3 should work
-  lxc init testimage cluster:c5 --target=node3
-  lxc info cluster:c5 | grep -q "Location: node3"
+  inc init testimage cluster:c5 --target=node3
+  inc info cluster:c5 | grep -q "Location: node3"
 
   # Clean up
-  lxc rm -f c1 c2 c3 c4 c5
+  inc rm -f c1 c2 c3 c4 c5
 
   # Restricted project tests
-  lxc project create foo -c features.images=false -c restricted=true -c restricted.cluster.groups=blah
-  lxc profile show default | lxc profile edit default --project foo
+  inc project create foo -c features.images=false -c restricted=true -c restricted.cluster.groups=blah
+  inc profile show default | inc profile edit default --project foo
 
   # Check cannot create instance in restricted project that only allows blah group, when the only member that
   # exists in the blah group also has scheduler.instance=group set (so it must be targeted via group or directly).
-  ! lxc init testimage cluster:c1 --project foo || false
+  ! inc init testimage cluster:c1 --project foo || false
 
   # Check cannot create instance in restricted project when targeting a member that isn't in the restricted
   # project's allowed cluster groups list.
-  ! lxc init testimage cluster:c1 --project foo --target=node1 || false
-  ! lxc init testimage cluster:c1 --project foo --target=@foobar2 || false
+  ! inc init testimage cluster:c1 --project foo --target=node1 || false
+  ! inc init testimage cluster:c1 --project foo --target=@foobar2 || false
 
   # Check can create instance in restricted project when not targeting any specific member, but that it will only
   # be created on members within the project's allowed cluster groups list.
-  lxc cluster unset cluster:node2 scheduler.instance
-  lxc init testimage cluster:c1 --project foo
-  lxc init testimage cluster:c2 --project foo
-  lxc info cluster:c1 --project foo | grep -q "Location: node2"
-  lxc info cluster:c2 --project foo | grep -q "Location: node2"
-  lxc delete -f c1 c2 --project foo
+  inc cluster unset cluster:node2 scheduler.instance
+  inc init testimage cluster:c1 --project foo
+  inc init testimage cluster:c2 --project foo
+  inc info cluster:c1 --project foo | grep -q "Location: node2"
+  inc info cluster:c2 --project foo | grep -q "Location: node2"
+  inc delete -f c1 c2 --project foo
 
   # Check can specify any member or group when restricted.cluster.groups is empty.
-  lxc project unset foo restricted.cluster.groups
-  lxc init testimage cluster:c1 --project foo --target=node1
-  lxc info cluster:c1 --project foo | grep -q "Location: node1"
+  inc project unset foo restricted.cluster.groups
+  inc init testimage cluster:c1 --project foo --target=node1
+  inc info cluster:c1 --project foo | grep -q "Location: node1"
 
-  lxc init testimage cluster:c2 --project foo --target=@blah
-  lxc info cluster:c2 --project foo | grep -q "Location: node2"
+  inc init testimage cluster:c2 --project foo --target=@blah
+  inc info cluster:c2 --project foo | grep -q "Location: node2"
 
-  lxc delete -f c1 c2 --project foo
+  inc delete -f c1 c2 --project foo
 
-  lxc project delete foo
+  inc project delete foo
 
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -3528,7 +3528,7 @@ test_clustering_groups() {
   kill_incus "${INCUS_TWO_DIR}"
   kill_incus "${INCUS_THREE_DIR}"
 
-  lxc remote rm cluster
+  inc remote rm cluster
 }
 
 test_clustering_events() {
@@ -3536,7 +3536,7 @@ test_clustering_events() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -3576,30 +3576,30 @@ test_clustering_events() {
   ns5="${prefix}5"
   spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 1 "${INCUS_FIVE_DIR}"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_FOUR_DIR}" inc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_FIVE_DIR}" inc info | grep -F "server_event_mode: full-mesh"
 
   ensure_import_testimage
 
   # c1 should go to node1.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch testimage c1 --target=node1
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info c1 | grep -q "Location: node1"
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch testimage c2 --target=node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch testimage c1 --target=node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info c1 | grep -q "Location: node1"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch testimage c2 --target=node2
 
-  INCUS_DIR="${INCUS_ONE_DIR}" stdbuf -oL lxc monitor --type=lifecycle > "${TEST_DIR}/node1.log" &
+  INCUS_DIR="${INCUS_ONE_DIR}" stdbuf -oL inc monitor --type=lifecycle > "${TEST_DIR}/node1.log" &
   monitorNode1PID=$!
-  INCUS_DIR="${INCUS_TWO_DIR}" stdbuf -oL lxc monitor --type=lifecycle > "${TEST_DIR}/node2.log" &
+  INCUS_DIR="${INCUS_TWO_DIR}" stdbuf -oL inc monitor --type=lifecycle > "${TEST_DIR}/node2.log" &
   monitorNode2PID=$!
-  INCUS_DIR="${INCUS_THREE_DIR}" stdbuf -oL lxc monitor --type=lifecycle > "${TEST_DIR}/node3.log" &
+  INCUS_DIR="${INCUS_THREE_DIR}" stdbuf -oL inc monitor --type=lifecycle > "${TEST_DIR}/node3.log" &
   monitorNode3PID=$!
 
   # Restart instance generating restart lifecycle event.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc restart -f c1
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc restart -f c2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc restart -f c1
+  INCUS_DIR="${INCUS_THREE_DIR}" inc restart -f c2
   sleep 2
 
   # Check events were distributed.
@@ -3609,10 +3609,10 @@ test_clustering_events() {
   done
 
   # Switch into event-hub mode.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster role add node1 event-hub
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster role add node2 event-hub
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep -Fc event-hub | grep -Fx 2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster role add node1 event-hub
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster role add node2 event-hub
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep -Fc event-hub | grep -Fx 2
 
   # Check events were distributed.
   for i in 1 2 3; do
@@ -3620,15 +3620,15 @@ test_clustering_events() {
   done
 
   sleep 2 # Wait for notification heartbeat to distribute new roles.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info | grep -F "server_event_mode: hub-server"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info | grep -F "server_event_mode: hub-server"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info | grep -F "server_event_mode: hub-client"
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxc info | grep -F "server_event_mode: hub-client"
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxc info | grep -F "server_event_mode: hub-client"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info | grep -F "server_event_mode: hub-server"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info | grep -F "server_event_mode: hub-server"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info | grep -F "server_event_mode: hub-client"
+  INCUS_DIR="${INCUS_FOUR_DIR}" inc info | grep -F "server_event_mode: hub-client"
+  INCUS_DIR="${INCUS_FIVE_DIR}" inc info | grep -F "server_event_mode: hub-client"
 
   # Restart instance generating restart lifecycle event.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc restart -f c1
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc restart -f c2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc restart -f c1
+  INCUS_DIR="${INCUS_THREE_DIR}" inc restart -f c2
   sleep 2
 
   # Check events were distributed.
@@ -3638,22 +3638,22 @@ test_clustering_events() {
   done
 
   # Launch container on node3 to check image distribution events work during event-hub mode.
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc launch testimage c3 --target=node3
+  INCUS_DIR="${INCUS_THREE_DIR}" inc launch testimage c3 --target=node3
 
   for i in 1 2 3; do
     grep -Fc "instance-created" "${TEST_DIR}/node${i}.log" | grep -Fx 1
   done
 
   # Switch into full-mesh mode by removing one event-hub role so there is <2 in the cluster.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster role remove node1 event-hub
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster list | grep -Fc event-hub | grep -Fx 1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster role remove node1 event-hub
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster list | grep -Fc event-hub | grep -Fx 1
 
   sleep 1 # Wait for notification heartbeat to distribute new roles.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_FOUR_DIR}" inc info | grep -F "server_event_mode: full-mesh"
+  INCUS_DIR="${INCUS_FIVE_DIR}" inc info | grep -F "server_event_mode: full-mesh"
 
   # Check events were distributed.
   for i in 1 2 3; do
@@ -3661,8 +3661,8 @@ test_clustering_events() {
   done
 
   # Restart instance generating restart lifecycle event.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc restart -f c1
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc restart -f c2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc restart -f c1
+  INCUS_DIR="${INCUS_THREE_DIR}" inc restart -f c2
   sleep 2
 
   # Check events were distributed.
@@ -3672,30 +3672,30 @@ test_clustering_events() {
   done
 
   # Switch back into event-hub mode by giving the role to node4 and node5.
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc cluster role remove node2 event-hub
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxc cluster role add node4 event-hub
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxc cluster role add node5 event-hub
+  INCUS_DIR="${INCUS_TWO_DIR}" inc cluster role remove node2 event-hub
+  INCUS_DIR="${INCUS_FOUR_DIR}" inc cluster role add node4 event-hub
+  INCUS_DIR="${INCUS_FIVE_DIR}" inc cluster role add node5 event-hub
 
   sleep 2 # Wait for notification heartbeat to distribute new roles.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc info | grep -F "server_event_mode: hub-client"
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc info | grep -F "server_event_mode: hub-client"
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc info | grep -F "server_event_mode: hub-client"
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxc info | grep -F "server_event_mode: hub-server"
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxc info | grep -F "server_event_mode: hub-server"
+  INCUS_DIR="${INCUS_ONE_DIR}" inc info | grep -F "server_event_mode: hub-client"
+  INCUS_DIR="${INCUS_TWO_DIR}" inc info | grep -F "server_event_mode: hub-client"
+  INCUS_DIR="${INCUS_THREE_DIR}" inc info | grep -F "server_event_mode: hub-client"
+  INCUS_DIR="${INCUS_FOUR_DIR}" inc info | grep -F "server_event_mode: hub-server"
+  INCUS_DIR="${INCUS_FIVE_DIR}" inc info | grep -F "server_event_mode: hub-server"
 
   # Shutdown the hub servers.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc config set cluster.offline_threshold 11
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster ls
+  INCUS_DIR="${INCUS_ONE_DIR}" inc config set cluster.offline_threshold 11
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster ls
 
-  INCUS_DIR="${INCUS_FOUR_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_FIVE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_FIVE_DIR}" incus shutdown
 
   sleep 12
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc cluster ls
+  INCUS_DIR="${INCUS_ONE_DIR}" inc cluster ls
 
   # Confirm that local operations are not blocked by having no event hubs running, but that events are not being
   # distributed.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc restart -f c1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc restart -f c1
   sleep 2
 
   grep -Fc "instance-restarted" "${TEST_DIR}/node1.log" | grep -Fx 7
@@ -3710,12 +3710,12 @@ test_clustering_events() {
   kill -9 ${monitorNode3PID} || true
 
   # Cleanup.
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc delete -f c1
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc delete -f c2
-  INCUS_DIR="${INCUS_THREE_DIR}" lxc delete -f c3
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" inc delete -f c1
+  INCUS_DIR="${INCUS_TWO_DIR}" inc delete -f c2
+  INCUS_DIR="${INCUS_THREE_DIR}" inc delete -f c3
+  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_FIVE_DIR}/unix.socket"
   rm -f "${INCUS_FOUR_DIR}/unix.socket"
@@ -3738,7 +3738,7 @@ test_clustering_uuid() {
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   # create two cluster nodes
@@ -3759,15 +3759,15 @@ test_clustering_uuid() {
   ensure_import_testimage
 
   # spawn an instance on the first LXD node
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc launch testimage c1 --target=node1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc launch testimage c1 --target=node1
   # get its volatile.uuid
-  uuid_before_move=$(INCUS_DIR="${INCUS_ONE_DIR}" lxc config get c1 volatile.uuid)
+  uuid_before_move=$(INCUS_DIR="${INCUS_ONE_DIR}" inc config get c1 volatile.uuid)
   # stop the instance
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc stop -f c1
+  INCUS_DIR="${INCUS_ONE_DIR}" inc stop -f c1
   # move the instance to the second LXD node
-  INCUS_DIR="${INCUS_ONE_DIR}" lxc move c1 --target=node2
+  INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target=node2
   # get the volatile.uuid of the moved instance on the second node
-  uuid_after_move=$(INCUS_DIR="${INCUS_TWO_DIR}" lxc config get c1 volatile.uuid)
+  uuid_after_move=$(INCUS_DIR="${INCUS_TWO_DIR}" inc config get c1 volatile.uuid)
 
   # check that the uuid have not changed, else return an error
   if [ "${uuid_before_move}" != "${uuid_after_move}" ]; then
@@ -3776,9 +3776,9 @@ test_clustering_uuid() {
   fi
 
   # cleanup
-  INCUS_DIR="${INCUS_TWO_DIR}" lxc delete c1 -f
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" inc delete c1 -f
+  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
