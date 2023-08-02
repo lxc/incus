@@ -373,7 +373,7 @@ IP addresses, gateways and routes
       169.254.0.1
       fe80::1
 
-  For VMs, the gateways must be configured manually or via a mechanism like `cloud-init`.
+  For VMs, the gateways must be configured manually or via a mechanism like `cloud-init` (see the {ref}`how to guide <instances-routed-nic-vm>`).
 
   ```{note}
   If your container image is configured to perform DHCP on the interface, it will likely remove the automatically added configuration.
