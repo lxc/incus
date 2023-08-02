@@ -66,10 +66,10 @@ func RandomDevName(prefix string) string {
 	return iface
 }
 
-// MACDevName returns interface name with prefix 'lxd' and MAC without leading 2 digits.
+// MACDevName returns interface name with prefix 'inc' and MAC without leading 2 digits.
 func MACDevName(mac net.HardwareAddr) string {
 	devName := strings.Join(strings.Split(mac.String(), ":"), "")
-	return fmt.Sprintf("lxd%s", devName[2:])
+	return fmt.Sprintf("inc%s", devName[2:])
 }
 
 // UsedByInstanceDevices looks for instance NIC devices using the network and runs the supplied usageFunc for each.
