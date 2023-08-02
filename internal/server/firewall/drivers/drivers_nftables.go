@@ -374,11 +374,12 @@ func (d Nftables) NetworkClear(networkName string, _ bool, _ []uint) error {
 		"fwd", "pstrt", "in", "out", // Chains used for network operation rules.
 		"aclin", "aclout", "aclfwd", "acl", // Chains used by ACL rules.
 		"fwdprert", "fwdout", "fwdpstrt", // Chains used by Address Forward rules.
+		"egress", // Chains added for limits.priority option
 	}
 
 	// Remove chains created by network rules.
 	// Remove from ip and ip6 tables to ensure cleanup for instances started before we moved to inet table
-	err := d.removeChains([]string{"inet", "ip", "ip6"}, networkName, removeChains...)
+	err := d.removeChains([]string{"inet", "ip", "ip6", "netdev"}, networkName, removeChains...)
 	if err != nil {
 		return fmt.Errorf("Failed clearing nftables rules for network %q: %w", networkName, err)
 	}
@@ -664,6 +665,43 @@ func (d Nftables) InstanceClearRPFilter(projectName string, instanceName string,
 	err := d.removeChains([]string{"inet", "ip", "ip6"}, deviceLabel, "prert")
 	if err != nil {
 		return fmt.Errorf("Failed clearing reverse path filter rules for instance device %q: %w", deviceLabel, err)
+	}
+
+	return nil
+}
+
+// InstanceSetupNetPrio activates setting of skb->priority for the specified instance device on the host interface.
+func (d Nftables) InstanceSetupNetPrio(projectName string, instanceName string, deviceName string, netPrio uint32) error {
+	deviceLabel := d.instanceDeviceLabel(projectName, instanceName, deviceName)
+	tplFields := map[string]any{
+		"namespace":      nftablesNamespace,
+		"family":         "netdev",
+		"chainSeparator": nftablesChainSeparator,
+		"deviceLabel":    deviceLabel,
+		"deviceName":     deviceName,
+		"netPrio":        netPrio,
+	}
+
+	err := d.applyNftConfig(nftablesInstanceNetPrio, tplFields)
+	if err != nil {
+		return fmt.Errorf("Failed adding netprio rules for instance device %q: %w", deviceLabel, err)
+	}
+
+	return nil
+}
+
+// InstanceClearNetPrio removes setting of skb->priority for the specified instance device on the host interface.
+func (d Nftables) InstanceClearNetPrio(projectName string, instanceName string, deviceName string) error {
+	if deviceName == "" {
+		return fmt.Errorf("Failed clearing netprio rules for instance %q in project %q: device name is empty", projectName, instanceName)
+	}
+
+	deviceLabel := d.instanceDeviceLabel(projectName, instanceName, deviceName)
+	chainLabel := fmt.Sprintf("netprio%s%s", nftablesChainSeparator, deviceLabel)
+
+	err := d.removeChains([]string{"netdev"}, chainLabel, "egress")
+	if err != nil {
+		return fmt.Errorf("Failed clearing netprio rules for instance device %q: %w", deviceLabel, err)
 	}
 
 	return nil

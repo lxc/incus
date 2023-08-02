@@ -1371,6 +1371,56 @@ func (d Xtables) InstanceClearRPFilter(projectName string, instanceName string, 
 	return nil
 }
 
+// InstanceSetupNetPrio activates setting of skb->priority for the specified instance device on the host interface.
+func (d Xtables) InstanceSetupNetPrio(projectName string, instanceName string, deviceName string, netPrio uint32) error {
+	comment := fmt.Sprintf("%s netprio", d.instanceDeviceIPTablesComment(projectName, instanceName, deviceName))
+	class := fmt.Sprintf("%x:%x", uint16(uint32(netPrio)>>16), uint16(uint32(netPrio)&0xFFFF))
+	args := []string{
+		"-i", deviceName,
+		"-j", "CLASSIFY",
+		"--set-class", class,
+	}
+
+	// IPv4 filter.
+	err := d.iptablesPrepend(4, comment, "mangle", "FORWARD", args...)
+	if err != nil {
+		return err
+	}
+
+	// IPv6 filter if IPv6 is enabled.
+	if util.PathExists("/proc/sys/net/ipv6") {
+		err = d.iptablesPrepend(6, comment, "mangle", "FORWARD", args...)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// InstanceClearNetPrio removes setting of skb->priority for the specified instance device on the host interface.
+func (d Xtables) InstanceClearNetPrio(projectName string, instanceName string, deviceName string) error {
+	if deviceName == "" {
+		return fmt.Errorf("Failed clearing netprio rules for instance %q in project %q: device name is empty", projectName, instanceName)
+	}
+
+	comment := fmt.Sprintf("%s netprio", d.instanceDeviceIPTablesComment(projectName, instanceName, deviceName))
+	errs := []error{}
+
+	for _, ipVersion := range []uint{4, 6} {
+		err := d.iptablesClear(ipVersion, []string{comment}, "mangle")
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("Failed to remove netprio rules for %q: %v", deviceName, errs)
+	}
+
+	return nil
+}
+
 // iptablesChainExists checks whether a chain exists in a table, and whether it has any rules.
 func (d Xtables) iptablesChainExists(ipVersion uint, table string, chain string) (bool, bool, error) {
 	var cmd string
