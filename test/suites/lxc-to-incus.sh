@@ -1,4 +1,4 @@
-test_lxc_to_lxd() {
+test_lxc_to_incus() {
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   LXC_DIR="${TEST_DIR}/lxc"
