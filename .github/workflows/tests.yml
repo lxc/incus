@@ -180,6 +180,10 @@ jobs:
             xfsprogs \
             xz-utils \
             zfsutils-linux
+
+          # reclaim some space
+          sudo apt-get clean
+
           mkdir -p "$(go env GOPATH)/bin"
           curl -sSfL https://dl.min.io/server/minio/release/linux-amd64/minio --output "$(go env GOPATH)/bin/minio"
           chmod +x "$(go env GOPATH)/bin/minio"
