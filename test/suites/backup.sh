@@ -10,7 +10,7 @@ test_storage_volume_recover() {
   incus storage volume create "${poolName}" vol1 --type=block
 
   # Import ISO.
-  truncate -s 25MiB foo.iso
+  truncate -s 8MiB foo.iso
   incus storage volume import "${poolName}" ./foo.iso vol2 --type=iso
 
   # Delete database entry of the created custom block volume.
