@@ -1283,9 +1283,9 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup shmounts
 	if d.state.OS.LXCFeatures["mount_injection_file"] {
-		err = lxcSetConfigItem(cc, "lxc.mount.auto", fmt.Sprintf("shmounts:%s:/dev/.lxd-mounts", d.ShmountsPath()))
+		err = lxcSetConfigItem(cc, "lxc.mount.auto", fmt.Sprintf("shmounts:%s:/dev/.incus-mounts", d.ShmountsPath()))
 	} else {
-		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/.lxd-mounts none bind,create=dir 0 0", d.ShmountsPath()))
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/.incus-mounts none bind,create=dir 0 0", d.ShmountsPath()))
 	}
 
 	if err != nil {
@@ -7459,7 +7459,7 @@ func (d *lxc) insertMountLXD(source, target, fstype string, flags int, mntnsPID 
 	}
 
 	// Move the mount inside the container
-	mntsrc := filepath.Join("/dev/.lxd-mounts", filepath.Base(tmpMount))
+	mntsrc := filepath.Join("/dev/.incus-mounts", filepath.Base(tmpMount))
 	pidStr := fmt.Sprintf("%d", pid)
 
 	pidFdNr, pidFd := seccomp.MakePidFd(pid, d.state)
