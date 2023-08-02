@@ -89,7 +89,7 @@ test_container_recover() {
     incus project switch test
 
     # Basic no-op check.
-    cat <<EOF | incusd recover | grep "No unknown volumes found. Nothing to do."
+    cat <<EOF | incusd recover | grep "No unknown storage pools or volumes found. Nothing to do."
 no
 yes
 EOF
