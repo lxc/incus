@@ -26,50 +26,33 @@ Note that while a type is defined for each option, all values are stored as stri
 
 In addition to the configuration options listed in the following sections, these instance options are supported:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-miscellaneous start -->
+    :end-before: <!-- config group instance-miscellaneous end -->
 ```
-
-Key                                             | Type      | Default           | Live update   | Condition                 | Description
-:--                                             | :---      | :------           | :----------   | :----------               | :----------
-`agent.nic_config`                              | bool      | `false`           | no            | virtual machine           | Controls whether to set the name and MTU of the default network interfaces to be the same as the instance devices (this happens automatically for containers)
-`cluster.evacuate`                              | string    | `auto`            | no            | -                         | Controls what to do when evacuating the instance (`auto`, `migrate`, `live-migrate`, or `stop`)
-`environment.*`                                 | string    | -                 | yes (exec)    | -                         | Key/value environment variables to export to the instance and set for `lxc exec`
-`linux.kernel_modules`                          | string    | -                 | yes           | container                 | Comma-separated list of kernel modules to load before starting the instance
-`linux.sysctl.*`                                | string    | -                 | no            | container                 | Value to override the corresponding `sysctl` setting in the container
-`user.*`                                        | string    | -                 | no            | -                         | Free-form user key/value storage (can be used in search)
 
 (instance-options-boot)=
 ## Boot-related options
 
 The following instance options control the boot-related behavior of the instance:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-boot start -->
+    :end-before: <!-- config group instance-boot end -->
 ```
-
-Key                                             | Type      | Default           | Live update   | Condition                 | Description
-:--                                             | :---      | :------           | :----------   | :----------               | :----------
-`boot.autostart`                                | bool      | -                 | no            | -                         | Controls whether to always start the instance when LXD starts (if not set, restore the last state)
-`boot.autostart.delay`                          | integer   | `0`               | no            | -                         | Number of seconds to wait after the instance started before starting the next one
-`boot.autostart.priority`                       | integer   | `0`               | no            | -                         | What order to start the instances in (starting with the highest value)
-`boot.host_shutdown_timeout`                    | integer   | `30`              | yes           | -                         | Seconds to wait for the instance to shut down before it is force-stopped
-`boot.stop.priority`                            | integer   | `0`               | no            | -                         | What order to shut down the instances in (starting with the highest value)
 
 (instance-options-cloud-init)=
 ## `cloud-init` configuration
 
 The following instance options control the [`cloud-init`](cloud-init) configuration of the instance:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-cloud-init start -->
+    :end-before: <!-- config group instance-cloud-init end -->
 ```
-
-Key                                             | Type      | Default           | Live update   | Condition                 | Description
-:--                                             | :---      | :------           | :----------   | :----------               | :----------
-`cloud-init.network-config`                     | string    | `DHCP on eth0`    | no            | if supported by image     | Network configuration for `cloud-init` (content is used as seed value)
-`cloud-init.user-data`                          | string    | `#cloud-config`   | no            | if supported by image     | User data for `cloud-init` (content is used as seed value)
-`cloud-init.vendor-data`                        | string    | `#cloud-config`   | no            | if supported by image     | Vendor data for `cloud-init` (content is used as seed value)
-`user.network-config`                           | string    | `DHCP on eth0`    | no            | if supported by image     | Legacy version of `cloud-init.network-config`
-`user.user-data`                                | string    | `#cloud-config`   | no            | if supported by image     | Legacy version of `cloud-init.user-data`
-`user.vendor-data`                              | string    | `#cloud-config`   | no            | if supported by image     | Legacy version of `cloud-init.vendor-data`
 
 Support for these options depends on the image that is used and is not guaranteed.
 
@@ -81,28 +64,21 @@ Therefore, make sure that the `cloud-init` configuration you specify in those op
 
 The following instance options specify resource limits for the instance:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-resource-limits start -->
+    :end-before: <!-- config group instance-resource-limits end -->
 ```
 
-Key                                             | Type      | Default           | Live update   | Condition                 | Description
-:--                                             | :---      | :------           | :----------   | :----------               | :----------
-`limits.cpu`                                    | string    | for VMs: 1 CPU    | yes           | -                         | Number or range of CPUs to expose to the instance; see {ref}`instance-options-limits-cpu`
-`limits.cpu.allowance`                          | string    | `100%`            | yes           | container                 | Controls how much of the CPU can be used: either a percentage (`50%`) for a soft limit or a chunk of time (`25ms/100ms`) for a hard limit; see {ref}`instance-options-limits-cpu-container`
-`limits.cpu.nodes`                              | string    | -                 | yes           | -                         | Comma-separated list of NUMA node IDs or ranges to place the instance CPUs on; see {ref}`instance-options-limits-cpu-container`
-`limits.cpu.priority`                           | integer   | `10` (maximum)    | yes           | container                 | CPU scheduling priority compared to other instances sharing the same CPUs when overcommitting resources (integer between 0 and 10); see {ref}`instance-options-limits-cpu-container`
-`limits.disk.priority`                          | integer   | `5` (medium)      | yes           | -                         | Controls how much priority to give to the instance's I/O requests when under load (integer between 0 and 10)
-`limits.hugepages.64KB`                         | string    | -                 | yes           | container                 | Fixed value in bytes (various suffixes supported, see {ref}`instances-limit-units`) to limit number of 64 KB huge pages; see {ref}`instance-options-limits-hugepages`
-`limits.hugepages.1MB`                          | string    | -                 | yes           | container                 | Fixed value in bytes (various suffixes supported, see {ref}`instances-limit-units`) to limit number of 1 MB huge pages; see {ref}`instance-options-limits-hugepages`
-`limits.hugepages.2MB`                          | string    | -                 | yes           | container                 | Fixed value in bytes (various suffixes supported, see {ref}`instances-limit-units`) to limit number of 2 MB huge pages; see {ref}`instance-options-limits-hugepages`
-`limits.hugepages.1GB`                          | string    | -                 | yes           | container                 | Fixed value in bytes (various suffixes supported, see {ref}`instances-limit-units`) to limit number of 1 GB huge pages; see {ref}`instance-options-limits-hugepages`
-`limits.kernel.*`                               | string    | -                 | no            | container                 | Kernel resources per instance (for example, number of open files); see {ref}`instance-options-limits-kernel`
-`limits.memory`                                 | string    | for VMs: `1Gib`   | yes           | -                         | Percentage of the host's memory or fixed value in bytes (various suffixes supported, see {ref}`instances-limit-units`)
-`limits.memory.enforce`                         | string    | `hard`            | yes           | container                 | If `hard`, the instance cannot exceed its memory limit; if `soft`, the instance can exceed its memory limit when extra host memory is available
-`limits.memory.hugepages`                       | bool      | `false`           | no            | virtual machine           | Controls whether to back the instance using huge pages rather than regular system memory
-`limits.memory.swap`                            | bool      | `true`            | yes           | container                 | Controls whether to encourage/discourage swapping less used pages for this instance
-`limits.memory.swap.priority`                   | integer   | `10` (maximum)    | yes           | container                 | Prevents the instance from being swapped to disk (integer between 0 and 10; the higher the value, the less likely the instance is to be swapped to disk)
-`limits.network.priority`                       | integer   | `0` (minimum)     | yes           | -                         | Controls how much priority to give to the instance's network requests when under load (integer between 0 and 10)
-`limits.processes`                              | integer   | - (max)           | yes           | container                 | Maximum number of processes that can run in the instance
+```{config:option} limits.kernel.* instance-resource-limits
+:type: "string"
+:liveupdate: "no"
+:condition: "container"
+:shortdesc: "Kernel resources per instance"
+
+You can set kernel limits on an instance, for example, you can limit the number of open files.
+See {ref}`instance-options-limits-kernel` for more information.
+```
 
 ### CPU limits
 
@@ -232,47 +208,33 @@ Note that this inheritance is not enforced by LXD but by the kernel.
 
 The following instance options control the behavior if the instance is {ref}`moved from one LXD server to another <move-instances>`:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-migration start -->
+    :end-before: <!-- config group instance-migration end -->
 ```
-
-Key                                             | Type      | Default           | Live update   | Condition                 | Description
-:--                                             | :---      | :------           | :----------   | :----------               | :----------
-`migration.incremental.memory`                  | bool      | `false`           | yes           | container                 | Controls whether to use incremental memory transfer of the instance's memory to reduce downtime
-`migration.incremental.memory.goal`             | integer   | `70`              | yes           | container                 | Percentage of memory to have in sync before stopping the instance
-`migration.incremental.memory.iterations`       | integer   | `10`              | yes           | container                 | Maximum number of transfer operations to go through before stopping the instance
-`migration.stateful`                            | bool      | `false`           | no            | virtual machine           | Controls whether to allow for stateful stop/start and snapshots (enabling this prevents the use of some features that are incompatible with it)
 
 (instance-options-nvidia)=
 ## NVIDIA and CUDA configuration
 
 The following instance options specify the NVIDIA and CUDA configuration of the instance:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-nvidia start -->
+    :end-before: <!-- config group instance-nvidia end -->
 ```
-
-Key                                             | Type      | Default           | Live update   | Condition                 | Description
-:--                                             | :---      | :------           | :----------   | :----------               | :----------
-`nvidia.driver.capabilities`                    | string    | `compute,utility` | no            | container                 | What driver capabilities the instance needs (sets `libnvidia-container` `NVIDIA_DRIVER_CAPABILITIES`)
-`nvidia.runtime`                                | bool      | `false`           | no            | container                 | Controls whether to pass the host NVIDIA and CUDA runtime libraries into the instance
-`nvidia.require.cuda`                           | string    | -                 | no            | container                 | Version expression for the required CUDA version (sets `libnvidia-container` `NVIDIA_REQUIRE_CUDA`)
-`nvidia.require.driver`                         | string    | -                 | no            | container                 | Version expression for the required driver version (sets `libnvidia-container` `NVIDIA_REQUIRE_DRIVER`)
 
 (instance-options-raw)=
 ## Raw instance configuration overrides
 
 The following instance options allow direct interaction with the backend features that LXD itself uses:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-raw start -->
+    :end-before: <!-- config group instance-raw end -->
 ```
-
-Key                                             | Type      | Default           | Live update   | Condition                 | Description
-:--                                             | :---      | :------           | :----------   | :----------               | :----------
-`raw.apparmor`                                  | blob      | -                 | yes           | -                         | AppArmor profile entries to be appended to the generated profile
-`raw.idmap`                                     | blob      | -                 | no            | unprivileged container    | Raw idmap configuration (for example, `both 1000 1000`)
-`raw.lxc`                                       | blob      | -                 | no            | container                 | Raw LXC configuration to be appended to the generated one
-`raw.qemu`                                      | blob      | -                 | no            | virtual machine           | Raw QEMU configuration to be appended to the generated command line
-`raw.qemu.conf`                                 | blob      | -                 | no            | virtual machine           | Addition/override to the generated `qemu.conf` file (see {ref}`instance-options-qemu`)
-`raw.seccomp`                                   | blob      | -                 | no            | container                 | Raw Seccomp configuration
 
 ```{important}
 Setting these `raw.*` keys might break LXD in non-obvious ways.
@@ -371,56 +333,22 @@ value = "0"
 
 The following instance options control the {ref}`security` policies of the instance:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-security start -->
+    :end-before: <!-- config group instance-security end -->
 ```
-
-Key                                             | Type      | Default           | Live update   | Condition                 | Description
-:--                                             | :---      | :------           | :----------   | :----------               | :----------
-`security.csm`                                  | bool      | `false`           | no            | virtual machine           | Controls whether to use a firmware that supports UEFI-incompatible operating systems (when enabling this option, set `security.secureboot` to `false`)
-`security.devlxd`                               | bool      | `true`            | no            | -                         | Controls the presence of `/dev/lxd` in the instance
-`security.devlxd.images`                        | bool      | `false`           | no            | container                 | Controls the availability of the `/1.0/images` API over `devlxd`
-`security.idmap.base`                           | integer   | -                 | no            | unprivileged container    | The base host ID to use for the allocation (overrides auto-detection)
-`security.idmap.isolated`                       | bool      | `false`           | no            | unprivileged container    | Controls whether to use an idmap for this instance that is unique among instances with isolated set
-`security.idmap.size`                           | integer   | -                 | no            | unprivileged container    | The size of the idmap to use
-`security.nesting`                              | bool      | `false`           | yes           | container                 | Controls whether to support running LXD (nested) inside the instance
-`security.privileged`                           | bool      | `false`           | no            | container                 | Controls whether to run the instance in privileged mode
-`security.protection.delete`                    | bool      | `false`           | yes           | -                         | Prevents the instance from being deleted
-`security.protection.shift`                     | bool      | `false`           | yes           | container                 | Prevents the instance's file system from being UID/GID shifted on startup
-`security.agent.metrics`                        | bool      | `true`            | no            | virtual machine           | Controls whether the `lxd-agent` is queried for state information and metrics
-`security.secureboot`                           | bool      | `true`            | no            | virtual machine           | Controls whether UEFI secure boot is enabled with the default Microsoft keys (when disabling this option, consider enabling `security.csm`)
-`security.sev`                                  | bool      | `false`           | no            | virtual machine           | Controls whether AMD SEV (Secure Encrypted Virtualization) is enabled for this VM
-`security.sev.policy.es`                        | bool      | `false`           | no            | virtual machine           | Controls whether AMD SEV-ES (SEV Encrypted State) is enabled for this VM
-`security.sev.session.dh`                       | string    | `true`            | no            | virtual machine           | The guest owner's `base64`-encoded Diffie-Hellman key
-`security.sev.session.data`                     | string    | `true`            | no            | virtual machine           | The guest owner's `base64`-encoded session blob
-`security.syscalls.allow`                       | string    | -                 | no            | container                 | A `\n`-separated list of syscalls to allow (mutually exclusive with `security.syscalls.deny*`)
-`security.syscalls.deny`                        | string    | -                 | no            | container                 | A `\n`-separated list of syscalls to deny
-`security.syscalls.deny_compat`                 | bool      | `false`           | no            | container                 | On `x86_64`, controls whether to block `compat_*` syscalls (no-op on other architectures)
-`security.syscalls.deny_default`                | bool      | `true`            | no            | container                 | Controls whether to enable the default syscall deny
-`security.syscalls.intercept.bpf`               | bool      | `false`           | no            | container                 | Controls whether to handle the `bpf` system call
-`security.syscalls.intercept.bpf.devices`       | bool      | `false`           | no            | container                 | Controls whether to allow `bpf` programs for the devices cgroup in the unified hierarchy to be loaded
-`security.syscalls.intercept.mknod`             | bool      | `false`           | no            | container                 | Controls whether to handle the `mknod` and `mknodat` system calls (allows creation of a limited subset of char/block devices)
-`security.syscalls.intercept.mount`             | bool      | `false`           | no            | container                 | Controls whether to handle the `mount` system call
-`security.syscalls.intercept.mount.allowed`     | string    | -                 | yes           | container                 | A comma-separated list of file systems that are safe to mount for processes inside the instance
-`security.syscalls.intercept.mount.fuse`        | string    | -                 | yes           | container                 | Mounts of a given file system that should be redirected to their FUSE implementation (for example, `ext4=fuse2fs`)
-`security.syscalls.intercept.mount.shift`       | bool      | `false`           | yes           | container                 | Controls whether to mount `shiftfs` on top of file systems handled through mount syscall interception
-`security.syscalls.intercept.sched_setscheduler`| bool      | `false`           | no            | container                 | Controls whether to handle the `sched_setscheduler` system call (allows increasing process priority)
-`security.syscalls.intercept.setxattr`          | bool      | `false`           | no            | container                 | Controls whether to handle the `setxattr` system call (allows setting a limited subset of restricted extended attributes)
-`security.syscalls.intercept.sysinfo`           | bool      | `false`           | no            | container                 | Controls whether to handle the `sysinfo` system call (to get cgroup-based resource usage information)
 
 (instance-options-snapshots)=
 ## Snapshot scheduling and configuration
 
 The following instance options control the creation and expiry of {ref}`instance snapshots <instances-snapshots>`:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-snapshots start -->
+    :end-before: <!-- config group instance-snapshots end -->
 ```
-
-Key                                             | Type      | Default           | Live update   | Condition                 | Description
-:--                                             | :---      | :------           | :----------   | :----------               | :----------
-`snapshots.schedule`                            | string    | -                 | no            | -                         | {{snapshot_schedule_format}}
-`snapshots.schedule.stopped`                    | bool      | `false`           | no            | -                         | Controls whether to automatically snapshot stopped instances
-`snapshots.pattern`                             | string    | `snap%d`          | no            | -                         | {{snapshot_pattern_format}}; see {ref}`instance-options-snapshots-names`
-`snapshots.expiry`                              | string    | -                 | no            | -                         | {{snapshot_expiry_format}}
 
 (instance-options-snapshots-names)=
 ### Automatic snapshot names
@@ -432,37 +360,11 @@ Key                                             | Type      | Default           
 
 The following volatile keys are currently used internally by LXD to store internal data specific to an instance:
 
-```{rst-class} dec-font-size break-col-1 min-width-1-15
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group instance-volatile start -->
+    :end-before: <!-- config group instance-volatile end --
 ```
-
-Key                                         | Type      | Description
-:--                                         | :---      | :----------
-`volatile.apply_template`                   | string    | The name of a template hook that should be triggered upon next startup
-`volatile.apply_nvram`                      | string    | Whether to regenerate VM NVRAM the next time the instance starts
-`volatile.base_image`                       | string    | The hash of the image the instance was created from (if any)
-`volatile.cloud-init.instance-id`           | string    | The `instance-id` (UUID) exposed to `cloud-init`
-`volatile.evacuate.origin`                  | string    | The origin (cluster member) of the evacuated instance
-`volatile.idmap.base`                       | integer   | The first ID in the instance's primary idmap range
-`volatile.idmap.current`                    | string    | The idmap currently in use by the instance
-`volatile.idmap.next`                       | string    | The idmap to use the next time the instance starts
-`volatile.last_state.idmap`                 | string    | Serialized instance UID/GID map
-`volatile.last_state.power`                 | string    | Instance state as of last host shutdown
-`volatile.vsock_id`                         | string    | Instance `vsock` ID used as of last start
-`volatile.uuid`                             | string    | Instance UUID (globally unique across all servers and projects)
-`volatile.uuid.generation`                             | string    | Instance generation UUID that will change whenever the instance's place in time moves backwards (globally unique across all servers and projects)
-`volatile.<name>.apply_quota`               | string    | Disk quota to be applied the next time the instance starts
-`volatile.<name>.ceph_rbd`                  | string    | RBD device path for Ceph disk devices
-`volatile.<name>.host_name`                 | string    | Network device name on the host
-`volatile.<name>.hwaddr`                    | string    | Network device MAC address (when no `hwaddr` property is set on the device itself)
-`volatile.<name>.last_state.created`        | string    | Whether the network device physical device was created (`true` or `false`)
-`volatile.<name>.last_state.mtu`            | string    | Network device original MTU used when moving a physical device into an instance
-`volatile.<name>.last_state.hwaddr`         | string    | Network device original MAC used when moving a physical device into an instance
-`volatile.<name>.last_state.ip_addresses`   | string    | Network device comma-separated list of last used IP addresses
-`volatile.<name>.last_state.vdpa.name`      | string    | VDPA device name used when moving a VDPA device file descriptor into an instance
-`volatile.<name>.last_state.vf.id`          | string    | SR-IOV virtual function ID used when moving a VF into an instance
-`volatile.<name>.last_state.vf.hwaddr`      | string    | SR-IOV virtual function original MAC used when moving a VF into an instance
-`volatile.<name>.last_state.vf.vlan`        | string    | SR-IOV virtual function original VLAN used when moving a VF into an instance
-`volatile.<name>.last_state.vf.spoofcheck`  | string    | SR-IOV virtual function original spoof check setting used when moving a VF into an instance
 
 ```{note}
 Volatile keys cannot be set by the user.
