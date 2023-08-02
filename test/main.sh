@@ -329,6 +329,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_storage_driver_zfs "zfs storage driver"
     run_test test_storage_buckets "storage buckets"
     run_test test_storage_volume_import "storage volume import"
+    run_test test_storage_volume_initial_config "storage volume initial configuration"
     run_test test_resources "resources"
     run_test test_kernel_limits "kernel limits"
     run_test test_console "console"
