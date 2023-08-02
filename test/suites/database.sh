@@ -9,7 +9,7 @@ test_database_restore(){
     set -e
     # shellcheck disable=SC2034
     INCUS_DIR=${INCUS_RESTORE_DIR}
-    lxc config set "core.https_allowed_credentials" "true"
+    inc config set "core.https_allowed_credentials" "true"
   )
 
   shutdown_incus "${INCUS_RESTORE_DIR}"
@@ -20,8 +20,8 @@ UPDATE config SET value='false' WHERE key='core.https_allowed_credentials';
 INSERT INTO broken(n) VALUES(1);
 EOF
 
-  # Starting LXD fails.
-  ! INCUS_DIR="${INCUS_RESTORE_DIR}" lxd --logfile "${INCUS_RESTORE_DIR}/lxd.log" "${DEBUG-}" 2>&1 || false
+  # Starting Incus fails.
+  ! INCUS_DIR="${INCUS_RESTORE_DIR}" incus --logfile "${INCUS_RESTORE_DIR}/incus.log" "${DEBUG-}" 2>&1 || false
 
   # Remove the broken patch
   rm -f "${INCUS_RESTORE_DIR}/database/patch.global.sql"
@@ -36,7 +36,7 @@ EOF
     set -e
     # shellcheck disable=SC2034
     INCUS_DIR=${INCUS_RESTORE_DIR}
-    lxc config get "core.https_allowed_credentials" | grep -q "true"
+    inc config get "core.https_allowed_credentials" | grep -q "true"
   )
 
   kill_incus "${INCUS_RESTORE_DIR}"
@@ -65,26 +65,26 @@ test_database_no_disk_space(){
     INCUS_DIR="${INCUS_NOSPACE_DIR}"
 
     ensure_import_testimage
-    lxc init testimage c
+    inc init testimage c
 
     # Set a custom user property with a big value, so we eventually eat up all
     # available disk space in the database directory.
     DATA="${INCUS_NOSPACE_DIR}/data"
     head -c 262144 < /dev/zero | tr '\0' '\141' > "${DATA}"
     for i in $(seq 20); do
-        if ! lxc config set c "user.prop${i}" - < "${DATA}"; then
+        if ! inc config set c "user.prop${i}" - < "${DATA}"; then
             break
         fi
     done
 
     # Commands that involve writing to the database keep failing.
-    ! lxc config set c "user.propX" - < "${DATA}" || false
-    ! lxc config set c "user.propY" - < "${DATA}" || false
+    ! inc config set c "user.propX" - < "${DATA}" || false
+    ! inc config set c "user.propY" - < "${DATA}" || false
 
     # Removing the big file makes the database happy again.
     rm "${BIG_FILE}"
-    lxc config set c "user.propZ" - < "${DATA}"
-    lxc delete -f c
+    inc config set c "user.propZ" - < "${DATA}"
+    inc delete -f c
   )
 
   shutdown_incus "${INCUS_NOSPACE_DIR}"
