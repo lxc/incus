@@ -569,7 +569,7 @@ migration() {
   incus_remote rm -f l2:c1
 
   # migrate ISO custom volumes
-  truncate -s 25MiB foo.iso
+  truncate -s 8MiB foo.iso
   incus storage volume import l1:"${pool}" ./foo.iso iso1
   incus storage volume copy l1:"${pool}"/iso1 l2:"${remote_pool}"/iso1
 
