@@ -19,7 +19,7 @@ import (
 	"github.com/cyphar/incus/shared/version"
 )
 
-const nftablesNamespace = "lxd"
+const nftablesNamespace = "incus"
 const nftablesContentTemplate = "nftablesContent"
 
 // nftablesChainSeparator The "." character is specifically chosen here so as to prevent the ability for collisions
@@ -97,7 +97,7 @@ func (d Nftables) Compat() (bool, error) {
 	}
 
 	// Check that nftables works at all (some kernels let you list ruleset despite missing support).
-	testTable := fmt.Sprintf("lxd_test_%s", uuid.New())
+	testTable := fmt.Sprintf("incus_test_%s", uuid.New())
 
 	_, err = shared.RunCommandCLocale("nft", "create", "table", testTable)
 	if err != nil {

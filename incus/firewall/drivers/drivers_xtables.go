@@ -18,10 +18,10 @@ import (
 )
 
 // iptablesChainNICFilterPrefix chain prefix used for NIC specific filtering rules.
-const iptablesChainNICFilterPrefix = "lxd_nic"
+const iptablesChainNICFilterPrefix = "incus_nic"
 
 // iptablesChainACLFilterPrefix chain used for ACL specific filtering rules.
-const iptablesChainACLFilterPrefix = "lxd_acl"
+const iptablesChainACLFilterPrefix = "incus_acl"
 
 // iptablesCommentPrefix is used to prefix the rule comment.
 const iptablesCommentPrefix = "generated for"
