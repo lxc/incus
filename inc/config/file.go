@@ -67,7 +67,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	// If the environment specifies a remote this takes priority over what
 	// is defined in the configuration
-	envDefaultRemote := os.Getenv("LXC_REMOTE")
+	envDefaultRemote := os.Getenv("INCUS_REMOTE")
 	if len(envDefaultRemote) > 0 {
 		c.DefaultRemote = envDefaultRemote
 	} else if c.DefaultRemote == "" {

@@ -313,8 +313,8 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 
 	// Figure out the config directory and config path
 	var configDir string
-	if os.Getenv("LXD_CONF") != "" {
-		configDir = os.Getenv("LXD_CONF")
+	if os.Getenv("INCUS_CONF") != "" {
+		configDir = os.Getenv("INCUS_CONF")
 	} else if os.Getenv("HOME") != "" {
 		configDir = path.Join(os.Getenv("HOME"), ".config", "lxc")
 	} else {
