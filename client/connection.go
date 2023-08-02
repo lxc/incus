@@ -148,8 +148,8 @@ func ConnectLXDHTTPWithContext(ctx context.Context, args *ConnectionArgs, client
 
 // ConnectLXDUnix lets you connect to a remote LXD daemon over a local unix socket.
 //
-// If the path argument is empty, then $LXD_SOCKET will be used, if
-// unset $LXD_DIR/unix.socket will be used and if that one isn't set
+// If the path argument is empty, then $INCUS_SOCKET will be used, if
+// unset $INCUS_DIR/unix.socket will be used and if that one isn't set
 // either, then the path will default to /var/lib/lxd/unix.socket.
 func ConnectLXDUnix(path string, args *ConnectionArgs) (InstanceServer, error) {
 	return ConnectLXDUnixWithContext(context.Background(), path, args)
@@ -157,8 +157,8 @@ func ConnectLXDUnix(path string, args *ConnectionArgs) (InstanceServer, error) {
 
 // ConnectLXDUnixWithContext lets you connect to a remote LXD daemon over a local unix socket with context.Context.
 //
-// If the path argument is empty, then $LXD_SOCKET will be used, if
-// unset $LXD_DIR/unix.socket will be used and if that one isn't set
+// If the path argument is empty, then $INCUS_SOCKET will be used, if
+// unset $INCUS_DIR/unix.socket will be used and if that one isn't set
 // either, then the path will default to /var/lib/lxd/unix.socket.
 func ConnectLXDUnixWithContext(ctx context.Context, path string, args *ConnectionArgs) (InstanceServer, error) {
 	logger.Debug("Connecting to a local LXD over a Unix socket")
@@ -190,9 +190,9 @@ func ConnectLXDUnixWithContext(ctx context.Context, path string, args *Connectio
 
 	// Determine the socket path
 	if path == "" {
-		path = os.Getenv("LXD_SOCKET")
+		path = os.Getenv("INCUS_SOCKET")
 		if path == "" {
-			lxdDir := os.Getenv("LXD_DIR")
+			lxdDir := os.Getenv("INCUS_DIR")
 			if lxdDir == "" {
 				lxdDir = "/var/lib/lxd"
 			}
