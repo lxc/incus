@@ -65,7 +65,7 @@ _have lxc && {
     fi
 
     if [ -n "${SNAP_COMMON:-""}" ]; then
-      export LXD_DIR=${LXD_DIR:-"${SNAP_COMMON}/lxd/"}
+      export INCUS_DIR=${INCUS_DIR:-"${SNAP_COMMON}/lxd/"}
     fi
 
     lxc_cmds="alias cluster config console copy delete exec export file \
