@@ -30,51 +30,51 @@ test_remote_url_with_token() {
   ! inc_remote remote add test "${invalid_token}" || false
 
   # Generate token for client foo
-  echo foo | lxc config trust add -q
+  echo foo | inc config trust add -q
 
   # Listing all tokens should show only a single one
-  [ "$(lxc config trust list-tokens -f json | jq '[.[] | select(.ClientName == "foo")] |  length')" -eq 1 ]
+  [ "$(inc config trust list-tokens -f json | jq '[.[] | select(.ClientName == "foo")] |  length')" -eq 1 ]
 
   # Extract token
-  token="$(lxc config trust list-tokens -f json | jq '.[].Token')"
+  token="$(inc config trust list-tokens -f json | jq '.[].Token')"
 
   # Invalidate token so that it cannot be used again
-  lxc config trust revoke-token foo
+  inc config trust revoke-token foo
 
   # Ensure the token is invalidated
-  [ "$(lxc config trust list-tokens -f json | jq 'length')" -eq 0 ]
+  [ "$(inc config trust list-tokens -f json | jq 'length')" -eq 0 ]
 
   # Try adding the remote using the invalidated token
   ! inc_remote remote add test "${token}" || false
 
   # Generate token for client foo
-  lxc project create foo
-  echo foo | lxc config trust add -q --projects foo --restricted
+  inc project create foo
+  echo foo | inc config trust add -q --projects foo --restricted
 
   # Extract the token
-  token="$(lxc config trust list-tokens -f json | jq -r '.[].Token')"
+  token="$(inc config trust list-tokens -f json | jq -r '.[].Token')"
 
   # Add the valid token
   inc_remote remote add test "${token}"
 
   # Ensure the token is invalidated
-  [ "$(lxc config trust list-tokens -f json | jq 'length')" -eq 0 ]
+  [ "$(inc config trust list-tokens -f json | jq 'length')" -eq 0 ]
 
   # List instances as the remote has been added
   inc_remote ls test:
 
   # Clean up
   inc_remote remote remove test
-  lxc config trust rm "$(lxc config trust list -f json | jq -r '.[].fingerprint')"
+  inc config trust rm "$(inc config trust list -f json | jq -r '.[].fingerprint')"
 
   # Generate new token
-  echo foo | lxc config trust add -q
+  echo foo | inc config trust add -q
 
   # Extract token
-  token="$(lxc config trust list-tokens -f json | jq '.[].Token')"
+  token="$(inc config trust list-tokens -f json | jq '.[].Token')"
 
   # create new certificate
-  openssl req -x509 -newkey rsa:2048 -keyout "${TEST_DIR}/token-client.key" -nodes -out "${TEST_DIR}/token-client.crt" -subj "/CN=lxd.local"
+  openssl req -x509 -newkey rsa:2048 -keyout "${TEST_DIR}/token-client.key" -nodes -out "${TEST_DIR}/token-client.crt" -subj "/CN=incus.local"
 
   # Try accessing instances (this should fail)
   [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.error_code')" -eq 403 ]
@@ -85,13 +85,13 @@ test_remote_url_with_token() {
   # Check if we can see instances
   [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.status_code')" -eq 200 ]
 
-  lxc config trust rm "$(lxc config trust list -f json | jq -r '.[].fingerprint')"
+  inc config trust rm "$(inc config trust list -f json | jq -r '.[].fingerprint')"
 
   # Generate new token
-  echo foo | lxc config trust add -q --projects foo --restricted
+  echo foo | inc config trust add -q --projects foo --restricted
 
   # Extract token
-  token="$(lxc config trust list-tokens -f json | jq '.[].Token')"
+  token="$(inc config trust list-tokens -f json | jq '.[].Token')"
 
   # Add valid token but override projects
   curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" -X POST -d "{\"password\":${token},\"projects\":[\"default\",\"foo\"],\"restricted\":false}" "https://${INCUS_ADDR}/1.0/certificates"
@@ -102,25 +102,25 @@ test_remote_url_with_token() {
   # Check if we can see instances in the default project (this should fail)
   [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.error_code')" -eq 403 ]
 
-  lxc config trust rm "$(lxc config trust list -f json | jq -r '.[].fingerprint')"
+  inc config trust rm "$(inc config trust list -f json | jq -r '.[].fingerprint')"
 
   # Set token expiry to 5 seconds
-  lxc config set core.remote_token_expiry 5S
+  inc config set core.remote_token_expiry 5S
 
   # Generate new token
-  token="$(lxc config trust add --name foo | tail -n1)"
+  token="$(inc config trust add --name foo | tail -n1)"
 
   # Try adding remote. This should succeed.
   inc_remote remote add test "${token}"
 
   # Remove all trusted clients
-  lxc config trust rm "$(lxc config trust list -f json | jq -r '.[].fingerprint')"
+  inc config trust rm "$(inc config trust list -f json | jq -r '.[].fingerprint')"
 
   # Remove remote
   inc_remote remote rm test
 
   # Generate new token
-  token="$(lxc config trust add --name foo | tail -n1)"
+  token="$(inc config trust add --name foo | tail -n1)"
 
   # This will cause the token to expire
   sleep 5
@@ -129,7 +129,7 @@ test_remote_url_with_token() {
   ! inc_remote remote add test "${token}" || false
 
   # Unset token expiry
-  lxc config unset core.remote_token_expiry
+  inc config unset core.remote_token_expiry
 }
 
 test_remote_admin() {
@@ -186,12 +186,12 @@ test_remote_usage() {
   INCUS2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS2_DIR}"
   spawn_incus "${INCUS2_DIR}" true
-  INCUS2_ADDR=$(cat "${INCUS2_DIR}/lxd.addr")
+  INCUS2_ADDR=$(cat "${INCUS2_DIR}/incus.addr")
 
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  inc_remote remote add lxd2 "${INCUS2_ADDR}" --accept-certificate --password foo
+  inc_remote remote add incus2 "${INCUS2_ADDR}" --accept-certificate --password foo
 
   # we need a public image on localhost
 
@@ -201,60 +201,60 @@ test_remote_usage() {
   inc_remote image import "${INCUS_DIR}/foo.tar.xz" localhost: --public
   inc_remote image alias create localhost:testimage "${sum}"
 
-  inc_remote image delete "lxd2:${sum}" || true
+  inc_remote image delete "incus2:${sum}" || true
 
-  inc_remote image copy localhost:testimage lxd2: --copy-aliases --public
+  inc_remote image copy localhost:testimage incus2: --copy-aliases --public
   inc_remote image delete "localhost:${sum}"
-  inc_remote image copy "lxd2:${sum}" local: --copy-aliases --public
+  inc_remote image copy "incus2:${sum}" local: --copy-aliases --public
   inc_remote image info localhost:testimage
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image delete "incus2:${sum}"
 
-  inc_remote image copy "localhost:${sum}" lxd2:
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image copy "localhost:${sum}" incus2:
+  inc_remote image delete "incus2:${sum}"
 
-  inc_remote image copy "localhost:$(echo "${sum}" | colrm 3)" lxd2:
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image copy "localhost:$(echo "${sum}" | colrm 3)" incus2:
+  inc_remote image delete "incus2:${sum}"
 
   # test a private image
-  inc_remote image copy "localhost:${sum}" lxd2:
+  inc_remote image copy "localhost:${sum}" incus2:
   inc_remote image delete "localhost:${sum}"
-  inc_remote init "lxd2:${sum}" localhost:c1
+  inc_remote init "incus2:${sum}" localhost:c1
   inc_remote delete localhost:c1
 
   inc_remote image alias create localhost:testimage "${sum}"
 
   # test remote publish
   inc_remote init testimage pub
-  inc_remote publish pub lxd2: --alias bar --public a=b
-  inc_remote image show lxd2:bar | grep -q "a: b"
-  inc_remote image show lxd2:bar | grep -q "public: true"
+  inc_remote publish pub incus2: --alias bar --public a=b
+  inc_remote image show incus2:bar | grep -q "a: b"
+  inc_remote image show incus2:bar | grep -q "public: true"
   ! inc_remote image show bar || false
   inc_remote delete pub
 
   # test spawn from public server
-  inc_remote remote add lxd2-public "${INCUS2_ADDR}" --public --accept-certificate
-  inc_remote init lxd2-public:bar pub
-  inc_remote image delete lxd2:bar
+  inc_remote remote add incus2-public "${INCUS2_ADDR}" --public --accept-certificate
+  inc_remote init incus2-public:bar pub
+  inc_remote image delete incus2:bar
   inc_remote delete pub
 
   # Double launch to test if the image downloads only once.
-  inc_remote init localhost:testimage lxd2:c1 &
+  inc_remote init localhost:testimage incus2:c1 &
   C1PID=$!
 
-  inc_remote init localhost:testimage lxd2:c2
-  inc_remote delete lxd2:c2
+  inc_remote init localhost:testimage incus2:c2
+  inc_remote delete incus2:c2
 
   wait "${C1PID}"
-  inc_remote delete lxd2:c1
+  inc_remote delete incus2:c1
 
-  # launch testimage stored on localhost as container c1 on lxd2
-  inc_remote launch localhost:testimage lxd2:c1
+  # launch testimage stored on localhost as container c1 on incus2
+  inc_remote launch localhost:testimage incus2:c1
 
   # make sure it is running
-  inc_remote list lxd2: | grep c1 | grep RUNNING
-  inc_remote info lxd2:c1
-  inc_remote stop lxd2:c1 --force
-  inc_remote delete lxd2:c1
+  inc_remote list incus2: | grep c1 | grep RUNNING
+  inc_remote info incus2:c1
+  inc_remote stop incus2:c1 --force
+  inc_remote delete incus2:c1
 
   # Test that local and public servers can be accessed without a client cert
   mv "${INCUS_CONF}/client.crt" "${INCUS_CONF}/client.crt.bak"
@@ -273,78 +273,78 @@ test_remote_usage() {
   mv "${INCUS_CONF}/client.crt.bak" "${INCUS_CONF}/client.crt"
   mv "${INCUS_CONF}/client.key.bak" "${INCUS_CONF}/client.key"
 
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image delete "incus2:${sum}"
 
   inc_remote image alias create localhost:foo "${sum}"
 
-  inc_remote image copy "localhost:${sum}" lxd2: --mode=push
-  inc_remote image show lxd2:"${sum}"
-  inc_remote image show lxd2:"${sum}" | grep -q 'public: false'
-  ! inc_remote image show lxd2:foo || false
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image copy "localhost:${sum}" incus2: --mode=push
+  inc_remote image show incus2:"${sum}"
+  inc_remote image show incus2:"${sum}" | grep -q 'public: false'
+  ! inc_remote image show incus2:foo || false
+  inc_remote image delete "incus2:${sum}"
 
-  inc_remote image copy "localhost:${sum}" lxd2: --mode=push --copy-aliases --public
-  inc_remote image show lxd2:"${sum}"
-  inc_remote image show lxd2:"${sum}" | grep -q 'public: true'
-  inc_remote image show lxd2:foo
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image copy "localhost:${sum}" incus2: --mode=push --copy-aliases --public
+  inc_remote image show incus2:"${sum}"
+  inc_remote image show incus2:"${sum}" | grep -q 'public: true'
+  inc_remote image show incus2:foo
+  inc_remote image delete "incus2:${sum}"
 
-  inc_remote image copy "localhost:${sum}" lxd2: --mode=push --copy-aliases --alias=bar
-  inc_remote image show lxd2:"${sum}"
-  inc_remote image show lxd2:foo
-  inc_remote image show lxd2:bar
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image copy "localhost:${sum}" incus2: --mode=push --copy-aliases --alias=bar
+  inc_remote image show incus2:"${sum}"
+  inc_remote image show incus2:foo
+  inc_remote image show incus2:bar
+  inc_remote image delete "incus2:${sum}"
 
-  inc_remote image copy "localhost:${sum}" lxd2: --mode=relay
-  inc_remote image show lxd2:"${sum}"
-  inc_remote image show lxd2:"${sum}" | grep -q 'public: false'
-  ! inc_remote image show lxd2:foo || false
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image copy "localhost:${sum}" incus2: --mode=relay
+  inc_remote image show incus2:"${sum}"
+  inc_remote image show incus2:"${sum}" | grep -q 'public: false'
+  ! inc_remote image show incus2:foo || false
+  inc_remote image delete "incus2:${sum}"
 
-  inc_remote image copy "localhost:${sum}" lxd2: --mode=relay --copy-aliases --public
-  inc_remote image show lxd2:"${sum}"
-  inc_remote image show lxd2:"${sum}" | grep -q 'public: true'
-  inc_remote image show lxd2:foo
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image copy "localhost:${sum}" incus2: --mode=relay --copy-aliases --public
+  inc_remote image show incus2:"${sum}"
+  inc_remote image show incus2:"${sum}" | grep -q 'public: true'
+  inc_remote image show incus2:foo
+  inc_remote image delete "incus2:${sum}"
 
-  inc_remote image copy "localhost:${sum}" lxd2: --mode=relay --copy-aliases --alias=bar
-  inc_remote image show lxd2:"${sum}"
-  inc_remote image show lxd2:foo
-  inc_remote image show lxd2:bar
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image copy "localhost:${sum}" incus2: --mode=relay --copy-aliases --alias=bar
+  inc_remote image show incus2:"${sum}"
+  inc_remote image show incus2:foo
+  inc_remote image show incus2:bar
+  inc_remote image delete "incus2:${sum}"
 
   # Test image copy between projects
-  inc_remote project create lxd2:foo
-  inc_remote image copy "localhost:${sum}" lxd2: --target-project foo
-  inc_remote image show lxd2:"${sum}" --project foo
-  inc_remote image delete "lxd2:${sum}" --project foo
-  inc_remote image copy "localhost:${sum}" lxd2: --target-project foo --mode=push
-  inc_remote image show lxd2:"${sum}" --project foo
-  inc_remote image delete "lxd2:${sum}" --project foo
-  inc_remote image copy "localhost:${sum}" lxd2: --target-project foo --mode=relay
-  inc_remote image show lxd2:"${sum}" --project foo
-  inc_remote image delete "lxd2:${sum}" --project foo
-  inc_remote project delete lxd2:foo
+  inc_remote project create incus2:foo
+  inc_remote image copy "localhost:${sum}" incus2: --target-project foo
+  inc_remote image show incus2:"${sum}" --project foo
+  inc_remote image delete "incus2:${sum}" --project foo
+  inc_remote image copy "localhost:${sum}" incus2: --target-project foo --mode=push
+  inc_remote image show incus2:"${sum}" --project foo
+  inc_remote image delete "incus2:${sum}" --project foo
+  inc_remote image copy "localhost:${sum}" incus2: --target-project foo --mode=relay
+  inc_remote image show incus2:"${sum}" --project foo
+  inc_remote image delete "incus2:${sum}" --project foo
+  inc_remote project delete incus2:foo
 
   # Test image copy with --profile option
-  inc_remote profile create lxd2:foo
-  inc_remote image copy "localhost:${sum}" lxd2: --profile foo
-  inc_remote image show lxd2:"${sum}" | grep -q '\- foo'
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote profile create incus2:foo
+  inc_remote image copy "localhost:${sum}" incus2: --profile foo
+  inc_remote image show incus2:"${sum}" | grep -q '\- foo'
+  inc_remote image delete "incus2:${sum}"
 
-  inc_remote image copy "localhost:${sum}" lxd2: --profile foo --mode=push
-  inc_remote image show lxd2:"${sum}" | grep -q '\- foo'
-  inc_remote image delete "lxd2:${sum}"
+  inc_remote image copy "localhost:${sum}" incus2: --profile foo --mode=push
+  inc_remote image show incus2:"${sum}" | grep -q '\- foo'
+  inc_remote image delete "incus2:${sum}"
 
-  inc_remote image copy "localhost:${sum}" lxd2: --profile foo --mode=relay
-  inc_remote image show lxd2:"${sum}" | grep -q '\- foo'
-  inc_remote image delete "lxd2:${sum}"
-  inc_remote profile delete lxd2:foo
+  inc_remote image copy "localhost:${sum}" incus2: --profile foo --mode=relay
+  inc_remote image show incus2:"${sum}" | grep -q '\- foo'
+  inc_remote image delete "incus2:${sum}"
+  inc_remote profile delete incus2:foo
 
   inc_remote image alias delete localhost:foo
 
-  inc_remote remote remove lxd2
-  inc_remote remote remove lxd2-public
+  inc_remote remote remove incus2
+  inc_remote remote remove incus2-public
 
   kill_incus "$INCUS2_DIR"
 }
