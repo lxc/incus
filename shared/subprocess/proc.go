@@ -41,7 +41,7 @@ type Process struct {
 }
 
 func (p *Process) hasApparmor() bool {
-	if shared.IsFalse(os.Getenv("LXD_SECURITY_APPARMOR")) {
+	if shared.IsFalse(os.Getenv("INCUS_SECURITY_APPARMOR")) {
 		return false
 	}
 

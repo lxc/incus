@@ -217,9 +217,9 @@ func HostPath(path string) string {
 }
 
 // VarPath returns the provided path elements joined by a slash and
-// appended to the end of $LXD_DIR, which defaults to /var/lib/lxd.
+// appended to the end of $INCUS_DIR, which defaults to /var/lib/lxd.
 func VarPath(path ...string) string {
-	varDir := os.Getenv("LXD_DIR")
+	varDir := os.Getenv("INCUS_DIR")
 	if varDir == "" {
 		varDir = "/var/lib/lxd"
 	}
@@ -229,10 +229,10 @@ func VarPath(path ...string) string {
 	return filepath.Join(items...)
 }
 
-// CachePath returns the directory that LXD should its cache under. If LXD_DIR is
-// set, this path is $LXD_DIR/cache, otherwise it is /var/cache/lxd.
+// CachePath returns the directory that LXD should its cache under. If INCUS_DIR is
+// set, this path is $INCUS_DIR/cache, otherwise it is /var/cache/lxd.
 func CachePath(path ...string) string {
-	varDir := os.Getenv("LXD_DIR")
+	varDir := os.Getenv("INCUS_DIR")
 	logDir := "/var/cache/lxd"
 	if varDir != "" {
 		logDir = filepath.Join(varDir, "cache")
@@ -243,10 +243,10 @@ func CachePath(path ...string) string {
 	return filepath.Join(items...)
 }
 
-// LogPath returns the directory that LXD should put logs under. If LXD_DIR is
-// set, this path is $LXD_DIR/logs, otherwise it is /var/log/lxd.
+// LogPath returns the directory that LXD should put logs under. If INCUS_DIR is
+// set, this path is $INCUS_DIR/logs, otherwise it is /var/log/lxd.
 func LogPath(path ...string) string {
-	varDir := os.Getenv("LXD_DIR")
+	varDir := os.Getenv("INCUS_DIR")
 	logDir := "/var/log/lxd"
 	if varDir != "" {
 		logDir = filepath.Join(varDir, "logs")

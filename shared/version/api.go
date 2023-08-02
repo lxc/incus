@@ -388,7 +388,7 @@ func APIExtensionsCount() int {
 	// to believe that we have an API extensions count greater than we
 	// actually have. It's used by integration tests to exercise the
 	// cluster upgrade process.
-	artificialBump := os.Getenv("LXD_ARTIFICIALLY_BUMP_API_EXTENSIONS")
+	artificialBump := os.Getenv("INCUS_ARTIFICIALLY_BUMP_API_EXTENSIONS")
 	if artificialBump != "" {
 		n, err := strconv.Atoi(artificialBump)
 		if err == nil {

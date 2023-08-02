@@ -61,8 +61,8 @@ func IsConnectionError(err error) bool {
 func InitTLSConfig() *tls.Config {
 	config := &tls.Config{}
 
-	// Restrict to TLS 1.3 unless LXD_INSECURE_TLS is set.
-	if IsFalseOrEmpty(os.Getenv("LXD_INSECURE_TLS")) {
+	// Restrict to TLS 1.3 unless INCUS_INSECURE_TLS is set.
+	if IsFalseOrEmpty(os.Getenv("INCUS_INSECURE_TLS")) {
 		config.MinVersion = tls.VersionTLS13
 	} else {
 		config.MinVersion = tls.VersionTLS12
