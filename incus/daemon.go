@@ -567,7 +567,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			}
 
 			r = r.WithContext(ctx)
-		} else if untrustedOk && r.Header.Get("X-LXD-authenticated") == "" {
+		} else if untrustedOk && r.Header.Get("X-Incus-authenticated") == "" {
 			logger.Debug(fmt.Sprintf("Allowing untrusted %s", r.Method), logger.Ctx{"url": r.URL.RequestURI(), "ip": r.RemoteAddr})
 		} else if derr, ok := err.(*bakery.DischargeRequiredError); ok {
 			d.candidVerifier.WriteRequest(r, w, derr)

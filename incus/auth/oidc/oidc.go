@@ -244,9 +244,9 @@ func (o *Verifier) VerifyAccessToken(ctx context.Context, token string) (*oidc.A
 
 // WriteHeaders writes the OIDC configuration as HTTP headers so the client can initatiate the device code flow.
 func (o *Verifier) WriteHeaders(w http.ResponseWriter) error {
-	w.Header().Set("X-LXD-OIDC-issuer", o.issuer)
-	w.Header().Set("X-LXD-OIDC-clientid", o.clientID)
-	w.Header().Set("X-LXD-OIDC-audience", o.audience)
+	w.Header().Set("X-Incus-OIDC-issuer", o.issuer)
+	w.Header().Set("X-Incus-OIDC-clientid", o.clientID)
+	w.Header().Set("X-Incus-OIDC-audience", o.audience)
 
 	return nil
 }
