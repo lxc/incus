@@ -1,29 +1,29 @@
 lvm_setup() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Setting up lvm backend in ${LXD_DIR}"
+  echo "==> Setting up lvm backend in ${INCUS_DIR}"
 }
 
 lvm_configure() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Configuring lvm backend in ${LXD_DIR}"
+  echo "==> Configuring lvm backend in ${INCUS_DIR}"
 
-  lxc storage create "lxdtest-$(basename "${LXD_DIR}")" lvm volume.size=25MiB size=1GiB
-  lxc profile device add default root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")"
+  inc storage create "incustest-$(basename "${INCUS_DIR}")" lvm volume.size=25MiB size=1GiB
+  inc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 }
 
 lvm_teardown() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Tearing down lvm backend in ${LXD_DIR}"
+  echo "==> Tearing down lvm backend in ${INCUS_DIR}"
 }

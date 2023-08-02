@@ -1,8 +1,8 @@
 test_metrics() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  lxc config set core.https_address "${LXD_ADDR}"
+  lxc config set core.https_address "${INCUS_ADDR}"
 
   lxc launch testimage c1
   lxc init testimage c2
@@ -17,19 +17,19 @@ test_metrics() {
   openssl req -x509 -newkey rsa:2048 -keyout "${TEST_DIR}/metrics.key" -nodes -out "${TEST_DIR}/metrics.crt" -subj "/CN=lxd.local"
 
   # this should fail as the certificate is not trusted yet
-  curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${LXD_ADDR}/1.0/metrics" | grep "\"error_code\":403"
+  curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${INCUS_ADDR}/1.0/metrics" | grep "\"error_code\":403"
 
   # trust newly created certificate for metrics only
   lxc config trust add "${TEST_DIR}/metrics.crt" --type=metrics
 
   # c1 metrics should show as the container is running
-  curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${LXD_ADDR}/1.0/metrics" | grep "name=\"c1\""
+  curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${INCUS_ADDR}/1.0/metrics" | grep "name=\"c1\""
 
   # c2 metrics should not exist as it's not running
-  ! curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${LXD_ADDR}/1.0/metrics" | grep "name=\"c2\"" || false
+  ! curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${INCUS_ADDR}/1.0/metrics" | grep "name=\"c2\"" || false
 
   # make sure nothing else can be done with this certificate
-  curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${LXD_ADDR}/1.0/instances" | grep "\"error_code\":403"
+  curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${INCUS_ADDR}/1.0/instances" | grep "\"error_code\":403"
 
   metrics_addr="127.0.0.1:$(local_tcp_port)"
 

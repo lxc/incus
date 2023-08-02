@@ -1,16 +1,16 @@
 test_init_interactive() {
   # - lxd init
-  LXD_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${LXD_INIT_DIR}"
-  spawn_lxd "${LXD_INIT_DIR}" false
+  INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_INIT_DIR}"
+  spawn_incus "${INCUS_INIT_DIR}" false
 
   (
     set -e
     # shellcheck disable=SC2034
-    LXD_DIR=${LXD_INIT_DIR}
+    INCUS_DIR=${INCUS_INIT_DIR}
 
     # XXX We need to remove the eth0 device from the default profile, which
-    #     is typically attached by spawn_lxd.
+    #     is typically attached by spawn_incus.
     if lxc profile show default | grep -q eth0; then
       lxc profile device remove default eth0
     fi
@@ -22,7 +22,7 @@ my-storage-pool
 dir
 no
 yes
-lxdt$$
+inct$$
 auto
 none
 no
@@ -31,14 +31,14 @@ yes
 EOF
 
     lxc info | grep -q 'images.auto_update_interval: "0"'
-    lxc network list | grep -q "lxdt$$"
+    lxc network list | grep -q "inct$$"
     lxc storage list | grep -q "my-storage-pool"
     lxc profile show default | grep -q "pool: my-storage-pool"
-    lxc profile show default | grep -q "network: lxdt$$"
+    lxc profile show default | grep -q "network: inct$$"
     printf 'config: {}\ndevices: {}' | lxc profile edit default
-    lxc network delete lxdt$$
+    lxc network delete inct$$
   )
-  kill_lxd "${LXD_INIT_DIR}"
+  kill_incus "${INCUS_INIT_DIR}"
 
   return
 }

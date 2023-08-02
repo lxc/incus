@@ -8,7 +8,7 @@ storage_backend_available() {
     if [ "${backends#*"$1"}" != "$backends" ]; then
         true
         return
-    elif [ "${1}" = "cephfs" ] && [ "${backends#*"ceph"}" != "$backends" ] && [ -n "${LXD_CEPH_CEPHFS:-}" ]; then
+    elif [ "${1}" = "cephfs" ] && [ "${backends#*"ceph"}" != "$backends" ] && [ -n "${INCUS_CEPH_CEPHFS:-}" ]; then
         true
         return
     fi
@@ -16,15 +16,15 @@ storage_backend_available() {
     false
 }
 
-# Choose a random available backend, excluding LXD_BACKEND
+# Choose a random available backend, excluding INCUS_BACKEND
 random_storage_backend() {
     # shellcheck disable=2046
     shuf -e $(available_storage_backends) | head -n 1
 }
 
-# Return the storage backend being used by a LXD instance
+# Return the storage backend being used by an incus instance
 storage_backend() {
-    cat "$1/lxd.backend"
+    cat "$1/incus.backend"
 }
 
 # Return a list of available storage backends
@@ -35,7 +35,7 @@ available_storage_backends() {
     backends="dir" # always available
 
     storage_backends="btrfs lvm zfs"
-    if [ -n "${LXD_CEPH_CLUSTER:-}" ]; then
+    if [ -n "${INCUS_CEPH_CLUSTER:-}" ]; then
         storage_backends="${storage_backends} ceph"
     fi
 

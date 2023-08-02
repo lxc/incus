@@ -14,11 +14,11 @@ test_exec() {
   }
 
   for i in $(seq 1 25); do
-    exec_container_interactive "${i}" > "${LXD_DIR}/exec-${i}.out" 2>&1
+    exec_container_interactive "${i}" > "${INCUS_DIR}/exec-${i}.out" 2>&1
   done
 
   for i in $(seq 1 25); do
-    exec_container_noninteractive "${i}" > "${LXD_DIR}/exec-${i}.out" 2>&1
+    exec_container_noninteractive "${i}" > "${INCUS_DIR}/exec-${i}.out" 2>&1
   done
 
   # Check non-websocket based exec works.
@@ -42,8 +42,8 @@ test_exec() {
 }
 
 test_concurrent_exec() {
-  if [ -z "${LXD_CONCURRENT:-}" ]; then
-    echo "==> SKIP: LXD_CONCURRENT isn't set"
+  if [ -z "${INCUS_CONCURRENT:-}" ]; then
+    echo "==> SKIP: INCUS_CONCURRENT isn't set"
     return
   fi
 
@@ -63,12 +63,12 @@ test_concurrent_exec() {
 
   PIDS=""
   for i in $(seq 1 25); do
-    exec_container_interactive "${i}" > "${LXD_DIR}/exec-${i}.out" 2>&1 &
+    exec_container_interactive "${i}" > "${INCUS_DIR}/exec-${i}.out" 2>&1 &
     PIDS="${PIDS} $!"
   done
 
   for i in $(seq 1 25); do
-    exec_container_noninteractive "${i}" > "${LXD_DIR}/exec-${i}.out" 2>&1 &
+    exec_container_noninteractive "${i}" > "${INCUS_DIR}/exec-${i}.out" 2>&1 &
     PIDS="${PIDS} $!"
   done
 

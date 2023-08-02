@@ -1,18 +1,18 @@
 test_storage_driver_cephfs() {
   # shellcheck disable=2039,3043
-  local lxd_backend
+  local incus_backend
 
-  lxd_backend=$(storage_backend "$LXD_DIR")
-  if [ "$lxd_backend" != "ceph" ] || [ -z "${LXD_CEPH_CEPHFS:-}" ]; then
+  incus_backend=$(storage_backend "$INCUS_DIR")
+  if [ "$incus_backend" != "ceph" ] || [ -z "${INCUS_CEPH_CEPHFS:-}" ]; then
     return
   fi
 
   # Simple create/delete attempt
-  lxc storage create cephfs cephfs source="${LXD_CEPH_CEPHFS}/$(basename "${LXD_DIR}")"
+  lxc storage create cephfs cephfs source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")"
   lxc storage delete cephfs
 
   # Second create (confirm got cleaned up properly)
-  lxc storage create cephfs cephfs source="${LXD_CEPH_CEPHFS}/$(basename "${LXD_DIR}")"
+  lxc storage create cephfs cephfs source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")"
   lxc storage info cephfs
 
   # Creation, rename and deletion

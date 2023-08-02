@@ -5,7 +5,7 @@ test_container_devices_tpm() {
   fi
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
   ctName="ct$$"
   lxc launch testimage "${ctName}"
 

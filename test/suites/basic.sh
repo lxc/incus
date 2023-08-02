@@ -1,15 +1,15 @@
 test_basic_usage() {
   # shellcheck disable=2039,3043
-  local lxd_backend
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  local incus_backend
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Test image export
   sum="$(lxc image info testimage | awk '/^Fingerprint/ {print $2}')"
-  lxc image export testimage "${LXD_DIR}/"
-  [ "${sum}" = "$(sha256sum "${LXD_DIR}/${sum}.tar.xz" | cut -d' ' -f1)" ]
+  lxc image export testimage "${INCUS_DIR}/"
+  [ "${sum}" = "$(sha256sum "${INCUS_DIR}/${sum}.tar.xz" | cut -d' ' -f1)" ]
 
   # Test an alias with slashes
   lxc image show "${sum}"
@@ -42,27 +42,27 @@ test_basic_usage() {
   lxc image delete testimage
 
   # test GET /1.0, since the client always puts to /1.0/
-  my_curl -f -X GET "https://${LXD_ADDR}/1.0"
-  my_curl -f -X GET "https://${LXD_ADDR}/1.0/containers"
+  my_curl -f -X GET "https://${INCUS_ADDR}/1.0"
+  my_curl -f -X GET "https://${INCUS_ADDR}/1.0/containers"
 
   # Re-import the image
-  mv "${LXD_DIR}/${sum}.tar.xz" "${LXD_DIR}/testimage.tar.xz"
-  lxc image import "${LXD_DIR}/testimage.tar.xz" --alias testimage user.foo=bar --public
+  mv "${INCUS_DIR}/${sum}.tar.xz" "${INCUS_DIR}/testimage.tar.xz"
+  lxc image import "${INCUS_DIR}/testimage.tar.xz" --alias testimage user.foo=bar --public
   lxc image show testimage | grep -qF "user.foo: bar"
   lxc image show testimage | grep -qF "public: true"
   lxc image delete testimage
-  lxc image import "${LXD_DIR}/testimage.tar.xz" --alias testimage
-  rm "${LXD_DIR}/testimage.tar.xz"
+  lxc image import "${INCUS_DIR}/testimage.tar.xz" --alias testimage
+  rm "${INCUS_DIR}/testimage.tar.xz"
 
   # Test filename for image export
-  lxc image export testimage "${LXD_DIR}/"
-  [ "${sum}" = "$(sha256sum "${LXD_DIR}/${sum}.tar.xz" | cut -d' ' -f1)" ]
-  rm "${LXD_DIR}/${sum}.tar.xz"
+  lxc image export testimage "${INCUS_DIR}/"
+  [ "${sum}" = "$(sha256sum "${INCUS_DIR}/${sum}.tar.xz" | cut -d' ' -f1)" ]
+  rm "${INCUS_DIR}/${sum}.tar.xz"
 
   # Test custom filename for image export
-  lxc image export testimage "${LXD_DIR}/foo"
-  [ "${sum}" = "$(sha256sum "${LXD_DIR}/foo.tar.xz" | cut -d' ' -f1)" ]
-  rm "${LXD_DIR}/foo.tar.xz"
+  lxc image export testimage "${INCUS_DIR}/foo"
+  [ "${sum}" = "$(sha256sum "${INCUS_DIR}/foo.tar.xz" | cut -d' ' -f1)" ]
+  rm "${INCUS_DIR}/foo.tar.xz"
 
 
   # Test image export with a split image.
@@ -70,12 +70,12 @@ test_basic_usage() {
 
   sum="$(lxc image info splitimage | awk '/^Fingerprint/ {print $2}')"
 
-  lxc image export splitimage "${LXD_DIR}"
-  [ "${sum}" = "$(cat "${LXD_DIR}/meta-${sum}.tar.xz" "${LXD_DIR}/${sum}.tar.xz" | sha256sum | cut -d' ' -f1)" ]
+  lxc image export splitimage "${INCUS_DIR}"
+  [ "${sum}" = "$(cat "${INCUS_DIR}/meta-${sum}.tar.xz" "${INCUS_DIR}/${sum}.tar.xz" | sha256sum | cut -d' ' -f1)" ]
 
   # Delete the split image and exported files
-  rm "${LXD_DIR}/${sum}.tar.xz"
-  rm "${LXD_DIR}/meta-${sum}.tar.xz"
+  rm "${INCUS_DIR}/${sum}.tar.xz"
+  rm "${INCUS_DIR}/meta-${sum}.tar.xz"
   lxc image delete splitimage
 
   # Redo the split image export test, this time with the --filename flag
@@ -83,12 +83,12 @@ test_basic_usage() {
   # The sum should remain the same as its the same image.
   deps/import-busybox --split --filename --alias splitimage
 
-  lxc image export splitimage "${LXD_DIR}"
-  [ "${sum}" = "$(cat "${LXD_DIR}/meta-${sum}.tar.xz" "${LXD_DIR}/${sum}.tar.xz" | sha256sum | cut -d' ' -f1)" ]
+  lxc image export splitimage "${INCUS_DIR}"
+  [ "${sum}" = "$(cat "${INCUS_DIR}/meta-${sum}.tar.xz" "${INCUS_DIR}/${sum}.tar.xz" | sha256sum | cut -d' ' -f1)" ]
 
   # Delete the split image and exported files
-  rm "${LXD_DIR}/${sum}.tar.xz"
-  rm "${LXD_DIR}/meta-${sum}.tar.xz"
+  rm "${INCUS_DIR}/${sum}.tar.xz"
+  rm "${INCUS_DIR}/meta-${sum}.tar.xz"
   lxc image delete splitimage
 
   # Test --no-profiles flag
@@ -137,12 +137,12 @@ test_basic_usage() {
   gen_cert client3
 
   # don't allow requests without a cert to get trusted data
-  curl -k -s -X GET "https://${LXD_ADDR}/1.0/containers/foo" | grep 403
+  curl -k -s -X GET "https://${INCUS_ADDR}/1.0/containers/foo" | grep 403
 
   # Test unprivileged container publish
   lxc publish bar --alias=foo-image prop1=val1
   lxc image show foo-image | grep val1
-  curl -k -s --cert "${LXD_CONF}/client3.crt" --key "${LXD_CONF}/client3.key" -X GET "https://${LXD_ADDR}/1.0/images" | grep -F "/1.0/images/" && false
+  curl -k -s --cert "${INCUS_CONF}/client3.crt" --key "${INCUS_CONF}/client3.key" -X GET "https://${INCUS_ADDR}/1.0/images" | grep -F "/1.0/images/" && false
   lxc image delete foo-image
 
   # Test container publish with existing alias
@@ -190,7 +190,7 @@ test_basic_usage() {
   # Test image compression on publish
   lxc publish bar --alias=foo-image-compressed --compression=bzip2 prop=val1
   lxc image show foo-image-compressed | grep val1
-  curl -k -s --cert "${LXD_CONF}/client3.crt" --key "${LXD_CONF}/client3.key" -X GET "https://${LXD_ADDR}/1.0/images" | grep -F "/1.0/images/" && false
+  curl -k -s --cert "${INCUS_CONF}/client3.crt" --key "${INCUS_CONF}/client3.key" -X GET "https://${INCUS_ADDR}/1.0/images" | grep -F "/1.0/images/" && false
   lxc image delete foo-image-compressed
 
   # Test compression options
@@ -203,7 +203,7 @@ test_basic_usage() {
   lxc init testimage barpriv -p default -p priv
   lxc publish barpriv --alias=foo-image prop1=val1
   lxc image show foo-image | grep val1
-  curl -k -s --cert "${LXD_CONF}/client3.crt" --key "${LXD_CONF}/client3.key" -X GET "https://${LXD_ADDR}/1.0/images" | grep -F "/1.0/images/" && false
+  curl -k -s --cert "${INCUS_CONF}/client3.crt" --key "${INCUS_CONF}/client3.key" -X GET "https://${INCUS_ADDR}/1.0/images" | grep -F "/1.0/images/" && false
   lxc image delete foo-image
   lxc delete barpriv
   lxc profile delete priv
@@ -213,9 +213,9 @@ test_basic_usage() {
   # the container's filesystem. That's ok though: the logic we're trying to
   # test here is independent of storage backend, so running it for just one
   # backend (or all non-lvm backends) is enough.
-  if [ "$lxd_backend" = "lvm" ]; then
+  if [ "$incus_backend" = "lvm" ]; then
     lxc init testimage nometadata
-    rm -f "${LXD_DIR}/containers/nometadata/metadata.yaml"
+    rm -f "${INCUS_DIR}/containers/nometadata/metadata.yaml"
     lxc publish nometadata --alias=nometadata-image
     lxc image delete nometadata-image
     lxc delete nometadata
@@ -223,7 +223,7 @@ test_basic_usage() {
 
   # Test public images
   lxc publish --public bar --alias=foo-image2
-  curl -k -s --cert "${LXD_CONF}/client3.crt" --key "${LXD_CONF}/client3.key" -X GET "https://${LXD_ADDR}/1.0/images" | grep -F "/1.0/images/"
+  curl -k -s --cert "${INCUS_CONF}/client3.crt" --key "${INCUS_CONF}/client3.key" -X GET "https://${INCUS_ADDR}/1.0/images" | grep -F "/1.0/images/"
   lxc image delete foo-image2
 
   # Test invalid container names
@@ -243,40 +243,40 @@ test_basic_usage() {
   lxc image delete foo
 
   # Test alias support
-  cp "${LXD_CONF}/config.yml" "${LXD_CONF}/config.yml.bak"
+  cp "${INCUS_CONF}/config.yml" "${INCUS_CONF}/config.yml.bak"
 
   #   1. Basic built-in alias functionality
   [ "$(lxc ls)" = "$(lxc list)" ]
   #   2. Basic user-defined alias functionality
-  printf "aliases:\\n  l: list\\n" >> "${LXD_CONF}/config.yml"
+  printf "aliases:\\n  l: list\\n" >> "${INCUS_CONF}/config.yml"
   [ "$(lxc l)" = "$(lxc list)" ]
   #   3. Built-in aliases and user-defined aliases can coexist
   [ "$(lxc ls)" = "$(lxc l)" ]
   #   4. Multi-argument alias keys and values
-  echo "  i ls: image list" >> "${LXD_CONF}/config.yml"
+  echo "  i ls: image list" >> "${INCUS_CONF}/config.yml"
   [ "$(lxc i ls)" = "$(lxc image list)" ]
   #   5. Aliases where len(keys) != len(values) (expansion/contraction of number of arguments)
-  printf "  ils: image list\\n  container ls: list\\n" >> "${LXD_CONF}/config.yml"
+  printf "  ils: image list\\n  container ls: list\\n" >> "${INCUS_CONF}/config.yml"
   [ "$(lxc ils)" = "$(lxc image list)" ]
   [ "$(lxc container ls)" = "$(lxc list)" ]
   #   6. User-defined aliases override built-in aliases
-  echo "  cp: list" >> "${LXD_CONF}/config.yml"
+  echo "  cp: list" >> "${INCUS_CONF}/config.yml"
   [ "$(lxc ls)" = "$(lxc cp)" ]
   #   7. User-defined aliases override commands and don't recurse
   lxc init testimage foo
-  LXC_CONFIG_SHOW=$(lxc config show foo --expanded)
-  echo "  config show: config show --expanded" >> "${LXD_CONF}/config.yml"
-  [ "$(lxc config show foo)" = "$LXC_CONFIG_SHOW" ]
+  INC_CONFIG_SHOW=$(lxc config show foo --expanded)
+  echo "  config show: config show --expanded" >> "${INCUS_CONF}/config.yml"
+  [ "$(lxc config show foo)" = "$INC_CONFIG_SHOW" ]
   lxc delete foo
 
   # Restore the config to remove the aliases
-  mv "${LXD_CONF}/config.yml.bak" "${LXD_CONF}/config.yml"
+  mv "${INCUS_CONF}/config.yml.bak" "${INCUS_CONF}/config.yml"
 
   # Delete the bar container we've used for several tests
   lxc delete bar
 
   # lxc delete should also delete all snapshots of bar
-  [ ! -d "${LXD_DIR}/snapshots/bar" ]
+  [ ! -d "${INCUS_DIR}/snapshots/bar" ]
 
   # Test randomly named container creation
   lxc launch testimage
@@ -284,25 +284,25 @@ test_basic_usage() {
   lxc delete -f "${RDNAME}"
 
   # Test "nonetype" container creation
-  wait_for "${LXD_ADDR}" my_curl -X POST "https://${LXD_ADDR}/1.0/containers" \
+  wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/containers" \
         -d "{\"name\":\"nonetype\",\"source\":{\"type\":\"none\"}}"
   lxc delete nonetype
 
   # Test "nonetype" container creation with an LXC config
-  wait_for "${LXD_ADDR}" my_curl -X POST "https://${LXD_ADDR}/1.0/containers" \
+  wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/containers" \
         -d "{\"name\":\"configtest\",\"config\":{\"raw.lxc\":\"lxc.hook.clone=/bin/true\"},\"source\":{\"type\":\"none\"}}"
   # shellcheck disable=SC2102
-  [ "$(my_curl "https://${LXD_ADDR}/1.0/containers/configtest" | jq -r .metadata.config[\"raw.lxc\"])" = "lxc.hook.clone=/bin/true" ]
+  [ "$(my_curl "https://${INCUS_ADDR}/1.0/containers/configtest" | jq -r .metadata.config[\"raw.lxc\"])" = "lxc.hook.clone=/bin/true" ]
   lxc delete configtest
 
   # Test activateifneeded/shutdown
-  LXD_ACTIVATION_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${LXD_ACTIVATION_DIR}"
-  spawn_lxd "${LXD_ACTIVATION_DIR}" true
+  INCUS_ACTIVATION_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_ACTIVATION_DIR}"
+  spawn_incus "${INCUS_ACTIVATION_DIR}" true
   (
     set -e
     # shellcheck disable=SC2030
-    LXD_DIR=${LXD_ACTIVATION_DIR}
+    INCUS_DIR=${INCUS_ACTIVATION_DIR}
     ensure_import_testimage
     lxd activateifneeded --debug 2>&1 | grep -qF "Daemon has core.https_address set, activating..."
     lxc config unset core.https_address --force-local
@@ -312,8 +312,8 @@ test_basic_usage() {
     lxc config set autostart boot.autostart true --force-local
 
     # Restart the daemon, this forces the global database to be dumped to disk.
-    shutdown_lxd "${LXD_DIR}"
-    respawn_lxd "${LXD_DIR}" true
+    shutdown_incus "${INCUS_DIR}"
+    respawn_incus "${INCUS_DIR}" true
     lxc stop --force autostart --force-local
 
     lxd activateifneeded --debug 2>&1 | grep -qF "Daemon has auto-started instances, activating..."
@@ -323,52 +323,52 @@ test_basic_usage() {
 
     lxc start autostart --force-local
     PID=$(lxc info autostart --force-local | awk '/^PID:/ {print $2}')
-    shutdown_lxd "${LXD_DIR}"
+    shutdown_incus "${INCUS_DIR}"
     [ -d "/proc/${PID}" ] && false
 
     lxd activateifneeded --debug 2>&1 | grep -qF "Daemon has auto-started instances, activating..."
 
     # shellcheck disable=SC2031
-    respawn_lxd "${LXD_DIR}" true
+    respawn_incus "${INCUS_DIR}" true
 
     lxc list --force-local autostart | grep -q RUNNING
 
     # Check for scheduled instance snapshots
     lxc stop --force autostart --force-local
     lxc config set autostart snapshots.schedule "* * * * *" --force-local
-    shutdown_lxd "${LXD_DIR}"
+    shutdown_incus "${INCUS_DIR}"
     lxd activateifneeded --debug 2>&1 | grep -qF "Daemon has scheduled instance snapshots, activating..."
 
     # shellcheck disable=SC2031
-    respawn_lxd "${LXD_DIR}" true
+    respawn_incus "${INCUS_DIR}" true
 
     lxc config unset autostart snapshots.schedule --force-local
 
     # Check for scheduled volume snapshots
-    storage_pool="lxdtest-$(basename "${LXD_DIR}")"
+    storage_pool="incustest-$(basename "${INCUS_DIR}")"
 
     lxc storage volume create "${storage_pool}" vol --force-local
 
-    shutdown_lxd "${LXD_DIR}"
+    shutdown_incus "${INCUS_DIR}"
     lxd activateifneeded --debug 2>&1 | grep -qF -v "activating..."
 
     # shellcheck disable=SC2031
-    respawn_lxd "${LXD_DIR}" true
+    respawn_incus "${INCUS_DIR}" true
 
     lxc storage volume set "${storage_pool}" vol snapshots.schedule="* * * * *" --force-local
 
-    shutdown_lxd "${LXD_DIR}"
+    shutdown_incus "${INCUS_DIR}"
     lxd activateifneeded --debug 2>&1 | grep -qF "Daemon has scheduled volume snapshots, activating..."
 
     # shellcheck disable=SC2031
-    respawn_lxd "${LXD_DIR}" true
+    respawn_incus "${INCUS_DIR}" true
 
     lxc delete autostart --force --force-local
     lxc storage volume delete "${storage_pool}" vol --force-local
   )
   # shellcheck disable=SC2031,2269
-  LXD_DIR=${LXD_DIR}
-  kill_lxd "${LXD_ACTIVATION_DIR}"
+  INCUS_DIR=${INCUS_DIR}
+  kill_incus "${INCUS_ACTIVATION_DIR}"
 
   # Create and start a container
   lxc launch testimage foo
@@ -417,17 +417,17 @@ test_basic_usage() {
   lxc exec foo ip link show | grep eth0
 
   # check that we can get the return code for a non- wait-for-websocket exec
-  op=$(my_curl -X POST "https://${LXD_ADDR}/1.0/containers/foo/exec" -d '{"command": ["echo", "test"], "environment": {}, "wait-for-websocket": false, "interactive": false}' | jq -r .operation)
-  [ "$(my_curl "https://${LXD_ADDR}${op}/wait" | jq -r .metadata.metadata.return)" != "null" ]
+  op=$(my_curl -X POST "https://${INCUS_ADDR}/1.0/containers/foo/exec" -d '{"command": ["echo", "test"], "environment": {}, "wait-for-websocket": false, "interactive": false}' | jq -r .operation)
+  [ "$(my_curl "https://${INCUS_ADDR}${op}/wait" | jq -r .metadata.metadata.return)" != "null" ]
 
   # test file transfer
-  echo abc > "${LXD_DIR}/in"
+  echo abc > "${INCUS_DIR}/in"
 
-  lxc file push "${LXD_DIR}/in" foo/root/
+  lxc file push "${INCUS_DIR}/in" foo/root/
   lxc exec foo /bin/cat /root/in | grep abc
   lxc exec foo -- /bin/rm -f root/in
 
-  lxc file push "${LXD_DIR}/in" foo/root/in1
+  lxc file push "${INCUS_DIR}/in" foo/root/in1
   lxc exec foo /bin/cat /root/in1 | grep abc
   lxc exec foo -- /bin/rm -f root/in1
 
@@ -445,18 +445,18 @@ test_basic_usage() {
   echo foo | lxc exec foo tee /tmp/foo
 
   # Detect regressions/hangs in exec
-  sum=$(ps aux | tee "${LXD_DIR}/out" | lxc exec foo md5sum | cut -d' ' -f1)
-  [ "${sum}" = "$(md5sum "${LXD_DIR}/out" | cut -d' ' -f1)" ]
-  rm "${LXD_DIR}/out"
+  sum=$(ps aux | tee "${INCUS_DIR}/out" | lxc exec foo md5sum | cut -d' ' -f1)
+  [ "${sum}" = "$(md5sum "${INCUS_DIR}/out" | cut -d' ' -f1)" ]
+  rm "${INCUS_DIR}/out"
 
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" = "dir" ]; then
-    content=$(cat "${LXD_DIR}/containers/foo/rootfs/tmp/foo")
+  if [ "$incus_backend" = "dir" ]; then
+    content=$(cat "${INCUS_DIR}/containers/foo/rootfs/tmp/foo")
     [ "${content}" = "foo" ]
   fi
 
   lxc launch testimage deleterunning
-  my_curl -X DELETE "https://${LXD_ADDR}/1.0/containers/deleterunning" | grep "Instance is running"
+  my_curl -X DELETE "https://${INCUS_ADDR}/1.0/containers/deleterunning" | grep "Instance is running"
   lxc delete deleterunning -f
 
   # cleanup
@@ -475,17 +475,17 @@ test_basic_usage() {
     fi
 
     if [ "${MAJOR}" -gt "1" ] || { [ "${MAJOR}" = "1" ] && [ "${MINOR}" -ge "2" ]; }; then
-      aa_namespace="lxd-lxd-apparmor-test_<$(echo "${LXD_DIR}" | sed -e 's/\//-/g' -e 's/^.//')>"
+      aa_namespace="lxd-lxd-apparmor-test_<$(echo "${INCUS_DIR}" | sed -e 's/\//-/g' -e 's/^.//')>"
       aa-status | grep -q ":${aa_namespace}:unconfined" || aa-status | grep -qF ":${aa_namespace}://unconfined"
       lxc stop lxd-apparmor-test --force
       ! aa-status | grep -qF ":${aa_namespace}:" || false
     else
-      aa-status | grep "lxd-lxd-apparmor-test_<${LXD_DIR}>"
+      aa-status | grep "lxd-lxd-apparmor-test_<${INCUS_DIR}>"
       lxc stop lxd-apparmor-test --force
-      ! aa-status | grep -qF "lxd-lxd-apparmor-test_<${LXD_DIR}>" || false
+      ! aa-status | grep -qF "lxd-lxd-apparmor-test_<${INCUS_DIR}>" || false
     fi
     lxc delete lxd-apparmor-test
-    [ ! -f "${LXD_DIR}/security/apparmor/profiles/lxd-lxd-apparmor-test" ]
+    [ ! -f "${INCUS_DIR}/security/apparmor/profiles/lxd-lxd-apparmor-test" ]
   else
     echo "==> SKIP: apparmor tests (missing kernel support)"
   fi
@@ -507,8 +507,8 @@ test_basic_usage() {
   # make sure that privileged containers are not world-readable
   lxc profile create unconfined
   lxc profile set unconfined security.privileged true
-  lxc init testimage foo2 -p unconfined -s "lxdtest-$(basename "${LXD_DIR}")"
-  [ "$(stat -L -c "%a" "${LXD_DIR}/containers/foo2")" = "100" ]
+  lxc init testimage foo2 -p unconfined -s "incustest-$(basename "${INCUS_DIR}")"
+  [ "$(stat -L -c "%a" "${INCUS_DIR}/containers/foo2")" = "100" ]
   lxc delete foo2
   lxc profile delete unconfined
 
@@ -637,7 +637,7 @@ test_basic_usage() {
 
   # Test rebuilding an instance with a new image.
   lxc init c1 --empty
-  lxc remote add l1 "${LXD_ADDR}" --accept-certificate --password foo
+  lxc remote add l1 "${INCUS_ADDR}" --accept-certificate --password foo
   lxc rebuild l1:testimage c1
   lxc start c1
   lxc delete c1 -f

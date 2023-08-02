@@ -1,12 +1,12 @@
 test_container_devices_nic_bridged() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   vethHostName="veth$$"
   ctName="nt$$"
   ctMAC="0a:92:a7:0d:b7:d9"
   ipRand=$(shuf -i 0-9 -n 1)
-  brName="lxdt$$"
+  brName="inct$$"
 
   # Standard bridge with random subnet and a bunch of options
   lxc network create "${brName}"
@@ -362,7 +362,7 @@ test_container_devices_nic_bridged() {
   lxc exec "${ctName}" -- udhcpc -f -i eth0 -n -q -t5 -F "${ctName}custom"
 
   # Check DHCPv4 lease is allocated.
-  if ! grep -i "${ctMAC}" "${LXD_DIR}/networks/${brName}/dnsmasq.leases" ; then
+  if ! grep -i "${ctMAC}" "${INCUS_DIR}/networks/${brName}/dnsmasq.leases" ; then
     echo "DHCPv4 lease not allocated"
     false
   fi
@@ -390,19 +390,19 @@ test_container_devices_nic_bridged() {
   sleep 2
 
   # Check DHCPv4 lease is released (space before the MAC important to avoid mismatching IPv6 lease).
-  if grep -i " ${ctMAC}" "${LXD_DIR}/networks/${brName}/dnsmasq.leases" ; then
+  if grep -i " ${ctMAC}" "${INCUS_DIR}/networks/${brName}/dnsmasq.leases" ; then
     echo "DHCPv4 lease not released"
     false
   fi
 
   # Check DHCPv6 lease is released.
-  if grep -i " ${ctName}" "${LXD_DIR}/networks/${brName}/dnsmasq.leases" ; then
+  if grep -i " ${ctName}" "${INCUS_DIR}/networks/${brName}/dnsmasq.leases" ; then
     echo "DHCPv6 lease not released"
     false
   fi
 
   # Check dnsmasq host config file is removed.
-  if [ -f "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ] ; then
+  if [ -f "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ] ; then
     echo "dnsmasq host config file not removed"
     false
   fi
@@ -411,26 +411,26 @@ test_container_devices_nic_bridged() {
   lxc init testimage "${ctName}" -p "${ctName}"
   lxc config device add "${ctName}" eth0 nic nictype=bridged parent="${brName}" name=eth0 ipv4.address=192.0.2.200 ipv6.address=2001:db8::200
 
-  ls -lR "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/"
+  ls -lR "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/"
 
-  if ! grep "192.0.2.200" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ; then
+  if ! grep "192.0.2.200" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ; then
     echo "dnsmasq host config not updated with IPv4 address"
     false
   fi
 
-  if ! grep "2001:db8::200" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ; then
+  if ! grep "2001:db8::200" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ; then
     echo "dnsmasq host config not updated with IPv6 address"
     false
   fi
 
   lxc config device remove "${ctName}" eth0
 
-  if grep "192.0.2.200" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ; then
+  if grep "192.0.2.200" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ; then
     echo "dnsmasq host config still has old IPv4 address"
     false
   fi
 
-  if grep "2001:db8::200" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ; then
+  if grep "2001:db8::200" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ; then
     echo "dnsmasq host config still has old IPv6 address"
     false
   fi
@@ -445,12 +445,12 @@ test_container_devices_nic_bridged() {
   # Confirm IPv6 is disabled.
   [ "$(cat /proc/sys/net/ipv6/conf/${brName}/disable_ipv6)" = "1" ]
 
-  if [ -f "${LXD_DIR}/networks/${brName}/dnsmasq.leases" ] ; then
+  if [ -f "${INCUS_DIR}/networks/${brName}/dnsmasq.leases" ] ; then
     echo "dnsmasq.leases file still present after disabling DHCP"
     false
   fi
 
-  if [ -f "${LXD_DIR}/networks/${brName}/dnsmasq.pid" ] ; then
+  if [ -f "${INCUS_DIR}/networks/${brName}/dnsmasq.pid" ] ; then
     echo "dnsmasq.pid file still present after disabling DHCP"
     false
   fi
@@ -458,7 +458,7 @@ test_container_devices_nic_bridged() {
   lxc profile device unset "${ctName}" eth0 ipv6.routes
   lxc config device remove "${ctName}" eth0
   lxc stop -f "${ctName}"
-  if [ -f "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ] ; then
+  if [ -f "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ] ; then
     echo "dnsmasq host config file not removed from network"
     false
   fi
@@ -473,7 +473,7 @@ test_container_devices_nic_bridged() {
 
   # Check dnsmasq host file is created on add.
   lxc config device add "${ctName}" eth0 nic nictype=bridged parent="${brName}" name=eth0
-  if [ ! -f "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ] ; then
+  if [ ! -f "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ] ; then
     echo "dnsmasq host config file not created"
     false
   fi
@@ -481,7 +481,7 @@ test_container_devices_nic_bridged() {
   # Check connecting device to non-managed bridged.
   ip link add "${ctName}" type dummy
   lxc config device set "${ctName}" eth0 parent "${ctName}"
-  if [ -f "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ] ; then
+  if [ -f "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0" ] ; then
     echo "dnsmasq host config file not removed from old network"
     false
   fi
@@ -583,22 +583,22 @@ test_container_devices_nic_bridged() {
   lxc config device set "${ctName}" eth0 \
     ipv4.address=192.0.2.232 \
     hwaddr="" # Remove static MAC so that copies use new MAC (as changing MAC triggers device remove/add on snapshot restore).
-  grep -F "192.0.2.232" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0"
+  grep -F "192.0.2.232" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0"
   lxc copy "${ctName}" foo # Gets new MAC address but IPs still conflict.
-  ! stat "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false
+  ! stat "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false
   lxc snapshot foo
   lxc export foo foo.tar.gz
   ! lxc start foo || false
   lxc config device set foo eth0 \
     ipv4.address=192.0.2.233 \
     ipv6.address=2001:db8::3
-  grep -F "192.0.2.233" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0"
+  grep -F "192.0.2.233" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0"
   lxc start foo
   lxc stop -f foo
 
   # Test container snapshot with conflicting addresses can be restored.
   lxc restore foo snap0 # Test restore, IPs conflict on config device update (due to only IPs changing).
-  ! stat "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false # Check lease file removed (due to non-user requested update failing).
+  ! stat "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false # Check lease file removed (due to non-user requested update failing).
   lxc config device get foo eth0 ipv4.address | grep -Fx '192.0.2.232'
   ! lxc start foo || false
   lxc config device set foo eth0 \
@@ -609,20 +609,20 @@ test_container_devices_nic_bridged() {
   lxc stop -f foo
 
   lxc restore foo snap0 # Test restore, IPs conflict on config device remove/add (due to MAC change).
-  ! stat "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false # Check lease file removed (due to MAC change).
+  ! stat "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false # Check lease file removed (due to MAC change).
   lxc config device get foo eth0 ipv4.address | grep -Fx '192.0.2.232'
   ! lxc start foo || false
   lxc config device set foo eth0 \
     hwaddr="0a:92:a7:0d:b7:c9" \
     ipv4.address=192.0.2.233 \
     ipv6.address=2001:db8::3
-  grep -F "192.0.2.233" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0"
+  grep -F "192.0.2.233" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0"
   lxc start foo
   lxc delete -f foo
 
   # Test container with conflicting addresses can be restored from backup.
   lxc import foo.tar.gz
-  ! stat "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false
+  ! stat "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false
   ! lxc start foo || false
   lxc config device get foo eth0 ipv4.address | grep -Fx '192.0.2.232'
   lxc config show foo/snap0 | grep -F 'ipv4.address: 192.0.2.232'
@@ -630,7 +630,7 @@ test_container_devices_nic_bridged() {
     hwaddr="0a:92:a7:0d:b7:c9" \
     ipv4.address=192.0.2.233 \
     ipv6.address=2001:db8::3
-  grep -F "192.0.2.233" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0"
+  grep -F "192.0.2.233" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0"
   lxc config device get foo eth0 ipv4.address | grep -Fx '192.0.2.233'
   lxc start foo
 
@@ -639,13 +639,13 @@ test_container_devices_nic_bridged() {
 
   # Test container with conflicting addresses rebuilds DHCP lease if original conflicting instance is removed.
   lxc delete -f foo
-  ! stat "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false
+  ! stat "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false
   lxc import foo.tar.gz
   rm foo.tar.gz
   ! lxc start foo || false
   lxc delete "${ctName}" -f
   lxc start foo
-  grep -F "192.0.2.232" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0"
+  grep -F "192.0.2.232" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0"
   lxc delete -f foo
 
   # Test container without extra network configuration can be restored from backup.

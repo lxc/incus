@@ -4,7 +4,7 @@ test_macaroon_auth() {
     # shellcheck disable=SC2086
     identity_endpoint="$(cat ${TEST_DIR}/macaroon-identity.endpoint)"
 
-    ensure_has_localhost_remote "$LXD_ADDR"
+    ensure_has_localhost_remote "$INCUS_ADDR"
 
     lxc config set candid.api.url "$identity_endpoint"
     key=$(curl -s "${identity_endpoint}/discharge/info" | jq .PublicKey)
@@ -16,7 +16,7 @@ test_macaroon_auth() {
 wrong-user
 wrong-pass
 EOF
-    ) | lxc remote add macaroon-remote "https://$LXD_ADDR" --auth-type candid --accept-certificate || false
+    ) | lxc remote add macaroon-remote "https://$INCUS_ADDR" --auth-type candid --accept-certificate || false
 
     # valid credentials work
     (
@@ -24,7 +24,7 @@ EOF
 user1
 pass1
 EOF
-    ) | lxc remote add macaroon-remote "https://$LXD_ADDR" --auth-type candid --accept-certificate
+    ) | lxc remote add macaroon-remote "https://$INCUS_ADDR" --auth-type candid --accept-certificate
 
     # run a lxc command through the new remote
     lxc config show macaroon-remote: | grep -q candid.api.url

@@ -1,6 +1,6 @@
 test_container_devices_disk_restricted() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Create directory for use as basis for restricted disk source tests.
   testRoot="${TEST_DIR}/restricted"
@@ -11,7 +11,7 @@ test_container_devices_disk_restricted() {
   mkdir "${testRoot}/allowed2"
   touch "${testRoot}/allowed1/foo1"
   touch "${testRoot}/allowed1/foo2"
-  ln "${LXD_DIR}/unix.socket" "${testRoot}/allowed1/lxd.sock"
+  ln "${INCUS_DIR}/unix.socket" "${testRoot}/allowed1/lxd.sock"
   chown 1000:1000 "${testRoot}/allowed1/foo1"
   chown 1001:1001 "${testRoot}/allowed1/foo2"
   mkdir "${testRoot}/not-allowed1"
@@ -26,7 +26,7 @@ test_container_devices_disk_restricted() {
     -c restricted.devices.disk=allow \
     -c restricted.devices.disk.paths="${testRoot}/allowed1,${testRoot}/allowed2"
   lxc project switch restricted
-  pool="lxdtest-$(basename "${LXD_DIR}")"
+  pool="incustest-$(basename "${INCUS_DIR}")"
   lxc profile device add default root disk path="/" pool="${pool}"
   lxc profile show default
 

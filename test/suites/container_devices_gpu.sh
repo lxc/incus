@@ -1,6 +1,6 @@
 test_container_devices_gpu() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   if [ ! -c /dev/dri/card0 ]; then
     echo "==> SKIP: No /dev/dri/card0 device found"
@@ -12,14 +12,14 @@ test_container_devices_gpu() {
 
   # Check adding all cards creates the correct device mounts and cleans up on removal.
   startMountCount=$(lxc exec "${ctName}" -- mount | wc -l)
-  startDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  startDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
   lxc config device add "${ctName}" gpu-basic gpu mode=0600 id=0
   lxc exec "${ctName}" -- mount | grep "/dev/dri/card0"
   lxc exec "${ctName}" -- stat -c '%a' /dev/dri/card0 | grep 600
-  stat -c '%a' "${LXD_DIR}"/devices/"${ctName}"/unix.gpu--basic.dev-dri-card0 | grep 600
+  stat -c '%a' "${INCUS_DIR}"/devices/"${ctName}"/unix.gpu--basic.dev-dri-card0 | grep 600
   lxc config device remove "${ctName}" gpu-basic
   endMountCount=$(lxc exec "${ctName}" -- mount | wc -l)
-  endDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  endDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
 
   if [ "$startMountCount" != "$endMountCount" ]; then
     echo "leftover container mounts detected"
@@ -57,19 +57,19 @@ test_container_devices_gpu() {
   lxc config device add "${ctName}" gpu-nvidia gpu mode=0600
 
   lxc exec "${ctName}" -- mount | grep /dev/nvidia0
-  stat -c '%a' "${LXD_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-dri-card0 | grep 600
+  stat -c '%a' "${INCUS_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-dri-card0 | grep 600
 
   lxc exec "${ctName}" -- mount | grep /dev/nvidia-modeset
-  stat -c '%a' "${LXD_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-nvidia--modeset | grep 600
+  stat -c '%a' "${INCUS_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-nvidia--modeset | grep 600
 
   lxc exec "${ctName}" -- mount | grep /dev/nvidia-uvm
-  stat -c '%a' "${LXD_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-nvidia--uvm | grep 600
+  stat -c '%a' "${INCUS_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-nvidia--uvm | grep 600
 
   lxc exec "${ctName}" -- mount | grep /dev/nvidia-uvm-tools
-  stat -c '%a' "${LXD_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-nvidia--uvm--tools | grep 600
+  stat -c '%a' "${INCUS_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-nvidia--uvm--tools | grep 600
 
   lxc exec "${ctName}" -- mount | grep /dev/nvidiactl
-  stat -c '%a' "${LXD_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-nvidiactl | grep 600
+  stat -c '%a' "${INCUS_DIR}"/devices/"${ctName}"/unix.gpu--nvidia.dev-nvidiactl | grep 600
 
   lxc config device remove "${ctName}" gpu-nvidia
 

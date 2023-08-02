@@ -1,6 +1,6 @@
 test_container_devices_disk() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   lxc init testimage foo
 
@@ -15,7 +15,7 @@ test_container_devices_disk() {
 }
 
 test_container_devices_disk_shift() {
-  if ! grep -q shiftfs /proc/filesystems || [ -n "${LXD_SHIFTFS_DISABLE:-}" ]; then
+  if ! grep -q shiftfs /proc/filesystems || [ -n "${INCUS_SHIFTFS_DISABLE:-}" ]; then
     return
   fi
 
@@ -97,14 +97,14 @@ test_container_devices_raw_mount_options() {
 
 test_container_devices_disk_ceph() {
   # shellcheck disable=SC2039,3043
-  local LXD_BACKEND
+  local INCUS_BACKEND
 
-  LXD_BACKEND=$(storage_backend "$LXD_DIR")
-  if ! [ "${LXD_BACKEND}" = "ceph" ]; then
+  INCUS_BACKEND=$(storage_backend "$INCUS_DIR")
+  if ! [ "${INCUS_BACKEND}" = "ceph" ]; then
     return
   fi
 
-  RBD_POOL_NAME=lxdtest-$(basename "${LXD_DIR}")-disk
+  RBD_POOL_NAME=incustest-$(basename "${INCUS_DIR}")-disk
   ceph osd pool create "${RBD_POOL_NAME}" 1
   rbd create --pool "${RBD_POOL_NAME}" --size 50M my-volume
   RBD_DEVICE=$(rbd map --pool "${RBD_POOL_NAME}" my-volume)
@@ -122,15 +122,15 @@ test_container_devices_disk_ceph() {
 
 test_container_devices_disk_cephfs() {
   # shellcheck disable=SC2039,3043
-  local LXD_BACKEND
+  local INCUS_BACKEND
 
-  LXD_BACKEND=$(storage_backend "$LXD_DIR")
-  if [ "${LXD_BACKEND}" != "ceph" ] || [ -z "${LXD_CEPH_CEPHFS:-}" ]; then
+  INCUS_BACKEND=$(storage_backend "$INCUS_DIR")
+  if [ "${INCUS_BACKEND}" != "ceph" ] || [ -z "${INCUS_CEPH_CEPHFS:-}" ]; then
     return
   fi
 
   lxc launch testimage ceph-fs -c security.privileged=true
-  lxc config device add ceph-fs fs disk source=cephfs:"${LXD_CEPH_CEPHFS}"/ ceph.user_name=admin ceph.cluster_name=ceph path=/cephfs
+  lxc config device add ceph-fs fs disk source=cephfs:"${INCUS_CEPH_CEPHFS}"/ ceph.user_name=admin ceph.cluster_name=ceph path=/cephfs
   lxc exec ceph-fs -- stat /cephfs
   lxc restart ceph-fs --force
   lxc exec ceph-fs -- stat /cephfs
@@ -139,7 +139,7 @@ test_container_devices_disk_cephfs() {
 
 test_container_devices_disk_socket() {
   lxc start foo
-  lxc config device add foo unix-socket disk source="${LXD_DIR}/unix.socket" path=/root/lxd.sock
+  lxc config device add foo unix-socket disk source="${INCUS_DIR}/unix.socket" path=/root/lxd.sock
   [ "$(lxc exec foo -- stat /root/lxd.sock -c '%F')" = "socket" ] || false
   lxc restart -f foo
   [ "$(lxc exec foo -- stat /root/lxd.sock -c '%F')" = "socket" ] || false

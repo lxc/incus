@@ -5,31 +5,31 @@
 # Any necessary backend-specific setup
 dir_setup() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Setting up directory backend in ${LXD_DIR}"
+  echo "==> Setting up directory backend in ${INCUS_DIR}"
 }
 
-# Do the API voodoo necessary to configure LXD to use this backend
+# Do the API voodoo necessary to configure Incus to use this backend
 dir_configure() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Configuring directory backend in ${LXD_DIR}"
+  echo "==> Configuring directory backend in ${INCUS_DIR}"
 
-  lxc storage create "lxdtest-$(basename "${LXD_DIR}")" dir
-  lxc profile device add default root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")"
+  inc storage create "incustest-$(basename "${INCUS_DIR}")" dir
+  inc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 }
 
 dir_teardown() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Tearing down directory backend in ${LXD_DIR}"
+  echo "==> Tearing down directory backend in ${INCUS_DIR}"
 }

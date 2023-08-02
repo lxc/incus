@@ -8,9 +8,9 @@
 # sudo modprobe igb max_vfs=2
 test_container_devices_nic_sriov() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  parent=${LXD_NIC_SRIOV_PARENT:-""}
+  parent=${INCUS_NIC_SRIOV_PARENT:-""}
 
   if [ "$parent" = "" ]; then
     echo "==> SKIP: No SR-IOV NIC parent specified"

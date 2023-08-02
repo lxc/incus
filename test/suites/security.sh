@@ -1,30 +1,30 @@
 test_security() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # CVE-2016-1581
-  if [ "$(storage_backend "$LXD_DIR")" = "zfs" ]; then
-    LXD_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-    chmod +x "${LXD_INIT_DIR}"
-    spawn_lxd "${LXD_INIT_DIR}" false
+  if [ "$(storage_backend "$INCUS_DIR")" = "zfs" ]; then
+    INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_INIT_DIR}"
+    spawn_incus "${INCUS_INIT_DIR}" false
 
-    ZFS_POOL="lxdtest-$(basename "${LXD_DIR}")-init"
-    LXD_DIR=${LXD_INIT_DIR} lxd init --storage-backend zfs --storage-create-loop 1 --storage-pool "${ZFS_POOL}" --auto
+    ZFS_POOL="incustest-$(basename "${INCUS_DIR}")-init"
+    INCUS_DIR=${INCUS_INIT_DIR} lxd init --storage-backend zfs --storage-create-loop 1 --storage-pool "${ZFS_POOL}" --auto
 
-    PERM=$(stat -c %a "${LXD_INIT_DIR}/disks/${ZFS_POOL}.img")
+    PERM=$(stat -c %a "${INCUS_INIT_DIR}/disks/${ZFS_POOL}.img")
     if [ "${PERM}" != "600" ]; then
       echo "Bad zfs.img permissions: ${PERM}"
       false
     fi
 
-    kill_lxd "${LXD_INIT_DIR}"
+    kill_incus "${INCUS_INIT_DIR}"
   fi
 
   # CVE-2016-1582
   lxc launch testimage test-priv -c security.privileged=true
 
-  PERM=$(stat -L -c %a "${LXD_DIR}/containers/test-priv")
-  UID=$(stat -L -c %u "${LXD_DIR}/containers/test-priv")
+  PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-priv")
+  UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-priv")
   if [ "${PERM}" != "100" ]; then
     echo "Bad container permissions: ${PERM}"
     false
@@ -40,8 +40,8 @@ test_security() {
   lxc config set test-priv security.privileged true
   lxc restart test-priv --force
 
-  PERM=$(stat -L -c %a "${LXD_DIR}/containers/test-priv")
-  UID=$(stat -L -c %u "${LXD_DIR}/containers/test-priv")
+  PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-priv")
+  UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-priv")
   if [ "${PERM}" != "100" ]; then
     echo "Bad container permissions: ${PERM}"
     false
@@ -58,8 +58,8 @@ test_security() {
   lxc config set test-unpriv security.privileged true
   lxc restart test-unpriv --force
 
-  PERM=$(stat -L -c %a "${LXD_DIR}/containers/test-unpriv")
-  UID=$(stat -L -c %u "${LXD_DIR}/containers/test-unpriv")
+  PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-unpriv")
+  UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-unpriv")
   if [ "${PERM}" != "100" ]; then
     echo "Bad container permissions: ${PERM}"
     false
@@ -73,8 +73,8 @@ test_security() {
   lxc config set test-unpriv security.privileged false
   lxc restart test-unpriv --force
 
-  PERM=$(stat -L -c %a "${LXD_DIR}/containers/test-unpriv")
-  UID=$(stat -L -c %u "${LXD_DIR}/containers/test-unpriv")
+  PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-unpriv")
+  UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-unpriv")
   if [ "${PERM}" != "100" ]; then
     echo "Bad container permissions: ${PERM}"
     false
@@ -88,20 +88,20 @@ test_security() {
   lxc delete test-unpriv --force
 
   # shellcheck disable=2039,3043
-  local LXD_STORAGE_DIR
+  local INCUS_STORAGE_DIR
 
-  LXD_STORAGE_DIR=$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)
-  chmod +x "${LXD_STORAGE_DIR}"
+  INCUS_STORAGE_DIR=$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)
+  chmod +x "${INCUS_STORAGE_DIR}"
   # Enforce that only unprivileged containers can be created
-  LXD_UNPRIVILEGED_ONLY=true
-  export LXD_UNPRIVILEGED_ONLY
-  spawn_lxd "${LXD_STORAGE_DIR}" true
-  unset LXD_UNPRIVILEGED_ONLY
+  INCUS_UNPRIVILEGED_ONLY=true
+  export INCUS_UNPRIVILEGED_ONLY
+  spawn_incus "${INCUS_STORAGE_DIR}" true
+  unset INCUS_UNPRIVILEGED_ONLY
 
   (
     set -e
     # shellcheck disable=2030
-    LXD_DIR="${LXD_STORAGE_DIR}"
+    INCUS_DIR="${INCUS_STORAGE_DIR}"
 
     # Import image into default storage pool.
     ensure_import_testimage
@@ -137,13 +137,13 @@ test_security() {
   )
 
   # shellcheck disable=SC2031,2269
-  LXD_DIR="${LXD_DIR}"
-  kill_lxd "${LXD_STORAGE_DIR}"
+  INCUS_DIR="${INCUS_DIR}"
+  kill_incus "${INCUS_STORAGE_DIR}"
 }
 
 test_security_protection() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Test deletion protecton
   lxc init testimage c1
@@ -165,13 +165,13 @@ test_security_protection() {
   # Test shifting protection
 
   # Respawn LXD with kernel ID shifting support disabled to force manual shifting.
-  shutdown_lxd "${LXD_DIR}"
-  lxdShiftfsDisable=${LXD_SHIFTFS_DISABLE:-}
-  lxdIdmappedMountsDisable=${LXD_IDMAPPED_MOUNTS_DISABLE:-}
+  shutdown_incus "${INCUS_DIR}"
+  lxdShiftfsDisable=${INCUS_SHIFTFS_DISABLE:-}
+  lxdIdmappedMountsDisable=${INCUS_IDMAPPED_MOUNTS_DISABLE:-}
 
-  export LXD_SHIFTFS_DISABLE=1
-  export LXD_IDMAPPED_MOUNTS_DISABLE=1
-  respawn_lxd "${LXD_DIR}" true
+  export INCUS_SHIFTFS_DISABLE=1
+  export INCUS_IDMAPPED_MOUNTS_DISABLE=1
+  respawn_incus "${INCUS_DIR}" true
 
   lxc init testimage c1
   lxc start c1
@@ -198,9 +198,9 @@ test_security_protection() {
   lxc profile unset default security.protection.shift
 
   # Respawn LXD to restore default kernel shifting support.
-  shutdown_lxd "${LXD_DIR}"
-  export LXD_SHIFTFS_DISABLE="${lxdShiftfsDisable}"
-  export LXD_IDMAPPED_MOUNTS_DISABLE="${lxdIdmappedMountsDisable}"
+  shutdown_incus "${INCUS_DIR}"
+  export INCUS_SHIFTFS_DISABLE="${lxdShiftfsDisable}"
+  export INCUS_IDMAPPED_MOUNTS_DISABLE="${lxdIdmappedMountsDisable}"
 
-  respawn_lxd "${LXD_DIR}" true
+  respawn_incus "${INCUS_DIR}" true
 }

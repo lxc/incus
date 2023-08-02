@@ -1,6 +1,6 @@
 test_container_devices_nic_physical() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   ctName="nt$$"
   dummyMAC="aa:3b:97:97:0f:d5"

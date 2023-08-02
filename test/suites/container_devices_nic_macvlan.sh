@@ -1,6 +1,6 @@
 test_container_devices_nic_macvlan() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   ctName="nt$$"
   ipRand=$(shuf -i 0-9 -n 1)

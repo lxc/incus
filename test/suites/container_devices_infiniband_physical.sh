@@ -9,9 +9,9 @@
 # reboot
 test_container_devices_infiniband_physical() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  parent=${LXD_IB_PHYSICAL_PARENT:-""}
+  parent=${INCUS_IB_PHYSICAL_PARENT:-""}
 
   if [ "$parent" = "" ]; then
     echo "==> SKIP: No physical IB parent specified"
@@ -38,7 +38,7 @@ test_container_devices_infiniband_physical() {
   lxc start "${ctName}"
 
   # Check host devices are created.
-  ibDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
   if [ "$ibDevCount" != "3" ]; then
     echo "unexpected IB device count after creation"
     false
@@ -65,7 +65,7 @@ test_container_devices_infiniband_physical() {
   fi
 
   # Check ownership of char devices.
-  nonRootDeviceCount=$(find "${LXD_DIR}"/devices/"${ctName}" ! -uid 0 -type c | wc -l)
+  nonRootDeviceCount=$(find "${INCUS_DIR}"/devices/"${ctName}" ! -uid 0 -type c | wc -l)
   if [ "$nonRootDeviceCount" != "3" ]; then
     echo "unexpected unprivileged non-root device ownership count after creation"
     false
@@ -86,7 +86,7 @@ test_container_devices_infiniband_physical() {
   fi
 
   # Check host devices are removed.
-  ibDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
   if [ "$ibDevCount" != "0" ]; then
     echo "unexpected IB device count after removal"
     false
@@ -104,7 +104,7 @@ test_container_devices_infiniband_physical() {
   fi
 
   # Check ownership of char devices.
-  rootDeviceCount=$(find "${LXD_DIR}"/devices/"${ctName}" -uid 0 -type c | wc -l)
+  rootDeviceCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -uid 0 -type c | wc -l)
   if [ "$rootDeviceCount" != "3" ]; then
     echo "unexpected privileged root device ownership count after creation"
     false
@@ -122,7 +122,7 @@ test_container_devices_infiniband_physical() {
     mtu=1500
 
   # Check host devices are created.
-  ibDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
   if [ "$ibDevCount" != "3" ]; then
     echo "unexpected IB device count after creation"
     false
@@ -132,7 +132,7 @@ test_container_devices_infiniband_physical() {
   lxc config device remove "${ctName}" eth0
 
   # Check host devices are removed.
-  ibDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
   if [ "$ibDevCount" != "0" ]; then
     echo "unexpected IB device count after removal"
     false

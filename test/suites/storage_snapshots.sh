@@ -2,19 +2,19 @@ test_storage_volume_snapshots() {
   ensure_import_testimage
 
   # shellcheck disable=2039,3043
-  local LXD_STORAGE_DIR lxd_backend
+  local INCUS_STORAGE_DIR incus_backend
 
-  lxd_backend=$(storage_backend "$LXD_DIR")
-  LXD_STORAGE_DIR=$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)
-  chmod +x "${LXD_STORAGE_DIR}"
-  spawn_lxd "${LXD_STORAGE_DIR}" false
+  incus_backend=$(storage_backend "$INCUS_DIR")
+  INCUS_STORAGE_DIR=$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)
+  chmod +x "${INCUS_STORAGE_DIR}"
+  spawn_incus "${INCUS_STORAGE_DIR}" false
 
   # shellcheck disable=2039,3043
   local storage_pool storage_volume
-  storage_pool="lxdtest-$(basename "${LXD_STORAGE_DIR}")-pool"
+  storage_pool="incustest-$(basename "${INCUS_STORAGE_DIR}")-pool"
   storage_volume="${storage_pool}-vol"
 
-  lxc storage create "$storage_pool" "$lxd_backend"
+  lxc storage create "$storage_pool" "$incus_backend"
   lxc storage volume create "${storage_pool}" "${storage_volume}"
   lxc launch testimage c1 -s "${storage_pool}"
   lxc storage volume attach "${storage_pool}" "${storage_volume}" c1 /mnt
@@ -102,6 +102,6 @@ test_storage_volume_snapshots() {
   lxc storage delete "${storage_pool}"
 
   # shellcheck disable=SC2031,2269
-  LXD_DIR="${LXD_DIR}"
-  kill_lxd "${LXD_STORAGE_DIR}"
+  INCUS_DIR="${INCUS_DIR}"
+  kill_incus "${INCUS_STORAGE_DIR}"
 }

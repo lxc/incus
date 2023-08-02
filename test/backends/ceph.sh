@@ -1,29 +1,29 @@
 ceph_setup() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Setting up CEPH backend in ${LXD_DIR}"
+  echo "==> Setting up CEPH backend in ${INCUS_DIR}"
 }
 
 ceph_configure() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Configuring CEPH backend in ${LXD_DIR}"
+  echo "==> Configuring CEPH backend in ${INCUS_DIR}"
 
-  lxc storage create "lxdtest-$(basename "${LXD_DIR}")" ceph volume.size=25MiB ceph.osd.pg_num=16
-  lxc profile device add default root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")"
+  inc storage create "incustest-$(basename "${INCUS_DIR}")" ceph volume.size=25MiB ceph.osd.pg_num=16
+  inc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 }
 
 ceph_teardown() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Tearing down CEPH backend in ${LXD_DIR}"
+  echo "==> Tearing down CEPH backend in ${INCUS_DIR}"
 }

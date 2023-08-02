@@ -1,6 +1,6 @@
 test_container_syscall_interception() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   if [ "$(lxc query /1.0 | jq -r .environment.lxc_features.seccomp_notify)" != "true" ]; then
     echo "==> SKIP: Seccomp notify not supported"

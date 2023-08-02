@@ -1,7 +1,7 @@
 test_storage_volume_recover() {
-  LXD_IMPORT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${LXD_IMPORT_DIR}"
-  spawn_lxd "${LXD_IMPORT_DIR}" true
+  INCUS_IMPORT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_IMPORT_DIR}"
+  spawn_incus "${INCUS_IMPORT_DIR}" true
 
   poolName=$(lxc profile device get default root pool)
   poolDriver=$(lxc storage show "${poolName}" | awk '/^driver:/ {print $2}')
@@ -62,20 +62,20 @@ EOF
   rm -f foo.iso
   lxc storage volume delete "${poolName}" vol1
   lxc storage volume delete "${poolName}" vol2
-  shutdown_lxd "${LXD_DIR}"
+  shutdown_incus "${INCUS_DIR}"
 }
 
 test_container_recover() {
-  LXD_IMPORT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${LXD_IMPORT_DIR}"
-  spawn_lxd "${LXD_IMPORT_DIR}" true
+  INCUS_IMPORT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_IMPORT_DIR}"
+  spawn_incus "${INCUS_IMPORT_DIR}" true
 
   (
     set -e
 
     # shellcheck disable=SC2030
-    LXD_DIR=${LXD_IMPORT_DIR}
-    lxd_backend=$(storage_backend "$LXD_DIR")
+    INCUS_DIR=${INCUS_IMPORT_DIR}
+    incus_backend=$(storage_backend "$INCUS_DIR")
 
     ensure_import_testimage
 
@@ -113,13 +113,13 @@ EOF
     # Remove container DB records and symlink.
     lxd sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
     lxd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
-    rm "${LXD_DIR}/containers/test_c1"
+    rm "${INCUS_DIR}/containers/test_c1"
 
     # Remove mount directories if block backed storage.
     if [ "$poolDriver" != "dir" ] && [ "$poolDriver" != "btrfs" ] && [ "$poolDriver" != "cephfs" ]; then
-      rmdir "${LXD_DIR}/storage-pools/${poolName}/containers/test_c1"
-      rmdir "${LXD_DIR}/storage-pools/${poolName}/containers-snapshots/test_c1/snap0"
-      rmdir "${LXD_DIR}/storage-pools/${poolName}/containers-snapshots/test_c1"
+      rmdir "${INCUS_DIR}/storage-pools/${poolName}/containers/test_c1"
+      rmdir "${INCUS_DIR}/storage-pools/${poolName}/containers-snapshots/test_c1/snap0"
+      rmdir "${INCUS_DIR}/storage-pools/${poolName}/containers-snapshots/test_c1"
     fi
 
     # Remove custom volume DB record.
@@ -127,20 +127,20 @@ EOF
 
     # Remove mount directories if block backed storage.
     if [ "$poolDriver" != "dir" ] && [ "$poolDriver" != "btrfs" ] && [ "$poolDriver" != "cephfs" ]; then
-      rmdir "${LXD_DIR}/storage-pools/${poolName}/custom/test_vol1_test"
-      rmdir "${LXD_DIR}/storage-pools/${poolName}/custom-snapshots/test_vol1_test/snap0"
-      rmdir "${LXD_DIR}/storage-pools/${poolName}/custom-snapshots/test_vol1_test"
+      rmdir "${INCUS_DIR}/storage-pools/${poolName}/custom/test_vol1_test"
+      rmdir "${INCUS_DIR}/storage-pools/${poolName}/custom-snapshots/test_vol1_test/snap0"
+      rmdir "${INCUS_DIR}/storage-pools/${poolName}/custom-snapshots/test_vol1_test"
     fi
 
     # Check container appears removed.
-    ! ls "${LXD_DIR}/containers/test_c1" || false
+    ! ls "${INCUS_DIR}/containers/test_c1" || false
     ! lxc info c1 || false
     ! lxc storage volume show "${poolName}" container/c1 || false
     ! lxc storage volume show "${poolName}" container/c1/snap0 || false
 
     if [ "$poolDriver" != "dir" ] && [ "$poolDriver" != "btrfs" ] && [ "$poolDriver" != "cephfs" ]; then
-      ! ls "${LXD_DIR}/storage-pools/${poolName}/containers/test_c1" || false
-      ! ls "${LXD_DIR}/storage-pools/${poolName}/containers-snapshots/test_c1" || false
+      ! ls "${INCUS_DIR}/storage-pools/${poolName}/containers/test_c1" || false
+      ! ls "${INCUS_DIR}/storage-pools/${poolName}/containers-snapshots/test_c1" || false
     fi
 
     # Check custom volume appears removed.
@@ -148,15 +148,15 @@ EOF
     ! lxc storage volume show "${poolName}" vol1_test/snap0 || false
 
     # Shutdown LXD so pools are unmounted.
-    shutdown_lxd "${LXD_DIR}"
+    shutdown_incus "${INCUS_DIR}"
 
     # Remove empty directory structures for pool drivers that don't have a mounted root.
     # This is so we can test the restoration of the storage pool directory structure.
     if [ "$poolDriver" != "dir" ] && [ "$poolDriver" != "btrfs" ] && [ "$poolDriver" != "cephfs" ]; then
-      rm -rvf "${LXD_DIR}/storage-pools/${poolName}"
+      rm -rvf "${INCUS_DIR}/storage-pools/${poolName}"
     fi
 
-    respawn_lxd "${LXD_DIR}" true
+    respawn_incus "${INCUS_DIR}" true
 
     cat <<EOF | lxd recover
 no
@@ -165,13 +165,13 @@ yes
 EOF
 
     # Check container mount directories have been restored.
-    ls "${LXD_DIR}/containers/test_c1"
-    ls "${LXD_DIR}/storage-pools/${poolName}/containers/test_c1"
-    ls "${LXD_DIR}/storage-pools/${poolName}/containers-snapshots/test_c1/snap0"
+    ls "${INCUS_DIR}/containers/test_c1"
+    ls "${INCUS_DIR}/storage-pools/${poolName}/containers/test_c1"
+    ls "${INCUS_DIR}/storage-pools/${poolName}/containers-snapshots/test_c1/snap0"
 
     # Check custom volume mount directories have been restored.
-    ls "${LXD_DIR}/storage-pools/${poolName}/custom/test_vol1_test"
-    ls "${LXD_DIR}/storage-pools/${poolName}/custom-snapshots/test_vol1_test/snap0"
+    ls "${INCUS_DIR}/storage-pools/${poolName}/custom/test_vol1_test"
+    ls "${INCUS_DIR}/storage-pools/${poolName}/custom-snapshots/test_vol1_test/snap0"
 
     # Check custom volume record exists with snapshot.
     lxc storage volume show "${poolName}" vol1_test
@@ -199,8 +199,8 @@ EOF
     lxd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
 
     # Restart LXD so internal mount counters are cleared for deleted (but running) container.
-    shutdown_lxd "${LXD_DIR}"
-    respawn_lxd "${LXD_DIR}" true
+    shutdown_incus "${INCUS_DIR}"
+    respawn_incus "${INCUS_DIR}" true
 
     cat <<EOF | lxd recover
 no
@@ -275,8 +275,8 @@ EOF
   )
 
   # shellcheck disable=SC2031,2269
-  LXD_DIR=${LXD_DIR}
-  kill_lxd "${LXD_IMPORT_DIR}"
+  INCUS_DIR=${INCUS_DIR}
+  kill_incus "${INCUS_IMPORT_DIR}"
 }
 
 test_bucket_recover() {
@@ -349,38 +349,38 @@ test_backup_import_with_project() {
     deps/import-busybox --project "$project-b" --alias testimage
 
     # Add a root device to the default profile of the project
-    pool="lxdtest-$(basename "${LXD_DIR}")"
+    pool="incustest-$(basename "${INCUS_DIR}")"
     lxc profile device add default root disk path="/" pool="${pool}"
     lxc profile device add default root disk path="/" pool="${pool}" --project "$project-b"
   fi
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   lxc launch testimage c1
   lxc launch testimage c2
   lxc snapshot c2
 
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   # container only
 
   # create backup
-  if [ "$lxd_backend" = "btrfs" ] || [ "$lxd_backend" = "zfs" ]; then
-    lxc export c1 "${LXD_DIR}/c1-optimized.tar.gz" --optimized-storage --instance-only
+  if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
+    lxc export c1 "${INCUS_DIR}/c1-optimized.tar.gz" --optimized-storage --instance-only
   fi
 
-  lxc export c1 "${LXD_DIR}/c1.tar.gz" --instance-only
+  lxc export c1 "${INCUS_DIR}/c1.tar.gz" --instance-only
   lxc delete --force c1
 
   # import backup, and ensure it's valid and runnable
-  lxc import "${LXD_DIR}/c1.tar.gz"
+  lxc import "${INCUS_DIR}/c1.tar.gz"
   lxc info c1
   lxc start c1
   lxc delete --force c1
 
-  if [ "$lxd_backend" = "btrfs" ] || [ "$lxd_backend" = "zfs" ]; then
-    lxc import "${LXD_DIR}/c1-optimized.tar.gz"
+  if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
+    lxc import "${INCUS_DIR}/c1-optimized.tar.gz"
     lxc info c1
     lxc start c1
     lxc delete --force c1
@@ -388,15 +388,15 @@ test_backup_import_with_project() {
 
   # with snapshots
 
-  if [ "$lxd_backend" = "btrfs" ] || [ "$lxd_backend" = "zfs" ]; then
-    lxc export c2 "${LXD_DIR}/c2-optimized.tar.gz" --optimized-storage
+  if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
+    lxc export c2 "${INCUS_DIR}/c2-optimized.tar.gz" --optimized-storage
   fi
 
-  lxc export c2 "${LXD_DIR}/c2.tar.gz"
+  lxc export c2 "${INCUS_DIR}/c2.tar.gz"
   lxc delete --force c2
 
-  lxc import "${LXD_DIR}/c2.tar.gz"
-  lxc import "${LXD_DIR}/c2.tar.gz" c3
+  lxc import "${INCUS_DIR}/c2.tar.gz"
+  lxc import "${INCUS_DIR}/c2.tar.gz" c3
   lxc info c2 | grep snap0
   lxc info c3 | grep snap0
   lxc start c2
@@ -406,8 +406,8 @@ test_backup_import_with_project() {
 
   if [ "$#" -ne 0 ]; then
     # Import into different project (before deleting earlier import).
-    lxc import "${LXD_DIR}/c2.tar.gz" --project "$project-b"
-    lxc import "${LXD_DIR}/c2.tar.gz" --project "$project-b" c3
+    lxc import "${INCUS_DIR}/c2.tar.gz" --project "$project-b"
+    lxc import "${INCUS_DIR}/c2.tar.gz" --project "$project-b" c3
     lxc info c2 --project "$project-b" | grep snap0
     lxc info c3 --project "$project-b" | grep snap0
     lxc start c2 --project "$project-b"
@@ -428,9 +428,9 @@ test_backup_import_with_project() {
   lxc delete --force c3
 
 
-  if [ "$lxd_backend" = "btrfs" ] || [ "$lxd_backend" = "zfs" ]; then
-    lxc import "${LXD_DIR}/c2-optimized.tar.gz"
-    lxc import "${LXD_DIR}/c2-optimized.tar.gz" c3
+  if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
+    lxc import "${INCUS_DIR}/c2-optimized.tar.gz"
+    lxc import "${INCUS_DIR}/c2-optimized.tar.gz" c3
     lxc info c2 | grep snap0
     lxc info c3 | grep snap0
     lxc start c2
@@ -456,10 +456,10 @@ test_backup_import_with_project() {
   lxc snapshot c1-foo c1-foo-snap1
   lxc storage volume set "${default_pool}" container/c1-foo user.foo=post-c1-foo-snap1
 
-  lxc export c1-foo "${LXD_DIR}/c1-foo.tar.gz"
+  lxc export c1-foo "${INCUS_DIR}/c1-foo.tar.gz"
   lxc delete --force c1-foo
 
-  lxc import "${LXD_DIR}/c1-foo.tar.gz"
+  lxc import "${INCUS_DIR}/c1-foo.tar.gz"
   lxc storage volume ls "${default_pool}"
   lxc storage volume get "${default_pool}" container/c1-foo user.foo | grep -Fx "post-c1-foo-snap1"
   lxc storage volume get "${default_pool}" container/c1-foo/c1-foo-snap0 user.foo | grep -Fx "c1-foo-snap0"
@@ -472,14 +472,14 @@ test_backup_import_with_project() {
 
   # Export created container
   lxc init testimage c3 -s pool_1
-  lxc export c3 "${LXD_DIR}/c3.tar.gz"
+  lxc export c3 "${INCUS_DIR}/c3.tar.gz"
 
   # Remove container and storage pool
   lxc rm -f c3
   lxc storage delete pool_1
 
   # This should succeed as it will fall back on the default pool
-  lxc import "${LXD_DIR}/c3.tar.gz"
+  lxc import "${INCUS_DIR}/c3.tar.gz"
 
   lxc rm -f c3
 
@@ -487,13 +487,13 @@ test_backup_import_with_project() {
   lxc profile device remove default root
 
   # This should fail as the expected storage is not available, and there is no default
-  ! lxc import "${LXD_DIR}/c3.tar.gz" || false
+  ! lxc import "${INCUS_DIR}/c3.tar.gz" || false
 
   # Specify pool explicitly; this should fails as the pool doesn't exist
-  ! lxc import "${LXD_DIR}/c3.tar.gz" -s pool_1 || false
+  ! lxc import "${INCUS_DIR}/c3.tar.gz" -s pool_1 || false
 
   # Specify pool explicitly
-  lxc import "${LXD_DIR}/c3.tar.gz" -s pool_2
+  lxc import "${INCUS_DIR}/c3.tar.gz" -s pool_2
 
   lxc rm -f c3
 
@@ -528,67 +528,67 @@ test_backup_export_with_project() {
     deps/import-busybox --project "$project" --alias testimage
 
     # Add a root device to the default profile of the project
-    pool="lxdtest-$(basename "${LXD_DIR}")"
+    pool="incustest-$(basename "${INCUS_DIR}")"
     lxc profile device add default root disk path="/" pool="${pool}"
   fi
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   lxc launch testimage c1
   lxc snapshot c1
 
-  mkdir "${LXD_DIR}/optimized" "${LXD_DIR}/non-optimized"
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  mkdir "${INCUS_DIR}/optimized" "${INCUS_DIR}/non-optimized"
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   # container only
 
-  if [ "$lxd_backend" = "btrfs" ] || [ "$lxd_backend" = "zfs" ]; then
-    lxc export c1 "${LXD_DIR}/c1-optimized.tar.gz" --optimized-storage --instance-only
-    tar -xzf "${LXD_DIR}/c1-optimized.tar.gz" -C "${LXD_DIR}/optimized"
+  if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
+    lxc export c1 "${INCUS_DIR}/c1-optimized.tar.gz" --optimized-storage --instance-only
+    tar -xzf "${INCUS_DIR}/c1-optimized.tar.gz" -C "${INCUS_DIR}/optimized"
 
-    [ -f "${LXD_DIR}/optimized/backup/index.yaml" ]
-    [ -f "${LXD_DIR}/optimized/backup/container.bin" ]
-    [ ! -d "${LXD_DIR}/optimized/backup/snapshots" ]
+    [ -f "${INCUS_DIR}/optimized/backup/index.yaml" ]
+    [ -f "${INCUS_DIR}/optimized/backup/container.bin" ]
+    [ ! -d "${INCUS_DIR}/optimized/backup/snapshots" ]
   fi
 
-  lxc export c1 "${LXD_DIR}/c1.tar.gz" --instance-only
-  tar -xzf "${LXD_DIR}/c1.tar.gz" -C "${LXD_DIR}/non-optimized"
+  lxc export c1 "${INCUS_DIR}/c1.tar.gz" --instance-only
+  tar -xzf "${INCUS_DIR}/c1.tar.gz" -C "${INCUS_DIR}/non-optimized"
 
   # check tarball content
-  [ -f "${LXD_DIR}/non-optimized/backup/index.yaml" ]
-  [ -d "${LXD_DIR}/non-optimized/backup/container" ]
-  [ ! -d "${LXD_DIR}/non-optimized/backup/snapshots" ]
+  [ -f "${INCUS_DIR}/non-optimized/backup/index.yaml" ]
+  [ -d "${INCUS_DIR}/non-optimized/backup/container" ]
+  [ ! -d "${INCUS_DIR}/non-optimized/backup/snapshots" ]
 
-  rm -rf "${LXD_DIR}/non-optimized/"* "${LXD_DIR}/optimized/"*
+  rm -rf "${INCUS_DIR}/non-optimized/"* "${INCUS_DIR}/optimized/"*
 
   # with snapshots
 
-  if [ "$lxd_backend" = "btrfs" ] || [ "$lxd_backend" = "zfs" ]; then
-    lxc export c1 "${LXD_DIR}/c1-optimized.tar.gz" --optimized-storage
-    tar -xzf "${LXD_DIR}/c1-optimized.tar.gz" -C "${LXD_DIR}/optimized"
+  if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
+    lxc export c1 "${INCUS_DIR}/c1-optimized.tar.gz" --optimized-storage
+    tar -xzf "${INCUS_DIR}/c1-optimized.tar.gz" -C "${INCUS_DIR}/optimized"
 
-    [ -f "${LXD_DIR}/optimized/backup/index.yaml" ]
-    [ -f "${LXD_DIR}/optimized/backup/container.bin" ]
-    [ -f "${LXD_DIR}/optimized/backup/snapshots/snap0.bin" ]
+    [ -f "${INCUS_DIR}/optimized/backup/index.yaml" ]
+    [ -f "${INCUS_DIR}/optimized/backup/container.bin" ]
+    [ -f "${INCUS_DIR}/optimized/backup/snapshots/snap0.bin" ]
   fi
 
-  lxc export c1 "${LXD_DIR}/c1.tar.gz"
-  tar -xzf "${LXD_DIR}/c1.tar.gz" -C "${LXD_DIR}/non-optimized"
+  lxc export c1 "${INCUS_DIR}/c1.tar.gz"
+  tar -xzf "${INCUS_DIR}/c1.tar.gz" -C "${INCUS_DIR}/non-optimized"
 
   # check tarball content
-  [ -f "${LXD_DIR}/non-optimized/backup/index.yaml" ]
-  [ -d "${LXD_DIR}/non-optimized/backup/container" ]
-  [ -d "${LXD_DIR}/non-optimized/backup/snapshots/snap0" ]
+  [ -f "${INCUS_DIR}/non-optimized/backup/index.yaml" ]
+  [ -d "${INCUS_DIR}/non-optimized/backup/container" ]
+  [ -d "${INCUS_DIR}/non-optimized/backup/snapshots/snap0" ]
 
   lxc delete --force c1
-  rm -rf "${LXD_DIR}/optimized" "${LXD_DIR}/non-optimized"
+  rm -rf "${INCUS_DIR}/optimized" "${INCUS_DIR}/non-optimized"
 
   # Check if hyphens cause issues when creating backups
   lxc launch testimage c1-foo
   lxc snapshot c1-foo
 
-  lxc export c1-foo "${LXD_DIR}/c1-foo.tar.gz"
+  lxc export c1-foo "${INCUS_DIR}/c1-foo.tar.gz"
 
   lxc delete --force c1-foo
 
@@ -601,7 +601,7 @@ test_backup_export_with_project() {
 
 test_backup_rename() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   if ! lxc query -X POST /1.0/containers/c1/backups/backupmissing -d '{\"name\": \"backupnewname\"}' --wait 2>&1 | grep -q "Error: Instance not found" ; then
     echo "invalid rename response for missing container"
@@ -640,12 +640,12 @@ test_backup_rename() {
 }
 
 test_backup_volume_export() {
-  test_backup_volume_export_with_project default "lxdtest-$(basename "${LXD_DIR}")"
-  test_backup_volume_export_with_project fooproject "lxdtest-$(basename "${LXD_DIR}")"
+  test_backup_volume_export_with_project default "incustest-$(basename "${INCUS_DIR}")"
+  test_backup_volume_export_with_project fooproject "incustest-$(basename "${INCUS_DIR}")"
 
-  if [ "$lxd_backend" = "ceph" ] && [ -n "${LXD_CEPH_CEPHFS:-}" ]; then
-    custom_vol_pool="lxdtest-$(basename "${LXD_DIR}")-cephfs"
-    lxc storage create "${custom_vol_pool}" cephfs source="${LXD_CEPH_CEPHFS}/$(basename "${LXD_DIR}")-cephfs"
+  if [ "$incus_backend" = "ceph" ] && [ -n "${INCUS_CEPH_CEPHFS:-}" ]; then
+    custom_vol_pool="incustest-$(basename "${INCUS_DIR}")-cephfs"
+    lxc storage create "${custom_vol_pool}" cephfs source="${INCUS_CEPH_CEPHFS}/$(basename "${INCUS_DIR}")-cephfs"
 
     test_backup_volume_export_with_project default "${custom_vol_pool}"
     test_backup_volume_export_with_project fooproject "${custom_vol_pool}"
@@ -655,7 +655,7 @@ test_backup_volume_export() {
 }
 
 test_backup_volume_export_with_project() {
-  pool="lxdtest-$(basename "${LXD_DIR}")"
+  pool="incustest-$(basename "${INCUS_DIR}")"
   project="$1"
   custom_vol_pool="$2"
 
@@ -673,10 +673,10 @@ test_backup_volume_export_with_project() {
   fi
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  mkdir "${LXD_DIR}/optimized" "${LXD_DIR}/non-optimized"
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  mkdir "${INCUS_DIR}/optimized" "${INCUS_DIR}/non-optimized"
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   # Create test container.
   lxc init testimage c1
@@ -702,84 +702,84 @@ test_backup_volume_export_with_project() {
   lxc storage volume snapshot "${custom_vol_pool}" testvol test-snap1
   lxc storage volume set "${custom_vol_pool}" testvol user.foo=post-test-snap1
 
-  if [ "$lxd_backend" = "btrfs" ] || [ "$lxd_backend" = "zfs" ]; then
+  if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
     # Create optimized backup without snapshots.
-    lxc storage volume export "${custom_vol_pool}" testvol "${LXD_DIR}/testvol-optimized.tar.gz" --volume-only --optimized-storage
+    lxc storage volume export "${custom_vol_pool}" testvol "${INCUS_DIR}/testvol-optimized.tar.gz" --volume-only --optimized-storage
 
-    [ -f "${LXD_DIR}/testvol-optimized.tar.gz" ]
+    [ -f "${INCUS_DIR}/testvol-optimized.tar.gz" ]
 
     # Extract backup tarball.
-    tar -xzf "${LXD_DIR}/testvol-optimized.tar.gz" -C "${LXD_DIR}/optimized"
+    tar -xzf "${INCUS_DIR}/testvol-optimized.tar.gz" -C "${INCUS_DIR}/optimized"
 
-    [ -f "${LXD_DIR}/optimized/backup/index.yaml" ]
-    [ -f "${LXD_DIR}/optimized/backup/volume.bin" ]
-    [ ! -d "${LXD_DIR}/optimized/backup/volume-snapshots" ]
+    [ -f "${INCUS_DIR}/optimized/backup/index.yaml" ]
+    [ -f "${INCUS_DIR}/optimized/backup/volume.bin" ]
+    [ ! -d "${INCUS_DIR}/optimized/backup/volume-snapshots" ]
   fi
 
   # Create non-optimized backup without snapshots.
-  lxc storage volume export "${custom_vol_pool}" testvol "${LXD_DIR}/testvol.tar.gz" --volume-only
+  lxc storage volume export "${custom_vol_pool}" testvol "${INCUS_DIR}/testvol.tar.gz" --volume-only
 
-  [ -f "${LXD_DIR}/testvol.tar.gz" ]
+  [ -f "${INCUS_DIR}/testvol.tar.gz" ]
 
   # Extract non-optimized backup tarball.
-  tar -xzf "${LXD_DIR}/testvol.tar.gz" -C "${LXD_DIR}/non-optimized"
+  tar -xzf "${INCUS_DIR}/testvol.tar.gz" -C "${INCUS_DIR}/non-optimized"
 
   # Check tarball content.
-  [ -f "${LXD_DIR}/non-optimized/backup/index.yaml" ]
-  [ -d "${LXD_DIR}/non-optimized/backup/volume" ]
-  [ "$(cat "${LXD_DIR}/non-optimized/backup/volume/test")" = "bar" ]
-  [ ! -d "${LXD_DIR}/non-optimized/backup/volume-snapshots" ]
+  [ -f "${INCUS_DIR}/non-optimized/backup/index.yaml" ]
+  [ -d "${INCUS_DIR}/non-optimized/backup/volume" ]
+  [ "$(cat "${INCUS_DIR}/non-optimized/backup/volume/test")" = "bar" ]
+  [ ! -d "${INCUS_DIR}/non-optimized/backup/volume-snapshots" ]
 
-  ! grep -q -- '- test-snap0' "${LXD_DIR}/non-optimized/backup/index.yaml" || false
+  ! grep -q -- '- test-snap0' "${INCUS_DIR}/non-optimized/backup/index.yaml" || false
 
-  rm -rf "${LXD_DIR}/non-optimized/"*
-  rm "${LXD_DIR}/testvol.tar.gz"
+  rm -rf "${INCUS_DIR}/non-optimized/"*
+  rm "${INCUS_DIR}/testvol.tar.gz"
 
-  if [ "$lxd_backend" = "btrfs" ] || [ "$lxd_backend" = "zfs" ]; then
+  if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
     # Create optimized backup with snapshots.
-    lxc storage volume export "${custom_vol_pool}" testvol "${LXD_DIR}/testvol-optimized.tar.gz" --optimized-storage
+    lxc storage volume export "${custom_vol_pool}" testvol "${INCUS_DIR}/testvol-optimized.tar.gz" --optimized-storage
 
-    [ -f "${LXD_DIR}/testvol-optimized.tar.gz" ]
+    [ -f "${INCUS_DIR}/testvol-optimized.tar.gz" ]
 
     # Extract backup tarball.
-    tar -xzf "${LXD_DIR}/testvol-optimized.tar.gz" -C "${LXD_DIR}/optimized"
+    tar -xzf "${INCUS_DIR}/testvol-optimized.tar.gz" -C "${INCUS_DIR}/optimized"
 
-    [ -f "${LXD_DIR}/optimized/backup/index.yaml" ]
-    [ -f "${LXD_DIR}/optimized/backup/volume.bin" ]
-    [ -f "${LXD_DIR}/optimized/backup/volume-snapshots/test-snap0.bin" ]
+    [ -f "${INCUS_DIR}/optimized/backup/index.yaml" ]
+    [ -f "${INCUS_DIR}/optimized/backup/volume.bin" ]
+    [ -f "${INCUS_DIR}/optimized/backup/volume-snapshots/test-snap0.bin" ]
   fi
 
   # Create non-optimized backup with snapshots.
-  lxc storage volume export "${custom_vol_pool}" testvol "${LXD_DIR}/testvol.tar.gz"
+  lxc storage volume export "${custom_vol_pool}" testvol "${INCUS_DIR}/testvol.tar.gz"
 
-  [ -f "${LXD_DIR}/testvol.tar.gz" ]
+  [ -f "${INCUS_DIR}/testvol.tar.gz" ]
 
   # Extract backup tarball.
-  tar -xzf "${LXD_DIR}/testvol.tar.gz" -C "${LXD_DIR}/non-optimized"
+  tar -xzf "${INCUS_DIR}/testvol.tar.gz" -C "${INCUS_DIR}/non-optimized"
 
   # Check tarball content.
-  [ -f "${LXD_DIR}/non-optimized/backup/index.yaml" ]
-  [ -d "${LXD_DIR}/non-optimized/backup/volume" ]
-  [ "$(cat "${LXD_DIR}/non-optimized/backup/volume/test")" = "bar" ]
-  [ -d "${LXD_DIR}/non-optimized/backup/volume-snapshots/test-snap0" ]
-  [  "$(cat "${LXD_DIR}/non-optimized/backup/volume-snapshots/test-snap0/test")" = "foo" ]
+  [ -f "${INCUS_DIR}/non-optimized/backup/index.yaml" ]
+  [ -d "${INCUS_DIR}/non-optimized/backup/volume" ]
+  [ "$(cat "${INCUS_DIR}/non-optimized/backup/volume/test")" = "bar" ]
+  [ -d "${INCUS_DIR}/non-optimized/backup/volume-snapshots/test-snap0" ]
+  [  "$(cat "${INCUS_DIR}/non-optimized/backup/volume-snapshots/test-snap0/test")" = "foo" ]
 
-  grep -q -- '- test-snap0' "${LXD_DIR}/non-optimized/backup/index.yaml"
+  grep -q -- '- test-snap0' "${INCUS_DIR}/non-optimized/backup/index.yaml"
 
-  rm -rf "${LXD_DIR}/non-optimized/"*
+  rm -rf "${INCUS_DIR}/non-optimized/"*
 
   # Test non-optimized import.
   lxc stop -f c1
   lxc storage volume detach "${custom_vol_pool}" testvol c1
   lxc storage volume delete "${custom_vol_pool}" testvol
-  lxc storage volume import "${custom_vol_pool}" "${LXD_DIR}/testvol.tar.gz"
+  lxc storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol.tar.gz"
   lxc storage volume ls "${custom_vol_pool}"
   lxc storage volume get "${custom_vol_pool}" testvol user.foo | grep -Fx "post-test-snap1"
   lxc storage volume show "${custom_vol_pool}" testvol/test-snap0
   lxc storage volume get "${custom_vol_pool}" testvol/test-snap0 user.foo | grep -Fx "test-snap0"
   lxc storage volume get "${custom_vol_pool}" testvol/test-snap1 user.foo | grep -Fx "test-snap1"
 
-  lxc storage volume import "${custom_vol_pool}" "${LXD_DIR}/testvol.tar.gz" testvol2
+  lxc storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol.tar.gz" testvol2
   lxc storage volume attach "${custom_vol_pool}" testvol c1 /mnt
   lxc storage volume attach "${custom_vol_pool}" testvol2 c1 /mnt2
   lxc start c1
@@ -789,25 +789,25 @@ test_backup_volume_export_with_project() {
 
   if [ "${project}" != "default" ]; then
     # Import into different project (before deleting earlier import).
-    lxc storage volume import "${custom_vol_pool}" "${LXD_DIR}/testvol.tar.gz" --project "$project-b"
-    lxc storage volume import "${custom_vol_pool}" "${LXD_DIR}/testvol.tar.gz" --project "$project-b" testvol2
+    lxc storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol.tar.gz" --project "$project-b"
+    lxc storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol.tar.gz" --project "$project-b" testvol2
     lxc storage volume delete "${custom_vol_pool}" testvol --project "$project-b"
     lxc storage volume delete "${custom_vol_pool}" testvol2 --project "$project-b"
   fi
 
   # Test optimized import.
-  if [ "$lxd_backend" = "btrfs" ] || [ "$lxd_backend" = "zfs" ]; then
+  if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
     lxc storage volume detach "${custom_vol_pool}" testvol c1
     lxc storage volume detach "${custom_vol_pool}" testvol2 c1
     lxc storage volume delete "${custom_vol_pool}" testvol
     lxc storage volume delete "${custom_vol_pool}" testvol2
-    lxc storage volume import "${custom_vol_pool}" "${LXD_DIR}/testvol-optimized.tar.gz"
+    lxc storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol-optimized.tar.gz"
     lxc storage volume ls "${custom_vol_pool}"
     lxc storage volume get "${custom_vol_pool}" testvol user.foo | grep -Fx "post-test-snap1"
     lxc storage volume get "${custom_vol_pool}" testvol/test-snap0 user.foo | grep -Fx "test-snap0"
     lxc storage volume get "${custom_vol_pool}" testvol/test-snap1 user.foo | grep -Fx "test-snap1"
 
-    lxc storage volume import "${custom_vol_pool}" "${LXD_DIR}/testvol-optimized.tar.gz" testvol2
+    lxc storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol-optimized.tar.gz" testvol2
     lxc storage volume attach "${custom_vol_pool}" testvol c1 /mnt
     lxc storage volume attach "${custom_vol_pool}" testvol2 c1 /mnt2
     lxc start c1
@@ -817,22 +817,22 @@ test_backup_volume_export_with_project() {
 
     if [ "${project}" != "default" ]; then
       # Import into different project (before deleting earlier import).
-      lxc storage volume import "${custom_vol_pool}" "${LXD_DIR}/testvol-optimized.tar.gz" --project "$project-b"
-      lxc storage volume import "${custom_vol_pool}" "${LXD_DIR}/testvol-optimized.tar.gz" --project "$project-b" testvol2
+      lxc storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol-optimized.tar.gz" --project "$project-b"
+      lxc storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol-optimized.tar.gz" --project "$project-b" testvol2
       lxc storage volume delete "${custom_vol_pool}" testvol --project "$project-b"
       lxc storage volume delete "${custom_vol_pool}" testvol2 --project "$project-b"
     fi
   fi
 
   # Clean up.
-  rm -rf "${LXD_DIR}/non-optimized/"* "${LXD_DIR}/optimized/"*
+  rm -rf "${INCUS_DIR}/non-optimized/"* "${INCUS_DIR}/optimized/"*
   lxc storage volume detach "${custom_vol_pool}" testvol c1
   lxc storage volume detach "${custom_vol_pool}" testvol2 c1
   lxc storage volume rm "${custom_vol_pool}" testvol
   lxc storage volume rm "${custom_vol_pool}" testvol2
   lxc rm -f c1
-  rmdir "${LXD_DIR}/optimized"
-  rmdir "${LXD_DIR}/non-optimized"
+  rmdir "${INCUS_DIR}/optimized"
+  rmdir "${INCUS_DIR}/non-optimized"
 
   if [ "${project}" != "default" ]; then
     lxc project switch default
@@ -844,9 +844,9 @@ test_backup_volume_export_with_project() {
 }
 
 test_backup_volume_rename_delete() {
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  pool="lxdtest-$(basename "${LXD_DIR}")"
+  pool="incustest-$(basename "${INCUS_DIR}")"
 
   # Create test volume.
   lxc storage volume create "${pool}" vol1
@@ -865,13 +865,13 @@ test_backup_volume_rename_delete() {
 
   # The specific backup should exist.
   lxc query /1.0/storage-pools/"${pool}"/volumes/custom/vol1/backups/foo
-  stat "${LXD_DIR}"/backups/custom/"${pool}"/default_vol1/foo
+  stat "${INCUS_DIR}"/backups/custom/"${pool}"/default_vol1/foo
 
   # Delete backup and check it is removed from DB and disk.
   lxc query -X DELETE --wait /1.0/storage-pools/"${pool}"/volumes/custom/vol1/backups/foo
   ! lxc query /1.0/storage-pools/"${pool}"/volumes/custom/vol1/backups/foo || false
-  ! stat "${LXD_DIR}"/backups/custom/"${pool}"/default_vol1/foo || false
-  ! stat "${LXD_DIR}"/backups/custom/"${pool}"/default_vol1 || false
+  ! stat "${INCUS_DIR}"/backups/custom/"${pool}"/default_vol1/foo || false
+  ! stat "${INCUS_DIR}"/backups/custom/"${pool}"/default_vol1 || false
 
   # Create backup again to test rename.
   lxc query -X POST --wait -d '{\"name\":\"foo\"}' /1.0/storage-pools/"${pool}"/volumes/custom/vol1/backups
@@ -884,27 +884,27 @@ test_backup_volume_rename_delete() {
 
   # The specific backup should exist.
   lxc query /1.0/storage-pools/"${pool}"/volumes/custom/vol2/backups/foo
-  stat "${LXD_DIR}"/backups/custom/"${pool}"/default_vol2/foo
+  stat "${INCUS_DIR}"/backups/custom/"${pool}"/default_vol2/foo
 
   # The old backup should not exist.
   ! lxc query /1.0/storage-pools/"${pool}"/volumes/custom/vol1/backups/foo || false
-  ! stat "${LXD_DIR}"/backups/custom/"${pool}"/default_vol1/foo || false
-  ! stat "${LXD_DIR}"/backups/custom/"${pool}"/default_vol1 || false
+  ! stat "${INCUS_DIR}"/backups/custom/"${pool}"/default_vol1/foo || false
+  ! stat "${INCUS_DIR}"/backups/custom/"${pool}"/default_vol1 || false
 
   # Rename backup itself and check its renamed in DB and on disk.
   lxc query -X POST --wait -d '{\"name\":\"foo2\"}' /1.0/storage-pools/"${pool}"/volumes/custom/vol2/backups/foo
   lxc query /1.0/storage-pools/"${pool}"/volumes/custom/vol2/backups | jq .'[0]' | grep storage-pools/"${pool}"/volumes/custom/vol2/backups/foo2
-  stat "${LXD_DIR}"/backups/custom/"${pool}"/default_vol2/foo2
-  ! stat "${LXD_DIR}"/backups/custom/"${pool}"/default_vol2/foo || false
+  stat "${INCUS_DIR}"/backups/custom/"${pool}"/default_vol2/foo2
+  ! stat "${INCUS_DIR}"/backups/custom/"${pool}"/default_vol2/foo || false
 
   # Remove volume and check the backups are removed too.
   lxc storage volume rm "${pool}" vol2
-  ! stat "${LXD_DIR}"/backups/custom/"${pool}"/default_vol2 || false
+  ! stat "${INCUS_DIR}"/backups/custom/"${pool}"/default_vol2 || false
 }
 
 test_backup_different_instance_uuid() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   echo "==> Checking instances UUID during backup operation"
   lxc launch testimage c1
@@ -912,9 +912,9 @@ test_backup_different_instance_uuid() {
   initialGenerationID=$(lxc config get c1 volatile.uuid.generation)
 
   # export and import to trigger new UUID generation
-  lxc export c1 "${LXD_DIR}/c1.tar.gz"
+  lxc export c1 "${INCUS_DIR}/c1.tar.gz"
   lxc delete -f c1
-  lxc import "${LXD_DIR}/c1.tar.gz"
+  lxc import "${INCUS_DIR}/c1.tar.gz"
 
   newUUID=$(lxc config get c1 volatile.uuid)
   newGenerationID=$(lxc config get c1 volatile.uuid.generation)
@@ -942,8 +942,8 @@ test_backup_volume_expiry() {
   [ "$(lxc query /1.0/storage-pools/"${poolName}"/volumes/custom/vol1/backups | jq '.[]' | wc -l)" -eq 2 ]
 
   # Restart LXD which will trigger the task which removes expired volume backups.
-  shutdown_lxd "${LXD_DIR}"
-  respawn_lxd "${LXD_DIR}" true
+  shutdown_incus "${INCUS_DIR}"
+  respawn_incus "${INCUS_DIR}" true
 
   # Check that there's only one backup remaining.
   [ "$(lxc query /1.0/storage-pools/"${poolName}"/volumes/custom/vol1/backups | jq '.[]' | wc -l)" -eq 1 ]

@@ -78,7 +78,7 @@ test_projects_containers() {
   fingerprint="$(lxc image list -c f --format json | jq -r .[0].fingerprint)"
 
   # Add a root device to the default profile of the project
-  pool="lxdtest-$(basename "${LXD_DIR}")"
+  pool="incustest-$(basename "${INCUS_DIR}")"
   lxc profile device add default root disk path="/" pool="${pool}"
 
   # Create a container in the project
@@ -93,7 +93,7 @@ test_projects_containers() {
 
   # For backends with optimized storage, we can see the image volume inside the
   # project.
-  driver="$(storage_backend "$LXD_DIR")"
+  driver="$(storage_backend "$INCUS_DIR")"
   if [ "${driver}" != "dir" ]; then
       lxc storage volume list "${pool}" | grep image | grep -q "${fingerprint}"
   fi
@@ -175,7 +175,7 @@ test_projects_copy() {
   lxc --project foo delete c1 -f
 
   # Move storage volume between projects
-  pool="lxdtest-$(basename "${LXD_DIR}")"
+  pool="incustest-$(basename "${INCUS_DIR}")"
 
   lxc --project foo storage volume create "${pool}" vol1
   lxc --project foo --target-project bar storage volume move "${pool}"/vol1 "${pool}"/vol1
@@ -196,7 +196,7 @@ test_projects_snapshots() {
   deps/import-busybox --project foo --alias testimage
 
   # Add a root device to the default profile of the project
-  lxc profile device add default root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")"
+  lxc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 
   # Create a container in the project
   lxc init testimage c1
@@ -245,31 +245,31 @@ test_projects_backups() {
   deps/import-busybox --project foo --alias testimage
 
   # Add a root device to the default profile of the project
-  lxc profile device add default root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")"
+  lxc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 
   # Create a container in the project
   lxc init testimage c1
 
-  mkdir "${LXD_DIR}/non-optimized"
+  mkdir "${INCUS_DIR}/non-optimized"
 
   # Create a backup.
-  lxc export c1 "${LXD_DIR}/c1.tar.gz"
-  tar -xzf "${LXD_DIR}/c1.tar.gz" -C "${LXD_DIR}/non-optimized"
+  lxc export c1 "${INCUS_DIR}/c1.tar.gz"
+  tar -xzf "${INCUS_DIR}/c1.tar.gz" -C "${INCUS_DIR}/non-optimized"
 
   # Check tarball content
-  [ -f "${LXD_DIR}/non-optimized/backup/index.yaml" ]
-  [ -d "${LXD_DIR}/non-optimized/backup/container" ]
+  [ -f "${INCUS_DIR}/non-optimized/backup/index.yaml" ]
+  [ -d "${INCUS_DIR}/non-optimized/backup/container" ]
 
   # Delete the container
   lxc delete c1
 
   # Import the backup.
-  lxc import "${LXD_DIR}/c1.tar.gz"
+  lxc import "${INCUS_DIR}/c1.tar.gz"
   lxc info c1
   lxc delete c1
 
   # Delete the project
-  rm -rf "${LXD_DIR}/non-optimized/"
+  rm -rf "${INCUS_DIR}/non-optimized/"
   lxc image delete testimage
   lxc project delete foo
 }
@@ -468,7 +468,7 @@ test_projects_images_default() {
 
 # Interaction between projects and storage pools.
 test_projects_storage() {
-  pool="lxdtest-$(basename "${LXD_DIR}")"
+  pool="incustest-$(basename "${INCUS_DIR}")"
 
   lxc storage volume create "${pool}" vol
 
@@ -506,7 +506,7 @@ test_projects_storage() {
 # Interaction between projects and networks.
 test_projects_network() {
   # Standard bridge with random subnet and a bunch of options
-  network="lxdt$$"
+  network="inct$$"
   lxc network create "${network}"
 
   lxc project create foo
@@ -516,7 +516,7 @@ test_projects_network() {
   deps/import-busybox --project foo --alias testimage
 
   # Add a root device to the default profile of the project
-  lxc profile device add default root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")"
+  lxc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 
   # Create a container in the project
   lxc init -n "${network}" testimage c1
@@ -545,7 +545,7 @@ test_projects_limits() {
   lxc project switch p1
 
   # Add a root device to the default profile of the project and import an image.
-  pool="lxdtest-$(basename "${LXD_DIR}")"
+  pool="incustest-$(basename "${INCUS_DIR}")"
   lxc profile device add default root disk path="/" pool="${pool}"
 
   deps/import-busybox --project p1 --alias testimage
@@ -691,7 +691,7 @@ test_projects_limits() {
 
   # Can't set the project's disk limit because not all volumes have
   # the "size" config defined.
-  pool1="lxdtest1-$(basename "${LXD_DIR}")"
+  pool1="inctest1-$(basename "${INCUS_DIR}")"
   lxc storage create "${pool1}" lvm size=1GiB
   lxc storage volume create "${pool1}" v1
   ! lxc project set p1 limits.disk 1GiB || false
@@ -737,22 +737,22 @@ test_projects_limits() {
   # Run the following part of the test only against the dir or zfs backend,
   # since it on other backends it requires resize the rootfs to a value which is
   # too small for resize2fs.
-  if [ "${LXD_BACKEND}" = "dir" ] || [ "${LXD_BACKEND}" = "zfs" ]; then
+  if [ "${INCUS_BACKEND}" = "dir" ] || [ "${INCUS_BACKEND}" = "zfs" ]; then
     # Add a remote LXD to be used as image server.
     # shellcheck disable=2039,3043
-    local LXD_REMOTE_DIR
-    LXD_REMOTE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-    chmod +x "${LXD_REMOTE_DIR}"
+    local INCUS_REMOTE_DIR
+    INCUS_REMOTE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_REMOTE_DIR}"
 
     # Switch to default project to spawn new LXD server, and then switch back to p1.
     lxc project switch default
-    spawn_lxd "${LXD_REMOTE_DIR}" true
+    spawn_incus "${INCUS_REMOTE_DIR}" true
     lxc project switch p1
 
-    LXD_REMOTE_ADDR=$(cat "${LXD_REMOTE_DIR}/lxd.addr")
-    (LXD_DIR=${LXD_REMOTE_DIR} deps/import-busybox --alias remoteimage --template start --public)
+    INCUS_REMOTE_ADDR=$(cat "${INCUS_REMOTE_DIR}/lxd.addr")
+    (INCUS_DIR=${INCUS_REMOTE_DIR} deps/import-busybox --alias remoteimage --template start --public)
 
-    lxc remote add l2 "${LXD_REMOTE_ADDR}" --accept-certificate --password foo
+    lxc remote add l2 "${INCUS_REMOTE_ADDR}" --accept-certificate --password foo
 
     # Relax all constraints except the disk limits, which won't be enough for the
     # image to be downloaded.
@@ -785,7 +785,7 @@ test_projects_limits() {
   lxc project set p1 restricted.containers.lowlevel allow
 
   # Add a root device to the default profile of the project and import an image.
-  pool="lxdtest-$(basename "${LXD_DIR}")"
+  pool="incustest-$(basename "${INCUS_DIR}")"
   lxc profile device add default root disk path="/" pool="${pool}"
 
   deps/import-busybox --project p1 --alias testimage
@@ -809,9 +809,9 @@ test_projects_limits() {
   lxc project switch default
   lxc project delete p1
 
-  if [ "${LXD_BACKEND}" = "dir" ] || [ "${LXD_BACKEND}" = "zfs" ]; then
+  if [ "${INCUS_BACKEND}" = "dir" ] || [ "${INCUS_BACKEND}" = "zfs" ]; then
     lxc remote remove l2
-    kill_lxd "$LXD_REMOTE_DIR"
+    kill_incus "$INCUS_REMOTE_DIR"
   fi
 }
 
@@ -884,7 +884,7 @@ test_projects_restrictions() {
   lxc project set p1 restricted=false
 
   # Add a root device to the default profile of the project and import an image.
-  pool="lxdtest-$(basename "${LXD_DIR}")"
+  pool="incustest-$(basename "${INCUS_DIR}")"
   lxc profile device add default root disk path="/" pool="${pool}"
 
   deps/import-busybox --project p1 --alias testimage

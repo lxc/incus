@@ -1,15 +1,15 @@
 test_network_zone() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   poolName=$(lxc profile device get default root pool)
 
   # Enable the DNS server
   lxc config unset core.https_address
-  lxc config set core.dns_address "${LXD_ADDR}"
+  lxc config set core.dns_address "${INCUS_ADDR}"
 
   # Create a network
-  netName=lxdt$$
+  netName=inct$$
   lxc network create "${netName}" \
         ipv4.address=192.0.2.1/24 \
         ipv6.address=fd42:4242:4242:1010::1/64
@@ -79,8 +79,8 @@ test_network_zone() {
   lxc network zone set 0.1.0.1.2.4.2.4.2.4.2.4.2.4.d.f.ip6.arpa peers.test.address=127.0.0.1
 
   # Check the zones
-  DNS_ADDR="$(echo "${LXD_ADDR}" | cut -d: -f1)"
-  DNS_PORT="$(echo "${LXD_ADDR}" | cut -d: -f2)"
+  DNS_ADDR="$(echo "${INCUS_ADDR}" | cut -d: -f1)"
+  DNS_PORT="$(echo "${INCUS_ADDR}" | cut -d: -f2)"
   dig "@${DNS_ADDR}" -p "${DNS_PORT}" axfr lxd.example.net
   dig "@${DNS_ADDR}" -p "${DNS_PORT}" axfr lxd.example.net | grep "${netName}.gw.lxd.example.net.\s\+300\s\+IN\s\+A\s\+"
   dig "@${DNS_ADDR}" -p "${DNS_PORT}" axfr lxd.example.net | grep "c1.lxd.example.net.\s\+300\s\+IN\s\+A\s\+"
@@ -149,5 +149,5 @@ test_network_zone() {
   lxc project delete foo
 
   lxc config unset core.dns_address
-  lxc config set core.https_address "${LXD_ADDR}"
+  lxc config set core.https_address "${INCUS_ADDR}"
 }

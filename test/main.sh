@@ -1,18 +1,18 @@
 #!/bin/sh -eu
 [ -n "${GOPATH:-}" ] && export "PATH=${GOPATH}/bin:${PATH}"
 
-# Don't translate lxc output for parsing in it in tests.
+# Don't translate inc output for parsing in it in tests.
 export LC_ALL="C"
 
 # Force UTC for consistency
 export TZ="UTC"
 
 export DEBUG=""
-if [ -n "${LXD_VERBOSE:-}" ]; then
+if [ -n "${INCUS_VERBOSE:-}" ]; then
   DEBUG="--verbose"
 fi
 
-if [ -n "${LXD_DEBUG:-}" ]; then
+if [ -n "${INCUS_DEBUG:-}" ]; then
   DEBUG="--debug"
 fi
 
@@ -20,12 +20,12 @@ if [ -n "${DEBUG:-}" ]; then
   set -x
 fi
 
-if [ -z "${LXD_BACKEND:-}" ]; then
-    LXD_BACKEND="dir"
+if [ -z "${INCUS_BACKEND:-}" ]; then
+    INCUS_BACKEND="dir"
 fi
 
 # shellcheck disable=SC2034
-LXD_NETNS=""
+INCUS_NETNS=""
 
 import_subdir_files() {
     test "$1"
@@ -40,28 +40,28 @@ import_subdir_files() {
 import_subdir_files includes
 
 echo "==> Checking for dependencies"
-check_dependencies lxd lxc curl dnsmasq jq git xgettext sqlite3 msgmerge msgfmt shuf setfacl socat dig
+check_dependencies incus inc curl dnsmasq jq git xgettext sqlite3 msgmerge msgfmt shuf setfacl socat dig
 
 if [ "${USER:-'root'}" != "root" ]; then
   echo "The testsuite must be run as root." >&2
   exit 1
 fi
 
-if [ -n "${LXD_LOGS:-}" ] && [ ! -d "${LXD_LOGS}" ]; then
-  echo "Your LXD_LOGS path doesn't exist: ${LXD_LOGS}"
+if [ -n "${INCUS_LOGS:-}" ] && [ ! -d "${INCUS_LOGS}" ]; then
+  echo "Your INCUS_LOGS path doesn't exist: ${INCUS_LOGS}"
   exit 1
 fi
 
 echo "==> Available storage backends: $(available_storage_backends | sort)"
-if [ "$LXD_BACKEND" != "random" ] && ! storage_backend_available "$LXD_BACKEND"; then
-  if [ "${LXD_BACKEND}" = "ceph" ] && [ -z "${LXD_CEPH_CLUSTER:-}" ]; then
-    echo "Ceph storage backend requires that \"LXD_CEPH_CLUSTER\" be set."
+if [ "$INCUS_BACKEND" != "random" ] && ! storage_backend_available "$INCUS_BACKEND"; then
+  if [ "${INCUS_BACKEND}" = "ceph" ] && [ -z "${INCUS_CEPH_CLUSTER:-}" ]; then
+    echo "Ceph storage backend requires that \"INCUS_CEPH_CLUSTER\" be set."
     exit 1
   fi
-  echo "Storage backend \"$LXD_BACKEND\" is not available"
+  echo "Storage backend \"$INCUS_BACKEND\" is not available"
   exit 1
 fi
-echo "==> Using storage backend ${LXD_BACKEND}"
+echo "==> Using storage backend ${INCUS_BACKEND}"
 
 import_storage_backends
 
@@ -71,14 +71,14 @@ cleanup() {
   DEBUG=
 
   # Allow for inspection
-  if [ -n "${LXD_INSPECT:-}" ]; then
+  if [ -n "${INCUS_INSPECT:-}" ]; then
     if [ "${TEST_RESULT}" != "success" ]; then
       echo "==> TEST DONE: ${TEST_CURRENT_DESCRIPTION}"
     fi
     echo "==> Test result: ${TEST_RESULT}"
 
     # shellcheck disable=SC2086
-    printf "To poke around, use:\\n LXD_DIR=%s LXD_CONF=%s sudo -E %s/bin/lxc COMMAND\\n" "${LXD_DIR}" "${LXD_CONF}" ${GOPATH:-}
+    printf "To poke around, use:\\n INCUS_DIR=%s INCUS_CONF=%s sudo -E %s/bin/inc COMMAND\\n" "${INCUS_DIR}" "${INCUS_CONF}" ${GOPATH:-}
     echo "Tests Completed (${TEST_RESULT}): hit enter to continue"
     read -r _
   fi
@@ -90,7 +90,7 @@ cleanup() {
 
     umount -l "${TEST_DIR}/dev"
     kill_external_auth_daemon "$TEST_DIR"
-    cleanup_lxds "$TEST_DIR"
+    cleanup_incus "$TEST_DIR"
   fi
 
   echo ""
@@ -116,25 +116,25 @@ import_subdir_files suites
 TEST_DIR=$(mktemp -d -p "$(pwd)" tmp.XXX)
 chmod +x "${TEST_DIR}"
 
-if [ -n "${LXD_TMPFS:-}" ]; then
+if [ -n "${INCUS_TMPFS:-}" ]; then
   mount -t tmpfs tmpfs "${TEST_DIR}" -o mode=0751 -o size=6G
 fi
 
 mkdir -p "${TEST_DIR}/dev"
 mount -t tmpfs none "${TEST_DIR}"/dev
-export LXD_DEVMONITOR_DIR="${TEST_DIR}/dev"
+export INCUS_DEVMONITOR_DIR="${TEST_DIR}/dev"
 
-LXD_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
-export LXD_CONF
+INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+export INCUS_CONF
 
-LXD_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-export LXD_DIR
-chmod +x "${LXD_DIR}"
-spawn_lxd "${LXD_DIR}" true
-LXD_ADDR=$(cat "${LXD_DIR}/lxd.addr")
-export LXD_ADDR
+INCUS_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+export INCUS_DIR
+chmod +x "${INCUS_DIR}"
+spawn_incus "${INCUS_DIR}" true
+INCUS_ADDR=$(cat "${INCUS_DIR}/incus.addr")
+export INCUS_ADDR
 
-start_external_auth_daemon "${LXD_DIR}"
+start_external_auth_daemon "${INCUS_DIR}"
 
 run_test() {
   TEST_CURRENT=${1}
@@ -148,10 +148,10 @@ run_test() {
   local skip=false
 
   # Skip test if requested.
-  if [ -n "${LXD_SKIP_TESTS:-}" ]; then
-    for testName in ${LXD_SKIP_TESTS}; do
+  if [ -n "${INCUS_SKIP_TESTS:-}" ]; then
+    for testName in ${INCUS_SKIP_TESTS}; do
       if [ "test_${testName}" = "${TEST_CURRENT}" ]; then
-          echo "==> SKIP: ${TEST_CURRENT} as specified in LXD_SKIP_TESTS"
+          echo "==> SKIP: ${TEST_CURRENT} as specified in INCUS_SKIP_TESTS"
           skip=true
           break
       fi
@@ -164,8 +164,8 @@ run_test() {
 
     # Check whether test was skipped due to unmet requirements, and if so check if the test is required and fail.
     if [ -n "${TEST_UNMET_REQUIREMENT}" ]; then
-      if [ -n "${LXD_REQUIRED_TESTS:-}" ]; then
-        for testName in ${LXD_REQUIRED_TESTS}; do
+      if [ -n "${INCUS_REQUIRED_TESTS:-}" ]; then
+        for testName in ${INCUS_REQUIRED_TESTS}; do
           if [ "test_${testName}" = "${TEST_CURRENT}" ]; then
               echo "==> REQUIRED: ${TEST_CURRENT} ${TEST_UNMET_REQUIREMENT}"
               false
@@ -196,7 +196,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_check_deps "checking dependencies"
     run_test test_database_restore "database restore"
     run_test test_database_no_disk_space "database out of disk space"
-    run_test test_sql "lxd sql"
+    run_test test_sql "SQL"
     run_test test_tls_restrictions "TLS restrictions"
     run_test test_certificate_edit "Certificate edit"
     run_test test_basic_usage "basic usage"
@@ -308,16 +308,16 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_idmap "id mapping"
     run_test test_template "file templating"
     run_test test_pki "PKI mode"
-    run_test test_devlxd "/dev/lxd"
+    run_test test_dev_incus "/dev/incus"
     run_test test_fuidshift "fuidshift"
     run_test test_migration "migration"
-    run_test test_lxc_to_lxd "LXC to LXD"
+    run_test test_lxc_to_incus "LXC to Incus"
     run_test test_fdleak "fd leak"
     run_test test_storage "storage"
     run_test test_storage_volume_snapshots "storage volume snapshots"
-    run_test test_init_auto "lxd init auto"
-    run_test test_init_interactive "lxd init interactive"
-    run_test test_init_preseed "lxd init preseed"
+    run_test test_init_auto "incus init auto"
+    run_test test_init_interactive "incus init interactive"
+    run_test test_init_preseed "incus init preseed"
     run_test test_storage_profiles "storage profiles"
     run_test test_container_recover "container recover"
     run_test test_bucket_recover "bucket recover"

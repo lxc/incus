@@ -1,13 +1,13 @@
 test_server_config() {
-  LXD_SERVERCONFIG_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  spawn_lxd "${LXD_SERVERCONFIG_DIR}" true
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  INCUS_SERVERCONFIG_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  spawn_incus "${INCUS_SERVERCONFIG_DIR}" true
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   test_server_config_password
   test_server_config_access
   test_server_config_storage
 
-  kill_lxd "${LXD_SERVERCONFIG_DIR}"
+  kill_incus "${INCUS_SERVERCONFIG_DIR}"
 }
 
 test_server_config_password() {
@@ -23,26 +23,26 @@ test_server_config_password() {
 
 test_server_config_access() {
   # test untrusted server GET
-  my_curl -X GET "https://$(cat "${LXD_SERVERCONFIG_DIR}/lxd.addr")/1.0" | grep -v -q environment
+  my_curl -X GET "https://$(cat "${INCUS_SERVERCONFIG_DIR}/lxd.addr")/1.0" | grep -v -q environment
 
   # test authentication type
-  curl --unix-socket "$LXD_DIR/unix.socket" "lxd/1.0" | jq .metadata.auth_methods | grep tls
+  curl --unix-socket "$INCUS_DIR/unix.socket" "lxd/1.0" | jq .metadata.auth_methods | grep tls
 
   # only tls is enabled by default
-  ! curl --unix-socket "$LXD_DIR/unix.socket" "lxd/1.0" | jq .metadata.auth_methods | grep candid || false
+  ! curl --unix-socket "$INCUS_DIR/unix.socket" "lxd/1.0" | jq .metadata.auth_methods | grep candid || false
   lxc config set candid.api.url "https://localhost:8081"
 
   # macaroons are also enabled
-  curl --unix-socket "$LXD_DIR/unix.socket" "lxd/1.0" | jq .metadata.auth_methods | grep candid
+  curl --unix-socket "$INCUS_DIR/unix.socket" "lxd/1.0" | jq .metadata.auth_methods | grep candid
   lxc config unset candid.api.url
 }
 
 test_server_config_storage() {
   # shellcheck disable=2039,3043
-  local lxd_backend
+  local incus_backend
 
-  lxd_backend=$(storage_backend "$LXD_DIR")
-  if [ "$lxd_backend" = "ceph" ]; then
+  incus_backend=$(storage_backend "$INCUS_DIR")
+  if [ "$incus_backend" = "ceph" ]; then
     return
   fi
 
@@ -53,8 +53,8 @@ test_server_config_storage() {
   lxc query --wait /1.0/containers/foo/backups -X POST -d '{\"expires_at\": \"2100-01-01T10:00:00-05:00\"}'
 
   # Record before
-  BACKUPS_BEFORE=$(find "${LXD_DIR}/backups/" | sort)
-  IMAGES_BEFORE=$(find "${LXD_DIR}/images/" | sort)
+  BACKUPS_BEFORE=$(find "${INCUS_DIR}/backups/" | sort)
+  IMAGES_BEFORE=$(find "${INCUS_DIR}/images/" | sort)
 
   lxc storage volume create "${pool}" backups
   lxc storage volume create "${pool}" images
@@ -78,8 +78,8 @@ test_server_config_storage() {
   lxc config set storage.images_volume "${pool}/images"
 
   # Record after
-  BACKUPS_AFTER=$(find "${LXD_DIR}/backups/" | sort)
-  IMAGES_AFTER=$(find "${LXD_DIR}/images/" | sort)
+  BACKUPS_AFTER=$(find "${INCUS_DIR}/backups/" | sort)
+  IMAGES_AFTER=$(find "${INCUS_DIR}/images/" | sort)
 
   # Validate content
   if [ "${BACKUPS_BEFORE}" != "${BACKUPS_AFTER}" ]; then

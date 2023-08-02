@@ -51,7 +51,7 @@ test_sql() {
   rm -f "${SQLITE_DUMP}"
 
   # Sync the global database to disk
-  SQLITE_SYNC="${LXD_DIR}/database/global/db.bin"
+  SQLITE_SYNC="${INCUS_DIR}/database/global/db.bin"
   echo "SYNC ${SQLITE_SYNC}"
   lxd sql global .sync
   sqlite3 "${SQLITE_SYNC}" "SELECT * FROM schema" | grep -q "^1|"

@@ -40,10 +40,10 @@ test_warnings() {
     [ "${count}" -eq 3 ] || false
 
     # Test filtering
-    count=$(curl -G --unix-socket "$LXD_DIR/unix.socket" "lxd/1.0/warnings" --data-urlencode "recursion=0" --data-urlencode "filter=status eq new" | jq ".metadata | length")
+    count=$(curl -G --unix-socket "$INCUS_DIR/unix.socket" "lxd/1.0/warnings" --data-urlencode "recursion=0" --data-urlencode "filter=status eq new" | jq ".metadata | length")
     [ "${count}" -eq 3 ] || false
 
-    count=$(curl -G --unix-socket "$LXD_DIR/unix.socket" "lxd/1.0/warnings" --data-urlencode "recursion=0" --data-urlencode "filter=status eq resolved" | jq ".metadata | length")
+    count=$(curl -G --unix-socket "$INCUS_DIR/unix.socket" "lxd/1.0/warnings" --data-urlencode "recursion=0" --data-urlencode "filter=status eq resolved" | jq ".metadata | length")
     [ "${count}" -eq 0 ] || false
 
     # Acknowledge a warning

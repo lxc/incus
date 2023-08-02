@@ -1,57 +1,57 @@
 test_snapshots() {
   snapshots
 
-  if [ "$(storage_backend "$LXD_DIR")" = "lvm" ]; then
+  if [ "$(storage_backend "$INCUS_DIR")" = "lvm" ]; then
     # Test that non-thinpool lvm backends work fine with snaphots.
-    lxc storage create "lxdtest-$(basename "${LXD_DIR}")-non-thinpool-lvm-snapshots" lvm lvm.use_thinpool=false volume.size=25MiB
-    lxc profile device set default root pool "lxdtest-$(basename "${LXD_DIR}")-non-thinpool-lvm-snapshots"
+    lxc storage create "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots" lvm lvm.use_thinpool=false volume.size=25MiB
+    lxc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots"
 
     snapshots
 
-    lxc profile device set default root pool "lxdtest-$(basename "${LXD_DIR}")"
+    lxc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")"
 
-    lxc storage delete "lxdtest-$(basename "${LXD_DIR}")-non-thinpool-lvm-snapshots"
+    lxc storage delete "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots"
   fi
 }
 
 snapshots() {
   # shellcheck disable=2039,3043
-  local lxd_backend
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  local incus_backend
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   lxc init testimage foo
 
   lxc snapshot foo
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" = "dir" ]; then
-    [ -d "${LXD_DIR}/snapshots/foo/snap0" ]
+  if [ "$incus_backend" = "dir" ]; then
+    [ -d "${INCUS_DIR}/snapshots/foo/snap0" ]
   fi
 
   lxc snapshot foo
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" = "dir" ]; then
-    [ -d "${LXD_DIR}/snapshots/foo/snap1" ]
+  if [ "$incus_backend" = "dir" ]; then
+    [ -d "${INCUS_DIR}/snapshots/foo/snap1" ]
   fi
 
   lxc snapshot foo tester
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" = "dir" ]; then
-    [ -d "${LXD_DIR}/snapshots/foo/tester" ]
+  if [ "$incus_backend" = "dir" ]; then
+    [ -d "${INCUS_DIR}/snapshots/foo/tester" ]
   fi
 
   lxc copy foo/tester foosnap1
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" != "lvm" ] && [ "${lxd_backend}" != "zfs" ] && [ "$lxd_backend" != "ceph" ]; then
-    [ -d "${LXD_DIR}/containers/foosnap1/rootfs" ]
+  if [ "$incus_backend" != "lvm" ] && [ "${incus_backend}" != "zfs" ] && [ "$incus_backend" != "ceph" ]; then
+    [ -d "${INCUS_DIR}/containers/foosnap1/rootfs" ]
   fi
 
   lxc delete foo/snap0
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" = "dir" ]; then
-    [ ! -d "${LXD_DIR}/snapshots/foo/snap0" ]
+  if [ "$incus_backend" = "dir" ]; then
+    [ ! -d "${INCUS_DIR}/snapshots/foo/snap0" ]
   fi
 
   # test deleting multiple snapshots
@@ -62,62 +62,62 @@ snapshots() {
   ! lxc info foo | grep -q snap3 || false
 
   # no CLI for this, so we use the API directly (rename a snapshot)
-  wait_for "${LXD_ADDR}" my_curl -X POST "https://${LXD_ADDR}/1.0/containers/foo/snapshots/tester" -d "{\"name\":\"tester2\"}"
+  wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/containers/foo/snapshots/tester" -d "{\"name\":\"tester2\"}"
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" = "dir" ]; then
-    [ ! -d "${LXD_DIR}/snapshots/foo/tester" ]
+  if [ "$incus_backend" = "dir" ]; then
+    [ ! -d "${INCUS_DIR}/snapshots/foo/tester" ]
   fi
 
   lxc move foo/tester2 foo/tester-two
   lxc delete foo/tester-two
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" = "dir" ]; then
-    [ ! -d "${LXD_DIR}/snapshots/foo/tester-two" ]
+  if [ "$incus_backend" = "dir" ]; then
+    [ ! -d "${INCUS_DIR}/snapshots/foo/tester-two" ]
   fi
 
   lxc snapshot foo namechange
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" = "dir" ]; then
-    [ -d "${LXD_DIR}/snapshots/foo/namechange" ]
+  if [ "$incus_backend" = "dir" ]; then
+    [ -d "${INCUS_DIR}/snapshots/foo/namechange" ]
   fi
   lxc move foo foople
-  [ ! -d "${LXD_DIR}/containers/foo" ]
-  [ -d "${LXD_DIR}/containers/foople" ]
+  [ ! -d "${INCUS_DIR}/containers/foo" ]
+  [ -d "${INCUS_DIR}/containers/foople" ]
   # FIXME: make this backend agnostic
-  if [ "$lxd_backend" = "dir" ]; then
-    [ -d "${LXD_DIR}/snapshots/foople/namechange" ]
-    [ -d "${LXD_DIR}/snapshots/foople/namechange" ]
+  if [ "$incus_backend" = "dir" ]; then
+    [ -d "${INCUS_DIR}/snapshots/foople/namechange" ]
+    [ -d "${INCUS_DIR}/snapshots/foople/namechange" ]
   fi
 
   lxc delete foople
   lxc delete foosnap1
-  [ ! -d "${LXD_DIR}/containers/foople" ]
-  [ ! -d "${LXD_DIR}/containers/foosnap1" ]
+  [ ! -d "${INCUS_DIR}/containers/foople" ]
+  [ ! -d "${INCUS_DIR}/containers/foosnap1" ]
 }
 
 test_snap_restore() {
   snap_restore
 
-  if [ "$(storage_backend "$LXD_DIR")" = "lvm" ]; then
+  if [ "$(storage_backend "$INCUS_DIR")" = "lvm" ]; then
     # Test that non-thinpool lvm backends work fine with snaphots.
-    lxc storage create "lxdtest-$(basename "${LXD_DIR}")-non-thinpool-lvm-snap-restore" lvm lvm.use_thinpool=false volume.size=25MiB
-    lxc profile device set default root pool "lxdtest-$(basename "${LXD_DIR}")-non-thinpool-lvm-snap-restore"
+    lxc storage create "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore" lvm lvm.use_thinpool=false volume.size=25MiB
+    lxc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore"
 
     snap_restore
 
-    lxc profile device set default root pool "lxdtest-$(basename "${LXD_DIR}")"
+    lxc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")"
 
-    lxc storage delete "lxdtest-$(basename "${LXD_DIR}")-non-thinpool-lvm-snap-restore"
+    lxc storage delete "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore"
   fi
 }
 
 snap_restore() {
   # shellcheck disable=2039,3043
-  local lxd_backend
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  local incus_backend
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   ##########################################################
   # PREPARATION
@@ -140,7 +140,7 @@ snap_restore() {
   lxc storage volume set "${pool}" container/bar user.foo=snap0
 
   # Check parent volume.block.filesystem is copied to snapshot and not from pool.
-  if [ "$lxd_backend" = "lvm" ] || [ "$lxd_backend" = "ceph" ]; then
+  if [ "$incus_backend" = "lvm" ] || [ "$incus_backend" = "ceph" ]; then
     # Change pool volume.block.filesystem setting after creation of instance and before snapshot.
     lxc storage set "${pool}" volume.block.filesystem=xfs
   fi
@@ -172,7 +172,7 @@ snap_restore() {
   lxc storage volume set "${pool}" container/bar user.foo=postsnaps
 
   # Check volume.block.filesystem on storage volume in parent and snapshot match.
-  if [ "${lxd_backend}" = "lvm" ] || [ "${lxd_backend}" = "ceph" ]; then
+  if [ "${incus_backend}" = "lvm" ] || [ "${incus_backend}" = "ceph" ]; then
     # Change pool volume.block.filesystem setting after creation of instance and before snapshot.
     pool=$(lxc config profile device get default root pool)
     parentFS=$(lxc storage volume get "${pool}" container/bar block.filesystem)
@@ -188,7 +188,7 @@ snap_restore() {
 
   ##########################################################
 
-  if [ "$lxd_backend" != "zfs" ]; then
+  if [ "$incus_backend" != "zfs" ]; then
     # The problem here is that you can't `zfs rollback` to a snapshot with a
     # parent, which snap0 has (snap1).
     restore_and_compare_fs snap0
@@ -279,7 +279,7 @@ snap_restore() {
   # Start container and then restore snapshot to verify the running state after restore.
   lxc start bar
 
-  if [ "$lxd_backend" != "zfs" ]; then
+  if [ "$incus_backend" != "zfs" ]; then
     # see comment above about snap0
     restore_and_compare_fs snap0
 
@@ -307,19 +307,19 @@ restore_and_compare_fs() {
   lxc restore bar "${snap}"
 
   # FIXME: make this backend agnostic
-  if [ "$(storage_backend "$LXD_DIR")" = "dir" ]; then
+  if [ "$(storage_backend "$INCUS_DIR")" = "dir" ]; then
     # Recursive diff of container FS
-    diff -r "${LXD_DIR}/containers/bar/rootfs" "${LXD_DIR}/snapshots/bar/${snap}/rootfs"
+    diff -r "${INCUS_DIR}/containers/bar/rootfs" "${INCUS_DIR}/snapshots/bar/${snap}/rootfs"
   fi
 }
 
 test_snap_expiry() {
   # shellcheck disable=2039,3043
-  local lxd_backend
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  local incus_backend
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   lxc launch testimage c1
   lxc snapshot c1
@@ -341,11 +341,11 @@ test_snap_expiry() {
 
 test_snap_schedule() {
   # shellcheck disable=2039,3043
-  local lxd_backend
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  local incus_backend
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Check we get a snapshot on first start
   lxc launch testimage c1 -c snapshots.schedule='@startup'
@@ -368,11 +368,11 @@ test_snap_schedule() {
 
 test_snap_volume_db_recovery() {
   # shellcheck disable=2039,3043
-  local lxd_backend
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  local incus_backend
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   poolName=$(lxc profile device get default root pool)
 
@@ -385,7 +385,7 @@ test_snap_volume_db_recovery() {
   lxd sql local 'DELETE FROM  patches WHERE name = "storage_missing_snapshot_records"' # Clear patch indicator.
   ! lxc start c1 || false # Shouldn't be able to start as backup.yaml generation checks for DB consistency.
   lxd shutdown
-  respawn_lxd "${LXD_DIR}" true
+  respawn_incus "${INCUS_DIR}" true
   lxc storage volume show "${poolName}" container/c1/snap0 | grep "Auto repaired"
   lxc storage volume show "${poolName}" container/c1/snap1 | grep "Auto repaired"
   lxc start c1

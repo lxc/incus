@@ -1,14 +1,14 @@
 test_fdleak() {
-  LXD_FDLEAK_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${LXD_FDLEAK_DIR}"
-  spawn_lxd "${LXD_FDLEAK_DIR}" true
-  pid=$(cat "${LXD_FDLEAK_DIR}/lxd.pid")
+  INCUS_FDLEAK_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_FDLEAK_DIR}"
+  spawn_incus "${INCUS_FDLEAK_DIR}" true
+  pid=$(cat "${INCUS_FDLEAK_DIR}/lxd.pid")
 
   beforefds=$(/bin/ls "/proc/${pid}/fd" | wc -l)
   (
     set -e
     # shellcheck disable=SC2034
-    LXD_DIR=${LXD_FDLEAK_DIR}
+    INCUS_DIR=${INCUS_FDLEAK_DIR}
 
     ensure_import_testimage
 
@@ -48,5 +48,5 @@ test_fdleak() {
     false
   fi
 
-  kill_lxd "${LXD_FDLEAK_DIR}"
+  kill_incus "${INCUS_FDLEAK_DIR}"
 }

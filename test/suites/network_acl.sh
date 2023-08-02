@@ -1,6 +1,6 @@
 test_network_acl() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Check basic ACL creation, listing, deletion and project namespacing support.
   ! lxc network acl create 192.168.1.1 || false # Don't allow non-hostname compatible names.

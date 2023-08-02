@@ -1,79 +1,79 @@
 test_image_expiry() {
   # shellcheck disable=2039,3043
-  local LXD2_DIR LXD2_ADDR
-  LXD2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${LXD2_DIR}"
-  spawn_lxd "${LXD2_DIR}" true
-  LXD2_ADDR=$(cat "${LXD2_DIR}/lxd.addr")
+  local INCUS2_DIR INCUS2_ADDR
+  INCUS2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS2_DIR}"
+  spawn_incus "${INCUS2_DIR}" true
+  INCUS2_ADDR=$(cat "${INCUS2_DIR}/lxd.addr")
 
   ensure_import_testimage
 
   # shellcheck disable=2153
-  lxc_remote remote add l1 "${LXD_ADDR}" --accept-certificate --password foo
-  lxc_remote remote add l2 "${LXD2_ADDR}" --accept-certificate --password foo
+  inc_remote remote add l1 "${INCUS_ADDR}" --accept-certificate --password foo
+  inc_remote remote add l2 "${INCUS2_ADDR}" --accept-certificate --password foo
 
   # Create containers from a remote image in two projects.
-  lxc_remote project create l2:p1 -c features.images=true -c features.profiles=false
-  lxc_remote init l1:testimage l2:c1 --project default
-  lxc_remote project switch l2:p1
-  lxc_remote init l1:testimage l2:c2
-  lxc_remote project switch l2:default
+  inc_remote project create l2:p1 -c features.images=true -c features.profiles=false
+  inc_remote init l1:testimage l2:c1 --project default
+  inc_remote project switch l2:p1
+  inc_remote init l1:testimage l2:c2
+  inc_remote project switch l2:default
 
-  fp="$(lxc_remote image info testimage | awk '/^Fingerprint/ {print $2}')"
+  fp="$(inc_remote image info testimage | awk '/^Fingerprint/ {print $2}')"
 
   # Confirm the image is cached
   [ -n "${fp}" ]
   fpbrief=$(echo "${fp}" | cut -c 1-12)
-  lxc_remote image list l2: | grep -q "${fpbrief}"
+  inc_remote image list l2: | grep -q "${fpbrief}"
 
   # Test modification of image expiry date
-  lxc_remote image info "l2:${fp}" | grep -q "Expires.*never"
-  lxc_remote image show "l2:${fp}" | sed "s/expires_at.*/expires_at: 3000-01-01T00:00:00-00:00/" | lxc_remote image edit "l2:${fp}"
-  lxc_remote image info "l2:${fp}" | grep -q "Expires.*3000"
+  inc_remote image info "l2:${fp}" | grep -q "Expires.*never"
+  inc_remote image show "l2:${fp}" | sed "s/expires_at.*/expires_at: 3000-01-01T00:00:00-00:00/" | inc_remote image edit "l2:${fp}"
+  inc_remote image info "l2:${fp}" | grep -q "Expires.*3000"
 
   # Override the upload date for the image record in the default project.
-  LXD_DIR="$LXD2_DIR" lxd sql global "UPDATE images SET last_use_date='$(date --rfc-3339=seconds -u -d "2 days ago")' WHERE fingerprint='${fp}' AND project_id = 1" | grep -q "Rows affected: 1"
+  INCUS_DIR="$INCUS2_DIR" lxd sql global "UPDATE images SET last_use_date='$(date --rfc-3339=seconds -u -d "2 days ago")' WHERE fingerprint='${fp}' AND project_id = 1" | grep -q "Rows affected: 1"
 
   # Trigger the expiry
-  lxc_remote config set l2: images.remote_cache_expiry 1
+  inc_remote config set l2: images.remote_cache_expiry 1
 
   for _ in $(seq 20); do
     sleep 1
-    ! lxc_remote image list l2: | grep -q "${fpbrief}" && break
+    ! inc_remote image list l2: | grep -q "${fpbrief}" && break
   done
 
-  ! lxc_remote image list l2: | grep -q "${fpbrief}" || false
+  ! inc_remote image list l2: | grep -q "${fpbrief}" || false
 
   # Check image is still in p1 project and has not been expired.
-  lxc_remote image list l2: --project p1 | grep -q "${fpbrief}"
+  inc_remote image list l2: --project p1 | grep -q "${fpbrief}"
 
   # Test instance can still be created in p1 project.
-  lxc_remote project switch l2:p1
-  lxc_remote init l1:testimage l2:c3
-  lxc_remote project switch l2:default
+  inc_remote project switch l2:p1
+  inc_remote init l1:testimage l2:c3
+  inc_remote project switch l2:default
 
   # Override the upload date for the image record in the p1 project.
-  LXD_DIR="$LXD2_DIR" lxd sql global "UPDATE images SET last_use_date='$(date --rfc-3339=seconds -u -d "2 days ago")' WHERE fingerprint='${fp}' AND project_id > 1" | grep -q "Rows affected: 1"
-  lxc_remote project set l2:p1 images.remote_cache_expiry=1
+  INCUS_DIR="$INCUS2_DIR" lxd sql global "UPDATE images SET last_use_date='$(date --rfc-3339=seconds -u -d "2 days ago")' WHERE fingerprint='${fp}' AND project_id > 1" | grep -q "Rows affected: 1"
+  inc_remote project set l2:p1 images.remote_cache_expiry=1
 
   # Trigger the expiry in p1 project by changing global images.remote_cache_expiry.
-  lxc_remote config unset l2: images.remote_cache_expiry
+  inc_remote config unset l2: images.remote_cache_expiry
 
   for _ in $(seq 20); do
     sleep 1
-    ! lxc_remote image list l2: --project p1 | grep -q "${fpbrief}" && break
+    ! inc_remote image list l2: --project p1 | grep -q "${fpbrief}" && break
   done
 
-  ! lxc_remote image list l2: --project p1 | grep -q "${fpbrief}" || false
+  ! inc_remote image list l2: --project p1 | grep -q "${fpbrief}" || false
 
   # Cleanup and reset
-  lxc_remote delete -f l2:c1
-  lxc_remote delete -f l2:c2 --project p1
-  lxc_remote delete -f l2:c3 --project p1
-  lxc_remote project delete l2:p1
-  lxc_remote remote remove l1
-  lxc_remote remote remove l2
-  kill_lxd "$LXD2_DIR"
+  inc_remote delete -f l2:c1
+  inc_remote delete -f l2:c2 --project p1
+  inc_remote delete -f l2:c3 --project p1
+  inc_remote project delete l2:p1
+  inc_remote remote remove l1
+  inc_remote remote remove l2
+  kill_incus "$INCUS2_DIR"
 }
 
 test_image_list_all_aliases() {
@@ -121,15 +121,15 @@ test_image_import_existing_alias() {
 
 test_image_refresh() {
   # shellcheck disable=2039,3043
-  local LXD2_DIR LXD2_ADDR
-  LXD2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${LXD2_DIR}"
-  spawn_lxd "${LXD2_DIR}" true
-  LXD2_ADDR=$(cat "${LXD2_DIR}/lxd.addr")
+  local INCUS2_DIR INCUS2_ADDR
+  INCUS2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS2_DIR}"
+  spawn_incus "${INCUS2_DIR}" true
+  INCUS2_ADDR=$(cat "${INCUS2_DIR}/lxd.addr")
 
   ensure_import_testimage
 
-  lxc_remote remote add l2 "${LXD2_ADDR}" --accept-certificate --password foo
+  inc_remote remote add l2 "${INCUS2_ADDR}" --accept-certificate --password foo
 
   poolDriver="$(lxc storage show "$(lxc profile device get default root pool)" | awk '/^driver:/ {print $2}')"
 
@@ -178,5 +178,5 @@ test_image_refresh() {
   lxc rm l2:c1
   lxc rm c1
   lxc remote rm l2
-  kill_lxd "${LXD2_DIR}"
+  kill_incus "${INCUS2_DIR}"
 }

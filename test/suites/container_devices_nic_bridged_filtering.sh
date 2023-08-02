@@ -1,6 +1,6 @@
 test_container_devices_nic_bridged_filtering() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   firewallDriver=$(lxc info | awk -F ":" '/firewall:/{gsub(/ /, "", $0); print $2}')
 
@@ -20,7 +20,7 @@ test_container_devices_nic_bridged_filtering() {
   startNicCount=$(find /sys/class/net | wc -l)
 
   ctPrefix="nt$$"
-  brName="lxdt$$"
+  brName="inct$$"
 
   # Standard bridge with random subnet and a bunch of options.
   lxc network create "${brName}"
@@ -286,27 +286,27 @@ test_container_devices_nic_bridged_filtering() {
   fi
 
   # Remove static IP and check IP filter works with previous DHCP lease.
-  rm "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0"
+  rm "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0"
   lxc config device unset "${ctPrefix}A" eth0 ipv4.address
   lxc start "${ctPrefix}A"
-  if ! grep "192.0.2.2" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
+  if ! grep "192.0.2.2" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
     echo "dnsmasq host config doesnt contain previous lease as static IPv4 config"
     false
   fi
 
   lxc stop -f "${ctPrefix}A"
   lxc config device set "${ctPrefix}A" eth0 security.ipv4_filtering false
-  rm "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0"
+  rm "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0"
 
   # Simulate 192.0.2.2 being used by another container, next free IP is 192.0.2.3
-  kill "$(awk '/^pid/ {print $2}' "${LXD_DIR}"/networks/"${brName}"/dnsmasq.pid)"
-  echo "$(date --date="1hour" +%s) 00:16:3e:55:4c:fd 192.0.2.2 c1 ff:6f:c3:ab:c5:00:02:00:00:ab:11:f8:5c:3d:73:db:b2:6a:06" > "${LXD_DIR}/networks/${brName}/dnsmasq.leases"
-  shutdown_lxd "${LXD_DIR}"
-  respawn_lxd "${LXD_DIR}" true
+  kill "$(awk '/^pid/ {print $2}' "${INCUS_DIR}"/networks/"${brName}"/dnsmasq.pid)"
+  echo "$(date --date="1hour" +%s) 00:16:3e:55:4c:fd 192.0.2.2 c1 ff:6f:c3:ab:c5:00:02:00:00:ab:11:f8:5c:3d:73:db:b2:6a:06" > "${INCUS_DIR}/networks/${brName}/dnsmasq.leases"
+  shutdown_incus "${INCUS_DIR}"
+  respawn_incus "${INCUS_DIR}" true
   lxc config device set "${ctPrefix}A" eth0 security.ipv4_filtering true
   lxc start "${ctPrefix}A"
 
-  if ! grep "192.0.2.3" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
+  if ! grep "192.0.2.3" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
     echo "dnsmasq host config doesnt contain sequentially allocated static IPv4 config"
     false
   fi
@@ -316,7 +316,7 @@ test_container_devices_nic_bridged_filtering() {
   lxc network set "${brName}" ipv4.dhcp.ranges "192.0.2.100-192.0.2.110"
   lxc start "${ctPrefix}A"
 
-  if ! grep "192.0.2.100" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
+  if ! grep "192.0.2.100" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
     echo "dnsmasq host config doesnt contain sequentially range allocated static IPv4 config"
     false
   fi
@@ -554,26 +554,26 @@ test_container_devices_nic_bridged_filtering() {
   lxc config device unset "${ctPrefix}A" eth0 ipv6.address
   lxc config device set "${ctPrefix}A" eth0 hwaddr 00:16:3e:92:f3:c1
   lxc config device set "${ctPrefix}A" eth0 security.ipv6_filtering false
-  rm "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0"
+  rm "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0"
   lxc config device set "${ctPrefix}A" eth0 security.ipv6_filtering true
   lxc start "${ctPrefix}A"
-  if ! grep "\\[2001:db8:1:0:216:3eff:fe92:f3c1\\]" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
+  if ! grep "\\[2001:db8:1:0:216:3eff:fe92:f3c1\\]" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
     echo "dnsmasq host config doesnt contain dynamically allocated static IPv6 config"
     false
   fi
 
   lxc stop -f "${ctPrefix}A"
   lxc config device set "${ctPrefix}A" eth0 security.ipv6_filtering false
-  rm "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0"
+  rm "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0"
 
   # Simulate SLAAC 2001:db8:1::216:3eff:fe92:f3c1 being used by another container, next free IP is 2001:db8:1::2
-  kill "$(awk '/^pid/ {print $2}' "${LXD_DIR}"/networks/"${brName}"/dnsmasq.pid)"
-  echo "$(date --date="1hour" +%s) 1875094469 2001:db8:1::216:3eff:fe92:f3c1 c1 00:02:00:00:ab:11:f8:5c:3d:73:db:b2:6a:06" > "${LXD_DIR}/networks/${brName}/dnsmasq.leases"
-  shutdown_lxd "${LXD_DIR}"
-  respawn_lxd "${LXD_DIR}" true
+  kill "$(awk '/^pid/ {print $2}' "${INCUS_DIR}"/networks/"${brName}"/dnsmasq.pid)"
+  echo "$(date --date="1hour" +%s) 1875094469 2001:db8:1::216:3eff:fe92:f3c1 c1 00:02:00:00:ab:11:f8:5c:3d:73:db:b2:6a:06" > "${INCUS_DIR}/networks/${brName}/dnsmasq.leases"
+  shutdown_incus "${INCUS_DIR}"
+  respawn_incus "${INCUS_DIR}" true
   lxc config device set "${ctPrefix}A" eth0 security.ipv6_filtering true
   lxc start "${ctPrefix}A"
-  if ! grep "\\[2001:db8:1::2\\]" "${LXD_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
+  if ! grep "\\[2001:db8:1::2\\]" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctPrefix}A.eth0" ; then
     echo "dnsmasq host config doesnt contain sequentially allocated static IPv6 config"
     false
   fi

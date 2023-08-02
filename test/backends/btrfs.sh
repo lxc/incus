@@ -1,29 +1,29 @@
 btrfs_setup() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Setting up btrfs backend in ${LXD_DIR}"
+  echo "==> Setting up btrfs backend in ${INCUS_DIR}"
 }
 
 btrfs_configure() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  lxc storage create "lxdtest-$(basename "${LXD_DIR}")" btrfs size=1GiB
-  lxc profile device add default root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")"
+  inc storage create "incustest-$(basename "${INCUS_DIR}")" btrfs size=1GiB
+  inc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 
-  echo "==> Configuring btrfs backend in ${LXD_DIR}"
+  echo "==> Configuring btrfs backend in ${INCUS_DIR}"
 }
 
 btrfs_teardown() {
   # shellcheck disable=2039,3043
-  local LXD_DIR
+  local INCUS_DIR
 
-  LXD_DIR=$1
+  INCUS_DIR=$1
 
-  echo "==> Tearing down btrfs backend in ${LXD_DIR}"
+  echo "==> Tearing down btrfs backend in ${INCUS_DIR}"
 }

@@ -4,16 +4,16 @@ test_image_auto_update() {
   fi
 
   # shellcheck disable=2039,3043
-  local LXD2_DIR LXD2_ADDR
-  LXD2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${LXD2_DIR}"
-  spawn_lxd "${LXD2_DIR}" true
-  LXD2_ADDR=$(cat "${LXD2_DIR}/lxd.addr")
+  local INCUS2_DIR INCUS2_ADDR
+  INCUS2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS2_DIR}"
+  spawn_incus "${INCUS2_DIR}" true
+  INCUS2_ADDR=$(cat "${INCUS2_DIR}/lxd.addr")
 
-  (LXD_DIR=${LXD2_DIR} deps/import-busybox --alias testimage --public)
-  fp1="$(LXD_DIR=${LXD2_DIR} lxc image info testimage | awk '/^Fingerprint/ {print $2}')"
+  (INCUS_DIR=${INCUS2_DIR} deps/import-busybox --alias testimage --public)
+  fp1="$(INCUS_DIR=${INCUS2_DIR} lxc image info testimage | awk '/^Fingerprint/ {print $2}')"
 
-  lxc remote add l2 "${LXD2_ADDR}" --accept-certificate --password foo
+  lxc remote add l2 "${INCUS2_ADDR}" --accept-certificate --password foo
   lxc init l2:testimage c1
 
   # Now the first image image is in the local store, since it was
@@ -24,15 +24,15 @@ test_image_auto_update() {
   # Delete the first image from the remote store and replace it with a
   # new one with a different fingerprint (passing "--template create"
   # will do that).
-  (LXD_DIR=${LXD2_DIR} lxc image delete testimage)
-  (LXD_DIR=${LXD2_DIR} deps/import-busybox --alias testimage --public --template create)
-  fp2="$(LXD_DIR=${LXD2_DIR} lxc image info testimage | awk '/^Fingerprint/ {print $2}')"
+  (INCUS_DIR=${INCUS2_DIR} lxc image delete testimage)
+  (INCUS_DIR=${INCUS2_DIR} deps/import-busybox --alias testimage --public --template create)
+  fp2="$(INCUS_DIR=${INCUS2_DIR} lxc image info testimage | awk '/^Fingerprint/ {print $2}')"
   [ "${fp1}" != "${fp2}" ]
 
   # Restart the server to force an image refresh immediately
   # shellcheck disable=2153
-  shutdown_lxd "${LXD_DIR}"
-  respawn_lxd "${LXD_DIR}" true
+  shutdown_incus "${INCUS_DIR}"
+  respawn_incus "${INCUS_DIR}" true
 
   # Check that the first image got deleted from the local storage
   #
@@ -60,5 +60,5 @@ test_image_auto_update() {
   lxc delete c1
   lxc remote remove l2
   lxc image delete "${fp2}"
-  kill_lxd "$LXD2_DIR"
+  kill_incus "$INCUS2_DIR"
 }

@@ -1,5 +1,5 @@
 test_resources() {
-  RES=$(lxc storage show --resources "lxdtest-$(basename "${LXD_DIR}")")
+  RES=$(lxc storage show --resources "incustest-$(basename "${INCUS_DIR}")")
   echo "${RES}" | grep -q "^space:"
 
   RES=$(lxc info --resources)

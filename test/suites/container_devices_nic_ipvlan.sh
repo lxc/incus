@@ -1,6 +1,6 @@
 test_container_devices_nic_ipvlan() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   if ! lxc info | grep 'network_ipvlan: "true"' ; then
     echo "==> SKIP: No IPVLAN support"

@@ -1,8 +1,8 @@
 test_container_devices_nic_bridged_vlan() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
   prefix="lxdvlan$$"
-  bridgeDriver=${LXD_NIC_BRIDGED_DRIVER:-"native"}
+  bridgeDriver=${INCUS_NIC_BRIDGED_DRIVER:-"native"}
 
   if [ "$bridgeDriver" != "native" ] && [ "$bridgeDriver" != "openvswitch" ]; then
     echo "Unrecognised bridge driver: ${bridgeDriver}"

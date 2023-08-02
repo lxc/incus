@@ -2,7 +2,7 @@ test_filemanip() {
   # Workaround for shellcheck getting confused by "cd"
   set -e
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   echo "test" > "${TEST_DIR}"/filemanip
 
@@ -16,7 +16,7 @@ test_filemanip() {
   lxc exec filemanip --project=test -- ls /tmp/filemanip
 
   # missing files should return 404
-  err=$(my_curl -o /dev/null -w "%{http_code}" -X GET "https://${LXD_ADDR}/1.0/containers/filemanip/files?path=/tmp/foo")
+  err=$(my_curl -o /dev/null -w "%{http_code}" -X GET "https://${INCUS_ADDR}/1.0/containers/filemanip/files?path=/tmp/foo")
   [ "${err}" -eq "404" ]
 
   # lxc {push|pull} -r
@@ -111,9 +111,9 @@ test_filemanip() {
   lxc file push -p "${TEST_DIR}"/source/foo filemanip/A/B/C/D/
   [ "$(lxc exec filemanip --project=test -- cat /A/B/C/D/foo)" = "foo" ]
 
-  if [ "$(storage_backend "$LXD_DIR")" != "lvm" ]; then
+  if [ "$(storage_backend "$INCUS_DIR")" != "lvm" ]; then
     lxc launch testimage idmap -c "raw.idmap=both 0 0"
-    [ "$(stat -c %u "${LXD_DIR}/containers/test_idmap/rootfs")" = "0" ]
+    [ "$(stat -c %u "${INCUS_DIR}/containers/test_idmap/rootfs")" = "0" ]
     lxc delete idmap --force
   fi
 

@@ -110,8 +110,8 @@ EOF
 
   kill -9 ${monitorDevlxdPID} || true
 
-  shutdown_lxd "${LXD_DIR}"
-  respawn_lxd "${LXD_DIR}" true
+  shutdown_incus "${INCUS_DIR}"
+  respawn_incus "${INCUS_DIR}" true
 
   # volatile.last_state.ready should be unset during daemon init
   [ -z "$(lxc config get devlxd volatile.last_state.ready)" ]

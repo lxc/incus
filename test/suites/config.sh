@@ -105,14 +105,14 @@ test_mount_order() {
 }
 
 test_config_profiles() {
-  # Unset LXD_DEVMONITOR_DIR as this test uses devices in /dev instead of TEST_DIR.
-  unset LXD_DEVMONITOR_DIR
-  shutdown_lxd "${LXD_DIR}"
-  respawn_lxd "${LXD_DIR}" true
+  # Unset INCUS_DEVMONITOR_DIR as this test uses devices in /dev instead of TEST_DIR.
+  unset INCUS_DEVMONITOR_DIR
+  shutdown_incus "${INCUS_DIR}"
+  respawn_incus "${INCUS_DIR}" true
 
   ensure_import_testimage
 
-  lxc init testimage foo -s "lxdtest-$(basename "${LXD_DIR}")"
+  lxc init testimage foo -s "incustest-$(basename "${INCUS_DIR}")"
   lxc profile list | grep default
 
   # let's check that 'lxc config profile' still works while it's deprecated
@@ -250,7 +250,7 @@ test_config_profiles() {
 
   lxc delete foo
 
-  lxc init testimage foo -s "lxdtest-$(basename "${LXD_DIR}")"
+  lxc init testimage foo -s "incustest-$(basename "${INCUS_DIR}")"
   lxc profile assign foo onenic,unconfined
   lxc start foo
 
@@ -272,7 +272,7 @@ test_config_edit() {
 
     ensure_import_testimage
 
-    lxc init testimage foo -s "lxdtest-$(basename "${LXD_DIR}")"
+    lxc init testimage foo -s "incustest-$(basename "${INCUS_DIR}")"
     lxc config show foo | sed 's/^description:.*/description: bar/' | lxc config edit foo
     lxc config show foo | grep -q 'description: bar'
 
@@ -290,7 +290,7 @@ test_config_edit() {
 test_property() {
   ensure_import_testimage
 
-  lxc init testimage foo -s "lxdtest-$(basename "${LXD_DIR}")"
+  lxc init testimage foo -s "incustest-$(basename "${INCUS_DIR}")"
 
   # Set a property of an instance
   lxc config set foo description="a new description" --property
@@ -323,7 +323,7 @@ test_property() {
   # Create a storage volume, create a volume snapshot and set its expiration timestamp
   # shellcheck disable=2039,3043
   local storage_pool
-  storage_pool="lxdtest-$(basename "${LXD_DIR}")"
+  storage_pool="incustest-$(basename "${INCUS_DIR}")"
   storage_volume="${storage_pool}-vol"
 
   lxc storage volume create "${storage_pool}" "${storage_volume}"
@@ -344,7 +344,7 @@ test_property() {
 
 test_config_edit_container_snapshot_pool_config() {
     # shellcheck disable=2034,2039,2155,3043
-    local storage_pool="lxdtest-$(basename "${LXD_DIR}")"
+    local storage_pool="incustest-$(basename "${INCUS_DIR}")"
 
     ensure_import_testimage
 
@@ -403,7 +403,7 @@ test_container_snapshot_config() {
 
     ensure_import_testimage
 
-    lxc init testimage foo -s "lxdtest-$(basename "${LXD_DIR}")"
+    lxc init testimage foo -s "incustest-$(basename "${INCUS_DIR}")"
     lxc snapshot foo
     lxc config show foo/snap0 | grep -q 'expires_at: 0001-01-01T00:00:00Z'
 

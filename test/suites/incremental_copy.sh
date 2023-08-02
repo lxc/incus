@@ -1,15 +1,15 @@
 test_incremental_copy() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   do_copy "" ""
 
   # cross-pool copy
   # shellcheck disable=2039,3043
   local source_pool
-  source_pool="lxdtest-$(basename "${LXD_DIR}")-dir-pool"
+  source_pool="incustest-$(basename "${INCUS_DIR}")-dir-pool"
   lxc storage create "${source_pool}" dir
-  do_copy "${source_pool}" "lxdtest-$(basename "${LXD_DIR}")"
+  do_copy "${source_pool}" "incustest-$(basename "${INCUS_DIR}")"
   lxc storage rm "${source_pool}"
 }
 

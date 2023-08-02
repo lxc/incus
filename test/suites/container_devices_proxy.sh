@@ -12,7 +12,7 @@ test_container_devices_proxy() {
 
 container_devices_proxy_validation() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
   HOST_TCP_PORT=$(local_tcp_port)
   lxc launch testimage proxyTester
 
@@ -62,7 +62,7 @@ container_devices_proxy_validation() {
 container_devices_proxy_tcp() {
   echo "====> Testing tcp proxying"
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Setup
   MESSAGE="Proxy device test string: tcp"
@@ -80,7 +80,7 @@ container_devices_proxy_tcp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly send data from host to container"
     false
   fi
@@ -96,7 +96,7 @@ container_devices_proxy_tcp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart on container restart"
     false
   fi
@@ -112,7 +112,7 @@ container_devices_proxy_tcp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart when config was updated"
     false
   fi
@@ -135,13 +135,13 @@ container_devices_proxy_tcp() {
   wait "${NSENTER_PID1}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly send data from host to container"
     false
   fi
 
   if [ "${ECHO1}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly send data from host to container"
     false
   fi
@@ -152,10 +152,10 @@ container_devices_proxy_tcp() {
   # Try NAT
   lxc init testimage nattest
 
-  lxc network create lxdt$$ dns.domain=test dns.mode=managed ipv6.dhcp.stateful=true
-  lxc network attach lxdt$$ nattest eth0
-  v4_addr="$(lxc network get lxdt$$ ipv4.address | cut -d/ -f1)0"
-  v6_addr="$(lxc network get lxdt$$ ipv6.address | cut -d/ -f1)00"
+  lxc network create inct$$ dns.domain=test dns.mode=managed ipv6.dhcp.stateful=true
+  lxc network attach inct$$ nattest eth0
+  v4_addr="$(lxc network get inct$$ ipv4.address | cut -d/ -f1)0"
+  v6_addr="$(lxc network get inct$$ ipv6.address | cut -d/ -f1)00"
   lxc config device set nattest eth0 ipv4.address "${v4_addr}"
   lxc config device set nattest eth0 ipv6.address "${v6_addr}"
 
@@ -264,17 +264,17 @@ container_devices_proxy_tcp() {
     ! nft -nn list chain inet lxd out.nattest.validNAT || false
   fi
 
-  lxc network delete lxdt$$
+  lxc network delete inct$$
 }
 
 container_devices_proxy_unix() {
   echo "====> Testing unix proxying"
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Setup
   MESSAGE="Proxy device test string: unix"
-  HOST_SOCK="${TEST_DIR}/lxdtest-$(basename "${LXD_DIR}")-host.sock"
+  HOST_SOCK="${TEST_DIR}/incustest-$(basename "${INCUS_DIR}")-host.sock"
   lxc launch testimage proxyTester
 
   # Some busybox images don't have /tmp globally accessible.
@@ -285,19 +285,19 @@ container_devices_proxy_unix() {
     PID="$(lxc query /1.0/containers/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
-    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"lxdtest-$(basename "${LXD_DIR}").sock",unlink-early exec:/bin/cat
+    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
   ) &
   NSENTER_PID=$!
   sleep 0.5
 
-  lxc config device add proxyTester proxyDev proxy "listen=unix:${HOST_SOCK}" uid=1234 gid=1234 security.uid=1234 security.gid=1234 connect=unix:/tmp/"lxdtest-$(basename "${LXD_DIR}").sock" bind=host
+  lxc config device add proxyTester proxyDev proxy "listen=unix:${HOST_SOCK}" uid=1234 gid=1234 security.uid=1234 security.gid=1234 connect=unix:/tmp/"incustest-$(basename "${INCUS_DIR}").sock" bind=host
 
   ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
   kill "${NSENTER_PID}" 2>/dev/null || true
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly send data from host to container"
     false
   fi
@@ -310,7 +310,7 @@ container_devices_proxy_unix() {
     PID="$(lxc query /1.0/containers/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
-    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"lxdtest-$(basename "${LXD_DIR}").sock",unlink-early exec:/bin/cat
+    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
   ) &
   NSENTER_PID=$!
   sleep 1
@@ -320,7 +320,7 @@ container_devices_proxy_unix() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart on container restart"
     false
   fi
@@ -332,11 +332,11 @@ container_devices_proxy_unix() {
     PID="$(lxc query /1.0/containers/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
-    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"lxdtest-$(basename "${LXD_DIR}")-2.sock",unlink-early exec:/bin/cat
+    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}")-2.sock",unlink-early exec:/bin/cat
   ) &
   NSENTER_PID=$!
 
-  lxc config device set proxyTester proxyDev connect unix:/tmp/"lxdtest-$(basename "${LXD_DIR}")-2.sock"
+  lxc config device set proxyTester proxyDev connect unix:/tmp/"incustest-$(basename "${INCUS_DIR}")-2.sock"
   sleep 0.5
 
   ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - unix:"${HOST_SOCK#"$(pwd)"/}")
@@ -344,7 +344,7 @@ container_devices_proxy_unix() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart when config was updated"
     false
   fi
@@ -358,7 +358,7 @@ container_devices_proxy_unix() {
 container_devices_proxy_tcp_unix() {
   echo "====> Testing tcp to unix proxying"
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Setup
   MESSAGE="Proxy device test string: tcp -> unix"
@@ -370,11 +370,11 @@ container_devices_proxy_tcp_unix() {
     PID="$(lxc query /1.0/containers/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
-    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"lxdtest-$(basename "${LXD_DIR}").sock",unlink-early exec:/bin/cat
+    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
   ) &
   NSENTER_PID=$!
 
-  lxc config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:${HOST_TCP_PORT}" connect=unix:/tmp/"lxdtest-$(basename "${LXD_DIR}").sock" bind=host
+  lxc config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:${HOST_TCP_PORT}" connect=unix:/tmp/"incustest-$(basename "${INCUS_DIR}").sock" bind=host
   sleep 0.5
 
   ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
@@ -382,7 +382,7 @@ container_devices_proxy_tcp_unix() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly send data from host to container"
     false
   fi
@@ -393,7 +393,7 @@ container_devices_proxy_tcp_unix() {
     PID="$(lxc query /1.0/containers/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
-    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"lxdtest-$(basename "${LXD_DIR}").sock",unlink-early exec:/bin/cat
+    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
   ) &
   NSENTER_PID=$!
   sleep 1
@@ -403,7 +403,7 @@ container_devices_proxy_tcp_unix() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart on container restart"
     false
   fi
@@ -413,11 +413,11 @@ container_devices_proxy_tcp_unix() {
     PID="$(lxc query /1.0/containers/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
-    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"lxdtest-$(basename "${LXD_DIR}")-2.sock",unlink-early exec:/bin/cat
+    exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}")-2.sock",unlink-early exec:/bin/cat
   ) &
   NSENTER_PID=$!
 
-  lxc config device set proxyTester proxyDev connect unix:/tmp/"lxdtest-$(basename "${LXD_DIR}")-2.sock"
+  lxc config device set proxyTester proxyDev connect unix:/tmp/"incustest-$(basename "${INCUS_DIR}")-2.sock"
   sleep 0.5
 
   ECHO=$( (echo "${MESSAGE}" ; sleep 0.5) | socat - tcp:127.0.0.1:"${HOST_TCP_PORT}")
@@ -425,7 +425,7 @@ container_devices_proxy_tcp_unix() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart when config was updated"
     false
   fi
@@ -437,11 +437,11 @@ container_devices_proxy_tcp_unix() {
 container_devices_proxy_unix_tcp() {
   echo "====> Testing unix to tcp proxying"
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Setup
   MESSAGE="Proxy device test string: unix -> tcp"
-  HOST_SOCK="${TEST_DIR}/lxdtest-$(basename "${LXD_DIR}")-host.sock"
+  HOST_SOCK="${TEST_DIR}/incustest-$(basename "${INCUS_DIR}")-host.sock"
   lxc launch testimage proxyTester
 
   # Initial test
@@ -455,7 +455,7 @@ container_devices_proxy_unix_tcp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly send data from host to container"
     false
   fi
@@ -473,7 +473,7 @@ container_devices_proxy_unix_tcp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart on container restart"
     false
   fi
@@ -491,7 +491,7 @@ container_devices_proxy_unix_tcp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart when config was updated"
     false
   fi
@@ -505,7 +505,7 @@ container_devices_proxy_unix_tcp() {
 container_devices_proxy_udp() {
   echo "====> Testing udp proxying"
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Setup
   MESSAGE="Proxy device test string: udp"
@@ -523,7 +523,7 @@ container_devices_proxy_udp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly send data from host to container"
     false
   fi
@@ -539,7 +539,7 @@ container_devices_proxy_udp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart on container restart"
     false
   fi
@@ -555,7 +555,7 @@ container_devices_proxy_udp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart when config was updated"
     false
   fi
@@ -567,11 +567,11 @@ container_devices_proxy_udp() {
 container_devices_proxy_unix_udp() {
   echo "====> Testing unix to udp proxying"
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Setup
   MESSAGE="Proxy device test string: unix -> udp"
-  HOST_SOCK="${TEST_DIR}/lxdtest-$(basename "${LXD_DIR}")-host.sock"
+  HOST_SOCK="${TEST_DIR}/incustest-$(basename "${INCUS_DIR}")-host.sock"
   lxc launch testimage proxyTester
 
   # Initial test
@@ -585,7 +585,7 @@ container_devices_proxy_unix_udp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly send data from host to container"
     false
   fi
@@ -603,7 +603,7 @@ container_devices_proxy_unix_udp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart on container restart"
     false
   fi
@@ -621,7 +621,7 @@ container_devices_proxy_unix_udp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart when config was updated"
     false
   fi
@@ -635,7 +635,7 @@ container_devices_proxy_unix_udp() {
 container_devices_proxy_tcp_udp() {
   echo "====> Testing tcp to udp proxying"
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Setup
   MESSAGE="Proxy device test string: tcp -> udp"
@@ -653,7 +653,7 @@ container_devices_proxy_tcp_udp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly send data from host to container"
     false
   fi
@@ -669,7 +669,7 @@ container_devices_proxy_tcp_udp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart on container restart"
     false
   fi
@@ -685,7 +685,7 @@ container_devices_proxy_tcp_udp() {
   wait "${NSENTER_PID}" 2>/dev/null || true
 
   if [ "${ECHO}" != "${MESSAGE}" ]; then
-    cat "${LXD_DIR}/logs/proxyTester/proxy.proxyDev.log"
+    cat "${INCUS_DIR}/logs/proxyTester/proxy.proxyDev.log"
     echo "Proxy device did not properly restart when config was updated"
     false
   fi
@@ -697,7 +697,7 @@ container_devices_proxy_tcp_udp() {
 container_devices_proxy_with_overlapping_forward_net() {
   echo "====> Testing proxy creation with overlapping network forward"
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   netName="testnet"
 

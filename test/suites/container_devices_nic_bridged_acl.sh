@@ -1,6 +1,6 @@
 test_container_devices_nic_bridged_acl() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
   firewallDriver=$(lxc info | awk -F ":" '/firewall:/{gsub(/ /, "", $0); print $2}')
 
@@ -10,7 +10,7 @@ test_container_devices_nic_bridged_acl() {
   fi
 
   ctPrefix="nt$$"
-  brName="lxdt$$"
+  brName="inct$$"
 
   # Standard bridge.
   lxc network create "${brName}" \

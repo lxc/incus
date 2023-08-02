@@ -1,7 +1,7 @@
 test_template() {
   # shellcheck disable=2039,3043
-  local lxd_backend
-  lxd_backend=$(storage_backend "$LXD_DIR")
+  local incus_backend
+  incus_backend=$(storage_backend "$INCUS_DIR")
 
   # Import a template which only triggers on create
   deps/import-busybox --alias template-test --template create
@@ -14,7 +14,7 @@ test_template() {
   lxc start template
   lxc file pull template/template - | grep "^name: template$"
 
-  if [ "$lxd_backend" = "lvm" ] || [ "$lxd_backend" = "ceph" ]; then
+  if [ "$incus_backend" = "lvm" ] || [ "$incus_backend" = "ceph" ]; then
     lxc stop template --force
   fi
 
@@ -33,7 +33,7 @@ test_template() {
 
   # Confirm that the template doesn't trigger on create
   ! lxc file pull template/template - || false
-  if [ "$lxd_backend" = "lvm" ] || [ "$lxd_backend" = "ceph" ]; then
+  if [ "$incus_backend" = "lvm" ] || [ "$incus_backend" = "ceph" ]; then
     lxc stop template --force
   fi
 

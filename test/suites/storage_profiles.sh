@@ -1,13 +1,13 @@
 test_storage_profiles() {
   # shellcheck disable=2039
 
-  LXD_STORAGE_DIR=$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)
-  chmod +x "${LXD_STORAGE_DIR}"
-  spawn_lxd "${LXD_STORAGE_DIR}" false
+  INCUS_STORAGE_DIR=$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)
+  chmod +x "${INCUS_STORAGE_DIR}"
+  spawn_incus "${INCUS_STORAGE_DIR}" false
   (
     set -e
     # shellcheck disable=2030
-    LXD_DIR="${LXD_STORAGE_DIR}"
+    INCUS_DIR="${INCUS_STORAGE_DIR}"
 
     HAS_ZFS="dir"
     if command -v zfs >/dev/null 2>&1; then
@@ -21,15 +21,15 @@ test_storage_profiles() {
 
     # shellcheck disable=SC1009
     # Create loop file zfs pool.
-    lxc storage create "lxdtest-$(basename "${LXD_DIR}")-pool1" "${HAS_ZFS}"
+    lxc storage create "incustest-$(basename "${INCUS_DIR}")-pool1" "${HAS_ZFS}"
 
     # Create loop file btrfs pool.
-    lxc storage create "lxdtest-$(basename "${LXD_DIR}")-pool2" "${HAS_BTRFS}"
+    lxc storage create "incustest-$(basename "${INCUS_DIR}")-pool2" "${HAS_BTRFS}"
 
-    lxc storage create "lxdtest-$(basename "${LXD_DIR}")-pool4" dir
+    lxc storage create "incustest-$(basename "${INCUS_DIR}")-pool4" dir
 
     # Set default storage pool for image import.
-    lxc profile device add default root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool1"
+    lxc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool1"
 
     # Import image into default storage pool.
     ensure_import_testimage
@@ -37,7 +37,7 @@ test_storage_profiles() {
     lxc profile create test
 
     # Create a new profile that provides a root device for some containers.
-    lxc profile device add test rootfs disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool1"
+    lxc profile device add test rootfs disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool1"
 
     # Begin interesting test cases.
 
@@ -48,41 +48,41 @@ test_storage_profiles() {
     # Check that we can't remove or change the root disk device since containers
     # are actually using it.
     ! lxc profile device remove test rootfs || false
-    ! lxc profile device set test rootfs pool "lxdtest-$(basename "${LXD_DIR}")-pool2" || false
+    ! lxc profile device set test rootfs pool "incustest-$(basename "${INCUS_DIR}")-pool2" || false
 
     # Give all the containers we started their own local root disk device.
     for i in $(seq 1 2); do
-      ! lxc config device add c"${i}" root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool1" || false
-      lxc config device add c"${i}" rootfs disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool1"
+      ! lxc config device add c"${i}" root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool1" || false
+      lxc config device add c"${i}" rootfs disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool1"
     done
 
     # Try to set new pool. This should fail since there is a single container
     # that has no local root disk device.
-    ! lxc profile device set test rootfs pool "lxdtest-$(basename "${LXD_DIR}")-pool2" || false
+    ! lxc profile device set test rootfs pool "incustest-$(basename "${INCUS_DIR}")-pool2" || false
     # This should work since it doesn't change the pool property.
-    lxc profile device set test rootfs pool "lxdtest-$(basename "${LXD_DIR}")-pool1"
+    lxc profile device set test rootfs pool "incustest-$(basename "${INCUS_DIR}")-pool1"
     # Check that we can not remove the root disk device since there is a single
     # container that is still using it.
     ! lxc profile device remove test rootfs || false
 
     # Give the last container a local root disk device.
-    ! lxc config device add c3 root disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool1" || false
-    lxc config device add c3 rootfs disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool1"
+    ! lxc config device add c3 root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool1" || false
+    lxc config device add c3 rootfs disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool1"
 
     # Try to set new pool. This should work since the container has a local disk
-    lxc profile device set test rootfs pool "lxdtest-$(basename "${LXD_DIR}")-pool2"
-    lxc profile device set test rootfs pool "lxdtest-$(basename "${LXD_DIR}")-pool1"
+    lxc profile device set test rootfs pool "incustest-$(basename "${INCUS_DIR}")-pool2"
+    lxc profile device set test rootfs pool "incustest-$(basename "${INCUS_DIR}")-pool1"
     # Check that we can now remove the root disk device since no container is
     # actually using it.
     lxc profile device remove test rootfs
 
     # Add back a root device to the profile.
-    ! lxc profile device add test rootfs1 disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool1" || false
+    ! lxc profile device add test rootfs1 disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool1" || false
 
     # Try to add another root device to the profile that tries to set a pool
     # property. This should fail. This is also a test for whether it is possible
     # to put multiple disk devices on the same path. This must fail!
-    ! lxc profile device add test rootfs2 disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool2" || false
+    ! lxc profile device add test rootfs2 disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool2" || false
 
     # Add another root device to the profile that does not set a pool property.
     # This should not work since it would use the same path.
@@ -90,18 +90,18 @@ test_storage_profiles() {
 
     # Create a second profile.
     lxc profile create testDup
-    lxc profile device add testDup rootfs1 disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool1"
+    lxc profile device add testDup rootfs1 disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool1"
 
     # Create a third profile
     lxc profile create testNoDup
-    lxc profile device add testNoDup rootfs2 disk path="/" pool="lxdtest-$(basename "${LXD_DIR}")-pool2"
+    lxc profile device add testNoDup rootfs2 disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool2"
 
     # Verify that we cannot create a container with profiles that have
     # contradicting root devices.
     ! lxc launch testimage cConflictingProfiles -p test -p testDup -p testNoDup || false
 
     # And that even with a local disk, a container can't have multiple root devices
-    ! lxc launch testimage cConflictingProfiles -s "lxdtest-$(basename "${LXD_DIR}")-pool2" -p test -p testDup -p testNoDup || false
+    ! lxc launch testimage cConflictingProfiles -s "incustest-$(basename "${INCUS_DIR}")-pool2" -p test -p testDup -p testNoDup || false
 
     # Check that we cannot assign conflicting profiles to a container that
     # relies on another profiles root disk device.
@@ -135,6 +135,6 @@ test_storage_profiles() {
   )
 
   # shellcheck disable=SC2031,2269
-  LXD_DIR="${LXD_DIR}"
-  kill_lxd "${LXD_STORAGE_DIR}"
+  INCUS_DIR="${INCUS_DIR}"
+  kill_incus "${INCUS_STORAGE_DIR}"
 }
