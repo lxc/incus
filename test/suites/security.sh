@@ -9,7 +9,7 @@ test_security() {
     spawn_incus "${INCUS_INIT_DIR}" false
 
     ZFS_POOL="incustest-$(basename "${INCUS_DIR}")-init"
-    INCUS_DIR=${INCUS_INIT_DIR} lxd init --storage-backend zfs --storage-create-loop 1 --storage-pool "${ZFS_POOL}" --auto
+    INCUS_DIR=${INCUS_INIT_DIR} incus init --storage-backend zfs --storage-create-loop 1 --storage-pool "${ZFS_POOL}" --auto
 
     PERM=$(stat -c %a "${INCUS_INIT_DIR}/disks/${ZFS_POOL}.img")
     if [ "${PERM}" != "600" ]; then
@@ -21,7 +21,7 @@ test_security() {
   fi
 
   # CVE-2016-1582
-  lxc launch testimage test-priv -c security.privileged=true
+  inc launch testimage test-priv -c security.privileged=true
 
   PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-priv")
   UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-priv")
@@ -35,10 +35,10 @@ test_security() {
     false
   fi
 
-  lxc config set test-priv security.privileged false
-  lxc restart test-priv --force
-  lxc config set test-priv security.privileged true
-  lxc restart test-priv --force
+  inc config set test-priv security.privileged false
+  inc restart test-priv --force
+  inc config set test-priv security.privileged true
+  inc restart test-priv --force
 
   PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-priv")
   UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-priv")
@@ -52,11 +52,11 @@ test_security() {
     false
   fi
 
-  lxc delete test-priv --force
+  inc delete test-priv --force
 
-  lxc launch testimage test-unpriv
-  lxc config set test-unpriv security.privileged true
-  lxc restart test-unpriv --force
+  inc launch testimage test-unpriv
+  inc config set test-unpriv security.privileged true
+  inc restart test-unpriv --force
 
   PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-unpriv")
   UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-unpriv")
@@ -70,8 +70,8 @@ test_security() {
     false
   fi
 
-  lxc config set test-unpriv security.privileged false
-  lxc restart test-unpriv --force
+  inc config set test-unpriv security.privileged false
+  inc restart test-unpriv --force
 
   PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-unpriv")
   UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-unpriv")
@@ -85,7 +85,7 @@ test_security() {
     false
   fi
 
-  lxc delete test-unpriv --force
+  inc delete test-unpriv --force
 
   # shellcheck disable=2039,3043
   local INCUS_STORAGE_DIR
@@ -107,33 +107,33 @@ test_security() {
     ensure_import_testimage
 
     # Verify that no privileged container can be created
-    ! lxc launch testimage c1 -c security.privileged=true || false
+    ! inc launch testimage c1 -c security.privileged=true || false
 
     # Verify that unprivileged container can be created
-    lxc launch testimage c1
+    inc launch testimage c1
 
     # Verify that we can't be tricked into using privileged containers
-    ! lxc config set c1 security.privileged true || false
-    ! lxc config set c1 raw.idmap "both 0 1000" || false
-    ! lxc config set c1 raw.lxc "lxc.idmap=" || false
-    ! lxc config set c1 raw.lxc "lxc.include=" || false
+    ! inc config set c1 security.privileged true || false
+    ! inc config set c1 raw.idmap "both 0 1000" || false
+    ! inc config set c1 raw.lxc "lxc.idmap=" || false
+    ! inc config set c1 raw.lxc "lxc.include=" || false
 
     # Verify that we can still unset and set to security.privileged to "false"
-    lxc config set c1 security.privileged false
-    lxc config unset c1 security.privileged
+    inc config set c1 security.privileged false
+    inc config unset c1 security.privileged
 
     # Verify that a profile can't be changed to trick us into using privileged
     # containers
-    ! lxc profile set default security.privileged true || false
-    ! lxc profile set default raw.idmap "both 0 1000" || false
-    ! lxc profile set default raw.lxc "lxc.idmap=" || false
-    ! lxc profile set default raw.lxc "lxc.include=" || false
+    ! inc profile set default security.privileged true || false
+    ! inc profile set default raw.idmap "both 0 1000" || false
+    ! inc profile set default raw.lxc "lxc.idmap=" || false
+    ! inc profile set default raw.lxc "lxc.include=" || false
 
     # Verify that we can still unset and set to security.privileged to "false"
-    lxc profile set default security.privileged false
-    lxc profile unset default security.privileged
+    inc profile set default security.privileged false
+    inc profile unset default security.privileged
 
-    lxc delete -f c1
+    inc delete -f c1
   )
 
   # shellcheck disable=SC2031,2269
@@ -146,61 +146,61 @@ test_security_protection() {
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Test deletion protecton
-  lxc init testimage c1
-  lxc snapshot c1
-  lxc delete c1
+  inc init testimage c1
+  inc snapshot c1
+  inc delete c1
 
-  lxc profile set default security.protection.delete true
+  inc profile set default security.protection.delete true
 
-  lxc init testimage c1
-  lxc snapshot c1
-  lxc delete c1/snap0
-  ! lxc delete c1 || false
+  inc init testimage c1
+  inc snapshot c1
+  inc delete c1/snap0
+  ! inc delete c1 || false
 
-  lxc config set c1 security.protection.delete false
-  lxc delete c1
+  inc config set c1 security.protection.delete false
+  inc delete c1
 
-  lxc profile unset default security.protection.delete
+  inc profile unset default security.protection.delete
 
   # Test shifting protection
 
-  # Respawn LXD with kernel ID shifting support disabled to force manual shifting.
+  # Respawn Incus with kernel ID shifting support disabled to force manual shifting.
   shutdown_incus "${INCUS_DIR}"
-  lxdShiftfsDisable=${INCUS_SHIFTFS_DISABLE:-}
-  lxdIdmappedMountsDisable=${INCUS_IDMAPPED_MOUNTS_DISABLE:-}
+  incusShiftfsDisable=${INCUS_SHIFTFS_DISABLE:-}
+  incusIdmappedMountsDisable=${INCUS_IDMAPPED_MOUNTS_DISABLE:-}
 
   export INCUS_SHIFTFS_DISABLE=1
   export INCUS_IDMAPPED_MOUNTS_DISABLE=1
   respawn_incus "${INCUS_DIR}" true
 
-  lxc init testimage c1
-  lxc start c1
-  lxc stop c1 --force
+  inc init testimage c1
+  inc start c1
+  inc stop c1 --force
 
-  lxc profile set default security.protection.shift true
-  lxc start c1
-  lxc stop c1 --force
+  inc profile set default security.protection.shift true
+  inc start c1
+  inc stop c1 --force
 
-  lxc publish c1 --alias=protected
-  lxc image delete protected
+  inc publish c1 --alias=protected
+  inc image delete protected
 
-  lxc snapshot c1
-  lxc publish c1/snap0 --alias=protected
-  lxc image delete protected
+  inc snapshot c1
+  inc publish c1/snap0 --alias=protected
+  inc image delete protected
 
-  lxc config set c1 security.privileged true
-  ! lxc start c1 || false
-  lxc config set c1 security.protection.shift false
-  lxc start c1
-  lxc stop c1 --force
+  inc config set c1 security.privileged true
+  ! inc start c1 || false
+  inc config set c1 security.protection.shift false
+  inc start c1
+  inc stop c1 --force
 
-  lxc delete c1
-  lxc profile unset default security.protection.shift
+  inc delete c1
+  inc profile unset default security.protection.shift
 
-  # Respawn LXD to restore default kernel shifting support.
+  # Respawn Incus to restore default kernel shifting support.
   shutdown_incus "${INCUS_DIR}"
-  export INCUS_SHIFTFS_DISABLE="${lxdShiftfsDisable}"
-  export INCUS_IDMAPPED_MOUNTS_DISABLE="${lxdIdmappedMountsDisable}"
+  export INCUS_SHIFTFS_DISABLE="${incusShiftfsDisable}"
+  export INCUS_IDMAPPED_MOUNTS_DISABLE="${incusIdmappedMountsDisable}"
 
   respawn_incus "${INCUS_DIR}" true
 }
