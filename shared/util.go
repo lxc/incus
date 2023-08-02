@@ -258,27 +258,27 @@ func LogPath(path ...string) string {
 }
 
 func ParseLXDFileHeaders(headers http.Header) (uid int64, gid int64, mode int, type_ string, write string) {
-	uid, err := strconv.ParseInt(headers.Get("X-LXD-uid"), 10, 64)
+	uid, err := strconv.ParseInt(headers.Get("X-Incus-uid"), 10, 64)
 	if err != nil {
 		uid = -1
 	}
 
-	gid, err = strconv.ParseInt(headers.Get("X-LXD-gid"), 10, 64)
+	gid, err = strconv.ParseInt(headers.Get("X-Incus-gid"), 10, 64)
 	if err != nil {
 		gid = -1
 	}
 
-	mode, err = strconv.Atoi(headers.Get("X-LXD-mode"))
+	mode, err = strconv.Atoi(headers.Get("X-Incus-mode"))
 	if err != nil {
 		mode = -1
 	} else {
-		rawMode, err := strconv.ParseInt(headers.Get("X-LXD-mode"), 0, 0)
+		rawMode, err := strconv.ParseInt(headers.Get("X-Incus-mode"), 0, 0)
 		if err == nil {
 			mode = int(os.FileMode(rawMode) & os.ModePerm)
 		}
 	}
 
-	type_ = headers.Get("X-LXD-type")
+	type_ = headers.Get("X-Incus-type")
 	/* backwards compat: before "type" was introduced, we could only
 	 * manipulate files
 	 */
@@ -286,7 +286,7 @@ func ParseLXDFileHeaders(headers http.Header) (uid int64, gid int64, mode int, t
 		type_ = "file"
 	}
 
-	write = headers.Get("X-LXD-write")
+	write = headers.Get("X-Incus-write")
 	/* backwards compat: before "write" was introduced, we could only
 	 * overwrite files
 	 */
