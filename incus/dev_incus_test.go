@@ -57,7 +57,7 @@ func setupDir() error {
 
 	_ = os.MkdirAll(fmt.Sprintf("%s/devlxd", testDir), 0755)
 
-	return os.Setenv("LXD_DIR", testDir)
+	return os.Setenv("INCUS_DIR", testDir)
 }
 
 func setupSocket() (*net.UnixListener, error) {

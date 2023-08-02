@@ -58,9 +58,9 @@ func (suite *lxdTestSuite) SetupTest() {
 
 	suite.tmpdir = tmpdir
 
-	err = os.Setenv("LXD_DIR", suite.tmpdir)
+	err = os.Setenv("INCUS_DIR", suite.tmpdir)
 	if err != nil {
-		suite.T().Errorf("failed to set LXD_DIR: %v", err)
+		suite.T().Errorf("failed to set INCUS_DIR: %v", err)
 	}
 
 	suite.d, err = mockStartDaemon()

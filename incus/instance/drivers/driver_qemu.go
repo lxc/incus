@@ -776,8 +776,8 @@ func (d *qemu) Rebuild(img *api.Image, op *operations.Operation) error {
 }
 
 func (d *qemu) ovmfPath() string {
-	if os.Getenv("LXD_OVMF_PATH") != "" {
-		return os.Getenv("LXD_OVMF_PATH")
+	if os.Getenv("INCUS_OVMF_PATH") != "" {
+		return os.Getenv("INCUS_OVMF_PATH")
 	}
 
 	return "/usr/share/OVMF"

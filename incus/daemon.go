@@ -418,7 +418,7 @@ func (d *Daemon) State() *state.State {
 // UnixSocket returns the full path to the unix.socket file that this daemon is
 // listening on. Used by tests.
 func (d *Daemon) UnixSocket() string {
-	path := os.Getenv("LXD_SOCKET")
+	path := os.Getenv("INCUS_SOCKET")
 	if path != "" {
 		return path
 	}
@@ -945,7 +945,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Detect shiftfs support.
-	if shared.IsTrue(os.Getenv("LXD_SHIFTFS_DISABLE")) {
+	if shared.IsTrue(os.Getenv("INCUS_SHIFTFS_DISABLE")) {
 		logger.Info(" - shiftfs support: disabled")
 	} else {
 		if canUseShiftfs() && (util.SupportsFilesystem("shiftfs") || util.LoadModule("shiftfs") == nil) {
@@ -957,7 +957,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Detect idmapped mounts support.
-	if shared.IsTrue(os.Getenv("LXD_IDMAPPED_MOUNTS_DISABLE")) {
+	if shared.IsTrue(os.Getenv("INCUS_IDMAPPED_MOUNTS_DISABLE")) {
 		logger.Info(" - idmapped mounts kernel support: disabled")
 	} else if kernelSupportsIdmappedMounts() {
 		d.os.IdmappedMounts = true
@@ -1445,7 +1445,7 @@ func (d *Daemon) init() error {
 		// Start the scheduler
 		go deviceEventListener(d.State)
 
-		prefixPath := os.Getenv("LXD_DEVMONITOR_DIR")
+		prefixPath := os.Getenv("INCUS_DEVMONITOR_DIR")
 		if prefixPath == "" {
 			prefixPath = "/dev"
 		}

@@ -232,7 +232,7 @@ func fsProbe(path string) (string, error) {
 }
 
 // GetPoolMountPath returns the mountpoint of the given pool.
-// {LXD_DIR}/storage-pools/<pool>.
+// {INCUS_DIR}/storage-pools/<pool>.
 func GetPoolMountPath(poolName string) string {
 	return shared.VarPath("storage-pools", poolName)
 }

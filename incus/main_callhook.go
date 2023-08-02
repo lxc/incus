@@ -67,7 +67,7 @@ func (c *cmdCallhook) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Connect to LXD.
-	socket := os.Getenv("LXD_SOCKET")
+	socket := os.Getenv("INCUS_SOCKET")
 	if socket == "" {
 		socket = filepath.Join(path, "unix.socket")
 	}

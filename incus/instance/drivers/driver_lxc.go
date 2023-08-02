@@ -827,7 +827,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	// For lxcfs
-	templateConfDir := os.Getenv("LXD_LXC_TEMPLATE_CONFIG")
+	templateConfDir := os.Getenv("INCUS_LXC_TEMPLATE_CONFIG")
 	if templateConfDir == "" {
 		templateConfDir = "/usr/share/lxc/config"
 	}
@@ -1036,7 +1036,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup NVIDIA runtime
 	if shared.IsTrue(d.expandedConfig["nvidia.runtime"]) {
-		hookDir := os.Getenv("LXD_LXC_HOOK")
+		hookDir := os.Getenv("INCUS_LXC_HOOK")
 		if hookDir == "" {
 			hookDir = "/usr/share/lxc/hooks"
 		}

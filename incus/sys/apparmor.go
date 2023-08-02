@@ -23,7 +23,7 @@ func (s *OS) initAppArmor() []cluster.Warning {
 
 	/* Detect AppArmor availability */
 	_, err := exec.LookPath("apparmor_parser")
-	if shared.IsFalse(os.Getenv("LXD_SECURITY_APPARMOR")) {
+	if shared.IsFalse(os.Getenv("INCUS_SECURITY_APPARMOR")) {
 		logger.Warnf("AppArmor support has been manually disabled")
 		dbWarnings = append(dbWarnings, cluster.Warning{
 			TypeCode:    warningtype.AppArmorNotAvailable,
