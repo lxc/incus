@@ -58,7 +58,7 @@ jobs:
         run: |
           go mod download
 
-      - name: Run LXD build
+      - name: Run Incus build
         run: |
           make
 
@@ -186,7 +186,7 @@ jobs:
         run: |
           go mod download
 
-      - name: Run LXD build
+      - name: Run Incus build
         run: |
           make
 
@@ -261,35 +261,35 @@ jobs:
         run: |
             mkdir bin
 
-      - name: Build static lxc
+      - name: Build static incc
         env:
           CGO_ENABLED: 0
         run: |
-          go build -o bin ./lxc
+          go build -o bin ./inc
 
-      - name: Build static lxd-migrate
+      - name: Build static incus-migrate
         if: runner.os == 'Linux'
         env:
           CGO_ENABLED: 0
         run: |
-          go build -o bin ./lxd-migrate
+          go build -o bin ./incus-migrate
 
       - name: Unit tests (client)
         env:
           CGO_ENABLED: 0
         run: go test -v ./client/...
 
-      - name: Unit tests (lxc)
+      - name: Unit tests (inc)
         env:
           CGO_ENABLED: 0
-        run: go test -v ./lxc/...
+        run: go test -v ./inc/...
 
       - name: Unit tests (shared)
         env:
           CGO_ENABLED: 0
         run: go test -v ./shared/...
 
-      - name: Upload lxc client artifacts
+      - name: Upload inc client artifacts
         uses: actions/upload-artifact@v3
         continue-on-error: true
         with:
