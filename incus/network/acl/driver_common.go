@@ -748,7 +748,7 @@ func (d *common) GetLog(clientType request.ClientType) (string, error) {
 	logEntries := []string{}
 	scanner := bufio.NewScanner(logFile)
 	for scanner.Scan() {
-		logEntry := ovnParseLogEntry(scanner.Text(), fmt.Sprintf("lxd_acl%d-", d.id))
+		logEntry := ovnParseLogEntry(scanner.Text(), fmt.Sprintf("incus_acl%d-", d.id))
 		if logEntry == "" {
 			continue
 		}

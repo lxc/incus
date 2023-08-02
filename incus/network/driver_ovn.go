@@ -1162,7 +1162,7 @@ func (n *ovn) uplinkOperationLockName(uplinkNet Network) string {
 
 // uplinkPortBridgeVars returns the uplink port bridge variables needed for port start/stop.
 func (n *ovn) uplinkPortBridgeVars(uplinkNet Network) *ovnUplinkPortBridgeVars {
-	ovsBridge := fmt.Sprintf("lxdovn%d", uplinkNet.ID())
+	ovsBridge := fmt.Sprintf("incusovn%d", uplinkNet.ID())
 
 	return &ovnUplinkPortBridgeVars{
 		ovsBridge: ovsBridge,

@@ -33,7 +33,7 @@ const ovnACLPriorityPortGroupReject = 400
 const ovnACLPriorityPortGroupDrop = 500
 
 // ovnACLPortGroupPrefix prefix used when naming ACL related port groups in OVN.
-const ovnACLPortGroupPrefix = "lxd_acl"
+const ovnACLPortGroupPrefix = "incus_acl"
 
 // OVNACLPortGroupName returns the port group name for a Network ACL ID.
 func OVNACLPortGroupName(networkACLID int64) openvswitch.OVNPortGroup {
@@ -51,7 +51,7 @@ func OVNACLNetworkPortGroupName(networkACLID int64, networkID int64) openvswitch
 
 // OVNIntSwitchPortGroupName returns the port group name for a Network ID.
 func OVNIntSwitchPortGroupName(networkID int64) openvswitch.OVNPortGroup {
-	return openvswitch.OVNPortGroup(fmt.Sprintf("lxd_net%d", networkID))
+	return openvswitch.OVNPortGroup(fmt.Sprintf("incus_net%d", networkID))
 }
 
 // OVNIntSwitchPortGroupAddressSetPrefix returns the internal switch routes address set prefix for a Network ID.
@@ -61,7 +61,7 @@ func OVNIntSwitchPortGroupAddressSetPrefix(networkID int64) openvswitch.OVNAddre
 
 // OVNNetworkPrefix returns the prefix used for OVN entities related to a Network ID.
 func OVNNetworkPrefix(networkID int64) string {
-	return fmt.Sprintf("lxd-net%d", networkID)
+	return fmt.Sprintf("incus-net%d", networkID)
 }
 
 // OVNIntSwitchName returns the internal logical switch name for a Network ID.
