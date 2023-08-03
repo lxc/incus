@@ -834,7 +834,7 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 		"raw.idmap",
 		"raw.lxc",
 		"raw.seccomp",
-		"security.devlxd.images",
+		"security.guestapi.images",
 		"security.idmap.base",
 		"security.idmap.size",
 	}) {

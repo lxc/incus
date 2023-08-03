@@ -1858,7 +1858,7 @@ func (d *qemu) getAgentConnectionInfo() (*agentAPI.API10Put, error) {
 
 	req := agentAPI.API10Put{
 		Certificate: string(d.state.Endpoints.NetworkCert().PublicKey()),
-		Devlxd:      shared.IsTrueOrEmpty(d.expandedConfig["security.devlxd"]),
+		Devlxd:      shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]),
 		CID:         vsock.Host, // Always tell lxd-agent to connect to LXD using Host Context ID to support nesting.
 		Port:        vsockaddr.Port,
 	}
@@ -5115,7 +5115,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			"limits.memory",
 			"security.agent.metrics",
 			"security.csm",
-			"security.devlxd",
+			"security.guestapi",
 			"security.secureboot",
 		}
 
@@ -5199,7 +5199,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			} else if key == "security.secureboot" {
 				// Defer rebuilding nvram until next start.
 				d.localConfig["volatile.apply_nvram"] = "true"
-			} else if key == "security.devlxd" {
+			} else if key == "security.guestapi" {
 				err = d.advertiseVsockAddress()
 				if err != nil {
 					return err

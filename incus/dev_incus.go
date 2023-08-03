@@ -57,7 +57,7 @@ type devLxdHandler struct {
 }
 
 var devlxdConfigGet = devLxdHandler{"/1.0/config", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.devlxd"]) {
+	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevLxdErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
@@ -72,7 +72,7 @@ var devlxdConfigGet = devLxdHandler{"/1.0/config", func(d *Daemon, c instance.In
 }}
 
 var devlxdConfigKeyGet = devLxdHandler{"/1.0/config/{key}", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.devlxd"]) {
+	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevLxdErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
@@ -94,11 +94,11 @@ var devlxdConfigKeyGet = devLxdHandler{"/1.0/config/{key}", func(d *Daemon, c in
 }}
 
 var devlxdImageExport = devLxdHandler{"/1.0/images/{fingerprint}/export", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.devlxd"]) {
+	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevLxdErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
-	if shared.IsFalseOrEmpty(c.ExpandedConfig()["security.devlxd.images"]) {
+	if shared.IsFalseOrEmpty(c.ExpandedConfig()["security.guestapi.images"]) {
 		return response.DevLxdErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
@@ -116,7 +116,7 @@ var devlxdImageExport = devLxdHandler{"/1.0/images/{fingerprint}/export", func(d
 }}
 
 var devlxdMetadataGet = devLxdHandler{"/1.0/meta-data", func(d *Daemon, inst instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(inst.ExpandedConfig()["security.devlxd"]) {
+	if shared.IsFalse(inst.ExpandedConfig()["security.guestapi"]) {
 		return response.DevLxdErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), inst.Type() == instancetype.VM)
 	}
 
@@ -126,7 +126,7 @@ var devlxdMetadataGet = devLxdHandler{"/1.0/meta-data", func(d *Daemon, inst ins
 }}
 
 var devlxdEventsGet = devLxdHandler{"/1.0/events", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.devlxd"]) {
+	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevLxdErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
@@ -211,7 +211,7 @@ var devlxdAPIHandler = devLxdHandler{"/1.0", func(d *Daemon, c instance.Instance
 
 		return response.DevLxdResponse(http.StatusOK, api.DevLXDGet{APIVersion: version.APIVersion, Location: location, InstanceType: c.Type().String(), DevLXDPut: api.DevLXDPut{State: state.String()}}, "json", c.Type() == instancetype.VM)
 	} else if r.Method == "PATCH" {
-		if shared.IsFalse(c.ExpandedConfig()["security.devlxd"]) {
+		if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 			return response.DevLxdErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 		}
 
@@ -245,7 +245,7 @@ var devlxdAPIHandler = devLxdHandler{"/1.0", func(d *Daemon, c instance.Instance
 }}
 
 var devlxdDevicesGet = devLxdHandler{"/1.0/devices", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.devlxd"]) {
+	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevLxdErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 

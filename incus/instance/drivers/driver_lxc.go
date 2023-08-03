@@ -947,7 +947,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	// Setup devlxd
-	if shared.IsTrueOrEmpty(d.expandedConfig["security.devlxd"]) {
+	if shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]) {
 		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/lxd none bind,create=dir 0 0", shared.VarPath("devlxd")))
 		if err != nil {
 			return nil, err
@@ -4333,7 +4333,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				if err != nil {
 					return err
 				}
-			} else if key == "security.devlxd" {
+			} else if key == "security.guestapi" {
 				if shared.IsTrueOrEmpty(value) {
 					err = d.insertMount(shared.VarPath("devlxd"), "/dev/lxd", "none", unix.MS_BIND, idmap.IdmapStorageNone)
 					if err != nil {
