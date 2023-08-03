@@ -12,14 +12,19 @@ test_remote_url() {
   # shellcheck disable=2153
   urls="${INCUS_DIR}/unix.socket unix:${INCUS_DIR}/unix.socket unix://${INCUS_DIR}/unix.socket"
   if [ -z "${INCUS_OFFLINE:-}" ]; then
-    urls="images.linuxcontainers.org https://images.linuxcontainers.org ${urls}"
+    urls="https://images.linuxcontainers.org ${urls}"
   fi
 
-  # an invalid protocol returns an error
-  ! inc_remote remote add test "${url}" --accept-certificate --password foo --protocol foo || false
-
   for url in ${urls}; do
-    inc_remote remote add test "${url}"
+    # an invalid protocol returns an error
+    ! inc_remote remote add test "${url}" --accept-certificate --password foo --protocol foo || false
+
+    if echo "${url}" | grep -q linuxcontainers.org; then
+      inc_remote remote add test "${url}" --protocol=simplestreams
+    else
+      inc_remote remote add test "${url}"
+    fi
+
     inc_remote remote remove test
   done
 }
