@@ -16,8 +16,8 @@ import (
 	"github.com/cyphar/incus/shared/units"
 )
 
-// tmpVolSuffix Suffix to use for any temporary volumes created by LXD.
-const tmpVolSuffix = ".lxdtmp"
+// tmpVolSuffix Suffix to use for any temporary volumes created by Incus.
+const tmpVolSuffix = ".incustmp"
 
 // isoVolSuffix suffix used for iso content type volumes.
 const isoVolSuffix = ".iso"

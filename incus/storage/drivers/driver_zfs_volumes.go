@@ -174,9 +174,9 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 			opts = []string{"volmode=none"}
 		}
 
-		// Add custom property lxd:content_type which allows distinguishing between regular volumes, block_mode enabled volumes, and ISO volumes.
+		// Add custom property incus:content_type which allows distinguishing between regular volumes, block_mode enabled volumes, and ISO volumes.
 		if vol.volType == VolumeTypeCustom {
-			opts = append(opts, fmt.Sprintf("lxd:content_type=%s", vol.contentType))
+			opts = append(opts, fmt.Sprintf("incus:content_type=%s", vol.contentType))
 		}
 
 		// Avoid double caching in the ARC cache and in the guest OS filesystem cache.
@@ -1087,7 +1087,7 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 	// snapshots that match the requested snapshots in volTargetArgs.Snapshots are kept. Any other snapshot
 	// data sets should be removed.
 	keepDataset := func(dataSetName string) bool {
-		// Keep non-snapshot data sets and snapshots that don't have the LXD snapshot prefix indicator.
+		// Keep non-snapshot data sets and snapshots that don't have the snapshot prefix indicator.
 		dataSetSnapshotPrefix := "@snapshot-"
 		if !strings.HasPrefix(dataSetName, "@") || !strings.HasPrefix(dataSetName, dataSetSnapshotPrefix) {
 			return false
@@ -1792,7 +1792,7 @@ func (d *zfs) GetVolumeDiskPath(vol Volume) (string, error) {
 	return d.getVolumeDiskPathFromDataset(d.dataset(vol, false))
 }
 
-// ListVolumes returns a list of LXD volumes in storage pool.
+// ListVolumes returns a list of volumes in storage pool.
 func (d *zfs) ListVolumes() ([]Volume, error) {
 	vols := make(map[string]Volume)
 
@@ -1802,7 +1802,7 @@ func (d *zfs) ListVolumes() ([]Volume, error) {
 	// However for custom block volumes it does not also end the volume name in zfsBlockVolSuffix (unlike the
 	// LVM and Ceph drivers), so we must also retrieve the dataset type here and look for "volume" types
 	// which also indicate this is a block volume.
-	cmd := exec.Command("zfs", "list", "-H", "-o", "name,type,lxd:content_type", "-r", "-t", "filesystem,volume", d.config["zfs.pool_name"])
+	cmd := exec.Command("zfs", "list", "-H", "-o", "name,type,incus:content_type", "-r", "-t", "filesystem,volume", d.config["zfs.pool_name"])
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -1830,7 +1830,7 @@ func (d *zfs) ListVolumes() ([]Volume, error) {
 
 		zfsVolName := parts[0]
 		zfsContentType := parts[1]
-		lxdContentType := parts[2]
+		incusContentType := parts[2]
 
 		var volType VolumeType
 		var volName string
@@ -1876,9 +1876,9 @@ func (d *zfs) ListVolumes() ([]Volume, error) {
 			v := NewVolume(d, d.name, volType, contentType, volName, make(map[string]string), d.config)
 
 			if isBlock {
-				// Get correct content type from lxd:content_type property.
-				if lxdContentType != "-" {
-					v.contentType = ContentType(lxdContentType)
+				// Get correct content type from incus:content_type property.
+				if incusContentType != "-" {
+					v.contentType = ContentType(incusContentType)
 				}
 
 				if v.contentType == ContentTypeBlock {

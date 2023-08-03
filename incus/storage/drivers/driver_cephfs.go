@@ -135,7 +135,7 @@ func (d *cephfs) Create() error {
 	}
 
 	// Create a temporary mountpoint.
-	mountPath, err := os.MkdirTemp("", "lxd_cephfs_")
+	mountPath, err := os.MkdirTemp("", "incus_cephfs_")
 	if err != nil {
 		return fmt.Errorf("Failed to create temporary directory under: %w", err)
 	}
@@ -178,7 +178,7 @@ func (d *cephfs) Create() error {
 	// Check that the existing path is empty.
 	ok, _ := shared.PathIsEmpty(filepath.Join(mountPoint, fsPath))
 	if !ok {
-		return fmt.Errorf("Only empty CEPHFS paths can be used as a LXD storage pool")
+		return fmt.Errorf("Only empty CEPHFS paths can be used as a storage pool")
 	}
 
 	return nil
@@ -195,7 +195,7 @@ func (d *cephfs) Delete(op *operations.Operation) error {
 	}
 
 	// Create a temporary mountpoint.
-	mountPath, err := os.MkdirTemp("", "lxd_cephfs_")
+	mountPath, err := os.MkdirTemp("", "incus_cephfs_")
 	if err != nil {
 		return fmt.Errorf("Failed to create temporary directory under: %w", err)
 	}

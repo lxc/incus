@@ -396,11 +396,11 @@ func (d *ceph) rbdListSnapshotClones(vol Volume, snapshotName string) ([]string,
 }
 
 // rbdMarkVolumeDeleted marks an RBD storage volume as being in "zombie" state.
-// An RBD storage volume that is in zombie state is not tracked in LXD's
+// An RBD storage volume that is in zombie state is not tracked in the
 // database anymore but still needs to be kept around for the sake of any
 // dependent storage entities in the storage pool. This usually happens when an
 // RBD storage volume has protected snapshots; a scenario most common when
-// creating a sparse copy of a container or when LXD updated an image and the
+// creating a sparse copy of a container or when it updated an image and the
 // image still has dependent container clones.
 func (d *ceph) rbdMarkVolumeDeleted(vol Volume, newVolumeName string) error {
 	// Ensure that new volume contains the config from the source volume to maintain filesystem suffix on
@@ -706,7 +706,7 @@ func (d *ceph) deleteVolume(vol Volume) (int, error) {
 
 			// Only delete the parent snapshot of the instance if it is a zombie.
 			// This includes both if the parent volume itself is a zombie, or if the just the snapshot
-			// is a zombie. If it is not we know that LXD is still using it.
+			// is a zombie. If it is not we know that Incus is still using it.
 			if strings.HasPrefix(string(parentVol.volType), "zombie_") || strings.HasPrefix(parentSnapshotName, "zombie_") {
 				ret, err := d.deleteVolumeSnapshot(parentVol, parentSnapshotName)
 				if ret < 0 {
@@ -777,7 +777,7 @@ func (d *ceph) deleteVolumeSnapshot(vol Volume, snapshotName string) (int, error
 			return -1, err
 		}
 
-		// Only delete the parent image if it is a zombie. If it is not we know that LXD is still using it.
+		// Only delete the parent image if it is a zombie. If it is not we know that Incus is still using it.
 		if strings.HasPrefix(string(vol.volType), "zombie_") {
 			ret, err := d.deleteVolume(vol)
 			if ret < 0 {
@@ -831,7 +831,7 @@ func (d *ceph) deleteVolumeSnapshot(vol Volume, snapshotName string) (int, error
 		}
 
 		// Only delete the parent image if it is a zombie. If it
-		// is not we know that LXD is still using it.
+		// is not we know that Incus is still using it.
 		if strings.HasPrefix(string(vol.volType), "zombie_") {
 			ret, err := d.deleteVolume(vol)
 			if ret < 0 {
@@ -859,7 +859,7 @@ func (d *ceph) deleteVolumeSnapshot(vol Volume, snapshotName string) (int, error
 }
 
 // parseParent splits a string describing a RBD storage entity into its components.
-// This can be used on strings like: <osd-pool-name>/<lxd-specific-prefix>_<rbd-storage-volume>@<rbd-snapshot-name>
+// This can be used on strings like: <osd-pool-name>/<prefix>_<rbd-storage-volume>@<rbd-snapshot-name>
 // and will return a Volume and snapshot name.
 func (d *ceph) parseParent(parent string) (Volume, string, error) {
 	vol := Volume{}
@@ -930,9 +930,9 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 
 // parseClone splits a strings describing an RBD storage volume.
 // For example a string like
-// <osd-pool-name>/<lxd-specific-prefix>_<rbd-storage-volume>
+// <osd-pool-name>/<prefix>_<rbd-storage-volume>
 // will be split into
-// <osd-pool-name>, <lxd-specific-prefix>, <rbd-storage-volume>.
+// <osd-pool-name>, <prefix>, <rbd-storage-volume>.
 func (d *ceph) parseClone(clone string) (string, string, string, error) {
 	idx := strings.Index(clone, "/")
 	if idx == -1 {
@@ -1101,7 +1101,7 @@ func (d *ceph) getRBDVolumeName(vol Volume, snapName string, zombie bool, withPo
 }
 
 // Let's say we want to send the a container "a" including snapshots "snap0" and
-// "snap1" on storage pool "pool1" from LXD "l1" to LXD "l2" on storage pool
+// "snap1" on storage pool "pool1" from Incus "l1" to Incus "l2" on storage pool
 // "pool2":
 //
 // The pool layout on "l1" would be:
@@ -1114,7 +1114,7 @@ func (d *ceph) getRBDVolumeName(vol Volume, snapName string, zombie bool, withPo
 //
 //	rbd export-diff pool1/container_a@snapshot_snap0 - | rbd import-diff - pool2/container_a
 //
-// (Note that pool2/container_a must have been created by the receiving LXD
+// (Note that pool2/container_a must have been created by the receiving Incus
 // instance before.)
 //
 //	rbd export-diff pool1/container_a@snapshot_snap1 --from-snap snapshot_snap0 - | rbd import-diff - pool2/container_a

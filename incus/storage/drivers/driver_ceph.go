@@ -92,9 +92,9 @@ func (d *ceph) Info() Info {
 	}
 }
 
-// getPlaceholderVolume returns the volume used to indicate if the pool is used by LXD.
+// getPlaceholderVolume returns the volume used to indicate if the pool is in use.
 func (d *ceph) getPlaceholderVolume() Volume {
-	return NewVolume(d, d.name, VolumeType("lxd"), ContentTypeFS, d.config["ceph.osd.pool_name"], nil, nil)
+	return NewVolume(d, d.name, VolumeType("incus"), ContentTypeFS, d.config["ceph.osd.pool_name"], nil, nil)
 }
 
 // FillConfig populates the storage pool's configuration file with the default values.
@@ -177,8 +177,8 @@ func (d *ceph) Create() error {
 			d.logger.Warn("Failed to initialize pool", logger.Ctx{"pool": d.config["ceph.osd.pool_name"], "cluster": d.config["ceph.cluster_name"]})
 		}
 
-		// Create placeholder storage volume. Other LXD instances will use this to detect whether this osd
-		// pool is already in use by another LXD instance.
+		// Create placeholder storage volume. Other instances will use this to detect whether this osd
+		// pool is already in use by another instance.
 		err = d.rbdCreateVolume(placeholderVol, "0")
 		if err != nil {
 			return err
@@ -193,15 +193,15 @@ func (d *ceph) Create() error {
 
 		if volExists {
 			// ceph.osd.force_reuse is deprecated and should not be used. OSD pools are a logical
-			// construct there is no good reason not to create one for dedicated use by LXD.
+			// construct there is no good reason not to create one for dedicated use by the daemon.
 			if shared.IsFalseOrEmpty(d.config["ceph.osd.force_reuse"]) {
-				return fmt.Errorf("Pool '%s' in cluster '%s' seems to be in use by another LXD instance. Use 'ceph.osd.force_reuse=true' to force", d.config["ceph.osd.pool_name"], d.config["ceph.cluster_name"])
+				return fmt.Errorf("Pool '%s' in cluster '%s' seems to be in use by another Incus instance. Use 'ceph.osd.force_reuse=true' to force", d.config["ceph.osd.pool_name"], d.config["ceph.cluster_name"])
 			}
 
 			d.config["volatile.pool.pristine"] = "false"
 		} else {
-			// Create placeholder storage volume. Other LXD instances will use this to detect whether this osd
-			// pool is already in use by another LXD instance.
+			// Create placeholder storage volume. Other instances will use this to detect whether this osd
+			// pool is already in use by another instance.
 			err := d.rbdCreateVolume(placeholderVol, "0")
 			if err != nil {
 				return err

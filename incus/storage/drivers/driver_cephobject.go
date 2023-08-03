@@ -18,7 +18,7 @@ var cephobjectVersion string
 var cephobjectLoaded bool
 
 // cephobjectRadosgwAdminUser admin user in radosgw.
-const cephobjectRadosgwAdminUser = "lxd-admin"
+const cephobjectRadosgwAdminUser = "incus-admin"
 
 type cephobject struct {
 	common

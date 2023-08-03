@@ -75,7 +75,7 @@ func (d *dir) Create() error {
 	// Check that if within INCUS_DIR, we're at our expected spot.
 	cleanSource := filepath.Clean(sourcePath)
 	if strings.HasPrefix(cleanSource, shared.VarPath()) && cleanSource != GetPoolMountPath(d.name) {
-		return fmt.Errorf("Source path '%s' is within the LXD directory", cleanSource)
+		return fmt.Errorf("Source path '%s' is within the Incus directory", cleanSource)
 	}
 
 	// Check that the path is currently empty.

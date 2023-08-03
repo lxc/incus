@@ -338,7 +338,7 @@ func (d *cephfs) GetVolumeDiskPath(vol Volume) (string, error) {
 	return "", ErrNotSupported
 }
 
-// ListVolumes returns a list of LXD volumes in storage pool.
+// ListVolumes returns a list of volumes in storage pool.
 func (d *cephfs) ListVolumes() ([]Volume, error) {
 	return genericVFSListVolumes(d)
 }

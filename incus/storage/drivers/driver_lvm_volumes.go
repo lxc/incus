@@ -512,7 +512,7 @@ func (d *lvm) GetVolumeDiskPath(vol Volume) (string, error) {
 	return "", ErrNotSupported
 }
 
-// ListVolumes returns a list of LXD volumes in storage pool.
+// ListVolumes returns a list of volumes in storage pool.
 func (d *lvm) ListVolumes() ([]Volume, error) {
 	vols := make(map[string]Volume)
 
@@ -565,7 +565,7 @@ func (d *lvm) ListVolumes() ([]Volume, error) {
 			continue // Ignore VM filesystem volumes as we will just return the VM's block volume.
 		}
 
-		// Unescape raw LVM name to LXD storage volume name. Safe to do now we know we are not dealing
+		// Unescape raw LVM name to storage volume name. Safe to do now we know we are not dealing
 		// with snapshot volumes.
 		volName = strings.Replace(volName, lvmEscapedHyphen, "-", -1)
 

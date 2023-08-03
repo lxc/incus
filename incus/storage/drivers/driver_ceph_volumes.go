@@ -1060,7 +1060,7 @@ func (d *ceph) GetVolumeDiskPath(vol Volume) (string, error) {
 	return "", ErrNotSupported
 }
 
-// ListVolumes returns a list of LXD volumes in storage pool.
+// ListVolumes returns a list of volumes in storage pool.
 func (d *ceph) ListVolumes() ([]Volume, error) {
 	vols := make(map[string]Volume)
 

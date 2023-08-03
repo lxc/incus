@@ -1081,7 +1081,7 @@ func genericVFSCopyVolume(d Driver, initVolume func(vol Volume) (revert.Hook, er
 	return nil
 }
 
-// genericVFSListVolumes returns a list of LXD volumes in storage pool.
+// genericVFSListVolumes returns a list of volumes in storage pool.
 func genericVFSListVolumes(d Driver) ([]Volume, error) {
 	var vols []Volume
 	poolName := d.Name()

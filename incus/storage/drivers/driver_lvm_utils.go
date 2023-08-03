@@ -721,7 +721,7 @@ func (d *lvm) thinPoolVolumeUsage(volDevPath string) (uint64, uint64, error) {
 
 // parseLogicalVolumeSnapshot parses a raw logical volume name (from lvs command) and checks whether it is a
 // snapshot of the supplied parent volume. Returns unescaped parsed snapshot name if snapshot volume recognised,
-// empty string if not. The parent is required due to limitations in the naming scheme that LXD has historically
+// empty string if not. The parent is required due to limitations in the naming scheme that Incus has historically
 // been used for naming logical volumes meaning that additional context of the parent is required to accurately
 // recognise snapshot volumes that belong to the parent.
 func (d *lvm) parseLogicalVolumeSnapshot(parent Volume, lvmVolName string) string {

@@ -49,7 +49,7 @@ func CephGetRBDImageName(vol Volume, snapName string, zombie bool) string {
 		}
 	}
 
-	// If the volume is to be in zombie state (i.e. not tracked by the LXD database),
+	// If the volume is to be in zombie state (i.e. not tracked in the database),
 	// prefix the output with "zombie_".
 	if zombie {
 		out = fmt.Sprintf("zombie_%s", out)

@@ -258,7 +258,7 @@ func (d *common) ApplyPatch(name string) error {
 // moveGPTAltHeader moves the GPT alternative header to the end of the disk device supplied.
 // If the device supplied is not detected as not being a GPT disk then no action is taken and nil is returned.
 // If the required sgdisk command is not available a warning is logged, but no error is returned, as really it is
-// the job of the VM quest to ensure the partitions are resized to the size of the disk (as LXD does not dicatate
+// the job of the VM quest to ensure the partitions are resized to the size of the disk (as Incus does not dictate
 // what partition structure (if any) the disk should have. However we do attempt to move the GPT alternative
 // header where possible so that the backup header is where it is expected in case of any corruption with the
 // primary header.
@@ -367,7 +367,7 @@ func (d *common) GetVolumeDiskPath(vol Volume) (string, error) {
 	return "", ErrNotSupported
 }
 
-// ListVolumes returns a list of LXD volumes in storage pool.
+// ListVolumes returns a list of volumes in storage pool.
 func (d *common) ListVolumes() ([]Volume, error) {
 	return nil, ErrNotSupported
 }
