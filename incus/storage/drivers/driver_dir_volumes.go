@@ -361,7 +361,7 @@ func (d *dir) GetVolumeDiskPath(vol Volume) (string, error) {
 	return genericVFSGetVolumeDiskPath(vol)
 }
 
-// ListVolumes returns a list of LXD volumes in storage pool.
+// ListVolumes returns a list of volumes in storage pool.
 func (d *dir) ListVolumes() ([]Volume, error) {
 	return genericVFSListVolumes(d)
 }

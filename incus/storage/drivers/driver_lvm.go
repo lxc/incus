@@ -19,7 +19,7 @@ import (
 	"github.com/cyphar/incus/shared/validate"
 )
 
-const lvmVgPoolMarker = "lxd_pool" // Indicator tag used to mark volume groups as in use by LXD.
+const lvmVgPoolMarker = "incus_pool" // Indicator tag used to mark volume groups as in use.
 
 var lvmLoaded bool
 var lvmVersion string
@@ -132,7 +132,7 @@ func (d *lvm) Create() error {
 	if d.config["source"] == "" || d.config["source"] == defaultSource {
 		usingLoopFile = true
 
-		// We are using a LXD internal loopback file.
+		// We are using an internal loopback file.
 		d.config["source"] = defaultSource
 		if d.config["lvm.vg_name"] == "" {
 			d.config["lvm.vg_name"] = d.name
@@ -302,18 +302,18 @@ func (d *lvm) Create() error {
 		}
 
 		// Skip the in use checks if the force reuse option is enabled. This allows a storage pool to be
-		// backed by an existing non-empty volume group. Note: This option should be used with care, as LXD
-		// can then not guarantee that volume name conflicts won't occur with non-LXD created volumes in
-		// the same volume group. This could also potentially lead to LXD deleting a non-LXD volume should
+		// backed by an existing non-empty volume group. Note: This option should be used with care, as Incus
+		// can then not guarantee that volume name conflicts won't occur with non-Incus created volumes in
+		// the same volume group. This could also potentially lead to Incus deleting a non-Incus volume should
 		// name conflicts occur.
 		if shared.IsFalseOrEmpty(d.config["lvm.vg.force_reuse"]) {
 			if !empty {
 				return fmt.Errorf("Volume group %q is not empty", d.config["lvm.vg_name"])
 			}
 
-			// Check the tags on the volume group to check it is not already being used by LXD.
+			// Check the tags on the volume group to check it is not already being used.
 			if shared.StringInSlice(lvmVgPoolMarker, vgTags) {
-				return fmt.Errorf("Volume group %q is already used by LXD", d.config["lvm.vg_name"])
+				return fmt.Errorf("Volume group %q is already used by Incus", d.config["lvm.vg_name"])
 			}
 		}
 	} else {
@@ -370,13 +370,13 @@ func (d *lvm) Create() error {
 		}
 	}
 
-	// Mark the volume group with the lvmVgPoolMarker tag to indicate it is now in use by LXD.
+	// Mark the volume group with the lvmVgPoolMarker tag to indicate it is now in use by Incus.
 	_, err = shared.TryRunCommand("vgchange", "--addtag", lvmVgPoolMarker, d.config["lvm.vg_name"])
 	if err != nil {
 		return err
 	}
 
-	d.logger.Debug("LXD marker tag added to volume group", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
+	d.logger.Debug("Incus marker tag added to volume group", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
 
 	revert.Success()
 	return nil
@@ -457,14 +457,14 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 			d.logger.Debug("Volume group removed", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
 		} else {
-			// Otherwise just remove the lvmVgPoolMarker tag to indicate LXD no longer uses this VG.
+			// Otherwise just remove the lvmVgPoolMarker tag to indicate Incus no longer uses this VG.
 			if shared.StringInSlice(lvmVgPoolMarker, vgTags) {
 				_, err = shared.TryRunCommand("vgchange", "--deltag", lvmVgPoolMarker, d.config["lvm.vg_name"])
 				if err != nil {
 					return fmt.Errorf("Failed to remove marker tag on volume group for the lvm storage pool: %w", err)
 				}
 
-				d.logger.Debug("LXD marker tag removed from volume group", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
+				d.logger.Debug("Incus marker tag removed from volume group", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
 			}
 		}
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/cyphar/incus/shared/logger"
 )
 
-// patchStorageSkipActivation set skipactivation=y on all LXD LVM logical volumes (excluding thin pool volumes).
+// patchStorageSkipActivation set skipactivation=y on all Incus LVM logical volumes (excluding thin pool volumes).
 func (d *lvm) patchStorageSkipActivation() error {
 	out, err := shared.RunCommand("lvs", "--noheadings", "-o", "lv_name,lv_attr", d.config["lvm.vg_name"])
 	if err != nil {
@@ -24,7 +24,7 @@ func (d *lvm) patchStorageSkipActivation() error {
 		volName := fields[0]
 		volAttr := fields[1]
 
-		// Ignore non-LXD prefixes, and thinpool volumes (these should remain auto activated).
+		// Ignore non-Incus prefixes, and thinpool volumes (these should remain auto activated).
 		if !strings.HasPrefix(volName, "images_") && !strings.HasPrefix(volName, "containers_") && !strings.HasPrefix(volName, "virtual-machines_") && !strings.HasPrefix(volName, "custom_") {
 			continue
 		}

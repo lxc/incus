@@ -795,7 +795,7 @@ func OperationLockName(operationName string, poolName string, volType VolumeType
 }
 
 // loopFileSizeDefault returns the size in GiB to use as the default size for a pool loop file.
-// This is based on the size of the filesystem of LXD's VarPath().
+// This is based on the size of the filesystem of daemon's VarPath().
 func loopFileSizeDefault() (uint64, error) {
 	st := unix.Statfs_t{}
 	err := unix.Statfs(shared.VarPath(), &st)

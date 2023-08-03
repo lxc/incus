@@ -207,7 +207,7 @@ func (d *btrfs) Create() error {
 		} else {
 			// New btrfs subvolume on existing btrfs filesystem.
 			cleanSource := filepath.Clean(hostPath)
-			lxdDir := shared.VarPath()
+			daemonDir := shared.VarPath()
 
 			if shared.PathExists(hostPath) {
 				hostPathFS, _ := filesystem.Detect(hostPath)
@@ -216,7 +216,7 @@ func (d *btrfs) Create() error {
 				}
 			}
 
-			if strings.HasPrefix(cleanSource, lxdDir) {
+			if strings.HasPrefix(cleanSource, daemonDir) {
 				if cleanSource != GetPoolMountPath(d.name) {
 					return fmt.Errorf("Only allowed source path under %q is %q", shared.VarPath(), GetPoolMountPath(d.name))
 				}

@@ -262,7 +262,7 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 
 	var copyOps []btrfsCopyOp
 
-	// unpackVolume unpacks all subvolumes in a LXD volume from a backup tarball file.
+	// unpackVolume unpacks all subvolumes in a volume from a backup tarball file.
 	unpackVolume := func(v Volume, srcFilePrefix string) error {
 		_, snapName, _ := api.GetParentAndSnapshotName(v.name)
 
@@ -515,7 +515,7 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 
 		d.logger.Debug("Received BTRFS migration meta data header", logger.Ctx{"name": vol.name})
 	} else {
-		// Populate the migrationHeader subvolumes with root volumes only to support older LXD sources.
+		// Populate the migrationHeader subvolumes with root volumes only to support older sources.
 		for _, snapName := range volTargetArgs.Snapshots {
 			migrationHeader.Subvolumes = append(migrationHeader.Subvolumes, BTRFSSubVolume{
 				Snapshot: snapName,
@@ -608,7 +608,7 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 	// received. We don't use a map as the order should be kept.
 	copyOps := []btrfsCopyOp{}
 
-	// receiveVolume receives all subvolumes in a LXD volume from the source.
+	// receiveVolume receives all subvolumes in a volume from the source.
 	receiveVolume := func(v Volume, receivePath string) error {
 		_, snapName, _ := api.GetParentAndSnapshotName(v.name)
 
@@ -653,7 +653,7 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 		return nil
 	}
 
-	// Get instances directory (e.g. /var/lib/lxd/storage-pools/btrfs/containers).
+	// Get instances directory (e.g. /var/lib/incus/storage-pools/btrfs/containers).
 	instancesPath := GetVolumeMountPath(d.name, vol.volType, "")
 
 	// Create a temporary directory which will act as the parent directory of the received ro snapshot.
@@ -1127,7 +1127,7 @@ func (d *btrfs) GetVolumeDiskPath(vol Volume) (string, error) {
 	return genericVFSGetVolumeDiskPath(vol)
 }
 
-// ListVolumes returns a list of LXD volumes in storage pool.
+// ListVolumes returns a list of volumes in storage pool.
 func (d *btrfs) ListVolumes() ([]Volume, error) {
 	return genericVFSListVolumes(d)
 }
@@ -1434,7 +1434,7 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 		}
 	}
 
-	// Get instances directory (e.g. /var/lib/lxd/storage-pools/btrfs/containers).
+	// Get instances directory (e.g. /var/lib/incus/storage-pools/btrfs/containers).
 	instancesPath := GetVolumeMountPath(d.name, vol.volType, "")
 
 	// Create a temporary directory which will act as the parent directory of the read-only snapshot.
