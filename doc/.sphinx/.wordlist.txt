@@ -21,6 +21,7 @@ bibi
 BitLocker
 bool
 bootable
+BPF
 Btrfs
 bugfix
 bugfixes
