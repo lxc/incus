@@ -948,7 +948,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup devlxd
 	if shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]) {
-		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/lxd none bind,create=dir 0 0", shared.VarPath("devlxd")))
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/incus none bind,create=dir 0 0", shared.VarPath("devlxd")))
 		if err != nil {
 			return nil, err
 		}
@@ -4335,7 +4335,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				}
 			} else if key == "security.guestapi" {
 				if shared.IsTrueOrEmpty(value) {
-					err = d.insertMount(shared.VarPath("devlxd"), "/dev/lxd", "none", unix.MS_BIND, idmap.IdmapStorageNone)
+					err = d.insertMount(shared.VarPath("devlxd"), "/dev/incus", "none", unix.MS_BIND, idmap.IdmapStorageNone)
 					if err != nil {
 						return err
 					}
@@ -4348,14 +4348,14 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 					defer func() { _ = files.Close() }()
 
-					_, err = files.Lstat("/dev/lxd")
+					_, err = files.Lstat("/dev/incus")
 					if err == nil {
-						err = d.removeMount("/dev/lxd")
+						err = d.removeMount("/dev/incus")
 						if err != nil {
 							return err
 						}
 
-						err = files.Remove("/dev/lxd")
+						err = files.Remove("/dev/incus")
 						if err != nil {
 							return err
 						}

@@ -315,7 +315,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 
 	// Devlxd unix socket credentials on main API.
 	if r.RemoteAddr == "@devlxd" {
-		return false, "", "", fmt.Errorf("Main API query can't come from /dev/lxd socket")
+		return false, "", "", fmt.Errorf("Main API query can't come from /dev/incus socket")
 	}
 
 	// Cluster notification with wrong certificate.
