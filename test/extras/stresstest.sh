@@ -19,7 +19,7 @@ if [ -n "$INCUS_DEBUG" ]; then
     debug=--debug
 fi
 
-echo "==> Running the LXD testsuite"
+echo "==> Running the Incus testsuite"
 
 BASEURL=https://127.0.0.1:18443
 my_curl() {
@@ -31,9 +31,9 @@ wait_for() {
   my_curl "$BASEURL$op/wait"
 }
 
-lxc() {
+inc() {
     INJECTED=0
-    CMD="$(command -v lxc)"
+    CMD="$(command -v inc)"
     for arg in "${@}"; do
         if [ "$arg" = "--" ]; then
             INJECTED=1
@@ -60,9 +60,9 @@ cleanup() {
         wait_for my_curl -X PUT "$BASEURL$line/state" -d "{\"action\":\"stop\",\"force\":true}"
     done
 
-    # kill the lxds which share our pgrp as parent
+    # kill the daemons which share our pgrp as parent
     mygrp="$(awk '{ print $5 }' /proc/self/stat)"
-    for p in $(pidof lxd); do
+    for p in $(pidof incus); do
         pgrp="$(awk '{ print $5 }' "/proc/$p/stat")"
         if [ "$pgrp" = "$mygrp" ]; then
           do_kill_incus "$p"
@@ -81,12 +81,12 @@ cleanup() {
 
 trap cleanup EXIT HUP INT TERM
 
-if ! command -v lxc > /dev/null; then
-    echo "==> Couldn't find lxc" && false
+if ! command -v inc > /dev/null; then
+    echo "==> Couldn't find inc" && false
 fi
 
 spawn_incus() {
-  # INCUS_DIR is local here because since `lxc` is actually a function, it
+  # INCUS_DIR is local here because since `inc` is actually a function, it
   # overwrites the environment and we would lose INCUS_DIR's value otherwise.
   local INCUS_DIR
 
@@ -94,17 +94,17 @@ spawn_incus() {
   incusdir=$2
   shift
   shift
-  echo "==> Spawning lxd on $addr in $incusdir"
-  INCUS_DIR="$incusdir" lxd "${debug}" "${@}" > "$incusdir/lxd.log" 2>&1 &
+  echo "==> Spawning incus on $addr in $incusdir"
+  INCUS_DIR="$incusdir" incus "${debug}" "${@}" > "$incusdir/incus.log" 2>&1 &
 
-  echo "==> Confirming lxd on $addr is responsive"
-  INCUS_DIR="$incusdir" lxd waitready
+  echo "==> Confirming incus on $addr is responsive"
+  INCUS_DIR="$incusdir" incus waitready
 
   echo "==> Binding to network"
-  INCUS_DIR="$incusdir" lxc config set core.https_address "$addr"
+  INCUS_DIR="$incusdir" inc config set core.https_address "$addr"
 
   echo "==> Setting trust password"
-  INCUS_DIR="$incusdir" lxc config set core.trust_password foo
+  INCUS_DIR="$incusdir" inc config set core.trust_password foo
 }
 
 spawn_incus 127.0.0.1:18443 "$INCUS_DIR"
@@ -114,10 +114,10 @@ if [ ! -e "$INCUS_TEST_IMAGE" ]; then
     echo "Please define INCUS_TEST_IMAGE"
     false
 fi
-lxc image import "$INCUS_TEST_IMAGE" --alias busybox
+inc image import "$INCUS_TEST_IMAGE" --alias busybox
 
-lxc image list
-lxc list
+inc image list
+inc list
 
 NUMCREATES=5
 createthread() {
@@ -126,7 +126,7 @@ createthread() {
         echo "createthread: starting loop $i out of $NUMCREATES"
         declare -a pids
         for j in $(seq 20); do
-            lxc launch busybox "b.$i.$j" &
+            inc launch busybox "b.$i.$j" &
             pids[$j]=$!
         done
         for j in $(seq 20); do
@@ -135,7 +135,7 @@ createthread() {
         done
         echo "createthread: deleting..."
         for j in $(seq 20); do
-            lxc delete "b.$i.$j" &
+            inc delete "b.$i.$j" &
             pids[$j]=$!
         done
         for j in $(seq 20); do
@@ -149,7 +149,7 @@ createthread() {
 listthread() {
     echo "listthread: I am $$"
     while true; do
-        lxc list
+        inc list
         sleep 2s
     done
     exit 0
@@ -158,9 +158,9 @@ listthread() {
 configthread() {
     echo "configthread: I am $$"
     for i in $(seq 20); do
-        lxc profile create "p$i"
-        lxc profile set "p$i" limits.memory 100MiB
-        lxc profile delete "p$i"
+        inc profile create "p$i"
+        inc profile set "p$i" limits.memory 100MiB
+        inc profile delete "p$i"
     done
     exit 0
 }
@@ -168,14 +168,14 @@ configthread() {
 disturbthread() {
     echo "disturbthread: I am $$"
     while true; do
-        lxc profile create empty
-        lxc init busybox disturb1
-        lxc profile assign disturb1 empty
-        lxc start disturb1
-        lxc exec disturb1 -- ps -ef
-        lxc stop disturb1 --force
-        lxc delete disturb1
-        lxc profile delete empty
+        inc profile create empty
+        inc init busybox disturb1
+        inc profile assign disturb1 empty
+        inc start disturb1
+        inc exec disturb1 -- ps -ef
+        inc stop disturb1 --force
+        inc delete disturb1
+        inc profile delete empty
     done
     exit 0
 }

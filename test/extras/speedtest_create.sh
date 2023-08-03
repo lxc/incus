@@ -19,7 +19,7 @@ fi
 
 PIDS=""
 for c in $(seq "$count"); do
-  lxc init busybox "${CNAME}${c}" 2>&1 &
+  inc init busybox "${CNAME}${c}" 2>&1 &
   PIDS="$PIDS $!"
 done
 
@@ -27,12 +27,12 @@ for pid in $PIDS; do
   wait "$pid"
 done
 
-echo -e "\nlxc list: All shutdown"
-time lxc list 1>/dev/null
+echo -e "\ninc list: All shutdown"
+time inc list 1>/dev/null
 
 PIDS=""
 for c in $(seq "$count"); do
-  lxc start "${CNAME}${c}" 2>&1 &
+  inc start "${CNAME}${c}" 2>&1 &
   PIDS="$PIDS $!"
 done
 
@@ -40,7 +40,7 @@ for pid in $PIDS; do
   wait "$pid"
 done
 
-echo -e "\nlxc list: All started"
-time lxc list 1>/dev/null
+echo -e "\ninc list: All started"
+time inc list 1>/dev/null
 
 echo -e "\nRun completed"
