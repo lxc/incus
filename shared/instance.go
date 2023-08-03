@@ -126,7 +126,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	"raw.apparmor": validate.IsAny,
 	"raw.idmap":    validate.IsAny,
 
-	"security.devlxd":            validate.Optional(validate.IsBool),
+	"security.guestapi":          validate.Optional(validate.IsBool),
 	"security.protection.delete": validate.Optional(validate.IsBool),
 
 	"snapshots.schedule":         validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly", "@startup", "@never"})),
@@ -211,7 +211,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"raw.lxc":     validate.IsAny,
 	"raw.seccomp": validate.IsAny,
 
-	"security.devlxd.images": validate.Optional(validate.IsBool),
+	"security.guestapi.images": validate.Optional(validate.IsBool),
 
 	"security.idmap.base":     validate.Optional(validate.IsUint32),
 	"security.idmap.isolated": validate.Optional(validate.IsBool),
