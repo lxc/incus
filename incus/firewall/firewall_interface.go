@@ -6,7 +6,7 @@ import (
 	drivers "github.com/cyphar/incus/incus/firewall/drivers"
 )
 
-// Firewall represents a LXD firewall.
+// Firewall represents a Incus firewall.
 type Firewall interface {
 	String() string
 	Compat() (bool, error)
