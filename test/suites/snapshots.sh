@@ -3,14 +3,14 @@ test_snapshots() {
 
   if [ "$(storage_backend "$INCUS_DIR")" = "lvm" ]; then
     # Test that non-thinpool lvm backends work fine with snaphots.
-    lxc storage create "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots" lvm lvm.use_thinpool=false volume.size=25MiB
-    lxc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots"
+    inc storage create "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots" lvm lvm.use_thinpool=false volume.size=25MiB
+    inc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots"
 
     snapshots
 
-    lxc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")"
+    inc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")"
 
-    lxc storage delete "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots"
+    inc storage delete "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snapshots"
   fi
 }
 
@@ -22,44 +22,44 @@ snapshots() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  lxc init testimage foo
+  inc init testimage foo
 
-  lxc snapshot foo
+  inc snapshot foo
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ -d "${INCUS_DIR}/snapshots/foo/snap0" ]
   fi
 
-  lxc snapshot foo
+  inc snapshot foo
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ -d "${INCUS_DIR}/snapshots/foo/snap1" ]
   fi
 
-  lxc snapshot foo tester
+  inc snapshot foo tester
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ -d "${INCUS_DIR}/snapshots/foo/tester" ]
   fi
 
-  lxc copy foo/tester foosnap1
+  inc copy foo/tester foosnap1
   # FIXME: make this backend agnostic
   if [ "$incus_backend" != "lvm" ] && [ "${incus_backend}" != "zfs" ] && [ "$incus_backend" != "ceph" ]; then
     [ -d "${INCUS_DIR}/containers/foosnap1/rootfs" ]
   fi
 
-  lxc delete foo/snap0
+  inc delete foo/snap0
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ ! -d "${INCUS_DIR}/snapshots/foo/snap0" ]
   fi
 
   # test deleting multiple snapshots
-  lxc snapshot foo snap2
-  lxc snapshot foo snap3
-  lxc delete foo/snap2 foo/snap3
-  ! lxc info foo | grep -q snap2 || false
-  ! lxc info foo | grep -q snap3 || false
+  inc snapshot foo snap2
+  inc snapshot foo snap3
+  inc delete foo/snap2 foo/snap3
+  ! inc info foo | grep -q snap2 || false
+  ! inc info foo | grep -q snap3 || false
 
   # no CLI for this, so we use the API directly (rename a snapshot)
   wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/containers/foo/snapshots/tester" -d "{\"name\":\"tester2\"}"
@@ -68,19 +68,19 @@ snapshots() {
     [ ! -d "${INCUS_DIR}/snapshots/foo/tester" ]
   fi
 
-  lxc move foo/tester2 foo/tester-two
-  lxc delete foo/tester-two
+  inc move foo/tester2 foo/tester-two
+  inc delete foo/tester-two
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ ! -d "${INCUS_DIR}/snapshots/foo/tester-two" ]
   fi
 
-  lxc snapshot foo namechange
+  inc snapshot foo namechange
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ -d "${INCUS_DIR}/snapshots/foo/namechange" ]
   fi
-  lxc move foo foople
+  inc move foo foople
   [ ! -d "${INCUS_DIR}/containers/foo" ]
   [ -d "${INCUS_DIR}/containers/foople" ]
   # FIXME: make this backend agnostic
@@ -89,8 +89,8 @@ snapshots() {
     [ -d "${INCUS_DIR}/snapshots/foople/namechange" ]
   fi
 
-  lxc delete foople
-  lxc delete foosnap1
+  inc delete foople
+  inc delete foosnap1
   [ ! -d "${INCUS_DIR}/containers/foople" ]
   [ ! -d "${INCUS_DIR}/containers/foosnap1" ]
 }
@@ -100,14 +100,14 @@ test_snap_restore() {
 
   if [ "$(storage_backend "$INCUS_DIR")" = "lvm" ]; then
     # Test that non-thinpool lvm backends work fine with snaphots.
-    lxc storage create "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore" lvm lvm.use_thinpool=false volume.size=25MiB
-    lxc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore"
+    inc storage create "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore" lvm lvm.use_thinpool=false volume.size=25MiB
+    inc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore"
 
     snap_restore
 
-    lxc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")"
+    inc profile device set default root pool "incustest-$(basename "${INCUS_DIR}")"
 
-    lxc storage delete "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore"
+    inc storage delete "incustest-$(basename "${INCUS_DIR}")-non-thinpool-lvm-snap-restore"
   fi
 }
 
@@ -126,64 +126,64 @@ snap_restore() {
   ## create some state we will check for when snapshot is restored
 
   ## prepare snap0
-  lxc launch testimage bar
+  inc launch testimage bar
   echo snap0 > state
-  lxc file push state bar/root/state
-  lxc file push state bar/root/file_only_in_snap0
-  lxc exec bar -- mkdir /root/dir_only_in_snap0
-  lxc exec bar -- ln -s file_only_in_snap0 /root/statelink
-  lxc stop bar --force
+  inc file push state bar/root/state
+  inc file push state bar/root/file_only_in_snap0
+  inc exec bar -- mkdir /root/dir_only_in_snap0
+  inc exec bar -- ln -s file_only_in_snap0 /root/statelink
+  inc stop bar --force
 
   # Get container's pool.
-  pool=$(lxc config profile device get default root pool)
+  pool=$(inc config profile device get default root pool)
 
-  lxc storage volume set "${pool}" container/bar user.foo=snap0
+  inc storage volume set "${pool}" container/bar user.foo=snap0
 
   # Check parent volume.block.filesystem is copied to snapshot and not from pool.
   if [ "$incus_backend" = "lvm" ] || [ "$incus_backend" = "ceph" ]; then
     # Change pool volume.block.filesystem setting after creation of instance and before snapshot.
-    lxc storage set "${pool}" volume.block.filesystem=xfs
+    inc storage set "${pool}" volume.block.filesystem=xfs
   fi
 
-  lxc snapshot bar snap0
+  inc snapshot bar snap0
 
   ## prepare snap1
-  lxc start bar
+  inc start bar
   echo snap1 > state
-  lxc file push state bar/root/state
-  lxc file push state bar/root/file_only_in_snap1
+  inc file push state bar/root/state
+  inc file push state bar/root/file_only_in_snap1
 
-  lxc exec bar -- rmdir /root/dir_only_in_snap0
-  lxc exec bar -- rm /root/file_only_in_snap0
-  lxc exec bar -- rm /root/statelink
-  lxc exec bar -- ln -s file_only_in_snap1 /root/statelink
-  lxc exec bar -- mkdir /root/dir_only_in_snap1
-  initialUUID=$(lxc config get bar volatile.uuid)
-  initialGenerationID=$(lxc config get bar volatile.uuid.generation)
-  lxc stop bar --force
-  lxc storage volume set "${pool}" container/bar user.foo=snap1
+  inc exec bar -- rmdir /root/dir_only_in_snap0
+  inc exec bar -- rm /root/file_only_in_snap0
+  inc exec bar -- rm /root/statelink
+  inc exec bar -- ln -s file_only_in_snap1 /root/statelink
+  inc exec bar -- mkdir /root/dir_only_in_snap1
+  initialUUID=$(inc config get bar volatile.uuid)
+  initialGenerationID=$(inc config get bar volatile.uuid.generation)
+  inc stop bar --force
+  inc storage volume set "${pool}" container/bar user.foo=snap1
 
   # Delete the state file we created to prevent leaking.
   rm state
 
-  lxc config set bar limits.cpu 1
+  inc config set bar limits.cpu 1
 
-  lxc snapshot bar snap1
-  lxc storage volume set "${pool}" container/bar user.foo=postsnaps
+  inc snapshot bar snap1
+  inc storage volume set "${pool}" container/bar user.foo=postsnaps
 
   # Check volume.block.filesystem on storage volume in parent and snapshot match.
   if [ "${incus_backend}" = "lvm" ] || [ "${incus_backend}" = "ceph" ]; then
     # Change pool volume.block.filesystem setting after creation of instance and before snapshot.
-    pool=$(lxc config profile device get default root pool)
-    parentFS=$(lxc storage volume get "${pool}" container/bar block.filesystem)
-    snapFS=$(lxc storage volume get "${pool}" container/bar/snap0 block.filesystem)
+    pool=$(inc config profile device get default root pool)
+    parentFS=$(inc storage volume get "${pool}" container/bar block.filesystem)
+    snapFS=$(inc storage volume get "${pool}" container/bar/snap0 block.filesystem)
 
     if [ "${parentFS}" != "${snapFS}" ]; then
       echo "block.filesystem settings do not match in parent and snapshot"
       false
     fi
 
-    lxc storage unset "${pool}" volume.block.filesystem
+    inc storage unset "${pool}" volume.block.filesystem
   fi
 
   ##########################################################
@@ -194,14 +194,14 @@ snap_restore() {
     restore_and_compare_fs snap0
 
     # Check container config has been restored (limits.cpu is unset)
-    cpus=$(lxc config get bar limits.cpu)
+    cpus=$(inc config get bar limits.cpu)
     if [ -n "${cpus}" ]; then
       echo "==> config didn't match expected value after restore (${cpus})"
       false
     fi
 
     # Check storage volume has been restored (user.foo=snap0)
-    lxc storage volume get "${pool}" container/bar user.foo | grep -Fx "snap0"
+    inc storage volume get "${pool}" container/bar user.foo | grep -Fx "snap0"
   fi
 
   ##########################################################
@@ -210,14 +210,14 @@ snap_restore() {
   restore_and_compare_fs snap1
 
   # Check that instances UUID remain the same before and after snapshoting
-  newUUID=$(lxc config get bar volatile.uuid)
+  newUUID=$(inc config get bar volatile.uuid)
   if [ "${initialUUID}" != "${newUUID}" ]; then
     echo "==> UUID of the instance should remain the same after restoring its snapshot"
     false
   fi
 
   # Check that the generation UUID from before changes compared to the one after snapshoting
-  newGenerationID=$(lxc config get bar volatile.uuid.generation)
+  newGenerationID=$(inc config get bar volatile.uuid.generation)
   if [ "${initialGenerationID}" = "${newGenerationID}" ]; then
     echo "==> Generation UUID of the instance should change after restoring its snapshot"
     false
@@ -227,84 +227,84 @@ snap_restore() {
   if ! command -v criu >/dev/null 2>&1; then
     echo "==> SKIP: stateful snapshotting with CRIU (missing binary)"
   else
-    initialUUID=$(lxc config get bar volatile.uuid)
-    initialGenerationID=$(lxc config get bar volatile.uuid.generation)
-    lxc start bar
-    lxc snapshot bar snap2 --stateful
+    initialUUID=$(inc config get bar volatile.uuid)
+    initialGenerationID=$(inc config get bar volatile.uuid.generation)
+    inc start bar
+    inc snapshot bar snap2 --stateful
     restore_and_compare_fs snap2
 
-    newUUID=$(lxc config get bar volatile.uuid)
+    newUUID=$(inc config get bar volatile.uuid)
     if [ "${initialUUID}" != "${newUUID}" ]; then
       echo "==> UUID of the instance should remain the same after restoring its stateful snapshot"
       false
     fi
 
-    newGenerationID=$(lxc config get bar volatile.uuid.generation)
+    newGenerationID=$(inc config get bar volatile.uuid.generation)
     if [ "${initialGenerationID}" = "${newGenerationID}" ]; then
       echo "==> Generation UUID of the instance should change after restoring its stateful snapshot"
       false
     fi
 
-    lxc stop bar --force
+    inc stop bar --force
   fi
 
   # Check that instances have two different UUID after a snapshot copy
-  lxc launch testimage bar2
-  initialUUID=$(lxc config get bar2 volatile.uuid)
-  initialGenerationID=$(lxc config get bar2 volatile.uuid.generation)
-  lxc copy bar2 bar3
-  newUUID=$(lxc config get bar3 volatile.uuid)
-  newGenerationID=$(lxc config get bar3 volatile.uuid.generation)
+  inc launch testimage bar2
+  initialUUID=$(inc config get bar2 volatile.uuid)
+  initialGenerationID=$(inc config get bar2 volatile.uuid.generation)
+  inc copy bar2 bar3
+  newUUID=$(inc config get bar3 volatile.uuid)
+  newGenerationID=$(inc config get bar3 volatile.uuid.generation)
 
   if [ "${initialGenerationID}" = "${newGenerationID}" ] || [ "${initialUUID}" = "${newUUID}" ]; then
     echo "==> UUIDs of the instance should be different after copying snapshot into instance"
     false
   fi
 
-  lxc delete --force bar2
-  lxc delete --force bar3
+  inc delete --force bar2
+  inc delete --force bar3
 
   # Check config value in snapshot has been restored
-  cpus=$(lxc config get bar limits.cpu)
+  cpus=$(inc config get bar limits.cpu)
   if [ "${cpus}" != "1" ]; then
    echo "==> config didn't match expected value after restore (${cpus})"
    false
   fi
 
   # Check storage volume has been restored (user.foo=snap0)
-  lxc storage volume get "${pool}" container/bar user.foo | grep -Fx "snap1"
+  inc storage volume get "${pool}" container/bar user.foo | grep -Fx "snap1"
 
   ##########################################################
 
   # Start container and then restore snapshot to verify the running state after restore.
-  lxc start bar
+  inc start bar
 
   if [ "$incus_backend" != "zfs" ]; then
     # see comment above about snap0
     restore_and_compare_fs snap0
 
     # check container is running after restore
-    lxc list | grep bar | grep RUNNING
+    inc list | grep bar | grep RUNNING
   fi
 
-  lxc stop --force bar
+  inc stop --force bar
 
-  lxc delete bar
+  inc delete bar
 
   # Test if container's with hyphen's in their names are treated correctly.
-  lxc launch testimage a-b
-  lxc snapshot a-b base
-  lxc restore a-b base
-  lxc snapshot a-b c-d
-  lxc restore a-b c-d
-  lxc delete -f a-b
+  inc launch testimage a-b
+  inc snapshot a-b base
+  inc restore a-b base
+  inc snapshot a-b c-d
+  inc restore a-b c-d
+  inc delete -f a-b
 }
 
 restore_and_compare_fs() {
   snap=${1}
   echo "==> Restoring ${snap}"
 
-  lxc restore bar "${snap}"
+  inc restore bar "${snap}"
 
   # FIXME: make this backend agnostic
   if [ "$(storage_backend "$INCUS_DIR")" = "dir" ]; then
@@ -321,22 +321,22 @@ test_snap_expiry() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  lxc launch testimage c1
-  lxc snapshot c1
-  lxc config show c1/snap0 | grep -q 'expires_at: 0001-01-01T00:00:00Z'
+  inc launch testimage c1
+  inc snapshot c1
+  inc config show c1/snap0 | grep -q 'expires_at: 0001-01-01T00:00:00Z'
 
-  lxc config set c1 snapshots.expiry '1d'
-  lxc snapshot c1
-  ! lxc config show c1/snap1 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
+  inc config set c1 snapshots.expiry '1d'
+  inc snapshot c1
+  ! inc config show c1/snap1 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
-  lxc copy c1 c2
-  ! lxc config show c2/snap1 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
+  inc copy c1 c2
+  ! inc config show c2/snap1 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
-  lxc snapshot c1 --no-expiry
-  lxc config show c1/snap2 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
+  inc snapshot c1 --no-expiry
+  inc config show c1/snap2 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
-  lxc rm -f c1
-  lxc rm -f c2
+  inc rm -f c1
+  inc rm -f c2
 }
 
 test_snap_schedule() {
@@ -348,22 +348,22 @@ test_snap_schedule() {
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Check we get a snapshot on first start
-  lxc launch testimage c1 -c snapshots.schedule='@startup'
-  lxc launch testimage c2 -c snapshots.schedule='@startup, @daily'
-  lxc launch testimage c3 -c snapshots.schedule='@startup, 10 5,6 * * *'
-  lxc launch testimage c4 -c snapshots.schedule='@startup, 10 5-8 * * *'
-  lxc launch testimage c5 -c snapshots.schedule='@startup, 10 2,5-8/2 * * *'
-  lxc info c1 | grep -q snap0
-  lxc info c2 | grep -q snap0
-  lxc info c3 | grep -q snap0
-  lxc info c4 | grep -q snap0
-  lxc info c5 | grep -q snap0
+  inc launch testimage c1 -c snapshots.schedule='@startup'
+  inc launch testimage c2 -c snapshots.schedule='@startup, @daily'
+  inc launch testimage c3 -c snapshots.schedule='@startup, 10 5,6 * * *'
+  inc launch testimage c4 -c snapshots.schedule='@startup, 10 5-8 * * *'
+  inc launch testimage c5 -c snapshots.schedule='@startup, 10 2,5-8/2 * * *'
+  inc info c1 | grep -q snap0
+  inc info c2 | grep -q snap0
+  inc info c3 | grep -q snap0
+  inc info c4 | grep -q snap0
+  inc info c5 | grep -q snap0
 
   # Check we get a new snapshot on restart
-  lxc restart c1 -f
-  lxc info c1 | grep -q snap1
+  inc restart c1 -f
+  inc info c1 | grep -q snap1
 
-  lxc rm -f c1 c2 c3 c4 c5
+  inc rm -f c1 c2 c3 c4 c5
 }
 
 test_snap_volume_db_recovery() {
@@ -374,20 +374,20 @@ test_snap_volume_db_recovery() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  poolName=$(lxc profile device get default root pool)
+  poolName=$(inc profile device get default root pool)
 
-  lxc init testimage c1
-  lxc snapshot c1
-  lxc snapshot c1
-  lxc start c1
-  lxc stop -f c1
-  lxd sql global 'DELETE FROM storage_volumes_snapshots' # Remove volume snapshot DB records.
-  lxd sql local 'DELETE FROM  patches WHERE name = "storage_missing_snapshot_records"' # Clear patch indicator.
-  ! lxc start c1 || false # Shouldn't be able to start as backup.yaml generation checks for DB consistency.
-  lxd shutdown
+  inc init testimage c1
+  inc snapshot c1
+  inc snapshot c1
+  inc start c1
+  inc stop -f c1
+  incus sql global 'DELETE FROM storage_volumes_snapshots' # Remove volume snapshot DB records.
+  incus sql local 'DELETE FROM  patches WHERE name = "storage_missing_snapshot_records"' # Clear patch indicator.
+  ! inc start c1 || false # Shouldn't be able to start as backup.yaml generation checks for DB consistency.
+  incus shutdown
   respawn_incus "${INCUS_DIR}" true
-  lxc storage volume show "${poolName}" container/c1/snap0 | grep "Auto repaired"
-  lxc storage volume show "${poolName}" container/c1/snap1 | grep "Auto repaired"
-  lxc start c1
-  lxc delete -f c1
+  inc storage volume show "${poolName}" container/c1/snap0 | grep "Auto repaired"
+  inc storage volume show "${poolName}" container/c1/snap1 | grep "Auto repaired"
+  inc start c1
+  inc delete -f c1
 }
