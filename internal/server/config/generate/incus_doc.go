@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -58,6 +59,40 @@ func detectType(s string) any {
 
 	// If all conversions fail, it's a string
 	return s
+}
+
+// sortConfigKeys alphabetically sorts the entries by key (config option key) within each config group.
+func sortConfigKeys(projectEntries map[string][]any) map[string][]any {
+	orderedProjectEntries := make(map[string][]any, len(projectEntries))
+	for groupKey, entries := range projectEntries {
+		var sortedConfigOptionKeysPerGroup []string
+		for _, configEntry := range entries {
+			for k := range configEntry.(map[string]any) {
+				sortedConfigOptionKeysPerGroup = append(sortedConfigOptionKeysPerGroup, k)
+			}
+		}
+
+		sort.Strings(sortedConfigOptionKeysPerGroup)
+		for _, configOptionKey := range sortedConfigOptionKeysPerGroup {
+			for _, configEntry := range entries {
+				c := configEntry.(map[string]any)
+				for k := range c {
+					if k == configOptionKey {
+						_, ok := orderedProjectEntries[groupKey]
+						if !ok {
+							orderedProjectEntries[groupKey] = []any{c}
+						} else {
+							orderedProjectEntries[groupKey] = append(orderedProjectEntries[groupKey], c)
+						}
+
+						break
+					}
+				}
+			}
+		}
+	}
+
+	return orderedProjectEntries
 }
 
 func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, error) {
@@ -190,7 +225,7 @@ func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, er
 		return nil, err
 	}
 
-	yamlDoc.Configs = projectEntries
+	yamlDoc.Configs = sortConfigKeys(projectEntries)
 	data, err := yaml.Marshal(yamlDoc)
 	if err != nil {
 		return nil, fmt.Errorf("Error while marshaling project documentation: %v", err)
