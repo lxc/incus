@@ -104,7 +104,7 @@ _have lxc && {
       nvidia.driver.capabilities nvidia.require.cuda nvidia.require.driver \
       migration.incremental.memory.iterations raw.apparmor raw.idmap raw.qemu \
       raw.qemu.conf raw.lxc raw.seccomp security.idmap.base security.idmap.isolated \
-      security.idmap.size security.devlxd security.devlxd.images \
+      security.idmap.size security.guestapi security.guestapi.images \
       security.nesting security.privileged security.protection.delete \
       security.protection.shift security.secureboot security.csm \
       security.syscalls.allow \
