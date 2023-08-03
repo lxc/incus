@@ -35,7 +35,7 @@ const lvmSnapshotSeparator = "-"
 const lvmEscapedHyphen = "--"
 
 // lvmThinpoolDefaultName is the default name for the thinpool volume.
-const lvmThinpoolDefaultName = "LXDThinPool"
+const lvmThinpoolDefaultName = "IncusThinPool"
 
 // usesThinpool indicates whether the config specifies to use a thin pool or not.
 func (d *lvm) usesThinpool() bool {
