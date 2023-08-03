@@ -1,18 +1,18 @@
 test_init_dump() {
-  # - lxd init --dump
-  LXD_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  chmod +x "${LXD_INIT_DIR}"
-  spawn_lxd "${LXD_INIT_DIR}" false
+  # - incus init --dump
+  INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_INIT_DIR}"
+  spawn_incus "${INCUS_INIT_DIR}" false
 
   (
     set -e
     # shellcheck disable=SC2034
-    LXD_DIR=${LXD_INIT_DIR}
+    INCUS_DIR=${INCUS_INIT_DIR}
 
-    storage_pool="lxdtest-$(basename "${LXD_DIR}")-data"
+    storage_pool="incustest-$(basename "${INCUS_DIR}")-data"
     driver="dir"
 
-    cat <<EOF | lxd init --preseed
+    cat <<EOF | incus init --preseed
 config:
   core.https_address: 127.0.0.1:9999
   images.auto_update_interval: 15
@@ -20,7 +20,7 @@ storage_pools:
 - name: ${storage_pool}
   driver: $driver
 networks:
-- name: lxdt$$
+- name: inct$$
   type: bridge
   config:
     ipv4.address: none
@@ -40,10 +40,10 @@ profiles:
     test0:
       name: test0
       nictype: bridged
-      parent: lxdt$$
+      parent: inct$$
       type: nic
 EOF
-  lxd init --dump > config.yaml
+  incus init --dump > config.yaml
 cat <<EOF > expected.yaml
 config:
   core.https_address: 127.0.0.1:9999
@@ -55,17 +55,17 @@ networks:
     ipv6.address: none
   description: ""
   managed: true
-  name: lxdt$$
+  name: inct$$
   type: bridge
 storage_pools:
 - config:
-    source: ${LXD_DIR}/storage-pools/${storage_pool}
+    source: ${INCUS_DIR}/storage-pools/${storage_pool}
   description: ""
   name: ${storage_pool}
   driver: ${driver}
 profiles:
 - config: {}
-  description: Default LXD profile
+  description: Default Incus profile
   devices:
     eth0:
       name: eth0
@@ -83,7 +83,7 @@ profiles:
     test0:
       name: test0
       nictype: bridged
-      parent: lxdt$$
+      parent: inct$$
       type: nic
   name: test-profile
 
@@ -92,5 +92,5 @@ EOF
   diff -u config.yaml expected.yaml
 )
   rm -f config.yaml expected.yaml
-  kill_lxd "${LXD_INIT_DIR}"
+  kill_incus "${INCUS_INIT_DIR}"
 }

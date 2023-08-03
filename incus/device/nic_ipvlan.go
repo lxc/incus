@@ -233,7 +233,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 	// Record a random host name to use to detach the ipvlan interface back onto the host at stop time so we
 	// can remove it and not have to rely on the kernel to do it when the namespace is destroyed, as this is
 	// not always reliable.
-	saveData["host_name"], err = d.generateHostName("lxd", d.config["hwaddr"])
+	saveData["host_name"], err = d.generateHostName("inc", d.config["hwaddr"])
 	if err != nil {
 		return nil, err
 	}

@@ -1,35 +1,35 @@
-test_devlxd() {
+test_dev_incus() {
   ensure_import_testimage
 
   (
-    cd devlxd-client || return
+    cd dev_incus-client || return
     # Use -buildvcs=false here to prevent git complaining about untrusted directory when tests are run as root.
     go build -tags netgo -v -buildvcs=false ./...
   )
 
-  lxc launch testimage devlxd -c security.devlxd=false
+  inc launch testimage dev-incus -c security.guestapi=false
 
-  ! lxc exec devlxd -- test -S /dev/lxd/sock || false
-  lxc config unset devlxd security.devlxd
-  lxc exec devlxd -- test -S /dev/lxd/sock
-  lxc file push "devlxd-client/devlxd-client" devlxd/bin/
+  ! inc exec dev-incus -- test -S /dev/incus/sock || false
+  inc config unset dev-incus security.guestapi
+  inc exec dev-incus -- test -S /dev/incus/sock
+  inc file push "dev_incus-client/dev_incus-client" dev-incus/bin/
 
-  lxc exec devlxd chmod +x /bin/devlxd-client
+  inc exec dev-incus chmod +x /bin/dev_incus-client
 
-  lxc config set devlxd user.foo bar
-  lxc exec devlxd devlxd-client user.foo | grep bar
+  inc config set dev-incus user.foo bar
+  inc exec dev-incus dev_incus-client user.foo | grep bar
 
-  lxc config set devlxd user.foo "bar %s bar"
-  lxc exec devlxd devlxd-client user.foo | grep "bar %s bar"
+  inc config set dev-incus user.foo "bar %s bar"
+  inc exec dev-incus dev_incus-client user.foo | grep "bar %s bar"
 
-  lxc config set devlxd security.nesting true
-  ! lxc exec devlxd devlxd-client security.nesting | grep true || false
+  inc config set dev-incus security.nesting true
+  ! inc exec dev-incus dev_incus-client security.nesting | grep true || false
 
-  cmd=$(unset -f lxc; command -v lxc)
-  ${cmd} exec devlxd devlxd-client monitor-websocket > "${TEST_DIR}/devlxd-websocket.log" &
+  cmd=$(unset -f inc; command -v inc)
+  ${cmd} exec dev-incus dev_incus-client monitor-websocket > "${TEST_DIR}/dev_incus-websocket.log" &
   client_websocket=$!
 
-  ${cmd} exec devlxd devlxd-client monitor-stream > "${TEST_DIR}/devlxd-stream.log" &
+  ${cmd} exec dev-incus dev_incus-client monitor-stream > "${TEST_DIR}/dev_incus-stream.log" &
   client_stream=$!
 
   (
@@ -62,23 +62,23 @@ timestamp: null
 type: device
 
 EOF
-  ) > "${TEST_DIR}/devlxd.expected"
+  ) > "${TEST_DIR}/dev_incus.expected"
 
   MATCH=0
 
   for _ in $(seq 10); do
-    lxc config set devlxd user.foo bar
-    lxc config set devlxd security.nesting true
+    inc config set dev-incus user.foo bar
+    inc config set dev-incus security.nesting true
 
-    true > "${TEST_DIR}/devlxd-websocket.log"
-    true > "${TEST_DIR}/devlxd-stream.log"
+    true > "${TEST_DIR}/dev_incus-websocket.log"
+    true > "${TEST_DIR}/dev_incus-stream.log"
 
-    lxc config set devlxd user.foo baz
-    lxc config set devlxd security.nesting false
-    lxc config device add devlxd mnt disk source="${TEST_DIR}" path=/mnt
-    lxc config device remove devlxd mnt
+    inc config set dev-incus user.foo baz
+    inc config set dev-incus security.nesting false
+    inc config device add dev-incus mnt disk source="${TEST_DIR}" path=/mnt
+    inc config device remove dev-incus mnt
 
-    if [ "$(tr -d '\0' < "${TEST_DIR}/devlxd-websocket.log" | md5sum | cut -d' ' -f1)" != "$(md5sum "${TEST_DIR}/devlxd.expected" | cut -d' ' -f1)" ] || [ "$(tr -d '\0' < "${TEST_DIR}/devlxd-stream.log" | md5sum | cut -d' ' -f1)" != "$(md5sum "${TEST_DIR}/devlxd.expected" | cut -d' ' -f1)" ]; then
+    if [ "$(tr -d '\0' < "${TEST_DIR}/dev_incus-websocket.log" | md5sum | cut -d' ' -f1)" != "$(md5sum "${TEST_DIR}/dev_incus.expected" | cut -d' ' -f1)" ] || [ "$(tr -d '\0' < "${TEST_DIR}/dev_incus-stream.log" | md5sum | cut -d' ' -f1)" != "$(md5sum "${TEST_DIR}/dev_incus.expected" | cut -d' ' -f1)" ]; then
       sleep 0.5
       continue
     fi
@@ -90,55 +90,55 @@ EOF
   kill -9 "${client_websocket}"
   kill -9 "${client_stream}"
 
-  lxc monitor --type=lifecycle > "${TEST_DIR}/devlxd.log" &
-  monitorDevlxdPID=$!
+  inc monitor --type=lifecycle > "${TEST_DIR}/dev_incus.log" &
+  monitorDevIncusPID=$!
 
   # Test instance Ready state
-  lxc info devlxd | grep -q 'Status: RUNNING'
-  lxc exec devlxd devlxd-client ready-state true
-  [ "$(lxc config get devlxd volatile.last_state.ready)" = "true" ]
+  inc info dev-incus | grep -q 'Status: RUNNING'
+  inc exec dev-incus dev_incus-client ready-state true
+  [ "$(inc config get dev-incus volatile.last_state.ready)" = "true" ]
 
-  grep -Fc "instance-ready" "${TEST_DIR}/devlxd.log" | grep -Fx 1
+  grep -Fc "instance-ready" "${TEST_DIR}/dev_incus.log" | grep -Fx 1
 
-  lxc info devlxd | grep -q 'Status: READY'
-  lxc exec devlxd devlxd-client ready-state false
-  [ "$(lxc config get devlxd volatile.last_state.ready)" = "false" ]
+  inc info dev-incus | grep -q 'Status: READY'
+  inc exec dev-incus dev_incus-client ready-state false
+  [ "$(inc config get dev-incus volatile.last_state.ready)" = "false" ]
 
-  grep -Fc "instance-ready" "${TEST_DIR}/devlxd.log" | grep -Fx 1
+  grep -Fc "instance-ready" "${TEST_DIR}/dev_incus.log" | grep -Fx 1
 
-  lxc info devlxd | grep -q 'Status: RUNNING'
+  inc info dev-incus | grep -q 'Status: RUNNING'
 
-  kill -9 ${monitorDevlxdPID} || true
+  kill -9 ${monitorDevIncusPID} || true
 
-  shutdown_lxd "${LXD_DIR}"
-  respawn_lxd "${LXD_DIR}" true
+  shutdown_incus "${INCUS_DIR}"
+  respawn_incus "${INCUS_DIR}" true
 
   # volatile.last_state.ready should be unset during daemon init
-  [ -z "$(lxc config get devlxd volatile.last_state.ready)" ]
+  [ -z "$(inc config get dev-incus volatile.last_state.ready)" ]
 
-  lxc monitor --type=lifecycle > "${TEST_DIR}/devlxd.log" &
-  monitorDevlxdPID=$!
+  inc monitor --type=lifecycle > "${TEST_DIR}/dev_incus.log" &
+  monitorDevIncusPID=$!
 
-  lxc exec devlxd devlxd-client ready-state true
-  [ "$(lxc config get devlxd volatile.last_state.ready)" = "true" ]
+  inc exec dev-incus dev_incus-client ready-state true
+  [ "$(inc config get dev-incus volatile.last_state.ready)" = "true" ]
 
-  grep -Fc "instance-ready" "${TEST_DIR}/devlxd.log" | grep -Fx 1
+  grep -Fc "instance-ready" "${TEST_DIR}/dev_incus.log" | grep -Fx 1
 
-  lxc stop -f devlxd
-  [ "$(lxc config get devlxd volatile.last_state.ready)" = "false" ]
+  inc stop -f dev-incus
+  [ "$(inc config get dev-incus volatile.last_state.ready)" = "false" ]
 
-  lxc start devlxd
-  lxc exec devlxd devlxd-client ready-state true
-  [ "$(lxc config get devlxd volatile.last_state.ready)" = "true" ]
+  inc start dev-incus
+  inc exec dev-incus dev_incus-client ready-state true
+  [ "$(inc config get dev-incus volatile.last_state.ready)" = "true" ]
 
-  grep -Fc "instance-ready" "${TEST_DIR}/devlxd.log" | grep -Fx 2
+  grep -Fc "instance-ready" "${TEST_DIR}/dev_incus.log" | grep -Fx 2
 
   # Check device configs are available and that NIC hwaddr is available even if volatile.
-  hwaddr=$(lxc config get devlxd volatile.eth0.hwaddr)
-  lxc exec devlxd devlxd-client devices | jq -r .eth0.hwaddr | grep -Fx "${hwaddr}"
+  hwaddr=$(inc config get dev-incus volatile.eth0.hwaddr)
+  inc exec dev-incus dev_incus-client devices | jq -r .eth0.hwaddr | grep -Fx "${hwaddr}"
 
-  lxc delete devlxd --force
-  kill -9 ${monitorDevlxdPID} || true
+  inc delete dev-incus --force
+  kill -9 ${monitorDevIncusPID} || true
 
   [ "${MATCH}" = "1" ] || false
 }

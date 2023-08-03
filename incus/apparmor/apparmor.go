@@ -249,8 +249,8 @@ func profileName(prefix string, name string) string {
 	}
 
 	if len(prefix) > 0 {
-		return fmt.Sprintf("lxd_%s-%s", prefix, name)
+		return fmt.Sprintf("incus_%s-%s", prefix, name)
 	}
 
-	return fmt.Sprintf("lxd-%s", name)
+	return fmt.Sprintf("incus-%s", name)
 }

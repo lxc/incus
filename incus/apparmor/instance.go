@@ -183,8 +183,8 @@ func instanceProfile(sysOS *sys.OS, inst instance) (string, error) {
 		}
 
 		ovmfPath := "/usr/share/OVMF"
-		if os.Getenv("LXD_OVMF_PATH") != "" {
-			ovmfPath = os.Getenv("LXD_OVMF_PATH")
+		if os.Getenv("INCUS_OVMF_PATH") != "" {
+			ovmfPath = os.Getenv("INCUS_OVMF_PATH")
 		}
 
 		ovmfPath, err = filepath.EvalSymlinks(ovmfPath)

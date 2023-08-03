@@ -131,7 +131,7 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 		return fmt.Errorf("LXD doesn't have a uid/gid allocation. In this mode, only privileged containers are supported")
 	}
 
-	unprivOnly := os.Getenv("LXD_UNPRIVILEGED_ONLY")
+	unprivOnly := os.Getenv("INCUS_UNPRIVILEGED_ONLY")
 	if shared.IsTrue(unprivOnly) {
 		if config["raw.idmap"] != "" {
 			err := AllowedUnprivilegedOnlyMap(config["raw.idmap"])
@@ -216,7 +216,7 @@ func lxcValidConfig(rawLxc string) error {
 			continue
 		}
 
-		unprivOnly := os.Getenv("LXD_UNPRIVILEGED_ONLY")
+		unprivOnly := os.Getenv("INCUS_UNPRIVILEGED_ONLY")
 		if shared.IsTrue(unprivOnly) {
 			if key == "lxc.idmap" || key == "lxc.id_map" || key == "lxc.include" {
 				return fmt.Errorf("%s can't be set in raw.lxc as LXD was configured to only allow unprivileged containers", key)

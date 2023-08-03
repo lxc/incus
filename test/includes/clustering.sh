@@ -28,7 +28,7 @@ setup_clustering_netns() {
   id="${1}"
   shift
 
-  prefix="lxd$$"
+  prefix="inc$$"
   ns="${prefix}${id}"
 
   echo "==> Setup clustering netns ${ns}"
@@ -87,7 +87,7 @@ EOF
 }
 
 teardown_clustering_netns() {
-  prefix="lxd$$"
+  prefix="inc$$"
   nsbridge="br$$"
 
   [ ! -d "${TEST_DIR}/ns/" ] && return
@@ -109,14 +109,14 @@ teardown_clustering_netns() {
   done
 }
 
-spawn_lxd_and_bootstrap_cluster() {
+spawn_incus_and_bootstrap_cluster() {
   # shellcheck disable=2039,3043
-  local LXD_NETNS
+  local INCUS_NETNS
 
   set -e
   ns="${1}"
   bridge="${2}"
-  LXD_DIR="${3}"
+  INCUS_DIR="${3}"
   driver="dir"
   port=""
   if [ "$#" -ge  "4" ]; then
@@ -128,56 +128,56 @@ spawn_lxd_and_bootstrap_cluster() {
 
   echo "==> Spawn bootstrap cluster node in ${ns} with storage driver ${driver}"
 
-  LXD_NETNS="${ns}" spawn_lxd "${LXD_DIR}" false
+  INCUS_NETNS="${ns}" spawn_incus "${INCUS_DIR}" false
   (
     set -e
 
-    cat > "${LXD_DIR}/preseed.yaml" <<EOF
+    cat > "${INCUS_DIR}/preseed.yaml" <<EOF
 config:
   core.trust_password: sekret
   core.https_address: 10.1.1.101:8443
 EOF
     if [ "${port}" != "" ]; then
-      cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+      cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   cluster.https_address: 10.1.1.101:${port}
 EOF
     fi
-    cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+    cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   images.auto_update_interval: 0
 storage_pools:
 - name: data
   driver: $driver
 EOF
     if [ "${driver}" = "btrfs" ]; then
-      cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+      cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   config:
     size: 1GiB
 EOF
     fi
     if [ "${driver}" = "zfs" ]; then
-      cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+      cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   config:
     size: 1GiB
-    zfs.pool_name: lxdtest-$(basename "${TEST_DIR}")-${ns}
+    zfs.pool_name: incustest-$(basename "${TEST_DIR}")-${ns}
 EOF
     fi
     if [ "${driver}" = "lvm" ]; then
-      cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+      cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   config:
     volume.size: 25MiB
     size: 1GiB
-    lvm.vg_name: lxdtest-$(basename "${TEST_DIR}")-${ns}
+    lvm.vg_name: incustest-$(basename "${TEST_DIR}")-${ns}
 EOF
     fi
     if [ "${driver}" = "ceph" ]; then
-      cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+      cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   config:
-    source: lxdtest-$(basename "${TEST_DIR}")
+    source: incustest-$(basename "${TEST_DIR}")
     volume.size: 25MiB
     ceph.osd.pg_num: 16
 EOF
     fi
-    cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+    cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
 networks:
 - name: $bridge
   type: bridge
@@ -195,13 +195,13 @@ cluster:
   server_name: node1
   enabled: true
 EOF
-  lxd init --preseed < "${LXD_DIR}/preseed.yaml"
+  incus init --preseed < "${INCUS_DIR}/preseed.yaml"
   )
 }
 
-spawn_lxd_and_join_cluster() {
+spawn_incus_and_join_cluster() {
   # shellcheck disable=2039,2034,3043
-  local LXD_NETNS
+  local INCUS_NETNS
 
   set -e
   ns="${1}"
@@ -209,7 +209,7 @@ spawn_lxd_and_join_cluster() {
   cert="${3}"
   index="${4}"
   target="${5}"
-  LXD_DIR="${6}"
+  INCUS_DIR="${6}"
   driver="dir"
   port="8443"
   if [ "$#" -ge  "7" ]; then
@@ -220,19 +220,19 @@ spawn_lxd_and_join_cluster() {
   fi
 
   echo "==> Spawn additional cluster node in ${ns} with storage driver ${driver}"
-  secret="${LXD_SECRET:-"sekret"}"
+  secret="${INCUS_SECRET:-"sekret"}"
 
-  LXD_NETNS="${ns}" spawn_lxd "${LXD_DIR}" false
+  INCUS_NETNS="${ns}" spawn_incus "${INCUS_DIR}" false
   (
     set -e
 
     # If a custom cluster port was given, we need to first set the REST
     # API address.
     if [ "${port}" != "8443" ]; then
-      lxc config set core.https_address "10.1.1.10${index}:8443"
+      inc config set core.https_address "10.1.1.10${index}:8443"
     fi
 
-    cat > "${LXD_DIR}/preseed.yaml" <<EOF
+    cat > "${INCUS_DIR}/preseed.yaml" <<EOF
 cluster:
   enabled: true
   server_name: node${index}
@@ -246,18 +246,18 @@ EOF
     # the ceph pool doesn't need to be created on the joining
     # node (it's shared with the bootstrap one).
     if [ "${driver}" != "ceph" ]; then
-      cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+      cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   - entity: storage-pool
     name: data
     key: source
     value: ""
 EOF
       if [ "${driver}" = "zfs" ]; then
-        cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+        cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   - entity: storage-pool
     name: data
     key: zfs.pool_name
-    value: lxdtest-$(basename "${TEST_DIR}")-${ns}
+    value: incustest-$(basename "${TEST_DIR}")-${ns}
   - entity: storage-pool
     name: data
     key: size
@@ -265,11 +265,11 @@ EOF
 EOF
       fi
       if [ "${driver}" = "lvm" ]; then
-        cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+        cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   - entity: storage-pool
     name: data
     key: lvm.vg_name
-    value: lxdtest-$(basename "${TEST_DIR}")-${ns}
+    value: incustest-$(basename "${TEST_DIR}")-${ns}
   - entity: storage-pool
     name: data
     key: size
@@ -277,7 +277,7 @@ EOF
 EOF
       fi
       if [ "${driver}" = "btrfs" ]; then
-        cat >> "${LXD_DIR}/preseed.yaml" <<EOF
+        cat >> "${INCUS_DIR}/preseed.yaml" <<EOF
   - entity: storage-pool
     name: data
     key: size
@@ -286,17 +286,17 @@ EOF
       fi
     fi
 
-    lxd init --preseed < "${LXD_DIR}/preseed.yaml"
+    incus init --preseed < "${INCUS_DIR}/preseed.yaml"
   )
 }
 
-respawn_lxd_cluster_member() {
+respawn_incus_cluster_member() {
   # shellcheck disable=2039,2034,3043
-  local LXD_NETNS
+  local INCUS_NETNS
 
   set -e
   ns="${1}"
-  LXD_DIR="${2}"
+  INCUS_DIR="${2}"
 
-  LXD_NETNS="${ns}" respawn_lxd "${LXD_DIR}" true
+  INCUS_NETNS="${ns}" respawn_incus "${INCUS_DIR}" true
 }

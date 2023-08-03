@@ -48,11 +48,11 @@ type OS struct {
 
 	// Daemon environment
 	Architectures   []int           // Cache of detected system architectures
-	BackingFS       string          // Backing filesystem of $LXD_DIR/containers
+	BackingFS       string          // Backing filesystem of $INCUS_DIR/containers
 	ExecPath        string          // Absolute path to the LXD executable
 	IdmapSet        *idmap.IdmapSet // Information about user/group ID mapping
 	InotifyWatch    InotifyInfo
-	LxcPath         string // Path to the $LXD_DIR/containers directory
+	LxcPath         string // Path to the $INCUS_DIR/containers directory
 	MockMode        bool   // If true some APIs will be mocked (for testing)
 	Nodev           bool
 	RunningInUserNS bool

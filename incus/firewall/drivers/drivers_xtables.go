@@ -18,10 +18,10 @@ import (
 )
 
 // iptablesChainNICFilterPrefix chain prefix used for NIC specific filtering rules.
-const iptablesChainNICFilterPrefix = "lxd_nic"
+const iptablesChainNICFilterPrefix = "incus_nic"
 
 // iptablesChainACLFilterPrefix chain used for ACL specific filtering rules.
-const iptablesChainACLFilterPrefix = "lxd_acl"
+const iptablesChainACLFilterPrefix = "incus_acl"
 
 // iptablesCommentPrefix is used to prefix the rule comment.
 const iptablesCommentPrefix = "generated for"
@@ -30,7 +30,7 @@ const iptablesCommentPrefix = "generated for"
 // As its own locking mechanism isn't always available.
 var ebtablesMu sync.Mutex
 
-// Xtables is an implmentation of LXD firewall using {ip, ip6, eb}tables.
+// Xtables is an implmentation of Incus firewall using {ip, ip6, eb}tables.
 type Xtables struct{}
 
 // String returns the driver name.
@@ -159,12 +159,12 @@ func (d Xtables) ebtablesInUse() bool {
 
 // networkIPTablesComment returns the iptables comment that is added to each network related rule.
 func (d Xtables) networkIPTablesComment(networkName string) string {
-	return fmt.Sprintf("LXD network %s", networkName)
+	return fmt.Sprintf("Incus network %s", networkName)
 }
 
 // networkForwardIPTablesComment returns the iptables comment that is added to each network forward related rule.
 func (d Xtables) networkForwardIPTablesComment(networkName string) string {
-	return fmt.Sprintf("LXD network-forward %s", networkName)
+	return fmt.Sprintf("Incus network-forward %s", networkName)
 }
 
 // networkSetupNICFilteringChain creates the NIC filtering chain if it doesn't exist, and adds the jump rules to
@@ -236,7 +236,7 @@ func (d Xtables) networkSetupACLFilteringChains(networkName string) error {
 		// point it becomes indistinguishable from FORWARD traffic. So unlike OVN an ACL rule cannot be
 		// used to block baseline service traffic.
 
-		// Allow DNS to LXD host.
+		// Allow DNS to Incus host.
 		err = d.iptablesPrepend(ipVersion, comment, "filter", "INPUT", "-i", networkName, "-p", "tcp", "--dport", "53", "-j", "ACCEPT")
 		if err != nil {
 			return err
@@ -248,7 +248,7 @@ func (d Xtables) networkSetupACLFilteringChains(networkName string) error {
 		}
 
 		if ipVersion == 4 {
-			// Allow DHCPv4 to/from LXD host.
+			// Allow DHCPv4 to/from Incus host.
 			err = d.iptablesPrepend(ipVersion, comment, "filter", "INPUT", "-i", networkName, "-p", "udp", "--sport", "68", "--dport", "67", "-j", "ACCEPT")
 			if err != nil {
 				return err
@@ -259,7 +259,7 @@ func (d Xtables) networkSetupACLFilteringChains(networkName string) error {
 				return err
 			}
 
-			// Allow core ICMPv4 to/from LXD host.
+			// Allow core ICMPv4 to/from Incus host.
 			for _, icmpType := range []int{3, 11, 12} {
 				err = d.iptablesPrepend(ipVersion, comment, "filter", "INPUT", "-i", networkName, "-p", "icmp", "-m", "icmp", "--icmp-type", fmt.Sprintf("%d", icmpType), "-j", "ACCEPT")
 				if err != nil {
@@ -274,7 +274,7 @@ func (d Xtables) networkSetupACLFilteringChains(networkName string) error {
 		}
 
 		if ipVersion == 6 {
-			// Allow DHCPv6 to/from LXD host.
+			// Allow DHCPv6 to/from Incus host.
 			err = d.iptablesPrepend(ipVersion, comment, "filter", "INPUT", "-i", networkName, "-p", "udp", "--sport", "546", "--dport", "547", "-j", "ACCEPT")
 			if err != nil {
 				return err
@@ -285,7 +285,7 @@ func (d Xtables) networkSetupACLFilteringChains(networkName string) error {
 				return err
 			}
 
-			// Allow core ICMPv6 to/from LXD host.
+			// Allow core ICMPv6 to/from Incus host.
 			for _, icmpType := range []int{1, 2, 3, 4, 133, 135, 136, 143} {
 				err = d.iptablesPrepend(ipVersion, comment, "filter", "INPUT", "-i", networkName, "-p", "icmpv6", "-m", "icmp6", "--icmpv6-type", fmt.Sprintf("%d", icmpType), "-j", "ACCEPT")
 				if err != nil {
@@ -390,7 +390,7 @@ func (d Xtables) networkSetupICMPDHCPDNSAccess(networkName string, ipVersion uin
 			{"4", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "udp", "--sport", "53", "-j", "ACCEPT"},
 			{"4", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "tcp", "--sport", "53", "-j", "ACCEPT"}}
 
-		// Allow core ICMPv4 to/from LXD host.
+		// Allow core ICMPv4 to/from Incus host.
 		for _, icmpType := range []int{3, 11, 12} {
 			rules = append(rules, []string{"4", networkName, "filter", "INPUT", "-i", networkName, "-p", "icmp", "-m", "icmp", "--icmp-type", fmt.Sprintf("%d", icmpType), "-j", "ACCEPT"})
 			rules = append(rules, []string{"4", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "icmp", "-m", "icmp", "--icmp-type", fmt.Sprintf("%d", icmpType), "-j", "ACCEPT"})
@@ -404,7 +404,7 @@ func (d Xtables) networkSetupICMPDHCPDNSAccess(networkName string, ipVersion uin
 			{"6", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "udp", "--sport", "53", "-j", "ACCEPT"},
 			{"6", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "tcp", "--sport", "53", "-j", "ACCEPT"}}
 
-		// Allow core ICMPv6 to/from LXD host.
+		// Allow core ICMPv6 to/from Incus host.
 		for _, icmpType := range []int{1, 2, 3, 4, 133, 135, 136, 143} {
 			rules = append(rules, []string{"6", networkName, "filter", "INPUT", "-i", networkName, "-p", "icmpv6", "-m", "icmp6", "--icmpv6-type", fmt.Sprintf("%d", icmpType), "-j", "ACCEPT"})
 		}
@@ -801,11 +801,11 @@ func (d Xtables) NetworkClear(networkName string, delete bool, ipVersions []uint
 
 // instanceDeviceIPTablesComment returns the iptables comment that is added to each instance device related rule.
 func (d Xtables) instanceDeviceIPTablesComment(projectName string, instanceName string, deviceName string) string {
-	return fmt.Sprintf("LXD container %s (%s)", project.Instance(projectName, instanceName), deviceName)
+	return fmt.Sprintf("Incus container %s (%s)", project.Instance(projectName, instanceName), deviceName)
 }
 
 // InstanceSetupBridgeFilter sets up the filter rules to apply bridged device IP filtering.
-// If the parent bridge is managed by LXD then parentManaged argument should be true so that the rules added can
+// If the parent bridge is managed by Incus then parentManaged argument should be true so that the rules added can
 // use the iptablesChainACLFilterPrefix chain. If not they are added to the main filter chains directly (which only
 // works for unmanaged bridges because those don't support ACLs).
 func (d Xtables) InstanceSetupBridgeFilter(projectName string, instanceName string, deviceName string, parentName string, hostName string, hwAddr string, IPv4Nets []*net.IPNet, IPv6Nets []*net.IPNet, parentManaged bool) error {
@@ -860,7 +860,7 @@ func (d Xtables) InstanceClearBridgeFilter(projectName string, instanceName stri
 	}
 
 	errs := []error{}
-	// Iterate through each active rule on the host and try and match it to one the LXD rules.
+	// Iterate through each active rule on the host and try and match it to one the Incus rules.
 	for _, line := range strings.Split(out, "\n") {
 		line = strings.TrimSpace(line)
 		fields := strings.Fields(line)
@@ -877,7 +877,7 @@ func (d Xtables) InstanceClearBridgeFilter(projectName string, instanceName stri
 				continue
 			}
 
-			// If we get this far, then the current host rule matches one of our LXD
+			// If we get this far, then the current host rule matches one of our Incus
 			// rules, so we should run the modified command to delete it.
 			_, err = shared.RunCommand(fields[0], fields[1:]...)
 			if err != nil {

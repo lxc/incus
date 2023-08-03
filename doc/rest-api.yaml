@@ -7315,34 +7315,34 @@ paths:
                 - description: Push secret for server to server communication
                   example: RANDOM-STRING
                   in: header
-                  name: X-LXD-secret
+                  name: X-Incus-secret
                   schema:
                     type: string
                 - description: Expected fingerprint when pushing a raw image
                   in: header
-                  name: X-LXD-fingerprint
+                  name: X-Incus-fingerprint
                   schema:
                     type: string
                 - description: Descriptive properties
                   in: header
-                  name: X-LXD-properties
+                  name: X-Incus-properties
                   schema:
                     additionalProperties:
                         type: string
                     type: object
                 - description: Whether the image is available to unauthenticated users
                   in: header
-                  name: X-LXD-public
+                  name: X-Incus-public
                   schema:
                     type: boolean
                 - description: Original filename of the image
                   in: header
-                  name: X-LXD-filename
+                  name: X-Incus-filename
                   schema:
                     type: string
                 - description: List of profiles to use
                   in: header
-                  name: X-LXD-profiles
+                  name: X-Incus-profiles
                   schema:
                     items:
                         type: string
@@ -8901,15 +8901,15 @@ paths:
                 "200":
                     description: Raw file or directory listing
                     headers:
-                        X-LXD-gid:
+                        X-Incus-gid:
                             description: File owner GID
-                        X-LXD-mode:
+                        X-Incus-mode:
                             description: Mode mask
-                        X-LXD-modified:
+                        X-Incus-modified:
                             description: Last modified date
-                        X-LXD-type:
+                        X-Incus-type:
                             description: Type of file (file, symlink or directory)
-                        X-LXD-uid:
+                        X-Incus-uid:
                             description: File owner UID
                 "400":
                     $ref: '#/responses/BadRequest'
@@ -8940,15 +8940,15 @@ paths:
                 "200":
                     description: Raw file or directory listing
                     headers:
-                        X-LXD-gid:
+                        X-Incus-gid:
                             description: File owner GID
-                        X-LXD-mode:
+                        X-Incus-mode:
                             description: Mode mask
-                        X-LXD-modified:
+                        X-Incus-modified:
                             description: Last modified date
-                        X-LXD-type:
+                        X-Incus-type:
                             description: Type of file (file, symlink or directory)
-                        X-LXD-uid:
+                        X-Incus-uid:
                             description: File owner UID
                 "400":
                     $ref: '#/responses/BadRequest'
@@ -8983,31 +8983,31 @@ paths:
                 - description: File owner UID
                   example: 1000
                   in: header
-                  name: X-LXD-uid
+                  name: X-Incus-uid
                   schema:
                     type: integer
                 - description: File owner GID
                   example: 1000
                   in: header
-                  name: X-LXD-gid
+                  name: X-Incus-gid
                   schema:
                     type: integer
                 - description: File mode
                   example: 420
                   in: header
-                  name: X-LXD-mode
+                  name: X-Incus-mode
                   schema:
                     type: integer
                 - description: Type of file (file, symlink or directory)
                   example: file
                   in: header
-                  name: X-LXD-type
+                  name: X-Incus-type
                   schema:
                     type: string
                 - description: Write mode (overwrite or append)
                   example: overwrite
                   in: header
-                  name: X-LXD-write
+                  name: X-Incus-write
                   schema:
                     type: string
             produces:

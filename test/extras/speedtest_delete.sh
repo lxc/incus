@@ -16,7 +16,7 @@ fi
 
 PIDS=""
 for c in $(seq "$count"); do
-  lxc delete "${CNAME}${c}" 2>&1 &
+  inc delete "${CNAME}${c}" 2>&1 &
   PIDS="$PIDS $!"
 done
 

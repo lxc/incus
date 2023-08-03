@@ -29,7 +29,7 @@ EOF
 
 # Certificate-aware curl wrapper
 my_curl() {
-    curl -k -s --cert "${LXD_CONF}/client.crt" --key "${LXD_CONF}/client.key" "$@"
+    curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" "$@"
 }
 
 # Wait for duplicate address detection to complete.
@@ -37,7 +37,7 @@ my_curl() {
 wait_for_dad() {
   cmd="ip -6 a show dev $1"
   if [ "$#" -eq 2 ]; then
-    cmd="lxc exec $1 -- ip -6 a show dev $2"
+    cmd="inc exec $1 -- ip -6 a show dev $2"
   fi
 
   # Ensure the command succeeds (else the while loop will break for the wrong reason).

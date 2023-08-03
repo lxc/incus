@@ -33,11 +33,11 @@ const (
 // Headers.
 const (
 	// HeaderForwardedAddress is the forwarded address field in request header.
-	HeaderForwardedAddress = "X-LXD-forwarded-address"
+	HeaderForwardedAddress = "X-Incus-forwarded-address"
 
 	// HeaderForwardedUsername is the forwarded username field in request header.
-	HeaderForwardedUsername = "X-LXD-forwarded-username"
+	HeaderForwardedUsername = "X-Incus-forwarded-username"
 
 	// HeaderForwardedProtocol is the forwarded protocol field in request header.
-	HeaderForwardedProtocol = "X-LXD-forwarded-protocol"
+	HeaderForwardedProtocol = "X-Incus-forwarded-protocol"
 )

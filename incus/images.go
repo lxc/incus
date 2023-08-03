@@ -547,9 +547,9 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 	var imageMeta *api.ImageMetadata
 	l := logger.AddContext(logger.Ctx{"function": "getImgPostInfo"})
 
-	info.Public = shared.IsTrue(r.Header.Get("X-LXD-public"))
-	propHeaders := r.Header[http.CanonicalHeaderKey("X-LXD-properties")]
-	profilesHeaders := r.Header.Get("X-LXD-profiles")
+	info.Public = shared.IsTrue(r.Header.Get("X-Incus-public"))
+	propHeaders := r.Header[http.CanonicalHeaderKey("X-Incus-properties")]
+	profilesHeaders := r.Header.Get("X-Incus-profiles")
 	ctype, ctypeParams, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
 		ctype = "application/octet-stream"
@@ -630,7 +630,7 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 		info.Filename = part.FileName()
 		info.Fingerprint = fmt.Sprintf("%x", sha256.Sum(nil))
 
-		expectedFingerprint := r.Header.Get("X-LXD-fingerprint")
+		expectedFingerprint := r.Header.Get("X-Incus-fingerprint")
 		if expectedFingerprint != "" && info.Fingerprint != expectedFingerprint {
 			err = fmt.Errorf("fingerprints don't match, got %s expected %s", info.Fingerprint, expectedFingerprint)
 			return nil, err
@@ -675,10 +675,10 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 
 		info.Size = size
 
-		info.Filename = r.Header.Get("X-LXD-filename")
+		info.Filename = r.Header.Get("X-Incus-filename")
 		info.Fingerprint = fmt.Sprintf("%x", sha256.Sum(nil))
 
-		expectedFingerprint := r.Header.Get("X-LXD-fingerprint")
+		expectedFingerprint := r.Header.Get("X-Incus-fingerprint")
 		if expectedFingerprint != "" && info.Fingerprint != expectedFingerprint {
 			l.Error("Fingerprints don't match", logger.Ctx{
 				"got":      info.Fingerprint,
@@ -869,35 +869,35 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 //	    description: Raw image file
 //	    required: false
 //	  - in: header
-//	    name: X-LXD-secret
+//	    name: X-Incus-secret
 //	    description: Push secret for server to server communication
 //	    schema:
 //	      type: string
 //	    example: RANDOM-STRING
 //	  - in: header
-//	    name: X-LXD-fingerprint
+//	    name: X-Incus-fingerprint
 //	    description: Expected fingerprint when pushing a raw image
 //	    schema:
 //	      type: string
 //	  - in: header
-//	    name: X-LXD-properties
+//	    name: X-Incus-properties
 //	    description: Descriptive properties
 //	    schema:
 //	      type: object
 //	      additionalProperties:
 //	        type: string
 //	  - in: header
-//	    name: X-LXD-public
+//	    name: X-Incus-public
 //	    description: Whether the image is available to unauthenticated users
 //	    schema:
 //	      type: boolean
 //	  - in: header
-//	    name: X-LXD-filename
+//	    name: X-Incus-filename
 //	    description: Original filename of the image
 //	    schema:
 //	      type: string
 //	  - in: header
-//	    name: X-LXD-profiles
+//	    name: X-Incus-profiles
 //	    description: List of profiles to use
 //	    schema:
 //	      type: array
@@ -917,8 +917,8 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 
 	trusted := d.checkTrustedClient(r) == nil && allowProjectPermission("images", "manage-images")(d, r) == response.EmptySyncResponse
 
-	secret := r.Header.Get("X-LXD-secret")
-	fingerprint := r.Header.Get("X-LXD-fingerprint")
+	secret := r.Header.Get("X-Incus-secret")
+	fingerprint := r.Header.Get("X-Incus-fingerprint")
 	projectName := projectParam(r)
 
 	var imageMetadata map[string]any

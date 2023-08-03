@@ -970,8 +970,8 @@ func (r *ProtocolLXD) CreateStoragePoolVolumeFromISO(pool string, args StoragePo
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
-	req.Header.Set("X-LXD-name", args.Name)
-	req.Header.Set("X-LXD-type", "iso")
+	req.Header.Set("X-Incus-name", args.Name)
+	req.Header.Set("X-Incus-type", "iso")
 
 	// Send the request.
 	resp, err := r.DoHTTP(req)
@@ -1029,7 +1029,7 @@ func (r *ProtocolLXD) CreateStoragePoolVolumeFromBackup(pool string, args Storag
 	req.Header.Set("Content-Type", "application/octet-stream")
 
 	if args.Name != "" {
-		req.Header.Set("X-LXD-name", args.Name)
+		req.Header.Set("X-Incus-name", args.Name)
 	}
 
 	// Send the request.

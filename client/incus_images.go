@@ -496,11 +496,11 @@ func (r *ProtocolLXD) CreateImage(image api.ImagesPost, args *ImageCreateArgs) (
 	// Setup the headers
 	req.Header.Set("Content-Type", contentType)
 	if image.Public {
-		req.Header.Set("X-LXD-public", "true")
+		req.Header.Set("X-Incus-public", "true")
 	}
 
 	if image.Filename != "" {
-		req.Header.Set("X-LXD-filename", image.Filename)
+		req.Header.Set("X-Incus-filename", image.Filename)
 	}
 
 	if len(image.Properties) > 0 {
@@ -510,7 +510,7 @@ func (r *ProtocolLXD) CreateImage(image api.ImagesPost, args *ImageCreateArgs) (
 			imgProps.Set(k, v)
 		}
 
-		req.Header.Set("X-LXD-properties", imgProps.Encode())
+		req.Header.Set("X-Incus-properties", imgProps.Encode())
 	}
 
 	if len(image.Profiles) > 0 {
@@ -520,16 +520,16 @@ func (r *ProtocolLXD) CreateImage(image api.ImagesPost, args *ImageCreateArgs) (
 			imgProfiles.Add("profile", v)
 		}
 
-		req.Header.Set("X-LXD-profiles", imgProfiles.Encode())
+		req.Header.Set("X-Incus-profiles", imgProfiles.Encode())
 	}
 
 	// Set the user agent
 	if image.Source != nil && image.Source.Fingerprint != "" && image.Source.Secret != "" && image.Source.Mode == "push" {
 		// Set fingerprint
-		req.Header.Set("X-LXD-fingerprint", image.Source.Fingerprint)
+		req.Header.Set("X-Incus-fingerprint", image.Source.Fingerprint)
 
 		// Set secret
-		req.Header.Set("X-LXD-secret", image.Source.Secret)
+		req.Header.Set("X-Incus-secret", image.Source.Secret)
 	}
 
 	// Send the request

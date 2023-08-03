@@ -354,7 +354,7 @@ func projectCreateDefaultProfile(tx *db.ClusterTx, project string) error {
 	profile := cluster.Profile{}
 	profile.Project = project
 	profile.Name = projecthelpers.Default
-	profile.Description = fmt.Sprintf("Default LXD profile for project %s", project)
+	profile.Description = fmt.Sprintf("Default Incus profile for project %s", project)
 
 	_, err := cluster.CreateProfile(context.TODO(), tx.Tx(), profile)
 	if err != nil {

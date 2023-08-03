@@ -122,29 +122,29 @@ flush chain {{.family}} {{.namespace}} aclfwd{{.chainSeparator}}{{.networkName}}
 
 table {{.family}} {{.namespace}} {
 	chain aclin{{.chainSeparator}}{{.networkName}} {
-		# Allow DNS to LXD host.
+		# Allow DNS to Incus host.
 		iifname "{{.networkName}}" tcp dport 53 accept
 		iifname "{{.networkName}}" udp dport 53 accept
 
-		# Allow DHCPv6 to LXD host.
+		# Allow DHCPv6 to Incus host.
 		iifname "{{$.networkName}}" udp dport 67 accept
 		iifname "{{$.networkName}}" udp dport 547 accept
 
-		# Allow core ICMPv4 to LXD host.
+		# Allow core ICMPv4 to Incus host.
 		iifname "{{$.networkName}}" icmp type {3, 11, 12} accept
 
-		# Allow core ICMPv6 to LXD host.
+		# Allow core ICMPv6 to Incus host.
 		iifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 133, 135, 136, 143} accept
 
 		iifname {{.networkName}} jump acl{{.chainSeparator}}{{.networkName}}
 	}
 
 	chain aclout{{.chainSeparator}}{{.networkName}} {
-		# Allow DHCPv6 from LXD host.
+		# Allow DHCPv6 from Incus host.
 		oifname "{{$.networkName}}" udp sport 67 accept
 		oifname "{{$.networkName}}" udp sport 547 accept
 
-		# Allow core ICMPv4 from LXD host.
+		# Allow core ICMPv4 from Incus host.
 		oifname "{{$.networkName}}" icmp type {3, 11, 12} accept
 
 		# Allow ICMPv6 ping from host into network as dnsmasq uses this to probe IP allocations.
@@ -177,7 +177,7 @@ table {{.family}} {{.namespace}} {
 // nftablesInstanceBridgeFilter defines the rules needed for MAC, IPv4 and IPv6 bridge security filtering.
 // To prevent instances from using IPs that are different from their assigned IPs we use ARP and NDP filtering
 // to prevent neighbour advertisements that are not allowed. However in order for DHCPv4 & DHCPv6 to work back to
-// the LXD host we need to allow DHCPv4 inbound and for IPv6 we need to allow IPv6 Router Solicitation and DHPCv6.
+// the Incus host we need to allow DHCPv4 inbound and for IPv6 we need to allow IPv6 Router Solicitation and DHPCv6.
 // Nftables doesn't support the equivalent of "arp saddr" and "arp saddr ether" at this time so in order to filter
 // NDP advertisements that come from the genuine Ethernet MAC address but have a spoofed NDP source MAC/IP adddress
 // we need to use manual header offset extraction. This also drops IPv6 router advertisements from instance.

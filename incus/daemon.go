@@ -315,7 +315,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 
 	// Devlxd unix socket credentials on main API.
 	if r.RemoteAddr == "@devlxd" {
-		return false, "", "", fmt.Errorf("Main API query can't come from /dev/lxd socket")
+		return false, "", "", fmt.Errorf("Main API query can't come from /dev/incus socket")
 	}
 
 	// Cluster notification with wrong certificate.
@@ -418,7 +418,7 @@ func (d *Daemon) State() *state.State {
 // UnixSocket returns the full path to the unix.socket file that this daemon is
 // listening on. Used by tests.
 func (d *Daemon) UnixSocket() string {
-	path := os.Getenv("LXD_SOCKET")
+	path := os.Getenv("INCUS_SOCKET")
 	if path != "" {
 		return path
 	}
@@ -567,7 +567,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			}
 
 			r = r.WithContext(ctx)
-		} else if untrustedOk && r.Header.Get("X-LXD-authenticated") == "" {
+		} else if untrustedOk && r.Header.Get("X-Incus-authenticated") == "" {
 			logger.Debug(fmt.Sprintf("Allowing untrusted %s", r.Method), logger.Ctx{"url": r.URL.RequestURI(), "ip": r.RemoteAddr})
 		} else if derr, ok := err.(*bakery.DischargeRequiredError); ok {
 			d.candidVerifier.WriteRequest(r, w, derr)
@@ -945,7 +945,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Detect shiftfs support.
-	if shared.IsTrue(os.Getenv("LXD_SHIFTFS_DISABLE")) {
+	if shared.IsTrue(os.Getenv("INCUS_SHIFTFS_DISABLE")) {
 		logger.Info(" - shiftfs support: disabled")
 	} else {
 		if canUseShiftfs() && (util.SupportsFilesystem("shiftfs") || util.LoadModule("shiftfs") == nil) {
@@ -957,7 +957,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Detect idmapped mounts support.
-	if shared.IsTrue(os.Getenv("LXD_IDMAPPED_MOUNTS_DISABLE")) {
+	if shared.IsTrue(os.Getenv("INCUS_IDMAPPED_MOUNTS_DISABLE")) {
 		logger.Info(" - idmapped mounts kernel support: disabled")
 	} else if kernelSupportsIdmappedMounts() {
 		d.os.IdmappedMounts = true
@@ -1445,7 +1445,7 @@ func (d *Daemon) init() error {
 		// Start the scheduler
 		go deviceEventListener(d.State)
 
-		prefixPath := os.Getenv("LXD_DEVMONITOR_DIR")
+		prefixPath := os.Getenv("INCUS_DEVMONITOR_DIR")
 		if prefixPath == "" {
 			prefixPath = "/dev"
 		}

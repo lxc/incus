@@ -827,7 +827,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	// For lxcfs
-	templateConfDir := os.Getenv("LXD_LXC_TEMPLATE_CONFIG")
+	templateConfDir := os.Getenv("INCUS_LXC_TEMPLATE_CONFIG")
 	if templateConfDir == "" {
 		templateConfDir = "/usr/share/lxc/config"
 	}
@@ -947,8 +947,8 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	// Setup devlxd
-	if shared.IsTrueOrEmpty(d.expandedConfig["security.devlxd"]) {
-		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/lxd none bind,create=dir 0 0", shared.VarPath("devlxd")))
+	if shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]) {
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/incus none bind,create=dir 0 0", shared.VarPath("devlxd")))
 		if err != nil {
 			return nil, err
 		}
@@ -1036,7 +1036,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup NVIDIA runtime
 	if shared.IsTrue(d.expandedConfig["nvidia.runtime"]) {
-		hookDir := os.Getenv("LXD_LXC_HOOK")
+		hookDir := os.Getenv("INCUS_LXC_HOOK")
 		if hookDir == "" {
 			hookDir = "/usr/share/lxc/hooks"
 		}
@@ -1283,9 +1283,9 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup shmounts
 	if d.state.OS.LXCFeatures["mount_injection_file"] {
-		err = lxcSetConfigItem(cc, "lxc.mount.auto", fmt.Sprintf("shmounts:%s:/dev/.lxd-mounts", d.ShmountsPath()))
+		err = lxcSetConfigItem(cc, "lxc.mount.auto", fmt.Sprintf("shmounts:%s:/dev/.incus-mounts", d.ShmountsPath()))
 	} else {
-		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/.lxd-mounts none bind,create=dir 0 0", d.ShmountsPath()))
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/.incus-mounts none bind,create=dir 0 0", d.ShmountsPath()))
 	}
 
 	if err != nil {
@@ -4333,9 +4333,9 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				if err != nil {
 					return err
 				}
-			} else if key == "security.devlxd" {
+			} else if key == "security.guestapi" {
 				if shared.IsTrueOrEmpty(value) {
-					err = d.insertMount(shared.VarPath("devlxd"), "/dev/lxd", "none", unix.MS_BIND, idmap.IdmapStorageNone)
+					err = d.insertMount(shared.VarPath("devlxd"), "/dev/incus", "none", unix.MS_BIND, idmap.IdmapStorageNone)
 					if err != nil {
 						return err
 					}
@@ -4348,14 +4348,14 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 					defer func() { _ = files.Close() }()
 
-					_, err = files.Lstat("/dev/lxd")
+					_, err = files.Lstat("/dev/incus")
 					if err == nil {
-						err = d.removeMount("/dev/lxd")
+						err = d.removeMount("/dev/incus")
 						if err != nil {
 							return err
 						}
 
-						err = files.Remove("/dev/lxd")
+						err = files.Remove("/dev/incus")
 						if err != nil {
 							return err
 						}
@@ -7459,7 +7459,7 @@ func (d *lxc) insertMountLXD(source, target, fstype string, flags int, mntnsPID 
 	}
 
 	// Move the mount inside the container
-	mntsrc := filepath.Join("/dev/.lxd-mounts", filepath.Base(tmpMount))
+	mntsrc := filepath.Join("/dev/.incus-mounts", filepath.Base(tmpMount))
 	pidStr := fmt.Sprintf("%d", pid)
 
 	pidFdNr, pidFd := seccomp.MakePidFd(pid, d.state)

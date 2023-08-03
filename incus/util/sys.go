@@ -39,7 +39,7 @@ func GetArchitectures() ([]int, error) {
 
 // GetExecPath returns the path to the current binary.
 func GetExecPath() string {
-	execPath := os.Getenv("LXD_EXEC_PATH")
+	execPath := os.Getenv("INCUS_EXEC_PATH")
 	if execPath != "" {
 		return execPath
 	}

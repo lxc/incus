@@ -107,23 +107,23 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 //	  "200":
 //	     description: Raw file or directory listing
 //	     headers:
-//	       X-LXD-uid:
+//	       X-Incus-uid:
 //	         description: File owner UID
 //	         schema:
 //	           type: integer
-//	       X-LXD-gid:
+//	       X-Incus-gid:
 //	         description: File owner GID
 //	         schema:
 //	           type: integer
-//	       X-LXD-mode:
+//	       X-Incus-mode:
 //	         description: Mode mask
 //	         schema:
 //	           type: integer
-//	       X-LXD-modified:
+//	       X-Incus-modified:
 //	         description: Last modified date
 //	         schema:
 //	           type: string
-//	       X-LXD-type:
+//	       X-Incus-type:
 //	         description: Type of file (file, symlink or directory)
 //	         schema:
 //	           type: string
@@ -179,11 +179,11 @@ func instanceFileGet(s *state.State, inst instance.Instance, path string, r *htt
 
 	// Prepare the response.
 	headers := map[string]string{
-		"X-LXD-uid":      fmt.Sprintf("%d", fs.UID),
-		"X-LXD-gid":      fmt.Sprintf("%d", fs.GID),
-		"X-LXD-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
-		"X-LXD-modified": stat.ModTime().UTC().String(),
-		"X-LXD-type":     fileType,
+		"X-Incus-uid":      fmt.Sprintf("%d", fs.UID),
+		"X-Incus-gid":      fmt.Sprintf("%d", fs.GID),
+		"X-Incus-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
+		"X-Incus-modified": stat.ModTime().UTC().String(),
+		"X-Incus-type":     fileType,
 	}
 
 	if fileType == "file" {
@@ -285,23 +285,23 @@ func instanceFileGet(s *state.State, inst instance.Instance, path string, r *htt
 //	  "200":
 //	     description: Raw file or directory listing
 //	     headers:
-//	       X-LXD-uid:
+//	       X-Incus-uid:
 //	         description: File owner UID
 //	         schema:
 //	           type: integer
-//	       X-LXD-gid:
+//	       X-Incus-gid:
 //	         description: File owner GID
 //	         schema:
 //	           type: integer
-//	       X-LXD-mode:
+//	       X-Incus-mode:
 //	         description: Mode mask
 //	         schema:
 //	           type: integer
-//	       X-LXD-modified:
+//	       X-Incus-modified:
 //	         description: Last modified date
 //	         schema:
 //	           type: string
-//	       X-LXD-type:
+//	       X-Incus-type:
 //	         description: Type of file (file, symlink or directory)
 //	         schema:
 //	           type: string
@@ -342,11 +342,11 @@ func instanceFileHead(s *state.State, inst instance.Instance, path string, r *ht
 
 	// Prepare the response.
 	headers := map[string]string{
-		"X-LXD-uid":      fmt.Sprintf("%d", fs.UID),
-		"X-LXD-gid":      fmt.Sprintf("%d", fs.GID),
-		"X-LXD-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
-		"X-LXD-modified": stat.ModTime().UTC().String(),
-		"X-LXD-type":     fileType,
+		"X-Incus-uid":      fmt.Sprintf("%d", fs.UID),
+		"X-Incus-gid":      fmt.Sprintf("%d", fs.GID),
+		"X-Incus-mode":     fmt.Sprintf("%04o", stat.Mode().Perm()),
+		"X-Incus-modified": stat.ModTime().UTC().String(),
+		"X-Incus-type":     fileType,
 	}
 
 	// Return an empty body (per RFC for HEAD).
@@ -388,31 +388,31 @@ func instanceFileHead(s *state.State, inst instance.Instance, path string, r *ht
 //	    name: raw_file
 //	    description: Raw file content
 //	  - in: header
-//	    name: X-LXD-uid
+//	    name: X-Incus-uid
 //	    description: File owner UID
 //	    schema:
 //	      type: integer
 //	    example: 1000
 //	  - in: header
-//	    name: X-LXD-gid
+//	    name: X-Incus-gid
 //	    description: File owner GID
 //	    schema:
 //	      type: integer
 //	    example: 1000
 //	  - in: header
-//	    name: X-LXD-mode
+//	    name: X-Incus-mode
 //	    description: File mode
 //	    schema:
 //	      type: integer
 //	    example: 0644
 //	  - in: header
-//	    name: X-LXD-type
+//	    name: X-Incus-type
 //	    description: Type of file (file, symlink or directory)
 //	    schema:
 //	      type: string
 //	    example: file
 //	  - in: header
-//	    name: X-LXD-write
+//	    name: X-Incus-write
 //	    description: Write mode (overwrite or append)
 //	    schema:
 //	      type: string

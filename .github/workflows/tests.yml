@@ -58,7 +58,7 @@ jobs:
         run: |
           go mod download
 
-      - name: Run LXD build
+      - name: Run Incus build
         run: |
           make
 
@@ -73,14 +73,14 @@ jobs:
   system-tests:
     env:
       CGO_LDFLAGS_ALLOW: "(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
-      LXD_SHIFTFS_DISABLE: "true"
-      LXD_CEPH_CLUSTER: "ceph"
-      LXD_CEPH_CEPHFS: "cephfs"
-      LXD_CEPH_CEPHOBJECT_RADOSGW: "http://127.0.0.1"
-      LXD_VERBOSE: "1"
-      LXD_OFFLINE: "1"
-      LXD_TMPFS: "1"
-      LXD_REQUIRED_TESTS: "test_storage_buckets"
+      INCUS_SHIFTFS_DISABLE: "true"
+      INCUS_CEPH_CLUSTER: "ceph"
+      INCUS_CEPH_CEPHFS: "cephfs"
+      INCUS_CEPH_CEPHOBJECT_RADOSGW: "http://127.0.0.1"
+      INCUS_VERBOSE: "1"
+      INCUS_OFFLINE: "1"
+      INCUS_TMPFS: "1"
+      INCUS_REQUIRED_TESTS: "test_storage_buckets"
     name: System tests
     runs-on: ubuntu-22.04
     strategy:
@@ -186,7 +186,7 @@ jobs:
         run: |
           go mod download
 
-      - name: Run LXD build
+      - name: Run Incus build
         run: |
           make
 
@@ -233,7 +233,7 @@ jobs:
           chmod +x ~
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
-          sudo --preserve-env=PATH,GOPATH,LXD_VERBOSE,LXD_BACKEND,LXD_CEPH_CLUSTER,LXD_CEPH_CEPHFS,LXD_CEPH_CEPHOBJECT_RADOSGW,LXD_OFFLINE,LXD_SKIP_TESTS,LXD_REQUIRED_TESTS,LXD_SHIFTFS_DISABLE LXD_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
+          sudo --preserve-env=PATH,GOPATH,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS,INCUS_SHIFTFS_DISABLE INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
 
   client:
     name: Client tests
@@ -261,35 +261,35 @@ jobs:
         run: |
             mkdir bin
 
-      - name: Build static lxc
+      - name: Build static incc
         env:
           CGO_ENABLED: 0
         run: |
-          go build -o bin ./lxc
+          go build -o bin ./inc
 
-      - name: Build static lxd-migrate
+      - name: Build static incus-migrate
         if: runner.os == 'Linux'
         env:
           CGO_ENABLED: 0
         run: |
-          go build -o bin ./lxd-migrate
+          go build -o bin ./incus-migrate
 
       - name: Unit tests (client)
         env:
           CGO_ENABLED: 0
         run: go test -v ./client/...
 
-      - name: Unit tests (lxc)
+      - name: Unit tests (inc)
         env:
           CGO_ENABLED: 0
-        run: go test -v ./lxc/...
+        run: go test -v ./inc/...
 
       - name: Unit tests (shared)
         env:
           CGO_ENABLED: 0
         run: go test -v ./shared/...
 
-      - name: Upload lxc client artifacts
+      - name: Upload inc client artifacts
         uses: actions/upload-artifact@v3
         continue-on-error: true
         with:
@@ -338,52 +338,3 @@ jobs:
         with:
           name: documentation
           path: doc/html
-
-  snap:
-    name: Trigger snap edge build
-    runs-on: ubuntu-22.04
-    needs: [code-tests, system-tests, client, documentation]
-    if: ${{ github.repository == 'canonical/lxd' && github.event_name == 'push'}}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Launchpad SSH access
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          LAUNCHPAD_LXD_BOT_KEY: ${{ secrets.LAUNCHPAD_LXD_BOT_KEY }}
-        run: |
-          ssh-agent -a "${SSH_AUTH_SOCK}" > /dev/null
-          ssh-add - <<< "${{ secrets.LAUNCHPAD_LXD_BOT_KEY }}"
-          mkdir -m 0700 -p ~/.ssh/
-          # In ephemeral environments like GitHub Action runners, relying on TOFU isn't providing any security
-          # so require the key obtained by `ssh-keyscan` to match the expected hash from https://help.launchpad.net/SSHFingerprints
-          ssh-keyscan git.launchpad.net >> ~/.ssh/known_hosts
-          ssh-keygen -qlF git.launchpad.net | grep -xF 'git.launchpad.net RSA SHA256:UNOzlP66WpDuEo34Wgs8mewypV0UzqHLsIFoqwe8dYo'
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.18.x
-
-      - name: Trigger Launchpad snap build
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          TARGET: >-
-            ${{ fromJson('{
-              "main": "latest-edge",
-              "stable-5.0": "5.0-edge",
-            }')[github.ref_name] }}
-        run: |
-          set -x
-          git config --global user.name "Canonical LXD Bot"
-          git config --global user.email "lxd@lists.canonical.com"
-          localRev=$(git rev-parse HEAD)
-          go install github.com/canonical/lxd-ci/lxd-snapcraft@latest
-          git clone -b "${TARGET}" git+ssh://lxdbot@git.launchpad.net/~canonical-lxd/lxd ~/lxd-pkg-snap-lp
-          cd ~/lxd-pkg-snap-lp
-          lxd-snapcraft -set-version "git-${localRev:0:7}" -set-source-commit "${localRev}"
-          git add --all
-          git commit --all --quiet -s --allow-empty -m "Automatic upstream build (${TARGET})" -m "Upstream commit: ${localRev}"
-          git show
-          git push --quiet

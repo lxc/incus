@@ -1,8 +1,8 @@
 test_container_syscall_interception() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  if [ "$(lxc query /1.0 | jq -r .environment.lxc_features.seccomp_notify)" != "true" ]; then
+  if [ "$(inc query /1.0 | jq -r .environment.lxc_features.seccomp_notify)" != "true" ]; then
     echo "==> SKIP: Seccomp notify not supported"
     return
   fi
@@ -18,16 +18,16 @@ test_container_syscall_interception() {
     go build -v -buildvcs=false ./...
   )
 
-  lxc init testimage c1
-  lxc config set c1 limits.memory=123MiB
-  lxc start c1
-  lxc file push syscall/sysinfo/sysinfo c1/root/sysinfo
-  lxc exec c1 -- /root/sysinfo
-  ! lxc exec c1 -- /root/sysinfo | grep "Totalram:128974848 " || false
-  lxc stop -f c1
-  lxc config set c1 security.syscalls.intercept.sysinfo=true
-  lxc start c1
-  lxc exec c1 -- /root/sysinfo
-  lxc exec c1 -- /root/sysinfo | grep "Totalram:128974848 "
-  lxc delete -f c1
+  inc init testimage c1
+  inc config set c1 limits.memory=123MiB
+  inc start c1
+  inc file push syscall/sysinfo/sysinfo c1/root/sysinfo
+  inc exec c1 -- /root/sysinfo
+  ! inc exec c1 -- /root/sysinfo | grep "Totalram:128974848 " || false
+  inc stop -f c1
+  inc config set c1 security.syscalls.intercept.sysinfo=true
+  inc start c1
+  inc exec c1 -- /root/sysinfo
+  inc exec c1 -- /root/sysinfo | grep "Totalram:128974848 "
+  inc delete -f c1
 }

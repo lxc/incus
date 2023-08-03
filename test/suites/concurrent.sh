@@ -1,6 +1,6 @@
 test_concurrent() {
-  if [ -z "${LXD_CONCURRENT:-}" ]; then
-    echo "==> SKIP: LXD_CONCURRENT isn't set"
+  if [ -z "${INCUS_CONCURRENT:-}" ]; then
+    echo "==> SKIP: INCUS_CONCURRENT isn't set"
     return
   fi
 
@@ -11,17 +11,17 @@ test_concurrent() {
 
     name=concurrent-${1}
 
-    lxc launch testimage "${name}"
-    lxc info "${name}" | grep RUNNING
-    echo abc | lxc exec "${name}" -- cat | grep abc
-    lxc stop "${name}" --force
-    lxc delete "${name}"
+    inc launch testimage "${name}"
+    inc info "${name}" | grep RUNNING
+    echo abc | inc exec "${name}" -- cat | grep abc
+    inc stop "${name}" --force
+    inc delete "${name}"
   }
 
   PIDS=""
 
   for id in $(seq $(($(find /sys/bus/cpu/devices/ -type l | wc -l)*8))); do
-    spawn_container "${id}" 2>&1 | tee "${LXD_DIR}/lxc-${id}.out" &
+    spawn_container "${id}" 2>&1 | tee "${INCUS_DIR}/incus-${id}.out" &
     PIDS="${PIDS} $!"
   done
 
@@ -29,5 +29,5 @@ test_concurrent() {
     wait "${pid}"
   done
 
-  ! lxc list | grep -q concurrent || false
+  ! inc list | grep -q concurrent || false
 }

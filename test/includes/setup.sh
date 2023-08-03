@@ -3,18 +3,18 @@
 ensure_has_localhost_remote() {
     # shellcheck disable=SC2039,3043
     local addr="${1}"
-    if ! lxc remote list | grep -q "localhost"; then
-        lxc remote add localhost "https://${addr}" --accept-certificate --password foo
+    if ! inc remote list | grep -q "localhost"; then
+        inc remote add localhost "https://${addr}" --accept-certificate --password foo
     fi
 }
 
 ensure_import_testimage() {
-    if ! lxc image alias list | grep -q "^| testimage\\s*|.*$"; then
-        if [ -e "${LXD_TEST_IMAGE:-}" ]; then
-            lxc image import "${LXD_TEST_IMAGE}" --alias testimage
+    if ! inc image alias list | grep -q "^| testimage\\s*|.*$"; then
+        if [ -e "${INCUS_TEST_IMAGE:-}" ]; then
+            inc image import "${INCUS_TEST_IMAGE}" --alias testimage
         else
             if [ ! -e "/bin/busybox" ]; then
-                echo "Please install busybox (busybox-static) or set LXD_TEST_IMAGE"
+                echo "Please install busybox (busybox-static) or set INCUS_TEST_IMAGE"
                 exit 1
             fi
 
@@ -23,7 +23,7 @@ ensure_import_testimage() {
                 exit 1
             fi
 
-            project="$(lxc project list | awk '/(current)/ {print $2}')"
+            project="$(inc project list | awk '/(current)/ {print $2}')"
             deps/import-busybox --alias testimage --project "$project"
         fi
     fi

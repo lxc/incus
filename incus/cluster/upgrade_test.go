@@ -62,7 +62,7 @@ func TestNotifyUpgradeCompleted(t *testing.T) {
 }
 
 // The task function checks if the node is out of date and runs whatever is in
-// LXD_CLUSTER_UPDATE if so.
+// INCUS_CLUSTER_UPDATE if so.
 func TestMaybeUpdate_Upgrade(t *testing.T) {
 	dir, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
@@ -106,8 +106,8 @@ func TestMaybeUpdate_Upgrade(t *testing.T) {
 		return nil
 	})
 
-	_ = os.Setenv("LXD_CLUSTER_UPDATE", script)
-	defer func() { _ = os.Unsetenv("LXD_CLUSTER_UPDATE") }()
+	_ = os.Setenv("INCUS_CLUSTER_UPDATE", script)
+	defer func() { _ = os.Unsetenv("INCUS_CLUSTER_UPDATE") }()
 
 	_ = cluster.MaybeUpdate(state)
 
@@ -132,8 +132,8 @@ func TestMaybeUpdate_NothingToDo(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	_ = os.Setenv("LXD_CLUSTER_UPDATE", script)
-	defer func() { _ = os.Unsetenv("LXD_CLUSTER_UPDATE") }()
+	_ = os.Setenv("INCUS_CLUSTER_UPDATE", script)
+	defer func() { _ = os.Unsetenv("INCUS_CLUSTER_UPDATE") }()
 
 	_ = cluster.MaybeUpdate(state)
 

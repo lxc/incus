@@ -1,111 +1,111 @@
-# LXD-related test helpers.
+# Incus-related test helpers.
 
-spawn_lxd() {
+spawn_incus() {
     set +x
-    # LXD_DIR is local here because since $(lxc) is actually a function, it
-    # overwrites the environment and we would lose LXD_DIR's value otherwise.
+    # INCUS_DIR is local here because since $(inc) is actually a function, it
+    # overwrites the environment and we would lose INCUS_DIR's value otherwise.
 
     # shellcheck disable=2039,3043
-    local LXD_DIR lxddir lxd_backend
+    local INCUS_DIR incusdir incus_backend
 
-    lxddir=${1}
+    incusdir=${1}
     shift
 
     storage=${1}
     shift
 
     # shellcheck disable=SC2153
-    if [ "$LXD_BACKEND" = "random" ]; then
-        lxd_backend="$(random_storage_backend)"
+    if [ "$INCUS_BACKEND" = "random" ]; then
+        incus_backend="$(random_storage_backend)"
     else
-        lxd_backend="$LXD_BACKEND"
+        incus_backend="$INCUS_BACKEND"
     fi
 
-    if [ "${LXD_BACKEND}" = "ceph" ] && [ -z "${LXD_CEPH_CLUSTER:-}" ]; then
+    if [ "${INCUS_BACKEND}" = "ceph" ] && [ -z "${INCUS_CEPH_CLUSTER:-}" ]; then
         echo "A cluster name must be specified when using the CEPH driver." >&2
         exit 1
     fi
 
     # setup storage
-    "$lxd_backend"_setup "${lxddir}"
-    echo "$lxd_backend" > "${lxddir}/lxd.backend"
+    "$incus_backend"_setup "${incusdir}"
+    echo "$incus_backend" > "${incusdir}/incus.backend"
 
-    echo "==> Spawning lxd in ${lxddir}"
+    echo "==> Spawning incus in ${incusdir}"
     # shellcheck disable=SC2086
 
-    if [ "${LXD_NETNS}" = "" ]; then
-        LXD_DIR="${lxddir}" lxd --logfile "${lxddir}/lxd.log" "${DEBUG-}" "$@" 2>&1 &
+    if [ "${INCUS_NETNS}" = "" ]; then
+        INCUS_DIR="${incusdir}" incus --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
     else
         # shellcheck disable=SC2153
-        pid="$(cat "${TEST_DIR}/ns/${LXD_NETNS}/PID")"
-        LXD_DIR="${lxddir}" nsenter -n -m -t "${pid}" lxd --logfile "${lxddir}/lxd.log" "${DEBUG-}" "$@" 2>&1 &
+        pid="$(cat "${TEST_DIR}/ns/${INCUS_NETNS}/PID")"
+        INCUS_DIR="${incusdir}" nsenter -n -m -t "${pid}" incus --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
     fi
-    LXD_PID=$!
-    echo "${LXD_PID}" > "${lxddir}/lxd.pid"
+    INCUS_PID=$!
+    echo "${INCUS_PID}" > "${incusdir}/incus.pid"
     # shellcheck disable=SC2153
-    echo "${lxddir}" >> "${TEST_DIR}/daemons"
-    echo "==> Spawned LXD (PID is ${LXD_PID})"
+    echo "${incusdir}" >> "${TEST_DIR}/daemons"
+    echo "==> Spawned Incus (PID is ${INCUS_PID})"
 
-    echo "==> Confirming lxd is responsive (PID is ${LXD_PID})"
-    LXD_DIR="${lxddir}" lxd waitready --timeout=300 || (echo "Killing PID ${LXD_PID}" ; kill -9 "${LXD_PID}" ; false)
+    echo "==> Confirming incus is responsive (PID is ${INCUS_PID})"
+    INCUS_DIR="${incusdir}" incus waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
 
-    if [ "${LXD_NETNS}" = "" ]; then
+    if [ "${INCUS_NETNS}" = "" ]; then
         echo "==> Binding to network"
         for _ in $(seq 10); do
             addr="127.0.0.1:$(local_tcp_port)"
-            LXD_DIR="${lxddir}" lxc config set core.https_address "${addr}" || continue
-            echo "${addr}" > "${lxddir}/lxd.addr"
+            INCUS_DIR="${incusdir}" inc config set core.https_address "${addr}" || continue
+            echo "${addr}" > "${incusdir}/incus.addr"
             echo "==> Bound to ${addr}"
             break
         done
     fi
 
     echo "==> Setting trust password"
-    LXD_DIR="${lxddir}" lxc config set core.trust_password foo
+    INCUS_DIR="${incusdir}" inc config set core.trust_password foo
     if [ -n "${DEBUG:-}" ]; then
         set -x
     fi
 
-    if [ "${LXD_NETNS}" = "" ]; then
+    if [ "${INCUS_NETNS}" = "" ]; then
         echo "==> Setting up networking"
-        LXD_DIR="${lxddir}" lxc profile device add default eth0 nic nictype=p2p name=eth0
+        INCUS_DIR="${incusdir}" inc profile device add default eth0 nic nictype=p2p name=eth0
     fi
 
     if [ "${storage}" = true ]; then
         echo "==> Configuring storage backend"
-        "$lxd_backend"_configure "${lxddir}"
+        "$incus_backend"_configure "${incusdir}"
     fi
 }
 
-respawn_lxd() {
+respawn_incus() {
     set +x
-    # LXD_DIR is local here because since $(lxc) is actually a function, it
-    # overwrites the environment and we would lose LXD_DIR's value otherwise.
+    # INCUS_DIR is local here because since $(inc) is actually a function, it
+    # overwrites the environment and we would lose INCUS_DIR's value otherwise.
 
     # shellcheck disable=2039,3043
-    local LXD_DIR
+    local INCUS_DIR
 
-    lxddir=${1}
+    incusdir=${1}
     shift
 
     wait=${1}
     shift
 
-    echo "==> Spawning lxd in ${lxddir}"
+    echo "==> Spawning incus in ${incusdir}"
     # shellcheck disable=SC2086
-    if [ "${LXD_NETNS}" = "" ]; then
-        LXD_DIR="${lxddir}" lxd --logfile "${lxddir}/lxd.log" "${DEBUG-}" "$@" 2>&1 &
+    if [ "${INCUS_NETNS}" = "" ]; then
+        INCUS_DIR="${incusdir}" incus --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
     else
-        pid="$(cat "${TEST_DIR}/ns/${LXD_NETNS}/PID")"
-        LXD_DIR="${lxddir}" nsenter -n -m -t "${pid}" lxd --logfile "${lxddir}/lxd.log" "${DEBUG-}" "$@" 2>&1 &
+        pid="$(cat "${TEST_DIR}/ns/${INCUS_NETNS}/PID")"
+        INCUS_DIR="${incusdir}" nsenter -n -m -t "${pid}" incus --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
     fi
-    LXD_PID=$!
-    echo "${LXD_PID}" > "${lxddir}/lxd.pid"
-    echo "==> Spawned LXD (PID is ${LXD_PID})"
+    INCUS_PID=$!
+    echo "${INCUS_PID}" > "${incusdir}/incus.pid"
+    echo "==> Spawned Incus (PID is ${INCUS_PID})"
 
     if [ "${wait}" = true ]; then
-        echo "==> Confirming lxd is responsive (PID is ${LXD_PID})"
-        LXD_DIR="${lxddir}" lxd waitready --timeout=300 || (echo "Killing PID ${LXD_PID}" ; kill -9 "${LXD_PID}" ; false)
+        echo "==> Confirming incus is responsive (PID is ${INCUS_PID})"
+        INCUS_DIR="${incusdir}" incus waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
     fi
 
     if [ -n "${DEBUG:-}" ]; then
@@ -113,72 +113,72 @@ respawn_lxd() {
     fi
 }
 
-kill_lxd() {
-    # LXD_DIR is local here because since $(lxc) is actually a function, it
-    # overwrites the environment and we would lose LXD_DIR's value otherwise.
+kill_incus() {
+    # INCUS_DIR is local here because since $(inc) is actually a function, it
+    # overwrites the environment and we would lose INCUS_DIR's value otherwise.
 
     # shellcheck disable=2039,3043
-    local LXD_DIR daemon_dir daemon_pid check_leftovers lxd_backend
+    local INCUS_DIR daemon_dir daemon_pid check_leftovers incus_backend
 
     daemon_dir=${1}
-    LXD_DIR=${daemon_dir}
+    INCUS_DIR=${daemon_dir}
 
     # Check if already killed
-    if [ ! -f "${daemon_dir}/lxd.pid" ]; then
+    if [ ! -f "${daemon_dir}/incus.pid" ]; then
       return
     fi
 
-    daemon_pid=$(cat "${daemon_dir}/lxd.pid")
+    daemon_pid=$(cat "${daemon_dir}/incus.pid")
     check_leftovers="false"
-    lxd_backend=$(storage_backend "$daemon_dir")
-    echo "==> Killing LXD at ${daemon_dir} (${daemon_pid})"
+    incus_backend=$(storage_backend "$daemon_dir")
+    echo "==> Killing Incus at ${daemon_dir} (${daemon_pid})"
 
     if [ -e "${daemon_dir}/unix.socket" ]; then
         # Delete all containers
         echo "==> Deleting all containers"
-        for container in $(timeout -k 2 2 lxc list --force-local --format csv --columns n); do
-            timeout -k 10 10 lxc delete "${container}" --force-local -f || true
+        for container in $(timeout -k 2 2 inc list --force-local --format csv --columns n); do
+            timeout -k 10 10 inc delete "${container}" --force-local -f || true
         done
 
         # Delete all images
         echo "==> Deleting all images"
-        for image in $(timeout -k 2 2 lxc image list --force-local --format csv --columns f); do
-            timeout -k 10 10 lxc image delete "${image}" --force-local || true
+        for image in $(timeout -k 2 2 inc image list --force-local --format csv --columns f); do
+            timeout -k 10 10 inc image delete "${image}" --force-local || true
         done
 
         # Delete all profiles
         echo "==> Deleting all profiles"
-        for profile in $(timeout -k 2 2 lxc profile list --force-local --format csv | cut -d, -f1); do
-            timeout -k 10 10 lxc profile delete "${profile}" --force-local || true
+        for profile in $(timeout -k 2 2 inc profile list --force-local --format csv | cut -d, -f1); do
+            timeout -k 10 10 inc profile delete "${profile}" --force-local || true
         done
 
         # Delete all networks
         echo "==> Deleting all managed networks"
-        for network in $(timeout -k 2 2 lxc network list --force-local --format csv | awk -F, '{if ($3 == "YES") {print $1}}'); do
-            timeout -k 10 10 lxc network delete "${network}" --force-local || true
+        for network in $(timeout -k 2 2 inc network list --force-local --format csv | awk -F, '{if ($3 == "YES") {print $1}}'); do
+            timeout -k 10 10 inc network delete "${network}" --force-local || true
         done
 
         # Clear config of the default profile since the profile itself cannot
         # be deleted.
         echo "==> Clearing config of default profile"
-        printf 'config: {}\ndevices: {}' | timeout -k 5 5 lxc profile edit default
+        printf 'config: {}\ndevices: {}' | timeout -k 5 5 inc profile edit default
 
         echo "==> Deleting all storage pools"
-        for storage_pool in $(lxc query "/1.0/storage-pools?recursion=1" | jq .[].name -r); do
+        for storage_pool in $(inc query "/1.0/storage-pools?recursion=1" | jq .[].name -r); do
             # Delete the storage volumes.
-            for volume in $(lxc query "/1.0/storage-pools/${storage_pool}/volumes/custom?recursion=1" | jq .[].name -r); do
+            for volume in $(inc query "/1.0/storage-pools/${storage_pool}/volumes/custom?recursion=1" | jq .[].name -r); do
                 echo "==> Deleting storage volume ${volume} on ${storage_pool}"
-                timeout -k 20 20 lxc storage volume delete "${storage_pool}" "${volume}" --force-local || true
+                timeout -k 20 20 inc storage volume delete "${storage_pool}" "${volume}" --force-local || true
             done
 
             # Delete the storage buckets.
-            for bucket in $(lxc query "/1.0/storage-pools/${storage_pool}/buckets?recursion=1" | jq .[].name -r); do
+            for bucket in $(inc query "/1.0/storage-pools/${storage_pool}/buckets?recursion=1" | jq .[].name -r); do
                 echo "==> Deleting storage bucket ${bucket} on ${storage_pool}"
-                timeout -k 20 20 lxc storage bucket delete "${storage_pool}" "${bucket}" --force-local || true
+                timeout -k 20 20 inc storage bucket delete "${storage_pool}" "${bucket}" --force-local || true
             done
 
             ## Delete the storage pool.
-            timeout -k 20 20 lxc storage delete "${storage_pool}" --force-local || true
+            timeout -k 20 20 inc storage delete "${storage_pool}" --force-local || true
         done
 
         echo "==> Checking for locked DB tables"
@@ -187,22 +187,22 @@ kill_lxd() {
         done
 
         # Kill the daemon
-        timeout -k 30 30 lxd shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
+        timeout -k 30 30 incus shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
 
         sleep 2
 
         # Cleanup shmounts (needed due to the forceful kill)
         find "${daemon_dir}" -name shmounts -exec "umount" "-l" "{}" \; >/dev/null 2>&1 || true
-        find "${daemon_dir}" -name devlxd -exec "umount" "-l" "{}" \; >/dev/null 2>&1 || true
+        find "${daemon_dir}" -name dev_incus -exec "umount" "-l" "{}" \; >/dev/null 2>&1 || true
 
         check_leftovers="true"
     fi
 
-    if [ -n "${LXD_LOGS:-}" ]; then
+    if [ -n "${INCUS_LOGS:-}" ]; then
         echo "==> Copying the logs"
-        mkdir -p "${LXD_LOGS}/${daemon_pid}"
-        cp -R "${daemon_dir}/logs/" "${LXD_LOGS}/${daemon_pid}/"
-        cp "${daemon_dir}/lxd.log" "${LXD_LOGS}/${daemon_pid}/"
+        mkdir -p "${INCUS_LOGS}/${daemon_pid}"
+        cp -R "${daemon_dir}/logs/" "${INCUS_LOGS}/${daemon_pid}/"
+        cp "${daemon_dir}/incus.log" "${INCUS_LOGS}/${daemon_pid}/"
     fi
 
     if [ "${check_leftovers}" = "true" ]; then
@@ -252,7 +252,7 @@ kill_lxd() {
     fi
 
     # teardown storage
-    "$lxd_backend"_teardown "${daemon_dir}"
+    "$incus_backend"_teardown "${daemon_dir}"
 
     # Wipe the daemon directory
     wipe "${daemon_dir}"
@@ -261,21 +261,21 @@ kill_lxd() {
     sed "\\|^${daemon_dir}|d" -i "${TEST_DIR}/daemons"
 }
 
-shutdown_lxd() {
-    # LXD_DIR is local here because since $(lxc) is actually a function, it
-    # overwrites the environment and we would lose LXD_DIR's value otherwise.
+shutdown_incus() {
+    # INCUS_DIR is local here because since $(inc) is actually a function, it
+    # overwrites the environment and we would lose INCUS_DIR's value otherwise.
 
     # shellcheck disable=2039,3043
-    local LXD_DIR
+    local INCUS_DIR
 
     daemon_dir=${1}
     # shellcheck disable=2034
-    LXD_DIR=${daemon_dir}
-    daemon_pid=$(cat "${daemon_dir}/lxd.pid")
-    echo "==> Shutting down LXD at ${daemon_dir} (${daemon_pid})"
+    INCUS_DIR=${daemon_dir}
+    daemon_pid=$(cat "${daemon_dir}/incus.pid")
+    echo "==> Shutting down Incus at ${daemon_dir} (${daemon_pid})"
 
     # Shutting down the daemon
-    lxd shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
+    incus shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
 
     # Wait for any cleanup activity that might be happening right
     # after the websocket is closed.
@@ -314,24 +314,24 @@ wipe() {
     rm -Rf "${1}"
 }
 
-# Kill and cleanup LXD instances and related resources
-cleanup_lxds() {
+# Kill and cleanup Incus instances and related resources
+cleanup_incus() {
     # shellcheck disable=SC2039,3043
     local test_dir daemon_dir
     test_dir="$1"
 
-    # Kill all LXD instances
+    # Kill all Incus instances
     while read -r daemon_dir; do
-        kill_lxd "${daemon_dir}"
+        kill_incus "${daemon_dir}"
     done < "${test_dir}/daemons"
 
     # Cleanup leftover networks
     # shellcheck disable=SC2009
-    ps aux | grep "interface=lxdt$$ " | grep -v grep | awk '{print $2}' | while read -r line; do
+    ps aux | grep "interface=inct$$ " | grep -v grep | awk '{print $2}' | while read -r line; do
         kill -9 "${line}"
     done
-    if [ -e "/sys/class/net/lxdt$$" ]; then
-        ip link del lxdt$$
+    if [ -e "/sys/class/net/inct$$" ]; then
+        ip link del inct$$
     fi
 
     # Cleanup clustering networking, if any

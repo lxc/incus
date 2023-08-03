@@ -9,9 +9,9 @@
 # reboot
 test_container_devices_infiniband_physical() {
   ensure_import_testimage
-  ensure_has_localhost_remote "${LXD_ADDR}"
+  ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  parent=${LXD_IB_PHYSICAL_PARENT:-""}
+  parent=${INCUS_IB_PHYSICAL_PARENT:-""}
 
   if [ "$parent" = "" ]; then
     echo "==> SKIP: No physical IB parent specified"
@@ -29,30 +29,30 @@ test_container_devices_infiniband_physical() {
   startNicCount=$(find /sys/class/net | wc -l)
 
   # Test basic container with SR-IOV IB.
-  lxc init testimage "${ctName}"
-  lxc config device add "${ctName}" eth0 infiniband \
+  inc init testimage "${ctName}"
+  inc config device add "${ctName}" eth0 infiniband \
     nictype=physical \
     parent="${parent}" \
     mtu=1500 \
     hwaddr="${ctMAC}"
-  lxc start "${ctName}"
+  inc start "${ctName}"
 
   # Check host devices are created.
-  ibDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
   if [ "$ibDevCount" != "3" ]; then
     echo "unexpected IB device count after creation"
     false
   fi
 
   # Check devices are mounted inside container.
-  ibMountCount=$(lxc exec "${ctName}" -- mount | grep -c infiniband)
+  ibMountCount=$(inc exec "${ctName}" -- mount | grep -c infiniband)
   if [ "$ibMountCount" != "3" ]; then
     echo "unexpected IB mount count after creation"
     false
   fi
 
   # Check custom MAC is applied in container on boot.
-  if ! lxc exec "${ctName}" -- grep -i "${ctMAC}" /sys/class/net/ib0/address ; then
+  if ! inc exec "${ctName}" -- grep -i "${ctMAC}" /sys/class/net/ib0/address ; then
     echo "custom mac not applied"
     false
   fi
@@ -65,13 +65,13 @@ test_container_devices_infiniband_physical() {
   fi
 
   # Check ownership of char devices.
-  nonRootDeviceCount=$(find "${LXD_DIR}"/devices/"${ctName}" ! -uid 0 -type c | wc -l)
+  nonRootDeviceCount=$(find "${INCUS_DIR}"/devices/"${ctName}" ! -uid 0 -type c | wc -l)
   if [ "$nonRootDeviceCount" != "3" ]; then
     echo "unexpected unprivileged non-root device ownership count after creation"
     false
   fi
 
-  lxc stop -f "${ctName}"
+  inc stop -f "${ctName}"
 
   # Check host dev MAC restore.
   if ! grep -i "${parentHostMAC}" /sys/class/net/"${parent}"/address ; then
@@ -80,21 +80,21 @@ test_container_devices_infiniband_physical() {
   fi
 
   # Check volatile cleanup on stop.
-  if lxc config show "${ctName}" | grep volatile.eth0 | grep -v volatile.eth0.name ; then
+  if inc config show "${ctName}" | grep volatile.eth0 | grep -v volatile.eth0.name ; then
     echo "unexpected volatile key remains"
     false
   fi
 
   # Check host devices are removed.
-  ibDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
   if [ "$ibDevCount" != "0" ]; then
     echo "unexpected IB device count after removal"
     false
   fi
 
   # Check privileged cgroup rules and device ownership.
-  lxc config set "${ctName}" security.privileged true
-  lxc start "${ctName}"
+  inc config set "${ctName}" security.privileged true
+  inc start "${ctName}"
 
   # Check privileged cgroup device rule count.
   cgroupDeviceCount=$(wc -l < /sys/fs/cgroup/devices/lxc.payload/"${ctName}"/devices.list)
@@ -104,47 +104,47 @@ test_container_devices_infiniband_physical() {
   fi
 
   # Check ownership of char devices.
-  rootDeviceCount=$(find "${LXD_DIR}"/devices/"${ctName}" -uid 0 -type c | wc -l)
+  rootDeviceCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -uid 0 -type c | wc -l)
   if [ "$rootDeviceCount" != "3" ]; then
     echo "unexpected privileged root device ownership count after creation"
     false
   fi
 
-  lxc stop -f "${ctName}"
+  inc stop -f "${ctName}"
 
 
   # Test hotplugging.
-  lxc config device remove "${ctName}" eth0
-  lxc start "${ctName}"
-  lxc config device add "${ctName}" eth0 infiniband \
+  inc config device remove "${ctName}" eth0
+  inc start "${ctName}"
+  inc config device add "${ctName}" eth0 infiniband \
     nictype=physical \
     parent="${parent}" \
     mtu=1500
 
   # Check host devices are created.
-  ibDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
   if [ "$ibDevCount" != "3" ]; then
     echo "unexpected IB device count after creation"
     false
   fi
 
   # Test hot unplug.
-  lxc config device remove "${ctName}" eth0
+  inc config device remove "${ctName}" eth0
 
   # Check host devices are removed.
-  ibDevCount=$(find "${LXD_DIR}"/devices/"${ctName}" -type c | wc -l)
+  ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
   if [ "$ibDevCount" != "0" ]; then
     echo "unexpected IB device count after removal"
     false
   fi
 
   # Check devices are unmounted inside container.
-  if lxc exec "${ctName}" -- mount | grep -c infiniband ; then
+  if inc exec "${ctName}" -- mount | grep -c infiniband ; then
     echo "unexpected IB mounts remain after removal"
     false
   fi
 
-  lxc delete -f "${ctName}"
+  inc delete -f "${ctName}"
 
   # Check we haven't left any NICS lying around.
   endNicCount=$(find /sys/class/net | wc -l)

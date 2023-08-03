@@ -111,9 +111,9 @@ func (o *oidcClient) do(req *http.Request) (*http.Response, error) {
 		return resp, nil
 	}
 
-	issuer := resp.Header.Get("X-LXD-OIDC-issuer")
-	clientID := resp.Header.Get("X-LXD-OIDC-clientid")
-	audience := resp.Header.Get("X-LXD-OIDC-audience")
+	issuer := resp.Header.Get("X-Incus-OIDC-issuer")
+	clientID := resp.Header.Get("X-Incus-OIDC-clientid")
+	audience := resp.Header.Get("X-Incus-OIDC-audience")
 
 	err = o.refresh(issuer, clientID)
 	if err != nil {

@@ -60,7 +60,7 @@ func NotifyUpgradeCompleted(state *state.State, networkCert *shared.CertInfo, se
 	})
 }
 
-// MaybeUpdate Check this node's version and possibly run LXD_CLUSTER_UPDATE.
+// MaybeUpdate Check this node's version and possibly run INCUS_CLUSTER_UPDATE.
 func MaybeUpdate(state *state.State) error {
 	shouldUpdate := false
 
@@ -103,9 +103,9 @@ func MaybeUpdate(state *state.State) error {
 func triggerUpdate() error {
 	logger.Warn("Member is out-of-date with respect to other cluster members")
 
-	updateExecutable := os.Getenv("LXD_CLUSTER_UPDATE")
+	updateExecutable := os.Getenv("INCUS_CLUSTER_UPDATE")
 	if updateExecutable == "" {
-		logger.Debug("No LXD_CLUSTER_UPDATE variable set, skipping auto-update")
+		logger.Debug("No INCUS_CLUSTER_UPDATE variable set, skipping auto-update")
 		return nil
 	}
 

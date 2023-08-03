@@ -195,7 +195,7 @@ func newPreClusteringTx(t *testing.T) *sql.Tx {
 		"INSERT INTO config VALUES(1, 'core.https_address', '1.2.3.4:666')",
 		"INSERT INTO config VALUES(2, 'core.trust_password', 'sekret')",
 		"INSERT INTO config VALUES(3, 'maas.machine', 'mymaas')",
-		"INSERT INTO profiles VALUES(1, 'default', 'Default LXD profile')",
+		"INSERT INTO profiles VALUES(1, 'default', 'Default Incus profile')",
 		"INSERT INTO profiles VALUES(2, 'users', '')",
 		"INSERT INTO profiles_config VALUES(2, 2, 'boot.autostart', 'false')",
 		"INSERT INTO profiles_config VALUES(3, 2, 'limits.cpu.allowance', '50%')",

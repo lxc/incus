@@ -1,7 +1,7 @@
 package main
 
 /*
- * An example of how to use lxd's golang /dev/lxd client. This is intended to
+ * An example of how to use incus's golang /dev/incus client. This is intended to
  * be run from inside a container.
  */
 
@@ -24,11 +24,11 @@ import (
 	"github.com/cyphar/incus/shared/api"
 )
 
-type devLxdDialer struct {
+type devIncusDialer struct {
 	Path string
 }
 
-func (d devLxdDialer) devLxdDial(ctx context.Context, network, path string) (net.Conn, error) {
+func (d devIncusDialer) devIncusDial(ctx context.Context, network, path string) (net.Conn, error) {
 	addr, err := net.ResolveUnixAddr("unix", d.Path)
 	if err != nil {
 		return nil, err
@@ -42,15 +42,15 @@ func (d devLxdDialer) devLxdDial(ctx context.Context, network, path string) (net
 	return conn, err
 }
 
-var devLxdTransport = &http.Transport{
-	DialContext: devLxdDialer{"/dev/lxd/sock"}.devLxdDial,
+var devIncusTransport = &http.Transport{
+	DialContext: devIncusDialer{"/dev/incus/sock"}.devIncusDial,
 }
 
-func devlxdMonitorStream() {
+func devIncusMonitorStream() {
 	client := http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", "/dev/lxd/sock")
+				return net.Dial("unix", "/dev/incus/sock")
 			},
 		},
 	}
@@ -80,9 +80,9 @@ func devlxdMonitorStream() {
 	}
 }
 
-func devlxdMonitorWebsocket(c http.Client) {
+func devIncusMonitorWebsocket(c http.Client) {
 	dialer := websocket.Dialer{
-		NetDialContext:   devLxdTransport.DialContext,
+		NetDialContext:   devIncusTransport.DialContext,
 		HandshakeTimeout: time.Second * 5,
 	}
 
@@ -114,11 +114,11 @@ func devlxdMonitorWebsocket(c http.Client) {
 	}
 }
 
-func devlxdState(ready bool) {
+func devIncusState(ready bool) {
 	client := http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", "/dev/lxd/sock")
+				return net.Dial("unix", "/dev/incus/sock")
 			},
 		},
 	}
@@ -153,7 +153,7 @@ func devlxdState(ready bool) {
 }
 
 func main() {
-	c := http.Client{Transport: devLxdTransport}
+	c := http.Client{Transport: devIncusTransport}
 	raw, err := c.Get("http://meshuggah-rocks/")
 	if err != nil {
 		fmt.Println(err)
@@ -184,12 +184,12 @@ func main() {
 
 	if len(os.Args) > 1 {
 		if os.Args[1] == "monitor-websocket" {
-			devlxdMonitorWebsocket(c)
+			devIncusMonitorWebsocket(c)
 			os.Exit(0)
 		}
 
 		if os.Args[1] == "monitor-stream" {
-			devlxdMonitorStream()
+			devIncusMonitorStream()
 			os.Exit(0)
 		}
 
@@ -200,7 +200,7 @@ func main() {
 				os.Exit(1)
 			}
 
-			devlxdState(ready)
+			devIncusState(ready)
 			os.Exit(0)
 		}
 
@@ -225,6 +225,6 @@ func main() {
 
 		fmt.Println(string(value))
 	} else {
-		fmt.Println("/dev/lxd ok")
+		fmt.Println("/dev/incus ok")
 	}
 }

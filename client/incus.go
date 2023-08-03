@@ -165,7 +165,7 @@ func (r *ProtocolLXD) DoHTTP(req *http.Request) (*http.Response, error) {
 
 // addClientHeaders sets headers from client settings.
 // User-Agent (if r.httpUserAgent is set).
-// X-LXD-authenticated (if r.requireAuthenticated is set).
+// X-Incus-authenticated (if r.requireAuthenticated is set).
 // Bakery authentication header and cookie (if r.bakeryClient is set).
 // OIDC Authorization header (if r.oidcClient is set).
 func (r *ProtocolLXD) addClientHeaders(req *http.Request) {
@@ -174,7 +174,7 @@ func (r *ProtocolLXD) addClientHeaders(req *http.Request) {
 	}
 
 	if r.requireAuthenticated {
-		req.Header.Set("X-LXD-authenticated", "true")
+		req.Header.Set("X-Incus-authenticated", "true")
 	}
 
 	if r.bakeryClient != nil {

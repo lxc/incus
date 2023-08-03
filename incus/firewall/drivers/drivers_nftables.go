@@ -19,7 +19,7 @@ import (
 	"github.com/cyphar/incus/shared/version"
 )
 
-const nftablesNamespace = "lxd"
+const nftablesNamespace = "incus"
 const nftablesContentTemplate = "nftablesContent"
 
 // nftablesChainSeparator The "." character is specifically chosen here so as to prevent the ability for collisions
@@ -30,7 +30,7 @@ const nftablesChainSeparator = "."
 // nftablesMinVersion We need at least 0.9.1 as this was when the arp ether saddr filters were added.
 const nftablesMinVersion = "0.9.1"
 
-// Nftables is an implmentation of LXD firewall using nftables.
+// Nftables is an implmentation of Incus firewall using nftables.
 type Nftables struct{}
 
 // String returns the driver name.
@@ -97,7 +97,7 @@ func (d Nftables) Compat() (bool, error) {
 	}
 
 	// Check that nftables works at all (some kernels let you list ruleset despite missing support).
-	testTable := fmt.Sprintf("lxd_test_%s", uuid.New())
+	testTable := fmt.Sprintf("incus_test_%s", uuid.New())
 
 	_, err = shared.RunCommandCLocale("nft", "create", "table", testTable)
 	if err != nil {
@@ -126,7 +126,7 @@ func (d Nftables) Compat() (bool, error) {
 
 // nftGenericItem represents some common fields amongst the different nftables types.
 type nftGenericItem struct {
-	ItemType string `json:"-"`      // Type of item (table, chain or rule). Populated by LXD.
+	ItemType string `json:"-"`      // Type of item (table, chain or rule). Populated by Incus.
 	Family   string `json:"family"` // Family of item (ip, ip6, bridge etc).
 	Table    string `json:"table"`  // Table the item belongs to (for chains and rules).
 	Chain    string `json:"chain"`  // Chain the item belongs to (for rules).
@@ -365,7 +365,7 @@ func (d Nftables) NetworkSetup(networkName string, opts Opts) error {
 	return nil
 }
 
-// NetworkClear removes the LXD network related chains.
+// NetworkClear removes the Incus network related chains.
 // The delete and ipeVersions arguments have no effect for nftables driver.
 func (d Nftables) NetworkClear(networkName string, _ bool, _ []uint) error {
 	removeChains := []string{

@@ -67,11 +67,11 @@ const OVNIPv6AddressModeDHCPStateful OVNIPv6AddressMode = "dhcpv6_stateful"
 const OVNIPv6AddressModeDHCPStateless OVNIPv6AddressMode = "dhcpv6_stateless"
 
 // OVN External ID names used by LXD.
-const ovnExtIDLXDSwitch = "lxd_switch"
-const ovnExtIDLXDSwitchPort = "lxd_switch_port"
-const ovnExtIDLXDProjectID = "lxd_project_id"
-const ovnExtIDLXDPortGroup = "lxd_port_group"
-const ovnExtIDLXDLocation = "lxd_location"
+const ovnExtIDLXDSwitch = "incus_switch"
+const ovnExtIDLXDSwitchPort = "incus_switch_port"
+const ovnExtIDLXDProjectID = "incus_project_id"
+const ovnExtIDLXDPortGroup = "incus_port_group"
+const ovnExtIDLXDLocation = "incus_location"
 
 // OVNIPv6RAOpts IPv6 router advertisements options that can be applied to a router.
 type OVNIPv6RAOpts struct {
@@ -1070,7 +1070,7 @@ func (o *OVN) LogicalSwitchPorts(switchName OVNSwitch) (map[OVNSwitchPort]OVNSwi
 	ports := make(map[OVNSwitchPort]OVNSwitchPortUUID, len(lines))
 
 	for _, line := range lines {
-		// E.g. "c709c4a8-ef3f-4ffe-a45a-c75295eb2698 (lxd-net3-instance-fc933d65-0900-46b0-b5f2-4d323342e755-eth0)"
+		// E.g. "c709c4a8-ef3f-4ffe-a45a-c75295eb2698 (incus-net3-instance-fc933d65-0900-46b0-b5f2-4d323342e755-eth0)"
 		fields := strings.Fields(line)
 
 		if len(fields) != 2 {

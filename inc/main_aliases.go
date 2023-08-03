@@ -155,14 +155,14 @@ func execIfAliases() error {
 	args := os.Args
 
 	// Avoid loops
-	if os.Getenv("LXC_ALIASES") == "1" {
+	if os.Getenv("INCUS_ALIASES") == "1" {
 		return nil
 	}
 
 	// Figure out the config directory and config path
 	var configDir string
-	if os.Getenv("LXD_CONF") != "" {
-		configDir = os.Getenv("LXD_CONF")
+	if os.Getenv("INCUS_CONF") != "" {
+		configDir = os.Getenv("INCUS_CONF")
 	} else if os.Getenv("HOME") != "" {
 		configDir = path.Join(os.Getenv("HOME"), ".config", "lxc")
 	} else {
@@ -204,7 +204,7 @@ func execIfAliases() error {
 
 	// Re-exec
 	environ := getEnviron()
-	environ = append(environ, "LXC_ALIASES=1")
+	environ = append(environ, "INCUS_ALIASES=1")
 	ret := doExec(path, newArgs, environ)
 	return fmt.Errorf(i18n.G("Processing aliases failed: %s"), ret)
 }

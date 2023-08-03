@@ -4,26 +4,26 @@ export PATH="$GOPATH/bin:$PATH"
 # /tmp isn't moutned exec on most systems, so we can't actually start
 # containers that are created there.
 SRC_DIR="$(pwd)"
-LXD_DIR="$(mktemp -d -p "$(pwd)")"
-chmod 777 "${LXD_DIR}"
-LXD_CONF="$(mktemp -d)"
-export SRC_DIR LXD_DIR LXD_CONF
-export LXD_FUIDMAP_DIR="${LXD_DIR}/fuidmap"
-mkdir -p "${LXD_FUIDMAP_DIR}"
+INCUS_DIR="$(mktemp -d -p "$(pwd)")"
+chmod 777 "${INCUS_DIR}"
+INCUS_CONF="$(mktemp -d)"
+export SRC_DIR INCUS_DIR INCUS_CONF
+export INCUS_FUIDMAP_DIR="${INCUS_DIR}/fuidmap"
+mkdir -p "${INCUS_FUIDMAP_DIR}"
 BASEURL=https://127.0.0.1:18443
 RESULT=failure
 
 set -e
-if [ -n "$LXD_DEBUG" ]; then
+if [ -n "$INCUS_DEBUG" ]; then
     set -x
     debug=--debug
 fi
 
-echo "==> Running the LXD testsuite"
+echo "==> Running the Incus testsuite"
 
 BASEURL=https://127.0.0.1:18443
 my_curl() {
-  curl -k -s --cert "${LXD_CONF}/client.crt" --key "${LXD_CONF}/client.key" "${@}"
+  curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" "${@}"
 }
 
 wait_for() {
@@ -31,9 +31,9 @@ wait_for() {
   my_curl "$BASEURL$op/wait"
 }
 
-lxc() {
+inc() {
     INJECTED=0
-    CMD="$(command -v lxc)"
+    CMD="$(command -v inc)"
     for arg in "${@}"; do
         if [ "$arg" = "--" ]; then
             INJECTED=1
@@ -60,19 +60,19 @@ cleanup() {
         wait_for my_curl -X PUT "$BASEURL$line/state" -d "{\"action\":\"stop\",\"force\":true}"
     done
 
-    # kill the lxds which share our pgrp as parent
+    # kill the daemons which share our pgrp as parent
     mygrp="$(awk '{ print $5 }' /proc/self/stat)"
-    for p in $(pidof lxd); do
+    for p in $(pidof incus); do
         pgrp="$(awk '{ print $5 }' "/proc/$p/stat")"
         if [ "$pgrp" = "$mygrp" ]; then
-          do_kill_lxd "$p"
+          do_kill_incus "$p"
         fi
     done
 
     # Apparently we need to wait a while for everything to die
     sleep 3
-    rm -Rf "${LXD_DIR}"
-    rm -Rf "${LXD_CONF}"
+    rm -Rf "${INCUS_DIR}"
+    rm -Rf "${INCUS_CONF}"
 
     echo ""
     echo ""
@@ -81,43 +81,43 @@ cleanup() {
 
 trap cleanup EXIT HUP INT TERM
 
-if ! command -v lxc > /dev/null; then
-    echo "==> Couldn't find lxc" && false
+if ! command -v inc > /dev/null; then
+    echo "==> Couldn't find inc" && false
 fi
 
-spawn_lxd() {
-  # LXD_DIR is local here because since `lxc` is actually a function, it
-  # overwrites the environment and we would lose LXD_DIR's value otherwise.
-  local LXD_DIR
+spawn_incus() {
+  # INCUS_DIR is local here because since `inc` is actually a function, it
+  # overwrites the environment and we would lose INCUS_DIR's value otherwise.
+  local INCUS_DIR
 
   addr=$1
-  lxddir=$2
+  incusdir=$2
   shift
   shift
-  echo "==> Spawning lxd on $addr in $lxddir"
-  LXD_DIR="$lxddir" lxd "${debug}" "${@}" > "$lxddir/lxd.log" 2>&1 &
+  echo "==> Spawning incus on $addr in $incusdir"
+  INCUS_DIR="$incusdir" incus "${debug}" "${@}" > "$incusdir/incus.log" 2>&1 &
 
-  echo "==> Confirming lxd on $addr is responsive"
-  LXD_DIR="$lxddir" lxd waitready
+  echo "==> Confirming incus on $addr is responsive"
+  INCUS_DIR="$incusdir" incus waitready
 
   echo "==> Binding to network"
-  LXD_DIR="$lxddir" lxc config set core.https_address "$addr"
+  INCUS_DIR="$incusdir" inc config set core.https_address "$addr"
 
   echo "==> Setting trust password"
-  LXD_DIR="$lxddir" lxc config set core.trust_password foo
+  INCUS_DIR="$incusdir" inc config set core.trust_password foo
 }
 
-spawn_lxd 127.0.0.1:18443 "$LXD_DIR"
+spawn_incus 127.0.0.1:18443 "$INCUS_DIR"
 
 ## tests go here
-if [ ! -e "$LXD_TEST_IMAGE" ]; then
-    echo "Please define LXD_TEST_IMAGE"
+if [ ! -e "$INCUS_TEST_IMAGE" ]; then
+    echo "Please define INCUS_TEST_IMAGE"
     false
 fi
-lxc image import "$LXD_TEST_IMAGE" --alias busybox
+inc image import "$INCUS_TEST_IMAGE" --alias busybox
 
-lxc image list
-lxc list
+inc image list
+inc list
 
 NUMCREATES=5
 createthread() {
@@ -126,21 +126,21 @@ createthread() {
         echo "createthread: starting loop $i out of $NUMCREATES"
         declare -a pids
         for j in $(seq 20); do
-            lxc launch busybox "b.$i.$j" &
-            pids[$j]=$!
+            inc launch busybox "b.$i.$j" &
+            pids[j]=$!
         done
         for j in $(seq 20); do
             # ignore errors if the task has already exited
-            wait ${pids[$j]} 2>/dev/null || true
+            wait "${pids[j]}" 2>/dev/null || true
         done
         echo "createthread: deleting..."
         for j in $(seq 20); do
-            lxc delete "b.$i.$j" &
-            pids[$j]=$!
+            inc delete "b.$i.$j" &
+            pids[j]=$!
         done
         for j in $(seq 20); do
             # ignore errors if the task has already exited
-            wait ${pids[$j]} 2>/dev/null || true
+            wait "${pids[j]}" 2>/dev/null || true
         done
     done
     exit 0
@@ -149,7 +149,7 @@ createthread() {
 listthread() {
     echo "listthread: I am $$"
     while true; do
-        lxc list
+        inc list
         sleep 2s
     done
     exit 0
@@ -158,9 +158,9 @@ listthread() {
 configthread() {
     echo "configthread: I am $$"
     for i in $(seq 20); do
-        lxc profile create "p$i"
-        lxc profile set "p$i" limits.memory 100MiB
-        lxc profile delete "p$i"
+        inc profile create "p$i"
+        inc profile set "p$i" limits.memory 100MiB
+        inc profile delete "p$i"
     done
     exit 0
 }
@@ -168,31 +168,31 @@ configthread() {
 disturbthread() {
     echo "disturbthread: I am $$"
     while true; do
-        lxc profile create empty
-        lxc init busybox disturb1
-        lxc profile assign disturb1 empty
-        lxc start disturb1
-        lxc exec disturb1 -- ps -ef
-        lxc stop disturb1 --force
-        lxc delete disturb1
-        lxc profile delete empty
+        inc profile create empty
+        inc init busybox disturb1
+        inc profile assign disturb1 empty
+        inc start disturb1
+        inc exec disturb1 -- ps -ef
+        inc stop disturb1 --force
+        inc delete disturb1
+        inc profile delete empty
     done
     exit 0
 }
 
 echo "Starting create thread"
-createthread 2>&1 | tee "$LXD_DIR/createthread.out" &
+createthread 2>&1 | tee "$INCUS_DIR/createthread.out" &
 p1=$!
 
 echo "starting the disturb thread"
-disturbthread 2>&1 | tee "$LXD_DIR/disturbthread.out" &
+disturbthread 2>&1 | tee "$INCUS_DIR/disturbthread.out" &
 pdisturb=$!
 
 echo "Starting list thread"
-listthread 2>&1 | tee "$LXD_DIR/listthread.out" &
+listthread 2>&1 | tee "$INCUS_DIR/listthread.out" &
 p2=$!
 echo "Starting config thread"
-configthread 2>&1 | tee "$LXD_DIR/configthread.out" &
+configthread 2>&1 | tee "$INCUS_DIR/configthread.out" &
 p3=$!
 
 # wait for listthread to finish

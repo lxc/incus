@@ -50,11 +50,11 @@ class UnixHTTPConnection(http.client.HTTPConnection):
         self.sock = sock
 
 
-class LXD(object):
+class Incus(object):
     workdir = None
 
     def __init__(self, path, project="default"):
-        self.lxd = UnixHTTPConnection(path)
+        self.incus = UnixHTTPConnection(path)
         self.project = project
 
         # Create our workdir
@@ -68,15 +68,15 @@ class LXD(object):
     def rest_call(self, path, data=None, method="GET", headers={}):
         if method == "GET" and data:
             data["project"] = self.project
-            self.lxd.request(
+            self.incus.request(
                 method,
                 "%s?%s" % "&".join(["%s=%s" % (key, value)
                                     for key, value in data.items()]), headers)
         else:
             path += "?project=%s" % self.project
-            self.lxd.request(method, path, data, headers)
+            self.incus.request(method, path, data, headers)
 
-        r = self.lxd.getresponse()
+        r = self.incus.getresponse()
         d = json.loads(r.read().decode("utf-8"))
         return r.status, d
 
@@ -114,7 +114,7 @@ class LXD(object):
     def images_upload(self, path, public, filename=None):
         headers = {}
         if public:
-            headers['X-LXD-public'] = "1"
+            headers['X-Incus-public'] = "1"
 
         if isinstance(path, str):
             headers['Content-Type'] = "application/octet-stream"
@@ -311,22 +311,22 @@ user.foo: {{ config_get("user.foo", "_unset_") }}
 
 
 if __name__ == "__main__":
-    if "LXD_DIR" in os.environ:
-        lxd_socket = os.path.join(os.environ['LXD_DIR'], "unix.socket")
+    if "INCUS_DIR" in os.environ:
+        incus_socket = os.path.join(os.environ['INCUS_DIR'], "unix.socket")
     else:
-        lxd_socket = "/var/lib/lxd/unix.socket"
+        incus_socket = "/var/lib/incus/unix.socket"
 
-    if not os.path.exists(lxd_socket):
-        print("LXD isn't running.")
+    if not os.path.exists(incus_socket):
+        print("Incus isn't running.")
         sys.exit(1)
 
     def setup_alias(aliases, fingerprint):
-        existing = lxd.aliases_list()
+        existing = incus.aliases_list()
 
         for alias in aliases:
             if alias in existing:
-                lxd.aliases_remove(alias)
-            lxd.aliases_create(alias, fingerprint)
+                incus.aliases_remove(alias)
+            incus.aliases_create(alias, fingerprint)
             print("Setup alias: %s" % alias)
 
     def import_busybox(parser, args):
@@ -342,14 +342,14 @@ if __name__ == "__main__":
                     fingerprint = hashlib.sha256(meta_fd.read() +
                                                  rootfs_fd.read()).hexdigest()
 
-            if fingerprint in lxd.images_list():
+            if fingerprint in incus.images_list():
                 parser.exit(1, "This image is already in the store.\n")
 
             if args.filename:
-                r = lxd.images_upload((meta_path, rootfs_path), args.public,
-                                      meta_path.split("/")[-1])
+                r = incus.images_upload((meta_path, rootfs_path), args.public,
+                                        meta_path.split("/")[-1])
             else:
-                r = lxd.images_upload((meta_path, rootfs_path), args.public)
+                r = incus.images_upload((meta_path, rootfs_path), args.public)
             print("Image imported as: %s" % r['fingerprint'])
         else:
             path = busybox.create_tarball(template=args.template.split(","))
@@ -357,10 +357,10 @@ if __name__ == "__main__":
             with open(path, "rb") as fd:
                 fingerprint = hashlib.sha256(fd.read()).hexdigest()
 
-            if fingerprint in lxd.images_list():
+            if fingerprint in incus.images_list():
                 parser.exit(1, "This image is already in the store.\n")
 
-            r = lxd.images_upload(path, args.public)
+            r = incus.images_upload(path, args.public)
             print("Image imported as: %s" % r['fingerprint'])
 
         setup_alias(args.alias, fingerprint)
@@ -383,7 +383,7 @@ if __name__ == "__main__":
     # Call the function
     args = parser.parse_args()
 
-    lxd = LXD(lxd_socket, project=args.project)
+    incus = Incus(incus_socket, project=args.project)
 
     try:
         args.func(parser, args)

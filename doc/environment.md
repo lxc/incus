@@ -1,18 +1,14 @@
 # Environment variables
 
-The LXD client and daemon respect some environment variables to adapt to
+The Incus client and daemon respect some environment variables to adapt to
 the user's environment and to turn some advanced features on and off.
-
-```{note}
-These environment variables are not available if you use the LXD snap.
-```
 
 ## Common
 
 Name                            | Description
 :---                            | :----
-`LXD_DIR`                       | The LXD data directory
-`LXD_INSECURE_TLS`              | If set to true, allows all default Go ciphers both for client <-> server communication and server <-> image servers (server <-> server and clustering are not affected)
+`INCUS_DIR`                     | The Incus data directory
+`INCUS_INSECURE_TLS`            | If set to true, allows all default Go ciphers both for client <-> server communication and server <-> image servers (server <-> server and clustering are not affected)
 `PATH`                          | List of paths to look into when resolving binaries
 `http_proxy`                    | Proxy server URL for HTTP
 `https_proxy`                   | Proxy server URL for HTTPS
@@ -24,19 +20,21 @@ Name                            | Description
 :---                            | :----
 `EDITOR`                        | What text editor to use
 `VISUAL`                        | What text editor to use (if `EDITOR` isn't set)
-`LXD_CONF`                      | Path to the LXC configuration directory
-`LXD_GLOBAL_CONF`               | Path to the global LXC configuration directory
-`LXC_REMOTE`                    | Name of the remote to use (overrides configured default remote)
+`INCUS_CONF`                    | Path to the client configuration directory
+`INCUS_GLOBAL_CONF`             | Path to the global client configuration directory
+`INCUS_REMOTE`                  | Name of the remote to use (overrides configured default remote)
 
 ## Server environment variable
 
 Name                            | Description
 :---                            | :----
-`LXD_EXEC_PATH`                 | Full path to the LXD binary (used when forking subcommands)
-`LXD_LXC_TEMPLATE_CONFIG`       | Path to the LXC template configuration directory
-`LXD_SECURITY_APPARMOR`         | If set to `false`, forces AppArmor off
-`LXD_UNPRIVILEGED_ONLY`         | If set to `true`, enforces that only unprivileged containers can be created. Note that any privileged containers that have been created before setting LXD_UNPRIVILEGED_ONLY will continue to be privileged. To use this option effectively it should be set when the LXD daemon is first set up.
-`LXD_OVMF_PATH`                 | Path to an OVMF build including `OVMF_CODE.fd` and `OVMF_VARS.ms.fd`
-`LXD_SHIFTFS_DISABLE`           | Disable `shiftfs` support (useful when testing traditional UID shifting)
-`LXD_IDMAPPED_MOUNTS_DISABLE`   | Disable idmapped mounts support (useful when testing traditional UID shifting)
-`LXD_DEVMONITOR_DIR`            | Path to be monitored by the device monitor. This is primarily for testing.
+`INCUS_CLUSTER_UPDATE`          | Script to call on a cluster update
+`INCUS_DEVMONITOR_DIR`          | Path to be monitored by the device monitor. This is primarily for testing
+`INCUS_EXEC_PATH`               | Full path to the Incus binary (used when forking subcommands)
+`INCUS_IDMAPPED_MOUNTS_DISABLE` | Disable idmapped mounts support (useful when testing traditional UID shifting)
+`INCUS_LXC_TEMPLATE_CONFIG`     | Path to the LXC template configuration directory
+`INCUS_OVMF_PATH`               | Path to an OVMF build including `OVMF_CODE.fd` and `OVMF_VARS.ms.fd`
+`INCUS_SECURITY_APPARMOR`       | If set to `false`, forces AppArmor off
+`INCUS_SHIFTFS_DISABLE`         | Disable `shiftfs` support (useful when testing traditional UID shifting)
+`INCUS_UI`                      | Path to the web UI to serve through the web server
+`INCUS_UNPRIVILEGED_ONLY`       | If set to `true`, enforces that only unprivileged containers can be created. Note that any privileged containers that have been created before setting INCUS_UNPRIVILEGED_ONLY will continue to be privileged. To use this option effectively it should be set when the Incus daemon is first set up.
