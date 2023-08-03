@@ -2,7 +2,7 @@ test_fdleak() {
   INCUS_FDLEAK_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FDLEAK_DIR}"
   spawn_incus "${INCUS_FDLEAK_DIR}" true
-  pid=$(cat "${INCUS_FDLEAK_DIR}/lxd.pid")
+  pid=$(cat "${INCUS_FDLEAK_DIR}/incus.pid")
 
   beforefds=$(/bin/ls "/proc/${pid}/fd" | wc -l)
   (
@@ -13,16 +13,16 @@ test_fdleak() {
     ensure_import_testimage
 
     for i in $(seq 5); do
-      lxc init testimage "leaktest${i}"
-      lxc info "leaktest${i}"
-      lxc start "leaktest${i}"
-      lxc exec "leaktest${i}" -- ps -ef
-      lxc stop "leaktest${i}" --force
-      lxc delete "leaktest${i}"
+      inc init testimage "leaktest${i}"
+      inc info "leaktest${i}"
+      inc start "leaktest${i}"
+      inc exec "leaktest${i}" -- ps -ef
+      inc stop "leaktest${i}" --force
+      inc delete "leaktest${i}"
     done
 
-    lxc list
-    lxc query /internal/gc
+    inc list
+    inc query /internal/gc
 
     exit 0
   )

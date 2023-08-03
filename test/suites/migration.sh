@@ -1,5 +1,5 @@
 test_migration() {
-  # setup a second LXD
+  # setup a second Incus
   # shellcheck disable=2039,3043
   local INCUS2_DIR INCUS2_ADDR incus_backend
   # shellcheck disable=2153
@@ -8,7 +8,7 @@ test_migration() {
   INCUS2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS2_DIR}"
   spawn_incus "${INCUS2_DIR}" true
-  INCUS2_ADDR=$(cat "${INCUS2_DIR}/lxd.addr")
+  INCUS2_ADDR=$(cat "${INCUS2_DIR}/incus.addr")
 
   # workaround for kernel/criu
   umount /sys/kernel/debug >/dev/null 2>&1 || true
@@ -82,10 +82,10 @@ test_migration() {
 
 migration() {
   # shellcheck disable=2039,3043
-  local lxd2_dir incus_backend lxd2_backend
-  lxd2_dir="$1"
+  local incus2_dir incus_backend incus2_backend
+  incus2_dir="$1"
   incus_backend=$(storage_backend "$INCUS_DIR")
-  lxd2_backend=$(storage_backend "$lxd2_dir")
+  incus2_backend=$(storage_backend "$incus2_dir")
   ensure_import_testimage
 
   inc_remote init testimage nonlive
@@ -100,15 +100,15 @@ migration() {
   # perform existence check for various files.
   inc_remote start l2:nonlive
   # FIXME: make this backend agnostic
-  if [ "$lxd2_backend" != "lvm" ] && [ "$lxd2_backend" != "zfs" ] && [ "$lxd2_backend" != "ceph" ]; then
-    [ -d "${lxd2_dir}/containers/nonlive/rootfs" ]
+  if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ]; then
+    [ -d "${incus2_dir}/containers/nonlive/rootfs" ]
   fi
   inc_remote stop l2:nonlive --force
 
   [ ! -d "${INCUS_DIR}/containers/nonlive" ]
   # FIXME: make this backend agnostic
-  if [ "$lxd2_backend" = "dir" ]; then
-    [ -d "${lxd2_dir}/snapshots/nonlive/snap0/rootfs/bin" ]
+  if [ "$incus2_backend" = "dir" ]; then
+    [ -d "${incus2_dir}/snapshots/nonlive/snap0/rootfs/bin" ]
   fi
 
   inc_remote copy l2:nonlive l1:nonlive2 --mode=push
@@ -117,8 +117,8 @@ migration() {
   inc_remote start l2:nonlive
   [ -d "${INCUS_DIR}/containers/nonlive2" ]
   # FIXME: make this backend agnostic
-  if [ "$lxd2_backend" != "lvm" ] && [ "$lxd2_backend" != "zfs" ] && [ "$lxd2_backend" != "ceph" ]; then
-    [ -d "${lxd2_dir}/containers/nonlive/rootfs/bin" ]
+  if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ]; then
+    [ -d "${incus2_dir}/containers/nonlive/rootfs/bin" ]
   fi
 
   # FIXME: make this backend agnostic
@@ -128,8 +128,8 @@ migration() {
 
   inc_remote copy l1:nonlive2/snap0 l2:nonlive3 --mode=relay
   # FIXME: make this backend agnostic
-  if [ "$lxd2_backend" != "lvm" ] && [ "$lxd2_backend" != "zfs" ] && [ "$lxd2_backend" != "ceph" ]; then
-    [ -d "${lxd2_dir}/containers/nonlive3/rootfs/bin" ]
+  if [ "$incus2_backend" != "lvm" ] && [ "$incus2_backend" != "zfs" ] && [ "$incus2_backend" != "ceph" ]; then
+    [ -d "${incus2_dir}/containers/nonlive3/rootfs/bin" ]
   fi
   inc_remote delete l2:nonlive3 --force
 
@@ -170,39 +170,39 @@ migration() {
   inc_remote delete l2:nonlive --force
 
   # Get container's pool.
-  pool=$(lxc config profile device get default root pool)
+  pool=$(inc config profile device get default root pool)
   remote_pool=$(inc_remote config profile device get l2:default root pool)
 
   # Test container only copies
-  lxc init testimage cccp
+  inc init testimage cccp
 
-  lxc storage volume set "${pool}" container/cccp user.foo=snap0
-  echo "before" | lxc file push - cccp/blah
-  lxc snapshot cccp
-  lxc storage volume set "${pool}" container/cccp user.foo=snap1
-  lxc snapshot cccp
-  echo "after" | lxc file push - cccp/blah
-  lxc storage volume set "${pool}" container/cccp user.foo=postsnap1
+  inc storage volume set "${pool}" container/cccp user.foo=snap0
+  echo "before" | inc file push - cccp/blah
+  inc snapshot cccp
+  inc storage volume set "${pool}" container/cccp user.foo=snap1
+  inc snapshot cccp
+  echo "after" | inc file push - cccp/blah
+  inc storage volume set "${pool}" container/cccp user.foo=postsnap1
 
   # Check storage volume creation times are set.
-  lxc query /1.0/storage-pools/"${pool}"/volumes/container/cccp | jq .created_at | grep -Fv '0001-01-01T00:00:00Z'
-  lxc query /1.0/storage-pools/"${pool}"/volumes/container/cccp/snapshots/snap0 | jq .created_at | grep -Fv '0001-01-01T00:00:00Z'
+  inc query /1.0/storage-pools/"${pool}"/volumes/container/cccp | jq .created_at | grep -Fv '0001-01-01T00:00:00Z'
+  inc query /1.0/storage-pools/"${pool}"/volumes/container/cccp/snapshots/snap0 | jq .created_at | grep -Fv '0001-01-01T00:00:00Z'
 
   # Local container only copy.
-  lxc copy cccp udssr --instance-only
-  [ "$(lxc info udssr | grep -c snap)" -eq 0 ]
-  [ "$(lxc file pull udssr/blah -)" = "after" ]
-  lxc delete udssr
+  inc copy cccp udssr --instance-only
+  [ "$(inc info udssr | grep -c snap)" -eq 0 ]
+  [ "$(inc file pull udssr/blah -)" = "after" ]
+  inc delete udssr
 
   # Local container with snapshots copy.
-  lxc copy cccp udssr
-  [ "$(lxc info udssr | grep -c snap)" -eq 2 ]
-  [ "$(lxc file pull udssr/blah -)" = "after" ]
-  lxc storage volume show "${pool}" container/udssr
-  lxc storage volume get "${pool}" container/udssr user.foo | grep -Fx "postsnap1"
-  lxc storage volume get "${pool}" container/udssr/snap0 user.foo | grep -Fx "snap0"
-  lxc storage volume get "${pool}" container/udssr/snap1 user.foo | grep -Fx "snap1"
-  lxc delete udssr
+  inc copy cccp udssr
+  [ "$(inc info udssr | grep -c snap)" -eq 2 ]
+  [ "$(inc file pull udssr/blah -)" = "after" ]
+  inc storage volume show "${pool}" container/udssr
+  inc storage volume get "${pool}" container/udssr user.foo | grep -Fx "postsnap1"
+  inc storage volume get "${pool}" container/udssr/snap0 user.foo | grep -Fx "snap0"
+  inc storage volume get "${pool}" container/udssr/snap1 user.foo | grep -Fx "snap1"
+  inc delete udssr
 
   # Remote container only copy.
   inc_remote copy l1:cccp l2:udssr --instance-only
@@ -237,35 +237,35 @@ migration() {
   inc_remote delete l2:udssr
 
   # Test container only copies
-  lxc init testimage cccp
-  lxc snapshot cccp
-  lxc snapshot cccp
+  inc init testimage cccp
+  inc snapshot cccp
+  inc snapshot cccp
 
   # Local container with snapshots move.
-  lxc move cccp udssr --mode=pull
-  ! lxc info cccp || false
-  [ "$(lxc info udssr | grep -c snap)" -eq 2 ]
-  lxc delete udssr
+  inc move cccp udssr --mode=pull
+  ! inc info cccp || false
+  [ "$(inc info udssr | grep -c snap)" -eq 2 ]
+  inc delete udssr
 
   if [ "$incus_backend" = "zfs" ]; then
     # Test container only copies when zfs.clone_copy is set to false.
-    lxc storage set "incustest-$(basename "${INCUS_DIR}")" zfs.clone_copy false
-    lxc init testimage cccp
-    lxc snapshot cccp
-    lxc snapshot cccp
+    inc storage set "incustest-$(basename "${INCUS_DIR}")" zfs.clone_copy false
+    inc init testimage cccp
+    inc snapshot cccp
+    inc snapshot cccp
 
     # Test container only copies when zfs.clone_copy is set to false.
-    lxc copy cccp udssr --instance-only
-    [ "$(lxc info udssr | grep -c snap)" -eq 0 ]
-    lxc delete udssr
+    inc copy cccp udssr --instance-only
+    [ "$(inc info udssr | grep -c snap)" -eq 0 ]
+    inc delete udssr
 
     # Test container with snapshots copy when zfs.clone_copy is set to false.
-    lxc copy cccp udssr
-    [ "$(lxc info udssr | grep -c snap)" -eq 2 ]
-    lxc delete cccp
-    lxc delete udssr
+    inc copy cccp udssr
+    [ "$(inc info udssr | grep -c snap)" -eq 2 ]
+    inc delete cccp
+    inc delete udssr
 
-    lxc storage unset "incustest-$(basename "${INCUS_DIR}")" zfs.clone_copy
+    inc storage unset "incustest-$(basename "${INCUS_DIR}")" zfs.clone_copy
   fi
 
   inc_remote init testimage l1:c1
@@ -275,8 +275,8 @@ migration() {
   inc_remote start l1:c1 l2:c2
 
   # Make sure the testfile doesn't exist
-  ! lxc file pull l1:c1 -- /root/testfile1 || false
-  ! lxc file pull l2:c2 -- /root/testfile1 || false
+  ! inc file pull l1:c1 -- /root/testfile1 || false
+  ! inc file pull l2:c2 -- /root/testfile1 || false
 
   #inc_remote start l1:c1 l2:c2
 
@@ -330,7 +330,7 @@ migration() {
   inc_remote rm -f l1:c1 l2:c2
 
   remote_pool1="incustest-$(basename "${INCUS_DIR}")"
-  remote_pool2="incustest-$(basename "${lxd2_dir}")"
+  remote_pool2="incustest-$(basename "${incus2_dir}")"
 
   inc_remote storage volume create l1:"$remote_pool1" vol1
   inc_remote storage volume set l1:"$remote_pool1" vol1 user.foo=snap0vol1
@@ -532,7 +532,7 @@ migration() {
   inc_remote rm -f l1:c1
   inc_remote rm -f l2:c1
 
-  # In this scenario the source LXD server used to crash due to a missing slice check.
+  # In this scenario the source Incus server used to crash due to a missing slice check.
   # Let's test this to make sure it doesn't happen again.
   inc_remote init testimage l1:c1
   inc_remote copy l1:c1 l2:c1
@@ -557,26 +557,26 @@ migration() {
   inc_remote rm -f l2:c1
 
   # On zfs, this used to crash due to a websocket read issue.
-  lxc launch testimage c1
-  lxc snapshot c1
-  lxc copy c1 l2:c1 --stateless
-  lxc copy c1 l2:c1 --stateless --refresh
+  inc launch testimage c1
+  inc snapshot c1
+  inc copy c1 l2:c1 --stateless
+  inc copy c1 l2:c1 --stateless --refresh
 
   inc_remote rm -f l1:c1
   inc_remote rm -f l2:c1
 
   # migrate ISO custom volumes
   truncate -s 25MiB foo.iso
-  lxc storage volume import l1:"${pool}" ./foo.iso iso1
-  lxc storage volume copy l1:"${pool}"/iso1 l2:"${remote_pool}"/iso1
+  inc storage volume import l1:"${pool}" ./foo.iso iso1
+  inc storage volume copy l1:"${pool}"/iso1 l2:"${remote_pool}"/iso1
 
-  lxc storage volume show l2:"${remote_pool}" iso1 | grep -q 'content_type: iso'
-  lxc storage volume move l1:"${pool}"/iso1 l2:"${remote_pool}"/iso2
-  lxc storage volume show l2:"${remote_pool}" iso2 | grep -q 'content_type: iso'
-  ! lxc storage volume show l1:"${pool}" iso1 || false
+  inc storage volume show l2:"${remote_pool}" iso1 | grep -q 'content_type: iso'
+  inc storage volume move l1:"${pool}"/iso1 l2:"${remote_pool}"/iso2
+  inc storage volume show l2:"${remote_pool}" iso2 | grep -q 'content_type: iso'
+  ! inc storage volume show l1:"${pool}" iso1 || false
 
-  lxc storage volume delete l2:"${remote_pool}" iso1
-  lxc storage volume delete l2:"${remote_pool}" iso2
+  inc storage volume delete l2:"${remote_pool}" iso1
+  inc storage volume delete l2:"${remote_pool}" iso2
   rm -f foo.iso
 
   if ! command -v criu >/dev/null 2>&1; then
