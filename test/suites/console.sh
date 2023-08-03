@@ -1,5 +1,5 @@
 test_console() {
-  lxc_version=$(lxc info | awk '/driver_version:/ {print $NF}')
+  lxc_version=$(inc info | awk '/driver_version:/ {print $NF}')
   lxc_major=$(echo "${lxc_version}" | cut -d. -f1)
 
   if [ "${lxc_major}" -lt 3 ]; then
@@ -11,21 +11,21 @@ test_console() {
 
   ensure_import_testimage
 
-  lxc init testimage cons1
+  inc init testimage cons1
 
-  lxc start cons1
+  inc start cons1
 
   # Make sure there's something in the console ringbuffer.
-  echo 'some content' | lxc exec cons1 -- tee /dev/console
-  echo 'some more content' | lxc exec cons1 -- tee /dev/console
+  echo 'some content' | inc exec cons1 -- tee /dev/console
+  echo 'some more content' | inc exec cons1 -- tee /dev/console
 
   # Retrieve the ringbuffer contents.
-  lxc console cons1 --show-log | grep 'some content'
+  inc console cons1 --show-log | grep 'some content'
 
-  lxc stop --force cons1
+  inc stop --force cons1
 
   # Retrieve on-disk representation of the console ringbuffer.
-  lxc console cons1 --show-log | grep 'some more content'
+  inc console cons1 --show-log | grep 'some more content'
 
-  lxc delete --force cons1
+  inc delete --force cons1
 }
