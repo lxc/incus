@@ -14,7 +14,7 @@ lxd-agent/lxd-agent
 lxd-benchmark/lxd-benchmark
 lxd-migrate/lxd-migrate
 lxd-user/lxd-user
-test/devlxd-client/devlxd-client
+test/dev_incus-client/dev_incus-client
 test/macaroon-identity/macaroon-identity
 test/syscall/sysinfo/sysinfo
 
