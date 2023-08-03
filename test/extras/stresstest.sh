@@ -127,20 +127,20 @@ createthread() {
         declare -a pids
         for j in $(seq 20); do
             inc launch busybox "b.$i.$j" &
-            pids[$j]=$!
+            pids[j]=$!
         done
         for j in $(seq 20); do
             # ignore errors if the task has already exited
-            wait ${pids[$j]} 2>/dev/null || true
+            wait "${pids[j]}" 2>/dev/null || true
         done
         echo "createthread: deleting..."
         for j in $(seq 20); do
             inc delete "b.$i.$j" &
-            pids[$j]=$!
+            pids[j]=$!
         done
         for j in $(seq 20); do
             # ignore errors if the task has already exited
-            wait ${pids[$j]} 2>/dev/null || true
+            wait "${pids[j]}" 2>/dev/null || true
         done
     done
     exit 0

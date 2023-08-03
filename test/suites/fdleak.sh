@@ -40,7 +40,7 @@ test_fdleak() {
 
   bad=0
   # shellcheck disable=SC2015
-  [ ${leakedfds} -gt 5 ] && bad=1 || true
+  [ "${leakedfds}" -gt 5 ] && bad=1 || true
   if [ ${bad} -eq 1 ]; then
     echo "${leakedfds} FDS leaked"
     ls "/proc/${pid}/fd" -al

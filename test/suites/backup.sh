@@ -360,6 +360,8 @@ test_backup_import_with_project() {
   fi
 
   ensure_import_testimage
+
+  # shellcheck disable=2153
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   inc launch testimage c1

@@ -4,6 +4,8 @@ test_basic_usage() {
   incus_backend=$(storage_backend "$INCUS_DIR")
 
   ensure_import_testimage
+
+  # shellcheck disable=2153
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Test image export

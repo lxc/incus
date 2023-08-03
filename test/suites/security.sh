@@ -1,5 +1,7 @@
 test_security() {
   ensure_import_testimage
+
+  # shellcheck disable=2153
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # CVE-2016-1581
