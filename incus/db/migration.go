@@ -123,7 +123,7 @@ func importPreClusteringData(tx *sql.Tx, dump *Dump) error {
 	stmt.WriteString(`INSERT INTO nodes(id, name, address, schema, api_extensions) VALUES(1, 'none', '0.0.0.0', 14, 1);`)
 
 	// Default project
-	stmt.WriteString(`INSERT INTO projects (name, description) VALUES ('default', 'Default LXD project');`)
+	stmt.WriteString(`INSERT INTO projects (name, description) VALUES ('default', 'Default Incus project');`)
 
 	// Enable all features for default project.
 	for featureName := range cluster.ProjectFeatures {

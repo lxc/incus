@@ -188,7 +188,7 @@ INSERT INTO nodes(id, name, address, schema, api_extensions, arch, description) 
 
 			// Default project
 			var defaultProjectStmt strings.Builder
-			_, _ = defaultProjectStmt.WriteString("INSERT INTO projects (name, description) VALUES ('default', 'Default LXD project');")
+			_, _ = defaultProjectStmt.WriteString("INSERT INTO projects (name, description) VALUES ('default', 'Default Incus project');")
 
 			// Enable all features for default project.
 			for featureName := range ProjectFeatures {
@@ -202,7 +202,7 @@ INSERT INTO nodes(id, name, address, schema, api_extensions, arch, description) 
 
 			// Default profile
 			stmt = `
-INSERT INTO profiles (name, description, project_id) VALUES ('default', 'Default LXD profile', 1)
+INSERT INTO profiles (name, description, project_id) VALUES ('default', 'Default Incus profile', 1)
 `
 			_, err = tx.Exec(stmt)
 			if err != nil {

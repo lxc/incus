@@ -3687,7 +3687,7 @@ CREATE VIEW projects_config_ref (name, key, value) AS
      JOIN projects ON projects.id=projects_config.project_id;
 
 -- Insert the default project, with ID 1
-INSERT INTO projects (name, description) VALUES ('default', 'Default LXD project');
+INSERT INTO projects (name, description) VALUES ('default', 'Default Incus project');
 INSERT INTO projects_config (project_id, key, value) VALUES (1, 'features.images', 'true');
 INSERT INTO projects_config (project_id, key, value) VALUES (1, 'features.profiles', 'true');
 
