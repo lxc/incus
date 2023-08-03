@@ -40,7 +40,7 @@ test_sql() {
   echo "$GLOBAL_DUMP" | grep -F "CREATE INDEX"   # ensure indices are captured.
   echo "$GLOBAL_DUMP" | grep -F "CREATE VIEW"    # ensure views are captured.
   echo "$GLOBAL_DUMP" | sqlite3 "${SQLITE_DUMP}"
-  sqlite3 "${SQLITE_DUMP}" "SELECT * FROM profiles" | grep -qF "|Default LXD profile|"
+  sqlite3 "${SQLITE_DUMP}" "SELECT * FROM profiles" | grep -qF "|Default Incus profile|"
   rm -f "${SQLITE_DUMP}"
 
   # Global database schema dump
@@ -55,5 +55,5 @@ test_sql() {
   echo "SYNC ${SQLITE_SYNC}"
   incus sql global .sync
   sqlite3 "${SQLITE_SYNC}" "SELECT * FROM schema" | grep -q "^1|"
-  sqlite3 "${SQLITE_SYNC}" "SELECT * FROM profiles" | grep -qF "|Default LXD profile|"
+  sqlite3 "${SQLITE_SYNC}" "SELECT * FROM profiles" | grep -qF "|Default Incus profile|"
 }

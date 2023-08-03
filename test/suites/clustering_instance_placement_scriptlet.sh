@@ -120,7 +120,7 @@ EOF
   ! INCUS_DIR="${INCUS_ONE_DIR}" inc init testimage c1 || false
 
   # Set instance placement scriptlet to one that sets an invalid cluster member target.
-  # Check that instance placement uses LXD's built in logic instead (as if setTarget hadn't been called at all).
+  # Check that instance placement uses Incus's built in logic instead (as if setTarget hadn't been called at all).
   cat << EOF | inc config set instances.placement.scriptlet=-
 def instance_placement(request, candidate_members):
         # Set invalid member target.

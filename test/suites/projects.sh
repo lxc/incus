@@ -48,12 +48,12 @@ test_projects_crud() {
   # Turning off the profiles feature makes the project see the default profile
   # from the default project.
   inc project set foo features.profiles false
-  inc profile show default | grep -E -q '^description: Default LXD profile$'
+  inc profile show default | grep -E -q '^description: Default Incus profile$'
 
   # Turning on the profiles feature creates a project-specific default
   # profile.
   inc project set foo features.profiles true
-  inc profile show default | grep -E -q '^description: Default LXD profile for project foo$'
+  inc profile show default | grep -E -q '^description: Default Incus profile for project foo$'
 
   # Invalid config values are rejected.
   ! inc project set foo garbage xxx || false
@@ -282,7 +282,7 @@ test_projects_profiles() {
 
   # List profiles
   inc profile list | grep -q 'default'
-  inc profile show default | grep -q 'description: Default LXD profile for project foo'
+  inc profile show default | grep -q 'description: Default Incus profile for project foo'
 
   # Create a profile in this project
   inc profile create p1
@@ -740,13 +740,13 @@ test_projects_limits() {
   # since it on other backends it requires resize the rootfs to a value which is
   # too small for resize2fs.
   if [ "${INCUS_BACKEND}" = "dir" ] || [ "${INCUS_BACKEND}" = "zfs" ]; then
-    # Add a remote LXD to be used as image server.
+    # Add a remote Incus to be used as image server.
     # shellcheck disable=2039,3043
     local INCUS_REMOTE_DIR
     INCUS_REMOTE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
     chmod +x "${INCUS_REMOTE_DIR}"
 
-    # Switch to default project to spawn new LXD server, and then switch back to p1.
+    # Switch to default project to spawn new Incus server, and then switch back to p1.
     inc project switch default
     spawn_incus "${INCUS_REMOTE_DIR}" true
     inc project switch p1

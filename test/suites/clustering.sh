@@ -1383,7 +1383,7 @@ test_clustering_publish() {
   ns2="${prefix}2"
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
 
-  # Give LXD a couple of seconds to get event API connected properly
+  # Give Incus a couple of seconds to get event API connected properly
   sleep 2
 
   # Init a container on node2, using a client connected to node1
@@ -1755,7 +1755,7 @@ test_clustering_shutdown_nodes() {
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
 
-  # Wait for LXD to terminate, otherwise the db will not be empty, and the
+  # Wait for Incus to terminate, otherwise the db will not be empty, and the
   # cleanup code will fail
   wait "${daemon_pid1}"
 
@@ -3758,13 +3758,13 @@ test_clustering_uuid() {
 
   ensure_import_testimage
 
-  # spawn an instance on the first LXD node
+  # spawn an instance on the first Incus node
   INCUS_DIR="${INCUS_ONE_DIR}" inc launch testimage c1 --target=node1
   # get its volatile.uuid
   uuid_before_move=$(INCUS_DIR="${INCUS_ONE_DIR}" inc config get c1 volatile.uuid)
   # stop the instance
   INCUS_DIR="${INCUS_ONE_DIR}" inc stop -f c1
-  # move the instance to the second LXD node
+  # move the instance to the second Incus node
   INCUS_DIR="${INCUS_ONE_DIR}" inc move c1 --target=node2
   # get the volatile.uuid of the moved instance on the second node
   uuid_after_move=$(INCUS_DIR="${INCUS_TWO_DIR}" inc config get c1 volatile.uuid)
