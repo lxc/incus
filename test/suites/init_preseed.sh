@@ -1,5 +1,5 @@
 test_init_preseed() {
-  # - lxd init --preseed
+  # - incus init --preseed
   incus_backend=$(storage_backend "$INCUS_DIR")
   INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_INIT_DIR}"
@@ -27,7 +27,7 @@ test_init_preseed() {
         source=""
     fi
 
-    cat <<EOF | lxd init --preseed
+    cat <<EOF | incus init --preseed
 config:
   core.https_address: 127.0.0.1:9999
   images.auto_update_interval: 15
@@ -61,20 +61,20 @@ profiles:
       type: nic
 EOF
 
-    lxc info | grep -q 'core.https_address: 127.0.0.1:9999'
-    lxc info | grep -q 'images.auto_update_interval: "15"'
-    lxc network list | grep -q "inct$$"
-    lxc storage list | grep -q "${storage_pool}"
-    lxc storage show "${storage_pool}" | grep -q "$source"
-    lxc profile list | grep -q "test-profile"
-    lxc profile show default | grep -q "pool: ${storage_pool}"
-    lxc profile show test-profile | grep -q "limits.memory: 2GiB"
-    lxc profile show test-profile | grep -q "nictype: bridged"
-    lxc profile show test-profile | grep -q "parent: inct$$"
-    printf 'config: {}\ndevices: {}' | lxc profile edit default
-    lxc profile delete test-profile
-    lxc network delete inct$$
-    lxc storage delete "${storage_pool}"
+    inc info | grep -q 'core.https_address: 127.0.0.1:9999'
+    inc info | grep -q 'images.auto_update_interval: "15"'
+    inc network list | grep -q "inct$$"
+    inc storage list | grep -q "${storage_pool}"
+    inc storage show "${storage_pool}" | grep -q "$source"
+    inc profile list | grep -q "test-profile"
+    inc profile show default | grep -q "pool: ${storage_pool}"
+    inc profile show test-profile | grep -q "limits.memory: 2GiB"
+    inc profile show test-profile | grep -q "nictype: bridged"
+    inc profile show test-profile | grep -q "parent: inct$$"
+    printf 'config: {}\ndevices: {}' | inc profile edit default
+    inc profile delete test-profile
+    inc network delete inct$$
+    inc storage delete "${storage_pool}"
 
     if [ "$incus_backend" = "zfs" ]; then
         # shellcheck disable=SC2154

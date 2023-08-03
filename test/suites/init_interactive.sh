@@ -1,5 +1,5 @@
 test_init_interactive() {
-  # - lxd init
+  # - incus init
   INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_INIT_DIR}"
   spawn_incus "${INCUS_INIT_DIR}" false
@@ -11,11 +11,11 @@ test_init_interactive() {
 
     # XXX We need to remove the eth0 device from the default profile, which
     #     is typically attached by spawn_incus.
-    if lxc profile show default | grep -q eth0; then
-      lxc profile device remove default eth0
+    if inc profile show default | grep -q eth0; then
+      inc profile device remove default eth0
     fi
 
-    cat <<EOF | lxd init
+    cat <<EOF | incus init
 no
 yes
 my-storage-pool
@@ -30,13 +30,13 @@ no
 yes
 EOF
 
-    lxc info | grep -q 'images.auto_update_interval: "0"'
-    lxc network list | grep -q "inct$$"
-    lxc storage list | grep -q "my-storage-pool"
-    lxc profile show default | grep -q "pool: my-storage-pool"
-    lxc profile show default | grep -q "network: inct$$"
-    printf 'config: {}\ndevices: {}' | lxc profile edit default
-    lxc network delete inct$$
+    inc info | grep -q 'images.auto_update_interval: "0"'
+    inc network list | grep -q "inct$$"
+    inc storage list | grep -q "my-storage-pool"
+    inc profile show default | grep -q "pool: my-storage-pool"
+    inc profile show default | grep -q "network: inct$$"
+    printf 'config: {}\ndevices: {}' | inc profile edit default
+    inc network delete inct$$
   )
   kill_incus "${INCUS_INIT_DIR}"
 
