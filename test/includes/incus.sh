@@ -1,6 +1,7 @@
 # incus CLI related test helpers.
 
 incus() {
+    set +x
     INC_LOCAL=1 incus_remote "$@"
 }
 
