@@ -33,6 +33,7 @@ Creating additional networks is a two-step process:
 
 Also see {ref}`network-create-cluster`.
 
+(cluster-https-address)=
 ## Separate REST API and clustering networks
 
 You can configure different networks for the REST API endpoint of your clients and for internal traffic between the members of your cluster.

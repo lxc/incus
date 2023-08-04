@@ -100,6 +100,7 @@ For example, running `dig @<DNS_server_IP> -p <DNS_server_PORT> axfr 2.0.192.in-
 2.0.192.in-addr.arpa.                  3600 IN SOA  2.0.192.in-addr.arpa. ns1.2.0.192.in-addr.arpa. 1669736828 120 60 86400 30
 ```
 
+(network-dns-server)=
 ## Enable the built-in DNS server
 
 To make use of network zones, you must enable the built-in DNS server.
