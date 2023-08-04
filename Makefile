@@ -31,7 +31,7 @@ ifeq "$(TAG_SQLITE3)" ""
 endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
-	CGO_ENABLED=0 go install -v -tags netgo ./incus-migrate
+	CGO_ENABLED=0 go install -v -tags netgo ./cmd/incus-migrate
 	CGO_ENABLED=0 go install -v -tags agent,netgo ./incus-agent
 	@echo "Incus built successfully"
 
@@ -47,7 +47,7 @@ incus-agent:
 
 .PHONY: incus-migrate
 incus-migrate:
-	CGO_ENABLED=0 go install -v -tags netgo ./incus-migrate
+	CGO_ENABLED=0 go install -v -tags netgo ./cmd/incus-migrate
 	@echo "Incus migration tool built successfully"
 
 .PHONY: incus-doc
@@ -158,7 +158,7 @@ ifeq "$(TAG_SQLITE3)" ""
 endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -v -tags "$(TAG_SQLITE3) logdebug" $(DEBUG) ./...
-	CGO_ENABLED=0 go install -v -tags "netgo,logdebug" ./incus-migrate
+	CGO_ENABLED=0 go install -v -tags "netgo,logdebug" ./cmd/incus-migrate
 	CGO_ENABLED=0 go install -v -tags "agent,netgo,logdebug" ./incus-agent
 	@echo "Incus built successfully"
 
@@ -170,7 +170,7 @@ ifeq "$(TAG_SQLITE3)" ""
 endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -a -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
-	CGO_ENABLED=0 go install -a -v -tags netgo ./incus-migrate
+	CGO_ENABLED=0 go install -a -v -tags netgo ./cmd/incus-migrate
 	CGO_ENABLED=0 go install -a -v -tags agent,netgo ./incus-agent
 	@echo "Incus built successfully"
 
@@ -181,7 +181,7 @@ ifeq "$(TAG_SQLITE3)" ""
 endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -race -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
-	CGO_ENABLED=0 go install -v -tags netgo ./incus-migrate
+	CGO_ENABLED=0 go install -v -tags netgo ./cmd/incus-migrate
 	CGO_ENABLED=0 go install -v -tags agent,netgo ./incus-agent
 	@echo "Incus built successfully"
 
