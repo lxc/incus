@@ -56,7 +56,7 @@ cleanup() {
     echo "==> Cleaning up"
 
     # Try to stop all the containers
-    my_curl "$BASEURL/1.0/containers" | jq -r .metadata[] 2>/dev/null | while read -r line; do
+    my_curl "$BASEURL/1.0/instances" | jq -r .metadata[] 2>/dev/null | while read -r line; do
         wait_for my_curl -X PUT "$BASEURL$line/state" -d "{\"action\":\"stop\",\"force\":true}"
     done
 

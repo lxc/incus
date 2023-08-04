@@ -70,7 +70,7 @@ container_devices_proxy_tcp() {
   inc launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=tcp:127.0.0.1:4321 bind=host
   sleep 0.5
@@ -87,7 +87,7 @@ container_devices_proxy_tcp() {
 
   # Restart the container
   inc restart -f proxyTester
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
@@ -102,7 +102,7 @@ container_devices_proxy_tcp() {
   fi
 
   # Change the port
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat tcp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device set proxyTester proxyDev connect tcp:127.0.0.1:1337
   sleep 0.5
@@ -120,9 +120,9 @@ container_devices_proxy_tcp() {
   # Initial test
   inc config device remove proxyTester proxyDev
   HOST_TCP_PORT2=$(local_tcp_port)
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat tcp-listen:4322 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4322 exec:/bin/cat &
   NSENTER_PID1=$!
   inc config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT,$HOST_TCP_PORT2" connect=tcp:127.0.0.1:4321-4322 bind=host
   sleep 0.5
@@ -282,7 +282,7 @@ container_devices_proxy_unix() {
 
   # Initial test
   (
-    PID="$(inc query /1.0/containers/proxyTester/state | jq .pid)"
+    PID="$(inc query /1.0/instances/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
     exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
@@ -307,7 +307,7 @@ container_devices_proxy_unix() {
   # Restart the container
   inc restart -f proxyTester
   (
-    PID="$(inc query /1.0/containers/proxyTester/state | jq .pid)"
+    PID="$(inc query /1.0/instances/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
     exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
@@ -329,7 +329,7 @@ container_devices_proxy_unix() {
 
   # Change the socket
   (
-    PID="$(inc query /1.0/containers/proxyTester/state | jq .pid)"
+    PID="$(inc query /1.0/instances/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
     exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}")-2.sock",unlink-early exec:/bin/cat
@@ -367,7 +367,7 @@ container_devices_proxy_tcp_unix() {
 
   # Initial test
   (
-    PID="$(inc query /1.0/containers/proxyTester/state | jq .pid)"
+    PID="$(inc query /1.0/instances/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
     exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
@@ -390,7 +390,7 @@ container_devices_proxy_tcp_unix() {
   # Restart the container
   inc restart -f proxyTester
   (
-    PID="$(inc query /1.0/containers/proxyTester/state | jq .pid)"
+    PID="$(inc query /1.0/instances/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
     exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}").sock",unlink-early exec:/bin/cat
@@ -410,7 +410,7 @@ container_devices_proxy_tcp_unix() {
 
   # Change the socket
   (
-    PID="$(inc query /1.0/containers/proxyTester/state | jq .pid)"
+    PID="$(inc query /1.0/instances/proxyTester/state | jq .pid)"
     cd "/proc/${PID}/root/tmp/" || exit
     umask 0000
     exec nsenter -n -U -t "${PID}" -- socat unix-listen:"incustest-$(basename "${INCUS_DIR}")-2.sock",unlink-early exec:/bin/cat
@@ -445,7 +445,7 @@ container_devices_proxy_unix_tcp() {
   inc launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device add proxyTester proxyDev proxy "listen=unix:${HOST_SOCK}" connect=tcp:127.0.0.1:4321 bind=host
   sleep 0.5
@@ -464,7 +464,7 @@ container_devices_proxy_unix_tcp() {
 
   # Restart the container
   inc restart -f proxyTester
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
@@ -481,7 +481,7 @@ container_devices_proxy_unix_tcp() {
   rm -f "${HOST_SOCK}"
 
   # Change the port
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat tcp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat tcp-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device set proxyTester proxyDev connect tcp:127.0.0.1:1337
   sleep 0.5
@@ -513,7 +513,7 @@ container_devices_proxy_udp() {
   inc launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device add proxyTester proxyDev proxy "listen=udp:127.0.0.1:$HOST_UDP_PORT" connect=udp:127.0.0.1:4321 bind=host
   sleep 0.5
@@ -530,7 +530,7 @@ container_devices_proxy_udp() {
 
   # Restart the container
   inc restart -f proxyTester
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
@@ -545,7 +545,7 @@ container_devices_proxy_udp() {
   fi
 
   # Change the port
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat udp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device set proxyTester proxyDev connect udp:127.0.0.1:1337
   sleep 0.5
@@ -575,7 +575,7 @@ container_devices_proxy_unix_udp() {
   inc launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device add proxyTester proxyDev proxy "listen=unix:${HOST_SOCK}" connect=udp:127.0.0.1:4321 bind=host
   sleep 0.5
@@ -594,7 +594,7 @@ container_devices_proxy_unix_udp() {
 
   # Restart the container
   inc restart -f proxyTester
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
@@ -611,7 +611,7 @@ container_devices_proxy_unix_udp() {
   rm -f "${HOST_SOCK}"
 
   # Change the port
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat udp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device set proxyTester proxyDev connect udp:127.0.0.1:1337
   sleep 0.5
@@ -643,7 +643,7 @@ container_devices_proxy_tcp_udp() {
   inc launch testimage proxyTester
 
   # Initial test
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=udp:127.0.0.1:4321 bind=host
   sleep 0.5
@@ -660,7 +660,7 @@ container_devices_proxy_tcp_udp() {
 
   # Restart the container
   inc restart -f proxyTester
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:4321 exec:/bin/cat &
   NSENTER_PID=$!
   sleep 1
 
@@ -675,7 +675,7 @@ container_devices_proxy_tcp_udp() {
   fi
 
   # Change the port
-  nsenter -n -U -t "$(inc query /1.0/containers/proxyTester/state | jq .pid)" -- socat udp-listen:1337 exec:/bin/cat &
+  nsenter -n -U -t "$(inc query /1.0/instances/proxyTester/state | jq .pid)" -- socat udp-listen:1337 exec:/bin/cat &
   NSENTER_PID=$!
   inc config device set proxyTester proxyDev connect udp:127.0.0.1:1337
   sleep 0.5
