@@ -138,7 +138,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 		target = os.Stdout
 		c.global.flagQuiet = true
 	} else {
-		target, err = os.Create(shared.HostPathFollow(targetName))
+		target, err = os.Create(targetName)
 		if err != nil {
 			return err
 		}
@@ -177,7 +177,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = os.Rename(shared.HostPathFollow(targetName), shared.HostPathFollow(name+ext))
+		err = os.Rename(targetName, name+ext)
 		if err != nil {
 			return fmt.Errorf("Failed to rename export file: %w", err)
 		}

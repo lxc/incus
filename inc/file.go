@@ -256,9 +256,6 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 
 	// Determine the target
 	target := filepath.Clean(args[len(args)-1])
-	if !c.edit {
-		target = shared.HostPathFollow(target)
-	}
 
 	targetIsDir := false
 	sb, err := os.Stat(target)
@@ -509,11 +506,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 	// Make a list of paths to transfer
 	sourcefilenames := []string{}
 	for _, fname := range args[:len(args)-1] {
-		if !c.edit {
-			sourcefilenames = append(sourcefilenames, shared.HostPathFollow(filepath.Clean(fname)))
-		} else {
-			sourcefilenames = append(sourcefilenames, filepath.Clean(fname))
-		}
+		sourcefilenames = append(sourcefilenames, filepath.Clean(fname))
 	}
 
 	// Determine the target mode
@@ -997,7 +990,7 @@ func (c *cmdFileMount) Run(cmd *cobra.Command, args []string) error {
 
 	// Determine the target if specified.
 	if len(args) >= 2 {
-		targetPath = shared.HostPathFollow(filepath.Clean(args[len(args)-1]))
+		targetPath = filepath.Clean(args[len(args)-1])
 		sb, err := os.Stat(targetPath)
 		if err != nil {
 			return err
