@@ -168,10 +168,8 @@ test_security_protection() {
 
   # Respawn Incus with kernel ID shifting support disabled to force manual shifting.
   shutdown_incus "${INCUS_DIR}"
-  incusShiftfsDisable=${INCUS_SHIFTFS_DISABLE:-}
   incusIdmappedMountsDisable=${INCUS_IDMAPPED_MOUNTS_DISABLE:-}
 
-  export INCUS_SHIFTFS_DISABLE=1
   export INCUS_IDMAPPED_MOUNTS_DISABLE=1
   respawn_incus "${INCUS_DIR}" true
 
@@ -201,7 +199,6 @@ test_security_protection() {
 
   # Respawn Incus to restore default kernel shifting support.
   shutdown_incus "${INCUS_DIR}"
-  export INCUS_SHIFTFS_DISABLE="${incusShiftfsDisable}"
   export INCUS_IDMAPPED_MOUNTS_DISABLE="${incusIdmappedMountsDisable}"
 
   respawn_incus "${INCUS_DIR}" true

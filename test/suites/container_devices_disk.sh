@@ -4,7 +4,6 @@ test_container_devices_disk() {
 
   inc init testimage foo
 
-  test_container_devices_disk_shift
   test_container_devices_raw_mount_options
   test_container_devices_disk_ceph
   test_container_devices_disk_cephfs
@@ -12,58 +11,6 @@ test_container_devices_disk() {
   test_container_devices_disk_char
 
   inc delete -f foo
-}
-
-test_container_devices_disk_shift() {
-  if ! grep -q shiftfs /proc/filesystems || [ -n "${INCUS_SHIFTFS_DISABLE:-}" ]; then
-    return
-  fi
-
-  # Test basic shiftfs
-  mkdir -p "${TEST_DIR}/shift-source"
-  touch "${TEST_DIR}/shift-source/a"
-  chown 123:456 "${TEST_DIR}/shift-source/a"
-
-  inc start foo
-  inc config device add foo shiftfs disk source="${TEST_DIR}/shift-source" path=/mnt
-  [ "$(inc exec foo -- stat /mnt/a -c '%u:%g')" = "65534:65534" ] || false
-  inc config device remove foo shiftfs
-
-  inc config device add foo shiftfs disk source="${TEST_DIR}/shift-source" path=/mnt shift=true
-  [ "$(inc exec foo -- stat /mnt/a -c '%u:%g')" = "123:456" ] || false
-
-  inc stop foo -f
-  inc start foo
-  [ "$(inc exec foo -- stat /mnt/a -c '%u:%g')" = "123:456" ] || false
-  inc config device remove foo shiftfs
-  inc stop foo -f
-
-  # Test shifted custom volumes
-  POOL=$(inc profile device get default root pool)
-  inc storage volume create "${POOL}" foo-shift security.shifted=true
-
-  inc start foo
-  inc launch testimage foo-priv -c security.privileged=true
-  inc launch testimage foo-isol1 -c security.idmap.isolated=true
-  inc launch testimage foo-isol2 -c security.idmap.isolated=true
-
-  inc config device add foo shifted disk pool="${POOL}" source=foo-shift path=/mnt
-  inc config device add foo-priv shifted disk pool="${POOL}" source=foo-shift path=/mnt
-  inc config device add foo-isol1 shifted disk pool="${POOL}" source=foo-shift path=/mnt
-  inc config device add foo-isol2 shifted disk pool="${POOL}" source=foo-shift path=/mnt
-
-  inc exec foo -- touch /mnt/a
-  inc exec foo -- chown 123:456 /mnt/a
-
-  [ "$(inc exec foo -- stat /mnt/a -c '%u:%g')" = "123:456" ] || false
-  [ "$(inc exec foo-priv -- stat /mnt/a -c '%u:%g')" = "123:456" ] || false
-  [ "$(inc exec foo-isol1 -- stat /mnt/a -c '%u:%g')" = "123:456" ] || false
-  [ "$(inc exec foo-isol2 -- stat /mnt/a -c '%u:%g')" = "123:456" ] || false
-
-  inc delete -f foo-priv foo-isol1 foo-isol2
-  inc config device remove foo shifted
-  inc storage volume delete "${POOL}" foo-shift
-  inc stop foo -f
 }
 
 test_container_devices_raw_mount_options() {
