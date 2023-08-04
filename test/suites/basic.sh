@@ -45,7 +45,7 @@ test_basic_usage() {
 
   # test GET /1.0, since the client always puts to /1.0/
   my_curl -f -X GET "https://${INCUS_ADDR}/1.0"
-  my_curl -f -X GET "https://${INCUS_ADDR}/1.0/containers"
+  my_curl -f -X GET "https://${INCUS_ADDR}/1.0/instances"
 
   # Re-import the image
   mv "${INCUS_DIR}/${sum}.tar.xz" "${INCUS_DIR}/testimage.tar.xz"
@@ -139,7 +139,7 @@ test_basic_usage() {
   gen_cert client3
 
   # don't allow requests without a cert to get trusted data
-  curl -k -s -X GET "https://${INCUS_ADDR}/1.0/containers/foo" | grep 403
+  curl -k -s -X GET "https://${INCUS_ADDR}/1.0/instances/foo" | grep 403
 
   # Test unprivileged container publish
   inc publish bar --alias=foo-image prop1=val1
@@ -286,15 +286,15 @@ test_basic_usage() {
   inc delete -f "${RDNAME}"
 
   # Test "nonetype" container creation
-  wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/containers" \
+  wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/instances" \
         -d "{\"name\":\"nonetype\",\"source\":{\"type\":\"none\"}}"
   inc delete nonetype
 
   # Test "nonetype" container creation with an LXC config
-  wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/containers" \
+  wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/instances" \
         -d "{\"name\":\"configtest\",\"config\":{\"raw.lxc\":\"lxc.hook.clone=/bin/true\"},\"source\":{\"type\":\"none\"}}"
   # shellcheck disable=SC2102
-  [ "$(my_curl "https://${INCUS_ADDR}/1.0/containers/configtest" | jq -r .metadata.config[\"raw.lxc\"])" = "lxc.hook.clone=/bin/true" ]
+  [ "$(my_curl "https://${INCUS_ADDR}/1.0/instances/configtest" | jq -r .metadata.config[\"raw.lxc\"])" = "lxc.hook.clone=/bin/true" ]
   inc delete configtest
 
   # Test activateifneeded/shutdown
@@ -419,7 +419,7 @@ test_basic_usage() {
   inc exec foo ip link show | grep eth0
 
   # check that we can get the return code for a non- wait-for-websocket exec
-  op=$(my_curl -X POST "https://${INCUS_ADDR}/1.0/containers/foo/exec" -d '{"command": ["echo", "test"], "environment": {}, "wait-for-websocket": false, "interactive": false}' | jq -r .operation)
+  op=$(my_curl -X POST "https://${INCUS_ADDR}/1.0/instances/foo/exec" -d '{"command": ["echo", "test"], "environment": {}, "wait-for-websocket": false, "interactive": false}' | jq -r .operation)
   [ "$(my_curl "https://${INCUS_ADDR}${op}/wait" | jq -r .metadata.metadata.return)" != "null" ]
 
   # test file transfer
@@ -458,7 +458,7 @@ test_basic_usage() {
   fi
 
   inc launch testimage deleterunning
-  my_curl -X DELETE "https://${INCUS_ADDR}/1.0/containers/deleterunning" | grep "Instance is running"
+  my_curl -X DELETE "https://${INCUS_ADDR}/1.0/instances/deleterunning" | grep "Instance is running"
   inc delete deleterunning -f
 
   # cleanup

@@ -62,7 +62,7 @@ snapshots() {
   ! inc info foo | grep -q snap3 || false
 
   # no CLI for this, so we use the API directly (rename a snapshot)
-  wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/containers/foo/snapshots/tester" -d "{\"name\":\"tester2\"}"
+  wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/instances/foo/snapshots/tester" -d "{\"name\":\"tester2\"}"
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ ! -d "${INCUS_DIR}/snapshots/foo/tester" ]

@@ -16,7 +16,7 @@ test_filemanip() {
   inc exec filemanip --project=test -- ls /tmp/filemanip
 
   # missing files should return 404
-  err=$(my_curl -o /dev/null -w "%{http_code}" -X GET "https://${INCUS_ADDR}/1.0/containers/filemanip/files?path=/tmp/foo")
+  err=$(my_curl -o /dev/null -w "%{http_code}" -X GET "https://${INCUS_ADDR}/1.0/instances/filemanip/files?path=/tmp/foo")
   [ "${err}" -eq "404" ]
 
   # inc {push|pull} -r

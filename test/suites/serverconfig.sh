@@ -50,7 +50,7 @@ test_server_config_storage() {
   pool=$(inc profile device get default root pool)
 
   inc init testimage foo
-  inc query --wait /1.0/containers/foo/backups -X POST -d '{\"expires_at\": \"2100-01-01T10:00:00-05:00\"}'
+  inc query --wait /1.0/instances/foo/backups -X POST -d '{\"expires_at\": \"2100-01-01T10:00:00-05:00\"}'
 
   # Record before
   BACKUPS_BEFORE=$(find "${INCUS_DIR}/backups/" | sort)
