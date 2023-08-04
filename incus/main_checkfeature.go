@@ -579,13 +579,7 @@ static bool kernel_supports_idmapped_mounts(void)
 import "C"
 
 import (
-	"os"
-	"runtime"
-
-	"golang.org/x/sys/unix"
-
 	_ "github.com/cyphar/incus/incus/include" // Used by cgo
-	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/logger"
 )
 
@@ -615,41 +609,6 @@ func canUseSeccompListenerAddfd() bool {
 
 func canUsePidFds() bool {
 	return bool(C.pidfd_aware)
-}
-
-func canUseShiftfs() bool {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
-
-	hostMntNs, err := os.Open("/proc/self/ns/mnt")
-	if err != nil {
-		logger.Debugf("%s - Failed to open host mount namespace", err)
-		return false
-	}
-
-	defer func() { _ = hostMntNs.Close() }()
-
-	err = unix.Unshare(unix.CLONE_NEWNS)
-	if err != nil {
-		logger.Debugf("%s - Failed to unshare mount namespace", err)
-		return false
-	}
-
-	defer func() {
-		err = unix.Setns(int(hostMntNs.Fd()), unix.CLONE_NEWNS)
-		if err != nil {
-			logger.Debugf("%s - Failed to reattach to host mount namespace", err)
-		}
-	}()
-
-	err = unix.Mount("/", "/", "", unix.MS_REC|unix.MS_PRIVATE, "")
-	if err != nil {
-		logger.Debugf("%s - Failed to turn \"/\" into private mount", err)
-		return false
-	}
-
-	err = unix.Mount(shared.VarPath(), shared.VarPath(), "shiftfs", 0, "mark")
-	return err == nil
 }
 
 // We're only using this during daemon startup to give an indication whether

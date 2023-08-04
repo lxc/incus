@@ -319,7 +319,6 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 		"unpriv_fscaps":             fmt.Sprintf("%v", s.OS.VFS3Fscaps),
 		"seccomp_listener":          fmt.Sprintf("%v", s.OS.SeccompListener),
 		"seccomp_listener_continue": fmt.Sprintf("%v", s.OS.SeccompListenerContinue),
-		"shiftfs":                   fmt.Sprintf("%v", s.OS.Shiftfs),
 		"idmapped_mounts":           fmt.Sprintf("%v", s.OS.IdmappedMounts),
 	}
 

@@ -81,7 +81,6 @@ type OS struct {
 	PidFdSetns              bool
 	SeccompListener         bool
 	SeccompListenerContinue bool
-	Shiftfs                 bool
 	UeventInjection         bool
 	VFS3Fscaps              bool
 

@@ -7,7 +7,7 @@ import (
 // MountOwnerShiftNone do not use owner shifting.
 const MountOwnerShiftNone = ""
 
-// MountOwnerShiftDynamic use shiftfs for dynamic owner shifting.
+// MountOwnerShiftDynamic use shifted mounts for dynamic owner shifting.
 const MountOwnerShiftDynamic = "dynamic"
 
 // MountOwnerShiftStatic statically modify ownership.

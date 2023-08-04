@@ -1305,15 +1305,10 @@ var idmappedStorageMap map[unix.Fsid]idmap.IdmapStorageType = map[unix.Fsid]idma
 var idmappedStorageMapString map[string]idmap.IdmapStorageType = map[string]idmap.IdmapStorageType{}
 var idmappedStorageMapLock sync.Mutex
 
-// IdmappedStorage determines if the container can use idmapped mounts or shiftfs.
+// IdmappedStorage determines if the container can use idmapped mounts.
 func (d *lxc) IdmappedStorage(path string, fstype string) idmap.IdmapStorageType {
 	var mode idmap.IdmapStorageType = idmap.IdmapStorageNone
 	var bindMount bool = fstype == "none" || fstype == ""
-
-	if d.state.OS.Shiftfs {
-		// Fallback to shiftfs.
-		mode = idmap.IdmapStorageShiftfs
-	}
 
 	if !d.state.OS.LXCFeatures["idmapped_mounts_v2"] || !d.state.OS.IdmappedMounts {
 		return mode
@@ -1324,7 +1319,6 @@ func (d *lxc) IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
 	if bindMount {
 		err := unix.Statfs(path, buf)
 		if err != nil {
-			// Log error but fallback to shiftfs
 			d.logger.Error("Failed to statfs", logger.Ctx{"path": path, "err": err})
 			return mode
 		}
@@ -2088,30 +2082,10 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 				}
 			}
 
-			if !d.IsPrivileged() {
-				if idmapType == idmap.IdmapStorageIdmapped {
-					err = lxcSetConfigItem(cc, "lxc.rootfs.options", "idmap=container")
-					if err != nil {
-						return "", nil, fmt.Errorf("Failed to set \"idmap=container\" rootfs option: %w", err)
-					}
-				} else if idmapType == idmap.IdmapStorageShiftfs {
-					// Host side mark mount.
-					err = lxcSetConfigItem(cc, "lxc.hook.pre-start", fmt.Sprintf("/bin/mount -t shiftfs -o mark,passthrough=3 %s %s", strconv.Quote(d.RootfsPath()), strconv.Quote(d.RootfsPath())))
-					if err != nil {
-						return "", nil, fmt.Errorf("Failed to setup device mount shiftfs %q: %w", dev.Name(), err)
-					}
-
-					// Container side shift mount.
-					err = lxcSetConfigItem(cc, "lxc.hook.pre-mount", fmt.Sprintf("/bin/mount -t shiftfs -o passthrough=3 %s %s", strconv.Quote(d.RootfsPath()), strconv.Quote(d.RootfsPath())))
-					if err != nil {
-						return "", nil, fmt.Errorf("Failed to setup device mount shiftfs %q: %w", dev.Name(), err)
-					}
-
-					// Host side umount of mark mount.
-					err = lxcSetConfigItem(cc, "lxc.hook.start-host", fmt.Sprintf("/bin/umount -l %s", strconv.Quote(d.RootfsPath())))
-					if err != nil {
-						return "", nil, fmt.Errorf("Failed to setup device mount shiftfs %q: %w", dev.Name(), err)
-					}
+			if !d.IsPrivileged() && idmapType == idmap.IdmapStorageIdmapped {
+				err = lxcSetConfigItem(cc, "lxc.rootfs.options", "idmap=container")
+				if err != nil {
+					return "", nil, fmt.Errorf("Failed to set \"idmap=container\" rootfs option: %w", err)
 				}
 			}
 		}
@@ -2148,22 +2122,6 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 					switch d.IdmappedStorage(mount.DevPath, mount.FSType) {
 					case idmap.IdmapStorageIdmapped:
 						mntOptions = strings.Join([]string{mntOptions, "idmap=container"}, ",")
-					case idmap.IdmapStorageShiftfs:
-						err = lxcSetConfigItem(cc, "lxc.hook.pre-start", fmt.Sprintf("/bin/mount -t shiftfs -o mark,passthrough=3 %s %s", strconv.Quote(mount.DevPath), strconv.Quote(mount.DevPath)))
-						if err != nil {
-							return "", nil, fmt.Errorf("Failed to setup device mount shiftfs %q: %w", dev.Name(), err)
-						}
-
-						err = lxcSetConfigItem(cc, "lxc.hook.pre-mount", fmt.Sprintf("/bin/mount -t shiftfs -o passthrough=3 %s %s", strconv.Quote(mount.DevPath), strconv.Quote(mount.DevPath)))
-						if err != nil {
-							return "", nil, fmt.Errorf("Failed to setup device mount shiftfs %q: %w", dev.Name(), err)
-						}
-
-						err = lxcSetConfigItem(cc, "lxc.hook.start-host", fmt.Sprintf("/bin/umount -l %s", strconv.Quote(mount.DevPath)))
-						if err != nil {
-							return "", nil, fmt.Errorf("Failed to setup device mount shiftfs %q: %w", dev.Name(), err)
-						}
-
 					case idmap.IdmapStorageNone:
 						return "", nil, fmt.Errorf("Failed to setup device mount %q: %w", dev.Name(), fmt.Errorf("idmapping abilities are required but aren't supported on system"))
 					}
@@ -2258,9 +2216,6 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	if !d.IsStateful() && shared.PathExists(d.StatePath()) {
 		_ = os.RemoveAll(d.StatePath())
 	}
-
-	// Unmount any previously mounted shiftfs
-	_ = unix.Unmount(d.RootfsPath(), unix.MNT_DETACH)
 
 	// Snapshot if needed.
 	snapName, expiry, err := d.getStartupSnapNameAndExpiry(d)
@@ -7364,16 +7319,6 @@ func (d *lxc) unmount() error {
 		return nil
 	}
 
-	// Workaround for liblxc failures on startup when shiftfs is used.
-	diskIdmap, err := d.DiskIdmap()
-	if err != nil {
-		return err
-	}
-
-	if d.IdmappedStorage(d.RootfsPath(), "none") == idmap.IdmapStorageShiftfs && !d.IsPrivileged() && diskIdmap == nil {
-		_ = unix.Unmount(d.RootfsPath(), unix.MNT_DETACH)
-	}
-
 	err = pool.UnmountInstance(d, nil)
 	if err != nil {
 		return err
@@ -7429,7 +7374,7 @@ func (d *lxc) insertMountLXD(source, target, fstype string, flags int, mntnsPID 
 
 	// Ensure that only flags modifying mount _properties_ make it through.
 	// Strip things such as MS_BIND which would cause the creation of a
-	// shiftfs mount to be skipped.
+	// shifted mount to be skipped.
 	// (Fyi, this is just one of the reasons why multiplexers are bad;
 	// specifically when they do heinous things such as confusing flags
 	// with commands.)
@@ -7442,21 +7387,6 @@ func (d *lxc) insertMountLXD(source, target, fstype string, flags int, mntnsPID 
 		unix.MS_DIRSYNC |
 		unix.MS_NOATIME |
 		unix.MS_NODIRATIME))
-
-	// Setup host side shiftfs as needed
-	switch idmapType {
-	case idmap.IdmapStorageShiftfs:
-		err = unix.Mount(tmpMount, tmpMount, "shiftfs", uintptr(shiftfsFlags), "mark,passthrough=3")
-		if err != nil {
-			return fmt.Errorf("Failed to setup host side shiftfs mount: %s", err)
-		}
-
-		defer func() { _ = unix.Unmount(tmpMount, unix.MNT_DETACH) }()
-	case idmap.IdmapStorageIdmapped:
-	case idmap.IdmapStorageNone:
-	default:
-		return fmt.Errorf("Invalid idmap value specified")
-	}
 
 	// Move the mount inside the container
 	mntsrc := filepath.Join("/dev/.incus-mounts", filepath.Base(tmpMount))
@@ -7569,7 +7499,7 @@ func (d *lxc) moveMount(source, target, fstype string, flags int, idmapType idma
 }
 
 func (d *lxc) insertMount(source, target, fstype string, flags int, idmapType idmap.IdmapStorageType) error {
-	if d.state.OS.IdmappedMounts && idmapType != idmap.IdmapStorageShiftfs {
+	if d.state.OS.IdmappedMounts && idmapType == idmap.IdmapStorageIdmapped {
 		return d.moveMount(source, target, fstype, flags, idmapType)
 	}
 

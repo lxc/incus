@@ -623,7 +623,6 @@ type IdmapStorageType string
 const (
 	IdmapStorageNone     = "none"
 	IdmapStorageIdmapped = "idmapped"
-	IdmapStorageShiftfs  = "shiftfs"
 )
 
 func CanIdmapMount(path string, fstype string) bool {

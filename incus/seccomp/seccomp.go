@@ -2468,7 +2468,7 @@ func (s *Server) MountSyscallValid(c Instance, args *MountArgs) (bool, string) {
 	return false, ""
 }
 
-// MountSyscallShift checks whether this mount syscall needs shiftfs.
+// MountSyscallShift checks whether this mount syscall needs shifting.
 func (s *Server) MountSyscallShift(c Instance, path string) idmap.IdmapStorageType {
 	if shared.IsTrue(c.ExpandedConfig()["security.syscalls.intercept.mount.shift"]) {
 		diskIdmap, err := c.DiskIdmap()
