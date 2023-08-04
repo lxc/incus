@@ -69,14 +69,14 @@ type UnixDevice struct {
 
 // unixDeviceSourcePath returns the absolute path for a device on the host.
 // This is based on the "source" property of the device's config, or the "path" property if "source"
-// not define. This uses the shared.HostPath function so works when running in a snap environment.
+// not define.
 func unixDeviceSourcePath(m deviceConfig.Device) string {
 	srcPath := m["source"]
 	if srcPath == "" {
 		srcPath = m["path"]
 	}
 
-	return shared.HostPath(srcPath)
+	return srcPath
 }
 
 // unixDeviceDestPath returns the absolute path for a device inside an instance.
