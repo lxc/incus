@@ -194,7 +194,7 @@ func (d *lvm) Create() error {
 		}
 	} else if filepath.IsAbs(d.config["source"]) {
 		// We are using an existing physical device.
-		srcPath := shared.HostPath(d.config["source"])
+		srcPath := d.config["source"]
 
 		// Size is invalid as the physical device is already sized.
 		if d.config["size"] != "" && !d.usesThinpool() {
