@@ -163,7 +163,7 @@ func validateConfig(conf []string, container *liblxc.Container) error {
 	return nil
 }
 
-func convertContainer(d incus.ContainerServer, container *liblxc.Container, storage string,
+func convertContainer(d incus.InstanceServer, container *liblxc.Container, storage string,
 	dryRun bool, rsyncArgs string, debug bool) error {
 	// Don't migrate running containers
 	if container.Running() {
@@ -376,9 +376,9 @@ func convertContainer(d incus.ContainerServer, container *liblxc.Container, stor
 	}
 
 	// Setup the container creation request
-	req := api.ContainersPost{
+	req := api.InstancesPost{
 		Name: container.Name(),
-		Source: api.ContainerSource{
+		Source: api.InstanceSource{
 			Type: "migration",
 			Mode: "push",
 		},
@@ -457,7 +457,7 @@ func convertContainer(d incus.ContainerServer, container *liblxc.Container, stor
 	if dryRun {
 		fmt.Println("Would create container now")
 	} else {
-		op, err := d.CreateContainer(req)
+		op, err := d.CreateInstance(req)
 		if err != nil {
 			return err
 		}

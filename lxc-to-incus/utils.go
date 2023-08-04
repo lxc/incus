@@ -9,7 +9,7 @@ import (
 	"github.com/cyphar/incus/shared/api"
 )
 
-func transferRootfs(dst incus.ContainerServer, op incus.Operation, rootfs string, rsyncArgs string) error {
+func transferRootfs(dst incus.InstanceServer, op incus.Operation, rootfs string, rsyncArgs string) error {
 	opAPI := op.Get()
 
 	// Connect to the websockets
