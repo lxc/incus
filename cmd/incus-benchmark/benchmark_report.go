@@ -1,4 +1,4 @@
-package benchmark
+package main
 
 import (
 	"encoding/csv"

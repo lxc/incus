@@ -39,7 +39,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/cyphar/incus/client"
-	agentAPI "github.com/cyphar/incus/incus-agent/api"
 	"github.com/cyphar/incus/incus/apparmor"
 	"github.com/cyphar/incus/incus/cgroup"
 	"github.com/cyphar/incus/incus/db"
@@ -71,6 +70,7 @@ import (
 	"github.com/cyphar/incus/incus/warnings"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
+	agentAPI "github.com/cyphar/incus/shared/api/agent"
 	"github.com/cyphar/incus/shared/instancewriter"
 	"github.com/cyphar/incus/shared/logger"
 	"github.com/cyphar/incus/shared/osarch"
