@@ -314,7 +314,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	fullName := name + shared.SnapshotDelimiter + req.Name
-	instanceOnly := req.InstanceOnly || req.ContainerOnly
+	instanceOnly := req.InstanceOnly
 
 	backup := func(op *operations.Operation) error {
 		args := db.InstanceBackup{

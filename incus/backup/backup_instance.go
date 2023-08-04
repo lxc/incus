@@ -143,7 +143,6 @@ func (b *InstanceBackup) Render() *api.InstanceBackup {
 		CreatedAt:        b.creationDate,
 		ExpiresAt:        b.expiryDate,
 		InstanceOnly:     b.instanceOnly,
-		ContainerOnly:    b.instanceOnly,
 		OptimizedStorage: b.optimizedStorage,
 	}
 }

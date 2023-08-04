@@ -296,7 +296,7 @@ func createFromMigration(s *state.State, r *http.Request, projectName string, pr
 	revert := revert.New()
 	defer revert.Fail()
 
-	instanceOnly := req.Source.InstanceOnly || req.Source.ContainerOnly
+	instanceOnly := req.Source.InstanceOnly
 
 	if inst == nil {
 		_, err := storagePools.LoadByName(s, storagePool)
@@ -532,7 +532,7 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 		_, err := instanceCreateAsCopy(s, instanceCreateAsCopyOpts{
 			sourceInstance:       source,
 			targetInstance:       args,
-			instanceOnly:         req.Source.InstanceOnly || req.Source.ContainerOnly,
+			instanceOnly:         req.Source.InstanceOnly,
 			refresh:              req.Source.Refresh,
 			applyTemplateTrigger: true,
 			allowInconsistent:    req.Source.AllowInconsistent,
@@ -1252,13 +1252,12 @@ func clusterCopyContainerInternal(s *state.State, r *http.Request, source instan
 
 		opAPI = op.Get()
 	} else {
-		instanceOnly := req.Source.InstanceOnly || req.Source.ContainerOnly
+		instanceOnly := req.Source.InstanceOnly
 		pullReq := api.InstancePost{
-			Migration:     true,
-			Live:          req.Source.Live,
-			ContainerOnly: instanceOnly,
-			InstanceOnly:  instanceOnly,
-			Name:          req.Name,
+			Migration:    true,
+			Live:         req.Source.Live,
+			InstanceOnly: instanceOnly,
+			Name:         req.Name,
 		}
 
 		op, err := client.MigrateInstance(req.Source.Source, pullReq)
