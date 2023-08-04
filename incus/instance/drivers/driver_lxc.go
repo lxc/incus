@@ -8438,7 +8438,7 @@ func (d *lxc) getFSStats() (*metrics.MetricSet, error) {
 				realDev = dev["source"]
 			}
 		} else {
-			source := shared.HostPath(dev["source"])
+			source := dev["source"]
 
 			statfs, err = filesystem.StatVFS(source)
 			if err != nil {
