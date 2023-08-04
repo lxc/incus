@@ -32,16 +32,6 @@ import (
 func (r *ProtocolLXD) instanceTypeToPath(instanceType api.InstanceType) (string, url.Values, error) {
 	v := url.Values{}
 
-	// If the remote server doesn't support instances extension, check that only containers
-	// or any type has been requested and then fallback to using the old /containers endpoint.
-	if !r.HasExtension("instances") {
-		if instanceType == api.InstanceTypeContainer || instanceType == api.InstanceTypeAny {
-			return "/containers", v, nil
-		}
-
-		return "", v, fmt.Errorf("Requested instance type not supported by server")
-	}
-
 	// If a specific instance type has been requested, add the instance-type filter parameter
 	// to the returned URL values so that it can be used in the final URL if needed to filter
 	// the result set being returned.
@@ -598,7 +588,7 @@ func (r *ProtocolLXD) CreateInstance(instance api.InstancesPost) (Operation, err
 		return nil, err
 	}
 
-	if instance.Source.InstanceOnly || instance.Source.ContainerOnly {
+	if instance.Source.InstanceOnly {
 		if !r.HasExtension("container_only_migration") {
 			return nil, fmt.Errorf("The server is missing the required \"container_only_migration\" API extension")
 		}
@@ -771,7 +761,6 @@ func (r *ProtocolLXD) CopyInstance(source InstanceServer, instance api.Instance,
 
 		req.Source.Live = args.Live
 		req.Source.InstanceOnly = args.InstanceOnly
-		req.Source.ContainerOnly = args.InstanceOnly // For legacy servers.
 		req.Source.Refresh = args.Refresh
 		req.Source.AllowInconsistent = args.AllowInconsistent
 	}
@@ -829,7 +818,6 @@ func (r *ProtocolLXD) CopyInstance(source InstanceServer, instance api.Instance,
 	sourceReq := api.InstancePost{
 		Migration:         true,
 		Live:              req.Source.Live,
-		ContainerOnly:     req.Source.ContainerOnly, // Deprecated, use InstanceOnly.
 		InstanceOnly:      req.Source.InstanceOnly,
 		AllowInconsistent: req.Source.AllowInconsistent,
 	}
@@ -1039,7 +1027,7 @@ func (r *ProtocolLXD) MigrateInstance(name string, instance api.InstancePost) (O
 		return nil, err
 	}
 
-	if instance.InstanceOnly || instance.ContainerOnly {
+	if instance.InstanceOnly {
 		if !r.HasExtension("container_only_migration") {
 			return nil, fmt.Errorf("The server is missing the required \"container_only_migration\" API extension")
 		}
