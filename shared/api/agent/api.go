@@ -1,4 +1,4 @@
-package api
+package agent
 
 // API10Put contains the fields which are needed for the lxd-agent to connect to LXD.
 type API10Put struct {

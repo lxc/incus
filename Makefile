@@ -32,7 +32,7 @@ endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
 	CGO_ENABLED=0 go install -v -tags netgo ./cmd/incus-migrate
-	CGO_ENABLED=0 go install -v -tags agent,netgo ./incus-agent
+	CGO_ENABLED=0 go install -v -tags agent,netgo ./cmd/incus-agent
 	@echo "Incus built successfully"
 
 .PHONY: client
@@ -42,7 +42,7 @@ client:
 
 .PHONY: incus-agent
 incus-agent:
-	CGO_ENABLED=0 go install -v -tags agent,netgo ./incus-agent
+	CGO_ENABLED=0 go install -v -tags agent,netgo ./cmd/incus-agent
 	@echo "Incus agent built successfully"
 
 .PHONY: incus-migrate
@@ -159,7 +159,7 @@ endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -v -tags "$(TAG_SQLITE3) logdebug" $(DEBUG) ./...
 	CGO_ENABLED=0 go install -v -tags "netgo,logdebug" ./cmd/incus-migrate
-	CGO_ENABLED=0 go install -v -tags "agent,netgo,logdebug" ./incus-agent
+	CGO_ENABLED=0 go install -v -tags "agent,netgo,logdebug" ./cmd/incus-agent
 	@echo "Incus built successfully"
 
 .PHONY: nocache
@@ -171,7 +171,7 @@ endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -a -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
 	CGO_ENABLED=0 go install -a -v -tags netgo ./cmd/incus-migrate
-	CGO_ENABLED=0 go install -a -v -tags agent,netgo ./incus-agent
+	CGO_ENABLED=0 go install -a -v -tags agent,netgo ./cmd/incus-agent
 	@echo "Incus built successfully"
 
 race:
@@ -182,7 +182,7 @@ endif
 
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" go install -race -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
 	CGO_ENABLED=0 go install -v -tags netgo ./cmd/incus-migrate
-	CGO_ENABLED=0 go install -v -tags agent,netgo ./incus-agent
+	CGO_ENABLED=0 go install -v -tags agent,netgo ./cmd/incus-agent
 	@echo "Incus built successfully"
 
 .PHONY: check
