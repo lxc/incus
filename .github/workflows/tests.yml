@@ -272,7 +272,7 @@ jobs:
         env:
           CGO_ENABLED: 0
         run: |
-          go build -o bin ./incus-migrate
+          go build -o bin ./cmd/incus-migrate
 
       - name: Unit tests (client)
         env:
