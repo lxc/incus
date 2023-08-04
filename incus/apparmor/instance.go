@@ -171,11 +171,6 @@ func instanceProfile(sysOS *sys.OS, inst instance) (string, error) {
 			return "", err
 		}
 	} else {
-		rootPath := ""
-		if shared.InSnap() {
-			rootPath = "/var/lib/snapd/hostfs"
-		}
-
 		// AppArmor requires deref of all paths.
 		path, err := filepath.EvalSymlinks(inst.Path())
 		if err != nil {
@@ -206,8 +201,6 @@ func instanceProfile(sysOS *sys.OS, inst instance) (string, error) {
 			"name":        InstanceProfileName(inst),
 			"path":        path,
 			"raw":         rawContent,
-			"rootPath":    rootPath,
-			"snap":        shared.InSnap(),
 			"userns":      sysOS.RunningInUserNS,
 			"ovmfPath":    ovmfPath,
 		})

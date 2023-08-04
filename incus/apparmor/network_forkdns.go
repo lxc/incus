@@ -31,22 +31,13 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   @{PROC}/@{pid}/cpuset r,
   {{ .exePath }} mr,
   @{PROC}/@{pid}/cmdline r,
-  {{ .rootPath }}/{etc,lib,usr/lib}/os-release r,
-  {{ .rootPath }}/run/systemd/resolve/stub-resolv.conf r,
+  /{etc,lib,usr/lib}/os-release r,
+  /run/systemd/resolve/stub-resolv.conf r,
 
   # Things that we definitely don't need
   deny @{PROC}/@{pid}/cgroup r,
   deny /sys/module/apparmor/parameters/enabled r,
   deny /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
-
-{{- if .snap }}
-  # The binary itself (for nesting)
-  /var/snap/lxd/common/lxd.debug      mr,
-  /snap/lxd/*/bin/lxd                 mr,
-
-  # Snap-specific libraries
-  /snap/lxd/*/lib/**.so*              mr,
-{{- end }}
 
 {{if .libraryPath -}}
   # Entries from LD_LIBRARY_PATH
@@ -59,11 +50,6 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 
 // forkdnsProfile generates the AppArmor profile template from the given network.
 func forkdnsProfile(sysOS *sys.OS, n network) (string, error) {
-	rootPath := ""
-	if shared.InSnap() {
-		rootPath = "/var/lib/snapd/hostfs"
-	}
-
 	// Deref paths.
 	execPath := util.GetExecPath()
 	execPathFull, err := filepath.EvalSymlinks(execPath)
@@ -77,8 +63,6 @@ func forkdnsProfile(sysOS *sys.OS, n network) (string, error) {
 		"name":        ForkdnsProfileName(n),
 		"networkName": n.Name(),
 		"varPath":     shared.VarPath(""),
-		"rootPath":    rootPath,
-		"snap":        shared.InSnap(),
 		"libraryPath": strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
 		"exePath":     execPath,
 	})

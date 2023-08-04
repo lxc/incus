@@ -34,11 +34,6 @@ profile "{{.name}}" {
   capability fsetid,
   capability mknod,
   capability setfcap,
-
-{{- if .snap }}
-  # Snap-specific libraries
-  /snap/lxd/*/lib/**.so*                  mr,
-{{- end }}
 }
 `))
 
@@ -88,11 +83,6 @@ func ArchiveDelete(sysOS *sys.OS, outputPath string) error {
 
 // archiveProfile generates the AppArmor profile template from the given destination path.
 func archiveProfile(outputPath string, allowedCommandPaths []string) (string, error) {
-	rootPath := ""
-	if shared.InSnap() {
-		rootPath = "/var/lib/snapd/hostfs"
-	}
-
 	// Attempt to deref all paths.
 	outputPathFull, err := filepath.EvalSymlinks(outputPath)
 	if err != nil {
@@ -126,11 +116,9 @@ func archiveProfile(outputPath string, allowedCommandPaths []string) (string, er
 	err = archiveProfileTpl.Execute(sb, map[string]any{
 		"name":                ArchiveProfileName(outputPath), // Use non-deferenced outputPath for name.
 		"outputPath":          outputPathFull,                 // Use deferenced path in AppArmor profile.
-		"rootPath":            rootPath,
 		"backupsPath":         backupsPath,
 		"imagesPath":          imagesPath,
 		"allowedCommandPaths": derefCommandPaths,
-		"snap":                shared.InSnap(),
 	})
 	if err != nil {
 		return "", err

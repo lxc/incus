@@ -53,14 +53,14 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   ptrace (trace),
 
   /etc/machine-id r,
-  {{ .rootPath }}/run/systemd/resolve/stub-resolv.conf r,
-  {{ .rootPath }}/run/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
-  {{ .rootPath }}/usr/lib/systemd/resolv.conf r,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /run/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
+  /usr/lib/systemd/resolv.conf r,
 
   # Needed for lxd fork commands
   {{ .exePath }} mr,
   @{PROC}/@{pid}/cmdline r,
-  {{ .rootPath }}/{etc,lib,usr/lib}/os-release r,
+  /{etc,lib,usr/lib}/os-release r,
 {{if .sockets -}}
 {{range $index, $element := .sockets}}
   {{$element}} rw,
@@ -73,15 +73,6 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   deny /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
   deny /sys/devices/virtual/dmi/id/product_uuid r,
 
-{{- if .snap }}
-  # The binary itself (for nesting)
-  /var/snap/lxd/common/lxd.debug      mr,
-  /snap/lxd/*/bin/lxd                 mr,
-
-  # Snap-specific libraries
-  /snap/lxd/*/lib/**.so*              mr,
-{{- end }}
-
 {{if .libraryPath }}
   # Entries from LD_LIBRARY_PATH
 {{range $index, $element := .libraryPath}}
@@ -93,42 +84,17 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 
 // forkproxyProfile generates the AppArmor profile template from the given network.
 func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) {
-	rootPath := ""
-	if shared.InSnap() {
-		rootPath = "/var/lib/snapd/hostfs"
-	}
-
 	// Add any socket used by forkproxy.
 	sockets := []string{}
 
 	fields := strings.SplitN(dev.Config()["listen"], ":", 2)
 	if fields[0] == "unix" && !strings.HasPrefix(fields[1], "@") {
-		if dev.Config()["bind"] == "host" || dev.Config()["bind"] == "" {
-			hostPath := shared.HostPath(fields[1])
-			sockets = append(sockets, hostPath)
-
-			if hostPath != fields[1] {
-				// AppArmor can get confused on Ubuntu Core so allow both paths.
-				sockets = append(sockets, fields[1])
-			}
-		} else {
-			sockets = append(sockets, fields[1])
-		}
+		sockets = append(sockets, fields[1])
 	}
 
 	fields = strings.SplitN(dev.Config()["connect"], ":", 2)
 	if fields[0] == "unix" && !strings.HasPrefix(fields[1], "@") {
-		if dev.Config()["bind"] == "host" || dev.Config()["bind"] == "" {
-			sockets = append(sockets, fields[1])
-		} else {
-			hostPath := shared.HostPath(fields[1])
-			sockets = append(sockets, hostPath)
-
-			if hostPath != fields[1] {
-				// AppArmor can get confused on Ubuntu Core so allow both paths.
-				sockets = append(sockets, fields[1])
-			}
-		}
+		sockets = append(sockets, fields[1])
 	}
 
 	// AppArmor requires deref of all paths.
@@ -159,8 +125,6 @@ func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) 
 	err = forkproxyProfileTpl.Execute(sb, map[string]any{
 		"name":        ForkproxyProfileName(inst, dev),
 		"varPath":     shared.VarPath(""),
-		"rootPath":    rootPath,
-		"snap":        shared.InSnap(),
 		"exePath":     execPath,
 		"logPath":     inst.LogPath(),
 		"libraryPath": strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),

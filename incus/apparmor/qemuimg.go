@@ -35,11 +35,6 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   {{ .dstPath }} rwk,
 {{- end }}
 
-{{- if .snap }}
-  # Snap-specific libraries
-  /snap/lxd/*/lib/**.so* mr,
-{{- end }}
-
 {{if .libraryPath -}}
   # Entries from LD_LIBRARY_PATH
 {{range $index, $element := .libraryPath}}
@@ -158,7 +153,6 @@ func qemuImgProfile(profileName string, imgPath string, dstPath string, allowedC
 		"pathToImg":       imgPath,
 		"dstPath":         dstPath,
 		"allowedCmdPaths": allowedCmdPaths,
-		"snap":            shared.InSnap(),
 		"libraryPath":     strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
 	})
 	if err != nil {

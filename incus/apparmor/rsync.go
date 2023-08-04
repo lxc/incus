@@ -32,12 +32,12 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 
   @{PROC}/@{pid}/cmdline r,
   @{PROC}/@{pid}/cpuset r,
-  {{ .rootPath }}/{etc,lib,usr/lib}/os-release r,
+  /{etc,lib,usr/lib}/os-release r,
 
   {{ .logPath }}/*/netcat.log rw,
 
-  {{ .rootPath }}/run/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
-  {{ .rootPath }}/run/systemd/resolve/stub-resolv.conf r,
+  /run/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
+  /run/systemd/resolve/stub-resolv.conf r,
 
 {{- if .sourcePath }}
   {{ .sourcePath }}/** r,
@@ -47,13 +47,6 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 {{- if .dstPath }}
   {{ .dstPath }}/** rwkl,
   {{ .dstPath }}/ rwkl,
-{{- end }}
-
-{{- if .snap }}
-  /snap/lxd/*/bin/rsync mrix,
-
-  # Snap-specific libraries
-  /snap/lxd/*/lib/**.so* mr,
 {{- end }}
 
   {{ .execPath }} mixr,
@@ -66,7 +59,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 {{- end }}
 
   # Silence denials on files that aren't required.
-  deny {{ .rootPath }}/etc/ssl/openssl.cnf r,
+  deny /etc/ssl/openssl.cnf r,
   deny /sys/devices/virtual/dmi/id/product_uuid r,
   deny /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 }
@@ -161,11 +154,6 @@ func rsyncProfileLoad(sysOS *sys.OS, sourcePath string, dstPath string) (string,
 // rsyncProfile generates the AppArmor profile template from the given destination path.
 func rsyncProfile(sysOS *sys.OS, name string, sourcePath string, dstPath string) (string, error) {
 	// Render the profile.
-	rootPath := ""
-	if shared.InSnap() {
-		rootPath = "/var/lib/snapd/hostfs"
-	}
-
 	logPath := shared.LogPath("")
 
 	// Fully deref the executable path.
@@ -181,8 +169,6 @@ func rsyncProfile(sysOS *sys.OS, name string, sourcePath string, dstPath string)
 		"execPath":    execPath,
 		"sourcePath":  sourcePath,
 		"dstPath":     dstPath,
-		"snap":        shared.InSnap(),
-		"rootPath":    rootPath,
 		"logPath":     logPath,
 		"libraryPath": strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
 	})

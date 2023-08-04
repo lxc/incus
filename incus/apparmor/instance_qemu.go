@@ -44,9 +44,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /usr/share/seabios/**                     kr,
   owner @{PROC}/@{pid}/cpuset               r,
   owner @{PROC}/@{pid}/task/@{tid}/comm     rw,
-  {{ .rootPath }}/etc/nsswitch.conf         r,
-  {{ .rootPath }}/etc/passwd                r,
-  {{ .rootPath }}/etc/group                 r,
+  /etc/nsswitch.conf         r,
+  /etc/passwd                r,
+  /etc/group                 r,
   @{PROC}/version                           r,
 
   # Used by qemu for live migration NBD server and client
@@ -65,30 +65,12 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   # Needed for lxd fork commands
   {{ .exePath }} mr,
   @{PROC}/@{pid}/cmdline r,
-  {{ .rootPath }}/{etc,lib,usr/lib}/os-release r,
+  /{etc,lib,usr/lib}/os-release r,
 
   # Things that we definitely don't need
   deny @{PROC}/@{pid}/cgroup r,
   deny /sys/module/apparmor/parameters/enabled r,
   deny /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
-
-{{- if .snap }}
-  # The binary itself (for nesting)
-  /var/snap/lxd/common/lxd.debug            mr,
-  /snap/lxd/*/bin/lxd                       mr,
-  /snap/lxd/*/bin/qemu*                     mrix,
-  /snap/lxd/*/share/qemu/**                 kr,
-
-  # Snap-specific paths
-  /var/snap/lxd/common/ceph/**                         r,
-  /var/snap/microceph/*/conf/**                        r,
-  {{ .rootPath }}/etc/ceph/**                          r,
-  {{ .rootPath }}/run/systemd/resolve/stub-resolv.conf r,
-  {{ .rootPath }}/run/systemd/resolve/resolv.conf      r,
-
-  # Snap-specific libraries
-  /snap/lxd/*/lib/**.so*            mr,
-{{- end }}
 
 {{if .libraryPath -}}
   # Entries from LD_LIBRARY_PATH
