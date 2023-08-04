@@ -2,8 +2,6 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/cyphar/incus/incus-benchmark/benchmark"
 )
 
 type cmdInit struct {
@@ -32,7 +30,7 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Run the test
-	duration, err := benchmark.LaunchContainers(c.global.srv, c.flagCount, c.global.flagParallel, image, c.flagPrivileged, false, false)
+	duration, err := LaunchContainers(c.global.srv, c.flagCount, c.global.flagParallel, image, c.flagPrivileged, false, false)
 	if err != nil {
 		return err
 	}

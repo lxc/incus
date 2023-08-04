@@ -1,4 +1,4 @@
-package benchmark
+package main
 
 import (
 	"github.com/cyphar/incus/client"

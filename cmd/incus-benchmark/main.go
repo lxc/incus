@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus-benchmark/benchmark"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/version"
 )
@@ -21,7 +20,7 @@ type cmdGlobal struct {
 	flagVersion     bool
 
 	srv            incus.InstanceServer
-	report         *benchmark.CSVReport
+	report         *CSVReport
 	reportDuration time.Duration
 }
 
@@ -35,14 +34,14 @@ func (c *cmdGlobal) Run(cmd *cobra.Command, args []string) error {
 	c.srv = srv.UseProject(c.flagProject)
 
 	// Print the initial header
-	err = benchmark.PrintServerInfo(srv)
+	err = PrintServerInfo(srv)
 	if err != nil {
 		return err
 	}
 
 	// Setup report handling
 	if c.flagReportFile != "" {
-		c.report = &benchmark.CSVReport{Filename: c.flagReportFile}
+		c.report = &CSVReport{Filename: c.flagReportFile}
 		if shared.PathExists(c.flagReportFile) {
 			err := c.report.Load()
 			if err != nil {
