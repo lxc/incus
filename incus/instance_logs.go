@@ -24,10 +24,6 @@ import (
 var instanceLogCmd = APIEndpoint{
 	Name: "instanceLog",
 	Path: "instances/{name}/logs/{file}",
-	Aliases: []APIEndpointAlias{
-		{Name: "containerLog", Path: "containers/{name}/logs/{file}"},
-		{Name: "vmLog", Path: "virtual-machines/{name}/logs/{file}"},
-	},
 
 	Delete: APIEndpointAction{Handler: instanceLogDelete, AccessHandler: allowProjectPermission("containers", "operate-containers")},
 	Get:    APIEndpointAction{Handler: instanceLogGet, AccessHandler: allowProjectPermission("containers", "view")},
@@ -36,10 +32,6 @@ var instanceLogCmd = APIEndpoint{
 var instanceLogsCmd = APIEndpoint{
 	Name: "instanceLogs",
 	Path: "instances/{name}/logs",
-	Aliases: []APIEndpointAlias{
-		{Name: "containerLogs", Path: "containers/{name}/logs"},
-		{Name: "vmLogs", Path: "virtual-machines/{name}/logs"},
-	},
 
 	Get: APIEndpointAction{Handler: instanceLogsGet, AccessHandler: allowProjectPermission("containers", "view")},
 }
@@ -47,10 +39,6 @@ var instanceLogsCmd = APIEndpoint{
 var instanceExecOutputCmd = APIEndpoint{
 	Name: "instanceExecOutput",
 	Path: "instances/{name}/logs/exec-output/{file}",
-	Aliases: []APIEndpointAlias{
-		{Name: "containerExecOutput", Path: "containers/{name}/logs/exec-output/{file}"},
-		{Name: "vmExecOutput", Path: "virtual-machines/{name}/logs/exec-output/{file}"},
-	},
 
 	Delete: APIEndpointAction{Handler: instanceExecOutputDelete, AccessHandler: allowProjectPermission("containers", "operate-containers")},
 	Get:    APIEndpointAction{Handler: instanceExecOutputGet, AccessHandler: allowProjectPermission("containers", "view")},
@@ -59,10 +47,6 @@ var instanceExecOutputCmd = APIEndpoint{
 var instanceExecOutputsCmd = APIEndpoint{
 	Name: "instanceExecOutputs",
 	Path: "instances/{name}/logs/exec-output",
-	Aliases: []APIEndpointAlias{
-		{Name: "containerExecOutputs", Path: "containers/{name}/logs/exec-output"},
-		{Name: "vmExecOutputs", Path: "virtual-machines/{name}/logs/exec-output"},
-	},
 
 	Get: APIEndpointAction{Handler: instanceExecOutputsGet, AccessHandler: allowProjectPermission("containers", "view")},
 }
