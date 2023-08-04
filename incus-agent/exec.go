@@ -40,7 +40,7 @@ var execCmd = APIEndpoint{
 }
 
 func execPost(d *Daemon, r *http.Request) response.Response {
-	post := api.ContainerExecPost{}
+	post := api.InstanceExecPost{}
 
 	buf, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -420,7 +420,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 				return
 			}
 
-			command := api.ContainerExecControl{}
+			command := api.InstanceExecControl{}
 			err = json.Unmarshal(buf, &command)
 			if err != nil {
 				l.Debug("Failed to unmarshal control socket command", logger.Ctx{"err": err})
