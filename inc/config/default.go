@@ -14,35 +14,15 @@ var ImagesRemote = Remote{
 	Protocol: "simplestreams",
 }
 
-// UbuntuRemote is the Ubuntu image server (over simplestreams).
-var UbuntuRemote = Remote{
-	Addr:     "https://cloud-images.ubuntu.com/releases",
-	Static:   true,
-	Public:   true,
-	Protocol: "simplestreams",
-}
-
-// UbuntuDailyRemote is the Ubuntu daily image server (over simplestreams).
-var UbuntuDailyRemote = Remote{
-	Addr:     "https://cloud-images.ubuntu.com/daily",
-	Static:   true,
-	Public:   true,
-	Protocol: "simplestreams",
-}
-
 // StaticRemotes is the list of remotes which can't be removed.
 var StaticRemotes = map[string]Remote{
-	"local":        LocalRemote,
-	"ubuntu":       UbuntuRemote,
-	"ubuntu-daily": UbuntuDailyRemote,
+	"local": LocalRemote,
 }
 
 // DefaultRemotes is the list of default remotes.
 var DefaultRemotes = map[string]Remote{
-	"images":       ImagesRemote,
-	"local":        LocalRemote,
-	"ubuntu":       UbuntuRemote,
-	"ubuntu-daily": UbuntuDailyRemote,
+	"images": ImagesRemote,
+	"local":  LocalRemote,
 }
 
 // DefaultConfig returns the default configuration.
