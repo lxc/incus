@@ -66,7 +66,7 @@ func (d *dir) Create() error {
 		return err
 	}
 
-	sourcePath := shared.HostPath(d.config["source"])
+	sourcePath := d.config["source"]
 
 	if !shared.PathExists(sourcePath) {
 		return fmt.Errorf("Source path '%s' doesn't exist", sourcePath)
@@ -121,7 +121,7 @@ func (d *dir) Update(changedConfig map[string]string) error {
 // Mount mounts the storage pool.
 func (d *dir) Mount() (bool, error) {
 	path := GetPoolMountPath(d.name)
-	sourcePath := shared.HostPath(d.config["source"])
+	sourcePath := d.config["source"]
 
 	// Check if we're dealing with an external mount.
 	if sourcePath == path {

@@ -732,7 +732,7 @@ func (d *common) Delete() error {
 // GetLog gets the ACL log.
 func (d *common) GetLog(clientType request.ClientType) (string, error) {
 	// ACLs aren't specific to a particular network type but the log only works with OVN.
-	logPath := shared.HostPath("/var/log/ovn/ovn-controller.log")
+	logPath := "/var/log/ovn/ovn-controller.log"
 	if !shared.PathExists(logPath) {
 		return "", fmt.Errorf("Only OVN log entries may be retrieved at this time")
 	}

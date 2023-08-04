@@ -162,8 +162,6 @@ func (c *cmdConfigTrustAdd) Run(cmd *cobra.Command, args []string) error {
 		fname := args[len(args)-1]
 		if fname == "-" {
 			fname = "/dev/stdin"
-		} else {
-			fname = shared.HostPathFollow(fname)
 		}
 
 		var name string

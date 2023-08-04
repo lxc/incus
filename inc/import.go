@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/shared"
 	cli "github.com/cyphar/incus/shared/cmd"
 	"github.com/cyphar/incus/shared/i18n"
 	"github.com/cyphar/incus/shared/ioprogress"
@@ -77,7 +76,7 @@ func (c *cmdImport) Run(cmd *cobra.Command, args []string) error {
 		file = os.Stdin
 		c.global.flagQuiet = true
 	} else {
-		file, err = os.Open(shared.HostPathFollow(srcFile))
+		file, err = os.Open(srcFile)
 		if err != nil {
 			return err
 		}

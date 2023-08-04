@@ -17,7 +17,6 @@ import (
 	"github.com/cyphar/incus/incus/operations"
 	"github.com/cyphar/incus/incus/project"
 	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/units"
 )
@@ -39,8 +38,6 @@ func (d *cephobject) s3Client(creds S3Credentials) (*minio.Client, error) {
 	certFilePath := d.config["cephobject.radosgw.endpoint_cert_file"]
 
 	if u.Scheme == "https" && certFilePath != "" {
-		certFilePath = shared.HostPath(certFilePath)
-
 		// Read in the cert file.
 		certs, err := os.ReadFile(certFilePath)
 		if err != nil {

@@ -245,7 +245,7 @@ func (o *OVN) xbctl(southbound bool, extraArgs ...string) (string, error) {
 	}
 
 	if strings.HasPrefix(dbAddr, "unix:") {
-		dbAddr = fmt.Sprintf("unix:%s", shared.HostPathFollow(strings.TrimPrefix(dbAddr, "unix:")))
+		dbAddr = fmt.Sprintf("unix:%s", strings.TrimPrefix(dbAddr, "unix:"))
 	}
 
 	// Figure out args.

@@ -201,8 +201,6 @@ func ConnectLXDUnixWithContext(ctx context.Context, path string, args *Connectio
 		}
 	}
 
-	path = shared.HostPath(path)
-
 	// Setup the HTTP client
 	httpClient, err := unixHTTPClient(args, path)
 	if err != nil {

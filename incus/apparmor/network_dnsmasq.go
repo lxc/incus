@@ -40,46 +40,32 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   # Additional system files
   @{PROC}/sys/net/ipv6/conf/*/mtu r,
   @{PROC}/@{pid}/fd/ r,
-  {{ .rootPath }}/etc/localtime  r,
-  {{ .rootPath }}/usr/share/zoneinfo/**  r,
+  /etc/localtime  r,
+  /usr/share/zoneinfo/**  r,
 
   # System configuration access
-  {{ .rootPath }}/etc/gai.conf           r,
-  {{ .rootPath }}/etc/group              r,
-  {{ .rootPath }}/etc/host.conf          r,
-  {{ .rootPath }}/etc/hosts              r,
-  {{ .rootPath }}/etc/nsswitch.conf      r,
-  {{ .rootPath }}/etc/passwd             r,
-  {{ .rootPath }}/etc/protocols          r,
+  /etc/gai.conf           r,
+  /etc/group              r,
+  /etc/host.conf          r,
+  /etc/hosts              r,
+  /etc/nsswitch.conf      r,
+  /etc/passwd             r,
+  /etc/protocols          r,
 
-  {{ .rootPath }}/etc/resolv.conf        r,
-  {{ .rootPath }}/etc/resolvconf/run/resolv.conf r,
+  /etc/resolv.conf        r,
+  /etc/resolvconf/run/resolv.conf r,
 
-  {{ .rootPath }}/run/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
-  {{ .rootPath }}/run/systemd/resolve/stub-resolv.conf r,
-  {{ .rootPath }}/mnt/wsl/resolv.conf r,
+  /run/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /mnt/wsl/resolv.conf r,
 
-{{- if .snap }}
-
-  # The binary itself (for nesting)
-  /snap/lxd/*/bin/dnsmasq                 mr,
-
-  # Snap-specific libraries
-  /snap/lxd/*/lib/**.so*                  mr,
-{{ else }}
   # The binary itself (for nesting)
   /{,usr/}sbin/dnsmasq                    mr,
-{{- end }}
 }
 `))
 
 // dnsmasqProfile generates the AppArmor profile template from the given network.
 func dnsmasqProfile(sysOS *sys.OS, n network) (string, error) {
-	rootPath := ""
-	if shared.InSnap() {
-		rootPath = "/var/lib/snapd/hostfs"
-	}
-
 	// Render the profile.
 	var sb *strings.Builder = &strings.Builder{}
 	err := dnsmasqProfileTpl.Execute(sb, map[string]any{
@@ -87,8 +73,6 @@ func dnsmasqProfile(sysOS *sys.OS, n network) (string, error) {
 		"networkName": n.Name(),
 		"logPath":     shared.LogPath(""),
 		"varPath":     shared.VarPath(""),
-		"rootPath":    rootPath,
-		"snap":        shared.InSnap(),
 	})
 	if err != nil {
 		return "", err

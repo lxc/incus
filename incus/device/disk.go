@@ -223,7 +223,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		return fmt.Errorf("Only the root disk may have a migration size quota")
 	}
 
-	if d.config["recursive"] != "" && (d.config["path"] == "/" || !shared.IsDir(shared.HostPath(d.config["source"]))) {
+	if d.config["recursive"] != "" && (d.config["path"] == "/" || !shared.IsDir(d.config["source"])) {
 		return fmt.Errorf("The recursive option is only supported for additional bind-mounted paths")
 	}
 
@@ -263,7 +263,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 	// source path exists when the disk device is required, is not an external ceph/cephfs source and is not a
 	// VM cloud-init drive. We only check this when an instance is loaded to avoid validating snapshot configs
 	// that may contain older config that no longer exists which can prevent migrations.
-	if d.inst != nil && srcPathIsLocal && d.isRequired(d.config) && !shared.PathExists(shared.HostPath(d.config["source"])) {
+	if d.inst != nil && srcPathIsLocal && d.isRequired(d.config) && !shared.PathExists(d.config["source"]) {
 		return fmt.Errorf("Missing source path %q for disk %q", d.config["source"], d.name)
 	}
 
@@ -362,7 +362,7 @@ func (d *disk) validateEnvironmentSourcePath() error {
 		return nil
 	}
 
-	sourceHostPath := shared.HostPath(d.config["source"])
+	sourceHostPath := d.config["source"]
 
 	// Check local external disk source path exists, but don't follow symlinks here (as we let openat2 do that
 	// safely later).
@@ -391,7 +391,7 @@ func (d *disk) validateEnvironmentSourcePath() error {
 				return fmt.Errorf(`The "shift" property cannot be used with a restricted source path`)
 			}
 
-			d.restrictedParentSourcePath = shared.HostPath(restrictedParentSourcePath)
+			d.restrictedParentSourcePath = restrictedParentSourcePath
 		}
 	}
 
@@ -548,7 +548,7 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 		runConf.RootFS = rootfs
 	} else {
 		// Source path.
-		srcPath := shared.HostPath(d.config["source"])
+		srcPath := d.config["source"]
 
 		// Destination path.
 		destPath := d.config["path"]
@@ -756,7 +756,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 
 			// Default to block device or image file passthrough first.
 			mount := deviceConfig.MountEntryItem{
-				DevPath: shared.HostPath(d.config["source"]),
+				DevPath: d.config["source"],
 				DevName: d.name,
 			}
 

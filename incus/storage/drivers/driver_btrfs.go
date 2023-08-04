@@ -192,7 +192,7 @@ func (d *btrfs) Create() error {
 			d.config["source"] = devUUID
 		}
 	} else if d.config["source"] != "" {
-		hostPath := shared.HostPath(d.config["source"])
+		hostPath := d.config["source"]
 		if d.isSubvolume(hostPath) {
 			// Existing btrfs subvolume.
 			subvols, err := d.getSubvolumes(hostPath)
@@ -409,7 +409,7 @@ func (d *btrfs) Mount() (bool, error) {
 		defer func() { _ = loopDeviceAutoDetach(mntSrc) }()
 	} else if filepath.IsAbs(d.config["source"]) {
 		// Bring up an existing device or path.
-		mntSrc = shared.HostPath(d.config["source"])
+		mntSrc = d.config["source"]
 
 		if !shared.IsBlockdevPath(mntSrc) {
 			mntFilesystem = "none"
