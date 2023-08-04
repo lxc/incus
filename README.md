@@ -21,7 +21,7 @@ This fork was made in response to [Canonical's takeover](https://linuxcontainers
 The main aim of this fork is to provide once again a real community project where everyone's contributions are welcome and no one single commercial entity is in charge of the project.
 
 The fork was done at the LXD 5.16 release, making it possible to upgrade from LXD releases up to and including LXD 5.16.
-Upgrading from a later LXD release may not work as the two projects are likely to start divering from this point onwards.
+Upgrading from a later LXD release may not work as the two projects are likely to start diverging from this point onwards.
 
 Incus will keep monitoring and importing relevant changes from LXD over time though changes and features that are specific to Ubuntu or Canonical's products are unlikely to be carried over.
 
