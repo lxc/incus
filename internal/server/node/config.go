@@ -150,7 +150,7 @@ var ConfigSchema = config.Schema{
 	// Network address for this server
 
 	// gendoc:generate(group=server-core, key=core.https_address)
-	//
+	// See {ref}`server-expose`.
 	// ---
 	//  type: string
 	//  scope: local
@@ -160,7 +160,7 @@ var ConfigSchema = config.Schema{
 	// Network address for cluster communication
 
 	// gendoc:generate(group=server-cluster, key=cluster.https_address)
-	//
+	// See {ref}`cluster-https-address`.
 	// ---
 	//  type: string
 	//  scope: local
@@ -170,21 +170,21 @@ var ConfigSchema = config.Schema{
 	// Network address for the BGP server
 
 	// gendoc:generate(group=server-core, key=core.bgp_address)
-	//
+	// See {ref}`network-bgp`.
 	// ---
 	//  type: string
 	//  scope: local
-	//  shortdesc: Address to bind the BGP server to (BGP)
+	//  shortdesc: Address to bind the BGP server to
 	"core.bgp_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Unique router ID for the BGP server
 
 	// gendoc:generate(group=server-core, key=core.bgp_routerid)
-	//
+	// The identifier must be formatted as an IPv4 address.
 	// ---
 	//  type: string
 	//  scope: local
-	//  shortdesc: A unique identifier for this BGP server (formatted as an IPv4 address)
+	//  shortdesc: A unique identifier for the BGP server
 	"core.bgp_routerid": {Validator: validate.Optional(validate.IsNetworkAddressV4)},
 
 	// Network address for the debug server
@@ -200,17 +200,17 @@ var ConfigSchema = config.Schema{
 	// Network address for the DNS server
 
 	// gendoc:generate(group=server-core, key=core.dns_address)
-	//
+	// See {ref}`network-dns-server`.
 	// ---
 	//  type: string
 	//  scope: local
-	//  shortdesc: Address to bind the authoritative DNS server to (DNS)
+	//  shortdesc: Address to bind the authoritative DNS server to
 	"core.dns_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Network address for the metrics server
 
 	// gendoc:generate(group=server-core, key=core.metrics_address)
-	//
+	// See {ref}`metrics`.
 	// ---
 	//  type: string
 	//  scope: local
@@ -220,7 +220,7 @@ var ConfigSchema = config.Schema{
 	// Network address for the storage buckets server
 
 	// gendoc:generate(group=server-core, key=core.storage_buckets_address)
-	//
+	// See {ref}`howto-storage-buckets`.
 	// ---
 	//  type: string
 	//  scope: local
@@ -230,17 +230,17 @@ var ConfigSchema = config.Schema{
 	// Storage volumes to store backups/images on
 
 	// gendoc:generate(group=server-miscellaneous, key=storage.backups_volume)
-	//
+	// Specify the volume using the syntax `POOL/VOLUME`.
 	// ---
 	//  type: string
 	//  scope: local
-	//  shortdesc: Volume to use to store the backup tarballs (syntax is `POOL/VOLUME`)
+	//  shortdesc: Volume to use to store backup tarballs
 	"storage.backups_volume": {},
 	// gendoc:generate(group=server-miscellaneous, key=storage.images_volume)
-	//
+	// Specify the volume using the syntax `POOL/VOLUME`.
 	// ---
 	//  type: string
 	//  scope: local
-	//  shortdesc: Volume to use to store the image tarballs (syntax is `POOL/VOLUME`)
+	//  shortdesc: Volume to use to store the image tarballs
 	"storage.images_volume": {},
 }
