@@ -78,7 +78,7 @@ func (r *ProtocolLXD) GetProjectState(name string) (*api.ProjectState, error) {
 	return &projectState, nil
 }
 
-// CreateProject defines a new container project.
+// CreateProject defines a new project.
 func (r *ProtocolLXD) CreateProject(project api.ProjectsPost) error {
 	if !r.HasExtension("projects") {
 		return fmt.Errorf("The server is missing the required \"projects\" API extension")
