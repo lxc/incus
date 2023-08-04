@@ -93,7 +93,7 @@ func main() {
 
   A CSV report can be produced to be consumed by graphing software.
 `
-	app.Example = `  # Spawn 20 Ubuntu containers in batches of 4
+	app.Example = `  # Spawn 20 containers in batches of 4
   lxd-benchmark launch --count 20 --parallel 4
 
   # Create 50 Alpine containers in batches of 10
