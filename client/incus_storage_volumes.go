@@ -585,7 +585,7 @@ func (r *ProtocolLXD) CopyStoragePoolVolume(pool string, source InstanceServer, 
 			return nil, err
 		}
 
-		// Create the container
+		// Set the source type and direction
 		req.Source.Type = "migration"
 		req.Source.Mode = "push"
 

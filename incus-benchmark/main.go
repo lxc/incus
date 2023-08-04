@@ -20,7 +20,7 @@ type cmdGlobal struct {
 	flagReportLabel string
 	flagVersion     bool
 
-	srv            incus.ContainerServer
+	srv            incus.InstanceServer
 	report         *benchmark.CSVReport
 	reportDuration time.Duration
 }

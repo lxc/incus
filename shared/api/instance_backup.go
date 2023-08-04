@@ -22,10 +22,6 @@ type InstanceBackupsPost struct {
 	// Example: false
 	InstanceOnly bool `json:"instance_only" yaml:"instance_only"`
 
-	// Whether to ignore snapshots (deprecated, use instance_only)
-	// Example: false
-	ContainerOnly bool `json:"container_only" yaml:"container_only"` // Deprecated, use InstanceOnly.
-
 	// Whether to use a pool-optimized binary format (instead of plain tarball)
 	// Example: true
 	OptimizedStorage bool `json:"optimized_storage" yaml:"optimized_storage"`
@@ -58,10 +54,6 @@ type InstanceBackup struct {
 	// Whether to ignore snapshots
 	// Example: false
 	InstanceOnly bool `json:"instance_only" yaml:"instance_only"`
-
-	// Whether to ignore snapshots (deprecated, use instance_only)
-	// Example: false
-	ContainerOnly bool `json:"container_only" yaml:"container_only"` // Deprecated, use InstanceOnly.
 
 	// Whether to use a pool-optimized binary format (instead of plain tarball)
 	// Example: true

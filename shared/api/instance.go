@@ -83,10 +83,6 @@ type InstancePost struct {
 	// Example: false
 	InstanceOnly bool `json:"instance_only" yaml:"instance_only"`
 
-	// Whether snapshots should be discarded (migration only, deprecated, use instance_only)
-	// Example: false
-	ContainerOnly bool `json:"container_only" yaml:"container_only"` // Deprecated, use InstanceOnly.
-
 	// Target for the migration, will use pull mode if not set (migration only)
 	Target *InstancePostTarget `json:"target" yaml:"target"`
 
@@ -337,10 +333,6 @@ type InstanceSource struct {
 	// Whether the copy should skip the snapshots (for copy)
 	// Example: false
 	InstanceOnly bool `json:"instance_only,omitempty" yaml:"instance_only,omitempty"`
-
-	// Whether the copy should skip the snapshots (for copy, deprecated, use instance_only)
-	// Example: false
-	ContainerOnly bool `json:"container_only,omitempty" yaml:"container_only,omitempty"` // Deprecated, use InstanceOnly.
 
 	// Whether this is refreshing an existing instance (for migration and copy)
 	// Example: false

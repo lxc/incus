@@ -1360,11 +1360,6 @@ definitions:
         x-go-package: github.com/cyphar/incus/shared/api
     InstanceBackup:
         properties:
-            container_only:
-                description: Whether to ignore snapshots (deprecated, use instance_only)
-                example: false
-                type: boolean
-                x-go-name: ContainerOnly
             created_at:
                 description: When the backup was created
                 example: "2021-03-23T16:38:37.753398689-04:00"
@@ -1412,11 +1407,6 @@ definitions:
                 example: gzip
                 type: string
                 x-go-name: CompressionAlgorithm
-            container_only:
-                description: Whether to ignore snapshots (deprecated, use instance_only)
-                example: false
-                type: boolean
-                x-go-name: ContainerOnly
             expires_at:
                 description: When the backup expires (gets auto-deleted)
                 example: "2021-03-23T17:38:37.753398689-04:00"
@@ -1667,11 +1657,6 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: AllowInconsistent
-            container_only:
-                description: Whether snapshots should be discarded (migration only, deprecated, use instance_only)
-                example: false
-                type: boolean
-                x-go-name: ContainerOnly
             instance_only:
                 description: Whether snapshots should be discarded (migration only)
                 example: false
@@ -1972,11 +1957,6 @@ definitions:
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
-            container_only:
-                description: Whether the copy should skip the snapshots (for copy, deprecated, use instance_only)
-                example: false
-                type: boolean
-                x-go-name: ContainerOnly
             fingerprint:
                 description: Image fingerprint (for image source)
                 example: ed56997f7c5b48e8d78986d2467a26109be6fb9f2d92e8c7b08eb8b6cec7629a

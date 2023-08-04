@@ -49,7 +49,7 @@ func (r *ProtocolLXD) GetProfile(name string) (*api.Profile, string, error) {
 	return &profile, etag, nil
 }
 
-// CreateProfile defines a new container profile.
+// CreateProfile defines a new instance profile.
 func (r *ProtocolLXD) CreateProfile(profile api.ProfilesPost) error {
 	// Send the request
 	_, _, err := r.query("POST", "/profiles", profile, "")
