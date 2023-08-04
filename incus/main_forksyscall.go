@@ -321,42 +321,11 @@ static void setxattr_emulate(void)
 	}
 }
 
-static bool is_dir(const char *path)
-{
-	struct stat statbuf;
-	int ret;
-
-	ret = stat(path, &statbuf);
-	if (ret == 0 && S_ISDIR(statbuf.st_mode))
-		return true;
-
-	return false;
-}
-
-static int make_private_tmpmount(char *template, bool dir)
-{
-	if (dir) {
-		if (!mkdtemp(template))
-			return -1;
-	} else {
-		__do_close int fd = -EBADF;
-
-		fd = mkstemp(template);
-		if (fd < 0)
-			return -1;
-	}
-
-	if (mount(template, template, NULL, MS_BIND, NULL))
-		return -1;
-
-	return mount(NULL, template, NULL, MS_PRIVATE, NULL);
-}
-
 static void mount_emulate(void)
 {
 	__do_close int fd_mntns = -EBADF, fd_userns = -EBADF, pidfd = -EBADF,
 		       ns_fd = -EBADF, root_fd = -EBADF, cwd_fd = -EBADF;
-	char *source = NULL, *shiftfs = NULL, *target = NULL, *fstype = NULL;
+	char *source = NULL, *shift = NULL, *target = NULL, *fstype = NULL;
 	bool use_fuse;
 	uid_t nsuid = -1, uid = -1, nsfsuid = -1, fsuid = -1;
 	gid_t nsgid = -1, gid = -1, nsfsgid = -1, fsgid = -1;
@@ -376,7 +345,7 @@ static void mount_emulate(void)
 		target = advance_arg(true);
 		fstype = advance_arg(true);
 		flags = atoi(advance_arg(true));
-		shiftfs = advance_arg(true);
+		shift = advance_arg(true);
 	}
 
 	uid = atoi(advance_arg(true));
@@ -439,7 +408,7 @@ static void mount_emulate(void)
 		ret = waitpid(pid_fuse, &status, 0);
 		if ((ret != pid_fuse) || !WIFEXITED(status) || WEXITSTATUS(status))
 			_exit(EXIT_FAILURE);
-	} else if (strcmp(shiftfs, "idmapped") == 0) {
+	} else if (strcmp(shift, "idmapped") == 0) {
 		int fd_tree;
 
 		fd_tree = mount_detach_idmap(source, fd_userns);
@@ -464,100 +433,6 @@ static void mount_emulate(void)
 		ret = lxd_move_mount(fd_tree, "", -EBADF, target, MOVE_MOUNT_F_EMPTY_PATH);
 		if (ret)
 			die("error: failed to attach detached mount");
-	} else if (strcmp(shiftfs, "shiftfs") == 0) {
-		char template[] = P_tmpdir "/.lxd_tmp_mount_XXXXXX";
-
-		// Create basic mount in container's mount namespace.
-		// If @target is on a shared mount then @source will become a
-		// shared mount.
-		ret = mount(source, target, fstype, flags, data);
-		if (ret)
-			_exit(EXIT_FAILURE);
-
-		// If the parent mount of @target is a shared mount we won't be
-		// able to MS_MOVE the shiftfs mount. So make @target a
-		// dependent mount. This is safe since we created a new
-		// bind-mount above anyway.
-		ret = mount(NULL, target, NULL, MS_SLAVE | MS_REC, NULL);
-		if (ret) {
-			umount2(target, MNT_DETACH); // @source@target
-			_exit(EXIT_FAILURE);
-		}
-
-		// Mark the mount as shiftable.
-		ret = mount(target, target, "shiftfs", 0, "mark,passthrough=3");
-		if (ret) {
-			umount2(target, MNT_DETACH); // @source@target
-			_exit(EXIT_FAILURE);
-		}
-
-		// We need to reattach to the old mount namespace, then attach
-		// to the user namespace of the container, and then attach to
-		// the mount namespace again to get the ownership right when
-		// creating our final shiftfs mount.
-		ret = setns(fd_mntns, CLONE_NEWNS);
-		if (ret) {
-			umount2(target, MNT_DETACH); // @source@target
-			umount2(target, MNT_DETACH); // @shiftfs@target
-			_exit(EXIT_FAILURE);
-		}
-
-		if (!change_namespaces(pidfd, ns_fd, CLONE_NEWUSER)) {
-			umount2(target, MNT_DETACH); // @source@target
-			umount2(target, MNT_DETACH); // @shiftfs@target
-			_exit(EXIT_FAILURE);
-		}
-
-		if (!reacquire_basic_creds(pidfd, ns_fd, root_fd, cwd_fd)) {
-			umount2(target, MNT_DETACH); // @source@target
-			umount2(target, MNT_DETACH); // @shiftfs@target
-			_exit(EXIT_FAILURE);
-		}
-
-		if (!acquire_final_creds(pid, nsuid, nsgid, nsfsuid, nsfsgid)) {
-			umount2(target, MNT_DETACH); // @source@target
-			umount2(target, MNT_DETACH); // @shiftfs@target
-			_exit(EXIT_FAILURE);
-		}
-
-		// This is weird to explain without having mount structures
-		// clearly represented in your head: @template's mount is
-		// likely /. That's likely a shared mount. If we MS_MOVE
-		// @target to @template then not just would @target become a
-		// shared mount. It also means @target would have a shared
-		// mount - again likely / - as it's parent. So the next MS_MOVE
-		// would fail.
-		//
-		// IOW, we need a non-shared mount we can temporarily move
-		// @target to and that serve's as @target's non-shared parent mount.
-		ret = make_private_tmpmount(template, is_dir(target));
-		if (ret) {
-			umount2(target, MNT_DETACH); // @source@target
-			umount2(target, MNT_DETACH); // @shiftfs@target
-			_exit(EXIT_FAILURE);
-		}
-
-		ret = mount(target, template, "shiftfs", 0, "passthrough=3");
-		if (ret) {
-			umount2(target, MNT_DETACH);	// @source@target
-			umount2(target, MNT_DETACH);	// @shiftfs@target
-			umount2(template, MNT_DETACH);	// @template@template
-			_exit(EXIT_FAILURE);
-		}
-
-		umount2(target, MNT_DETACH); // @source@target
-		umount2(target, MNT_DETACH); // @shiftfs@target
-
-		ret = mount(template, target, "none", MS_MOVE | MS_REC, NULL);
-		if (ret) {
-			umount2(template, MNT_DETACH); // @shiftfs@template
-			umount2(template, MNT_DETACH); // @template@template
-			remove(template);
-			_exit(EXIT_FAILURE);
-		}
-
-		umount2(template, MNT_DETACH); // @template@template
-		remove(template);
 	} else {
 		if (mount(source, target, fstype, flags, data) < 0)
 			_exit(EXIT_FAILURE);

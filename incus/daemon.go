@@ -944,18 +944,6 @@ func (d *Daemon) init() error {
 		logger.Warnf(" - %s, %s", warningtype.TypeNames[warningtype.Type(w.TypeCode)], w.LastMessage)
 	}
 
-	// Detect shiftfs support.
-	if shared.IsTrue(os.Getenv("INCUS_SHIFTFS_DISABLE")) {
-		logger.Info(" - shiftfs support: disabled")
-	} else {
-		if canUseShiftfs() && (util.SupportsFilesystem("shiftfs") || util.LoadModule("shiftfs") == nil) {
-			d.os.Shiftfs = true
-			logger.Info(" - shiftfs support: yes")
-		} else {
-			logger.Info(" - shiftfs support: no")
-		}
-	}
-
 	// Detect idmapped mounts support.
 	if shared.IsTrue(os.Getenv("INCUS_IDMAPPED_MOUNTS_DISABLE")) {
 		logger.Info(" - idmapped mounts kernel support: disabled")
