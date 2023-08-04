@@ -26,7 +26,7 @@ func (c *cmdLaunch) Command() *cobra.Command {
 
 func (c *cmdLaunch) Run(cmd *cobra.Command, args []string) error {
 	// Choose the image
-	image := "ubuntu:"
+	image := "images:ubuntu/22.04"
 	if len(args) > 0 {
 		image = args[0]
 	}
