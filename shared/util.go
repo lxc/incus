@@ -119,103 +119,6 @@ func IsUnixSocket(path string) bool {
 	return (stat.Mode() & os.ModeSocket) == os.ModeSocket
 }
 
-// HostPathFollow takes a valid path (from HostPath) and resolves it
-// all the way to its target or to the last which can be resolved.
-func HostPathFollow(path string) string {
-	// Ignore empty paths
-	if len(path) == 0 {
-		return path
-	}
-
-	// Don't prefix stdin/stdout
-	if path == "-" {
-		return path
-	}
-
-	// Check if we're running in a snap package.
-	if !InSnap() {
-		return path
-	}
-
-	// Handle relative paths
-	if path[0] != os.PathSeparator {
-		// Use the cwd of the parent as snap-confine alters our own cwd on launch
-		ppid := os.Getppid()
-		if ppid < 1 {
-			return path
-		}
-
-		pwd, err := os.Readlink(fmt.Sprintf("/proc/%d/cwd", ppid))
-		if err != nil {
-			return path
-		}
-
-		path = filepath.Clean(strings.Join([]string{pwd, path}, string(os.PathSeparator)))
-	}
-
-	// Rely on "readlink -m" to do the right thing.
-	path = HostPath(path)
-	for {
-		target, err := RunCommand("readlink", "-m", path)
-		if err != nil {
-			return path
-		}
-
-		target = strings.TrimSpace(target)
-
-		if path == HostPath(target) {
-			return path
-		}
-
-		path = HostPath(target)
-	}
-}
-
-// HostPath returns the host path for the provided path
-// On a normal system, this does nothing
-// When inside of a snap environment, returns the real path.
-func HostPath(path string) string {
-	// Ignore empty paths
-	if len(path) == 0 {
-		return path
-	}
-
-	// Don't prefix stdin/stdout
-	if path == "-" {
-		return path
-	}
-
-	// Check if we're running in a snap package
-	if !InSnap() {
-		return path
-	}
-
-	// Handle relative paths
-	if path[0] != os.PathSeparator {
-		// Use the cwd of the parent as snap-confine alters our own cwd on launch
-		ppid := os.Getppid()
-		if ppid < 1 {
-			return path
-		}
-
-		pwd, err := os.Readlink(fmt.Sprintf("/proc/%d/cwd", ppid))
-		if err != nil {
-			return path
-		}
-
-		path = filepath.Clean(strings.Join([]string{pwd, path}, string(os.PathSeparator)))
-	}
-
-	// Check if the path is already snap-aware
-	for _, prefix := range []string{"/dev", "/snap", "/var/snap", "/var/lib/snapd"} {
-		if path == prefix || strings.HasPrefix(path, fmt.Sprintf("%s/", prefix)) {
-			return path
-		}
-	}
-
-	return fmt.Sprintf("/var/lib/snapd/hostfs%s", path)
-}
-
 // VarPath returns the provided path elements joined by a slash and
 // appended to the end of $INCUS_DIR, which defaults to /var/lib/lxd.
 func VarPath(path ...string) string {
@@ -1299,18 +1202,6 @@ func GetExpiry(refDate time.Time, s string) (time.Time, error) {
 		time.Hour*time.Duration(expiry["H"]) + time.Minute*time.Duration(expiry["M"]) + time.Second*time.Duration(expiry["S"]))
 
 	return t, nil
-}
-
-// InSnap returns true if we're running inside the LXD snap.
-func InSnap() bool {
-	// Detect the snap.
-	_, snapPath := os.LookupEnv("SNAP")
-	snapName := os.Getenv("SNAP_NAME")
-	if snapPath && snapName == "lxd" {
-		return true
-	}
-
-	return false
 }
 
 // JoinUrlPath return the join of the input urls/paths sanitized.
