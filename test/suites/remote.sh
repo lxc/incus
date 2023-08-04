@@ -267,7 +267,6 @@ test_remote_usage() {
   # Ubuntu images in the results for the remote servers.
   if [ -z "${INCUS_OFFLINE:-}" ]; then
     inc_remote image list images: | grep -i -c ubuntu
-    inc_remote image list ubuntu: | grep -i -c ubuntu
   fi
 
   mv "${INCUS_CONF}/client.crt.bak" "${INCUS_CONF}/client.crt"
