@@ -37,7 +37,7 @@ endif
 
 .PHONY: client
 client:
-	go install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./inc
+	go install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./cmd/inc
 	@echo "Incus client built successfully"
 
 .PHONY: incus-agent
@@ -245,7 +245,7 @@ update-pot:
 ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; go install -v -x github.com/snapcore/snapd/i18n/xgettext-go@2.57.1)
 endif
-	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=incus@example.net --keyword=i18n.G --keyword-plural=i18n.NG inc/*.go internal/cliconfig/*.go
+	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=incus@example.net --keyword=i18n.G --keyword-plural=i18n.NG cmd/inc/*.go internal/cliconfig/*.go
 
 .PHONY: build-mo
 build-mo: $(MOFILES)
@@ -273,5 +273,5 @@ endif
 	run-parts --exit-on-error --regex '.sh' test/lint
 
 .PHONY: tags
-tags: *.go incus/*.go shared/*.go inc/*.go
+tags: *.go incus/*.go shared/*.go cmd/inc/*.go
 	find . -type f -name '*.go' | xargs gotags > tags
