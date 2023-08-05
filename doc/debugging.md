@@ -108,9 +108,8 @@ against the local or global database, you can use the `lxd sql` command (run
 `lxd sql --help` for details).
 
 You should only need to do that in order to recover from broken updates or bugs.
-Please consult the LXD team first (creating a [GitHub
-issue](https://github.com/canonical/lxd/issues/new) or
-[forum](https://discourse.ubuntu.com/c/lxd/) post).
+Please consult the Incus team first (creating a [GitHub
+issue](https://github.com/cyphar/incus/issues/new)
 
 ### Running custom queries at LXD daemon startup
 

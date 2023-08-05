@@ -19,7 +19,7 @@ To build the dependencies, follow the instructions in {ref}`installing_from_sour
 
 After building your dependencies, you can now add your GitHub fork as a remote:
 
-    git remote add myfork git@github.com:<your_username>/lxd.git
+    git remote add myfork git@github.com:<your_username>/incus.git
     git remote update
 
 Then switch to it:

@@ -19,8 +19,8 @@ if not os.path.islink('.sphinx/_static/swagger-ui/swagger-ui.css'):
     os.symlink('../../deps/swagger-ui/dist/swagger-ui.css', '.sphinx/_static/swagger-ui/swagger-ui.css')
 
 # Project config.
-project = "LXD"
-author = "LXD contributors"
+project = "Incus"
+author = "Incus contributors"
 copyright = "2014-%s %s" % (datetime.date.today().year, author)
 
 with open("../shared/version/flex.go") as fd:
@@ -132,7 +132,7 @@ html_theme_options = {
 }
 
 html_context = {
-    "github_url": "https://github.com/canonical/lxd",
+    "github_url": "https://github.com/cyphar/incus",
     "github_version": "main",
     "github_folder": "/doc/",
     "github_filetype": "md",
@@ -148,8 +148,8 @@ exclude_patterns = ['html', 'README.md', '.sphinx', 'config_options_cheat_sheet.
 
 # Open Graph configuration
 
-ogp_site_url = "https://documentation.ubuntu.com/lxd/en/latest/"
-ogp_site_name = "LXD documentation"
+ogp_site_url = "https://cyphar.github.io/incus/"
+ogp_site_name = "Incus documentation"
 ogp_image = "https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png"
 
 # Links to ignore when checking links
