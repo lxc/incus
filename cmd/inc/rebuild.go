@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cyphar/incus/inc/config"
+	config "github.com/cyphar/incus/internal/cliconfig"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	cli "github.com/cyphar/incus/shared/cmd"

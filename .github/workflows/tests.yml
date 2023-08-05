@@ -261,11 +261,11 @@ jobs:
         run: |
             mkdir bin
 
-      - name: Build static incc
+      - name: Build static inc
         env:
           CGO_ENABLED: 0
         run: |
-          go build -o bin ./inc
+          go build -o bin ./cmd/inc
 
       - name: Build static incus-migrate
         if: runner.os == 'Linux'
@@ -282,7 +282,7 @@ jobs:
       - name: Unit tests (inc)
         env:
           CGO_ENABLED: 0
-        run: go test -v ./inc/...
+        run: go test -v ./cmd/inc/...
 
       - name: Unit tests (shared)
         env:
