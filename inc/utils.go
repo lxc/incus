@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/inc/config"
+	config "github.com/cyphar/incus/internal/cliconfig"
 	"github.com/cyphar/incus/shared"
 	"github.com/cyphar/incus/shared/api"
 	"github.com/cyphar/incus/shared/i18n"
