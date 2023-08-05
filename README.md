@@ -53,7 +53,7 @@ Consider the following aspects to ensure that your Incus installation is secure:
 - Configure your network interfaces to be secure.
 <!-- Include end security -->
 
-See [Security](https://github.com/cyphar/incus/blob/main/doc/explanation/security.md) for detailed information.
+See [Security](https://cyphar.github.io/incus/explanation/security/) for detailed information.
 
 **IMPORTANT:**
 <!-- Include start security note -->
@@ -74,7 +74,7 @@ You can file bug reports and feature requests at: [`https://github.com/cyphar/in
 
 ## Documentation
 
-The official documentation is available at: [`https://github.com/cyphar/incus/tree/main/doc`](https://github.com/cyphar/incus/tree/main/doc)
+The official documentation is available at: [`https://cyphar.github.io/incus`](https://cyphar.github.io/incus)
 
 <!-- Include end support -->
 

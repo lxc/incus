@@ -1,0 +1,66 @@
+name: Pages
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - docs/**
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  documentation:
+    name: Documentation Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install aspell aspell-en
+          sudo snap install mdl
+
+      - name: Run markdown linter
+        run: |
+          make doc-lint
+
+      - name: Run spell checker
+        run: |
+          make doc-spellcheck
+
+      - name: Run inclusive naming checker
+        uses: get-woke/woke-action@v0
+        with:
+          fail-on-error: true
+          woke-args: "*.md **/*.md -c https://github.com/canonical-web-and-design/Inclusive-naming/raw/main/config.yml"
+
+      - name: Run link checker
+        run: |
+          make doc-linkcheck
+
+      - name: Build docs (Sphinx)
+        run: make doc
+
+      - name: Print warnings (Sphinx)
+        run: if [ -s doc/.sphinx/warnings.txt ]; then cat doc/.sphinx/warnings.txt; exit 1; fi
+
+      - name: Upload documentation artifacts
+        if: always()
+        uses: actions/upload-pages-artifact@v1
+        with:
+          name: documentation
+          path: doc/html
+
+      - name: Deploy to GitHub Pages
+        id: documentation
+        uses: actions/deploy-pages@v2
+        with:
+          artifact_name: documentation
