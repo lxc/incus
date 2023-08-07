@@ -29,7 +29,7 @@ func pprofCreateListener(address string) (net.Listener, error) {
 	return net.Listen("tcp", address)
 }
 
-// PprofAddress returns the network addresss of the pprof endpoint, or an empty string if there's no pprof endpoint.
+// PprofAddress returns the network address of the pprof endpoint, or an empty string if there's no pprof endpoint.
 func (e *Endpoints) PprofAddress() string {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
