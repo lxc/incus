@@ -568,7 +568,7 @@ test_basic_usage() {
         REBOOTED="true"
         break
       else
-        incus exec foo reboot || true  # Signal to running old init processs to reboot if not rebooted yet.
+        incus exec foo reboot || true  # Signal to running old init process to reboot if not rebooted yet.
       fi
     fi
 
