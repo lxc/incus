@@ -69,7 +69,7 @@ func (d *dir) deleteQuota(path string, volID int64) error {
 
 	ok, err := quota.Supported(path)
 	if err != nil || !ok {
-		// Skipping quota as underlying filesystem doesn't suppport project quotas.
+		// Skipping quota as underlying filesystem doesn't support project quotas.
 		return nil
 	}
 
@@ -105,7 +105,7 @@ func (d *dir) setQuota(path string, volID int64, sizeBytes int64) error {
 	ok, err := quota.Supported(path)
 	if err != nil || !ok {
 		if sizeBytes > 0 {
-			// Skipping quota as underlying filesystem doesn't suppport project quotas.
+			// Skipping quota as underlying filesystem doesn't support project quotas.
 			d.logger.Warn("The backing filesystem doesn't support quotas, skipping set quota", logger.Ctx{"path": path, "size": sizeBytes, "volID": volID})
 		}
 
