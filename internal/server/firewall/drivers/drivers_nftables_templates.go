@@ -179,7 +179,7 @@ table {{.family}} {{.namespace}} {
 // to prevent neighbour advertisements that are not allowed. However in order for DHCPv4 & DHCPv6 to work back to
 // the Incus host we need to allow DHCPv4 inbound and for IPv6 we need to allow IPv6 Router Solicitation and DHPCv6.
 // Nftables doesn't support the equivalent of "arp saddr" and "arp saddr ether" at this time so in order to filter
-// NDP advertisements that come from the genuine Ethernet MAC address but have a spoofed NDP source MAC/IP adddress
+// NDP advertisements that come from the genuine Ethernet MAC address but have a spoofed NDP source MAC/IP address
 // we need to use manual header offset extraction. This also drops IPv6 router advertisements from instance.
 // If IP filtering is enabled, this also drops unwanted ethernet frames.
 var nftablesInstanceBridgeFilter = template.Must(template.New("nftablesInstanceBridgeFilter").Parse(`
