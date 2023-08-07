@@ -59,7 +59,7 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 		}
 
 		// If network property is specified, lookup network settings and apply them to the device's config.
-		// project.Default is used here as macvlan networks don't suppprt projects.
+		// project.Default is used here as macvlan networks don't support projects.
 		var err error
 		d.network, err = network.LoadByName(d.state, project.Default, d.config["network"])
 		if err != nil {
