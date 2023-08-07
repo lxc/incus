@@ -91,12 +91,12 @@ func (n *macvlan) Stop() error {
 func (n *macvlan) Update(newNetwork api.NetworkPut, targetNode string, clientType request.ClientType) error {
 	n.logger.Debug("Update", logger.Ctx{"clientType": clientType, "newNetwork": newNetwork})
 
-	dbUpdateNeeeded, _, oldNetwork, err := n.common.configChanged(newNetwork)
+	dbUpdateNeeded, _, oldNetwork, err := n.common.configChanged(newNetwork)
 	if err != nil {
 		return err
 	}
 
-	if !dbUpdateNeeeded {
+	if !dbUpdateNeeded {
 		return nil // Nothing changed.
 	}
 
