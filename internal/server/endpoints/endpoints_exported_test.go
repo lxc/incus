@@ -31,14 +31,14 @@ func (e *Endpoints) LocalSocketPath() string {
 	return listener.Addr().String()
 }
 
-// Return the network addresss and server certificate of the network
+// Return the network address and server certificate of the network
 // endpoint. This method is supposed to be used in conjunction with
 // the httpGetOverTLSSocket test helper.
 func (e *Endpoints) NetworkAddressAndCert() (string, *localtls.CertInfo) {
 	return e.NetworkAddress(), e.cert
 }
 
-// Return the cluster addresss and server certificate of the network
+// Return the cluster address and server certificate of the network
 // endpoint. This method is supposed to be used in conjunction with
 // the httpGetOverTLSSocket test helper.
 func (e *Endpoints) ClusterAddressAndCert() (string, *localtls.CertInfo) {
