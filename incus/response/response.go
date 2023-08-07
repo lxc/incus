@@ -11,10 +11,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 var debug bool

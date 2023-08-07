@@ -18,12 +18,12 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/incus/backup"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/ioprogress"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/backup"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // Errors.

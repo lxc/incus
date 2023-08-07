@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/response"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/response"
 )
 
 func init() {

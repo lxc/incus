@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	config "github.com/cyphar/incus/internal/cliconfig"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/i18n"
+	config "github.com/lxc/incus/internal/cliconfig"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/i18n"
 )
 
 var numberedArgRegex = regexp.MustCompile(`@ARG(\d+)@`)

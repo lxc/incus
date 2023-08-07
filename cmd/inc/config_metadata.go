@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/i18n"
-	"github.com/cyphar/incus/shared/termios"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/i18n"
+	"github.com/lxc/incus/shared/termios"
 )
 
 type cmdConfigMetadata struct {

@@ -14,7 +14,7 @@ import (
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 	"github.com/zitadel/oidc/v2/pkg/op"
 
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 // Verifier holds all information needed to verify an access token offline.

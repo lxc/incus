@@ -109,9 +109,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	_ "github.com/cyphar/incus/incus/include" // Used by cgo
-	"github.com/cyphar/incus/incus/ip"
-	"github.com/cyphar/incus/shared/netutils"
+	_ "github.com/lxc/incus/incus/include" // Used by cgo
+	"github.com/lxc/incus/incus/ip"
+	"github.com/lxc/incus/shared/netutils"
 )
 
 type cmdForknet struct {

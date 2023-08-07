@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 // GetNetworkACLNames returns a list of network ACL names.

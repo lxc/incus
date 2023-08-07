@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/storage/drivers"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/storage/drivers"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 var lxdEarlyPatches = map[string]func(b *lxdBackend) error{

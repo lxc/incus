@@ -9,8 +9,8 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 func (c *cmdExec) getTERM() (string, bool) {

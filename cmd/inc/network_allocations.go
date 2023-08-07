@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	lxd "github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/shared/api"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/i18n"
+	lxd "github.com/lxc/incus/client"
+	"github.com/lxc/incus/shared/api"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/i18n"
 )
 
 type cmdNetworkListAllocations struct {

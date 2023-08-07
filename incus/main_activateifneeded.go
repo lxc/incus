@@ -9,14 +9,14 @@ import (
 	sqlite3 "github.com/mattn/go-sqlite3"
 	"github.com/spf13/cobra"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/node"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/idmap"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/node"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/idmap"
+	"github.com/lxc/incus/shared/logger"
 )
 
 func init() {

@@ -8,18 +8,18 @@ import (
 
 	"go.starlark.net/starlark"
 
-	"github.com/cyphar/incus/incus/cluster"
-	"github.com/cyphar/incus/incus/db"
-	instanceDrivers "github.com/cyphar/incus/incus/instance/drivers"
-	"github.com/cyphar/incus/incus/resources"
-	scriptletLoad "github.com/cyphar/incus/incus/scriptlet/load"
-	"github.com/cyphar/incus/incus/state"
-	storageDrivers "github.com/cyphar/incus/incus/storage/drivers"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	apiScriptlet "github.com/cyphar/incus/shared/api/scriptlet"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/units"
+	"github.com/lxc/incus/incus/cluster"
+	"github.com/lxc/incus/incus/db"
+	instanceDrivers "github.com/lxc/incus/incus/instance/drivers"
+	"github.com/lxc/incus/incus/resources"
+	scriptletLoad "github.com/lxc/incus/incus/scriptlet/load"
+	"github.com/lxc/incus/incus/state"
+	storageDrivers "github.com/lxc/incus/incus/storage/drivers"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	apiScriptlet "github.com/lxc/incus/shared/api/scriptlet"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/units"
 )
 
 // InstancePlacementRun runs the instance placement scriptlet and returns the chosen cluster member target.

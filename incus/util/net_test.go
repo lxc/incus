@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
 )
 
 // The connection returned by the dialer is paired with the one returned by the

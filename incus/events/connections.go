@@ -12,8 +12,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // EventListenerConnection represents an event listener connection.

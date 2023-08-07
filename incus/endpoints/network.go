@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/endpoints/listeners"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/endpoints/listeners"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // NetworkPublicKey returns the public key of the TLS certificate used by the

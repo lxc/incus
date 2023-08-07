@@ -11,9 +11,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 const fixtures string = `

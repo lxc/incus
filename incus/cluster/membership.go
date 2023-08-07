@@ -13,14 +13,14 @@ import (
 	"github.com/canonical/go-dqlite/app"
 	"github.com/canonical/go-dqlite/client"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/node"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/node"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/version"
 )
 
 // Bootstrap turns a non-clustered LXD instance into the first (and leader)

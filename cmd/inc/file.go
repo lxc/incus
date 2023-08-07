@@ -18,14 +18,14 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/shared"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/i18n"
-	"github.com/cyphar/incus/shared/ioprogress"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/termios"
-	"github.com/cyphar/incus/shared/units"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/shared"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/i18n"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/shared/units"
 )
 
 // DirMode represents the file mode for creating dirs on `lxc file pull/push`.

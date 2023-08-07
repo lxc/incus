@@ -7,8 +7,8 @@ import (
 
 	"github.com/armon/go-proxyproto"
 
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
 )
 
 // FancyTLSListener is a variation of the standard tls.Listener that supports

@@ -1,4 +1,4 @@
-module github.com/cyphar/incus
+module github.com/lxc/incus
 
 go 1.18
 

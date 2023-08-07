@@ -10,8 +10,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/cyphar/incus/incus/ucred"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/ucred"
+	"github.com/lxc/incus/shared"
 )
 
 func tlsConfig(uid uint32) (*tls.Config, error) {

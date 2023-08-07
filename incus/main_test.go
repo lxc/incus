@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/sys"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/idmap"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/sys"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/idmap"
 )
 
 func mockStartDaemon() (*Daemon, error) {

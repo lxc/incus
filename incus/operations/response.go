@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/version"
 )
 
 // Operation response.

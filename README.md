@@ -35,10 +35,10 @@ For production use, you are likely better off sticking with Canonical's LXD for 
 
 Type                | Service               | Status
 ---                 | ---                   | ---
-CI (client)         | GitHub                | [![Build Status](https://github.com/cyphar/incus/workflows/Client%20build%20and%20unit%20tests/badge.svg)](https://github.com/cyphar/incus/actions)
-CI (server)         | GitHub                | [![Build Status](https://github.com/cyphar/incus/workflows/Tests/badge.svg)](https://github.com/cyphar/incus/actions)
-Go documentation    | Godoc                 | [![GoDoc](https://godoc.org/github.com/cyphar/incus/client?status.svg)](https://godoc.org/github.com/cyphar/incus/client)
-Static analysis     | GoReport              | [![Go Report Card](https://goreportcard.com/badge/github.com/cyphar/incus)](https://goreportcard.com/report/github.com/cyphar/incus)
+CI (client)         | GitHub                | [![Build Status](https://github.com/lxc/incus/workflows/Client%20build%20and%20unit%20tests/badge.svg)](https://github.com/lxc/incus/actions)
+CI (server)         | GitHub                | [![Build Status](https://github.com/lxc/incus/workflows/Tests/badge.svg)](https://github.com/lxc/incus/actions)
+Go documentation    | Godoc                 | [![GoDoc](https://godoc.org/github.com/lxc/incus/client?status.svg)](https://godoc.org/github.com/lxc/incus/client)
+Static analysis     | GoReport              | [![Go Report Card](https://goreportcard.com/badge/github.com/lxc/incus)](https://goreportcard.com/report/github.com/lxc/incus)
 
 ## Security
 
@@ -53,7 +53,7 @@ Consider the following aspects to ensure that your Incus installation is secure:
 - Configure your network interfaces to be secure.
 <!-- Include end security -->
 
-See [Security](https://github.com/cyphar/incus/blob/main/doc/explanation/security.md) for detailed information.
+See [Security](https://github.com/lxc/incus/blob/main/doc/explanation/security.md) for detailed information.
 
 **IMPORTANT:**
 <!-- Include start security note -->
@@ -70,11 +70,11 @@ The following channels are available for you to interact with the Incus communit
 
 ### Bug reports
 
-You can file bug reports and feature requests at: [`https://github.com/cyphar/incus/issues/new`](https://github.com/cyphar/incus/issues/new)
+You can file bug reports and feature requests at: [`https://github.com/lxc/incus/issues/new`](https://github.com/lxc/incus/issues/new)
 
 ## Documentation
 
-The official documentation is available at: [`https://github.com/cyphar/incus/tree/main/doc`](https://github.com/cyphar/incus/tree/main/doc)
+The official documentation is available at: [`https://github.com/lxc/incus/tree/main/doc`](https://github.com/lxc/incus/tree/main/doc)
 
 <!-- Include end support -->
 

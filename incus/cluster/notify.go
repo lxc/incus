@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // Notifier is a function that invokes the given function against each node in

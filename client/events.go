@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 // The EventListener struct is used to interact with a LXD event stream.

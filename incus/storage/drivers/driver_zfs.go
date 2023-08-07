@@ -8,16 +8,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cyphar/incus/incus/migration"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/units"
-	"github.com/cyphar/incus/shared/validate"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/migration"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/shared/version"
 )
 
 var zfsVersion string

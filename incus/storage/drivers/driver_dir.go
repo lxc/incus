@@ -7,9 +7,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 type dir struct {

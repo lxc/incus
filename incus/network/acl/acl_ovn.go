@@ -8,16 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/network/openvswitch"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/validate"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/network/openvswitch"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/validate"
 )
 
 // OVN ACL rule priorities.

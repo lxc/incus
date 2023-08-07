@@ -17,8 +17,8 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 const VFS3FscapsUnsupported int32 = 0

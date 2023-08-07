@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // InstanceBackup is a value object holding all db-related details about an instance backup.

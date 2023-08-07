@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"os"
 
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/locking"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/refcount"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/units"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/locking"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/refcount"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/units"
 )
 
 // tmpVolSuffix Suffix to use for any temporary volumes created by Incus.

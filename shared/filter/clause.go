@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 // Clause is a single filter clause in a filter string.

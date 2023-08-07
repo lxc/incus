@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cyphar/incus/incus/db/generate/file"
-	"github.com/cyphar/incus/incus/db/generate/lex"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/db/generate/file"
+	"github.com/lxc/incus/incus/db/generate/lex"
+	"github.com/lxc/incus/shared"
 )
 
 // Method generates a code snippet for a particular database query method.

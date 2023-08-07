@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/node"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/rsync"
-	"github.com/cyphar/incus/incus/state"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	storageDrivers "github.com/cyphar/incus/incus/storage/drivers"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/node"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/rsync"
+	"github.com/lxc/incus/incus/state"
+	storagePools "github.com/lxc/incus/incus/storage"
+	storageDrivers "github.com/lxc/incus/incus/storage/drivers"
+	"github.com/lxc/incus/shared"
 )
 
 func daemonStorageVolumesUnmount(s *state.State) error {

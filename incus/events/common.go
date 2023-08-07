@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/cancel"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/cancel"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // EventHandler called when the connection receives an event from the client.

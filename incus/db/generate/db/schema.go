@@ -3,8 +3,8 @@ package db
 import (
 	"fmt"
 
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/db/node"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/db/node"
 )
 
 // UpdateSchema updates the schema.go file of the cluster and node databases.

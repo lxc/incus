@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/shared/osarch"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/shared/osarch"
 )
 
 func TestUpdateFromV0(t *testing.T) {

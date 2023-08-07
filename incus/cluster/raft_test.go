@@ -9,9 +9,9 @@ import (
 	"github.com/canonical/go-dqlite/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
 )
 
 // Set the cluster.https_address config key to the given address, and insert the

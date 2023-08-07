@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/incus/db/node"
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/db/node"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/shared"
 )
 
 func TestUpdateFromV38_RaftNodes(t *testing.T) {

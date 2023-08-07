@@ -5,7 +5,7 @@ import (
 	"net"
 	"regexp"
 
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/logger"
 )
 
 type networkServerErrorLogWriter struct {

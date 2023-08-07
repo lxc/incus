@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 var checkedKeys = []string{

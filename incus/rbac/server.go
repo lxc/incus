@@ -19,8 +19,8 @@ import (
 	"github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery"
 	"github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery/agent"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 type rbacResource struct {

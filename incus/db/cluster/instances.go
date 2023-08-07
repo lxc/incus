@@ -7,10 +7,10 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/osarch"
+	"github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/osarch"
 )
 
 // Code generation directives.

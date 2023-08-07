@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Event handling functions

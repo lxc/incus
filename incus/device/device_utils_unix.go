@@ -9,12 +9,12 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/incus/storage/filesystem"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/idmap"
-	"github.com/cyphar/incus/shared/logger"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/incus/storage/filesystem"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/idmap"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // unixDefaultMode default mode to create unix devices with if not specified in device config.

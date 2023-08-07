@@ -3,12 +3,12 @@ package network
 import (
 	"net"
 
-	"github.com/cyphar/incus/incus/cluster"
-	"github.com/cyphar/incus/incus/cluster/request"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/cluster"
+	"github.com/lxc/incus/incus/cluster/request"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Type represents a LXD network driver type.

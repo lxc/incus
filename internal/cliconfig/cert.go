@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 // HasClientCertificate will return true if a client certificate has already been generated.

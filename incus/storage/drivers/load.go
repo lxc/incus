@@ -1,8 +1,8 @@
 package drivers
 
 import (
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared/logger"
 )
 
 var drivers = map[string]func() driver{

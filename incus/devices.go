@@ -43,15 +43,15 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/incus/cgroup"
-	"github.com/cyphar/incus/incus/device"
-	_ "github.com/cyphar/incus/incus/include" // Used by cgo
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/resources"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/cgroup"
+	"github.com/lxc/incus/incus/device"
+	_ "github.com/lxc/incus/incus/include" // Used by cgo
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/resources"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 type deviceTaskCPU struct {

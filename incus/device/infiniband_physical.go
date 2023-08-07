@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strconv"
 
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	pcidev "github.com/cyphar/incus/incus/device/pci"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/ip"
-	"github.com/cyphar/incus/incus/resources"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	pcidev "github.com/lxc/incus/incus/device/pci"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/ip"
+	"github.com/lxc/incus/incus/resources"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
 )
 
 type infinibandPhysical struct {

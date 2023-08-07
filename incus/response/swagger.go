@@ -4,7 +4,7 @@
 package response
 
 import (
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Operation

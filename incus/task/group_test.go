@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/cyphar/incus/incus/task"
+	"github.com/lxc/incus/incus/task"
 )
 
 func TestGroup_Add(t *testing.T) {

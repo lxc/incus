@@ -9,16 +9,16 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/db/cluster"
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/project"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/idmap"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/db/cluster"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/project"
+	storagePools "github.com/lxc/incus/incus/storage"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 )
 
 type containerTestSuite struct {

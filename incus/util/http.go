@@ -19,9 +19,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // DebugJSON helper to log JSON.

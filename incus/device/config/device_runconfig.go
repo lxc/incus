@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/cyphar/incus/incus/revert"
+	"github.com/lxc/incus/incus/revert"
 )
 
 // MountOwnerShiftNone do not use owner shifting.

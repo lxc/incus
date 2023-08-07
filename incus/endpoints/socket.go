@@ -9,9 +9,9 @@ import (
 	"os/user"
 	"strconv"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // Bind to the given unix socket path.

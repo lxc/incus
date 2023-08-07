@@ -7,11 +7,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cyphar/incus/client"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/i18n"
-	"github.com/cyphar/incus/shared/ioprogress"
-	"github.com/cyphar/incus/shared/units"
+	"github.com/lxc/incus/client"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/i18n"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/units"
 )
 
 type cmdImport struct {

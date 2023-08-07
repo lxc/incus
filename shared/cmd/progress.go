@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/ioprogress"
-	"github.com/cyphar/incus/shared/termios"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/termios"
 )
 
 // ProgressRenderer tracks the progress information.

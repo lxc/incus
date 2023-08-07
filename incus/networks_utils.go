@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/cyphar/incus/incus/cluster"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/network"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/cluster"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/network"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared/logger"
 )
 
 var networkOVNChassis *bool

@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cyphar/incus/incus/cluster/request"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/incus/state"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/cluster/request"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incus/state"
+	storagePools "github.com/lxc/incus/incus/storage"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // storagePoolDBCreate creates a storage pool DB entry and returns the created Pool ID.

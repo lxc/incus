@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // NewWrapper returns a new ReadWriteCloser wrapper for a websocket connection.

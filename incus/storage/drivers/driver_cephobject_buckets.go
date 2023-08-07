@@ -14,11 +14,11 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/units"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/units"
 )
 
 // ValidateVolume validates the supplied volume config.

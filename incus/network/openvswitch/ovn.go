@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
 )
 
 // OVNRouter OVN router name.

@@ -7,16 +7,16 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/incus/acme"
-	"github.com/cyphar/incus/incus/cluster"
-	"github.com/cyphar/incus/incus/db/operationtype"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/task"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/acme"
+	"github.com/lxc/incus/incus/cluster"
+	"github.com/lxc/incus/incus/db/operationtype"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/task"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 var apiACME = []APIEndpoint{

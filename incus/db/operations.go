@@ -5,9 +5,9 @@ package db
 import (
 	"context"
 
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/db/operationtype"
-	"github.com/cyphar/incus/incus/db/query"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/db/operationtype"
+	"github.com/lxc/incus/incus/db/query"
 )
 
 // GetNodesWithOperations returns a list of nodes that have operations.

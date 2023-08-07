@@ -8,8 +8,8 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 type dnsHandler struct {

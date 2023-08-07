@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
 )
 
 func (suite *containerTestSuite) TestSnapshotScheduling() {

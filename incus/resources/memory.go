@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/units"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/units"
 )
 
 var sysDevicesNode = "/sys/devices/system/node"

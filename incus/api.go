@@ -10,18 +10,18 @@ import (
 
 	"github.com/gorilla/mux"
 
-	clusterConfig "github.com/cyphar/incus/incus/cluster/config"
-	"github.com/cyphar/incus/incus/cluster/request"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/project"
-	lxdRequest "github.com/cyphar/incus/incus/request"
-	"github.com/cyphar/incus/incus/response"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	"github.com/cyphar/incus/incus/storage/s3"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	clusterConfig "github.com/lxc/incus/incus/cluster/config"
+	"github.com/lxc/incus/incus/cluster/request"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/project"
+	lxdRequest "github.com/lxc/incus/incus/request"
+	"github.com/lxc/incus/incus/response"
+	storagePools "github.com/lxc/incus/incus/storage"
+	"github.com/lxc/incus/incus/storage/s3"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // swagger:operation GET / server api_get

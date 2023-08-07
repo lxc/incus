@@ -5,14 +5,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/endpoints"
-	"github.com/cyphar/incus/incus/events"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/endpoints"
+	"github.com/lxc/incus/incus/events"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // eventHubMinHosts is the minimum number of members that must have the event-hub role to trigger switching into
