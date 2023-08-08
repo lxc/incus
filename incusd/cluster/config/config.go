@@ -357,14 +357,6 @@ var ConfigSchema = config.Schema{
 	"oidc.client.id":                 {},
 	"oidc.issuer":                    {},
 	"oidc.audience":                  {},
-	"rbac.agent.url":                 {},
-	"rbac.agent.username":            {},
-	"rbac.agent.private_key":         {},
-	"rbac.agent.public_key":          {},
-	"rbac.api.expiry":                {Type: config.Int64, Default: "3600"},
-	"rbac.api.key":                   {},
-	"rbac.api.url":                   {},
-	"rbac.expiry":                    {Type: config.Int64, Default: "3600"},
 
 	// OVN networking global keys.
 	"network.ovn.integration_bridge":    {Default: "br-int"},
