@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/auth/candid"
@@ -211,8 +210,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	// Get the authentication methods.
 	authMethods := []string{"tls"}
 	candidURL, _, _, _ := s.GlobalConfig.CandidServer()
-	rbacURL, _, _, _, _, _, _ := s.GlobalConfig.RBACServer()
-	if candidURL != "" || rbacURL != "" {
+	if candidURL != "" {
 		authMethods = append(authMethods, "candid")
 	}
 
@@ -631,25 +629,6 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		}
 	}
 
-	// Validate global configuration
-	hasRBAC := false
-	hasCandid := false
-	for k, v := range req.Config {
-		if v == "" {
-			continue
-		}
-
-		if strings.HasPrefix(k, "candid.") {
-			hasCandid = true
-		} else if strings.HasPrefix(k, "rbac.") {
-			hasRBAC = true
-		}
-
-		if hasCandid && hasRBAC {
-			return response.BadRequest(fmt.Errorf("RBAC and Candid are mutually exclusive"))
-		}
-	}
-
 	// Then deal with cluster wide configuration
 	var clusterChanged map[string]string
 	var newClusterConfig *clusterConfig.Config
@@ -725,7 +704,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 	maasChanged := false
 	candidChanged := false
-	rbacChanged := false
 	bgpChanged := false
 	dnsChanged := false
 	lokiChanged := false
@@ -771,20 +749,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 				d.taskPruneImages.Reset()
 			}
 
-		case "rbac.agent.url":
-			fallthrough
-		case "rbac.agent.username":
-			fallthrough
-		case "rbac.agent.private_key":
-			fallthrough
-		case "rbac.agent.public_key":
-			fallthrough
-		case "rbac.api.url":
-			fallthrough
-		case "rbac.api.key":
-			fallthrough
-		case "rbac.expiry":
-			rbacChanged = true
 		case "core.bgp_asn":
 			bgpChanged = true
 		case "loki.api.url":
@@ -902,22 +866,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 		apiURL, apiKey, expiry, domains := clusterConfig.CandidServer()
 		d.candidVerifier, err = candid.NewVerifier(apiURL, apiKey, expiry, domains)
-		if err != nil {
-			return err
-		}
-	}
-
-	if rbacChanged {
-		apiURL, apiKey, apiExpiry, agentURL, agentUsername, agentPrivateKey, agentPublicKey := clusterConfig.RBACServer()
-
-		// Since RBAC seems to have been set up already, we need to disable it temporarily
-		if d.rbac != nil {
-			d.candidVerifier = nil
-			d.rbac.StopStatusCheck()
-			d.rbac = nil
-		}
-
-		err := d.setupRBACServer(apiURL, apiKey, apiExpiry, agentURL, agentUsername, agentPrivateKey, agentPublicKey)
 		if err != nil {
 			return err
 		}

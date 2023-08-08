@@ -97,17 +97,6 @@ func (c *Config) CandidServer() (string, string, int64, string) {
 		c.m.GetString("candid.domains")
 }
 
-// RBACServer returns all the Candid settings needed to connect to a server.
-func (c *Config) RBACServer() (string, string, int64, string, string, string, string) {
-	return c.m.GetString("rbac.api.url"),
-		c.m.GetString("rbac.api.key"),
-		c.m.GetInt64("rbac.expiry"),
-		c.m.GetString("rbac.agent.url"),
-		c.m.GetString("rbac.agent.username"),
-		c.m.GetString("rbac.agent.private_key"),
-		c.m.GetString("rbac.agent.public_key")
-}
-
 // ProxyHTTPS returns the configured HTTPS proxy, if any.
 func (c *Config) ProxyHTTPS() string {
 	return c.m.GetString("core.proxy_https")

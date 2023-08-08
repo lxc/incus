@@ -763,14 +763,6 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		// Handle external authentication/RBAC
 		candidAPIURL, candidAPIKey, candidExpiry, candidDomains := s.GlobalConfig.CandidServer()
-		rbacAPIURL, rbacAPIKey, rbacExpiry, rbacAgentURL, rbacAgentUsername, rbacAgentPrivateKey, rbacAgentPublicKey := s.GlobalConfig.RBACServer()
-
-		if rbacAPIURL != "" {
-			err = d.setupRBACServer(rbacAPIURL, rbacAPIKey, rbacExpiry, rbacAgentURL, rbacAgentUsername, rbacAgentPrivateKey, rbacAgentPublicKey)
-			if err != nil {
-				return err
-			}
-		}
 
 		if candidAPIURL != "" {
 			d.candidVerifier, err = candid.NewVerifier(candidAPIURL, candidAPIKey, candidExpiry, candidDomains)

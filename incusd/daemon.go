@@ -1248,14 +1248,6 @@ func (d *Daemon) init() error {
 
 	dnsAddress := d.localConfig.DNSAddress()
 
-	rbacAPIURL := ""
-	rbacAPIKey := ""
-	rbacAgentURL := ""
-	rbacAgentUsername := ""
-	rbacAgentPrivateKey := ""
-	rbacAgentPublicKey := ""
-	rbacExpiry := int64(0)
-
 	maasAPIURL := ""
 	maasAPIKey := ""
 	maasMachine := d.localConfig.MAASMachine()
@@ -1291,7 +1283,6 @@ func (d *Daemon) init() error {
 
 	candidAPIURL, candidAPIKey, candidExpiry, candidDomains = d.globalConfig.CandidServer()
 	maasAPIURL, maasAPIKey = d.globalConfig.MAASController()
-	rbacAPIURL, rbacAPIKey, rbacExpiry, rbacAgentURL, rbacAgentUsername, rbacAgentPrivateKey, rbacAgentPublicKey = d.globalConfig.RBACServer()
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
 	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes := d.globalConfig.LokiServer()
 	oidcIssuer, oidcClientID, oidcAudience := d.globalConfig.OIDCServer()
@@ -1304,14 +1295,6 @@ func (d *Daemon) init() error {
 	// Setup Loki logger.
 	if lokiURL != "" {
 		err = d.setupLoki(lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Setup RBAC authentication.
-	if rbacAPIURL != "" {
-		err = d.setupRBACServer(rbacAPIURL, rbacAPIKey, rbacExpiry, rbacAgentURL, rbacAgentUsername, rbacAgentPrivateKey, rbacAgentPublicKey)
 		if err != nil {
 			return err
 		}
@@ -1795,56 +1778,6 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	}
 
 	return err
-}
-
-// Setup RBAC.
-func (d *Daemon) setupRBACServer(rbacURL string, rbacKey string, rbacExpiry int64, rbacAgentURL string, rbacAgentUsername string, rbacAgentPrivateKey string, rbacAgentPublicKey string) error {
-	if d.rbac != nil || rbacURL == "" || rbacAgentURL == "" || rbacAgentUsername == "" || rbacAgentPrivateKey == "" || rbacAgentPublicKey == "" {
-		return nil
-	}
-
-	// Get a new server struct
-	server, err := rbac.NewServer(rbacURL, rbacKey, rbacAgentURL, rbacAgentUsername, rbacAgentPrivateKey, rbacAgentPublicKey)
-	if err != nil {
-		return err
-	}
-
-	// Set projects helper
-	server.ProjectsFunc = func() (map[int64]string, error) {
-		var result map[int64]string
-		err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			var err error
-			result, err = dbCluster.GetProjectIDsToNames(ctx, tx.Tx())
-			return err
-		})
-
-		return result, err
-	}
-
-	// Perform full sync when online
-	go func() {
-		for {
-			err = server.SyncProjects()
-			if err != nil {
-				time.Sleep(time.Minute)
-				continue
-			}
-
-			break
-		}
-	}()
-
-	server.StartStatusCheck()
-
-	d.rbac = server
-
-	// Enable candid authentication
-	d.candidVerifier, err = candid.NewVerifier(fmt.Sprintf("%s/auth", rbacURL), rbacKey, rbacExpiry, "")
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Setup MAAS.
