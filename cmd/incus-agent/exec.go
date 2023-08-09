@@ -18,9 +18,9 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/incus/db/operationtype"
-	"github.com/lxc/incus/incus/operations"
-	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incusd/db/operationtype"
+	"github.com/lxc/incus/incusd/operations"
+	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"

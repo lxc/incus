@@ -9,9 +9,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incus/operations"
-	"github.com/lxc/incus/incus/response"
-	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/incusd/operations"
+	"github.com/lxc/incus/incusd/response"
+	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )

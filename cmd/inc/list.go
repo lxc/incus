@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incusd/instance/instancetype"
 	config "github.com/lxc/incus/internal/cliconfig"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"

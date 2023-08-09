@@ -10,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/lxc/incus/incus/ucred"
+	"github.com/lxc/incus/incusd/ucred"
 	"github.com/lxc/incus/shared"
 )
 

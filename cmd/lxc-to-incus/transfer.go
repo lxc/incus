@@ -12,8 +12,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pborman/uuid"
 
-	"github.com/lxc/incus/incus/migration"
-	"github.com/lxc/incus/incus/rsync"
+	"github.com/lxc/incus/incusd/migration"
+	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/shared/linux"
 	"github.com/lxc/incus/shared/ws"
 )

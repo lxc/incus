@@ -21,7 +21,7 @@ import (
 	schemaform "gopkg.in/juju/environschema.v1/form"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incus/migration"
+	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	cli "github.com/lxc/incus/shared/cmd"
