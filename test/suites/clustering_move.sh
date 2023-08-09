@@ -182,9 +182,9 @@ EOF
   # Cleanup
   INCUS_DIR="${INCUS_ONE_DIR}" inc delete -f c1 c2 c3
 
-  INCUS_DIR="${INCUS_THREE_DIR}" incus shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incus shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incus shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"

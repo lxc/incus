@@ -50,7 +50,7 @@ container_devices_proxy_validation() {
 
   # Check that old invalid config doesn't prevent device being stopped and removed cleanly.
   inc config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" connect=tcp:127.0.0.1:4321 bind=host
-  incus sql global "UPDATE instances_devices_config SET value='tcp:localhost:4321' WHERE value='tcp:127.0.0.1:4321';"
+  incusd sql global "UPDATE instances_devices_config SET value='tcp:localhost:4321' WHERE value='tcp:127.0.0.1:4321';"
   inc config device remove proxyTester proxyDev
 
   # Add the device again with the same listen param so if the old process hasn't been stopped it will fail to start.

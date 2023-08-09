@@ -40,7 +40,7 @@ import_subdir_files() {
 import_subdir_files includes
 
 echo "==> Checking for dependencies"
-check_dependencies incus inc curl dnsmasq jq git xgettext sqlite3 msgmerge msgfmt shuf setfacl socat dig
+check_dependencies incusd inc curl dnsmasq jq git xgettext sqlite3 msgmerge msgfmt shuf setfacl socat dig
 
 if [ "${USER:-'root'}" != "root" ]; then
   echo "The testsuite must be run as root." >&2
@@ -315,9 +315,9 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_fdleak "fd leak"
     run_test test_storage "storage"
     run_test test_storage_volume_snapshots "storage volume snapshots"
-    run_test test_init_auto "incus init auto"
-    run_test test_init_interactive "incus init interactive"
-    run_test test_init_preseed "incus init preseed"
+    run_test test_init_auto "incusd init auto"
+    run_test test_init_interactive "incusd init interactive"
+    run_test test_init_preseed "incusd init preseed"
     run_test test_storage_profiles "storage profiles"
     run_test test_container_recover "container recover"
     run_test test_bucket_recover "bucket recover"

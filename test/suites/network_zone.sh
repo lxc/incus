@@ -125,7 +125,7 @@ test_network_zone() {
   dig "@${DNS_ADDR}" -p "${DNS_PORT}" axfr incus.example.net | grep -Fc demo.incus.example.net | grep -Fx 6
   inc network zone record entry remove incus.example.net demo A 1.1.1.1
 
-  incus sql global 'select * from networks_zones_records'
+  incusd sql global 'select * from networks_zones_records'
   inc network zone record create incus-foo.example.net demo user.foo=bar --project foo
   ! inc network zone record create incus-foo.example.net demo user.foo=bar --project foo || false
   inc network zone record entry add incus-foo.example.net demo A 1.1.1.1 --ttl 900 --project foo

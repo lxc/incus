@@ -14,8 +14,8 @@ test_storage_volume_recover() {
   inc storage volume import "${poolName}" ./foo.iso vol2 --type=iso
 
   # Delete database entry of the created custom block volume.
-  incus sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol1'"
-  incus sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol2'"
+  incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol1'"
+  incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol2'"
 
   # Ensure the custom block volume is no longer listed.
   ! inc storage volume show "${poolName}" vol1 || false
@@ -29,8 +29,8 @@ test_storage_volume_recover() {
     inc storage volume create "${poolName}" vol4 zfs.block_mode=true size=200MiB
 
     # Delete database entries of the created custom volumes.
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol3'"
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol4'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol3'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol4'"
 
     # Ensure the custom volumes are no longer listed.
     ! inc storage volume show "${poolName}" vol3 || false
@@ -38,7 +38,7 @@ test_storage_volume_recover() {
   fi
 
   # Recover custom block volume.
-  cat <<EOF | incus recover
+  cat <<EOF | incusd recover
 no
 yes
 yes
@@ -89,7 +89,7 @@ test_container_recover() {
     inc project switch test
 
     # Basic no-op check.
-    cat <<EOF | incus recover | grep "No unknown volumes found. Nothing to do."
+    cat <<EOF | incusd recover | grep "No unknown volumes found. Nothing to do."
 no
 yes
 EOF
@@ -111,8 +111,8 @@ EOF
     inc storage volume show "${poolName}" vol1_test/snap0
 
     # Remove container DB records and symlink.
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
     rm "${INCUS_DIR}/containers/test_c1"
 
     # Remove mount directories if block backed storage.
@@ -123,7 +123,7 @@ EOF
     fi
 
     # Remove custom volume DB record.
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol1_test'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol1_test'"
 
     # Remove mount directories if block backed storage.
     if [ "$poolDriver" != "dir" ] && [ "$poolDriver" != "btrfs" ] && [ "$poolDriver" != "cephfs" ]; then
@@ -158,7 +158,7 @@ EOF
 
     respawn_incus "${INCUS_DIR}" true
 
-    cat <<EOF | incus recover
+    cat <<EOF | incusd recover
 no
 yes
 yes
@@ -195,14 +195,14 @@ EOF
     inc exec c1 --project test -- hostname
 
     # Recover container that is running.
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
 
     # Restart Incus so internal mount counters are cleared for deleted (but running) container.
     shutdown_incus "${INCUS_DIR}"
     respawn_incus "${INCUS_DIR}" true
 
-    cat <<EOF | incus recover
+    cat <<EOF | incusd recover
 no
 yes
 yes
@@ -215,7 +215,7 @@ EOF
     inc exec c1 --project test -- hostname
 
     # Test recover after pool DB config deletion too.
-    poolConfigBefore=$(incus sql global "SELECT key,value FROM storage_pools_config JOIN storage_pools ON storage_pools.id = storage_pools_config.storage_pool_id WHERE storage_pools.name = '${poolName}' ORDER BY key")
+    poolConfigBefore=$(incusd sql global "SELECT key,value FROM storage_pools_config JOIN storage_pools ON storage_pools.id = storage_pools_config.storage_pool_id WHERE storage_pools.name = '${poolName}' ORDER BY key")
     poolSource=$(inc storage get "${poolName}" source)
     poolExtraConfig=""
 
@@ -236,11 +236,11 @@ ceph.user.name=$(inc storage get "${poolName}" ceph.user.name)
       ;;
     esac
 
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
-    incus sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_pools WHERE name='${poolName}'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
+    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_pools WHERE name='${poolName}'"
 
-    cat <<EOF |incus recover
+    cat <<EOF |incusd recover
 yes
 ${poolName}
 ${poolDriver}
@@ -253,7 +253,7 @@ EOF
 
     # Check recovered pool config (from instance backup file) matches what originally was there.
     inc storage show "${poolName}"
-    poolConfigAfter=$(incus sql global "SELECT key,value FROM storage_pools_config JOIN storage_pools ON storage_pools.id = storage_pools_config.storage_pool_id WHERE storage_pools.name = '${poolName}' ORDER BY key")
+    poolConfigAfter=$(incusd sql global "SELECT key,value FROM storage_pools_config JOIN storage_pools ON storage_pools.id = storage_pools_config.storage_pool_id WHERE storage_pools.name = '${poolName}' ORDER BY key")
     echo "Before:"
     echo "${poolConfigBefore}"
 
@@ -309,10 +309,10 @@ test_bucket_recover() {
     key2_secretKey=$(echo "$key2" | awk '/^Secret key/ { print $3 }')
 
     # Remove bucket from global DB
-    incus sql global "delete from storage_buckets where name = '${bucketName}'"
+    incusd sql global "delete from storage_buckets where name = '${bucketName}'"
 
     # Recover bucket
-    cat <<EOF | incus recover
+    cat <<EOF | incusd recover
 no
 yes
 yes
