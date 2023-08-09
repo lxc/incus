@@ -1471,7 +1471,7 @@ func networkStartup(s *state.State) error {
 				NetworkName: networkName,
 			}
 
-			// Asssume all networks are networkPriorityStandalone initially.
+			// Assume all networks are networkPriorityStandalone initially.
 			initNetworks[networkPriorityStandalone][pn] = struct{}{}
 		}
 	}
