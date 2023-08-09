@@ -348,7 +348,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	_ "github.com/lxc/incus/incus/include" // Used by cgo
+	_ "github.com/lxc/incus/incusd/include" // Used by cgo
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 )

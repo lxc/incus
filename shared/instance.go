@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/validate"
 )
