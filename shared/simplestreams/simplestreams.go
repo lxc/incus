@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/osarch"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/osarch"
 )
 
 var urlDefaultOS = map[string]string{

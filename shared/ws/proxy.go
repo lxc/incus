@@ -5,7 +5,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // Proxy mirrors the traffic between two websockets.

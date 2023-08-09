@@ -16,7 +16,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Allow the caller to set expectations.

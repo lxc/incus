@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/shared/units"
-	"github.com/cyphar/incus/shared/validate"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/validate"
 )
 
 // InstanceAction indicates the type of action being performed.
