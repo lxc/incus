@@ -5,7 +5,7 @@ Check the following guidelines before contributing to the project.
 ## Pull requests
 
 Changes to this project should be proposed as pull requests on GitHub
-at: [`https://github.com/canonical/lxd`](https://github.com/canonical/lxd)
+at: [`https://github.com/lxc/incus`](https://github.com/lxc/incus)
 
 Proposed changes will then go through code review there and once approved,
 be merged in the main branch.
@@ -20,10 +20,10 @@ Separate commits should be used for:
 - Go client package (`client: Add XYZ` for changes to `client/`)
 - CLI (`lxc/<command>: Change XYZ` for changes to `lxc/`)
 - Scripts (`scripts: Update bash completion for XYZ` for changes to `scripts/`)
-- LXD daemon (`lxd/<package>: Add support for XYZ` for changes to `lxd/`)
+- Incus daemon (`incus/<package>: Add support for XYZ` for changes to `incus/`)
 - Tests (`tests: Add test for XYZ` for changes to `tests/`)
 
-The same kind of pattern extends to the other tools in the LXD code tree
+The same kind of pattern extends to the other tools in the Incus code tree
 and depending on complexity, things may be split into even smaller chunks.
 
 When updating strings in the CLI tool (`lxc/`), you may need a commit to update the templates:
@@ -108,10 +108,10 @@ even when part of a larger set. You may find `git commit -s` useful.
 
 ## Code of Conduct
 
-When contributing, you must adhere to the Code of Conduct, which is available at: [`https://github.com/canonical/lxd/blob/main/CODE_OF_CONDUCT.md`](https://github.com/canonical/lxd/blob/main/CODE_OF_CONDUCT.md)
+When contributing, you must adhere to the Code of Conduct, which is available at: [`https://github.com/lxc/incus/blob/main/CODE_OF_CONDUCT.md`](https://github.com/lxc/incus/blob/main/CODE_OF_CONDUCT.md)
 
 <!-- Include end contributing -->
 
 ## More information
 
-For more information, see [Contributing](https://documentation.ubuntu.com/lxd/en/latest/contributing/) in the documentation.
+For more information, see [Contributing](https://linuxcontainers.org/incus/doc/main/contributing/) in the documentation.
