@@ -53,7 +53,7 @@ incus-migrate:
 .PHONY: incus-doc
 incus-doc:
 	@go version > /dev/null 2>&1 || { echo "go is not installed for incus-doc installation."; exit 1; }
-	cd incus/config/generate && CGO_ENABLED=0 go build -o $(GOPATH)/bin/incus-doc
+	cd incusd/config/generate && CGO_ENABLED=0 go build -o $(GOPATH)/bin/incus-doc
 	@echo "Incus documentation generator built successfully"
 
 .PHONY: deps
@@ -101,14 +101,14 @@ endif
 
 .PHONY: update-protobuf
 update-protobuf:
-	protoc --go_out=. ./incus/migration/migrate.proto
+	protoc --go_out=. ./incusd/migration/migrate.proto
 
 .PHONY: update-schema
 update-schema:
-	cd incus/db/generate && go build -o $(GOPATH)/bin/incus-generate -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
+	cd incusd/db/generate && go build -o $(GOPATH)/bin/incus-generate -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
 	go generate ./...
-	gofmt -s -w ./incus/db/
-	goimports -w ./incus/db/
+	gofmt -s -w ./incusd/db/
+	goimports -w ./incusd/db/
 	@echo "Code generation completed"
 
 .PHONY: update-api
@@ -116,7 +116,7 @@ update-api:
 ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; go install -v -x github.com/go-swagger/go-swagger/cmd/swagger@latest)
 endif
-	swagger generate spec -o doc/rest-api.yaml -w ./incus -m
+	swagger generate spec -o doc/rest-api.yaml -w ./incusd -m
 
 .PHONY: doc-setup
 doc-setup:
@@ -131,7 +131,7 @@ doc: incus-doc doc-setup doc-incremental
 .PHONY: doc-incremental
 doc-incremental:
 	@echo "Build the documentation"
-	$(GOPATH)/bin/incus-doc ./incus -y ./doc/config_options.yaml -t ./doc/config_options.txt
+	$(GOPATH)/bin/incus-doc ./incusd -y ./doc/config_options.yaml -t ./doc/config_options.txt
 	. $(SPHINXENV) ; sphinx-build -c doc/ -b dirhtml doc/ doc/html/ -w doc/.sphinx/warnings.txt
 
 .PHONY: doc-serve
@@ -245,7 +245,7 @@ update-pot:
 ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; go install -v -x github.com/snapcore/snapd/i18n/xgettext-go@2.57.1)
 endif
-	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=incus@example.net --keyword=i18n.G --keyword-plural=i18n.NG cmd/inc/*.go internal/cliconfig/*.go
+	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=lxc-users@lists.linuxcontainers.org --keyword=i18n.G --keyword-plural=i18n.NG cmd/inc/*.go internal/cliconfig/*.go
 
 .PHONY: build-mo
 build-mo: $(MOFILES)
@@ -273,5 +273,5 @@ endif
 	run-parts --exit-on-error --regex '.sh' test/lint
 
 .PHONY: tags
-tags: *.go incus/*.go shared/*.go cmd/inc/*.go
+tags: *.go incusd/*.go shared/*.go cmd/inc/*.go
 	find . -type f -name '*.go' | xargs gotags > tags
