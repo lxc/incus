@@ -15,13 +15,13 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/sftp"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/cancel"
-	"github.com/cyphar/incus/shared/ioprogress"
-	"github.com/cyphar/incus/shared/tcp"
-	"github.com/cyphar/incus/shared/units"
-	"github.com/cyphar/incus/shared/ws"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/cancel"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/tcp"
+	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/ws"
 )
 
 // Instance handling functions.
