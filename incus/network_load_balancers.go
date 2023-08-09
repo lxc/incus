@@ -8,15 +8,15 @@ import (
 
 	"github.com/gorilla/mux"
 
-	clusterRequest "github.com/cyphar/incus/incus/cluster/request"
-	"github.com/cyphar/incus/incus/lifecycle"
-	"github.com/cyphar/incus/incus/network"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/request"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/version"
+	clusterRequest "github.com/lxc/incus/incus/cluster/request"
+	"github.com/lxc/incus/incus/lifecycle"
+	"github.com/lxc/incus/incus/network"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/request"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/version"
 )
 
 var networkLoadBalancersCmd = APIEndpoint{

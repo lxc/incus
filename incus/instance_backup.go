@@ -11,18 +11,18 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/db/operationtype"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/lifecycle"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/db/operationtype"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/lifecycle"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/version"
 )
 
 // swagger:operation GET /1.0/instances/{name}/backups instances instance_backups_get

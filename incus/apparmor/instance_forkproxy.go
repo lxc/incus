@@ -7,11 +7,11 @@ import (
 	"strings"
 	"text/template"
 
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/sys"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/sys"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
 )
 
 // Internal copy of the device interface.

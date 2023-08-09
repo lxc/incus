@@ -10,11 +10,11 @@ import (
 
 	"github.com/canonical/go-dqlite/client"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // NotifyUpgradeCompleted sends a notification to all other nodes in the

@@ -1,8 +1,8 @@
 package drivers
 
 import (
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
 )
 
 // PrepareEqualTest modifies any unexported variables required for reflect.DeepEqual to complete safely.

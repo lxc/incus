@@ -13,16 +13,16 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/lifecycle"
-	"github.com/cyphar/incus/incus/request"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/state"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/lifecycle"
+	"github.com/lxc/incus/incus/request"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/state"
+	storagePools "github.com/lxc/incus/incus/storage"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // swagger:operation GET /1.0/instances/{name}/metadata instances instance_metadata_get

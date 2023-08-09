@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 // tlsHTTPClient creates an HTTP client with a specified Transport Layer Security (TLS) configuration.

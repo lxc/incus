@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 // LoadModule loads the kernel module with the given name, by invoking

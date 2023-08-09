@@ -11,8 +11,8 @@ import (
 	"github.com/canonical/go-dqlite/driver"
 	"github.com/mattn/go-sqlite3"
 
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 const maxRetries = 250

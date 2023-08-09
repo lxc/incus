@@ -14,15 +14,15 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus/cluster"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/node"
-	"github.com/cyphar/incus/incus/sys"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/termios"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incus/cluster"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/node"
+	"github.com/lxc/incus/incus/sys"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/termios"
 )
 
 type cmdCluster struct {

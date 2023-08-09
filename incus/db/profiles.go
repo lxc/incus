@@ -6,9 +6,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cyphar/incus/incus/db/cluster"
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/db/cluster"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/shared/api"
 )
 
 // GetProfileNames returns the names of all profiles in the given project.

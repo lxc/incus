@@ -9,10 +9,10 @@ import (
 
 	tomb "gopkg.in/tomb.v2"
 
-	"github.com/cyphar/incus/incus/endpoints/listeners"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/endpoints/listeners"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // Config holds various configuration values that affect LXD endpoints

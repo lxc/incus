@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/fsmonitor/drivers"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/storage/filesystem"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/validate"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/fsmonitor/drivers"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/storage/filesystem"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/validate"
 )
 
 // unixIsOurDeviceType checks that device file type matches what we are expecting in the config.

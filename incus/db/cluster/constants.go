@@ -1,7 +1,7 @@
 package cluster
 
 import (
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/shared/version"
 )
 
 // Numeric type codes identifying different kind of entities.

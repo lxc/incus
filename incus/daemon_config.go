@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 
-	clusterConfig "github.com/cyphar/incus/incus/cluster/config"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/node"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
+	clusterConfig "github.com/lxc/incus/incus/cluster/config"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/node"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
 )
 
 func daemonConfigRender(state *state.State) (map[string]any, error) {

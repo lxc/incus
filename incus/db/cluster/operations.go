@@ -3,7 +3,7 @@
 package cluster
 
 import (
-	"github.com/cyphar/incus/incus/db/operationtype"
+	"github.com/lxc/incus/incus/db/operationtype"
 )
 
 // Code generation directives.

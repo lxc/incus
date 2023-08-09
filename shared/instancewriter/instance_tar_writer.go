@@ -9,9 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/idmap"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/idmap"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // InstanceTarWriter provides a TarWriter implementation that handles ID shifting and hardlink tracking.

@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/incus/sys"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/sys"
+	"github.com/lxc/incus/shared/logger"
 )
 
 type cmdDaemon struct {

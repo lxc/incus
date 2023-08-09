@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/storage/filesystem"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/subprocess"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/storage/filesystem"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/version"
 )
 
 const staticAllocationDeviceSeparator = "."

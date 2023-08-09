@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/incus/db/query"
+	"github.com/lxc/incus/incus/db/query"
 )
 
 func TestSelectConfig(t *testing.T) {

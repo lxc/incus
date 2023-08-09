@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/lifecycle"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/lifecycle"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Instance represents the backup relevant subset of a LXD instance.

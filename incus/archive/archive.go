@@ -12,12 +12,12 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/incus/apparmor"
-	"github.com/cyphar/incus/incus/sys"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/ioprogress"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/subprocess"
+	"github.com/lxc/incus/incus/apparmor"
+	"github.com/lxc/incus/incus/sys"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 type nullWriteCloser struct {

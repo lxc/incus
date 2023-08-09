@@ -8,16 +8,16 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cyphar/incus/incus/backup"
-	"github.com/cyphar/incus/incus/migration"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/incus/storage/filesystem"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/instancewriter"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/backup"
+	"github.com/lxc/incus/incus/migration"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/incus/storage/filesystem"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/instancewriter"
+	"github.com/lxc/incus/shared/logger"
 )
 
 type common struct {

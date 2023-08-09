@@ -9,16 +9,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/db/cluster"
-	deviceconfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/rbac"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/idmap"
-	"github.com/cyphar/incus/shared/units"
-	"github.com/cyphar/incus/shared/validate"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/db/cluster"
+	deviceconfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/rbac"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
+	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/validate"
 )
 
 // AllowInstanceCreation returns an error if any project-specific limit or

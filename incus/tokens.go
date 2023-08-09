@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/cyphar/incus/incus/db/operationtype"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/incus/task"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db/operationtype"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/incus/task"
+	"github.com/lxc/incus/shared/logger"
 )
 
 func autoRemoveExpiredTokens(ctx context.Context, s *state.State) {

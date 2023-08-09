@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/units"
-	"github.com/cyphar/incus/shared/validate"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/validate"
 )
 
 const lvmVgPoolMarker = "incus_pool" // Indicator tag used to mark volume groups as in use.
@@ -691,7 +691,7 @@ func (d *lvm) Mount() (bool, error) {
 }
 
 // Unmount unmounts the storage pool (this does nothing).
-// LVM doesn't currently support unmounting, please see https://github.com/cyphar/incus/issues/9278
+// LVM doesn't currently support unmounting, please see https://github.com/lxc/incus/issues/9278
 func (d *lvm) Unmount() (bool, error) {
 	return false, nil
 }

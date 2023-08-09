@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cyphar/incus/incus/events"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/ws"
+	"github.com/lxc/incus/incus/events"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/ws"
 )
 
 var eventsCmd = APIEndpoint{

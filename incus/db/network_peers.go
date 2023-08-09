@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/shared/api"
 )
 
 // CreateNetworkPeer creates a new Network Peer and returns its ID.

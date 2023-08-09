@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/db/operationtype"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/incus/task"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db/operationtype"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/incus/task"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // This task function expires logs when executed. It's started by the Daemon

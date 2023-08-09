@@ -7,11 +7,11 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/cyphar/incus/incus/migration"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/validate"
+	"github.com/lxc/incus/incus/migration"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/validate"
 )
 
 var cephobjectVersion string

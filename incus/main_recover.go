@@ -8,10 +8,10 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/shared/api"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/validate"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/shared/api"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/validate"
 )
 
 type cmdRecover struct {

@@ -5,11 +5,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	config "github.com/cyphar/incus/internal/cliconfig"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/i18n"
+	config "github.com/lxc/incus/internal/cliconfig"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/i18n"
 )
 
 type cmdMove struct {

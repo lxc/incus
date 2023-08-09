@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/cyphar/incus/incus/storage/memorypipe"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/storage/memorypipe"
+	"github.com/lxc/incus/shared/api"
 )
 
 // InternalListener represents a internal event listener.

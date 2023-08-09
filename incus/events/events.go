@@ -8,10 +8,10 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/cancel"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/cancel"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // EventSource indicates the source of an event.

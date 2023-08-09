@@ -12,16 +12,16 @@ import (
 	"github.com/pkg/sftp"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/cyphar/incus/incus/backup"
-	"github.com/cyphar/incus/incus/cgroup"
-	"github.com/cyphar/incus/incus/db"
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/instance/operationlock"
-	"github.com/cyphar/incus/incus/metrics"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/idmap"
+	"github.com/lxc/incus/incus/backup"
+	"github.com/lxc/incus/incus/cgroup"
+	"github.com/lxc/incus/incus/db"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/instance/operationlock"
+	"github.com/lxc/incus/incus/metrics"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 )
 
 // HookStart hook used when instance has started.

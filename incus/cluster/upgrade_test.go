@@ -16,12 +16,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/incus/cluster"
-	"github.com/cyphar/incus/incus/db"
-	dbCluster "github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/node"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/cluster"
+	"github.com/lxc/incus/incus/db"
+	dbCluster "github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/node"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
 )
 
 // A node can unblock other nodes that were waiting for a cluster upgrade to

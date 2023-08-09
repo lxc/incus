@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 type devLxdResponse struct {

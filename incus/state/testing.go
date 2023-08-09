@@ -6,10 +6,10 @@ import (
 	"context"
 	"testing"
 
-	clusterConfig "github.com/cyphar/incus/incus/cluster/config"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/firewall"
-	"github.com/cyphar/incus/incus/sys"
+	clusterConfig "github.com/lxc/incus/incus/cluster/config"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/firewall"
+	"github.com/lxc/incus/incus/sys"
 )
 
 // NewTestState returns a State object initialized with testable instances of

@@ -4,14 +4,14 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/cyphar/incus/incus/backup"
-	"github.com/cyphar/incus/incus/migration"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/instancewriter"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/backup"
+	"github.com/lxc/incus/incus/migration"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/instancewriter"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // driver is the extended internal interface.

@@ -1,7 +1,7 @@
 package incus
 
 import (
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 // GetStoragePoolBucketNames returns a list of storage bucket names.

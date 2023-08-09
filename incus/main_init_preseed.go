@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/shared/api"
 )
 
 func (c *cmdInit) RunPreseed(cmd *cobra.Command, args []string, d incus.InstanceServer) (*api.InitPreseed, error) {

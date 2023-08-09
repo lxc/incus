@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/cyphar/incus/incus/config"
+	"github.com/lxc/incus/incus/config"
 )
 
 func TestSchema_Defaults(t *testing.T) {

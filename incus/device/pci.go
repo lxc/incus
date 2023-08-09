@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"path/filepath"
 
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	pcidev "github.com/cyphar/incus/incus/device/pci"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/validate"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	pcidev "github.com/lxc/incus/incus/device/pci"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/validate"
 )
 
 type pci struct {

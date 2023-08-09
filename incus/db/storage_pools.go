@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 // StorageRemoteDriverNames returns a list of remote storage driver names.

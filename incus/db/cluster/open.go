@@ -10,13 +10,13 @@ import (
 
 	driver "github.com/canonical/go-dqlite/driver"
 
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/incus/db/schema"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/osarch"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/incus/db/schema"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/version"
 )
 
 // Open the cluster database object.

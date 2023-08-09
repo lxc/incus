@@ -21,7 +21,7 @@ import (
 	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 type devIncusDialer struct {

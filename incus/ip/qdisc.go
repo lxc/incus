@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 // Qdisc represents 'queueing discipline' object.

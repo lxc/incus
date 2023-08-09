@@ -13,10 +13,10 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/validate"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/shared/version"
 )
 
 const nftablesNamespace = "incus"

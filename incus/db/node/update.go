@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/incus/db/schema"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/units"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/incus/db/schema"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/units"
 )
 
 // Schema for the local database.

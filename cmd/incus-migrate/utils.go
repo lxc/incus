@@ -20,13 +20,13 @@ import (
 	"golang.org/x/term"
 	schemaform "gopkg.in/juju/environschema.v1/form"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus/migration"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/version"
-	"github.com/cyphar/incus/shared/ws"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incus/migration"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/shared/ws"
 )
 
 func transferRootfs(ctx context.Context, dst incus.InstanceServer, op incus.Operation, rootfs string, rsyncArgs string, instanceType api.InstanceType) error {

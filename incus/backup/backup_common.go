@@ -3,7 +3,7 @@ package backup
 import (
 	"time"
 
-	"github.com/cyphar/incus/incus/state"
+	"github.com/lxc/incus/incus/state"
 )
 
 // WorkingDirPrefix is used when temporary working directories are needed.

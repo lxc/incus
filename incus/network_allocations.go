@@ -7,15 +7,15 @@ import (
 	"net"
 	"net/http"
 
-	clusterRequest "github.com/cyphar/incus/incus/cluster/request"
-	"github.com/cyphar/incus/incus/db"
-	dbCluster "github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/network"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/version"
+	clusterRequest "github.com/lxc/incus/incus/cluster/request"
+	"github.com/lxc/incus/incus/db"
+	dbCluster "github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/network"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/version"
 )
 
 var networkAllocationsCmd = APIEndpoint{

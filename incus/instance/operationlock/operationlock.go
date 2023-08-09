@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // Action indicates the operation action type.

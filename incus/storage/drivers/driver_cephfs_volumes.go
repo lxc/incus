@@ -7,17 +7,17 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/cyphar/incus/incus/backup"
-	"github.com/cyphar/incus/incus/migration"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/incus/rsync"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/instancewriter"
-	"github.com/cyphar/incus/shared/ioprogress"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/units"
+	"github.com/lxc/incus/incus/backup"
+	"github.com/lxc/incus/incus/migration"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incus/rsync"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/instancewriter"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/units"
 )
 
 // CreateVolume creates a new storage volume on disk.

@@ -13,15 +13,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cyphar/incus/incus/db"
-	dbCluster "github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/device/pci"
-	"github.com/cyphar/incus/incus/ip"
-	"github.com/cyphar/incus/incus/network/openvswitch"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db"
+	dbCluster "github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/device/pci"
+	"github.com/lxc/incus/incus/ip"
+	"github.com/lxc/incus/incus/network/openvswitch"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // sriovReservedDevicesMutex used to coordinate access for checking reserved devices.

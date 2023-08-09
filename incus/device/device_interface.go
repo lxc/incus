@@ -1,10 +1,10 @@
 package device
 
 import (
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared/api"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared/api"
 )
 
 // VolatileSetter is a function that accepts one or more key/value strings to save into the LXD

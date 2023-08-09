@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Config represents the config of a backup that can be stored in a backup.yaml file (or embedded in index.yaml).

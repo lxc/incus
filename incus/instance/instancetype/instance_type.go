@@ -3,7 +3,7 @@ package instancetype
 import (
 	"fmt"
 
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Type indicates the type of instance.

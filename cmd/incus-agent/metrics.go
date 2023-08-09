@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cyphar/incus/incus/metrics"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/storage/filesystem"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/metrics"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/storage/filesystem"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // These mountpoints are excluded as they are irrelevant for metrics.

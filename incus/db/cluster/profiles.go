@@ -6,8 +6,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Code generation directives.

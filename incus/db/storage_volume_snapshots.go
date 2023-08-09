@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 // CreateStorageVolumeSnapshot creates a new storage volume snapshot attached to a given

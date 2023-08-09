@@ -10,7 +10,7 @@ import (
 
 	"github.com/digitalocean/go-qemu/qmp"
 
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/logger"
 )
 
 var monitors = map[string]*Monitor{}
