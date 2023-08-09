@@ -9,13 +9,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cyphar/incus/client"
-	config "github.com/cyphar/incus/internal/cliconfig"
-	"github.com/cyphar/incus/shared"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/i18n"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/client"
+	config "github.com/lxc/incus/internal/cliconfig"
+	"github.com/lxc/incus/shared"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/i18n"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/version"
 )
 
 type cmdGlobal struct {

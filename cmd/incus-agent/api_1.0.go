@@ -10,14 +10,14 @@ import (
 
 	"github.com/mdlayher/vsock"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus/response"
-	lxdvsock "github.com/cyphar/incus/incus/vsock"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	agentAPI "github.com/cyphar/incus/shared/api/agent"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incus/response"
+	lxdvsock "github.com/lxc/incus/incus/vsock"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	agentAPI "github.com/lxc/incus/shared/api/agent"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/version"
 )
 
 var api10Cmd = APIEndpoint{

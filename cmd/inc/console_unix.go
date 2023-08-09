@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/logger"
 )
 
 func (c *cmdConsole) controlSocketHandler(control *websocket.Conn) {

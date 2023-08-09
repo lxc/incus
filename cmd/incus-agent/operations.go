@@ -9,11 +9,11 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 var operationCmd = APIEndpoint{

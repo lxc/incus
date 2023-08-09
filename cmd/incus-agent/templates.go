@@ -8,8 +8,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 func templatesApply(path string) ([]string, error) {

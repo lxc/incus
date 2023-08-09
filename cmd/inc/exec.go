@@ -11,12 +11,12 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/shared/api"
-	cli "github.com/cyphar/incus/shared/cmd"
-	"github.com/cyphar/incus/shared/i18n"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/termios"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/shared/api"
+	cli "github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/shared/i18n"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/termios"
 )
 
 type cmdExec struct {
