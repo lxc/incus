@@ -178,10 +178,8 @@ test_remote_admin() {
 
   # Check that we can add domains with valid certs without confirmation:
   if [ -z "${INCUS_OFFLINE:-}" ]; then
-    inc_remote remote add images1 images.linuxcontainers.org
-    inc_remote remote add images2 images.linuxcontainers.org:443
+    inc_remote remote add images1 https://images.linuxcontainers.org --protocol=simplestreams
     inc_remote remote remove images1
-    inc_remote remote remove images2
   fi
 }
 

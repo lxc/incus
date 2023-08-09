@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/incusd/util"
 )
 
 var mu sync.RWMutex

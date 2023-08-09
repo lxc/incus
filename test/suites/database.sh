@@ -21,7 +21,7 @@ INSERT INTO broken(n) VALUES(1);
 EOF
 
   # Starting Incus fails.
-  ! INCUS_DIR="${INCUS_RESTORE_DIR}" incus --logfile "${INCUS_RESTORE_DIR}/incus.log" "${DEBUG-}" 2>&1 || false
+  ! INCUS_DIR="${INCUS_RESTORE_DIR}" incusd --logfile "${INCUS_RESTORE_DIR}/incus.log" "${DEBUG-}" 2>&1 || false
 
   # Remove the broken patch
   rm -f "${INCUS_RESTORE_DIR}/database/patch.global.sql"

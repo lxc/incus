@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"sync"
 
-	deviceConfig "github.com/lxc/incus/incus/device/config"
-	"github.com/lxc/incus/incus/ip"
-	"github.com/lxc/incus/incus/revert"
-	"github.com/lxc/incus/incus/util"
+	deviceConfig "github.com/lxc/incus/incusd/device/config"
+	"github.com/lxc/incus/incusd/ip"
+	"github.com/lxc/incus/incusd/revert"
+	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 )

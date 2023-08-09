@@ -19,7 +19,7 @@
 #include <sys/un.h>
 
 #include "unixfd.h"
-#include "../../incus/include/memory_utils.h"
+#include "../../incusd/include/memory_utils.h"
 
 int lxc_abstract_unix_send_fds(int fd, int *sendfds, int num_sendfds,
 			       void *data, size_t size)

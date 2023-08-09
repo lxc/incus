@@ -94,11 +94,11 @@ spawn_incus() {
   incusdir=$2
   shift
   shift
-  echo "==> Spawning incus on $addr in $incusdir"
-  INCUS_DIR="$incusdir" incus "${debug}" "${@}" > "$incusdir/incus.log" 2>&1 &
+  echo "==> Spawning incusd on $addr in $incusdir"
+  INCUS_DIR="$incusdir" incusd "${debug}" "${@}" > "$incusdir/incus.log" 2>&1 &
 
-  echo "==> Confirming incus on $addr is responsive"
-  INCUS_DIR="$incusdir" incus waitready
+  echo "==> Confirming incusd on $addr is responsive"
+  INCUS_DIR="$incusdir" incusd waitready
 
   echo "==> Binding to network"
   INCUS_DIR="$incusdir" inc config set core.https_address "$addr"

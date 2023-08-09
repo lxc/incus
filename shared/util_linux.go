@@ -16,7 +16,7 @@ import (
 	"github.com/pkg/xattr"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/shared/units"
 )
 

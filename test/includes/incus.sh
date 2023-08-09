@@ -30,15 +30,15 @@ spawn_incus() {
     "$incus_backend"_setup "${incusdir}"
     echo "$incus_backend" > "${incusdir}/incus.backend"
 
-    echo "==> Spawning incus in ${incusdir}"
+    echo "==> Spawning incusd in ${incusdir}"
     # shellcheck disable=SC2086
 
     if [ "${INCUS_NETNS}" = "" ]; then
-        INCUS_DIR="${incusdir}" incus --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
+        INCUS_DIR="${incusdir}" incusd --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
     else
         # shellcheck disable=SC2153
         pid="$(cat "${TEST_DIR}/ns/${INCUS_NETNS}/PID")"
-        INCUS_DIR="${incusdir}" nsenter -n -m -t "${pid}" incus --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
+        INCUS_DIR="${incusdir}" nsenter -n -m -t "${pid}" incusd --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
     fi
     INCUS_PID=$!
     echo "${INCUS_PID}" > "${incusdir}/incus.pid"
@@ -46,8 +46,8 @@ spawn_incus() {
     echo "${incusdir}" >> "${TEST_DIR}/daemons"
     echo "==> Spawned Incus (PID is ${INCUS_PID})"
 
-    echo "==> Confirming incus is responsive (PID is ${INCUS_PID})"
-    INCUS_DIR="${incusdir}" incus waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
+    echo "==> Confirming incusd is responsive (PID is ${INCUS_PID})"
+    INCUS_DIR="${incusdir}" incusd waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
 
     if [ "${INCUS_NETNS}" = "" ]; then
         echo "==> Binding to network"
@@ -91,21 +91,21 @@ respawn_incus() {
     wait=${1}
     shift
 
-    echo "==> Spawning incus in ${incusdir}"
+    echo "==> Spawning incusd in ${incusdir}"
     # shellcheck disable=SC2086
     if [ "${INCUS_NETNS}" = "" ]; then
-        INCUS_DIR="${incusdir}" incus --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
+        INCUS_DIR="${incusdir}" incusd --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
     else
         pid="$(cat "${TEST_DIR}/ns/${INCUS_NETNS}/PID")"
-        INCUS_DIR="${incusdir}" nsenter -n -m -t "${pid}" incus --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
+        INCUS_DIR="${incusdir}" nsenter -n -m -t "${pid}" incusd --logfile "${incusdir}/incus.log" "${DEBUG-}" "$@" 2>&1 &
     fi
     INCUS_PID=$!
     echo "${INCUS_PID}" > "${incusdir}/incus.pid"
     echo "==> Spawned Incus (PID is ${INCUS_PID})"
 
     if [ "${wait}" = true ]; then
-        echo "==> Confirming incus is responsive (PID is ${INCUS_PID})"
-        INCUS_DIR="${incusdir}" incus waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
+        echo "==> Confirming incusd is responsive (PID is ${INCUS_PID})"
+        INCUS_DIR="${incusdir}" incusd waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
     fi
 
     if [ -n "${DEBUG:-}" ]; then
@@ -187,7 +187,7 @@ kill_incus() {
         done
 
         # Kill the daemon
-        timeout -k 30 30 incus shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
+        timeout -k 30 30 incusd shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
 
         sleep 2
 
@@ -275,7 +275,7 @@ shutdown_incus() {
     echo "==> Shutting down Incus at ${daemon_dir} (${daemon_pid})"
 
     # Shutting down the daemon
-    incus shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
+    incusd shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
 
     # Wait for any cleanup activity that might be happening right
     # after the websocket is closed.

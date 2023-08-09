@@ -15,9 +15,9 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/incus/instance/instancetype"
-	"github.com/lxc/incus/incus/util"
-	"github.com/lxc/incus/incus/vsock"
+	"github.com/lxc/incus/incusd/instance/instancetype"
+	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 )

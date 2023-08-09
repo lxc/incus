@@ -11,8 +11,8 @@ import (
 	"github.com/mdlayher/vsock"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incus/response"
-	lxdvsock "github.com/lxc/incus/incus/vsock"
+	"github.com/lxc/incus/incusd/response"
+	lxdvsock "github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	agentAPI "github.com/lxc/incus/shared/api/agent"

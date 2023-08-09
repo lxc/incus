@@ -306,11 +306,11 @@ test_basic_usage() {
     # shellcheck disable=SC2030
     INCUS_DIR=${INCUS_ACTIVATION_DIR}
     ensure_import_testimage
-    incus activateifneeded --debug 2>&1 | grep -qF "Daemon has core.https_address set, activating..."
+    incusd activateifneeded --debug 2>&1 | grep -qF "Daemon has core.https_address set, activating..."
     inc config unset core.https_address --force-local
-    incus activateifneeded --debug 2>&1 | grep -qF -v "activating..."
+    incusd activateifneeded --debug 2>&1 | grep -qF -v "activating..."
     inc init testimage autostart --force-local
-    incus activateifneeded --debug 2>&1 | grep -qF -v "activating..."
+    incusd activateifneeded --debug 2>&1 | grep -qF -v "activating..."
     inc config set autostart boot.autostart true --force-local
 
     # Restart the daemon, this forces the global database to be dumped to disk.
@@ -318,17 +318,17 @@ test_basic_usage() {
     respawn_incus "${INCUS_DIR}" true
     inc stop --force autostart --force-local
 
-    incus activateifneeded --debug 2>&1 | grep -qF "Daemon has auto-started instances, activating..."
+    incusd activateifneeded --debug 2>&1 | grep -qF "Daemon has auto-started instances, activating..."
 
     inc config unset autostart boot.autostart --force-local
-    incus activateifneeded --debug 2>&1 | grep -qF -v "activating..."
+    incusd activateifneeded --debug 2>&1 | grep -qF -v "activating..."
 
     inc start autostart --force-local
     PID=$(inc info autostart --force-local | awk '/^PID:/ {print $2}')
     shutdown_incus "${INCUS_DIR}"
     [ -d "/proc/${PID}" ] && false
 
-    incus activateifneeded --debug 2>&1 | grep -qF "Daemon has auto-started instances, activating..."
+    incusd activateifneeded --debug 2>&1 | grep -qF "Daemon has auto-started instances, activating..."
 
     # shellcheck disable=SC2031
     respawn_incus "${INCUS_DIR}" true
@@ -339,7 +339,7 @@ test_basic_usage() {
     inc stop --force autostart --force-local
     inc config set autostart snapshots.schedule "* * * * *" --force-local
     shutdown_incus "${INCUS_DIR}"
-    incus activateifneeded --debug 2>&1 | grep -qF "Daemon has scheduled instance snapshots, activating..."
+    incusd activateifneeded --debug 2>&1 | grep -qF "Daemon has scheduled instance snapshots, activating..."
 
     # shellcheck disable=SC2031
     respawn_incus "${INCUS_DIR}" true
@@ -352,7 +352,7 @@ test_basic_usage() {
     inc storage volume create "${storage_pool}" vol --force-local
 
     shutdown_incus "${INCUS_DIR}"
-    incus activateifneeded --debug 2>&1 | grep -qF -v "activating..."
+    incusd activateifneeded --debug 2>&1 | grep -qF -v "activating..."
 
     # shellcheck disable=SC2031
     respawn_incus "${INCUS_DIR}" true
@@ -360,7 +360,7 @@ test_basic_usage() {
     inc storage volume set "${storage_pool}" vol snapshots.schedule="* * * * *" --force-local
 
     shutdown_incus "${INCUS_DIR}"
-    incus activateifneeded --debug 2>&1 | grep -qF "Daemon has scheduled volume snapshots, activating..."
+    incusd activateifneeded --debug 2>&1 | grep -qF "Daemon has scheduled volume snapshots, activating..."
 
     # shellcheck disable=SC2031
     respawn_incus "${INCUS_DIR}" true

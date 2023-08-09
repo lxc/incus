@@ -18,7 +18,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	cli "github.com/lxc/incus/shared/cmd"
