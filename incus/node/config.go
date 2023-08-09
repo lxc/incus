@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cyphar/incus/incus/config"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/validate"
+	"github.com/lxc/incus/incus/config"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/validate"
 )
 
 // Config holds node-local configuration values for a certain LXD instance.

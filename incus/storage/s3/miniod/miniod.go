@@ -18,14 +18,14 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/pborman/uuid"
 
-	"github.com/cyphar/incus/incus/locking"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/state"
-	storageDrivers "github.com/cyphar/incus/incus/storage/drivers"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/cancel"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/locking"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/state"
+	storageDrivers "github.com/lxc/incus/incus/storage/drivers"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/cancel"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // minioHost is the host address that the local MinIO processes will listen on.

@@ -10,14 +10,14 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/cyphar/incus/incus/migration"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/state"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	storageDrivers "github.com/cyphar/incus/incus/storage/drivers"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/migration"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/state"
+	storagePools "github.com/lxc/incus/incus/storage"
+	storageDrivers "github.com/lxc/incus/incus/storage/drivers"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 func newStorageMigrationSource(volumeOnly bool, pushTarget *api.StorageVolumePostTarget) (*migrationSourceWs, error) {

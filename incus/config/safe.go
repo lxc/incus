@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // SafeLoad is a wrapper around Load() that does not error when invalid keys

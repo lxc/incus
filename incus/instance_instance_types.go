@@ -11,14 +11,14 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/cyphar/incus/incus/db/operationtype"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/incus/task"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/db/operationtype"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/incus/task"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/version"
 )
 
 type instanceType struct {

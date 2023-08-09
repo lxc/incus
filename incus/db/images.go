@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/osarch"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/osarch"
 )
 
 // ImageSourceProtocol maps image source protocol codes to human-readable names.

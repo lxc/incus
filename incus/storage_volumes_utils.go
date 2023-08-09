@@ -3,14 +3,14 @@ package main
 import (
 	"strings"
 
-	"github.com/cyphar/incus/incus/backup"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/state"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/backup"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/state"
+	storagePools "github.com/lxc/incus/incus/storage"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/version"
 )
 
 var supportedVolumeTypes = []int{db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM, db.StoragePoolVolumeTypeCustom, db.StoragePoolVolumeTypeImage}

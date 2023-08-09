@@ -1,7 +1,7 @@
 package dns
 
 import (
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Zone represents a DNS zone configuration and its content.

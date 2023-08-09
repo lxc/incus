@@ -9,11 +9,11 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/state"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/state"
+	storagePools "github.com/lxc/incus/incus/storage"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // getLoadAvgs returns the host's load averages from /proc/loadavg.

@@ -9,16 +9,16 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/cyphar/incus/incus/db/operationtype"
-	"github.com/cyphar/incus/incus/events"
-	"github.com/cyphar/incus/incus/request"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/cancel"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/db/operationtype"
+	"github.com/lxc/incus/incus/events"
+	"github.com/lxc/incus/incus/request"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/cancel"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/version"
 )
 
 var debug bool

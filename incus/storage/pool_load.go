@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/incus/storage/drivers"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/incus/storage/drivers"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // PoolIDTemporary is used to indicate a temporary pool instance that is not in the database.

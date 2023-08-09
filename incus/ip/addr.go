@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 // Addr represents arguments for address protocol manipulation.

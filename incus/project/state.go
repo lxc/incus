@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/shared/api"
 )
 
 // GetCurrentAllocations returns the current resource utilization for a given project.

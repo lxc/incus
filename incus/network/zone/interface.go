@@ -3,9 +3,9 @@ package zone
 import (
 	"strings"
 
-	"github.com/cyphar/incus/incus/cluster/request"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/cluster/request"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared/api"
 )
 
 // NetworkZone represents a Network zone.

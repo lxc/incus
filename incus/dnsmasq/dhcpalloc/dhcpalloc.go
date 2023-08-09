@@ -12,9 +12,9 @@ import (
 
 	"github.com/mdlayher/netx/eui64"
 
-	"github.com/cyphar/incus/incus/dnsmasq"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/dnsmasq"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // ErrDHCPNotSupported indicates network doesn't support DHCP for this IP protocol.

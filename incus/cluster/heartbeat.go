@@ -11,16 +11,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/incus/db/warningtype"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/task"
-	"github.com/cyphar/incus/incus/warnings"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/incus/db/warningtype"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/task"
+	"github.com/lxc/incus/incus/warnings"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 type heartbeatMode int

@@ -1,8 +1,8 @@
 package lifecycle
 
 import (
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/version"
 )
 
 // Internal copy of the network zone interface.

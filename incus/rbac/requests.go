@@ -3,8 +3,8 @@ package rbac
 import (
 	"net/http"
 
-	"github.com/cyphar/incus/incus/request"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/request"
+	"github.com/lxc/incus/shared"
 )
 
 // UserIsAdmin checks whether the requestor is a global admin.

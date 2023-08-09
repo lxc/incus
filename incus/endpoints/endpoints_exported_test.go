@@ -1,8 +1,8 @@
 package endpoints
 
 import (
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
 )
 
 // New creates a new Endpoints instance without bringing it up.

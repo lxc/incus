@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/node"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/node"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // Load information about the dqlite node associated with this LXD member

@@ -12,7 +12,7 @@ import (
 	"github.com/digitalocean/go-smbios/smbios"
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 )
 
 var sysDevicesCPU = "/sys/devices/system/cpu"

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/logger"
 )
 
 type common struct {

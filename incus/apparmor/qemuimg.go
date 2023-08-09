@@ -10,9 +10,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/cyphar/incus/incus/sys"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/subprocess"
+	"github.com/lxc/incus/incus/sys"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 var qemuImgProfileTpl = template.Must(template.New("qemuImgProfile").Parse(`#include <tunables/global>

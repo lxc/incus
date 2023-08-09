@@ -6,7 +6,7 @@ import (
 
 	"go.starlark.net/starlark"
 
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 // nameInstancePlacement is the name used in Starlark for the instance placement scriptlet.

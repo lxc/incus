@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/incus/db/node"
+	"github.com/lxc/incus/incus/db/node"
 )
 
 func TestOpen(t *testing.T) {

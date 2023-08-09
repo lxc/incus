@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared/api"
 )
 
 var drivers = map[string]func() Network{

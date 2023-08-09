@@ -6,9 +6,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // Cmd represents a running command for an Qemu VM.

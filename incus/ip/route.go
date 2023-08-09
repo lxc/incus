@@ -3,7 +3,7 @@ package ip
 import (
 	"strings"
 
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/shared"
 )
 
 // Route represents arguments for route manipulation.

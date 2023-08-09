@@ -6,10 +6,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/incus/resources"
-	"github.com/cyphar/incus/incus/response"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/resources"
+	"github.com/lxc/incus/incus/response"
+	storagePools "github.com/lxc/incus/incus/storage"
+	"github.com/lxc/incus/shared/api"
 )
 
 var api10ResourcesCmd = APIEndpoint{

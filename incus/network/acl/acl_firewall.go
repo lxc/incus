@@ -3,11 +3,11 @@ package acl
 import (
 	"fmt"
 
-	firewallDrivers "github.com/cyphar/incus/incus/firewall/drivers"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	firewallDrivers "github.com/lxc/incus/incus/firewall/drivers"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // FirewallApplyACLRules applies ACL rules to network firewall.

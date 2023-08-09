@@ -1,9 +1,9 @@
 package acl
 
 import (
-	"github.com/cyphar/incus/incus/cluster/request"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/cluster/request"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared/api"
 )
 
 // NetworkACL represents a Network ACL.

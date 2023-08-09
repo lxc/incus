@@ -579,8 +579,8 @@ static bool kernel_supports_idmapped_mounts(void)
 import "C"
 
 import (
-	_ "github.com/cyphar/incus/incus/include" // Used by cgo
-	"github.com/cyphar/incus/shared/logger"
+	_ "github.com/lxc/incus/incus/include" // Used by cgo
+	"github.com/lxc/incus/shared/logger"
 )
 
 func canUseNetnsGetifaddrs() bool {

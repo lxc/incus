@@ -11,14 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cyphar/incus/client"
-	"github.com/cyphar/incus/incus/cluster"
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/node"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incus/cluster"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/node"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 // The returned notifier connects to all nodes.

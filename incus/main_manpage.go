@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	cli "github.com/cyphar/incus/shared/cmd"
+	cli "github.com/lxc/incus/shared/cmd"
 )
 
 type cmdManpage struct {

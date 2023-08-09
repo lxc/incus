@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net"
 
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/network"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared/logger"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/network"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // deviceCommon represents the common struct for all devices.

@@ -12,11 +12,11 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/ioprogress"
-	"github.com/cyphar/incus/shared/linux"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/linux"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/version"
 )
 
 // Debug controls additional debugging in rsync output.

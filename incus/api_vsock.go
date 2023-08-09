@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/incus/util"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/incus/util"
 )
 
 func authenticateAgentCert(s *state.State, r *http.Request) (bool, instance.Instance, error) {

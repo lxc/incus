@@ -3,7 +3,7 @@ package drivers
 import (
 	"context"
 
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/shared/logger"
 )
 
 var drivers = map[string]func() driver{

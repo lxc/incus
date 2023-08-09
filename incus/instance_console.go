@@ -18,17 +18,17 @@ import (
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
 
-	"github.com/cyphar/incus/incus/cluster"
-	"github.com/cyphar/incus/incus/db/operationtype"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
-	"github.com/cyphar/incus/shared/version"
-	"github.com/cyphar/incus/shared/ws"
+	"github.com/lxc/incus/incus/cluster"
+	"github.com/lxc/incus/incus/db/operationtype"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/shared/ws"
 )
 
 type consoleWs struct {

@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cyphar/incus/incus/ip"
-	"github.com/cyphar/incus/incus/network/openvswitch"
-	"github.com/cyphar/incus/shared"
+	"github.com/lxc/incus/incus/ip"
+	"github.com/lxc/incus/incus/network/openvswitch"
+	"github.com/lxc/incus/shared"
 )
 
 // BridgeVLANFilteringStatus returns whether VLAN filtering is enabled on a bridge interface.

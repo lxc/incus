@@ -10,16 +10,16 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/cyphar/incus/incus/db"
-	"github.com/cyphar/incus/incus/lifecycle"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/request"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/incus/revert"
-	storagePools "github.com/cyphar/incus/incus/storage"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/version"
+	"github.com/lxc/incus/incus/db"
+	"github.com/lxc/incus/incus/lifecycle"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/request"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/incus/revert"
+	storagePools "github.com/lxc/incus/incus/storage"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/version"
 )
 
 var storagePoolBucketsCmd = APIEndpoint{

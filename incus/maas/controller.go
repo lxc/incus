@@ -7,8 +7,8 @@ import (
 
 	"github.com/juju/gomaasapi"
 
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/shared/api"
 )
 
 // Instance is a MAAS specific instance interface.

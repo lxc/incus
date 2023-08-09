@@ -5,12 +5,12 @@ import (
 	"io"
 	"net/http"
 
-	backupConfig "github.com/cyphar/incus/incus/backup/config"
-	"github.com/cyphar/incus/incus/operations"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/ioprogress"
-	"github.com/cyphar/incus/shared/units"
+	backupConfig "github.com/lxc/incus/incus/backup/config"
+	"github.com/lxc/incus/incus/operations"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/units"
 )
 
 // Info represents the index frame sent if supported.

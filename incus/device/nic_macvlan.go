@@ -7,16 +7,16 @@ import (
 	"os"
 	"strconv"
 
-	deviceConfig "github.com/cyphar/incus/incus/device/config"
-	"github.com/cyphar/incus/incus/instance"
-	"github.com/cyphar/incus/incus/instance/instancetype"
-	"github.com/cyphar/incus/incus/ip"
-	"github.com/cyphar/incus/incus/network"
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/incus/util"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	deviceConfig "github.com/lxc/incus/incus/device/config"
+	"github.com/lxc/incus/incus/instance"
+	"github.com/lxc/incus/incus/instance/instancetype"
+	"github.com/lxc/incus/incus/ip"
+	"github.com/lxc/incus/incus/network"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incus/util"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 type nicMACVLAN struct {

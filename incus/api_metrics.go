@@ -11,16 +11,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cyphar/incus/incus/db"
-	dbCluster "github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/instance"
-	instanceDrivers "github.com/cyphar/incus/incus/instance/drivers"
-	"github.com/cyphar/incus/incus/locking"
-	"github.com/cyphar/incus/incus/metrics"
-	"github.com/cyphar/incus/incus/response"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db"
+	dbCluster "github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/instance"
+	instanceDrivers "github.com/lxc/incus/incus/instance/drivers"
+	"github.com/lxc/incus/incus/locking"
+	"github.com/lxc/incus/incus/metrics"
+	"github.com/lxc/incus/incus/response"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 type metricsCacheEntry struct {

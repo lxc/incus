@@ -17,11 +17,11 @@ import (
 
 	"github.com/canonical/go-dqlite/driver"
 
-	"github.com/cyphar/incus/incus/db/cluster"
-	"github.com/cyphar/incus/incus/db/node"
-	"github.com/cyphar/incus/incus/db/query"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/db/cluster"
+	"github.com/lxc/incus/incus/db/node"
+	"github.com/lxc/incus/incus/db/query"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // DB represents access to LXD's global and local databases.

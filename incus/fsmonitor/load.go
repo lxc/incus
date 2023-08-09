@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/cyphar/incus/incus/fsmonitor/drivers"
-	"github.com/cyphar/incus/incus/storage/filesystem"
-	"github.com/cyphar/incus/shared/logger"
+	"github.com/lxc/incus/incus/fsmonitor/drivers"
+	"github.com/lxc/incus/incus/storage/filesystem"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // New creates a new FSMonitor instance.

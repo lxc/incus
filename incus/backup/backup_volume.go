@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cyphar/incus/incus/project"
-	"github.com/cyphar/incus/incus/revert"
-	"github.com/cyphar/incus/incus/state"
-	"github.com/cyphar/incus/shared"
-	"github.com/cyphar/incus/shared/api"
+	"github.com/lxc/incus/incus/project"
+	"github.com/lxc/incus/incus/revert"
+	"github.com/lxc/incus/incus/state"
+	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 )
 
 // VolumeBackup represents a custom volume backup.
