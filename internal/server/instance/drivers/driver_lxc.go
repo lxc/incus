@@ -7855,7 +7855,7 @@ func (d *lxc) setNetworkPriority() error {
 	}
 
 	// Check that the container is running
-	if !d.IsRunning() {
+	if d.InitPID() <= 0 {
 		return fmt.Errorf("Can't set network priority on stopped container")
 	}
 
