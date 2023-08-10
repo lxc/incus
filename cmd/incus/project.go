@@ -124,12 +124,12 @@ func (c *cmdProjectCreate) Run(cmd *cobra.Command, args []string) error {
 
 	project.Config = map[string]string{}
 	for _, entry := range c.flagConfig {
-		if !strings.Contains(entry, "=") {
-			return fmt.Errorf(i18n.G("Bad key=value pair: %s"), entry)
+		key, value, found := strings.Cut(entry, "=")
+		if !found {
+			return fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
 		}
 
-		fields := strings.SplitN(entry, "=", 2)
-		project.Config[fields[0]] = fields[1]
+		project.Config[key] = value
 	}
 
 	err = resource.server.CreateProject(project)
