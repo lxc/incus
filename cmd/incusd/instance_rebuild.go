@@ -21,41 +21,41 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// swagger:operation POST /1.0/instances/{instance_name}/rebuild instances instance_post
-// Rebuild an instance.
+// swagger:operation POST /1.0/instances/{name}/rebuild instances instance_rebuild_post
 //
-// ---
-// consumes:
-//   - application/octet-stream
+//	Rebuild an instance
 //
-// produces:
-//   - application/json
-//
-// parameters:
-//   - in: query
-//     name: project
-//     description: Project name
-//     type: string
-//     example: default
-//   - in: body
-//     name: instance
-//     description: InstanceRebuild request
-//     required: true
-//     schema:
-//     $ref: "#/definitions/InstanceRebuildPost"
-//
-// responses:
-//
-//	"202":
-//	  $ref: "#/responses/Operation"
-//	"400":
-//	  $ref: "#/responses/BadRequest"
-//	"403":
-//	  $ref: "#/responses/Forbidden"
-//	"404":
-//	  $ref: "#/responses/NotFound"
-//	"500":
-//	  $ref: "#/responses/InternalServerError"
+//	Rebuild an instance using an alternate image or as empty.
+//	---
+//	consumes:
+//	  - application/octet-stream
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    example: default
+//	  - in: body
+//	    name: instance
+//	    description: InstanceRebuild request
+//	    required: true
+//	    schema:
+//	      $ref: "#/definitions/InstanceRebuildPost"
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "202":
+//	    $ref: "#/responses/Operation"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
 func instanceRebuildPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
