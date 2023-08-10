@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	dqlite "github.com/canonical/go-dqlite"
-	client "github.com/canonical/go-dqlite/client"
+	dqlite "github.com/cowsql/go-cowsql"
+	client "github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/node"

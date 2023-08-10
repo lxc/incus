@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/canonical/go-dqlite/driver"
+	"github.com/cowsql/go-cowsql/driver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

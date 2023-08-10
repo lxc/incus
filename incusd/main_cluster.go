@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/canonical/go-dqlite/client"
+	"github.com/cowsql/go-cowsql/client"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"

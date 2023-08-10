@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/canonical/go-dqlite/client"
+	"github.com/cowsql/go-cowsql/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

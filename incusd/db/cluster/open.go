@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	driver "github.com/canonical/go-dqlite/driver"
+	driver "github.com/cowsql/go-cowsql/driver"
 
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/incusd/db/schema"
