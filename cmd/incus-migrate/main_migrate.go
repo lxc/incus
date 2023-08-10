@@ -635,8 +635,8 @@ func (c *cmdMigrate) askConfig(config *cmdMigrateData) error {
 	}
 
 	for _, entry := range strings.Split(configs, " ") {
-		fields := strings.SplitN(entry, "=", 2)
-		config.InstanceArgs.Config[fields[0]] = fields[1]
+		key, value, _ := strings.Cut(entry, "=")
+		config.InstanceArgs.Config[key] = value
 	}
 
 	return nil
