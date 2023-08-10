@@ -29,19 +29,19 @@ test_container_devices_infiniband_sriov() {
   startNicCount=$(find /sys/class/net | wc -l)
 
   # Test basic container with SR-IOV IB. Add 2 devices to check reservation system works.
-  inc init testimage "${ctName}"
+  incus init testimage "${ctName}"
 
   # Name the device eth0 rather than ib0 so that check volatile data reset.
-  inc config device add "${ctName}" eth0 infiniband \
+  incus config device add "${ctName}" eth0 infiniband \
     nictype=sriov \
     parent="${parent}" \
     mtu=1500
-  inc config device add "${ctName}" ib1 infiniband \
+  incus config device add "${ctName}" ib1 infiniband \
     nictype=sriov \
     parent="${parent}" \
     mtu=1500 \
     hwaddr="${ctMAC}"
-  inc start "${ctName}"
+  incus start "${ctName}"
 
   # Check host devices are created.
   ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
@@ -51,14 +51,14 @@ test_container_devices_infiniband_sriov() {
   fi
 
   # Check devices are mounted inside container.
-  ibMountCount=$(inc exec "${ctName}" -- mount | grep -c infiniband)
+  ibMountCount=$(incus exec "${ctName}" -- mount | grep -c infiniband)
   if [ "$ibMountCount" != "6" ]; then
     echo "unexpected IB mount count after creation"
     false
   fi
 
   # Check custom MAC is applied in container on boot.
-  if ! inc exec "${ctName}" -- grep -i "${ctMAC}" /sys/class/net/ib1/address ; then
+  if ! incus exec "${ctName}" -- grep -i "${ctMAC}" /sys/class/net/ib1/address ; then
     echo "custom mac not applied"
     false
   fi
@@ -78,10 +78,10 @@ test_container_devices_infiniband_sriov() {
   fi
 
   # Get host dev name for ib1 before stop to check MAC restore.
-  ib1HostDev=$(inc config get "${ctName}" volatile.ib1.host_name)
-  ib1HostMAC=$(inc config get "${ctName}" volatile.ib1.last_state.hwaddr)
+  ib1HostDev=$(incus config get "${ctName}" volatile.ib1.host_name)
+  ib1HostMAC=$(incus config get "${ctName}" volatile.ib1.last_state.hwaddr)
 
-  inc stop -f "${ctName}"
+  incus stop -f "${ctName}"
 
   # Check host dev MAC restore.
   if ! grep -i "${ib1HostMAC}" /sys/class/net/"${ib1HostDev}"/address ; then
@@ -90,7 +90,7 @@ test_container_devices_infiniband_sriov() {
   fi
 
   # Check volatile cleanup on stop.
-  if inc config show "${ctName}" | grep volatile.eth0 | grep -v volatile.eth0.name ; then
+  if incus config show "${ctName}" | grep volatile.eth0 | grep -v volatile.eth0.name ; then
     echo "unexpected volatile key remains"
     false
   fi
@@ -103,8 +103,8 @@ test_container_devices_infiniband_sriov() {
   fi
 
   # Check privileged cgroup rules and device ownership.
-  inc config set "${ctName}" security.privileged true
-  inc start "${ctName}"
+  incus config set "${ctName}" security.privileged true
+  incus start "${ctName}"
 
   # Check privileged cgroup device rule count.
   cgroupDeviceCount=$(wc -l < /sys/fs/cgroup/devices/lxc.payload/"${ctName}"/devices.list)
@@ -120,14 +120,14 @@ test_container_devices_infiniband_sriov() {
     false
   fi
 
-  inc stop -f "${ctName}"
+  incus stop -f "${ctName}"
 
-  inc config device remove "${ctName}" eth0
-  inc config device remove "${ctName}" ib1
+  incus config device remove "${ctName}" eth0
+  incus config device remove "${ctName}" ib1
 
   # Test hotplugging.
-  inc start "${ctName}"
-  inc config device add "${ctName}" eth0 infiniband \
+  incus start "${ctName}"
+  incus config device add "${ctName}" eth0 infiniband \
     nictype=sriov \
     parent="${parent}" \
     mtu=1500
@@ -140,7 +140,7 @@ test_container_devices_infiniband_sriov() {
   fi
 
   # Test hot unplug.
-  inc config device remove "${ctName}" eth0
+  incus config device remove "${ctName}" eth0
 
   # Check host devices are removed.
   ibDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
@@ -150,12 +150,12 @@ test_container_devices_infiniband_sriov() {
   fi
 
   # Check devices are unmounted inside container.
-  if inc exec "${ctName}" -- mount | grep -c infiniband ; then
+  if incus exec "${ctName}" -- mount | grep -c infiniband ; then
     echo "unexpected IB mounts remain after removal"
     false
   fi
 
-  inc delete -f "${ctName}"
+  incus delete -f "${ctName}"
 
   # Check we haven't left any NICS lying around.
   endNicCount=$(find /sys/class/net | wc -l)

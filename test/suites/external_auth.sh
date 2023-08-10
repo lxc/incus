@@ -6,9 +6,9 @@ test_macaroon_auth() {
 
     ensure_has_localhost_remote "$INCUS_ADDR"
 
-    inc config set candid.api.url "$identity_endpoint"
+    incus config set candid.api.url "$identity_endpoint"
     key=$(curl -s "${identity_endpoint}/discharge/info" | jq .PublicKey)
-    inc config set candid.api.key "${key}"
+    incus config set candid.api.key "${key}"
 
     # invalid credentials make the remote add fail
     ! (
@@ -16,7 +16,7 @@ test_macaroon_auth() {
 wrong-user
 wrong-pass
 EOF
-    ) | inc remote add macaroon-remote "https://$INCUS_ADDR" --auth-type candid --accept-certificate || false
+    ) | incus remote add macaroon-remote "https://$INCUS_ADDR" --auth-type candid --accept-certificate || false
 
     # valid credentials work
     (
@@ -24,13 +24,13 @@ EOF
 user1
 pass1
 EOF
-    ) | inc remote add macaroon-remote "https://$INCUS_ADDR" --auth-type candid --accept-certificate
+    ) | incus remote add macaroon-remote "https://$INCUS_ADDR" --auth-type candid --accept-certificate
 
-    # run a inc command through the new remote
-    inc config show macaroon-remote: | grep -q candid.api.url
+    # run a incus command through the new remote
+    incus config show macaroon-remote: | grep -q candid.api.url
 
     # cleanup
-    inc config unset candid.api.url
-    inc config unset core.https_address
-    inc remote remove macaroon-remote
+    incus config unset candid.api.url
+    incus config unset core.https_address
+    incus remote remove macaroon-remote
 }

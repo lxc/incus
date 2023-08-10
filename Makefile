@@ -1,5 +1,5 @@
 GO ?= go
-DOMAIN=inc
+DOMAIN=incus
 POFILES=$(wildcard po/*.po)
 MOFILES=$(patsubst %.po,%.mo,$(POFILES))
 LINGUAS=$(basename $(POFILES))
@@ -38,7 +38,7 @@ endif
 
 .PHONY: client
 client:
-	$(GO) install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./cmd/inc
+	$(GO) install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./cmd/incus
 	@echo "Incus client built successfully"
 
 .PHONY: incus-agent
@@ -246,7 +246,7 @@ update-pot:
 ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; $(GO) install -v -x github.com/snapcore/snapd/i18n/xgettext-go@2.57.1)
 endif
-	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=lxc-users@lists.linuxcontainers.org --keyword=i18n.G --keyword-plural=i18n.NG cmd/inc/*.go internal/cliconfig/*.go
+	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=lxc-users@lists.linuxcontainers.org --keyword=i18n.G --keyword-plural=i18n.NG cmd/incus/*.go internal/cliconfig/*.go
 
 .PHONY: build-mo
 build-mo: $(MOFILES)
@@ -274,5 +274,5 @@ endif
 	run-parts --exit-on-error --regex '.sh' test/lint
 
 .PHONY: tags
-tags: *.go incusd/*.go shared/*.go cmd/inc/*.go
+tags: *.go incusd/*.go shared/*.go cmd/incus/*.go
 	find . -type f -name '*.go' | xargs gotags > tags

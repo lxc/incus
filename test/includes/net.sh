@@ -37,7 +37,7 @@ my_curl() {
 wait_for_dad() {
   cmd="ip -6 a show dev $1"
   if [ "$#" -eq 2 ]; then
-    cmd="inc exec $1 -- ip -6 a show dev $2"
+    cmd="incus exec $1 -- ip -6 a show dev $2"
   fi
 
   # Ensure the command succeeds (else the while loop will break for the wrong reason).

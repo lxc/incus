@@ -14,8 +14,8 @@ test_filtering() {
 
     ensure_import_testimage
 
-    inc init testimage c1
-    inc init testimage c2
+    incus init testimage c1
+    incus init testimage c2
 
     count=$(curl -G --unix-socket "$INCUS_DIR/unix.socket" "incus/1.0/instances" --data-urlencode "recursion=0" --data-urlencode "filter=name eq c1" | jq ".metadata | length")
     [ "${count}" = "1" ] || false
@@ -32,8 +32,8 @@ test_filtering() {
     count=$(curl -G --unix-socket "$INCUS_DIR/unix.socket" "incus/1.0/images" --data-urlencode "recursion=1" --data-urlencode "filter=properties.os eq Ubuntu" | jq ".metadata | length")
     [ "${count}" = "0" ] || false
 
-    inc delete c1
-    inc delete c2
+    incus delete c1
+    incus delete c2
   )
 
   kill_incus "${INCUS_FILTERING_DIR}"

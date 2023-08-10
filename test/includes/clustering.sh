@@ -229,7 +229,7 @@ spawn_incus_and_join_cluster() {
     # If a custom cluster port was given, we need to first set the REST
     # API address.
     if [ "${port}" != "8443" ]; then
-      inc config set core.https_address "10.1.1.10${index}:8443"
+      incus config set core.https_address "10.1.1.10${index}:8443"
     fi
 
     cat > "${INCUS_DIR}/preseed.yaml" <<EOF

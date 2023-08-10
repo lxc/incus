@@ -16,7 +16,7 @@ test_init_auto() {
     # shellcheck disable=SC2154
     zpool create -m none -O compression=on "incustest-$(basename "${INCUS_DIR}")-pool1-existing-pool" "${loop_device_1}"
     INCUS_DIR=${INCUS_INIT_DIR} incusd init --auto --storage-backend zfs --storage-pool "incustest-$(basename "${INCUS_DIR}")-pool1-existing-pool"
-    INCUS_DIR=${INCUS_INIT_DIR} inc profile show default | grep -q "pool: default"
+    INCUS_DIR=${INCUS_INIT_DIR} incus profile show default | grep -q "pool: default"
 
     kill_incus "${INCUS_INIT_DIR}"
     sed -i "\\|^${loop_device_1}|d" "${TEST_DIR}/loops"

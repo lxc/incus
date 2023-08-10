@@ -2,21 +2,21 @@ test_network_forward() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  firewallDriver=$(inc info | awk -F ":" '/firewall:/{gsub(/ /, "", $0); print $2}')
+  firewallDriver=$(incus info | awk -F ":" '/firewall:/{gsub(/ /, "", $0); print $2}')
   netName=inct$$
 
-  inc network create "${netName}" \
+  incus network create "${netName}" \
         ipv4.address=192.0.2.1/24 \
         ipv6.address=fd42:4242:4242:1010::1/64
 
   # Check creating a forward with an unspecified IPv4 address fails.
-  ! inc network forward create "${netName}" 0.0.0.0 || false
+  ! incus network forward create "${netName}" 0.0.0.0 || false
 
   # Check creating a forward with an unspecified IPv6 address fails.
-  ! inc network forward create "${netName}" :: || false
+  ! incus network forward create "${netName}" :: || false
 
   # Check creating empty forward doesn't create any firewall rules.
-  inc network forward create "${netName}" 198.51.100.1
+  incus network forward create "${netName}" 198.51.100.1
   if [ "$firewallDriver" = "xtables" ]; then
     ! iptables -w -t nat -S | grep -c "generated for Incus network-forward ${netName}" || false
   else
@@ -26,15 +26,15 @@ test_network_forward() {
   fi
 
   # Check forward is exported via BGP prefixes.
-  inc query /internal/testing/bgp | grep "198.51.100.1/32"
+  incus query /internal/testing/bgp | grep "198.51.100.1/32"
 
-  inc network forward delete "${netName}" 198.51.100.1
+  incus network forward delete "${netName}" 198.51.100.1
 
   # Check deleting network forward removes forward BGP prefix.
-  ! inc query /internal/testing/bgp | grep "198.51.100.1/32" || false
+  ! incus query /internal/testing/bgp | grep "198.51.100.1/32" || false
 
   # Check creating forward with default target creates valid firewall rules.
-  inc network forward create "${netName}" 198.51.100.1 target_address=192.0.2.2
+  incus network forward create "${netName}" 198.51.100.1 target_address=192.0.2.2
   if [ "$firewallDriver" = "xtables" ]; then
     iptables -w -t nat -S | grep -- "-A PREROUTING -d 198.51.100.1/32 -m comment --comment \"generated for Incus network-forward ${netName}\" -j DNAT --to-destination 192.0.2.2"
     iptables -w -t nat -S | grep -- "-A OUTPUT -d 198.51.100.1/32 -m comment --comment \"generated for Incus network-forward ${netName}\" -j DNAT --to-destination 192.0.2.2"
@@ -46,7 +46,7 @@ test_network_forward() {
   fi
 
   # Check unsetting default target clears firewall rules.
-  inc network forward unset "${netName}" 198.51.100.1 target_address
+  incus network forward unset "${netName}" 198.51.100.1 target_address
   if [ "$firewallDriver" = "xtables" ]; then
     ! iptables -w -t nat -S | grep -c "generated for Incus network-forward ${netName}" || false
   else
@@ -56,14 +56,14 @@ test_network_forward() {
   fi
 
   # Check can't add a port based rule to the same target IP as the default target.
-  inc network forward set "${netName}" 198.51.100.1 target_address=192.0.2.2
-  ! inc network forward port add "${netName}" 198.51.100.1 tcp 80 192.0.2.2 || false
+  incus network forward set "${netName}" 198.51.100.1 target_address=192.0.2.2
+  ! incus network forward port add "${netName}" 198.51.100.1 tcp 80 192.0.2.2 || false
 
   # Check can't add a port based rule to multiple target ports if only one listener port.
-  ! inc network forward port add "${netName}" 198.51.100.1 tcp 80 192.0.2.3 80-81 || false
+  ! incus network forward port add "${netName}" 198.51.100.1 tcp 80 192.0.2.3 80-81 || false
 
   # Check can add a port with a listener range and no target port (so it uses same range for target ports).
-  inc network forward port add "${netName}" 198.51.100.1 tcp 80-81 192.0.2.3
+  incus network forward port add "${netName}" 198.51.100.1 tcp 80-81 192.0.2.3
   if [ "$firewallDriver" = "xtables" ]; then
     iptables -w -t nat -S | grep -- "-A PREROUTING -d 198.51.100.1/32 -p tcp -m tcp --dport 80:81 -m comment --comment \"generated for Incus network-forward ${netName}\" -j DNAT --to-destination 192.0.2.3"
     iptables -w -t nat -S | grep -- "-A OUTPUT -d 198.51.100.1/32 -p tcp -m tcp --dport 80:81 -m comment --comment \"generated for Incus network-forward ${netName}\" -j DNAT --to-destination 192.0.2.3"
@@ -75,10 +75,10 @@ test_network_forward() {
   fi
 
   # Check can't add port with duplicate listen port.
-  ! inc network forward port add "${netName}" 198.51.100.1 tcp 80 192.0.2.3 90 || false
+  ! incus network forward port add "${netName}" 198.51.100.1 tcp 80 192.0.2.3 90 || false
 
   # Check adding port with single listen and target port.
-  inc network forward port add "${netName}" 198.51.100.1 udp 80 192.0.2.3 90
+  incus network forward port add "${netName}" 198.51.100.1 udp 80 192.0.2.3 90
   if [ "$firewallDriver" = "xtables" ]; then
     iptables -w -t nat -S | grep -- "-A PREROUTING -d 198.51.100.1/32 -p udp -m udp --dport 80 -m comment --comment \"generated for Incus network-forward ${netName}\" -j DNAT --to-destination 192.0.2.3:90"
     iptables -w -t nat -S | grep -- "-A OUTPUT -d 198.51.100.1/32 -p udp -m udp --dport 80 -m comment --comment \"generated for Incus network-forward ${netName}\" -j DNAT --to-destination 192.0.2.3:90"
@@ -90,10 +90,10 @@ test_network_forward() {
   fi
 
   # Check can't add multi-port listener with mismatch target ports.
-  ! inc network forward port add "${netName}" 198.51.100.1 tcp 82,83,84 192.0.2.3 90,91 || false
+  ! incus network forward port add "${netName}" 198.51.100.1 tcp 82,83,84 192.0.2.3 90,91 || false
 
   # Check adding port with listen port range and single target port (using mixture of commas and dashes).
-  inc network forward port add "${netName}" 198.51.100.1 tcp 82-83,84 192.0.2.3 90,91-92
+  incus network forward port add "${netName}" 198.51.100.1 tcp 82-83,84 192.0.2.3 90,91-92
   if [ "$firewallDriver" = "xtables" ]; then
     iptables -w -t nat -S | grep -- "-A PREROUTING -d 198.51.100.1/32 -p tcp -m tcp --dport 84 -m comment --comment \"generated for Incus network-forward ${netName}\" -j DNAT --to-destination 192.0.2.3:92"
     iptables -w -t nat -S | grep -- "-A PREROUTING -d 198.51.100.1/32 -p tcp -m tcp --dport 83 -m comment --comment \"generated for Incus network-forward ${netName}\" -j DNAT --to-destination 192.0.2.3:91"
@@ -121,8 +121,8 @@ test_network_forward() {
     [ "$(nft -nn list chain inet incus "fwdpstrt.${netName}" | wc -l)" -eq 9 ]
   fi
 
-  ! inc network forward port remove "${netName}" 198.51.100.1 tcp || false
-  inc network forward port remove "${netName}" 198.51.100.1 tcp --force
+  ! incus network forward port remove "${netName}" 198.51.100.1 tcp || false
+  incus network forward port remove "${netName}" 198.51.100.1 tcp --force
 
   if [ "$firewallDriver" = "xtables" ]; then
     [ "$(iptables -w -t nat -S | grep -c "generated for Incus network-forward ${netName}")" -eq 6 ]
@@ -133,13 +133,13 @@ test_network_forward() {
   fi
 
   # Check forward is exported via BGP prefixes before network delete.
-  inc query /internal/testing/bgp | grep "198.51.100.1/32"
+  incus query /internal/testing/bgp | grep "198.51.100.1/32"
 
   # Check deleting the network clears the forward firewall rules.
-  inc network delete "${netName}"
+  incus network delete "${netName}"
 
   # Check deleting network removes forward BGP prefix.
-  ! inc query /internal/testing/bgp | grep "198.51.100.1/32" || false
+  ! incus query /internal/testing/bgp | grep "198.51.100.1/32" || false
 
   if [ "$firewallDriver" = "xtables" ]; then
     ! iptables -w -t nat -S | grep -c "generated for Incus network-forward ${netName}" || false

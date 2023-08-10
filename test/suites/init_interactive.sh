@@ -11,8 +11,8 @@ test_init_interactive() {
 
     # XXX We need to remove the eth0 device from the default profile, which
     #     is typically attached by spawn_incus.
-    if inc profile show default | grep -q eth0; then
-      inc profile device remove default eth0
+    if incus profile show default | grep -q eth0; then
+      incus profile device remove default eth0
     fi
 
     cat <<EOF | incusd init
@@ -30,13 +30,13 @@ no
 yes
 EOF
 
-    inc info | grep -q 'images.auto_update_interval: "0"'
-    inc network list | grep -q "inct$$"
-    inc storage list | grep -q "my-storage-pool"
-    inc profile show default | grep -q "pool: my-storage-pool"
-    inc profile show default | grep -q "network: inct$$"
-    printf 'config: {}\ndevices: {}' | inc profile edit default
-    inc network delete inct$$
+    incus info | grep -q 'images.auto_update_interval: "0"'
+    incus network list | grep -q "inct$$"
+    incus storage list | grep -q "my-storage-pool"
+    incus profile show default | grep -q "pool: my-storage-pool"
+    incus profile show default | grep -q "network: inct$$"
+    printf 'config: {}\ndevices: {}' | incus profile edit default
+    incus network delete inct$$
   )
   kill_incus "${INCUS_INIT_DIR}"
 

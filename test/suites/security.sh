@@ -23,7 +23,7 @@ test_security() {
   fi
 
   # CVE-2016-1582
-  inc launch testimage test-priv -c security.privileged=true
+  incus launch testimage test-priv -c security.privileged=true
 
   PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-priv")
   UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-priv")
@@ -37,10 +37,10 @@ test_security() {
     false
   fi
 
-  inc config set test-priv security.privileged false
-  inc restart test-priv --force
-  inc config set test-priv security.privileged true
-  inc restart test-priv --force
+  incus config set test-priv security.privileged false
+  incus restart test-priv --force
+  incus config set test-priv security.privileged true
+  incus restart test-priv --force
 
   PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-priv")
   UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-priv")
@@ -54,11 +54,11 @@ test_security() {
     false
   fi
 
-  inc delete test-priv --force
+  incus delete test-priv --force
 
-  inc launch testimage test-unpriv
-  inc config set test-unpriv security.privileged true
-  inc restart test-unpriv --force
+  incus launch testimage test-unpriv
+  incus config set test-unpriv security.privileged true
+  incus restart test-unpriv --force
 
   PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-unpriv")
   UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-unpriv")
@@ -72,8 +72,8 @@ test_security() {
     false
   fi
 
-  inc config set test-unpriv security.privileged false
-  inc restart test-unpriv --force
+  incus config set test-unpriv security.privileged false
+  incus restart test-unpriv --force
 
   PERM=$(stat -L -c %a "${INCUS_DIR}/containers/test-unpriv")
   UID=$(stat -L -c %u "${INCUS_DIR}/containers/test-unpriv")
@@ -87,7 +87,7 @@ test_security() {
     false
   fi
 
-  inc delete test-unpriv --force
+  incus delete test-unpriv --force
 
   # shellcheck disable=2039,3043
   local INCUS_STORAGE_DIR
@@ -109,33 +109,33 @@ test_security() {
     ensure_import_testimage
 
     # Verify that no privileged container can be created
-    ! inc launch testimage c1 -c security.privileged=true || false
+    ! incus launch testimage c1 -c security.privileged=true || false
 
     # Verify that unprivileged container can be created
-    inc launch testimage c1
+    incus launch testimage c1
 
     # Verify that we can't be tricked into using privileged containers
-    ! inc config set c1 security.privileged true || false
-    ! inc config set c1 raw.idmap "both 0 1000" || false
-    ! inc config set c1 raw.lxc "lxc.idmap=" || false
-    ! inc config set c1 raw.lxc "lxc.include=" || false
+    ! incus config set c1 security.privileged true || false
+    ! incus config set c1 raw.idmap "both 0 1000" || false
+    ! incus config set c1 raw.lxc "lxc.idmap=" || false
+    ! incus config set c1 raw.lxc "lxc.include=" || false
 
     # Verify that we can still unset and set to security.privileged to "false"
-    inc config set c1 security.privileged false
-    inc config unset c1 security.privileged
+    incus config set c1 security.privileged false
+    incus config unset c1 security.privileged
 
     # Verify that a profile can't be changed to trick us into using privileged
     # containers
-    ! inc profile set default security.privileged true || false
-    ! inc profile set default raw.idmap "both 0 1000" || false
-    ! inc profile set default raw.lxc "lxc.idmap=" || false
-    ! inc profile set default raw.lxc "lxc.include=" || false
+    ! incus profile set default security.privileged true || false
+    ! incus profile set default raw.idmap "both 0 1000" || false
+    ! incus profile set default raw.lxc "lxc.idmap=" || false
+    ! incus profile set default raw.lxc "lxc.include=" || false
 
     # Verify that we can still unset and set to security.privileged to "false"
-    inc profile set default security.privileged false
-    inc profile unset default security.privileged
+    incus profile set default security.privileged false
+    incus profile unset default security.privileged
 
-    inc delete -f c1
+    incus delete -f c1
   )
 
   # shellcheck disable=SC2031,2269
@@ -148,21 +148,21 @@ test_security_protection() {
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Test deletion protecton
-  inc init testimage c1
-  inc snapshot c1
-  inc delete c1
+  incus init testimage c1
+  incus snapshot c1
+  incus delete c1
 
-  inc profile set default security.protection.delete true
+  incus profile set default security.protection.delete true
 
-  inc init testimage c1
-  inc snapshot c1
-  inc delete c1/snap0
-  ! inc delete c1 || false
+  incus init testimage c1
+  incus snapshot c1
+  incus delete c1/snap0
+  ! incus delete c1 || false
 
-  inc config set c1 security.protection.delete false
-  inc delete c1
+  incus config set c1 security.protection.delete false
+  incus delete c1
 
-  inc profile unset default security.protection.delete
+  incus profile unset default security.protection.delete
 
   # Test shifting protection
 
@@ -173,29 +173,29 @@ test_security_protection() {
   export INCUS_IDMAPPED_MOUNTS_DISABLE=1
   respawn_incus "${INCUS_DIR}" true
 
-  inc init testimage c1
-  inc start c1
-  inc stop c1 --force
+  incus init testimage c1
+  incus start c1
+  incus stop c1 --force
 
-  inc profile set default security.protection.shift true
-  inc start c1
-  inc stop c1 --force
+  incus profile set default security.protection.shift true
+  incus start c1
+  incus stop c1 --force
 
-  inc publish c1 --alias=protected
-  inc image delete protected
+  incus publish c1 --alias=protected
+  incus image delete protected
 
-  inc snapshot c1
-  inc publish c1/snap0 --alias=protected
-  inc image delete protected
+  incus snapshot c1
+  incus publish c1/snap0 --alias=protected
+  incus image delete protected
 
-  inc config set c1 security.privileged true
-  ! inc start c1 || false
-  inc config set c1 security.protection.shift false
-  inc start c1
-  inc stop c1 --force
+  incus config set c1 security.privileged true
+  ! incus start c1 || false
+  incus config set c1 security.protection.shift false
+  incus start c1
+  incus stop c1 --force
 
-  inc delete c1
-  inc profile unset default security.protection.shift
+  incus delete c1
+  incus profile unset default security.protection.shift
 
   # Respawn Incus to restore default kernel shifting support.
   shutdown_incus "${INCUS_DIR}"

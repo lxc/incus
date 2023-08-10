@@ -1,5 +1,5 @@
 test_kernel_limits() {
-  lxc_version=$(inc info | awk '/driver_version:/ {print $NF}')
+  lxc_version=$(incus info | awk '/driver_version:/ {print $NF}')
   lxc_major=$(echo "${lxc_version}" | cut -d. -f1)
   lxc_minor=$(echo "${lxc_version}" | cut -d. -f2)
 
@@ -11,16 +11,16 @@ test_kernel_limits() {
   echo "==> API extension kernel_limits"
 
   ensure_import_testimage
-  inc init testimage limits
+  incus init testimage limits
   # Set it to a limit < 65536 because older systemd's do not have my nofile
   # limit patch.
-  inc config set limits limits.kernel.nofile 3000
-  inc start limits
-  pid="$(inc info limits | awk '/^PID/ {print $2}')"
+  incus config set limits limits.kernel.nofile 3000
+  incus start limits
+  pid="$(incus info limits | awk '/^PID/ {print $2}')"
   soft="$(awk '/^Max open files/ {print $4}' /proc/"${pid}"/limits)"
   hard="$(awk '/^Max open files/ {print $5}' /proc/"${pid}"/limits)"
 
-  inc delete --force limits
+  incus delete --force limits
 
   [ "${soft}" = "3000" ] && [ "${hard}" = "3000" ]
 }

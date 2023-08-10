@@ -2,15 +2,15 @@ test_exec() {
   ensure_import_testimage
 
   name=x1
-  inc launch testimage x1
-  inc list ${name} | grep RUNNING
+  incus launch testimage x1
+  incus list ${name} | grep RUNNING
 
   exec_container_noninteractive() {
-    echo "abc${1}" | inc exec "${name}" --force-noninteractive -- cat | grep abc
+    echo "abc${1}" | incus exec "${name}" --force-noninteractive -- cat | grep abc
   }
 
   exec_container_interactive() {
-    echo "abc${1}" | inc exec "${name}" -- cat | grep abc
+    echo "abc${1}" | incus exec "${name}" -- cat | grep abc
   }
 
   for i in $(seq 1 25); do
@@ -22,23 +22,23 @@ test_exec() {
   done
 
   # Check non-websocket based exec works.
-  opID=$(inc query -X POST -d '{\"command\":[\"touch\",\"/root/foo1\"],\"record-output\":false}' /1.0/instances/x1/exec | jq -r .id)
+  opID=$(incus query -X POST -d '{\"command\":[\"touch\",\"/root/foo1\"],\"record-output\":false}' /1.0/instances/x1/exec | jq -r .id)
   sleep 1
-  inc query  /1.0/operations/"${opID}" | jq .metadata.return | grep -F "0"
-  inc exec x1 -- stat /root/foo1
+  incus query  /1.0/operations/"${opID}" | jq .metadata.return | grep -F "0"
+  incus exec x1 -- stat /root/foo1
 
-  opID=$(inc query -X POST -d '{\"command\":[\"missingcmd\"],\"record-output\":false}' /1.0/instances/x1/exec | jq -r .id)
+  opID=$(incus query -X POST -d '{\"command\":[\"missingcmd\"],\"record-output\":false}' /1.0/instances/x1/exec | jq -r .id)
   sleep 1
-  inc query  /1.0/operations/"${opID}" | jq .metadata.return | grep -F "127"
+  incus query  /1.0/operations/"${opID}" | jq .metadata.return | grep -F "127"
 
-  echo "hello" | inc exec x1 -- tee /root/foo1
-  opID=$(inc query -X POST -d '{\"command\":[\"cat\",\"/root/foo1\"],\"record-output\":true}' /1.0/instances/x1/exec | jq -r .id)
+  echo "hello" | incus exec x1 -- tee /root/foo1
+  opID=$(incus query -X POST -d '{\"command\":[\"cat\",\"/root/foo1\"],\"record-output\":true}' /1.0/instances/x1/exec | jq -r .id)
   sleep 1
-  stdOutURL=$(inc query  /1.0/operations/"${opID}" | jq '.metadata.output["1"]')
-  inc query "${stdOutURL}" | grep -F "hello"
+  stdOutURL=$(incus query  /1.0/operations/"${opID}" | jq '.metadata.output["1"]')
+  incus query "${stdOutURL}" | grep -F "hello"
 
-  inc stop "${name}" --force
-  inc delete "${name}"
+  incus stop "${name}" --force
+  incus delete "${name}"
 }
 
 test_concurrent_exec() {
@@ -50,15 +50,15 @@ test_concurrent_exec() {
   ensure_import_testimage
 
   name=x1
-  inc launch testimage x1
-  inc list ${name} | grep RUNNING
+  incus launch testimage x1
+  incus list ${name} | grep RUNNING
 
   exec_container_noninteractive() {
-    echo "abc${1}" | inc exec "${name}" --force-noninteractive -- cat | grep abc
+    echo "abc${1}" | incus exec "${name}" --force-noninteractive -- cat | grep abc
   }
 
   exec_container_interactive() {
-    echo "abc${1}" | inc exec "${name}" -- cat | grep abc
+    echo "abc${1}" | incus exec "${name}" -- cat | grep abc
   }
 
   PIDS=""
@@ -76,6 +76,6 @@ test_concurrent_exec() {
     wait "${pid}"
   done
 
-  inc stop "${name}" --force
-  inc delete "${name}"
+  incus stop "${name}" --force
+  incus delete "${name}"
 }

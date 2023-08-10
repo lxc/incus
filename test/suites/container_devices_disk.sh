@@ -2,7 +2,7 @@ test_container_devices_disk() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  inc init testimage foo
+  incus init testimage foo
 
   test_container_devices_raw_mount_options
   test_container_devices_disk_ceph
@@ -10,7 +10,7 @@ test_container_devices_disk() {
   test_container_devices_disk_socket
   test_container_devices_disk_char
 
-  inc delete -f foo
+  incus delete -f foo
 }
 
 test_container_devices_raw_mount_options() {
@@ -18,26 +18,26 @@ test_container_devices_raw_mount_options() {
   # shellcheck disable=SC2154
   mkfs.vfat "${loop_device_1}"
 
-  inc launch testimage foo-priv -c security.privileged=true
+  incus launch testimage foo-priv -c security.privileged=true
 
-  inc config device add foo-priv loop_raw_mount_options disk source="${loop_device_1}" path=/mnt
-  [ "$(inc exec foo-priv -- stat /mnt -c '%u:%g')" = "0:0" ] || false
-  inc exec foo-priv -- touch /mnt/foo
-  inc config device remove foo-priv loop_raw_mount_options
+  incus config device add foo-priv loop_raw_mount_options disk source="${loop_device_1}" path=/mnt
+  [ "$(incus exec foo-priv -- stat /mnt -c '%u:%g')" = "0:0" ] || false
+  incus exec foo-priv -- touch /mnt/foo
+  incus config device remove foo-priv loop_raw_mount_options
 
-  inc config device add foo-priv loop_raw_mount_options disk source="${loop_device_1}" path=/mnt raw.mount.options=uid=123,gid=456,ro
-  [ "$(inc exec foo-priv -- stat /mnt -c '%u:%g')" = "123:456" ] || false
-  ! inc exec foo-priv -- touch /mnt/foo || false
-  inc config device remove foo-priv loop_raw_mount_options
+  incus config device add foo-priv loop_raw_mount_options disk source="${loop_device_1}" path=/mnt raw.mount.options=uid=123,gid=456,ro
+  [ "$(incus exec foo-priv -- stat /mnt -c '%u:%g')" = "123:456" ] || false
+  ! incus exec foo-priv -- touch /mnt/foo || false
+  incus config device remove foo-priv loop_raw_mount_options
 
-  inc stop foo-priv -f
-  inc config device add foo-priv loop_raw_mount_options disk source="${loop_device_1}" path=/mnt raw.mount.options=uid=123,gid=456,ro
-  inc start foo-priv
-  [ "$(inc exec foo-priv -- stat /mnt -c '%u:%g')" = "123:456" ] || false
-  ! inc exec foo-priv -- touch /mnt/foo || false
-  inc config device remove foo-priv loop_raw_mount_options
+  incus stop foo-priv -f
+  incus config device add foo-priv loop_raw_mount_options disk source="${loop_device_1}" path=/mnt raw.mount.options=uid=123,gid=456,ro
+  incus start foo-priv
+  [ "$(incus exec foo-priv -- stat /mnt -c '%u:%g')" = "123:456" ] || false
+  ! incus exec foo-priv -- touch /mnt/foo || false
+  incus config device remove foo-priv loop_raw_mount_options
 
-  inc delete -f foo-priv
+  incus delete -f foo-priv
   # shellcheck disable=SC2154
   deconfigure_loop_device "${loop_file_1}" "${loop_device_1}"
 }
@@ -58,12 +58,12 @@ test_container_devices_disk_ceph() {
   mkfs.ext4 -m0 "${RBD_DEVICE}"
   rbd unmap "${RBD_DEVICE}"
 
-  inc launch testimage ceph-disk -c security.privileged=true
-  inc config device add ceph-disk rbd disk source=ceph:"${RBD_POOL_NAME}"/my-volume ceph.user_name=admin ceph.cluster_name=ceph path=/ceph
-  inc exec ceph-disk -- stat /ceph/lost+found
-  inc restart ceph-disk --force
-  inc exec ceph-disk -- stat /ceph/lost+found
-  inc delete -f ceph-disk
+  incus launch testimage ceph-disk -c security.privileged=true
+  incus config device add ceph-disk rbd disk source=ceph:"${RBD_POOL_NAME}"/my-volume ceph.user_name=admin ceph.cluster_name=ceph path=/ceph
+  incus exec ceph-disk -- stat /ceph/lost+found
+  incus restart ceph-disk --force
+  incus exec ceph-disk -- stat /ceph/lost+found
+  incus delete -f ceph-disk
   ceph osd pool rm "${RBD_POOL_NAME}" "${RBD_POOL_NAME}" --yes-i-really-really-mean-it
 }
 
@@ -76,30 +76,30 @@ test_container_devices_disk_cephfs() {
     return
   fi
 
-  inc launch testimage ceph-fs -c security.privileged=true
-  inc config device add ceph-fs fs disk source=cephfs:"${INCUS_CEPH_CEPHFS}"/ ceph.user_name=admin ceph.cluster_name=ceph path=/cephfs
-  inc exec ceph-fs -- stat /cephfs
-  inc restart ceph-fs --force
-  inc exec ceph-fs -- stat /cephfs
-  inc delete -f ceph-fs
+  incus launch testimage ceph-fs -c security.privileged=true
+  incus config device add ceph-fs fs disk source=cephfs:"${INCUS_CEPH_CEPHFS}"/ ceph.user_name=admin ceph.cluster_name=ceph path=/cephfs
+  incus exec ceph-fs -- stat /cephfs
+  incus restart ceph-fs --force
+  incus exec ceph-fs -- stat /cephfs
+  incus delete -f ceph-fs
 }
 
 test_container_devices_disk_socket() {
-  inc start foo
-  inc config device add foo unix-socket disk source="${INCUS_DIR}/unix.socket" path=/root/incus.sock
-  [ "$(inc exec foo -- stat /root/incus.sock -c '%F')" = "socket" ] || false
-  inc restart -f foo
-  [ "$(inc exec foo -- stat /root/incus.sock -c '%F')" = "socket" ] || false
-  inc config device remove foo unix-socket
-  inc stop foo -f
+  incus start foo
+  incus config device add foo unix-socket disk source="${INCUS_DIR}/unix.socket" path=/root/incus.sock
+  [ "$(incus exec foo -- stat /root/incus.sock -c '%F')" = "socket" ] || false
+  incus restart -f foo
+  [ "$(incus exec foo -- stat /root/incus.sock -c '%F')" = "socket" ] || false
+  incus config device remove foo unix-socket
+  incus stop foo -f
 }
 
 test_container_devices_disk_char() {
-  inc start foo
-  inc config device add foo char disk source=/dev/zero path=/root/zero
-  [ "$(inc exec foo -- stat /root/zero -c '%F')" = "character special file" ] || false
-  inc restart -f foo
-  [ "$(inc exec foo -- stat /root/zero -c '%F')" = "character special file" ] || false
-  inc config device remove foo char
-  inc stop foo -f
+  incus start foo
+  incus config device add foo char disk source=/dev/zero path=/root/zero
+  [ "$(incus exec foo -- stat /root/zero -c '%F')" = "character special file" ] || false
+  incus restart -f foo
+  [ "$(incus exec foo -- stat /root/zero -c '%F')" = "character special file" ] || false
+  incus config device remove foo char
+  incus stop foo -f
 }

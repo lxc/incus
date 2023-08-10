@@ -11,11 +11,11 @@ test_concurrent() {
 
     name=concurrent-${1}
 
-    inc launch testimage "${name}"
-    inc info "${name}" | grep RUNNING
-    echo abc | inc exec "${name}" -- cat | grep abc
-    inc stop "${name}" --force
-    inc delete "${name}"
+    incus launch testimage "${name}"
+    incus info "${name}" | grep RUNNING
+    echo abc | incus exec "${name}" -- cat | grep abc
+    incus stop "${name}" --force
+    incus delete "${name}"
   }
 
   PIDS=""
@@ -29,5 +29,5 @@ test_concurrent() {
     wait "${pid}"
   done
 
-  ! inc list | grep -q concurrent || false
+  ! incus list | grep -q concurrent || false
 }

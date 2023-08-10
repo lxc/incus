@@ -261,11 +261,11 @@ jobs:
         run: |
             mkdir bin
 
-      - name: Build static inc
+      - name: Build static incus
         env:
           CGO_ENABLED: 0
         run: |
-          go build -o bin ./cmd/inc
+          go build -o bin ./cmd/incus
 
       - name: Build static incus-migrate
         if: runner.os == 'Linux'
@@ -279,17 +279,17 @@ jobs:
           CGO_ENABLED: 0
         run: go test -v ./client/...
 
-      - name: Unit tests (inc)
+      - name: Unit tests (incus)
         env:
           CGO_ENABLED: 0
-        run: go test -v ./cmd/inc/...
+        run: go test -v ./cmd/incus/...
 
       - name: Unit tests (shared)
         env:
           CGO_ENABLED: 0
         run: go test -v ./shared/...
 
-      - name: Upload inc client artifacts
+      - name: Upload incus client artifacts
         uses: actions/upload-artifact@v3
         continue-on-error: true
         with:
