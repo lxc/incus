@@ -256,17 +256,17 @@ build-mo: $(MOFILES)
 
 .PHONY: static-analysis
 static-analysis:
-ifeq ($(shell command -v golangci-lint 2> /dev/null),)
+ifeq ($(shell command -v golangci-lint),)
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$($(GO) env GOPATH)/bin
 endif
-ifeq ($(shell command -v shellcheck 2> /dev/null),)
+ifeq ($(shell command -v shellcheck),)
 	echo "Please install shellcheck"
 	exit 1
 endif
 ifneq "$(shell shellcheck --version | grep version: | cut -d ' ' -f2)" "0.8.0"
 	@echo "WARN: shellcheck version is not 0.8.0"
 endif
-ifeq ($(shell command -v flake8 2> /dev/null),)
+ifeq ($(shell command -v flake8),)
 	echo "Please install flake8"
 	exit 1
 endif
