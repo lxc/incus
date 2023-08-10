@@ -149,6 +149,17 @@ intersphinx_mapping = {
 
 notfound_urls_prefix = "/lxd/en/latest/"
 
+if ("LOCAL_SPHINX_BUILD" in os.environ) and (os.environ["LOCAL_SPHINX_BUILD"] == "True"):
+    swagger_url_scheme = "/api/#{{path}}"
+else:
+    swagger_url_scheme = "/lxd/en/latest/api/#{{path}}"
+
+myst_url_schemes = {
+    "http": None,
+    "https": None,
+    "swagger": swagger_url_scheme,
+}
+
 # Setup theme.
 templates_path = [".sphinx/_templates"]
 
@@ -248,7 +259,9 @@ ogp_image = "https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png"
 linkcheck_ignore = [
     'https://127.0.0.1:8443/1.0',
     'https://web.libera.chat/#lxd',
-    'http://localhost:8001'
+    'http://localhost:8001',
+    r'/lxd/en/latest/api/.*',
+    r'/api/.*'
 ]
 linkcheck_exclude_documents = [r'.*/manpages/.*']
 
