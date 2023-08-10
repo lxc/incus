@@ -1,7 +1,7 @@
 (instances-configure)=
 # How to configure instances
 
-You can configure instances by setting {ref}`instance-options` or by adding and configuring {ref}`devices`.
+You can configure instances by setting {ref}`instance-properties`, {ref}`instance-options`, or by adding and configuring {ref}`devices`.
 
 See the following sections for instructions.
 
@@ -14,27 +14,50 @@ To store and reuse different instance configurations, use {ref}`profiles <profil
 
 You can specify instance options when you {ref}`create an instance <instances-create>`.
 
-To update instance options after the instance is created, use the [`lxc config set`](lxc_config_set.md) command.
+````{tabs}
+```{group-tab} CLI
+Alternatively, to update instance options after the instance is created, use the [`lxc config set`](lxc_config_set.md) command.
 Specify the instance name and the key and value of the instance option:
 
     lxc config set <instance_name> <option_key>=<option_value> <option_key>=<option_value> ...
+```
+
+```{group-tab} API
+Alternatively, to update instance options after the instance is created, send a PATCH request to the instance.
+Specify the instance name and the key and value of the instance option:
+
+    lxc query --request PATCH /1.0/instances/<instance_name> --data '{"config": {"<option_key>":"<option_value>","<option_key>":"<option_value>"}}'
+
+See [`PATCH /1.0/instances/{name}`](swagger:/instances/instance_patch) for more information.
+```
+````
 
 See {ref}`instance-options` for a list of available options and information about which options are available for which instance type.
 
 For example, to change the memory limit for your container, enter the following command:
 
+````{tabs}
+```{group-tab} CLI
     lxc config set my-container limits.memory=128MiB
+```
+
+```{group-tab} API
+    lxc query --request PATCH /1.0/instances/my-container --data '{"config": {"limits.memory":"128MiB"}}'
+```
+````
 
 ```{note}
 Some of the instance options are updated immediately while the instance is running.
 Others are updated only when the instance is restarted.
 
-See the "Live update" column in the {ref}`instance-options` tables for information about which options are applied immediately while the instance is running.
+See the "Live update" information in the {ref}`instance-options` reference for information about which options are applied immediately while the instance is running.
 ```
 
 (instances-configure-properties)=
 ## Configure instance properties
 
+````{tabs}
+```{group-tab} CLI
 To update instance properties after the instance is created, use the [`lxc config set`](lxc_config_set.md) command with the `--property` flag.
 Specify the instance name and the key and value of the instance property:
 
@@ -47,17 +70,27 @@ Using the same flag, you can also unset a property just like you would unset a c
 You can also retrieve a specific property value with:
 
     lxc config get <instance_name> <property_key> --property
+```
+
+```{group-tab} API
+To update instance properties through the API, use the same mechanism as for configuring instance options.
+The only difference is that properties are on the root level of the configuration, while options are under the `config` field.
+
+Therefore, to set an instance property, send a PATCH request to the instance:
+
+    lxc query --request PATCH /1.0/instances/<instance_name> --data '{"<property_key>":"<property_value>","<property_key>":"property_value>"}}'
+
+To unset an instance property, send a PUT request that contains the full instance configuration that you want except for the property that you want to unset.
+
+See [`PATCH /1.0/instances/{name}`](swagger:/instances/instance_patch) and [`PUT /1.0/instances/{name}`](swagger:/instances/instance_put) for more information.
+```
+````
 
 (instances-configure-devices)=
 ## Configure devices
 
-To add and configure an instance device for your instance, use the [`lxc config device add`](lxc_config_device_add.md) command.
 Generally, devices can be added or removed for a container while it is running.
 VMs support hotplugging for some device types, but not all.
-
-Specify the instance name, a device name, the device type and maybe device options (depending on the {ref}`device type <devices>`):
-
-    lxc config device add <instance_name> <device_name> <device_type> <device_option_key>=<device_option_value> <device_option_key>=<device_option_value> ...
 
 See {ref}`devices` for a list of available device types and their options.
 
@@ -70,6 +103,14 @@ At each stage, if a device with the same name already exists from an earlier sta
 
 Device names are limited to a maximum of 64 characters.
 ```
+
+`````{tabs}
+````{group-tab} CLI
+To add and configure an instance device for your instance, use the [`lxc config device add`](lxc_config_device_add.md) command.
+
+Specify the instance name, a device name, the device type and maybe device options (depending on the {ref}`device type <devices>`):
+
+    lxc config device add <instance_name> <device_name> <device_type> <device_option_key>=<device_option_value> <device_option_key>=<device_option_value> ...
 
 For example, to add the storage at `/share/c1` on the host system to your instance at path `/opt`, enter the following command:
 
@@ -86,16 +127,47 @@ This is useful if you want to override device options for a device that is provi
 
 To remove a device, use the [`lxc config device remove`](lxc_config_device_remove.md) command.
 See [`lxc config device --help`](lxc_config_device.md) for a full list of available commands.
+````
+
+````{group-tab} API
+To add and configure an instance device for your instance, use the same mechanism of patching the instance configuration.
+The device configuration is located under the `devices` field of the configuration.
+
+Specify the instance name, a device name, the device type and maybe device options (depending on the {ref}`device type <devices>`):
+
+    lxc query --request PATCH /1.0/instances/<instance_name> --data '{"devices": {"<device_name>": {"type":"<device_type>","<device_option_key>":"<device_option_value>","<device_option_key>":"device_option_value>"}}}'
+
+For example, to add the storage at `/share/c1` on the host system to your instance at path `/opt`, enter the following command:
+
+    lxc query --request PATCH /1.0/instances/my-container --data '{"devices": {"disk-storage-device": {"type":"disk","source":"/share/c1","path":"/opt"}}}'
+
+See [`PATCH /1.0/instances/{name}`](swagger:/instances/instance_patch) for more information.
+````
+`````
 
 ## Display instance configuration
 
+````{tabs}
+```{group-tab} CLI
 To display the current configuration of your instance, including writable instance properties, instance options, devices and device options, enter the following command:
 
     lxc config show <instance_name> --expanded
+```
+
+```{group-tab} API
+To retrieve the current configuration of your instance, including writable instance properties, instance options, devices and device options, send a GET request to the instance:
+
+    lxc query /1.0/instances/<instance_name>
+
+See [`GET /1.0/instances/{name}`](swagger:/instances/instance_get) for more information.
+```
+````
 
 (instances-configure-edit)=
 ## Edit the full instance configuration
 
+`````{tabs}
+````{group-tab} CLI
 To edit the full instance configuration, including writable instance properties, instance options, devices and device options, enter the following command:
 
     lxc config edit <instance_name>
@@ -105,3 +177,16 @@ For convenience, the [`lxc config edit`](lxc_config_edit.md) command displays th
 However, you cannot edit those properties.
 Any changes are ignored.
 ```
+````
+
+````{group-tab} API
+To update the full instance configuration, including writable instance properties, instance options, devices and device options, send a PUT request to the instance:
+
+    lxc query --request PUT /1.0/instances/<instance_name> --data '<instance_configuration>'
+
+See [`PUT /1.0/instances/{name}`](swagger:/instances/instance_put) for more information.
+
+```{note}
+If you include changes to any read-only instance properties in the configuration you provide, they are ignored.
+````
+`````

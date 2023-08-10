@@ -155,6 +155,7 @@ Code  | Meaning
 400   | Failure
 401   | Canceled
 
+(rest-api-recursion)=
 ## Recursion
 
 To optimize queries of large lists, recursion is implemented for collections.
@@ -167,6 +168,7 @@ they point to (typically another JSON object).
 Recursion is implemented by simply replacing any pointer to an job (URL)
 by the object itself.
 
+(rest-api-filtering)=
 ## Filtering
 
 To filter your results on certain values, filter is implemented for collections.
