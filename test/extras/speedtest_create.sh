@@ -19,7 +19,7 @@ fi
 
 PIDS=""
 for c in $(seq "$count"); do
-  inc init busybox "${CNAME}${c}" 2>&1 &
+  incus init busybox "${CNAME}${c}" 2>&1 &
   PIDS="$PIDS $!"
 done
 
@@ -27,12 +27,12 @@ for pid in $PIDS; do
   wait "$pid"
 done
 
-echo -e "\ninc list: All shutdown"
-time inc list 1>/dev/null
+echo -e "\nincus list: All shutdown"
+time incus list 1>/dev/null
 
 PIDS=""
 for c in $(seq "$count"); do
-  inc start "${CNAME}${c}" 2>&1 &
+  incus start "${CNAME}${c}" 2>&1 &
   PIDS="$PIDS $!"
 done
 
@@ -40,7 +40,7 @@ for pid in $PIDS; do
   wait "$pid"
 done
 
-echo -e "\ninc list: All started"
-time inc list 1>/dev/null
+echo -e "\nincus list: All started"
+time incus list 1>/dev/null
 
 echo -e "\nRun completed"

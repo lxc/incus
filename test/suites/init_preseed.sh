@@ -61,20 +61,20 @@ profiles:
       type: nic
 EOF
 
-    inc info | grep -q 'core.https_address: 127.0.0.1:9999'
-    inc info | grep -q 'images.auto_update_interval: "15"'
-    inc network list | grep -q "inct$$"
-    inc storage list | grep -q "${storage_pool}"
-    inc storage show "${storage_pool}" | grep -q "$source"
-    inc profile list | grep -q "test-profile"
-    inc profile show default | grep -q "pool: ${storage_pool}"
-    inc profile show test-profile | grep -q "limits.memory: 2GiB"
-    inc profile show test-profile | grep -q "nictype: bridged"
-    inc profile show test-profile | grep -q "parent: inct$$"
-    printf 'config: {}\ndevices: {}' | inc profile edit default
-    inc profile delete test-profile
-    inc network delete inct$$
-    inc storage delete "${storage_pool}"
+    incus info | grep -q 'core.https_address: 127.0.0.1:9999'
+    incus info | grep -q 'images.auto_update_interval: "15"'
+    incus network list | grep -q "inct$$"
+    incus storage list | grep -q "${storage_pool}"
+    incus storage show "${storage_pool}" | grep -q "$source"
+    incus profile list | grep -q "test-profile"
+    incus profile show default | grep -q "pool: ${storage_pool}"
+    incus profile show test-profile | grep -q "limits.memory: 2GiB"
+    incus profile show test-profile | grep -q "nictype: bridged"
+    incus profile show test-profile | grep -q "parent: inct$$"
+    printf 'config: {}\ndevices: {}' | incus profile edit default
+    incus profile delete test-profile
+    incus network delete inct$$
+    incus storage delete "${storage_pool}"
 
     if [ "$incus_backend" = "zfs" ]; then
         # shellcheck disable=SC2154

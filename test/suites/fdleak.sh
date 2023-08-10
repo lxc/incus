@@ -13,16 +13,16 @@ test_fdleak() {
     ensure_import_testimage
 
     for i in $(seq 5); do
-      inc init testimage "leaktest${i}"
-      inc info "leaktest${i}"
-      inc start "leaktest${i}"
-      inc exec "leaktest${i}" -- ps -ef
-      inc stop "leaktest${i}" --force
-      inc delete "leaktest${i}"
+      incus init testimage "leaktest${i}"
+      incus info "leaktest${i}"
+      incus start "leaktest${i}"
+      incus exec "leaktest${i}" -- ps -ef
+      incus stop "leaktest${i}" --force
+      incus delete "leaktest${i}"
     done
 
-    inc list
-    inc query /internal/gc
+    incus list
+    incus query /internal/gc
 
     exit 0
   )

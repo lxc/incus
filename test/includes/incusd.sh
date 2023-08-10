@@ -53,7 +53,7 @@ spawn_incus() {
         echo "==> Binding to network"
         for _ in $(seq 10); do
             addr="127.0.0.1:$(local_tcp_port)"
-            INCUS_DIR="${incusdir}" inc config set core.https_address "${addr}" || continue
+            INCUS_DIR="${incusdir}" incus config set core.https_address "${addr}" || continue
             echo "${addr}" > "${incusdir}/incus.addr"
             echo "==> Bound to ${addr}"
             break
@@ -61,14 +61,14 @@ spawn_incus() {
     fi
 
     echo "==> Setting trust password"
-    INCUS_DIR="${incusdir}" inc config set core.trust_password foo
+    INCUS_DIR="${incusdir}" incus config set core.trust_password foo
     if [ -n "${DEBUG:-}" ]; then
         set -x
     fi
 
     if [ "${INCUS_NETNS}" = "" ]; then
         echo "==> Setting up networking"
-        INCUS_DIR="${incusdir}" inc profile device add default eth0 nic nictype=p2p name=eth0
+        INCUS_DIR="${incusdir}" incus profile device add default eth0 nic nictype=p2p name=eth0
     fi
 
     if [ "${storage}" = true ]; then
@@ -136,49 +136,49 @@ kill_incus() {
     if [ -e "${daemon_dir}/unix.socket" ]; then
         # Delete all containers
         echo "==> Deleting all containers"
-        for container in $(timeout -k 2 2 inc list --force-local --format csv --columns n); do
-            timeout -k 10 10 inc delete "${container}" --force-local -f || true
+        for container in $(timeout -k 2 2 incus list --force-local --format csv --columns n); do
+            timeout -k 10 10 incus delete "${container}" --force-local -f || true
         done
 
         # Delete all images
         echo "==> Deleting all images"
-        for image in $(timeout -k 2 2 inc image list --force-local --format csv --columns f); do
-            timeout -k 10 10 inc image delete "${image}" --force-local || true
+        for image in $(timeout -k 2 2 incus image list --force-local --format csv --columns f); do
+            timeout -k 10 10 incus image delete "${image}" --force-local || true
         done
 
         # Delete all profiles
         echo "==> Deleting all profiles"
-        for profile in $(timeout -k 2 2 inc profile list --force-local --format csv | cut -d, -f1); do
-            timeout -k 10 10 inc profile delete "${profile}" --force-local || true
+        for profile in $(timeout -k 2 2 incus profile list --force-local --format csv | cut -d, -f1); do
+            timeout -k 10 10 incus profile delete "${profile}" --force-local || true
         done
 
         # Delete all networks
         echo "==> Deleting all managed networks"
-        for network in $(timeout -k 2 2 inc network list --force-local --format csv | awk -F, '{if ($3 == "YES") {print $1}}'); do
-            timeout -k 10 10 inc network delete "${network}" --force-local || true
+        for network in $(timeout -k 2 2 incus network list --force-local --format csv | awk -F, '{if ($3 == "YES") {print $1}}'); do
+            timeout -k 10 10 incus network delete "${network}" --force-local || true
         done
 
         # Clear config of the default profile since the profile itself cannot
         # be deleted.
         echo "==> Clearing config of default profile"
-        printf 'config: {}\ndevices: {}' | timeout -k 5 5 inc profile edit default
+        printf 'config: {}\ndevices: {}' | timeout -k 5 5 incus profile edit default
 
         echo "==> Deleting all storage pools"
-        for storage_pool in $(inc query "/1.0/storage-pools?recursion=1" | jq .[].name -r); do
+        for storage_pool in $(incus query "/1.0/storage-pools?recursion=1" | jq .[].name -r); do
             # Delete the storage volumes.
-            for volume in $(inc query "/1.0/storage-pools/${storage_pool}/volumes/custom?recursion=1" | jq .[].name -r); do
+            for volume in $(incus query "/1.0/storage-pools/${storage_pool}/volumes/custom?recursion=1" | jq .[].name -r); do
                 echo "==> Deleting storage volume ${volume} on ${storage_pool}"
-                timeout -k 20 20 inc storage volume delete "${storage_pool}" "${volume}" --force-local || true
+                timeout -k 20 20 incus storage volume delete "${storage_pool}" "${volume}" --force-local || true
             done
 
             # Delete the storage buckets.
-            for bucket in $(inc query "/1.0/storage-pools/${storage_pool}/buckets?recursion=1" | jq .[].name -r); do
+            for bucket in $(incus query "/1.0/storage-pools/${storage_pool}/buckets?recursion=1" | jq .[].name -r); do
                 echo "==> Deleting storage bucket ${bucket} on ${storage_pool}"
-                timeout -k 20 20 inc storage bucket delete "${storage_pool}" "${bucket}" --force-local || true
+                timeout -k 20 20 incus storage bucket delete "${storage_pool}" "${bucket}" --force-local || true
             done
 
             ## Delete the storage pool.
-            timeout -k 20 20 inc storage delete "${storage_pool}" --force-local || true
+            timeout -k 20 20 incus storage delete "${storage_pool}" --force-local || true
         done
 
         echo "==> Checking for locked DB tables"

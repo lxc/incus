@@ -21,8 +21,8 @@ dir_configure() {
 
   echo "==> Configuring directory backend in ${INCUS_DIR}"
 
-  inc storage create "incustest-$(basename "${INCUS_DIR}")" dir
-  inc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
+  incus storage create "incustest-$(basename "${INCUS_DIR}")" dir
+  incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 }
 
 dir_teardown() {

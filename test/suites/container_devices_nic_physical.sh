@@ -15,10 +15,10 @@ test_container_devices_nic_physical() {
   startNicCount=$(find /sys/class/net | wc -l)
 
   # Create test container from default profile.
-  inc init testimage "${ctName}"
+  incus init testimage "${ctName}"
 
   # Add physical device to container/
-  inc config device add "${ctName}" eth0 nic \
+  incus config device add "${ctName}" eth0 nic \
     nictype=physical \
     parent="${ctName}" \
     name=eth0 \
@@ -26,31 +26,31 @@ test_container_devices_nic_physical() {
     hwaddr="${ctMAC}"
 
   # Launch container and check it has nic applied correctly.
-  inc start "${ctName}"
+  incus start "${ctName}"
 
   # Check custom MTU is applied if feature available in Incus.
-  if inc info | grep 'network_phys_macvlan_mtu: "true"' ; then
-    if ! inc exec "${ctName}" -- grep "1400" /sys/class/net/eth0/mtu ; then
+  if incus info | grep 'network_phys_macvlan_mtu: "true"' ; then
+    if ! incus exec "${ctName}" -- grep "1400" /sys/class/net/eth0/mtu ; then
       echo "mtu invalid"
       false
     fi
   fi
 
   # Check custom MAC is applied in container.
-  if ! inc exec "${ctName}" -- grep -Fix "${ctMAC}" /sys/class/net/eth0/address ; then
+  if ! incus exec "${ctName}" -- grep -Fix "${ctMAC}" /sys/class/net/eth0/address ; then
     echo "mac invalid"
     false
   fi
 
   # Check volatile cleanup on stop.
-  inc stop -f "${ctName}"
-  if inc config show "${ctName}" | grep volatile.eth0 ; then
+  incus stop -f "${ctName}"
+  if incus config show "${ctName}" | grep volatile.eth0 ; then
     echo "unexpected volatile key remains"
     false
   fi
 
   # Check original MTU is restored on physical device.
-  if inc info | grep 'network_phys_macvlan_mtu: "true"' ; then
+  if incus info | grep 'network_phys_macvlan_mtu: "true"' ; then
     if ! grep "1500" /sys/class/net/"${ctName}"/mtu ; then
       echo "mtu invalid"
       false
@@ -64,11 +64,11 @@ test_container_devices_nic_physical() {
   fi
 
   # Remove boot time physical device and check MTU is restored.
-  inc start "${ctName}"
-  inc config device remove "${ctName}" eth0
+  incus start "${ctName}"
+  incus config device remove "${ctName}" eth0
 
   # Check original MTU is restored on physical device.
-  if inc info | grep 'network_phys_macvlan_mtu: "true"' ; then
+  if incus info | grep 'network_phys_macvlan_mtu: "true"' ; then
     if ! grep "1500" /sys/class/net/"${ctName}"/mtu ; then
       echo "mtu invalid"
       false
@@ -85,7 +85,7 @@ test_container_devices_nic_physical() {
   # Make the MTU higher than the original boot time 1400 MTU above to check that the
   # parent device's MTU is reset on removal to the pre-boot value on host (expect >=1500).
   ip link set "${ctName}" up #VLAN requires parent nic be up.
-  inc config device add "${ctName}" eth0 nic \
+  incus config device add "${ctName}" eth0 nic \
     nictype=physical \
     parent="${ctName}" \
     name=eth0 \
@@ -94,24 +94,24 @@ test_container_devices_nic_physical() {
     mtu=1401 #Higher than 1400 boot time value above
 
   # Check custom MTU is applied if feature available in Incus.
-  if inc info | grep 'network_phys_macvlan_mtu: "true"' ; then
-    if ! inc exec "${ctName}" -- grep "1401" /sys/class/net/eth0/mtu ; then
+  if incus info | grep 'network_phys_macvlan_mtu: "true"' ; then
+    if ! incus exec "${ctName}" -- grep "1401" /sys/class/net/eth0/mtu ; then
       echo "mtu invalid"
       false
     fi
   fi
 
   # Check custom MAC is applied in container.
-  if ! inc exec "${ctName}" -- grep -Fix "${ctMAC}" /sys/class/net/eth0/address ; then
+  if ! incus exec "${ctName}" -- grep -Fix "${ctMAC}" /sys/class/net/eth0/address ; then
     echo "mac invalid"
     false
   fi
 
   # Remove hot-plugged physical device and check MTU is restored.
-  inc config device remove "${ctName}" eth0
+  incus config device remove "${ctName}" eth0
 
   # Check original MTU is restored on physical device.
-  if inc info | grep 'network_phys_macvlan_mtu: "true"' ; then
+  if incus info | grep 'network_phys_macvlan_mtu: "true"' ; then
     if ! grep "1500" /sys/class/net/"${ctName}"/mtu ; then
       echo "mtu invalid"
       false
@@ -127,7 +127,7 @@ test_container_devices_nic_physical() {
   # Test hot-plugging physical device based on existing parent.
   # Make the MTU higher than the original boot time 1400 MTU above to check that the
   # parent device's MTU is reset on removal to the pre-boot value on host (expect >=1500).
-  inc config device add "${ctName}" eth0 nic \
+  incus config device add "${ctName}" eth0 nic \
     nictype=physical \
     parent="${ctName}" \
     name=eth0 \
@@ -135,24 +135,24 @@ test_container_devices_nic_physical() {
     mtu=1402 #Higher than 1400 boot time value above
 
   # Check custom MTU is applied if feature available in Incus.
-  if inc info | grep 'network_phys_macvlan_mtu: "true"' ; then
-    if ! inc exec "${ctName}" -- grep "1402" /sys/class/net/eth0/mtu ; then
+  if incus info | grep 'network_phys_macvlan_mtu: "true"' ; then
+    if ! incus exec "${ctName}" -- grep "1402" /sys/class/net/eth0/mtu ; then
       echo "mtu invalid"
       false
     fi
   fi
 
   # Check custom MAC is applied in container.
-  if ! inc exec "${ctName}" -- grep -Fix "${ctMAC}" /sys/class/net/eth0/address ; then
+  if ! incus exec "${ctName}" -- grep -Fix "${ctMAC}" /sys/class/net/eth0/address ; then
     echo "mac invalid"
     false
   fi
 
   # Test removing a physical device an check its MTU gets restored to default 1500 mtu
-  inc config device remove "${ctName}" eth0
+  incus config device remove "${ctName}" eth0
 
   # Check original MTU is restored on physical device.
-  if inc info | grep 'network_phys_macvlan_mtu: "true"' ; then
+  if incus info | grep 'network_phys_macvlan_mtu: "true"' ; then
     if ! grep "1500" /sys/class/net/"${ctName}"/mtu ; then
       echo "mtu invalid"
       false
@@ -166,17 +166,17 @@ test_container_devices_nic_physical() {
   fi
 
   # Test hot-plugging physical device based on existing parent with new name that LXC doesn't know about.
-  inc config device add "${ctName}" eth1 nic \
+  incus config device add "${ctName}" eth1 nic \
     nictype=physical \
     parent="${ctName}" \
     hwaddr="${ctMAC}" \
     mtu=1402 #Higher than 1400 boot time value above
 
   # Stop the container, LXC doesn't know about the nic, so we will rely on Incus to restore it.
-  inc stop -f "${ctName}"
+  incus stop -f "${ctName}"
 
   # Check original MTU is restored on physical device.
-  if inc info | grep 'network_phys_macvlan_mtu: "true"' ; then
+  if incus info | grep 'network_phys_macvlan_mtu: "true"' ; then
     if ! grep "1500" /sys/class/net/"${ctName}"/mtu ; then
       echo "mtu invalid"
       false
@@ -190,35 +190,35 @@ test_container_devices_nic_physical() {
   fi
 
   # create a dummy test network of type physical
-  inc network create "${networkName}" --type=physical parent="${ctName}" mtu=1400
+  incus network create "${networkName}" --type=physical parent="${ctName}" mtu=1400
 
   # remove existing device nic of the container
-  inc config device remove "${ctName}" eth1
+  incus config device remove "${ctName}" eth1
 
   # Test adding a physical network to container
-  inc config device add "${ctName}" eth1 nic \
+  incus config device add "${ctName}" eth1 nic \
     network="${networkName}"
 
   # Check that network config has been applied
-  if ! inc config show "${ctName}" | grep "network: ${networkName}" ; then
+  if ! incus config show "${ctName}" | grep "network: ${networkName}" ; then
     echo "no network configuration detected"
     false
   fi
 
   # Check container can start with the physical network configuration
-  inc start "${ctName}"
+  incus start "${ctName}"
 
   # Check custom MTU is applied if feature available in Incus.
-  if inc info | grep 'network_phys_macvlan_mtu: "true"' ; then
-    if ! inc exec "${ctName}" -- grep "1400" /sys/class/net/eth1/mtu ; then
+  if incus info | grep 'network_phys_macvlan_mtu: "true"' ; then
+    if ! incus exec "${ctName}" -- grep "1400" /sys/class/net/eth1/mtu ; then
       echo "mtu invalid"
       false
     fi
   fi
 
-  inc delete "${ctName}" -f
+  incus delete "${ctName}" -f
 
-  inc network delete "${networkName}"
+  incus network delete "${networkName}"
 
   # Check we haven't left any NICS lying around.
   endNicCount=$(find /sys/class/net | wc -l)

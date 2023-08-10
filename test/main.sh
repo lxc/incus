@@ -1,7 +1,7 @@
 #!/bin/sh -eu
 [ -n "${GOPATH:-}" ] && export "PATH=${GOPATH}/bin:${PATH}"
 
-# Don't translate inc output for parsing in it in tests.
+# Don't translate incus output for parsing in it in tests.
 export LC_ALL="C"
 
 # Force UTC for consistency
@@ -40,7 +40,7 @@ import_subdir_files() {
 import_subdir_files includes
 
 echo "==> Checking for dependencies"
-check_dependencies incusd inc curl dnsmasq jq git xgettext sqlite3 msgmerge msgfmt shuf setfacl socat dig
+check_dependencies incusd incus curl dnsmasq jq git xgettext sqlite3 msgmerge msgfmt shuf setfacl socat dig
 
 if [ "${USER:-'root'}" != "root" ]; then
   echo "The testsuite must be run as root." >&2
@@ -78,7 +78,7 @@ cleanup() {
     echo "==> Test result: ${TEST_RESULT}"
 
     # shellcheck disable=SC2086
-    printf "To poke around, use:\\n INCUS_DIR=%s INCUS_CONF=%s sudo -E %s/bin/inc COMMAND\\n" "${INCUS_DIR}" "${INCUS_CONF}" ${GOPATH:-}
+    printf "To poke around, use:\\n INCUS_DIR=%s INCUS_CONF=%s sudo -E %s/bin/incus COMMAND\\n" "${INCUS_DIR}" "${INCUS_CONF}" ${GOPATH:-}
     echo "Tests Completed (${TEST_RESULT}): hit enter to continue"
     read -r _
   fi

@@ -13,8 +13,8 @@ btrfs_configure() {
 
   INCUS_DIR=$1
 
-  inc storage create "incustest-$(basename "${INCUS_DIR}")" btrfs size=1GiB
-  inc profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
+  incus storage create "incustest-$(basename "${INCUS_DIR}")" btrfs size=1GiB
+  incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 
   echo "==> Configuring btrfs backend in ${INCUS_DIR}"
 }

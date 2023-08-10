@@ -10,7 +10,7 @@ test_lxc_to_incus() {
 
   mkdir -p "${LXC_DIR}"
 
-  inc network create lxcbr0
+  incus network create lxcbr0
 
   # Create LXC containers
   lxc-create -P "${LXC_DIR}" -n c1 -B dir -t busybox
@@ -28,9 +28,9 @@ test_lxc_to_incus() {
   [ "$(lxc-ls -P "${LXC_DIR}" -1 | wc -l)" -eq "3" ]
 
   # Ensure no containers have been converted
-  ! inc info c1 || false
-  ! inc info c2 || false
-  ! inc info c3 || false
+  ! incus info c1 || false
+  ! incus info c2 || false
+  ! incus info c3 || false
 
   # Convert single LXC container
   lxc-to-incus --lxcpath "${LXC_DIR}" --containers c1
@@ -39,14 +39,14 @@ test_lxc_to_incus() {
   [ "$(lxc-ls -P "${LXC_DIR}" -1 | wc -l)" -eq 3 ]
 
   # Ensure only c1 has been converted
-  inc info c1
-  ! inc info c2 || false
-  ! inc info c3 || false
+  incus info c1
+  ! incus info c2 || false
+  ! incus info c3 || false
 
   # Ensure the converted container is startable
-  inc start c1
-  inc exec c1 -- stat /root/foo
-  inc delete -f c1
+  incus start c1
+  incus exec c1 -- stat /root/foo
+  incus delete -f c1
 
   # Convert some LXC containers
   lxc-to-incus --lxcpath "${LXC_DIR}" --delete --containers c1,c2
@@ -55,9 +55,9 @@ test_lxc_to_incus() {
   [ "$(lxc-ls -P "${LXC_DIR}" -1 | wc -l)" -eq 1 ]
 
   # Ensure all containers have been converted
-  inc info c1
-  inc info c2
-  ! inc info c3 || false
+  incus info c1
+  incus info c2
+  ! incus info c3 || false
 
   # Convert all LXC containers
   lxc-to-incus --lxcpath "${LXC_DIR}" --delete --all
@@ -66,10 +66,10 @@ test_lxc_to_incus() {
   [ "$(lxc-ls -P "${LXC_DIR}" -1 | wc -l)" -eq 0 ]
 
   # Ensure all containers have been converted
-  inc info c1
-  inc info c2
-  inc info c3
+  incus info c1
+  incus info c2
+  incus info c3
 
-  inc delete -f c1 c2 c3
-  inc network delete lxcbr0
+  incus delete -f c1 c2 c3
+  incus network delete lxcbr0
 }

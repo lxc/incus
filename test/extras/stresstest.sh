@@ -31,9 +31,9 @@ wait_for() {
   my_curl "$BASEURL$op/wait"
 }
 
-inc() {
+incus() {
     INJECTED=0
-    CMD="$(command -v inc)"
+    CMD="$(command -v incus)"
     for arg in "${@}"; do
         if [ "$arg" = "--" ]; then
             INJECTED=1
@@ -81,8 +81,8 @@ cleanup() {
 
 trap cleanup EXIT HUP INT TERM
 
-if ! command -v inc > /dev/null; then
-    echo "==> Couldn't find inc" && false
+if ! command -v incus > /dev/null; then
+    echo "==> Couldn't find incus" && false
 fi
 
 spawn_incus() {
@@ -101,10 +101,10 @@ spawn_incus() {
   INCUS_DIR="$incusdir" incusd waitready
 
   echo "==> Binding to network"
-  INCUS_DIR="$incusdir" inc config set core.https_address "$addr"
+  INCUS_DIR="$incusdir" incus config set core.https_address "$addr"
 
   echo "==> Setting trust password"
-  INCUS_DIR="$incusdir" inc config set core.trust_password foo
+  INCUS_DIR="$incusdir" incus config set core.trust_password foo
 }
 
 spawn_incus 127.0.0.1:18443 "$INCUS_DIR"
@@ -114,10 +114,10 @@ if [ ! -e "$INCUS_TEST_IMAGE" ]; then
     echo "Please define INCUS_TEST_IMAGE"
     false
 fi
-inc image import "$INCUS_TEST_IMAGE" --alias busybox
+incus image import "$INCUS_TEST_IMAGE" --alias busybox
 
-inc image list
-inc list
+incus image list
+incus list
 
 NUMCREATES=5
 createthread() {
@@ -126,7 +126,7 @@ createthread() {
         echo "createthread: starting loop $i out of $NUMCREATES"
         declare -a pids
         for j in $(seq 20); do
-            inc launch busybox "b.$i.$j" &
+            incus launch busybox "b.$i.$j" &
             pids[j]=$!
         done
         for j in $(seq 20); do
@@ -135,7 +135,7 @@ createthread() {
         done
         echo "createthread: deleting..."
         for j in $(seq 20); do
-            inc delete "b.$i.$j" &
+            incus delete "b.$i.$j" &
             pids[j]=$!
         done
         for j in $(seq 20); do
@@ -149,7 +149,7 @@ createthread() {
 listthread() {
     echo "listthread: I am $$"
     while true; do
-        inc list
+        incus list
         sleep 2s
     done
     exit 0
@@ -158,9 +158,9 @@ listthread() {
 configthread() {
     echo "configthread: I am $$"
     for i in $(seq 20); do
-        inc profile create "p$i"
-        inc profile set "p$i" limits.memory 100MiB
-        inc profile delete "p$i"
+        incus profile create "p$i"
+        incus profile set "p$i" limits.memory 100MiB
+        incus profile delete "p$i"
     done
     exit 0
 }
@@ -168,14 +168,14 @@ configthread() {
 disturbthread() {
     echo "disturbthread: I am $$"
     while true; do
-        inc profile create empty
-        inc init busybox disturb1
-        inc profile assign disturb1 empty
-        inc start disturb1
-        inc exec disturb1 -- ps -ef
-        inc stop disturb1 --force
-        inc delete disturb1
-        inc profile delete empty
+        incus profile create empty
+        incus init busybox disturb1
+        incus profile assign disturb1 empty
+        incus start disturb1
+        incus exec disturb1 -- ps -ef
+        incus stop disturb1 --force
+        incus delete disturb1
+        incus profile delete empty
     done
     exit 0
 }

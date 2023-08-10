@@ -2,7 +2,7 @@ test_container_devices_nic_ipvlan() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  if ! inc info | grep 'network_ipvlan: "true"' ; then
+  if ! incus info | grep 'network_ipvlan: "true"' ; then
     echo "==> SKIP: No IPVLAN support"
     return
   fi
@@ -20,8 +20,8 @@ test_container_devices_nic_ipvlan() {
   sysctl net.ipv6.conf."${ctName}".proxy_ndp=1
   sysctl net.ipv6.conf."${ctName}".forwarding=1
   sysctl net.ipv4.conf."${ctName}".forwarding=1
-  inc init testimage "${ctName}"
-  inc config device add "${ctName}" eth0 nic \
+  incus init testimage "${ctName}"
+  incus config device add "${ctName}" eth0 nic \
     nictype=ipvlan \
     parent=${ctName} \
     ipv4.address="192.0.2.1${ipRand}" \
@@ -29,54 +29,54 @@ test_container_devices_nic_ipvlan() {
     ipv4.gateway=auto \
     ipv6.gateway=auto \
     mtu=1400
-  inc start "${ctName}"
+  incus start "${ctName}"
 
   # Check custom MTU is applied.
-  if ! inc exec "${ctName}" -- ip link show eth0 | grep "mtu 1400" ; then
+  if ! incus exec "${ctName}" -- ip link show eth0 | grep "mtu 1400" ; then
     echo "mtu invalid"
     false
   fi
 
-  inc stop "${ctName}" --force
+  incus stop "${ctName}" --force
 
   # Check that MTU is inherited from parent device when not specified on device.
   ip link set "${ctName}" mtu 1405
-  inc config device unset "${ctName}" eth0 mtu
-  inc start "${ctName}"
-  if ! inc exec "${ctName}" -- grep "1405" /sys/class/net/eth0/mtu ; then
+  incus config device unset "${ctName}" eth0 mtu
+  incus start "${ctName}"
+  if ! incus exec "${ctName}" -- grep "1405" /sys/class/net/eth0/mtu ; then
     echo "mtu not inherited from parent"
     false
   fi
 
   #Spin up another container with multiple IPs.
-  inc init testimage "${ctName}2"
-  inc config device add "${ctName}2" eth0 nic \
+  incus init testimage "${ctName}2"
+  incus config device add "${ctName}2" eth0 nic \
     nictype=ipvlan \
     parent=${ctName} \
     ipv4.address="192.0.2.2${ipRand}, 192.0.2.3${ipRand}" \
     ipv6.address="2001:db8::2${ipRand}, 2001:db8::3${ipRand}"
-  inc start "${ctName}2"
+  incus start "${ctName}2"
 
   # Check comms between containers.
-  inc exec "${ctName}" -- ping -c2 -W5 "192.0.2.2${ipRand}"
-  inc exec "${ctName}" -- ping -c2 -W5 "192.0.2.3${ipRand}"
-  inc exec "${ctName}" -- ping6 -c2 -W5 "2001:db8::2${ipRand}"
-  inc exec "${ctName}" -- ping6 -c2 -W5 "2001:db8::3${ipRand}"
-  inc exec "${ctName}2" -- ping -c2 -W5 "192.0.2.1${ipRand}"
-  inc exec "${ctName}2" -- ping6 -c2 -W5 "2001:db8::1${ipRand}"
-  inc stop -f "${ctName}2"
+  incus exec "${ctName}" -- ping -c2 -W5 "192.0.2.2${ipRand}"
+  incus exec "${ctName}" -- ping -c2 -W5 "192.0.2.3${ipRand}"
+  incus exec "${ctName}" -- ping6 -c2 -W5 "2001:db8::2${ipRand}"
+  incus exec "${ctName}" -- ping6 -c2 -W5 "2001:db8::3${ipRand}"
+  incus exec "${ctName}2" -- ping -c2 -W5 "192.0.2.1${ipRand}"
+  incus exec "${ctName}2" -- ping6 -c2 -W5 "2001:db8::1${ipRand}"
+  incus stop -f "${ctName}2"
 
   # Check IPVLAN ontop of VLAN parent with custom routing tables.
-  inc stop -f "${ctName}"
-  inc config device set "${ctName}" eth0 vlan 1234
-  inc config device set "${ctName}" eth0 ipv4.host_table=100
-  inc config device set "${ctName}" eth0 ipv6.host_table=101
+  incus stop -f "${ctName}"
+  incus config device set "${ctName}" eth0 vlan 1234
+  incus config device set "${ctName}" eth0 ipv4.host_table=100
+  incus config device set "${ctName}" eth0 ipv6.host_table=101
 
   # Check gateway settings don't accept IPs in default l3s mode.
-  ! inc config device set "${ctName}" eth0 ipv4.gateway=192.0.2.254
-  ! inc config device set "${ctName}" eth0 ipv6.gateway=2001:db8::FFFF
+  ! incus config device set "${ctName}" eth0 ipv4.gateway=192.0.2.254
+  ! incus config device set "${ctName}" eth0 ipv6.gateway=2001:db8::FFFF
 
-  inc start "${ctName}"
+  incus start "${ctName}"
 
   # Check VLAN interface created
   if ! grep "1" "/sys/class/net/${ctName}.1234/carrier" ; then
@@ -89,8 +89,8 @@ test_container_devices_nic_ipvlan() {
   ip -6 route show table 101 | grep "2001:db8::1${ipRand}"
 
   # Check volatile cleanup on stop.
-  inc stop -f "${ctName}"
-  if inc config show "${ctName}" | grep volatile.eth0 | grep -v volatile.eth0.hwaddr | grep -v volatile.eth0.name ; then
+  incus stop -f "${ctName}"
+  if incus config show "${ctName}" | grep volatile.eth0 | grep -v volatile.eth0.hwaddr | grep -v volatile.eth0.name ; then
     echo "unexpected volatile key remains"
     false
   fi
@@ -106,8 +106,8 @@ test_container_devices_nic_ipvlan() {
   ! ip -6 route show table 101 | grep "2001:db8::1${ipRand}"
 
   # Check ipvlan l2 mode with mixture of singular and CIDR IPs, and gateway IPs.
-  inc config device remove "${ctName}" eth0
-  inc config device add "${ctName}" eth0 nic \
+  incus config device remove "${ctName}" eth0
+  incus config device add "${ctName}" eth0 nic \
     nictype=ipvlan \
     mode=l2 \
     parent=${ctName} \
@@ -116,34 +116,34 @@ test_container_devices_nic_ipvlan() {
     ipv4.gateway=192.0.2.254 \
     ipv6.gateway=2001:db8::FFFF \
     mtu=1400
-  inc start "${ctName}"
+  incus start "${ctName}"
 
-  inc config device remove "${ctName}2" eth0
-  inc config device add "${ctName}2" eth0 nic \
+  incus config device remove "${ctName}2" eth0
+  incus config device add "${ctName}2" eth0 nic \
     nictype=ipvlan \
     parent=${ctName} \
     ipv4.address="192.0.2.3${ipRand}" \
     ipv6.address="2001:db8::3${ipRand}" \
     mtu=1400
-  inc start "${ctName}2"
+  incus start "${ctName}2"
 
   # Add an internally configured address (only possible in l2 mode).
-  inc exec "${ctName}2" -- ip -4 addr add "192.0.2.4${ipRand}/32" dev eth0
-  inc exec "${ctName}2" -- ip -6 addr add "2001:db8::4${ipRand}/128" dev eth0
+  incus exec "${ctName}2" -- ip -4 addr add "192.0.2.4${ipRand}/32" dev eth0
+  incus exec "${ctName}2" -- ip -6 addr add "2001:db8::4${ipRand}/128" dev eth0
   wait_for_dad "${ctName}2" eth0
 
   # Check comms between containers.
-  inc exec "${ctName}" -- ping -c2 -W5 "192.0.2.3${ipRand}"
-  inc exec "${ctName}" -- ping -c2 -W5 "192.0.2.4${ipRand}"
-  inc exec "${ctName}" -- ping6 -c2 -W5 "2001:db8::3${ipRand}"
-  inc exec "${ctName}" -- ping6 -c2 -W5 "2001:db8::4${ipRand}"
-  inc exec "${ctName}2" -- ping -c2 -W5 "192.0.2.1${ipRand}"
-  inc exec "${ctName}2" -- ping -c2 -W5 "192.0.2.2${ipRand}"
-  inc exec "${ctName}2" -- ping6 -c2 -W5 "2001:db8::1${ipRand}"
-  inc exec "${ctName}2" -- ping6 -c2 -W5 "2001:db8::2${ipRand}"
+  incus exec "${ctName}" -- ping -c2 -W5 "192.0.2.3${ipRand}"
+  incus exec "${ctName}" -- ping -c2 -W5 "192.0.2.4${ipRand}"
+  incus exec "${ctName}" -- ping6 -c2 -W5 "2001:db8::3${ipRand}"
+  incus exec "${ctName}" -- ping6 -c2 -W5 "2001:db8::4${ipRand}"
+  incus exec "${ctName}2" -- ping -c2 -W5 "192.0.2.1${ipRand}"
+  incus exec "${ctName}2" -- ping -c2 -W5 "192.0.2.2${ipRand}"
+  incus exec "${ctName}2" -- ping6 -c2 -W5 "2001:db8::1${ipRand}"
+  incus exec "${ctName}2" -- ping6 -c2 -W5 "2001:db8::2${ipRand}"
 
-  inc stop -f "${ctName}"
-  inc stop -f "${ctName}2"
+  incus stop -f "${ctName}"
+  incus stop -f "${ctName}2"
 
   # Check we haven't left any NICS lying around.
   endNicCount=$(find /sys/class/net | wc -l)
@@ -153,7 +153,7 @@ test_container_devices_nic_ipvlan() {
   fi
 
   # Cleanup ipvlan checks
-  inc delete "${ctName}" -f
-  inc delete "${ctName}2" -f
+  incus delete "${ctName}" -f
+  incus delete "${ctName}2" -f
   ip link delete "${ctName}" type dummy
 }

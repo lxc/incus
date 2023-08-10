@@ -9,7 +9,7 @@ test_database_restore(){
     set -e
     # shellcheck disable=SC2034
     INCUS_DIR=${INCUS_RESTORE_DIR}
-    inc config set "core.https_allowed_credentials" "true"
+    incus config set "core.https_allowed_credentials" "true"
   )
 
   shutdown_incus "${INCUS_RESTORE_DIR}"
@@ -36,7 +36,7 @@ EOF
     set -e
     # shellcheck disable=SC2034
     INCUS_DIR=${INCUS_RESTORE_DIR}
-    inc config get "core.https_allowed_credentials" | grep -q "true"
+    incus config get "core.https_allowed_credentials" | grep -q "true"
   )
 
   kill_incus "${INCUS_RESTORE_DIR}"
@@ -65,26 +65,26 @@ test_database_no_disk_space(){
     INCUS_DIR="${INCUS_NOSPACE_DIR}"
 
     ensure_import_testimage
-    inc init testimage c
+    incus init testimage c
 
     # Set a custom user property with a big value, so we eventually eat up all
     # available disk space in the database directory.
     DATA="${INCUS_NOSPACE_DIR}/data"
     head -c 262144 < /dev/zero | tr '\0' '\141' > "${DATA}"
     for i in $(seq 20); do
-        if ! inc config set c "user.prop${i}" - < "${DATA}"; then
+        if ! incus config set c "user.prop${i}" - < "${DATA}"; then
             break
         fi
     done
 
     # Commands that involve writing to the database keep failing.
-    ! inc config set c "user.propX" - < "${DATA}" || false
-    ! inc config set c "user.propY" - < "${DATA}" || false
+    ! incus config set c "user.propX" - < "${DATA}" || false
+    ! incus config set c "user.propY" - < "${DATA}" || false
 
     # Removing the big file makes the database happy again.
     rm "${BIG_FILE}"
-    inc config set c "user.propZ" - < "${DATA}"
-    inc delete -f c
+    incus config set c "user.propZ" - < "${DATA}"
+    incus delete -f c
   )
 
   shutdown_incus "${INCUS_NOSPACE_DIR}"

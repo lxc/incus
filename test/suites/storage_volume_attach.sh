@@ -39,66 +39,66 @@ test_storage_volume_attach() {
   ensure_import_testimage
 
   # create storage volume
-  inc storage volume create "incustest-$(basename "${INCUS_DIR}")" testvolume
+  incus storage volume create "incustest-$(basename "${INCUS_DIR}")" testvolume
 
   # create containers
-  inc launch testimage c1 -c security.privileged=true
-  inc launch testimage c2
+  incus launch testimage c1 -c security.privileged=true
+  incus launch testimage c2
 
   # Attach to a single privileged container
-  inc storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c1 testvolume
+  incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c1 testvolume
   PATH_TO_CHECK="${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")/custom/default_testvolume"
   [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "0:0" ]
 
   # make container unprivileged
-  inc config set c1 security.privileged false
+  incus config set c1 security.privileged false
   [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "0:0" ]
 
   if [ "${UIDs}" -lt 500000 ] || [ "${GIDs}" -lt 500000 ]; then
     echo "==> SKIP: The storage volume attach test requires at least 500000 uids and gids"
-    inc rm -f c1 c2
-    inc storage volume delete "incustest-$(basename "${INCUS_DIR}")" testvolume
+    incus rm -f c1 c2
+    incus storage volume delete "incustest-$(basename "${INCUS_DIR}")" testvolume
     return
   fi
 
   # restart
-  inc restart --force c1
+  incus restart --force c1
   [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "${UID_BASE}:${GID_BASE}" ]
 
   # give container isolated id mapping
-  inc config set c1 security.idmap.isolated true
+  incus config set c1 security.idmap.isolated true
   [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "${UID_BASE}:${GID_BASE}" ]
 
   # restart
-  inc restart --force c1
+  incus restart --force c1
 
   # get new isolated base ids
-  ISOLATED_UID_BASE="$(inc exec c1 -- cat /proc/self/uid_map | awk '{print $2}')"
-  ISOLATED_GID_BASE="$(inc exec c1 -- cat /proc/self/gid_map | awk '{print $2}')"
+  ISOLATED_UID_BASE="$(incus exec c1 -- cat /proc/self/uid_map | awk '{print $2}')"
+  ISOLATED_GID_BASE="$(incus exec c1 -- cat /proc/self/gid_map | awk '{print $2}')"
   [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "${ISOLATED_UID_BASE}:${ISOLATED_GID_BASE}" ]
 
-  ! inc storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c2 testvolume || false
+  ! incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c2 testvolume || false
 
   # give container standard mapping
-  inc config set c1 security.idmap.isolated false
+  incus config set c1 security.idmap.isolated false
   [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "${ISOLATED_UID_BASE}:${ISOLATED_GID_BASE}" ]
 
   # restart
-  inc restart --force c1
+  incus restart --force c1
   [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "${UID_BASE}:${GID_BASE}" ]
 
   # attach second container
-  inc storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c2 testvolume
+  incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c2 testvolume
 
   # check that setting perms on the root of the custom volume persists after a reboot.
-  inc exec c2 -- stat -c '%a' /testvolume | grep 711
-  inc exec c2 -- chmod 0700 /testvolume
-  inc exec c2 -- stat -c '%a' /testvolume | grep 700
-  inc restart --force c2
-  inc exec c2 -- stat -c '%a' /testvolume | grep 700
+  incus exec c2 -- stat -c '%a' /testvolume | grep 711
+  incus exec c2 -- chmod 0700 /testvolume
+  incus exec c2 -- stat -c '%a' /testvolume | grep 700
+  incus restart --force c2
+  incus exec c2 -- stat -c '%a' /testvolume | grep 700
 
   # delete containers
-  inc delete -f c1
-  inc delete -f c2
-  inc storage volume delete "incustest-$(basename "${INCUS_DIR}")" testvolume
+  incus delete -f c1
+  incus delete -f c2
+  incus storage volume delete "incustest-$(basename "${INCUS_DIR}")" testvolume
 }
