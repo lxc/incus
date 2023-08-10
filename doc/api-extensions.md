@@ -1006,7 +1006,7 @@ redirect file-system mounts to their fuse implementation. To this end, set e.g.
 
 This allows for existing a Ceph RBD or CephFS to be directly connected to a LXD container.
 
-## `virtual_machines`
+## `virtual-machines`
 
 Add virtual machine support.
 
