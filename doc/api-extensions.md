@@ -1646,6 +1646,9 @@ The following network configurations keys (`bridge` and `physical`):
 * `bgp.peers.<name>.address`
 * `bgp.peers.<name>.asn`
 * `bgp.peers.<name>.password`
+
+The `nexthop` configuration keys (`bridge`):
+
 * `bgp.ipv4.nexthop`
 * `bgp.ipv6.nexthop`
 
