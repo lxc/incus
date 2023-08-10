@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/auth/candid"
 	"github.com/lxc/incus/incusd/auth/oidc"
 	"github.com/lxc/incus/incusd/cluster"
@@ -19,7 +20,6 @@ import (
 	"github.com/lxc/incus/incusd/lifecycle"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	scriptletLoad "github.com/lxc/incus/incusd/scriptlet/load"
@@ -372,7 +372,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	fullSrv.AuthUserName = requestor.Username
 	fullSrv.AuthUserMethod = requestor.Protocol
 
-	if rbac.UserIsAdmin(r) {
+	if auth.UserIsAdmin(r) {
 		fullSrv.Config, err = daemonConfigRender(s)
 		if err != nil {
 			return response.InternalError(err)

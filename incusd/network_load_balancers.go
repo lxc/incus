@@ -22,17 +22,17 @@ import (
 var networkLoadBalancersCmd = APIEndpoint{
 	Path: "networks/{networkName}/load-balancers",
 
-	Get:  APIEndpointAction{Handler: networkLoadBalancersGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Post: APIEndpointAction{Handler: networkLoadBalancersPost, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Get:  APIEndpointAction{Handler: networkLoadBalancersGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: networkLoadBalancersPost, AccessHandler: allowProjectPermission()},
 }
 
 var networkLoadBalancerCmd = APIEndpoint{
 	Path: "networks/{networkName}/load-balancers/{listenAddress}",
 
-	Delete: APIEndpointAction{Handler: networkLoadBalancerDelete, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Get:    APIEndpointAction{Handler: networkLoadBalancerGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Put:    APIEndpointAction{Handler: networkLoadBalancerPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Patch:  APIEndpointAction{Handler: networkLoadBalancerPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Delete: APIEndpointAction{Handler: networkLoadBalancerDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: networkLoadBalancerGet, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: networkLoadBalancerPut, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: networkLoadBalancerPut, AccessHandler: allowProjectPermission()},
 }
 
 // API endpoints

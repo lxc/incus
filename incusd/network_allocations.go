@@ -21,7 +21,7 @@ import (
 var networkAllocationsCmd = APIEndpoint{
 	Path: "network-allocations",
 
-	Get: APIEndpointAction{Handler: networkAllocationsGet, AccessHandler: allowProjectPermission("networks", "view")},
+	Get: APIEndpointAction{Handler: networkAllocationsGet, AccessHandler: allowProjectPermission()},
 }
 
 // swagger:operation GET /1.0/network-allocations network-allocations network_allocations_get

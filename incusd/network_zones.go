@@ -22,17 +22,17 @@ import (
 var networkZonesCmd = APIEndpoint{
 	Path: "network-zones",
 
-	Get:  APIEndpointAction{Handler: networkZonesGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Post: APIEndpointAction{Handler: networkZonesPost, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Get:  APIEndpointAction{Handler: networkZonesGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: networkZonesPost, AccessHandler: allowProjectPermission()},
 }
 
 var networkZoneCmd = APIEndpoint{
 	Path: "network-zones/{zone}",
 
-	Delete: APIEndpointAction{Handler: networkZoneDelete, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Get:    APIEndpointAction{Handler: networkZoneGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Put:    APIEndpointAction{Handler: networkZonePut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Patch:  APIEndpointAction{Handler: networkZonePut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Delete: APIEndpointAction{Handler: networkZoneDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: networkZoneGet, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: networkZonePut, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: networkZonePut, AccessHandler: allowProjectPermission()},
 }
 
 // API endpoints.

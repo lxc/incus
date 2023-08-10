@@ -21,17 +21,17 @@ import (
 var networkPeersCmd = APIEndpoint{
 	Path: "networks/{networkName}/peers",
 
-	Get:  APIEndpointAction{Handler: networkPeersGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Post: APIEndpointAction{Handler: networkPeersPost, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Get:  APIEndpointAction{Handler: networkPeersGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: networkPeersPost, AccessHandler: allowProjectPermission()},
 }
 
 var networkPeerCmd = APIEndpoint{
 	Path: "networks/{networkName}/peers/{peerName}",
 
-	Delete: APIEndpointAction{Handler: networkPeerDelete, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Get:    APIEndpointAction{Handler: networkPeerGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Put:    APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Patch:  APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Delete: APIEndpointAction{Handler: networkPeerDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: networkPeerGet, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowProjectPermission()},
 }
 
 // API endpoints

@@ -22,17 +22,17 @@ import (
 var networkForwardsCmd = APIEndpoint{
 	Path: "networks/{networkName}/forwards",
 
-	Get:  APIEndpointAction{Handler: networkForwardsGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Post: APIEndpointAction{Handler: networkForwardsPost, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Get:  APIEndpointAction{Handler: networkForwardsGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: networkForwardsPost, AccessHandler: allowProjectPermission()},
 }
 
 var networkForwardCmd = APIEndpoint{
 	Path: "networks/{networkName}/forwards/{listenAddress}",
 
-	Delete: APIEndpointAction{Handler: networkForwardDelete, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Get:    APIEndpointAction{Handler: networkForwardGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Put:    APIEndpointAction{Handler: networkForwardPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Patch:  APIEndpointAction{Handler: networkForwardPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Delete: APIEndpointAction{Handler: networkForwardDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: networkForwardGet, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: networkForwardPut, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: networkForwardPut, AccessHandler: allowProjectPermission()},
 }
 
 // API endpoints

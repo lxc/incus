@@ -13,6 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/operationtype"
@@ -20,7 +21,6 @@ import (
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/operations"
 	projecthelpers "github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
@@ -147,7 +147,7 @@ func projectsGet(d *Daemon, r *http.Request) response.Response {
 
 		filtered := []api.Project{}
 		for _, project := range projects {
-			if !rbac.UserHasPermission(r, project.Name, "view") {
+			if !auth.UserHasPermission(r, project.Name) {
 				continue
 			}
 
@@ -398,7 +398,7 @@ func projectGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check user permissions
-	if !rbac.UserHasPermission(r, name, "view") {
+	if !auth.UserHasPermission(r, name) {
 		return response.Forbidden(nil)
 	}
 
@@ -468,7 +468,7 @@ func projectPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check user permissions
-	if !rbac.UserHasPermission(r, name, "manage-projects") {
+	if !auth.UserHasPermission(r, name) {
 		return response.Forbidden(nil)
 	}
 
@@ -559,7 +559,7 @@ func projectPatch(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check user permissions
-	if !rbac.UserHasPermission(r, name, "manage-projects") {
+	if !auth.UserHasPermission(r, name) {
 		return response.Forbidden(nil)
 	}
 
@@ -944,7 +944,7 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check user permissions.
-	if !rbac.UserHasPermission(r, name, "view") {
+	if !auth.UserHasPermission(r, name) {
 		return response.Forbidden(nil)
 	}
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/cluster"
 	"github.com/lxc/incus/incusd/db"
 	dbCluster "github.com/lxc/incus/incusd/db/cluster"
@@ -19,7 +20,6 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/scriptlet"
 	"github.com/lxc/incus/incusd/state"
@@ -333,7 +333,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		// Server-side project migration.
 		if req.Project != "" {
 			// Check if user has access to target project
-			if !rbac.UserHasPermission(r, req.Project, "manage-containers") {
+			if !auth.UserHasPermission(r, req.Project) {
 				return response.Forbidden(nil)
 			}
 

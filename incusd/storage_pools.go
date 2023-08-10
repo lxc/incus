@@ -12,12 +12,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/cluster"
 	clusterRequest "github.com/lxc/incus/incusd/cluster/request"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/lifecycle"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
@@ -175,7 +175,7 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 			poolAPI := pool.ToAPI()
 			poolAPI.UsedBy = project.FilterUsedBy(r, poolUsedBy)
 
-			if !rbac.UserIsAdmin(r) {
+			if !auth.UserIsAdmin(r) {
 				// Don't allow non-admins to see pool config as sensitive info can be stored there.
 				poolAPI.Config = nil
 			}
@@ -610,7 +610,7 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 	poolAPI := pool.ToAPI()
 	poolAPI.UsedBy = project.FilterUsedBy(r, poolUsedBy)
 
-	if !rbac.UserIsAdmin(r) {
+	if !auth.UserIsAdmin(r) {
 		// Don't allow non-admins to see pool config as sensitive info can be stored there.
 		poolAPI.Config = nil
 	}

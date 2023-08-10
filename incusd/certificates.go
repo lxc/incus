@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/cluster"
 	clusterConfig "github.com/lxc/incus/incusd/cluster/config"
 	clusterRequest "github.com/lxc/incus/incusd/cluster/request"
@@ -26,7 +27,6 @@ import (
 	"github.com/lxc/incus/incusd/lifecycle"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
@@ -541,7 +541,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Handle requests by non-admin users.
-	if !rbac.UserIsAdmin(r) {
+	if !auth.UserIsAdmin(r) {
 		// Non-admin cannot issue tokens.
 		if req.Token {
 			return response.Forbidden(nil)
@@ -983,7 +983,7 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 		// In order to prevent possible future security issues, the certificate information is
 		// reset in case a non-admin user is performing the update.
 		certProjects := req.Projects
-		if !rbac.UserIsAdmin(r) {
+		if !auth.UserIsAdmin(r) {
 			if r.TLS == nil {
 				response.Forbidden(fmt.Errorf("Cannot update certificate information"))
 			}
@@ -1128,7 +1128,7 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Non-admins are able to delete only their own certificate.
-		if !rbac.UserIsAdmin(r) {
+		if !auth.UserIsAdmin(r) {
 			if r.TLS == nil {
 				response.Forbidden(fmt.Errorf("Cannot delete certificate"))
 			}

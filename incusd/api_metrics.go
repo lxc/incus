@@ -46,7 +46,7 @@ func allowMetrics(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// If not wide open, apply project access restrictions.
-	return allowProjectPermission("containers", "view")(d, r)
+	return allowProjectPermission()(d, r)
 }
 
 // swagger:operation GET /1.0/metrics metrics metrics_get

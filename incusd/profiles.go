@@ -34,18 +34,18 @@ import (
 var profilesCmd = APIEndpoint{
 	Path: "profiles",
 
-	Get:  APIEndpointAction{Handler: profilesGet, AccessHandler: allowProjectPermission("profiles", "view")},
-	Post: APIEndpointAction{Handler: profilesPost, AccessHandler: allowProjectPermission("profiles", "manage-profiles")},
+	Get:  APIEndpointAction{Handler: profilesGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: profilesPost, AccessHandler: allowProjectPermission()},
 }
 
 var profileCmd = APIEndpoint{
 	Path: "profiles/{name}",
 
-	Delete: APIEndpointAction{Handler: profileDelete, AccessHandler: allowProjectPermission("profiles", "manage-profiles")},
-	Get:    APIEndpointAction{Handler: profileGet, AccessHandler: allowProjectPermission("profiles", "view")},
-	Patch:  APIEndpointAction{Handler: profilePatch, AccessHandler: allowProjectPermission("profiles", "manage-profiles")},
-	Post:   APIEndpointAction{Handler: profilePost, AccessHandler: allowProjectPermission("profiles", "manage-profiles")},
-	Put:    APIEndpointAction{Handler: profilePut, AccessHandler: allowProjectPermission("profiles", "manage-profiles")},
+	Delete: APIEndpointAction{Handler: profileDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: profileGet, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: profilePatch, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: profilePost, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: profilePut, AccessHandler: allowProjectPermission()},
 }
 
 // swagger:operation GET /1.0/profiles profiles profiles_get
