@@ -633,12 +633,15 @@ func (d *common) rebuildCommon(inst instance.Instance, img *api.Image, op *opera
 
 	// Rebuild as empty if there is no image provided.
 	if img == nil {
-		return pool.CreateInstance(inst, nil)
-	}
-
-	err = pool.CreateInstanceFromImage(inst, img.Fingerprint, op)
-	if err != nil {
-		return err
+		err = pool.CreateInstance(inst, nil)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = pool.CreateInstanceFromImage(inst, img.Fingerprint, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -647,9 +650,11 @@ func (d *common) rebuildCommon(inst instance.Instance, img *api.Image, op *opera
 			return err
 		}
 
-		err = tx.UpdateImageLastUseDate(ctx, inst.Project().Name, img.Fingerprint, time.Now().UTC())
-		if err != nil {
-			return err
+		if img != nil {
+			err = tx.UpdateImageLastUseDate(ctx, inst.Project().Name, img.Fingerprint, time.Now().UTC())
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
