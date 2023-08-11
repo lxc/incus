@@ -253,14 +253,12 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 	op, err := operations.OperationGetInternal(id)
 	if err == nil {
 		projectName := op.Project()
-		if op.Permission() != "" {
-			if projectName == "" {
-				projectName = project.Default
-			}
+		if projectName == "" {
+			projectName = project.Default
+		}
 
-			if !auth.UserHasPermission(r, projectName) {
-				return response.Forbidden(nil)
-			}
+		if !auth.UserHasPermission(r, projectName) {
+			return response.Forbidden(nil)
 		}
 
 		_, err = op.Cancel()
