@@ -761,7 +761,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			return err
 		}
 
-		// Handle external authentication/RBAC
+		// Handle external authentication
 		candidAPIURL, candidAPIKey, candidExpiry, candidDomains := s.GlobalConfig.CandidServer()
 
 		if candidAPIURL != "" {

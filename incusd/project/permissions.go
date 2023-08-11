@@ -1419,7 +1419,7 @@ var aggregateLimitConfigValuePrinters = map[string]func(int64) string{
 
 // FilterUsedBy filters a UsedBy list based on project access.
 func FilterUsedBy(r *http.Request, entries []string) []string {
-	// Shortcut for admins and non-RBAC environments.
+	// Shortcut for admins and environments without access control.
 	if auth.UserIsAdmin(r) {
 		return entries
 	}

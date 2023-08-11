@@ -173,7 +173,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 	i := 1
 
 	if shared.StringInSlice("candid", apiServer.AuthMethods) {
-		fmt.Printf("%d) Candid/RBAC based authentication\n", i)
+		fmt.Printf("%d) Candid based authentication\n", i)
 		availableAuthMethods = append(availableAuthMethods, authMethodCandid)
 		i++
 	}
