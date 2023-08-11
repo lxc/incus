@@ -262,8 +262,18 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 		// If no member was selected yet, pick the member with the least number of instances.
 		if targetMemberInfo == nil {
+			var filteredCandidateMembers []db.NodeInfo
+
+			// The instance might already be placed on the node with least number of instances.
+			// Therefore remove it from the list of possible candidates if existent.
+			for _, candidateMember := range candidateMembers {
+				if candidateMember.Name != inst.Location() {
+					filteredCandidateMembers = append(filteredCandidateMembers, candidateMember)
+				}
+			}
+
 			err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-				targetMemberInfo, err = tx.GetNodeWithLeastInstances(ctx, candidateMembers)
+				targetMemberInfo, err = tx.GetNodeWithLeastInstances(ctx, filteredCandidateMembers)
 				return err
 			})
 			if err != nil {
