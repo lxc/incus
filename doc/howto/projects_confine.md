@@ -48,16 +48,6 @@ This configuration pre-selects the specified project.
 However, it does not confine the client to this project.
 ```
 
-## Confine projects to specific RBAC roles
-
-```{youtube} https://www.youtube.com/watch?v=VE60AbJHT6E
-```
-
-If you are using the Canonical RBAC service, the RBAC roles define what operations a user with that role can carry out.
-See {ref}`authentication-rbac` for detailed information.
-
-To use RBAC to confine a project, go to the respective project in the RBAC interface and assign RBAC roles to the different users or groups as required.
-
 ## Confine projects to specific LXD users
 
 ```{youtube} https://www.youtube.com/watch?v=6O0q3rSWr8A

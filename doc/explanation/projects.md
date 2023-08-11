@@ -67,11 +67,6 @@ Client certificates
   The projects must exist before you can restrict access to them.
   A client that connects using a restricted certificate can see only the project or projects that the client has been granted access to.
 
-RBAC authentication
-: If you use {ref}`authentication-rbac`, you can assign roles to users or groups both on a global and on a project basis.
-  The roles define what a user is allowed to do within the project.
-  This way, you can configure which users are allowed to see, use, or manage each project.
-
 Multi-user LXD daemon
 : The LXD snap contains a multi-user LXD daemon that allows dynamic project creation on a per-user basis.
   You can configure a specific user group other than the `lxd` group to give restricted LXD access to every user in the group.
