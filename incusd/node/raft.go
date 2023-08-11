@@ -3,7 +3,7 @@ package node
 import (
 	"context"
 
-	"github.com/canonical/go-dqlite/client"
+	"github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/incusd/db"
 )

@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/canonical/go-dqlite"
+	dqlite "github.com/cowsql/go-cowsql"
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/incusd/daemon"

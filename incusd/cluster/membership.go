@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/canonical/go-dqlite/app"
-	"github.com/canonical/go-dqlite/client"
+	"github.com/cowsql/go-cowsql/app"
+	"github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/db/cluster"

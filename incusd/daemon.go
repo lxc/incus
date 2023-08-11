@@ -18,8 +18,8 @@ import (
 	"sync"
 	"time"
 
-	dqliteClient "github.com/canonical/go-dqlite/client"
-	"github.com/canonical/go-dqlite/driver"
+	dqliteClient "github.com/cowsql/go-cowsql/client"
+	"github.com/cowsql/go-cowsql/driver"
 	"github.com/go-macaroon-bakery/macaroon-bakery/v3/bakery"
 	"github.com/gorilla/mux"
 	liblxc "github.com/lxc/go-lxc"

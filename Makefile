@@ -7,17 +7,17 @@ POTFILE=po/$(DOMAIN).pot
 VERSION=$(shell grep "var Version" shared/version/flex.go | cut -d'"' -f2)
 ARCHIVE=incus-$(VERSION).tar
 HASH := \#
-TAG_SQLITE3=$(shell printf "$(HASH)include <dqlite.h>\nvoid main(){dqlite_node_id n = 1;}" | $(CC) ${CGO_CFLAGS} -o /dev/null -xc - >/dev/null 2>&1 && echo "libsqlite3")
+TAG_SQLITE3=$(shell printf "$(HASH)include <cowsql.h>\nvoid main(){cowsql_node_id n = 1;}" | $(CC) ${CGO_CFLAGS} -o /dev/null -xc - >/dev/null 2>&1 && echo "libsqlite3")
 GOPATH ?= $(shell $(GO) env GOPATH)
 CGO_LDFLAGS_ALLOW ?= (-Wl,-wrap,pthread_create)|(-Wl,-z,now)
 SPHINXENV=doc/.sphinx/venv/bin/activate
 
 ifneq "$(wildcard vendor)" ""
 	RAFT_PATH=$(CURDIR)/vendor/raft
-	DQLITE_PATH=$(CURDIR)/vendor/dqlite
+	COWSQL_PATH=$(CURDIR)/vendor/cowsql
 else
 	RAFT_PATH=$(GOPATH)/deps/raft
-	DQLITE_PATH=$(GOPATH)/deps/dqlite
+	COWSQL_PATH=$(GOPATH)/deps/cowsql
 endif
 
 	# raft
@@ -27,7 +27,7 @@ default: build
 .PHONY: build
 build:
 ifeq "$(TAG_SQLITE3)" ""
-	@echo "Missing dqlite, run \"make deps\" to setup."
+	@echo "Missing cowsql, run \"make deps\" to setup."
 	exit 1
 endif
 
@@ -70,14 +70,14 @@ deps:
 		./configure && \
 		make
 
-	# dqlite
-	@if [ ! -e "$(DQLITE_PATH)" ]; then \
-		git clone --depth=1 "https://github.com/canonical/dqlite" "$(DQLITE_PATH)"; \
-	elif [ -e "$(DQLITE_PATH)/.git" ]; then \
-		cd "$(DQLITE_PATH)"; git pull; \
+	# cowsql
+	@if [ ! -e "$(COWSQL_PATH)" ]; then \
+		git clone --depth=1 "https://github.com/cowsql/cowsql" "$(COWSQL_PATH)"; \
+	elif [ -e "$(COWSQL_PATH)/.git" ]; then \
+		cd "$(COWSQL_PATH)"; git pull; \
 	fi
 
-	cd "$(DQLITE_PATH)" && \
+	cd "$(COWSQL_PATH)" && \
 		autoreconf -i && \
 		PKG_CONFIG_PATH="$(RAFT_PATH)" ./configure && \
 		make CFLAGS="-I$(RAFT_PATH)/include/" LDFLAGS="-L$(RAFT_PATH)/.libs/"
@@ -85,9 +85,9 @@ deps:
 	# environment
 	@echo ""
 	@echo "Please set the following in your environment (possibly ~/.bashrc)"
-	@echo "export CGO_CFLAGS=\"-I$(RAFT_PATH)/include/ -I$(DQLITE_PATH)/include/\""
-	@echo "export CGO_LDFLAGS=\"-L$(RAFT_PATH)/.libs -L$(DQLITE_PATH)/.libs/\""
-	@echo "export LD_LIBRARY_PATH=\"$(RAFT_PATH)/.libs/:$(DQLITE_PATH)/.libs/\""
+	@echo "export CGO_CFLAGS=\"-I$(RAFT_PATH)/include/ -I$(COWSQL_PATH)/include/\""
+	@echo "export CGO_LDFLAGS=\"-L$(RAFT_PATH)/.libs -L$(COWSQL_PATH)/.libs/\""
+	@echo "export LD_LIBRARY_PATH=\"$(RAFT_PATH)/.libs/:$(COWSQL_PATH)/.libs/\""
 	@echo "export CGO_LDFLAGS_ALLOW=\"(-Wl,-wrap,pthread_create)|(-Wl,-z,now)\""
 
 .PHONY: update
@@ -209,9 +209,9 @@ dist: doc
 	# Download dependencies
 	(cd $(TMP)/incus-$(VERSION) ; $(GO) mod vendor)
 
-	# Download the dqlite libraries
-	git clone --depth=1 https://github.com/canonical/dqlite $(TMP)/incus-$(VERSION)/vendor/dqlite
-	(cd $(TMP)/incus-$(VERSION)/vendor/dqlite ; git show-ref HEAD | cut -d' ' -f1 > .gitref)
+	# Download the cowsql libraries
+	git clone --depth=1 https://github.com/cowsql/cowsql $(TMP)/incus-$(VERSION)/vendor/cowsql
+	(cd $(TMP)/incus-$(VERSION)/vendor/cowsql ; git show-ref HEAD | cut -d' ' -f1 > .gitref)
 
 	git clone --depth=1 https://github.com/canonical/raft $(TMP)/incus-$(VERSION)/vendor/raft
 	(cd $(TMP)/incus-$(VERSION)/vendor/raft ; git show-ref HEAD | cut -d' ' -f1 > .gitref)

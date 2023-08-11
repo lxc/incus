@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo add-apt-repository ppa:ubuntu-lxc/lxc-git-master -y --no-update
-          sudo add-apt-repository ppa:dqlite/dev -y --no-update
+          sudo add-apt-repository ppa:cowsql/master -y --no-update
           sudo apt-get update
 
           sudo apt-get install --no-install-recommends -y \
@@ -40,7 +40,7 @@ jobs:
             libacl1-dev \
             libcap-dev \
             libdbus-1-dev \
-            libdqlite-dev \
+            libcowsql-dev \
             liblxc-dev \
             lxc-templates \
             libseccomp-dev \
@@ -127,7 +127,7 @@ jobs:
         run: |
           set -x
           sudo add-apt-repository ppa:ubuntu-lxc/lxc-git-master -y --no-update
-          sudo add-apt-repository ppa:dqlite/dev -y --no-update
+          sudo add-apt-repository ppa:cowsql/master -y --no-update
           sudo apt-get update
 
           sudo snap remove lxd --purge
@@ -145,7 +145,7 @@ jobs:
             libacl1-dev \
             libcap-dev \
             libdbus-1-dev \
-            libdqlite-dev \
+            libcowsql-dev \
             liblxc-dev \
             libseccomp-dev \
             libselinux-dev \

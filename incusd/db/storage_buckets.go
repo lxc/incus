@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	dqliteDriver "github.com/canonical/go-dqlite/driver"
+	dqliteDriver "github.com/cowsql/go-cowsql/driver"
 
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/shared/api"

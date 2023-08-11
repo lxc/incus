@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/canonical/go-dqlite/client"
+	"github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/shared/api"

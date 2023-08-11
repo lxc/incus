@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/canonical/go-dqlite/driver"
+	"github.com/cowsql/go-cowsql/driver"
 
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/node"

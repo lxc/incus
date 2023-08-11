@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/canonical/go-dqlite/client"
+	"github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/db"
