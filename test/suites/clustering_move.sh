@@ -52,8 +52,12 @@ test_clustering_move() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus info c1 | grep -q "Location: node1"
 
   # c1 can be moved within the same cluster group if it has multiple members
+  current_location="$(INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c1 | jq -r '.location')"
   INCUS_DIR="${INCUS_ONE_DIR}" incus move c1 --target=@default
+  INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c1 | jq -re ".location != \"$current_location\""
+  current_location="$(INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c1 | jq -r '.location')"
   INCUS_DIR="${INCUS_ONE_DIR}" incus move c1 --target=@default
+  INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c1 | jq -re ".location != \"$current_location\""
 
   # c1 cannot be moved within the same cluster group if it has a single member
   INCUS_DIR="${INCUS_ONE_DIR}" incus move c1 --target=@foobar3
