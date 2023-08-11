@@ -18,7 +18,9 @@ Unless specified differently during creation (with the `source` configuration op
 (storage-dir-quotas)=
 ### Quotas
 
+<!-- Include start dir quotas -->
 The `dir` driver supports storage quotas when running on either ext4 or XFS with project quotas enabled at the file system level.
+<!-- Include end dir quotas -->
 
 ## Configuration options
 
