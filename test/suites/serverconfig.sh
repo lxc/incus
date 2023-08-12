@@ -27,14 +27,6 @@ test_server_config_access() {
 
   # test authentication type
   curl --unix-socket "$INCUS_DIR/unix.socket" "incus/1.0" | jq .metadata.auth_methods | grep tls
-
-  # only tls is enabled by default
-  ! curl --unix-socket "$INCUS_DIR/unix.socket" "incus/1.0" | jq .metadata.auth_methods | grep candid || false
-  incus config set candid.api.url "https://localhost:8081"
-
-  # macaroons are also enabled
-  curl --unix-socket "$INCUS_DIR/unix.socket" "incus/1.0" | jq .metadata.auth_methods | grep candid
-  incus config unset candid.api.url
 }
 
 test_server_config_storage() {

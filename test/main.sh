@@ -89,7 +89,6 @@ cleanup() {
     echo "==> Cleaning up"
 
     umount -l "${TEST_DIR}/dev"
-    kill_external_auth_daemon "$TEST_DIR"
     cleanup_incus "$TEST_DIR"
   fi
 
@@ -133,8 +132,6 @@ chmod +x "${INCUS_DIR}"
 spawn_incus "${INCUS_DIR}" true
 INCUS_ADDR=$(cat "${INCUS_DIR}/incus.addr")
 export INCUS_ADDR
-
-start_external_auth_daemon "${INCUS_DIR}"
 
 run_test() {
   TEST_CURRENT=${1}
@@ -330,7 +327,6 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_storage_volume_import "storage volume import"
     run_test test_resources "resources"
     run_test test_kernel_limits "kernel limits"
-    run_test test_macaroon_auth "macaroon authentication"
     run_test test_console "console"
     run_test test_query "query"
     run_test test_storage_local_volume_handling "storage local volume handling"
