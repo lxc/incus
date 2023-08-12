@@ -63,46 +63,46 @@ var imagesCmd = APIEndpoint{
 var imageCmd = APIEndpoint{
 	Path: "images/{fingerprint}",
 
-	Delete: APIEndpointAction{Handler: imageDelete, AccessHandler: allowProjectPermission("images", "manage-images")},
+	Delete: APIEndpointAction{Handler: imageDelete, AccessHandler: allowProjectPermission()},
 	Get:    APIEndpointAction{Handler: imageGet, AllowUntrusted: true},
-	Patch:  APIEndpointAction{Handler: imagePatch, AccessHandler: allowProjectPermission("images", "manage-images")},
-	Put:    APIEndpointAction{Handler: imagePut, AccessHandler: allowProjectPermission("images", "manage-images")},
+	Patch:  APIEndpointAction{Handler: imagePatch, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: imagePut, AccessHandler: allowProjectPermission()},
 }
 
 var imageExportCmd = APIEndpoint{
 	Path: "images/{fingerprint}/export",
 
 	Get:  APIEndpointAction{Handler: imageExport, AllowUntrusted: true},
-	Post: APIEndpointAction{Handler: imageExportPost, AccessHandler: allowProjectPermission("images", "manage-images")},
+	Post: APIEndpointAction{Handler: imageExportPost, AccessHandler: allowProjectPermission()},
 }
 
 var imageSecretCmd = APIEndpoint{
 	Path: "images/{fingerprint}/secret",
 
-	Post: APIEndpointAction{Handler: imageSecret, AccessHandler: allowProjectPermission("images", "view")},
+	Post: APIEndpointAction{Handler: imageSecret, AccessHandler: allowProjectPermission()},
 }
 
 var imageRefreshCmd = APIEndpoint{
 	Path: "images/{fingerprint}/refresh",
 
-	Post: APIEndpointAction{Handler: imageRefresh, AccessHandler: allowProjectPermission("images", "manage-images")},
+	Post: APIEndpointAction{Handler: imageRefresh, AccessHandler: allowProjectPermission()},
 }
 
 var imageAliasesCmd = APIEndpoint{
 	Path: "images/aliases",
 
-	Get:  APIEndpointAction{Handler: imageAliasesGet, AccessHandler: allowProjectPermission("images", "view")},
-	Post: APIEndpointAction{Handler: imageAliasesPost, AccessHandler: allowProjectPermission("images", "manage-images")},
+	Get:  APIEndpointAction{Handler: imageAliasesGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: imageAliasesPost, AccessHandler: allowProjectPermission()},
 }
 
 var imageAliasCmd = APIEndpoint{
 	Path: "images/aliases/{name:.*}",
 
-	Delete: APIEndpointAction{Handler: imageAliasDelete, AccessHandler: allowProjectPermission("images", "manage-images")},
+	Delete: APIEndpointAction{Handler: imageAliasDelete, AccessHandler: allowProjectPermission()},
 	Get:    APIEndpointAction{Handler: imageAliasGet, AllowUntrusted: true},
-	Patch:  APIEndpointAction{Handler: imageAliasPatch, AccessHandler: allowProjectPermission("images", "manage-images")},
-	Post:   APIEndpointAction{Handler: imageAliasPost, AccessHandler: allowProjectPermission("images", "manage-images")},
-	Put:    APIEndpointAction{Handler: imageAliasPut, AccessHandler: allowProjectPermission("images", "manage-images")},
+	Patch:  APIEndpointAction{Handler: imageAliasPatch, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: imageAliasPost, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: imageAliasPut, AccessHandler: allowProjectPermission()},
 }
 
 /*
@@ -915,7 +915,7 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 func imagesPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	trusted := d.checkTrustedClient(r) == nil && allowProjectPermission("images", "manage-images")(d, r) == response.EmptySyncResponse
+	trusted := d.checkTrustedClient(r) == nil && allowProjectPermission()(d, r) == response.EmptySyncResponse
 
 	secret := r.Header.Get("X-Incus-secret")
 	fingerprint := r.Header.Get("X-Incus-fingerprint")
@@ -1536,7 +1536,7 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 func imagesGet(d *Daemon, r *http.Request) response.Response {
 	projectName := projectParam(r)
 	filterStr := r.FormValue("filter")
-	public := d.checkTrustedClient(r) != nil || allowProjectPermission("images", "view")(d, r) != response.EmptySyncResponse
+	public := d.checkTrustedClient(r) != nil || allowProjectPermission()(d, r) != response.EmptySyncResponse
 
 	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
 	if err != nil {
@@ -2758,7 +2758,7 @@ func imageGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	public := d.checkTrustedClient(r) != nil || allowProjectPermission("images", "view")(d, r) != response.EmptySyncResponse
+	public := d.checkTrustedClient(r) != nil || allowProjectPermission()(d, r) != response.EmptySyncResponse
 	secret := r.FormValue("secret")
 
 	var info *api.Image
@@ -3300,7 +3300,7 @@ func imageAliasGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	public := d.checkTrustedClient(r) != nil || allowProjectPermission("images", "view")(d, r) != response.EmptySyncResponse
+	public := d.checkTrustedClient(r) != nil || allowProjectPermission()(d, r) != response.EmptySyncResponse
 
 	var alias api.ImageAliasesEntry
 	err = d.State().DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -3712,7 +3712,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	public := d.checkTrustedClient(r) != nil || allowProjectPermission("images", "view")(d, r) != response.EmptySyncResponse
+	public := d.checkTrustedClient(r) != nil || allowProjectPermission()(d, r) != response.EmptySyncResponse
 	secret := r.FormValue("secret")
 
 	var imgInfo *api.Image

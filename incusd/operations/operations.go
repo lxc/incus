@@ -136,7 +136,6 @@ func OperationCreate(s *state.State, projectName string, opClass OperationClass,
 	op.projectName = projectName
 	op.id = uuid.New()
 	op.description = opType.Description()
-	op.permission = opType.Permission()
 	op.dbOpType = opType
 	op.class = opClass
 	op.createdAt = time.Now()

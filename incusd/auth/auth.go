@@ -1,4 +1,4 @@
-package rbac
+package auth
 
 import (
 	"net/http"
@@ -6,6 +6,12 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/shared"
 )
+
+// UserAccess struct for permission checks.
+type UserAccess struct {
+	Admin    bool
+	Projects []string
+}
 
 // UserIsAdmin checks whether the requestor is a global admin.
 func UserIsAdmin(r *http.Request) bool {
@@ -18,8 +24,8 @@ func UserIsAdmin(r *http.Request) bool {
 	return ua.Admin
 }
 
-// UserHasPermission checks whether the requestor has a specific permission on a project.
-func UserHasPermission(r *http.Request, project string, permission string) bool {
+// UserHasPermission checks whether the requestor has access to a project.
+func UserHasPermission(r *http.Request, project string) bool {
 	val := r.Context().Value(request.CtxAccess)
 	if val == nil {
 		return false
@@ -30,5 +36,5 @@ func UserHasPermission(r *http.Request, project string, permission string) bool 
 		return true
 	}
 
-	return shared.StringInSlice(permission, ua.Projects[project])
+	return shared.StringInSlice(project, ua.Projects)
 }

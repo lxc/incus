@@ -869,18 +869,6 @@ Those keys control the source address used for outbound traffic from the bridge.
 This introduces the `ipv4.routes` and `ipv6.routes` properties on `nic` type devices.
 This allows adding static routes on host to container's NIC.
 
-## `rbac`
-
-Adds support for RBAC (role based access control). This introduces new configuration keys:
-
-* `rbac.api.url`
-* `rbac.api.key`
-* `rbac.api.expiry`
-* `rbac.agent.url`
-* `rbac.agent.username`
-* `rbac.agent.private_key`
-* `rbac.agent.public_key`
-
 ## `cluster_internal_copy`
 
 This makes it possible to do a normal `POST /1.0/containers` to copy a

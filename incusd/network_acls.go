@@ -25,24 +25,24 @@ import (
 var networkACLsCmd = APIEndpoint{
 	Path: "network-acls",
 
-	Get:  APIEndpointAction{Handler: networkACLsGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Post: APIEndpointAction{Handler: networkACLsPost, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Get:  APIEndpointAction{Handler: networkACLsGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: networkACLsPost, AccessHandler: allowProjectPermission()},
 }
 
 var networkACLCmd = APIEndpoint{
 	Path: "network-acls/{name}",
 
-	Delete: APIEndpointAction{Handler: networkACLDelete, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Get:    APIEndpointAction{Handler: networkACLGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Put:    APIEndpointAction{Handler: networkACLPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Patch:  APIEndpointAction{Handler: networkACLPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Post:   APIEndpointAction{Handler: networkACLPost, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Delete: APIEndpointAction{Handler: networkACLDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: networkACLGet, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: networkACLPut, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: networkACLPut, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: networkACLPost, AccessHandler: allowProjectPermission()},
 }
 
 var networkACLLogCmd = APIEndpoint{
 	Path: "network-acls/{name}/log",
 
-	Get: APIEndpointAction{Handler: networkACLLogGet, AccessHandler: allowProjectPermission("networks", "view")},
+	Get: APIEndpointAction{Handler: networkACLLogGet, AccessHandler: allowProjectPermission()},
 }
 
 // API endpoints.

@@ -8,7 +8,7 @@ The following options are available:
 
 - {ref}`server-options-core`
 - {ref}`server-options-acme`
-- {ref}`server-options-candid-rbac`
+- {ref}`server-options-candid`
 - {ref}`server-options-cluster`
 - {ref}`server-options-images`
 - {ref}`server-options-loki`
@@ -62,10 +62,10 @@ Key                                 | Type      | Scope     | Default           
 `acme.domain`                       | string    | global    | -                                                | Domain for which the certificate is issued
 `acme.email`                        | string    | global    | -                                                | Email address used for the account registration
 
-(server-options-candid-rbac)=
-## Candid and RBAC configuration
+(server-options-candid)=
+## Candid configuration
 
-The following server options configure external user authentication, through {ref}`authentication-candid` or through {ref}`authentication-rbac`:
+The following server options configure external user authentication, through {ref}`authentication-candid`:
 
 Key                                 | Type      | Scope     | Default                                          | Description
 :--                                 | :---      | :----     | :------                                          | :----------
@@ -73,13 +73,6 @@ Key                                 | Type      | Scope     | Default           
 `candid.api.url`                    | string    | global    | -                                                | URL of the external authentication endpoint using Candid
 `candid.domains`                    | string    | global    | -                                                | Comma-separated list of allowed Candid domains (empty string means all domains are valid)
 `candid.expiry`                     | integer   | global    | `3600`                                           | Candid macaroon expiry in seconds
-`rbac.agent.private_key`            | string    | global    | -                                                | Private key of the Candid agent as provided during RBAC registration
-`rbac.agent.public_key`             | string    | global    | -                                                | Public key of the Candid agent as provided during RBAC registration
-`rbac.agent.url`                    | string    | global    | -                                                | URL of the Candid agent as provided during RBAC registration
-`rbac.agent.username`               | string    | global    | -                                                | User name of the Candid agent as provided during RBAC registration
-`rbac.api.expiry`                   | integer   | global    | -                                                | RBAC macaroon expiry in seconds
-`rbac.api.key`                      | string    | global    | -                                                | Public key of the RBAC server (required for HTTP-only servers)
-`rbac.api.url`                      | string    | global    | -                                                | URL of the external RBAC server
 
 (server-options-oidc)=
 ## OpenID Connect configuration

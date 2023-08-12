@@ -13,6 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/cluster"
 	"github.com/lxc/incus/incusd/db"
 	dbCluster "github.com/lxc/incus/incusd/db/cluster"
@@ -20,7 +21,6 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/shared"
@@ -287,7 +287,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 			}
 
 			for _, project := range projects {
-				if !rbac.UserHasPermission(r, project.Name, "view") {
+				if !auth.UserHasPermission(r, project.Name) {
 					continue
 				}
 

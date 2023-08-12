@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/db/cluster"
 	deviceconfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/idmap"
@@ -1419,8 +1419,8 @@ var aggregateLimitConfigValuePrinters = map[string]func(int64) string{
 
 // FilterUsedBy filters a UsedBy list based on project access.
 func FilterUsedBy(r *http.Request, entries []string) []string {
-	// Shortcut for admins and non-RBAC environments.
-	if rbac.UserIsAdmin(r) {
+	// Shortcut for admins and environments without access control.
+	if auth.UserIsAdmin(r) {
 		return entries
 	}
 
@@ -1442,7 +1442,7 @@ func FilterUsedBy(r *http.Request, entries []string) []string {
 			projectName = val
 		}
 
-		if !rbac.UserHasPermission(r, projectName, "view") {
+		if !auth.UserHasPermission(r, projectName) {
 			continue
 		}
 
@@ -1473,7 +1473,7 @@ func projectHasRestriction(project *api.Project, restrictionKey string, blockVal
 // CheckClusterTargetRestriction check if user is allowed to use cluster member targeting.
 func CheckClusterTargetRestriction(r *http.Request, project *api.Project, targetFlag string) error {
 	// Allow server administrators to move instances around even when restricted (node evacuation, ...)
-	if rbac.UserIsAdmin(r) {
+	if auth.UserIsAdmin(r) {
 		return nil
 	}
 

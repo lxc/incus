@@ -150,7 +150,6 @@ var APIExtensions = []string{
 	"storage_api_remote_volume_snapshots",
 	"network_nat_address",
 	"container_nic_routes",
-	"rbac",
 	"cluster_internal_copy",
 	"seccomp_notify",
 	"lxc_features",

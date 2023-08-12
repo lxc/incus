@@ -21,17 +21,17 @@ import (
 var networkZoneRecordsCmd = APIEndpoint{
 	Path: "network-zones/{zone}/records",
 
-	Get:  APIEndpointAction{Handler: networkZoneRecordsGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Post: APIEndpointAction{Handler: networkZoneRecordsPost, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Get:  APIEndpointAction{Handler: networkZoneRecordsGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: networkZoneRecordsPost, AccessHandler: allowProjectPermission()},
 }
 
 var networkZoneRecordCmd = APIEndpoint{
 	Path: "network-zones/{zone}/records/{name}",
 
-	Delete: APIEndpointAction{Handler: networkZoneRecordDelete, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Get:    APIEndpointAction{Handler: networkZoneRecordGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Put:    APIEndpointAction{Handler: networkZoneRecordPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Patch:  APIEndpointAction{Handler: networkZoneRecordPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Delete: APIEndpointAction{Handler: networkZoneRecordDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: networkZoneRecordGet, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: networkZoneRecordPut, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: networkZoneRecordPut, AccessHandler: allowProjectPermission()},
 }
 
 // API endpoints.

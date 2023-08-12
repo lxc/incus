@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/cluster"
 	"github.com/lxc/incus/incusd/db"
 	dbCluster "github.com/lxc/incus/incusd/db/cluster"
@@ -18,7 +19,6 @@ import (
 	"github.com/lxc/incus/incusd/lifecycle"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
@@ -253,14 +253,12 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 	op, err := operations.OperationGetInternal(id)
 	if err == nil {
 		projectName := op.Project()
-		if op.Permission() != "" {
-			if projectName == "" {
-				projectName = project.Default
-			}
+		if projectName == "" {
+			projectName = project.Default
+		}
 
-			if !rbac.UserHasPermission(r, projectName, op.Permission()) {
-				return response.Forbidden(nil)
-			}
+		if !auth.UserHasPermission(r, projectName) {
+			return response.Forbidden(nil)
 		}
 
 		_, err = op.Cancel()

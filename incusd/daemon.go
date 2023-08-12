@@ -27,6 +27,7 @@ import (
 
 	"github.com/lxc/incus/incusd/acme"
 	"github.com/lxc/incus/incusd/apparmor"
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/auth/candid"
 	"github.com/lxc/incus/incusd/auth/oidc"
 	"github.com/lxc/incus/incusd/bgp"
@@ -48,7 +49,6 @@ import (
 	"github.com/lxc/incus/incusd/maas"
 	networkZone "github.com/lxc/incus/incusd/network/zone"
 	"github.com/lxc/incus/incusd/node"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/rsync"
@@ -80,7 +80,6 @@ type Daemon struct {
 	maas        *maas.Controller
 	bgp         *bgp.Server
 	dns         *dns.Server
-	rbac        *rbac.Server
 
 	// Event servers
 	devlxdEvents     *events.DevLXDServer
@@ -232,19 +231,19 @@ func allowAuthenticated(d *Daemon, r *http.Request) response.Response {
 	return response.EmptySyncResponse
 }
 
-// allowProjectPermission is a wrapper to check access against the project, its features and RBAC permission.
-func allowProjectPermission(feature string, permission string) func(d *Daemon, r *http.Request) response.Response {
+// allowProjectPermission is a wrapper to check access against the project.
+func allowProjectPermission() func(d *Daemon, r *http.Request) response.Response {
 	return func(d *Daemon, r *http.Request) response.Response {
 		// Shortcut for speed
-		if rbac.UserIsAdmin(r) {
+		if auth.UserIsAdmin(r) {
 			return response.EmptySyncResponse
 		}
 
 		// Get the project
 		projectName := projectParam(r)
 
-		// Validate whether the user has the needed permission
-		if !rbac.UserHasPermission(r, projectName, permission) {
+		// Validate whether the user access to the project.
+		if !auth.UserHasPermission(r, projectName) {
 			return response.Forbidden(nil)
 		}
 
@@ -495,8 +494,8 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			logger.Debug("Handling API request", logCtx)
 
 			// Get user access data.
-			userAccess, err := func() (*rbac.UserAccess, error) {
-				ua := &rbac.UserAccess{}
+			userAccess, err := func() (*auth.UserAccess, error) {
+				ua := &auth.UserAccess{}
 				ua.Admin = true
 
 				// Internal cluster communications.
@@ -515,33 +514,11 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 						projects, ok := certProjects[username]
 						if ok {
 							ua.Admin = false
-							ua.Projects = map[string][]string{}
-							for _, projectName := range projects {
-								ua.Projects[projectName] = []string{
-									"view",
-									"manage-containers",
-									"manage-images",
-									"manage-networks",
-									"manage-profiles",
-									"manage-storage-volumes",
-									"operate-containers",
-								}
-							}
+							ua.Projects = projects
 						}
 					}
 
 					return ua, nil
-				}
-
-				// If no external authentication configured, we're done now.
-				if d.candidVerifier == nil || d.rbac == nil || r.RemoteAddr == "@" {
-					return ua, nil
-				}
-
-				// Validate RBAC permissions.
-				ua, err = d.rbac.UserAccess(username)
-				if err != nil {
-					return nil, err
 				}
 
 				return ua, nil
@@ -641,7 +618,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 				}
 			} else if !action.AllowUntrusted {
 				// Require admin privileges
-				if !rbac.UserIsAdmin(r) {
+				if !auth.UserIsAdmin(r) {
 					return response.Forbidden(nil)
 				}
 			}
@@ -1248,14 +1225,6 @@ func (d *Daemon) init() error {
 
 	dnsAddress := d.localConfig.DNSAddress()
 
-	rbacAPIURL := ""
-	rbacAPIKey := ""
-	rbacAgentURL := ""
-	rbacAgentUsername := ""
-	rbacAgentPrivateKey := ""
-	rbacAgentPublicKey := ""
-	rbacExpiry := int64(0)
-
 	maasAPIURL := ""
 	maasAPIKey := ""
 	maasMachine := d.localConfig.MAASMachine()
@@ -1291,7 +1260,6 @@ func (d *Daemon) init() error {
 
 	candidAPIURL, candidAPIKey, candidExpiry, candidDomains = d.globalConfig.CandidServer()
 	maasAPIURL, maasAPIKey = d.globalConfig.MAASController()
-	rbacAPIURL, rbacAPIKey, rbacExpiry, rbacAgentURL, rbacAgentUsername, rbacAgentPrivateKey, rbacAgentPublicKey = d.globalConfig.RBACServer()
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
 	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes := d.globalConfig.LokiServer()
 	oidcIssuer, oidcClientID, oidcAudience := d.globalConfig.OIDCServer()
@@ -1304,14 +1272,6 @@ func (d *Daemon) init() error {
 	// Setup Loki logger.
 	if lokiURL != "" {
 		err = d.setupLoki(lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Setup RBAC authentication.
-	if rbacAPIURL != "" {
-		err = d.setupRBACServer(rbacAPIURL, rbacAPIKey, rbacExpiry, rbacAgentURL, rbacAgentUsername, rbacAgentPrivateKey, rbacAgentPublicKey)
 		if err != nil {
 			return err
 		}
@@ -1795,56 +1755,6 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	}
 
 	return err
-}
-
-// Setup RBAC.
-func (d *Daemon) setupRBACServer(rbacURL string, rbacKey string, rbacExpiry int64, rbacAgentURL string, rbacAgentUsername string, rbacAgentPrivateKey string, rbacAgentPublicKey string) error {
-	if d.rbac != nil || rbacURL == "" || rbacAgentURL == "" || rbacAgentUsername == "" || rbacAgentPrivateKey == "" || rbacAgentPublicKey == "" {
-		return nil
-	}
-
-	// Get a new server struct
-	server, err := rbac.NewServer(rbacURL, rbacKey, rbacAgentURL, rbacAgentUsername, rbacAgentPrivateKey, rbacAgentPublicKey)
-	if err != nil {
-		return err
-	}
-
-	// Set projects helper
-	server.ProjectsFunc = func() (map[int64]string, error) {
-		var result map[int64]string
-		err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			var err error
-			result, err = dbCluster.GetProjectIDsToNames(ctx, tx.Tx())
-			return err
-		})
-
-		return result, err
-	}
-
-	// Perform full sync when online
-	go func() {
-		for {
-			err = server.SyncProjects()
-			if err != nil {
-				time.Sleep(time.Minute)
-				continue
-			}
-
-			break
-		}
-	}()
-
-	server.StartStatusCheck()
-
-	d.rbac = server
-
-	// Enable candid authentication
-	d.candidVerifier, err = candid.NewVerifier(fmt.Sprintf("%s/auth", rbacURL), rbacKey, rbacExpiry, "")
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Setup MAAS.

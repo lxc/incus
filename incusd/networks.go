@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/cluster"
 	clusterRequest "github.com/lxc/incus/incusd/cluster/request"
 	"github.com/lxc/incus/incusd/db"
@@ -27,7 +28,6 @@ import (
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/network/openvswitch"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/incusd/response"
@@ -47,30 +47,30 @@ var networkCreateLock sync.Mutex
 var networksCmd = APIEndpoint{
 	Path: "networks",
 
-	Get:  APIEndpointAction{Handler: networksGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Post: APIEndpointAction{Handler: networksPost, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Get:  APIEndpointAction{Handler: networksGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: networksPost, AccessHandler: allowProjectPermission()},
 }
 
 var networkCmd = APIEndpoint{
 	Path: "networks/{networkName}",
 
-	Delete: APIEndpointAction{Handler: networkDelete, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Get:    APIEndpointAction{Handler: networkGet, AccessHandler: allowProjectPermission("networks", "view")},
-	Patch:  APIEndpointAction{Handler: networkPatch, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Post:   APIEndpointAction{Handler: networkPost, AccessHandler: allowProjectPermission("networks", "manage-networks")},
-	Put:    APIEndpointAction{Handler: networkPut, AccessHandler: allowProjectPermission("networks", "manage-networks")},
+	Delete: APIEndpointAction{Handler: networkDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: networkGet, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: networkPatch, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: networkPost, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: networkPut, AccessHandler: allowProjectPermission()},
 }
 
 var networkLeasesCmd = APIEndpoint{
 	Path: "networks/{networkName}/leases",
 
-	Get: APIEndpointAction{Handler: networkLeasesGet, AccessHandler: allowProjectPermission("networks", "view")},
+	Get: APIEndpointAction{Handler: networkLeasesGet, AccessHandler: allowProjectPermission()},
 }
 
 var networkStateCmd = APIEndpoint{
 	Path: "networks/{networkName}/state",
 
-	Get: APIEndpointAction{Handler: networkStateGet, AccessHandler: allowProjectPermission("networks", "view")},
+	Get: APIEndpointAction{Handler: networkStateGet, AccessHandler: allowProjectPermission()},
 }
 
 // API endpoints
@@ -836,7 +836,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 		apiNet.Description = n.Description()
 		apiNet.Type = n.Type()
 
-		if rbac.UserIsAdmin(r) {
+		if auth.UserIsAdmin(r) {
 			// Only allow admins to see network config as sensitive info can be stored there.
 			apiNet.Config = n.Config()
 

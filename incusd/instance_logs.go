@@ -25,30 +25,30 @@ var instanceLogCmd = APIEndpoint{
 	Name: "instanceLog",
 	Path: "instances/{name}/logs/{file}",
 
-	Delete: APIEndpointAction{Handler: instanceLogDelete, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Get:    APIEndpointAction{Handler: instanceLogGet, AccessHandler: allowProjectPermission("containers", "view")},
+	Delete: APIEndpointAction{Handler: instanceLogDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: instanceLogGet, AccessHandler: allowProjectPermission()},
 }
 
 var instanceLogsCmd = APIEndpoint{
 	Name: "instanceLogs",
 	Path: "instances/{name}/logs",
 
-	Get: APIEndpointAction{Handler: instanceLogsGet, AccessHandler: allowProjectPermission("containers", "view")},
+	Get: APIEndpointAction{Handler: instanceLogsGet, AccessHandler: allowProjectPermission()},
 }
 
 var instanceExecOutputCmd = APIEndpoint{
 	Name: "instanceExecOutput",
 	Path: "instances/{name}/logs/exec-output/{file}",
 
-	Delete: APIEndpointAction{Handler: instanceExecOutputDelete, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Get:    APIEndpointAction{Handler: instanceExecOutputGet, AccessHandler: allowProjectPermission("containers", "view")},
+	Delete: APIEndpointAction{Handler: instanceExecOutputDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: instanceExecOutputGet, AccessHandler: allowProjectPermission()},
 }
 
 var instanceExecOutputsCmd = APIEndpoint{
 	Name: "instanceExecOutputs",
 	Path: "instances/{name}/logs/exec-output",
 
-	Get: APIEndpointAction{Handler: instanceExecOutputsGet, AccessHandler: allowProjectPermission("containers", "view")},
+	Get: APIEndpointAction{Handler: instanceExecOutputsGet, AccessHandler: allowProjectPermission()},
 }
 
 // swagger:operation GET /1.0/instances/{name}/logs instances instance_logs_get

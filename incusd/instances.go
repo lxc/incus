@@ -28,129 +28,129 @@ var instancesCmd = APIEndpoint{
 	Name: "instances",
 	Path: "instances",
 
-	Get:  APIEndpointAction{Handler: instancesGet, AccessHandler: allowProjectPermission("containers", "view")},
-	Post: APIEndpointAction{Handler: instancesPost, AccessHandler: allowProjectPermission("containers", "manage-containers")},
-	Put:  APIEndpointAction{Handler: instancesPut, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Get:  APIEndpointAction{Handler: instancesGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: instancesPost, AccessHandler: allowProjectPermission()},
+	Put:  APIEndpointAction{Handler: instancesPut, AccessHandler: allowProjectPermission()},
 }
 
 var instanceCmd = APIEndpoint{
 	Name: "instance",
 	Path: "instances/{name}",
 
-	Get:    APIEndpointAction{Handler: instanceGet, AccessHandler: allowProjectPermission("containers", "view")},
-	Put:    APIEndpointAction{Handler: instancePut, AccessHandler: allowProjectPermission("containers", "manage-containers")},
-	Delete: APIEndpointAction{Handler: instanceDelete, AccessHandler: allowProjectPermission("containers", "manage-containers")},
-	Post:   APIEndpointAction{Handler: instancePost, AccessHandler: allowProjectPermission("containers", "manage-containers")},
-	Patch:  APIEndpointAction{Handler: instancePatch, AccessHandler: allowProjectPermission("containers", "manage-containers")},
+	Get:    APIEndpointAction{Handler: instanceGet, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: instancePut, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: instanceDelete, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: instancePost, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: instancePatch, AccessHandler: allowProjectPermission()},
 }
 
 var instanceRebuildCmd = APIEndpoint{
 	Name: "instanceRebuild",
 	Path: "instances/{name}/rebuild",
 
-	Post: APIEndpointAction{Handler: instanceRebuildPost, AccessHandler: allowProjectPermission("containers", "manage-containers")},
+	Post: APIEndpointAction{Handler: instanceRebuildPost, AccessHandler: allowProjectPermission()},
 }
 
 var instanceStateCmd = APIEndpoint{
 	Name: "instanceState",
 	Path: "instances/{name}/state",
 
-	Get: APIEndpointAction{Handler: instanceState, AccessHandler: allowProjectPermission("containers", "view")},
-	Put: APIEndpointAction{Handler: instanceStatePut, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Get: APIEndpointAction{Handler: instanceState, AccessHandler: allowProjectPermission()},
+	Put: APIEndpointAction{Handler: instanceStatePut, AccessHandler: allowProjectPermission()},
 }
 
 var instanceSFTPCmd = APIEndpoint{
 	Name: "instanceFile",
 	Path: "instances/{name}/sftp",
 
-	Get: APIEndpointAction{Handler: instanceSFTPHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Get: APIEndpointAction{Handler: instanceSFTPHandler, AccessHandler: allowProjectPermission()},
 }
 
 var instanceFileCmd = APIEndpoint{
 	Name: "instanceFile",
 	Path: "instances/{name}/files",
 
-	Get:    APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Head:   APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Post:   APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Delete: APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Get:    APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission()},
+	Head:   APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission()},
 }
 
 var instanceSnapshotsCmd = APIEndpoint{
 	Name: "instanceSnapshots",
 	Path: "instances/{name}/snapshots",
 
-	Get:  APIEndpointAction{Handler: instanceSnapshotsGet, AccessHandler: allowProjectPermission("containers", "view")},
-	Post: APIEndpointAction{Handler: instanceSnapshotsPost, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Get:  APIEndpointAction{Handler: instanceSnapshotsGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: instanceSnapshotsPost, AccessHandler: allowProjectPermission()},
 }
 
 var instanceSnapshotCmd = APIEndpoint{
 	Name: "instanceSnapshot",
 	Path: "instances/{name}/snapshots/{snapshotName}",
 
-	Get:    APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Post:   APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Delete: APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Patch:  APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Put:    APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Get:    APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
+	Put:    APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
 }
 
 var instanceConsoleCmd = APIEndpoint{
 	Name: "instanceConsole",
 	Path: "instances/{name}/console",
 
-	Get:    APIEndpointAction{Handler: instanceConsoleLogGet, AccessHandler: allowProjectPermission("containers", "view")},
-	Post:   APIEndpointAction{Handler: instanceConsolePost, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Delete: APIEndpointAction{Handler: instanceConsoleLogDelete, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Get:    APIEndpointAction{Handler: instanceConsoleLogGet, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: instanceConsolePost, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: instanceConsoleLogDelete, AccessHandler: allowProjectPermission()},
 }
 
 var instanceExecCmd = APIEndpoint{
 	Name: "instanceExec",
 	Path: "instances/{name}/exec",
 
-	Post: APIEndpointAction{Handler: instanceExecPost, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Post: APIEndpointAction{Handler: instanceExecPost, AccessHandler: allowProjectPermission()},
 }
 
 var instanceMetadataCmd = APIEndpoint{
 	Name: "instanceMetadata",
 	Path: "instances/{name}/metadata",
 
-	Get:   APIEndpointAction{Handler: instanceMetadataGet, AccessHandler: allowProjectPermission("containers", "view")},
-	Patch: APIEndpointAction{Handler: instanceMetadataPatch, AccessHandler: allowProjectPermission("containers", "manage-containers")},
-	Put:   APIEndpointAction{Handler: instanceMetadataPut, AccessHandler: allowProjectPermission("containers", "manage-containers")},
+	Get:   APIEndpointAction{Handler: instanceMetadataGet, AccessHandler: allowProjectPermission()},
+	Patch: APIEndpointAction{Handler: instanceMetadataPatch, AccessHandler: allowProjectPermission()},
+	Put:   APIEndpointAction{Handler: instanceMetadataPut, AccessHandler: allowProjectPermission()},
 }
 
 var instanceMetadataTemplatesCmd = APIEndpoint{
 	Name: "instanceMetadataTemplates",
 	Path: "instances/{name}/metadata/templates",
 
-	Get:    APIEndpointAction{Handler: instanceMetadataTemplatesGet, AccessHandler: allowProjectPermission("containers", "view")},
-	Post:   APIEndpointAction{Handler: instanceMetadataTemplatesPost, AccessHandler: allowProjectPermission("containers", "manage-containers")},
-	Delete: APIEndpointAction{Handler: instanceMetadataTemplatesDelete, AccessHandler: allowProjectPermission("containers", "manage-containers")},
+	Get:    APIEndpointAction{Handler: instanceMetadataTemplatesGet, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: instanceMetadataTemplatesPost, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: instanceMetadataTemplatesDelete, AccessHandler: allowProjectPermission()},
 }
 
 var instanceBackupsCmd = APIEndpoint{
 	Name: "instanceBackups",
 	Path: "instances/{name}/backups",
 
-	Get:  APIEndpointAction{Handler: instanceBackupsGet, AccessHandler: allowProjectPermission("containers", "view")},
-	Post: APIEndpointAction{Handler: instanceBackupsPost, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Get:  APIEndpointAction{Handler: instanceBackupsGet, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: instanceBackupsPost, AccessHandler: allowProjectPermission()},
 }
 
 var instanceBackupCmd = APIEndpoint{
 	Name: "instanceBackup",
 	Path: "instances/{name}/backups/{backupName}",
 
-	Get:    APIEndpointAction{Handler: instanceBackupGet, AccessHandler: allowProjectPermission("containers", "view")},
-	Post:   APIEndpointAction{Handler: instanceBackupPost, AccessHandler: allowProjectPermission("containers", "operate-containers")},
-	Delete: APIEndpointAction{Handler: instanceBackupDelete, AccessHandler: allowProjectPermission("containers", "operate-containers")},
+	Get:    APIEndpointAction{Handler: instanceBackupGet, AccessHandler: allowProjectPermission()},
+	Post:   APIEndpointAction{Handler: instanceBackupPost, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: instanceBackupDelete, AccessHandler: allowProjectPermission()},
 }
 
 var instanceBackupExportCmd = APIEndpoint{
 	Name: "instanceBackupExport",
 	Path: "instances/{name}/backups/{backupName}/export",
 
-	Get: APIEndpointAction{Handler: instanceBackupExportGet, AccessHandler: allowProjectPermission("containers", "view")},
+	Get: APIEndpointAction{Handler: instanceBackupExportGet, AccessHandler: allowProjectPermission()},
 }
 
 type instanceAutostartList []instance.Instance

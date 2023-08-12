@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/events"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rbac"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
@@ -64,7 +64,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 	if len(types) == 1 && types[0] == "" {
 		types = []string{}
 		for _, entry := range eventTypes {
-			if !rbac.UserIsAdmin(r) && shared.StringInSlice(entry, privilegedEventTypes) {
+			if !auth.UserIsAdmin(r) && shared.StringInSlice(entry, privilegedEventTypes) {
 				continue
 			}
 
@@ -79,7 +79,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		}
 	}
 
-	if shared.StringInSlice(api.EventTypeLogging, types) && !rbac.UserIsAdmin(r) {
+	if shared.StringInSlice(api.EventTypeLogging, types) && !auth.UserIsAdmin(r) {
 		return api.StatusErrorf(http.StatusForbidden, "Forbidden")
 	}
 
