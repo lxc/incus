@@ -420,10 +420,6 @@ files for the container via `nofile`. The format is `limits.kernel.[limit name]`
 
 This adds support for renaming custom storage volumes.
 
-## `external_authentication`
-
-This adds support for external authentication via Macaroons.
-
 ## `network_sriov`
 
 This adds support for SR-IOV enabled network devices.

@@ -83,7 +83,6 @@ var APIExtensions = []string{
 	"resources",
 	"kernel_limits",
 	"storage_api_volume_rename",
-	"macaroon_authentication",
 	"network_sriov",
 	"console",
 	"restrict_devlxd",
