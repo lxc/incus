@@ -20,7 +20,6 @@ import (
 
 	dqliteClient "github.com/cowsql/go-cowsql/client"
 	"github.com/cowsql/go-cowsql/driver"
-	"github.com/go-macaroon-bakery/macaroon-bakery/v3/bakery"
 	"github.com/gorilla/mux"
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
@@ -28,7 +27,6 @@ import (
 	"github.com/lxc/incus/incusd/acme"
 	"github.com/lxc/incus/incusd/apparmor"
 	"github.com/lxc/incus/incusd/auth"
-	"github.com/lxc/incus/incusd/auth/candid"
 	"github.com/lxc/incus/incusd/auth/oidc"
 	"github.com/lxc/incus/incusd/bgp"
 	"github.com/lxc/incus/incusd/cluster"
@@ -108,8 +106,7 @@ type Daemon struct {
 
 	proxy func(req *http.Request) (*url.URL, error)
 
-	candidVerifier *candid.Verifier
-	oidcVerifier   *oidc.Verifier
+	oidcVerifier *oidc.Verifier
 
 	// Stores last heartbeat node information to detect node changes.
 	lastNodeList *cluster.APIHeartbeat
@@ -275,11 +272,11 @@ func (d *Daemon) getTrustedCertificates() map[dbCluster.CertificateType]map[stri
 
 // Authenticate validates an incoming http Request
 // It will check over what protocol it came, what type of request it is and
-// will validate the TLS certificate or Macaroon.
+// will validate the TLS certificate.
 //
 // This does not perform authorization, only validates authentication.
 // Returns whether trusted or not, the username (or certificate fingerprint) of the trusted client, and the type of
-// client that has been authenticated (cluster, unix, candid or tls).
+// client that has been authenticated (cluster, unix, or tls).
 func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, string, string, error) {
 	trustedCerts := d.getTrustedCertificates()
 
@@ -334,19 +331,6 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		}
 
 		return true, userName, "oidc", nil
-	} else if d.candidVerifier != nil && d.candidVerifier.IsRequest(r) {
-		info, err := d.candidVerifier.Auth(r)
-		if err != nil {
-			return false, "", "", err
-		}
-
-		if info != nil && info.Identity != nil {
-			// Valid identity macaroon found.
-			return true, info.Identity.Id(), "candid", nil
-		}
-
-		// Valid macaroon with no identity information.
-		return true, "", "candid", nil
 	}
 
 	// Validate normal TLS access.
@@ -463,13 +447,6 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 				_ = response.Unauthorized(err).Render(w)
 				return
 			}
-
-			// If not a macaroon discharge request, return the error
-			_, ok = err.(*bakery.DischargeRequiredError)
-			if !ok {
-				_ = response.InternalError(err).Render(w)
-				return
-			}
 		}
 
 		// Reject internal queries to remote, non-cluster, clients
@@ -546,9 +523,6 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			r = r.WithContext(ctx)
 		} else if untrustedOk && r.Header.Get("X-Incus-authenticated") == "" {
 			logger.Debug(fmt.Sprintf("Allowing untrusted %s", r.Method), logger.Ctx{"url": r.URL.RequestURI(), "ip": r.RemoteAddr})
-		} else if derr, ok := err.(*bakery.DischargeRequiredError); ok {
-			d.candidVerifier.WriteRequest(r, w, derr)
-			return
 		} else {
 			if d.oidcVerifier != nil {
 				_ = d.oidcVerifier.WriteHeaders(w)
