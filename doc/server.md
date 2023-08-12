@@ -8,7 +8,6 @@ The following options are available:
 
 - {ref}`server-options-core`
 - {ref}`server-options-acme`
-- {ref}`server-options-candid`
 - {ref}`server-options-cluster`
 - {ref}`server-options-images`
 - {ref}`server-options-loki`
@@ -61,18 +60,6 @@ Key                                 | Type      | Scope     | Default           
 `acme.ca_url`                       | string    | global    | `https://acme-v02.api.letsencrypt.org/directory` | URL to the directory resource of the ACME service
 `acme.domain`                       | string    | global    | -                                                | Domain for which the certificate is issued
 `acme.email`                        | string    | global    | -                                                | Email address used for the account registration
-
-(server-options-candid)=
-## Candid configuration
-
-The following server options configure external user authentication, through {ref}`authentication-candid`:
-
-Key                                 | Type      | Scope     | Default                                          | Description
-:--                                 | :---      | :----     | :------                                          | :----------
-`candid.api.key`                    | string    | global    | -                                                | Public key of the Candid server (required for HTTP-only servers)
-`candid.api.url`                    | string    | global    | -                                                | URL of the external authentication endpoint using Candid
-`candid.domains`                    | string    | global    | -                                                | Comma-separated list of allowed Candid domains (empty string means all domains are valid)
-`candid.expiry`                     | integer   | global    | `3600`                                           | Candid macaroon expiry in seconds
 
 (server-options-oidc)=
 ## OpenID Connect configuration
