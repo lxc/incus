@@ -5,16 +5,11 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"net/url"
 	"os"
 	"runtime"
 	"strings"
 
-	"github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery"
-	"github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery/form"
-	"github.com/juju/persistent-cookiejar"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
-	schemaform "gopkg.in/juju/environschema.v1/form"
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared"
@@ -24,7 +19,6 @@ import (
 type Remote struct {
 	Addr     string `yaml:"addr"`
 	AuthType string `yaml:"auth_type,omitempty"`
-	Domain   string `yaml:"domain,omitempty"`
 	Project  string `yaml:"project,omitempty"`
 	Protocol string `yaml:"protocol,omitempty"`
 	Public   bool   `yaml:"public"`
@@ -95,7 +89,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 	}
 
 	// HTTPs
-	if !shared.StringInSlice(remote.AuthType, []string{"candid", "oidc"}) && (args.TLSClientCert == "" || args.TLSClientKey == "") {
+	if !shared.StringInSlice(remote.AuthType, []string{"oidc"}) && (args.TLSClientCert == "" || args.TLSClientKey == "") {
 		return nil, fmt.Errorf("Missing TLS client certificate and key")
 	}
 
@@ -200,56 +194,7 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 		AuthType:  remote.AuthType,
 	}
 
-	if args.AuthType == "candid" {
-		args.AuthInteractor = []httpbakery.Interactor{
-			form.Interactor{Filler: schemaform.IOFiller{}},
-			httpbakery.WebBrowserInteractor{
-				OpenWebBrowser: func(uri *url.URL) error {
-					if remote.Domain != "" {
-						query := uri.Query()
-						query.Set("domain", remote.Domain)
-						uri.RawQuery = query.Encode()
-					}
-
-					return httpbakery.OpenWebBrowser(uri)
-				},
-			},
-		}
-
-		if c.cookieJars == nil || c.cookieJars[name] == nil {
-			if !shared.PathExists(c.ConfigPath("jars")) {
-				err := os.MkdirAll(c.ConfigPath("jars"), 0700)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			if !shared.PathExists(c.CookiesPath(name)) {
-				if shared.PathExists(c.ConfigPath("cookies")) {
-					err := shared.FileCopy(c.ConfigPath("cookies"), c.CookiesPath(name))
-					if err != nil {
-						return nil, err
-					}
-				}
-			}
-
-			jar, err := cookiejar.New(
-				&cookiejar.Options{
-					Filename: c.CookiesPath(name),
-				})
-			if err != nil {
-				return nil, err
-			}
-
-			if c.cookieJars == nil {
-				c.cookieJars = map[string]*cookiejar.Jar{}
-			}
-
-			c.cookieJars[name] = jar
-		}
-
-		args.CookieJar = c.cookieJars[name]
-	} else if args.AuthType == "oidc" {
+	if args.AuthType == "oidc" {
 		if c.oidcTokens == nil {
 			c.oidcTokens = map[string]*oidc.Tokens[*oidc.IDTokenClaims]{}
 		}
@@ -295,7 +240,7 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	}
 
 	// Stop here if no client certificate involved
-	if remote.Protocol == "simplestreams" || shared.StringInSlice(remote.AuthType, []string{"candid", "oidc"}) {
+	if remote.Protocol == "simplestreams" || shared.StringInSlice(remote.AuthType, []string{"oidc"}) {
 		return &args, nil
 	}
 
