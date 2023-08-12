@@ -89,14 +89,6 @@ func (c *Config) TrustCACertificates() bool {
 	return c.m.GetBool("core.trust_ca_certificates")
 }
 
-// CandidServer returns all the Candid settings needed to connect to a server.
-func (c *Config) CandidServer() (string, string, int64, string) {
-	return c.m.GetString("candid.api.url"),
-		c.m.GetString("candid.api.key"),
-		c.m.GetInt64("candid.expiry"),
-		c.m.GetString("candid.domains")
-}
-
 // ProxyHTTPS returns the configured HTTPS proxy, if any.
 func (c *Config) ProxyHTTPS() string {
 	return c.m.GetString("core.proxy_https")

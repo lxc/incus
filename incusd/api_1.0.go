@@ -10,7 +10,6 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/auth"
-	"github.com/lxc/incus/incusd/auth/candid"
 	"github.com/lxc/incus/incusd/auth/oidc"
 	"github.com/lxc/incus/incusd/cluster"
 	clusterConfig "github.com/lxc/incus/incusd/cluster/config"
@@ -209,10 +208,6 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 
 	// Get the authentication methods.
 	authMethods := []string{"tls"}
-	candidURL, _, _, _ := s.GlobalConfig.CandidServer()
-	if candidURL != "" {
-		authMethods = append(authMethods, "candid")
-	}
 
 	oidcIssuer, oidcClientID, _ := s.GlobalConfig.OIDCServer()
 	if oidcIssuer != "" && oidcClientID != "" {
@@ -703,7 +698,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	s := d.State()
 
 	maasChanged := false
-	candidChanged := false
 	bgpChanged := false
 	dnsChanged := false
 	lokiChanged := false
@@ -725,14 +719,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			fallthrough
 		case "maas.api.key":
 			maasChanged = true
-		case "candid.domains":
-			fallthrough
-		case "candid.expiry":
-			fallthrough
-		case "candid.api.key":
-			fallthrough
-		case "candid.api.url":
-			candidChanged = true
 		case "cluster.images_minimal_replica":
 			err := autoSyncImages(s.ShutdownCtx, s)
 			if err != nil {
@@ -856,16 +842,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		url, key := clusterConfig.MAASController()
 		machine := nodeConfig.MAASMachine()
 		err := d.setupMAASController(url, key, machine)
-		if err != nil {
-			return err
-		}
-	}
-
-	if candidChanged {
-		var err error
-
-		apiURL, apiKey, expiry, domains := clusterConfig.CandidServer()
-		d.candidVerifier, err = candid.NewVerifier(apiURL, apiKey, expiry, domains)
 		if err != nil {
 			return err
 		}

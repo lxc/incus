@@ -1218,11 +1218,6 @@ func (d *Daemon) init() error {
 	bgpRouterID := d.localConfig.BGPRouterID()
 	bgpASN := int64(0)
 
-	candidAPIURL := ""
-	candidAPIKey := ""
-	candidDomains := ""
-	candidExpiry := int64(0)
-
 	dnsAddress := d.localConfig.DNSAddress()
 
 	maasAPIURL := ""
@@ -1258,7 +1253,6 @@ func (d *Daemon) init() error {
 
 	d.proxy = shared.ProxyFromConfig(d.globalConfig.ProxyHTTPS(), d.globalConfig.ProxyHTTP(), d.globalConfig.ProxyIgnoreHosts())
 
-	candidAPIURL, candidAPIKey, candidExpiry, candidDomains = d.globalConfig.CandidServer()
 	maasAPIURL, maasAPIKey = d.globalConfig.MAASController()
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
 	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes := d.globalConfig.LokiServer()
@@ -1272,14 +1266,6 @@ func (d *Daemon) init() error {
 	// Setup Loki logger.
 	if lokiURL != "" {
 		err = d.setupLoki(lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Setup Candid authentication.
-	if candidAPIURL != "" {
-		d.candidVerifier, err = candid.NewVerifier(candidAPIURL, candidAPIKey, candidExpiry, candidDomains)
 		if err != nil {
 			return err
 		}
