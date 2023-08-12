@@ -13,12 +13,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery"
-	"github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery/form"
-	cookiejar "github.com/juju/persistent-cookiejar"
 	"golang.org/x/sys/unix"
 	"golang.org/x/term"
-	schemaform "gopkg.in/juju/environschema.v1/form"
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/migration"
@@ -192,30 +188,6 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 
 		args.TLSClientCert = string(clientCrt)
 		args.TLSClientKey = string(clientKey)
-	} else if authType == "candid" {
-		args.AuthInteractor = []httpbakery.Interactor{
-			form.Interactor{Filler: schemaform.IOFiller{}},
-			httpbakery.WebBrowserInteractor{
-				OpenWebBrowser: httpbakery.OpenWebBrowser,
-			},
-		}
-
-		f, err := os.CreateTemp("", "lxd-migrate_")
-		if err != nil {
-			return nil, "", err
-		}
-
-		_ = f.Close()
-
-		jar, err := cookiejar.New(
-			&cookiejar.Options{
-				Filename: f.Name(),
-			})
-		if err != nil {
-			return nil, "", err
-		}
-
-		args.CookieJar = jar
 	}
 
 	// Attempt to connect using the system CA
@@ -241,10 +213,6 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 		if err != nil {
 			return nil, "", err
 		}
-	}
-
-	if authType == "candid" {
-		c.RequireAuthenticated(false)
 	}
 
 	// Get server information
