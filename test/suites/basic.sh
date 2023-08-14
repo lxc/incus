@@ -646,6 +646,7 @@ test_basic_usage() {
   # Test rebuilding an instance with an empty file system.
   incus init testimage c1
   incus rebuild c1 --empty
+  ! incus config show c1 | grep -q 'image.*' || false
   incus delete c1 -f
 
   # Test assigning an empty profile (with no root disk device) to an instance.
