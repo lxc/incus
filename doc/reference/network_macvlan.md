@@ -19,7 +19,6 @@ Both the host and the instances can talk to the gateway, but they cannot communi
 
 The following configuration key namespaces are currently supported for the `macvlan` network type:
 
-- `maas` (MAAS network identification)
 - `user` (free-form key/value for user metadata)
 
 ```{note}
@@ -34,6 +33,4 @@ Key                             | Type      | Condition             | Default   
 `mtu`                           | integer   | -                     | -                         | The MTU of the new interface
 `parent`                        | string    | -                     | -                         | Parent interface to create `macvlan` NICs on
 `vlan`                          | integer   | -                     | -                         | The VLAN ID to attach to
-`maas.subnet.ipv4`              | string    | IPv4 address          | -                         | MAAS IPv4 subnet to register instances in (when using `network` property on NIC)
-`maas.subnet.ipv6`              | string    | IPv6 address          | -                         | MAAS IPv6 subnet to register instances in (when using `network` property on NIC)
 `user.*`                        | string    | -                     | -                         | User-provided free-form key/value pairs

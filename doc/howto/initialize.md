@@ -26,12 +26,6 @@ Clustering (see {ref}`exp-clustering` and {ref}`cluster-form`)
   The default answer is `no`, which means clustering is not enabled.
   If you answer `yes`, you can either connect to an existing cluster or create one.
 
-MAAS support (see [`maas.io`](https://maas.io/) and [MAAS - How to manage VM hosts](https://maas.io/docs/install-with-lxd))
-: MAAS is an open-source tool that lets you build a data center from bare-metal servers.
-
-  The default answer is `no`, which means MAAS support is not enabled.
-  If you answer `yes`, you can connect to an existing MAAS server and specify the `name`, `URL` and `API key`.
-
 Networking (see {ref}`networks` and {ref}`Network devices <devices-nic>`)
 : Provides network access for the instances.
 

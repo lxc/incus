@@ -46,7 +46,6 @@ The following configuration key namespaces are currently supported for the `brid
 - `fan` (configuration specific to the Ubuntu FAN overlay)
 - `ipv4` (L3 IPv4 configuration)
 - `ipv6` (L3 IPv6 configuration)
-- `maas` (MAAS network identification)
 - `security` (network ACL configuration)
 - `raw` (raw configuration file content)
 - `tunnel` (cross-host tunneling configuration)
@@ -104,8 +103,6 @@ Key                                  | Type      | Condition             | Defau
 `ipv6.ovn.ranges`                    | string    | -                     | -                         | Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)
 `ipv6.routes`                        | string    | IPv6 address          | -                         | Comma-separated list of additional IPv6 CIDR subnets to route to the bridge
 `ipv6.routing`                       | bool      | IPv6 address          | `true`                    | Whether to route traffic in and out of the bridge
-`maas.subnet.ipv4`                   | string    | IPv4 address          | -                         | MAAS IPv4 subnet to register instances in (when using `network` property on NIC)
-`maas.subnet.ipv6`                   | string    | IPv6 address          | -                         | MAAS IPv6 subnet to register instances in (when using `network` property on NIC)
 `raw.dnsmasq`                        | string    | -                     | -                         | Additional `dnsmasq` configuration to append to the configuration file
 `security.acls`                      | string    | -                     | -                         | Comma-separated list of Network ACLs to apply to NICs connected to this network (see {ref}`network-acls-bridge-limitations`)
 `security.acls.default.egress.action`| string    | `security.acls`       | `reject`                  | Action to use for egress traffic that doesn't match any ACL rule

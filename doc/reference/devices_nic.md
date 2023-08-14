@@ -88,8 +88,6 @@ Key                      | Type    | Default           | Managed | Description
 `limits.egress`          | string  | -                 | no      | I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)
 `limits.ingress`         | string  | -                 | no      | I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)
 `limits.max`             | string  | -                 | no      | I/O limit in bit/s for both incoming and outgoing traffic (same as setting both `limits.ingress` and `limits.egress`)
-`maas.subnet.ipv4`       | string  | -                 | yes     | MAAS IPv4 subnet to register the instance in
-`maas.subnet.ipv6`       | string  | -                 | yes     | MAAS IPv6 subnet to register the instance in
 `mtu`                    | integer | parent MTU        | yes     | The MTU of the new interface
 `name`                   | string  | kernel assigned   | no      | The name of the interface inside the instance
 `network`                | string  | -                 | no      | The managed network to link the device to (instead of specifying the `nictype` directly)
@@ -123,8 +121,6 @@ Key                     | Type    | Default           | Managed | Description
 `boot.priority`         | integer | -                 | no      | Boot priority for VMs (higher value boots first)
 `gvrp`                  | bool    | `false`           | no      | Register VLAN using GARP VLAN Registration Protocol
 `hwaddr`                | string  | randomly assigned | no      | The MAC address of the new interface
-`maas.subnet.ipv4`      | string  | -                 | yes     | MAAS IPv4 subnet to register the instance in
-`maas.subnet.ipv6`      | string  | -                 | yes     | MAAS IPv6 subnet to register the instance in
 `mtu`                   | integer | parent MTU        | yes     | The MTU of the new interface
 `name`                  | string  | kernel assigned   | no      | The name of the interface inside the instance
 `network`               | string  | -                 | no      | The managed network to link the device to (instead of specifying the `nictype` directly)
@@ -167,8 +163,6 @@ Key                     | Type    | Default           | Managed | Description
 :--                     | :--     | :--               | :--     | :--
 `boot.priority`         | integer | -                 | no      | Boot priority for VMs (higher value boots first)
 `hwaddr`                | string  | randomly assigned | no      | The MAC address of the new interface
-`maas.subnet.ipv4`      | string  | -                 | yes     | MAAS IPv4 subnet to register the instance in
-`maas.subnet.ipv6`      | string  | -                 | yes     | MAAS IPv6 subnet to register the instance in
 `mtu`                   | integer | kernel assigned   | yes     | The MTU of the new interface
 `name`                  | string  | kernel assigned   | no      | The name of the interface inside the instance
 `network`               | string  | -                 | no      | The managed network to link the device to (instead of specifying the `nictype` directly)
@@ -269,8 +263,6 @@ Key                     | Type    | Default           | Managed | Description
 `boot.priority`         | integer | -                 | no      | Boot priority for VMs (higher value boots first)
 `gvrp`                  | bool    | `false`           | no      | Register VLAN using GARP VLAN Registration Protocol
 `hwaddr`                | string  | randomly assigned | no      | The MAC address of the new interface
-`maas.subnet.ipv4`      | string  | -                 | no      | MAAS IPv4 subnet to register the instance in
-`maas.subnet.ipv6`      | string  | -                 | no      | MAAS IPv6 subnet to register the instance in
 `mtu`                   | integer | parent MTU        | no      | The MTU of the new interface
 `name`                  | string  | kernel assigned   | no      | The name of the interface inside the instance
 `network`               | string  | -                 | no      | The managed network to link the device to (instead of specifying the `nictype` directly)
@@ -465,13 +457,3 @@ In such case, a `bridge` device is preferable.
 A bridge also lets you use MAC filtering and I/O limits, which cannot be applied to a `macvlan` device.
 
 `ipvlan` is similar to `macvlan`, with the difference being that the forked device has IPs statically assigned to it and inherits the parent's MAC address on the network.
-
-## MAAS integration
-
-If you're using MAAS to manage the physical network under your LXD host and want to attach your instances directly to a MAAS-managed network, LXD can be configured to interact with MAAS so that it can track your instances.
-
-At the daemon level, you must configure `maas.api.url` and `maas.api.key`, and then set the `maas.subnet.ipv4` and/or `maas.subnet.ipv6` keys on the instance or profile's `nic` entry.
-
-With this configuration, LXD registers all your instances with MAAS, giving them proper DHCP leases and DNS records.
-
-If you set the `ipv4.address` or `ipv6.address` keys on the NIC, those are registered as static assignments in MAAS.

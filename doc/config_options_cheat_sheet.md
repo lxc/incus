@@ -72,14 +72,6 @@ If set to `random`, use the random host interface name as the host name; if set 
 Stores the {ref}`clustering-instance-placement-scriptlet` for custom automatic instance placement logic
 ```
 
-```{config:option} maas.api.key
-:shortdesc: API key to manage MAAS
-:type: string
-:scope: global
-
-API key to manage MAAS
-```
-
 Any other scope is also possible.
 This scope shows that you can use formatting, mainly in the short description and the description, and the available options.
 
@@ -134,8 +126,6 @@ Except for server options (default), you must specify the scope.
 {config:option}`instance:migration.incremental.memory.iterations`
 
 {config:option}`something:test1`
-
-{config:option}`maas.api.key`
 
 The index is here:
 {ref}`config-options`

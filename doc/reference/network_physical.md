@@ -17,7 +17,6 @@ The following configuration key namespaces are currently supported for the `phys
 - `dns` (DNS server and resolution configuration)
 - `ipv4` (L3 IPv4 configuration)
 - `ipv6` (L3 IPv6 configuration)
-- `maas` (MAAS network identification)
 - `ovn` (OVN configuration)
 - `user` (free-form key/value for user metadata)
 
@@ -46,8 +45,6 @@ Key                             | Type      | Condition             | Default   
 `ipv6.ovn.ranges`               | string    | -                     | -                         | Comma-separated list of IPv6 ranges to use for child OVN network routers (FIRST-LAST format)
 `ipv6.routes`                   | string    | IPv6 address          | -                         | Comma-separated list of additional IPv6 CIDR subnets that can be used with child OVN networks `ipv6.routes.external` setting
 `ipv6.routes.anycast`           | bool      | IPv6 address          | `false`                   | Allow the overlapping routes to be used on multiple networks/NIC at the same time
-`maas.subnet.ipv4`              | string    | IPv4 address          | -                         | MAAS IPv4 subnet to register instances in (when using `network` property on NIC)
-`maas.subnet.ipv6`              | string    | IPv6 address          | -                         | MAAS IPv6 subnet to register instances in (when using `network` property on NIC)
 `ovn.ingress_mode`              | string    | standard mode         | `l2proxy`                 | Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`
 `user.*`                        | string    | -                     | -                         | User-provided free-form key/value pairs
 
