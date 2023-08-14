@@ -161,10 +161,10 @@ func importPreClusteringData(tx *sql.Tx, dump *Dump) error {
 
 			switch table {
 			case "config":
-				// Don't migrate the core.https_address and maas.machine config keys,
+				// Don't migrate the core.https_address config keys,
 				// which is node-specific and must remain in the node
 				// database.
-				keys := []string{"core.https_address", "maas.machine"}
+				keys := []string{"core.https_address"}
 				skip := false
 				for i, column := range columns {
 					value, ok := row[i].(string)

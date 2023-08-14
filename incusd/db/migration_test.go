@@ -28,14 +28,12 @@ func TestLoadPreClusteringData(t *testing.T) {
 
 	// config
 	assert.Equal(t, []string{"id", "key", "value"}, dump.Schema["config"])
-	assert.Len(t, dump.Data["config"], 3)
+	assert.Len(t, dump.Data["config"], 2)
 	assert.Equal(t, "1.2.3.4:666", dump.Data["config"][0][2])
 	rows := []any{int64(1), "core.https_address", "1.2.3.4:666"}
 	assert.Equal(t, rows, dump.Data["config"][0])
 	rows = []any{int64(2), "core.trust_password", "sekret"}
 	assert.Equal(t, rows, dump.Data["config"][1])
-	rows = []any{int64(3), "maas.machine", "mymaas"}
-	assert.Equal(t, rows, dump.Data["config"][2])
 
 	// networks
 	assert.Equal(t, []string{"id", "name", "description"}, dump.Schema["networks"])
@@ -194,7 +192,6 @@ func newPreClusteringTx(t *testing.T) *sql.Tx {
 		"INSERT INTO certificates VALUES (1, 'abcd:efgh', 1, 'foo', 'FOO')",
 		"INSERT INTO config VALUES(1, 'core.https_address', '1.2.3.4:666')",
 		"INSERT INTO config VALUES(2, 'core.trust_password', 'sekret')",
-		"INSERT INTO config VALUES(3, 'maas.machine', 'mymaas')",
 		"INSERT INTO profiles VALUES(1, 'default', 'Default Incus profile')",
 		"INSERT INTO profiles VALUES(2, 'users', '')",
 		"INSERT INTO profiles_config VALUES(2, 2, 'boot.autostart', 'false')",
