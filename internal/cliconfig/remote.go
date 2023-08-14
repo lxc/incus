@@ -72,7 +72,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 
 	// Unix socket
 	if strings.HasPrefix(remote.Addr, "unix:") {
-		d, err := incus.ConnectLXDUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
+		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +93,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 		return nil, fmt.Errorf("Missing TLS client certificate and key")
 	}
 
-	d, err := incus.ConnectLXD(remote.Addr, args)
+	d, err := incus.ConnectIncus(remote.Addr, args)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 
 	// Unix socket
 	if strings.HasPrefix(remote.Addr, "unix:") {
-		d, err := incus.ConnectLXDUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
+		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +158,7 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 
 	// HTTPs (public LXD)
 	if remote.Public {
-		d, err := incus.ConnectPublicLXD(remote.Addr, args)
+		d, err := incus.ConnectPublicIncus(remote.Addr, args)
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +167,7 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 	}
 
 	// HTTPs (private LXD)
-	d, err := incus.ConnectLXD(remote.Addr, args)
+	d, err := incus.ConnectIncus(remote.Addr, args)
 	if err != nil {
 		return nil, err
 	}
