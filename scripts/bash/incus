@@ -84,7 +84,7 @@ _have lxc && {
       core.debug_address cluster.offline_threshold \
       images.auto_update_cached images.auto_update_interval \
       images.compression_algorithm images.remote_cache_expiry \
-      maas.api.url maas.api.key maas.machine cluster.images_minimal_replica \
+      cluster.images_minimal_replica \
       network.ovn.integration_bridge network.ovn.northbound_connection \
       oidc.client.id oidc.issuer oidc.audience \
       storage.backups_volume storage.images_volume"
@@ -124,7 +124,7 @@ _have lxc && {
 
     device_keys="limits.ingress limits.egress ipv4.routes \
       ipv4.routes.external ipv6.routes ipv6.routes.external parent \
-      name mtu hwaddr vlan maas.subnet.ipv4 maas.subnet.ipv6 nictype \
+      name mtu hwaddr vlan nictype \
       host_name limits.max \
       ipv4.address ipv6.address ipv4.host_address ipv6.host_address ipv4.gateway ipv6.gateway \
       security.mac_filtering security.ipv4_filtering security.ipv6_filtering vlan limits.read \
@@ -139,7 +139,7 @@ _have lxc && {
       ipv4.dhcp.ranges ipv4.firewall ipv4.nat ipv4.nat.address ipv4.nat.order ipv4.ovn.ranges \
       ipv4.routes ipv4.routing ipv6.address ipv6.dhcp ipv6.dhcp.expiry ipv6.dhcp.ranges \
       ipv6.dhcp.stateful ipv6.firewall ipv6.nat ipv6.nat.address ipv6.nat.order ipv6.ovn.ranges \
-      ipv6.routes ipv6.routing maas.subnet.ipv4 maas.subnet.ipv6 mtu network parent raw.dnsmasq vlan"
+      ipv6.routes ipv6.routing mtu network parent raw.dnsmasq vlan"
 
     project_keys="features.images features.profiles features.storage.volumes \
       limits.containers limits.virtual-machines limits.memory limits.processes limits.cpu \
