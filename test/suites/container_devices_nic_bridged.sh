@@ -501,8 +501,6 @@ test_container_devices_nic_bridged() {
   # Can't use some settings when network is set.
   ! incus profile device set "${ctName}" eth0 nictype="bridged"
   ! incus profile device set "${ctName}" eth0 mtu="1400"
-  ! incus profile device set "${ctName}" eth0 maas.subnet.ipv4="test"
-  ! incus profile device set "${ctName}" eth0 maas.subnet.ipv6="test"
 
   # Can't set static IP that isn't part of network's subnet.
   ! incus profile device set "${ctName}" eth0 ipv4.address="192.0.4.2"
