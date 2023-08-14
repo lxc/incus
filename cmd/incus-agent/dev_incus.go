@@ -48,7 +48,7 @@ func getVsockClient(d *Daemon) (incus.InstanceServer, error) {
 		return nil, err
 	}
 
-	server, err := incus.ConnectLXDHTTP(nil, client)
+	server, err := incus.ConnectIncusHTTP(nil, client)
 	if err != nil {
 		return nil, err
 	}
