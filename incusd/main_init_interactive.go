@@ -57,12 +57,6 @@ func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d incus.Inst
 			return nil, err
 		}
 
-		// MAAS
-		err = c.askMAAS(&config, d)
-		if err != nil {
-			return nil, err
-		}
-
 		// Networking
 		err = c.askNetworking(&config, d)
 		if err != nil {
@@ -366,38 +360,6 @@ func (c *cmdInit) askClustering(config *api.InitPreseed, d incus.InstanceServer,
 	return nil
 }
 
-func (c *cmdInit) askMAAS(config *api.InitPreseed, d incus.InstanceServer) error {
-	maas, err := cli.AskBool("Would you like to connect to a MAAS server? (yes/no) [default=no]: ", "no")
-	if err != nil {
-		return err
-	}
-
-	if !maas {
-		return nil
-	}
-
-	maasHostname, err := cli.AskString(fmt.Sprintf("What's the name of this host in MAAS? [default=%s]: ", c.defaultHostname()), c.defaultHostname(), nil)
-	if err != nil {
-		return err
-	}
-
-	if maasHostname != c.defaultHostname() {
-		config.Node.Config["maas.machine"] = maasHostname
-	}
-
-	config.Node.Config["maas.api.url"], err = cli.AskString("URL of your MAAS server (e.g. http://1.2.3.4:5240/MAAS): ", "", nil)
-	if err != nil {
-		return err
-	}
-
-	config.Node.Config["maas.api.key"], err = cli.AskString("API key for your MAAS server: ", "", nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer) error {
 	var err error
 	localBridgeCreate := false
@@ -446,33 +408,6 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 
 				if shared.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", interfaceName)) {
 					config.Node.Profiles[0].Devices["eth0"]["nictype"] = "bridged"
-				}
-
-				if config.Node.Config["maas.api.url"] != nil {
-					maasConnect, err := cli.AskBool("Is this interface connected to your MAAS server? (yes/no) [default=yes]: ", "yes")
-					if err != nil {
-						return err
-					}
-
-					if maasConnect {
-						maasSubnetV4, err := cli.AskString("MAAS IPv4 subnet name for this interface (empty for no subnet): ", "", validate.Optional())
-						if err != nil {
-							return err
-						}
-
-						if maasSubnetV4 != "" {
-							config.Node.Profiles[0].Devices["eth0"]["maas.subnet.ipv4"] = maasSubnetV4
-						}
-
-						maasSubnetV6, err := cli.AskString("MAAS IPv6 subnet name for this interface (empty for no subnet): ", "", validate.Optional())
-						if err != nil {
-							return err
-						}
-
-						if maasSubnetV6 != "" {
-							config.Node.Profiles[0].Devices["eth0"]["maas.subnet.ipv6"] = maasSubnetV6
-						}
-					}
 				}
 
 				break
