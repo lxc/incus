@@ -268,8 +268,6 @@ func (n *bridge) Validate(config map[string]string) error {
 		"dns.zone.reverse.ipv4":                validate.IsAny,
 		"dns.zone.reverse.ipv6":                validate.IsAny,
 		"raw.dnsmasq":                          validate.IsAny,
-		"maas.subnet.ipv4":                     validate.IsAny,
-		"maas.subnet.ipv6":                     validate.IsAny,
 		"security.acls":                        validate.IsAny,
 		"security.acls.default.ingress.action": validate.Optional(validate.IsOneOf(acl.ValidActions...)),
 		"security.acls.default.egress.action":  validate.Optional(validate.IsOneOf(acl.ValidActions...)),
