@@ -263,7 +263,7 @@ func devLxdAPI(d *Daemon) http.Handler {
 
 // Create a new net.Listener bound to the unix socket of the devlxd endpoint.
 func createDevLxdlListener(dir string) (net.Listener, error) {
-	path := filepath.Join(dir, "lxd", "sock")
+	path := filepath.Join(dir, "incus", "sock")
 
 	err := os.MkdirAll(filepath.Dir(path), 0755)
 	if err != nil {
