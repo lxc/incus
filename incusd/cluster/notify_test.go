@@ -222,7 +222,7 @@ func (h *notifyFixtures) Down(i int) {
 }
 
 // Returns a minimal stub for the LXD RESTful API server, just realistic
-// enough to make incus.ConnectLXD succeed.
+// enough to make incus.ConnectIncus succeed.
 func newRestServer(cert *shared.CertInfo) *httptest.Server {
 	mux := http.NewServeMux()
 

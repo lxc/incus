@@ -79,7 +79,7 @@ func httpGetOverTLSSocket(addr string, cert *shared.CertInfo) error {
 }
 
 // Returns a minimal stub for the LXD RESTful API server, just realistic
-// enough to make incus.ConnectLXDUnix succeed.
+// enough to make incus.ConnectIncusUnix succeed.
 func newServer() *http.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/1.0/", func(w http.ResponseWriter, r *http.Request) {

@@ -76,7 +76,7 @@ func (c *cmdCallhook) Run(cmd *cobra.Command, args []string) error {
 		SkipGetServer: true,
 	}
 
-	d, err := incus.ConnectLXDUnix(socket, &lxdArgs)
+	d, err := incus.ConnectIncusUnix(socket, &lxdArgs)
 	if err != nil {
 		return err
 	}

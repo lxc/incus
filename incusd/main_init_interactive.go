@@ -330,7 +330,7 @@ func (c *cmdInit) askClustering(config *api.InitPreseed, d incus.InstanceServer,
 				UserAgent:     version.UserAgent,
 			}
 
-			client, err := incus.ConnectLXD(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), args)
+			client, err := incus.ConnectIncus(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), args)
 			if err != nil {
 				return err
 			}

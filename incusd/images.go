@@ -3867,7 +3867,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Setup LXD client
-	remote, err := incus.ConnectLXD(req.Target, args)
+	remote, err := incus.ConnectIncus(req.Target, args)
 	if err != nil {
 		return response.SmartError(err)
 	}

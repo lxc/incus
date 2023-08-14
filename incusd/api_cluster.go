@@ -560,7 +560,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		}
 
 		// Connect to the target cluster node.
-		client, err := incus.ConnectLXD(fmt.Sprintf("https://%s", req.ClusterAddress), args)
+		client, err := incus.ConnectIncus(fmt.Sprintf("https://%s", req.ClusterAddress), args)
 		if err != nil {
 			return err
 		}
@@ -568,7 +568,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		// As ServerAddress field is required to be set it means that we're using the new join API
 		// introduced with the 'clustering_join' extension.
 		// Connect to ourselves to initialize storage pools and networks using the API.
-		localClient, err := incus.ConnectLXDUnix(d.UnixSocket(), &incus.ConnectionArgs{UserAgent: clusterRequest.UserAgentJoiner})
+		localClient, err := incus.ConnectIncusUnix(d.UnixSocket(), &incus.ConnectionArgs{UserAgent: clusterRequest.UserAgentJoiner})
 		if err != nil {
 			return fmt.Errorf("Failed to connect to local LXD: %w", err)
 		}

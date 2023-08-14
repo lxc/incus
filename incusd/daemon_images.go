@@ -88,7 +88,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 
 		if protocol == "lxd" {
 			// Setup LXD client
-			remote, err = incus.ConnectPublicLXD(args.Server, clientArgs)
+			remote, err = incus.ConnectPublicIncus(args.Server, clientArgs)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to LXD server %q: %w", args.Server, err)
 			}
