@@ -44,7 +44,6 @@ import (
 	instanceDrivers "github.com/lxc/incus/incusd/instance/drivers"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/loki"
-	"github.com/lxc/incus/incusd/maas"
 	networkZone "github.com/lxc/incus/incusd/network/zone"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/request"
@@ -75,7 +74,6 @@ type Daemon struct {
 	os          *sys.OS
 	db          *db.DB
 	firewall    firewall.Firewall
-	maas        *maas.Controller
 	bgp         *bgp.Server
 	dns         *dns.Server
 
@@ -378,7 +376,6 @@ func (d *Daemon) State() *state.State {
 	return &state.State{
 		ShutdownCtx:            d.shutdownCtx,
 		DB:                     d.db,
-		MAAS:                   d.maas,
 		BGP:                    d.bgp,
 		DNS:                    d.dns,
 		OS:                     d.os,
@@ -1194,10 +1191,6 @@ func (d *Daemon) init() error {
 
 	dnsAddress := d.localConfig.DNSAddress()
 
-	maasAPIURL := ""
-	maasAPIKey := ""
-	maasMachine := d.localConfig.MAASMachine()
-
 	err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
 		config, err := clusterConfig.Load(ctx, tx)
 		if err != nil {
@@ -1227,7 +1220,6 @@ func (d *Daemon) init() error {
 
 	d.proxy = shared.ProxyFromConfig(d.globalConfig.ProxyHTTPS(), d.globalConfig.ProxyHTTP(), d.globalConfig.ProxyIgnoreHosts())
 
-	maasAPIURL, maasAPIKey = d.globalConfig.MAASController()
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
 	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes := d.globalConfig.LokiServer()
 	oidcIssuer, oidcClientID, oidcAudience := d.globalConfig.OIDCServer()
@@ -1390,36 +1382,6 @@ func (d *Daemon) init() error {
 
 		// Read the trusted certificates
 		updateCertificateCache(d)
-
-		// Connect to MAAS
-		if maasAPIURL != "" {
-			go func() {
-				warningAdded := false
-
-				for {
-					err = d.setupMAASController(maasAPIURL, maasAPIKey, maasMachine)
-					if err == nil {
-						logger.Info("Connected to MAAS controller", logger.Ctx{"url": maasAPIURL})
-						break
-					}
-
-					logger.Warn("Unable to connect to MAAS, trying again in a minute", logger.Ctx{"url": maasAPIURL, "err": err})
-
-					if !warningAdded {
-						_ = d.db.Cluster.UpsertWarningLocalNode("", -1, -1, warningtype.UnableToConnectToMAAS, err.Error())
-
-						warningAdded = true
-					}
-
-					time.Sleep(time.Minute)
-				}
-
-				// Resolve any previously created warning once connected
-				if warningAdded {
-					_ = warnings.ResolveWarningsByLocalNodeAndType(d.db.Cluster, warningtype.UnableToConnectToMAAS)
-				}
-			}()
-		}
 	}
 
 	// Remove volatile.last_state.ready key as LXD doesn't know if the instances are ready.
@@ -1715,35 +1677,6 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	}
 
 	return err
-}
-
-// Setup MAAS.
-func (d *Daemon) setupMAASController(server string, key string, machine string) error {
-	var err error
-	d.maas = nil
-
-	// Default the machine name to the hostname
-	if machine == "" {
-		machine, err = os.Hostname()
-		if err != nil {
-			return err
-		}
-	}
-
-	// We need both URL and key, otherwise disable MAAS
-	if server == "" || key == "" {
-		return nil
-	}
-
-	// Get a new controller struct
-	controller, err := maas.NewController(server, key, machine)
-	if err != nil {
-		d.maas = nil
-		return err
-	}
-
-	d.maas = controller
-	return nil
 }
 
 // Create a database connection and perform any updates needed.

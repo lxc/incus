@@ -697,7 +697,6 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]string, nodeConfig *node.Config, clusterConfig *clusterConfig.Config) error {
 	s := d.State()
 
-	maasChanged := false
 	bgpChanged := false
 	dnsChanged := false
 	lokiChanged := false
@@ -715,10 +714,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			fallthrough
 		case "core.proxy_ignore_hosts":
 			daemonConfigSetProxy(d, clusterConfig)
-		case "maas.api.url":
-			fallthrough
-		case "maas.api.key":
-			maasChanged = true
 		case "cluster.images_minimal_replica":
 			err := autoSyncImages(s.ShutdownCtx, s)
 			if err != nil {
@@ -762,8 +757,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 	for key := range nodeChanged {
 		switch key {
-		case "maas.machine":
-			maasChanged = true
 		case "core.bgp_address":
 			fallthrough
 		case "core.bgp_routerid":
@@ -833,15 +826,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	value, ok = nodeChanged["storage.images_volume"]
 	if ok {
 		err := daemonStorageMove(s, "images", value)
-		if err != nil {
-			return err
-		}
-	}
-
-	if maasChanged {
-		url, key := clusterConfig.MAASController()
-		machine := nodeConfig.MAASMachine()
-		err := d.setupMAASController(url, key, machine)
 		if err != nil {
 			return err
 		}
