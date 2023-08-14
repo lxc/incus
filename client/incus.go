@@ -20,8 +20,8 @@ import (
 	"github.com/lxc/incus/shared/tcp"
 )
 
-// ProtocolLXD represents a LXD API server.
-type ProtocolLXD struct {
+// ProtocolIncus represents an Incus API server.
+type ProtocolIncus struct {
 	ctx                context.Context
 	server             *api.Server
 	ctxConnected       context.Context
@@ -53,17 +53,17 @@ type ProtocolLXD struct {
 }
 
 // Disconnect gets rid of any background goroutines.
-func (r *ProtocolLXD) Disconnect() {
+func (r *ProtocolIncus) Disconnect() {
 	if r.ctxConnected.Err() != nil {
 		r.ctxConnectedCancel()
 	}
 }
 
 // GetConnectionInfo returns the basic connection information used to interact with the server.
-func (r *ProtocolLXD) GetConnectionInfo() (*ConnectionInfo, error) {
+func (r *ProtocolIncus) GetConnectionInfo() (*ConnectionInfo, error) {
 	info := ConnectionInfo{}
 	info.Certificate = r.httpCertificate
-	info.Protocol = "lxd"
+	info.Protocol = "incus"
 	info.URL = r.httpBaseURL.String()
 	info.SocketPath = r.httpUnixPath
 
@@ -100,9 +100,9 @@ func (r *ProtocolLXD) GetConnectionInfo() (*ConnectionInfo, error) {
 	return &info, nil
 }
 
-// isSameServer compares the calling ProtocolLXD object with the provided server object to check if they are the same server.
+// isSameServer compares the calling ProtocolIncus object with the provided server object to check if they are the same server.
 // It verifies the equality based on their connection information (Protocol, Certificate, Project, and Target).
-func (r *ProtocolLXD) isSameServer(server Server) bool {
+func (r *ProtocolIncus) isSameServer(server Server) bool {
 	// Short path checking if the two structs are identical.
 	if r == server {
 		return true
@@ -135,7 +135,7 @@ func (r *ProtocolLXD) isSameServer(server Server) bool {
 }
 
 // GetHTTPClient returns the http client used for the connection. This can be used to set custom http options.
-func (r *ProtocolLXD) GetHTTPClient() (*http.Client, error) {
+func (r *ProtocolIncus) GetHTTPClient() (*http.Client, error) {
 	if r.http == nil {
 		return nil, fmt.Errorf("HTTP client isn't set, bad connection")
 	}
@@ -144,7 +144,7 @@ func (r *ProtocolLXD) GetHTTPClient() (*http.Client, error) {
 }
 
 // DoHTTP performs a Request, using OIDC authentication if set.
-func (r *ProtocolLXD) DoHTTP(req *http.Request) (*http.Response, error) {
+func (r *ProtocolIncus) DoHTTP(req *http.Request) (*http.Response, error) {
 	r.addClientHeaders(req)
 
 	if r.oidcClient != nil {
@@ -158,7 +158,7 @@ func (r *ProtocolLXD) DoHTTP(req *http.Request) (*http.Response, error) {
 // User-Agent (if r.httpUserAgent is set).
 // X-Incus-authenticated (if r.requireAuthenticated is set).
 // OIDC Authorization header (if r.oidcClient is set).
-func (r *ProtocolLXD) addClientHeaders(req *http.Request) {
+func (r *ProtocolIncus) addClientHeaders(req *http.Request) {
 	if r.httpUserAgent != "" {
 		req.Header.Set("User-Agent", r.httpUserAgent)
 	}
@@ -173,35 +173,35 @@ func (r *ProtocolLXD) addClientHeaders(req *http.Request) {
 }
 
 // RequireAuthenticated sets whether we expect to be authenticated with the server.
-func (r *ProtocolLXD) RequireAuthenticated(authenticated bool) {
+func (r *ProtocolIncus) RequireAuthenticated(authenticated bool) {
 	r.requireAuthenticated = authenticated
 }
 
-// RawQuery allows directly querying the LXD API
+// RawQuery allows directly querying the Incus API
 //
-// This should only be used by internal LXD tools.
-func (r *ProtocolLXD) RawQuery(method string, path string, data any, ETag string) (*api.Response, string, error) {
+// This should only be used by internal Incus tools.
+func (r *ProtocolIncus) RawQuery(method string, path string, data any, ETag string) (*api.Response, string, error) {
 	// Generate the URL
 	url := fmt.Sprintf("%s%s", r.httpBaseURL.String(), path)
 
 	return r.rawQuery(method, url, data, ETag)
 }
 
-// RawWebsocket allows directly connection to LXD API websockets
+// RawWebsocket allows directly connection to Incus API websockets
 //
-// This should only be used by internal LXD tools.
-func (r *ProtocolLXD) RawWebsocket(path string) (*websocket.Conn, error) {
+// This should only be used by internal Incus tools.
+func (r *ProtocolIncus) RawWebsocket(path string) (*websocket.Conn, error) {
 	return r.websocket(path)
 }
 
-// RawOperation allows direct querying of a LXD API endpoint returning
+// RawOperation allows direct querying of an Incus API endpoint returning
 // background operations.
-func (r *ProtocolLXD) RawOperation(method string, path string, data any, ETag string) (Operation, string, error) {
+func (r *ProtocolIncus) RawOperation(method string, path string, data any, ETag string) (Operation, string, error) {
 	return r.queryOperation(method, path, data, ETag)
 }
 
 // Internal functions.
-func lxdParseResponse(resp *http.Response) (*api.Response, string, error) {
+func incusParseResponse(resp *http.Response) (*api.Response, string, error) {
 	// Get the ETag
 	etag := resp.Header.Get("ETag")
 
@@ -227,14 +227,14 @@ func lxdParseResponse(resp *http.Response) (*api.Response, string, error) {
 	return &response, etag, nil
 }
 
-// rawQuery is a method that sends an HTTP request to the LXD server with the provided method, URL, data, and ETag.
+// rawQuery is a method that sends an HTTP request to the Incus server with the provided method, URL, data, and ETag.
 // It processes the request based on the data's type and handles the HTTP response, returning parsed results or an error if it occurs.
-func (r *ProtocolLXD) rawQuery(method string, url string, data any, ETag string) (*api.Response, string, error) {
+func (r *ProtocolIncus) rawQuery(method string, url string, data any, ETag string) (*api.Response, string, error) {
 	var req *http.Request
 	var err error
 
 	// Log the request
-	logger.Debug("Sending request to LXD", logger.Ctx{
+	logger.Debug("Sending request to Incus", logger.Ctx{
 		"method": method,
 		"url":    url,
 		"etag":   ETag,
@@ -294,11 +294,11 @@ func (r *ProtocolLXD) rawQuery(method string, url string, data any, ETag string)
 
 	defer func() { _ = resp.Body.Close() }()
 
-	return lxdParseResponse(resp)
+	return incusParseResponse(resp)
 }
 
 // setURLQueryAttributes modifies the supplied URL's query string with the client's current target and project.
-func (r *ProtocolLXD) setURLQueryAttributes(apiURL *neturl.URL) {
+func (r *ProtocolIncus) setURLQueryAttributes(apiURL *neturl.URL) {
 	// Extract query fields and update for cluster targeting or project
 	values := apiURL.Query()
 	if r.clusterTarget != "" {
@@ -316,7 +316,7 @@ func (r *ProtocolLXD) setURLQueryAttributes(apiURL *neturl.URL) {
 	apiURL.RawQuery = values.Encode()
 }
 
-func (r *ProtocolLXD) setQueryAttributes(uri string) (string, error) {
+func (r *ProtocolIncus) setQueryAttributes(uri string) (string, error) {
 	// Parse the full URI
 	fields, err := neturl.Parse(uri)
 	if err != nil {
@@ -328,7 +328,7 @@ func (r *ProtocolLXD) setQueryAttributes(uri string) (string, error) {
 	return fields.String(), nil
 }
 
-func (r *ProtocolLXD) query(method string, path string, data any, ETag string) (*api.Response, string, error) {
+func (r *ProtocolIncus) query(method string, path string, data any, ETag string) (*api.Response, string, error) {
 	// Generate the URL
 	url := fmt.Sprintf("%s/1.0%s", r.httpBaseURL.String(), path)
 
@@ -342,9 +342,9 @@ func (r *ProtocolLXD) query(method string, path string, data any, ETag string) (
 	return r.rawQuery(method, url, data, ETag)
 }
 
-// queryStruct sends a query to the LXD server, then converts the response metadata into the specified target struct.
+// queryStruct sends a query to the Incus server, then converts the response metadata into the specified target struct.
 // The function logs the retrieved data, returns the etag of the response, and handles any errors during this process.
-func (r *ProtocolLXD) queryStruct(method string, path string, data any, ETag string, target any) (string, error) {
+func (r *ProtocolIncus) queryStruct(method string, path string, data any, ETag string, target any) (string, error) {
 	resp, etag, err := r.query(method, path, data, ETag)
 	if err != nil {
 		return "", err
@@ -356,15 +356,15 @@ func (r *ProtocolLXD) queryStruct(method string, path string, data any, ETag str
 	}
 
 	// Log the data
-	logger.Debugf("Got response struct from LXD")
+	logger.Debugf("Got response struct from Incus")
 	logger.Debugf(logger.Pretty(target))
 
 	return etag, nil
 }
 
-// queryOperation sends a query to the LXD server and then converts the response metadata into an Operation object.
+// queryOperation sends a query to the Incus server and then converts the response metadata into an Operation object.
 // It sets up an early event listener, performs the query, processes the response, and manages the lifecycle of the event listener.
-func (r *ProtocolLXD) queryOperation(method string, path string, data any, ETag string) (Operation, string, error) {
+func (r *ProtocolIncus) queryOperation(method string, path string, data any, ETag string) (Operation, string, error) {
 	// Attempt to setup an early event listener
 	listener, err := r.GetEvents()
 	if err != nil {
@@ -400,15 +400,15 @@ func (r *ProtocolLXD) queryOperation(method string, path string, data any, ETag 
 	}
 
 	// Log the data
-	logger.Debugf("Got operation from LXD")
+	logger.Debugf("Got operation from Incus")
 	logger.Debugf(logger.Pretty(op.Operation))
 
 	return &op, etag, nil
 }
 
-// rawWebsocket creates a websocket connection to the provided URL using the underlying HTTP transport of the ProtocolLXD receiver.
+// rawWebsocket creates a websocket connection to the provided URL using the underlying HTTP transport of the ProtocolIncus receiver.
 // It sets up the request headers, manages the connection handshake, sets TCP timeouts, and handles any errors that may occur during these operations.
-func (r *ProtocolLXD) rawWebsocket(url string) (*websocket.Conn, error) {
+func (r *ProtocolIncus) rawWebsocket(url string) (*websocket.Conn, error) {
 	// Grab the http transport handler
 	httpTransport, err := r.getUnderlyingHTTPTransport()
 	if err != nil {
@@ -432,7 +432,7 @@ func (r *ProtocolLXD) rawWebsocket(url string) (*websocket.Conn, error) {
 	conn, resp, err := dialer.Dial(url, req.Header)
 	if err != nil {
 		if resp != nil {
-			_, _, err = lxdParseResponse(resp)
+			_, _, err = incusParseResponse(resp)
 		}
 
 		return nil, err
@@ -453,9 +453,9 @@ func (r *ProtocolLXD) rawWebsocket(url string) (*websocket.Conn, error) {
 	return conn, nil
 }
 
-// websocket generates a websocket URL based on the provided path and the base URL of the ProtocolLXD receiver.
+// websocket generates a websocket URL based on the provided path and the base URL of the ProtocolIncus receiver.
 // It then leverages the rawWebsocket method to establish and return a websocket connection to the generated URL.
-func (r *ProtocolLXD) websocket(path string) (*websocket.Conn, error) {
+func (r *ProtocolIncus) websocket(path string) (*websocket.Conn, error) {
 	// Generate the URL
 	var url string
 	if r.httpBaseURL.Scheme == "https" {
@@ -468,7 +468,7 @@ func (r *ProtocolLXD) websocket(path string) (*websocket.Conn, error) {
 }
 
 // WithContext returns a client that will add context.Context.
-func (r *ProtocolLXD) WithContext(ctx context.Context) InstanceServer {
+func (r *ProtocolIncus) WithContext(ctx context.Context) InstanceServer {
 	rr := r
 	rr.ctx = ctx
 	return rr
@@ -476,7 +476,7 @@ func (r *ProtocolLXD) WithContext(ctx context.Context) InstanceServer {
 
 // getUnderlyingHTTPTransport returns the *http.Transport used by the http client. If the http
 // client was initialized with a HTTPTransporter, it returns the wrapped *http.Transport.
-func (r *ProtocolLXD) getUnderlyingHTTPTransport() (*http.Transport, error) {
+func (r *ProtocolIncus) getUnderlyingHTTPTransport() (*http.Transport, error) {
 	switch t := r.http.Transport.(type) {
 	case *http.Transport:
 		return t, nil
@@ -490,7 +490,7 @@ func (r *ProtocolLXD) getUnderlyingHTTPTransport() (*http.Transport, error) {
 // getSourceImageConnectionInfo returns the connection information for the source image.
 // The returned `info` is nil if the source image is local. In this process, the `instSrc`
 // is also updated with the minimal source fields.
-func (r *ProtocolLXD) getSourceImageConnectionInfo(source ImageServer, image api.Image, instSrc *api.InstanceSource) (info *ConnectionInfo, err error) {
+func (r *ProtocolIncus) getSourceImageConnectionInfo(source ImageServer, image api.Image, instSrc *api.InstanceSource) (info *ConnectionInfo, err error) {
 	// Set the minimal source fields
 	instSrc.Type = "image"
 

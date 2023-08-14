@@ -45,7 +45,7 @@ type ConnectionArgs struct {
 	// Custom HTTP Client (used as base for the connection)
 	HTTPClient *http.Client
 
-	// TransportWrapper wraps the *http.Transport set by lxd
+	// TransportWrapper wraps the *http.Transport set by Incus
 	TransportWrapper func(*http.Transport) HTTPTransporter
 
 	// Controls whether a client verifies the server's certificate chain and host name.
@@ -65,40 +65,40 @@ type ConnectionArgs struct {
 	CacheExpiry time.Duration
 }
 
-// ConnectLXD lets you connect to a remote LXD daemon over HTTPs.
+// ConnectIncus lets you connect to a remote Incus daemon over HTTPs.
 //
 // A client certificate (TLSClientCert) and key (TLSClientKey) must be provided.
 //
-// If connecting to a LXD daemon running in PKI mode, the PKI CA (TLSCA) must also be provided.
+// If connecting to an Incus daemon running in PKI mode, the PKI CA (TLSCA) must also be provided.
 //
 // Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
-func ConnectLXD(url string, args *ConnectionArgs) (InstanceServer, error) {
-	return ConnectLXDWithContext(context.Background(), url, args)
+func ConnectIncus(url string, args *ConnectionArgs) (InstanceServer, error) {
+	return ConnectIncusWithContext(context.Background(), url, args)
 }
 
-// ConnectLXDWithContext lets you connect to a remote LXD daemon over HTTPs with context.Context.
+// ConnectIncusWithContext lets you connect to a remote Incus daemon over HTTPs with context.Context.
 //
 // A client certificate (TLSClientCert) and key (TLSClientKey) must be provided.
 //
-// If connecting to a LXD daemon running in PKI mode, the PKI CA (TLSCA) must also be provided.
+// If connecting to an Incus daemon running in PKI mode, the PKI CA (TLSCA) must also be provided.
 //
 // Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
-func ConnectLXDWithContext(ctx context.Context, url string, args *ConnectionArgs) (InstanceServer, error) {
+func ConnectIncusWithContext(ctx context.Context, url string, args *ConnectionArgs) (InstanceServer, error) {
 	// Cleanup URL
 	url = strings.TrimSuffix(url, "/")
 
-	logger.Debug("Connecting to a remote LXD over HTTPS", logger.Ctx{"url": url})
+	logger.Debug("Connecting to a remote Incus over HTTPS", logger.Ctx{"url": url})
 
-	return httpsLXD(ctx, url, args)
+	return httpsIncus(ctx, url, args)
 }
 
-// ConnectLXDHTTP lets you connect to a VM agent over a VM socket.
-func ConnectLXDHTTP(args *ConnectionArgs, client *http.Client) (InstanceServer, error) {
-	return ConnectLXDHTTPWithContext(context.Background(), args, client)
+// ConnectIncusHTTP lets you connect to a VM agent over a VM socket.
+func ConnectIncusHTTP(args *ConnectionArgs, client *http.Client) (InstanceServer, error) {
+	return ConnectIncusHTTPWithContext(context.Background(), args, client)
 }
 
-// ConnectLXDHTTPWithContext lets you connect to a VM agent over a VM socket with context.Context.
-func ConnectLXDHTTPWithContext(ctx context.Context, args *ConnectionArgs, client *http.Client) (InstanceServer, error) {
+// ConnectIncusHTTPWithContext lets you connect to a VM agent over a VM socket with context.Context.
+func ConnectIncusHTTPWithContext(ctx context.Context, args *ConnectionArgs, client *http.Client) (InstanceServer, error) {
 	logger.Debug("Connecting to a VM agent over a VM socket")
 
 	// Use empty args if not specified
@@ -114,7 +114,7 @@ func ConnectLXDHTTPWithContext(ctx context.Context, args *ConnectionArgs, client
 	ctxConnected, ctxConnectedCancel := context.WithCancel(context.Background())
 
 	// Initialize the client struct
-	server := ProtocolLXD{
+	server := ProtocolIncus{
 		ctx:                ctx,
 		httpBaseURL:        *httpBaseURL,
 		httpProtocol:       "custom",
@@ -142,22 +142,22 @@ func ConnectLXDHTTPWithContext(ctx context.Context, args *ConnectionArgs, client
 	return &server, nil
 }
 
-// ConnectLXDUnix lets you connect to a remote LXD daemon over a local unix socket.
+// ConnectIncusUnix lets you connect to a remote Incus daemon over a local unix socket.
 //
 // If the path argument is empty, then $INCUS_SOCKET will be used, if
 // unset $INCUS_DIR/unix.socket will be used and if that one isn't set
-// either, then the path will default to /var/lib/lxd/unix.socket.
-func ConnectLXDUnix(path string, args *ConnectionArgs) (InstanceServer, error) {
-	return ConnectLXDUnixWithContext(context.Background(), path, args)
+// either, then the path will default to /var/lib/incus/unix.socket.
+func ConnectIncusUnix(path string, args *ConnectionArgs) (InstanceServer, error) {
+	return ConnectIncusUnixWithContext(context.Background(), path, args)
 }
 
-// ConnectLXDUnixWithContext lets you connect to a remote LXD daemon over a local unix socket with context.Context.
+// ConnectIncusUnixWithContext lets you connect to a remote Incus daemon over a local unix socket with context.Context.
 //
 // If the path argument is empty, then $INCUS_SOCKET will be used, if
 // unset $INCUS_DIR/unix.socket will be used and if that one isn't set
-// either, then the path will default to /var/lib/lxd/unix.socket.
-func ConnectLXDUnixWithContext(ctx context.Context, path string, args *ConnectionArgs) (InstanceServer, error) {
-	logger.Debug("Connecting to a local LXD over a Unix socket")
+// either, then the path will default to /var/lib/incus/unix.socket.
+func ConnectIncusUnixWithContext(ctx context.Context, path string, args *ConnectionArgs) (InstanceServer, error) {
+	logger.Debug("Connecting to a local Incus over a Unix socket")
 
 	// Use empty args if not specified
 	if args == nil {
@@ -172,7 +172,7 @@ func ConnectLXDUnixWithContext(ctx context.Context, path string, args *Connectio
 	ctxConnected, ctxConnectedCancel := context.WithCancel(context.Background())
 
 	// Initialize the client struct
-	server := ProtocolLXD{
+	server := ProtocolIncus{
 		ctx:                ctx,
 		httpBaseURL:        *httpBaseURL,
 		httpUnixPath:       path,
@@ -188,12 +188,12 @@ func ConnectLXDUnixWithContext(ctx context.Context, path string, args *Connectio
 	if path == "" {
 		path = os.Getenv("INCUS_SOCKET")
 		if path == "" {
-			lxdDir := os.Getenv("INCUS_DIR")
-			if lxdDir == "" {
-				lxdDir = "/var/lib/lxd"
+			incusDir := os.Getenv("INCUS_DIR")
+			if incusDir == "" {
+				incusDir = "/var/lib/incus"
 			}
 
-			path = filepath.Join(lxdDir, "unix.socket")
+			path = filepath.Join(incusDir, "unix.socket")
 		}
 	}
 
@@ -219,23 +219,23 @@ func ConnectLXDUnixWithContext(ctx context.Context, path string, args *Connectio
 	return &server, nil
 }
 
-// ConnectPublicLXD lets you connect to a remote public LXD daemon over HTTPs.
+// ConnectPublicIncus lets you connect to a remote public Incus daemon over HTTPs.
 //
 // Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
-func ConnectPublicLXD(url string, args *ConnectionArgs) (ImageServer, error) {
-	return ConnectPublicLXDWithContext(context.Background(), url, args)
+func ConnectPublicIncus(url string, args *ConnectionArgs) (ImageServer, error) {
+	return ConnectPublicIncusWithContext(context.Background(), url, args)
 }
 
-// ConnectPublicLXDWithContext lets you connect to a remote public LXD daemon over HTTPs with context.Context.
+// ConnectPublicIncusWithContext lets you connect to a remote public Incus daemon over HTTPs with context.Context.
 //
 // Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
-func ConnectPublicLXDWithContext(ctx context.Context, url string, args *ConnectionArgs) (ImageServer, error) {
-	logger.Debug("Connecting to a remote public LXD over HTTPS")
+func ConnectPublicIncusWithContext(ctx context.Context, url string, args *ConnectionArgs) (ImageServer, error) {
+	logger.Debug("Connecting to a remote public Incus over HTTPS")
 
 	// Cleanup URL
 	url = strings.TrimSuffix(url, "/")
 
-	return httpsLXD(ctx, url, args)
+	return httpsIncus(ctx, url, args)
 }
 
 // ConnectSimpleStreams lets you connect to a remote SimpleStreams image server over HTTPs.
@@ -298,8 +298,8 @@ func ConnectSimpleStreams(url string, args *ConnectionArgs) (ImageServer, error)
 	return &server, nil
 }
 
-// Internal function called by ConnectLXD and ConnectPublicLXD.
-func httpsLXD(ctx context.Context, requestURL string, args *ConnectionArgs) (InstanceServer, error) {
+// Internal function called by ConnectIncus and ConnectPublicIncus.
+func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (InstanceServer, error) {
 	// Use empty args if not specified
 	if args == nil {
 		args = &ConnectionArgs{}
@@ -313,7 +313,7 @@ func httpsLXD(ctx context.Context, requestURL string, args *ConnectionArgs) (Ins
 	ctxConnected, ctxConnectedCancel := context.WithCancel(context.Background())
 
 	// Initialize the client struct
-	server := ProtocolLXD{
+	server := ProtocolIncus{
 		ctx:                ctx,
 		httpCertificate:    args.TLSServerCert,
 		httpBaseURL:        *httpBaseURL,

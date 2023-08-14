@@ -17,7 +17,7 @@ import (
 // Storage volumes handling function
 
 // GetStoragePoolVolumeNames returns the names of all volumes in a pool.
-func (r *ProtocolLXD) GetStoragePoolVolumeNames(pool string) ([]string, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeNames(pool string) ([]string, error) {
 	if !r.HasExtension("storage") {
 		return nil, fmt.Errorf("The server is missing the required \"storage\" API extension")
 	}
@@ -35,7 +35,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeNames(pool string) ([]string, error) {
 }
 
 // GetStoragePoolVolumeNamesAllProjects returns the names of all volumes in a pool for all projects.
-func (r *ProtocolLXD) GetStoragePoolVolumeNamesAllProjects(pool string) (map[string][]string, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeNamesAllProjects(pool string) (map[string][]string, error) {
 	err := r.CheckExtension("storage")
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeNamesAllProjects(pool string) (map[str
 }
 
 // GetStoragePoolVolumes returns a list of StorageVolume entries for the provided pool.
-func (r *ProtocolLXD) GetStoragePoolVolumes(pool string) ([]api.StorageVolume, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumes(pool string) ([]api.StorageVolume, error) {
 	if !r.HasExtension("storage") {
 		return nil, fmt.Errorf("The server is missing the required \"storage\" API extension")
 	}
@@ -95,7 +95,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumes(pool string) ([]api.StorageVolume, e
 }
 
 // GetStoragePoolVolumesAllProjects returns a list of StorageVolume entries for the provided pool for all projects.
-func (r *ProtocolLXD) GetStoragePoolVolumesAllProjects(pool string) ([]api.StorageVolume, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumesAllProjects(pool string) ([]api.StorageVolume, error) {
 	err := r.CheckExtension("storage")
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumesAllProjects(pool string) ([]api.Stora
 }
 
 // GetStoragePoolVolumesWithFilter returns a filtered list of StorageVolume entries for the provided pool.
-func (r *ProtocolLXD) GetStoragePoolVolumesWithFilter(pool string, filters []string) ([]api.StorageVolume, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumesWithFilter(pool string, filters []string) ([]api.StorageVolume, error) {
 	if !r.HasExtension("storage") {
 		return nil, fmt.Errorf("The server is missing the required \"storage\" API extension")
 	}
@@ -142,7 +142,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumesWithFilter(pool string, filters []str
 }
 
 // GetStoragePoolVolumesWithFilterAllProjects returns a filtered list of StorageVolume entries for the provided pool for all projects.
-func (r *ProtocolLXD) GetStoragePoolVolumesWithFilterAllProjects(pool string, filters []string) ([]api.StorageVolume, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumesWithFilterAllProjects(pool string, filters []string) ([]api.StorageVolume, error) {
 	err := r.CheckExtension("storage")
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumesWithFilterAllProjects(pool string, fi
 }
 
 // GetStoragePoolVolume returns a StorageVolume entry for the provided pool and volume name.
-func (r *ProtocolLXD) GetStoragePoolVolume(pool string, volType string, name string) (*api.StorageVolume, string, error) {
+func (r *ProtocolIncus) GetStoragePoolVolume(pool string, volType string, name string) (*api.StorageVolume, string, error) {
 	if !r.HasExtension("storage") {
 		return nil, "", fmt.Errorf("The server is missing the required \"storage\" API extension")
 	}
@@ -188,7 +188,7 @@ func (r *ProtocolLXD) GetStoragePoolVolume(pool string, volType string, name str
 }
 
 // GetStoragePoolVolumeState returns a StorageVolumeState entry for the provided pool and volume name.
-func (r *ProtocolLXD) GetStoragePoolVolumeState(pool string, volType string, name string) (*api.StorageVolumeState, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeState(pool string, volType string, name string) (*api.StorageVolumeState, error) {
 	if !r.HasExtension("storage_volume_state") {
 		return nil, fmt.Errorf("The server is missing the required \"storage_volume_state\" API extension")
 	}
@@ -205,7 +205,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeState(pool string, volType string, nam
 }
 
 // CreateStoragePoolVolume defines a new storage volume.
-func (r *ProtocolLXD) CreateStoragePoolVolume(pool string, volume api.StorageVolumesPost) error {
+func (r *ProtocolIncus) CreateStoragePoolVolume(pool string, volume api.StorageVolumesPost) error {
 	if !r.HasExtension("storage") {
 		return fmt.Errorf("The server is missing the required \"storage\" API extension")
 	}
@@ -221,7 +221,7 @@ func (r *ProtocolLXD) CreateStoragePoolVolume(pool string, volume api.StorageVol
 }
 
 // CreateStoragePoolVolumeSnapshot defines a new storage volume.
-func (r *ProtocolLXD) CreateStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshot api.StorageVolumeSnapshotsPost) (Operation, error) {
+func (r *ProtocolIncus) CreateStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshot api.StorageVolumeSnapshotsPost) (Operation, error) {
 	if !r.HasExtension("storage_api_volume_snapshots") {
 		return nil, fmt.Errorf("The server is missing the required \"storage_api_volume_snapshots\" API extension")
 	}
@@ -241,7 +241,7 @@ func (r *ProtocolLXD) CreateStoragePoolVolumeSnapshot(pool string, volumeType st
 
 // GetStoragePoolVolumeSnapshotNames returns a list of snapshot names for the
 // storage volume.
-func (r *ProtocolLXD) GetStoragePoolVolumeSnapshotNames(pool string, volumeType string, volumeName string) ([]string, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeSnapshotNames(pool string, volumeType string, volumeName string) ([]string, error) {
 	if !r.HasExtension("storage_api_volume_snapshots") {
 		return nil, fmt.Errorf("The server is missing the required \"storage_api_volume_snapshots\" API extension")
 	}
@@ -260,7 +260,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeSnapshotNames(pool string, volumeType 
 
 // GetStoragePoolVolumeSnapshots returns a list of snapshots for the storage
 // volume.
-func (r *ProtocolLXD) GetStoragePoolVolumeSnapshots(pool string, volumeType string, volumeName string) ([]api.StorageVolumeSnapshot, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeSnapshots(pool string, volumeType string, volumeName string) ([]api.StorageVolumeSnapshot, error) {
 	if !r.HasExtension("storage_api_volume_snapshots") {
 		return nil, fmt.Errorf("The server is missing the required \"storage_api_volume_snapshots\" API extension")
 	}
@@ -280,7 +280,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeSnapshots(pool string, volumeType stri
 }
 
 // GetStoragePoolVolumeSnapshot returns a snapshots for the storage volume.
-func (r *ProtocolLXD) GetStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string) (*api.StorageVolumeSnapshot, string, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string) (*api.StorageVolumeSnapshot, string, error) {
 	if !r.HasExtension("storage_api_volume_snapshots") {
 		return nil, "", fmt.Errorf("The server is missing the required \"storage_api_volume_snapshots\" API extension")
 	}
@@ -301,7 +301,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeSnapshot(pool string, volumeType strin
 }
 
 // RenameStoragePoolVolumeSnapshot renames a storage volume snapshot.
-func (r *ProtocolLXD) RenameStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string, snapshot api.StorageVolumeSnapshotPost) (Operation, error) {
+func (r *ProtocolIncus) RenameStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string, snapshot api.StorageVolumeSnapshotPost) (Operation, error) {
 	if !r.HasExtension("storage_api_volume_snapshots") {
 		return nil, fmt.Errorf("The server is missing the required \"storage_api_volume_snapshots\" API extension")
 	}
@@ -317,7 +317,7 @@ func (r *ProtocolLXD) RenameStoragePoolVolumeSnapshot(pool string, volumeType st
 }
 
 // DeleteStoragePoolVolumeSnapshot deletes a storage volume snapshot.
-func (r *ProtocolLXD) DeleteStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string) (Operation, error) {
+func (r *ProtocolIncus) DeleteStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string) (Operation, error) {
 	if !r.HasExtension("storage_api_volume_snapshots") {
 		return nil, fmt.Errorf("The server is missing the required \"storage_api_volume_snapshots\" API extension")
 	}
@@ -336,7 +336,7 @@ func (r *ProtocolLXD) DeleteStoragePoolVolumeSnapshot(pool string, volumeType st
 }
 
 // UpdateStoragePoolVolumeSnapshot updates the volume to match the provided StoragePoolVolume struct.
-func (r *ProtocolLXD) UpdateStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string, volume api.StorageVolumeSnapshotPut, ETag string) error {
+func (r *ProtocolIncus) UpdateStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string, volume api.StorageVolumeSnapshotPut, ETag string) error {
 	if !r.HasExtension("storage_api_volume_snapshots") {
 		return fmt.Errorf("The server is missing the required \"storage_api_volume_snapshots\" API extension")
 	}
@@ -351,8 +351,8 @@ func (r *ProtocolLXD) UpdateStoragePoolVolumeSnapshot(pool string, volumeType st
 	return nil
 }
 
-// MigrateStoragePoolVolume requests that LXD prepares for a storage volume migration.
-func (r *ProtocolLXD) MigrateStoragePoolVolume(pool string, volume api.StorageVolumePost) (Operation, error) {
+// MigrateStoragePoolVolume requests that Incus prepares for a storage volume migration.
+func (r *ProtocolIncus) MigrateStoragePoolVolume(pool string, volume api.StorageVolumePost) (Operation, error) {
 	if !r.HasExtension("storage_api_remote_volume_handling") {
 		return nil, fmt.Errorf("The server is missing the required \"storage_api_remote_volume_handling\" API extension")
 	}
@@ -372,7 +372,7 @@ func (r *ProtocolLXD) MigrateStoragePoolVolume(pool string, volume api.StorageVo
 	return op, nil
 }
 
-func (r *ProtocolLXD) tryMigrateStoragePoolVolume(source InstanceServer, pool string, req api.StorageVolumePost, urls []string) (RemoteOperation, error) {
+func (r *ProtocolIncus) tryMigrateStoragePoolVolume(source InstanceServer, pool string, req api.StorageVolumePost, urls []string) (RemoteOperation, error) {
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("The source server isn't listening on the network")
 	}
@@ -433,7 +433,7 @@ func (r *ProtocolLXD) tryMigrateStoragePoolVolume(source InstanceServer, pool st
 
 // tryCreateStoragePoolVolume attempts to create a storage volume in the specified storage pool.
 // It will try to do this on every server in the provided list of urls, and waits for the creation to be complete.
-func (r *ProtocolLXD) tryCreateStoragePoolVolume(pool string, req api.StorageVolumesPost, urls []string) (RemoteOperation, error) {
+func (r *ProtocolIncus) tryCreateStoragePoolVolume(pool string, req api.StorageVolumesPost, urls []string) (RemoteOperation, error) {
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("The source server isn't listening on the network")
 	}
@@ -494,7 +494,7 @@ func (r *ProtocolLXD) tryCreateStoragePoolVolume(pool string, req api.StorageVol
 }
 
 // CopyStoragePoolVolume copies an existing storage volume.
-func (r *ProtocolLXD) CopyStoragePoolVolume(pool string, source InstanceServer, sourcePool string, volume api.StorageVolume, args *StoragePoolVolumeCopyArgs) (RemoteOperation, error) {
+func (r *ProtocolIncus) CopyStoragePoolVolume(pool string, source InstanceServer, sourcePool string, volume api.StorageVolume, args *StoragePoolVolumeCopyArgs) (RemoteOperation, error) {
 	if !r.HasExtension("storage_api_local_volume_handling") {
 		return nil, fmt.Errorf("The server is missing the required \"storage_api_local_volume_handling\" API extension")
 	}
@@ -690,7 +690,7 @@ func (r *ProtocolLXD) CopyStoragePoolVolume(pool string, source InstanceServer, 
 }
 
 // MoveStoragePoolVolume renames or moves an existing storage volume.
-func (r *ProtocolLXD) MoveStoragePoolVolume(pool string, source InstanceServer, sourcePool string, volume api.StorageVolume, args *StoragePoolVolumeMoveArgs) (RemoteOperation, error) {
+func (r *ProtocolIncus) MoveStoragePoolVolume(pool string, source InstanceServer, sourcePool string, volume api.StorageVolume, args *StoragePoolVolumeMoveArgs) (RemoteOperation, error) {
 	if !r.HasExtension("storage_api_local_volume_handling") {
 		return nil, fmt.Errorf("The server is missing the required \"storage_api_local_volume_handling\" API extension")
 	}
@@ -733,7 +733,7 @@ func (r *ProtocolLXD) MoveStoragePoolVolume(pool string, source InstanceServer, 
 }
 
 // UpdateStoragePoolVolume updates the volume to match the provided StoragePoolVolume struct.
-func (r *ProtocolLXD) UpdateStoragePoolVolume(pool string, volType string, name string, volume api.StorageVolumePut, ETag string) error {
+func (r *ProtocolIncus) UpdateStoragePoolVolume(pool string, volType string, name string, volume api.StorageVolumePut, ETag string) error {
 	if !r.HasExtension("storage") {
 		return fmt.Errorf("The server is missing the required \"storage\" API extension")
 	}
@@ -753,7 +753,7 @@ func (r *ProtocolLXD) UpdateStoragePoolVolume(pool string, volType string, name 
 }
 
 // DeleteStoragePoolVolume deletes a storage pool.
-func (r *ProtocolLXD) DeleteStoragePoolVolume(pool string, volType string, name string) error {
+func (r *ProtocolIncus) DeleteStoragePoolVolume(pool string, volType string, name string) error {
 	if !r.HasExtension("storage") {
 		return fmt.Errorf("The server is missing the required \"storage\" API extension")
 	}
@@ -769,7 +769,7 @@ func (r *ProtocolLXD) DeleteStoragePoolVolume(pool string, volType string, name 
 }
 
 // RenameStoragePoolVolume renames a storage volume.
-func (r *ProtocolLXD) RenameStoragePoolVolume(pool string, volType string, name string, volume api.StorageVolumePost) error {
+func (r *ProtocolIncus) RenameStoragePoolVolume(pool string, volType string, name string, volume api.StorageVolumePost) error {
 	if !r.HasExtension("storage_api_volume_rename") {
 		return fmt.Errorf("The server is missing the required \"storage_api_volume_rename\" API extension")
 	}
@@ -786,7 +786,7 @@ func (r *ProtocolLXD) RenameStoragePoolVolume(pool string, volType string, name 
 }
 
 // GetStoragePoolVolumeBackupNames returns a list of volume backup names.
-func (r *ProtocolLXD) GetStoragePoolVolumeBackupNames(pool string, volName string) ([]string, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeBackupNames(pool string, volName string) ([]string, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -804,7 +804,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeBackupNames(pool string, volName strin
 }
 
 // GetStoragePoolVolumeBackups returns a list of custom volume backups.
-func (r *ProtocolLXD) GetStoragePoolVolumeBackups(pool string, volName string) ([]api.StoragePoolVolumeBackup, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeBackups(pool string, volName string) ([]api.StoragePoolVolumeBackup, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -821,7 +821,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeBackups(pool string, volName string) (
 }
 
 // GetStoragePoolVolumeBackup returns a custom volume backup.
-func (r *ProtocolLXD) GetStoragePoolVolumeBackup(pool string, volName string, name string) (*api.StoragePoolVolumeBackup, string, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeBackup(pool string, volName string, name string) (*api.StoragePoolVolumeBackup, string, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, "", fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -837,7 +837,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeBackup(pool string, volName string, na
 }
 
 // CreateStoragePoolVolumeBackup creates new custom volume backup.
-func (r *ProtocolLXD) CreateStoragePoolVolumeBackup(pool string, volName string, backup api.StoragePoolVolumeBackupsPost) (Operation, error) {
+func (r *ProtocolIncus) CreateStoragePoolVolumeBackup(pool string, volName string, backup api.StoragePoolVolumeBackupsPost) (Operation, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -852,7 +852,7 @@ func (r *ProtocolLXD) CreateStoragePoolVolumeBackup(pool string, volName string,
 }
 
 // RenameStoragePoolVolumeBackup renames a custom volume backup.
-func (r *ProtocolLXD) RenameStoragePoolVolumeBackup(pool string, volName string, name string, backup api.StoragePoolVolumeBackupPost) (Operation, error) {
+func (r *ProtocolIncus) RenameStoragePoolVolumeBackup(pool string, volName string, name string, backup api.StoragePoolVolumeBackupPost) (Operation, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -867,7 +867,7 @@ func (r *ProtocolLXD) RenameStoragePoolVolumeBackup(pool string, volName string,
 }
 
 // DeleteStoragePoolVolumeBackup deletes a custom volume backup.
-func (r *ProtocolLXD) DeleteStoragePoolVolumeBackup(pool string, volName string, name string) (Operation, error) {
+func (r *ProtocolIncus) DeleteStoragePoolVolumeBackup(pool string, volName string, name string) (Operation, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -882,7 +882,7 @@ func (r *ProtocolLXD) DeleteStoragePoolVolumeBackup(pool string, volName string,
 }
 
 // GetStoragePoolVolumeBackupFile requests the custom volume backup content.
-func (r *ProtocolLXD) GetStoragePoolVolumeBackupFile(pool string, volName string, name string, req *BackupFileRequest) (*BackupFileResponse, error) {
+func (r *ProtocolIncus) GetStoragePoolVolumeBackupFile(pool string, volName string, name string, req *BackupFileRequest) (*BackupFileResponse, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"custom_volume_backup\" API extension")
 	}
@@ -914,7 +914,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeBackupFile(pool string, volName string
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
-		_, _, err := lxdParseResponse(response)
+		_, _, err := incusParseResponse(response)
 		if err != nil {
 			return nil, err
 		}
@@ -946,7 +946,7 @@ func (r *ProtocolLXD) GetStoragePoolVolumeBackupFile(pool string, volName string
 }
 
 // CreateStoragePoolVolumeFromISO creates a custom volume from an ISO file.
-func (r *ProtocolLXD) CreateStoragePoolVolumeFromISO(pool string, args StoragePoolVolumeBackupArgs) (Operation, error) {
+func (r *ProtocolIncus) CreateStoragePoolVolumeFromISO(pool string, args StoragePoolVolumeBackupArgs) (Operation, error) {
 	err := r.CheckExtension("custom_volume_iso")
 	if err != nil {
 		return nil, err
@@ -982,7 +982,7 @@ func (r *ProtocolLXD) CreateStoragePoolVolumeFromISO(pool string, args StoragePo
 	defer func() { _ = resp.Body.Close() }()
 
 	// Handle errors.
-	response, _, err := lxdParseResponse(resp)
+	response, _, err := incusParseResponse(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -1004,7 +1004,7 @@ func (r *ProtocolLXD) CreateStoragePoolVolumeFromISO(pool string, args StoragePo
 }
 
 // CreateStoragePoolVolumeFromBackup creates a custom volume from a backup file.
-func (r *ProtocolLXD) CreateStoragePoolVolumeFromBackup(pool string, args StoragePoolVolumeBackupArgs) (Operation, error) {
+func (r *ProtocolIncus) CreateStoragePoolVolumeFromBackup(pool string, args StoragePoolVolumeBackupArgs) (Operation, error) {
 	if !r.HasExtension("custom_volume_backup") {
 		return nil, fmt.Errorf(`The server is missing the required "custom_volume_backup" API extension`)
 	}
@@ -1041,7 +1041,7 @@ func (r *ProtocolLXD) CreateStoragePoolVolumeFromBackup(pool string, args Storag
 	defer func() { _ = resp.Body.Close() }()
 
 	// Handle errors.
-	response, _, err := lxdParseResponse(resp)
+	response, _, err := incusParseResponse(resp)
 	if err != nil {
 		return nil, err
 	}

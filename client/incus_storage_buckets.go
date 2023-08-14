@@ -5,7 +5,7 @@ import (
 )
 
 // GetStoragePoolBucketNames returns a list of storage bucket names.
-func (r *ProtocolLXD) GetStoragePoolBucketNames(poolName string) ([]string, error) {
+func (r *ProtocolIncus) GetStoragePoolBucketNames(poolName string) ([]string, error) {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func (r *ProtocolLXD) GetStoragePoolBucketNames(poolName string) ([]string, erro
 }
 
 // GetStoragePoolBuckets returns a list of storage buckets for the provided pool.
-func (r *ProtocolLXD) GetStoragePoolBuckets(poolName string) ([]api.StorageBucket, error) {
+func (r *ProtocolIncus) GetStoragePoolBuckets(poolName string) ([]api.StorageBucket, error) {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (r *ProtocolLXD) GetStoragePoolBuckets(poolName string) ([]api.StorageBucke
 }
 
 // GetStoragePoolBucket returns a storage bucket entry for the provided pool and bucket name.
-func (r *ProtocolLXD) GetStoragePoolBucket(poolName string, bucketName string) (*api.StorageBucket, string, error) {
+func (r *ProtocolIncus) GetStoragePoolBucket(poolName string, bucketName string) (*api.StorageBucket, string, error) {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return nil, "", err
@@ -64,7 +64,7 @@ func (r *ProtocolLXD) GetStoragePoolBucket(poolName string, bucketName string) (
 // CreateStoragePoolBucket defines a new storage bucket using the provided struct.
 // If the server supports storage_buckets_create_credentials API extension, then this function will return the
 // initial admin credentials. Otherwise it will be nil.
-func (r *ProtocolLXD) CreateStoragePoolBucket(poolName string, bucket api.StorageBucketsPost) (*api.StorageBucketKey, error) {
+func (r *ProtocolIncus) CreateStoragePoolBucket(poolName string, bucket api.StorageBucketsPost) (*api.StorageBucketKey, error) {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (r *ProtocolLXD) CreateStoragePoolBucket(poolName string, bucket api.Storag
 }
 
 // UpdateStoragePoolBucket updates the storage bucket to match the provided struct.
-func (r *ProtocolLXD) UpdateStoragePoolBucket(poolName string, bucketName string, bucket api.StorageBucketPut, ETag string) error {
+func (r *ProtocolIncus) UpdateStoragePoolBucket(poolName string, bucketName string, bucket api.StorageBucketPut, ETag string) error {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return err
@@ -109,7 +109,7 @@ func (r *ProtocolLXD) UpdateStoragePoolBucket(poolName string, bucketName string
 }
 
 // DeleteStoragePoolBucket deletes an existing storage bucket.
-func (r *ProtocolLXD) DeleteStoragePoolBucket(poolName string, bucketName string) error {
+func (r *ProtocolIncus) DeleteStoragePoolBucket(poolName string, bucketName string) error {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func (r *ProtocolLXD) DeleteStoragePoolBucket(poolName string, bucketName string
 }
 
 // GetStoragePoolBucketKeyNames returns a list of storage bucket key names.
-func (r *ProtocolLXD) GetStoragePoolBucketKeyNames(poolName string, bucketName string) ([]string, error) {
+func (r *ProtocolIncus) GetStoragePoolBucketKeyNames(poolName string, bucketName string) ([]string, error) {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ func (r *ProtocolLXD) GetStoragePoolBucketKeyNames(poolName string, bucketName s
 }
 
 // GetStoragePoolBucketKeys returns a list of storage bucket keys for the provided pool and bucket.
-func (r *ProtocolLXD) GetStoragePoolBucketKeys(poolName string, bucketName string) ([]api.StorageBucketKey, error) {
+func (r *ProtocolIncus) GetStoragePoolBucketKeys(poolName string, bucketName string) ([]api.StorageBucketKey, error) {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (r *ProtocolLXD) GetStoragePoolBucketKeys(poolName string, bucketName strin
 }
 
 // GetStoragePoolBucketKey returns a storage bucket key entry for the provided pool, bucket and key name.
-func (r *ProtocolLXD) GetStoragePoolBucketKey(poolName string, bucketName string, keyName string) (*api.StorageBucketKey, string, error) {
+func (r *ProtocolIncus) GetStoragePoolBucketKey(poolName string, bucketName string, keyName string) (*api.StorageBucketKey, string, error) {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return nil, "", err
@@ -183,7 +183,7 @@ func (r *ProtocolLXD) GetStoragePoolBucketKey(poolName string, bucketName string
 }
 
 // CreateStoragePoolBucketKey adds a key to a storage bucket.
-func (r *ProtocolLXD) CreateStoragePoolBucketKey(poolName string, bucketName string, key api.StorageBucketKeysPost) (*api.StorageBucketKey, error) {
+func (r *ProtocolIncus) CreateStoragePoolBucketKey(poolName string, bucketName string, key api.StorageBucketKeysPost) (*api.StorageBucketKey, error) {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return nil, err
@@ -201,7 +201,7 @@ func (r *ProtocolLXD) CreateStoragePoolBucketKey(poolName string, bucketName str
 }
 
 // UpdateStoragePoolBucketKey updates an existing storage bucket key.
-func (r *ProtocolLXD) UpdateStoragePoolBucketKey(poolName string, bucketName string, keyName string, key api.StorageBucketKeyPut, ETag string) error {
+func (r *ProtocolIncus) UpdateStoragePoolBucketKey(poolName string, bucketName string, keyName string, key api.StorageBucketKeyPut, ETag string) error {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func (r *ProtocolLXD) UpdateStoragePoolBucketKey(poolName string, bucketName str
 }
 
 // DeleteStoragePoolBucketKey removes a key from a storage bucket.
-func (r *ProtocolLXD) DeleteStoragePoolBucketKey(poolName string, bucketName string, keyName string) error {
+func (r *ProtocolIncus) DeleteStoragePoolBucketKey(poolName string, bucketName string, keyName string) error {
 	err := r.CheckExtension("storage_buckets")
 	if err != nil {
 		return err

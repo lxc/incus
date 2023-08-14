@@ -12,11 +12,11 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// The Operation type represents an ongoing LXD operation (asynchronous processing).
+// The Operation type represents an ongoing Incus operation (asynchronous processing).
 type operation struct {
 	api.Operation
 
-	r            *ProtocolLXD
+	r            *ProtocolIncus
 	listener     *EventListener
 	handlerReady bool
 	handlerLock  sync.Mutex
@@ -60,7 +60,7 @@ func (op *operation) AddHandler(function func(api.Operation)) (*EventTarget, err
 	return op.listener.AddHandler([]string{"operation"}, wrapped)
 }
 
-// Cancel will request that LXD cancels the operation (if supported).
+// Cancel will request that Incus cancels the operation (if supported).
 func (op *operation) Cancel() error {
 	return op.r.DeleteOperation(op.ID)
 }
@@ -272,7 +272,7 @@ func (op *operation) setupListener() error {
 	return nil
 }
 
-// The remoteOperation type represents an ongoing LXD operation between two servers.
+// The remoteOperation type represents an ongoing Incus operation between two servers.
 type remoteOperation struct {
 	targetOp Operation
 

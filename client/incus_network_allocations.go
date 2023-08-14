@@ -5,7 +5,7 @@ import (
 )
 
 // GetNetworkAllocations returns a list of Network allocations tied to one or several projects (e.g, for IPAM information for example).
-func (r *ProtocolLXD) GetNetworkAllocations(allProjects bool) ([]api.NetworkAllocations, error) {
+func (r *ProtocolIncus) GetNetworkAllocations(allProjects bool) ([]api.NetworkAllocations, error) {
 	err := r.CheckExtension("network_allocations")
 	if err != nil {
 		return nil, err

@@ -5,7 +5,7 @@ import (
 )
 
 // GetNetworkLoadBalancerAddresses returns a list of network load balancer listen addresses.
-func (r *ProtocolLXD) GetNetworkLoadBalancerAddresses(networkName string) ([]string, error) {
+func (r *ProtocolIncus) GetNetworkLoadBalancerAddresses(networkName string) ([]string, error) {
 	err := r.CheckExtension("network_load_balancer")
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func (r *ProtocolLXD) GetNetworkLoadBalancerAddresses(networkName string) ([]str
 }
 
 // GetNetworkLoadBalancers returns a list of Network load balancer structs.
-func (r *ProtocolLXD) GetNetworkLoadBalancers(networkName string) ([]api.NetworkLoadBalancer, error) {
+func (r *ProtocolIncus) GetNetworkLoadBalancers(networkName string) ([]api.NetworkLoadBalancer, error) {
 	err := r.CheckExtension("network_load_balancer")
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (r *ProtocolLXD) GetNetworkLoadBalancers(networkName string) ([]api.Network
 }
 
 // GetNetworkLoadBalancer returns a Network load balancer entry for the provided network and listen address.
-func (r *ProtocolLXD) GetNetworkLoadBalancer(networkName string, listenAddress string) (*api.NetworkLoadBalancer, string, error) {
+func (r *ProtocolIncus) GetNetworkLoadBalancer(networkName string, listenAddress string) (*api.NetworkLoadBalancer, string, error) {
 	err := r.CheckExtension("network_load_balancer")
 	if err != nil {
 		return nil, "", err
@@ -62,7 +62,7 @@ func (r *ProtocolLXD) GetNetworkLoadBalancer(networkName string, listenAddress s
 }
 
 // CreateNetworkLoadBalancer defines a new network load balancer using the provided struct.
-func (r *ProtocolLXD) CreateNetworkLoadBalancer(networkName string, loadBalancer api.NetworkLoadBalancersPost) error {
+func (r *ProtocolIncus) CreateNetworkLoadBalancer(networkName string, loadBalancer api.NetworkLoadBalancersPost) error {
 	err := r.CheckExtension("network_load_balancer")
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (r *ProtocolLXD) CreateNetworkLoadBalancer(networkName string, loadBalancer
 }
 
 // UpdateNetworkLoadBalancer updates the network load balancer to match the provided struct.
-func (r *ProtocolLXD) UpdateNetworkLoadBalancer(networkName string, listenAddress string, loadBalancer api.NetworkLoadBalancerPut, ETag string) error {
+func (r *ProtocolIncus) UpdateNetworkLoadBalancer(networkName string, listenAddress string, loadBalancer api.NetworkLoadBalancerPut, ETag string) error {
 	err := r.CheckExtension("network_load_balancer")
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func (r *ProtocolLXD) UpdateNetworkLoadBalancer(networkName string, listenAddres
 }
 
 // DeleteNetworkLoadBalancer deletes an existing network load balancer.
-func (r *ProtocolLXD) DeleteNetworkLoadBalancer(networkName string, listenAddress string) error {
+func (r *ProtocolIncus) DeleteNetworkLoadBalancer(networkName string, listenAddress string) error {
 	err := r.CheckExtension("network_load_balancer")
 	if err != nil {
 		return err

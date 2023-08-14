@@ -27,7 +27,7 @@ import (
 // Instance handling functions.
 
 // instanceTypeToPath converts the instance type to a URL path prefix and query string values.
-func (r *ProtocolLXD) instanceTypeToPath(instanceType api.InstanceType) (string, url.Values, error) {
+func (r *ProtocolIncus) instanceTypeToPath(instanceType api.InstanceType) (string, url.Values, error) {
 	v := url.Values{}
 
 	// If a specific instance type has been requested, add the instance-type filter parameter
@@ -41,7 +41,7 @@ func (r *ProtocolLXD) instanceTypeToPath(instanceType api.InstanceType) (string,
 }
 
 // GetInstanceNames returns a list of instance names.
-func (r *ProtocolLXD) GetInstanceNames(instanceType api.InstanceType) ([]string, error) {
+func (r *ProtocolIncus) GetInstanceNames(instanceType api.InstanceType) ([]string, error) {
 	baseURL, v, err := r.instanceTypeToPath(instanceType)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (r *ProtocolLXD) GetInstanceNames(instanceType api.InstanceType) ([]string,
 }
 
 // GetInstanceNamesAllProjects returns a list of instance names from all projects.
-func (r *ProtocolLXD) GetInstanceNamesAllProjects(instanceType api.InstanceType) (map[string][]string, error) {
+func (r *ProtocolIncus) GetInstanceNamesAllProjects(instanceType api.InstanceType) (map[string][]string, error) {
 	instances := []api.Instance{}
 
 	path, v, err := r.instanceTypeToPath(instanceType)
@@ -85,7 +85,7 @@ func (r *ProtocolLXD) GetInstanceNamesAllProjects(instanceType api.InstanceType)
 }
 
 // GetInstances returns a list of instances.
-func (r *ProtocolLXD) GetInstances(instanceType api.InstanceType) ([]api.Instance, error) {
+func (r *ProtocolIncus) GetInstances(instanceType api.InstanceType) ([]api.Instance, error) {
 	instances := []api.Instance{}
 
 	path, v, err := r.instanceTypeToPath(instanceType)
@@ -105,7 +105,7 @@ func (r *ProtocolLXD) GetInstances(instanceType api.InstanceType) ([]api.Instanc
 }
 
 // GetInstancesWithFilter returns a filtered list of instances.
-func (r *ProtocolLXD) GetInstancesWithFilter(instanceType api.InstanceType, filters []string) ([]api.Instance, error) {
+func (r *ProtocolIncus) GetInstancesWithFilter(instanceType api.InstanceType, filters []string) ([]api.Instance, error) {
 	if !r.HasExtension("api_filtering") {
 		return nil, fmt.Errorf("The server is missing the required \"api_filtering\" API extension")
 	}
@@ -130,7 +130,7 @@ func (r *ProtocolLXD) GetInstancesWithFilter(instanceType api.InstanceType, filt
 }
 
 // GetInstancesAllProjects returns a list of instances from all projects.
-func (r *ProtocolLXD) GetInstancesAllProjects(instanceType api.InstanceType) ([]api.Instance, error) {
+func (r *ProtocolIncus) GetInstancesAllProjects(instanceType api.InstanceType) ([]api.Instance, error) {
 	instances := []api.Instance{}
 
 	path, v, err := r.instanceTypeToPath(instanceType)
@@ -155,7 +155,7 @@ func (r *ProtocolLXD) GetInstancesAllProjects(instanceType api.InstanceType) ([]
 }
 
 // GetInstancesAllProjectsWithFilter returns a filtered list of instances from all projects.
-func (r *ProtocolLXD) GetInstancesAllProjectsWithFilter(instanceType api.InstanceType, filters []string) ([]api.Instance, error) {
+func (r *ProtocolIncus) GetInstancesAllProjectsWithFilter(instanceType api.InstanceType, filters []string) ([]api.Instance, error) {
 	if !r.HasExtension("api_filtering") {
 		return nil, fmt.Errorf("The server is missing the required \"api_filtering\" API extension")
 	}
@@ -185,7 +185,7 @@ func (r *ProtocolLXD) GetInstancesAllProjectsWithFilter(instanceType api.Instanc
 }
 
 // UpdateInstances updates all instances to match the requested state.
-func (r *ProtocolLXD) UpdateInstances(state api.InstancesPut, ETag string) (Operation, error) {
+func (r *ProtocolIncus) UpdateInstances(state api.InstancesPut, ETag string) (Operation, error) {
 	path, v, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -200,8 +200,8 @@ func (r *ProtocolLXD) UpdateInstances(state api.InstancesPut, ETag string) (Oper
 	return op, nil
 }
 
-// rebuildInstance initiates a rebuild of a given instance on the LXD Protocol server and returns the corresponding operation or an error.
-func (r *ProtocolLXD) rebuildInstance(instanceName string, instance api.InstanceRebuildPost) (Operation, error) {
+// rebuildInstance initiates a rebuild of a given instance on the Incus Protocol server and returns the corresponding operation or an error.
+func (r *ProtocolIncus) rebuildInstance(instanceName string, instance api.InstanceRebuildPost) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -218,7 +218,7 @@ func (r *ProtocolLXD) rebuildInstance(instanceName string, instance api.Instance
 
 // tryRebuildInstance attempts to rebuild a specific instance on multiple target servers identified by their URLs.
 // It runs the rebuild process asynchronously and returns a RemoteOperation to monitor the progress and any errors.
-func (r *ProtocolLXD) tryRebuildInstance(instanceName string, req api.InstanceRebuildPost, urls []string, op Operation) (RemoteOperation, error) {
+func (r *ProtocolIncus) tryRebuildInstance(instanceName string, req api.InstanceRebuildPost, urls []string, op Operation) (RemoteOperation, error) {
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("The source server isn't listening on the network")
 	}
@@ -282,7 +282,7 @@ func (r *ProtocolLXD) tryRebuildInstance(instanceName string, req api.InstanceRe
 }
 
 // RebuildInstanceFromImage rebuilds an instance from an image.
-func (r *ProtocolLXD) RebuildInstanceFromImage(source ImageServer, image api.Image, instanceName string, req api.InstanceRebuildPost) (RemoteOperation, error) {
+func (r *ProtocolIncus) RebuildInstanceFromImage(source ImageServer, image api.Image, instanceName string, req api.InstanceRebuildPost) (RemoteOperation, error) {
 	info, err := r.getSourceImageConnectionInfo(source, image, &req.Source)
 	if err != nil {
 		return nil, err
@@ -312,12 +312,12 @@ func (r *ProtocolLXD) RebuildInstanceFromImage(source ImageServer, image api.Ima
 }
 
 // RebuildInstance rebuilds an instance as empty.
-func (r *ProtocolLXD) RebuildInstance(instanceName string, instance api.InstanceRebuildPost) (op Operation, err error) {
+func (r *ProtocolIncus) RebuildInstance(instanceName string, instance api.InstanceRebuildPost) (op Operation, err error) {
 	return r.rebuildInstance(instanceName, instance)
 }
 
 // GetInstancesFull returns a list of instances including snapshots, backups and state.
-func (r *ProtocolLXD) GetInstancesFull(instanceType api.InstanceType) ([]api.InstanceFull, error) {
+func (r *ProtocolIncus) GetInstancesFull(instanceType api.InstanceType) ([]api.InstanceFull, error) {
 	instances := []api.InstanceFull{}
 
 	path, v, err := r.instanceTypeToPath(instanceType)
@@ -341,7 +341,7 @@ func (r *ProtocolLXD) GetInstancesFull(instanceType api.InstanceType) ([]api.Ins
 }
 
 // GetInstancesFullWithFilter returns a filtered list of instances including snapshots, backups and state.
-func (r *ProtocolLXD) GetInstancesFullWithFilter(instanceType api.InstanceType, filters []string) ([]api.InstanceFull, error) {
+func (r *ProtocolIncus) GetInstancesFullWithFilter(instanceType api.InstanceType, filters []string) ([]api.InstanceFull, error) {
 	if !r.HasExtension("api_filtering") {
 		return nil, fmt.Errorf("The server is missing the required \"api_filtering\" API extension")
 	}
@@ -370,7 +370,7 @@ func (r *ProtocolLXD) GetInstancesFullWithFilter(instanceType api.InstanceType, 
 }
 
 // GetInstancesFullAllProjects returns a list of instances including snapshots, backups and state from all projects.
-func (r *ProtocolLXD) GetInstancesFullAllProjects(instanceType api.InstanceType) ([]api.InstanceFull, error) {
+func (r *ProtocolIncus) GetInstancesFullAllProjects(instanceType api.InstanceType) ([]api.InstanceFull, error) {
 	instances := []api.InstanceFull{}
 
 	path, v, err := r.instanceTypeToPath(instanceType)
@@ -399,7 +399,7 @@ func (r *ProtocolLXD) GetInstancesFullAllProjects(instanceType api.InstanceType)
 }
 
 // GetInstancesFullAllProjectsWithFilter returns a filtered list of instances including snapshots, backups and state from all projects.
-func (r *ProtocolLXD) GetInstancesFullAllProjectsWithFilter(instanceType api.InstanceType, filters []string) ([]api.InstanceFull, error) {
+func (r *ProtocolIncus) GetInstancesFullAllProjectsWithFilter(instanceType api.InstanceType, filters []string) ([]api.InstanceFull, error) {
 	if !r.HasExtension("api_filtering") {
 		return nil, fmt.Errorf("The server is missing the required \"api_filtering\" API extension")
 	}
@@ -433,7 +433,7 @@ func (r *ProtocolLXD) GetInstancesFullAllProjectsWithFilter(instanceType api.Ins
 }
 
 // GetInstance returns the instance entry for the provided name.
-func (r *ProtocolLXD) GetInstance(name string) (*api.Instance, string, error) {
+func (r *ProtocolIncus) GetInstance(name string) (*api.Instance, string, error) {
 	instance := api.Instance{}
 
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
@@ -451,7 +451,7 @@ func (r *ProtocolLXD) GetInstance(name string) (*api.Instance, string, error) {
 }
 
 // GetInstanceFull returns the instance entry for the provided name along with snapshot information.
-func (r *ProtocolLXD) GetInstanceFull(name string) (*api.InstanceFull, string, error) {
+func (r *ProtocolIncus) GetInstanceFull(name string) (*api.InstanceFull, string, error) {
 	instance := api.InstanceFull{}
 
 	if !r.HasExtension("instance_get_full") {
@@ -500,7 +500,7 @@ func (r *ProtocolLXD) GetInstanceFull(name string) (*api.InstanceFull, string, e
 
 // CreateInstanceFromBackup is a convenience function to make it easier to
 // create a instance from a backup.
-func (r *ProtocolLXD) CreateInstanceFromBackup(args InstanceBackupArgs) (Operation, error) {
+func (r *ProtocolIncus) CreateInstanceFromBackup(args InstanceBackupArgs) (Operation, error) {
 	if !r.HasExtension("container_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"container_backup\" API extension")
 	}
@@ -558,7 +558,7 @@ func (r *ProtocolLXD) CreateInstanceFromBackup(args InstanceBackupArgs) (Operati
 	defer func() { _ = resp.Body.Close() }()
 
 	// Handle errors
-	response, _, err := lxdParseResponse(resp)
+	response, _, err := incusParseResponse(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -579,8 +579,8 @@ func (r *ProtocolLXD) CreateInstanceFromBackup(args InstanceBackupArgs) (Operati
 	return &op, nil
 }
 
-// CreateInstance requests that LXD creates a new instance.
-func (r *ProtocolLXD) CreateInstance(instance api.InstancesPost) (Operation, error) {
+// CreateInstance requests that Incus creates a new instance.
+func (r *ProtocolIncus) CreateInstance(instance api.InstancesPost) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(instance.Type)
 	if err != nil {
 		return nil, err
@@ -603,7 +603,7 @@ func (r *ProtocolLXD) CreateInstance(instance api.InstancesPost) (Operation, err
 
 // tryCreateInstance attempts to create a new instance on multiple target servers specified by their URLs.
 // It runs the instance creation asynchronously and returns a RemoteOperation to monitor the progress and any errors.
-func (r *ProtocolLXD) tryCreateInstance(req api.InstancesPost, urls []string, op Operation) (RemoteOperation, error) {
+func (r *ProtocolIncus) tryCreateInstance(req api.InstancesPost, urls []string, op Operation) (RemoteOperation, error) {
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("The source server isn't listening on the network")
 	}
@@ -668,7 +668,7 @@ func (r *ProtocolLXD) tryCreateInstance(req api.InstancesPost, urls []string, op
 }
 
 // CreateInstanceFromImage is a convenience function to make it easier to create a instance from an existing image.
-func (r *ProtocolLXD) CreateInstanceFromImage(source ImageServer, image api.Image, req api.InstancesPost) (RemoteOperation, error) {
+func (r *ProtocolIncus) CreateInstanceFromImage(source ImageServer, image api.Image, req api.InstancesPost) (RemoteOperation, error) {
 	info, err := r.getSourceImageConnectionInfo(source, image, &req.Source)
 	if err != nil {
 		return nil, err
@@ -699,7 +699,7 @@ func (r *ProtocolLXD) CreateInstanceFromImage(source ImageServer, image api.Imag
 }
 
 // CopyInstance copies a instance from a remote server. Additional options can be passed using InstanceCopyArgs.
-func (r *ProtocolLXD) CopyInstance(source InstanceServer, instance api.Instance, args *InstanceCopyArgs) (RemoteOperation, error) {
+func (r *ProtocolIncus) CopyInstance(source InstanceServer, instance api.Instance, args *InstanceCopyArgs) (RemoteOperation, error) {
 	// Base request
 	req := api.InstancesPost{
 		Name:        instance.Name,
@@ -925,7 +925,7 @@ func (r *ProtocolLXD) CopyInstance(source InstanceServer, instance api.Instance,
 }
 
 // UpdateInstance updates the instance definition.
-func (r *ProtocolLXD) UpdateInstance(name string, instance api.InstancePut, ETag string) (Operation, error) {
+func (r *ProtocolIncus) UpdateInstance(name string, instance api.InstancePut, ETag string) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -940,8 +940,8 @@ func (r *ProtocolLXD) UpdateInstance(name string, instance api.InstancePut, ETag
 	return op, nil
 }
 
-// RenameInstance requests that LXD renames the instance.
-func (r *ProtocolLXD) RenameInstance(name string, instance api.InstancePost) (Operation, error) {
+// RenameInstance requests that Incus renames the instance.
+func (r *ProtocolIncus) RenameInstance(name string, instance api.InstancePost) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -963,7 +963,7 @@ func (r *ProtocolLXD) RenameInstance(name string, instance api.InstancePost) (Op
 
 // tryMigrateInstance attempts to migrate a specific instance from a source server to one of the target URLs.
 // The function runs the migration operation asynchronously and returns a RemoteOperation to track the progress and handle any errors.
-func (r *ProtocolLXD) tryMigrateInstance(source InstanceServer, name string, req api.InstancePost, urls []string) (RemoteOperation, error) {
+func (r *ProtocolIncus) tryMigrateInstance(source InstanceServer, name string, req api.InstancePost, urls []string) (RemoteOperation, error) {
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("The target server isn't listening on the network")
 	}
@@ -1018,8 +1018,8 @@ func (r *ProtocolLXD) tryMigrateInstance(source InstanceServer, name string, req
 	return &rop, nil
 }
 
-// MigrateInstance requests that LXD prepares for a instance migration.
-func (r *ProtocolLXD) MigrateInstance(name string, instance api.InstancePost) (Operation, error) {
+// MigrateInstance requests that Incus prepares for a instance migration.
+func (r *ProtocolIncus) MigrateInstance(name string, instance api.InstancePost) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -1057,8 +1057,8 @@ func (r *ProtocolLXD) MigrateInstance(name string, instance api.InstancePost) (O
 	return op, nil
 }
 
-// DeleteInstance requests that LXD deletes the instance.
-func (r *ProtocolLXD) DeleteInstance(name string) (Operation, error) {
+// DeleteInstance requests that Incus deletes the instance.
+func (r *ProtocolIncus) DeleteInstance(name string) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -1073,8 +1073,8 @@ func (r *ProtocolLXD) DeleteInstance(name string) (Operation, error) {
 	return op, nil
 }
 
-// ExecInstance requests that LXD spawns a command inside the instance.
-func (r *ProtocolLXD) ExecInstance(instanceName string, exec api.InstanceExecPost, args *InstanceExecArgs) (Operation, error) {
+// ExecInstance requests that Incus spawns a command inside the instance.
+func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecPost, args *InstanceExecArgs) (Operation, error) {
 	if exec.RecordOutput {
 		if !r.HasExtension("container_exec_recording") {
 			return nil, fmt.Errorf("The server is missing the required \"container_exec_recording\" API extension")
@@ -1288,7 +1288,7 @@ func (r *ProtocolLXD) ExecInstance(instanceName string, exec api.InstanceExecPos
 }
 
 // GetInstanceFile retrieves the provided path from the instance.
-func (r *ProtocolLXD) GetInstanceFile(instanceName string, filePath string) (io.ReadCloser, *InstanceFileResponse, error) {
+func (r *ProtocolIncus) GetInstanceFile(instanceName string, filePath string) (io.ReadCloser, *InstanceFileResponse, error) {
 	var err error
 	var requestURL string
 
@@ -1332,7 +1332,7 @@ func (r *ProtocolLXD) GetInstanceFile(instanceName string, filePath string) (io.
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := lxdParseResponse(resp)
+		_, _, err := incusParseResponse(resp)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1372,8 +1372,8 @@ func (r *ProtocolLXD) GetInstanceFile(instanceName string, filePath string) (io.
 	return resp.Body, &fileResp, err
 }
 
-// CreateInstanceFile tells LXD to create a file in the instance.
-func (r *ProtocolLXD) CreateInstanceFile(instanceName string, filePath string, args InstanceFileArgs) error {
+// CreateInstanceFile tells Incus to create a file in the instance.
+func (r *ProtocolIncus) CreateInstanceFile(instanceName string, filePath string, args InstanceFileArgs) error {
 	if args.Type == "directory" {
 		if !r.HasExtension("directory_manipulation") {
 			return fmt.Errorf("The server is missing the required \"directory_manipulation\" API extension")
@@ -1444,7 +1444,7 @@ func (r *ProtocolLXD) CreateInstanceFile(instanceName string, filePath string, a
 	}
 
 	// Check the return value for a cleaner error
-	_, _, err = lxdParseResponse(resp)
+	_, _, err = incusParseResponse(resp)
 	if err != nil {
 		return err
 	}
@@ -1453,7 +1453,7 @@ func (r *ProtocolLXD) CreateInstanceFile(instanceName string, filePath string, a
 }
 
 // DeleteInstanceFile deletes a file in the instance.
-func (r *ProtocolLXD) DeleteInstanceFile(instanceName string, filePath string) error {
+func (r *ProtocolIncus) DeleteInstanceFile(instanceName string, filePath string) error {
 	if !r.HasExtension("file_delete") {
 		return fmt.Errorf("The server is missing the required \"file_delete\" API extension")
 	}
@@ -1487,7 +1487,7 @@ func (r *ProtocolLXD) DeleteInstanceFile(instanceName string, filePath string) e
 }
 
 // rawSFTPConn connects to the apiURL, upgrades to an SFTP raw connection and returns it.
-func (r *ProtocolLXD) rawSFTPConn(apiURL *url.URL) (net.Conn, error) {
+func (r *ProtocolIncus) rawSFTPConn(apiURL *url.URL) (net.Conn, error) {
 	// Get the HTTP transport.
 	httpTransport, err := r.getUnderlyingHTTPTransport()
 	if err != nil {
@@ -1541,7 +1541,7 @@ func (r *ProtocolLXD) rawSFTPConn(apiURL *url.URL) (net.Conn, error) {
 	}
 
 	if resp.StatusCode != http.StatusSwitchingProtocols {
-		_, _, err := lxdParseResponse(resp)
+		_, _, err := incusParseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -1555,7 +1555,7 @@ func (r *ProtocolLXD) rawSFTPConn(apiURL *url.URL) (net.Conn, error) {
 }
 
 // GetInstanceFileSFTPConn returns a connection to the instance's SFTP endpoint.
-func (r *ProtocolLXD) GetInstanceFileSFTPConn(instanceName string) (net.Conn, error) {
+func (r *ProtocolIncus) GetInstanceFileSFTPConn(instanceName string) (net.Conn, error) {
 	apiURL := api.NewURL()
 	apiURL.URL = r.httpBaseURL // Preload the URL with the client base URL.
 	apiURL.Path("1.0", "instances", instanceName, "sftp")
@@ -1565,7 +1565,7 @@ func (r *ProtocolLXD) GetInstanceFileSFTPConn(instanceName string) (net.Conn, er
 }
 
 // GetInstanceFileSFTP returns an SFTP connection to the instance.
-func (r *ProtocolLXD) GetInstanceFileSFTP(instanceName string) (*sftp.Client, error) {
+func (r *ProtocolIncus) GetInstanceFileSFTP(instanceName string) (*sftp.Client, error) {
 	conn, err := r.GetInstanceFileSFTPConn(instanceName)
 	if err != nil {
 		return nil, err
@@ -1588,7 +1588,7 @@ func (r *ProtocolLXD) GetInstanceFileSFTP(instanceName string) (*sftp.Client, er
 }
 
 // GetInstanceSnapshotNames returns a list of snapshot names for the instance.
-func (r *ProtocolLXD) GetInstanceSnapshotNames(instanceName string) ([]string, error) {
+func (r *ProtocolIncus) GetInstanceSnapshotNames(instanceName string) ([]string, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -1607,7 +1607,7 @@ func (r *ProtocolLXD) GetInstanceSnapshotNames(instanceName string) ([]string, e
 }
 
 // GetInstanceSnapshots returns a list of snapshots for the instance.
-func (r *ProtocolLXD) GetInstanceSnapshots(instanceName string) ([]api.InstanceSnapshot, error) {
+func (r *ProtocolIncus) GetInstanceSnapshots(instanceName string) ([]api.InstanceSnapshot, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -1625,7 +1625,7 @@ func (r *ProtocolLXD) GetInstanceSnapshots(instanceName string) ([]api.InstanceS
 }
 
 // GetInstanceSnapshot returns a Snapshot struct for the provided instance and snapshot names.
-func (r *ProtocolLXD) GetInstanceSnapshot(instanceName string, name string) (*api.InstanceSnapshot, string, error) {
+func (r *ProtocolIncus) GetInstanceSnapshot(instanceName string, name string) (*api.InstanceSnapshot, string, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, "", err
@@ -1642,8 +1642,8 @@ func (r *ProtocolLXD) GetInstanceSnapshot(instanceName string, name string) (*ap
 	return &snapshot, etag, nil
 }
 
-// CreateInstanceSnapshot requests that LXD creates a new snapshot for the instance.
-func (r *ProtocolLXD) CreateInstanceSnapshot(instanceName string, snapshot api.InstanceSnapshotsPost) (Operation, error) {
+// CreateInstanceSnapshot requests that Incus creates a new snapshot for the instance.
+func (r *ProtocolIncus) CreateInstanceSnapshot(instanceName string, snapshot api.InstanceSnapshotsPost) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -1664,7 +1664,7 @@ func (r *ProtocolLXD) CreateInstanceSnapshot(instanceName string, snapshot api.I
 }
 
 // CopyInstanceSnapshot copies a snapshot from a remote server into a new instance. Additional options can be passed using InstanceCopyArgs.
-func (r *ProtocolLXD) CopyInstanceSnapshot(source InstanceServer, instanceName string, snapshot api.InstanceSnapshot, args *InstanceSnapshotCopyArgs) (RemoteOperation, error) {
+func (r *ProtocolIncus) CopyInstanceSnapshot(source InstanceServer, instanceName string, snapshot api.InstanceSnapshot, args *InstanceSnapshotCopyArgs) (RemoteOperation, error) {
 	// Backward compatibility (with broken Name field)
 	fields := strings.Split(snapshot.Name, shared.SnapshotDelimiter)
 	cName := instanceName
@@ -1889,8 +1889,8 @@ func (r *ProtocolLXD) CopyInstanceSnapshot(source InstanceServer, instanceName s
 	return r.tryCreateInstance(req, info.Addresses, op)
 }
 
-// RenameInstanceSnapshot requests that LXD renames the snapshot.
-func (r *ProtocolLXD) RenameInstanceSnapshot(instanceName string, name string, instance api.InstanceSnapshotPost) (Operation, error) {
+// RenameInstanceSnapshot requests that Incus renames the snapshot.
+func (r *ProtocolIncus) RenameInstanceSnapshot(instanceName string, name string, instance api.InstanceSnapshotPost) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -1910,7 +1910,7 @@ func (r *ProtocolLXD) RenameInstanceSnapshot(instanceName string, name string, i
 	return op, nil
 }
 
-func (r *ProtocolLXD) tryMigrateInstanceSnapshot(source InstanceServer, instanceName string, name string, req api.InstanceSnapshotPost, urls []string) (RemoteOperation, error) {
+func (r *ProtocolIncus) tryMigrateInstanceSnapshot(source InstanceServer, instanceName string, name string, req api.InstanceSnapshotPost, urls []string) (RemoteOperation, error) {
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("The target server isn't listening on the network")
 	}
@@ -1965,8 +1965,8 @@ func (r *ProtocolLXD) tryMigrateInstanceSnapshot(source InstanceServer, instance
 	return &rop, nil
 }
 
-// MigrateInstanceSnapshot requests that LXD prepares for a snapshot migration.
-func (r *ProtocolLXD) MigrateInstanceSnapshot(instanceName string, name string, instance api.InstanceSnapshotPost) (Operation, error) {
+// MigrateInstanceSnapshot requests that Incus prepares for a snapshot migration.
+func (r *ProtocolIncus) MigrateInstanceSnapshot(instanceName string, name string, instance api.InstanceSnapshotPost) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -1986,8 +1986,8 @@ func (r *ProtocolLXD) MigrateInstanceSnapshot(instanceName string, name string, 
 	return op, nil
 }
 
-// DeleteInstanceSnapshot requests that LXD deletes the instance snapshot.
-func (r *ProtocolLXD) DeleteInstanceSnapshot(instanceName string, name string) (Operation, error) {
+// DeleteInstanceSnapshot requests that Incus deletes the instance snapshot.
+func (r *ProtocolIncus) DeleteInstanceSnapshot(instanceName string, name string) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2002,8 +2002,8 @@ func (r *ProtocolLXD) DeleteInstanceSnapshot(instanceName string, name string) (
 	return op, nil
 }
 
-// UpdateInstanceSnapshot requests that LXD updates the instance snapshot.
-func (r *ProtocolLXD) UpdateInstanceSnapshot(instanceName string, name string, instance api.InstanceSnapshotPut, ETag string) (Operation, error) {
+// UpdateInstanceSnapshot requests that Incus updates the instance snapshot.
+func (r *ProtocolIncus) UpdateInstanceSnapshot(instanceName string, name string, instance api.InstanceSnapshotPut, ETag string) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2023,7 +2023,7 @@ func (r *ProtocolLXD) UpdateInstanceSnapshot(instanceName string, name string, i
 }
 
 // GetInstanceState returns a InstanceState entry for the provided instance name.
-func (r *ProtocolLXD) GetInstanceState(name string) (*api.InstanceState, string, error) {
+func (r *ProtocolIncus) GetInstanceState(name string) (*api.InstanceState, string, error) {
 	var uri string
 
 	if r.IsAgent() {
@@ -2049,7 +2049,7 @@ func (r *ProtocolLXD) GetInstanceState(name string) (*api.InstanceState, string,
 }
 
 // UpdateInstanceState updates the instance to match the requested state.
-func (r *ProtocolLXD) UpdateInstanceState(name string, state api.InstanceStatePut, ETag string) (Operation, error) {
+func (r *ProtocolIncus) UpdateInstanceState(name string, state api.InstanceStatePut, ETag string) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2065,7 +2065,7 @@ func (r *ProtocolLXD) UpdateInstanceState(name string, state api.InstanceStatePu
 }
 
 // GetInstanceLogfiles returns a list of logfiles for the instance.
-func (r *ProtocolLXD) GetInstanceLogfiles(name string) ([]string, error) {
+func (r *ProtocolIncus) GetInstanceLogfiles(name string) ([]string, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2086,7 +2086,7 @@ func (r *ProtocolLXD) GetInstanceLogfiles(name string) ([]string, error) {
 // GetInstanceLogfile returns the content of the requested logfile.
 //
 // Note that it's the caller's responsibility to close the returned ReadCloser.
-func (r *ProtocolLXD) GetInstanceLogfile(name string, filename string) (io.ReadCloser, error) {
+func (r *ProtocolIncus) GetInstanceLogfile(name string, filename string) (io.ReadCloser, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2113,7 +2113,7 @@ func (r *ProtocolLXD) GetInstanceLogfile(name string, filename string) (io.ReadC
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := lxdParseResponse(resp)
+		_, _, err := incusParseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -2123,7 +2123,7 @@ func (r *ProtocolLXD) GetInstanceLogfile(name string, filename string) (io.ReadC
 }
 
 // DeleteInstanceLogfile deletes the requested logfile.
-func (r *ProtocolLXD) DeleteInstanceLogfile(name string, filename string) error {
+func (r *ProtocolIncus) DeleteInstanceLogfile(name string, filename string) error {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return err
@@ -2141,7 +2141,7 @@ func (r *ProtocolLXD) DeleteInstanceLogfile(name string, filename string) error 
 // getInstanceExecOutputLogFile returns the content of the requested exec logfile.
 //
 // Note that it's the caller's responsibility to close the returned ReadCloser.
-func (r *ProtocolLXD) getInstanceExecOutputLogFile(name string, filename string) (io.ReadCloser, error) {
+func (r *ProtocolIncus) getInstanceExecOutputLogFile(name string, filename string) (io.ReadCloser, error) {
 	err := r.CheckExtension("container_exec_recording")
 	if err != nil {
 		return nil, err
@@ -2173,7 +2173,7 @@ func (r *ProtocolLXD) getInstanceExecOutputLogFile(name string, filename string)
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := lxdParseResponse(resp)
+		_, _, err := incusParseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -2183,7 +2183,7 @@ func (r *ProtocolLXD) getInstanceExecOutputLogFile(name string, filename string)
 }
 
 // deleteInstanceExecOutputLogFiles deletes the requested exec logfile.
-func (r *ProtocolLXD) deleteInstanceExecOutputLogFile(instanceName string, filename string) error {
+func (r *ProtocolIncus) deleteInstanceExecOutputLogFile(instanceName string, filename string) error {
 	err := r.CheckExtension("container_exec_recording")
 	if err != nil {
 		return err
@@ -2204,7 +2204,7 @@ func (r *ProtocolLXD) deleteInstanceExecOutputLogFile(instanceName string, filen
 }
 
 // GetInstanceMetadata returns instance metadata.
-func (r *ProtocolLXD) GetInstanceMetadata(name string) (*api.ImageMetadata, string, error) {
+func (r *ProtocolIncus) GetInstanceMetadata(name string) (*api.ImageMetadata, string, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, "", err
@@ -2226,7 +2226,7 @@ func (r *ProtocolLXD) GetInstanceMetadata(name string) (*api.ImageMetadata, stri
 }
 
 // UpdateInstanceMetadata sets the content of the instance metadata file.
-func (r *ProtocolLXD) UpdateInstanceMetadata(name string, metadata api.ImageMetadata, ETag string) error {
+func (r *ProtocolIncus) UpdateInstanceMetadata(name string, metadata api.ImageMetadata, ETag string) error {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return err
@@ -2246,7 +2246,7 @@ func (r *ProtocolLXD) UpdateInstanceMetadata(name string, metadata api.ImageMeta
 }
 
 // GetInstanceTemplateFiles returns the list of names of template files for a instance.
-func (r *ProtocolLXD) GetInstanceTemplateFiles(instanceName string) ([]string, error) {
+func (r *ProtocolIncus) GetInstanceTemplateFiles(instanceName string) ([]string, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2268,7 +2268,7 @@ func (r *ProtocolLXD) GetInstanceTemplateFiles(instanceName string) ([]string, e
 }
 
 // GetInstanceTemplateFile returns the content of a template file for a instance.
-func (r *ProtocolLXD) GetInstanceTemplateFile(instanceName string, templateName string) (io.ReadCloser, error) {
+func (r *ProtocolIncus) GetInstanceTemplateFile(instanceName string, templateName string) (io.ReadCloser, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2298,7 +2298,7 @@ func (r *ProtocolLXD) GetInstanceTemplateFile(instanceName string, templateName 
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := lxdParseResponse(resp)
+		_, _, err := incusParseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -2308,7 +2308,7 @@ func (r *ProtocolLXD) GetInstanceTemplateFile(instanceName string, templateName 
 }
 
 // CreateInstanceTemplateFile creates an a template for a instance.
-func (r *ProtocolLXD) CreateInstanceTemplateFile(instanceName string, templateName string, content io.ReadSeeker) error {
+func (r *ProtocolIncus) CreateInstanceTemplateFile(instanceName string, templateName string, content io.ReadSeeker) error {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return err
@@ -2336,7 +2336,7 @@ func (r *ProtocolLXD) CreateInstanceTemplateFile(instanceName string, templateNa
 	resp, err := r.DoHTTP(req)
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := lxdParseResponse(resp)
+		_, _, err := incusParseResponse(resp)
 		if err != nil {
 			return err
 		}
@@ -2345,7 +2345,7 @@ func (r *ProtocolLXD) CreateInstanceTemplateFile(instanceName string, templateNa
 }
 
 // DeleteInstanceTemplateFile deletes a template file for a instance.
-func (r *ProtocolLXD) DeleteInstanceTemplateFile(name string, templateName string) error {
+func (r *ProtocolIncus) DeleteInstanceTemplateFile(name string, templateName string) error {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return err
@@ -2359,8 +2359,8 @@ func (r *ProtocolLXD) DeleteInstanceTemplateFile(name string, templateName strin
 	return err
 }
 
-// ConsoleInstance requests that LXD attaches to the console device of a instance.
-func (r *ProtocolLXD) ConsoleInstance(instanceName string, console api.InstanceConsolePost, args *InstanceConsoleArgs) (Operation, error) {
+// ConsoleInstance requests that Incus attaches to the console device of a instance.
+func (r *ProtocolIncus) ConsoleInstance(instanceName string, console api.InstanceConsolePost, args *InstanceConsoleArgs) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2443,12 +2443,12 @@ func (r *ProtocolLXD) ConsoleInstance(instanceName string, console api.InstanceC
 	return op, nil
 }
 
-// ConsoleInstanceDynamic requests that LXD attaches to the console device of a
+// ConsoleInstanceDynamic requests that Incus attaches to the console device of a
 // instance with the possibility of opening multiple connections to it.
 //
 // Every time the returned 'console' function is called, a new connection will
 // be established and proxied to the given io.ReadWriteCloser.
-func (r *ProtocolLXD) ConsoleInstanceDynamic(instanceName string, console api.InstanceConsolePost, args *InstanceConsoleArgs) (Operation, func(io.ReadWriteCloser) error, error) {
+func (r *ProtocolIncus) ConsoleInstanceDynamic(instanceName string, console api.InstanceConsolePost, args *InstanceConsoleArgs) (Operation, func(io.ReadWriteCloser) error, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, nil, err
@@ -2532,10 +2532,10 @@ func (r *ProtocolLXD) ConsoleInstanceDynamic(instanceName string, console api.In
 	return op, f, nil
 }
 
-// GetInstanceConsoleLog requests that LXD attaches to the console device of a instance.
+// GetInstanceConsoleLog requests that Incus attaches to the console device of a instance.
 //
 // Note that it's the caller's responsibility to close the returned ReadCloser.
-func (r *ProtocolLXD) GetInstanceConsoleLog(instanceName string, args *InstanceConsoleLogArgs) (io.ReadCloser, error) {
+func (r *ProtocolIncus) GetInstanceConsoleLog(instanceName string, args *InstanceConsoleLogArgs) (io.ReadCloser, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2566,7 +2566,7 @@ func (r *ProtocolLXD) GetInstanceConsoleLog(instanceName string, args *InstanceC
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := lxdParseResponse(resp)
+		_, _, err := incusParseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -2576,7 +2576,7 @@ func (r *ProtocolLXD) GetInstanceConsoleLog(instanceName string, args *InstanceC
 }
 
 // DeleteInstanceConsoleLog deletes the requested instance's console log.
-func (r *ProtocolLXD) DeleteInstanceConsoleLog(instanceName string, args *InstanceConsoleLogArgs) error {
+func (r *ProtocolIncus) DeleteInstanceConsoleLog(instanceName string, args *InstanceConsoleLogArgs) error {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return err
@@ -2596,7 +2596,7 @@ func (r *ProtocolLXD) DeleteInstanceConsoleLog(instanceName string, args *Instan
 }
 
 // GetInstanceBackupNames returns a list of backup names for the instance.
-func (r *ProtocolLXD) GetInstanceBackupNames(instanceName string) ([]string, error) {
+func (r *ProtocolIncus) GetInstanceBackupNames(instanceName string) ([]string, error) {
 	if !r.HasExtension("container_backup") {
 		return nil, fmt.Errorf("The server is missing the required \"container_backup\" API extension")
 	}
@@ -2619,7 +2619,7 @@ func (r *ProtocolLXD) GetInstanceBackupNames(instanceName string) ([]string, err
 }
 
 // GetInstanceBackups returns a list of backups for the instance.
-func (r *ProtocolLXD) GetInstanceBackups(instanceName string) ([]api.InstanceBackup, error) {
+func (r *ProtocolIncus) GetInstanceBackups(instanceName string) ([]api.InstanceBackup, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2641,7 +2641,7 @@ func (r *ProtocolLXD) GetInstanceBackups(instanceName string) ([]api.InstanceBac
 }
 
 // GetInstanceBackup returns a Backup struct for the provided instance and backup names.
-func (r *ProtocolLXD) GetInstanceBackup(instanceName string, name string) (*api.InstanceBackup, string, error) {
+func (r *ProtocolIncus) GetInstanceBackup(instanceName string, name string) (*api.InstanceBackup, string, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, "", err
@@ -2661,8 +2661,8 @@ func (r *ProtocolLXD) GetInstanceBackup(instanceName string, name string) (*api.
 	return &backup, etag, nil
 }
 
-// CreateInstanceBackup requests that LXD creates a new backup for the instance.
-func (r *ProtocolLXD) CreateInstanceBackup(instanceName string, backup api.InstanceBackupsPost) (Operation, error) {
+// CreateInstanceBackup requests that Incus creates a new backup for the instance.
+func (r *ProtocolIncus) CreateInstanceBackup(instanceName string, backup api.InstanceBackupsPost) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2681,8 +2681,8 @@ func (r *ProtocolLXD) CreateInstanceBackup(instanceName string, backup api.Insta
 	return op, nil
 }
 
-// RenameInstanceBackup requests that LXD renames the backup.
-func (r *ProtocolLXD) RenameInstanceBackup(instanceName string, name string, backup api.InstanceBackupPost) (Operation, error) {
+// RenameInstanceBackup requests that Incus renames the backup.
+func (r *ProtocolIncus) RenameInstanceBackup(instanceName string, name string, backup api.InstanceBackupPost) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2701,8 +2701,8 @@ func (r *ProtocolLXD) RenameInstanceBackup(instanceName string, name string, bac
 	return op, nil
 }
 
-// DeleteInstanceBackup requests that LXD deletes the instance backup.
-func (r *ProtocolLXD) DeleteInstanceBackup(instanceName string, name string) (Operation, error) {
+// DeleteInstanceBackup requests that Incus deletes the instance backup.
+func (r *ProtocolIncus) DeleteInstanceBackup(instanceName string, name string) (Operation, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2722,7 +2722,7 @@ func (r *ProtocolLXD) DeleteInstanceBackup(instanceName string, name string) (Op
 }
 
 // GetInstanceBackupFile requests the instance backup content.
-func (r *ProtocolLXD) GetInstanceBackupFile(instanceName string, name string, req *BackupFileRequest) (*BackupFileResponse, error) {
+func (r *ProtocolIncus) GetInstanceBackupFile(instanceName string, name string, req *BackupFileRequest) (*BackupFileResponse, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
 	if err != nil {
 		return nil, err
@@ -2758,7 +2758,7 @@ func (r *ProtocolLXD) GetInstanceBackupFile(instanceName string, name string, re
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
-		_, _, err := lxdParseResponse(response)
+		_, _, err := incusParseResponse(response)
 		if err != nil {
 			return nil, err
 		}
@@ -2789,7 +2789,7 @@ func (r *ProtocolLXD) GetInstanceBackupFile(instanceName string, name string, re
 	return &resp, nil
 }
 
-func (r *ProtocolLXD) proxyMigration(targetOp *operation, targetSecrets map[string]string, source InstanceServer, sourceOp *operation, sourceSecrets map[string]string) error {
+func (r *ProtocolIncus) proxyMigration(targetOp *operation, targetSecrets map[string]string, source InstanceServer, sourceOp *operation, sourceSecrets map[string]string) error {
 	// Quick checks.
 	for n := range targetSecrets {
 		_, ok := sourceSecrets[n]

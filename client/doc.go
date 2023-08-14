@@ -1,17 +1,17 @@
-// Package lxd implements a client for the LXD API
+// Package incus implements a client for the Incus API
 //
 // # Overview
 //
-// This package lets you connect to LXD daemons or SimpleStream image
+// This package lets you connect to Incus daemons or SimpleStream image
 // servers over a Unix socket or HTTPs. You can then interact with those
 // remote servers, creating instances, images, moving them around, ...
 //
 // # Example - instance creation
 //
-// This creates a container on a local LXD daemon and then starts it.
+// This creates a container on a local Incus daemon and then starts it.
 //
-//	// Connect to LXD over the Unix socket
-//	c, err := lxd.ConnectLXDUnix("", nil)
+//	// Connect to Incus over the Unix socket
+//	c, err := incus.ConnectIncusUnix("", nil)
 //	if err != nil {
 //	  return err
 //	}
@@ -26,7 +26,7 @@
 //	  Type: "container"
 //	}
 //
-//	// Get LXD to create the instance (background operation)
+//	// Get Incus to create the instance (background operation)
 //	op, err := c.CreateInstance(req)
 //	if err != nil {
 //	  return err
@@ -38,7 +38,7 @@
 //	  return err
 //	}
 //
-//	// Get LXD to start the instance (background operation)
+//	// Get Incus to start the instance (background operation)
 //	reqState := api.InstanceStatePut{
 //	  Action: "start",
 //	  Timeout: -1,
@@ -59,8 +59,8 @@
 //
 // This executes an interactive bash terminal
 //
-//	// Connect to LXD over the Unix socket
-//	c, err := lxd.ConnectLXDUnix("", nil)
+//	// Connect to Incus over the Unix socket
+//	c, err := incus.ConnectIncusUnix("", nil)
 //	if err != nil {
 //	  return err
 //	}
@@ -75,7 +75,7 @@
 //	}
 //
 //	// Setup the exec arguments (fds)
-//	args := lxd.InstanceExecArgs{
+//	args := incus.InstanceExecArgs{
 //	  Stdin: os.Stdin,
 //	  Stdout: os.Stdout,
 //	  Stderr: os.Stderr,
@@ -106,16 +106,16 @@
 //
 // # Example - image copy
 //
-// This copies an image from a simplestreams server to a local LXD daemon
+// This copies an image from a simplestreams server to a local Incus daemon
 //
-//	// Connect to LXD over the Unix socket
-//	c, err := lxd.ConnectLXDUnix("", nil)
+//	// Connect to Incus over the Unix socket
+//	c, err := incus.ConnectIncusUnix("", nil)
 //	if err != nil {
 //	  return err
 //	}
 //
 //	// Connect to the remote SimpleStreams server
-//	d, err = lxd.ConnectSimpleStreams("https://images.linuxcontainers.org", nil)
+//	d, err = incus.ConnectSimpleStreams("https://images.linuxcontainers.org", nil)
 //	if err != nil {
 //	  return err
 //	}
@@ -132,7 +132,7 @@
 //	  return err
 //	}
 //
-//	// Ask LXD to copy the image from the remote server
+//	// Ask Incus to copy the image from the remote server
 //	op, err := d.CopyImage(*image, c, nil)
 //	if err != nil {
 //	  return err

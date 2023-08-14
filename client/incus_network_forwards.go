@@ -8,7 +8,7 @@ import (
 )
 
 // GetNetworkForwardAddresses returns a list of network forward listen addresses.
-func (r *ProtocolLXD) GetNetworkForwardAddresses(networkName string) ([]string, error) {
+func (r *ProtocolIncus) GetNetworkForwardAddresses(networkName string) ([]string, error) {
 	if !r.HasExtension("network_forward") {
 		return nil, fmt.Errorf(`The server is missing the required "network_forward" API extension`)
 	}
@@ -26,7 +26,7 @@ func (r *ProtocolLXD) GetNetworkForwardAddresses(networkName string) ([]string, 
 }
 
 // GetNetworkForwards returns a list of Network forward structs.
-func (r *ProtocolLXD) GetNetworkForwards(networkName string) ([]api.NetworkForward, error) {
+func (r *ProtocolIncus) GetNetworkForwards(networkName string) ([]api.NetworkForward, error) {
 	if !r.HasExtension("network_forward") {
 		return nil, fmt.Errorf(`The server is missing the required "network_forward" API extension`)
 	}
@@ -43,7 +43,7 @@ func (r *ProtocolLXD) GetNetworkForwards(networkName string) ([]api.NetworkForwa
 }
 
 // GetNetworkForward returns a Network forward entry for the provided network and listen address.
-func (r *ProtocolLXD) GetNetworkForward(networkName string, listenAddress string) (*api.NetworkForward, string, error) {
+func (r *ProtocolIncus) GetNetworkForward(networkName string, listenAddress string) (*api.NetworkForward, string, error) {
 	if !r.HasExtension("network_forward") {
 		return nil, "", fmt.Errorf(`The server is missing the required "network_forward" API extension`)
 	}
@@ -60,7 +60,7 @@ func (r *ProtocolLXD) GetNetworkForward(networkName string, listenAddress string
 }
 
 // CreateNetworkForward defines a new network forward using the provided struct.
-func (r *ProtocolLXD) CreateNetworkForward(networkName string, forward api.NetworkForwardsPost) error {
+func (r *ProtocolIncus) CreateNetworkForward(networkName string, forward api.NetworkForwardsPost) error {
 	if !r.HasExtension("network_forward") {
 		return fmt.Errorf(`The server is missing the required "network_forward" API extension`)
 	}
@@ -75,7 +75,7 @@ func (r *ProtocolLXD) CreateNetworkForward(networkName string, forward api.Netwo
 }
 
 // UpdateNetworkForward updates the network forward to match the provided struct.
-func (r *ProtocolLXD) UpdateNetworkForward(networkName string, listenAddress string, forward api.NetworkForwardPut, ETag string) error {
+func (r *ProtocolIncus) UpdateNetworkForward(networkName string, listenAddress string, forward api.NetworkForwardPut, ETag string) error {
 	if !r.HasExtension("network_forward") {
 		return fmt.Errorf(`The server is missing the required "network_forward" API extension`)
 	}
@@ -90,7 +90,7 @@ func (r *ProtocolLXD) UpdateNetworkForward(networkName string, listenAddress str
 }
 
 // DeleteNetworkForward deletes an existing network forward.
-func (r *ProtocolLXD) DeleteNetworkForward(networkName string, listenAddress string) error {
+func (r *ProtocolIncus) DeleteNetworkForward(networkName string, listenAddress string) error {
 	if !r.HasExtension("network_forward") {
 		return fmt.Errorf(`The server is missing the required "network_forward" API extension`)
 	}

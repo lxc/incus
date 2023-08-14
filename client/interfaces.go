@@ -68,7 +68,7 @@ type ImageServer interface {
 	ExportImage(fingerprint string, image api.ImageExportPost) (Operation, error)
 }
 
-// The InstanceServer type represents a full featured LXD server.
+// The InstanceServer type represents a full featured Incus server.
 type InstanceServer interface {
 	ImageServer
 
@@ -457,7 +457,7 @@ type ImageCopyArgs struct {
 	// Aliases to add to the copied image.
 	Aliases []api.ImageAlias
 
-	// Whether to have LXD keep this image up to date
+	// Whether to have Incus keep this image up to date
 	AutoUpdate bool
 
 	// Whether to copy the source image aliases to the target
