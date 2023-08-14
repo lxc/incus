@@ -92,12 +92,6 @@ func (c *Config) MetricsAddress() string {
 	return metricsAddress
 }
 
-// MAASMachine returns the MAAS machine this instance is associated with, if
-// any.
-func (c *Config) MAASMachine() string {
-	return c.m.GetString("maas.machine")
-}
-
 // StorageBucketsAddress returns the address and port to setup the storage buckets listener on.
 func (c *Config) StorageBucketsAddress() string {
 	objectAddress := c.m.GetString("core.storage_buckets_address")
@@ -178,9 +172,6 @@ var ConfigSchema = config.Schema{
 
 	// Network address for the storage buckets server
 	"core.storage_buckets_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
-
-	// MAAS machine this LXD instance is associated with
-	"maas.machine": {},
 
 	// Storage volumes to store backups/images on
 	"storage.backups_volume": {},

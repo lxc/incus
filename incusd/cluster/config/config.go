@@ -109,13 +109,6 @@ func (c *Config) HTTPSTrustedProxy() string {
 	return c.m.GetString("core.https_trusted_proxy")
 }
 
-// MAASController the configured MAAS url and key, if any.
-func (c *Config) MAASController() (string, string) {
-	url := c.m.GetString("maas.api.url")
-	key := c.m.GetString("maas.api.key")
-	return url, key
-}
-
 // OfflineThreshold returns the configured heartbeat threshold, i.e. the
 // number of seconds before after which an unresponsive node is considered
 // offline..
@@ -329,8 +322,6 @@ var ConfigSchema = config.Schema{
 	"loki.labels":                    {},
 	"loki.loglevel":                  {Validator: logLevelValidator, Default: logrus.InfoLevel.String()},
 	"loki.types":                     {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging"))), Default: "lifecycle,logging"},
-	"maas.api.key":                   {},
-	"maas.api.url":                   {},
 	"oidc.client.id":                 {},
 	"oidc.issuer":                    {},
 	"oidc.audience":                  {},
