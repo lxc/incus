@@ -363,7 +363,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 
 		// Attempt to connect to the local server
 		runInit := true
-		d, err := incus.ConnectLXDUnix("", nil)
+		d, err := incus.ConnectIncusUnix("", nil)
 		if err == nil {
 			// Check if server is initialized.
 			info, _, err := d.GetServer()
