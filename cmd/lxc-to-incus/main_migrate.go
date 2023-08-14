@@ -65,7 +65,7 @@ func (c *cmdMigrate) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 	// Connect to LXD
-	d, err := incus.ConnectLXDUnix("", nil)
+	d, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return err
 	}
