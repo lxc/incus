@@ -442,13 +442,6 @@ This adds support for optimized memory transfer during live migration.
 
 This adds support to use InfiniBand network devices.
 
-## `maas_network`
-
-This adds support for MAAS network integration.
-
-When configured at the daemon level, it's then possible to attach a `nic`
-device to a particular MAAS subnet.
-
 ## `devlxd_events`
 
 This adds a WebSocket API to the `devlxd` socket.

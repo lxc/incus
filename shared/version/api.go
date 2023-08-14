@@ -88,7 +88,6 @@ var APIExtensions = []string{
 	"restrict_devlxd",
 	"migration_pre_copy",
 	"infiniband",
-	"maas_network",
 	"devlxd_events",
 	"proxy",
 	"network_dhcp_gateway",
