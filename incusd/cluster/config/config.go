@@ -89,14 +89,6 @@ func (c *Config) TrustCACertificates() bool {
 	return c.m.GetBool("core.trust_ca_certificates")
 }
 
-// CandidServer returns all the Candid settings needed to connect to a server.
-func (c *Config) CandidServer() (string, string, int64, string) {
-	return c.m.GetString("candid.api.url"),
-		c.m.GetString("candid.api.key"),
-		c.m.GetInt64("candid.expiry"),
-		c.m.GetString("candid.domains")
-}
-
 // ProxyHTTPS returns the configured HTTPS proxy, if any.
 func (c *Config) ProxyHTTPS() string {
 	return c.m.GetString("core.proxy_https")
@@ -323,10 +315,6 @@ var ConfigSchema = config.Schema{
 	"core.shutdown_timeout":          {Type: config.Int64, Default: "5"},
 	"core.trust_password":            {Hidden: true, Setter: passwordSetter},
 	"core.trust_ca_certificates":     {Type: config.Bool},
-	"candid.api.key":                 {},
-	"candid.api.url":                 {},
-	"candid.domains":                 {},
-	"candid.expiry":                  {Type: config.Int64, Default: "3600"},
 	"images.auto_update_cached":      {Type: config.Bool, Default: "true"},
 	"images.auto_update_interval":    {Type: config.Int64, Default: "6"},
 	"images.compression_algorithm":   {Default: "gzip", Validator: validate.IsCompressionAlgorithm},

@@ -44,7 +44,7 @@ To add a LXD server as a remote, enter the following command:
 
     lxc remote add <remote_name> <IP|FQDN|URL> [flags]
 
-Some authentication methods require specific flags (for example, use `lxc remote add <remote_name> <IP|FQDN|URL> --auth-type=candid` for Candid authentication).
+Some authentication methods require specific flags (for example, use `lxc remote add <remote_name> <IP|FQDN|URL> --auth-type=tls` for TLS authentication).
 See {ref}`server-authenticate` and {ref}`authentication` for more information.
 
 For example, enter the following command to add a remote through an IP address:

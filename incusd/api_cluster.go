@@ -19,7 +19,6 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/acme"
-	"github.com/lxc/incus/incusd/auth/candid"
 	"github.com/lxc/incus/incusd/cluster"
 	clusterRequest "github.com/lxc/incus/incusd/cluster/request"
 	"github.com/lxc/incus/incusd/db"
@@ -759,16 +758,6 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		err = d.setupMAASController(url, key, machine)
 		if err != nil {
 			return err
-		}
-
-		// Handle external authentication
-		candidAPIURL, candidAPIKey, candidExpiry, candidDomains := s.GlobalConfig.CandidServer()
-
-		if candidAPIURL != "" {
-			d.candidVerifier, err = candid.NewVerifier(candidAPIURL, candidAPIKey, candidExpiry, candidDomains)
-			if err != nil {
-				return err
-			}
 		}
 
 		// Start up networks so any post-join changes can be applied now that we have a Node ID.

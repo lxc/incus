@@ -1,8 +1,4 @@
-github.com/go-macaroon-bakery/macaroon-bakery/v3/bakery
-github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery
-github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery/form
 github.com/gorilla/websocket
-github.com/juju/persistent-cookiejar
 github.com/lxc/incus/client
 github.com/lxc/incus/shared
 github.com/lxc/incus/shared/api
@@ -18,5 +14,4 @@ github.com/zitadel/oidc/v2/pkg/client/rp
 github.com/zitadel/oidc/v2/pkg/http
 github.com/zitadel/oidc/v2/pkg/oidc
 golang.org/x/oauth2
-gopkg.in/juju/environschema.v1/form
 gopkg.in/yaml.v2

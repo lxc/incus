@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-macaroon-bakery/macaroon-bakery/v3/httpbakery"
 	"github.com/zitadel/oidc/v2/pkg/client/rp"
 	httphelper "github.com/zitadel/oidc/v2/pkg/http"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
@@ -223,7 +222,7 @@ func (o *oidcClient) authenticate(issuer string, clientID string, audience strin
 
 	u, _ := url.Parse(resp.VerificationURIComplete)
 
-	err = httpbakery.OpenWebBrowser(u)
+	err = openBrowser(u.String())
 	if err != nil {
 		return err
 	}

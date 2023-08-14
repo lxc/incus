@@ -13,7 +13,6 @@ The following authentication methods are supported:
 
 - {ref}`authentication-tls-certs`
 - {ref}`authentication-openid`
-- {ref}`authentication-candid`
 
 (authentication-tls-certs)=
 ## TLS client certificates
@@ -152,25 +151,6 @@ Your OIDC provider must be configured to enable the [Device Authorization Grant]
 To add a remote pointing to a LXD server configured with OIDC authentication, run `lxc remote add <remote_name> <remote_address>`.
 You are then prompted to authenticate through your web browser, where you must confirm the device code that LXD uses.
 The LXD client then retrieves and stores the access and refresh tokens and provides those to LXD for all interactions.
-
-(authentication-candid)=
-## Candid-based authentication
-
-```{youtube} https://www.youtube.com/watch?v=FebTipM1jJk
-```
-
-You can configure LXD to use [Candid](https://github.com/canonical/candid) authentication by setting the [`candid.*`](server-options-candid) server configuration options.
-In this case, clients that try to authenticate with the server must get a Discharge token from the authentication server specified by the [`candid.api.url`](server-options-candid) option.
-
-The authentication server certificate must be trusted by the LXD server.
-
-To add a remote pointing to a LXD server configured with Candid/Macaroon authentication, run `lxc remote add REMOTE ENDPOINT --auth-type=candid`.
-To verify the user, the client will prompt for the credentials required by the authentication server.
-If the authentication is successful, the client will connect to the LXD server and present the token received from the authentication server.
-The LXD server verifies the token, thus authenticating the request.
-The token is stored as cookie and is presented by the client at each request to LXD.
-
-For instructions on how to set up Candid-based authentication, see the [Candid authentication for LXD](https://ubuntu.com/tutorials/candid-authentication-lxd) tutorial.
 
 (authentication-server-certificate)=
 ## TLS server certificate

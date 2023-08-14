@@ -182,7 +182,7 @@ type ServerUntrusted struct {
 
 	// List of supported authentication methods
 	// Read only: true
-	// Example: ["tls", "candid"]
+	// Example: ["tls"]
 	//
 	// API extension: macaroon_authentication
 	AuthMethods []string `json:"auth_methods" yaml:"auth_methods"`

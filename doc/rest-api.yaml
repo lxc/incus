@@ -5110,7 +5110,6 @@ definitions:
                 description: List of supported authentication methods
                 example:
                     - tls
-                    - candid
                 items:
                     type: string
                 readOnly: true
@@ -5358,7 +5357,6 @@ definitions:
                 description: List of supported authentication methods
                 example:
                     - tls
-                    - candid
                 items:
                     type: string
                 readOnly: true
@@ -6154,8 +6152,7 @@ info:
         The LXD API is available over both a local unix+http and remote https API.
         Authentication for local users relies on group membership and access to the unix socket.
         For remote users, the default authentication method is TLS client
-        certificates with a macaroon based (candid) authentication method also
-        supported.
+        certificates.
     license:
         name: Apache-2.0
         url: https://www.apache.org/licenses/LICENSE-2.0
