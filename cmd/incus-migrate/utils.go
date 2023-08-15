@@ -192,7 +192,7 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 
 	// Attempt to connect using the system CA
 	args.UserAgent = fmt.Sprintf("LXC-MIGRATE %s", version.Version)
-	c, err := incus.ConnectLXD(url, &args)
+	c, err := incus.ConnectIncus(url, &args)
 
 	var certificate *x509.Certificate
 	if err != nil {
@@ -209,7 +209,7 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 		args.TLSServerCert = string(serverCrt)
 
 		// Setup a new connection, this time with the remote certificate
-		c, err = incus.ConnectLXD(url, &args)
+		c, err = incus.ConnectIncus(url, &args)
 		if err != nil {
 			return nil, "", err
 		}

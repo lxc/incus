@@ -20,7 +20,7 @@ import (
 
 // ImageSourceProtocol maps image source protocol codes to human-readable names.
 var ImageSourceProtocol = map[int]string{
-	0: "lxd",
+	0: "incus",
 	1: "direct",
 	2: "simplestreams",
 }

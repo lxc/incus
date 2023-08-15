@@ -21,7 +21,7 @@ import (
 	"github.com/lxc/incus/shared/version"
 )
 
-// Connect is a convenience around incus.ConnectLXD that configures the client
+// Connect is a convenience around incus.ConnectIncus that configures the client
 // with the correct parameters for node-to-node communication.
 //
 // If 'notify' switch is true, then the user agent will be set to the special
@@ -73,7 +73,7 @@ func Connect(address string, networkCert *shared.CertInfo, serverCert *shared.Ce
 	}
 
 	url := fmt.Sprintf("https://%s", address)
-	return incus.ConnectLXD(url, args)
+	return incus.ConnectIncus(url, args)
 }
 
 // ConnectIfInstanceIsRemote figures out the address of the cluster member which is running the instance with the
@@ -195,7 +195,7 @@ func SetupTrust(serverCert *shared.CertInfo, serverName string, targetAddress st
 		UserAgent:     version.UserAgent,
 	}
 
-	target, err := incus.ConnectLXD(fmt.Sprintf("https://%s", targetAddress), args)
+	target, err := incus.ConnectIncus(fmt.Sprintf("https://%s", targetAddress), args)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to target cluster node %q: %w", targetAddress, err)
 	}
@@ -232,7 +232,7 @@ func UpdateTrust(serverCert *shared.CertInfo, serverName string, targetAddress s
 		UserAgent:     version.UserAgent,
 	}
 
-	target, err := incus.ConnectLXD(fmt.Sprintf("https://%s", targetAddress), args)
+	target, err := incus.ConnectIncus(fmt.Sprintf("https://%s", targetAddress), args)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to target cluster node %q: %w", targetAddress, err)
 	}

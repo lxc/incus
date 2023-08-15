@@ -14,7 +14,7 @@ import (
 // Server handling functions
 
 // GetServer returns the server status as a Server struct.
-func (r *ProtocolLXD) GetServer() (*api.Server, string, error) {
+func (r *ProtocolIncus) GetServer() (*api.Server, string, error) {
 	server := api.Server{}
 
 	// Fetch the raw value
@@ -33,7 +33,7 @@ func (r *ProtocolLXD) GetServer() (*api.Server, string, error) {
 	}
 
 	if !server.Public && len(server.AuthMethods) == 0 {
-		// TLS is always available for LXD servers
+		// TLS is always available for Incus servers
 		server.AuthMethods = []string{"tls"}
 	}
 
@@ -44,7 +44,7 @@ func (r *ProtocolLXD) GetServer() (*api.Server, string, error) {
 }
 
 // UpdateServer updates the server status to match the provided Server struct.
-func (r *ProtocolLXD) UpdateServer(server api.ServerPut, ETag string) error {
+func (r *ProtocolIncus) UpdateServer(server api.ServerPut, ETag string) error {
 	// Send the request
 	_, _, err := r.query("PUT", "", server, ETag)
 	if err != nil {
@@ -55,7 +55,7 @@ func (r *ProtocolLXD) UpdateServer(server api.ServerPut, ETag string) error {
 }
 
 // HasExtension returns true if the server supports a given API extension.
-func (r *ProtocolLXD) HasExtension(extension string) bool {
+func (r *ProtocolIncus) HasExtension(extension string) bool {
 	// If no cached API information, just assume we're good
 	// This is needed for those rare cases where we must avoid a GetServer call
 	if r.server == nil {
@@ -72,7 +72,7 @@ func (r *ProtocolLXD) HasExtension(extension string) bool {
 }
 
 // CheckExtension checks if the server has the specified extension.
-func (r *ProtocolLXD) CheckExtension(extensionName string) error {
+func (r *ProtocolIncus) CheckExtension(extensionName string) error {
 	if !r.HasExtension(extensionName) {
 		return fmt.Errorf("The server is missing the required %q API extension", extensionName)
 	}
@@ -80,13 +80,13 @@ func (r *ProtocolLXD) CheckExtension(extensionName string) error {
 	return nil
 }
 
-// IsClustered returns true if the server is part of a LXD cluster.
-func (r *ProtocolLXD) IsClustered() bool {
+// IsClustered returns true if the server is part of an Incus cluster.
+func (r *ProtocolIncus) IsClustered() bool {
 	return r.server.Environment.ServerClustered
 }
 
-// GetServerResources returns the resources available to a given LXD server.
-func (r *ProtocolLXD) GetServerResources() (*api.Resources, error) {
+// GetServerResources returns the resources available to a given Incus server.
+func (r *ProtocolIncus) GetServerResources() (*api.Resources, error) {
 	if !r.HasExtension("resources") {
 		return nil, fmt.Errorf("The server is missing the required \"resources\" API extension")
 	}
@@ -103,8 +103,8 @@ func (r *ProtocolLXD) GetServerResources() (*api.Resources, error) {
 }
 
 // UseProject returns a client that will use a specific project.
-func (r *ProtocolLXD) UseProject(name string) InstanceServer {
-	return &ProtocolLXD{
+func (r *ProtocolIncus) UseProject(name string) InstanceServer {
+	return &ProtocolIncus{
 		ctx:                  r.ctx,
 		ctxConnected:         r.ctxConnected,
 		ctxConnectedCancel:   r.ctxConnectedCancel,
@@ -126,8 +126,8 @@ func (r *ProtocolLXD) UseProject(name string) InstanceServer {
 // UseTarget returns a client that will target a specific cluster member.
 // Use this member-specific operations such as specific container
 // placement, preparing a new storage pool or network, ...
-func (r *ProtocolLXD) UseTarget(name string) InstanceServer {
-	return &ProtocolLXD{
+func (r *ProtocolIncus) UseTarget(name string) InstanceServer {
+	return &ProtocolIncus{
 		ctx:                  r.ctx,
 		ctxConnected:         r.ctxConnected,
 		ctxConnectedCancel:   r.ctxConnectedCancel,
@@ -146,13 +146,13 @@ func (r *ProtocolLXD) UseTarget(name string) InstanceServer {
 	}
 }
 
-// IsAgent returns true if the server is a LXD agent.
-func (r *ProtocolLXD) IsAgent() bool {
-	return r.server != nil && r.server.Environment.Server == "lxd-agent"
+// IsAgent returns true if the server is an Incus agent.
+func (r *ProtocolIncus) IsAgent() bool {
+	return r.server != nil && r.server.Environment.Server == "incus-agent"
 }
 
 // GetMetrics returns the text OpenMetrics data.
-func (r *ProtocolLXD) GetMetrics() (string, error) {
+func (r *ProtocolIncus) GetMetrics() (string, error) {
 	// Check that the server supports it.
 	if !r.HasExtension("metrics") {
 		return "", fmt.Errorf("The server is missing the required \"metrics\" API extension")

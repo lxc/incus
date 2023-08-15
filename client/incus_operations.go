@@ -10,7 +10,7 @@ import (
 )
 
 // GetOperationUUIDs returns a list of operation uuids.
-func (r *ProtocolLXD) GetOperationUUIDs() ([]string, error) {
+func (r *ProtocolIncus) GetOperationUUIDs() ([]string, error) {
 	// Fetch the raw URL values.
 	urls := []string{}
 	baseURL := "/operations"
@@ -24,7 +24,7 @@ func (r *ProtocolLXD) GetOperationUUIDs() ([]string, error) {
 }
 
 // GetOperations returns a list of Operation struct.
-func (r *ProtocolLXD) GetOperations() ([]api.Operation, error) {
+func (r *ProtocolIncus) GetOperations() ([]api.Operation, error) {
 	apiOperations := map[string][]api.Operation{}
 
 	// Fetch the raw value
@@ -43,7 +43,7 @@ func (r *ProtocolLXD) GetOperations() ([]api.Operation, error) {
 }
 
 // GetOperation returns an Operation entry for the provided uuid.
-func (r *ProtocolLXD) GetOperation(uuid string) (*api.Operation, string, error) {
+func (r *ProtocolIncus) GetOperation(uuid string) (*api.Operation, string, error) {
 	op := api.Operation{}
 
 	// Fetch the raw value
@@ -56,7 +56,7 @@ func (r *ProtocolLXD) GetOperation(uuid string) (*api.Operation, string, error) 
 }
 
 // GetOperationWait returns an Operation entry for the provided uuid once it's complete or hits the timeout.
-func (r *ProtocolLXD) GetOperationWait(uuid string, timeout int) (*api.Operation, string, error) {
+func (r *ProtocolIncus) GetOperationWait(uuid string, timeout int) (*api.Operation, string, error) {
 	op := api.Operation{}
 
 	// Fetch the raw value
@@ -69,7 +69,7 @@ func (r *ProtocolLXD) GetOperationWait(uuid string, timeout int) (*api.Operation
 }
 
 // GetOperationWaitSecret returns an Operation entry for the provided uuid and secret once it's complete or hits the timeout.
-func (r *ProtocolLXD) GetOperationWaitSecret(uuid string, secret string, timeout int) (*api.Operation, string, error) {
+func (r *ProtocolIncus) GetOperationWaitSecret(uuid string, secret string, timeout int) (*api.Operation, string, error) {
 	op := api.Operation{}
 
 	// Fetch the raw value
@@ -82,7 +82,7 @@ func (r *ProtocolLXD) GetOperationWaitSecret(uuid string, secret string, timeout
 }
 
 // GetOperationWebsocket returns a websocket connection for the provided operation.
-func (r *ProtocolLXD) GetOperationWebsocket(uuid string, secret string) (*websocket.Conn, error) {
+func (r *ProtocolIncus) GetOperationWebsocket(uuid string, secret string) (*websocket.Conn, error) {
 	path := fmt.Sprintf("/operations/%s/websocket", url.PathEscape(uuid))
 	if secret != "" {
 		path = fmt.Sprintf("%s?secret=%s", path, url.QueryEscape(secret))
@@ -92,7 +92,7 @@ func (r *ProtocolLXD) GetOperationWebsocket(uuid string, secret string) (*websoc
 }
 
 // DeleteOperation deletes (cancels) a running operation.
-func (r *ProtocolLXD) DeleteOperation(uuid string) error {
+func (r *ProtocolIncus) DeleteOperation(uuid string) error {
 	// Send the request
 	_, _, err := r.query("DELETE", fmt.Sprintf("/operations/%s", url.PathEscape(uuid)), nil, "")
 	if err != nil {

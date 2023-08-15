@@ -95,7 +95,7 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Connect to LXD
-	d, err := incus.ConnectLXDUnix("", nil)
+	d, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to local LXD: %w", err)
 	}

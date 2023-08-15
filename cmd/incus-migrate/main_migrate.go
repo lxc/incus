@@ -145,7 +145,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		return nil, "", fmt.Errorf("Server certificate rejected by user")
 	}
 
-	server, err := incus.ConnectLXD(serverURL, &args)
+	server, err := incus.ConnectIncus(serverURL, &args)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed to connect to server: %w", err)
 	}

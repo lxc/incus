@@ -52,7 +52,7 @@ func (c *cmdWaitready) Run(cmd *cobra.Command, args []string) error {
 				logger.Debugf("Connecting to LXD daemon (attempt %d)", i)
 			}
 
-			d, err := incus.ConnectLXDUnix("", nil)
+			d, err := incus.ConnectIncusUnix("", nil)
 			if err != nil {
 				errLast = err
 				if doLog {

@@ -63,13 +63,13 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 	}
 
 	// Attempt to download from host
-	if shared.PathExists("/dev/lxd/sock") && os.Geteuid() == 0 {
+	if shared.PathExists("/dev/incus/sock") && os.Geteuid() == 0 {
 		unixURI := fmt.Sprintf("http://unix.socket/1.0/images/%s/export", url.PathEscape(fingerprint))
 
 		// Setup the HTTP client
-		devlxdHTTP, err := unixHTTPClient(nil, "/dev/lxd/sock")
+		devIncusHTTP, err := unixHTTPClient(nil, "/dev/incus/sock")
 		if err == nil {
-			resp, err := lxdDownloadImage(fingerprint, unixURI, r.httpUserAgent, devlxdHTTP.Do, req)
+			resp, err := incusDownloadImage(fingerprint, unixURI, r.httpUserAgent, devIncusHTTP.Do, req)
 			if err == nil {
 				return resp, nil
 			}
@@ -122,7 +122,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 		return size, nil
 	}
 
-	// Download the LXD image file
+	// Download the Incus image file
 	meta, ok := files["meta"]
 	if ok && req.MetaFile != nil {
 		size, err := download(meta.Path, "metadata", meta.Sha256, req.MetaFile)
@@ -155,7 +155,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 				}
 
 				// Create temporary file for the delta
-				deltaFile, err := os.CreateTemp("", "lxc_image_")
+				deltaFile, err := os.CreateTemp("", "incus_image_")
 				if err != nil {
 					return nil, err
 				}
@@ -171,7 +171,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 				}
 
 				// Create temporary file for the delta
-				patchedFile, err := os.CreateTemp("", "lxc_image_")
+				patchedFile, err := os.CreateTemp("", "incus_image_")
 				if err != nil {
 					return nil, err
 				}

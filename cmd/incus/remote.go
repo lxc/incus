@@ -298,7 +298,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	var rPort string
 
 	if c.flagProtocol == "" {
-		c.flagProtocol = "lxd"
+		c.flagProtocol = "incus"
 	}
 
 	// Initialize the remotes list if needed
@@ -325,7 +325,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 
 		conf.Remotes[server] = config.Remote{Addr: addr, Public: true, Protocol: c.flagProtocol}
 		return conf.SaveConfig(c.global.confPath)
-	} else if c.flagProtocol != "lxd" {
+	} else if c.flagProtocol != "incus" {
 		return fmt.Errorf(i18n.G("Invalid protocol: %s"), c.flagProtocol)
 	}
 
@@ -690,7 +690,7 @@ func (c *cmdRemoteList) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		if rc.Protocol == "" {
-			rc.Protocol = "lxd"
+			rc.Protocol = "incus"
 		}
 
 		if rc.AuthType == "" {

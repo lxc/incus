@@ -618,7 +618,7 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 			var remote incus.ImageServer
 			if shared.StringInSlice(req.Source.Protocol, []string{"", "lxd"}) {
 				// Remote LXD image server.
-				remote, err = incus.ConnectPublicLXD(req.Source.Server, &incus.ConnectionArgs{
+				remote, err = incus.ConnectPublicIncus(req.Source.Server, &incus.ConnectionArgs{
 					TLSServerCert: req.Source.Certificate,
 					UserAgent:     version.UserAgent,
 					Proxy:         s.Proxy,

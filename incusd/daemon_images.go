@@ -67,7 +67,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	// Default protocol is LXD. Copy so that local modifications aren't propgated to args.
 	protocol := args.Protocol
 	if protocol == "" {
-		protocol = "lxd"
+		protocol = "incus"
 	}
 
 	// Copy so that local modifications aren't propgated to args.
@@ -77,7 +77,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	fp := alias
 
 	// Attempt to resolve the alias
-	if shared.StringInSlice(protocol, []string{"lxd", "simplestreams"}) {
+	if shared.StringInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
 		clientArgs := &incus.ConnectionArgs{
 			TLSServerCert: args.Certificate,
 			UserAgent:     version.UserAgent,
@@ -86,9 +86,9 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 			CacheExpiry:   time.Hour,
 		}
 
-		if protocol == "lxd" {
+		if shared.StringInSlice(protocol, []string{"incus", "lxd"}) {
 			// Setup LXD client
-			remote, err = incus.ConnectPublicLXD(args.Server, clientArgs)
+			remote, err = incus.ConnectPublicIncus(args.Server, clientArgs)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to LXD server %q: %w", args.Server, err)
 			}
@@ -308,7 +308,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		op.SetCanceler(canceler)
 	}
 
-	if protocol == "lxd" || protocol == "simplestreams" {
+	if shared.StringInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
 		// Create the target files
 		dest, err := os.Create(destName)
 		if err != nil {

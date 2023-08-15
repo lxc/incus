@@ -10,7 +10,7 @@ import (
 // Warning handling functions
 
 // GetWarningUUIDs returns a list of operation uuids.
-func (r *ProtocolLXD) GetWarningUUIDs() ([]string, error) {
+func (r *ProtocolIncus) GetWarningUUIDs() ([]string, error) {
 	if !r.HasExtension("warnings") {
 		return nil, fmt.Errorf("The server is missing the required \"warnings\" API extension")
 	}
@@ -28,7 +28,7 @@ func (r *ProtocolLXD) GetWarningUUIDs() ([]string, error) {
 }
 
 // GetWarnings returns a list of warnings.
-func (r *ProtocolLXD) GetWarnings() ([]api.Warning, error) {
+func (r *ProtocolIncus) GetWarnings() ([]api.Warning, error) {
 	if !r.HasExtension("warnings") {
 		return nil, fmt.Errorf("The server is missing the required \"warnings\" API extension")
 	}
@@ -44,7 +44,7 @@ func (r *ProtocolLXD) GetWarnings() ([]api.Warning, error) {
 }
 
 // GetWarning returns the warning with the given UUID.
-func (r *ProtocolLXD) GetWarning(UUID string) (*api.Warning, string, error) {
+func (r *ProtocolIncus) GetWarning(UUID string) (*api.Warning, string, error) {
 	if !r.HasExtension("warnings") {
 		return nil, "", fmt.Errorf("The server is missing the required \"warnings\" API extension")
 	}
@@ -60,7 +60,7 @@ func (r *ProtocolLXD) GetWarning(UUID string) (*api.Warning, string, error) {
 }
 
 // UpdateWarning updates the warning with the given UUID.
-func (r *ProtocolLXD) UpdateWarning(UUID string, warning api.WarningPut, ETag string) error {
+func (r *ProtocolIncus) UpdateWarning(UUID string, warning api.WarningPut, ETag string) error {
 	if !r.HasExtension("warnings") {
 		return fmt.Errorf("The server is missing the required \"warnings\" API extension")
 	}
@@ -75,7 +75,7 @@ func (r *ProtocolLXD) UpdateWarning(UUID string, warning api.WarningPut, ETag st
 }
 
 // DeleteWarning deletes the provided warning.
-func (r *ProtocolLXD) DeleteWarning(UUID string) error {
+func (r *ProtocolIncus) DeleteWarning(UUID string) error {
 	if !r.HasExtension("warnings") {
 		return fmt.Errorf("The server is missing the required \"warnings\" API extension")
 	}

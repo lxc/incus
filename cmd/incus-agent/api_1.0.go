@@ -103,7 +103,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 		return response.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}
 
-	server, err := incus.ConnectLXDHTTP(nil, client)
+	server, err := incus.ConnectIncusHTTP(nil, client)
 	if err != nil {
 		return response.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}

@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	lxd "github.com/lxc/incus/client"
+	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared/api"
 	cli "github.com/lxc/incus/shared/cmd"
 	"github.com/lxc/incus/shared/i18n"
@@ -62,7 +62,7 @@ func (c *cmdNetworkListAllocations) Command() *cobra.Command {
 }
 
 func (c *cmdNetworkListAllocations) Run(cmd *cobra.Command, args []string) error {
-	d, err := lxd.ConnectLXDUnix("", nil)
+	d, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return nil
 	}

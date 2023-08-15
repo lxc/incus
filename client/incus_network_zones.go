@@ -8,7 +8,7 @@ import (
 )
 
 // GetNetworkZoneNames returns a list of network zone names.
-func (r *ProtocolLXD) GetNetworkZoneNames() ([]string, error) {
+func (r *ProtocolIncus) GetNetworkZoneNames() ([]string, error) {
 	if !r.HasExtension("network_dns") {
 		return nil, fmt.Errorf(`The server is missing the required "network_dns" API extension`)
 	}
@@ -26,7 +26,7 @@ func (r *ProtocolLXD) GetNetworkZoneNames() ([]string, error) {
 }
 
 // GetNetworkZones returns a list of Network zone structs.
-func (r *ProtocolLXD) GetNetworkZones() ([]api.NetworkZone, error) {
+func (r *ProtocolIncus) GetNetworkZones() ([]api.NetworkZone, error) {
 	if !r.HasExtension("network_dns") {
 		return nil, fmt.Errorf(`The server is missing the required "network_dns" API extension`)
 	}
@@ -43,7 +43,7 @@ func (r *ProtocolLXD) GetNetworkZones() ([]api.NetworkZone, error) {
 }
 
 // GetNetworkZone returns a Network zone entry for the provided name.
-func (r *ProtocolLXD) GetNetworkZone(name string) (*api.NetworkZone, string, error) {
+func (r *ProtocolIncus) GetNetworkZone(name string) (*api.NetworkZone, string, error) {
 	if !r.HasExtension("network_dns") {
 		return nil, "", fmt.Errorf(`The server is missing the required "network_dns" API extension`)
 	}
@@ -60,7 +60,7 @@ func (r *ProtocolLXD) GetNetworkZone(name string) (*api.NetworkZone, string, err
 }
 
 // CreateNetworkZone defines a new Network zone using the provided struct.
-func (r *ProtocolLXD) CreateNetworkZone(zone api.NetworkZonesPost) error {
+func (r *ProtocolIncus) CreateNetworkZone(zone api.NetworkZonesPost) error {
 	if !r.HasExtension("network_dns") {
 		return fmt.Errorf(`The server is missing the required "network_dns" API extension`)
 	}
@@ -75,7 +75,7 @@ func (r *ProtocolLXD) CreateNetworkZone(zone api.NetworkZonesPost) error {
 }
 
 // UpdateNetworkZone updates the network zone to match the provided struct.
-func (r *ProtocolLXD) UpdateNetworkZone(name string, zone api.NetworkZonePut, ETag string) error {
+func (r *ProtocolIncus) UpdateNetworkZone(name string, zone api.NetworkZonePut, ETag string) error {
 	if !r.HasExtension("network_dns") {
 		return fmt.Errorf(`The server is missing the required "network_dns" API extension`)
 	}
@@ -90,7 +90,7 @@ func (r *ProtocolLXD) UpdateNetworkZone(name string, zone api.NetworkZonePut, ET
 }
 
 // DeleteNetworkZone deletes an existing network zone.
-func (r *ProtocolLXD) DeleteNetworkZone(name string) error {
+func (r *ProtocolIncus) DeleteNetworkZone(name string) error {
 	if !r.HasExtension("network_dns") {
 		return fmt.Errorf(`The server is missing the required "network_dns" API extension`)
 	}
@@ -105,7 +105,7 @@ func (r *ProtocolLXD) DeleteNetworkZone(name string) error {
 }
 
 // GetNetworkZoneRecordNames returns a list of network zone record names.
-func (r *ProtocolLXD) GetNetworkZoneRecordNames(zone string) ([]string, error) {
+func (r *ProtocolIncus) GetNetworkZoneRecordNames(zone string) ([]string, error) {
 	if !r.HasExtension("network_dns_records") {
 		return nil, fmt.Errorf(`The server is missing the required "network_dns_records" API extension`)
 	}
@@ -123,7 +123,7 @@ func (r *ProtocolLXD) GetNetworkZoneRecordNames(zone string) ([]string, error) {
 }
 
 // GetNetworkZoneRecords returns a list of Network zone record structs.
-func (r *ProtocolLXD) GetNetworkZoneRecords(zone string) ([]api.NetworkZoneRecord, error) {
+func (r *ProtocolIncus) GetNetworkZoneRecords(zone string) ([]api.NetworkZoneRecord, error) {
 	if !r.HasExtension("network_dns_records") {
 		return nil, fmt.Errorf(`The server is missing the required "network_dns_records" API extension`)
 	}
@@ -140,7 +140,7 @@ func (r *ProtocolLXD) GetNetworkZoneRecords(zone string) ([]api.NetworkZoneRecor
 }
 
 // GetNetworkZoneRecord returns a Network zone record entry for the provided zone and name.
-func (r *ProtocolLXD) GetNetworkZoneRecord(zone string, name string) (*api.NetworkZoneRecord, string, error) {
+func (r *ProtocolIncus) GetNetworkZoneRecord(zone string, name string) (*api.NetworkZoneRecord, string, error) {
 	if !r.HasExtension("network_dns_records") {
 		return nil, "", fmt.Errorf(`The server is missing the required "network_dns_records" API extension`)
 	}
@@ -157,7 +157,7 @@ func (r *ProtocolLXD) GetNetworkZoneRecord(zone string, name string) (*api.Netwo
 }
 
 // CreateNetworkZoneRecord defines a new Network zone record using the provided struct.
-func (r *ProtocolLXD) CreateNetworkZoneRecord(zone string, record api.NetworkZoneRecordsPost) error {
+func (r *ProtocolIncus) CreateNetworkZoneRecord(zone string, record api.NetworkZoneRecordsPost) error {
 	if !r.HasExtension("network_dns_records") {
 		return fmt.Errorf(`The server is missing the required "network_dns_records" API extension`)
 	}
@@ -172,7 +172,7 @@ func (r *ProtocolLXD) CreateNetworkZoneRecord(zone string, record api.NetworkZon
 }
 
 // UpdateNetworkZoneRecord updates the network zone record to match the provided struct.
-func (r *ProtocolLXD) UpdateNetworkZoneRecord(zone string, name string, record api.NetworkZoneRecordPut, ETag string) error {
+func (r *ProtocolIncus) UpdateNetworkZoneRecord(zone string, name string, record api.NetworkZoneRecordPut, ETag string) error {
 	if !r.HasExtension("network_dns_records") {
 		return fmt.Errorf(`The server is missing the required "network_dns_records" API extension`)
 	}
@@ -187,7 +187,7 @@ func (r *ProtocolLXD) UpdateNetworkZoneRecord(zone string, name string, record a
 }
 
 // DeleteNetworkZoneRecord deletes an existing network zone record.
-func (r *ProtocolLXD) DeleteNetworkZoneRecord(zone string, name string) error {
+func (r *ProtocolIncus) DeleteNetworkZoneRecord(zone string, name string) error {
 	if !r.HasExtension("network_dns_records") {
 		return fmt.Errorf(`The server is missing the required "network_dns_records" API extension`)
 	}

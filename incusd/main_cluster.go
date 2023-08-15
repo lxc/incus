@@ -121,7 +121,7 @@ func (c *cmdClusterEdit) Command() *cobra.Command {
 
 func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 	// Make sure that the daemon is not running.
-	_, err := incus.ConnectLXDUnix("", nil)
+	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {
 		return fmt.Errorf("The LXD daemon is running, please stop it first.")
 	}
@@ -387,7 +387,7 @@ func (c *cmdClusterRecoverFromQuorumLoss) Command() *cobra.Command {
 
 func (c *cmdClusterRecoverFromQuorumLoss) Run(cmd *cobra.Command, args []string) error {
 	// Make sure that the daemon is not running.
-	_, err := incus.ConnectLXDUnix("", nil)
+	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {
 		return fmt.Errorf("The LXD daemon is running, please stop it first.")
 	}
@@ -472,7 +472,7 @@ func (c *cmdClusterRemoveRaftNode) Run(cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	client, err := incus.ConnectLXDUnix("", nil)
+	client, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to LXD daemon: %w", err)
 	}

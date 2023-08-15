@@ -26,7 +26,7 @@ type cmdGlobal struct {
 
 func (c *cmdGlobal) Run(cmd *cobra.Command, args []string) error {
 	// Connect to LXD
-	srv, err := incus.ConnectLXDUnix("", nil)
+	srv, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return err
 	}

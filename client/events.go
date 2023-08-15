@@ -8,9 +8,9 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// The EventListener struct is used to interact with a LXD event stream.
+// The EventListener struct is used to interact with an Incus event stream.
 type EventListener struct {
-	r         *ProtocolLXD
+	r         *ProtocolIncus
 	ctx       context.Context
 	ctxCancel context.CancelFunc
 	err       error

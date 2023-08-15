@@ -21,7 +21,7 @@ import (
 
 // setupOIDCClient initializes the OIDC (OpenID Connect) client with given tokens if it hasn't been set up already.
 // It also assigns the protocol's http client to the oidcClient's httpClient.
-func (r *ProtocolLXD) setupOIDCClient(token *oidc.Tokens[*oidc.IDTokenClaims]) {
+func (r *ProtocolIncus) setupOIDCClient(token *oidc.Tokens[*oidc.IDTokenClaims]) {
 	if r.oidcClient != nil {
 		return
 	}

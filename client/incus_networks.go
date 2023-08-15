@@ -8,7 +8,7 @@ import (
 )
 
 // GetNetworkNames returns a list of network names.
-func (r *ProtocolLXD) GetNetworkNames() ([]string, error) {
+func (r *ProtocolIncus) GetNetworkNames() ([]string, error) {
 	if !r.HasExtension("network") {
 		return nil, fmt.Errorf("The server is missing the required \"network\" API extension")
 	}
@@ -26,7 +26,7 @@ func (r *ProtocolLXD) GetNetworkNames() ([]string, error) {
 }
 
 // GetNetworks returns a list of Network struct.
-func (r *ProtocolLXD) GetNetworks() ([]api.Network, error) {
+func (r *ProtocolIncus) GetNetworks() ([]api.Network, error) {
 	if !r.HasExtension("network") {
 		return nil, fmt.Errorf("The server is missing the required \"network\" API extension")
 	}
@@ -43,7 +43,7 @@ func (r *ProtocolLXD) GetNetworks() ([]api.Network, error) {
 }
 
 // GetNetwork returns a Network entry for the provided name.
-func (r *ProtocolLXD) GetNetwork(name string) (*api.Network, string, error) {
+func (r *ProtocolIncus) GetNetwork(name string) (*api.Network, string, error) {
 	if !r.HasExtension("network") {
 		return nil, "", fmt.Errorf("The server is missing the required \"network\" API extension")
 	}
@@ -60,7 +60,7 @@ func (r *ProtocolLXD) GetNetwork(name string) (*api.Network, string, error) {
 }
 
 // GetNetworkLeases returns a list of Network struct.
-func (r *ProtocolLXD) GetNetworkLeases(name string) ([]api.NetworkLease, error) {
+func (r *ProtocolIncus) GetNetworkLeases(name string) ([]api.NetworkLease, error) {
 	if !r.HasExtension("network_leases") {
 		return nil, fmt.Errorf("The server is missing the required \"network_leases\" API extension")
 	}
@@ -77,7 +77,7 @@ func (r *ProtocolLXD) GetNetworkLeases(name string) ([]api.NetworkLease, error) 
 }
 
 // GetNetworkState returns metrics and information on the running network.
-func (r *ProtocolLXD) GetNetworkState(name string) (*api.NetworkState, error) {
+func (r *ProtocolIncus) GetNetworkState(name string) (*api.NetworkState, error) {
 	if !r.HasExtension("network_state") {
 		return nil, fmt.Errorf("The server is missing the required \"network_state\" API extension")
 	}
@@ -94,7 +94,7 @@ func (r *ProtocolLXD) GetNetworkState(name string) (*api.NetworkState, error) {
 }
 
 // CreateNetwork defines a new network using the provided Network struct.
-func (r *ProtocolLXD) CreateNetwork(network api.NetworksPost) error {
+func (r *ProtocolIncus) CreateNetwork(network api.NetworksPost) error {
 	if !r.HasExtension("network") {
 		return fmt.Errorf("The server is missing the required \"network\" API extension")
 	}
@@ -109,7 +109,7 @@ func (r *ProtocolLXD) CreateNetwork(network api.NetworksPost) error {
 }
 
 // UpdateNetwork updates the network to match the provided Network struct.
-func (r *ProtocolLXD) UpdateNetwork(name string, network api.NetworkPut, ETag string) error {
+func (r *ProtocolIncus) UpdateNetwork(name string, network api.NetworkPut, ETag string) error {
 	if !r.HasExtension("network") {
 		return fmt.Errorf("The server is missing the required \"network\" API extension")
 	}
@@ -124,7 +124,7 @@ func (r *ProtocolLXD) UpdateNetwork(name string, network api.NetworkPut, ETag st
 }
 
 // RenameNetwork renames an existing network entry.
-func (r *ProtocolLXD) RenameNetwork(name string, network api.NetworkPost) error {
+func (r *ProtocolIncus) RenameNetwork(name string, network api.NetworkPost) error {
 	if !r.HasExtension("network") {
 		return fmt.Errorf("The server is missing the required \"network\" API extension")
 	}
@@ -139,7 +139,7 @@ func (r *ProtocolLXD) RenameNetwork(name string, network api.NetworkPost) error 
 }
 
 // DeleteNetwork deletes an existing network.
-func (r *ProtocolLXD) DeleteNetwork(name string) error {
+func (r *ProtocolIncus) DeleteNetwork(name string) error {
 	if !r.HasExtension("network") {
 		return fmt.Errorf("The server is missing the required \"network\" API extension")
 	}

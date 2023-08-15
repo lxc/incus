@@ -10,7 +10,7 @@ import (
 )
 
 // GetNetworkACLNames returns a list of network ACL names.
-func (r *ProtocolLXD) GetNetworkACLNames() ([]string, error) {
+func (r *ProtocolIncus) GetNetworkACLNames() ([]string, error) {
 	if !r.HasExtension("network_acl") {
 		return nil, fmt.Errorf(`The server is missing the required "network_acl" API extension`)
 	}
@@ -28,7 +28,7 @@ func (r *ProtocolLXD) GetNetworkACLNames() ([]string, error) {
 }
 
 // GetNetworkACLs returns a list of Network ACL structs.
-func (r *ProtocolLXD) GetNetworkACLs() ([]api.NetworkACL, error) {
+func (r *ProtocolIncus) GetNetworkACLs() ([]api.NetworkACL, error) {
 	if !r.HasExtension("network_acl") {
 		return nil, fmt.Errorf(`The server is missing the required "network_acl" API extension`)
 	}
@@ -45,7 +45,7 @@ func (r *ProtocolLXD) GetNetworkACLs() ([]api.NetworkACL, error) {
 }
 
 // GetNetworkACL returns a Network ACL entry for the provided name.
-func (r *ProtocolLXD) GetNetworkACL(name string) (*api.NetworkACL, string, error) {
+func (r *ProtocolIncus) GetNetworkACL(name string) (*api.NetworkACL, string, error) {
 	if !r.HasExtension("network_acl") {
 		return nil, "", fmt.Errorf(`The server is missing the required "network_acl" API extension`)
 	}
@@ -64,7 +64,7 @@ func (r *ProtocolLXD) GetNetworkACL(name string) (*api.NetworkACL, string, error
 // GetNetworkACLLogfile returns a reader for the ACL log file.
 //
 // Note that it's the caller's responsibility to close the returned ReadCloser.
-func (r *ProtocolLXD) GetNetworkACLLogfile(name string) (io.ReadCloser, error) {
+func (r *ProtocolIncus) GetNetworkACLLogfile(name string) (io.ReadCloser, error) {
 	if !r.HasExtension("network_acl_log") {
 		return nil, fmt.Errorf(`The server is missing the required "network_acl_log" API extension`)
 	}
@@ -89,7 +89,7 @@ func (r *ProtocolLXD) GetNetworkACLLogfile(name string) (io.ReadCloser, error) {
 
 	// Check the return value for a cleaner error
 	if resp.StatusCode != http.StatusOK {
-		_, _, err := lxdParseResponse(resp)
+		_, _, err := incusParseResponse(resp)
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func (r *ProtocolLXD) GetNetworkACLLogfile(name string) (io.ReadCloser, error) {
 }
 
 // CreateNetworkACL defines a new network ACL using the provided struct.
-func (r *ProtocolLXD) CreateNetworkACL(acl api.NetworkACLsPost) error {
+func (r *ProtocolIncus) CreateNetworkACL(acl api.NetworkACLsPost) error {
 	if !r.HasExtension("network_acl") {
 		return fmt.Errorf(`The server is missing the required "network_acl" API extension`)
 	}
@@ -114,7 +114,7 @@ func (r *ProtocolLXD) CreateNetworkACL(acl api.NetworkACLsPost) error {
 }
 
 // UpdateNetworkACL updates the network ACL to match the provided struct.
-func (r *ProtocolLXD) UpdateNetworkACL(name string, acl api.NetworkACLPut, ETag string) error {
+func (r *ProtocolIncus) UpdateNetworkACL(name string, acl api.NetworkACLPut, ETag string) error {
 	if !r.HasExtension("network_acl") {
 		return fmt.Errorf(`The server is missing the required "network_acl" API extension`)
 	}
@@ -129,7 +129,7 @@ func (r *ProtocolLXD) UpdateNetworkACL(name string, acl api.NetworkACLPut, ETag 
 }
 
 // RenameNetworkACL renames an existing network ACL entry.
-func (r *ProtocolLXD) RenameNetworkACL(name string, acl api.NetworkACLPost) error {
+func (r *ProtocolIncus) RenameNetworkACL(name string, acl api.NetworkACLPost) error {
 	if !r.HasExtension("network_acl") {
 		return fmt.Errorf(`The server is missing the required "network_acl" API extension`)
 	}
@@ -144,7 +144,7 @@ func (r *ProtocolLXD) RenameNetworkACL(name string, acl api.NetworkACLPost) erro
 }
 
 // DeleteNetworkACL deletes an existing network ACL.
-func (r *ProtocolLXD) DeleteNetworkACL(name string) error {
+func (r *ProtocolIncus) DeleteNetworkACL(name string) error {
 	if !r.HasExtension("network_acl") {
 		return fmt.Errorf(`The server is missing the required "network_acl" API extension`)
 	}

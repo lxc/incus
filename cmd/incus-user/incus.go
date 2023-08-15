@@ -172,7 +172,7 @@ func lxdSetupUser(uid uint32) error {
 	}
 
 	// Connect to LXD.
-	client, err := incus.ConnectLXDUnix("", nil)
+	client, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return fmt.Errorf("Unable to connect to LXD: %w", err)
 	}

@@ -280,7 +280,7 @@ func (s *dbTestSuite) Test_GetCachedImageSourceFingerprint_no_match() {
 	s.Nil(err)
 
 	_ = s.db.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		_, err = tx.GetCachedImageSourceFingerprint(ctx, "server.remote", "lxd", "test", "container", 0)
+		_, err = tx.GetCachedImageSourceFingerprint(ctx, "server.remote", "incus", "test", "container", 0)
 		s.True(api.StatusErrorCheck(err, http.StatusNotFound))
 		return nil
 	})
