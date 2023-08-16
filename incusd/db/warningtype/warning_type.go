@@ -38,8 +38,6 @@ const (
 	AppArmorNotAvailable
 	// MissingVirtiofsd represents the missing virtiofsd warning.
 	MissingVirtiofsd
-	// UnableToConnectToMAAS represents the unable to connect to MAAS warning.
-	UnableToConnectToMAAS
 	// AppArmorDisabledDueToRawDnsmasq represents the disabled AppArmor due to raw.dnsmasq warning.
 	AppArmorDisabledDueToRawDnsmasq
 	// LargerIPv6PrefixThanSupported represents the larger IPv6 prefix than supported warning.
@@ -78,7 +76,6 @@ var TypeNames = map[Type]string{
 	ClusterTimeSkew:                        "Time skew detected between leader and local",
 	AppArmorNotAvailable:                   "AppArmor support has been disabled",
 	MissingVirtiofsd:                       "Missing virtiofsd",
-	UnableToConnectToMAAS:                  "Unable to connect to MAAS",
 	AppArmorDisabledDueToRawDnsmasq:        "Skipping AppArmor for dnsmasq due to raw.dnsmasq being set",
 	LargerIPv6PrefixThanSupported:          "IPv6 networks with a prefix larger than 64 aren't properly supported by dnsmasq",
 	ProxyBridgeNetfilterNotEnabled:         "Proxy bridge netfilter not enabled",
@@ -124,8 +121,6 @@ func (t Type) Severity() Severity {
 	case AppArmorNotAvailable:
 		return SeverityLow
 	case MissingVirtiofsd:
-		return SeverityLow
-	case UnableToConnectToMAAS:
 		return SeverityLow
 	case AppArmorDisabledDueToRawDnsmasq:
 		return SeverityLow

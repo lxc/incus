@@ -20,7 +20,6 @@ no
 yes
 my-storage-pool
 dir
-no
 yes
 inct$$
 auto

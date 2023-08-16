@@ -24,11 +24,9 @@ func (n *sriov) DBType() db.NetworkType {
 // Validate network config.
 func (n *sriov) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
-		"parent":           validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
-		"mtu":              validate.Optional(validate.IsNetworkMTU),
-		"vlan":             validate.Optional(validate.IsNetworkVLAN),
-		"maas.subnet.ipv4": validate.IsAny,
-		"maas.subnet.ipv6": validate.IsAny,
+		"parent": validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
+		"mtu":    validate.Optional(validate.IsNetworkMTU),
+		"vlan":   validate.Optional(validate.IsNetworkVLAN),
 	}
 
 	err := n.validate(config, rules)

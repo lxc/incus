@@ -742,24 +742,6 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			return err
 		}
 
-		var nodeConfig *node.Config
-		err = s.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
-			var err error
-			nodeConfig, err = node.ConfigLoad(ctx, tx)
-			return err
-		})
-		if err != nil {
-			return err
-		}
-
-		// Connect to MAAS
-		url, key := s.GlobalConfig.MAASController()
-		machine := nodeConfig.MAASMachine()
-		err = d.setupMAASController(url, key, machine)
-		if err != nil {
-			return err
-		}
-
 		// Start up networks so any post-join changes can be applied now that we have a Node ID.
 		logger.Debug("Starting networks after cluster join")
 		err = networkStartup(s)

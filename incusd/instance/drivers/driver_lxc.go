@@ -3699,13 +3699,6 @@ func (d *lxc) delete(force bool) error {
 			}
 		}
 
-		// Delete the MAAS entry.
-		err = d.maasDelete(d)
-		if err != nil {
-			d.logger.Error("Failed deleting instance MAAS record", logger.Ctx{"err": err})
-			return err
-		}
-
 		// Run device removal function for each device.
 		d.devicesRemove(d)
 
@@ -3832,14 +3825,6 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 		if err != nil {
 			d.logger.Error("Failed renaming instance", ctxMap)
 			return fmt.Errorf("Failed renaming instance: %w", err)
-		}
-	}
-
-	// Rename the MAAS entry.
-	if !d.IsSnapshot() {
-		err = d.maasRename(d, newName)
-		if err != nil {
-			return err
 		}
 	}
 
@@ -4105,7 +4090,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	// Diff the devices
-	removeDevices, addDevices, updateDevices, allUpdatedKeys := oldExpandedDevices.Update(d.expandedDevices, func(oldDevice deviceConfig.Device, newDevice deviceConfig.Device) []string {
+	removeDevices, addDevices, updateDevices, _ := oldExpandedDevices.Update(d.expandedDevices, func(oldDevice deviceConfig.Device, newDevice deviceConfig.Device) []string {
 		// This function needs to return a list of fields that are excluded from differences
 		// between oldDevice and newDevice. The result of this is that as long as the
 		// devices are otherwise identical except for the fields returned here, then the
@@ -4248,22 +4233,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	err = d.devicesUpdate(d, removeDevices, addDevices, updateDevices, oldExpandedDevices, isRunning, userRequested)
 	if err != nil {
 		return err
-	}
-
-	// Update MAAS (must run after the MAC addresses have been generated).
-	updateMAAS := false
-	for _, key := range []string{"maas.subnet.ipv4", "maas.subnet.ipv6", "ipv4.address", "ipv6.address"} {
-		if shared.StringInSlice(key, allUpdatedKeys) {
-			updateMAAS = true
-			break
-		}
-	}
-
-	if !d.IsSnapshot() && updateMAAS {
-		err = d.maasUpdate(d, oldExpandedDevices.CloneNative())
-		if err != nil {
-			return err
-		}
 	}
 
 	// Apply the live changes

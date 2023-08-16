@@ -44,8 +44,6 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 		"hwaddr",
 		"vlan",
 		"security.mac_filtering",
-		"maas.subnet.ipv4",
-		"maas.subnet.ipv6",
 		"boot.priority",
 	}
 
@@ -53,7 +51,7 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 	if d.config["network"] != "" {
 		requiredFields = append(requiredFields, "network")
 
-		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "maas.subnet.ipv4", "maas.subnet.ipv6"}
+		bannedKeys := []string{"nictype", "parent", "mtu", "vlan"}
 		for _, bannedKey := range bannedKeys {
 			if d.config[bannedKey] != "" {
 				return fmt.Errorf("Cannot use %q property in conjunction with %q property", bannedKey, "network")
@@ -82,7 +80,7 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 		d.config["parent"] = netConfig["parent"]
 
 		// Copy certain keys verbatim from the network's settings.
-		inheritKeys := []string{"mtu", "vlan", "maas.subnet.ipv4", "maas.subnet.ipv6"}
+		inheritKeys := []string{"mtu", "vlan"}
 		for _, inheritKey := range inheritKeys {
 			_, found := netConfig[inheritKey]
 			if found {

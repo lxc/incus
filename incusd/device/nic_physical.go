@@ -39,8 +39,6 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 	optionalFields := []string{
 		"parent",
 		"name",
-		"maas.subnet.ipv4",
-		"maas.subnet.ipv6",
 		"boot.priority",
 		"gvrp",
 	}
@@ -52,7 +50,7 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 	if d.config["network"] != "" {
 		requiredFields = append(requiredFields, "network")
 
-		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "maas.subnet.ipv4", "maas.subnet.ipv6", "gvrp"}
+		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "gvrp"}
 		for _, bannedKey := range bannedKeys {
 			if d.config[bannedKey] != "" {
 				return fmt.Errorf("Cannot use %q property in conjunction with %q property", bannedKey, "network")

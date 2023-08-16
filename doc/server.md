@@ -115,7 +115,7 @@ Key                                 | Type      | Scope     | Default           
 (server-options-misc)=
 ## Miscellaneous options
 
-The following server options configure server-specific settings for {ref}`instances`, MAAS integration, {ref}`OVN <network-ovn>` integration, {ref}`Backups <backups>` and {ref}`storage`:
+The following server options configure server-specific settings for {ref}`instances`, {ref}`OVN <network-ovn>` integration, {ref}`Backups <backups>` and {ref}`storage`:
 
 ```{rst-class} break-col-4 min-width-4-8
 ```
@@ -126,9 +126,6 @@ Key                                 | Type      | Scope     | Default           
 `backups.compression_algorithm`     | string    | global    | `gzip`                                           | Compression algorithm to use for backups (`bzip2`, `gzip`, `lzma`, `xz` or `none`)
 `instances.nic.host_name`           | string    | global    | `random`                                         | If set to `random`, use the random host interface name as the host name; if set to `mac`, generate a host name in the form `lxd<mac_address>` (MAC without leading two digits)
 `instances.placement.scriptlet`     | string    | global    | -                                                | Stores the {ref}`clustering-instance-placement-scriptlet` for custom automatic instance placement logic
-`maas.api.key`                      | string    | global    | -                                                | API key to manage MAAS
-`maas.api.url`                      | string    | global    | -                                                | URL of the MAAS server
-`maas.machine`                      | string    | local     | host name                                        | Name of this LXD host in MAAS
 `network.ovn.integration_bridge`    | string    | global    | `br-int`                                         | OVS integration bridge to use for OVN networks
 `network.ovn.northbound_connection` | string    | global    | `unix:/var/run/ovn/ovnnb_db.sock`                | OVN northbound database connection string
 `storage.backups_volume`            | string    | local     | -                                                | Volume to use to store the backup tarballs (syntax is `POOL/VOLUME`)

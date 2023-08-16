@@ -58,7 +58,6 @@ Create a new ZFS pool? (yes/no) [default=yes]:
 Would you like to use an existing empty block device (e.g. a disk or partition)? (yes/no) [default=no]:
 Size in GiB of the new loop device (1GiB minimum) [default=9GiB]:
 Do you want to configure a new remote storage pool? (yes/no) [default=no]:
-Would you like to connect to a MAAS server? (yes/no) [default=no]:
 Would you like to configure LXD to use an existing bridge or host interface? (yes/no) [default=no]:
 Would you like to create a new Fan overlay network? (yes/no) [default=yes]:
 What subnet should be used as the Fan underlay? [default=auto]:

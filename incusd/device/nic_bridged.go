@@ -85,8 +85,6 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 		"security.ipv4_filtering",
 		"security.ipv6_filtering",
 		"security.port_isolation",
-		"maas.subnet.ipv4",
-		"maas.subnet.ipv6",
 		"boot.priority",
 		"vlan",
 	}
@@ -202,7 +200,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 	if d.config["network"] != "" {
 		requiredFields = append(requiredFields, "network")
 
-		bannedKeys := []string{"nictype", "parent", "mtu", "maas.subnet.ipv4", "maas.subnet.ipv6"}
+		bannedKeys := []string{"nictype", "parent", "mtu"}
 		for _, bannedKey := range bannedKeys {
 			if d.config[bannedKey] != "" {
 				return fmt.Errorf("Cannot use %q property in conjunction with %q property", bannedKey, "network")
@@ -232,15 +230,6 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 		if netConfig["bridge.mtu"] != "" {
 			d.config["mtu"] = netConfig["bridge.mtu"]
 		}
-
-		// Copy certain keys verbatim from the network's settings.
-		inheritKeys := []string{"maas.subnet.ipv4", "maas.subnet.ipv6"}
-		for _, inheritKey := range inheritKeys {
-			_, found := netConfig[inheritKey]
-			if found {
-				d.config[inheritKey] = netConfig[inheritKey]
-			}
-		}
 	} else {
 		// If no network property supplied, then parent property is required.
 		requiredFields = append(requiredFields, "parent")
@@ -261,22 +250,18 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 				if d.config["ipv4.address"] == "" {
 					return fmt.Errorf("IPv4 filtering requires a manually specified ipv4.address when using an unmanaged parent bridge")
 				}
-			} else {
-				// If MAAS isn't being used, then static IP cannot be used with unmanaged parent.
-				if d.config["ipv4.address"] != "" && d.config["maas.subnet.ipv4"] == "" {
-					return fmt.Errorf("Cannot use manually specified ipv4.address when using unmanaged parent bridge")
-				}
+			} else if d.config["ipv4.address"] != "" {
+				// Static IP cannot be used with unmanaged parent.
+				return fmt.Errorf("Cannot use manually specified ipv4.address when using unmanaged parent bridge")
 			}
 
 			if shared.IsTrue(d.config["security.ipv6_filtering"]) {
 				if d.config["ipv6.address"] == "" {
 					return fmt.Errorf("IPv6 filtering requires a manually specified ipv6.address when using an unmanaged parent bridge")
 				}
-			} else {
-				// If MAAS isn't being used, then static IP cannot be used with unmanaged parent.
-				if d.config["ipv6.address"] != "" && d.config["maas.subnet.ipv6"] == "" {
-					return fmt.Errorf("Cannot use manually specified ipv6.address when using unmanaged parent bridge")
-				}
+			} else if d.config["ipv6.address"] != "" {
+				// Static IP cannot be used with unmanaged parent.
+				return fmt.Errorf("Cannot use manually specified ipv6.address when using unmanaged parent bridge")
 			}
 		}
 	}

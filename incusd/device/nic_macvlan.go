@@ -49,8 +49,6 @@ func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader) error {
 		"mtu",
 		"hwaddr",
 		"vlan",
-		"maas.subnet.ipv4",
-		"maas.subnet.ipv6",
 		"boot.priority",
 		"gvrp",
 	}
@@ -59,7 +57,7 @@ func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader) error {
 	if d.config["network"] != "" {
 		requiredFields = append(requiredFields, "network")
 
-		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "maas.subnet.ipv4", "maas.subnet.ipv6", "gvrp"}
+		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "gvrp"}
 		for _, bannedKey := range bannedKeys {
 			if d.config[bannedKey] != "" {
 				return fmt.Errorf("Cannot use %q property in conjunction with %q property", bannedKey, "network")
@@ -88,7 +86,7 @@ func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader) error {
 		d.config["parent"] = netConfig["parent"]
 
 		// Copy certain keys verbatim from the network's settings.
-		inheritKeys := []string{"mtu", "vlan", "maas.subnet.ipv4", "maas.subnet.ipv6", "gvrp"}
+		inheritKeys := []string{"mtu", "vlan", "gvrp"}
 		for _, inheritKey := range inheritKeys {
 			_, found := netConfig[inheritKey]
 			if found {

@@ -34,8 +34,6 @@ func (n *physical) Validate(config map[string]string) error {
 		"mtu":                         validate.Optional(validate.IsNetworkMTU),
 		"vlan":                        validate.Optional(validate.IsNetworkVLAN),
 		"gvrp":                        validate.Optional(validate.IsBool),
-		"maas.subnet.ipv4":            validate.IsAny,
-		"maas.subnet.ipv6":            validate.IsAny,
 		"ipv4.gateway":                validate.Optional(validate.IsNetworkAddressCIDRV4),
 		"ipv6.gateway":                validate.Optional(validate.IsNetworkAddressCIDRV6),
 		"ipv4.ovn.ranges":             validate.Optional(validate.IsListOf(validate.IsNetworkRangeV4)),

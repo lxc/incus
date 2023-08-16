@@ -126,7 +126,6 @@ LXC's
 LXCFS
 LXD
 LXD's
-MAAS
 macOS
 macvlan
 Makefile

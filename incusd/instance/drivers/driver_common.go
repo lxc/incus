@@ -26,7 +26,6 @@ import (
 	"github.com/lxc/incus/incusd/instance/operationlock"
 	"github.com/lxc/incus/incusd/lifecycle"
 	"github.com/lxc/incus/incusd/locking"
-	"github.com/lxc/incus/incusd/maas"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/revert"
@@ -822,168 +821,6 @@ func (d *common) getStartupSnapNameAndExpiry(inst instance.Instance) (string, *t
 	return name, &expiry, nil
 }
 
-// Internal MAAS handling.
-func (d *common) maasUpdate(inst instance.Instance, oldDevices map[string]map[string]string) error {
-	// Check if MAAS is configured
-	maasURL, _ := d.state.GlobalConfig.MAASController()
-
-	if maasURL == "" {
-		return nil
-	}
-
-	// Check if there's something that uses MAAS
-	interfaces, err := d.maasInterfaces(inst, d.expandedDevices.CloneNative())
-	if err != nil {
-		return err
-	}
-
-	var oldInterfaces []maas.ContainerInterface
-	if oldDevices != nil {
-		oldInterfaces, err = d.maasInterfaces(inst, oldDevices)
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(interfaces) == 0 && len(oldInterfaces) == 0 {
-		return nil
-	}
-
-	// See if we're connected to MAAS
-	if d.state.MAAS == nil {
-		return fmt.Errorf("Can't perform the operation because MAAS is currently unavailable")
-	}
-
-	exists, err := d.state.MAAS.DefinedContainer(d)
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		if len(interfaces) == 0 && len(oldInterfaces) > 0 {
-			return d.state.MAAS.DeleteContainer(d)
-		}
-
-		return d.state.MAAS.UpdateContainer(d, interfaces)
-	}
-
-	return d.state.MAAS.CreateContainer(d, interfaces)
-}
-
-func (d *common) maasInterfaces(inst instance.Instance, devices map[string]map[string]string) ([]maas.ContainerInterface, error) {
-	interfaces := []maas.ContainerInterface{}
-	for k, m := range devices {
-		if m["type"] != "nic" {
-			continue
-		}
-
-		if m["maas.subnet.ipv4"] == "" && m["maas.subnet.ipv6"] == "" {
-			continue
-		}
-
-		m, err := inst.FillNetworkDevice(k, m)
-		if err != nil {
-			return nil, err
-		}
-
-		subnets := []maas.ContainerInterfaceSubnet{}
-
-		// IPv4
-		if m["maas.subnet.ipv4"] != "" {
-			subnet := maas.ContainerInterfaceSubnet{
-				Name:    m["maas.subnet.ipv4"],
-				Address: m["ipv4.address"],
-			}
-
-			subnets = append(subnets, subnet)
-		}
-
-		// IPv6
-		if m["maas.subnet.ipv6"] != "" {
-			subnet := maas.ContainerInterfaceSubnet{
-				Name:    m["maas.subnet.ipv6"],
-				Address: m["ipv6.address"],
-			}
-
-			subnets = append(subnets, subnet)
-		}
-
-		iface := maas.ContainerInterface{
-			Name:       m["name"],
-			MACAddress: m["hwaddr"],
-			Subnets:    subnets,
-		}
-
-		interfaces = append(interfaces, iface)
-	}
-
-	return interfaces, nil
-}
-
-func (d *common) maasRename(inst instance.Instance, newName string) error {
-	maasURL, _ := d.state.GlobalConfig.MAASController()
-
-	if maasURL == "" {
-		return nil
-	}
-
-	interfaces, err := d.maasInterfaces(inst, d.expandedDevices.CloneNative())
-	if err != nil {
-		return err
-	}
-
-	if len(interfaces) == 0 {
-		return nil
-	}
-
-	if d.state.MAAS == nil {
-		return fmt.Errorf("Can't perform the operation because MAAS is currently unavailable")
-	}
-
-	exists, err := d.state.MAAS.DefinedContainer(d)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		return d.maasUpdate(inst, nil)
-	}
-
-	return d.state.MAAS.RenameContainer(d, newName)
-}
-
-func (d *common) maasDelete(inst instance.Instance) error {
-	maasURL, _ := d.state.GlobalConfig.MAASController()
-
-	if maasURL == "" {
-		return nil
-	}
-
-	interfaces, err := d.maasInterfaces(inst, d.expandedDevices.CloneNative())
-	if err != nil {
-		return err
-	}
-
-	if len(interfaces) == 0 {
-		return nil
-	}
-
-	if d.state.MAAS == nil {
-		return fmt.Errorf("Can't perform the operation because MAAS is currently unavailable")
-	}
-
-	exists, err := d.state.MAAS.DefinedContainer(d)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		return nil
-	}
-
-	return d.state.MAAS.DeleteContainer(d)
-}
-
 // validateStartup checks any constraints that would prevent start up from succeeding under normal circumstances.
 func (d *common) validateStartup(stateful bool, statusCode api.StatusCode) error {
 	// Because the root disk is special and is mounted before the root disk device is setup we duplicate the
@@ -1317,7 +1154,7 @@ func (d *common) deviceRemove(dev device.Device, instanceRunning bool) error {
 	return dev.Remove()
 }
 
-// devicesAdd adds devices to instance and registers with MAAS.
+// devicesAdd adds devices to instance.
 func (d *common) devicesAdd(inst instance.Instance, instanceRunning bool) (revert.Hook, error) {
 	revert := revert.New()
 	defer revert.Fail()
@@ -1351,14 +1188,6 @@ func (d *common) devicesAdd(inst instance.Instance, instanceRunning bool) (rever
 
 		revert.Add(func() { _ = d.deviceRemove(dev, instanceRunning) })
 	}
-
-	// Update MAAS (must run after the MAC addresses have been generated).
-	err := d.maasUpdate(inst, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	revert.Add(func() { _ = d.maasDelete(inst) })
 
 	cleanup := revert.Clone().Fail
 	revert.Success()

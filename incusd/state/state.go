@@ -17,7 +17,6 @@ import (
 	"github.com/lxc/incus/incusd/firewall"
 	"github.com/lxc/incus/incusd/fsmonitor"
 	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/maas"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/shared"
@@ -32,9 +31,6 @@ type State struct {
 
 	// Databases
 	DB *db.DB
-
-	// MAAS server
-	MAAS *maas.Controller
 
 	// BGP server
 	BGP *bgp.Server
