@@ -1,4 +1,4 @@
-package agent
+package api
 
 // API10Put contains the fields which are needed for the incus-agent to connect to Incus.
 type API10Put struct {
