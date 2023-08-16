@@ -160,7 +160,7 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	// Check whether we should start the devlxd server in the early setup. This way, /dev/lxd/sock
+	// Check whether we should start the DevIncus server in the early setup. This way, /dev/lxd/sock
 	// will be available for any systemd services starting after the lxd-agent.
 	if shared.PathExists("agent.conf") {
 		f, err := os.Open("agent.conf")
@@ -176,8 +176,8 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 
 		_ = f.Close()
 
-		if d.devlxdEnabled {
-			err = startDevlxdServer(d)
+		if d.DevIncusEnabled {
+			err = startDevIncusServer(d)
 			if err != nil {
 				return err
 			}

@@ -81,12 +81,12 @@ func setConnectionInfo(d *Daemon, rd io.Reader) error {
 		return err
 	}
 
-	d.devlxdMu.Lock()
+	d.DevIncusMu.Lock()
 	d.serverCID = data.CID
 	d.serverPort = data.Port
 	d.serverCertificate = data.Certificate
-	d.devlxdEnabled = data.Devlxd
-	d.devlxdMu.Unlock()
+	d.DevIncusEnabled = data.DevIncus
+	d.DevIncusMu.Unlock()
 
 	return nil
 }
@@ -113,10 +113,10 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 	// Let LXD know, we were able to connect successfully.
 	d.chConnected <- struct{}{}
 
-	if d.devlxdEnabled {
-		err = startDevlxdServer(d)
+	if d.DevIncusEnabled {
+		err = startDevIncusServer(d)
 	} else {
-		err = stopDevlxdServer(d)
+		err = stopDevIncusServer(d)
 	}
 
 	if err != nil {
@@ -126,32 +126,32 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 	return response.EmptySyncResponse
 }
 
-func startDevlxdServer(d *Daemon) error {
-	d.devlxdMu.Lock()
-	defer d.devlxdMu.Unlock()
+func startDevIncusServer(d *Daemon) error {
+	d.DevIncusMu.Lock()
+	defer d.DevIncusMu.Unlock()
 
-	// If a devlxd server is already running, don't start a second one.
-	if d.devlxdRunning {
+	// If a DevIncus server is already running, don't start a second one.
+	if d.DevIncusRunning {
 		return nil
 	}
 
-	servers["devlxd"] = devLxdServer(d)
+	servers["DevIncus"] = devLxdServer(d)
 
-	// Prepare the devlxd server.
-	devlxdListener, err := createDevLxdlListener("/dev")
+	// Prepare the DevIncus server.
+	DevIncusListener, err := createDevIncuslListener("/dev")
 	if err != nil {
 		return err
 	}
 
-	d.devlxdRunning = true
+	d.DevIncusRunning = true
 
-	// Start the devlxd listener.
+	// Start the DevIncus listener.
 	go func() {
-		err := servers["devlxd"].Serve(devlxdListener)
+		err := servers["DevIncus"].Serve(DevIncusListener)
 		if err != nil {
-			d.devlxdMu.Lock()
-			d.devlxdRunning = false
-			d.devlxdMu.Unlock()
+			d.DevIncusMu.Lock()
+			d.DevIncusRunning = false
+			d.DevIncusMu.Unlock()
 
 			// http.ErrServerClosed can be ignored as this is returned when the server is closed intentionally.
 			if !errors.Is(err, http.ErrServerClosed) {
@@ -163,12 +163,12 @@ func startDevlxdServer(d *Daemon) error {
 	return nil
 }
 
-func stopDevlxdServer(d *Daemon) error {
-	d.devlxdMu.Lock()
-	d.devlxdRunning = false
-	d.devlxdMu.Unlock()
+func stopDevIncusServer(d *Daemon) error {
+	d.DevIncusMu.Lock()
+	d.DevIncusRunning = false
+	d.DevIncusMu.Unlock()
 
-	return servers["devlxd"].Close()
+	return servers["DevIncus"].Close()
 }
 
 func getClient(CID uint32, port int, serverCertificate string) (*http.Client, error) {
