@@ -1466,7 +1466,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// SMBIOS only on x86_64 and aarch64.
 	if d.architectureSupportsUEFI(d.architecture) {
-		qemuCmd = append(qemuCmd, "-smbios", "type=2,manufacturer=Canonical Ltd.,product=LXD")
+		qemuCmd = append(qemuCmd, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
 	}
 
 	// Attempt to drop privileges (doesn't work when restoring state).
