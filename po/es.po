@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
-"Report-Msgid-Bugs-To: lxc-users@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-08-12 21:30+0200\n"
+"Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
+"POT-Creation-Date: 2023-08-16 00:09-0400\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -3095,7 +3095,7 @@ msgstr ""
 msgid "Invalid new snapshot name, parent volume must be the same as source"
 msgstr ""
 
-#: cmd/incus/main.go:484
+#: cmd/incus/main.go:482
 msgid "Invalid number of arguments"
 msgstr ""
 

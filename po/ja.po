@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
-"Report-Msgid-Bugs-To: lxc-users@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-08-12 21:30+0200\n"
+"Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
+"POT-Creation-Date: 2023-08-16 00:09-0400\n"
 "PO-Revision-Date: 2023-03-10 15:14+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/linux-"
@@ -3159,7 +3159,7 @@ msgstr ""
 "新しいスナップショット名が不正です。親のボリュームはソースと同じでなければな"
 "りません"
 
-#: cmd/incus/main.go:484
+#: cmd/incus/main.go:482
 msgid "Invalid number of arguments"
 msgstr "引数の数が不正です"
 
