@@ -60,7 +60,7 @@ incus-doc:
 .PHONY: deps
 deps:
 	@if [ ! -e "$(RAFT_PATH)" ]; then \
-		git clone --depth=1 "https://github.com/canonical/raft" "$(RAFT_PATH)"; \
+		git clone --depth=1 "https://github.com/cowsql/raft" "$(RAFT_PATH)"; \
 	elif [ -e "$(RAFT_PATH)/.git" ]; then \
 		cd "$(RAFT_PATH)"; git pull; \
 	fi
@@ -213,7 +213,7 @@ dist: doc
 	git clone --depth=1 https://github.com/cowsql/cowsql $(TMP)/incus-$(VERSION)/vendor/cowsql
 	(cd $(TMP)/incus-$(VERSION)/vendor/cowsql ; git show-ref HEAD | cut -d' ' -f1 > .gitref)
 
-	git clone --depth=1 https://github.com/canonical/raft $(TMP)/incus-$(VERSION)/vendor/raft
+	git clone --depth=1 https://github.com/cowsql/raft $(TMP)/incus-$(VERSION)/vendor/raft
 	(cd $(TMP)/incus-$(VERSION)/vendor/raft ; git show-ref HEAD | cut -d' ' -f1 > .gitref)
 
 	# Copy doc output
@@ -246,7 +246,7 @@ update-pot:
 ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; $(GO) install -v -x github.com/snapcore/snapd/i18n/xgettext-go@2.57.1)
 endif
-	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=lxc-users@lists.linuxcontainers.org --keyword=i18n.G --keyword-plural=i18n.NG cmd/incus/*.go internal/cliconfig/*.go
+	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=lxc-devel@lists.linuxcontainers.org --keyword=i18n.G --keyword-plural=i18n.NG cmd/incus/*.go internal/cliconfig/*.go
 
 .PHONY: build-mo
 build-mo: $(MOFILES)
