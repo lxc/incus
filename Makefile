@@ -246,7 +246,7 @@ update-pot:
 ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; $(GO) install -v -x github.com/snapcore/snapd/i18n/xgettext-go@2.57.1)
 endif
-	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=lxc-users@lists.linuxcontainers.org --keyword=i18n.G --keyword-plural=i18n.NG cmd/incus/*.go internal/cliconfig/*.go
+	xgettext-go -o po/$(DOMAIN).pot --add-comments-tag=TRANSLATORS: --sort-output --package-name=$(DOMAIN) --msgid-bugs-address=lxc-devel@lists.linuxcontainers.org --keyword=i18n.G --keyword-plural=i18n.NG cmd/incus/*.go internal/cliconfig/*.go
 
 .PHONY: build-mo
 build-mo: $(MOFILES)
