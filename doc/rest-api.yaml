@@ -6142,21 +6142,21 @@ definitions:
         x-go-package: github.com/lxc/incus/shared/api
 info:
     contact:
-        email: lxd@lists.canonical.com
-        name: LXD upstream
+        email: lxc-devel@lists.linuxcontainers.org
+        name: Incus upstream
         url: https://github.com/lxc/incus
     description: |-
-        This is the REST API used by all LXD clients.
+        This is the REST API used by all Incus clients.
         Internal endpoints aren't included in this documentation.
 
-        The LXD API is available over both a local unix+http and remote https API.
+        The Incus API is available over both a local unix+http and remote https API.
         Authentication for local users relies on group membership and access to the unix socket.
         For remote users, the default authentication method is TLS client
         certificates.
     license:
         name: Apache-2.0
         url: https://www.apache.org/licenses/LICENSE-2.0
-    title: LXD external REST API
+    title: Incus external REST API
     version: "1.0"
 paths:
     /:
