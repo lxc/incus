@@ -11,13 +11,13 @@ import (
 
 // If no socket-based activation is detected, a new local unix socket will be
 // created.
-func TestEndpoints_DevLxdCreateUnixSocket(t *testing.T) {
+func TestEndpoints_DevIncusCreateUnixSocket(t *testing.T) {
 	endpoints, config, cleanup := newEndpoints(t)
 	defer cleanup()
 
 	require.NoError(t, endpoints.Up(config))
 
-	path := endpoints.DevLxdSocketPath()
+	path := endpoints.DevIncusSocketPath()
 	assert.NoError(t, httpGetOverUnixSocket(path))
 
 	// The unix socket file gets removed after shutdown.

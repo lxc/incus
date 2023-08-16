@@ -30,14 +30,14 @@ type Response interface {
 	String() string
 }
 
-// Devlxd response.
-type devLxdResponse struct {
+// DevIncus response.
+type devIncusResponse struct {
 	content     any
 	code        int
 	contentType string
 }
 
-func (r *devLxdResponse) Render(w http.ResponseWriter) error {
+func (r *devIncusResponse) Render(w http.ResponseWriter) error {
 	var err error
 
 	if r.code != http.StatusOK {
@@ -64,7 +64,7 @@ func (r *devLxdResponse) Render(w http.ResponseWriter) error {
 	return nil
 }
 
-func (r *devLxdResponse) String() string {
+func (r *devIncusResponse) String() string {
 	if r.code == http.StatusOK {
 		return "success"
 	}
@@ -72,27 +72,27 @@ func (r *devLxdResponse) String() string {
 	return "failure"
 }
 
-// DevLxdErrorResponse returns an error response. If rawResponse is true, a api.ResponseRaw will be sent instead of a minimal devLxdResponse.
-func DevLxdErrorResponse(err error, rawResponse bool) Response {
+// DevIncusErrorResponse returns an error response. If rawResponse is true, a api.ResponseRaw will be sent instead of a minimal devIncusResponse.
+func DevIncusErrorResponse(err error, rawResponse bool) Response {
 	if rawResponse {
 		return SmartError(err)
 	}
 
 	code, ok := api.StatusErrorMatch(err)
 	if ok {
-		return &devLxdResponse{content: err.Error(), code: code, contentType: "raw"}
+		return &devIncusResponse{content: err.Error(), code: code, contentType: "raw"}
 	}
 
-	return &devLxdResponse{content: err.Error(), code: http.StatusInternalServerError, contentType: "raw"}
+	return &devIncusResponse{content: err.Error(), code: http.StatusInternalServerError, contentType: "raw"}
 }
 
-// DevLxdResponse represents a devLxdResponse. If rawResponse is true, a api.ResponseRaw will be sent instead of a minimal devLxdResponse.
-func DevLxdResponse(code int, content any, contentType string, rawResponse bool) Response {
+// DevIncusResponse represents a devIncusResponse. If rawResponse is true, a api.ResponseRaw will be sent instead of a minimal devIncusResponse.
+func DevIncusResponse(code int, content any, contentType string, rawResponse bool) Response {
 	if rawResponse {
 		return SyncResponse(true, content)
 	}
 
-	return &devLxdResponse{content: content, code: code, contentType: contentType}
+	return &devIncusResponse{content: content, code: code, contentType: contentType}
 }
 
 // Sync response.

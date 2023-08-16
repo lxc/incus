@@ -13,29 +13,29 @@ import (
 	"github.com/lxc/incus/shared/cancel"
 )
 
-// DevLXDServer represents an instance of an devlxd event server.
-type DevLXDServer struct {
+// DevIncusServer represents an instance of an devIncus event server.
+type DevIncusServer struct {
 	serverCommon
 
-	listeners map[string]*DevLXDListener
+	listeners map[string]*DevIncusListener
 }
 
-// NewDevLXDServer returns a new devlxd event server.
-func NewDevLXDServer(debug bool, verbose bool) *DevLXDServer {
-	server := &DevLXDServer{
+// NewDevIncusServer returns a new devIncus event server.
+func NewDevIncusServer(debug bool, verbose bool) *DevIncusServer {
+	server := &DevIncusServer{
 		serverCommon: serverCommon{
 			debug:   debug,
 			verbose: verbose,
 		},
-		listeners: map[string]*DevLXDListener{},
+		listeners: map[string]*DevIncusListener{},
 	}
 
 	return server
 }
 
 // AddListener creates and returns a new event listener.
-func (s *DevLXDServer) AddListener(instanceID int, connection EventListenerConnection, messageTypes []string) (*DevLXDListener, error) {
-	listener := &DevLXDListener{
+func (s *DevIncusServer) AddListener(instanceID int, connection EventListenerConnection, messageTypes []string) (*DevIncusListener, error) {
+	listener := &DevIncusListener{
 		listenerCommon: listenerCommon{
 			EventListenerConnection: connection,
 			messageTypes:            messageTypes,
@@ -60,7 +60,7 @@ func (s *DevLXDServer) AddListener(instanceID int, connection EventListenerConne
 }
 
 // Send broadcasts a custom event.
-func (s *DevLXDServer) Send(instanceID int, eventType string, eventMessage any) error {
+func (s *DevIncusServer) Send(instanceID int, eventType string, eventMessage any) error {
 	encodedMessage, err := json.Marshal(eventMessage)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (s *DevLXDServer) Send(instanceID int, eventType string, eventMessage any) 
 	return s.broadcast(instanceID, event)
 }
 
-func (s *DevLXDServer) broadcast(instanceID int, event api.Event) error {
+func (s *DevIncusServer) broadcast(instanceID int, event api.Event) error {
 	s.lock.Lock()
 	listeners := s.listeners
 	for _, listener := range listeners {
@@ -87,7 +87,7 @@ func (s *DevLXDServer) broadcast(instanceID int, event api.Event) error {
 			continue
 		}
 
-		go func(listener *DevLXDListener, event api.Event) {
+		go func(listener *DevIncusListener, event api.Event) {
 			// Check that the listener still exists
 			if listener == nil {
 				return
@@ -115,8 +115,8 @@ func (s *DevLXDServer) broadcast(instanceID int, event api.Event) error {
 	return nil
 }
 
-// DevLXDListener describes a devlxd event listener.
-type DevLXDListener struct {
+// DevIncusListener describes a devIncus event listener.
+type DevIncusListener struct {
 	listenerCommon
 
 	instanceID int

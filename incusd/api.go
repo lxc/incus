@@ -176,7 +176,7 @@ func hoistReqVM(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Re
 }
 
 func vSockServer(d *Daemon) *http.Server {
-	return &http.Server{Handler: devLxdAPI(d, hoistReqVM)}
+	return &http.Server{Handler: devIncusAPI(d, hoistReqVM)}
 }
 
 func metricsServer(d *Daemon) *http.Server {

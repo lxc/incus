@@ -19,11 +19,11 @@ import (
 
 var testDir string
 
-type DevLxdDialer struct {
+type DevIncusDialer struct {
 	Path string
 }
 
-func (d DevLxdDialer) DevLxdDial(ctx context.Context, network, path string) (net.Conn, error) {
+func (d DevIncusDialer) DevIncusDial(ctx context.Context, network, path string) (net.Conn, error) {
 	addr, err := net.ResolveUnixAddr("unix", d.Path)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (d DevLxdDialer) DevLxdDial(ctx context.Context, network, path string) (net
 func setupDir() error {
 	var err error
 
-	testDir, err = os.MkdirTemp("", "lxd_test_devlxd_")
+	testDir, err = os.MkdirTemp("", "lxd_test_devIncus_")
 	if err != nil {
 		return err
 	}
@@ -55,14 +55,14 @@ func setupDir() error {
 		return err
 	}
 
-	_ = os.MkdirAll(fmt.Sprintf("%s/devlxd", testDir), 0755)
+	_ = os.MkdirAll(fmt.Sprintf("%s/devIncus", testDir), 0755)
 
 	return os.Setenv("INCUS_DIR", testDir)
 }
 
 func setupSocket() (*net.UnixListener, error) {
 	_ = setupDir()
-	path := filepath.Join(testDir, "test-devlxd-sock")
+	path := filepath.Join(testDir, "test-devIncus-sock")
 	addr, err := net.ResolveUnixAddr("unix", path)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func TestCredsSendRecv(t *testing.T) {
 		result <- cred.Pid
 	}()
 
-	conn, err := connect(fmt.Sprintf("%s/test-devlxd-sock", testDir))
+	conn, err := connect(fmt.Sprintf("%s/test-devIncus-sock", testDir))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -153,7 +153,7 @@ func TestHttpRequest(t *testing.T) {
 
 	defer func() { _ = d.Stop(context.Background(), unix.SIGQUIT) }()
 
-	c := http.Client{Transport: &http.Transport{DialContext: DevLxdDialer{Path: fmt.Sprintf("%s/devlxd/sock", testDir)}.DevLxdDial}}
+	c := http.Client{Transport: &http.Transport{DialContext: DevIncusDialer{Path: fmt.Sprintf("%s/devIncus/sock", testDir)}.DevIncusDial}}
 
 	raw, err := c.Get("http://1.0")
 	if err != nil {
