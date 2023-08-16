@@ -111,6 +111,7 @@ type ovmfFirmware struct {
 
 var ovmfGenericFirmwares = []ovmfFirmware{
 	{code: "OVMF_CODE.4MB.fd", vars: "OVMF_VARS.4MB.fd"},
+	{code: "OVMF_CODE_4M.fd", vars: "OVMF_VARS_4M.fd"},
 	{code: "OVMF_CODE.2MB.fd", vars: "OVMF_VARS.2MB.fd"},
 	{code: "OVMF_CODE.fd", vars: "OVMF_VARS.fd"},
 	{code: "OVMF_CODE.fd", vars: "qemu.nvram"},
@@ -118,6 +119,7 @@ var ovmfGenericFirmwares = []ovmfFirmware{
 
 var ovmfSecurebootFirmwares = []ovmfFirmware{
 	{code: "OVMF_CODE.4MB.fd", vars: "OVMF_VARS.4MB.ms.fd"},
+	{code: "OVMF_CODE_4M.ms.fd", vars: "OVMF_VARS_4M.ms.fd"},
 	{code: "OVMF_CODE.2MB.fd", vars: "OVMF_VARS.2MB.ms.fd"},
 	{code: "OVMF_CODE.fd", vars: "OVMF_VARS.ms.fd"},
 	{code: "OVMF_CODE.fd", vars: "qemu.nvram"},
