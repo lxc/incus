@@ -120,11 +120,11 @@ func IsUnixSocket(path string) bool {
 }
 
 // VarPath returns the provided path elements joined by a slash and
-// appended to the end of $INCUS_DIR, which defaults to /var/lib/lxd.
+// appended to the end of $INCUS_DIR, which defaults to /var/lib/incus.
 func VarPath(path ...string) string {
 	varDir := os.Getenv("INCUS_DIR")
 	if varDir == "" {
-		varDir = "/var/lib/lxd"
+		varDir = "/var/lib/incus"
 	}
 
 	items := []string{varDir}
@@ -132,11 +132,11 @@ func VarPath(path ...string) string {
 	return filepath.Join(items...)
 }
 
-// CachePath returns the directory that LXD should its cache under. If INCUS_DIR is
-// set, this path is $INCUS_DIR/cache, otherwise it is /var/cache/lxd.
+// CachePath returns the directory that Incus should its cache under. If INCUS_DIR is
+// set, this path is $INCUS_DIR/cache, otherwise it is /var/cache/incus.
 func CachePath(path ...string) string {
 	varDir := os.Getenv("INCUS_DIR")
-	logDir := "/var/cache/lxd"
+	logDir := "/var/cache/incus"
 	if varDir != "" {
 		logDir = filepath.Join(varDir, "cache")
 	}
@@ -146,11 +146,11 @@ func CachePath(path ...string) string {
 	return filepath.Join(items...)
 }
 
-// LogPath returns the directory that LXD should put logs under. If INCUS_DIR is
-// set, this path is $INCUS_DIR/logs, otherwise it is /var/log/lxd.
+// LogPath returns the directory that Incus should put logs under. If INCUS_DIR is
+// set, this path is $INCUS_DIR/logs, otherwise it is /var/log/incus.
 func LogPath(path ...string) string {
 	varDir := os.Getenv("INCUS_DIR")
-	logDir := "/var/log/lxd"
+	logDir := "/var/log/incus"
 	if varDir != "" {
 		logDir = filepath.Join(varDir, "logs")
 	}
@@ -725,7 +725,7 @@ func TextEditor(inPath string, inContent []byte) ([]byte, error) {
 
 	if inPath == "" {
 		// If provided input, create a new file
-		f, err = os.CreateTemp("", "lxd_editor_")
+		f, err = os.CreateTemp("", "incus_editor_")
 		if err != nil {
 			return []byte{}, err
 		}
