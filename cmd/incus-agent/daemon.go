@@ -22,9 +22,9 @@ type Daemon struct {
 	// The channel which is used to indicate that the lxd-agent was able to connect to LXD.
 	chConnected chan struct{}
 
-	devlxdRunning bool
-	devlxdMu      sync.Mutex
-	devlxdEnabled bool
+	DevIncusRunning bool
+	DevIncusMu      sync.Mutex
+	DevIncusEnabled bool
 }
 
 // newDaemon returns a new Daemon object with the given configuration.

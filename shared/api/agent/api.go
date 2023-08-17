@@ -1,6 +1,6 @@
-package agent
+package api
 
-// API10Put contains the fields which are needed for the lxd-agent to connect to LXD.
+// API10Put contains the fields which are needed for the incus-agent to connect to Incus.
 type API10Put struct {
 	// Context ID
 	// Example: 2
@@ -14,7 +14,7 @@ type API10Put struct {
 	// Example: X509 PEM certificate
 	Certificate string `json:"certificate" yaml:"certificate"`
 
-	// Whether or not to enable devlxd
+	// Whether or not to enable /dev/incus
 	// Example: true
-	Devlxd bool `json:"devlxd" yaml:"devlxd"`
+	DevIncus bool `json:"dev_incus" yaml:"dev_incus"`
 }

@@ -22,22 +22,22 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// Return a new unstarted Endpoints instance, a Config with stub rest/devlxd
+// Return a new unstarted Endpoints instance, a Config with stub rest/devIncus
 // servers, and a cleanup function that can be used to clear all state
 // associated with the endpoints (e.g. the temporary LXD var dir and any
 // goroutine that was spawned by the tomb).
 func newEndpoints(t *testing.T) (*endpoints.Endpoints, *endpoints.Config, func()) {
 	dir, err := os.MkdirTemp("", "lxd-endpoints-test-")
 	require.NoError(t, err)
-	require.NoError(t, os.Mkdir(filepath.Join(dir, "devlxd"), 0755))
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "devIncus"), 0755))
 
 	config := &endpoints.Config{
-		Dir:          dir,
-		UnixSocket:   filepath.Join(dir, "unix.socket"),
-		RestServer:   newServer(),
-		DevLxdServer: newServer(),
-		Cert:         shared.TestingKeyPair(),
-		VsockServer:  newServer(),
+		Dir:            dir,
+		UnixSocket:     filepath.Join(dir, "unix.socket"),
+		RestServer:     newServer(),
+		DevIncusServer: newServer(),
+		Cert:           shared.TestingKeyPair(),
+		VsockServer:    newServer(),
 	}
 
 	endpoints := endpoints.Unstarted()

@@ -316,14 +316,14 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 	if os.Getenv("INCUS_CONF") != "" {
 		configDir = os.Getenv("INCUS_CONF")
 	} else if os.Getenv("HOME") != "" {
-		configDir = path.Join(os.Getenv("HOME"), ".config", "lxc")
+		configDir = path.Join(os.Getenv("HOME"), ".config", "incus")
 	} else {
 		user, err := user.Current()
 		if err != nil {
 			return err
 		}
 
-		configDir = path.Join(user.HomeDir, ".config", "lxc")
+		configDir = path.Join(user.HomeDir, ".config", "incus")
 	}
 
 	c.confPath = os.ExpandEnv(path.Join(configDir, "config.yml"))

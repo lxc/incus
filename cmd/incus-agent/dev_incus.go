@@ -17,11 +17,11 @@ import (
 	"github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/api/guest"
 	"github.com/lxc/incus/shared/logger"
 )
 
-// DevLxdServer creates an http.Server capable of handling requests against the
+// DevIncusServer creates an http.Server capable of handling requests against the
 // /dev/lxd Unix socket endpoint created inside VMs.
 func devLxdServer(d *Daemon) *http.Server {
 	return &http.Server{
@@ -56,7 +56,7 @@ func getVsockClient(d *Daemon) (incus.InstanceServer, error) {
 	return server, nil
 }
 
-var devlxdConfigGet = devLxdHandler{"/1.0/config", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusConfigGet = devLxdHandler{"/1.0/config", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
 	client, err := getVsockClient(d)
 	if err != nil {
 		return smartResponse(fmt.Errorf("Failed connecting to LXD over vsock: %w", err))
@@ -85,7 +85,7 @@ var devlxdConfigGet = devLxdHandler{"/1.0/config", func(d *Daemon, w http.Respon
 	return okResponse(filtered, "json")
 }}
 
-var devlxdConfigKeyGet = devLxdHandler{"/1.0/config/{key}", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusConfigKeyGet = devLxdHandler{"/1.0/config/{key}", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
 	key, err := url.PathUnescape(mux.Vars(r)["key"])
 	if err != nil {
 		return &devLxdResponse{"bad request", http.StatusBadRequest, "raw"}
@@ -117,7 +117,7 @@ var devlxdConfigKeyGet = devLxdHandler{"/1.0/config/{key}", func(d *Daemon, w ht
 	return okResponse(value, "raw")
 }}
 
-var devlxdMetadataGet = devLxdHandler{"/1.0/meta-data", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusMetadataGet = devLxdHandler{"/1.0/meta-data", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
 	var client incus.InstanceServer
 	var err error
 
@@ -160,7 +160,7 @@ var devLxdEventsGet = devLxdHandler{"/1.0/events", func(d *Daemon, w http.Respon
 	return okResponse("", "raw")
 }}
 
-var devlxdAPIGet = devLxdHandler{"/1.0", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusAPIGet = devLxdHandler{"/1.0", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
 	client, err := getVsockClient(d)
 	if err != nil {
 		return smartResponse(fmt.Errorf("Failed connecting to LXD over vsock: %w", err))
@@ -174,7 +174,7 @@ var devlxdAPIGet = devLxdHandler{"/1.0", func(d *Daemon, w http.ResponseWriter, 
 			return smartResponse(err)
 		}
 
-		var instanceData api.DevLXDGet
+		var instanceData api.DevIncusGet
 
 		err = resp.MetadataAsStruct(&instanceData)
 		if err != nil {
@@ -194,7 +194,7 @@ var devlxdAPIGet = devLxdHandler{"/1.0", func(d *Daemon, w http.ResponseWriter, 
 	return &devLxdResponse{fmt.Sprintf("method %q not allowed", r.Method), http.StatusBadRequest, "raw"}
 }}
 
-var devlxdDevicesGet = devLxdHandler{"/1.0/devices", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusDevicesGet = devLxdHandler{"/1.0/devices", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
 	client, err := getVsockClient(d)
 	if err != nil {
 		return smartResponse(fmt.Errorf("Failed connecting to LXD over vsock: %w", err))
@@ -221,12 +221,12 @@ var handlers = []devLxdHandler{
 	{"/", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
 		return okResponse([]string{"/1.0"}, "json")
 	}},
-	devlxdAPIGet,
-	devlxdConfigGet,
-	devlxdConfigKeyGet,
-	devlxdMetadataGet,
+	DevIncusAPIGet,
+	DevIncusConfigGet,
+	DevIncusConfigKeyGet,
+	DevIncusMetadataGet,
 	devLxdEventsGet,
-	devlxdDevicesGet,
+	DevIncusDevicesGet,
 }
 
 func hoistReq(f func(*Daemon, http.ResponseWriter, *http.Request) *devLxdResponse, d *Daemon) func(http.ResponseWriter, *http.Request) {
@@ -261,8 +261,8 @@ func devLxdAPI(d *Daemon) http.Handler {
 	return m
 }
 
-// Create a new net.Listener bound to the unix socket of the devlxd endpoint.
-func createDevLxdlListener(dir string) (net.Listener, error) {
+// Create a new net.Listener bound to the unix socket of the DevIncus endpoint.
+func createDevIncuslListener(dir string) (net.Listener, error) {
 	path := filepath.Join(dir, "incus", "sock")
 
 	err := os.MkdirAll(filepath.Dir(path), 0755)

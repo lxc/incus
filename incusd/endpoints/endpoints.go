@@ -28,7 +28,7 @@ type Config struct {
 	RestServer *http.Server
 
 	// HTTP server for the internal /dev/lxd API exposed to containers.
-	DevLxdServer *http.Server
+	DevIncusServer *http.Server
 
 	// The TLS keypair and optional CA to use for the network endpoint. It
 	// must be always provided, since the pubblic key will be included in
@@ -92,10 +92,10 @@ type Config struct {
 // will be set to the process GID, or to the GID of the system group name
 // specified via config.LocalUnixSocketGroup.
 //
-// devlxd endpoint (unix socket)
+// devIncus endpoint (unix socket)
 // ----------------------------
 //
-// Created using <lxd-var-dir>/devlxd/sock, with file mode set to 666 (actual
+// Created using <lxd-var-dir>/devIncus/sock, with file mode set to 666 (actual
 // authorization will be performed by the HTTP server using the socket ucred
 // struct).
 //
@@ -130,8 +130,8 @@ func Up(config *Config) (*Endpoints, error) {
 		return nil, fmt.Errorf("No REST server configured")
 	}
 
-	if config.DevLxdServer == nil {
-		return nil, fmt.Errorf("No devlxd server configured")
+	if config.DevIncusServer == nil {
+		return nil, fmt.Errorf("No devIncus server configured")
 	}
 
 	if config.Cert == nil {
@@ -174,7 +174,7 @@ func (e *Endpoints) up(config *Config) error {
 	defer e.mu.Unlock()
 
 	e.servers = map[kind]*http.Server{
-		devlxd:         config.DevLxdServer,
+		devIncus:       config.DevIncusServer,
 		local:          config.RestServer,
 		network:        config.RestServer,
 		cluster:        config.RestServer,
@@ -210,8 +210,8 @@ func (e *Endpoints) up(config *Config) error {
 		e.listeners[local] = listeners.NewSTARTTLSListener(e.listeners[local], e.cert)
 	}
 
-	// Start the devlxd listener
-	e.listeners[devlxd], err = createDevLxdlListener(config.Dir)
+	// Start the devIncus listener
+	e.listeners[devIncus], err = createDevIncuslListener(config.Dir)
 	if err != nil {
 		return err
 	}
@@ -363,8 +363,8 @@ func (e *Endpoints) Down() error {
 		}
 	}
 
-	if e.listeners[devlxd] != nil {
-		err := e.closeListener(devlxd)
+	if e.listeners[devIncus] != nil {
+		err := e.closeListener(devIncus)
 		if err != nil {
 			return err
 		}
@@ -482,7 +482,7 @@ func (k kind) String() string {
 // Numeric codes identifying the various endpoints.
 const (
 	local kind = iota
-	devlxd
+	devIncus
 	network
 	pprof
 	cluster
@@ -494,7 +494,7 @@ const (
 // Human-readable descriptions of the various kinds of endpoints.
 var descriptions = map[kind]string{
 	local:          "REST API Unix socket",
-	devlxd:         "devlxd socket",
+	devIncus:       "devIncus socket",
 	network:        "REST API TCP socket",
 	pprof:          "pprof socket",
 	cluster:        "cluster socket",

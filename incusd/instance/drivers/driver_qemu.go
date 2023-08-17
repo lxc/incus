@@ -111,6 +111,7 @@ type ovmfFirmware struct {
 
 var ovmfGenericFirmwares = []ovmfFirmware{
 	{code: "OVMF_CODE.4MB.fd", vars: "OVMF_VARS.4MB.fd"},
+	{code: "OVMF_CODE_4M.fd", vars: "OVMF_VARS_4M.fd"},
 	{code: "OVMF_CODE.2MB.fd", vars: "OVMF_VARS.2MB.fd"},
 	{code: "OVMF_CODE.fd", vars: "OVMF_VARS.fd"},
 	{code: "OVMF_CODE.fd", vars: "qemu.nvram"},
@@ -118,6 +119,7 @@ var ovmfGenericFirmwares = []ovmfFirmware{
 
 var ovmfSecurebootFirmwares = []ovmfFirmware{
 	{code: "OVMF_CODE.4MB.fd", vars: "OVMF_VARS.4MB.ms.fd"},
+	{code: "OVMF_CODE_4M.ms.fd", vars: "OVMF_VARS_4M.ms.fd"},
 	{code: "OVMF_CODE.2MB.fd", vars: "OVMF_VARS.2MB.ms.fd"},
 	{code: "OVMF_CODE.fd", vars: "OVMF_VARS.ms.fd"},
 	{code: "OVMF_CODE.fd", vars: "qemu.nvram"},
@@ -1858,7 +1860,7 @@ func (d *qemu) getAgentConnectionInfo() (*agentAPI.API10Put, error) {
 
 	req := agentAPI.API10Put{
 		Certificate: string(d.state.Endpoints.NetworkCert().PublicKey()),
-		Devlxd:      shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]),
+		DevIncus:    shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]),
 		CID:         vsock.Host, // Always tell lxd-agent to connect to LXD using Host Context ID to support nesting.
 		Port:        vsockaddr.Port,
 	}
@@ -2648,7 +2650,7 @@ echo "To start it now, unmount this filesystem and run: systemctl start lxd-agen
 		return err
 	}
 
-	// Writing the connection info the config drive allows the lxd-agent to start devlxd very
+	// Writing the connection info the config drive allows the lxd-agent to start devIncus very
 	// early. This is important for systemd services which want or require /dev/lxd/sock.
 	connInfo, err := d.getAgentConnectionInfo()
 	if err != nil {
@@ -5273,7 +5275,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	revert.Success()
 
 	if isRunning {
-		// Send devlxd notifications only for user.* key changes
+		// Send devIncus notifications only for user.* key changes
 		for _, key := range changedConfig {
 			if !strings.HasPrefix(key, "user.") {
 				continue
@@ -5285,7 +5287,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				"value":     d.expandedConfig[key],
 			}
 
-			err = d.devlxdEventSend("config", msg)
+			err = d.devIncusEventSend("config", msg)
 			if err != nil {
 				return err
 			}
@@ -7809,7 +7811,7 @@ func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
 	return topology, nil
 }
 
-func (d *qemu) devlxdEventSend(eventType string, eventMessage map[string]any) error {
+func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) error {
 	event := shared.Jmap{}
 	event["type"] = eventType
 	event["timestamp"] = time.Now()

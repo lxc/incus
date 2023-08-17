@@ -469,9 +469,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   mount fstype=sysfs -> /usr/lib/*/lxc/**,
 
   # Allow nested LXD
-  mount none -> /var/lib/lxd/shmounts/,
-  mount /var/lib/lxd/shmounts/ -> /var/lib/lxd/shmounts/,
-  mount options=bind /var/lib/lxd/shmounts/** -> /var/lib/lxd/**,
+  mount none -> /var/lib/incus/shmounts/,
+  mount /var/lib/incus/shmounts/ -> /var/lib/incus/shmounts/,
+  mount options=bind /var/lib/incus/shmounts/** -> /var/lib/incus/**,
 
   # FIXME: There doesn't seem to be a way to ask for:
   # mount options=(ro,nosuid,nodev,noexec,remount,bind),

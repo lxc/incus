@@ -42,9 +42,9 @@ type InotifyInfo struct {
 // level functionality that LXD uses.
 type OS struct {
 	// Directories
-	CacheDir string // Cache directory (e.g. /var/cache/lxd/).
-	LogDir   string // Log directory (e.g. /var/log/lxd).
-	VarDir   string // Data directory (e.g. /var/lib/lxd/).
+	CacheDir string // Cache directory (e.g. /var/cache/incus/).
+	LogDir   string // Log directory (e.g. /var/log/incus/).
+	VarDir   string // Data directory (e.g. /var/lib/incus/).
 
 	// Daemon environment
 	Architectures   []int           // Cache of detected system architectures

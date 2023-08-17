@@ -124,7 +124,7 @@ type Cluster struct {
 // - name: Basename of the database file holding the data. Typically "db.bin".
 // - dialer: Function used to connect to the dqlite backend via gRPC SQL.
 // - address: Network address of this node (or empty string).
-// - dir: Base LXD database directory (e.g. /var/lib/lxd/database)
+// - dir: Base LXD database directory (e.g. /var/lib/incus/database)
 // - timeout: Give up trying to open the database after this amount of time.
 // - dump: If not nil, a copy of 2.0 db data, for migrating to 3.0.
 //

@@ -16,11 +16,11 @@ func (e *Endpoints) Up(config *Config) error {
 	return e.up(config)
 }
 
-// Return the path to the devlxd socket file.
-func (e *Endpoints) DevLxdSocketPath() string {
+// Return the path to the devIncus socket file.
+func (e *Endpoints) DevIncusSocketPath() string {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-	listener := e.listeners[devlxd]
+	listener := e.listeners[devIncus]
 	return listener.Addr().String()
 }
 

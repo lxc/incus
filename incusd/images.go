@@ -3716,7 +3716,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 	secret := r.FormValue("secret")
 
 	var imgInfo *api.Image
-	if r.RemoteAddr == "@devlxd" {
+	if r.RemoteAddr == "@devIncus" {
 		// /dev/lxd API requires exact match
 		_, imgInfo, err = s.DB.Cluster.GetImage(fingerprint, dbCluster.ImageFilter{Project: &projectName})
 		if err != nil {

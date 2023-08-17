@@ -946,9 +946,9 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		return nil, err
 	}
 
-	// Setup devlxd
+	// Setup devIncus
 	if shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]) {
-		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/incus none bind,create=dir 0 0", shared.VarPath("devlxd")))
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/incus none bind,create=dir 0 0", shared.VarPath("devIncus")))
 		if err != nil {
 			return nil, err
 		}
@@ -1355,13 +1355,13 @@ func (d *lxc) IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
 	return mode
 }
 
-func (d *lxc) devlxdEventSend(eventType string, eventMessage map[string]any) error {
+func (d *lxc) devIncusEventSend(eventType string, eventMessage map[string]any) error {
 	event := shared.Jmap{}
 	event["type"] = eventType
 	event["timestamp"] = time.Now()
 	event["metadata"] = eventMessage
 
-	return d.state.DevlxdEvents.Send(d.ID(), eventType, eventMessage)
+	return d.state.DevIncusEvents.Send(d.ID(), eventType, eventMessage)
 }
 
 // RegisterDevices calls the Register() function on all of the instance's devices.
@@ -4259,7 +4259,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				}
 			} else if key == "security.guestapi" {
 				if shared.IsTrueOrEmpty(value) {
-					err = d.insertMount(shared.VarPath("devlxd"), "/dev/incus", "none", unix.MS_BIND, idmap.IdmapStorageNone)
+					err = d.insertMount(shared.VarPath("devIncus"), "/dev/incus", "none", unix.MS_BIND, idmap.IdmapStorageNone)
 					if err != nil {
 						return err
 					}
@@ -4615,7 +4615,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 		return fmt.Errorf("Failed to write backup file: %w", err)
 	}
 
-	// Send devlxd notifications
+	// Send devIncus notifications
 	if isRunning {
 		// Config changes (only for user.* keys
 		for _, key := range changedConfig {
@@ -4629,7 +4629,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				"value":     d.expandedConfig[key],
 			}
 
-			err = d.devlxdEventSend("config", msg)
+			err = d.devIncusEventSend("config", msg)
 			if err != nil {
 				return err
 			}
@@ -4643,7 +4643,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				"config": m,
 			}
 
-			err = d.devlxdEventSend("device", msg)
+			err = d.devIncusEventSend("device", msg)
 			if err != nil {
 				return err
 			}
@@ -4656,7 +4656,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				"config": m,
 			}
 
-			err = d.devlxdEventSend("device", msg)
+			err = d.devIncusEventSend("device", msg)
 			if err != nil {
 				return err
 			}
@@ -4669,7 +4669,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				"config": m,
 			}
 
-			err = d.devlxdEventSend("device", msg)
+			err = d.devIncusEventSend("device", msg)
 			if err != nil {
 				return err
 			}

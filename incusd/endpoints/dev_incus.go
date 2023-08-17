@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 )
 
-// Create a new net.Listener bound to the unix socket of the devlxd endpoint.
-func createDevLxdlListener(dir string) (net.Listener, error) {
-	path := filepath.Join(dir, "devlxd", "sock")
+// Create a new net.Listener bound to the unix socket of the devIncus endpoint.
+func createDevIncuslListener(dir string) (net.Listener, error) {
+	path := filepath.Join(dir, "devIncus", "sock")
 
 	// If this socket exists, that means a previous LXD instance died and
 	// didn't clean up. We assume that such LXD instance is actually dead
