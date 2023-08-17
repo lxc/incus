@@ -220,10 +220,6 @@ For help with any of those, simply call them with --help.`))
 	remoteCmd := cmdRemote{global: &globalCmd}
 	app.AddCommand(remoteCmd.Command())
 
-	// restore sub-command
-	restoreCmd := cmdRestore{global: &globalCmd}
-	app.AddCommand(restoreCmd.Command())
-
 	// snapshot sub-command
 	snapshotCmd := cmdSnapshot{global: &globalCmd}
 	app.AddCommand(snapshotCmd.Command())
