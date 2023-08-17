@@ -16,7 +16,7 @@ pytz
 requests
 six
 snowballstemmer
-Sphinx
+Sphinx<7.2.0
 sphinx-autobuild
 sphinxcontrib-applehelp
 sphinxcontrib-devhelp
