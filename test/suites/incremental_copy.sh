@@ -64,9 +64,9 @@ do_copy() {
 
   # This will create snapshot c1/snap0
   incus storage volume set "${source_pool}" container/c1 user.foo=snap0
-  incus snapshot c1
+  incus snapshot create c1
   incus storage volume set "${source_pool}" container/c1 user.foo=snap1
-  incus snapshot c1
+  incus snapshot create c1
   incus storage volume set "${source_pool}" container/c1 user.foo=main
 
   # Remove the testfile from c1 and refresh again
@@ -88,7 +88,7 @@ do_copy() {
   incus storage volume get "${target_pool}" container/c2/snap1 user.foo | grep -Fx "snap1"
 
   # This will create snapshot c2/snap2
-  incus snapshot c2
+  incus snapshot create c2
   incus config show c2/snap2
   incus storage volume show "${target_pool}" container/c2/snap2
 

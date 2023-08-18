@@ -24,19 +24,19 @@ snapshots() {
 
   incus init testimage foo
 
-  incus snapshot foo
+  incus snapshot create foo
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ -d "${INCUS_DIR}/snapshots/foo/snap0" ]
   fi
 
-  incus snapshot foo
+  incus snapshot create foo
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ -d "${INCUS_DIR}/snapshots/foo/snap1" ]
   fi
 
-  incus snapshot foo tester
+  incus snapshot create foo tester
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ -d "${INCUS_DIR}/snapshots/foo/tester" ]
@@ -48,16 +48,16 @@ snapshots() {
     [ -d "${INCUS_DIR}/containers/foosnap1/rootfs" ]
   fi
 
-  incus delete foo/snap0
+  incus snapshot delete foo/snap0
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ ! -d "${INCUS_DIR}/snapshots/foo/snap0" ]
   fi
 
   # test deleting multiple snapshots
-  incus snapshot foo snap2
-  incus snapshot foo snap3
-  incus delete foo/snap2 foo/snap3
+  incus snapshot create foo snap2
+  incus snapshot create foo snap3
+  incus snapshot delete foo/snap2 foo/snap3
   ! incus info foo | grep -q snap2 || false
   ! incus info foo | grep -q snap3 || false
 
@@ -68,14 +68,14 @@ snapshots() {
     [ ! -d "${INCUS_DIR}/snapshots/foo/tester" ]
   fi
 
-  incus move foo/tester2 foo/tester-two
-  incus delete foo/tester-two
+  incus snapshot rename foo tester2 tester-two
+  incus snapshot delete foo/tester-two
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ ! -d "${INCUS_DIR}/snapshots/foo/tester-two" ]
   fi
 
-  incus snapshot foo namechange
+  incus snapshot create foo namechange
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ -d "${INCUS_DIR}/snapshots/foo/namechange" ]
@@ -145,7 +145,7 @@ snap_restore() {
     incus storage set "${pool}" volume.block.filesystem=xfs
   fi
 
-  incus snapshot bar snap0
+  incus snapshot create bar snap0
 
   ## prepare snap1
   incus start bar
@@ -168,7 +168,7 @@ snap_restore() {
 
   incus config set bar limits.cpu 1
 
-  incus snapshot bar snap1
+  incus snapshot create bar snap1
   incus storage volume set "${pool}" container/bar user.foo=postsnaps
 
   # Check volume.block.filesystem on storage volume in parent and snapshot match.
@@ -230,7 +230,7 @@ snap_restore() {
     initialUUID=$(incus config get bar volatile.uuid)
     initialGenerationID=$(incus config get bar volatile.uuid.generation)
     incus start bar
-    incus snapshot bar snap2 --stateful
+    incus snapshot create bar snap2 --stateful
     restore_and_compare_fs snap2
 
     newUUID=$(incus config get bar volatile.uuid)
@@ -293,10 +293,10 @@ snap_restore() {
 
   # Test if container's with hyphen's in their names are treated correctly.
   incus launch testimage a-b
-  incus snapshot a-b base
-  incus restore a-b base
-  incus snapshot a-b c-d
-  incus restore a-b c-d
+  incus snapshot create a-b base
+  incus snapshot restore a-b base
+  incus snapshot create a-b c-d
+  incus snapshot restore a-b c-d
   incus delete -f a-b
 }
 
@@ -304,7 +304,7 @@ restore_and_compare_fs() {
   snap=${1}
   echo "==> Restoring ${snap}"
 
-  incus restore bar "${snap}"
+  incus snapshot restore bar "${snap}"
 
   # FIXME: make this backend agnostic
   if [ "$(storage_backend "$INCUS_DIR")" = "dir" ]; then
@@ -322,17 +322,17 @@ test_snap_expiry() {
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   incus launch testimage c1
-  incus snapshot c1
+  incus snapshot create c1
   incus config show c1/snap0 | grep -q 'expires_at: 0001-01-01T00:00:00Z'
 
   incus config set c1 snapshots.expiry '1d'
-  incus snapshot c1
+  incus snapshot create c1
   ! incus config show c1/snap1 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
   incus copy c1 c2
   ! incus config show c2/snap1 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
-  incus snapshot c1 --no-expiry
+  incus snapshot create c1 --no-expiry
   incus config show c1/snap2 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
   incus rm -f c1
@@ -377,8 +377,8 @@ test_snap_volume_db_recovery() {
   poolName=$(incus profile device get default root pool)
 
   incus init testimage c1
-  incus snapshot c1
-  incus snapshot c1
+  incus snapshot create c1
+  incus snapshot create c1
   incus start c1
   incus stop -f c1
   incusd sql global 'DELETE FROM storage_volumes_snapshots' # Remove volume snapshot DB records.

@@ -156,7 +156,7 @@ do_storage_driver_zfs() {
   incus rename c2 c3
 
   # Create snapshot
-  incus snapshot c3 snap0
+  incus snapshot create c3 snap0
   [ "$(zfs get -H -o value type incustest-"$(basename "${INCUS_DIR}")/containers/c3@snapshot-snap0")" = "snapshot" ]
 
   # This should create c11 as a dataset, and c21 as a zvol
@@ -198,7 +198,7 @@ do_storage_driver_zfs() {
   [ "$(zfs get -H -o value type incustest-"$(basename "${INCUS_DIR}")/containers/c4")" = "volume" ]
   incus exec c4 -- touch /root/foo
   incus stop -f c4
-  incus snapshot c4 snap0
+  incus snapshot create c4 snap0
   incus export c4 "${INCUS_DIR}/c4.tar.gz"
   incus rm -f c4
 
@@ -209,10 +209,10 @@ do_storage_driver_zfs() {
   incus exec c4 -- test -f /root/foo
 
   # Snapshot and restore
-  incus snapshot c4 snap1
+  incus snapshot create c4 snap1
   incus exec c4 -- touch /root/bar
   incus stop -f c4
-  incus restore c4 snap1
+  incus snapshot restore c4 snap1
   incus start c4
   incus exec c4 -- test -f /root/foo
   ! incus exec c4 -- test -f /root/bar || false

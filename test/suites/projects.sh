@@ -202,26 +202,26 @@ test_projects_snapshots() {
   incus init testimage c1
 
   # Create, rename, restore and delete a snapshot
-  incus snapshot c1
+  incus snapshot create c1
   incus info c1 | grep -q snap0
   incus config show c1/snap0 | grep -q BusyBox
-  incus rename c1/snap0 c1/foo
-  incus restore c1 foo
-  incus delete c1/foo
+  incus snapshot rename c1 snap0 foo
+  incus snapshot restore c1 foo
+  incus snapshot delete c1/foo
 
   # Test copies
-  incus snapshot c1
-  incus snapshot c1
+  incus snapshot create c1
+  incus snapshot create c1
   incus copy c1 c2
   incus delete c2
 
   # Create a snapshot in this project and another one in the default project
-  incus snapshot c1
+  incus snapshot create c1
 
   incus project switch default
   ensure_import_testimage
   incus init testimage c1
-  incus snapshot c1
+  incus snapshot create c1
   incus delete c1
 
   # Switch back to the project
@@ -578,8 +578,8 @@ test_projects_limits() {
   incus project set p1 limits.memory 3GiB
 
   # Validate that snapshots don't fail with limits.
-  incus snapshot c2
-  incus restore c2 snap0
+  incus snapshot create c2
+  incus snapshot restore c2 snap0
 
   incus delete c2
 

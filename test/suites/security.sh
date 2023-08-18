@@ -149,14 +149,14 @@ test_security_protection() {
 
   # Test deletion protecton
   incus init testimage c1
-  incus snapshot c1
+  incus snapshot create c1
   incus delete c1
 
   incus profile set default security.protection.delete true
 
   incus init testimage c1
-  incus snapshot c1
-  incus delete c1/snap0
+  incus snapshot create c1
+  incus snapshot delete c1/snap0
   ! incus delete c1 || false
 
   incus config set c1 security.protection.delete false
@@ -184,7 +184,7 @@ test_security_protection() {
   incus publish c1 --alias=protected
   incus image delete protected
 
-  incus snapshot c1
+  incus snapshot create c1
   incus publish c1/snap0 --alias=protected
   incus image delete protected
 

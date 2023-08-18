@@ -30,7 +30,7 @@ test_storage_driver_btrfs() {
     incus launch testimage c1pool1 -s "incustest-$(basename "${INCUS_DIR}")-pool1"
 
     # Snapshot without any subvolumes (to test missing subvolume parent origin is handled).
-    incus snapshot c1pool1 snap0
+    incus snapshot create c1pool1 snap0
 
     # Create some subvolumes and populate with test files. Mark the intermedia subvolume as read only.
     OWNER="$(stat -c %u:%g "${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")-pool1/containers/c1pool1/rootfs")"
@@ -46,7 +46,7 @@ test_storage_driver_btrfs() {
     btrfs property set "${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")-pool1/containers/c1pool1/rootfs/a/b" ro true
 
     # Snapshot again now subvolumes exist.
-    incus snapshot c1pool1 snap1
+    incus snapshot create c1pool1 snap1
 
     # Add some more files to subvolumes
     btrfs property set "${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")-pool1/containers/c1pool1/rootfs/a/b" ro false
@@ -54,7 +54,7 @@ test_storage_driver_btrfs() {
     incus exec c1pool1 -- touch /a/b/b2.txt
     incus exec c1pool1 -- touch /a/b/c/c2.txt
     btrfs property set "${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")-pool1/containers/c1pool1/rootfs/a/b" ro true
-    incus snapshot c1pool1 snap2
+    incus snapshot create c1pool1 snap2
 
     # Copy container to other BTRFS storage pool (will use migration subsystem).
     incus copy c1pool1 c1pool2 -s "incustest-$(basename "${INCUS_DIR}")-pool2"
@@ -69,7 +69,7 @@ test_storage_driver_btrfs() {
     incus exec c1pool2 -- touch /a/b/c/w.txt
 
     # Restore copied snapshot and check it is correct.
-    incus restore c1pool2 snap1
+    incus snapshot restore c1pool2 snap1
     incus exec c1pool2 -- stat /a/a1.txt
     incus exec c1pool2 -- stat /a/b/b1.txt
     incus exec c1pool2 -- stat /a/b/c/c1.txt
@@ -104,7 +104,7 @@ test_storage_driver_btrfs() {
     btrfs subvol delete "${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")-pool1/containers/c1pool1/rootfs/a/b/c"
     btrfs subvol delete "${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")-pool1/containers/c1pool1/rootfs/a/b"
     btrfs subvol delete "${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")-pool1/containers/c1pool1/rootfs/a"
-    incus restore c1pool1 snap1
+    incus snapshot restore c1pool1 snap1
     incus exec c1pool1 -- stat /a/a1.txt
     incus exec c1pool1 -- stat /a/b/b1.txt
     incus exec c1pool1 -- stat /a/b/c/c1.txt
