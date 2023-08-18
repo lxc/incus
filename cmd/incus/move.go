@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	config "github.com/lxc/incus/internal/cliconfig"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	cli "github.com/lxc/incus/shared/cmd"
 	"github.com/lxc/incus/shared/i18n"
@@ -30,7 +29,7 @@ type cmdMove struct {
 
 func (c *cmdMove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("move", i18n.G("[<remote>:]<instance>[/<snapshot>] [<remote>:][<instance>[/<snapshot>]]"))
+	cmd.Use = usage("move", i18n.G("[<remote>:]<instance> [<remote>:][<instance>]"))
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Move instances within or in between servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -119,27 +118,6 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 		source, err := conf.GetInstanceServer(sourceRemote)
 		if err != nil {
 			return err
-		}
-
-		if shared.IsSnapshot(sourceName) {
-			// Snapshot rename
-			srcParent, srcSnap, _ := api.GetParentAndSnapshotName(sourceName)
-			dstParent, dstSnap, dstIsSnap := api.GetParentAndSnapshotName(destName)
-
-			if srcParent != dstParent {
-				return fmt.Errorf(i18n.G("Invalid new snapshot name, parent must be the same as source"))
-			}
-
-			if !dstIsSnap {
-				return fmt.Errorf(i18n.G("Invalid new snapshot name"))
-			}
-
-			op, err := source.RenameInstanceSnapshot(srcParent, srcSnap, api.InstanceSnapshotPost{Name: dstSnap})
-			if err != nil {
-				return err
-			}
-
-			return op.Wait()
 		}
 
 		// Instance rename
