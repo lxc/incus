@@ -25,11 +25,11 @@ type cmdDelete struct {
 
 func (c *cmdDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("delete", i18n.G("[<remote>:]<instance>[/<snapshot>] [[<remote>:]<instance>[/<snapshot>]...]"))
+	cmd.Use = usage("delete", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
 	cmd.Aliases = []string{"rm"}
-	cmd.Short = i18n.G("Delete instances and snapshots")
+	cmd.Short = i18n.G("Delete instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete instances and snapshots`))
+		`Delete instances`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force the removal of running instances"))
@@ -52,18 +52,8 @@ func (c *cmdDelete) promptDelete(name string) error {
 }
 
 func (c *cmdDelete) doDelete(d incus.InstanceServer, name string) error {
-	var op incus.Operation
-	var err error
-
-	if shared.IsSnapshot(name) {
-		// Snapshot delete
-		fields := strings.SplitN(name, shared.SnapshotDelimiter, 2)
-		op, err = d.DeleteInstanceSnapshot(fields[0], fields[1])
-	} else {
-		// Instance delete
-		op, err = d.DeleteInstance(name)
-	}
-
+	// Instance delete
+	op, err := d.DeleteInstance(name)
 	if err != nil {
 		return err
 	}
@@ -97,15 +87,6 @@ func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return err
 			}
-		}
-
-		if shared.IsSnapshot(resource.name) {
-			err := c.doDelete(resource.server, resource.name)
-			if err != nil {
-				return err
-			}
-
-			continue
 		}
 
 		ct, _, err := resource.server.GetInstance(resource.name)
