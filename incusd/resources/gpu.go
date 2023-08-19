@@ -410,7 +410,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 	return nil
 }
 
-// GetGPU returns a filled api.ResourcesGPU struct ready for use by LXD.
+// GetGPU returns a filled api.ResourcesGPU struct ready for use by Incus.
 func GetGPU() (*api.ResourcesGPU, error) {
 	gpu := api.ResourcesGPU{}
 	gpu.Cards = []api.ResourcesGPUCard{}

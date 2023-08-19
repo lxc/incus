@@ -6,7 +6,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// GetResources returns a filled api.Resources struct ready for use by LXD.
+// GetResources returns a filled api.Resources struct ready for use by Incus.
 func GetResources() (*api.Resources, error) {
 	// Get CPU information
 	cpu, err := GetCPU()
