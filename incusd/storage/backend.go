@@ -3296,7 +3296,7 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 			}
 		} else {
 			// We have an unrecorded on-disk volume, assume it's a partial unpack and delete it.
-			// This can occur if LXD process exits unexpectedly during an image unpack or if the
+			// This can occur if Incus process exits unexpectedly during an image unpack or if the
 			// storage pool has been recovered (which would not recreate the image volume DB records).
 			l.Warn("Deleting leftover/partially unpacked image volume")
 			err = b.driver.DeleteVolume(imgVol, op)
@@ -3700,7 +3700,7 @@ func (b *backend) DeleteBucket(projectName string, bucketName string, op *operat
 }
 
 // ImportBucket takes an existing bucket on the storage backend and ensures that the DB records
-// are restored as needed to make it operational with LXD.
+// are restored as needed to make it operational with Incus.
 // Used during the recovery import stage.
 func (b *backend) ImportBucket(projectName string, poolVol *backupConfig.Config, op *operations.Operation) (revert.Hook, error) {
 	if poolVol.Bucket == nil {
@@ -5285,7 +5285,7 @@ func (b *backend) UnmountCustomVolume(projectName, volName string, op *operation
 }
 
 // ImportCustomVolume takes an existing custom volume on the storage backend and ensures that the DB records,
-// volume directories and symlinks are restored as needed to make it operational with LXD.
+// volume directories and symlinks are restored as needed to make it operational with Incus.
 // Used during the recovery import stage.
 func (b *backend) ImportCustomVolume(projectName string, poolVol *backupConfig.Config, op *operations.Operation) (revert.Hook, error) {
 	if poolVol.Volume == nil {
@@ -5947,7 +5947,7 @@ func (b *backend) CheckInstanceBackupFileSnapshots(backupConf *backupConfig.Conf
 // ListUnknownVolumes returns volumes that exist on the storage pool but don't have records in the database.
 // Returns the unknown volumes parsed/generated backup config in a slice (keyed on project name).
 func (b *backend) ListUnknownVolumes(op *operations.Operation) (map[string][]*backupConfig.Config, error) {
-	// Get a list of volumes on the storage pool. We only expect to get 1 volume per logical LXD volume.
+	// Get a list of volumes on the storage pool. We only expect to get 1 volume per logical Incus volume.
 	// So for VMs we only expect to get the block volume for a VM and not its filesystem one too. This way we
 	// can operate on the volume using the existing storage pool functions and let the pool then handle the
 	// associated filesystem volume as needed.
@@ -6286,7 +6286,7 @@ func (b *backend) detectUnknownBuckets(vol *drivers.Volume, projectVols map[stri
 }
 
 // ImportInstance takes an existing instance volume on the storage backend and ensures that the volume directories
-// and symlinks are restored as needed to make it operational with LXD. Used during the recovery import stage.
+// and symlinks are restored as needed to make it operational with Incus. Used during the recovery import stage.
 // If the instance exists on the local cluster member then the local mount status is restored as needed.
 // If the optional poolVol argument is provided then it is used to create the storage volume database records.
 func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.Config, op *operations.Operation) (revert.Hook, error) {
@@ -6397,7 +6397,7 @@ func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.C
 		l.Debug("Restoring local instance mount status")
 
 		if inst.IsRunning() {
-			// If the instance is running then this implies the volume is mounted, but if the LXD
+			// If the instance is running then this implies the volume is mounted, but if the Incus
 			// daemon has been restarted since the DB records were removed then there will be no mount
 			// reference counter showing the volume is in use. If this is the case then call mount the
 			// volume to increment the reference counter.

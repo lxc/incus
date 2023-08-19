@@ -29,13 +29,13 @@ type MountInfo struct {
 	DiskPath string // The location of the block disk (if supported).
 }
 
-// Type represents a LXD storage pool type.
+// Type represents an Incus storage pool type.
 type Type interface {
 	ValidateName(name string) error
 	Validate(config map[string]string) error
 }
 
-// Pool represents a LXD storage pool.
+// Pool represents an Incus storage pool.
 type Pool interface {
 	Type
 

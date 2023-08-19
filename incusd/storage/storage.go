@@ -35,8 +35,8 @@ func InstancePath(instanceType instancetype.Type, projectName, instanceName stri
 }
 
 // InstanceImportingFilePath returns the file path used to indicate an instance import is in progress.
-// This marker file is created when using `lxd import` to import an instance that exists on the storage device
-// but does not exist in the LXD database. The presence of this file causes the instance not to be removed from
+// This marker file is created when using `incusd import` to import an instance that exists on the storage device
+// but does not exist in the Incus database. The presence of this file causes the instance not to be removed from
 // the storage device if the import should fail for some reason.
 func InstanceImportingFilePath(instanceType instancetype.Type, poolName, projectName, instanceName string) string {
 	fullName := project.Instance(projectName, instanceName)
