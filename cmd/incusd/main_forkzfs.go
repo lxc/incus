@@ -22,9 +22,9 @@ func (c *cmdForkZFS) Command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
 	cmd.Use = "forkzfs [<arguments>...]"
-	cmd.Short = "Run ZFS inside a cleaned up mount namepsace"
+	cmd.Short = "Run ZFS inside a cleaned up mount namespace"
 	cmd.Long = `Description:
-  Run ZFS inside a cleaned up mount namepsace
+  Run ZFS inside a cleaned up mount namespace
 
   This internal command is used to run ZFS in some specific cases.
 `
