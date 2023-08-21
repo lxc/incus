@@ -16,13 +16,13 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
-var lxdEarlyPatches = map[string]func(b *lxdBackend) error{
+var earlyPatches = map[string]func(b *backend) error{
 	"storage_missing_snapshot_records":         patchMissingSnapshotRecords,
 	"storage_delete_old_snapshot_records":      patchDeleteOldSnapshotRecords,
 	"storage_prefix_bucket_names_with_project": patchBucketNames,
 }
 
-var lxdLatePatches = map[string]func(b *lxdBackend) error{}
+var latePatches = map[string]func(b *backend) error{}
 
 // Patches start here.
 
@@ -30,7 +30,7 @@ var lxdLatePatches = map[string]func(b *lxdBackend) error{}
 // This is needed because it seems that in 2019 some instance snapshots did not have their associated volume DB
 // records created. This later caused problems when we started validating that the instance snapshot DB record
 // count matched the volume snapshot DB record count.
-func patchMissingSnapshotRecords(b *lxdBackend) error {
+func patchMissingSnapshotRecords(b *backend) error {
 	var err error
 	var localNode string
 
@@ -131,7 +131,7 @@ func patchMissingSnapshotRecords(b *lxdBackend) error {
 
 // patchDeleteOldSnapshotRecords deletes the remaining snapshot records in storage_volumes
 // (a previous patch would have already moved them into storage_volume_snapshots).
-func patchDeleteOldSnapshotRecords(b *lxdBackend) error {
+func patchDeleteOldSnapshotRecords(b *backend) error {
 	err := b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		nodeID := tx.GetNodeID()
 		_, err := tx.Tx().Exec(`
@@ -161,7 +161,7 @@ DELETE FROM storage_volumes WHERE id IN (
 
 // patchBucketNames modifies the naming convention of bucket volumes by adding
 // the corresponding project name as a prefix.
-func patchBucketNames(b *lxdBackend) error {
+func patchBucketNames(b *backend) error {
 	// Apply patch only for btrfs, dir, lvm, and zfs drivers.
 	if !shared.StringInSlice(b.driver.Info().Name, []string{"btrfs", "dir", "lvm", "zfs"}) {
 		return nil

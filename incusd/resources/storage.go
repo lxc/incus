@@ -114,7 +114,7 @@ func storageAddDriveInfo(devicePath string, disk *api.ResourcesStorageDisk) erro
 	return nil
 }
 
-// GetStorage returns a filled api.ResourcesStorage struct ready for use by LXD.
+// GetStorage returns a filled api.ResourcesStorage struct ready for use by Incus.
 func GetStorage() (*api.ResourcesStorage, error) {
 	storage := api.ResourcesStorage{}
 	storage.Disks = []api.ResourcesStorageDisk{}

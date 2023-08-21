@@ -13,7 +13,7 @@ import (
 var sysClassDMIID = "/sys/class/dmi/id"
 var systemType string
 
-// GetSystem returns a filled api.ResourcesSystem struct ready for use by LXD.
+// GetSystem returns a filled api.ResourcesSystem struct ready for use by Incus.
 func GetSystem() (*api.ResourcesSystem, error) {
 	var err error
 	system := api.ResourcesSystem{}

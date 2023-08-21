@@ -22,9 +22,9 @@ func Test_certificateNeedsUpdate(t *testing.T) {
 		{
 			"Certificate is valid for more than 30 days",
 			args{
-				domain: "lxd.example.net",
+				domain: "foo.example.net",
 				cert: &x509.Certificate{
-					DNSNames: []string{"lxd.example.net"},
+					DNSNames: []string{"foo.example.net"},
 					NotAfter: time.Now().Add(90 * 24 * time.Hour),
 				},
 			},
@@ -33,9 +33,9 @@ func Test_certificateNeedsUpdate(t *testing.T) {
 		{
 			"Certificate is valid for less than 30 days",
 			args{
-				domain: "lxd.example.net",
+				domain: "foo.example.net",
 				cert: &x509.Certificate{
-					DNSNames: []string{"lxd.example.net"},
+					DNSNames: []string{"foo.example.net"},
 					NotAfter: time.Now().Add(15 * 24 * time.Hour),
 				},
 			},
@@ -44,9 +44,9 @@ func Test_certificateNeedsUpdate(t *testing.T) {
 		{
 			"Domain differs from certificate and is valid for more than 30 days",
 			args{
-				domain: "lxd.example.org",
+				domain: "foo.example.org",
 				cert: &x509.Certificate{
-					DNSNames: []string{"lxd.example.net"},
+					DNSNames: []string{"foo.example.net"},
 					NotAfter: time.Now().Add(90 * 24 * time.Hour),
 				},
 			},
@@ -55,9 +55,9 @@ func Test_certificateNeedsUpdate(t *testing.T) {
 		{
 			"Domain differs from certificate and is valid for less than 30 days",
 			args{
-				domain: "lxd.example.org",
+				domain: "foo.example.org",
 				cert: &x509.Certificate{
-					DNSNames: []string{"lxd.example.net"},
+					DNSNames: []string{"foo.example.net"},
 					NotAfter: time.Now().Add(15 * 24 * time.Hour),
 				},
 			},

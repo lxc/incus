@@ -75,7 +75,7 @@ func GetIP(subnet *net.IPNet, host int64) net.IP {
 	return newIP
 }
 
-// Network represents a LXD network responsible for running dnsmasq.
+// Network represents an Incus network responsible for running dnsmasq.
 type Network interface {
 	Name() string
 	Type() string
@@ -179,7 +179,7 @@ func (t *Transaction) AllocateIPv6() (net.IP, error) {
 // It first checks whether there is an existing allocation for the instance.
 // If no previous allocation, then a free IP is picked from the ranges configured.
 func (t *Transaction) getDHCPFreeIPv4(usedIPs map[[4]byte]dnsmasq.DHCPAllocation, deviceStaticFileName string, mac net.HardwareAddr) (net.IP, error) {
-	lxdIP, subnet, err := net.ParseCIDR(t.opts.Network.Config()["ipv4.address"])
+	ip, subnet, err := net.ParseCIDR(t.opts.Network.Config()["ipv4.address"])
 	if err != nil {
 		return nil, err
 	}
@@ -217,8 +217,8 @@ func (t *Transaction) getDHCPFreeIPv4(usedIPs map[[4]byte]dnsmasq.DHCPAllocation
 
 			IP := net.IP(startBig.Bytes())
 
-			// Check IP generated is not LXD's IP.
-			if IP.Equal(lxdIP) {
+			// Check IP generated is not Incus's IP.
+			if IP.Equal(ip) {
 				startBig.Add(startBig, inc)
 				continue
 			}
@@ -248,7 +248,7 @@ func (t *Transaction) getDHCPFreeIPv4(usedIPs map[[4]byte]dnsmasq.DHCPAllocation
 // device's MAC address. Finally if stateful custom ranges are enabled, then a free IP is picked
 // from the ranges configured.
 func (t *Transaction) getDHCPFreeIPv6(usedIPs map[[16]byte]dnsmasq.DHCPAllocation, deviceStaticFileName string, mac net.HardwareAddr) (net.IP, error) {
-	lxdIP, subnet, err := net.ParseCIDR(t.opts.Network.Config()["ipv6.address"])
+	ip, subnet, err := net.ParseCIDR(t.opts.Network.Config()["ipv6.address"])
 	if err != nil {
 		return nil, err
 	}
@@ -274,11 +274,11 @@ func (t *Transaction) getDHCPFreeIPv6(usedIPs map[[16]byte]dnsmasq.DHCPAllocatio
 			return nil, err
 		}
 
-		// Check IP is not already allocated and not the LXD IP.
+		// Check IP is not already allocated and not the Incus IP.
 		var IPKey [16]byte
 		copy(IPKey[:], IP.To16())
 		_, inUse := usedIPs[IPKey]
-		if !inUse && !IP.Equal(lxdIP) {
+		if !inUse && !IP.Equal(ip) {
 			return IP, nil
 		}
 	}
@@ -307,8 +307,8 @@ func (t *Transaction) getDHCPFreeIPv6(usedIPs map[[16]byte]dnsmasq.DHCPAllocatio
 
 			IP := net.IP(startBig.Bytes())
 
-			// Check IP generated is not LXD's IP.
-			if IP.Equal(lxdIP) {
+			// Check IP generated is not Incus's IP.
+			if IP.Equal(ip) {
 				startBig.Add(startBig, inc)
 				continue
 			}

@@ -341,7 +341,7 @@ func Init() {
 		cgNamespace = true
 	}
 
-	// Go through the list of resource controllers for LXD.
+	// Go through the list of resource controllers for Incus.
 	selfCg, err := os.Open("/proc/self/cgroup")
 	if err != nil {
 		if os.IsNotExist(err) {

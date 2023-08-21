@@ -22,13 +22,13 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
-// retries describes the number of retries after which LXD will give up registering a user or
+// retries describes the number of retries after which Incus will give up registering a user or
 // issuing a new certificate. The number 5 was chosen because Let's Encrypt has a limit of 5
 // failures per account, per hostname, per hour.
 const retries = 5
 
 // ClusterCertFilename describes the filename of the new certificate which is stored in case it
-// cannot be distributed in a cluster due to offline members. LXD will try to distribute this
+// cannot be distributed in a cluster due to offline members. Incus will try to distribute this
 // certificate at a later stage.
 const ClusterCertFilename = "cluster.crt.new"
 

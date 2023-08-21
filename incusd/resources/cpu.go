@@ -205,7 +205,7 @@ func getCPUdmi() (string, string, error) {
 	return "", "", fmt.Errorf("No DMI table found")
 }
 
-// GetCPU returns a filled api.ResourcesCPU struct ready for use by LXD.
+// GetCPU returns a filled api.ResourcesCPU struct ready for use by Incus.
 func GetCPU() (*api.ResourcesCPU, error) {
 	cpu := api.ResourcesCPU{}
 

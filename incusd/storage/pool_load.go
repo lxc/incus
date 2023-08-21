@@ -102,7 +102,7 @@ func NewTemporary(state *state.State, info *api.StoragePool) (Pool, error) {
 	}
 
 	// Setup the pool struct.
-	pool := lxdBackend{}
+	pool := backend{}
 	pool.driver = driver
 	pool.id = poolID
 	pool.db = *info
@@ -124,7 +124,7 @@ func LoadByType(state *state.State, driverType string) (Type, error) {
 	}
 
 	// Setup the pool struct.
-	pool := lxdBackend{}
+	pool := backend{}
 	pool.state = state
 	pool.driver = driver
 	pool.id = PoolIDTemporary
@@ -150,7 +150,7 @@ func LoadByRecord(s *state.State, poolID int64, poolInfo api.StoragePool, poolMe
 	}
 
 	// Setup the pool struct.
-	pool := lxdBackend{}
+	pool := backend{}
 	pool.driver = driver
 	pool.id = poolID
 	pool.db = poolInfo

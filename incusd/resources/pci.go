@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// GetPCI returns a filled api.ResourcesPCI struct ready for use by LXD.
+// GetPCI returns a filled api.ResourcesPCI struct ready for use by Incus.
 func GetPCI() (*api.ResourcesPCI, error) {
 	pci := api.ResourcesPCI{}
 	pci.Devices = []api.ResourcesPCIDevice{}

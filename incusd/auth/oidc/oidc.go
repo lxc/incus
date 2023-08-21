@@ -48,9 +48,9 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	if auth != "" {
 		// When a client wants to authenticate, it needs to set the Authorization HTTP header like this:
 		//    Authorization Bearer <access_token>
-		// If set correctly, LXD will attempt to verify the access token, and grant access if it's valid.
-		// If the verification fails, LXD will return an InvalidToken error. The client should then either use its refresh token to get a new valid access token, or log in again.
-		// If the Authorization header is missing, LXD returns an AuthenticationRequired error.
+		// If set correctly, Incus will attempt to verify the access token, and grant access if it's valid.
+		// If the verification fails, Incus will return an InvalidToken error. The client should then either use its refresh token to get a new valid access token, or log in again.
+		// If the Authorization header is missing, Incus returns an AuthenticationRequired error.
 		// Both returned errors contain information which are needed for the client to authenticate.
 		parts := strings.Split(auth, "Bearer ")
 		if len(parts) != 2 {

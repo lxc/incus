@@ -15,7 +15,7 @@ import (
 
 var sysBusUSB = "/sys/bus/usb/devices"
 
-// GetUSB returns a filled api.ResourcesUSB struct ready for use by LXD.
+// GetUSB returns a filled api.ResourcesUSB struct ready for use by Incus.
 func GetUSB() (*api.ResourcesUSB, error) {
 	// Load the USB database.
 	usbid.Load()

@@ -35,7 +35,7 @@ const minioHost = "[::1]"
 const minioLockPrefix = "minio_"
 
 // minioAdminUser in MinIO.
-const minioAdminUser = "lxd-admin"
+const minioAdminUser = "incus-admin"
 
 // minioBucketDir the directory on the storage volume used for the MinIO bucket.
 const minioBucketDir = "minio"

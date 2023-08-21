@@ -196,7 +196,7 @@ func getTotalMemory(sysDevicesBase string) uint64 {
 	return blockSize * count
 }
 
-// GetMemory returns a filled api.ResourcesMemory struct ready for use by LXD.
+// GetMemory returns a filled api.ResourcesMemory struct ready for use by Incus.
 func GetMemory() (*api.ResourcesMemory, error) {
 	memory := api.ResourcesMemory{}
 

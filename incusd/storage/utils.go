@@ -186,9 +186,9 @@ func VolumeContentTypeNameToContentType(contentTypeName string) (int, error) {
 
 // VolumeDBGet loads a volume from the database.
 func VolumeDBGet(pool Pool, projectName string, volumeName string, volumeType drivers.VolumeType) (*db.StorageVolume, error) {
-	p, ok := pool.(*lxdBackend)
+	p, ok := pool.(*backend)
 	if !ok {
-		return nil, fmt.Errorf("Pool is not a lxdBackend")
+		return nil, fmt.Errorf("Pool is not a backend")
 	}
 
 	volDBType, err := VolumeTypeToDBType(volumeType)
@@ -221,9 +221,9 @@ func VolumeDBGet(pool Pool, projectName string, volumeName string, volumeType dr
 // If volumeConfig is supplied, it is modified with any driver level default config options (if not set).
 // If removeUnknownKeys is true, any unknown config keys are removed from volumeConfig rather than failing.
 func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDescription string, volumeType drivers.VolumeType, snapshot bool, volumeConfig map[string]string, creationDate time.Time, expiryDate time.Time, contentType drivers.ContentType, removeUnknownKeys bool, hasSource bool) error {
-	p, ok := pool.(*lxdBackend)
+	p, ok := pool.(*backend)
 	if !ok {
-		return fmt.Errorf("Pool is not a lxdBackend")
+		return fmt.Errorf("Pool is not a backend")
 	}
 
 	// Prevent using this function to create storage volume bucket records.
@@ -296,9 +296,9 @@ func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDesc
 
 // VolumeDBDelete deletes a volume from the database.
 func VolumeDBDelete(pool Pool, projectName string, volumeName string, volumeType drivers.VolumeType) error {
-	p, ok := pool.(*lxdBackend)
+	p, ok := pool.(*backend)
 	if !ok {
-		return fmt.Errorf("Pool is not a lxdBackend")
+		return fmt.Errorf("Pool is not a backend")
 	}
 
 	// Convert the volume type to our internal integer representation.
@@ -317,9 +317,9 @@ func VolumeDBDelete(pool Pool, projectName string, volumeName string, volumeType
 
 // VolumeDBSnapshotsGet loads a list of snapshots volumes from the database.
 func VolumeDBSnapshotsGet(pool Pool, projectName string, volume string, volumeType drivers.VolumeType) ([]db.StorageVolumeArgs, error) {
-	p, ok := pool.(*lxdBackend)
+	p, ok := pool.(*backend)
 	if !ok {
-		return nil, fmt.Errorf("Pool is not a lxdBackend")
+		return nil, fmt.Errorf("Pool is not a backend")
 	}
 
 	volDBType, err := VolumeTypeToDBType(volumeType)
@@ -337,9 +337,9 @@ func VolumeDBSnapshotsGet(pool Pool, projectName string, volume string, volumeTy
 
 // BucketDBGet loads a bucket from the database.
 func BucketDBGet(pool Pool, projectName string, bucketName string, memberSpecific bool) (*db.StorageBucket, error) {
-	p, ok := pool.(*lxdBackend)
+	p, ok := pool.(*backend)
 	if !ok {
-		return nil, fmt.Errorf("Pool is not a lxdBackend")
+		return nil, fmt.Errorf("Pool is not a backend")
 	}
 
 	var err error
@@ -369,9 +369,9 @@ func BucketDBGet(pool Pool, projectName string, bucketName string, memberSpecifi
 // The supplied bucket's config may be modified with defaults for the storage pool being used.
 // Returns bucket DB record ID.
 func BucketDBCreate(ctx context.Context, pool Pool, projectName string, memberSpecific bool, bucket *api.StorageBucketsPost) (int64, error) {
-	p, ok := pool.(*lxdBackend)
+	p, ok := pool.(*backend)
 	if !ok {
-		return -1, fmt.Errorf("Pool is not a lxdBackend")
+		return -1, fmt.Errorf("Pool is not a backend")
 	}
 
 	// Make sure that we don't pass a nil to the next function.
@@ -411,9 +411,9 @@ func BucketDBCreate(ctx context.Context, pool Pool, projectName string, memberSp
 
 // BucketDBDelete deletes a bucket from the database.
 func BucketDBDelete(ctx context.Context, pool Pool, bucketID int64) error {
-	p, ok := pool.(*lxdBackend)
+	p, ok := pool.(*backend)
 	if !ok {
-		return fmt.Errorf("Pool is not a lxdBackend")
+		return fmt.Errorf("Pool is not a backend")
 	}
 
 	err := p.state.DB.Cluster.DeleteStoragePoolBucket(ctx, p.ID(), bucketID)
@@ -675,7 +675,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 		}
 	} else {
 		// Dealing with unified tarballs require an initial unpack to a temporary directory.
-		tempDir, err := os.MkdirTemp(shared.VarPath("images"), "lxd_image_unpack_")
+		tempDir, err := os.MkdirTemp(shared.VarPath("images"), "incus_image_unpack_")
 		if err != nil {
 			return -1, err
 		}
