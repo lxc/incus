@@ -125,10 +125,11 @@ update-metadata: build
 	$(GOPATH)/bin/incus-doc . --json ./internal/server/metadata/configuration.json --txt ./doc/config_options.txt
 
 .PHONY: doc-setup
-doc-setup:
+doc-setup: client
 	@echo "Setting up documentation build environment"
 	python3 -m venv doc/.sphinx/venv
 	. $(SPHINXENV) ; pip install --upgrade -r doc/.sphinx/requirements.txt
+	find doc/reference/manpages/ -name "*.md" -type f -delete
 	rm -Rf doc/html
 
 .PHONY: doc
@@ -137,7 +138,7 @@ doc: doc-setup doc-incremental
 .PHONY: doc-incremental
 doc-incremental:
 	@echo "Build the documentation"
-	. $(SPHINXENV) ; sphinx-build -c doc/ -b dirhtml doc/ doc/html/ -w doc/.sphinx/warnings.txt
+	. $(SPHINXENV) ; LOCAL_SPHINX_BUILD=True sphinx-build -c doc/ -b dirhtml doc/ doc/html/ -w doc/.sphinx/warnings.txt
 
 .PHONY: doc-serve
 doc-serve:
@@ -149,7 +150,7 @@ doc-spellcheck: doc
 
 .PHONY: doc-linkcheck
 doc-linkcheck: doc-setup
-	. $(SPHINXENV) ; sphinx-build -c doc/ -b linkcheck doc/ doc/html/
+	. $(SPHINXENV) ; LOCAL_SPHINX_BUILD=True sphinx-build -c doc/ -b linkcheck doc/ doc/html/
 
 .PHONY: doc-lint
 doc-lint:

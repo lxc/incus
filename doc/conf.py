@@ -1,12 +1,13 @@
 import contextlib
 import datetime
 import os
+import stat
 import subprocess
-import sys
 import tempfile
 import yaml
 from git import Repo
 import wget
+import filecmp
 
 # Download and link swagger-ui files
 if not os.path.isdir('.sphinx/deps/swagger-ui'):
@@ -20,6 +21,89 @@ if not os.path.islink('.sphinx/_static/swagger-ui/swagger-ui-standalone-preset.j
     os.symlink('../../deps/swagger-ui/dist/swagger-ui-standalone-preset.js', '.sphinx/_static/swagger-ui/swagger-ui-standalone-preset.js')
 if not os.path.islink('.sphinx/_static/swagger-ui/swagger-ui.css'):
     os.symlink('../../deps/swagger-ui/dist/swagger-ui.css', '.sphinx/_static/swagger-ui/swagger-ui.css')
+
+### MAN PAGES ###
+
+# Find path to lxc client (different for local builds and on RTD)
+
+if ("LOCAL_SPHINX_BUILD" in os.environ and
+    os.environ["LOCAL_SPHINX_BUILD"] == "True"):
+    path = str(subprocess.check_output(['go', 'env', 'GOPATH'], encoding="utf-8").strip())
+    lxc = os.path.join(path, 'bin', 'lxc')
+    if os.path.isfile(lxc):
+        print("Using " + lxc + " to generate man pages.")
+    else:
+        print("Cannot find lxc in " + lxc)
+        exit(2)
+else:
+    lxc = "../lxc.bin"
+
+# Generate man pages content
+
+os.makedirs('.sphinx/deps/manpages', exist_ok=True)
+subprocess.run([lxc, 'manpage', '.sphinx/deps/manpages/', '--format=md'],
+               check=True)
+
+# Preprocess man pages content
+
+for page in [x for x in os.listdir('.sphinx/deps/manpages')
+             if os.path.isfile(os.path.join('.sphinx/deps/manpages/', x))]:
+
+    # replace underscores with slashes to create a directory structure
+    pagepath = page.replace('_', '/')
+
+    # for each generated page, add an anchor, fix the title, and adjust the
+    # heading levels
+    with open(os.path.join('.sphinx/deps/manpages/', page), 'r') as mdfile:
+        content = mdfile.readlines()
+
+    os.makedirs(os.path.dirname(os.path.join('.sphinx/deps/manpages/', pagepath)),
+                exist_ok=True)
+
+    with open(os.path.join('.sphinx/deps/manpages/', pagepath), 'w') as mdfile:
+        mdfile.write('(' + page + ')=\n')
+        for line in content:
+            if line.startswith('###### Auto generated'):
+                continue
+            elif line.startswith('## '):
+                mdfile.write('# `' + line[3:].rstrip() + '`\n')
+            elif line.startswith('##'):
+                mdfile.write(line[1:])
+            else:
+                mdfile.write(line)
+
+    # remove the input page (unless the file path doesn't change)
+    if '_' in page:
+        os.remove(os.path.join('.sphinx/deps/manpages/', page))
+
+# Complete and copy man pages content
+
+for folder, subfolders, files in os.walk('.sphinx/deps/manpages'):
+
+    # for each subfolder, add toctrees to the parent page that
+    # include the subpages
+    for subfolder in subfolders:
+        with open(os.path.join(folder, subfolder + '.md'), 'a') as parent:
+            parent.write('```{toctree}\n:titlesonly:\n:glob:\n:hidden:\n\n' +
+                         subfolder + '/*\n```\n')
+
+    # for each file, if the content is different to what has been generated
+    # before, copy the file to the reference/manpages folder
+    # (copying all would mess up the incremental build)
+    for f in files:
+        sourcefile = os.path.join(folder, f)
+        targetfile = os.path.join('reference/manpages/',
+                                  os.path.relpath(folder,
+                                                  '.sphinx/deps/manpages'),
+                                  f)
+
+        if (not os.path.isfile(targetfile) or
+            not filecmp.cmp(sourcefile, targetfile, shallow=False)):
+
+            os.makedirs(os.path.dirname(targetfile), exist_ok=True)
+            os.system('cp ' + sourcefile + ' ' + targetfile)
+
+### End MAN PAGES ###
 
 # Project config.
 project = "LXD"

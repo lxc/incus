@@ -21,6 +21,7 @@ test/syscall/sysinfo/sysinfo
 
 # Sphinx
 doc/html/
+doc/reference/manpages/**/*.md
 doc/.sphinx/deps/
 doc/.sphinx/themes/
 doc/.sphinx/venv/
