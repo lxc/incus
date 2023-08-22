@@ -14,6 +14,8 @@ for fn in $(find doc/ -name '*.md'); do
     sed -E "s/(\(.+\)=)/\1\n/" $fn > .tmp/$fn;
 done
 
+rm -rf .tmp/doc/reference/manpages/
+
 mdl .tmp/doc -sdoc/.sphinx/.markdownlint/style.rb -udoc/.sphinx/.markdownlint/rules.rb --ignore-front-matter > .tmp/errors.txt || true
 
 ## Postprocessing
