@@ -34,7 +34,7 @@ Use the following command to add a restricted client certificate:
 
 ````
 
-The client can then add the server as a remote in the usual way (`lxc remote add <server_name> <token>` or `lxc remote add <server_name> <server_address>`) and can only access the project or projects that have been specified.
+The client can then add the server as a remote in the usual way ([`lxc remote add <server_name> <token>`](lxc_remote_add.md) or [`lxc remote add <server_name> <server_address>`](lxc_remote_add.md)) and can only access the project or projects that have been specified.
 
 To confine access for an existing certificate (either because the access restrictions change or because the certificate was added with a trust password), use the following command:
 

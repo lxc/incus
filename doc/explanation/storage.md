@@ -81,8 +81,8 @@ When you create a storage volume, you must specify the storage pool to use.
 When LXD automatically creates a storage volume during instance creation, it uses the storage pool that is configured for the instance.
 This configuration can be set in either of the following ways:
 
-- Directly on an instance: `lxc launch <image> <instance_name> --storage <storage_pool>`
-- Through a profile: `lxc profile device add <profile_name> root disk path=/ pool=<storage_pool>` and `lxc launch <image> <instance_name> --profile <profile_name>`
+- Directly on an instance: [`lxc launch <image> <instance_name> --storage <storage_pool>`](lxc_launch.md)
+- Through a profile: [`lxc profile device add <profile_name> root disk path=/ pool=<storage_pool>`](lxc_profile_device_add.md) and [`lxc launch <image> <instance_name> --profile <profile_name>`](lxc_launch.md)
 - Through the default profile
 
 In a profile, the storage pool to use is defined by the pool for the root disk device:
@@ -158,7 +158,7 @@ Each storage volume uses one of the following content types:
 
 `iso`
 : This content type is used for custom ISO volumes.
-  A custom storage volume of type `iso` can only be created by importing an ISO file using `lxc import`.
+  A custom storage volume of type `iso` can only be created by importing an ISO file using [`lxc import`](lxc_import.md).
 
   Custom storage volumes of content type `iso` can only be attached to virtual machines.
   They can be attached to multiple machines simultaneously as they are always read-only.

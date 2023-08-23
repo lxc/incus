@@ -113,7 +113,7 @@ All information about the cluster members and their instances is still there.
 
 In some situations, you might need to manually alter the Raft membership configuration of the cluster because of some unexpected behavior.
 
-For example, if you have a cluster member that was removed uncleanly, it might not show up in `lxc cluster list` but still be part of the Raft configuration.
+For example, if you have a cluster member that was removed uncleanly, it might not show up in [`lxc cluster list`](lxc_cluster_list.md) but still be part of the Raft configuration.
 To see the Raft configuration, run the following command:
 
     lxd sql local "SELECT * FROM raft_nodes"

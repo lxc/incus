@@ -45,7 +45,7 @@ any backward compatibility to broken protocol or ciphers.
 (authentication-trusted-clients)=
 ### Trusted TLS clients
 
-You can obtain the list of TLS certificates trusted by a LXD server with `lxc config trust list`.
+You can obtain the list of TLS certificates trusted by a LXD server with [`lxc config trust list`](lxc_config_trust_list.md).
 
 Trusted clients can be added in either of the following ways:
 
@@ -54,7 +54,7 @@ Trusted clients can be added in either of the following ways:
 
 The workflow to authenticate with the server is similar to that of SSH, where an initial connection to an unknown server triggers a prompt:
 
-1. When the user adds a server with `lxc remote add`, the server is contacted over HTTPS, its certificate is downloaded and the fingerprint is shown to the user.
+1. When the user adds a server with [`lxc remote add`](lxc_remote_add.md), the server is contacted over HTTPS, its certificate is downloaded and the fingerprint is shown to the user.
 1. The user is asked to confirm that this is indeed the server's fingerprint, which they can manually check by connecting to the server or by asking someone with access to the server to run the info command and compare the fingerprints.
 1. The server attempts to authenticate the client:
 
@@ -63,12 +63,12 @@ The workflow to authenticate with the server is similar to that of SSH, where an
      If the provided token or trust password matches, the client certificate is added to the server's trust store and the connection is granted.
      Otherwise, the connection is rejected.
 
-To revoke trust to a client, remove its certificate from the server with `lxc config trust remove FINGERPRINT`.
+To revoke trust to a client, remove its certificate from the server with [`lxc config trust remove <fingerprint>`](lxc_config_trust_remove.md).
 
 It's possible to restrict a TLS client to one or multiple projects.
 In this case, the client will also be prevented from performing global configuration changes or altering the configuration (limits, restrictions) of the projects it's allowed access to.
 
-To restrict access, use `lxc config trust edit FINGERPRINT`.
+To restrict access, use [`lxc config trust edit <fingerprint>`](lxc_config_trust_edit.md).
 Set the `restricted` key to `true` and specify a list of projects to restrict the client to.
 If the list of projects is empty, the client will not be allowed access to any of them.
 
@@ -76,14 +76,14 @@ If the list of projects is empty, the client will not be allowed access to any o
 #### Adding trusted certificates to the server
 
 The preferred way to add trusted clients is to directly add their certificates to the trust store on the server.
-To do so, copy the client certificate to the server and register it using `lxc config trust add <file>`.
+To do so, copy the client certificate to the server and register it using [`lxc config trust add <file>`](lxc_config_trust_add.md).
 
 (authentication-token)=
 #### Adding client certificates using tokens
 
 You can also add new clients by using tokens. This is a safer way than using the trust password, because tokens expire after a configurable time ({config:option}`server-core:core.remote_token_expiry`) or once they've been used.
 
-To use this method, generate a token for each client by calling `lxc config trust add`, which will prompt for the client name.
+To use this method, generate a token for each client by calling [`lxc config trust add`](lxc_config_trust_add.md), which will prompt for the client name.
 The clients can then add their certificates to the server's trust store by providing the generated token when prompted for the trust password.
 
 <!-- Include start NAT authentication -->
@@ -102,7 +102,7 @@ In this case, you must specify the external address manually.
 
 <!-- Include end NAT authentication -->
 
-Alternatively, the clients can provide the token directly when adding the remote: `lxc remote add <name> <token>`.
+Alternatively, the clients can provide the token directly when adding the remote: [`lxc remote add <name> <token>`](lxc_remote_add.md).
 
 ### Using a PKI system
 
@@ -139,7 +139,7 @@ Any user that authenticates through the configured OIDC Identity Provider gets f
 To configure LXD to use OIDC authentication, set the [`oidc.*`](server-options-oidc) server configuration options.
 Your OIDC provider must be configured to enable the [Device Authorization Grant](https://oauth.net/2/device-flow/) type.
 
-To add a remote pointing to a LXD server configured with OIDC authentication, run `lxc remote add <remote_name> <remote_address>`.
+To add a remote pointing to a LXD server configured with OIDC authentication, run [`lxc remote add <remote_name> <remote_address>`](lxc_remote_add.md).
 You are then prompted to authenticate through your web browser, where you must confirm the device code that LXD uses.
 The LXD client then retrieves and stores the access and refresh tokens and provides those to LXD for all interactions.
 

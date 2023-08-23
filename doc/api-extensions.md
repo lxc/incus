@@ -656,7 +656,7 @@ Those keys control whether to put the LXD rules before or after any pre-existing
 This introduces a new `recursion=2` mode for `GET /1.0/containers` which allows for the retrieval of
 all container structs, including the state, snapshots and backup structs.
 
-This effectively allows for `lxc list` to get all it needs in one query.
+This effectively allows for [`lxc list`](lxc_list.md) to get all it needs in one query.
 
 ## `backup_compression`
 
@@ -772,7 +772,7 @@ parts have to be used.
 
 Snapshots which are then created will be given an expiry date based on the
 expression. This expiry date, defined by `expires_at`, can be manually edited
-using the API or `lxc config edit`. Snapshots with a valid expiry date will be
+using the API or [`lxc config edit`](lxc_config_edit.md). Snapshots with a valid expiry date will be
 removed when the task in run. Expiry can be disabled by setting `expires_at` to
 an empty string or `0001-01-01T00:00:00Z` (zero time). This is the default if
 `snapshots.expiry` is not set.
@@ -854,7 +854,7 @@ decide to trigger various actions.
 
 ## `lxc_features`
 
-This introduces the `lxc_features` section output from the `lxc info` command
+This introduces the `lxc_features` section output from the [`lxc info`](lxc_info.md) command
 via the `GET /1.0` route. It outputs the result of checks for key features being present in the
 underlying LXC library.
 
@@ -2207,7 +2207,7 @@ Introduce a new `security.csm` configuration key to control the use of
 be run in LXD VMs.
 
 ## `instances_rebuild`
-This extension adds the ability to rebuild an instance with the same origin image, alternate image or as empty. A new `POST /1.0/instances/<name>/rebuild?project=<project>` API endpoint has been added as well as a new CLI command `lxc rebuild`.
+This extension adds the ability to rebuild an instance with the same origin image, alternate image or as empty. A new `POST /1.0/instances/<name>/rebuild?project=<project>` API endpoint has been added as well as a new CLI command [`lxc rebuild`](lxc_rebuild.md).
 
 ## `numa_cpu_placement`
 This adds the possibility to place a set of CPUs in a desired set of NUMA nodes.
@@ -2219,12 +2219,12 @@ This adds the following new configuration key:
 ## `custom_volume_iso`
 This adds the possibility to import ISO images as custom storage volumes.
 
-This adds the `--type` flag to `lxc storage volume import`.
+This adds the `--type` flag to [`lxc storage volume import`](lxc_storage_volume_import.md).
 
 ## `network_allocations`
 This adds the possibility to list a LXD deployment's network allocations.
 
-Through the `lxc network list-allocations` command and the `--project <PROJECT> | --all-projects` flags,
+Through the [`lxc network list-allocations`](lxc_network_list-allocations.md) command and the `--project <PROJECT> | --all-projects` flags,
 you can list all the used IP addresses, hardware addresses (for instances), resource URIs and whether it uses NAT for
 each `instance`, `network`, `network forward` and `network load-balancer`.
 

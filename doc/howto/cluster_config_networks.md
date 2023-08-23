@@ -20,7 +20,7 @@ Creating additional networks is a two-step process:
    ```
 
    These commands define the network, but they don't create it.
-   If you run `lxc network list`, you can see that the network is marked as "pending".
+   If you run [`lxc network list`](lxc_network_list.md), you can see that the network is marked as "pending".
 1. Run the following command to instantiate the network on all cluster members:
 
        lxc network create my-network

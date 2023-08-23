@@ -28,7 +28,7 @@ To get all the latest features and monthly updates to LXD, use the feature relea
 ## Install LXD from a package
 
 The LXD daemon only works on Linux.
-The client tool (`lxc`) is available on most platforms.
+The client tool ([`lxc`](lxc.md)) is available on most platforms.
 
 ### Linux
 

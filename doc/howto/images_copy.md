@@ -13,7 +13,7 @@ To copy an image from one server to another, enter the following command:
 To copy the image to your local image store, specify `local:` as the target remote.
 ```
 
-See `lxc image copy --help` for a list of all available flags.
+See [`lxc image copy --help`](lxc_image_copy.md) for a list of all available flags.
 The most relevant ones are:
 
 `--alias`
@@ -40,7 +40,7 @@ There are several ways of obtaining such image files:
 
 ### Import from the local file system
 
-To import an image from the local file system, use the `lxc image import` command.
+To import an image from the local file system, use the [`lxc image import`](lxc_image_import.md) command.
 This command supports both {ref}`unified images <image-format-unified>` (compressed file or directory) and {ref}`split images <image-format-split>` (two files).
 
 To import a unified image from one file or directory, enter the following command:
@@ -52,7 +52,7 @@ To import a split image, enter the following command:
     lxc image import <metadata_tarball_path> <rootfs_tarball_path> [<target_remote>:]
 
 In both cases, you can assign an alias with the `--alias` flag.
-See `lxc image import --help` for all available flags.
+See [`lxc image import --help`](lxc_image_import.md) for all available flags.
 
 ### Import from a file on a remote web server
 

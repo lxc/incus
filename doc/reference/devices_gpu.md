@@ -54,7 +54,7 @@ It does not support hotplugging.
 ```
 
 An `mdev` GPU device creates and passes a virtual GPU through into the instance.
-You can check the list of available `mdev` profiles by running `lxc info --resources`.
+You can check the list of available `mdev` profiles by running [`lxc info --resources`](lxc_info.md).
 
 ### Device options
 

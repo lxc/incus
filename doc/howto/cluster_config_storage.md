@@ -22,7 +22,7 @@ Creating additional storage pools is a two-step process:
    ```
 
    These commands define the storage pool, but they don't create it.
-   If you run `lxc storage list`, you can see that the pool is marked as "pending".
+   If you run [`lxc storage list`](lxc_storage_list.md), you can see that the pool is marked as "pending".
 1. Run the following command to instantiate the storage pool on all cluster members:
 
        lxc storage create data zfs
@@ -37,7 +37,7 @@ Also see {ref}`storage-pools-cluster`.
 
 ## View member-specific pool configuration
 
-Running `lxc storage show <pool_name>` shows the cluster-wide configuration of the storage pool.
+Running [`lxc storage show <pool_name>`](lxc_storage_show.md) shows the cluster-wide configuration of the storage pool.
 
 To view the member-specific configuration, use the `--target` flag.
 For example:
@@ -47,7 +47,7 @@ For example:
 ## Create storage volumes
 
 For most storage drivers (all except for Ceph-based storage drivers), storage volumes are not replicated across the cluster and exist only on the member for which they were created.
-Run `lxc storage volume list <pool_name>` to see on which member a certain volume is located.
+Run [`lxc storage volume list <pool_name>`](lxc_storage_volume_list.md) to see on which member a certain volume is located.
 
 When creating a storage volume, use the `--target` flag to create a storage volume on a specific cluster member.
 Without the flag, the volume is created on the cluster member on which you run the command.

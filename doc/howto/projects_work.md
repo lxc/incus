@@ -31,12 +31,12 @@ By default, the output is presented as a list:
 ```
 
 You can request a different output format by adding the `--format` flag.
-See `lxc project list --help` for more information.
+See [`lxc project list --help`](lxc_project_list.md) for more information.
 
 ## Switch projects
 
 By default, all commands that you issue in LXD affect the project that you are currently using.
-To see which project you are in, use the `lxc project list` command.
+To see which project you are in, use the [`lxc project list`](lxc_project_list.md) command.
 
 To switch to a different project, enter the following command:
 
@@ -55,7 +55,7 @@ The following sections give some typical examples where you would typically targ
 
 ### List instances in a project
 
-To list the instances in a specific project, add the `--project` flag to the `lxc list` command.
+To list the instances in a specific project, add the `--project` flag to the [`lxc list`](lxc_list.md) command.
 For example:
 
     lxc list --project my-project

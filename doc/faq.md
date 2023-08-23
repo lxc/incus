@@ -40,7 +40,7 @@ For unprivileged containers, you need to make sure that the user in the containe
 Otherwise, all files will show up as the overflow UID/GID (`65536:65536`) and access to anything that's not world-readable will fail.
 Use either of the following methods to grant the required permissions:
 
-- Pass `shift=true` to the `lxc config device add` call. This depends on the kernel and file system supporting either idmapped mounts or shiftfs (see `lxc info`).
+- Pass `shift=true` to the [`lxc config device add`](lxc_config_device_add.md) call. This depends on the kernel and file system supporting either idmapped mounts or shiftfs (see [`lxc info`](lxc_info.md)).
 - Add a `raw.idmap` entry (see [Idmaps for user namespace](userns-idmap.md)).
 - Place recursive POSIX ACLs on your home directory.
 
@@ -65,7 +65,7 @@ In addition, creating a `/.dockerenv` file in your container can help Docker ign
 
 ## Where does the LXD client (`lxc`) store its configuration?
 
-The `lxc` command stores its configuration under `~/.config/lxc`, or in `~/snap/lxd/common/config` for snap users.
+The [`lxc`](lxc.md) command stores its configuration under `~/.config/lxc`, or in `~/snap/lxd/common/config` for snap users.
 
 Various configuration files are stored in that directory, for example:
 
@@ -94,7 +94,7 @@ See `lxc monitor --help` for all options, and {doc}`debugging` for more informat
 
 ## Why does LXD stall when creating an instance?
 
-Check if your storage pool is out of space (by running `lxc storage info <pool_name>`).
+Check if your storage pool is out of space (by running [`lxc storage info <pool_name>`](lxc_storage_info.md)).
 In that case, LXD cannot finish unpacking the image, and the instance that you're trying to create shows up as stopped.
 
 To get more insight into what is happening, run `lxc monitor` (see {ref}`faq-monitor`), and check `sudo dmesg` for any I/O errors.

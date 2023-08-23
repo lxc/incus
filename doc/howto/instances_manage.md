@@ -17,7 +17,7 @@ For example:
 
     lxc list ubuntu.*
 
-Enter `lxc list --help` to see all filter options.
+Enter [`lxc list --help`](lxc_list.md) to see all filter options.
 
 ## Show information about an instance
 
@@ -70,7 +70,7 @@ This command permanently deletes the instance and all its snapshots.
 
 There are two ways to prevent accidental deletion of instances:
 
-- To be prompted for approval every time you use the `lxc delete` command, create an alias for it:
+- To be prompted for approval every time you use the [`lxc delete`](lxc_delete.md) command, create an alias for it:
 
        lxc alias add delete "delete -i"
 
@@ -94,4 +94,4 @@ Then enter one of the following commands:
 
         lxc rebuild <instance_name> --empty
 
-For more information about the `rebuild` command, see `lxc rebuild --help`.
+For more information about the `rebuild` command, see [`lxc rebuild --help`](lxc_rebuild.md).

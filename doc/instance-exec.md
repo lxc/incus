@@ -6,12 +6,12 @@ LXD allows to run commands inside an instance using the LXD client, without need
 For containers, this always works and is handled directly by LXD.
 For virtual machines, the `lxd-agent` process must be running inside of the virtual machine for this to work.
 
-To run commands inside your instance, use the `lxc exec` command.
+To run commands inside your instance, use the [`lxc exec`](lxc_exec.md) command.
 By running a shell command (for example, `/bin/bash`), you can get shell access to your instance.
 
 ## Run commands inside your instance
 
-To run a single command from the terminal of the host machine, use the `lxc exec` command:
+To run a single command from the terminal of the host machine, use the [`lxc exec`](lxc_exec.md) command:
 
     lxc exec <instance_name> -- <command>
 

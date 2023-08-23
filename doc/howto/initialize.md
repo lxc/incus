@@ -21,7 +21,7 @@ They cover the following areas:
 
 Clustering (see {ref}`exp-clustering` and {ref}`cluster-form`)
 : A cluster combines several LXD servers.
-  The cluster members share the same distributed database and can be managed uniformly using the LXD client (`lxc`) or the REST API.
+  The cluster members share the same distributed database and can be managed uniformly using the LXD client ([`lxc`](lxc.md)) or the REST API.
 
   The default answer is `no`, which means clustering is not enabled.
   If you answer `yes`, you can either connect to an existing cluster or create one.

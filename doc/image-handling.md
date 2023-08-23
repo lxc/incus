@@ -38,7 +38,7 @@ If you request an image through a fingerprint, you request an exact image versio
 Whether auto-update is enabled for an image depends on how the image was downloaded:
 
 - If the image was downloaded and cached when creating an instance, it is automatically updated if {config:option}`server-images:images.auto_update_cached` was set to `true` (the default) at download time.
-- If the image was copied from a remote server using the `lxc image copy` command, it is automatically updated only if the `--auto-update` flag was specified.
+- If the image was copied from a remote server using the [`lxc image copy`](lxc_image_copy.md) command, it is automatically updated only if the `--auto-update` flag was specified.
 
 You can change this behavior for an image by [editing the `auto_update` property](images-manage-edit).
 

@@ -130,7 +130,7 @@ When `limits.cpu` is set to a single integer, LXD allocates multiple vCPUs and e
 Those vCPUs are not pinned to specific physical cores on the host.
 The number of vCPUs can be updated while the VM is running.
 
-When `limits.cpu` is set to a range or comma-separated list of CPU IDs (as provided by `lxc info --resources`), the vCPUs are pinned to those physical cores.
+When `limits.cpu` is set to a range or comma-separated list of CPU IDs (as provided by [`lxc info --resources`](lxc_info.md)), the vCPUs are pinned to those physical cores.
 In this scenario, LXD checks whether the CPU configuration lines up with a realistic hardware topology and if it does, it replicates that topology in the guest.
 When doing CPU pinning, it is not possible to change the configuration while the VM is running.
 

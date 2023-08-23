@@ -16,7 +16,7 @@ Instance options
 : Instance options are configuration options that are related directly to the instance.
   They include, for example, startup options, security settings, hardware limits, kernel modules, snapshots and user keys.
   These options can be specified as key/value pairs during instance creation (through the `--config key=value` flag).
-  After creation, they can be configured with the `lxc config set` and `lxc config unset` commands.
+  After creation, they can be configured with the [`lxc config set`](lxc_config_set.md) and [`lxc config unset`](lxc_config_unset.md) commands.
 
   In the YAML configuration, options are located under the `config` entry.
 
@@ -25,7 +25,7 @@ Instance options
 Instance devices
 : Instance devices are attached to an instance.
   They include, for example, network interfaces, mount points, USB and GPU devices.
-  Devices are usually added after an instance is created with the `lxc config device add` command, but they can also be added to a profile or a YAML configuration file that is used to create an instance.
+  Devices are usually added after an instance is created with the [`lxc config device add`](lxc_config_device_add.md) command, but they can also be added to a profile or a YAML configuration file that is used to create an instance.
 
   Each type of device has its own specific set of options, referred to as *instance device options*.
 

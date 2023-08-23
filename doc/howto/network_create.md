@@ -1,6 +1,6 @@
 # How to create and configure a network
 
-To create and configure a managed network, use the `lxc network` command and its subcommands.
+To create a managed network, use the [`lxc network`](lxc_network.md) command and its subcommands.
 Append `--help` to any command to see more information about its usage and available flags.
 
 (network-types)=
@@ -89,7 +89,7 @@ For example, to attach the network `my-network` to the instance `my-instance` as
 
 ### Attach the network as a device
 
-The `lxc network attach` command is a shortcut for adding a NIC device to an instance.
+The [`lxc network attach`](lxc_network_attach.md) command is a shortcut for adding a NIC device to an instance.
 Alternatively, you can add a NIC device based on the network configuration in the usual way:
 
     lxc config device add <instance_name> <device_name> nic network=<network_name>

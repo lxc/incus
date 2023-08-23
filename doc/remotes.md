@@ -51,7 +51,7 @@ To see which server is configured as the default remote, enter the following com
 You can configure remotes on a global, per-system basis.
 These remotes are available for every user of the LXD server for which you add the configuration.
 
-Users can override these system remotes (for example, by running `lxc remote rename` or `lxc remote set-url`), which results in the remote and its associated certificates being copied to the user configuration.
+Users can override these system remotes (for example, by running [`lxc remote rename`](lxc_remote_rename.md) or [`lxc remote set-url`](lxc_remote_set-url.md)), which results in the remote and its associated certificates being copied to the user configuration.
 
 To configure a global remote, edit the `config.yml` file that is located in one of the following directories:
 

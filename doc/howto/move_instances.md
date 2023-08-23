@@ -5,7 +5,7 @@ discourse: 16635
 (move-instances)=
 # How to move existing LXD instances between servers
 
-To move an instance from one LXD server to another, use the `lxc move` command:
+To move an instance from one LXD server to another, use the [`lxc move`](lxc_move.md) command:
 
     lxc move [<source_remote>:]<source_instance_name> <target_remote>:[<target_instance_name>]
 
@@ -16,7 +16,7 @@ See {ref}`live-migration-containers` for more information.
 When moving a virtual machine, you must either enable {ref}`live-migration-vms` or stop it first.
 ```
 
-Alternatively, you can use the `lxc copy` command if you want to duplicate the instance:
+Alternatively, you can use the [`lxc copy`](lxc_copy.md) command if you want to duplicate the instance:
 
     lxc copy [<source_remote>:]<source_instance_name> <target_remote>:[<target_instance_name>]
 
@@ -35,7 +35,7 @@ You can add the `--mode` flag to choose a transfer mode, depending on your netwo
 `relay`
 : Instruct the client to connect to both the source and the target server and transfer the data through the client.
 
-If you need to adapt the configuration for the instance to run on the target server, you can either specify the new configuration directly (using `--config`, `--device`, `--storage` or `--target-project`) or through profiles (using `--no-profiles` or `--profile`). See `lxc move --help` for all available flags.
+If you need to adapt the configuration for the instance to run on the target server, you can either specify the new configuration directly (using `--config`, `--device`, `--storage` or `--target-project`) or through profiles (using `--no-profiles` or `--profile`). See [`lxc move --help`](lxc_move.md) for all available flags.
 
 (live-migration)=
 ## Live migration

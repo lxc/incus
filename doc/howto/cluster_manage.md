@@ -5,7 +5,7 @@ discourse: 11330
 (cluster-manage)=
 # How to manage a cluster
 
-After your cluster is formed, use `lxc cluster list` to see a list of its members and their status:
+After your cluster is formed, use [`lxc cluster list`](lxc_cluster_list.md) to see a list of its members and their status:
 
 ```{terminal}
 :input: lxc cluster list
@@ -33,7 +33,7 @@ To see state and usage information for a cluster member, run the following comma
 
 ## Configure your cluster
 
-To configure your cluster, use `lxc config`.
+To configure your cluster, use [`lxc config`](lxc_config.md).
 For example:
 
     lxc config set cluster.max_voters 5
@@ -45,14 +45,14 @@ The local options are set only on the server where you configure them (or altern
 In addition to the server configuration, there are a few cluster configurations that are specific to each cluster member.
 See {ref}`cluster-member-config` for all available configurations.
 
-To set these configuration options, use `lxc cluster set` or `lxc cluster edit`.
+To set these configuration options, use [`lxc cluster set`](lxc_cluster_set.md) or [`lxc cluster edit`](lxc_cluster_edit.md).
 For example:
 
     lxc cluster set server1 scheduler.instance manual
 
 ### Assign member roles
 
-To add or remove a {ref}`member role <clustering-member-roles>` for a cluster member, use the `lxc cluster role` command.
+To add or remove a {ref}`member role <clustering-member-roles>` for a cluster member, use the [`lxc cluster role`](lxc_cluster_role.md) command.
 For example:
 
     lxc cluster role add server1 event-hub
@@ -63,21 +63,21 @@ You can add or remove only those roles that are not assigned automatically by LX
 
 ### Edit the cluster member configuration
 
-To edit all properties of a cluster member, including the member-specific configuration, the member roles, the failure domain and the cluster groups, use the `lxc cluster edit` command.
+To edit all properties of a cluster member, including the member-specific configuration, the member roles, the failure domain and the cluster groups, use the [`lxc cluster edit`](lxc_cluster_edit.md) command.
 
 (cluster-evacuate)=
 ## Evacuate and restore cluster members
 
 There are scenarios where you might need to empty a given cluster member of all its instances (for example, for routine maintenance like applying system updates that require a reboot, or to perform hardware changes).
 
-To do so, use the `lxc cluster evacuate` command.
+To do so, use the [`lxc cluster evacuate`](lxc_cluster_evacuate.md) command.
 This command migrates all instances on the given server, moving them to other cluster members.
 The evacuated cluster member is then transitioned to an "evacuated" state, which prevents the creation of any instances on it.
 
 You can control how each instance is moved through the {config:option}`instance-miscellaneous:cluster.evacuate` instance configuration key.
 Instances are shut down cleanly, respecting the `boot.host_shutdown_timeout` configuration key.
 
-When the evacuated server is available again, use the `lxc cluster restore` command to move the server back into a normal running state.
+When the evacuated server is available again, use the [`lxc cluster restore`](lxc_cluster_restore.md) command to move the server back into a normal running state.
 This command also moves the evacuated instances back from the servers that were temporarily holding them.
 
 (cluster-automatic-evacuation)=
@@ -132,7 +132,7 @@ If the new version of the daemon has database schema or API changes, the upgrade
 In this case, the member does not serve any LXD API requests (which means that `lxc` commands don't work on that member anymore), but any running instances will continue to run.
 
 This happens if there are other cluster members that have not been upgraded and are therefore running an older version.
-Run `lxc cluster list` on a cluster member that is not blocked to see if any members are blocked.
+Run [`lxc cluster list`](lxc_cluster_list.md) on a cluster member that is not blocked to see if any members are blocked.
 
 As you proceed upgrading the rest of the cluster members, they will all transition to the "blocked" state.
 When you upgrade the last member, the blocked members will notice that all servers are now up-to-date, and the blocked members become operational again.
@@ -144,5 +144,5 @@ In a LXD cluster, the API on all servers responds with the same shared certifica
 The certificate is stored at `/var/snap/lxd/common/lxd/cluster.crt` (if you use the snap) or `/var/lib/lxd/cluster.crt` (otherwise) and is the same on all cluster members.
 
 You can replace the standard certificate with another one, for example, a valid certificate obtained through ACME services (see {ref}`authentication-server-certificate` for more information).
-To do so, use the `lxc cluster update-certificate` command.
+To do so, use the [`lxc cluster update-certificate`](lxc_cluster_update-certificate.md) command.
 This command replaces the certificate on all servers in your cluster.

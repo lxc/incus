@@ -14,7 +14,7 @@ To store and reuse different instance configurations, use {ref}`profiles <profil
 
 You can specify instance options when you {ref}`create an instance <instances-create>`.
 
-To update instance options after the instance is created, use the `lxc config set` command.
+To update instance options after the instance is created, use the [`lxc config set`](lxc_config_set.md) command.
 Specify the instance name and the key and value of the instance option:
 
     lxc config set <instance_name> <option_key>=<option_value> <option_key>=<option_value> ...
@@ -35,7 +35,7 @@ See the "Live update" column in the {ref}`instance-options` tables for informati
 (instances-configure-properties)=
 ## Configure instance properties
 
-To update instance properties after the instance is created, use the `lxc config set` command with the `--property` flag.
+To update instance properties after the instance is created, use the [`lxc config set`](lxc_config_set.md) command with the `--property` flag.
 Specify the instance name and the key and value of the instance property:
 
     lxc config set <instance_name> <property_key>=<property_value> <property_key>=<property_value> ... --property
@@ -51,7 +51,7 @@ You can also retrieve a specific property value with:
 (instances-configure-devices)=
 ## Configure devices
 
-To add and configure an instance device for your instance, use the `lxc config device add` command.
+To add and configure an instance device for your instance, use the [`lxc config device add`](lxc_config_device_add.md) command.
 Generally, devices can be added or removed for a container while it is running.
 VMs support hotplugging for some device types, but not all.
 
@@ -75,7 +75,7 @@ For example, to add the storage at `/share/c1` on the host system to your instan
 
     lxc config device add my-container disk-storage-device disk source=/share/c1 path=/opt
 
-To configure instance device options for a device that you have added earlier, use the `lxc config device set` command:
+To configure instance device options for a device that you have added earlier, use the [`lxc config device set`](lxc_config_device_set.md) command:
 
     lxc config device set <instance_name> <device_name> <device_option_key>=<device_option_value> <device_option_key>=<device_option_value> ...
 
@@ -84,8 +84,8 @@ You can also specify device options by using the `--device` flag when {ref}`crea
 This is useful if you want to override device options for a device that is provided through a {ref}`profile <profiles>`.
 ```
 
-To remove a device, use the `lxc config device remove` command.
-See `lxc config device --help` for a full list of available commands.
+To remove a device, use the [`lxc config device remove`](lxc_config_device_remove.md) command.
+See [`lxc config device --help`](lxc_config_device.md) for a full list of available commands.
 
 ## Display instance configuration
 
@@ -101,7 +101,7 @@ To edit the full instance configuration, including writable instance properties,
     lxc config edit <instance_name>
 
 ```{note}
-For convenience, the `lxc config edit` command displays the full configuration including read-only instance properties.
+For convenience, the [`lxc config edit`](lxc_config_edit.md) command displays the full configuration including read-only instance properties.
 However, you cannot edit those properties.
 Any changes are ignored.
 ```

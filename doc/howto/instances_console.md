@@ -5,7 +5,7 @@ discourse: 9223
 (instances-console)=
 # How to access the console
 
-Use the `lxc console` command to attach to instance consoles.
+Use the [`lxc console`](lxc_console.md) command to attach to instance consoles.
 The console is available at boot time already, so you can use it to see boot messages and, if necessary, debug startup issues of a container or VM.
 
 To get an interactive console, enter the following command:
