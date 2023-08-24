@@ -52,8 +52,8 @@ Virtual machines can be moved to another server while they are running, thus wit
 To allow for live migration, you must enable support for stateful migration.
 To do so, ensure the following configuration:
 
-* Set [`migration.stateful`](instance-options-migration) to `true` on the instance.
-* Set [`size.state`](devices-disk) of the virtual machine's root disk device to at least the size of the virtual machine's [`limits.memory`](instance-options-limits) setting.
+* Set {config:option}`instance-migration:migration.stateful` to `true` on the instance.
+* Set [`size.state`](devices-disk) of the virtual machine's root disk device to at least the size of the virtual machine's {config:option}`instance-resource-limits:limits.memory` setting.
 
 (live-migration-containers)=
 ### Live migration for containers
@@ -70,8 +70,8 @@ If you are using the snap, use the following commands to enable CRIU:
 
 Otherwise, make sure you have CRIU installed on both systems.
 
-To optimize the memory transfer for a container, set the [`migration.incremental.memory`](instance-options-migration) property to `true` to make use of the pre-copy features in CRIU.
+To optimize the memory transfer for a container, set the {config:option}`instance-migration:migration.incremental.memory` property to `true` to make use of the pre-copy features in CRIU.
 With this configuration, LXD instructs CRIU to perform a series of memory dumps for the container.
 After each dump, LXD sends the memory dump to the specified remote.
 In an ideal scenario, each memory dump will decrease the delta to the previous memory dump, thereby increasing the percentage of memory that is already synced.
-When the percentage of synced memory is equal to or greater than the threshold specified via [`migration.incremental.memory.goal`](instance-options-migration), or the maximum number of allowed iterations specified via [`migration.incremental.memory.iterations`](instance-options-migration) is reached, LXD instructs CRIU to perform a final memory dump and transfers it.
+When the percentage of synced memory is equal to or greater than the threshold specified via {config:option}`instance-migration:migration.incremental.memory.goal`, or the maximum number of allowed iterations specified via {config:option}`instance-migration:migration.incremental.memory.iterations` is reached, LXD instructs CRIU to perform a final memory dump and transfers it.

@@ -83,7 +83,7 @@ To delete a snapshot, use the following command:
 ### Schedule instance snapshots
 
 You can configure an instance to automatically create snapshots at specific times (at most once every minute).
-To do so, set the [`snapshots.schedule`](instance-options-snapshots) instance option.
+To do so, set the {config:option}`instance-snapshots:snapshots.schedule` instance option.
 
 For example, to configure daily snapshots, use the following command:
 
@@ -93,8 +93,8 @@ To configure taking a snapshot every day at 6 am, use the following command:
 
     lxc config set <instance_name> snapshots.schedule "0 6 * * *"
 
-When scheduling regular snapshots, consider setting an automatic expiry ([`snapshots.expiry`](instance-options-snapshots)) and a naming pattern for snapshots ([`snapshots.pattern`](instance-options-snapshots)).
-You should also configure whether you want to take snapshots of instances that are not running ([`snapshots.schedule.stopped`](instance-options-snapshots)).
+When scheduling regular snapshots, consider setting an automatic expiry ({config:option}`instance-snapshots:snapshots.expiry`) and a naming pattern for snapshots ({config:option}`instance-snapshots:snapshots.pattern`).
+You should also configure whether you want to take snapshots of instances that are not running ({config:option}`instance-snapshots:snapshots.schedule.stopped`).
 
 ### Restore an instance snapshot
 

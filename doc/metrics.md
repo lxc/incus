@@ -62,7 +62,7 @@ You can then configure it to scrape the metrics through the metrics API endpoint
 
 To expose the `/1.0/metrics` API endpoint, you must set the address on which it should be available.
 
-To do so, you can set either the [`core.metrics_address`](server-options-core) server configuration option or the [`core.https_address`](server-options-core) server configuration option.
+To do so, you can set either the {config:option}`server-core:core.metrics_address` server configuration option or the {config:option}`server-core:core.https_address` server configuration option.
 The `core.metrics_address` option is intended for metrics only, while the `core.https_address` option exposes the full API.
 So if you want to use a different address for the metrics API than for the full API, or if you want to expose only the metrics endpoint but not the full API, you should set the `core.metrics_address` option.
 

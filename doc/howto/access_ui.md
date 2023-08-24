@@ -23,7 +23,7 @@ Complete the following steps to access the LXD web UI:
        sudo systemctl reload snap.lxd.daemon
 
 1. Make sure that your LXD server is {ref}`exposed to the network <server-expose>`.
-   You can expose the server during {ref}`initialization <initialize>`, or afterwards by setting the [`core.https_address`](server-options-core) server configuration option.
+   You can expose the server during {ref}`initialization <initialize>`, or afterwards by setting the {config:option}`server-core:core.https_address` server configuration option.
 
 1. Access the UI in your browser by entering the server address (for example, `https://192.0.2.10:8443`).
 

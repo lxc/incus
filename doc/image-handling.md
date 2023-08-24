@@ -21,7 +21,7 @@ When you create an instance using a remote image, LXD downloads the image and ca
 It is stored in the local image store with the cached flag set.
 The image is kept locally as a private image until either:
 
-- The image has not been used to create a new instance for the number of days set in [`images.remote_cache_expiry`](server-options-images).
+- The image has not been used to create a new instance for the number of days set in {config:option}`server-images:images.remote_cache_expiry`.
 - The image's expiry date (one of the image properties; see {ref}`images-manage-edit` for information on how to change it) is reached.
 
 LXD keeps track of the image usage by updating the `last_used_at` image property every time a new instance is spawned from the image.
@@ -37,12 +37,12 @@ If you request an image through a fingerprint, you request an exact image versio
 
 Whether auto-update is enabled for an image depends on how the image was downloaded:
 
-- If the image was downloaded and cached when creating an instance, it is automatically updated if [`images.auto_update_cached`](server-options-images) was set to `true` (the default) at download time.
+- If the image was downloaded and cached when creating an instance, it is automatically updated if {config:option}`server-images:images.auto_update_cached` was set to `true` (the default) at download time.
 - If the image was copied from a remote server using the `lxc image copy` command, it is automatically updated only if the `--auto-update` flag was specified.
 
 You can change this behavior for an image by [editing the `auto_update` property](images-manage-edit).
 
-On startup and after every [`images.auto_update_interval`](server-options-images) (by default, every six hours), the LXD daemon checks for more recent versions of all the images in the store that are marked to be auto-updated and have a recorded source server.
+On startup and after every {config:option}`server-images:images.auto_update_interval` (by default, every six hours), the LXD daemon checks for more recent versions of all the images in the store that are marked to be auto-updated and have a recorded source server.
 
 When a new version of an image is found, it is downloaded into the image store.
 Then any aliases pointing to the old image are moved to the new one, and the old image is removed from the store.

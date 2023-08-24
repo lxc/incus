@@ -18,7 +18,7 @@ Run `lxd cluster --help` for an overview of all available commands.
 
 ## Recover from quorum loss
 
-Every LXD cluster has a specific number of members (configured through [`cluster.max_voters`](server-options-cluster)) that serve as voting members of the distributed database.
+Every LXD cluster has a specific number of members (configured through {config:option}`server-cluster:cluster.max_voters`) that serve as voting members of the distributed database.
 If you permanently lose a majority of these cluster members (for example, you have a three-member cluster and you lose two members), the cluster loses quorum and becomes unavailable.
 However, if at least one database member survives, it is possible to recover the cluster.
 

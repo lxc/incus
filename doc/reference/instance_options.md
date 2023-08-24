@@ -32,6 +32,15 @@ In addition to the configuration options listed in the following sections, these
     :end-before: <!-- config group instance-miscellaneous end -->
 ```
 
+```{config:option} environment.* instance-miscellaneous
+:type: "string"
+:liveupdate: "yes (exec)"
+:shortdesc: "Environment variables for the instance"
+
+You can export key/value environment variables to the instance.
+These are then set for `incus exec`.
+```
+
 (instance-options-boot)=
 ## Boot-related options
 
