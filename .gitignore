@@ -1,19 +1,19 @@
 *.swp
 po/*.mo
 po/*.po~
-lxd-*.tar.gz
+incus-*.tar.gz
 .vagrant
 *~
 tags
 
 # Potential binaries
-fuidshift/fuidshift
-lxc/lxc
-lxc-to-lxd/lxc-to-lxd
-lxd-agent/lxd-agent
-lxd-benchmark/lxd-benchmark
-lxd-migrate/lxd-migrate
-lxd-user/lxd-user
+cmd/fuidshift/fuidshift
+cmd/incus/incus
+cmd/lxc-to-incus/lxc-to-incus
+cmd/incus-agent/incus-agent
+cmd/incus-benchmark/incus-benchmark
+cmd/incus-migrate/incus-migrate
+cmd/incus-user/incus-user
 test/dev_incus-client/dev_incus-client
 test/macaroon-identity/macaroon-identity
 test/syscall/sysinfo/sysinfo
