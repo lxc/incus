@@ -191,6 +191,7 @@ qgroups
 RADOS
 RBAC
 RBD
+README
 reconfiguring
 requestor
 RESTful

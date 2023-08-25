@@ -87,3 +87,34 @@ You can (and should!) run these tests locally as well with the following command
 - Check the validity of links: `make doc-linkcheck`
 - Check the Markdown formatting: `make doc-lint`
 - Check for inclusive language: `make doc-woke`
+
+### Document configuration options
+
+```{note}
+We are currently in the process of moving the documentation of configuration options to code comments.
+At the moment, not all configuration options follow this approach.
+```
+
+The documentation of configuration options is extracted from comments in the Go code.
+Look for comments that start with `gendoc:generate` in the code.
+
+When you add or change a configuration option, make sure to include the required documentation comment for it.
+See the [`incus-doc` README file](https://github.com/lxc/incus/blob/main/lxd/incus-doc/README.md) for information about the format.
+
+Then run `make generate-config` to re-generate the `doc/config_options.txt` file.
+The updated file should be checked in.
+
+The documentation includes sections from the `doc/config_options.txt` to display a group of configuration options.
+For example, to include the core server options:
+
+````
+% Include content from [config_options.txt](config_options.txt)
+```{include} config_options.txt
+    :start-after: <!-- config group server-core start -->
+    :end-before: <!-- config group server-core end -->
+```
+````
+
+If you add a configuration option to an existing group, you don't need to do any updates to the documentation files.
+The new option will automatically be picked up.
+You only need to add an include to a documentation file if you are defining a new group.
