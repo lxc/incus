@@ -8,20 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var logger *log.Logger
-var logFilePath string = "/tmp/incusdoc.log"
-
-func init() {
-	file, err := os.Create(logFilePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	logger = log.New(file, "INCUSDOC: ", log.Ldate|log.Ltime|log.Lshortfile)
-}
-
 var exclude []string
-var yamlOutput string
+var jsonOutput string
 var txtOutput string
 var rootCmd = &cobra.Command{
 	Use:   "incus-doc",
@@ -34,13 +22,13 @@ var rootCmd = &cobra.Command{
 		}
 
 		path := args[0]
-		_, err := parse(path, yamlOutput, exclude)
+		_, err := parse(path, jsonOutput, exclude)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		if txtOutput != "" {
-			err = writeDocFile(yamlOutput, txtOutput)
+			err = writeDocFile(jsonOutput, txtOutput)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -50,7 +38,7 @@ var rootCmd = &cobra.Command{
 
 func main() {
 	rootCmd.Flags().StringSliceVarP(&exclude, "exclude", "e", []string{}, "Path to exclude from the process")
-	rootCmd.Flags().StringVarP(&yamlOutput, "yaml", "y", "incus-doc.yaml", "Output YAML file containing the generated documentation")
+	rootCmd.Flags().StringVarP(&jsonOutput, "json", "j", "configuration.json", "Output JSON file containing the generated configuration")
 	rootCmd.Flags().StringVarP(&txtOutput, "txt", "t", "", "Output TXT file containing the generated documentation")
 	err := rootCmd.Execute()
 	if err != nil {
