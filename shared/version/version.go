@@ -56,7 +56,7 @@ func Parse(s string) (*DottedVersion, error) {
 
 	matches := r.FindStringSubmatch(s)
 	if len(matches) == 0 {
-		return nil, fmt.Errorf("Can't parse a version")
+		return nil, fmt.Errorf("Can't parse a version: %s", s)
 	}
 
 	return NewDottedVersion(matches[1])
