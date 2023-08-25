@@ -21,8 +21,6 @@ test/syscall/sysinfo/sysinfo
 
 # Sphinx
 doc/html/
-doc/config_options.txt
-doc/config_options.yaml
 doc/.sphinx/deps/
 doc/.sphinx/themes/
 doc/.sphinx/venv/
