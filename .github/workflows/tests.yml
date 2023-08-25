@@ -326,7 +326,7 @@ jobs:
         uses: get-woke/woke-action@v0
         with:
           fail-on-error: true
-          woke-args: "*.md **/*.md -c https://github.com/canonical-web-and-design/Inclusive-naming/raw/main/config.yml"
+          woke-args: "*.md **/*.md -c https://github.com/canonical/Inclusive-naming/raw/main/config.yml"
 
       - name: Run link checker
         run: |

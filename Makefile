@@ -155,6 +155,11 @@ doc-linkcheck: doc-setup
 doc-lint:
 	doc/.sphinx/.markdownlint/doc-lint.sh
 
+.PHONY: doc-woke
+doc-woke:
+	type woke >/dev/null 2>&1 || { sudo snap install woke; }
+	woke *.md **/*.md -c https://github.com/canonical/Inclusive-naming/raw/main/config.yml
+
 .PHONY: debug
 debug:
 ifeq "$(TAG_SQLITE3)" ""
