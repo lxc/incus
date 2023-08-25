@@ -52,6 +52,7 @@ dereferenced
 devtmpfs
 DHCP
 DHCPv
+Diátaxis
 Diffie
 DNS
 DNSSEC
