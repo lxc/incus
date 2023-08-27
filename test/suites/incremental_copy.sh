@@ -90,13 +90,13 @@ do_copy() {
   # This will create snapshot c2/snap2
   incus snapshot create c2
   incus config show c2/snap2
-  incus storage volume show "${target_pool}" container/c2/snap2
+  incus storage volume snapshot show "${target_pool}" container/c2/snap2
 
   # This should remove c2/snap2
   # shellcheck disable=2086
   incus copy c1 c2 --refresh ${targetPoolFlag}
   ! incus config show c2/snap2 || false
-  ! incus storage volume show "${target_pool}" container/c2/snap2 || false
+  ! incus storage volume snapshot show "${target_pool}" container/c2/snap2 || false
 
   incus rm -f c1 c2
 }

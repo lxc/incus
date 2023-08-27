@@ -334,9 +334,9 @@ migration() {
 
   incus_remote storage volume create l1:"$remote_pool1" vol1
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=snap0vol1
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol1
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol1
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=snap1vol1
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol1
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol1
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=postsnap1vol1
 
   # remote storage volume and snapshots migration in "pull" mode
@@ -363,7 +363,7 @@ migration() {
 
   # remote storage volume and snapshots migration refresh in "pull" mode
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=snapremovevol1
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol1 snapremove
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol1 snapremove
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=postsnap1vol1
   incus_remote storage volume copy l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol2" --refresh
   incus_remote storage volume delete l1:"$remote_pool1" vol1
@@ -376,11 +376,11 @@ migration() {
   # check remote storage volume refresh from a different volume
   incus_remote storage volume create l1:"$remote_pool1" vol3
   incus_remote storage volume set l1:"$remote_pool1" vol3 user.foo=snap0vol3
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol3
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol3
   incus_remote storage volume set l1:"$remote_pool1" vol3 user.foo=snap1vol3
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol3
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol3
   incus_remote storage volume set l1:"$remote_pool1" vol3 user.foo=snap2vol3
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol3
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol3
   incus_remote storage volume set l1:"$remote_pool1" vol3 user.foo=postsnap1vol3
 
   # check snapshot volumes and snapshots are refreshed
@@ -398,7 +398,7 @@ migration() {
   # remote storage volume migration in "push" mode
   incus_remote storage volume create l1:"$remote_pool1" vol1
   incus_remote storage volume create l1:"$remote_pool1" vol2
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol2
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol2
 
   incus_remote storage volume copy l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol2" --mode=push
   incus_remote storage volume move l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol3" --mode=push
@@ -416,7 +416,7 @@ migration() {
   # remote storage volume migration in "relay" mode
   incus_remote storage volume create l1:"$remote_pool1" vol1
   incus_remote storage volume create l1:"$remote_pool1" vol2
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol2
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol2
 
   incus_remote storage volume copy l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol2" --mode=relay
   incus_remote storage volume move l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol3" --mode=relay

@@ -106,9 +106,9 @@ EOF
     incus snapshot create c1
     incus info c1
 
-    incus storage volume snapshot "${poolName}" vol1_test snap0
+    incus storage volume snapshot create "${poolName}" vol1_test snap0
     incus storage volume show "${poolName}" vol1_test
-    incus storage volume show "${poolName}" vol1_test/snap0
+    incus storage volume snapshot show "${poolName}" vol1_test/snap0
 
     # Remove container DB records and symlink.
     incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
@@ -136,7 +136,7 @@ EOF
     ! ls "${INCUS_DIR}/containers/test_c1" || false
     ! incus info c1 || false
     ! incus storage volume show "${poolName}" container/c1 || false
-    ! incus storage volume show "${poolName}" container/c1/snap0 || false
+    ! incus storage volume snapshot show "${poolName}" container/c1/snap0 || false
 
     if [ "$poolDriver" != "dir" ] && [ "$poolDriver" != "btrfs" ] && [ "$poolDriver" != "cephfs" ]; then
       ! ls "${INCUS_DIR}/storage-pools/${poolName}/containers/test_c1" || false
@@ -145,7 +145,7 @@ EOF
 
     # Check custom volume appears removed.
     ! incus storage volume show "${poolName}" vol1_test || false
-    ! incus storage volume show "${poolName}" vol1_test/snap0 || false
+    ! incus storage volume snapshot show "${poolName}" vol1_test/snap0 || false
 
     # Shutdown Incus so pools are unmounted.
     shutdown_incus "${INCUS_DIR}"
@@ -175,13 +175,13 @@ EOF
 
     # Check custom volume record exists with snapshot.
     incus storage volume show "${poolName}" vol1_test
-    incus storage volume show "${poolName}" vol1_test/snap0
+    incus storage volume snapshot show "${poolName}" vol1_test/snap0
 
     # Check snapshot exists and container can be started.
     incus info c1 | grep snap0
     incus storage volume ls "${poolName}"
     incus storage volume show "${poolName}" container/c1
-    incus storage volume show "${poolName}" container/c1/snap0
+    incus storage volume snapshot show "${poolName}" container/c1/snap0
     incus start c1
     incus exec c1 --project test -- hostname
 
@@ -700,13 +700,13 @@ test_backup_volume_export_with_project() {
 
   # Snapshot the custom volume.
   incus storage volume set "${custom_vol_pool}" testvol user.foo=test-snap0
-  incus storage volume snapshot "${custom_vol_pool}" testvol test-snap0
+  incus storage volume snapshot create "${custom_vol_pool}" testvol test-snap0
 
   # Change the content (the snapshot will contain the old value).
   echo bar | incus file push - c1/mnt/test
 
   incus storage volume set "${custom_vol_pool}" testvol user.foo=test-snap1
-  incus storage volume snapshot "${custom_vol_pool}" testvol test-snap1
+  incus storage volume snapshot create "${custom_vol_pool}" testvol test-snap1
   incus storage volume set "${custom_vol_pool}" testvol user.foo=post-test-snap1
 
   if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
@@ -782,7 +782,7 @@ test_backup_volume_export_with_project() {
   incus storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol.tar.gz"
   incus storage volume ls "${custom_vol_pool}"
   incus storage volume get "${custom_vol_pool}" testvol user.foo | grep -Fx "post-test-snap1"
-  incus storage volume show "${custom_vol_pool}" testvol/test-snap0
+  incus storage volume snapshot show "${custom_vol_pool}" testvol/test-snap0
   incus storage volume get "${custom_vol_pool}" testvol/test-snap0 user.foo | grep -Fx "test-snap0"
   incus storage volume get "${custom_vol_pool}" testvol/test-snap1 user.foo | grep -Fx "test-snap1"
 

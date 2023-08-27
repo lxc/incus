@@ -386,8 +386,8 @@ test_snap_volume_db_recovery() {
   ! incus start c1 || false # Shouldn't be able to start as backup.yaml generation checks for DB consistency.
   incusd shutdown
   respawn_incus "${INCUS_DIR}" true
-  incus storage volume show "${poolName}" container/c1/snap0 | grep "Auto repaired"
-  incus storage volume show "${poolName}" container/c1/snap1 | grep "Auto repaired"
+  incus storage volume snapshot show "${poolName}" container/c1/snap0 | grep "Auto repaired"
+  incus storage volume snapshot show "${poolName}" container/c1/snap1 | grep "Auto repaired"
   incus start c1
   incus delete -f c1
 }
