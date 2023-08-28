@@ -1618,8 +1618,8 @@ type cmdStorageVolumeRename struct {
 
 func (c *cmdStorageVolumeRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("rename", i18n.G("[<remote>:]<pool> <old name>[/<old snapshot name>] <new name>[/<new snapshot name>]"))
-	cmd.Short = i18n.G("Rename storage volumes and storage volume snapshots")
+	cmd.Use = usage("rename", i18n.G("[<remote>:]<pool> <old name> <new name>"))
+	cmd.Short = i18n.G("Rename storage volumes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Rename storage volumes`))
 
@@ -1652,53 +1652,6 @@ func (c *cmdStorageVolumeRename) Run(cmd *cobra.Command, args []string) error {
 
 	// Parse the input
 	volName, volType := c.storageVolume.parseVolume("custom", args[1])
-
-	isSnapshot := false
-	fields := strings.Split(volName, "/")
-	if len(fields) > 2 {
-		return fmt.Errorf(i18n.G("Invalid snapshot name"))
-	} else if len(fields) > 1 {
-		isSnapshot = true
-	}
-
-	if isSnapshot {
-		// Create the storage volume entry
-		vol := api.StorageVolumeSnapshotPost{}
-		dstParentName, dstSnapName, dstIsSnap := api.GetParentAndSnapshotName(args[2])
-
-		if dstParentName != fields[0] {
-			return fmt.Errorf(i18n.G("Invalid new snapshot name, parent volume must be the same as source"))
-		}
-
-		if !dstIsSnap {
-			return fmt.Errorf(i18n.G("Invalid new snapshot name"))
-		}
-
-		vol.Name = dstSnapName
-
-		// If a target member was specified, get the volume with the matching
-		// name on that member, if any.
-		if c.storage.flagTarget != "" {
-			client = client.UseTarget(c.storage.flagTarget)
-		}
-
-		if len(fields) != 2 {
-			return fmt.Errorf(i18n.G("Not a snapshot name"))
-		}
-
-		op, err := client.RenameStoragePoolVolumeSnapshot(resource.name, volType, fields[0], fields[1], vol)
-		if err != nil {
-			return err
-		}
-
-		err = op.Wait()
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf(i18n.G(`Renamed storage volume from "%s" to "%s"`)+"\n", volName, vol.Name)
-		return nil
-	}
 
 	// Create the storage volume entry
 	vol := api.StorageVolumePost{}
