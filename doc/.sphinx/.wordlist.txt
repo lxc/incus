@@ -118,6 +118,7 @@ kbit
 KiB
 kibi
 Kibit
+KVM
 lookups
 LRU
 LTS
