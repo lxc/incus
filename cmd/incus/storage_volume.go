@@ -1830,7 +1830,7 @@ type cmdStorageVolumeShow struct {
 
 func (c *cmdStorageVolumeShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("show", i18n.G("[<remote>:]<pool> [<type>/]<volume>[/<snapshot>]"))
+	cmd.Use = usage("show", i18n.G("[<remote>:]<pool> [<type>/]<volume>"))
 	cmd.Short = i18n.G("Show storage volume configurations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show storage volume configurations`))
@@ -1844,10 +1844,7 @@ incus storage volume show default data
     Will show the properties of a custom volume called "data" in the "default" pool.
 
 incus storage volume show default container/data
-    Will show the properties of the filesystem for a container called "data" in the "default" pool.
-
-incus storage volume show default virtual-machine/data/snap0
-    Will show the properties of snapshot "snap0" for a virtual machine called "data" in the "default" pool.`))
+    Will show the properties of the filesystem for a container called "data" in the "default" pool.`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
@@ -1879,14 +1876,6 @@ func (c *cmdStorageVolumeShow) Run(cmd *cobra.Command, args []string) error {
 	// Parse the input
 	volName, volType := c.storageVolume.parseVolume("custom", args[1])
 
-	isSnapshot := false
-	fields := strings.Split(volName, "/")
-	if len(fields) > 2 {
-		return fmt.Errorf(i18n.G("Invalid snapshot name"))
-	} else if len(fields) > 1 {
-		isSnapshot = true
-	}
-
 	// If a target member was specified, get the volume with the matching
 	// name on that member, if any.
 	if c.storage.flagTarget != "" {
@@ -1894,22 +1883,6 @@ func (c *cmdStorageVolumeShow) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get the storage volume entry
-	if isSnapshot {
-		vol, _, err := client.GetStoragePoolVolumeSnapshot(resource.name, volType, fields[0], fields[1])
-		if err != nil {
-			return err
-		}
-
-		data, err := yaml.Marshal(&vol)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("%s", data)
-
-		return nil
-	}
-
 	vol, _, err := client.GetStoragePoolVolume(resource.name, volType, volName)
 	if err != nil {
 		return err
