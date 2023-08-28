@@ -599,7 +599,7 @@ type cmdStorageVolumeDelete struct {
 
 func (c *cmdStorageVolumeDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("delete", i18n.G("[<remote>:]<pool> <volume>[/<snapshot>]"))
+	cmd.Use = usage("delete", i18n.G("[<remote>:]<pool> <volume>"))
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete storage volumes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -639,24 +639,10 @@ func (c *cmdStorageVolumeDelete) Run(cmd *cobra.Command, args []string) error {
 		client = client.UseTarget(c.storage.flagTarget)
 	}
 
-	fields := strings.SplitN(volName, "/", 2)
-	if len(fields) == 2 {
-		// Delete the snapshot
-		op, err := client.DeleteStoragePoolVolumeSnapshot(resource.name, volType, fields[0], fields[1])
-		if err != nil {
-			return err
-		}
-
-		err = op.Wait()
-		if err != nil {
-			return err
-		}
-	} else {
-		// Delete the volume
-		err := client.DeleteStoragePoolVolume(resource.name, volType, volName)
-		if err != nil {
-			return err
-		}
+	// Delete the volume
+	err = client.DeleteStoragePoolVolume(resource.name, volType, volName)
+	if err != nil {
+		return err
 	}
 
 	if !c.global.flagQuiet {
