@@ -1,5 +1,5 @@
-#ifndef __LXD_SYSCALL_WRAPPER_H
-#define __LXD_SYSCALL_WRAPPER_H
+#ifndef __INCUS_SYSCALL_WRAPPER_H
+#define __INCUS_SYSCALL_WRAPPER_H
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
@@ -22,7 +22,7 @@
 #define CLOSE_RANGE_CLOEXEC (1U << 2)
 #endif
 
-static inline int lxd_close_range(unsigned int fd, unsigned int max_fd, unsigned int flags)
+static inline int incus_close_range(unsigned int fd, unsigned int max_fd, unsigned int flags)
 {
 	return syscall(__NR_close_range, fd, max_fd, flags);
 }
@@ -133,4 +133,4 @@ static inline bool filetable_shared(pid_t pid1, pid_t pid2)
 	return kcmp(pid1, pid2, KCMP_FILES, -EBADF, -EBADF) == 0;
 }
 
-#endif /* __LXD_SYSCALL_WRAPPER_H */
+#endif /* __INCUS_SYSCALL_WRAPPER_H */

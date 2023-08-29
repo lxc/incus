@@ -1,5 +1,5 @@
-#ifndef __LXD_FILE_UTILS_H
-#define __LXD_FILE_UTILS_H
+#ifndef __INCUS_FILE_UTILS_H
+#define __INCUS_FILE_UTILS_H
 
 #include "config.h"
 
@@ -30,4 +30,4 @@ static inline ssize_t write_nointr(int fd, const void *buf, size_t count)
 	return ret;
 }
 
-#endif /* __LXD_FILE_UTILS_H */
+#endif /* __INCUS_FILE_UTILS_H */

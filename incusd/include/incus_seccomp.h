@@ -1,5 +1,5 @@
-#ifndef LXD_SECCOMP_H
-#define LXD_SECCOMP_H
+#ifndef INCUS_SECCOMP_H
+#define INCUS_SECCOMP_H
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
@@ -88,4 +88,4 @@ struct seccomp_notif_addfd {
 	__u32 newfd_flags;
 };
 #endif
-#endif /* LXD_SECCOMP_H */
+#endif /* INCUS_SECCOMP_H */
