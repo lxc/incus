@@ -38,7 +38,7 @@ func PasswordCheck(secret string, password string) error {
 	return nil
 }
 
-// LoadCert reads the LXD server certificate from the given var dir.
+// LoadCert reads the server certificate from the given var dir.
 //
 // If a cluster certificate is found it will be loaded instead.
 // If neither a server or cluster certfificate exists, a new server certificate will be generated.
@@ -56,7 +56,7 @@ func LoadCert(dir string) (*shared.CertInfo, error) {
 	return cert, nil
 }
 
-// LoadClusterCert reads the LXD cluster certificate from the given var dir.
+// LoadClusterCert reads the cluster certificate from the given var dir.
 //
 // If a cluster certificate doesn't exist, a new one is generated.
 func LoadClusterCert(dir string) (*shared.CertInfo, error) {
@@ -70,7 +70,7 @@ func LoadClusterCert(dir string) (*shared.CertInfo, error) {
 	return cert, nil
 }
 
-// LoadServerCert reads the LXD server certificate from the given var dir.
+// LoadServerCert reads the server certificate from the given var dir.
 func LoadServerCert(dir string) (*shared.CertInfo, error) {
 	prefix := "server"
 	cert, err := shared.KeyPairAndCA(dir, prefix, shared.CertServer, true)
@@ -82,7 +82,7 @@ func LoadServerCert(dir string) (*shared.CertInfo, error) {
 }
 
 // WriteCert writes the given material to the appropriate certificate files in
-// the given LXD var directory.
+// the given directory.
 func WriteCert(dir, prefix string, cert, key, ca []byte) error {
 	err := os.WriteFile(filepath.Join(dir, prefix+".crt"), cert, 0644)
 	if err != nil {
