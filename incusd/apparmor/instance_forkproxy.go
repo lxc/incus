@@ -57,7 +57,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /run/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
   /usr/lib/systemd/resolv.conf r,
 
-  # Needed for lxd fork commands
+  # Needed for the fork sub-commands
   {{ .exePath }} mr,
   @{PROC}/@{pid}/cmdline r,
   /{etc,lib,usr/lib}/os-release r,

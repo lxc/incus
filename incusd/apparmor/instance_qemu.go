@@ -36,7 +36,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /sys/class/                               r,
   /sys/devices/**                           r,
   /sys/module/vhost/**                      r,
-  /tmp/lxd_sev_*                            r,
+  /tmp/incus_sev_*                          r,
   /{,usr/}bin/qemu*                         mrix,
   {{ .ovmfPath }}/OVMF_CODE.fd              kr,
   {{ .ovmfPath }}/OVMF_CODE_*.fd            kr,
@@ -63,7 +63,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   {{ .path }}/** rwk,
   {{ .devicesPath }}/** rwk,
 
-  # Needed for lxd fork commands
+  # Needed for the fork sub-commands
   {{ .exePath }} mr,
   @{PROC}/@{pid}/cmdline r,
   /{etc,lib,usr/lib}/os-release r,

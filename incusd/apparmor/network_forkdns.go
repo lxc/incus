@@ -27,7 +27,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   {{ .varPath }}/networks/{{ .networkName }}/dnsmasq.leases r,
   {{ .varPath }}/networks/{{ .networkName }}/forkdns.servers/servers.conf r,
 
-  # Needed for lxd fork commands
+  # Needed for the fork sub-commands
   @{PROC}/@{pid}/cpuset r,
   {{ .exePath }} mr,
   @{PROC}/@{pid}/cmdline r,
