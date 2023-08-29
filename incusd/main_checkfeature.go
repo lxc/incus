@@ -421,7 +421,7 @@ static int is_pidfd_aware(void)
 	__do_close int pidfd = -EBADF;
 	int ret;
 
-	pidfd = lxd_pidfd_open(getpid(), 0);
+	pidfd = incus_pidfd_open(getpid(), 0);
 	if (pidfd < 0)
 		return -EBADF;
 
@@ -437,7 +437,7 @@ static int is_pidfd_aware(void)
 	if (ret < 0 && errno != ECHILD)
 		return -errno;
 
-	ret = lxd_pidfd_send_signal(pidfd, 0, NULL, 0);
+	ret = incus_pidfd_send_signal(pidfd, 0, NULL, 0);
 	if (ret)
 		return -errno;
 
@@ -485,7 +485,7 @@ static void is_close_range_aware(void)
 	if (fd < 0)
 		return;
 
-	if (lxd_close_range(fd, fd, CLOSE_RANGE_UNSHARE))
+	if (incus_close_range(fd, fd, CLOSE_RANGE_UNSHARE))
 		return;
 
 	close_range_aware = true;
@@ -558,7 +558,7 @@ static bool kernel_supports_idmapped_mounts(void)
 	};
 	int ret;
 
-	fd_tree = lxd_open_tree(-EBADF, "/", OPEN_TREE_CLONE | OPEN_TREE_CLOEXEC);
+	fd_tree = incus_open_tree(-EBADF, "/", OPEN_TREE_CLONE | OPEN_TREE_CLOEXEC);
 	if (fd_tree < 0)
 		return false;
 
@@ -569,7 +569,7 @@ static bool kernel_supports_idmapped_mounts(void)
 	// If the kernel supports idmapped mounts at all we will get a EBADF
 	// for trying to create one from an invalid O_PATH fd.
 	attr.userns_fd = fd_devnull;
-	ret = lxd_mount_setattr(fd_tree, "", AT_EMPTY_PATH, &attr, sizeof(attr));
+	ret = incus_mount_setattr(fd_tree, "", AT_EMPTY_PATH, &attr, sizeof(attr));
 	if (ret && (errno == EBADF))
 		return true;
 

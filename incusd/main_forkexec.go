@@ -217,7 +217,7 @@ __attribute__ ((noinline)) static int __forkexec(void)
 	if (!argvp || !*argvp)
 		return log_error(EXIT_FAILURE, "No command specified");
 
-	ret = lxd_close_range(EXEC_PIPE_FD + 1, UINT_MAX, CLOSE_RANGE_UNSHARE);
+	ret = incus_close_range(EXEC_PIPE_FD + 1, UINT_MAX, CLOSE_RANGE_UNSHARE);
 	if (ret) {
 		// Fallback to close_inherited() when the syscall is not
 		// available or when CLOSE_RANGE_UNSHARE isn't supported.
