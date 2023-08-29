@@ -37,13 +37,13 @@ type RootFSEntryItem struct {
 	Opts []string // Describes the mount options associated with the filesystem.
 }
 
-// USBDeviceItem represents a single USB device matched from LXD USB device specification.
+// USBDeviceItem represents a single USB device matched from a USB device specification.
 type USBDeviceItem struct {
 	DeviceName     string
 	HostDevicePath string
 }
 
-// RunConfig represents LXD defined run-time config used for device setup/cleanup.
+// RunConfig represents run-time config used for device setup/cleanup.
 type RunConfig struct {
 	RootFS           RootFSEntryItem  // RootFS to setup.
 	NetworkInterface []RunConfigItem  // Network interface configuration settings.
