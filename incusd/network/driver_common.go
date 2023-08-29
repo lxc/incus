@@ -76,7 +76,7 @@ type externalSubnetUsage struct {
 	instanceDevice  string
 }
 
-// common represents a generic LXD network.
+// common represents a generic network.
 type common struct {
 	logger      logger.Logger
 	state       *state.State

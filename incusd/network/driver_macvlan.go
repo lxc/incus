@@ -11,7 +11,7 @@ import (
 	"github.com/lxc/incus/shared/validate"
 )
 
-// macvlan represents a LXD macvlan network.
+// macvlan represents a macvlan network.
 type macvlan struct {
 	common
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/lxc/incus/shared/validate"
 )
 
-// physical represents a LXD physical network.
+// physical represents a physical network.
 type physical struct {
 	common
 }
@@ -205,7 +205,7 @@ func (n *physical) setup(oldConfig map[string]string) error {
 	}
 
 	// Record if we created this device or not (if we have not already recorded that we created it previously),
-	// so it can be removed on stop. This way we won't overwrite the setting on LXD restart.
+	// so it can be removed on stop. This way we won't overwrite the setting on daemon restart.
 	if shared.IsFalseOrEmpty(n.config["volatile.last_state.created"]) {
 		n.config["volatile.last_state.created"] = fmt.Sprintf("%t", created)
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {

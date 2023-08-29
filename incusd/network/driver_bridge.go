@@ -54,7 +54,7 @@ var forkdnsServersLock sync.Mutex
 // Default MTU for bridge interface.
 const bridgeMTUDefault = 1500
 
-// bridge represents a LXD bridge network.
+// bridge represents a bridge network.
 type bridge struct {
 	common
 }
@@ -1405,7 +1405,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 		// If clusterAddress is non-empty, this indicates the intention for this node to be
 		// part of a cluster and so we should ensure that dnsmasq and forkdns are started
-		// in cluster mode. Note: During LXD initialisation the cluster may not actually be
+		// in cluster mode. Note: During initialisation the cluster may not actually be
 		// setup yet, but we want the DNS processes to be ready for when it is.
 		if localClusterAddress != "" {
 			dnsClustered = true
@@ -1592,7 +1592,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Check for dnsmasq.
 		_, err := exec.LookPath("dnsmasq")
 		if err != nil {
-			return fmt.Errorf("dnsmasq is required for LXD managed bridges")
+			return fmt.Errorf("dnsmasq is required for managed bridges")
 		}
 
 		// Update the static leases.
