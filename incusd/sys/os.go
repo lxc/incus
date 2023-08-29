@@ -38,8 +38,7 @@ type InotifyInfo struct {
 	Targets map[string]*InotifyTargetInfo
 }
 
-// OS is a high-level facade for accessing all operating-system
-// level functionality that LXD uses.
+// OS is a high-level facade for accessing operating-system level functionalities.
 type OS struct {
 	// Directories
 	CacheDir string // Cache directory (e.g. /var/cache/incus/).
@@ -49,7 +48,7 @@ type OS struct {
 	// Daemon environment
 	Architectures   []int           // Cache of detected system architectures
 	BackingFS       string          // Backing filesystem of $INCUS_DIR/containers
-	ExecPath        string          // Absolute path to the LXD executable
+	ExecPath        string          // Absolute path to the daemon
 	IdmapSet        *idmap.IdmapSet // Information about user/group ID mapping
 	InotifyWatch    InotifyInfo
 	LxcPath         string // Path to the $INCUS_DIR/containers directory
@@ -135,7 +134,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 	}
 
 	// Detect if it is possible to run daemons as an unprivileged user and group.
-	for _, userName := range []string{"lxd", "nobody"} {
+	for _, userName := range []string{"incus", "nobody"} {
 		u, err := user.Lookup(userName)
 		if err != nil {
 			continue
@@ -151,7 +150,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 		break
 	}
 
-	for _, groupName := range []string{"lxd", "nogroup"} {
+	for _, groupName := range []string{"incus", "nogroup"} {
 		g, err := user.LookupGroup(groupName)
 		if err != nil {
 			continue
