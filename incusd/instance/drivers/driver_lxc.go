@@ -969,7 +969,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 			profile := apparmor.InstanceProfileName(d)
 
 			/* In the nesting case, we want to enable the inside
-			 * LXD to load its profile. Unprivileged containers can
+			 * daemon to load its profile. Unprivileged containers can
 			 * load profiles, but privileged containers cannot, so
 			 * let's not use a namespace so they can fall back to
 			 * the old way of nesting, i.e. using the parent's
@@ -1431,7 +1431,7 @@ func (d *lxc) deviceStart(dev device.Device, instanceRunning bool) (*deviceConfi
 				}
 			}
 
-			// If running, run post start hooks now (if not running LXD will run them
+			// If running, run post start hooks now (if not running, they will be run
 			// once the instance is started).
 			err = d.runHooks(runConf.PostHooks)
 			if err != nil {
@@ -1451,7 +1451,7 @@ func (d *lxc) deviceStaticShiftMounts(mounts []deviceConfig.MountEntryItem) erro
 		return fmt.Errorf("Failed to get idmap for device: %s", err)
 	}
 
-	// If there is an idmap being applied and LXD not running in a user namespace then shift the
+	// If there is an idmap being applied and the daemon is not running in a user namespace then shift the
 	// device files before they are mounted.
 	if idmapSet != nil && !d.state.OS.RunningInUserNS {
 		for _, mount := range mounts {
@@ -2245,7 +2245,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 // detachInterfaceRename enters the container's network namespace and moves the named interface
 // in ifName back to the network namespace of the running process as the name specified in hostName.
 func (d *lxc) detachInterfaceRename(netns string, ifName string, hostName string) error {
-	lxdPID := os.Getpid()
+	daemonPID := os.Getpid()
 
 	// Run forknet detach
 	_, err := shared.RunCommand(
@@ -2254,7 +2254,7 @@ func (d *lxc) detachInterfaceRename(netns string, ifName string, hostName string
 		"detach",
 		"--",
 		netns,
-		fmt.Sprintf("%d", lxdPID),
+		fmt.Sprintf("%d", daemonPID),
 		ifName,
 		hostName,
 	)
@@ -2978,7 +2978,7 @@ func (d *lxc) cleanupDevices(instanceRunning bool, stopHookNetnsPath string) {
 		}
 
 		// If a usable device was returned from deviceLoad try to stop anyway, even if validation fails.
-		// This allows for the scenario where a new version of LXD has additional validation restrictions
+		// This allows for the scenario where a new version has additional validation restrictions
 		// than older versions and we still need to allow previously valid devices to be stopped even if
 		// they are no longer considered valid.
 		if dev != nil {
@@ -4748,7 +4748,7 @@ func (d *lxc) Export(w io.Writer, properties map[string]string, expiration time.
 	fnam := filepath.Join(cDir, "metadata.yaml")
 	if !shared.PathExists(fnam) {
 		// Generate a new metadata.yaml.
-		tempDir, err := os.MkdirTemp("", "lxd_lxd_metadata_")
+		tempDir, err := os.MkdirTemp("", "incus_metadata_")
 		if err != nil {
 			_ = tarWriter.Close()
 			d.logger.Error("Failed exporting instance", ctxMap)
@@ -4846,7 +4846,7 @@ func (d *lxc) Export(w io.Writer, properties map[string]string, expiration time.
 
 		if properties != nil || !expiration.IsZero() {
 			// Generate a new metadata.yaml.
-			tempDir, err := os.MkdirTemp("", "lxd_lxd_metadata_")
+			tempDir, err := os.MkdirTemp("", "incus_metadata_")
 			if err != nil {
 				_ = tarWriter.Close()
 				d.logger.Error("Failed exporting instance", ctxMap)
@@ -5243,7 +5243,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 			rsyncBwlimit := pool.Driver().Config()["rsync.bwlimit"]
 			rsyncFeatures := respHeader.GetRsyncFeaturesSlice()
 			if !shared.StringInSlice("bidirectional", rsyncFeatures) {
-				// If no bi-directional support, assume LXD 3.7 level.
+				// If no bi-directional support, assume 3.7 level.
 				// NOTE: Do NOT extend this list of arguments.
 				rsyncFeatures = []string{"xattrs", "delete", "compress"}
 			}
@@ -5254,7 +5254,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 				return fmt.Errorf("Formats other than criu rsync not understood (%q)", respHeader.Criu)
 			}
 
-			checkpointDir, err := os.MkdirTemp("", "lxd_checkpoint_")
+			checkpointDir, err := os.MkdirTemp("", "incus_checkpoint_")
 			if err != nil {
 				return err
 			}
@@ -5988,7 +5988,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		// For containers, the fs map of the source is sent as part of the migration
 		// stream, then at the end we need to record that map as last_state so that
-		// LXD can shift on startup if needed.
+		// shifting can happen on startup if needed.
 		err = d.resetContainerDiskIdmap(srcIdmap)
 		if err != nil {
 			return err
@@ -6014,7 +6014,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 			defer close(stateTransferDone)
 
-			imagesDir, err := os.MkdirTemp("", "lxd_restore_")
+			imagesDir, err := os.MkdirTemp("", "incus_restore_")
 			if err != nil {
 				return err
 			}
@@ -6197,8 +6197,8 @@ func (d *lxc) migrate(args *instance.CriuMigrationArgs) error {
 	finalStateDir := args.StateDir
 	var migrateErr error
 
-	/* For restore, we need an extra fork so that we daemonize monitor
-	 * instead of having it be a child of LXD, so let's hijack the command
+	/* For restore, we need an extra fork so that we daemonize the monitor
+	 * instead of having it be a child. So let's hijack the command
 	 * here and do the extra fork.
 	 */
 	if args.Cmd == liblxc.MIGRATE_RESTORE {
@@ -7160,7 +7160,7 @@ func (d *lxc) networkState(hostInterfaces []net.Interface) map[string]api.Instan
 
 		// Process forkgetnet response
 		if err != nil {
-			d.logger.Error("Error calling 'lxd forknet", logger.Ctx{"err": err, "pid": pid})
+			d.logger.Error("Error calling 'forknet", logger.Ctx{"err": err, "pid": pid})
 			return result
 		}
 
@@ -7296,13 +7296,13 @@ func (d *lxc) unmount() error {
 	return nil
 }
 
-// insertMountLXD inserts a mount into a LXD container.
+// insertMountGo inserts a mount into a container.
 // This function is used for the seccomp notifier and so cannot call any
 // functions that would cause LXC to talk to the container's monitor. Otherwise
 // we'll have a deadlock (with a timeout but still). The InitPID() call here is
 // the exception since the seccomp notifier will make sure to always pass a
 // valid PID.
-func (d *lxc) insertMountLXD(source, target, fstype string, flags int, mntnsPID int, idmapType idmap.IdmapStorageType) error {
+func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID int, idmapType idmap.IdmapStorageType) error {
 	pid := mntnsPID
 	if pid <= 0 {
 		// Get the init PID
@@ -7317,12 +7317,12 @@ func (d *lxc) insertMountLXD(source, target, fstype string, flags int, mntnsPID 
 	var tmpMount string
 	var err error
 	if shared.IsDir(source) {
-		tmpMount, err = os.MkdirTemp(d.ShmountsPath(), "lxdmount_")
+		tmpMount, err = os.MkdirTemp(d.ShmountsPath(), "incus_mount_")
 		if err != nil {
 			return fmt.Errorf("Failed to create shmounts path: %s", err)
 		}
 	} else {
-		f, err := os.CreateTemp(d.ShmountsPath(), "lxdmount_")
+		f, err := os.CreateTemp(d.ShmountsPath(), "incus_mount_")
 		if err != nil {
 			return fmt.Errorf("Failed to create shmounts path: %s", err)
 		}
@@ -7375,7 +7375,7 @@ func (d *lxc) insertMountLXD(source, target, fstype string, flags int, mntnsPID 
 		[]*os.File{pidFd},
 		d.state.OS.ExecPath,
 		"forkmount",
-		"lxd-mount",
+		"go-mount",
 		"--",
 		pidStr,
 		fmt.Sprintf("%d", pidFdNr),
@@ -7476,7 +7476,7 @@ func (d *lxc) insertMount(source, target, fstype string, flags int, idmapType id
 		return d.insertMountLXC(source, target, fstype, flags)
 	}
 
-	return d.insertMountLXD(source, target, fstype, flags, -1, idmapType)
+	return d.insertMountGo(source, target, fstype, flags, -1, idmapType)
 }
 
 func (d *lxc) removeMount(mount string) error {
@@ -7519,7 +7519,7 @@ func (d *lxc) removeMount(mount string) error {
 			[]*os.File{pidFd},
 			d.state.OS.ExecPath,
 			"forkmount",
-			"lxd-umount",
+			"go-umount",
 			"--",
 			fmt.Sprintf("%d", pid),
 			fmt.Sprintf("%d", pidFdNr),
@@ -7586,7 +7586,7 @@ func (d *lxc) InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid 
 
 	// Bind-mount it into the container
 	defer func() { _ = os.Remove(devPath) }()
-	return d.insertMountLXD(devPath, tgtPath, "none", unix.MS_BIND, pid, idmap.IdmapStorageNone)
+	return d.insertMountGo(devPath, tgtPath, "none", unix.MS_BIND, pid, idmap.IdmapStorageNone)
 }
 
 func (d *lxc) removeUnixDevices() error {
@@ -8411,7 +8411,7 @@ func (d *lxc) loadRawLXCConfig(cc *liblxc.Container) error {
 	}
 
 	// Write to temp config file.
-	f, err := os.CreateTemp("", "lxd_config_")
+	f, err := os.CreateTemp("", "incus_config_")
 	if err != nil {
 		return err
 	}

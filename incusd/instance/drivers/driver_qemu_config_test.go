@@ -125,14 +125,14 @@ func TestQemuConfigTemplates(t *testing.T) {
 			bus = "qemu_pcie0"
 			addr = "00.5"
 
-			# LXD serial identifier
+			# Serial identifier
 			[chardev "qemu_serial-chardev"]
 			backend = "ringbuf"
 			size = "32B"
 
 			[device "qemu_serial"]
 			driver = "virtserialport"
-			name = "org.linuxcontainers.lxd"
+			name = "org.linuxcontainers.incus"
 			chardev = "qemu_serial-chardev"
 			bus = "dev-qemu_serial.0"
 
@@ -839,18 +839,18 @@ func TestQemuConfigTemplates(t *testing.T) {
 				proxyFD:  5,
 			},
 			`# stub drive (9p)
-			[fsdev "lxd_stub"]
+			[fsdev "incus_stub"]
 			fsdriver = "proxy"
 			sock_fd = "5"
 			readonly = "off"
 
-			[device "dev-lxd_stub-9p"]
+			[device "dev-incus_stub-9p"]
 			driver = "virtio-9p-pci"
 			bus = "qemu_pcie0"
 			addr = "00.5"
 			multifunction = "on"
 			mount_tag = "mtag"
-			fsdev = "lxd_stub"`,
+			fsdev = "incus_stub"`,
 		}, {
 			qemuDriveDirOpts{
 				dev:      qemuDevOpts{"pcie", "qemu_pcie1", "10.2", false},
@@ -860,16 +860,16 @@ func TestQemuConfigTemplates(t *testing.T) {
 				protocol: "virtio-fs",
 			},
 			`# vfs drive (virtio-fs)
-			[chardev "lxd_vfs"]
+			[chardev "incus_vfs"]
 			backend = "socket"
 			path = "/dev/virtio"
 
-			[device "dev-lxd_vfs-virtio-fs"]
+			[device "dev-incus_vfs-virtio-fs"]
 			driver = "vhost-user-fs-pci"
 			bus = "qemu_pcie1"
 			addr = "10.2"
 			tag = "vtag"
-			chardev = "lxd_vfs"`,
+			chardev = "incus_vfs"`,
 		}, {
 			qemuDriveDirOpts{
 				dev:      qemuDevOpts{"ccw", "qemu_pcie0", "00.0", true},
@@ -879,15 +879,15 @@ func TestQemuConfigTemplates(t *testing.T) {
 				protocol: "virtio-fs",
 			},
 			`# vfs drive (virtio-fs)
-			[chardev "lxd_vfs"]
+			[chardev "incus_vfs"]
 			backend = "socket"
 			path = "/dev/vio"
 
-			[device "dev-lxd_vfs-virtio-fs"]
+			[device "dev-incus_vfs-virtio-fs"]
 			driver = "vhost-user-fs-ccw"
 			multifunction = "on"
 			tag = "vtag"
-			chardev = "lxd_vfs"`,
+			chardev = "incus_vfs"`,
 		}, {
 			qemuDriveDirOpts{
 				dev:      qemuDevOpts{"ccw", "qemu_pcie0", "00.0", false},
@@ -898,15 +898,15 @@ func TestQemuConfigTemplates(t *testing.T) {
 				proxyFD:  3,
 			},
 			`# stub2 drive (9p)
-			[fsdev "lxd_stub2"]
+			[fsdev "incus_stub2"]
 			fsdriver = "proxy"
 			sock_fd = "3"
 			readonly = "on"
 
-			[device "dev-lxd_stub2-9p"]
+			[device "dev-incus_stub2-9p"]
 			driver = "virtio-9p-ccw"
 			mount_tag = "mtag2"
-			fsdev = "lxd_stub2"`,
+			fsdev = "incus_stub2"`,
 		}, {
 			qemuDriveDirOpts{
 				dev:      qemuDevOpts{"ccw", "qemu_pcie0", "00.0", true},
@@ -931,7 +931,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				pciSlotName: "host-slot",
 			},
 			`# PCI card ("physical-pci-name" device)
-			[device "dev-lxd_physical-pci-name"]
+			[device "dev-incus_physical-pci-name"]
 			driver = "vfio-pci"
 			bus = "qemu_pcie1"
 			addr = "00.0"
@@ -943,7 +943,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				pciSlotName: "host-slot-ccw",
 			},
 			`# PCI card ("physical-ccw-name" device)
-			[device "dev-lxd_physical-ccw-name"]
+			[device "dev-incus_physical-ccw-name"]
 			driver = "vfio-ccw"
 			multifunction = "on"
 			host = "host-slot-ccw"`,
@@ -964,7 +964,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				pciSlotName: "gpu-slot",
 			},
 			`# GPU card ("gpu-name" device)
-			[device "dev-lxd_gpu-name"]
+			[device "dev-incus_gpu-name"]
 			driver = "vfio-pci"
 			bus = "qemu_pcie1"
 			addr = "00.0"
@@ -977,7 +977,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				vga:         true,
 			},
 			`# GPU card ("gpu-name" device)
-			[device "dev-lxd_gpu-name"]
+			[device "dev-incus_gpu-name"]
 			driver = "vfio-ccw"
 			multifunction = "on"
 			host = "gpu-slot"
@@ -989,7 +989,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 				vgpu:    "vgpu-dev",
 			},
 			`# GPU card ("vgpu-name" device)
-			[device "dev-lxd_vgpu-name"]
+			[device "dev-incus_vgpu-name"]
 			driver = "vfio-pci"
 			bus = "qemu_pcie1"
 			addr = "00.0"
@@ -1067,7 +1067,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			type = "emulator"
 			chardev = "qemu_tpm-chardev_myTpm"
 
-			[device "dev-lxd_myTpm"]
+			[device "dev-incus_myTpm"]
 			driver = "tpm-crb"
 			tpmdev = "qemu_tpm-tpmdev_myTpm"`,
 		}}

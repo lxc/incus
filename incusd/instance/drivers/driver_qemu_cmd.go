@@ -46,7 +46,7 @@ func (c *qemuCmd) Signal(sig unix.Signal) error {
 		return err
 	}
 
-	logger.Debugf(`Forwarded signal "%d" to lxd-agent`, sig)
+	logger.Debugf(`Forwarded signal "%d" to the agent`, sig)
 	return nil
 }
 
@@ -107,6 +107,6 @@ func (c *qemuCmd) WindowResize(fd, winchWidth, winchHeight int) error {
 		return err
 	}
 
-	logger.Debugf(`Forwarded window resize "%dx%d" to lxd-agent`, winchWidth, winchHeight)
+	logger.Debugf(`Forwarded window resize "%dx%d" to the agent`, winchWidth, winchHeight)
 	return nil
 }
