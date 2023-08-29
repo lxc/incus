@@ -66,7 +66,7 @@ func NewTestCluster(t *testing.T) (*Cluster, func()) {
 		return net.Dial("unix", address)
 	}
 
-	cluster, err := OpenCluster(context.Background(), "test.db", store, "1", dir, 5*time.Second, nil, driver.WithLogFunc(log), driver.WithDialFunc(dial))
+	cluster, err := OpenCluster(context.Background(), "test.db", store, "1", dir, 5*time.Second, driver.WithLogFunc(log), driver.WithDialFunc(dial))
 	require.NoError(t, err)
 
 	cleanup := func() {

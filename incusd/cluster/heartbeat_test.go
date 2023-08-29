@@ -230,7 +230,7 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 	require.NoError(f.t, state.DB.Cluster.Close())
 	store := gateway.NodeStore()
 	dial := gateway.DialFunc()
-	state.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, nil, driver.WithDialFunc(dial))
+	state.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, driver.WithDialFunc(dial))
 	require.NoError(f.t, err)
 
 	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
