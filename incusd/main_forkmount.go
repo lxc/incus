@@ -571,7 +571,7 @@ void forkmount(void)
 	advance_arg(true);
 
 	// Call the subcommands
-	if (strcmp(command, "lxd-mount") == 0) {
+	if (strcmp(command, "go-mount") == 0) {
 		// Get the pid
 		cur = advance_arg(false);
 		if (cur == NULL || (strcmp(cur, "--help") == 0 || strcmp(cur, "--version") == 0 || strcmp(cur, "-h") == 0))
@@ -605,7 +605,7 @@ void forkmount(void)
 			_exit(EXIT_FAILURE);
 
 		do_move_forkmount(pidfd, ns_fd);
-	} else if (strcmp(command, "lxd-umount") == 0) {
+	} else if (strcmp(command, "go-umount") == 0) {
 		// Get the pid
 		cur = advance_arg(false);
 		if (cur == NULL || (strcmp(cur, "--help") == 0 || strcmp(cur, "--version") == 0 || strcmp(cur, "-h") == 0))
@@ -662,7 +662,7 @@ func (c *cmdForkmount) Command() *cobra.Command {
 	cmd.AddCommand(cmdLXCMount)
 
 	cmdLXDMount := &cobra.Command{}
-	cmdLXDMount.Use = "lxd-mount <PID> <PidFd> <source> <destination> <idmapType> <flags>"
+	cmdLXDMount.Use = "go-mount <PID> <PidFd> <source> <destination> <idmapType> <flags>"
 	cmdLXDMount.Args = cobra.ExactArgs(6)
 	cmdLXDMount.RunE = c.Run
 	cmd.AddCommand(cmdLXDMount)
@@ -675,7 +675,7 @@ func (c *cmdForkmount) Command() *cobra.Command {
 	cmd.AddCommand(cmdLXCUmount)
 
 	cmdLXDUmount := &cobra.Command{}
-	cmdLXDUmount.Use = "lxd-umount <PID> <PidFd> <path>"
+	cmdLXDUmount.Use = "go-umount <PID> <PidFd> <path>"
 	cmdLXDUmount.Args = cobra.ExactArgs(3)
 	cmdLXDUmount.RunE = c.Run
 	cmd.AddCommand(cmdLXDUmount)
