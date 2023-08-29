@@ -78,7 +78,7 @@ func (c *Config) HTTPSAllowedCredentials() bool {
 	return c.m.GetBool("core.https_allowed_credentials")
 }
 
-// TrustPassword returns the LXD trust password for authenticating clients.
+// TrustPassword returns the trust password for authenticating clients.
 func (c *Config) TrustPassword() string {
 	return c.m.GetString("core.trust_password")
 }
@@ -145,7 +145,7 @@ func (c *Config) NetworkOVNNorthboundConnection() string {
 }
 
 // ShutdownTimeout returns the number of minutes to wait for running operation to complete
-// before LXD server shut down.
+// before the server shuts down.
 func (c *Config) ShutdownTimeout() time.Duration {
 	n := c.m.GetInt64("core.shutdown_timeout")
 	return time.Duration(n) * time.Minute
