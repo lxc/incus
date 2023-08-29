@@ -22,7 +22,7 @@ import (
 	"github.com/lxc/incus/shared"
 )
 
-// State is a gateway to the two main stateful components of LXD, the database
+// State is a gateway to the two main stateful components, the database
 // and the operating system. It's typically used by model entities such as
 // containers, volumes, etc. in order to perform changes.
 type State struct {
@@ -42,7 +42,7 @@ type State struct {
 	OS    *sys.OS
 	Proxy func(req *http.Request) (*url.URL, error)
 
-	// LXD server
+	// REST endpoints
 	Endpoints *endpoints.Endpoints
 
 	// Event server

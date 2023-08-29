@@ -7,7 +7,7 @@ package cluster
 //
 //go:generate mapper method -i -e node ID
 
-// Node represents a LXD cluster node.
+// Node represents a cluster member.
 type Node struct {
 	ID   int
 	Name string

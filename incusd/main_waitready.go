@@ -19,11 +19,11 @@ type cmdWaitready struct {
 func (c *cmdWaitready) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "waitready"
-	cmd.Short = "Wait for LXD to be ready to process requests"
+	cmd.Short = "Wait for the daemon to be ready to process requests"
 	cmd.Long = `Description:
-  Wait for LXD to be ready to process requests
+  Wait for the daemon to be ready to process requests
 
-  This command will block until LXD is reachable over its REST API and
+  This command will block until the daemon is reachable over its REST API and
   is done with early start tasks like re-starting previously started
   containers.
 `
@@ -49,14 +49,14 @@ func (c *cmdWaitready) Run(cmd *cobra.Command, args []string) error {
 			}
 
 			if doLog {
-				logger.Debugf("Connecting to LXD daemon (attempt %d)", i)
+				logger.Debugf("Connecting to the daemon (attempt %d)", i)
 			}
 
 			d, err := incus.ConnectIncusUnix("", nil)
 			if err != nil {
 				errLast = err
 				if doLog {
-					logger.Debugf("Failed connecting to LXD daemon (attempt %d): %v", i, err)
+					logger.Debugf("Failed connecting to the daemon (attempt %d): %v", i, err)
 				}
 
 				time.Sleep(500 * time.Millisecond)
@@ -64,14 +64,14 @@ func (c *cmdWaitready) Run(cmd *cobra.Command, args []string) error {
 			}
 
 			if doLog {
-				logger.Debugf("Checking if LXD daemon is ready (attempt %d)", i)
+				logger.Debugf("Checking if the daemon is ready (attempt %d)", i)
 			}
 
 			_, _, err = d.RawQuery("GET", "/internal/ready", nil, "")
 			if err != nil {
 				errLast = err
 				if doLog {
-					logger.Debugf("Failed to check if LXD daemon is ready (attempt %d): %v", i, err)
+					logger.Debugf("Failed to check if the daemon is ready (attempt %d): %v", i, err)
 				}
 
 				time.Sleep(500 * time.Millisecond)
@@ -88,7 +88,7 @@ func (c *cmdWaitready) Run(cmd *cobra.Command, args []string) error {
 		case <-finger:
 			break
 		case <-time.After(time.Second * time.Duration(c.flagTimeout)):
-			return fmt.Errorf("LXD still not running after %ds timeout (%v)", c.flagTimeout, errLast)
+			return fmt.Errorf("Daemon still not running after %ds timeout (%v)", c.flagTimeout, errLast)
 		}
 	} else {
 		<-finger

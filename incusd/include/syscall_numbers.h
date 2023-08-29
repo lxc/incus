@@ -1,5 +1,5 @@
-#ifndef __LXD_SYSCALL_NUMBERS_H
-#define __LXD_SYSCALL_NUMBERS_H
+#ifndef __INCUS_SYSCALL_NUMBERS_H
+#define __INCUS_SYSCALL_NUMBERS_H
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
@@ -303,4 +303,4 @@
 	#endif
 #endif
 
-#endif /* __LXD_SYSCALL_NUMBERS_H */
+#endif /* __INCUS_SYSCALL_NUMBERS_H */

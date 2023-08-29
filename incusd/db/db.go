@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -24,13 +23,13 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
-// DB represents access to LXD's global and local databases.
+// DB represents access to global and local databases.
 type DB struct {
 	Node    *Node
 	Cluster *Cluster
 }
 
-// Node mediates access to LXD's data stored in the node-local SQLite database.
+// Node mediates access to data stored in the node-local SQLite database.
 type Node struct {
 	db  *sql.DB // Handle to the node-local SQLite database file.
 	dir string  // Reference to the directory where the database file lives.
@@ -110,10 +109,10 @@ func (n *Node) Close() error {
 	return n.db.Close()
 }
 
-// Cluster mediates access to LXD's data stored in the cluster dqlite database.
+// Cluster mediates access to data stored in the cluster dqlite database.
 type Cluster struct {
 	db         *sql.DB // Handle to the cluster dqlite database, gated behind gRPC SQL.
-	nodeID     int64   // Node ID of this LXD instance.
+	nodeID     int64   // Node ID of this server.
 	mu         sync.RWMutex
 	closingCtx context.Context
 }
@@ -124,16 +123,15 @@ type Cluster struct {
 // - name: Basename of the database file holding the data. Typically "db.bin".
 // - dialer: Function used to connect to the dqlite backend via gRPC SQL.
 // - address: Network address of this node (or empty string).
-// - dir: Base LXD database directory (e.g. /var/lib/incus/database)
+// - dir: Base database directory (e.g. /var/lib/incus/database)
 // - timeout: Give up trying to open the database after this amount of time.
-// - dump: If not nil, a copy of 2.0 db data, for migrating to 3.0.
 //
 // The address and api parameters will be used to determine if the cluster
 // database matches our version, and possibly trigger a schema update. If the
 // schema update can't be performed right now, because some nodes are still
 // behind, an Upgrading error is returned.
 // Accepts a closingCtx context argument used to indicate when the daemon is shutting down.
-func OpenCluster(closingCtx context.Context, name string, store driver.NodeStore, address, dir string, timeout time.Duration, dump *Dump, options ...driver.Option) (*Cluster, error) {
+func OpenCluster(closingCtx context.Context, name string, store driver.NodeStore, address, dir string, timeout time.Duration, options ...driver.Option) (*Cluster, error) {
 	db, err := cluster.Open(name, store, options...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open database: %w", err)
@@ -190,31 +188,6 @@ func OpenCluster(closingCtx context.Context, name string, store driver.NodeStore
 	_, err = db.Exec("PRAGMA cache_size=-50000")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to set page cache size: %w", err)
-	}
-
-	if dump != nil {
-		logger.Infof("Migrating data from local to global database")
-		err := query.Transaction(context.TODO(), db, func(ctx context.Context, tx *sql.Tx) error {
-			return importPreClusteringData(tx, dump)
-		})
-		if err != nil {
-			// Restore the local sqlite3 backup and wipe the raft
-			// directory, so users can fix problems and retry.
-			path := filepath.Join(dir, "local.db")
-			copyErr := shared.FileCopy(path+".bak", path)
-			if copyErr != nil {
-				// Ignore errors here, there's not much we can do
-				logger.Errorf("Failed to restore local database: %v", copyErr)
-			}
-
-			rmErr := os.RemoveAll(filepath.Join(dir, "global"))
-			if rmErr != nil {
-				// Ignore errors here, there's not much we can do
-				logger.Errorf("Failed to cleanup global database: %v", rmErr)
-			}
-
-			return nil, fmt.Errorf("Failed to migrate data to global database: %w", err)
-		}
 	}
 
 	nodesVersionsMatch, err := cluster.EnsureSchema(db, address, dir)

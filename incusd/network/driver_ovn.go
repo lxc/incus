@@ -81,7 +81,7 @@ type OVNInstanceNICStopOpts struct {
 	DeviceConfig deviceConfig.Device
 }
 
-// ovn represents a LXD OVN network.
+// ovn represents an OVN network.
 type ovn struct {
 	common
 }
@@ -1332,7 +1332,7 @@ func (n *ovn) pingOVNRouter() {
 		ip := ips[i] // Local var
 
 		// Now that the OVN router is connected to the uplink bridge, attempt to ping the OVN
-		// router's external IPv6 from the LXD host running the uplink bridge in an attempt to trigger the
+		// router's external IPv6 from the host running the uplink bridge in an attempt to trigger the
 		// OVN router to learn the uplink gateway's MAC address. This is to work around a bug in
 		// older versions of OVN that meant that the OVN router would not attempt to learn the external
 		// uplink IPv6 gateway MAC address when using SNAT, meaning that external IPv6 connectivity
@@ -3606,8 +3606,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 	// If NIC has static IPv4 address then ensure a DHCPv4 reservation exists.
 	// Do this at start time as well as add time in case an instance was copied (causing a duplicate address
-	// conflict at add time) which is later resolved by deleting the original instance, meaning LXD needs to
-	// add a reservation when the copied instance next starts.
+	// conflict at add time) which is later resolved by deleting the original instance, meaning a reservation needs to
+	// be added when the copied instance next starts.
 	if opts.DeviceConfig["ipv4.address"] != "" && dnsIPv4 != nil {
 		if !n.hasDHCPv4Reservation(dhcpReservations, dnsIPv4) {
 			dhcpReservations = append(dhcpReservations, shared.IPRange{Start: dnsIPv4})
@@ -3634,7 +3634,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			}
 
 			if ip == nil {
-				continue //No qualifying target IP from DNS records.
+				continue // No qualifying target IP from DNS records.
 			}
 
 			err = client.LogicalRouterDNATSNATAdd(n.getRouterName(), ip, ip, true, true)

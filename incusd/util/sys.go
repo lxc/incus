@@ -49,12 +49,12 @@ func GetExecPath() string {
 		execPath = "bad-exec-path"
 	}
 
-	// The execPath from /proc/self/exe can end with " (deleted)" if the lxd binary has been removed/changed
-	// since the lxd process was started, strip this so that we only return a valid path.
+	// The execPath from /proc/self/exe can end with " (deleted)" if the binary has been removed/changed
+	// since it was first started, strip this so that we only return a valid path.
 	return strings.TrimSuffix(execPath, " (deleted)")
 }
 
-// ReplaceDaemon replaces the LXD process.
+// ReplaceDaemon replaces the daemon by re-execing the binary.
 func ReplaceDaemon() error {
 	err := unix.Exec(GetExecPath(), os.Args, os.Environ())
 	if err != nil {

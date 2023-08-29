@@ -23,19 +23,19 @@ type cmdDaemon struct {
 
 func (c *cmdDaemon) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "lxd"
-	cmd.Short = "The LXD container manager (daemon)"
+	cmd.Use = "incusd"
+	cmd.Short = "The Incus daemon"
 	cmd.Long = `Description:
-  The LXD container manager (daemon)
+  The Incus daemon
 
-  This is the LXD daemon command line. It's typically started directly by your
-  init system and interacted with through a tool like ` + "`lxc`" + `.
+  This is the incus daemon command line. It's typically started directly by your
+  init system and interacted with through a tool like ` + "`incus`" + `.
 
   There are however a number of subcommands that let you interact directly with
-  the local LXD daemon and which may not be performed through the REST API alone.
+  the local Incus daemon and which may not be performed through the REST API alone.
 `
 	cmd.RunE = c.Run
-	cmd.Flags().StringVar(&c.flagGroup, "group", "", "The group of users that will be allowed to talk to LXD"+"``")
+	cmd.Flags().StringVar(&c.flagGroup, "group", "", "The group of users that will be allowed to talk to Incus"+"``")
 
 	return cmd
 }

@@ -1,4 +1,4 @@
-# lxd-doc
+# incus-doc
 
 A small CLI to parse comments in a Golang codebase meant to be used for a documentation tool (like Sphinx for example).
 
@@ -6,8 +6,8 @@ It parses the comments from the AST and extracts their documentation.
 
 # Usage
 
-    $ lxd-doc -h
-    Usage of lxd-doc:
+    $ incus-doc -h
+    Usage of incus-doc:
     -e value
         Path that will be excluded from the process
 
@@ -16,7 +16,7 @@ It parses the comments from the AST and extracts their documentation.
 A comment is formatted this way:
 
 ```go
-	// lxddoc:generate(group=cluster, key=scheduler.instance)
+	// gendoc:generate(group=cluster, key=scheduler.instance)
 	//
 	//  <Possibly a very long documentation on multiple lines with Markdown tables, etc.>
 	// ---
@@ -31,7 +31,7 @@ A comment is formatted this way:
 	}
 
     for k, v := range config {
-		// lxddoc:generate(group=cluster, key=user.*)
+		// gendoc:generate(group=cluster, key=user.*)
 		//
 		// This is the real long desc.
 		//
@@ -76,9 +76,9 @@ A comment is formatted this way:
 	return nil
 ```
 
-The go-swagger spec from source generator can only handles `swagger:meta` (global file/package level documentation), `swagger:route` (API endpoints), `swagger:params` (function parameters), `swagger:operation` (method documentation), `swagger:response` (API response content documentation), `swagger:model` (struct documentation) generation. In our use case, we would want a config variable spec generator that can bundle any key-value data pairs alongside metadata to build a sense of hierarchy and identity (we want to associate a unique key to each lxddoc comment group that will also be displayed in the generated documentation)
+The go-swagger spec from source generator can only handles `swagger:meta` (global file/package level documentation), `swagger:route` (API endpoints), `swagger:params` (function parameters), `swagger:operation` (method documentation), `swagger:response` (API response content documentation), `swagger:model` (struct documentation) generation. In our use case, we would want a config variable spec generator that can bundle any key-value data pairs alongside metadata to build a sense of hierarchy and identity (we want to associate a unique key to each gendoc comment group that will also be displayed in the generated documentation)
 
-In a swagger fashion, `lxd-doc` can associate metadata key-value pairs (here for example, `group` and `key`) to data key-value pairs. As a result, it can generate a YAML tree out of the code documentation and also a Markdown document.
+In a swagger fashion, `incus-doc` can associate metadata key-value pairs (here for example, `group` and `key`) to data key-value pairs. As a result, it can generate a YAML tree out of the code documentation and also a Markdown document.
 
 ## Output
 

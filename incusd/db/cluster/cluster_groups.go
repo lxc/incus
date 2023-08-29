@@ -38,7 +38,7 @@ type ClusterGroupFilter struct {
 	Name *string
 }
 
-// ToAPI returns a LXD API entry.
+// ToAPI returns an API entry.
 func (c *ClusterGroup) ToAPI() (*api.ClusterGroup, error) {
 	result := api.ClusterGroup{
 		ClusterGroupPut: api.ClusterGroupPut{

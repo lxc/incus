@@ -838,7 +838,7 @@ func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
 	// If there is integrationBridgeNICName specified, then try and remove it from the OVS integration bridge.
 	// Do this early on during the stop process to prevent any future error from leaving the OVS port present
 	// as if the instance is being migrated, this can cause port conflicts in OVN if the instance comes up on
-	// another LXD host later.
+	// another host later.
 	if integrationBridgeNICName != "" {
 		integrationBridge := d.state.GlobalConfig.NetworkOVNIntegrationBridge()
 
@@ -1090,7 +1090,7 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 	return &network, nil
 }
 
-// Register sets up anything needed on LXD startup.
+// Register sets up anything needed on startup.
 func (d *nicOVN) Register() error {
 	err := bgpAddPrefix(&d.deviceCommon, d.network, d.config)
 	if err != nil {

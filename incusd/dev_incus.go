@@ -36,7 +36,7 @@ import (
 type hoistFunc func(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Request) response.Response, d *Daemon) func(http.ResponseWriter, *http.Request)
 
 // DevIncusServer creates an http.Server capable of handling requests against the
-// /dev/lxd Unix socket endpoint created inside containers.
+// /dev/incus Unix socket endpoint created inside containers.
 func devIncusServer(d *Daemon) *http.Server {
 	return &http.Server{
 		Handler:     devIncusAPI(d, hoistReq),
@@ -103,8 +103,8 @@ var devIncusImageExport = devIncusHandler{"/1.0/images/{fingerprint}/export", fu
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
-	// Use by security checks to distinguish devIncus vs lxd APIs
-	r.RemoteAddr = "@devIncus"
+	// Use by security checks to distinguish /dev/incus vs REST APs
+	r.RemoteAddr = "@dev_incus"
 
 	resp := imageExport(d, r)
 
@@ -252,7 +252,7 @@ var devIncusDevicesGet = devIncusHandler{"/1.0/devices", func(d *Daemon, c insta
 
 	// Populate NIC hwaddr from volatile if not explicitly specified.
 	// This is so cloud-init running inside the instance can identify the NIC when the interface name is
-	// different than the LXD device name (such as when run inside a VM).
+	// different than the device name (such as when run inside a VM).
 	localConfig := c.LocalConfig()
 	devices := c.ExpandedDevices()
 	for devName, devConfig := range devices {
@@ -400,7 +400,7 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 	/*
 	 * Try and figure out which container a pid is in. There is probably a
 	 * better way to do this. Based on rharper's initial performance
-	 * metrics, looping over every container and calling newLxdContainer is
+	 * metrics, looping over every container and loading them is
 	 * expensive, so I wanted to avoid that if possible, so this happens in
 	 * a two step process:
 	 *

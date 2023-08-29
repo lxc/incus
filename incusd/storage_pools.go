@@ -223,7 +223,7 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: storage
 //	    description: Storage pool
@@ -545,7 +545,7 @@ func storagePoolsPostCluster(s *state.State, pool *api.StoragePool, req api.Stor
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Storage pool
@@ -651,7 +651,7 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: storage pool
 //	    description: Storage pool configuration
@@ -785,7 +785,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: storage pool
 //	    description: Storage pool configuration

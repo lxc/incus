@@ -69,7 +69,7 @@ var storagePoolVolumeSnapshotTypeCmd = APIEndpoint{
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume snapshot
@@ -176,7 +176,7 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	}
 
 	if used {
-		return response.BadRequest(fmt.Errorf("Volumes used by LXD itself cannot have snapshots"))
+		return response.BadRequest(fmt.Errorf("Volumes used by Incus itself cannot have snapshots"))
 	}
 
 	// Retrieve the storage pool (and check if the storage pool exists).
@@ -260,7 +260,7 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: lxd01
+//      example: server01
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -314,7 +314,7 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -462,7 +462,7 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: volume rename
 //	    description: Storage volume snapshot
@@ -590,7 +590,7 @@ func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Resp
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume snapshot
@@ -721,7 +721,7 @@ func storagePoolVolumeSnapshotTypeGet(d *Daemon, r *http.Request) response.Respo
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: storage volume snapshot
 //	    description: Storage volume snapshot configuration
@@ -849,7 +849,7 @@ func storagePoolVolumeSnapshotTypePut(d *Daemon, r *http.Request) response.Respo
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: storage volume snapshot
 //	    description: Storage volume snapshot configuration
@@ -1013,7 +1013,7 @@ func doStoragePoolVolumeSnapshotUpdate(s *state.State, r *http.Request, poolName
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"

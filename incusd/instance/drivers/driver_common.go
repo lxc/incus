@@ -1375,7 +1375,7 @@ func (d *common) devicesRemove(inst instance.Instance) {
 		}
 
 		// If a usable device was returned from deviceLoad try to remove anyway, even if validation fails.
-		// This allows for the scenario where a new version of LXD has additional validation restrictions
+		// This allows for the scenario where a new version has additional validation restrictions
 		// than older versions and we still need to allow previously valid devices to be stopped even if
 		// they are no longer considered valid.
 		if dev != nil {

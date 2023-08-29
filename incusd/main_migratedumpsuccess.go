@@ -18,9 +18,9 @@ type cmdMigratedumpsuccess struct {
 func (c *cmdMigratedumpsuccess) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "migratedumpsuccess <operation> <secret>"
-	cmd.Short = "Tell LXD that a particular CRIU dump succeeded"
+	cmd.Short = "Tell the daemon that a particular CRIU dump succeeded"
 	cmd.Long = `Description:
-  Tell LXD that a particular CRIU dump succeeded
+  Tell the daemon that a particular CRIU dump succeeded
 
   This internal command is used from the CRIU dump script and is
   called as soon as the script is done running.
@@ -48,11 +48,11 @@ func (c *cmdMigratedumpsuccess) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("This must be run as root")
 	}
 
-	lxdArgs := incus.ConnectionArgs{
+	clientArgs := incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
 
-	d, err := incus.ConnectIncusUnix("", &lxdArgs)
+	d, err := incus.ConnectIncusUnix("", &clientArgs)
 	if err != nil {
 		return err
 	}

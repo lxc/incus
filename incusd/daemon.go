@@ -118,10 +118,10 @@ type Daemon struct {
 
 	// Status control.
 	setupChan      chan struct{}      // Closed when basic Daemon setup is completed
-	waitReady      *cancel.Canceller  // Cancelled when LXD is fully ready
+	waitReady      *cancel.Canceller  // Cancelled when fully ready
 	shutdownCtx    context.Context    // Cancelled when shutdown starts.
 	shutdownCancel context.CancelFunc // Cancels the shutdownCtx to indicate shutdown starting.
-	shutdownDoneCh chan error         // Receives the result of the d.Stop() function and tells LXD to end.
+	shutdownDoneCh chan error         // Receives the result of the d.Stop() function and tells the daemon to end.
 
 	// Device monitor for watching filesystem events
 	devmonitor fsmonitor.FSMonitor
@@ -153,7 +153,7 @@ type DaemonConfig struct {
 
 // newDaemon returns a new Daemon object with the given configuration.
 func newDaemon(config *DaemonConfig, os *sys.OS) *Daemon {
-	lxdEvents := events.NewServer(daemon.Debug, daemon.Verbose, cluster.EventHubPush)
+	incusEvents := events.NewServer(daemon.Debug, daemon.Verbose, cluster.EventHubPush)
 	devIncusEvents := events.NewDevIncusServer(daemon.Debug, daemon.Verbose)
 	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
 
@@ -161,7 +161,7 @@ func newDaemon(config *DaemonConfig, os *sys.OS) *Daemon {
 		clientCerts:    &certificateCache{},
 		config:         config,
 		devIncusEvents: devIncusEvents,
-		events:         lxdEvents,
+		events:         incusEvents,
 		db:             &db.DB{},
 		http01Provider: acme.NewHTTP01Provider(),
 		os:             os,
@@ -308,7 +308,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	}
 
 	// DevIncus unix socket credentials on main API.
-	if r.RemoteAddr == "@devIncus" {
+	if r.RemoteAddr == "@dev_incus" {
 		return false, "", "", fmt.Errorf("Main API query can't come from /dev/incus socket")
 	}
 
@@ -425,7 +425,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			select {
 			case <-d.setupChan:
 			default:
-				response := response.Unavailable(fmt.Errorf("LXD daemon setup in progress"))
+				response := response.Unavailable(fmt.Errorf("Daemon setup in progress"))
 				_ = response.Render(w)
 				return
 			}
@@ -550,8 +550,8 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 
 		// Return Unavailable Error (503) if daemon is shutting down.
 		// There are some exceptions:
-		// - internal calls, e.g. lxd shutdown
-		// - events endpoint as this is accessed when running `lxd shutdown`
+		// - internal calls, e.g. shutdown
+		// - events endpoint as this is accessed when running `shutdown`
 		// - /1.0 endpoint
 		// - /1.0/operations endpoints
 		// - GET queries
@@ -572,7 +572,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		}
 
 		if d.shutdownCtx.Err() == context.Canceled && !allowedDuringShutdown() {
-			_ = response.Unavailable(fmt.Errorf("LXD is shutting down")).Render(w)
+			_ = response.Unavailable(fmt.Errorf("Shutting down")).Render(w)
 			return
 		}
 
@@ -717,7 +717,7 @@ func (d *Daemon) init() error {
 	// Setup internal event listener
 	d.internalListener = events.NewInternalListener(d.shutdownCtx, d.events)
 
-	// Lets check if there's an existing LXD running
+	// Lets check if there's an existing daemon running
 	err := endpoints.CheckAlreadyRunning(d.UnixSocket())
 	if err != nil {
 		return err
@@ -735,7 +735,7 @@ func (d *Daemon) init() error {
 		mode = "mock"
 	}
 
-	logger.Info("LXD is starting", logger.Ctx{"version": version.Version, "mode": mode, "path": shared.VarPath("")})
+	logger.Info("Starting up", logger.Ctx{"version": version.Version, "mode": mode, "path": shared.VarPath("")})
 
 	/* List of sub-systems to trace */
 	trace := d.config.Trace
@@ -918,7 +918,7 @@ func (d *Daemon) init() error {
 	if err == nil {
 		fd, err := os.Open(testDev)
 		if err != nil && os.IsPermission(err) {
-			logger.Warn("Unable to access device nodes, LXD likely running on a nodev mount")
+			logger.Warn("Unable to access device nodes, likely running on a nodev mount")
 			d.os.Nodev = true
 		}
 
@@ -1083,7 +1083,7 @@ func (d *Daemon) init() error {
 			options = append(options, driver.WithTracing(dqliteClient.LogDebug))
 		}
 
-		d.db.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, localClusterAddress, dir, d.config.DqliteSetupTimeout, nil, options...)
+		d.db.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, localClusterAddress, dir, d.config.DqliteSetupTimeout, options...)
 		if err == nil {
 			logger.Info("Initialized global database")
 			break
@@ -1384,7 +1384,7 @@ func (d *Daemon) init() error {
 		updateCertificateCache(d)
 	}
 
-	// Remove volatile.last_state.ready key as LXD doesn't know if the instances are ready.
+	// Remove volatile.last_state.ready key as we don't know if the instances are ready.
 	err = d.db.Cluster.DeleteReadyStateFromLocalInstances()
 	if err != nil {
 		return fmt.Errorf("Failed deleting volatile.last_state.ready: %w", err)
@@ -1457,7 +1457,7 @@ func (d *Daemon) init() error {
 		instancesStart(d.State(), instances)
 	}
 
-	// Re-balance in case things changed while LXD was down
+	// Re-balance in case things changed while the daemon was down
 	deviceTaskBalance(d.State())
 
 	// Unblock incoming requests
@@ -1557,7 +1557,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 		if d.db.Cluster != nil {
 			// waitForOperations will block until all operations are done, or it's forced to shut down.
 			// For the latter case, we re-use the shutdown channel which is filled when a shutdown is
-			// initiated using `lxd shutdown`.
+			// initiated using `shutdown`.
 			waitForOperations(ctx, d.db.Cluster, s.GlobalConfig.ShutdownTimeout())
 		}
 

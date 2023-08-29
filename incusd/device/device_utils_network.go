@@ -710,7 +710,7 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 
 	// Setup VF MAC spoofing protection if specified.
 	// The ordering of this section is very important, as Intel cards require a very specific
-	// order of setup to allow LXD to set custom MACs when using spoof check mode.
+	// order of setup to allow setting custom MACs when using spoof check mode.
 	if shared.IsTrue(d.config["security.mac_filtering"]) {
 		if !useSpoofCheck {
 			return pcidev.Device{}, 0, fmt.Errorf("security.mac_filtering cannot be enabled when VF spoof check not enabled")

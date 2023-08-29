@@ -22,9 +22,9 @@ import (
 	"github.com/lxc/incus/incusd/archive"
 	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/backup"
-	lxdCluster "github.com/lxc/incus/incusd/cluster"
+	"github.com/lxc/incus/incusd/cluster"
 	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/db/cluster"
+	dbCluster "github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/operationtype"
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/operations"
@@ -84,7 +84,7 @@ var storagePoolVolumeTypeCmd = APIEndpoint{
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: lxd01
+//      example: server01
 //    - in: query
 //      name: filter
 //      description: Collection filter
@@ -145,7 +145,7 @@ var storagePoolVolumeTypeCmd = APIEndpoint{
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: lxd01
+//      example: server01
 //    - in: query
 //      name: filter
 //      description: Collection filter
@@ -199,7 +199,7 @@ var storagePoolVolumeTypeCmd = APIEndpoint{
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: lxd01
+//      example: server01
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -253,7 +253,7 @@ var storagePoolVolumeTypeCmd = APIEndpoint{
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -342,7 +342,7 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 		var customVolProjectName string
 
 		if !allProjects {
-			dbProject, err := cluster.GetProject(ctx, tx.Tx(), requestProjectName)
+			dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), requestProjectName)
 			if err != nil {
 				return err
 			}
@@ -515,7 +515,7 @@ func filterVolumes(volumes []*db.StorageVolume, clauses *filter.ClauseSet, allPr
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume
@@ -743,7 +743,7 @@ func doVolumeCreateOrCopy(s *state.State, r *http.Request, requestProjectName st
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume
@@ -954,7 +954,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: migration
 //	    description: Migration request
@@ -1107,7 +1107,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if used {
-		return response.SmartError(fmt.Errorf("Volume is used by LXD itself and cannot be renamed"))
+		return response.SmartError(fmt.Errorf("Volume is used by Incus itself and cannot be renamed"))
 	}
 
 	// Load source volume.
@@ -1125,7 +1125,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		// Check if the user provided an incorrect target query parameter and return a helpful error message.
 		_, volumeNotFound := api.StatusErrorMatch(err, http.StatusNotFound)
 		targetIsSet := r.URL.Query().Get("target") != ""
-		serverIsClustered, _ := lxdCluster.Enabled(s.DB.Node)
+		serverIsClustered, _ := cluster.Enabled(s.DB.Node)
 
 		if serverIsClustered && targetIsSet && volumeNotFound {
 			return response.NotFound(fmt.Errorf("Storage volume not found on this cluster member"))
@@ -1300,7 +1300,7 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume
@@ -1422,7 +1422,7 @@ func storagePoolVolumeGet(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: storage volume
 //	    description: Storage volume configuration
@@ -1593,7 +1593,7 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: storage volume
 //	    description: Storage volume configuration
@@ -1733,7 +1733,7 @@ func storagePoolVolumePatch(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -1873,7 +1873,7 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 	}
 
 	// Create temporary file to store uploaded ISO data.
-	isoFile, err := os.CreateTemp(shared.VarPath("isos"), fmt.Sprintf("%s_", "lxd_iso"))
+	isoFile, err := os.CreateTemp(shared.VarPath("isos"), fmt.Sprintf("%s_", "incus_iso"))
 	if err != nil {
 		return response.InternalError(err)
 	}

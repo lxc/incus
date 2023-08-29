@@ -22,14 +22,14 @@ type cmdShutdown struct {
 func (c *cmdShutdown) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "shutdown"
-	cmd.Short = "Tell LXD to shutdown all containers and exit"
+	cmd.Short = "Tell the daemon to shutdown all instances and exit"
 	cmd.Long = `Description:
-  Tell LXD to shutdown all containers and exit
+  Tell the daemon to shutdown all instances and exit
 
-  This will tell LXD to start a clean shutdown of all containers,
+  This will tell the daemon to start a clean shutdown of all instances,
   followed by having itself shutdown and exit.
 
-  This can take quite a while as containers can take a long time to
+  This can take quite a while as instances can take a long time to
   shutdown, especially if a non-standard timeout was configured for them.
 `
 	cmd.RunE = c.Run
@@ -78,7 +78,7 @@ func (c *cmdShutdown) Run(cmd *cobra.Command, args []string) error {
 		case err = <-chResult:
 			return err
 		case <-time.After(time.Second * time.Duration(c.flagTimeout)):
-			return fmt.Errorf("LXD still running after %ds timeout", c.flagTimeout)
+			return fmt.Errorf("Daemon still running after %ds timeout", c.flagTimeout)
 		}
 	}
 

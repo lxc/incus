@@ -430,7 +430,7 @@ static void mount_emulate(void)
 		if (!acquire_final_creds(pid, nsuid, nsgid, nsfsuid, nsfsgid))
 			die("error: failed to acquire final creds");
 
-		ret = lxd_move_mount(fd_tree, "", -EBADF, target, MOVE_MOUNT_F_EMPTY_PATH);
+		ret = incus_move_mount(fd_tree, "", -EBADF, target, MOVE_MOUNT_F_EMPTY_PATH);
 		if (ret)
 			die("error: failed to attach detached mount");
 	} else {
@@ -439,7 +439,7 @@ static void mount_emulate(void)
 	}
 }
 
-static bool lxd_cap_is_set(cap_t caps, cap_value_t cap, cap_flag_t flag)
+static bool incus_cap_is_set(cap_t caps, cap_value_t cap, cap_flag_t flag)
 {
 	int ret;
 	cap_flag_value_t flagval;
@@ -487,7 +487,7 @@ static void sched_setscheduler_emulate(void)
 	if (!caps)
 		_exit(EXIT_FAILURE);
 
-	if (!lxd_cap_is_set(caps, CAP_SYS_NICE, CAP_EFFECTIVE))
+	if (!incus_cap_is_set(caps, CAP_SYS_NICE, CAP_EFFECTIVE))
 		_exit(EXIT_FAILURE);
 
 	if (switch_pidns && !change_namespaces(pidfd, ns_fd, CLONE_NEWPID))

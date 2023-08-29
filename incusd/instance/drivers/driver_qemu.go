@@ -66,7 +66,7 @@ import (
 	"github.com/lxc/incus/incusd/storage/filesystem"
 	pongoTemplate "github.com/lxc/incus/incusd/template"
 	"github.com/lxc/incus/incusd/util"
-	lxdvsock "github.com/lxc/incus/incusd/vsock"
+	localvsock "github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -85,23 +85,23 @@ const QEMUDefaultCPUCores = 1
 // QEMUDefaultMemSize is the default memory size for VMs if no limit specified.
 const QEMUDefaultMemSize = "1GiB"
 
-// qemuSerialChardevName is used to communicate state via qmp between Qemu and LXD.
+// qemuSerialChardevName is used to communicate state with QEMU via QMP.
 const qemuSerialChardevName = "qemu_serial-chardev"
 
 // qemuPCIDeviceIDStart is the first PCI slot used for user configurable devices.
 const qemuPCIDeviceIDStart = 4
 
 // qemuDeviceIDPrefix used as part of the name given QEMU devices generated from user added devices.
-const qemuDeviceIDPrefix = "dev-lxd_"
+const qemuDeviceIDPrefix = "dev-incus_"
 
 // qemuNetDevIDPrefix used as part of the name given QEMU netdevs generated from user added devices.
-const qemuNetDevIDPrefix = "lxd_"
+const qemuNetDevIDPrefix = "incus_"
 
 // qemuBlockDevIDPrefix used as part of the name given QEMU blockdevs generated from user added devices.
-const qemuBlockDevIDPrefix = "lxd_"
+const qemuBlockDevIDPrefix = "incus_"
 
 // qemuMigrationNBDExportName is the name of the disk device export by the migration NBD server.
-const qemuMigrationNBDExportName = "lxd_root"
+const qemuMigrationNBDExportName = "incus_root"
 
 // OVMF firmwares.
 type ovmfFirmware struct {
@@ -135,7 +135,7 @@ var ovmfCSMFirmwares = []ovmfFirmware{
 // 4 are reserved, and the other 4 can be used for any USB device.
 const qemuSparseUSBPorts = 8
 
-var errQemuAgentOffline = fmt.Errorf("LXD VM agent isn't currently running")
+var errQemuAgentOffline = fmt.Errorf("VM agent isn't currently running")
 
 type monitorHook func(m *qmp.Monitor) error
 
@@ -372,7 +372,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 		return nil, errQemuAgentOffline
 	}
 
-	// The connection uses mutual authentication, so use the LXD server's key & cert for client.
+	// The connection uses mutual authentication, so use the server's key & cert for client.
 	agentCert, _, clientCert, clientKey, err := d.generateAgentCert()
 	if err != nil {
 		return nil, err
@@ -384,7 +384,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 		return nil, err
 	}
 
-	agent, err := lxdvsock.HTTPClient(vsockID, shared.HTTPSDefaultPort, clientCert, clientKey, agentCert)
+	agent, err := localvsock.HTTPClient(vsockID, shared.HTTPSDefaultPort, clientCert, clientKey, agentCert)
 	if err != nil {
 		return nil, err
 	}
@@ -574,8 +574,8 @@ func (d *qemu) configVirtiofsdPaths() (string, string) {
 	return sockPath, pidPath
 }
 
-// pidWait waits for the QEMU process to exit. Does this in a way that doesn't require the LXD process to be a
-// parent of the QEMU process (in order to allow for LXD to be restarted after the VM was started).
+// pidWait waits for the QEMU process to exit. Does this in a way that doesn't require the process to be a
+// parent of the QEMU process (in order to allow for the daemon to be restarted after the VM was started).
 // Returns true if process stopped, false if timeout was exceeded.
 func (d *qemu) pidWait(timeout time.Duration) bool {
 	waitUntil := time.Now().Add(timeout)
@@ -786,7 +786,7 @@ func (d *qemu) ovmfPath() string {
 }
 
 // killQemuProcess kills specified process. Optimistically attempts to wait for the process to fully exit, but does
-// not return an error if the Wait call fails. This is because this function is used in scenarios where LXD has
+// not return an error if the Wait call fails. This is because this function is used in scenarios where the daemon has
 // been restarted after the VM has been started and is no longer the parent of the QEMU process.
 // The caller should use another method to ensure that the QEMU process has fully exited instead.
 // Returns an error if the Kill signal couldn't be sent to the process (for any other reason apart from the process
@@ -806,7 +806,7 @@ func (d *qemu) killQemuProcess(pid int) error {
 		return err
 	}
 
-	// Wait for process to exit, but don't return an error if this fails as it may be called when LXD isn't
+	// Wait for process to exit, but don't return an error if this fails as it may be called when the daemon isn't
 	// the parent of the process, and we have still sent the kill signal as per the function's description.
 	_, err = proc.Wait()
 	if err != nil {
@@ -1332,7 +1332,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Setup virtiofsd for the config drive mount path.
-	// This is used by the lxd-agent in preference to 9p (due to its improved performance) and in scenarios
+	// This is used by the agent in preference to 9p (due to its improved performance) and in scenarios
 	// where 9p isn't available in the VM guest OS.
 	configSockPath, configPIDPath := d.configVirtiofsdPaths()
 	revertFunc, unixListener, err := device.DiskVMVirtiofsdStart(d.state.OS.ExecPath, d, configSockPath, configPIDPath, "", configMntPath, nil)
@@ -1688,7 +1688,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// the guest instead.
 	actions := map[string]string{
 		"shutdown": "poweroff",
-		"reboot":   "shutdown", // Don't reset on reboot. Let LXD handle reboots.
+		"reboot":   "shutdown", // Don't reset on reboot. Let us handle reboots.
 		"panic":    "pause",    // Pause on panics to allow investigation.
 	}
 
@@ -1783,7 +1783,7 @@ func (d *qemu) setupSEV(fdFiles *[]*os.File) (*qemuSevOpts, error) {
 	// Write user's dh-cert and session-data to file descriptors.
 	var dhCertFD, sessionDataFD int
 	if d.expandedConfig["security.sev.session.dh"] != "" {
-		dhCert, err := os.CreateTemp("", "lxd_sev_dh_cert_")
+		dhCert, err := os.CreateTemp("", "incus_sev_dh_cert_")
 		if err != nil {
 			return nil, err
 		}
@@ -1802,7 +1802,7 @@ func (d *qemu) setupSEV(fdFiles *[]*os.File) (*qemuSevOpts, error) {
 	}
 
 	if d.expandedConfig["security.sev.session.data"] != "" {
-		sessionData, err := os.CreateTemp("", "lxd_sev_session_data_")
+		sessionData, err := os.CreateTemp("", "incus_sev_session_data_")
 		if err != nil {
 			return nil, err
 		}
@@ -1845,8 +1845,7 @@ func (d *qemu) setupSEV(fdFiles *[]*os.File) (*qemuSevOpts, error) {
 	return sevOpts, nil
 }
 
-// getAgentConnectionInfo returns the connection info the lxd-agent needs to connect to the LXD
-// server.
+// getAgentConnectionInfo returns the connection info the agent needs to connect to the server.
 func (d *qemu) getAgentConnectionInfo() (*agentAPI.API10Put, error) {
 	addr := d.state.Endpoints.VsockAddress()
 	if addr == nil {
@@ -1861,7 +1860,7 @@ func (d *qemu) getAgentConnectionInfo() (*agentAPI.API10Put, error) {
 	req := agentAPI.API10Put{
 		Certificate: string(d.state.Endpoints.NetworkCert().PublicKey()),
 		DevIncus:    shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]),
-		CID:         vsock.Host, // Always tell lxd-agent to connect to LXD using Host Context ID to support nesting.
+		CID:         vsock.Host, // Always tell the agent to connect to the server using the Host Context ID to support nesting.
 		Port:        vsockaddr.Port,
 	}
 
@@ -1877,7 +1876,7 @@ func (d *qemu) advertiseVsockAddress() error {
 
 	agent, err := incus.ConnectIncusHTTP(nil, client)
 	if err != nil {
-		return fmt.Errorf("Failed connecting to lxd-agent: %w", err)
+		return fmt.Errorf("Failed connecting to the agent: %w", err)
 	}
 
 	defer agent.Disconnect()
@@ -1893,13 +1892,13 @@ func (d *qemu) advertiseVsockAddress() error {
 
 	_, _, err = agent.RawQuery("PUT", "/1.0", connInfo, "")
 	if err != nil {
-		return fmt.Errorf("Failed sending VM sock address to lxd-agent: %w", err)
+		return fmt.Errorf("Failed sending host vsock information to the agent: %w", err)
 	}
 
 	return nil
 }
 
-// AgentCertificate returns the server certificate of the lxd-agent.
+// AgentCertificate returns the server certificate of the agent.
 func (d *qemu) AgentCertificate() *x509.Certificate {
 	agentCert := filepath.Join(d.Path(), "config", "agent.crt")
 	if !shared.PathExists(agentCert) {
@@ -2102,7 +2101,7 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 				}
 			}
 
-			// If running, run post start hooks now (if not running LXD will run them
+			// If running, run post start hooks now (if not, they will be run
 			// once the instance is started).
 			err = d.runHooks(runConf.PostHooks)
 			if err != nil {
@@ -2399,61 +2398,61 @@ func (d *qemu) generateConfigShare() error {
 	}
 
 	// Add the VM agent.
-	lxdAgentSrcPath, err := exec.LookPath("lxd-agent")
+	agentSrcPath, err := exec.LookPath("incus-agent")
 	if err != nil {
-		d.logger.Warn("lxd-agent not found, skipping its inclusion in the VM config drive", logger.Ctx{"err": err})
+		d.logger.Warn("incus-agent not found, skipping its inclusion in the VM config drive", logger.Ctx{"err": err})
 	} else {
 		// Install agent into config drive dir if found.
-		lxdAgentSrcPath, err = filepath.EvalSymlinks(lxdAgentSrcPath)
+		agentSrcPath, err = filepath.EvalSymlinks(agentSrcPath)
 		if err != nil {
 			return err
 		}
 
-		lxdAgentSrcInfo, err := os.Stat(lxdAgentSrcPath)
+		agentSrcInfo, err := os.Stat(agentSrcPath)
 		if err != nil {
-			return fmt.Errorf("Failed getting info for lxd-agent source %q: %w", lxdAgentSrcPath, err)
+			return fmt.Errorf("Failed getting info for incus-agent source %q: %w", agentSrcPath, err)
 		}
 
-		lxdAgentInstallPath := filepath.Join(configDrivePath, "lxd-agent")
-		lxdAgentNeedsInstall := true
+		agentInstallPath := filepath.Join(configDrivePath, "incus-agent")
+		agentNeedsInstall := true
 
-		if shared.PathExists(lxdAgentInstallPath) {
-			lxdAgentInstallInfo, err := os.Stat(lxdAgentInstallPath)
+		if shared.PathExists(agentInstallPath) {
+			agentInstallInfo, err := os.Stat(agentInstallPath)
 			if err != nil {
-				return fmt.Errorf("Failed getting info for existing lxd-agent install %q: %w", lxdAgentInstallPath, err)
+				return fmt.Errorf("Failed getting info for existing incus-agent install %q: %w", agentInstallPath, err)
 			}
 
-			if lxdAgentInstallInfo.ModTime() == lxdAgentSrcInfo.ModTime() && lxdAgentInstallInfo.Size() == lxdAgentSrcInfo.Size() {
-				lxdAgentNeedsInstall = false
+			if agentInstallInfo.ModTime() == agentSrcInfo.ModTime() && agentInstallInfo.Size() == agentSrcInfo.Size() {
+				agentNeedsInstall = false
 			}
 		}
 
-		// Only install the lxd-agent into config drive if the existing one is different to the source one.
+		// Only install the agent into config drive if the existing one is different to the source one.
 		// Otherwise we would end up copying it again and this can cause unnecessary snapshot usage.
-		if lxdAgentNeedsInstall {
-			d.logger.Debug("Installing lxd-agent", logger.Ctx{"srcPath": lxdAgentSrcPath, "installPath": lxdAgentInstallPath})
-			err = shared.FileCopy(lxdAgentSrcPath, lxdAgentInstallPath)
+		if agentNeedsInstall {
+			d.logger.Debug("Installing incus-agent", logger.Ctx{"srcPath": agentSrcPath, "installPath": agentInstallPath})
+			err = shared.FileCopy(agentSrcPath, agentInstallPath)
 			if err != nil {
 				return err
 			}
 
-			err = os.Chmod(lxdAgentInstallPath, 0500)
+			err = os.Chmod(agentInstallPath, 0500)
 			if err != nil {
 				return err
 			}
 
-			err = os.Chown(lxdAgentInstallPath, 0, 0)
+			err = os.Chown(agentInstallPath, 0, 0)
 			if err != nil {
 				return err
 			}
 
 			// Ensure we copy the source file's timestamps so they can be used for comparison later.
-			err = os.Chtimes(lxdAgentInstallPath, lxdAgentSrcInfo.ModTime(), lxdAgentSrcInfo.ModTime())
+			err = os.Chtimes(agentInstallPath, agentSrcInfo.ModTime(), agentSrcInfo.ModTime())
 			if err != nil {
-				return fmt.Errorf("Failed setting lxd-agent timestamps: %w", err)
+				return fmt.Errorf("Failed setting incus-agent timestamps: %w", err)
 			}
 		} else {
-			d.logger.Debug("Skipping lxd-agent install as unchanged", logger.Ctx{"srcPath": lxdAgentSrcPath, "installPath": lxdAgentInstallPath})
+			d.logger.Debug("Skipping incus-agent install as unchanged", logger.Ctx{"srcPath": agentSrcPath, "installPath": agentInstallPath})
 		}
 	}
 
@@ -2483,18 +2482,18 @@ func (d *qemu) generateConfigShare() error {
 		return err
 	}
 
-	lxdAgentServiceUnit := `[Unit]
-Description=LXD - agent
-Documentation=https://documentation.ubuntu.com/lxd/en/latest/
-ConditionPathExists=/dev/virtio-ports/org.linuxcontainers.lxd
+	agentServiceUnit := `[Unit]
+Description=Incus - agent
+Documentation=https://linuxcontainers.org/incus/docs/main/
+ConditionPathExists=/dev/virtio-ports/org.linuxcontainers.incus
 Before=cloud-init.target cloud-init.service cloud-init-local.service
 DefaultDependencies=no
 
 [Service]
 Type=notify
-WorkingDirectory=-/run/lxd_agent
-ExecStartPre=/lib/systemd/lxd-agent-setup
-ExecStart=/run/lxd_agent/lxd-agent
+WorkingDirectory=-/run/incus_agent
+ExecStartPre=/lib/systemd/incus-agent-setup
+ExecStart=/run/incus_agent/incus-agent
 Restart=on-failure
 RestartSec=5s
 StartLimitInterval=60
@@ -2504,14 +2503,14 @@ StartLimitBurst=10
 WantedBy=multi-user.target
 `
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "lxd-agent.service"), []byte(lxdAgentServiceUnit), 0400)
+	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent.service"), []byte(agentServiceUnit), 0400)
 	if err != nil {
 		return err
 	}
 
-	lxdAgentSetupScript := `#!/bin/sh
+	agentSetupScript := `#!/bin/sh
 set -eu
-PREFIX="/run/lxd_agent"
+PREFIX="/run/incus_agent"
 
 # Functions.
 mount_virtiofs() {
@@ -2550,7 +2549,7 @@ rmdir "${PREFIX}/.mnt"
 chown -R root:root "${PREFIX}"
 `
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "lxd-agent-setup"), []byte(lxdAgentSetupScript), 0500)
+	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent-setup"), []byte(agentSetupScript), 0500)
 	if err != nil {
 		return err
 	}
@@ -2561,15 +2560,15 @@ chown -R root:root "${PREFIX}"
 		return err
 	}
 
-	lxdAgentRules := `ACTION=="add", SYMLINK=="virtio-ports/org.linuxcontainers.lxd", TAG+="systemd", ACTION=="add", RUN+="/bin/systemctl start lxd-agent.service"`
-	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-lxd-agent.rules"), []byte(lxdAgentRules), 0400)
+	agentRules := `ACTION=="add", SYMLINK=="virtio-ports/org.linuxcontainers.incus", TAG+="systemd", ACTION=="add", RUN+="/bin/systemctl start incus-agent.service"`
+	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-incus-agent.rules"), []byte(agentRules), 0400)
 	if err != nil {
 		return err
 	}
 
 	// Install script for manual installs.
-	lxdConfigShareInstall := `#!/bin/sh
-if [ ! -e "systemd" ] || [ ! -e "lxd-agent" ]; then
+	configShareInstall := `#!/bin/sh
+if [ ! -e "systemd" ] || [ ! -e "incus-agent" ]; then
     echo "This script must be run from within the 9p mount"
     exit 1
 fi
@@ -2580,24 +2579,24 @@ if [ ! -e "/lib/systemd/system" ]; then
 fi
 
 # Cleanup former units.
-rm -f /lib/systemd/system/lxd-agent-9p.service \
-    /lib/systemd/system/lxd-agent-virtiofs.service \
-    /etc/systemd/system/multi-user.target.wants/lxd-agent-9p.service \
-    /etc/systemd/system/multi-user.target.wants/lxd-agent-virtiofs.service
+rm -f /lib/systemd/system/incus-agent-9p.service \
+    /lib/systemd/system/incus-agent-virtiofs.service \
+    /etc/systemd/system/multi-user.target.wants/incus-agent-9p.service \
+    /etc/systemd/system/multi-user.target.wants/incus-agent-virtiofs.service
 
 # Install the units.
-cp udev/99-lxd-agent.rules /lib/udev/rules.d/
-cp systemd/lxd-agent.service /lib/systemd/system/
-cp systemd/lxd-agent-setup /lib/systemd/
+cp udev/99-incus-agent.rules /lib/udev/rules.d/
+cp systemd/incus-agent.service /lib/systemd/system/
+cp systemd/incus-agent-setup /lib/systemd/
 systemctl daemon-reload
-systemctl enable lxd-agent.service
+systemctl enable incus-agent.service
 
 echo ""
-echo "LXD agent has been installed, reboot to confirm setup."
-echo "To start it now, unmount this filesystem and run: systemctl start lxd-agent"
+echo "Incus agent has been installed, reboot to confirm setup."
+echo "To start it now, unmount this filesystem and run: systemctl start incus-agent"
 `
 
-	err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), []byte(lxdConfigShareInstall), 0700)
+	err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), []byte(configShareInstall), 0700)
 	if err != nil {
 		return err
 	}
@@ -2650,8 +2649,8 @@ echo "To start it now, unmount this filesystem and run: systemctl start lxd-agen
 		return err
 	}
 
-	// Writing the connection info the config drive allows the lxd-agent to start devIncus very
-	// early. This is important for systemd services which want or require /dev/lxd/sock.
+	// Writing the connection info the config drive allows the agent to start /dev/incus very
+	// early. This is important for systemd services which want or require /dev/incus/sock.
 	connInfo, err := d.getAgentConnectionInfo()
 	if err != nil {
 		return err
@@ -3047,7 +3046,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	}
 
 	// If virtiofsd is running for the config directory then export the config drive via virtio-fs.
-	// This is used by the lxd-agent in preference to 9p (due to its improved performance) and in scenarios
+	// This is used by the agent in preference to 9p (due to its improved performance) and in scenarios
 	// where 9p isn't available in the VM guest OS.
 	configSockPath, _ := d.configVirtiofsdPaths()
 	if shared.PathExists(configSockPath) {
@@ -3384,7 +3383,7 @@ func (d *qemu) addRootDriveConfig(mountInfo *storagePools.MountInfo, bootIndexes
 
 // addDriveDirConfig adds the qemu config required for adding a supplementary drive directory share.
 func (d *qemu) addDriveDirConfig(cfg *[]cfgSection, bus *qemuBus, fdFiles *[]*os.File, agentMounts *[]instancetype.VMAgentMount, driveConf deviceConfig.MountEntryItem) error {
-	mountTag := fmt.Sprintf("lxd_%s", driveConf.DevName)
+	mountTag := fmt.Sprintf("incus_%s", driveConf.DevName)
 
 	agentMount := instancetype.VMAgentMount{
 		Source: mountTag,
@@ -3968,7 +3967,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]string, bootIn
 				return nil, fmt.Errorf("Error creating new ifreq for %q: %w", nicName, err)
 			}
 
-			// These settings need to be compatible with what the LXD device created the interface with
+			// These settings need to be compatible with what the device created the interface with
 			// and what QEMU is expecting.
 			ifr.SetUint16(unix.IFF_TAP | unix.IFF_NO_PI | unix.IFF_ONE_QUEUE | unix.IFF_MULTI_QUEUE | unix.IFF_VNET_HDR)
 
@@ -4077,7 +4076,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]string, bootIn
 }
 
 // writeNICDevConfig writes the NIC config for the specified device into the NICConfigDir.
-// This will be used by the lxd-agent to rename the NIC interfaces inside the VM guest.
+// This will be used by the agent to rename the NIC interfaces inside the VM guest.
 func (d *qemu) writeNICDevConfig(mtuStr string, devName string, nicName string, devHwaddr string) error {
 	// Parse MAC address to ensure it is in a canonical form (avoiding casing/presentation differences).
 	hw, err := net.ParseMAC(devHwaddr)
@@ -4126,7 +4125,7 @@ func (d *qemu) addPCIDevConfig(cfg *[]cfgSection, bus *qemuBus, pciConfig []devi
 		}
 	}
 
-	devBus, devAddr, multi := bus.allocate(fmt.Sprintf("lxd_%s", devName))
+	devBus, devAddr, multi := bus.allocate(fmt.Sprintf("incus_%s", devName))
 	pciPhysicalOpts := qemuPCIPhysicalOpts{
 		dev: qemuDevOpts{
 			busName:       bus.name,
@@ -4179,7 +4178,7 @@ func (d *qemu) addGPUDevConfig(cfg *[]cfgSection, bus *qemuBus, gpuConfig []devi
 		return true
 	}()
 
-	devBus, devAddr, multi := bus.allocate(fmt.Sprintf("lxd_%s", devName))
+	devBus, devAddr, multi := bus.allocate(fmt.Sprintf("incus_%s", devName))
 	gpuDevPhysicalOpts := qemuGPUDevPhysicalOpts{
 		dev: qemuDevOpts{
 			busName:       bus.name,
@@ -4221,7 +4220,7 @@ func (d *qemu) addGPUDevConfig(cfg *[]cfgSection, bus *qemuBus, gpuConfig []devi
 			// Match any VFs that are related to the GPU device (but not the GPU device itself).
 			if strings.HasPrefix(iommuSlotName, prefix) && iommuSlotName != pciSlotName {
 				// Add VF device without VGA mode to qemu config.
-				devBus, devAddr, multi := bus.allocate(fmt.Sprintf("lxd_%s", devName))
+				devBus, devAddr, multi := bus.allocate(fmt.Sprintf("incus_%s", devName))
 				gpuDevPhysicalOpts := qemuGPUDevPhysicalOpts{
 					dev: qemuDevOpts{
 						busName:       bus.name,
@@ -5485,7 +5484,7 @@ func (d *qemu) cleanupDevices() {
 		}
 
 		// If a usable device was returned from deviceLoad try to stop anyway, even if validation fails.
-		// This allows for the scenario where a new version of LXD has additional validation restrictions
+		// This allows for the scenario where a new version has additional validation restrictions
 		// than older versions and we still need to allow previously valid devices to be stopped even if
 		// they are no longer considered valid.
 		if dev != nil {
@@ -5694,7 +5693,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	fnam := filepath.Join(cDir, "metadata.yaml")
 	if !shared.PathExists(fnam) {
 		// Generate a new metadata.yaml.
-		tempDir, err := os.MkdirTemp("", "lxd_lxd_metadata_")
+		tempDir, err := os.MkdirTemp("", "incus_metadata_")
 		if err != nil {
 			_ = tarWriter.Close()
 			d.logger.Error("Failed exporting instance", ctxMap)
@@ -5791,7 +5790,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 
 		if properties != nil || !expiration.IsZero() {
 			// Generate a new metadata.yaml.
-			tempDir, err := os.MkdirTemp("", "lxd_lxd_metadata_")
+			tempDir, err := os.MkdirTemp("", "incus_metadata_")
 			if err != nil {
 				_ = tarWriter.Close()
 				d.logger.Error("Failed exporting instance", ctxMap)
@@ -5842,7 +5841,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 	}
 
 	// Convert from raw to qcow2 and add to tarball.
-	tmpPath, err := os.MkdirTemp(shared.VarPath("images"), "lxd_export_")
+	tmpPath, err := os.MkdirTemp(shared.VarPath("images"), "incus_export_")
 	if err != nil {
 		return meta, err
 	}
@@ -5987,7 +5986,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 	// Offer QEMU to QEMU live state transfer state transfer feature.
 	// If the request is for live migration, then offer that live QEMU to QEMU state transfer can proceed.
-	// Otherwise LXD will fallback to doing stateful stop, migrate, and then stateful start, which will still
+	// Otherwise we'll fallback to doing stateful stop, migrate, and then stateful start, which will still
 	// fulfil the "live" part of the request, albeit with longer pause of the instance during the process.
 	if args.Live {
 		offerHeader.Criu = migration.CRIUType_VM_QEMU.Enum()
@@ -6157,9 +6156,9 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 		return err
 	}
 
-	rootDiskName := "lxd_root"                  // Name of source disk device to sync from
-	nbdTargetDiskName := "lxd_root_nbd"         // Name of NBD disk device added to local VM to sync to.
-	rootSnapshotDiskName := "lxd_root_snapshot" // Name of snapshot disk device to use.
+	rootDiskName := "incus_root"                  // Name of source disk device to sync from
+	nbdTargetDiskName := "incus_root_nbd"         // Name of NBD disk device added to local VM to sync to.
+	rootSnapshotDiskName := "incus_root_snapshot" // Name of snapshot disk device to use.
 
 	// If we are performing an intra-cluster member move on a Ceph storage pool then we can treat this as
 	// shared storage and avoid needing to sync the root disk.
@@ -6583,7 +6582,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 	// Negotiate support for QEMU to QEMU live state transfer.
 	// If the request is for live migration, then respond that live QEMU to QEMU state transfer can proceed.
-	// Otherwise LXD will fallback to doing stateful stop, migrate, and then stateful start, which will still
+	// Otherwise we'll fallback to doing stateful stop, migrate, and then stateful start, which will still
 	// fulfil the "live" part of the request, albeit with longer pause of the instance during the process.
 	poolInfo := pool.Driver().Info()
 	var useStateConn bool
@@ -6873,7 +6872,7 @@ func (d *qemu) CGroup() (*cgroup.CGroup, error) {
 
 // FileSFTPConn returns a connection to the agent SFTP endpoint.
 func (d *qemu) FileSFTPConn() (net.Conn, error) {
-	// VMs, unlike containers, cannot perform file operations if not running and using the lxd-agent.
+	// VMs, unlike containers, cannot perform file operations if not running and using the agent.
 	if !d.IsRunning() {
 		return nil, fmt.Errorf("Instance is not running")
 	}
@@ -7007,8 +7006,8 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 
 	agent, err := incus.ConnectIncusHTTP(nil, client)
 	if err != nil {
-		d.logger.Error("Failed to connect to lxd-agent", logger.Ctx{"err": err})
-		return nil, fmt.Errorf("Failed to connect to lxd-agent")
+		d.logger.Error("Failed to connect to the agent", logger.Ctx{"err": err})
+		return nil, fmt.Errorf("Failed to connect to the agent")
 	}
 
 	revert.Add(agent.Disconnect)
@@ -7041,7 +7040,7 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 	}
 
 	// Always needed for VM exec, as even for non-websocket requests from the client we need to connect the
-	// websockets for control and for capturing output to a file on the LXD server.
+	// websockets for control and for capturing output to a file on the server.
 	req.WaitForWS = true
 
 	op, err := agent.ExecInstance("", req, &args)
@@ -7051,7 +7050,7 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 
 	instCmd := &qemuCmd{
 		cmd:              op,
-		attachedChildPid: 0, // Process is not running on LXD host.
+		attachedChildPid: 0, // Process is not running on the host.
 		dataDone:         args.DataDone,
 		cleanupFunc:      revert.Clone().Fail, // Pass revert function clone as clean up function.
 		controlSendCh:    controlSendCh,
@@ -7244,7 +7243,7 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 			}
 
 			// We have to match on hwaddr as device name can be different from the configured device
-			// name when reported from the lxd-agent inside the VM (due to the guest OS choosing name).
+			// name when reported from the agent inside the VM (due to the guest OS choosing name).
 			for netName, netStatus := range status.Network {
 				if netStatus.Hwaddr == hwaddr {
 					if netStatus.HostName == "" {
@@ -7376,7 +7375,7 @@ func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 				// This ensures that the device is actually removed from QEMU before adding it again.
 				// In most cases the device will already be removed, but it is possible that the
 				// device still exists in QEMU before trying to add it again.
-				// If a USB device is physically detached from a running VM while the LXD server
+				// If a USB device is physically detached from a running VM while the server
 				// itself is stopped, QEMU in theory will not delete the device.
 				err := d.deviceDetachUSB(usbDev)
 				if err != nil {
@@ -7824,8 +7823,8 @@ func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) 
 
 	agent, err := incus.ConnectIncusHTTP(nil, client)
 	if err != nil {
-		d.logger.Error("Failed to connect to lxd-agent", logger.Ctx{"err": err})
-		return fmt.Errorf("Failed to connect to lxd-agent")
+		d.logger.Error("Failed to connect to the agent", logger.Ctx{"err": err})
+		return fmt.Errorf("Failed to connect to the agent")
 	}
 
 	defer agent.Disconnect()
@@ -8116,8 +8115,8 @@ func (d *qemu) getAgentMetrics() (*metrics.MetricSet, error) {
 
 	agent, err := incus.ConnectIncusHTTP(nil, client)
 	if err != nil {
-		d.logger.Error("Failed to connect to lxd-agent", logger.Ctx{"project": d.Project().Name, "instance": d.Name(), "err": err})
-		return nil, fmt.Errorf("Failed to connect to lxd-agent")
+		d.logger.Error("Failed to connect to the agent", logger.Ctx{"project": d.Project().Name, "instance": d.Name(), "err": err})
+		return nil, fmt.Errorf("Failed to connect to the agent")
 	}
 
 	defer agent.Disconnect()
@@ -8237,7 +8236,7 @@ func (d *qemu) blockNodeName(name string) string {
 		name = base64.RawURLEncoding.EncodeToString(binaryHash)
 	}
 
-	// Apply the lxd_ prefix.
+	// Apply the prefix.
 	return fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, name)
 }
 

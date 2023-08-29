@@ -11,7 +11,7 @@ import (
 	"github.com/lxc/incus/shared/validate"
 )
 
-// sriov represents a LXD sriov network.
+// sriov represents an sriov network.
 type sriov struct {
 	common
 }

@@ -37,9 +37,9 @@ type cmdInit struct {
 func (c *cmdInit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "init"
-	cmd.Short = "Configure the LXD daemon"
+	cmd.Short = "Configure the daemon"
 	cmd.Long = `Description:
-  Configure the LXD daemon
+  Configure the daemon
 `
 	cmd.Example = `  init --minimal
   init --auto [--network-address=IP] [--network-port=8443] [--storage-backend=dir]
@@ -54,8 +54,8 @@ func (c *cmdInit) Command() *cobra.Command {
 	cmd.Flags().BoolVar(&c.flagPreseed, "preseed", false, "Pre-seed mode, expects YAML config from stdin")
 	cmd.Flags().BoolVar(&c.flagDump, "dump", false, "Dump YAML config to stdout")
 
-	cmd.Flags().StringVar(&c.flagNetworkAddress, "network-address", "", "Address to bind LXD to (default: none)"+"``")
-	cmd.Flags().IntVar(&c.flagNetworkPort, "network-port", -1, fmt.Sprintf("Port to bind LXD to (default: %d)"+"``", shared.HTTPSDefaultPort))
+	cmd.Flags().StringVar(&c.flagNetworkAddress, "network-address", "", "Address to bind to (default: none)"+"``")
+	cmd.Flags().IntVar(&c.flagNetworkPort, "network-port", -1, fmt.Sprintf("Port to bind to (default: %d)"+"``", shared.HTTPSDefaultPort))
 	cmd.Flags().StringVar(&c.flagStorageBackend, "storage-backend", "", "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"+"``")
 	cmd.Flags().StringVar(&c.flagStorageDevice, "storage-create-device", "", "Setup device based storage using DEVICE"+"``")
 	cmd.Flags().IntVar(&c.flagStorageLoopSize, "storage-create-loop", -1, "Setup loop based storage with SIZE in GB"+"``")
@@ -94,15 +94,15 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Can't use --dump with other flags")
 	}
 
-	// Connect to LXD
+	// Connect to the daemon
 	d, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to local LXD: %w", err)
+		return fmt.Errorf("Failed to connect to local daemon: %w", err)
 	}
 
 	server, _, err := d.GetServer()
 	if err != nil {
-		return fmt.Errorf("Failed to connect to get LXD server info: %w", err)
+		return fmt.Errorf("Failed to connect to get server info: %w", err)
 	}
 
 	// Dump mode
@@ -253,7 +253,7 @@ func (c *cmdInit) defaultHostname() string {
 	// Cluster server name
 	hostName, err := os.Hostname()
 	if err != nil {
-		hostName = "lxd"
+		hostName = "incus"
 	}
 
 	c.hostname = hostName

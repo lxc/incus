@@ -30,16 +30,16 @@ type cmdActivateifneeded struct {
 func (c *cmdActivateifneeded) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "activateifneeded"
-	cmd.Short = "Check if LXD should be started"
+	cmd.Short = "Check if the daemon should be started"
 	cmd.Long = `Description:
-  Check if LXD should be started
+  Check if the daemon should be started
 
-  This command will check if LXD has any auto-started instances,
-  instances which were running prior to LXD's last shutdown or if it's
+  This command will check if the daemon has any auto-started instances,
+  instances which were running prior to the last shutdown or if it's
   configured to listen on the network address.
 
   If at least one of those is true, then a connection will be attempted to the
-  LXD socket which will cause a socket-activated LXD to be spawned.
+  socket which will cause a socket-activated daemon to be spawned.
 `
 	cmd.RunE = c.Run
 

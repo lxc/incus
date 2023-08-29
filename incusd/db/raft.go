@@ -32,9 +32,9 @@ const (
 	RaftSpare   = client.Spare
 )
 
-// GetRaftNodes returns information about all LXD nodes that are members of the
-// dqlite Raft cluster (possibly including the local member). If this LXD
-// instance is not running in clustered mode, an empty list is returned.
+// GetRaftNodes returns information about all cluster members that are members of the
+// dqlite Raft cluster (possibly including the local member). If this server
+// is not running in clustered mode, an empty list is returned.
 func (n *NodeTx) GetRaftNodes(ctx context.Context) ([]RaftNode, error) {
 	nodes := []RaftNode{}
 
@@ -57,14 +57,14 @@ func (n *NodeTx) GetRaftNodes(ctx context.Context) ([]RaftNode, error) {
 	return nodes, nil
 }
 
-// GetRaftNodeAddresses returns the addresses of all LXD nodes that are members of
-// the dqlite Raft cluster (possibly including the local member). If this LXD
-// instance is not running in clustered mode, an empty list is returned.
+// GetRaftNodeAddresses returns the addresses of all servers that are members of
+// the dqlite Raft cluster (possibly including the local member). If this server
+// is not running in clustered mode, an empty list is returned.
 func (n *NodeTx) GetRaftNodeAddresses(ctx context.Context) ([]string, error) {
 	return query.SelectStrings(ctx, n.tx, "SELECT address FROM raft_nodes")
 }
 
-// GetRaftNodeAddress returns the address of the LXD raft node with the given ID,
+// GetRaftNodeAddress returns the address of the raft node with the given ID,
 // if any matching row exists.
 func (n *NodeTx) GetRaftNodeAddress(ctx context.Context, id int64) (string, error) {
 	stmt := "SELECT address FROM raft_nodes WHERE id=?"
@@ -105,7 +105,7 @@ func (n *NodeTx) CreateFirstRaftNode(address string, name string) error {
 	return nil
 }
 
-// CreateRaftNode adds a node to the current list of LXD nodes that are part of the
+// CreateRaftNode adds a node to the current list of nodes that are part of the
 // dqlite Raft cluster. It returns the ID of the newly inserted row.
 func (n *NodeTx) CreateRaftNode(address string, name string) (int64, error) {
 	columns := []string{"address", "name"}
@@ -113,7 +113,7 @@ func (n *NodeTx) CreateRaftNode(address string, name string) (int64, error) {
 	return query.UpsertObject(n.tx, "raft_nodes", columns, values)
 }
 
-// RemoveRaftNode removes a node from the current list of LXD nodes that are
+// RemoveRaftNode removes a node from the current list of nodes that are
 // part of the dqlite Raft cluster.
 func (n *NodeTx) RemoveRaftNode(id int64) error {
 	deleted, err := query.DeleteObject(n.tx, "raft_nodes", id)

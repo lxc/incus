@@ -18,7 +18,7 @@ import (
 
 // Packages returns the AST packages in which to search for structs.
 //
-// By default it includes the lxd/db and shared/api packages.
+// By default it includes the incusd/db and shared/api packages.
 func Packages() (map[string]*ast.Package, error) {
 	packages := map[string]*ast.Package{}
 

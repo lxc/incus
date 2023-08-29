@@ -128,7 +128,7 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 	}
 
 	if expanded && (shared.IsFalseOrEmpty(config["security.privileged"])) && sysOS.IdmapSet == nil {
-		return fmt.Errorf("LXD doesn't have a uid/gid allocation. In this mode, only privileged containers are supported")
+		return fmt.Errorf("No uid/gid allocation configured. In this mode, only privileged containers are supported")
 	}
 
 	unprivOnly := os.Getenv("INCUS_UNPRIVILEGED_ONLY")
@@ -141,7 +141,7 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 		}
 
 		if shared.IsTrue(config["security.privileged"]) {
-			return fmt.Errorf("LXD was configured to only allow unprivileged containers")
+			return fmt.Errorf("The server was configured to only allow unprivileged containers")
 		}
 	}
 
@@ -219,7 +219,7 @@ func lxcValidConfig(rawLxc string) error {
 		unprivOnly := os.Getenv("INCUS_UNPRIVILEGED_ONLY")
 		if shared.IsTrue(unprivOnly) {
 			if key == "lxc.idmap" || key == "lxc.id_map" || key == "lxc.include" {
-				return fmt.Errorf("%s can't be set in raw.lxc as LXD was configured to only allow unprivileged containers", key)
+				return fmt.Errorf("%s can't be set in raw.lxc as the server was configured to only allow unprivileged containers", key)
 			}
 		}
 
@@ -288,7 +288,7 @@ func AllowedUnprivilegedOnlyMap(rawIdmap string) error {
 
 	for _, ent := range rawMaps {
 		if ent.Hostid == 0 {
-			return fmt.Errorf("Cannot map root user into container as LXD was configured to only allow unprivileged containers")
+			return fmt.Errorf("Cannot map root user into container as the server was configured to only allow unprivileged containers")
 		}
 	}
 
@@ -616,8 +616,8 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 
 			var err error
 			var remote incus.ImageServer
-			if shared.StringInSlice(req.Source.Protocol, []string{"", "lxd"}) {
-				// Remote LXD image server.
+			if shared.StringInSlice(req.Source.Protocol, []string{"", "incus", "lxd"}) {
+				// Remote image server.
 				remote, err = incus.ConnectPublicIncus(req.Source.Server, &incus.ConnectionArgs{
 					TLSServerCert: req.Source.Certificate,
 					UserAgent:     version.UserAgent,
@@ -1052,7 +1052,7 @@ func NextSnapshotName(s *state.State, inst Instance, defaultPattern string) (str
 
 // temporaryName concatenates the move prefix and instUUID for a temporary instance.
 func temporaryName(instUUID string) string {
-	return fmt.Sprintf("lxd-move-of-%s", instUUID)
+	return fmt.Sprintf("move-of-%s", instUUID)
 }
 
 // MoveTemporaryName returns a name derived from the instance's volatile.uuid, to use when moving an instance

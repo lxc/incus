@@ -511,7 +511,7 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 
 	defer func() { _ = template.Close() }()
 
-	tempfile, err := os.CreateTemp("", "lxd_template")
+	tempfile, err := os.CreateTemp("", "incus_template")
 	if err != nil {
 		return response.SmartError(err)
 	}

@@ -170,7 +170,7 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	require.NoError(t, state.DB.Cluster.Close())
 	store := gateway.NodeStore()
 	dial := gateway.DialFunc()
-	state.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, nil, driver.WithDialFunc(dial))
+	state.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, driver.WithDialFunc(dial))
 	require.NoError(t, err)
 	gateway.Cluster = state.DB.Cluster
 

@@ -73,8 +73,7 @@ func TestEndpoints_LocalUnknownUnixGroup(t *testing.T) {
 		t, err, "local endpoint: cannot get group ID of 'xquibaz': group: unknown group xquibaz")
 }
 
-// If another LXD endpoints is already listening on the unix socket, an error is
-// returned.
+// If another endpoint is already listening on the unix socket, an error is returned.
 func TestEndpoints_LocalAlreadyRunning(t *testing.T) {
 	endpoints1, config1, cleanup1 := newEndpoints(t)
 	defer cleanup1()
@@ -87,12 +86,12 @@ func TestEndpoints_LocalAlreadyRunning(t *testing.T) {
 	defer cleanup2()
 
 	err := endpoints2.Up(config2)
-	assert.EqualError(t, err, "local endpoint: LXD is already running")
+	assert.EqualError(t, err, "local endpoint: Incus is already running")
 }
 
 // Create a UnixListener using a random and unique file name.
 func newUnixListener(t *testing.T) *net.UnixListener {
-	file, err := os.CreateTemp("", "lxd-endpoints-test")
+	file, err := os.CreateTemp("", "incus-endpoints-test")
 	require.NoError(t, err)
 
 	path := file.Name()

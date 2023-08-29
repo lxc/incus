@@ -76,7 +76,7 @@ func (c *cmdForkZFS) Run(cmd *cobra.Command, args []string) error {
 
 	defer func() { _ = file.Close() }()
 
-	// Unmount all mounts under LXD directory
+	// Unmount all mounts under the main directory
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()

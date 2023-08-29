@@ -24,10 +24,10 @@ import (
 
 // Return a new unstarted Endpoints instance, a Config with stub rest/devIncus
 // servers, and a cleanup function that can be used to clear all state
-// associated with the endpoints (e.g. the temporary LXD var dir and any
+// associated with the endpoints (e.g. the temporary var dir and any
 // goroutine that was spawned by the tomb).
 func newEndpoints(t *testing.T) (*endpoints.Endpoints, *endpoints.Config, func()) {
-	dir, err := os.MkdirTemp("", "lxd-endpoints-test-")
+	dir, err := os.MkdirTemp("", "incus-endpoints-test-")
 	require.NoError(t, err)
 	require.NoError(t, os.Mkdir(filepath.Join(dir, "devIncus"), 0755))
 
@@ -78,7 +78,7 @@ func httpGetOverTLSSocket(addr string, cert *shared.CertInfo) error {
 	return err
 }
 
-// Returns a minimal stub for the LXD RESTful API server, just realistic
+// Returns a minimal stub for the REST API server, just realistic
 // enough to make incus.ConnectIncusUnix succeed.
 func newServer() *http.Server {
 	mux := http.NewServeMux()

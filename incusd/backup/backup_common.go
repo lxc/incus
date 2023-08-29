@@ -7,7 +7,7 @@ import (
 )
 
 // WorkingDirPrefix is used when temporary working directories are needed.
-const WorkingDirPrefix = "lxd_backup"
+const WorkingDirPrefix = "incus_backup"
 
 // CommonBackup represents a common backup.
 type CommonBackup struct {

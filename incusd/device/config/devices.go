@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Device represents a LXD container device.
+// Device represents an instance device.
 type Device map[string]string
 
 // Clone returns a copy of the Device.
@@ -63,7 +63,7 @@ func (device Device) Validate(rules map[string]func(value string) error) error {
 	return nil
 }
 
-// Devices represents a set of LXD container devices.
+// Devices represents a set of instance devices.
 type Devices map[string]Device
 
 // NewDevices creates a new Devices set from a native map[string]map[string]string set.

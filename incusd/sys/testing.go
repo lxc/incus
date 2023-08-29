@@ -13,7 +13,7 @@ import (
 
 // NewTestOS returns a new OS instance initialized with test values.
 func NewTestOS(t *testing.T) (*OS, func()) {
-	dir, err := os.MkdirTemp("", "lxd-sys-os-test-")
+	dir, err := os.MkdirTemp("", "incus-sys-os-test-")
 	require.NoError(t, err)
 	require.NoError(t, SetupTestCerts(dir))
 
@@ -37,8 +37,7 @@ func NewTestOS(t *testing.T) (*OS, func()) {
 	return os, cleanup
 }
 
-// SetupTestCerts populates the given test LXD directory with server
-// certificates.
+// SetupTestCerts populates the given test directory with server certificates.
 //
 // Since generating certificates is CPU intensive, they will be simply
 // symlink'ed from the test/deps/ directory.

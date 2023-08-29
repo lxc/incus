@@ -93,7 +93,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 		// non-clustered case, because otherwise the directory would be
 		// re-populated by replication.
 		if !clustered && !backupDone {
-			logger.Infof("Updating the LXD global schema. Backup made as \"global.bak\"")
+			logger.Infof("Updating the global schema. Backup made as \"global.bak\"")
 			err := shared.DirCopy(
 				filepath.Join(dir, "global"),
 				filepath.Join(dir, "global.bak"),

@@ -140,7 +140,7 @@ func (c *cmdForknet) Command() *cobra.Command {
 
 	// detach
 	cmdDetach := &cobra.Command{}
-	cmdDetach.Use = "detach <netns file> <LXD PID> <ifname> <hostname>"
+	cmdDetach.Use = "detach <netns file> <daemon PID> <ifname> <hostname>"
 	cmdDetach.Args = cobra.ExactArgs(4)
 	cmdDetach.RunE = c.RunDetach
 	cmd.AddCommand(cmdDetach)
@@ -169,12 +169,12 @@ func (c *cmdForknet) RunInfo(cmd *cobra.Command, args []string) error {
 }
 
 func (c *cmdForknet) RunDetach(cmd *cobra.Command, args []string) error {
-	lxdPID := args[1]
+	daemonPID := args[1]
 	ifName := args[2]
 	hostName := args[3]
 
-	if lxdPID == "" {
-		return fmt.Errorf("LXD PID argument is required")
+	if daemonPID == "" {
+		return fmt.Errorf("Daemon PID argument is required")
 	}
 
 	if ifName == "" {
@@ -209,7 +209,7 @@ func (c *cmdForknet) RunDetach(cmd *cobra.Command, args []string) error {
 	}
 
 	link = &ip.Link{Name: hostName}
-	err = link.SetNetns(lxdPID)
+	err = link.SetNetns(daemonPID)
 	if err != nil {
 		return err
 	}

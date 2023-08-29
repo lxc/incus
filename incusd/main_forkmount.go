@@ -148,7 +148,7 @@ static int lxc_safe_ulong(const char *numstr, unsigned long *converted)
 	return 0;
 }
 
-static void do_lxd_forkmount(int pidfd, int ns_fd)
+static void do_incus_forkmount(int pidfd, int ns_fd)
 {
 	unsigned long mntflags = 0;
 	int fd_tree = -EBADF;
@@ -216,7 +216,7 @@ static void do_lxd_forkmount(int pidfd, int ns_fd)
 	}
 
 	if (fd_tree >= 0) {
-		ret = lxd_move_mount(fd_tree, "", -EBADF, dest, MOVE_MOUNT_F_EMPTY_PATH);
+		ret = incus_move_mount(fd_tree, "", -EBADF, dest, MOVE_MOUNT_F_EMPTY_PATH);
 		if (ret) {
 			fprintf(stderr, "Failed to move detached mount to target from %d to %s: %s\n", fd_tree, dest, strerror(errno));
 			_exit(1);
@@ -387,23 +387,23 @@ static void do_move_forkmount(int pidfd, int ns_fd)
 	mnt_attributes_new(old_mntflags, &new_mntflags);
 
 	if (strcmp(fstype, "") && strcmp(fstype, "none")) {
-		fs_fd = lxd_fsopen(fstype, FSOPEN_CLOEXEC);
+		fs_fd = incus_fsopen(fstype, FSOPEN_CLOEXEC);
 		if (fs_fd < 0)
 			die("fsopen: %s", fstype);
 
-		ret = lxd_fsconfig(fs_fd, FSCONFIG_SET_STRING, "source", src, 0);
+		ret = incus_fsconfig(fs_fd, FSCONFIG_SET_STRING, "source", src, 0);
 		if (ret < 0)
 			die("fsconfig: source");
 
-		ret = lxd_fsconfig(fs_fd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
+		ret = incus_fsconfig(fs_fd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
 		if (ret < 0)
 			die("fsconfig: create");
 
-		mnt_fd = lxd_fsmount(fs_fd, FSMOUNT_CLOEXEC, new_mntflags);
+		mnt_fd = incus_fsmount(fs_fd, FSMOUNT_CLOEXEC, new_mntflags);
 		if (mnt_fd < 0)
 			die("fsmount");
 	} else {
-		mnt_fd = lxd_open_tree(-EBADF, src, OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE);
+		mnt_fd = incus_open_tree(-EBADF, src, OPEN_TREE_CLOEXEC | OPEN_TREE_CLONE);
 		if (mnt_fd < 0)
 			die("open_tree");
 	}
@@ -419,7 +419,7 @@ static void do_move_forkmount(int pidfd, int ns_fd)
 
 		};
 
-		ret = lxd_mount_setattr(mnt_fd, "", AT_EMPTY_PATH, &attr, sizeof(attr));
+		ret = incus_mount_setattr(mnt_fd, "", AT_EMPTY_PATH, &attr, sizeof(attr));
 		if (ret)
 			die("idmap mount");
 	}
@@ -433,7 +433,7 @@ static void do_move_forkmount(int pidfd, int ns_fd)
 	if (dest_fd < 0)
 		die("Failed to create destination mount point");
 
-	ret = lxd_move_mount(mnt_fd, "", dest_fd, "",
+	ret = incus_move_mount(mnt_fd, "", dest_fd, "",
 			     MOVE_MOUNT_F_EMPTY_PATH | MOVE_MOUNT_T_EMPTY_PATH);
 	if (ret)
 		die("Failed to move detached mount to target from %d to %s", mnt_fd, dest);
@@ -441,7 +441,7 @@ static void do_move_forkmount(int pidfd, int ns_fd)
 	_exit(EXIT_SUCCESS);
 }
 
-static void do_lxd_forkumount(int pidfd, int ns_fd)
+static void do_incus_forkumount(int pidfd, int ns_fd)
 {
 	int ret;
 	char *path = NULL;
@@ -571,7 +571,7 @@ void forkmount(void)
 	advance_arg(true);
 
 	// Call the subcommands
-	if (strcmp(command, "lxd-mount") == 0) {
+	if (strcmp(command, "go-mount") == 0) {
 		// Get the pid
 		cur = advance_arg(false);
 		if (cur == NULL || (strcmp(cur, "--help") == 0 || strcmp(cur, "--version") == 0 || strcmp(cur, "-h") == 0))
@@ -586,7 +586,7 @@ void forkmount(void)
 		if (ns_fd < 0)
 			_exit(EXIT_FAILURE);
 
-		do_lxd_forkmount(pidfd, ns_fd);
+		do_incus_forkmount(pidfd, ns_fd);
 	} else if (strcmp(command, "lxc-mount") == 0) {
 		do_lxc_forkmount();
 	} else if (strcmp(command, "move-mount") == 0) {
@@ -605,7 +605,7 @@ void forkmount(void)
 			_exit(EXIT_FAILURE);
 
 		do_move_forkmount(pidfd, ns_fd);
-	} else if (strcmp(command, "lxd-umount") == 0) {
+	} else if (strcmp(command, "go-umount") == 0) {
 		// Get the pid
 		cur = advance_arg(false);
 		if (cur == NULL || (strcmp(cur, "--help") == 0 || strcmp(cur, "--version") == 0 || strcmp(cur, "-h") == 0))
@@ -620,7 +620,7 @@ void forkmount(void)
 		if (ns_fd < 0)
 			_exit(EXIT_FAILURE);
 
-		do_lxd_forkumount(pidfd, ns_fd);
+		do_incus_forkumount(pidfd, ns_fd);
 	} else if (strcmp(command, "lxc-umount") == 0) {
 		do_lxc_forkumount();
 	}
@@ -661,11 +661,11 @@ func (c *cmdForkmount) Command() *cobra.Command {
 	cmdLXCMount.RunE = c.Run
 	cmd.AddCommand(cmdLXCMount)
 
-	cmdLXDMount := &cobra.Command{}
-	cmdLXDMount.Use = "lxd-mount <PID> <PidFd> <source> <destination> <idmapType> <flags>"
-	cmdLXDMount.Args = cobra.ExactArgs(6)
-	cmdLXDMount.RunE = c.Run
-	cmd.AddCommand(cmdLXDMount)
+	cmdGoMount := &cobra.Command{}
+	cmdGoMount.Use = "go-mount <PID> <PidFd> <source> <destination> <idmapType> <flags>"
+	cmdGoMount.Args = cobra.ExactArgs(6)
+	cmdGoMount.RunE = c.Run
+	cmd.AddCommand(cmdGoMount)
 
 	// umount
 	cmdLXCUmount := &cobra.Command{}
@@ -674,11 +674,11 @@ func (c *cmdForkmount) Command() *cobra.Command {
 	cmdLXCUmount.RunE = c.Run
 	cmd.AddCommand(cmdLXCUmount)
 
-	cmdLXDUmount := &cobra.Command{}
-	cmdLXDUmount.Use = "lxd-umount <PID> <PidFd> <path>"
-	cmdLXDUmount.Args = cobra.ExactArgs(3)
-	cmdLXDUmount.RunE = c.Run
-	cmd.AddCommand(cmdLXDUmount)
+	cmdGoUmount := &cobra.Command{}
+	cmdGoUmount.Use = "go-umount <PID> <PidFd> <path>"
+	cmdGoUmount.Args = cobra.ExactArgs(3)
+	cmdGoUmount.RunE = c.Run
+	cmd.AddCommand(cmdGoUmount)
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs

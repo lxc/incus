@@ -1,5 +1,5 @@
-#ifndef LXD_H
-#define LXD_H
+#ifndef INCUS_H
+#define INCUS_H
 
 #include "compiler.h"
 
@@ -24,4 +24,4 @@ __hidden extern int preserve_ns(pid_t pid, int ns_fd, const char *ns);
 
 extern bool pidfd_setns_aware;
 
-#endif /* LXD_H */
+#endif /* INCUS_H */

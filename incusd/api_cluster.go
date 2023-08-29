@@ -570,7 +570,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		// Connect to ourselves to initialize storage pools and networks using the API.
 		localClient, err := incus.ConnectIncusUnix(d.UnixSocket(), &incus.ConnectionArgs{UserAgent: clusterRequest.UserAgentJoiner})
 		if err != nil {
-			return fmt.Errorf("Failed to connect to local LXD: %w", err)
+			return fmt.Errorf("Failed to connect to local server: %w", err)
 		}
 
 		revert := revert.New()
@@ -787,7 +787,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 	return operations.OperationResponse(op)
 }
 
-// clusterPutDisableMu is used to prevent the LXD process from being replaced/stopped during removal from the
+// clusterPutDisableMu is used to prevent the daemon from being replaced/stopped during removal from the
 // cluster until such time as the request that initiated the removal has finished. This allows for self removal
 // from the cluster when not the leader.
 var clusterPutDisableMu sync.Mutex
@@ -838,18 +838,18 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 		<-r.Context().Done() // Wait until request has finished.
 
 		// Wait until we can acquire the lock. This way if another request is holding the lock we won't
-		// replace/stop the LXD daemon until that request has finished.
+		// replace/stop the daemon until that request has finished.
 		clusterPutDisableMu.Lock()
 		defer clusterPutDisableMu.Unlock()
 
 		if d.systemdSocketActivated {
-			logger.Info("Exiting LXD daemon following removal from cluster")
+			logger.Info("Exiting daemon following removal from cluster")
 			os.Exit(0)
 		} else {
-			logger.Info("Restarting LXD daemon following removal from cluster")
+			logger.Info("Restarting daemon following removal from cluster")
 			err = util.ReplaceDaemon()
 			if err != nil {
-				logger.Error("Failed restarting LXD daemon", logger.Ctx{"err": err})
+				logger.Error("Failed restarting daemon", logger.Ctx{"err": err})
 			}
 		}
 	}()
@@ -860,7 +860,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 			return err
 		}
 
-		// Send the response before replacing the LXD daemon process.
+		// Send the response before replacing the daemon process.
 		f, ok := w.(http.Flusher)
 		if ok {
 			f.Flush()
@@ -872,7 +872,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 	})
 }
 
-// clusterInitMember initialises storage pools and networks on this member. We pass two LXD client instances, one
+// clusterInitMember initialises storage pools and networks on this member. We pass two client instances, one
 // connected to ourselves (the joining member) and one connected to the target cluster member to join.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
 func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memberConfig []api.ClusterMemberConfigKey) (revert.Hook, error) {
@@ -900,7 +900,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 			Name:           pool.Name,
 		}
 
-		// Delete config keys that are automatically populated by LXD
+		// Delete config keys that are automatically populated by the daemon.
 		delete(post.Config, "volatile.initial_source")
 		delete(post.Config, "zfs.pool_name")
 
@@ -1069,8 +1069,8 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //              type: string
 //            example: |-
 //              [
-//                "/1.0/cluster/members/lxd01",
-//                "/1.0/cluster/members/lxd02"
+//                "/1.0/cluster/members/server01",
+//                "/1.0/cluster/members/server02"
 //              ]
 //    "403":
 //      $ref: "#/responses/Forbidden"
@@ -1732,7 +1732,7 @@ func clusterRolesChanged(oldRoles []db.ClusterRole, newRoles []db.ClusterRole) b
 // clusterValidateConfig validates the configuration keys/values for cluster members.
 func clusterValidateConfig(config map[string]string) error {
 	clusterConfigKeys := map[string]func(value string) error{
-		// lxddoc:generate(group=cluster, key=scheduler.instance)
+		// gendoc:generate(group=cluster, key=scheduler.instance)
 		//
 		// ---
 		//  shortdesc: Possible values are `all`, `manual` and `group`. See {ref}`clustering-instance-placement` for more information.
@@ -1744,7 +1744,7 @@ func clusterValidateConfig(config map[string]string) error {
 	for k, v := range config {
 		// User keys are free for all.
 
-		// lxddoc:generate(group=cluster, key=user.*)
+		// gendoc:generate(group=cluster, key=user.*)
 		//
 		// ---
 		//  shortdesc: Free form user key/value storage (can be used in search).
@@ -1949,7 +1949,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			// Send the response before replacing the LXD daemon process.
+			// Send the response before replacing the daemon process.
 			f, ok := w.(http.Flusher)
 			if ok {
 				f.Flush()
@@ -2097,8 +2097,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 //
 //	Update the certificate for the cluster
 //
-//	Replaces existing cluster certificate and reloads LXD on each cluster
-//	member.
+//	Replaces existing cluster certificate and reloads each cluster member.
 //
 //	---
 //	consumes:
@@ -2374,7 +2373,7 @@ type internalClusterPostAcceptResponse struct {
 	PrivateKey []byte             `json:"private_key" yaml:"private_key"`
 }
 
-// Represent a LXD node that is part of the dqlite raft cluster.
+// Represent a node that is part of the dqlite raft cluster.
 type internalRaftNode struct {
 	ID      uint64 `json:"id" yaml:"id"`
 	Address string `json:"address" yaml:"address"`
@@ -3624,8 +3623,8 @@ func clusterGroupsPost(d *Daemon, r *http.Request) response.Response {
 //              type: string
 //            example: |-
 //              [
-//                "/1.0/cluster/groups/lxd01",
-//                "/1.0/cluster/groups/lxd02"
+//                "/1.0/cluster/groups/server01",
+//                "/1.0/cluster/groups/server02"
 //              ]
 //    "403":
 //      $ref: "#/responses/Forbidden"

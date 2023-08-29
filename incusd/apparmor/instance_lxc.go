@@ -468,7 +468,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   mount fstype=proc -> /usr/lib/*/lxc/**,
   mount fstype=sysfs -> /usr/lib/*/lxc/**,
 
-  # Allow nested LXD
+  # Allow nested Incus
   mount none -> /var/lib/incus/shmounts/,
   mount /var/lib/incus/shmounts/ -> /var/lib/incus/shmounts/,
   mount options=bind /var/lib/incus/shmounts/** -> /var/lib/incus/**,

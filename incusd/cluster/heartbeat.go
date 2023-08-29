@@ -216,7 +216,7 @@ func (hbState *APIHeartbeat) Send(ctx context.Context, networkCert *shared.CertI
 }
 
 // HeartbeatTask returns a task function that performs leader-initiated heartbeat
-// checks against all LXD nodes in the cluster.
+// checks against all cluster members in the cluster.
 //
 // It will update the heartbeat timestamp column of the nodes table
 // accordingly, and also notify them of the current list of database nodes.

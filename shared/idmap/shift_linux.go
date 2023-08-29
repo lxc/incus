@@ -305,21 +305,21 @@ static int create_detached_idmapped_mount(const char *path, const char *fstype)
 	int ret;
 
 	if (strcmp(fstype, "") && strcmp(fstype, "none")) {
-		fs_fd = lxd_fsopen(fstype, FSOPEN_CLOEXEC);
+		fs_fd = incus_fsopen(fstype, FSOPEN_CLOEXEC);
 		if (fs_fd < 0)
 			return -errno;
 
-		ret = lxd_fsconfig(fs_fd, FSCONFIG_SET_STRING, "source", path, 0);
+		ret = incus_fsconfig(fs_fd, FSCONFIG_SET_STRING, "source", path, 0);
 		if (ret < 0)
 			return -errno;
 
-		ret = lxd_fsconfig(fs_fd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
+		ret = incus_fsconfig(fs_fd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
 		if (ret < 0)
 			return -errno;
 
-		mnt_fd = lxd_fsmount(fs_fd, FSMOUNT_CLOEXEC, 0);
+		mnt_fd = incus_fsmount(fs_fd, FSMOUNT_CLOEXEC, 0);
 	} else {
-		mnt_fd = lxd_open_tree(-EBADF, path, OPEN_TREE_CLONE | OPEN_TREE_CLOEXEC);
+		mnt_fd = incus_open_tree(-EBADF, path, OPEN_TREE_CLONE | OPEN_TREE_CLOEXEC);
 	}
 
 	if (mnt_fd < 0)
@@ -331,7 +331,7 @@ static int create_detached_idmapped_mount(const char *path, const char *fstype)
 
 	attr.userns_fd = fd_userns;
 
-	ret = lxd_mount_setattr(mnt_fd, "", AT_EMPTY_PATH, &attr, sizeof(attr));
+	ret = incus_mount_setattr(mnt_fd, "", AT_EMPTY_PATH, &attr, sizeof(attr));
 	if (ret < 0)
 		return -errno;
 
@@ -488,7 +488,7 @@ func shiftAclType(path string, aclType int, shiftIds func(uid int64, gid int64) 
 }
 
 func SupportsVFS3Fscaps(prefix string) bool {
-	tmpfile, err := os.CreateTemp(prefix, ".lxd_fcaps_v3_")
+	tmpfile, err := os.CreateTemp(prefix, ".incus_fcaps_v3_")
 	if err != nil {
 		return false
 	}

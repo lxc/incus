@@ -234,7 +234,7 @@ func (c *Client) HandleEvent(event api.Event) {
 
 	entry := entry{
 		labels: LabelSet{
-			"app":      "lxd",
+			"app":      "incus",
 			"type":     event.Type,
 			"location": event.Location,
 		},

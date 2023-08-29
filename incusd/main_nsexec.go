@@ -7,7 +7,7 @@
  * our init as an initializer, we can capture process control before it is
  * transferred to the golang runtime, so we can then setns() as we'd like
  * before golang has a chance to set up any threads. So, we implement two new
- * lxd fork* commands which are captured here, and take a file on the host fs
+ * fork* commands which are captured here, and take a file on the host fs
  * and copy it into the container ns.
  *
  * An alternative to this would be to move this code into a separate binary,
@@ -202,7 +202,7 @@ int pidfd_nsfd(int pidfd, pid_t pid)
 	if (pidfd >= 0) {
 		// Verify that the pid has not been recycled and our /proc/<pid> handle
 		// is still valid.
-		ret = lxd_pidfd_send_signal(pidfd, 0, NULL, 0);
+		ret = incus_pidfd_send_signal(pidfd, 0, NULL, 0);
 		if (ret && errno != EPERM)
 			return -errno;
 	}
@@ -299,12 +299,12 @@ int mount_detach_idmap(const char *path, int fd_userns)
 	};
 	int ret;
 
-	fd_tree = lxd_open_tree(-EBADF, path, OPEN_TREE_CLONE | OPEN_TREE_CLOEXEC);
+	fd_tree = incus_open_tree(-EBADF, path, OPEN_TREE_CLONE | OPEN_TREE_CLOEXEC);
 	if (fd_tree < 0)
 		return -errno;
 
 	attr.userns_fd = fd_userns;
-	ret = lxd_mount_setattr(fd_tree, "", AT_EMPTY_PATH, &attr, sizeof(attr));
+	ret = incus_mount_setattr(fd_tree, "", AT_EMPTY_PATH, &attr, sizeof(attr));
 	if (ret < 0)
 		return -errno;
 

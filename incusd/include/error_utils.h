@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-2.1+ */
 
-#ifndef __LXD_ERROR_UTILS_H
-#define __LXD_ERROR_UTILS_H
+#ifndef __INCUS_ERROR_UTILS_H
+#define __INCUS_ERROR_UTILS_H
 
 #include "config.h"
 
@@ -66,4 +66,4 @@ static inline bool ERRNO_IS_NOT_SUPPORTED(int r) {
 	return IN_SET(abs(r), EOPNOTSUPP, ENOSYS);
 }
 
-#endif /* __LXD_ERROR_UTILS_H */
+#endif /* __INCUS_ERROR_UTILS_H */

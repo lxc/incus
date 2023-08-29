@@ -1335,7 +1335,7 @@ func NICUsesNetwork(nicDev map[string]string, networks ...*api.Network) bool {
 
 // BridgeNetfilterEnabled checks whether the bridge netfilter feature is loaded and enabled.
 // If it is not an error is returned. This is needed in order for instances connected to a bridge to access DNAT
-// listeners on the LXD host, as otherwise the packets from the bridge do have the SNAT netfilter rules applied.
+// listeners on the host, as otherwise the packets from the bridge do have the SNAT netfilter rules applied.
 func BridgeNetfilterEnabled(ipVersion uint) error {
 	sysctlName := "iptables"
 	if ipVersion == 6 {

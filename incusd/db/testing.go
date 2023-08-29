@@ -21,7 +21,7 @@ import (
 // NewTestNode creates a new Node for testing purposes, along with a function
 // that can be used to clean it up when done.
 func NewTestNode(t *testing.T) (*Node, func()) {
-	dir, err := os.MkdirTemp("", "lxd-db-test-node-")
+	dir, err := os.MkdirTemp("", "incus-db-test-node-")
 	require.NoError(t, err)
 
 	db, err := OpenNode(dir, nil)
@@ -66,7 +66,7 @@ func NewTestCluster(t *testing.T) (*Cluster, func()) {
 		return net.Dial("unix", address)
 	}
 
-	cluster, err := OpenCluster(context.Background(), "test.db", store, "1", dir, 5*time.Second, nil, driver.WithLogFunc(log), driver.WithDialFunc(dial))
+	cluster, err := OpenCluster(context.Background(), "test.db", store, "1", dir, 5*time.Second, driver.WithLogFunc(log), driver.WithDialFunc(dial))
 	require.NoError(t, err)
 
 	cleanup := func() {

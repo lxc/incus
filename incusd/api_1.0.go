@@ -174,7 +174,7 @@ var api10 = []APIEndpoint{
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: query
 //	    name: project
 //	    description: Project name
@@ -297,7 +297,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 		OSName:                 s.OS.ReleaseInfo["NAME"],
 		OSVersion:              s.OS.ReleaseInfo["VERSION_ID"],
 		Project:                projectName,
-		Server:                 "lxd",
+		Server:                 "incus",
 		ServerPid:              os.Getpid(),
 		ServerVersion:          version.Version,
 		ServerClustered:        clustered,
@@ -393,7 +393,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: server
 //	    description: Server configuration
@@ -492,7 +492,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: server
 //	    description: Server configuration

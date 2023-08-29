@@ -762,7 +762,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 //
 //	Create a new instance
 //
-//	Creates a new instance on LXD.
+//	Creates a new instance.
 //	Depending on the source, this can create an instance from an existing
 //	local image, remote image, existing local instance or snapshot, remote
 //	migration stream or backup file.
@@ -1154,7 +1154,7 @@ func instanceFindStoragePool(s *state.State, projectName string, req *api.Instan
 		storagePool = localRootDiskDevice["pool"]
 	}
 
-	// Handle copying/moving between two storage-api LXD instances.
+	// Handle copying/moving between two storage-api instances.
 	if storagePool != "" {
 		_, err := s.DB.Cluster.GetStoragePoolID(storagePool)
 		if response.IsNotFoundError(err) {
@@ -1188,7 +1188,7 @@ func instanceFindStoragePool(s *state.State, projectName string, req *api.Instan
 		pools, err := s.DB.Cluster.GetStoragePoolNames()
 		if err != nil {
 			if response.IsNotFoundError(err) {
-				return "", "", "", nil, response.BadRequest(fmt.Errorf("This LXD instance does not have any storage pools configured"))
+				return "", "", "", nil, response.BadRequest(fmt.Errorf("This instance does not have any storage pools configured"))
 			}
 
 			return "", "", "", nil, response.SmartError(err)

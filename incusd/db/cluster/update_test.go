@@ -412,7 +412,7 @@ INSERT INTO profiles_config VALUES(3, 2, 'limits.cpu.allowance', '50%');
 INSERT INTO profiles_devices VALUES(1, 1, 'eth0', 1);
 INSERT INTO profiles_devices VALUES(2, 1, 'root', 1);
 INSERT INTO profiles_devices_config VALUES(1, 1, 'nictype', 'bridged');
-INSERT INTO profiles_devices_config VALUES(2, 1, 'parent', 'lxdbr0');
+INSERT INTO profiles_devices_config VALUES(2, 1, 'parent', 'incusbr0');
 INSERT INTO profiles_devices_config VALUES(3, 2, 'path', '/');
 INSERT INTO profiles_devices_config VALUES(4, 2, 'pool', 'default');
 `, time.Now())

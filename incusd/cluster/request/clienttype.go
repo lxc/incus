@@ -2,11 +2,11 @@ package request
 
 // UserAgentNotifier used to distinguish between a regular client request and an internal cluster request when
 // notifying other nodes of a cluster change.
-const UserAgentNotifier = "lxd-cluster-notifier"
+const UserAgentNotifier = "incus-cluster-notifier"
 
 // UserAgentJoiner used to distinguish between a regular client request and an internal cluster request when
 // joining a node to a cluster.
-const UserAgentJoiner = "lxd-cluster-joiner"
+const UserAgentJoiner = "incus-cluster-joiner"
 
 // ClientType indicates which sort of client type is being used.
 type ClientType string

@@ -19,8 +19,8 @@ var monitorsLock sync.Mutex
 // RingbufSize is the size of the agent serial ringbuffer in bytes.
 var RingbufSize = 16
 
-// EventAgentStarted is the event sent once the lxd-agent has started.
-var EventAgentStarted = "LXD-AGENT-STARTED"
+// EventAgentStarted is the event sent once the agent has started.
+var EventAgentStarted = "AGENT-STARTED"
 
 // EventVMShutdown is the event sent when VM guest shuts down.
 var EventVMShutdown = "SHUTDOWN"

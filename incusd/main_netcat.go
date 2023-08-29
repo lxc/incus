@@ -25,10 +25,10 @@ func (c *cmdNetcat) Command() *cobra.Command {
   Send stdin data to a unix socket
 
   This internal command is used to forward the output of a program over
-  a websocket by first forwarding it to a unix socket controlled by LXD.
+  a websocket by first forwarding it to a unix socket controlled by the daemon.
 
   Its main use is when running rsync or btrfs/zfs send/receive between
-  two machines over the LXD websocket API.
+  two machines over the websocket API.
 `
 	cmd.RunE = c.Run
 	cmd.Hidden = true

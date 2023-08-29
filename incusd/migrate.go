@@ -1,4 +1,4 @@
-// Package migration provides the primitives for migration in LXD.
+// Package migration provides the primitives for server to server migration.
 //
 // See https://github.com/lxc/incus/blob/main/doc/migration.md for a complete
 // description.

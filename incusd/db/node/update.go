@@ -37,19 +37,19 @@ func SchemaDotGo() error {
 /* Database updates are one-time actions that are needed to move an
    existing database from one version of the schema to the next.
 
-   Those updates are applied at startup time before anything else in LXD
+   Those updates are applied at startup time before anything else
    is initialized. This means that they should be entirely
    self-contained and not touch anything but the database.
 
-   Calling LXD functions isn't allowed as such functions may themselves
+   Calling API functions isn't allowed as such functions may themselves
    depend on a newer DB schema and so would fail when upgrading a very old
-   version of LXD.
+   version.
 
    DO NOT USE this mechanism for one-time actions which do not involve
-   changes to the database schema. Use patches instead (see lxd/patches.go).
+   changes to the database schema. Use patches instead (see patches.go).
 
    REMEMBER to run "make update-schema" after you add a new update function to
-   this slice. That will refresh the schema declaration in lxd/db/schema.go and
+   this slice. That will refresh the schema declaration in db/schema.go and
    include the effect of applying your patch as well.
 
    Only append to the updates list, never remove entries and never re-order them.
@@ -234,19 +234,19 @@ INSERT INTO config (key, value)
 }
 
 // Add a raft_nodes table to be used when running in clustered mode. It lists
-// the current nodes in the LXD cluster that are participating to the dqlite
+// the current nodes in the cluster that are participating in the dqlite
 // database Raft cluster.
 //
 // The 'id' column contains the raft server ID of the database node, and the
 // 'address' column its network address. Both are used internally by the raft
 // Go package to manage the cluster.
 //
-// Typical setups will have 3 LXD cluster nodes that participate to the dqlite
-// database Raft cluster, and an arbitrary number of additional LXD cluster
-// nodes that don't. Non-database nodes are not tracked in this table, but rather
+// Typical setups will have 3 cluster members that participate to the dqlite
+// database Raft cluster, and an arbitrary number of additional cluster
+// members that don't. Non-database nodes are not tracked in this table, but rather
 // in the nodes table of the cluster database itself.
 //
-// The data in this table must be replicated by LXD on all nodes of the
+// The data in this table must be replicated on all nodes of the
 // cluster, regardless of whether they are part of the raft cluster or not, and
 // all nodes will consult this table when they need to find out a leader to
 // send SQL queries to.
@@ -465,8 +465,8 @@ func updateFromV21(ctx context.Context, tx *sql.Tx) error {
 
 func updateFromV20(ctx context.Context, tx *sql.Tx) error {
 	stmt := `
-UPDATE containers_devices SET name='__lxd_upgrade_root' WHERE name='root';
-UPDATE profiles_devices SET name='__lxd_upgrade_root' WHERE name='root';
+UPDATE containers_devices SET name='__upgrade_root' WHERE name='root';
+UPDATE profiles_devices SET name='__upgrade_root' WHERE name='root';
 
 INSERT INTO containers_devices (container_id, name, type) SELECT id, "root", 2 FROM containers;
 INSERT INTO containers_devices_config (container_device_id, key, value) SELECT id, "path", "/" FROM containers_devices WHERE name='root';`

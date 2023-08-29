@@ -27,7 +27,7 @@ func (c *cmdRecover) Command() *cobra.Command {
 
   This command is mostly used for disaster recovery. It will ask you about unknown storage pools and attempt to
   access them, along with existing storage pools, and identify any missing instances and volumes that exist on the
-  pools but are not in the LXD database. It will then offer to recreate these database records.
+  pools but are not in the database. It will then offer to recreate these database records.
 `
 	cmd.RunE = c.Run
 
@@ -58,7 +58,7 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Failed getting existing storage pools: %w", err)
 	}
 
-	fmt.Println("This LXD server currently has the following storage pools:")
+	fmt.Println("This server currently has the following storage pools:")
 	for _, existingPool := range existingPools {
 		fmt.Printf(" - %s (backend=%q, source=%q)\n", existingPool.Name, existingPool.Driver, existingPool.Config["source"])
 	}
@@ -166,7 +166,7 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("Scanning for unknown volumes...")
 
-	// Send /internal/recover/validate request to LXD.
+	// Send /internal/recover/validate request to the daemon.
 	reqValidate := internalRecoverValidatePost{
 		Pools: make([]api.StoragePoolsPost, 0, len(existingPools)+len(unknownPools)),
 	}
@@ -230,7 +230,7 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("Starting recovery...")
 
-	// Send /internal/recover/import request to LXD.
+	// Send /internal/recover/import request to the daemon.
 	// Don't lint next line with gosimple. It says we should convert reqValidate directly to an internalRecoverImportPost
 	// because their types are identical. This is less clear and will not work if either type changes in the future.
 	reqImport := internalRecoverImportPost{ //nolint:gosimple

@@ -629,7 +629,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 	}
 
 	// If there are affected OVN networks, then apply the changes, but only if the request type is normal.
-	// This way we won't apply the same changes multiple times for each LXD cluster member.
+	// This way we won't apply the same changes multiple times for each cluster member.
 	if len(aclOVNNets) > 0 && clientType == request.ClientTypeNormal {
 		client, err := openvswitch.NewOVN(d.state)
 		if err != nil {

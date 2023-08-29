@@ -116,8 +116,8 @@ var networkStateCmd = APIEndpoint{
 //              type: string
 //            example: |-
 //              [
-//                "/1.0/networks/lxdbr0",
-//                "/1.0/networks/lxdbr1"
+//                "/1.0/networks/mybr0",
+//                "/1.0/networks/mybr1"
 //              ]
 //    "403":
 //      $ref: "#/responses/Forbidden"
@@ -252,7 +252,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: network
 //	    description: Network
@@ -727,7 +727,7 @@ func doNetworksCreate(s *state.State, n network.Network, clientType clusterReque
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Network
@@ -1151,7 +1151,7 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: network
 //	    description: Network configuration
@@ -1288,7 +1288,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: network
 //	    description: Network configuration
@@ -1373,7 +1373,7 @@ func doNetworkUpdate(projectName string, n network.Network, req api.NetworkPut, 
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -1740,7 +1740,7 @@ func networkRestartOVN(s *state.State) error {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints

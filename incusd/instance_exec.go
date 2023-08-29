@@ -183,7 +183,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 
 	if s.req.Interactive {
 		if s.instance.Type() == instancetype.Container {
-			// For containers, we setup a PTY on the LXD server.
+			// For containers, we setup a PTY on the server.
 			ttys = make([]*os.File, 1)
 			ptys = make([]*os.File, 1)
 
@@ -222,7 +222,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 				_ = shared.SetSize(int(ptys[0].Fd()), s.req.Width, s.req.Height)
 			}
 		} else {
-			// For VMs we rely on the lxd-agent PTY running inside the VM guest.
+			// For VMs we rely on the agent PTY running inside the VM guest.
 			ttys = make([]*os.File, 2)
 			ptys = make([]*os.File, 2)
 			for i := 0; i < len(ttys); i++ {
@@ -411,7 +411,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 
 			var readDone, writeDone chan struct{}
 			if s.instance.Type() == instancetype.Container {
-				// For containers, we are running the command via the local LXD managed PTY and so
+				// For containers, we are running the command via the locally managed PTY and so
 				// need to use the same PTY handle for both read and write.
 				readDone, writeDone = ws.Mirror(context.Background(), conn, ptys[0])
 			} else {
@@ -485,7 +485,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 //	In non-interactive mode, you'll get one websocket for each of stdin, stdout and stderr.
 //	In interactive mode, a single bi-directional websocket is used for stdin and stdout/stderr.
 //
-//	An additional "control" socket is always added on top which can be used for out of band communication with LXD.
+//	An additional "control" socket is always added on top which can be used for out of band communications.
 //	This allows sending signals and window sizing information through.
 //
 //	---

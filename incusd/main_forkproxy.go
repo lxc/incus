@@ -664,7 +664,7 @@ func (c *cmdForkproxy) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// This line is used by LXD to check forkproxy has started OK.
+	// This line is used by the daemon to check forkproxy has started OK.
 	fmt.Println("Status: Started")
 
 	for {

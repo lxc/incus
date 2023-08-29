@@ -3,7 +3,7 @@
 ## Introduction
 
 `incus-generate` is a database statement and associated `go` function generator
-for LXD and related projects. `incus-generate` utilizes `go`'s code generation
+for Incus and related projects. `incus-generate` utilizes `go`'s code generation
 directives (`//go:generate ...`) alongside go's [ast](https://pkg.go.dev/go/ast)
 package for parsing the syntax tree for go structs and variables. We use
 `incus-generate` for the majority of our SQL statements and database interactions

@@ -77,27 +77,26 @@ type HeartbeatHook func(heartbeatData *APIHeartbeat, isLeader bool, unavailableM
 type HeartbeatHandler func(w http.ResponseWriter, r *http.Request, isLeader bool, hbData *APIHeartbeat)
 
 // Gateway mediates access to the dqlite cluster using a gRPC SQL client, and
-// possibly runs a dqlite replica on this LXD node (if we're configured to do
-// so).
+// possibly runs a dqlite replica on this member (if we're configured to do so).
 type Gateway struct {
 	db          *db.Node
 	networkCert *shared.CertInfo
 	options     *options
 
 	// The raft instance to use for creating the dqlite driver. It's nil if
-	// this LXD node is not supposed to be part of the raft cluster.
+	// this member is not supposed to be part of the raft cluster.
 	info *db.RaftNode
 
 	// The gRPC server exposing the dqlite driver created by this
-	// gateway. It's nil if this LXD node is not supposed to be part of the
+	// gateway. It's nil if this member is not supposed to be part of the
 	// raft cluster.
 	server   *dqlite.Node
 	acceptCh chan net.Conn
 	stopCh   chan struct{}
 
 	// A dialer that will connect to the dqlite server using a loopback
-	// net.Conn. It's non-nil when clustering is not enabled on this LXD
-	// node, and so we don't expose any dqlite or raft network endpoint,
+	// net.Conn. It's non-nil when clustering is not enabled on this member
+	// and so we don't expose any dqlite or raft network endpoint,
 	// but still we want to use dqlite as backend for the "cluster"
 	// database, to minimize the difference between code paths in
 	// clustering and non-clustering modes.
@@ -151,8 +150,8 @@ func setDqliteVersionHeader(request *http.Request) {
 // There are two handlers, one for the /internal/raft endpoint and the other
 // for /internal/db, which handle respectively raft and gRPC-SQL requests.
 //
-// These handlers might return 404, either because this LXD node is a
-// non-clustered node not available over the network or because it is not a
+// These handlers might return 404, either because this server is a
+// non-clustered member not available over the network or because it is not a
 // database node part of the dqlite cluster.
 func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts func() map[cluster.CertificateType]map[string]x509.Certificate) map[string]http.HandlerFunc {
 	database := func(w http.ResponseWriter, r *http.Request) {
@@ -751,8 +750,8 @@ func (g *Gateway) NetworkUpdateCert(cert *shared.CertInfo) {
 
 // Initialize the gateway, creating a new raft factory and gRPC server (if this
 // node is a database node), and a gRPC dialer.
-// @bootstrap should only be true when turning a non-clustered LXD instance into
-// the first (and leader) node of a new LXD cluster.
+// @bootstrap should only be true when turning a non-clustered server into
+// the first (and leader) member of a new cluster.
 func (g *Gateway) init(bootstrap bool) error {
 	logger.Debugf("Initializing database gateway")
 	g.stopCh = make(chan struct{})
@@ -902,7 +901,7 @@ func (g *Gateway) isLeader() (bool, error) {
 // ErrNotLeader signals that a node not the leader.
 var ErrNotLeader = fmt.Errorf("Not leader")
 
-// Return information about the LXD nodes that a currently part of the raft
+// Return information about the cluster members that a currently part of the raft
 // cluster, as configured in the raft log. It returns an error if this node is
 // not the leader.
 func (g *Gateway) currentRaftNodes() ([]db.RaftNode, error) {
@@ -1105,7 +1104,7 @@ func dqliteMemoryDial(bindAddress string) client.DialFunc {
 	}
 }
 
-// The LXD API endpoint path that gets routed to a dqlite server handler for
+// The API endpoint path that gets routed to a dqlite server handler for
 // performing SQL queries against the dqlite server running on this node.
 const databaseEndpoint = "/internal/database"
 

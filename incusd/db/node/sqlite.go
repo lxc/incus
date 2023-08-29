@@ -11,7 +11,7 @@ func init() {
 	sql.Register("sqlite3_with_fk", &sqlite3.SQLiteDriver{ConnectHook: sqliteEnableForeignKeys})
 }
 
-// Opens the node-level database with the correct parameters for LXD.
+// Opens the node-level database with the correct parameters.
 func sqliteOpen(path string) (*sql.DB, error) {
 	timeout := 5 // TODO - make this command-line configurable?
 

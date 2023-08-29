@@ -1,6 +1,6 @@
 package request
 
-// CtxKey is the type used for all fields stored in the request context by LXD.
+// CtxKey is the type used for all fields stored in the request context.
 type CtxKey string
 
 // Context keys.

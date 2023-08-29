@@ -178,7 +178,7 @@ func qemuSerial(opts *qemuSerialOpts) []cfgSection {
 		entries: qemuDeviceEntries(&entriesOpts),
 	}, {
 		name:    fmt.Sprintf(`chardev "%s"`, opts.charDevName),
-		comment: "LXD serial identifier",
+		comment: "Serial identifier",
 		entries: []cfgEntry{
 			{key: "backend", value: "ringbuf"},
 			{key: "size", value: fmt.Sprintf("%dB", opts.ringbufSizeBytes)}},
@@ -186,7 +186,7 @@ func qemuSerial(opts *qemuSerialOpts) []cfgSection {
 		name: `device "qemu_serial"`,
 		entries: []cfgEntry{
 			{key: "driver", value: "virtserialport"},
-			{key: "name", value: "org.linuxcontainers.lxd"},
+			{key: "name", value: "org.linuxcontainers.incus"},
 			{key: "chardev", value: opts.charDevName},
 			{key: "bus", value: "dev-qemu_serial.0"},
 		},
@@ -713,9 +713,8 @@ type qemuDriveDirOpts struct {
 
 func qemuDriveDir(opts *qemuDriveDirOpts) []cfgSection {
 	return qemuHostDrive(&qemuHostDriveOpts{
-		dev: opts.dev,
-		// Devices use "lxd_" prefix indicating that this is a user named device.
-		name:     fmt.Sprintf("lxd_%s", opts.devName),
+		dev:      opts.dev,
+		name:     fmt.Sprintf("incus_%s", opts.devName),
 		comment:  fmt.Sprintf("%s drive (%s)", opts.devName, opts.protocol),
 		mountTag: opts.mountTag,
 		protocol: opts.protocol,
@@ -744,8 +743,7 @@ func qemuPCIPhysical(opts *qemuPCIPhysicalOpts) []cfgSection {
 	}...)
 
 	return []cfgSection{{
-		// Devices use "lxd_" prefix indicating that this is a user named device.
-		name:    fmt.Sprintf(`device "dev-lxd_%s"`, opts.devName),
+		name:    fmt.Sprintf(`device "%s%s"`, qemuDeviceIDPrefix, opts.devName),
 		comment: fmt.Sprintf(`PCI card ("%s" device)`, opts.devName),
 		entries: entries,
 	}}
@@ -780,8 +778,7 @@ func qemuGPUDevPhysical(opts *qemuGPUDevPhysicalOpts) []cfgSection {
 	}
 
 	return []cfgSection{{
-		// Devices use "lxd_" prefix indicating that this is a user named device.
-		name:    fmt.Sprintf(`device "dev-lxd_%s"`, opts.devName),
+		name:    fmt.Sprintf(`device "%s%s"`, qemuDeviceIDPrefix, opts.devName),
 		comment: fmt.Sprintf(`GPU card ("%s" device)`, opts.devName),
 		entries: entries,
 	}}
@@ -856,7 +853,7 @@ func qemuTPM(opts *qemuTPMOpts) []cfgSection {
 			{key: "chardev", value: chardev},
 		},
 	}, {
-		name: fmt.Sprintf(`device "dev-lxd_%s"`, opts.devName),
+		name: fmt.Sprintf(`device "%s%s"`, qemuDeviceIDPrefix, opts.devName),
 		entries: []cfgEntry{
 			{key: "driver", value: "tpm-crb"},
 			{key: "tpmdev", value: tpmdev},

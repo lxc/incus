@@ -6164,8 +6164,8 @@ paths:
             description: |-
                 Returns a list of supported API versions (URLs).
 
-                Internal API endpoints are not reported as those aren't versioned and
-                should only be used by LXD itself.
+                Internal API endpoints are not reported as those aren't versioned
+                and should only be used by the daemon itself.
             operationId: api_get
             produces:
                 - application/json
@@ -6204,7 +6204,7 @@ paths:
             operationId: server_get
             parameters:
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -6248,7 +6248,7 @@ paths:
             operationId: server_patch
             parameters:
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -6281,7 +6281,7 @@ paths:
             operationId: server_put
             parameters:
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -6623,9 +6623,7 @@ paths:
         put:
             consumes:
                 - application/json
-            description: |-
-                Replaces existing cluster certificate and reloads LXD on each cluster
-                member.
+            description: Replaces existing cluster certificate and reloads each cluster member.
             operationId: clustering_update_cert
             parameters:
                 - description: Cluster certificate replace request
@@ -6664,8 +6662,8 @@ paths:
                                 description: List of endpoints
                                 example: |-
                                     [
-                                      "/1.0/cluster/groups/lxd01",
-                                      "/1.0/cluster/groups/lxd02"
+                                      "/1.0/cluster/groups/server01",
+                                      "/1.0/cluster/groups/server02"
                                     ]
                                 items:
                                     type: string
@@ -6902,8 +6900,8 @@ paths:
                                 description: List of endpoints
                                 example: |-
                                     [
-                                      "/1.0/cluster/members/lxd01",
-                                      "/1.0/cluster/members/lxd02"
+                                      "/1.0/cluster/members/server01",
+                                      "/1.0/cluster/members/server02"
                                     ]
                                 items:
                                     type: string
@@ -7493,7 +7491,7 @@ paths:
             tags:
                 - images
         post:
-            description: Gets LXD to connect to a remote server and push the image to it.
+            description: Gets the server to connect to a remote server and push the image to it.
             operationId: images_export_post
             parameters:
                 - description: Project name
@@ -7516,7 +7514,7 @@ paths:
                     $ref: '#/responses/Forbidden'
                 "500":
                     $ref: '#/responses/InternalServerError'
-            summary: Make LXD push the image to a remote server
+            summary: Make the server push the image to a remote server
             tags:
                 - images
     /1.0/images/{fingerprint}/export?public:
@@ -7552,7 +7550,7 @@ paths:
     /1.0/images/{fingerprint}/refresh:
         post:
             description: |-
-                This causes LXD to check the image source server for an updated
+                This causes the server to check the image source server for an updated
                 version of the image and if available to refresh the local copy with the
                 new version.
             operationId: images_refresh_post
@@ -8026,7 +8024,7 @@ paths:
                 - application/json
             description: |-
                 Pushes the data to the target image server.
-                This is meant for LXD to LXD communication where a new image entry is
+                This is meant for server to server communication where a new image entry is
                 prepared on the target server and the source server is provided that URL
                 and a secret token to push the image content over.
             operationId: images_post_untrusted
@@ -8213,7 +8211,7 @@ paths:
             consumes:
                 - application/json
             description: |-
-                Creates a new instance on LXD.
+                Creates a new instance.
                 Depending on the source, this can create an instance from an existing
                 local image, remote image, existing local instance or snapshot, remote
                 migration stream or backup file.
@@ -8798,7 +8796,7 @@ paths:
                 In non-interactive mode, you'll get one websocket for each of stdin, stdout and stderr.
                 In interactive mode, a single bi-directional websocket is used for stdin and stdout/stderr.
 
-                An additional "control" socket is always added on top which can be used for out of band communication with LXD.
+                An additional "control" socket is always added on top which can be used for out of band communications.
                 This allows sending signals and window sizing information through.
             operationId: instance_exec_post
             parameters:
@@ -9955,7 +9953,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -10280,7 +10278,7 @@ paths:
                 - network-acls
     /1.0/network-allocations:
         get:
-            description: Returns a list of network allocations in use by a LXD deployment.
+            description: Returns a list of network allocations.
             operationId: network_allocations_get
             parameters:
                 - description: Project name
@@ -10848,8 +10846,8 @@ paths:
                                 description: List of endpoints
                                 example: |-
                                     [
-                                      "/1.0/networks/lxdbr0",
-                                      "/1.0/networks/lxdbr1"
+                                      "/1.0/networks/mybr0",
+                                      "/1.0/networks/mybr1"
                                     ]
                                 items:
                                     type: string
@@ -10888,7 +10886,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -10946,7 +10944,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -10992,7 +10990,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -11061,7 +11059,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -11098,7 +11096,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -11146,7 +11144,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -11202,8 +11200,8 @@ paths:
                                 description: List of endpoints
                                 example: |-
                                     [
-                                      "/1.0/networks/lxdbr0/forwards/192.0.2.1",
-                                      "/1.0/networks/lxdbr0/forwards/192.0.2.2"
+                                      "/1.0/networks/mybr0/forwards/192.0.2.1",
+                                      "/1.0/networks/mybr0/forwards/192.0.2.2"
                                     ]
                                 items:
                                     type: string
@@ -11453,8 +11451,8 @@ paths:
                                 description: List of endpoints
                                 example: |-
                                     [
-                                      "/1.0/networks/lxdbr0/load-balancers/192.0.2.1",
-                                      "/1.0/networks/lxdbr0/load-balancers/192.0.2.2"
+                                      "/1.0/networks/mybr0/load-balancers/192.0.2.1",
+                                      "/1.0/networks/mybr0/load-balancers/192.0.2.2"
                                     ]
                                 items:
                                     type: string
@@ -11704,8 +11702,8 @@ paths:
                                 description: List of endpoints
                                 example: |-
                                     [
-                                      "/1.0/networks/lxdbr0/peers/my-peer-1",
-                                      "/1.0/networks/lxdbr0/peers/my-peer-2"
+                                      "/1.0/networks/mybr0/peers/my-peer-1",
+                                      "/1.0/networks/mybr0/peers/my-peer-2"
                                     ]
                                 items:
                                     type: string
@@ -12167,7 +12165,7 @@ paths:
             description: |-
                 Connects to an associated websocket stream for the operation.
                 This should almost never be done directly by a client, instead it's
-                meant for LXD to LXD communication with the client only relaying the
+                meant for server to server communication with the client only relaying the
                 connection information to the servers.
             operationId: operation_websocket_get
             parameters:
@@ -12193,7 +12191,7 @@ paths:
             description: |-
                 Connects to an associated websocket stream for the operation.
                 This should almost never be done directly by a client, instead it's
-                meant for LXD to LXD communication with the client only relaying the
+                meant for server to server communication with the client only relaying the
                 connection information to the servers.
 
                 The untrusted endpoint is used by the target server to connect to the source server.
@@ -12810,11 +12808,11 @@ paths:
                 - projects
     /1.0/resources:
         get:
-            description: Gets the hardware information profile of the LXD server.
+            description: Gets the hardware information profile of the server.
             operationId: resources_get
             parameters:
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -12910,7 +12908,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -12945,7 +12943,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -12975,7 +12973,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13013,7 +13011,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13050,7 +13048,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13080,7 +13078,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13112,7 +13110,7 @@ paths:
             operationId: storage_pool_resources
             parameters:
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13180,7 +13178,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13226,7 +13224,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13264,7 +13262,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13625,7 +13623,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13688,7 +13686,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13725,7 +13723,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13781,7 +13779,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13818,7 +13816,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13846,7 +13844,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13892,7 +13890,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13937,7 +13935,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -13972,7 +13970,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14009,7 +14007,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14063,7 +14061,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14100,7 +14098,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14128,7 +14126,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14174,7 +14172,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14209,7 +14207,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14236,7 +14234,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14284,7 +14282,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14338,7 +14336,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14375,7 +14373,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14403,7 +14401,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14449,7 +14447,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14487,7 +14485,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14523,7 +14521,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14560,7 +14558,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14608,7 +14606,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14653,7 +14651,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string
@@ -14701,7 +14699,7 @@ paths:
                   name: project
                   type: string
                 - description: Cluster member name
-                  example: lxd01
+                  example: server01
                   in: query
                   name: target
                   type: string

@@ -65,7 +65,7 @@ func (d *unixHotplug) validateConfig(instConf instance.ConfigReader) error {
 	return nil
 }
 
-// Register is run after the device is started or when LXD starts.
+// Register is run after the device is started or on daemon startup.
 func (d *unixHotplug) Register() error {
 	// Extract variables needed to run the event hook so that the reference to this device
 	// struct is not needed to be kept in memory.

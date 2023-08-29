@@ -11,7 +11,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// Type represents a LXD network driver type.
+// Type represents a network driver type.
 type Type interface {
 	FillConfig(config map[string]string) error
 	Info() Info
@@ -20,7 +20,7 @@ type Type interface {
 	DBType() db.NetworkType
 }
 
-// Network represents an instantiated LXD network.
+// Network represents an instantiated network.
 type Network interface {
 	Type
 

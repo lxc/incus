@@ -1,5 +1,5 @@
-#ifndef __LXD_MOUNT_UTILS_H
-#define __LXD_MOUNT_UTILS_H
+#ifndef __INCUS_MOUNT_UTILS_H
+#define __INCUS_MOUNT_UTILS_H
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
@@ -115,24 +115,24 @@
 #define FSOPEN_CLOEXEC 0x00000001
 #endif
 
-static inline int lxd_fsopen(const char *fs_name, unsigned int flags)
+static inline int incus_fsopen(const char *fs_name, unsigned int flags)
 {
 	return syscall(__NR_fsopen, fs_name, flags);
 }
 
-static inline int lxd_fsconfig(int fd, unsigned int cmd, const char *key,
+static inline int incus_fsconfig(int fd, unsigned int cmd, const char *key,
 			       const void *value, int aux)
 {
 	return syscall(__NR_fsconfig, fd, cmd, key, value, aux);
 }
 
-static inline int lxd_fsmount(int fs_fd, unsigned int flags,
+static inline int incus_fsmount(int fs_fd, unsigned int flags,
 			      unsigned int attr_flags)
 {
 	return syscall(__NR_fsmount, fs_fd, flags, attr_flags);
 }
 
-static inline int lxd_open_tree(int dfd, const char *filename, unsigned int flags)
+static inline int incus_open_tree(int dfd, const char *filename, unsigned int flags)
 {
 	return syscall(__NR_open_tree, dfd, filename, flags);
 }
@@ -144,13 +144,13 @@ struct lxc_mount_attr {
 	__u64 userns_fd;
 };
 
-static inline int lxd_mount_setattr(int dfd, const char *path, unsigned int flags,
+static inline int incus_mount_setattr(int dfd, const char *path, unsigned int flags,
 				    struct lxc_mount_attr *attr, size_t size)
 {
 	return syscall(__NR_mount_setattr, dfd, path, flags, attr, size);
 }
 
-static inline int lxd_move_mount(int from_dfd, const char *from_pathname,
+static inline int incus_move_mount(int from_dfd, const char *from_pathname,
 				 int to_dfd, const char *to_pathname,
 				 unsigned int flags)
 {
@@ -158,5 +158,5 @@ static inline int lxd_move_mount(int from_dfd, const char *from_pathname,
 		       to_pathname, flags);
 }
 
-#endif /* __LXD_MOUNT_UTILS_H */
+#endif /* __INCUS_MOUNT_UTILS_H */
 

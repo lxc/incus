@@ -19,7 +19,7 @@ func TestGetNetworksLocalConfigs(t *testing.T) {
 	cluster, cleanup := db.NewTestCluster(t)
 	defer cleanup()
 
-	_, err := cluster.CreateNetwork(project.Default, "lxdbr0", "", db.NetworkTypeBridge, map[string]string{
+	_, err := cluster.CreateNetwork(project.Default, "incusbr0", "", db.NetworkTypeBridge, map[string]string{
 		"dns.mode":                   "none",
 		"bridge.external_interfaces": "vlan0",
 	})
@@ -35,7 +35,7 @@ func TestGetNetworksLocalConfigs(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, config, map[string]map[string]string{
-		"lxdbr0": {"bridge.external_interfaces": "vlan0"},
+		"incusbr0": {"bridge.external_interfaces": "vlan0"},
 	})
 }
 

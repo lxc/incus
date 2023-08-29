@@ -63,7 +63,7 @@ func (s *OS) initAppArmor() []cluster.Warning {
 		}
 	} else if s.RunningInUserNS && !s.AppArmorStacked {
 		if s.AppArmorAvailable {
-			logger.Warnf("Per-container AppArmor profiles are disabled because LXD is running in an unprivileged container without stacking")
+			logger.Warnf("Per-container AppArmor profiles are disabled because Incus is running in an unprivileged container without stacking")
 		}
 	} else {
 		s.AppArmorAdmin = true
@@ -73,7 +73,7 @@ func (s *OS) initAppArmor() []cluster.Warning {
 	profile := util.AppArmorProfile()
 	if profile != "unconfined" && profile != "" {
 		if s.AppArmorAvailable {
-			logger.Warnf("Per-container AppArmor profiles are disabled because LXD is already protected by AppArmor")
+			logger.Warnf("Per-container AppArmor profiles are disabled because Incus is already protected by AppArmor")
 		}
 
 		s.AppArmorConfined = true

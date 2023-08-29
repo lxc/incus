@@ -1339,7 +1339,7 @@ func (r *ProtocolIncus) GetInstanceFile(instanceName string, filePath string) (i
 	}
 
 	// Parse the headers
-	uid, gid, mode, fileType, _ := shared.ParseLXDFileHeaders(resp.Header)
+	uid, gid, mode, fileType, _ := shared.ParseFileHeaders(resp.Header)
 	fileResp := InstanceFileResponse{
 		UID:  uid,
 		GID:  gid,

@@ -25,8 +25,7 @@ func TestGetStoragePoolsLocalConfigs(t *testing.T) {
 	cluster, cleanup := db.NewTestCluster(t)
 	defer cleanup()
 
-	// Create a storage pool named "local" (like the default LXD clustering
-	// one), then delete it and create another one.
+	// Create a storage pool named "local" (like the default clustering one), then delete it and create another one.
 	_, err := cluster.CreateStoragePool("local", "", "dir", map[string]string{
 		"rsync.bwlimit": "1",
 		"source":        "/foo/bar",
