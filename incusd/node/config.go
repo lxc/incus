@@ -11,7 +11,7 @@ import (
 	"github.com/lxc/incus/shared/validate"
 )
 
-// Config holds node-local configuration values for a certain LXD instance.
+// Config holds member-local configuration values.
 type Config struct {
 	tx *db.NodeTx // DB transaction the values in this config are bound to
 	m  config.Map // Low-level map holding the config values.
@@ -35,8 +35,7 @@ func ConfigLoad(ctx context.Context, tx *db.NodeTx) (*Config, error) {
 	return &Config{tx: tx, m: m}, nil
 }
 
-// HTTPSAddress returns the address and port this LXD node should expose its
-// API to, if any.
+// HTTPSAddress returns the address and port this server should expose its // API to, if any.
 func (c *Config) HTTPSAddress() string {
 	networkAddress := c.m.GetString("core.https_address")
 	if networkAddress != "" {
@@ -56,8 +55,7 @@ func (c *Config) BGPRouterID() string {
 	return c.m.GetString("core.bgp_routerid")
 }
 
-// ClusterAddress returns the address and port this LXD node should use for
-// cluster communication.
+// ClusterAddress returns the address and port this cluster member should use for cluster communication.
 func (c *Config) ClusterAddress() string {
 	clusterAddress := c.m.GetString("cluster.https_address")
 	if clusterAddress != "" {
@@ -149,7 +147,7 @@ func (c *Config) update(values map[string]any) (map[string]string, error) {
 
 // ConfigSchema defines available server configuration keys.
 var ConfigSchema = config.Schema{
-	// Network address for this LXD server
+	// Network address for this server
 	"core.https_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
 	// Network address for cluster communication
