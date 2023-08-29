@@ -21,8 +21,8 @@ import (
 	"github.com/lxc/incus/shared/version"
 )
 
-// Simply cache used to storage the activated drivers on this LXD instance. This
-// allows us to avoid querying the database everytime and API call is made.
+// Simple cache used to store the activated drivers on this server.
+// This allows us to avoid querying the database everytime and API call is made.
 var storagePoolUsedDriversCacheVal atomic.Value
 var storagePoolSupportedDriversCacheVal atomic.Value
 var storagePoolDriversCacheLock sync.Mutex
@@ -152,7 +152,7 @@ func storageStartup(s *state.State, forceCheck bool) error {
 
 func storagePoolDriversCacheUpdate(s *state.State) {
 	// Get a list of all storage drivers currently in use
-	// on this LXD instance. Only do this when we do not already have done
+	// on this server. Only do this when we do not already have done
 	// this once to avoid unnecessarily querying the db. All subsequent
 	// updates of the cache will be done when we create or delete storage
 	// pools in the db. Since this is a rare event, this cache

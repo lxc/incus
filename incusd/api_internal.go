@@ -221,11 +221,11 @@ func internalWaitReady(d *Daemon, r *http.Request) response.Response {
 	// Check that we're not shutting down.
 	isClosing := d.State().ShutdownCtx.Err() != nil
 	if isClosing {
-		return response.Unavailable(fmt.Errorf("LXD daemon is shutting down"))
+		return response.Unavailable(fmt.Errorf("Daemon is shutting down"))
 	}
 
 	if d.waitReady.Err() == nil {
-		return response.Unavailable(fmt.Errorf("LXD daemon not ready yet"))
+		return response.Unavailable(fmt.Errorf("Daemon not ready yet"))
 	}
 
 	return response.EmptySyncResponse
@@ -257,7 +257,7 @@ func internalShutdown(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		// Send the response before the LXD daemon process ends.
+		// Send the response before the daemon process ends.
 		f, ok := w.(http.Flusher)
 		if ok {
 			f.Flush()

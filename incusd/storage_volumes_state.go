@@ -42,7 +42,7 @@ var storagePoolVolumeTypeStateCmd = APIEndpoint{
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Storage pool

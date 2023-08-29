@@ -841,7 +841,7 @@ func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
 	return nil
 }
 
-// patchZfsSetContentTypeUserProperty adds the `lxd:content_type` user property to custom storage volumes. In case of recovery, this allows for proper detection of block-mode enabled volumes.
+// patchZfsSetContentTypeUserProperty adds the `incus:content_type` user property to custom storage volumes. In case of recovery, this allows for proper detection of block-mode enabled volumes.
 func patchZfsSetContentTypeUserProperty(name string, d *Daemon) error {
 	s := d.State()
 
@@ -900,9 +900,9 @@ func patchZfsSetContentTypeUserProperty(name string, d *Daemon) error {
 
 			zfsVolName := fmt.Sprintf("%s/%s/%s", poolName, storageDrivers.VolumeTypeCustom, project.StorageVolume(vol.Project, vol.Name))
 
-			_, err = shared.RunCommand("zfs", "set", fmt.Sprintf("lxd:content_type=%s", vol.ContentType), zfsVolName)
+			_, err = shared.RunCommand("zfs", "set", fmt.Sprintf("incus:content_type=%s", vol.ContentType), zfsVolName)
 			if err != nil {
-				logger.Debug("Failed setting lxd:content_type property", logger.Ctx{"name": zfsVolName, "err": err})
+				logger.Debug("Failed setting incus:content_type property", logger.Ctx{"name": zfsVolName, "err": err})
 			}
 		}
 	}

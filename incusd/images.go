@@ -134,7 +134,7 @@ func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 	if fields[0] == "squashfs" {
 		// 'tar2sqfs' do not support writing to stdout. So write to a temporary
 		//  file first and then replay the compressed content to outfile.
-		tempfile, err := os.CreateTemp("", "lxd_compress_")
+		tempfile, err := os.CreateTemp("", "incus_compress_")
 		if err != nil {
 			return err
 		}
@@ -233,7 +233,7 @@ func imgPostInstanceInfo(s *state.State, r *http.Request, req api.ImagesPost, op
 	info.Type = c.Type().String()
 
 	// Build the actual image file
-	imageFile, err := os.CreateTemp(builddir, "lxd_build_image_")
+	imageFile, err := os.CreateTemp(builddir, "incus_build_image_")
 	if err != nil {
 		return nil, err
 	}
@@ -490,22 +490,22 @@ func imgPostURLInfo(s *state.State, r *http.Request, req api.ImagesPost, op *ope
 	}
 
 	head.Header.Set("User-Agent", version.UserAgent)
-	head.Header.Set("LXD-Server-Architectures", strings.Join(architectures, ", "))
-	head.Header.Set("LXD-Server-Version", version.Version)
+	head.Header.Set("Incus-Server-Architectures", strings.Join(architectures, ", "))
+	head.Header.Set("Incus-Server-Version", version.Version)
 
 	raw, err := myhttp.Do(head)
 	if err != nil {
 		return nil, err
 	}
 
-	hash := raw.Header.Get("LXD-Image-Hash")
+	hash := raw.Header.Get("Incus-Image-Hash")
 	if hash == "" {
-		return nil, fmt.Errorf("Missing LXD-Image-Hash header")
+		return nil, fmt.Errorf("Missing Incus-Image-Hash header")
 	}
 
-	url := raw.Header.Get("LXD-Image-URL")
+	url := raw.Header.Get("Incus-Image-URL")
 	if url == "" {
-		return nil, fmt.Errorf("Missing LXD-Image-URL header")
+		return nil, fmt.Errorf("Missing Incus-Image-URL header")
 	}
 
 	// Import the image
@@ -560,7 +560,7 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 
 	if ctype == "multipart/form-data" {
 		// Create a temporary file for the image tarball
-		imageTarf, err := os.CreateTemp(builddir, "lxd_tar_")
+		imageTarf, err := os.CreateTemp(builddir, "incus_tar_")
 		if err != nil {
 			return nil, err
 		}
@@ -611,7 +611,7 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 		}
 
 		// Create a temporary file for the rootfs tarball
-		rootfsTarf, err := os.CreateTemp(builddir, "lxd_tar_")
+		rootfsTarf, err := os.CreateTemp(builddir, "incus_tar_")
 		if err != nil {
 			return nil, err
 		}
@@ -810,7 +810,7 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 //  Add an image
 //
 //  Pushes the data to the target image server.
-//  This is meant for LXD to LXD communication where a new image entry is
+//  This is meant for server to server communication where a new image entry is
 //  prepared on the target server and the source server is provided that URL
 //  and a secret token to push the image content over.
 //
@@ -945,7 +945,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// create a directory under which we keep everything while building
-	builddir, err := os.MkdirTemp(shared.VarPath("images"), "lxd_build_")
+	builddir, err := os.MkdirTemp(shared.VarPath("images"), "incus_build_")
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -962,7 +962,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Store the post data to disk
-	post, err := os.CreateTemp(builddir, "lxd_post_")
+	post, err := os.CreateTemp(builddir, "incus_post_")
 	if err != nil {
 		cleanup(builddir, nil)
 		return response.InternalError(err)
@@ -3716,8 +3716,8 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 	secret := r.FormValue("secret")
 
 	var imgInfo *api.Image
-	if r.RemoteAddr == "@devIncus" {
-		// /dev/lxd API requires exact match
+	if r.RemoteAddr == "@dev_incus" {
+		// /dev/incus API requires exact match
 		_, imgInfo, err = s.DB.Cluster.GetImage(fingerprint, dbCluster.ImageFilter{Project: &projectName})
 		if err != nil {
 			return response.SmartError(err)
@@ -3809,9 +3809,9 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 
 // swagger:operation POST /1.0/images/{fingerprint}/export images images_export_post
 //
-//	Make LXD push the image to a remote server
+//	Make the server push the image to a remote server
 //
-//	Gets LXD to connect to a remote server and push the image to it.
+//	Gets the server to connect to a remote server and push the image to it.
 //
 //	---
 //	produces:
@@ -3866,7 +3866,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 		CacheExpiry:   time.Hour,
 	}
 
-	// Setup LXD client
+	// Setup client
 	remote, err := incus.ConnectIncus(req.Target, args)
 	if err != nil {
 		return response.SmartError(err)
@@ -3994,21 +3994,21 @@ func imageSecret(d *Daemon, r *http.Request) response.Response {
 
 func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerprint string) error {
 	// Prepare the temp files
-	buildDir, err := os.MkdirTemp(imagesDir, "lxd_build_")
+	buildDir, err := os.MkdirTemp(imagesDir, "incus_build_")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary directory for download: %w", err)
 	}
 
 	defer func() { _ = os.RemoveAll(buildDir) }()
 
-	metaFile, err := os.CreateTemp(buildDir, "lxd_tar_")
+	metaFile, err := os.CreateTemp(buildDir, "incus_tar_")
 	if err != nil {
 		return err
 	}
 
 	defer func() { _ = metaFile.Close() }()
 
-	rootfsFile, err := os.CreateTemp(buildDir, "lxd_tar_")
+	rootfsFile, err := os.CreateTemp(buildDir, "incus_tar_")
 	if err != nil {
 		return err
 	}
@@ -4068,7 +4068,7 @@ func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerpr
 //
 //	Refresh an image
 //
-//	This causes LXD to check the image source server for an updated
+//	This causes the server to check the image source server for an updated
 //	version of the image and if available to refresh the local copy with the
 //	new version.
 //

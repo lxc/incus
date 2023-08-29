@@ -67,7 +67,7 @@ var storagePoolVolumeTypeCustomBackupExportCmd = APIEndpoint{
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: lxd01
+//      example: server01
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -121,7 +121,7 @@ var storagePoolVolumeTypeCustomBackupExportCmd = APIEndpoint{
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -252,7 +252,7 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume backup
@@ -454,7 +454,7 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume backup
@@ -564,7 +564,7 @@ func storagePoolVolumeTypeCustomBackupGet(d *Daemon, r *http.Request) response.R
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	  - in: body
 //	    name: volume rename
 //	    description: Storage volume backup
@@ -697,7 +697,7 @@ func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
@@ -809,7 +809,7 @@ func storagePoolVolumeTypeCustomBackupDelete(d *Daemon, r *http.Request) respons
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Raw backup data

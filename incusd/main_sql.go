@@ -20,18 +20,18 @@ type cmdSql struct {
 func (c *cmdSql) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "sql <local|global> <query>"
-	cmd.Short = "Execute a SQL query against the LXD local or global database"
+	cmd.Short = "Execute a SQL query against the local or global database"
 	cmd.Long = `Description:
-  Execute a SQL query against the LXD local or global database
+  Execute a SQL query against the local or global database
 
-  The local database is specific to the LXD cluster member you target the
+  The local database is specific to the cluster member you target the
   command to, and contains member-specific data (such as the member network
   address).
 
-  The global database is common to all LXD members in the cluster, and contains
+  The global database is common to all members in the cluster, and contains
   cluster-specific data (such as profiles, containers, etc).
 
-  If you are running a non-clustered LXD instance, the same applies, as that
+  If you are running a non-clustered server, the same applies, as that
   instance is effectively a single-member cluster.
 
   If <query> is the special value "-", then the query is read from
@@ -44,10 +44,10 @@ func (c *cmdSql) Command() *cobra.Command {
   text schema of the given database.
 
   This internal command is mostly useful for debugging and disaster
-  recovery. The LXD team will occasionally provide hotfixes to users as a
+  recovery. The development team will occasionally provide hotfixes to users as a
   set of database queries to fix some data inconsistency.
 
-  This command targets the global LXD database and works in both local
+  This command targets the global database and works in both local
   and cluster mode.
 `
 	cmd.RunE = c.Run
@@ -86,12 +86,12 @@ func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
 		query = string(bytes)
 	}
 
-	// Connect to LXD
-	lxdArgs := incus.ConnectionArgs{
+	// Connect to daemon
+	clientArgs := incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
 
-	d, err := incus.ConnectIncusUnix("", &lxdArgs)
+	d, err := incus.ConnectIncusUnix("", &clientArgs)
 	if err != nil {
 		return err
 	}

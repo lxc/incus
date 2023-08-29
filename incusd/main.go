@@ -60,7 +60,7 @@ func (c *cmdGlobal) Run(cmd *cobra.Command, args []string) error {
 	// Setup logger
 	syslog := ""
 	if c.flagLogSyslog {
-		syslog = "lxd"
+		syslog = "incus"
 	}
 
 	err = logger.InitLogger(c.flagLogFile, syslog, c.flagLogVerbose, c.flagLogDebug, events.NewEventHandler())

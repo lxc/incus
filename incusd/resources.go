@@ -28,7 +28,7 @@ var storagePoolResourcesCmd = APIEndpoint{
 //
 //	Get system resources information
 //
-//	Gets the hardware information profile of the LXD server.
+//	Gets the hardware information profile of the server.
 //
 //	---
 //	produces:
@@ -38,7 +38,7 @@ var storagePoolResourcesCmd = APIEndpoint{
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Hardware resources
@@ -96,7 +96,7 @@ func api10ResourcesGet(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Hardware resources

@@ -263,7 +263,7 @@ __attribute__ ((noinline)) static int __forkexec(void)
 	ret = write_nointr(status_pipe, &attached_pid, sizeof(attached_pid));
 	if (ret < 0) {
 		// Kill the child just to be safe.
-		fprintf(stderr, "Failed to send pid %d of executing child to LXD. Killing child\n", attached_pid);
+		fprintf(stderr, "Failed to send pid %d of executing child to daemon. Killing child\n", attached_pid);
 		kill(attached_pid, SIGKILL);
 		goto out_reap;
 	}
@@ -349,7 +349,7 @@ func (c *cmdForkexec) Command() *cobra.Command {
   Execute a task inside the container
 
   This internal command is used to spawn a task inside the container and
-  allow LXD to interact with it.
+  allow the daemon to interact with it.
 `
 	cmd.RunE = c.Run
 	cmd.Hidden = true

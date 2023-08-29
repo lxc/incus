@@ -143,7 +143,8 @@ func (h *dnsHandler) handlePTR(r *dns.Msg) (dns.Msg, error) {
 					Class:  dns.ClassINET,
 					Ttl:    0,
 				},
-				// Suffix the hostname in the lease with the cluster DNS zone name (e.g. ".lxd.")
+
+				// Suffix the hostname in the lease with the cluster DNS zone name (e.g. ".example.net.")
 				// The final full stop is important as the response needs to be a FQDN.
 				Ptr: fmt.Sprintf("%s.%s.", hostname, h.domain),
 			})
@@ -353,7 +354,7 @@ func (c *cmdForkDNS) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Missing required arguments")
 	}
 
-	err := logger.InitLogger("", "lxd-forkdns", c.global.flagLogVerbose, c.global.flagLogDebug, nil)
+	err := logger.InitLogger("", "incus-forkdns", c.global.flagLogVerbose, c.global.flagLogDebug, nil)
 	if err != nil {
 		return err
 	}

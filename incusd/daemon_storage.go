@@ -182,7 +182,7 @@ func daemonStorageValidate(s *state.State, target string) error {
 	}
 
 	if len(snapshots) != 0 {
-		return fmt.Errorf("Storage volumes for use by LXD itself cannot have snapshots")
+		return fmt.Errorf("Storage volumes for use by Incus itself cannot have snapshots")
 	}
 
 	pool, err := storagePools.LoadByName(s, poolName)

@@ -22,7 +22,7 @@ import (
 )
 
 type containerTestSuite struct {
-	lxdTestSuite
+	daemonTestSuite
 }
 
 func (suite *containerTestSuite) TestContainer_ProfilesDefault() {

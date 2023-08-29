@@ -19,12 +19,12 @@ type cmdCallhook struct {
 func (c *cmdCallhook) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "callhook <path> [<instance id>|<instance project> <instance name>] <hook>"
-	cmd.Short = "Call container lifecycle hook in LXD"
+	cmd.Short = "Call container lifecycle hook"
 	cmd.Long = `Description:
-  Call container lifecycle hook in LXD
+  Call container lifecycle hook
 
-  This internal command notifies LXD about a container lifecycle event
-  (start, stopns, stop, restart) and blocks until LXD has processed it.
+  This internal command notifies the daemon about a container lifecycle event
+  (start, stopns, stop, restart) and blocks until it has been processed.
 `
 	cmd.RunE = c.Run
 	cmd.Hidden = true
@@ -66,17 +66,17 @@ func (c *cmdCallhook) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("This must be run as root")
 	}
 
-	// Connect to LXD.
+	// Connect to daemon.
 	socket := os.Getenv("INCUS_SOCKET")
 	if socket == "" {
 		socket = filepath.Join(path, "unix.socket")
 	}
 
-	lxdArgs := incus.ConnectionArgs{
+	clientArgs := incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
 
-	d, err := incus.ConnectIncusUnix(socket, &lxdArgs)
+	d, err := incus.ConnectIncusUnix(socket, &clientArgs)
 	if err != nil {
 		return err
 	}
@@ -121,10 +121,10 @@ func (c *cmdCallhook) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// If the container is rebooting, we purposefully tell LXC that this hook failed so that
-	// it won't reboot the container, which lets LXD start it again in the OnStop function.
+	// it won't reboot the container, which lets us start it again in the OnStop function.
 	// Other hook types can return without error safely.
 	if hook == "stop" && target == "reboot" {
-		return fmt.Errorf("Reboot must be handled by LXD")
+		return fmt.Errorf("Reboot must be handled by Incus")
 	}
 
 	return nil

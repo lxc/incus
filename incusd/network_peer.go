@@ -77,8 +77,8 @@ var networkPeerCmd = APIEndpoint{
 //              type: string
 //            example: |-
 //              [
-//                "/1.0/networks/lxdbr0/peers/my-peer-1",
-//                "/1.0/networks/lxdbr0/peers/my-peer-2"
+//                "/1.0/networks/mybr0/peers/my-peer-1",
+//                "/1.0/networks/mybr0/peers/my-peer-2"
 //              ]
 //    "403":
 //      $ref: "#/responses/Forbidden"

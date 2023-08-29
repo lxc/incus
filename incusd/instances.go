@@ -386,7 +386,7 @@ func instancesShutdown(s *state.State, instances []instance.Instance) {
 				if inst.ID() > 0 {
 					// If DB was available then the instance shutdown process will have set
 					// the last power state to STOPPED, so set that back to RUNNING so that
-					// when LXD restarts the instance will be started again.
+					// when the daemon restarts the instance will be started again.
 					_ = inst.VolatileSet(map[string]string{"volatile.last_state.power": instance.PowerStateRunning})
 				}
 

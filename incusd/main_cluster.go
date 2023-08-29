@@ -34,7 +34,7 @@ func (c *cmdCluster) Command() *cobra.Command {
 	cmd.Use = "cluster"
 	cmd.Short = "Low-level cluster administration commands"
 	cmd.Long = `Description:
-  Low level administration tools for inspecting and recovering LXD clusters.
+  Low level administration tools for inspecting and recovering clusters.
 `
 	// List database nodes
 	listDatabase := cmdClusterListDatabase{global: c.global}
@@ -123,7 +123,7 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 	// Make sure that the daemon is not running.
 	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {
-		return fmt.Errorf("The LXD daemon is running, please stop it first.")
+		return fmt.Errorf("The daemon is running, please stop it first.")
 	}
 
 	database, err := db.OpenNode(filepath.Join(sys.DefaultOS().VarDir, "database"), nil)
@@ -376,7 +376,7 @@ type cmdClusterRecoverFromQuorumLoss struct {
 func (c *cmdClusterRecoverFromQuorumLoss) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "recover-from-quorum-loss"
-	cmd.Short = "Recover a LXD instance whose cluster has lost quorum"
+	cmd.Short = "Recover an instance whose cluster has lost quorum"
 
 	cmd.RunE = c.Run
 
@@ -389,7 +389,7 @@ func (c *cmdClusterRecoverFromQuorumLoss) Run(cmd *cobra.Command, args []string)
 	// Make sure that the daemon is not running.
 	_, err := incus.ConnectIncusUnix("", nil)
 	if err == nil {
-		return fmt.Errorf("The LXD daemon is running, please stop it first.")
+		return fmt.Errorf("The daemon is running, please stop it first.")
 	}
 
 	// Prompt for confirmation unless --quiet was passed.
@@ -414,9 +414,9 @@ func (c *cmdClusterRecoverFromQuorumLoss) promptConfirmation() error {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print(`You should run this command only if you are *absolutely* certain that this is
 the only database node left in your cluster AND that other database nodes will
-never come back (i.e. their LXD daemon won't ever be started again).
+never come back (i.e. their daemon won't ever be started again).
 
-This will make this LXD instance the only member of the cluster, and it won't
+This will make this server the only member of the cluster, and it won't
 be possible to perform operations on former cluster members anymore.
 
 However all information about former cluster members will be preserved in the
@@ -425,8 +425,7 @@ database, so you can possibly inspect it for further recovery.
 You'll be able to permanently delete from the database all information about
 former cluster members by running "lxc cluster remove <member-name> --force".
 
-See https://documentation.ubuntu.com/lxd/en/latest/howto/cluster_recover/#recover-from-quorum-loss for more
-info.
+See https://linuxcontainers.org/incus/docs/main/howto/cluster_recover/#recover-from-quorum-loss for more info.
 
 Do you want to proceed? (yes/no): `)
 	input, _ := reader.ReadString('\n')
@@ -474,7 +473,7 @@ func (c *cmdClusterRemoveRaftNode) Run(cmd *cobra.Command, args []string) error 
 
 	client, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to LXD daemon: %w", err)
+		return fmt.Errorf("Failed to connect to daemon: %w", err)
 	}
 
 	endpoint := fmt.Sprintf("/internal/cluster/raft-node/%s", address)

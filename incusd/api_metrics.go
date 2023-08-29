@@ -68,7 +68,7 @@ func allowMetrics(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: lxd01
+//	    example: server01
 //	responses:
 //	  "200":
 //	    description: Metrics

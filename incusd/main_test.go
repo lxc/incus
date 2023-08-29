@@ -41,17 +41,17 @@ func mockStartDaemon() (*Daemon, error) {
 	return d, nil
 }
 
-type lxdTestSuite struct {
+type daemonTestSuite struct {
 	suite.Suite
 	d      *Daemon
 	Req    *require.Assertions
 	tmpdir string
 }
 
-const lxdTestSuiteDefaultStoragePool string = "lxdTestrunPool"
+const daemonTestSuiteDefaultStoragePool string = "testrunPool"
 
-func (suite *lxdTestSuite) SetupTest() {
-	tmpdir, err := os.MkdirTemp("", "lxd_testrun_")
+func (suite *daemonTestSuite) SetupTest() {
+	tmpdir, err := os.MkdirTemp("", "incus_testrun_")
 	if err != nil {
 		suite.T().Errorf("failed to create temp dir: %v", err)
 	}
@@ -73,15 +73,15 @@ func (suite *lxdTestSuite) SetupTest() {
 	poolConfig := map[string]string{}
 
 	// Create the database entry for the storage pool.
-	poolDescription := fmt.Sprintf("%s storage pool", lxdTestSuiteDefaultStoragePool)
-	_, err = dbStoragePoolCreateAndUpdateCache(suite.d.State(), lxdTestSuiteDefaultStoragePool, poolDescription, "mock", poolConfig)
+	poolDescription := fmt.Sprintf("%s storage pool", daemonTestSuiteDefaultStoragePool)
+	_, err = dbStoragePoolCreateAndUpdateCache(suite.d.State(), daemonTestSuiteDefaultStoragePool, poolDescription, "mock", poolConfig)
 	if err != nil {
 		suite.T().Errorf("failed to create default storage pool: %v", err)
 	}
 
 	rootDev := map[string]string{}
 	rootDev["path"] = "/"
-	rootDev["pool"] = lxdTestSuiteDefaultStoragePool
+	rootDev["pool"] = daemonTestSuiteDefaultStoragePool
 	device := cluster.Device{
 		Name:   "root",
 		Type:   cluster.TypeDisk,
@@ -103,7 +103,7 @@ func (suite *lxdTestSuite) SetupTest() {
 	suite.Req = require.New(suite.T())
 }
 
-func (suite *lxdTestSuite) TearDownTest() {
+func (suite *daemonTestSuite) TearDownTest() {
 	err := suite.d.Stop(context.Background(), unix.SIGQUIT)
 	if err != nil {
 		suite.T().Errorf("failed to stop daemon: %v", err)

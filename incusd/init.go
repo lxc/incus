@@ -10,10 +10,10 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// Helper to initialize node-specific entities on a LXD instance using the
+// Helper to initialize node-specific entities on an instance using the
 // definitions from the given api.InitLocalPreseed object.
 //
-// It's used both by the 'lxd init' command and by the PUT /1.0/cluster API.
+// It's used both by the 'init' command and by the PUT /1.0/cluster API.
 //
 // In case of error, the returned function can be used to revert the changes.
 func initDataNodeApply(d incus.InstanceServer, config api.InitLocalPreseed) (func(), error) {
@@ -381,9 +381,9 @@ func initDataNodeApply(d incus.InstanceServer, config api.InitLocalPreseed) (fun
 	return cleanup, nil
 }
 
-// Helper to initialize LXD clustering.
+// Helper to initialize clustering.
 //
-// Used by the 'lxd init' command.
+// Used by the 'init' command.
 func initDataClusterApply(d incus.InstanceServer, config *api.InitClusterPreseed) error {
 	if config == nil || !config.Enabled {
 		return nil

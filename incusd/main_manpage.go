@@ -40,7 +40,7 @@ func (c *cmdManpage) Run(cmd *cobra.Command, args []string) error {
 
 	// Generate the manpages
 	header := &doc.GenManHeader{
-		Title:   "LXD - Container server",
+		Title:   "Incus - Daemon",
 		Section: "1",
 	}
 

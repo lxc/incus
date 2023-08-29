@@ -16,7 +16,7 @@ import (
 func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Quick checks.
 	if c.flagStorageBackend != "" && !shared.StringInSlice(c.flagStorageBackend, storageDrivers.AllDriverNames()) {
-		return nil, fmt.Errorf("The requested backend '%s' isn't supported by lxd init", c.flagStorageBackend)
+		return nil, fmt.Errorf("The requested backend '%s' isn't supported by init", c.flagStorageBackend)
 	}
 
 	if c.flagStorageBackend != "" && !shared.StringInSlice(c.flagStorageBackend, util.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, util.PoolTypeAny)) {
@@ -145,7 +145,7 @@ func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceSer
 		// Find a new name
 		idx := 0
 		for {
-			if shared.PathExists(fmt.Sprintf("/sys/class/net/lxdbr%d", idx)) {
+			if shared.PathExists(fmt.Sprintf("/sys/class/net/incusbr%d", idx)) {
 				idx++
 				continue
 			}
@@ -155,7 +155,7 @@ func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceSer
 
 		// Define the new network
 		network := api.InitNetworksProjectPost{}
-		network.Name = fmt.Sprintf("lxdbr%d", idx)
+		network.Name = fmt.Sprintf("incusbr%d", idx)
 		network.Project = project.Default
 		config.Networks = append(config.Networks, network)
 

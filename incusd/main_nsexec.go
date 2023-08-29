@@ -7,7 +7,7 @@
  * our init as an initializer, we can capture process control before it is
  * transferred to the golang runtime, so we can then setns() as we'd like
  * before golang has a chance to set up any threads. So, we implement two new
- * lxd fork* commands which are captured here, and take a file on the host fs
+ * fork* commands which are captured here, and take a file on the host fs
  * and copy it into the container ns.
  *
  * An alternative to this would be to move this code into a separate binary,

@@ -40,7 +40,7 @@ func (d DevIncusDialer) DevIncusDial(ctx context.Context, network, path string) 
 func setupDir() error {
 	var err error
 
-	testDir, err = os.MkdirTemp("", "lxd_test_devIncus_")
+	testDir, err = os.MkdirTemp("", "incus_test_devIncus_")
 	if err != nil {
 		return err
 	}

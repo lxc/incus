@@ -64,7 +64,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	var remote incus.ImageServer
 	var info *api.Image
 
-	// Default protocol is LXD. Copy so that local modifications aren't propgated to args.
+	// Default protocol is Incus. Copy so that local modifications aren't propgated to args.
 	protocol := args.Protocol
 	if protocol == "" {
 		protocol = "incus"
@@ -87,10 +87,10 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		}
 
 		if shared.StringInSlice(protocol, []string{"incus", "lxd"}) {
-			// Setup LXD client
+			// Setup client
 			remote, err = incus.ConnectPublicIncus(args.Server, clientArgs)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to connect to LXD server %q: %w", args.Server, err)
+				return nil, fmt.Errorf("Failed to connect to the server %q: %w", args.Server, err)
 			}
 
 			server, ok := remote.(incus.InstanceServer)
@@ -343,7 +343,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 			}
 		}
 
-		// Compatibility with older LXD servers
+		// Compatibility with older servers
 		if info.Type == "" {
 			info.Type = "container"
 		}

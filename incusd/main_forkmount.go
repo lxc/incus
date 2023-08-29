@@ -661,11 +661,11 @@ func (c *cmdForkmount) Command() *cobra.Command {
 	cmdLXCMount.RunE = c.Run
 	cmd.AddCommand(cmdLXCMount)
 
-	cmdLXDMount := &cobra.Command{}
-	cmdLXDMount.Use = "go-mount <PID> <PidFd> <source> <destination> <idmapType> <flags>"
-	cmdLXDMount.Args = cobra.ExactArgs(6)
-	cmdLXDMount.RunE = c.Run
-	cmd.AddCommand(cmdLXDMount)
+	cmdGoMount := &cobra.Command{}
+	cmdGoMount.Use = "go-mount <PID> <PidFd> <source> <destination> <idmapType> <flags>"
+	cmdGoMount.Args = cobra.ExactArgs(6)
+	cmdGoMount.RunE = c.Run
+	cmd.AddCommand(cmdGoMount)
 
 	// umount
 	cmdLXCUmount := &cobra.Command{}
@@ -674,11 +674,11 @@ func (c *cmdForkmount) Command() *cobra.Command {
 	cmdLXCUmount.RunE = c.Run
 	cmd.AddCommand(cmdLXCUmount)
 
-	cmdLXDUmount := &cobra.Command{}
-	cmdLXDUmount.Use = "go-umount <PID> <PidFd> <path>"
-	cmdLXDUmount.Args = cobra.ExactArgs(3)
-	cmdLXDUmount.RunE = c.Run
-	cmd.AddCommand(cmdLXDUmount)
+	cmdGoUmount := &cobra.Command{}
+	cmdGoUmount.Use = "go-umount <PID> <PidFd> <path>"
+	cmdGoUmount.Args = cobra.ExactArgs(3)
+	cmdGoUmount.RunE = c.Run
+	cmd.AddCommand(cmdGoUmount)
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs

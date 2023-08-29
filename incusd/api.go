@@ -11,11 +11,11 @@ import (
 	"github.com/gorilla/mux"
 
 	clusterConfig "github.com/lxc/incus/incusd/cluster/config"
-	"github.com/lxc/incus/incusd/cluster/request"
+	clusterRequest "github.com/lxc/incus/incusd/cluster/request"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/project"
-	lxdRequest "github.com/lxc/incus/incusd/request"
+	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/storage/s3"
@@ -30,8 +30,8 @@ import (
 //
 //	Returns a list of supported API versions (URLs).
 //
-//	Internal API endpoints are not reported as those aren't versioned and
-//	should only be used by LXD itself.
+//	Internal API endpoints are not reported as those aren't versioned
+//	and should only be used by the daemon itself.
 //
 //	---
 //	produces:
@@ -152,8 +152,8 @@ func restServer(d *Daemon) *http.Server {
 	})
 
 	return &http.Server{
-		Handler:     &lxdHttpServer{r: mux, d: d},
-		ConnContext: lxdRequest.SaveConnectionInContext,
+		Handler:     &httpServer{r: mux, d: d},
+		ConnContext: request.SaveConnectionInContext,
 	}
 }
 
@@ -203,7 +203,7 @@ func metricsServer(d *Daemon) *http.Server {
 		_ = response.NotFound(nil).Render(w)
 	})
 
-	return &http.Server{Handler: &lxdHttpServer{r: mux, d: d}}
+	return &http.Server{Handler: &httpServer{r: mux, d: d}}
 }
 
 func storageBucketsServer(d *Daemon) *http.Server {
@@ -344,15 +344,15 @@ func storageBucketsServer(d *Daemon) *http.Server {
 		rproxy.ServeHTTP(w, r)
 	})
 
-	return &http.Server{Handler: &lxdHttpServer{r: m, d: d}}
+	return &http.Server{Handler: &httpServer{r: m, d: d}}
 }
 
-type lxdHttpServer struct {
+type httpServer struct {
 	r *mux.Router
 	d *Daemon
 }
 
-func (s *lxdHttpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (s *httpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if !strings.HasPrefix(req.URL.Path, "/internal") {
 		<-s.d.setupChan
 
@@ -396,7 +396,7 @@ func setCORSHeaders(rw http.ResponseWriter, req *http.Request, config *clusterCo
 // notifying us of some user-initiated API request that needs some action to be
 // taken on this node as well.
 func isClusterNotification(r *http.Request) bool {
-	return r.Header.Get("User-Agent") == request.UserAgentNotifier
+	return r.Header.Get("User-Agent") == clusterRequest.UserAgentNotifier
 }
 
 // projectParam returns the project query parameter from the given request or "default" if parameter is not set.
@@ -411,14 +411,14 @@ func projectParam(request *http.Request) string {
 
 // Extract the given query parameter directly from the URL, never from an
 // encoded body.
-func queryParam(request *http.Request, key string) string {
+func queryParam(req *http.Request, key string) string {
 	var values url.Values
 	var err error
 
-	if request.URL != nil {
-		values, err = url.ParseQuery(request.URL.RawQuery)
+	if req.URL != nil {
+		values, err = url.ParseQuery(req.URL.RawQuery)
 		if err != nil {
-			logger.Warnf("Failed to parse query string %q: %v", request.URL.RawQuery, err)
+			logger.Warnf("Failed to parse query string %q: %v", req.URL.RawQuery, err)
 			return ""
 		}
 	}

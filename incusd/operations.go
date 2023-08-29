@@ -962,7 +962,7 @@ func (r *operationWebSocket) String() string {
 //
 //  Connects to an associated websocket stream for the operation.
 //  This should almost never be done directly by a client, instead it's
-//  meant for LXD to LXD communication with the client only relaying the
+//  meant for server to server communication with the client only relaying the
 //  connection information to the servers.
 //
 //  The untrusted endpoint is used by the target server to connect to the source server.
@@ -991,7 +991,7 @@ func (r *operationWebSocket) String() string {
 //
 //	Connects to an associated websocket stream for the operation.
 //	This should almost never be done directly by a client, instead it's
-//	meant for LXD to LXD communication with the client only relaying the
+//	meant for server to server communication with the client only relaying the
 //	connection information to the servers.
 //
 //	---

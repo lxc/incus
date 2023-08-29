@@ -12,13 +12,13 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// A LXD node which is already configured for networking can be converted to a
-// single-node LXD cluster.
+// A node which is already configured for networking can be converted to a
+// single-node cluster.
 func TestCluster_Bootstrap(t *testing.T) {
 	daemon, cleanup := newTestDaemon(t)
 	defer cleanup()
 
-	// Simulate what happens when running "lxd init", where a PUT /1.0
+	// Simulate what happens when running "init", where a PUT /1.0
 	// request is issued to set both core.https_address and
 	// cluster.https_address to the same value.
 	f := clusterFixture{t: t}
@@ -53,7 +53,7 @@ func TestCluster_Get(t *testing.T) {
 	assert.False(t, cluster.Enabled)
 }
 
-// A LXD node can be renamed.
+// A node can be renamed.
 func TestCluster_RenameNode(t *testing.T) {
 	daemon, cleanup := newTestDaemon(t)
 	defer cleanup()

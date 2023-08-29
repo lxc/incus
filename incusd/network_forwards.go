@@ -78,8 +78,8 @@ var networkForwardCmd = APIEndpoint{
 //              type: string
 //            example: |-
 //              [
-//                "/1.0/networks/lxdbr0/forwards/192.0.2.1",
-//                "/1.0/networks/lxdbr0/forwards/192.0.2.2"
+//                "/1.0/networks/mybr0/forwards/192.0.2.1",
+//                "/1.0/networks/mybr0/forwards/192.0.2.2"
 //              ]
 //    "403":
 //      $ref: "#/responses/Forbidden"

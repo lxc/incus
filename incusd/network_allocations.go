@@ -28,7 +28,7 @@ var networkAllocationsCmd = APIEndpoint{
 //
 //	Get the network allocations in use (`network`, `network-forward` and `load-balancer` and `instance`)
 //
-//	Returns a list of network allocations in use by a LXD deployment.
+//	Returns a list of network allocations.
 //
 //	---
 //	produces:

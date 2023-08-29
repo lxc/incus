@@ -71,7 +71,7 @@ func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d incus.Inst
 	}
 
 	// Print the YAML
-	preSeedPrint, err := cli.AskBool("Would you like a YAML \"lxd init\" preseed to be printed? (yes/no) [default=no]: ", "no")
+	preSeedPrint, err := cli.AskBool("Would you like a YAML \"init\" preseed to be printed? (yes/no) [default=no]: ", "no")
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d incus.Inst
 }
 
 func (c *cmdInit) askClustering(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
-	clustering, err := cli.AskBool("Would you like to use LXD clustering? (yes/no) [default=no]: ", "no")
+	clustering, err := cli.AskBool("Would you like to use clustering? (yes/no) [default=no]: ", "no")
 	if err != nil {
 		return err
 	}
@@ -381,7 +381,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 			}
 		}
 
-		useExistingInterface, err := cli.AskBool("Would you like to configure LXD to use an existing bridge or host interface? (yes/no) [default=no]: ", "no")
+		useExistingInterface, err := cli.AskBool("Would you like to use an existing bridge or host interface? (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
@@ -421,7 +421,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 			if fan {
 				// Define the network
 				networkPost := api.InitNetworksProjectPost{}
-				networkPost.Name = "lxdfan0"
+				networkPost.Name = "incusfan0"
 				networkPost.Project = project.Default
 				networkPost.Config = map[string]string{
 					"bridge.mode": "fan",
@@ -467,7 +467,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 				config.Node.Profiles[0].Devices["eth0"] = map[string]string{
 					"type":    "nic",
 					"name":    "eth0",
-					"network": "lxdfan0",
+					"network": "incusfan0",
 				}
 			}
 		}
@@ -482,7 +482,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 		net.Project = project.Default
 
 		// Network name
-		net.Name, err = cli.AskString("What should the new bridge be called? [default=lxdbr0]: ", "lxdbr0", func(netName string) error {
+		net.Name, err = cli.AskString("What should the new bridge be called? [default=incusbr0]: ", "incusbr0", func(netName string) error {
 			netType, err := network.LoadByType("bridge")
 			if err != nil {
 				return err
@@ -520,7 +520,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 		}
 
 		if !shared.StringInSlice(net.Config["ipv4.address"], []string{"auto", "none"}) {
-			netIPv4UseNAT, err := cli.AskBool("Would you like LXD to NAT IPv4 traffic on your bridge? [default=yes]: ", "yes")
+			netIPv4UseNAT, err := cli.AskBool("Would you like to NAT IPv4 traffic on your bridge? [default=yes]: ", "yes")
 			if err != nil {
 				return err
 			}
@@ -541,7 +541,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 		}
 
 		if !shared.StringInSlice(net.Config["ipv6.address"], []string{"auto", "none"}) {
-			netIPv6UseNAT, err := cli.AskBool("Would you like LXD to NAT IPv6 traffic on your bridge? [default=yes]: ", "yes")
+			netIPv6UseNAT, err := cli.AskBool("Would you like to NAT IPv6 traffic on your bridge? [default=yes]: ", "yes")
 			if err != nil {
 				return err
 			}
@@ -700,13 +700,13 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 		if pool.Driver == "zfs" && backingFs == "zfs" {
 			poolName, _ := shared.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
 			if strings.TrimSpace(poolName) == "rpool" {
-				zfsDataset, err := cli.AskBool("Would you like to create a new zfs dataset under rpool/lxd? (yes/no) [default=yes]: ", "yes")
+				zfsDataset, err := cli.AskBool("Would you like to create a new zfs dataset under rpool/incus? (yes/no) [default=yes]: ", "yes")
 				if err != nil {
 					return err
 				}
 
 				if zfsDataset {
-					pool.Config["source"] = "rpool/lxd"
+					pool.Config["source"] = "rpool/incus"
 					config.Node.StoragePools = append(config.Node.StoragePools, pool)
 					break
 				}
@@ -727,7 +727,7 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 				}
 
 				// Ask for the name of the osd pool
-				pool.Config["ceph.osd.pool_name"], err = cli.AskString("Name of the OSD storage pool [default=lxd]: ", "lxd", nil)
+				pool.Config["ceph.osd.pool_name"], err = cli.AskString("Name of the OSD storage pool [default=incus]: ", "incus", nil)
 				if err != nil {
 					return err
 				}
@@ -819,7 +819,7 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 				}
 
 				// ask for the name of the existing pool
-				pool.Config["source"], err = cli.AskString("Name of the existing OSD storage pool [default=lxd]: ", "lxd", nil)
+				pool.Config["source"], err = cli.AskString("Name of the existing OSD storage pool [default=incus]: ", "incus", nil)
 				if err != nil {
 					return err
 				}
@@ -843,7 +843,7 @@ LVM can still be used without thin provisioning but this will disable over-provi
 increase the space requirements and creation time of images, instances and snapshots.
 
 If you wish to use thin provisioning, abort now, install the tools from your Linux distribution
-and make sure that your user can see and run the "thin_check" command before running "lxd init" again.
+and make sure that your user can see and run the "thin_check" command before running "init" again.
 
 `)
 				lvmContinueNoThin, err := cli.AskBool("Do you want to continue without thin provisioning? (yes/no) [default=yes]: ", "yes")
@@ -875,7 +875,7 @@ We detected that you are running inside an unprivileged container.
 This means that unless you manually configured your host otherwise,
 you will not have enough uids and gids to allocate to your containers.
 
-LXD can re-use your container's own allocation to avoid the problem.
+Your container's own allocation can be re-used to avoid the problem.
 Doing so makes your nested containers slightly less safe as they could
 in theory attack their parent container and gain more privileges than
 they otherwise would.
@@ -894,12 +894,12 @@ they otherwise would.
 
 	// Network listener
 	if config.Cluster == nil {
-		lxdOverNetwork, err := cli.AskBool("Would you like the LXD server to be available over the network? (yes/no) [default=no]: ", "no")
+		overNetwork, err := cli.AskBool("Would you like the server to be available over the network? (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
 
-		if lxdOverNetwork {
+		if overNetwork {
 			isIPAddress := func(s string) error {
 				if s != "all" && net.ParseIP(s) == nil {
 					return fmt.Errorf("%q is not an IP address", s)
@@ -908,7 +908,7 @@ they otherwise would.
 				return nil
 			}
 
-			netAddr, err := cli.AskString("Address to bind LXD to (not including port) [default=all]: ", "all", isIPAddress)
+			netAddr, err := cli.AskString("Address to bind to (not including port) [default=all]: ", "all", isIPAddress)
 			if err != nil {
 				return err
 			}
@@ -921,7 +921,7 @@ they otherwise would.
 				netAddr = fmt.Sprintf("[%s]", netAddr)
 			}
 
-			netPort, err := cli.AskInt(fmt.Sprintf("Port to bind LXD to [default=%d]: ", shared.HTTPSDefaultPort), 1, 65535, fmt.Sprintf("%d", shared.HTTPSDefaultPort), func(netPort int64) error {
+			netPort, err := cli.AskInt(fmt.Sprintf("Port to bind to [default=%d]: ", shared.HTTPSDefaultPort), 1, 65535, fmt.Sprintf("%d", shared.HTTPSDefaultPort), func(netPort int64) error {
 				address := util.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), shared.HTTPSDefaultPort)
 
 				if err == nil {
