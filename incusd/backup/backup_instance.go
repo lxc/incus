@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// Instance represents the backup relevant subset of a LXD instance.
+// Instance represents the backup relevant subset of an instance.
 // This is used rather than instance.Instance to avoid import loops.
 type Instance interface {
 	Name() string
