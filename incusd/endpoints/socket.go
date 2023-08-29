@@ -30,7 +30,7 @@ func socketUnixListen(path string) (*net.UnixListener, error) {
 }
 
 // CheckAlreadyRunning checks if the socket at the given path is already
-// bound to a running LXD process, and return an error if so.
+// bound to a running process, and return an error if so.
 //
 //	FIXME: We should probably rather just try a regular unix socket
 //		connection without using the client. However this is the way
@@ -52,9 +52,9 @@ func CheckAlreadyRunning(path string) error {
 
 	_, err = incus.ConnectIncusUnix(path, nil)
 
-	// If the connection succeeded it means there's another LXD running.
+	// If the connection succeeded it means there's another daemon running.
 	if err == nil {
-		return fmt.Errorf("LXD is already running")
+		return fmt.Errorf("Incus is already running")
 	}
 
 	return nil

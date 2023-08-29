@@ -15,19 +15,18 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
-// Config holds various configuration values that affect LXD endpoints
-// initialization.
+// Config holds various configuration values that affect endpoints initialization.
 type Config struct {
-	// The LXD var directory to create Unix sockets in.
+	// The directory to create Unix sockets in.
 	Dir string
 
 	// UnixSocket is the path to the Unix socket to bind
 	UnixSocket string
 
-	// HTTP server handling requests for the LXD RESTful API.
+	// HTTP server handling requests for the REST API.
 	RestServer *http.Server
 
-	// HTTP server for the internal /dev/lxd API exposed to containers.
+	// HTTP server for the internal /dev/incus API exposed to containers.
 	DevIncusServer *http.Server
 
 	// The TLS keypair and optional CA to use for the network endpoint. It
@@ -60,10 +59,10 @@ type Config struct {
 	// It can be updated after the endpoints are up using PprofUpdateAddress().
 	DebugAddress string
 
-	// HTTP server handling requests for the LXD metrics API.
+	// HTTP server handling requests for the metrics API.
 	MetricsServer *http.Server
 
-	// HTTP server handling requests for the LXD storage buckets API.
+	// HTTP server handling requests for the storage buckets API.
 	StorageBucketsServer *http.Server
 
 	// HTTP server handling requests from VMs via the vsock.
@@ -73,7 +72,7 @@ type Config struct {
 	VsockSupport bool
 }
 
-// Up brings up all applicable LXD endpoints and starts accepting HTTP
+// Up brings up all applicable endpoints and starts accepting HTTP
 // requests.
 //
 // The endpoints will be activated in the following order and according to the
@@ -87,7 +86,7 @@ type Config struct {
 // file descriptor exists, don't bring up the local endpoint at all).
 //
 // If no socket-based activation is detected, create a unix socket using the
-// default <lxd-var-dir>/unix.socket path. The file mode of this socket will be set
+// default <var-path>/unix.socket path. The file mode of this socket will be set
 // to 660, the file owner will be set to the process' UID, and the file group
 // will be set to the process GID, or to the GID of the system group name
 // specified via config.LocalUnixSocketGroup.
@@ -95,7 +94,7 @@ type Config struct {
 // devIncus endpoint (unix socket)
 // ----------------------------
 //
-// Created using <lxd-var-dir>/devIncus/sock, with file mode set to 666 (actual
+// Created using <var-path>/dev_incus/sock, with file mode set to 666 (actual
 // authorization will be performed by the HTTP server using the socket ucred
 // struct).
 //
@@ -152,11 +151,7 @@ func Up(config *Config) (*Endpoints, error) {
 }
 
 // Endpoints are in charge of bringing up and down the HTTP endpoints for
-// serving the LXD RESTful API.
-//
-// When LXD starts up, they start listen to the appropriate sockets and attach
-// the relevant HTTP handlers to them. When LXD shuts down they close all
-// sockets.
+// serving the REST API.
 type Endpoints struct {
 	tomb      *tomb.Tomb            // Controls the HTTP servers shutdown.
 	mu        sync.RWMutex          // Serialize access to internal state.
