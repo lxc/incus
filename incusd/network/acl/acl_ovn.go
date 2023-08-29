@@ -160,7 +160,7 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *openvswitch.OVN, acl
 			// If we are being asked to forcefully reapply the rules, or if the port group exists but
 			// doesn't have any rules, then we load the current rule set from the database to apply.
 			// Note: An empty ACL list on a port group means it has only been partially setup, as
-			// even LXD Network ACLs with no rules should have at least 1 OVN ACL applied because of
+			// even Network ACLs with no rules should have at least 1 OVN ACL applied because of
 			// the default rule we add. We also need to reapply the rules if we are adding any
 			// new per-ACL-per-network port groups.
 			if reapplyRules || !portGroupHasACLs || len(addACLNets) > 0 {
@@ -417,7 +417,7 @@ func ovnApplyToPortGroup(l logger.Logger, client *openvswitch.OVN, aclInfo *api.
 	return nil
 }
 
-// ovnRuleCriteriaToOVNACLRule converts a LXD ACL rule into an OVNACLRule for an OVN port group or network.
+// ovnRuleCriteriaToOVNACLRule converts an ACL rule into an OVNACLRule for an OVN port group or network.
 // Returns a bool indicating if any of the rule subjects are network specific.
 func ovnRuleCriteriaToOVNACLRule(direction string, rule *api.NetworkACLRule, portGroupName openvswitch.OVNPortGroup, aclNameIDs map[string]int64, peerTargetNetIDs map[db.NetworkPeer]int64) (openvswitch.OVNACLRule, bool, []db.NetworkPeer, error) {
 	networkSpecific := false
@@ -792,7 +792,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *openvsw
 	// This contains the initial candidates for removal. But any found to be in use will be removed from list.
 	removeACLPortGroups := make(map[openvswitch.OVNPortGroup]struct{}, 0)
 	for _, portGroup := range portGroups {
-		// If port group is related to a LXD ACL and is not related to one of keepACLs, then add it as a
+		// If port group is related to an ACL and is not related to one of keepACLs, then add it as a
 		// candidate for removal.
 		if strings.HasPrefix(string(portGroup), ovnACLPortGroupPrefix) && !hasKeeperPrefix(portGroup) {
 			removeACLPortGroups[portGroup] = struct{}{}

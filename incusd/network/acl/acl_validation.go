@@ -13,7 +13,7 @@ func ValidName(name string) error {
 		return fmt.Errorf("Name is required")
 	}
 
-	// Don't allow ACL names to start with special port selector characters to allow LXD to define special port
+	// Don't allow ACL names to start with special port selector characters to allow Incus to define special port
 	// selectors without risking conflict with user defined ACL names.
 	if shared.StringHasPrefix(name, "@", "%", "#") {
 		return fmt.Errorf("Name cannot start with reserved character %q", name[0])
