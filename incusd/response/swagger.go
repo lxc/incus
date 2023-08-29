@@ -1,4 +1,4 @@
-// Package response contains helpers for rendering LXD HTTP responses.
+// Package response contains helpers for rendering HTTP responses.
 //
 //nolint:deadcode,unused
 package response
