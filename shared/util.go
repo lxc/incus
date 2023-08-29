@@ -160,7 +160,7 @@ func LogPath(path ...string) string {
 	return filepath.Join(items...)
 }
 
-func ParseLXDFileHeaders(headers http.Header) (uid int64, gid int64, mode int, type_ string, write string) {
+func ParseFileHeaders(headers http.Header) (uid int64, gid int64, mode int, type_ string, write string) {
 	uid, err := strconv.ParseInt(headers.Get("X-Incus-uid"), 10, 64)
 	if err != nil {
 		uid = -1
