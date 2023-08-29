@@ -1,6 +1,6 @@
 package cliconfig
 
-// LocalRemote is the default local remote (over the LXD unix socket).
+// LocalRemote is the default local remote (over the unix socket).
 var LocalRemote = Remote{
 	Addr:   "unix://",
 	Static: true,
