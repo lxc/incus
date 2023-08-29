@@ -65,7 +65,7 @@ var ProjectFeatures = map[string]ProjectFeature{
 	},
 }
 
-// Project represents a LXD project.
+// Project represents a project.
 type Project struct {
 	ID          int
 	Description string

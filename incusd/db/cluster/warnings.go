@@ -61,7 +61,7 @@ type WarningFilter struct {
 	Status         *warningtype.Status
 }
 
-// ToAPI returns a LXD API entry.
+// ToAPI returns an API entry.
 func (w Warning) ToAPI() api.Warning {
 	typeCode := warningtype.Type(w.TypeCode)
 

@@ -24,8 +24,7 @@ import (
 //go:generate mapper method -i -e operation DeleteOne-by-UUID
 //go:generate mapper method -i -e operation DeleteMany-by-NodeID
 
-// Operation holds information about a single LXD operation running on a node
-// in the cluster.
+// Operation holds information about a single operation running on a member in the cluster.
 type Operation struct {
 	ID          int64              `db:"primary=yes"`                               // Stable database identifier
 	UUID        string             `db:"primary=yes"`                               // User-visible identifier
