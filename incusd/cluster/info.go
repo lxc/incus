@@ -11,8 +11,7 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
-// Load information about the dqlite node associated with this LXD member
-// should have, such as its ID, address and role.
+// Load information about the dqlite node associated with this cluster member.
 func loadInfo(database *db.Node, cert *shared.CertInfo) (*db.RaftNode, error) {
 	// Figure out if we actually need to act as dqlite node.
 	var info *db.RaftNode

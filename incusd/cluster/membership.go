@@ -23,8 +23,8 @@ import (
 	"github.com/lxc/incus/shared/version"
 )
 
-// Bootstrap turns a non-clustered LXD instance into the first (and leader)
-// node of a new LXD cluster.
+// Bootstrap turns a non-clustered server into the first (and leader)
+// member of a new cluster.
 //
 // This instance must already have its cluster.https_address set and be listening
 // on the associated network address.
@@ -298,7 +298,7 @@ func Accept(state *state.State, gateway *Gateway, name, address string, schema, 
 	return nodes, nil
 }
 
-// Join makes a non-clustered LXD node join an existing cluster.
+// Join makes a non-clustered server join an existing cluster.
 //
 // It's assumed that Accept() was previously called against the leader node,
 // which handed the raft server ID.
@@ -1196,8 +1196,7 @@ func membershipCheckClusterStateForLeave(ctx context.Context, tx *db.ClusterTx, 
 	return nil
 }
 
-// Check that there is no left-over cluster certificate in the LXD var dir of
-// this node.
+// Check that there is no left-over cluster certificate in the var dir of this server.
 func membershipCheckNoLeftoverClusterCert(dir string) error {
 	// Ensure that there's no leftover cluster certificate.
 	for _, basename := range []string{"cluster.crt", "cluster.key", "cluster.ca"} {
