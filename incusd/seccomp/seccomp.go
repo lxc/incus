@@ -42,7 +42,7 @@ struct seccomp_notify_proxy_msg {
 	// followed by: seccomp_notif, seccomp_notif_resp, cookie
 };
 
-#define LXD_SCHED_PARAM_SIZE (sizeof(struct sched_param))
+#define INCUS_SCHED_PARAM_SIZE (sizeof(struct sched_param))
 #define SECCOMP_PROXY_MSG_SIZE (sizeof(struct seccomp_notify_proxy_msg))
 #define SECCOMP_NOTIFY_SIZE (sizeof(struct seccomp_notif))
 #define SECCOMP_RESPONSE_SIZE (sizeof(struct seccomp_notif_resp))
@@ -90,7 +90,7 @@ static int device_allowed(dev_t dev, mode_t mode)
 
 #include <linux/audit.h>
 
-struct lxd_seccomp_data_arch {
+struct incus_seccomp_data_arch {
 	int arch;
 	int nr_mknod;
 	int nr_mknodat;
@@ -101,17 +101,17 @@ struct lxd_seccomp_data_arch {
 	int nr_sysinfo;
 };
 
-#define LXD_SECCOMP_NOTIFY_MKNOD    0
-#define LXD_SECCOMP_NOTIFY_MKNODAT  1
-#define LXD_SECCOMP_NOTIFY_SETXATTR 2
-#define LXD_SECCOMP_NOTIFY_MOUNT 3
-#define LXD_SECCOMP_NOTIFY_BPF 4
-#define LXD_SECCOMP_NOTIFY_SCHED_SETSCHEDULER 5
-#define LXD_SECCOMP_NOTIFY_SYSINFO 6
+#define INCUS_SECCOMP_NOTIFY_MKNOD    0
+#define INCUS_SECCOMP_NOTIFY_MKNODAT  1
+#define INCUS_SECCOMP_NOTIFY_SETXATTR 2
+#define INCUS_SECCOMP_NOTIFY_MOUNT 3
+#define INCUS_SECCOMP_NOTIFY_BPF 4
+#define INCUS_SECCOMP_NOTIFY_SCHED_SETSCHEDULER 5
+#define INCUS_SECCOMP_NOTIFY_SYSINFO 6
 
 // ordered by likelihood of usage...
-static const struct lxd_seccomp_data_arch seccomp_notify_syscall_table[] = {
-	{ -1, LXD_SECCOMP_NOTIFY_MKNOD, LXD_SECCOMP_NOTIFY_MKNODAT, LXD_SECCOMP_NOTIFY_SETXATTR, LXD_SECCOMP_NOTIFY_MOUNT, LXD_SECCOMP_NOTIFY_BPF, LXD_SECCOMP_NOTIFY_SCHED_SETSCHEDULER, LXD_SECCOMP_NOTIFY_SYSINFO},
+static const struct incus_seccomp_data_arch seccomp_notify_syscall_table[] = {
+	{ -1, INCUS_SECCOMP_NOTIFY_MKNOD, INCUS_SECCOMP_NOTIFY_MKNODAT, INCUS_SECCOMP_NOTIFY_SETXATTR, INCUS_SECCOMP_NOTIFY_MOUNT, INCUS_SECCOMP_NOTIFY_BPF, INCUS_SECCOMP_NOTIFY_SCHED_SETSCHEDULER, INCUS_SECCOMP_NOTIFY_SYSINFO},
 #ifdef AUDIT_ARCH_X86_64
 	{ AUDIT_ARCH_X86_64,      133, 259, 188, 165, 321, 144, 99 },
 #endif
@@ -182,31 +182,31 @@ static int seccomp_notify_get_syscall(struct seccomp_notif *req,
 	for (size_t i = 0; i < (sizeof(seccomp_notify_syscall_table) /
 				sizeof(seccomp_notify_syscall_table[0]));
 	     i++) {
-		const struct lxd_seccomp_data_arch *entry = &seccomp_notify_syscall_table[i];
+		const struct incus_seccomp_data_arch *entry = &seccomp_notify_syscall_table[i];
 
 		if (entry->arch != req->data.arch)
 			continue;
 
 		if (entry->nr_mknod == req->data.nr)
-			return LXD_SECCOMP_NOTIFY_MKNOD;
+			return INCUS_SECCOMP_NOTIFY_MKNOD;
 
 		if (entry->nr_mknodat == req->data.nr)
-			return LXD_SECCOMP_NOTIFY_MKNODAT;
+			return INCUS_SECCOMP_NOTIFY_MKNODAT;
 
 		if (entry->nr_setxattr == req->data.nr)
-			return LXD_SECCOMP_NOTIFY_SETXATTR;
+			return INCUS_SECCOMP_NOTIFY_SETXATTR;
 
 		if (entry->nr_mount == req->data.nr)
-			return LXD_SECCOMP_NOTIFY_MOUNT;
+			return INCUS_SECCOMP_NOTIFY_MOUNT;
 
 		if (entry->nr_bpf == req->data.nr)
-			return LXD_SECCOMP_NOTIFY_BPF;
+			return INCUS_SECCOMP_NOTIFY_BPF;
 
 		if (entry->nr_sched_setscheduler == req->data.nr)
-			return LXD_SECCOMP_NOTIFY_SCHED_SETSCHEDULER;
+			return INCUS_SECCOMP_NOTIFY_SCHED_SETSCHEDULER;
 
 		if (entry->nr_sysinfo == req->data.nr)
-			return LXD_SECCOMP_NOTIFY_SYSINFO;
+			return INCUS_SECCOMP_NOTIFY_SYSINFO;
 
 		break;
 	}
@@ -304,7 +304,7 @@ static int handle_bpf_syscall(pid_t pid_target, int notify_fd, int mem_fd,
 
 	*bpf_prog_type = attr.prog_type;
 
-	pidfd = lxd_pidfd_open(tgid, 0);
+	pidfd = incus_pidfd_open(tgid, 0);
 	if (pidfd < 0)
 		return -errno;
 
@@ -476,13 +476,13 @@ import (
 	"github.com/lxc/incus/shared/osarch"
 )
 
-const lxdSeccompNotifyMknod = C.LXD_SECCOMP_NOTIFY_MKNOD
-const lxdSeccompNotifyMknodat = C.LXD_SECCOMP_NOTIFY_MKNODAT
-const lxdSeccompNotifySetxattr = C.LXD_SECCOMP_NOTIFY_SETXATTR
-const lxdSeccompNotifyMount = C.LXD_SECCOMP_NOTIFY_MOUNT
-const lxdSeccompNotifyBpf = C.LXD_SECCOMP_NOTIFY_BPF
-const lxdSeccompNotifySchedSetscheduler = C.LXD_SECCOMP_NOTIFY_SCHED_SETSCHEDULER
-const lxdSeccompNotifySysinfo = C.LXD_SECCOMP_NOTIFY_SYSINFO
+const incusSeccompNotifyMknod = C.INCUS_SECCOMP_NOTIFY_MKNOD
+const incusSeccompNotifyMknodat = C.INCUS_SECCOMP_NOTIFY_MKNODAT
+const incusSeccompNotifySetxattr = C.INCUS_SECCOMP_NOTIFY_SETXATTR
+const incusSeccompNotifyMount = C.INCUS_SECCOMP_NOTIFY_MOUNT
+const incusSeccompNotifyBpf = C.INCUS_SECCOMP_NOTIFY_BPF
+const incusSeccompNotifySchedSetscheduler = C.INCUS_SECCOMP_NOTIFY_SCHED_SETSCHEDULER
+const incusSeccompNotifySysinfo = C.INCUS_SECCOMP_NOTIFY_SYSINFO
 
 const seccompHeader = `2
 `
@@ -1376,8 +1376,7 @@ func (s *Server) HandleMknodatSyscall(c Instance, siov *Iovec) int {
 
 	defer logger.Debug("Handling mknodat syscall", ctx)
 
-	// Make sure to handle 64bit kernel, 32bit container/userspace, LXD
-	// built on 64bit userspace correctly.
+	// Make sure to handle 64bit kernel, 32bit container/userspace, 64bit daemon.
 	if int32(siov.req.data.args[0]) != int32(C.AT_FDCWD) {
 		ctx["err"] = "Non AT_FDCWD mknodat calls are not allowed"
 		logger.Debug("bla", ctx)
@@ -1690,7 +1689,7 @@ func (s *Server) HandleSchedSetschedulerSyscall(c Instance, siov *Iovec) int {
 	args.policy = C.int(siov.req.data.args[1])
 
 	schedParamArgs := C.struct_sched_param{}
-	_, err = C.pread(C.int(siov.memFd), unsafe.Pointer(&schedParamArgs), C.LXD_SCHED_PARAM_SIZE, C.off_t(siov.req.data.args[2]))
+	_, err = C.pread(C.int(siov.memFd), unsafe.Pointer(&schedParamArgs), C.INCUS_SCHED_PARAM_SIZE, C.off_t(siov.req.data.args[2]))
 	if err != nil {
 		if s.s.OS.SeccompListenerContinue {
 			ctx["syscall_continue"] = "true"
@@ -2296,19 +2295,19 @@ func (s *Server) HandleBpfSyscall(c Instance, siov *Iovec) int {
 
 func (s *Server) handleSyscall(c Instance, siov *Iovec) int {
 	switch int(C.seccomp_notify_get_syscall(siov.req, siov.resp)) {
-	case lxdSeccompNotifyMknod:
+	case incusSeccompNotifyMknod:
 		return s.HandleMknodSyscall(c, siov)
-	case lxdSeccompNotifyMknodat:
+	case incusSeccompNotifyMknodat:
 		return s.HandleMknodatSyscall(c, siov)
-	case lxdSeccompNotifySetxattr:
+	case incusSeccompNotifySetxattr:
 		return s.HandleSetxattrSyscall(c, siov)
-	case lxdSeccompNotifyMount:
+	case incusSeccompNotifyMount:
 		return s.HandleMountSyscall(c, siov)
-	case lxdSeccompNotifyBpf:
+	case incusSeccompNotifyBpf:
 		return s.HandleBpfSyscall(c, siov)
-	case lxdSeccompNotifySchedSetscheduler:
+	case incusSeccompNotifySchedSetscheduler:
 		return s.HandleSchedSetschedulerSyscall(c, siov)
-	case lxdSeccompNotifySysinfo:
+	case incusSeccompNotifySysinfo:
 		return s.HandleSysinfoSyscall(c, siov)
 	}
 
