@@ -6,7 +6,7 @@ import (
 	"database/sql"
 )
 
-// NodeTx models a single interaction with a LXD node-local database.
+// NodeTx models a single interaction with a server-local database.
 //
 // It wraps low-level sql.Tx objects and offers a high-level API to fetch and
 // update data.
@@ -14,13 +14,13 @@ type NodeTx struct {
 	tx *sql.Tx // Handle to a transaction in the node-level SQLite database.
 }
 
-// ClusterTx models a single interaction with a LXD cluster database.
+// ClusterTx models a single interaction with a cluster database.
 //
 // It wraps low-level sql.Tx objects and offers a high-level API to fetch and
 // update data.
 type ClusterTx struct {
 	tx     *sql.Tx // Handle to a transaction in the cluster dqlite database.
-	nodeID int64   // Node ID of this LXD instance.
+	nodeID int64   // Node ID of this server.
 }
 
 // Tx retrieves the underlying transaction on the cluster database.

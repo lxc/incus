@@ -43,7 +43,7 @@ const ClusterRoleOVNChassis = ClusterRole("ovn-chassis")
 //
 // Note: the database role is currently stored directly in the raft
 // configuration which acts as single source of truth for it. This map should
-// only contain LXD-specific cluster roles.
+// only contain Incus-specific cluster roles.
 var ClusterRoles = map[int]ClusterRole{
 	1: ClusterRoleEventHub,
 	2: ClusterRoleOVNChassis,
@@ -56,14 +56,14 @@ const (
 	ClusterMemberStateEvacuated = 2
 )
 
-// NodeInfo holds information about a single LXD instance in a cluster.
+// NodeInfo holds information about a single member in a cluster.
 type NodeInfo struct {
 	ID            int64             // Stable node identifier
 	Name          string            // User-assigned name of the node
 	Address       string            // Network address of the node
 	Description   string            // Node description (optional)
-	Schema        int               // Schema version of the LXD code running the node
-	APIExtensions int               // Number of API extensions of the LXD code running on the node
+	Schema        int               // Schema version of the daemon running the member
+	APIExtensions int               // Number of API extensions of the daemon running the member
 	Heartbeat     time.Time         // Timestamp of the last heartbeat
 	Roles         []ClusterRole     // List of cluster roles
 	Architecture  int               // Node architecture
@@ -88,7 +88,7 @@ type NodeInfoArgs struct {
 	RaftNodes            []RaftNode
 }
 
-// ToAPI returns a LXD API entry.
+// ToAPI returns an API entry.
 func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (*api.ClusterMember, error) {
 	var err error
 	var maxVersion [2]int
@@ -350,15 +350,14 @@ func (c *ClusterTx) NodeIsOutdated(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-// GetNodes returns all LXD nodes part of the cluster.
+// GetNodes returns all cluster members that are part of the cluster.
 //
-// If this LXD instance is not clustered, a list with a single node whose
-// address is 0.0.0.0 is returned.
+// If this server is not clustered, a list with a single member whose address is 0.0.0.0 is returned.
 func (c *ClusterTx) GetNodes(ctx context.Context) ([]NodeInfo, error) {
 	return c.nodes(ctx, false /* not pending */, "")
 }
 
-// GetNodesCount returns the number of nodes in the LXD cluster.
+// GetNodesCount returns the number of members in the cluster.
 //
 // Since there's always at least one node row, even when not-clustered, the
 // return value is greater than zero.
@@ -422,7 +421,7 @@ func (c *ClusterTx) SetDescription(id int64, description string) error {
 	return nil
 }
 
-// Nodes returns all LXD nodes part of the cluster.
+// Nodes returns all members part of the cluster.
 func (c *ClusterTx) nodes(ctx context.Context, pending bool, where string, args ...any) ([]NodeInfo, error) {
 	// Get node roles
 	sql := "SELECT node_id, role FROM nodes_roles"
@@ -547,7 +546,7 @@ JOIN cluster_groups ON cluster_groups.id = nodes_cluster_groups.group_id`
 	return nodes, nil
 }
 
-// CreateNode adds a node to the current list of LXD nodes that are part of the
+// CreateNode adds a node to the current list of members that are part of the
 // cluster. The node's architecture will be the architecture of the machine the
 // method is being run on. It returns the ID of the newly inserted row.
 func (c *ClusterTx) CreateNode(name string, address string) (int64, error) {

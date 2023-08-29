@@ -371,7 +371,7 @@ func TestSchema_File_Garbage(t *testing.T) {
 	schema, db := newSchemaAndDB(t)
 	schema.Add(updateCreateTable)
 
-	path, err := WriteTempFile("", "lxd-db-schema-", "SELECT FROM baz")
+	path, err := WriteTempFile("", "incus-db-schema-", "SELECT FROM baz")
 	require.NoError(t, err)
 	defer func() { _ = os.Remove(path) }()
 
@@ -391,7 +391,7 @@ func TestSchema_File(t *testing.T) {
 	// Add an update that would insert a value into a non-existing table.
 	schema.Add(updateInsertValue)
 
-	path, err := WriteTempFile("", "lxd-db-schema-",
+	path, err := WriteTempFile("", "incus-db-schema-",
 		`CREATE TABLE test (id INTEGER);
 INSERT INTO test VALUES (2);
 `)
@@ -425,7 +425,7 @@ func TestSchema_File_Hook(t *testing.T) {
 
 	// Add a custom schema update query file that inserts a value into a
 	// non-existing table.
-	path, err := WriteTempFile("", "lxd-db-schema-", "INSERT INTO test VALUES (2)")
+	path, err := WriteTempFile("", "incus-db-schema-", "INSERT INTO test VALUES (2)")
 	require.NoError(t, err)
 	defer func() { _ = os.Remove(path) }()
 

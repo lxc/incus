@@ -23,13 +23,13 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
-// DB represents access to LXD's global and local databases.
+// DB represents access to global and local databases.
 type DB struct {
 	Node    *Node
 	Cluster *Cluster
 }
 
-// Node mediates access to LXD's data stored in the node-local SQLite database.
+// Node mediates access to data stored in the node-local SQLite database.
 type Node struct {
 	db  *sql.DB // Handle to the node-local SQLite database file.
 	dir string  // Reference to the directory where the database file lives.
@@ -109,10 +109,10 @@ func (n *Node) Close() error {
 	return n.db.Close()
 }
 
-// Cluster mediates access to LXD's data stored in the cluster dqlite database.
+// Cluster mediates access to data stored in the cluster dqlite database.
 type Cluster struct {
 	db         *sql.DB // Handle to the cluster dqlite database, gated behind gRPC SQL.
-	nodeID     int64   // Node ID of this LXD instance.
+	nodeID     int64   // Node ID of this server.
 	mu         sync.RWMutex
 	closingCtx context.Context
 }
@@ -123,7 +123,7 @@ type Cluster struct {
 // - name: Basename of the database file holding the data. Typically "db.bin".
 // - dialer: Function used to connect to the dqlite backend via gRPC SQL.
 // - address: Network address of this node (or empty string).
-// - dir: Base LXD database directory (e.g. /var/lib/incus/database)
+// - dir: Base database directory (e.g. /var/lib/incus/database)
 // - timeout: Give up trying to open the database after this amount of time.
 //
 // The address and api parameters will be used to determine if the cluster

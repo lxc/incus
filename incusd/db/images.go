@@ -1108,7 +1108,7 @@ func (c *Cluster) GetImages() (map[string][]string, error) {
 	return images, err
 }
 
-// GetImagesOnLocalNode returns all images that the local LXD node has.
+// GetImagesOnLocalNode returns all images that the local server holds.
 func (c *Cluster) GetImagesOnLocalNode() (map[string][]string, error) {
 	return c.GetImagesOnNode(c.nodeID)
 }

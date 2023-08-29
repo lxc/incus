@@ -569,7 +569,7 @@ func (c *Cluster) GetStoragePoolNodeVolumeID(projectName string, volumeName stri
 	return c.storagePoolVolumeGetTypeID(projectName, volumeName, volumeType, poolID, c.nodeID)
 }
 
-// XXX: this was extracted from lxd/storage_volume_utils.go, we find a way to
+// XXX: this was extracted from storage_volume_utils.go, we find a way to
 // factor it independently from both the db and main packages.
 const (
 	StoragePoolVolumeTypeContainer = iota
