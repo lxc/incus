@@ -1,9 +1,9 @@
 {
   "__inputs": [
     {
-      "name": "DS_LXD",
-      "label": "LXD",
-      "description": "Prometheus instance for LXD",
+      "name": "DS_INCUS",
+      "label": "INCUS",
+      "description": "Prometheus instance for INCUS",
       "type": "datasource",
       "pluginId": "prometheus",
       "pluginName": "Prometheus"
@@ -61,7 +61,7 @@
       }
     ]
   },
-  "description": "Overview of LXD instances",
+  "description": "Overview of INCUS instances",
   "editable": false,
   "fiscalYearStartMonth": 0,
   "gnetId": 19131,
@@ -74,7 +74,7 @@
       "targetBlank": true,
       "title": "Documentation",
       "type": "link",
-      "url": "https://documentation.ubuntu.com/lxd/en/latest/"
+      "url": "https://linuxcontainers.org/incus/docs/main/"
     }
   ],
   "liveNow": false,
@@ -83,7 +83,7 @@
       "collapsed": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "gridPos": {
         "h": 1,
@@ -99,7 +99,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -174,10 +174,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "topk(${top}, sum by (name) (increase(lxd_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__range])))",
+          "expr": "topk(${top}, sum by (name) (increase(incus_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__range])))",
           "instant": true,
           "interval": "",
           "legendFormat": "{{name}}",
@@ -186,11 +186,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(increase(lxd_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__range])) - sum(topk(${top}, sum by (name) (increase(lxd_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__range]))))",
+          "expr": "sum(increase(incus_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__range])) - sum(topk(${top}, sum by (name) (increase(incus_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__range]))))",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -205,7 +205,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -280,10 +280,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "topk(${top}, lxd_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - lxd_memory_MemFree_bytes - lxd_memory_Cached_bytes)",
+          "expr": "topk(${top}, incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes)",
           "instant": true,
           "interval": "",
           "legendFormat": "{{name}}",
@@ -292,10 +292,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(lxd_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - lxd_memory_MemFree_bytes - lxd_memory_Cached_bytes) -\nsum(topk(${top}, lxd_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - lxd_memory_MemFree_bytes - lxd_memory_Cached_bytes))",
+          "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes) -\nsum(topk(${top}, incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes))",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -310,7 +310,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -385,10 +385,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "topk(${top}, lxd_filesystem_size_bytes{job=\"$job\",project=\"$project\",mountpoint=\"/\"} - lxd_filesystem_avail_bytes)",
+          "expr": "topk(${top}, incus_filesystem_size_bytes{job=\"$job\",project=\"$project\",mountpoint=\"/\"} - incus_filesystem_avail_bytes)",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -398,10 +398,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(lxd_filesystem_size_bytes{job=\"$job\",project=\"$project\",mountpoint=\"/\"} - lxd_filesystem_avail_bytes) - \nsum(topk(${top}, lxd_filesystem_size_bytes{job=\"$job\",project=\"$project\",mountpoint=\"/\"} - lxd_filesystem_avail_bytes))",
+          "expr": "sum(incus_filesystem_size_bytes{job=\"$job\",project=\"$project\",mountpoint=\"/\"} - incus_filesystem_avail_bytes) - \nsum(topk(${top}, incus_filesystem_size_bytes{job=\"$job\",project=\"$project\",mountpoint=\"/\"} - incus_filesystem_avail_bytes))",
           "hide": false,
           "interval": "",
           "legendFormat": "Others",
@@ -415,7 +415,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Total disk reads during the time interval",
       "fieldConfig": {
@@ -465,10 +465,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(increase(lxd_disk_read_bytes_total{job=\"$job\",project=\"$project\"}[$__range]))",
+          "expr": "sum(increase(incus_disk_read_bytes_total{job=\"$job\",project=\"$project\"}[$__range]))",
           "hide": false,
           "interval": "",
           "legendFormat": "",
@@ -482,7 +482,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Total disk writes during the time interval",
       "fieldConfig": {
@@ -532,10 +532,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(increase(lxd_disk_written_bytes_total{job=\"$job\",project=\"$project\"}[$__range]))",
+          "expr": "sum(increase(incus_disk_written_bytes_total{job=\"$job\",project=\"$project\"}[$__range]))",
           "hide": false,
           "interval": "",
           "legendFormat": "",
@@ -549,7 +549,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Total network RX traffic during the time interval",
       "fieldConfig": {
@@ -599,10 +599,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(increase(lxd_network_receive_bytes_total{job=\"$job\",project=\"$project\"}[$__range]))*8",
+          "expr": "sum(increase(incus_network_receive_bytes_total{job=\"$job\",project=\"$project\"}[$__range]))*8",
           "hide": false,
           "interval": "",
           "legendFormat": "",
@@ -616,7 +616,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Total network TX traffic during the time interval",
       "fieldConfig": {
@@ -666,10 +666,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(increase(lxd_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__range]))*8",
+          "expr": "sum(increase(incus_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__range]))*8",
           "hide": false,
           "interval": "",
           "legendFormat": "",
@@ -683,7 +683,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -758,11 +758,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "topk(${top}, sum by (name) (rate(lxd_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8)",
+          "expr": "topk(${top}, sum by (name) (rate(incus_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8)",
           "instant": true,
           "interval": "",
           "legendFormat": "{{name}}",
@@ -771,11 +771,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval])*8) -\nsum(topk(${top}, sum by (name) (rate(lxd_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8))",
+          "expr": "sum(rate(incus_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval])*8) -\nsum(topk(${top}, sum by (name) (rate(incus_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8))",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -790,7 +790,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -865,11 +865,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "topk(${top}, sum by (name) (rate(lxd_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8)",
+          "expr": "topk(${top}, sum by (name) (rate(incus_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8)",
           "instant": true,
           "interval": "",
           "legendFormat": "{{name}}",
@@ -878,11 +878,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval])*8) -\nsum(topk(${top}, sum by (name) (rate(lxd_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8))",
+          "expr": "sum(rate(incus_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval])*8) -\nsum(topk(${top}, sum by (name) (rate(incus_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8))",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -897,7 +897,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -972,11 +972,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "topk(${top}, sum by (name) (rate(lxd_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8)",
+          "expr": "topk(${top}, sum by (name) (rate(incus_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8)",
           "instant": true,
           "interval": "",
           "legendFormat": "{{name}}",
@@ -985,11 +985,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval])*8) -\nsum(topk(${top}, sum by (name) (rate(lxd_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8))",
+          "expr": "sum(rate(incus_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval])*8) -\nsum(topk(${top}, sum by (name) (rate(incus_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8))",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -1004,7 +1004,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -1079,11 +1079,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "topk(${top}, sum by (name) (rate(lxd_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8)",
+          "expr": "topk(${top}, sum by (name) (rate(incus_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8)",
           "instant": true,
           "interval": "",
           "legendFormat": "{{name}}",
@@ -1092,11 +1092,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval])*8) -\nsum(topk(${top}, sum by (name) (rate(lxd_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8))",
+          "expr": "sum(rate(incus_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval])*8) -\nsum(topk(${top}, sum by (name) (rate(incus_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8))",
           "hide": false,
           "instant": true,
           "interval": "",
@@ -1111,7 +1111,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "CPU usage overview for the whole project",
       "fieldConfig": {
@@ -1221,9 +1221,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
-          "expr": "sum(rate(lxd_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__rate_interval])) by (mode) * 100",
+          "expr": "sum(rate(incus_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__rate_interval])) by (mode) * 100",
           "hide": false,
           "interval": "",
           "legendFormat": "{{mode}}",
@@ -1237,7 +1237,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Memory usage overview for the whole project",
       "fieldConfig": {
@@ -1392,9 +1392,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
-          "expr": "sum(lxd_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"})",
+          "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"})",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1406,10 +1406,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(lxd_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - lxd_memory_MemFree_bytes - lxd_memory_Cached_bytes)",
+          "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes)",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1421,9 +1421,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
-          "expr": "sum(lxd_memory_Cached_bytes{job=\"$job\",project=\"$project\"})",
+          "expr": "sum(incus_memory_Cached_bytes{job=\"$job\",project=\"$project\"})",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1435,9 +1435,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
-          "expr": "sum(lxd_memory_MemFree_bytes{job=\"$job\",project=\"$project\"})",
+          "expr": "sum(incus_memory_MemFree_bytes{job=\"$job\",project=\"$project\"})",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -1448,9 +1448,9 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
-          "expr": "sum(lxd_memory_Swap_bytes{job=\"$job\",project=\"$project\"})",
+          "expr": "sum(incus_memory_Swap_bytes{job=\"$job\",project=\"$project\"})",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -1466,7 +1466,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Number of running processes for the whole project",
       "fieldConfig": {
@@ -1541,10 +1541,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(lxd_procs_total{job=\"$job\",project=\"$project\"})",
+          "expr": "sum(incus_procs_total{job=\"$job\",project=\"$project\"})",
           "interval": "",
           "legendFormat": "Processes",
           "refId": "A"
@@ -1557,7 +1557,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Disk space used for the whole project",
       "fieldConfig": {
@@ -1655,10 +1655,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(lxd_filesystem_size_bytes{mountpoint=\"/\",job=\"$job\",project=\"$project\"} - lxd_filesystem_avail_bytes)",
+          "expr": "sum(incus_filesystem_size_bytes{mountpoint=\"/\",job=\"$job\",project=\"$project\"} - incus_filesystem_avail_bytes)",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -1669,10 +1669,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(lxd_filesystem_size_bytes{mountpoint=\"/\",job=\"$job\",project=\"$project\"})",
+          "expr": "sum(incus_filesystem_size_bytes{mountpoint=\"/\",job=\"$job\",project=\"$project\"})",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1689,7 +1689,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "The number of bytes read or written per second for the whole project",
       "fieldConfig": {
@@ -1789,10 +1789,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_disk_written_bytes_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_disk_written_bytes_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -1803,10 +1803,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_disk_read_bytes_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_disk_read_bytes_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -1822,7 +1822,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "The number (after merges) of I/O requests completed per second for the whole project",
       "fieldConfig": {
@@ -1919,10 +1919,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_disk_writes_completed_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_disk_writes_completed_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "interval": "",
           "intervalFactor": 1,
           "legendFormat": "Writes completed",
@@ -1932,10 +1932,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_disk_reads_completed_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_disk_reads_completed_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "interval": "",
           "intervalFactor": 1,
           "legendFormat": "Reads completed",
@@ -1950,7 +1950,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Network traffic overview for the whole project",
       "fieldConfig": {
@@ -2045,10 +2045,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8",
+          "expr": "sum(rate(incus_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -2059,10 +2059,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8",
+          "expr": "sum(rate(incus_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8",
           "hide": false,
           "interval": "",
           "intervalFactor": 1,
@@ -2077,7 +2077,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Network traffic overview for the whole project",
       "fieldConfig": {
@@ -2172,11 +2172,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -2187,11 +2187,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "interval": "",
@@ -2207,7 +2207,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "description": "Network errors and drop overview for the whole project",
       "fieldConfig": {
@@ -2312,10 +2312,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_receive_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_network_receive_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -2326,10 +2326,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_transmit_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_network_transmit_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -2340,10 +2340,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_receive_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_network_receive_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -2355,10 +2355,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "exemplar": true,
-          "expr": "sum(rate(lxd_network_transmit_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
+          "expr": "sum(rate(incus_network_transmit_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -2376,7 +2376,7 @@
       "collapsed": true,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_LXD}"
+        "uid": "${DS_INCUS}"
       },
       "gridPos": {
         "h": 1,
@@ -2389,7 +2389,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "description": "Basic CPU info",
           "fieldConfig": {
@@ -2496,10 +2496,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "sum(rate(lxd_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])) by (mode) * 100",
+              "expr": "sum(rate(incus_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])) by (mode) * 100",
               "hide": false,
               "interval": "",
               "legendFormat": "{{mode}}",
@@ -2513,7 +2513,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "description": "Basic memory usage",
           "fieldConfig": {
@@ -2665,10 +2665,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "sum(lxd_memory_MemTotal_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
+              "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
               "format": "time_series",
               "hide": false,
               "interval": "",
@@ -2680,10 +2680,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "sum(lxd_memory_MemTotal_bytes{job=\"$job\",project=\"$project\",name=\"$name\"} - lxd_memory_MemFree_bytes - lxd_memory_Cached_bytes)",
+              "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\",name=\"$name\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes)",
               "format": "time_series",
               "hide": false,
               "interval": "",
@@ -2695,10 +2695,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "sum(lxd_memory_Cached_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
+              "expr": "sum(incus_memory_Cached_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
               "format": "time_series",
               "hide": false,
               "interval": "",
@@ -2710,10 +2710,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "sum(lxd_memory_MemFree_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
+              "expr": "sum(incus_memory_MemFree_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -2724,10 +2724,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "sum(lxd_memory_Swap_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
+              "expr": "sum(incus_memory_Swap_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -2743,7 +2743,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "description": "Number of running processes in the instance",
           "fieldConfig": {
@@ -2816,10 +2816,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "lxd_procs_total{job=\"$job\",project=\"$project\",name=\"$name\"}",
+              "expr": "incus_procs_total{job=\"$job\",project=\"$project\",name=\"$name\"}",
               "interval": "",
               "legendFormat": "Processes",
               "refId": "A"
@@ -2832,7 +2832,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "description": "Disk space used of all filesystems mounted",
           "fieldConfig": {
@@ -2913,10 +2913,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "100 - ((lxd_filesystem_avail_bytes{job=\"$job\",project=\"$project\",name=\"$name\"} * 100) / lxd_filesystem_size_bytes)",
+              "expr": "100 - ((incus_filesystem_avail_bytes{job=\"$job\",project=\"$project\",name=\"$name\"} * 100) / incus_filesystem_size_bytes)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -2932,7 +2932,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "description": "The number of bytes read from or written to the device per second",
           "fieldConfig": {
@@ -3025,10 +3025,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_disk_written_bytes_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_disk_written_bytes_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -3039,10 +3039,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_disk_read_bytes_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_disk_read_bytes_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -3058,7 +3058,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "description": "The number (after merges) of I/O requests completed per second for the device",
           "fieldConfig": {
@@ -3151,9 +3151,9 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
-              "expr": "rate(lxd_disk_writes_completed_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_disk_writes_completed_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "{{device}} - Writes completed",
@@ -3163,10 +3163,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_disk_reads_completed_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_disk_reads_completed_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "{{device}} - Reads completed",
@@ -3181,7 +3181,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "description": "Basic network info per interface",
           "fieldConfig": {
@@ -3274,10 +3274,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
+              "expr": "rate(incus_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
               "hide": false,
               "instant": false,
               "interval": "",
@@ -3288,10 +3288,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
+              "expr": "rate(incus_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
               "hide": false,
               "interval": "",
               "intervalFactor": 1,
@@ -3301,10 +3301,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_network_transmit_bytes_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
+              "expr": "rate(incus_network_transmit_bytes_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
               "hide": true,
               "instant": false,
               "interval": "",
@@ -3315,10 +3315,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_network_receive_bytes_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
+              "expr": "rate(incus_network_receive_bytes_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
               "hide": true,
               "interval": "",
               "intervalFactor": 1,
@@ -3334,7 +3334,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "fieldConfig": {
             "defaults": {
@@ -3428,10 +3428,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -3442,10 +3442,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -3456,10 +3456,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_network_transmit_packets_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_network_transmit_packets_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -3471,10 +3471,10 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
               "exemplar": true,
-              "expr": "rate(lxd_network_receive_packets_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_network_receive_packets_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "hide": true,
               "interval": "",
@@ -3491,7 +3491,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_LXD}"
+            "uid": "${DS_INCUS}"
           },
           "fieldConfig": {
             "defaults": {
@@ -3571,9 +3571,9 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
-              "expr": "rate(lxd_network_receive_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_network_receive_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -3584,9 +3584,9 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
-              "expr": "rate(lxd_network_transmit_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_network_transmit_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -3597,9 +3597,9 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
-              "expr": "rate(lxd_network_receive_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_network_receive_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "hide": false,
               "interval": "",
@@ -3611,9 +3611,9 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_LXD}"
+                "uid": "${DS_INCUS}"
               },
-              "expr": "rate(lxd_network_transmit_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
+              "expr": "rate(incus_network_transmit_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
               "hide": false,
               "interval": "",
@@ -3643,9 +3643,9 @@
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_LXD}"
+          "uid": "${DS_INCUS}"
         },
-        "definition": "label_values(lxd_procs_total, job)",
+        "definition": "label_values(incus_procs_total, job)",
         "hide": 0,
         "includeAll": false,
         "label": "Job",
@@ -3653,7 +3653,7 @@
         "name": "job",
         "options": [],
         "query": {
-          "query": "label_values(lxd_procs_total, job)",
+          "query": "label_values(incus_procs_total, job)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -3669,9 +3669,9 @@
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_LXD}"
+          "uid": "${DS_INCUS}"
         },
-        "definition": "label_values(lxd_procs_total{job=\"$job\"}, project)",
+        "definition": "label_values(incus_procs_total{job=\"$job\"}, project)",
         "description": "Name of the project",
         "hide": 0,
         "includeAll": false,
@@ -3680,7 +3680,7 @@
         "name": "project",
         "options": [],
         "query": {
-          "query": "label_values(lxd_procs_total{job=\"$job\"}, project)",
+          "query": "label_values(incus_procs_total{job=\"$job\"}, project)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -3697,9 +3697,9 @@
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_LXD}"
+          "uid": "${DS_INCUS}"
         },
-        "definition": "label_values(lxd_procs_total{job=\"$job\",project=\"$project\"}, name)",
+        "definition": "label_values(incus_procs_total{job=\"$job\",project=\"$project\"}, name)",
         "description": "Name of the instance",
         "hide": 0,
         "includeAll": true,
@@ -3708,7 +3708,7 @@
         "name": "name",
         "options": [],
         "query": {
-          "query": "label_values(lxd_procs_total{job=\"$job\",project=\"$project\"}, name)",
+          "query": "label_values(incus_procs_total{job=\"$job\",project=\"$project\"}, name)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -3787,7 +3787,7 @@
     ]
   },
   "timezone": "",
-  "title": "LXD",
+  "title": "INCUS",
   "uid": "bGY-LSB7k",
   "version": 14,
   "weekStart": ""
