@@ -33,7 +33,7 @@ func EnsureSchema(db *sql.DB, dir string) (int, error) {
 	schema.File(filepath.Join(dir, "patch.local.sql")) // Optional custom queries
 	schema.Hook(func(ctx context.Context, version int, tx *sql.Tx) error {
 		if !backupDone {
-			logger.Infof("Updating the LXD database schema. Backup made as \"local.db.bak\"")
+			logger.Infof("Updating the database schema. Backup made as \"local.db.bak\"")
 			path := filepath.Join(dir, "local.db")
 			err := shared.FileCopy(path, path+".bak")
 			if err != nil {

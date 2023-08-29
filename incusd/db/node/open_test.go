@@ -36,7 +36,7 @@ func TestEnsureSchema(t *testing.T) {
 
 // Create a new temporary directory, along with a function to clean it up.
 func newDir(t *testing.T) (string, func()) {
-	dir, err := os.MkdirTemp("", "lxd-db-node-test-")
+	dir, err := os.MkdirTemp("", "incus-db-node-test-")
 	require.NoError(t, err)
 
 	cleanup := func() {
