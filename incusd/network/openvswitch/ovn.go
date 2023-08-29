@@ -66,12 +66,12 @@ const OVNIPv6AddressModeDHCPStateful OVNIPv6AddressMode = "dhcpv6_stateful"
 // OVNIPv6AddressModeDHCPStateless IPv6 DHCPv6 stateless mode.
 const OVNIPv6AddressModeDHCPStateless OVNIPv6AddressMode = "dhcpv6_stateless"
 
-// OVN External ID names used by LXD.
-const ovnExtIDLXDSwitch = "incus_switch"
-const ovnExtIDLXDSwitchPort = "incus_switch_port"
-const ovnExtIDLXDProjectID = "incus_project_id"
-const ovnExtIDLXDPortGroup = "incus_port_group"
-const ovnExtIDLXDLocation = "incus_location"
+// OVN External ID names used by Incus.
+const ovnExtIDIncusSwitch = "incus_switch"
+const ovnExtIDIncusSwitchPort = "incus_switch_port"
+const ovnExtIDIncusProjectID = "incus_project_id"
+const ovnExtIDIncusPortGroup = "incus_port_group"
+const ovnExtIDIncusLocation = "incus_location"
 
 // OVNIPv6RAOpts IPv6 router advertisements options that can be applied to a router.
 type OVNIPv6RAOpts struct {
@@ -117,7 +117,7 @@ type OVNSwitchPortOpts struct {
 	DHCPv6OptsID OVNDHCPOptionsUUID // Optional, if empty, no DHCPv6 enabled on port.
 	Parent       OVNSwitchPort      // Optional, if set a nested port is created.
 	VLAN         uint16             // Optional, use with Parent to request a specific VLAN for nested port.
-	Location     string             // Optional, use to indicate the name of the LXD server this port is bound to.
+	Location     string             // Optional, use to indicate the name of the server this port is bound to.
 }
 
 // OVNACLRule represents an ACL rule that can be added to a logical switch or port group.
@@ -641,7 +641,7 @@ func (o *OVN) LogicalSwitchDelete(switchName OVNSwitch) error {
 // logicalSwitchFindAssociatedPortGroups finds the port groups that are associated to the switch specified.
 func (o *OVN) logicalSwitchFindAssociatedPortGroups(switchName OVNSwitch) ([]OVNPortGroup, error) {
 	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "port_group",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName),
+		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
 	)
 	if err != nil {
 		return nil, err
@@ -818,7 +818,7 @@ func (o *OVN) LogicalSwitchDHCPv4OptionsSet(switchName OVNSwitch, uuid OVNDHCPOp
 
 	if uuid != "" {
 		_, err = o.nbctl("set", "dhcp_option", string(uuid),
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName),
+			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
 			fmt.Sprintf("cidr=%s", subnet.String()),
 		)
 		if err != nil {
@@ -826,7 +826,7 @@ func (o *OVN) LogicalSwitchDHCPv4OptionsSet(switchName OVNSwitch, uuid OVNDHCPOp
 		}
 	} else {
 		uuidRaw, err := o.nbctl("create", "dhcp_option",
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName),
+			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
 			fmt.Sprintf("cidr=%s", subnet.String()),
 		)
 		if err != nil {
@@ -890,7 +890,7 @@ func (o *OVN) LogicalSwitchDHCPv6OptionsSet(switchName OVNSwitch, uuid OVNDHCPOp
 
 	if uuid != "" {
 		_, err = o.nbctl("set", "dhcp_option", string(uuid),
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName),
+			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
 			fmt.Sprintf(`cidr="%s"`, subnet.String()), // Special quoting to allow IPv6 address.
 		)
 		if err != nil {
@@ -898,7 +898,7 @@ func (o *OVN) LogicalSwitchDHCPv6OptionsSet(switchName OVNSwitch, uuid OVNDHCPOp
 		}
 	} else {
 		uuidRaw, err := o.nbctl("create", "dhcp_option",
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName),
+			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
 			fmt.Sprintf(`cidr="%s"`, subnet.String()), // Special quoting to allow IPv6 address.
 		)
 		if err != nil {
@@ -943,7 +943,7 @@ func (o *OVN) LogicalSwitchDHCPv6OptionsSet(switchName OVNSwitch, uuid OVNDHCPOp
 // LogicalSwitchDHCPOptionsGet retrieves the existing DHCP options defined for a logical switch.
 func (o *OVN) LogicalSwitchDHCPOptionsGet(switchName OVNSwitch) ([]OVNDHCPOptsSet, error) {
 	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid,cidr", "find", "dhcp_options",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName),
+		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
 	)
 	if err != nil {
 		return nil, err
@@ -997,7 +997,7 @@ func (o *OVN) LogicalSwitchDHCPOptionsDelete(switchName OVNSwitch, uuids ...OVND
 // logicalSwitchDNSRecordsDelete deletes any DNS records defined for a switch.
 func (o *OVN) logicalSwitchDNSRecordsDelete(switchName OVNSwitch) error {
 	uuids, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid", "find", "dns",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName),
+		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
 	)
 	if err != nil {
 		return err
@@ -1030,7 +1030,7 @@ func (o *OVN) LogicalSwitchSetACLRules(switchName OVNSwitch, aclRules ...OVNACLR
 
 	// Add new rules.
 	externalIDs := map[string]string{
-		ovnExtIDLXDSwitch: string(switchName),
+		ovnExtIDIncusSwitch: string(switchName),
 	}
 
 	args = o.aclRuleAddAppendArgs(args, "logical_switch", string(switchName), externalIDs, nil, aclRules...)
@@ -1047,7 +1047,7 @@ func (o *OVN) LogicalSwitchSetACLRules(switchName OVNSwitch, aclRules ...OVNACLR
 func (o *OVN) logicalSwitchPortACLRules(portName OVNSwitchPort) ([]string, error) {
 	// Remove any existing rules assigned to the entity.
 	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid", "find", "acl",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitchPort, string(portName)),
+		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitchPort, string(portName)),
 	)
 	if err != nil {
 		return nil, err
@@ -1088,7 +1088,7 @@ func (o *OVN) LogicalSwitchPorts(switchName OVNSwitch) (map[OVNSwitchPort]OVNSwi
 // LogicalSwitchPortIPs returns a list of IPs associated to each port connected to switch.
 func (o *OVN) LogicalSwitchPortIPs(switchName OVNSwitch) (map[OVNSwitchPort][]net.IP, error) {
 	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=name,addresses,dynamic_addresses", "find", "logical_switch_port",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName),
+		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
 	)
 	if err != nil {
 		return nil, err
@@ -1181,11 +1181,11 @@ func (o *OVN) LogicalSwitchPortAdd(switchName OVNSwitch, portName OVNSwitchPort,
 		}
 
 		if opts.Location != "" {
-			args = append(args, "--", "set", "logical_switch_port", string(portName), fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDLocation, opts.Location))
+			args = append(args, "--", "set", "logical_switch_port", string(portName), fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusLocation, opts.Location))
 		}
 	}
 
-	args = append(args, "--", "set", "logical_switch_port", string(portName), fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName))
+	args = append(args, "--", "set", "logical_switch_port", string(portName), fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName))
 
 	_, err := o.nbctl(args...)
 	if err != nil {
@@ -1229,7 +1229,7 @@ func (o *OVN) LogicalSwitchPortDynamicIPs(portName OVNSwitchPort) ([]net.IP, err
 
 // LogicalSwitchPortLocationGet returns the last set location of a logical switch port.
 func (o *OVN) LogicalSwitchPortLocationGet(portName OVNSwitchPort) (string, error) {
-	location, err := o.nbctl("--if-exists", "get", "logical_switch_port", string(portName), fmt.Sprintf("external-ids:%s", ovnExtIDLXDLocation))
+	location, err := o.nbctl("--if-exists", "get", "logical_switch_port", string(portName), fmt.Sprintf("external-ids:%s", ovnExtIDIncusLocation))
 	if err != nil {
 		return "", err
 	}
@@ -1258,15 +1258,15 @@ func (o *OVN) LogicalSwitchPortOptionsSet(portName OVNSwitchPort, options map[st
 func (o *OVN) LogicalSwitchPortSetDNS(switchName OVNSwitch, portName OVNSwitchPort, dnsName string, dnsIPs []net.IP) (OVNDNSUUID, error) {
 	// Check if existing DNS record exists for switch port.
 	dnsUUID, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid", "find", "dns",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitchPort, portName),
+		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitchPort, portName),
 	)
 	if err != nil {
 		return "", err
 	}
 
 	cmdArgs := []string{
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, switchName),
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitchPort, portName),
+		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
+		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitchPort, portName),
 	}
 
 	// Only include DNS name record if IPs supplied.
@@ -1318,7 +1318,7 @@ func (o *OVN) LogicalSwitchPortSetDNS(switchName OVNSwitch, portName OVNSwitchPo
 func (o *OVN) LogicalSwitchPortGetDNS(portName OVNSwitchPort) (OVNDNSUUID, string, []net.IP, error) {
 	// Get UUID and DNS IPs for a switch port in the format: "<DNS UUID>,<DNS NAME>=<IP> <IP>"
 	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid,records", "find", "dns",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitchPort, portName),
+		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitchPort, portName),
 	)
 	if err != nil {
 		return "", "", nil, err
@@ -1561,16 +1561,16 @@ func (o *OVN) PortGroupAdd(projectID int64, portGroupName OVNPortGroup, associat
 	}
 
 	args = append(args, "--", "set", "port_group", string(portGroupName),
-		fmt.Sprintf("external_ids:%s=%d", ovnExtIDLXDProjectID, projectID),
+		fmt.Sprintf("external_ids:%s=%d", ovnExtIDIncusProjectID, projectID),
 	)
 
 	if associatedPortGroup != "" || associatedSwitch != "" {
 		if associatedPortGroup != "" {
-			args = append(args, fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDPortGroup, associatedPortGroup))
+			args = append(args, fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusPortGroup, associatedPortGroup))
 		}
 
 		if associatedSwitch != "" {
-			args = append(args, fmt.Sprintf("external_ids:%s=%s", ovnExtIDLXDSwitch, associatedSwitch))
+			args = append(args, fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, associatedSwitch))
 		}
 	}
 
@@ -1605,7 +1605,7 @@ func (o *OVN) PortGroupDelete(portGroupNames ...OVNPortGroup) error {
 // PortGroupListByProject finds the port groups that are associated to the project ID.
 func (o *OVN) PortGroupListByProject(projectID int64) ([]OVNPortGroup, error) {
 	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "port_group",
-		fmt.Sprintf("external_ids:%s=%d", ovnExtIDLXDProjectID, projectID),
+		fmt.Sprintf("external_ids:%s=%d", ovnExtIDIncusProjectID, projectID),
 	)
 	if err != nil {
 		return nil, err
@@ -1660,7 +1660,7 @@ func (o *OVN) PortGroupSetACLRules(portGroupName OVNPortGroup, matchReplace map[
 
 	// Add new rules.
 	externalIDs := map[string]string{
-		ovnExtIDLXDPortGroup: string(portGroupName),
+		ovnExtIDIncusPortGroup: string(portGroupName),
 	}
 
 	args = o.aclRuleAddAppendArgs(args, "port_group", string(portGroupName), externalIDs, matchReplace, aclRules...)
@@ -1740,8 +1740,8 @@ func (o *OVN) PortGroupPortSetACLRules(portGroupName OVNPortGroup, portName OVNS
 
 	// Add new rules.
 	externalIDs := map[string]string{
-		ovnExtIDLXDPortGroup:  string(portGroupName),
-		ovnExtIDLXDSwitchPort: string(portName),
+		ovnExtIDIncusPortGroup:  string(portGroupName),
+		ovnExtIDIncusSwitchPort: string(portName),
 	}
 
 	args = o.aclRuleAddAppendArgs(args, "port_group", string(portGroupName), externalIDs, nil, aclRules...)
