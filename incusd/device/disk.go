@@ -424,7 +424,7 @@ func (d *disk) UpdatableFields(oldDevice Type) []string {
 }
 
 // Register calls mount for the disk volume (which should already be mounted) to reinitialise the reference counter
-// for volumes attached to running instances on LXD restart.
+// for volumes attached to running instances on daemon restart.
 func (d *disk) Register() error {
 	d.logger.Debug("Initialising mounted disk ref counter")
 
@@ -627,7 +627,7 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 			options = append(options, "create=dir")
 		}
 
-		// Instruct LXD to perform the mount.
+		// Ask for the mount to be performed.
 		runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
 			DevName:    d.name,
 			DevPath:    sourceDevPath,
@@ -835,7 +835,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				mount.Opts = append(mount.Opts, "ro")
 			}
 
-			// If the source being added is a directory or cephfs share, then we will use the lxd-agent
+			// If the source being added is a directory or cephfs share, then we will use the agent
 			// directory sharing feature to mount the directory inside the VM, and as such we need to
 			// indicate to the VM the target path to mount to.
 			if shared.IsDir(mount.DevPath) || d.sourceIsCephFs() {
@@ -868,7 +868,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					rawIDMaps = diskAddRootUserNSEntry(rawIDMaps, 65534)
 				}
 
-				// Start virtiofsd for virtio-fs share. The lxd-agent prefers to use this over the
+				// Start virtiofsd for virtio-fs share. The agent prefers to use this over the
 				// virtfs-proxy-helper 9p share. The 9p share will only be used as a fallback.
 				err = func() error {
 					sockPath, pidPath := d.vmVirtiofsdPaths()

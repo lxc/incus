@@ -255,7 +255,7 @@ func unixDeviceSetup(s *state.State, devicesPath string, typePrefix string, devi
 	// Before creating the device, check that another existing device isn't using the same mount
 	// path inside the instance as our device. If we find an existing device with the same mount
 	// path we will skip mounting our device inside the instance. This can happen when multiple
-	// LXD devices share the same parent device (such as Nvidia GPUs and Infiniband devices).
+	// devices share the same parent device (such as Nvidia GPUs and Infiniband devices).
 
 	// Convert the requested dest path inside the instance to an encoded relative one.
 	ourDestPath := unixDeviceDestPath(m)
@@ -273,7 +273,7 @@ func unixDeviceSetup(s *state.State, devicesPath string, typePrefix string, devi
 	for _, ent := range dents {
 		devName := ent.Name()
 
-		// Remove the LXD device type and name prefix, leaving just the encoded dest path.
+		// Remove the device type and name prefix, leaving just the encoded dest path.
 		idx := strings.LastIndex(devName, ".")
 		if idx == -1 {
 			return fmt.Errorf("Invalid device name \"%s\"", devName)
@@ -282,8 +282,8 @@ func unixDeviceSetup(s *state.State, devicesPath string, typePrefix string, devi
 		encRelDestFile := devName[idx+1:]
 
 		// If the encoded relative path of the device file matches the encoded relative dest
-		// path of our new device then return as we do not want to instruct LXD to mount
-		// the device and create cgroup rules.
+		// path of our new device then return as we do not want to have
+		// it mounted or cgroup rules created.
 		if encRelDestFile == ourEncRelDestFile {
 			dupe = true // There is an existing device using the same mount path.
 			break
@@ -302,7 +302,7 @@ func unixDeviceSetup(s *state.State, devicesPath string, typePrefix string, devi
 		return nil
 	}
 
-	// Instruct LXD to perform the mount.
+	// Ask for a mount to be performed.
 	runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
 		DevPath:    d.HostPath,
 		TargetPath: d.RelativePath,
@@ -311,7 +311,7 @@ func unixDeviceSetup(s *state.State, devicesPath string, typePrefix string, devi
 		OwnerShift: deviceConfig.MountOwnerShiftStatic,
 	})
 
-	// Instruct LXD to setup the cgroup rule.
+	// Ask for cgroups to be configured.
 	runConf.CGroups = append(runConf.CGroups, deviceConfig.RunConfigItem{
 		Key:   "devices.allow",
 		Value: fmt.Sprintf("%s %d:%d rwm", d.Type, d.Major, d.Minor),
@@ -376,7 +376,7 @@ func UnixDeviceExists(devicesPath string, prefix string, path string) bool {
 // It detects if any other devices attached to the instance that share the same prefix have the same
 // relative mount path inside the instance encoded into the file name. If there is another device
 // that shares the same mount path then the unmount rule is not added to the runConf as the device
-// may still be in use with another LXD device.
+// may still be in use with another device.
 // Accepts an optional file prefix that will be used to narrow the selection of files to remove.
 func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, optPrefix string, runConf *deviceConfig.RunConfig) error {
 	// Load all devices.
@@ -401,23 +401,23 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 	for _, ent := range dents {
 		devName := ent.Name()
 
-		// This device file belongs our LXD device.
+		// This device file belongs to our device.
 		if strings.HasPrefix(devName, ourPrefix) {
 			ourDevs = append(ourDevs, devName)
 			continue
 		}
 
-		// This device file belongs to another LXD device.
+		// This device file belongs to another device.
 		otherDevs = append(otherDevs, devName)
 	}
 
-	// It is possible for some LXD devices to share the same device on the same mount point
+	// It is possible for some devices to share the same device on the same mount point
 	// inside the instance. We extract the relative path of the device that is encoded into its
 	// name on the host so that we can compare the device files for our own device and check
 	// none of them use the same mount point.
 	encRelDevFiles := []string{}
 	for _, otherDev := range otherDevs {
-		// Remove the LXD device type and name prefix, leaving just the encoded dest path.
+		// Remove the device type and name prefix, leaving just the encoded dest path.
 		idx := strings.LastIndex(otherDev, ".")
 		if idx == -1 {
 			return fmt.Errorf("Invalid device name \"%s\"", otherDev)
@@ -427,9 +427,9 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 		encRelDevFiles = append(encRelDevFiles, encRelDestFile)
 	}
 
-	// Check that none of our devices are in use by another LXD device.
+	// Check that none of our devices are in use by another device.
 	for _, ourDev := range ourDevs {
-		// Remove the LXD device type and name prefix, leaving just the encoded dest path.
+		// Remove the device type and name prefix, leaving just the encoded dest path.
 		idx := strings.LastIndex(ourDev, ".")
 		if idx == -1 {
 			return fmt.Errorf("Invalid device name \"%s\"", ourDev)
@@ -437,7 +437,7 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 
 		ourEncRelDestFile := ourDev[idx+1:]
 
-		// Look for devices for other LXD devices that match the same path.
+		// Look for devices for other devices that match the same path.
 		dupe := false
 		for _, encRelDevFile := range encRelDevFiles {
 			if encRelDevFile == ourEncRelDestFile {
@@ -473,7 +473,7 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 	return nil
 }
 
-// unixDeviceDeleteFiles removes all host side device files for a particular LXD device.
+// unixDeviceDeleteFiles removes all host side device files for a particular device.
 // Accepts an optional file prefix that will be used to narrow the selection of files to delete.
 // This should be run after the files have been detached from the instance as a post hook.
 func unixDeviceDeleteFiles(s *state.State, devicesPath string, typePrefix string, deviceName string, optPrefix string) error {
@@ -497,7 +497,7 @@ func unixDeviceDeleteFiles(s *state.State, devicesPath string, typePrefix string
 	for _, ent := range dents {
 		devName := ent.Name()
 
-		// This device file belongs our LXD device.
+		// This device file belongs to our device.
 		if strings.HasPrefix(devName, ourPrefix) {
 			devPath := filepath.Join(devicesPath, devName)
 

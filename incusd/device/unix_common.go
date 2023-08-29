@@ -77,7 +77,7 @@ func (d *unixCommon) validateConfig(instConf instance.ConfigReader) error {
 	return nil
 }
 
-// Register is run after the device is started or when LXD starts.
+// Register is run after the device is started or on daemon startup.
 func (d *unixCommon) Register() error {
 	// Don't register for hot plug events if the device is required.
 	if d.isRequired() {

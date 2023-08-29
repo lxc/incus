@@ -7,16 +7,16 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// VolatileSetter is a function that accepts one or more key/value strings to save into the LXD
+// VolatileSetter is a function that accepts one or more key/value strings to save into the
 // config for this instance. It should add the volatile device name prefix to each key when saving.
 type VolatileSetter func(map[string]string) error
 
-// VolatileGetter is a function that retrieves any key/value string that exists in the LXD database
+// VolatileGetter is a function that retrieves any key/value string that exists in the database
 // config for this instance. It should only return keys that match the volatile device name prefix,
 // and should remove the prefix before being returned.
 type VolatileGetter func() map[string]string
 
-// Type represents a LXD device type.
+// Type represents a device type.
 type Type interface {
 	// CanHotPlug returns true if the device can be managed whilst instance is running.
 	CanHotPlug() bool
@@ -48,8 +48,8 @@ type Device interface {
 	// Returns run-time configuration needed for configuring the instance with the new device.
 	Start() (*deviceConfig.RunConfig, error)
 
-	// Register provides the ability for a device to subcribe to events that LXD can generate.
-	// It is called after a device is started (after Start()) or when LXD starts.
+	// Register provides the ability for a device to subcribe to daemon generated events.
+	// It is called after a device is started (after Start()) or on daemon startup.
 	Register() error
 
 	// Update performs host-side modifications for a device based on the difference between the
@@ -70,7 +70,7 @@ type Device interface {
 // device represents a sealed interface that implements Device, but also contains some internal
 // setup functions for a Device that should only be called by device.New() to avoid exposing devices
 // that are not in a known configured state. This is separate from the Device interface so that
-// Devices created outside of the device package can be used by LXD, but ensures that any devices
+// Devices created outside of the device package can be used externally, but ensures that any devices
 // created by the device package will only be accessible after being configured properly by New().
 type device interface {
 	Device

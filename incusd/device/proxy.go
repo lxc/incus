@@ -504,10 +504,10 @@ func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 	defer func() { _ = cc.Release() }()
 
 	containerPid := strconv.Itoa(cc.InitPid())
-	lxdPid := strconv.Itoa(os.Getpid())
+	daemonPid := strconv.Itoa(os.Getpid())
 
 	containerPidFd := -1
-	lxdPidFd := -1
+	daemonPidFd := -1
 	var inheritFd []*os.File
 	if d.state.OS.PidFds {
 		cPidFd, err := cc.InitPidFd()
@@ -516,7 +516,7 @@ func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 			if err == nil {
 				inheritFd = []*os.File{cPidFd, dPidFd}
 				containerPidFd = 3
-				lxdPidFd = 4
+				daemonPidFd = 4
 			}
 		}
 	}
@@ -528,8 +528,8 @@ func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 
 	switch d.config["bind"] {
 	case "host", "":
-		listenPid = lxdPid
-		listenPidFd = fmt.Sprintf("%d", lxdPidFd)
+		listenPid = daemonPid
+		listenPidFd = fmt.Sprintf("%d", daemonPidFd)
 
 		connectPid = containerPid
 		connectPidFd = fmt.Sprintf("%d", containerPidFd)
@@ -539,8 +539,8 @@ func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 		listenPid = containerPid
 		listenPidFd = fmt.Sprintf("%d", containerPidFd)
 
-		connectPid = lxdPid
-		connectPidFd = fmt.Sprintf("%d", lxdPidFd)
+		connectPid = daemonPid
+		connectPidFd = fmt.Sprintf("%d", daemonPidFd)
 
 		connectAddr = d.rewriteHostAddr(connectAddr)
 	default:

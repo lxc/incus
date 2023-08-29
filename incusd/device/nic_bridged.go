@@ -863,7 +863,7 @@ func (d *nicBridged) Remove() error {
 	return nil
 }
 
-// rebuildDnsmasqEntry rebuilds the dnsmasq host entry if connected to a LXD managed network and reloads dnsmasq.
+// rebuildDnsmasqEntry rebuilds the dnsmasq host entry if connected to a managed network and reloads dnsmasq.
 func (d *nicBridged) rebuildDnsmasqEntry() error {
 	// Rebuild dnsmasq config if parent is a managed bridge network using dnsmasq.
 	bridgeNet, ok := d.network.(bridgeNetwork)
@@ -1731,7 +1731,7 @@ func (d *nicBridged) getHostMTU() (int, error) {
 	return mtu, nil
 }
 
-// Register sets up anything needed on LXD startup.
+// Register sets up anything needed on startup.
 func (d *nicBridged) Register() error {
 	err := bgpAddPrefix(&d.deviceCommon, d.network, d.config)
 	if err != nil {
