@@ -13,7 +13,7 @@ import (
 // A new key pair is generated if none exists and saved to the appropriate
 // files.
 func TestKeyPairAndCA(t *testing.T) {
-	dir, err := os.MkdirTemp("", "lxd-shared-test-")
+	dir, err := os.MkdirTemp("", "incus-shared-test-")
 	if err != nil {
 		t.Errorf("failed to create temporary dir: %v", err)
 	}

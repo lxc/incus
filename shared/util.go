@@ -1001,7 +1001,7 @@ func SetProgressMetadata(metadata map[string]any, stage, displayPrefix string, p
 	progress["speed"] = strconv.FormatInt(speed, 10)
 	metadata["progress"] = progress
 
-	// <stage>_progress with formatted text sent for lxc cli.
+	// <stage>_progress with formatted text.
 	if percent > 0 {
 		metadata[stage+"_progress"] = fmt.Sprintf("%s: %d%% (%s/s)", displayPrefix, percent, units.GetByteSizeString(speed, 2))
 	} else if processed > 0 {

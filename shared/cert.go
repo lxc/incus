@@ -109,7 +109,7 @@ func KeyPairFromRaw(certificate []byte, key []byte) (*CertInfo, error) {
 // CertInfo captures TLS certificate information about a certain public/private
 // keypair and an optional CA certificate and CRL.
 //
-// Given LXD's support for PKI setups, these two bits of information are
+// Given support for PKI setups, these two bits of information are
 // normally used and passed around together, so this structure helps with that
 // (see doc/security.md for more details).
 type CertInfo struct {
@@ -341,7 +341,7 @@ func GenerateMemCert(client bool, addHosts bool) ([]byte, []byte, error) {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{"LXD"},
+			Organization: []string{"Linux Containers"},
 			CommonName:   fmt.Sprintf("%s@%s", username, hostname),
 		},
 		NotBefore: validFrom,

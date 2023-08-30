@@ -384,7 +384,7 @@ func ConfigKeyChecker(key string, instanceType instancetype.Type) (func(value st
 }
 
 // InstanceIncludeWhenCopying is used to decide whether to include a config item or not when copying an instance.
-// The remoteCopy argument indicates if the copy is remote (i.e between LXD nodes) as this affects the keys kept.
+// The remoteCopy argument indicates if the copy is remote (i.e between servers) as this affects the keys kept.
 func InstanceIncludeWhenCopying(configKey string, remoteCopy bool) bool {
 	if configKey == "volatile.base_image" {
 		return true // Include volatile.base_image always as it can help optimize copies.
