@@ -136,6 +136,11 @@ func TestQemuConfigTemplates(t *testing.T) {
 			chardev = "qemu_serial-chardev"
 			bus = "dev-qemu_serial.0"
 
+			[device "qemu_serial_legacy"]
+			driver = "virtserialport"
+			name = "org.linuxcontainers.lxd"
+			bus = "dev-qemu_serial.0"
+
 			# Spice agent
 			[chardev "qemu_spice-chardev"]
 			backend = "spicevmc"

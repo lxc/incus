@@ -191,6 +191,13 @@ func qemuSerial(opts *qemuSerialOpts) []cfgSection {
 			{key: "bus", value: "dev-qemu_serial.0"},
 		},
 	}, {
+		name: `device "qemu_serial_legacy"`,
+		entries: []cfgEntry{
+			{key: "driver", value: "virtserialport"},
+			{key: "name", value: "org.linuxcontainers.lxd"},
+			{key: "bus", value: "dev-qemu_serial.0"},
+		},
+	}, {
 		name:    `chardev "qemu_spice-chardev"`,
 		comment: "Spice agent",
 		entries: []cfgEntry{
