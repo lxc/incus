@@ -8,7 +8,7 @@ import (
 
 // G returns the translated string.
 func G(msgid string) string {
-	return gettext.DGettext("lxd", msgid)
+	return gettext.DGettext("incus", msgid)
 }
 
 func init() {
