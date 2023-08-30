@@ -12,7 +12,7 @@ import (
 	"github.com/lxc/incus/shared/version"
 )
 
-const userConfigKey = "user.lxd-benchmark"
+const userConfigKey = "user.incus-benchmark"
 
 // PrintServerInfo prints out information about the server.
 func PrintServerInfo(c incus.InstanceServer) error {

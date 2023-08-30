@@ -25,7 +25,7 @@ type cmdGlobal struct {
 }
 
 func (c *cmdGlobal) Run(cmd *cobra.Command, args []string) error {
-	// Connect to LXD
+	// Connect to the daemon
 	srv, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return err
@@ -79,27 +79,27 @@ func (c *cmdGlobal) Teardown(cmd *cobra.Command, args []string) error {
 
 func main() {
 	app := &cobra.Command{}
-	app.Use = "lxd-benchmark"
-	app.Short = "Benchmark performance of LXD"
+	app.Use = "incus-benchmark"
+	app.Short = "Benchmark performance of Incus"
 	app.Long = `Description:
-  Benchmark performance of LXD
+  Benchmark performance of Incus
 
-  This tool lets you benchmark various actions on a local LXD daemon.
+  This tool lets you benchmark various actions on a local Incus daemon.
 
-  It can be used just to check how fast a given LXD host is, to
+  It can be used just to check how fast a given host is, to
   compare performance on different servers or for performance tracking
-  when doing changes to the LXD codebase.
+  when doing changes to the codebase.
 
   A CSV report can be produced to be consumed by graphing software.
 `
 	app.Example = `  # Spawn 20 containers in batches of 4
-  lxd-benchmark launch --count 20 --parallel 4
+  incus-benchmark launch --count 20 --parallel 4
 
   # Create 50 Alpine containers in batches of 10
-  lxd-benchmark init --count 50 --parallel 10 images:alpine/edge
+  incus-benchmark init --count 50 --parallel 10 images:alpine/edge
 
   # Delete all test containers using dynamic batch size
-  lxd-benchmark delete`
+  incus-benchmark delete`
 	app.SilenceUsage = true
 	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 
