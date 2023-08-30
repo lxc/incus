@@ -81,15 +81,15 @@ func proxyConnection(conn *net.UnixConn) {
 
 	// Check if the user was setup.
 	if !shared.PathExists(filepath.Join("users", fmt.Sprintf("%d", creds.Uid))) {
-		log.Infof("Setting up LXD for uid %d", creds.Uid)
-		err := lxdSetupUser(creds.Uid)
+		log.Infof("Setting up for uid %d", creds.Uid)
+		err := serverSetupUser(creds.Uid)
 		if err != nil {
 			log.Errorf("Failed to setup new user: %v", err)
 			return
 		}
 	}
 
-	// Connect to LXD.
+	// Connect to the daemon.
 	unixAddr, err := net.ResolveUnixAddr("unix", shared.VarPath("unix.socket"))
 	if err != nil {
 		log.Errorf("Unable to resolve the target server: %v", err)
