@@ -14,7 +14,7 @@ const OperationClassWebsocket = "websocket"
 // OperationClassToken represents the Token OperationClass.
 const OperationClassToken = "token"
 
-// Operation represents a LXD background operation
+// Operation represents a background operation
 //
 // swagger:model
 type Operation struct {
@@ -63,7 +63,7 @@ type Operation struct {
 	Err string `json:"err" yaml:"err"`
 
 	// What cluster member this record was found on
-	// Example: lxd01
+	// Example: server01
 	//
 	// API extension: operation_location
 	Location string `json:"location" yaml:"location"`

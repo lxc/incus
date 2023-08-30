@@ -137,7 +137,7 @@ type NetworkACL struct {
 
 	// List of URLs of objects using this profile
 	// Read only: true
-	// Example: ["/1.0/instances/c1", "/1.0/instances/v1", "/1.0/networks/lxdbr0"]
+	// Example: ["/1.0/instances/c1", "/1.0/instances/v1", "/1.0/networks/mybr0"]
 	UsedBy []string `json:"used_by" yaml:"used_by"` // Resources that use the ACL.
 }
 

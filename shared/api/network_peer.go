@@ -1,6 +1,6 @@
 package api
 
-// NetworkPeersPost represents the fields of a new LXD network peering
+// NetworkPeersPost represents the fields of a new network peering
 //
 // swagger:model
 //
@@ -21,7 +21,7 @@ type NetworkPeersPost struct {
 	TargetNetwork string `json:"target_network" yaml:"target_network"`
 }
 
-// NetworkPeerPut represents the modifiable fields of a LXD network peering
+// NetworkPeerPut represents the modifiable fields of a network peering
 //
 // swagger:model
 //
@@ -36,7 +36,7 @@ type NetworkPeerPut struct {
 	Config map[string]string `json:"config" yaml:"config"`
 }
 
-// NetworkPeer used for displaying a LXD network peering.
+// NetworkPeer used for displaying a network peering.
 //
 // swagger:model
 //

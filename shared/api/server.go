@@ -1,6 +1,6 @@
 package api
 
-// ServerEnvironment represents the read-only environment fields of a LXD server.
+// ServerEnvironment represents the read-only environment fields of a server configuration.
 type ServerEnvironment struct {
 	// List of addresses the server is listening on
 	// Example: [":8443"]
@@ -75,7 +75,7 @@ type ServerEnvironment struct {
 	Project string `json:"project" yaml:"project"`
 
 	// Server implementation name
-	// Example: lxd
+	// Example: incus
 	Server string `json:"server" yaml:"server"`
 
 	// Whether the server is part of a cluster
@@ -97,7 +97,7 @@ type ServerEnvironment struct {
 	// API extension: clustering
 	ServerName string `json:"server_name" yaml:"server_name"`
 
-	// PID of the LXD process
+	// PID of the daemon
 	// Example: 1453969
 	ServerPid int `json:"server_pid" yaml:"server_pid"`
 
@@ -142,7 +142,7 @@ type ServerStorageDriverInfo struct {
 	Remote bool
 }
 
-// ServerPut represents the modifiable fields of a LXD server configuration
+// ServerPut represents the modifiable fields of a server configuration
 //
 // swagger:model
 type ServerPut struct {
@@ -151,7 +151,7 @@ type ServerPut struct {
 	Config map[string]any `json:"config" yaml:"config"`
 }
 
-// ServerUntrusted represents a LXD server for an untrusted client
+// ServerUntrusted represents a server configuration for an untrusted client
 //
 // swagger:model
 type ServerUntrusted struct {
@@ -188,21 +188,21 @@ type ServerUntrusted struct {
 	AuthMethods []string `json:"auth_methods" yaml:"auth_methods"`
 }
 
-// Server represents a LXD server
+// Server represents a server configuration
 //
 // swagger:model
 type Server struct {
 	ServerPut       `yaml:",inline"`
 	ServerUntrusted `yaml:",inline"`
 
-	// The current user username as seen by LXD
+	// The current API user identifier
 	// Read only: true
 	// Example: uid=201105
 	//
 	// API extension: auth_user
 	AuthUserName string `json:"auth_user_name" yaml:"auth_user_name"`
 
-	// The current user login method as seen by LXD
+	// The current API user login method
 	// Read only: true
 	// Example: unix
 	//

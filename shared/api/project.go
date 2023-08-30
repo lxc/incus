@@ -1,6 +1,6 @@
 package api
 
-// ProjectsPost represents the fields of a new LXD project
+// ProjectsPost represents the fields of a new project
 //
 // swagger:model
 //
@@ -13,7 +13,7 @@ type ProjectsPost struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// ProjectPost represents the fields required to rename a LXD project
+// ProjectPost represents the fields required to rename a project
 //
 // swagger:model
 //
@@ -24,7 +24,7 @@ type ProjectPost struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// ProjectPut represents the modifiable fields of a LXD project
+// ProjectPut represents the modifiable fields of a project
 //
 // swagger:model
 //
@@ -39,7 +39,7 @@ type ProjectPut struct {
 	Description string `json:"description" yaml:"description"`
 }
 
-// Project represents a LXD project
+// Project represents a project
 //
 // swagger:model
 //
@@ -54,7 +54,7 @@ type Project struct {
 
 	// List of URLs of objects using this project
 	// Read only: true
-	// Example: ["/1.0/images/0e60015346f06627f10580d56ac7fffd9ea775f6d4f25987217d5eed94910a20", "/1.0/instances/c1", "/1.0/networks/lxdbr0", "/1.0/profiles/default", "/1.0/storage-pools/default/volumes/custom/blah"]
+	// Example: ["/1.0/images/0e60015346f06627f10580d56ac7fffd9ea775f6d4f25987217d5eed94910a20", "/1.0/instances/c1", "/1.0/networks/mybr0", "/1.0/profiles/default", "/1.0/storage-pools/default/volumes/custom/blah"]
 	UsedBy []string `json:"used_by" yaml:"used_by"`
 }
 
@@ -70,7 +70,7 @@ func (project *Project) URL(apiVersion string) *URL {
 	return NewURL().Path(apiVersion, "projects", project.Name)
 }
 
-// ProjectState represents the current running state of a LXD project
+// ProjectState represents the current running state of a project
 //
 // swagger:model
 //
@@ -82,7 +82,7 @@ type ProjectState struct {
 	Resources map[string]ProjectStateResource `json:"resources" yaml:"resources"`
 }
 
-// ProjectStateResource represents the state of a particular resource in a LXD project
+// ProjectStateResource represents the state of a particular resource in a project
 //
 // swagger:model
 //

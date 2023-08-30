@@ -1,6 +1,6 @@
 package api
 
-// NetworksPost represents the fields of a new LXD network
+// NetworksPost represents the fields of a new network
 //
 // swagger:model
 //
@@ -9,7 +9,7 @@ type NetworksPost struct {
 	NetworkPut `yaml:",inline"`
 
 	// The name of the new network
-	// Example: lxdbr1
+	// Example: mybr1
 	Name string `json:"name" yaml:"name"`
 
 	// The network type (refer to doc/networks.md)
@@ -17,18 +17,18 @@ type NetworksPost struct {
 	Type string `json:"type" yaml:"type"`
 }
 
-// NetworkPost represents the fields required to rename a LXD network
+// NetworkPost represents the fields required to rename a network
 //
 // swagger:model
 //
 // API extension: network.
 type NetworkPost struct {
 	// The new name for the network
-	// Example: lxdbr1
+	// Example: mybr1
 	Name string `json:"name" yaml:"name"`
 }
 
-// NetworkPut represents the modifiable fields of a LXD network
+// NetworkPut represents the modifiable fields of a network
 //
 // swagger:model
 //
@@ -39,7 +39,7 @@ type NetworkPut struct {
 	Config map[string]string `json:"config" yaml:"config"`
 
 	// Description of the profile
-	// Example: My new LXD bridge
+	// Example: My new bridge
 	//
 	// API extension: entity_description
 	Description string `json:"description" yaml:"description"`
@@ -60,7 +60,7 @@ const NetworkStatusUnknown = "Unknown"
 // NetworkStatusUnavailable network failed to initialize.
 const NetworkStatusUnavailable = "Unavailable"
 
-// Network represents a LXD network
+// Network represents a network
 //
 // swagger:model
 type Network struct {
@@ -68,7 +68,7 @@ type Network struct {
 
 	// The network name
 	// Read only: true
-	// Example: lxdbr0
+	// Example: mybr0
 	Name string `json:"name" yaml:"name"`
 
 	// The network type
@@ -81,7 +81,7 @@ type Network struct {
 	// Example: ["/1.0/profiles/default", "/1.0/instances/c1"]
 	UsedBy []string `json:"used_by" yaml:"used_by"`
 
-	// Whether this is a LXD managed network
+	// Whether this is a managed network
 	// Read only: true
 	// Example: true
 	//
@@ -97,7 +97,7 @@ type Network struct {
 
 	// Cluster members on which the network has been defined
 	// Read only: true
-	// Example: ["lxd01", "lxd02", "lxd03"]
+	// Example: ["server01", "server02", "server03"]
 	//
 	// API extension: clustering
 	Locations []string `json:"locations" yaml:"locations"`
@@ -131,7 +131,7 @@ type NetworkLease struct {
 	Type string `json:"type" yaml:"type"`
 
 	// What cluster member this record was found on
-	// Example: lxd01
+	// Example: server01
 	//
 	// API extension: network_leases_location
 	Location string `json:"location" yaml:"location"`

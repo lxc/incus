@@ -84,7 +84,7 @@ func (p *NetworkLoadBalancerPort) Normalise() {
 	p.ListenPort = strings.Join(subjects, ",")
 }
 
-// NetworkLoadBalancersPost represents the fields of a new LXD network load balancer
+// NetworkLoadBalancersPost represents the fields of a new network load balancer
 //
 // swagger:model
 //
@@ -97,7 +97,7 @@ type NetworkLoadBalancersPost struct {
 	ListenAddress string `json:"listen_address" yaml:"listen_address"`
 }
 
-// NetworkLoadBalancerPut represents the modifiable fields of a LXD network load balancer
+// NetworkLoadBalancerPut represents the modifiable fields of a network load balancer
 //
 // swagger:model
 //
@@ -144,7 +144,7 @@ type NetworkLoadBalancer struct {
 	ListenAddress string `json:"listen_address" yaml:"listen_address"`
 
 	// What cluster member this record was found on
-	// Example: lxd01
+	// Example: server01
 	Location string `json:"location" yaml:"location"`
 }
 

@@ -1,9 +1,9 @@
 package api
 
-// StatusCode represents a valid LXD operation and container status.
+// StatusCode represents a valid operation and container status.
 type StatusCode int
 
-// LXD status codes.
+// Status codes.
 const (
 	OperationCreated StatusCode = 100
 	Started          StatusCode = 101

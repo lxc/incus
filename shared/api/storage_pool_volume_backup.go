@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// StoragePoolVolumeBackup represents a LXD volume backup
+// StoragePoolVolumeBackup represents a volume backup
 //
 // swagger:model
 //
@@ -31,7 +31,7 @@ type StoragePoolVolumeBackup struct {
 	OptimizedStorage bool `json:"optimized_storage" yaml:"optimized_storage"`
 }
 
-// StoragePoolVolumeBackupsPost represents the fields available for a new LXD volume backup
+// StoragePoolVolumeBackupsPost represents the fields available for a new volume backup
 //
 // swagger:model
 //

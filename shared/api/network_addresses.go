@@ -14,7 +14,7 @@ type NetworkAllocations struct {
 	UsedBy string `json:"used_by" yaml:"used_by"`
 	// Type of the entity consuming the network address
 	Type string `json:"type" yaml:"type"`
-	// Whether the entity comes from a network that LXD performs egress source NAT on
+	// Whether the entity comes from a network that performs egress source NAT
 	NAT bool `json:"nat" yaml:"nat"`
 	// Hwaddr is the MAC address of the entity consuming the network address
 	Hwaddr string `json:"hwaddr" yaml:"hwaddr"`

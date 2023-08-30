@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// URL represents an endpoint for the LXD API.
+// URL represents an endpoint for the REST API.
 type URL struct {
 	url.URL
 }

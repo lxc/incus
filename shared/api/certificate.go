@@ -18,7 +18,7 @@ const CertificateTypeMetrics = "metrics"
 // CertificateTypeUnknown indicates an unknown certificate type.
 const CertificateTypeUnknown = "unknown"
 
-// CertificatesPost represents the fields of a new LXD certificate
+// CertificatesPost represents the fields of a new certificate
 //
 // swagger:model
 type CertificatesPost struct {
@@ -35,7 +35,7 @@ type CertificatesPost struct {
 	Token bool `json:"token" yaml:"token"`
 }
 
-// CertificatePut represents the modifiable fields of a LXD certificate
+// CertificatePut represents the modifiable fields of a certificate
 //
 // swagger:model
 //
@@ -68,7 +68,7 @@ type CertificatePut struct {
 	Certificate string `json:"certificate" yaml:"certificate"`
 }
 
-// Certificate represents a LXD certificate
+// Certificate represents a certificate
 //
 // swagger:model
 type Certificate struct {

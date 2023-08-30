@@ -1,6 +1,6 @@
 package api
 
-// ProfilesPost represents the fields of a new LXD profile
+// ProfilesPost represents the fields of a new profile
 //
 // swagger:model
 type ProfilesPost struct {
@@ -11,7 +11,7 @@ type ProfilesPost struct {
 	Name string `json:"name" yaml:"name" db:"primary=yes"`
 }
 
-// ProfilePost represents the fields required to rename a LXD profile
+// ProfilePost represents the fields required to rename a profile
 //
 // swagger:model
 type ProfilePost struct {
@@ -20,7 +20,7 @@ type ProfilePost struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// ProfilePut represents the modifiable fields of a LXD profile
+// ProfilePut represents the modifiable fields of a profile
 //
 // swagger:model
 type ProfilePut struct {
@@ -33,11 +33,11 @@ type ProfilePut struct {
 	Description string `json:"description" yaml:"description"`
 
 	// List of devices
-	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}, "eth0": {"type": "nic", "network": "lxdbr0", "name": "eth0"}}
+	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}, "eth0": {"type": "nic", "network": "mybr0", "name": "eth0"}}
 	Devices map[string]map[string]string `json:"devices" yaml:"devices"`
 }
 
-// Profile represents a LXD profile
+// Profile represents a profile
 //
 // swagger:model
 type Profile struct {

@@ -1,6 +1,6 @@
 package api
 
-// Resources represents the system resources available for LXD
+// Resources represents the system hardware resources
 //
 // swagger:model
 //

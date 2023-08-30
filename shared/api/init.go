@@ -1,6 +1,6 @@
 package api
 
-// InitPreseed represents initialization configuration that can be supplied to `lxd init`.
+// InitPreseed represents initialization configuration that can be supplied to `init`.
 //
 // swagger:model
 //
@@ -10,7 +10,7 @@ type InitPreseed struct {
 	Cluster *InitClusterPreseed `json:"cluster" yaml:"cluster"`
 }
 
-// InitLocalPreseed represents initialization configuration for the local LXD.
+// InitLocalPreseed represents initialization configuration.
 //
 // swagger:model
 //
@@ -18,24 +18,24 @@ type InitPreseed struct {
 type InitLocalPreseed struct {
 	ServerPut `yaml:",inline"`
 
-	// Networks by project to add to LXD
+	// Networks by project to add
 	// Example: Network on the "default" project
 	Networks []InitNetworksProjectPost `json:"networks" yaml:"networks"`
 
-	// Storage Pools to add to LXD
+	// Storage Pools to add
 	// Example: local dir storage pool
 	StoragePools []StoragePoolsPost `json:"storage_pools" yaml:"storage_pools"`
 
-	// Profiles to add to LXD
+	// Profiles to add
 	// Example: "default" profile with a root disk device
 	Profiles []ProfilesPost `json:"profiles" yaml:"profiles"`
 
-	// Projects to add to LXD
+	// Projects to add
 	// Example: "default" project
 	Projects []ProjectsPost `json:"projects" yaml:"projects"`
 }
 
-// InitNetworksProjectPost represents the fields of a new LXD network along with its associated project.
+// InitNetworksProjectPost represents the fields of a new network along with its associated project.
 //
 // swagger:model
 //
@@ -48,7 +48,7 @@ type InitNetworksProjectPost struct {
 	Project string
 }
 
-// InitClusterPreseed represents initialization configuration for the LXD cluster.
+// InitClusterPreseed represents initialization configuration for the cluster.
 //
 // swagger:model
 //
