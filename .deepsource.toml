@@ -17,4 +17,4 @@ name = "go"
 enabled = true
 
   [analyzers.meta]
-  import_paths = ["github.com/lxd/lxd"]
+  import_paths = ["github.com/lxc/incus"]

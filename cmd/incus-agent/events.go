@@ -35,7 +35,7 @@ func (r *eventsServe) String() string {
 func eventsSocket(d *Daemon, r *http.Request, w http.ResponseWriter) error {
 	typeStr := r.FormValue("type")
 	if typeStr == "" {
-		// We add 'config' here to allow listeners on /dev/lxd/sock to receive config changes.
+		// We add 'config' here to allow listeners on /dev/incus/sock to receive config changes.
 		typeStr = "logging,operation,lifecycle,config"
 	}
 

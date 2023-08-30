@@ -60,7 +60,7 @@ func (p *NetworkForwardPort) Normalise() {
 	p.TargetPort = strings.Join(subjects, ",")
 }
 
-// NetworkForwardsPost represents the fields of a new LXD network address forward
+// NetworkForwardsPost represents the fields of a new network address forward
 //
 // swagger:model
 //
@@ -83,7 +83,7 @@ func (f *NetworkForwardsPost) Normalise() {
 	f.NetworkForwardPut.Normalise()
 }
 
-// NetworkForwardPut represents the modifiable fields of a LXD network address forward
+// NetworkForwardPut represents the modifiable fields of a network address forward
 //
 // swagger:model
 //
@@ -128,7 +128,7 @@ type NetworkForward struct {
 	ListenAddress string `json:"listen_address" yaml:"listen_address"`
 
 	// What cluster member this record was found on
-	// Example: lxd01
+	// Example: server01
 	Location string `json:"location" yaml:"location"`
 }
 

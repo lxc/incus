@@ -38,9 +38,9 @@ func (c *cmdInit) Command() *cobra.Command {
 	cmd.Use = usage("init", i18n.G("[<remote>:]<image> [<remote>:][<name>]"))
 	cmd.Short = i18n.G("Create instances from images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create instances from images`))
-	cmd.Example = cli.FormatSection("", i18n.G(`lxc init images:ubuntu/22.04 u1
+	cmd.Example = cli.FormatSection("", i18n.G(`incus init images:ubuntu/22.04 u1
 
-lxc init images:ubuntu/22.04 u1 < config.yaml
+incus init images:ubuntu/22.04 u1 < config.yaml
     Create the instance with configuration from config.yaml`))
 	cmd.Hidden = true
 
@@ -280,7 +280,7 @@ func (c *cmdInit) create(conf *config.Config, args []string) (incus.InstanceServ
 	// If there are device overrides that are expected to be applied to profile devices then load the profiles
 	// that would be applied server-side.
 	if needProfileExpansion {
-		// If the list of profiles is empty then LXD would apply the default profile on the server side.
+		// If the list of profiles is empty then the default profile would be applied on the server side.
 		serverSideProfiles := req.Profiles
 		if len(serverSideProfiles) == 0 {
 			serverSideProfiles = []string{"default"}
@@ -431,6 +431,6 @@ func (c *cmdInit) checkNetwork(d incus.InstanceServer, name string) {
 	}
 
 	fmt.Fprintf(os.Stderr, "\n"+i18n.G("The instance you are starting doesn't have any network attached to it.")+"\n")
-	fmt.Fprintf(os.Stderr, "  "+i18n.G("To create a new network, use: lxc network create")+"\n")
-	fmt.Fprintf(os.Stderr, "  "+i18n.G("To attach a network to an instance, use: lxc network attach")+"\n\n")
+	fmt.Fprintf(os.Stderr, "  "+i18n.G("To create a new network, use: incus network create")+"\n")
+	fmt.Fprintf(os.Stderr, "  "+i18n.G("To attach a network to an instance, use: incus network attach")+"\n\n")
 }

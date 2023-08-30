@@ -223,7 +223,7 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 
 	// Check if our cert is already trusted
 	if srv.Auth == "trusted" {
-		fmt.Printf("\nRemote LXD server:\n  Hostname: %s\n  Version: %s\n\n", srv.Environment.ServerName, srv.Environment.ServerVersion)
+		fmt.Printf("\nRemote server:\n  Hostname: %s\n  Version: %s\n\n", srv.Environment.ServerName, srv.Environment.ServerVersion)
 		return c, "", nil
 	}
 
@@ -238,7 +238,7 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 				return nil, "", fmt.Errorf("Failed to create certificate: %w", err)
 			}
 		} else {
-			fmt.Println("It is recommended to have this certificate be manually added to LXD through `lxc config trust add` on the target server.\nAlternatively you could use a pre-defined trust password to add it remotely (use of a trust password can be a security issue).")
+			fmt.Println("It is recommended to have this certificate be manually added to Incus through `incus config trust add` on the target server.\nAlternatively you could use a pre-defined trust password to add it remotely (use of a trust password can be a security issue).")
 
 			fmt.Println("")
 
@@ -294,7 +294,7 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 		return nil, "", fmt.Errorf("Server doesn't trust us after authentication")
 	}
 
-	fmt.Printf("\nRemote LXD server:\n  Hostname: %s\n  Version: %s\n\n", srv.Environment.ServerName, srv.Environment.ServerVersion)
+	fmt.Printf("\nRemote server:\n  Hostname: %s\n  Version: %s\n\n", srv.Environment.ServerName, srv.Environment.ServerVersion)
 
 	return c, clientFingerprint, nil
 }

@@ -1,12 +1,12 @@
-_have lxc && {
-  _lxd_complete()
+_have incus && {
+  _incus_complete()
   {
-    _lxd_names()
+    _incus_names()
     {
       local state=$1
       local keys=$2
 
-      local cmd="lxc list --format=csv --columns=ns"
+      local cmd="incus list --format=csv --columns=ns"
       [ -n "$state" ] && cmd="$cmd | grep -E '$state$'"
 
       COMPREPLY=( $( compgen -W \
@@ -14,48 +14,48 @@ _have lxc && {
       )
     }
 
-    _lxd_images()
+    _incus_images()
     {
-      COMPREPLY=( $( compgen -W "$( lxc image list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus image list --format=csv | cut -d, -f1 )" "$cur" ) )
     }
 
-    _lxd_remotes()
+    _incus_remotes()
     {
-      COMPREPLY=( $( compgen -W "$( lxc remote list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus remote list --format=csv | cut -d, -f1 )" "$cur" ) )
     }
 
-    _lxd_profiles()
+    _incus_profiles()
     {
-      COMPREPLY=( $( compgen -W "$( lxc profile list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus profile list --format=csv | cut -d, -f1 )" "$cur" ) )
     }
 
-    _lxd_projects()
+    _incus_projects()
     {
-      COMPREPLY=( $( compgen -W "$( lxc project list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus project list --format=csv | cut -d, -f1 )" "$cur" ) )
     }
 
-    _lxd_networks()
+    _incus_networks()
     {
-      COMPREPLY=( $( compgen -W "$( lxc network list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus network list --format=csv | cut -d, -f1 )" "$cur" ) )
     }
 
-    _lxd_restore_snapshots()
+    _incus_restore_snapshots()
     {
       local name=$1
 
       local query="/1.0/instances/$name/snapshots"
 
-      COMPREPLY=( $( compgen -W "$( lxc query $query | sed -nr "s \s*\"$query/+(\w*)\",* \1 p" )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus query $query | sed -nr "s \s*\"$query/+(\w*)\",* \1 p" )" "$cur" ) )
     }
 
-    _lxd_storage_pools()
+    _incus_storage_pools()
     {
-      COMPREPLY=( $( compgen -W "$( lxc storage list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus storage list --format=csv | cut -d, -f1 )" "$cur" ) )
     }
 
-    _lxd_storage_volumes()
+    _incus_storage_volumes()
     {
-      COMPREPLY=( $( compgen -W "$( lxc storage volume list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus storage volume list --format=csv | cut -d, -f1 )" "$cur" ) )
     }
 
     COMPREPLY=()
@@ -64,11 +64,7 @@ _have lxc && {
       return 0
     fi
 
-    if [ -n "${SNAP_COMMON:-""}" ]; then
-      export INCUS_DIR=${INCUS_DIR:-"${SNAP_COMMON}/lxd/"}
-    fi
-
-    lxc_cmds="alias cluster config console copy delete exec export file \
+    incus_cmds="alias cluster config console copy delete exec export file \
       help image import info init launch list manpage monitor move network \
       operation pause profile project publish query remote rename \
       restart restore shell snapshot start stop storage version"
@@ -162,7 +158,7 @@ _have lxc && {
       security.unmapped security.shifted zfs.remove_snapshots zfs.use_refquota zfs.reserve_space"
 
     if [ $COMP_CWORD -eq 1 ]; then
-      COMPREPLY=( $(compgen -W "$lxc_cmds" -- ${COMP_WORDS[COMP_CWORD]}) )
+      COMPREPLY=( $(compgen -W "$incus_cmds" -- ${COMP_WORDS[COMP_CWORD]}) )
       return 0
     fi
 
@@ -196,20 +192,20 @@ _have lxc && {
                 COMPREPLY=( $(compgen -W "list show create edit delete" -- $cur) )
                 ;;
               "show"|"edit")
-                _lxd_names
+                _incus_names
                 ;;
               "get"|"set"|"unset")
-                _lxd_names "" "$global_keys"
+                _incus_names "" "$global_keys"
                 ;;
             esac
             ;;
           4)
             case ${no_dashargs[2]} in
               "trust")
-                _lxd_remotes
+                _incus_remotes
                 ;;
               "device")
-                _lxd_names
+                _incus_names
                 ;;
               "get"|"set"|"unset")
                 COMPREPLY=( $(compgen -W "$container_keys" -- $cur) )
@@ -231,29 +227,29 @@ _have lxc && {
         ;;
       "copy")
         if [ $pos -lt 4 ]; then
-          _lxd_names
+          _incus_names
         fi
         ;;
       "delete"|"info"|"move"|"publish"|"restart"|"snapshot"|"rename")
-        _lxd_names
+        _incus_names
         ;;
       "start")
-        _lxd_names "(STOPPED|FROZEN)"
+        _incus_names "(STOPPED|FROZEN)"
         ;;
       "exec"|"console"|"stop"|"shell")
-        _lxd_names "RUNNING|READY"
+        _incus_names "RUNNING|READY"
         ;;
       "file")
         COMPREPLY=( $(compgen -W "pull push edit delete mount" -- $cur) )
         ;;
       "help")
-        COMPREPLY=( $(compgen -W "$lxc_cmds" -- $cur) )
+        COMPREPLY=( $(compgen -W "$incus_cmds" -- $cur) )
         ;;
       "image")
         COMPREPLY=( $(compgen -W "import copy delete refresh export info list show edit alias" -- $cur) )
         ;;
       "init"|"launch")
-        _lxd_images
+        _incus_images
         ;;
       "network")
         case $pos in
@@ -263,7 +259,7 @@ _have lxc && {
           3)
             case ${no_dashargs[2]} in
               "show"|"get"|"set"|"unset"|"delete"|"edit"|"rename"|"attach"|"attach-profile"|"detach"|"detach-profile"|"info"|"acl"|"forward"|"list-leases"|"load-balancer"|"peer"|"zone")
-                _lxd_networks
+                _incus_networks
                 ;;
             esac
             ;;
@@ -273,10 +269,10 @@ _have lxc && {
                 COMPREPLY=( $(compgen -W "$networks_keys" -- $cur) )
                 ;;
               "attach"|"detach"|"detach-profile")
-                _lxd_names
+                _incus_names
                 ;;
               "attach-profile")
-                _lxd_profiles
+                _incus_profiles
                 ;;
             esac
         esac
@@ -292,17 +288,17 @@ _have lxc && {
                 COMPREPLY=( $(compgen -W "list show remove get set unset add" -- $cur) )
                 ;;
               "add"|"assign"|"remove")
-                _lxd_names
+                _incus_names
                 ;;
               *)
-                _lxd_profiles
+                _incus_profiles
                 ;;
             esac
             ;;
           4)
             case ${no_dashargs[2]} in
               "device"|"add"|"assign"|"remove")
-                _lxd_profiles
+                _incus_profiles
                 ;;
               *)
                 COMPREPLY=( $(compgen -W "$container_keys" -- $cur) )
@@ -331,7 +327,7 @@ _have lxc && {
           3)
             case ${no_dashargs[2]} in
               "get"|"set"|"unset"|"create"|"delete"|"edit"|"list"|"show"|"switch"|"rename")
-                _lxd_projects
+                _incus_projects
                 ;;
             esac
             ;;
@@ -345,7 +341,7 @@ _have lxc && {
           5)
             case ${no_dashargs[2]} in
               "rename")
-                _lxd_projects
+                _incus_projects
                 ;;
             esac
             ;;
@@ -358,10 +354,10 @@ _have lxc && {
       "restore")
         case $pos in
           2)
-            _lxd_names
+            _incus_names
             ;;
           3)
-            _lxd_restore_snapshots ${no_dashargs[2]}
+            _incus_restore_snapshots ${no_dashargs[2]}
             ;;
         esac
         ;;
@@ -373,7 +369,7 @@ _have lxc && {
           3)
             case ${no_dashargs[2]} in
               "show"|"get"|"set"|"unset"|"delete"|"edit")
-                _lxd_storage_pools
+                _incus_storage_pools
                 ;;
             esac
             ;;
@@ -393,7 +389,7 @@ _have lxc && {
           3)
             case ${no_dashargs[2]} in
               "show"|"get"|"set"|"unset"|"rename"|"delete"|"edit"|"attach"|"attach-profile"|"detach"|"detach-profile")
-                _lxd_storage_volumes
+                _incus_storage_volumes
                 ;;
             esac
             ;;
@@ -403,10 +399,10 @@ _have lxc && {
                 COMPREPLY=( $(compgen -W "$storage_volume_keys" -- $cur) )
                 ;;
               "attach"|"detach"|"detach-profile")
-                _lxd_names
+                _incus_names
                 ;;
               "attach-profile")
-                _lxd_profiles
+                _incus_profiles
                 ;;
             esac
         esac
@@ -418,5 +414,5 @@ _have lxc && {
     return 0
   }
 
-  complete -o default -F _lxd_complete lxc lxd.lxc
+  complete -o default -F _incus_complete incus
 }

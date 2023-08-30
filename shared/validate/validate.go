@@ -567,7 +567,7 @@ func IsCompressionAlgorithm(value string) error {
 	return err
 }
 
-// IsArchitecture validates whether the value is a valid LXD architecture name.
+// IsArchitecture validates whether the value is a valid architecture name.
 func IsArchitecture(value string) error {
 	return IsOneOf(osarch.SupportedArchitectures()...)(value)
 }

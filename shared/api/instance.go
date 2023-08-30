@@ -27,7 +27,7 @@ const InstanceTypeContainer = InstanceType("container")
 // InstanceTypeVM defines the instance type value for a virtual-machine.
 const InstanceTypeVM = InstanceType("virtual-machine")
 
-// InstancesPost represents the fields available for a new LXD instance.
+// InstancesPost represents the fields available for a new instance.
 //
 // swagger:model
 //
@@ -61,7 +61,7 @@ type InstancesPut struct {
 	State *InstanceStatePut `json:"state" yaml:"state"`
 }
 
-// InstancePost represents the fields required to rename/move a LXD instance.
+// InstancePost represents the fields required to rename/move an instance.
 //
 // swagger:model
 //
@@ -124,7 +124,7 @@ type InstancePostTarget struct {
 	Websockets map[string]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
 }
 
-// InstancePut represents the modifiable fields of a LXD instance.
+// InstancePut represents the modifiable fields of an instance.
 //
 // swagger:model
 //
@@ -173,7 +173,7 @@ type InstanceRebuildPost struct {
 	Source InstanceSource `json:"source" yaml:"source"`
 }
 
-// Instance represents a LXD instance.
+// Instance represents an instance.
 //
 // swagger:model
 //
@@ -210,7 +210,7 @@ type Instance struct {
 	LastUsedAt time.Time `json:"last_used_at" yaml:"last_used_at"`
 
 	// What cluster member this instance is located on
-	// Example: lxd01
+	// Example: server01
 	Location string `json:"location" yaml:"location"`
 
 	// The type of instance (container or virtual-machine)

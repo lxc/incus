@@ -18,7 +18,7 @@ var APIVersion = "1.0"
 // - New argument inside an existing REST API call
 // - New HTTPs authentication mechanisms or protocols
 //
-// This list is used mainly by the LXD server code, but it's in the shared
+// This list is used mainly by the server code, but it's in the shared
 // package as well for reference.
 var APIExtensions = []string{
 	"storage_zfs_remove_snapshots",
@@ -85,10 +85,10 @@ var APIExtensions = []string{
 	"storage_api_volume_rename",
 	"network_sriov",
 	"console",
-	"restrict_devlxd",
+	"restrict_dev_incus",
 	"migration_pre_copy",
 	"infiniband",
-	"devlxd_events",
+	"dev_incus_events",
 	"proxy",
 	"network_dhcp_gateway",
 	"file_get_symlink",
@@ -102,7 +102,7 @@ var APIExtensions = []string{
 	"nvidia_runtime",
 	"container_mount_propagation",
 	"container_backup",
-	"devlxd_images",
+	"dev_incus_images",
 	"container_local_cross_pool_handling",
 	"proxy_unix",
 	"proxy_udp",

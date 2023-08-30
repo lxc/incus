@@ -291,10 +291,10 @@ func (c *cmdNetworkCreate) Command() *cobra.Command {
 	cmd.Use = usage("create", i18n.G("[<remote>:]<network> [key=value...]"))
 	cmd.Short = i18n.G("Create new networks")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create new networks`))
-	cmd.Example = cli.FormatSection("", i18n.G(`lxc network create foo
+	cmd.Example = cli.FormatSection("", i18n.G(`incus network create foo
     Create a new network called foo
 
-lxc network create bar network=baz --type ovn
+incus network create bar network=baz --type ovn
     Create a new OVN network called bar using baz as its uplink network`))
 
 	cmd.Flags().StringVar(&c.network.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -605,7 +605,7 @@ func (c *cmdNetworkEdit) helpTemplate() string {
 ### A network consists of a set of configuration items.
 ###
 ### An example would look like:
-### name: lxdbr0
+### name: mybr0
 ### config:
 ###   ipv4.address: 10.62.42.1/24
 ###   ipv4.nat: true
@@ -1129,7 +1129,7 @@ func (c *cmdNetworkSet) Command() *cobra.Command {
 		`Set network configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc network set [<remote>:]<network> <key> <value>`))
+    incus network set [<remote>:]<network> <key> <value>`))
 
 	cmd.Flags().StringVar(&c.network.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a network property"))

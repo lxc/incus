@@ -30,11 +30,11 @@ type cmdQuery struct {
 func (c *cmdQuery) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("query", i18n.G("[<remote>:]<API path>"))
-	cmd.Short = i18n.G("Send a raw query to LXD")
+	cmd.Short = i18n.G("Send a raw query to the server")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Send a raw query to LXD`))
+		`Send a raw query to the server`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc query -X DELETE --wait /1.0/instances/c1
+		`incus query -X DELETE --wait /1.0/instances/c1
     Delete local instance "c1".`))
 	cmd.Hidden = true
 

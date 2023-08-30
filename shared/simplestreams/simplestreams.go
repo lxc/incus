@@ -309,7 +309,7 @@ func (s *SimpleStreams) getImages() ([]api.Image, []extendedAlias, error) {
 			return nil, nil, fmt.Errorf("Failed parsing products: %w", err)
 		}
 
-		streamImages, _ := products.ToLXD()
+		streamImages, _ := products.ToAPI()
 		images = append(images, streamImages...)
 	}
 
@@ -350,7 +350,7 @@ func (s *SimpleStreams) GetFiles(fingerprint string) (map[string]DownloadableFil
 			return nil, err
 		}
 
-		images, downloads := products.ToLXD()
+		images, downloads := products.ToAPI()
 
 		for _, image := range images {
 			if strings.HasPrefix(image.Fingerprint, fingerprint) {
@@ -405,13 +405,13 @@ func (s *SimpleStreams) ListAliases() ([]api.ImageAliasesEntry, error) {
 	return aliases, nil
 }
 
-// ListImages returns a list of LXD images.
+// ListImages returns a list of images.
 func (s *SimpleStreams) ListImages() ([]api.Image, error) {
 	images, _, err := s.getImages()
 	return images, err
 }
 
-// GetAlias returns a LXD ImageAliasesEntry for the provided alias name.
+// GetAlias returns an ImageAliasesEntry for the provided alias name.
 func (s *SimpleStreams) GetAlias(imageType string, name string) (*api.ImageAliasesEntry, error) {
 	_, aliasesList, err := s.getImages()
 	if err != nil {
@@ -481,7 +481,7 @@ func (s *SimpleStreams) GetAliasArchitectures(imageType string, name string) (ma
 	return aliases, nil
 }
 
-// GetImage returns a LXD image for the provided image fingerprint.
+// GetImage returns an image for the provided image fingerprint.
 func (s *SimpleStreams) GetImage(fingerprint string) (*api.Image, error) {
 	images, _, err := s.getImages()
 	if err != nil {

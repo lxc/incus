@@ -260,7 +260,7 @@ func (c *cmdInit) askClustering(config *api.InitPreseed, d incus.InstanceServer,
 
 					certDigest := shared.CertFingerprint(cert)
 					fmt.Println("Cluster fingerprint:", certDigest)
-					fmt.Println("You can validate this fingerprint by running \"lxc info\" locally on an existing cluster member.")
+					fmt.Println("You can validate this fingerprint by running \"incus info\" locally on an existing cluster member.")
 
 					validator := func(input string) error {
 						if input == certDigest {

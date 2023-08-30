@@ -36,16 +36,16 @@ func (c *cmdCopy) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("copy", i18n.G("[<remote>:]<source>[/<snapshot>] [[<remote>:]<destination>]"))
 	cmd.Aliases = []string{"cp"}
-	cmd.Short = i18n.G("Copy instances within or in between LXD servers")
+	cmd.Short = i18n.G("Copy instances within or in between servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Copy instances within or in between LXD servers
+		`Copy instances within or in between servers
 
 Transfer modes (--mode):
  - pull: Target server pulls the data from the source server (source must listen on network)
  - push: Source server pushes the data to the target server (target must listen on network)
  - relay: The CLI connects to both source and server and proxies the data (both source and target must listen on network)
 
-The pull transfer mode is the default as it is compatible with all LXD versions.
+The pull transfer mode is the default as it is compatible with all server versions.
 `))
 
 	cmd.RunE = c.Run
@@ -257,7 +257,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		}
 
 		// Only start the instance back up if doing a stateless migration.
-		// Its LXD's job to start things back up when receiving a stateful migration.
+		// It's the server's job to start things back up when receiving a stateful migration.
 		if entry.StatusCode == api.Running && move && !stateful {
 			start = true
 		}

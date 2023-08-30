@@ -413,7 +413,7 @@ func (c *cmdNetworkACLSet) Command() *cobra.Command {
 		`Set network ACL configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc network set [<remote>:]<ACL> <key> <value>`))
+    incus network set [<remote>:]<ACL> <key> <value>`))
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a network ACL property"))
 	cmd.RunE = c.Run
@@ -579,7 +579,7 @@ func (c *cmdNetworkACLEdit) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Allow output of `lxc network acl show` command to be passed in here, but only take the contents
+		// Allow output of `incus network acl show` command to be passed in here, but only take the contents
 		// of the NetworkACLPut fields when updating the ACL. The other fields are silently discarded.
 		newdata := api.NetworkACL{}
 		err = yaml.UnmarshalStrict(contents, &newdata)

@@ -61,7 +61,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 
 	// Quick checks.
 	if remote.Public || remote.Protocol == "simplestreams" {
-		return nil, fmt.Errorf("The remote isn't a private LXD server")
+		return nil, fmt.Errorf("The remote isn't a private server")
 	}
 
 	// Get connection arguments
@@ -156,7 +156,7 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 		return d, nil
 	}
 
-	// HTTPs (public LXD)
+	// HTTPs (public)
 	if remote.Public {
 		d, err := incus.ConnectPublicIncus(remote.Addr, args)
 		if err != nil {
@@ -166,7 +166,7 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 		return d, nil
 	}
 
-	// HTTPs (private LXD)
+	// HTTPs (private)
 	d, err := incus.ConnectIncus(remote.Addr, args)
 	if err != nil {
 		return nil, err

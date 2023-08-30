@@ -22,14 +22,14 @@ import (
 )
 
 // DevIncusServer creates an http.Server capable of handling requests against the
-// /dev/lxd Unix socket endpoint created inside VMs.
-func devLxdServer(d *Daemon) *http.Server {
+// /dev/incus Unix socket endpoint created inside VMs.
+func devIncusServer(d *Daemon) *http.Server {
 	return &http.Server{
-		Handler: devLxdAPI(d),
+		Handler: devIncusAPI(d),
 	}
 }
 
-type devLxdHandler struct {
+type devIncusHandler struct {
 	path string
 
 	/*
@@ -38,11 +38,11 @@ type devLxdHandler struct {
 	 * server side right now either, I went the simple route to avoid
 	 * needless noise.
 	 */
-	f func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse
+	f func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse
 }
 
 func getVsockClient(d *Daemon) (incus.InstanceServer, error) {
-	// Try connecting to LXD server.
+	// Try connecting to the host.
 	client, err := getClient(d.serverCID, int(d.serverPort), d.serverCertificate)
 	if err != nil {
 		return nil, err
@@ -56,10 +56,10 @@ func getVsockClient(d *Daemon) (incus.InstanceServer, error) {
 	return server, nil
 }
 
-var DevIncusConfigGet = devLxdHandler{"/1.0/config", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusConfigGet = devIncusHandler{"/1.0/config", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
 	client, err := getVsockClient(d)
 	if err != nil {
-		return smartResponse(fmt.Errorf("Failed connecting to LXD over vsock: %w", err))
+		return smartResponse(fmt.Errorf("Failed connecting to the host over vsock: %w", err))
 	}
 
 	defer client.Disconnect()
@@ -73,7 +73,7 @@ var DevIncusConfigGet = devLxdHandler{"/1.0/config", func(d *Daemon, w http.Resp
 
 	err = resp.MetadataAsStruct(&config)
 	if err != nil {
-		return smartResponse(fmt.Errorf("Failed parsing response from LXD: %w", err))
+		return smartResponse(fmt.Errorf("Failed parsing response from host: %w", err))
 	}
 
 	filtered := []string{}
@@ -85,19 +85,19 @@ var DevIncusConfigGet = devLxdHandler{"/1.0/config", func(d *Daemon, w http.Resp
 	return okResponse(filtered, "json")
 }}
 
-var DevIncusConfigKeyGet = devLxdHandler{"/1.0/config/{key}", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusConfigKeyGet = devIncusHandler{"/1.0/config/{key}", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
 	key, err := url.PathUnescape(mux.Vars(r)["key"])
 	if err != nil {
-		return &devLxdResponse{"bad request", http.StatusBadRequest, "raw"}
+		return &devIncusResponse{"bad request", http.StatusBadRequest, "raw"}
 	}
 
 	if !strings.HasPrefix(key, "user.") && !strings.HasPrefix(key, "cloud-init.") {
-		return &devLxdResponse{"not authorized", http.StatusForbidden, "raw"}
+		return &devIncusResponse{"not authorized", http.StatusForbidden, "raw"}
 	}
 
 	client, err := getVsockClient(d)
 	if err != nil {
-		return smartResponse(fmt.Errorf("Failed connecting to LXD over vsock: %w", err))
+		return smartResponse(fmt.Errorf("Failed connecting to host over vsock: %w", err))
 	}
 
 	defer client.Disconnect()
@@ -111,13 +111,13 @@ var DevIncusConfigKeyGet = devLxdHandler{"/1.0/config/{key}", func(d *Daemon, w 
 
 	err = resp.MetadataAsStruct(&value)
 	if err != nil {
-		return smartResponse(fmt.Errorf("Failed parsing response from LXD: %w", err))
+		return smartResponse(fmt.Errorf("Failed parsing response from host: %w", err))
 	}
 
 	return okResponse(value, "raw")
 }}
 
-var DevIncusMetadataGet = devLxdHandler{"/1.0/meta-data", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusMetadataGet = devIncusHandler{"/1.0/meta-data", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
 	var client incus.InstanceServer
 	var err error
 
@@ -131,7 +131,7 @@ var DevIncusMetadataGet = devLxdHandler{"/1.0/meta-data", func(d *Daemon, w http
 	}
 
 	if err != nil {
-		return smartResponse(fmt.Errorf("Failed connecting to LXD over vsock: %w", err))
+		return smartResponse(fmt.Errorf("Failed connecting to host over vsock: %w", err))
 	}
 
 	defer client.Disconnect()
@@ -145,13 +145,13 @@ var DevIncusMetadataGet = devLxdHandler{"/1.0/meta-data", func(d *Daemon, w http
 
 	err = resp.MetadataAsStruct(&metaData)
 	if err != nil {
-		return smartResponse(fmt.Errorf("Failed parsing response from LXD: %w", err))
+		return smartResponse(fmt.Errorf("Failed parsing response from host: %w", err))
 	}
 
 	return okResponse(metaData, "raw")
 }}
 
-var devLxdEventsGet = devLxdHandler{"/1.0/events", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var devIncusEventsGet = devIncusHandler{"/1.0/events", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
 	err := eventsGet(d, r).Render(w)
 	if err != nil {
 		return smartResponse(err)
@@ -160,10 +160,10 @@ var devLxdEventsGet = devLxdHandler{"/1.0/events", func(d *Daemon, w http.Respon
 	return okResponse("", "raw")
 }}
 
-var DevIncusAPIGet = devLxdHandler{"/1.0", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusAPIGet = devIncusHandler{"/1.0", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
 	client, err := getVsockClient(d)
 	if err != nil {
-		return smartResponse(fmt.Errorf("Failed connecting to LXD over vsock: %w", err))
+		return smartResponse(fmt.Errorf("Failed connecting to host over vsock: %w", err))
 	}
 
 	defer client.Disconnect()
@@ -178,7 +178,7 @@ var DevIncusAPIGet = devLxdHandler{"/1.0", func(d *Daemon, w http.ResponseWriter
 
 		err = resp.MetadataAsStruct(&instanceData)
 		if err != nil {
-			return smartResponse(fmt.Errorf("Failed parsing response from LXD: %w", err))
+			return smartResponse(fmt.Errorf("Failed parsing response from host: %w", err))
 		}
 
 		return okResponse(instanceData, "json")
@@ -191,13 +191,13 @@ var DevIncusAPIGet = devLxdHandler{"/1.0", func(d *Daemon, w http.ResponseWriter
 		return okResponse("", "raw")
 	}
 
-	return &devLxdResponse{fmt.Sprintf("method %q not allowed", r.Method), http.StatusBadRequest, "raw"}
+	return &devIncusResponse{fmt.Sprintf("method %q not allowed", r.Method), http.StatusBadRequest, "raw"}
 }}
 
-var DevIncusDevicesGet = devLxdHandler{"/1.0/devices", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var DevIncusDevicesGet = devIncusHandler{"/1.0/devices", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
 	client, err := getVsockClient(d)
 	if err != nil {
-		return smartResponse(fmt.Errorf("Failed connecting to LXD over vsock: %w", err))
+		return smartResponse(fmt.Errorf("Failed connecting to host over vsock: %w", err))
 	}
 
 	defer client.Disconnect()
@@ -211,25 +211,25 @@ var DevIncusDevicesGet = devLxdHandler{"/1.0/devices", func(d *Daemon, w http.Re
 
 	err = resp.MetadataAsStruct(&devices)
 	if err != nil {
-		return smartResponse(fmt.Errorf("Failed parsing response from LXD: %w", err))
+		return smartResponse(fmt.Errorf("Failed parsing response from host: %w", err))
 	}
 
 	return okResponse(devices, "json")
 }}
 
-var handlers = []devLxdHandler{
-	{"/", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devLxdResponse {
+var handlers = []devIncusHandler{
+	{"/", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
 		return okResponse([]string{"/1.0"}, "json")
 	}},
 	DevIncusAPIGet,
 	DevIncusConfigGet,
 	DevIncusConfigKeyGet,
 	DevIncusMetadataGet,
-	devLxdEventsGet,
+	devIncusEventsGet,
 	DevIncusDevicesGet,
 }
 
-func hoistReq(f func(*Daemon, http.ResponseWriter, *http.Request) *devLxdResponse, d *Daemon) func(http.ResponseWriter, *http.Request) {
+func hoistReq(f func(*Daemon, http.ResponseWriter, *http.Request) *devIncusResponse, d *Daemon) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resp := f(d, w, r)
 		if resp.code != http.StatusOK {
@@ -250,7 +250,7 @@ func hoistReq(f func(*Daemon, http.ResponseWriter, *http.Request) *devLxdRespons
 	}
 }
 
-func devLxdAPI(d *Daemon) http.Handler {
+func devIncusAPI(d *Daemon) http.Handler {
 	m := mux.NewRouter()
 	m.UseEncodedPath() // Allow encoded values in path segments.
 
@@ -270,17 +270,17 @@ func createDevIncuslListener(dir string) (net.Listener, error) {
 		return nil, err
 	}
 
-	// If this socket exists, that means a previous LXD instance died and
-	// didn't clean up. We assume that such LXD instance is actually dead
+	// If this socket exists, that means a previous agent instance died and
+	// didn't clean up. We assume that such agent instance is actually dead
 	// if we get this far, since localCreateListener() tries to connect to
-	// the actual lxd socket to make sure that it is actually dead. So, it
+	// the actual incus socket to make sure that it is actually dead. So, it
 	// is safe to remove it here without any checks.
 	//
 	// Also, it would be nice to SO_REUSEADDR here so we don't have to
 	// delete the socket, but we can't:
 	//   http://stackoverflow.com/questions/15716302/so-reuseaddr-and-af-unix
 	//
-	// Note that this will force clients to reconnect when LXD is restarted.
+	// Note that this will force clients to reconnect when the daemon is restarted.
 	err = socketUnixRemoveStale(path)
 	if err != nil {
 		return nil, err

@@ -31,7 +31,7 @@ func getUserAgent() string {
 	osTokens = append(osTokens, getPlatformVersionStrings()...)
 
 	// Initial version string
-	agent := fmt.Sprintf("LXD %s", Version)
+	agent := fmt.Sprintf("Incus %s", Version)
 
 	// OS information
 	agent = fmt.Sprintf("%s (%s)", agent, strings.Join(osTokens, "; "))

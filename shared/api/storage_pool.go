@@ -15,7 +15,7 @@ const StoragePoolStatusUnknown = "Unknown"
 // StoragePoolStatusUnvailable storage pool failed to initialize.
 const StoragePoolStatusUnvailable = "Unavailable"
 
-// StoragePoolsPost represents the fields of a new LXD storage pool
+// StoragePoolsPost represents the fields of a new storage pool
 //
 // swagger:model
 //
@@ -32,7 +32,7 @@ type StoragePoolsPost struct {
 	Driver string `json:"driver" yaml:"driver"`
 }
 
-// StoragePool represents the fields of a LXD storage pool.
+// StoragePool represents the fields of a storage pool.
 //
 // swagger:model
 //
@@ -61,13 +61,13 @@ type StoragePool struct {
 
 	// Cluster members on which the storage pool has been defined
 	// Read only: true
-	// Example: ["lxd01", "lxd02", "lxd03"]
+	// Example: ["server01", "server02", "server03"]
 	//
 	// API extension: clustering
 	Locations []string `json:"locations" yaml:"locations"`
 }
 
-// StoragePoolPut represents the modifiable fields of a LXD storage pool.
+// StoragePoolPut represents the modifiable fields of a storage pool.
 //
 // swagger:model
 //

@@ -1,6 +1,6 @@
 
-#ifndef LXD_UNIXFD_H
-#define LXD_UNIXFD_H
+#ifndef NETUTILS_UNIXFD_H
+#define NETUTILS_UNIXFD_H
 
 #include <linux/types.h>
 #include <sys/socket.h>
@@ -38,4 +38,4 @@ extern ssize_t lxc_abstract_unix_recv_fds_iov(int fd, struct unix_fds *ret_fds,
 extern ssize_t lxc_abstract_unix_recv_fds(int fd, struct unix_fds *ret_fds,
 					  void *ret_data, size_t size_ret_data);
 
-#endif // LXD_UNIXFD_H
+#endif // NETUTILS_UNIXFD_H

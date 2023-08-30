@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// InstanceSnapshotsPost represents the fields available for a new LXD instance snapshot.
+// InstanceSnapshotsPost represents the fields available for a new instance snapshot.
 //
 // swagger:model
 //
@@ -25,7 +25,7 @@ type InstanceSnapshotsPost struct {
 	ExpiresAt *time.Time `json:"expires_at" yaml:"expires_at"`
 }
 
-// InstanceSnapshotPost represents the fields required to rename/move a LXD instance snapshot.
+// InstanceSnapshotPost represents the fields required to rename/move an instance snapshot.
 //
 // swagger:model
 //
@@ -47,7 +47,7 @@ type InstanceSnapshotPost struct {
 	Live bool `json:"live,omitempty" yaml:"live,omitempty"`
 }
 
-// InstanceSnapshotPut represents the modifiable fields of a LXD instance snapshot.
+// InstanceSnapshotPut represents the modifiable fields of an instance snapshot.
 //
 // swagger:model
 //
@@ -58,7 +58,7 @@ type InstanceSnapshotPut struct {
 	ExpiresAt time.Time `json:"expires_at" yaml:"expires_at"`
 }
 
-// InstanceSnapshot represents a LXD instance snapshot.
+// InstanceSnapshot represents an instance snapshot.
 //
 // swagger:model
 //

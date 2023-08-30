@@ -27,7 +27,7 @@ func (c *cmdImport) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Import backups of instances including their snapshots.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc import backup0.tar.gz
+		`incus import backup0.tar.gz
     Create a new instance using backup0.tar.gz as the source.`))
 
 	cmd.RunE = c.Run

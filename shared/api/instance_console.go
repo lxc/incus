@@ -8,7 +8,7 @@ type InstanceConsoleControl struct {
 	Args    map[string]string `json:"args" yaml:"args"`
 }
 
-// InstanceConsolePost represents a LXD instance console request.
+// InstanceConsolePost represents an instance console request.
 //
 // swagger:model
 //

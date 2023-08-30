@@ -17,14 +17,13 @@ func main() {
 	// daemon command (main)
 	daemonCmd := cmdDaemon{}
 	app := daemonCmd.Command()
-	app.Use = "lxd-user"
-	app.Short = "LXD user project daemon"
+	app.Use = "incus-user"
+	app.Short = "Incus user project daemon"
 	app.Long = `Description:
-  LXD user project daemon
+  Incus user project daemon
 
-  This daemon is used to allow users that aren't considered to be LXD
-  administrators access to a personal LXD project with suitable
-  restrictions.
+  This daemon is used to allow users that aren't considered to be Incus
+  administrators access to a personal project with suitable restrictions.
 `
 	app.SilenceUsage = true
 	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}

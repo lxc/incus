@@ -1,4 +1,4 @@
-// Package api contains Go structs for all LXD API objects
+// Package api contains Go structs for all API objects
 //
 // # Overview
 //
@@ -9,5 +9,5 @@
 //
 // A few convenience functions are also tied to those structs which let
 // you convert between the various strucs for a given object and also query
-// some of the more complex metadata that LXD can export.
+// some of the more complex metadata available.
 package api

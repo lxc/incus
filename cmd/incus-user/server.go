@@ -14,15 +14,15 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-func lxdIsConfigured(client incus.InstanceServer) (bool, error) {
+func serverIsConfigured(client incus.InstanceServer) (bool, error) {
 	// Look for networks.
 	networks, err := client.GetNetworkNames()
 	if err != nil {
 		return false, fmt.Errorf("Failed to list networks: %w", err)
 	}
 
-	if !shared.StringInSlice("lxdbr0", networks) {
-		// Couldn't find lxdbr0.
+	if !shared.StringInSlice("incusbr0", networks) {
+		// Couldn't find incusbr0.
 		return false, nil
 	}
 
@@ -40,7 +40,7 @@ func lxdIsConfigured(client incus.InstanceServer) (bool, error) {
 	return true, nil
 }
 
-func lxdInitialConfiguration(client incus.InstanceServer) error {
+func serverInitialConfiguration(client incus.InstanceServer) error {
 	// Load current server config.
 	info, _, err := client.GetServer()
 	if err != nil {
@@ -73,7 +73,7 @@ func lxdInitialConfiguration(client incus.InstanceServer) error {
 			// Check if zsys.
 			poolName, _ := shared.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
 			if strings.TrimSpace(poolName) == "rpool" {
-				pool.Config["source"] = "rpool/lxd"
+				pool.Config["source"] = "rpool/incus"
 			}
 		} else {
 			// Fallback to dir backend.
@@ -109,11 +109,11 @@ func lxdInitialConfiguration(client incus.InstanceServer) error {
 	}
 
 	if !found {
-		// Create lxdbr0.
+		// Create incusbr0.
 		network := api.NetworksPost{}
 		network.Config = map[string]string{}
 		network.Type = "bridge"
-		network.Name = "lxdbr0"
+		network.Name = "incusbr0"
 
 		err := client.CreateNetwork(network)
 		if err != nil {
@@ -123,7 +123,7 @@ func lxdInitialConfiguration(client incus.InstanceServer) error {
 		// Add to default profile in default project.
 		profile.Devices["eth0"] = map[string]string{
 			"type":    "nic",
-			"network": "lxdbr0",
+			"network": "incusbr0",
 			"name":    "eth0",
 		}
 	}
@@ -137,9 +137,9 @@ func lxdInitialConfiguration(client incus.InstanceServer) error {
 	return nil
 }
 
-func lxdSetupUser(uid uint32) error {
+func serverSetupUser(uid uint32) error {
 	projectName := fmt.Sprintf("user-%d", uid)
-	networkName := fmt.Sprintf("lxdbr-%d", uid)
+	networkName := fmt.Sprintf("incusbr-%d", uid)
 	userPath := filepath.Join("users", fmt.Sprintf("%d", uid))
 
 	// User account.
@@ -171,10 +171,10 @@ func lxdSetupUser(uid uint32) error {
 		return fmt.Errorf("Failed to generate user certificate: %w", err)
 	}
 
-	// Connect to LXD.
+	// Connect to the daemon.
 	client, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
-		return fmt.Errorf("Unable to connect to LXD: %w", err)
+		return fmt.Errorf("Unable to connect to the daemon: %w", err)
 	}
 
 	_, _, _ = client.GetServer()
@@ -225,7 +225,7 @@ func lxdSetupUser(uid uint32) error {
 	// Add the certificate to the trust store.
 	err = client.CreateCertificate(api.CertificatesPost{
 		CertificatePut: api.CertificatePut{
-			Name:        fmt.Sprintf("lxd-user-%d", uid),
+			Name:        fmt.Sprintf("incus-user-%d", uid),
 			Type:        "client",
 			Restricted:  true,
 			Projects:    []string{projectName},
@@ -252,7 +252,7 @@ func lxdSetupUser(uid uint32) error {
 
 	// Setup default profile.
 	err = client.UseProject(projectName).UpdateProfile("default", api.ProfilePut{
-		Description: "Default LXD profile",
+		Description: "Default Incus profile",
 		Config: map[string]string{
 			"raw.idmap": fmt.Sprintf("uid %s %s\ngid %s %s", pw[2], pw[2], pw[3], pw[3]),
 		},

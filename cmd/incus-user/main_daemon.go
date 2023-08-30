@@ -23,7 +23,7 @@ type cmdDaemon struct{}
 
 func (c *cmdDaemon) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "lxd-user"
+	cmd.Use = "incus-user"
 	cmd.RunE = c.Run
 
 	return cmd
@@ -37,28 +37,28 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
 
-	// Connect to LXD.
-	log.Debug("Connecting to LXD")
+	// Connect.
+	log.Debug("Connecting to the daemon")
 	client, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
-		return fmt.Errorf("Unable to connect to LXD: %w", err)
+		return fmt.Errorf("Unable to connect to the daemon: %w", err)
 	}
 
-	// Validate LXD configuration.
-	ok, err := lxdIsConfigured(client)
+	// Validate the configuration.
+	ok, err := serverIsConfigured(client)
 	if err != nil {
-		return fmt.Errorf("Failed to check LXD configuration: %w", err)
+		return fmt.Errorf("Failed to check the configuration: %w", err)
 	}
 
 	if !ok {
-		log.Info("Performing initial LXD configuration")
-		err = lxdInitialConfiguration(client)
+		log.Info("Performing initial configuration")
+		err = serverInitialConfiguration(client)
 		if err != nil {
-			return fmt.Errorf("Failed to apply initial LXD configuration: %w", err)
+			return fmt.Errorf("Failed to apply initial configuration: %w", err)
 		}
 	}
 
-	// Disconnect from LXD.
+	// Disconnect.
 	client.Disconnect()
 
 	// Setup the unix socket.

@@ -49,40 +49,40 @@ func TestExpandAliases(t *testing.T) {
 
 	testcases := []aliasTestcase{
 		{
-			input:    []string{"lxc", "list"},
-			expected: []string{"lxc", "list"},
+			input:    []string{"incus", "list"},
+			expected: []string{"incus", "list"},
 		},
 		{
-			input:    []string{"lxc", "tester", "12"},
-			expected: []string{"lxc", "list"},
+			input:    []string{"incus", "tester", "12"},
+			expected: []string{"incus", "list"},
 		},
 		{
-			input:    []string{"lxc", "foo", "asdf"},
-			expected: []string{"lxc", "list", "asdf", "-c", "n"},
+			input:    []string{"incus", "foo", "asdf"},
+			expected: []string{"incus", "list", "asdf", "-c", "n"},
 		},
 		{
-			input:    []string{"lxc", "ssh", "c1"},
+			input:    []string{"incus", "ssh", "c1"},
 			expected: []string{"/usr/bin/ssh", "c1"},
 		},
 		{
-			input:    []string{"lxc", "bar", "ls", "/"},
-			expected: []string{"lxc", "exec", "c1", "--", "ls", "/"},
+			input:    []string{"incus", "bar", "ls", "/"},
+			expected: []string{"incus", "exec", "c1", "--", "ls", "/"},
 		},
 		{
-			input:    []string{"lxc", "fizz", "c1", "buzz"},
-			expected: []string{"lxc", "exec", "c1", "--", "echo", "buzz"},
+			input:    []string{"incus", "fizz", "c1", "buzz"},
+			expected: []string{"incus", "exec", "c1", "--", "echo", "buzz"},
 		},
 		{
-			input:     []string{"lxc", "fizz", "c1"},
+			input:     []string{"incus", "fizz", "c1"},
 			expectErr: true,
 		},
 		{
-			input:    []string{"lxc", "snaps", "c1"},
-			expected: []string{"lxc", "query", "/1.0/instances/c1/snapshots"},
+			input:    []string{"incus", "snaps", "c1"},
+			expected: []string{"incus", "query", "/1.0/instances/c1/snapshots"},
 		},
 		{
-			input:    []string{"lxc", "snapshots", "with", "recursion", "c1", "2"},
-			expected: []string{"lxc", "query", "/1.0/instances/c1/snapshots?recursion=2"},
+			input:    []string{"incus", "snapshots", "with", "recursion", "c1", "2"},
+			expected: []string{"incus", "query", "/1.0/instances/c1/snapshots?recursion=2"},
 		},
 	}
 

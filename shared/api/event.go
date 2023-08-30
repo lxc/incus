@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// LXD event types.
+// Event types.
 const (
 	EventTypeLifecycle = "lifecycle"
 	EventTypeLogging   = "logging"
@@ -30,7 +30,7 @@ type Event struct {
 	Metadata json.RawMessage `yaml:"metadata" json:"metadata"`
 
 	// Originating cluster member
-	// Example: lxd01
+	// Example: server01
 	//
 	// API extension: event_location
 	Location string `yaml:"location,omitempty" json:"location,omitempty"`

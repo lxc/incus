@@ -1,6 +1,6 @@
 definitions:
     Certificate:
-        description: Certificate represents a LXD certificate
+        description: Certificate represents a certificate
         properties:
             certificate:
                 description: The certificate itself, as PEM encoded X509
@@ -75,7 +75,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     CertificatePut:
-        description: CertificatePut represents the modifiable fields of a LXD certificate
+        description: CertificatePut represents the modifiable fields of a certificate
         properties:
             certificate:
                 description: The certificate itself, as PEM encoded X509
@@ -110,7 +110,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     CertificatesPost:
-        description: CertificatesPost represents the fields of a new LXD certificate
+        description: CertificatesPost represents the fields of a new certificate
         properties:
             certificate:
                 description: The certificate itself, as PEM encoded X509
@@ -170,14 +170,14 @@ definitions:
                 x-go-name: MemberConfig
             server_name:
                 description: Name of the cluster member answering the request
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: ServerName
-        title: Cluster represents high-level information about a LXD cluster.
+        title: Cluster represents high-level information about a cluster.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ClusterCertificatePut:
-        description: ClusterCertificatePut represents the certificate and key pair for all members in a LXD Cluster
+        description: ClusterCertificatePut represents the certificate and key pair for all cluster members
         properties:
             cluster_certificate:
                 description: The new certificate (X509 PEM encoded) for the cluster
@@ -322,7 +322,7 @@ definitions:
                 x-go-name: Roles
             server_name:
                 description: Name of the cluster member
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: ServerName
             status:
@@ -335,7 +335,7 @@ definitions:
                 example: https://10.0.0.1:8443
                 type: string
                 x-go-name: URL
-        title: ClusterMember represents the a LXD node in the cluster.
+        title: ClusterMember represents a member of a cluster.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ClusterMemberConfigKey:
@@ -402,7 +402,7 @@ definitions:
                 x-go-name: Secret
             server_name:
                 description: The name of the new cluster member
-                example: lxd02
+                example: server02
                 type: string
                 x-go-name: ServerName
         title: ClusterMemberJoinToken represents the fields contained within an encoded cluster member join token.
@@ -412,14 +412,14 @@ definitions:
         properties:
             server_name:
                 description: The new name of the cluster member
-                example: lxd02
+                example: server02
                 type: string
                 x-go-name: ServerName
-        title: ClusterMemberPost represents the fields required to rename a LXD node.
+        title: ClusterMemberPost represents the fields required to rename a cluster member.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ClusterMemberPut:
-        description: ClusterMemberPut represents the modifiable fields of a LXD cluster member
+        description: ClusterMemberPut represents the modifiable fields of a cluster member
         properties:
             config:
                 additionalProperties:
@@ -532,16 +532,13 @@ definitions:
         properties:
             server_name:
                 description: The name of the new cluster member
-                example: lxd02
+                example: server02
                 type: string
                 x-go-name: ServerName
         title: ClusterMembersPost represents the fields required to request a join token to add a member to the cluster.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ClusterPut:
-        description: |-
-            ClusterPut represents the fields required to bootstrap or join a LXD
-            cluster.
         properties:
             cluster_address:
                 description: The address of the cluster you wish to join
@@ -577,9 +574,10 @@ definitions:
                 x-go-name: ServerAddress
             server_name:
                 description: Name of the cluster member answering the request
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: ServerName
+        title: ClusterPut represents the fields required to bootstrap or join a cluster.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     Event:
@@ -587,7 +585,7 @@ definitions:
         properties:
             location:
                 description: Originating cluster member
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: Location
             metadata:
@@ -617,7 +615,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     Image:
-        description: Image represents a LXD image
+        description: Image represents an image
         properties:
             aliases:
                 description: List of aliases
@@ -705,7 +703,7 @@ definitions:
             update_source:
                 $ref: '#/definitions/ImageSource'
             uploaded_at:
-                description: When the image was added to this LXD server
+                description: When the image was added to this server
                 example: "2021-03-24T14:18:15.115036787-04:00"
                 format: date-time
                 type: string
@@ -713,7 +711,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImageAlias:
-        description: ImageAlias represents an alias from the alias list of a LXD image
+        description: ImageAlias represents an alias from the alias list of an image
         properties:
             description:
                 description: Description of the alias
@@ -728,7 +726,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImageAliasesEntry:
-        description: ImageAliasesEntry represents a LXD image alias
+        description: ImageAliasesEntry represents an image alias
         properties:
             description:
                 description: Alias description
@@ -753,7 +751,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImageAliasesEntryPost:
-        description: ImageAliasesEntryPost represents the required fields to rename a LXD image alias
+        description: ImageAliasesEntryPost represents the required fields to rename an image alias
         properties:
             name:
                 description: Alias name
@@ -763,7 +761,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImageAliasesEntryPut:
-        description: ImageAliasesEntryPut represents the modifiable fields of a LXD image alias
+        description: ImageAliasesEntryPut represents the modifiable fields of an image alias
         properties:
             description:
                 description: Alias description
@@ -778,7 +776,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImageAliasesPost:
-        description: ImageAliasesPost represents a new LXD image alias
+        description: ImageAliasesPost represents a new image alias
         properties:
             description:
                 description: Alias description
@@ -803,7 +801,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImageExportPost:
-        description: ImageExportPost represents the fields required to export a LXD image
+        description: ImageExportPost represents the fields required to export an image
         properties:
             aliases:
                 description: List of aliases to set on the image
@@ -842,7 +840,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImageMetadata:
-        description: ImageMetadata represents LXD image metadata (used in image tarball)
+        description: ImageMetadata represents image metadata (used in image tarball)
         properties:
             architecture:
                 description: Architecture name
@@ -910,7 +908,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImagePut:
-        description: ImagePut represents the modifiable fields of a LXD image
+        description: ImagePut represents the modifiable fields of an image
         properties:
             auto_update:
                 description: Whether the image should auto-update when a new build is available
@@ -949,7 +947,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImageSource:
-        description: ImageSource represents the source of a LXD image
+        description: ImageSource represents the source of an image
         properties:
             alias:
                 description: Source alias to download from
@@ -979,7 +977,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImagesPost:
-        description: ImagesPost represents the fields available for a new LXD image
+        description: ImagesPost represents the fields available for a new image
         properties:
             aliases:
                 description: Aliases to add to the image
@@ -1008,7 +1006,7 @@ definitions:
                 x-go-name: ExpiresAt
             filename:
                 description: Original filename of the image
-                example: lxd.tar.xz
+                example: image.tar.xz
                 type: string
                 x-go-name: Filename
             profiles:
@@ -1039,7 +1037,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ImagesPostSource:
-        description: ImagesPostSource represents the source of a new LXD image
+        description: ImagesPostSource represents the source of a new image
         properties:
             alias:
                 description: Source alias to download from
@@ -1149,10 +1147,10 @@ definitions:
                 x-go-name: ServerAddress
             server_name:
                 description: Name of the cluster member answering the request
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: ServerName
-        title: InitClusterPreseed represents initialization configuration for the LXD cluster.
+        title: InitClusterPreseed represents initialization configuration for the cluster.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InitLocalPreseed:
@@ -1166,34 +1164,34 @@ definitions:
                 type: object
                 x-go-name: Config
             networks:
-                description: Networks by project to add to LXD
+                description: Networks by project to add
                 example: Network on the "default" project
                 items:
                     $ref: '#/definitions/InitNetworksProjectPost'
                 type: array
                 x-go-name: Networks
             profiles:
-                description: Profiles to add to LXD
+                description: Profiles to add
                 example: '"default" profile with a root disk device'
                 items:
                     $ref: '#/definitions/ProfilesPost'
                 type: array
                 x-go-name: Profiles
             projects:
-                description: Projects to add to LXD
+                description: Projects to add
                 example: '"default" project'
                 items:
                     $ref: '#/definitions/ProjectsPost'
                 type: array
                 x-go-name: Projects
             storage_pools:
-                description: Storage Pools to add to LXD
+                description: Storage Pools to add
                 example: local dir storage pool
                 items:
                     $ref: '#/definitions/StoragePoolsPost'
                 type: array
                 x-go-name: StoragePools
-        title: InitLocalPreseed represents initialization configuration for the local LXD.
+        title: InitLocalPreseed represents initialization configuration.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InitNetworksProjectPost:
@@ -1214,12 +1212,12 @@ definitions:
                 x-go-name: Config
             description:
                 description: Description of the profile
-                example: My new LXD bridge
+                example: My new bridge
                 type: string
                 x-go-name: Description
             name:
                 description: The name of the new network
-                example: lxdbr1
+                example: mybr1
                 type: string
                 x-go-name: Name
             type:
@@ -1227,7 +1225,7 @@ definitions:
                 example: bridge
                 type: string
                 x-go-name: Type
-        title: InitNetworksProjectPost represents the fields of a new LXD network along with its associated project.
+        title: InitNetworksProjectPost represents the fields of a new network along with its associated project.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InitPreseed:
@@ -1236,7 +1234,7 @@ definitions:
                 $ref: '#/definitions/InitLocalPreseed'
             cluster:
                 $ref: '#/definitions/InitClusterPreseed'
-        title: InitPreseed represents initialization configuration that can be supplied to `lxd init`.
+        title: InitPreseed represents initialization configuration that can be supplied to `init`.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     Instance:
@@ -1312,7 +1310,7 @@ definitions:
                 x-go-name: LastUsedAt
             location:
                 description: What cluster member this instance is located on
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: Location
             name:
@@ -1355,7 +1353,7 @@ definitions:
                 example: container
                 type: string
                 x-go-name: Type
-        title: Instance represents a LXD instance.
+        title: Instance represents an instance.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceBackup:
@@ -1387,7 +1385,7 @@ definitions:
                 example: true
                 type: boolean
                 x-go-name: OptimizedStorage
-        title: InstanceBackup represents a LXD instance backup.
+        title: InstanceBackup represents an instance backup.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceBackupPost:
@@ -1428,7 +1426,7 @@ definitions:
                 example: true
                 type: boolean
                 x-go-name: OptimizedStorage
-        title: InstanceBackupsPost represents the fields available for a new LXD instance backup.
+        title: InstanceBackupsPost represents the fields available for a new instance backup.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceConsolePost:
@@ -1450,7 +1448,7 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: Width
-        title: InstanceConsolePost represents a LXD instance console request.
+        title: InstanceConsolePost represents an instance console request.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceExecPost:
@@ -1514,7 +1512,7 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: Width
-        title: InstanceExecPost represents a LXD instance exec request.
+        title: InstanceExecPost represents an instance exec request.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceFull:
@@ -1596,7 +1594,7 @@ definitions:
                 x-go-name: LastUsedAt
             location:
                 description: What cluster member this instance is located on
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: Location
             name:
@@ -1689,7 +1687,7 @@ definitions:
                 x-go-name: Project
             target:
                 $ref: '#/definitions/InstancePostTarget'
-        title: InstancePost represents the fields required to rename/move a LXD instance.
+        title: InstancePost represents the fields required to rename/move an instance.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstancePostTarget:
@@ -1772,7 +1770,7 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: Stateful
-        title: InstancePut represents the modifiable fields of a LXD instance.
+        title: InstancePut represents the modifiable fields of an instance.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceRebuildPost:
@@ -1878,7 +1876,7 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: Stateful
-        title: InstanceSnapshot represents a LXD instance snapshot.
+        title: InstanceSnapshot represents an instance snapshot.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceSnapshotPost:
@@ -1900,7 +1898,7 @@ definitions:
                 x-go-name: Name
             target:
                 $ref: '#/definitions/InstancePostTarget'
-        title: InstanceSnapshotPost represents the fields required to rename/move a LXD instance snapshot.
+        title: InstanceSnapshotPost represents the fields required to rename/move an instance snapshot.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceSnapshotPut:
@@ -1911,7 +1909,7 @@ definitions:
                 format: date-time
                 type: string
                 x-go-name: ExpiresAt
-        title: InstanceSnapshotPut represents the modifiable fields of a LXD instance snapshot.
+        title: InstanceSnapshotPut represents the modifiable fields of an instance snapshot.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceSnapshotsPost:
@@ -1932,7 +1930,7 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: Stateful
-        title: InstanceSnapshotsPost represents the fields available for a new LXD instance snapshot.
+        title: InstanceSnapshotsPost represents the fields available for a new instance snapshot.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceSource:
@@ -2076,7 +2074,7 @@ definitions:
                 x-go-name: Status
             status_code:
                 $ref: '#/definitions/StatusCode'
-        title: InstanceState represents a LXD instance's state.
+        title: InstanceState represents an instance's state.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceStateCPU:
@@ -2087,7 +2085,7 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: Usage
-        title: InstanceStateCPU represents the cpu information section of a LXD instance's state.
+        title: InstanceStateCPU represents the cpu information section of an instance's state.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceStateDisk:
@@ -2104,7 +2102,7 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: Usage
-        title: InstanceStateDisk represents the disk information section of a LXD instance's state.
+        title: InstanceStateDisk represents the disk information section of an instance's state.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceStateMemory:
@@ -2139,7 +2137,7 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: UsagePeak
-        title: InstanceStateMemory represents the memory information section of a LXD instance's state.
+        title: InstanceStateMemory represents the memory information section of an instance's state.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceStateNetwork:
@@ -2178,12 +2176,12 @@ definitions:
                 example: broadcast
                 type: string
                 x-go-name: Type
-        title: InstanceStateNetwork represents the network information section of a LXD instance's state.
+        title: InstanceStateNetwork represents the network information section of an instance's state.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceStateNetworkAddress:
         description: |-
-            InstanceStateNetworkAddress represents a network address as part of the network section of a LXD
+            InstanceStateNetworkAddress represents a network address as part of the network section of an
             instance's state.
         properties:
             address:
@@ -2210,7 +2208,7 @@ definitions:
         x-go-package: github.com/lxc/incus/shared/api
     InstanceStateNetworkCounters:
         description: |-
-            InstanceStateNetworkCounters represents packet counters as part of the network section of a LXD
+            InstanceStateNetworkCounters represents packet counters as part of the network section of an
             instance's state.
         properties:
             bytes_received:
@@ -2286,7 +2284,7 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: Timeout
-        title: InstanceStatePut represents the modifiable fields of a LXD instance's state.
+        title: InstanceStatePut represents the modifiable fields of an instance's state.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstanceType:
@@ -2363,7 +2361,7 @@ definitions:
                 x-go-name: Stateful
             type:
                 $ref: '#/definitions/InstanceType'
-        title: InstancesPost represents the fields available for a new LXD instance.
+        title: InstancesPost represents the fields available for a new instance.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     InstancesPut:
@@ -2374,7 +2372,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     Network:
-        description: Network represents a LXD network
+        description: Network represents a network
         properties:
             config:
                 additionalProperties:
@@ -2388,29 +2386,29 @@ definitions:
                 x-go-name: Config
             description:
                 description: Description of the profile
-                example: My new LXD bridge
+                example: My new bridge
                 type: string
                 x-go-name: Description
             locations:
                 description: Cluster members on which the network has been defined
                 example:
-                    - lxd01
-                    - lxd02
-                    - lxd03
+                    - server01
+                    - server02
+                    - server03
                 items:
                     type: string
                 readOnly: true
                 type: array
                 x-go-name: Locations
             managed:
-                description: Whether this is a LXD managed network
+                description: Whether this is a managed network
                 example: true
                 readOnly: true
                 type: boolean
                 x-go-name: Managed
             name:
                 description: The network name
-                example: lxdbr0
+                example: mybr0
                 readOnly: true
                 type: string
                 x-go-name: Name
@@ -2475,7 +2473,7 @@ definitions:
                 example:
                     - /1.0/instances/c1
                     - /1.0/instances/v1
-                    - /1.0/networks/lxdbr0
+                    - /1.0/networks/mybr0
                 items:
                     type: string
                 readOnly: true
@@ -2630,7 +2628,7 @@ definitions:
                 type: string
                 x-go-name: Hwaddr
             nat:
-                description: Whether the entity comes from a network that LXD performs egress source NAT on
+                description: Whether the entity comes from a network that performs egress source NAT
                 type: boolean
                 x-go-name: NAT
             type:
@@ -2665,7 +2663,7 @@ definitions:
                 x-go-name: ListenAddress
             location:
                 description: What cluster member this record was found on
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: Location
             ports:
@@ -2708,7 +2706,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkForwardPut:
-        description: NetworkForwardPut represents the modifiable fields of a LXD network address forward
+        description: NetworkForwardPut represents the modifiable fields of a network address forward
         properties:
             config:
                 additionalProperties:
@@ -2732,7 +2730,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkForwardsPost:
-        description: NetworkForwardsPost represents the fields of a new LXD network address forward
+        description: NetworkForwardsPost represents the fields of a new network address forward
         properties:
             config:
                 additionalProperties:
@@ -2780,7 +2778,7 @@ definitions:
                 x-go-name: Hwaddr
             location:
                 description: What cluster member this record was found on
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: Location
             type:
@@ -2819,7 +2817,7 @@ definitions:
                 x-go-name: ListenAddress
             location:
                 description: What cluster member this record was found on
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: Location
             ports:
@@ -2885,7 +2883,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkLoadBalancerPut:
-        description: NetworkLoadBalancerPut represents the modifiable fields of a LXD network load balancer
+        description: NetworkLoadBalancerPut represents the modifiable fields of a network load balancer
         properties:
             backends:
                 description: Backends (optional)
@@ -2915,7 +2913,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkLoadBalancersPost:
-        description: NetworkLoadBalancersPost represents the fields of a new LXD network load balancer
+        description: NetworkLoadBalancersPost represents the fields of a new network load balancer
         properties:
             backends:
                 description: Backends (optional)
@@ -2998,11 +2996,11 @@ definitions:
                 readOnly: true
                 type: array
                 x-go-name: UsedBy
-        title: NetworkPeer used for displaying a LXD network peering.
+        title: NetworkPeer used for displaying a network peering.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkPeerPut:
-        description: NetworkPeerPut represents the modifiable fields of a LXD network peering
+        description: NetworkPeerPut represents the modifiable fields of a network peering
         properties:
             config:
                 additionalProperties:
@@ -3020,7 +3018,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkPeersPost:
-        description: NetworkPeersPost represents the fields of a new LXD network peering
+        description: NetworkPeersPost represents the fields of a new network peering
         properties:
             config:
                 additionalProperties:
@@ -3053,17 +3051,17 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkPost:
-        description: NetworkPost represents the fields required to rename a LXD network
+        description: NetworkPost represents the fields required to rename a network
         properties:
             name:
                 description: The new name for the network
-                example: lxdbr1
+                example: mybr1
                 type: string
                 x-go-name: Name
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkPut:
-        description: NetworkPut represents the modifiable fields of a LXD network
+        description: NetworkPut represents the modifiable fields of a network
         properties:
             config:
                 additionalProperties:
@@ -3077,7 +3075,7 @@ definitions:
                 x-go-name: Config
             description:
                 description: Description of the profile
-                example: My new LXD bridge
+                example: My new bridge
                 type: string
                 x-go-name: Description
         type: object
@@ -3325,7 +3323,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkZonePut:
-        description: NetworkZonePut represents the modifiable fields of a LXD network zone
+        description: NetworkZonePut represents the modifiable fields of a network zone
         properties:
             config:
                 additionalProperties:
@@ -3393,7 +3391,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkZoneRecordPut:
-        description: NetworkZoneRecordPut represents the modifiable fields of a LXD network zone record
+        description: NetworkZoneRecordPut represents the modifiable fields of a network zone record
         properties:
             config:
                 additionalProperties:
@@ -3417,7 +3415,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkZoneRecordsPost:
-        description: NetworkZoneRecordsPost represents the fields of a new LXD network zone record
+        description: NetworkZoneRecordsPost represents the fields of a new network zone record
         properties:
             config:
                 additionalProperties:
@@ -3446,7 +3444,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkZonesPost:
-        description: NetworkZonesPost represents the fields of a new LXD network zone
+        description: NetworkZonesPost represents the fields of a new network zone
         properties:
             config:
                 additionalProperties:
@@ -3469,7 +3467,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworksPost:
-        description: NetworksPost represents the fields of a new LXD network
+        description: NetworksPost represents the fields of a new network
         properties:
             config:
                 additionalProperties:
@@ -3483,12 +3481,12 @@ definitions:
                 x-go-name: Config
             description:
                 description: Description of the profile
-                example: My new LXD bridge
+                example: My new bridge
                 type: string
                 x-go-name: Description
             name:
                 description: The name of the new network
-                example: lxdbr1
+                example: mybr1
                 type: string
                 x-go-name: Name
             type:
@@ -3499,7 +3497,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     Operation:
-        description: Operation represents a LXD background operation
+        description: Operation represents a background operation
         properties:
             class:
                 description: Type of operation (task, token or websocket)
@@ -3529,7 +3527,7 @@ definitions:
                 x-go-name: ID
             location:
                 description: What cluster member this record was found on
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: Location
             may_cancel:
@@ -3584,7 +3582,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     Profile:
-        description: Profile represents a LXD profile
+        description: Profile represents a profile
         properties:
             config:
                 additionalProperties:
@@ -3609,7 +3607,7 @@ definitions:
                 example:
                     eth0:
                         name: eth0
-                        network: lxdbr0
+                        network: mybr0
                         type: nic
                     root:
                         path: /
@@ -3636,7 +3634,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ProfilePost:
-        description: ProfilePost represents the fields required to rename a LXD profile
+        description: ProfilePost represents the fields required to rename a profile
         properties:
             name:
                 description: The new name for the profile
@@ -3646,7 +3644,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ProfilePut:
-        description: ProfilePut represents the modifiable fields of a LXD profile
+        description: ProfilePut represents the modifiable fields of a profile
         properties:
             config:
                 additionalProperties:
@@ -3671,7 +3669,7 @@ definitions:
                 example:
                     eth0:
                         name: eth0
-                        network: lxdbr0
+                        network: mybr0
                         type: nic
                     root:
                         path: /
@@ -3682,7 +3680,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ProfilesPost:
-        description: ProfilesPost represents the fields of a new LXD profile
+        description: ProfilesPost represents the fields of a new profile
         properties:
             config:
                 additionalProperties:
@@ -3707,7 +3705,7 @@ definitions:
                 example:
                     eth0:
                         name: eth0
-                        network: lxdbr0
+                        network: mybr0
                         type: nic
                     root:
                         path: /
@@ -3723,7 +3721,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     Project:
-        description: Project represents a LXD project
+        description: Project represents a project
         properties:
             config:
                 additionalProperties:
@@ -3750,7 +3748,7 @@ definitions:
                 example:
                     - /1.0/images/0e60015346f06627f10580d56ac7fffd9ea775f6d4f25987217d5eed94910a20
                     - /1.0/instances/c1
-                    - /1.0/networks/lxdbr0
+                    - /1.0/networks/mybr0
                     - /1.0/profiles/default
                     - /1.0/storage-pools/default/volumes/custom/blah
                 items:
@@ -3761,7 +3759,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ProjectPost:
-        description: ProjectPost represents the fields required to rename a LXD project
+        description: ProjectPost represents the fields required to rename a project
         properties:
             name:
                 description: The new name for the project
@@ -3771,7 +3769,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ProjectPut:
-        description: ProjectPut represents the modifiable fields of a LXD project
+        description: ProjectPut represents the modifiable fields of a project
         properties:
             config:
                 additionalProperties:
@@ -3790,7 +3788,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ProjectState:
-        description: ProjectState represents the current running state of a LXD project
+        description: ProjectState represents the current running state of a project
         properties:
             resources:
                 additionalProperties:
@@ -3809,7 +3807,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ProjectStateResource:
-        description: ProjectStateResource represents the state of a particular resource in a LXD project
+        description: ProjectStateResource represents the state of a particular resource in a project
         properties:
             Limit:
                 description: Limit for the resource (-1 if none)
@@ -3824,7 +3822,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ProjectsPost:
-        description: ProjectsPost represents the fields of a new LXD project
+        description: ProjectsPost represents the fields of a new project
         properties:
             config:
                 additionalProperties:
@@ -3848,7 +3846,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     Resources:
-        description: Resources represents the system resources available for LXD
+        description: Resources represents the system hardware resources
         properties:
             cpu:
                 $ref: '#/definitions/ResourcesCPU'
@@ -5074,7 +5072,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     Server:
-        description: Server represents a LXD server
+        description: Server represents a server configuration
         properties:
             api_extensions:
                 description: List of supported API extensions
@@ -5116,13 +5114,13 @@ definitions:
                 type: array
                 x-go-name: AuthMethods
             auth_user_method:
-                description: The current user login method as seen by LXD
+                description: The current API user login method
                 example: unix
                 readOnly: true
                 type: string
                 x-go-name: AuthUserMethod
             auth_user_name:
-                description: The current user username as seen by LXD
+                description: The current API user identifier
                 example: uid=201105
                 readOnly: true
                 type: string
@@ -5240,7 +5238,7 @@ definitions:
                 x-go-name: Project
             server:
                 description: Server implementation name
-                example: lxd
+                example: incus
                 type: string
                 x-go-name: Server
             server_clustered:
@@ -5261,7 +5259,7 @@ definitions:
                 type: string
                 x-go-name: ServerName
             server_pid:
-                description: PID of the LXD process
+                description: PID of the daemon
                 example: 1453969
                 format: int64
                 type: integer
@@ -5287,11 +5285,11 @@ definitions:
                 example: 1 | 0.8.4-1ubuntu11
                 type: string
                 x-go-name: StorageVersion
-        title: ServerEnvironment represents the read-only environment fields of a LXD server.
+        title: ServerEnvironment represents the read-only environment fields of a server configuration.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ServerPut:
-        description: ServerPut represents the modifiable fields of a LXD server configuration
+        description: ServerPut represents the modifiable fields of a server configuration
         properties:
             config:
                 additionalProperties: {}
@@ -5321,7 +5319,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     ServerUntrusted:
-        description: ServerUntrusted represents a LXD server for an untrusted client
+        description: ServerUntrusted represents a server configuration for an untrusted client
         properties:
             api_extensions:
                 description: List of supported API extensions
@@ -5372,11 +5370,11 @@ definitions:
         x-go-package: github.com/lxc/incus/shared/api
     StatusCode:
         format: int64
-        title: StatusCode represents a valid LXD operation and container status.
+        title: StatusCode represents a valid operation and container status.
         type: integer
         x-go-package: github.com/lxc/incus/shared/api
     StorageBucket:
-        description: StorageBucket represents the fields of a LXD storage pool bucket
+        description: StorageBucket represents the fields of a storage pool bucket
         properties:
             config:
                 additionalProperties:
@@ -5393,7 +5391,7 @@ definitions:
                 x-go-name: Description
             location:
                 description: What cluster member this record was found on
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: Location
             name:
@@ -5409,7 +5407,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageBucketKey:
-        description: StorageBucketKey represents the fields of a LXD storage pool bucket key
+        description: StorageBucketKey represents the fields of a storage pool bucket key
         properties:
             access-key:
                 description: Access key
@@ -5439,7 +5437,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageBucketKeyPut:
-        description: StorageBucketKeyPut represents the modifiable fields of a LXD storage pool bucket key
+        description: StorageBucketKeyPut represents the modifiable fields of a storage pool bucket key
         properties:
             access-key:
                 description: Access key
@@ -5464,7 +5462,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageBucketKeysPost:
-        description: StorageBucketKeysPost represents the fields of a new LXD storage pool bucket key
+        description: StorageBucketKeysPost represents the fields of a new storage pool bucket key
         properties:
             access-key:
                 description: Access key
@@ -5494,7 +5492,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageBucketPut:
-        description: StorageBucketPut represents the modifiable fields of a LXD storage pool bucket
+        description: StorageBucketPut represents the modifiable fields of a storage pool bucket
         properties:
             config:
                 additionalProperties:
@@ -5512,7 +5510,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageBucketsPost:
-        description: StorageBucketsPost represents the fields of a new LXD storage pool bucket
+        description: StorageBucketsPost represents the fields of a new storage pool bucket
         properties:
             config:
                 additionalProperties:
@@ -5558,9 +5556,9 @@ definitions:
             locations:
                 description: Cluster members on which the storage pool has been defined
                 example:
-                    - lxd01
-                    - lxd02
-                    - lxd03
+                    - server01
+                    - server02
+                    - server03
                 items:
                     type: string
                 readOnly: true
@@ -5586,7 +5584,7 @@ definitions:
                     type: string
                 type: array
                 x-go-name: UsedBy
-        title: StoragePool represents the fields of a LXD storage pool.
+        title: StoragePool represents the fields of a storage pool.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StoragePoolPut:
@@ -5605,7 +5603,7 @@ definitions:
                 example: Local SSD pool
                 type: string
                 x-go-name: Description
-        title: StoragePoolPut represents the modifiable fields of a LXD storage pool.
+        title: StoragePoolPut represents the modifiable fields of a storage pool.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StoragePoolState:
@@ -5618,7 +5616,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StoragePoolVolumeBackup:
-        description: StoragePoolVolumeBackup represents a LXD volume backup
+        description: StoragePoolVolumeBackup represents a volume backup
         properties:
             created_at:
                 description: When the backup was created
@@ -5660,7 +5658,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StoragePoolVolumeBackupsPost:
-        description: StoragePoolVolumeBackupsPost represents the fields available for a new LXD volume backup
+        description: StoragePoolVolumeBackupsPost represents the fields available for a new volume backup
         properties:
             compression_algorithm:
                 description: What compression algorithm to use
@@ -5691,7 +5689,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StoragePoolsPost:
-        description: StoragePoolsPost represents the fields of a new LXD storage pool
+        description: StoragePoolsPost represents the fields of a new storage pool
         properties:
             config:
                 additionalProperties:
@@ -5748,7 +5746,7 @@ definitions:
                 x-go-name: Description
             location:
                 description: What cluster member this record was found on
-                example: lxd01
+                example: server01
                 type: string
                 x-go-name: Location
             name:
@@ -5779,11 +5777,11 @@ definitions:
                     type: string
                 type: array
                 x-go-name: UsedBy
-        title: StorageVolume represents the fields of a LXD storage volume.
+        title: StorageVolume represents the fields of a storage volume.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageVolumePost:
-        description: StorageVolumePost represents the fields required to rename a LXD storage pool volume
+        description: StorageVolumePost represents the fields required to rename a storage pool volume
         properties:
             migration:
                 description: Initiate volume migration
@@ -5838,7 +5836,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageVolumePut:
-        description: StorageVolumePut represents the modifiable fields of a LXD storage volume
+        description: StorageVolumePut represents the modifiable fields of a storage volume
         properties:
             config:
                 additionalProperties:
@@ -5862,7 +5860,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageVolumeSnapshot:
-        description: StorageVolumeSnapshot represents a LXD storage volume snapshot
+        description: StorageVolumeSnapshot represents a storage volume snapshot
         properties:
             config:
                 additionalProperties:
@@ -5903,7 +5901,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageVolumeSnapshotPost:
-        description: StorageVolumeSnapshotPost represents the fields required to rename/move a LXD storage volume snapshot
+        description: StorageVolumeSnapshotPost represents the fields required to rename/move a storage volume snapshot
         properties:
             name:
                 description: New snapshot name
@@ -5913,7 +5911,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageVolumeSnapshotPut:
-        description: StorageVolumeSnapshotPut represents the modifiable fields of a LXD storage volume
+        description: StorageVolumeSnapshotPut represents the modifiable fields of a storage volume
         properties:
             description:
                 description: Description of the storage volume
@@ -5929,7 +5927,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageVolumeSnapshotsPost:
-        description: StorageVolumeSnapshotsPost represents the fields available for a new LXD storage volume snapshot
+        description: StorageVolumeSnapshotsPost represents the fields available for a new storage volume snapshot
         properties:
             expires_at:
                 description: When the snapshot expires (gets auto-deleted)
@@ -6027,7 +6025,7 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageVolumesPost:
-        description: StorageVolumesPost represents the fields of a new LXD storage pool volume
+        description: StorageVolumesPost represents the fields of a new storage pool volume
         properties:
             config:
                 additionalProperties:

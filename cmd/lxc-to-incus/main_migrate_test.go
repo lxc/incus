@@ -20,7 +20,7 @@ func TestValidateConfig(t *testing.T) {
 		{
 			"container migrated",
 			[]string{
-				"lxd.migrated = 1",
+				"incus.migrated = 1",
 			},
 			"Container has already been migrated",
 			true,
@@ -92,7 +92,7 @@ func TestValidateConfig(t *testing.T) {
 		},
 	}
 
-	lxcPath, err := os.MkdirTemp("", "lxc-to-lxd-test-")
+	lxcPath, err := os.MkdirTemp("", "lxc-to-incus-test-")
 	require.NoError(t, err)
 	defer require.NoError(t, os.RemoveAll(lxcPath))
 
@@ -201,7 +201,7 @@ func TestConvertNetworkConfig(t *testing.T) {
 		},
 	}
 
-	lxcPath, err := os.MkdirTemp("", "lxc-to-lxd-test-")
+	lxcPath, err := os.MkdirTemp("", "lxc-to-incus-test-")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(lxcPath) }()
 

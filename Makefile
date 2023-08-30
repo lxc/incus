@@ -90,10 +90,10 @@ deps:
 	@echo "export LD_LIBRARY_PATH=\"$(RAFT_PATH)/.libs/:$(COWSQL_PATH)/.libs/\""
 	@echo "export CGO_LDFLAGS_ALLOW=\"(-Wl,-wrap,pthread_create)|(-Wl,-z,now)\""
 
-.PHONY: update
-update:
+.PHONY: update-gomod
+update-gomod:
 ifneq "$(INCUS_OFFLINE)" ""
-	@echo "The update target cannot be run in offline mode."
+	@echo "The update-gomod target cannot be run in offline mode."
 	exit 1
 endif
 	$(GO) get -t -v -d -u ./...

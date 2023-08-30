@@ -39,7 +39,7 @@ func (c *cmdManpage) Run(cmd *cobra.Command, args []string) error {
 	switch c.flagFormat {
 	case "man":
 		header := &doc.GenManHeader{
-			Title:   i18n.G("LXD - Command line client"),
+			Title:   i18n.G("Incus - Command line client"),
 			Section: "1",
 		}
 

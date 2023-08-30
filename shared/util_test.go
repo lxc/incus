@@ -93,7 +93,7 @@ func TestFileCopy(t *testing.T) {
 }
 
 func TestDirCopy(t *testing.T) {
-	dir, err := os.MkdirTemp("", "lxd-shared-util-")
+	dir, err := os.MkdirTemp("", "incus-shared-util-")
 	require.NoError(t, err)
 	defer func() { _ = os.RemoveAll(dir) }()
 

@@ -851,7 +851,7 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 			e := IdmapEntry{Isuid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
 			idmapset.Idmap = Extend(idmapset.Idmap, e)
 
-			// NOTE: Remove once LXD can deal with multiple shadow maps
+			// NOTE: Remove once we can deal with multiple shadow maps
 			break
 		}
 
@@ -875,7 +875,7 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 			e := IdmapEntry{Isgid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
 			idmapset.Idmap = Extend(idmapset.Idmap, e)
 
-			// NOTE: Remove once LXD can deal with multiple shadow maps
+			// NOTE: Remove once we can deal with multiple shadow maps
 			break
 		}
 
@@ -947,7 +947,7 @@ func kernelDefaultMap() (*IdmapSet, error) {
 		e := IdmapEntry{Isuid: true, Isgid: false, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
 		idmapset.Idmap = Extend(idmapset.Idmap, e)
 
-		// NOTE: Remove once LXD can deal with multiple shadow maps
+		// NOTE: Remove once we can deal with multiple shadow maps
 		break
 	}
 
@@ -977,7 +977,7 @@ func kernelDefaultMap() (*IdmapSet, error) {
 		e := IdmapEntry{Isuid: false, Isgid: true, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
 		idmapset.Idmap = Extend(idmapset.Idmap, e)
 
-		// NOTE: Remove once LXD can deal with multiple shadow maps
+		// NOTE: Remove once we can deal with multiple shadow maps
 		break
 	}
 
@@ -1073,7 +1073,7 @@ func GetIdmapSet() *IdmapSet {
 			logger.Warnf("Only privileged containers will be able to run")
 			idmapSet = nil
 		} else {
-			logger.Infof("Configured LXD uid/gid map:")
+			logger.Infof("Configured uid/gid map:")
 			for _, lxcmap := range idmapSet.Idmap {
 				suffix := ""
 

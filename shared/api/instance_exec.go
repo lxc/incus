@@ -9,7 +9,7 @@ type InstanceExecControl struct {
 	Signal  int               `json:"signal" yaml:"signal"`
 }
 
-// InstanceExecPost represents a LXD instance exec request.
+// InstanceExecPost represents an instance exec request.
 //
 // swagger:model
 //

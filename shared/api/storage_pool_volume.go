@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// StorageVolumesPost represents the fields of a new LXD storage pool volume
+// StorageVolumesPost represents the fields of a new storage pool volume
 //
 // swagger:model
 //
@@ -32,7 +32,7 @@ type StorageVolumesPost struct {
 	ContentType string `json:"content_type" yaml:"content_type"`
 }
 
-// StorageVolumePost represents the fields required to rename a LXD storage pool volume
+// StorageVolumePost represents the fields required to rename a storage pool volume
 //
 // swagger:model
 //
@@ -91,7 +91,7 @@ type StorageVolumePostTarget struct {
 	Websockets map[string]string `json:"secrets,omitempty" yaml:"secrets,omitempty"`
 }
 
-// StorageVolume represents the fields of a LXD storage volume.
+// StorageVolume represents the fields of a storage volume.
 //
 // swagger:model
 //
@@ -112,7 +112,7 @@ type StorageVolume struct {
 	UsedBy []string `json:"used_by" yaml:"used_by"`
 
 	// What cluster member this record was found on
-	// Example: lxd01
+	// Example: server01
 	//
 	// API extension: clustering
 	Location string `json:"location" yaml:"location"`
@@ -149,7 +149,7 @@ func (v *StorageVolume) URL(apiVersion string, poolName string) *URL {
 	return u.Project(v.Project).Target(v.Location)
 }
 
-// StorageVolumePut represents the modifiable fields of a LXD storage volume
+// StorageVolumePut represents the modifiable fields of a storage volume
 //
 // swagger:model
 //

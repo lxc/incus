@@ -1,6 +1,6 @@
 package api
 
-// InstanceStatePut represents the modifiable fields of a LXD instance's state.
+// InstanceStatePut represents the modifiable fields of an instance's state.
 //
 // swagger:model
 //
@@ -23,7 +23,7 @@ type InstanceStatePut struct {
 	Stateful bool `json:"stateful" yaml:"stateful"`
 }
 
-// InstanceState represents a LXD instance's state.
+// InstanceState represents an instance's state.
 //
 // swagger:model
 //
@@ -58,7 +58,7 @@ type InstanceState struct {
 	CPU InstanceStateCPU `json:"cpu" yaml:"cpu"`
 }
 
-// InstanceStateDisk represents the disk information section of a LXD instance's state.
+// InstanceStateDisk represents the disk information section of an instance's state.
 //
 // swagger:model
 //
@@ -75,7 +75,7 @@ type InstanceStateDisk struct {
 	Total int64 `json:"total" yaml:"total"`
 }
 
-// InstanceStateCPU represents the cpu information section of a LXD instance's state.
+// InstanceStateCPU represents the cpu information section of an instance's state.
 //
 // swagger:model
 //
@@ -86,7 +86,7 @@ type InstanceStateCPU struct {
 	Usage int64 `json:"usage" yaml:"usage"`
 }
 
-// InstanceStateMemory represents the memory information section of a LXD instance's state.
+// InstanceStateMemory represents the memory information section of an instance's state.
 //
 // swagger:model
 //
@@ -115,7 +115,7 @@ type InstanceStateMemory struct {
 	SwapUsagePeak int64 `json:"swap_usage_peak" yaml:"swap_usage_peak"`
 }
 
-// InstanceStateNetwork represents the network information section of a LXD instance's state.
+// InstanceStateNetwork represents the network information section of an instance's state.
 //
 // swagger:model
 //
@@ -148,7 +148,7 @@ type InstanceStateNetwork struct {
 	Type string `json:"type" yaml:"type"`
 }
 
-// InstanceStateNetworkAddress represents a network address as part of the network section of a LXD
+// InstanceStateNetworkAddress represents a network address as part of the network section of an
 // instance's state.
 //
 // swagger:model
@@ -172,7 +172,7 @@ type InstanceStateNetworkAddress struct {
 	Scope string `json:"scope" yaml:"scope"`
 }
 
-// InstanceStateNetworkCounters represents packet counters as part of the network section of a LXD
+// InstanceStateNetworkCounters represents packet counters as part of the network section of an
 // instance's state.
 //
 // swagger:model

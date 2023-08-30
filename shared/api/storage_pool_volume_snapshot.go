@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// StorageVolumeSnapshotsPost represents the fields available for a new LXD storage volume snapshot
+// StorageVolumeSnapshotsPost represents the fields available for a new storage volume snapshot
 //
 // swagger:model
 //
@@ -21,7 +21,7 @@ type StorageVolumeSnapshotsPost struct {
 	ExpiresAt *time.Time `json:"expires_at" yaml:"expires_at"`
 }
 
-// StorageVolumeSnapshotPost represents the fields required to rename/move a LXD storage volume snapshot
+// StorageVolumeSnapshotPost represents the fields required to rename/move a storage volume snapshot
 //
 // swagger:model
 //
@@ -32,7 +32,7 @@ type StorageVolumeSnapshotPost struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// StorageVolumeSnapshot represents a LXD storage volume snapshot
+// StorageVolumeSnapshot represents a storage volume snapshot
 //
 // swagger:model
 //
@@ -60,7 +60,7 @@ type StorageVolumeSnapshot struct {
 	CreatedAt time.Time `json:"created_at" yaml:"created_at"`
 }
 
-// StorageVolumeSnapshotPut represents the modifiable fields of a LXD storage volume
+// StorageVolumeSnapshotPut represents the modifiable fields of a storage volume
 //
 // swagger:model
 //

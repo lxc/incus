@@ -48,7 +48,7 @@ func (a sortedImages) Less(i, j int) bool {
 		iScore := 0
 		jScore := 0
 
-		// Image types in order of preference for LXD hosts.
+		// Image types in order of preference.
 		for score, pref := range []string{"squashfs", "root.tar.xz", "disk-kvm.img", "uefi1.img", "disk1.img"} {
 			if a[i].Properties["type"] == pref {
 				iScore = score

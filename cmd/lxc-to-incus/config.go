@@ -46,7 +46,7 @@ var checkedKeys = []string{
 	"lxc.tty.max",
 	"lxc.uts.name",
 	"lxc.utsname",
-	"lxd.migrated",
+	"incus.migrated",
 }
 
 func getUnsupportedKeys(config []string) []string {

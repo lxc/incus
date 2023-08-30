@@ -48,16 +48,15 @@ func RFC3493Dialer(context context.Context, network string, address string) (net
 	return nil, fmt.Errorf("%s: %s (%v)", connectErrorPrefix, address, errs)
 }
 
-// IsConnectionError returns true if the given error is due to the dialer not being able to connect to the target
-// LXD server.
+// IsConnectionError returns true if the given error is due to the dialer not being able to connect to the target.
 func IsConnectionError(err error) bool {
-	// FIXME: unfortunately the LXD client currently does not provide a way to differentiate between errors.
+	// FIXME: Unfortunately the client currently does not provide a way to differentiate between errors.
 	return strings.Contains(err.Error(), connectErrorPrefix)
 }
 
 // InitTLSConfig returns a tls.Config populated with default encryption
 // parameters. This is used as baseline config for both client and server
-// certificates used by LXD.
+// certificates.
 func InitTLSConfig() *tls.Config {
 	config := &tls.Config{}
 

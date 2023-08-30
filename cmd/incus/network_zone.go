@@ -355,7 +355,7 @@ func (c *cmdNetworkZoneSet) Command() *cobra.Command {
 		`Set network zone configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc network set [<remote>:]<Zone> <key> <value>`))
+    incus network set [<remote>:]<Zone> <key> <value>`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a network zone property"))
@@ -510,7 +510,7 @@ func (c *cmdNetworkZoneEdit) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Allow output of `lxc network zone show` command to be passed in here, but only take the contents
+		// Allow output of `incus network zone show` command to be passed in here, but only take the contents
 		// of the NetworkZonePut fields when updating the Zone. The other fields are silently discarded.
 		newdata := api.NetworkZone{}
 		err = yaml.UnmarshalStrict(contents, &newdata)
@@ -1102,7 +1102,7 @@ func (c *cmdNetworkZoneRecordEdit) Run(cmd *cobra.Command, args []string) error 
 			return err
 		}
 
-		// Allow output of `lxc network zone show` command to be passed in here, but only take the contents
+		// Allow output of `incus network zone show` command to be passed in here, but only take the contents
 		// of the NetworkZonePut fields when updating the Zone. The other fields are silently discarded.
 		newdata := api.NetworkZoneRecord{}
 		err = yaml.UnmarshalStrict(contents, &newdata)

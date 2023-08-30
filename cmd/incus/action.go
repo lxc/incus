@@ -76,7 +76,7 @@ func (c *cmdRestart) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Restart instances
 
-The opposite of "lxc pause" is "lxc start".`))
+The opposite of "incus pause" is "incus start".`))
 
 	return cmd
 }
@@ -285,7 +285,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 	err = cli.CancelableWait(op, &progress)
 	if err != nil {
 		progress.Done("")
-		return fmt.Errorf("%s\n"+i18n.G("Try `lxc info --show-log %s` for more info"), err, nameArg)
+		return fmt.Errorf("%s\n"+i18n.G("Try `incus info --show-log %s` for more info"), err, nameArg)
 	}
 
 	progress.Done("")

@@ -1,6 +1,6 @@
 package api
 
-// NetworkZonesPost represents the fields of a new LXD network zone
+// NetworkZonesPost represents the fields of a new network zone
 //
 // swagger:model
 //
@@ -13,7 +13,7 @@ type NetworkZonesPost struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// NetworkZonePut represents the modifiable fields of a LXD network zone
+// NetworkZonePut represents the modifiable fields of a network zone
 //
 // swagger:model
 //
@@ -51,7 +51,7 @@ func (f *NetworkZone) Writable() NetworkZonePut {
 	return f.NetworkZonePut
 }
 
-// NetworkZoneRecordsPost represents the fields of a new LXD network zone record
+// NetworkZoneRecordsPost represents the fields of a new network zone record
 //
 // swagger:model
 //
@@ -64,7 +64,7 @@ type NetworkZoneRecordsPost struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// NetworkZoneRecordPut represents the modifiable fields of a LXD network zone record
+// NetworkZoneRecordPut represents the modifiable fields of a network zone record
 //
 // swagger:model
 //

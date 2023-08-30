@@ -90,13 +90,13 @@ func (c *cmdRemoteAdd) Command() *cobra.Command {
 URL for remote resources must be HTTPS (https://).
 
 Basic authentication can be used when combined with the "simplestreams" protocol:
-  lxc remote add some-name https://LOGIN:PASSWORD@example.com/some/path --protocol=simplestreams
+  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path --protocol=simplestreams
 `))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVar(&c.flagAcceptCert, "accept-certificate", false, i18n.G("Accept certificate"))
 	cmd.Flags().StringVar(&c.flagPassword, "password", "", i18n.G("Remote admin password")+"``")
-	cmd.Flags().StringVar(&c.flagProtocol, "protocol", "", i18n.G("Server protocol (lxd or simplestreams)")+"``")
+	cmd.Flags().StringVar(&c.flagProtocol, "protocol", "", i18n.G("Server protocol (incus or simplestreams)")+"``")
 	cmd.Flags().StringVar(&c.flagAuthType, "auth-type", "", i18n.G("Server authentication type (tls or oidc)")+"``")
 	cmd.Flags().BoolVar(&c.flagPublic, "public", false, i18n.G("Public image server"))
 	cmd.Flags().StringVar(&c.flagProject, "project", "", i18n.G("Project to use for the remote")+"``")

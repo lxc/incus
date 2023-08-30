@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-// ResponseRaw represents a LXD operation in its original form.
+// ResponseRaw represents an operation in its original form.
 type ResponseRaw struct {
 	Type ResponseType `json:"type" yaml:"type"`
 
@@ -22,7 +22,7 @@ type ResponseRaw struct {
 	Metadata any `json:"metadata" yaml:"metadata"`
 }
 
-// Response represents a LXD operation.
+// Response represents an operation.
 type Response struct {
 	Type ResponseType `json:"type" yaml:"type"`
 
@@ -79,10 +79,10 @@ func (r *Response) MetadataAsStruct(target any) error {
 	return json.Unmarshal(r.Metadata, &target)
 }
 
-// ResponseType represents a valid LXD response type.
+// ResponseType represents a valid response type.
 type ResponseType string
 
-// LXD response types.
+// Response types.
 const (
 	SyncResponse  ResponseType = "sync"
 	AsyncResponse ResponseType = "async"

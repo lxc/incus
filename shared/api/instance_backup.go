@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// InstanceBackupsPost represents the fields available for a new LXD instance backup.
+// InstanceBackupsPost represents the fields available for a new instance backup.
 //
 // swagger:model
 //
@@ -33,7 +33,7 @@ type InstanceBackupsPost struct {
 	CompressionAlgorithm string `json:"compression_algorithm" yaml:"compression_algorithm"`
 }
 
-// InstanceBackup represents a LXD instance backup.
+// InstanceBackup represents an instance backup.
 //
 // swagger:model
 //

@@ -28,7 +28,7 @@ import (
 	"github.com/lxc/incus/shared/units"
 )
 
-// DirMode represents the file mode for creating dirs on `lxc file pull/push`.
+// DirMode represents the file mode for creating dirs on `incus file pull/push`.
 const DirMode = 0755
 
 type cmdFile struct {
@@ -187,7 +187,7 @@ func (c *cmdFileEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create temp file
-	f, err := os.CreateTemp("", "lxd_file_edit_")
+	f, err := os.CreateTemp("", "incus_file_edit_")
 	if err != nil {
 		return fmt.Errorf(i18n.G("Unable to create a temporary file: %v"), err)
 	}
@@ -237,7 +237,7 @@ func (c *cmdFilePull) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Pull files from instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc file pull foo/etc/hosts .
+		`incus file pull foo/etc/hosts .
    To pull /etc/hosts from the instance and write it to the current directory.`))
 
 	cmd.Flags().BoolVarP(&c.file.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
@@ -456,7 +456,7 @@ func (c *cmdFilePush) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Push files into instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc file push /etc/hosts foo/etc/hosts
+		`incus file push /etc/hosts foo/etc/hosts
    To push /etc/hosts into the instance "foo".`))
 
 	cmd.Flags().BoolVarP(&c.file.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
@@ -960,7 +960,7 @@ func (c *cmdFileMount) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Mount files from instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc file mount foo/root fooroot
+		`incus file mount foo/root fooroot
    To mount /root from the instance foo onto the local fooroot directory.`))
 
 	cmd.RunE = c.Run
@@ -1048,9 +1048,9 @@ func (c *cmdFileMount) sshfsMount(ctx context.Context, resource remoteResource, 
 
 	defer func() { _ = sftpConn.Close() }()
 
-	// Use the format "lxd.<instance_name>" as the source "host" (although not used for communication)
-	// so that the mount can be seen to be associated with LXD and the instance in the local mount table.
-	sourceURL := fmt.Sprintf("lxd.%s:%s", instName, instPath)
+	// Use the format "incus.<instance_name>" as the source "host" (although not used for communication)
+	// so that the mount can be seen to be associated with Incus and the instance in the local mount table.
+	sourceURL := fmt.Sprintf("incus.%s:%s", instName, instPath)
 
 	sshfsCmd := exec.Command(sshfsPath, "-o", "slave", sourceURL, targetPath)
 

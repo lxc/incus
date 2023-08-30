@@ -46,7 +46,7 @@ shell patterns (variables, file redirects, ...) won't be understood.
 If you need a shell environment you need to execute the shell
 executable, passing the shell commands as arguments, for example:
 
-  lxc exec <instance> -- sh -c "cd /tmp && pwd"
+  incus exec <instance> -- sh -c "cd /tmp && pwd"
 
 Mode defaults to non-interactive, interactive mode is selected if both stdin AND stdout are terminals (stderr is ignored).`))
 

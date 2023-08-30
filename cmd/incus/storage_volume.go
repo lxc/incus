@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	lxd "github.com/lxc/incus/client"
+	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	cli "github.com/lxc/incus/shared/cmd"
@@ -415,7 +415,7 @@ func (c *cmdStorageVolumeCopy) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get destination pool and volume name
-	// TODO: Make is possible to run lxc storage volume copy pool/vol/snap new-pool/new-vol/new-snap
+	// TODO: Make is possible to run incus storage volume copy pool/vol/snap new-pool/new-vol/new-snap
 	dstVolName, dstVolPool := c.storageVolume.parseVolumeWithPool(dstPath)
 	if dstVolPool == "" {
 		return fmt.Errorf(i18n.G("No storage pool for target volume specified"))
@@ -427,7 +427,7 @@ func (c *cmdStorageVolumeCopy) Run(cmd *cobra.Command, args []string) error {
 		mode = c.flagMode
 	}
 
-	var op lxd.RemoteOperation
+	var op incus.RemoteOperation
 
 	// Messages
 	opMsg := i18n.G("Copying the storage volume: %s")
@@ -452,7 +452,7 @@ func (c *cmdStorageVolumeCopy) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if cmd.Name() == "move" && srcServer == dstServer {
-		args := &lxd.StoragePoolVolumeMoveArgs{}
+		args := &incus.StoragePoolVolumeMoveArgs{}
 		args.Name = dstVolName
 		args.Mode = mode
 		args.VolumeOnly = false
@@ -463,7 +463,7 @@ func (c *cmdStorageVolumeCopy) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	} else {
-		args := &lxd.StoragePoolVolumeCopyArgs{}
+		args := &incus.StoragePoolVolumeCopyArgs{}
 		args.Name = dstVolName
 		args.Mode = mode
 		args.VolumeOnly = c.flagVolumeOnly
@@ -850,7 +850,7 @@ func (c *cmdStorageVolumeEdit) Command() *cobra.Command {
 		`Provide the type of the storage volume if it is not custom.
 Supported types are custom, image, container and virtual-machine.
 
-lxc storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume.yaml
+incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume.yaml
     Update a storage volume using the content of pool.yaml.`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -1061,10 +1061,10 @@ Supported types are custom, image, container and virtual-machine.
 
 Add the name of the snapshot if type is one of custom, container or virtual-machine.
 
-lxc storage volume get default data size
+incus storage volume get default data size
     Returns the size of a custom volume "data" in pool "default".
 
-lxc storage volume get default virtual-machine/data snapshots.expiry
+incus storage volume get default virtual-machine/data snapshots.expiry
     Returns the snapshot expiration period for a virtual machine "data" in pool "default".`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -1174,10 +1174,10 @@ func (c *cmdStorageVolumeInfo) Command() *cobra.Command {
 		`Provide the type of the storage volume if it is not custom.
 Supported types are custom, container and virtual-machine.
 
-lxc storage volume info default data
+incus storage volume info default data
     Returns state information for a custom volume "data" in pool "default".
 
-lxc storage volume info default virtual-machine/data
+incus storage volume info default virtual-machine/data
     Returns state information for a virtual machine "data" in pool "default".`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -1757,15 +1757,15 @@ func (c *cmdStorageVolumeSet) Command() *cobra.Command {
 		`Set storage volume configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc storage volume set [<remote>:]<pool> [<type>/]<volume> <key> <value>`))
+    incus storage volume set [<remote>:]<pool> [<type>/]<volume> <key> <value>`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`Provide the type of the storage volume if it is not custom.
 Supported types are custom, image, container and virtual-machine.
 
-lxc storage volume set default data size=1GiB
+incus storage volume set default data size=1GiB
     Sets the size of a custom volume "data" in pool "default" to 1 GiB.
 
-lxc storage volume set default virtual-machine/data snapshots.expiry=7d
+incus storage volume set default virtual-machine/data snapshots.expiry=7d
     Sets the snapshot expiration period for a virtual machine "data" in pool "default" to seven days.`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -1905,13 +1905,13 @@ Supported types are custom, image, container and virtual-machine.
 
 Add the name of the snapshot if type is one of custom, container or virtual-machine.
 
-lxc storage volume show default data
+incus storage volume show default data
     Will show the properties of a custom volume called "data" in the "default" pool.
 
-lxc storage volume show default container/data
+incus storage volume show default container/data
     Will show the properties of the filesystem for a container called "data" in the "default" pool.
 
-lxc storage volume show default virtual-machine/data/snap0
+incus storage volume show default virtual-machine/data/snap0
     Will show the properties of snapshot "snap0" for a virtual machine called "data" in the "default" pool.`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -2012,10 +2012,10 @@ func (c *cmdStorageVolumeUnset) Command() *cobra.Command {
 		`Provide the type of the storage volume if it is not custom.
 Supported types are custom, image, container and virtual-machine.
 
-lxc storage volume unset default data size
+incus storage volume unset default data size
     Remotes the size/quota of a custom volume "data" in pool "default".
 
-lxc storage volume unset default virtual-machine/data snapshots.expiry
+incus storage volume unset default virtual-machine/data snapshots.expiry
     Removes the snapshot expiration period for a virtual machine "data" in pool "default".`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -2238,7 +2238,7 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Connect to LXD
+	// Connect to the daemon.
 	remote, name, err := conf.ParseRemote(args[0])
 	if err != nil {
 		return err
@@ -2340,7 +2340,7 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 		Quiet:  c.global.flagQuiet,
 	}
 
-	backupFileRequest := lxd.BackupFileRequest{
+	backupFileRequest := incus.BackupFileRequest{
 		BackupFile:      io.WriteSeeker(target),
 		ProgressHandler: progress.UpdateProgress,
 	}
@@ -2373,7 +2373,7 @@ func (c *cmdStorageVolumeImport) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Import backups of custom volumes including their snapshots.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc storage volume import default backup0.tar.gz
+		`incus storage volume import default backup0.tar.gz
 		Create a new custom volume using backup0.tar.gz as the source.`))
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
@@ -2391,7 +2391,7 @@ func (c *cmdStorageVolumeImport) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Connect to LXD.
+	// Connect to the daemon.
 	remote, pool, err := conf.ParseRemote(args[0])
 	if err != nil {
 		return err
@@ -2447,7 +2447,7 @@ func (c *cmdStorageVolumeImport) Run(cmd *cobra.Command, args []string) error {
 		Quiet:  c.global.flagQuiet,
 	}
 
-	createArgs := lxd.StoragePoolVolumeBackupArgs{
+	createArgs := incus.StoragePoolVolumeBackupArgs{
 		BackupFile: &ioprogress.ProgressReader{
 			ReadCloser: file,
 			Tracker: &ioprogress.ProgressTracker{
@@ -2460,7 +2460,7 @@ func (c *cmdStorageVolumeImport) Run(cmd *cobra.Command, args []string) error {
 		Name: volName,
 	}
 
-	var op lxd.Operation
+	var op incus.Operation
 
 	if c.flagType == "iso" {
 		op, err = d.CreateStoragePoolVolumeFromISO(pool, createArgs)

@@ -35,19 +35,19 @@ type cmdMigrate struct {
 
 func (c *cmdMigrate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "lxd-migrate"
+	cmd.Use = "incus-migrate"
 	cmd.Short = "Physical to instance migration tool"
 	cmd.Long = `Description:
   Physical to instance migration tool
 
   This tool lets you turn any Linux filesystem (including your current one)
-  into a LXD instance on a remote LXD host.
+  into an instance on a remote host.
 
   It will setup a clean mount tree made of the root filesystem and any
-  additional mount you list, then transfer this through LXD's migration
+  additional mount you list, then transfer this through the migration
   API to create a new instance from it.
 
-  The same set of options as ` + "`lxc launch`" + ` are also supported.
+  The same set of options as ` + "`incus launch`" + ` are also supported.
 `
 	cmd.RunE = c.Run
 	cmd.Flags().StringVar(&c.flagRsyncArgs, "rsync-args", "", "Extra arguments to pass to rsync"+"``")
@@ -112,7 +112,7 @@ func (c *cmdMigrateData) Render() string {
 
 func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 	// Server address
-	serverURL, err := cli.AskString("Please provide LXD server URL: ", "", nil)
+	serverURL, err := cli.AskString("Please provide Incus server URL: ", "", nil)
 	if err != nil {
 		return nil, "", err
 	}
@@ -165,7 +165,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		authMethodTLSCertificateToken
 	)
 
-	// TLS is always available for LXD servers
+	// TLS is always available
 	var availableAuthMethods []AuthMethod
 	var authMethod AuthMethod
 
@@ -492,7 +492,7 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create the temporary directory to be used for the mounts
-	path, err := os.MkdirTemp("", "lxd-migrate_mount_")
+	path, err := os.MkdirTemp("", "incus-migrate_mount_")
 	if err != nil {
 		return err
 	}

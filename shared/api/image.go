@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// ImageExportPost represents the fields required to export a LXD image
+// ImageExportPost represents the fields required to export an image
 //
 // swagger:model
 //
@@ -38,14 +38,14 @@ type ImageExportPost struct {
 	Profiles []string `json:"profiles" yaml:"profiles"`
 }
 
-// ImagesPost represents the fields available for a new LXD image
+// ImagesPost represents the fields available for a new image
 //
 // swagger:model
 type ImagesPost struct {
 	ImagePut `yaml:",inline"`
 
 	// Original filename of the image
-	// Example: lxd.tar.xz
+	// Example: image.tar.xz
 	Filename string `json:"filename" yaml:"filename"`
 
 	// Source of the image
@@ -64,7 +64,7 @@ type ImagesPost struct {
 	Aliases []ImageAlias `json:"aliases" yaml:"aliases"`
 }
 
-// ImagesPostSource represents the source of a new LXD image
+// ImagesPostSource represents the source of a new image
 //
 // swagger:model
 type ImagesPostSource struct {
@@ -101,7 +101,7 @@ type ImagesPostSource struct {
 	Project string `json:"project" yaml:"project"`
 }
 
-// ImagePut represents the modifiable fields of a LXD image
+// ImagePut represents the modifiable fields of an image
 //
 // swagger:model
 type ImagePut struct {
@@ -130,7 +130,7 @@ type ImagePut struct {
 	Profiles []string `json:"profiles" yaml:"profiles"`
 }
 
-// Image represents a LXD image
+// Image represents an image
 //
 // swagger:model
 type Image struct {
@@ -176,7 +176,7 @@ type Image struct {
 	// Example: 2021-03-22T20:39:00.575185384-04:00
 	LastUsedAt time.Time `json:"last_used_at" yaml:"last_used_at"`
 
-	// When the image was added to this LXD server
+	// When the image was added to this server
 	// Example: 2021-03-24T14:18:15.115036787-04:00
 	UploadedAt time.Time `json:"uploaded_at" yaml:"uploaded_at"`
 }
@@ -191,7 +191,7 @@ func (img *Image) URL(apiVersion string, project string) *URL {
 	return NewURL().Path(apiVersion, "images", img.Fingerprint).Project(project)
 }
 
-// ImageAlias represents an alias from the alias list of a LXD image
+// ImageAlias represents an alias from the alias list of an image
 //
 // swagger:model
 type ImageAlias struct {
@@ -204,7 +204,7 @@ type ImageAlias struct {
 	Description string `json:"description" yaml:"description"`
 }
 
-// ImageSource represents the source of a LXD image
+// ImageSource represents the source of an image
 //
 // swagger:model
 type ImageSource struct {
@@ -231,14 +231,14 @@ type ImageSource struct {
 	ImageType string `json:"image_type" yaml:"image_type"`
 }
 
-// ImageAliasesPost represents a new LXD image alias
+// ImageAliasesPost represents a new image alias
 //
 // swagger:model
 type ImageAliasesPost struct {
 	ImageAliasesEntry `yaml:",inline"`
 }
 
-// ImageAliasesEntryPost represents the required fields to rename a LXD image alias
+// ImageAliasesEntryPost represents the required fields to rename an image alias
 //
 // swagger:model
 type ImageAliasesEntryPost struct {
@@ -247,7 +247,7 @@ type ImageAliasesEntryPost struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// ImageAliasesEntryPut represents the modifiable fields of a LXD image alias
+// ImageAliasesEntryPut represents the modifiable fields of an image alias
 //
 // swagger:model
 type ImageAliasesEntryPut struct {
@@ -260,7 +260,7 @@ type ImageAliasesEntryPut struct {
 	Target string `json:"target" yaml:"target"`
 }
 
-// ImageAliasesEntry represents a LXD image alias
+// ImageAliasesEntry represents an image alias
 //
 // swagger:model
 type ImageAliasesEntry struct {
@@ -277,7 +277,7 @@ type ImageAliasesEntry struct {
 	Type string `json:"type" yaml:"type"`
 }
 
-// ImageMetadata represents LXD image metadata (used in image tarball)
+// ImageMetadata represents image metadata (used in image tarball)
 //
 // swagger:model
 type ImageMetadata struct {

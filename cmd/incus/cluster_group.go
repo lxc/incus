@@ -84,10 +84,10 @@ func (c *cmdClusterGroupAssign) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Assign sets of groups to cluster members`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc cluster group assign foo default,bar
+		`incus cluster group assign foo default,bar
     Set the groups for "foo" to "default" and "bar".
 
-lxc cluster group assign foo default
+incus cluster group assign foo default
     Reset "foo" to only using the "default" cluster group.`))
 
 	cmd.RunE = c.Run
@@ -416,7 +416,7 @@ func (c *cmdClusterGroupList) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !cluster.Enabled {
-		return fmt.Errorf(i18n.G("LXD server isn't part of a cluster"))
+		return fmt.Errorf(i18n.G("Server isn't part of a cluster"))
 	}
 
 	groups, err := resource.server.GetClusterGroups()

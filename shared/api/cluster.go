@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-// Cluster represents high-level information about a LXD cluster.
+// Cluster represents high-level information about a cluster.
 //
 // swagger:model
 //
 // API extension: clustering.
 type Cluster struct {
 	// Name of the cluster member answering the request
-	// Example: lxd01
+	// Example: server01
 	ServerName string `json:"server_name" yaml:"server_name"`
 
 	// Whether clustering is enabled
@@ -59,8 +59,7 @@ type ClusterMemberConfigKey struct {
 	Description string `json:"description" yaml:"description"`
 }
 
-// ClusterPut represents the fields required to bootstrap or join a LXD
-// cluster.
+// ClusterPut represents the fields required to bootstrap or join a cluster.
 //
 // swagger:model
 //
@@ -96,7 +95,7 @@ type ClusterPut struct {
 // API extension: clustering_join_token.
 type ClusterMembersPost struct {
 	// The name of the new cluster member
-	// Example: lxd02
+	// Example: server02
 	ServerName string `json:"server_name" yaml:"server_name"`
 }
 
@@ -107,7 +106,7 @@ type ClusterMembersPost struct {
 // API extension: clustering_join_token.
 type ClusterMemberJoinToken struct {
 	// The name of the new cluster member
-	// Example: lxd02
+	// Example: server02
 	ServerName string `json:"server_name" yaml:"server_name"`
 
 	// The fingerprint of the network certificate
@@ -137,18 +136,18 @@ func (t *ClusterMemberJoinToken) String() string {
 	return base64.StdEncoding.EncodeToString(joinTokenJSON)
 }
 
-// ClusterMemberPost represents the fields required to rename a LXD node.
+// ClusterMemberPost represents the fields required to rename a cluster member.
 //
 // swagger:model
 //
 // API extension: clustering.
 type ClusterMemberPost struct {
 	// The new name of the cluster member
-	// Example: lxd02
+	// Example: server02
 	ServerName string `json:"server_name" yaml:"server_name"`
 }
 
-// ClusterMember represents the a LXD node in the cluster.
+// ClusterMember represents a member of a cluster.
 //
 // swagger:model
 //
@@ -157,7 +156,7 @@ type ClusterMember struct {
 	ClusterMemberPut `yaml:",inline"`
 
 	// Name of the cluster member
-	// Example: lxd01
+	// Example: server01
 	ServerName string `json:"server_name" yaml:"server_name"`
 
 	// URL at which the cluster member can be reached
@@ -188,7 +187,7 @@ func (member *ClusterMember) Writable() ClusterMemberPut {
 	return member.ClusterMemberPut
 }
 
-// ClusterMemberPut represents the modifiable fields of a LXD cluster member
+// ClusterMemberPut represents the modifiable fields of a cluster member
 //
 // swagger:model
 //
@@ -225,7 +224,7 @@ type ClusterMemberPut struct {
 	Groups []string `json:"groups" yaml:"groups"`
 }
 
-// ClusterCertificatePut represents the certificate and key pair for all members in a LXD Cluster
+// ClusterCertificatePut represents the certificate and key pair for all cluster members
 //
 // swagger:model
 //

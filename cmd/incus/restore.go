@@ -26,10 +26,10 @@ func (c *cmdRestore) Command() *cobra.Command {
 
 If --stateful is passed, then the running state will be restored too.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc snapshot u1 snap0
+		`incus snapshot u1 snap0
     Create the snapshot.
 
-lxc restore u1 snap0
+incus restore u1 snap0
     Restore the snapshot.`))
 
 	cmd.RunE = c.Run
@@ -47,7 +47,7 @@ func (c *cmdRestore) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Connect to LXD
+	// Connect to the daemon.
 	remote, name, err := conf.ParseRemote(args[0])
 	if err != nil {
 		return err

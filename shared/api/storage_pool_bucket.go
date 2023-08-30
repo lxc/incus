@@ -1,6 +1,6 @@
 package api
 
-// StorageBucketsPost represents the fields of a new LXD storage pool bucket
+// StorageBucketsPost represents the fields of a new storage pool bucket
 //
 // swagger:model
 //
@@ -15,7 +15,7 @@ type StorageBucketsPost struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// StorageBucketPut represents the modifiable fields of a LXD storage pool bucket
+// StorageBucketPut represents the modifiable fields of a storage pool bucket
 //
 // swagger:model
 //
@@ -34,7 +34,7 @@ type StorageBucketPut struct {
 	Description string `json:"description" yaml:"description"`
 }
 
-// StorageBucket represents the fields of a LXD storage pool bucket
+// StorageBucket represents the fields of a storage pool bucket
 //
 // swagger:model
 //
@@ -55,7 +55,7 @@ type StorageBucket struct {
 	S3URL string `json:"s3_url" yaml:"s3_url"`
 
 	// What cluster member this record was found on
-	// Example: lxd01
+	// Example: server01
 	//
 	// API extension: storage_buckets
 	Location string `json:"location" yaml:"location"`
@@ -76,7 +76,7 @@ func (b *StorageBucket) URL(apiVersion string, poolName string, projectName stri
 	return NewURL().Path(apiVersion, "storage-pools", poolName, "buckets", b.Name).Project(projectName).Target(b.Location)
 }
 
-// StorageBucketKeysPost represents the fields of a new LXD storage pool bucket key
+// StorageBucketKeysPost represents the fields of a new storage pool bucket key
 //
 // swagger:model
 //
@@ -91,7 +91,7 @@ type StorageBucketKeysPost struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// StorageBucketKeyPut represents the modifiable fields of a LXD storage pool bucket key
+// StorageBucketKeyPut represents the modifiable fields of a storage pool bucket key
 //
 // swagger:model
 //
@@ -122,7 +122,7 @@ type StorageBucketKeyPut struct {
 	SecretKey string `json:"secret-key" yaml:"secret-key"`
 }
 
-// StorageBucketKey represents the fields of a LXD storage pool bucket key
+// StorageBucketKey represents the fields of a storage pool bucket key
 //
 // swagger:model
 //

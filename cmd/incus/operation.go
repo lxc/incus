@@ -184,7 +184,7 @@ func (c *cmdOperationShow) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show details on a background operation`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a
+		`incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a
     Show details on that operation UUID`))
 
 	cmd.RunE = c.Run
