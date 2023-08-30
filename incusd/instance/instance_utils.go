@@ -131,20 +131,6 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 		return fmt.Errorf("No uid/gid allocation configured. In this mode, only privileged containers are supported")
 	}
 
-	unprivOnly := os.Getenv("INCUS_UNPRIVILEGED_ONLY")
-	if shared.IsTrue(unprivOnly) {
-		if config["raw.idmap"] != "" {
-			err := AllowedUnprivilegedOnlyMap(config["raw.idmap"])
-			if err != nil {
-				return err
-			}
-		}
-
-		if shared.IsTrue(config["security.privileged"]) {
-			return fmt.Errorf("The server was configured to only allow unprivileged containers")
-		}
-	}
-
 	if shared.IsTrue(config["security.privileged"]) && shared.IsTrue(config["nvidia.runtime"]) {
 		return fmt.Errorf("nvidia.runtime is incompatible with privileged containers")
 	}
@@ -214,13 +200,6 @@ func lxcValidConfig(rawLxc string) error {
 
 		if key == "" {
 			continue
-		}
-
-		unprivOnly := os.Getenv("INCUS_UNPRIVILEGED_ONLY")
-		if shared.IsTrue(unprivOnly) {
-			if key == "lxc.idmap" || key == "lxc.id_map" || key == "lxc.include" {
-				return fmt.Errorf("%s can't be set in raw.lxc as the server was configured to only allow unprivileged containers", key)
-			}
 		}
 
 		// block some keys
