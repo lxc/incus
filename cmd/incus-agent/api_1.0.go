@@ -12,7 +12,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/response"
-	lxdvsock "github.com/lxc/incus/incusd/vsock"
+	localvsock "github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	agentAPI "github.com/lxc/incus/shared/api/agent"
@@ -61,7 +61,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 		Kernel:             uname.Sysname,
 		KernelArchitecture: uname.Machine,
 		KernelVersion:      uname.Release,
-		Server:             "lxd-agent",
+		Server:             "incus-agent",
 		ServerPid:          os.Getpid(),
 		ServerVersion:      version.Version,
 		ServerName:         serverName,
@@ -97,7 +97,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 		return response.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}
 
-	// Try connecting to LXD server.
+	// Try connecting to the host.
 	client, err := getClient(d.serverCID, int(d.serverPort), d.serverCertificate)
 	if err != nil {
 		return response.ErrorResponse(http.StatusInternalServerError, err.Error())
@@ -110,7 +110,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 
 	defer server.Disconnect()
 
-	// Let LXD know, we were able to connect successfully.
+	// Let the host know, we were able to connect successfully.
 	d.chConnected <- struct{}{}
 
 	if d.DevIncusEnabled {
@@ -135,7 +135,7 @@ func startDevIncusServer(d *Daemon) error {
 		return nil
 	}
 
-	servers["DevIncus"] = devLxdServer(d)
+	servers["DevIncus"] = devIncusServer(d)
 
 	// Prepare the DevIncus server.
 	DevIncusListener, err := createDevIncuslListener("/dev")
@@ -182,7 +182,7 @@ func getClient(CID uint32, port int, serverCertificate string) (*http.Client, er
 		return nil, err
 	}
 
-	client, err := lxdvsock.HTTPClient(CID, port, string(agentCert), string(agentKey), serverCertificate)
+	client, err := localvsock.HTTPClient(CID, port, string(agentCert), string(agentKey), serverCertificate)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func getClient(CID uint32, port int, serverCertificate string) (*http.Client, er
 }
 
 func startHTTPServer(d *Daemon, debug bool) error {
-	// Setup the listener on VM's context ID for inbound connections from LXD.
+	// Setup the listener on VM's context ID for inbound connections from the host.
 	l, err := vsock.Listen(shared.HTTPSDefaultPort, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to listen on vsock: %w", err)

@@ -6,21 +6,21 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-type devLxdResponse struct {
+type devIncusResponse struct {
 	content any
 	code    int
 	ctype   string
 }
 
-func errorResponse(code int, msg string) *devLxdResponse {
-	return &devLxdResponse{msg, code, "raw"}
+func errorResponse(code int, msg string) *devIncusResponse {
+	return &devIncusResponse{msg, code, "raw"}
 }
 
-func okResponse(ct any, ctype string) *devLxdResponse {
-	return &devLxdResponse{ct, http.StatusOK, ctype}
+func okResponse(ct any, ctype string) *devIncusResponse {
+	return &devIncusResponse{ct, http.StatusOK, ctype}
 }
 
-func smartResponse(err error) *devLxdResponse {
+func smartResponse(err error) *devIncusResponse {
 	if err == nil {
 		return okResponse(nil, "")
 	}
