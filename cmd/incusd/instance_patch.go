@@ -88,6 +88,9 @@ func instancePatch(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
+	unlock := instanceOperationLock(s.ShutdownCtx, projectName, name)
+	defer unlock()
+
 	c, err := instance.LoadByProjectAndName(s, projectName, name)
 	if err != nil {
 		return response.SmartError(err)
