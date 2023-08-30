@@ -62,7 +62,7 @@ func (s *Server) setup() {
 	}
 
 	// Spawn the BGP goroutines.
-	s.bgp = bgpServer.NewBgpServer()
+	s.bgp = bgpServer.NewBgpServer(bgpServer.LoggerOption(&logWrapper{logger.Log}))
 	go s.bgp.Serve()
 
 	// Insert any path that's already defined.
