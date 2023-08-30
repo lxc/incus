@@ -35,7 +35,7 @@ type cmdMigrate struct {
 
 func (c *cmdMigrate) Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "lxc-to-lxd",
+		Use:   "lxc-to-incus",
 		Short: i18n.G("Command line client for container migration"),
 	}
 
@@ -64,7 +64,8 @@ func (c *cmdMigrate) RunE(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr, "You must either pass container names or --all")
 		os.Exit(1)
 	}
-	// Connect to LXD
+
+	// Connect to the daemon
 	d, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return err
@@ -103,7 +104,7 @@ func (c *cmdMigrate) RunE(cmd *cobra.Command, args []string) error {
 func validateConfig(conf []string, container *liblxc.Container) error {
 	// Checking whether container has already been migrated
 	fmt.Println("Checking whether container has already been migrated")
-	if len(getConfig(conf, "lxd.migrated")) > 0 {
+	if len(getConfig(conf, "incus.migrated")) > 0 {
 		return fmt.Errorf("Container has already been migrated")
 	}
 
@@ -217,9 +218,9 @@ func convertContainer(d incus.InstanceServer, container *liblxc.Container, stora
 
 	newConfig := make(map[string]string)
 
-	value := getConfig(conf, "lxd.idmap")
+	value := getConfig(conf, "lxc.idmap")
 	if value == nil {
-		value = getConfig(conf, "lxd.id_map")
+		value = getConfig(conf, "lxc.id_map")
 	}
 
 	if value == nil {
@@ -334,7 +335,7 @@ func convertContainer(d incus.InstanceServer, container *liblxc.Container, stora
 	value = getConfig(conf, "lxc.cap.drop")
 	if value != nil {
 		for _, cap := range strings.Split(value[0], " ") {
-			// Ignore capabilities that are dropped in LXD containers by default.
+			// Ignore capabilities that are dropped in containers by default.
 			if shared.StringInSlice(cap, []string{"mac_admin", "mac_override", "sys_module",
 				"sys_time"}) {
 				continue
@@ -449,7 +450,7 @@ func convertContainer(d incus.InstanceServer, container *liblxc.Container, stora
 
 	if debug {
 		out, _ := json.MarshalIndent(req, "", "  ")
-		fmt.Printf("LXD container config:\n%v\n", string(out))
+		fmt.Printf("Container config:\n%v\n", string(out))
 	}
 
 	// Create container
@@ -569,7 +570,7 @@ func convertStorageConfig(conf []string, devices map[string]map[string]string) e
 			return fmt.Errorf("Invalid mount configuration: %s", mount)
 		}
 
-		// Ignore mounts that are present in LXD containers by default.
+		// Ignore mounts that are present in containers by default.
 		if shared.StringInSlice(parts[0], []string{"proc", "sysfs"}) {
 			continue
 		}
