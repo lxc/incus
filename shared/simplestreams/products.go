@@ -25,7 +25,7 @@ type Product struct {
 	Aliases         string                    `json:"aliases"`
 	Architecture    string                    `json:"arch"`
 	OperatingSystem string                    `json:"os"`
-	LXDRequirements map[string]string         `json:"lxd_requirements,omitempty"`
+	Requirements    map[string]string         `json:"requirements,omitempty"`
 	Release         string                    `json:"release"`
 	ReleaseCodename string                    `json:"release_codename,omitempty"`
 	ReleaseTitle    string                    `json:"release_title"`
@@ -47,22 +47,22 @@ type ProductVersion struct {
 
 // ProductVersionItem represents a file/item of a particular ProductVersion.
 type ProductVersionItem struct {
-	LXDHashSha256DiskImg     string `json:"combined_disk1-img_sha256,omitempty"`
-	LXDHashSha256DiskKvmImg  string `json:"combined_disk-kvm-img_sha256,omitempty"`
-	LXDHashSha256DiskUefiImg string `json:"combined_uefi1-img_sha256,omitempty"`
-	LXDHashSha256RootXz      string `json:"combined_rootxz_sha256,omitempty"`
-	LXDHashSha256            string `json:"combined_sha256,omitempty"`
-	LXDHashSha256SquashFs    string `json:"combined_squashfs_sha256,omitempty"`
-	FileType                 string `json:"ftype"`
-	HashMd5                  string `json:"md5,omitempty"`
-	Path                     string `json:"path"`
-	HashSha256               string `json:"sha256,omitempty"`
-	Size                     int64  `json:"size"`
-	DeltaBase                string `json:"delta_base,omitempty"`
+	CombinedSha256DiskImg     string `json:"combined_disk1-img_sha256,omitempty"`
+	CombinedSha256DiskKvmImg  string `json:"combined_disk-kvm-img_sha256,omitempty"`
+	CombinedSha256DiskUefiImg string `json:"combined_uefi1-img_sha256,omitempty"`
+	CombinedSha256RootXz      string `json:"combined_rootxz_sha256,omitempty"`
+	CombinedSha256            string `json:"combined_sha256,omitempty"`
+	CombinedSha256SquashFs    string `json:"combined_squashfs_sha256,omitempty"`
+	FileType                  string `json:"ftype"`
+	HashMd5                   string `json:"md5,omitempty"`
+	Path                      string `json:"path"`
+	HashSha256                string `json:"sha256,omitempty"`
+	Size                      int64  `json:"size"`
+	DeltaBase                 string `json:"delta_base,omitempty"`
 }
 
-// ToLXD converts the products data into a list of LXD images and associated downloadable files.
-func (s *Products) ToLXD() ([]api.Image, map[string][][]string) {
+// ToAPI converts the products data into a list of API images and associated downloadable files.
+func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 	downloads := map[string][][]string{}
 
 	images := []api.Image{}
@@ -108,26 +108,26 @@ func (s *Products) ToLXD() ([]api.Image, map[string][][]string) {
 				fingerprint := ""
 				if root != nil {
 					if root.FileType == "root.tar.xz" {
-						if meta.LXDHashSha256RootXz != "" {
-							fingerprint = meta.LXDHashSha256RootXz
+						if meta.CombinedSha256RootXz != "" {
+							fingerprint = meta.CombinedSha256RootXz
 						} else {
-							fingerprint = meta.LXDHashSha256
+							fingerprint = meta.CombinedSha256
 						}
 					} else if root.FileType == "squashfs" {
-						fingerprint = meta.LXDHashSha256SquashFs
+						fingerprint = meta.CombinedSha256SquashFs
 					} else if root.FileType == "disk-kvm.img" {
-						fingerprint = meta.LXDHashSha256DiskKvmImg
+						fingerprint = meta.CombinedSha256DiskKvmImg
 					} else if root.FileType == "disk1.img" {
-						fingerprint = meta.LXDHashSha256DiskImg
+						fingerprint = meta.CombinedSha256DiskImg
 					} else if root.FileType == "uefi1.img" {
-						fingerprint = meta.LXDHashSha256DiskUefiImg
+						fingerprint = meta.CombinedSha256DiskUefiImg
 					}
 				} else {
 					fingerprint = meta.HashSha256
 				}
 
 				if fingerprint == "" {
-					return fmt.Errorf("No LXD image fingerprint found")
+					return fmt.Errorf("No image fingerprint found")
 				}
 
 				// Figure out the size
@@ -170,8 +170,8 @@ func (s *Products) ToLXD() ([]api.Image, map[string][][]string) {
 					"description":  description,
 				}
 
-				for lxdReq, lxdReqVal := range product.LXDRequirements {
-					image.Properties["requirements."+lxdReq] = lxdReqVal
+				for key, value := range product.Requirements {
+					image.Properties["requirements."+key] = value
 				}
 
 				if product.Variant != "" {
@@ -234,11 +234,11 @@ func (s *Products) ToLXD() ([]api.Image, map[string][][]string) {
 					// Locate source image fingerprint
 					var srcFingerprint string
 					for _, item := range srcImage.Items {
-						if item.FileType != "lxd.tar.xz" {
+						if item.FileType != "incus.tar.xz" {
 							continue
 						}
 
-						srcFingerprint = item.LXDHashSha256SquashFs
+						srcFingerprint = item.CombinedSha256SquashFs
 						break
 					}
 
@@ -262,16 +262,16 @@ func (s *Products) ToLXD() ([]api.Image, map[string][][]string) {
 				return nil
 			}
 
-			// Locate a valid LXD image
+			// Locate a valid image
 			for _, item := range version.Items {
-				if item.FileType == "lxd_combined.tar.gz" {
+				if item.FileType == "incus_combined.tar.gz" {
 					err := addImage(&item, nil)
 					if err != nil {
 						continue
 					}
 				}
 
-				if item.FileType == "lxd.tar.xz" {
+				if item.FileType == "incus.tar.xz" {
 					// Locate the root files
 					for _, subItem := range version.Items {
 						if shared.StringInSlice(subItem.FileType, []string{"disk1.img", "disk-kvm.img", "uefi1.img", "root.tar.xz", "squashfs"}) {
