@@ -21,7 +21,7 @@ func (o *OperatorSet) isValid() bool {
 	return o.And != "" && o.Or != "" && o.Equals != "" && o.NotEquals != "" && o.Negate != "" && len(o.Quote) > 0
 }
 
-// QueryOperatorSet returns the default operator set for LXD API queries.
+// QueryOperatorSet returns the default operator set for REST API queries.
 func QueryOperatorSet() OperatorSet {
 	return OperatorSet{
 		And:       "and",
