@@ -5,9 +5,12 @@ _have incus && {
     {
       local state=$1
       local keys=$2
+      local project
+      project=$(incus project list -f csv | sed -n 's/^\([^(]\+\) (current),.*/\1/ p')
+      project=${project:-"default"}
 
-      local cmd="incus list --format=csv --columns=ns"
-      [ -n "$state" ] && cmd="$cmd | grep -E '$state$'"
+      local cmd="incus list --format=csv --columns=ns --project $project"
+      [ -n "$state" ] && cmd="$cmd | grep -E ',$state$'"
 
       COMPREPLY=( $( compgen -W \
         "$( eval $cmd | cut -d, -f1 ) $keys" "$cur" )
