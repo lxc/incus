@@ -33,11 +33,11 @@ func (c *cmdInfo) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance or server information`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc info [<remote>:]<instance> [--show-log]
+		`incus info [<remote>:]<instance> [--show-log]
     For instance information.
 
-lxc info [<remote>:] [--resources]
-    For LXD server information.`))
+incus info [<remote>:] [--resources]
+    For server information.`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVar(&c.flagShowLog, "show-log", false, i18n.G("Show the instance's last 100 log lines?"))

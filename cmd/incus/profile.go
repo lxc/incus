@@ -167,13 +167,13 @@ func (c *cmdProfileAssign) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Assign sets of profiles to instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc profile assign foo default,bar
+		`incus profile assign foo default,bar
     Set the profiles for "foo" to "default" and "bar".
 
-lxc profile assign foo default
+incus profile assign foo default
     Reset "foo" to only using the "default" profile.
 
-lxc profile assign foo ''
+incus profile assign foo ''
     Remove all profile from "foo"`))
 
 	cmd.RunE = c.Run
@@ -424,7 +424,7 @@ func (c *cmdProfileEdit) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit profile configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc profile edit <profile> < profile.yaml
+		`incus profile edit <profile> < profile.yaml
     Update a profile using the content of profile.yaml`))
 
 	cmd.RunE = c.Run
@@ -447,7 +447,7 @@ func (c *cmdProfileEdit) helpTemplate() string {
 ### devices:
 ###   eth0:
 ###     nictype: bridged
-###     parent: lxdbr0
+###     parent: mybr0
 ###     type: nic
 ###
 ### Note that the name is shown but cannot be changed`)
@@ -803,7 +803,7 @@ func (c *cmdProfileSet) Command() *cobra.Command {
 		`Set profile configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc profile set [<remote>:]<profile> <key> <value>`))
+    incus profile set [<remote>:]<profile> <key> <value>`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a profile property"))

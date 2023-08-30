@@ -40,7 +40,7 @@ func TestShouldShow(t *testing.T) {
 			"eth0": {
 				"name":    "eth0",
 				"type":    "nic",
-				"parent":  "lxdbr0",
+				"parent":  "mybr0",
 				"nictype": "bridged",
 			},
 		},

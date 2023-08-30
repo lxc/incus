@@ -155,7 +155,7 @@ func (c *cmdClusterList) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !cluster.Enabled {
-		return fmt.Errorf(i18n.G("LXD server isn't part of a cluster"))
+		return fmt.Errorf(i18n.G("Server isn't part of a cluster"))
 	}
 
 	// Get the cluster members
@@ -534,8 +534,8 @@ func (c *cmdClusterRemove) promptConfirmation(name string) error {
 resort.
 
 The removed server will not be functional after this action and will require a
-full reset of LXD, losing any remaining instance, image or storage volume
-that the server may have held.
+full reset, losing any remaining instance, image or storage volume that
+the server may have held.
 
 When possible, a graceful removal should be preferred, this will require you to
 move any affected instance, image or storage volume to another server prior to
@@ -600,15 +600,15 @@ type cmdClusterEnable struct {
 func (c *cmdClusterEnable) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("enable", i18n.G("[<remote>:] <name>"))
-	cmd.Short = i18n.G("Enable clustering on a single non-clustered LXD server")
+	cmd.Short = i18n.G("Enable clustering on a single non-clustered server")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Enable clustering on a single non-clustered LXD server
+		`Enable clustering on a single non-clustered server
 
-  This command turns a non-clustered LXD server into the first member of a new
-  LXD cluster, which will have the given name.
+  This command turns a non-clustered server into the first member of a new
+  cluster, which will have the given name.
 
-  It's required that the LXD is already available on the network. You can check
-  that by running 'lxc config get core.https_address', and possibly set a value
+  It's required that the server is already available on the network. You can check
+  that by running 'incus config get core.https_address', and possibly set a value
   for the address if not yet set.`))
 
 	cmd.RunE = c.Run
@@ -638,14 +638,14 @@ func (c *cmdClusterEnable) Run(cmd *cobra.Command, args []string) error {
 
 	resource := resources[0]
 
-	// Check if the LXD server is available on the network.
+	// Check if the server is available on the network.
 	server, _, err := resource.server.GetServer()
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve current server config: %w", err)
 	}
 
 	if server.Config["core.https_address"] == "" {
-		return fmt.Errorf(i18n.G("This LXD server is not available on the network"))
+		return fmt.Errorf(i18n.G("This server is not available on the network"))
 	}
 
 	// Check if already enabled
@@ -655,7 +655,7 @@ func (c *cmdClusterEnable) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if currentCluster.Enabled {
-		return fmt.Errorf(i18n.G("This LXD server is already clustered"))
+		return fmt.Errorf(i18n.G("This server is already clustered"))
 	}
 
 	// Enable clustering.
@@ -689,7 +689,7 @@ func (c *cmdClusterEdit) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit cluster member configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc cluster edit <cluster member> < member.yaml
+		`incus cluster edit <cluster member> < member.yaml
     Update a cluster member using the content of member.yaml`))
 
 	cmd.RunE = c.Run
@@ -912,7 +912,7 @@ func (c *cmdClusterListTokens) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !cluster.Enabled {
-		return fmt.Errorf(i18n.G("LXD server isn't part of a cluster"))
+		return fmt.Errorf(i18n.G("Server isn't part of a cluster"))
 	}
 
 	// Get the cluster member join tokens. Use default project as join tokens are created in default project.
@@ -1006,7 +1006,7 @@ func (c *cmdClusterRevokeToken) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !cluster.Enabled {
-		return fmt.Errorf(i18n.G("LXD server isn't part of a cluster"))
+		return fmt.Errorf(i18n.G("Server isn't part of a cluster"))
 	}
 
 	// Get the cluster member join tokens. Use default project as join tokens are created in default project.
@@ -1097,7 +1097,7 @@ func (c *cmdClusterUpdateCertificate) Run(cmd *cobra.Command, args []string) err
 	}
 
 	if !cluster.Enabled {
-		return fmt.Errorf(i18n.G("LXD server isn't part of a cluster"))
+		return fmt.Errorf(i18n.G("Server isn't part of a cluster"))
 	}
 
 	if !shared.PathExists(certFile) {

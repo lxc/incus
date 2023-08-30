@@ -221,7 +221,7 @@ func (c *cmdProjectEdit) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit project configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc project edit <project> < project.yaml
+		`incus project edit <project> < project.yaml
     Update a project using the content of project.yaml`))
 
 	cmd.RunE = c.Run
@@ -581,7 +581,7 @@ func (c *cmdProjectSet) Command() *cobra.Command {
 		`Set project configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc project set [<remote>:]<project> <key> <value>`))
+    incus project set [<remote>:]<project> <key> <value>`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a project property"))

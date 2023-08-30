@@ -220,7 +220,7 @@ func (c *cmdStorageEdit) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit storage pool configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc storage edit [<remote>:]<pool> < pool.yaml
+		`incus storage edit [<remote>:]<pool> < pool.yaml
     Update a storage pool using the content of pool.yaml.`))
 
 	cmd.RunE = c.Run
@@ -241,7 +241,7 @@ func (c *cmdStorageEdit) helpTemplate() string {
 ### used_by: []
 ### config:
 ###   size: "61203283968"
-###   source: /home/chb/mnt/lxd_test/default.img
+###   source: default
 ###   zfs.pool_name: default`)
 }
 
@@ -666,7 +666,7 @@ func (c *cmdStorageSet) Command() *cobra.Command {
 		`Set storage pool configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc storage set [<remote>:]<pool> <key> <value>`))
+    incus storage set [<remote>:]<pool> <key> <value>`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a storage property"))

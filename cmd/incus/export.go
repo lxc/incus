@@ -32,7 +32,7 @@ func (c *cmdExport) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Export instances as backup tarballs.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc export u1 backup0.tar.gz
+		`incus export u1 backup0.tar.gz
     Download a backup tarball of the u1 instance.`))
 
 	cmd.RunE = c.Run
@@ -54,7 +54,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Connect to LXD
+	// Connect to the daemon.
 	remote, name, err := conf.ParseRemote(args[0])
 	if err != nil {
 		return err

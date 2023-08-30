@@ -400,7 +400,7 @@ func (c *cmdNetworkPeerSet) Command() *cobra.Command {
 		`Set network peer keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc network set [<remote>:]<network> <peer_name> <key> <value>`))
+    incus network set [<remote>:]<network> <peer_name> <key> <value>`))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a network peer property"))
@@ -569,7 +569,7 @@ func (c *cmdNetworkPeerEdit) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Allow output of `lxc network peer show` command to be passed in here, but only take the contents
+		// Allow output of `incus network peer show` command to be passed in here, but only take the contents
 		// of the NetworkPeerPut fields when updating. The other fields are silently discarded.
 		newData := api.NetworkPeer{}
 		err = yaml.UnmarshalStrict(contents, &newData)

@@ -399,7 +399,7 @@ func (c *cmdNetworkForwardSet) Command() *cobra.Command {
 		`Set network forward keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc network set [<remote>:]<network> <listen_address> <key> <value>`))
+    incus network set [<remote>:]<network> <listen_address> <key> <value>`))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a network forward property"))
@@ -549,7 +549,7 @@ func (c *cmdNetworkForwardEdit) helpTemplate() string {
 ###   listen_port: 80,81,8080-8090
 ###   target_address: 198.51.100.3
 ###   target_port: 80,81,8080-8090
-### location: lxd01
+### location: server01
 ###
 ### Note that the listen_address and location cannot be changed.`)
 }
@@ -591,7 +591,7 @@ func (c *cmdNetworkForwardEdit) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Allow output of `lxc network forward show` command to be passed in here, but only take the
+		// Allow output of `incus network forward show` command to be passed in here, but only take the
 		// contents of the NetworkForwardPut fields when updating. The other fields are silently discarded.
 		newData := api.NetworkForward{}
 		err = yaml.UnmarshalStrict(contents, &newData)

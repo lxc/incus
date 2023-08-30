@@ -108,7 +108,7 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Unknown output type %q"), c.flagType)
 	}
 
-	// Connect to LXD
+	// Connect to the daemon.
 	remote, name, err := conf.ParseRemote(args[0])
 	if err != nil {
 		return err
@@ -374,7 +374,7 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 			_ = cmd.Process.Kill()
 		}()
 	} else {
-		fmt.Println(i18n.G("LXD automatically uses either spicy or remote-viewer when present."))
+		fmt.Println(i18n.G("The client automatically uses either spicy or remote-viewer when present."))
 		fmt.Println(i18n.G("As neither could be found, the raw SPICE socket can be found at:"))
 		fmt.Printf("  %s\n", socket)
 

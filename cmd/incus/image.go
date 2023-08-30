@@ -37,11 +37,11 @@ func (c *cmdImage) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage images
 
-In LXD instances are created from images. Those images were themselves
+Instances are created from images. Those images were themselves
 either generated from an existing instance or downloaded from an image
 server.
 
-When using remote images, LXD will automatically cache images for you
+When using remote images, the server will automatically cache images for you
 and remove them upon expiration.
 
 The image unique identifier is the hash (sha-256) of its representation
@@ -363,10 +363,10 @@ func (c *cmdImageEdit) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit image properties`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc image edit <image>
+		`incus image edit <image>
     Launch a text editor to edit the properties
 
-lxc image edit <image> < image.yaml
+incus image edit <image> < image.yaml
     Load the image properties from a YAML file`))
 
 	cmd.RunE = c.Run
@@ -667,7 +667,7 @@ func (c *cmdImageImport) packImageDir(path string) (string, error) {
 		return "", fmt.Errorf(i18n.G("Must run as root to import from directory"))
 	}
 
-	outFile, err := os.CreateTemp("", "lxd_image_")
+	outFile, err := os.CreateTemp("", "incus_image_")
 	if err != nil {
 		return "", err
 	}

@@ -400,7 +400,7 @@ func (c *cmdNetworkLoadBalancerSet) Command() *cobra.Command {
 		`Set network load balancer keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc network set [<remote>:]<network> <listen_address> <key> <value>`))
+    incus network set [<remote>:]<network> <listen_address> <key> <value>`))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a network load balancer property"))
@@ -550,7 +550,7 @@ func (c *cmdNetworkLoadBalancerEdit) helpTemplate() string {
 ###   listen_port: 80,81,8080-8090
 ###   target_address: 198.51.100.3
 ###   target_port: 80,81,8080-8090
-### location: lxd01
+### location: server01
 ###
 ### Note that the listen_address and location cannot be changed.`)
 }
@@ -592,7 +592,7 @@ func (c *cmdNetworkLoadBalancerEdit) Run(cmd *cobra.Command, args []string) erro
 			return err
 		}
 
-		// Allow output of `lxc network load-balancer show` command to be passed in here, but only take the
+		// Allow output of `incus network load-balancer show` command to be passed in here, but only take the
 		// contents of the NetworkLoadBalancerPut fields when updating.
 		// The other fields are silently discarded.
 		newData := api.NetworkLoadBalancer{}

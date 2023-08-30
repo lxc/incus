@@ -74,12 +74,12 @@ func main() {
 
 	// Setup the parser
 	app := &cobra.Command{}
-	app.Use = "lxc"
-	app.Short = i18n.G("Command line client for LXD")
+	app.Use = "incus"
+	app.Short = i18n.G("Command line client for Incus")
 	app.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Command line client for LXD
+		`Command line client for Incus
 
-All of LXD's features can be driven through the various commands below.
+All of Incus's features can be driven through the various commands below.
 For help with any of those, simply call them with --help.`))
 	app.SilenceUsage = true
 	app.SilenceErrors = true
@@ -281,11 +281,10 @@ For help with any of those, simply call them with --help.`))
 	if err != nil {
 		// Handle non-Linux systems
 		if err == config.ErrNotLinux {
-			fmt.Fprintf(os.Stderr, i18n.G(`This client hasn't been configured to use a remote LXD server yet.
-As your platform can't run native Linux instances, you must connect to a remote LXD server.
+			fmt.Fprintf(os.Stderr, i18n.G(`This client hasn't been configured to use a remote server yet.
+As your platform can't run native Linux instances, you must connect to a remote server.
 
-If you already added a remote server, make it the default with "lxc remote switch NAME".
-To easily setup a local LXD server in a virtual machine, consider using: https://multipass.run`)+"\n")
+If you already added a remote server, make it the default with "incus remote switch NAME".`)+"\n")
 			os.Exit(1)
 		}
 
@@ -352,8 +351,8 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 
 	// If the user is running a command that may attempt to connect to the local daemon
 	// and this is the first time the client has been run by the user, then check to see
-	// if LXD has been properly configured.  Don't display the message if the var path
-	// does not exist (LXD not installed), as the user may be targeting a remote daemon.
+	// if the server has been properly configured.  Don't display the message if the var path
+	// does not exist (server missing), as the user may be targeting a remote daemon.
 	if !c.flagForceLocal && shared.PathExists(shared.VarPath("")) && !shared.PathExists(c.confPath) {
 		// Create the config dir so that we don't get in here again for this user.
 		err = os.MkdirAll(c.conf.ConfigDir, 0750)
@@ -384,13 +383,13 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 
 		flush := false
 		if runInit {
-			fmt.Fprintf(os.Stderr, i18n.G("If this is your first time running LXD on this machine, you should also run: lxd init")+"\n")
+			fmt.Fprintf(os.Stderr, i18n.G("If this is your first time running Incus on this machine, you should also run: incus admin init")+"\n")
 			flush = true
 		}
 
 		if !shared.StringInSlice(cmd.Name(), []string{"init", "launch"}) {
-			fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: lxc launch images:ubuntu/22.04
-Or for a virtual machine: lxc launch images:ubuntu/22.04 --vm`)+"\n")
+			fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:ubuntu/22.04
+Or for a virtual machine: incus launch images:ubuntu/22.04 --vm`)+"\n")
 			flush = true
 		}
 

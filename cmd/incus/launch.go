@@ -24,15 +24,15 @@ func (c *cmdLaunch) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create and start instances from images`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc launch images:ubuntu/22.04 u1
+		`incus launch images:ubuntu/22.04 u1
 
-lxc launch images:ubuntu/22.04 u1 < config.yaml
+incus launch images:ubuntu/22.04 u1 < config.yaml
     Create and start a container with configuration from config.yaml
 
-lxc launch images:ubuntu/22.04 u2 -t aws:t2.micro
+incus launch images:ubuntu/22.04 u2 -t aws:t2.micro
     Create and start a container using the same size as an AWS t2.micro (1 vCPU, 1GiB of RAM)
 
-lxc launch images:ubuntu/22.04 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB
+incus launch images:ubuntu/22.04 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB
     Create and start a virtual machine with 4 vCPUs and 4GiB of RAM`))
 	cmd.Hidden = false
 
@@ -107,7 +107,7 @@ func (c *cmdLaunch) Run(cmd *cobra.Command, args []string) error {
 			prettyName = fmt.Sprintf("%s:%s", remote, name)
 		}
 
-		return fmt.Errorf("%s\n"+i18n.G("Try `lxc info --show-log %s` for more info"), err, prettyName)
+		return fmt.Errorf("%s\n"+i18n.G("Try `incus info --show-log %s` for more info"), err, prettyName)
 	}
 
 	progress.Done("")

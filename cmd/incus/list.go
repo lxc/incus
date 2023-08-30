@@ -120,12 +120,12 @@ Custom columns are defined with "[config:|devices:]key[:name][:maxWidth]":
   Defaults to -1 (unlimited). Use 0 to limit to the column header size.`))
 
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP
+		`incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP
   Show instances using the "NAME", "BASE IMAGE", "STATE", "IPV4", "IPV6" and "MAC" columns.
   "BASE IMAGE", "MAC" and "IMAGE OS" are custom columns generated from instance configuration keys.
   "ETHP" is a custom column generated from a device key.
 
-lxc list -c ns,user.comment:comment
+incus list -c ns,user.comment:comment
   List instances with their running state and user comment.`))
 
 	cmd.RunE = c.Run
@@ -488,7 +488,7 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 		remote = conf.DefaultRemote
 	}
 
-	// Connect to LXD
+	// Connect to the daemon.
 	d, err := conf.GetInstanceServer(remote)
 	if err != nil {
 		return err

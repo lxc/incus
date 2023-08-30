@@ -32,25 +32,25 @@ func (c *cmdMove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("move", i18n.G("[<remote>:]<instance>[/<snapshot>] [<remote>:][<instance>[/<snapshot>]]"))
 	cmd.Aliases = []string{"mv"}
-	cmd.Short = i18n.G("Move instances within or in between LXD servers")
+	cmd.Short = i18n.G("Move instances within or in between servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Move instances within or in between LXD servers
+		`Move instances within or in between servers
 
 Transfer modes (--mode):
  - pull: Target server pulls the data from the source server (source must listen on network)
  - push: Source server pushes the data to the target server (target must listen on network)
  - relay: The CLI connects to both source and server and proxies the data (both source and target must listen on network)
 
-The pull transfer mode is the default as it is compatible with all LXD versions.
+The pull transfer mode is the default as it is compatible with all server versions.
 `))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc move [<remote>:]<source instance> [<remote>:][<destination instance>] [--instance-only]
+		`incus move [<remote>:]<source instance> [<remote>:][<destination instance>] [--instance-only]
     Move an instance between two hosts, renaming it if destination name differs.
 
-lxc move <old name> <new name> [--instance-only]
+incus move <old name> <new name> [--instance-only]
     Rename a local instance.
 
-lxc move <instance>/<old snapshot name> <instance>/<new snapshot name>
+incus move <instance>/<old snapshot name> <instance>/<new snapshot name>
     Rename a snapshot.`))
 
 	cmd.RunE = c.Run
@@ -188,7 +188,7 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		if !dest.IsClustered() {
-			return fmt.Errorf(i18n.G("The destination LXD server is not clustered"))
+			return fmt.Errorf(i18n.G("The destination server is not clustered"))
 		}
 	}
 
@@ -286,7 +286,7 @@ func moveClusterInstance(conf *config.Config, sourceResource string, destResourc
 
 	// Check that it's a cluster
 	if !source.IsClustered() {
-		return fmt.Errorf(i18n.G("The source LXD server is not clustered"))
+		return fmt.Errorf(i18n.G("The source server is not clustered"))
 	}
 
 	// The migrate API will do the right thing when passed a target.

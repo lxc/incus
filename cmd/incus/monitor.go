@@ -29,19 +29,19 @@ type cmdMonitor struct {
 func (c *cmdMonitor) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("monitor", i18n.G("[<remote>:]"))
-	cmd.Short = i18n.G("Monitor a local or remote LXD server")
+	cmd.Short = i18n.G("Monitor a local or remote server")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Monitor a local or remote LXD server
+		`Monitor a local or remote server
 
 By default the monitor will listen to all message types.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc monitor --type=logging
+		`incus monitor --type=logging
     Only show log messages.
 
-lxc monitor --pretty --type=logging --loglevel=info
+incus monitor --pretty --type=logging --loglevel=info
     Show a pretty log of messages with info level or higher.
 
-lxc monitor --type=lifecycle
+incus monitor --type=lifecycle
     Only show lifecycle events.`))
 	cmd.Hidden = true
 

@@ -52,7 +52,7 @@ func (c *cmdConfig) Command() *cobra.Command {
 	configProfileCmd := cmdProfile{global: c.global}
 	profileCmd := configProfileCmd.Command()
 	profileCmd.Hidden = true
-	profileCmd.Deprecated = i18n.G("please use `lxc profile`")
+	profileCmd.Deprecated = i18n.G("please use `incus profile`")
 	cmd.AddCommand(profileCmd)
 
 	// Set
@@ -95,7 +95,7 @@ func (c *cmdConfigEdit) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit instance or server configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc config edit <instance> < instance.yaml
+		`incus config edit <instance> < instance.yaml
     Update the instance configuration from config.yaml.`))
 
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -514,15 +514,15 @@ func (c *cmdConfigSet) Command() *cobra.Command {
 		`Set instance or server configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc config set [<remote>:][<instance>] <key> <value>`))
+    incus config set [<remote>:][<instance>] <key> <value>`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc config set [<remote>:]<instance> limits.cpu=2
+		`incus config set [<remote>:]<instance> limits.cpu=2
     Will set a CPU limit of "2" for the instance.
 
-lxc config set core.https_address=[::]:8443
-    Will have LXD listen on IPv4 and IPv6 port 8443.
+incus config set core.https_address=[::]:8443
+    Will have the server listen on IPv4 and IPv6 port 8443.
 
-lxc config set core.trust_password=blah
+incus config set core.trust_password=blah
     Will set the server's trust password to blah.`))
 
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")

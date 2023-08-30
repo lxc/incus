@@ -242,7 +242,7 @@ func (c *cmdStorageBucketEdit) Command() *cobra.Command {
 	cmd.Use = usage("edit", i18n.G("[<remote>:]<pool> <bucket>"))
 	cmd.Short = i18n.G("Edit storage bucket configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Edit storage bucket configurations as YAML`))
-	cmd.Example = cli.FormatSection("", i18n.G(`lxc storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml
+	cmd.Example = cli.FormatSection("", i18n.G(`incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml
     Update a storage bucket using the content of bucket.yaml.`))
 
 	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -296,7 +296,7 @@ func (c *cmdStorageBucketEdit) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Allow output of `lxc storage bucket show` command to be passed in here, but only take the
+		// Allow output of `incus storage bucket show` command to be passed in here, but only take the
 		// contents of the StorageBucketPut fields when updating.
 		// The other fields are silently discarded.
 		newdata := api.StorageBucketPut{}
@@ -531,7 +531,7 @@ func (c *cmdStorageBucketSet) Command() *cobra.Command {
 		`Set storage bucket configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    lxc storage bucket set [<remote>:]<pool> <bucket> <key> <value>`))
+    incus storage bucket set [<remote>:]<pool> <bucket> <key> <value>`))
 
 	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a storage bucket property"))
@@ -623,7 +623,7 @@ func (c *cmdStorageBucketShow) Command() *cobra.Command {
 	cmd.Short = i18n.G("Show storage bucket configurations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Show storage bucket configurations`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc storage bucket show default data
+		`incus storage bucket show default data
     Will show the properties of a bucket called "data" in the "default" pool.`))
 
 	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -987,7 +987,7 @@ func (c *cmdStorageBucketKeyEdit) Command() *cobra.Command {
 	cmd.Use = usage("edit", i18n.G("[<remote>:]<pool> <bucket> <key>"))
 	cmd.Short = i18n.G("Edit storage bucket key as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Edit storage bucket key as YAML`))
-	cmd.Example = cli.FormatSection("", i18n.G(`lxc storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml
+	cmd.Example = cli.FormatSection("", i18n.G(`incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml
     Update a storage bucket key using the content of key.yaml.`))
 
 	cmd.Flags().StringVar(&c.storageBucketKey.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -1045,7 +1045,7 @@ func (c *cmdStorageBucketKeyEdit) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Allow output of `lxc storage bucket key show` command to be passed in here, but only take the
+		// Allow output of `incus storage bucket key show` command to be passed in here, but only take the
 		// contents of the StorageBucketPut fields when updating.
 		// The other fields are silently discarded.
 		newdata := api.StorageBucketKeyPut{}
@@ -1123,7 +1123,7 @@ func (c *cmdStorageBucketKeyShow) Command() *cobra.Command {
 	cmd.Short = i18n.G("Show storage bucket key configurations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Show storage bucket key configurations`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`lxc storage bucket key show default data foo
+		`incus storage bucket key show default data foo
     Will show the properties of a bucket key called "foo" for a bucket called "data" in the "default" pool.`))
 
 	cmd.Flags().StringVar(&c.storageBucketKey.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
