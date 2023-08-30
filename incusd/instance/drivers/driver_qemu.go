@@ -2454,6 +2454,11 @@ func (d *qemu) generateConfigShare() error {
 		} else {
 			d.logger.Debug("Skipping incus-agent install as unchanged", logger.Ctx{"srcPath": agentSrcPath, "installPath": agentInstallPath})
 		}
+
+		err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
+		if err != nil && !os.IsExist(err) {
+			return err
+		}
 	}
 
 	agentCert, agentKey, clientCert, _, err := d.generateAgentCert()
