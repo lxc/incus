@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-08-16 00:09-0400\n"
+"POT-Creation-Date: 2023-08-30 00:40-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -42,7 +42,7 @@ msgid ""
 "### used_by: []\n"
 "### config:\n"
 "###   size: \"61203283968\"\n"
-"###   source: /home/chb/mnt/lxd_test/default.img\n"
+"###   source: default\n"
 "###   zfs.pool_name: default"
 msgstr ""
 
@@ -176,7 +176,7 @@ msgid ""
 "###   listen_port: 80,81,8080-8090\n"
 "###   target_address: 198.51.100.3\n"
 "###   target_port: 80,81,8080-8090\n"
-"### location: lxd01\n"
+"### location: server01\n"
 "###\n"
 "### Note that the listen_address and location cannot be changed."
 msgstr ""
@@ -200,7 +200,7 @@ msgid ""
 "###   listen_port: 80,81,8080-8090\n"
 "###   target_address: 198.51.100.3\n"
 "###   target_port: 80,81,8080-8090\n"
-"### location: lxd01\n"
+"### location: server01\n"
 "###\n"
 "### Note that the listen_address and location cannot be changed."
 msgstr ""
@@ -258,7 +258,7 @@ msgid ""
 "### A network consists of a set of configuration items.\n"
 "###\n"
 "### An example would look like:\n"
-"### name: lxdbr0\n"
+"### name: mybr0\n"
 "### config:\n"
 "###   ipv4.address: 10.62.42.1/24\n"
 "###   ipv4.nat: true\n"
@@ -285,7 +285,7 @@ msgid ""
 "### devices:\n"
 "###   eth0:\n"
 "###     nictype: bridged\n"
-"###     parent: lxdbr0\n"
+"###     parent: mybr0\n"
 "###     type: nic\n"
 "###\n"
 "### Note that the name is shown but cannot be changed"
@@ -534,7 +534,7 @@ msgid ""
 "\n"
 "Basic authentication can be used when combined with the \"simplestreams\" "
 "protocol:\n"
-"  lxc remote add some-name https://LOGIN:PASSWORD@example.com/some/path --"
+"  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path --"
 "protocol=simplestreams\n"
 msgstr ""
 
@@ -1073,14 +1073,14 @@ msgid "Columns"
 msgstr ""
 
 #: cmd/incus/main.go:78
-msgid "Command line client for LXD"
+msgid "Command line client for Incus"
 msgstr ""
 
 #: cmd/incus/main.go:79
 msgid ""
-"Command line client for LXD\n"
+"Command line client for Incus\n"
 "\n"
-"All of LXD's features can be driven through the various commands below.\n"
+"All of Incus's features can be driven through the various commands below.\n"
 "For help with any of those, simply call them with --help."
 msgstr ""
 
@@ -1157,12 +1157,12 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/copy.go:39
-msgid "Copy instances within or in between LXD servers"
+msgid "Copy instances within or in between servers"
 msgstr ""
 
 #: cmd/incus/copy.go:40
 msgid ""
-"Copy instances within or in between LXD servers\n"
+"Copy instances within or in between servers\n"
 "\n"
 "Transfer modes (--mode):\n"
 " - pull: Target server pulls the data from the source server (source must "
@@ -1172,7 +1172,7 @@ msgid ""
 " - relay: The CLI connects to both source and server and proxies the data "
 "(both source and target must listen on network)\n"
 "\n"
-"The pull transfer mode is the default as it is compatible with all LXD "
+"The pull transfer mode is the default as it is compatible with all server "
 "versions.\n"
 msgstr ""
 
@@ -1299,7 +1299,7 @@ msgstr ""
 msgid ""
 "Create instance snapshots\n"
 "\n"
-"When --stateful is used, LXD attempts to checkpoint the instance's\n"
+"When --stateful is used, attempt to checkpoint the instance's\n"
 "running state, including process memory state, TCP connections, ..."
 msgstr ""
 
@@ -1896,20 +1896,19 @@ msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
 
 #: cmd/incus/cluster.go:603
-msgid "Enable clustering on a single non-clustered LXD server"
+msgid "Enable clustering on a single non-clustered server"
 msgstr ""
 
 #: cmd/incus/cluster.go:604
 msgid ""
-"Enable clustering on a single non-clustered LXD server\n"
+"Enable clustering on a single non-clustered server\n"
 "\n"
-"  This command turns a non-clustered LXD server into the first member of a "
-"new\n"
-"  LXD cluster, which will have the given name.\n"
+"  This command turns a non-clustered server into the first member of a new\n"
+"  cluster, which will have the given name.\n"
 "\n"
-"  It's required that the LXD is already available on the network. You can "
+"  It's required that the server is already available on the network. You can "
 "check\n"
-"  that by running 'lxc config get core.https_address', and possibly set a "
+"  that by running 'incus config get core.https_address', and possibly set a "
 "value\n"
 "  for the address if not yet set."
 msgstr ""
@@ -2000,7 +1999,7 @@ msgid ""
 "If you need a shell environment you need to execute the shell\n"
 "executable, passing the shell commands as arguments, for example:\n"
 "\n"
-"  lxc exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
+"  incus exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
 "\n"
 "Mode defaults to non-interactive, interactive mode is selected if both stdin "
 "AND stdout are terminals (stderr is ignored)."
@@ -2257,8 +2256,8 @@ msgid ""
 "\n"
 "The removed server will not be functional after this action and will require "
 "a\n"
-"full reset of LXD, losing any remaining instance, image or storage volume\n"
-"that the server may have held.\n"
+"full reset, losing any remaining instance, image or storage volume that\n"
+"the server may have held.\n"
 "\n"
 "When possible, a graceful removal should be preferred, this will require you "
 "to\n"
@@ -2570,10 +2569,10 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:387
+#: cmd/incus/main.go:386
 msgid ""
-"If this is your first time running LXD on this machine, you should also run: "
-"lxd init"
+"If this is your first time running Incus on this machine, you should also "
+"run: incus admin init"
 msgstr ""
 
 #: cmd/incus/snapshot.go:39
@@ -2669,6 +2668,10 @@ msgstr ""
 #: cmd/incus/import.go:93
 #, c-format
 msgid "Importing instance: %s"
+msgstr ""
+
+#: cmd/incus/manpage.go:42
+msgid "Incus - Command line client"
 msgstr ""
 
 #: cmd/incus/info.go:227
@@ -2791,7 +2794,7 @@ msgstr ""
 msgid "Invalid new snapshot name, parent volume must be the same as source"
 msgstr ""
 
-#: cmd/incus/main.go:482
+#: cmd/incus/main.go:481
 msgid "Invalid number of arguments"
 msgstr ""
 
@@ -2851,19 +2854,6 @@ msgstr ""
 #: cmd/incus/operation.go:168 cmd/incus/storage_bucket.go:511
 #: cmd/incus/storage_volume.go:1514 cmd/incus/warning.go:220
 msgid "LOCATION"
-msgstr ""
-
-#: cmd/incus/manpage.go:42
-msgid "LXD - Command line client"
-msgstr ""
-
-#: cmd/incus/console.go:377
-msgid "LXD automatically uses either spicy or remote-viewer when present."
-msgstr ""
-
-#: cmd/incus/cluster.go:158 cmd/incus/cluster.go:915 cmd/incus/cluster.go:1009
-#: cmd/incus/cluster.go:1100 cmd/incus/cluster_group.go:419
-msgid "LXD server isn't part of a cluster"
 msgstr ""
 
 #: cmd/incus/info.go:491
@@ -3310,11 +3300,12 @@ msgstr ""
 msgid ""
 "Manage images\n"
 "\n"
-"In LXD instances are created from images. Those images were themselves\n"
+"Instances are created from images. Those images were themselves\n"
 "either generated from an existing instance or downloaded from an image\n"
 "server.\n"
 "\n"
-"When using remote images, LXD will automatically cache images for you\n"
+"When using remote images, the server will automatically cache images for "
+"you\n"
 "and remove them upon expiration.\n"
 "\n"
 "The image unique identifier is the hash (sha-256) of its representation\n"
@@ -3681,12 +3672,12 @@ msgid "Model: %v"
 msgstr ""
 
 #: cmd/incus/monitor.go:32
-msgid "Monitor a local or remote LXD server"
+msgid "Monitor a local or remote server"
 msgstr ""
 
 #: cmd/incus/monitor.go:33
 msgid ""
-"Monitor a local or remote LXD server\n"
+"Monitor a local or remote server\n"
 "\n"
 "By default the monitor will listen to all message types."
 msgstr ""
@@ -3705,12 +3696,12 @@ msgid "Mount files from instances"
 msgstr ""
 
 #: cmd/incus/move.go:35
-msgid "Move instances within or in between LXD servers"
+msgid "Move instances within or in between servers"
 msgstr ""
 
 #: cmd/incus/move.go:36
 msgid ""
-"Move instances within or in between LXD servers\n"
+"Move instances within or in between servers\n"
 "\n"
 "Transfer modes (--mode):\n"
 " - pull: Target server pulls the data from the source server (source must "
@@ -3720,7 +3711,7 @@ msgid ""
 " - relay: The CLI connects to both source and server and proxies the data "
 "(both source and target must listen on network)\n"
 "\n"
-"The pull transfer mode is the default as it is compatible with all LXD "
+"The pull transfer mode is the default as it is compatible with all server "
 "versions.\n"
 msgstr ""
 
@@ -4109,7 +4100,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:350
+#: cmd/incus/main.go:349
 #, c-format
 msgid "Password for %s: "
 msgstr ""
@@ -4283,11 +4274,11 @@ msgid ""
 "Provide the type of the storage volume if it is not custom.\n"
 "Supported types are custom, container and virtual-machine.\n"
 "\n"
-"lxc storage volume info default data\n"
+"incus storage volume info default data\n"
 "    Returns state information for a custom volume \"data\" in pool "
 "\"default\".\n"
 "\n"
-"lxc storage volume info default virtual-machine/data\n"
+"incus storage volume info default virtual-machine/data\n"
 "    Returns state information for a virtual machine \"data\" in pool "
 "\"default\"."
 msgstr ""
@@ -4300,10 +4291,10 @@ msgid ""
 "Add the name of the snapshot if type is one of custom, container or virtual-"
 "machine.\n"
 "\n"
-"lxc storage volume get default data size\n"
+"incus storage volume get default data size\n"
 "    Returns the size of a custom volume \"data\" in pool \"default\".\n"
 "\n"
-"lxc storage volume get default virtual-machine/data snapshots.expiry\n"
+"incus storage volume get default virtual-machine/data snapshots.expiry\n"
 "    Returns the snapshot expiration period for a virtual machine \"data\" in "
 "pool \"default\"."
 msgstr ""
@@ -4316,15 +4307,15 @@ msgid ""
 "Add the name of the snapshot if type is one of custom, container or virtual-"
 "machine.\n"
 "\n"
-"lxc storage volume show default data\n"
+"incus storage volume show default data\n"
 "    Will show the properties of a custom volume called \"data\" in the "
 "\"default\" pool.\n"
 "\n"
-"lxc storage volume show default container/data\n"
+"incus storage volume show default container/data\n"
 "    Will show the properties of the filesystem for a container called "
 "\"data\" in the \"default\" pool.\n"
 "\n"
-"lxc storage volume show default virtual-machine/data/snap0\n"
+"incus storage volume show default virtual-machine/data/snap0\n"
 "    Will show the properties of snapshot \"snap0\" for a virtual machine "
 "called \"data\" in the \"default\" pool."
 msgstr ""
@@ -4334,7 +4325,7 @@ msgid ""
 "Provide the type of the storage volume if it is not custom.\n"
 "Supported types are custom, image, container and virtual-machine.\n"
 "\n"
-"lxc storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume.yaml\n"
+"incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume.yaml\n"
 "    Update a storage volume using the content of pool.yaml."
 msgstr ""
 
@@ -4343,10 +4334,10 @@ msgid ""
 "Provide the type of the storage volume if it is not custom.\n"
 "Supported types are custom, image, container and virtual-machine.\n"
 "\n"
-"lxc storage volume set default data size=1GiB\n"
+"incus storage volume set default data size=1GiB\n"
 "    Sets the size of a custom volume \"data\" in pool \"default\" to 1 GiB.\n"
 "\n"
-"lxc storage volume set default virtual-machine/data snapshots.expiry=7d\n"
+"incus storage volume set default virtual-machine/data snapshots.expiry=7d\n"
 "    Sets the snapshot expiration period for a virtual machine \"data\" in "
 "pool \"default\" to seven days."
 msgstr ""
@@ -4356,10 +4347,10 @@ msgid ""
 "Provide the type of the storage volume if it is not custom.\n"
 "Supported types are custom, image, container and virtual-machine.\n"
 "\n"
-"lxc storage volume unset default data size\n"
+"incus storage volume unset default data size\n"
 "    Remotes the size/quota of a custom volume \"data\" in pool \"default\".\n"
 "\n"
-"lxc storage volume unset default virtual-machine/data snapshots.expiry\n"
+"incus storage volume unset default virtual-machine/data snapshots.expiry\n"
 "    Removes the snapshot expiration period for a virtual machine \"data\" in "
 "pool \"default\"."
 msgstr ""
@@ -4647,7 +4638,7 @@ msgstr ""
 msgid ""
 "Restart instances\n"
 "\n"
-"The opposite of \"lxc pause\" is \"lxc start\"."
+"The opposite of \"incus pause\" is \"incus start\"."
 msgstr ""
 
 #: cmd/incus/cluster.go:1188 cmd/incus/cluster.go:1189
@@ -4780,7 +4771,7 @@ msgid "Secret key: %s"
 msgstr ""
 
 #: cmd/incus/query.go:33 cmd/incus/query.go:34
-msgid "Send a raw query to LXD"
+msgid "Send a raw query to the server"
 msgstr ""
 
 #: cmd/incus/remote.go:100
@@ -4795,8 +4786,13 @@ msgstr ""
 msgid "Server doesn't trust us after authentication"
 msgstr ""
 
+#: cmd/incus/cluster.go:158 cmd/incus/cluster.go:915 cmd/incus/cluster.go:1009
+#: cmd/incus/cluster.go:1100 cmd/incus/cluster_group.go:419
+msgid "Server isn't part of a cluster"
+msgstr ""
+
 #: cmd/incus/remote.go:99
-msgid "Server protocol (lxd or simplestreams)"
+msgid "Server protocol (incus or simplestreams)"
 msgstr ""
 
 #: cmd/incus/version.go:58
@@ -4822,7 +4818,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc config device set [<remote>:]<instance> <device> <key> <value>"
+"    incus config device set [<remote>:]<instance> <device> <key> <value>"
 msgstr ""
 
 #: cmd/incus/config_device.go:555
@@ -4831,7 +4827,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc profile device set [<remote>:]<profile> <device> <key> <value>"
+"    incus profile device set [<remote>:]<profile> <device> <key> <value>"
 msgstr ""
 
 #: cmd/incus/image.go:1527 cmd/incus/image.go:1528
@@ -4848,7 +4844,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc config set [<remote>:][<instance>] <key> <value>"
+"    incus config set [<remote>:][<instance>] <key> <value>"
 msgstr ""
 
 #: cmd/incus/network_acl.go:411
@@ -4861,7 +4857,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc network set [<remote>:]<ACL> <key> <value>"
+"    incus network set [<remote>:]<ACL> <key> <value>"
 msgstr ""
 
 #: cmd/incus/network.go:1127
@@ -4874,7 +4870,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc network set [<remote>:]<network> <key> <value>"
+"    incus network set [<remote>:]<network> <key> <value>"
 msgstr ""
 
 #: cmd/incus/network_forward.go:397
@@ -4887,7 +4883,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc network set [<remote>:]<network> <listen_address> <key> <value>"
+"    incus network set [<remote>:]<network> <listen_address> <key> <value>"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:398
@@ -4900,7 +4896,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc network set [<remote>:]<network> <listen_address> <key> <value>"
+"    incus network set [<remote>:]<network> <listen_address> <key> <value>"
 msgstr ""
 
 #: cmd/incus/network_peer.go:398
@@ -4913,7 +4909,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc network set [<remote>:]<network> <peer_name> <key> <value>"
+"    incus network set [<remote>:]<network> <peer_name> <key> <value>"
 msgstr ""
 
 #: cmd/incus/network_zone.go:353
@@ -4926,7 +4922,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc network set [<remote>:]<Zone> <key> <value>"
+"    incus network set [<remote>:]<Zone> <key> <value>"
 msgstr ""
 
 #: cmd/incus/network_zone.go:951 cmd/incus/network_zone.go:952
@@ -4943,7 +4939,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc profile set [<remote>:]<profile> <key> <value>"
+"    incus profile set [<remote>:]<profile> <key> <value>"
 msgstr ""
 
 #: cmd/incus/project.go:579
@@ -4956,7 +4952,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc project set [<remote>:]<project> <key> <value>"
+"    incus project set [<remote>:]<project> <key> <value>"
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:529
@@ -4969,7 +4965,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc storage bucket set [<remote>:]<pool> <bucket> <key> <value>"
+"    incus storage bucket set [<remote>:]<pool> <bucket> <key> <value>"
 msgstr ""
 
 #: cmd/incus/storage.go:664
@@ -4982,7 +4978,7 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc storage set [<remote>:]<pool> <key> <value>"
+"    incus storage set [<remote>:]<pool> <key> <value>"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:1755
@@ -4995,7 +4991,8 @@ msgid ""
 "\n"
 "For backward compatibility, a single configuration key may still be set "
 "with:\n"
-"    lxc storage volume set [<remote>:]<pool> [<type>/]<volume> <key> <value>"
+"    incus storage volume set [<remote>:]<pool> [<type>/]<volume> <key> "
+"<value>"
 msgstr ""
 
 #: cmd/incus/remote.go:903 cmd/incus/remote.go:904
@@ -5468,8 +5465,13 @@ msgstr ""
 msgid "The --target-project flag can't be used with --target"
 msgstr ""
 
+#: cmd/incus/console.go:377
+msgid ""
+"The client automatically uses either spicy or remote-viewer when present."
+msgstr ""
+
 #: cmd/incus/move.go:191
-msgid "The destination LXD server is not clustered"
+msgid "The destination server is not clustered"
 msgstr ""
 
 #: cmd/incus/config_device.go:151 cmd/incus/config_device.go:168
@@ -5604,7 +5606,7 @@ msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
 
 #: cmd/incus/move.go:289
-msgid "The source LXD server is not clustered"
+msgid "The source server is not clustered"
 msgstr ""
 
 #: cmd/incus/network.go:480 cmd/incus/network.go:565
@@ -5620,24 +5622,22 @@ msgstr ""
 msgid "There is no \"image name\".  Did you want an alias?"
 msgstr ""
 
+#: cmd/incus/main.go:284
+msgid ""
+"This client hasn't been configured to use a remote server yet.\n"
+"As your platform can't run native Linux instances, you must connect to a "
+"remote server.\n"
+"\n"
+"If you already added a remote server, make it the default with \"incus "
+"remote switch NAME\"."
+msgstr ""
+
 #: cmd/incus/cluster.go:658
-msgid "This LXD server is already clustered"
+msgid "This server is already clustered"
 msgstr ""
 
 #: cmd/incus/cluster.go:648
-msgid "This LXD server is not available on the network"
-msgstr ""
-
-#: cmd/incus/main.go:284
-msgid ""
-"This client hasn't been configured to use a remote LXD server yet.\n"
-"As your platform can't run native Linux instances, you must connect to a "
-"remote LXD server.\n"
-"\n"
-"If you already added a remote server, make it the default with \"lxc remote "
-"switch NAME\".\n"
-"To easily setup a local LXD server in a virtual machine, consider using: "
-"https://multipass.run"
+msgid "This server is not available on the network"
 msgstr ""
 
 #: cmd/incus/info.go:317
@@ -5653,21 +5653,21 @@ msgid "Timestamps:"
 msgstr ""
 
 #: cmd/incus/init.go:435
-msgid "To attach a network to an instance, use: lxc network attach"
+msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
 #: cmd/incus/init.go:434
-msgid "To create a new network, use: lxc network create"
+msgid "To create a new network, use: incus network create"
 msgstr ""
 
 #: cmd/incus/console.go:209
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:392
+#: cmd/incus/main.go:391
 msgid ""
-"To start your first container, try: lxc launch images:ubuntu/22.04\n"
-"Or for a virtual machine: lxc launch images:ubuntu/22.04 --vm"
+"To start your first container, try: incus launch images:ubuntu/22.04\n"
+"Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
 msgstr ""
 
 #: cmd/incus/config.go:293 cmd/incus/config.go:474 cmd/incus/config.go:681
@@ -5728,7 +5728,7 @@ msgstr ""
 
 #: cmd/incus/action.go:288 cmd/incus/launch.go:110
 #, c-format
-msgid "Try `lxc info --show-log %s` for more info"
+msgid "Try `incus info --show-log %s` for more info"
 msgstr ""
 
 #: cmd/incus/info.go:553
@@ -6752,148 +6752,144 @@ msgstr ""
 msgid "error: %v"
 msgstr ""
 
-#: cmd/incus/storage.go:469
-msgid "info"
-msgstr ""
-
 #: cmd/incus/alias.go:62
 msgid ""
-"lxc alias add list \"list -c ns46S\"\n"
+"incus alias add list \"list -c ns46S\"\n"
 "    Overwrite the \"list\" command to pass -c ns46S."
 msgstr ""
 
 #: cmd/incus/alias.go:216
 msgid ""
-"lxc alias remove my-list\n"
+"incus alias remove my-list\n"
 "    Remove the \"my-list\" alias."
 msgstr ""
 
 #: cmd/incus/alias.go:161
 msgid ""
-"lxc alias rename list my-list\n"
+"incus alias rename list my-list\n"
 "    Rename existing alias \"list\" to \"my-list\"."
 msgstr ""
 
 #: cmd/incus/cluster.go:691
 msgid ""
-"lxc cluster edit <cluster member> < member.yaml\n"
+"incus cluster edit <cluster member> < member.yaml\n"
 "    Update a cluster member using the content of member.yaml"
 msgstr ""
 
 #: cmd/incus/cluster_group.go:86
 msgid ""
-"lxc cluster group assign foo default,bar\n"
+"incus cluster group assign foo default,bar\n"
 "    Set the groups for \"foo\" to \"default\" and \"bar\".\n"
 "\n"
-"lxc cluster group assign foo default\n"
+"incus cluster group assign foo default\n"
 "    Reset \"foo\" to only using the \"default\" cluster group."
 msgstr ""
 
 #: cmd/incus/config_device.go:82
 msgid ""
-"lxc config device add [<remote>:]instance1 <device-name> disk source=/share/"
-"c1 path=/opt\n"
+"incus config device add [<remote>:]instance1 <device-name> disk source=/"
+"share/c1 path=/opt\n"
 "    Will mount the host's /share/c1 onto /opt in the instance.\n"
 "\n"
-"lxc config device add [<remote>:]instance1 <device-name> disk pool=some-pool "
-"source=some-volume path=/opt\n"
+"incus config device add [<remote>:]instance1 <device-name> disk pool=some-"
+"pool source=some-volume path=/opt\n"
 "    Will mount the some-volume volume on some-pool onto /opt in the instance."
 msgstr ""
 
 #: cmd/incus/config.go:97
 msgid ""
-"lxc config edit <instance> < instance.yaml\n"
+"incus config edit <instance> < instance.yaml\n"
 "    Update the instance configuration from config.yaml."
 msgstr ""
 
 #: cmd/incus/config.go:518
 msgid ""
-"lxc config set [<remote>:]<instance> limits.cpu=2\n"
+"incus config set [<remote>:]<instance> limits.cpu=2\n"
 "    Will set a CPU limit of \"2\" for the instance.\n"
 "\n"
-"lxc config set core.https_address=[::]:8443\n"
-"    Will have LXD listen on IPv4 and IPv6 port 8443.\n"
+"incus config set core.https_address=[::]:8443\n"
+"    Will have the server listen on IPv4 and IPv6 port 8443.\n"
 "\n"
-"lxc config set core.trust_password=blah\n"
+"incus config set core.trust_password=blah\n"
 "    Will set the server's trust password to blah."
 msgstr ""
 
 #: cmd/incus/export.go:34
 msgid ""
-"lxc export u1 backup0.tar.gz\n"
+"incus export u1 backup0.tar.gz\n"
 "    Download a backup tarball of the u1 instance."
 msgstr ""
 
 #: cmd/incus/file.go:962
 msgid ""
-"lxc file mount foo/root fooroot\n"
+"incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory."
 msgstr ""
 
 #: cmd/incus/file.go:239
 msgid ""
-"lxc file pull foo/etc/hosts .\n"
+"incus file pull foo/etc/hosts .\n"
 "   To pull /etc/hosts from the instance and write it to the current "
 "directory."
 msgstr ""
 
 #: cmd/incus/file.go:458
 msgid ""
-"lxc file push /etc/hosts foo/etc/hosts\n"
+"incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\"."
 msgstr ""
 
 #: cmd/incus/image.go:365
 msgid ""
-"lxc image edit <image>\n"
+"incus image edit <image>\n"
 "    Launch a text editor to edit the properties\n"
 "\n"
-"lxc image edit <image> < image.yaml\n"
+"incus image edit <image> < image.yaml\n"
 "    Load the image properties from a YAML file"
 msgstr ""
 
 #: cmd/incus/import.go:29
 msgid ""
-"lxc import backup0.tar.gz\n"
+"incus import backup0.tar.gz\n"
 "    Create a new instance using backup0.tar.gz as the source."
 msgstr ""
 
 #: cmd/incus/info.go:35
 msgid ""
-"lxc info [<remote>:]<instance> [--show-log]\n"
+"incus info [<remote>:]<instance> [--show-log]\n"
 "    For instance information.\n"
 "\n"
-"lxc info [<remote>:] [--resources]\n"
-"    For LXD server information."
+"incus info [<remote>:] [--resources]\n"
+"    For server information."
 msgstr ""
 
 #: cmd/incus/init.go:41
 msgid ""
-"lxc init images:ubuntu/22.04 u1\n"
+"incus init images:ubuntu/22.04 u1\n"
 "\n"
-"lxc init images:ubuntu/22.04 u1 < config.yaml\n"
+"incus init images:ubuntu/22.04 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml"
 msgstr ""
 
 #: cmd/incus/launch.go:26
 msgid ""
-"lxc launch images:ubuntu/22.04 u1\n"
+"incus launch images:ubuntu/22.04 u1\n"
 "\n"
-"lxc launch images:ubuntu/22.04 u1 < config.yaml\n"
+"incus launch images:ubuntu/22.04 u1 < config.yaml\n"
 "    Create and start a container with configuration from config.yaml\n"
 "\n"
-"lxc launch images:ubuntu/22.04 u2 -t aws:t2.micro\n"
+"incus launch images:ubuntu/22.04 u2 -t aws:t2.micro\n"
 "    Create and start a container using the same size as an AWS t2.micro (1 "
 "vCPU, 1GiB of RAM)\n"
 "\n"
-"lxc launch images:ubuntu/22.04 v1 --vm -c limits.cpu=4 -c limits."
+"incus launch images:ubuntu/22.04 v1 --vm -c limits.cpu=4 -c limits."
 "memory=4GiB\n"
 "    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM"
 msgstr ""
 
 #: cmd/incus/list.go:122
 msgid ""
-"lxc list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
 "parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
@@ -6901,143 +6897,147 @@ msgid ""
 "instance configuration keys.\n"
 "  \"ETHP\" is a custom column generated from a device key.\n"
 "\n"
-"lxc list -c ns,user.comment:comment\n"
+"incus list -c ns,user.comment:comment\n"
 "  List instances with their running state and user comment."
 msgstr ""
 
 #: cmd/incus/monitor.go:37
 msgid ""
-"lxc monitor --type=logging\n"
+"incus monitor --type=logging\n"
 "    Only show log messages.\n"
 "\n"
-"lxc monitor --pretty --type=logging --loglevel=info\n"
+"incus monitor --pretty --type=logging --loglevel=info\n"
 "    Show a pretty log of messages with info level or higher.\n"
 "\n"
-"lxc monitor --type=lifecycle\n"
+"incus monitor --type=lifecycle\n"
 "    Only show lifecycle events."
 msgstr ""
 
 #: cmd/incus/move.go:46
 msgid ""
-"lxc move [<remote>:]<source instance> [<remote>:][<destination instance>] [--"
-"instance-only]\n"
+"incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
+"[--instance-only]\n"
 "    Move an instance between two hosts, renaming it if destination name "
 "differs.\n"
 "\n"
-"lxc move <old name> <new name> [--instance-only]\n"
+"incus move <old name> <new name> [--instance-only]\n"
 "    Rename a local instance.\n"
 "\n"
-"lxc move <instance>/<old snapshot name> <instance>/<new snapshot name>\n"
+"incus move <instance>/<old snapshot name> <instance>/<new snapshot name>\n"
 "    Rename a snapshot."
 msgstr ""
 
 #: cmd/incus/network.go:294
 msgid ""
-"lxc network create foo\n"
+"incus network create foo\n"
 "    Create a new network called foo\n"
 "\n"
-"lxc network create bar network=baz --type ovn\n"
+"incus network create bar network=baz --type ovn\n"
 "    Create a new OVN network called bar using baz as its uplink network"
 msgstr ""
 
 #: cmd/incus/operation.go:186
 msgid ""
-"lxc operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a\n"
+"incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a\n"
 "    Show details on that operation UUID"
 msgstr ""
 
 #: cmd/incus/profile.go:169
 msgid ""
-"lxc profile assign foo default,bar\n"
+"incus profile assign foo default,bar\n"
 "    Set the profiles for \"foo\" to \"default\" and \"bar\".\n"
 "\n"
-"lxc profile assign foo default\n"
+"incus profile assign foo default\n"
 "    Reset \"foo\" to only using the \"default\" profile.\n"
 "\n"
-"lxc profile assign foo ''\n"
+"incus profile assign foo ''\n"
 "    Remove all profile from \"foo\""
 msgstr ""
 
 #: cmd/incus/config_device.go:90
 msgid ""
-"lxc profile device add [<remote>:]profile1 <device-name> disk source=/share/"
-"c1 path=/opt\n"
+"incus profile device add [<remote>:]profile1 <device-name> disk source=/"
+"share/c1 path=/opt\n"
 "    Will mount the host's /share/c1 onto /opt in the instance.\n"
 "\n"
-"lxc profile device add [<remote>:]profile1 <device-name> disk pool=some-pool "
-"source=some-volume path=/opt\n"
+"incus profile device add [<remote>:]profile1 <device-name> disk pool=some-"
+"pool source=some-volume path=/opt\n"
 "    Will mount the some-volume volume on some-pool onto /opt in the instance."
 msgstr ""
 
 #: cmd/incus/profile.go:426
 msgid ""
-"lxc profile edit <profile> < profile.yaml\n"
+"incus profile edit <profile> < profile.yaml\n"
 "    Update a profile using the content of profile.yaml"
 msgstr ""
 
 #: cmd/incus/project.go:223
 msgid ""
-"lxc project edit <project> < project.yaml\n"
+"incus project edit <project> < project.yaml\n"
 "    Update a project using the content of project.yaml"
 msgstr ""
 
 #: cmd/incus/query.go:36
 msgid ""
-"lxc query -X DELETE --wait /1.0/instances/c1\n"
+"incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Delete local instance \"c1\"."
 msgstr ""
 
 #: cmd/incus/snapshot.go:33
 msgid ""
-"lxc snapshot u1 snap0\n"
+"incus snapshot u1 snap0\n"
 "    Create a snapshot of \"u1\" called \"snap0\"."
 msgstr ""
 
 #: cmd/incus/restore.go:28
 msgid ""
-"lxc snapshot u1 snap0\n"
+"incus snapshot u1 snap0\n"
 "    Create the snapshot.\n"
 "\n"
-"lxc restore u1 snap0\n"
+"incus restore u1 snap0\n"
 "    Restore the snapshot."
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:245
 msgid ""
-"lxc storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml\n"
+"incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml\n"
 "    Update a storage bucket using the content of bucket.yaml."
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:990
 msgid ""
-"lxc storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
+"incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
 "    Update a storage bucket key using the content of key.yaml."
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:1125
 msgid ""
-"lxc storage bucket key show default data foo\n"
+"incus storage bucket key show default data foo\n"
 "    Will show the properties of a bucket key called \"foo\" for a bucket "
 "called \"data\" in the \"default\" pool."
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:625
 msgid ""
-"lxc storage bucket show default data\n"
+"incus storage bucket show default data\n"
 "    Will show the properties of a bucket called \"data\" in the \"default\" "
 "pool."
 msgstr ""
 
 #: cmd/incus/storage.go:222
 msgid ""
-"lxc storage edit [<remote>:]<pool> < pool.yaml\n"
+"incus storage edit [<remote>:]<pool> < pool.yaml\n"
 "    Update a storage pool using the content of pool.yaml."
 msgstr ""
 
 #: cmd/incus/storage_volume.go:2375
 msgid ""
-"lxc storage volume import default backup0.tar.gz\n"
+"incus storage volume import default backup0.tar.gz\n"
 "\t\tCreate a new custom volume using backup0.tar.gz as the source."
+msgstr ""
+
+#: cmd/incus/storage.go:469
+msgid "info"
 msgstr ""
 
 #: cmd/incus/remote.go:450
@@ -7057,7 +7057,7 @@ msgid "ok (y/n/[fingerprint])?"
 msgstr ""
 
 #: cmd/incus/config.go:55
-msgid "please use `lxc profile`"
+msgid "please use `incus profile`"
 msgstr ""
 
 #: cmd/incus/storage.go:474
