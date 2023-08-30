@@ -34,7 +34,7 @@ _have incus && {
 
     _incus_projects()
     {
-      COMPREPLY=( $( compgen -W "$( incus project list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus project list --format=csv | sed 's/,.\+//; s/ (current)$//' )" "$cur" ) )
     }
 
     _incus_networks()
