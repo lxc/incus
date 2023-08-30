@@ -28,41 +28,41 @@ test_storage_volume_snapshots() {
 
   incus storage volume detach "${storage_pool}" "${storage_volume}" c1
   # This will create a snapshot named 'snap0'
-  incus storage volume snapshot "${storage_pool}" "${storage_volume}"
+  incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
   incus storage volume list "${storage_pool}" |  grep "${storage_volume}/snap0"
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | grep 'name: snap0'
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 0001-01-01T00:00:00Z'
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'name: snap0'
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 0001-01-01T00:00:00Z'
 
   # edit volume snapshot description
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | sed 's/^description:.*/description: foo/' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | grep -q 'description: foo'
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | sed 's/^description:.*/description: foo/' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep -q 'description: foo'
 
   # edit volume snapshot expiry date
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | sed 's/^expires_at:.*/expires_at: 2100-01-02T15:04:05Z/' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | sed 's/^expires_at:.*/expires_at: 2100-01-02T15:04:05Z/' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
   # Depending on the timezone of the runner, some values will be different.
   # Both the year (2100) and the month (01) will be constant though.
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | grep -q '^expires_at: 2100-01'
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep -q '^expires_at: 2100-01'
   # Reset/remove expiry date
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | sed '/^expires_at:/d' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | grep -q '^expires_at: 0001-01-01T00:00:00Z'
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | sed '/^expires_at:/d' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep -q '^expires_at: 0001-01-01T00:00:00Z'
 
   incus storage volume set "${storage_pool}" "${storage_volume}" snapshots.expiry '1d'
-  incus storage volume snapshot "${storage_pool}" "${storage_volume}"
-  ! incus storage volume show "${storage_pool}" "${storage_volume}/snap1" | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
+  incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
+  ! incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap1" | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
-  incus storage volume snapshot "${storage_pool}" "${storage_volume}" --no-expiry
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap2" | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
+  incus storage volume snapshot create "${storage_pool}" "${storage_volume}" --no-expiry
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap2" | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
-  incus storage volume rm "${storage_pool}" "${storage_volume}/snap2"
-  incus storage volume rm "${storage_pool}" "${storage_volume}/snap1"
+  incus storage volume snapshot rm "${storage_pool}" "${storage_volume}/snap2"
+  incus storage volume snapshot rm "${storage_pool}" "${storage_volume}/snap1"
 
   # Test snapshot renaming
-  incus storage volume snapshot "${storage_pool}" "${storage_volume}"
+  incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
   incus storage volume list "${storage_pool}" |  grep "${storage_volume}/snap1"
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap1" | grep 'name: snap1'
-  incus storage volume rename "${storage_pool}" "${storage_volume}/snap1" "${storage_volume}/foo"
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap1" | grep 'name: snap1'
+  incus storage volume snapshot rename "${storage_pool}" "${storage_volume}" snap1 foo
   incus storage volume list "${storage_pool}" |  grep "${storage_volume}/foo"
-  incus storage volume show "${storage_pool}" "${storage_volume}/foo" | grep 'name: foo'
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/foo" | grep 'name: foo'
 
   incus storage volume attach "${storage_pool}" "${storage_volume}" c1 /mnt
   # Delete file on volume
@@ -73,14 +73,14 @@ test_storage_volume_snapshots() {
 
   # This should fail since you cannot restore a snapshot when the target volume
   # is attached to the container
-  ! incus storage volume restore "${storage_pool}" "${storage_volume}" snap0 || false
+  ! incus storage volume snapshot restore "${storage_pool}" "${storage_volume}" snap0 || false
 
   incus stop -f c1
-  incus storage volume restore "${storage_pool}" "${storage_volume}" foo
+  incus storage volume snapshot restore "${storage_pool}" "${storage_volume}" foo
 
   incus start c1
   incus storage volume detach "${storage_pool}" "${storage_volume}" c1
-  incus storage volume restore "${storage_pool}" "${storage_volume}" foo
+  incus storage volume snapshot restore "${storage_pool}" "${storage_volume}" foo
   incus storage volume attach "${storage_pool}" "${storage_volume}" c1 /mnt
 
   # Validate file
@@ -94,7 +94,7 @@ test_storage_volume_snapshots() {
   # Check snapshots naming conflicts.
   incus storage volume create "${storage_pool}" "vol1"
   incus storage volume create "${storage_pool}" "vol1-snap0"
-  incus storage volume snapshot "${storage_pool}" "vol1" "snap0"
+  incus storage volume snapshot create "${storage_pool}" "vol1" "snap0"
   incus storage volume delete "${storage_pool}" "vol1"
   incus storage volume delete "${storage_pool}" "vol1-snap0"
 

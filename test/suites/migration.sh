@@ -91,7 +91,7 @@ migration() {
   incus_remote init testimage nonlive
   # test moving snapshots
   incus_remote config set l1:nonlive user.tester foo
-  incus_remote snapshot l1:nonlive
+  incus_remote snapshot create l1:nonlive
   incus_remote config unset l1:nonlive user.tester
   incus_remote move l1:nonlive l2:
   incus_remote config show l2:nonlive/snap0 | grep user.tester | grep foo
@@ -178,9 +178,9 @@ migration() {
 
   incus storage volume set "${pool}" container/cccp user.foo=snap0
   echo "before" | incus file push - cccp/blah
-  incus snapshot cccp
+  incus snapshot create cccp
   incus storage volume set "${pool}" container/cccp user.foo=snap1
-  incus snapshot cccp
+  incus snapshot create cccp
   echo "after" | incus file push - cccp/blah
   incus storage volume set "${pool}" container/cccp user.foo=postsnap1
 
@@ -227,8 +227,8 @@ migration() {
   incus_remote delete l2:udssr
 
   incus_remote init testimage l1:cccp
-  incus_remote snapshot l1:cccp
-  incus_remote snapshot l1:cccp
+  incus_remote snapshot create l1:cccp
+  incus_remote snapshot create l1:cccp
 
   # Remote container with snapshots move.
   incus_remote move l1:cccp l2:udssr --mode=push
@@ -238,8 +238,8 @@ migration() {
 
   # Test container only copies
   incus init testimage cccp
-  incus snapshot cccp
-  incus snapshot cccp
+  incus snapshot create cccp
+  incus snapshot create cccp
 
   # Local container with snapshots move.
   incus move cccp udssr --mode=pull
@@ -251,8 +251,8 @@ migration() {
     # Test container only copies when zfs.clone_copy is set to false.
     incus storage set "incustest-$(basename "${INCUS_DIR}")" zfs.clone_copy false
     incus init testimage cccp
-    incus snapshot cccp
-    incus snapshot cccp
+    incus snapshot create cccp
+    incus snapshot create cccp
 
     # Test container only copies when zfs.clone_copy is set to false.
     incus copy cccp udssr --instance-only
@@ -298,7 +298,7 @@ migration() {
   # This will create snapshot c1/snap0 with test device and expiry date.
   incus_remote config device add l1:c1 testsnapdev none
   incus_remote config set l1:c1 snapshots.expiry '1d'
-  incus_remote snapshot l1:c1
+  incus_remote snapshot create l1:c1
   incus_remote config device remove l1:c1 testsnapdev
   incus_remote config device add l1:c1 testdev none
 
@@ -316,11 +316,11 @@ migration() {
   incus_remote config show l2:c2/snap0
   ! incus_remote config show l2:c2/snap0 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
   incus_remote config device get l2:c2 testdev type | grep -q 'none'
-  incus_remote restore l2:c2 snap0
+  incus_remote snapshot restore l2:c2 snap0
   incus_remote config device get l2:c2 testsnapdev type | grep -q 'none'
 
   # This will create snapshot c2/snap1
-  incus_remote snapshot l2:c2
+  incus_remote snapshot create l2:c2
   incus_remote config show l2:c2/snap1
 
   # This should remove c2/snap1
@@ -334,9 +334,9 @@ migration() {
 
   incus_remote storage volume create l1:"$remote_pool1" vol1
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=snap0vol1
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol1
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol1
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=snap1vol1
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol1
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol1
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=postsnap1vol1
 
   # remote storage volume and snapshots migration in "pull" mode
@@ -363,7 +363,7 @@ migration() {
 
   # remote storage volume and snapshots migration refresh in "pull" mode
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=snapremovevol1
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol1 snapremove
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol1 snapremove
   incus_remote storage volume set l1:"$remote_pool1" vol1 user.foo=postsnap1vol1
   incus_remote storage volume copy l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol2" --refresh
   incus_remote storage volume delete l1:"$remote_pool1" vol1
@@ -376,11 +376,11 @@ migration() {
   # check remote storage volume refresh from a different volume
   incus_remote storage volume create l1:"$remote_pool1" vol3
   incus_remote storage volume set l1:"$remote_pool1" vol3 user.foo=snap0vol3
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol3
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol3
   incus_remote storage volume set l1:"$remote_pool1" vol3 user.foo=snap1vol3
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol3
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol3
   incus_remote storage volume set l1:"$remote_pool1" vol3 user.foo=snap2vol3
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol3
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol3
   incus_remote storage volume set l1:"$remote_pool1" vol3 user.foo=postsnap1vol3
 
   # check snapshot volumes and snapshots are refreshed
@@ -398,7 +398,7 @@ migration() {
   # remote storage volume migration in "push" mode
   incus_remote storage volume create l1:"$remote_pool1" vol1
   incus_remote storage volume create l1:"$remote_pool1" vol2
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol2
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol2
 
   incus_remote storage volume copy l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol2" --mode=push
   incus_remote storage volume move l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol3" --mode=push
@@ -416,7 +416,7 @@ migration() {
   # remote storage volume migration in "relay" mode
   incus_remote storage volume create l1:"$remote_pool1" vol1
   incus_remote storage volume create l1:"$remote_pool1" vol2
-  incus_remote storage volume snapshot l1:"$remote_pool1" vol2
+  incus_remote storage volume snapshot create l1:"$remote_pool1" vol2
 
   incus_remote storage volume copy l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol2" --mode=relay
   incus_remote storage volume move l1:"$remote_pool1/vol1" l2:"$remote_pool2/vol3" --mode=relay
@@ -448,9 +448,9 @@ migration() {
   incus_remote start l2:c1
   incus_remote delete l2:c1 -f
 
-  incus_remote snapshot l1:c1
-  incus_remote snapshot l1:c1
-  incus_remote snapshot l1:c1
+  incus_remote snapshot create l1:c1
+  incus_remote snapshot create l1:c1
+  incus_remote snapshot create l1:c1
   incus_remote copy l1:c1 l2:
   incus_remote start l2:c1
   incus_remote stop l2:c1 -f
@@ -460,9 +460,9 @@ migration() {
   incus_remote start l1:c1
   incus_remote delete l1:c1 -f
 
-  incus_remote delete l2:c1/snap0
-  incus_remote delete l2:c1/snap1
-  incus_remote delete l2:c1/snap2
+  incus_remote snapshot delete l2:c1/snap0
+  incus_remote snapshot delete l2:c1/snap1
+  incus_remote snapshot delete l2:c1/snap2
   incus_remote copy l2:c1 l1:
   incus_remote start l1:c1
   incus_remote delete l1:c1 -f
@@ -479,7 +479,7 @@ migration() {
   incus_remote storage volume attach l1:dir vol1 c1 /mnt
   mkdir "$INCUS_DIR/testvol2"
   incus_remote config device add l1:c1 vol2 disk source="$INCUS_DIR/testvol2" path=/vol2
-  incus_remote snapshot l1:c1 # Take snapshot with disk devices still attached.
+  incus_remote snapshot create l1:c1 # Take snapshot with disk devices still attached.
   incus_remote config device remove c1 vol1
   incus_remote config device remove c1 vol2
   rmdir "$INCUS_DIR/testvol2"
@@ -495,7 +495,7 @@ migration() {
   echo test | incus_remote file push - l1:c1/tmp/foo
   incus_remote copy l1:c1 l2:c1
   incus_remote file pull l2:c1/tmp/foo .
-  incus_remote snapshot l1:c1
+  incus_remote snapshot create l1:c1
   echo test | incus_remote file push - l1:c1/tmp/bar
   incus_remote copy l1:c1 l2:c1 --refresh
   incus_remote start l2:c1
@@ -503,7 +503,7 @@ migration() {
   incus_remote file pull l2:c1/tmp/bar .
   incus_remote stop l2:c1 -f
 
-  incus_remote restore l2:c1 snap0
+  incus_remote snapshot restore l2:c1 snap0
   incus_remote start l2:c1
   incus_remote file pull l2:c1/tmp/foo .
   ! incus_remote file pull l2:c1/tmp/bar . ||  false
@@ -516,15 +516,15 @@ migration() {
 
   incus_remote init testimage l1:c1
   # This creates snap0
-  incus_remote snapshot l1:c1
+  incus_remote snapshot create l1:c1
   # This creates snap1
-  incus_remote snapshot l1:c1
+  incus_remote snapshot create l1:c1
   incus_remote copy l1:c1 l2:c1
   # This creates snap2
-  incus_remote snapshot l1:c1
+  incus_remote snapshot create l1:c1
 
   # Delete first snapshot from target
-  incus_remote rm l2:c1/snap0
+  incus_remote snapshot rm l2:c1/snap0
 
   # Refresh
   incus_remote copy l1:c1 l2:c1 --refresh
@@ -536,8 +536,8 @@ migration() {
   # Let's test this to make sure it doesn't happen again.
   incus_remote init testimage l1:c1
   incus_remote copy l1:c1 l2:c1
-  incus_remote snapshot l1:c1
-  incus_remote snapshot l1:c1
+  incus_remote snapshot create l1:c1
+  incus_remote snapshot create l1:c1
 
   incus_remote copy l1:c1 l2:c1 --refresh
   incus_remote copy l1:c1 l2:c1 --refresh
@@ -548,9 +548,9 @@ migration() {
   # On btrfs, this used to cause a failure because btrfs couldn't find the parent subvolume.
   incus_remote init testimage l1:c1
   incus_remote copy l1:c1 l2:c1
-  incus_remote snapshot l1:c1
+  incus_remote snapshot create l1:c1
   incus_remote copy l1:c1 l2:c1 --refresh
-  incus_remote snapshot l1:c1
+  incus_remote snapshot create l1:c1
   incus_remote copy l1:c1 l2:c1 --refresh
 
   incus_remote rm -f l1:c1
@@ -558,7 +558,7 @@ migration() {
 
   # On zfs, this used to crash due to a websocket read issue.
   incus launch testimage c1
-  incus snapshot c1
+  incus snapshot create c1
   incus copy c1 l2:c1 --stateless
   incus copy c1 l2:c1 --stateless --refresh
 
@@ -599,8 +599,8 @@ migration() {
   # checkpoint. So stop instance first before taking stateful snapshot.
   incus_remote stop -f l1:migratee
   incus_remote start l1:migratee
-  incus_remote snapshot --stateful l1:migratee
-  incus_remote restore l1:migratee snap0
+  incus_remote snapshot create --stateful l1:migratee
+  incus_remote snapshot restore l1:migratee snap0
 
   # Test live migration of container
   # There is apparently a bug in CRIU that prevents checkpointing an instance that has been started from a

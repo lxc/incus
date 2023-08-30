@@ -464,10 +464,10 @@ test_clustering_containers() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus info --show-log foo | grep -q Log
 
   # Create, rename and delete a snapshot of the container via node1
-  INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot foo foo-bak
+  INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot create foo foo-bak
   INCUS_DIR="${INCUS_ONE_DIR}" incus info foo | grep -q foo-bak
-  INCUS_DIR="${INCUS_ONE_DIR}" incus rename foo/foo-bak foo/foo-bak-2
-  INCUS_DIR="${INCUS_ONE_DIR}" incus delete foo/foo-bak-2
+  INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot rename foo foo-bak foo-bak-2
+  INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot delete foo/foo-bak-2
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus info foo | grep -q foo-bak-2 || false
 
   # Export from node1 the image that was imported on node2
@@ -482,7 +482,7 @@ test_clustering_containers() {
   ! INCUS_DIR="${INCUS_TWO_DIR}" incus list | grep -q bar || false
 
   # Create a container on node1 using a snapshot from node2.
-  INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot foo foo-bak
+  INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot create foo foo-bak
   INCUS_DIR="${INCUS_TWO_DIR}" incus copy foo/foo-bak bar --target node1
   INCUS_DIR="${INCUS_TWO_DIR}" incus info bar | grep -q "Location: node1"
   INCUS_DIR="${INCUS_THREE_DIR}" incus delete bar
@@ -764,7 +764,7 @@ test_clustering_storage() {
 
     # Stop the container and create a snapshot
     INCUS_DIR="${INCUS_ONE_DIR}" incus stop foo --force
-    INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot foo snap-test
+    INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot create foo snap-test
 
     # Move the container to node1
     INCUS_DIR="${INCUS_TWO_DIR}" incus move foo --target node1
@@ -1394,7 +1394,7 @@ test_clustering_publish() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus image show foo-image | grep -q "public: false"
   INCUS_DIR="${INCUS_TWO_DIR}" incus image delete foo-image
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incus snapshot foo backup
+  INCUS_DIR="${INCUS_TWO_DIR}" incus snapshot create foo backup
   INCUS_DIR="${INCUS_ONE_DIR}" incus publish foo/backup --alias=foo-backup-image
   INCUS_DIR="${INCUS_ONE_DIR}" incus image show foo-backup-image | grep -q "public: false"
 

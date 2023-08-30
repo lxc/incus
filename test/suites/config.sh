@@ -313,7 +313,7 @@ test_property() {
   incus config show foo | grep -q "ephemeral: false"
 
   # Create a snap of the instance to set its expiration timestamp
-  incus snapshot foo s1
+  incus snapshot create foo s1
   incus config set foo/s1 expires_at="2024-03-23T17:38:37.753398689-04:00" --property
   incus config show foo/s1 | grep -q "expires_at: 2024-03-23T17:38:37.753398689-04:00"
   incus config unset foo/s1 expires_at --property
@@ -330,12 +330,12 @@ test_property() {
   incus launch testimage c1 -s "${storage_pool}"
 
   # This will create a snapshot named 'snap0'
-  incus storage volume snapshot "${storage_pool}" "${storage_volume}"
+  incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
 
   incus storage volume set "${storage_pool}" "${storage_volume}"/snap0 expires_at="2024-03-23T17:38:37.753398689-04:00" --property
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 2024-03-23T17:38:37.753398689-04:00'
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 2024-03-23T17:38:37.753398689-04:00'
   incus storage volume unset "${storage_pool}" "${storage_volume}"/snap0 expires_at --property
-  incus storage volume show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 0001-01-01T00:00:00Z'
+  incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 0001-01-01T00:00:00Z'
 
   incus delete -f c1
   incus storage volume delete "${storage_pool}" "${storage_volume}"
@@ -349,17 +349,17 @@ test_config_edit_container_snapshot_pool_config() {
     ensure_import_testimage
 
     incus init testimage c1 -s "$storage_pool"
-    incus snapshot c1 s1
+    incus snapshot create c1 s1
     # edit the container volume name
     incus storage volume show "$storage_pool" container/c1 | \
         sed 's/^description:.*/description: bar/' | \
         incus storage volume edit "$storage_pool" container/c1
     incus storage volume show "$storage_pool" container/c1 | grep -q 'description: bar'
     # edit the container snapshot volume name
-    incus storage volume show "$storage_pool" container/c1/s1 | \
+    incus storage volume snapshot show "$storage_pool" container/c1/s1 | \
         sed 's/^description:.*/description: baz/' | \
         incus storage volume edit "$storage_pool" container/c1/s1
-    incus storage volume show "$storage_pool" container/c1/s1 | grep -q 'description: baz'
+    incus storage volume snapshot show "$storage_pool" container/c1/s1 | grep -q 'description: baz'
     incus delete c1
 }
 
@@ -404,7 +404,7 @@ test_container_snapshot_config() {
     ensure_import_testimage
 
     incus init testimage foo -s "incustest-$(basename "${INCUS_DIR}")"
-    incus snapshot foo
+    incus snapshot create foo
     incus config show foo/snap0 | grep -q 'expires_at: 0001-01-01T00:00:00Z'
 
     echo 'expires_at: 2100-01-01T00:00:00Z' | incus config edit foo/snap0

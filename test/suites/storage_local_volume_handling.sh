@@ -65,19 +65,19 @@ test_storage_local_volume_handling() {
     incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1 snapshots.expiry=1H
 
     # This will create the snapshot vol1/snap0
-    incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1
+    incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1
 
     # This will create the snapshot vol1/snap1
     incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1 user.foo=snap1
-    incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1
+    incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1
     incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1 user.foo=postsnap1
 
     # Copy volume with snapshots in same pool
     incus storage volume copy "incustest-$(basename "${INCUS_DIR}")-${driver}/vol1" "incustest-$(basename "${INCUS_DIR}")-${driver}/vol1copy"
 
     # Ensure the target snapshots are there
-    incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1copy/snap0
-    incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1copy/snap1
+    incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1copy/snap0
+    incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1copy/snap1
 
     # Check snapshot volume config was copied
     incus storage volume get "incustest-$(basename "${INCUS_DIR}")-${driver}" vol1copy user.foo | grep -Fx "postsnap1"
@@ -89,8 +89,8 @@ test_storage_local_volume_handling() {
     incus storage volume copy "incustest-$(basename "${INCUS_DIR}")-${driver}/vol1" "incustest-$(basename "${INCUS_DIR}")-${driver}1/vol1"
 
     # Ensure the target snapshots are there
-    incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol1/snap0
-    incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol1/snap1
+    incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol1/snap0
+    incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol1/snap1
 
     # Check snapshot volume config was copied
     incus storage volume get "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol1 user.foo | grep -Fx "postsnap1"
@@ -101,8 +101,8 @@ test_storage_local_volume_handling() {
     incus storage volume copy --volume-only "incustest-$(basename "${INCUS_DIR}")-${driver}/vol1" "incustest-$(basename "${INCUS_DIR}")-${driver}1/vol2"
 
     # Ensure the target snapshots are not there
-    ! incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol2/snap0 || false
-    ! incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol2/snap1 || false
+    ! incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol2/snap0 || false
+    ! incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol2/snap1 || false
 
     # Check snapshot volume config was copied
     incus storage volume get "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol2 user.foo | grep -Fx "postsnap1"
@@ -132,11 +132,11 @@ test_storage_local_volume_handling() {
           # source_driver -> target_driver
           incus storage volume create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol1
           # This will create the snapshot vol1/snap0
-          incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol1
+          incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol1
           # Copy volume with snapshots
           incus storage volume copy "incustest-$(basename "${INCUS_DIR}")-${source_driver}/vol1" "incustest-$(basename "${INCUS_DIR}")-${target_driver}/vol1"
           # Ensure the target snapshot is there
-          incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol1/snap0
+          incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol1/snap0
           # Copy volume only
           incus storage volume copy --volume-only "incustest-$(basename "${INCUS_DIR}")-${source_driver}/vol1" "incustest-$(basename "${INCUS_DIR}")-${target_driver}/vol2"
           # Copy snapshot to volume
@@ -170,49 +170,49 @@ test_storage_local_volume_handling() {
 
           # create custom block volume with a snapshot
           incus storage volume create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol2 --type=block size=4194304
-          incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol2
-          incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol2/snap0 | grep -q 'content_type: block'
+          incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol2
+          incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol2/snap0 | grep -q 'content_type: block'
 
           # restore snapshot
-          incus storage volume restore "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol2 snap0
+          incus storage volume snapshot restore "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol2 snap0
           incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol2 | grep -q 'content_type: block'
 
           # copy with snapshots
           incus storage volume copy "incustest-$(basename "${INCUS_DIR}")-${source_driver}/vol2" "incustest-$(basename "${INCUS_DIR}")-${target_driver}/vol2"
           incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol2 | grep -q 'content_type: block'
-          incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol2/snap0 | grep -q 'content_type: block'
+          incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol2/snap0 | grep -q 'content_type: block'
 
           # copy without snapshots
           incus storage volume copy "incustest-$(basename "${INCUS_DIR}")-${source_driver}/vol2" "incustest-$(basename "${INCUS_DIR}")-${target_driver}/vol3" --volume-only
           incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol3 | grep -q 'content_type: block'
-          ! incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol3/snap0 | grep -q 'content_type: block' || false
+          ! incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol3/snap0 | grep -q 'content_type: block' || false
 
           # move images
           incus storage volume move "incustest-$(basename "${INCUS_DIR}")-${source_driver}/vol2" "incustest-$(basename "${INCUS_DIR}")-${target_driver}/vol4"
           ! incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol2 | grep -q 'content_type: block' || false
           incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol4 | grep -q 'content_type: block'
-          incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol4/snap0 | grep -q 'content_type: block'
+          incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol4/snap0 | grep -q 'content_type: block'
 
           # check refreshing volumes
 
           # create storage volume with user config differing over snapshots
           incus storage volume create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5 --type=block size=4194304
           incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5 user.foo=snap0vol5
-          incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5
+          incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5
           incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5 user.foo=snap1vol5
-          incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5
+          incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5
           incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5 user.foo=snapremovevol5
-          incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5 snapremove
+          incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5 snapremove
           incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol5 user.foo=postsnap1vol5
 
           # create storage volume with user config differing over snapshots and additional snapshot than vol5
           incus storage volume create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6 --type=block size=4194304
           incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6 user.foo=snap0vol6
-          incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6
+          incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6
           incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6 user.foo=snap1vol6
-          incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6
+          incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6
           incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6 user.foo=snap2vol6
-          incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6
+          incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6
           incus storage volume set "incustest-$(basename "${INCUS_DIR}")-${source_driver}" vol6 user.foo=postsnap1vol6
 
           # copy to new volume destination with refresh flag

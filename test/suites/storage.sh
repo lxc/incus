@@ -370,9 +370,9 @@ test_storage() {
 
     incus storage volume create "incustest-$(basename "${INCUS_DIR}")-pool5" c12pool5
     # should create snap0
-    incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-pool5" c12pool5
+    incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-pool5" c12pool5
     # should create snap1
-    incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")-pool5" c12pool5
+    incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")-pool5" c12pool5
 
     if [ "$incus_backend" = "lvm" ]; then
       incus init testimage c10pool6 -s "incustest-$(basename "${INCUS_DIR}")-pool6"

@@ -24,7 +24,7 @@ test_storage_volume_import() {
   incus storage volume show "incustest-$(basename "${INCUS_DIR}")" foobar | grep -q 'content_type: iso'
 
   # snapshots are disabled for ISO storage volumes
-  ! incus storage volume snapshot "incustest-$(basename "${INCUS_DIR}")" foo || false
+  ! incus storage volume snapshot create "incustest-$(basename "${INCUS_DIR}")" foo || false
 
   # backups are disabled for ISO storage volumes
   ! incus storage volume export "incustest-$(basename "${INCUS_DIR}")" foo || false

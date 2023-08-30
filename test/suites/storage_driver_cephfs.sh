@@ -25,14 +25,14 @@ test_storage_driver_cephfs() {
 
   # Snapshots
   incus storage volume create cephfs vol1
-  incus storage volume snapshot cephfs vol1
-  incus storage volume snapshot cephfs vol1
-  incus storage volume snapshot cephfs vol1 blah1
-  incus storage volume rename cephfs vol1/blah1 vol1/blah2
-  incus storage volume snapshot cephfs vol1 blah1
-  incus storage volume delete cephfs vol1/snap0
-  incus storage volume delete cephfs vol1/snap1
-  incus storage volume restore cephfs vol1 blah1
+  incus storage volume snapshot create cephfs vol1
+  incus storage volume snapshot create cephfs vol1
+  incus storage volume snapshot create cephfs vol1 blah1
+  incus storage volume snapshot rename cephfs vol1 blah1 blah2
+  incus storage volume snapshot create cephfs vol1 blah1
+  incus storage volume snapshot delete cephfs vol1/snap0
+  incus storage volume snapshot delete cephfs vol1/snap1
+  incus storage volume snapshot restore cephfs vol1 blah1
   incus storage volume copy cephfs/vol1 cephfs/vol2 --volume-only
   incus storage volume copy cephfs/vol1 cephfs/vol3 --volume-only
   incus storage volume delete cephfs vol1

@@ -57,13 +57,13 @@ test_server_config_storage() {
   ! incus config set storage.backups_volume "${pool}/bar"
   ! incus config set storage.images_volume "${pool}/bar"
 
-  incus storage volume snapshot "${pool}" backups
-  incus storage volume snapshot "${pool}" images
+  incus storage volume snapshot create "${pool}" backups
+  incus storage volume snapshot create "${pool}" images
   ! incus config set storage.backups_volume "${pool}/backups"
   ! incus config set storage.images_volume "${pool}/images"
 
-  incus storage volume delete "${pool}" backups/snap0
-  incus storage volume delete "${pool}" images/snap0
+  incus storage volume snapshot delete "${pool}" backups/snap0
+  incus storage volume snapshot delete "${pool}" images/snap0
 
   # Set the configuration
   incus config set storage.backups_volume "${pool}/backups"
@@ -89,8 +89,8 @@ test_server_config_storage() {
   ! incus storage volume delete "${pool}" images
   ! incus storage volume rename "${pool}" backups backups1
   ! incus storage volume rename "${pool}" images images1
-  ! incus storage volume snapshot "${pool}" backups
-  ! incus storage volume snapshot "${pool}" images
+  ! incus storage volume snapshot create "${pool}" backups
+  ! incus storage volume snapshot create "${pool}" images
 
   # Modify container and publish to image on custom volume.
   incus start foo

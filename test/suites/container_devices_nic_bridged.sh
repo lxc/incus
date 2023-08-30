@@ -584,7 +584,7 @@ test_container_devices_nic_bridged() {
   grep -F "192.0.2.232" "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/${ctName}.eth0"
   incus copy "${ctName}" foo # Gets new MAC address but IPs still conflict.
   ! stat "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false
-  incus snapshot foo
+  incus snapshot create foo
   incus export foo foo.tar.gz
   ! incus start foo || false
   incus config device set foo eth0 \
@@ -595,7 +595,7 @@ test_container_devices_nic_bridged() {
   incus stop -f foo
 
   # Test container snapshot with conflicting addresses can be restored.
-  incus restore foo snap0 # Test restore, IPs conflict on config device update (due to only IPs changing).
+  incus snapshot restore foo snap0 # Test restore, IPs conflict on config device update (due to only IPs changing).
   ! stat "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false # Check lease file removed (due to non-user requested update failing).
   incus config device get foo eth0 ipv4.address | grep -Fx '192.0.2.232'
   ! incus start foo || false
@@ -606,7 +606,7 @@ test_container_devices_nic_bridged() {
   incus start foo
   incus stop -f foo
 
-  incus restore foo snap0 # Test restore, IPs conflict on config device remove/add (due to MAC change).
+  incus snapshot restore foo snap0 # Test restore, IPs conflict on config device remove/add (due to MAC change).
   ! stat "${INCUS_DIR}/networks/${brName}/dnsmasq.hosts/foo.eth0" || false # Check lease file removed (due to MAC change).
   incus config device get foo eth0 ipv4.address | grep -Fx '192.0.2.232'
   ! incus start foo || false

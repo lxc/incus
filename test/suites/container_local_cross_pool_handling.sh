@@ -86,33 +86,33 @@ test_container_local_cross_pool_handling() {
         incus delete -f c2
 
         incus init testimage c1
-        incus snapshot c1
-        incus snapshot c1
+        incus snapshot create c1
+        incus snapshot create c1
         incus copy c1 c2 -s "incustest-$(basename "${INCUS_DIR}")-${driver}1" --instance-only
         incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2
-        ! incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap0 || false
-        ! incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap1 || false
+        ! incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap0 || false
+        ! incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap1 || false
         incus delete -f c2
         incus move c1 c2 -s "incustest-$(basename "${INCUS_DIR}")-${driver}1" --instance-only
         ! incus info c1 || false
         incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2
-        ! incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap0 || false
-        ! incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap1 || false
+        ! incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap0 || false
+        ! incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap1 || false
         incus delete -f c2
 
         incus init testimage c1
-        incus snapshot c1
-        incus snapshot c1
+        incus snapshot create c1
+        incus snapshot create c1
         incus copy c1 c2 -s "incustest-$(basename "${INCUS_DIR}")-${driver}1"
         incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2
-        incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap0
-        incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap1
+        incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap0
+        incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap1
         incus delete -f c2
         incus move c1 c2 -s "incustest-$(basename "${INCUS_DIR}")-${driver}1"
         ! incus info c1 || false
         incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2
-        incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap0
-        incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap1
+        incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap0
+        incus storage volume snapshot show "incustest-$(basename "${INCUS_DIR}")-${driver}1" container/c2/snap1
         incus delete -f c2
       fi
     done
@@ -124,4 +124,3 @@ test_container_local_cross_pool_handling() {
   INCUS_DIR="${INCUS_DIR}"
   kill_incus "${INCUS_STORAGE_DIR}"
 }
-
