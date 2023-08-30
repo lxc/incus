@@ -177,7 +177,7 @@ func (p *ProgressRenderer) UpdateProgress(progress ioprogress.ProgressData) {
 	p.Update(progress.Text)
 }
 
-// UpdateOp is a helper to update the status using a LXD API operation.
+// UpdateOp is a helper to update the status using a REST API operation.
 func (p *ProgressRenderer) UpdateOp(op api.Operation) {
 	if op.Metadata == nil {
 		return
