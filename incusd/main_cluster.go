@@ -423,7 +423,7 @@ However all information about former cluster members will be preserved in the
 database, so you can possibly inspect it for further recovery.
 
 You'll be able to permanently delete from the database all information about
-former cluster members by running "lxc cluster remove <member-name> --force".
+former cluster members by running "incus cluster remove <member-name> --force".
 
 See https://linuxcontainers.org/incus/docs/main/howto/cluster_recover/#recover-from-quorum-loss for more info.
 
@@ -489,7 +489,7 @@ func (c *cmdClusterRemoveRaftNode) promptConfirmation() error {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print(`You should run this command only if you ended up in an
 inconsistent state where a node has been uncleanly removed (i.e. it doesn't show
-up in "lxc cluster list" but it's still in the raft configuration).
+up in "incus cluster list" but it's still in the raft configuration).
 
 Do you want to proceed? (yes/no): `)
 	input, _ := reader.ReadString('\n')
