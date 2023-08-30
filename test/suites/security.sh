@@ -89,21 +89,25 @@ test_security() {
 
   incus delete test-unpriv --force
 
+  # Spawn a separate daemon
+
   # shellcheck disable=2039,3043
   local INCUS_STORAGE_DIR
 
   INCUS_STORAGE_DIR=$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)
   chmod +x "${INCUS_STORAGE_DIR}"
-  # Enforce that only unprivileged containers can be created
-  INCUS_UNPRIVILEGED_ONLY=true
-  export INCUS_UNPRIVILEGED_ONLY
   spawn_incus "${INCUS_STORAGE_DIR}" true
-  unset INCUS_UNPRIVILEGED_ONLY
 
   (
     set -e
     # shellcheck disable=2030
     INCUS_DIR="${INCUS_STORAGE_DIR}"
+
+    # Enforce that only unprivileged containers can be created
+    incus project set default restricted=true
+
+    # Needed for the default profile in the test suite
+    incus project set default restricted.devices.nic=allow
 
     # Import image into default storage pool.
     ensure_import_testimage

@@ -37,4 +37,3 @@ Name                            | Description
 `INCUS_SECURITY_APPARMOR`       | If set to `false`, forces AppArmor off
 `INCUS_SHIFTFS_DISABLE`         | Disable `shiftfs` support (useful when testing traditional UID shifting)
 `INCUS_UI`                      | Path to the web UI to serve through the web server
-`INCUS_UNPRIVILEGED_ONLY`       | If set to `true`, enforces that only unprivileged containers can be created. Note that any privileged containers that have been created before setting INCUS_UNPRIVILEGED_ONLY will continue to be privileged. To use this option effectively it should be set when the Incus daemon is first set up.
