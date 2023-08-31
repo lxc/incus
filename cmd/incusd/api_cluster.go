@@ -1737,7 +1737,7 @@ func clusterValidateConfig(config map[string]string) error {
 		// {ref}`clustering-instance-placement` for more information.
 		// ---
 		//  type: string
-		//  default: `all`
+		//  defaultdesc: `all`
 		//  shortdesc: Controls how instances are scheduled to run on this member
 		"scheduler.instance": validate.Optional(validate.IsOneOf("all", "group", "manual")),
 	}

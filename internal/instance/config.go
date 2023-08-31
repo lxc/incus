@@ -40,7 +40,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// The number of seconds to wait after the instance started before starting the next one.
 	// ---
 	//  type: integer
-	//  default: 0
+	//  defaultdesc: 0
 	//  liveupdate: no
 	//  shortdesc: Delay after starting the instance
 	"boot.autostart.delay": validate.Optional(validate.IsInt64),
@@ -49,7 +49,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// The instance with the highest value is started first.
 	// ---
 	//  type: integer
-	//  default: 0
+	//  defaultdesc: 0
 	//  liveupdate: no
 	//  shortdesc: What order to start the instances in
 	"boot.autostart.priority": validate.Optional(validate.IsInt64),
@@ -58,7 +58,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// The instance with the highest value is shut down first.
 	// ---
 	//  type: integer
-	//  default: 0
+	//  defaultdesc: 0
 	//  liveupdate: no
 	//  shortdesc: What order to shut down the instances in
 	"boot.stop.priority": validate.Optional(validate.IsInt64),
@@ -67,7 +67,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// Number of seconds to wait for the instance to shut down before it is force-stopped.
 	// ---
 	//  type: integer
-	//  default: 30
+	//  defaultdesc: 30
 	//  liveupdate: yes
 	//  shortdesc: How long to wait for the instance to shut down
 	"boot.host_shutdown_timeout": validate.Optional(validate.IsInt64),
@@ -76,7 +76,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// The content is used as seed value for `cloud-init`.
 	// ---
 	//  type: string
-	//  default: `DHCP on eth0`
+	//  defaultdesc: `DHCP on eth0`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Network configuration for `cloud-init`
@@ -86,7 +86,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// The content is used as seed value for `cloud-init`.
 	// ---
 	//  type: string
-	//  default: `#cloud-config`
+	//  defaultdesc: `#cloud-config`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: User data for `cloud-init`
@@ -96,7 +96,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// The content is used as seed value for `cloud-init`.
 	// ---
 	//  type: string
-	//  default: `#cloud-config`
+	//  defaultdesc: `#cloud-config`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Vendor data for `cloud-init`
@@ -106,7 +106,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//
 	// ---
 	//  type: string
-	//  default: `DHCP on eth0`
+	//  defaultdesc: `DHCP on eth0`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Legacy version of `cloud-init.network-config`
@@ -115,7 +115,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//
 	// ---
 	//  type: string
-	//  default: `#cloud-config`
+	//  defaultdesc: `#cloud-config`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Legacy version of `cloud-init.user-data`
@@ -124,7 +124,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//
 	// ---
 	//  type: string
-	//  default: `#cloud-config`
+	//  defaultdesc: `#cloud-config`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Legacy version of `cloud-init.vendor-data`
@@ -149,7 +149,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// See {ref}`cluster-evacuate` for more information.
 	// ---
 	//  type: string
-	//  default: `auto`
+	//  defaultdesc: `auto`
 	//  liveupdate: no
 	//  shortdesc: What to do when evacuating the instance
 	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "stop")),
@@ -160,7 +160,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// See {ref}`instance-options-limits-cpu` for more information.
 	// ---
 	//  type: string
-	//  default: 1 (VMs)
+	//  defaultdesc: 1 (VMs)
 	//  liveupdate: yes
 	//  shortdesc: Which CPUs to expose to the instance
 	"limits.cpu": validate.Optional(validate.IsValidCPUSet),
@@ -181,7 +181,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// Specify an integer between 0 and 10.
 	// ---
 	//  type: integer
-	//  default: `5` (medium)
+	//  defaultdesc: `5` (medium)
 	//  liveupdate: yes
 	//  shortdesc: Priority of the instance's I/O requests
 	"limits.disk.priority": validate.Optional(validate.IsPriority),
@@ -193,7 +193,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// See {ref}`instances-limit-units` for details.
 	// ---
 	//  type: string
-	//  default: `1Gib` (VMs)
+	//  defaultdesc: `1Gib` (VMs)
 	//  liveupdate: yes
 	//  shortdesc: Usage limit for the host's memory
 	"limits.memory": func(value string) error {
@@ -232,7 +232,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// Specify an integer between 0 and 10.
 	// ---
 	//  type: integer
-	//  default: `0` (minimum)
+	//  defaultdesc: `0` (minimum)
 	//  liveupdate: yes
 	//  shortdesc: Priority of the instance's network requests
 	"limits.network.priority": validate.Optional(validate.IsPriority),
@@ -260,7 +260,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// See {ref}`dev-incus` for more information.
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  shortdesc: Whether `/dev/incus` is present in the instance
 	"security.guestapi": validate.Optional(validate.IsBool),
@@ -269,7 +269,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  shortdesc: Prevents the instance from being deleted
 	"security.protection.delete": validate.Optional(validate.IsBool),
@@ -279,7 +279,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//
 	// ---
 	//  type: string
-	//  default: empty
+	//  defaultdesc: empty
 	//  liveupdate: no
 	//  shortdesc: Schedule for automatic instance snapshots
 	"snapshots.schedule": validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly", "@startup", "@never"})),
@@ -288,7 +288,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  shortdesc: Whether to automatically snapshot stopped instances
 	"snapshots.schedule.stopped": validate.Optional(validate.IsBool),
@@ -300,7 +300,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// See {ref}`instance-options-snapshots-names` for more information.
 	// ---
 	//  type: string
-	//  default: `snap%d`
+	//  defaultdesc: `snap%d`
 	//  liveupdate: no
 	//  shortdesc: Template for the snapshot name
 	"snapshots.pattern": validate.IsAny,
@@ -380,7 +380,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// See {ref}`instance-options-limits-cpu-container` for more information.
 	// ---
 	//  type: string
-	//  default: 100%
+	//  defaultdesc: 100%
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: How much of the CPU can be used
@@ -425,7 +425,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// See {ref}`instance-options-limits-cpu-container` for more information.
 	// ---
 	//  type: integer
-	//  default: `10` (maximum)
+	//  defaultdesc: `10` (maximum)
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: CPU scheduling priority compared to other instances
@@ -484,7 +484,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// If it is `soft`, the instance can exceed its memory limit when extra host memory is available.
 	// ---
 	//  type: string
-	//  default: `hard`
+	//  defaultdesc: `hard`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether the memory limit is `hard` or `soft`
@@ -494,7 +494,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to encourage/discourage swapping less used pages for this instance
@@ -505,7 +505,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// The higher the value, the less likely the instance is to be swapped to disk.
 	// ---
 	//  type: integer
-	//  default: `10` (maximum)
+	//  defaultdesc: `10` (maximum)
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Prevents the instance from being swapped to disk
@@ -514,7 +514,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// If left empty, no limit is set.
 	// ---
 	//  type: integer
-	//  default: empty
+	//  defaultdesc: empty
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Maximum number of processes that can run in the instance
@@ -533,7 +533,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// Using incremental memory transfer of the instance's memory can reduce downtime.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to use incremental memory transfer
@@ -543,7 +543,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: integer
-	//  default: `10`
+	//  defaultdesc: `10`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Maximum number of transfer operations to go through before stopping the instance
@@ -553,7 +553,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: integer
-	//  default: `70`
+	//  defaultdesc: `70`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Percentage of memory to have in sync before stopping the instance
@@ -563,7 +563,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to pass the host NVIDIA and CUDA runtime libraries into the instance
@@ -573,7 +573,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// The specified driver capabilities are used to set `libnvidia-container NVIDIA_DRIVER_CAPABILITIES`.
 	// ---
 	//  type: string
-	//  default: `compute,utility`
+	//  defaultdesc: `compute,utility`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: What driver capabilities the instance needs
@@ -621,7 +621,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Controls the availability of the `/1.0/images` API over `guestapi`
@@ -640,7 +640,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// If specified, the idmap used for this instance is unique among instances that have this option set.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: unprivileged container
 	//  shortdesc: Whether to use a unique idmap for this instance
@@ -659,7 +659,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to support running Incus (nested) inside the instance
@@ -669,7 +669,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to run the instance in privileged mode
@@ -679,7 +679,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// Set this option to `true` to prevent the instance's file system from being UID/GID shifted on startup.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to protect the file system from being UID/GID shifted
@@ -703,7 +703,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to enable the default syscall deny
@@ -714,7 +714,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// On other architectures, the option is ignored.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to block `compat_*` syscalls (`x86_64` only)
@@ -734,7 +734,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `bpf()` system call
@@ -744,7 +744,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// This option controls whether to allow BPF programs for the devices cgroup in the unified hierarchy to be loaded.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to allow BPF programs
@@ -754,7 +754,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// These system calls allow creation of a limited subset of char/block devices.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `mknod` and `mknodat` system calls
@@ -764,7 +764,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `mount` system call
@@ -792,7 +792,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to mount `shiftfs` on top of file systems handled through mount syscall interception
@@ -802,7 +802,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// This system call allows increasing process priority.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `sched_setscheduler` system call
@@ -812,7 +812,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// This system call allows setting a limited subset of restricted extended attributes.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `setxattr` system call
@@ -822,7 +822,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// This system call can be used to get cgroup-based resource usage information.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `sysinfo` system call
@@ -865,7 +865,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	// If this option is set to `false`, regular system memory is used.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether to back the instance using huge pages
@@ -875,7 +875,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	// Enabling this option prevents the use of some features that are incompatible with it.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether to allow for stateful stop/start and snapshots
@@ -905,7 +905,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether the `incus-agent` is queried for state information and metrics
@@ -915,7 +915,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	// When enabling this option, set {config:option}`instance-security:security.secureboot` to `false`.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether to use a firmware that supports UEFI-incompatible operating systems
@@ -925,7 +925,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	// When disabling this option, consider enabling {config:option}`instance-security:security.csm`.
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether UEFI secure boot is enabled with the default Microsoft keys
@@ -935,7 +935,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether AMD SEV (Secure Encrypted Virtualization) is enabled for this VM
@@ -945,7 +945,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether AMD SEV-ES (SEV Encrypted State) is enabled for this VM
@@ -955,7 +955,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//
 	// ---
 	//  type: string
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: The guest owner's `base64`-encoded Diffie-Hellman key
@@ -965,7 +965,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//
 	// ---
 	//  type: string
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: The guest owner's `base64`-encoded session blob
@@ -983,7 +983,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	// For virtual machines, set this option to `true` to set the name and MTU of the default network interfaces to be the same as the instance devices.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether to use the name and MTU of the default network interfaces

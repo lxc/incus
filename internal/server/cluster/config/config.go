@@ -279,7 +279,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: `https://acme-v02.api.letsencrypt.org/directory`
+	//  defaultdesc: `https://acme-v02.api.letsencrypt.org/directory`
 	//  shortdesc: Agree to ACME terms of service
 	"acme.ca_url": {},
 
@@ -304,7 +304,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: bool
 	//  scope: global
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  shortdesc: Agree to ACME terms of service
 	"acme.agree_tos": {Type: config.Bool, Default: "false"},
 
@@ -313,7 +313,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: `gzip`
+	//  defaultdesc: `gzip`
 	//  shortdesc: Compression algorithm to use for backups
 	"backups.compression_algorithm": {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
 
@@ -322,7 +322,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: integer
 	//  scope: global
-	//  default: `20`
+	//  defaultdesc: `20`
 	//  shortdesc: Threshold when an unresponsive member is considered offline
 	"cluster.offline_threshold": {Type: config.Int64, Default: offlineThresholdDefault(), Validator: offlineThresholdValidator},
 
@@ -332,7 +332,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: integer
 	//  scope: global
-	//  default: `3`
+	//  defaultdesc: `3`
 	//  shortdesc: Number of cluster members that replicate an image
 	"cluster.images_minimal_replica": {Type: config.Int64, Default: "3", Validator: imageMinimalReplicaValidator},
 
@@ -342,7 +342,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: integer
 	//  scope: global
-	//  default: `0`
+	//  defaultdesc: `0`
 	//  shortdesc: Threshold when to evacuate an offline cluster member
 	"cluster.healing_threshold": {Type: config.Int64, Default: "0"},
 
@@ -351,7 +351,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: `3H`
+	//  defaultdesc: `3H`
 	//  shortdesc: Time after which a cluster join token expires
 	"cluster.join_token_expiry": {Type: config.String, Default: "3H", Validator: expiryValidator},
 
@@ -361,7 +361,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: integer
 	//  scope: global
-	//  default: `3`
+	//  defaultdesc: `3`
 	//  shortdesc: Number of database voter members
 	"cluster.max_voters": {Type: config.Int64, Default: "3", Validator: maxVotersValidator},
 
@@ -371,7 +371,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: integer
 	//  scope: global
-	//  default: `2`
+	//  defaultdesc: `2`
 	//  shortdesc: Number of database stand-by members
 	"cluster.max_standby": {Type: config.Int64, Default: "2", Validator: maxStandByValidator},
 
@@ -380,7 +380,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: bool
 	//  scope: global
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  shortdesc: Whether to enforce authentication on the metrics endpoint
 	"core.metrics_authentication": {Type: config.Bool, Default: "true"},
 
@@ -463,7 +463,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: no expiry
+	//  defaultdesc: no expiry
 	//  shortdesc: Time after which a remote add token expires
 	"core.remote_token_expiry": {Type: config.String, Validator: validate.Optional(expiryValidator)},
 
@@ -472,7 +472,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: integer
 	//  scope: global
-	//  default: `5`
+	//  defaultdesc: `5`
 	//  shortdesc: How long to wait before shutdown
 	"core.shutdown_timeout": {Type: config.Int64, Default: "5"},
 
@@ -489,7 +489,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: bool
 	//  scope: global
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  shortdesc: Whether to automatically update cached images
 	"images.auto_update_cached": {Type: config.Bool, Default: "true"},
 
@@ -499,7 +499,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: integer
 	//  scope: global
-	//  default: `6`
+	//  defaultdesc: `6`
 	//  shortdesc: Interval at which to look for updates to cached images
 	"images.auto_update_interval": {Type: config.Int64, Default: "6"},
 
@@ -508,7 +508,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: `gzip`
+	//  defaultdesc: `gzip`
 	//  shortdesc: Compression algorithm to use for new images
 	"images.compression_algorithm": {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
 
@@ -524,7 +524,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: integer
 	//  scope: global
-	//  default: `10`
+	//  defaultdesc: `10`
 	//  shortdesc: When an unused cached remote image is flushed
 	"images.remote_cache_expiry": {Type: config.Int64, Default: "10"},
 
@@ -536,7 +536,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: `random`
+	//  defaultdesc: `random`
 	//  shortdesc: How to set the host name for a NIC
 	"instances.nic.host_name": {Validator: validate.Optional(validate.IsOneOf("random", "mac"))},
 
@@ -594,7 +594,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: `info`
+	//  defaultdesc: `info`
 	//  shortdesc: Minimum log level to send to the Loki server
 	"loki.loglevel": {Validator: logLevelValidator, Default: logrus.InfoLevel.String()},
 
@@ -604,7 +604,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: `lifecycle,logging`
+	//  defaultdesc: `lifecycle,logging`
 	//  shortdesc: Events to send to the Loki server
 	"loki.types": {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging"))), Default: "lifecycle,logging"},
 
@@ -639,7 +639,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: `br-int`
+	//  defaultdesc: `br-int`
 	//  shortdesc: OVS integration bridge to use for OVN networks
 	"network.ovn.integration_bridge": {Default: "br-int"},
 
@@ -648,7 +648,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  default: `unix:/var/run/ovn/ovnnb_db.sock`
+	//  defaultdesc: `unix:/var/run/ovn/ovnnb_db.sock`
 	//  shortdesc: OVN northbound database connection string
 	"network.ovn.northbound_connection": {Default: "unix:/var/run/ovn/ovnnb_db.sock"},
 }
