@@ -19,7 +19,7 @@ import (
 	"github.com/lxc/incus/shared/ws"
 )
 
-var eventTypes = []string{api.EventTypeLogging, api.EventTypeOperation, api.EventTypeLifecycle}
+var eventTypes = []string{api.EventTypeLogging, api.EventTypeOperation, api.EventTypeLifecycle, api.EventTypeOVN}
 var privilegedEventTypes = []string{api.EventTypeLogging}
 
 var eventsCmd = APIEndpoint{
