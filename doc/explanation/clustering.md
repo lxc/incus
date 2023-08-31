@@ -142,7 +142,7 @@ When you launch an instance, you can target it to a specific cluster member, to 
 By default, the automatic assignment picks the cluster member that has the lowest number of instances.
 If several members have the same amount of instances, one of the members is chosen at random.
 
-However, you can control this behavior with the {config:option}`cluster:scheduler.instance` configuration option:
+However, you can control this behavior with the {config:option}`cluster-cluster:scheduler.instance` configuration option:
 
 - If `scheduler.instance` is set to `all` for a cluster member, this cluster member is selected for an instance if:
 
