@@ -38,7 +38,7 @@ In addition to the configuration options listed in the following sections, these
 :shortdesc: "Environment variables for the instance"
 
 You can export key/value environment variables to the instance.
-These are then set for `incus exec`.
+These are then set for [`lxc exec`](lxc_exec.md).
 ```
 
 (instance-options-boot)=

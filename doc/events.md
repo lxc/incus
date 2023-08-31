@@ -3,7 +3,7 @@
 ## Introduction
 
 Events are messages about actions that have occurred over LXD. Using the API endpoint `/1.0/events` directly or via
-`lxc monitor` will connect to a WebSocket through which logs and life-cycle messages will be streamed.
+[`lxc monitor`](lxc_monitor.md) will connect to a WebSocket through which logs and life-cycle messages will be streamed.
 
 ## Event types
 

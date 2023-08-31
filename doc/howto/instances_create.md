@@ -1,8 +1,8 @@
 (instances-create)=
 # How to create instances
 
-To create an instance, you can use either the `lxc init` or the [`lxc launch`](lxc_launch.md) command.
-The `lxc init` command only creates the instance, while the [`lxc launch`](lxc_launch.md) command creates and starts it.
+To create an instance, you can use either the [`lxc init`](lxc_init.md) or the [`lxc launch`](lxc_launch.md) command.
+The [`lxc init`](lxc_init.md) command only creates the instance, while the [`lxc launch`](lxc_launch.md) command creates and starts it.
 
 ## Usage
 
@@ -22,7 +22,7 @@ Instance name
   See {ref}`instance-properties` for additional requirements.
 
 Flags
-: See [`lxc launch --help`](lxc_launch.md) or `lxc init --help` for a full list of flags.
+: See [`lxc launch --help`](lxc_launch.md) or [`lxc init --help`](lxc_init.md) for a full list of flags.
   The most common flags are:
 
   - `--config` to specify a configuration option for the new instance
@@ -46,7 +46,7 @@ Check the contents of an existing instance configuration ([`lxc config show <ins
 
 ## Examples
 
-The following examples use [`lxc launch`](lxc_launch.md), but you can use `lxc init` in the same way.
+The following examples use [`lxc launch`](lxc_launch.md), but you can use [`lxc init`](lxc_init.md) in the same way.
 
 ### Launch a container
 

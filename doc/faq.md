@@ -84,17 +84,17 @@ The way to diagnose this problem is to run a `tcpdump` on the uplink and you wil
 (faq-monitor)=
 ## How can I monitor what LXD is doing?
 
-To see detailed information about what LXD is doing and what processes it is running, use the `lxc monitor` command.
+To see detailed information about what LXD is doing and what processes it is running, use the [`lxc monitor`](lxc_monitor.md) command.
 
 For example, to show a human-readable output of all types of messages, enter the following command:
 
     lxc monitor --pretty
 
-See `lxc monitor --help` for all options, and {doc}`debugging` for more information.
+See [`lxc monitor --help`](lxc_monitor.md) for all options, and {doc}`debugging` for more information.
 
 ## Why does LXD stall when creating an instance?
 
 Check if your storage pool is out of space (by running [`lxc storage info <pool_name>`](lxc_storage_info.md)).
 In that case, LXD cannot finish unpacking the image, and the instance that you're trying to create shows up as stopped.
 
-To get more insight into what is happening, run `lxc monitor` (see {ref}`faq-monitor`), and check `sudo dmesg` for any I/O errors.
+To get more insight into what is happening, run [`lxc monitor`](lxc_monitor.md) (see {ref}`faq-monitor`), and check `sudo dmesg` for any I/O errors.

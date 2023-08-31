@@ -25,7 +25,7 @@ Fetching metrics is a relatively expensive operation for LXD to perform, so if t
 
 ## Query the raw data
 
-To view the raw data that LXD collects, use the `lxc query` command to query the `/1.0/metrics` endpoint:
+To view the raw data that LXD collects, use the [`lxc query`](lxc_query.md) command to query the `/1.0/metrics` endpoint:
 
 ```{terminal}
 :input: lxc query /1.0/metrics
