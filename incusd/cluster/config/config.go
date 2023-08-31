@@ -78,11 +78,6 @@ func (c *Config) HTTPSAllowedCredentials() bool {
 	return c.m.GetBool("core.https_allowed_credentials")
 }
 
-// TrustPassword returns the trust password for authenticating clients.
-func (c *Config) TrustPassword() string {
-	return c.m.GetString("core.trust_password")
-}
-
 // TrustCACertificates returns whether client certificates are checked
 // against a CA.
 func (c *Config) TrustCACertificates() bool {
@@ -306,7 +301,6 @@ var ConfigSchema = config.Schema{
 	"core.proxy_ignore_hosts":        {},
 	"core.remote_token_expiry":       {Type: config.String, Validator: validate.Optional(expiryValidator)},
 	"core.shutdown_timeout":          {Type: config.Int64, Default: "5"},
-	"core.trust_password":            {Hidden: true, Setter: passwordSetter},
 	"core.trust_ca_certificates":     {Type: config.Bool},
 	"images.auto_update_cached":      {Type: config.Bool, Default: "true"},
 	"images.auto_update_interval":    {Type: config.Int64, Default: "6"},

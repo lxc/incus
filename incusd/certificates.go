@@ -19,7 +19,6 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/cluster"
-	clusterConfig "github.com/lxc/incus/incusd/cluster/config"
 	clusterRequest "github.com/lxc/incus/incusd/cluster/request"
 	"github.com/lxc/incus/incusd/db"
 	dbCluster "github.com/lxc/incus/incusd/db/cluster"
@@ -426,7 +425,7 @@ func certificateTokenValid(s *state.State, r *http.Request, addToken *api.Certif
 //  Add a trusted certificate
 //
 //  Adds a certificate to the trust store as an untrusted user.
-//  In this mode, the `password` property must be set to the correct value.
+//  In this mode, the `token` property must be set to the correct value.
 //
 //  The `certificate` field can be omitted in which case the TLS client
 //  certificate in use for the connection will be retrieved and added to the
@@ -462,7 +461,7 @@ func certificateTokenValid(s *state.State, r *http.Request, addToken *api.Certif
 //	Add a trusted certificate
 //
 //	Adds a certificate to the trust store.
-//	In this mode, the `password` property is always ignored.
+//	In this mode, the `token` property is always ignored.
 //
 //	---
 //	consumes:
@@ -513,22 +512,6 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Access check.
-	// Can't us s.GlobalConfig.TrustPassword() here as global config is not yet updated.
-	var secret string
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		config, err := clusterConfig.Load(ctx, tx)
-		if err != nil {
-			return err
-		}
-
-		secret = config.TrustPassword()
-
-		return nil
-	})
-	if err != nil {
-		return response.SmartError(err)
-	}
-
 	// Check if the user is already trusted.
 	trusted, _, _, err := d.Authenticate(nil, r)
 	if err != nil {
@@ -547,13 +530,13 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 			return response.Forbidden(nil)
 		}
 
-		// A password is required for non-admin users.
-		if req.Password == "" {
+		// A token is required for non-admin users.
+		if req.TrustToken == "" {
 			return response.Forbidden(nil)
 		}
 
-		// Check if cluster member join token supplied as password.
-		joinToken, err := shared.JoinTokenDecode(req.Password)
+		// Check if cluster member join token supplied as token.
+		joinToken, err := shared.JoinTokenDecode(req.TrustToken)
 		if err == nil {
 			// If so then check there is a matching join operation.
 			joinOp, err := clusterMemberJoinTokenValid(s, r, project.Default, joinToken)
@@ -565,8 +548,8 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 				return response.Forbidden(fmt.Errorf("No matching cluster join operation found"))
 			}
 		} else {
-			// Check if certificate add token supplied as password.
-			joinToken, err := shared.CertificateTokenDecode(req.Password)
+			// Check if certificate add token supplied as token.
+			joinToken, err := shared.CertificateTokenDecode(req.TrustToken)
 			if err == nil {
 				// If so then check there is a matching join operation.
 				joinOp, err := certificateTokenValid(s, r, joinToken)
@@ -593,11 +576,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 					},
 				}
 			} else {
-				// Otherwise check if password matches trust password.
-				if util.PasswordCheck(secret, req.Password) != nil {
-					logger.Warn("Bad trust password", logger.Ctx{"url": r.URL.RequestURI(), "ip": r.RemoteAddr})
-					return response.Forbidden(nil)
-				}
+				return response.Forbidden(nil)
 			}
 		}
 	}

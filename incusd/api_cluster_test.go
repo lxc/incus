@@ -97,7 +97,6 @@ func (f *clusterFixture) EnableNetworking(daemon *Daemon, password string) {
 	require.NoError(f.t, err)
 	serverPut := server.Writable()
 	serverPut.Config["core.https_address"] = address
-	serverPut.Config["core.trust_password"] = password
 
 	require.NoError(f.t, client.UpdateServer(serverPut, ""))
 }
@@ -116,7 +115,6 @@ func (f *clusterFixture) EnableNetworkingWithClusterAddress(daemon *Daemon, pass
 	require.NoError(f.t, err)
 	serverPut := server.Writable()
 	serverPut.Config["core.https_address"] = address
-	serverPut.Config["core.trust_password"] = password
 	serverPut.Config["cluster.https_address"] = address
 
 	require.NoError(f.t, client.UpdateServer(serverPut, ""))

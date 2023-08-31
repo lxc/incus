@@ -29,7 +29,6 @@ type cmdInit struct {
 	flagStorageDevice   string
 	flagStorageLoopSize int
 	flagStoragePool     string
-	flagTrustPassword   string
 
 	hostname string
 }
@@ -44,7 +43,7 @@ func (c *cmdInit) Command() *cobra.Command {
 	cmd.Example = `  init --minimal
   init --auto [--network-address=IP] [--network-port=8443] [--storage-backend=dir]
               [--storage-create-device=DEVICE] [--storage-create-loop=SIZE]
-              [--storage-pool=POOL] [--trust-password=PASSWORD]
+              [--storage-pool=POOL]
   init --preseed
   init --dump
 `
@@ -60,7 +59,6 @@ func (c *cmdInit) Command() *cobra.Command {
 	cmd.Flags().StringVar(&c.flagStorageDevice, "storage-create-device", "", "Setup device based storage using DEVICE"+"``")
 	cmd.Flags().IntVar(&c.flagStorageLoopSize, "storage-create-loop", -1, "Setup loop based storage with SIZE in GB"+"``")
 	cmd.Flags().StringVar(&c.flagStoragePool, "storage-pool", "", "Storage pool to use or create"+"``")
-	cmd.Flags().StringVar(&c.flagTrustPassword, "trust-password", "", "Password required to add new clients"+"``")
 
 	return cmd
 }
@@ -81,8 +79,7 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 
 	if !c.flagAuto && (c.flagNetworkAddress != "" || c.flagNetworkPort != -1 ||
 		c.flagStorageBackend != "" || c.flagStorageDevice != "" ||
-		c.flagStorageLoopSize != -1 || c.flagStoragePool != "" ||
-		c.flagTrustPassword != "") {
+		c.flagStorageLoopSize != -1 || c.flagStoragePool != "") {
 		return fmt.Errorf("Configuration flags require --auto")
 	}
 
@@ -90,7 +87,7 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 		c.flagPreseed || c.flagNetworkAddress != "" ||
 		c.flagNetworkPort != -1 || c.flagStorageBackend != "" ||
 		c.flagStorageDevice != "" || c.flagStorageLoopSize != -1 ||
-		c.flagStoragePool != "" || c.flagTrustPassword != "") {
+		c.flagStoragePool != "") {
 		return fmt.Errorf("Can't use --dump with other flags")
 	}
 
@@ -193,9 +190,6 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 		if config.Cluster.ClusterCertificate == "" {
 			return fmt.Errorf("Unable to connect to any of the cluster members specified in join token")
 		}
-
-		// Raw join token used as cluster password so it can be validated.
-		config.Cluster.ClusterPassword = config.Cluster.ClusterToken
 	}
 
 	// If clustering is enabled, and no cluster.https_address network address
