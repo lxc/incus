@@ -288,7 +288,7 @@ func (c *Client) HandleEvent(event api.Event) {
 		}
 
 		entry.Line = fmt.Sprintf("%s%s", messagePrefix, lifecycleEvent.Action)
-	} else if event.Type == api.EventTypeLogging {
+	} else if event.Type == api.EventTypeLogging || event.Type == api.EventTypeOVN {
 		logEvent := api.EventLogging{}
 
 		err := json.Unmarshal(event.Metadata, &logEvent)
