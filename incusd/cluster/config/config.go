@@ -310,7 +310,7 @@ var ConfigSchema = config.Schema{
 	"instances.nic.host_name":        {Validator: validate.Optional(validate.IsOneOf("random", "mac"))},
 	"instances.placement.scriptlet":  {Validator: validate.Optional(scriptletLoad.InstancePlacementValidate)},
 	"loki.auth.username":             {},
-	"loki.auth.password":             {Hidden: true},
+	"loki.auth.password":             {},
 	"loki.api.ca_cert":               {},
 	"loki.api.url":                   {},
 	"loki.labels":                    {},
