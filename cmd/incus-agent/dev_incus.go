@@ -270,6 +270,12 @@ func createDevIncuslListener(dir string) (net.Listener, error) {
 		return nil, err
 	}
 
+	// Add a symlink for legacy support.
+	err = os.Symlink(filepath.Join(dir, "incus"), filepath.Join(dir, "lxd"))
+	if err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+
 	// If this socket exists, that means a previous agent instance died and
 	// didn't clean up. We assume that such agent instance is actually dead
 	// if we get this far, since localCreateListener() tries to connect to
