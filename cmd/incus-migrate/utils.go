@@ -14,13 +14,11 @@ import (
 	"strings"
 
 	"golang.org/x/sys/unix"
-	"golang.org/x/term"
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	cli "github.com/lxc/incus/shared/cmd"
 	"github.com/lxc/incus/shared/version"
 	"github.com/lxc/incus/shared/ws"
 )
@@ -230,7 +228,7 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 	if authType == "tls" {
 		if token != "" {
 			req := api.CertificatesPost{
-				Password: token,
+				TrustToken: token,
 			}
 
 			err = c.CreateCertificate(req)
@@ -238,42 +236,13 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 				return nil, "", fmt.Errorf("Failed to create certificate: %w", err)
 			}
 		} else {
-			fmt.Println("It is recommended to have this certificate be manually added to Incus through `incus config trust add` on the target server.\nAlternatively you could use a pre-defined trust password to add it remotely (use of a trust password can be a security issue).")
-
+			fmt.Println("A temporary client certificate was generated, use `incus config trust add` on the target server.")
 			fmt.Println("")
 
-			useTrustPassword, err := cli.AskBool("Would you like to use a trust password? [default=no]: ", "no")
+			fmt.Print("Press ENTER after the certificate was added to the remote server: ")
+			_, err = bufio.NewReader(os.Stdin).ReadString('\n')
 			if err != nil {
 				return nil, "", err
-			}
-
-			if useTrustPassword {
-				// Prompt for trust password
-				fmt.Print("Trust password: ")
-				pwd, err := term.ReadPassword(0)
-				if err != nil {
-					return nil, "", err
-				}
-
-				fmt.Println("")
-
-				// Add client certificate to trust store
-				req := api.CertificatesPost{
-					Password: string(pwd),
-				}
-
-				req.Type = api.CertificateTypeClient
-
-				err = c.CreateCertificate(req)
-				if err != nil {
-					return nil, "", err
-				}
-			} else {
-				fmt.Print("Press ENTER after the certificate was added to the remote server: ")
-				_, err = bufio.NewReader(os.Stdin).ReadString('\n')
-				if err != nil {
-					return nil, "", err
-				}
 			}
 		}
 	} else {
