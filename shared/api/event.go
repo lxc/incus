@@ -11,6 +11,7 @@ const (
 	EventTypeLifecycle = "lifecycle"
 	EventTypeLogging   = "logging"
 	EventTypeOperation = "operation"
+	EventTypeOVN       = "ovn"
 )
 
 // Event represents an event entry (over websocket)
