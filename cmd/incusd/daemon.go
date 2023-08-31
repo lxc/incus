@@ -59,6 +59,7 @@ import (
 	storageDrivers "github.com/lxc/incus/internal/server/storage/drivers"
 	"github.com/lxc/incus/internal/server/storage/s3/miniod"
 	"github.com/lxc/incus/internal/server/sys"
+	"github.com/lxc/incus/internal/server/syslog"
 	"github.com/lxc/incus/internal/server/task"
 	"github.com/lxc/incus/internal/server/ucred"
 	localUtil "github.com/lxc/incus/internal/server/util"
@@ -149,6 +150,9 @@ type Daemon struct {
 
 	// Authorization.
 	authorizer auth.Authorizer
+
+	// Syslog listener cancel function.
+	syslogSocketCancel context.CancelFunc
 }
 
 // DaemonConfig holds configuration values for Daemon.
@@ -1251,7 +1255,7 @@ func (d *Daemon) init() error {
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
 	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes := d.globalConfig.LokiServer()
 	oidcIssuer, oidcClientID, oidcAudience := d.globalConfig.OIDCServer()
-
+	syslogSocketEnabled := d.localConfig.SyslogSocket()
 	instancePlacementScriptlet := d.globalConfig.InstancesPlacementScriptlet()
 
 	d.endpoints.NetworkUpdateTrustedProxy(d.globalConfig.HTTPSTrustedProxy())
@@ -1260,6 +1264,14 @@ func (d *Daemon) init() error {
 	// Setup Loki logger.
 	if lokiURL != "" {
 		err = d.setupLoki(lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Setup syslog listener.
+	if syslogSocketEnabled {
+		err = d.setupSyslogSocket(true)
 		if err != nil {
 			return err
 		}
@@ -1705,6 +1717,32 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	}
 
 	return err
+}
+
+// Syslog listener.
+func (d *Daemon) setupSyslogSocket(enable bool) error {
+	// Always cancel the context to ensure that no goroutines leak.
+	if d.syslogSocketCancel != nil {
+		logger.Debug("Stopping syslog socket")
+		d.syslogSocketCancel()
+	}
+
+	if !enable {
+		return nil
+	}
+
+	var ctx context.Context
+
+	ctx, d.syslogSocketCancel = context.WithCancel(d.shutdownCtx)
+
+	logger.Debug("Starting syslog socket")
+
+	err := syslog.Listen(ctx, d.events)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Create a database connection and perform any updates needed.

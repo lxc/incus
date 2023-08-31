@@ -781,6 +781,7 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	acmeDomainChanged := false
 	acmeCAURLChanged := false
 	oidcChanged := false
+	syslogSocketChanged := false
 
 	for key := range clusterChanged {
 		switch key {
@@ -841,6 +842,8 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			bgpChanged = true
 		case "core.dns_address":
 			dnsChanged = true
+		case "core.syslog_socket":
+			syslogSocketChanged = true
 		}
 	}
 
@@ -965,6 +968,13 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			d.oidcVerifier = nil
 		} else {
 			d.oidcVerifier = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcAudience)
+		}
+	}
+
+	if syslogSocketChanged {
+		err := d.setupSyslogSocket(nodeConfig.SyslogSocket())
+		if err != nil {
+			return err
 		}
 	}
 
