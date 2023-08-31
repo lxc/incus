@@ -105,11 +105,11 @@ func RunCommandInheritFds(ctx context.Context, filesInherit []*os.File, name str
 	return stdout, err
 }
 
-// RunCommandCLocale runs a command with a LANG=C.UTF-8 and LANGUAGE=en environment set with optional arguments and
+// RunCommandCLocale runs a command with a LC_ALL=C.UTF-8 and LANGUAGE=en environment set with optional arguments and
 // returns stdout. If the command fails to start or returns a non-zero exit code then an error is
 // returned containing the output of stderr.
 func RunCommandCLocale(name string, arg ...string) (string, error) {
-	stdout, _, err := RunCommandSplit(context.TODO(), append(os.Environ(), "LANG=C.UTF-8", "LANGUAGE=en"), nil, name, arg...)
+	stdout, _, err := RunCommandSplit(context.TODO(), append(os.Environ(), "LC_ALL=C.UTF-8", "LANGUAGE=en"), nil, name, arg...)
 	return stdout, err
 }
 
