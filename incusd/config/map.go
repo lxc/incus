@@ -42,15 +42,6 @@ func (m *Map) Change(changes map[string]any) (map[string]string, error) {
 
 	errors := ErrorList{}
 	for name, change := range changes {
-		key, ok := m.schema[name]
-
-		// When a hidden value is set to "true" in the change set, it
-		// means "keep it unchanged", so we replace it with our current
-		// value.
-		if ok && key.Hidden && change == true {
-			change = m.GetRaw(name)
-		}
-
 		// A nil object means the empty string.
 		if change == nil {
 			change = ""
@@ -90,9 +81,7 @@ func (m *Map) Change(changes map[string]any) (map[string]string, error) {
 
 // Dump the current configuration held by this Map.
 //
-// Keys that match their default value will not be included in the dump. Also,
-// if a Key has its Hidden attribute set to true, it will be rendered as
-// "true", for obfuscating the actual value.
+// Keys that match their default value will not be included in the dump.
 func (m *Map) Dump() map[string]any {
 	values := map[string]any{}
 
@@ -102,11 +91,7 @@ func (m *Map) Dump() map[string]any {
 			// Schema key
 			value := m.GetRaw(name)
 			if value != key.Default {
-				if key.Hidden {
-					values[name] = true
-				} else {
-					values[name] = value
-				}
+				values[name] = value
 			}
 		} else if shared.IsUserConfig(name) {
 			// User key, just include it as is
