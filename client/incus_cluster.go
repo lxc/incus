@@ -7,8 +7,6 @@ import (
 )
 
 // GetCluster returns information about a cluster
-//
-// If this client is not trusted, the password must be supplied.
 func (r *ProtocolIncus) GetCluster() (*api.Cluster, string, error) {
 	if !r.HasExtension("clustering") {
 		return nil, "", fmt.Errorf("The server is missing the required \"clustering\" API extension")
