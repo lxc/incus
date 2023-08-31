@@ -600,13 +600,13 @@ var ConfigSchema = config.Schema{
 
 	// gendoc:generate(entity=server, group=loki, key=loki.types)
 	// Specify a comma-separated list of events to send to the Loki server.
-	// The events can be `lifecycle` and/or `logging`.
+	// The events can be any combination of `lifecycle`, `logging`, and `ovn`.
 	// ---
 	//  type: string
 	//  scope: global
 	//  defaultdesc: `lifecycle,logging`
 	//  shortdesc: Events to send to the Loki server
-	"loki.types": {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging"))), Default: "lifecycle,logging"},
+	"loki.types": {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging", "ovn"))), Default: "lifecycle,logging"},
 
 	// gendoc:generate(entity=server, group=oidc, key=oidc.client.id)
 	//
