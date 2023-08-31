@@ -265,6 +265,10 @@ linkcheck_ignore = [
 ]
 linkcheck_exclude_documents = [r'.*/manpages/.*']
 
+linkcheck_anchors_ignore_for_url = [
+    r'https://github\.com/.*'
+]
+
 # Setup redirects (https://documatt.gitlab.io/sphinx-reredirects/usage.html)
 redirects = {
     "howto/instances_snapshots/index": "../instances_backup/",
