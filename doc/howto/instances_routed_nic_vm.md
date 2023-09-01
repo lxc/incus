@@ -15,9 +15,9 @@ Then add the routed NIC device:
 
 In this command, `my-parent-network` is your parent network, and the IPv4 and IPv6 addresses are within the subnet of the parent.
 
-Next we will create a `netplan` configuration file `netplan.yaml` to use with the instance:
+Next we will add some `netplan` configuration to the instance using the `cloud-init.network-config` configuration key:
 
-    cat <<EOF > netplan.yaml
+    cat <<EOF | lxc config set jammy cloud-init.network-config -
     network:
       version: 2
       ethernets:
@@ -25,18 +25,18 @@ Next we will create a `netplan` configuration file `netplan.yaml` to use with th
           routes:
           - to: default
             via: 169.254.0.1
+            on-link: true
           - to: default
             via: fe80::1
-          link-local:
-          - ipv4
-          - ipv6
+            on-link: true
           addresses:
           - 192.0.2.2/32
           - 2001:db8::2/128
     EOF
 
 This `netplan` configuration adds the {ref}`static link-local next-hop addresses <nic-routed>` (`169.254.0.1` and `fe80::1`) that are required.
-Additionally, we enable link-local addressing for IPv4 and IPv6, and add the addresses we configured in our routed NIC device.
+For each of these routes we set `on-link` to `true`, which specifies that the route is directly connected to the interface.
+We also add the addresses that we configured in our routed NIC device.
 For more information on `netplan`, see [their documentation](https://netplan.readthedocs.io/en/latest/).
 
 ```{note}
@@ -45,14 +45,10 @@ To enable DNS within the instance, you must set a valid DNS IP address.
 If there is a `lxdbr0` network on the host, the name server can be set to that IP instead.
 ```
 
-Finally, we add this `netplan` configuration to the instance using the `cloud-init.network-config` configuration key:
+You can then start your instance with:
 
-    incus config set jammy cloud-init.network-config "$(cat netplan.yaml)"
+    lxc start jammy
 
 ```{note}
 Before you start your instance, make sure that you have {ref}`configured the parent network <nic-routed>` to enable proxy ARP/NDP.
 ```
-
-You can then start your instance with:
-
-    incus start jammy
