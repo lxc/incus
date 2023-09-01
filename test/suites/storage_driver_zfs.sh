@@ -268,6 +268,10 @@ do_storage_driver_zfs() {
   # Turn off block mode
   incus storage unset incustest-"$(basename "${INCUS_DIR}")" volume.zfs.block_mode
 
+  # Regular (no block mode) custom storage block volumes shouldn't be allowed to set block.*.
+  ! incus storage create incustest-"$(basename "${INCUS_DIR}")" block.filesystem=ext4 || false
+  ! incus storage create incustest-"$(basename "${INCUS_DIR}")" block.mount_options=rw || false
+
   # shellcheck disable=SC2031
   kill_incus "${INCUS_STORAGE_DIR}"
 }
