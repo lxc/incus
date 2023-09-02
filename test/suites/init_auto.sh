@@ -57,12 +57,12 @@ test_init_auto() {
     kill_incus "${INCUS_INIT_DIR}"
   fi
 
-  # incusd init --trust-password test --network-address 127.0.0.1 --network-port LOCAL --auto
+  # incusd init --network-address 127.0.0.1 --network-port LOCAL --auto
   INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_INIT_DIR}"
   spawn_incus "${INCUS_INIT_DIR}" false
 
-  INCUS_DIR=${INCUS_INIT_DIR} incusd init --trust-password test --network-address 127.0.0.1 --network-port "$(local_tcp_port)" --auto
+  INCUS_DIR=${INCUS_INIT_DIR} incusd init --network-address 127.0.0.1 --network-port "$(local_tcp_port)" --auto
 
   kill_incus "${INCUS_INIT_DIR}"
 }

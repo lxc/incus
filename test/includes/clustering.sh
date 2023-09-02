@@ -134,7 +134,6 @@ spawn_incus_and_bootstrap_cluster() {
 
     cat > "${INCUS_DIR}/preseed.yaml" <<EOF
 config:
-  core.trust_password: sekret
   core.https_address: 10.1.1.101:8443
 EOF
     if [ "${port}" != "" ]; then
@@ -210,17 +209,21 @@ spawn_incus_and_join_cluster() {
   index="${4}"
   target="${5}"
   INCUS_DIR="${6}"
+  if [ -d "${7}" ]; then
+    token="$(INCUS_DIR=${7} incus cluster add --quiet "node${index}")"
+  else
+    token="${7}"
+  fi
   driver="dir"
   port="8443"
-  if [ "$#" -ge  "7" ]; then
-      driver="${7}"
-  fi
   if [ "$#" -ge  "8" ]; then
-      port="${8}"
+      driver="${8}"
+  fi
+  if [ "$#" -ge  "9" ]; then
+      port="${9}"
   fi
 
   echo "==> Spawn additional cluster node in ${ns} with storage driver ${driver}"
-  secret="${INCUS_SECRET:-"sekret"}"
 
   INCUS_NETNS="${ns}" spawn_incus "${INCUS_DIR}" false
   (
@@ -239,7 +242,7 @@ cluster:
   server_address: 10.1.1.10${index}:${port}
   cluster_address: 10.1.1.10${target}:8443
   cluster_certificate: "$cert"
-  cluster_password: ${secret}
+  cluster_token: ${token}
   member_config:
 EOF
     # Declare the pool only if the driver is not ceph, because

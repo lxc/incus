@@ -102,9 +102,6 @@ spawn_incus() {
 
   echo "==> Binding to network"
   INCUS_DIR="$incusdir" incus config set core.https_address "$addr"
-
-  echo "==> Setting trust password"
-  INCUS_DIR="$incusdir" incus config set core.trust_password foo
 }
 
 spawn_incus 127.0.0.1:18443 "$INCUS_DIR"

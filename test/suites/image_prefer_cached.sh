@@ -16,7 +16,8 @@ test_image_prefer_cached() {
   (INCUS_DIR=${INCUS2_DIR} deps/import-busybox --alias testimage --public)
   fp1="$(INCUS_DIR=${INCUS2_DIR} incus image info testimage | awk '/^Fingerprint/ {print $2}')"
 
-  incus remote add l2 "${INCUS2_ADDR}" --accept-certificate --password foo
+  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add --name foo -q)"
+  incus remote add l2 "${INCUS2_ADDR}" --accept-certificate --token "${token}"
   incus init l2:testimage c1
 
   # Now the first image image is in the local store, since it was

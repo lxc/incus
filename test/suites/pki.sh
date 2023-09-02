@@ -55,27 +55,28 @@ test_pki() {
     set -e
     export INCUS_CONF="${INC5_DIR}"
 
-    # Try adding remote using an incorrect password.
-    # This should fail, as if the certificate is unknown and password is wrong then no access should be allowed.
-    ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --password=bar || false
+    # Try adding remote using an incorrect token.
+    # This should fail, as if the certificate is unknown and token is wrong then no access should be allowed.
+    ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token=bar || false
 
-    # Add remote using the correct password.
+    # Add remote using the correct token.
     # This should work because the client certificate is signed by the CA.
-    incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --password=foo
+    token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add --name foo -q)"
+    incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token "${token}"
     incus_remote config trust ls pki-incus: | grep incus-client
     incus_remote remote remove pki-incus
 
-    # Add remote using a CA-signed client certificate, and not providing a password.
+    # Add remote using a CA-signed client certificate, and not providing a token.
     # This should succeed and tests that the CA trust is working, as adding the client certificate to the trust
-    # store without a trust password would normally fail.
+    # store without a token would normally fail.
     INCUS_DIR=${INCUS5_DIR} incus config set core.trust_ca_certificates true
     incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate
     incus_remote config trust ls pki-incus: | grep incus-client
     incus_remote remote remove pki-incus
 
-    # Add remote using a CA-signed client certificate, and providing an incorrect password.
-    # This should succeed as is the same as the test above but with an incorrect password rather than no password.
-    incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --password=bar
+    # Add remote using a CA-signed client certificate, and providing an incorrect token.
+    # This should succeed as is the same as the test above but with an incorrect token rather than no token.
+    incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token=bar
     incus_remote config trust ls pki-incus: | grep incus-client
 
     # Try removing the fingerprint.
@@ -89,21 +90,23 @@ test_pki() {
     cp "${TEST_DIR}/pki/keys/incus-client-revoked.crt" "${INC5_DIR}/client.crt"
     cp "${TEST_DIR}/pki/keys/incus-client-revoked.key" "${INC5_DIR}/client.key"
 
-    # Try adding a remote using a revoked client certificate, and the correct password.
+    # Try adding a remote using a revoked client certificate, and the correct token.
     # This should fail, as although revoked certificates can be added to the trust store, they will not be usable.
-    ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --password=foo || false
+    token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add --name foo -q)"
+    ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token "${token}" || false
 
-    # Try adding a remote using a revoked client certificate, and an incorrect password.
-    # This should fail, as if the certificate is revoked and password is wrong then no access should be allowed.
-    ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --password=incorrect || false
+    # Try adding a remote using a revoked client certificate, and an incorrect token.
+    # This should fail, as if the certificate is revoked and token is wrong then no access should be allowed.
+    ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token=incorrect || false
   )
 
   # Confirm that a normal, non-PKI certificate doesn't.
   # As INCUS_CONF is not set to INC5_DIR where the CA signed client certs are, this will cause the incus command to
   # generate a new certificate that isn't trusted by the CA certificate and thus will not be allowed, even with a
-  # correct trust password. This is because the Incus TLS listener in CA mode will not consider a client cert that
+  # correct token. This is because the Incus TLS listener in CA mode will not consider a client cert that
   # is not signed by the CA as valid.
-  ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --password=foo || false
+  token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add --name foo -q)"
+  ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token "${token}" || false
 
   kill_incus "${INCUS5_DIR}"
 }
