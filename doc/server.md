@@ -47,7 +47,6 @@ Key                                 | Type      | Scope     | Default           
 `core.shutdown_timeout`             | integer   | global    | `5`                                              | Number of minutes to wait for running operations to complete before the LXD server shuts down
 `core.storage_buckets_address`      | string    | local     | -                                                | Address to bind the storage object server to (HTTPS)
 `core.trust_ca_certificates`        | bool      | global    | -                                                | Whether to automatically trust clients signed by the CA
-`core.trust_password`               | string    | global    | -                                                | Password to be provided by clients to set up a trust
 
 (server-options-acme)=
 ## ACME configuration

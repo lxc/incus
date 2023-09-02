@@ -143,7 +143,6 @@ You can use it as a template for your own preseed file and add, change or remove
 # Daemon settings
 config:
   core.https_address: 192.0.2.1:9999
-  core.trust_password: sekret
   images.auto_update_interval: 6
 
 # Storage pools
