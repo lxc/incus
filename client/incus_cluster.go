@@ -6,7 +6,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-// GetCluster returns information about a cluster
+// GetCluster returns information about a cluster.
 func (r *ProtocolIncus) GetCluster() (*api.Cluster, string, error) {
 	if !r.HasExtension("clustering") {
 		return nil, "", fmt.Errorf("The server is missing the required \"clustering\" API extension")
@@ -27,7 +27,7 @@ func (r *ProtocolIncus) UpdateCluster(cluster api.ClusterPut, ETag string) (Oper
 		return nil, fmt.Errorf("The server is missing the required \"clustering\" API extension")
 	}
 
-	if cluster.ServerAddress != "" || cluster.ClusterPassword != "" || len(cluster.MemberConfig) > 0 {
+	if cluster.ServerAddress != "" || cluster.ClusterToken != "" || len(cluster.MemberConfig) > 0 {
 		if !r.HasExtension("clustering_join") {
 			return nil, fmt.Errorf("The server is missing the required \"clustering_join\" API extension")
 		}
