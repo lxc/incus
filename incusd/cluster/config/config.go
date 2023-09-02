@@ -2,16 +2,12 @@ package config
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/scrypt"
 
 	"github.com/lxc/incus/incusd/config"
 	"github.com/lxc/incus/incusd/db"
@@ -405,28 +401,4 @@ func maxStandByValidator(value string) error {
 	}
 
 	return nil
-}
-
-func passwordSetter(value string) (string, error) {
-	// Nothing to do on unset
-	if value == "" {
-		return value, nil
-	}
-
-	// Hash the password
-	buf := make([]byte, 32)
-	_, err := io.ReadFull(rand.Reader, buf)
-	if err != nil {
-		return "", err
-	}
-
-	hash, err := scrypt.Key([]byte(value), buf, 1<<14, 8, 1, 64)
-	if err != nil {
-		return "", err
-	}
-
-	buf = append(buf, hash...)
-	value = hex.EncodeToString(buf)
-
-	return value, nil
 }
