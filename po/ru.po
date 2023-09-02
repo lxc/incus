@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-08-30 21:06+0200\n"
+"POT-Creation-Date: 2023-09-02 00:18-0400\n"
 "PO-Revision-Date: 2022-03-10 15:06+0000\n"
 "Last-Translator: Александр Киль <shorrey@gmail.com>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/linux-containers/"
@@ -631,7 +631,7 @@ msgstr ""
 msgid "--empty cannot be combined with an image name"
 msgstr ""
 
-#: cmd/incus/config.go:468 cmd/incus/config.go:767
+#: cmd/incus/config.go:468 cmd/incus/config.go:764
 msgid "--expanded cannot be used with a server"
 msgstr ""
 
@@ -651,8 +651,8 @@ msgstr ""
 msgid "--refresh can only be used with instances"
 msgstr ""
 
-#: cmd/incus/config.go:157 cmd/incus/config.go:418 cmd/incus/config.go:594
-#: cmd/incus/config.go:793 cmd/incus/info.go:451
+#: cmd/incus/config.go:157 cmd/incus/config.go:418 cmd/incus/config.go:591
+#: cmd/incus/config.go:790 cmd/incus/info.go:451
 msgid "--target cannot be used with instances"
 msgstr ""
 
@@ -852,11 +852,6 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:164
 #, fuzzy, c-format
 msgid "Admin access key: %s"
-msgstr "Пароль администратора для %s: "
-
-#: cmd/incus/remote.go:553
-#, fuzzy, c-format
-msgid "Admin password (or token) for %s:"
 msgstr "Пароль администратора для %s: "
 
 #: cmd/incus/storage_bucket.go:165
@@ -1167,7 +1162,7 @@ msgstr ""
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr ""
 
-#: cmd/incus/config.go:660
+#: cmd/incus/config.go:657
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
 msgstr ""
@@ -1290,8 +1285,8 @@ msgstr ""
 msgid "Cluster member %s removed from group %s"
 msgstr ""
 
-#: cmd/incus/config.go:101 cmd/incus/config.go:385 cmd/incus/config.go:528
-#: cmd/incus/config.go:734 cmd/incus/config.go:857 cmd/incus/copy.go:60
+#: cmd/incus/config.go:101 cmd/incus/config.go:385 cmd/incus/config.go:525
+#: cmd/incus/config.go:731 cmd/incus/config.go:854 cmd/incus/copy.go:60
 #: cmd/incus/info.go:45 cmd/incus/init.go:55 cmd/incus/move.go:64
 #: cmd/incus/network.go:300 cmd/incus/network.go:723 cmd/incus/network.go:792
 #: cmd/incus/network.go:1134 cmd/incus/network.go:1219
@@ -1840,8 +1835,8 @@ msgstr ""
 #: cmd/incus/cluster_group.go:577 cmd/incus/cluster_group.go:631
 #: cmd/incus/cluster_role.go:23 cmd/incus/cluster_role.go:50
 #: cmd/incus/cluster_role.go:106 cmd/incus/config.go:32 cmd/incus/config.go:95
-#: cmd/incus/config.go:380 cmd/incus/config.go:513 cmd/incus/config.go:730
-#: cmd/incus/config.go:854 cmd/incus/config_device.go:24
+#: cmd/incus/config.go:380 cmd/incus/config.go:513 cmd/incus/config.go:727
+#: cmd/incus/config.go:851 cmd/incus/config_device.go:24
 #: cmd/incus/config_device.go:78 cmd/incus/config_device.go:208
 #: cmd/incus/config_device.go:285 cmd/incus/config_device.go:356
 #: cmd/incus/config_device.go:450 cmd/incus/config_device.go:548
@@ -2269,7 +2264,7 @@ msgstr ""
 msgid "Error retrieving aliases: %w"
 msgstr ""
 
-#: cmd/incus/cluster.go:414 cmd/incus/config.go:620 cmd/incus/config.go:652
+#: cmd/incus/cluster.go:414 cmd/incus/config.go:617 cmd/incus/config.go:649
 #: cmd/incus/network.go:1194 cmd/incus/network_acl.go:467
 #: cmd/incus/network_forward.go:469 cmd/incus/network_load_balancer.go:470
 #: cmd/incus/network_peer.go:463 cmd/incus/network_zone.go:409
@@ -2281,7 +2276,7 @@ msgstr ""
 msgid "Error setting properties: %v"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/config.go:614 cmd/incus/config.go:646
+#: cmd/incus/config.go:611 cmd/incus/config.go:643
 #, fuzzy, c-format
 msgid "Error unsetting properties: %v"
 msgstr "Копирование образа: %s"
@@ -3180,6 +3175,11 @@ msgstr ""
 #, c-format
 msgid "IsSM: %s (%s)"
 msgstr ""
+
+#: cmd/incus/remote.go:553
+#, fuzzy, c-format
+msgid "Join token for %s:"
+msgstr "Пароль администратора для %s: "
 
 #: cmd/incus/image.go:153
 msgid "Keep the image up to date after initial copy"
@@ -5567,7 +5567,7 @@ msgstr "Копирование образа: %s"
 msgid "Set the key as a storage volume property"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/config.go:529
+#: cmd/incus/config.go:526
 msgid "Set the key as an instance property"
 msgstr ""
 
@@ -5618,7 +5618,7 @@ msgstr ""
 msgid "Show instance metadata files"
 msgstr "Невозможно добавить имя контейнера в список"
 
-#: cmd/incus/config.go:729 cmd/incus/config.go:730
+#: cmd/incus/config.go:726 cmd/incus/config.go:727
 msgid "Show instance or server configurations"
 msgstr ""
 
@@ -5714,7 +5714,7 @@ msgstr "Копирование образа: %s"
 msgid "Show the default remote"
 msgstr ""
 
-#: cmd/incus/config.go:733
+#: cmd/incus/config.go:730
 msgid "Show the expanded configuration"
 msgstr ""
 
@@ -6024,7 +6024,7 @@ msgstr ""
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
-#: cmd/incus/config.go:631
+#: cmd/incus/config.go:628
 msgid "The is no config key to set on an instance snapshot."
 msgstr ""
 
@@ -6198,8 +6198,8 @@ msgid ""
 "Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
 msgstr ""
 
-#: cmd/incus/config.go:293 cmd/incus/config.go:474 cmd/incus/config.go:681
-#: cmd/incus/config.go:773 cmd/incus/copy.go:128 cmd/incus/info.go:336
+#: cmd/incus/config.go:293 cmd/incus/config.go:474 cmd/incus/config.go:678
+#: cmd/incus/config.go:770 cmd/incus/copy.go:128 cmd/incus/info.go:336
 #: cmd/incus/network.go:821 cmd/incus/storage.go:446
 msgid "To use --target, the destination remote must be a cluster"
 msgstr ""
@@ -6379,7 +6379,7 @@ msgstr ""
 msgid "Unset image properties"
 msgstr ""
 
-#: cmd/incus/config.go:853 cmd/incus/config.go:854
+#: cmd/incus/config.go:850 cmd/incus/config.go:851
 msgid "Unset instance or server configuration keys"
 msgstr ""
 
@@ -6513,7 +6513,7 @@ msgstr "Копирование образа: %s"
 msgid "Unset the key as a storage volume property"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/config.go:858
+#: cmd/incus/config.go:855
 msgid "Unset the key as an instance property"
 msgstr ""
 
@@ -7798,7 +7798,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/config.go:93 cmd/incus/config.go:728
+#: cmd/incus/config.go:93 cmd/incus/config.go:725
 #, fuzzy
 msgid "[<remote>:][<instance>[/<snapshot>]]"
 msgstr ""
@@ -7814,7 +7814,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/config.go:378 cmd/incus/config.go:852
+#: cmd/incus/config.go:378 cmd/incus/config.go:849
 #, fuzzy
 msgid "[<remote>:][<instance>] <key>"
 msgstr ""
@@ -7927,10 +7927,7 @@ msgid ""
 "    Will set a CPU limit of \"2\" for the instance.\n"
 "\n"
 "incus config set core.https_address=[::]:8443\n"
-"    Will have the server listen on IPv4 and IPv6 port 8443.\n"
-"\n"
-"incus config set core.trust_password=blah\n"
-"    Will set the server's trust password to blah."
+"    Will have the server listen on IPv4 and IPv6 port 8443."
 msgstr ""
 
 #: cmd/incus/export.go:34
