@@ -1043,6 +1043,11 @@ func (cg *CGroup) GetIOStats() (map[string]*IOStats, error) {
 					continue
 				}
 
+				// Skip loop devices (major dev ID 7) as they are irrelevant.
+				if strings.HasPrefix(devID, "7:") {
+					continue
+				}
+
 				// Parse the stat value.
 				statName, statValueStr, found := strings.Cut(statPart, "=")
 				if !found {
