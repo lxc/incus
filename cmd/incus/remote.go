@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 
 	"github.com/lxc/incus/client"
 	config "github.com/lxc/incus/internal/cliconfig"
@@ -73,7 +72,7 @@ type cmdRemoteAdd struct {
 	remote *cmdRemote
 
 	flagAcceptCert bool
-	flagPassword   string
+	flagToken      string
 	flagPublic     bool
 	flagProtocol   string
 	flagAuthType   string
@@ -95,7 +94,7 @@ Basic authentication can be used when combined with the "simplestreams" protocol
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVar(&c.flagAcceptCert, "accept-certificate", false, i18n.G("Accept certificate"))
-	cmd.Flags().StringVar(&c.flagPassword, "password", "", i18n.G("Remote admin password")+"``")
+	cmd.Flags().StringVar(&c.flagToken, "token", "", i18n.G("Remote trust token")+"``")
 	cmd.Flags().StringVar(&c.flagProtocol, "protocol", "", i18n.G("Server protocol (incus or simplestreams)")+"``")
 	cmd.Flags().StringVar(&c.flagAuthType, "auth-type", "", i18n.G("Server authentication type (tls or oidc)")+"``")
 	cmd.Flags().BoolVar(&c.flagPublic, "public", false, i18n.G("Public image server"))
@@ -244,7 +243,7 @@ func (c *cmdRemoteAdd) addRemoteFromToken(addr string, server string, token stri
 	}
 
 	req := api.CertificatesPost{
-		Password: token,
+		TrustToken: token,
 	}
 
 	err = d.CreateCertificate(req)
@@ -548,25 +547,17 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	// Check if additional authentication is required.
 	if srv.Auth != "trusted" {
 		if c.flagAuthType == "tls" {
-			// Prompt for trust password
-			if c.flagPassword == "" {
-				fmt.Printf(i18n.G("Admin password (or token) for %s:")+" ", server)
-				pwd, err := term.ReadPassword(0)
+			// Prompt for trust token
+			if c.flagToken == "" {
+				c.flagToken, err = cli.AskString(fmt.Sprintf(i18n.G("Trust token for %s: "), server), "", nil)
 				if err != nil {
-					/* We got an error, maybe this isn't a terminal, let's try to
-					 * read it as a file */
-					pwd, err = shared.ReadStdin()
-					if err != nil {
-						return err
-					}
+					return err
 				}
-				fmt.Println("")
-				c.flagPassword = string(pwd)
 			}
 
 			// Add client certificate to trust store
 			req := api.CertificatesPost{
-				Password: c.flagPassword,
+				TrustToken: c.flagToken,
 			}
 
 			req.Type = api.CertificateTypeClient
