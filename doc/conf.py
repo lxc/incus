@@ -168,7 +168,7 @@ html_show_sphinx = False
 html_last_updated_fmt = ""
 html_favicon = ".sphinx/_static/favicon.ico"
 html_static_path = ['.sphinx/_static']
-html_css_files = ['custom.css']
+html_css_files = ['custom.css', 'header.css']
 html_js_files = ['header-nav.js']
 html_extra_path = ['.sphinx/_extra']
 
