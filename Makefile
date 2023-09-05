@@ -131,6 +131,7 @@ doc-setup: client
 	. $(SPHINXENV) ; pip install --upgrade -r doc/.sphinx/requirements.txt
 	find doc/reference/manpages/ -name "*.md" -type f -delete
 	rm -Rf doc/html
+	rm -Rf doc/.sphinx/.doctrees
 
 .PHONY: doc
 doc: doc-setup doc-incremental
@@ -138,7 +139,7 @@ doc: doc-setup doc-incremental
 .PHONY: doc-incremental
 doc-incremental:
 	@echo "Build the documentation"
-	. $(SPHINXENV) ; LOCAL_SPHINX_BUILD=True sphinx-build -c doc/ -b dirhtml doc/ doc/html/ -w doc/.sphinx/warnings.txt
+	. $(SPHINXENV) ; LOCAL_SPHINX_BUILD=True sphinx-build -c doc/ -b dirhtml doc/ doc/html/ -d doc/.sphinx/.doctrees -w doc/.sphinx/warnings.txt
 
 .PHONY: doc-serve
 doc-serve:
@@ -150,7 +151,7 @@ doc-spellcheck: doc
 
 .PHONY: doc-linkcheck
 doc-linkcheck: doc-setup
-	. $(SPHINXENV) ; LOCAL_SPHINX_BUILD=True sphinx-build -c doc/ -b linkcheck doc/ doc/html/
+	. $(SPHINXENV) ; LOCAL_SPHINX_BUILD=True sphinx-build -c doc/ -b linkcheck doc/ doc/html/ -d doc/.sphinx/.doctrees
 
 .PHONY: doc-lint
 doc-lint:
