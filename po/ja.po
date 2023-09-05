@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-08-30 21:06+0200\n"
+"POT-Creation-Date: 2023-09-02 00:18-0400\n"
 "PO-Revision-Date: 2023-03-10 15:14+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/linux-"
@@ -613,7 +613,7 @@ msgstr "--console は単一のインスタンスのときのみ指定できま�
 msgid "--empty cannot be combined with an image name"
 msgstr "--empty はイメージ名と同時に指定できません"
 
-#: cmd/incus/config.go:468 cmd/incus/config.go:767
+#: cmd/incus/config.go:468 cmd/incus/config.go:764
 msgid "--expanded cannot be used with a server"
 msgstr "--expanded はサーバーでは使えません"
 
@@ -633,8 +633,8 @@ msgstr "--project は query コマンドでは使えません"
 msgid "--refresh can only be used with instances"
 msgstr "--refresh はインスタンスの場合のみ使えます"
 
-#: cmd/incus/config.go:157 cmd/incus/config.go:418 cmd/incus/config.go:594
-#: cmd/incus/config.go:793 cmd/incus/info.go:451
+#: cmd/incus/config.go:157 cmd/incus/config.go:418 cmd/incus/config.go:591
+#: cmd/incus/config.go:790 cmd/incus/info.go:451
 msgid "--target cannot be used with instances"
 msgstr "--target はインスタンスでは使えません"
 
@@ -847,11 +847,6 @@ msgstr "アドレス: %s"
 #, c-format
 msgid "Admin access key: %s"
 msgstr "管理者アクセスキー: %s"
-
-#: cmd/incus/remote.go:553
-#, c-format
-msgid "Admin password (or token) for %s:"
-msgstr "%s の管理者パスワード（もしくはトークン）:"
 
 #: cmd/incus/storage_bucket.go:165
 #, c-format
@@ -1162,7 +1157,7 @@ msgstr "クラスタでない場合はカラムとして L は指定できませ
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr "再帰 (recursive) モードでは uid/gid/mode を指定できません"
 
-#: cmd/incus/config.go:660
+#: cmd/incus/config.go:657
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
 msgstr "キー '%s' が設定されていないので削除できません"
@@ -1290,8 +1285,8 @@ msgstr "クラスターメンバー %s がグループ %s から削除されま�
 msgid "Cluster member %s removed from group %s"
 msgstr "クラスターメンバー %s がグループ %s から削除されました"
 
-#: cmd/incus/config.go:101 cmd/incus/config.go:385 cmd/incus/config.go:528
-#: cmd/incus/config.go:734 cmd/incus/config.go:857 cmd/incus/copy.go:60
+#: cmd/incus/config.go:101 cmd/incus/config.go:385 cmd/incus/config.go:525
+#: cmd/incus/config.go:731 cmd/incus/config.go:854 cmd/incus/copy.go:60
 #: cmd/incus/info.go:45 cmd/incus/init.go:55 cmd/incus/move.go:64
 #: cmd/incus/network.go:300 cmd/incus/network.go:723 cmd/incus/network.go:792
 #: cmd/incus/network.go:1134 cmd/incus/network.go:1219
@@ -1843,8 +1838,8 @@ msgstr "警告を削除します"
 #: cmd/incus/cluster_group.go:577 cmd/incus/cluster_group.go:631
 #: cmd/incus/cluster_role.go:23 cmd/incus/cluster_role.go:50
 #: cmd/incus/cluster_role.go:106 cmd/incus/config.go:32 cmd/incus/config.go:95
-#: cmd/incus/config.go:380 cmd/incus/config.go:513 cmd/incus/config.go:730
-#: cmd/incus/config.go:854 cmd/incus/config_device.go:24
+#: cmd/incus/config.go:380 cmd/incus/config.go:513 cmd/incus/config.go:727
+#: cmd/incus/config.go:851 cmd/incus/config_device.go:24
 #: cmd/incus/config_device.go:78 cmd/incus/config_device.go:208
 #: cmd/incus/config_device.go:285 cmd/incus/config_device.go:356
 #: cmd/incus/config_device.go:450 cmd/incus/config_device.go:548
@@ -2280,7 +2275,7 @@ msgstr "イメージの取得中: %s"
 msgid "Error retrieving aliases: %w"
 msgstr "イメージの取得中: %s"
 
-#: cmd/incus/cluster.go:414 cmd/incus/config.go:620 cmd/incus/config.go:652
+#: cmd/incus/cluster.go:414 cmd/incus/config.go:617 cmd/incus/config.go:649
 #: cmd/incus/network.go:1194 cmd/incus/network_acl.go:467
 #: cmd/incus/network_forward.go:469 cmd/incus/network_load_balancer.go:470
 #: cmd/incus/network_peer.go:463 cmd/incus/network_zone.go:409
@@ -2292,7 +2287,7 @@ msgstr "イメージの取得中: %s"
 msgid "Error setting properties: %v"
 msgstr "イメージの取得中: %s"
 
-#: cmd/incus/config.go:614 cmd/incus/config.go:646
+#: cmd/incus/config.go:611 cmd/incus/config.go:643
 #, fuzzy, c-format
 msgid "Error unsetting properties: %v"
 msgstr "イメージのプロパティを削除します"
@@ -3217,6 +3212,11 @@ msgstr "不正な送り先 %s"
 #, c-format
 msgid "IsSM: %s (%s)"
 msgstr "IsSM: %s (%s)"
+
+#: cmd/incus/remote.go:553
+#, fuzzy, c-format
+msgid "Join token for %s:"
+msgstr "%s:%s のクラスターに join するためのトークンが削除されました"
 
 #: cmd/incus/image.go:153
 msgid "Keep the image up to date after initial copy"
@@ -5821,7 +5821,7 @@ msgstr "ストレージバケットに対する鍵を作成します"
 msgid "Set the key as a storage volume property"
 msgstr "新しいストレージボリュームをプロファイルに追加します"
 
-#: cmd/incus/config.go:529
+#: cmd/incus/config.go:526
 msgid "Set the key as an instance property"
 msgstr ""
 
@@ -5870,7 +5870,7 @@ msgstr "イメージのプロパティを表示します"
 msgid "Show instance metadata files"
 msgstr "インスタンスのメタデータファイルを表示します"
 
-#: cmd/incus/config.go:729 cmd/incus/config.go:730
+#: cmd/incus/config.go:726 cmd/incus/config.go:727
 msgid "Show instance or server configurations"
 msgstr "インスタンスもしくはサーバの設定を表示します"
 
@@ -5956,7 +5956,7 @@ msgstr "ストレージボリュームの状態を表示します"
 msgid "Show the default remote"
 msgstr "デフォルトのリモートを表示します"
 
-#: cmd/incus/config.go:733
+#: cmd/incus/config.go:730
 msgid "Show the expanded configuration"
 msgstr "拡張した設定を表示する"
 
@@ -6265,7 +6265,7 @@ msgstr ""
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr "起動しようとしたインスタンスに接続されているネットワークがありません。"
 
-#: cmd/incus/config.go:631
+#: cmd/incus/config.go:628
 msgid "The is no config key to set on an instance snapshot."
 msgstr ""
 
@@ -6465,8 +6465,8 @@ msgstr ""
 "さい\n"
 "仮想マシンの場合は \"lxc launch ubuntu:22.04 --vm\" と実行してみてください"
 
-#: cmd/incus/config.go:293 cmd/incus/config.go:474 cmd/incus/config.go:681
-#: cmd/incus/config.go:773 cmd/incus/copy.go:128 cmd/incus/info.go:336
+#: cmd/incus/config.go:293 cmd/incus/config.go:474 cmd/incus/config.go:678
+#: cmd/incus/config.go:770 cmd/incus/copy.go:128 cmd/incus/info.go:336
 #: cmd/incus/network.go:821 cmd/incus/storage.go:446
 msgid "To use --target, the destination remote must be a cluster"
 msgstr ""
@@ -6648,7 +6648,7 @@ msgstr "デバイスの設定を削除します"
 msgid "Unset image properties"
 msgstr "イメージのプロパティを削除します"
 
-#: cmd/incus/config.go:853 cmd/incus/config.go:854
+#: cmd/incus/config.go:850 cmd/incus/config.go:851
 msgid "Unset instance or server configuration keys"
 msgstr "インスタンスもしくはサーバの設定を削除します"
 
@@ -6773,7 +6773,7 @@ msgstr "ストレージバケットに対する鍵を作成します"
 msgid "Unset the key as a storage volume property"
 msgstr "新しいストレージボリュームをプロファイルに追加します"
 
-#: cmd/incus/config.go:858
+#: cmd/incus/config.go:855
 msgid "Unset the key as an instance property"
 msgstr ""
 
@@ -7557,7 +7557,7 @@ msgstr "[<remote>:]<zone> <record> <type> <value>"
 msgid "[<remote>:]<zone> <record> [key=value...]"
 msgstr "[<remote>:]<zone> <record> [key=value...]"
 
-#: cmd/incus/config.go:93 cmd/incus/config.go:728
+#: cmd/incus/config.go:93 cmd/incus/config.go:725
 msgid "[<remote>:][<instance>[/<snapshot>]]"
 msgstr "[<remote>:][<instance>[/<snapshot>]]"
 
@@ -7565,7 +7565,7 @@ msgstr "[<remote>:][<instance>[/<snapshot>]]"
 msgid "[<remote>:][<instance>]"
 msgstr "[<remote>:][<instance>]"
 
-#: cmd/incus/config.go:378 cmd/incus/config.go:852
+#: cmd/incus/config.go:378 cmd/incus/config.go:849
 msgid "[<remote>:][<instance>] <key>"
 msgstr "[<remote>:][<instance>] <key>"
 
@@ -7694,10 +7694,7 @@ msgid ""
 "    Will set a CPU limit of \"2\" for the instance.\n"
 "\n"
 "incus config set core.https_address=[::]:8443\n"
-"    Will have the server listen on IPv4 and IPv6 port 8443.\n"
-"\n"
-"incus config set core.trust_password=blah\n"
-"    Will set the server's trust password to blah."
+"    Will have the server listen on IPv4 and IPv6 port 8443."
 msgstr ""
 "lxc config set [<remote>:]<instance> limits.cpu=2\n"
 "    インスタンスの設定値 limits.cpu を \"2\" に設定します。\n"
@@ -8128,6 +8125,10 @@ msgstr "y"
 #: cmd/incus/image.go:929 cmd/incus/image.go:1114 cmd/incus/snapshot.go:222
 msgid "yes"
 msgstr "yes"
+
+#, c-format
+#~ msgid "Admin password (or token) for %s:"
+#~ msgstr "%s の管理者パスワード（もしくはトークン）:"
 
 #~ msgid "Invalid new snapshot name"
 #~ msgstr "不適切な新しいスナップショット名"

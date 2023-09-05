@@ -521,7 +521,7 @@ test_projects_network() {
   # Create a container in the project
   incus init -n "${network}" testimage c1
 
-  incus network show "${network}" |grep -q "/1.0/instances/c1?project=foo"
+  incus network show "${network}" | grep -q "/1.0/instances/c1?project=foo"
 
   # Delete the container
   incus delete c1
@@ -754,7 +754,8 @@ test_projects_limits() {
     INCUS_REMOTE_ADDR=$(cat "${INCUS_REMOTE_DIR}/incus.addr")
     (INCUS_DIR=${INCUS_REMOTE_DIR} deps/import-busybox --alias remoteimage --template start --public)
 
-    incus remote add l2 "${INCUS_REMOTE_ADDR}" --accept-certificate --password foo
+    token="$(INCUS_DIR=${INCUS_REMOTE_DIR} incus config trust add --name foo -q)"
+    incus remote add l2 "${INCUS_REMOTE_ADDR}" --accept-certificate --token "${token}"
 
     # Relax all constraints except the disk limits, which won't be enough for the
     # image to be downloaded.

@@ -47,7 +47,6 @@ EOF
 cat <<EOF > expected.yaml
 config:
   core.https_address: 127.0.0.1:9999
-  core.trust_password: true
   images.auto_update_interval: "15"
 networks:
 - config:

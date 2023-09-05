@@ -37,10 +37,6 @@ func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceSer
 		if c.flagNetworkPort != -1 {
 			return nil, fmt.Errorf("--network-port can't be used without --network-address")
 		}
-
-		if c.flagTrustPassword != "" {
-			return nil, fmt.Errorf("--trust-password can't be used without --network-address")
-		}
 	}
 
 	storagePools, err := d.GetStoragePoolNames()
@@ -68,10 +64,6 @@ func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceSer
 	// Network listening
 	if c.flagNetworkAddress != "" {
 		config.Config["core.https_address"] = util.CanonicalNetworkAddressFromAddressAndPort(c.flagNetworkAddress, c.flagNetworkPort, shared.HTTPSDefaultPort)
-
-		if c.flagTrustPassword != "" {
-			config.Config["core.trust_password"] = c.flagTrustPassword
-		}
 	}
 
 	// Storage configuration

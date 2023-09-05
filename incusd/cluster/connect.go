@@ -185,10 +185,10 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 }
 
 // SetupTrust is a convenience around InstanceServer.CreateCertificate that adds the given server certificate to
-// the trusted pool of the cluster at the given address, using the given password. The certificate is added as
+// the trusted pool of the cluster at the given address, using the given token. The certificate is added as
 // type CertificateTypeServer to allow intra-member communication. If a certificate with the same fingerprint
 // already exists with a different name or type, then no error is returned.
-func SetupTrust(serverCert *shared.CertInfo, serverName string, targetAddress string, targetCert string, targetPassword string) error {
+func SetupTrust(serverCert *shared.CertInfo, serverName string, targetAddress string, targetCert string, targetToken string) error {
 	// Connect to the target cluster node.
 	args := &incus.ConnectionArgs{
 		TLSServerCert: targetCert,
@@ -207,7 +207,7 @@ func SetupTrust(serverCert *shared.CertInfo, serverName string, targetAddress st
 
 	post := api.CertificatesPost{
 		CertificatePut: cert.CertificatePut,
-		Password:       targetPassword,
+		TrustToken:     targetToken,
 	}
 
 	err = target.CreateCertificate(post)

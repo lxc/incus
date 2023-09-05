@@ -60,8 +60,6 @@ spawn_incus() {
         done
     fi
 
-    echo "==> Setting trust password"
-    INCUS_DIR="${incusdir}" incus config set core.trust_password foo
     if [ -n "${DEBUG:-}" ]; then
         set -x
     fi

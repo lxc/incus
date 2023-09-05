@@ -81,7 +81,7 @@ test_certificate_edit() {
 
   curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" -X PATCH -d "{\"restricted\": false}" "https://${INCUS_ADDR}/1.0/certificates/${FINGERPRINT}"
 
-  ! incus_remote config trust show "${FINGERPRINT}" | sed -e "s/name:.*/name: foo/" | incus_remote config trust edit localhost:"${FINGERPRINT}" || false
+  ! incus_remote config trust show "${FINGERPRINT}" | sed -e "s/name:.*/name: bar/" | incus_remote config trust edit localhost:"${FINGERPRINT}" || false
 
   curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" -X PATCH -d "{\"name\": \"bar\"}" "https://${INCUS_ADDR}/1.0/certificates/${FINGERPRINT}"
 

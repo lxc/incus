@@ -4,7 +4,8 @@ ensure_has_localhost_remote() {
     # shellcheck disable=SC2039,3043
     local addr="${1}"
     if ! incus remote list | grep -q "localhost"; then
-        incus remote add localhost "https://${addr}" --accept-certificate --password foo
+        token="$(incus config trust add --name foo -q)"
+        incus remote add localhost "https://${addr}" --accept-certificate --token "${token}"
     fi
 }
 

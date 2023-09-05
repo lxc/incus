@@ -520,10 +520,7 @@ For backward compatibility, a single configuration key may still be set with:
     Will set a CPU limit of "2" for the instance.
 
 incus config set core.https_address=[::]:8443
-    Will have the server listen on IPv4 and IPv6 port 8443.
-
-incus config set core.trust_password=blah
-    Will set the server's trust password to blah.`))
+    Will have the server listen on IPv4 and IPv6 port 8443.`))
 
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as an instance property"))

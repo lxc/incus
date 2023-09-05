@@ -200,7 +200,7 @@ test_clustering_membership() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Configuration keys can be changed on any node.
   INCUS_DIR="${INCUS_TWO_DIR}" incus config set cluster.offline_threshold 11
@@ -224,21 +224,21 @@ test_clustering_membership() {
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a fourth node, this will be a non-database node.
   setup_clustering_netns 4
   INCUS_FOUR_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FOUR_DIR}"
   ns4="${prefix}4"
-  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}"
+  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a fifth node, using non-database node4 as join target.
   setup_clustering_netns 5
   INCUS_FIVE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FIVE_DIR}"
   ns5="${prefix}5"
-  spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 4 "${INCUS_FIVE_DIR}"
+  spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 4 "${INCUS_FIVE_DIR}" "${INCUS_ONE_DIR}"
 
   # List all nodes, using clients points to different nodes and
   # checking which are database nodes and which are database-standby nodes.
@@ -251,7 +251,8 @@ test_clustering_membership() {
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster show node5 | grep -q "node5"
 
   # Client certificate are shared across all nodes.
-  incus remote add cluster 10.1.1.101:8443 --accept-certificate --password=sekret
+  token="$(INCUS_DIR=${INCUS_ONE_DIR} incus config trust add --name foo -q)"
+  incus remote add cluster 10.1.1.101:8443 --accept-certificate --token "${token}"
   incus remote set-url cluster https://10.1.1.102:8443
   incus network list cluster: | grep -q "${bridge}"
   incus remote remove cluster
@@ -295,9 +296,7 @@ test_clustering_membership() {
   ns6="${prefix}6"
 
   # shellcheck disable=SC2034
-  INCUS_SECRET="${token}"
-  spawn_incus_and_join_cluster "${ns6}" "${bridge}" "${cert}" 6 2 "${INCUS_SIX_DIR}"
-  unset INCUS_SECRET
+  spawn_incus_and_join_cluster "${ns6}" "${bridge}" "${cert}" 6 2 "${INCUS_SIX_DIR}" "${token}"
 
   # Check token has been deleted after join.
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster list-tokens
@@ -329,9 +328,7 @@ test_clustering_membership() {
   ns8="${prefix}8"
 
   # shellcheck disable=SC2034
-  INCUS_SECRET="${token_valid}"
-  spawn_incus_and_join_cluster "${ns8}" "${bridge}" "${cert}" 8 2 "${INCUS_EIGHT_DIR}"
-  unset INCUS_SECRET
+  spawn_incus_and_join_cluster "${ns8}" "${bridge}" "${cert}" 8 2 "${INCUS_EIGHT_DIR}" "${token_valid}"
 
   # This will cause the token to expire
   INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.join_token_expiry=5S
@@ -345,9 +342,7 @@ test_clustering_membership() {
   ns9="${prefix}9"
 
   # shellcheck disable=SC2034
-  INCUS_SECRET="${token_expired}"
-  ! spawn_incus_and_join_cluster "${ns9}" "${bridge}" "${cert}" 9 2 "${INCUS_NINE_DIR}" || false
-  unset INCUS_SECRET
+  ! spawn_incus_and_join_cluster "${ns9}" "${bridge}" "${cert}" 9 2 "${INCUS_NINE_DIR}" "${token_expired}" || false
 
   # Unset join_token_expiry which will set it to the default value of 3h
   INCUS_DIR="${INCUS_ONE_DIR}" incus config unset cluster.join_token_expiry
@@ -404,14 +399,14 @@ test_clustering_containers() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a third node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Init a container on node2, using a client connected to node1
   INCUS_DIR="${INCUS_TWO_DIR}" ensure_import_testimage
@@ -597,7 +592,7 @@ test_clustering_storage() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${poolDriver}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   # The state of the preseeded storage pool is still CREATED
   INCUS_DIR="${INCUS_ONE_DIR}" incus storage list | grep data | grep -q CREATED
@@ -786,7 +781,7 @@ test_clustering_storage() {
     INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
     chmod +x "${INCUS_THREE_DIR}"
     ns3="${prefix}3"
-    spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${poolDriver}"
+    spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
     # Move the container to node3, renaming it
     INCUS_DIR="${INCUS_TWO_DIR}" incus move foo bar --target node3
@@ -1040,7 +1035,7 @@ test_clustering_network() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # The state of the preseeded network is still CREATED
   INCUS_DIR="${INCUS_ONE_DIR}" incus network list| grep "${bridge}" | grep -q CREATED
@@ -1230,7 +1225,7 @@ test_clustering_upgrade() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Respawn the second node, making it believe it has an higher
   # version than it actually has.
@@ -1260,7 +1255,7 @@ test_clustering_upgrade() {
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Respawn the second node, making it believe it has an higher
   # version than it actually has.
@@ -1330,7 +1325,7 @@ test_clustering_upgrade_large() {
     mkdir -p "${INCUS_ITH_DIR}"
     chmod +x "${INCUS_ITH_DIR}"
     nsi="${prefix}${i}"
-    spawn_incus_and_join_cluster "${nsi}" "${bridge}" "${cert}" "${i}" 1 "${INCUS_ITH_DIR}"
+    spawn_incus_and_join_cluster "${nsi}" "${bridge}" "${cert}" "${i}" 1 "${INCUS_ITH_DIR}" "${INCUS_ONE_DIR}"
   done
 
   # Respawn all nodes in sequence, as if their version had been upgrade.
@@ -1381,7 +1376,7 @@ test_clustering_publish() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Give Incus a couple of seconds to get event API connected properly
   sleep 2
@@ -1433,7 +1428,7 @@ test_clustering_profiles() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Create an empty profile.
   INCUS_DIR="${INCUS_TWO_DIR}" incus profile create web
@@ -1537,7 +1532,7 @@ test_clustering_update_cert() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Send update request
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster update-cert "${cert_path}" "${key_path}" -q
@@ -1616,14 +1611,14 @@ test_clustering_update_cert_reversion() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a third node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Shutdown third node
   INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
@@ -1680,7 +1675,8 @@ test_clustering_join_api() {
   ns2="${prefix}2"
   INCUS_NETNS="${ns2}" spawn_incus "${INCUS_TWO_DIR}" false
 
-  op=$(curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" -X PUT "incus/1.0/cluster" -d "{\"server_name\":\"node2\",\"enabled\":true,\"member_config\":[{\"entity\": \"storage-pool\",\"name\":\"data\",\"key\":\"source\",\"value\":\"\"}],\"server_address\":\"10.1.1.102:8443\",\"cluster_address\":\"10.1.1.101:8443\",\"cluster_certificate\":\"${cert}\",\"cluster_password\":\"sekret\"}" | jq -r .operation)
+  token="$(incus cluster add node2 --quiet)"
+  op=$(curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" -X PUT "incus/1.0/cluster" -d "{\"server_name\":\"node2\",\"enabled\":true,\"member_config\":[{\"entity\": \"storage-pool\",\"name\":\"data\",\"key\":\"source\",\"value\":\"\"}],\"server_address\":\"10.1.1.102:8443\",\"cluster_address\":\"10.1.1.101:8443\",\"cluster_certificate\":\"${cert}\",\"cluster_token\":\"${token}\"}" | jq -r .operation)
   curl --unix-socket "${INCUS_TWO_DIR}/unix.socket" "incus${op}/wait"
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "message: Fully operational"
@@ -1720,14 +1716,14 @@ test_clustering_shutdown_nodes() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a third node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Init a container on node1, using a client connected to node1
   INCUS_DIR="${INCUS_ONE_DIR}" ensure_import_testimage
@@ -1792,7 +1788,7 @@ test_clustering_projects() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Create a test project
   INCUS_DIR="${INCUS_ONE_DIR}" incus project create p1
@@ -1858,7 +1854,8 @@ test_clustering_address() {
   # Add a remote using the core.https_address of the bootstrap node, and check
   # that the REST API is exposed.
   url="https://10.1.1.101:8443"
-  incus remote add cluster --password sekret --accept-certificate "${url}"
+  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add --name foo --quiet)"
+  incus remote add cluster --token "${token}" --accept-certificate "${url}"
   incus storage list cluster: | grep -q data
 
   # Add a newline at the end of each line. YAML as weird rules..
@@ -1869,7 +1866,7 @@ test_clustering_address() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "dir" "8444"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}" "dir" "8444"
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q node2
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster show node2 | grep -q "database: true"
@@ -1935,7 +1932,7 @@ test_clustering_image_replication() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Image replication will be performed across all nodes in the cluster by default
   images_minimal_replica1=$(INCUS_DIR="${INCUS_ONE_DIR}" incus config get cluster.images_minimal_replica)
@@ -1960,7 +1957,7 @@ test_clustering_image_replication() {
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Wait for the test image to be synced into the joined node on the background
   retries=10
@@ -2183,14 +2180,14 @@ test_clustering_recover() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a third node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Wait a bit for raft roles to update.
   sleep 5
@@ -2267,7 +2264,7 @@ test_clustering_handover() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   echo "Launched member 2"
 
@@ -2276,7 +2273,7 @@ test_clustering_handover() {
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   echo "Launched member 3"
 
@@ -2285,7 +2282,7 @@ test_clustering_handover() {
   INCUS_FOUR_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FOUR_DIR}"
   ns4="${prefix}4"
-  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}"
+  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}" "${INCUS_ONE_DIR}"
 
   echo "Launched member 4"
 
@@ -2383,21 +2380,21 @@ test_clustering_rebalance() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a third node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a fourth node
   setup_clustering_netns 4
   INCUS_FOUR_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FOUR_DIR}"
   ns4="${prefix}4"
-  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}"
+  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}" "${INCUS_ONE_DIR}"
 
   # Wait a bit for raft roles to update.
   sleep 5
@@ -2472,7 +2469,7 @@ test_clustering_remove_raft_node() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Configuration keys can be changed on any node.
   INCUS_DIR="${INCUS_TWO_DIR}" incus config set cluster.offline_threshold 11
@@ -2496,14 +2493,14 @@ test_clustering_remove_raft_node() {
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a fourth node, this will be a database-standby node.
   setup_clustering_netns 4
   INCUS_FOUR_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FOUR_DIR}"
   ns4="${prefix}4"
-  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}"
+  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}" "${INCUS_ONE_DIR}"
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list
 
@@ -2593,35 +2590,35 @@ test_clustering_failure_domains() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a third node, using the non-leader node2 as join target.
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a fourth node, this will be a non-database node.
   setup_clustering_netns 4
   INCUS_FOUR_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FOUR_DIR}"
   ns4="${prefix}4"
-  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}"
+  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a fifth node, using non-database node4 as join target.
   setup_clustering_netns 5
   INCUS_FIVE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FIVE_DIR}"
   ns5="${prefix}5"
-  spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 4 "${INCUS_FIVE_DIR}"
+  spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 4 "${INCUS_FIVE_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a sixth node, using non-database node4 as join target.
   setup_clustering_netns 6
   INCUS_SIX_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_SIX_DIR}"
   ns6="${prefix}6"
-  spawn_incus_and_join_cluster "${ns6}" "${bridge}" "${cert}" 6 4 "${INCUS_SIX_DIR}"
+  spawn_incus_and_join_cluster "${ns6}" "${bridge}" "${cert}" 6 4 "${INCUS_SIX_DIR}" "${INCUS_ONE_DIR}"
 
   # Default failure domain
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "failure_domain: default"
@@ -2708,14 +2705,14 @@ test_clustering_image_refresh() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${poolDriver}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   # Spawn a third node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${poolDriver}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   # Spawn public node which has a public testimage
   setup_clustering_netns 4
@@ -2730,8 +2727,10 @@ test_clustering_image_refresh() {
   INCUS_DIR="${INCUS_REMOTE_DIR}" incus config set core.https_address "10.1.1.104:8443"
 
   # Add remotes
-  incus remote add public "https://10.1.1.104:8443" --accept-certificate --password foo --public
-  incus remote add cluster "https://10.1.1.101:8443" --accept-certificate --password sekret
+  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add --name foo --quiet)"
+  incus remote add public "https://10.1.1.104:8443" --accept-certificate --token foo --public
+  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add --name foo --quiet)"
+  incus remote add cluster "https://10.1.1.101:8443" --accept-certificate --token "${token}"
 
   INCUS_DIR="${INCUS_REMOTE_DIR}" incus init testimage c1
 
@@ -2935,14 +2934,14 @@ test_clustering_evacuation() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${poolDriver}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   # Spawn a third node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${poolDriver}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   # Create local pool
   INCUS_DIR="${INCUS_ONE_DIR}" incus storage create pool1 dir --target node1
@@ -3077,32 +3076,32 @@ test_clustering_edit_configuration() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn 6 nodes in total for role coverage.
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   setup_clustering_netns 4
   INCUS_FOUR_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FOUR_DIR}"
   ns4="${prefix}4"
-  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}"
+  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}" "${INCUS_ONE_DIR}"
 
   setup_clustering_netns 5
   INCUS_FIVE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FIVE_DIR}"
   ns5="${prefix}5"
-  spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 1 "${INCUS_FIVE_DIR}"
+  spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 1 "${INCUS_FIVE_DIR}" "${INCUS_ONE_DIR}"
 
   setup_clustering_netns 6
   INCUS_SIX_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_SIX_DIR}"
   ns6="${prefix}6"
-  spawn_incus_and_join_cluster "${ns6}" "${bridge}" "${cert}" 6 1 "${INCUS_SIX_DIR}"
+  spawn_incus_and_join_cluster "${ns6}" "${bridge}" "${cert}" 6 1 "${INCUS_SIX_DIR}" "${INCUS_ONE_DIR}"
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.offline_threshold 11
 
@@ -3226,7 +3225,7 @@ test_clustering_remove_members() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Ensure successful communication
   INCUS_DIR="${INCUS_ONE_DIR}" incus info --target node2 | grep -q "server_name: node2"
@@ -3247,7 +3246,7 @@ test_clustering_remove_members() {
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}" "${INCUS_TWO_DIR}"
 
   # Ensure successful communication
   INCUS_DIR="${INCUS_TWO_DIR}" incus info --target node3 | grep -q "server_name: node3"
@@ -3312,7 +3311,7 @@ test_clustering_autotarget() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
  # Use node1 for all cluster actions.
  INCUS_DIR="${INCUS_ONE_DIR}"
@@ -3364,16 +3363,17 @@ test_clustering_groups() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a third node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
-  incus remote add cluster --password sekret --accept-certificate "https://10.1.1.101:8443"
+  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add --name foo --quiet)"
+  incus remote add cluster --token "${token}" --accept-certificate "https://10.1.1.101:8443"
 
   # Initially, there is only the default group
   incus cluster group show cluster:default
@@ -3553,28 +3553,28 @@ test_clustering_events() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a third node.
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a fourth node.
   setup_clustering_netns 4
   INCUS_FOUR_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FOUR_DIR}"
   ns4="${prefix}4"
-  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}"
+  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}" "${INCUS_ONE_DIR}"
 
   # Spawn a firth node.
   setup_clustering_netns 5
   INCUS_FIVE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_FIVE_DIR}"
   ns5="${prefix}5"
-  spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 1 "${INCUS_FIVE_DIR}"
+  spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 1 "${INCUS_FIVE_DIR}" "${INCUS_ONE_DIR}"
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list
   INCUS_DIR="${INCUS_ONE_DIR}" incus info | grep -F "server_event_mode: full-mesh"
@@ -3754,7 +3754,7 @@ test_clustering_uuid() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
   ensure_import_testimage
 

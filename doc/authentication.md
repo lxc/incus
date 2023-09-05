@@ -50,7 +50,6 @@ You can obtain the list of TLS certificates trusted by a LXD server with `lxc co
 Trusted clients can be added in either of the following ways:
 
 - {ref}`authentication-add-certs`
-- {ref}`authentication-trust-pw`
 - {ref}`authentication-token`
 
 The workflow to authenticate with the server is similar to that of SSH, where an initial connection to an unknown server triggers a prompt:
@@ -78,14 +77,6 @@ If the list of projects is empty, the client will not be allowed access to any o
 
 The preferred way to add trusted clients is to directly add their certificates to the trust store on the server.
 To do so, copy the client certificate to the server and register it using `lxc config trust add <file>`.
-
-(authentication-trust-pw)=
-#### Adding client certificates using a trust password
-
-To allow establishing a new trust relationship from the client side, you must set a trust password ([`core.trust_password`](server-options-core)) for the server. Clients can then add their own certificate to the server's trust store by providing the trust password when prompted.
-
-In a production setup, unset `core.trust_password` after all clients have been added.
-This prevents brute-force attacks trying to guess the password.
 
 (authentication-token)=
 #### Adding client certificates using tokens

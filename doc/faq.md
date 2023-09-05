@@ -17,12 +17,11 @@ By default, the LXD server is not accessible from the network, because it only l
 
 You can enable it for remote access by following the instructions in {ref}`server-expose`.
 
-## When I do a `lxc remote add`, it asks for a password or token?
+## When I do a `lxc remote add`, it asks for a token?
 
 To be able to access the remote API, clients must authenticate with the LXD server.
-Depending on how the remote server is configured, you must provide either a trust token issued by the server or specify a trust password (if [`core.trust_password`](server-options-core) is set).
 
-See {ref}`server-authenticate` for instructions on how to authenticate using a trust token (the recommended way), and  {doc}`authentication` for information about other authentication methods.
+See {ref}`server-authenticate` for instructions on how to authenticate using a trust token.
 
 ## Why should I not run privileged containers?
 

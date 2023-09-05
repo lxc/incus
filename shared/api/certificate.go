@@ -24,9 +24,9 @@ const CertificateTypeUnknown = "unknown"
 type CertificatesPost struct {
 	CertificatePut `yaml:",inline"`
 
-	// Server trust password (used to add an untrusted client)
+	// Trust token (used to add an untrusted client)
 	// Example: blah
-	Password string `json:"password" yaml:"password"`
+	TrustToken string `json:"trust_token" yaml:"trust_token"`
 
 	// Whether to create a certificate add token
 	// Example: true

@@ -76,7 +76,7 @@ _have incus && {
       core.metrics_address core.metrics_authentication \
       core.storage_buckets_address \
       core.proxy_https core.proxy_http core.proxy_ignore_hosts \
-      core.trust_password core.bgp_address core.bgp_asn core.bgp_routerid \
+      core.bgp_address core.bgp_asn core.bgp_routerid \
       core.debug_address cluster.offline_threshold \
       images.auto_update_cached images.auto_update_interval \
       images.compression_algorithm images.remote_cache_expiry \

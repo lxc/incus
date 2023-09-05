@@ -2,16 +2,12 @@ package config
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/scrypt"
 
 	"github.com/lxc/incus/incusd/config"
 	"github.com/lxc/incus/incusd/db"
@@ -76,11 +72,6 @@ func (c *Config) HTTPSAllowedOrigin() string {
 // HTTPSAllowedCredentials returns the relevant CORS setting.
 func (c *Config) HTTPSAllowedCredentials() bool {
 	return c.m.GetBool("core.https_allowed_credentials")
-}
-
-// TrustPassword returns the trust password for authenticating clients.
-func (c *Config) TrustPassword() string {
-	return c.m.GetString("core.trust_password")
 }
 
 // TrustCACertificates returns whether client certificates are checked
@@ -306,7 +297,6 @@ var ConfigSchema = config.Schema{
 	"core.proxy_ignore_hosts":        {},
 	"core.remote_token_expiry":       {Type: config.String, Validator: validate.Optional(expiryValidator)},
 	"core.shutdown_timeout":          {Type: config.Int64, Default: "5"},
-	"core.trust_password":            {Hidden: true, Setter: passwordSetter},
 	"core.trust_ca_certificates":     {Type: config.Bool},
 	"images.auto_update_cached":      {Type: config.Bool, Default: "true"},
 	"images.auto_update_interval":    {Type: config.Int64, Default: "6"},
@@ -316,7 +306,7 @@ var ConfigSchema = config.Schema{
 	"instances.nic.host_name":        {Validator: validate.Optional(validate.IsOneOf("random", "mac"))},
 	"instances.placement.scriptlet":  {Validator: validate.Optional(scriptletLoad.InstancePlacementValidate)},
 	"loki.auth.username":             {},
-	"loki.auth.password":             {Hidden: true},
+	"loki.auth.password":             {},
 	"loki.api.ca_cert":               {},
 	"loki.api.url":                   {},
 	"loki.labels":                    {},
@@ -411,28 +401,4 @@ func maxStandByValidator(value string) error {
 	}
 
 	return nil
-}
-
-func passwordSetter(value string) (string, error) {
-	// Nothing to do on unset
-	if value == "" {
-		return value, nil
-	}
-
-	// Hash the password
-	buf := make([]byte, 32)
-	_, err := io.ReadFull(rand.Reader, buf)
-	if err != nil {
-		return "", err
-	}
-
-	hash, err := scrypt.Key([]byte(value), buf, 1<<14, 8, 1, 64)
-	if err != nil {
-		return "", err
-	}
-
-	buf = append(buf, hash...)
-	value = hex.EncodeToString(buf)
-
-	return value, nil
 }

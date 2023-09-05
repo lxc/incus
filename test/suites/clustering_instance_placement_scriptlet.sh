@@ -28,14 +28,14 @@ test_clustering_instance_placement_scriptlet() {
   INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_TWO_DIR}"
   ns2="${prefix}2"
-  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${poolDriver}"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   # Spawn a third node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${poolDriver}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
   INCUS_DIR="${INCUS_ONE_DIR}" ensure_import_testimage
 

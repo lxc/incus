@@ -8,14 +8,15 @@ test_sql() {
   incusd sql local "SELECT * FROM config" | grep -qF "core.https_address"
 
   # Global database query
-  incusd sql global "SELECT * FROM config" | grep -qF "core.trust_password"
+  incus config set user.foo=bar
+  incusd sql global "SELECT * FROM config" | grep -qF "user.foo"
 
   # Global database insert
   incusd sql global "INSERT INTO config(key,value) VALUES('core.https_allowed_credentials','true')" | grep -qxF "Rows affected: 1"
   incusd sql global "DELETE FROM config WHERE key='core.https_allowed_credentials'" | grep -qxF "Rows affected: 1"
 
   # Standard input
-  echo "SELECT * FROM config" | incusd sql global - | grep -qF "core.trust_password"
+  echo "SELECT * FROM config" | incusd sql global - | grep -qF "user.foo"
 
   # Multiple queries
   incusd sql global "SELECT * FROM config; SELECT * FROM instances" | grep -qxF "=> Query 0:"

@@ -13,9 +13,12 @@ test_migration() {
   # workaround for kernel/criu
   umount /sys/kernel/debug >/dev/null 2>&1 || true
 
+  token="$(incus config trust add --name foo -q)"
   # shellcheck disable=2153
-  incus_remote remote add l1 "${INCUS_ADDR}" --accept-certificate --password foo
-  incus_remote remote add l2 "${INCUS2_ADDR}" --accept-certificate --password foo
+  incus_remote remote add l1 "${INCUS_ADDR}" --accept-certificate --token "${token}"
+
+  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add --name foo -q)"
+  incus_remote remote add l2 "${INCUS2_ADDR}" --accept-certificate --token "${token}"
 
   migration "$INCUS2_DIR"
 

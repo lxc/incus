@@ -1,42 +1,12 @@
 package util
 
 import (
-	"bytes"
-	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"golang.org/x/crypto/scrypt"
-
 	"github.com/lxc/incus/shared"
 )
-
-// PasswordCheck validates the provided password against the encoded secret.
-func PasswordCheck(secret string, password string) error {
-	// No password set
-	if secret == "" {
-		return fmt.Errorf("No password is set")
-	}
-
-	// Compare the password
-	buff, err := hex.DecodeString(secret)
-	if err != nil {
-		return err
-	}
-
-	salt := buff[0:32]
-	hash, err := scrypt.Key([]byte(password), salt, 1<<14, 8, 1, 64)
-	if err != nil {
-		return err
-	}
-
-	if !bytes.Equal(hash, buff[32:]) {
-		return fmt.Errorf("Bad password provided")
-	}
-
-	return nil
-}
 
 // LoadCert reads the server certificate from the given var dir.
 //

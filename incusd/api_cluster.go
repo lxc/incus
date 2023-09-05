@@ -543,10 +543,10 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 	run := func(op *operations.Operation) error {
 		logger.Debug("Running cluster join operation")
 
-		// If the user has provided a cluster password, setup the trust
+		// If the user has provided a join token, setup the trust
 		// relationship by adding our own certificate to the cluster.
-		if req.ClusterPassword != "" {
-			err = cluster.SetupTrust(serverCert, req.ServerName, req.ClusterAddress, req.ClusterCertificate, req.ClusterPassword)
+		if req.ClusterToken != "" {
+			err = cluster.SetupTrust(serverCert, req.ServerName, req.ClusterAddress, req.ClusterCertificate, req.ClusterToken)
 			if err != nil {
 				return fmt.Errorf("Failed to setup cluster trust: %w", err)
 			}
