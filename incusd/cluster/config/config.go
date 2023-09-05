@@ -235,21 +235,21 @@ func (c *Config) ClusterHealingThreshold() time.Duration {
 
 // Dump current configuration keys and their values. Keys with values matching
 // their defaults are omitted.
-func (c *Config) Dump() map[string]any {
+func (c *Config) Dump() map[string]string {
 	return c.m.Dump()
 }
 
 // Replace the current configuration with the given values.
 //
 // Return what has actually changed.
-func (c *Config) Replace(values map[string]any) (map[string]string, error) {
+func (c *Config) Replace(values map[string]string) (map[string]string, error) {
 	return c.update(values)
 }
 
 // Patch changes only the configuration keys in the given map.
 //
 // Return what has actually changed.
-func (c *Config) Patch(patch map[string]any) (map[string]string, error) {
+func (c *Config) Patch(patch map[string]string) (map[string]string, error) {
 	values := c.Dump() // Use current values as defaults
 	for name, value := range patch {
 		values[name] = value
@@ -258,7 +258,7 @@ func (c *Config) Patch(patch map[string]any) (map[string]string, error) {
 	return c.update(values)
 }
 
-func (c *Config) update(values map[string]any) (map[string]string, error) {
+func (c *Config) update(values map[string]string) (map[string]string, error) {
 	changed, err := c.m.Change(values)
 	if err != nil {
 		return nil, err

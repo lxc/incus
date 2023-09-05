@@ -435,7 +435,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 		logger.Debug("Handling config changed notification")
 		changed := make(map[string]string)
 		for key, value := range req.Config {
-			changed[key] = value.(string)
+			changed[key] = value
 		}
 
 		// Get the current (updated) config.
@@ -549,7 +549,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 	s := d.State()
 
 	// First deal with config specific to the local daemon
-	nodeValues := map[string]any{}
+	nodeValues := map[string]string{}
 
 	for key := range node.ConfigSchema {
 		value, ok := req.Config[key]
@@ -587,21 +587,21 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 				newClusterHTTPSAddress = ""
 			}
 
-			if curConfig["cluster.https_address"] != newClusterHTTPSAddress.(string) {
+			if curConfig["cluster.https_address"] != newClusterHTTPSAddress {
 				return fmt.Errorf("Changing cluster.https_address is currently not supported")
 			}
 		}
 
 		// Validate the storage volumes
-		if nodeValues["storage.backups_volume"] != nil && nodeValues["storage.backups_volume"] != newNodeConfig.StorageBackupsVolume() {
-			err := daemonStorageValidate(s, nodeValues["storage.backups_volume"].(string))
+		if nodeValues["storage.backups_volume"] != "" && nodeValues["storage.backups_volume"] != newNodeConfig.StorageBackupsVolume() {
+			err := daemonStorageValidate(s, nodeValues["storage.backups_volume"])
 			if err != nil {
 				return fmt.Errorf("Failed validation of %q: %w", "storage.backups_volume", err)
 			}
 		}
 
-		if nodeValues["storage.images_volume"] != nil && nodeValues["storage.images_volume"] != newNodeConfig.StorageImagesVolume() {
-			err := daemonStorageValidate(s, nodeValues["storage.images_volume"].(string))
+		if nodeValues["storage.images_volume"] != "" && nodeValues["storage.images_volume"] != newNodeConfig.StorageImagesVolume() {
+			err := daemonStorageValidate(s, nodeValues["storage.images_volume"])
 			if err != nil {
 				return fmt.Errorf("Failed validation of %q: %w", "storage.images_volume", err)
 			}
@@ -664,7 +664,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		}
 
 		serverPut := server.Writable()
-		serverPut.Config = make(map[string]any)
+		serverPut.Config = make(map[string]string)
 		// Only propagated cluster-wide changes
 		for key, value := range clusterChanged {
 			serverPut.Config[key] = value
