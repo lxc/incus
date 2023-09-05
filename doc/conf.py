@@ -127,7 +127,8 @@ extensions = [
     "sphinx.ext.intersphinx",
     "terminal-output",
     "config-options",
-    "notfound.extension"
+    "notfound.extension",
+    "sphinx_remove_toctrees"
 ]
 
 myst_enable_extensions = [
@@ -159,6 +160,8 @@ myst_url_schemes = {
     "https": None,
     "swagger": swagger_url_scheme,
 }
+
+remove_from_toctrees = ["reference/manpages/lxc/*.md"]
 
 # Setup theme.
 templates_path = [".sphinx/_templates"]
