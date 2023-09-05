@@ -644,7 +644,7 @@ func (c *cmdClusterEnable) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Failed to retrieve current server config: %w", err)
 	}
 
-	if server.Config["core.https_address"] == "" {
+	if server.Config["core.https_address"] == "" && server.Config["cluster.https_address"] == "" {
 		return fmt.Errorf(i18n.G("This server is not available on the network"))
 	}
 
