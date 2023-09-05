@@ -61,7 +61,6 @@ func (s Schema) assertKeyType(name string, code Type) {
 type Key struct {
 	Type       Type   // Type of the value. It defaults to String.
 	Default    string // If the key is not set in a Map, use this value instead.
-	Hidden     bool   // Hide this key when dumping the object.
 	Deprecated string // Optional message to set if this config value is deprecated.
 
 	// Optional function used to validate the values. It's called by Map
