@@ -111,7 +111,7 @@ func updateLocalAddress(database *db.Node, address string) error {
 			return err
 		}
 
-		newConfig := map[string]any{"cluster.https_address": address}
+		newConfig := map[string]string{"cluster.https_address": address}
 		_, err = config.Patch(newConfig)
 		if err != nil {
 			return err
