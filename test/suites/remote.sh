@@ -1,7 +1,7 @@
 test_remote_url() {
   # shellcheck disable=2153
   for url in "${INCUS_ADDR}" "https://${INCUS_ADDR}"; do
-    token="$(incus config trust add --name foo -q)"
+    token="$(incus config trust add foo -q)"
     incus_remote remote add test "${url}" --accept-certificate --token "${token}"
     incus_remote info test:
     incus_remote config trust list | awk '/@/ {print $8}' | while read -r line ; do
@@ -36,7 +36,7 @@ test_remote_url_with_token() {
   ! incus_remote remote add test "${invalid_token}" || false
 
   # Generate token for client foo
-  echo foo | incus config trust add -q
+  incus config trust add foo -q
 
   # Listing all tokens should show only a single one
   [ "$(incus config trust list-tokens -f json | jq '[.[] | select(.ClientName == "foo")] |  length')" -eq 1 ]
@@ -55,7 +55,7 @@ test_remote_url_with_token() {
 
   # Generate token for client foo
   incus project create foo
-  echo foo | incus config trust add -q --projects foo --restricted
+  incus config trust add -q --projects foo --restricted foo
 
   # Extract the token
   token="$(incus config trust list-tokens -f json | jq -r '.[].Token')"
@@ -74,7 +74,7 @@ test_remote_url_with_token() {
   incus config trust rm "$(incus config trust list -f json | jq -r '.[].fingerprint')"
 
   # Generate new token
-  echo foo | incus config trust add -q
+  incus config trust add -q foo
 
   # Extract token
   token="$(incus config trust list-tokens -f json | jq '.[].Token')"
@@ -94,7 +94,7 @@ test_remote_url_with_token() {
   incus config trust rm "$(incus config trust list -f json | jq -r '.[].fingerprint')"
 
   # Generate new token
-  echo foo | incus config trust add -q --projects foo --restricted
+  incus config trust add -q --projects foo --restricted foo
 
   # Extract token
   token="$(incus config trust list-tokens -f json | jq '.[].Token')"
@@ -114,7 +114,7 @@ test_remote_url_with_token() {
   incus config set core.remote_token_expiry 5S
 
   # Generate new token
-  token="$(incus config trust add --name foo | tail -n1)"
+  token="$(incus config trust add foo | tail -n1)"
 
   # Try adding remote. This should succeed.
   incus_remote remote add test "${token}"
@@ -126,7 +126,7 @@ test_remote_url_with_token() {
   incus_remote remote rm test
 
   # Generate new token
-  token="$(incus config trust add --name foo | tail -n1)"
+  token="$(incus config trust add foo | tail -n1)"
 
   # This will cause the token to expire
   sleep 5
@@ -142,7 +142,7 @@ test_remote_admin() {
   ! incus_remote remote add badpass "${INCUS_ADDR}" --accept-certificate --token badtoken || false
   ! incus_remote list badpass: || false
 
-  token="$(incus config trust add --name foo -q)"
+  token="$(incus config trust add foo -q)"
   incus_remote remote add foo "${INCUS_ADDR}" --accept-certificate --token "${token}"
   incus_remote remote list | grep 'foo'
 
@@ -168,12 +168,12 @@ test_remote_admin() {
   gen_cert client2
 
   # Test for #623
-  token="$(incus config trust add --name foo -q)"
+  token="$(incus config trust add foo -q)"
   incus_remote remote add test-623 "${INCUS_ADDR}" --accept-certificate --token "${token}"
   incus_remote remote remove test-623
 
   # now re-add under a different alias
-  incus_remote config trust add "${INCUS_CONF}/client2.crt"
+  incus_remote config trust add-certificate "${INCUS_CONF}/client2.crt"
   if [ "$(incus_remote config trust list | wc -l)" -ne 7 ]; then
     echo "wrong number of certs"
     false
@@ -197,7 +197,7 @@ test_remote_usage() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add --name foo -q)"
+  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add foo -q)"
   incus_remote remote add incus2 "${INCUS2_ADDR}" --accept-certificate --token "${token}"
 
   # we need a public image on localhost

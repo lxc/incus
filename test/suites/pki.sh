@@ -61,7 +61,7 @@ test_pki() {
 
     # Add remote using the correct token.
     # This should work because the client certificate is signed by the CA.
-    token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add --name foo -q)"
+    token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add foo -q)"
     incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token "${token}"
     incus_remote config trust ls pki-incus: | grep incus-client
     incus_remote remote remove pki-incus
@@ -92,7 +92,7 @@ test_pki() {
 
     # Try adding a remote using a revoked client certificate, and the correct token.
     # This should fail, as although revoked certificates can be added to the trust store, they will not be usable.
-    token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add --name foo -q)"
+    token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add foo -q)"
     ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token "${token}" || false
 
     # Try adding a remote using a revoked client certificate, and an incorrect token.
@@ -105,7 +105,7 @@ test_pki() {
   # generate a new certificate that isn't trusted by the CA certificate and thus will not be allowed, even with a
   # correct token. This is because the Incus TLS listener in CA mode will not consider a client cert that
   # is not signed by the CA as valid.
-  token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add --name foo -q)"
+  token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add foo -q)"
   ! incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token "${token}" || false
 
   kill_incus "${INCUS5_DIR}"

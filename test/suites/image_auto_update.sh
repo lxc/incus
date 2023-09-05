@@ -13,7 +13,7 @@ test_image_auto_update() {
   (INCUS_DIR=${INCUS2_DIR} deps/import-busybox --alias testimage --public)
   fp1="$(INCUS_DIR=${INCUS2_DIR} incus image info testimage | awk '/^Fingerprint/ {print $2}')"
 
-  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add --name foo -q)"
+  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add foo -q)"
   incus remote add l2 "${INCUS2_ADDR}" --accept-certificate --token "${token}"
   incus init l2:testimage c1
 

@@ -20,7 +20,7 @@ test_metrics() {
   curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${INCUS_ADDR}/1.0/metrics" | grep "\"error_code\":403"
 
   # trust newly created certificate for metrics only
-  incus config trust add "${TEST_DIR}/metrics.crt" --type=metrics
+  incus config trust add-certificate "${TEST_DIR}/metrics.crt" --type=metrics
 
   # c1 metrics should show as the container is running
   curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${INCUS_ADDR}/1.0/metrics" | grep "name=\"c1\""
