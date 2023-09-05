@@ -546,6 +546,15 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Constraint validations.
+	if post.RecordOutput && post.WaitForWS {
+		return response.BadRequest(fmt.Errorf("Cannot use %q in combination with %q", "record-output", "wait-for-websocket"))
+	}
+
+	if post.Interactive && post.RecordOutput {
+		return response.BadRequest(fmt.Errorf("Cannot use %q in combination with %q", "interactive", "record-output"))
+	}
+
 	// Forward the request if the container is remote.
 	client, err := cluster.ConnectIfInstanceIsRemote(s.DB.Cluster, projectName, name, s.Endpoints.NetworkCert(), s.ServerCert(), r, instanceType)
 	if err != nil {
