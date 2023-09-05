@@ -59,7 +59,7 @@ func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceSer
 
 	// Fill in the node configuration
 	config := api.InitLocalPreseed{}
-	config.Config = map[string]any{}
+	config.Config = map[string]string{}
 
 	// Network listening
 	if c.flagNetworkAddress != "" {

@@ -30,7 +30,7 @@ import (
 func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Initialize config
 	config := api.InitPreseed{}
-	config.Node.Config = map[string]any{}
+	config.Node.Config = map[string]string{}
 	config.Node.Networks = []api.InitNetworksProjectPost{}
 	config.Node.StoragePools = []api.StoragePoolsPost{}
 	config.Node.Profiles = []api.ProfilesPost{
