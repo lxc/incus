@@ -38,6 +38,10 @@ func (c *cmdConfigTrust) Command() *cobra.Command {
 	configTrustAddCmd := cmdConfigTrustAdd{global: c.global, config: c.config, configTrust: c}
 	cmd.AddCommand(configTrustAddCmd.Command())
 
+	// Add certificate
+	configTrustAddCertificateCmd := cmdConfigTrustAddCertificate{global: c.global, config: c.config, configTrust: c}
+	cmd.AddCommand(configTrustAddCertificateCmd.Command())
+
 	// Edit
 	configTrustEditCmd := cmdConfigTrustEdit{global: c.global, config: c.config, configTrust: c}
 	cmd.AddCommand(configTrustEditCmd.Command())
@@ -74,27 +78,100 @@ type cmdConfigTrustAdd struct {
 	config      *cmdConfig
 	configTrust *cmdConfigTrust
 
-	flagName       string
 	flagProjects   string
 	flagRestricted bool
-	flagType       string
 }
 
 func (c *cmdConfigTrustAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("add", i18n.G("[<remote>:] [<cert>]"))
+	cmd.Use = usage("add", i18n.G("[<remote>:]<name>"))
 	cmd.Short = i18n.G("Add new trusted client")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add new trusted client
 
+This will issue a trust token to be used by the client to add itself to the trust store.
+`))
+
+	cmd.Flags().BoolVar(&c.flagRestricted, "restricted", false, i18n.G("Restrict the certificate to one or more projects"))
+	cmd.Flags().StringVar(&c.flagProjects, "projects", "", i18n.G("List of projects to restrict the certificate to")+"``")
+
+	cmd.RunE = c.Run
+
+	return cmd
+}
+
+func (c *cmdConfigTrustAdd) Run(cmd *cobra.Command, args []string) error {
+	// Quick checks.
+	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
+	if exit {
+		return err
+	}
+
+	// Parse remote.
+	resources, err := c.global.ParseServers(args[0])
+	if err != nil {
+		return err
+	}
+
+	resource := resources[0]
+	if resource.name == "" {
+		return fmt.Errorf(i18n.G("A client name must be provided"))
+	}
+
+	// Prepare the request.
+	cert := api.CertificatesPost{}
+	cert.Token = true
+	cert.Name = resource.name
+	cert.Type = api.CertificateTypeClient
+	cert.Restricted = c.flagRestricted
+
+	if c.flagProjects != "" {
+		cert.Projects = strings.Split(c.flagProjects, ",")
+	}
+
+	// Create the token.
+	op, err := resource.server.CreateCertificateToken(cert)
+	if err != nil {
+		return err
+	}
+
+	opAPI := op.Get()
+	certificateToken, err := opAPI.ToCertificateAddToken()
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed converting token operation to certificate add token: %w"), err)
+	}
+
+	if !c.global.flagQuiet {
+		fmt.Printf(i18n.G("Client %s certificate add token:")+"\n", cert.Name)
+	}
+
+	fmt.Println(certificateToken.String())
+
+	return nil
+}
+
+// Add certificate.
+type cmdConfigTrustAddCertificate struct {
+	global      *cmdGlobal
+	config      *cmdConfig
+	configTrust *cmdConfigTrust
+
+	flagProjects   string
+	flagRestricted bool
+	flagName       string
+	flagType       string
+}
+
+func (c *cmdConfigTrustAddCertificate) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("add-certificate", i18n.G("[<remote>:] <cert>"))
+	cmd.Short = i18n.G("Add new trusted client certificate")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`Add new trusted client certificate
+
 The following certificate types are supported:
 - client (default)
 - metrics
-
-If the certificate is omitted, a token will be generated and returned. A client
-providing a valid token will have its client certificate added to the trusted list
-and the consumed token will be invalidated. Similar to certificates, tokens can be
-restricted to one or more projects.
 `))
 
 	cmd.Flags().BoolVar(&c.flagRestricted, "restricted", false, i18n.G("Restrict the certificate to one or more projects"))
@@ -107,9 +184,9 @@ restricted to one or more projects.
 	return cmd
 }
 
-func (c *cmdConfigTrustAdd) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigTrustAddCertificate) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 0, 2)
+	exit, err := c.global.CheckArgs(cmd, args, 1, 2)
 	if exit {
 		return err
 	}
@@ -121,8 +198,16 @@ func (c *cmdConfigTrustAdd) Run(cmd *cobra.Command, args []string) error {
 
 	// Parse remote
 	remote := ""
-	if len(args) > 0 {
+	path := ""
+	if len(args) > 1 {
 		remote = args[0]
+		path = args[1]
+	} else {
+		path = args[0]
+	}
+
+	if path == "-" {
+		path = "/dev/stdin"
 	}
 
 	resources, err := c.global.ParseServers(remote)
@@ -132,89 +217,43 @@ func (c *cmdConfigTrustAdd) Run(cmd *cobra.Command, args []string) error {
 
 	resource := resources[0]
 
+	// Check that the path exists.
+	if !shared.PathExists(path) {
+		return fmt.Errorf(i18n.G("Provided certificate path doesn't exist: %s"), path)
+	}
+
+	// Validate server support for metrics.
 	if c.flagType == "metrics" && !resource.server.HasExtension("metrics") {
 		return errors.New("The server doesn't implement metrics")
 	}
 
-	cert := api.CertificatesPost{}
-
-	// Check if remote is the first argument
-	// to detect method of adding trusted client
-	useToken := false
-	if len(args) == 0 || (len(args) == 1 && resource.name == "") {
-		useToken = true
+	// Load the certificate.
+	x509Cert, err := shared.ReadCert(path)
+	if err != nil {
+		return err
 	}
 
-	if useToken {
-		// Use token
-		cert.Token = true
-
-		if c.flagName != "" {
-			cert.Name = c.flagName
-		} else {
-			cert.Name, err = cli.AskString(i18n.G("Please provide client name: "), "", nil)
-			if err != nil {
-				return err
-			}
-		}
+	var name string
+	if c.flagName != "" {
+		name = c.flagName
 	} else {
-		// Load the certificate.
-		fname := args[len(args)-1]
-		if fname == "-" {
-			fname = "/dev/stdin"
-		}
-
-		var name string
-		if c.flagName != "" {
-			name = c.flagName
-		} else {
-			name = filepath.Base(fname)
-		}
-
-		// Add trust relationship.
-		x509Cert, err := shared.ReadCert(fname)
-		if err != nil {
-			return err
-		}
-
-		cert.Certificate = base64.StdEncoding.EncodeToString(x509Cert.Raw)
-		cert.Name = name
+		name = filepath.Base(path)
 	}
+
+	// Add trust relationship.
+	cert := api.CertificatesPost{}
+	cert.Certificate = base64.StdEncoding.EncodeToString(x509Cert.Raw)
+	cert.Name = name
 
 	if c.flagType == "client" {
 		cert.Type = api.CertificateTypeClient
 	} else if c.flagType == "metrics" {
-		if cert.Token {
-			return fmt.Errorf(i18n.G("Cannot use metrics type certificate when using a token"))
-		}
-
 		cert.Type = api.CertificateTypeMetrics
 	}
 
 	cert.Restricted = c.flagRestricted
 	if c.flagProjects != "" {
 		cert.Projects = strings.Split(c.flagProjects, ",")
-	}
-
-	if cert.Token {
-		op, err := resource.server.CreateCertificateToken(cert)
-		if err != nil {
-			return err
-		}
-
-		opAPI := op.Get()
-		certificateToken, err := opAPI.ToCertificateAddToken()
-		if err != nil {
-			return fmt.Errorf(i18n.G("Failed converting token operation to certificate add token: %w"), err)
-		}
-
-		if !c.global.flagQuiet {
-			fmt.Printf(i18n.G("Client %s certificate add token:")+"\n", cert.Name)
-		}
-
-		fmt.Println(certificateToken.String())
-
-		return nil
 	}
 
 	return resource.server.CreateCertificate(cert)
