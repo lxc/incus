@@ -1,8 +1,6 @@
 package resources
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -137,9 +135,7 @@ func GetSystem() (*api.ResourcesSystem, error) {
 
 // getSystemFromLshw gets the system information from the `lshw` command.
 func getSystemFromLshw() *api.ResourcesSystem {
-	var buf bytes.Buffer
-
-	err := subprocess.RunCommandWithFds(context.TODO(), nil, &buf, "lshw", "-json")
+	output, err := subprocess.RunCommandCLocale("lshw", "-json")
 	if err != nil {
 		return nil
 	}
@@ -173,7 +169,7 @@ func getSystemFromLshw() *api.ResourcesSystem {
 
 	systemInfo := system{}
 
-	err = json.Unmarshal(buf.Bytes(), &systemInfo)
+	err = json.Unmarshal([]byte(output), &systemInfo)
 	if err != nil {
 		return nil
 	}
