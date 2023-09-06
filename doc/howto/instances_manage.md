@@ -45,6 +45,15 @@ For example:
 
 See [`GET /1.0/instances`](swagger:/instances/instances_get) for more information.
 ```
+
+```{group-tab} UI
+Go to {guilabel}`Instances` to see a list of all instances.
+
+You can filter the instances that are displayed by status, instance type, or the profile they use by selecting the corresponding filter.
+
+In addition, you can search for instances by entering a search text.
+The text you enter is matched against the name, the description, and the name of the base image.
+```
 ````
 
 ## Show information about an instance
@@ -66,6 +75,12 @@ Query the following endpoint to show detailed information about an instance:
     lxc query /1.0/instances/<instance_name>
 
 See [`GET /1.0/instances/{name}`](swagger:/instances/instance_get) for more information.
+```
+
+```{group-tab} UI
+Clicking an instance line in the overview will show a summary of the instance information right next to the instance list.
+
+Click the instance name to go to the instance detail page, which contains detailed information about the instance.
 ```
 ````
 
@@ -104,6 +119,15 @@ Use the following query to monitor the state of the instance:
 See [`GET /1.0/instances/{name}/state`](swagger:/instances/instance_state_get) and [`PUT /1.0/instances/{name}/state`](swagger:/instances/instance_state_put)for more information.
 <!-- Include end monitor status -->
 ```
+
+```{group-tab} UI
+To start an instance, go to the instance list or the respective instance and click the {guilabel}`Start` button (▷).
+
+You can also start several instances at the same time by selecting them in the instance list and clicking the {guilabel}`Start` button at the top.
+
+On the instance detail page, select the {guilabel}`Console` tab to see the boot log with information about the instance starting up.
+Once it is running, you can select the {guilabel}`Terminal` tab to access the instance.
+```
 ````
 
 (instances-manage-stop)=
@@ -128,8 +152,24 @@ To stop an instance, send a PUT request to change the instance state:
     :start-after: <!-- Include start monitor status -->
     :end-before: <!-- Include end monitor status -->
 ```
-
 ````
+
+````{group-tab} UI
+To stop an instance, go to the instance list or the respective instance and click the {guilabel}`Stop` button (□).
+You are then prompted to confirm.
+
+<!-- Include start skip confirmation -->
+```{tip}
+To skip the confirmation prompt, hold the {kbd}`Shift` key while clicking.
+```
+<!-- Include end skip confirmation -->
+
+You can choose to force-stop the instance.
+If stopping the instance takes a long time or the instance is not responding to the stop request, click the spinning stop button to go back to the confirmation prompt, where you can select to force-stop the instance.
+
+You can also stop several instances at the same time by selecting them in the instance list and clicking the {guilabel}`Stop` button at the top.
+````
+
 `````
 
 ## Delete an instance
@@ -137,7 +177,7 @@ To stop an instance, send a PUT request to change the instance state:
 If you don't need an instance anymore, you can remove it.
 The instance must be stopped before you can delete it.
 
-````{tabs}
+`````{tabs}
 ```{group-tab} CLI
 Enter the following command to delete an instance:
 
@@ -151,7 +191,20 @@ To delete an instance, send a DELETE request to the instance:
 
 See [`DELETE /1.0/instances/{name}`](swagger:/instances/instance_delete) for more information.
 ```
+
+````{group-tab} UI
+To delete an instance, go to its instance detail page and click {guilabel}`Delete instance`.
+You are then prompted to confirm.
+
+% Include content from above
+```{include} ./instances_manage.md
+    :start-after: <!-- Include start skip confirmation -->
+    :end-before: <!-- Include end skip confirmation -->
+```
+
+You can also delete several instances at the same time by selecting them in the instance list and clicking the {guilabel}`Delete` button at the top.
 ````
+`````
 
 ```{caution}
 This command permanently deletes the instance and all its snapshots.
@@ -199,5 +252,9 @@ To rebuild the instance with an empty root disk, specify the source type as `non
     lxc query --request POST /1.0/instances/<instance_name>/rebuild --data '{"source": {"type":"none"}}'
 
 See [`POST /1.0/instances/{name}/rebuild`](swagger:/instances/instance_rebuild_post) for more information.
+```
+
+```{group-tab} UI
+Rebuilding an instance is not yet supported in the UI.
 ```
 ````

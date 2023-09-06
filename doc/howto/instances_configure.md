@@ -13,36 +13,59 @@ To store and reuse different instance configurations, use {ref}`profiles <profil
 ## Configure instance options
 
 You can specify instance options when you {ref}`create an instance <instances-create>`.
+Alternatively, you can update the instance options after the instance is created.
 
 ````{tabs}
 ```{group-tab} CLI
-Alternatively, to update instance options after the instance is created, use the [`lxc config set`](lxc_config_set.md) command.
+Use the [`lxc config set`](lxc_config_set.md) command to update instance options.
 Specify the instance name and the key and value of the instance option:
 
     lxc config set <instance_name> <option_key>=<option_value> <option_key>=<option_value> ...
 ```
 
 ```{group-tab} API
-Alternatively, to update instance options after the instance is created, send a PATCH request to the instance.
+Send a PATCH request to the instance to update instance options.
 Specify the instance name and the key and value of the instance option:
 
     lxc query --request PATCH /1.0/instances/<instance_name> --data '{"config": {"<option_key>":"<option_value>","<option_key>":"<option_value>"}}'
 
 See [`PATCH /1.0/instances/{name}`](swagger:/instances/instance_patch) for more information.
 ```
+
+```{group-tab} UI
+To update instance options, go to the {guilabel}`Configuration` tab of the instance detail page and click {guilabel}`Edit instance`.
+
+Find the configuration option that you want to update and change its value.
+Click {guilabel}`Save changes` to save the updated configuration.
+
+To configure instance options that are not displayed in the UI, follow the instructions in {ref}`instances-configure-edit`.
+```
 ````
 
 See {ref}`instance-options` for a list of available options and information about which options are available for which instance type.
 
-For example, to change the memory limit for your container, enter the following command:
+For example, change the memory limit for your container:
 
 ````{tabs}
 ```{group-tab} CLI
-    lxc config set my-container limits.memory=128MiB
+To set the memory limit to 8 GiB, enter the following command:
+
+    lxc config set my-container limits.memory=8GiB
 ```
 
 ```{group-tab} API
-    lxc query --request PATCH /1.0/instances/my-container --data '{"config": {"limits.memory":"128MiB"}}'
+To set the memory limit to 8 GiB, send the following request:
+
+    lxc query --request PATCH /1.0/instances/my-container --data '{"config": {"limits.memory":"8GiB"}}'
+```
+
+```{group-tab} UI
+To set the memory limit to 8 GiB, go to the {guilabel}`Configuration` tab of the instance detail page and select {guilabel}`Advanced > Resource limits`.
+Then click {guilabel}`Edit instance`.
+
+Select {guilabel}`Override` for the **Memory limit** and enter 8 GiB as the absolute value.
+
+![Setting the memory limit for an instance to 8 GiB](/images/UI/limits_memory_example.png)
 ```
 ````
 
@@ -83,6 +106,11 @@ Therefore, to set an instance property, send a PATCH request to the instance:
 To unset an instance property, send a PUT request that contains the full instance configuration that you want except for the property that you want to unset.
 
 See [`PATCH /1.0/instances/{name}`](swagger:/instances/instance_patch) and [`PUT /1.0/instances/{name}`](swagger:/instances/instance_put) for more information.
+```
+
+```{group-tab} UI
+The LXD UI does not distinguish between instance options and instance properties.
+Therefore, you can configure instance properties in the same way as you {ref}`configure instance options <instances-configure-options>`.
 ```
 ````
 
@@ -143,6 +171,21 @@ For example, to add the storage at `/share/c1` on the host system to your instan
 
 See [`PATCH /1.0/instances/{name}`](swagger:/instances/instance_patch) for more information.
 ````
+
+````{group-tab} UI
+The UI currently has limited support for devices.
+
+To attach a device to your instance, you must first create it.
+Then you can update your instance configuration (in the same way as you {ref}`configure instance options <instances-configure-options>`) to attach the device to the instance.
+
+```{note}
+Some of the devices that are displayed in the instance configuration are inherited from a {ref}`profile <profiles>` or defined through a {ref}`project <projects>`.
+These devices cannot be edited for an instance.
+```
+
+To add and configure devices that are not currently supported in the UI, follow the instructions in {ref}`instances-configure-edit`.
+````
+
 `````
 
 ## Display instance configuration
@@ -160,6 +203,13 @@ To retrieve the current configuration of your instance, including writable insta
     lxc query /1.0/instances/<instance_name>
 
 See [`GET /1.0/instances/{name}`](swagger:/instances/instance_get) for more information.
+```
+
+```{group-tab} UI
+To view the current configuration of your instance, go to {guilabel}`Instances`, select your instance, and then switch to the {guilabel}`Configuration` tab.
+
+To see the full configuration including instance properties, instance options, devices and device options (also the ones that aren't yet supported by the UI), select {guilabel}`YAML configuration`.
+This view shows the full YAML of the instance configuration.
 ```
 ````
 
@@ -188,5 +238,28 @@ See [`PUT /1.0/instances/{name}`](swagger:/instances/instance_put) for more info
 
 ```{note}
 If you include changes to any read-only instance properties in the configuration you provide, they are ignored.
+```
+````
+
+````{group-tab} UI
+Instead of using the UI forms to configure your instance, you can choose to edit the YAML configuration of the instance.
+You must use this method if you need to update any configurations that are not available in the UI.
+
+```{important}
+When doing updates, do not navigate away from the YAML configuration without saving your changes.
+If you do, your updates are lost.
+```
+
+To edit the YAML configuration of your instance, go to the instance detail page, switch to the {guilabel}`Configuration` tab and select {guilabel}`YAML configuration`.
+Then click {guilabel}`Edit instance`.
+
+Edit the YAML configuration as required.
+Then click {guilabel}`Save changes` to save the updated configuration.
+
+```{note}
+For convenience, the YAML contains the full configuration including read-only instance properties.
+However, you cannot edit those properties.
+Any changes are ignored.
+```
 ````
 `````
