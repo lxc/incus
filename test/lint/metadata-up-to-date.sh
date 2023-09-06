@@ -25,7 +25,7 @@ metadata_hash "$hash_after"
 mv "${json_metadata}.bak" "${json_metadata}"
 mv "${doc_config_options}.bak" "${doc_config_options}"
 
-d="$(diff "$hash_before" "$hash_after")"
+d="$(diff -Nau "$hash_before" "$hash_after" || true)"
 rm "$hash_before" "$hash_after"
 
 if [ -z "$d" ]; then
