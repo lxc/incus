@@ -52,6 +52,7 @@ The following restrictions apply:
 - Custom storage volumes of {ref}`content type <storage-content-types>` `block` or `iso` cannot be attached to containers, but only to virtual machines.
 - To avoid data corruption, storage volumes of {ref}`content type <storage-content-types>` `block` should never be attached to more than one virtual machine at a time.
 - Storage volumes of {ref}`content type <storage-content-types>` `iso` are always read-only, and can therefore be attached to more than one virtual machine at a time without corrupting data.
+- Storage volumes can't be attached to virtual machines while they're running.
 
 For custom storage volumes with the content type `filesystem`, use the following command, where `<location>` is the path for accessing the storage volume inside the instance (for example, `/data`):
 
