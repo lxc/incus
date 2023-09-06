@@ -27,19 +27,19 @@ snapshots() {
   incus snapshot create foo
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
-    [ -d "${INCUS_DIR}/snapshots/foo/snap0" ]
+    [ -d "${INCUS_DIR}/containers-snapshots/foo/snap0" ]
   fi
 
   incus snapshot create foo
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
-    [ -d "${INCUS_DIR}/snapshots/foo/snap1" ]
+    [ -d "${INCUS_DIR}/containers-snapshots/foo/snap1" ]
   fi
 
   incus snapshot create foo tester
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
-    [ -d "${INCUS_DIR}/snapshots/foo/tester" ]
+    [ -d "${INCUS_DIR}/containers-snapshots/foo/tester" ]
   fi
 
   incus copy foo/tester foosnap1
@@ -51,7 +51,7 @@ snapshots() {
   incus snapshot delete foo/snap0
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
-    [ ! -d "${INCUS_DIR}/snapshots/foo/snap0" ]
+    [ ! -d "${INCUS_DIR}/containers-snapshots/foo/snap0" ]
   fi
 
   # test deleting multiple snapshots
@@ -65,28 +65,28 @@ snapshots() {
   wait_for "${INCUS_ADDR}" my_curl -X POST "https://${INCUS_ADDR}/1.0/instances/foo/snapshots/tester" -d "{\"name\":\"tester2\"}"
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
-    [ ! -d "${INCUS_DIR}/snapshots/foo/tester" ]
+    [ ! -d "${INCUS_DIR}/containers-snapshots/foo/tester" ]
   fi
 
   incus snapshot rename foo tester2 tester-two
   incus snapshot delete foo/tester-two
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
-    [ ! -d "${INCUS_DIR}/snapshots/foo/tester-two" ]
+    [ ! -d "${INCUS_DIR}/containers-snapshots/foo/tester-two" ]
   fi
 
   incus snapshot create foo namechange
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
-    [ -d "${INCUS_DIR}/snapshots/foo/namechange" ]
+    [ -d "${INCUS_DIR}/containers-snapshots/foo/namechange" ]
   fi
   incus move foo foople
   [ ! -d "${INCUS_DIR}/containers/foo" ]
   [ -d "${INCUS_DIR}/containers/foople" ]
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
-    [ -d "${INCUS_DIR}/snapshots/foople/namechange" ]
-    [ -d "${INCUS_DIR}/snapshots/foople/namechange" ]
+    [ -d "${INCUS_DIR}/containers-snapshots/foople/namechange" ]
+    [ -d "${INCUS_DIR}/containers-snapshots/foople/namechange" ]
   fi
 
   incus delete foople
@@ -309,7 +309,7 @@ restore_and_compare_fs() {
   # FIXME: make this backend agnostic
   if [ "$(storage_backend "$INCUS_DIR")" = "dir" ]; then
     # Recursive diff of container FS
-    diff -r "${INCUS_DIR}/containers/bar/rootfs" "${INCUS_DIR}/snapshots/bar/${snap}/rootfs"
+    diff -r "${INCUS_DIR}/containers/bar/rootfs" "${INCUS_DIR}/containers-snapshots/bar/${snap}/rootfs"
   fi
 }
 

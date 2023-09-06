@@ -278,7 +278,7 @@ test_basic_usage() {
   incus delete bar
 
   # incus delete should also delete all snapshots of bar
-  [ ! -d "${INCUS_DIR}/snapshots/bar" ]
+  [ ! -d "${INCUS_DIR}/containers-snapshots/bar" ]
 
   # Test randomly named container creation
   incus launch testimage
