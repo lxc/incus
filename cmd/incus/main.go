@@ -87,6 +87,7 @@ For help with any of those, simply call them with --help.`))
 
 	// Global flags
 	globalCmd := cmdGlobal{cmd: app}
+
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, i18n.G("Print version number"))
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, i18n.G("Print help"))
 	app.PersistentFlags().BoolVar(&globalCmd.flagForceLocal, "force-local", false, i18n.G("Force using the local unix socket"))
@@ -108,6 +109,9 @@ For help with any of those, simply call them with --help.`))
 	aliasCmd := cmdAlias{global: &globalCmd}
 	app.AddCommand(aliasCmd.Command())
 
+	// admin sub-command
+	adminCmd := cmdAdmin{global: &globalCmd}
+	app.AddCommand(adminCmd.Command())
 	// cluster sub-command
 	clusterCmd := cmdCluster{global: &globalCmd}
 	app.AddCommand(clusterCmd.Command())
