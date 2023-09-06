@@ -999,7 +999,7 @@ func (d *Daemon) init() error {
 		}
 
 		// Attempt to Mount the devIncus tmpfs
-		devIncus := filepath.Join(d.os.VarDir, "devIncus")
+		devIncus := filepath.Join(d.os.VarDir, "guestapi")
 		if !filesystem.IsMountPoint(devIncus) {
 			err = unix.Mount("tmpfs", devIncus, "tmpfs", 0, "size=100k,mode=0755")
 			if err != nil {
@@ -1650,7 +1650,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	if shouldUnmount {
 		logger.Info("Unmounting temporary filesystems")
 
-		_ = unix.Unmount(shared.VarPath("devIncus"), unix.MNT_DETACH)
+		_ = unix.Unmount(shared.VarPath("guestapi"), unix.MNT_DETACH)
 		_ = unix.Unmount(shared.VarPath("shmounts"), unix.MNT_DETACH)
 
 		logger.Info("Done unmounting temporary filesystems")

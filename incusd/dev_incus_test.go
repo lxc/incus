@@ -153,7 +153,7 @@ func TestHttpRequest(t *testing.T) {
 
 	defer func() { _ = d.Stop(context.Background(), unix.SIGQUIT) }()
 
-	c := http.Client{Transport: &http.Transport{DialContext: DevIncusDialer{Path: fmt.Sprintf("%s/devIncus/sock", testDir)}.DevIncusDial}}
+	c := http.Client{Transport: &http.Transport{DialContext: DevIncusDialer{Path: fmt.Sprintf("%s/guestapi/sock", testDir)}.DevIncusDial}}
 
 	raw, err := c.Get("http://1.0")
 	if err != nil {
