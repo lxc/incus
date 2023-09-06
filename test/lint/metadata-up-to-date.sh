@@ -25,11 +25,8 @@ metadata_hash "$hash_after"
 mv "${json_metadata}.bak" "${json_metadata}"
 mv "${doc_config_options}.bak" "${doc_config_options}"
 
-mkfifo tmphash_before tmphash_after
-cat "$hash_before" > tmphash_before &
-cat "$hash_after" > tmphash_after &
-d=$(diff tmphash_before tmphash_after)
-rm "$hash_before" "$hash_after" tmphash_before tmphash_after
+d="$(diff "$hash_before" "$hash_after")"
+rm "$hash_before" "$hash_after"
 
 if [ -z "$d" ]; then
     echo "==> metadata is up to date"
