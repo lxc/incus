@@ -31,15 +31,21 @@ func (s *OS) initDirs() error {
 		mode os.FileMode
 	}{
 		{s.VarDir, 0711},
-		{filepath.Join(s.VarDir, "backups"), 0700},
-		{s.CacheDir, 0700},
-		// containers is 0711 because liblxc needs to traverse dir to get to each container.
+
+		// Instances are 0711 so the runtime can traverse to the data.
 		{filepath.Join(s.VarDir, "containers"), 0711},
 		{filepath.Join(s.VarDir, "virtual-machines"), 0711},
+
+		// Snapshots are kept 0700 as the runtime doesn't need access.
+		{filepath.Join(s.VarDir, "containers-snapshots"), 0700},
+		{filepath.Join(s.VarDir, "virtual-machines-snapshots"), 0700},
+
+		{filepath.Join(s.VarDir, "backups"), 0700},
+		{s.CacheDir, 0700},
 		{filepath.Join(s.VarDir, "database"), 0700},
 		{filepath.Join(s.VarDir, "devices"), 0711},
-		{filepath.Join(s.VarDir, "guestapi"), 0755},
 		{filepath.Join(s.VarDir, "disks"), 0700},
+		{filepath.Join(s.VarDir, "guestapi"), 0755},
 		{filepath.Join(s.VarDir, "images"), 0700},
 		{s.LogDir, 0700},
 		{filepath.Join(s.VarDir, "networks"), 0711},
@@ -49,9 +55,6 @@ func (s *OS) initDirs() error {
 		{filepath.Join(s.VarDir, "security", "apparmor", "profiles"), 0700},
 		{filepath.Join(s.VarDir, "security", "seccomp"), 0700},
 		{filepath.Join(s.VarDir, "shmounts"), 0711},
-		// snapshots is 0700 as liblxc does not need to access this.
-		{filepath.Join(s.VarDir, "containers-snapshots"), 0700},
-		{filepath.Join(s.VarDir, "virtual-machines-snapshots"), 0700},
 		{filepath.Join(s.VarDir, "storage-pools"), 0711},
 	}
 
