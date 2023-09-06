@@ -282,6 +282,5 @@ endif
 	shellcheck test/extras/*.sh
 	run-parts --exit-on-error --regex '.sh' test/lint
 
-.PHONY: tags
-tags: *.go cmd/incusd/*.go shared/*.go cmd/incus/*.go
+tags: */*.go
 	find . -type f -name '*.go' | xargs gotags > tags
