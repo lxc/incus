@@ -59,10 +59,6 @@ Then use the following commands to make sure that trimming is automatically enab
 
 The `zfs` driver has the following limitations:
 
-Delegating part of a pool
-: ZFS doesn't support delegating part of a pool to a container user.
-  Upstream is actively working on providing this functionality.
-
 Restoring from older snapshots
 : ZFS doesn't support restoring from snapshots other than the latest one.
   You can, however, create new instances from older snapshots.
