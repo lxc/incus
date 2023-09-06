@@ -50,7 +50,7 @@ func (s *OS) initDirs() error {
 		{filepath.Join(s.VarDir, "security", "seccomp"), 0700},
 		{filepath.Join(s.VarDir, "shmounts"), 0711},
 		// snapshots is 0700 as liblxc does not need to access this.
-		{filepath.Join(s.VarDir, "snapshots"), 0700},
+		{filepath.Join(s.VarDir, "containers-snapshots"), 0700},
 		{filepath.Join(s.VarDir, "virtual-machines-snapshots"), 0700},
 		{filepath.Join(s.VarDir, "storage-pools"), 0711},
 	}
