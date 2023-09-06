@@ -251,7 +251,7 @@ test_clustering_membership() {
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster show node5 | grep -q "node5"
 
   # Client certificate are shared across all nodes.
-  token="$(INCUS_DIR=${INCUS_ONE_DIR} incus config trust add --name foo -q)"
+  token="$(INCUS_DIR=${INCUS_ONE_DIR} incus config trust add foo -q)"
   incus remote add cluster 10.1.1.101:8443 --accept-certificate --token "${token}"
   incus remote set-url cluster https://10.1.1.102:8443
   incus network list cluster: | grep -q "${bridge}"
@@ -284,7 +284,7 @@ test_clustering_membership() {
 
   # Generate a join token for the sixth node.
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list
-  token=$(INCUS_DIR="${INCUS_ONE_DIR}" incus cluster add node6 | tail -n 1)
+  token=$(INCUS_DIR="${INCUS_ONE_DIR}" incus cluster add node6 --quiet)
 
   # Check token is associated to correct name.
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster list-tokens | grep node6 | grep "${token}"
@@ -303,7 +303,7 @@ test_clustering_membership() {
   ! INCUS_DIR="${INCUS_TWO_DIR}" incus cluster list-tokens | grep node6 || false
 
   # Generate a join token for a seventh node
-  token=$(INCUS_DIR="${INCUS_ONE_DIR}" incus cluster add node7 | tail -n 1)
+  token=$(INCUS_DIR="${INCUS_ONE_DIR}" incus cluster add node7 --quiet)
 
   # Check token is associated to correct name
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster list-tokens | grep node7 | grep "${token}"
@@ -319,7 +319,7 @@ test_clustering_membership() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.join_token_expiry=30S
 
   # Generate a join token for an eigth and ninth node
-  token_valid=$(INCUS_DIR="${INCUS_ONE_DIR}" incus cluster add node8 | tail -n 1)
+  token_valid=$(INCUS_DIR="${INCUS_ONE_DIR}" incus cluster add node8 --quiet)
 
   # Spawn an eigth node, using join token.
   setup_clustering_netns 8
@@ -332,7 +332,7 @@ test_clustering_membership() {
 
   # This will cause the token to expire
   INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.join_token_expiry=5S
-  token_expired=$(INCUS_DIR="${INCUS_ONE_DIR}" incus cluster add node9 | tail -n 1)
+  token_expired=$(INCUS_DIR="${INCUS_ONE_DIR}" incus cluster add node9 --quiet)
   sleep 6
 
   # Spawn a ninth node, using join token.
@@ -1854,7 +1854,7 @@ test_clustering_address() {
   # Add a remote using the core.https_address of the bootstrap node, and check
   # that the REST API is exposed.
   url="https://10.1.1.101:8443"
-  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add --name foo --quiet)"
+  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add foo --quiet)"
   incus remote add cluster --token "${token}" --accept-certificate "${url}"
   incus storage list cluster: | grep -q data
 
@@ -2727,9 +2727,9 @@ test_clustering_image_refresh() {
   INCUS_DIR="${INCUS_REMOTE_DIR}" incus config set core.https_address "10.1.1.104:8443"
 
   # Add remotes
-  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add --name foo --quiet)"
+  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add foo --quiet)"
   incus remote add public "https://10.1.1.104:8443" --accept-certificate --token foo --public
-  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add --name foo --quiet)"
+  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add foo --quiet)"
   incus remote add cluster "https://10.1.1.101:8443" --accept-certificate --token "${token}"
 
   INCUS_DIR="${INCUS_REMOTE_DIR}" incus init testimage c1
@@ -3372,7 +3372,7 @@ test_clustering_groups() {
   ns3="${prefix}3"
   spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
-  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add --name foo --quiet)"
+  token="$(INCUS_DIR="${INCUS_ONE_DIR}" incus config trust add foo --quiet)"
   incus remote add cluster --token "${token}" --accept-certificate "https://10.1.1.101:8443"
 
   # Initially, there is only the default group

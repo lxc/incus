@@ -8,11 +8,11 @@ test_image_expiry() {
 
   ensure_import_testimage
 
-  token="$(incus config trust add --name foo -q)"
+  token="$(incus config trust add foo -q)"
   # shellcheck disable=2153
   incus_remote remote add l1 "${INCUS_ADDR}" --accept-certificate --token "${token}"
 
-  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add --name foo -q)"
+  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add foo -q)"
   incus_remote remote add l2 "${INCUS2_ADDR}" --accept-certificate --token "${token}"
 
   # Create containers from a remote image in two projects.
@@ -132,7 +132,7 @@ test_image_refresh() {
 
   ensure_import_testimage
 
-  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add --name foo -q)"
+  token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add foo -q)"
   incus_remote remote add l2 "${INCUS2_ADDR}" --accept-certificate --token "${token}"
 
   poolDriver="$(incus storage show "$(incus profile device get default root pool)" | awk '/^driver:/ {print $2}')"

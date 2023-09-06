@@ -210,7 +210,7 @@ spawn_incus_and_join_cluster() {
   target="${5}"
   INCUS_DIR="${6}"
   if [ -d "${7}" ]; then
-    token="$(INCUS_DIR=${7} incus cluster add --quiet "node${index}")"
+    token="$(INCUS_DIR=${7} incus cluster add "node${index}" --quiet)"
   else
     token="${7}"
   fi

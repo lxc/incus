@@ -754,7 +754,7 @@ test_projects_limits() {
     INCUS_REMOTE_ADDR=$(cat "${INCUS_REMOTE_DIR}/incus.addr")
     (INCUS_DIR=${INCUS_REMOTE_DIR} deps/import-busybox --alias remoteimage --template start --public)
 
-    token="$(INCUS_DIR=${INCUS_REMOTE_DIR} incus config trust add --name foo -q)"
+    token="$(INCUS_DIR=${INCUS_REMOTE_DIR} incus config trust add foo -q)"
     incus remote add l2 "${INCUS_REMOTE_ADDR}" --accept-certificate --token "${token}"
 
     # Relax all constraints except the disk limits, which won't be enough for the

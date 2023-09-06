@@ -793,8 +793,6 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 type cmdClusterAdd struct {
 	global  *cmdGlobal
 	cluster *cmdCluster
-
-	flagName string
 }
 
 func (c *cmdClusterAdd) Command() *cobra.Command {
@@ -802,7 +800,6 @@ func (c *cmdClusterAdd) Command() *cobra.Command {
 	cmd.Use = usage("add", i18n.G("[[<remote>:]<name>]"))
 	cmd.Short = i18n.G("Request a join token for adding a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Request a join token for adding a cluster member`))
-	cmd.Flags().StringVar(&c.flagName, "name", "", i18n.G("Cluster member name (alternative to passing it as an argument)")+"``")
 
 	cmd.RunE = c.Run
 
@@ -825,19 +822,8 @@ func (c *cmdClusterAdd) Run(cmd *cobra.Command, args []string) error {
 	resource := resources[0]
 
 	// Determine the machine name.
-	if resource.name != "" && c.flagName != "" && resource.name != c.flagName {
-		return fmt.Errorf(i18n.G("Cluster member name was provided as both a flag and as an argument"))
-	}
-
 	if resource.name == "" {
-		if c.flagName == "" {
-			resource.name, err = cli.AskString(i18n.G("Please provide cluster member name: "), "", nil)
-			if err != nil {
-				return err
-			}
-		} else {
-			resource.name = c.flagName
-		}
+		return fmt.Errorf(i18n.G("A cluster member name must be provided"))
 	}
 
 	// Request the join token.
