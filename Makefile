@@ -283,4 +283,4 @@ endif
 	run-parts --exit-on-error --regex '.sh' test/lint
 
 tags: */*.go
-	find . -type f -name '*.go' | xargs gotags > tags
+	find . -type f -name '*.go' | gotags -L - -f tags
