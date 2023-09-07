@@ -98,6 +98,8 @@ ifneq "$(INCUS_OFFLINE)" ""
 endif
 	$(GO) get -t -v -d -u ./...
 	$(GO) mod tidy
+	cd cmd/lxd-to-incus && $(GO) get -t -v -d -u ./...
+	cd cmd/lxd-to-incus && $(GO) mod tidy
 	@echo "Dependencies updated"
 
 .PHONY: update-protobuf
