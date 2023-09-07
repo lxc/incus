@@ -18,7 +18,7 @@ import (
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/idmap"
+	"github.com/lxc/incus/internal/idmap"
 )
 
 type containerTestSuite struct {

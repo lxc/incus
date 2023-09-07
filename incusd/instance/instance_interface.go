@@ -21,7 +21,7 @@ import (
 	"github.com/lxc/incus/incusd/metrics"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/idmap"
+	"github.com/lxc/incus/internal/idmap"
 )
 
 // HookStart hook used when instance has started.

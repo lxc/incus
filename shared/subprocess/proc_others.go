@@ -3,7 +3,7 @@
 package subprocess
 
 import (
-	"github.com/lxc/incus/shared/idmap"
+	"github.com/lxc/incus/internal/idmap"
 )
 
 // SetUserns allows running inside of a user namespace.

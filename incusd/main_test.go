@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/idmap"
+	"github.com/lxc/incus/internal/idmap"
 )
 
 func mockStartDaemon() (*Daemon, error) {
