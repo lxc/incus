@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // radosgwadmin wrapper around radosgw-admin command.
@@ -26,7 +27,7 @@ func (d *cephobject) radosgwadmin(ctx context.Context, args ...string) (string, 
 	cmd := []string{"radosgw-admin", "--cluster", d.config["cephobject.cluster_name"], "--id", d.config["cephobject.user.name"]}
 	cmd = append(cmd, args...)
 
-	return shared.RunCommandContext(ctx, cmd[0], cmd[1:]...)
+	return subprocess.RunCommandContext(ctx, cmd[0], cmd[1:]...)
 }
 
 // radosgwadminGetUser returns credentials for an existing radosgw user (and its sub users).

@@ -11,7 +11,6 @@ import (
 	"text/template"
 
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
 )
 
@@ -108,7 +107,7 @@ func QemuImg(sysOS *sys.OS, cmd []string, imgPath string, dstPath string) (strin
 
 	_, err = p.Wait(context.Background())
 	if err != nil {
-		return "", shared.NewRunError(cmd[0], cmd[1:], err, nil, &buffer)
+		return "", subprocess.NewRunError(cmd[0], cmd[1:], err, nil, &buffer)
 	}
 
 	return output.String(), nil

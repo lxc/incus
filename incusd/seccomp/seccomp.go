@@ -474,6 +474,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 const incusSeccompNotifyMknod = C.INCUS_SECCOMP_NOTIFY_MKNOD
@@ -1242,7 +1243,7 @@ func CallForkmknod(c Instance, dev deviceConfig.Device, requestPID int, s *state
 		defer func() { _ = pidFd.Close() }()
 	}
 
-	_, stderr, err := shared.RunCommandSplit(
+	_, stderr, err := subprocess.RunCommandSplit(
 		context.TODO(),
 		nil,
 		[]*os.File{pidFd},
@@ -1550,7 +1551,7 @@ func (s *Server) HandleSetxattrSyscall(c Instance, siov *Iovec) int {
 		return 0
 	}
 
-	_, stderr, err := shared.RunCommandSplit(
+	_, stderr, err := subprocess.RunCommandSplit(
 		context.TODO(),
 		nil,
 		[]*os.File{pidFd},
@@ -1702,7 +1703,7 @@ func (s *Server) HandleSchedSetschedulerSyscall(c Instance, siov *Iovec) int {
 
 	args.schedPriority = schedParamArgs.sched_priority
 
-	_, stderr, err := shared.RunCommandSplit(
+	_, stderr, err := subprocess.RunCommandSplit(
 		context.TODO(),
 		nil,
 		[]*os.File{pidFd},
@@ -2181,7 +2182,7 @@ func (s *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 		ctx["fuse_source"] = fuseSource
 		ctx["fuse_target"] = args.target
 		ctx["fuse_opts"] = fuseOpts
-		_, _, err = shared.RunCommandSplit(
+		_, _, err = subprocess.RunCommandSplit(
 			context.TODO(),
 			nil,
 			[]*os.File{pidFd},
@@ -2199,7 +2200,7 @@ func (s *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 			args.target,
 			fuseOpts)
 	} else {
-		_, _, err = shared.RunCommandSplit(
+		_, _, err = subprocess.RunCommandSplit(
 			context.TODO(),
 			nil,
 			[]*os.File{pidFd},

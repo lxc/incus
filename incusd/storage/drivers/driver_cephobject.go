@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -50,7 +51,7 @@ func (d *cephobject) load() error {
 
 	// Detect and record the version.
 	if cephobjectVersion == "" {
-		out, err := shared.RunCommand("radosgw-admin", "--version")
+		out, err := subprocess.RunCommand("radosgw-admin", "--version")
 		if err != nil {
 			return err
 		}

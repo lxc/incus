@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -304,7 +305,7 @@ func (d *cephfs) GetVolumeUsage(vol Volume) (int64, error) {
 		return -1, ErrNotSupported
 	}
 
-	out, err := shared.RunCommand("getfattr", "-n", "ceph.quota.max_bytes", "--only-values", GetVolumeMountPath(d.name, vol.volType, vol.name))
+	out, err := subprocess.RunCommand("getfattr", "-n", "ceph.quota.max_bytes", "--only-values", GetVolumeMountPath(d.name, vol.volType, vol.name))
 	if err != nil {
 		return -1, err
 	}
@@ -329,7 +330,7 @@ func (d *cephfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool,
 		return err
 	}
 
-	_, err = shared.RunCommand("setfattr", "-n", "ceph.quota.max_bytes", "-v", fmt.Sprintf("%d", sizeBytes), GetVolumeMountPath(d.name, vol.volType, vol.name))
+	_, err = subprocess.RunCommand("setfattr", "-n", "ceph.quota.max_bytes", "-v", fmt.Sprintf("%d", sizeBytes), GetVolumeMountPath(d.name, vol.volType, vol.name))
 	return err
 }
 

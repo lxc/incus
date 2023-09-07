@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/validate"
 )
@@ -54,7 +55,7 @@ func (d *btrfs) load() error {
 
 	// Detect and record the version.
 	if btrfsVersion == "" {
-		out, err := shared.RunCommand("btrfs", "version")
+		out, err := subprocess.RunCommand("btrfs", "version")
 		if err != nil {
 			return err
 		}
@@ -234,7 +235,7 @@ func (d *btrfs) Create() error {
 			}
 
 			// Create the subvolume.
-			_, err := shared.RunCommand("btrfs", "subvolume", "create", hostPath)
+			_, err := subprocess.RunCommand("btrfs", "subvolume", "create", hostPath)
 			if err != nil {
 				return err
 			}
@@ -377,7 +378,7 @@ func (d *btrfs) Update(changedConfig map[string]string) error {
 			return err
 		}
 
-		_, err = shared.RunCommand("btrfs", "filesystem", "resize", "max", GetPoolMountPath(d.name))
+		_, err = subprocess.RunCommand("btrfs", "filesystem", "resize", "max", GetPoolMountPath(d.name))
 		if err != nil {
 			return err
 		}

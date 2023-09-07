@@ -12,6 +12,7 @@ import (
 	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -48,7 +49,7 @@ func (d *cephfs) load() error {
 
 	// Detect and record the version.
 	if cephfsVersion == "" {
-		out, err := shared.RunCommand("rbd", "--version")
+		out, err := subprocess.RunCommand("rbd", "--version")
 		if err != nil {
 			return err
 		}

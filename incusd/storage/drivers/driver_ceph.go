@@ -14,6 +14,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/validate"
 )
@@ -51,7 +52,7 @@ func (d *ceph) load() error {
 
 	// Detect and record the version.
 	if cephVersion == "" {
-		out, err := shared.RunCommand("rbd", "--version")
+		out, err := subprocess.RunCommand("rbd", "--version")
 		if err != nil {
 			return err
 		}
@@ -152,7 +153,7 @@ func (d *ceph) Create() error {
 
 	if !d.osdPoolExists() {
 		// Create new osd pool.
-		_, err := shared.TryRunCommand("ceph",
+		_, err := subprocess.TryRunCommand("ceph",
 			"--name", fmt.Sprintf("client.%s", d.config["ceph.user.name"]),
 			"--cluster", d.config["ceph.cluster_name"],
 			"osd",
@@ -167,7 +168,7 @@ func (d *ceph) Create() error {
 		revert.Add(func() { _ = d.osdDeletePool() })
 
 		// Initialize the pool. This is not necessary but allows the pool to be monitored.
-		_, err = shared.TryRunCommand("rbd",
+		_, err = subprocess.TryRunCommand("rbd",
 			"--id", d.config["ceph.user.name"],
 			"--cluster", d.config["ceph.cluster_name"],
 			"pool",
@@ -211,7 +212,7 @@ func (d *ceph) Create() error {
 		}
 
 		// Use existing OSD pool.
-		msg, err := shared.RunCommand("ceph",
+		msg, err := subprocess.RunCommand("ceph",
 			"--name", fmt.Sprintf("client.%s", d.config["ceph.user.name"]),
 			"--cluster", d.config["ceph.cluster_name"],
 			"osd",
@@ -324,7 +325,7 @@ func (d *ceph) Unmount() (bool, error) {
 func (d *ceph) GetResources() (*api.ResourcesStoragePool, error) {
 	var stdout bytes.Buffer
 
-	err := shared.RunCommandWithFds(context.TODO(), nil, &stdout,
+	err := subprocess.RunCommandWithFds(context.TODO(), nil, &stdout,
 		"ceph",
 		"--name", fmt.Sprintf("client.%s", d.config["ceph.user.name"]),
 		"--cluster", d.config["ceph.cluster_name"],

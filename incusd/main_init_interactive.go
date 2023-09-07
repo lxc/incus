@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -623,7 +624,7 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 
 		// Optimization for zfs on zfs (when using Ubuntu's bpool/rpool)
 		if pool.Driver == "zfs" && backingFs == "zfs" {
-			poolName, _ := shared.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
+			poolName, _ := subprocess.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
 			if strings.TrimSpace(poolName) == "rpool" {
 				zfsDataset, err := cli.AskBool("Would you like to create a new zfs dataset under rpool/incus? (yes/no) [default=yes]: ", "yes")
 				if err != nil {

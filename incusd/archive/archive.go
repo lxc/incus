@@ -64,7 +64,7 @@ func ExtractWithFds(cmd string, args []string, allowedCmds []string, stdin io.Re
 
 	_, err = p.Wait(context.Background())
 	if err != nil {
-		return shared.NewRunError(cmd, args, err, nil, &buffer)
+		return subprocess.NewRunError(cmd, args, err, nil, &buffer)
 	}
 
 	return nil
@@ -212,7 +212,7 @@ func Unpack(file string, path string, blockBackend bool, sysOS *sys.OS, tracker 
 	if err != nil {
 		// We can't create char/block devices in unpriv containers so ignore related errors.
 		if sysOS.RunningInUserNS && command == "unsquashfs" {
-			runError, ok := err.(shared.RunError)
+			runError, ok := err.(subprocess.RunError)
 			if !ok {
 				return err
 			}

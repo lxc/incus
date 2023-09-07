@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // iptablesChainNICFilterPrefix chain prefix used for NIC specific filtering rules.
@@ -77,7 +78,7 @@ func (d Xtables) Compat() (bool, error) {
 
 // xtablesIsNftables checks whether the specified xtables backend command is actually an nftables shim.
 func (d Xtables) xtablesIsNftables(cmd string) bool {
-	output, err := shared.RunCommandCLocale(cmd, "--version")
+	output, err := subprocess.RunCommandCLocale(cmd, "--version")
 	if err != nil {
 		return false
 	}
@@ -545,20 +546,20 @@ func (d Xtables) NetworkApplyACLRules(networkName string, rules []ACLRule) error
 
 	applyACLRules := func(cmd string, iptRules [][]string) error {
 		// Attempt to flush chain in table.
-		_, err := shared.RunCommand(cmd, "-w", "-t", "filter", "-F", chain)
+		_, err := subprocess.RunCommand(cmd, "-w", "-t", "filter", "-F", chain)
 		if err != nil {
 			return fmt.Errorf("Failed flushing %q chain %q in table %q: %w", cmd, chain, "filter", err)
 		}
 
 		// Allow connection tracking.
-		_, err = shared.RunCommand(cmd, "-w", "-t", "filter", "-A", chain, "-m", "state", "--state", "ESTABLISHED,RELATED", "-j", "ACCEPT")
+		_, err = subprocess.RunCommand(cmd, "-w", "-t", "filter", "-A", chain, "-m", "state", "--state", "ESTABLISHED,RELATED", "-j", "ACCEPT")
 		if err != nil {
 			return fmt.Errorf("Failed adding connection tracking rules to %q chain %q in table %q: %w", cmd, chain, "filter", err)
 		}
 
 		// Add rules to chain in table.
 		for _, iptRule := range iptRules {
-			_, err := shared.RunCommand(cmd, append([]string{"-t", "filter", "-A", chain}, iptRule...)...)
+			_, err := subprocess.RunCommand(cmd, append([]string{"-t", "filter", "-A", chain}, iptRule...)...)
 			if err != nil {
 				return fmt.Errorf("Failed adding rule to %q chain %q in table %q: %w", cmd, chain, "filter", err)
 			}
@@ -815,7 +816,7 @@ func (d Xtables) InstanceSetupBridgeFilter(projectName string, instanceName stri
 
 	ebtablesMu.Lock()
 	for _, rule := range rules {
-		_, err := shared.RunCommand(rule[0], rule[1:]...)
+		_, err := subprocess.RunCommand(rule[0], rule[1:]...)
 		if err != nil {
 			ebtablesMu.Unlock()
 			return err
@@ -853,7 +854,7 @@ func (d Xtables) InstanceClearBridgeFilter(projectName string, instanceName stri
 	ebtablesMu.Lock()
 
 	// Get a current list of rules active on the host.
-	out, err := shared.RunCommand("ebtables", "-L", "--Lmac2", "--Lx")
+	out, err := subprocess.RunCommand("ebtables", "-L", "--Lmac2", "--Lx")
 	if err != nil {
 		ebtablesMu.Unlock()
 		return fmt.Errorf("Failed to get a list of network filters to for %q: %w", deviceName, err)
@@ -879,7 +880,7 @@ func (d Xtables) InstanceClearBridgeFilter(projectName string, instanceName stri
 
 			// If we get this far, then the current host rule matches one of our Incus
 			// rules, so we should run the modified command to delete it.
-			_, err = shared.RunCommand(fields[0], fields[1:]...)
+			_, err = subprocess.RunCommand(fields[0], fields[1:]...)
 			if err != nil {
 				errs = append(errs, err)
 			}
@@ -1228,7 +1229,7 @@ func (d Xtables) iptablesAdd(ipVersion uint, comment string, table string, metho
 	args = append(args, rule...)
 	args = append(args, "-m", "comment", "--comment", fmt.Sprintf("%s %s", iptablesCommentPrefix, comment))
 
-	_, err = shared.TryRunCommand(cmd, args...)
+	_, err = subprocess.TryRunCommand(cmd, args...)
 	if err != nil {
 		return err
 	}
@@ -1297,7 +1298,7 @@ func (d Xtables) iptablesClear(ipVersion uint, comments []string, fromTables ...
 
 		// List the rules.
 		args := append(baseArgs, "--list-rules")
-		output, err := shared.TryRunCommand(cmd, args...)
+		output, err := subprocess.TryRunCommand(cmd, args...)
 		if err != nil {
 			return fmt.Errorf("Failed to list IPv%d rules (table %s)", ipVersion, fromTable)
 		}
@@ -1313,7 +1314,7 @@ func (d Xtables) iptablesClear(ipVersion uint, comments []string, fromTables ...
 				fields[0] = "-D"
 
 				args = append(baseArgs, fields...)
-				_, err = shared.TryRunCommand("sh", "-c", fmt.Sprintf("%s %s", cmd, strings.Join(args, " ")))
+				_, err = subprocess.TryRunCommand("sh", "-c", fmt.Sprintf("%s %s", cmd, strings.Join(args, " ")))
 				if err != nil {
 					return err
 				}
@@ -1387,7 +1388,7 @@ func (d Xtables) iptablesChainExists(ipVersion uint, table string, chain string)
 	}
 
 	// Attempt to dump the rules of the chain, if this fails then chain doesn't exist.
-	rules, err := shared.RunCommand(cmd, "-t", table, "-S", chain)
+	rules, err := subprocess.RunCommand(cmd, "-t", table, "-S", chain)
 	if err != nil {
 		return false, false, nil
 	}
@@ -1413,7 +1414,7 @@ func (d Xtables) iptablesChainCreate(ipVersion uint, table string, chain string)
 	}
 
 	// Attempt to create chain in table.
-	_, err := shared.RunCommand(cmd, "-t", table, "-N", chain)
+	_, err := subprocess.RunCommand(cmd, "-t", table, "-N", chain)
 	if err != nil {
 		return fmt.Errorf("Failed creating %q chain %q in table %q: %w", cmd, chain, table, err)
 	}
@@ -1434,14 +1435,14 @@ func (d Xtables) iptablesChainDelete(ipVersion uint, table string, chain string,
 
 	// Attempt to flush rules from chain in table.
 	if flushFirst {
-		_, err := shared.RunCommand(cmd, "-t", table, "-F", chain)
+		_, err := subprocess.RunCommand(cmd, "-t", table, "-F", chain)
 		if err != nil {
 			return fmt.Errorf("Failed flushing %q chain %q in table %q: %w", cmd, chain, table, err)
 		}
 	}
 
 	// Attempt to delete chain in table.
-	_, err := shared.RunCommand(cmd, "-t", table, "-X", chain)
+	_, err := subprocess.RunCommand(cmd, "-t", table, "-X", chain)
 	if err != nil {
 		return fmt.Errorf("Failed deleting %q chain %q in table %q: %w", cmd, chain, table, err)
 	}

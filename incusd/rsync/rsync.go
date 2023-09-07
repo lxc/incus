@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // Debug controls additional debugging in rsync output.
@@ -54,7 +55,7 @@ func rsync(args ...string) (string, error) {
 	// Run the command.
 	err := cmd.Run()
 	if err != nil {
-		return stdout.String(), shared.NewRunError("rsync", args, err, &stdout, &stderr)
+		return stdout.String(), subprocess.NewRunError("rsync", args, err, &stdout, &stderr)
 	}
 
 	return stdout.String(), nil
@@ -104,7 +105,7 @@ func LocalCopy(source string, dest string, bwlimit string, xattrs bool, rsyncArg
 
 	msg, err := rsync(args...)
 	if err != nil {
-		runError, ok := err.(shared.RunError)
+		runError, ok := err.(subprocess.RunError)
 		if ok {
 			exitError, ok := runError.Unwrap().(*exec.ExitError)
 			if ok {
@@ -436,7 +437,7 @@ func rsyncFeatureArgs(features []string) []string {
 // AtLeast compares the local version to a minimum version.
 func AtLeast(min string) bool {
 	// Parse the current version.
-	out, err := shared.RunCommand("rsync", "--version")
+	out, err := subprocess.RunCommand("rsync", "--version")
 	if err != nil {
 		return false
 	}

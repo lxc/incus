@@ -20,10 +20,10 @@ import (
 
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // Errors.
@@ -136,7 +136,7 @@ func (d *btrfs) snapshotSubvolume(path string, dest string, recursion bool) (rev
 
 	// Single subvolume creation.
 	snapshot := func(path string, dest string) error {
-		_, err := shared.RunCommand("btrfs", "subvolume", "snapshot", path, dest)
+		_, err := subprocess.RunCommand("btrfs", "subvolume", "snapshot", path, dest)
 		if err != nil {
 			return err
 		}
@@ -190,7 +190,7 @@ func (d *btrfs) deleteSubvolume(rootPath string, recursion bool) error {
 		// Attempt (but don't fail on) to delete any qgroup on the subvolume.
 		qgroup, _, err := d.getQGroup(path)
 		if err == nil {
-			_, _ = shared.RunCommand("btrfs", "qgroup", "destroy", qgroup, path)
+			_, _ = subprocess.RunCommand("btrfs", "qgroup", "destroy", qgroup, path)
 		}
 
 		// Temporarily change ownership & mode to help with nesting.
@@ -198,7 +198,7 @@ func (d *btrfs) deleteSubvolume(rootPath string, recursion bool) error {
 		_ = os.Chown(path, 0, 0)
 
 		// Delete the subvolume itself.
-		_, err = shared.RunCommand("btrfs", "subvolume", "delete", path)
+		_, err = subprocess.RunCommand("btrfs", "subvolume", "delete", path)
 
 		return err
 	}
@@ -256,7 +256,7 @@ func (d *btrfs) deleteSubvolume(rootPath string, recursion bool) error {
 
 func (d *btrfs) getQGroup(path string) (string, int64, error) {
 	// Try to get the qgroup details.
-	output, err := shared.RunCommand("btrfs", "qgroup", "show", "-e", "-f", "--raw", path)
+	output, err := subprocess.RunCommand("btrfs", "qgroup", "show", "-e", "-f", "--raw", path)
 	if err != nil {
 		return "", -1, errBtrfsNoQuota
 	}
@@ -356,7 +356,7 @@ func (d *btrfs) setSubvolumeReadonlyProperty(path string, readonly bool) error {
 
 	args = append(args, "-ts", path, "ro", fmt.Sprintf("%t", readonly))
 
-	_, err := shared.RunCommand("btrfs", args...)
+	_, err := subprocess.RunCommand("btrfs", args...)
 	return err
 }
 
@@ -409,7 +409,7 @@ func (d *btrfs) getSubvolumesMetaData(vol Volume) ([]BTRFSSubVolume, error) {
 
 	if !d.state.OS.RunningInUserNS {
 		// List all subvolumes in the given filesystem with their UUIDs and received UUIDs.
-		err = shared.RunCommandWithFds(context.TODO(), nil, &stdout, "btrfs", "subvolume", "list", "-u", "-R", poolMountPath)
+		err = subprocess.RunCommandWithFds(context.TODO(), nil, &stdout, "btrfs", "subvolume", "list", "-u", "-R", poolMountPath)
 		if err != nil {
 			return nil, err
 		}
@@ -447,7 +447,7 @@ func (d *btrfs) getSubVolumeReceivedUUID(vol Volume) (string, error) {
 	poolMountPath := GetPoolMountPath(vol.pool)
 
 	// List all subvolumes in the given filesystem with their UUIDs.
-	err := shared.RunCommandWithFds(context.TODO(), nil, &stdout, "btrfs", "subvolume", "list", "-R", poolMountPath)
+	err := subprocess.RunCommandWithFds(context.TODO(), nil, &stdout, "btrfs", "subvolume", "list", "-R", poolMountPath)
 	if err != nil {
 		return "", err
 	}
@@ -560,7 +560,7 @@ func (d *btrfs) receiveSubVolume(r io.Reader, receivePath string) (string, error
 		return "", fmt.Errorf("Failed listing contents of %q: %w", receivePath, err)
 	}
 
-	err = shared.RunCommandWithFds(context.TODO(), r, nil, "btrfs", "receive", "-e", receivePath)
+	err = subprocess.RunCommandWithFds(context.TODO(), r, nil, "btrfs", "receive", "-e", receivePath)
 	if err != nil {
 		return "", err
 	}

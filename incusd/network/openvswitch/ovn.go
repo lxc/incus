@@ -9,6 +9,7 @@ import (
 
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // OVNRouter OVN router name.
@@ -260,7 +261,7 @@ func (o *OVN) xbctl(southbound bool, extraArgs ...string) (string, error) {
 	}
 
 	args = append(args, extraArgs...)
-	return shared.RunCommand(cmd, args...)
+	return subprocess.RunCommand(cmd, args...)
 }
 
 // LogicalRouterAdd adds a named logical router.

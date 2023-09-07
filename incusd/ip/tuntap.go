@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // Tuntap represents arguments for tuntap manipulation.
@@ -18,7 +18,7 @@ func (t *Tuntap) Add() error {
 		cmd = append(cmd, "multi_queue")
 	}
 
-	_, err := shared.RunCommand("ip", cmd...)
+	_, err := subprocess.RunCommand("ip", cmd...)
 	if err != nil {
 		return err
 	}

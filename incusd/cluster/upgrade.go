@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // NotifyUpgradeCompleted sends a notification to all other nodes in the
@@ -117,7 +118,7 @@ func triggerUpdate() error {
 	time.Sleep(wait)
 
 	logger.Info("Triggering cluster auto-update now")
-	_, err := shared.RunCommand(updateExecutable)
+	_, err := subprocess.RunCommand(updateExecutable)
 	if err != nil {
 		logger.Error("Triggering cluster update failed", logger.Ctx{"err": err})
 		return err

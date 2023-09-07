@@ -32,12 +32,12 @@ func (s *targetSystemd) Present() bool {
 }
 
 func (s *targetSystemd) Stop() error {
-	_, err := shared.RunCommand("systemctl", "stop", "incus")
+	_, err := subprocess.RunCommand("systemctl", "stop", "incus")
 	return err
 }
 
 func (s *targetSystemd) Start() error {
-	_, err := shared.RunCommand("systemctl", "start", "incus")
+	_, err := subprocess.RunCommand("systemctl", "start", "incus")
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // LoadModule loads the kernel module with the given name, by invoking
@@ -16,7 +17,7 @@ func LoadModule(module string) error {
 		return nil
 	}
 
-	_, err := shared.RunCommand("modprobe", "-b", module)
+	_, err := subprocess.RunCommand("modprobe", "-b", module)
 	return err
 }
 

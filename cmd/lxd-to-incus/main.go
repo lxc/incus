@@ -380,17 +380,17 @@ Instances will come back online once the migration is complete.
 		return fmt.Errorf("Failed to get source paths: %w", err)
 	}
 
-	_, err = shared.RunCommand("mv", sourcePaths.Logs, targetPaths.Logs)
+	_, err = subprocess.RunCommand("mv", sourcePaths.Logs, targetPaths.Logs)
 	if err != nil {
 		return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.Logs, targetPaths.Logs, err)
 	}
 
-	_, err = shared.RunCommand("mv", sourcePaths.Cache, targetPaths.Cache)
+	_, err = subprocess.RunCommand("mv", sourcePaths.Cache, targetPaths.Cache)
 	if err != nil {
 		return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.Cache, targetPaths.Cache, err)
 	}
 
-	_, err = shared.RunCommand("mv", sourcePaths.Daemon, targetPaths.Daemon)
+	_, err = subprocess.RunCommand("mv", sourcePaths.Daemon, targetPaths.Daemon)
 	if err != nil {
 		return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.Daemon, targetPaths.Daemon, err)
 	}

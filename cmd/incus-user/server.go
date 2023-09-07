@@ -12,6 +12,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 func serverIsConfigured(client incus.InstanceServer) (bool, error) {
@@ -71,7 +72,7 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 			pool.Driver = "zfs"
 
 			// Check if zsys.
-			poolName, _ := shared.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
+			poolName, _ := subprocess.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
 			if strings.TrimSpace(poolName) == "rpool" {
 				pool.Config["source"] = "rpool/incus"
 			}
@@ -143,7 +144,7 @@ func serverSetupUser(uid uint32) error {
 	userPath := filepath.Join("users", fmt.Sprintf("%d", uid))
 
 	// User account.
-	out, err := shared.RunCommand("getent", "passwd", fmt.Sprintf("%d", uid))
+	out, err := subprocess.RunCommand("getent", "passwd", fmt.Sprintf("%d", uid))
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve user information: %w", err)
 	}

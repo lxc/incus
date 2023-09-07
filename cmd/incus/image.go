@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/termios"
 )
 
@@ -675,7 +676,7 @@ func (c *cmdImageImport) packImageDir(path string) (string, error) {
 	defer func() { _ = outFile.Close() }()
 
 	outFileName := outFile.Name()
-	_, err = shared.RunCommand("tar", "-C", path, "--numeric-owner", "--restrict", "--force-local", "--xattrs", "-cJf", outFileName, "rootfs", "templates", "metadata.yaml")
+	_, err = subprocess.RunCommand("tar", "-C", path, "--numeric-owner", "--restrict", "--force-local", "--xattrs", "-cJf", outFileName, "rootfs", "templates", "metadata.yaml")
 	if err != nil {
 		return "", err
 	}

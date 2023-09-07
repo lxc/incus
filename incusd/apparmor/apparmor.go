@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 const (
@@ -27,7 +28,7 @@ func runApparmor(sysOS *sys.OS, command string, name string) error {
 		return nil
 	}
 
-	_, err := shared.RunCommand("apparmor_parser", []string{
+	_, err := subprocess.RunCommand("apparmor_parser", []string{
 		fmt.Sprintf("-%sWL", command),
 		filepath.Join(aaPath, "cache"),
 		filepath.Join(aaPath, "profiles", name),
@@ -194,7 +195,7 @@ func getVersion(sysOS *sys.OS) (*version.DottedVersion, error) {
 		return version.NewDottedVersion("0.0")
 	}
 
-	out, err := shared.RunCommand("apparmor_parser", "--version")
+	out, err := subprocess.RunCommand("apparmor_parser", "--version")
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +227,7 @@ func getCacheDir(sysOS *sys.OS) (string, error) {
 		return basePath, nil
 	}
 
-	output, err := shared.RunCommand("apparmor_parser", "-L", basePath, "--print-cache-dir")
+	output, err := subprocess.RunCommand("apparmor_parser", "-L", basePath, "--print-cache-dir")
 	if err != nil {
 		return "", err
 	}

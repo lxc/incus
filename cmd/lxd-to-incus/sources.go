@@ -33,17 +33,17 @@ func (s *srcSnap) Present() bool {
 }
 
 func (s *srcSnap) Stop() error {
-	_, err := shared.RunCommand("snap", "stop", "lxd")
+	_, err := subprocess.RunCommand("snap", "stop", "lxd")
 	return err
 }
 
 func (s *srcSnap) Start() error {
-	_, err := shared.RunCommand("snap", "start", "lxd")
+	_, err := subprocess.RunCommand("snap", "start", "lxd")
 	return err
 }
 
 func (s *srcSnap) Purge() error {
-	_, err := shared.RunCommand("snap", "remove", "lxd", "--purge")
+	_, err := subprocess.RunCommand("snap", "remove", "lxd", "--purge")
 	return err
 }
 

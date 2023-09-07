@@ -14,6 +14,7 @@ import (
 
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // Image handling functions
@@ -181,7 +182,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 				defer func() { _ = os.Remove(patchedFile.Name()) }()
 
 				// Apply it
-				_, err = shared.RunCommand("xdelta3", "-f", "-d", "-s", srcPath, deltaFile.Name(), patchedFile.Name())
+				_, err = subprocess.RunCommand("xdelta3", "-f", "-d", "-s", srcPath, deltaFile.Name(), patchedFile.Name())
 				if err != nil {
 					return nil, err
 				}

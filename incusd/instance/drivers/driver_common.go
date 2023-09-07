@@ -34,6 +34,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // ErrExecCommandNotFound indicates the command is not found.
@@ -983,7 +984,7 @@ func (d *common) setCoreSched(pids []int) error {
 		args = append(args, strconv.Itoa(pid))
 	}
 
-	_, err := shared.RunCommand(d.state.OS.ExecPath, args...)
+	_, err := subprocess.RunCommand(d.state.OS.ExecPath, args...)
 	return err
 }
 

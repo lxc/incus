@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 type common struct {
@@ -269,13 +270,13 @@ func (d *common) moveGPTAltHeader(devPath string) error {
 		return nil
 	}
 
-	_, err = shared.RunCommand(path, "--move-second-header", devPath)
+	_, err = subprocess.RunCommand(path, "--move-second-header", devPath)
 	if err == nil {
 		d.logger.Debug("Moved GPT alternative header to end of disk", logger.Ctx{"dev": devPath})
 		return nil
 	}
 
-	runErr, ok := err.(shared.RunError)
+	runErr, ok := err.(subprocess.RunError)
 	if ok {
 		exitError, ok := runErr.Unwrap().(*exec.ExitError)
 		if ok {
@@ -530,7 +531,7 @@ func (d *common) filesystemFreeze(path string) (func() error, error) {
 		return nil, fmt.Errorf("Failed syncing filesystem %q: %w", path, err)
 	}
 
-	_, err = shared.RunCommand("fsfreeze", "--freeze", path)
+	_, err = subprocess.RunCommand("fsfreeze", "--freeze", path)
 	if err != nil {
 		return nil, fmt.Errorf("Failed freezing filesystem %q: %w", path, err)
 	}
@@ -538,7 +539,7 @@ func (d *common) filesystemFreeze(path string) (func() error, error) {
 	d.logger.Info("Filesystem frozen", logger.Ctx{"path": path})
 
 	unfreezeFS := func() error {
-		_, err := shared.RunCommand("fsfreeze", "--unfreeze", path)
+		_, err := subprocess.RunCommand("fsfreeze", "--unfreeze", path)
 		if err != nil {
 			return fmt.Errorf("Failed unfreezing filesystem %q: %w", path, err)
 		}

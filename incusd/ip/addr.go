@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // Addr represents arguments for address protocol manipulation.
@@ -14,7 +14,7 @@ type Addr struct {
 
 // Add adds new protocol address.
 func (a *Addr) Add() error {
-	_, err := shared.RunCommand("ip", a.Family, "addr", "add", "dev", a.DevName, a.Address)
+	_, err := subprocess.RunCommand("ip", a.Family, "addr", "add", "dev", a.DevName, a.Address)
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (a *Addr) Flush() error {
 		cmd = append(cmd, "scope", a.Scope)
 	}
 
-	_, err := shared.RunCommand("ip", cmd...)
+	_, err := subprocess.RunCommand("ip", cmd...)
 	if err != nil {
 		return err
 	}
