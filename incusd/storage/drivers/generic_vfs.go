@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/archive"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
@@ -17,6 +16,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/sys"
+	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -809,7 +809,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 		return nil, nil, err
 	}
 
-	tarArgs, _, unpacker, err := shared.DetectCompressionFile(srcData)
+	tarArgs, _, unpacker, err := archive.DetectCompressionFile(srcData)
 	if err != nil {
 		return nil, nil, err
 	}

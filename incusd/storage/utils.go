@@ -12,7 +12,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/apparmor"
-	"github.com/lxc/incus/incusd/archive"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/instance"
@@ -26,6 +25,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/sys"
+	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"

@@ -12,7 +12,6 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/incusd/archive"
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/cluster"
 	"github.com/lxc/incus/incusd/db"
@@ -30,6 +29,7 @@ import (
 	"github.com/lxc/incus/incusd/scriptlet"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
+	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -584,7 +584,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		return response.InternalError(err)
 	}
 
-	_, algo, decomArgs, err := shared.DetectCompressionFile(backupFile)
+	_, algo, decomArgs, err := archive.DetectCompressionFile(backupFile)
 	if err != nil {
 		return response.InternalError(err)
 	}

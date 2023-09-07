@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/internal/archive"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -172,7 +172,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		_, ext, _, err := shared.DetectCompressionFile(target)
+		_, ext, _, err := archive.DetectCompressionFile(target)
 		if err != nil {
 			return err
 		}

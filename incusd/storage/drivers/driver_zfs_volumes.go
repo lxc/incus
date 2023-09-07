@@ -18,12 +18,12 @@ import (
 	"github.com/pborman/uuid"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/incusd/archive"
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -432,7 +432,7 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 			return nil, nil, err
 		}
 
-		_, _, unpacker, err := shared.DetectCompressionFile(srcData)
+		_, _, unpacker, err := archive.DetectCompressionFile(srcData)
 		if err != nil {
 			return nil, nil, err
 		}

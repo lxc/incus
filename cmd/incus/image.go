@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/internal/archive"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared"
@@ -806,7 +807,7 @@ func (c *cmdImageImport) Run(cmd *cobra.Command, args []string) error {
 
 			defer func() { _ = rootfs.Close() }()
 
-			_, ext, _, err := shared.DetectCompressionFile(rootfs)
+			_, ext, _, err := archive.DetectCompressionFile(rootfs)
 			if err != nil {
 				return err
 			}
