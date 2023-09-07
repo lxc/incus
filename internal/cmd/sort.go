@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/fvbommel/sortorder"
@@ -98,84 +96,4 @@ func (a ByNameAndType) Less(i, j int) bool {
 	}
 
 	return sortorder.NaturalLess(a[i][1], a[j][1])
-}
-
-// SortByPrecedence sorts the given data in order of precedence. Each row of the data argument should have length equal
-// to len(displayColumns). The sortColumns argument should be a subset of displayColumns.
-func SortByPrecedence(data [][]string, displayColumns string, sortColumns string) error {
-	precedence := make([]int, len(sortColumns))
-	for i, r := range sortColumns {
-		index := strings.IndexRune(displayColumns, r)
-		if index < 0 {
-			return fmt.Errorf("Invalid sort column %q, not present in display columns %q", string(r), displayColumns)
-		}
-
-		for _, row := range data {
-			if index >= len(row) {
-				return fmt.Errorf("Index of sort column %q outside data range", string(r))
-			}
-		}
-
-		precedence[i] = index
-	}
-
-	sort.Sort(byPrecedence{
-		precedence: precedence,
-		data:       data,
-	})
-
-	return nil
-}
-
-// byPrecedence implements the sort.Interface. It is intentionally private because it may panic. Use the
-// SortByPrecedence method instead.
-type byPrecedence struct {
-	// precedence defines the column indexes to be sorted in order of precedence.
-	precedence []int
-	// data is the table data to be sorted.
-	data [][]string
-}
-
-func (a byPrecedence) Len() int {
-	if a.data == nil {
-		return 0
-	}
-
-	return len(a.data)
-}
-
-func (a byPrecedence) Swap(i, j int) {
-	if a.data == nil {
-		return
-	}
-
-	a.data[i], a.data[j] = a.data[j], a.data[i]
-}
-
-func (a byPrecedence) Less(i, j int) bool {
-	for _, k := range a.precedence {
-		if k >= len(a.data[i]) {
-			panic("Given precedence index is out of bounds")
-		}
-
-		if k >= len(a.data[j]) {
-			panic("Given precedence index is out of bounds")
-		}
-
-		if a.data[i][k] == a.data[j][k] {
-			continue
-		}
-
-		if a.data[i][k] == "" {
-			return false
-		}
-
-		if a.data[j][k] == "" {
-			return true
-		}
-
-		return sortorder.NaturalLess(a.data[i][k], a.data[j][k])
-	}
-
-	return false
 }
