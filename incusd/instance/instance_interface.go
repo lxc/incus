@@ -20,8 +20,8 @@ import (
 	"github.com/lxc/incus/incusd/instance/operationlock"
 	"github.com/lxc/incus/incusd/metrics"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/shared/api"
 )
 
 // HookStart hook used when instance has started.

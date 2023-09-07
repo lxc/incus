@@ -259,8 +259,8 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	_ "github.com/lxc/incus/incusd/include" // Used by cgo
 	"github.com/lxc/incus/incusd/network"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/internal/netutils"
+	"github.com/lxc/incus/shared"
 )
 
 const forkproxyUDSSockFDNum int = C.FORKPROXY_UDS_SOCK_FD_NUM

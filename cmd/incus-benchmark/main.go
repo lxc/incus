@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared"
 )
 
 type cmdGlobal struct {

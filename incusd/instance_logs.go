@@ -17,8 +17,8 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/storage"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared"
 )
 
 var instanceLogCmd = APIEndpoint{

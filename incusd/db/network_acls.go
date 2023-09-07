@@ -10,8 +10,8 @@ import (
 	"net/http"
 
 	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared/api"
 )
 
 // GetNetworkACLs returns the names of existing Network ACLs.

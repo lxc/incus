@@ -15,9 +15,9 @@ import (
 
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/shared/logger"
 )
 

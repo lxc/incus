@@ -13,11 +13,11 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/internal/version"
 )
 
 var btrfsVersion string

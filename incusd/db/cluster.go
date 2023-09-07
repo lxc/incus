@@ -8,8 +8,8 @@ import (
 
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared/api"
 )
 
 // ClusterGroupToAPI is a convenience to convert a ClusterGroup db struct into

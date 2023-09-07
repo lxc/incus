@@ -13,9 +13,9 @@ import (
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/internal/version"
 )
 
 var networkAllocationsCmd = APIEndpoint{

@@ -9,8 +9,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/internal/usbid"
+	"github.com/lxc/incus/shared/api"
 )
 
 var sysBusUSB = "/sys/bus/usb/devices"

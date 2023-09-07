@@ -68,15 +68,15 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	localvsock "github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/incusd/warnings"
+	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	agentAPI "github.com/lxc/incus/shared/api/agent"
-	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/internal/version"
 )
 
 // QEMUDefaultCPUCores defines the default number of cores a VM will get if no limit specified.

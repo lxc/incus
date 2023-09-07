@@ -14,9 +14,9 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/internal/version"
 )
 
 // swagger:operation GET /1.0/instances/{name}/state instances instance_state_get

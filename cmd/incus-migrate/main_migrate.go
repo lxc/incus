@@ -19,12 +19,12 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/revert"
+	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/internal/version"
 )
 
 type cmdMigrate struct {

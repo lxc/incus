@@ -23,10 +23,10 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/internal/version"
 )
 
 // Lock to prevent concurent storage pools creation.

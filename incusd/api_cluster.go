@@ -40,13 +40,13 @@ import (
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	apiScriptlet "github.com/lxc/incus/shared/api/scriptlet"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/internal/version"
 )
 
 type evacuateStopFunc func(inst instance.Instance) error

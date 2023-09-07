@@ -8,9 +8,9 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/shared/api"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
+	"github.com/lxc/incus/shared/api"
 )
 
 type warningColumn struct {

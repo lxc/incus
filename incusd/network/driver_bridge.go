@@ -35,12 +35,12 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/internal/version"
 )
 
 // ForkdnsServersListPath defines the path that contains the forkdns server candidate file.

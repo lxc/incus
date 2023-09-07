@@ -11,9 +11,9 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/internal/version"
 )
 
 // InstancePath returns the directory of an instance or snapshot.
