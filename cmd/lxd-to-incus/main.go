@@ -395,6 +395,13 @@ Instances will come back online once the migration is complete.
 		return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.Daemon, targetPaths.Daemon, err)
 	}
 
+	// Migrate database format.
+	fmt.Println("=> Migrating database")
+	err = migrateDatabase(filepath.Join(targetPaths.Daemon, "database"))
+	if err != nil {
+		return fmt.Errorf("Failed to migrate database in %q: %w", filepath.Join(targetPaths.Daemon, "database"), err)
+	}
+
 	// Cleanup paths.
 	fmt.Println("=> Cleaning up target paths")
 
