@@ -260,7 +260,7 @@ import (
 	_ "github.com/lxc/incus/incusd/include" // Used by cgo
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/netutils"
+	"github.com/lxc/incus/internal/netutils"
 )
 
 const forkproxyUDSSockFDNum int = C.FORKPROXY_UDS_SOCK_FD_NUM

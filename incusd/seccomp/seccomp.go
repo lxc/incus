@@ -472,7 +472,7 @@ import (
 	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/linux"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/netutils"
+	"github.com/lxc/incus/internal/netutils"
 	"github.com/lxc/incus/shared/osarch"
 )
 

@@ -32,7 +32,7 @@ package main
 #include "syscall_numbers.h"
 #include "syscall_wrappers.h"
 
-#include "../shared/netutils/netns_getifaddrs.c"
+#include "../internal/netutils/netns_getifaddrs.c"
 
 __ro_after_init bool core_scheduling_aware = false;
 __ro_after_init bool close_range_aware = false;
