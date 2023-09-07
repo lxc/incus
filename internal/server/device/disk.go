@@ -867,6 +867,10 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			// directory sharing feature to mount the directory inside the VM, and as such we need to
 			// indicate to the VM the target path to mount to.
 			if internalUtil.IsDir(mount.DevPath) || d.sourceIsCephFs() {
+				if d.config["path"] == "" {
+					return nil, fmt.Errorf(`Missing mount "path" setting`)
+				}
+
 				// Mount the source in the instance devices directory.
 				// This will ensure that if the exported directory configured as readonly that this
 				// takes effect event if using virtio-fs (which doesn't support read only mode) by
