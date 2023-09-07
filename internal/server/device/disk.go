@@ -104,11 +104,6 @@ func (d *disk) CanMigrate() bool {
 	return false
 }
 
-// sourceIsDir returns true if the disks source config setting is a directory.
-func (d *disk) sourceIsDir() bool {
-	return internalUtil.IsDir(d.config["source"])
-}
-
 // sourceIsCephFs returns true if the disks source config setting is a CephFS share.
 func (d *disk) sourceIsCephFs() bool {
 	return strings.HasPrefix(d.config["source"], "cephfs:")
