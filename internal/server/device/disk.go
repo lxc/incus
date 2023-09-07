@@ -121,7 +121,19 @@ func (d *disk) sourceIsCeph() bool {
 
 // CanHotPlug returns whether the device can be managed whilst the instance is running.
 func (d *disk) CanHotPlug() bool {
-	return !(d.sourceIsDir() || d.sourceIsCephFs()) || d.inst.Type() == instancetype.Container
+	// Containers support hot-plugging all disk types.
+	if d.inst.Type() == instancetype.Container {
+		return true
+	}
+
+	// A mount path indicates a filesystem disk being attached, which cannot be hot-plugged for VMs due to
+	// limitations with virtiofs.
+	if d.config["path"] != "" {
+		return false
+	}
+
+	// Block disks can be hot-plugged into VMs.
+	return true
 }
 
 // validateConfig checks the supplied config for correctness.
