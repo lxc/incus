@@ -111,7 +111,7 @@ migration() {
   [ ! -d "${INCUS_DIR}/containers/nonlive" ]
   # FIXME: make this backend agnostic
   if [ "$incus2_backend" = "dir" ]; then
-    [ -d "${incus2_dir}/snapshots/nonlive/snap0/rootfs/bin" ]
+    [ -d "${incus2_dir}/containers-snapshots/nonlive/snap0/rootfs/bin" ]
   fi
 
   incus_remote copy l2:nonlive l1:nonlive2 --mode=push
@@ -126,7 +126,7 @@ migration() {
 
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
-    [ -d "${INCUS_DIR}/snapshots/nonlive2/snap0/rootfs/bin" ]
+    [ -d "${INCUS_DIR}/containers-snapshots/nonlive2/snap0/rootfs/bin" ]
   fi
 
   incus_remote copy l1:nonlive2/snap0 l2:nonlive3 --mode=relay

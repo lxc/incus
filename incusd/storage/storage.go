@@ -28,7 +28,7 @@ func InstancePath(instanceType instancetype.Type, projectName, instanceName stri
 	}
 
 	if isSnapshot {
-		return shared.VarPath("snapshots", fullName)
+		return shared.VarPath("containers-snapshots", fullName)
 	}
 
 	return shared.VarPath("containers", fullName)

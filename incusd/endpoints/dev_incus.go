@@ -9,7 +9,7 @@ import (
 
 // Create a new net.Listener bound to the unix socket of the devIncus endpoint.
 func createDevIncuslListener(dir string) (net.Listener, error) {
-	path := filepath.Join(dir, "devIncus", "sock")
+	path := filepath.Join(dir, "guestapi", "sock")
 
 	// If this socket exists, that means a previous daemon died and
 	// didn't clean up. We assume that such a daemon is actually dead

@@ -948,7 +948,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup devIncus
 	if shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]) {
-		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/incus none bind,create=dir 0 0", shared.VarPath("devIncus")))
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/incus none bind,create=dir 0 0", shared.VarPath("guestapi")))
 		if err != nil {
 			return nil, err
 		}
@@ -4259,7 +4259,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				}
 			} else if key == "security.guestapi" {
 				if shared.IsTrueOrEmpty(value) {
-					err = d.insertMount(shared.VarPath("devIncus"), "/dev/incus", "none", unix.MS_BIND, idmap.IdmapStorageNone)
+					err = d.insertMount(shared.VarPath("guestapi"), "/dev/incus", "none", unix.MS_BIND, idmap.IdmapStorageNone)
 					if err != nil {
 						return err
 					}
