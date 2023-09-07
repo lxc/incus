@@ -65,7 +65,7 @@ import (
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // A Daemon can respond to requests from a shared client.

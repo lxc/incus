@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // GetNetworksLocalConfig returns a map associating each network name to its

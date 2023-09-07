@@ -8,7 +8,7 @@ import (
 
 	cli "github.com/lxc/incus/shared/cmd"
 	"github.com/lxc/incus/shared/i18n"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 type cmdVersion struct {

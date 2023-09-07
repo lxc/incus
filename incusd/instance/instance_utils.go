@@ -37,7 +37,7 @@ import (
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // ValidDevices is linked from instance/drivers.validDevices to validate device config.

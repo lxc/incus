@@ -76,7 +76,7 @@ import (
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // QEMUDefaultCPUCores defines the default number of cores a VM will get if no limit specified.

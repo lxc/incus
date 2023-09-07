@@ -9,7 +9,7 @@ import (
 	"github.com/lxc/incus/client"
 	config "github.com/lxc/incus/internal/cliconfig"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 const userConfigKey = "user.incus-benchmark"

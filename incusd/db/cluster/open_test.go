@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // If the node is not clustered, the schema updates works normally.

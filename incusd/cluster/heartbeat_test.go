@@ -20,7 +20,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // After a heartbeat request is completed, the leader updates the heartbeat

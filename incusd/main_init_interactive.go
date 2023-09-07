@@ -24,7 +24,7 @@ import (
 	cli "github.com/lxc/incus/shared/cmd"
 	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {

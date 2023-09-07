@@ -2,7 +2,7 @@ package lifecycle
 
 import (
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // InstanceMetadataTemplateAction represents a lifecycle event action for instance metadata templates.

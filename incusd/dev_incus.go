@@ -29,7 +29,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 	apiGuest "github.com/lxc/incus/shared/api/guest"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/ws"
 )
 

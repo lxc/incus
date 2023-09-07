@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // Initialize the random number generator.

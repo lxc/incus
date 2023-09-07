@@ -3,7 +3,7 @@ package lifecycle
 import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // Internal copy of the volume interface.

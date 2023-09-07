@@ -26,7 +26,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // swagger:operation GET /1.0/instances/{name}/snapshots instances instance_snapshots_get

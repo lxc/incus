@@ -17,7 +17,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 var btrfsVersion string

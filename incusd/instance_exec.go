@@ -32,7 +32,7 @@ import (
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/tcp"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/ws"
 )
 

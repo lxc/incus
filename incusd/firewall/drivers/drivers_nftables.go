@@ -16,7 +16,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 const nftablesNamespace = "incus"

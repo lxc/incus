@@ -22,7 +22,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // swagger:operation GET /1.0/instances/{name}/backups instances instance_backups_get

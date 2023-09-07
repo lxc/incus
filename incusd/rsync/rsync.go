@@ -16,7 +16,7 @@ import (
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/linux"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // Debug controls additional debugging in rsync output.

@@ -18,7 +18,7 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // swagger:operation POST /1.0/instances/{instance_name}/rebuild instances instance_post

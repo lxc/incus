@@ -8,7 +8,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 type cmdGlobal struct {

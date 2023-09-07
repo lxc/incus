@@ -10,7 +10,7 @@ import (
 
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 const (

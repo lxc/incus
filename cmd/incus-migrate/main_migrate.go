@@ -24,7 +24,7 @@ import (
 	cli "github.com/lxc/incus/shared/cmd"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 type cmdMigrate struct {

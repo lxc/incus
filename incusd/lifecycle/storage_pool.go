@@ -2,7 +2,7 @@ package lifecycle
 
 import (
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // StoragePoolAction represents a lifecycle event action for storage pools.

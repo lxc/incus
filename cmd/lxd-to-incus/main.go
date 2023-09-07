@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/shared"
 	incusAPI "github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cmd"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 var minLXDVersion = &version.DottedVersion{4, 0, 0}

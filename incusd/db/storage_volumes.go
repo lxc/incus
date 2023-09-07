@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
+	"github.com/lxc/incus/internal/version"
 )
 
 // GetStoragePoolVolumesWithType return a list of all volumes of the given type.
