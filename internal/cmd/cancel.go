@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared/i18n"
+	"github.com/lxc/incus/internal/i18n"
 )
 
 // CancelableWait waits for an operation and cancel it on SIGINT/SIGTERM.

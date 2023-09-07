@@ -8,7 +8,7 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared/api"
 	cli "github.com/lxc/incus/shared/cmd"
-	"github.com/lxc/incus/shared/i18n"
+	"github.com/lxc/incus/internal/i18n"
 )
 
 type cmdNetworkListAllocations struct {

@@ -9,7 +9,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/shared/cmd"
-	"github.com/lxc/incus/shared/i18n"
+	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/units"
 )
