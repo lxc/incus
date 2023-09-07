@@ -151,8 +151,12 @@ func (d *ceph) Create() error {
 	}
 
 	placeholderVol := d.getPlaceholderVolume()
+	poolExists, err := d.osdPoolExists()
+	if err != nil {
+		return fmt.Errorf("Failed checking the existence of the ceph %q osd pool while attempting to create it because of an internal error: %w", d.config["ceph.osd.pool_name"], err)
+	}
 
-	if !d.osdPoolExists() {
+	if !poolExists {
 		// Create new osd pool.
 		_, err := subprocess.TryRunCommand("ceph",
 			"--name", fmt.Sprintf("client.%s", d.config["ceph.user.name"]),
@@ -248,7 +252,11 @@ func (d *ceph) Create() error {
 // Delete removes the storage pool from the storage device.
 func (d *ceph) Delete(op *operations.Operation) error {
 	// Test if the pool exists.
-	poolExists := d.osdPoolExists()
+	poolExists, err := d.osdPoolExists()
+	if err != nil {
+		return fmt.Errorf("Failed checking the existence of the ceph %q osd pool while attempting to delete it because of an internal error: %w", d.config["ceph.osd.pool_name"], err)
+	}
+
 	if !poolExists {
 		d.logger.Warn("Pool does not exist", logger.Ctx{"pool": d.config["ceph.osd.pool_name"], "cluster": d.config["ceph.cluster_name"]})
 	}
@@ -270,7 +278,7 @@ func (d *ceph) Delete(op *operations.Operation) error {
 	}
 
 	// On delete, wipe everything in the directory.
-	err := wipeDirectory(GetPoolMountPath(d.name))
+	err = wipeDirectory(GetPoolMountPath(d.name))
 	if err != nil {
 		return err
 	}
