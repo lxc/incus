@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/linux"
+	"github.com/lxc/incus/internal/linux"
 )
 
 type cmdForkstart struct {

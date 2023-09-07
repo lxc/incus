@@ -14,7 +14,7 @@ import (
 
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/rsync"
-	"github.com/lxc/incus/shared/linux"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared/ws"
 )
 
