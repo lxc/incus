@@ -71,7 +71,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	agentAPI "github.com/lxc/incus/shared/api/agent"
-	"github.com/lxc/incus/shared/instancewriter"
+	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"

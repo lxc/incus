@@ -16,7 +16,7 @@ import (
 	"github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/storage/s3/miniod"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/instancewriter"
+	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/shared/logger"
 )
 

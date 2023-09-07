@@ -15,7 +15,7 @@ import (
 	"github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/storage/s3/miniod"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/instancewriter"
+	"github.com/lxc/incus/internal/instancewriter"
 )
 
 // VolumeUsage contains the used and total size of a volume.

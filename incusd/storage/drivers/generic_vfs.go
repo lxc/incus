@@ -19,7 +19,7 @@ import (
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/instancewriter"
+	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 )

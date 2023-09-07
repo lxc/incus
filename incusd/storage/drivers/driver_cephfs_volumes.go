@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/instancewriter"
+	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
