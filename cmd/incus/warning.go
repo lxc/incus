@@ -9,7 +9,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/shared/api"
-	cli "github.com/lxc/incus/shared/cmd"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 )
 

@@ -12,7 +12,7 @@ import (
 
 	"github.com/lxc/incus/shared"
 	incusAPI "github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/cmd"
+	"github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/version"
 )
 

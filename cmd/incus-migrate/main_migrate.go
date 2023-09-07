@@ -21,7 +21,7 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	cli "github.com/lxc/incus/shared/cmd"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/internal/version"

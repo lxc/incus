@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/shared/cmd"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/version"
 )
 

@@ -21,7 +21,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	cli "github.com/lxc/incus/shared/cmd"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/shared/validate"
 	"github.com/lxc/incus/internal/version"

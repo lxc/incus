@@ -10,7 +10,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared/api"
-	cli "github.com/lxc/incus/shared/cmd"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/shared/validate"
 )
 

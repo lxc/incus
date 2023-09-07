@@ -21,7 +21,7 @@ import (
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
-	cli "github.com/lxc/incus/shared/cmd"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/shared/termios"
 )
 

@@ -20,7 +20,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared"
-	cli "github.com/lxc/incus/shared/cmd"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
