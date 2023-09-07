@@ -1,6 +1,6 @@
 //go:build linux && cgo
 
-package shared
+package linux
 
 // #cgo CFLAGS: -std=gnu11 -Wvla -Werror -fvisibility=hidden -Winit-self
 // #cgo CFLAGS: -Wformat=2 -Wshadow -Wendif-labels -fasynchronous-unwind-tables
