@@ -46,7 +46,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/filter"
+	"github.com/lxc/incus/internal/filter"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"

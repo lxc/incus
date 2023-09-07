@@ -24,7 +24,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/filter"
+	"github.com/lxc/incus/internal/filter"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/internal/version"
 )

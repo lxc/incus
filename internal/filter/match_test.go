@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/filter"
+	"github.com/lxc/incus/internal/filter"
 )
 
 func TestMatch_Instance(t *testing.T) {
