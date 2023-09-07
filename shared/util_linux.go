@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"reflect"
 	"strings"
 	"unsafe"
@@ -92,46 +91,6 @@ func GetAllXattr(path string) (map[string]string, error) {
 }
 
 var ObjectFound = fmt.Errorf("Found requested object")
-
-func LookupUUIDByBlockDevPath(diskDevice string) (string, error) {
-	uuid := ""
-	readUUID := func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if (info.Mode() & os.ModeSymlink) == os.ModeSymlink {
-			link, err := os.Readlink(path)
-			if err != nil {
-				return err
-			}
-
-			// filepath.Join() will call Clean() on the result and
-			// thus resolve those ugly "../../" parts that make it
-			// hard to compare the strings.
-			absPath := filepath.Join("/dev/disk/by-uuid", link)
-			if absPath == diskDevice {
-				uuid = path
-				// Will allows us to avoid needlessly travers
-				// the whole directory.
-				return ObjectFound
-			}
-		}
-		return nil
-	}
-
-	err := filepath.Walk("/dev/disk/by-uuid", readUUID)
-	if err != nil && err != ObjectFound {
-		return "", fmt.Errorf("Failed to detect UUID: %s", err)
-	}
-
-	if uuid == "" {
-		return "", fmt.Errorf("Failed to detect UUID")
-	}
-
-	lastSlash := strings.LastIndex(uuid, "/")
-	return uuid[lastSlash+1:], nil
-}
 
 // Detect whether err is an errno.
 func GetErrno(err error) (errno error, iserrno bool) {
