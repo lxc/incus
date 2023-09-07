@@ -55,7 +55,7 @@ func main() {
 	}
 }
 
-type cmdMigrate struct{
+type cmdMigrate struct {
 	flagYes bool
 }
 
