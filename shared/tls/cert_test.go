@@ -1,4 +1,4 @@
-package shared_test
+package cert
 
 import (
 	"crypto/x509"
@@ -10,8 +10,7 @@ import (
 	"github.com/lxc/incus/shared"
 )
 
-// A new key pair is generated if none exists and saved to the appropriate
-// files.
+// A new key pair is generated if none exists and saved to the appropriate files.
 func TestKeyPairAndCA(t *testing.T) {
 	dir, err := os.MkdirTemp("", "incus-shared-test-")
 	if err != nil {
