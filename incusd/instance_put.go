@@ -21,10 +21,10 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/version"
 )
 
 // swagger:operation PUT /1.0/instances/{name} instances instance_put

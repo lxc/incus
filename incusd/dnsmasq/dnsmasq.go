@@ -11,9 +11,9 @@ import (
 
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/version"
 )
 
 const staticAllocationDeviceSeparator = "."

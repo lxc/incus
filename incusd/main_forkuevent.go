@@ -22,7 +22,7 @@ package main
 #include <time.h>
 #include <unistd.h>
 
-#include "../shared/netutils/network.c"
+#include "../internal/netutils/network.c"
 #include "include/memory_utils.h"
 
 #ifndef UEVENT_SEND

@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	config "github.com/lxc/incus/internal/cliconfig"
+	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/i18n"
 )
 
 var numberedArgRegex = regexp.MustCompile(`@ARG(\d+)@`)

@@ -13,8 +13,8 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/rsync"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/version"
 )
 
 // Initialize the random number generator.

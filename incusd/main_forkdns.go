@@ -16,8 +16,8 @@ import (
 	"k8s.io/utils/inotify"
 
 	"github.com/lxc/incus/incusd/network"
+	"github.com/lxc/incus/internal/dnsutil"
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/dnsutil"
 	"github.com/lxc/incus/shared/logger"
 )
 

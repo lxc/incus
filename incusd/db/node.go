@@ -15,10 +15,10 @@ import (
 	"github.com/lxc/incus/incusd/db/operationtype"
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/version"
 )
 
 // ClusterRole represents the role of a member in a cluster.

@@ -14,8 +14,8 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/node"
+	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/logger"
 )
 

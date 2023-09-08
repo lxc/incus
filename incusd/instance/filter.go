@@ -1,8 +1,8 @@
 package instance
 
 import (
+	"github.com/lxc/incus/internal/filter"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/filter"
 )
 
 // FilterFull returns a filtered list of full instances that match the given clauses.

@@ -17,9 +17,9 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/migration"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
 	"github.com/lxc/incus/shared/ws"
 )
 

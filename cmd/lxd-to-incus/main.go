@@ -10,10 +10,10 @@ import (
 	lxdAPI "github.com/canonical/lxd/shared/api"
 	"github.com/spf13/cobra"
 
+	"github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	incusAPI "github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/cmd"
-	"github.com/lxc/incus/shared/version"
 )
 
 var minLXDVersion = &version.DottedVersion{4, 0, 0}

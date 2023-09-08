@@ -13,10 +13,10 @@ import (
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/incusd/db/schema"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/version"
 )
 
 // Open the cluster database object.

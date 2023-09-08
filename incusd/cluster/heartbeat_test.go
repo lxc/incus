@@ -18,9 +18,9 @@ import (
 	dbCluster "github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/version"
 )
 
 // After a heartbeat request is completed, the leader updates the heartbeat

@@ -31,21 +31,6 @@ func ExtractAddressFromReverse(reverseName string) string {
 	return f(strings.Split(search, "."))
 }
 
-// IsReverse returns 0 is name is not in a reverse zone. Anything > 0 indicates
-// name is in a reverse zone. The returned integer will be 1 for in-addr.arpa. (IPv4)
-// and 2 for ip6.arpa. (IPv6).
-func IsReverse(name string) int {
-	if strings.HasSuffix(name, IP4arpa) {
-		return 1
-	}
-
-	if strings.HasSuffix(name, IP6arpa) {
-		return 2
-	}
-
-	return 0
-}
-
 func reverse(slice []string) string {
 	for i := 0; i < len(slice)/2; i++ {
 		j := len(slice) - i - 1

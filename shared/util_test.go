@@ -1,8 +1,6 @@
 package shared
 
 import (
-	"bytes"
-	"crypto/rand"
 	"fmt"
 	"io"
 	"os"
@@ -128,46 +126,6 @@ func TestDirCopy(t *testing.T) {
 	bytes, err = os.ReadFile(filepath.Join(dest, file2))
 	require.NoError(t, err)
 	assert.Equal(t, content2, bytes)
-}
-
-func TestReaderToChannel(t *testing.T) {
-	buf := make([]byte, 1*1024*1024)
-	_, _ = rand.Read(buf)
-
-	offset := 0
-	finished := false
-
-	ch := ReaderToChannel(bytes.NewBuffer(buf), -1)
-	for {
-		data, ok := <-ch
-		if len(data) > 0 {
-			for i := 0; i < len(data); i++ {
-				if buf[offset+i] != data[i] {
-					t.Errorf("byte %d didn't match", offset+i)
-					return
-				}
-			}
-
-			offset += len(data)
-			if offset > len(buf) {
-				t.Error("read too much data")
-				return
-			}
-
-			if offset == len(buf) {
-				finished = true
-			}
-		}
-
-		if !ok {
-			if !finished {
-				t.Error("connection closed too early")
-				return
-			} else {
-				break
-			}
-		}
-	}
 }
 
 func TestGetExpiry(t *testing.T) {

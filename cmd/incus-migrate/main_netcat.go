@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/shared/eagain"
+	"github.com/lxc/incus/internal/eagain"
 )
 
 type cmdNetcat struct {

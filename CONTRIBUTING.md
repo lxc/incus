@@ -14,7 +14,7 @@ be merged in the main branch.
 
 Separate commits should be used for:
 
-- API extension (`api: Add XYZ extension`, contains `doc/api-extensions.md` and `shared/version.api.go`)
+- API extension (`api: Add XYZ extension`, contains `doc/api-extensions.md` and `internal/version/api.go`)
 - Documentation (`doc: Update XYZ` for files in `doc/`)
 - API structure (`shared/api: Add XYZ` for changes to `shared/api/`)
 - Go client package (`client: Add XYZ` for changes to `client/`)

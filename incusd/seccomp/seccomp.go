@@ -467,12 +467,12 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/ucred"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/netutils"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/idmap"
-	"github.com/lxc/incus/shared/linux"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/netutils"
 	"github.com/lxc/incus/shared/osarch"
 )
 

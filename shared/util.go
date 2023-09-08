@@ -200,38 +200,6 @@ func ParseFileHeaders(headers http.Header) (uid int64, gid int64, mode int, type
 	return uid, gid, mode, type_, write
 }
 
-func ReaderToChannel(r io.Reader, bufferSize int) <-chan []byte {
-	if bufferSize <= 128*1024 {
-		bufferSize = 128 * 1024
-	}
-
-	ch := make(chan ([]byte))
-
-	go func() {
-		readSize := 128 * 1024
-		offset := 0
-		buf := make([]byte, bufferSize)
-
-		for {
-			read := buf[offset : offset+readSize]
-			nr, err := r.Read(read)
-			offset += nr
-			if offset > 0 && (offset+readSize >= bufferSize || err != nil) {
-				ch <- buf[0:offset]
-				offset = 0
-				buf = make([]byte, bufferSize)
-			}
-
-			if err != nil {
-				close(ch)
-				break
-			}
-		}
-	}()
-
-	return ch
-}
-
 // Returns a random base64 encoded string from crypto/rand.
 func RandomCryptoString() (string, error) {
 	buf := make([]byte, 32)
@@ -629,18 +597,6 @@ func IsFalseOrEmpty(value string) bool {
 
 func IsUserConfig(key string) bool {
 	return strings.HasPrefix(key, "user.")
-}
-
-// StringMapHasStringKey returns true if any of the supplied keys are present in the map.
-func StringMapHasStringKey(m map[string]string, keys ...string) bool {
-	for _, k := range keys {
-		_, ok := m[k]
-		if ok {
-			return true
-		}
-	}
-
-	return false
 }
 
 func IsBlockdev(fm os.FileMode) bool {
@@ -1084,29 +1040,6 @@ func DownloadFileHash(ctx context.Context, httpClient *http.Client, useragent st
 	}
 
 	return size, nil
-}
-
-func ParseNumberFromFile(file string) (int64, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return int64(0), err
-	}
-
-	defer func() { _ = f.Close() }()
-
-	buf := make([]byte, 4096)
-	n, err := f.Read(buf)
-	if err != nil {
-		return int64(0), err
-	}
-
-	str := strings.TrimSpace(string(buf[0:n]))
-	nr, err := strconv.Atoi(str)
-	if err != nil {
-		return int64(0), err
-	}
-
-	return int64(nr), nil
 }
 
 type ReadSeeker struct {

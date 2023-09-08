@@ -4,7 +4,7 @@ POFILES=$(wildcard po/*.po)
 MOFILES=$(patsubst %.po,%.mo,$(POFILES))
 LINGUAS=$(basename $(POFILES))
 POTFILE=po/$(DOMAIN).pot
-VERSION=$(shell grep "var Version" shared/version/flex.go | cut -d'"' -f2)
+VERSION=$(shell grep "var Version" internal/version/flex.go | cut -d'"' -f2)
 ARCHIVE=incus-$(VERSION).tar
 HASH := \#
 TAG_SQLITE3=$(shell printf "$(HASH)include <cowsql.h>\nvoid main(){cowsql_node_id n = 1;}" | $(CC) ${CGO_CFLAGS} -o /dev/null -xc - >/dev/null 2>&1 && echo "libsqlite3")

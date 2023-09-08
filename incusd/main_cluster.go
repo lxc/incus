@@ -20,8 +20,8 @@ import (
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/incusd/util"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/shared"
-	cli "github.com/lxc/incus/shared/cmd"
 	"github.com/lxc/incus/shared/termios"
 )
 

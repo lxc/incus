@@ -111,7 +111,7 @@ import (
 
 	_ "github.com/lxc/incus/incusd/include" // Used by cgo
 	"github.com/lxc/incus/incusd/ip"
-	"github.com/lxc/incus/shared/netutils"
+	"github.com/lxc/incus/internal/netutils"
 )
 
 type cmdForknet struct {

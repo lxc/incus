@@ -9,8 +9,8 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/lxc/incus/client"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/shared/api"
-	cli "github.com/lxc/incus/shared/cmd"
 	"github.com/lxc/incus/shared/validate"
 )
 

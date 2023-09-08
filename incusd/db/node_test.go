@@ -14,8 +14,8 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/operationtype"
 	"github.com/lxc/incus/incusd/response"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/version"
 )
 
 // Add a new raft node.

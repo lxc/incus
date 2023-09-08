@@ -31,13 +31,13 @@ import (
 	"github.com/lxc/incus/incusd/seccomp"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/sys"
+	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/shared/version"
 )
 
 // ValidDevices is linked from instance/drivers.validDevices to validate device config.

@@ -8,10 +8,10 @@ import (
 
 	"github.com/lxc/incus/client"
 	config "github.com/lxc/incus/internal/cliconfig"
+	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	cli "github.com/lxc/incus/shared/cmd"
-	"github.com/lxc/incus/shared/i18n"
 )
 
 type cmdCopy struct {

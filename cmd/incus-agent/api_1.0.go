@@ -13,11 +13,11 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/response"
 	localvsock "github.com/lxc/incus/incusd/vsock"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	agentAPI "github.com/lxc/incus/shared/api/agent"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/version"
 )
 
 var api10Cmd = APIEndpoint{

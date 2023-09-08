@@ -19,12 +19,12 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/util"
+	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
-	cli "github.com/lxc/incus/shared/cmd"
-	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/validate"
-	"github.com/lxc/incus/shared/version"
 )
 
 func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {

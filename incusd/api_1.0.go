@@ -23,11 +23,11 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	scriptletLoad "github.com/lxc/incus/incusd/scriptlet/load"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/version"
 )
 
 var api10Cmd = APIEndpoint{

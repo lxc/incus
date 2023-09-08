@@ -14,8 +14,8 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/version"
 )
 
 var networkPeersCmd = APIEndpoint{
