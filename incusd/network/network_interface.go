@@ -7,7 +7,7 @@ import (
 	"github.com/lxc/incus/incusd/cluster/request"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/iprange"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -41,8 +41,8 @@ type Network interface {
 	IsManaged() bool
 	DHCPv4Subnet() *net.IPNet
 	DHCPv6Subnet() *net.IPNet
-	DHCPv4Ranges() []shared.IPRange
-	DHCPv6Ranges() []shared.IPRange
+	DHCPv4Ranges() []iprange.Range
+	DHCPv6Ranges() []iprange.Range
 
 	// Actions.
 	Create(clientType request.ClientType) error

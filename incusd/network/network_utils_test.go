@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/iprange"
 )
 
 func Example_parseIPRange() {
@@ -108,7 +108,7 @@ func Example_ipRangesOverlap() {
 	}
 
 	// also do a couple of tests with ranges that have no end
-	singleIPRange := &shared.IPRange{
+	singleIPRange := &iprange.Range{
 		Start: net.ParseIP("10.1.1.4"),
 	}
 

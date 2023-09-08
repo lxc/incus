@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/iprange"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -314,15 +315,15 @@ func (n *common) DHCPv6Subnet() *net.IPNet {
 }
 
 // DHCPv4Ranges returns a parsed set of DHCPv4 ranges for this network.
-func (n *common) DHCPv4Ranges() []shared.IPRange {
-	dhcpRanges := make([]shared.IPRange, 0)
+func (n *common) DHCPv4Ranges() []iprange.Range {
+	dhcpRanges := make([]iprange.Range, 0)
 	if n.config["ipv4.dhcp.ranges"] != "" {
 		for _, r := range strings.Split(n.config["ipv4.dhcp.ranges"], ",") {
 			parts := strings.SplitN(strings.TrimSpace(r), "-", 2)
 			if len(parts) == 2 {
 				startIP := net.ParseIP(parts[0])
 				endIP := net.ParseIP(parts[1])
-				dhcpRanges = append(dhcpRanges, shared.IPRange{
+				dhcpRanges = append(dhcpRanges, iprange.Range{
 					Start: startIP.To4(),
 					End:   endIP.To4(),
 				})
@@ -334,15 +335,15 @@ func (n *common) DHCPv4Ranges() []shared.IPRange {
 }
 
 // DHCPv6Ranges returns a parsed set of DHCPv6 ranges for this network.
-func (n *common) DHCPv6Ranges() []shared.IPRange {
-	dhcpRanges := make([]shared.IPRange, 0)
+func (n *common) DHCPv6Ranges() []iprange.Range {
+	dhcpRanges := make([]iprange.Range, 0)
 	if n.config["ipv6.dhcp.ranges"] != "" {
 		for _, r := range strings.Split(n.config["ipv6.dhcp.ranges"], ",") {
 			parts := strings.SplitN(strings.TrimSpace(r), "-", 2)
 			if len(parts) == 2 {
 				startIP := net.ParseIP(parts[0])
 				endIP := net.ParseIP(parts[1])
-				dhcpRanges = append(dhcpRanges, shared.IPRange{
+				dhcpRanges = append(dhcpRanges, iprange.Range{
 					Start: startIP.To16(),
 					End:   endIP.To16(),
 				})

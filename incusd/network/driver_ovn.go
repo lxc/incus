@@ -28,6 +28,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/iprange"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -1083,7 +1084,7 @@ func (n *ovn) uplinkAllAllocatedIPs(ctx context.Context, tx *db.ClusterTx, uplin
 }
 
 // uplinkAllocateIP allocates a free IP from one of the IP ranges.
-func (n *ovn) uplinkAllocateIP(ipRanges []*shared.IPRange, allAllocated []net.IP) (net.IP, error) {
+func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP) (net.IP, error) {
 	for _, ipRange := range ipRanges {
 		inc := big.NewInt(1)
 
@@ -1790,22 +1791,22 @@ func (n *ovn) validateUplinkNetwork(p *api.Project, uplinkNetworkName string) (s
 }
 
 // getDHCPv4Reservations returns list DHCP IPv4 reservations from NICs connected to this network.
-func (n *ovn) getDHCPv4Reservations() ([]shared.IPRange, error) {
+func (n *ovn) getDHCPv4Reservations() ([]iprange.Range, error) {
 	routerIntPortIPv4, _, err := n.parseRouterIntPortIPv4Net()
 	if err != nil {
 		return nil, fmt.Errorf("Failed parsing router's internal port IPv4 Net for DHCP reservation: %w", err)
 	}
 
-	var dhcpReserveIPv4s []shared.IPRange
+	var dhcpReserveIPv4s []iprange.Range
 
 	if routerIntPortIPv4 != nil {
-		dhcpReserveIPv4s = []shared.IPRange{{Start: routerIntPortIPv4}}
+		dhcpReserveIPv4s = []iprange.Range{{Start: routerIntPortIPv4}}
 	}
 
 	err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
 		ip := net.ParseIP(nicConfig["ipv4.address"])
 		if ip != nil {
-			dhcpReserveIPv4s = append(dhcpReserveIPv4s, shared.IPRange{Start: ip})
+			dhcpReserveIPv4s = append(dhcpReserveIPv4s, iprange.Range{Start: ip})
 		}
 
 		return nil
@@ -3332,7 +3333,7 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devi
 			}
 
 			if !n.hasDHCPv4Reservation(dhcpReservations, ip) {
-				dhcpReservations = append(dhcpReservations, shared.IPRange{Start: ip})
+				dhcpReservations = append(dhcpReservations, iprange.Range{Start: ip})
 				err = client.LogicalSwitchDHCPv4RevervationsSet(n.getIntSwitchName(), dhcpReservations)
 				if err != nil {
 					return fmt.Errorf("Failed adding DHCPv4 reservation for %q: %w", ip.String(), err)
@@ -3346,7 +3347,7 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devi
 }
 
 // hasDHCPv4Reservation returns whether IP is in the supplied reservation list.
-func (n *ovn) hasDHCPv4Reservation(dhcpReservations []shared.IPRange, ip net.IP) bool {
+func (n *ovn) hasDHCPv4Reservation(dhcpReservations []iprange.Range, ip net.IP) bool {
 	for _, dhcpReservation := range dhcpReservations {
 		if dhcpReservation.Start.Equal(ip) && dhcpReservation.End == nil {
 			return true
@@ -3610,7 +3611,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	// be added when the copied instance next starts.
 	if opts.DeviceConfig["ipv4.address"] != "" && dnsIPv4 != nil {
 		if !n.hasDHCPv4Reservation(dhcpReservations, dnsIPv4) {
-			dhcpReservations = append(dhcpReservations, shared.IPRange{Start: dnsIPv4})
+			dhcpReservations = append(dhcpReservations, iprange.Range{Start: dnsIPv4})
 			err = client.LogicalSwitchDHCPv4RevervationsSet(n.getIntSwitchName(), dhcpReservations)
 			if err != nil {
 				return "", nil, fmt.Errorf("Failed adding DHCPv4 reservation for %q: %w", dnsIPv4.String(), err)
@@ -4096,8 +4097,8 @@ func (n *ovn) InstanceDevicePortRemove(instanceUUID string, deviceName string, d
 					return fmt.Errorf("Failed getting DHCPv4 reservations: %w", err)
 				}
 
-				dhcpReservations = append(dhcpReservations, shared.IPRange{Start: ip})
-				dhcpReservationsNew := make([]shared.IPRange, 0, len(dhcpReservations))
+				dhcpReservations = append(dhcpReservations, iprange.Range{Start: ip})
+				dhcpReservationsNew := make([]iprange.Range, 0, len(dhcpReservations))
 
 				found := false
 				for _, dhcpReservation := range dhcpReservations {

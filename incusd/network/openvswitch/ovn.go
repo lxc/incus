@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/iprange"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
 )
@@ -52,7 +53,7 @@ type OVNAddressSet string
 type OVNIPAllocationOpts struct {
 	PrefixIPv4  *net.IPNet
 	PrefixIPv6  *net.IPNet
-	ExcludeIPv4 []shared.IPRange
+	ExcludeIPv4 []iprange.Range
 }
 
 // OVNIPv6AddressMode IPv6 router advertisement address mode.
@@ -659,7 +660,7 @@ func (o *OVN) logicalSwitchFindAssociatedPortGroups(switchName OVNSwitch) ([]OVN
 }
 
 // logicalSwitchParseExcludeIPs parses the ips into OVN exclude_ips format.
-func (o *OVN) logicalSwitchParseExcludeIPs(ips []shared.IPRange) ([]string, error) {
+func (o *OVN) logicalSwitchParseExcludeIPs(ips []iprange.Range) ([]string, error) {
 	excludeIPs := make([]string, 0, len(ips))
 	for _, v := range ips {
 		if v.Start == nil || v.Start.To4() == nil {
@@ -727,7 +728,7 @@ func (o *OVN) LogicalSwitchSetIPAllocation(switchName OVNSwitch, opts *OVNIPAllo
 }
 
 // LogicalSwitchDHCPv4RevervationsSet sets the DHCPv4 IP reservations.
-func (o *OVN) LogicalSwitchDHCPv4RevervationsSet(switchName OVNSwitch, reservedIPs []shared.IPRange) error {
+func (o *OVN) LogicalSwitchDHCPv4RevervationsSet(switchName OVNSwitch, reservedIPs []iprange.Range) error {
 	var removeOtherConfigKeys []string
 	args := []string{"set", "logical_switch", string(switchName)}
 
@@ -763,7 +764,7 @@ func (o *OVN) LogicalSwitchDHCPv4RevervationsSet(switchName OVNSwitch, reservedI
 }
 
 // LogicalSwitchDHCPv4RevervationsGet gets the DHCPv4 IP reservations.
-func (o *OVN) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]shared.IPRange, error) {
+func (o *OVN) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]iprange.Range, error) {
 	excludeIPsRaw, err := o.nbctl("--if-exists", "get", "logical_switch", string(switchName), "other_config:exclude_ips")
 	if err != nil {
 		return nil, err
@@ -773,7 +774,7 @@ func (o *OVN) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]shared
 
 	// Check if no dynamic IPs set.
 	if excludeIPsRaw == "" || excludeIPsRaw == "[]" {
-		return []shared.IPRange{}, nil
+		return []iprange.Range{}, nil
 	}
 
 	excludeIPsRaw, err = unquote(excludeIPsRaw)
@@ -782,7 +783,7 @@ func (o *OVN) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]shared
 	}
 
 	excludeIPsParts := shared.SplitNTrimSpace(strings.TrimSpace(excludeIPsRaw), " ", -1, true)
-	excludeIPs := make([]shared.IPRange, 0, len(excludeIPsParts))
+	excludeIPs := make([]iprange.Range, 0, len(excludeIPsParts))
 
 	for _, excludeIPsPart := range excludeIPsParts {
 		ip := net.ParseIP(excludeIPsPart) // Check if single IP part.
@@ -798,13 +799,13 @@ func (o *OVN) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]shared
 				}
 
 				// Add range IP part to list.
-				excludeIPs = append(excludeIPs, shared.IPRange{Start: startIP, End: endIP})
+				excludeIPs = append(excludeIPs, iprange.Range{Start: startIP, End: endIP})
 			} else {
 				return nil, fmt.Errorf("Unrecognised exclude_ips part: %q", excludeIPsPart)
 			}
 		} else {
 			// Add single IP part to list.
-			excludeIPs = append(excludeIPs, shared.IPRange{Start: ip})
+			excludeIPs = append(excludeIPs, iprange.Range{Start: ip})
 		}
 	}
 
