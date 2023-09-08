@@ -21,6 +21,7 @@ import (
 
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // This is a modified version of https://github.com/grafana/loki/blob/v1.6.1/pkg/promtail/client/.
@@ -87,7 +88,7 @@ func NewClient(ctx context.Context, url *url.URL, username string, password stri
 	}
 
 	if caCert != "" {
-		tlsConfig, err := shared.GetTLSConfigMem("", "", caCert, "", true)
+		tlsConfig, err := localtls.GetTLSConfigMem("", "", caCert, "", true)
 		if err != nil {
 			return nil
 		}

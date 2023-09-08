@@ -39,6 +39,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 var storagePoolVolumesCmd = APIEndpoint{
@@ -867,7 +868,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 		}
 	}
 
-	config, err := shared.GetTLSConfig("", "", "", cert)
+	config, err := localtls.GetTLSConfig("", "", "", cert)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -883,7 +884,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 		URL: req.Source.Operation,
 		Dialer: &websocket.Dialer{
 			TLSClientConfig:  config,
-			NetDialContext:   shared.RFC3493Dialer,
+			NetDialContext:   localtls.RFC3493Dialer,
 			HandshakeTimeout: time.Second * 5,
 		},
 		Secrets:    req.Source.Websockets,

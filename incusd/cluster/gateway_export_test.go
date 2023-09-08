@@ -2,7 +2,7 @@ package cluster
 
 import (
 	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // IsLeader returns true if this node is the leader.
@@ -11,12 +11,12 @@ func (g *Gateway) IsLeader() (bool, error) {
 }
 
 // ServerCert returns the gateway's internal TLS server certificate information.
-func (g *Gateway) ServerCert() *shared.CertInfo {
+func (g *Gateway) ServerCert() *localtls.CertInfo {
 	return g.networkCert
 }
 
 // NetworkCert returns the gateway's internal TLS NetworkCert certificate information.
-func (g *Gateway) NetworkCert() *shared.CertInfo {
+func (g *Gateway) NetworkCert() *localtls.CertInfo {
 	return g.networkCert
 }
 

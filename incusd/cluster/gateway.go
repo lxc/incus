@@ -29,6 +29,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/tcp"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // NewGateway creates a new Gateway for managing access to the dqlite cluster.
@@ -41,7 +42,7 @@ import (
 // After creation, the Daemon is expected to expose whatever http handlers the
 // HandlerFuncs method returns and to access the dqlite cluster using the
 // dialer returned by the DialFunc method.
-func NewGateway(shutdownCtx context.Context, db *db.Node, networkCert *shared.CertInfo, stateFunc func() *state.State, options ...Option) (*Gateway, error) {
+func NewGateway(shutdownCtx context.Context, db *db.Node, networkCert *localtls.CertInfo, stateFunc func() *state.State, options ...Option) (*Gateway, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	o := newOptions()
@@ -80,7 +81,7 @@ type HeartbeatHandler func(w http.ResponseWriter, r *http.Request, isLeader bool
 // possibly runs a dqlite replica on this member (if we're configured to do so).
 type Gateway struct {
 	db          *db.Node
-	networkCert *shared.CertInfo
+	networkCert *localtls.CertInfo
 	options     *options
 
 	// The raft instance to use for creating the dqlite driver. It's nil if
@@ -582,7 +583,7 @@ func (g *Gateway) getClient() (*client.Client, error) {
 // Reset the gateway, shutting it down.
 //
 // This is used when disabling clustering on a node.
-func (g *Gateway) Reset(networkCert *shared.CertInfo) error {
+func (g *Gateway) Reset(networkCert *localtls.CertInfo) error {
 	err := g.Shutdown()
 	if err != nil {
 		return err
@@ -741,7 +742,7 @@ func (g *Gateway) LeaderAddress() (string, error) {
 
 // NetworkUpdateCert sets a new network certificate for the gateway
 // Use with Endpoints.NetworkUpdateCert() to fully update the API endpoint.
-func (g *Gateway) NetworkUpdateCert(cert *shared.CertInfo) {
+func (g *Gateway) NetworkUpdateCert(cert *localtls.CertInfo) {
 	g.lock.Lock()
 	defer g.lock.Unlock()
 

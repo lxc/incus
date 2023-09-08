@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -156,12 +157,12 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 		if certPath == "" || keyPath == "" {
 			var err error
 
-			clientCrt, clientKey, err = shared.GenerateMemCert(true, false)
+			clientCrt, clientKey, err = localtls.GenerateMemCert(true, false)
 			if err != nil {
 				return nil, "", err
 			}
 
-			clientFingerprint, err = shared.CertFingerprintStr(string(clientCrt))
+			clientFingerprint, err = localtls.CertFingerprintStr(string(clientCrt))
 			if err != nil {
 				return nil, "", err
 			}
@@ -195,7 +196,7 @@ func connectTarget(url string, certPath string, keyPath string, authType string,
 	var certificate *x509.Certificate
 	if err != nil {
 		// Failed to connect using the system CA, so retrieve the remote certificate
-		certificate, err = shared.GetRemoteCertificate(url, args.UserAgent)
+		certificate, err = localtls.GetRemoteCertificate(url, args.UserAgent)
 		if err != nil {
 			return nil, "", err
 		}

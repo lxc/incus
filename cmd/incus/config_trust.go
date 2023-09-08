@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 type cmdConfigTrust struct {
@@ -228,7 +229,7 @@ func (c *cmdConfigTrustAddCertificate) Run(cmd *cobra.Command, args []string) er
 	}
 
 	// Load the certificate.
-	x509Cert, err := shared.ReadCert(path)
+	x509Cert, err := localtls.ReadCert(path)
 	if err != nil {
 		return err
 	}

@@ -46,6 +46,7 @@ import (
 	apiScriptlet "github.com/lxc/incus/shared/api/scriptlet"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
+	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -1328,7 +1329,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 
 	// Generate fingerprint of network certificate so joining member can automatically trust the correct
 	// certificate when it is presented during the join process.
-	fingerprint, err := shared.CertFingerprintStr(string(s.Endpoints.NetworkPublicKey()))
+	fingerprint, err := localtls.CertFingerprintStr(string(s.Endpoints.NetworkPublicKey()))
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -2209,7 +2210,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 			}
 		})
 
-		newCertInfo, err := shared.KeyPairFromRaw([]byte(req.ClusterCertificate), []byte(req.ClusterCertificateKey))
+		newCertInfo, err := localtls.KeyPairFromRaw([]byte(req.ClusterCertificate), []byte(req.ClusterCertificateKey))
 		if err != nil {
 			return err
 		}

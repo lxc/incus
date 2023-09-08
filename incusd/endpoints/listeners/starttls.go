@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // StarttlsListener is a variation of the standard tls.Listener that supports
@@ -21,7 +21,7 @@ type StarttlsListener struct {
 }
 
 // NewSTARTTLSListener creates a new STARTTLS listener.
-func NewSTARTTLSListener(inner net.Listener, cert *shared.CertInfo) *StarttlsListener {
+func NewSTARTTLSListener(inner net.Listener, cert *localtls.CertInfo) *StarttlsListener {
 	listener := &StarttlsListener{
 		Listener: inner,
 	}
@@ -64,7 +64,7 @@ func (l *StarttlsListener) Accept() (net.Conn, error) {
 }
 
 // Config safely swaps the underlying TLS configuration.
-func (l *StarttlsListener) Config(cert *shared.CertInfo) {
+func (l *StarttlsListener) Config(cert *localtls.CertInfo) {
 	config := util.ServerTLSConfig(cert)
 
 	l.mu.Lock()

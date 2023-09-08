@@ -9,12 +9,12 @@ import (
 
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Return a TLS configuration suitable for establishing intra-member network connections using the server cert.
-func tlsClientConfig(networkCert *shared.CertInfo, serverCert *shared.CertInfo) (*tls.Config, error) {
+func tlsClientConfig(networkCert *localtls.CertInfo, serverCert *localtls.CertInfo) (*tls.Config, error) {
 	if networkCert == nil {
 		return nil, fmt.Errorf("Invalid networkCert")
 	}
@@ -24,7 +24,7 @@ func tlsClientConfig(networkCert *shared.CertInfo, serverCert *shared.CertInfo) 
 	}
 
 	keypair := serverCert.KeyPair()
-	config := shared.InitTLSConfig()
+	config := localtls.InitTLSConfig()
 	config.Certificates = []tls.Certificate{keypair}
 	config.RootCAs = x509.NewCertPool()
 	ca := serverCert.CA()
@@ -53,7 +53,7 @@ func tlsClientConfig(networkCert *shared.CertInfo, serverCert *shared.CertInfo) 
 }
 
 // tlsCheckCert checks certificate access, returns true if certificate is trusted.
-func tlsCheckCert(r *http.Request, networkCert *shared.CertInfo, serverCert *shared.CertInfo, trustedCerts map[cluster.CertificateType]map[string]x509.Certificate) bool {
+func tlsCheckCert(r *http.Request, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, trustedCerts map[cluster.CertificateType]map[string]x509.Certificate) bool {
 	_, err := x509.ParseCertificate(networkCert.KeyPair().Certificate[0])
 	if err != nil {
 		// Since we have already loaded this certificate, typically
@@ -82,7 +82,7 @@ func tlsCheckCert(r *http.Request, networkCert *shared.CertInfo, serverCert *sha
 			return true
 		}
 
-		logger.Errorf("Invalid client certificate %v (%v) from %v", i.Subject, shared.CertFingerprint(i), r.RemoteAddr)
+		logger.Errorf("Invalid client certificate %v (%v) from %v", i.Subject, localtls.CertFingerprint(i), r.RemoteAddr)
 	}
 
 	return false

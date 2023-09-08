@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/osarch"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 func TestBootstrap_UnmetPreconditions(t *testing.T) {
@@ -72,8 +73,8 @@ func TestBootstrap_UnmetPreconditions(t *testing.T) {
 
 			c.setup(&membershipFixtures{t: t, state: state})
 
-			serverCert := shared.TestingKeyPair()
-			state.ServerCert = func() *shared.CertInfo { return serverCert }
+			serverCert := localtls.TestingKeyPair()
+			state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 			gateway := newGateway(t, state.DB.Node, serverCert, state)
 			defer func() { _ = gateway.Shutdown() }()
@@ -88,8 +89,8 @@ func TestBootstrap(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	serverCert := shared.TestingKeyPair()
-	state.ServerCert = func() *shared.CertInfo { return serverCert }
+	serverCert := localtls.TestingKeyPair()
+	state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(t, state.DB.Node, serverCert, state)
 	defer func() { _ = gateway.Shutdown() }()
@@ -213,8 +214,8 @@ func TestAccept_UnmetPreconditions(t *testing.T) {
 			state, cleanup := state.NewTestState(t)
 			defer cleanup()
 
-			serverCert := shared.TestingKeyPair()
-			state.ServerCert = func() *shared.CertInfo { return serverCert }
+			serverCert := localtls.TestingKeyPair()
+			state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 			gateway := newGateway(t, state.DB.Node, serverCert, state)
 			defer func() { _ = gateway.Shutdown() }()
@@ -232,8 +233,8 @@ func TestAccept(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	serverCert := shared.TestingKeyPair()
-	state.ServerCert = func() *shared.CertInfo { return serverCert }
+	serverCert := localtls.TestingKeyPair()
+	state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(t, state.DB.Node, serverCert, state)
 	defer func() { _ = gateway.Shutdown() }()
@@ -272,7 +273,7 @@ func TestAccept(t *testing.T) {
 
 func TestJoin(t *testing.T) {
 	// Setup a target node running as leader of a cluster.
-	targetCert := shared.TestingKeyPair()
+	targetCert := localtls.TestingKeyPair()
 	targetMux := http.NewServeMux()
 	targetServer := newServer(targetCert, targetMux)
 	defer targetServer.Close()
@@ -280,12 +281,12 @@ func TestJoin(t *testing.T) {
 	targetState, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	targetState.ServerCert = func() *shared.CertInfo { return targetCert }
+	targetState.ServerCert = func() *localtls.CertInfo { return targetCert }
 
 	targetGateway := newGateway(t, targetState.DB.Node, targetCert, targetState)
 	defer func() { _ = targetGateway.Shutdown() }()
 
-	altServerCert := shared.TestingAltKeyPair()
+	altServerCert := localtls.TestingAltKeyPair()
 	trustedAltServerCert, _ := x509.ParseCertificate(altServerCert.KeyPair().Certificate[0])
 
 	trustedCerts := func() map[dbCluster.CertificateType]map[string]x509.Certificate {
@@ -309,7 +310,7 @@ func TestJoin(t *testing.T) {
 
 	var err error
 	targetState.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", targetStore, targetAddress, "/unused/db/dir", 10*time.Second, driver.WithDialFunc(targetDialFunc))
-	targetState.ServerCert = func() *shared.CertInfo { return targetCert }
+	targetState.ServerCert = func() *localtls.CertInfo { return targetCert }
 	require.NoError(t, err)
 
 	err = targetState.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -347,7 +348,7 @@ func TestJoin(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	state.ServerCert = func() *shared.CertInfo { return altServerCert }
+	state.ServerCert = func() *localtls.CertInfo { return altServerCert }
 
 	gateway := newGateway(t, state.DB.Node, targetCert, state)
 

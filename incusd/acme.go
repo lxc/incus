@@ -14,9 +14,9 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 var apiACME = []APIEndpoint{
@@ -134,7 +134,7 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 			return nil
 		}
 
-		cert, err := shared.KeyPairFromRaw(newCert.Certificate, newCert.PrivateKey)
+		cert, err := localtls.KeyPairFromRaw(newCert.Certificate, newCert.PrivateKey)
 		if err != nil {
 			return err
 		}

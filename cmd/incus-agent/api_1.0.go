@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 	agentAPI "github.com/lxc/incus/shared/api/agent"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 var api10Cmd = APIEndpoint{
@@ -200,7 +201,7 @@ func startHTTPServer(d *Daemon, debug bool) error {
 	logger.Info("Started vsock listener")
 
 	// Load the expected server certificate.
-	cert, err := shared.ReadCert("server.crt")
+	cert, err := localtls.ReadCert("server.crt")
 	if err != nil {
 		return fmt.Errorf("Failed to read client certificate: %w", err)
 	}

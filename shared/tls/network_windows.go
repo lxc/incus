@@ -1,6 +1,6 @@
 //go:build windows
 
-package cert
+package tls
 
 import (
 	"crypto/x509"

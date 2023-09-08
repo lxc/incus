@@ -66,6 +66,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // A Daemon can respond to requests from a shared client.
@@ -113,8 +114,8 @@ type Daemon struct {
 	// changes).
 	clusterMembershipMutex sync.RWMutex
 
-	serverCert    func() *shared.CertInfo
-	serverCertInt *shared.CertInfo // Do not use this directly, use servertCert func.
+	serverCert    func() *localtls.CertInfo
+	serverCertInt *localtls.CertInfo // Do not use this directly, use servertCert func.
 
 	// Status control.
 	setupChan      chan struct{}      // Closed when basic Daemon setup is completed
@@ -172,7 +173,7 @@ func newDaemon(config *DaemonConfig, os *sys.OS) *Daemon {
 		shutdownDoneCh: make(chan error),
 	}
 
-	d.serverCert = func() *shared.CertInfo { return d.serverCertInt }
+	d.serverCert = func() *localtls.CertInfo { return d.serverCertInt }
 
 	return d
 }

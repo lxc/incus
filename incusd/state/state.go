@@ -19,7 +19,7 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // State is a gateway to the two main stateful components, the database
@@ -53,7 +53,7 @@ type State struct {
 	Firewall firewall.Firewall
 
 	// Server certificate
-	ServerCert             func() *shared.CertInfo
+	ServerCert             func() *localtls.CertInfo
 	UpdateCertificateCache func()
 
 	// Available instance types based on operational drivers.

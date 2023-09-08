@@ -76,6 +76,7 @@ import (
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"
+	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -503,13 +504,13 @@ func (d *qemu) generateAgentCert() (string, string, string, string, error) {
 	clientKeyFile := filepath.Join(d.Path(), "agent-client.key")
 
 	// Create server certificate.
-	err := shared.FindOrGenCert(agentCertFile, agentKeyFile, false, false)
+	err := localtls.FindOrGenCert(agentCertFile, agentKeyFile, false, false)
 	if err != nil {
 		return "", "", "", "", err
 	}
 
 	// Create client certificate.
-	err = shared.FindOrGenCert(clientCertFile, clientKeyFile, true, false)
+	err = localtls.FindOrGenCert(clientCertFile, clientKeyFile, true, false)
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -1905,7 +1906,7 @@ func (d *qemu) AgentCertificate() *x509.Certificate {
 		return nil
 	}
 
-	cert, err := shared.ReadCert(agentCert)
+	cert, err := localtls.ReadCert(agentCert)
 	if err != nil {
 		return nil
 	}

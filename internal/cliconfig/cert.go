@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // HasClientCertificate will return true if a client certificate has already been generated.
@@ -28,7 +29,7 @@ func (c *Config) GenerateClientCertificate() error {
 	certf := c.ConfigPath("client.crt")
 	keyf := c.ConfigPath("client.key")
 
-	return shared.FindOrGenCert(certf, keyf, true, false)
+	return localtls.FindOrGenCert(certf, keyf, true, false)
 }
 
 // CopyGlobalCert will copy global (system-wide) certificate to the user config path.

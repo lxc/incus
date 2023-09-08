@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/tcp"
+	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/ws"
 )
@@ -257,7 +258,7 @@ func (r *ProtocolIncus) tryRebuildInstance(instanceName string, req api.Instance
 			err = rop.targetOp.Wait()
 			if err != nil {
 				errors = append(errors, remoteOperationResult{URL: serverURL, Error: err})
-				if shared.IsConnectionError(err) {
+				if localtls.IsConnectionError(err) {
 					continue
 				}
 
@@ -643,7 +644,7 @@ func (r *ProtocolIncus) tryCreateInstance(req api.InstancesPost, urls []string, 
 			if err != nil {
 				errors = append(errors, remoteOperationResult{URL: serverURL, Error: err})
 
-				if shared.IsConnectionError(err) {
+				if localtls.IsConnectionError(err) {
 					continue
 				}
 
@@ -997,7 +998,7 @@ func (r *ProtocolIncus) tryMigrateInstance(source InstanceServer, name string, r
 			if err != nil {
 				errors = append(errors, remoteOperationResult{URL: serverURL, Error: err})
 
-				if shared.IsConnectionError(err) {
+				if localtls.IsConnectionError(err) {
 					continue
 				}
 
@@ -1944,7 +1945,7 @@ func (r *ProtocolIncus) tryMigrateInstanceSnapshot(source InstanceServer, instan
 			if err != nil {
 				errors = append(errors, remoteOperationResult{URL: serverURL, Error: err})
 
-				if shared.IsConnectionError(err) {
+				if localtls.IsConnectionError(err) {
 					continue
 				}
 

@@ -11,10 +11,10 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
-func createVsockListener(cert *shared.CertInfo) (net.Listener, error) {
+func createVsockListener(cert *localtls.CertInfo) (net.Listener, error) {
 	for i := 0; i < 10; i++ {
 		// Get random port between 1024 and 65535.
 		port := 1024 + rand.Int31n(math.MaxUint16-1024)

@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // NetworkPublicKey returns the public key of the TLS certificate used by the
@@ -32,7 +33,7 @@ func (e *Endpoints) NetworkPrivateKey() []byte {
 }
 
 // NetworkCert returns the full TLS certificate information for this endpoint.
-func (e *Endpoints) NetworkCert() *shared.CertInfo {
+func (e *Endpoints) NetworkCert() *localtls.CertInfo {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
@@ -133,7 +134,7 @@ func (e *Endpoints) NetworkUpdateAddress(address string) error {
 //
 // If the network endpoint is active, in-flight requests will continue using
 // the old certificate, and only new requests will use the new one.
-func (e *Endpoints) NetworkUpdateCert(cert *shared.CertInfo) {
+func (e *Endpoints) NetworkUpdateCert(cert *localtls.CertInfo) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.cert = cert
@@ -177,7 +178,7 @@ func (e *Endpoints) NetworkUpdateTrustedProxy(trustedProxy string) {
 }
 
 // Create a new net.Listener bound to the tcp socket of the network endpoint.
-func networkCreateListener(address string, cert *shared.CertInfo) (net.Listener, error) {
+func networkCreateListener(address string, cert *localtls.CertInfo) (net.Listener, error) {
 	// Listening on `tcp` network with address 0.0.0.0 will end up with listening
 	// on both IPv4 and IPv6 interfaces. Pass `tcp4` to make it
 	// work only on 0.0.0.0. https://go-review.googlesource.com/c/go/+/45771/

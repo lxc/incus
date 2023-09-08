@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Connect is a convenience around incus.ConnectIncus that configures the client
@@ -27,7 +28,7 @@ import (
 // If 'notify' switch is true, then the user agent will be set to the special
 // to the UserAgentNotifier value, which can be used in some cases to distinguish
 // between a regular client request and an internal cluster request.
-func Connect(address string, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request, notify bool) (incus.InstanceServer, error) {
+func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request, notify bool) (incus.InstanceServer, error) {
 	// Wait for a connection to the events API first for non-notify connections.
 	if !notify {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Second)
@@ -79,7 +80,7 @@ func Connect(address string, networkCert *shared.CertInfo, serverCert *shared.Ce
 // ConnectIfInstanceIsRemote figures out the address of the cluster member which is running the instance with the
 // given name in the specified project. If it's not the local member will connect to it and return the connected
 // client (configured with the specified project), otherwise it will just return nil.
-func ConnectIfInstanceIsRemote(cluster *db.Cluster, projectName string, instName string, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request, instanceType instancetype.Type) (incus.InstanceServer, error) {
+func ConnectIfInstanceIsRemote(cluster *db.Cluster, projectName string, instName string, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request, instanceType instancetype.Type) (incus.InstanceServer, error) {
 	var address string // Cluster member address.
 	err := cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
@@ -107,7 +108,7 @@ func ConnectIfInstanceIsRemote(cluster *db.Cluster, projectName string, instName
 // ConnectIfVolumeIsRemote figures out the address of the cluster member on which the volume with the given name is
 // defined. If it's not the local cluster member it will connect to it and return the connected client, otherwise
 // it just returns nil. If there is more than one cluster member with a matching volume name, an error is returned.
-func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string, volumeName string, volumeType int, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request) (incus.InstanceServer, error) {
+func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string, volumeName string, volumeType int, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request) (incus.InstanceServer, error) {
 	localNodeID := s.DB.Cluster.GetNodeID()
 	var err error
 	var nodes []db.NodeInfo
@@ -188,7 +189,7 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 // the trusted pool of the cluster at the given address, using the given token. The certificate is added as
 // type CertificateTypeServer to allow intra-member communication. If a certificate with the same fingerprint
 // already exists with a different name or type, then no error is returned.
-func SetupTrust(serverCert *shared.CertInfo, serverName string, targetAddress string, targetCert string, targetToken string) error {
+func SetupTrust(serverCert *localtls.CertInfo, serverName string, targetAddress string, targetCert string, targetToken string) error {
 	// Connect to the target cluster node.
 	args := &incus.ConnectionArgs{
 		TLSServerCert: targetCert,
@@ -200,7 +201,7 @@ func SetupTrust(serverCert *shared.CertInfo, serverName string, targetAddress st
 		return fmt.Errorf("Failed to connect to target cluster node %q: %w", targetAddress, err)
 	}
 
-	cert, err := shared.GenerateTrustCertificate(serverCert, serverName)
+	cert, err := localtls.GenerateTrustCertificate(serverCert, serverName)
 	if err != nil {
 		return fmt.Errorf("Failed generating trust certificate: %w", err)
 	}
@@ -223,7 +224,7 @@ func SetupTrust(serverCert *shared.CertInfo, serverName string, targetAddress st
 // fingerprint is already in the trust store, but is of the wrong type or name then the existing certificate is
 // updated to the correct type and name. If the existing certificate is the correct type but the wrong name then an
 // error is returned. And if the existing certificate is the correct type and name then nothing more is done.
-func UpdateTrust(serverCert *shared.CertInfo, serverName string, targetAddress string, targetCert string) error {
+func UpdateTrust(serverCert *localtls.CertInfo, serverName string, targetAddress string, targetCert string) error {
 	// Connect to the target cluster node.
 	args := &incus.ConnectionArgs{
 		TLSClientCert: string(serverCert.PublicKey()),
@@ -237,7 +238,7 @@ func UpdateTrust(serverCert *shared.CertInfo, serverName string, targetAddress s
 		return fmt.Errorf("Failed to connect to target cluster node %q: %w", targetAddress, err)
 	}
 
-	cert, err := shared.GenerateTrustCertificate(serverCert, serverName)
+	cert, err := localtls.GenerateTrustCertificate(serverCert, serverName)
 	if err != nil {
 		return fmt.Errorf("Failed generating trust certificate: %w", err)
 	}
@@ -265,7 +266,7 @@ func UpdateTrust(serverCert *shared.CertInfo, serverName string, targetAddress s
 }
 
 // HasConnectivity probes the member with the given address for connectivity.
-func HasConnectivity(networkCert *shared.CertInfo, serverCert *shared.CertInfo, address string) bool {
+func HasConnectivity(networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, address string) bool {
 	config, err := tlsClientConfig(networkCert, serverCert)
 	if err != nil {
 		return false

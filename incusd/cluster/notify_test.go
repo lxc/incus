@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // The returned notifier connects to all nodes.
@@ -26,7 +27,7 @@ func TestNewNotifier(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	cert := shared.TestingKeyPair()
+	cert := localtls.TestingKeyPair()
 
 	f := notifyFixtures{t: t, state: state}
 	defer f.Nodes(cert, 3)()
@@ -74,7 +75,7 @@ func TestNewNotify_NotifyAllError(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	cert := shared.TestingKeyPair()
+	cert := localtls.TestingKeyPair()
 
 	f := notifyFixtures{t: t, state: state}
 	defer f.Nodes(cert, 3)()
@@ -104,7 +105,7 @@ func TestNewNotify_NotifyAlive(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	cert := shared.TestingKeyPair()
+	cert := localtls.TestingKeyPair()
 
 	f := notifyFixtures{t: t, state: state}
 	defer f.Nodes(cert, 3)()
@@ -147,7 +148,7 @@ type notifyFixtures struct {
 //
 // The address of the first node spawned will be saved as local
 // cluster.https_address.
-func (h *notifyFixtures) Nodes(cert *shared.CertInfo, n int) func() {
+func (h *notifyFixtures) Nodes(cert *localtls.CertInfo, n int) func() {
 	servers := make([]*httptest.Server, n)
 	for i := 0; i < n; i++ {
 		servers[i] = newRestServer(cert)
@@ -223,7 +224,7 @@ func (h *notifyFixtures) Down(i int) {
 
 // Returns a minimal stub for the REST API server, just realistic
 // enough to make incus.ConnectIncus succeed.
-func newRestServer(cert *shared.CertInfo) *httptest.Server {
+func newRestServer(cert *localtls.CertInfo) *httptest.Server {
 	mux := http.NewServeMux()
 
 	server := httptest.NewUnstartedServer(mux)

@@ -13,10 +13,10 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/tcp"
+	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -37,14 +37,14 @@ func setupWebsocketDialer(certificate string) (*websocket.Dialer, error) {
 		}
 	}
 
-	config, err := shared.GetTLSConfig("", "", "", cert)
+	config, err := localtls.GetTLSConfig("", "", "", cert)
 	if err != nil {
 		return nil, fmt.Errorf("Failed configuring TLS: %w", err)
 	}
 
 	dialer := &websocket.Dialer{
 		TLSClientConfig:  config,
-		NetDialContext:   shared.RFC3493Dialer,
+		NetDialContext:   localtls.RFC3493Dialer,
 		HandshakeTimeout: time.Second * 5,
 	}
 

@@ -21,6 +21,7 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Bootstrap turns a non-clustered server into the first (and leader)
@@ -170,14 +171,14 @@ func Bootstrap(state *state.State, gateway *Gateway, serverName string) error {
 // the existing certificate is updated to the correct type and name. If the existing certificate is the correct
 // type but the wrong name then an error is returned. And if the existing certificate is the correct type and name
 // then nothing more is done.
-func EnsureServerCertificateTrusted(serverName string, serverCert *shared.CertInfo, tx *db.ClusterTx) error {
+func EnsureServerCertificateTrusted(serverName string, serverCert *localtls.CertInfo, tx *db.ClusterTx) error {
 	// Parse our server certificate and prepare to add it to DB trust store.
 	serverCertx509, err := x509.ParseCertificate(serverCert.KeyPair().Certificate[0])
 	if err != nil {
 		return err
 	}
 
-	fingerprint := shared.CertFingerprint(serverCertx509)
+	fingerprint := localtls.CertFingerprint(serverCertx509)
 
 	dbCert := cluster.Certificate{
 		Fingerprint: fingerprint,
@@ -305,7 +306,7 @@ func Accept(state *state.State, gateway *Gateway, name, address string, schema, 
 //
 // The cert parameter must contain the keypair/CA material of the cluster being
 // joined.
-func Join(state *state.State, gateway *Gateway, networkCert *shared.CertInfo, serverCert *shared.CertInfo, name string, raftNodes []db.RaftNode) error {
+func Join(state *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, name string, raftNodes []db.RaftNode) error {
 	// Check parameters
 	if name == "" {
 		return fmt.Errorf("Member name must not be empty")

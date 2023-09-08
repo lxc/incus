@@ -24,10 +24,10 @@ import (
 	scriptletLoad "github.com/lxc/incus/incusd/scriptlet/load"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 var api10Cmd = APIEndpoint{
@@ -264,7 +264,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	certificate := string(s.Endpoints.NetworkPublicKey())
 	var certificateFingerprint string
 	if certificate != "" {
-		certificateFingerprint, err = shared.CertFingerprintStr(certificate)
+		certificateFingerprint, err = localtls.CertFingerprintStr(certificate)
 		if err != nil {
 			return response.InternalError(err)
 		}

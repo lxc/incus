@@ -9,7 +9,7 @@ import (
 
 	"github.com/mdlayher/vsock"
 
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // ContextID returns the local VM sockets context ID.
@@ -27,7 +27,7 @@ func HTTPClient(vsockID uint32, port int, tlsClientCert string, tlsClientKey str
 	client := &http.Client{}
 
 	// Get the TLS configuration.
-	tlsConfig, err := shared.GetTLSConfigMem(tlsClientCert, tlsClientKey, "", tlsServerCert, false)
+	tlsConfig, err := localtls.GetTLSConfigMem(tlsClientCert, tlsClientKey, "", tlsServerCert, false)
 	if err != nil {
 		return nil, err
 	}

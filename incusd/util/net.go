@@ -9,6 +9,7 @@ import (
 
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // InMemoryNetwork creates a fully in-memory listener and dial function.
@@ -104,8 +105,8 @@ func CanonicalNetworkAddressFromAddressAndPort(address string, port int, default
 
 // ServerTLSConfig returns a new server-side tls.Config generated from the give
 // certificate info.
-func ServerTLSConfig(cert *shared.CertInfo) *tls.Config {
-	config := shared.InitTLSConfig()
+func ServerTLSConfig(cert *localtls.CertInfo) *tls.Config {
+	config := localtls.InitTLSConfig()
 	config.ClientAuth = tls.RequestClientCert
 	config.Certificates = []tls.Certificate{cert.KeyPair()}
 	config.NextProtos = []string{"h2"} // Required by gRPC
