@@ -1,12 +1,12 @@
-package shared
+package jmap
 
 import (
 	"fmt"
 )
 
-type Jmap map[string]any
+type Map map[string]any
 
-func (m Jmap) GetString(key string) (string, error) {
+func (m Map) GetString(key string) (string, error) {
 	val, ok := m[key]
 	if !ok {
 		return "", fmt.Errorf("Response was missing `%s`", key)
@@ -17,7 +17,7 @@ func (m Jmap) GetString(key string) (string, error) {
 	}
 }
 
-func (m Jmap) GetMap(key string) (Jmap, error) {
+func (m Map) GetMap(key string) (Map, error) {
 	val, ok := m[key]
 	if !ok {
 		return nil, fmt.Errorf("Response was missing `%s`", key)
@@ -28,7 +28,7 @@ func (m Jmap) GetMap(key string) (Jmap, error) {
 	}
 }
 
-func (m Jmap) GetInt(key string) (int, error) {
+func (m Map) GetInt(key string) (int, error) {
 	val, ok := m[key]
 	if !ok {
 		return -1, fmt.Errorf("Response was missing `%s`", key)
@@ -39,7 +39,7 @@ func (m Jmap) GetInt(key string) (int, error) {
 	}
 }
 
-func (m Jmap) GetBool(key string) (bool, error) {
+func (m Map) GetBool(key string) (bool, error) {
 	val, ok := m[key]
 	if !ok {
 		return false, fmt.Errorf("Response was missing `%s`", key)
