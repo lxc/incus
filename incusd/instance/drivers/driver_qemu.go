@@ -69,6 +69,7 @@ import (
 	localvsock "github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -7817,7 +7818,7 @@ func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
 }
 
 func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) error {
-	event := shared.Jmap{}
+	event := jmap.Map{}
 	event["type"] = eventType
 	event["timestamp"] = time.Now()
 	event["metadata"] = eventMessage

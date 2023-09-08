@@ -65,6 +65,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/netutils"
 	"github.com/lxc/incus/shared"
@@ -1357,7 +1358,7 @@ func (d *lxc) IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
 }
 
 func (d *lxc) devIncusEventSend(eventType string, eventMessage map[string]any) error {
-	event := shared.Jmap{}
+	event := jmap.Map{}
 	event["type"] = eventType
 	event["timestamp"] = time.Now()
 	event["metadata"] = eventMessage

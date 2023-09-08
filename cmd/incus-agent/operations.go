@@ -12,7 +12,7 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -80,12 +80,12 @@ func operationGet(d *Daemon, r *http.Request) response.Response {
 func operationsGet(d *Daemon, r *http.Request) response.Response {
 	recursion := util.IsRecursionRequest(r)
 
-	localOperationURLs := func() (shared.Jmap, error) {
+	localOperationURLs := func() (jmap.Map, error) {
 		// Get all the operations
 		ops := operations.Clone()
 
 		// Build a list of URLs
-		body := shared.Jmap{}
+		body := jmap.Map{}
 
 		for _, v := range ops {
 			status := strings.ToLower(v.Status().String())
@@ -100,12 +100,12 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 		return body, nil
 	}
 
-	localOperations := func() (shared.Jmap, error) {
+	localOperations := func() (jmap.Map, error) {
 		// Get all the operations
 		ops := operations.Clone()
 
 		// Build a list of operations
-		body := shared.Jmap{}
+		body := jmap.Map{}
 
 		for _, v := range ops {
 			status := strings.ToLower(v.Status().String())
@@ -126,7 +126,7 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Start with local operations
-	var md shared.Jmap
+	var md jmap.Map
 	var err error
 
 	if recursion {

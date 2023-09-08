@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -613,7 +614,7 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 	rdr1 := io.NopCloser(bytes.NewBuffer(body))
 	rdr2 := io.NopCloser(bytes.NewBuffer(body))
 
-	reqRaw := shared.Jmap{}
+	reqRaw := jmap.Map{}
 	err = json.NewDecoder(rdr1).Decode(&reqRaw)
 	if err != nil {
 		return response.BadRequest(err)

@@ -21,6 +21,7 @@ import (
 	"github.com/lxc/incus/incusd/db/operationtype"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -164,7 +165,7 @@ type execWs struct {
 }
 
 func (s *execWs) Metadata() any {
-	fds := shared.Jmap{}
+	fds := jmap.Map{}
 	for fd, secret := range s.fds {
 		if fd == execWSControl {
 			fds[api.SecretNameControl] = secret
@@ -173,7 +174,7 @@ func (s *execWs) Metadata() any {
 		}
 	}
 
-	return shared.Jmap{
+	return jmap.Map{
 		"fds":         fds,
 		"command":     s.command,
 		"environment": s.env,
@@ -307,7 +308,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 			_ = pty.Close()
 		}
 
-		metadata := shared.Jmap{"return": cmdResult}
+		metadata := jmap.Map{"return": cmdResult}
 		err = op.UpdateMetadata(metadata)
 		if err != nil {
 			return err

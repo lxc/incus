@@ -19,7 +19,7 @@ import (
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/idmap"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -145,7 +145,7 @@ type migrationSourceWs struct {
 }
 
 func (s *migrationSourceWs) Metadata() any {
-	secrets := make(shared.Jmap, len(s.conns))
+	secrets := make(jmap.Map, len(s.conns))
 	for connName, conn := range s.conns {
 		secrets[connName] = conn.Secret()
 	}
@@ -213,7 +213,7 @@ type migrationSinkArgs struct {
 
 // Metadata returns metadata for the migration sink.
 func (s *migrationSink) Metadata() any {
-	secrets := make(shared.Jmap, len(s.conns))
+	secrets := make(jmap.Map, len(s.conns))
 	for connName, conn := range s.conns {
 		secrets[connName] = conn.Secret()
 	}

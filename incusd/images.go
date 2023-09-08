@@ -46,6 +46,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/internal/filter"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -2941,7 +2942,7 @@ func imagePatch(d *Daemon, r *http.Request) response.Response {
 	rdr1 := io.NopCloser(bytes.NewBuffer(body))
 	rdr2 := io.NopCloser(bytes.NewBuffer(body))
 
-	reqRaw := shared.Jmap{}
+	reqRaw := jmap.Map{}
 	err = json.NewDecoder(rdr1).Decode(&reqRaw)
 	if err != nil {
 		return response.BadRequest(err)
@@ -3501,7 +3502,7 @@ func imageAliasPatch(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	req := shared.Jmap{}
+	req := jmap.Map{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
@@ -4325,13 +4326,13 @@ func imageSyncBetweenNodes(s *state.State, r *http.Request, project string, fing
 	return nil
 }
 
-func createTokenResponse(s *state.State, r *http.Request, projectName string, fingerprint string, metadata shared.Jmap) response.Response {
+func createTokenResponse(s *state.State, r *http.Request, projectName string, fingerprint string, metadata jmap.Map) response.Response {
 	secret, err := shared.RandomCryptoString()
 	if err != nil {
 		return response.InternalError(err)
 	}
 
-	meta := shared.Jmap{}
+	meta := jmap.Map{}
 
 	for k, v := range metadata {
 		meta[k] = v

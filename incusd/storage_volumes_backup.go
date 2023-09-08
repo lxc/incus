@@ -21,6 +21,7 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -337,7 +338,7 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 		return response.SmartError(err)
 	}
 
-	rj := shared.Jmap{}
+	rj := jmap.Map{}
 	err = json.NewDecoder(r.Body).Decode(&rj)
 	if err != nil {
 		return response.InternalError(err)
