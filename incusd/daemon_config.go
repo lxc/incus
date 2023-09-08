@@ -7,7 +7,7 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/proxy"
 )
 
 func daemonConfigRender(state *state.State) (map[string]string, error) {
@@ -40,7 +40,7 @@ func daemonConfigRender(state *state.State) (map[string]string, error) {
 
 func daemonConfigSetProxy(d *Daemon, config *clusterConfig.Config) {
 	// Update the cached proxy function
-	d.proxy = shared.ProxyFromConfig(
+	d.proxy = proxy.FromConfig(
 		config.ProxyHTTPS(),
 		config.ProxyHTTP(),
 		config.ProxyIgnoreHosts(),

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/proxy"
 	localtls "github.com/lxc/incus/shared/tls"
 )
 
@@ -20,7 +20,7 @@ import (
 // It takes in parameters for client certificates, keys, Certificate Authority, server certificates,
 // a boolean for skipping verification, a proxy function, and a transport wrapper function.
 // It returns the HTTP client with the provided configurations and handles any errors that might occur during the setup process.
-func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey string, tlsCA string, tlsServerCert string, insecureSkipVerify bool, proxy func(req *http.Request) (*url.URL, error), transportWrapper func(t *http.Transport) HTTPTransporter) (*http.Client, error) {
+func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey string, tlsCA string, tlsServerCert string, insecureSkipVerify bool, proxyFunc func(req *http.Request) (*url.URL, error), transportWrapper func(t *http.Transport) HTTPTransporter) (*http.Client, error) {
 	// Get the TLS configuration
 	tlsConfig, err := localtls.GetTLSConfigMem(tlsClientCert, tlsClientKey, tlsCA, tlsServerCert, insecureSkipVerify)
 	if err != nil {
@@ -30,7 +30,7 @@ func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey strin
 	// Define the http transport
 	transport := &http.Transport{
 		TLSClientConfig:       tlsConfig,
-		Proxy:                 shared.ProxyFromEnvironment,
+		Proxy:                 proxy.FromEnvironment,
 		DisableKeepAlives:     true,
 		ExpectContinueTimeout: time.Second * 30,
 		ResponseHeaderTimeout: time.Second * 3600,
@@ -38,8 +38,8 @@ func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey strin
 	}
 
 	// Allow overriding the proxy
-	if proxy != nil {
-		transport.Proxy = proxy
+	if proxyFunc != nil {
+		transport.Proxy = proxyFunc
 	}
 
 	// Special TLS handling

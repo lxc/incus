@@ -66,6 +66,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/proxy"
 	localtls "github.com/lxc/incus/shared/tls"
 )
 
@@ -1219,7 +1220,7 @@ func (d *Daemon) init() error {
 	d.globalConfigMu.Lock()
 	bgpASN = d.globalConfig.BGPASN()
 
-	d.proxy = shared.ProxyFromConfig(d.globalConfig.ProxyHTTPS(), d.globalConfig.ProxyHTTP(), d.globalConfig.ProxyIgnoreHosts())
+	d.proxy = proxy.FromConfig(d.globalConfig.ProxyHTTPS(), d.globalConfig.ProxyHTTP(), d.globalConfig.ProxyIgnoreHosts())
 
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
 	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes := d.globalConfig.LokiServer()

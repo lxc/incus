@@ -28,6 +28,7 @@ import (
 
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/proxy"
 )
 
 // KeyPairAndCA returns a CertInfo object with a reference to the key pair and
@@ -438,7 +439,7 @@ func GetRemoteCertificate(address string, useragent string) (*x509.Certificate, 
 	tr := &http.Transport{
 		TLSClientConfig:       tlsConfig,
 		DialContext:           RFC3493Dialer,
-		Proxy:                 shared.ProxyFromEnvironment,
+		Proxy:                 proxy.FromEnvironment,
 		ExpectContinueTimeout: time.Second * 30,
 		ResponseHeaderTimeout: time.Second * 3600,
 		TLSHandshakeTimeout:   time.Second * 5,

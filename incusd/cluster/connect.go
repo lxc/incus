@@ -17,8 +17,8 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/proxy"
 	localtls "github.com/lxc/incus/shared/tls"
 )
 
@@ -67,7 +67,7 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 
 			req.Header.Add(request.HeaderForwardedAddress, r.RemoteAddr)
 
-			return shared.ProxyFromEnvironment(req)
+			return proxy.FromEnvironment(req)
 		}
 
 		args.Proxy = proxy
