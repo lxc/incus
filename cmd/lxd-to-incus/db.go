@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -53,12 +54,40 @@ func migrateDatabase(dir string) error {
 }
 
 // Uncompress the given file, preserving its mode and ownership.
+//
+// If the file is not lz4-compressed, this is a no-op.
 func lz4Uncompress(zfilename string) error {
 	zr := lz4.NewReader(nil)
 
 	zfile, err := os.Open(zfilename)
 	if err != nil {
 		return fmt.Errorf("Failed to open file %q: %w", zfilename, err)
+	}
+
+	buf := make([]byte, 4)
+	n, err := zfile.Read(buf)
+	if err != nil {
+		return fmt.Errorf("Failed to read header file %q: %w", zfilename, err)
+	}
+
+	if n != 4 {
+		return fmt.Errorf("Read only %n bytes from %q: %w", n, zfilename)
+	}
+
+	// Check the file magic, and return now if it's not an lz4 file.
+	magic := binary.LittleEndian.Uint32(buf)
+	if magic != 0x184D2204 {
+		zfile.Close()
+		return nil
+	}
+
+	off, err := zfile.Seek(0, 0)
+	if err != nil {
+		return fmt.Errorf("Failed to seek %q: %w", zfilename, err)
+	}
+
+	if off != 0 {
+		return fmt.Errorf("Seek %q to offset: %d", zfilename, off)
 	}
 
 	zinfo, err := zfile.Stat()
