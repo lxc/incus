@@ -13,6 +13,7 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/response"
 	localvsock "github.com/lxc/incus/incusd/vsock"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -193,7 +194,7 @@ func getClient(CID uint32, port int, serverCertificate string) (*http.Client, er
 
 func startHTTPServer(d *Daemon, debug bool) error {
 	// Setup the listener on VM's context ID for inbound connections from the host.
-	l, err := vsock.Listen(shared.HTTPSDefaultPort, nil)
+	l, err := vsock.Listen(ports.HTTPSDefaultPort, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to listen on vsock: %w", err)
 	}

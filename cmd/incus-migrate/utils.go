@@ -17,6 +17,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/migration"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -311,7 +312,7 @@ func parseURL(URL string) (string, error) {
 
 	// If no port was provided, use default port
 	if u.Port() == "" {
-		u.Host = fmt.Sprintf("%s:%d", u.Hostname(), shared.HTTPSDefaultPort)
+		u.Host = fmt.Sprintf("%s:%d", u.Hostname(), ports.HTTPSDefaultPort)
 	}
 
 	return u.String(), nil

@@ -9,6 +9,7 @@ import (
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
@@ -58,7 +59,7 @@ func (e *Endpoints) NetworkAddress() string {
 // it down and restarting it.
 func (e *Endpoints) NetworkUpdateAddress(address string) error {
 	if address != "" {
-		address = util.CanonicalNetworkAddress(address, shared.HTTPSDefaultPort)
+		address = util.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
 	}
 
 	oldAddress := e.NetworkAddress()
@@ -182,7 +183,7 @@ func networkCreateListener(address string, cert *localtls.CertInfo) (net.Listene
 	// Listening on `tcp` network with address 0.0.0.0 will end up with listening
 	// on both IPv4 and IPv6 interfaces. Pass `tcp4` to make it
 	// work only on 0.0.0.0. https://go-review.googlesource.com/c/go/+/45771/
-	listenAddress := util.CanonicalNetworkAddress(address, shared.HTTPSDefaultPort)
+	listenAddress := util.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
 	protocol := "tcp"
 
 	if strings.HasPrefix(listenAddress, "0.0.0.0") {

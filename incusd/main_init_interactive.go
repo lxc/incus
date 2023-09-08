@@ -21,6 +21,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -124,7 +125,7 @@ func (c *cmdInit) askClustering(config *api.InitPreseed, d incus.InstanceServer,
 		// Cluster server address
 		address := util.NetworkInterfaceAddress()
 		validateServerAddress := func(value string) error {
-			address := util.CanonicalNetworkAddress(value, shared.HTTPSDefaultPort)
+			address := util.CanonicalNetworkAddress(value, ports.HTTPSDefaultPort)
 
 			host, _, _ := net.SplitHostPort(address)
 			if shared.StringInSlice(host, []string{"", "[::]", "0.0.0.0"}) {
@@ -152,7 +153,7 @@ func (c *cmdInit) askClustering(config *api.InitPreseed, d incus.InstanceServer,
 			return err
 		}
 
-		serverAddress = util.CanonicalNetworkAddress(serverAddress, shared.HTTPSDefaultPort)
+		serverAddress = util.CanonicalNetworkAddress(serverAddress, ports.HTTPSDefaultPort)
 		config.Node.Config["core.https_address"] = serverAddress
 
 		clusterJoin, err := cli.AskBool("Are you joining an existing cluster? (yes/no) [default=no]: ", "no")
@@ -192,7 +193,7 @@ func (c *cmdInit) askClustering(config *api.InitPreseed, d incus.InstanceServer,
 			// Attempt to find a working cluster member to use for joining by retrieving the
 			// cluster certificate from each address in the join token until we succeed.
 			for _, clusterAddress := range joinToken.Addresses {
-				config.Cluster.ClusterAddress = util.CanonicalNetworkAddress(clusterAddress, shared.HTTPSDefaultPort)
+				config.Cluster.ClusterAddress = util.CanonicalNetworkAddress(clusterAddress, ports.HTTPSDefaultPort)
 
 				// Cluster certificate
 				cert, err := localtls.GetRemoteCertificate(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), version.UserAgent)
@@ -848,8 +849,8 @@ they otherwise would.
 				netAddr = fmt.Sprintf("[%s]", netAddr)
 			}
 
-			netPort, err := cli.AskInt(fmt.Sprintf("Port to bind to [default=%d]: ", shared.HTTPSDefaultPort), 1, 65535, fmt.Sprintf("%d", shared.HTTPSDefaultPort), func(netPort int64) error {
-				address := util.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), shared.HTTPSDefaultPort)
+			netPort, err := cli.AskInt(fmt.Sprintf("Port to bind to [default=%d]: ", ports.HTTPSDefaultPort), 1, 65535, fmt.Sprintf("%d", ports.HTTPSDefaultPort), func(netPort int64) error {
+				address := util.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
 
 				if err == nil {
 					if server.Config["cluster.https_address"] == address || server.Config["core.https_address"] == address {
@@ -870,7 +871,7 @@ they otherwise would.
 				return err
 			}
 
-			config.Node.Config["core.https_address"] = util.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), shared.HTTPSDefaultPort)
+			config.Node.Config["core.https_address"] = util.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
 		}
 	}
 

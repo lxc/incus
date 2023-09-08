@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/ports"
 )
 
 // The connection returned by the dialer is paired with the one returned by the
@@ -59,7 +59,7 @@ func TestCanonicalNetworkAddress(t *testing.T) {
 
 	for in, out := range cases {
 		t.Run(in, func(t *testing.T) {
-			assert.Equal(t, out, util.CanonicalNetworkAddress(in, shared.HTTPSDefaultPort))
+			assert.Equal(t, out, util.CanonicalNetworkAddress(in, ports.HTTPSDefaultPort))
 		})
 	}
 }

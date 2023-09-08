@@ -8,7 +8,7 @@ import (
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 )
@@ -17,7 +17,7 @@ func storageBucketsCreateListener(address string, cert *localtls.CertInfo) (net.
 	// Listening on `tcp` network with address 0.0.0.0 will end up with listening
 	// on both IPv4 and IPv6 interfaces. Pass `tcp4` to make it
 	// work only on 0.0.0.0. https://go-review.googlesource.com/c/go/+/45771/
-	listenAddress := util.CanonicalNetworkAddress(address, shared.HTTPSStorageBucketsDefaultPort)
+	listenAddress := util.CanonicalNetworkAddress(address, ports.HTTPSStorageBucketsDefaultPort)
 	protocol := "tcp"
 
 	if strings.HasPrefix(listenAddress, "0.0.0.0") {
@@ -50,7 +50,7 @@ func (e *Endpoints) StorageBucketsAddress() string {
 // restarting it.
 func (e *Endpoints) StorageBucketsUpdateAddress(address string, cert *localtls.CertInfo) error {
 	if address != "" {
-		address = util.CanonicalNetworkAddress(address, shared.HTTPSStorageBucketsDefaultPort)
+		address = util.CanonicalNetworkAddress(address, ports.HTTPSStorageBucketsDefaultPort)
 	}
 
 	oldAddress := e.StorageBucketsAddress()

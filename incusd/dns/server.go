@@ -8,6 +8,7 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -47,7 +48,7 @@ func (s *Server) Start(address string) error {
 
 func (s *Server) start(address string) error {
 	// Set default port if needed.
-	address = util.CanonicalNetworkAddress(address, 53)
+	address = util.CanonicalNetworkAddress(address, ports.DNSDefaultPort)
 
 	// Setup the handler.
 	handler := dnsHandler{}

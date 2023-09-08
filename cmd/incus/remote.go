@@ -17,6 +17,7 @@ import (
 	config "github.com/lxc/incus/internal/cliconfig"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	localtls "github.com/lxc/incus/shared/tls"
@@ -362,7 +363,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		rHost = host
 		rPort = port
 	} else {
-		rPort = fmt.Sprintf("%d", shared.HTTPSDefaultPort)
+		rPort = fmt.Sprintf("%d", ports.HTTPSDefaultPort)
 	}
 
 	if rScheme == "unix" {

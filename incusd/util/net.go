@@ -7,7 +7,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 )
@@ -162,8 +162,8 @@ func NetworkInterfaceAddress() string {
 // address2, in the sense that they are either the same address or address2 is
 // specified using a wildcard with the same port of address1.
 func IsAddressCovered(address1, address2 string) bool {
-	address1 = CanonicalNetworkAddress(address1, shared.HTTPSDefaultPort)
-	address2 = CanonicalNetworkAddress(address2, shared.HTTPSDefaultPort)
+	address1 = CanonicalNetworkAddress(address1, ports.HTTPSDefaultPort)
+	address2 = CanonicalNetworkAddress(address2, ports.HTTPSDefaultPort)
 
 	if address1 == address2 {
 		return true
@@ -255,7 +255,7 @@ func IsAddressCovered(address1, address2 string) bool {
 
 // IsWildCardAddress returns whether the given address is a wildcard.
 func IsWildCardAddress(address string) bool {
-	address = CanonicalNetworkAddress(address, shared.HTTPSDefaultPort)
+	address = CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
 
 	host, _, err := net.SplitHostPort(address)
 	if err != nil {

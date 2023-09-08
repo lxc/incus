@@ -70,6 +70,7 @@ import (
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -386,7 +387,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 		return nil, err
 	}
 
-	agent, err := localvsock.HTTPClient(vsockID, shared.HTTPSDefaultPort, clientCert, clientKey, agentCert)
+	agent, err := localvsock.HTTPClient(vsockID, ports.HTTPSDefaultPort, clientCert, clientKey, agentCert)
 	if err != nil {
 		return nil, err
 	}
