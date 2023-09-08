@@ -9,6 +9,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
@@ -54,7 +55,7 @@ func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceSer
 	}
 
 	if c.flagNetworkPort == -1 {
-		c.flagNetworkPort = shared.HTTPSDefaultPort
+		c.flagNetworkPort = ports.HTTPSDefaultPort
 	}
 
 	// Fill in the node configuration
@@ -63,7 +64,7 @@ func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceSer
 
 	// Network listening
 	if c.flagNetworkAddress != "" {
-		config.Config["core.https_address"] = util.CanonicalNetworkAddressFromAddressAndPort(c.flagNetworkAddress, c.flagNetworkPort, shared.HTTPSDefaultPort)
+		config.Config["core.https_address"] = util.CanonicalNetworkAddressFromAddressAndPort(c.flagNetworkAddress, c.flagNetworkPort, ports.HTTPSDefaultPort)
 	}
 
 	// Storage configuration

@@ -1,4 +1,4 @@
-package shared_test
+package tls
 
 import (
 	"crypto/x509"
@@ -10,8 +10,7 @@ import (
 	"github.com/lxc/incus/shared"
 )
 
-// A new key pair is generated if none exists and saved to the appropriate
-// files.
+// A new key pair is generated if none exists and saved to the appropriate files.
 func TestKeyPairAndCA(t *testing.T) {
 	dir, err := os.MkdirTemp("", "incus-shared-test-")
 	if err != nil {
@@ -20,7 +19,7 @@ func TestKeyPairAndCA(t *testing.T) {
 
 	defer func() { _ = os.RemoveAll(dir) }()
 
-	info, err := shared.KeyPairAndCA(dir, "test", shared.CertServer, true)
+	info, err := KeyPairAndCA(dir, "test", CertServer, true)
 	if err != nil {
 		t.Errorf("initial call to KeyPairAndCA failed: %v", err)
 	}
@@ -67,7 +66,7 @@ func TestGenerateMemCert(t *testing.T) {
 		t.Skip("skipping cert generation in short mode")
 	}
 
-	cert, key, err := shared.GenerateMemCert(false, true)
+	cert, key, err := GenerateMemCert(false, true)
 	if err != nil {
 		t.Error(err)
 		return

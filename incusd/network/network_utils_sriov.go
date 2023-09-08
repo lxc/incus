@@ -22,6 +22,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // sriovReservedDevicesMutex used to coordinate access for checking reserved devices.
@@ -279,7 +280,7 @@ func SRIOVSwitchdevEnabled(deviceName string) bool {
 
 	slotName := fmt.Sprintf("pci/%s", pciDev.SlotName)
 
-	err = shared.RunCommandWithFds(context.TODO(), nil, &buf, "devlink", "-j", "dev", "eswitch", "show", slotName)
+	err = subprocess.RunCommandWithFds(context.TODO(), nil, &buf, "devlink", "-j", "dev", "eswitch", "show", slotName)
 	if err != nil {
 		return false
 	}

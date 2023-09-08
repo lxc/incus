@@ -19,9 +19,10 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // DebugJSON helper to log JSON.
@@ -113,14 +114,14 @@ func HTTPClient(certificate string, proxy proxyFunc) (*http.Client, error) {
 		}
 	}
 
-	tlsConfig, err := shared.GetTLSConfig("", "", "", cert)
+	tlsConfig, err := localtls.GetTLSConfig("", "", "", cert)
 	if err != nil {
 		return nil, err
 	}
 
 	tr := &http.Transport{
 		TLSClientConfig:       tlsConfig,
-		DialContext:           shared.RFC3493Dialer,
+		DialContext:           localtls.RFC3493Dialer,
 		Proxy:                 proxy,
 		DisableKeepAlives:     true,
 		ExpectContinueTimeout: time.Second * 30,
@@ -156,7 +157,7 @@ type ContextAwareRequest interface {
 // (i.e. it has a valid time span and it belongs to the given list of trusted
 // certificates).
 // Returns whether or not the certificate is trusted, and the fingerprint of the certificate.
-func CheckTrustState(cert x509.Certificate, trustedCerts map[string]x509.Certificate, networkCert *shared.CertInfo, trustCACertificates bool) (bool, string) {
+func CheckTrustState(cert x509.Certificate, trustedCerts map[string]x509.Certificate, networkCert *localtls.CertInfo, trustCACertificates bool) (bool, string) {
 	// Extra validity check (should have been caught by TLS stack)
 	if time.Now().Before(cert.NotBefore) || time.Now().After(cert.NotAfter) {
 		return false, ""
@@ -178,7 +179,7 @@ func CheckTrustState(cert x509.Certificate, trustedCerts map[string]x509.Certifi
 			}
 
 			// Certificate not revoked, so trust it as is signed by CA cert.
-			return true, shared.CertFingerprint(&cert)
+			return true, localtls.CertFingerprint(&cert)
 		}
 	}
 
@@ -208,7 +209,7 @@ func IsRecursionRequest(r *http.Request) bool {
 
 // ListenAddresses returns a list of <host>:<port> combinations at which this machine can be reached.
 // It accepts the configured listen address in the following formats: <host>, <host>:<port> or :<port>.
-// If a listen port is not specified then then shared.HTTPSDefaultPort is used instead.
+// If a listen port is not specified then then ports.HTTPSDefaultPort is used instead.
 // If a non-empty and non-wildcard host is passed in then this functions returns a single element list with the
 // listen address specified. Otherwise if an empty host or wildcard address is specified then all global unicast
 // addresses actively configured on the host are returned. If an IPv4 wildcard address (0.0.0.0) is specified as
@@ -226,7 +227,7 @@ func ListenAddresses(configListenAddress string) ([]string, error) {
 	listenIP := net.ParseIP(unwrappedConfigListenAddress)
 	if listenIP != nil || !strings.Contains(unwrappedConfigListenAddress, ":") {
 		// Use net.JoinHostPort so that IPv6 addresses are correctly wrapped ready for parsing below.
-		configListenAddress = net.JoinHostPort(unwrappedConfigListenAddress, fmt.Sprintf("%d", shared.HTTPSDefaultPort))
+		configListenAddress = net.JoinHostPort(unwrappedConfigListenAddress, fmt.Sprintf("%d", ports.HTTPSDefaultPort))
 	}
 
 	// By this point we should always have the configListenAddress in form <host>:<port>, so lets check that.

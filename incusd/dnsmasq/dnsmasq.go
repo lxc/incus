@@ -106,7 +106,7 @@ func Kill(name string, reload bool) error {
 
 // GetVersion returns the version of dnsmasq.
 func GetVersion() (*version.DottedVersion, error) {
-	output, err := shared.RunCommandCLocale("dnsmasq", "--version")
+	output, err := subprocess.RunCommandCLocale("dnsmasq", "--version")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to check dnsmasq version: %w", err)
 	}

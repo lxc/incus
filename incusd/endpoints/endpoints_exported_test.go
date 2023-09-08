@@ -2,7 +2,7 @@ package endpoints
 
 import (
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // New creates a new Endpoints instance without bringing it up.
@@ -34,14 +34,14 @@ func (e *Endpoints) LocalSocketPath() string {
 // Return the network addresss and server certificate of the network
 // endpoint. This method is supposed to be used in conjunction with
 // the httpGetOverTLSSocket test helper.
-func (e *Endpoints) NetworkAddressAndCert() (string, *shared.CertInfo) {
+func (e *Endpoints) NetworkAddressAndCert() (string, *localtls.CertInfo) {
 	return e.NetworkAddress(), e.cert
 }
 
 // Return the cluster addresss and server certificate of the network
 // endpoint. This method is supposed to be used in conjunction with
 // the httpGetOverTLSSocket test helper.
-func (e *Endpoints) ClusterAddressAndCert() (string, *shared.CertInfo) {
+func (e *Endpoints) ClusterAddressAndCert() (string, *localtls.CertInfo) {
 	return e.clusterAddress(), e.cert
 }
 

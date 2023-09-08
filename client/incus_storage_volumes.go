@@ -7,10 +7,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/ioprogress"
+	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -410,7 +410,7 @@ func (r *ProtocolIncus) tryMigrateStoragePoolVolume(source InstanceServer, pool 
 			if err != nil {
 				errors = append(errors, remoteOperationResult{URL: serverURL, Error: err})
 
-				if shared.IsConnectionError(err) {
+				if localtls.IsConnectionError(err) {
 					continue
 				}
 
@@ -472,7 +472,7 @@ func (r *ProtocolIncus) tryCreateStoragePoolVolume(pool string, req api.StorageV
 			if err != nil {
 				errors = append(errors, remoteOperationResult{URL: serverURL, Error: err})
 
-				if shared.IsConnectionError(err) {
+				if localtls.IsConnectionError(err) {
 					continue
 				}
 

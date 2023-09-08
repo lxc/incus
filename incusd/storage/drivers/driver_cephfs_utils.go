@@ -3,12 +3,12 @@ package drivers
 import (
 	"fmt"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // fsExists checks that the Ceph FS instance indeed exists.
 func (d *cephfs) fsExists(clusterName string, userName string, fsName string) bool {
-	_, err := shared.RunCommand("ceph", "--name", fmt.Sprintf("client.%s", userName), "--cluster", clusterName, "fs", "get", fsName)
+	_, err := subprocess.RunCommand("ceph", "--name", fmt.Sprintf("client.%s", userName), "--cluster", clusterName, "fs", "get", fsName)
 	return err == nil
 }
 

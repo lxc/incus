@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -76,7 +77,7 @@ func (d *lvm) openLoopFile(source string) (string, error) {
 // isLVMNotFoundExitError checks whether the supplied error is an exit error from an LVM command
 // meaning that the object was not found. Returns true if it is (exit status 5) false if not.
 func (d *lvm) isLVMNotFoundExitError(err error) bool {
-	runErr, ok := err.(shared.RunError)
+	runErr, ok := err.(subprocess.RunError)
 	if ok {
 		exitError, ok := runErr.Unwrap().(*exec.ExitError)
 		if ok {
@@ -91,7 +92,7 @@ func (d *lvm) isLVMNotFoundExitError(err error) bool {
 
 // pysicalVolumeExists checks if an LVM Physical Volume exists.
 func (d *lvm) pysicalVolumeExists(pvName string) (bool, error) {
-	_, err := shared.RunCommand("pvs", "--noheadings", "-o", "pv_name", pvName)
+	_, err := subprocess.RunCommand("pvs", "--noheadings", "-o", "pv_name", pvName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -105,7 +106,7 @@ func (d *lvm) pysicalVolumeExists(pvName string) (bool, error) {
 
 // volumeGroupExists checks if an LVM Volume Group exists and returns any tags on that volume group.
 func (d *lvm) volumeGroupExists(vgName string) (bool, []string, error) {
-	output, err := shared.RunCommand("vgs", "--noheadings", "-o", "vg_tags", vgName)
+	output, err := subprocess.RunCommand("vgs", "--noheadings", "-o", "vg_tags", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil, nil
@@ -122,7 +123,7 @@ func (d *lvm) volumeGroupExists(vgName string) (bool, []string, error) {
 
 // volumeGroupExtentSize gets the volume group's physical extent size in bytes.
 func (d *lvm) volumeGroupExtentSize(vgName string) (int64, error) {
-	output, err := shared.RunCommand("vgs", "--noheadings", "--nosuffix", "--units", "b", "-o", "vg_extent_size", vgName)
+	output, err := subprocess.RunCommand("vgs", "--noheadings", "--nosuffix", "--units", "b", "-o", "vg_extent_size", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume group not found")
@@ -137,7 +138,7 @@ func (d *lvm) volumeGroupExtentSize(vgName string) (int64, error) {
 
 // countLogicalVolumes gets the count of volumes (both normal and thin) in a volume group.
 func (d *lvm) countLogicalVolumes(vgName string) (int, error) {
-	output, err := shared.RunCommand("vgs", "--noheadings", "-o", "lv_count", vgName)
+	output, err := subprocess.RunCommand("vgs", "--noheadings", "-o", "lv_count", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume group not found")
@@ -152,7 +153,7 @@ func (d *lvm) countLogicalVolumes(vgName string) (int, error) {
 
 // countThinVolumes gets the count of thin volumes in a thin pool.
 func (d *lvm) countThinVolumes(vgName, poolName string) (int, error) {
-	output, err := shared.RunCommand("lvs", "--noheadings", "-o", "thin_count", fmt.Sprintf("%s/%s", vgName, poolName))
+	output, err := subprocess.RunCommand("lvs", "--noheadings", "-o", "thin_count", fmt.Sprintf("%s/%s", vgName, poolName))
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume group not found")
@@ -167,7 +168,7 @@ func (d *lvm) countThinVolumes(vgName, poolName string) (int, error) {
 
 // thinpoolExists checks whether the specified thinpool exists in a volume group.
 func (d *lvm) thinpoolExists(vgName string, poolName string) (bool, error) {
-	output, err := shared.RunCommand("lvs", "--noheadings", "-o", "lv_attr", fmt.Sprintf("%s/%s", vgName, poolName))
+	output, err := subprocess.RunCommand("lvs", "--noheadings", "-o", "lv_attr", fmt.Sprintf("%s/%s", vgName, poolName))
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -187,7 +188,7 @@ func (d *lvm) thinpoolExists(vgName string, poolName string) (bool, error) {
 
 // logicalVolumeExists checks whether the specified logical volume exists.
 func (d *lvm) logicalVolumeExists(volDevPath string) (bool, error) {
-	_, err := shared.RunCommand("lvs", "--noheadings", "-o", "lv_name", volDevPath)
+	_, err := subprocess.RunCommand("lvs", "--noheadings", "-o", "lv_name", volDevPath)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -251,14 +252,14 @@ func (d *lvm) createDefaultThinPool(lvmVersion, thinPoolName string, thinpoolSiz
 	}
 
 	// Create the thin pool volume.
-	_, err = shared.TryRunCommand("lvcreate", args...)
+	_, err = subprocess.TryRunCommand("lvcreate", args...)
 	if err != nil {
 		return fmt.Errorf("Error creating LVM thin pool named %q: %w", thinPoolName, err)
 	}
 
 	if !isRecent && thinpoolSizeBytes <= 0 {
 		// Grow it to the maximum VG size (two step process required by old LVM).
-		_, err = shared.TryRunCommand("lvextend", "--alloc", "anywhere", "-l", "100%FREE", lvmThinPool)
+		_, err = subprocess.TryRunCommand("lvextend", "--alloc", "anywhere", "-l", "100%FREE", lvmThinPool)
 		if err != nil {
 			return fmt.Errorf("Error growing LVM thin pool named %q: %w", thinPoolName, err)
 		}
@@ -358,7 +359,7 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 		}
 	}
 
-	_, err = shared.TryRunCommand("lvcreate", args...)
+	_, err = subprocess.TryRunCommand("lvcreate", args...)
 	if err != nil {
 		return fmt.Errorf("Error creating LVM logical volume %q: %w", lvFullName, err)
 	}
@@ -380,7 +381,7 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 	if isRecent {
 		// Disable auto activation of volume on LVM versions that support it.
 		// Must be done after volume create so that zeroing and signature wiping can take place.
-		_, err := shared.RunCommand("lvchange", "--setactivationskip", "y", volDevPath)
+		_, err := subprocess.RunCommand("lvchange", "--setactivationskip", "y", volDevPath)
 		if err != nil {
 			return fmt.Errorf("Failed to set activation skip on LVM logical volume %q: %w", volDevPath, err)
 		}
@@ -422,7 +423,7 @@ func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol 
 	revert := revert.New()
 	defer revert.Fail()
 
-	_, err = shared.TryRunCommand("lvcreate", args...)
+	_, err = subprocess.TryRunCommand("lvcreate", args...)
 	if err != nil {
 		return "", err
 	}
@@ -441,7 +442,7 @@ func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol 
 
 // removeLogicalVolume removes a logical volume.
 func (d *lvm) removeLogicalVolume(volDevPath string) error {
-	_, err := shared.TryRunCommand("lvremove", "-f", volDevPath)
+	_, err := subprocess.TryRunCommand("lvremove", "-f", volDevPath)
 	if err != nil {
 		return err
 	}
@@ -453,7 +454,7 @@ func (d *lvm) removeLogicalVolume(volDevPath string) error {
 
 // renameLogicalVolume renames a logical volume.
 func (d *lvm) renameLogicalVolume(volDevPath string, newVolDevPath string) error {
-	_, err := shared.TryRunCommand("lvrename", volDevPath, newVolDevPath)
+	_, err := subprocess.TryRunCommand("lvrename", volDevPath, newVolDevPath)
 	if err != nil {
 		return err
 	}
@@ -497,7 +498,7 @@ func (d *lvm) lvmDevPath(vgName string, volType VolumeType, contentType ContentT
 
 // resizeLogicalVolume resizes an LVM logical volume. This function does not resize any filesystem inside the LV.
 func (d *lvm) resizeLogicalVolume(lvPath string, sizeBytes int64) error {
-	_, err := shared.TryRunCommand("lvresize", "-L", fmt.Sprintf("%db", sizeBytes), "-f", lvPath)
+	_, err := subprocess.TryRunCommand("lvresize", "-L", fmt.Sprintf("%db", sizeBytes), "-f", lvPath)
 	if err != nil {
 		return err
 	}
@@ -654,7 +655,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 
 // logicalVolumeSize gets the size in bytes of a logical volume.
 func (d *lvm) logicalVolumeSize(volDevPath string) (int64, error) {
-	output, err := shared.RunCommand("lvs", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size", volDevPath)
+	output, err := subprocess.RunCommand("lvs", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size", volDevPath)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume not found")
@@ -677,7 +678,7 @@ func (d *lvm) thinPoolVolumeUsage(volDevPath string) (uint64, uint64, error) {
 		"-o", "lv_size,data_percent,metadata_percent",
 	}
 
-	out, err := shared.RunCommand("lvs", args...)
+	out, err := subprocess.RunCommand("lvs", args...)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -767,7 +768,7 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	}
 
 	if !shared.PathExists(volDevPath) {
-		_, err := shared.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
+		_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
 		if err != nil {
 			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
 		}
@@ -805,7 +806,7 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 		// Keep trying to deactivate a few times in case the device is still being flushed.
 		var err error
 		for i := 0; i < 20; i++ {
-			_, err = shared.RunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volDevPath)
+			_, err = subprocess.RunCommand("lvchange", "--activate", "n", "--ignoreactivationskip", volDevPath)
 			if err == nil {
 				break
 			}

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Server handling functions
@@ -26,7 +26,7 @@ func (r *ProtocolIncus) GetServer() (*api.Server, string, error) {
 	// Fill in certificate fingerprint if not provided
 	if server.Environment.CertificateFingerprint == "" && server.Environment.Certificate != "" {
 		var err error
-		server.Environment.CertificateFingerprint, err = shared.CertFingerprintStr(server.Environment.Certificate)
+		server.Environment.CertificateFingerprint, err = localtls.CertFingerprintStr(server.Environment.Certificate)
 		if err != nil {
 			return nil, "", err
 		}

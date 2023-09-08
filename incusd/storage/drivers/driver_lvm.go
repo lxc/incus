@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/validate"
 )
@@ -53,7 +54,7 @@ func (d *lvm) load() error {
 
 	// Detect and record the version.
 	if lvmVersion == "" {
-		output, err := shared.RunCommand("lvm", "version")
+		output, err := subprocess.RunCommand("lvm", "version")
 		if err != nil {
 			return fmt.Errorf("Error getting LVM version: %w", err)
 		}
@@ -324,22 +325,22 @@ func (d *lvm) Create() error {
 				return fmt.Errorf("No name for physical volume detected")
 			}
 
-			_, err := shared.TryRunCommand("pvcreate", pvName)
+			_, err := subprocess.TryRunCommand("pvcreate", pvName)
 			if err != nil {
 				return err
 			}
 
-			revert.Add(func() { _, _ = shared.TryRunCommand("pvremove", pvName) })
+			revert.Add(func() { _, _ = subprocess.TryRunCommand("pvremove", pvName) })
 		}
 
 		// Create volume group.
-		_, err := shared.TryRunCommand("vgcreate", d.config["lvm.vg_name"], pvName)
+		_, err := subprocess.TryRunCommand("vgcreate", d.config["lvm.vg_name"], pvName)
 		if err != nil {
 			return err
 		}
 
 		d.logger.Debug("Volume group created", logger.Ctx{"pv_name": pvName, "vg_name": d.config["lvm.vg_name"]})
-		revert.Add(func() { _, _ = shared.TryRunCommand("vgremove", d.config["lvm.vg_name"]) })
+		revert.Add(func() { _, _ = subprocess.TryRunCommand("vgremove", d.config["lvm.vg_name"]) })
 	}
 
 	// Create thin pool if needed.
@@ -371,7 +372,7 @@ func (d *lvm) Create() error {
 	}
 
 	// Mark the volume group with the lvmVgPoolMarker tag to indicate it is now in use by Incus.
-	_, err = shared.TryRunCommand("vgchange", "--addtag", lvmVgPoolMarker, d.config["lvm.vg_name"])
+	_, err = subprocess.TryRunCommand("vgchange", "--addtag", lvmVgPoolMarker, d.config["lvm.vg_name"])
 	if err != nil {
 		return err
 	}
@@ -450,7 +451,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 		// Remove volume group if needed.
 		if removeVg {
-			_, err := shared.TryRunCommand("vgremove", "-f", d.config["lvm.vg_name"])
+			_, err := subprocess.TryRunCommand("vgremove", "-f", d.config["lvm.vg_name"])
 			if err != nil {
 				return fmt.Errorf("Failed to delete the volume group for the lvm storage pool: %w", err)
 			}
@@ -459,7 +460,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 		} else {
 			// Otherwise just remove the lvmVgPoolMarker tag to indicate Incus no longer uses this VG.
 			if shared.StringInSlice(lvmVgPoolMarker, vgTags) {
-				_, err = shared.TryRunCommand("vgchange", "--deltag", lvmVgPoolMarker, d.config["lvm.vg_name"])
+				_, err = subprocess.TryRunCommand("vgchange", "--deltag", lvmVgPoolMarker, d.config["lvm.vg_name"])
 				if err != nil {
 					return fmt.Errorf("Failed to remove marker tag on volume group for the lvm storage pool: %w", err)
 				}
@@ -471,7 +472,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 	// If we have removed the volume group and this is a loop file, lets clean up the physical volume too.
 	if removeVg && loopDevPath != "" {
-		_, err := shared.TryRunCommand("pvremove", "-f", loopDevPath)
+		_, err := subprocess.TryRunCommand("pvremove", "-f", loopDevPath)
 		if err != nil {
 			d.logger.Warn("Failed to destroy the physical volume for the lvm storage pool", logger.Ctx{"err": err})
 		}
@@ -552,7 +553,7 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 	}
 
 	if changedConfig["lvm.vg_name"] != "" {
-		_, err := shared.TryRunCommand("vgrename", d.config["lvm.vg_name"], changedConfig["lvm.vg_name"])
+		_, err := subprocess.TryRunCommand("vgrename", d.config["lvm.vg_name"], changedConfig["lvm.vg_name"])
 		if err != nil {
 			return fmt.Errorf("Error renaming LVM volume group from %q to %q: %w", d.config["lvm.vg_name"], changedConfig["lvm.vg_name"], err)
 		}
@@ -561,7 +562,7 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 	}
 
 	if changedConfig["lvm.thinpool_name"] != "" {
-		_, err := shared.TryRunCommand("lvrename", d.config["lvm.vg_name"], d.thinpoolName(), changedConfig["lvm.thinpool_name"])
+		_, err := subprocess.TryRunCommand("lvrename", d.config["lvm.vg_name"], d.thinpoolName(), changedConfig["lvm.thinpool_name"])
 		if err != nil {
 			return fmt.Errorf("Error renaming LVM thin pool from %q to %q: %w", d.thinpoolName(), changedConfig["lvm.thinpool_name"], err)
 		}
@@ -604,7 +605,7 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 		}
 
 		// Resize physical volume so that lvresize is able to resize as well.
-		_, err = shared.RunCommand("pvresize", "-y", loopDevPath)
+		_, err = subprocess.RunCommand("pvresize", "-y", loopDevPath)
 		if err != nil {
 			return err
 		}
@@ -613,7 +614,7 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 			lvPath := d.lvmDevPath(d.config["lvm.vg_name"], "", "", d.thinpoolName())
 
 			// Use the remaining space in the volume group.
-			_, err = shared.RunCommand("lvresize", "-f", "-l", "+100%FREE", lvPath)
+			_, err = subprocess.RunCommand("lvresize", "-f", "-l", "+100%FREE", lvPath)
 			if err != nil {
 				return err
 			}
@@ -722,7 +723,7 @@ func (d *lvm) GetResources() (*api.ResourcesStoragePool, error) {
 			"-o", "vg_size,vg_free",
 		}
 
-		out, err := shared.RunCommand("vgs", args...)
+		out, err := subprocess.RunCommand("vgs", args...)
 		if err != nil {
 			return nil, err
 		}

@@ -13,11 +13,13 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/response"
 	localvsock "github.com/lxc/incus/incusd/vsock"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	agentAPI "github.com/lxc/incus/shared/api/agent"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 var api10Cmd = APIEndpoint{
@@ -192,7 +194,7 @@ func getClient(CID uint32, port int, serverCertificate string) (*http.Client, er
 
 func startHTTPServer(d *Daemon, debug bool) error {
 	// Setup the listener on VM's context ID for inbound connections from the host.
-	l, err := vsock.Listen(shared.HTTPSDefaultPort, nil)
+	l, err := vsock.Listen(ports.HTTPSDefaultPort, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to listen on vsock: %w", err)
 	}
@@ -200,7 +202,7 @@ func startHTTPServer(d *Daemon, debug bool) error {
 	logger.Info("Started vsock listener")
 
 	// Load the expected server certificate.
-	cert, err := shared.ReadCert("server.crt")
+	cert, err := localtls.ReadCert("server.crt")
 	if err != nil {
 		return fmt.Errorf("Failed to read client certificate: %w", err)
 	}

@@ -2,15 +2,30 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
+
+// allocatePort asks the kernel for a free open port that is ready to use.
+func allocatePort() (int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return -1, err
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return -1, err
+	}
+
+	return l.Addr().(*net.TCPAddr).Port, l.Close()
+}
 
 // A node which is already configured for networking can be converted to a
 // single-node cluster.
@@ -87,7 +102,7 @@ type clusterFixture struct {
 // Enable networking in the given daemon. The password is optional and can be
 // an empty string.
 func (f *clusterFixture) EnableNetworking(daemon *Daemon, password string) {
-	port, err := shared.AllocatePort()
+	port, err := allocatePort()
 	require.NoError(f.t, err)
 
 	address := fmt.Sprintf("127.0.0.1:%d", port)
@@ -105,7 +120,7 @@ func (f *clusterFixture) EnableNetworking(daemon *Daemon, password string) {
 // same value as core.https address. The password is optional and can be an
 // empty string.
 func (f *clusterFixture) EnableNetworkingWithClusterAddress(daemon *Daemon, password string) {
-	port, err := shared.AllocatePort()
+	port, err := allocatePort()
 	require.NoError(f.t, err)
 
 	address := fmt.Sprintf("127.0.0.1:%d", port)

@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Return a new unstarted Endpoints instance, a Config with stub rest/devIncus
@@ -36,7 +37,7 @@ func newEndpoints(t *testing.T) (*endpoints.Endpoints, *endpoints.Config, func()
 		UnixSocket:     filepath.Join(dir, "unix.socket"),
 		RestServer:     newServer(),
 		DevIncusServer: newServer(),
-		Cert:           shared.TestingKeyPair(),
+		Cert:           localtls.TestingKeyPair(),
 		VsockServer:    newServer(),
 	}
 
@@ -71,8 +72,8 @@ func httpGetOverUnixSocket(path string) error {
 
 // Perform an HTTP GET "/" over TLS, using the given network address and server
 // certificate.
-func httpGetOverTLSSocket(addr string, cert *shared.CertInfo) error {
-	tlsConfig, _ := shared.GetTLSConfigMem("", "", "", string(cert.PublicKey()), false)
+func httpGetOverTLSSocket(addr string, cert *localtls.CertInfo) error {
+	tlsConfig, _ := localtls.GetTLSConfigMem("", "", "", string(cert.PublicKey()), false)
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
 	_, err := client.Get(fmt.Sprintf("https://%s/", addr))
 	return err

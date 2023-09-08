@@ -12,6 +12,8 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 func serverIsConfigured(client incus.InstanceServer) (bool, error) {
@@ -71,7 +73,7 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 			pool.Driver = "zfs"
 
 			// Check if zsys.
-			poolName, _ := shared.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
+			poolName, _ := subprocess.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
 			if strings.TrimSpace(poolName) == "rpool" {
 				pool.Config["source"] = "rpool/incus"
 			}
@@ -143,7 +145,7 @@ func serverSetupUser(uid uint32) error {
 	userPath := filepath.Join("users", fmt.Sprintf("%d", uid))
 
 	// User account.
-	out, err := shared.RunCommand("getent", "passwd", fmt.Sprintf("%d", uid))
+	out, err := subprocess.RunCommand("getent", "passwd", fmt.Sprintf("%d", uid))
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve user information: %w", err)
 	}
@@ -166,7 +168,7 @@ func serverSetupUser(uid uint32) error {
 	revert.Add(func() { _ = os.RemoveAll(userPath) })
 
 	// Generate certificate.
-	err = shared.FindOrGenCert(filepath.Join(userPath, "client.crt"), filepath.Join(userPath, "client.key"), true, false)
+	err = localtls.FindOrGenCert(filepath.Join(userPath, "client.crt"), filepath.Join(userPath, "client.key"), true, false)
 	if err != nil {
 		return fmt.Errorf("Failed to generate user certificate: %w", err)
 	}
@@ -217,7 +219,7 @@ func serverSetupUser(uid uint32) error {
 	}
 
 	// Parse the certificate.
-	x509Cert, err := shared.ReadCert(filepath.Join(userPath, "client.crt"))
+	x509Cert, err := localtls.ReadCert(filepath.Join(userPath, "client.crt"))
 	if err != nil {
 		return fmt.Errorf("Unable to read user certificate: %w", err)
 	}
@@ -236,7 +238,7 @@ func serverSetupUser(uid uint32) error {
 		return fmt.Errorf("Unable to add user certificate: %w", err)
 	}
 
-	revert.Add(func() { _ = client.DeleteCertificate(shared.CertFingerprint(x509Cert)) })
+	revert.Add(func() { _ = client.DeleteCertificate(localtls.CertFingerprint(x509Cert)) })
 
 	// Create user-specific bridge.
 	network := api.NetworksPost{}

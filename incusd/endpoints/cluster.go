@@ -7,7 +7,7 @@ import (
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -31,7 +31,7 @@ func (e *Endpoints) ClusterUpdateAddress(address string) error {
 	networkAddress := e.NetworkAddress()
 
 	if address != "" {
-		address = util.CanonicalNetworkAddress(address, shared.HTTPSDefaultPort)
+		address = util.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
 	}
 
 	oldAddress := e.clusterAddress()

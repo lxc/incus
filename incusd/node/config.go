@@ -7,7 +7,7 @@ import (
 	"github.com/lxc/incus/incusd/config"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -39,7 +39,7 @@ func ConfigLoad(ctx context.Context, tx *db.NodeTx) (*Config, error) {
 func (c *Config) HTTPSAddress() string {
 	networkAddress := c.m.GetString("core.https_address")
 	if networkAddress != "" {
-		return util.CanonicalNetworkAddress(networkAddress, shared.HTTPSDefaultPort)
+		return util.CanonicalNetworkAddress(networkAddress, ports.HTTPSDefaultPort)
 	}
 
 	return networkAddress
@@ -59,7 +59,7 @@ func (c *Config) BGPRouterID() string {
 func (c *Config) ClusterAddress() string {
 	clusterAddress := c.m.GetString("cluster.https_address")
 	if clusterAddress != "" {
-		return util.CanonicalNetworkAddress(clusterAddress, shared.HTTPSDefaultPort)
+		return util.CanonicalNetworkAddress(clusterAddress, ports.HTTPSDefaultPort)
 	}
 
 	return clusterAddress
@@ -69,7 +69,7 @@ func (c *Config) ClusterAddress() string {
 func (c *Config) DebugAddress() string {
 	debugAddress := c.m.GetString("core.debug_address")
 	if debugAddress != "" {
-		return util.CanonicalNetworkAddress(debugAddress, shared.HTTPDefaultPort)
+		return util.CanonicalNetworkAddress(debugAddress, ports.HTTPDebugDefaultPort)
 	}
 
 	return debugAddress
@@ -84,7 +84,7 @@ func (c *Config) DNSAddress() string {
 func (c *Config) MetricsAddress() string {
 	metricsAddress := c.m.GetString("core.metrics_address")
 	if metricsAddress != "" {
-		return util.CanonicalNetworkAddress(metricsAddress, shared.HTTPSMetricsDefaultPort)
+		return util.CanonicalNetworkAddress(metricsAddress, ports.HTTPSMetricsDefaultPort)
 	}
 
 	return metricsAddress
@@ -94,7 +94,7 @@ func (c *Config) MetricsAddress() string {
 func (c *Config) StorageBucketsAddress() string {
 	objectAddress := c.m.GetString("core.storage_buckets_address")
 	if objectAddress != "" {
-		return util.CanonicalNetworkAddress(objectAddress, shared.HTTPSStorageBucketsDefaultPort)
+		return util.CanonicalNetworkAddress(objectAddress, ports.HTTPSStorageBucketsDefaultPort)
 	}
 
 	return objectAddress

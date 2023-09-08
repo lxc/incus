@@ -44,7 +44,9 @@ import (
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/internal/filter"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -1175,7 +1177,7 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 	defer func() { _ = r.Close() }()
 
 	// Decompress if needed
-	_, algo, unpacker, err := shared.DetectCompressionFile(r)
+	_, algo, unpacker, err := archive.DetectCompressionFile(r)
 	if err != nil {
 		return nil, "unknown", err
 	}
@@ -2940,7 +2942,7 @@ func imagePatch(d *Daemon, r *http.Request) response.Response {
 	rdr1 := io.NopCloser(bytes.NewBuffer(body))
 	rdr2 := io.NopCloser(bytes.NewBuffer(body))
 
-	reqRaw := shared.Jmap{}
+	reqRaw := jmap.Map{}
 	err = json.NewDecoder(rdr1).Decode(&reqRaw)
 	if err != nil {
 		return response.BadRequest(err)
@@ -3500,7 +3502,7 @@ func imageAliasPatch(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	req := shared.Jmap{}
+	req := jmap.Map{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
@@ -3755,7 +3757,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 	imagePath := shared.VarPath("images", imgInfo.Fingerprint)
 	rootfsPath := imagePath + ".rootfs"
 
-	_, ext, _, err := shared.DetectCompression(imagePath)
+	_, ext, _, err := archive.DetectCompression(imagePath)
 	if err != nil {
 		ext = ""
 	}
@@ -3771,7 +3773,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 
 		// Recompute the extension for the root filesystem, it may use a different
 		// compression algorithm than the metadata.
-		_, ext, _, err = shared.DetectCompression(rootfsPath)
+		_, ext, _, err = archive.DetectCompression(rootfsPath)
 		if err != nil {
 			ext = ""
 		}
@@ -4324,13 +4326,13 @@ func imageSyncBetweenNodes(s *state.State, r *http.Request, project string, fing
 	return nil
 }
 
-func createTokenResponse(s *state.State, r *http.Request, projectName string, fingerprint string, metadata shared.Jmap) response.Response {
+func createTokenResponse(s *state.State, r *http.Request, projectName string, fingerprint string, metadata jmap.Map) response.Response {
 	secret, err := shared.RandomCryptoString()
 	if err != nil {
 		return response.InternalError(err)
 	}
 
-	meta := shared.Jmap{}
+	meta := jmap.Map{}
 
 	for k, v := range metadata {
 		meta[k] = v

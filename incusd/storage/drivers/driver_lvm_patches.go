@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // patchStorageSkipActivation set skipactivation=y on all Incus LVM logical volumes (excluding thin pool volumes).
 func (d *lvm) patchStorageSkipActivation() error {
-	out, err := shared.RunCommand("lvs", "--noheadings", "-o", "lv_name,lv_attr", d.config["lvm.vg_name"])
+	out, err := subprocess.RunCommand("lvs", "--noheadings", "-o", "lv_name,lv_attr", d.config["lvm.vg_name"])
 	if err != nil {
 		return fmt.Errorf("Error getting LVM logical volume list for storage pool %q: %w", d.config["lvm.vg_name"], err)
 	}
@@ -36,7 +36,7 @@ func (d *lvm) patchStorageSkipActivation() error {
 		}
 
 		// Set the --setactivationskip flag enabled on the volume.
-		_, err = shared.RunCommand("lvchange", "--setactivationskip", "y", fmt.Sprintf("%s/%s", d.config["lvm.vg_name"], volName))
+		_, err = subprocess.RunCommand("lvchange", "--setactivationskip", "y", fmt.Sprintf("%s/%s", d.config["lvm.vg_name"], volName))
 		if err != nil {
 			return fmt.Errorf("Error setting setactivationskip=y on LVM logical volume %q for storage pool %q: %w", volName, d.config["lvm.vg_name"], err)
 		}

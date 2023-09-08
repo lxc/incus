@@ -11,8 +11,8 @@ import (
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Config holds various configuration values that affect endpoints initialization.
@@ -34,7 +34,7 @@ type Config struct {
 	// the response of the /1.0 REST API as part of the server info.
 	//
 	// It can be updated after the endpoints are up using NetworkUpdateCert().
-	Cert *shared.CertInfo
+	Cert *localtls.CertInfo
 
 	// System group name to which the unix socket for the local endpoint should be
 	// chgrp'ed when starting. The default is to use the process group. An empty
@@ -157,7 +157,7 @@ type Endpoints struct {
 	mu        sync.RWMutex          // Serialize access to internal state.
 	listeners map[kind]net.Listener // Activer listeners by endpoint type.
 	servers   map[kind]*http.Server // HTTP servers by endpoint type.
-	cert      *shared.CertInfo      // Keypair and CA to use for TLS.
+	cert      *localtls.CertInfo    // Keypair and CA to use for TLS.
 	inherited map[kind]bool         // Store whether the listener came through socket activation
 
 	systemdListenFDsStart int // First socket activation FD, for tests.
@@ -446,7 +446,7 @@ func (e *Endpoints) closeListener(kind kind) error {
 
 // Use the listeners associated with the file descriptors passed via
 // socket-based activation.
-func activatedListeners(systemdListeners []net.Listener, cert *shared.CertInfo) map[kind]net.Listener {
+func activatedListeners(systemdListeners []net.Listener, cert *localtls.CertInfo) map[kind]net.Listener {
 	activatedListeners := map[kind]net.Listener{}
 	for _, listener := range systemdListeners {
 		var kind kind

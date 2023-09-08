@@ -19,7 +19,7 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	dbCluster "github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Basic creation and shutdown. By default, the gateway runs an in-memory gRPC
@@ -28,10 +28,10 @@ func TestGateway_Single(t *testing.T) {
 	node, cleanup := db.NewTestNode(t)
 	defer cleanup()
 
-	cert := shared.TestingKeyPair()
+	cert := localtls.TestingKeyPair()
 
 	s := &state.State{
-		ServerCert: func() *shared.CertInfo { return cert },
+		ServerCert: func() *localtls.CertInfo { return cert },
 	}
 
 	gateway := newGateway(t, node, cert, s)
@@ -86,7 +86,7 @@ func TestGateway_SingleWithNetworkAddress(t *testing.T) {
 	node, cleanup := db.NewTestNode(t)
 	defer cleanup()
 
-	cert := shared.TestingKeyPair()
+	cert := localtls.TestingKeyPair()
 	mux := http.NewServeMux()
 	server := newServer(cert, mux)
 	defer server.Close()
@@ -95,7 +95,7 @@ func TestGateway_SingleWithNetworkAddress(t *testing.T) {
 	setRaftRole(t, node, address)
 
 	s := &state.State{
-		ServerCert: func() *shared.CertInfo { return cert },
+		ServerCert: func() *localtls.CertInfo { return cert },
 	}
 
 	gateway := newGateway(t, node, cert, s)
@@ -131,7 +131,7 @@ func TestGateway_NetworkAuth(t *testing.T) {
 	node, cleanup := db.NewTestNode(t)
 	defer cleanup()
 
-	cert := shared.TestingKeyPair()
+	cert := localtls.TestingKeyPair()
 	mux := http.NewServeMux()
 	server := newServer(cert, mux)
 	defer server.Close()
@@ -140,7 +140,7 @@ func TestGateway_NetworkAuth(t *testing.T) {
 	setRaftRole(t, node, address)
 
 	s := &state.State{
-		ServerCert: func() *shared.CertInfo { return cert },
+		ServerCert: func() *localtls.CertInfo { return cert },
 	}
 
 	gateway := newGateway(t, node, cert, s)
@@ -155,7 +155,7 @@ func TestGateway_NetworkAuth(t *testing.T) {
 	}
 
 	// Make a request using a certificate different than the cluster one.
-	certAlt := shared.TestingAltKeyPair()
+	certAlt := localtls.TestingAltKeyPair()
 	config, err := cluster.TLSClientConfig(certAlt, certAlt)
 	config.InsecureSkipVerify = true // Skip client-side verification
 	require.NoError(t, err)
@@ -174,7 +174,7 @@ func TestGateway_RaftNodesNotLeader(t *testing.T) {
 	node, cleanup := db.NewTestNode(t)
 	defer cleanup()
 
-	cert := shared.TestingKeyPair()
+	cert := localtls.TestingKeyPair()
 	mux := http.NewServeMux()
 	server := newServer(cert, mux)
 	defer server.Close()
@@ -183,7 +183,7 @@ func TestGateway_RaftNodesNotLeader(t *testing.T) {
 	setRaftRole(t, node, address)
 
 	s := &state.State{
-		ServerCert: func() *shared.CertInfo { return cert },
+		ServerCert: func() *localtls.CertInfo { return cert },
 	}
 
 	gateway := newGateway(t, node, cert, s)
@@ -198,7 +198,7 @@ func TestGateway_RaftNodesNotLeader(t *testing.T) {
 }
 
 // Create a new test Gateway with the given parameters, and ensure no error happens.
-func newGateway(t *testing.T, node *db.Node, networkCert *shared.CertInfo, s *state.State) *cluster.Gateway {
+func newGateway(t *testing.T, node *db.Node, networkCert *localtls.CertInfo, s *state.State) *cluster.Gateway {
 	require.NoError(t, os.Mkdir(filepath.Join(node.Dir(), "global"), 0755))
 	stateFunc := func() *state.State { return s }
 	gateway, err := cluster.NewGateway(context.Background(), node, networkCert, stateFunc, cluster.Latency(0.2), cluster.LogLevel("TRACE"))

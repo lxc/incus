@@ -28,6 +28,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // urlInstanceTypeDetect detects what sort of instance type filter is being requested. Either
@@ -524,7 +525,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 
 // Fetch information about the containers on the given remote node, using the
 // rest API and with a timeout of 30 seconds.
-func doContainersGetFromNode(projects []string, node string, allProjects bool, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request, instanceType instancetype.Type) ([]api.Instance, error) {
+func doContainersGetFromNode(projects []string, node string, allProjects bool, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request, instanceType instancetype.Type) ([]api.Instance, error) {
 	f := func() ([]api.Instance, error) {
 		client, err := cluster.Connect(node, networkCert, serverCert, r, true)
 		if err != nil {
@@ -573,7 +574,7 @@ func doContainersGetFromNode(projects []string, node string, allProjects bool, n
 	return containers, err
 }
 
-func doContainersFullGetFromNode(projects []string, node string, allProjects bool, networkCert *shared.CertInfo, serverCert *shared.CertInfo, r *http.Request, instanceType instancetype.Type) ([]api.InstanceFull, error) {
+func doContainersFullGetFromNode(projects []string, node string, allProjects bool, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request, instanceType instancetype.Type) ([]api.InstanceFull, error) {
 	f := func() ([]api.InstanceFull, error) {
 		client, err := cluster.Connect(node, networkCert, serverCert, r, true)
 		if err != nil {

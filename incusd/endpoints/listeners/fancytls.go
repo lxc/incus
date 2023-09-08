@@ -8,7 +8,7 @@ import (
 	"github.com/armon/go-proxyproto"
 
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // FancyTLSListener is a variation of the standard tls.Listener that supports
@@ -22,7 +22,7 @@ type FancyTLSListener struct {
 }
 
 // NewFancyTLSListener creates a new FancyTLSListener.
-func NewFancyTLSListener(inner net.Listener, cert *shared.CertInfo) *FancyTLSListener {
+func NewFancyTLSListener(inner net.Listener, cert *localtls.CertInfo) *FancyTLSListener {
 	listener := &FancyTLSListener{
 		Listener: inner,
 	}
@@ -50,7 +50,7 @@ func (l *FancyTLSListener) Accept() (net.Conn, error) {
 }
 
 // Config safely swaps the underlying TLS configuration.
-func (l *FancyTLSListener) Config(cert *shared.CertInfo) {
+func (l *FancyTLSListener) Config(cert *localtls.CertInfo) {
 	config := util.ServerTLSConfig(cert)
 
 	l.mu.Lock()

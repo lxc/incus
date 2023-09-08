@@ -19,7 +19,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/incusd/archive"
 	"github.com/lxc/incus/incusd/auth"
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/cluster"
@@ -34,11 +33,13 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/internal/filter"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 var storagePoolVolumesCmd = APIEndpoint{
@@ -867,7 +868,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 		}
 	}
 
-	config, err := shared.GetTLSConfig("", "", "", cert)
+	config, err := localtls.GetTLSConfig("", "", "", cert)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -883,7 +884,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 		URL: req.Source.Operation,
 		Dialer: &websocket.Dialer{
 			TLSClientConfig:  config,
-			NetDialContext:   shared.RFC3493Dialer,
+			NetDialContext:   localtls.RFC3493Dialer,
 			HandshakeTimeout: time.Second * 5,
 		},
 		Secrets:    req.Source.Websockets,
@@ -1946,7 +1947,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		return response.InternalError(err)
 	}
 
-	_, algo, decomArgs, err := shared.DetectCompressionFile(backupFile)
+	_, algo, decomArgs, err := archive.DetectCompressionFile(backupFile)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -1964,7 +1965,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		defer func() { _ = os.Remove(tarFile.Name()) }()
 
 		// Decompress to tarFile temporary file.
-		err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, s.OS, tarFile)
+		err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, tarFile)
 		if err != nil {
 			return response.InternalError(err)
 		}

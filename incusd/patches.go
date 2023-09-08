@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 type patchStage int
@@ -901,7 +902,7 @@ func patchZfsSetContentTypeUserProperty(name string, d *Daemon) error {
 
 			zfsVolName := fmt.Sprintf("%s/%s/%s", poolName, storageDrivers.VolumeTypeCustom, project.StorageVolume(vol.Project, vol.Name))
 
-			_, err = shared.RunCommand("zfs", "set", fmt.Sprintf("incus:content_type=%s", vol.ContentType), zfsVolName)
+			_, err = subprocess.RunCommand("zfs", "set", fmt.Sprintf("incus:content_type=%s", vol.ContentType), zfsVolName)
 			if err != nil {
 				logger.Debug("Failed setting incus:content_type property", logger.Ctx{"name": zfsVolName, "err": err})
 			}

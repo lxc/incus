@@ -31,6 +31,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/validate"
 )
@@ -1981,7 +1982,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 		// Accessible zfs filesystems
 		poolName := strings.Split(dev[1], "/")[0]
 
-		output, err := shared.RunCommand("zpool", "status", "-P", "-L", poolName)
+		output, err := subprocess.RunCommand("zpool", "status", "-P", "-L", poolName)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to query zfs filesystem information for %q: %w", dev[1], err)
 		}
@@ -2033,7 +2034,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 		}
 	} else if fs == "btrfs" && shared.PathExists(dev[1]) {
 		// Accessible btrfs filesystems
-		output, err := shared.RunCommand("btrfs", "filesystem", "show", dev[1])
+		output, err := subprocess.RunCommand("btrfs", "filesystem", "show", dev[1])
 		if err != nil {
 			// Fallback to using device path to support BTRFS on block volumes (like LVM).
 			_, major, minor, errFallback := unixDeviceAttributes(dev[1])
@@ -2148,7 +2149,7 @@ local-hostname: %s
 	// templates on first boot. The vendor-data template then modifies the system so that the
 	// config drive is mounted and the agent is started on subsequent boots.
 	isoPath := filepath.Join(d.inst.Path(), "config.iso")
-	_, err = shared.RunCommand(mkisofsPath, "-joliet", "-rock", "-input-charset", "utf8", "-output-charset", "utf8", "-volid", "cidata", "-o", isoPath, scratchDir)
+	_, err = subprocess.RunCommand(mkisofsPath, "-joliet", "-rock", "-input-charset", "utf8", "-output-charset", "utf8", "-volid", "cidata", "-o", isoPath, scratchDir)
 	if err != nil {
 		return "", err
 	}

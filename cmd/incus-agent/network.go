@@ -12,8 +12,8 @@ import (
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // A variation of the standard tls.Listener that supports atomically swapping
@@ -49,7 +49,7 @@ func (l *networkListener) Accept() (net.Conn, error) {
 }
 
 func serverTLSConfig() (*tls.Config, error) {
-	certInfo, err := shared.KeyPairAndCA(".", "agent", shared.CertServer, false)
+	certInfo, err := localtls.KeyPairAndCA(".", "agent", localtls.CertServer, false)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // NeighbourIPState can be { PERMANENT | NOARP | REACHABLE | STALE | NONE | INCOMPLETE | DELAY | PROBE | FAILED }.
@@ -50,7 +51,7 @@ type Neigh struct {
 
 // Show list neighbour entries filtered by DevName and optionally MAC address.
 func (n *Neigh) Show() ([]Neigh, error) {
-	out, err := shared.RunCommand("ip", "neigh", "show", "dev", n.DevName)
+	out, err := subprocess.RunCommand("ip", "neigh", "show", "dev", n.DevName)
 	if err != nil {
 		return nil, err
 	}

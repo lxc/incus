@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -64,7 +65,7 @@ type consoleWs struct {
 }
 
 func (s *consoleWs) Metadata() any {
-	fds := shared.Jmap{}
+	fds := jmap.Map{}
 	for fd, secret := range s.fds {
 		if fd == -1 {
 			fds[api.SecretNameControl] = secret
@@ -73,7 +74,7 @@ func (s *consoleWs) Metadata() any {
 		}
 	}
 
-	return shared.Jmap{"fds": fds}
+	return jmap.Map{"fds": fds}
 }
 
 func (s *consoleWs) Connect(op *operations.Operation, r *http.Request, w http.ResponseWriter) error {

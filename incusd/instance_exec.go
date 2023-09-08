@@ -27,6 +27,7 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -54,7 +55,7 @@ type execWs struct {
 }
 
 func (s *execWs) Metadata() any {
-	fds := shared.Jmap{}
+	fds := jmap.Map{}
 	for fd, secret := range s.fds {
 		if fd == execWSControl {
 			fds[api.SecretNameControl] = secret
@@ -63,7 +64,7 @@ func (s *execWs) Metadata() any {
 		}
 	}
 
-	return shared.Jmap{
+	return jmap.Map{
 		"fds":         fds,
 		"command":     s.req.Command,
 		"environment": s.req.Environment,
@@ -281,7 +282,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 			_ = pty.Close()
 		}
 
-		metadata := shared.Jmap{"return": cmdResult}
+		metadata := jmap.Map{"return": cmdResult}
 		err = op.ExtendMetadata(metadata)
 		if err != nil {
 			return err
@@ -679,7 +680,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	run := func(op *operations.Operation) error {
-		metadata := shared.Jmap{}
+		metadata := jmap.Map{}
 
 		var err error
 		var stdout, stderr *os.File
@@ -708,7 +709,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 			defer func() { _ = stderr.Close() }()
 
 			// Update metadata with the right URLs.
-			metadata["output"] = shared.Jmap{
+			metadata["output"] = jmap.Map{
 				"1": fmt.Sprintf("/%s/instances/%s/logs/exec-output/%s", version.APIVersion, inst.Name(), filepath.Base(stdout.Name())),
 				"2": fmt.Sprintf("/%s/instances/%s/logs/exec-output/%s", version.APIVersion, inst.Name(), filepath.Base(stderr.Name())),
 			}

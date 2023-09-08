@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/lxc/incus/incusd/archive"
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/archive"
 )
 
 // TarReader rewinds backup file handle r and returns new tar reader and process cleanup function.
@@ -18,7 +17,7 @@ func TarReader(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*tar.Reader, 
 		return nil, nil, err
 	}
 
-	_, _, unpacker, err := shared.DetectCompressionFile(r)
+	_, _, unpacker, err := archive.DetectCompressionFile(r)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -27,7 +26,7 @@ func TarReader(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*tar.Reader, 
 		return nil, nil, fmt.Errorf("Unsupported backup compression")
 	}
 
-	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, sysOS, outputPath)
+	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, outputPath)
 	if err != nil {
 		return nil, nil, err
 	}

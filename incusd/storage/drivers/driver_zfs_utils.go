@@ -14,6 +14,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -73,7 +74,7 @@ func (d *zfs) createDataset(dataset string, options ...string) error {
 
 	args = append(args, dataset)
 
-	_, err := shared.RunCommand("zfs", args...)
+	_, err := subprocess.RunCommand("zfs", args...)
 	if err != nil {
 		return err
 	}
@@ -92,7 +93,7 @@ func (d *zfs) createVolume(dataset string, size int64, options ...string) error 
 
 	args = append(args, dataset)
 
-	_, err := shared.RunCommand("zfs", args...)
+	_, err := subprocess.RunCommand("zfs", args...)
 	if err != nil {
 		return err
 	}
@@ -101,7 +102,7 @@ func (d *zfs) createVolume(dataset string, size int64, options ...string) error 
 }
 
 func (d *zfs) datasetExists(dataset string) (bool, error) {
-	out, err := shared.RunCommand("zfs", "get", "-H", "-o", "name", "name", dataset)
+	out, err := subprocess.RunCommand("zfs", "get", "-H", "-o", "name", "name", dataset)
 	if err != nil {
 		return false, nil
 	}
@@ -117,7 +118,7 @@ func (d *zfs) deleteDatasetRecursive(dataset string) error {
 	}
 
 	// Delete the dataset (and any snapshots left).
-	_, err = shared.TryRunCommand("zfs", "destroy", "-r", dataset)
+	_, err = subprocess.TryRunCommand("zfs", "destroy", "-r", dataset)
 	if err != nil {
 		return err
 	}
@@ -155,7 +156,7 @@ func (d *zfs) deleteDatasetRecursive(dataset string) error {
 }
 
 func (d *zfs) getClones(dataset string) ([]string, error) {
-	out, err := shared.RunCommand("zfs", "get", "-H", "-p", "-r", "-o", "value", "clones", dataset)
+	out, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-r", "-o", "value", "clones", dataset)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +176,7 @@ func (d *zfs) getClones(dataset string) ([]string, error) {
 }
 
 func (d *zfs) getDatasets(dataset string) ([]string, error) {
-	out, err := shared.RunCommand("zfs", "get", "-H", "-r", "-o", "name", "name", dataset)
+	out, err := subprocess.RunCommand("zfs", "get", "-H", "-r", "-o", "name", "name", dataset)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +200,7 @@ func (d *zfs) setDatasetProperties(dataset string, options ...string) error {
 	if len(zfsVersion) >= 3 && zfsVersion[0:3] == "0.6" {
 		// Slow path for ZFS 0.6
 		for _, option := range options {
-			_, err := shared.RunCommand("zfs", "set", option, dataset)
+			_, err := subprocess.RunCommand("zfs", "set", option, dataset)
 			if err != nil {
 				return err
 			}
@@ -212,7 +213,7 @@ func (d *zfs) setDatasetProperties(dataset string, options ...string) error {
 	args = append(args, options...)
 	args = append(args, dataset)
 
-	_, err := shared.RunCommand("zfs", args...)
+	_, err := subprocess.RunCommand("zfs", args...)
 	if err != nil {
 		return err
 	}
@@ -249,7 +250,7 @@ func (d *zfs) setBlocksize(vol Volume, size int64) error {
 }
 
 func (d *zfs) getDatasetProperty(dataset string, key string) (string, error) {
-	output, err := shared.RunCommand("zfs", "get", "-H", "-p", "-o", "value", key, dataset)
+	output, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "value", key, dataset)
 	if err != nil {
 		return "", err
 	}
@@ -258,7 +259,7 @@ func (d *zfs) getDatasetProperty(dataset string, key string) (string, error) {
 }
 
 func (d *zfs) getDatasetProperties(dataset string, keys ...string) (map[string]string, error) {
-	output, err := shared.RunCommand("zfs", "get", "-H", "-p", "-o", "property,value", strings.Join(keys, ","), dataset)
+	output, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "property,value", strings.Join(keys, ","), dataset)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +285,7 @@ func (d *zfs) getDatasetProperties(dataset string, keys ...string) (map[string]s
 func (d *zfs) version() (string, error) {
 	// This function is only really ever relevant on Ubuntu as the only
 	// distro that ships out of sync tools and kernel modules
-	out, err := shared.RunCommand("dpkg-query", "--showformat=${Version}", "--show", "zfsutils-linux")
+	out, err := subprocess.RunCommand("dpkg-query", "--showformat=${Version}", "--show", "zfsutils-linux")
 	if out != "" && err == nil {
 		return strings.TrimSpace(string(out)), nil
 	}
@@ -298,7 +299,7 @@ func (d *zfs) version() (string, error) {
 	}
 
 	// Module information version
-	out, err = shared.RunCommand("modinfo", "-F", "version", "zfs")
+	out, err = subprocess.RunCommand("modinfo", "-F", "version", "zfs")
 	if err == nil {
 		return strings.TrimSpace(string(out)), nil
 	}

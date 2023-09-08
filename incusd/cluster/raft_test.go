@@ -11,7 +11,7 @@ import (
 
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Set the cluster.https_address config key to the given address, and insert the
@@ -35,7 +35,7 @@ func setRaftRole(t *testing.T, database *db.Node, address string) client.NodeSto
 
 // Create a new test HTTP server configured with the given TLS certificate and
 // using the given handler.
-func newServer(cert *shared.CertInfo, handler http.Handler) *httptest.Server {
+func newServer(cert *localtls.CertInfo, handler http.Handler) *httptest.Server {
 	server := httptest.NewUnstartedServer(handler)
 	server.TLS = util.ServerTLSConfig(cert)
 	server.StartTLS()

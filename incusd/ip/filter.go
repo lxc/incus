@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // Action represents an action in filter.
@@ -74,7 +74,7 @@ func (u32 *U32Filter) Add() error {
 		cmd = append(cmd, "flowid", u32.Flowid)
 	}
 
-	_, err := shared.RunCommand("tc", cmd...)
+	_, err := subprocess.RunCommand("tc", cmd...)
 	if err != nil {
 		return err
 	}

@@ -17,8 +17,10 @@ import (
 	config "github.com/lxc/incus/internal/cliconfig"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 type cmdRemote struct {
@@ -203,12 +205,12 @@ func (c *cmdRemoteAdd) addRemoteFromToken(addr string, server string, token stri
 
 	_, err = conf.GetInstanceServer(server)
 	if err != nil {
-		certificate, err = shared.GetRemoteCertificate(addr, c.global.conf.UserAgent)
+		certificate, err = localtls.GetRemoteCertificate(addr, c.global.conf.UserAgent)
 		if err != nil {
 			return api.StatusErrorf(http.StatusServiceUnavailable, i18n.G("Unavailable remote server")+": %v", err)
 		}
 
-		certDigest := shared.CertFingerprint(certificate)
+		certDigest := localtls.CertFingerprint(certificate)
 		if fingerprint != certDigest {
 			return fmt.Errorf(i18n.G("Certificate fingerprint mismatch between certificate token and server %q"), addr)
 		}
@@ -305,7 +307,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		conf.Remotes = map[string]config.Remote{}
 	}
 
-	rawToken, err := shared.CertificateTokenDecode(addr)
+	rawToken, err := localtls.CertificateTokenDecode(addr)
 	if err == nil {
 		return c.RunToken(server, addr, rawToken)
 	}
@@ -361,7 +363,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		rHost = host
 		rPort = port
 	} else {
-		rPort = fmt.Sprintf("%d", shared.HTTPSDefaultPort)
+		rPort = fmt.Sprintf("%d", ports.HTTPSDefaultPort)
 	}
 
 	if rScheme == "unix" {
@@ -427,7 +429,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	var certificate *x509.Certificate
 	if err != nil {
 		// Failed to connect using the system CA, so retrieve the remote certificate
-		certificate, err = shared.GetRemoteCertificate(addr, c.global.conf.UserAgent)
+		certificate, err = localtls.GetRemoteCertificate(addr, c.global.conf.UserAgent)
 		if err != nil {
 			return err
 		}
@@ -436,7 +438,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	// Handle certificate prompt
 	if certificate != nil {
 		if !c.flagAcceptCert {
-			digest := shared.CertFingerprint(certificate)
+			digest := localtls.CertFingerprint(certificate)
 
 			fmt.Printf(i18n.G("Certificate fingerprint: %s")+"\n", digest)
 			fmt.Printf(i18n.G("ok (y/n/[fingerprint])?") + " ")

@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
+	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -127,12 +128,12 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		InsecureSkipVerify: true,
 	}
 
-	certificate, err := shared.GetRemoteCertificate(serverURL, args.UserAgent)
+	certificate, err := localtls.GetRemoteCertificate(serverURL, args.UserAgent)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed to get remote certificate: %w", err)
 	}
 
-	digest := shared.CertFingerprint(certificate)
+	digest := localtls.CertFingerprint(certificate)
 
 	fmt.Println("Certificate fingerprint:", digest)
 	fmt.Print("ok (y/n)? ")
@@ -219,7 +220,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		}
 	} else if authMethod == authMethodTLSCertificateToken {
 		token, err = cli.AskString("Please provide the certificate token: ", "", func(token string) error {
-			_, err := shared.CertificateTokenDecode(token)
+			_, err := localtls.CertificateTokenDecode(token)
 			if err != nil {
 				return err
 			}

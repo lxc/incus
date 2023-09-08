@@ -7,8 +7,9 @@ import (
 	"net"
 	"os"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // InMemoryNetwork creates a fully in-memory listener and dial function.
@@ -104,8 +105,8 @@ func CanonicalNetworkAddressFromAddressAndPort(address string, port int, default
 
 // ServerTLSConfig returns a new server-side tls.Config generated from the give
 // certificate info.
-func ServerTLSConfig(cert *shared.CertInfo) *tls.Config {
-	config := shared.InitTLSConfig()
+func ServerTLSConfig(cert *localtls.CertInfo) *tls.Config {
+	config := localtls.InitTLSConfig()
 	config.ClientAuth = tls.RequestClientCert
 	config.Certificates = []tls.Certificate{cert.KeyPair()}
 	config.NextProtos = []string{"h2"} // Required by gRPC
@@ -161,8 +162,8 @@ func NetworkInterfaceAddress() string {
 // address2, in the sense that they are either the same address or address2 is
 // specified using a wildcard with the same port of address1.
 func IsAddressCovered(address1, address2 string) bool {
-	address1 = CanonicalNetworkAddress(address1, shared.HTTPSDefaultPort)
-	address2 = CanonicalNetworkAddress(address2, shared.HTTPSDefaultPort)
+	address1 = CanonicalNetworkAddress(address1, ports.HTTPSDefaultPort)
+	address2 = CanonicalNetworkAddress(address2, ports.HTTPSDefaultPort)
 
 	if address1 == address2 {
 		return true
@@ -254,7 +255,7 @@ func IsAddressCovered(address1, address2 string) bool {
 
 // IsWildCardAddress returns whether the given address is a wildcard.
 func IsWildCardAddress(address string) bool {
-	address = CanonicalNetworkAddress(address, shared.HTTPSDefaultPort)
+	address = CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
 
 	host, _, err := net.SplitHostPort(address)
 	if err != nil {

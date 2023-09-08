@@ -17,17 +17,18 @@ import (
 	"github.com/pborman/uuid"
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/incusd/archive"
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -40,7 +41,7 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 	defer revert.Fail()
 
 	// Create the volume itself.
-	_, err := shared.RunCommand("btrfs", "subvolume", "create", volPath)
+	_, err := subprocess.RunCommand("btrfs", "subvolume", "create", volPath)
 	if err != nil {
 		return err
 	}
@@ -68,7 +69,7 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 		// as when a snapshot is taken, writes that happen on the original volume necessarily create a CoW
 		// in order to track the difference between original and snapshot. This will increase the size of
 		// data being referenced.
-		_, err = shared.RunCommand("chattr", "+C", volPath)
+		_, err = subprocess.RunCommand("chattr", "+C", volPath)
 		if err != nil {
 			return fmt.Errorf("Failed setting nodatacow on %q: %w", volPath, err)
 		}
@@ -176,7 +177,7 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 		return nil, nil, err
 	}
 
-	_, _, unpacker, err := shared.DetectCompressionFile(srcData)
+	_, _, unpacker, err := archive.DetectCompressionFile(srcData)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -224,7 +225,7 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 
 	// unpackSubVolume unpacks a subvolume file from a backup tarball file.
 	unpackSubVolume := func(r io.ReadSeeker, unpacker []string, srcFile string, targetPath string) (string, error) {
-		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, d.state.OS, targetPath)
+		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, targetPath)
 		if err != nil {
 			return "", err
 		}
@@ -1034,7 +1035,7 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 
 			path := GetPoolMountPath(d.name)
 
-			_, err = shared.RunCommand("btrfs", "quota", "enable", path)
+			_, err = subprocess.RunCommand("btrfs", "quota", "enable", path)
 			if err != nil {
 				return err
 			}
@@ -1047,7 +1048,7 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 		if err == errBtrfsNoQGroup {
 			// Find the volume ID.
 			var output string
-			output, err = shared.RunCommand("btrfs", "subvolume", "show", volPath)
+			output, err = subprocess.RunCommand("btrfs", "subvolume", "show", volPath)
 			if err != nil {
 				return fmt.Errorf("Failed to get subvol information: %w", err)
 			}
@@ -1066,7 +1067,7 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 			}
 
 			// Create a qgroup.
-			_, err = shared.RunCommand("btrfs", "qgroup", "create", fmt.Sprintf("0/%s", id), volPath)
+			_, err = subprocess.RunCommand("btrfs", "qgroup", "create", fmt.Sprintf("0/%s", id), volPath)
 			if err != nil {
 				return err
 			}
@@ -1096,24 +1097,24 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 		}
 
 		// Apply the limit to referenced data in qgroup.
-		_, err = shared.RunCommand("btrfs", "qgroup", "limit", fmt.Sprintf("%d", sizeBytes), qgroup, volPath)
+		_, err = subprocess.RunCommand("btrfs", "qgroup", "limit", fmt.Sprintf("%d", sizeBytes), qgroup, volPath)
 		if err != nil {
 			return err
 		}
 
 		// Remove any former exclusive data limit.
-		_, err = shared.RunCommand("btrfs", "qgroup", "limit", "-e", "none", qgroup, volPath)
+		_, err = subprocess.RunCommand("btrfs", "qgroup", "limit", "-e", "none", qgroup, volPath)
 		if err != nil {
 			return err
 		}
 	} else if qgroup != "" {
 		// Remove all limits.
-		_, err = shared.RunCommand("btrfs", "qgroup", "limit", "none", qgroup, volPath)
+		_, err = subprocess.RunCommand("btrfs", "qgroup", "limit", "none", qgroup, volPath)
 		if err != nil {
 			return err
 		}
 
-		_, err = shared.RunCommand("btrfs", "qgroup", "limit", "none", "-e", qgroup, volPath)
+		_, err = subprocess.RunCommand("btrfs", "qgroup", "limit", "none", "-e", qgroup, volPath)
 		if err != nil {
 			return err
 		}
@@ -1546,7 +1547,7 @@ func (d *btrfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWr
 
 		// Write the subvolume to the file.
 		d.logger.Debug("Generating optimized volume file", logger.Ctx{"sourcePath": path, "parent": parent, "file": tmpFile.Name(), "name": fileName})
-		err = shared.RunCommandWithFds(context.TODO(), nil, tmpFile, "btrfs", args...)
+		err = subprocess.RunCommandWithFds(context.TODO(), nil, tmpFile, "btrfs", args...)
 		if err != nil {
 			return err
 		}
@@ -1839,7 +1840,7 @@ func (d *btrfs) VolumeSnapshots(vol Volume, op *operations.Operation) ([]string,
 func (d *btrfs) volumeSnapshotsSorted(vol Volume, op *operations.Operation) ([]string, error) {
 	stdout := bytes.Buffer{}
 
-	err := shared.RunCommandWithFds(context.TODO(), nil, &stdout, "btrfs", "subvolume", "list", GetPoolMountPath(vol.pool))
+	err := subprocess.RunCommandWithFds(context.TODO(), nil, &stdout, "btrfs", "subvolume", "list", GetPoolMountPath(vol.pool))
 	if err != nil {
 		return nil, err
 	}

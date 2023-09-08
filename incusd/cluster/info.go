@@ -9,10 +9,11 @@ import (
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Load information about the dqlite node associated with this cluster member.
-func loadInfo(database *db.Node, cert *shared.CertInfo) (*db.RaftNode, error) {
+func loadInfo(database *db.Node, cert *localtls.CertInfo) (*db.RaftNode, error) {
 	// Figure out if we actually need to act as dqlite node.
 	var info *db.RaftNode
 	err := database.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {

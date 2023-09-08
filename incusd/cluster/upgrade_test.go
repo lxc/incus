@@ -21,7 +21,7 @@ import (
 	dbCluster "github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // A node can unblock other nodes that were waiting for a cluster upgrade to
@@ -145,7 +145,7 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	state, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	serverCert := shared.TestingKeyPair()
+	serverCert := localtls.TestingKeyPair()
 	mux := http.NewServeMux()
 	server := newServer(serverCert, mux)
 	defer server.Close()
@@ -153,7 +153,7 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	address := server.Listener.Addr().String()
 	setRaftRole(t, state.DB.Node, address)
 
-	state.ServerCert = func() *shared.CertInfo { return serverCert }
+	state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(t, state.DB.Node, serverCert, state)
 	defer func() { _ = gateway.Shutdown() }()

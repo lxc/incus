@@ -65,12 +65,14 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/netutils"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/termios"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/ws"
@@ -1356,7 +1358,7 @@ func (d *lxc) IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
 }
 
 func (d *lxc) devIncusEventSend(eventType string, eventMessage map[string]any) error {
-	event := shared.Jmap{}
+	event := jmap.Map{}
 	event["type"] = eventType
 	event["timestamp"] = time.Now()
 	event["metadata"] = eventMessage
@@ -1772,7 +1774,7 @@ func (d *lxc) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 
 			ueventArray[5] = fmt.Sprintf("%d", length)
 			ueventArray = append(ueventArray, eventParts...)
-			_, _, err := shared.RunCommandSplit(context.TODO(), nil, []*os.File{pidFd}, d.state.OS.ExecPath, ueventArray...)
+			_, _, err := subprocess.RunCommandSplit(context.TODO(), nil, []*os.File{pidFd}, d.state.OS.ExecPath, ueventArray...)
 			if err != nil {
 				return err
 			}
@@ -2248,7 +2250,7 @@ func (d *lxc) detachInterfaceRename(netns string, ifName string, hostName string
 	daemonPID := os.Getpid()
 
 	// Run forknet detach
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		d.state.OS.ExecPath,
 		"forknet",
 		"detach",
@@ -2380,7 +2382,7 @@ func (d *lxc) Start(stateful bool) error {
 	name := project.Instance(d.Project().Name, d.name)
 
 	// Start the LXC container
-	_, err = shared.RunCommand(
+	_, err = subprocess.RunCommand(
 		d.state.OS.ExecPath,
 		"forkstart",
 		name,
@@ -4953,7 +4955,7 @@ func getCRIULogErrors(imagesDir string, method string) (string, error) {
 // Check if CRIU supports pre-dumping and number of pre-dump iterations.
 func (d *lxc) migrationSendCheckForPreDumpSupport() (bool, int) {
 	// Check if this architecture/kernel/criu combination supports pre-copy dirty memory tracking feature.
-	_, err := shared.RunCommand("criu", "check", "--feature", "mem_dirty_track")
+	_, err := subprocess.RunCommand("criu", "check", "--feature", "mem_dirty_track")
 	if err != nil {
 		// CRIU says it does not know about dirty memory tracking.
 		// This means the rest of this function is irrelevant.
@@ -6251,7 +6253,7 @@ func (d *lxc) migrate(args *instance.CriuMigrationArgs) error {
 			finalStateDir = fmt.Sprintf("%s/%s", args.StateDir, args.DumpDir)
 		}
 
-		_, migrateErr = shared.RunCommand(
+		_, migrateErr = subprocess.RunCommand(
 			d.state.OS.ExecPath,
 			"forkmigrate",
 			d.name,
@@ -7147,7 +7149,7 @@ func (d *lxc) networkState(hostInterfaces []net.Interface) map[string]api.Instan
 		}
 
 		// Get the network state from the container
-		out, _, err := shared.RunCommandSplit(
+		out, _, err := subprocess.RunCommandSplit(
 			context.TODO(),
 			nil,
 			[]*os.File{pidFd},
@@ -7370,7 +7372,7 @@ func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID i
 		target = "/" + target
 	}
 
-	_, err = shared.RunCommandInheritFds(
+	_, err = subprocess.RunCommandInheritFds(
 		context.Background(),
 		[]*os.File{pidFd},
 		d.state.OS.ExecPath,
@@ -7401,7 +7403,7 @@ func (d *lxc) insertMountLXC(source, target, fstype string, flags int) error {
 		target = "/" + target
 	}
 
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		d.state.OS.ExecPath,
 		"forkmount",
 		"lxc-mount",
@@ -7446,7 +7448,7 @@ func (d *lxc) moveMount(source, target, fstype string, flags int, idmapType idma
 		target = "/" + target
 	}
 
-	_, err := shared.RunCommandInheritFds(
+	_, err := subprocess.RunCommandInheritFds(
 		context.Background(),
 		[]*os.File{pidFd},
 		d.state.OS.ExecPath,
@@ -7495,7 +7497,7 @@ func (d *lxc) removeMount(mount string) error {
 			mount = "/" + mount
 		}
 
-		_, err := shared.RunCommand(
+		_, err := subprocess.RunCommand(
 			d.state.OS.ExecPath,
 			"forkmount",
 			"lxc-umount",
@@ -7514,7 +7516,7 @@ func (d *lxc) removeMount(mount string) error {
 			defer func() { _ = pidFd.Close() }()
 		}
 
-		_, err := shared.RunCommandInheritFds(
+		_, err := subprocess.RunCommandInheritFds(
 			context.TODO(),
 			[]*os.File{pidFd},
 			d.state.OS.ExecPath,

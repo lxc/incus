@@ -13,6 +13,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // eventHubMinHosts is the minimum number of members that must have the event-hub role to trigger switching into
@@ -215,7 +216,7 @@ func hubAddresses(localAddress string, members map[int64]APIHeartbeatMember) ([]
 }
 
 // EventsUpdateListeners refreshes the cluster event listener connections.
-func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, serverCert func() *shared.CertInfo, hbMembers map[int64]APIHeartbeatMember, inject events.InjectFunc) {
+func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, serverCert func() *localtls.CertInfo, hbMembers map[int64]APIHeartbeatMember, inject events.InjectFunc) {
 	listenersUpdateLock.Lock()
 	defer listenersUpdateLock.Unlock()
 
@@ -372,7 +373,7 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 }
 
 // Establish a client connection to get events from the given node.
-func eventsConnect(address string, networkCert *shared.CertInfo, serverCert *shared.CertInfo) (*eventListenerClient, error) {
+func eventsConnect(address string, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo) (*eventListenerClient, error) {
 	client, err := Connect(address, networkCert, serverCert, nil, true)
 	if err != nil {
 		return nil, err

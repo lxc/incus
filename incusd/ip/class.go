@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // Class represents qdisc class object.
@@ -29,7 +29,7 @@ func (class *ClassHTB) Add() error {
 		cmd = append(cmd, "rate", class.Rate)
 	}
 
-	_, err := shared.RunCommand("tc", cmd...)
+	_, err := subprocess.RunCommand("tc", cmd...)
 	if err != nil {
 		return err
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -47,7 +48,7 @@ var cephVolTypePrefixes = map[VolumeType]string{
 
 // osdPoolExists checks whether a given OSD pool exists.
 func (d *ceph) osdPoolExists() bool {
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"ceph",
 		"--name", fmt.Sprintf("client.%s", d.config["ceph.user.name"]),
 		"--cluster", d.config["ceph.cluster_name"],
@@ -68,7 +69,7 @@ func (d *ceph) osdPoolExists() bool {
 //     that this call actually deleted an OSD pool it needs to check for the
 //     existence of the pool first.
 func (d *ceph) osdDeletePool() error {
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"ceph",
 		"--name", fmt.Sprintf("client.%s", d.config["ceph.user.name"]),
 		"--cluster", d.config["ceph.cluster_name"],
@@ -120,7 +121,7 @@ func (d *ceph) rbdCreateVolume(vol Volume, size string) error {
 		"create",
 		d.getRBDVolumeName(vol, "", false, false))
 
-	_, err = shared.RunCommand("rbd", cmd...)
+	_, err = subprocess.RunCommand("rbd", cmd...)
 	return err
 }
 
@@ -130,7 +131,7 @@ func (d *ceph) rbdCreateVolume(vol Volume, size string) error {
 //     to be sure that this call actually deleted an RBD storage volume it needs
 //     to check for the existence of the pool first.
 func (d *ceph) rbdDeleteVolume(vol Volume) error {
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -149,7 +150,7 @@ func (d *ceph) rbdDeleteVolume(vol Volume) error {
 // in the /dev directory and is therefore necessary in order to mount it.
 func (d *ceph) rbdMapVolume(vol Volume) (string, error) {
 	rbdName := d.getRBDVolumeName(vol, "", false, false)
-	devPath, err := shared.RunCommand(
+	devPath, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -180,7 +181,7 @@ func (d *ceph) rbdUnmapVolume(vol Volume, unmapUntilEINVAL bool) error {
 	ourDeactivate := false
 
 again:
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -188,7 +189,7 @@ again:
 		"unmap",
 		rbdVol)
 	if err != nil {
-		runError, ok := err.(shared.RunError)
+		runError, ok := err.(subprocess.RunError)
 		if ok {
 			exitError, ok := runError.Unwrap().(*exec.ExitError)
 			if ok {
@@ -232,7 +233,7 @@ again:
 // This is a precondition in order to delete an RBD snapshot can.
 func (d *ceph) rbdUnmapVolumeSnapshot(vol Volume, snapshotName string, unmapUntilEINVAL bool) error {
 again:
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -240,7 +241,7 @@ again:
 		"unmap",
 		d.getRBDVolumeName(vol, snapshotName, false, false))
 	if err != nil {
-		runError, ok := err.(shared.RunError)
+		runError, ok := err.(subprocess.RunError)
 		if ok {
 			exitError, ok := runError.Unwrap().(*exec.ExitError)
 			if ok {
@@ -263,7 +264,7 @@ again:
 
 // rbdCreateVolumeSnapshot creates a read-write snapshot of a given RBD storage volume.
 func (d *ceph) rbdCreateVolumeSnapshot(vol Volume, snapshotName string) error {
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -282,7 +283,7 @@ func (d *ceph) rbdCreateVolumeSnapshot(vol Volume, snapshotName string) error {
 // rbdProtectVolumeSnapshot protects a given snapshot from being deleted.
 // This is a precondition to be able to create RBD clones from a given snapshot.
 func (d *ceph) rbdProtectVolumeSnapshot(vol Volume, snapshotName string) error {
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -292,7 +293,7 @@ func (d *ceph) rbdProtectVolumeSnapshot(vol Volume, snapshotName string) error {
 		"--snap", snapshotName,
 		d.getRBDVolumeName(vol, "", false, false))
 	if err != nil {
-		runError, ok := err.(shared.RunError)
+		runError, ok := err.(subprocess.RunError)
 		if ok {
 			exitError, ok := runError.Unwrap().(*exec.ExitError)
 			if ok {
@@ -313,7 +314,7 @@ func (d *ceph) rbdProtectVolumeSnapshot(vol Volume, snapshotName string) error {
 // - This is a precondition to be able to delete an RBD snapshot.
 // - This command will only succeed if the snapshot does not have any clones.
 func (d *ceph) rbdUnprotectVolumeSnapshot(vol Volume, snapshotName string) error {
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -323,7 +324,7 @@ func (d *ceph) rbdUnprotectVolumeSnapshot(vol Volume, snapshotName string) error
 		"--snap", snapshotName,
 		d.getRBDVolumeName(vol, "", false, false))
 	if err != nil {
-		runError, ok := err.(shared.RunError)
+		runError, ok := err.(subprocess.RunError)
 		if ok {
 			exitError, ok := runError.Unwrap().(*exec.ExitError)
 			if ok {
@@ -364,7 +365,7 @@ func (d *ceph) rbdCreateClone(sourceVol Volume, sourceSnapshotName string, targe
 		d.getRBDVolumeName(sourceVol, sourceSnapshotName, false, true),
 		d.getRBDVolumeName(targetVol, "", false, true))
 
-	_, err := shared.RunCommand("rbd", cmd...)
+	_, err := subprocess.RunCommand("rbd", cmd...)
 	if err != nil {
 		return err
 	}
@@ -374,7 +375,7 @@ func (d *ceph) rbdCreateClone(sourceVol Volume, sourceSnapshotName string, targe
 
 // rbdListSnapshotClones list all clones of an RBD snapshot.
 func (d *ceph) rbdListSnapshotClones(vol Volume, snapshotName string) ([]string, error) {
-	msg, err := shared.RunCommand(
+	msg, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -408,7 +409,7 @@ func (d *ceph) rbdMarkVolumeDeleted(vol Volume, newVolumeName string) error {
 	newVol := NewVolume(d, d.name, vol.volType, vol.contentType, newVolumeName, vol.config, vol.poolConfig)
 	deletedName := d.getRBDVolumeName(newVol, "", true, true)
 
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -433,7 +434,7 @@ func (d *ceph) rbdRenameVolume(vol Volume, newVolumeName string) error {
 	// new volume name generated in getRBDVolumeName.
 	newVol := NewVolume(d, d.name, vol.volType, vol.contentType, newVolumeName, vol.config, vol.poolConfig)
 
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -455,7 +456,7 @@ func (d *ceph) rbdRenameVolume(vol Volume, newVolumeName string) error {
 // original name and the caller maps it under its new name the snapshot will be
 // mapped twice. This will prevent it from being deleted.
 func (d *ceph) rbdRenameVolumeSnapshot(vol Volume, oldSnapshotName string, newSnapshotName string) error {
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -478,7 +479,7 @@ func (d *ceph) rbdRenameVolumeSnapshot(vol Volume, oldSnapshotName string, newSn
 //     The caller will usually want to parse this according to its needs. This
 //     helper library provides two small functions to do this but see below.
 func (d *ceph) rbdGetVolumeParent(vol Volume) (string, error) {
-	msg, err := shared.RunCommand(
+	msg, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -512,7 +513,7 @@ func (d *ceph) rbdGetVolumeParent(vol Volume) (string, error) {
 // This requires that the snapshot does not have any clones and is unmapped and
 // unprotected.
 func (d *ceph) rbdDeleteVolumeSnapshot(vol Volume, snapshotName string) error {
-	_, err := shared.RunCommand(
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -534,7 +535,7 @@ func (d *ceph) rbdDeleteVolumeSnapshot(vol Volume, snapshotName string) error {
 // this will only return
 // <rbd-snapshot-name>.
 func (d *ceph) rbdListVolumeSnapshots(vol Volume) ([]string, error) {
-	msg, err := shared.RunCommand(
+	msg, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -1247,7 +1248,7 @@ func (d *ceph) resizeVolume(vol Volume, sizeBytes int64, allowShrink bool) error
 	)
 
 	// Resize the block device.
-	_, err := shared.TryRunCommand("rbd", args...)
+	_, err := subprocess.TryRunCommand("rbd", args...)
 
 	return err
 }

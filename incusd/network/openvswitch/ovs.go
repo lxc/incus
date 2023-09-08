@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/lxc/incus/incusd/ip"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // ovnBridgeMappingMutex locks access to read/write external-ids:ovn-bridge-mappings.
@@ -43,9 +43,9 @@ func (o *OVS) Installed() bool {
 
 // BridgeExists returns true if OVS bridge exists.
 func (o *OVS) BridgeExists(bridgeName string) (bool, error) {
-	_, err := shared.RunCommand("ovs-vsctl", "br-exists", bridgeName)
+	_, err := subprocess.RunCommand("ovs-vsctl", "br-exists", bridgeName)
 	if err != nil {
-		runErr, ok := err.(shared.RunError)
+		runErr, ok := err.(subprocess.RunError)
 		if ok {
 			exitError, ok := runErr.Unwrap().(*exec.ExitError)
 
@@ -79,7 +79,7 @@ func (o *OVS) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.HardwareAdd
 		args = append(args, "--", "set", "int", bridgeName, fmt.Sprintf(`mtu_request=%d`, mtu))
 	}
 
-	_, err := shared.RunCommand("ovs-vsctl", args...)
+	_, err := subprocess.RunCommand("ovs-vsctl", args...)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (o *OVS) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.HardwareAdd
 
 // BridgeDelete deletes an OVS bridge.
 func (o *OVS) BridgeDelete(bridgeName string) error {
-	_, err := shared.RunCommand("ovs-vsctl", "del-br", bridgeName)
+	_, err := subprocess.RunCommand("ovs-vsctl", "del-br", bridgeName)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (o *OVS) BridgePortAdd(bridgeName string, portName string, mayExist bool) e
 
 	args = append(args, "add-port", bridgeName, portName)
 
-	_, err := shared.RunCommand("ovs-vsctl", args...)
+	_, err := subprocess.RunCommand("ovs-vsctl", args...)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (o *OVS) BridgePortAdd(bridgeName string, portName string, mayExist bool) e
 
 // BridgePortDelete deletes a port from the bridge (if already detached does nothing).
 func (o *OVS) BridgePortDelete(bridgeName string, portName string) error {
-	_, err := shared.RunCommand("ovs-vsctl", "--if-exists", "del-port", bridgeName, portName)
+	_, err := subprocess.RunCommand("ovs-vsctl", "--if-exists", "del-port", bridgeName, portName)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (o *OVS) BridgePortDelete(bridgeName string, portName string) error {
 
 // BridgePortSet sets port options.
 func (o *OVS) BridgePortSet(portName string, options ...string) error {
-	_, err := shared.RunCommand("ovs-vsctl", append([]string{"set", "port", portName}, options...)...)
+	_, err := subprocess.RunCommand("ovs-vsctl", append([]string{"set", "port", portName}, options...)...)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (o *OVS) BridgePortSet(portName string, options ...string) error {
 // and then associates the specified interfaceName to the OVN switch port.
 func (o *OVS) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitchPortName OVNSwitchPort) error {
 	// Clear existing ports that were formerly associated to ovnSwitchPortName.
-	existingPorts, err := shared.RunCommand("ovs-vsctl", "--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "interface", fmt.Sprintf("external-ids:iface-id=%s", string(ovnSwitchPortName)))
+	existingPorts, err := subprocess.RunCommand("ovs-vsctl", "--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "interface", fmt.Sprintf("external-ids:iface-id=%s", string(ovnSwitchPortName)))
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (o *OVS) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitchPor
 	existingPorts = strings.TrimSpace(existingPorts)
 	if existingPorts != "" {
 		for _, port := range strings.Split(existingPorts, "\n") {
-			_, err = shared.RunCommand("ovs-vsctl", "del-port", port)
+			_, err = subprocess.RunCommand("ovs-vsctl", "del-port", port)
 			if err != nil {
 				return err
 			}
@@ -160,7 +160,7 @@ func (o *OVS) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitchPor
 		}
 	}
 
-	_, err = shared.RunCommand("ovs-vsctl", "set", "interface", interfaceName, fmt.Sprintf("external_ids:iface-id=%s", string(ovnSwitchPortName)))
+	_, err = subprocess.RunCommand("ovs-vsctl", "set", "interface", interfaceName, fmt.Sprintf("external_ids:iface-id=%s", string(ovnSwitchPortName)))
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (o *OVS) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitchPor
 
 // InterfaceAssociatedOVNSwitchPort returns the OVN switch port associated to the OVS interface.
 func (o *OVS) InterfaceAssociatedOVNSwitchPort(interfaceName string) (OVNSwitchPort, error) {
-	ovnSwitchPort, err := shared.RunCommand("ovs-vsctl", "get", "interface", interfaceName, "external_ids:iface-id")
+	ovnSwitchPort, err := subprocess.RunCommand("ovs-vsctl", "get", "interface", interfaceName, "external_ids:iface-id")
 	if err != nil {
 		return "", err
 	}
@@ -184,7 +184,7 @@ func (o *OVS) ChassisID() (string, error) {
 	// However ovs-vsctl's find and list commands don't support retrieving a single column's map field.
 	// And ovs-vsctl's JSON output is unfriendly towards statically typed languages as it mixes data types
 	// in a slice. So stick with "get" command and use Go's strconv.Unquote to return the actual values.
-	chassisID, err := shared.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:system-id")
+	chassisID, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:system-id")
 	if err != nil {
 		return "", err
 	}
@@ -204,7 +204,7 @@ func (o *OVS) OVNEncapIP() (net.IP, error) {
 	// However ovs-vsctl's find and list commands don't support retrieving a single column's map field.
 	// And ovs-vsctl's JSON output is unfriendly towards statically typed languages as it mixes data types
 	// in a slice. So stick with "get" command and use Go's strconv.Unquote to return the actual values.
-	encapIPStr, err := shared.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-encap-ip")
+	encapIPStr, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-encap-ip")
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func (o *OVS) OVNBridgeMappings(bridgeName string) ([]string, error) {
 	// However ovs-vsctl's find and list commands don't support retrieving a single column's map field.
 	// And ovs-vsctl's JSON output is unfriendly towards statically typed languages as it mixes data types
 	// in a slice. So stick with "get" command and use Go's strconv.Unquote to return the actual values.
-	mappings, err := shared.RunCommand("ovs-vsctl", "--if-exists", "get", "open_vswitch", ".", "external-ids:ovn-bridge-mappings")
+	mappings, err := subprocess.RunCommand("ovs-vsctl", "--if-exists", "get", "open_vswitch", ".", "external-ids:ovn-bridge-mappings")
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func (o *OVS) OVNBridgeMappingAdd(bridgeName string, providerName string) error 
 	mappings = append(mappings, newMapping)
 
 	// Set new mapping string back into OVS database.
-	_, err = shared.RunCommand("ovs-vsctl", "set", "open_vswitch", ".", fmt.Sprintf("external-ids:ovn-bridge-mappings=%s", strings.Join(mappings, ",")))
+	_, err = subprocess.RunCommand("ovs-vsctl", "set", "open_vswitch", ".", fmt.Sprintf("external-ids:ovn-bridge-mappings=%s", strings.Join(mappings, ",")))
 	if err != nil {
 		return err
 	}
@@ -299,13 +299,13 @@ func (o *OVS) OVNBridgeMappingDelete(bridgeName string, providerName string) err
 	if changed {
 		if len(newMappings) < 1 {
 			// Remove mapping key in OVS database.
-			_, err = shared.RunCommand("ovs-vsctl", "remove", "open_vswitch", ".", "external-ids", "ovn-bridge-mappings")
+			_, err = subprocess.RunCommand("ovs-vsctl", "remove", "open_vswitch", ".", "external-ids", "ovn-bridge-mappings")
 			if err != nil {
 				return err
 			}
 		} else {
 			// Set updated mapping string back into OVS database.
-			_, err = shared.RunCommand("ovs-vsctl", "set", "open_vswitch", ".", fmt.Sprintf("external-ids:ovn-bridge-mappings=%s", strings.Join(newMappings, ",")))
+			_, err = subprocess.RunCommand("ovs-vsctl", "set", "open_vswitch", ".", fmt.Sprintf("external-ids:ovn-bridge-mappings=%s", strings.Join(newMappings, ",")))
 			if err != nil {
 				return err
 			}
@@ -318,7 +318,7 @@ func (o *OVS) OVNBridgeMappingDelete(bridgeName string, providerName string) err
 // BridgePortList returns a list of ports that are connected to the bridge.
 func (o *OVS) BridgePortList(bridgeName string) ([]string, error) {
 	// Clear existing ports that were formerly associated to ovnSwitchPortName.
-	portString, err := shared.RunCommand("ovs-vsctl", "list-ports", bridgeName)
+	portString, err := subprocess.RunCommand("ovs-vsctl", "list-ports", bridgeName)
 	if err != nil {
 		return nil, err
 	}
@@ -341,7 +341,7 @@ func (o *OVS) HardwareOffloadingEnabled() bool {
 	// However ovs-vsctl's find and list commands don't support retrieving a single column's map field.
 	// And ovs-vsctl's JSON output is unfriendly towards statically typed languages as it mixes data types
 	// in a slice. So stick with "get" command and use Go's strconv.Unquote to return the actual values.
-	offload, err := shared.RunCommand("ovs-vsctl", "--if-exists", "get", "open_vswitch", ".", "other_config:hw-offload")
+	offload, err := subprocess.RunCommand("ovs-vsctl", "--if-exists", "get", "open_vswitch", ".", "other_config:hw-offload")
 	if err != nil {
 		return false
 	}
@@ -361,7 +361,7 @@ func (o *OVS) HardwareOffloadingEnabled() bool {
 
 // OVNSouthboundDBRemoteAddress gets the address of the southbound ovn database.
 func (o *OVS) OVNSouthboundDBRemoteAddress() (string, error) {
-	result, err := shared.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-remote")
+	result, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-remote")
 	if err != nil {
 		return "", err
 	}

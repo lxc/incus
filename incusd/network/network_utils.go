@@ -27,10 +27,12 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/iprange"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -696,7 +698,7 @@ func pingIP(ctx context.Context, ip net.IP) error {
 		timeout = time.Until(deadline)
 	}
 
-	_, err := shared.RunCommandContext(ctx, cmd, "-n", "-q", ip.String(), "-c", "1", "-w", fmt.Sprintf("%d", int(timeout.Seconds())))
+	_, err := subprocess.RunCommandContext(ctx, cmd, "-n", "-q", ip.String(), "-c", "1", "-w", fmt.Sprintf("%d", int(timeout.Seconds())))
 
 	return err
 }
@@ -935,13 +937,13 @@ func randomHwaddr(r *rand.Rand) string {
 	return ret.String()
 }
 
-// parseIPRange parses an IP range in the format "start-end" and converts it to a shared.IPRange.
+// parseIPRange parses an IP range in the format "start-end" and converts it to a iprange.Range.
 // If allowedNets are supplied, then each IP in the range is checked that it belongs to at least one of them.
 // IPs in the range can be zero prefixed, e.g. "::1" or "0.0.0.1", however they should not overlap with any
 // supplied allowedNets prefixes. If they are within an allowed network, any zero prefixed addresses are
 // returned combined with the first allowed network they are within.
 // If no allowedNets supplied they are returned as-is.
-func parseIPRange(ipRange string, allowedNets ...*net.IPNet) (*shared.IPRange, error) {
+func parseIPRange(ipRange string, allowedNets ...*net.IPNet) (*iprange.Range, error) {
 	inAllowedNet := func(ip net.IP, allowedNet *net.IPNet) net.IP {
 		if ip == nil {
 			return nil
@@ -1023,16 +1025,16 @@ func parseIPRange(ipRange string, allowedNets ...*net.IPNet) (*shared.IPRange, e
 		}
 	}
 
-	return &shared.IPRange{
+	return &iprange.Range{
 		Start: startIP,
 		End:   endIP,
 	}, nil
 }
 
 // parseIPRanges parses a comma separated list of IP ranges using parseIPRange.
-func parseIPRanges(ipRangesList string, allowedNets ...*net.IPNet) ([]*shared.IPRange, error) {
+func parseIPRanges(ipRangesList string, allowedNets ...*net.IPNet) ([]*iprange.Range, error) {
 	ipRanges := strings.Split(ipRangesList, ",")
-	netIPRanges := make([]*shared.IPRange, 0, len(ipRanges))
+	netIPRanges := make([]*iprange.Range, 0, len(ipRanges))
 	for _, ipRange := range ipRanges {
 		netIPRange, err := parseIPRange(strings.TrimSpace(ipRange), allowedNets...)
 		if err != nil {
@@ -1208,7 +1210,7 @@ func SubnetParseAppend(subnets []*net.IPNet, parseSubnet ...string) ([]*net.IPNe
 }
 
 // IPRangesOverlap checks whether two ip ranges have ip addresses in common.
-func IPRangesOverlap(r1, r2 *shared.IPRange) bool {
+func IPRangesOverlap(r1, r2 *iprange.Range) bool {
 	if r1.End == nil {
 		return r2.ContainsIP(r1.Start)
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/mdlayher/netx/eui64"
 
 	"github.com/lxc/incus/incusd/dnsmasq"
+	"github.com/lxc/incus/internal/iprange"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 )
@@ -21,7 +22,7 @@ import (
 var ErrDHCPNotSupported error = errors.New("Network doesn't support DHCP")
 
 // DHCPValidIP returns whether an IP fits inside one of the supplied DHCP ranges and subnet.
-func DHCPValidIP(subnet *net.IPNet, ranges []shared.IPRange, IP net.IP) bool {
+func DHCPValidIP(subnet *net.IPNet, ranges []iprange.Range, IP net.IP) bool {
 	inSubnet := subnet.Contains(IP)
 	if !inSubnet {
 		return false
@@ -82,8 +83,8 @@ type Network interface {
 	Config() map[string]string
 	DHCPv4Subnet() *net.IPNet
 	DHCPv6Subnet() *net.IPNet
-	DHCPv4Ranges() []shared.IPRange
-	DHCPv6Ranges() []shared.IPRange
+	DHCPv4Ranges() []iprange.Range
+	DHCPv6Ranges() []iprange.Range
 }
 
 // Options to initialise the allocator with.
@@ -196,7 +197,7 @@ func (t *Transaction) getDHCPFreeIPv4(usedIPs map[[4]byte]dnsmasq.DHCPAllocation
 
 	// If no custom ranges defined, convert subnet pool to a range.
 	if len(dhcpRanges) <= 0 {
-		dhcpRanges = append(dhcpRanges, shared.IPRange{
+		dhcpRanges = append(dhcpRanges, iprange.Range{
 			Start: GetIP(subnet, 1).To4(),
 			End:   GetIP(subnet, -2).To4()},
 		)
@@ -285,7 +286,7 @@ func (t *Transaction) getDHCPFreeIPv6(usedIPs map[[16]byte]dnsmasq.DHCPAllocatio
 
 	// If no custom ranges defined, convert subnet pool to a range.
 	if len(dhcpRanges) <= 0 {
-		dhcpRanges = append(dhcpRanges, shared.IPRange{
+		dhcpRanges = append(dhcpRanges, iprange.Range{
 			Start: GetIP(subnet, 1).To16(),
 			End:   GetIP(subnet, -1).To16()},
 		)

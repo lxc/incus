@@ -3,7 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package shared
+package tls
 
 import (
 	"crypto/ecdsa"
@@ -26,7 +26,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/proxy"
 )
 
 // KeyPairAndCA returns a CertInfo object with a reference to the key pair and
@@ -64,7 +66,7 @@ func KeyPairAndCA(dir, prefix string, kind CertKind, addHosts bool) (*CertInfo, 
 	// If available, load the CA data as well.
 	caFilename := filepath.Join(dir, prefix+".ca")
 	var ca *x509.Certificate
-	if PathExists(caFilename) {
+	if shared.PathExists(caFilename) {
 		ca, err = ReadCert(caFilename)
 		if err != nil {
 			return nil, err
@@ -73,7 +75,7 @@ func KeyPairAndCA(dir, prefix string, kind CertKind, addHosts bool) (*CertInfo, 
 
 	crlFilename := filepath.Join(dir, "ca.crl")
 	var crl *pkix.CertificateList
-	if PathExists(crlFilename) {
+	if shared.PathExists(crlFilename) {
 		data, err := os.ReadFile(crlFilename)
 		if err != nil {
 			return nil, err
@@ -238,7 +240,7 @@ func mynames() ([]string, error) {
 // FindOrGenCert generates a keypair if needed.
 // The type argument is false for server, true for client.
 func FindOrGenCert(certf string, keyf string, certtype bool, addHosts bool) error {
-	if PathExists(certf) && PathExists(keyf) {
+	if shared.PathExists(certf) && shared.PathExists(keyf) {
 		return nil
 	}
 
@@ -437,7 +439,7 @@ func GetRemoteCertificate(address string, useragent string) (*x509.Certificate, 
 	tr := &http.Transport{
 		TLSClientConfig:       tlsConfig,
 		DialContext:           RFC3493Dialer,
-		Proxy:                 ProxyFromEnvironment,
+		Proxy:                 proxy.FromEnvironment,
 		ExpectContinueTimeout: time.Second * 30,
 		ResponseHeaderTimeout: time.Second * 3600,
 		TLSHandshakeTimeout:   time.Second * 5,

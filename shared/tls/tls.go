@@ -1,4 +1,4 @@
-package shared
+package tls
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/lxc/incus/shared"
 )
 
 // connectErrorPrefix used as prefix to error returned from RFC3493Dialer.
@@ -61,7 +63,7 @@ func InitTLSConfig() *tls.Config {
 	config := &tls.Config{}
 
 	// Restrict to TLS 1.3 unless INCUS_INSECURE_TLS is set.
-	if IsFalseOrEmpty(os.Getenv("INCUS_INSECURE_TLS")) {
+	if shared.IsFalseOrEmpty(os.Getenv("INCUS_INSECURE_TLS")) {
 		config.MinVersion = tls.VersionTLS13
 	} else {
 		config.MinVersion = tls.VersionTLS12
@@ -163,23 +165,4 @@ func GetTLSConfigMem(tlsClientCert string, tlsClientKey string, tlsClientCA stri
 	finalizeTLSConfig(tlsConfig, tlsRemoteCert)
 
 	return tlsConfig, nil
-}
-
-func IsLoopback(iface *net.Interface) bool {
-	return int(iface.Flags&net.FlagLoopback) > 0
-}
-
-// AllocatePort asks the kernel for a free open port that is ready to use.
-func AllocatePort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return -1, err
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return -1, err
-	}
-
-	return l.Addr().(*net.TCPAddr).Port, l.Close()
 }

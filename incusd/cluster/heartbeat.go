@@ -18,9 +18,9 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/incusd/warnings"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 type heartbeatMode int
@@ -140,7 +140,7 @@ func (hbState *APIHeartbeat) Update(fullStateList bool, raftNodes []db.RaftNode,
 }
 
 // Send sends heartbeat requests to the nodes supplied and updates heartbeat state.
-func (hbState *APIHeartbeat) Send(ctx context.Context, networkCert *shared.CertInfo, serverCert *shared.CertInfo, localAddress string, nodes []db.NodeInfo, spreadDuration time.Duration) {
+func (hbState *APIHeartbeat) Send(ctx context.Context, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, localAddress string, nodes []db.NodeInfo, spreadDuration time.Duration) {
 	heartbeatsWg := sync.WaitGroup{}
 	sendHeartbeat := func(nodeID int64, address string, spreadDuration time.Duration, heartbeatData *APIHeartbeat) {
 		defer heartbeatsWg.Done()
@@ -509,7 +509,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 }
 
 // HeartbeatNode performs a single heartbeat request against the node with the given address.
-func HeartbeatNode(taskCtx context.Context, address string, networkCert *shared.CertInfo, serverCert *shared.CertInfo, heartbeatData *APIHeartbeat) error {
+func HeartbeatNode(taskCtx context.Context, address string, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, heartbeatData *APIHeartbeat) error {
 	logger.Debug("Sending heartbeat request", logger.Ctx{"address": address})
 
 	config, err := tlsClientConfig(networkCert, serverCert)

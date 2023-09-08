@@ -19,8 +19,8 @@ import (
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/osarch"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // After a heartbeat request is completed, the leader updates the heartbeat
@@ -205,8 +205,8 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 	state, cleanup := state.NewTestState(f.t)
 	f.cleanups = append(f.cleanups, cleanup)
 
-	serverCert := shared.TestingKeyPair()
-	state.ServerCert = func() *shared.CertInfo { return serverCert }
+	serverCert := localtls.TestingKeyPair()
+	state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(f.t, state.DB.Node, serverCert, state)
 	f.cleanups = append(f.cleanups, func() { _ = gateway.Shutdown() })

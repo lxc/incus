@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/ioprogress"
+	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -643,7 +644,7 @@ func (r *ProtocolIncus) tryCopyImage(req api.ImagesPost, urls []string) (RemoteO
 			if err != nil {
 				errors = append(errors, remoteOperationResult{URL: serverURL, Error: err})
 
-				if shared.IsConnectionError(err) {
+				if localtls.IsConnectionError(err) {
 					continue
 				}
 

@@ -12,7 +12,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/apparmor"
-	"github.com/lxc/incus/incusd/archive"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/instance"
@@ -26,6 +25,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/sys"
+	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
@@ -522,7 +522,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 		rootfsPath := filepath.Join(destPath, "rootfs")
 
 		// Unpack the main image file.
-		err := archive.Unpack(imageFile, destPath, blockBackend, sysOS, tracker)
+		err := archive.Unpack(imageFile, destPath, blockBackend, tracker)
 		if err != nil {
 			return -1, err
 		}
@@ -534,7 +534,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 				return -1, fmt.Errorf("Error creating rootfs directory")
 			}
 
-			err = archive.Unpack(imageRootfsFile, rootfsPath, blockBackend, sysOS, tracker)
+			err = archive.Unpack(imageRootfsFile, rootfsPath, blockBackend, tracker)
 			if err != nil {
 				return -1, err
 			}
@@ -663,7 +663,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 
 	if shared.PathExists(imageRootfsFile) {
 		// Unpack the main image file.
-		err := archive.Unpack(imageFile, destPath, blockBackend, sysOS, tracker)
+		err := archive.Unpack(imageFile, destPath, blockBackend, tracker)
 		if err != nil {
 			return -1, err
 		}
@@ -683,7 +683,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 		defer func() { _ = os.RemoveAll(tempDir) }()
 
 		// Unpack the whole image.
-		err = archive.Unpack(imageFile, tempDir, blockBackend, sysOS, tracker)
+		err = archive.Unpack(imageFile, tempDir, blockBackend, tracker)
 		if err != nil {
 			return -1, err
 		}

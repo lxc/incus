@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/lxc/incus/incusd/revert"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -100,7 +101,7 @@ func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 	addrHost, addrPort, err := net.SplitHostPort(address)
 	if err != nil {
 		addrHost = address
-		addrPort = "179"
+		addrPort = fmt.Sprintf("%d", ports.BGPDefaultPort)
 	}
 
 	if addrHost == "" {

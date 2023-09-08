@@ -13,15 +13,16 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // NotifyUpgradeCompleted sends a notification to all other nodes in the
 // cluster that any possible pending database update has been applied, and any
 // nodes which was waiting for this node to be upgraded should re-check if it's
 // okay to move forward.
-func NotifyUpgradeCompleted(state *state.State, networkCert *shared.CertInfo, serverCert *shared.CertInfo) error {
+func NotifyUpgradeCompleted(state *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo) error {
 	notifier, err := NewNotifier(state, networkCert, serverCert, NotifyTryAll)
 	if err != nil {
 		return err
@@ -117,7 +118,7 @@ func triggerUpdate() error {
 	time.Sleep(wait)
 
 	logger.Info("Triggering cluster auto-update now")
-	_, err := shared.RunCommand(updateExecutable)
+	_, err := subprocess.RunCommand(updateExecutable)
 	if err != nil {
 		logger.Error("Triggering cluster update failed", logger.Ctx{"err": err})
 		return err

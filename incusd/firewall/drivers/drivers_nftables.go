@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -99,12 +100,12 @@ func (d Nftables) Compat() (bool, error) {
 	// Check that nftables works at all (some kernels let you list ruleset despite missing support).
 	testTable := fmt.Sprintf("incus_test_%s", uuid.New())
 
-	_, err = shared.RunCommandCLocale("nft", "create", "table", testTable)
+	_, err = subprocess.RunCommandCLocale("nft", "create", "table", testTable)
 	if err != nil {
 		return false, fmt.Errorf("Failed to create a test table: %w", err)
 	}
 
-	_, err = shared.RunCommandCLocale("nft", "delete", "table", testTable)
+	_, err = subprocess.RunCommandCLocale("nft", "delete", "table", testTable)
 	if err != nil {
 		return false, fmt.Errorf("Failed to delete a test table: %w", err)
 	}
@@ -186,7 +187,7 @@ func (d Nftables) nftParseRuleset() ([]nftGenericItem, error) {
 
 // GetVersion returns the version of dnsmasq.
 func (d Nftables) hostVersion() (*version.DottedVersion, error) {
-	output, err := shared.RunCommandCLocale("nft", "--version")
+	output, err := subprocess.RunCommandCLocale("nft", "--version")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to check nftables version: %w", err)
 	}
@@ -306,7 +307,7 @@ func (d Nftables) networkSetupACLChainAndJumpRules(networkName string) error {
 		return fmt.Errorf("Failed running %q template: %w", nftablesNetACLSetup.Name(), err)
 	}
 
-	err = shared.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
+	err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
 	if err != nil {
 		return err
 	}
@@ -548,7 +549,7 @@ func (d Nftables) InstanceSetupProxyNAT(projectName string, instanceName string,
 		return fmt.Errorf("Failed running %q template: %w", nftablesNetProxyNAT.Name(), err)
 	}
 
-	err = shared.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
+	err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
 	if err != nil {
 		return err
 	}
@@ -585,7 +586,7 @@ func (d Nftables) applyNftConfig(tpl *template.Template, tplFields map[string]an
 		return fmt.Errorf("Failed running %q template: %w", tpl.Name(), err)
 	}
 
-	err = shared.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
+	err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("Failed apply nftables config: %w", err)
 	}
@@ -626,7 +627,7 @@ func (d Nftables) removeChains(families []string, chainSuffix string, chains ...
 			continue
 		}
 
-		_, err = shared.RunCommand("nft", "flush", "chain", item.Family, nftablesNamespace, item.Name, ";", "delete", "chain", item.Family, nftablesNamespace, item.Name)
+		_, err = subprocess.RunCommand("nft", "flush", "chain", item.Family, nftablesNamespace, item.Name, ";", "delete", "chain", item.Family, nftablesNamespace, item.Name)
 		if err != nil {
 			return fmt.Errorf("Failed deleting nftables chain %q (%s): %w", item.Name, item.Family, err)
 		}
@@ -713,7 +714,7 @@ func (d Nftables) NetworkApplyACLRules(networkName string, rules []ACLRule) erro
 		return fmt.Errorf("Failed running %q template: %w", nftablesNetACLRules.Name(), err)
 	}
 
-	err = shared.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
+	err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
 	if err != nil {
 		return err
 	}
@@ -1042,7 +1043,7 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 			return fmt.Errorf("Failed running %q template: %w", nftablesNetProxyNAT.Name(), err)
 		}
 
-		err = shared.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
+		err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
 		if err != nil {
 			return err
 		}

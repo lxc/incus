@@ -9,8 +9,8 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // Notifier is a function that invokes the given function against each node in
@@ -30,7 +30,7 @@ const (
 
 // NewNotifier builds a Notifier that can be used to notify other peers using
 // the given policy.
-func NewNotifier(state *state.State, networkCert *shared.CertInfo, serverCert *shared.CertInfo, policy NotifierPolicy) (Notifier, error) {
+func NewNotifier(state *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, policy NotifierPolicy) (Notifier, error) {
 	localClusterAddress := state.LocalConfig.ClusterAddress()
 
 	// Fast-track the case where we're not clustered at all.
@@ -109,7 +109,7 @@ func NewNotifier(state *state.State, networkCert *shared.CertInfo, serverCert *s
 		// TODO: aggregate all errors?
 		for i, err := range errs {
 			if err != nil {
-				if shared.IsConnectionError(err) && policy == NotifyAlive {
+				if localtls.IsConnectionError(err) && policy == NotifyAlive {
 					logger.Warnf("Could not notify node %s", peers[i])
 					continue
 				}

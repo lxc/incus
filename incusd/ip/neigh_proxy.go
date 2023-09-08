@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // NeighProxy represents arguments for neighbour proxy manipulation.
@@ -15,7 +16,7 @@ type NeighProxy struct {
 
 // Show list neighbour proxy entries.
 func (n *NeighProxy) Show() ([]NeighProxy, error) {
-	out, err := shared.RunCommand("ip", "neigh", "show", "proxy", "dev", n.DevName)
+	out, err := subprocess.RunCommand("ip", "neigh", "show", "proxy", "dev", n.DevName)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func (n *NeighProxy) Show() ([]NeighProxy, error) {
 
 // Add a neighbour proxy entry.
 func (n *NeighProxy) Add() error {
-	_, err := shared.RunCommand("ip", "neigh", "add", "proxy", n.Addr.String(), "dev", n.DevName)
+	_, err := subprocess.RunCommand("ip", "neigh", "add", "proxy", n.Addr.String(), "dev", n.DevName)
 	if err != nil {
 		return err
 	}
@@ -55,7 +56,7 @@ func (n *NeighProxy) Add() error {
 
 // Delete a neighbour proxy entry.
 func (n *NeighProxy) Delete() error {
-	_, err := shared.RunCommand("ip", "neigh", "delete", "proxy", n.Addr.String(), "dev", n.DevName)
+	_, err := subprocess.RunCommand("ip", "neigh", "delete", "proxy", n.Addr.String(), "dev", n.DevName)
 	if err != nil {
 		return err
 	}

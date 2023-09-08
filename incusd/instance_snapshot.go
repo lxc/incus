@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -471,7 +472,7 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 		return response.PreconditionFailed(err)
 	}
 
-	rj := shared.Jmap{}
+	rj := jmap.Map{}
 
 	err = json.NewDecoder(r.Body).Decode(&rj)
 	if err != nil {
@@ -638,7 +639,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 
 	rdr1 := io.NopCloser(bytes.NewBuffer(body))
 
-	raw := shared.Jmap{}
+	raw := jmap.Map{}
 	err = json.NewDecoder(rdr1).Decode(&raw)
 	if err != nil {
 		return response.BadRequest(err)

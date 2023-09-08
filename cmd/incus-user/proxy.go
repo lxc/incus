@@ -12,6 +12,7 @@ import (
 
 	"github.com/lxc/incus/incusd/ucred"
 	"github.com/lxc/incus/shared"
+	localtls "github.com/lxc/incus/shared/tls"
 )
 
 func tlsConfig(uid uint32) (*tls.Config, error) {
@@ -44,7 +45,7 @@ func tlsConfig(uid uint32) (*tls.Config, error) {
 
 	tlsServerCert := string(content)
 
-	return shared.GetTLSConfigMem(tlsClientCert, tlsClientKey, "", tlsServerCert, false)
+	return localtls.GetTLSConfigMem(tlsClientCert, tlsClientKey, "", tlsServerCert, false)
 }
 
 func proxyConnection(conn *net.UnixConn) {

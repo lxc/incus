@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 // MinBlockBoundary minimum block boundary size to use.
@@ -55,7 +56,7 @@ func wipeDirectory(path string) error {
 func forceRemoveAll(path string) error {
 	err := os.RemoveAll(path)
 	if err != nil {
-		_, _ = shared.RunCommand("chattr", "-ai", "-R", path)
+		_, _ = subprocess.RunCommand("chattr", "-ai", "-R", path)
 		err = os.RemoveAll(path)
 		if err != nil {
 			return err
@@ -213,7 +214,7 @@ func tryExists(path string) bool {
 
 // fsUUID returns the filesystem UUID for the given block path.
 func fsUUID(path string) (string, error) {
-	val, err := shared.RunCommand("blkid", "-s", "UUID", "-o", "value", path)
+	val, err := subprocess.RunCommand("blkid", "-s", "UUID", "-o", "value", path)
 	if err != nil {
 		return "", err
 	}
@@ -223,7 +224,7 @@ func fsUUID(path string) (string, error) {
 
 // fsProbe returns the filesystem type for the given block path.
 func fsProbe(path string) (string, error) {
-	val, err := shared.RunCommand("blkid", "-s", "TYPE", "-o", "value", path)
+	val, err := subprocess.RunCommand("blkid", "-s", "TYPE", "-o", "value", path)
 	if err != nil {
 		return "", err
 	}
@@ -406,7 +407,7 @@ func makeFSType(path string, fsType string, options *mkfsOptions) (string, error
 	// Always add the path to the device as the last argument for wider compatibility with versions of mkfs.
 	cmd = append(cmd, path)
 
-	msg, err = shared.TryRunCommand(cmd[0], cmd[1:]...)
+	msg, err = subprocess.TryRunCommand(cmd[0], cmd[1:]...)
 	if err != nil {
 		return msg, err
 	}
@@ -447,10 +448,10 @@ func shrinkFileSystem(fsType string, devPath string, vol Volume, byteSize int64,
 	switch fsType {
 	case "ext4":
 		return vol.UnmountTask(func(op *operations.Operation) error {
-			output, err := shared.RunCommand("e2fsck", "-f", "-y", devPath)
+			output, err := subprocess.RunCommand("e2fsck", "-f", "-y", devPath)
 			if err != nil {
 				exitCodeFSModified := false
-				runErr, ok := err.(shared.RunError)
+				runErr, ok := err.(subprocess.RunError)
 				if ok {
 					exitError, ok := runErr.Unwrap().(*exec.ExitError)
 					if ok {
@@ -478,7 +479,7 @@ func shrinkFileSystem(fsType string, devPath string, vol Volume, byteSize int64,
 			}
 
 			args = append(args, devPath, strSize)
-			_, err = shared.RunCommand("resize2fs", args...)
+			_, err = subprocess.RunCommand("resize2fs", args...)
 			if err != nil {
 				return err
 			}
@@ -487,7 +488,7 @@ func shrinkFileSystem(fsType string, devPath string, vol Volume, byteSize int64,
 		}, true, nil)
 	case "btrfs":
 		return vol.MountTask(func(mountPath string, op *operations.Operation) error {
-			_, err := shared.RunCommand("btrfs", "filesystem", "resize", strSize, mountPath)
+			_, err := subprocess.RunCommand("btrfs", "filesystem", "resize", strSize, mountPath)
 			if err != nil {
 				return err
 			}
@@ -510,11 +511,11 @@ func growFileSystem(fsType string, devPath string, vol Volume) error {
 		var err error
 		switch fsType {
 		case "ext4":
-			msg, err = shared.TryRunCommand("resize2fs", devPath)
+			msg, err = subprocess.TryRunCommand("resize2fs", devPath)
 		case "xfs":
-			msg, err = shared.TryRunCommand("xfs_growfs", mountPath)
+			msg, err = subprocess.TryRunCommand("xfs_growfs", mountPath)
 		case "btrfs":
-			msg, err = shared.TryRunCommand("btrfs", "filesystem", "resize", "max", mountPath)
+			msg, err = subprocess.TryRunCommand("btrfs", "filesystem", "resize", "max", mountPath)
 		default:
 			return fmt.Errorf("Unrecognised filesystem type %q", fsType)
 		}
@@ -556,12 +557,12 @@ func regenerateFilesystemUUID(fsType string, devPath string) error {
 func regenerateFilesystemBTRFSUUID(devPath string) error {
 	// If the snapshot was taken whilst instance was running there may be outstanding transactions that will
 	// cause btrfstune to corrupt superblock, so ensure these are cleared out first.
-	_, err := shared.RunCommand("btrfs", "rescue", "zero-log", devPath)
+	_, err := subprocess.RunCommand("btrfs", "rescue", "zero-log", devPath)
 	if err != nil {
 		return err
 	}
 
-	_, err = shared.RunCommand("btrfstune", "-f", "-u", devPath)
+	_, err = subprocess.RunCommand("btrfstune", "-f", "-u", devPath)
 	if err != nil {
 		return err
 	}
@@ -572,20 +573,20 @@ func regenerateFilesystemBTRFSUUID(devPath string) error {
 // regenerateFilesystemXFSUUID changes the XFS filesystem UUID to a new randomly generated one.
 func regenerateFilesystemXFSUUID(devPath string) error {
 	// Attempt to generate a new UUID.
-	msg, err := shared.RunCommand("xfs_admin", "-U", "generate", devPath)
+	msg, err := subprocess.RunCommand("xfs_admin", "-U", "generate", devPath)
 	if err != nil {
 		return err
 	}
 
 	if msg != "" {
 		// Exit 0 with a msg usually means some log entry getting in the way.
-		_, err = shared.RunCommand("xfs_repair", "-o", "force_geometry", "-L", devPath)
+		_, err = subprocess.RunCommand("xfs_repair", "-o", "force_geometry", "-L", devPath)
 		if err != nil {
 			return err
 		}
 
 		// Attempt to generate a new UUID again.
-		_, err = shared.RunCommand("xfs_admin", "-U", "generate", devPath)
+		_, err = subprocess.RunCommand("xfs_admin", "-U", "generate", devPath)
 		if err != nil {
 			return err
 		}
@@ -617,7 +618,7 @@ func copyDevice(inputPath string, outputPath string) error {
 		_ = to.Close()
 	}
 
-	_, err = shared.RunCommand(cmd[0], cmd[1:]...)
+	_, err = subprocess.RunCommand(cmd[0], cmd[1:]...)
 	if err != nil {
 		return err
 	}
@@ -725,7 +726,7 @@ func btrfsIsSubVolume(subvolPath string) bool {
 
 // BTRFSSubVolumeIsRo returns if subvolume is read only.
 func BTRFSSubVolumeIsRo(path string) bool {
-	output, err := shared.RunCommand("btrfs", "property", "get", "-ts", path)
+	output, err := subprocess.RunCommand("btrfs", "property", "get", "-ts", path)
 	if err != nil {
 		return false
 	}
@@ -735,13 +736,13 @@ func BTRFSSubVolumeIsRo(path string) bool {
 
 // BTRFSSubVolumeMakeRo makes a subvolume read only. Deprecated use btrfs.setSubvolumeReadonlyProperty().
 func BTRFSSubVolumeMakeRo(path string) error {
-	_, err := shared.RunCommand("btrfs", "property", "set", "-ts", path, "ro", "true")
+	_, err := subprocess.RunCommand("btrfs", "property", "set", "-ts", path, "ro", "true")
 	return err
 }
 
 // BTRFSSubVolumeMakeRw makes a sub volume read/write. Deprecated use btrfs.setSubvolumeReadonlyProperty().
 func BTRFSSubVolumeMakeRw(path string) error {
-	_, err := shared.RunCommand("btrfs", "property", "set", "-ts", path, "ro", "false")
+	_, err := subprocess.RunCommand("btrfs", "property", "set", "-ts", path, "ro", "false")
 	return err
 }
 
@@ -818,10 +819,10 @@ func loopFileSizeDefault() (uint64, error) {
 // loopFileSetup sets up a loop device for the provided sourcePath.
 // It tries to enable direct I/O if supported.
 func loopDeviceSetup(sourcePath string) (string, error) {
-	out, err := shared.RunCommand("losetup", "--find", "--nooverlap", "--direct-io=on", "--show", sourcePath)
+	out, err := subprocess.RunCommand("losetup", "--find", "--nooverlap", "--direct-io=on", "--show", sourcePath)
 	if err != nil {
 		if strings.Contains(err.Error(), "direct io") || strings.Contains(err.Error(), "Invalid argument") {
-			out, err = shared.RunCommand("losetup", "--find", "--nooverlap", "--show", sourcePath)
+			out, err = subprocess.RunCommand("losetup", "--find", "--nooverlap", "--show", sourcePath)
 			if err != nil {
 				return "", err
 			}
@@ -835,13 +836,13 @@ func loopDeviceSetup(sourcePath string) (string, error) {
 
 // loopFileAutoDetach enables auto detach mode for a loop device.
 func loopDeviceAutoDetach(loopDevPath string) error {
-	_, err := shared.RunCommand("losetup", "--detach", loopDevPath)
+	_, err := subprocess.RunCommand("losetup", "--detach", loopDevPath)
 	return err
 }
 
 // loopDeviceSetCapacity forces the loop driver to reread the size of the file associated with the specified loop device.
 func loopDeviceSetCapacity(loopDevPath string) error {
-	_, err := shared.RunCommand("losetup", "--set-capacity", loopDevPath)
+	_, err := subprocess.RunCommand("losetup", "--set-capacity", loopDevPath)
 	return err
 }
 

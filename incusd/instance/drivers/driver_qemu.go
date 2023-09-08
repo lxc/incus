@@ -69,6 +69,8 @@ import (
 	localvsock "github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -76,6 +78,7 @@ import (
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"
+	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
 )
 
@@ -384,7 +387,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 		return nil, err
 	}
 
-	agent, err := localvsock.HTTPClient(vsockID, shared.HTTPSDefaultPort, clientCert, clientKey, agentCert)
+	agent, err := localvsock.HTTPClient(vsockID, ports.HTTPSDefaultPort, clientCert, clientKey, agentCert)
 	if err != nil {
 		return nil, err
 	}
@@ -503,13 +506,13 @@ func (d *qemu) generateAgentCert() (string, string, string, string, error) {
 	clientKeyFile := filepath.Join(d.Path(), "agent-client.key")
 
 	// Create server certificate.
-	err := shared.FindOrGenCert(agentCertFile, agentKeyFile, false, false)
+	err := localtls.FindOrGenCert(agentCertFile, agentKeyFile, false, false)
 	if err != nil {
 		return "", "", "", "", err
 	}
 
 	// Create client certificate.
-	err = shared.FindOrGenCert(clientCertFile, clientKeyFile, true, false)
+	err = localtls.FindOrGenCert(clientCertFile, clientKeyFile, true, false)
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -1905,7 +1908,7 @@ func (d *qemu) AgentCertificate() *x509.Certificate {
 		return nil
 	}
 
-	cert, err := shared.ReadCert(agentCert)
+	cert, err := localtls.ReadCert(agentCert)
 	if err != nil {
 		return nil
 	}
@@ -6207,7 +6210,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 		// Create qcow2 disk image with the maximum size set to the instance's root disk size for use as
 		// a CoW target for the migration snapshot. This will be used during migration to store writes in
 		// the guest whilst the storage driver is transferring the root disk and snapshots to the taget.
-		_, err = shared.RunCommand("qemu-img", "create", "-f", "qcow2", snapshotFile, fmt.Sprintf("%d", rootDiskSize))
+		_, err = subprocess.RunCommand("qemu-img", "create", "-f", "qcow2", snapshotFile, fmt.Sprintf("%d", rootDiskSize))
 		if err != nil {
 			return fmt.Errorf("Failed opening file image for migration storage snapshot %q: %w", snapshotFile, err)
 		}
@@ -7816,7 +7819,7 @@ func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
 }
 
 func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) error {
-	event := shared.Jmap{}
+	event := jmap.Map{}
 	event["type"] = eventType
 	event["timestamp"] = time.Now()
 	event["metadata"] = eventMessage
