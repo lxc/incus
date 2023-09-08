@@ -847,7 +847,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 				}
 			}
 		}
-	} else if osInfo != nil && shared.IsLoopback(osInfo) {
+	} else if osInfo != nil && int(osInfo.Flags&net.FlagLoopback) > 0 {
 		apiNet.Type = "loopback"
 	} else if shared.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", apiNet.Name)) {
 		apiNet.Type = "bridge"
