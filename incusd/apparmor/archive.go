@@ -1,11 +1,17 @@
 package apparmor
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
 
+	"github.com/pborman/uuid"
+
+	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/shared"
 )
@@ -37,52 +43,79 @@ profile "{{.name}}" {
 }
 `))
 
-// ArchiveLoad ensures that the archive's policy is loaded into the kernel.
-func ArchiveLoad(sysOS *sys.OS, outputPath string, allowedCommandPaths []string) error {
-	profile := filepath.Join(aaPath, "profiles", ArchiveProfileFilename(outputPath))
-	content, err := os.ReadFile(profile)
-	if err != nil && !os.IsNotExist(err) {
-		return err
+// ArchiveWrapper is used as a RunWrapper in the rsync package.
+func ArchiveWrapper(sysOS *sys.OS, cmd *exec.Cmd, output string, allowedCmds []string) (func(), error) {
+	if !sysOS.AppArmorAvailable {
+		return func() {}, nil
 	}
 
-	updated, err := archiveProfile(outputPath, allowedCommandPaths)
+	revert := revert.New()
+	defer revert.Fail()
+
+	// Load the profile.
+	profileName, err := archiveProfileLoad(sysOS, output, allowedCmds)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("Failed to load apparmor profile: %w", err)
 	}
 
-	if string(content) != string(updated) {
-		err = os.WriteFile(profile, []byte(updated), 0600)
-		if err != nil {
-			return err
-		}
-	}
+	revert.Add(func() { _ = deleteProfile(sysOS, profileName, profileName) })
 
-	err = loadProfile(sysOS, ArchiveProfileFilename(outputPath))
+	// Resolve aa-exec.
+	execPath, err := exec.LookPath("aa-exec")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	// Override the command.
+	newArgs := []string{"aa-exec", "-p", profileName}
+	newArgs = append(newArgs, cmd.Args...)
+	cmd.Args = newArgs
+	cmd.Path = execPath
+
+	// All done, setup a cleanup function and disarm reverter.
+	cleanup := func() {
+		_ = deleteProfile(sysOS, profileName, profileName)
+	}
+
+	revert.Success()
+
+	return cleanup, nil
 }
 
-// ArchiveUnload ensures that the archive's policy namespace is unloaded to free kernel memory.
-// This does not delete the policy from disk or cache.
-func ArchiveUnload(sysOS *sys.OS, outputPath string) error {
-	err := unloadProfile(sysOS, ArchiveProfileName(outputPath), ArchiveProfileFilename(outputPath))
+func archiveProfileLoad(sysOS *sys.OS, output string, allowedCommandPaths []string) (string, error) {
+	revert := revert.New()
+	defer revert.Fail()
+
+	// Generate a temporary profile name.
+	name := profileName("archive", uuid.New())
+	profilePath := filepath.Join(aaPath, "profiles", name)
+
+	// Generate the profile
+	content, err := archiveProfile(name, output, allowedCommandPaths)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
-}
+	// Write it to disk.
+	err = ioutil.WriteFile(profilePath, []byte(content), 0600)
+	if err != nil {
+		return "", err
+	}
 
-// ArchiveDelete removes the profile from cache/disk.
-func ArchiveDelete(sysOS *sys.OS, outputPath string) error {
-	return deleteProfile(sysOS, ArchiveProfileName(outputPath), ArchiveProfileFilename(outputPath))
+	revert.Add(func() { os.Remove(profilePath) })
+
+	// Load it.
+	err = loadProfile(sysOS, name)
+	if err != nil {
+		return "", err
+	}
+
+	revert.Success()
+	return name, nil
 }
 
 // archiveProfile generates the AppArmor profile template from the given destination path.
-func archiveProfile(outputPath string, allowedCommandPaths []string) (string, error) {
+func archiveProfile(name string, outputPath string, allowedCommandPaths []string) (string, error) {
 	// Attempt to deref all paths.
 	outputPathFull, err := filepath.EvalSymlinks(outputPath)
 	if err != nil {
@@ -103,6 +136,11 @@ func archiveProfile(outputPath string, allowedCommandPaths []string) (string, er
 
 	derefCommandPaths := make([]string, len(allowedCommandPaths))
 	for i, cmd := range allowedCommandPaths {
+		cmdPath, err := exec.LookPath(cmd)
+		if err == nil {
+			cmd = cmdPath
+		}
+
 		cmdFull, err := filepath.EvalSymlinks(cmd)
 		if err == nil {
 			derefCommandPaths[i] = cmdFull
@@ -114,8 +152,8 @@ func archiveProfile(outputPath string, allowedCommandPaths []string) (string, er
 	// Render the profile.
 	var sb *strings.Builder = &strings.Builder{}
 	err = archiveProfileTpl.Execute(sb, map[string]any{
-		"name":                ArchiveProfileName(outputPath), // Use non-deferenced outputPath for name.
-		"outputPath":          outputPathFull,                 // Use deferenced path in AppArmor profile.
+		"name":                name,
+		"outputPath":          outputPathFull, // Use deferenced path in AppArmor profile.
 		"backupsPath":         backupsPath,
 		"imagesPath":          imagesPath,
 		"allowedCommandPaths": derefCommandPaths,
@@ -125,16 +163,4 @@ func archiveProfile(outputPath string, allowedCommandPaths []string) (string, er
 	}
 
 	return sb.String(), nil
-}
-
-// ArchiveProfileName returns the AppArmor profile name.
-func ArchiveProfileName(outputPath string) string {
-	name := strings.Replace(strings.Trim(outputPath, "/"), "/", "-", -1)
-	return profileName("archive", name)
-}
-
-// ArchiveProfileFilename returns the name of the on-disk profile name.
-func ArchiveProfileFilename(outputPath string) string {
-	name := strings.Replace(strings.Trim(outputPath, "/"), "/", "-", -1)
-	return profileName("archive", name)
 }

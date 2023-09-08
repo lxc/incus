@@ -225,7 +225,7 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 
 	// unpackSubVolume unpacks a subvolume file from a backup tarball file.
 	unpackSubVolume := func(r io.ReadSeeker, unpacker []string, srcFile string, targetPath string) (string, error) {
-		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, d.state.OS, targetPath)
+		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, targetPath)
 		if err != nil {
 			return "", err
 		}

@@ -522,7 +522,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 		rootfsPath := filepath.Join(destPath, "rootfs")
 
 		// Unpack the main image file.
-		err := archive.Unpack(imageFile, destPath, blockBackend, sysOS, tracker)
+		err := archive.Unpack(imageFile, destPath, blockBackend, tracker)
 		if err != nil {
 			return -1, err
 		}
@@ -534,7 +534,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 				return -1, fmt.Errorf("Error creating rootfs directory")
 			}
 
-			err = archive.Unpack(imageRootfsFile, rootfsPath, blockBackend, sysOS, tracker)
+			err = archive.Unpack(imageRootfsFile, rootfsPath, blockBackend, tracker)
 			if err != nil {
 				return -1, err
 			}
@@ -663,7 +663,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 
 	if shared.PathExists(imageRootfsFile) {
 		// Unpack the main image file.
-		err := archive.Unpack(imageFile, destPath, blockBackend, sysOS, tracker)
+		err := archive.Unpack(imageFile, destPath, blockBackend, tracker)
 		if err != nil {
 			return -1, err
 		}
@@ -683,7 +683,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 		defer func() { _ = os.RemoveAll(tempDir) }()
 
 		// Unpack the whole image.
-		err = archive.Unpack(imageFile, tempDir, blockBackend, sysOS, tracker)
+		err = archive.Unpack(imageFile, tempDir, blockBackend, tracker)
 		if err != nil {
 			return -1, err
 		}

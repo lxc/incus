@@ -61,6 +61,7 @@ import (
 	"github.com/lxc/incus/incusd/ucred"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
+	"github.com/lxc/incus/internal/archive"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
@@ -749,6 +750,10 @@ func (d *Daemon) init() error {
 	}
 
 	// Setup AppArmor wrapper.
+	archive.RunWrapper = func(cmd *exec.Cmd, output string, allowedCmds []string) (func(), error) {
+		return apparmor.ArchiveWrapper(d.os, cmd, output, allowedCmds)
+	}
+
 	rsync.RunWrapper = func(cmd *exec.Cmd, source string, destination string) (func(), error) {
 		return apparmor.RsyncWrapper(d.os, cmd, source, destination)
 	}

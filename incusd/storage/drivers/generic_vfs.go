@@ -724,7 +724,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 				allowedCmds = append(allowedCmds, unpacker[0])
 			}
 
-			err = archive.ExtractWithFds("tar", args, allowedCmds, io.NopCloser(r), sysOS, f)
+			err = archive.ExtractWithFds("tar", args, allowedCmds, io.NopCloser(r), f)
 			if err != nil {
 				return fmt.Errorf("Error starting unpack: %w", err)
 			}
@@ -739,7 +739,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 
 			srcFile := fmt.Sprintf("%s.%s", srcPrefix, genericVolumeBlockExtension)
 
-			tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, sysOS, mountPath)
+			tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, mountPath)
 			if err != nil {
 				return err
 			}

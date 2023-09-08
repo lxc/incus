@@ -26,7 +26,7 @@ func TarReader(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*tar.Reader, 
 		return nil, nil, fmt.Errorf("Unsupported backup compression")
 	}
 
-	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, sysOS, outputPath)
+	tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, outputPath)
 	if err != nil {
 		return nil, nil, err
 	}

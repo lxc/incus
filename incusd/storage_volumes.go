@@ -1965,7 +1965,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		defer func() { _ = os.Remove(tarFile.Name()) }()
 
 		// Decompress to tarFile temporary file.
-		err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, s.OS, tarFile)
+		err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, tarFile)
 		if err != nil {
 			return response.InternalError(err)
 		}
