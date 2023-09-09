@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/instance/instancetype"
+	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/shared"
@@ -311,6 +312,9 @@ func (c *cmdAgent) mountHostShares() {
 				logger.Errorf("Failed to create mount target %q", mount.Target)
 				continue // Don't try to mount if mount point can't be created.
 			}
+		} else if filesystem.IsMountPoint(mount.Target) {
+			// Already mounted.
+			continue
 		}
 
 		if mount.FSType == "9p" {
