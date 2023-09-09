@@ -34,6 +34,7 @@ endif
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" $(GO) install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
 	CGO_ENABLED=0 $(GO) install -v -tags netgo ./cmd/incus-migrate
 	CGO_ENABLED=0 $(GO) install -v -tags agent,netgo ./cmd/incus-agent
+	cd cmd/lxd-to-incus && CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" $(GO) install -v ./
 	@echo "Incus built successfully"
 
 .PHONY: client

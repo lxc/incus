@@ -12,8 +12,8 @@ import (
 
 	"github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	incusAPI "github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 var minLXDVersion = &version.DottedVersion{4, 0, 0}

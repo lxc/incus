@@ -1,10 +1,11 @@
 module github.com/lxc/incus/cmd/lxd-to-incus
 
-go 1.21.0
+go 1.18
 
 require (
-	github.com/canonical/lxd v0.0.0-20230906180525-bbd424b78d32
-	github.com/lxc/incus v0.0.0-20230906011158-7c67b413e03b
+	github.com/canonical/lxd v0.0.0-20230908200628-227bc5cd75eb
+	github.com/lxc/incus v0.0.0-20230909152925-1f1bc2b7e5d5
+	github.com/pierrec/lz4/v4 v4.1.18
 	github.com/spf13/cobra v1.7.0
 )
 
@@ -28,7 +29,6 @@ require (
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
-	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pkg/sftp v1.13.6 // indirect
 	github.com/pkg/xattr v0.4.9 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
@@ -36,14 +36,14 @@ require (
 	github.com/rogpeppe/fastuuid v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/zitadel/oidc/v2 v2.8.3 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
-	golang.org/x/oauth2 v0.11.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/term v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
+	github.com/zitadel/oidc/v2 v2.11.0 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/net v0.15.0 // indirect
+	golang.org/x/oauth2 v0.12.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/term v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
+	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
 	gopkg.in/httprequest.v1 v1.2.1 // indirect
