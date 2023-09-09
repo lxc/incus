@@ -4,6 +4,7 @@ import (
 	"github.com/canonical/lxd/client"
 
 	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 type Source interface {

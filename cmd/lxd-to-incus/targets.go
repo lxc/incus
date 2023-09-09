@@ -5,6 +5,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 type Target interface {
