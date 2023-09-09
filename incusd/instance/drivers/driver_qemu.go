@@ -2458,8 +2458,10 @@ func (d *qemu) generateConfigShare() error {
 			d.logger.Debug("Skipping incus-agent install as unchanged", logger.Ctx{"srcPath": agentSrcPath, "installPath": agentInstallPath})
 		}
 
+		// Legacy support.
+		_ = os.Remove(filepath.Join(configDrivePath, "lxd-agent"))
 		err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
-		if err != nil && !os.IsExist(err) {
+		if err != nil {
 			return err
 		}
 	}
