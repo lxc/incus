@@ -2793,7 +2793,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 
 // deviceBootPriorities returns a map keyed on device name containing the boot index to use.
 // Qemu tries to boot devices in order of boot index (lowest first).
-func (d *qemu) deviceBootPriorities() (map[string]int, error) {
+func (d *qemu) deviceBootPriorities(base int) (map[string]int, error) {
 	type devicePrios struct {
 		Name     string
 		BootPrio uint32
@@ -2830,7 +2830,7 @@ func (d *qemu) deviceBootPriorities() (map[string]int, error) {
 
 	sortedDevs := make(map[string]int, len(devices))
 	for bootIndex, dev := range devices {
-		sortedDevs[dev.Name] = bootIndex
+		sortedDevs[dev.Name] = bootIndex + base
 	}
 
 	return sortedDevs, nil
@@ -3096,7 +3096,12 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	cfg = append(cfg, qemuGPU(&gpuOpts)...)
 
 	// Dynamic devices.
-	bootIndexes, err := d.deviceBootPriorities()
+	base := 0
+	if shared.StringInSlice("-kernel", rawOptions) {
+		base = 1
+	}
+
+	bootIndexes, err := d.deviceBootPriorities(base)
 	if err != nil {
 		return "", nil, fmt.Errorf("Error calculating boot indexes: %w", err)
 	}
