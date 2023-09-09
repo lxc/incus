@@ -6,7 +6,7 @@ require (
 	github.com/Rican7/retry v0.3.1
 	github.com/armon/go-proxyproto v0.0.0-20210323213023-7e956b284f0a
 	github.com/checkpoint-restore/go-criu/v6 v6.3.0
-	github.com/cowsql/go-cowsql v1.21.0
+	github.com/cowsql/go-cowsql v1.22.0
 	github.com/digitalocean/go-qemu v0.0.0-20230711162256-2e3d0186973e
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/dustinkirkland/golang-petname v0.0.0-20230626224747-e794b9370d49
