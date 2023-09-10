@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/canonical/lxd v0.0.0-20230908200628-227bc5cd75eb
-	github.com/lxc/incus v0.0.0-20230909152925-1f1bc2b7e5d5
+	github.com/lxc/incus v0.0.0-20230909195442-b522857c07b4
 	github.com/pierrec/lz4/v4 v4.1.18
 	github.com/spf13/cobra v1.7.0
 )
