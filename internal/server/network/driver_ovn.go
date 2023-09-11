@@ -3449,7 +3449,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				// If the sticky IP isn't statically reserved, lets check its not used dynamically
 				// on any active port.
 				if !n.hasDHCPv4Reservation(dhcpReservations, dhcpV4StickyIP) {
-					existingPortIPs, err := client.LogicalSwitchPortIPs(n.getIntSwitchName())
+					existingPortIPs, err := client.LogicalSwitchIPs(n.getIntSwitchName())
 					if err != nil {
 						return "", nil, fmt.Errorf("Failed getting existing switch port IPs: %w", err)
 					}
