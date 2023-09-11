@@ -3921,22 +3921,6 @@ func (n *ovn) instanceDeviceACLDefaults(deviceConfig deviceConfig.Device, direct
 	return defaults[fmt.Sprintf("security.acls.default.%s.action", direction)], util.IsTrue(defaults[fmt.Sprintf("security.acls.default.%s.logged", direction)])
 }
 
-// InstanceDevicePortDynamicIPs returns the dynamically allocated IPs for a device port.
-func (n *ovn) InstanceDevicePortDynamicIPs(instanceUUID string, deviceName string) ([]net.IP, error) {
-	if instanceUUID == "" {
-		return nil, fmt.Errorf("Instance UUID is required")
-	}
-
-	instancePortName := n.getInstanceDevicePortName(instanceUUID, deviceName)
-
-	client, err := openvswitch.NewOVN(n.state)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to get OVN client: %w", err)
-	}
-
-	return client.LogicalSwitchPortDynamicIPs(instancePortName)
-}
-
 // InstanceDevicePortIPs returns the allocated IPs for a device port.
 func (n *ovn) InstanceDevicePortIPs(instanceUUID string, deviceName string) ([]net.IP, error) {
 	if instanceUUID == "" {
