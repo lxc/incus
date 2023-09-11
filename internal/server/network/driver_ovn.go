@@ -3937,6 +3937,27 @@ func (n *ovn) InstanceDevicePortDynamicIPs(instanceUUID string, deviceName strin
 	return client.LogicalSwitchPortDynamicIPs(instancePortName)
 }
 
+// InstanceDevicePortIPs returns the allocated IPs for a device port.
+func (n *ovn) InstanceDevicePortIPs(instanceUUID string, deviceName string) ([]net.IP, error) {
+	if instanceUUID == "" {
+		return nil, fmt.Errorf("Instance UUID is required")
+	}
+
+	client, err := openvswitch.NewOVN(n.state)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get OVN client: %w", err)
+	}
+
+	instancePortName := n.getInstanceDevicePortName(instanceUUID, deviceName)
+
+	devIPs, err := client.LogicalSwitchPortIPs(instancePortName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get OVN switch port IPs: %w", err)
+	}
+
+	return devIPs, nil
+}
+
 // InstanceDevicePortStop deletes an instance device port from the internal logical switch.
 func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort openvswitch.OVNSwitchPort, opts *OVNInstanceNICStopOpts) error {
 	// Decide whether to use OVS provided OVN port name or internally derived OVN port name.
@@ -5065,7 +5086,7 @@ func (n *ovn) Leases(projectName string, clientType request.ClientType) ([]api.N
 			return nil
 		}
 
-		devIPs, err := n.InstanceDevicePortDynamicIPs(instanceUUID, nicName)
+		devIPs, err := n.InstanceDevicePortIPs(instanceUUID, nicName)
 		if err != nil {
 			return nil // There is likely no active port and so no leases.
 		}
