@@ -77,6 +77,9 @@ Observing I/O quotas
 : I/O quotas are unlikely to affect {spellexception}`ZFS filesystems` very much.
   That's because ZFS is a port of a Solaris module (using SPL) and not a native Linux file system using the Linux VFS API, which is where I/O limits are applied.
 
+Feature support in ZFS
+: Some features, like the use of idmaps or delegation of a ZFS dataset, require ZFS 2.2 or higher and are therefore not widely available yet.
+
 ### Quotas
 
 ZFS provides two different quota properties: `quota` and `refquota`.
