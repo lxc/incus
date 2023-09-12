@@ -83,6 +83,10 @@ cleanup() {
     read -r _
   fi
 
+  echo ""
+  echo "df -h output:"
+  df -h
+
   if [ -n "${GITHUB_ACTIONS:-}" ]; then
     echo "==> Skipping cleanup (GitHub Action runner detected)"
   else
