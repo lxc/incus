@@ -48,7 +48,7 @@ func instanceProfileFilename(inst instance) string {
 }
 
 // InstanceLoad ensures that the instances's policy is loaded into the kernel so the it can boot.
-func InstanceLoad(sysOS *sys.OS, inst instance) error {
+func InstanceLoad(sysOS *sys.OS, inst instance, extraBinaries []string) error {
 	if inst.Type() == instancetype.Container {
 		err := createNamespace(sysOS, InstanceNamespaceName(inst))
 		if err != nil {
@@ -56,7 +56,7 @@ func InstanceLoad(sysOS *sys.OS, inst instance) error {
 		}
 	}
 
-	err := instanceProfileGenerate(sysOS, inst)
+	err := instanceProfileGenerate(sysOS, inst, extraBinaries)
 	if err != nil {
 		return err
 	}
@@ -88,8 +88,8 @@ func InstanceUnload(sysOS *sys.OS, inst instance) error {
 }
 
 // InstanceValidate generates the instance profile file and validates it.
-func InstanceValidate(sysOS *sys.OS, inst instance) error {
-	err := instanceProfileGenerate(sysOS, inst)
+func InstanceValidate(sysOS *sys.OS, inst instance, extraBinaries []string) error {
+	err := instanceProfileGenerate(sysOS, inst, extraBinaries)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func InstanceDelete(sysOS *sys.OS, inst instance) error {
 }
 
 // instanceProfileGenerate generates instance apparmor profile policy file.
-func instanceProfileGenerate(sysOS *sys.OS, inst instance) error {
+func instanceProfileGenerate(sysOS *sys.OS, inst instance, extraBinaries []string) error {
 	/* In order to avoid forcing a profile parse (potentially slow) on
 	 * every container start, let's use AppArmor's binary policy cache,
 	 * which checks mtime of the files to figure out if the policy needs to
@@ -121,7 +121,7 @@ func instanceProfileGenerate(sysOS *sys.OS, inst instance) error {
 		return err
 	}
 
-	updated, err := instanceProfile(sysOS, inst)
+	updated, err := instanceProfile(sysOS, inst, extraBinaries)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func instanceProfileGenerate(sysOS *sys.OS, inst instance) error {
 }
 
 // instanceProfile generates the AppArmor profile template from the given instance.
-func instanceProfile(sysOS *sys.OS, inst instance) (string, error) {
+func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (string, error) {
 	// Prepare raw.apparmor.
 	rawContent := ""
 	rawApparmor, ok := inst.ExpandedConfig()["raw.apparmor"]
@@ -153,10 +153,21 @@ func instanceProfile(sysOS *sys.OS, inst instance) (string, error) {
 		return "", err
 	}
 
+	// Deref the extra binaries.
+	for i, entry := range extraBinaries {
+		fullPath, err := filepath.EvalSymlinks(entry)
+		if err != nil {
+			continue
+		}
+
+		extraBinaries[i] = fullPath
+	}
+
 	// Render the profile.
 	var sb *strings.Builder = &strings.Builder{}
 	if inst.Type() == instancetype.Container {
 		err = lxcProfileTpl.Execute(sb, map[string]any{
+			"extra_binaries":   extraBinaries,
 			"feature_cgns":     sysOS.CGInfo.Namespacing,
 			"feature_cgroup2":  sysOS.CGInfo.Layout == cgroup.CgroupsUnified || sysOS.CGInfo.Layout == cgroup.CgroupsHybrid,
 			"feature_stacking": sysOS.AppArmorStacking && !sysOS.AppArmorStacked,
@@ -194,15 +205,16 @@ func instanceProfile(sysOS *sys.OS, inst instance) (string, error) {
 		}
 
 		err = qemuProfileTpl.Execute(sb, map[string]any{
-			"devicesPath": inst.DevicesPath(),
-			"exePath":     execPath,
-			"libraryPath": strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
-			"logPath":     inst.LogPath(),
-			"name":        InstanceProfileName(inst),
-			"path":        path,
-			"raw":         rawContent,
-			"userns":      sysOS.RunningInUserNS,
-			"ovmfPath":    ovmfPath,
+			"devicesPath":    inst.DevicesPath(),
+			"exePath":        execPath,
+			"extra_binaries": extraBinaries,
+			"libraryPath":    strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
+			"logPath":        inst.LogPath(),
+			"name":           InstanceProfileName(inst),
+			"path":           path,
+			"raw":            rawContent,
+			"userns":         sysOS.RunningInUserNS,
+			"ovmfPath":       ovmfPath,
 		})
 		if err != nil {
 			return "", err

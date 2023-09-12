@@ -13,6 +13,11 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   network,
   umount,
 
+  # Extra binaries
+{{- range $index, $element := .extra_binaries }}
+{{ $element }}                               mrix,
+{{- end }}
+
   # Hide common denials
   deny mount options=(ro,remount) -> /,
   deny mount options=(ro,remount,silent) -> /,
