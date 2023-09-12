@@ -137,7 +137,7 @@ func (c *cmdRemoteAdd) findProject(d incus.InstanceServer, project string) (stri
 				fmt.Println(" - " + name)
 			}
 
-			return cli.AskChoice(i18n.G("Name of the project to use for this remote:")+" ", names, "")
+			return c.global.asker.AskChoice(i18n.G("Name of the project to use for this remote:")+" ", names, "")
 		}
 
 		return "", nil

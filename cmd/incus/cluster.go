@@ -1205,7 +1205,7 @@ func (c *cmdClusterEvacuateAction) Run(cmd *cobra.Command, args []string) error 
 	}
 
 	if !c.flagForce {
-		evacuate, err := cli.AskBool(fmt.Sprintf(i18n.G("Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "), cmd.Name(), resource.name), "no")
+		evacuate, err := c.global.asker.AskBool(fmt.Sprintf(i18n.G("Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "), cmd.Name(), resource.name), "no")
 		if err != nil {
 			return err
 		}
