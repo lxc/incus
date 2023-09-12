@@ -28,6 +28,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /dev/vhost-net                            rw,
   /dev/vhost-vsock                          rw,
   /etc/ceph/**                              r,
+  /etc/machine-id                           r,
   /run/udev/data/*                          r,
   /sys/bus/                                 r,
   /sys/bus/nd/devices/                      r,
