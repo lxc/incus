@@ -11,7 +11,6 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/lxc/incus/client"
-	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/recover"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/validate"
@@ -75,7 +74,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 		var supportedDriverNames []string
 
 		for {
-			addUnknownPool, err := cli.AskBool("Would you like to recover another storage pool? (yes/no) [default=no]: ", "no")
+			addUnknownPool, err := c.global.asker.AskBool("Would you like to recover another storage pool? (yes/no) [default=no]: ", "no")
 			if err != nil {
 				return err
 			}
@@ -97,7 +96,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 				},
 			}
 
-			unknownPool.Name, err = cli.AskString("Name of the storage pool: ", "", validate.Required(func(value string) error {
+			unknownPool.Name, err = c.global.asker.AskString("Name of the storage pool: ", "", validate.Required(func(value string) error {
 				if value == "" {
 					return fmt.Errorf("Pool name cannot be empty")
 				}
@@ -114,19 +113,19 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			unknownPool.Driver, err = cli.AskString(fmt.Sprintf("Name of the storage backend (%s): ", strings.Join(supportedDriverNames, ", ")), "", validate.IsOneOf(supportedDriverNames...))
+			unknownPool.Driver, err = c.global.asker.AskString(fmt.Sprintf("Name of the storage backend (%s): ", strings.Join(supportedDriverNames, ", ")), "", validate.IsOneOf(supportedDriverNames...))
 			if err != nil {
 				return err
 			}
 
-			unknownPool.Config["source"], err = cli.AskString("Source of the storage pool (block device, volume group, dataset, path, ... as applicable): ", "", validate.IsNotEmpty)
+			unknownPool.Config["source"], err = c.global.asker.AskString("Source of the storage pool (block device, volume group, dataset, path, ... as applicable): ", "", validate.IsNotEmpty)
 			if err != nil {
 				return err
 			}
 
 			for {
 				var configKey, configValue string
-				_, _ = cli.AskString("Additional storage pool configuration property (KEY=VALUE, empty when done): ", "", validate.Optional(func(value string) error {
+				_, _ = c.global.asker.AskString("Additional storage pool configuration property (KEY=VALUE, empty when done): ", "", validate.Optional(func(value string) error {
 					configParts := strings.SplitN(value, "=", 2)
 					if len(configParts) < 2 {
 						return fmt.Errorf("Config option should be in the format KEY=VALUE")
@@ -158,7 +157,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 		fmt.Printf(" - NEW: %q (backend=%q, source=%q)\n", p.Name, p.Driver, p.Config["source"])
 	}
 
-	proceed, err := cli.AskBool("Would you like to continue with scanning for lost volumes? (yes/no) [default=yes]: ", "yes")
+	proceed, err := c.global.asker.AskBool("Would you like to continue with scanning for lost volumes? (yes/no) [default=yes]: ", "yes")
 	if err != nil {
 		return err
 	}
@@ -217,7 +216,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 				fmt.Printf(" - %s\n", depErr)
 			}
 
-			_, _ = cli.AskString("Please create those missing entries and then hit ENTER: ", "", validate.Optional())
+			_, _ = c.global.asker.AskString("Please create those missing entries and then hit ENTER: ", "", validate.Optional())
 		} else {
 			if len(unknownPools) == 0 && len(res.UnknownVolumes) == 0 {
 				fmt.Println("No unknown storage pools or volumes found. Nothing to do.")
@@ -228,7 +227,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	proceed, err = cli.AskBool("Would you like those to be recovered? (yes/no) [default=no]: ", "no")
+	proceed, err = c.global.asker.AskBool("Would you like those to be recovered? (yes/no) [default=no]: ", "no")
 	if err != nil {
 		return err
 	}

@@ -555,7 +555,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		if c.flagAuthType == "tls" {
 			// Prompt for trust token
 			if c.flagToken == "" {
-				c.flagToken, err = cli.AskString(fmt.Sprintf(i18n.G("Trust token for %s: "), server), "", nil)
+				c.flagToken, err = c.global.asker.AskString(fmt.Sprintf(i18n.G("Trust token for %s: "), server), "", nil)
 				if err != nil {
 					return err
 				}
