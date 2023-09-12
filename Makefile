@@ -268,9 +268,10 @@ endif
 ifeq ($(shell command -v shellcheck),)
 	echo "Please install shellcheck"
 	exit 1
-endif
+else
 ifneq "$(shell shellcheck --version | grep version: | cut -d ' ' -f2)" "0.8.0"
 	@echo "WARN: shellcheck version is not 0.8.0"
+endif
 endif
 ifeq ($(shell command -v flake8),)
 	echo "Please install flake8"
