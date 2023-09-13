@@ -124,6 +124,7 @@ LRU
 LTS
 LV
 LVM
+lxc
 LXC
 LXC's
 LXCFS
@@ -249,6 +250,7 @@ symlinks
 syscall
 syscalls
 sysfs
+syslog
 Tbit
 TCP
 Telegraf
@@ -271,6 +273,7 @@ URI
 URIs
 unconfigured
 unevictable
+unixgram
 unmanaged
 unmount
 unmounting
