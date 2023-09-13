@@ -1265,6 +1265,14 @@
 						}
 					},
 					{
+						"core.syslog_socket": {
+							"longdesc": "Set this option to `true` to enable the syslog unixgram socket to receive log messages from external processes.",
+							"scope": "local",
+							"shortdesc": "Whether to enable the syslog unixgram socket listener",
+							"type": "bool"
+						}
+					},
+					{
 						"core.trust_ca_certificates": {
 							"longdesc": "",
 							"scope": "global",
@@ -1375,7 +1383,7 @@
 					{
 						"loki.types": {
 							"defaultdesc": "`lifecycle,logging`",
-							"longdesc": "Specify a comma-separated list of events to send to the Loki server.\nThe events can be `lifecycle` and/or `logging`.",
+							"longdesc": "Specify a comma-separated list of events to send to the Loki server.\nThe events can be any combination of `lifecycle`, `logging`, and `ovn`.",
 							"scope": "global",
 							"shortdesc": "Events to send to the Loki server",
 							"type": "string"

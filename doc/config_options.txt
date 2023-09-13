@@ -1157,6 +1157,13 @@ Specify the number of minutes to wait for running operations to complete before 
 See {ref}`howto-storage-buckets`.
 ```
 
+```{config:option} core.syslog_socket server-core
+:scope: "local"
+:shortdesc: "Whether to enable the syslog unixgram socket listener"
+:type: "bool"
+Set this option to `true` to enable the syslog unixgram socket to receive log messages from external processes.
+```
+
 ```{config:option} core.trust_ca_certificates server-core
 :scope: "global"
 :shortdesc: "Whether to automatically trust clients signed by the CA"
@@ -1256,7 +1263,7 @@ Specify a comma-separated list of values that should be used as labels for a Lok
 :shortdesc: "Events to send to the Loki server"
 :type: "string"
 Specify a comma-separated list of events to send to the Loki server.
-The events can be `lifecycle` and/or `logging`.
+The events can be any combination of `lifecycle`, `logging`, and `ovn`.
 ```
 
 <!-- config group server-loki end -->
