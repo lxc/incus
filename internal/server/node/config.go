@@ -110,6 +110,11 @@ func (c *Config) StorageImagesVolume() string {
 	return c.m.GetString("storage.images_volume")
 }
 
+// SyslogSocket returns true if the syslog socket is enabled, otherwise false.
+func (c *Config) SyslogSocket() bool {
+	return c.m.GetBool("core.syslog_socket")
+}
+
 // Dump current configuration keys and their values. Keys with values matching
 // their defaults are omitted.
 func (c *Config) Dump() map[string]string {
@@ -226,6 +231,16 @@ var ConfigSchema = config.Schema{
 	//  scope: local
 	//  shortdesc: Address to bind the storage object server to (HTTPS)
 	"core.storage_buckets_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
+
+	// Syslog socket
+
+	// gendoc:generate(entity=server, group=core, key=core.syslog_socket)
+	// Set this option to `true` to enable the syslog unixgram socket to receive log messages from external processes.
+	// ---
+	//  type: bool
+	//  scope: local
+	//  shortdesc: Whether to enable the syslog unixgram socket listener
+	"core.syslog_socket": {Validator: validate.Optional(validate.IsBool), Type: config.Bool},
 
 	// Storage volumes to store backups/images on
 
