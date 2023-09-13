@@ -4,19 +4,17 @@ package subprocess
 
 import (
 	"syscall"
-
-	"github.com/lxc/incus/internal/idmap"
 )
 
 // SetUserns allows running inside of a user namespace.
-func (p *Process) SetUserns(userns *idmap.IdmapSet) {
+func (p *Process) SetUserns(uidMap []syscall.SysProcIDMap, gidMap []syscall.SysProcIDMap) {
 	p.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUSER,
 		Credential: &syscall.Credential{
 			Uid: uint32(0),
 			Gid: uint32(0),
 		},
-		UidMappings: userns.ToUidMappings(),
-		GidMappings: userns.ToGidMappings(),
+		UidMappings: uidMap,
+		GidMappings: gidMap,
 	}
 }
