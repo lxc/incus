@@ -379,7 +379,8 @@ func DiskVMVirtfsProxyStart(execPath string, pidPath string, sharePath string, i
 	}
 
 	if len(idmaps) > 0 {
-		proc.SetUserns(&idmap.IdmapSet{Idmap: idmaps})
+		idmapSet := &idmap.IdmapSet{Idmap: idmaps}
+		proc.SetUserns(idmapSet.ToUidMappings(), idmapSet.ToGidMappings())
 	}
 
 	err = proc.StartWithFiles(context.Background(), []*os.File{acceptFile})
@@ -503,7 +504,8 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 	}
 
 	if len(idmaps) > 0 {
-		proc.SetUserns(&idmap.IdmapSet{Idmap: idmaps})
+		idmapSet := &idmap.IdmapSet{Idmap: idmaps}
+		proc.SetUserns(idmapSet.ToUidMappings(), idmapSet.ToGidMappings())
 	}
 
 	err = proc.StartWithFiles(context.Background(), []*os.File{unixFile})
