@@ -2462,7 +2462,7 @@ func (d *lxc) onStart(_ map[string]string) error {
 	d.fromHook = true
 
 	// Load the container AppArmor profile
-	err := apparmor.InstanceLoad(d.state.OS, d)
+	err := apparmor.InstanceLoad(d.state.OS, d, nil)
 	if err != nil {
 		return err
 	}
@@ -4186,7 +4186,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 	// If apparmor changed, re-validate the apparmor profile (even if not running).
 	if shared.StringInSlice("raw.apparmor", changedConfig) || shared.StringInSlice("security.nesting", changedConfig) {
-		err = apparmor.InstanceValidate(d.state.OS, d)
+		err = apparmor.InstanceValidate(d.state.OS, d, nil)
 		if err != nil {
 			return fmt.Errorf("Parse AppArmor profile: %w", err)
 		}
@@ -4255,7 +4255,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 			if key == "raw.apparmor" || key == "security.nesting" {
 				// Update the AppArmor profile
-				err = apparmor.InstanceLoad(d.state.OS, d)
+				err = apparmor.InstanceLoad(d.state.OS, d, nil)
 				if err != nil {
 					return err
 				}

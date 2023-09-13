@@ -1566,7 +1566,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Load the AppArmor profile
-	err = apparmor.InstanceLoad(d.state.OS, d)
+	err = apparmor.InstanceLoad(d.state.OS, d, []string{qemuPath})
 	if err != nil {
 		op.Done(err)
 		return err
@@ -5102,7 +5102,12 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 
 	// If apparmor changed, re-validate the apparmor profile (even if not running).
 	if shared.StringInSlice("raw.apparmor", changedConfig) {
-		err = apparmor.InstanceValidate(d.state.OS, d)
+		qemuPath, _, err := d.qemuArchConfig(d.architecture)
+		if err != nil {
+			return err
+		}
+
+		err = apparmor.InstanceValidate(d.state.OS, d, []string{qemuPath})
 		if err != nil {
 			return fmt.Errorf("Parse AppArmor profile: %w", err)
 		}
