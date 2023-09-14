@@ -37,6 +37,7 @@ func (d *nicP2P) validateConfig(instConf instance.ConfigReader) error {
 		"limits.ingress",
 		"limits.egress",
 		"limits.max",
+		"limits.priority",
 		"ipv4.routes",
 		"ipv6.routes",
 		"boot.priority",
@@ -67,7 +68,7 @@ func (d *nicP2P) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "ipv4.routes", "ipv6.routes"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority", "ipv4.routes", "ipv6.routes"}
 }
 
 // Start is run when the device is added to a running instance or instance is starting up.
@@ -199,6 +200,14 @@ func (d *nicP2P) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 
 // Stop is run when the device is removed from the instance.
 func (d *nicP2P) Stop() (*deviceConfig.RunConfig, error) {
+	// Populate device config with volatile fields (hwaddr and host_name) if needed.
+	networkVethFillFromVolatile(d.config, d.volatileGet())
+
+	err := networkClearHostVethLimits(&d.deviceCommon)
+	if err != nil {
+		return nil, err
+	}
+
 	runConf := deviceConfig.RunConfig{
 		PostHooks: []func() error{d.postStop},
 	}

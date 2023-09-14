@@ -560,6 +560,44 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 		}
 	}
 
+	var networkPriority uint64
+	if d.config["limits.priority"] != "" {
+		networkPriority, err = strconv.ParseUint(d.config["limits.priority"], 10, 32)
+		if err != nil {
+			return fmt.Errorf("Failed to parse limits.priority %q: %w", d.config["limits.priority"], err)
+		}
+	}
+
+	if oldConfig != nil && oldConfig["limits.priority"] != d.config["limits.priority"] {
+		err = d.state.Firewall.InstanceClearNetPrio(d.inst.Project().Name, d.inst.Name(), veth)
+		if err != nil {
+			return err
+		}
+	}
+
+	if oldConfig == nil || (oldConfig != nil && oldConfig["limits.priority"] != d.config["limits.priority"]) {
+		if networkPriority != 0 {
+			if bridged && d.state.Firewall.String() == "xtables" {
+				return fmt.Errorf("Failed to setup instance device network priority. The xtables firewall driver does not support required functionality.")
+			}
+
+			err = d.state.Firewall.InstanceSetupNetPrio(d.inst.Project().Name, d.inst.Name(), veth, uint32(networkPriority))
+			if err != nil {
+				return fmt.Errorf("Failed to setup instance device network priority: %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// networkClearHostVethLimits clears any network rate limits to the veth device specified in the config.
+func networkClearHostVethLimits(d *deviceCommon) error {
+	err := d.state.Firewall.InstanceClearNetPrio(d.inst.Project().Name, d.inst.Name(), d.config["host_name"])
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
