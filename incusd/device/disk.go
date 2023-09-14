@@ -25,9 +25,9 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -352,7 +352,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 // getDevicePath returns the absolute path on the host for this instance and supplied device config.
 func (d *disk) getDevicePath(devName string, devConfig deviceConfig.Device) string {
 	relativeDestPath := strings.TrimPrefix(devConfig["path"], "/")
-	devPath := filesystem.PathNameEncode(deviceJoinPath("disk", devName, relativeDestPath))
+	devPath := linux.PathNameEncode(deviceJoinPath("disk", devName, relativeDestPath))
 	return filepath.Join(d.inst.DevicesPath(), devPath)
 }
 
@@ -1976,7 +1976,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 
 	// Deal with per-filesystem oddities. We don't care about failures here
 	// because any non-special filesystem => directory backend.
-	fs, _ := filesystem.Detect(expPath)
+	fs, _ := linux.DetectFilesystem(expPath)
 
 	if fs == "zfs" && shared.PathExists("/dev/zfs") {
 		// Accessible zfs filesystems
@@ -2076,7 +2076,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 // generateVMConfigDrive generates an ISO containing the cloud init config for a VM.
 // Returns the path to the ISO.
 func (d *disk) generateVMConfigDrive() (string, error) {
-	scratchDir := filepath.Join(d.inst.DevicesPath(), filesystem.PathNameEncode(d.name))
+	scratchDir := filepath.Join(d.inst.DevicesPath(), linux.PathNameEncode(d.name))
 
 	// Check we have the mkisofs tool available.
 	mkisofsPath, err := exec.LookPath("mkisofs")

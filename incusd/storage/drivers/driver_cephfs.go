@@ -9,7 +9,7 @@ import (
 
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
@@ -276,7 +276,7 @@ func (d *cephfs) Update(changedConfig map[string]string) error {
 // Mount brings up the driver and sets it up to be used.
 func (d *cephfs) Mount() (bool, error) {
 	// Check if already mounted.
-	if filesystem.IsMountPoint(GetPoolMountPath(d.name)) {
+	if linux.IsMountPoint(GetPoolMountPath(d.name)) {
 		return false, nil
 	}
 

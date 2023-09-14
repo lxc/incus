@@ -14,8 +14,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -72,7 +72,7 @@ func forceUnmount(path string) (bool, error) {
 
 	for {
 		// Check if already unmounted.
-		if !filesystem.IsMountPoint(path) {
+		if !linux.IsMountPoint(path) {
 			return unmounted, nil
 		}
 
@@ -93,7 +93,7 @@ func forceUnmount(path string) (bool, error) {
 // mountReadOnly performs a read-only bind-mount.
 func mountReadOnly(srcPath string, dstPath string) (bool, error) {
 	// Check if already mounted.
-	if filesystem.IsMountPoint(dstPath) {
+	if linux.IsMountPoint(dstPath) {
 		return false, nil
 	}
 

@@ -13,9 +13,9 @@ import (
 
 	"github.com/lxc/incus/incusd/cgroup"
 	"github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
@@ -128,7 +128,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 
 	s.LxcPath = filepath.Join(s.VarDir, "containers")
 
-	s.BackingFS, err = filesystem.Detect(s.LxcPath)
+	s.BackingFS, err = linux.DetectFilesystem(s.LxcPath)
 	if err != nil {
 		logger.Error("Error detecting backing fs", logger.Ctx{"err": err})
 	}

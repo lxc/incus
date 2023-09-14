@@ -19,8 +19,8 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
@@ -859,7 +859,7 @@ func (d *ceph) GetVolumeUsage(vol Volume) (int64, error) {
 	isSnap := vol.IsSnapshot()
 
 	// If mounted, use the filesystem stats for pretty accurate usage information.
-	if !isSnap && vol.contentType == ContentTypeFS && filesystem.IsMountPoint(vol.MountPath()) {
+	if !isSnap && vol.contentType == ContentTypeFS && linux.IsMountPoint(vol.MountPath()) {
 		var stat unix.Statfs_t
 
 		err := unix.Statfs(vol.MountPath(), &stat)
@@ -1184,7 +1184,7 @@ func (d *ceph) MountVolume(vol Volume, op *operations.Operation) error {
 
 	if vol.contentType == ContentTypeFS {
 		mountPath := vol.MountPath()
-		if !filesystem.IsMountPoint(mountPath) {
+		if !linux.IsMountPoint(mountPath) {
 			err := vol.EnsureMountPath()
 			if err != nil {
 				return err
@@ -1199,7 +1199,7 @@ func (d *ceph) MountVolume(vol Volume, op *operations.Operation) error {
 				}
 			}
 
-			mountFlags, mountOptions := filesystem.ResolveMountOptions(strings.Split(vol.ConfigBlockMountOptions(), ","))
+			mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(vol.ConfigBlockMountOptions(), ","))
 			err = TryMount(volDevPath, mountPath, fsType, mountFlags, mountOptions)
 			if err != nil {
 				return err
@@ -1236,7 +1236,7 @@ func (d *ceph) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Opera
 	refCount := vol.MountRefCountDecrement()
 
 	// Attempt to unmount the volume.
-	if vol.contentType == ContentTypeFS && filesystem.IsMountPoint(mountPath) {
+	if vol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
 			return false, ErrInUse
@@ -1460,7 +1460,7 @@ func (d *ceph) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 	sourcePath := GetVolumeMountPath(d.name, snapVol.volType, parentName)
 	snapshotName := fmt.Sprintf("snapshot_%s", snapshotOnlyName)
 
-	if filesystem.IsMountPoint(sourcePath) {
+	if linux.IsMountPoint(sourcePath) {
 		// Attempt to sync and freeze filesystem, but do not error if not able to freeze (as filesystem
 		// could still be busy), as we do not guarantee the consistency of a snapshot. This is costly but
 		// try to ensure that all cached data has been committed to disk. If we don't then the rbd snapshot
@@ -1572,7 +1572,7 @@ func (d *ceph) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 
 	mountPath := snapVol.MountPath()
 
-	if snapVol.contentType == ContentTypeFS && !filesystem.IsMountPoint(mountPath) {
+	if snapVol.contentType == ContentTypeFS && !linux.IsMountPoint(mountPath) {
 		err := snapVol.EnsureMountPath()
 		if err != nil {
 			return err
@@ -1611,7 +1611,7 @@ func (d *ceph) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 		revert.Add(func() { _ = d.rbdUnmapVolume(cloneVol, true) })
 
 		RBDFilesystem := snapVol.ConfigBlockFilesystem()
-		mountFlags, mountOptions := filesystem.ResolveMountOptions(strings.Split(snapVol.ConfigBlockMountOptions(), ","))
+		mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(snapVol.ConfigBlockMountOptions(), ","))
 
 		if renegerateFilesystemUUIDNeeded(RBDFilesystem) {
 			if RBDFilesystem == "xfs" {
@@ -1665,7 +1665,7 @@ func (d *ceph) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (
 	mountPath := snapVol.MountPath()
 	refCount := snapVol.MountRefCountDecrement()
 
-	if snapVol.contentType == ContentTypeFS && filesystem.IsMountPoint(mountPath) {
+	if snapVol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
 			return false, ErrInUse

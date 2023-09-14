@@ -60,7 +60,6 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/template"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/idmap"
@@ -1892,7 +1891,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	if kernelModules != "" {
 		for _, module := range strings.Split(kernelModules, ",") {
 			module = strings.TrimPrefix(module, " ")
-			err := util.LoadModule(module)
+			err := linux.LoadModule(module)
 			if err != nil {
 				return "", nil, fmt.Errorf("Failed to load kernel module '%s': %w", module, err)
 			}
@@ -4290,7 +4289,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			} else if key == "linux.kernel_modules" && value != "" {
 				for _, module := range strings.Split(value, ",") {
 					module = strings.TrimPrefix(module, " ")
-					err := util.LoadModule(module)
+					err := linux.LoadModule(module)
 					if err != nil {
 						return fmt.Errorf("Failed to load kernel module '%s': %w", module, err)
 					}
@@ -8317,7 +8316,7 @@ func (d *lxc) getFSStats() (*metrics.MetricSet, error) {
 			}
 
 			// Grab the filesystem information.
-			statfs, err = filesystem.StatVFS(mountpoint)
+			statfs, err = linux.StatVFS(mountpoint)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to stat %s: %w", mountpoint, err)
 			}
@@ -8341,7 +8340,7 @@ func (d *lxc) getFSStats() (*metrics.MetricSet, error) {
 		} else {
 			source := dev["source"]
 
-			statfs, err = filesystem.StatVFS(source)
+			statfs, err = linux.StatVFS(source)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to stat %s: %w", dev["source"], err)
 			}
@@ -8390,7 +8389,7 @@ func (d *lxc) getFSStats() (*metrics.MetricSet, error) {
 		labels["device"] = realDev
 		labels["mountpoint"] = dev["path"]
 
-		fsType, err := filesystem.FSTypeToName(int32(statfs.Type))
+		fsType, err := linux.FSTypeToName(int32(statfs.Type))
 		if err == nil {
 			labels["fstype"] = fsType
 		}

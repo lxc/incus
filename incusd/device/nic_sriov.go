@@ -9,7 +9,7 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
@@ -148,7 +148,7 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 
 	// If VM, then try and load the vfio-pci module first.
 	if d.inst.Type() == instancetype.VM {
-		err = util.LoadModule("vfio-pci")
+		err = linux.LoadModule("vfio-pci")
 		if err != nil {
 			return nil, fmt.Errorf("Error loading %q module: %w", "vfio-pci", err)
 		}

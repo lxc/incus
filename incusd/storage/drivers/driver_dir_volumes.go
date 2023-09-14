@@ -12,9 +12,9 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/rsync"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/storage/quota"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -534,7 +534,7 @@ func (d *dir) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (b
 
 	refCount := snapVol.MountRefCountDecrement()
 
-	if filesystem.IsMountPoint(mountPath) {
+	if linux.IsMountPoint(mountPath) {
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
 			return false, ErrInUse

@@ -15,7 +15,7 @@ import (
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
@@ -156,7 +156,7 @@ func (d *infinibandSRIOV) startContainer() (*deviceConfig.RunConfig, error) {
 func (d *infinibandSRIOV) startVM() (*deviceConfig.RunConfig, error) {
 	saveData := make(map[string]string)
 
-	err := util.LoadModule("vfio-pci")
+	err := linux.LoadModule("vfio-pci")
 	if err != nil {
 		return nil, fmt.Errorf("Error loading %q module: %w", "vfio-pci", err)
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -211,7 +211,7 @@ func (d *btrfs) Create() error {
 			daemonDir := shared.VarPath()
 
 			if shared.PathExists(hostPath) {
-				hostPathFS, _ := filesystem.Detect(hostPath)
+				hostPathFS, _ := linux.DetectFilesystem(hostPath)
 				if hostPathFS != "btrfs" {
 					return fmt.Errorf("Provided path does not reside on a btrfs filesystem")
 				}
@@ -222,7 +222,7 @@ func (d *btrfs) Create() error {
 					return fmt.Errorf("Only allowed source path under %q is %q", shared.VarPath(), GetPoolMountPath(d.name))
 				}
 
-				storagePoolDirFS, _ := filesystem.Detect(shared.VarPath("storage-pools"))
+				storagePoolDirFS, _ := linux.DetectFilesystem(shared.VarPath("storage-pools"))
 				if storagePoolDirFS != "btrfs" {
 					return fmt.Errorf("Provided path does not reside on a btrfs filesystem")
 				}
@@ -333,7 +333,7 @@ func (d *btrfs) Update(changedConfig map[string]string) error {
 
 		// Trigger a re-mount.
 		d.config["btrfs.mount_options"] = val
-		mntFlags, mntOptions := filesystem.ResolveMountOptions(strings.Split(d.getMountOptions(), ","))
+		mntFlags, mntOptions := linux.ResolveMountOptions(strings.Split(d.getMountOptions(), ","))
 		mntFlags |= unix.MS_REMOUNT
 
 		err := TryMount("", GetPoolMountPath(d.name), "none", mntFlags, mntOptions)
@@ -390,7 +390,7 @@ func (d *btrfs) Update(changedConfig map[string]string) error {
 // Mount mounts the storage pool.
 func (d *btrfs) Mount() (bool, error) {
 	// Check if already mounted.
-	if filesystem.IsMountPoint(GetPoolMountPath(d.name)) {
+	if linux.IsMountPoint(GetPoolMountPath(d.name)) {
 		return false, nil
 	}
 
@@ -415,7 +415,7 @@ func (d *btrfs) Mount() (bool, error) {
 		if !shared.IsBlockdevPath(mntSrc) {
 			mntFilesystem = "none"
 
-			mntSrcFS, _ := filesystem.Detect(mntSrc)
+			mntSrcFS, _ := linux.DetectFilesystem(mntSrc)
 			if mntSrcFS != "btrfs" {
 				return false, fmt.Errorf("Source path %q isn't btrfs", mntSrc)
 			}
@@ -426,7 +426,7 @@ func (d *btrfs) Mount() (bool, error) {
 	}
 
 	// Get the custom mount flags/options.
-	mntFlags, mntOptions := filesystem.ResolveMountOptions(strings.Split(d.getMountOptions(), ","))
+	mntFlags, mntOptions := linux.ResolveMountOptions(strings.Split(d.getMountOptions(), ","))
 
 	// Handle bind-mounts first.
 	if mntFilesystem == "none" {

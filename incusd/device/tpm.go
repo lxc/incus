@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/validate"
@@ -65,7 +65,7 @@ func (d *tpm) validateEnvironment() error {
 		// by the TPM emulator.
 		module := "tpm_vtpm_proxy"
 
-		err := util.LoadModule(module)
+		err := linux.LoadModule(module)
 		if err != nil {
 			return fmt.Errorf("Failed to load kernel module %q: %w", module, err)
 		}

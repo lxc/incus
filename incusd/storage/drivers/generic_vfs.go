@@ -14,9 +14,9 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
@@ -36,7 +36,7 @@ const genericISOVolumeSuffix = ".iso"
 // genericVFSGetResources is a generic GetResources implementation for VFS-only drivers.
 func genericVFSGetResources(d Driver) (*api.ResourcesStoragePool, error) {
 	// Get the VFS information
-	st, err := filesystem.StatVFS(GetPoolMountPath(d.Name()))
+	st, err := linux.StatVFS(GetPoolMountPath(d.Name()))
 	if err != nil {
 		return nil, err
 	}

@@ -14,8 +14,8 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
@@ -526,7 +526,7 @@ func (d *common) isBlockBacked(vol Volume) bool {
 
 // filesystemFreeze syncs and freezes a filesystem and returns an unfreeze function on success.
 func (d *common) filesystemFreeze(path string) (func() error, error) {
-	err := filesystem.SyncFS(path)
+	err := linux.SyncFS(path)
 	if err != nil {
 		return nil, fmt.Errorf("Failed syncing filesystem %q: %w", path, err)
 	}
