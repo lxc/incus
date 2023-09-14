@@ -486,33 +486,33 @@ func networkNICRouteDelete(routeDev string, routes ...string) {
 }
 
 // networkSetupHostVethLimits applies any network rate limits to the veth device specified in the config.
-func networkSetupHostVethLimits(m deviceConfig.Device) error {
+func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, bridged bool) error {
 	var err error
 
-	veth := m["host_name"]
+	veth := d.config["host_name"]
 
 	if veth == "" || !network.InterfaceExists(veth) {
 		return fmt.Errorf("Unknown or missing host side veth device %q", veth)
 	}
 
 	// Apply max limit
-	if m["limits.max"] != "" {
-		m["limits.ingress"] = m["limits.max"]
-		m["limits.egress"] = m["limits.max"]
+	if d.config["limits.max"] != "" {
+		d.config["limits.ingress"] = d.config["limits.max"]
+		d.config["limits.egress"] = d.config["limits.max"]
 	}
 
 	// Parse the values
 	var ingressInt int64
-	if m["limits.ingress"] != "" {
-		ingressInt, err = units.ParseBitSizeString(m["limits.ingress"])
+	if d.config["limits.ingress"] != "" {
+		ingressInt, err = units.ParseBitSizeString(d.config["limits.ingress"])
 		if err != nil {
 			return err
 		}
 	}
 
 	var egressInt int64
-	if m["limits.egress"] != "" {
-		egressInt, err = units.ParseBitSizeString(m["limits.egress"])
+	if d.config["limits.egress"] != "" {
+		egressInt, err = units.ParseBitSizeString(d.config["limits.egress"])
 		if err != nil {
 			return err
 		}
@@ -525,7 +525,7 @@ func networkSetupHostVethLimits(m deviceConfig.Device) error {
 	_ = qdisc.Delete()
 
 	// Apply new limits
-	if m["limits.ingress"] != "" {
+	if d.config["limits.ingress"] != "" {
 		qdiscHTB := &ip.QdiscHTB{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Root: true}, Default: "10"}
 		err := qdiscHTB.Add()
 		if err != nil {
@@ -545,7 +545,7 @@ func networkSetupHostVethLimits(m deviceConfig.Device) error {
 		}
 	}
 
-	if m["limits.egress"] != "" {
+	if d.config["limits.egress"] != "" {
 		qdisc = &ip.Qdisc{Dev: veth, Handle: "ffff:0", Ingress: true}
 		err := qdisc.Add()
 		if err != nil {
