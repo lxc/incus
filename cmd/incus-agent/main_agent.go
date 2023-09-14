@@ -16,8 +16,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/vsock"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
@@ -113,7 +113,7 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 
 	// Load the kernel driver.
 	logger.Info("Loading vsock module")
-	err = util.LoadModule("vsock")
+	err = linux.LoadModule("vsock")
 	if err != nil {
 		return fmt.Errorf("Unable to load the vsock kernel module: %w", err)
 	}
@@ -311,7 +311,7 @@ func (c *cmdAgent) mountHostShares() {
 				logger.Errorf("Failed to create mount target %q", mount.Target)
 				continue // Don't try to mount if mount point can't be created.
 			}
-		} else if util.IsMountPoint(mount.Target) {
+		} else if linux.IsMountPoint(mount.Target) {
 			// Already mounted.
 			continue
 		}
