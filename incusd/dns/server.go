@@ -7,8 +7,8 @@ import (
 
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 )
 

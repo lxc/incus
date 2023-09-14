@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/task"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"

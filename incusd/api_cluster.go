@@ -40,6 +40,7 @@ import (
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -405,7 +406,7 @@ func clusterPutBootstrap(d *Daemon, r *http.Request, req api.ClusterPut) respons
 
 		localHTTPSAddress := config.HTTPSAddress()
 
-		if util.IsWildCardAddress(localHTTPSAddress) {
+		if internalUtil.IsWildCardAddress(localHTTPSAddress) {
 			return fmt.Errorf("Cannot use wildcard core.https_address %q for cluster.https_address. Please specify a new cluster.https_address or core.https_address", localClusterAddress)
 		}
 
@@ -500,7 +501,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		// The user has previously set core.https_address and
 		// is now providing a cluster address as well. If they
 		// differ we need to listen to it.
-		if !util.IsAddressCovered(req.ServerAddress, localHTTPSAddress) {
+		if !internalUtil.IsAddressCovered(req.ServerAddress, localHTTPSAddress) {
 			err := s.Endpoints.ClusterUpdateAddress(req.ServerAddress)
 			if err != nil {
 				return response.SmartError(err)
@@ -652,12 +653,12 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		}
 
 		// Update our TLS configuration using the returned cluster certificate.
-		err = util.WriteCert(s.OS.VarDir, "cluster", []byte(req.ClusterCertificate), info.PrivateKey, nil)
+		err = internalUtil.WriteCert(s.OS.VarDir, "cluster", []byte(req.ClusterCertificate), info.PrivateKey, nil)
 		if err != nil {
 			return fmt.Errorf("Failed to save cluster certificate: %w", err)
 		}
 
-		networkCert, err := util.LoadClusterCert(s.OS.VarDir)
+		networkCert, err := internalUtil.LoadClusterCert(s.OS.VarDir)
 		if err != nil {
 			return fmt.Errorf("Failed to parse cluster certificate: %w", err)
 		}
@@ -816,7 +817,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 		}
 	}
 
-	networkCert, err := util.LoadCert(s.OS.VarDir)
+	networkCert, err := internalUtil.LoadCert(s.OS.VarDir)
 	if err != nil {
 		return response.InternalError(fmt.Errorf("Failed to parse member certificate: %w", err))
 	}
@@ -2248,7 +2249,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 		}
 	}
 
-	err := util.WriteCert(s.OS.VarDir, "cluster", []byte(req.ClusterCertificate), []byte(req.ClusterCertificateKey), nil)
+	err := internalUtil.WriteCert(s.OS.VarDir, "cluster", []byte(req.ClusterCertificate), []byte(req.ClusterCertificateKey), nil)
 	if err != nil {
 		return err
 	}
@@ -2261,7 +2262,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 	}
 
 	// Get the new cluster certificate struct
-	cert, err := util.LoadClusterCert(s.OS.VarDir)
+	cert, err := internalUtil.LoadClusterCert(s.OS.VarDir)
 	if err != nil {
 		return err
 	}

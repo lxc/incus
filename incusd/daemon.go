@@ -62,6 +62,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/idmap"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/archive"
@@ -940,13 +941,13 @@ func (d *Daemon) init() error {
 	}
 
 	/* Setup network endpoint certificate */
-	networkCert, err := util.LoadCert(d.os.VarDir)
+	networkCert, err := internalUtil.LoadCert(d.os.VarDir)
 	if err != nil {
 		return err
 	}
 
 	/* Setup server certificate */
-	serverCert, err := util.LoadServerCert(d.os.VarDir)
+	serverCert, err := internalUtil.LoadServerCert(d.os.VarDir)
 	if err != nil {
 		return err
 	}

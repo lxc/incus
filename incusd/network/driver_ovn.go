@@ -29,6 +29,7 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/iprange"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -728,7 +729,7 @@ func (n *ovn) getRouterMAC() (net.HardwareAddr, error) {
 	hwAddr := n.config["bridge.hwaddr"]
 	if hwAddr == "" {
 		// Load server certificate. This is needs to be the same certificate for all nodes in a cluster.
-		cert, err := util.LoadCert(n.state.OS.VarDir)
+		cert, err := internalUtil.LoadCert(n.state.OS.VarDir)
 		if err != nil {
 			return nil, err
 		}
