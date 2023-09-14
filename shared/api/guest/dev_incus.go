@@ -20,6 +20,6 @@ type DevIncusGet struct {
 	InstanceType string `json:"instance_type" yaml:"instance_type"`
 
 	// What cluster member this instance is located on
-	// Example: incus01
+	// Example: server01
 	Location string `json:"location" yaml:"location"`
 }
