@@ -31,7 +31,7 @@ LXD will then automatically manage forward and reverse records for all instances
 
 ## Project views
 
-Projects have a `features.networks.zones` feature, which is disabled by default.
+Projects have a {config:option}`project-features:features.networks.zones` feature, which is disabled by default.
 This controls which project new networks zones are created in.
 When this feature is enabled new zones are created in the project, otherwise they are created in the default project.
 
@@ -51,7 +51,7 @@ If you configure a zone with forward DNS records for `lxd.example.net` for your 
 
 You can check the records that are generated with your zone setup with the `dig` command.
 
-This assumes that `core.dns_address` was set to `<DNS_server_IP>:<DNS_server_PORT>`. (Setting that configuration
+This assumes that {config:option}`server-core:core.dns_address` was set to `<DNS_server_IP>:<DNS_server_PORT>`. (Setting that configuration
 option causes the backend to immediately start serving on that address.)
 
 In order for the `dig` request to be allowed for a given zone, you must set the
@@ -184,7 +184,7 @@ lxc network set <network_name> dns.zone.forward="lxd.example.net"
 ```
 
 Zones belong to projects and are tied to the `networks` features of projects.
-You can restrict projects to specific domains and sub-domains through the `restricted.networks.zones` project configuration key.
+You can restrict projects to specific domains and sub-domains through the {config:option}`project-restricted:restricted.networks.zones` project configuration key.
 
 ## Add custom records
 
