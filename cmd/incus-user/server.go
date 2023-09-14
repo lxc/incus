@@ -9,7 +9,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
