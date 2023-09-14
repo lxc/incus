@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 )
@@ -71,38 +72,6 @@ func (a *inMemoryAddr) String() string {
 	return ""
 }
 
-// CanonicalNetworkAddress parses the given network address and returns a string of the form "host:port",
-// possibly filling it with the default port if it's missing. It will also wrap a bare IPv6 address with square
-// brackets if needed.
-func CanonicalNetworkAddress(address string, defaultPort int) string {
-	host, port, err := net.SplitHostPort(address)
-	if err != nil {
-		ip := net.ParseIP(address)
-		if ip != nil {
-			// If the input address is a bare IP address, then convert it to a proper listen address
-			// using the canonical IP with default port and wrap IPv6 addresses in square brackets.
-			address = net.JoinHostPort(ip.String(), fmt.Sprintf("%d", defaultPort))
-		} else {
-			// Otherwise assume this is either a host name or a partial address (e.g `[::]`) without
-			// a port number, so append the default port.
-			address = fmt.Sprintf("%s:%d", address, defaultPort)
-		}
-	} else if port == "" && address[len(address)-1] == ':' {
-		// An address that ends with a trailing colon will be parsed as having an empty port.
-		address = net.JoinHostPort(host, fmt.Sprintf("%d", defaultPort))
-	}
-
-	return address
-}
-
-// CanonicalNetworkAddressFromAddressAndPort returns a network address from separate address and port values.
-// The address accepts values such as "[::]", "::" and "localhost".
-func CanonicalNetworkAddressFromAddressAndPort(address string, port int, defaultPort int) string {
-	// Because we accept just the host part of an IPv6 listen address (e.g. `[::]`) don't use net.JoinHostPort.
-	// If a bare IP address is supplied then CanonicalNetworkAddress will use net.JoinHostPort if needed.
-	return CanonicalNetworkAddress(fmt.Sprintf("%s:%d", address, port), defaultPort)
-}
-
 // ServerTLSConfig returns a new server-side tls.Config generated from the give
 // certificate info.
 func ServerTLSConfig(cert *localtls.CertInfo) *tls.Config {
@@ -162,8 +131,8 @@ func NetworkInterfaceAddress() string {
 // address2, in the sense that they are either the same address or address2 is
 // specified using a wildcard with the same port of address1.
 func IsAddressCovered(address1, address2 string) bool {
-	address1 = CanonicalNetworkAddress(address1, ports.HTTPSDefaultPort)
-	address2 = CanonicalNetworkAddress(address2, ports.HTTPSDefaultPort)
+	address1 = util.CanonicalNetworkAddress(address1, ports.HTTPSDefaultPort)
+	address2 = util.CanonicalNetworkAddress(address2, ports.HTTPSDefaultPort)
 
 	if address1 == address2 {
 		return true
@@ -255,7 +224,7 @@ func IsAddressCovered(address1, address2 string) bool {
 
 // IsWildCardAddress returns whether the given address is a wildcard.
 func IsWildCardAddress(address string) bool {
-	address = CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
+	address = util.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
 
 	host, _, err := net.SplitHostPort(address)
 	if err != nil {
