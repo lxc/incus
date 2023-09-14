@@ -297,15 +297,6 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 	}
 
 	if !localBridgeCreate {
-		// At this time, only the Ubuntu kernel supports the Fan, detect it
-		fanKernel := false
-		if shared.PathExists("/proc/sys/kernel/version") {
-			content, _ := os.ReadFile("/proc/sys/kernel/version")
-			if content != nil && strings.Contains(string(content), "Ubuntu") {
-				fanKernel = true
-			}
-		}
-
 		useExistingInterface, err := cli.AskBool("Would you like to use an existing bridge or host interface? (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
@@ -336,64 +327,6 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 				}
 
 				break
-			}
-		} else if config.Cluster != nil && fanKernel {
-			fan, err := cli.AskBool("Would you like to create a new Fan overlay network? (yes/no) [default=yes]: ", "yes")
-			if err != nil {
-				return err
-			}
-
-			if fan {
-				// Define the network
-				networkPost := api.InitNetworksProjectPost{}
-				networkPost.Name = "incusfan0"
-				networkPost.Project = project.Default
-				networkPost.Config = map[string]string{
-					"bridge.mode": "fan",
-				}
-
-				// Select the underlay
-				networkPost.Config["fan.underlay_subnet"], err = cli.AskString("What subnet should be used as the Fan underlay? [default=auto]: ", "auto", func(value string) error {
-					var err error
-					var subnet *net.IPNet
-
-					// Handle auto
-					if value == "auto" {
-						subnet, _, err = network.DefaultGatewaySubnetV4()
-						if err != nil {
-							return err
-						}
-					} else {
-						_, subnet, err = net.ParseCIDR(value)
-						if err != nil {
-							return err
-						}
-					}
-
-					size, _ := subnet.Mask.Size()
-					if size != 16 && size != 24 {
-						if value == "auto" {
-							return fmt.Errorf("The auto-detected underlay (%s) isn't a /16 or /24, please specify manually", subnet.String())
-						}
-
-						return fmt.Errorf("The underlay subnet must be a /16 or a /24")
-					}
-
-					return nil
-				})
-				if err != nil {
-					return err
-				}
-
-				// Add the new network
-				config.Server.Networks = append(config.Server.Networks, networkPost)
-
-				// Add to the default profile
-				config.Server.Profiles[0].Devices["eth0"] = map[string]string{
-					"type":    "nic",
-					"name":    "eth0",
-					"network": "incusfan0",
-				}
 			}
 		}
 
