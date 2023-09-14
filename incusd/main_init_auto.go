@@ -175,5 +175,5 @@ func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceSer
 		}
 	}
 
-	return &api.InitPreseed{Node: config}, nil
+	return &api.InitPreseed{Server: config}, nil
 }

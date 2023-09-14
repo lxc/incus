@@ -587,12 +587,10 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			d.globalConfigMu.Unlock()
 		})
 
-		localRevert, err := clusterInitMember(localClient, client, req.MemberConfig)
+		err = clusterInitMember(localClient, client, req.MemberConfig)
 		if err != nil {
 			return fmt.Errorf("Failed to initialize member: %w", err)
 		}
-
-		revert.Add(localRevert)
 
 		// Get all defined storage pools and networks, so they can be compared to the ones in the cluster.
 		pools := []api.StoragePool{}
@@ -875,14 +873,13 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 
 // clusterInitMember initialises storage pools and networks on this member. We pass two client instances, one
 // connected to ourselves (the joining member) and one connected to the target cluster member to join.
-// Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memberConfig []api.ClusterMemberConfigKey) (revert.Hook, error) {
+func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memberConfig []api.ClusterMemberConfigKey) error {
 	data := api.InitLocalPreseed{}
 
 	// Fetch all pools currently defined in the cluster.
 	pools, err := client.GetStoragePools()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch information about cluster storage pools: %w", err)
+		return fmt.Errorf("Failed to fetch information about cluster storage pools: %w", err)
 	}
 
 	// Merge the returned storage pools configs with the node-specific
@@ -928,7 +925,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 
 	projects, err := client.GetProjects()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch project information about cluster networks: %w", err)
+		return fmt.Errorf("Failed to fetch project information about cluster networks: %w", err)
 	}
 
 	for _, p := range projects {
@@ -950,7 +947,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 		// Fetch all project specific networks currently defined in the cluster for the project.
 		networks, err := client.UseProject(p.Name).GetNetworks()
 		if err != nil {
-			return nil, fmt.Errorf("Failed to fetch network information about cluster networks in project %q: %w", p.Name, err)
+			return fmt.Errorf("Failed to fetch network information about cluster networks in project %q: %w", p.Name, err)
 		}
 
 		// Merge the returned networks configs with the node-specific configs provided by the user.
@@ -994,12 +991,12 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 		}
 	}
 
-	revert, err := initDataNodeApply(d, data)
+	err = d.ApplyServerPreseed(api.InitPreseed{Server: data})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to initialize storage pools and networks: %w", err)
+		return fmt.Errorf("Failed to initialize storage pools and networks: %w", err)
 	}
 
-	return revert, nil
+	return nil
 }
 
 // Perform a request to the /internal/cluster/accept endpoint to check if a new
