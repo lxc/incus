@@ -1,4 +1,4 @@
-package filesystem
+package util
 
 import (
 	"bufio"
@@ -9,8 +9,6 @@ import (
 	"syscall"
 
 	"golang.org/x/sys/unix"
-
-	"github.com/lxc/incus/shared/logger"
 )
 
 // Filesystem magic numbers.
@@ -67,7 +65,6 @@ func FSTypeToName(fsType int32) (string, error) {
 		return "zfs", nil
 	}
 
-	logger.Debugf("Unknown backing filesystem type: 0x%x", fsType)
 	return fmt.Sprintf("0x%x", fsType), nil
 }
 
