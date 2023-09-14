@@ -64,8 +64,8 @@ Key                           | Type                          | Default         
 
 Key                     | Type      | Condition     | Default                                        | Description
 :--                     | :---      | :------       | :------                                        | :----------
-`block.filesystem`      | string    |               | same as `volume.block.filesystem`              | {{block_filesystem}}
-`block.mount_options`   | string    |               | same as `volume.block.mount_options`           | Mount options for block-backed file system volumes
+`block.filesystem`      | string    | block-based volume with content type `filesystem` | same as `volume.block.filesystem`              | {{block_filesystem}}
+`block.mount_options`   | string    | block-based volume with content type `filesystem` | same as `volume.block.mount_options`           | Mount options for block-backed file system volumes
 `lvm.stripes`           | string    |               | same as `volume.lvm.stripes`                   | Number of stripes to use for new volumes (or thin pool volume)
 `lvm.stripes.size`      | string    |               | same as `volume.lvm.stripes.size`              | Size of stripes to use (at least 4096 bytes and multiple of 512 bytes)
 `security.shifted`      | bool      | custom volume | same as `volume.security.shifted` or `false`   | {{enable_ID_shifting}}

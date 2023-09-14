@@ -109,8 +109,8 @@ Key                           | Type                          | Default         
 
 Key                     | Type      | Condition                 | Default                                        | Description
 :--                     | :---      | :--------                 | :------                                        | :----------
-`block.filesystem`      | string    |                           | same as `volume.block.filesystem`              | {{block_filesystem}}
-`block.mount_options`   | string    |                           | same as `volume.block.mount_options`           | Mount options for block-backed file system volumes
+`block.filesystem`      | string    | block-based volume with content type `filesystem` | same as `volume.block.filesystem`              | {{block_filesystem}}
+`block.mount_options`   | string    | block-based volume with content type `filesystem` | same as `volume.block.mount_options`           | Mount options for block-backed file system volumes
 `security.shifted`      | bool      | custom volume             | same as `volume.security.shifted` or `false`   | {{enable_ID_shifting}}
 `security.unmapped`     | bool      | custom volume             | same as `volume.security.unmapped` or `false`  | Disable ID mapping for the volume
 `size`                  | string    |                           | same as `volume.size`                          | Size/quota of the storage volume
