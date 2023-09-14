@@ -13,7 +13,7 @@ import (
 
 	"github.com/lxc/incus/incusd/metrics"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 )
@@ -267,12 +267,12 @@ func getFilesystemMetrics(d *Daemon) (map[string]metrics.FilesystemMetrics, erro
 
 		stats.Mountpoint = fields[1]
 
-		statfs, err := filesystem.StatVFS(stats.Mountpoint)
+		statfs, err := util.StatVFS(stats.Mountpoint)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to stat %s: %w", stats.Mountpoint, err)
 		}
 
-		fsType, err := filesystem.FSTypeToName(int32(statfs.Type))
+		fsType, err := util.FSTypeToName(int32(statfs.Type))
 		if err == nil {
 			stats.FSType = fsType
 		}
