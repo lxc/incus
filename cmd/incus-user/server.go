@@ -9,6 +9,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/revert"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -49,7 +50,7 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 		return fmt.Errorf("Failed to get server info: %w", err)
 	}
 
-	availableBackends := util.AvailableStorageDrivers(info.Environment.StorageSupportedDrivers, util.PoolTypeLocal)
+	availableBackends := linux.AvailableStorageDrivers(info.Environment.StorageSupportedDrivers, util.PoolTypeLocal)
 
 	// Load the default profile.
 	profile, profileEtag, err := client.GetProfile("default")
