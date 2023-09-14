@@ -17,7 +17,7 @@ type Warning struct {
 	UUID string `json:"uuid" yaml:"uuid"`
 
 	// What cluster member this warning occurred on
-	// Example: node1
+	// Example: server01
 	Location string `json:"location" yaml:"location"`
 
 	// The project the warning occurred in
