@@ -232,6 +232,7 @@ test_basic_usage() {
   ! incus init testimage -abc || false
   ! incus init testimage abc- || false
   ! incus init testimage 1234 || false
+  ! incus init testimage foo.bar || false
   ! incus init testimage a_b_c || false
   ! incus init testimage aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa || false
 
