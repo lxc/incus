@@ -732,9 +732,9 @@ func IsHostname(name string) error {
 		return fmt.Errorf(`Name must not end with "-" character`)
 	}
 
-	_, err := strconv.Atoi(string(name[0]))
+	_, err := strconv.ParseUint(name, 10, 64)
 	if err == nil {
-		return fmt.Errorf("Name must not start with a number")
+		return fmt.Errorf("Name cannot be a number")
 	}
 
 	match, err := regexp.MatchString(`^[\-a-zA-Z0-9]+$`, name)
