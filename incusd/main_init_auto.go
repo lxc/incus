@@ -8,8 +8,9 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/project"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
@@ -20,7 +21,7 @@ func (c *cmdInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceSer
 		return nil, fmt.Errorf("The requested backend '%s' isn't supported by init", c.flagStorageBackend)
 	}
 
-	if c.flagStorageBackend != "" && !shared.StringInSlice(c.flagStorageBackend, util.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, util.PoolTypeAny)) {
+	if c.flagStorageBackend != "" && !shared.StringInSlice(c.flagStorageBackend, linux.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, util.PoolTypeAny)) {
 		return nil, fmt.Errorf("The requested backend '%s' isn't available on your system (missing tools)", c.flagStorageBackend)
 	}
 

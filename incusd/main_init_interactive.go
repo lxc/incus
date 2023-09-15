@@ -17,11 +17,11 @@ import (
 	"github.com/lxc/incus/incusd/cluster"
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/storage/filesystem"
-	"github.com/lxc/incus/incusd/util"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -528,7 +528,7 @@ func (c *cmdInit) askStorage(config *api.InitPreseed, d incus.InstanceServer, se
 
 func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer, server *api.Server, poolType util.PoolType) error {
 	// Figure out the preferred storage driver
-	availableBackends := util.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, poolType)
+	availableBackends := linux.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, poolType)
 
 	if len(availableBackends) == 0 {
 		if poolType != util.PoolTypeAny {
@@ -538,7 +538,7 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 		return fmt.Errorf("No %s storage backends available", poolType)
 	}
 
-	backingFs, err := filesystem.Detect(shared.VarPath())
+	backingFs, err := linux.DetectFilesystem(shared.VarPath())
 	if err != nil {
 		backingFs = "dir"
 	}
