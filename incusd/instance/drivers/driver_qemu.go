@@ -63,13 +63,13 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	pongoTemplate "github.com/lxc/incus/incusd/template"
 	"github.com/lxc/incus/incusd/util"
 	localvsock "github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
@@ -1111,7 +1111,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	defer op.Done(err)
 
 	// Ensure the correct vhost_vsock kernel module is loaded before establishing the vsock.
-	err = util.LoadModule("vhost_vsock")
+	err = linux.LoadModule("vhost_vsock")
 	if err != nil {
 		op.Done(err)
 		return err
@@ -2144,7 +2144,7 @@ func (d *qemu) deviceDetachBlockDevice(deviceName string, rawConfig deviceConfig
 		return err
 	}
 
-	escapedDeviceName := filesystem.PathNameEncode(deviceName)
+	escapedDeviceName := linux.PathNameEncode(deviceName)
 	deviceID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
 	blockDevName := d.blockNodeName(escapedDeviceName)
 
@@ -2320,7 +2320,7 @@ func (d *qemu) deviceDetachNIC(deviceName string) error {
 		return false, nil
 	}
 
-	escapedDeviceName := filesystem.PathNameEncode(deviceName)
+	escapedDeviceName := linux.PathNameEncode(deviceName)
 	deviceID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
 	netDevID := fmt.Sprintf("%s%s", qemuNetDevIDPrefix, escapedDeviceName)
 
@@ -3546,7 +3546,7 @@ func (d *qemu) addDriveConfig(bootIndexes map[string]int, driveConf deviceConfig
 		// Handle I/O mode configuration.
 		if !isBlockDev {
 			// Disk dev path is a file, check what the backing filesystem is.
-			fsType, err := filesystem.Detect(srcDevPath)
+			fsType, err := linux.DetectFilesystem(srcDevPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed detecting filesystem type of %q: %w", srcDevPath, err)
 			}
@@ -3603,7 +3603,7 @@ func (d *qemu) addDriveConfig(bootIndexes map[string]int, driveConf deviceConfig
 		directCache = false
 	}
 
-	escapedDeviceName := filesystem.PathNameEncode(driveConf.DevName)
+	escapedDeviceName := linux.PathNameEncode(driveConf.DevName)
 
 	blockDev := map[string]any{
 		"aio": aioMode,
@@ -3821,7 +3821,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]string, bootIn
 		}
 	}
 
-	escapedDeviceName := filesystem.PathNameEncode(devName)
+	escapedDeviceName := linux.PathNameEncode(devName)
 	qemuDev["id"] = fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
 
 	if len(bootIndexes) > 0 {
@@ -4119,7 +4119,7 @@ func (d *qemu) writeNICDevConfig(mtuStr string, devName string, nicName string, 
 		return fmt.Errorf("Failed encoding NIC config: %w", err)
 	}
 
-	nicFile := filepath.Join(d.Path(), "config", deviceConfig.NICConfigDir, fmt.Sprintf("%s.json", filesystem.PathNameEncode(nicConfig.DeviceName)))
+	nicFile := filepath.Join(d.Path(), "config", deviceConfig.NICConfigDir, fmt.Sprintf("%s.json", linux.PathNameEncode(nicConfig.DeviceName)))
 
 	err = os.WriteFile(nicFile, nicConfigBytes, 0700)
 	if err != nil {
@@ -7871,7 +7871,7 @@ func (d *qemu) Info() instance.Info {
 		return data
 	}
 
-	err := util.LoadModule("vhost_vsock")
+	err := linux.LoadModule("vhost_vsock")
 	if err != nil {
 		data.Error = fmt.Errorf("vhost_vsock kernel module not loaded")
 		return data

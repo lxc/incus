@@ -41,12 +41,12 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/storage/memorypipe"
 	"github.com/lxc/incus/incusd/storage/s3"
 	"github.com/lxc/incus/incusd/storage/s3/miniod"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
@@ -991,7 +991,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 		defer func() { _ = src.Unfreeze() }()
 
 		// Attempt to sync the filesystem.
-		_ = filesystem.SyncFS(src.RootfsPath())
+		_ = linux.SyncFS(src.RootfsPath())
 	}
 
 	revert.Add(func() { _ = b.DeleteInstance(inst, op) })
@@ -1489,7 +1489,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 		defer func() { _ = src.Unfreeze() }()
 
 		// Attempt to sync the filesystem.
-		_ = filesystem.SyncFS(src.RootfsPath())
+		_ = linux.SyncFS(src.RootfsPath())
 	}
 
 	if b.Name() == srcPool.Name() {
@@ -2370,7 +2370,7 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		defer func() { _ = inst.Unfreeze() }()
 
 		// Attempt to sync the filesystem.
-		_ = filesystem.SyncFS(inst.RootfsPath())
+		_ = linux.SyncFS(inst.RootfsPath())
 	}
 
 	err = b.driver.MigrateVolume(vol, conn, args, op)
@@ -2800,7 +2800,7 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 		defer func() { _ = src.Unfreeze() }()
 
 		// Attempt to sync the filesystem.
-		_ = filesystem.SyncFS(src.RootfsPath())
+		_ = linux.SyncFS(src.RootfsPath())
 	}
 
 	volStorageName := project.Instance(inst.Project().Name, inst.Name())
@@ -6170,14 +6170,14 @@ func (b *backend) detectUnknownCustomVolume(vol *drivers.Volume, projectVols map
 		if vol.IsBlockBacked() {
 			var blockFS string
 			mountPath := vol.MountPath()
-			if filesystem.IsMountPoint(mountPath) {
-				blockFS, err = filesystem.Detect(mountPath)
+			if linux.IsMountPoint(mountPath) {
+				blockFS, err = linux.DetectFilesystem(mountPath)
 				if err != nil {
 					return err
 				}
 			} else {
 				err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
-					blockFS, err = filesystem.Detect(mountPath)
+					blockFS, err = linux.DetectFilesystem(mountPath)
 					if err != nil {
 						return err
 					}

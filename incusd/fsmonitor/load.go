@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/lxc/incus/incusd/fsmonitor/drivers"
-	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -22,7 +22,7 @@ func New(ctx context.Context, path string) (FSMonitor, error) {
 		return driver, logger, nil
 	}
 
-	if !filesystem.IsMountPoint(path) {
+	if !linux.IsMountPoint(path) {
 		return nil, errors.New("Path needs to be a mountpoint")
 	}
 

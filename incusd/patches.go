@@ -21,7 +21,7 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"

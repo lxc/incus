@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -409,7 +410,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 			// If VM, then try and load the vfio-pci module first.
 			if d.inst.Type() == instancetype.VM {
-				err := util.LoadModule("vfio-pci")
+				err := linux.LoadModule("vfio-pci")
 				if err != nil {
 					return nil, fmt.Errorf("Error loading %q module: %w", "vfio-pci", err)
 				}
@@ -454,14 +455,14 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				return nil, fmt.Errorf("SR-IOV acceleration requires hardware offloading be enabled in OVS")
 			}
 
-			err := util.LoadModule("vdpa")
+			err := linux.LoadModule("vdpa")
 			if err != nil {
 				return nil, fmt.Errorf("Error loading %q module: %w", "vdpa", err)
 			}
 
 			// If VM, then try and load the vhost_vdpa module first.
 			if d.inst.Type() == instancetype.VM {
-				err = util.LoadModule("vhost_vdpa")
+				err = linux.LoadModule("vhost_vdpa")
 				if err != nil {
 					return nil, fmt.Errorf("Error loading %q module: %w", "vhost_vdpa", err)
 				}

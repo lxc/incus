@@ -11,7 +11,7 @@ import (
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -58,7 +58,7 @@ func (d *zfs) load() error {
 	}
 
 	// Load the kernel module.
-	err := util.LoadModule("zfs")
+	err := linux.LoadModule("zfs")
 	if err != nil {
 		return fmt.Errorf("Error loading %q module: %w", "zfs", err)
 	}

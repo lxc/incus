@@ -10,7 +10,7 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/resources"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 )
 
@@ -71,7 +71,7 @@ func (d *infinibandPhysical) Start() (*deviceConfig.RunConfig, error) {
 
 	// If VM, then try and load the vfio-pci module first.
 	if d.inst.Type() == instancetype.VM {
-		err = util.LoadModule("vfio-pci")
+		err = linux.LoadModule("vfio-pci")
 		if err != nil {
 			return nil, fmt.Errorf("Error loading %q module: %w", "vfio-pci", err)
 		}

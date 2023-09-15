@@ -7,19 +7,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/shared"
-	"github.com/lxc/incus/shared/subprocess"
 )
-
-// LoadModule loads the kernel module with the given name, by invoking
-// modprobe. This respects any modprobe configuration on the system.
-func LoadModule(module string) error {
-	if shared.PathExists(fmt.Sprintf("/sys/module/%s", module)) {
-		return nil
-	}
-
-	_, err := subprocess.RunCommand("modprobe", "-b", module)
-	return err
-}
 
 // SupportsFilesystem checks whether a given filesystem is already supported
 // by the kernel. Note that if the filesystem is a module, you may need to

@@ -15,7 +15,7 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/resources"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 )
 
@@ -237,7 +237,7 @@ func (d *gpuPhysical) startVM() (*deviceConfig.RunConfig, error) {
 	}
 
 	// Make sure that vfio-pci is loaded.
-	err = util.LoadModule("vfio-pci")
+	err = linux.LoadModule("vfio-pci")
 	if err != nil {
 		return nil, fmt.Errorf("Error loading %q module: %w", "vfio-pci", err)
 	}

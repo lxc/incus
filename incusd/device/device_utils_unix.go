@@ -11,8 +11,8 @@ import (
 
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 )
@@ -195,7 +195,7 @@ func UnixDeviceCreate(s *state.State, idmapSet *idmap.IdmapSet, devicesPath stri
 
 	destPath := unixDeviceDestPath(m)
 	relativeDestPath := strings.TrimPrefix(destPath, "/")
-	devName := filesystem.PathNameEncode(deviceJoinPath(prefix, relativeDestPath))
+	devName := linux.PathNameEncode(deviceJoinPath(prefix, relativeDestPath))
 	devPath := filepath.Join(devicesPath, devName)
 
 	// Create the new entry.
@@ -259,7 +259,7 @@ func unixDeviceSetup(s *state.State, devicesPath string, typePrefix string, devi
 
 	// Convert the requested dest path inside the instance to an encoded relative one.
 	ourDestPath := unixDeviceDestPath(m)
-	ourEncRelDestFile := filesystem.PathNameEncode(strings.TrimPrefix(ourDestPath, "/"))
+	ourEncRelDestFile := linux.PathNameEncode(strings.TrimPrefix(ourDestPath, "/"))
 
 	// Load all existing host devices.
 	dents, err := os.ReadDir(devicesPath)
@@ -365,7 +365,7 @@ func unixDeviceSetupBlockNum(s *state.State, devicesPath string, typePrefix stri
 // UnixDeviceExists checks if the unix device already exists in devices path.
 func UnixDeviceExists(devicesPath string, prefix string, path string) bool {
 	relativeDestPath := strings.TrimPrefix(path, "/")
-	devName := fmt.Sprintf("%s.%s", filesystem.PathNameEncode(prefix), filesystem.PathNameEncode(relativeDestPath))
+	devName := fmt.Sprintf("%s.%s", linux.PathNameEncode(prefix), linux.PathNameEncode(relativeDestPath))
 	devPath := filepath.Join(devicesPath, devName)
 
 	return shared.PathExists(devPath)
@@ -390,9 +390,9 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 	var ourPrefix string
 	// If a prefix override has been supplied, use that for filtering the devices to remove.
 	if optPrefix != "" {
-		ourPrefix = filesystem.PathNameEncode(deviceJoinPath(typePrefix, deviceName, optPrefix))
+		ourPrefix = linux.PathNameEncode(deviceJoinPath(typePrefix, deviceName, optPrefix))
 	} else {
-		ourPrefix = filesystem.PathNameEncode(deviceJoinPath(typePrefix, deviceName))
+		ourPrefix = linux.PathNameEncode(deviceJoinPath(typePrefix, deviceName))
 	}
 
 	ourDevs := []string{}
@@ -454,7 +454,7 @@ func unixDeviceRemove(devicesPath string, typePrefix string, deviceName string, 
 
 		// Append this device to the mount rules (these will be unmounted).
 		runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
-			TargetPath: filesystem.PathNameDecode(ourEncRelDestFile),
+			TargetPath: linux.PathNameDecode(ourEncRelDestFile),
 		})
 
 		absDevPath := filepath.Join(devicesPath, ourDev)
@@ -480,9 +480,9 @@ func unixDeviceDeleteFiles(s *state.State, devicesPath string, typePrefix string
 	var ourPrefix string
 	// If a prefix override has been supplied, use that for filtering the devices to remove.
 	if optPrefix != "" {
-		ourPrefix = filesystem.PathNameEncode(deviceJoinPath(typePrefix, deviceName, optPrefix))
+		ourPrefix = linux.PathNameEncode(deviceJoinPath(typePrefix, deviceName, optPrefix))
 	} else {
-		ourPrefix = filesystem.PathNameEncode(deviceJoinPath(typePrefix, deviceName))
+		ourPrefix = linux.PathNameEncode(deviceJoinPath(typePrefix, deviceName))
 	}
 
 	// Load all devices.

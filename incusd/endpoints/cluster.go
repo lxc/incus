@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
-	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 )
 

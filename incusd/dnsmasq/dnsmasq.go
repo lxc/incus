@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
@@ -274,7 +274,7 @@ func DHCPAllAllocations(network string) (map[[4]byte]DHCPAllocation, map[[16]byt
 
 // StaticAllocationFileName returns the file name to use for a dnsmasq instance device static allocation.
 func StaticAllocationFileName(projectName string, instanceName string, deviceName string) string {
-	escapedDeviceName := filesystem.PathNameEncode(deviceName)
+	escapedDeviceName := linux.PathNameEncode(deviceName)
 
 	return strings.Join([]string{project.Instance(projectName, instanceName), escapedDeviceName}, staticAllocationDeviceSeparator)
 }

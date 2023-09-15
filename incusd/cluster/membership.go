@@ -17,7 +17,7 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"

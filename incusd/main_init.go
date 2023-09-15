@@ -8,9 +8,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -197,9 +196,9 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 	// If clustering is enabled, and no cluster.https_address network address
 	// was specified, we fallback to core.https_address.
 	if config.Cluster != nil &&
-		config.Node.Config["core.https_address"] != "" &&
-		config.Node.Config["cluster.https_address"] == "" {
-		config.Node.Config["cluster.https_address"] = config.Node.Config["core.https_address"]
+		config.Server.Config["core.https_address"] != "" &&
+		config.Server.Config["cluster.https_address"] == "" {
+		config.Server.Config["cluster.https_address"] = config.Server.Config["core.https_address"]
 	}
 
 	// Detect if the user has chosen to join a cluster using the new
@@ -222,23 +221,7 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
-
-	localRevert, err := initDataNodeApply(d, config.Node)
-	if err != nil {
-		return err
-	}
-
-	revert.Add(localRevert)
-
-	err = initDataClusterApply(d, config.Cluster)
-	if err != nil {
-		return err
-	}
-
-	revert.Success()
-	return nil
+	return d.ApplyServerPreseed(*config)
 }
 
 func (c *cmdInit) defaultHostname() string {

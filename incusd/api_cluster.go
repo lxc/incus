@@ -40,6 +40,7 @@ import (
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -405,7 +406,7 @@ func clusterPutBootstrap(d *Daemon, r *http.Request, req api.ClusterPut) respons
 
 		localHTTPSAddress := config.HTTPSAddress()
 
-		if util.IsWildCardAddress(localHTTPSAddress) {
+		if internalUtil.IsWildCardAddress(localHTTPSAddress) {
 			return fmt.Errorf("Cannot use wildcard core.https_address %q for cluster.https_address. Please specify a new cluster.https_address or core.https_address", localClusterAddress)
 		}
 
@@ -500,7 +501,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		// The user has previously set core.https_address and
 		// is now providing a cluster address as well. If they
 		// differ we need to listen to it.
-		if !util.IsAddressCovered(req.ServerAddress, localHTTPSAddress) {
+		if !internalUtil.IsAddressCovered(req.ServerAddress, localHTTPSAddress) {
 			err := s.Endpoints.ClusterUpdateAddress(req.ServerAddress)
 			if err != nil {
 				return response.SmartError(err)
@@ -587,12 +588,10 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			d.globalConfigMu.Unlock()
 		})
 
-		localRevert, err := clusterInitMember(localClient, client, req.MemberConfig)
+		err = clusterInitMember(localClient, client, req.MemberConfig)
 		if err != nil {
 			return fmt.Errorf("Failed to initialize member: %w", err)
 		}
-
-		revert.Add(localRevert)
 
 		// Get all defined storage pools and networks, so they can be compared to the ones in the cluster.
 		pools := []api.StoragePool{}
@@ -654,12 +653,12 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		}
 
 		// Update our TLS configuration using the returned cluster certificate.
-		err = util.WriteCert(s.OS.VarDir, "cluster", []byte(req.ClusterCertificate), info.PrivateKey, nil)
+		err = internalUtil.WriteCert(s.OS.VarDir, "cluster", []byte(req.ClusterCertificate), info.PrivateKey, nil)
 		if err != nil {
 			return fmt.Errorf("Failed to save cluster certificate: %w", err)
 		}
 
-		networkCert, err := util.LoadClusterCert(s.OS.VarDir)
+		networkCert, err := internalUtil.LoadClusterCert(s.OS.VarDir)
 		if err != nil {
 			return fmt.Errorf("Failed to parse cluster certificate: %w", err)
 		}
@@ -818,7 +817,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 		}
 	}
 
-	networkCert, err := util.LoadCert(s.OS.VarDir)
+	networkCert, err := internalUtil.LoadCert(s.OS.VarDir)
 	if err != nil {
 		return response.InternalError(fmt.Errorf("Failed to parse member certificate: %w", err))
 	}
@@ -875,14 +874,13 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 
 // clusterInitMember initialises storage pools and networks on this member. We pass two client instances, one
 // connected to ourselves (the joining member) and one connected to the target cluster member to join.
-// Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memberConfig []api.ClusterMemberConfigKey) (revert.Hook, error) {
+func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memberConfig []api.ClusterMemberConfigKey) error {
 	data := api.InitLocalPreseed{}
 
 	// Fetch all pools currently defined in the cluster.
 	pools, err := client.GetStoragePools()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch information about cluster storage pools: %w", err)
+		return fmt.Errorf("Failed to fetch information about cluster storage pools: %w", err)
 	}
 
 	// Merge the returned storage pools configs with the node-specific
@@ -928,7 +926,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 
 	projects, err := client.GetProjects()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch project information about cluster networks: %w", err)
+		return fmt.Errorf("Failed to fetch project information about cluster networks: %w", err)
 	}
 
 	for _, p := range projects {
@@ -950,7 +948,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 		// Fetch all project specific networks currently defined in the cluster for the project.
 		networks, err := client.UseProject(p.Name).GetNetworks()
 		if err != nil {
-			return nil, fmt.Errorf("Failed to fetch network information about cluster networks in project %q: %w", p.Name, err)
+			return fmt.Errorf("Failed to fetch network information about cluster networks in project %q: %w", p.Name, err)
 		}
 
 		// Merge the returned networks configs with the node-specific configs provided by the user.
@@ -994,12 +992,12 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 		}
 	}
 
-	revert, err := initDataNodeApply(d, data)
+	err = d.ApplyServerPreseed(api.InitPreseed{Server: data})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to initialize storage pools and networks: %w", err)
+		return fmt.Errorf("Failed to initialize storage pools and networks: %w", err)
 	}
 
-	return revert, nil
+	return nil
 }
 
 // Perform a request to the /internal/cluster/accept endpoint to check if a new
@@ -2251,7 +2249,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 		}
 	}
 
-	err := util.WriteCert(s.OS.VarDir, "cluster", []byte(req.ClusterCertificate), []byte(req.ClusterCertificateKey), nil)
+	err := internalUtil.WriteCert(s.OS.VarDir, "cluster", []byte(req.ClusterCertificate), []byte(req.ClusterCertificateKey), nil)
 	if err != nil {
 		return err
 	}
@@ -2264,7 +2262,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 	}
 
 	// Get the new cluster certificate struct
-	cert, err := util.LoadClusterCert(s.OS.VarDir)
+	cert, err := internalUtil.LoadClusterCert(s.OS.VarDir)
 	if err != nil {
 		return err
 	}

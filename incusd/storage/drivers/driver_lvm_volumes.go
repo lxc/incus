@@ -16,8 +16,8 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/rsync"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -352,7 +352,7 @@ func (d *lvm) GetVolumeUsage(vol Volume) (int64, error) {
 	// This is because to get an accurate value we cannot use blocks allocated, as the filesystem will likely
 	// consume blocks and not free them when files are deleted in the volume. This avoids returning different
 	// values depending on whether the volume is mounted or not.
-	if vol.contentType == ContentTypeFS && filesystem.IsMountPoint(vol.MountPath()) {
+	if vol.contentType == ContentTypeFS && linux.IsMountPoint(vol.MountPath()) {
 		var stat unix.Statfs_t
 		err := unix.Statfs(vol.MountPath(), &stat)
 		if err != nil {
@@ -637,7 +637,7 @@ func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
 	if vol.contentType == ContentTypeFS {
 		// Check if already mounted.
 		mountPath := vol.MountPath()
-		if !filesystem.IsMountPoint(mountPath) {
+		if !linux.IsMountPoint(mountPath) {
 			fsType := vol.ConfigBlockFilesystem()
 			volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
 
@@ -653,7 +653,7 @@ func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
 				return err
 			}
 
-			mountFlags, mountOptions := filesystem.ResolveMountOptions(strings.Split(vol.ConfigBlockMountOptions(), ","))
+			mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(vol.ConfigBlockMountOptions(), ","))
 			err = TryMount(volDevPath, mountPath, fsType, mountFlags, mountOptions)
 			if err != nil {
 				return fmt.Errorf("Failed to mount LVM logical volume: %w", err)
@@ -690,7 +690,7 @@ func (d *lvm) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 	refCount := vol.MountRefCountDecrement()
 
 	// Check if already mounted.
-	if vol.contentType == ContentTypeFS && filesystem.IsMountPoint(mountPath) {
+	if vol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
 			return false, ErrInUse
@@ -937,7 +937,7 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 	mountPath := snapVol.MountPath()
 
 	// Check if already mounted.
-	if snapVol.contentType == ContentTypeFS && !filesystem.IsMountPoint(mountPath) {
+	if snapVol.contentType == ContentTypeFS && !linux.IsMountPoint(mountPath) {
 		err = snapVol.EnsureMountPath()
 		if err != nil {
 			return err
@@ -946,7 +946,7 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 		// Default to mounting the original snapshot directly. This may be changed below if a temporary
 		// snapshot needs to be taken.
 		mountVol := snapVol
-		mountFlags, mountOptions := filesystem.ResolveMountOptions(strings.Split(mountVol.ConfigBlockMountOptions(), ","))
+		mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(mountVol.ConfigBlockMountOptions(), ","))
 
 		// Regenerate filesystem UUID if needed. This is because some filesystems do not allow mounting
 		// multiple volumes that share the same UUID. As snapshotting a volume will copy its UUID we need
@@ -1045,7 +1045,7 @@ func (d *lvm) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (b
 	refCount := snapVol.MountRefCountDecrement()
 
 	// Check if already mounted.
-	if snapVol.contentType == ContentTypeFS && filesystem.IsMountPoint(mountPath) {
+	if snapVol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
 			return false, ErrInUse

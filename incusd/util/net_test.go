@@ -11,6 +11,7 @@ import (
 
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/ports"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 // The connection returned by the dialer is paired with the one returned by the
@@ -59,7 +60,7 @@ func TestCanonicalNetworkAddress(t *testing.T) {
 
 	for in, out := range cases {
 		t.Run(in, func(t *testing.T) {
-			assert.Equal(t, out, util.CanonicalNetworkAddress(in, ports.HTTPSDefaultPort))
+			assert.Equal(t, out, internalUtil.CanonicalNetworkAddress(in, ports.HTTPSDefaultPort))
 		})
 	}
 }
@@ -101,7 +102,7 @@ func TestIsAddressCovered(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("%s-%s", c.address1, c.address2), func(t *testing.T) {
-			covered := util.IsAddressCovered(c.address1, c.address2)
+			covered := internalUtil.IsAddressCovered(c.address1, c.address2)
 			if c.covered {
 				assert.True(t, covered)
 			} else {

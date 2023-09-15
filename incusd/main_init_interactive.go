@@ -17,11 +17,11 @@ import (
 	"github.com/lxc/incus/incusd/cluster"
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/storage/filesystem"
-	"github.com/lxc/incus/incusd/util"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -33,10 +33,10 @@ import (
 func (c *cmdInit) RunInteractive(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Initialize config
 	config := api.InitPreseed{}
-	config.Node.Config = map[string]string{}
-	config.Node.Networks = []api.InitNetworksProjectPost{}
-	config.Node.StoragePools = []api.StoragePoolsPost{}
-	config.Node.Profiles = []api.ProfilesPost{
+	config.Server.Config = map[string]string{}
+	config.Server.Networks = []api.InitNetworksProjectPost{}
+	config.Server.StoragePools = []api.StoragePoolsPost{}
+	config.Server.Profiles = []api.ProfilesPost{
 		{
 			Name: "default",
 			ProfilePut: api.ProfilePut{
@@ -154,7 +154,7 @@ func (c *cmdInit) askClustering(config *api.InitPreseed, d incus.InstanceServer,
 		}
 
 		serverAddress = util.CanonicalNetworkAddress(serverAddress, ports.HTTPSDefaultPort)
-		config.Node.Config["core.https_address"] = serverAddress
+		config.Server.Config["core.https_address"] = serverAddress
 
 		clusterJoin, err := cli.AskBool("Are you joining an existing cluster? (yes/no) [default=no]: ", "no")
 		if err != nil {
@@ -327,7 +327,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 				}
 
 				// Add to the default profile
-				config.Node.Profiles[0].Devices["eth0"] = map[string]string{
+				config.Server.Profiles[0].Devices["eth0"] = map[string]string{
 					"type":    "nic",
 					"nictype": "macvlan",
 					"name":    "eth0",
@@ -335,7 +335,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 				}
 
 				if shared.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", interfaceName)) {
-					config.Node.Profiles[0].Devices["eth0"]["nictype"] = "bridged"
+					config.Server.Profiles[0].Devices["eth0"]["nictype"] = "bridged"
 				}
 
 				break
@@ -389,10 +389,10 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 				}
 
 				// Add the new network
-				config.Node.Networks = append(config.Node.Networks, networkPost)
+				config.Server.Networks = append(config.Server.Networks, networkPost)
 
 				// Add to the default profile
-				config.Node.Profiles[0].Devices["eth0"] = map[string]string{
+				config.Server.Profiles[0].Devices["eth0"] = map[string]string{
 					"type":    "nic",
 					"name":    "eth0",
 					"network": "incusfan0",
@@ -429,7 +429,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 		}
 
 		// Add to the default profile
-		config.Node.Profiles[0].Devices["eth0"] = map[string]string{
+		config.Server.Profiles[0].Devices["eth0"] = map[string]string{
 			"type":    "nic",
 			"name":    "eth0",
 			"network": net.Name,
@@ -478,7 +478,7 @@ func (c *cmdInit) askNetworking(config *api.InitPreseed, d incus.InstanceServer)
 		}
 
 		// Add the new network
-		config.Node.Networks = append(config.Node.Networks, net)
+		config.Server.Networks = append(config.Server.Networks, net)
 		break
 	}
 
@@ -528,7 +528,7 @@ func (c *cmdInit) askStorage(config *api.InitPreseed, d incus.InstanceServer, se
 
 func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer, server *api.Server, poolType util.PoolType) error {
 	// Figure out the preferred storage driver
-	availableBackends := util.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, poolType)
+	availableBackends := linux.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, poolType)
 
 	if len(availableBackends) == 0 {
 		if poolType != util.PoolTypeAny {
@@ -538,7 +538,7 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 		return fmt.Errorf("No %s storage backends available", poolType)
 	}
 
-	backingFs, err := filesystem.Detect(shared.VarPath())
+	backingFs, err := linux.DetectFilesystem(shared.VarPath())
 	if err != nil {
 		backingFs = "dir"
 	}
@@ -577,8 +577,8 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 		}
 
 		// Add to the default profile
-		if config.Node.Profiles[0].Devices["root"] == nil {
-			config.Node.Profiles[0].Devices["root"] = map[string]string{
+		if config.Server.Profiles[0].Devices["root"] == nil {
+			config.Server.Profiles[0].Devices["root"] = map[string]string{
 				"type": "disk",
 				"path": "/",
 				"pool": pool.Name,
@@ -606,7 +606,7 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 
 		// Optimization for dir
 		if pool.Driver == "dir" {
-			config.Node.StoragePools = append(config.Node.StoragePools, pool)
+			config.Server.StoragePools = append(config.Server.StoragePools, pool)
 			break
 		}
 
@@ -619,7 +619,7 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 
 			if btrfsSubvolume {
 				pool.Config["source"] = shared.VarPath("storage-pools", pool.Name)
-				config.Node.StoragePools = append(config.Node.StoragePools, pool)
+				config.Server.StoragePools = append(config.Server.StoragePools, pool)
 				break
 			}
 		}
@@ -635,7 +635,7 @@ func (c *cmdInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer
 
 				if zfsDataset {
 					pool.Config["source"] = "rpool/incus"
-					config.Node.StoragePools = append(config.Node.StoragePools, pool)
+					config.Server.StoragePools = append(config.Server.StoragePools, pool)
 					break
 				}
 			}
@@ -787,7 +787,7 @@ and make sure that your user can see and run the "thin_check" command before run
 			}
 		}
 
-		config.Node.StoragePools = append(config.Node.StoragePools, pool)
+		config.Server.StoragePools = append(config.Server.StoragePools, pool)
 		break
 	}
 
@@ -816,7 +816,7 @@ they otherwise would.
 		}
 
 		if shareParentAllocation {
-			config.Node.Profiles[0].Config["security.privileged"] = "true"
+			config.Server.Profiles[0].Config["security.privileged"] = "true"
 		}
 	}
 
@@ -871,7 +871,7 @@ they otherwise would.
 				return err
 			}
 
-			config.Node.Config["core.https_address"] = util.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
+			config.Server.Config["core.https_address"] = util.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
 		}
 	}
 
@@ -882,7 +882,7 @@ they otherwise would.
 	}
 
 	if !imageStaleRefresh {
-		config.Node.Config["images.auto_update_interval"] = "0"
+		config.Server.Config["images.auto_update_interval"] = "0"
 	}
 
 	return nil

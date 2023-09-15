@@ -1,4 +1,6 @@
-package filesystem
+//go:build linux
+
+package linux
 
 import (
 	"bufio"
@@ -9,8 +11,6 @@ import (
 	"syscall"
 
 	"golang.org/x/sys/unix"
-
-	"github.com/lxc/incus/shared/logger"
 )
 
 // Filesystem magic numbers.
@@ -30,8 +30,8 @@ func StatVFS(path string) (*unix.Statfs_t, error) {
 	return &st, nil
 }
 
-// Detect returns the filesystem on which the passed-in path sits.
-func Detect(path string) (string, error) {
+// DetectFilesystem returns the filesystem on which the passed-in path sits.
+func DetectFilesystem(path string) (string, error) {
 	fs, err := StatVFS(path)
 	if err != nil {
 		return "", err
@@ -67,7 +67,6 @@ func FSTypeToName(fsType int32) (string, error) {
 		return "zfs", nil
 	}
 
-	logger.Debugf("Unknown backing filesystem type: 0x%x", fsType)
 	return fmt.Sprintf("0x%x", fsType), nil
 }
 
@@ -129,7 +128,7 @@ func IsMountPoint(path string) bool {
 
 	// Btrfs annoyingly uses a different Dev id for different subvolumes on the same mount.
 	// So for btrfs, we require a matching mount entry in mountinfo.
-	fs, _ := Detect(path)
+	fs, _ := DetectFilesystem(path)
 	if err == nil && fs == "btrfs" {
 		return false
 	}

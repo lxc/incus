@@ -10,7 +10,7 @@ import (
 	"github.com/lxc/incus/incusd/fsmonitor/drivers"
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/validate"
 )
@@ -101,7 +101,7 @@ func (d *unixCommon) Register() error {
 		// Derive the host side path for the instance device file.
 		ourPrefix := deviceJoinPath("unix", deviceName)
 		relativeDestPath := strings.TrimPrefix(unixDeviceDestPath(devConfig), "/")
-		devName := filesystem.PathNameEncode(deviceJoinPath(ourPrefix, relativeDestPath))
+		devName := linux.PathNameEncode(deviceJoinPath(ourPrefix, relativeDestPath))
 		devPath := filepath.Join(devicesPath, devName)
 
 		runConf := deviceConfig.RunConfig{}

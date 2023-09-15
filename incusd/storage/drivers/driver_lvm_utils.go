@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/locking"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/storage/filesystem"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -796,7 +796,7 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 			parentVol := NewVolume(d, d.name, vol.volType, vol.contentType, parent, nil, d.config)
 
 			// If parent is in use then skip deactivating non-thinpool snapshot volume as it will fail.
-			if parentVol.MountInUse() || (parentVol.contentType == ContentTypeFS && filesystem.IsMountPoint(parentVol.MountPath())) {
+			if parentVol.MountInUse() || (parentVol.contentType == ContentTypeFS && linux.IsMountPoint(parentVol.MountPath())) {
 				return false, nil
 			}
 		}

@@ -54,7 +54,6 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/incusd/storage/s3/miniod"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/incusd/task"
@@ -62,6 +61,8 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/archive"
@@ -650,7 +651,7 @@ func setupSharedMounts() error {
 
 	// Check if already setup
 	path := shared.VarPath("shmounts")
-	if filesystem.IsMountPoint(path) {
+	if linux.IsMountPoint(path) {
 		daemon.SharedMountsSetup = true
 		return nil
 	}
@@ -940,13 +941,13 @@ func (d *Daemon) init() error {
 	}
 
 	/* Setup network endpoint certificate */
-	networkCert, err := util.LoadCert(d.os.VarDir)
+	networkCert, err := internalUtil.LoadCert(d.os.VarDir)
 	if err != nil {
 		return err
 	}
 
 	/* Setup server certificate */
-	serverCert, err := util.LoadServerCert(d.os.VarDir)
+	serverCert, err := internalUtil.LoadServerCert(d.os.VarDir)
 	if err != nil {
 		return err
 	}
@@ -1007,7 +1008,7 @@ func (d *Daemon) init() error {
 
 		// Attempt to Mount the devIncus tmpfs
 		devIncus := filepath.Join(d.os.VarDir, "guestapi")
-		if !filesystem.IsMountPoint(devIncus) {
+		if !linux.IsMountPoint(devIncus) {
 			err = unix.Mount("tmpfs", devIncus, "tmpfs", 0, "size=100k,mode=0755")
 			if err != nil {
 				logger.Warn("Failed to mount devIncus", logger.Ctx{"err": err})

@@ -22,8 +22,8 @@ import (
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/storage/filesystem"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
@@ -586,7 +586,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 	// further modifications occur while taking the source snapshot.
 	var unfreezeFS func() error
 	sourcePath := srcVol.MountPath()
-	if !allowInconsistent && srcVol.contentType == ContentTypeFS && srcVol.IsBlockBacked() && filesystem.IsMountPoint(sourcePath) {
+	if !allowInconsistent && srcVol.contentType == ContentTypeFS && srcVol.IsBlockBacked() && linux.IsMountPoint(sourcePath) {
 		unfreezeFS, err = d.filesystemFreeze(sourcePath)
 		if err != nil {
 			return err
@@ -1533,7 +1533,7 @@ func (d *zfs) GetVolumeUsage(vol Volume) (int64, error) {
 		}
 
 		// Shortcut for mounted refquota filesystems.
-		if key == "referenced" && vol.contentType == ContentTypeFS && filesystem.IsMountPoint(vol.MountPath()) {
+		if key == "referenced" && vol.contentType == ContentTypeFS && linux.IsMountPoint(vol.MountPath()) {
 			var stat unix.Statfs_t
 			err := unix.Statfs(vol.MountPath(), &stat)
 			if err != nil {
@@ -2017,7 +2017,7 @@ func (d *zfs) MountVolume(vol Volume, op *operations.Operation) error {
 
 	// Check if filesystem volume already mounted.
 	if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol) {
-		if !filesystem.IsMountPoint(mountPath) {
+		if !linux.IsMountPoint(mountPath) {
 			err := d.setDatasetProperties(dataset, "mountpoint=legacy", "canmount=noauto")
 			if err != nil {
 				return err
@@ -2038,7 +2038,7 @@ func (d *zfs) MountVolume(vol Volume, op *operations.Operation) error {
 				volOptions = append(volOptions, "strictatime")
 			}
 
-			mountFlags, mountOptions := filesystem.ResolveMountOptions(volOptions)
+			mountFlags, mountOptions := linux.ResolveMountOptions(volOptions)
 
 			// Mount the dataset.
 			err = TryMount(dataset, mountPath, "zfs", mountFlags, mountOptions)
@@ -2059,7 +2059,7 @@ func (d *zfs) MountVolume(vol Volume, op *operations.Operation) error {
 			revert.Add(func() { _, _ = d.deactivateVolume(vol) })
 		}
 
-		if !IsContentBlock(vol.contentType) && d.isBlockBacked(vol) && !filesystem.IsMountPoint(mountPath) {
+		if !IsContentBlock(vol.contentType) && d.isBlockBacked(vol) && !linux.IsMountPoint(mountPath) {
 			volPath, err := d.GetVolumeDiskPath(vol)
 			if err != nil {
 				return err
@@ -2070,7 +2070,7 @@ func (d *zfs) MountVolume(vol Volume, op *operations.Operation) error {
 				return err
 			}
 
-			mountFlags, mountOptions := filesystem.ResolveMountOptions(strings.Split(vol.ConfigBlockMountOptions(), ","))
+			mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(vol.ConfigBlockMountOptions(), ","))
 
 			err = TryMount(volPath, mountPath, vol.ConfigBlockFilesystem(), mountFlags, mountOptions)
 			if err != nil {
@@ -2108,7 +2108,7 @@ func (d *zfs) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 
 	refCount := vol.MountRefCountDecrement()
 
-	if vol.contentType == ContentTypeFS && filesystem.IsMountPoint(mountPath) {
+	if vol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
 			return false, ErrInUse
@@ -2768,7 +2768,7 @@ func (d *zfs) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountP
 
 	// Check if filesystem volume already mounted.
 	if snapVol.contentType == ContentTypeFS && !d.isBlockBacked(snapVol) {
-		if !filesystem.IsMountPoint(mountPath) {
+		if !linux.IsMountPoint(mountPath) {
 			err := snapVol.EnsureMountPath()
 			if err != nil {
 				return nil, err
@@ -2827,14 +2827,14 @@ func (d *zfs) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountP
 			d.logger.Debug("Activated ZFS snapshot volume", logger.Ctx{"dev": snapshotDataset})
 		}
 
-		if snapVol.contentType != ContentTypeBlock && d.isBlockBacked(snapVol) && !filesystem.IsMountPoint(mountPath) {
+		if snapVol.contentType != ContentTypeBlock && d.isBlockBacked(snapVol) && !linux.IsMountPoint(mountPath) {
 			err = snapVol.EnsureMountPath()
 			if err != nil {
 				return nil, err
 			}
 
 			mountVol := snapVol
-			mountFlags, mountOptions := filesystem.ResolveMountOptions(strings.Split(mountVol.ConfigBlockMountOptions(), ","))
+			mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(mountVol.ConfigBlockMountOptions(), ","))
 
 			dataset := snapshotDataset
 
@@ -2971,7 +2971,7 @@ func (d *zfs) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (b
 			}
 		}
 
-		if snapVol.contentType == ContentTypeFS && d.isBlockBacked(snapVol) && filesystem.IsMountPoint(mountPath) {
+		if snapVol.contentType == ContentTypeFS && d.isBlockBacked(snapVol) && linux.IsMountPoint(mountPath) {
 			if refCount > 0 {
 				d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
 				return false, ErrInUse
@@ -3033,7 +3033,7 @@ func (d *zfs) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (b
 
 			ourUnmount = true
 		}
-	} else if snapVol.contentType == ContentTypeFS && filesystem.IsMountPoint(mountPath) {
+	} else if snapVol.contentType == ContentTypeFS && linux.IsMountPoint(mountPath) {
 		if refCount > 0 {
 			d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
 			return false, ErrInUse
