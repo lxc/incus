@@ -1,4 +1,4 @@
-//go:build linux
+//go:build !linux
 
 package main
 
@@ -19,10 +19,6 @@ func (c *cmdAdmin) Command() *cobra.Command {
 	cmd.Short = i18n.G("Manage incus daemon")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage incus daemon`))
-
-	// init
-	adminInitCmd := cmdAdminInit{global: c.global}
-	cmd.AddCommand(adminInitCmd.Command())
 
 	return cmd
 }
