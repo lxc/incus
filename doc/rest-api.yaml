@@ -201,8 +201,8 @@ definitions:
             members:
                 description: List of members in this group
                 example:
-                    - node1
-                    - node3
+                    - server01
+                    - server02
                 items:
                     type: string
                 type: array
@@ -235,8 +235,8 @@ definitions:
             members:
                 description: List of members in this group
                 example:
-                    - node1
-                    - node3
+                    - server01
+                    - server02
                 items:
                     type: string
                 type: array
@@ -254,8 +254,8 @@ definitions:
             members:
                 description: List of members in this group
                 example:
-                    - node1
-                    - node3
+                    - server01
+                    - server02
                 items:
                     type: string
                 type: array
@@ -341,7 +341,7 @@ definitions:
     ClusterMemberConfigKey:
         description: |-
             The Value field is empty when getting clustering information with GET
-            1.0/cluster, and should be filled by the joining node when performing a PUT
+            1.0/cluster, and should be filled by the joining server when performing a PUT
             1.0/cluster join request.
         properties:
             description:
@@ -1225,7 +1225,7 @@ definitions:
         x-go-package: github.com/lxc/incus/shared/api
     InitPreseed:
         properties:
-            Node:
+            Server:
                 $ref: '#/definitions/InitLocalPreseed'
             cluster:
                 $ref: '#/definitions/InitClusterPreseed'
@@ -6092,7 +6092,7 @@ definitions:
                 x-go-name: LastSeenAt
             location:
                 description: What cluster member this warning occurred on
-                example: node1
+                example: server01
                 type: string
                 x-go-name: Location
             project:
