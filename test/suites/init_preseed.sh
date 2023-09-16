@@ -1,5 +1,5 @@
 test_init_preseed() {
-  # - incusd init --preseed
+  # - incus admin init --preseed
   incus_backend=$(storage_backend "$INCUS_DIR")
   INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_INIT_DIR}"
@@ -27,7 +27,7 @@ test_init_preseed() {
         source=""
     fi
 
-    cat <<EOF | incusd init --preseed
+    cat <<EOF | incus admin init --preseed
 config:
   core.https_address: 127.0.0.1:9999
   images.auto_update_interval: 15

@@ -1,3 +1,5 @@
+//go:build linux
+
 package main
 
 import (
@@ -16,7 +18,7 @@ import (
 	localtls "github.com/lxc/incus/shared/tls"
 )
 
-type cmdInit struct {
+type cmdAdminInit struct {
 	global *cmdGlobal
 
 	flagAuto    bool
@@ -34,7 +36,7 @@ type cmdInit struct {
 	hostname string
 }
 
-func (c *cmdInit) Command() *cobra.Command {
+func (c *cmdAdminInit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "init"
 	cmd.Short = "Configure the daemon"
@@ -64,7 +66,7 @@ func (c *cmdInit) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if c.flagAuto && c.flagPreseed {
 		return fmt.Errorf("Can't use --auto and --preseed together")
@@ -224,7 +226,7 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 	return d.ApplyServerPreseed(*config)
 }
 
-func (c *cmdInit) defaultHostname() string {
+func (c *cmdAdminInit) defaultHostname() string {
 	if c.hostname != "" {
 		return c.hostname
 	}

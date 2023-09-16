@@ -1,5 +1,5 @@
 test_init_dump() {
-  # - incusd init --dump
+  # - incus admin init --dump
   INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_INIT_DIR}"
   spawn_incus "${INCUS_INIT_DIR}" false
@@ -12,7 +12,7 @@ test_init_dump() {
     storage_pool="incustest-$(basename "${INCUS_DIR}")-data"
     driver="dir"
 
-    cat <<EOF | incusd init --preseed
+    cat <<EOF | incus admin init --preseed
 config:
   core.https_address: 127.0.0.1:9999
   images.auto_update_interval: 15
@@ -43,7 +43,7 @@ profiles:
       parent: inct$$
       type: nic
 EOF
-  incusd init --dump > config.yaml
+  incus admin init --dump > config.yaml
 cat <<EOF > expected.yaml
 config:
   core.https_address: 127.0.0.1:9999

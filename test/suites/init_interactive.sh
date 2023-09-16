@@ -1,5 +1,5 @@
 test_init_interactive() {
-  # - incusd init
+  # - incus admin init
   INCUS_INIT_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_INIT_DIR}"
   spawn_incus "${INCUS_INIT_DIR}" false
@@ -15,7 +15,7 @@ test_init_interactive() {
       incus profile device remove default eth0
     fi
 
-    cat <<EOF | incusd init
+    cat <<EOF | incus admin init
 no
 yes
 my-storage-pool

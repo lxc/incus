@@ -194,7 +194,7 @@ cluster:
   server_name: node1
   enabled: true
 EOF
-  incusd init --preseed < "${INCUS_DIR}/preseed.yaml"
+  incus admin init --preseed < "${INCUS_DIR}/preseed.yaml"
   )
 }
 
@@ -289,7 +289,7 @@ EOF
       fi
     fi
 
-    incusd init --preseed < "${INCUS_DIR}/preseed.yaml"
+    incus admin init --preseed < "${INCUS_DIR}/preseed.yaml"
   )
 }
 

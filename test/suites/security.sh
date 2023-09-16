@@ -11,7 +11,7 @@ test_security() {
     spawn_incus "${INCUS_INIT_DIR}" false
 
     ZFS_POOL="incustest-$(basename "${INCUS_DIR}")-init"
-    INCUS_DIR=${INCUS_INIT_DIR} incusd init --storage-backend zfs --storage-create-loop 1 --storage-pool "${ZFS_POOL}" --auto
+    INCUS_DIR=${INCUS_INIT_DIR} incus admin init --storage-backend zfs --storage-create-loop 1 --storage-pool "${ZFS_POOL}" --auto
 
     PERM=$(stat -c %a "${INCUS_INIT_DIR}/disks/${ZFS_POOL}.img")
     if [ "${PERM}" != "600" ]; then

@@ -1,3 +1,5 @@
+//go:build linux
+
 package main
 
 import (
@@ -12,7 +14,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-func (c *cmdInit) RunPreseed(cmd *cobra.Command, args []string, d incus.InstanceServer) (*api.InitPreseed, error) {
+func (c *cmdAdminInit) RunPreseed(cmd *cobra.Command, args []string, d incus.InstanceServer) (*api.InitPreseed, error) {
 	// Read the YAML
 	bytes, err := io.ReadAll(os.Stdin)
 	if err != nil {

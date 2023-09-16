@@ -176,10 +176,6 @@ func main() {
 	importCmd := cmdImport{global: &globalCmd}
 	app.AddCommand(importCmd.Command())
 
-	// init sub-command
-	initCmd := cmdInit{global: &globalCmd}
-	app.AddCommand(initCmd.Command())
-
 	// manpage sub-command
 	manpageCmd := cmdManpage{global: &globalCmd}
 	app.AddCommand(manpageCmd.Command())

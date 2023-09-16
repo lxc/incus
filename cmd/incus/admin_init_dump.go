@@ -1,3 +1,5 @@
+//go:build linux
+
 package main
 
 import (
@@ -6,11 +8,10 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/shared/api"
 )
 
-func (c *cmdInit) RunDump(d incus.InstanceServer) error {
+func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 	currentServer, _, err := d.GetServer()
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve current server configuration: %w", err)
@@ -21,9 +22,9 @@ func (c *cmdInit) RunDump(d incus.InstanceServer) error {
 
 	// Only retrieve networks in the default project as the preseed format doesn't support creating
 	// projects at this time.
-	networks, err := d.UseProject(project.Default).GetNetworks()
+	networks, err := d.UseProject("default").GetNetworks()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve current server network configuration for project %q: %w", project.Default, err)
+		return fmt.Errorf("Failed to retrieve current server network configuration for project %q: %w", "default", err)
 	}
 
 	for _, network := range networks {
@@ -37,7 +38,7 @@ func (c *cmdInit) RunDump(d incus.InstanceServer) error {
 		networksPost.Description = network.Description
 		networksPost.Name = network.Name
 		networksPost.Type = network.Type
-		networksPost.Project = project.Default
+		networksPost.Project = "default"
 
 		config.Networks = append(config.Networks, networksPost)
 	}
