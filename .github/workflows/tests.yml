@@ -142,7 +142,6 @@ jobs:
 
           sudo apt-get install --no-install-recommends -y \
             curl \
-            dnsutils \
             git \
             libacl1-dev \
             libcap-dev \
