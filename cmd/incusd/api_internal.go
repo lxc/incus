@@ -240,7 +240,7 @@ func internalShutdown(d *Daemon, r *http.Request) response.Response {
 	logger.Info("Asked to shutdown by API", logger.Ctx{"force": force})
 
 	if d.State().ShutdownCtx.Err() != nil {
-		return response.SmartError(fmt.Errorf("Shutdown already in progress"))
+		return response.SmartError(api.StatusErrorf(http.StatusTooManyRequests, "Shutdown already in progress"))
 	}
 
 	forceCtx, forceCtxCancel := context.WithCancel(context.Background())
