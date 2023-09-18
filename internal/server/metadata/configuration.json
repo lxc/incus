@@ -1333,7 +1333,7 @@
 					},
 					{
 						"loki.api.url": {
-							"longdesc": "",
+							"longdesc": "Specify the protocol, name or IP and port. For example `https://loki.example.com:3100`.",
 							"scope": "global",
 							"shortdesc": "URL to the Loki server",
 							"type": "string"
