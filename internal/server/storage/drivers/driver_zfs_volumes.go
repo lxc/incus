@@ -1534,7 +1534,11 @@ func (d *zfs) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 	// when using custom filesystem volumes with block mode enabled. LXD will create the filesystem
 	// for these volumes, and use the mount options. When attaching a regular block volumes to a VM,
 	// these are not mounted by LXD and therefore don't need these config keys.
-	if vol.volType == VolumeTypeCustom && (vol.contentType == ContentTypeBlock || !vol.IsBlockBacked()) {
+	if vol.IsVMBlock() || vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeBlock {
+		delete(commonRules, "zfs.block_mode")
+		delete(commonRules, "block.filesystem")
+		delete(commonRules, "block.mount_options")
+	} else if vol.volType == VolumeTypeCustom && !vol.IsBlockBacked() {
 		delete(commonRules, "block.filesystem")
 		delete(commonRules, "block.mount_options")
 	}
@@ -3342,9 +3346,9 @@ func (d *zfs) FillVolumeConfig(vol Volume) error {
 
 	// Copy volume.* configuration options from pool.
 	// If vol has a source, ignore the block mode related config keys from the pool.
-	if vol.hasSource || vol.IsVMBlock() {
+	if vol.hasSource || vol.IsVMBlock() || vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeBlock {
 		excludedKeys = []string{"zfs.block_mode", "block.filesystem", "block.mount_options"}
-	} else if vol.volType == VolumeTypeCustom && (vol.contentType == ContentTypeBlock || !vol.IsBlockBacked()) {
+	} else if vol.volType == VolumeTypeCustom && !vol.IsBlockBacked() {
 		excludedKeys = []string{"block.filesystem", "block.mount_options"}
 	}
 
