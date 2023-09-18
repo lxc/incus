@@ -1,3 +1,7 @@
+---
+discourse: 14705
+---
+
 # Frequently asked questions
 
 The following sections give answers to frequently asked questions.
@@ -98,3 +102,17 @@ Check if your storage pool is out of space (by running [`lxc storage info <pool_
 In that case, LXD cannot finish unpacking the image, and the instance that you're trying to create shows up as stopped.
 
 To get more insight into what is happening, run [`lxc monitor`](lxc_monitor.md) (see {ref}`faq-monitor`), and check `sudo dmesg` for any I/O errors.
+
+## Why does starting containers suddenly fail?
+
+If starting containers suddenly fails with a cgroup-related error message (`Failed to mount "/sys/fs/cgroup"`), this might be due to running a VPN client on the host.
+
+This is a known issue for both [Mullvad VPN](https://github.com/mullvad/mullvadvpn-app/issues/3651) and [Private Internet Access VPN](https://github.com/pia-foss/desktop/issues/50), but might occur for other VPN clients as well.
+The problem is that the VPN client mounts the `net_cls` cgroup1 over cgroup2 (which LXD uses).
+
+The easiest fix for this problem is to stop the VPN client and unmount the `net_cls` cgroup1 with the following command:
+
+    umount /sys/fs/cgroup/net_cls
+
+If you need to keep the VPN client running, mount the `net_cls` cgroup1 in another location and reconfigure your VPN client accordingly.
+See [this Discourse post](https://discuss.linuxcontainers.org/t/help-help-help-cgroup2-related-issue-on-ubuntu-jammy-with-mullvad-and-privateinternetaccess-vpn/14705/18) for instructions for Mullvad VPN.

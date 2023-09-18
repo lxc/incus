@@ -141,6 +141,7 @@ MicroCloud
 MII
 MITM
 MTU
+Mullvad
 multicast
 MyST
 namespace
@@ -290,6 +291,7 @@ VLANs
 VM
 VMs
 VPD
+VPN
 VPS
 vSwitch
 VXLAN
