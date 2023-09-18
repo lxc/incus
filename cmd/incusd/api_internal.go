@@ -140,16 +140,16 @@ var internalBGPStateCmd = APIEndpoint{
 
 type internalImageOptimizePost struct {
 	Image api.Image `json:"image" yaml:"image"`
-	Pool  string    `json:"pool" yaml:"pool"`
+	Pool  string    `json:"pool"  yaml:"pool"`
 }
 
 type internalWarningCreatePost struct {
-	Location       string `json:"location" yaml:"location"`
-	Project        string `json:"project" yaml:"project"`
+	Location       string `json:"location"         yaml:"location"`
+	Project        string `json:"project"          yaml:"project"`
 	EntityTypeCode int    `json:"entity_type_code" yaml:"entity_type_code"`
-	EntityID       int    `json:"entity_id" yaml:"entity_id"`
-	TypeCode       int    `json:"type_code" yaml:"type_code"`
-	Message        string `json:"message" yaml:"message"`
+	EntityID       int    `json:"entity_id"        yaml:"entity_id"`
+	TypeCode       int    `json:"type_code"        yaml:"type_code"`
+	Message        string `json:"message"          yaml:"message"`
 }
 
 // internalCreateWarning creates a warning, and is used for testing only.
