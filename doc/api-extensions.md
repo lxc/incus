@@ -2021,7 +2021,7 @@ This adds support for sending life cycle and logging events to a Loki server.
 It adds the following global configuration keys:
 
 * `loki.api.ca_cert`: CA certificate which can be used when sending events to the Loki server
-* `loki.api.url`: URL to the Loki server
+* `loki.api.url`: URL to the Loki server (protocol, name or IP and port)
 * `loki.auth.username` and `loki.auth.password`: Used if Loki is behind a reverse proxy with basic authentication enabled
 * `loki.labels`: Comma-separated list of values which are to be used as labels for Loki events.
 * `loki.loglevel`: Minimum log level for events sent to the Loki server.
