@@ -1,0 +1,24 @@
+.github-issue-link-container {
+    padding-right: 0.5rem;
+}
+.github-issue-link {
+    font-size: var(--font-size--small);
+    font-weight: bold;
+    background-color: #DD4814;
+    padding: 13px 23px;
+    text-decoration: none;
+}
+.github-issue-link:link {
+    color: #FFFFFF;
+}
+.github-issue-link:visited {
+    color: #FFFFFF
+}
+.muted-link.github-issue-link:hover {
+    color: #FFFFFF;
+    text-decoration: underline;
+}
+.github-issue-link:active {
+    color: #FFFFFF;
+    text-decoration: underline;
+}

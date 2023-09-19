@@ -5,7 +5,7 @@ matrix:
     d: en_US
   dictionary:
     wordlists:
-    - doc/.sphinx/.wordlist.txt
+    - doc/.wordlist.txt
     output: doc/.sphinx/.wordlist.dic
   sources:
   - doc/html/**/*.html|!doc/html/config-options/index.html|!doc/html/reference/manpages/**/*.html
@@ -23,5 +23,6 @@ matrix:
       - title
       - div.relatedlinks
       - span.guilabel
-      - a.p-navigation__link
       - div.visually-hidden
+      - img
+      - a.p-navigation__link

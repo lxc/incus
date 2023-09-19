@@ -5,15 +5,15 @@
     <ul class="p-navigation__links" role="menu">
 
       <li>
-        <a class="p-logo" href="https://ubuntu.com/lxd" aria-current="page">
-          <img src="{{ pathto('_static/tag.png', 1) }}" alt="LXD-UI logo" class="p-logo-image">
-          <div class="p-logo-text p-heading--4">Canonical LXD
+        <a class="p-logo" href="https://{{ product_page }}" aria-current="page">
+          <img src="{{ pathto(product_tag,1) }}" alt="Logo" class="p-logo-image">
+          <div class="p-logo-text p-heading--4">{{ project }}
           </div>
         </a>
       </li>
 
       <li class="nav-ubuntu-com">
-        <a href="https://ubuntu.com/lxd" class="p-navigation__link">ubuntu.com/lxd</a>
+        <a href="https://{{ product_page }}" class="p-navigation__link">{{ product_page }}</a>
       </li>
 
       <li>
@@ -29,11 +29,11 @@
           </li>
 
           <li>
-            <a href="https://discourse.ubuntu.com/c/lxd" class="p-navigation__sub-link p-dropdown__link">Forum</a>
+            <a href="{{ discourse }}" class="p-navigation__sub-link p-dropdown__link">Forum</a>
           </li>
 
           <li>
-            <a href="https://github.com/canonical/lxd" class="p-navigation__sub-link p-dropdown__link">GitHub</a>
+            <a href="{{ github_url }}" class="p-navigation__sub-link p-dropdown__link">GitHub</a>
           </li>
 
         </ul>

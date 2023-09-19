@@ -128,7 +128,10 @@ update-metadata: build
 doc-setup: client
 	@echo "Setting up documentation build environment"
 	python3 -m venv doc/.sphinx/venv
-	. $(SPHINXENV) ; pip install --upgrade -r doc/.sphinx/requirements.txt
+	. $(SPHINXENV) ; pip install --require-virtualenv --upgrade -r doc/.sphinx/requirements.txt --log doc/.sphinx/venv/pip_install.log
+	@test ! -f doc/.sphinx/venv/pip_list.txt || \
+        mv doc/.sphinx/venv/pip_list.txt doc/.sphinx/venv/pip_list.txt.bak
+	@pip list --local --format=freeze > doc/.sphinx/venv/pip_list.txt
 	find doc/reference/manpages/ -name "*.md" -type f -delete
 	rm -Rf doc/html
 	rm -Rf doc/.sphinx/.doctrees
@@ -147,7 +150,7 @@ doc-serve:
 
 .PHONY: doc-spellcheck
 doc-spellcheck: doc
-	. $(SPHINXENV) ; python3 -m pyspelling -c doc/.sphinx/.spellcheck.yaml
+	. $(SPHINXENV) ; python3 -m pyspelling -c doc/.sphinx/spellingcheck.yaml
 
 .PHONY: doc-linkcheck
 doc-linkcheck: doc-setup
@@ -157,9 +160,13 @@ doc-linkcheck: doc-setup
 doc-lint:
 	doc/.sphinx/.markdownlint/doc-lint.sh
 
+.PHONY:  woke-install
+woke-install:
+	@type woke >/dev/null 2>&1 || \
+        { echo "Installing \"woke\" snap... \n"; sudo snap install woke; }
+
 .PHONY: doc-woke
-doc-woke:
-	type woke >/dev/null 2>&1 || { sudo snap install woke; }
+doc-woke: woke-install
 	woke *.md **/*.md -c https://github.com/canonical/Inclusive-naming/raw/main/config.yml
 
 .PHONY: debug
