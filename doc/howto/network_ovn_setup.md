@@ -177,3 +177,39 @@ See the linked YouTube video for the complete tutorial using four machines.
        ping <IP of c1>
        ping <nameserver>
        ping6 -n www.example.com
+
+## Send OVN logs to LXD
+
+Complete the following steps to have the OVN controller send its logs to LXD.
+
+1. Enable the syslog socket:
+
+       incus config set core.syslog_socket=true
+
+1. Open `/etc/default/ovn-host` for editing.
+
+1. Paste the following configuration:
+
+       OVN_CTL_OPTS=" \
+              --ovn-controller-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket'"
+
+1. Restart the OVN controller:
+
+       systemctl restart ovn-controller.service
+
+You can now use [incus monitor](lxc_monitor.md) to see logs from the OVN controller:
+
+    incus monitor --type=ovn
+
+You can also send the logs to Loki.
+To do so, add the `ovn` value to the {config:option}`server-loki:loki.types` configuration key.
+
+```{tip}
+You can include logs for OVN `northd`, OVN north-bound `ovsdb-server`, and OVN south-bound `ovsdb-server` as well.
+To do so, edit `/etc/default/ovn-central`:
+
+    OVN_CTL_OPTS=" \
+       --northd-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket' \
+       --nb-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket' \
+       --sb-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket'"
+```
