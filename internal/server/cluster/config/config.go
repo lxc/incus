@@ -574,7 +574,7 @@ var ConfigSchema = config.Schema{
 	"loki.api.ca_cert": {},
 
 	// gendoc:generate(entity=server, group=loki, key=loki.api.url)
-	// Specify the protocol, name or IP and port. For example `https://loki.example.com:3100`.
+	// Specify the protocol, name or IP and port. For example `https://loki.example.com:3100`. LXD will automatically add the `/loki/api/v1/push` suffix so there's no need to add it here.
 	// ---
 	//  type: string
 	//  scope: global

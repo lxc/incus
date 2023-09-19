@@ -1218,7 +1218,7 @@ Specify the number of days after which the unused cached image expires.
 :scope: "global"
 :shortdesc: "URL to the Loki server"
 :type: "string"
-Specify the protocol, name or IP and port. For example `https://loki.example.com:3100`.
+Specify the protocol, name or IP and port. For example `https://loki.example.com:3100`. LXD will automatically add the `/loki/api/v1/push` suffix so there's no need to add it here.
 ```
 
 ```{config:option} loki.auth.password server-loki
