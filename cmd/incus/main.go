@@ -338,6 +338,8 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 	// Override the project
 	if c.flagProject != "" {
 		c.conf.ProjectOverride = c.flagProject
+	} else {
+		c.conf.ProjectOverride = os.Getenv("INCUS_PROJECT")
 	}
 
 	// Setup password helper

@@ -23,6 +23,7 @@ Name                            | Description
 `INCUS_CONF`                    | Path to the client configuration directory
 `INCUS_GLOBAL_CONF`             | Path to the global client configuration directory
 `INCUS_REMOTE`                  | Name of the remote to use (overrides configured default remote)
+`INCUS_PROJECT`                 | Name of the project to use (overrides configured default project)
 
 ## Server environment variable
 
