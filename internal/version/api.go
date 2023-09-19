@@ -376,6 +376,7 @@ var APIExtensions = []string{
 	"storage_api_remote_volume_snapshot_copy",
 	"operations_get_query_all_projects",
 	"metadata_configuration",
+	"syslog_socket",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
