@@ -113,21 +113,26 @@ func udevDecode(s string) (string, error) {
 }
 
 func pciAddress(devicePath string) (string, error) {
+	deviceDeviceDir, err := getDeviceDir(devicePath)
+	if err != nil {
+		return "", err
+	}
+
 	// Check if we have a subsystem listed at all.
-	if !sysfsExists(filepath.Join(devicePath, "subsystem")) {
+	if !sysfsExists(filepath.Join(deviceDeviceDir, "subsystem")) {
 		return "", nil
 	}
 
 	// Track down the device.
-	linkTarget, err := filepath.EvalSymlinks(devicePath)
+	linkTarget, err := filepath.EvalSymlinks(deviceDeviceDir)
 	if err != nil {
-		return "", fmt.Errorf("Failed to find %q: %w", devicePath, err)
+		return "", fmt.Errorf("Failed to find %q: %w", deviceDeviceDir, err)
 	}
 
 	// Extract the subsystem.
 	subsystemTarget, err := filepath.EvalSymlinks(filepath.Join(linkTarget, "subsystem"))
 	if err != nil {
-		return "", fmt.Errorf("Failed to find %q: %w", filepath.Join(devicePath, "subsystem"), err)
+		return "", fmt.Errorf("Failed to find %q: %w", filepath.Join(deviceDeviceDir, "subsystem"), err)
 	}
 
 	subsystem := filepath.Base(subsystemTarget)
@@ -137,7 +142,7 @@ func pciAddress(devicePath string) (string, error) {
 		linkTarget = filepath.Dir(linkTarget)
 		subsystemTarget, err := filepath.EvalSymlinks(filepath.Join(linkTarget, "subsystem"))
 		if err != nil {
-			return "", fmt.Errorf("Failed to find %q: %w", filepath.Join(devicePath, "subsystem"), err)
+			return "", fmt.Errorf("Failed to find %q: %w", filepath.Join(deviceDeviceDir, "subsystem"), err)
 		}
 
 		subsystem = filepath.Base(subsystemTarget)
@@ -191,4 +196,25 @@ func usbAddress(devicePath string) (string, error) {
 
 		return fmt.Sprintf("%d:%d", bus, dev), nil
 	}
+}
+
+// getDeviceDir returns the directory which contains device information needed for a device.
+// It appends /device to the path until it ends up to a child /device which is a regular file.
+// This function is needed for devices which include sub-devices like wwan.
+func getDeviceDir(devicePath string) (string, error) {
+	for {
+		deviceDir := filepath.Join(devicePath, "device")
+		fileInfo, err := os.Stat(deviceDir)
+		if os.IsNotExist(err) {
+			break
+		} else if err != nil {
+			return "", fmt.Errorf("Unable to get file info for %q: %w", deviceDir, err)
+		} else if fileInfo.Mode().IsRegular() {
+			break
+		}
+
+		devicePath = deviceDir
+	}
+
+	return devicePath, nil
 }
