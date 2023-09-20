@@ -53,8 +53,8 @@ test_storage_volume_snapshots() {
   incus storage volume snapshot create "${storage_pool}" "${storage_volume}" --no-expiry
   incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap2" | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
-  incus storage volume snapshot rm "${storage_pool}" "${storage_volume}/snap2"
-  incus storage volume snapshot rm "${storage_pool}" "${storage_volume}/snap1"
+  incus storage volume snapshot rm "${storage_pool}" "${storage_volume}" "snap2"
+  incus storage volume snapshot rm "${storage_pool}" "${storage_volume}" "snap1"
 
   # Test snapshot renaming
   incus storage volume snapshot create "${storage_pool}" "${storage_volume}"

@@ -160,7 +160,7 @@ test_security_protection() {
 
   incus init testimage c1
   incus snapshot create c1
-  incus snapshot delete c1/snap0
+  incus snapshot delete c1 snap0
   ! incus delete c1 || false
 
   incus config set c1 security.protection.delete false

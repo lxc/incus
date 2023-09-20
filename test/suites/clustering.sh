@@ -462,7 +462,7 @@ test_clustering_containers() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot create foo foo-bak
   INCUS_DIR="${INCUS_ONE_DIR}" incus info foo | grep -q foo-bak
   INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot rename foo foo-bak foo-bak-2
-  INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot delete foo/foo-bak-2
+  INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot delete foo foo-bak-2
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus info foo | grep -q foo-bak-2 || false
 
   # Export from node1 the image that was imported on node2

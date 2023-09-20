@@ -207,7 +207,7 @@ test_projects_snapshots() {
   incus config show c1/snap0 | grep -q BusyBox
   incus snapshot rename c1 snap0 foo
   incus snapshot restore c1 foo
-  incus snapshot delete c1/foo
+  incus snapshot delete c1 foo
 
   # Test copies
   incus snapshot create c1

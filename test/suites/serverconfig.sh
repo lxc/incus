@@ -50,8 +50,8 @@ test_server_config_storage() {
   ! incus config set storage.backups_volume "${pool}/backups"
   ! incus config set storage.images_volume "${pool}/images"
 
-  incus storage volume snapshot delete "${pool}" backups/snap0
-  incus storage volume snapshot delete "${pool}" images/snap0
+  incus storage volume snapshot delete "${pool}" backups snap0
+  incus storage volume snapshot delete "${pool}" images snap0
 
   # Set the configuration
   incus config set storage.backups_volume "${pool}/backups"

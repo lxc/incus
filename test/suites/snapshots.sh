@@ -48,7 +48,7 @@ snapshots() {
     [ -d "${INCUS_DIR}/containers/foosnap1/rootfs" ]
   fi
 
-  incus snapshot delete foo/snap0
+  incus snapshot delete foo snap0
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ ! -d "${INCUS_DIR}/containers-snapshots/foo/snap0" ]
@@ -57,7 +57,8 @@ snapshots() {
   # test deleting multiple snapshots
   incus snapshot create foo snap2
   incus snapshot create foo snap3
-  incus snapshot delete foo/snap2 foo/snap3
+  incus snapshot delete foo snap2
+  incus snapshot delete foo snap3
   ! incus info foo | grep -q snap2 || false
   ! incus info foo | grep -q snap3 || false
 
@@ -69,7 +70,7 @@ snapshots() {
   fi
 
   incus snapshot rename foo tester2 tester-two
-  incus snapshot delete foo/tester-two
+  incus snapshot delete foo tester-two
   # FIXME: make this backend agnostic
   if [ "$incus_backend" = "dir" ]; then
     [ ! -d "${INCUS_DIR}/containers-snapshots/foo/tester-two" ]
