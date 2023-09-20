@@ -2102,7 +2102,7 @@ type cmdStorageVolumeSnapshotDelete struct {
 
 func (c *cmdStorageVolumeSnapshotDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("delete", i18n.G("[<remote>:]<pool> <volume>/<snapshot>"))
+	cmd.Use = usage("delete", i18n.G("[<remote>:]<pool> <volume> <snapshot>"))
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete storage volume snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -2116,7 +2116,7 @@ func (c *cmdStorageVolumeSnapshotDelete) Command() *cobra.Command {
 
 func (c *cmdStorageVolumeSnapshotDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	exit, err := c.global.CheckArgs(cmd, args, 3, 3)
 	if exit {
 		return err
 	}
@@ -2137,19 +2137,13 @@ func (c *cmdStorageVolumeSnapshotDelete) Run(cmd *cobra.Command, args []string) 
 	// Parse the input
 	volName, volType := c.storageVolume.parseVolume("custom", args[1])
 
-	// If a target was specified, create the volume on the given member.
+	// If a target was specified, delete the volume on the given member.
 	if c.storage.flagTarget != "" {
 		client = client.UseTarget(c.storage.flagTarget)
 	}
 
-	if !strings.Contains(volName, shared.SnapshotDelimiter) {
-		return fmt.Errorf("Volume is not a snapshot")
-	}
-
-	fields := strings.SplitN(volName, "/", 2)
-
 	// Delete the snapshot
-	op, err := client.DeleteStoragePoolVolumeSnapshot(resource.name, volType, fields[0], fields[1])
+	op, err := client.DeleteStoragePoolVolumeSnapshot(resource.name, volType, volName, args[2])
 	if err != nil {
 		return err
 	}
@@ -2160,7 +2154,7 @@ func (c *cmdStorageVolumeSnapshotDelete) Run(cmd *cobra.Command, args []string) 
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Storage volume %s deleted")+"\n", args[1])
+		fmt.Printf(i18n.G("Storage volume snapshot %s deleted from %s")+"\n", args[2], args[1])
 	}
 
 	return nil
