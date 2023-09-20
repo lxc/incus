@@ -197,7 +197,7 @@ Complete the following steps to have the OVN controller send its logs to LXD.
 
        systemctl restart ovn-controller.service
 
-You can now use [incus monitor](lxc_monitor.md) to see logs from the OVN controller:
+You can now use [`incus monitor`](lxc_monitor.md) to see logs from the OVN controller:
 
     incus monitor --type=ovn
 
