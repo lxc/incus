@@ -163,7 +163,7 @@ type cmdSnapshotDelete struct {
 
 func (c *cmdSnapshotDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("delete", i18n.G("[<remote>:]<instance>/<snapshot name> [[<remote>:]<instance>/<snapshot name>...]"))
+	cmd.Use = usage("delete", i18n.G("[<remote>:]<instance> <snapshot name>"))
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -178,7 +178,7 @@ func (c *cmdSnapshotDelete) Command() *cobra.Command {
 
 func (c *cmdSnapshotDelete) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 1, -1)
+	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
 	if exit {
 		return err
 	}
@@ -189,33 +189,25 @@ func (c *cmdSnapshotDelete) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Check that everything exists.
-	err = instancesExist(resources)
-	if err != nil {
-		return err
-	}
-
 	// Process with deletion.
-	for _, resource := range resources {
-		if c.flagInteractive {
-			err := c.promptDelete(resource.name)
-			if err != nil {
-				return err
-			}
-		}
-
-		err := c.doDelete(resource.server, resource.name)
+	if c.flagInteractive {
+		err := c.promptDelete(resources[0].name, args[1])
 		if err != nil {
 			return err
 		}
 	}
 
+	err = c.doDelete(resources[0].server, resources[0].name, args[1])
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (c *cmdSnapshotDelete) promptDelete(name string) error {
+func (c *cmdSnapshotDelete) promptDelete(instName string, name string) error {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf(i18n.G("Remove %s (yes/no): "), name)
+	fmt.Printf(i18n.G("Remove snapshot %s from %s (yes/no): "), name, instName)
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
@@ -226,14 +218,12 @@ func (c *cmdSnapshotDelete) promptDelete(name string) error {
 	return nil
 }
 
-func (c *cmdSnapshotDelete) doDelete(d incus.InstanceServer, name string) error {
+func (c *cmdSnapshotDelete) doDelete(d incus.InstanceServer, instName string, name string) error {
 	var op incus.Operation
 	var err error
 
 	// Snapshot delete
-	fields := strings.SplitN(name, shared.SnapshotDelimiter, 2)
-
-	op, err = d.DeleteInstanceSnapshot(fields[0], fields[1])
+	op, err = d.DeleteInstanceSnapshot(instName, name)
 	if err != nil {
 		return err
 	}

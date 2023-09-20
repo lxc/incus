@@ -463,9 +463,9 @@ migration() {
   incus_remote start l1:c1
   incus_remote delete l1:c1 -f
 
-  incus_remote snapshot delete l2:c1/snap0
-  incus_remote snapshot delete l2:c1/snap1
-  incus_remote snapshot delete l2:c1/snap2
+  incus_remote snapshot delete l2:c1 snap0
+  incus_remote snapshot delete l2:c1 snap1
+  incus_remote snapshot delete l2:c1 snap2
   incus_remote copy l2:c1 l1:
   incus_remote start l1:c1
   incus_remote delete l1:c1 -f
@@ -527,7 +527,7 @@ migration() {
   incus_remote snapshot create l1:c1
 
   # Delete first snapshot from target
-  incus_remote snapshot rm l2:c1/snap0
+  incus_remote snapshot rm l2:c1 snap0
 
   # Refresh
   incus_remote copy l1:c1 l2:c1 --refresh
