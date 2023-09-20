@@ -3,10 +3,18 @@
     {
       "name": "DS_INCUS",
       "label": "INCUS",
-      "description": "Prometheus instance for INCUS",
+      "description": "Prometheus instance for Incus",
       "type": "datasource",
       "pluginId": "prometheus",
       "pluginName": "Prometheus"
+    },
+    {
+      "name": "DS_LOKI",
+      "label": "Loki",
+      "description": "Loki instance for Incus",
+      "type": "datasource",
+      "pluginId": "loki",
+      "pluginName": "Loki"
     }
   ],
   "__elements": {},
@@ -16,6 +24,18 @@
       "id": "grafana",
       "name": "Grafana",
       "version": "9.3.2"
+    },
+    {
+      "type": "panel",
+      "id": "logs",
+      "name": "Logs",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "loki",
+      "name": "Loki",
+      "version": "1.0.0"
     },
     {
       "type": "panel",
@@ -3631,6 +3651,93 @@
       "repeat": "name",
       "title": "Instance: $name",
       "type": "row"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 60
+      },
+      "id": 521,
+      "panels": [],
+      "title": "Loki logs",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "id": 572,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "editorMode": "builder",
+          "expr": "{app=\"incus\", type=\"lifecycle\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Lifecycle event logs",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 68
+      },
+      "id": 573,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "editorMode": "builder",
+          "expr": "{app=\"incus\", type=\"logging\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Event logs",
+      "type": "logs"
     }
   ],
   "refresh": false,
@@ -3789,6 +3896,6 @@
   "timezone": "",
   "title": "INCUS",
   "uid": "bGY-LSB7k",
-  "version": 14,
+  "version": 15,
   "weekStart": ""
 }
