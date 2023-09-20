@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-09-15 10:56-0400\n"
+"POT-Creation-Date: 2023-09-20 01:17-0400\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -1793,14 +1793,14 @@ msgid "Delete warning"
 msgstr ""
 
 #: cmd/incus/action.go:32 cmd/incus/action.go:53 cmd/incus/action.go:76
-#: cmd/incus/action.go:99 cmd/incus/admin.go:18 cmd/incus/alias.go:23
-#: cmd/incus/alias.go:60 cmd/incus/alias.go:110 cmd/incus/alias.go:159
-#: cmd/incus/alias.go:214 cmd/incus/cluster.go:29 cmd/incus/cluster.go:122
-#: cmd/incus/cluster.go:206 cmd/incus/cluster.go:255 cmd/incus/cluster.go:306
-#: cmd/incus/cluster.go:367 cmd/incus/cluster.go:439 cmd/incus/cluster.go:471
-#: cmd/incus/cluster.go:521 cmd/incus/cluster.go:604 cmd/incus/cluster.go:689
-#: cmd/incus/cluster.go:802 cmd/incus/cluster.go:866 cmd/incus/cluster.go:968
-#: cmd/incus/cluster.go:1047 cmd/incus/cluster.go:1154
+#: cmd/incus/action.go:99 cmd/incus/admin.go:20 cmd/incus/admin_other.go:20
+#: cmd/incus/alias.go:23 cmd/incus/alias.go:60 cmd/incus/alias.go:110
+#: cmd/incus/alias.go:159 cmd/incus/alias.go:214 cmd/incus/cluster.go:29
+#: cmd/incus/cluster.go:122 cmd/incus/cluster.go:206 cmd/incus/cluster.go:255
+#: cmd/incus/cluster.go:306 cmd/incus/cluster.go:367 cmd/incus/cluster.go:439
+#: cmd/incus/cluster.go:471 cmd/incus/cluster.go:521 cmd/incus/cluster.go:604
+#: cmd/incus/cluster.go:689 cmd/incus/cluster.go:802 cmd/incus/cluster.go:866
+#: cmd/incus/cluster.go:968 cmd/incus/cluster.go:1047 cmd/incus/cluster.go:1154
 #: cmd/incus/cluster.go:1175 cmd/incus/cluster_group.go:30
 #: cmd/incus/cluster_group.go:84 cmd/incus/cluster_group.go:157
 #: cmd/incus/cluster_group.go:214 cmd/incus/cluster_group.go:266
@@ -1901,8 +1901,8 @@ msgstr ""
 #: cmd/incus/remote.go:649 cmd/incus/remote.go:733 cmd/incus/remote.go:804
 #: cmd/incus/remote.go:859 cmd/incus/remote.go:897 cmd/incus/rename.go:21
 #: cmd/incus/snapshot.go:27 cmd/incus/snapshot.go:70 cmd/incus/snapshot.go:169
-#: cmd/incus/snapshot.go:256 cmd/incus/snapshot.go:354
-#: cmd/incus/snapshot.go:403 cmd/incus/storage.go:33 cmd/incus/storage.go:96
+#: cmd/incus/snapshot.go:246 cmd/incus/snapshot.go:344
+#: cmd/incus/snapshot.go:393 cmd/incus/storage.go:33 cmd/incus/storage.go:96
 #: cmd/incus/storage.go:170 cmd/incus/storage.go:220 cmd/incus/storage.go:344
 #: cmd/incus/storage.go:414 cmd/incus/storage.go:586 cmd/incus/storage.go:665
 #: cmd/incus/storage.go:757 cmd/incus/storage.go:843
@@ -2300,7 +2300,7 @@ msgid ""
 "AND stdout are terminals (stderr is ignored)."
 msgstr ""
 
-#: cmd/incus/info.go:630 cmd/incus/info.go:681 cmd/incus/snapshot.go:335
+#: cmd/incus/info.go:630 cmd/incus/info.go:681 cmd/incus/snapshot.go:325
 #: cmd/incus/storage_volume.go:1301 cmd/incus/storage_volume.go:1351
 #: cmd/incus/storage_volume.go:2281
 #, fuzzy
@@ -2583,7 +2583,7 @@ msgstr ""
 #: cmd/incus/network_peer.go:84 cmd/incus/network_zone.go:88
 #: cmd/incus/network_zone.go:692 cmd/incus/operation.go:106
 #: cmd/incus/profile.go:617 cmd/incus/project.go:412 cmd/incus/project.go:804
-#: cmd/incus/remote.go:653 cmd/incus/snapshot.go:259 cmd/incus/storage.go:588
+#: cmd/incus/remote.go:653 cmd/incus/snapshot.go:249 cmd/incus/storage.go:588
 #: cmd/incus/storage_bucket.go:454 cmd/incus/storage_bucket.go:769
 #: cmd/incus/storage_volume.go:1400 cmd/incus/storage_volume.go:2208
 #: cmd/incus/warning.go:93
@@ -2887,7 +2887,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:386
+#: cmd/incus/main.go:388
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -3104,7 +3104,7 @@ msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr ""
 
-#: cmd/incus/main.go:481
+#: cmd/incus/main.go:483
 msgid "Invalid number of arguments"
 msgstr ""
 
@@ -3320,7 +3320,7 @@ msgstr ""
 msgid "List instance file templates"
 msgstr ""
 
-#: cmd/incus/snapshot.go:255 cmd/incus/snapshot.go:256
+#: cmd/incus/snapshot.go:245 cmd/incus/snapshot.go:246
 #, fuzzy
 msgid "List instance snapshots"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -3667,7 +3667,8 @@ msgid ""
 "hash or alias name (if one is set)."
 msgstr ""
 
-#: cmd/incus/admin.go:17 cmd/incus/admin.go:18
+#: cmd/incus/admin.go:19 cmd/incus/admin.go:20 cmd/incus/admin_other.go:19
+#: cmd/incus/admin_other.go:20
 #, fuzzy
 msgid "Manage incus daemon"
 msgstr "Nombre del Miembro del Cluster"
@@ -4198,7 +4199,7 @@ msgstr ""
 msgid "NVRM Version: %v"
 msgstr ""
 
-#: cmd/incus/info.go:628 cmd/incus/info.go:679 cmd/incus/snapshot.go:333
+#: cmd/incus/info.go:628 cmd/incus/info.go:679 cmd/incus/snapshot.go:323
 #: cmd/incus/storage_volume.go:1299 cmd/incus/storage_volume.go:1349
 #: cmd/incus/storage_volume.go:2279
 msgid "Name"
@@ -4491,7 +4492,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:349
+#: cmd/incus/main.go:351
 #, fuzzy, c-format
 msgid "Password for %s: "
 msgstr "Contraseña admin para %s:"
@@ -4888,7 +4889,7 @@ msgstr ""
 msgid "Removable: %v"
 msgstr ""
 
-#: cmd/incus/delete.go:43 cmd/incus/snapshot.go:218
+#: cmd/incus/delete.go:43
 #, c-format
 msgid "Remove %s (yes/no): "
 msgstr ""
@@ -4968,6 +4969,11 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Remove rules from an ACL"
 msgstr ""
 
+#: cmd/incus/snapshot.go:210
+#, c-format
+msgid "Remove snapshot %s from %s (yes/no): "
+msgstr ""
+
 #: cmd/incus/config_trust.go:571 cmd/incus/config_trust.go:572
 msgid "Remove trusted client"
 msgstr ""
@@ -4985,7 +4991,7 @@ msgstr ""
 msgid "Rename aliases"
 msgstr ""
 
-#: cmd/incus/snapshot.go:353 cmd/incus/snapshot.go:354
+#: cmd/incus/snapshot.go:343 cmd/incus/snapshot.go:344
 #, fuzzy
 msgid "Rename instance snapshots"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -5068,14 +5074,14 @@ msgstr ""
 msgid "Restore cluster member"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/snapshot.go:403
+#: cmd/incus/snapshot.go:393
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
 "If --stateful is passed, then the running state will be restored too."
 msgstr ""
 
-#: cmd/incus/snapshot.go:402
+#: cmd/incus/snapshot.go:392
 #, fuzzy
 msgid "Restore instance snapshots"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -5705,7 +5711,7 @@ msgstr ""
 msgid "Snapshots are read-only and can't have their configuration changed"
 msgstr ""
 
-#: cmd/incus/info.go:597 cmd/incus/snapshot.go:302
+#: cmd/incus/info.go:597 cmd/incus/snapshot.go:292
 #: cmd/incus/storage_volume.go:1278
 msgid "Snapshots:"
 msgstr ""
@@ -5743,7 +5749,7 @@ msgstr "Auto actualización: %s"
 msgid "State: %s"
 msgstr "Auto actualización: %s"
 
-#: cmd/incus/info.go:631 cmd/incus/snapshot.go:336
+#: cmd/incus/info.go:631 cmd/incus/snapshot.go:326
 msgid "Stateful"
 msgstr ""
 
@@ -5878,7 +5884,7 @@ msgstr ""
 msgid "TYPE"
 msgstr ""
 
-#: cmd/incus/info.go:629 cmd/incus/info.go:680 cmd/incus/snapshot.go:334
+#: cmd/incus/info.go:629 cmd/incus/info.go:680 cmd/incus/snapshot.go:324
 #: cmd/incus/storage_volume.go:1350 cmd/incus/storage_volume.go:2280
 msgid "Taken at"
 msgstr ""
@@ -6121,7 +6127,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:391
+#: cmd/incus/main.go:393
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
 "Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
@@ -6507,7 +6513,7 @@ msgstr ""
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
-#: cmd/incus/cluster.go:552 cmd/incus/delete.go:48 cmd/incus/snapshot.go:223
+#: cmd/incus/cluster.go:552 cmd/incus/delete.go:48 cmd/incus/snapshot.go:215
 msgid "User aborted delete operation"
 msgstr ""
 
@@ -6565,7 +6571,7 @@ msgstr ""
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 
-#: cmd/incus/snapshot.go:414
+#: cmd/incus/snapshot.go:404
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
@@ -6797,7 +6803,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 #: cmd/incus/config_device.go:288 cmd/incus/config_device.go:662
 #: cmd/incus/config_metadata.go:53 cmd/incus/config_metadata.go:178
 #: cmd/incus/config_template.go:238 cmd/incus/console.go:34
-#: cmd/incus/snapshot.go:254
+#: cmd/incus/snapshot.go:244
 #, fuzzy
 msgid "[<remote>:]<instance>"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -6832,7 +6838,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "[<remote>:]<instance> <name>..."
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/snapshot.go:352
+#: cmd/incus/snapshot.go:342
 #, fuzzy
 msgid "[<remote>:]<instance> <old snapshot name> <new snapshot name>"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -6847,7 +6853,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "[<remote>:]<instance> <profiles>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/snapshot.go:401
+#: cmd/incus/snapshot.go:166 cmd/incus/snapshot.go:391
 #, fuzzy
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -6897,13 +6903,6 @@ msgstr "No se puede proveer el nombre del container a la lista"
 #, fuzzy
 msgid ""
 "[<remote>:]<instance>/<path> [[<remote>:]<instance>/<path>...] <target path>"
-msgstr "No se puede proveer el nombre del container a la lista"
-
-#: cmd/incus/snapshot.go:166
-#, fuzzy
-msgid ""
-"[<remote>:]<instance>/<snapshot name> [[<remote>:]<instance>/<snapshot "
-"name>...]"
 msgstr "No se puede proveer el nombre del container a la lista"
 
 #: cmd/incus/file.go:959
@@ -7621,7 +7620,7 @@ msgid ""
 "    Create a snapshot of \"u1\" called \"snap0\"."
 msgstr ""
 
-#: cmd/incus/snapshot.go:407
+#: cmd/incus/snapshot.go:397
 msgid ""
 "incus snapshot create u1 snap0\n"
 "Create the snapshot.\n"
@@ -7726,9 +7725,15 @@ msgid "y"
 msgstr ""
 
 #: cmd/incus/cluster.go:551 cmd/incus/delete.go:47 cmd/incus/image.go:926
-#: cmd/incus/image.go:931 cmd/incus/image.go:1116 cmd/incus/snapshot.go:222
+#: cmd/incus/image.go:931 cmd/incus/image.go:1116 cmd/incus/snapshot.go:214
 msgid "yes"
 msgstr ""
+
+#, fuzzy
+#~ msgid ""
+#~ "[<remote>:]<instance>/<snapshot name> [[<remote>:]<instance>/<snapshot "
+#~ "name>...]"
+#~ msgstr "No se puede proveer el nombre del container a la lista"
 
 #, fuzzy
 #~ msgid "Please provide cluster member name: "
