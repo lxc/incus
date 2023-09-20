@@ -3447,7 +3447,16 @@ func (b *backend) shouldUseOptimizedImage(fingerprint string, contentType driver
 func volumeConfigsMatch(vol1, vol2 drivers.Volume) bool {
 	blockModeChanged := vol1.IsBlockBacked() != vol2.IsBlockBacked()
 	blockFSChanged := vol1.IsBlockBacked() && vol1.Config()["block.filesystem"] != vol2.Config()["block.filesystem"]
-	return !blockModeChanged && !blockFSChanged
+
+	// TODO: Temporary workaround for zfs.blocksize issue:
+	// When zfs.blocksize changes, a new optimized image isn't generated. This ensures we don't use an
+	// optimized image if initial.zfs.blocksize differs from the default pool settings.
+	//
+	// Note: If initial.zfs.blocksize is set to 8KiB and volume.zfs.blocksize is unset (defaults to 8KiB),
+	// they're considered unequal ("" != "8KiB"), preventing the use of a matching optimized image.
+	blockSizeChanged := vol1.IsBlockBacked() && vol1.Config()["zfs.blocksize"] != vol2.Config()["zfs.blocksize"]
+
+	return !blockModeChanged && !blockFSChanged && !blockSizeChanged
 }
 
 // DeleteImage removes an image from the database and underlying storage device if needed.
