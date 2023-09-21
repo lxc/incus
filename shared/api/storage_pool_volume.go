@@ -231,6 +231,12 @@ type StorageVolumeSource struct {
 	//
 	// API extension: storage_api_project
 	Project string `json:"project,omitempty" yaml:"project,omitempty"`
+
+	// What cluster member this record was found on
+	// Example: server01
+	//
+	// API extension: cluster_internal_custom_volume_copy
+	Location string `json:"location" yaml:"location"`
 }
 
 // Writable converts a full StorageVolume struct into a StorageVolumePut struct (filters read-only fields).
