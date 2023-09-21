@@ -230,6 +230,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// Controls how much priority to give to the instance's network requests when under load.
 	//
 	// Specify an integer between 0 and 10.
+	// This option is deprecated. Use the per-NIC `limits.priority` option instead.
 	// ---
 	//  type: integer
 	//  defaultdesc: `0` (minimum)

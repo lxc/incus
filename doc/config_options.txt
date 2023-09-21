@@ -450,6 +450,7 @@ The higher the value, the less likely the instance is to be swapped to disk.
 Controls how much priority to give to the instance's network requests when under load.
 
 Specify an integer between 0 and 10.
+This option is deprecated. Use the per-NIC `limits.priority` option instead.
 ```
 
 ```{config:option} limits.processes instance-resource-limits
