@@ -331,14 +331,24 @@ func (c *Client) HandleEvent(event api.Event) {
 			}
 		}
 
-		messagePrefix := ""
+		keys := make([]string, 0, len(context))
 
-		// Add the remaining context as the message prefix.
-		for k, v := range context {
-			messagePrefix += fmt.Sprintf("%s=\"%s\" ", k, v)
+		for k := range context {
+			keys = append(keys, k)
 		}
 
-		entry.Line = fmt.Sprintf("%s%s", messagePrefix, logEvent.Message)
+		sort.Strings(keys)
+
+		var message strings.Builder
+
+		// Add the remaining context as the message prefix. The keys are sorted alphabetically.
+		for _, k := range keys {
+			message.WriteString(fmt.Sprintf("%s=%q ", k, context[k]))
+		}
+
+		message.WriteString(logEvent.Message)
+
+		entry.Line = message.String()
 	}
 
 	c.entries <- entry
