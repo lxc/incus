@@ -284,6 +284,11 @@ func (r *ProtocolIncus) tryRebuildInstance(instanceName string, req api.Instance
 
 // RebuildInstanceFromImage rebuilds an instance from an image.
 func (r *ProtocolIncus) RebuildInstanceFromImage(source ImageServer, image api.Image, instanceName string, req api.InstanceRebuildPost) (RemoteOperation, error) {
+	err := r.CheckExtension("instances_rebuild")
+	if err != nil {
+		return nil, err
+	}
+
 	info, err := r.getSourceImageConnectionInfo(source, image, &req.Source)
 	if err != nil {
 		return nil, err
@@ -314,6 +319,11 @@ func (r *ProtocolIncus) RebuildInstanceFromImage(source ImageServer, image api.I
 
 // RebuildInstance rebuilds an instance as empty.
 func (r *ProtocolIncus) RebuildInstance(instanceName string, instance api.InstanceRebuildPost) (op Operation, err error) {
+	err = r.CheckExtension("instances_rebuild")
+	if err != nil {
+		return nil, err
+	}
+
 	return r.rebuildInstance(instanceName, instance)
 }
 
