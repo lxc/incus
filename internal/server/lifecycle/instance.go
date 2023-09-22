@@ -53,5 +53,7 @@ func (a InstanceAction) Event(inst instance, ctx map[string]any) api.EventLifecy
 		Source:    url.String(),
 		Context:   ctx,
 		Requestor: requestor,
+		Name:      inst.Name(),
+		Project:   inst.Project().Name,
 	}
 }
