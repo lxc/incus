@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"sort"
 	"strconv"
@@ -233,11 +234,17 @@ func (c *Client) HandleEvent(event api.Event) {
 		return
 	}
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "none"
+	}
+
 	entry := entry{
 		labels: LabelSet{
 			"app":      "incus",
 			"type":     event.Type,
 			"location": event.Location,
+			"instance": hostname,
 		},
 		Entry: Entry{
 			Timestamp: event.Timestamp,
