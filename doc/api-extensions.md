@@ -2248,3 +2248,7 @@ Check the list of {doc}`configuration options </config-options>` to see which co
 ## `syslog_socket`
 
 This introduces a syslog socket that can receive syslog formatted log messages. These can be viewed in the events API and `incus monitor`, and can be forwarded to Loki. To enable this feature, set `core.syslog_socket` to `true`.
+
+## `event_lifecycle_name_and_project`
+
+This adds the fields `Name` and `Project` to `lifecycle` events.
