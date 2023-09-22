@@ -360,7 +360,7 @@ func buildNestedContext(prefix string, m map[string]any) map[string]string {
 	for k, v := range m {
 		t := reflect.TypeOf(v)
 
-		if t.Kind() == reflect.Map {
+		if t != nil && t.Kind() == reflect.Map {
 			for k, v := range buildNestedContext(k, v.(map[string]any)) {
 				if prefix == "" {
 					labels[k] = v
