@@ -1613,7 +1613,7 @@ This adds supported storage driver info to server environment info.
 
 ## `event_lifecycle_requestor_address`
 
-Adds a new address field to life-cycle requestor.
+Adds a new address field to `lifecycle` requestor.
 
 ## `resources_gpu_usb`
 
