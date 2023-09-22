@@ -148,6 +148,10 @@ type EventLifecycle struct {
 
 	// API extension: event_lifecycle_requestor
 	Requestor *EventLifecycleRequestor `yaml:"requestor,omitempty" json:"requestor,omitempty"`
+
+	// API extension: event_lifecycle_name_and_project
+	Name    string `yaml:"name,omitempty" json:"name,omitempty"`
+	Project string `yaml:"project,omitempty" json:"project,omitempty"`
 }
 
 // EventLifecycleRequestor represents the initial requestor for an event
