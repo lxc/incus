@@ -254,6 +254,14 @@ func (c *Client) HandleEvent(event api.Event) {
 			return
 		}
 
+		if lifecycleEvent.Name != "" {
+			entry.labels["name"] = lifecycleEvent.Name
+		}
+
+		if lifecycleEvent.Project != "" {
+			entry.labels["project"] = lifecycleEvent.Project
+		}
+
 		// Build map. These key-value pairs will either be added as labels, or be part of the
 		// log message itself.
 		context["action"] = lifecycleEvent.Action
