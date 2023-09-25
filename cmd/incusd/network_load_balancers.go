@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network"
@@ -22,17 +23,17 @@ import (
 var networkLoadBalancersCmd = APIEndpoint{
 	Path: "networks/{networkName}/load-balancers",
 
-	Get:  APIEndpointAction{Handler: networkLoadBalancersGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: networkLoadBalancersPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: networkLoadBalancersGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+	Post: APIEndpointAction{Handler: networkLoadBalancersPost, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 }
 
 var networkLoadBalancerCmd = APIEndpoint{
 	Path: "networks/{networkName}/load-balancers/{listenAddress}",
 
-	Delete: APIEndpointAction{Handler: networkLoadBalancerDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: networkLoadBalancerGet, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: networkLoadBalancerPut, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: networkLoadBalancerPut, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: networkLoadBalancerDelete, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
+	Get:    APIEndpointAction{Handler: networkLoadBalancerGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+	Put:    APIEndpointAction{Handler: networkLoadBalancerPut, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
+	Patch:  APIEndpointAction{Handler: networkLoadBalancerPut, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 }
 
 // API endpoints
