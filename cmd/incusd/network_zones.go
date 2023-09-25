@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network/zone"
@@ -22,17 +23,17 @@ import (
 var networkZonesCmd = APIEndpoint{
 	Path: "network-zones",
 
-	Get:  APIEndpointAction{Handler: networkZonesGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: networkZonesPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: networkZonesGet, AccessHandler: allowAuthenticated},
+	Post: APIEndpointAction{Handler: networkZonesPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateNetworkZones)},
 }
 
 var networkZoneCmd = APIEndpoint{
 	Path: "network-zones/{zone}",
 
-	Delete: APIEndpointAction{Handler: networkZoneDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: networkZoneGet, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: networkZonePut, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: networkZonePut, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: networkZoneDelete, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanEdit, "zone")},
+	Get:    APIEndpointAction{Handler: networkZoneGet, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanView, "zone")},
+	Put:    APIEndpointAction{Handler: networkZonePut, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanEdit, "zone")},
+	Patch:  APIEndpointAction{Handler: networkZonePut, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanEdit, "zone")},
 }
 
 // API endpoints.
@@ -145,9 +146,18 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeNetworkZone)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
 	resultString := []string{}
 	resultMap := []api.NetworkZone{}
 	for _, zoneName := range zoneNames {
+		if !userHasPermission(auth.ObjectNetworkZone(projectName, zoneName)) {
+			continue
+		}
+
 		if !recursion {
 			resultString = append(resultString, api.NewURL().Path(version.APIVersion, "network-zones", zoneName).String())
 		} else {
