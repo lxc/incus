@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/instance"
@@ -96,10 +97,20 @@ func instancesPut(d *Daemon, r *http.Request) response.Response {
 
 	action := internalInstance.InstanceAction(req.State.Action)
 
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanUpdateState, auth.ObjectTypeInstance)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	var names []string
 	var instances []instance.Instance
 	for _, inst := range c {
 		if inst.Project().Name != projectName {
+			continue
+		}
+
+		// Only allow changing the state of instances the user has permission for.
+		if !userHasPermission(auth.ObjectInstance(inst.Project().Name, inst.Name())) {
 			continue
 		}
 

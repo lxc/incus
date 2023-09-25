@@ -12,6 +12,7 @@ import (
 
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/project"
@@ -26,30 +27,30 @@ var instanceLogCmd = APIEndpoint{
 	Name: "instanceLog",
 	Path: "instances/{name}/logs/{file}",
 
-	Delete: APIEndpointAction{Handler: instanceLogDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: instanceLogGet, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: instanceLogDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+	Get:    APIEndpointAction{Handler: instanceLogGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
 }
 
 var instanceLogsCmd = APIEndpoint{
 	Name: "instanceLogs",
 	Path: "instances/{name}/logs",
 
-	Get: APIEndpointAction{Handler: instanceLogsGet, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: instanceLogsGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
 }
 
 var instanceExecOutputCmd = APIEndpoint{
 	Name: "instanceExecOutput",
 	Path: "instances/{name}/logs/exec-output/{file}",
 
-	Delete: APIEndpointAction{Handler: instanceExecOutputDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: instanceExecOutputGet, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: instanceExecOutputDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanExec, "name")},
+	Get:    APIEndpointAction{Handler: instanceExecOutputGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanExec, "name")},
 }
 
 var instanceExecOutputsCmd = APIEndpoint{
 	Name: "instanceExecOutputs",
 	Path: "instances/{name}/logs/exec-output",
 
-	Get: APIEndpointAction{Handler: instanceExecOutputsGet, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: instanceExecOutputsGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanExec, "name")},
 }
 
 // swagger:operation GET /1.0/instances/{name}/logs instances instance_logs_get

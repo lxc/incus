@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/internal/filter"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
@@ -280,10 +281,6 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 			}
 
 			for _, project := range projects {
-				if !s.Authorizer.UserHasPermission(r, project.Name, "") {
-					continue
-				}
-
 				filteredProjects = append(filteredProjects, project.Name)
 			}
 		} else {
@@ -301,6 +298,26 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	// Removes instances the user doesn't have access to.
+	for address, instances := range memberAddressInstances {
+		var filteredInstances []db.Instance
+
+		for _, inst := range instances {
+			if !userHasPermission(auth.ObjectInstance(inst.Project, inst.Name)) {
+				continue
+			}
+
+			filteredInstances = append(filteredInstances, inst)
+		}
+
+		memberAddressInstances[address] = filteredInstances
 	}
 
 	resultErrListAppend := func(inst db.Instance, err error) {
