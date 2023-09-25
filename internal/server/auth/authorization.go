@@ -12,13 +12,17 @@ import (
 const (
 	// DriverTLS is the default TLS authorization driver. It is not compatible with OIDC or Candid authentication.
 	DriverTLS string = "tls"
+
+	// DriverOpenFGA provides fine-grained authorization. It is compatible with any authentication method.
+	DriverOpenFGA string = "openfga"
 )
 
 // ErrUnknownDriver is the "Unknown driver" error.
 var ErrUnknownDriver = fmt.Errorf("Unknown driver")
 
 var authorizers = map[string]func() authorizer{
-	DriverTLS: func() authorizer { return &tls{} },
+	DriverTLS:     func() authorizer { return &tls{} },
+	DriverOpenFGA: func() authorizer { return &fga{} },
 }
 
 type authorizer interface {
