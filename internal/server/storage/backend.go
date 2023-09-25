@@ -4436,6 +4436,11 @@ func (b *backend) CreateCustomVolume(projectName string, volName string, desc st
 		eventCtx["location"] = b.state.ServerName
 	}
 
+	err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName)
+	if err != nil {
+		logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": volName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
+	}
+
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), projectName, op, eventCtx))
 
 	revert.Success()
@@ -4567,6 +4572,11 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 		eventCtx := logger.Ctx{"type": vol.Type()}
 		if !b.Driver().Info().Remote {
 			eventCtx["location"] = b.state.ServerName
+		}
+
+		err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName)
+		if err != nil {
+			logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": volName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
 		}
 
 		b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), projectName, op, eventCtx))
@@ -4967,6 +4977,11 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 		eventCtx["location"] = b.state.ServerName
 	}
 
+	err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), args.Name)
+	if err != nil {
+		logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": args.Name, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
+	}
+
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), projectName, op, eventCtx))
 
 	revert.Success()
@@ -5053,6 +5068,11 @@ func (b *backend) RenameCustomVolume(projectName string, volName string, newVolN
 	err = b.driver.RenameVolume(vol, newVolStorageName, op)
 	if err != nil {
 		return err
+	}
+
+	err = b.state.Authorizer.RenameStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName, newVolStorageName)
+	if err != nil {
+		logger.Error("Failed to rename storage volume in authorizer", logger.Ctx{"old_name": volName, "new_name": newVolStorageName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
 	}
 
 	vol = b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), newVolStorageName, nil)
@@ -5307,6 +5327,11 @@ func (b *backend) DeleteCustomVolume(projectName string, volName string, op *ope
 	err = VolumeDBDelete(b, projectName, volName, vol.Type())
 	if err != nil {
 		return err
+	}
+
+	err = b.state.Authorizer.DeleteStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName)
+	if err != nil {
+		logger.Error("Failed to remove storage volume from authorizer", logger.Ctx{"name": volName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
 	}
 
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeDeleted.Event(vol, string(vol.Type()), projectName, op, nil))
@@ -6731,6 +6756,11 @@ func (b *backend) CreateCustomVolumeFromISO(projectName string, volName string, 
 		eventCtx["location"] = b.state.ServerName
 	}
 
+	err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName)
+	if err != nil {
+		logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": volName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
+	}
+
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), projectName, op, eventCtx))
 
 	revert.Success()
@@ -6827,6 +6857,11 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 	eventCtx := logger.Ctx{"type": vol.Type()}
 	if !b.Driver().Info().Remote {
 		eventCtx["location"] = b.state.ServerName
+	}
+
+	err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, srcBackup.Project, b.Name(), string(vol.Type()), srcBackup.Name)
+	if err != nil {
+		logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": srcBackup.Name, "type": vol.Type(), "pool": b.Name(), "project": srcBackup.Project, "error": err})
 	}
 
 	b.state.Events.SendLifecycle(srcBackup.Project, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), srcBackup.Project, op, eventCtx))
