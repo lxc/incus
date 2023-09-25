@@ -332,6 +332,12 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.In
 	if d.isSnapshot {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceSnapshotCreated.Event(d, nil))
 	} else {
+		// Add instance to authorizer.
+		err = d.state.Authorizer.AddInstance(d.state.ShutdownCtx, d.project.Name, d.Name())
+		if err != nil {
+			logger.Error("Failed to add instance to authorizer", logger.Ctx{"instanceName": d.Name(), "projectName": d.project.Name, "error": err})
+		}
+
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceCreated.Event(d, map[string]any{
 			"type":         api.InstanceTypeContainer,
 			"storage-pool": d.storagePool.Name(),
@@ -3789,6 +3795,11 @@ func (d *lxc) delete(force bool) error {
 	if d.isSnapshot {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceSnapshotDeleted.Event(d, nil))
 	} else {
+		err = d.state.Authorizer.DeleteInstance(d.state.ShutdownCtx, d.project.Name, d.Name())
+		if err != nil {
+			logger.Error("Failed to remove instance from authorizer", logger.Ctx{"name": d.Name(), "project": d.project.Name, "error": err})
+		}
+
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceDeleted.Event(d, nil))
 	}
 
@@ -3955,6 +3966,11 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 	if d.isSnapshot {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceSnapshotRenamed.Event(d, map[string]any{"old_name": oldName}))
 	} else {
+		err = d.state.Authorizer.RenameInstance(d.state.ShutdownCtx, d.project.Name, oldName, newName)
+		if err != nil {
+			logger.Error("Failed to rename instance in authorizer", logger.Ctx{"old_name": oldName, "new_name": newName, "project": d.project.Name, "error": err})
+		}
+
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceRenamed.Event(d, map[string]any{"old_name": oldName}))
 	}
 
