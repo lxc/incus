@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network/acl"
@@ -25,24 +26,24 @@ import (
 var networkACLsCmd = APIEndpoint{
 	Path: "network-acls",
 
-	Get:  APIEndpointAction{Handler: networkACLsGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: networkACLsPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: networkACLsGet, AccessHandler: allowAuthenticated},
+	Post: APIEndpointAction{Handler: networkACLsPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateNetworkACLs)},
 }
 
 var networkACLCmd = APIEndpoint{
 	Path: "network-acls/{name}",
 
-	Delete: APIEndpointAction{Handler: networkACLDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: networkACLGet, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: networkACLPut, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: networkACLPut, AccessHandler: allowProjectPermission()},
-	Post:   APIEndpointAction{Handler: networkACLPost, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: networkACLDelete, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanEdit, "name")},
+	Get:    APIEndpointAction{Handler: networkACLGet, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanView, "name")},
+	Put:    APIEndpointAction{Handler: networkACLPut, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanEdit, "name")},
+	Patch:  APIEndpointAction{Handler: networkACLPut, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanEdit, "name")},
+	Post:   APIEndpointAction{Handler: networkACLPost, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanEdit, "name")},
 }
 
 var networkACLLogCmd = APIEndpoint{
 	Path: "network-acls/{name}/log",
 
-	Get: APIEndpointAction{Handler: networkACLLogGet, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: networkACLLogGet, AccessHandler: allowPermission(auth.ObjectTypeNetworkACL, auth.EntitlementCanView, "name")},
 }
 
 // API endpoints.
@@ -155,9 +156,18 @@ func networkACLsGet(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeNetworkACL)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	resultString := []string{}
 	resultMap := []api.NetworkACL{}
 	for _, aclName := range aclNames {
+		if !userHasPermission(auth.ObjectNetworkACL(projectName, aclName)) {
+			continue
+		}
+
 		if !recursion {
 			resultString = append(resultString, fmt.Sprintf("/%s/network-acls/%s", version.APIVersion, aclName))
 		} else {
