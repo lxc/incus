@@ -233,6 +233,11 @@ func (c *Config) ClusterHealingThreshold() time.Duration {
 	return healingThreshold
 }
 
+// OpenFGA returns all OpenFGA settings need to interact with an OpenFGA server.
+func (c *Config) OpenFGA() (apiURL string, apiToken string, storeID string, authorizationModelID string) {
+	return c.m.GetString("openfga.api.url"), c.m.GetString("openfga.api.token"), c.m.GetString("openfga.store.id"), c.m.GetString("openfga.store.model_id")
+}
+
 // Dump current configuration keys and their values. Keys with values matching
 // their defaults are omitted.
 func (c *Config) Dump() map[string]string {
@@ -607,6 +612,38 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: `lifecycle,logging`
 	//  shortdesc: Events to send to the Loki server
 	"loki.types": {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging", "network-acl"))), Default: "lifecycle,logging"},
+
+	// gendoc:generate(entity=server, group=openfga, key=openfga.api.token)
+	//
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: API token of OpenFGA server
+	"openfga.api.token": {},
+
+	// gendoc:generate(entity=server, group=openfga, key=openfga.api.url)
+	//
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: URL of OpenFGA server
+	"openfga.api.url": {},
+
+	// gendoc:generate(entity=server, group=openfga, key=openfga.store.id)
+	//
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: ID of OpenFGA permission store.
+	"openfga.store.id": {},
+
+	// gendoc:generate(entity=server, group=openfga, key=openfga.store.model_id)
+	//
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: ID of OpenFGA authorization model.
+	"openfga.store.model_id": {},
 
 	// gendoc:generate(entity=server, group=oidc, key=oidc.client.id)
 	//
