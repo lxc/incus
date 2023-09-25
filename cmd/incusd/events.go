@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/events"
@@ -58,11 +59,27 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		}
 	}
 
+	var projectPermissionFunc auth.PermissionChecker
+	if projectName != "" {
+		err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanViewEvents)
+		if err != nil {
+			return err
+		}
+	} else if allProjects {
+		var err error
+		projectPermissionFunc, err = s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanViewEvents, auth.ObjectTypeProject)
+		if err != nil {
+			return err
+		}
+	}
+
+	canViewPrivilegedEvents := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanViewPrivilegedEvents) == nil
+
 	types := strings.Split(r.FormValue("type"), ",")
 	if len(types) == 1 && types[0] == "" {
 		types = []string{}
 		for _, entry := range eventTypes {
-			if !s.Authorizer.UserIsAdmin(r) && util.ValueInSlice(entry, privilegedEventTypes) {
+			if !canViewPrivilegedEvents && util.ValueInSlice(entry, privilegedEventTypes) {
 				continue
 			}
 
@@ -77,7 +94,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		}
 	}
 
-	if util.ValueInSlice(api.EventTypeLogging, types) && !s.Authorizer.UserIsAdmin(r) {
+	if util.ValueInSlice(api.EventTypeLogging, types) && !canViewPrivilegedEvents {
 		return api.StatusErrorf(http.StatusForbidden, "Forbidden")
 	}
 
@@ -139,7 +156,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 
 	listenerConnection := events.NewWebsocketListenerConnection(conn)
 
-	listener, err := s.Events.AddListener(projectName, allProjects, listenerConnection, types, excludeSources, recvFunc, excludeLocations)
+	listener, err := s.Events.AddListener(projectName, allProjects, projectPermissionFunc, listenerConnection, types, excludeSources, recvFunc, excludeLocations)
 	if err != nil {
 		l.Warn("Failed to add event listener", logger.Ctx{"err": err})
 		return nil
