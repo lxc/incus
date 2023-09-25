@@ -564,10 +564,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 					return resp
 				}
 			} else if !action.AllowUntrusted {
-				// Require admin privileges
-				if !d.authorizer.UserIsAdmin(r) {
-					return response.Forbidden(nil)
-				}
+				return response.Forbidden(nil)
 			}
 
 			return action.Handler(d, r)
