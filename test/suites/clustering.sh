@@ -3796,3 +3796,82 @@ test_clustering_uuid() {
   kill_incus "${INCUS_ONE_DIR}"
   kill_incus "${INCUS_TWO_DIR}"
 }
+
+test_clustering_openfga() {
+  # shellcheck disable=2039,3043
+  local INCUS_DIR
+
+  setup_clustering_bridge
+  prefix="lxd$$"
+  bridge="${prefix}"
+
+  setup_clustering_netns 1
+  INCUS_ONE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_ONE_DIR}"
+  ns1="${prefix}1"
+  spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}"
+
+  run_openfga
+
+  # Create store and get store ID.
+  OPENFGA_STORE_ID="$(fga store create --name "test" | jq -r '.store.id')"
+
+  # Configure OpenFGA using the candid-openfga remote.
+  INCUS_DIR="${INCUS_ONE_DIR}" incus config set candid-openfga: openfga.api.url "$(fga_address)"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus config set candid-openfga: openfga.api.token "$(fga_token)"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus config set candid-openfga: openfga.store.id "${OPENFGA_STORE_ID}"
+  sleep 1
+
+  # Add a newline at the end of each line. YAML as weird rules..
+  cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
+
+  # Spawn a second node
+  setup_clustering_netns 2
+  INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_TWO_DIR}"
+  ns2="${prefix}2"
+  spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}"
+
+  # After the second node has joined there should exist only one authorization model.
+  [ "$(fga model list --store-id "${OPENFGA_STORE_ID}" | jq '.authorization_models | length')" = 1 ]
+
+  # Add node2 as another candid remote. OpenFGA should be loaded and we should not be able to see any config as we have not given
+  # any permissions to the user.
+  (
+  cat <<EOF
+user1
+pass1
+EOF
+  ) | incus remote add node2 "https://10.1.1.102:8443" --auth-type candid --accept-certificate
+  ! incus_remote info node2: | grep -Fq 'core.https_address' || false
+
+  # Add self as server admin. Should be able to see config now.
+  fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 admin server:lxd
+  incus_remote info node2: | grep -Fq 'core.https_address'
+
+  # Spawn a third node. Should be able to join while OpenFGA is running.
+  setup_clustering_netns 3
+  INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_THREE_DIR}"
+  ns3="${prefix}3"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}"
+
+  # cleanup
+  incus remote rm node2
+  incus remote rm candid-openfga
+  shutdown_openfga
+  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
+  sleep 0.5
+  rm -f "${INCUS_ONE_DIR}/unix.socket"
+  rm -f "${INCUS_TWO_DIR}/unix.socket"
+  rm -f "${INCUS_THREE_DIR}/unix.socket"
+
+  teardown_clustering_netns
+  teardown_clustering_bridge
+
+  kill_incus "${INCUS_ONE_DIR}"
+  kill_incus "${INCUS_TWO_DIR}"
+  kill_incus "${INCUS_THREE_DIR}"
+}
