@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/lxc/incus/internal/server/auth"
 )
 
 // NewMetricSet returns a new MetricSet.
@@ -18,6 +20,28 @@ func NewMetricSet(labels map[string]string) *MetricSet {
 	}
 
 	return &out
+}
+
+// FilterSamples filters the existing MetricSet using the given permission checker. Samples not containing "project" and
+// "name" labels are skipped.
+func (m *MetricSet) FilterSamples(permissionChecker func(object auth.Object) bool) {
+	for metricType, samples := range m.set {
+		allowedSamples := make([]Sample, 0, len(samples))
+		for _, s := range samples {
+			projectName := s.Labels["project"]
+			instanceName := s.Labels["name"]
+			if projectName == "" || instanceName == "" {
+				continue
+			}
+
+			hasPermission := permissionChecker(auth.ObjectInstance(projectName, instanceName))
+			if hasPermission {
+				allowedSamples = append(allowedSamples, s)
+			}
+		}
+
+		m.set[metricType] = allowedSamples
+	}
 }
 
 // AddSamples adds samples of the type metricType to the MetricSet.
