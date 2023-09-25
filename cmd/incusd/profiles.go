@@ -333,6 +333,11 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Error inserting %q into database: %w", req.Name, err))
 	}
 
+	err = s.Authorizer.AddProfile(r.Context(), p.Name, req.Name)
+	if err != nil {
+		logger.Error("Failed to add profile to authorizer", logger.Ctx{"name": req.Name, "project": p.Name, "error": err})
+	}
+
 	requestor := request.CreateRequestor(r)
 	lc := lifecycle.ProfileCreated.Event(req.Name, p.Name, requestor, nil)
 	s.Events.SendLifecycle(p.Name, lc)
@@ -754,6 +759,11 @@ func profilePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	err = s.Authorizer.RenameProfile(r.Context(), p.Name, name, req.Name)
+	if err != nil {
+		logger.Error("Failed to rename profile in authorizer", logger.Ctx{"old_name": name, "new_name": req.Name, "project": p.Name, "error": err})
+	}
+
 	requestor := request.CreateRequestor(r)
 	lc := lifecycle.ProfileRenamed.Event(req.Name, p.Name, requestor, logger.Ctx{"old_name": name})
 	s.Events.SendLifecycle(p.Name, lc)
@@ -821,6 +831,11 @@ func profileDelete(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	err = s.Authorizer.DeleteProfile(r.Context(), p.Name, name)
+	if err != nil {
+		logger.Error("Failed to remove profile from authorizer", logger.Ctx{"name": name, "project": p.Name, "error": err})
 	}
 
 	requestor := request.CreateRequestor(r)
