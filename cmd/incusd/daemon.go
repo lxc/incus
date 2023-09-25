@@ -240,22 +240,23 @@ func allowAuthenticated(d *Daemon, r *http.Request) response.Response {
 	return response.EmptySyncResponse
 }
 
-// allowProjectPermission is a wrapper to check access against the project.
-func allowProjectPermission() func(d *Daemon, r *http.Request) response.Response {
+// allowPermission is a wrapper to check access against a given object, an object being an image, instance, network, etc.
+// Mux vars should be passed in so that the object we are checking can be created. For example, a certificate object requires
+// a fingerprint, the mux var for certificate fingerprints is "fingerprint", so that string should be passed in.
+// Mux vars should always be passed in with the same order they appear in the API route.
+func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, muxVars ...string) func(d *Daemon, r *http.Request) response.Response {
 	return func(d *Daemon, r *http.Request) response.Response {
-		s := d.State()
-
-		// Shortcut for speed
-		if s.Authorizer.UserIsAdmin(r) {
-			return response.EmptySyncResponse
+		objectName, err := auth.ObjectFromRequest(r, objectType, muxVars...)
+		if err != nil {
+			return response.InternalError(fmt.Errorf("Failed to create authentication object: %w", err))
 		}
 
-		// Get the project
-		projectName := request.ProjectParam(r)
+		s := d.State()
 
-		// Validate whether the user access to the project.
-		if !s.Authorizer.UserHasPermission(r, projectName, "") {
-			return response.Forbidden(nil)
+		// Validate whether the user has the needed permission
+		err = s.Authorizer.CheckPermission(r.Context(), r, objectName, entitlement)
+		if err != nil {
+			return response.SmartError(err)
 		}
 
 		return response.EmptySyncResponse
