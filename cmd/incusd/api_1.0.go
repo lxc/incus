@@ -10,6 +10,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/auth/oidc"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
@@ -31,8 +32,8 @@ import (
 
 var api10Cmd = APIEndpoint{
 	Get:   APIEndpointAction{Handler: api10Get, AllowUntrusted: true},
-	Patch: APIEndpointAction{Handler: api10Patch},
-	Put:   APIEndpointAction{Handler: api10Put},
+	Patch: APIEndpointAction{Handler: api10Patch, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Put:   APIEndpointAction{Handler: api10Put, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var api10 = []APIEndpoint{
@@ -228,6 +229,12 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 		return response.SyncResponseETag(true, srv, nil)
 	}
 
+	// If not authorized, return now.
+	err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanView)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// If a target was specified, forward the request to the relevant node.
 	resp := forwardedResponseIfTargetIsRemote(s, r)
 	if resp != nil {
@@ -367,11 +374,14 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	fullSrv.AuthUserName = requestor.Username
 	fullSrv.AuthUserMethod = requestor.Protocol
 
-	if s.Authorizer.UserIsAdmin(r) {
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanEdit)
+	if err == nil {
 		fullSrv.Config, err = daemonConfigRender(s)
 		if err != nil {
 			return response.InternalError(err)
 		}
+	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
 	}
 
 	return response.SyncResponseETag(true, fullSrv, fullSrv.Config)
