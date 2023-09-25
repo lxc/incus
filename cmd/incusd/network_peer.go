@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network"
 	"github.com/lxc/incus/internal/server/project"
@@ -21,17 +22,17 @@ import (
 var networkPeersCmd = APIEndpoint{
 	Path: "networks/{networkName}/peers",
 
-	Get:  APIEndpointAction{Handler: networkPeersGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: networkPeersPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: networkPeersGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+	Post: APIEndpointAction{Handler: networkPeersPost, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 }
 
 var networkPeerCmd = APIEndpoint{
 	Path: "networks/{networkName}/peers/{peerName}",
 
-	Delete: APIEndpointAction{Handler: networkPeerDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: networkPeerGet, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: networkPeerDelete, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
+	Get:    APIEndpointAction{Handler: networkPeerGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+	Put:    APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
+	Patch:  APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 }
 
 // API endpoints
