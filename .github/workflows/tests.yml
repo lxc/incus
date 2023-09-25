@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo add-apt-repository ppa:ubuntu-lxc/lxc-git-master -y --no-update
-          sudo add-apt-repository ppa:cowsql/main -y --no-update
+          sudo add-apt-repository ppa:cowsql/stable -y --no-update
           sudo apt-get update
 
           sudo apt-get install --no-install-recommends -y \
@@ -127,7 +127,7 @@ jobs:
         run: |
           set -x
           sudo add-apt-repository ppa:ubuntu-lxc/lxc-git-master -y --no-update
-          sudo add-apt-repository ppa:cowsql/main -y --no-update
+          sudo add-apt-repository ppa:cowsql/stable -y --no-update
           sudo apt-get update
 
           sudo snap remove lxd --purge
