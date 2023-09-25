@@ -481,50 +481,9 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		if trusted {
 			logger.Debug("Handling API request", logCtx)
 
-			// Get user access data.
-			userAccess, err := func() (*auth.UserAccess, error) {
-				ua := &auth.UserAccess{}
-				ua.Admin = true
-
-				// Internal cluster communications.
-				if protocol == "cluster" {
-					return ua, nil
-				}
-
-				// Regular TLS clients.
-				if protocol == api.AuthenticationMethodTLS {
-					certProjects := d.clientCerts.GetProjects()
-
-					// Check if we have restrictions on the key.
-					if certProjects != nil {
-						projects, ok := certProjects[username]
-						if ok {
-							ua.Admin = false
-							projectMap := map[string][]string{}
-							for _, projectName := range projects {
-								projectMap[projectName] = nil
-							}
-
-							ua.Projects = projectMap
-						}
-					}
-
-					return ua, nil
-				}
-
-				return ua, nil
-			}()
-			if err != nil {
-				logCtx["err"] = err
-				logger.Warn("Rejecting remote API request", logCtx)
-				_ = response.Forbidden(nil).Render(w)
-				return
-			}
-
 			// Add authentication/authorization context data.
 			ctx := context.WithValue(r.Context(), request.CtxUsername, username)
 			ctx = context.WithValue(ctx, request.CtxProtocol, protocol)
-			ctx = context.WithValue(ctx, request.CtxAccess, userAccess)
 
 			// Add forwarded requestor data.
 			if protocol == "cluster" {
