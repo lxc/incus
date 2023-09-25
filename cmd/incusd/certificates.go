@@ -17,6 +17,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
@@ -46,8 +47,8 @@ var certificatesCmd = APIEndpoint{
 var certificateCmd = APIEndpoint{
 	Path: "certificates/{fingerprint}",
 
-	Delete: APIEndpointAction{Handler: certificateDelete},
-	Get:    APIEndpointAction{Handler: certificateGet, AccessHandler: allowAuthenticated},
+	Delete: APIEndpointAction{Handler: certificateDelete, AccessHandler: allowAuthenticated},
+	Get:    APIEndpointAction{Handler: certificateGet, AccessHandler: allowPermission(auth.ObjectTypeCertificate, auth.EntitlementCanView, "fingerprint")},
 	Patch:  APIEndpointAction{Handler: certificatePatch, AccessHandler: allowAuthenticated},
 	Put:    APIEndpointAction{Handler: certificatePut, AccessHandler: allowAuthenticated},
 }
@@ -134,6 +135,12 @@ var certificateCmd = APIEndpoint{
 //	    $ref: "#/responses/InternalServerError"
 func certificatesGet(d *Daemon, r *http.Request) response.Response {
 	recursion := localUtil.IsRecursionRequest(r)
+	s := d.State()
+
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeCertificate)
+	if err != nil {
+		return response.SmartError(err)
+	}
 
 	if recursion {
 		var certResponses []api.Certificate
@@ -147,6 +154,10 @@ func certificatesGet(d *Daemon, r *http.Request) response.Response {
 
 			certResponses = make([]api.Certificate, 0, len(baseCerts))
 			for _, baseCert := range baseCerts {
+				if !userHasPermission(auth.ObjectCertificate(baseCert.Fingerprint)) {
+					continue
+				}
+
 				apiCert, err := baseCert.ToAPI(ctx, tx.Tx())
 				if err != nil {
 					return err
@@ -169,8 +180,13 @@ func certificatesGet(d *Daemon, r *http.Request) response.Response {
 	trustedCertificates := d.getTrustedCertificates()
 	for _, certs := range trustedCertificates {
 		for _, cert := range certs {
-			fingerprint := fmt.Sprintf("/%s/certificates/%s", version.APIVersion, localtls.CertFingerprint(&cert))
-			body = append(body, fingerprint)
+			fingerprint := localtls.CertFingerprint(&cert)
+			if !userHasPermission(auth.ObjectCertificate(fingerprint)) {
+				continue
+			}
+
+			certificateURL := fmt.Sprintf("/%s/certificates/%s", version.APIVersion, fingerprint)
+			body = append(body, certificateURL)
 		}
 	}
 
@@ -513,7 +529,15 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Handle requests by non-admin users.
-	if !s.Authorizer.UserIsAdmin(r) {
+	var userCanCreateCertificates bool
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanCreateCertificates)
+	if err == nil {
+		userCanCreateCertificates = true
+	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
+	}
+
+	if !trusted || !userCanCreateCertificates {
 		// Non-admin cannot issue tokens.
 		if req.Token {
 			return response.Forbidden(nil)
@@ -723,6 +747,12 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 		})
 		if err != nil {
 			return response.SmartError(err)
+		}
+
+		// Add the certificate resource to the authorizer.
+		err = s.Authorizer.AddCertificate(r.Context(), fingerprint)
+		if err != nil {
+			logger.Error("Failed to add certificate to authorizer", logger.Ctx{"fingerprint": fingerprint, "error": err})
 		}
 	}
 
@@ -947,11 +977,19 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 			Type:        reqDBType,
 		}
 
+		var userCanEditCertificate bool
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectCertificate(dbInfo.Fingerprint), auth.EntitlementCanEdit)
+		if err == nil {
+			userCanEditCertificate = true
+		} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+			return response.SmartError(err)
+		}
+
 		// Non-admins are able to change their own certificate but no other fields.
 		// In order to prevent possible future security issues, the certificate information is
 		// reset in case a non-admin user is performing the update.
 		certProjects := req.Projects
-		if !s.Authorizer.UserIsAdmin(r) {
+		if !userCanEditCertificate {
 			if r.TLS == nil {
 				response.Forbidden(fmt.Errorf("Cannot update certificate information"))
 			}
@@ -1095,8 +1133,16 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
+		var userCanEditCertificate bool
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectCertificate(fingerprint), auth.EntitlementCanEdit)
+		if err == nil {
+			userCanEditCertificate = true
+		} else if api.StatusErrorCheck(err, http.StatusForbidden) {
+			return response.SmartError(err)
+		}
+
 		// Non-admins are able to delete only their own certificate.
-		if !s.Authorizer.UserIsAdmin(r) {
+		if !userCanEditCertificate {
 			if r.TLS == nil {
 				response.Forbidden(fmt.Errorf("Cannot delete certificate"))
 			}
@@ -1146,6 +1192,12 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 		})
 		if err != nil {
 			return response.SmartError(err)
+		}
+
+		// Remove the certificate from the authorizer.
+		err = s.Authorizer.DeleteCertificate(r.Context(), certInfo.Fingerprint)
+		if err != nil {
+			logger.Error("Failed to remove certificate from authorizer", logger.Ctx{"fingerprint": certInfo.Fingerprint, "error": err})
 		}
 	}
 
