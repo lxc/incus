@@ -1240,6 +1240,7 @@ func (d *Daemon) init() error {
 	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes := d.globalConfig.LokiServer()
 	oidcIssuer, oidcClientID, oidcAudience := d.globalConfig.OIDCServer()
 	syslogSocketEnabled := d.localConfig.SyslogSocket()
+	openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openFGAAuthorizationModelID := d.globalConfig.OpenFGA()
 	instancePlacementScriptlet := d.globalConfig.InstancesPlacementScriptlet()
 
 	d.endpoints.NetworkUpdateTrustedProxy(d.globalConfig.HTTPSTrustedProxy())
@@ -1266,6 +1267,20 @@ func (d *Daemon) init() error {
 		d.oidcVerifier, err = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcAudience)
 		if err != nil {
 			return err
+		}
+	}
+
+	// Setup OpenFGA authorization.
+	if openfgaAPIURL != "" && openfgaStoreID != "" && openfgaAPIToken != "" {
+		if openFGAAuthorizationModelID == "" {
+			// We should never be missing the model ID at start up if we have other connection details (this means
+			// something went wrong the last time we tried to set it up).
+			logger.Warn("OpenFGA authorization driver is misconfigured, skipping...")
+		} else {
+			err = d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openFGAAuthorizationModelID)
+			if err != nil {
+				logger.Error("Failed to configure OpenFGA. Reverting to default TLS authorization", logger.Ctx{"error": err})
+			}
 		}
 	}
 
