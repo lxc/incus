@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/project"
@@ -25,32 +26,32 @@ import (
 var storagePoolBucketsCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets",
 
-	Get:  APIEndpointAction{Handler: storagePoolBucketsGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: storagePoolBucketsPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: storagePoolBucketsGet, AccessHandler: allowAuthenticated},
+	Post: APIEndpointAction{Handler: storagePoolBucketsPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateStorageBuckets)},
 }
 
 var storagePoolBucketCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets/{bucketName}",
 
-	Delete: APIEndpointAction{Handler: storagePoolBucketDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: storagePoolBucketGet, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: storagePoolBucketPut, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: storagePoolBucketPut, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: storagePoolBucketDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
+	Get:    APIEndpointAction{Handler: storagePoolBucketGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName")},
+	Patch:  APIEndpointAction{Handler: storagePoolBucketPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
+	Put:    APIEndpointAction{Handler: storagePoolBucketPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
 }
 
 var storagePoolBucketKeysCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets/{bucketName}/keys",
 
-	Get:  APIEndpointAction{Handler: storagePoolBucketKeysGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: storagePoolBucketKeysPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: storagePoolBucketKeysGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName")},
+	Post: APIEndpointAction{Handler: storagePoolBucketKeysPost, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
 }
 
 var storagePoolBucketKeyCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets/{bucketName}/keys/{keyName}",
 
-	Delete: APIEndpointAction{Handler: storagePoolBucketKeyDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: storagePoolBucketKeyGet, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: storagePoolBucketKeyPut, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: storagePoolBucketKeyDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
+	Get:    APIEndpointAction{Handler: storagePoolBucketKeyGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName")},
+	Put:    APIEndpointAction{Handler: storagePoolBucketKeyPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
 }
 
 // API endpoints
@@ -193,17 +194,32 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeStorageBucket)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	var filteredDBBuckets []*db.StorageBucket
+
+	for _, bucket := range dbBuckets {
+		if !userHasPermission(auth.ObjectStorageBucket(requestProjectName, poolName, bucket.Name)) {
+			continue
+		}
+
+		filteredDBBuckets = append(filteredDBBuckets, bucket)
+	}
+
 	// Sort by bucket name.
-	sort.SliceStable(dbBuckets, func(i, j int) bool {
-		bucketA := dbBuckets[i]
-		bucketB := dbBuckets[j]
+	sort.SliceStable(filteredDBBuckets, func(i, j int) bool {
+		bucketA := filteredDBBuckets[i]
+		bucketB := filteredDBBuckets[j]
 
 		return bucketA.Name < bucketB.Name
 	})
 
 	if localUtil.IsRecursionRequest(r) {
-		buckets := make([]*api.StorageBucket, 0, len(dbBuckets))
-		for _, dbBucket := range dbBuckets {
+		buckets := make([]*api.StorageBucket, 0, len(filteredDBBuckets))
+		for _, dbBucket := range filteredDBBuckets {
 			u := pool.GetBucketURL(dbBucket.Name)
 			if u != nil {
 				dbBucket.S3URL = u.String()
@@ -215,8 +231,8 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SyncResponse(true, buckets)
 	}
 
-	urls := make([]string, 0, len(dbBuckets))
-	for _, dbBucket := range dbBuckets {
+	urls := make([]string, 0, len(filteredDBBuckets))
+	for _, dbBucket := range filteredDBBuckets {
 		urls = append(urls, dbBucket.StorageBucket.URL(version.APIVersion, poolName, requestProjectName).String())
 	}
 
