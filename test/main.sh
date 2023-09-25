@@ -40,7 +40,7 @@ import_subdir_files() {
 import_subdir_files includes
 
 echo "==> Checking for dependencies"
-check_dependencies incusd incus curl dnsmasq jq git xgettext sqlite3 msgmerge msgfmt shuf setfacl socat dig
+check_dependencies incusd incus curl dnsmasq jq git xgettext sqlite3 msgmerge msgfmt shuf setfacl socat dig openfga fga
 
 if [ "${USER:-'root'}" != "root" ]; then
   echo "The testsuite must be run as root." >&2
@@ -93,6 +93,7 @@ cleanup() {
     echo "==> Cleaning up"
 
     umount -l "${TEST_DIR}/dev"
+    shutdown_openfga
     cleanup_incus "$TEST_DIR"
   fi
 
@@ -199,6 +200,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_database_no_disk_space "database out of disk space"
     run_test test_sql "SQL"
     run_test test_tls_restrictions "TLS restrictions"
+    run_test test_openfga "OpenFGA"
     run_test test_certificate_edit "Certificate edit"
     run_test test_basic_usage "basic usage"
     run_test test_remote_url "remote url handling"
@@ -238,6 +240,7 @@ if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_groups "clustering groups"
     run_test test_clustering_events "clustering events"
     run_test test_clustering_uuid "clustering uuid"
+    run_test test_clustering_openfga "clustering OpenFGA"
 fi
 
 if [ "${1:-"all"}" != "cluster" ]; then
