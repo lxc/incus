@@ -253,6 +253,11 @@ func networkACLsPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	err = s.Authorizer.AddNetworkACL(r.Context(), projectName, req.Name)
+	if err != nil {
+		logger.Error("Failed to add network ACL to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
+	}
+
 	lc := lifecycle.NetworkACLCreated.Event(netACL, request.CreateRequestor(r), nil)
 	s.Events.SendLifecycle(projectName, lc)
 
@@ -304,6 +309,11 @@ func networkACLDelete(d *Daemon, r *http.Request) response.Response {
 	err = netACL.Delete()
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	err = s.Authorizer.DeleteNetworkACL(r.Context(), projectName, aclName)
+	if err != nil {
+		logger.Error("Failed to remove network ACL from authorizer", logger.Ctx{"name": aclName, "project": projectName, "error": err})
 	}
 
 	s.Events.SendLifecycle(projectName, lifecycle.NetworkACLDeleted.Event(netACL, request.CreateRequestor(r), nil))
@@ -565,6 +575,11 @@ func networkACLPost(d *Daemon, r *http.Request) response.Response {
 	err = netACL.Rename(req.Name)
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	err = s.Authorizer.RenameNetworkACL(r.Context(), projectName, aclName, req.Name)
+	if err != nil {
+		logger.Error("Failed to rename network ACL in authorizer", logger.Ctx{"old_name": aclName, "new_name": req.Name, "project": projectName, "error": err})
 	}
 
 	lc := lifecycle.NetworkACLRenamed.Event(netACL, request.CreateRequestor(r), logger.Ctx{"old_name": aclName})
