@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/resources"
 	"github.com/lxc/incus/internal/server/response"
 	storagePools "github.com/lxc/incus/internal/server/storage"
@@ -15,13 +16,13 @@ import (
 var api10ResourcesCmd = APIEndpoint{
 	Path: "resources",
 
-	Get: APIEndpointAction{Handler: api10ResourcesGet, AccessHandler: allowAuthenticated},
+	Get: APIEndpointAction{Handler: api10ResourcesGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanViewResources)},
 }
 
 var storagePoolResourcesCmd = APIEndpoint{
 	Path: "storage-pools/{name}/resources",
 
-	Get: APIEndpointAction{Handler: storagePoolResourcesGet, AccessHandler: allowAuthenticated},
+	Get: APIEndpointAction{Handler: storagePoolResourcesGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanViewResources)},
 }
 
 // swagger:operation GET /1.0/resources server resources_get
