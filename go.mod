@@ -1,6 +1,6 @@
 module github.com/lxc/incus
 
-go 1.20
+go 1.21.1
 
 require (
 	github.com/Rican7/retry v0.3.1
@@ -95,6 +95,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/muhlemmer/httpforwarded v0.1.0 // indirect
+	github.com/openfga/go-sdk v0.2.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

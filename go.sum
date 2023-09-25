@@ -345,6 +345,8 @@ github.com/muhlemmer/httpforwarded v0.1.0/go.mod h1:yo9czKedo2pdZhoXe+yDkGVbU0TJ
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
+github.com/openfga/go-sdk v0.2.3 h1:VPCouXbUP+vtGREbLu8BIuzFiA1kBDQ6tnunFTxtLzc=
+github.com/openfga/go-sdk v0.2.3/go.mod h1:2k8hL4VJ46GXUGbnQ1QOrcZWcP1kKATLPeqVnuLzgIE=
 github.com/osrg/gobgp/v3 v3.19.0 h1:SHjeu707EVp5h2LR8qLxDz/PzFU6oO+jhquGzGsigTI=
 github.com/osrg/gobgp/v3 v3.19.0/go.mod h1:TszzyYD/31jXlljifRhxFEmPsITEloZmGU5CTN21W18=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
