@@ -690,7 +690,7 @@ func (d *Daemon) init() error {
 	var dbWarnings []dbCluster.Warning
 
 	// Set default authorizer.
-	d.authorizer, err = auth.LoadAuthorizer("tls", nil, logger.Log, nil)
+	d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
 	if err != nil {
 		return err
 	}
