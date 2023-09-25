@@ -30,6 +30,7 @@ Incus will keep monitoring and importing relevant changes from LXD over time tho
 This is still the very early days of this fork. No packages or even releases currently exist.
 For production use, you are likely better off sticking with Canonical's LXD for the time being until stable release of Incus exist.
 
+You can test the current state of Incus through an online session here: https://linuxcontainers.org/incus/try-it/
 
 ## Status
 
