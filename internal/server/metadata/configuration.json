@@ -1861,6 +1861,42 @@
 						}
 					}
 				]
+			},
+			"openfga": {
+				"keys": [
+					{
+						"openfga.api.token": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "API token of OpenFGA server",
+							"type": "string"
+						}
+					},
+					{
+						"openfga.api.url": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "URL of OpenFGA server",
+							"type": "string"
+						}
+					},
+					{
+						"openfga.store.id": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "ID of OpenFGA permission store.",
+							"type": "string"
+						}
+					},
+					{
+						"openfga.store.model_id": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "ID of OpenFGA authorization model.",
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	}
