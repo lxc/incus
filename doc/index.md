@@ -4,9 +4,7 @@ relatedlinks: https://ubuntu.com/lxd, https://ubuntu.com/blog/open-source-for-be
 
 # LXD
 
-LXD (<a href="#" title="Listen" onclick="document.getElementById('player').play();return false;">`[lɛks'di:]`&#128264;</a>) is a modern, secure and powerful system container and virtual machine manager.
-
-<audio id="player">  <source src="_static/lxd.mp3" type="audio/mpeg">  <source src="_static/lxd.ogg" type="audio/ogg">  <source src="_static/lxd.wav" type="audio/wav"></audio>
+LXD is a modern, secure and powerful system container and virtual machine manager.
 
 % Include content from [../README.md](../README.md)
 ```{include} ../README.md
