@@ -210,7 +210,7 @@ func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isMa
 	}
 
 	// Don't allow access to unmanaged networks if only managed network access is allowed.
-	if shared.StringInSlice(reqProjectConfig["restricted.devices.nic"], []string{"managed", ""}) && !isManaged {
+	if shared.ValueInSlice(reqProjectConfig["restricted.devices.nic"], []string{"managed", ""}) && !isManaged {
 		return false
 	}
 
@@ -221,7 +221,7 @@ func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isMa
 
 	// Check if reqquested network is in list of allowed networks.
 	allowedRestrictedNetworks := shared.SplitNTrimSpace(reqProjectConfig["restricted.networks.access"], ",", -1, false)
-	return shared.StringInSlice(networkName, allowedRestrictedNetworks)
+	return shared.ValueInSlice(networkName, allowedRestrictedNetworks)
 }
 
 // ProfileProject returns the effective project to use for the profile based on the requested project.

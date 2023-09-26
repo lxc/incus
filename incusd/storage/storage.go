@@ -143,7 +143,7 @@ func UsedBy(ctx context.Context, s *state.State, pool Pool, firstOnly bool, memb
 		for _, vol := range volumes {
 			var u *api.URL
 
-			if shared.StringInSlice(vol.Type, ignoreVolumeType) {
+			if shared.ValueInSlice(vol.Type, ignoreVolumeType) {
 				continue
 			}
 

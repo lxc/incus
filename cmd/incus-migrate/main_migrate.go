@@ -172,7 +172,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 
 	i := 1
 
-	if shared.StringInSlice("tls", apiServer.AuthMethods) {
+	if shared.ValueInSlice("tls", apiServer.AuthMethods) {
 		fmt.Printf("%d) Use a certificate token\n", i)
 		availableAuthMethods = append(availableAuthMethods, authMethodTLSCertificateToken)
 		i++
@@ -183,7 +183,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		availableAuthMethods = append(availableAuthMethods, authMethodTLSTemporaryCertificate)
 	}
 
-	if len(apiServer.AuthMethods) > 1 || shared.StringInSlice("tls", apiServer.AuthMethods) {
+	if len(apiServer.AuthMethods) > 1 || shared.ValueInSlice("tls", apiServer.AuthMethods) {
 		authMethodInt, err := cli.AskInt("Please pick an authentication mechanism above: ", 1, int64(i), "", nil)
 		if err != nil {
 			return nil, "", err
@@ -298,7 +298,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 			return cmdMigrateData{}, err
 		}
 
-		if shared.StringInSlice(instanceName, instanceNames) {
+		if shared.ValueInSlice(instanceName, instanceNames) {
 			fmt.Printf("Instance %q already exists\n", instanceName)
 			continue
 		}
@@ -335,7 +335,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 	if config.InstanceArgs.Type == api.InstanceTypeVM {
 		architectureName, _ := osarch.ArchitectureGetLocal()
 
-		if shared.StringInSlice(architectureName, []string{"x86_64", "aarch64"}) {
+		if shared.ValueInSlice(architectureName, []string{"x86_64", "aarch64"}) {
 			hasSecureBoot, err := cli.AskBool("Does the VM support UEFI Secure Boot? [default=no]: ", "no")
 			if err != nil {
 				return cmdMigrateData{}, err
@@ -596,7 +596,7 @@ func (c *cmdMigrate) askProfiles(server incus.InstanceServer, config *cmdMigrate
 		profiles := strings.Split(s, " ")
 
 		for _, profile := range profiles {
-			if !shared.StringInSlice(profile, profileNames) {
+			if !shared.ValueInSlice(profile, profileNames) {
 				return fmt.Errorf("Unknown profile %q", profile)
 			}
 		}

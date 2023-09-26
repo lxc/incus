@@ -89,7 +89,7 @@ func (r *ProtocolIncus) GetConnectionInfo() (*ConnectionInfo, error) {
 			}
 
 			url := fmt.Sprintf("https://%s", addr)
-			if !shared.StringInSlice(url, urls) {
+			if !shared.ValueInSlice(url, urls) {
 				urls = append(urls, url)
 			}
 		}

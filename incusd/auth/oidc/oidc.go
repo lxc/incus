@@ -235,7 +235,7 @@ func (o *Verifier) VerifyAccessToken(ctx context.Context, token string) (*oidc.A
 
 	// Check that the token includes the configured audience.
 	audience := claims.GetAudience()
-	if o.audience != "" && !shared.StringInSlice(o.audience, audience) {
+	if o.audience != "" && !shared.ValueInSlice(o.audience, audience) {
 		return nil, fmt.Errorf("Provided OIDC token doesn't allow the configured audience")
 	}
 

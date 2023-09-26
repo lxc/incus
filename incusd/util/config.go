@@ -16,7 +16,7 @@ func CompareConfigs(config1, config2 map[string]string, exclude []string) error 
 
 	delta := []string{}
 	for key, value := range config1 {
-		if shared.StringInSlice(key, exclude) {
+		if shared.ValueInSlice(key, exclude) {
 			continue
 		}
 
@@ -25,7 +25,7 @@ func CompareConfigs(config1, config2 map[string]string, exclude []string) error 
 		}
 	}
 	for key, value := range config2 {
-		if shared.StringInSlice(key, exclude) {
+		if shared.ValueInSlice(key, exclude) {
 			continue
 		}
 

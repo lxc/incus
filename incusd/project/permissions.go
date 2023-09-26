@@ -67,7 +67,7 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 	// Special case restriction checks on volatile.* keys.
 	strip := false
 
-	if shared.StringInSlice(req.Source.Type, []string{"copy", "migration"}) {
+	if shared.ValueInSlice(req.Source.Type, []string{"copy", "migration"}) {
 		// Allow stripping volatile keys if dealing with a copy or migration.
 		strip = true
 	}
@@ -179,7 +179,7 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 
 	// Checker for safe volatile keys.
 	isSafeKey := func(key string) bool {
-		if shared.StringInSlice(key, []string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power"}) {
+		if shared.ValueInSlice(key, []string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power"}) {
 			return true
 		}
 
@@ -312,7 +312,7 @@ func checkRestrictionsAndAggregateLimits(tx *db.ClusterTx, info *projectInfo) er
 	aggregateKeys := []string{}
 	isRestricted := false
 	for key, value := range info.Project.Config {
-		if shared.StringInSlice(key, allAggregateLimits) {
+		if shared.ValueInSlice(key, allAggregateLimits) {
 			aggregateKeys = append(aggregateKeys, key)
 			continue
 		}
@@ -823,11 +823,11 @@ var allowableIntercept = []string{
 
 // Return true if a low-level container option is forbidden.
 func isContainerLowLevelOptionForbidden(key string) bool {
-	if strings.HasPrefix(key, "security.syscalls.intercept") && !shared.StringInSlice(key, allowableIntercept) {
+	if strings.HasPrefix(key, "security.syscalls.intercept") && !shared.ValueInSlice(key, allowableIntercept) {
 		return true
 	}
 
-	if shared.StringInSlice(key, []string{
+	if shared.ValueInSlice(key, []string{
 		"boot.host_shutdown_timeout",
 		"linux.kernel_modules",
 		"raw.apparmor",
@@ -846,7 +846,7 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 
 // Return true if a low-level VM option is forbidden.
 func isVMLowLevelOptionForbidden(key string) bool {
-	return shared.StringInSlice(key, []string{
+	return shared.ValueInSlice(key, []string{
 		"boot.host_shutdown_timeout",
 		"limits.memory.hugepages",
 		"raw.idmap",
@@ -1526,7 +1526,7 @@ func AllowClusterMember(p *api.Project, member *db.NodeInfo) error {
 
 	if shared.IsTrue(p.Config["restricted"]) && len(clusterGroupsAllowed) > 0 {
 		for _, memberGroupName := range member.Groups {
-			if shared.StringInSlice(memberGroupName, clusterGroupsAllowed) {
+			if shared.ValueInSlice(memberGroupName, clusterGroupsAllowed) {
 				return nil
 			}
 		}
@@ -1546,7 +1546,7 @@ func AllowClusterGroup(p *api.Project, groupName string) error {
 		return nil
 	}
 
-	if len(clusterGroupsAllowed) > 0 && !shared.StringInSlice(groupName, clusterGroupsAllowed) {
+	if len(clusterGroupsAllowed) > 0 && !shared.ValueInSlice(groupName, clusterGroupsAllowed) {
 		return fmt.Errorf("Project isn't allowed to use this cluster group: %q", groupName)
 	}
 

@@ -724,7 +724,7 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		newACLs := shared.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
 		removedACLs := []string{}
 		for _, oldACL := range oldACLs {
-			if !shared.StringInSlice(oldACL, newACLs) {
+			if !shared.ValueInSlice(oldACL, newACLs) {
 				removedACLs = append(removedACLs, oldACL)
 			}
 		}

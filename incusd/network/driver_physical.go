@@ -292,7 +292,7 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 	revert := revert.New()
 	defer revert.Fail()
 
-	hostNameChanged := shared.StringInSlice("vlan", changedKeys) || shared.StringInSlice("parent", changedKeys)
+	hostNameChanged := shared.ValueInSlice("vlan", changedKeys) || shared.ValueInSlice("parent", changedKeys)
 
 	// We only need to check in the database once, not on every clustered node.
 	if clientType == request.ClientTypeNormal {

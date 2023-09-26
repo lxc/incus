@@ -1755,7 +1755,7 @@ func (n *ovn) allowedUplinkNetworks(p *api.Project) ([]string, error) {
 	allowedRestrictedUplinks := shared.SplitNTrimSpace(p.Config["restricted.networks.uplinks"], ",", -1, false)
 
 	for _, allowedRestrictedUplink := range allowedRestrictedUplinks {
-		if shared.StringInSlice(allowedRestrictedUplink, uplinkNetworkNames) {
+		if shared.ValueInSlice(allowedRestrictedUplink, uplinkNetworkNames) {
 			allowedUplinkNetworkNames = append(allowedUplinkNetworkNames, allowedRestrictedUplink)
 		}
 	}
@@ -1773,7 +1773,7 @@ func (n *ovn) validateUplinkNetwork(p *api.Project, uplinkNetworkName string) (s
 	}
 
 	if uplinkNetworkName != "" {
-		if !shared.StringInSlice(uplinkNetworkName, allowedUplinkNetworks) {
+		if !shared.ValueInSlice(uplinkNetworkName, allowedUplinkNetworks) {
 			return "", fmt.Errorf(`Option "network" value %q is not one of the allowed uplink networks in project`, uplinkNetworkName)
 		}
 
@@ -2911,7 +2911,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	})
 
 	// Stop network before new config applied if uplink network is changing.
-	if shared.StringInSlice("network", changedKeys) {
+	if shared.ValueInSlice("network", changedKeys) {
 		err = n.Stop()
 		if err != nil {
 			return err
@@ -2940,14 +2940,14 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		newACLs := shared.SplitNTrimSpace(newNetwork.Config["security.acls"], ",", -1, true)
 		removedACLs := []string{}
 		for _, oldACL := range oldACLs {
-			if !shared.StringInSlice(oldACL, newACLs) {
+			if !shared.ValueInSlice(oldACL, newACLs) {
 				removedACLs = append(removedACLs, oldACL)
 			}
 		}
 
 		addedACLs := []string{}
 		for _, newACL := range newACLs {
-			if !shared.StringInSlice(newACL, oldACLs) {
+			if !shared.ValueInSlice(newACL, oldACLs) {
 				addedACLs = append(addedACLs, newACL)
 			}
 		}
@@ -2956,7 +2956,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		defaultRuleKeys := []string{"security.acls.default.ingress.action", "security.acls.default.egress.action", "security.acls.default.ingress.logged", "security.acls.default.egress.logged"}
 		changedDefaultRuleKeys := []string{}
 		for _, k := range defaultRuleKeys {
-			if shared.StringInSlice(k, changedKeys) {
+			if shared.ValueInSlice(k, changedKeys) {
 				changedDefaultRuleKeys = append(changedDefaultRuleKeys, k)
 			}
 		}
@@ -3001,7 +3001,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 			if aclConfigChanged {
 				// Check whether we need to add any of the new ACLs to the NIC.
 				for _, addedACL := range addedACLs {
-					if shared.StringInSlice(addedACL, nicACLs) {
+					if shared.ValueInSlice(addedACL, nicACLs) {
 						continue // NIC already has this ACL applied directly, so no need to add.
 					}
 
@@ -3018,7 +3018,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 				// Check whether we need to remove any of the removed ACLs from the NIC.
 				for _, removedACL := range removedACLs {
-					if shared.StringInSlice(removedACL, nicACLs) {
+					if shared.ValueInSlice(removedACL, nicACLs) {
 						continue // NIC still has this ACL applied directly, so don't remove.
 					}
 
@@ -3111,7 +3111,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		// Remove any old unused subnet addresses from the internal switch's address set.
 		rebuildPeers := false
 		for _, key := range []string{"ipv4.address", "ipv6.address"} {
-			if shared.StringInSlice(key, changedKeys) {
+			if shared.ValueInSlice(key, changedKeys) {
 				rebuildPeers = true
 				_, oldRouterIntPortIPNet, _ := net.ParseCIDR(oldNetwork.Config[key])
 				if oldRouterIntPortIPNet != nil {
@@ -3145,7 +3145,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	}
 
 	// If uplink network is changing, start network after config applied.
-	if shared.StringInSlice("network", changedKeys) {
+	if shared.ValueInSlice("network", changedKeys) {
 		err = n.Start()
 		if err != nil {
 			return err
@@ -3215,7 +3215,7 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 	}
 
 	// Check port's external routes are suffciently small when using l2proxy ingress mode on uplink.
-	if shared.StringInSlice(uplink.Config["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+	if shared.ValueInSlice(uplink.Config["ovn.ingress_mode"], []string{"l2proxy", ""}) {
 		for _, portExternalRoute := range portExternalRoutes {
 			rOnes, rBits := portExternalRoute.Mask.Size()
 			if rBits > 32 && rOnes < 122 {
@@ -3621,7 +3621,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	}
 
 	// Publish NIC's IPs on uplink network if NAT is disabled and using l2proxy ingress mode on uplink.
-	if shared.StringInSlice(opts.UplinkConfig["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+	if shared.ValueInSlice(opts.UplinkConfig["ovn.ingress_mode"], []string{"l2proxy", ""}) {
 		for _, k := range []string{"ipv4.nat", "ipv6.nat"} {
 			if shared.IsTrue(n.config[k]) {
 				continue
@@ -3701,7 +3701,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		// knowledge this is the only way to get the OVN router to respond to ARP/NDP requests for IPs that
 		// it doesn't actually have). However we have to add each IP in the external route individually as
 		// DNAT doesn't support whole subnets.
-		if shared.StringInSlice(opts.UplinkConfig["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+		if shared.ValueInSlice(opts.UplinkConfig["ovn.ingress_mode"], []string{"l2proxy", ""}) {
 			err = SubnetIterate(externalRoute, func(ip net.IP) error {
 				err = client.LogicalRouterDNATSNATAdd(n.getRouterName(), ip, ip, true, true)
 				if err != nil {
@@ -3793,7 +3793,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	nicACLNames := shared.SplitNTrimSpace(opts.DeviceConfig["security.acls"], ",", -1, true)
 
 	for _, aclName := range netACLNames {
-		if !shared.StringInSlice(aclName, nicACLNames) {
+		if !shared.ValueInSlice(aclName, nicACLNames) {
 			nicACLNames = append(nicACLNames, aclName)
 		}
 	}
@@ -3850,7 +3850,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		for _, aclName := range securityACLsRemove {
 			// Don't remove ACLs that are in the add ACLs list (there are possibly added from
 			// the network assigned ACLs).
-			if shared.StringInSlice(aclName, nicACLNames) {
+			if shared.ValueInSlice(aclName, nicACLNames) {
 				continue
 			}
 
@@ -4017,7 +4017,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort openvswitch.OVNSwitchPor
 		removeRoutes = append(removeRoutes, *externalRoute)
 
 		// Remove the DNAT rules when using l2proxy ingress mode on uplink.
-		if shared.StringInSlice(uplink.Config["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+		if shared.ValueInSlice(uplink.Config["ovn.ingress_mode"], []string{"l2proxy", ""}) {
 			err = SubnetIterate(externalRoute, func(ip net.IP) error {
 				removeNATIPs = append(removeNATIPs, ip)
 
@@ -4312,7 +4312,7 @@ func (n *ovn) uplinkHasIngressRoutedAnycastIPv6(uplink *api.Network) bool {
 func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]string, changedKeys []string) error {
 	// Detect changes that need to be applied to the network.
 	for _, k := range []string{"dns.nameservers"} {
-		if shared.StringInSlice(k, changedKeys) {
+		if shared.ValueInSlice(k, changedKeys) {
 			n.logger.Debug("Applying changes from uplink network", logger.Ctx{"uplink": uplinkName})
 
 			// Re-setup logical network in order to apply uplink changes.
@@ -4326,7 +4326,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 	}
 
 	// Add or remove the instance NIC l2proxy DNAT_AND_SNAT rules if uplink's ovn.ingress_mode has changed.
-	if shared.StringInSlice("ovn.ingress_mode", changedKeys) {
+	if shared.ValueInSlice("ovn.ingress_mode", changedKeys) {
 		n.logger.Debug("Applying ingress mode changes from uplink network to instance NICs", logger.Ctx{"uplink": uplinkName})
 
 		client, err := openvswitch.NewOVN(n.state)
@@ -4334,7 +4334,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
 
-		if shared.StringInSlice(uplinkConfig["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+		if shared.ValueInSlice(uplinkConfig["ovn.ingress_mode"], []string{"l2proxy", ""}) {
 			// Get list of active switch ports (avoids repeated querying of OVN NB).
 			activePorts, err := client.LogicalSwitchPorts(n.getIntSwitchName())
 			if err != nil {

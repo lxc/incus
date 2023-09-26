@@ -127,12 +127,12 @@ func (c *cmdAction) Command(action string) *cobra.Command {
 		cmd.Flags().BoolVar(&c.flagStateless, "stateless", false, i18n.G("Ignore the instance state"))
 	}
 
-	if shared.StringInSlice(action, []string{"start", "restart", "stop"}) {
+	if shared.ValueInSlice(action, []string{"start", "restart", "stop"}) {
 		cmd.Flags().StringVar(&c.flagConsole, "console", "", i18n.G("Immediately attach to the console")+"``")
 		cmd.Flags().Lookup("console").NoOptDefVal = "console"
 	}
 
-	if shared.StringInSlice(action, []string{"restart", "stop"}) {
+	if shared.ValueInSlice(action, []string{"restart", "stop"}) {
 		cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force the instance to stop"))
 		cmd.Flags().IntVar(&c.flagTimeout, "timeout", -1, i18n.G("Time to wait for the instance to shutdown cleanly")+"``")
 	}

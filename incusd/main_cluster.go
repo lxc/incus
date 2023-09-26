@@ -432,7 +432,7 @@ Do you want to proceed? (yes/no): `)
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !shared.StringInSlice(strings.ToLower(input), []string{"yes"}) {
+	if !shared.ValueInSlice(strings.ToLower(input), []string{"yes"}) {
 		return fmt.Errorf("Recover operation aborted")
 	}
 
@@ -496,7 +496,7 @@ Do you want to proceed? (yes/no): `)
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !shared.StringInSlice(strings.ToLower(input), []string{"yes"}) {
+	if !shared.ValueInSlice(strings.ToLower(input), []string{"yes"}) {
 		return fmt.Errorf("Remove raft node operation aborted")
 	}
 

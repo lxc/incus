@@ -1007,7 +1007,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			for {
 				i++
 				req.Name = strings.ToLower(petname.Generate(2, "-"))
-				if !shared.StringInSlice(req.Name, names) {
+				if !shared.ValueInSlice(req.Name, names) {
 					break
 				}
 

@@ -64,7 +64,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 	if len(types) == 1 && types[0] == "" {
 		types = []string{}
 		for _, entry := range eventTypes {
-			if !auth.UserIsAdmin(r) && shared.StringInSlice(entry, privilegedEventTypes) {
+			if !auth.UserIsAdmin(r) && shared.ValueInSlice(entry, privilegedEventTypes) {
 				continue
 			}
 
@@ -74,12 +74,12 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 
 	// Validate event types.
 	for _, entry := range types {
-		if !shared.StringInSlice(entry, eventTypes) {
+		if !shared.ValueInSlice(entry, eventTypes) {
 			return api.StatusErrorf(http.StatusBadRequest, "%q isn't a supported event type", entry)
 		}
 	}
 
-	if shared.StringInSlice(api.EventTypeLogging, types) && !auth.UserIsAdmin(r) {
+	if shared.ValueInSlice(api.EventTypeLogging, types) && !auth.UserIsAdmin(r) {
 		return api.StatusErrorf(http.StatusForbidden, "Forbidden")
 	}
 

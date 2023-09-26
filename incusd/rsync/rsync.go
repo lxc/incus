@@ -415,18 +415,18 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 
 func rsyncFeatureArgs(features []string) []string {
 	args := []string{}
-	if shared.StringInSlice("xattrs", features) {
+	if shared.ValueInSlice("xattrs", features) {
 		args = append(args, "--xattrs")
 		if AtLeast("3.1.3") {
 			args = append(args, "--filter=-x security.selinux")
 		}
 	}
 
-	if shared.StringInSlice("delete", features) {
+	if shared.ValueInSlice("delete", features) {
 		args = append(args, "--delete")
 	}
 
-	if shared.StringInSlice("compress", features) {
+	if shared.ValueInSlice("compress", features) {
 		args = append(args, "--compress")
 		args = append(args, "--compress-level=2")
 	}

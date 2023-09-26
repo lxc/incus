@@ -174,7 +174,7 @@ func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 			args = append(args, fields[1:]...)
 		}
 
-		if shared.StringInSlice(fields[0], reproducible) {
+		if shared.ValueInSlice(fields[0], reproducible) {
 			args = append(args, "-n")
 		}
 
@@ -1021,13 +1021,13 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		return createTokenResponse(s, r, projectName, req.Source.Fingerprint, metadata)
 	}
 
-	if !imageUpload && !shared.StringInSlice(req.Source.Type, []string{"container", "instance", "virtual-machine", "snapshot", "image", "url"}) {
+	if !imageUpload && !shared.ValueInSlice(req.Source.Type, []string{"container", "instance", "virtual-machine", "snapshot", "image", "url"}) {
 		cleanup(builddir, post)
 		return response.InternalError(fmt.Errorf("Invalid images JSON"))
 	}
 
 	/* Forward requests for containers on other nodes */
-	if !imageUpload && shared.StringInSlice(req.Source.Type, []string{"container", "instance", "virtual-machine", "snapshot"}) {
+	if !imageUpload && shared.ValueInSlice(req.Source.Type, []string{"container", "instance", "virtual-machine", "snapshot"}) {
 		name := req.Source.Name
 		if name != "" {
 			_, err = post.Seek(0, io.SeekStart)
@@ -1759,7 +1759,7 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 
 			// Add the volume to the list if the pool is backed by remote
 			// storage as only then the volumes are shared.
-			if shared.StringInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
+			if shared.ValueInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
 				imageVolumes = append(imageVolumes, vol)
 			}
 		}
@@ -1841,7 +1841,7 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 				if err != nil {
 					logger.Error("Failed to get storage pool info", logger.Ctx{"err": err, "pool": fields[0]})
 				} else {
-					if shared.StringInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
+					if shared.ValueInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
 						imageVolumes = append(imageVolumes, vol)
 					}
 				}
@@ -2240,7 +2240,7 @@ func pruneLeftoverImages(s *state.State) {
 		// Check and delete leftovers
 		for _, entry := range entries {
 			fp := strings.Split(entry.Name(), ".")[0]
-			if !shared.StringInSlice(fp, images) {
+			if !shared.ValueInSlice(fp, images) {
 				err = os.RemoveAll(shared.VarPath("images", entry.Name()))
 				if err != nil {
 					return fmt.Errorf("Unable to remove leftover image: %v: %w", entry.Name(), err)

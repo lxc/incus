@@ -24,7 +24,7 @@ func serverIsConfigured(client incus.InstanceServer) (bool, error) {
 		return false, fmt.Errorf("Failed to list networks: %w", err)
 	}
 
-	if !shared.StringInSlice("incusbr0", networks) {
+	if !shared.ValueInSlice("incusbr0", networks) {
 		// Couldn't find incusbr0.
 		return false, nil
 	}
@@ -35,7 +35,7 @@ func serverIsConfigured(client incus.InstanceServer) (bool, error) {
 		return false, fmt.Errorf("Failed to list storage pools: %w", err)
 	}
 
-	if !shared.StringInSlice("default", pools) {
+	if !shared.ValueInSlice("default", pools) {
 		// No storage pool found.
 		return false, nil
 	}
@@ -70,7 +70,7 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 		pool.Name = "default"
 
 		// Check if ZFS supported.
-		if shared.StringInSlice("zfs", availableBackends) {
+		if shared.ValueInSlice("zfs", availableBackends) {
 			pool.Driver = "zfs"
 
 			// Check if zsys.
@@ -188,7 +188,7 @@ func serverSetupUser(uid uint32) error {
 		return fmt.Errorf("Unable to retrieve project list: %w", err)
 	}
 
-	if !shared.StringInSlice(projectName, projects) {
+	if !shared.ValueInSlice(projectName, projects) {
 		// Create the project.
 		err := client.CreateProject(api.ProjectsPost{
 			Name: projectName,

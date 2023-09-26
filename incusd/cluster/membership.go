@@ -469,7 +469,7 @@ func Join(state *state.State, gateway *Gateway, networkCert *localtls.CertInfo, 
 				return fmt.Errorf("Failed to get storage pool driver: %w", err)
 			}
 
-			if shared.StringInSlice(driver, []string{"ceph", "cephfs"}) {
+			if shared.ValueInSlice(driver, []string{"ceph", "cephfs"}) {
 				// For ceph pools we have to create volume
 				// entries for the joining node.
 				err := tx.UpdateCephStoragePoolAfterNodeJoin(ctx, id, node.ID)
@@ -1017,7 +1017,7 @@ func newRolesChanges(state *state.State, gateway *Gateway, nodes []db.RaftNode, 
 	cluster := map[client.NodeInfo]*client.NodeMetadata{}
 
 	for _, node := range nodes {
-		if !shared.StringInSlice(node.Address, unavailableMembers) && HasConnectivity(gateway.networkCert, gateway.state().ServerCert(), node.Address) {
+		if !shared.ValueInSlice(node.Address, unavailableMembers) && HasConnectivity(gateway.networkCert, gateway.state().ServerCert(), node.Address) {
 			cluster[node.NodeInfo] = &client.NodeMetadata{
 				FailureDomain: domains[node.Address],
 			}

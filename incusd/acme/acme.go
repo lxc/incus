@@ -35,7 +35,7 @@ const ClusterCertFilename = "cluster.crt.new"
 // certificateNeedsUpdate returns true if the domain doesn't match the certificate's DNS names
 // or it's valid for less than 30 days.
 func certificateNeedsUpdate(domain string, cert *x509.Certificate) bool {
-	return !shared.StringInSlice(domain, cert.DNSNames) || time.Now().After(cert.NotAfter.Add(-30*24*time.Hour))
+	return !shared.ValueInSlice(domain, cert.DNSNames) || time.Now().After(cert.NotAfter.Add(-30*24*time.Hour))
 }
 
 // UpdateCertificate updates the certificate.

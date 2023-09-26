@@ -127,7 +127,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			address := util.CanonicalNetworkAddress(value, ports.HTTPSDefaultPort)
 
 			host, _, _ := net.SplitHostPort(address)
-			if shared.StringInSlice(host, []string{"", "[::]", "0.0.0.0"}) {
+			if shared.ValueInSlice(host, []string{"", "[::]", "0.0.0.0"}) {
 				return fmt.Errorf("Invalid IP address or DNS name")
 			}
 
@@ -362,7 +362,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 
 		// IPv4
 		net.Config["ipv4.address"], err = cli.AskString("What IPv4 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
-			if shared.StringInSlice(value, []string{"auto", "none"}) {
+			if shared.ValueInSlice(value, []string{"auto", "none"}) {
 				return nil
 			}
 
@@ -372,7 +372,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 			return err
 		}
 
-		if !shared.StringInSlice(net.Config["ipv4.address"], []string{"auto", "none"}) {
+		if !shared.ValueInSlice(net.Config["ipv4.address"], []string{"auto", "none"}) {
 			netIPv4UseNAT, err := cli.AskBool("Would you like to NAT IPv4 traffic on your bridge? [default=yes]: ", "yes")
 			if err != nil {
 				return err
@@ -383,7 +383,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 
 		// IPv6
 		net.Config["ipv6.address"], err = cli.AskString("What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
-			if shared.StringInSlice(value, []string{"auto", "none"}) {
+			if shared.ValueInSlice(value, []string{"auto", "none"}) {
 				return nil
 			}
 
@@ -393,7 +393,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 			return err
 		}
 
-		if !shared.StringInSlice(net.Config["ipv6.address"], []string{"auto", "none"}) {
+		if !shared.ValueInSlice(net.Config["ipv6.address"], []string{"auto", "none"}) {
 			netIPv6UseNAT, err := cli.AskBool("Would you like to NAT IPv6 traffic on your bridge? [default=yes]: ", "yes")
 			if err != nil {
 				return err
@@ -499,11 +499,11 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 	}
 
 	defaultStorage := "dir"
-	if backingFs == "btrfs" && shared.StringInSlice("btrfs", availableBackends) {
+	if backingFs == "btrfs" && shared.ValueInSlice("btrfs", availableBackends) {
 		defaultStorage = "btrfs"
-	} else if shared.StringInSlice("zfs", availableBackends) {
+	} else if shared.ValueInSlice("zfs", availableBackends) {
 		defaultStorage = "zfs"
-	} else if shared.StringInSlice("btrfs", availableBackends) {
+	} else if shared.ValueInSlice("btrfs", availableBackends) {
 		defaultStorage = "btrfs"
 	}
 
@@ -544,7 +544,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		if len(availableBackends) > 1 {
 			defaultBackend := defaultStorage
 			if poolType == util.PoolTypeRemote {
-				if shared.StringInSlice("ceph", availableBackends) {
+				if shared.ValueInSlice("ceph", availableBackends) {
 					defaultBackend = "ceph"
 				} else {
 					defaultBackend = availableBackends[0] // Default to first remote driver.

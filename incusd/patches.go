@@ -127,7 +127,7 @@ func patchesApply(d *Daemon, stage patchStage) error {
 			return fmt.Errorf("Patch %q has no stage set: %d", patch.name, patch.stage)
 		}
 
-		if shared.StringInSlice(patch.name, appliedPatches) {
+		if shared.ValueInSlice(patch.name, appliedPatches) {
 			continue
 		}
 

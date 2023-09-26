@@ -89,7 +89,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 	}
 
 	// HTTPs
-	if !shared.StringInSlice(remote.AuthType, []string{"oidc"}) && (args.TLSClientCert == "" || args.TLSClientKey == "") {
+	if !shared.ValueInSlice(remote.AuthType, []string{"oidc"}) && (args.TLSClientCert == "" || args.TLSClientKey == "") {
 		return nil, fmt.Errorf("Missing TLS client certificate and key")
 	}
 
@@ -240,7 +240,7 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	}
 
 	// Stop here if no client certificate involved
-	if remote.Protocol == "simplestreams" || shared.StringInSlice(remote.AuthType, []string{"oidc"}) {
+	if remote.Protocol == "simplestreams" || shared.ValueInSlice(remote.AuthType, []string{"oidc"}) {
 		return &args, nil
 	}
 

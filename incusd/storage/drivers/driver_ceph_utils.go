@@ -1052,7 +1052,7 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 			if len(rbdNameParts) == 2 && rbdNameParts[1] == devSnapName {
 				return false, fmt.Sprintf("/dev/rbd%d", idx), nil // We found a match.
 			}
-		} else if shared.StringInSlice(devSnapName, []string{"-", ""}) {
+		} else if shared.ValueInSlice(devSnapName, []string{"-", ""}) {
 			// Volume is not a snapshot and neither is this device.
 			return false, fmt.Sprintf("/dev/rbd%d", idx), nil // We found a match.
 		}

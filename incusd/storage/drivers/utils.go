@@ -421,7 +421,7 @@ func filesystemTypeCanBeShrunk(fsType string) bool {
 		fsType = DefaultFilesystem
 	}
 
-	if shared.StringInSlice(fsType, []string{"ext4", "btrfs"}) {
+	if shared.ValueInSlice(fsType, []string{"ext4", "btrfs"}) {
 		return true
 	}
 

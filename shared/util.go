@@ -501,15 +501,6 @@ func ValueInSlice[T comparable](key T, list []T) bool {
 	return false
 }
 
-func StringInSlice(key string, list []string) bool {
-	for _, entry := range list {
-		if entry == key {
-			return true
-		}
-	}
-	return false
-}
-
 // StringPrefixInSlice returns true if any element in the list has the given prefix.
 func StringPrefixInSlice(key string, list []string) bool {
 	for _, entry := range list {
@@ -582,7 +573,7 @@ func Uint64InSlice(key uint64, list []uint64) bool {
 
 // IsTrue returns true if value is "true", "1", "yes" or "on" (case insensitive).
 func IsTrue(value string) bool {
-	return StringInSlice(strings.ToLower(value), []string{"true", "1", "yes", "on"})
+	return ValueInSlice(strings.ToLower(value), []string{"true", "1", "yes", "on"})
 }
 
 // IsTrueOrEmpty returns true if value is empty or if IsTrue() returns true.
@@ -592,7 +583,7 @@ func IsTrueOrEmpty(value string) bool {
 
 // IsFalse returns true if value is "false", "0", "no" or "off" (case insensitive).
 func IsFalse(value string) bool {
-	return StringInSlice(strings.ToLower(value), []string{"false", "0", "no", "off"})
+	return ValueInSlice(strings.ToLower(value), []string{"false", "0", "no", "off"})
 }
 
 // IsFalseOrEmpty returns true if value is empty or if IsFalse() returns true.

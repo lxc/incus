@@ -109,7 +109,7 @@ func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) 
 			return "", err
 		}
 
-		if !shared.StringInSlice(v, sockets) {
+		if !shared.ValueInSlice(v, sockets) {
 			sockets = append(sockets, v)
 		}
 	}

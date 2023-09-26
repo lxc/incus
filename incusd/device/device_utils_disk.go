@@ -99,7 +99,7 @@ func DiskMount(srcPath string, dstPath string, recursive bool, propagation strin
 	flags, mountOptionsStr := linux.ResolveMountOptions(mountOptions)
 
 	var readonly bool
-	if shared.StringInSlice("ro", mountOptions) {
+	if shared.ValueInSlice("ro", mountOptions) {
 		readonly = true
 	}
 

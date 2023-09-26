@@ -440,7 +440,7 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 	// Extract file ownership and mode from headers
 	uid, gid, mode, type_, write := shared.ParseFileHeaders(r.Header)
 
-	if !shared.StringInSlice(write, []string{"overwrite", "append"}) {
+	if !shared.ValueInSlice(write, []string{"overwrite", "append"}) {
 		return response.BadRequest(fmt.Errorf("Bad file write mode: %s", write))
 	}
 

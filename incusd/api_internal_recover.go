@@ -144,7 +144,7 @@ func internalRecoverScan(s *state.State, userPools []api.StoragePoolsPost, valid
 	addDependencyError := func(err error) {
 		errStr := err.Error()
 
-		if !shared.StringInSlice(errStr, res.DependencyErrors) {
+		if !shared.ValueInSlice(errStr, res.DependencyErrors) {
 			res.DependencyErrors = append(res.DependencyErrors, errStr)
 		}
 	}

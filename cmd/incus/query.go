@@ -73,7 +73,7 @@ func (c *cmdQuery) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("--project cannot be used with the query command"))
 	}
 
-	if !shared.StringInSlice(c.flagAction, []string{"GET", "PUT", "POST", "PATCH", "DELETE"}) {
+	if !shared.ValueInSlice(c.flagAction, []string{"GET", "PUT", "POST", "PATCH", "DELETE"}) {
 		return fmt.Errorf(i18n.G("Action %q isn't supported by this tool"), c.flagAction)
 	}
 

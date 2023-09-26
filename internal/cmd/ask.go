@@ -22,9 +22,9 @@ func AskBool(question string, defaultAnswer string) (bool, error) {
 			return false, err
 		}
 
-		if shared.StringInSlice(strings.ToLower(answer), []string{"yes", "y"}) {
+		if shared.ValueInSlice(strings.ToLower(answer), []string{"yes", "y"}) {
 			return true, nil
-		} else if shared.StringInSlice(strings.ToLower(answer), []string{"no", "n"}) {
+		} else if shared.ValueInSlice(strings.ToLower(answer), []string{"no", "n"}) {
 			return false, nil
 		}
 
@@ -40,7 +40,7 @@ func AskChoice(question string, choices []string, defaultAnswer string) (string,
 			return "", err
 		}
 
-		if shared.StringInSlice(answer, choices) {
+		if shared.ValueInSlice(answer, choices) {
 			return answer, nil
 		}
 

@@ -1521,7 +1521,7 @@ func (o *OVN) ChassisGroupChassisDelete(haChassisGroupName OVNChassisGroup, chas
 		members := shared.SplitNTrimSpace(lines[1], " ", -1, true)
 
 		// Remove chassis from group if exists.
-		if existingChassisGroup == string(haChassisGroupName) && shared.StringInSlice(chassisID, members) {
+		if existingChassisGroup == string(haChassisGroupName) && shared.ValueInSlice(chassisID, members) {
 			_, err := o.nbctl("ha-chassis-group-remove-chassis", string(haChassisGroupName), chassisID)
 			if err != nil {
 				return err

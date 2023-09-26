@@ -70,7 +70,7 @@ func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
 	database := args[0]
 	query := args[1]
 
-	if !shared.StringInSlice(database, []string{"local", "global"}) {
+	if !shared.ValueInSlice(database, []string{"local", "global"}) {
 		_ = cmd.Help()
 
 		return fmt.Errorf("Invalid database type")

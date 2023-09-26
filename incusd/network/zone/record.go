@@ -134,7 +134,7 @@ func (d *zone) validateEntries(info api.NetworkZoneRecordPut) error {
 		}
 
 		entryID := entry.Type + "/" + entry.Value
-		if shared.StringInSlice(entryID, uniqueEntries) {
+		if shared.ValueInSlice(entryID, uniqueEntries) {
 			return fmt.Errorf("Duplicate record for type %q and value %q", entry.Type, entry.Value)
 		}
 

@@ -106,7 +106,7 @@ func UnixDeviceCreate(s *state.State, idmapSet *idmap.IdmapSet, devicesPath stri
 	// Extra checks for nesting.
 	if s.OS.RunningInUserNS {
 		for key, value := range m {
-			if shared.StringInSlice(key, []string{"major", "minor", "mode", "uid", "gid"}) && value != "" {
+			if shared.ValueInSlice(key, []string{"major", "minor", "mode", "uid", "gid"}) && value != "" {
 				return nil, fmt.Errorf("The \"%s\" property may not be set when adding a device to a nested container", key)
 			}
 		}

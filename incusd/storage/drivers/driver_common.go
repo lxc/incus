@@ -480,7 +480,7 @@ func (d *common) ValidateBucketKey(keyName string, creds S3Credentials, roleName
 	}
 
 	validRoles := []string{"admin", "read-only"}
-	if !shared.StringInSlice(roleName, validRoles) {
+	if !shared.ValueInSlice(roleName, validRoles) {
 		return fmt.Errorf("Invalid key role")
 	}
 

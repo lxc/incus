@@ -163,7 +163,7 @@ DELETE FROM storage_volumes WHERE id IN (
 // the corresponding project name as a prefix.
 func patchBucketNames(b *backend) error {
 	// Apply patch only for btrfs, dir, lvm, and zfs drivers.
-	if !shared.StringInSlice(b.driver.Info().Name, []string{"btrfs", "dir", "lvm", "zfs"}) {
+	if !shared.ValueInSlice(b.driver.Info().Name, []string{"btrfs", "dir", "lvm", "zfs"}) {
 		return nil
 	}
 

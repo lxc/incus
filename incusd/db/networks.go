@@ -264,7 +264,7 @@ WHERE networks.id = ? AND networks.state = ?
 	// Figure which nodes are missing
 	missing := []string{}
 	for _, node := range nodes {
-		if !shared.StringInSlice(node.Name, defined) {
+		if !shared.ValueInSlice(node.Name, defined) {
 			missing = append(missing, node.Name)
 		}
 	}
@@ -847,7 +847,7 @@ func networkConfigAdd(tx *sql.Tx, networkID, nodeID int64, config map[string]str
 		}
 
 		var nodeIDValue any
-		if !shared.StringInSlice(k, NodeSpecificNetworkConfig) {
+		if !shared.ValueInSlice(k, NodeSpecificNetworkConfig) {
 			nodeIDValue = nil
 		} else {
 			nodeIDValue = nodeID

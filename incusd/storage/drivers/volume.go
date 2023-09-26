@@ -360,13 +360,13 @@ func (v Volume) SnapshotsMatch(snapNames []string, op *operations.Operation) err
 	}
 
 	for _, snapName := range snapNames {
-		if !shared.StringInSlice(snapName, snapshots) {
+		if !shared.ValueInSlice(snapName, snapshots) {
 			return fmt.Errorf("Snapshot %q expected but not in storage", snapName)
 		}
 	}
 
 	for _, snapshot := range snapshots {
-		if !shared.StringInSlice(snapshot, snapNames) {
+		if !shared.ValueInSlice(snapshot, snapNames) {
 			return fmt.Errorf("Snapshot %q in storage but not expected", snapshot)
 		}
 	}

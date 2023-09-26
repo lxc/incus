@@ -451,7 +451,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		}
 
 		// Reject internal queries to remote, non-cluster, clients
-		if version == "internal" && !shared.StringInSlice(protocol, []string{"unix", "cluster"}) {
+		if version == "internal" && !shared.ValueInSlice(protocol, []string{"unix", "cluster"}) {
 			// Except for the initial cluster accept request (done over trusted TLS)
 			if !trusted || c.Path != "cluster/accept" || protocol != "tls" {
 				logger.Warn("Rejecting remote internal API request", logger.Ctx{"ip": r.RemoteAddr})
@@ -981,7 +981,7 @@ func (d *Daemon) init() error {
 
 	/* Setup dqlite */
 	clusterLogLevel := "ERROR"
-	if shared.StringInSlice("dqlite", trace) {
+	if shared.ValueInSlice("dqlite", trace) {
 		clusterLogLevel = "TRACE"
 	}
 
@@ -1087,7 +1087,7 @@ func (d *Daemon) init() error {
 			driver.WithLogFunc(cluster.DqliteLog),
 		}
 
-		if shared.StringInSlice("database", trace) {
+		if shared.ValueInSlice("database", trace) {
 			options = append(options, driver.WithTracing(dqliteClient.LogDebug))
 		}
 

@@ -704,7 +704,7 @@ func (c *cmdProfileRemove) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if !shared.StringInSlice(args[1], inst.Profiles) {
+	if !shared.ValueInSlice(args[1], inst.Profiles) {
 		return fmt.Errorf(i18n.G("Profile %s isn't currently applied to %s"), args[1], resource.name)
 	}
 

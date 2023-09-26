@@ -680,7 +680,7 @@ func (c *ClusterTx) UpdateNodeClusterGroups(ctx context.Context, id int64, group
 
 	// Check if node already belongs to the given groups.
 	for _, newGroup := range groups {
-		if shared.StringInSlice(newGroup, oldGroups) {
+		if shared.ValueInSlice(newGroup, oldGroups) {
 			// Node already belongs to this group.
 			skipGroups = append(skipGroups, newGroup)
 			continue
@@ -694,7 +694,7 @@ func (c *ClusterTx) UpdateNodeClusterGroups(ctx context.Context, id int64, group
 	}
 
 	for _, oldGroup := range oldGroups {
-		if shared.StringInSlice(oldGroup, skipGroups) {
+		if shared.ValueInSlice(oldGroup, skipGroups) {
 			continue
 		}
 
@@ -1064,12 +1064,12 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 		}
 
 		// Skip group-only members if targeted cluster group doesn't match.
-		if member.Config["scheduler.instance"] == "group" && !shared.StringInSlice(targetClusterGroup, member.Groups) {
+		if member.Config["scheduler.instance"] == "group" && !shared.ValueInSlice(targetClusterGroup, member.Groups) {
 			continue
 		}
 
 		// Skip if a group is requested and member isn't part of it.
-		if targetClusterGroup != "" && !shared.StringInSlice(targetClusterGroup, member.Groups) {
+		if targetClusterGroup != "" && !shared.ValueInSlice(targetClusterGroup, member.Groups) {
 			continue
 		}
 
@@ -1077,7 +1077,7 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 		if allowedClusterGroups != nil {
 			found := false
 			for _, allowedClusterGroup := range allowedClusterGroups {
-				if shared.StringInSlice(allowedClusterGroup, member.Groups) {
+				if shared.ValueInSlice(allowedClusterGroup, member.Groups) {
 					found = true
 					break
 				}

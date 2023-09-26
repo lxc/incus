@@ -470,7 +470,7 @@ func filterVolumes(volumes []*db.StorageVolume, clauses *filter.ClauseSet, allPr
 	filtered := []*db.StorageVolume{}
 	for _, volume := range volumes {
 		// Filter out image volumes that are not used by this project.
-		if volume.Type == db.StoragePoolVolumeTypeNameImage && !allProjects && !shared.StringInSlice(volume.Name, filterProjectImages) {
+		if volume.Type == db.StoragePoolVolumeTypeNameImage && !allProjects && !shared.ValueInSlice(volume.Name, filterProjectImages) {
 			continue
 		}
 

@@ -36,5 +36,5 @@ func UserHasPermission(r *http.Request, project string) bool {
 		return true
 	}
 
-	return shared.StringInSlice(project, ua.Projects)
+	return shared.ValueInSlice(project, ua.Projects)
 }

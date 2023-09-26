@@ -143,7 +143,7 @@ func (d zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 
 	for _, dataset := range d.initialDatasets() {
 		properties := []string{"mountpoint=legacy"}
-		if shared.StringInSlice(dataset, []string{"virtual-machines", "deleted/virtual-machines"}) {
+		if shared.ValueInSlice(dataset, []string{"virtual-machines", "deleted/virtual-machines"}) {
 			if len(zfsVersion) >= 3 && zfsVersion[0:3] == "0.6" {
 				d.logger.Warn("Unable to set volmode on parent virtual-machines datasets due to ZFS being too old")
 			} else {
@@ -378,7 +378,7 @@ func (d *zfs) Delete(op *operations.Operation) error {
 
 	initialDatasets := d.initialDatasets()
 	for _, dataset := range datasets {
-		if shared.StringInSlice(dataset, initialDatasets) {
+		if shared.ValueInSlice(dataset, initialDatasets) {
 			continue
 		}
 

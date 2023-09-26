@@ -44,7 +44,7 @@ func ConfigDiff(oldConfig map[string]string, newConfig map[string]string) ([]str
 				userOnly = false
 			}
 
-			if !shared.StringInSlice(key, changedConfig) {
+			if !shared.ValueInSlice(key, changedConfig) {
 				changedConfig = append(changedConfig, key)
 			}
 		}
@@ -56,7 +56,7 @@ func ConfigDiff(oldConfig map[string]string, newConfig map[string]string) ([]str
 				userOnly = false
 			}
 
-			if !shared.StringInSlice(key, changedConfig) {
+			if !shared.ValueInSlice(key, changedConfig) {
 				changedConfig = append(changedConfig, key)
 			}
 		}
