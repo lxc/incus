@@ -1,4 +1,4 @@
-package shared
+package instance
 
 import (
 	"errors"
@@ -8,65 +8,13 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/instance/instancetype"
+	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/validate"
 )
 
-// InstanceAction indicates the type of action being performed.
-type InstanceAction string
-
-// InstanceAction types.
-const (
-	Stop     InstanceAction = "stop"
-	Start    InstanceAction = "start"
-	Restart  InstanceAction = "restart"
-	Freeze   InstanceAction = "freeze"
-	Unfreeze InstanceAction = "unfreeze"
-)
-
 // ConfigVolatilePrefix indicates the prefix used for volatile config keys.
 const ConfigVolatilePrefix = "volatile."
-
-// IsRootDiskDevice returns true if the given device representation is configured as root disk for
-// an instance. It typically get passed a specific entry of api.Instance.Devices.
-func IsRootDiskDevice(device map[string]string) bool {
-	// Root disk devices also need a non-empty "pool" property, but we can't check that here
-	// because this function is used with clients talking to older servers where there was no
-	// concept of a storage pool, and also it is used for migrating from old to new servers.
-	// The validation of the non-empty "pool" property is done inside the disk device itself.
-	if device["type"] == "disk" && device["path"] == "/" && device["source"] == "" {
-		return true
-	}
-
-	return false
-}
-
-// ErrNoRootDisk means there is no root disk device found.
-var ErrNoRootDisk = fmt.Errorf("No root device could be found")
-
-// GetRootDiskDevice returns the instance device that is configured as root disk.
-// Returns the device name and device config map.
-func GetRootDiskDevice(devices map[string]map[string]string) (string, map[string]string, error) {
-	var devName string
-	var dev map[string]string
-
-	for n, d := range devices {
-		if IsRootDiskDevice(d) {
-			if devName != "" {
-				return "", nil, fmt.Errorf("More than one root device found")
-			}
-
-			devName = n
-			dev = d
-		}
-	}
-
-	if devName != "" {
-		return devName, dev, nil
-	}
-
-	return "", nil, ErrNoRootDisk
-}
 
 // HugePageSizeKeys is a list of known hugepage size configuration keys.
 var HugePageSizeKeys = [...]string{"limits.hugepages.64KB", "limits.hugepages.1MB", "limits.hugepages.2MB", "limits.hugepages.1GB"}
@@ -134,7 +82,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	"snapshots.pattern":          validate.IsAny,
 	"snapshots.expiry": func(value string) error {
 		// Validate expression
-		_, err := GetExpiry(time.Time{}, value)
+		_, err := shared.GetExpiry(time.Time{}, value)
 		return err
 	},
 
