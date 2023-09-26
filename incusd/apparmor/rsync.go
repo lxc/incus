@@ -2,7 +2,6 @@ package apparmor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -134,7 +133,7 @@ func rsyncProfileLoad(sysOS *sys.OS, sourcePath string, dstPath string) (string,
 	}
 
 	// Write it to disk.
-	err = ioutil.WriteFile(profilePath, []byte(content), 0600)
+	err = os.WriteFile(profilePath, []byte(content), 0600)
 	if err != nil {
 		return "", err
 	}

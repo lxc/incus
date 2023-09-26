@@ -6,7 +6,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -162,7 +161,7 @@ func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, er
 			return nil, fmt.Errorf("Error while writing the YAML project documentation: %v", err)
 		}
 
-		err := ioutil.WriteFile(outputYAMLPath, buf.Bytes(), 0644)
+		err := os.WriteFile(outputYAMLPath, buf.Bytes(), 0644)
 		if err != nil {
 			return nil, fmt.Errorf("Error while writing the YAML project documentation: %v", err)
 		}
@@ -246,7 +245,7 @@ func writeDocFile(path string, yaml *doc) error {
 		buffer.WriteString(fmt.Sprintf("<!-- config group %s end -->\n", groupKey))
 	}
 
-	err := ioutil.WriteFile(path, buffer.Bytes(), 0644)
+	err := os.WriteFile(path, buffer.Bytes(), 0644)
 	if err != nil {
 		return fmt.Errorf("Error while writing the Markdown project documentation: %v", err)
 	}

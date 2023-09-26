@@ -2,7 +2,6 @@ package apparmor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -97,7 +96,7 @@ func archiveProfileLoad(sysOS *sys.OS, output string, allowedCommandPaths []stri
 	}
 
 	// Write it to disk.
-	err = ioutil.WriteFile(profilePath, []byte(content), 0600)
+	err = os.WriteFile(profilePath, []byte(content), 0600)
 	if err != nil {
 		return "", err
 	}
