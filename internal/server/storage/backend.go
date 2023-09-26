@@ -5122,11 +5122,6 @@ func (b *backend) UpdateCustomVolume(projectName string, volName string, newDesc
 			return fmt.Errorf("Custom volume 'block.filesystem' property cannot be changed")
 		}
 
-		// Check that security.unmapped and security.shifted aren't set together.
-		if util.IsTrue(newConfig["security.unmapped"]) && util.IsTrue(newConfig["security.shifted"]) {
-			return fmt.Errorf("security.unmapped and security.shifted are mutually exclusive")
-		}
-
 		// Check for config changing that is not allowed when running instances are using it.
 		if changedConfig["security.shifted"] != "" {
 			err = VolumeUsedByInstanceDevices(b.state, b.name, projectName, &curVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
