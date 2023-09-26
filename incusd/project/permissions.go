@@ -15,6 +15,7 @@ import (
 	deviceconfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/units"
@@ -183,7 +184,7 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 			return true
 		}
 
-		if strings.HasPrefix(key, shared.ConfigVolatilePrefix) {
+		if strings.HasPrefix(key, instance.ConfigVolatilePrefix) {
 			if strings.HasSuffix(key, ".apply_quota") {
 				return true
 			}
@@ -197,7 +198,7 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 	}
 
 	for key, value := range config {
-		if !strings.HasPrefix(key, shared.ConfigVolatilePrefix) {
+		if !strings.HasPrefix(key, instance.ConfigVolatilePrefix) {
 			continue
 		}
 
@@ -1293,7 +1294,7 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 }
 
 // Return the effective instance-level values for the limits with the given keys.
-func getInstanceLimits(instance api.Instance, keys []string, skipUnset bool) (map[string]int64, error) {
+func getInstanceLimits(inst api.Instance, keys []string, skipUnset bool) (map[string]int64, error) {
 	var err error
 	limits := map[string]int64{}
 
@@ -1302,9 +1303,9 @@ func getInstanceLimits(instance api.Instance, keys []string, skipUnset bool) (ma
 		parser := aggregateLimitConfigValueParsers[key]
 
 		if key == "limits.disk" {
-			_, device, err := shared.GetRootDiskDevice(instance.Devices)
+			_, device, err := instance.GetRootDiskDevice(inst.Devices)
 			if err != nil {
-				return nil, fmt.Errorf("Failed getting root disk device for instance %q in project %q: %w", instance.Name, instance.Project, err)
+				return nil, fmt.Errorf("Failed getting root disk device for instance %q in project %q: %w", inst.Name, inst.Project, err)
 			}
 
 			value, ok := device["size"]
@@ -1313,7 +1314,7 @@ func getInstanceLimits(instance api.Instance, keys []string, skipUnset bool) (ma
 					continue
 				}
 
-				return nil, fmt.Errorf(`Instance %q in project %q has no "size" config set on the root device either directly or via a profile`, instance.Name, instance.Project)
+				return nil, fmt.Errorf(`Instance %q in project %q has no "size" config set on the root device either directly or via a profile`, inst.Name, inst.Project)
 			}
 
 			limit, err = parser(value)
@@ -1322,11 +1323,11 @@ func getInstanceLimits(instance api.Instance, keys []string, skipUnset bool) (ma
 					continue
 				}
 
-				return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", key, instance.Name, instance.Project)
+				return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", key, inst.Name, inst.Project)
 			}
 
 			// Add size.state accounting for VM root disks.
-			if instance.Type == instancetype.VM.String() {
+			if inst.Type == instancetype.VM.String() {
 				sizeStateValue, ok := device["size.state"]
 				if !ok {
 					sizeStateValue = deviceconfig.DefaultVMBlockFilesystemSize
@@ -1338,19 +1339,19 @@ func getInstanceLimits(instance api.Instance, keys []string, skipUnset bool) (ma
 						continue
 					}
 
-					return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", "size.state", instance.Name, instance.Project)
+					return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", "size.state", inst.Name, inst.Project)
 				}
 
 				limit += sizeStateLimit
 			}
 		} else {
-			value, ok := instance.Config[key]
+			value, ok := inst.Config[key]
 			if !ok || value == "" {
 				if skipUnset {
 					continue
 				}
 
-				return nil, fmt.Errorf("Instance %q in project %q has no %q config, either directly or via a profile", instance.Name, instance.Project, key)
+				return nil, fmt.Errorf("Instance %q in project %q has no %q config, either directly or via a profile", inst.Name, inst.Project, key)
 			}
 
 			limit, err = parser(value)
@@ -1359,7 +1360,7 @@ func getInstanceLimits(instance api.Instance, keys []string, skipUnset bool) (ma
 					continue
 				}
 
-				return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", key, instance.Name, instance.Project)
+				return nil, fmt.Errorf("Failed parsing %q for instance %q in project %q", key, inst.Name, inst.Project)
 			}
 		}
 

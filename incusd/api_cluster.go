@@ -40,6 +40,7 @@ import (
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
@@ -245,7 +246,7 @@ func clusterGetMemberConfig(cluster *db.Cluster) ([]api.ClusterMemberConfigKey, 
 
 	for pool, config := range pools {
 		for key := range config {
-			if strings.HasPrefix(key, shared.ConfigVolatilePrefix) {
+			if strings.HasPrefix(key, internalInstance.ConfigVolatilePrefix) {
 				continue
 			}
 
@@ -262,7 +263,7 @@ func clusterGetMemberConfig(cluster *db.Cluster) ([]api.ClusterMemberConfigKey, 
 
 	for network, config := range networks {
 		for key := range config {
-			if strings.HasPrefix(key, shared.ConfigVolatilePrefix) {
+			if strings.HasPrefix(key, internalInstance.ConfigVolatilePrefix) {
 				continue
 			}
 

@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/incusd/scriptlet"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
@@ -476,7 +477,7 @@ func instancePostPoolMigration(s *state.State, inst instance.Instance, newName s
 	}
 
 	// Load source root disk from expanded devices (in case instance doesn't have its own root disk).
-	rootDevKey, rootDev, err := shared.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+	rootDevKey, rootDev, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 	if err != nil {
 		return err
 	}
@@ -566,7 +567,7 @@ func instancePostProjectMigration(s *state.State, inst instance.Instance, newNam
 	}
 
 	// Load source root disk from expanded devices (in case instance doesn't have its own root disk).
-	rootDevKey, rootDev, err := shared.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+	rootDevKey, rootDev, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 	if err != nil {
 		return err
 	}

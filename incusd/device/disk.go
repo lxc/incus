@@ -27,6 +27,7 @@ import (
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/idmap"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -529,7 +530,7 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 	defer revert.Fail()
 
 	// Deal with a rootfs.
-	if shared.IsRootDiskDevice(d.config) {
+	if internalInstance.IsRootDiskDevice(d.config) {
 		// Set the rootfs path.
 		rootfs := deviceConfig.RootFSEntryItem{
 			Path: d.inst.RootfsPath(),
@@ -696,7 +697,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
-	if shared.IsRootDiskDevice(d.config) {
+	if internalInstance.IsRootDiskDevice(d.config) {
 		// Handle previous requests for setting new quotas.
 		err := d.applyDeferredQuota()
 		if err != nil {
@@ -979,14 +980,14 @@ func (d *disk) postStart() error {
 
 // Update applies configuration changes to a started device.
 func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
-	if d.inst.Type() == instancetype.VM && !shared.IsRootDiskDevice(d.config) {
+	if d.inst.Type() == instancetype.VM && !internalInstance.IsRootDiskDevice(d.config) {
 		return fmt.Errorf("Non-root disks not supported for VMs")
 	}
 
-	if shared.IsRootDiskDevice(d.config) {
+	if internalInstance.IsRootDiskDevice(d.config) {
 		// Make sure we have a valid root disk device (and only one).
 		expandedDevices := d.inst.ExpandedDevices()
-		newRootDiskDeviceKey, _, err := shared.GetRootDiskDevice(expandedDevices.CloneNative())
+		newRootDiskDeviceKey, _, err := internalInstance.GetRootDiskDevice(expandedDevices.CloneNative())
 		if err != nil {
 			return fmt.Errorf("Detect root disk device: %w", err)
 		}
@@ -994,7 +995,7 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		// Retrieve the first old root disk device key, even if there are duplicates.
 		oldRootDiskDeviceKey := ""
 		for k, v := range oldDevices {
-			if shared.IsRootDiskDevice(v) {
+			if internalInstance.IsRootDiskDevice(v) {
 				oldRootDiskDeviceKey = k
 				break
 			}
@@ -1083,7 +1084,7 @@ func (d *disk) applyDeferredQuota() error {
 // applyQuota attempts to resize the instance root disk to the specified size.
 // If remount is true, attempts to unmount first before resizing and then mounts again afterwards.
 func (d *disk) applyQuota(remount bool) error {
-	rootDisk, _, err := shared.GetRootDiskDevice(d.inst.ExpandedDevices().CloneNative())
+	rootDisk, _, err := internalInstance.GetRootDiskDevice(d.inst.ExpandedDevices().CloneNative())
 	if err != nil {
 		return fmt.Errorf("Detect root disk device: %w", err)
 	}

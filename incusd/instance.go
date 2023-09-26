@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/task"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -262,7 +263,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 
 	// At this point we have already figured out the instance's root disk device so we can simply retrieve it
 	// from the expanded devices.
-	instRootDiskDeviceKey, instRootDiskDevice, err := shared.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+	instRootDiskDeviceKey, instRootDiskDevice, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +330,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			snapLocalDevices := srcSnap.LocalDevices().Clone()
 
 			// Load snap root disk from expanded devices (in case it doesn't have its own root disk).
-			snapExpandedRootDiskDevKey, snapExpandedRootDiskDev, err := shared.GetRootDiskDevice(srcSnap.ExpandedDevices().CloneNative())
+			snapExpandedRootDiskDevKey, snapExpandedRootDiskDev, err := internalInstance.GetRootDiskDevice(srcSnap.ExpandedDevices().CloneNative())
 			if err == nil {
 				// If the expanded devices has a root disk, but its pool doesn't match our new
 				// parent instance's pool, then either modify the device if it is local or add a
@@ -349,7 +350,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 						}
 					}
 				}
-			} else if errors.Is(err, shared.ErrNoRootDisk) {
+			} else if errors.Is(err, internalInstance.ErrNoRootDisk) {
 				// If no root disk defined in either local devices or profiles, then add one to the
 				// snapshot local devices using the same device name from the parent instance.
 				snapLocalDevices[instRootDiskDeviceKey] = map[string]string{

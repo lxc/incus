@@ -34,6 +34,7 @@ import (
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/filter"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -2028,7 +2029,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 			return response.InternalError(fmt.Errorf("Failed to get default profile: %w", err))
 		}
 
-		_, v, err := shared.GetRootDiskDevice(profile.Devices)
+		_, v, err := internalInstance.GetRootDiskDevice(profile.Devices)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed to get root disk device: %w", err))
 		}

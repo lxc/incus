@@ -44,6 +44,7 @@ import (
 	"github.com/lxc/incus/incusd/storage/s3"
 	"github.com/lxc/incus/incusd/storage/s3/miniod"
 	"github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
@@ -591,7 +592,7 @@ func (b *backend) removeInstanceSnapshotSymlinkIfUnused(instanceType instancetyp
 
 // applyInstanceRootDiskOverrides applies the instance's root disk config to the volume's config.
 func (b *backend) applyInstanceRootDiskOverrides(inst instance.Instance, vol *drivers.Volume) error {
-	_, rootDiskConf, err := shared.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 	if err != nil {
 		return err
 	}
@@ -2542,7 +2543,7 @@ func (b *backend) GetInstanceUsage(inst instance.Instance) (*VolumeUsage, error)
 	val.Used = size
 
 	// Get the total size.
-	_, rootDiskConf, err := shared.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 	if err != nil {
 		return nil, err
 	}
