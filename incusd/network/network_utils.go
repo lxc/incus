@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	cryptoRand "crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -59,7 +60,7 @@ func networkValidPort(value string) error {
 func RandomDevName(prefix string) string {
 	// Return a new random veth device name.
 	randBytes := make([]byte, 4)
-	rand.Read(randBytes)
+	_, _ = cryptoRand.Read(randBytes)
 	iface := prefix + hex.EncodeToString(randBytes)
 	if len(iface) > 13 {
 		return ""
