@@ -14,7 +14,7 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
 )
@@ -95,7 +95,7 @@ func ParseConfigYamlFile(path string) (*config.Config, error) {
 // specified. Returns true if a root disk device has been found and updated otherwise false.
 func updateRootDevicePool(devices map[string]map[string]string, poolName string) bool {
 	if devices != nil {
-		devName, _, err := shared.GetRootDiskDevice(devices)
+		devName, _, err := instance.GetRootDiskDevice(devices)
 		if err == nil {
 			devices[devName]["pool"] = poolName
 			return true

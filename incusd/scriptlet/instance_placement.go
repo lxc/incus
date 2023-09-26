@@ -15,7 +15,7 @@ import (
 	scriptletLoad "github.com/lxc/incus/incusd/scriptlet/load"
 	"github.com/lxc/incus/incusd/state"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
 	apiScriptlet "github.com/lxc/incus/shared/api/scriptlet"
 	"github.com/lxc/incus/shared/logger"
@@ -215,7 +215,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		}
 
 		// Parse root disk size.
-		_, rootDiskConfig, err := shared.GetRootDiskDevice(req.Devices)
+		_, rootDiskConfig, err := instance.GetRootDiskDevice(req.Devices)
 		if err == nil {
 			rootDiskSizeStr := rootDiskConfig["size"]
 

@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -75,7 +76,7 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 	}
 
 	for k, v := range config {
-		if instanceType == instancetype.Any && !expanded && strings.HasPrefix(k, shared.ConfigVolatilePrefix) {
+		if instanceType == instancetype.Any && !expanded && strings.HasPrefix(k, instance.ConfigVolatilePrefix) {
 			return fmt.Errorf("Volatile keys can only be set on instances")
 		}
 
@@ -139,7 +140,7 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 }
 
 func validConfigKey(os *sys.OS, key string, value string, instanceType instancetype.Type) error {
-	f, err := shared.ConfigKeyChecker(key, instanceType)
+	f, err := instance.ConfigKeyChecker(key, instanceType)
 	if err != nil {
 		return err
 	}

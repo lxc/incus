@@ -31,6 +31,7 @@ import (
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -321,7 +322,7 @@ func (d *common) Snapshots() ([]instance.Instance, error) {
 func (d *common) VolatileSet(changes map[string]string) error {
 	// Quick check.
 	for key := range changes {
-		if !strings.HasPrefix(key, shared.ConfigVolatilePrefix) {
+		if !strings.HasPrefix(key, internalInstance.ConfigVolatilePrefix) {
 			return fmt.Errorf("Only volatile keys can be modified with VolatileSet")
 		}
 	}
@@ -828,7 +829,7 @@ func (d *common) validateStartup(stateful bool, statusCode api.StatusCode) error
 	// pre-start check here before the isStartableStatusCode check below so that if there is a problem loading
 	// the instance status because the storage pool isn't available we don't mask the StatusServiceUnavailable
 	// error with an ERROR status code from the instance check instead.
-	_, rootDiskConf, err := shared.GetRootDiskDevice(d.expandedDevices.CloneNative())
+	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
 	if err != nil {
 		return err
 	}
@@ -1004,7 +1005,7 @@ func (d *common) getRootDiskDevice() (string, map[string]string, error) {
 	}
 
 	// Retrieve the instance's storage pool.
-	name, configuration, err := shared.GetRootDiskDevice(devices.CloneNative())
+	name, configuration, err := internalInstance.GetRootDiskDevice(devices.CloneNative())
 	if err != nil {
 		return "", nil, err
 	}

@@ -14,8 +14,8 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -93,7 +93,7 @@ func instancesPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	action := shared.InstanceAction(req.State.Action)
+	action := internalInstance.InstanceAction(req.State.Action)
 
 	var names []string
 	var instances []instance.Instance
@@ -103,27 +103,27 @@ func instancesPut(d *Daemon, r *http.Request) response.Response {
 		}
 
 		switch action {
-		case shared.Freeze:
+		case internalInstance.Freeze:
 			if !inst.IsRunning() {
 				continue
 			}
 
-		case shared.Restart:
+		case internalInstance.Restart:
 			if !inst.IsRunning() {
 				continue
 			}
 
-		case shared.Start:
+		case internalInstance.Start:
 			if inst.IsRunning() {
 				continue
 			}
 
-		case shared.Stop:
+		case internalInstance.Stop:
 			if !inst.IsRunning() {
 				continue
 			}
 
-		case shared.Unfreeze:
+		case internalInstance.Unfreeze:
 			if inst.IsRunning() {
 				continue
 			}

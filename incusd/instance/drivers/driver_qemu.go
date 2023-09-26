@@ -67,6 +67,7 @@ import (
 	"github.com/lxc/incus/incusd/util"
 	localvsock "github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/incusd/warnings"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/linux"
@@ -5088,8 +5089,8 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 		}
 
 		// Validate root device
-		_, oldRootDev, oldErr := shared.GetRootDiskDevice(oldExpandedDevices.CloneNative())
-		_, newRootDev, newErr := shared.GetRootDiskDevice(d.expandedDevices.CloneNative())
+		_, oldRootDev, oldErr := internalInstance.GetRootDiskDevice(oldExpandedDevices.CloneNative())
+		_, newRootDev, newErr := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
 		if oldErr == nil && newErr == nil && oldRootDev["pool"] != newRootDev["pool"] {
 			return fmt.Errorf("Cannot update root disk device pool name to %q", newRootDev["pool"])
 		}
@@ -5144,7 +5145,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 
 		isLiveUpdatable := func(key string) bool {
 			// Skip container config keys for VMs
-			_, ok := shared.InstanceConfigKeysContainer[key]
+			_, ok := internalInstance.InstanceConfigKeysContainer[key]
 			if ok {
 				return true
 			}
@@ -6734,7 +6735,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// disk device so we can simply retrieve it from the expanded devices.
 		parentStoragePool := ""
 		parentExpandedDevices := d.ExpandedDevices()
-		parentLocalRootDiskDeviceKey, parentLocalRootDiskDevice, _ := shared.GetRootDiskDevice(parentExpandedDevices.CloneNative())
+		parentLocalRootDiskDeviceKey, parentLocalRootDiskDevice, _ := internalInstance.GetRootDiskDevice(parentExpandedDevices.CloneNative())
 		if parentLocalRootDiskDeviceKey != "" {
 			parentStoragePool = parentLocalRootDiskDevice["pool"]
 		}
@@ -6763,7 +6764,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					// comes from a profile on the new instance as well we don't need to do
 					// anything.
 					if snapArgs.Devices != nil {
-						snapLocalRootDiskDeviceKey, _, _ := shared.GetRootDiskDevice(snapArgs.Devices.CloneNative())
+						snapLocalRootDiskDeviceKey, _, _ := internalInstance.GetRootDiskDevice(snapArgs.Devices.CloneNative())
 						if snapLocalRootDiskDeviceKey != "" {
 							snapArgs.Devices[snapLocalRootDiskDeviceKey]["pool"] = parentStoragePool
 						}

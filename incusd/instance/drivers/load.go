@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -123,7 +124,7 @@ func validDevices(state *state.State, p api.Project, instanceType instancetype.T
 
 	if len(expandedDevices) > 0 {
 		// Check we have a root disk if in expanded validation mode.
-		_, _, err := shared.GetRootDiskDevice(expandedDevices.CloneNative())
+		_, _, err := internalInstance.GetRootDiskDevice(expandedDevices.CloneNative())
 		if err != nil {
 			return fmt.Errorf("Failed detecting root disk device: %w", err)
 		}

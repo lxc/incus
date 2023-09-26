@@ -14,6 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
@@ -211,16 +212,16 @@ func instanceStatePut(d *Daemon, r *http.Request) response.Response {
 }
 
 func instanceActionToOptype(action string) (operationtype.Type, error) {
-	switch shared.InstanceAction(action) {
-	case shared.Start:
+	switch internalInstance.InstanceAction(action) {
+	case internalInstance.Start:
 		return operationtype.InstanceStart, nil
-	case shared.Stop:
+	case internalInstance.Stop:
 		return operationtype.InstanceStop, nil
-	case shared.Restart:
+	case internalInstance.Restart:
 		return operationtype.InstanceRestart, nil
-	case shared.Freeze:
+	case internalInstance.Freeze:
 		return operationtype.InstanceFreeze, nil
-	case shared.Unfreeze:
+	case internalInstance.Unfreeze:
 		return operationtype.InstanceUnfreeze, nil
 	}
 
@@ -239,10 +240,10 @@ func doInstanceStatePut(inst instance.Instance, req api.InstanceStatePut) error 
 
 	timeout := time.Duration(req.Timeout) * time.Second
 
-	switch shared.InstanceAction(req.Action) {
-	case shared.Start:
+	switch internalInstance.InstanceAction(req.Action) {
+	case internalInstance.Start:
 		return inst.Start(req.Stateful)
-	case shared.Stop:
+	case internalInstance.Stop:
 		if req.Stateful {
 			return inst.Stop(req.Stateful)
 		} else if req.Timeout == 0 {
@@ -251,11 +252,11 @@ func doInstanceStatePut(inst instance.Instance, req api.InstanceStatePut) error 
 			return inst.Shutdown(timeout)
 		}
 
-	case shared.Restart:
+	case internalInstance.Restart:
 		return inst.Restart(timeout)
-	case shared.Freeze:
+	case internalInstance.Freeze:
 		return inst.Freeze()
-	case shared.Unfreeze:
+	case internalInstance.Unfreeze:
 		return inst.Unfreeze()
 	}
 
