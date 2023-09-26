@@ -1098,7 +1098,7 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 
 			supportedArchitectures := append([]int{member.Architecture}, personalities...)
 			for _, supportedArchitecture := range supportedArchitectures {
-				if shared.IntInSlice(supportedArchitecture, targetArchitectures) {
+				if shared.ValueInSlice(supportedArchitecture, targetArchitectures) {
 					candidateMembers = append(candidateMembers, member)
 					break
 				}

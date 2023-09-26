@@ -302,7 +302,7 @@ func queryCurrentVersion(ctx context.Context, tx *sql.Tx) (int, error) {
 	}
 
 	// Fix bad upgrade code between 30 and 32
-	hasVersion := func(v int) bool { return shared.IntInSlice(v, versions) }
+	hasVersion := func(v int) bool { return shared.ValueInSlice(v, versions) }
 	if hasVersion(30) && hasVersion(32) && !hasVersion(31) {
 		err = insertSchemaVersion(tx, 31)
 		if err != nil {

@@ -770,7 +770,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 		return nil, nil, nil, err
 	}
 
-	if !shared.IntInSlice(args.Architecture, s.OS.Architectures) {
+	if !shared.ValueInSlice(args.Architecture, s.OS.Architectures) {
 		return nil, nil, nil, fmt.Errorf("Requested architecture isn't supported by this host")
 	}
 
