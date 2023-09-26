@@ -1,4 +1,12 @@
+// if we already have an onload function, save that one
+var prev_handler = window.onload;
+
 window.onload = function() {
+    // call the previous onload function
+    if (prev_handler) {
+        prev_handler();
+    }
+
     const link = document.createElement("a");
     link.classList.add("muted-link");
     link.classList.add("github-issue-link");
