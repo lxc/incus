@@ -7739,7 +7739,7 @@ func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
 							sockets[cpu.Socket] = []uint64{}
 						}
 
-						if !shared.Uint64InSlice(core.Core, sockets[cpu.Socket]) {
+						if !shared.ValueInSlice(core.Core, sockets[cpu.Socket]) {
 							sockets[cpu.Socket] = append(sockets[cpu.Socket], core.Core)
 						}
 
@@ -7749,7 +7749,7 @@ func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
 							cores[core.Core] = []uint64{}
 						}
 
-						if !shared.Uint64InSlice(thread.Thread, cores[core.Core]) {
+						if !shared.ValueInSlice(thread.Thread, cores[core.Core]) {
 							cores[core.Core] = append(cores[core.Core], thread.Thread)
 						}
 

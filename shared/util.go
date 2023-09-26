@@ -544,15 +544,6 @@ func StringHasPrefix(value string, prefixes ...string) bool {
 	return false
 }
 
-func Uint64InSlice(key uint64, list []uint64) bool {
-	for _, entry := range list {
-		if entry == key {
-			return true
-		}
-	}
-	return false
-}
-
 // IsTrue returns true if value is "true", "1", "yes" or "on" (case insensitive).
 func IsTrue(value string) bool {
 	return ValueInSlice(strings.ToLower(value), []string{"true", "1", "yes", "on"})
