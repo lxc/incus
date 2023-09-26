@@ -14,12 +14,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
-	config "github.com/lxc/incus/internal/cliconfig"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	config "github.com/lxc/incus/shared/cliconfig"
 	localtls "github.com/lxc/incus/shared/tls"
 )
 

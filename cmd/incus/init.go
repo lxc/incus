@@ -10,10 +10,10 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
-	config "github.com/lxc/incus/internal/cliconfig"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/api"
+	config "github.com/lxc/incus/shared/cliconfig"
 	"github.com/lxc/incus/shared/termios"
 )
 
