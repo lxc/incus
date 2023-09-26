@@ -124,7 +124,7 @@ If you choose a fully controlled network, it provides more functionality than us
 
 As a general recommendation:
 
-- If you are running LXD on a single system or in a public cloud, use a {ref}`network-bridge`, possibly in connection with the [Ubuntu Fan](https://www.youtube.com/watch?v=5cwd0vZJ5bw).
+- If you are running LXD on a single system or in a public cloud, use a {ref}`network-bridge`.
 - If you are running LXD in your own private cloud, use an {ref}`network-ovn`.
 
   ```{note}
