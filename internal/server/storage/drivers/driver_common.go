@@ -186,6 +186,11 @@ func (d *common) validateVolume(vol Volume, driverRules map[string]func(value st
 		return fmt.Errorf("Volume %q property is not valid for volume type", "size")
 	}
 
+	// Check that security.unmapped and security.shifted are not set together.
+	if util.IsTrue(vol.config["security.unmapped"]) && util.IsTrue(vol.config["security.shifted"]) {
+		return fmt.Errorf("security.unmapped and security.shifted are mutually exclusive")
+	}
+
 	return nil
 }
 
