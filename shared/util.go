@@ -544,15 +544,6 @@ func StringHasPrefix(value string, prefixes ...string) bool {
 	return false
 }
 
-func Int64InSlice(key int64, list []int64) bool {
-	for _, entry := range list {
-		if entry == key {
-			return true
-		}
-	}
-	return false
-}
-
 func Uint64InSlice(key uint64, list []uint64) bool {
 	for _, entry := range list {
 		if entry == key {

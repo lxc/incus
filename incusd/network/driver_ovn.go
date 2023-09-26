@@ -2443,7 +2443,7 @@ func (n *ovn) logicalRouterPolicySetup(client *openvswitch.OVN, excludePeers ...
 	// This prevents source address spoofing of peer connection routes from the external network, which in
 	// turn allows us to use the peer connection's address set for referencing traffic from the peer in ACL.
 	err := n.forPeers(func(targetOVNNet *ovn) error {
-		if shared.Int64InSlice(targetOVNNet.ID(), excludePeers) {
+		if shared.ValueInSlice(targetOVNNet.ID(), excludePeers) {
 			return nil // Don't setup rules for this peer network connection.
 		}
 

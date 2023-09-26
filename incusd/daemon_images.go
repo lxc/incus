@@ -244,7 +244,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 			return nil, err
 		}
 
-		if shared.Int64InSlice(poolID, poolIDs) {
+		if shared.ValueInSlice(poolID, poolIDs) {
 			logger.Debug("Image already exists on storage pool", ctxMap)
 			return info, nil
 		}

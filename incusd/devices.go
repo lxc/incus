@@ -332,7 +332,7 @@ func fillFixedInstances(fixedInstances map[int64][]instance.Instance, inst insta
 	// If the `targetCpuPool` has been manually specified (explicit CPU IDs/ranges specified with `limits.cpu`)
 	if len(targetCpuPool) == targetCpuNum && !loadBalancing {
 		for _, nr := range targetCpuPool {
-			if !shared.Int64InSlice(nr, effectiveCpus) {
+			if !shared.ValueInSlice(nr, effectiveCpus) {
 				continue
 			}
 
@@ -450,7 +450,7 @@ func deviceTaskBalance(s *state.State) {
 	isolatedCpusInt := resources.GetCPUIsolated()
 	effectiveCpusSlice := []string{}
 	for _, id := range effectiveCpusInt {
-		if shared.Int64InSlice(id, isolatedCpusInt) {
+		if shared.ValueInSlice(id, isolatedCpusInt) {
 			continue
 		}
 
