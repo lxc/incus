@@ -9,6 +9,7 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	config "github.com/lxc/incus/shared/cliconfig"
@@ -202,7 +203,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 			entry.Ephemeral = false
 		}
 
-		rootDiskDeviceKey, _, _ := shared.GetRootDiskDevice(entry.Devices)
+		rootDiskDeviceKey, _, _ := instance.GetRootDiskDevice(entry.Devices)
 		if err != nil {
 			return err
 		}
@@ -223,7 +224,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 
 			if !keepVolatile {
 				for k := range entry.Config {
-					if !shared.InstanceIncludeWhenCopying(k, true) {
+					if !instance.InstanceIncludeWhenCopying(k, true) {
 						delete(entry.Config, k)
 					}
 				}
@@ -293,7 +294,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 			entry.Ephemeral = false
 		}
 
-		rootDiskDeviceKey, _, _ := shared.GetRootDiskDevice(entry.Devices)
+		rootDiskDeviceKey, _, _ := instance.GetRootDiskDevice(entry.Devices)
 		if rootDiskDeviceKey != "" && pool != "" {
 			entry.Devices[rootDiskDeviceKey]["pool"] = pool
 		} else if pool != "" {
@@ -307,7 +308,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		// Strip the volatile keys if requested
 		if !keepVolatile {
 			for k := range entry.Config {
-				if !shared.InstanceIncludeWhenCopying(k, true) {
+				if !instance.InstanceIncludeWhenCopying(k, true) {
 					delete(entry.Config, k)
 				}
 			}
@@ -364,8 +365,8 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		}
 
 		// Ensure we don't change the target's root disk pool.
-		srcRootDiskDeviceKey, _, _ := shared.GetRootDiskDevice(writable.Devices)
-		destRootDiskDeviceKey, destRootDiskDevice, _ := shared.GetRootDiskDevice(inst.Devices)
+		srcRootDiskDeviceKey, _, _ := instance.GetRootDiskDevice(writable.Devices)
+		destRootDiskDeviceKey, destRootDiskDevice, _ := instance.GetRootDiskDevice(inst.Devices)
 		if srcRootDiskDeviceKey != "" && srcRootDiskDeviceKey == destRootDiskDeviceKey {
 			writable.Devices[destRootDiskDeviceKey]["pool"] = destRootDiskDevice["pool"]
 		}
@@ -423,7 +424,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 	// Start the instance if needed
 	if start {
 		req := api.InstanceStatePut{
-			Action: string(shared.Start),
+			Action: string(instance.Start),
 		}
 
 		op, err := dest.UpdateInstanceState(destName, req, "")

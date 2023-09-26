@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	config "github.com/lxc/incus/shared/cliconfig"
@@ -643,7 +644,7 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 
 			k := cc[0]
 			if colType == configColumnType {
-				_, err := shared.ConfigKeyChecker(k, instancetype.Any)
+				_, err := instance.ConfigKeyChecker(k, instancetype.Any)
 				if err != nil {
 					return nil, false, fmt.Errorf(i18n.G("Invalid config key '%s' in '%s'"), k, columnEntry)
 				}
@@ -848,7 +849,7 @@ func (c *cmdList) cpuUsageSecondsColumnData(cInfo api.InstanceFull) string {
 }
 
 func (c *cmdList) diskUsageColumnData(cInfo api.InstanceFull) string {
-	rootDisk, _, _ := shared.GetRootDiskDevice(cInfo.ExpandedDevices)
+	rootDisk, _, _ := instance.GetRootDiskDevice(cInfo.ExpandedDevices)
 
 	if cInfo.State != nil && cInfo.State.Disk != nil && cInfo.State.Disk[rootDisk].Usage > 0 {
 		return units.GetByteSizeStringIEC(cInfo.State.Disk[rootDisk].Usage, 2)
