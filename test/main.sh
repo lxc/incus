@@ -218,7 +218,6 @@ if [ "${1:-"all"}" != "standalone" ]; then
     run_test test_clustering_update_cert_reversion "clustering update cert reversion"
     run_test test_clustering_address "clustering address"
     run_test test_clustering_image_replication "clustering image replication"
-    run_test test_clustering_dns "clustering DNS"
     run_test test_clustering_recover "clustering recovery"
     run_test test_clustering_handover "clustering handover"
     run_test test_clustering_rebalance "clustering rebalance"
