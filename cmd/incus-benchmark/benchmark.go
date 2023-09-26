@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/lxc/incus/client"
-	config "github.com/lxc/incus/internal/cliconfig"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
+	config "github.com/lxc/incus/shared/cliconfig"
 )
 
 const userConfigKey = "user.incus-benchmark"
