@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -24,7 +23,7 @@ func migrateDatabase(dir string) error {
 		return fmt.Errorf("Failed to backup database directory %q: %w", global, err)
 	}
 
-	files, err := ioutil.ReadDir(global)
+	files, err := os.ReadDir(global)
 	if err != nil {
 		return fmt.Errorf("Failed to list database directory %q: %w", global, err)
 	}
@@ -34,7 +33,7 @@ func migrateDatabase(dir string) error {
 		var first uint64
 		var last uint64
 
-		if !file.Mode().IsRegular() {
+		if !file.Type().IsRegular() {
 			continue
 		}
 
