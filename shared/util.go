@@ -512,9 +512,9 @@ func StringPrefixInSlice(key string, list []string) bool {
 	return false
 }
 
-// RemoveElementsFromStringSlice returns a slice equivalent to removing the given elements from the given list.
+// RemoveElementsFromSlice returns a slice equivalent to removing the given elements from the given list.
 // Elements not present in the list are ignored.
-func RemoveElementsFromStringSlice(list []string, elements ...string) []string {
+func RemoveElementsFromSlice[T comparable](list []T, elements ...T) []T {
 	for i := len(elements) - 1; i >= 0; i-- {
 		element := elements[i]
 		match := false

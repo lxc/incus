@@ -143,7 +143,7 @@ func (c *cmdClusterRoleRemove) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	memberWritable.Roles = shared.RemoveElementsFromStringSlice(memberWritable.Roles, rolesToRemove...)
+	memberWritable.Roles = shared.RemoveElementsFromSlice(memberWritable.Roles, rolesToRemove...)
 
 	return resource.server.UpdateClusterMember(resource.name, memberWritable, etag)
 }

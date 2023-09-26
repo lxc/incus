@@ -208,7 +208,7 @@ func TestRemoveElementsFromStringSlice(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		gotList := RemoveElementsFromStringSlice(tt.list, tt.elementsToRemove...)
+		gotList := RemoveElementsFromSlice(tt.list, tt.elementsToRemove...)
 		assert.ElementsMatch(t, tt.expectedList, gotList)
 	}
 }
