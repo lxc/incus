@@ -31,12 +31,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         if: github.event_name == 'pull_request'
 
-      - if: ${{ always() }}
-        name: Upload artifact with ShellCheck defects in SARIF format
+      - name: Upload artifact with ShellCheck defects in SARIF format
         uses: actions/upload-artifact@v3
         with:
           name: Differential ShellCheck SARIF
           path: ${{ steps.ShellCheck.outputs.sarif }}
+        if: github.event_name == 'pull_request'
 
       - name: Install Go
         uses: actions/setup-go@v4
