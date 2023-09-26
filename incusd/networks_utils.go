@@ -4,7 +4,6 @@ import (
 	"github.com/lxc/incus/incusd/cluster"
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/network"
-	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/shared/logger"
 )
@@ -19,37 +18,6 @@ func networkAutoAttach(cluster *db.Cluster, devName string) error {
 	}
 
 	return network.AttachInterface(dbInfo.Name, devName)
-}
-
-// networkUpdateForkdnsServersTask runs every 30s and refreshes the forkdns servers list.
-func networkUpdateForkdnsServersTask(s *state.State, heartbeatData *cluster.APIHeartbeat) error {
-	logger.Debug("Refreshing forkdns servers")
-
-	// Use project.Default here as forkdns (fan bridge) networks don't support projects.
-	projectName := project.Default
-
-	// Get a list of managed networks
-	networks, err := s.DB.Cluster.GetCreatedNetworks(projectName)
-	if err != nil {
-		return err
-	}
-
-	for _, name := range networks {
-		n, err := network.LoadByName(s, projectName, name)
-		if err != nil {
-			logger.Errorf("Failed to load network %q from project %q for heartbeat", name, projectName)
-			continue
-		}
-
-		if n.Type() == "bridge" && n.Config()["bridge.mode"] == "fan" {
-			err := n.HandleHeartbeat(heartbeatData)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 // networkUpdateOVNChassis gets called on heartbeats to check if OVN needs reconfiguring.

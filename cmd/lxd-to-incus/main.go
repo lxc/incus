@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -413,7 +412,7 @@ Instances will come back online once the migration is complete.
 	}
 
 	for _, dir := range []string{"containers", "containers-snapshots", "snapshots", "virtual-machines", "virtual-machines-snapshots"} {
-		entries, err := ioutil.ReadDir(filepath.Join(targetPaths.Daemon, dir))
+		entries, err := os.ReadDir(filepath.Join(targetPaths.Daemon, dir))
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue

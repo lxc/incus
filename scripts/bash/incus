@@ -129,9 +129,9 @@ _have incus && {
       pci id listen connect bind nat proxy_protocol security.uid security.gid \
       boot.priority"
 
-    networks_keys="bgp.ipv4.nexthop bgp.ipv6.nexthop bridge.driver bridge.external_interfaces bridge.mode \
-      bridge.mtu bridge.hwaddr dns.domain dns.mode dns.search fan.overlay_subnet fan.type \
-      fan.underlay_subnet ipv4.address ipv4.dhcp ipv4.dhcp.expiry ipv4.dhcp.gateway \
+    networks_keys="bgp.ipv4.nexthop bgp.ipv6.nexthop bridge.driver bridge.external_interfaces \
+      bridge.mtu bridge.hwaddr dns.domain dns.mode dns.search \
+      ipv4.address ipv4.dhcp ipv4.dhcp.expiry ipv4.dhcp.gateway \
       ipv4.dhcp.ranges ipv4.firewall ipv4.nat ipv4.nat.address ipv4.nat.order ipv4.ovn.ranges \
       ipv4.routes ipv4.routing ipv6.address ipv6.dhcp ipv6.dhcp.expiry ipv6.dhcp.ranges \
       ipv6.dhcp.stateful ipv6.firewall ipv6.nat ipv6.nat.address ipv6.nat.order ipv6.ovn.ranges \

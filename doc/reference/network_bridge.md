@@ -43,7 +43,6 @@ The following configuration key namespaces are currently supported for the `brid
 - `bgp` (BGP peer configuration)
 - `bridge` (L2 interface configuration)
 - `dns` (DNS server and resolution configuration)
-- `fan` (configuration specific to the Ubuntu FAN overlay)
 - `ipv4` (L3 IPv4 configuration)
 - `ipv6` (L3 IPv6 configuration)
 - `security` (network ACL configuration)
@@ -68,17 +67,13 @@ Key                                  | Type      | Condition             | Defau
 `bridge.driver`                      | string    | -                     | `native`                  | Bridge driver: `native` or `openvswitch`
 `bridge.external_interfaces`         | string    | -                     | -                         | Comma-separated list of unconfigured network interfaces to include in the bridge
 `bridge.hwaddr`                      | string    | -                     | -                         | MAC address for the bridge
-`bridge.mode`                        | string    | -                     | `standard`                | Bridge operation mode: `standard` or `fan`
-`bridge.mtu`                         | integer   | -                     | `1500`                    | Bridge MTU (default varies if tunnel or fan setup)
+`bridge.mtu`                         | integer   | -                     | `1500`                    | Bridge MTU (default varies if tunnel in use)
 `dns.domain`                         | string    | -                     | `lxd`                     | Domain to advertise to DHCP clients and use for DNS resolution
 `dns.mode`                           | string    | -                     | `managed`                 | DNS registration mode: `none` for no DNS record, `managed` for LXD-generated static records or `dynamic` for client-generated records
 `dns.search`                         | string    | -                     | -                         | Full comma-separated domain search list, defaulting to `dns.domain` value
 `dns.zone.forward`                   | string    | -                     | `managed`                 | Comma-separated list of DNS zone names for forward DNS records
 `dns.zone.reverse.ipv4`              | string    | -                     | `managed`                 | DNS zone name for IPv4 reverse DNS records
 `dns.zone.reverse.ipv6`              | string    | -                     | `managed`                 | DNS zone name for IPv6 reverse DNS records
-`fan.overlay_subnet`                 | string    | fan mode              | `240.0.0.0/8`             | Subnet to use as the overlay for the FAN (CIDR)
-`fan.type`                           | string    | fan mode              | `vxlan`                   | Tunneling type for the FAN: `vxlan` or `ipip`
-`fan.underlay_subnet`                | string    | fan mode              | `auto` (on create only)   | Subnet to use as the underlay for the FAN (use `auto` to use default gateway subnet) (CIDR)
 `ipv4.address`                       | string    | standard mode         | - (initial value on creation: `auto`) | IPv4 address for the bridge (use `none` to turn off IPv4 or `auto` to generate a new random unused subnet) (CIDR)
 `ipv4.dhcp`                          | bool      | IPv4 address          | `true`                    | Whether to allocate addresses using DHCP
 `ipv4.dhcp.expiry`                   | string    | IPv4 DHCP             | `1h`                      | When to expire DHCP leases

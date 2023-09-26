@@ -1,9 +1,7 @@
 package main
 
 import (
-	"math/rand"
 	"os"
-	"time"
 
 	dqlite "github.com/cowsql/go-cowsql"
 	"github.com/spf13/cobra"
@@ -16,11 +14,6 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/logger"
 )
-
-// Initialize the random number generator.
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
 
 type cmdGlobal struct {
 	cmd *cobra.Command
@@ -119,10 +112,6 @@ func main() {
 	// forkconsole sub-command
 	forkconsoleCmd := cmdForkconsole{global: &globalCmd}
 	app.AddCommand(forkconsoleCmd.Command())
-
-	// forkdns sub-command
-	forkDNSCmd := cmdForkDNS{global: &globalCmd}
-	app.AddCommand(forkDNSCmd.Command())
 
 	// forkexec sub-command
 	forkexecCmd := cmdForkexec{global: &globalCmd}

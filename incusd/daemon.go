@@ -1834,7 +1834,7 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 }
 
 // nodeRefreshTask is run when a full state heartbeat is sent (on the leader) or received (by a non-leader member).
-// Is is used to check for member state changes and trigger refreshes of the certificate cache and forkdns peers.
+// Is is used to check for member state changes and trigger refreshes of the certificate cache.
 // It also triggers member role promotion when run on the isLeader is true.
 // When run on the leader, it accepts a list of unavailableMembers that have not responded to the current heartbeat
 // round (but may not be considered actually offline at this stage). These unavailable members will not be used for
@@ -1877,13 +1877,6 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 
 		// Refresh cluster certificates cached.
 		updateCertificateCache(d)
-
-		// Refresh forkdns peers.
-		err := networkUpdateForkdnsServersTask(s, heartbeatData)
-		if err != nil {
-			stateChangeTaskFailure = true
-			logger.Error("Error refreshing forkdns", logger.Ctx{"err": err, "local": localClusterAddress})
-		}
 	}
 
 	// Refresh event listeners from heartbeat members (after certificates refreshed if needed).
