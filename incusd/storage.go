@@ -178,7 +178,7 @@ func storagePoolDriversCacheUpdate(s *state.State) {
 			Remote:  entry.Remote,
 		})
 
-		if shared.StringInSlice(entry.Name, drivers) {
+		if shared.ValueInSlice(entry.Name, drivers) {
 			usedDrivers[entry.Name] = entry.Version
 		}
 	}

@@ -723,7 +723,7 @@ func (r *ProtocolIncus) CopyInstance(source InstanceServer, instance api.Instanc
 			}
 		}
 
-		if shared.StringInSlice(args.Mode, []string{"push", "relay"}) {
+		if shared.ValueInSlice(args.Mode, []string{"push", "relay"}) {
 			if !r.HasExtension("container_push") {
 				return nil, fmt.Errorf("The target server is missing the required \"container_push\" API extension")
 			}
@@ -1697,7 +1697,7 @@ func (r *ProtocolIncus) CopyInstanceSnapshot(source InstanceServer, instanceName
 	// Process the copy arguments
 	if args != nil {
 		// Quick checks.
-		if shared.StringInSlice(args.Mode, []string{"push", "relay"}) {
+		if shared.ValueInSlice(args.Mode, []string{"push", "relay"}) {
 			if !r.HasExtension("container_push") {
 				return nil, fmt.Errorf("The target server is missing the required \"container_push\" API extension")
 			}

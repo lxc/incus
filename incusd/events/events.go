@@ -183,12 +183,12 @@ func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 			continue
 		}
 
-		if !shared.StringInSlice(event.Type, listener.messageTypes) {
+		if !shared.ValueInSlice(event.Type, listener.messageTypes) {
 			continue
 		}
 
 		// If the event doesn't come from this member and has been excluded by listener, don't deliver it.
-		if eventSource != EventSourceLocal && shared.StringInSlice(event.Location, listener.excludeLocations) {
+		if eventSource != EventSourceLocal && shared.ValueInSlice(event.Location, listener.excludeLocations) {
 			continue
 		}
 

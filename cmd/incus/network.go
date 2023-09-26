@@ -950,7 +950,7 @@ func (c *cmdNetworkList) Run(cmd *cobra.Command, args []string) error {
 
 	data := [][]string{}
 	for _, network := range networks {
-		if shared.StringInSlice(network.Type, []string{"loopback", "unknown"}) {
+		if shared.ValueInSlice(network.Type, []string{"loopback", "unknown"}) {
 			continue
 		}
 

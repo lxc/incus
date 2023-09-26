@@ -193,7 +193,7 @@ func (c *ClusterTx) createWarning(ctx context.Context, object cluster.Warning) (
 			return -1, fmt.Errorf("Failed to get project names: %w", err)
 		}
 
-		if !shared.StringInSlice(object.Project, projects) {
+		if !shared.ValueInSlice(object.Project, projects) {
 			return -1, fmt.Errorf("Unknown project %q", object.Project)
 		}
 

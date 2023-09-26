@@ -112,7 +112,7 @@ func expireLogs(ctx context.Context, state *state.State) error {
 		}
 
 		// Check if the instance still exists.
-		if shared.StringInSlice(fi.Name(), names) {
+		if shared.ValueInSlice(fi.Name(), names) {
 			instDirEntries, err := os.ReadDir(shared.LogPath(fi.Name()))
 			if err != nil {
 				return err

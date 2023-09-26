@@ -101,7 +101,7 @@ func (v *Key) validate(value string) error {
 	switch v.Type {
 	case String:
 	case Bool:
-		if !shared.StringInSlice(strings.ToLower(value), booleans) {
+		if !shared.ValueInSlice(strings.ToLower(value), booleans) {
 			return fmt.Errorf("invalid boolean")
 		}
 

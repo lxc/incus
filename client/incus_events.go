@@ -143,7 +143,7 @@ func (r *ProtocolIncus) getEvents(allProjects bool) (*EventListener, error) {
 			for _, listener := range r.eventListeners[listener.projectName] {
 				listener.targetsLock.Lock()
 				for _, target := range listener.targets {
-					if target.types != nil && !shared.StringInSlice(event.Type, target.types) {
+					if target.types != nil && !shared.ValueInSlice(event.Type, target.types) {
 						continue
 					}
 

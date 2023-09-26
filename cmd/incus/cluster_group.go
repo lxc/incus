@@ -487,7 +487,7 @@ func (c *cmdClusterGroupRemove) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if !shared.StringInSlice(args[1], member.Groups) {
+	if !shared.ValueInSlice(args[1], member.Groups) {
 		return fmt.Errorf(i18n.G("Cluster group %s isn't currently applied to %s"), args[1], resource.name)
 	}
 
@@ -661,7 +661,7 @@ func (c *cmdClusterGroupAdd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if shared.StringInSlice(args[1], member.Groups) {
+	if shared.ValueInSlice(args[1], member.Groups) {
 		return fmt.Errorf(i18n.G("Cluster member %s is already in group %s"), resource.name, args[1])
 	}
 

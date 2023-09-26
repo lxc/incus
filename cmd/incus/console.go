@@ -104,7 +104,7 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate flags.
-	if !shared.StringInSlice(c.flagType, []string{"console", "vga"}) {
+	if !shared.ValueInSlice(c.flagType, []string{"console", "vga"}) {
 		return fmt.Errorf(i18n.G("Unknown output type %q"), c.flagType)
 	}
 

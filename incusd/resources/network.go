@@ -12,6 +12,7 @@ import (
 	"github.com/jaypipes/pcidb"
 	"golang.org/x/sys/unix"
 
+	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -354,7 +355,7 @@ func GetNetwork() (*api.ResourcesNetwork, error) {
 				card.PCIAddress = pciAddr
 
 				// Skip devices we already know about
-				if stringInSlice(card.PCIAddress, pciKnown) {
+				if shared.ValueInSlice(card.PCIAddress, pciKnown) {
 					continue
 				}
 
@@ -402,7 +403,7 @@ func GetNetwork() (*api.ResourcesNetwork, error) {
 			devicePath := filepath.Join(sysBusPci, entryName)
 
 			// Skip devices we already know about
-			if stringInSlice(entryName, pciKnown) {
+			if shared.ValueInSlice(entryName, pciKnown) {
 				continue
 			}
 

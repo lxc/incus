@@ -62,7 +62,7 @@ func Exists(s *state.State, projectName string, name ...string) error {
 	checkedACLNames := make(map[string]struct{}, len(name))
 
 	for _, aclName := range name {
-		if !shared.StringInSlice(aclName, existingACLNames) {
+		if !shared.ValueInSlice(aclName, existingACLNames) {
 			return fmt.Errorf("Network ACL %q does not exist", aclName)
 		}
 
@@ -99,7 +99,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(matchedACLName
 		netACLNames := shared.SplitNTrimSpace(network.Config["security.acls"], ",", -1, true)
 		matchedACLNames := []string{}
 		for _, netACLName := range netACLNames {
-			if shared.StringInSlice(netACLName, matchACLNames) {
+			if shared.ValueInSlice(netACLName, matchACLNames) {
 				matchedACLNames = append(matchedACLNames, netACLName)
 			}
 		}
@@ -178,7 +178,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(matchedACLName
 		for _, rule := range aclInfo.Ingress {
 			for _, subject := range shared.SplitNTrimSpace(rule.Source, ",", -1, true) {
 				// Look for new matching ACLs, but ignore our own ACL reference in our own rules.
-				if shared.StringInSlice(subject, matchACLNames) && !shared.StringInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
+				if shared.ValueInSlice(subject, matchACLNames) && !shared.ValueInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
 					matchedACLNames = append(matchedACLNames, subject)
 				}
 			}
@@ -188,7 +188,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(matchedACLName
 		for _, rule := range aclInfo.Egress {
 			for _, subject := range shared.SplitNTrimSpace(rule.Destination, ",", -1, true) {
 				// Look for new matching ACLs, but ignore our own ACL reference in our own rules.
-				if shared.StringInSlice(subject, matchACLNames) && !shared.StringInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
+				if shared.ValueInSlice(subject, matchACLNames) && !shared.ValueInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
 					matchedACLNames = append(matchedACLNames, subject)
 				}
 			}
@@ -246,7 +246,7 @@ func isInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
 	}
 
 	for _, nicACLName := range shared.SplitNTrimSpace(d["security.acls"], ",", -1, true) {
-		if shared.StringInSlice(nicACLName, matchACLNames) {
+		if shared.ValueInSlice(nicACLName, matchACLNames) {
 			matchedACLNames = append(matchedACLNames, nicACLName)
 		}
 	}
@@ -275,7 +275,7 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
 			}
 
-			if shared.StringInSlice(network.Type, supportedNetTypes) {
+			if shared.ValueInSlice(network.Type, supportedNetTypes) {
 				_, found := aclNets[network.Name]
 				if !found {
 					aclNets[network.Name] = NetworkACLUsage{
@@ -288,7 +288,7 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 			}
 
 		case *api.Network:
-			if shared.StringInSlice(u.Type, supportedNetTypes) {
+			if shared.ValueInSlice(u.Type, supportedNetTypes) {
 				_, found := aclNets[u.Name]
 				if !found {
 					networkID, network, _, err := s.DB.Cluster.GetNetworkInAnyState(aclProjectName, u.Name)

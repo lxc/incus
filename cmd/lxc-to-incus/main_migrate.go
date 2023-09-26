@@ -73,7 +73,7 @@ func (c *cmdMigrate) RunE(cmd *cobra.Command, args []string) error {
 
 	// Retrieve LXC containers
 	for _, container := range liblxc.Containers(c.flagLXCPath) {
-		if !c.flagAll && !shared.StringInSlice(container.Name(), c.flagContainers) {
+		if !c.flagAll && !shared.ValueInSlice(container.Name(), c.flagContainers) {
 			continue
 		}
 
@@ -336,7 +336,7 @@ func convertContainer(d incus.InstanceServer, container *liblxc.Container, stora
 	if value != nil {
 		for _, cap := range strings.Split(value[0], " ") {
 			// Ignore capabilities that are dropped in containers by default.
-			if shared.StringInSlice(cap, []string{"mac_admin", "mac_override", "sys_module",
+			if shared.ValueInSlice(cap, []string{"mac_admin", "mac_override", "sys_module",
 				"sys_time"}) {
 				continue
 			}
@@ -571,7 +571,7 @@ func convertStorageConfig(conf []string, devices map[string]map[string]string) e
 		}
 
 		// Ignore mounts that are present in containers by default.
-		if shared.StringInSlice(parts[0], []string{"proc", "sysfs"}) {
+		if shared.ValueInSlice(parts[0], []string{"proc", "sysfs"}) {
 			continue
 		}
 
@@ -579,12 +579,12 @@ func convertStorageConfig(conf []string, devices map[string]map[string]string) e
 		device["type"] = "disk"
 
 		// Deal with read-only mounts
-		if shared.StringInSlice("ro", strings.Split(parts[3], ",")) {
+		if shared.ValueInSlice("ro", strings.Split(parts[3], ",")) {
 			device["readonly"] = "true"
 		}
 
 		// Deal with optional mounts
-		if shared.StringInSlice("optional", strings.Split(parts[3], ",")) {
+		if shared.ValueInSlice("optional", strings.Split(parts[3], ",")) {
 			device["optional"] = "true"
 		} else {
 			if strings.HasPrefix(parts[0], "/") {

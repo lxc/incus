@@ -76,7 +76,7 @@ func FiltersFromStmt(pkg *ast.Package, kind string, entity string, filters []*Fi
 	for _, filterGroup := range stmtFilters {
 		ignoredFilterGroup := []string{}
 		for _, filter := range filters {
-			if !shared.StringInSlice(filter.Name, filterGroup) {
+			if !shared.ValueInSlice(filter.Name, filterGroup) {
 				ignoredFilterGroup = append(ignoredFilterGroup, filter.Name)
 			}
 		}
@@ -108,7 +108,7 @@ func RefFiltersFromStmt(pkg *ast.Package, entity string, ref string, filters []*
 	for _, filterGroup := range stmtFilters {
 		ignoredFilterGroup := []string{}
 		for _, filter := range filters {
-			if !shared.StringInSlice(filter.Name, filterGroup) {
+			if !shared.ValueInSlice(filter.Name, filterGroup) {
 				ignoredFilterGroup = append(ignoredFilterGroup, filter.Name)
 			}
 		}
@@ -269,8 +269,8 @@ func tableType(pkg *ast.Package, name string, fields []*Field) TableType {
 		}
 	}
 
-	if shared.StringInSlice("ReferenceID", fieldNames) {
-		if shared.StringInSlice("Key", fieldNames) && shared.StringInSlice("Value", fieldNames) {
+	if shared.ValueInSlice("ReferenceID", fieldNames) {
+		if shared.ValueInSlice("Key", fieldNames) && shared.ValueInSlice("Value", fieldNames) {
 			return MapTable
 		}
 
@@ -410,9 +410,9 @@ func parseField(f *ast.Field, kind string) (*Field, error) {
 			stmtKind = "delete"
 		}
 
-		if shared.StringInSlice(kind, omitFields) || shared.StringInSlice(stmtKind, omitFields) {
+		if shared.ValueInSlice(kind, omitFields) || shared.ValueInSlice(stmtKind, omitFields) {
 			return nil, nil
-		} else if kind == "exists" && shared.StringInSlice("id", omitFields) {
+		} else if kind == "exists" && shared.ValueInSlice("id", omitFields) {
 			// Exists checks ID, so if we are omitting the field from ID, also omit it from Exists.
 			return nil, nil
 		}

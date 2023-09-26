@@ -229,7 +229,7 @@ func (c *Client) Stop() {
 
 // HandleEvent handles the event received from the internal event listener.
 func (c *Client) HandleEvent(event api.Event) {
-	if !shared.StringInSlice(event.Type, c.cfg.types) {
+	if !shared.ValueInSlice(event.Type, c.cfg.types) {
 		return
 	}
 
@@ -271,7 +271,7 @@ func (c *Client) HandleEvent(event api.Event) {
 
 		// Add key-value pairs as labels but don't override any labels.
 		for k, v := range context {
-			if shared.StringInSlice(k, c.cfg.labels) {
+			if shared.ValueInSlice(k, c.cfg.labels) {
 				_, ok := entry.labels[k]
 				if !ok {
 					entry.labels[k] = v
@@ -322,7 +322,7 @@ func (c *Client) HandleEvent(event api.Event) {
 
 		// Add key-value pairs as labels but don't override any labels.
 		for k, v := range context {
-			if shared.StringInSlice(k, c.cfg.labels) {
+			if shared.ValueInSlice(k, c.cfg.labels) {
 				_, ok := entry.labels[k]
 				if !ok {
 					entry.labels[k] = v

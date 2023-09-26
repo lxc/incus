@@ -77,7 +77,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	fp := alias
 
 	// Attempt to resolve the alias
-	if shared.StringInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
+	if shared.ValueInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
 		clientArgs := &incus.ConnectionArgs{
 			TLSServerCert: args.Certificate,
 			UserAgent:     version.UserAgent,
@@ -86,7 +86,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 			CacheExpiry:   time.Hour,
 		}
 
-		if shared.StringInSlice(protocol, []string{"incus", "lxd"}) {
+		if shared.ValueInSlice(protocol, []string{"incus", "lxd"}) {
 			// Setup client
 			remote, err = incus.ConnectPublicIncus(args.Server, clientArgs)
 			if err != nil {
@@ -244,7 +244,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 			return nil, err
 		}
 
-		if shared.Int64InSlice(poolID, poolIDs) {
+		if shared.ValueInSlice(poolID, poolIDs) {
 			logger.Debug("Image already exists on storage pool", ctxMap)
 			return info, nil
 		}
@@ -308,7 +308,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		op.SetCanceler(canceler)
 	}
 
-	if shared.StringInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
+	if shared.ValueInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
 		// Create the target files
 		dest, err := os.Create(destName)
 		if err != nil {

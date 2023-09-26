@@ -324,7 +324,7 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 
 			// Indicate to any notifiers waiting for this member's address that it is connected.
 			for connected, notifyAddresses := range listenersNotify {
-				if shared.StringInSlice(m.Address, notifyAddresses) {
+				if shared.ValueInSlice(m.Address, notifyAddresses) {
 					close(connected)
 					delete(listenersNotify, connected)
 				}

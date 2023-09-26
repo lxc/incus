@@ -533,7 +533,7 @@ WHERE storage_pools.id = ? AND storage_pools.state = ?
 	// Figure which nodes are missing
 	missing := []string{}
 	for _, node := range nodes {
-		if !shared.StringInSlice(node.Name, defined) {
+		if !shared.ValueInSlice(node.Name, defined) {
 			missing = append(missing, node.Name)
 		}
 	}
@@ -827,7 +827,7 @@ func storagePoolConfigAdd(tx *sql.Tx, poolID, nodeID int64, poolConfig map[strin
 		}
 
 		var nodeIDValue any
-		if !shared.StringInSlice(k, NodeSpecificStorageConfig) {
+		if !shared.ValueInSlice(k, NodeSpecificStorageConfig) {
 			nodeIDValue = nil
 		} else {
 			nodeIDValue = nodeID
@@ -923,7 +923,7 @@ func (c *Cluster) IsRemoteStorage(poolID int64) (bool, error) {
 			return err
 		}
 
-		isRemoteStorage = shared.StringInSlice(driver, StorageRemoteDriverNames())
+		isRemoteStorage = shared.ValueInSlice(driver, StorageRemoteDriverNames())
 
 		return nil
 	})

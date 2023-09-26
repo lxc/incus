@@ -200,19 +200,19 @@ func MatchTypes(offer *MigrationHeader, fallbackType MigrationFSType, ourTypes [
 			// Find common features in both our type and offered type.
 			commonFeatures := []string{}
 			for _, ourFeature := range ourType.Features {
-				if shared.StringInSlice(ourFeature, offeredFeatures) {
+				if shared.ValueInSlice(ourFeature, offeredFeatures) {
 					commonFeatures = append(commonFeatures, ourFeature)
 				}
 			}
 
 			if offer.GetRefresh() {
 				// Optimized refresh with zfs only works if ZfsFeatureMigrationHeader is available.
-				if ourType.FSType == MigrationFSType_ZFS && !shared.StringInSlice(ZFSFeatureMigrationHeader, commonFeatures) {
+				if ourType.FSType == MigrationFSType_ZFS && !shared.ValueInSlice(ZFSFeatureMigrationHeader, commonFeatures) {
 					continue
 				}
 
 				// Optimized refresh with btrfs only works if BtrfsFeatureSubvolumeUUIDs is available.
-				if ourType.FSType == MigrationFSType_BTRFS && !shared.StringInSlice(BTRFSFeatureSubvolumeUUIDs, commonFeatures) {
+				if ourType.FSType == MigrationFSType_BTRFS && !shared.ValueInSlice(BTRFSFeatureSubvolumeUUIDs, commonFeatures) {
 					continue
 				}
 			}

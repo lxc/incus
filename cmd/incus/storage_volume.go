@@ -131,7 +131,7 @@ func (c *cmdStorageVolume) parseVolume(defaultType string, name string) (string,
 	fields := strings.SplitN(name, "/", 2)
 	if len(fields) == 1 {
 		return fields[0], defaultType
-	} else if len(fields) == 2 && !shared.StringInSlice(fields[0], []string{"custom", "image", "container", "virtual-machine"}) {
+	} else if len(fields) == 2 && !shared.ValueInSlice(fields[0], []string{"custom", "image", "container", "virtual-machine"}) {
 		return name, defaultType
 	}
 
@@ -2728,7 +2728,7 @@ func (c *cmdStorageVolumeImport) Run(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		// Validate type flag
-		if !shared.StringInSlice(c.flagType, []string{"backup", "iso"}) {
+		if !shared.ValueInSlice(c.flagType, []string{"backup", "iso"}) {
 			return fmt.Errorf("Import type needs to be \"backup\" or \"iso\"")
 		}
 	}

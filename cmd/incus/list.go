@@ -765,7 +765,7 @@ func (c *cmdList) IP4ColumnData(cInfo api.InstanceFull) string {
 			}
 
 			for _, addr := range net.Addresses {
-				if shared.StringInSlice(addr.Scope, []string{"link", "local"}) {
+				if shared.ValueInSlice(addr.Scope, []string{"link", "local"}) {
 					continue
 				}
 
@@ -791,7 +791,7 @@ func (c *cmdList) IP6ColumnData(cInfo api.InstanceFull) string {
 			}
 
 			for _, addr := range net.Addresses {
-				if shared.StringInSlice(addr.Scope, []string{"link", "local"}) {
+				if shared.ValueInSlice(addr.Scope, []string{"link", "local"}) {
 					continue
 				}
 

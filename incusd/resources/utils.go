@@ -48,24 +48,6 @@ func readInt(path string) (int64, error) {
 	return value, nil
 }
 
-func stringInSlice(key string, list []string) bool {
-	for _, entry := range list {
-		if entry == key {
-			return true
-		}
-	}
-	return false
-}
-
-func int64InSlice(key int64, list []int64) bool {
-	for _, entry := range list {
-		if entry == key {
-			return true
-		}
-	}
-	return false
-}
-
 func sysfsExists(path string) bool {
 	_, err := os.Lstat(path)
 	return err == nil

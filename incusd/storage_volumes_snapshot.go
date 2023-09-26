@@ -373,7 +373,7 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 	}
 
 	// Check that the storage volume type is valid.
-	if !shared.IntInSlice(volumeType, supportedVolumeTypes) {
+	if !shared.ValueInSlice(volumeType, supportedVolumeTypes) {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 

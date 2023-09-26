@@ -67,7 +67,7 @@ func (c *cmdMonitor) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if !shared.StringInSlice(c.flagFormat, []string{"json", "pretty", "yaml"}) {
+	if !shared.ValueInSlice(c.flagFormat, []string{"json", "pretty", "yaml"}) {
 		return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
 	}
 

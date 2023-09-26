@@ -308,7 +308,7 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 		// A targetNode was specified, let's just define the node's storage without actually creating it.
 		// The only legal key values for the storage config are the ones in NodeSpecificStorageConfig.
 		for key := range req.Config {
-			if !shared.StringInSlice(key, db.NodeSpecificStorageConfig) {
+			if !shared.ValueInSlice(key, db.NodeSpecificStorageConfig) {
 				return response.SmartError(fmt.Errorf("Config key %q may not be used as member-specific key", key))
 			}
 		}
@@ -376,7 +376,7 @@ func storagePoolPartiallyCreated(pool *api.StoragePool) bool {
 	// If the pool has global config keys, then it has previously been created by having its global config
 	// inserted, and this means it is partialled created.
 	for key := range pool.Config {
-		if !shared.StringInSlice(key, db.NodeSpecificStorageConfig) {
+		if !shared.ValueInSlice(key, db.NodeSpecificStorageConfig) {
 			return true
 		}
 	}
@@ -389,7 +389,7 @@ func storagePoolPartiallyCreated(pool *api.StoragePool) bool {
 func storagePoolsPostCluster(s *state.State, pool *api.StoragePool, req api.StoragePoolsPost, clientType clusterRequest.ClientType) error {
 	// Check that no node-specific config key has been defined.
 	for key := range req.Config {
-		if shared.StringInSlice(key, db.NodeSpecificStorageConfig) {
+		if shared.ValueInSlice(key, db.NodeSpecificStorageConfig) {
 			return fmt.Errorf("Config key %q is cluster member specific", key)
 		}
 	}
@@ -732,7 +732,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 		if targetNode == "" {
 			// If no target is specified, then ensure only non-node-specific config keys are changed.
 			for k := range req.Config {
-				if shared.StringInSlice(k, db.NodeSpecificStorageConfig) {
+				if shared.ValueInSlice(k, db.NodeSpecificStorageConfig) {
 					return response.BadRequest(fmt.Errorf("Config key %q is cluster member specific", k))
 				}
 			}
@@ -741,7 +741,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 
 			// If a target is specified, then ensure only node-specific config keys are changed.
 			for k, v := range req.Config {
-				if !shared.StringInSlice(k, db.NodeSpecificStorageConfig) && curConfig[k] != v {
+				if !shared.ValueInSlice(k, db.NodeSpecificStorageConfig) && curConfig[k] != v {
 					return response.BadRequest(fmt.Errorf("Config key %q may not be used as cluster member specific key", k))
 				}
 			}
@@ -821,7 +821,7 @@ func doStoragePoolUpdate(s *state.State, pool storagePools.Pool, req api.Storage
 		// node-specific network config with the submitted config to allow validation.
 		// This allows removal of non-node specific keys when they are absent from request config.
 		for k, v := range pool.Driver().Config() {
-			if shared.StringInSlice(k, db.NodeSpecificStorageConfig) {
+			if shared.ValueInSlice(k, db.NodeSpecificStorageConfig) {
 				req.Config[k] = v
 			}
 		}
@@ -853,7 +853,7 @@ func doStoragePoolUpdate(s *state.State, pool storagePools.Pool, req api.Storage
 		sendPool.Config = make(map[string]string)
 		for k, v := range req.Config {
 			// Don't forward node specific keys (these will be merged in on recipient node).
-			if shared.StringInSlice(k, db.NodeSpecificStorageConfig) {
+			if shared.ValueInSlice(k, db.NodeSpecificStorageConfig) {
 				continue
 			}
 

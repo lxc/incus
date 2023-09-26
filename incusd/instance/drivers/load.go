@@ -86,7 +86,7 @@ func validDevices(state *state.State, p api.Project, instanceType instancetype.T
 	checkDevices := func(devices deviceConfig.Devices, expanded bool) error {
 		// Check each device individually using the device package.
 		for deviceName, deviceConfig := range devices {
-			if expanded && shared.StringInSlice(deviceName, checkedDevices) {
+			if expanded && shared.ValueInSlice(deviceName, checkedDevices) {
 				continue // Don't check the device twice if present in both local and expanded.
 			}
 

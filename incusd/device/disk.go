@@ -162,7 +162,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 	// These come from https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt
 	propagationTypes := []string{"", "private", "shared", "slave", "unbindable", "rshared", "rslave", "runbindable", "rprivate"}
 	validatePropagation := func(input string) error {
-		if !shared.StringInSlice(d.config["bind"], propagationTypes) {
+		if !shared.ValueInSlice(d.config["bind"], propagationTypes) {
 			return fmt.Errorf("Invalid propagation value. Must be one of: %s", strings.Join(propagationTypes, ", "))
 		}
 
@@ -1809,14 +1809,14 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 		for _, block := range blocks {
 			blockStr := ""
 
-			if shared.StringInSlice(block, validBlocks) {
+			if shared.ValueInSlice(block, validBlocks) {
 				// Straightforward entry (full block device)
 				blockStr = block
 			} else {
 				// Attempt to deal with a partition (guess its parent)
 				fields := strings.SplitN(block, ":", 2)
 				fields[1] = "0"
-				if shared.StringInSlice(fmt.Sprintf("%s:%s", fields[0], fields[1]), validBlocks) {
+				if shared.ValueInSlice(fmt.Sprintf("%s:%s", fields[0], fields[1]), validBlocks) {
 					blockStr = fmt.Sprintf("%s:%s", fields[0], fields[1])
 				}
 			}

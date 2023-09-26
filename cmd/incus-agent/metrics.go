@@ -259,7 +259,7 @@ func getFilesystemMetrics(d *Daemon) (map[string]metrics.FilesystemMetrics, erro
 		fields := strings.Fields(scanner.Text())
 
 		// Skip uninteresting mounts
-		if shared.StringInSlice(fields[2], defFSTypesExcluded) || defMountPointsExcluded.MatchString(fields[1]) {
+		if shared.ValueInSlice(fields[2], defFSTypesExcluded) || defMountPointsExcluded.MatchString(fields[1]) {
 			continue
 		}
 

@@ -150,7 +150,7 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			for _, lease := range leases {
-				if shared.StringInSlice(lease.Type, []string{"static", "dynamic"}) {
+				if shared.ValueInSlice(lease.Type, []string{"static", "dynamic"}) {
 					cidrAddr, nat, err := ipToCIDR(lease.Address, netConf)
 					if err != nil {
 						return response.SmartError(err)

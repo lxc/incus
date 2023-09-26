@@ -72,7 +72,7 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 	// Supported bind types are: "host" or "instance" (or "guest" or "container", legacy options equivalent to "instance").
 	// If an empty value is supplied the default behavior is to assume "host" bind mode.
 	validateBind := func(input string) error {
-		if !shared.StringInSlice(d.config["bind"], []string{"host", "instance", "guest", "container"}) {
+		if !shared.ValueInSlice(d.config["bind"], []string{"host", "instance", "guest", "container"}) {
 			return fmt.Errorf("Invalid binding side given. Must be \"host\" or \"instance\"")
 		}
 

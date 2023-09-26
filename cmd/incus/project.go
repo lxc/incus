@@ -839,7 +839,7 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 	for k, v := range projectState.Resources {
 		limit := i18n.G("UNLIMITED")
 		if v.Limit >= 0 {
-			if shared.StringInSlice(k, byteLimits) {
+			if shared.ValueInSlice(k, byteLimits) {
 				limit = units.GetByteSizeStringIEC(v.Limit, 2)
 			} else {
 				limit = fmt.Sprintf("%d", v.Limit)
@@ -847,7 +847,7 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		usage := ""
-		if shared.StringInSlice(k, byteLimits) {
+		if shared.ValueInSlice(k, byteLimits) {
 			usage = units.GetByteSizeStringIEC(v.Usage, 2)
 		} else {
 			usage = fmt.Sprintf("%d", v.Usage)

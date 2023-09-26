@@ -15,7 +15,7 @@ const nameInstancePlacement = "instance_placement"
 // InstancePlacementCompile compiles the instance placement scriptlet.
 func InstancePlacementCompile(src string) (*starlark.Program, error) {
 	isPreDeclared := func(name string) bool {
-		return shared.StringInSlice(name, []string{
+		return shared.ValueInSlice(name, []string{
 			"log_info",
 			"log_warn",
 			"log_error",

@@ -82,7 +82,7 @@ func (c *cmdClusterRoleAdd) Run(cmd *cobra.Command, args []string) error {
 	memberWritable := member.Writable()
 	newRoles := shared.SplitNTrimSpace(args[1], ",", -1, false)
 	for _, newRole := range newRoles {
-		if shared.StringInSlice(newRole, memberWritable.Roles) {
+		if shared.ValueInSlice(newRole, memberWritable.Roles) {
 			return fmt.Errorf(i18n.G("Member %q already has role %q"), resource.name, newRole)
 		}
 	}
@@ -138,12 +138,12 @@ func (c *cmdClusterRoleRemove) Run(cmd *cobra.Command, args []string) error {
 	memberWritable := member.Writable()
 	rolesToRemove := shared.SplitNTrimSpace(args[1], ",", -1, false)
 	for _, roleToRemove := range rolesToRemove {
-		if !shared.StringInSlice(roleToRemove, memberWritable.Roles) {
+		if !shared.ValueInSlice(roleToRemove, memberWritable.Roles) {
 			return fmt.Errorf(i18n.G("Member %q does not have role %q"), resource.name, roleToRemove)
 		}
 	}
 
-	memberWritable.Roles = shared.RemoveElementsFromStringSlice(memberWritable.Roles, rolesToRemove...)
+	memberWritable.Roles = shared.RemoveElementsFromSlice(memberWritable.Roles, rolesToRemove...)
 
 	return resource.server.UpdateClusterMember(resource.name, memberWritable, etag)
 }

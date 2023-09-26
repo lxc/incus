@@ -503,7 +503,7 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 	var syncSubvolumes []BTRFSSubVolume
 
 	// Inspect negotiated features to see if we are expecting to get a metadata migration header frame.
-	if shared.StringInSlice(migration.BTRFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
+	if shared.ValueInSlice(migration.BTRFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
 		buf, err := io.ReadAll(conn)
 		if err != nil {
 			return fmt.Errorf("Failed reading BTRFS migration header: %w", err)
@@ -532,7 +532,7 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 		})
 	}
 
-	if volTargetArgs.Refresh && shared.StringInSlice(migration.BTRFSFeatureSubvolumeUUIDs, volTargetArgs.MigrationType.Features) {
+	if volTargetArgs.Refresh && shared.ValueInSlice(migration.BTRFSFeatureSubvolumeUUIDs, volTargetArgs.MigrationType.Features) {
 		snapshots, err := d.volumeSnapshotsSorted(vol, op)
 		if err != nil {
 			return err
@@ -1264,7 +1264,7 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *m
 
 	// If we haven't negotiated subvolume support, check if we have any subvolumes in source and fail,
 	// otherwise we would end up not materialising all of the source's files on the target.
-	if !shared.StringInSlice(migration.BTRFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) || !shared.StringInSlice(migration.BTRFSFeatureSubvolumes, volSrcArgs.MigrationType.Features) {
+	if !shared.ValueInSlice(migration.BTRFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) || !shared.ValueInSlice(migration.BTRFSFeatureSubvolumes, volSrcArgs.MigrationType.Features) {
 		for _, subVol := range migrationHeader.Subvolumes {
 			if subVol.Path != string(filepath.Separator) {
 				return fmt.Errorf("Subvolumes detected in source but target does not support receiving subvolumes")
@@ -1273,7 +1273,7 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *m
 	}
 
 	// Send metadata migration header frame with subvolume info if we have negotiated that feature.
-	if shared.StringInSlice(migration.BTRFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
+	if shared.ValueInSlice(migration.BTRFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
 		headerJSON, err := json.Marshal(migrationHeader)
 		if err != nil {
 			return fmt.Errorf("Failed encoding BTRFS migration header: %w", err)
@@ -1292,7 +1292,7 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *m
 		d.logger.Debug("Sent migration meta data header", logger.Ctx{"name": vol.name})
 	}
 
-	if volSrcArgs.Refresh && shared.StringInSlice(migration.BTRFSFeatureSubvolumeUUIDs, volSrcArgs.MigrationType.Features) {
+	if volSrcArgs.Refresh && shared.ValueInSlice(migration.BTRFSFeatureSubvolumeUUIDs, volSrcArgs.MigrationType.Features) {
 		migrationHeader = &BTRFSMetaDataHeader{}
 
 		buf, err := io.ReadAll(conn)
@@ -1345,7 +1345,7 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 				continue // Only sending subvolumes related to snapshot name (empty for main vol).
 			}
 
-			if subVolume.Path != string(filepath.Separator) && !shared.StringInSlice(migration.BTRFSFeatureSubvolumes, volSrcArgs.MigrationType.Features) {
+			if subVolume.Path != string(filepath.Separator) && !shared.ValueInSlice(migration.BTRFSFeatureSubvolumes, volSrcArgs.MigrationType.Features) {
 				continue // Skip sending subvolumes of volume if subvolumes feature not negotiated.
 			}
 

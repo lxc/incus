@@ -60,7 +60,7 @@ func TestUpdateFromV36_DropTables(t *testing.T) {
 	}
 
 	for _, name := range deleted {
-		assert.False(t, shared.StringInSlice(name, current))
+		assert.False(t, shared.ValueInSlice(name, current))
 	}
 }
 

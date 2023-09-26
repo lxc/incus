@@ -58,7 +58,7 @@ func storagePoolVolumeUpdateUsers(s *state.State, projectName string, oldPoolNam
 	// Update all profiles that are using the volume with a device.
 	err = storagePools.VolumeUsedByProfileDevices(s, oldPoolName, projectName, oldVol, func(profileID int64, profile api.Profile, p api.Project, usedByDevices []string) error {
 		for name, dev := range profile.Devices {
-			if shared.StringInSlice(name, usedByDevices) {
+			if shared.ValueInSlice(name, usedByDevices) {
 				dev["pool"] = newPoolName
 				dev["source"] = newVol.Name
 			}

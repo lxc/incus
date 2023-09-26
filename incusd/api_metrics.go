@@ -274,7 +274,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	for _, project := range projectsToFetch {
-		if shared.StringInSlice(*project.Project, updatedProjects) {
+		if shared.ValueInSlice(*project.Project, updatedProjects) {
 			continue
 		}
 

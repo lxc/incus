@@ -153,7 +153,7 @@ func (m *Mapping) ColumnFields(exclude ...string) []*Field {
 	fields := []*Field{}
 
 	for _, field := range m.Fields {
-		if shared.StringInSlice(field.Name, exclude) {
+		if shared.ValueInSlice(field.Name, exclude) {
 			continue
 		}
 

@@ -412,7 +412,7 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 			}
 
 			// Skip devices not connected to managed networks.
-			if !shared.StringInSlice(d["parent"], networks) {
+			if !shared.ValueInSlice(d["parent"], networks) {
 				continue
 			}
 
@@ -1338,7 +1338,7 @@ func ProxyParseAddr(data string) (*deviceConfig.ProxyAddress, error) {
 	// Split into <protocol> and <address>.
 	fields := strings.SplitN(data, ":", 2)
 
-	if !shared.StringInSlice(fields[0], []string{"tcp", "udp", "unix"}) {
+	if !shared.ValueInSlice(fields[0], []string{"tcp", "udp", "unix"}) {
 		return nil, fmt.Errorf("Unknown protocol type %q", fields[0])
 	}
 
@@ -1365,7 +1365,7 @@ func ProxyParseAddr(data string) (*deviceConfig.ProxyAddress, error) {
 	}
 
 	// Validate that it's a valid address.
-	if shared.StringInSlice(newProxyAddr.ConnType, []string{"udp", "tcp"}) {
+	if shared.ValueInSlice(newProxyAddr.ConnType, []string{"udp", "tcp"}) {
 		err := validate.Optional(validate.IsNetworkAddress)(address)
 		if err != nil {
 			return nil, err

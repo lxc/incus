@@ -168,7 +168,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 		// Ensure that only the requested snapshots are included in the migration index header.
 		volSourceArgs.Info.Config.VolumeSnapshots = make([]*api.StorageVolumeSnapshot, 0, len(volSourceArgs.Snapshots))
 		for i := range allSnapshots {
-			if shared.StringInSlice(allSnapshots[i].Name, volSourceArgs.Snapshots) {
+			if shared.ValueInSlice(allSnapshots[i].Name, volSourceArgs.Snapshots) {
 				volSourceArgs.Info.Config.VolumeSnapshots = append(volSourceArgs.Info.Config.VolumeSnapshots, allSnapshots[i])
 			}
 		}

@@ -565,7 +565,7 @@ func networkSetupHostVethLimits(m deviceConfig.Device) error {
 
 // networkValidGateway validates the gateway value.
 func networkValidGateway(value string) error {
-	if shared.StringInSlice(value, []string{"none", "auto"}) {
+	if shared.ValueInSlice(value, []string{"none", "auto"}) {
 		return nil
 	}
 

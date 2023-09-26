@@ -714,7 +714,7 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 			return fmt.Errorf("Persist profile changes: %w", err)
 		}
 
-		if shared.StringInSlice("features.profiles", configChanged) {
+		if shared.ValueInSlice("features.profiles", configChanged) {
 			if shared.IsTrue(req.Config["features.profiles"]) {
 				err = projectCreateDefaultProfile(tx, project.Name)
 				if err != nil {
@@ -729,7 +729,7 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 			}
 		}
 
-		if shared.StringInSlice("features.images", configChanged) && shared.IsFalse(req.Config["features.images"]) && shared.IsTrue(req.Config["features.profiles"]) {
+		if shared.ValueInSlice("features.images", configChanged) && shared.IsFalse(req.Config["features.images"]) && shared.IsTrue(req.Config["features.profiles"]) {
 			err = cluster.InitProjectWithoutImages(ctx, tx.Tx(), project.Name)
 			if err != nil {
 				return err
@@ -1151,7 +1151,7 @@ func projectValidateName(name string) error {
 		return fmt.Errorf("Reserved project name")
 	}
 
-	if shared.StringInSlice(name, []string{".", ".."}) {
+	if shared.ValueInSlice(name, []string{".", ".."}) {
 		return fmt.Errorf("Invalid project name %q", name)
 	}
 

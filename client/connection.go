@@ -325,7 +325,7 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 		eventListeners:     make(map[string][]*EventListener),
 	}
 
-	if shared.StringInSlice(args.AuthType, []string{"oidc"}) {
+	if shared.ValueInSlice(args.AuthType, []string{"oidc"}) {
 		server.RequireAuthenticated(true)
 	}
 

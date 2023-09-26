@@ -3046,7 +3046,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 			// Go through all the snapshots.
 			for _, snap := range snaps {
 				_, snapName, _ := api.GetParentAndSnapshotName(snap.Name())
-				if !shared.StringInSlice(snapName, snapErr.Snapshots) {
+				if !shared.ValueInSlice(snapName, snapErr.Snapshots) {
 					continue
 				}
 
@@ -6115,7 +6115,7 @@ func (b *backend) detectUnknownInstanceVolume(vol *drivers.Volume, projectVols m
 		fullSnapshotName := drivers.GetSnapshotVolumeName(instName, snapshot.Name)
 
 		// Check if an entry for the instance already exists in the DB.
-		if shared.StringInSlice(fullSnapshotName, instSnapshots) {
+		if shared.ValueInSlice(fullSnapshotName, instSnapshots) {
 			return fmt.Errorf("Instance %q snapshot %q in project %q already has instance DB record", instName, snapshot.Name, projectName)
 		}
 

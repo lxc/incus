@@ -470,7 +470,7 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Basic parameter validation.
-	if !shared.StringInSlice(post.Type, []string{instance.ConsoleTypeConsole, instance.ConsoleTypeVGA}) {
+	if !shared.ValueInSlice(post.Type, []string{instance.ConsoleTypeConsole, instance.ConsoleTypeVGA}) {
 		return response.BadRequest(fmt.Errorf("Unknown console type %q", post.Type))
 	}
 
