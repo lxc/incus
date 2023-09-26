@@ -10,7 +10,6 @@ type Vxlan struct {
 	Group   string
 	DstPort string
 	TTL     string
-	FanMap  string
 }
 
 // additionalArgs generates vxlan specific arguments.
@@ -39,10 +38,6 @@ func (vxlan *Vxlan) additionalArgs() []string {
 
 	if vxlan.DstPort != "" {
 		args = append(args, "dstport", vxlan.DstPort)
-	}
-
-	if vxlan.FanMap != "" {
-		args = append(args, "fan-map", vxlan.FanMap)
 	}
 
 	return args

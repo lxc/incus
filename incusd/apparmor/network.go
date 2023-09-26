@@ -51,32 +51,6 @@ func NetworkLoad(sysOS *sys.OS, n network) error {
 		return err
 	}
 
-	// forkdns
-	if n.Config()["bridge.mode"] == "fan" {
-		profile := filepath.Join(aaPath, "profiles", forkdnsProfileFilename(n))
-		content, err := os.ReadFile(profile)
-		if err != nil && !os.IsNotExist(err) {
-			return err
-		}
-
-		updated, err := forkdnsProfile(sysOS, n)
-		if err != nil {
-			return err
-		}
-
-		if string(content) != string(updated) {
-			err = os.WriteFile(profile, []byte(updated), 0600)
-			if err != nil {
-				return err
-			}
-		}
-
-		err = loadProfile(sysOS, forkdnsProfileFilename(n))
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -89,14 +63,6 @@ func NetworkUnload(sysOS *sys.OS, n network) error {
 		return err
 	}
 
-	// forkdns
-	if n.Config()["bridge.mode"] == "fan" {
-		err := unloadProfile(sysOS, ForkdnsProfileName(n), forkdnsProfileFilename(n))
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -105,13 +71,6 @@ func NetworkDelete(sysOS *sys.OS, n network) error {
 	err := deleteProfile(sysOS, DnsmasqProfileName(n), dnsmasqProfileFilename(n))
 	if err != nil {
 		return err
-	}
-
-	if n.Config()["bridge.mode"] == "fan" {
-		err := deleteProfile(sysOS, ForkdnsProfileName(n), forkdnsProfileFilename(n))
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil

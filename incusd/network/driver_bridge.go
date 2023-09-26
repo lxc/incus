@@ -2,17 +2,14 @@ package network
 
 import (
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
-	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/mdlayher/netx/eui64"
@@ -44,14 +41,6 @@ import (
 	"github.com/lxc/incus/shared/validate"
 )
 
-// ForkdnsServersListPath defines the path that contains the forkdns server candidate file.
-const ForkdnsServersListPath = "forkdns.servers"
-
-// ForkdnsServersListFile file that contains the server candidates list.
-const ForkdnsServersListFile = "servers.conf"
-
-var forkdnsServersLock sync.Mutex
-
 // Default MTU for bridge interface.
 const bridgeMTUDefault = 1500
 
@@ -82,11 +71,6 @@ func (n *bridge) Info() Info {
 // then we assume this is not being done. However if IP addresses are explicitly set to "none" and
 // "bridge.external_interfaces" is set then it may not be safe to use a the same MAC address on all nodes.
 func (n *bridge) checkClusterWideMACSafe(config map[string]string) error {
-	// Fan mode breaks if using the same MAC address on each node.
-	if config["bridge.mode"] == "fan" {
-		return fmt.Errorf(`Cannot use static "bridge.hwaddr" MAC address in fan mode`)
-	}
-
 	// We can't be sure that multiple clustered nodes aren't connected to the same network segment so don't
 	// use a static MAC address for the bridge interface to avoid introducing a MAC conflict.
 	if config["bridge.external_interfaces"] != "" && config["ipv4.address"] == "none" && config["ipv6.address"] == "none" {
@@ -99,34 +83,23 @@ func (n *bridge) checkClusterWideMACSafe(config map[string]string) error {
 // FillConfig fills requested config with any default values.
 func (n *bridge) FillConfig(config map[string]string) error {
 	// Set some default values where needed.
-	if config["bridge.mode"] == "fan" {
-		if config["fan.underlay_subnet"] == "" {
-			config["fan.underlay_subnet"] = "auto"
-		}
+	if config["ipv4.address"] == "" {
+		config["ipv4.address"] = "auto"
+	}
 
-		// We enable NAT by default even if address is manually specified.
-		if config["ipv4.nat"] == "" {
-			config["ipv4.nat"] = "true"
-		}
-	} else {
-		if config["ipv4.address"] == "" {
-			config["ipv4.address"] = "auto"
-		}
+	if config["ipv4.address"] == "auto" && config["ipv4.nat"] == "" {
+		config["ipv4.nat"] = "true"
+	}
 
-		if config["ipv4.address"] == "auto" && config["ipv4.nat"] == "" {
-			config["ipv4.nat"] = "true"
+	if config["ipv6.address"] == "" {
+		content, err := os.ReadFile("/proc/sys/net/ipv6/conf/default/disable_ipv6")
+		if err == nil && string(content) == "0\n" {
+			config["ipv6.address"] = "auto"
 		}
+	}
 
-		if config["ipv6.address"] == "" {
-			content, err := os.ReadFile("/proc/sys/net/ipv6/conf/default/disable_ipv6")
-			if err == nil && string(content) == "0\n" {
-				config["ipv6.address"] = "auto"
-			}
-		}
-
-		if config["ipv6.address"] == "auto" && config["ipv6.nat"] == "" {
-			config["ipv6.nat"] = "true"
-		}
+	if config["ipv6.address"] == "auto" && config["ipv6.nat"] == "" {
+		config["ipv6.nat"] = "true"
 	}
 
 	// Now replace any "auto" keys with generated values.
@@ -160,16 +133,6 @@ func (n *bridge) populateAutoConfig(config map[string]string) error {
 		}
 
 		config["ipv6.address"] = subnet
-		changedConfig = true
-	}
-
-	if config["fan.underlay_subnet"] == "auto" {
-		subnet, _, err := DefaultGatewaySubnetV4()
-		if err != nil {
-			return err
-		}
-
-		config["fan.underlay_subnet"] = subnet.String()
 		changedConfig = true
 	}
 
@@ -213,17 +176,6 @@ func (n *bridge) Validate(config map[string]string) error {
 		}),
 		"bridge.hwaddr": validate.Optional(validate.IsNetworkMAC),
 		"bridge.mtu":    validate.Optional(validate.IsNetworkMTU),
-		"bridge.mode":   validate.Optional(validate.IsOneOf("standard", "fan")),
-
-		"fan.overlay_subnet": validate.Optional(validate.IsNetworkV4),
-		"fan.underlay_subnet": validate.Optional(func(value string) error {
-			if value == "auto" {
-				return nil
-			}
-
-			return validate.IsNetworkV4(value)
-		}),
-		"fan.type": validate.Optional(validate.IsOneOf("vxlan", "ipip")),
 
 		"ipv4.address": validate.Optional(func(value string) error {
 			if validate.IsOneOf("none", "auto")(value) == nil {
@@ -338,27 +290,8 @@ func (n *bridge) Validate(config map[string]string) error {
 		return err
 	}
 
-	// Validate network name when used in fan mode.
-	bridgeMode := config["bridge.mode"]
-	if bridgeMode == "fan" && len(n.name) > 11 {
-		return fmt.Errorf("Network name too long to use with the FAN (must be 11 characters or less)")
-	}
-
 	for k, v := range config {
 		key := k
-		// Bridge mode checks
-		if bridgeMode == "fan" && strings.HasPrefix(key, "ipv4.") && !shared.StringInSlice(key, []string{"ipv4.dhcp.expiry", "ipv4.firewall", "ipv4.nat", "ipv4.nat.order"}) && v != "" {
-			return fmt.Errorf("IPv4 configuration may not be set when in 'fan' mode")
-		}
-
-		if bridgeMode == "fan" && strings.HasPrefix(key, "ipv6.") && v != "" {
-			return fmt.Errorf("IPv6 configuration may not be set when in 'fan' mode")
-		}
-
-		if bridgeMode != "fan" && strings.HasPrefix(key, "fan.") && v != "" {
-			return fmt.Errorf("FAN configuration may only be set when in 'fan' mode")
-		}
-
 		// MTU checks
 		if key == "bridge.mtu" && v != "" {
 			mtu, err := strconv.ParseInt(v, 10, 64)
@@ -374,18 +307,6 @@ func (n *bridge) Validate(config map[string]string) error {
 			ipv4 := config["ipv4.address"]
 			if ipv4 != "" && ipv4 != "none" && mtu < 68 {
 				return fmt.Errorf("The minimum MTU for an IPv4 network is 68")
-			}
-
-			if config["bridge.mode"] == "fan" {
-				if config["fan.type"] == "ipip" {
-					if mtu > 1480 {
-						return fmt.Errorf("Maximum MTU for an IPIP FAN bridge is 1480")
-					}
-				} else {
-					if mtu > 1450 {
-						return fmt.Errorf("Maximum MTU for a VXLAN FAN bridge is 1450")
-					}
-				}
 			}
 		}
 	}
@@ -529,15 +450,6 @@ func (n *bridge) Rename(newName string) error {
 		}
 	}
 
-	// Rename forkdns log file.
-	forkDNSLogPath := fmt.Sprintf("forkdns.%s.log", n.name)
-	if shared.PathExists(shared.LogPath(forkDNSLogPath)) {
-		err := os.Rename(forkDNSLogPath, shared.LogPath(fmt.Sprintf("forkdns.%s.log", newName)))
-		if err != nil {
-			return err
-		}
-	}
-
 	// Rename common steps.
 	err := n.common.rename(newName)
 	if err != nil {
@@ -618,12 +530,6 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		bridge.MTU = uint32(mtuInt)
 	} else if len(tunnels) > 0 {
 		bridge.MTU = 1400
-	} else if n.config["bridge.mode"] == "fan" {
-		if n.config["fan.type"] == "ipip" {
-			bridge.MTU = 1480
-		} else {
-			bridge.MTU = 1450
-		}
 	}
 
 	// Decide the MAC address of bridge interface.
@@ -637,7 +543,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		var seedNodeID int64
 
 		if n.checkClusterWideMACSafe(n.config) != nil {
-			// If not safe to use a cluster wide MAC or in in fan mode, then use cluster node's ID to
+			// If not safe to use a cluster wide MAC, then use cluster node's ID to
 			// generate a stable per-node & network derived random MAC.
 			seedNodeID = n.state.DB.Cluster.GetNodeID()
 		} else {
@@ -897,14 +803,14 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		return err
 	}
 
-	// Configure IPv4 firewall (includes fan).
-	if n.config["bridge.mode"] == "fan" || !shared.StringInSlice(n.config["ipv4.address"], []string{"", "none"}) {
+	// Configure IPv4 firewall.
+	if !shared.StringInSlice(n.config["ipv4.address"], []string{"", "none"}) {
 		if n.hasDHCPv4() && n.hasIPv4Firewall() {
 			fwOpts.FeaturesV4.ICMPDHCPDNSAccess = true
 		}
 
 		// Allow forwarding.
-		if n.config["bridge.mode"] == "fan" || shared.IsTrueOrEmpty(n.config["ipv4.routing"]) {
+		if shared.IsTrueOrEmpty(n.config["ipv4.routing"]) {
 			err = util.SysctlSet("net/ipv4/ip_forward", "1")
 			if err != nil {
 				return err
@@ -1224,197 +1130,6 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		n.applyBootRoutesV6(ctRoutes)
 	}
 
-	// Configure the fan.
-	dnsClustered := false
-	dnsClusteredAddress := ""
-	var overlaySubnet *net.IPNet
-	if n.config["bridge.mode"] == "fan" {
-		tunName := fmt.Sprintf("%s-fan", n.name)
-
-		// Parse the underlay.
-		underlay := n.config["fan.underlay_subnet"]
-		_, underlaySubnet, err := net.ParseCIDR(underlay)
-		if err != nil {
-			return fmt.Errorf("Failed parsing fan.underlay_subnet: %w", err)
-		}
-
-		// Parse the overlay.
-		overlay := n.config["fan.overlay_subnet"]
-		if overlay == "" {
-			overlay = "240.0.0.0/8"
-		}
-
-		_, overlaySubnet, err = net.ParseCIDR(overlay)
-		if err != nil {
-			return fmt.Errorf("Failed parsing fan.overlay_subnet: %w", err)
-		}
-
-		// Get the address.
-		fanAddress, devName, devAddr, err := n.fanAddress(underlaySubnet, overlaySubnet)
-		if err != nil {
-			return err
-		}
-
-		addr := strings.Split(fanAddress, "/")
-		if n.config["fan.type"] == "ipip" {
-			fanAddress = fmt.Sprintf("%s/24", addr[0])
-		}
-
-		// Update the MTU based on overlay device (if available).
-		fanMTU, err := GetDevMTU(devName)
-		if err == nil {
-			// Apply overhead.
-			if n.config["fan.type"] == "ipip" {
-				fanMTU = fanMTU - 20
-			} else {
-				fanMTU = fanMTU - 50
-			}
-
-			// Apply changes.
-			if fanMTU != bridge.MTU {
-				bridge.MTU = fanMTU
-				if n.config["bridge.driver"] != "openvswitch" {
-					mtuLink := &ip.Link{Name: fmt.Sprintf("%s-mtu", n.name)}
-					err = mtuLink.SetMTU(bridge.MTU)
-					if err != nil {
-						return err
-					}
-				}
-
-				err = bridge.SetMTU(bridge.MTU)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		// Parse the host subnet.
-		_, hostSubnet, err := net.ParseCIDR(fmt.Sprintf("%s/24", addr[0]))
-		if err != nil {
-			return fmt.Errorf("Failed parsing fan address: %w", err)
-		}
-
-		// Add the address.
-		ipAddr := &ip.Addr{
-			DevName: n.name,
-			Address: fanAddress,
-			Family:  ip.FamilyV4,
-		}
-
-		err = ipAddr.Add()
-		if err != nil {
-			return err
-		}
-
-		// Update the dnsmasq config.
-		expiry := "1h"
-		if n.config["ipv4.dhcp.expiry"] != "" {
-			expiry = n.config["ipv4.dhcp.expiry"]
-		}
-
-		dnsmasqCmd = append(dnsmasqCmd, []string{
-			fmt.Sprintf("--listen-address=%s", addr[0]),
-			"--dhcp-no-override", "--dhcp-authoritative",
-			fmt.Sprintf("--dhcp-option-force=26,%d", fanMTU),
-			fmt.Sprintf("--dhcp-leasefile=%s", shared.VarPath("networks", n.name, "dnsmasq.leases")),
-			fmt.Sprintf("--dhcp-hostsfile=%s", shared.VarPath("networks", n.name, "dnsmasq.hosts")),
-			"--dhcp-range", fmt.Sprintf("%s,%s,%s", dhcpalloc.GetIP(hostSubnet, 2).String(), dhcpalloc.GetIP(hostSubnet, -2).String(), expiry)}...)
-
-		// Setup the tunnel.
-		if n.config["fan.type"] == "ipip" {
-			r := &ip.Route{
-				DevName: "tunl0",
-				Family:  ip.FamilyV4,
-			}
-
-			err = r.Flush()
-			if err != nil {
-				return err
-			}
-
-			tunLink := &ip.Link{Name: "tunl0"}
-			err = tunLink.SetUp()
-			if err != nil {
-				return err
-			}
-
-			// Fails if the map is already set.
-			_ = tunLink.Change("ipip", fmt.Sprintf("%s:%s", overlay, underlay))
-
-			r = &ip.Route{
-				DevName: "tunl0",
-				Route:   overlay,
-				Src:     addr[0],
-				Proto:   "static",
-			}
-
-			err = r.Add()
-			if err != nil {
-				return err
-			}
-		} else {
-			vxlanID := fmt.Sprintf("%d", binary.BigEndian.Uint32(overlaySubnet.IP.To4())>>8)
-			vxlan := &ip.Vxlan{
-				Link:    ip.Link{Name: tunName},
-				VxlanID: vxlanID,
-				DevName: devName,
-				DstPort: "0",
-				Local:   devAddr,
-				FanMap:  fmt.Sprintf("%s:%s", overlay, underlay),
-			}
-
-			err = vxlan.Add()
-			if err != nil {
-				return err
-			}
-
-			err = AttachInterface(n.name, tunName)
-			if err != nil {
-				return err
-			}
-
-			err = vxlan.SetMTU(bridge.MTU)
-			if err != nil {
-				return err
-			}
-
-			err = vxlan.SetUp()
-			if err != nil {
-				return err
-			}
-
-			err = bridge.SetUp()
-			if err != nil {
-				return err
-			}
-		}
-
-		// Configure NAT.
-		if shared.IsTrue(n.config["ipv4.nat"]) {
-			fwOpts.SNATV4 = &firewallDrivers.SNATOpts{
-				SNATAddress: nil, // Use MASQUERADE mode.
-				Subnet:      overlaySubnet,
-			}
-
-			if n.config["ipv4.nat.order"] == "after" {
-				fwOpts.SNATV4.Append = true
-			}
-		}
-
-		// Setup clustered DNS.
-		localClusterAddress := n.state.LocalConfig.ClusterAddress()
-
-		// If clusterAddress is non-empty, this indicates the intention for this node to be
-		// part of a cluster and so we should ensure that dnsmasq and forkdns are started
-		// in cluster mode. Note: During initialisation the cluster may not actually be
-		// setup yet, but we want the DNS processes to be ready for when it is.
-		if localClusterAddress != "" {
-			dnsClustered = true
-		}
-
-		dnsClusteredAddress = strings.Split(fanAddress, "/")[0]
-	}
-
 	// Configure tunnels.
 	for _, tunnel := range tunnels {
 		getConfig := func(key string) string {
@@ -1534,13 +1249,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		return err
 	}
 
-	// Kill any existing dnsmasq and forkdns daemon for this network.
+	// Kill any existing dnsmasq daemon for this network.
 	err = dnsmasq.Kill(n.name, false)
-	if err != nil {
-		return err
-	}
-
-	err = n.killForkDNS()
 	if err != nil {
 		return err
 	}
@@ -1556,13 +1266,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		if n.config["dns.mode"] != "none" {
 			dnsmasqCmd = append(dnsmasqCmd, "-s", dnsDomain)
 			dnsmasqCmd = append(dnsmasqCmd, "--interface-name", fmt.Sprintf("_gateway.%s,%s", dnsDomain, n.name))
-
-			if dnsClustered {
-				dnsmasqCmd = append(dnsmasqCmd, "-S", fmt.Sprintf("/%s/%s#1053", dnsDomain, dnsClusteredAddress))
-				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--rev-server=%s,%s#1053", overlaySubnet, dnsClusteredAddress))
-			} else {
-				dnsmasqCmd = append(dnsmasqCmd, "-S", fmt.Sprintf("/%s/", dnsDomain))
-			}
+			dnsmasqCmd = append(dnsmasqCmd, "-S", fmt.Sprintf("/%s/", dnsDomain))
 		}
 
 		// Create a config file to contain additional config (and to prevent dnsmasq from reading /etc/dnsmasq.conf)
@@ -1653,30 +1357,6 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			return fmt.Errorf("Failed to save subprocess details: %s", err)
-		}
-
-		// Spawn DNS forwarder if needed (backgrounded to avoid deadlocks during cluster boot).
-		if dnsClustered {
-			// Create forkdns servers directory.
-			if !shared.PathExists(shared.VarPath("networks", n.name, ForkdnsServersListPath)) {
-				err = os.MkdirAll(shared.VarPath("networks", n.name, ForkdnsServersListPath), 0755)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Create forkdns servers.conf file if doesn't exist.
-			f, err := os.OpenFile(shared.VarPath("networks", n.name, ForkdnsServersListPath+"/"+ForkdnsServersListFile), os.O_RDONLY|os.O_CREATE, 0666)
-			if err != nil {
-				return err
-			}
-
-			_ = f.Close()
-
-			err = n.spawnForkDNS(dnsClusteredAddress)
-			if err != nil {
-				return err
-			}
 		}
 	} else {
 		// Clean up old dnsmasq config if exists and we are not starting dnsmasq.
@@ -1784,13 +1464,8 @@ func (n *bridge) Stop() error {
 		}
 	}
 
-	// Kill any existing dnsmasq and forkdns daemon for this network
+	// Kill any existing dnsmasq daemon for this network
 	err = dnsmasq.Kill(n.name, false)
-	if err != nil {
-		return err
-	}
-
-	err = n.killForkDNS()
 	if err != nil {
 		return err
 	}
@@ -1911,119 +1586,6 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 	return nil
 }
 
-func (n *bridge) spawnForkDNS(listenAddress string) error {
-	// Setup the dnsmasq domain
-	dnsDomain := n.config["dns.domain"]
-	if dnsDomain == "" {
-		dnsDomain = "incus"
-	}
-
-	// Spawn the daemon using subprocess
-	command := n.state.OS.ExecPath
-	forkdnsargs := []string{"forkdns",
-		fmt.Sprintf("%s:1053", listenAddress),
-		dnsDomain,
-		n.name}
-
-	logPath := shared.LogPath(fmt.Sprintf("forkdns.%s.log", n.name))
-
-	p, err := subprocess.NewProcess(command, forkdnsargs, logPath, logPath)
-	if err != nil {
-		return fmt.Errorf("Failed to create subprocess: %s", err)
-	}
-
-	// Drop privileges.
-	p.SetCreds(n.state.OS.UnprivUID, n.state.OS.UnprivGID)
-
-	// Apply AppArmor profile.
-	p.SetApparmor(apparmor.ForkdnsProfileName(n))
-
-	err = p.Start(context.Background())
-	if err != nil {
-		return fmt.Errorf("Failed to run: %s %s: %w", command, strings.Join(forkdnsargs, " "), err)
-	}
-
-	err = p.Save(shared.VarPath("networks", n.name, "forkdns.pid"))
-	if err != nil {
-		// Kill Process if started, but could not save the file
-		err2 := p.Stop()
-		if err != nil {
-			return fmt.Errorf("Could not kill subprocess while handling saving error: %s: %s", err, err2)
-		}
-
-		return fmt.Errorf("Failed to save subprocess details: %s", err)
-	}
-
-	return nil
-}
-
-// HandleHeartbeat refreshes forkdns servers. Retrieves the IPv4 address of each cluster node (excluding ourselves)
-// for this network. It then updates the forkdns server list file if there are changes.
-func (n *bridge) HandleHeartbeat(heartbeatData *cluster.APIHeartbeat) error {
-	// Make sure forkdns has been setup.
-	if !shared.PathExists(shared.VarPath("networks", n.name, "forkdns.pid")) {
-		return nil
-	}
-
-	addresses := []string{}
-	localClusterAddress := n.state.LocalConfig.ClusterAddress()
-
-	n.logger.Info("Refreshing forkdns peers")
-
-	networkCert := n.state.Endpoints.NetworkCert()
-	for _, node := range heartbeatData.Members {
-		if node.Address == localClusterAddress {
-			// No need to query ourselves.
-			continue
-		}
-
-		if !node.Online {
-			n.logger.Warn("Excluding offline member from DNS peers refresh", logger.Ctx{"address": node.Address, "ID": node.ID, "raftID": node.RaftID, "lastHeartbeat": node.LastHeartbeat})
-			continue
-		}
-
-		client, err := cluster.Connect(node.Address, networkCert, n.state.ServerCert(), nil, true)
-		if err != nil {
-			return err
-		}
-
-		state, err := client.GetNetworkState(n.name)
-		if err != nil {
-			return err
-		}
-
-		for _, addr := range state.Addresses {
-			// Only get IPv4 addresses of nodes on network.
-			if addr.Family != "inet" || addr.Scope != "global" {
-				continue
-			}
-
-			addresses = append(addresses, addr.Address)
-			break
-		}
-	}
-
-	// Compare current stored list to retrieved list and see if we need to update.
-	curList, err := ForkdnsServersList(n.name)
-	if err != nil {
-		// Only warn here, but continue on to regenerate the servers list from cluster info.
-		n.logger.Warn("Failed to load existing forkdns server list", logger.Ctx{"err": err})
-	}
-
-	// If current list is same as cluster list, nothing to do.
-	if err == nil && reflect.DeepEqual(curList, addresses) {
-		return nil
-	}
-
-	err = n.updateForkdnsServersFile(addresses)
-	if err != nil {
-		return err
-	}
-
-	n.logger.Info("Updated forkdns server list", logger.Ctx{"nodes": addresses})
-	return nil
-}
-
 func (n *bridge) getTunnels() []string {
 	tunnels := []string{}
 
@@ -2107,153 +1669,10 @@ func (n *bridge) applyBootRoutesV6(routes []string) {
 	}
 }
 
-func (n *bridge) fanAddress(underlay *net.IPNet, overlay *net.IPNet) (string, string, string, error) {
-	// Quick checks.
-	underlaySize, _ := underlay.Mask.Size()
-	if underlaySize != 16 && underlaySize != 24 {
-		return "", "", "", fmt.Errorf("Only /16 or /24 underlays are supported at this time")
-	}
-
-	overlaySize, _ := overlay.Mask.Size()
-	if overlaySize != 8 && overlaySize != 16 {
-		return "", "", "", fmt.Errorf("Only /8 or /16 overlays are supported at this time")
-	}
-
-	if overlaySize+(32-underlaySize)+8 > 32 {
-		return "", "", "", fmt.Errorf("Underlay or overlay networks too large to accommodate the FAN")
-	}
-
-	// Get the IP
-	ip, dev, err := n.addressForSubnet(underlay)
-	if err != nil {
-		return "", "", "", err
-	}
-
-	ipStr := ip.String()
-
-	// Force into IPv4 format
-	ipBytes := ip.To4()
-	if ipBytes == nil {
-		return "", "", "", fmt.Errorf("Invalid IPv4: %s", ip)
-	}
-
-	// Compute the IP
-	ipBytes[0] = overlay.IP[0]
-	if overlaySize == 16 {
-		ipBytes[1] = overlay.IP[1]
-		ipBytes[2] = ipBytes[3]
-	} else if underlaySize == 24 {
-		ipBytes[1] = ipBytes[3]
-		ipBytes[2] = 0
-	} else if underlaySize == 16 {
-		ipBytes[1] = ipBytes[2]
-		ipBytes[2] = ipBytes[3]
-	}
-
-	ipBytes[3] = 1
-
-	return fmt.Sprintf("%s/%d", ipBytes.String(), overlaySize), dev, ipStr, err
-}
-
-func (n *bridge) addressForSubnet(subnet *net.IPNet) (net.IP, string, error) {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return net.IP{}, "", err
-	}
-
-	for _, iface := range ifaces {
-		// Skip addresses on lo interface in case VIPs are being used on that interface that are part of
-		// the underlay subnet as is unlikely to be the actual intended underlay subnet interface.
-		if iface.Name == "lo" {
-			continue
-		}
-
-		addrs, err := iface.Addrs()
-		if err != nil {
-			continue
-		}
-
-		for _, addr := range addrs {
-			ip, _, err := net.ParseCIDR(addr.String())
-			if err != nil {
-				continue
-			}
-
-			if subnet.Contains(ip) {
-				return ip, iface.Name, nil
-			}
-		}
-	}
-
-	return net.IP{}, "", fmt.Errorf("No address found in subnet")
-}
-
-func (n *bridge) killForkDNS() error {
-	// Check if we have a running forkdns at all
-	pidPath := shared.VarPath("networks", n.name, "forkdns.pid")
-
-	// If the pid file doesn't exist, there is no process to kill.
-	if !shared.PathExists(pidPath) {
-		return nil
-	}
-
-	p, err := subprocess.ImportProcess(pidPath)
-	if err != nil {
-		return fmt.Errorf("Could not read pid file: %s", err)
-	}
-
-	err = p.Stop()
-	if err != nil && err != subprocess.ErrNotRunning {
-		return fmt.Errorf("Unable to kill dnsmasq: %s", err)
-	}
-
-	return nil
-}
-
-// updateForkdnsServersFile takes a list of node addresses and writes them atomically to
-// the forkdns.servers file ready for forkdns to notice and re-apply its config.
-func (n *bridge) updateForkdnsServersFile(addresses []string) error {
-	// We don't want to race with ourselves here
-	forkdnsServersLock.Lock()
-	defer forkdnsServersLock.Unlock()
-
-	permName := shared.VarPath("networks", n.name, ForkdnsServersListPath+"/"+ForkdnsServersListFile)
-	tmpName := permName + ".tmp"
-
-	// Open tmp file and truncate
-	tmpFile, err := os.Create(tmpName)
-	if err != nil {
-		return err
-	}
-
-	defer func() { _ = tmpFile.Close() }()
-
-	for _, address := range addresses {
-		_, err := tmpFile.WriteString(address + "\n")
-		if err != nil {
-			return err
-		}
-	}
-
-	err = tmpFile.Close()
-	if err != nil {
-		return err
-	}
-
-	// Atomically rename finished file into permanent location so forkdns can pick it up.
-	err = os.Rename(tmpName, permName)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // hasIPv4Firewall indicates whether the network has IPv4 firewall enabled.
 func (n *bridge) hasIPv4Firewall() bool {
-	// IPv4 firewall is only enabled if there is a bridge ipv4.address or fan mode, and ipv4.firewall enabled.
-	// When using fan bridge.mode, there can be an empty ipv4.address, so we assume it is active.
-	if (n.config["bridge.mode"] == "fan" || !shared.StringInSlice(n.config["ipv4.address"], []string{"", "none"})) && shared.IsTrueOrEmpty(n.config["ipv4.firewall"]) {
+	// IPv4 firewall is only enabled if there is a bridge ipv4.address and ipv4.firewall enabled.
+	if !shared.StringInSlice(n.config["ipv4.address"], []string{"", "none"}) && shared.IsTrueOrEmpty(n.config["ipv4.firewall"]) {
 		return true
 	}
 
@@ -2289,34 +1708,7 @@ func (n *bridge) DHCPv4Subnet() *net.IPNet {
 		return nil
 	}
 
-	// Fan mode. Extract DHCP subnet from fan bridge address. Only detectable once network has started.
-	// But if there is no address on the fan bridge then DHCP won't work anyway.
-	if n.config["bridge.mode"] == "fan" {
-		iface, err := net.InterfaceByName(n.name)
-		if err != nil {
-			return nil
-		}
-
-		addrs, err := iface.Addrs()
-		if err != nil {
-			return nil
-		}
-
-		for _, addr := range addrs {
-			ip, subnet, err := net.ParseCIDR(addr.String())
-			if err != nil {
-				continue
-			}
-
-			if ip != nil && err == nil && ip.To4() != nil && ip.IsGlobalUnicast() {
-				return subnet // Use first IPv4 unicast address on host for DHCP subnet.
-			}
-		}
-
-		return nil // No addresses found, means DHCP must be disabled.
-	}
-
-	// Non-fan mode. Return configured bridge subnet directly.
+	// Return configured bridge subnet directly.
 	_, subnet, err := net.ParseCIDR(n.config["ipv4.address"])
 	if err != nil {
 		return nil
@@ -3131,5 +2523,5 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 
 // UsesDNSMasq indicates if network's config indicates if it needs to use dnsmasq.
 func (n *bridge) UsesDNSMasq() bool {
-	return n.config["bridge.mode"] == "fan" || !shared.StringInSlice(n.config["ipv4.address"], []string{"", "none"}) || !shared.StringInSlice(n.config["ipv6.address"], []string{"", "none"})
+	return !shared.StringInSlice(n.config["ipv4.address"], []string{"", "none"}) || !shared.StringInSlice(n.config["ipv6.address"], []string{"", "none"})
 }

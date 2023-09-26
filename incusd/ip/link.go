@@ -367,16 +367,6 @@ func (l *Link) GetVFInfo(vfID int) (VirtFuncInfo, error) {
 	return vf, nil
 }
 
-// Change sets map for link device.
-func (l *Link) Change(devType string, fanMap string) error {
-	_, err := subprocess.RunCommand("ip", "link", "change", "dev", l.Name, "type", devType, "fan-map", fanMap)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Delete deletes the link device.
 func (l *Link) Delete() error {
 	_, err := subprocess.RunCommand("ip", "link", "delete", "dev", l.Name)

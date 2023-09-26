@@ -375,7 +375,7 @@ func clusterPutBootstrap(d *Daemon, r *http.Request, req api.ClusterPut) respons
 			return err
 		}
 
-		// Restart the networks (to pickup forkdns and the like).
+		// Restart the networks.
 		err = networkStartup(s)
 		if err != nil {
 			return err

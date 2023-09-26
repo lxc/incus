@@ -537,32 +537,6 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 	return nil
 }
 
-// ForkdnsServersList reads the server list file and returns the list as a slice.
-func ForkdnsServersList(networkName string) ([]string, error) {
-	servers := []string{}
-	file, err := os.Open(shared.VarPath("networks", networkName, ForkdnsServersListPath, "/", ForkdnsServersListFile))
-	if err != nil {
-		return servers, err
-	}
-
-	defer func() { _ = file.Close() }()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		fields := strings.Fields(scanner.Text())
-		if len(fields) > 0 {
-			servers = append(servers, fields[0])
-		}
-	}
-
-	err = scanner.Err()
-	if err != nil {
-		return servers, err
-	}
-
-	return servers, nil
-}
-
 func randomSubnetV4() (string, error) {
 	for i := 0; i < 100; i++ {
 		cidr := fmt.Sprintf("10.%d.%d.1/24", rand.Intn(255), rand.Intn(255))

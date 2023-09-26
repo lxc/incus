@@ -67,7 +67,7 @@ type APIHeartbeat struct {
 
 	// Indicates if heartbeat contains a fresh set of node states.
 	// This can be used to indicate to the receiving node that the state is fresh enough to
-	// trigger node refresh activies (such as forkdns).
+	// trigger node refresh activies.
 	FullStateList bool
 }
 
