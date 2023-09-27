@@ -1,6 +1,10 @@
 package cluster
 
 import (
+	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/lxc/incus/internal/version"
 )
 
@@ -80,4 +84,59 @@ func init() {
 	for code, name := range EntityNames {
 		EntityTypes[name] = code
 	}
+}
+
+// URLToEntityType parses a raw URL string and returns the entity type, the project, and the path arguments. The
+// returned project is set to "default" if it is not present (unless the entity type is TypeProject, in which case it is
+// set to the value of the path parameter). An error is returned if the URL is not recognised.
+func URLToEntityType(rawURL string) (int, string, []string, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return -1, "", nil, fmt.Errorf("Failed to parse url %q into an entity type: %w", rawURL, err)
+	}
+
+	// We need to space separate the path because fmt.Sscanf uses this as a delimiter.
+	spaceSeparatedURLPath := strings.Replace(u.Path, "/", " / ", -1)
+	for entityType, entityURI := range EntityURIs {
+		entityPath, _, _ := strings.Cut(entityURI, "?")
+
+		// Skip if we don't have the same number of slashes.
+		if strings.Count(entityPath, "/") != strings.Count(u.Path, "/") {
+			continue
+		}
+
+		spaceSeparatedEntityPath := strings.Replace(entityPath, "/", " / ", -1)
+
+		// Make an []any for the number of expected path arguments and set each value in the slice to a *string.
+		nPathArgs := strings.Count(spaceSeparatedEntityPath, "%s")
+		pathArgsAny := make([]any, 0, nPathArgs)
+		for i := 0; i < nPathArgs; i++ {
+			var pathComponentStr string
+			pathArgsAny = append(pathArgsAny, &pathComponentStr)
+		}
+
+		// Scan the given URL into the entity URL. If we found all the expected path arguments and there
+		// are no errors we have a match.
+		nFound, err := fmt.Sscanf(spaceSeparatedURLPath, spaceSeparatedEntityPath, pathArgsAny...)
+		if nFound == nPathArgs && err == nil {
+			pathArgs := make([]string, 0, nPathArgs)
+			for _, pathArgAny := range pathArgsAny {
+				pathArgPtr := pathArgAny.(*string)
+				pathArgs = append(pathArgs, *pathArgPtr)
+			}
+
+			projectName := u.Query().Get("project")
+			if projectName == "" {
+				projectName = "default"
+			}
+
+			if entityType == TypeProject {
+				return TypeProject, pathArgs[0], pathArgs, nil
+			}
+
+			return entityType, projectName, pathArgs, nil
+		}
+	}
+
+	return -1, "", nil, fmt.Errorf("Unknown entity URL %q", u.String())
 }
