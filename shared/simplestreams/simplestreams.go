@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -98,7 +99,7 @@ func (s *SimpleStreams) cachedDownload(path string) ([]byte, error) {
 	}
 
 	// Download from the source
-	uri, err := shared.JoinUrls(s.url, path)
+	uri, err := url.JoinPath(s.url, path)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func (s *SimpleStreams) parseStream() (*Stream, error) {
 		return nil, err
 	}
 
-	pathURL, _ := shared.JoinUrls(s.url, path)
+	pathURL, _ := url.JoinPath(s.url, path)
 
 	// Parse the idnex
 	stream := Stream{}
