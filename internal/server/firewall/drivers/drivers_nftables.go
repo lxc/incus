@@ -186,7 +186,7 @@ func (d Nftables) nftParseRuleset() ([]nftGenericItem, error) {
 	return items, nil
 }
 
-// GetVersion returns the version of dnsmasq.
+// GetVersion returns the version of nftables.
 func (d Nftables) hostVersion() (*version.DottedVersion, error) {
 	output, err := subprocess.RunCommandCLocale("nft", "--version")
 	if err != nil {
