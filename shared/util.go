@@ -963,17 +963,6 @@ func GetExpiry(refDate time.Time, s string) (time.Time, error) {
 	return t, nil
 }
 
-// JoinUrlPath return the join of the input urls/paths sanitized.
-func JoinUrls(baseUrl, p string) (string, error) {
-	u, err := url.Parse(baseUrl)
-	if err != nil {
-		return "", err
-	}
-
-	u.Path = path.Join(u.Path, p)
-	return u.String(), nil
-}
-
 // SplitNTrimSpace returns result of strings.SplitN() and then strings.TrimSpace() on each element.
 // Accepts nilIfEmpty argument which if true, will return nil slice if s is empty (after trimming space).
 func SplitNTrimSpace(s string, sep string, n int, nilIfEmpty bool) []string {

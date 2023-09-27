@@ -22,22 +22,6 @@ func TestURLEncode(t *testing.T) {
 	}
 }
 
-func TestUrlsJoin(t *testing.T) {
-	baseUrl := "http://images.linuxcontainers.org/streams/v1/"
-	path := "../../image/root.tar.xz"
-
-	res, err := JoinUrls(baseUrl, path)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	expected := "http://images.linuxcontainers.org/image/root.tar.xz"
-	if res != expected {
-		t.Error(fmt.Errorf("'%s' != '%s'", res, expected))
-	}
-}
-
 func TestFileCopy(t *testing.T) {
 	helloWorld := []byte("hello world\n")
 	source, err := os.CreateTemp("", "")
