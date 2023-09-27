@@ -24,6 +24,7 @@ const (
 	TypeStorageVolumeSnapshot = 15
 	TypeWarning               = 16
 	TypeClusterGroup          = 17
+	TypeStorageBucket         = 18
 )
 
 // EntityNames associates an entity code to its name.
@@ -44,6 +45,7 @@ var EntityNames = map[int]string{
 	TypeStorageVolume:         "storage volume",
 	TypeStorageVolumeBackup:   "storage volume backup",
 	TypeStorageVolumeSnapshot: "storage volume snapshot",
+	TypeStorageBucket:         "storage bucket",
 	TypeWarning:               "warning",
 	TypeClusterGroup:          "cluster group",
 }
@@ -69,6 +71,7 @@ var EntityURIs = map[int]string{
 	TypeStorageVolume:         "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s?project=%s",
 	TypeStorageVolumeBackup:   "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s/backups/%s?project=%s",
 	TypeStorageVolumeSnapshot: "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s/snapshots/%s?project=%s",
+	TypeStorageBucket:         "/" + version.APIVersion + "/storage-pools/%s/buckets/%s?project=%s",
 	TypeWarning:               "/" + version.APIVersion + "/warnings/%s",
 	TypeClusterGroup:          "/" + version.APIVersion + "/cluster/groups/%s",
 }
