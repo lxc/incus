@@ -96,7 +96,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 	// Download function
 	download := func(path string, filename string, hash string, target io.WriteSeeker) (int64, error) {
 		// Try over http
-		url, err := shared.JoinUrls(fmt.Sprintf("http://%s", strings.TrimPrefix(r.httpHost, "https://")), path)
+		url, err := url.JoinPath(fmt.Sprintf("http://%s", strings.TrimPrefix(r.httpHost, "https://")), path)
 		if err != nil {
 			return -1, err
 		}
@@ -109,7 +109,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 			}
 
 			// Try over https
-			url, err := shared.JoinUrls(r.httpHost, path)
+			url, err := url.JoinPath(r.httpHost, path)
 			if err != nil {
 				return -1, err
 			}
