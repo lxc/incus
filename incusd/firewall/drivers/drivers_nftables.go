@@ -14,6 +14,7 @@ import (
 	"github.com/pborman/uuid"
 
 	"github.com/lxc/incus/incusd/project"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
@@ -42,7 +43,7 @@ func (d Nftables) String() string {
 // Compat returns whether the driver backend is in use, and any host compatibility errors.
 func (d Nftables) Compat() (bool, error) {
 	// Get the kernel version.
-	uname, err := shared.Uname()
+	uname, err := linux.Uname()
 	if err != nil {
 		return false, err
 	}

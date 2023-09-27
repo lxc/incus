@@ -94,7 +94,7 @@ type OS struct {
 	// OS info
 	ReleaseInfo   map[string]string
 	KernelVersion version.DottedVersion
-	Uname         *shared.Utsname
+	Uname         *linux.Utsname
 	BootTime      time.Time
 }
 
@@ -182,7 +182,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 
 	s.ReleaseInfo = osInfo
 
-	uname, err := shared.Uname()
+	uname, err := linux.Uname()
 	if err != nil {
 		return nil, err
 	}
