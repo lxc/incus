@@ -13,9 +13,9 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/response"
 	localvsock "github.com/lxc/incus/incusd/vsock"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	agentAPI "github.com/lxc/incus/shared/api/agent"
 	"github.com/lxc/incus/shared/logger"
@@ -49,7 +49,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 		AuthMethods:   []string{"tls"},
 	}
 
-	uname, err := shared.Uname()
+	uname, err := linux.Uname()
 	if err != nil {
 		return response.InternalError(err)
 	}
