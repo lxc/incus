@@ -78,6 +78,7 @@ var patches = []patch{
 	{name: "storage_move_custom_iso_block_volumes", stage: patchPostDaemonStorage, run: patchStorageRenameCustomISOBlockVolumes},
 	{name: "zfs_set_content_type_user_property", stage: patchPostDaemonStorage, run: patchZfsSetContentTypeUserProperty},
 	{name: "snapshots_rename", stage: patchPreDaemonStorage, run: patchSnapshotsRename},
+	{name: "storage_zfs_unset_invalid_block_settings", stage: patchPostDaemonStorage, run: patchStorageZfsUnsetInvalidBlockSettings},
 }
 
 type patch struct {
@@ -874,6 +875,96 @@ func patchSnapshotsRename(name string, d *Daemon) error {
 	os.Remove(internalUtil.VarPath("containers-snapshots"))
 
 	return os.Rename(internalUtil.VarPath("snapshots"), internalUtil.VarPath("containers-snapshots"))
+}
+
+// patchStorageZfsUnsetInvalidBlockSettings removes invalid block settings from volumes.
+func patchStorageZfsUnsetInvalidBlockSettings(_ string, d *Daemon) error {
+	s := d.State()
+
+	// Get all storage pool names.
+	pools, err := s.DB.Cluster.GetStoragePoolNames()
+	if err != nil {
+		// Skip the rest of the patch if no storage pools were found.
+		if api.StatusErrorCheck(err, http.StatusNotFound) {
+			return nil
+		}
+
+		return fmt.Errorf("Failed getting storage pool names: %w", err)
+	}
+
+	volTypeCustom := db.StoragePoolVolumeTypeCustom
+	volTypeVM := db.StoragePoolVolumeTypeVM
+
+	poolIDNameMap := make(map[int64]string, 0)
+	poolVolumes := make(map[int64][]*db.StorageVolume, 0)
+
+	err = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		for _, pool := range pools {
+			// Get storage pool ID.
+			poolID, err := tx.GetStoragePoolID(ctx, pool)
+			if err != nil {
+				return fmt.Errorf("Failed getting storage pool ID of pool %q: %w", pool, err)
+			}
+
+			driverName, err := tx.GetStoragePoolDriver(ctx, poolID)
+			if err != nil {
+				return fmt.Errorf("Failed getting storage pool driver of pool %q: %w", pool, err)
+			}
+
+			if driverName != "zfs" {
+				continue
+			}
+
+			// Get the pool's custom storage volumes.
+			volumes, err := tx.GetStoragePoolVolumes(ctx, poolID, false, db.StorageVolumeFilter{Type: &volTypeCustom}, db.StorageVolumeFilter{Type: &volTypeVM})
+			if err != nil {
+				return fmt.Errorf("Failed getting custom storage volumes of pool %q: %w", pool, err)
+			}
+
+			if poolVolumes[poolID] == nil {
+				poolVolumes[poolID] = []*db.StorageVolume{}
+			}
+
+			poolIDNameMap[poolID] = pool
+			poolVolumes[poolID] = append(poolVolumes[poolID], volumes...)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	var volType int
+
+	for pool, volumes := range poolVolumes {
+		for _, vol := range volumes {
+			config := vol.Config
+
+			if util.IsTrue(config["zfs.block_mode"]) {
+				continue
+			}
+
+			delete(config, "block.filesystem")
+			delete(config, "block.mount_options")
+
+			if vol.Type == db.StoragePoolVolumeTypeNameVM {
+				volType = volTypeVM
+			} else if vol.Type == db.StoragePoolVolumeTypeNameCustom {
+				volType = volTypeCustom
+			} else {
+				// Should not happen.
+				continue
+			}
+
+			err = s.DB.Cluster.UpdateStoragePoolVolume(vol.Project, vol.Name, volType, pool, vol.Description, config)
+			if err != nil {
+				return fmt.Errorf("Failed updating volume %q in project %q on pool %q: %w", vol.Name, vol.Project, poolIDNameMap[pool], err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Patches end here
