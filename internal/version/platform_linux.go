@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/osarch"
 )
@@ -14,7 +15,7 @@ func getPlatformVersionStrings() []string {
 	versions := []string{}
 
 	// Add kernel version
-	uname, err := shared.Uname()
+	uname, err := linux.Uname()
 	if err != nil {
 		return versions
 	}
