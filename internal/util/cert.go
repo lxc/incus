@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/lxc/incus/shared"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // LoadCert reads the server certificate from the given var dir.
@@ -15,7 +15,7 @@ import (
 // If neither a server or cluster certfificate exists, a new server certificate will be generated.
 func LoadCert(dir string) (*localtls.CertInfo, error) {
 	prefix := "server"
-	if shared.PathExists(filepath.Join(dir, "cluster.crt")) {
+	if util.PathExists(filepath.Join(dir, "cluster.crt")) {
 		prefix = "cluster"
 	}
 
