@@ -188,11 +188,7 @@ func main() {
 	// version sub-command
 	versionCmd := cmdVersion{global: &globalCmd}
 	app.AddCommand(versionCmd.Command())
-
-	// waitready sub-command
-	waitreadyCmd := cmdWaitready{global: &globalCmd}
-	app.AddCommand(waitreadyCmd.Command())
-
+	
 	// cluster sub-command
 	clusterCmd := cmdCluster{global: &globalCmd}
 	app.AddCommand(clusterCmd.Command())

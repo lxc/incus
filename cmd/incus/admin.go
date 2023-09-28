@@ -28,5 +28,9 @@ func (c *cmdAdmin) Command() *cobra.Command {
 	shutdownCmd := cmdAdminShutdown{global: c.global}
 	cmd.AddCommand(shutdownCmd.Command())
 
+	// waitready sub-command
+	adminWaitreadyCmd := cmdAdminWaitready{global: c.global}
+	cmd.AddCommand(adminWaitreadyCmd.Command())
+
 	return cmd
 }
