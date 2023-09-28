@@ -4,13 +4,12 @@ package linux
 
 import (
 	"github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
 
 // AvailableStorageDrivers returns a list of storage drivers that are available.
-func AvailableStorageDrivers(supportedDrivers []api.ServerStorageDriverInfo, poolType util.PoolType) []string {
-	backingFs, err := DetectFilesystem(shared.VarPath())
+func AvailableStorageDrivers(path string, supportedDrivers []api.ServerStorageDriverInfo, poolType util.PoolType) []string {
+	backingFs, err := DetectFilesystem(path)
 	if err != nil {
 		backingFs = "dir"
 	}
@@ -37,7 +36,7 @@ func AvailableStorageDrivers(supportedDrivers []api.ServerStorageDriverInfo, poo
 		}
 
 		// btrfs can work in user namespaces too. (If source=/some/path/on/btrfs is used.)
-		if shared.RunningInUserNS() && (backingFs != "btrfs" || driver.Name != "btrfs") {
+		if RunningInUserNS() && (backingFs != "btrfs" || driver.Name != "btrfs") {
 			continue
 		}
 

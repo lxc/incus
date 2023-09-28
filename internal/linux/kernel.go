@@ -8,14 +8,14 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // LoadModule loads the kernel module with the given name, by invoking
 // modprobe. This respects any modprobe configuration on the system.
 func LoadModule(module string) error {
-	if shared.PathExists(fmt.Sprintf("/sys/module/%s", module)) {
+	if util.PathExists(fmt.Sprintf("/sys/module/%s", module)) {
 		return nil
 	}
 
