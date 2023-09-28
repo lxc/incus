@@ -24,5 +24,9 @@ func (c *cmdAdmin) Command() *cobra.Command {
 	adminInitCmd := cmdAdminInit{global: c.global}
 	cmd.AddCommand(adminInitCmd.Command())
 
+	// waitready sub-command
+	adminWaitreadyCmd := cmdAdminWaitready{global: c.global}
+	cmd.AddCommand(adminWaitreadyCmd.Command())
+
 	return cmd
 }

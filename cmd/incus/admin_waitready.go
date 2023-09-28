@@ -10,13 +10,13 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
-type cmdWaitready struct {
+type cmdAdminWaitready struct {
 	global *cmdGlobal
 
 	flagTimeout int
 }
 
-func (c *cmdWaitready) Command() *cobra.Command {
+func (c *cmdAdminWaitready) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "waitready"
 	cmd.Short = "Wait for the daemon to be ready to process requests"
@@ -33,7 +33,7 @@ func (c *cmdWaitready) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdWaitready) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminWaitready) Run(cmd *cobra.Command, args []string) error {
 	finger := make(chan error, 1)
 	var errLast error
 	go func() {
