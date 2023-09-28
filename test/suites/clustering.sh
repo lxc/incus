@@ -267,7 +267,7 @@ test_clustering_membership() {
   # Shutdown a database node, and wait a few seconds so it will be
   # detected as down.
   INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.offline_threshold 11
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
   sleep 12
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster list
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster show node3 | grep -q "status: Offline"
@@ -347,13 +347,13 @@ test_clustering_membership() {
   # Unset join_token_expiry which will set it to the default value of 3h
   INCUS_DIR="${INCUS_ONE_DIR}" incus config unset cluster.join_token_expiry
 
-  INCUS_DIR="${INCUS_NINE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_EIGHT_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_SIX_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_FIVE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_NINE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_EIGHT_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_SIX_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_FIVE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_NINE_DIR}/unix.socket"
   rm -f "${INCUS_EIGHT_DIR}/unix.socket"
@@ -530,7 +530,7 @@ test_clustering_containers() {
   # Shutdown node 2, wait for it to be considered offline, and list
   # containers.
   INCUS_DIR="${INCUS_THREE_DIR}" incus config set cluster.offline_threshold 11
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
   sleep 12
   INCUS_DIR="${INCUS_ONE_DIR}" incus list | grep foo | grep -q ERROR
 
@@ -548,8 +548,8 @@ test_clustering_containers() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus stop egg --force
   INCUS_DIR="${INCUS_ONE_DIR}" incus stop bar --force
 
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -790,7 +790,7 @@ test_clustering_storage() {
 
     # Shutdown node 3, and wait for it to be considered offline.
     INCUS_DIR="${INCUS_THREE_DIR}" incus config set cluster.offline_threshold 11
-    INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
+    INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
     sleep 12
 
     # Move the container back to node2, even if node3 is offline
@@ -911,8 +911,8 @@ test_clustering_storage() {
   printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" incus profile edit default
   INCUS_DIR="${INCUS_TWO_DIR}" incus storage delete data
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -992,7 +992,7 @@ test_clustering_storage_single_node() {
 
   printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" incus profile edit default
   INCUS_DIR="${INCUS_ONE_DIR}" incus storage delete data
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
 
@@ -1187,8 +1187,8 @@ test_clustering_network() {
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus project delete foo
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1281,9 +1281,9 @@ test_clustering_upgrade() {
   # The cluster is again operational
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "OFFLINE" || false
 
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -1339,7 +1339,7 @@ test_clustering_upgrade_large() {
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "OFFLINE" || false
 
   for i in $(seq "${N}" -1 1); do
-    INCUS_DIR="${INCUS_CLUSTER_DIR}/${i}" incusd shutdown
+    INCUS_DIR="${INCUS_CLUSTER_DIR}/${i}" incus admin shutdown
   done
   sleep 0.5
   for i in $(seq "${N}"); do
@@ -1393,8 +1393,8 @@ test_clustering_publish() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus publish foo/backup --alias=foo-backup-image
   INCUS_DIR="${INCUS_ONE_DIR}" incus image show foo-backup-image | grep -q "public: false"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1467,8 +1467,8 @@ EOF
   INCUS_DIR="${INCUS_TWO_DIR}" incus stop c1 --force
   INCUS_DIR="${INCUS_ONE_DIR}" incus stop c2 --force
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1503,7 +1503,7 @@ test_clustering_update_cert() {
   cp "${INCUS_ONE_DIR}/cluster.key" "${key_path}"
 
   # Tear down the instance
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   teardown_clustering_netns
@@ -1546,8 +1546,8 @@ test_clustering_update_cert() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus info --target node2 | grep -q "server_name: node2"
   INCUS_DIR="${INCUS_TWO_DIR}" incus info --target node1 | grep -q "server_name: node1"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1582,7 +1582,7 @@ test_clustering_update_cert_reversion() {
   cp "${INCUS_ONE_DIR}/cluster.key" "${key_path}"
 
   # Tear down the instance
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   teardown_clustering_netns
@@ -1621,7 +1621,7 @@ test_clustering_update_cert_reversion() {
   spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
   # Shutdown third node
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   kill_incus "${INCUS_THREE_DIR}"
@@ -1640,8 +1640,8 @@ test_clustering_update_cert_reversion() {
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus warning list | grep -q "Unable to update cluster certificate"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1681,8 +1681,8 @@ test_clustering_join_api() {
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "message: Fully operational"
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1737,10 +1737,10 @@ test_clustering_shutdown_nodes() {
   daemon_pid2=$(INCUS_DIR="${INCUS_TWO_DIR}" incus info | awk '/server_pid/{print $2}')
   daemon_pid3=$(INCUS_DIR="${INCUS_THREE_DIR}" incus info | awk '/server_pid/{print $2}')
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
   wait "${daemon_pid2}"
 
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
   wait "${daemon_pid3}"
 
   # Wait for raft election to take place and become aware that quorum has been lost (should take 3-6s).
@@ -1749,7 +1749,7 @@ test_clustering_shutdown_nodes() {
   # Make sure the database is not available to the first node
   ! INCUS_DIR="${INCUS_ONE_DIR}" timeout -k 5 5 incus cluster ls || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
 
   # Wait for Incus to terminate, otherwise the db will not be empty, and the
   # cleanup code will fail
@@ -1818,8 +1818,8 @@ test_clustering_projects() {
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus project switch default
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -1895,8 +1895,8 @@ test_clustering_address() {
 
   INCUS_DIR="${INCUS_TWO_DIR}" incus delete c1
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"
@@ -2057,9 +2057,9 @@ test_clustering_image_replication() {
   [ ! -f "${INCUS_TWO_DIR}/images/${fingerprint}" ] || false
   [ ! -f "${INCUS_THREE_DIR}/images/${fingerprint}" ] || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2119,9 +2119,9 @@ test_clustering_recover() {
   ! INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster recover-from-quorum-loss || false
 
   # Shutdown all nodes.
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
 
   # Now recover the first node and restart it.
@@ -2139,7 +2139,7 @@ test_clustering_recover() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster remove node2 --force --yes
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster remove node3 --force --yes
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2205,7 +2205,7 @@ test_clustering_handover() {
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster list | grep -Fc "database-standby" | grep -Fx 1
 
   # Shutdown the first node.
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
 
   echo "Stopped member 1"
 
@@ -2218,7 +2218,7 @@ test_clustering_handover() {
   INCUS_DIR="${INCUS_THREE_DIR}" incus cluster show node1 | grep -q "database: false"
 
   # Even if we shutdown one more node, the cluster is still available.
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
 
   echo "Stopped member 2"
 
@@ -2234,9 +2234,9 @@ test_clustering_handover() {
 
   # Shutdown two voters concurrently.
   echo "Shutting down cluster members 2 and 3..."
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown &
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown &
   pid1="$!"
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown &
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown &
   pid2="$!"
 
   wait "$pid1"
@@ -2253,9 +2253,9 @@ test_clustering_handover() {
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2341,10 +2341,10 @@ test_clustering_rebalance() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "status: Online"
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "database: true"
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2465,9 +2465,9 @@ test_clustering_remove_raft_node() {
   # The second node is gone from the raft_nodes_table.
   ! INCUS_DIR="${INCUS_ONE_DIR}" incusd sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102" || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2556,18 +2556,18 @@ test_clustering_failure_domains() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "failure_domain: az2"
 
   # Shutdown a node in az2, its replacement is picked from az2.
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
   sleep 3
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "database: false"
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node5 | grep -q "database: true"
 
-  INCUS_DIR="${INCUS_SIX_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_FIVE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_FOUR_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_SIX_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_FIVE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_SIX_DIR}/unix.socket"
   rm -f "${INCUS_FIVE_DIR}/unix.socket"
@@ -2795,10 +2795,10 @@ test_clustering_image_refresh() {
   printf 'config: {}\ndevices: {}' | INCUS_DIR="${INCUS_ONE_DIR}" incus profile edit default
   INCUS_DIR="${INCUS_ONE_DIR}" incus storage delete data
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_REMOTE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_REMOTE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -2949,9 +2949,9 @@ test_clustering_evacuation() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus storage delete data
 
   # Shut down cluster
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -3428,9 +3428,9 @@ test_clustering_groups() {
 
   incus project delete foo
 
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_THREE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
@@ -3602,8 +3602,8 @@ test_clustering_events() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.offline_threshold 11
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster ls
 
-  INCUS_DIR="${INCUS_FOUR_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_FIVE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_FIVE_DIR}" incus admin shutdown
 
   sleep 12
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster ls
@@ -3628,9 +3628,9 @@ test_clustering_events() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus delete -f c1
   INCUS_DIR="${INCUS_TWO_DIR}" incus delete -f c2
   INCUS_DIR="${INCUS_THREE_DIR}" incus delete -f c3
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_FIVE_DIR}/unix.socket"
   rm -f "${INCUS_FOUR_DIR}/unix.socket"
@@ -3692,8 +3692,8 @@ test_clustering_uuid() {
 
   # cleanup
   INCUS_DIR="${INCUS_TWO_DIR}" incus delete c1 -f
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_ONE_DIR}/unix.socket"

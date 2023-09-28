@@ -185,7 +185,7 @@ kill_incus() {
         done
 
         # Kill the daemon
-        timeout -k 30 30 incusd shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
+        timeout -k 30 30 incus admin shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
 
         sleep 2
 
@@ -273,7 +273,7 @@ shutdown_incus() {
     echo "==> Shutting down Incus at ${daemon_dir} (${daemon_pid})"
 
     # Shutting down the daemon
-    incusd shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
+    incus admin shutdown || kill -9 "${daemon_pid}" 2>/dev/null || true
 
     # Wait for any cleanup activity that might be happening right
     # after the websocket is closed.
