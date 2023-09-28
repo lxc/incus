@@ -23,13 +23,13 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/tcp"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // NewGateway creates a new Gateway for managing access to the dqlite cluster.
@@ -298,7 +298,7 @@ func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts f
 				return
 			}
 
-			_ = util.WriteJSON(w, map[string]string{"leader": leader}, nil)
+			_ = localUtil.WriteJSON(w, map[string]string{"leader": leader}, nil)
 			return
 		}
 
@@ -763,7 +763,7 @@ func (g *Gateway) init(bootstrap bool) error {
 	}
 
 	dir := filepath.Join(g.db.Dir(), "global")
-	if shared.PathExists(filepath.Join(dir, "logs.db")) {
+	if util.PathExists(filepath.Join(dir, "logs.db")) {
 		return fmt.Errorf("Unsupported upgrade path, please first upgrade to LXD 4.0")
 	}
 

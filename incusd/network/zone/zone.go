@@ -13,13 +13,14 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -66,7 +67,7 @@ func (d *zone) Info() *api.NetworkZone {
 	info := api.NetworkZone{}
 	info.Name = d.info.Name
 	info.Description = d.info.Description
-	info.Config = util.CopyConfig(d.info.Config)
+	info.Config = localUtil.CopyConfig(d.info.Config)
 	info.UsedBy = nil // To indicate its not populated (use Usedby() function to populate).
 
 	return &info
@@ -75,8 +76,8 @@ func (d *zone) Info() *api.NetworkZone {
 // networkUsesZone indicates if the network uses the zone based on its config.
 func (d *zone) networkUsesZone(netConfig map[string]string) bool {
 	for _, key := range []string{"dns.zone.forward", "dns.zone.reverse.ipv4", "dns.zone.reverse.ipv6"} {
-		zoneNames := shared.SplitNTrimSpace(netConfig[key], ",", -1, true)
-		if shared.ValueInSlice(d.info.Name, zoneNames) {
+		zoneNames := util.SplitNTrimSpace(netConfig[key], ",", -1, true)
+		if util.ValueInSlice(d.info.Name, zoneNames) {
 			return true
 		}
 	}
@@ -207,7 +208,7 @@ func (d *zone) validateConfigMap(config map[string]string, rules map[string]func
 		}
 
 		// User keys are not validated.
-		if shared.IsUserConfig(k) {
+		if internalInstance.IsUserConfig(k) {
 			continue
 		}
 
@@ -303,7 +304,7 @@ func (d *zone) Content() (*strings.Builder, error) {
 	records := []map[string]string{}
 
 	// Check if we should include NAT records.
-	includeNAT := shared.IsTrueOrEmpty(d.info.Config["network.nat"])
+	includeNAT := util.IsTrueOrEmpty(d.info.Config["network.nat"])
 
 	// Get all managed networks across all projects.
 	var projectNetworks map[string]map[int64]api.Network
@@ -339,8 +340,8 @@ func (d *zone) Content() (*strings.Builder, error) {
 
 			// Check whether what records to include.
 			netConfig := n.Config()
-			includeV4 := includeNAT || shared.IsFalseOrEmpty(netConfig["ipv4.nat"])
-			includeV6 := includeNAT || shared.IsFalseOrEmpty(netConfig["ipv6.nat"])
+			includeV4 := includeNAT || util.IsFalseOrEmpty(netConfig["ipv4.nat"])
+			includeV6 := includeNAT || util.IsFalseOrEmpty(netConfig["ipv6.nat"])
 
 			// Check if dealing with a reverse zone.
 			isReverse4 := strings.HasSuffix(d.info.Name, ip4Arpa)
@@ -396,7 +397,7 @@ func (d *zone) Content() (*strings.Builder, error) {
 
 			if isReverse {
 				// Load network leases in correct project context for each forward zone referenced.
-				for _, forwardZoneName := range shared.SplitNTrimSpace(n.Config()["dns.zone.forward"], ",", -1, true) {
+				for _, forwardZoneName := range util.SplitNTrimSpace(n.Config()["dns.zone.forward"], ",", -1, true) {
 					// Get forward zone's project.
 					forwardZoneProjectName := zoneProjects[forwardZoneName]
 					if forwardZoneProjectName == "" {

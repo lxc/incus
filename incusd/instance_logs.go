@@ -15,10 +15,11 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/storage"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 )
 
 var instanceLogCmd = APIEndpoint{
@@ -121,7 +122,7 @@ func instanceLogsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -143,7 +144,7 @@ func instanceLogsGet(d *Daemon, r *http.Request) response.Response {
 	result := []string{}
 
 	fullName := project.Instance(projectName, name)
-	dents, err := os.ReadDir(shared.LogPath(fullName))
+	dents, err := os.ReadDir(internalUtil.LogPath(fullName))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -205,7 +206,7 @@ func instanceLogGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -240,7 +241,7 @@ func instanceLogGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	ent := response.FileResponseEntry{
-		Path:     shared.LogPath(project.Instance(projectName, name), file),
+		Path:     internalUtil.LogPath(project.Instance(projectName, name), file),
 		Filename: file,
 	}
 
@@ -289,7 +290,7 @@ func instanceLogDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -327,7 +328,7 @@ func instanceLogDelete(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Only log files excluding qemu.log and lxc.log may be deleted"))
 	}
 
-	err = os.Remove(shared.LogPath(project.Instance(projectName, name), file))
+	err = os.Remove(internalUtil.LogPath(project.Instance(projectName, name), file))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -401,7 +402,7 @@ func instanceExecOutputsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -506,7 +507,7 @@ func instanceExecOutputGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -606,7 +607,7 @@ func instanceExecOutputDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 

@@ -22,18 +22,19 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/idmap"
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -105,7 +106,7 @@ func (d *disk) CanMigrate() bool {
 
 // sourceIsDir returns true if the disks source config setting is a directory.
 func (d *disk) sourceIsDir() bool {
-	return shared.IsDir(d.config["source"])
+	return internalUtil.IsDir(d.config["source"])
 }
 
 // sourceIsCephFs returns true if the disks source config setting is a CephFS share.
@@ -127,7 +128,7 @@ func (d *disk) CanHotPlug() bool {
 // isRequired indicates whether the supplied device config requires this device to start OK.
 func (d *disk) isRequired(devConfig deviceConfig.Device) bool {
 	// Defaults to required.
-	if shared.IsTrueOrEmpty(devConfig["required"]) && shared.IsFalseOrEmpty(devConfig["optional"]) {
+	if util.IsTrueOrEmpty(devConfig["required"]) && util.IsFalseOrEmpty(devConfig["optional"]) {
 		return true
 	}
 
@@ -163,7 +164,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 	// These come from https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt
 	propagationTypes := []string{"", "private", "shared", "slave", "unbindable", "rshared", "rslave", "runbindable", "rprivate"}
 	validatePropagation := func(input string) error {
-		if !shared.ValueInSlice(d.config["bind"], propagationTypes) {
+		if !util.ValueInSlice(d.config["bind"], propagationTypes) {
 			return fmt.Errorf("Invalid propagation value. Must be one of: %s", strings.Join(propagationTypes, ", "))
 		}
 
@@ -225,11 +226,11 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		return fmt.Errorf("Only the root disk may have a migration size quota")
 	}
 
-	if d.config["recursive"] != "" && (d.config["path"] == "/" || !shared.IsDir(d.config["source"])) {
+	if d.config["recursive"] != "" && (d.config["path"] == "/" || !internalUtil.IsDir(d.config["source"])) {
 		return fmt.Errorf("The recursive option is only supported for additional bind-mounted paths")
 	}
 
-	if shared.IsTrue(d.config["recursive"]) && shared.IsTrue(d.config["readonly"]) {
+	if util.IsTrue(d.config["recursive"]) && util.IsTrue(d.config["readonly"]) {
 		return fmt.Errorf("Recursive read-only bind-mounts aren't currently supported by the kernel")
 	}
 
@@ -265,7 +266,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 	// source path exists when the disk device is required, is not an external ceph/cephfs source and is not a
 	// VM cloud-init drive. We only check this when an instance is loaded to avoid validating snapshot configs
 	// that may contain older config that no longer exists which can prevent migrations.
-	if d.inst != nil && srcPathIsLocal && d.isRequired(d.config) && !shared.PathExists(d.config["source"]) {
+	if d.inst != nil && srcPathIsLocal && d.isRequired(d.config) && !util.PathExists(d.config["source"]) {
 		return fmt.Errorf("Missing source path %q for disk %q", d.config["source"], d.name)
 	}
 
@@ -383,13 +384,13 @@ func (d *disk) validateEnvironmentSourcePath() error {
 	if instProject.Name != project.Default {
 		// If restricted disk paths are in force, then check the disk's source is allowed, and record the
 		// allowed parent path for later user during device start up sequence.
-		if shared.IsTrue(instProject.Config["restricted"]) && instProject.Config["restricted.devices.disk.paths"] != "" {
+		if util.IsTrue(instProject.Config["restricted"]) && instProject.Config["restricted.devices.disk.paths"] != "" {
 			allowed, restrictedParentSourcePath := project.CheckRestrictedDevicesDiskPaths(instProject.Config, d.config["source"])
 			if !allowed {
 				return fmt.Errorf("Disk source path %q not allowed by project for disk %q", d.config["source"], d.name)
 			}
 
-			if shared.IsTrue(d.config["shift"]) {
+			if util.IsTrue(d.config["shift"]) {
 				return fmt.Errorf(`The "shift" property cannot be used with a restricted source path`)
 			}
 
@@ -466,7 +467,7 @@ func (d *disk) PreStartCheck() error {
 
 	// Custom volume disks that are not required don't need to be checked as if the pool is
 	// not available we should still start the instance.
-	if d.config["path"] != "/" && shared.IsFalse(d.config["required"]) {
+	if d.config["path"] != "/" && util.IsFalse(d.config["required"]) {
 		return nil
 	}
 
@@ -507,7 +508,7 @@ func (d *disk) Start() (*deviceConfig.RunConfig, error) {
 // startContainer starts the disk device for a container instance.
 func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 	runConf := deviceConfig.RunConfig{}
-	isReadOnly := shared.IsTrue(d.config["readonly"])
+	isReadOnly := util.IsTrue(d.config["readonly"])
 
 	// Apply cgroups only after all the mounts have been processed.
 	runConf.PostHooks = append(runConf.PostHooks, func() error {
@@ -557,10 +558,10 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 		relativeDestPath := strings.TrimPrefix(destPath, "/")
 
 		// Option checks.
-		isRecursive := shared.IsTrue(d.config["recursive"])
+		isRecursive := util.IsTrue(d.config["recursive"])
 
 		ownerShift := deviceConfig.MountOwnerShiftNone
-		if shared.IsTrue(d.config["shift"]) {
+		if util.IsTrue(d.config["shift"]) {
 			ownerShift = deviceConfig.MountOwnerShiftDynamic
 		}
 
@@ -582,7 +583,7 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 				return nil, err
 			}
 
-			if shared.IsTrue(dbVolume.Config["security.shifted"]) {
+			if util.IsTrue(dbVolume.Config["security.shifted"]) {
 				ownerShift = "dynamic"
 			}
 		}
@@ -670,7 +671,7 @@ func (d *disk) detectVMPoolMountOpts() []string {
 	// If the pool's source is a normal file, rather than a block device or directory, then we consider it to
 	// be a loop backed stored pool.
 	fileInfo, _ := os.Stat(driverConf["source"])
-	if fileInfo != nil && !shared.IsBlockdev(fileInfo.Mode()) && !fileInfo.IsDir() {
+	if fileInfo != nil && !linux.IsBlockdev(fileInfo.Mode()) && !fileInfo.IsDir() {
 		opts = append(opts, DiskLoopBacked)
 	}
 
@@ -833,14 +834,14 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				mount.Opts = d.detectVMPoolMountOpts()
 			}
 
-			if shared.IsTrue(d.config["readonly"]) {
+			if util.IsTrue(d.config["readonly"]) {
 				mount.Opts = append(mount.Opts, "ro")
 			}
 
 			// If the source being added is a directory or cephfs share, then we will use the agent
 			// directory sharing feature to mount the directory inside the VM, and as such we need to
 			// indicate to the VM the target path to mount to.
-			if shared.IsDir(mount.DevPath) || d.sourceIsCephFs() {
+			if internalUtil.IsDir(mount.DevPath) || d.sourceIsCephFs() {
 				// Mount the source in the instance devices directory.
 				// This will ensure that if the exported directory configured as readonly that this
 				// takes effect event if using virtio-fs (which doesn't support read only mode) by
@@ -1306,10 +1307,10 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 	// Paths.
 	devPath := d.getDevicePath(d.name, d.config)
 
-	isReadOnly := shared.IsTrue(d.config["readonly"])
-	isRecursive := shared.IsTrue(d.config["recursive"])
+	isReadOnly := util.IsTrue(d.config["readonly"])
+	isRecursive := util.IsTrue(d.config["recursive"])
 
-	mntOptions := shared.SplitNTrimSpace(d.config["raw.mount.options"], ",", -1, true)
+	mntOptions := util.SplitNTrimSpace(d.config["raw.mount.options"], ",", -1, true)
 	fsName := "none"
 
 	var isFile bool
@@ -1368,7 +1369,7 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 			}
 
 			fileMode := fileInfo.Mode()
-			if shared.IsBlockdev(fileMode) {
+			if linux.IsBlockdev(fileMode) {
 				fsName, err = BlockFsDetect(srcPath)
 				if err != nil {
 					return nil, "", false, fmt.Errorf("Failed detecting source path %q block device filesystem: %w", srcPath, err)
@@ -1389,7 +1390,7 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 	}
 
 	// Create the devices directory if missing.
-	if !shared.PathExists(d.inst.DevicesPath()) {
+	if !util.PathExists(d.inst.DevicesPath()) {
 		err := os.Mkdir(d.inst.DevicesPath(), 0711)
 		if err != nil {
 			return nil, "", false, err
@@ -1397,7 +1398,7 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 	}
 
 	// Clean any existing entry.
-	if shared.PathExists(devPath) {
+	if util.PathExists(devPath) {
 		err := os.Remove(devPath)
 		if err != nil {
 			return nil, "", false, err
@@ -1499,7 +1500,7 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 	poolVolumePut := dbVolume.StorageVolume.Writable()
 
 	// Check if unmapped.
-	if shared.IsTrue(poolVolumePut.Config["security.unmapped"]) {
+	if util.IsTrue(poolVolumePut.Config["security.unmapped"]) {
 		// No need to look at containers and maps for unmapped volumes.
 		return nil
 	}
@@ -1516,7 +1517,7 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 
 	var nextIdmap *idmap.IdmapSet
 	nextJSONMap := "[]"
-	if shared.IsFalseOrEmpty(poolVolumePut.Config["security.shifted"]) {
+	if util.IsFalseOrEmpty(poolVolumePut.Config["security.shifted"]) {
 		c := d.inst.(instance.Container)
 		// Get the container's idmap.
 		if c.IsRunning() {
@@ -1542,7 +1543,7 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 	if !nextIdmap.Equals(lastIdmap) {
 		d.logger.Debug("Shifting storage volume")
 
-		if shared.IsFalseOrEmpty(poolVolumePut.Config["security.shifted"]) {
+		if util.IsFalseOrEmpty(poolVolumePut.Config["security.shifted"]) {
 			volumeUsedBy := []instance.Instance{}
 			err = storagePools.VolumeUsedByInstanceDevices(d.state, poolName, projectName, &dbVolume.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
 				inst, err := instance.Load(d.state, dbInst, project)
@@ -1666,7 +1667,7 @@ func (d *disk) Stop() (*deviceConfig.RunConfig, error) {
 	devPath := d.getDevicePath(d.name, d.config)
 
 	// The disk device doesn't exist do nothing.
-	if !shared.PathExists(devPath) {
+	if !util.PathExists(devPath) {
 		return nil, nil
 	}
 
@@ -1745,11 +1746,11 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 
 	for _, f := range dents {
 		fPath := filepath.Join("/sys/class/block/", f.Name())
-		if shared.PathExists(fmt.Sprintf("%s/partition", fPath)) {
+		if util.PathExists(fmt.Sprintf("%s/partition", fPath)) {
 			continue
 		}
 
-		if !shared.PathExists(fmt.Sprintf("%s/dev", fPath)) {
+		if !util.PathExists(fmt.Sprintf("%s/dev", fPath)) {
 			continue
 		}
 
@@ -1786,7 +1787,7 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 			source = d.inst.RootfsPath()
 		}
 
-		if !shared.PathExists(source) {
+		if !util.PathExists(source) {
 			// Require that device is mounted before resolving block device if required.
 			if d.isRequired(dev) {
 				return nil, fmt.Errorf("Block device path doesn't exist %q", source)
@@ -1810,14 +1811,14 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 		for _, block := range blocks {
 			blockStr := ""
 
-			if shared.ValueInSlice(block, validBlocks) {
+			if util.ValueInSlice(block, validBlocks) {
 				// Straightforward entry (full block device)
 				blockStr = block
 			} else {
 				// Attempt to deal with a partition (guess its parent)
 				fields := strings.SplitN(block, ":", 2)
 				fields[1] = "0"
-				if shared.ValueInSlice(fmt.Sprintf("%s:%s", fields[0], fields[1]), validBlocks) {
+				if util.ValueInSlice(fmt.Sprintf("%s:%s", fields[0], fields[1]), validBlocks) {
 					blockStr = fmt.Sprintf("%s:%s", fields[0], fields[1])
 				}
 			}
@@ -1979,7 +1980,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 	// because any non-special filesystem => directory backend.
 	fs, _ := linux.DetectFilesystem(expPath)
 
-	if fs == "zfs" && shared.PathExists("/dev/zfs") {
+	if fs == "zfs" && util.PathExists("/dev/zfs") {
 		// Accessible zfs filesystems
 		poolName := strings.Split(dev[1], "/")[0]
 
@@ -2005,8 +2006,8 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 			}
 
 			var path string
-			if shared.PathExists(fields[0]) {
-				if shared.IsBlockdevPath(fields[0]) {
+			if util.PathExists(fields[0]) {
+				if linux.IsBlockdevPath(fields[0]) {
 					path = fields[0]
 				} else {
 					subDevices, err := d.getParentBlocks(fields[0])
@@ -2033,7 +2034,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 		if len(devices) == 0 {
 			return nil, fmt.Errorf("Unable to find backing block for zfs pool %q", poolName)
 		}
-	} else if fs == "btrfs" && shared.PathExists(dev[1]) {
+	} else if fs == "btrfs" && util.PathExists(dev[1]) {
 		// Accessible btrfs filesystems
 		output, err := subprocess.RunCommand("btrfs", "filesystem", "show", dev[1])
 		if err != nil {
@@ -2059,7 +2060,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 
 			devices = append(devices, fmt.Sprintf("%d:%d", major, minor))
 		}
-	} else if shared.PathExists(dev[1]) {
+	} else if util.PathExists(dev[1]) {
 		// Anything else with a valid path
 		_, major, minor, err := unixDeviceAttributes(dev[1])
 		if err != nil {

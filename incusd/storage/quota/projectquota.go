@@ -162,7 +162,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 var errNoDevice = fmt.Errorf("Couldn't find backing device for mountpoint")
@@ -196,7 +196,7 @@ func devForPath(path string) (string, error) {
 		}
 
 		if tokens[2] == fmt.Sprintf("%d:%d", devMajor, devMinor) {
-			if shared.PathExists(tokens[len(tokens)-2]) {
+			if util.PathExists(tokens[len(tokens)-2]) {
 				return tokens[len(tokens)-2], nil
 			}
 		}

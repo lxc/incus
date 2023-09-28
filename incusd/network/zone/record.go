@@ -6,8 +6,8 @@ import (
 	"github.com/miekg/dns"
 
 	"github.com/lxc/incus/incusd/cluster/request"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 func (d *zone) AddRecord(req api.NetworkZoneRecordsPost) error {
@@ -134,7 +134,7 @@ func (d *zone) validateEntries(info api.NetworkZoneRecordPut) error {
 		}
 
 		entryID := entry.Type + "/" + entry.Value
-		if shared.ValueInSlice(entryID, uniqueEntries) {
+		if util.ValueInSlice(entryID, uniqueEntries) {
 			return fmt.Errorf("Duplicate record for type %q and value %q", entry.Type, entry.Value)
 		}
 

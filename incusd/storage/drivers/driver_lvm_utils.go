@@ -13,14 +13,15 @@ import (
 
 	"github.com/lxc/incus/incusd/locking"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // lvmBlockVolSuffix suffix used for block content type volumes.
@@ -41,7 +42,7 @@ const lvmThinpoolDefaultName = "IncusThinPool"
 // usesThinpool indicates whether the config specifies to use a thin pool or not.
 func (d *lvm) usesThinpool() bool {
 	// Default is to use a thinpool.
-	return shared.IsTrueOrEmpty(d.config["lvm.use_thinpool"])
+	return util.IsTrueOrEmpty(d.config["lvm.use_thinpool"])
 }
 
 // thinpoolName returns the thinpool volume to use.
@@ -59,7 +60,7 @@ func (d *lvm) openLoopFile(source string) (string, error) {
 		return "", fmt.Errorf("No source property found for the storage pool")
 	}
 
-	if filepath.IsAbs(source) && !shared.IsBlockdevPath(source) {
+	if filepath.IsAbs(source) && !linux.IsBlockdevPath(source) {
 		unlock := locking.Lock(context.TODO(), OperationLockName("openLoopFile", d.name, "", "", ""))
 		defer unlock()
 
@@ -481,7 +482,7 @@ func (d *lvm) lvmFullVolumeName(volType VolumeType, contentType ContentType, vol
 	}
 
 	// Escape the volume name to a name suitable for using as a logical volume.
-	lvName := strings.Replace(strings.Replace(volName, "-", lvmEscapedHyphen, -1), shared.SnapshotDelimiter, lvmSnapshotSeparator, -1)
+	lvName := strings.Replace(strings.Replace(volName, "-", lvmEscapedHyphen, -1), internalInstance.SnapshotDelimiter, lvmSnapshotSeparator, -1)
 
 	return fmt.Sprintf("%s_%s%s", volType, lvName, contentTypeSuffix)
 }
@@ -683,7 +684,7 @@ func (d *lvm) thinPoolVolumeUsage(volDevPath string) (uint64, uint64, error) {
 		return 0, 0, err
 	}
 
-	parts := shared.SplitNTrimSpace(out, ",", -1, true)
+	parts := util.SplitNTrimSpace(out, ",", -1, true)
 	if len(parts) < 3 {
 		return 0, 0, fmt.Errorf("Unexpected output from lvs command")
 	}
@@ -767,7 +768,7 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 		volDevPath = d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, parent)
 	}
 
-	if !shared.PathExists(volDevPath) {
+	if !util.PathExists(volDevPath) {
 		_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
 		if err != nil {
 			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
@@ -802,7 +803,7 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 		}
 	}
 
-	if shared.PathExists(volDevPath) {
+	if util.PathExists(volDevPath) {
 		// Keep trying to deactivate a few times in case the device is still being flushed.
 		var err error
 		for i := 0; i < 20; i++ {

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -50,7 +50,7 @@ func (r *operationResponse) Render(w http.ResponseWriter) error {
 		debugLogger = logger.AddContext(logger.Ctx{"http_code": code})
 	}
 
-	return util.WriteJSON(w, body, debugLogger)
+	return localUtil.WriteJSON(w, body, debugLogger)
 }
 
 func (r *operationResponse) String() string {
@@ -103,7 +103,7 @@ func (r *forwardedOperationResponse) Render(w http.ResponseWriter) error {
 		debugLogger = logger.AddContext(logger.Ctx{"http_code": code})
 	}
 
-	return util.WriteJSON(w, body, debugLogger)
+	return localUtil.WriteJSON(w, body, debugLogger)
 }
 
 func (r *forwardedOperationResponse) String() string {

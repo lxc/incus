@@ -13,8 +13,8 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // GetNetworksLocalConfig returns a map associating each network name to its
@@ -264,7 +264,7 @@ WHERE networks.id = ? AND networks.state = ?
 	// Figure which nodes are missing
 	missing := []string{}
 	for _, node := range nodes {
-		if !shared.ValueInSlice(node.Name, defined) {
+		if !util.ValueInSlice(node.Name, defined) {
 			missing = append(missing, node.Name)
 		}
 	}
@@ -847,7 +847,7 @@ func networkConfigAdd(tx *sql.Tx, networkID, nodeID int64, config map[string]str
 		}
 
 		var nodeIDValue any
-		if !shared.ValueInSlice(k, NodeSpecificNetworkConfig) {
+		if !util.ValueInSlice(k, NodeSpecificNetworkConfig) {
 			nodeIDValue = nil
 		} else {
 			nodeIDValue = nodeID

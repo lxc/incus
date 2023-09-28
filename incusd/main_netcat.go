@@ -10,7 +10,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/internal/eagain"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdNetcat struct {
@@ -53,8 +54,8 @@ func (c *cmdNetcat) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("This must be run as root")
 	}
 
-	logPath := shared.LogPath(args[1], "netcat.log")
-	if shared.PathExists(logPath) {
+	logPath := internalUtil.LogPath(args[1], "netcat.log")
+	if util.PathExists(logPath) {
 		_ = os.Remove(logPath)
 	}
 

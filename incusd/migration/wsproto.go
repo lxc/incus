@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/lxc/incus/shared"
+	internalIO "github.com/lxc/incus/internal/io"
 )
 
 // ProtoRecv gets a protobuf message from a websocket.
@@ -56,7 +56,7 @@ func ProtoSend(ws *websocket.Conn, msg proto.Message) error {
 		return err
 	}
 
-	err = shared.WriteAll(w, data)
+	err = internalIO.WriteAll(w, data)
 	if err != nil {
 		return err
 	}

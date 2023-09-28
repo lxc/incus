@@ -9,9 +9,9 @@ import (
 
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -154,7 +154,7 @@ func (d *cephobject) Create() error {
 
 // Delete clears any local and remote data related to this driver instance.
 func (d *cephobject) Delete(op *operations.Operation) error {
-	if shared.IsTrue(d.config["volatile.pool.pristine"]) {
+	if util.IsTrue(d.config["volatile.pool.pristine"]) {
 		err := d.radosgwadminUserDelete(context.TODO(), cephobjectRadosgwAdminUser)
 		if err != nil {
 			return fmt.Errorf("Failed deleting admin user %q: %w", cephobjectRadosgwAdminUser, err)

@@ -11,17 +11,18 @@ import (
 
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // genericVolumeBlockExtension extension used for generic block volume disk files.
@@ -69,7 +70,7 @@ func genericVFSRenameVolume(d Driver, vol Volume, newVolName string, op *operati
 	srcVolumePath := GetVolumeMountPath(d.Name(), vol.volType, vol.name)
 	dstVolumePath := GetVolumeMountPath(d.Name(), vol.volType, newVolName)
 
-	if shared.PathExists(srcVolumePath) {
+	if util.PathExists(srcVolumePath) {
 		err := os.Rename(srcVolumePath, dstVolumePath)
 		if err != nil {
 			return fmt.Errorf("Failed to rename %q to %q: %w", srcVolumePath, dstVolumePath, err)
@@ -82,7 +83,7 @@ func genericVFSRenameVolume(d Driver, vol Volume, newVolName string, op *operati
 	srcSnapshotDir := GetVolumeSnapshotDir(d.Name(), vol.volType, vol.name)
 	dstSnapshotDir := GetVolumeSnapshotDir(d.Name(), vol.volType, newVolName)
 
-	if shared.PathExists(srcSnapshotDir) {
+	if util.PathExists(srcSnapshotDir) {
 		err := os.Rename(srcSnapshotDir, dstSnapshotDir)
 		if err != nil {
 			return fmt.Errorf("Failed to rename %q to %q: %w", srcSnapshotDir, dstSnapshotDir, err)
@@ -136,7 +137,7 @@ func genericVFSRenameVolumeSnapshot(d Driver, snapVol Volume, newSnapshotName st
 	oldPath := snapVol.MountPath()
 	newPath := GetVolumeMountPath(d.Name(), snapVol.volType, GetSnapshotVolumeName(parentName, newSnapshotName))
 
-	if shared.PathExists(oldPath) {
+	if util.PathExists(oldPath) {
 		err := os.Rename(oldPath, newPath)
 		if err != nil {
 			return fmt.Errorf("Failed to rename %q to %q: %w", oldPath, newPath, err)
@@ -170,12 +171,12 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 			wrapper = migration.ProgressTracker(op, "fs_progress", vol.name)
 		}
 
-		path := shared.AddSlash(mountPath)
+		path := internalUtil.AddSlash(mountPath)
 
 		d.Logger().Debug("Sending filesystem volume", logger.Ctx{"volName": vol.name, "path": path, "bwlimit": bwlimit, "rsyncArgs": rsyncArgs})
 		err := rsync.Send(vol.name, path, conn, wrapper, volSrcArgs.MigrationType.Features, bwlimit, s.OS.ExecPath, rsyncArgs...)
 
-		status, _ := shared.ExitStatus(err)
+		status, _ := linux.ExitStatus(err)
 		if volSrcArgs.AllowInconsistent && status == 24 {
 			return nil
 		}
@@ -354,7 +355,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 
 		// Setup paths to the main volume. We will receive each snapshot to these paths and then create
 		// a snapshot of the main volume for each one.
-		path := shared.AddSlash(mountPath)
+		path := internalUtil.AddSlash(mountPath)
 		pathBlock := ""
 
 		if vol.IsVMBlock() || (IsContentBlock(vol.contentType) && vol.volType == VolumeTypeCustom) {
@@ -504,7 +505,7 @@ func genericVFSBackupVolume(d Driver, vol Volume, tarWriter *instancewriter.Inst
 				}
 
 				var exclude []string // Files to exclude from filesystem volume backup.
-				if !shared.IsBlockdevPath(blockPath) {
+				if !linux.IsBlockdevPath(blockPath) {
 					// Exclude the volume root disk file from the filesystem volume backup.
 					// We will read it as a block device later instead.
 					exclude = append(exclude, blockPath)
@@ -520,7 +521,7 @@ func genericVFSBackupVolume(d Driver, vol Volume, tarWriter *instancewriter.Inst
 						}
 
 						// Skip any exluded files.
-						if shared.StringHasPrefix(srcPath, exclude...) {
+						if util.StringHasPrefix(srcPath, exclude...) {
 							return nil
 						}
 
@@ -956,7 +957,7 @@ func genericVFSCopyVolume(d Driver, initVolume func(vol Volume) (revert.Hook, er
 		d.Logger().Debug("Copying fileystem volume", logger.Ctx{"sourcePath": srcPath, "targetPath": targetPath, "bwlimit": bwlimit, "rsyncArgs": rsyncArgs})
 		_, err := rsync.LocalCopy(srcPath, targetPath, bwlimit, true, rsyncArgs...)
 
-		status, _ := shared.ExitStatus(err)
+		status, _ := linux.ExitStatus(err)
 		if allowInconsistent && status == 24 {
 			return nil
 		}
@@ -1105,7 +1106,7 @@ func genericVFSListVolumes(d Driver) ([]Volume, error) {
 			contentType := ContentTypeFS
 			if volType == VolumeTypeVM {
 				contentType = ContentTypeBlock
-			} else if volType == VolumeTypeCustom && shared.PathExists(filepath.Join(volTypePath, volName, genericVolumeDiskFile)) {
+			} else if volType == VolumeTypeCustom && util.PathExists(filepath.Join(volTypePath, volName, genericVolumeDiskFile)) {
 				if strings.HasSuffix(ent.Name(), genericISOVolumeSuffix) {
 					contentType = ContentTypeISO
 					volName = strings.TrimSuffix(volName, genericISOVolumeSuffix)

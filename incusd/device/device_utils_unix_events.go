@@ -9,8 +9,8 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // UnixEvent represents the properties of a Unix device inotify event.
@@ -145,7 +145,7 @@ func unixRunHandlers(state *state.State, event *UnixEvent) {
 // masked by the consuming event handler functions.
 func unixNewEvent(action string, path string) UnixEvent {
 	if action == "" {
-		if shared.PathExists(path) {
+		if util.PathExists(path) {
 			action = "add"
 		} else {
 			action = "remove"

@@ -19,17 +19,18 @@ import (
 	"github.com/lxc/incus/incusd/lifecycle"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/instancewriter"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Create a new backup.
@@ -99,8 +100,8 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	}
 
 	// Create the target path if needed.
-	backupsPath := shared.VarPath("backups", "instances", project.Instance(sourceInst.Project().Name, sourceInst.Name()))
-	if !shared.PathExists(backupsPath) {
+	backupsPath := internalUtil.VarPath("backups", "instances", project.Instance(sourceInst.Project().Name, sourceInst.Name()))
+	if !util.PathExists(backupsPath) {
 		err := os.MkdirAll(backupsPath, 0700)
 		if err != nil {
 			return err
@@ -109,7 +110,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 		revert.Add(func() { _ = os.Remove(backupsPath) })
 	}
 
-	target := shared.VarPath("backups", "instances", project.Instance(sourceInst.Project().Name, b.Name()))
+	target := internalUtil.VarPath("backups", "instances", project.Instance(sourceInst.Project().Name, b.Name()))
 
 	// Setup the tarball writer.
 	l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
@@ -240,7 +241,7 @@ func backupWriteIndex(sourceInst instance.Instance, pool storagePools.Pool, opti
 	}
 
 	// Immediately return if the instance directory doesn't exist yet.
-	if !shared.PathExists(sourceInst.Path()) {
+	if !util.PathExists(sourceInst.Path()) {
 		return os.ErrNotExist
 	}
 
@@ -418,8 +419,8 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 	}
 
 	// Create the target path if needed.
-	backupsPath := shared.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, volumeName))
-	if !shared.PathExists(backupsPath) {
+	backupsPath := internalUtil.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, volumeName))
+	if !util.PathExists(backupsPath) {
 		err := os.MkdirAll(backupsPath, 0700)
 		if err != nil {
 			return err
@@ -428,7 +429,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 		revert.Add(func() { _ = os.Remove(backupsPath) })
 	}
 
-	target := shared.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, backupRow.Name))
+	target := internalUtil.VarPath("backups", "custom", pool.Name(), project.StorageVolume(projectName, backupRow.Name))
 
 	// Setup the tarball writer.
 	l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})

@@ -10,8 +10,8 @@ import (
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type nicSRIOV struct {
@@ -122,7 +122,7 @@ func (d *nicSRIOV) PreStartCheck() error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicSRIOV) validateEnvironment() error {
-	if d.inst.Type() == instancetype.VM && shared.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
+	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return fmt.Errorf("Network SR-IOV devices cannot be used when migration.stateful is enabled")
 	}
 

@@ -8,8 +8,8 @@ import (
 
 	"github.com/robfig/cron/v3"
 
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/shared/util"
 )
 
 // SnapshotScheduleAliases contains the mapping of scheduling aliases to cron syntax
@@ -43,7 +43,7 @@ func buildCronSpecs(spec string, subjectID int64) []string {
 	var result []string
 
 	if strings.Contains(spec, ", ") {
-		for _, curSpec := range shared.SplitNTrimSpace(spec, ",", -1, true) {
+		for _, curSpec := range util.SplitNTrimSpace(spec, ",", -1, true) {
 			entry := getCronSyntax(curSpec, subjectID)
 			if entry != "" {
 				result = append(result, entry)
@@ -82,14 +82,14 @@ func getObfuscatedTimeValuesForSubject(subjectID int64) (string, string) {
 	var minuteResult = "0"
 	var hourResult = "0"
 
-	minSequence, minSequenceErr := util.GenerateSequenceInt64(0, 60, 1)
-	min, minErr := util.GetStableRandomInt64FromList(subjectID, minSequence)
+	minSequence, minSequenceErr := localUtil.GenerateSequenceInt64(0, 60, 1)
+	min, minErr := localUtil.GetStableRandomInt64FromList(subjectID, minSequence)
 	if minErr == nil && minSequenceErr == nil {
 		minuteResult = strconv.FormatInt(min, 10)
 	}
 
-	hourSequence, hourSequenceErr := util.GenerateSequenceInt64(0, 24, 1)
-	hour, hourErr := util.GetStableRandomInt64FromList(subjectID, hourSequence)
+	hourSequence, hourSequenceErr := localUtil.GenerateSequenceInt64(0, 24, 1)
+	hour, hourErr := localUtil.GetStableRandomInt64FromList(subjectID, hourSequence)
 	if hourErr == nil && hourSequenceErr == nil {
 		hourResult = strconv.FormatInt(hour, 10)
 	}

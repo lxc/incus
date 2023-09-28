@@ -10,8 +10,9 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalUtil "github.com/lxc/incus/internal/util"
+	util "github.com/lxc/incus/shared/util"
 )
 
 // Internal copy of the device interface.
@@ -100,7 +101,7 @@ func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) 
 	// AppArmor requires deref of all paths.
 	for k := range sockets {
 		// Skip non-existing because of the additional entry for the host side.
-		if !shared.PathExists(sockets[k]) {
+		if !util.PathExists(sockets[k]) {
 			continue
 		}
 
@@ -109,12 +110,12 @@ func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) 
 			return "", err
 		}
 
-		if !shared.ValueInSlice(v, sockets) {
+		if !util.ValueInSlice(v, sockets) {
 			sockets = append(sockets, v)
 		}
 	}
 
-	execPath := util.GetExecPath()
+	execPath := localUtil.GetExecPath()
 	execPathFull, err := filepath.EvalSymlinks(execPath)
 	if err == nil {
 		execPath = execPathFull
@@ -124,7 +125,7 @@ func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) 
 	var sb *strings.Builder = &strings.Builder{}
 	err = forkproxyProfileTpl.Execute(sb, map[string]any{
 		"name":        ForkproxyProfileName(inst, dev),
-		"varPath":     shared.VarPath(""),
+		"varPath":     internalUtil.VarPath(""),
 		"exePath":     execPath,
 		"logPath":     inst.LogPath(),
 		"libraryPath": strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
@@ -139,7 +140,7 @@ func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) 
 
 // ForkproxyProfileName returns the AppArmor profile name.
 func ForkproxyProfileName(inst instance, dev device) string {
-	path := shared.VarPath("")
+	path := internalUtil.VarPath("")
 	name := fmt.Sprintf("%s_%s_<%s>", dev.Name(), project.Instance(inst.Project().Name, inst.Name()), path)
 	return profileName("forkproxy", name)
 }

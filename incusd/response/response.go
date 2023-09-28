@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 )
@@ -50,7 +50,7 @@ func (r *devIncusResponse) Render(w http.ResponseWriter) error {
 			debugLogger = logger.Logger(logger.Log)
 		}
 
-		err = util.WriteJSON(w, r.content, debugLogger)
+		err = localUtil.WriteJSON(w, r.content, debugLogger)
 	} else if r.contentType != "websocket" {
 		w.Header().Set("Content-Type", "application/octet-stream")
 
@@ -145,7 +145,7 @@ func SyncResponsePlain(success bool, compress bool, metadata string) Response {
 func (r *syncResponse) Render(w http.ResponseWriter) error {
 	// Set an appropriate ETag header
 	if r.etag != nil {
-		etag, err := util.EtagHash(r.etag)
+		etag, err := localUtil.EtagHash(r.etag)
 		if err == nil {
 			w.Header().Set("ETag", fmt.Sprintf("\"%s\"", etag))
 		}
@@ -224,7 +224,7 @@ func (r *syncResponse) Render(w http.ResponseWriter) error {
 		debugLogger = logger.AddContext(logger.Ctx{"http_code": code})
 	}
 
-	return util.WriteJSON(w, resp, debugLogger)
+	return localUtil.WriteJSON(w, resp, debugLogger)
 }
 
 func (r *syncResponse) String() string {
@@ -341,7 +341,7 @@ func (r *errorResponse) Render(w http.ResponseWriter) error {
 
 	if debug {
 		debugLogger := logger.AddContext(logger.Ctx{"http_code": r.code})
-		util.DebugJSON("Error Response", captured, debugLogger)
+		localUtil.DebugJSON("Error Response", captured, debugLogger)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/lxc/incus/incusd/request"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // UserAccess struct for permission checks.
@@ -36,5 +36,5 @@ func UserHasPermission(r *http.Request, project string) bool {
 		return true
 	}
 
-	return shared.ValueInSlice(project, ua.Projects)
+	return util.ValueInSlice(project, ua.Projects)
 }

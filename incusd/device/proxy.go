@@ -27,9 +27,9 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -72,7 +72,7 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 	// Supported bind types are: "host" or "instance" (or "guest" or "container", legacy options equivalent to "instance").
 	// If an empty value is supplied the default behavior is to assume "host" bind mode.
 	validateBind := func(input string) error {
-		if !shared.ValueInSlice(d.config["bind"], []string{"host", "instance", "guest", "container"}) {
+		if !util.ValueInSlice(d.config["bind"], []string{"host", "instance", "guest", "container"}) {
 			return fmt.Errorf("Invalid binding side given. Must be \"host\" or \"instance\"")
 		}
 
@@ -97,7 +97,7 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 		return err
 	}
 
-	if instConf.Type() == instancetype.VM && shared.IsFalseOrEmpty(d.config["nat"]) {
+	if instConf.Type() == instancetype.VM && util.IsFalseOrEmpty(d.config["nat"]) {
 		return fmt.Errorf("Only NAT mode is supported for proxies on VM instances")
 	}
 
@@ -121,7 +121,7 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 		return fmt.Errorf("Mismatch between listen port(s) and connect port(s) count")
 	}
 
-	if shared.IsTrue(d.config["proxy_protocol"]) && (!strings.HasPrefix(d.config["connect"], "tcp") || shared.IsTrue(d.config["nat"])) {
+	if util.IsTrue(d.config["proxy_protocol"]) && (!strings.HasPrefix(d.config["connect"], "tcp") || util.IsTrue(d.config["nat"])) {
 		return fmt.Errorf("The PROXY header can only be sent to tcp servers in non-nat mode")
 	}
 
@@ -130,12 +130,12 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 		return fmt.Errorf("Only proxy devices for non-abstract unix sockets can carry uid, gid, or mode properties")
 	}
 
-	if shared.IsTrue(d.config["nat"]) {
+	if util.IsTrue(d.config["nat"]) {
 		if d.inst != nil {
 			// Default project always has networks feature so don't bother loading the project config
 			// in that case.
 			instProject := d.inst.Project()
-			if instProject.Name != project.Default && shared.IsTrue(instProject.Config["features.networks"]) {
+			if instProject.Name != project.Default && util.IsTrue(instProject.Config["features.networks"]) {
 				// Prevent use of NAT mode on non-default projects with networks feature.
 				// This is because OVN networks don't allow the host to communicate directly with
 				// instance NICs and so DNAT rules on the host won't work.
@@ -223,7 +223,7 @@ func (d *proxy) Start() (*deviceConfig.RunConfig, error) {
 	runConf := deviceConfig.RunConfig{}
 	runConf.PostHooks = []func() error{
 		func() error {
-			if shared.IsTrue(d.config["nat"]) {
+			if util.IsTrue(d.config["nat"]) {
 				err = d.setupNAT()
 				if err != nil {
 					return fmt.Errorf("Failed to start device %q: %w", d.name, err)
@@ -358,7 +358,7 @@ func (d *proxy) Stop() (*deviceConfig.RunConfig, error) {
 	devFileName := fmt.Sprintf("proxy.%s", d.name)
 	devPath := filepath.Join(d.inst.DevicesPath(), devFileName)
 
-	if !shared.PathExists(devPath) {
+	if !util.PathExists(devPath) {
 		// There's no proxy process if NAT is enabled
 		return nil, nil
 	}
@@ -573,7 +573,7 @@ func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 
 func (d *proxy) killProxyProc(pidPath string) error {
 	// If the pid file doesn't exist, there is no process to kill.
-	if !shared.PathExists(pidPath) {
+	if !util.PathExists(pidPath) {
 		return nil
 	}
 

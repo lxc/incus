@@ -16,10 +16,10 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared/api"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // The returned notifier connects to all nodes.
@@ -65,7 +65,7 @@ func TestNewNotifier(t *testing.T) {
 	}
 	require.NoError(t, err)
 	for i := range addresses {
-		assert.True(t, shared.ValueInSlice(f.Address(i+1), addresses))
+		assert.True(t, util.ValueInSlice(f.Address(i+1), addresses))
 	}
 }
 
@@ -228,14 +228,14 @@ func newRestServer(cert *localtls.CertInfo) *httptest.Server {
 	mux := http.NewServeMux()
 
 	server := httptest.NewUnstartedServer(mux)
-	server.TLS = util.ServerTLSConfig(cert)
+	server.TLS = localUtil.ServerTLSConfig(cert)
 	server.StartTLS()
 
 	mux.HandleFunc("/1.0/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		config := map[string]string{"cluster.https_address": server.Listener.Addr().String()}
 		metadata := api.ServerPut{Config: config}
-		_ = util.WriteJSON(w, api.ResponseRaw{Metadata: metadata}, nil)
+		_ = localUtil.WriteJSON(w, api.ResponseRaw{Metadata: metadata}, nil)
 	})
 
 	return server

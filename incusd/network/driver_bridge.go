@@ -29,15 +29,15 @@ import (
 	"github.com/lxc/incus/incusd/network/acl"
 	"github.com/lxc/incus/incusd/network/openvswitch"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
+	"github.com/lxc/incus/internal/revert"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -320,7 +320,7 @@ func (n *bridge) Validate(config map[string]string) error {
 	}
 
 	// Check IPv4 OVN ranges.
-	if config["ipv4.ovn.ranges"] != "" && shared.IsTrueOrEmpty(config["ipv4.dhcp"]) {
+	if config["ipv4.ovn.ranges"] != "" && util.IsTrueOrEmpty(config["ipv4.dhcp"]) {
 		dhcpSubnet := n.DHCPv4Subnet()
 		allowedNets := []*net.IPNet{}
 
@@ -352,12 +352,12 @@ func (n *bridge) Validate(config map[string]string) error {
 	}
 
 	// Check IPv6 OVN ranges.
-	if config["ipv6.ovn.ranges"] != "" && shared.IsTrueOrEmpty(config["ipv6.dhcp"]) {
+	if config["ipv6.ovn.ranges"] != "" && util.IsTrueOrEmpty(config["ipv6.dhcp"]) {
 		dhcpSubnet := n.DHCPv6Subnet()
 		allowedNets := []*net.IPNet{}
 
 		if dhcpSubnet != nil {
-			if config["ipv6.dhcp.ranges"] == "" && shared.IsTrue(config["ipv6.dhcp.stateful"]) {
+			if config["ipv6.dhcp.ranges"] == "" && util.IsTrue(config["ipv6.dhcp.stateful"]) {
 				return fmt.Errorf(`"ipv6.ovn.ranges" must be used in conjunction with non-overlapping "ipv6.dhcp.ranges" when stateful DHCPv6 is enabled`)
 			}
 
@@ -371,7 +371,7 @@ func (n *bridge) Validate(config map[string]string) error {
 
 		// If stateful DHCPv6 is enabled, check OVN ranges don't overlap with DHCPv6 stateful ranges.
 		// Otherwise SLAAC will be being used to generate client IPs and predefined ranges aren't used.
-		if dhcpSubnet != nil && shared.IsTrue(config["ipv6.dhcp.stateful"]) {
+		if dhcpSubnet != nil && util.IsTrue(config["ipv6.dhcp.stateful"]) {
 			dhcpRanges, err := parseIPRanges(config["ipv6.dhcp.ranges"], allowedNets...)
 			if err != nil {
 				return fmt.Errorf("Failed parsing ipv6.dhcp.ranges: %w", err)
@@ -389,7 +389,7 @@ func (n *bridge) Validate(config map[string]string) error {
 
 	// Check Security ACLs are supported and exist.
 	if config["security.acls"] != "" {
-		err = acl.Exists(n.state, n.Project(), shared.SplitNTrimSpace(config["security.acls"], ",", -1, true)...)
+		err = acl.Exists(n.state, n.Project(), util.SplitNTrimSpace(config["security.acls"], ",", -1, true)...)
 		if err != nil {
 			return err
 		}
@@ -500,8 +500,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	defer revert.Fail()
 
 	// Create directory.
-	if !shared.PathExists(shared.VarPath("networks", n.name)) {
-		err := os.MkdirAll(shared.VarPath("networks", n.name), 0711)
+	if !util.PathExists(internalUtil.VarPath("networks", n.name)) {
+		err := os.MkdirAll(internalUtil.VarPath("networks", n.name), 0711)
 		if err != nil {
 			return err
 		}
@@ -564,7 +564,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// cluster to allow the same MAC to be generated on each bridge interface in the network when
 		// seedNodeID is 0 (when safe to do so).
 		seed := fmt.Sprintf("%s.%d.%d", cert.Fingerprint(), seedNodeID, n.ID())
-		r, err := util.GetStableRandomGenerator(seed)
+		r, err := localUtil.GetStableRandomGenerator(seed)
 		if err != nil {
 			return fmt.Errorf("Failed generating stable random bridge MAC: %w", err)
 		}
@@ -624,22 +624,22 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// IPv6 bridge configuration.
-	if !shared.ValueInSlice(n.config["ipv6.address"], []string{"", "none"}) {
-		if !shared.PathExists("/proc/sys/net/ipv6") {
+	if !util.ValueInSlice(n.config["ipv6.address"], []string{"", "none"}) {
+		if !util.PathExists("/proc/sys/net/ipv6") {
 			return fmt.Errorf("Network has ipv6.address but kernel IPv6 support is missing")
 		}
 
-		err := util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", n.name), "0")
+		err := localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", n.name), "0")
 		if err != nil {
 			return err
 		}
 
-		err = util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/autoconf", n.name), "0")
+		err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/autoconf", n.name), "0")
 		if err != nil {
 			return err
 		}
 
-		err = util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_dad", n.name), "0")
+		err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_dad", n.name), "0")
 		if err != nil {
 			return err
 		}
@@ -647,8 +647,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Disable IPv6 if no address is specified. This prevents the
 		// host being reachable over a guessable link-local address as well as it
 		// auto-configuring an address should an instance operate an IPv6 router.
-		if shared.PathExists("/proc/sys/net/ipv6") {
-			err := util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", n.name), "1")
+		if util.PathExists("/proc/sys/net/ipv6") {
+			err := localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", n.name), "1")
 			if err != nil {
 				return err
 			}
@@ -804,14 +804,14 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// Configure IPv4 firewall.
-	if !shared.ValueInSlice(n.config["ipv4.address"], []string{"", "none"}) {
+	if !util.ValueInSlice(n.config["ipv4.address"], []string{"", "none"}) {
 		if n.hasDHCPv4() && n.hasIPv4Firewall() {
 			fwOpts.FeaturesV4.ICMPDHCPDNSAccess = true
 		}
 
 		// Allow forwarding.
-		if shared.IsTrueOrEmpty(n.config["ipv4.routing"]) {
-			err = util.SysctlSet("net/ipv4/ip_forward", "1")
+		if util.IsTrueOrEmpty(n.config["ipv4.routing"]) {
+			err = localUtil.SysctlSet("net/ipv4/ip_forward", "1")
 			if err != nil {
 				return err
 			}
@@ -857,7 +857,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// Configure IPv4.
-	if !shared.ValueInSlice(n.config["ipv4.address"], []string{"", "none"}) {
+	if !util.ValueInSlice(n.config["ipv4.address"], []string{"", "none"}) {
 		// Parse the subnet.
 		ipAddress, subnet, err := net.ParseCIDR(n.config["ipv4.address"])
 		if err != nil {
@@ -867,8 +867,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		// Update the dnsmasq config.
 		dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--listen-address=%s", ipAddress.String()))
 		if n.DHCPv4Subnet() != nil {
-			if !shared.ValueInSlice("--dhcp-no-override", dnsmasqCmd) {
-				dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-no-override", "--dhcp-authoritative", fmt.Sprintf("--dhcp-leasefile=%s", shared.VarPath("networks", n.name, "dnsmasq.leases")), fmt.Sprintf("--dhcp-hostsfile=%s", shared.VarPath("networks", n.name, "dnsmasq.hosts"))}...)
+			if !util.ValueInSlice("--dhcp-no-override", dnsmasqCmd) {
+				dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-no-override", "--dhcp-authoritative", fmt.Sprintf("--dhcp-leasefile=%s", internalUtil.VarPath("networks", n.name, "dnsmasq.leases")), fmt.Sprintf("--dhcp-hostsfile=%s", internalUtil.VarPath("networks", n.name, "dnsmasq.hosts"))}...)
 			}
 
 			if n.config["ipv4.dhcp.gateway"] != "" {
@@ -912,7 +912,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Configure NAT.
-		if shared.IsTrue(n.config["ipv4.nat"]) {
+		if util.IsTrue(n.config["ipv4.nat"]) {
 			//If a SNAT source address is specified, use that, otherwise default to MASQUERADE mode.
 			var srcIP net.IP
 			if n.config["ipv4.nat.address"] != "" {
@@ -982,9 +982,9 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// Configure IPv6.
-	if !shared.ValueInSlice(n.config["ipv6.address"], []string{"", "none"}) {
+	if !util.ValueInSlice(n.config["ipv6.address"], []string{"", "none"}) {
 		// Enable IPv6 for the subnet.
-		err := util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", n.name), "0")
+		err := localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", n.name), "0")
 		if err != nil {
 			return err
 		}
@@ -1019,8 +1019,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			// Build DHCP configuration.
-			if !shared.ValueInSlice("--dhcp-no-override", dnsmasqCmd) {
-				dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-no-override", "--dhcp-authoritative", fmt.Sprintf("--dhcp-leasefile=%s", shared.VarPath("networks", n.name, "dnsmasq.leases")), fmt.Sprintf("--dhcp-hostsfile=%s", shared.VarPath("networks", n.name, "dnsmasq.hosts"))}...)
+			if !util.ValueInSlice("--dhcp-no-override", dnsmasqCmd) {
+				dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-no-override", "--dhcp-authoritative", fmt.Sprintf("--dhcp-leasefile=%s", internalUtil.VarPath("networks", n.name, "dnsmasq.leases")), fmt.Sprintf("--dhcp-hostsfile=%s", internalUtil.VarPath("networks", n.name, "dnsmasq.hosts"))}...)
 			}
 
 			expiry := "1h"
@@ -1028,7 +1028,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				expiry = n.config["ipv6.dhcp.expiry"]
 			}
 
-			if shared.IsTrue(n.config["ipv6.dhcp.stateful"]) {
+			if util.IsTrue(n.config["ipv6.dhcp.stateful"]) {
 				if n.config["ipv6.dhcp.ranges"] != "" {
 					for _, dhcpRange := range strings.Split(n.config["ipv6.dhcp.ranges"], ",") {
 						dhcpRange = strings.TrimSpace(dhcpRange)
@@ -1045,7 +1045,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Allow forwarding.
-		if shared.IsTrueOrEmpty(n.config["ipv6.routing"]) {
+		if util.IsTrueOrEmpty(n.config["ipv6.routing"]) {
 			// Get a list of proc entries.
 			entries, err := os.ReadDir("/proc/sys/net/ipv6/conf/")
 			if err != nil {
@@ -1059,7 +1059,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 					continue
 				}
 
-				err = util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", entry.Name()), "2")
+				err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", entry.Name()), "2")
 				if err != nil && !os.IsNotExist(err) {
 					return err
 				}
@@ -1067,7 +1067,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 			// Then set forwarding for all of them.
 			for _, entry := range entries {
-				err = util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/forwarding", entry.Name()), "1")
+				err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/forwarding", entry.Name()), "1")
 				if err != nil && !os.IsNotExist(err) {
 					return err
 				}
@@ -1091,7 +1091,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Configure NAT.
-		if shared.IsTrue(n.config["ipv6.nat"]) {
+		if util.IsTrue(n.config["ipv6.nat"]) {
 			//If a SNAT source address is specified, use that, otherwise default to MASQUERADE mode.
 			var srcIP net.IP
 			if n.config["ipv6.nat.address"] != "" {
@@ -1270,12 +1270,12 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Create a config file to contain additional config (and to prevent dnsmasq from reading /etc/dnsmasq.conf)
-		err = os.WriteFile(shared.VarPath("networks", n.name, "dnsmasq.raw"), []byte(fmt.Sprintf("%s\n", n.config["raw.dnsmasq"])), 0644)
+		err = os.WriteFile(internalUtil.VarPath("networks", n.name, "dnsmasq.raw"), []byte(fmt.Sprintf("%s\n", n.config["raw.dnsmasq"])), 0644)
 		if err != nil {
 			return err
 		}
 
-		dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--conf-file=%s", shared.VarPath("networks", n.name, "dnsmasq.raw")))
+		dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--conf-file=%s", internalUtil.VarPath("networks", n.name, "dnsmasq.raw")))
 
 		// Attempt to drop privileges.
 		if n.state.OS.UnprivUser != "" {
@@ -1287,8 +1287,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Create DHCP hosts directory.
-		if !shared.PathExists(shared.VarPath("networks", n.name, "dnsmasq.hosts")) {
-			err = os.MkdirAll(shared.VarPath("networks", n.name, "dnsmasq.hosts"), 0755)
+		if !util.PathExists(internalUtil.VarPath("networks", n.name, "dnsmasq.hosts")) {
+			err = os.MkdirAll(internalUtil.VarPath("networks", n.name, "dnsmasq.hosts"), 0755)
 			if err != nil {
 				return err
 			}
@@ -1307,7 +1307,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Create subprocess object dnsmasq.
-		dnsmasqLogPath := shared.LogPath(fmt.Sprintf("dnsmasq.%s.log", n.name))
+		dnsmasqLogPath := internalUtil.LogPath(fmt.Sprintf("dnsmasq.%s.log", n.name))
 		p, err := subprocess.NewProcess(command, dnsmasqCmd, "", dnsmasqLogPath)
 		if err != nil {
 			return fmt.Errorf("Failed to create subprocess: %s", err)
@@ -1348,7 +1348,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 		cancel()
 
-		err = p.Save(shared.VarPath("networks", n.name, "dnsmasq.pid"))
+		err = p.Save(internalUtil.VarPath("networks", n.name, "dnsmasq.pid"))
 		if err != nil {
 			// Kill Process if started, but could not save the file.
 			err2 := p.Stop()
@@ -1360,8 +1360,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 	} else {
 		// Clean up old dnsmasq config if exists and we are not starting dnsmasq.
-		leasesPath := shared.VarPath("networks", n.name, "dnsmasq.leases")
-		if shared.PathExists(leasesPath) {
+		leasesPath := internalUtil.VarPath("networks", n.name, "dnsmasq.leases")
+		if util.PathExists(leasesPath) {
 			err := os.Remove(leasesPath)
 			if err != nil {
 				return fmt.Errorf("Failed to remove old dnsmasq leases file %q: %w", leasesPath, err)
@@ -1369,8 +1369,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Clean up old dnsmasq PID file.
-		pidPath := shared.VarPath("networks", n.name, "dnsmasq.pid")
-		if shared.PathExists(pidPath) {
+		pidPath := internalUtil.VarPath("networks", n.name, "dnsmasq.pid")
+		if util.PathExists(pidPath) {
 			err := os.Remove(pidPath)
 			if err != nil {
 				return fmt.Errorf("Failed to remove old dnsmasq pid file %q: %w", pidPath, err)
@@ -1537,7 +1537,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 		})
 
 		// Bring the bridge down entirely if the driver has changed.
-		if shared.ValueInSlice("bridge.driver", changedKeys) && n.isRunning() {
+		if util.ValueInSlice("bridge.driver", changedKeys) && n.isRunning() {
 			err = n.Stop()
 			if err != nil {
 				return err
@@ -1545,7 +1545,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 		}
 
 		// Detach any external interfaces should no longer be attached.
-		if shared.ValueInSlice("bridge.external_interfaces", changedKeys) && n.isRunning() {
+		if util.ValueInSlice("bridge.external_interfaces", changedKeys) && n.isRunning() {
 			devices := []string{}
 			for _, dev := range strings.Split(newNetwork.Config["bridge.external_interfaces"], ",") {
 				dev = strings.TrimSpace(dev)
@@ -1558,7 +1558,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 					continue
 				}
 
-				if !shared.ValueInSlice(dev, devices) && InterfaceExists(dev) {
+				if !util.ValueInSlice(dev, devices) && InterfaceExists(dev) {
 					err = DetachInterface(n.name, dev)
 					if err != nil {
 						return err
@@ -1595,7 +1595,7 @@ func (n *bridge) getTunnels() []string {
 		}
 
 		fields := strings.Split(k, ".")
-		if !shared.ValueInSlice(fields[1], tunnels) {
+		if !util.ValueInSlice(fields[1], tunnels) {
 			tunnels = append(tunnels, fields[1])
 		}
 	}
@@ -1672,7 +1672,7 @@ func (n *bridge) applyBootRoutesV6(routes []string) {
 // hasIPv4Firewall indicates whether the network has IPv4 firewall enabled.
 func (n *bridge) hasIPv4Firewall() bool {
 	// IPv4 firewall is only enabled if there is a bridge ipv4.address and ipv4.firewall enabled.
-	if !shared.ValueInSlice(n.config["ipv4.address"], []string{"", "none"}) && shared.IsTrueOrEmpty(n.config["ipv4.firewall"]) {
+	if !util.ValueInSlice(n.config["ipv4.address"], []string{"", "none"}) && util.IsTrueOrEmpty(n.config["ipv4.firewall"]) {
 		return true
 	}
 
@@ -1682,7 +1682,7 @@ func (n *bridge) hasIPv4Firewall() bool {
 // hasIPv6Firewall indicates whether the network has IPv6 firewall enabled.
 func (n *bridge) hasIPv6Firewall() bool {
 	// IPv6 firewall is only enabled if there is a bridge ipv6.address and ipv6.firewall enabled.
-	if !shared.ValueInSlice(n.config["ipv6.address"], []string{"", "none"}) && shared.IsTrueOrEmpty(n.config["ipv6.firewall"]) {
+	if !util.ValueInSlice(n.config["ipv6.address"], []string{"", "none"}) && util.IsTrueOrEmpty(n.config["ipv6.firewall"]) {
 		return true
 	}
 
@@ -1692,13 +1692,13 @@ func (n *bridge) hasIPv6Firewall() bool {
 // hasDHCPv4 indicates whether the network has DHCPv4 enabled.
 // An empty ipv4.dhcp setting indicates enabled by default.
 func (n *bridge) hasDHCPv4() bool {
-	return shared.IsTrueOrEmpty(n.config["ipv4.dhcp"])
+	return util.IsTrueOrEmpty(n.config["ipv4.dhcp"])
 }
 
 // hasDHCPv6 indicates whether the network has DHCPv6 enabled.
 // An empty ipv6.dhcp setting indicates enabled by default.
 func (n *bridge) hasDHCPv6() bool {
-	return shared.IsTrueOrEmpty(n.config["ipv6.dhcp"])
+	return util.IsTrueOrEmpty(n.config["ipv6.dhcp"])
 }
 
 // DHCPv4Subnet returns the DHCPv4 subnet (if DHCP is enabled on network).
@@ -1788,7 +1788,7 @@ func (n *bridge) bridgeNetworkExternalSubnets(bridgeProjectNetworks map[string][
 		for _, netInfo := range networks {
 			for _, keyPrefix := range []string{"ipv4", "ipv6"} {
 				// If NAT is disabled, then network subnet is an external subnet.
-				if shared.IsFalseOrEmpty(netInfo.Config[fmt.Sprintf("%s.nat", keyPrefix)]) {
+				if util.IsFalseOrEmpty(netInfo.Config[fmt.Sprintf("%s.nat", keyPrefix)]) {
 					key := fmt.Sprintf("%s.address", keyPrefix)
 
 					_, ipNet, err := net.ParseCIDR(netInfo.Config[key])
@@ -1827,7 +1827,7 @@ func (n *bridge) bridgeNetworkExternalSubnets(bridgeProjectNetworks map[string][
 				}
 
 				// Find any routes being used by the network.
-				for _, cidr := range shared.SplitNTrimSpace(netInfo.Config[fmt.Sprintf("%s.routes", keyPrefix)], ",", -1, true) {
+				for _, cidr := range util.SplitNTrimSpace(netInfo.Config[fmt.Sprintf("%s.routes", keyPrefix)], ",", -1, true) {
 					_, ipNet, err := net.ParseCIDR(cidr)
 					if err != nil {
 						continue // Skip invalid/unspecified network addresses.
@@ -1877,7 +1877,7 @@ func (n *bridge) bridgedNICExternalRoutes(bridgeProjectNetworks map[string][]*ap
 			// For bridged NICs that are connected to networks specified, check if they have any
 			// routes or external routes configured, and if so add them to the list to return.
 			for _, key := range []string{"ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external"} {
-				for _, cidr := range shared.SplitNTrimSpace(devConfig[key], ",", -1, true) {
+				for _, cidr := range util.SplitNTrimSpace(devConfig[key], ",", -1, true) {
 					_, ipNet, _ := net.ParseCIDR(cidr)
 					if ipNet == nil {
 						// Skip if NIC device doesn't have a valid route.
@@ -2169,7 +2169,7 @@ func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, 
 		return err
 	}
 
-	curForwardEtagHash, err := util.EtagHash(curForward.Etag())
+	curForwardEtagHash, err := localUtil.EtagHash(curForward.Etag())
 	if err != nil {
 		return err
 	}
@@ -2179,7 +2179,7 @@ func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, 
 		NetworkForwardPut: req,
 	}
 
-	newForwardEtagHash, err := util.EtagHash(newForward.Etag())
+	newForwardEtagHash, err := localUtil.EtagHash(newForward.Etag())
 	if err != nil {
 		return err
 	}
@@ -2412,7 +2412,7 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 
 			// Add EUI64 records.
 			_, netIP6, _ := net.ParseCIDR(n.config["ipv6.address"])
-			if netIP6 != nil && hwAddr != nil && shared.IsFalseOrEmpty(n.config["ipv6.dhcp.stateful"]) {
+			if netIP6 != nil && hwAddr != nil && util.IsFalseOrEmpty(n.config["ipv6.dhcp.stateful"]) {
 				eui64IP6, err := eui64.ParseMAC(netIP6.IP, hwAddr)
 				if err == nil {
 					leases = append(leases, api.NetworkLease{
@@ -2433,8 +2433,8 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 	}
 
 	// Get dynamic leases.
-	leaseFile := shared.VarPath("networks", n.name, "dnsmasq.leases")
-	if !shared.PathExists(leaseFile) {
+	leaseFile := internalUtil.VarPath("networks", n.name, "dnsmasq.leases")
+	if !util.PathExists(leaseFile) {
 		return leases, nil
 	}
 
@@ -2476,7 +2476,7 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 			// Skip leases that don't match any of the instance MACs from the project (only when we
 			// have populated the projectMacs list in ClientTypeNormal mode). Otherwise get all local
 			// leases and they will be filtered on the server handling the end user request.
-			if clientType == request.ClientTypeNormal && macStr != "" && !shared.ValueInSlice(macStr, projectMacs) {
+			if clientType == request.ClientTypeNormal && macStr != "" && !util.ValueInSlice(macStr, projectMacs) {
 				continue
 			}
 
@@ -2506,7 +2506,7 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 
 			// Add local leases from other members, filtering them for MACs that belong to the project.
 			for _, lease := range memberLeases {
-				if lease.Hwaddr != "" && shared.ValueInSlice(lease.Hwaddr, projectMacs) {
+				if lease.Hwaddr != "" && util.ValueInSlice(lease.Hwaddr, projectMacs) {
 					leases = append(leases, lease)
 				}
 			}
@@ -2523,5 +2523,5 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 
 // UsesDNSMasq indicates if network's config indicates if it needs to use dnsmasq.
 func (n *bridge) UsesDNSMasq() bool {
-	return !shared.ValueInSlice(n.config["ipv4.address"], []string{"", "none"}) || !shared.ValueInSlice(n.config["ipv6.address"], []string{"", "none"})
+	return !util.ValueInSlice(n.config["ipv4.address"], []string{"", "none"}) || !util.ValueInSlice(n.config["ipv6.address"], []string{"", "none"})
 }

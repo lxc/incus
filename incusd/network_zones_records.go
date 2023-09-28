@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 )
@@ -136,7 +136,7 @@ func networkZoneRecordsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
 	if err != nil {
@@ -474,7 +474,7 @@ func networkZoneRecordPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Validate the ETag.
-	err = util.EtagCheck(r, record.Writable())
+	err = localUtil.EtagCheck(r, record.Writable())
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}

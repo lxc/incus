@@ -12,10 +12,10 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -83,7 +83,7 @@ func (d *tpm) Start() (*deviceConfig.RunConfig, error) {
 
 	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
 
-	if !shared.PathExists(tpmDevPath) {
+	if !util.PathExists(tpmDevPath) {
 		err := os.Mkdir(tpmDevPath, 0700)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create device path %q: %w", tpmDevPath, err)
@@ -237,7 +237,7 @@ func (d *tpm) Stop() (*deviceConfig.RunConfig, error) {
 
 	defer func() { _ = os.Remove(pidPath) }()
 
-	if shared.PathExists(pidPath) {
+	if util.PathExists(pidPath) {
 		proc, err := subprocess.ImportProcess(pidPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to import process %q: %w", pidPath, err)

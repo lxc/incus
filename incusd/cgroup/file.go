@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // NewFileReadWriter returns a CGroup instance using the filesystem as its backend.
@@ -36,7 +36,7 @@ func NewFileReadWriter(pid int, unifiedCapable bool) (*CGroup, error) {
 		path := filepath.Join("/sys/fs/cgroup", fields[1], fields[2])
 		if fields[0] == "0" {
 			fields[1] = "unified"
-			if shared.PathExists("/sys/fs/cgroup/unified") {
+			if util.PathExists("/sys/fs/cgroup/unified") {
 				path = filepath.Join("/sys/fs/cgroup", "unified", fields[2])
 			} else {
 				path = filepath.Join("/sys/fs/cgroup", fields[2])

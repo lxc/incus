@@ -10,7 +10,7 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 )
 
 func authenticateAgentCert(s *state.State, r *http.Request) (bool, instance.Instance, error) {
@@ -46,7 +46,7 @@ func authenticateAgentCert(s *state.State, r *http.Request) (bool, instance.Inst
 	agentCert := inst.(instance.VM).AgentCertificate()
 
 	for _, cert := range r.TLS.PeerCertificates {
-		trusted, _ = util.CheckTrustState(*cert, map[string]x509.Certificate{"0": *agentCert}, nil, false)
+		trusted, _ = localUtil.CheckTrustState(*cert, map[string]x509.Certificate{"0": *agentCert}, nil, false)
 		if trusted {
 			return true, inst, nil
 		}

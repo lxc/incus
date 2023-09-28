@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/cluster"
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/tcp"
@@ -50,7 +50,7 @@ func instanceSFTPHandler(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(instName) {
+	if internalInstance.IsSnapshot(instName) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 

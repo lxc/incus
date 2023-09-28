@@ -15,10 +15,11 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/task"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 type instanceType struct {
@@ -41,7 +42,7 @@ func instanceSaveCache() error {
 		return err
 	}
 
-	err = os.WriteFile(shared.CachePath("instance_types.yaml"), data, 0600)
+	err = os.WriteFile(internalUtil.CachePath("instance_types.yaml"), data, 0600)
 	if err != nil {
 		return err
 	}
@@ -50,11 +51,11 @@ func instanceSaveCache() error {
 }
 
 func instanceLoadCache() error {
-	if !shared.PathExists(shared.CachePath("instance_types.yaml")) {
+	if !util.PathExists(internalUtil.CachePath("instance_types.yaml")) {
 		return nil
 	}
 
-	content, err := os.ReadFile(shared.CachePath("instance_types.yaml"))
+	content, err := os.ReadFile(internalUtil.CachePath("instance_types.yaml"))
 	if err != nil {
 		return err
 	}
@@ -105,7 +106,7 @@ func instanceRefreshTypes(ctx context.Context, s *state.State) error {
 	downloadParse := func(filename string, target any) error {
 		url := fmt.Sprintf("https://images.linuxcontainers.org/meta/instance-types/%s", filename)
 
-		httpClient, err := util.HTTPClient("", s.Proxy)
+		httpClient, err := localUtil.HTTPClient("", s.Proxy)
 		if err != nil {
 			return err
 		}
@@ -117,7 +118,7 @@ func instanceRefreshTypes(ctx context.Context, s *state.State) error {
 
 		httpReq.Header.Set("User-Agent", version.UserAgent)
 
-		cancelableRequest, ok := any(httpReq).(util.ContextAwareRequest)
+		cancelableRequest, ok := any(httpReq).(localUtil.ContextAwareRequest)
 		if ok {
 			httpReq = cancelableRequest.WithContext(ctx)
 		}

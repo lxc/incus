@@ -10,8 +10,8 @@ import (
 	"strconv"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Bind to the given unix socket path.
@@ -46,7 +46,7 @@ func CheckAlreadyRunning(path string) error {
 	}
 
 	// If there's no socket file at all, there's nothing to do.
-	if !shared.PathExists(path) {
+	if !util.PathExists(path) {
 		return nil
 	}
 
@@ -63,7 +63,7 @@ func CheckAlreadyRunning(path string) error {
 // Remove any stale socket file at the given path.
 func socketUnixRemoveStale(path string) error {
 	// If there's no socket file at all, there's nothing to do.
-	if !shared.PathExists(path) {
+	if !util.PathExists(path) {
 		return nil
 	}
 

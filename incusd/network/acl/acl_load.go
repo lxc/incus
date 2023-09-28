@@ -10,8 +10,8 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // LoadByName loads and initialises a Network ACL from the database by project and name.
@@ -62,7 +62,7 @@ func Exists(s *state.State, projectName string, name ...string) error {
 	checkedACLNames := make(map[string]struct{}, len(name))
 
 	for _, aclName := range name {
-		if !shared.ValueInSlice(aclName, existingACLNames) {
+		if !util.ValueInSlice(aclName, existingACLNames) {
 			return fmt.Errorf("Network ACL %q does not exist", aclName)
 		}
 
@@ -96,10 +96,10 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(matchedACLName
 			return fmt.Errorf("Failed to get network config for %q: %w", networkName, err)
 		}
 
-		netACLNames := shared.SplitNTrimSpace(network.Config["security.acls"], ",", -1, true)
+		netACLNames := util.SplitNTrimSpace(network.Config["security.acls"], ",", -1, true)
 		matchedACLNames := []string{}
 		for _, netACLName := range netACLNames {
-			if shared.ValueInSlice(netACLName, matchACLNames) {
+			if util.ValueInSlice(netACLName, matchACLNames) {
 				matchedACLNames = append(matchedACLNames, netACLName)
 			}
 		}
@@ -176,9 +176,9 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(matchedACLName
 
 		// Ingress rules can specify ACL names in their Source subjects.
 		for _, rule := range aclInfo.Ingress {
-			for _, subject := range shared.SplitNTrimSpace(rule.Source, ",", -1, true) {
+			for _, subject := range util.SplitNTrimSpace(rule.Source, ",", -1, true) {
 				// Look for new matching ACLs, but ignore our own ACL reference in our own rules.
-				if shared.ValueInSlice(subject, matchACLNames) && !shared.ValueInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
+				if util.ValueInSlice(subject, matchACLNames) && !util.ValueInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
 					matchedACLNames = append(matchedACLNames, subject)
 				}
 			}
@@ -186,9 +186,9 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(matchedACLName
 
 		// Egress rules can specify ACL names in their Destination subjects.
 		for _, rule := range aclInfo.Egress {
-			for _, subject := range shared.SplitNTrimSpace(rule.Destination, ",", -1, true) {
+			for _, subject := range util.SplitNTrimSpace(rule.Destination, ",", -1, true) {
 				// Look for new matching ACLs, but ignore our own ACL reference in our own rules.
-				if shared.ValueInSlice(subject, matchACLNames) && !shared.ValueInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
+				if util.ValueInSlice(subject, matchACLNames) && !util.ValueInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
 					matchedACLNames = append(matchedACLNames, subject)
 				}
 			}
@@ -245,8 +245,8 @@ func isInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
 		return matchedACLNames
 	}
 
-	for _, nicACLName := range shared.SplitNTrimSpace(d["security.acls"], ",", -1, true) {
-		if shared.ValueInSlice(nicACLName, matchACLNames) {
+	for _, nicACLName := range util.SplitNTrimSpace(d["security.acls"], ",", -1, true) {
+		if util.ValueInSlice(nicACLName, matchACLNames) {
 			matchedACLNames = append(matchedACLNames, nicACLName)
 		}
 	}
@@ -275,7 +275,7 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
 			}
 
-			if shared.ValueInSlice(network.Type, supportedNetTypes) {
+			if util.ValueInSlice(network.Type, supportedNetTypes) {
 				_, found := aclNets[network.Name]
 				if !found {
 					aclNets[network.Name] = NetworkACLUsage{
@@ -288,7 +288,7 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 			}
 
 		case *api.Network:
-			if shared.ValueInSlice(u.Type, supportedNetTypes) {
+			if util.ValueInSlice(u.Type, supportedNetTypes) {
 				_, found := aclNets[u.Name]
 				if !found {
 					networkID, network, _, err := s.DB.Cluster.GetNetworkInAnyState(aclProjectName, u.Name)

@@ -11,9 +11,9 @@ import (
 	"github.com/lxc/incus/incusd/instance/drivers/qmp"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/metrics"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 func (d *qemu) getQemuMetrics() (*metrics.MetricSet, error) {
@@ -179,7 +179,7 @@ func (d *qemu) getQemuCPUMetrics(monitor *qmp.Monitor) (map[string]metrics.CPUMe
 
 		statFile := filepath.Join("/proc", strings.TrimSpace(string(pid)), "task", strconv.Itoa(threadID), "stat")
 
-		if !shared.PathExists(statFile) {
+		if !util.PathExists(statFile) {
 			continue
 		}
 

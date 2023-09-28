@@ -7,7 +7,7 @@ import (
 
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/network/openvswitch"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // BridgeVLANFilteringStatus returns whether VLAN filtering is enabled on a bridge interface.
@@ -52,7 +52,7 @@ func BridgeVLANSetDefaultPVID(interfaceName string, vlanID string) error {
 
 // IsNativeBridge returns whether the bridge name specified is a Linux native bridge.
 func IsNativeBridge(bridgeName string) bool {
-	return shared.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", bridgeName))
+	return util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", bridgeName))
 }
 
 // AttachInterface attaches an interface to a bridge.

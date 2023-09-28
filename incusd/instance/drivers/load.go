@@ -13,12 +13,12 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Instance driver definitions.
@@ -87,7 +87,7 @@ func validDevices(state *state.State, p api.Project, instanceType instancetype.T
 	checkDevices := func(devices deviceConfig.Devices, expanded bool) error {
 		// Check each device individually using the device package.
 		for deviceName, deviceConfig := range devices {
-			if expanded && shared.ValueInSlice(deviceName, checkedDevices) {
+			if expanded && util.ValueInSlice(deviceName, checkedDevices) {
 				continue // Don't check the device twice if present in both local and expanded.
 			}
 

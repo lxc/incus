@@ -8,8 +8,8 @@ import (
 
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/warningtype"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 var cgControllers = map[string]Backend{}
@@ -434,45 +434,45 @@ func Init() {
 
 	// Check for additional legacy cgroup features
 	val, ok := cgControllers["blkio"]
-	if ok && val == V1 && shared.PathExists("/sys/fs/cgroup/blkio/blkio.weight") {
+	if ok && val == V1 && util.PathExists("/sys/fs/cgroup/blkio/blkio.weight") {
 		cgControllers["blkio.weight"] = V1
 	} else {
 		val, ok := cgControllers["blkio"]
-		if ok && val == V1 && shared.PathExists("/sys/fs/cgroup/blkio/blkio.bfq.weight") {
+		if ok && val == V1 && util.PathExists("/sys/fs/cgroup/blkio/blkio.bfq.weight") {
 			cgControllers["blkio.weight"] = V1
 		}
 	}
 
 	val, ok = cgControllers["memory"]
 	if ok && val == V1 {
-		if shared.PathExists("/sys/fs/cgroup/memory/memory.max_usage_in_bytes") {
+		if util.PathExists("/sys/fs/cgroup/memory/memory.max_usage_in_bytes") {
 			cgControllers["memory.max_usage_in_bytes"] = V1
 		}
 
-		if shared.PathExists("/sys/fs/cgroup/memory/memory.swappiness") {
+		if util.PathExists("/sys/fs/cgroup/memory/memory.swappiness") {
 			cgControllers["memory.swappiness"] = V1
 		}
 
-		if shared.PathExists("/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes") {
+		if util.PathExists("/sys/fs/cgroup/memory/memory.memsw.limit_in_bytes") {
 			cgControllers["memory.memsw.limit_in_bytes"] = V1
 		}
 
-		if shared.PathExists("/sys/fs/cgroup/memory/memory.memsw.usage_in_bytes") {
+		if util.PathExists("/sys/fs/cgroup/memory/memory.memsw.usage_in_bytes") {
 			cgControllers["memory.memsw.usage_in_bytes"] = V1
 		}
 
-		if shared.PathExists("/sys/fs/cgroup/memory/memory.memsw.max_usage_in_bytes") {
+		if util.PathExists("/sys/fs/cgroup/memory/memory.memsw.max_usage_in_bytes") {
 			cgControllers["memory.memsw.max_usage_in_bytes"] = V1
 		}
 	}
 
 	val, ok = cgControllers["memory"]
 	if ok && val == V2 {
-		if shared.PathExists("/sys/fs/cgroup/init.scope/memory.swap.max") {
+		if util.PathExists("/sys/fs/cgroup/init.scope/memory.swap.max") {
 			cgControllers["memory.swap.max"] = V2
 		}
 
-		if shared.PathExists("/sys/fs/cgroup/init.scope/memory.swap.current") {
+		if util.PathExists("/sys/fs/cgroup/init.scope/memory.swap.current") {
 			cgControllers["memory.swap.current"] = V2
 		}
 	}

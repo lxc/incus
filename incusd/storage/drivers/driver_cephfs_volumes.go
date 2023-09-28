@@ -10,15 +10,16 @@ import (
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/internal/instancewriter"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // CreateVolume creates a new storage volume on disk.
@@ -187,7 +188,7 @@ func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, 
 
 	// Ensure the volume is mounted.
 	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
-		path := shared.AddSlash(mountPath)
+		path := internalUtil.AddSlash(mountPath)
 
 		// Snapshots are sent first by the sender, so create these first.
 		for _, snapName := range volTargetArgs.Snapshots {
@@ -253,7 +254,7 @@ func (d *cephfs) DeleteVolume(vol Volume, op *operations.Operation) error {
 	volPath := GetVolumeMountPath(d.name, vol.volType, vol.name)
 
 	// If the volume doesn't exist, then nothing more to do.
-	if !shared.PathExists(volPath) {
+	if !util.PathExists(volPath) {
 		return nil
 	}
 
@@ -404,7 +405,7 @@ func (d *cephfs) RenameVolume(vol Volume, newVolName string, op *operations.Oper
 	// Rename the snapshot directory first.
 	srcSnapshotDir := GetVolumeSnapshotDir(d.name, vol.volType, vol.name)
 
-	if shared.PathExists(srcSnapshotDir) {
+	if util.PathExists(srcSnapshotDir) {
 		targetSnapshotDir := GetVolumeSnapshotDir(d.name, vol.volType, newVolName)
 
 		err = os.Rename(srcSnapshotDir, targetSnapshotDir)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,9 +24,8 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/task"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/jmap"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 )
@@ -450,7 +450,7 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := projectParam(r)
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	localOperationURLs := func() (jmap.Map, error) {
 		// Get all the operations.
@@ -862,9 +862,12 @@ func operationWaitGet(d *Daemon, r *http.Request) response.Response {
 		return response.Forbidden(nil)
 	}
 
-	timeoutSecs, err := shared.AtoiEmptyDefault(r.FormValue("timeout"), -1)
-	if err != nil {
-		return response.InternalError(err)
+	timeoutSecs := -1
+	if r.FormValue("timeout") != "" {
+		timeoutSecs, err = strconv.Atoi(r.FormValue("timeout"))
+		if err != nil {
+			return response.InternalError(err)
+		}
 	}
 
 	// First check if the query is for a local operation from this node

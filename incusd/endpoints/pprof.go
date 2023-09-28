@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -45,7 +45,7 @@ func (e *Endpoints) PprofAddress() string {
 // PprofUpdateAddress updates the address for the pprof endpoint, shutting it down and restarting it.
 func (e *Endpoints) PprofUpdateAddress(address string) error {
 	if address != "" {
-		address = util.CanonicalNetworkAddress(address, ports.HTTPDebugDefaultPort)
+		address = internalUtil.CanonicalNetworkAddress(address, ports.HTTPDebugDefaultPort)
 	}
 
 	oldAddress := e.NetworkAddress()

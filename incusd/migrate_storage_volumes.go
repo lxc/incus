@@ -15,9 +15,10 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 func newStorageMigrationSource(volumeOnly bool, pushTarget *api.StorageVolumePostTarget) (*migrationSourceWs, error) {
@@ -53,7 +54,7 @@ func newStorageMigrationSource(volumeOnly bool, pushTarget *api.StorageVolumePos
 
 			ret.conns[connName] = newMigrationConn(ret.pushSecrets[connName], dialer, u)
 		} else {
-			secret, err := shared.RandomCryptoString()
+			secret, err := internalUtil.RandomHexString(32)
 			if err != nil {
 				return nil, fmt.Errorf("Failed creating migration source secret for %q connection: %w", connName, err)
 			}
@@ -168,7 +169,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 		// Ensure that only the requested snapshots are included in the migration index header.
 		volSourceArgs.Info.Config.VolumeSnapshots = make([]*api.StorageVolumeSnapshot, 0, len(volSourceArgs.Snapshots))
 		for i := range allSnapshots {
-			if shared.ValueInSlice(allSnapshots[i].Name, volSourceArgs.Snapshots) {
+			if util.ValueInSlice(allSnapshots[i].Name, volSourceArgs.Snapshots) {
 				volSourceArgs.Info.Config.VolumeSnapshots = append(volSourceArgs.Info.Config.VolumeSnapshots, allSnapshots[i])
 			}
 		}
@@ -226,7 +227,7 @@ func newStorageMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 
 			sink.conns[connName] = newMigrationConn(args.Secrets[connName], args.Dialer, u)
 		} else {
-			secret, err := shared.RandomCryptoString()
+			secret, err := internalUtil.RandomHexString(32)
 			if err != nil {
 				return nil, fmt.Errorf("Failed creating migration sink secret for %q connection: %w", connName, err)
 			}

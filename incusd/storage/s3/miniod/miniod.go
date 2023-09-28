@@ -22,10 +22,11 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/state"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/shared"
+	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // minioHost is the host address that the local MinIO processes will listen on.
@@ -226,7 +227,7 @@ func EnsureRunning(s *state.State, bucketVol storageDrivers.Volume) (*Process, e
 
 			var newDirMode os.FileMode = os.ModeDir | 0700
 
-			if !shared.PathExists(bucketPath) {
+			if !util.PathExists(bucketPath) {
 				err = os.Mkdir(bucketPath, newDirMode)
 				if err != nil {
 					return fmt.Errorf("Failed creating MinIO bucket directory %q: %w", bucketPath, err)
@@ -238,7 +239,7 @@ func EnsureRunning(s *state.State, bucketVol storageDrivers.Volume) (*Process, e
 				return fmt.Errorf("Failed getting MinIO bucket directory info %q: %w", bucketPath, err)
 			}
 
-			dirMode, dirUID, dirGID := shared.GetOwnerMode(dirInfo)
+			dirMode, dirUID, dirGID := internalIO.GetOwnerMode(dirInfo)
 
 			// Ensure file ownership is correct.
 			if uint32(dirUID) != s.OS.UnprivUID || uint32(dirGID) != s.OS.UnprivGID {

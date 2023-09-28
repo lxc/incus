@@ -17,9 +17,9 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // retries describes the number of retries after which Incus will give up registering a user or
@@ -35,20 +35,20 @@ const ClusterCertFilename = "cluster.crt.new"
 // certificateNeedsUpdate returns true if the domain doesn't match the certificate's DNS names
 // or it's valid for less than 30 days.
 func certificateNeedsUpdate(domain string, cert *x509.Certificate) bool {
-	return !shared.ValueInSlice(domain, cert.DNSNames) || time.Now().After(cert.NotAfter.Add(-30*24*time.Hour))
+	return !util.ValueInSlice(domain, cert.DNSNames) || time.Now().After(cert.NotAfter.Add(-30*24*time.Hour))
 }
 
 // UpdateCertificate updates the certificate.
 func UpdateCertificate(s *state.State, provider HTTP01Provider, clustered bool, domain string, email string, caURL string, force bool) (*certificate.Resource, error) {
-	clusterCertFilename := shared.VarPath(ClusterCertFilename)
+	clusterCertFilename := internalUtil.VarPath(ClusterCertFilename)
 
 	l := logger.AddContext(logger.Ctx{"domain": domain, "caURL": caURL})
 
 	// If clusterCertFilename exists, it means that a previously issued certificate couldn't be
 	// distributed to all cluster members and was therefore kept back. In this case, don't issue
 	// a new certificate but return the previously issued one.
-	if !force && clustered && shared.PathExists(clusterCertFilename) {
-		keyFilename := shared.VarPath("cluster.key")
+	if !force && clustered && util.PathExists(clusterCertFilename) {
+		keyFilename := internalUtil.VarPath("cluster.key")
 
 		clusterCert, err := os.ReadFile(clusterCertFilename)
 		if err != nil {
@@ -78,12 +78,12 @@ func UpdateCertificate(s *state.State, provider HTTP01Provider, clustered bool, 
 		}
 	}
 
-	if shared.PathExists(clusterCertFilename) {
+	if util.PathExists(clusterCertFilename) {
 		_ = os.Remove(clusterCertFilename)
 	}
 
 	// Load the certificate.
-	certInfo, err := util.LoadCert(s.OS.VarDir)
+	certInfo, err := internalUtil.LoadCert(s.OS.VarDir)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to load certificate and key file: %w", err)
 	}

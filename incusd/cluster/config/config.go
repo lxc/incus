@@ -12,7 +12,7 @@ import (
 	"github.com/lxc/incus/incusd/config"
 	"github.com/lxc/incus/incusd/db"
 	scriptletLoad "github.com/lxc/incus/incusd/scriptlet/load"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -322,7 +322,7 @@ var ConfigSchema = config.Schema{
 }
 
 func expiryValidator(value string) error {
-	_, err := shared.GetExpiry(time.Time{}, value)
+	_, err := internalInstance.GetExpiry(time.Time{}, value)
 	if err != nil {
 		return err
 	}

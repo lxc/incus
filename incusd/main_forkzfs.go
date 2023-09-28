@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 type cmdForkZFS struct {
@@ -58,7 +58,7 @@ func (c *cmdForkZFS) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Expand the mount path
-	absPath, err := filepath.Abs(shared.VarPath())
+	absPath, err := filepath.Abs(internalUtil.VarPath())
 	if err != nil {
 		return err
 	}

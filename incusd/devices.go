@@ -50,8 +50,8 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 type deviceTaskCPU struct {
@@ -170,7 +170,7 @@ func deviceNetlinkListener() (chan []string, chan []string, chan device.USBEvent
 					continue
 				}
 
-				if !shared.PathExists(fmt.Sprintf("/sys/class/net/%s", props["INTERFACE"])) {
+				if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", props["INTERFACE"])) {
 					continue
 				}
 
@@ -332,7 +332,7 @@ func fillFixedInstances(fixedInstances map[int64][]instance.Instance, inst insta
 	// If the `targetCpuPool` has been manually specified (explicit CPU IDs/ranges specified with `limits.cpu`)
 	if len(targetCpuPool) == targetCpuNum && !loadBalancing {
 		for _, nr := range targetCpuPool {
-			if !shared.ValueInSlice(nr, effectiveCpus) {
+			if !util.ValueInSlice(nr, effectiveCpus) {
 				continue
 			}
 
@@ -450,7 +450,7 @@ func deviceTaskBalance(s *state.State) {
 	isolatedCpusInt := resources.GetCPUIsolated()
 	effectiveCpusSlice := []string{}
 	for _, id := range effectiveCpusInt {
-		if shared.ValueInSlice(id, isolatedCpusInt) {
+		if util.ValueInSlice(id, isolatedCpusInt) {
 			continue
 		}
 

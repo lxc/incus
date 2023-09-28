@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Code generation directives.
@@ -114,7 +114,7 @@ SELECT projects_config.value
 		return false, nil
 	}
 
-	return shared.IsTrue(values[0]), nil
+	return util.IsTrue(values[0]), nil
 }
 
 // GetProjectNames returns the names of all availablprojects.
@@ -175,7 +175,7 @@ func ProjectHasImages(ctx context.Context, tx *sql.Tx, name string) (bool, error
 		return false, err
 	}
 
-	enabled := shared.IsTrue(config["features.images"])
+	enabled := util.IsTrue(config["features.images"])
 
 	return enabled, nil
 }

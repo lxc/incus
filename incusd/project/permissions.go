@@ -16,9 +16,9 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -68,7 +68,7 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 	// Special case restriction checks on volatile.* keys.
 	strip := false
 
-	if shared.ValueInSlice(req.Source.Type, []string{"copy", "migration"}) {
+	if util.ValueInSlice(req.Source.Type, []string{"copy", "migration"}) {
 		// Allow stripping volatile keys if dealing with a copy or migration.
 		strip = true
 	}
@@ -180,7 +180,7 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 
 	// Checker for safe volatile keys.
 	isSafeKey := func(key string) bool {
-		if shared.ValueInSlice(key, []string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power"}) {
+		if util.ValueInSlice(key, []string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power"}) {
 			return true
 		}
 
@@ -271,7 +271,7 @@ func GetImageSpaceBudget(tx *db.ClusterTx, projectName string) (int64, error) {
 	}
 
 	// If "features.images" is not enabled, the budget is unlimited.
-	if shared.IsFalse(info.Project.Config["features.images"]) {
+	if util.IsFalse(info.Project.Config["features.images"]) {
 		return -1, nil
 	}
 
@@ -313,12 +313,12 @@ func checkRestrictionsAndAggregateLimits(tx *db.ClusterTx, info *projectInfo) er
 	aggregateKeys := []string{}
 	isRestricted := false
 	for key, value := range info.Project.Config {
-		if shared.ValueInSlice(key, allAggregateLimits) {
+		if util.ValueInSlice(key, allAggregateLimits) {
 			aggregateKeys = append(aggregateKeys, key)
 			continue
 		}
 
-		if key == "restricted" && shared.IsTrue(value) {
+		if key == "restricted" && util.IsTrue(value) {
 			isRestricted = true
 			continue
 		}
@@ -412,7 +412,7 @@ func checkAggregateLimits(info *projectInfo, aggregateKeys []string) error {
 func parseHostIDMapRange(isUID bool, isGID bool, listValue string) ([]idmap.IdmapEntry, error) {
 	var idmaps []idmap.IdmapEntry
 
-	for _, listItem := range shared.SplitNTrimSpace(listValue, ",", -1, true) {
+	for _, listItem := range util.SplitNTrimSpace(listValue, ",", -1, true) {
 		rangeStart, rangeSize, err := validate.ParseUint32Range(listItem)
 		if err != nil {
 			return nil, err
@@ -454,7 +454,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.containers.interception":
 			for _, key := range allowableIntercept {
 				containerConfigChecks[key] = func(instanceValue string) error {
-					disabled := shared.IsFalseOrEmpty(instanceValue)
+					disabled := util.IsFalseOrEmpty(instanceValue)
 
 					if restrictionValue != "allow" && !disabled {
 						return fmt.Errorf("Container syscall interception is forbidden")
@@ -465,7 +465,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 			}
 		case "restricted.containers.nesting":
 			containerConfigChecks["security.nesting"] = func(instanceValue string) error {
-				if restrictionValue == "block" && shared.IsTrue(instanceValue) {
+				if restrictionValue == "block" && util.IsTrue(instanceValue) {
 					return fmt.Errorf("Container nesting is forbidden")
 				}
 
@@ -479,7 +479,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 
 		case "restricted.containers.privilege":
 			containerConfigChecks["security.privileged"] = func(instanceValue string) error {
-				if restrictionValue != "allow" && shared.IsTrue(instanceValue) {
+				if restrictionValue != "allow" && util.IsTrue(instanceValue) {
 					return fmt.Errorf("Privileged containers are forbidden")
 				}
 
@@ -487,7 +487,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 			}
 
 			containerConfigChecks["security.idmap.isolated"] = func(instanceValue string) error {
-				if restrictionValue == "isolated" && shared.IsFalseOrEmpty(instanceValue) {
+				if restrictionValue == "isolated" && util.IsFalseOrEmpty(instanceValue) {
 					return fmt.Errorf("Non-isolated containers are forbidden")
 				}
 
@@ -824,11 +824,11 @@ var allowableIntercept = []string{
 
 // Return true if a low-level container option is forbidden.
 func isContainerLowLevelOptionForbidden(key string) bool {
-	if strings.HasPrefix(key, "security.syscalls.intercept") && !shared.ValueInSlice(key, allowableIntercept) {
+	if strings.HasPrefix(key, "security.syscalls.intercept") && !util.ValueInSlice(key, allowableIntercept) {
 		return true
 	}
 
-	if shared.ValueInSlice(key, []string{
+	if util.ValueInSlice(key, []string{
 		"boot.host_shutdown_timeout",
 		"linux.kernel_modules",
 		"raw.apparmor",
@@ -847,7 +847,7 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 
 // Return true if a low-level VM option is forbidden.
 func isVMLowLevelOptionForbidden(key string) bool {
-	return shared.ValueInSlice(key, []string{
+	return util.ValueInSlice(key, []string{
 		"boot.host_shutdown_timeout",
 		"limits.memory.hugepages",
 		"raw.idmap",
@@ -1128,7 +1128,7 @@ func projectHasLimitsOrRestrictions(project api.Project) bool {
 			return true
 		}
 
-		if k == "restricted" && shared.IsTrue(v) {
+		if k == "restricted" && util.IsTrue(v) {
 			return true
 		}
 	}
@@ -1173,7 +1173,7 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 	// profiles to expand the instances configs, otherwise we use the
 	// profiles from the default project.
 	defaultProject := Default
-	if projectName == Default || shared.IsTrue(project.Config["features.profiles"]) {
+	if projectName == Default || util.IsTrue(project.Config["features.profiles"]) {
 		profilesFilter.Project = &projectName
 	} else {
 		profilesFilter.Project = &defaultProject
@@ -1455,7 +1455,7 @@ func FilterUsedBy(r *http.Request, entries []string) []string {
 
 // Return true if particular restriction in project is violated.
 func projectHasRestriction(project *api.Project, restrictionKey string, blockValue string) bool {
-	if shared.IsFalseOrEmpty(project.Config["restricted"]) {
+	if util.IsFalseOrEmpty(project.Config["restricted"]) {
 		return false
 	}
 
@@ -1518,16 +1518,16 @@ func AllowSnapshotCreation(p *api.Project) error {
 
 // GetRestrictedClusterGroups returns a slice of restricted cluster groups for the given project.
 func GetRestrictedClusterGroups(p *api.Project) []string {
-	return shared.SplitNTrimSpace(p.Config["restricted.cluster.groups"], ",", -1, true)
+	return util.SplitNTrimSpace(p.Config["restricted.cluster.groups"], ",", -1, true)
 }
 
 // AllowClusterMember returns nil if the given project is allowed to use the cluster member.
 func AllowClusterMember(p *api.Project, member *db.NodeInfo) error {
 	clusterGroupsAllowed := GetRestrictedClusterGroups(p)
 
-	if shared.IsTrue(p.Config["restricted"]) && len(clusterGroupsAllowed) > 0 {
+	if util.IsTrue(p.Config["restricted"]) && len(clusterGroupsAllowed) > 0 {
 		for _, memberGroupName := range member.Groups {
-			if shared.ValueInSlice(memberGroupName, clusterGroupsAllowed) {
+			if util.ValueInSlice(memberGroupName, clusterGroupsAllowed) {
 				return nil
 			}
 		}
@@ -1543,11 +1543,11 @@ func AllowClusterGroup(p *api.Project, groupName string) error {
 	clusterGroupsAllowed := GetRestrictedClusterGroups(p)
 
 	// Skip the check if the project is not restricted
-	if shared.IsFalseOrEmpty(p.Config["restricted"]) {
+	if util.IsFalseOrEmpty(p.Config["restricted"]) {
 		return nil
 	}
 
-	if len(clusterGroupsAllowed) > 0 && !shared.ValueInSlice(groupName, clusterGroupsAllowed) {
+	if len(clusterGroupsAllowed) > 0 && !util.ValueInSlice(groupName, clusterGroupsAllowed) {
 		return fmt.Errorf("Project isn't allowed to use this cluster group: %q", groupName)
 	}
 
@@ -1600,7 +1600,14 @@ func CheckTargetGroup(ctx context.Context, tx *db.ClusterTx, p *api.Project, gro
 // If target is a cluster group it returns the cluster group name.
 // In case of error, neither node information nor cluster group name gets returned.
 func CheckTarget(ctx context.Context, r *http.Request, tx *db.ClusterTx, p *api.Project, target string, allMembers []db.NodeInfo) (*db.NodeInfo, string, error) {
-	targetMemberName, targetGroupName := shared.TargetDetect(target)
+	// Extract the target.
+	var targetGroupName string
+	var targetMemberName string
+	if strings.HasPrefix(target, "@") {
+		targetGroupName = strings.TrimPrefix(target, "@")
+	} else {
+		targetMemberName = target
+	}
 
 	// Check manual cluster member targeting restrictions.
 	err := CheckClusterTargetRestriction(r, p, target)

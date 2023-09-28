@@ -21,9 +21,9 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/osarch"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 func TestBootstrap_UnmetPreconditions(t *testing.T) {
@@ -129,7 +129,7 @@ func TestBootstrap(t *testing.T) {
 	require.NoError(t, err)
 
 	// The cluster certificate is in place.
-	assert.True(t, shared.PathExists(filepath.Join(state.OS.VarDir, "cluster.crt")))
+	assert.True(t, util.PathExists(filepath.Join(state.OS.VarDir, "cluster.crt")))
 
 	trustedCerts := func() map[dbCluster.CertificateType]map[string]x509.Certificate {
 		return nil

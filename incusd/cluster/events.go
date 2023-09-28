@@ -9,11 +9,11 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/endpoints"
 	"github.com/lxc/incus/incusd/events"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // eventHubMinHosts is the minimum number of members that must have the event-hub role to trigger switching into
@@ -324,7 +324,7 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 
 			// Indicate to any notifiers waiting for this member's address that it is connected.
 			for connected, notifyAddresses := range listenersNotify {
-				if shared.ValueInSlice(m.Address, notifyAddresses) {
+				if util.ValueInSlice(m.Address, notifyAddresses) {
 					close(connected)
 					delete(listenersNotify, connected)
 				}

@@ -25,10 +25,10 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/filter"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // urlInstanceTypeDetect detects what sort of instance type filter is being requested. Either
@@ -268,7 +268,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 
 	// Detect project mode.
 	projectName := queryParam(r, "project")
-	allProjects := shared.IsTrue(r.FormValue("all-projects"))
+	allProjects := util.IsTrue(r.FormValue("all-projects"))
 
 	if allProjects && projectName != "" {
 		return nil, api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects")

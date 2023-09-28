@@ -13,9 +13,9 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/resources"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 var gpuMdevMu sync.Mutex
@@ -123,7 +123,7 @@ func (d *gpuMdev) startVM() (*deviceConfig.RunConfig, error) {
 		}
 
 		// Create the vGPU.
-		if mdevUUID == "" || !shared.PathExists(fmt.Sprintf("/sys/bus/pci/devices/%s/%s", pciAddress, mdevUUID)) {
+		if mdevUUID == "" || !util.PathExists(fmt.Sprintf("/sys/bus/pci/devices/%s/%s", pciAddress, mdevUUID)) {
 			mdevUUID = uuid.New()
 
 			err = os.WriteFile(filepath.Join(fmt.Sprintf("/sys/bus/pci/devices/%s/mdev_supported_types/%s/create", pciAddress, d.config["mdev"])), []byte(mdevUUID), 0200)
@@ -138,7 +138,7 @@ func (d *gpuMdev) startVM() (*deviceConfig.RunConfig, error) {
 			revert.Add(func() {
 				path := fmt.Sprintf("/sys/bus/mdev/devices/%s", mdevUUID)
 
-				if shared.PathExists(path) {
+				if util.PathExists(path) {
 					err := os.WriteFile(filepath.Join(path, "remove"), []byte("1\n"), 0200)
 					if err != nil {
 						d.logger.Error("Failed to remove vgpu", logger.Ctx{"device": mdevUUID, "err": err})
@@ -197,7 +197,7 @@ func (d *gpuMdev) postStop() error {
 	if v["vgpu.uuid"] != "" {
 		path := fmt.Sprintf("/sys/bus/mdev/devices/%s", v["vgpu.uuid"])
 
-		if shared.PathExists(path) {
+		if util.PathExists(path) {
 			err := os.WriteFile(filepath.Join(path, "remove"), []byte("1\n"), 0200)
 			if err != nil {
 				d.logger.Error("Failed to remove vgpu", logger.Ctx{"device": v["vgpu.uuid"], "err": err})
@@ -253,7 +253,7 @@ func (d *gpuMdev) validateConfig(instConf instance.ConfigReader) error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *gpuMdev) validateEnvironment() error {
-	if d.inst.Type() == instancetype.VM && shared.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
+	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return fmt.Errorf("GPU devices cannot be used when migration.stateful is enabled")
 	}
 

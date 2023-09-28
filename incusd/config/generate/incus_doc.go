@@ -13,7 +13,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 var (
@@ -38,7 +38,7 @@ func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, er
 		}
 
 		// Skip excluded paths
-		if shared.ValueInSlice(path, excludedPaths) {
+		if util.ValueInSlice(path, excludedPaths) {
 			if info.IsDir() {
 				logger.Printf("Skipping excluded directory: %v", path)
 				return filepath.SkipDir
@@ -93,13 +93,13 @@ func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, er
 					mdKey := mdKVMatch[1]
 					mdValue := mdKVMatch[2]
 					// check that the metadata key is among the expected ones
-					if !shared.ValueInSlice(mdKey, mdKeys) {
+					if !util.ValueInSlice(mdKey, mdKeys) {
 						continue
 					}
 
 					if mdKey == "key" {
 						// check that the metadata key 'key' is not already present as these are meant to be unique
-						if shared.ValueInSlice(mdValue, docKeys) {
+						if util.ValueInSlice(mdValue, docKeys) {
 							return fmt.Errorf("Duplicate key '%s' found at %s", mdValue, fset.Position(cg.Pos()).String())
 						} else {
 							docKeys = append(docKeys, mdValue)

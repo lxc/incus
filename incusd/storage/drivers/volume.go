@@ -10,10 +10,11 @@ import (
 	"github.com/lxc/incus/incusd/locking"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/refcount"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // tmpVolSuffix Suffix to use for any temporary volumes created by Incus.
@@ -155,7 +156,7 @@ func (v Volume) NewSnapshot(snapshotName string) (Volume, error) {
 
 // IsSnapshot indicates if volume is a snapshot.
 func (v Volume) IsSnapshot() bool {
-	return shared.IsSnapshot(v.name)
+	return internalInstance.IsSnapshot(v.name)
 }
 
 // MountPath returns the path where the volume will be mounted.
@@ -207,7 +208,7 @@ func (v Volume) EnsureMountPath() error {
 	defer revert.Fail()
 
 	// Create volume's mount path if missing, with any created directories set to 0711.
-	if !shared.PathExists(volPath) {
+	if !util.PathExists(volPath) {
 		if v.IsSnapshot() {
 			// Create the parent directory if needed.
 			parentName, _, _ := api.GetParentAndSnapshotName(v.name)
@@ -360,13 +361,13 @@ func (v Volume) SnapshotsMatch(snapNames []string, op *operations.Operation) err
 	}
 
 	for _, snapName := range snapNames {
-		if !shared.ValueInSlice(snapName, snapshots) {
+		if !util.ValueInSlice(snapName, snapshots) {
 			return fmt.Errorf("Snapshot %q expected but not in storage", snapName)
 		}
 	}
 
 	for _, snapshot := range snapshots {
-		if !shared.ValueInSlice(snapshot, snapNames) {
+		if !util.ValueInSlice(snapshot, snapNames) {
 			return fmt.Errorf("Snapshot %q in storage but not expected", snapshot)
 		}
 	}

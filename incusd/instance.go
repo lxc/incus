@@ -19,14 +19,14 @@ import (
 	"github.com/lxc/incus/incusd/instance/operationlock"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/task"
 	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Helper functions
@@ -363,7 +363,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 				// leave alone so we don't prevent copy.
 			}
 
-			fields := strings.SplitN(srcSnap.Name(), shared.SnapshotDelimiter, 2)
+			fields := strings.SplitN(srcSnap.Name(), internalInstance.SnapshotDelimiter, 2)
 			newSnapName := fmt.Sprintf("%s/%s", inst.Name(), fields[1])
 			snapInstArgs := db.InstanceArgs{
 				Architecture: srcSnap.Architecture(),
@@ -471,7 +471,7 @@ func autoCreateInstanceSnapshots(ctx context.Context, s *state.State, instances 
 			return err
 		}
 
-		expiry, err := shared.GetExpiry(time.Now(), inst.ExpandedConfig()["snapshots.expiry"])
+		expiry, err := internalInstance.GetExpiry(time.Now(), inst.ExpandedConfig()["snapshots.expiry"])
 		if err != nil {
 			l.Error("Error getting snapshots.expiry date")
 			return err
@@ -616,7 +616,7 @@ func pruneExpiredAndAutoCreateInstanceSnapshotsTask(d *Daemon) (task.Func, task.
 			}
 
 			// If snapshot should only be taken if instance is running, check if running.
-			if shared.IsFalseOrEmpty(inst.ExpandedConfig()["snapshots.schedule.stopped"]) && !inst.IsRunning() {
+			if util.IsFalseOrEmpty(inst.ExpandedConfig()["snapshots.schedule.stopped"]) && !inst.IsRunning() {
 				return nil
 			}
 

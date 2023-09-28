@@ -20,9 +20,9 @@ import (
 	projecthelpers "github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
 )
@@ -77,7 +77,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -98,7 +98,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 
 	// Validate the ETag
 	etag := []any{inst.Architecture(), inst.LocalConfig(), inst.LocalDevices(), inst.IsEphemeral(), inst.Profiles()}
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -187,8 +187,8 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 
 func instanceSnapRestore(s *state.State, projectName string, name string, snap string, stateful bool) error {
 	// normalize snapshot name
-	if !shared.IsSnapshot(snap) {
-		snap = name + shared.SnapshotDelimiter + snap
+	if !internalInstance.IsSnapshot(snap) {
+		snap = name + internalInstance.SnapshotDelimiter + snap
 	}
 
 	inst, err := instance.LoadByProjectAndName(s, projectName, name)

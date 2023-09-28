@@ -8,8 +8,9 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type dir struct {
@@ -68,18 +69,18 @@ func (d *dir) Create() error {
 
 	sourcePath := d.config["source"]
 
-	if !shared.PathExists(sourcePath) {
+	if !util.PathExists(sourcePath) {
 		return fmt.Errorf("Source path '%s' doesn't exist", sourcePath)
 	}
 
 	// Check that if within INCUS_DIR, we're at our expected spot.
 	cleanSource := filepath.Clean(sourcePath)
-	if strings.HasPrefix(cleanSource, shared.VarPath()) && cleanSource != GetPoolMountPath(d.name) {
+	if strings.HasPrefix(cleanSource, internalUtil.VarPath()) && cleanSource != GetPoolMountPath(d.name) {
 		return fmt.Errorf("Source path '%s' is within the Incus directory", cleanSource)
 	}
 
 	// Check that the path is currently empty.
-	isEmpty, err := shared.PathIsEmpty(sourcePath)
+	isEmpty, err := internalUtil.PathIsEmpty(sourcePath)
 	if err != nil {
 		return err
 	}

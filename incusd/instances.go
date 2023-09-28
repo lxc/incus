@@ -19,9 +19,10 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/warnings"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 var instancesCmd = APIEndpoint{
@@ -185,7 +186,7 @@ func instanceShouldAutoStart(inst instance.Instance) bool {
 	autoStart := config["boot.autostart"]
 	lastState := config["volatile.last_state.power"]
 
-	return shared.IsTrue(autoStart) || (autoStart == "" && lastState == instance.PowerStateRunning)
+	return util.IsTrue(autoStart) || (autoStart == "" && lastState == instance.PowerStateRunning)
 }
 
 func instancesStart(s *state.State, instances []instance.Instance) {
@@ -289,8 +290,8 @@ func instancesOnDisk(s *state.State) ([]instance.Instance, error) {
 	var err error
 
 	instancePaths := map[instancetype.Type]string{
-		instancetype.Container: shared.VarPath("containers"),
-		instancetype.VM:        shared.VarPath("virtual-machines"),
+		instancetype.Container: internalUtil.VarPath("containers"),
+		instancetype.VM:        internalUtil.VarPath("virtual-machines"),
 	}
 
 	instanceTypeNames := make(map[instancetype.Type][]os.DirEntry, 2)
@@ -317,7 +318,7 @@ func instancesOnDisk(s *state.State) ([]instance.Instance, error) {
 			// This allows us to stop VMs which require access to the vsock ID and volatile UUID.
 			// Also generally it ensures that all devices are stopped cleanly too.
 			backupYamlPath := filepath.Join(instancePaths[instanceType], file.Name(), "backup.yaml")
-			if shared.PathExists(backupYamlPath) {
+			if util.PathExists(backupYamlPath) {
 				inst, err = instance.LoadFromBackup(s, projectName, filepath.Join(instancePaths[instanceType], file.Name()), false)
 				if err != nil {
 					logger.Warn("Failed loading instance", logger.Ctx{"project": projectName, "instance": instanceName, "backup_file": backupYamlPath, "err": err})

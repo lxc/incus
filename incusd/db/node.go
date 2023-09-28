@@ -14,11 +14,11 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/operationtype"
 	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 )
 
 // ClusterRole represents the role of a member in a cluster.
@@ -156,7 +156,7 @@ func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (
 		result.Message = fmt.Sprintf("No heartbeat for %s (%s)", time.Since(n.Heartbeat), n.Heartbeat)
 	} else {
 		// Check if up to date.
-		n, err := util.CompareVersions(maxVersion, n.Version())
+		n, err := localUtil.CompareVersions(maxVersion, n.Version())
 		if err != nil {
 			return nil, err
 		}
@@ -336,7 +336,7 @@ func (c *ClusterTx) NodeIsOutdated(ctx context.Context) (bool, error) {
 			continue
 		}
 
-		n, err := util.CompareVersions(node.Version(), version)
+		n, err := localUtil.CompareVersions(node.Version(), version)
 		if err != nil {
 			return false, fmt.Errorf("Failed to compare with version of member %s: %w", node.Name, err)
 		}
@@ -680,7 +680,7 @@ func (c *ClusterTx) UpdateNodeClusterGroups(ctx context.Context, id int64, group
 
 	// Check if node already belongs to the given groups.
 	for _, newGroup := range groups {
-		if shared.ValueInSlice(newGroup, oldGroups) {
+		if util.ValueInSlice(newGroup, oldGroups) {
 			// Node already belongs to this group.
 			skipGroups = append(skipGroups, newGroup)
 			continue
@@ -694,7 +694,7 @@ func (c *ClusterTx) UpdateNodeClusterGroups(ctx context.Context, id int64, group
 	}
 
 	for _, oldGroup := range oldGroups {
-		if shared.ValueInSlice(oldGroup, skipGroups) {
+		if util.ValueInSlice(oldGroup, skipGroups) {
 			continue
 		}
 
@@ -1064,12 +1064,12 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 		}
 
 		// Skip group-only members if targeted cluster group doesn't match.
-		if member.Config["scheduler.instance"] == "group" && !shared.ValueInSlice(targetClusterGroup, member.Groups) {
+		if member.Config["scheduler.instance"] == "group" && !util.ValueInSlice(targetClusterGroup, member.Groups) {
 			continue
 		}
 
 		// Skip if a group is requested and member isn't part of it.
-		if targetClusterGroup != "" && !shared.ValueInSlice(targetClusterGroup, member.Groups) {
+		if targetClusterGroup != "" && !util.ValueInSlice(targetClusterGroup, member.Groups) {
 			continue
 		}
 
@@ -1077,7 +1077,7 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 		if allowedClusterGroups != nil {
 			found := false
 			for _, allowedClusterGroup := range allowedClusterGroups {
-				if shared.ValueInSlice(allowedClusterGroup, member.Groups) {
+				if util.ValueInSlice(allowedClusterGroup, member.Groups) {
 					found = true
 					break
 				}
@@ -1098,7 +1098,7 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 
 			supportedArchitectures := append([]int{member.Architecture}, personalities...)
 			for _, supportedArchitecture := range supportedArchitectures {
-				if shared.ValueInSlice(supportedArchitecture, targetArchitectures) {
+				if util.ValueInSlice(supportedArchitecture, targetArchitectures) {
 					candidateMembers = append(candidateMembers, member)
 					break
 				}

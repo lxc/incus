@@ -8,10 +8,10 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // EventSource indicates the source of an event.
@@ -183,12 +183,12 @@ func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 			continue
 		}
 
-		if !shared.ValueInSlice(event.Type, listener.messageTypes) {
+		if !util.ValueInSlice(event.Type, listener.messageTypes) {
 			continue
 		}
 
 		// If the event doesn't come from this member and has been excluded by listener, don't deliver it.
-		if eventSource != EventSourceLocal && shared.ValueInSlice(event.Location, listener.excludeLocations) {
+		if eventSource != EventSourceLocal && util.ValueInSlice(event.Location, listener.excludeLocations) {
 			continue
 		}
 

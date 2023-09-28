@@ -15,9 +15,9 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	storagePools "github.com/lxc/incus/incusd/storage"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 )
@@ -201,7 +201,7 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 		return bucketA.Name < bucketB.Name
 	})
 
-	if util.IsRecursionRequest(r) {
+	if localUtil.IsRecursionRequest(r) {
 		buckets := make([]*api.StorageBucket, 0, len(dbBuckets))
 		for _, dbBucket := range dbBuckets {
 			u := pool.GetBucketURL(dbBucket.Name)
@@ -773,7 +773,7 @@ func storagePoolBucketKeysGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if util.IsRecursionRequest(r) {
+	if localUtil.IsRecursionRequest(r) {
 		bucketKeys := make([]*api.StorageBucketKey, 0, len(dbBucketKeys))
 		for _, dbBucketKey := range dbBucketKeys {
 			bucketKeys = append(bucketKeys, &dbBucketKey.StorageBucketKey)

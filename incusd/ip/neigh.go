@@ -5,8 +5,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // NeighbourIPState can be { PERMANENT | NOARP | REACHABLE | STALE | NONE | INCOMPLETE | DELAY | PROBE | FAILED }.
@@ -58,7 +58,7 @@ func (n *Neigh) Show() ([]Neigh, error) {
 
 	neighbours := []Neigh{}
 
-	for _, line := range shared.SplitNTrimSpace(out, "\n", -1, true) {
+	for _, line := range util.SplitNTrimSpace(out, "\n", -1, true) {
 		// Split fields and early validation.
 		fields := strings.Fields(line)
 		if len(fields) != 4 {

@@ -16,7 +16,7 @@ import (
 
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/units"
 )

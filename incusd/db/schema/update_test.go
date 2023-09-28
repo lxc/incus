@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/lxc/incus/incusd/db/schema"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // A Go source file matching the given prefix is created in the calling
@@ -19,6 +19,6 @@ func TestDotGo(t *testing.T) {
 	}
 
 	require.NoError(t, schema.DotGo(updates, "xyz"))
-	require.Equal(t, true, shared.PathExists("xyz.go"))
+	require.Equal(t, true, util.PathExists("xyz.go"))
 	require.NoError(t, os.Remove("xyz.go"))
 }

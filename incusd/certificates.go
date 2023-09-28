@@ -29,9 +29,10 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
@@ -140,7 +141,7 @@ var certificateCmd = APIEndpoint{
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func certificatesGet(d *Daemon, r *http.Request) response.Response {
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	if recursion {
 		var certResponses []api.Certificate
@@ -537,7 +538,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Check if cluster member join token supplied as token.
-		joinToken, err := shared.JoinTokenDecode(req.TrustToken)
+		joinToken, err := internalUtil.JoinTokenDecode(req.TrustToken)
 		if err == nil {
 			// If so then check there is a matching join operation.
 			joinOp, err := clusterMemberJoinTokenValid(s, r, project.Default, joinToken)
@@ -604,7 +605,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 		// Get all addresses the server is listening on. This is encoded in the certificate token,
 		// so that the client will not have to specify a server address. The client will iterate
 		// through all these addresses until it can connect to one of them.
-		addresses, err := util.ListenAddresses(localHTTPSAddress)
+		addresses, err := localUtil.ListenAddresses(localHTTPSAddress)
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -612,7 +613,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 		// Generate join secret for new client. This will be stored inside the join token operation and will be
 		// supplied by the joining client (encoded inside the join token) which will allow us to lookup the correct
 		// operation in order to validate the requested joining client name is correct and authorised.
-		joinSecret, err := shared.RandomCryptoString()
+		joinSecret, err := internalUtil.RandomHexString(32)
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -639,7 +640,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 		expiry := s.GlobalConfig.RemoteTokenExpiry()
 
 		if expiry != "" {
-			expiresAt, err := shared.GetExpiry(time.Now(), expiry)
+			expiresAt, err := internalInstance.GetExpiry(time.Now(), expiry)
 			if err != nil {
 				return response.InternalError(err)
 			}
@@ -855,7 +856,7 @@ func certificatePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Validate the ETag.
-	err = util.EtagCheck(r, apiEntry)
+	err = localUtil.EtagCheck(r, apiEntry)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -924,7 +925,7 @@ func certificatePatch(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Validate the ETag.
-	err = util.EtagCheck(r, apiEntry)
+	err = localUtil.EtagCheck(r, apiEntry)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -1005,7 +1006,7 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 
 				trusted := false
 				for _, i := range r.TLS.PeerCertificates {
-					trusted, _ = util.CheckTrustState(*i, trustedCerts, s.Endpoints.NetworkCert(), false)
+					trusted, _ = localUtil.CheckTrustState(*i, trustedCerts, s.Endpoints.NetworkCert(), false)
 
 					if trusted {
 						break
@@ -1127,7 +1128,7 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 
 			trusted := false
 			for _, i := range r.TLS.PeerCertificates {
-				trusted, _ = util.CheckTrustState(*i, trustedCerts, s.Endpoints.NetworkCert(), false)
+				trusted, _ = localUtil.CheckTrustState(*i, trustedCerts, s.Endpoints.NetworkCert(), false)
 
 				if trusted {
 					break

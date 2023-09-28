@@ -11,9 +11,10 @@ import (
 
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/incusd/db/schema"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Schema for the local database.
@@ -387,8 +388,8 @@ func updateFromV30(ctx context.Context, tx *sql.Tx) error {
 }
 
 func updateFromV29(ctx context.Context, tx *sql.Tx) error {
-	if shared.PathExists(shared.VarPath("zfs.img")) {
-		err := os.Chmod(shared.VarPath("zfs.img"), 0600)
+	if util.PathExists(internalUtil.VarPath("zfs.img")) {
+		err := os.Chmod(internalUtil.VarPath("zfs.img"), 0600)
 		if err != nil {
 			return err
 		}
@@ -915,7 +916,7 @@ CREATE TABLE IF NOT EXISTS config (
 		return err
 	}
 
-	passfname := shared.VarPath("adminpwd")
+	passfname := internalUtil.VarPath("adminpwd")
 	passOut, err := os.Open(passfname)
 	oldPassword := ""
 	if err == nil {

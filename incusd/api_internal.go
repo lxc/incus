@@ -29,17 +29,18 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 var apiInternal = []APIEndpoint{
@@ -304,7 +305,7 @@ func internalContainerHookLoadFromReference(s *state.State, r *http.Request) (in
 			// If DB not available, try loading from backup file.
 			logger.Warn("Failed loading instance from database, trying backup file", logger.Ctx{"project": projectName, "instance": instanceRef, "err": err})
 
-			instancePath := filepath.Join(shared.VarPath("containers"), project.Instance(projectName, instanceRef))
+			instancePath := filepath.Join(internalUtil.VarPath("containers"), project.Instance(projectName, instanceRef))
 			inst, err = instance.LoadFromBackup(s, projectName, instancePath, false)
 			if err != nil {
 				return nil, err
@@ -420,7 +421,7 @@ func internalSQLGet(d *Daemon, r *http.Request) response.Response {
 
 	database := r.FormValue("database")
 
-	if !shared.ValueInSlice(database, []string{"local", "global"}) {
+	if !util.ValueInSlice(database, []string{"local", "global"}) {
 		return response.BadRequest(fmt.Errorf("Invalid database"))
 	}
 
@@ -463,7 +464,7 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	if !shared.ValueInSlice(req.Database, []string{"local", "global"}) {
+	if !util.ValueInSlice(req.Database, []string{"local", "global"}) {
 		return response.BadRequest(fmt.Errorf("Invalid database"))
 	}
 
@@ -589,7 +590,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 		return fmt.Errorf("The name of the instance is required")
 	}
 
-	storagePoolsPath := shared.VarPath("storage-pools")
+	storagePoolsPath := internalUtil.VarPath("storage-pools")
 	storagePoolsDir, err := os.Open(storagePoolsPath)
 	if err != nil {
 		return err
@@ -616,7 +617,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 			volStorageName := project.Instance(projectName, instName)
 			instanceMntPoint := storageDrivers.GetVolumeMountPath(poolName, volType, volStorageName)
 
-			if shared.PathExists(instanceMntPoint) {
+			if util.PathExists(instanceMntPoint) {
 				instanceMountPoints = append(instanceMountPoints, instanceMntPoint)
 				instancePoolName = poolName
 				instanceVolType = volType
@@ -641,7 +642,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 
 	// User needs to make sure that we can access the directory where backup.yaml lives.
 	instanceMountPoint := instanceMountPoints[0]
-	isEmpty, err := shared.PathIsEmpty(instanceMountPoint)
+	isEmpty, err := internalUtil.PathIsEmpty(instanceMountPoint)
 	if err != nil {
 		return err
 	}
@@ -797,7 +798,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 	}
 
 	for _, snap := range existingSnapshots {
-		snapInstName := fmt.Sprintf("%s%s%s", backupConf.Container.Name, shared.SnapshotDelimiter, snap.Name)
+		snapInstName := fmt.Sprintf("%s%s%s", backupConf.Container.Name, internalInstance.SnapshotDelimiter, snap.Name)
 
 		// Check if an entry for the snapshot already exists in the db.
 		_, snapErr := s.DB.Cluster.GetInstanceSnapshotID(projectName, backupConf.Container.Name, snap.Name)

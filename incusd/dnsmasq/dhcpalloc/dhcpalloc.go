@@ -14,8 +14,9 @@ import (
 
 	"github.com/lxc/incus/incusd/dnsmasq"
 	"github.com/lxc/incus/internal/iprange"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // ErrDHCPNotSupported indicates network doesn't support DHCP for this IP protocol.
@@ -269,7 +270,7 @@ func (t *Transaction) getDHCPFreeIPv6(usedIPs map[[16]byte]dnsmasq.DHCPAllocatio
 	netConfig := t.opts.Network.Config()
 
 	// Try using an EUI64 IP when in either SLAAC or DHCPv6 stateful mode without custom ranges.
-	if shared.IsFalseOrEmpty(netConfig["ipv6.dhcp.stateful"]) || netConfig["ipv6.dhcp.ranges"] == "" {
+	if util.IsFalseOrEmpty(netConfig["ipv6.dhcp.stateful"]) || netConfig["ipv6.dhcp.ranges"] == "" {
 		IP, err := eui64.ParseMAC(subnet.IP, mac)
 		if err != nil {
 			return nil, err
@@ -356,7 +357,7 @@ func AllocateTask(opts *Options, f func(*Transaction) error) error {
 
 	// Get all existing allocations in network if leases file exists. If not then we will detect this later
 	// due to the existing allocations maps being nil.
-	if shared.PathExists(shared.VarPath("networks", opts.Network.Name(), "dnsmasq.leases")) {
+	if util.PathExists(internalUtil.VarPath("networks", opts.Network.Name(), "dnsmasq.leases")) {
 		t.allocationsDHCPv4, t.allocationsDHCPv6, err = dnsmasq.DHCPAllAllocations(opts.Network.Name())
 		if err != nil {
 			return err

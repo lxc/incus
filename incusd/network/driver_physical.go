@@ -10,10 +10,10 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -181,7 +181,7 @@ func (n *physical) setup(oldConfig map[string]string) error {
 
 	hostName := GetHostDevice(n.config["parent"], n.config["vlan"])
 
-	created, err := VLANInterfaceCreate(n.config["parent"], hostName, n.config["vlan"], shared.IsTrue(n.config["gvrp"]))
+	created, err := VLANInterfaceCreate(n.config["parent"], hostName, n.config["vlan"], util.IsTrue(n.config["gvrp"]))
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (n *physical) setup(oldConfig map[string]string) error {
 
 	// Record if we created this device or not (if we have not already recorded that we created it previously),
 	// so it can be removed on stop. This way we won't overwrite the setting on daemon restart.
-	if shared.IsFalseOrEmpty(n.config["volatile.last_state.created"]) {
+	if util.IsFalseOrEmpty(n.config["volatile.last_state.created"]) {
 		n.config["volatile.last_state.created"] = fmt.Sprintf("%t", created)
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.UpdateNetwork(n.id, n.description, n.config)
@@ -239,7 +239,7 @@ func (n *physical) Stop() error {
 	hostName := GetHostDevice(n.config["parent"], n.config["vlan"])
 
 	// Only try and remove created VLAN interfaces.
-	if n.config["vlan"] != "" && shared.IsTrue(n.config["volatile.last_state.created"]) && InterfaceExists(hostName) {
+	if n.config["vlan"] != "" && util.IsTrue(n.config["volatile.last_state.created"]) && InterfaceExists(hostName) {
 		err := InterfaceRemove(hostName)
 		if err != nil {
 			return err
@@ -292,7 +292,7 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 	revert := revert.New()
 	defer revert.Fail()
 
-	hostNameChanged := shared.ValueInSlice("vlan", changedKeys) || shared.ValueInSlice("parent", changedKeys)
+	hostNameChanged := util.ValueInSlice("vlan", changedKeys) || util.ValueInSlice("parent", changedKeys)
 
 	// We only need to check in the database once, not on every clustered node.
 	if clientType == request.ClientTypeNormal {

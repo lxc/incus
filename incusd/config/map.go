@@ -6,7 +6,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Map is a structured map of config keys to config values.
@@ -88,7 +89,7 @@ func (m *Map) Dump() map[string]string {
 			if value != key.Default {
 				values[name] = value
 			}
-		} else if shared.IsUserConfig(name) {
+		} else if internalInstance.IsUserConfig(name) {
 			// User key, just include it as is
 			values[name] = value
 		}
@@ -101,7 +102,7 @@ func (m *Map) Dump() map[string]string {
 func (m *Map) GetRaw(name string) string {
 	value, ok := m.values[name]
 	// User key?
-	if shared.IsUserConfig(name) {
+	if internalInstance.IsUserConfig(name) {
 		return value
 	}
 	// Schema key
@@ -115,7 +116,7 @@ func (m *Map) GetRaw(name string) string {
 
 // GetString returns the value of the given key, which must be of type String.
 func (m *Map) GetString(name string) string {
-	if !shared.IsUserConfig(name) {
+	if !internalInstance.IsUserConfig(name) {
 		m.schema.assertKeyType(name, String)
 	}
 
@@ -125,7 +126,7 @@ func (m *Map) GetString(name string) string {
 // GetBool returns the value of the given key, which must be of type Bool.
 func (m *Map) GetBool(name string) bool {
 	m.schema.assertKeyType(name, Bool)
-	return shared.IsTrue(m.GetRaw(name))
+	return util.IsTrue(m.GetRaw(name))
 }
 
 // GetInt64 returns the value of the given key, which must be of type Int64.
@@ -182,7 +183,7 @@ func (m *Map) update(values map[string]string) ([]string, error) {
 // the value has changed, and error if something went wrong.
 func (m *Map) set(name string, value string, initial bool) (bool, error) {
 	// Bypass schema for user.* keys
-	if shared.IsUserConfig(name) {
+	if internalInstance.IsUserConfig(name) {
 		current, ok := m.values[name]
 		if ok && value == current {
 			// Value is unchanged
@@ -241,7 +242,7 @@ func (m *Map) set(name string, value string, initial bool) (bool, error) {
 
 // Normalize a boolean value, converting it to the string "true" or "false".
 func normalizeBool(value string) string {
-	if shared.IsTrue(value) {
+	if util.IsTrue(value) {
 		return "true"
 	}
 

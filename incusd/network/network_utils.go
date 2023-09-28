@@ -27,13 +27,14 @@ import (
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/iprange"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -412,7 +413,7 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 			}
 
 			// Skip devices not connected to managed networks.
-			if !shared.ValueInSlice(d["parent"], networks) {
+			if !util.ValueInSlice(d["parent"], networks) {
 				continue
 			}
 
@@ -428,7 +429,7 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 				entries[d["parent"]] = [][]string{}
 			}
 
-			if (shared.IsTrue(d["security.ipv4_filtering"]) && d["ipv4.address"] == "") || (shared.IsTrue(d["security.ipv6_filtering"]) && d["ipv6.address"] == "") {
+			if (util.IsTrue(d["security.ipv4_filtering"]) && d["ipv4.address"] == "") || (util.IsTrue(d["security.ipv6_filtering"]) && d["ipv6.address"] == "") {
 				deviceStaticFileName := dnsmasq.StaticAllocationFileName(inst.Project().Name, inst.Name(), deviceName)
 				_, curIPv4, curIPv6, err := dnsmasq.DHCPStaticAllocation(d["parent"], deviceStaticFileName)
 				if err != nil && !os.IsNotExist(err) {
@@ -453,7 +454,7 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 		entries := entries[network]
 
 		// Skip networks we don't manage (or don't have DHCP enabled).
-		if !shared.PathExists(shared.VarPath("networks", network, "dnsmasq.pid")) {
+		if !util.PathExists(internalUtil.VarPath("networks", network, "dnsmasq.pid")) {
 			continue
 		}
 
@@ -466,13 +467,13 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 		config := n.Config()
 
 		// Wipe everything clean.
-		files, err := os.ReadDir(shared.VarPath("networks", network, "dnsmasq.hosts"))
+		files, err := os.ReadDir(internalUtil.VarPath("networks", network, "dnsmasq.hosts"))
 		if err != nil {
 			return err
 		}
 
 		for _, entry := range files {
-			err = os.Remove(shared.VarPath("networks", network, "dnsmasq.hosts", entry.Name()))
+			err = os.Remove(internalUtil.VarPath("networks", network, "dnsmasq.hosts", entry.Name()))
 			if err != nil {
 				return err
 			}
@@ -749,7 +750,7 @@ func GetHostDevice(parent string, vlan string) string {
 
 	// If no VLANs are configured, use the default pattern
 	defaultVlan := fmt.Sprintf("%s.%s", parent, vlan)
-	if !shared.PathExists("/proc/net/vlan/config") {
+	if !util.PathExists("/proc/net/vlan/config") {
 		return defaultVlan
 	}
 
@@ -799,8 +800,8 @@ func GetNeighbourIPs(interfaceName string, hwaddr net.HardwareAddr) ([]ip.Neigh,
 
 // GetLeaseAddresses returns the lease addresses for a network and hwaddr.
 func GetLeaseAddresses(networkName string, hwaddr string) ([]net.IP, error) {
-	leaseFile := shared.VarPath("networks", networkName, "dnsmasq.leases")
-	if !shared.PathExists(leaseFile) {
+	leaseFile := internalUtil.VarPath("networks", networkName, "dnsmasq.leases")
+	if !util.PathExists(leaseFile) {
 		return nil, fmt.Errorf("Leases file not found for network %q", networkName)
 	}
 
@@ -869,11 +870,11 @@ func usesIPv4Firewall(netConfig map[string]string) bool {
 		return false
 	}
 
-	if shared.IsTrueOrEmpty(netConfig["ipv4.firewall"]) {
+	if util.IsTrueOrEmpty(netConfig["ipv4.firewall"]) {
 		return true
 	}
 
-	if shared.IsTrue(netConfig["ipv4.nat"]) {
+	if util.IsTrue(netConfig["ipv4.nat"]) {
 		return true
 	}
 
@@ -886,11 +887,11 @@ func usesIPv6Firewall(netConfig map[string]string) bool {
 		return false
 	}
 
-	if shared.IsTrueOrEmpty(netConfig["ipv6.firewall"]) {
+	if util.IsTrueOrEmpty(netConfig["ipv6.firewall"]) {
 		return true
 	}
 
-	if shared.IsTrue(netConfig["ipv6.nat"]) {
+	if util.IsTrue(netConfig["ipv6.nat"]) {
 		return true
 	}
 
@@ -1060,7 +1061,7 @@ func VLANInterfaceCreate(parent string, vlanDevice string, vlanID string, gvrp b
 	}
 
 	// Attempt to disable IPv6 router advertisement acceptance.
-	_ = util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", vlanDevice), "0")
+	_ = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", vlanDevice), "0")
 
 	// We created a new vlan interface, return true.
 	return true, nil
@@ -1075,7 +1076,7 @@ func InterfaceRemove(nic string) error {
 
 // InterfaceExists returns true if network interface exists.
 func InterfaceExists(nic string) bool {
-	if nic != "" && shared.PathExists(fmt.Sprintf("/sys/class/net/%s", nic)) {
+	if nic != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s", nic)) {
 		return true
 	}
 
@@ -1320,7 +1321,7 @@ func BridgeNetfilterEnabled(ipVersion uint) error {
 	}
 
 	sysctlPath := fmt.Sprintf("net/bridge/bridge-nf-call-%s", sysctlName)
-	sysctlVal, err := util.SysctlGet(sysctlPath)
+	sysctlVal, err := localUtil.SysctlGet(sysctlPath)
 	if err != nil {
 		return fmt.Errorf("br_netfilter kernel module not loaded")
 	}
@@ -1338,7 +1339,7 @@ func ProxyParseAddr(data string) (*deviceConfig.ProxyAddress, error) {
 	// Split into <protocol> and <address>.
 	fields := strings.SplitN(data, ":", 2)
 
-	if !shared.ValueInSlice(fields[0], []string{"tcp", "udp", "unix"}) {
+	if !util.ValueInSlice(fields[0], []string{"tcp", "udp", "unix"}) {
 		return nil, fmt.Errorf("Unknown protocol type %q", fields[0])
 	}
 
@@ -1365,7 +1366,7 @@ func ProxyParseAddr(data string) (*deviceConfig.ProxyAddress, error) {
 	}
 
 	// Validate that it's a valid address.
-	if shared.ValueInSlice(newProxyAddr.ConnType, []string{"udp", "tcp"}) {
+	if util.ValueInSlice(newProxyAddr.ConnType, []string{"udp", "tcp"}) {
 		err := validate.Optional(validate.IsNetworkAddress)(address)
 		if err != nil {
 			return nil, err

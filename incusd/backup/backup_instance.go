@@ -9,8 +9,9 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Instance represents the backup relevant subset of an instance.
@@ -57,19 +58,19 @@ func (b *InstanceBackup) Instance() Instance {
 
 // Rename renames an instance backup.
 func (b *InstanceBackup) Rename(newName string) error {
-	oldBackupPath := shared.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, b.name))
-	newBackupPath := shared.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, newName))
+	oldBackupPath := internalUtil.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, b.name))
+	newBackupPath := internalUtil.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, newName))
 
 	// Extract the old and new parent backup paths from the old and new backup names rather than use
 	// instance.Name() as this may be in flux if the instance itself is being renamed, whereas the relevant
 	// instance name is encoded into the backup names.
 	oldParentName, _, _ := api.GetParentAndSnapshotName(b.name)
-	oldParentBackupsPath := shared.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, oldParentName))
+	oldParentBackupsPath := internalUtil.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, oldParentName))
 	newParentName, _, _ := api.GetParentAndSnapshotName(newName)
-	newParentBackupsPath := shared.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, newParentName))
+	newParentBackupsPath := internalUtil.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, newParentName))
 
 	// Create the new backup path if doesn't exist.
-	if !shared.PathExists(newParentBackupsPath) {
+	if !util.PathExists(newParentBackupsPath) {
 		err := os.MkdirAll(newParentBackupsPath, 0700)
 		if err != nil {
 			return err
@@ -83,7 +84,7 @@ func (b *InstanceBackup) Rename(newName string) error {
 	}
 
 	// Check if we can remove the old parent directory.
-	empty, _ := shared.PathIsEmpty(oldParentBackupsPath)
+	empty, _ := internalUtil.PathIsEmpty(oldParentBackupsPath)
 	if empty {
 		err := os.Remove(oldParentBackupsPath)
 		if err != nil {
@@ -105,10 +106,10 @@ func (b *InstanceBackup) Rename(newName string) error {
 
 // Delete removes an instance backup.
 func (b *InstanceBackup) Delete() error {
-	backupPath := shared.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, b.name))
+	backupPath := internalUtil.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, b.name))
 
 	// Delete the on-disk data.
-	if shared.PathExists(backupPath) {
+	if util.PathExists(backupPath) {
 		err := os.RemoveAll(backupPath)
 		if err != nil {
 			return err
@@ -116,8 +117,8 @@ func (b *InstanceBackup) Delete() error {
 	}
 
 	// Check if we can remove the instance directory.
-	backupsPath := shared.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, b.instance.Name()))
-	empty, _ := shared.PathIsEmpty(backupsPath)
+	backupsPath := internalUtil.VarPath("backups", "instances", project.Instance(b.instance.Project().Name, b.instance.Name()))
+	empty, _ := internalUtil.PathIsEmpty(backupsPath)
 	if empty {
 		err := os.Remove(backupsPath)
 		if err != nil {

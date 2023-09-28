@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/shared/util"
 )
 
 // CGroup represents the main cgroup abstraction.
@@ -129,7 +130,7 @@ func (cg *CGroup) GetMemoryLimit() (int64, error) {
 // Returns the cgroup memory limit, or if the cgroup memory limit couldn't be determined or is larger than the
 // total system memory, then the total system memory is returned.
 func (cg *CGroup) GetEffectiveMemoryLimit() (int64, error) {
-	memoryTotal, err := shared.DeviceTotalMemory()
+	memoryTotal, err := linux.DeviceTotalMemory()
 	if err != nil {
 		return -1, fmt.Errorf("Failed getting total memory: %q", err)
 	}
@@ -563,7 +564,7 @@ func (cg *CGroup) GetMemorySwapLimit() (int64, error) {
 		}
 
 		if val == "max" {
-			return shared.GetMeminfo("SwapTotal")
+			return linux.GetMeminfo("SwapTotal")
 		}
 
 		n, err := strconv.ParseInt(val, 10, 64)
@@ -674,11 +675,11 @@ func (cg *CGroup) SetBlkioWeight(limit int64) error {
 
 // SetBlkioLimit sets the specified read or write limit for a device.
 func (cg *CGroup) SetBlkioLimit(dev string, oType string, uType string, limit int64) error {
-	if !shared.ValueInSlice(oType, []string{"read", "write"}) {
+	if !util.ValueInSlice(oType, []string{"read", "write"}) {
 		return fmt.Errorf("Invalid I/O operation type: %s", oType)
 	}
 
-	if !shared.ValueInSlice(uType, []string{"iops", "bps"}) {
+	if !util.ValueInSlice(uType, []string{"iops", "bps"}) {
 		return fmt.Errorf("Invalid I/O limit type: %s", uType)
 	}
 

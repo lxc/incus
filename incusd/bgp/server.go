@@ -13,8 +13,8 @@ import (
 	"github.com/pborman/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/logger"
 )
 

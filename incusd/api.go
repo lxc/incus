@@ -19,9 +19,9 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/storage/s3"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // swagger:operation GET / server api_get
@@ -69,7 +69,7 @@ func restServer(d *Daemon) *http.Server {
 	mux.UseEncodedPath() // Allow encoded values in path segments.
 
 	uiPath := os.Getenv("INCUS_UI")
-	uiEnabled := uiPath != "" && shared.PathExists(uiPath)
+	uiEnabled := uiPath != "" && util.PathExists(uiPath)
 	if uiEnabled {
 		uiHttpDir := uiHttpDir{http.Dir(uiPath)}
 		mux.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(uiHttpDir)))

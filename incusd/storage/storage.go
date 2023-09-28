@@ -11,9 +11,10 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // InstancePath returns the directory of an instance or snapshot.
@@ -21,17 +22,17 @@ func InstancePath(instanceType instancetype.Type, projectName, instanceName stri
 	fullName := project.Instance(projectName, instanceName)
 	if instanceType == instancetype.VM {
 		if isSnapshot {
-			return shared.VarPath("virtual-machines-snapshots", fullName)
+			return internalUtil.VarPath("virtual-machines-snapshots", fullName)
 		}
 
-		return shared.VarPath("virtual-machines", fullName)
+		return internalUtil.VarPath("virtual-machines", fullName)
 	}
 
 	if isSnapshot {
-		return shared.VarPath("containers-snapshots", fullName)
+		return internalUtil.VarPath("containers-snapshots", fullName)
 	}
 
-	return shared.VarPath("containers", fullName)
+	return internalUtil.VarPath("containers", fullName)
 }
 
 // InstanceImportingFilePath returns the file path used to indicate an instance import is in progress.
@@ -46,38 +47,38 @@ func InstanceImportingFilePath(instanceType instancetype.Type, poolName, project
 		typeDir = "virtual-machines"
 	}
 
-	return shared.VarPath("storage-pools", poolName, typeDir, fullName, ".importing")
+	return internalUtil.VarPath("storage-pools", poolName, typeDir, fullName, ".importing")
 }
 
 // GetStoragePoolMountPoint returns the mountpoint of the given pool.
 // {INCUS_DIR}/storage-pools/<pool>
 // Deprecated, use GetPoolMountPath in storage/drivers package.
 func GetStoragePoolMountPoint(poolName string) string {
-	return shared.VarPath("storage-pools", poolName)
+	return internalUtil.VarPath("storage-pools", poolName)
 }
 
 // GetSnapshotMountPoint returns the mountpoint of the given container snapshot.
 // ${INCUS_DIR}/storage-pools/<pool>/containers-snapshots/<snapshot_name>.
 func GetSnapshotMountPoint(projectName, poolName string, snapshotName string) string {
-	return shared.VarPath("storage-pools", poolName, "containers-snapshots", project.Instance(projectName, snapshotName))
+	return internalUtil.VarPath("storage-pools", poolName, "containers-snapshots", project.Instance(projectName, snapshotName))
 }
 
 // GetImageMountPoint returns the mountpoint of the given image.
 // ${INCUS_DIR}/storage-pools/<pool>/images/<fingerprint>.
 func GetImageMountPoint(poolName string, fingerprint string) string {
-	return shared.VarPath("storage-pools", poolName, "images", fingerprint)
+	return internalUtil.VarPath("storage-pools", poolName, "images", fingerprint)
 }
 
 // GetStoragePoolVolumeSnapshotMountPoint returns the mountpoint of the given pool volume snapshot.
 // ${INCUS_DIR}/storage-pools/<pool>/custom-snapshots/<custom volume name>/<snapshot name>.
 func GetStoragePoolVolumeSnapshotMountPoint(poolName string, snapshotName string) string {
-	return shared.VarPath("storage-pools", poolName, "custom-snapshots", snapshotName)
+	return internalUtil.VarPath("storage-pools", poolName, "custom-snapshots", snapshotName)
 }
 
 // CreateContainerMountpoint creates the provided container mountpoint and symlink.
 func CreateContainerMountpoint(mountPoint string, mountPointSymlink string, privileged bool) error {
-	mntPointSymlinkExist := shared.PathExists(mountPointSymlink)
-	mntPointSymlinkTargetExist := shared.PathExists(mountPoint)
+	mntPointSymlinkExist := util.PathExists(mountPointSymlink)
+	mntPointSymlinkTargetExist := util.PathExists(mountPoint)
 
 	var err error
 	if !mntPointSymlinkTargetExist {
@@ -105,8 +106,8 @@ func CreateContainerMountpoint(mountPoint string, mountPointSymlink string, priv
 // CreateSnapshotMountpoint creates the provided container snapshot mountpoint
 // and symlink.
 func CreateSnapshotMountpoint(snapshotMountpoint string, snapshotsSymlinkTarget string, snapshotsSymlink string) error {
-	snapshotMntPointExists := shared.PathExists(snapshotMountpoint)
-	mntPointSymlinkExist := shared.PathExists(snapshotsSymlink)
+	snapshotMntPointExists := util.PathExists(snapshotMountpoint)
+	mntPointSymlinkExist := util.PathExists(snapshotsSymlink)
 
 	if !snapshotMntPointExists {
 		err := os.MkdirAll(snapshotMountpoint, 0711)
@@ -143,7 +144,7 @@ func UsedBy(ctx context.Context, s *state.State, pool Pool, firstOnly bool, memb
 		for _, vol := range volumes {
 			var u *api.URL
 
-			if shared.ValueInSlice(vol.Type, ignoreVolumeType) {
+			if util.ValueInSlice(vol.Type, ignoreVolumeType) {
 				continue
 			}
 

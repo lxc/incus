@@ -37,21 +37,23 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/storage/memorypipe"
 	"github.com/lxc/incus/incusd/storage/s3"
 	"github.com/lxc/incus/incusd/storage/s3/miniod"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/instancewriter"
+	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 var unavailablePools = make(map[string]struct{})
@@ -185,7 +187,7 @@ func (b *backend) Create(clientType request.ClientType, op *operations.Operation
 
 	path := drivers.GetPoolMountPath(b.name)
 
-	if shared.IsDir(path) {
+	if internalUtil.IsDir(path) {
 		return fmt.Errorf("Storage pool directory %q already exists", path)
 	}
 
@@ -342,8 +344,8 @@ func (b *backend) Delete(clientType request.ClientType, op *operations.Operation
 	}
 
 	// If completely gone, just return
-	path := shared.VarPath("storage-pools", b.name)
-	if !shared.PathExists(path) {
+	path := internalUtil.VarPath("storage-pools", b.name)
+	if !util.PathExists(path) {
 		return nil
 	}
 
@@ -418,7 +420,7 @@ func (b *backend) Mount() (bool, error) {
 	path := drivers.GetPoolMountPath(b.name)
 
 	// Create the storage path if needed.
-	if !shared.IsDir(path) {
+	if !internalUtil.IsDir(path) {
 		err := os.MkdirAll(path, 0711)
 		if err != nil {
 			return false, fmt.Errorf("Failed to create storage pool directory %q: %w", path, err)
@@ -492,14 +494,14 @@ func (b *backend) ApplyPatch(name string) error {
 // ensureInstanceSymlink creates a symlink in the instance directory to the instance's mount path
 // if doesn't exist already.
 func (b *backend) ensureInstanceSymlink(instanceType instancetype.Type, projectName string, instanceName string, mountPath string) error {
-	if shared.IsSnapshot(instanceName) {
+	if internalInstance.IsSnapshot(instanceName) {
 		return fmt.Errorf("Instance must not be snapshot")
 	}
 
 	symlinkPath := InstancePath(instanceType, projectName, instanceName, false)
 
 	// Remove any old symlinks left over by previous bugs that may point to a different pool.
-	if shared.PathExists(symlinkPath) {
+	if util.PathExists(symlinkPath) {
 		err := os.Remove(symlinkPath)
 		if err != nil {
 			return fmt.Errorf("Failed to remove symlink %q: %w", symlinkPath, err)
@@ -519,7 +521,7 @@ func (b *backend) ensureInstanceSymlink(instanceType instancetype.Type, projectN
 func (b *backend) removeInstanceSymlink(instanceType instancetype.Type, projectName string, instanceName string) error {
 	symlinkPath := InstancePath(instanceType, projectName, instanceName, false)
 
-	if shared.PathExists(symlinkPath) {
+	if util.PathExists(symlinkPath) {
 		err := os.Remove(symlinkPath)
 		if err != nil {
 			return fmt.Errorf("Failed to remove symlink %q: %w", symlinkPath, err)
@@ -545,7 +547,7 @@ func (b *backend) ensureInstanceSnapshotSymlink(instanceType instancetype.Type, 
 	snapshotTargetPath := drivers.GetVolumeSnapshotDir(b.name, volType, volStorageName)
 
 	// Remove any old symlinks left over by previous bugs that may point to a different pool.
-	if shared.PathExists(snapshotSymlink) {
+	if util.PathExists(snapshotSymlink) {
 		err = os.Remove(snapshotSymlink)
 		if err != nil {
 			return fmt.Errorf("Failed to remove symlink %q: %w", snapshotSymlink, err)
@@ -578,8 +580,8 @@ func (b *backend) removeInstanceSnapshotSymlinkIfUnused(instanceType instancetyp
 	snapshotTargetPath := drivers.GetVolumeSnapshotDir(b.name, volType, volStorageName)
 
 	// If snapshot parent directory doesn't exist, remove symlink.
-	if !shared.PathExists(snapshotTargetPath) {
-		if shared.PathExists(snapshotSymlink) {
+	if !util.PathExists(snapshotTargetPath) {
+		if util.PathExists(snapshotSymlink) {
 			err := os.Remove(snapshotSymlink)
 			if err != nil {
 				return fmt.Errorf("Failed to remove symlink %q: %w", snapshotSymlink, err)
@@ -1597,12 +1599,12 @@ func (b *backend) imageFiller(fingerprint string, op *operations.Operation) func
 			metadata := make(map[string]any)
 			tracker = &ioprogress.ProgressTracker{
 				Handler: func(percent, speed int64) {
-					shared.SetProgressMetadata(metadata, "create_instance_from_image_unpack", "Unpack", percent, 0, speed)
+					operations.SetProgressMetadata(metadata, "create_instance_from_image_unpack", "Unpack", percent, 0, speed)
 					_ = op.UpdateMetadata(metadata)
 				}}
 		}
 
-		imageFile := shared.VarPath("images", fingerprint)
+		imageFile := internalUtil.VarPath("images", fingerprint)
 		return ImageUnpack(imageFile, vol, rootBlockPath, b.driver.Info().BlockBacking, b.state.OS, allowUnsafeResize, tracker)
 	}
 }
@@ -1939,7 +1941,7 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 				}
 
 				// Make sure that the image is available locally too (not guaranteed in clusters).
-				imageExists = err == nil && shared.PathExists(shared.VarPath("images", fingerprint))
+				imageExists = err == nil && util.PathExists(internalUtil.VarPath("images", fingerprint))
 			}
 
 			if imageExists {
@@ -1998,7 +2000,7 @@ func (b *backend) RenameInstance(inst instance.Instance, newName string, op *ope
 		return fmt.Errorf("Instance cannot be a snapshot")
 	}
 
-	if shared.IsSnapshot(newName) {
+	if internalInstance.IsSnapshot(newName) {
 		return fmt.Errorf("New name cannot be a snapshot")
 	}
 
@@ -2841,7 +2843,7 @@ func (b *backend) RenameInstanceSnapshot(inst instance.Instance, newName string,
 		return fmt.Errorf("Instance must be a snapshot")
 	}
 
-	if shared.IsSnapshot(newName) {
+	if internalInstance.IsSnapshot(newName) {
 		return fmt.Errorf("New name cannot be a snapshot")
 	}
 
@@ -3047,7 +3049,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 			// Go through all the snapshots.
 			for _, snap := range snaps {
 				_, snapName, _ := api.GetParentAndSnapshotName(snap.Name())
-				if !shared.ValueInSlice(snapName, snapErr.Snapshots) {
+				if !util.ValueInSlice(snapName, snapErr.Snapshots) {
 					continue
 				}
 
@@ -3584,7 +3586,7 @@ func (b *backend) UpdateBucket(projectName string, bucketName string, bucket api
 		return err
 	}
 
-	curBucketEtagHash, err := util.EtagHash(curBucket.Etag())
+	curBucketEtagHash, err := localUtil.EtagHash(curBucket.Etag())
 	if err != nil {
 		return err
 	}
@@ -3594,7 +3596,7 @@ func (b *backend) UpdateBucket(projectName string, bucketName string, bucket api
 		StorageBucketPut: bucket,
 	}
 
-	newBucketEtagHash, err := util.EtagHash(newBucket.Etag())
+	newBucketEtagHash, err := localUtil.EtagHash(newBucket.Etag())
 	if err != nil {
 		return err
 	}
@@ -4020,7 +4022,7 @@ func (b *backend) UpdateBucketKey(projectName string, bucketName string, keyName
 		return err
 	}
 
-	curBucketKeyEtagHash, err := util.EtagHash(curBucketKey.Etag())
+	curBucketKeyEtagHash, err := localUtil.EtagHash(curBucketKey.Etag())
 	if err != nil {
 		return err
 	}
@@ -4030,7 +4032,7 @@ func (b *backend) UpdateBucketKey(projectName string, bucketName string, keyName
 		StorageBucketKeyPut: key,
 	}
 
-	newBucketKeyEtagHash, err := util.EtagHash(newBucketKey.Etag())
+	newBucketKeyEtagHash, err := localUtil.EtagHash(newBucketKey.Etag())
 	if err != nil {
 		return err
 	}
@@ -4843,11 +4845,11 @@ func (b *backend) RenameCustomVolume(projectName string, volName string, newVolN
 	l.Debug("RenameCustomVolume started")
 	defer l.Debug("RenameCustomVolume finished")
 
-	if shared.IsSnapshot(volName) {
+	if internalInstance.IsSnapshot(volName) {
 		return fmt.Errorf("Volume name cannot be a snapshot")
 	}
 
-	if shared.IsSnapshot(newVolName) {
+	if internalInstance.IsSnapshot(newVolName) {
 		return fmt.Errorf("New volume name cannot be a snapshot")
 	}
 
@@ -4962,7 +4964,7 @@ func (b *backend) UpdateCustomVolume(projectName string, volName string, newDesc
 	l.Debug("UpdateCustomVolume started")
 	defer l.Debug("UpdateCustomVolume finished")
 
-	if shared.IsSnapshot(volName) {
+	if internalInstance.IsSnapshot(volName) {
 		return fmt.Errorf("Volume name cannot be a snapshot")
 	}
 
@@ -5007,7 +5009,7 @@ func (b *backend) UpdateCustomVolume(projectName string, volName string, newDesc
 		}
 
 		// Check that security.unmapped and security.shifted aren't set together.
-		if shared.IsTrue(newConfig["security.unmapped"]) && shared.IsTrue(newConfig["security.shifted"]) {
+		if util.IsTrue(newConfig["security.unmapped"]) && util.IsTrue(newConfig["security.shifted"]) {
 			return fmt.Errorf("security.unmapped and security.shifted are mutually exclusive")
 		}
 
@@ -5041,7 +5043,7 @@ func (b *backend) UpdateCustomVolume(projectName string, volName string, newDesc
 	}
 
 	// Unset idmap keys if volume is unmapped.
-	if shared.IsTrue(newConfig["security.unmapped"]) {
+	if util.IsTrue(newConfig["security.unmapped"]) {
 		delete(newConfig, "volatile.idmap.last")
 		delete(newConfig, "volatile.idmap.next")
 	}
@@ -5066,7 +5068,7 @@ func (b *backend) UpdateCustomVolumeSnapshot(projectName string, volName string,
 	l.Debug("UpdateCustomVolumeSnapshot started")
 	defer l.Debug("UpdateCustomVolumeSnapshot finished")
 
-	if !shared.IsSnapshot(volName) {
+	if !internalInstance.IsSnapshot(volName) {
 		return fmt.Errorf("Volume must be a snapshot")
 	}
 
@@ -5164,8 +5166,8 @@ func (b *backend) DeleteCustomVolume(projectName string, volName string, op *ope
 	}
 
 	// Remove backups directory for volume.
-	backupsPath := shared.VarPath("backups", "custom", b.name, project.StorageVolume(projectName, volName))
-	if shared.PathExists(backupsPath) {
+	backupsPath := internalUtil.VarPath("backups", "custom", b.name, project.StorageVolume(projectName, volName))
+	if util.PathExists(backupsPath) {
 		err := os.RemoveAll(backupsPath)
 		if err != nil {
 			return err
@@ -5369,11 +5371,11 @@ func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSna
 	l.Debug("CreateCustomVolumeSnapshot started")
 	defer l.Debug("CreateCustomVolumeSnapshot finished")
 
-	if shared.IsSnapshot(volName) {
+	if internalInstance.IsSnapshot(volName) {
 		return fmt.Errorf("Volume does not support snapshots")
 	}
 
-	if shared.IsSnapshot(newSnapshotName) {
+	if internalInstance.IsSnapshot(newSnapshotName) {
 		return fmt.Errorf("Snapshot name is not a valid snapshot name")
 	}
 
@@ -5455,7 +5457,7 @@ func (b *backend) RenameCustomVolumeSnapshot(projectName, volName string, newSna
 		return fmt.Errorf("Volume name must be a snapshot")
 	}
 
-	if shared.IsSnapshot(newSnapshotName) {
+	if internalInstance.IsSnapshot(newSnapshotName) {
 		return fmt.Errorf("Invalid new snapshot name")
 	}
 
@@ -5498,7 +5500,7 @@ func (b *backend) DeleteCustomVolumeSnapshot(projectName, volName string, op *op
 	l.Debug("DeleteCustomVolumeSnapshot started")
 	defer l.Debug("DeleteCustomVolumeSnapshot finished")
 
-	isSnap := shared.IsSnapshot(volName)
+	isSnap := internalInstance.IsSnapshot(volName)
 
 	if !isSnap {
 		return fmt.Errorf("Volume name must be a snapshot")
@@ -5559,11 +5561,11 @@ func (b *backend) RestoreCustomVolume(projectName, volName string, snapshotName 
 	defer l.Debug("RestoreCustomVolume finished")
 
 	// Quick checks.
-	if shared.IsSnapshot(volName) {
+	if internalInstance.IsSnapshot(volName) {
 		return fmt.Errorf("Volume cannot be snapshot")
 	}
 
-	if shared.IsSnapshot(snapshotName) {
+	if internalInstance.IsSnapshot(snapshotName) {
 		return fmt.Errorf("Invalid snapshot name")
 	}
 
@@ -5830,7 +5832,7 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, op *operation
 			return err
 		}
 
-		err = shared.WriteAll(f, data)
+		err = internalIO.WriteAll(f, data)
 		if err != nil {
 			return err
 		}
@@ -6026,7 +6028,7 @@ func (b *backend) detectUnknownInstanceVolume(vol *drivers.Volume, projectVols m
 
 	// If the instance is running, it should already be mounted, so check if the backup file
 	// is already accessible, and if so parse it directly, without disturbing the mount count.
-	if shared.PathExists(backupYamlPath) {
+	if util.PathExists(backupYamlPath) {
 		backupConf, err = backup.ParseConfigYamlFile(backupYamlPath)
 		if err != nil {
 			return fmt.Errorf("Failed parsing backup file %q: %w", backupYamlPath, err)
@@ -6116,7 +6118,7 @@ func (b *backend) detectUnknownInstanceVolume(vol *drivers.Volume, projectVols m
 		fullSnapshotName := drivers.GetSnapshotVolumeName(instName, snapshot.Name)
 
 		// Check if an entry for the instance already exists in the DB.
-		if shared.ValueInSlice(fullSnapshotName, instSnapshots) {
+		if util.ValueInSlice(fullSnapshotName, instSnapshots) {
 			return fmt.Errorf("Instance %q snapshot %q in project %q already has instance DB record", instName, snapshot.Name, projectName)
 		}
 
@@ -6633,7 +6635,7 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 
 		// Due to a historical bug, the volume snapshot names were sometimes written in their full form
 		// (<parent>/<snap>) rather than the expected snapshot name only form, so we need to handle both.
-		if shared.IsSnapshot(snapshot.Name) {
+		if internalInstance.IsSnapshot(snapshot.Name) {
 			_, snapName, _ = api.GetParentAndSnapshotName(snapshot.Name)
 		}
 

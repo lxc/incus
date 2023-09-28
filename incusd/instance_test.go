@@ -17,7 +17,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/internal/idmap"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -205,8 +205,8 @@ func (suite *containerTestSuite) TestContainer_Path_Regular() {
 	defer func() { _ = c.Delete(true) }()
 
 	suite.Req.False(c.IsSnapshot(), "Shouldn't be a snapshot.")
-	suite.Req.Equal(shared.VarPath("containers", "testFoo"), c.Path())
-	suite.Req.Equal(shared.VarPath("containers", "testFoo2"), storagePools.InstancePath(instancetype.Container, "default", "testFoo2", false))
+	suite.Req.Equal(internalUtil.VarPath("containers", "testFoo"), c.Path())
+	suite.Req.Equal(internalUtil.VarPath("containers", "testFoo2"), storagePools.InstancePath(instancetype.Container, "default", "testFoo2", false))
 }
 
 func (suite *containerTestSuite) TestContainer_LogPath() {
@@ -221,7 +221,7 @@ func (suite *containerTestSuite) TestContainer_LogPath() {
 	op.Done(nil)
 	defer func() { _ = c.Delete(true) }()
 
-	suite.Req.Equal(shared.VarPath("logs", "testFoo"), c.LogPath())
+	suite.Req.Equal(internalUtil.VarPath("logs", "testFoo"), c.LogPath())
 }
 
 func (suite *containerTestSuite) TestContainer_IsPrivileged_Privileged() {
@@ -330,7 +330,7 @@ func (suite *containerTestSuite) TestContainer_Rename() {
 	defer func() { _ = c.Delete(true) }()
 
 	suite.Req.Nil(c.Rename("testFoo2", true), "Failed to rename the container.")
-	suite.Req.Equal(shared.VarPath("containers", "testFoo2"), c.Path())
+	suite.Req.Equal(internalUtil.VarPath("containers", "testFoo2"), c.Path())
 }
 
 func (suite *containerTestSuite) TestContainer_findIdmap_isolated() {

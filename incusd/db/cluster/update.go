@@ -10,7 +10,7 @@ import (
 
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/incusd/db/schema"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 )
@@ -2806,7 +2806,7 @@ CREATE VIEW storage_volumes_all (
 
 	// Migrate snapshots to the new tables.
 	for _, snapshot := range snapshots {
-		parts := strings.Split(snapshot.Name, shared.SnapshotDelimiter)
+		parts := strings.Split(snapshot.Name, internalInstance.SnapshotDelimiter)
 		if len(parts) != 2 {
 			logger.Errorf("Invalid volume snapshot name: %s", snapshot.Name)
 			continue
@@ -3355,7 +3355,7 @@ SELECT instances_devices.id, instance_id, instances_devices.name, instances_devi
 		}
 
 		// Figure out the instance and snapshot names.
-		parts := strings.SplitN(instance.Name, shared.SnapshotDelimiter, 2)
+		parts := strings.SplitN(instance.Name, internalInstance.SnapshotDelimiter, 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("Snapshot %s has an invalid name", instance.Name)
 		}

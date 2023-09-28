@@ -27,17 +27,19 @@ import (
 	"github.com/lxc/incus/incusd/instance/operationlock"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/seccomp"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/instance"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -106,14 +108,14 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 		return err
 	}
 
-	isDenyDefault := shared.IsTrue(val)
+	isDenyDefault := util.IsTrue(val)
 
 	val, _, err = exclusiveConfigKeys("security.syscalls.deny_compat", "security.syscalls.blacklist_compat", config)
 	if err != nil {
 		return err
 	}
 
-	isDenyCompat := shared.IsTrue(val)
+	isDenyCompat := util.IsTrue(val)
 
 	if rawSeccomp && (isAllow || isDeny || isDenyDefault || isDenyCompat) {
 		return fmt.Errorf("raw.seccomp is mutually exclusive with security.syscalls*")
@@ -128,11 +130,11 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 		return err
 	}
 
-	if expanded && (shared.IsFalseOrEmpty(config["security.privileged"])) && sysOS.IdmapSet == nil {
+	if expanded && (util.IsFalseOrEmpty(config["security.privileged"])) && sysOS.IdmapSet == nil {
 		return fmt.Errorf("No uid/gid allocation configured. In this mode, only privileged containers are supported")
 	}
 
-	if shared.IsTrue(config["security.privileged"]) && shared.IsTrue(config["nvidia.runtime"]) {
+	if util.IsTrue(config["security.privileged"]) && util.IsTrue(config["nvidia.runtime"]) {
 		return fmt.Errorf("nvidia.runtime is incompatible with privileged containers")
 	}
 
@@ -140,7 +142,7 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 }
 
 func validConfigKey(os *sys.OS, key string, value string, instanceType instancetype.Type) error {
-	f, err := instance.ConfigKeyChecker(key, instanceType)
+	f, err := instance.ConfigKeyChecker(key, instanceType.ToAPI())
 	if err != nil {
 		return err
 	}
@@ -232,22 +234,22 @@ func lxcValidConfig(rawLxc string) error {
 
 			if !liblxc.RuntimeLiblxcVersionAtLeast(liblxc.Version(), 2, 1, 0) {
 				// lxc.network.X.ipv4 or lxc.network.X.ipv6
-				if len(fields) == 4 && shared.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) {
+				if len(fields) == 4 && util.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) {
 					continue
 				}
 
 				// lxc.network.X.ipv4.gateway or lxc.network.X.ipv6.gateway
-				if len(fields) == 5 && shared.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) && fields[4] == "gateway" {
+				if len(fields) == 5 && util.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) && fields[4] == "gateway" {
 					continue
 				}
 			} else {
 				// lxc.net.X.ipv4.address or lxc.net.X.ipv6.address
-				if len(fields) == 5 && shared.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) && fields[4] == "address" {
+				if len(fields) == 5 && util.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) && fields[4] == "address" {
 					continue
 				}
 
 				// lxc.net.X.ipv4.gateway or lxc.net.X.ipv6.gateway
-				if len(fields) == 5 && shared.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) && fields[4] == "gateway" {
+				if len(fields) == 5 && util.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) && fields[4] == "gateway" {
 					continue
 				}
 			}
@@ -291,8 +293,8 @@ func LoadInstanceDatabaseObject(ctx context.Context, tx *db.ClusterTx, project, 
 	var container *cluster.Instance
 	var err error
 
-	if strings.Contains(name, shared.SnapshotDelimiter) {
-		parts := strings.SplitN(name, shared.SnapshotDelimiter, 2)
+	if strings.Contains(name, internalInstance.SnapshotDelimiter) {
+		parts := strings.SplitN(name, internalInstance.SnapshotDelimiter, 2)
 		instanceName := parts[0]
 		snapshotName := parts[1]
 
@@ -546,7 +548,7 @@ func ResolveImage(ctx context.Context, tx *db.ClusterTx, projectName string, sou
 // A nil list indicates that we can't tell at this stage, typically for private images.
 func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx, projectName string, sourceInst *cluster.Instance, sourceImageRef string, req api.InstancesPost) ([]int, error) {
 	// Handle cases where the architecture is already provided.
-	if shared.ValueInSlice(req.Source.Type, []string{"migration", "none"}) && req.Architecture != "" {
+	if util.ValueInSlice(req.Source.Type, []string{"migration", "none"}) && req.Architecture != "" {
 		id, err := osarch.ArchitectureId(req.Architecture)
 		if err != nil {
 			return nil, err
@@ -596,7 +598,7 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 
 			var err error
 			var remote incus.ImageServer
-			if shared.ValueInSlice(req.Source.Protocol, []string{"", "incus", "lxd"}) {
+			if util.ValueInSlice(req.Source.Protocol, []string{"", "incus", "lxd"}) {
 				// Remote image server.
 				remote, err = incus.ConnectPublicIncus(req.Source.Server, &incus.ConnectionArgs{
 					TLSServerCert: req.Source.Certificate,
@@ -674,8 +676,8 @@ func ValidName(instanceName string, isSnapshot bool) error {
 			return fmt.Errorf("Invalid instance snapshot name: Cannot contain space or / characters")
 		}
 	} else {
-		if strings.Contains(instanceName, shared.SnapshotDelimiter) {
-			return fmt.Errorf("The character %q is reserved for snapshots", shared.SnapshotDelimiter)
+		if strings.Contains(instanceName, internalInstance.SnapshotDelimiter) {
+			return fmt.Errorf("The character %q is reserved for snapshots", internalInstance.SnapshotDelimiter)
 		}
 
 		err := validate.IsHostname(instanceName)
@@ -771,7 +773,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 		return nil, nil, nil, err
 	}
 
-	if !shared.ValueInSlice(args.Architecture, s.OS.Architectures) {
+	if !util.ValueInSlice(args.Architecture, s.OS.Architectures) {
 		return nil, nil, nil, fmt.Errorf("Requested architecture isn't supported by this host")
 	}
 
@@ -783,7 +785,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 
 	checkedProfiles := map[string]bool{}
 	for _, profile := range args.Profiles {
-		if !shared.ValueInSlice(profile.Name, profiles) {
+		if !util.ValueInSlice(profile.Name, profiles) {
 			return nil, nil, nil, fmt.Errorf("Requested profile %q doesn't exist", profile.Name)
 		}
 
@@ -830,7 +832,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 		}
 
 		if args.Snapshot {
-			parts := strings.SplitN(args.Name, shared.SnapshotDelimiter, 2)
+			parts := strings.SplitN(args.Name, internalInstance.SnapshotDelimiter, 2)
 			instanceName := parts[0]
 			snapshotName := parts[1]
 			instance, err := cluster.GetInstance(ctx, tx.Tx(), args.Project, instanceName)
@@ -952,7 +954,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 	if err != nil {
 		if err == db.ErrAlreadyDefined {
 			thing := "Instance"
-			if shared.IsSnapshot(args.Name) {
+			if internalInstance.IsSnapshot(args.Name) {
 				thing = "Snapshot"
 			}
 
@@ -990,7 +992,7 @@ func NextSnapshotName(s *state.State, inst Instance, defaultPattern string) (str
 		pattern = defaultPattern
 	}
 
-	pattern, err = shared.RenderTemplate(pattern, pongo2.Context{
+	pattern, err = internalUtil.RenderTemplate(pattern, pongo2.Context{
 		"creation_date": time.Now(),
 	})
 	if err != nil {
@@ -1159,7 +1161,7 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 		Snapshot:     true,
 		Devices:      devices,
 		Ephemeral:    snap.GetEphemeral(),
-		Name:         inst.Name() + shared.SnapshotDelimiter + snap.GetName(),
+		Name:         inst.Name() + internalInstance.SnapshotDelimiter + snap.GetName(),
 		Profiles:     profiles,
 		Stateful:     snap.GetStateful(),
 		Project:      inst.Project().Name,

@@ -51,6 +51,23 @@ func (instanceType Type) String() string {
 	return ""
 }
 
+// ToAPI converts the internal representation of instance type to an api.InstanceType.
+func (instanceType Type) ToAPI() api.InstanceType {
+	if instanceType == Container {
+		return api.InstanceTypeContainer
+	}
+
+	if instanceType == VM {
+		return api.InstanceTypeVM
+	}
+
+	if instanceType == Any {
+		return api.InstanceTypeAny
+	}
+
+	return api.InstanceType("")
+}
+
 // Filter returns a valid filter field compatible with cluster.InstanceFilter.
 // 'Any' represents any possible instance type, and so it is omitted.
 func (instanceType Type) Filter() *Type {

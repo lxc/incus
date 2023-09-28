@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // If no socket-based activation is detected, a new local unix socket will be
@@ -22,5 +22,5 @@ func TestEndpoints_DevIncusCreateUnixSocket(t *testing.T) {
 
 	// The unix socket file gets removed after shutdown.
 	cleanup()
-	assert.Equal(t, false, shared.PathExists(path))
+	assert.Equal(t, false, util.PathExists(path))
 }

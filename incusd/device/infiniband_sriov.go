@@ -14,10 +14,10 @@ import (
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/resources"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type infinibandSRIOV struct {
@@ -56,7 +56,7 @@ func (d *infinibandSRIOV) validateEnvironment() error {
 		return fmt.Errorf("Requires name property to start")
 	}
 
-	if !shared.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
+	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
 		return fmt.Errorf("Parent device '%s' doesn't exist", d.config["parent"])
 	}
 

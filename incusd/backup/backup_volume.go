@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // VolumeBackup represents a custom volume backup.
@@ -52,22 +53,22 @@ func (b *VolumeBackup) OptimizedStorage() bool {
 
 // Rename renames a volume backup.
 func (b *VolumeBackup) Rename(newName string) error {
-	oldBackupPath := shared.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, b.name))
-	newBackupPath := shared.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, newName))
+	oldBackupPath := internalUtil.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, b.name))
+	newBackupPath := internalUtil.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, newName))
 
 	// Extract the old and new parent backup paths from the old and new backup names rather than use
 	// instance.Name() as this may be in flux if the instance itself is being renamed, whereas the relevant
 	// instance name is encoded into the backup names.
 	oldParentName, _, _ := api.GetParentAndSnapshotName(b.name)
-	oldParentBackupsPath := shared.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, oldParentName))
+	oldParentBackupsPath := internalUtil.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, oldParentName))
 	newParentName, _, _ := api.GetParentAndSnapshotName(newName)
-	newParentBackupsPath := shared.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, newParentName))
+	newParentBackupsPath := internalUtil.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, newParentName))
 
 	revert := revert.New()
 	defer revert.Fail()
 
 	// Create the new backup path if doesn't exist.
-	if !shared.PathExists(newParentBackupsPath) {
+	if !util.PathExists(newParentBackupsPath) {
 		err := os.MkdirAll(newParentBackupsPath, 0700)
 		if err != nil {
 			return err
@@ -83,7 +84,7 @@ func (b *VolumeBackup) Rename(newName string) error {
 	revert.Add(func() { _ = os.Rename(newBackupPath, oldBackupPath) })
 
 	// Check if we can remove the old parent directory.
-	empty, _ := shared.PathIsEmpty(oldParentBackupsPath)
+	empty, _ := internalUtil.PathIsEmpty(oldParentBackupsPath)
 	if empty {
 		err := os.Remove(oldParentBackupsPath)
 		if err != nil {
@@ -103,9 +104,9 @@ func (b *VolumeBackup) Rename(newName string) error {
 
 // Delete removes a volume backup.
 func (b *VolumeBackup) Delete() error {
-	backupPath := shared.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, b.name))
+	backupPath := internalUtil.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, b.name))
 	// Delete the on-disk data.
-	if shared.PathExists(backupPath) {
+	if util.PathExists(backupPath) {
 		err := os.RemoveAll(backupPath)
 		if err != nil {
 			return err
@@ -113,8 +114,8 @@ func (b *VolumeBackup) Delete() error {
 	}
 
 	// Check if we can remove the volume directory.
-	backupsPath := shared.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, b.volumeName))
-	empty, _ := shared.PathIsEmpty(backupsPath)
+	backupsPath := internalUtil.VarPath("backups", "custom", b.poolName, project.StorageVolume(b.projectName, b.volumeName))
+	empty, _ := internalUtil.PathIsEmpty(backupsPath)
 	if empty {
 		err := os.Remove(backupsPath)
 		if err != nil {

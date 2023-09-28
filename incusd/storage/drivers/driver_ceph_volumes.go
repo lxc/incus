@@ -18,15 +18,15 @@ import (
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -375,7 +375,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 	// Copy without snapshots.
 	if !copySnapshots || len(snapshots) == 0 {
 		// If lightweight clone mode isn't enabled, perform a full copy of the volume.
-		if shared.IsFalse(d.config["ceph.rbd.clone_copy"]) {
+		if util.IsFalse(d.config["ceph.rbd.clone_copy"]) {
 			_, err = subprocess.RunCommand(
 				"rbd",
 				"--id", d.config["ceph.user.name"],
@@ -738,7 +738,7 @@ func (d *ceph) DeleteVolume(vol Volume, op *operations.Operation) error {
 
 	mountPath := vol.MountPath()
 
-	if vol.contentType == ContentTypeFS && shared.PathExists(mountPath) {
+	if vol.contentType == ContentTypeFS && util.PathExists(mountPath) {
 		err := wipeDirectory(mountPath)
 		if err != nil {
 			return err
@@ -872,7 +872,7 @@ func (d *ceph) GetVolumeUsage(vol Volume) (int64, error) {
 
 	// Running rbd du can be resource intensive, so users may want to miss disk usage
 	// data for stopped instances instead of dealing with the performance hit
-	if shared.IsFalse(d.config["ceph.rbd.du"]) {
+	if util.IsFalse(d.config["ceph.rbd.du"]) {
 		return -1, fmt.Errorf("Cannot get disk usage of unmounted volume when ceph.rbd.du is false")
 	}
 
@@ -1271,7 +1271,7 @@ func (d *ceph) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Opera
 		if !keepBlockDev {
 			// Check if device is currently mapped (but don't map if not).
 			_, devPath, _ := d.getRBDMappedDevPath(vol, false)
-			if devPath != "" && shared.PathExists(devPath) {
+			if devPath != "" && util.PathExists(devPath) {
 				if refCount > 0 {
 					d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
 					return false, ErrInUse
@@ -1532,7 +1532,7 @@ func (d *ceph) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 
 	mountPath := snapVol.MountPath()
 
-	if snapVol.contentType == ContentTypeFS && shared.PathExists(mountPath) {
+	if snapVol.contentType == ContentTypeFS && util.PathExists(mountPath) {
 		err = wipeDirectory(mountPath)
 		if err != nil {
 			return err
@@ -1714,7 +1714,7 @@ func (d *ceph) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (
 
 		// Check if device is currently mapped (but don't map if not).
 		_, devPath, _ := d.getRBDMappedDevPath(snapVol, false)
-		if devPath != "" && shared.PathExists(devPath) {
+		if devPath != "" && util.PathExists(devPath) {
 			if refCount > 0 {
 				d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
 				return false, ErrInUse

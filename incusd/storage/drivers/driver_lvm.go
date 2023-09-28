@@ -11,12 +11,13 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -154,7 +155,7 @@ func (d *lvm) Create() error {
 			return err
 		}
 
-		if shared.PathExists(d.config["source"]) {
+		if util.PathExists(d.config["source"]) {
 			return fmt.Errorf("Source file location %q already exists", d.config["source"])
 		}
 
@@ -208,12 +209,12 @@ func (d *lvm) Create() error {
 
 		d.config["source"] = d.config["lvm.vg_name"]
 
-		if !shared.IsBlockdevPath(srcPath) {
+		if !linux.IsBlockdevPath(srcPath) {
 			return fmt.Errorf("Custom loop file locations are not supported")
 		}
 
 		// Wipe if requested.
-		if shared.IsTrue(d.config["source.wipe"]) {
+		if util.IsTrue(d.config["source.wipe"]) {
 			err := wipeBlockHeaders(d.config["source"])
 			if err != nil {
 				return fmt.Errorf("Failed to wipe headers from disk %q: %w", d.config["source"], err)
@@ -307,13 +308,13 @@ func (d *lvm) Create() error {
 		// can then not guarantee that volume name conflicts won't occur with non-Incus created volumes in
 		// the same volume group. This could also potentially lead to Incus deleting a non-Incus volume should
 		// name conflicts occur.
-		if shared.IsFalseOrEmpty(d.config["lvm.vg.force_reuse"]) {
+		if util.IsFalseOrEmpty(d.config["lvm.vg.force_reuse"]) {
 			if !empty {
 				return fmt.Errorf("Volume group %q is not empty", d.config["lvm.vg_name"])
 			}
 
 			// Check the tags on the volume group to check it is not already being used.
-			if shared.ValueInSlice(lvmVgPoolMarker, vgTags) {
+			if util.ValueInSlice(lvmVgPoolMarker, vgTags) {
 				return fmt.Errorf("Volume group %q is already used by Incus", d.config["lvm.vg_name"])
 			}
 		}
@@ -389,7 +390,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 	var loopDevPath string
 
 	// Open the loop file if needed.
-	if filepath.IsAbs(d.config["source"]) && !shared.IsBlockdevPath(d.config["source"]) {
+	if filepath.IsAbs(d.config["source"]) && !linux.IsBlockdevPath(d.config["source"]) {
 		loopDevPath, err = d.openLoopFile(d.config["source"])
 		if err != nil {
 			return err
@@ -404,7 +405,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 	}
 
 	removeVg := false
-	if vgExists && shared.IsFalseOrEmpty(d.config["lvm.vg.force_reuse"]) {
+	if vgExists && util.IsFalseOrEmpty(d.config["lvm.vg.force_reuse"]) {
 		// Count normal and thin volumes.
 		lvCount, err := d.countLogicalVolumes(d.config["lvm.vg_name"])
 		if err != nil {
@@ -459,7 +460,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 			d.logger.Debug("Volume group removed", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
 		} else {
 			// Otherwise just remove the lvmVgPoolMarker tag to indicate Incus no longer uses this VG.
-			if shared.ValueInSlice(lvmVgPoolMarker, vgTags) {
+			if util.ValueInSlice(lvmVgPoolMarker, vgTags) {
 				_, err = subprocess.TryRunCommand("vgchange", "--deltag", lvmVgPoolMarker, d.config["lvm.vg_name"])
 				if err != nil {
 					return fmt.Errorf("Failed to remove marker tag on volume group for the lvm storage pool: %w", err)
@@ -517,7 +518,7 @@ func (d *lvm) Validate(config map[string]string) error {
 		return err
 	}
 
-	if shared.IsFalse(config["lvm.use_thinpool"]) {
+	if util.IsFalse(config["lvm.use_thinpool"]) {
 		if config["lvm.thinpool_name"] != "" {
 			return fmt.Errorf("The key lvm.use_thinpool cannot be set to false when lvm.thinpool_name is set")
 		}
@@ -642,7 +643,7 @@ func (d *lvm) Mount() (bool, error) {
 
 	// Open the loop file if the source points to a non-block device file.
 	// This ensures that auto clear isn't enabled on the loop file.
-	if filepath.IsAbs(d.config["source"]) && !shared.IsBlockdevPath(d.config["source"]) {
+	if filepath.IsAbs(d.config["source"]) && !linux.IsBlockdevPath(d.config["source"]) {
 		loopDevPath, err := d.openLoopFile(d.config["source"])
 		if err != nil {
 			return false, err

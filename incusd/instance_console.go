@@ -24,11 +24,14 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -215,7 +218,7 @@ func (s *consoleWs) doConsole(op *operations.Operation) error {
 
 	// Detect size of window and set it into console.
 	if s.width > 0 && s.height > 0 {
-		_ = shared.SetSize(int(console.Fd()), s.width, s.height)
+		_ = linux.SetPtySize(int(console.Fd()), s.width, s.height)
 	}
 
 	consoleDoneCh := make(chan struct{})
@@ -267,7 +270,7 @@ func (s *consoleWs) doConsole(op *operations.Operation) error {
 					continue
 				}
 
-				err = shared.SetSize(int(console.Fd()), winchWidth, winchHeight)
+				err = linux.SetPtySize(int(console.Fd()), winchWidth, winchHeight)
 				if err != nil {
 					logger.Debugf("Failed to set window size to: %dx%d", winchWidth, winchHeight)
 					continue
@@ -429,7 +432,7 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -470,7 +473,7 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Basic parameter validation.
-	if !shared.ValueInSlice(post.Type, []string{instance.ConsoleTypeConsole, instance.ConsoleTypeVGA}) {
+	if !util.ValueInSlice(post.Type, []string{instance.ConsoleTypeConsole, instance.ConsoleTypeVGA}) {
 		return response.BadRequest(fmt.Errorf("Unknown console type %q", post.Type))
 	}
 
@@ -498,7 +501,7 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 	ws.conns[0] = nil
 	ws.dynamic = map[*websocket.Conn]*os.File{}
 	for i := -1; i < len(ws.conns)-1; i++ {
-		ws.fds[i], err = shared.RandomCryptoString()
+		ws.fds[i], err = internalUtil.RandomHexString(32)
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -571,7 +574,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -619,7 +622,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 	// Send a ringbuffer request to the container.
 	logContents, err := c.ConsoleLog(console)
 	if err != nil {
-		errno, isErrno := shared.GetErrno(err)
+		errno, isErrno := linux.GetErrno(err)
 		if !isErrno {
 			return response.SmartError(err)
 		}
@@ -674,7 +677,7 @@ func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -725,7 +728,7 @@ func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {
 
 	_, err = c.ConsoleLog(console)
 	if err != nil {
-		errno, isErrno := shared.GetErrno(err)
+		errno, isErrno := linux.GetErrno(err)
 		if !isErrno {
 			return response.SmartError(err)
 		}

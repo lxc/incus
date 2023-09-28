@@ -7,8 +7,8 @@ import (
 
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Default is the string used for a default project.
@@ -117,7 +117,7 @@ func StorageVolumeProjectFromRecord(p *api.Project, volumeType int) string {
 
 	// Custom volumes only use the project specified if the project has the features.storage.volumes feature
 	// enabled, otherwise the legacy behaviour of using the default project for custom volumes is used.
-	if shared.IsTrue(p.Config["features.storage.volumes"]) {
+	if util.IsTrue(p.Config["features.storage.volumes"]) {
 		return p.Name
 	}
 
@@ -152,7 +152,7 @@ func StorageBucketProject(ctx context.Context, c *db.Cluster, projectName string
 func StorageBucketProjectFromRecord(p *api.Project) string {
 	// Buckets only use the project specified if the project has the features.storage.buckets feature
 	// enabled, otherwise the default project is used.
-	if shared.IsTrue(p.Config["features.storage.buckets"]) {
+	if util.IsTrue(p.Config["features.storage.buckets"]) {
 		return p.Name
 	}
 
@@ -190,7 +190,7 @@ func NetworkProject(c *db.Cluster, projectName string) (string, *api.Project, er
 func NetworkProjectFromRecord(p *api.Project) string {
 	// Networks only use the project specified if the project has the features.networks feature enabled,
 	// otherwise the legacy behaviour of using the default project for networks is used.
-	if shared.IsTrue(p.Config["features.networks"]) {
+	if util.IsTrue(p.Config["features.networks"]) {
 		return p.Name
 	}
 
@@ -200,7 +200,7 @@ func NetworkProjectFromRecord(p *api.Project) string {
 // NetworkAllowed returns whether access is allowed to a particular network based on projectConfig.
 func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isManaged bool) bool {
 	// If project is not restricted, then access to network is allowed.
-	if shared.IsFalseOrEmpty(reqProjectConfig["restricted"]) {
+	if util.IsFalseOrEmpty(reqProjectConfig["restricted"]) {
 		return true
 	}
 
@@ -210,7 +210,7 @@ func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isMa
 	}
 
 	// Don't allow access to unmanaged networks if only managed network access is allowed.
-	if shared.ValueInSlice(reqProjectConfig["restricted.devices.nic"], []string{"managed", ""}) && !isManaged {
+	if util.ValueInSlice(reqProjectConfig["restricted.devices.nic"], []string{"managed", ""}) && !isManaged {
 		return false
 	}
 
@@ -220,8 +220,8 @@ func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isMa
 	}
 
 	// Check if reqquested network is in list of allowed networks.
-	allowedRestrictedNetworks := shared.SplitNTrimSpace(reqProjectConfig["restricted.networks.access"], ",", -1, false)
-	return shared.ValueInSlice(networkName, allowedRestrictedNetworks)
+	allowedRestrictedNetworks := util.SplitNTrimSpace(reqProjectConfig["restricted.networks.access"], ",", -1, false)
+	return util.ValueInSlice(networkName, allowedRestrictedNetworks)
 }
 
 // ProfileProject returns the effective project to use for the profile based on the requested project.
@@ -269,7 +269,7 @@ func ProfileProject(c *db.Cluster, projectName string) (*api.Project, error) {
 func ProfileProjectFromRecord(p *api.Project) string {
 	// Profiles only use the project specified if the project has the features.profiles feature enabled,
 	// otherwise the default project for profiles is used.
-	if shared.IsTrue(p.Config["features.profiles"]) {
+	if util.IsTrue(p.Config["features.profiles"]) {
 		return p.Name
 	}
 
@@ -307,7 +307,7 @@ func NetworkZoneProject(c *db.Cluster, projectName string) (string, *api.Project
 func NetworkZoneProjectFromRecord(p *api.Project) string {
 	// Network zones only use the project specified if the project has the features.networks.zones feature
 	// enabled, otherwise the legacy behaviour of using the default project for network zones is used.
-	if shared.IsTrue(p.Config["features.networks.zones"]) {
+	if util.IsTrue(p.Config["features.networks.zones"]) {
 		return p.Name
 	}
 

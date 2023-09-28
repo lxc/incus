@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // CephGetRBDImageName returns the RBD image name as it is used in ceph.
@@ -190,15 +190,15 @@ func CephKeyring(cluster string, client string) (string, error) {
 	keyringPathGlobal := "/etc/ceph/keyring"
 	keyringPathGlobalBin := "/etc/ceph/keyring.bin"
 
-	if shared.PathExists(keyringPathFull) {
+	if util.PathExists(keyringPathFull) {
 		return getCephKeyFromFile(keyringPathFull)
-	} else if shared.PathExists(keyringPathCluster) {
+	} else if util.PathExists(keyringPathCluster) {
 		return getCephKeyFromFile(keyringPathCluster)
-	} else if shared.PathExists(keyringPathGlobal) {
+	} else if util.PathExists(keyringPathGlobal) {
 		return getCephKeyFromFile(keyringPathGlobal)
-	} else if shared.PathExists(keyringPathGlobalBin) {
+	} else if util.PathExists(keyringPathGlobalBin) {
 		return getCephKeyFromFile(keyringPathGlobalBin)
-	} else if shared.PathExists(cephConfigPath) {
+	} else if util.PathExists(cephConfigPath) {
 		// Open the CEPH config file.
 		cephConfig, err := os.Open(cephConfigPath)
 		if err != nil {

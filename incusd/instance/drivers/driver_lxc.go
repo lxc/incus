@@ -54,27 +54,29 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/incusd/seccomp"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/template"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/idmap"
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/instancewriter"
+	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/netutils"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/termios"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -438,7 +440,7 @@ type lxc struct {
 
 func idmapSize(state *state.State, isolatedStr string, size string) (int64, error) {
 	isolated := false
-	if shared.IsTrue(isolatedStr) {
+	if util.IsTrue(isolatedStr) {
 		isolated = true
 	}
 
@@ -469,7 +471,7 @@ var idmapLock sync.Mutex
 
 func findIdmap(state *state.State, cName string, isolatedStr string, configBase string, configSize string, rawIdmap string) (*idmap.IdmapSet, int64, error) {
 	isolated := false
-	if shared.IsTrue(isolatedStr) {
+	if util.IsTrue(isolatedStr) {
 		isolated = true
 	}
 
@@ -554,7 +556,7 @@ func findIdmap(state *state.State, cName string, isolatedStr string, configBase 
 			continue
 		}
 
-		if shared.IsFalseOrEmpty(container.ExpandedConfig()["security.idmap.isolated"]) {
+		if util.IsFalseOrEmpty(container.ExpandedConfig()["security.idmap.isolated"]) {
 			continue
 		}
 
@@ -811,11 +813,11 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	for _, mnt := range bindMounts {
-		if !shared.PathExists(mnt) {
+		if !util.PathExists(mnt) {
 			continue
 		}
 
-		if shared.IsDir(mnt) {
+		if internalUtil.IsDir(mnt) {
 			err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s %s none rbind,create=dir,optional 0 0", mnt, strings.TrimPrefix(mnt, "/")))
 			if err != nil {
 				return nil, err
@@ -834,7 +836,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		templateConfDir = "/usr/share/lxc/config"
 	}
 
-	if shared.PathExists(fmt.Sprintf("%s/common.conf.d/", templateConfDir)) {
+	if util.PathExists(fmt.Sprintf("%s/common.conf.d/", templateConfDir)) {
 		err = lxcSetConfigItem(cc, "lxc.include", fmt.Sprintf("%s/common.conf.d/", templateConfDir))
 		if err != nil {
 			return nil, err
@@ -919,19 +921,19 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	// Call the onstart hook on start.
-	err = lxcSetConfigItem(cc, "lxc.hook.pre-start", fmt.Sprintf("/proc/%d/exe callhook %s %s %s start", os.Getpid(), shared.VarPath(""), strconv.Quote(d.Project().Name), strconv.Quote(d.Name())))
+	err = lxcSetConfigItem(cc, "lxc.hook.pre-start", fmt.Sprintf("/proc/%d/exe callhook %s %s %s start", os.Getpid(), internalUtil.VarPath(""), strconv.Quote(d.Project().Name), strconv.Quote(d.Name())))
 	if err != nil {
 		return nil, err
 	}
 
 	// Call the onstopns hook on stop but before namespaces are unmounted.
-	err = lxcSetConfigItem(cc, "lxc.hook.stop", fmt.Sprintf("%s callhook %s %s %s stopns", d.state.OS.ExecPath, shared.VarPath(""), strconv.Quote(d.Project().Name), strconv.Quote(d.Name())))
+	err = lxcSetConfigItem(cc, "lxc.hook.stop", fmt.Sprintf("%s callhook %s %s %s stopns", d.state.OS.ExecPath, internalUtil.VarPath(""), strconv.Quote(d.Project().Name), strconv.Quote(d.Name())))
 	if err != nil {
 		return nil, err
 	}
 
 	// Call the onstop hook on stop.
-	err = lxcSetConfigItem(cc, "lxc.hook.post-stop", fmt.Sprintf("%s callhook %s %s %s stop", d.state.OS.ExecPath, shared.VarPath(""), strconv.Quote(d.Project().Name), strconv.Quote(d.Name())))
+	err = lxcSetConfigItem(cc, "lxc.hook.post-stop", fmt.Sprintf("%s callhook %s %s %s stop", d.state.OS.ExecPath, internalUtil.VarPath(""), strconv.Quote(d.Project().Name), strconv.Quote(d.Name())))
 	if err != nil {
 		return nil, err
 	}
@@ -949,8 +951,8 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	// Setup devIncus
-	if shared.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]) {
-		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/incus none bind,create=dir 0 0", shared.VarPath("guestapi")))
+	if util.IsTrueOrEmpty(d.expandedConfig["security.guestapi"]) {
+		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s dev/incus none bind,create=dir 0 0", internalUtil.VarPath("guestapi")))
 		if err != nil {
 			return nil, err
 		}
@@ -960,7 +962,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	if d.state.OS.AppArmorAvailable {
 		if d.state.OS.AppArmorConfined || !d.state.OS.AppArmorAdmin {
 			// If confined but otherwise able to use AppArmor, use our own profile
-			curProfile := util.AppArmorProfile()
+			curProfile := localUtil.AppArmorProfile()
 			curProfile = strings.TrimSuffix(curProfile, " (enforce)")
 			err := lxcSetConfigItem(cc, "lxc.apparmor.profile", curProfile)
 			if err != nil {
@@ -1003,7 +1005,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		// System requirement errors are handled during policy generation instead of here
 		ok, err := seccomp.InstanceNeedsIntercept(d.state, d)
 		if err == nil && ok {
-			err = lxcSetConfigItem(cc, "lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", shared.VarPath("seccomp.socket")))
+			err = lxcSetConfigItem(cc, "lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", internalUtil.VarPath("seccomp.socket")))
 			if err != nil {
 				return nil, err
 			}
@@ -1037,14 +1039,14 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	// Setup NVIDIA runtime
-	if shared.IsTrue(d.expandedConfig["nvidia.runtime"]) {
+	if util.IsTrue(d.expandedConfig["nvidia.runtime"]) {
 		hookDir := os.Getenv("INCUS_LXC_HOOK")
 		if hookDir == "" {
 			hookDir = "/usr/share/lxc/hooks"
 		}
 
 		hookPath := filepath.Join(hookDir, "nvidia")
-		if !shared.PathExists(hookPath) {
+		if !util.PathExists(hookPath) {
 			return nil, fmt.Errorf("The NVIDIA LXC hook couldn't be found")
 		}
 
@@ -1109,7 +1111,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 					return nil, err
 				}
 
-				memoryTotal, err := shared.DeviceTotalMemory()
+				memoryTotal, err := linux.DeviceTotalMemory()
 				if err != nil {
 					return nil, err
 				}
@@ -1128,7 +1130,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 					return nil, err
 				}
 			} else {
-				if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) && shared.IsFalse(memorySwap) {
+				if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) && util.IsFalse(memorySwap) {
 					err = cg.SetMemoryLimit(valueInt)
 					if err != nil {
 						return nil, err
@@ -1155,7 +1157,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 		if d.state.OS.CGInfo.Supports(cgroup.MemorySwappiness, cg) {
 			// Configure the swappiness
-			if shared.IsFalse(memorySwap) {
+			if util.IsFalse(memorySwap) {
 				err = cg.SetMemorySwappiness(0)
 				if err != nil {
 					return nil, err
@@ -1618,7 +1620,7 @@ func (d *lxc) deviceDetachNIC(configCopy map[string]string, netIF []deviceConfig
 		}
 
 		// If interface doesn't exist inside container, cannot proceed.
-		if !shared.ValueInSlice(configCopy["name"], ifaces) {
+		if !util.ValueInSlice(configCopy["name"], ifaces) {
 			return nil
 		}
 
@@ -1635,7 +1637,7 @@ func (d *lxc) deviceDetachNIC(configCopy map[string]string, netIF []deviceConfig
 		// that device doesn't already exist on the host as if a device exists on the host
 		// we can't know whether that is because liblxc has moved it back already or whether
 		// it is a conflicting device.
-		if !shared.PathExists(fmt.Sprintf("/sys/class/net/%s", devName)) {
+		if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", devName)) {
 			if stopHookNetnsPath == "" {
 				return fmt.Errorf("Cannot detach NIC device %q without stopHookNetnsPath being provided", devName)
 			}
@@ -1809,7 +1811,7 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.IdmapSet, 
 
 	// We need to change the on-disk idmap but the container is protected
 	// against idmap changes.
-	if shared.IsTrue(d.expandedConfig["security.protection.shift"]) {
+	if util.IsTrue(d.expandedConfig["security.protection.shift"]) {
 		return idmap.IdmapStorageNone, nil, fmt.Errorf("Container is protected against filesystem shifting")
 	}
 
@@ -1883,7 +1885,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	}
 
 	// Ensure cgroup v1 configuration is set appropriately with the image using systemd
-	if d.localConfig["image.requirements.cgroup"] == "v1" && !shared.PathExists("/sys/fs/cgroup/systemd") {
+	if d.localConfig["image.requirements.cgroup"] == "v1" && !util.PathExists("/sys/fs/cgroup/systemd") {
 		return "", nil, fmt.Errorf("The image used by this instance requires a CGroupV1 host system")
 	}
 
@@ -1901,7 +1903,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 	// Rotate the log file.
 	logfile := d.LogFilePath()
-	if shared.PathExists(logfile) {
+	if util.PathExists(logfile) {
 		_ = os.Remove(logfile + ".old")
 		err := os.Rename(logfile, logfile+".old")
 		if err != nil && !os.IsNotExist(err) {
@@ -2113,8 +2115,17 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 		// Pass any mounts into LXC.
 		if len(runConf.Mounts) > 0 {
+			escapePathFstab := func(path string) string {
+				r := strings.NewReplacer(
+					" ", "\\040",
+					"\t", "\\011",
+					"\n", "\\012",
+					"\\", "\\\\")
+				return r.Replace(path)
+			}
+
 			for _, mount := range runConf.Mounts {
-				if shared.ValueInSlice("propagation", mount.Opts) && !liblxc.RuntimeLiblxcVersionAtLeast(liblxc.Version(), 3, 0, 0) {
+				if util.ValueInSlice("propagation", mount.Opts) && !liblxc.RuntimeLiblxcVersionAtLeast(liblxc.Version(), 3, 0, 0) {
 					return "", nil, fmt.Errorf("Failed to setup device mount %q: %w", dev.Name(), fmt.Errorf("liblxc 3.0 is required for mount propagation configuration"))
 				}
 
@@ -2129,7 +2140,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 					}
 				}
 
-				mntVal := fmt.Sprintf("%s %s %s %s %d %d", shared.EscapePathFstab(mount.DevPath), shared.EscapePathFstab(mount.TargetPath), mount.FSType, mntOptions, mount.Freq, mount.PassNo)
+				mntVal := fmt.Sprintf("%s %s %s %s %d %d", escapePathFstab(mount.DevPath), escapePathFstab(mount.TargetPath), mount.FSType, mntOptions, mount.Freq, mount.PassNo)
 				err = lxcSetConfigItem(cc, "lxc.mount.entry", mntVal)
 				if err != nil {
 					return "", nil, fmt.Errorf("Failed to setup device mount %q: %w", dev.Name(), err)
@@ -2215,7 +2226,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	}
 
 	// If starting stateless, wipe state
-	if !d.IsStateful() && shared.PathExists(d.StatePath()) {
+	if !d.IsStateful() && util.PathExists(d.StatePath()) {
 		_ = os.RemoveAll(d.StatePath())
 	}
 
@@ -2392,7 +2403,7 @@ func (d *lxc) Start(stateful bool) error {
 		// Attempt to extract the LXC errors
 		lxcLog := ""
 		logPath := filepath.Join(d.LogPath(), "lxc.log")
-		if shared.PathExists(logPath) {
+		if util.PathExists(logPath) {
 			logContent, err := os.ReadFile(logPath)
 			if err == nil {
 				for _, line := range strings.Split(string(logContent), "\n") {
@@ -2620,7 +2631,7 @@ func (d *lxc) Stop(stateful bool) error {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceStopped.Event(d, nil))
 
 		return nil
-	} else if shared.PathExists(d.StatePath()) {
+	} else if util.PathExists(d.StatePath()) {
 		_ = os.RemoveAll(d.StatePath())
 	}
 
@@ -2809,7 +2820,7 @@ func (d *lxc) onStopNS(args map[string]string) error {
 	netns := args["netns"]
 
 	// Validate target.
-	if !shared.ValueInSlice(target, []string{"stop", "reboot"}) {
+	if !util.ValueInSlice(target, []string{"stop", "reboot"}) {
 		d.logger.Error("Container sent invalid target to OnStopNS", logger.Ctx{"target": target})
 		return fmt.Errorf("Invalid stop target %q", target)
 	}
@@ -2832,7 +2843,7 @@ func (d *lxc) onStop(args map[string]string) error {
 	target := args["target"]
 
 	// Validate target
-	if !shared.ValueInSlice(target, []string{"stop", "reboot"}) {
+	if !util.ValueInSlice(target, []string{"stop", "reboot"}) {
 		d.logger.Error("Container sent invalid target to OnStop", logger.Ctx{"target": target})
 		return fmt.Errorf("Invalid stop target: %s", target)
 	}
@@ -3464,7 +3475,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 
 	// Check for CRIU if necessary, before doing a bunch of filesystem manipulations.
 	// Requires container be mounted to check StatePath exists.
-	if shared.PathExists(d.StatePath()) {
+	if util.PathExists(d.StatePath()) {
 		_, err := exec.LookPath("criu")
 		if err != nil {
 			err = fmt.Errorf("Failed to restore container state. CRIU isn't installed")
@@ -3511,7 +3522,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool) error {
 
 	// If the container wasn't running but was stateful, should we restore it as running?
 	if stateful {
-		if !shared.PathExists(d.StatePath()) {
+		if !util.PathExists(d.StatePath()) {
 			err = fmt.Errorf("Stateful snapshot restore requested but snapshot is stateless")
 			op.Done(err)
 			return err
@@ -3641,7 +3652,7 @@ func (d *lxc) delete(force bool) error {
 		d.logger.Info("Deleting instance", ctxMap)
 	}
 
-	if !force && shared.IsTrue(d.expandedConfig["security.protection.delete"]) && !d.IsSnapshot() {
+	if !force && util.IsTrue(d.expandedConfig["security.protection.delete"]) && !d.IsSnapshot() {
 		err := fmt.Errorf("Instance is protected")
 		d.logger.Warn("Failed to delete instance", logger.Ctx{"err": err})
 		return err
@@ -3792,7 +3803,7 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 
 		for _, sname := range results {
 			// Rename the snapshot.
-			oldSnapName := strings.SplitN(sname, shared.SnapshotDelimiter, 2)[1]
+			oldSnapName := strings.SplitN(sname, internalInstance.SnapshotDelimiter, 2)[1]
 			baseSnapName := filepath.Base(sname)
 			err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 				return cluster.RenameInstanceSnapshot(ctx, tx.Tx(), d.project.Name, oldName, oldSnapName, baseSnapName)
@@ -3807,8 +3818,8 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 	// Rename the instance database entry.
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		if d.IsSnapshot() {
-			oldParts := strings.SplitN(oldName, shared.SnapshotDelimiter, 2)
-			newParts := strings.SplitN(newName, shared.SnapshotDelimiter, 2)
+			oldParts := strings.SplitN(oldName, internalInstance.SnapshotDelimiter, 2)
+			newParts := strings.SplitN(newName, internalInstance.SnapshotDelimiter, 2)
 			return cluster.RenameInstanceSnapshot(ctx, tx.Tx(), d.project.Name, oldParts[0], oldParts[1], newParts[1])
 		}
 
@@ -3821,9 +3832,9 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 
 	// Rename the logging path.
 	newFullName := project.Instance(d.Project().Name, d.Name())
-	_ = os.RemoveAll(shared.LogPath(newFullName))
-	if shared.PathExists(d.LogPath()) {
-		err := os.Rename(d.LogPath(), shared.LogPath(newFullName))
+	_ = os.RemoveAll(internalUtil.LogPath(newFullName))
+	if util.PathExists(d.LogPath()) {
+		err := os.Rename(d.LogPath(), internalUtil.LogPath(newFullName))
 		if err != nil {
 			d.logger.Error("Failed renaming instance", ctxMap)
 			return fmt.Errorf("Failed renaming instance: %w", err)
@@ -3970,11 +3981,11 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 	checkedProfiles := []string{}
 	for _, profile := range args.Profiles {
-		if !shared.ValueInSlice(profile.Name, profiles) {
+		if !util.ValueInSlice(profile.Name, profiles) {
 			return fmt.Errorf("Requested profile '%s' doesn't exist", profile.Name)
 		}
 
-		if shared.ValueInSlice(profile.Name, checkedProfiles) {
+		if util.ValueInSlice(profile.Name, checkedProfiles) {
 			return fmt.Errorf("Duplicate profile found in request")
 		}
 
@@ -3992,43 +4003,43 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	// Get a copy of the old configuration
 	oldDescription := d.Description()
 	oldArchitecture := 0
-	err = shared.DeepCopy(&d.architecture, &oldArchitecture)
+	err = util.DeepCopy(&d.architecture, &oldArchitecture)
 	if err != nil {
 		return err
 	}
 
 	oldEphemeral := false
-	err = shared.DeepCopy(&d.ephemeral, &oldEphemeral)
+	err = util.DeepCopy(&d.ephemeral, &oldEphemeral)
 	if err != nil {
 		return err
 	}
 
 	oldExpandedDevices := deviceConfig.Devices{}
-	err = shared.DeepCopy(&d.expandedDevices, &oldExpandedDevices)
+	err = util.DeepCopy(&d.expandedDevices, &oldExpandedDevices)
 	if err != nil {
 		return err
 	}
 
 	oldExpandedConfig := map[string]string{}
-	err = shared.DeepCopy(&d.expandedConfig, &oldExpandedConfig)
+	err = util.DeepCopy(&d.expandedConfig, &oldExpandedConfig)
 	if err != nil {
 		return err
 	}
 
 	oldLocalDevices := deviceConfig.Devices{}
-	err = shared.DeepCopy(&d.localDevices, &oldLocalDevices)
+	err = util.DeepCopy(&d.localDevices, &oldLocalDevices)
 	if err != nil {
 		return err
 	}
 
 	oldLocalConfig := map[string]string{}
-	err = shared.DeepCopy(&d.localConfig, &oldLocalConfig)
+	err = util.DeepCopy(&d.localConfig, &oldLocalConfig)
 	if err != nil {
 		return err
 	}
 
 	oldProfiles := []api.Profile{}
-	err = shared.DeepCopy(&d.profiles, &oldProfiles)
+	err = util.DeepCopy(&d.profiles, &oldProfiles)
 	if err != nil {
 		return err
 	}
@@ -4077,7 +4088,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	changedConfig := []string{}
 	for key := range oldExpandedConfig {
 		if oldExpandedConfig[key] != d.expandedConfig[key] {
-			if !shared.ValueInSlice(key, changedConfig) {
+			if !util.ValueInSlice(key, changedConfig) {
 				changedConfig = append(changedConfig, key)
 			}
 		}
@@ -4085,7 +4096,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 	for key := range d.expandedConfig {
 		if oldExpandedConfig[key] != d.expandedConfig[key] {
-			if !shared.ValueInSlice(key, changedConfig) {
+			if !util.ValueInSlice(key, changedConfig) {
 				changedConfig = append(changedConfig, key)
 			}
 		}
@@ -4120,7 +4131,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 		}
 
 		for _, k := range changedConfig {
-			if !shared.ValueInSlice(k, protectedKeys) {
+			if !util.ValueInSlice(k, protectedKeys) {
 				continue
 			}
 
@@ -4166,7 +4177,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	// If raw.lxc changed, re-validate the config.
-	if shared.ValueInSlice("raw.lxc", changedConfig) && d.expandedConfig["raw.lxc"] != "" {
+	if util.ValueInSlice("raw.lxc", changedConfig) && d.expandedConfig["raw.lxc"] != "" {
 		// Get a new liblxc instance.
 		cc, err := liblxc.NewContainer(d.name, d.state.OS.LxcPath)
 		if err != nil {
@@ -4185,14 +4196,14 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	// If apparmor changed, re-validate the apparmor profile (even if not running).
-	if shared.ValueInSlice("raw.apparmor", changedConfig) || shared.ValueInSlice("security.nesting", changedConfig) {
+	if util.ValueInSlice("raw.apparmor", changedConfig) || util.ValueInSlice("security.nesting", changedConfig) {
 		err = apparmor.InstanceValidate(d.state.OS, d, nil)
 		if err != nil {
 			return fmt.Errorf("Parse AppArmor profile: %w", err)
 		}
 	}
 
-	if shared.ValueInSlice("security.idmap.isolated", changedConfig) || shared.ValueInSlice("security.idmap.base", changedConfig) || shared.ValueInSlice("security.idmap.size", changedConfig) || shared.ValueInSlice("raw.idmap", changedConfig) || shared.ValueInSlice("security.privileged", changedConfig) {
+	if util.ValueInSlice("security.idmap.isolated", changedConfig) || util.ValueInSlice("security.idmap.base", changedConfig) || util.ValueInSlice("security.idmap.size", changedConfig) || util.ValueInSlice("raw.idmap", changedConfig) || util.ValueInSlice("security.privileged", changedConfig) {
 		var idmap *idmap.IdmapSet
 		base := int64(0)
 		if !d.IsPrivileged() {
@@ -4260,8 +4271,8 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 					return err
 				}
 			} else if key == "security.guestapi" {
-				if shared.IsTrueOrEmpty(value) {
-					err = d.insertMount(shared.VarPath("guestapi"), "/dev/incus", "none", unix.MS_BIND, idmap.IdmapStorageNone)
+				if util.IsTrueOrEmpty(value) {
+					err = d.insertMount(internalUtil.VarPath("guestapi"), "/dev/incus", "none", unix.MS_BIND, idmap.IdmapStorageNone)
 					if err != nil {
 						return err
 					}
@@ -4340,7 +4351,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						return err
 					}
 
-					memoryTotal, err := shared.DeviceTotalMemory()
+					memoryTotal, err := linux.DeviceTotalMemory()
 					if err != nil {
 						return err
 					}
@@ -4415,7 +4426,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						return err
 					}
 				} else {
-					if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) && shared.IsFalse(memorySwap) {
+					if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) && util.IsFalse(memorySwap) {
 						err = cg.SetMemoryLimit(memoryInt)
 						if err != nil {
 							revertMemory()
@@ -4451,7 +4462,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				if key == "limits.memory.swap" || key == "limits.memory.swap.priority" {
 					memorySwap := d.expandedConfig["limits.memory.swap"]
 					memorySwapPriority := d.expandedConfig["limits.memory.swap.priority"]
-					if shared.IsFalse(memorySwap) {
+					if util.IsFalse(memorySwap) {
 						err = cg.SetMemorySwappiness(0)
 						if err != nil {
 							return err
@@ -4748,7 +4759,7 @@ func (d *lxc) Export(w io.Writer, properties map[string]string, expiration time.
 
 	// Look for metadata.yaml.
 	fnam := filepath.Join(cDir, "metadata.yaml")
-	if !shared.PathExists(fnam) {
+	if !util.PathExists(fnam) {
 		// Generate a new metadata.yaml.
 		tempDir, err := os.MkdirTemp("", "incus_metadata_")
 		if err != nil {
@@ -4908,7 +4919,7 @@ func (d *lxc) Export(w io.Writer, properties map[string]string, expiration time.
 
 	// Include all the templates.
 	fnam = d.TemplatesPath()
-	if shared.PathExists(fnam) {
+	if util.PathExists(fnam) {
 		err = filepath.Walk(fnam, writeToTar)
 		if err != nil {
 			d.logger.Error("Failed exporting instance", ctxMap)
@@ -4929,7 +4940,7 @@ func (d *lxc) Export(w io.Writer, properties map[string]string, expiration time.
 func collectCRIULogFile(d instance.Instance, imagesDir string, function string, method string) error {
 	t := time.Now().Format(time.RFC3339)
 	newPath := filepath.Join(d.LogPath(), fmt.Sprintf("%s_%s_%s.log", function, method, t))
-	return shared.FileCopy(filepath.Join(imagesDir, fmt.Sprintf("%s.log", method)), newPath)
+	return internalUtil.FileCopy(filepath.Join(imagesDir, fmt.Sprintf("%s.log", method)), newPath)
 }
 
 func getCRIULogErrors(imagesDir string, method string) (string, error) {
@@ -4970,7 +4981,7 @@ func (d *lxc) migrationSendCheckForPreDumpSupport() (bool, int) {
 	tmp := d.ExpandedConfig()["migration.incremental.memory"]
 
 	if tmp != "" {
-		usePreDumps = shared.IsTrue(tmp)
+		usePreDumps = util.IsTrue(tmp)
 	}
 
 	var maxIterations int
@@ -5161,7 +5172,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		// Ensure that only the requested snapshots are included in the migration index header.
 		volSourceArgs.Info.Config.VolumeSnapshots = make([]*api.StorageVolumeSnapshot, 0, len(volSourceArgs.Snapshots))
 		for i := range allSnapshots {
-			if shared.ValueInSlice(allSnapshots[i].Name, volSourceArgs.Snapshots) {
+			if util.ValueInSlice(allSnapshots[i].Name, volSourceArgs.Snapshots) {
 				volSourceArgs.Info.Config.VolumeSnapshots = append(volSourceArgs.Info.Config.VolumeSnapshots, allSnapshots[i])
 			}
 		}
@@ -5244,7 +5255,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 			// Setup rsync options (used for CRIU state transfers).
 			rsyncBwlimit := pool.Driver().Config()["rsync.bwlimit"]
 			rsyncFeatures := respHeader.GetRsyncFeaturesSlice()
-			if !shared.ValueInSlice("bidirectional", rsyncFeatures) {
+			if !util.ValueInSlice("bidirectional", rsyncFeatures) {
 				// If no bi-directional support, assume 3.7 level.
 				// NOTE: Do NOT extend this list of arguments.
 				rsyncFeatures = []string{"xattrs", "delete", "compress"}
@@ -5273,7 +5284,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 				// successfully or fails, and exits 1 or 0, which causes criu to either
 				// leave the container running or kill it as we asked.
 				dumpDone := make(chan bool, 1)
-				actionScriptOpSecret, err := shared.RandomCryptoString()
+				actionScriptOpSecret, err := internalUtil.RandomHexString(32)
 				if err != nil {
 					_ = os.RemoveAll(checkpointDir)
 					return err
@@ -5426,7 +5437,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 			// parallel. In the future when we're using p.haul's protocol, it will make sense
 			// to do these in parallel.
 			ctName, _, _ := api.GetParentAndSnapshotName(d.Name())
-			err = rsync.Send(ctName, shared.AddSlash(checkpointDir), stateConn, nil, rsyncFeatures, rsyncBwlimit, d.state.OS.ExecPath)
+			err = rsync.Send(ctName, internalUtil.AddSlash(checkpointDir), stateConn, nil, rsyncFeatures, rsyncBwlimit, d.state.OS.ExecPath)
 			if err != nil {
 				return err
 			}
@@ -5514,7 +5525,7 @@ func (d *lxc) migrateSendPreDumpLoop(args *preDumpLoopArgs) (bool, error) {
 
 	// Send the pre-dump.
 	ctName, _, _ := api.GetParentAndSnapshotName(d.Name())
-	err = rsync.Send(ctName, shared.AddSlash(args.checkpointDir), args.stateConn, nil, args.rsyncFeatures, args.bwlimit, d.state.OS.ExecPath)
+	err = rsync.Send(ctName, internalUtil.AddSlash(args.checkpointDir), args.stateConn, nil, args.rsyncFeatures, args.bwlimit, d.state.OS.ExecPath)
 	if err != nil {
 		return final, err
 	}
@@ -5532,8 +5543,8 @@ func (d *lxc) migrateSendPreDumpLoop(args *preDumpLoopArgs) (bool, error) {
 	}
 
 	// Read the CRIU's 'stats-dump' file
-	dumpPath := shared.AddSlash(args.checkpointDir)
-	dumpPath += shared.AddSlash(args.dumpDir)
+	dumpPath := internalUtil.AddSlash(args.checkpointDir)
+	dumpPath += internalUtil.AddSlash(args.dumpDir)
 	written, skippedParent, err := readCriuStatsDump(dumpPath)
 	if err != nil {
 		return final, err
@@ -6032,7 +6043,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					d.logger.Debug("Waiting to receive pre-dump rsync")
 
 					// Transfer a CRIU pre-dump.
-					err = rsync.Recv(shared.AddSlash(imagesDir), stateConn, nil, rsyncFeatures)
+					err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures)
 					if err != nil {
 						return fmt.Errorf("Failed receiving pre-dump rsync: %w", err)
 					}
@@ -6062,7 +6073,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 			// Final CRIU dump.
 			d.logger.Debug("About to receive final dump rsync")
-			err = rsync.Recv(shared.AddSlash(imagesDir), stateConn, nil, rsyncFeatures)
+			err = rsync.Recv(internalUtil.AddSlash(imagesDir), stateConn, nil, rsyncFeatures)
 			if err != nil {
 				return fmt.Errorf("Failed receiving final dump rsync: %w", err)
 			}
@@ -6358,7 +6369,7 @@ func (d *lxc) migrate(args *instance.CriuMigrationArgs) error {
 func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 	// If there's no metadata, just return
 	fname := filepath.Join(d.Path(), "metadata.yaml")
-	if !shared.PathExists(fname) {
+	if !util.PathExists(fname) {
 		return nil
 	}
 
@@ -6436,7 +6447,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 
 			// Open the file to template, create if needed
 			fullpath := filepath.Join(d.RootfsPath(), strings.TrimLeft(tplPath, "/"))
-			if shared.PathExists(fullpath) {
+			if util.PathExists(fullpath) {
 				if tpl.CreateOnly {
 					return nil
 				}
@@ -6448,7 +6459,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 				}
 			} else {
 				// Create the directories leading to the file
-				err = shared.MkdirAllOwner(path.Dir(fullpath), 0755, int(rootUID), int(rootGID))
+				err = internalUtil.MkdirAllOwner(path.Dir(fullpath), 0755, int(rootUID), int(rootGID))
 				if err != nil {
 					return err
 				}
@@ -6817,7 +6828,7 @@ func (d *lxc) Console(protocol string) (*os.File, chan error, error) {
 	}
 
 	// Create a PTS pair.
-	ptx, pty, err := shared.OpenPty(rootUID, rootGID)
+	ptx, pty, err := linux.OpenPty(rootUID, rootGID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -6939,7 +6950,7 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		}
 	}
 
-	if shared.IsTrue(d.expandedConfig["security.privileged"]) {
+	if util.IsTrue(d.expandedConfig["security.privileged"]) {
 		useRexec = true
 	}
 
@@ -7318,7 +7329,7 @@ func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID i
 	// Create the temporary mount target
 	var tmpMount string
 	var err error
-	if shared.IsDir(source) {
+	if internalUtil.IsDir(source) {
 		tmpMount, err = os.MkdirTemp(d.ShmountsPath(), "incus_mount_")
 		if err != nil {
 			return fmt.Errorf("Failed to create shmounts path: %s", err)
@@ -7593,7 +7604,7 @@ func (d *lxc) InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid 
 
 func (d *lxc) removeUnixDevices() error {
 	// Check that we indeed have devices to remove
-	if !shared.PathExists(d.DevicesPath()) {
+	if !util.PathExists(d.DevicesPath()) {
 		return nil
 	}
 
@@ -7633,7 +7644,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 
 		// Include all static interface names
 		for _, dev := range d.expandedDevices.Sorted() {
-			if dev.Config["name"] != "" && !shared.ValueInSlice(dev.Config["name"], devNames) {
+			if dev.Config["name"] != "" && !util.ValueInSlice(dev.Config["name"], devNames) {
 				devNames = append(devNames, dev.Config["name"])
 			}
 		}
@@ -7649,7 +7660,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 				continue
 			}
 
-			if fields[2] != "name" || shared.ValueInSlice(v, devNames) {
+			if fields[2] != "name" || util.ValueInSlice(v, devNames) {
 				continue
 			}
 
@@ -7665,7 +7676,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 			interfaces, err := cc.Interfaces()
 			if err == nil {
 				for _, name := range interfaces {
-					if shared.ValueInSlice(name, devNames) {
+					if util.ValueInSlice(name, devNames) {
 						continue
 					}
 
@@ -7684,7 +7695,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 			}
 
 			// Find a free device name
-			if !shared.ValueInSlice(name, devNames) {
+			if !util.ValueInSlice(name, devNames) {
 				return name, nil
 			}
 
@@ -7698,7 +7709,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 	}
 
 	// Fill in the MAC address.
-	if !shared.ValueInSlice(nicType, []string{"physical", "ipvlan", "sriov"}) && m["hwaddr"] == "" {
+	if !util.ValueInSlice(nicType, []string{"physical", "ipvlan", "sriov"}) && m["hwaddr"] == "" {
 		configKey := fmt.Sprintf("volatile.%s.hwaddr", name)
 		volatileHwaddr := d.localConfig[configKey]
 		if volatileHwaddr == "" {
@@ -7760,7 +7771,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 
 func (d *lxc) removeDiskDevices() error {
 	// Check that we indeed have devices to remove
-	if !shared.PathExists(d.DevicesPath()) {
+	if !util.PathExists(d.DevicesPath()) {
 		return nil
 	}
 
@@ -7858,7 +7869,7 @@ func (d *lxc) IsFrozen() bool {
 
 // IsNesting returns if instance is nested.
 func (d *lxc) IsNesting() bool {
-	return shared.IsTrue(d.expandedConfig["security.nesting"])
+	return util.IsTrue(d.expandedConfig["security.nesting"])
 }
 
 func (d *lxc) isCurrentlyPrivileged() bool {
@@ -7876,7 +7887,7 @@ func (d *lxc) isCurrentlyPrivileged() bool {
 
 // IsPrivileged returns if instance is privileged.
 func (d *lxc) IsPrivileged() bool {
-	return shared.IsTrue(d.expandedConfig["security.privileged"])
+	return util.IsTrue(d.expandedConfig["security.privileged"])
 }
 
 // IsRunning returns if instance is running.
@@ -7986,7 +7997,7 @@ func (d *lxc) statusCode() api.StatusCode {
 		}
 
 		if op.Action() == operationlock.ActionStop {
-			if shared.IsTrue(d.LocalConfig()["volatile.last_state.ready"]) {
+			if util.IsTrue(d.LocalConfig()["volatile.last_state.ready"]) {
 				return api.Ready
 			}
 
@@ -8001,7 +8012,7 @@ func (d *lxc) statusCode() api.StatusCode {
 
 	statusCode := lxcStatusCode(state)
 
-	if statusCode == api.Running && shared.IsTrue(d.LocalConfig()["volatile.last_state.ready"]) {
+	if statusCode == api.Running && util.IsTrue(d.LocalConfig()["volatile.last_state.ready"]) {
 		return api.Ready
 	}
 
@@ -8312,7 +8323,7 @@ func (d *lxc) getFSStats() (*metrics.MetricSet, error) {
 
 			// Check that we have a mountpoint.
 			mountpoint := storageDrivers.GetVolumeMountPath(dev["pool"], volType, volName)
-			if mountpoint == "" || !shared.PathExists(mountpoint) {
+			if mountpoint == "" || !util.PathExists(mountpoint) {
 				continue
 			}
 
@@ -8365,7 +8376,7 @@ func (d *lxc) getFSStats() (*metrics.MetricSet, error) {
 
 				backingFilePath := fmt.Sprintf("/sys/dev/block/%d:%d/loop/backing_file", unix.Major(uint64(stat.Dev)), unix.Minor(uint64(stat.Dev)))
 
-				if shared.PathExists(backingFilePath) {
+				if util.PathExists(backingFilePath) {
 					// Read backing file
 					backingFile, err := os.ReadFile(backingFilePath)
 					if err != nil {
@@ -8418,7 +8429,7 @@ func (d *lxc) loadRawLXCConfig(cc *liblxc.Container) error {
 		return err
 	}
 
-	err = shared.WriteAll(f, []byte(lxcConfig))
+	err = internalIO.WriteAll(f, []byte(lxcConfig))
 	if err != nil {
 		return err
 	}

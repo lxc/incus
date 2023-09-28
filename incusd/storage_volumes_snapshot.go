@@ -24,11 +24,13 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/task"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 var storagePoolVolumeSnapshotsTypeCmd = APIEndpoint{
@@ -218,7 +220,7 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	if req.ExpiresAt != nil {
 		expiry = *req.ExpiresAt
 	} else {
-		expiry, err = shared.GetExpiry(time.Now(), parentDBVolume.Config["snapshots.expiry"])
+		expiry, err = internalInstance.GetExpiry(time.Now(), parentDBVolume.Config["snapshots.expiry"])
 		if err != nil {
 			return response.BadRequest(err)
 		}
@@ -352,7 +354,7 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 		return response.SmartError(err)
 	}
 
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	// Get the name of the volume type.
 	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
@@ -373,7 +375,7 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 	}
 
 	// Check that the storage volume type is valid.
-	if !shared.ValueInSlice(volumeType, supportedVolumeTypes) {
+	if !util.ValueInSlice(volumeType, supportedVolumeTypes) {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 
@@ -813,7 +815,7 @@ func storagePoolVolumeSnapshotTypePut(d *Daemon, r *http.Request) response.Respo
 
 	// Validate the ETag
 	etag := []any{dbVolume.Description, expiry}
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -938,7 +940,7 @@ func storagePoolVolumeSnapshotTypePatch(d *Daemon, r *http.Request) response.Res
 
 	// Validate the ETag
 	etag := []any{dbVolume.Description, expiry}
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -1211,7 +1213,7 @@ func pruneExpiredAndAutoCreateCustomVolumeSnapshotsTask(d *Daemon) (task.Func, t
 					// to perform the snapshot expiry. This avoids expiring the snapshot on
 					// every member and spreads the load across the online cluster members.
 					if memberCount > 1 {
-						selectedMemberID, err := util.GetStableRandomInt64FromList(int64(v.ID), onlineMemberIDs)
+						selectedMemberID, err := localUtil.GetStableRandomInt64FromList(int64(v.ID), onlineMemberIDs)
 						if err != nil {
 							logger.Error("Failed scheduling remote expire custom volume snapshot task", logger.Ctx{"volName": v.Name, "project": v.ProjectName, "pool": v.PoolName, "err": err})
 							continue
@@ -1242,7 +1244,7 @@ func pruneExpiredAndAutoCreateCustomVolumeSnapshotsTask(d *Daemon) (task.Func, t
 					// member and spreads the load taking the snapshots across the online
 					// cluster members.
 					if memberCount > 1 {
-						selectedNodeID, err := util.GetStableRandomInt64FromList(int64(v.ID), onlineMemberIDs)
+						selectedNodeID, err := localUtil.GetStableRandomInt64FromList(int64(v.ID), onlineMemberIDs)
 						if err != nil {
 							logger.Error("Failed scheduling remote auto custom volume snapshot task", logger.Ctx{"volName": v.Name, "project": v.ProjectName, "pool": v.PoolName, "err": err})
 							continue
@@ -1370,7 +1372,7 @@ func autoCreateCustomVolumeSnapshots(ctx context.Context, s *state.State, volume
 			return fmt.Errorf("Error retrieving next snapshot name for volume %q (project %q, pool %q): %w", v.Name, v.ProjectName, v.PoolName, err)
 		}
 
-		expiry, err := shared.GetExpiry(time.Now(), v.Config["snapshots.expiry"])
+		expiry, err := internalInstance.GetExpiry(time.Now(), v.Config["snapshots.expiry"])
 		if err != nil {
 			return fmt.Errorf("Error getting snapshot expiry for volume %q (project %q, pool %q): %w", v.Name, v.ProjectName, v.PoolName, err)
 		}
@@ -1397,7 +1399,7 @@ func volumeDetermineNextSnapshotName(s *state.State, volume db.StorageVolumeArgs
 		pattern = defaultPattern
 	}
 
-	pattern, err = shared.RenderTemplate(pattern, pongo2.Context{
+	pattern, err = internalUtil.RenderTemplate(pattern, pongo2.Context{
 		"creation_date": time.Now(),
 	})
 	if err != nil {

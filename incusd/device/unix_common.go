@@ -11,7 +11,7 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -35,7 +35,7 @@ type unixCommon struct {
 // isRequired indicates whether the device config requires this device to start OK.
 func (d *unixCommon) isRequired() bool {
 	// Defaults to required.
-	return shared.IsTrueOrEmpty(d.config["required"])
+	return util.IsTrueOrEmpty(d.config["required"])
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -108,7 +108,7 @@ func (d *unixCommon) Register() error {
 
 		if e.Action == "add" {
 			// Skip if host side instance device file already exists.
-			if shared.PathExists(devPath) {
+			if util.PathExists(devPath) {
 				return nil, nil
 			}
 
@@ -134,7 +134,7 @@ func (d *unixCommon) Register() error {
 			}
 		} else if e.Action == "remove" {
 			// Skip if host side instance device file doesn't exist.
-			if !shared.PathExists(devPath) {
+			if !util.PathExists(devPath) {
 				return nil, nil
 			}
 

@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -33,7 +33,7 @@ func (c *lxcCmd) Signal(sig unix.Signal) error {
 
 // Wait for the command to end and returns its exit code and any error.
 func (c *lxcCmd) Wait() (int, error) {
-	exitStatus, err := shared.ExitStatus(c.cmd.Wait())
+	exitStatus, err := linux.ExitStatus(c.cmd.Wait())
 
 	// Convert special exit statuses into errors.
 	switch exitStatus {
@@ -48,7 +48,7 @@ func (c *lxcCmd) Wait() (int, error) {
 
 // WindowResize resizes the running command's window.
 func (c *lxcCmd) WindowResize(fd, winchWidth, winchHeight int) error {
-	err := shared.SetSize(fd, winchWidth, winchHeight)
+	err := linux.SetPtySize(fd, winchWidth, winchHeight)
 	if err != nil {
 		return err
 	}

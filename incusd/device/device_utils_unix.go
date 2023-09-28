@@ -12,9 +12,10 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/idmap"
+	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // unixDefaultMode default mode to create unix devices with if not specified in device config.
@@ -106,7 +107,7 @@ func UnixDeviceCreate(s *state.State, idmapSet *idmap.IdmapSet, devicesPath stri
 	// Extra checks for nesting.
 	if s.OS.RunningInUserNS {
 		for key, value := range m {
-			if shared.ValueInSlice(key, []string{"major", "minor", "mode", "uid", "gid"}) && value != "" {
+			if util.ValueInSlice(key, []string{"major", "minor", "mode", "uid", "gid"}) && value != "" {
 				return nil, fmt.Errorf("The \"%s\" property may not be set when adding a device to a nested container", key)
 			}
 		}
@@ -151,9 +152,9 @@ func UnixDeviceCreate(s *state.State, idmapSet *idmap.IdmapSet, devicesPath stri
 	} else if !defaultMode {
 		// If not specified mode in device config, and default mode is false, then try and
 		// read the source device's mode and use that inside the instance.
-		d.Mode, err = shared.GetPathMode(srcPath)
+		d.Mode, err = internalIO.GetPathMode(srcPath)
 		if err != nil {
-			errno, isErrno := shared.GetErrno(err)
+			errno, isErrno := linux.GetErrno(err)
 			if !isErrno || errno != unix.ENOENT {
 				return nil, fmt.Errorf("Failed to retrieve mode of device %s: %w", srcPath, err)
 			}
@@ -186,7 +187,7 @@ func UnixDeviceCreate(s *state.State, idmapSet *idmap.IdmapSet, devicesPath stri
 	}
 
 	// Create the devices directory if missing.
-	if !shared.PathExists(devicesPath) {
+	if !util.PathExists(devicesPath) {
 		err := os.Mkdir(devicesPath, 0711)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to create devices path: %s", err)
@@ -368,7 +369,7 @@ func UnixDeviceExists(devicesPath string, prefix string, path string) bool {
 	devName := fmt.Sprintf("%s.%s", linux.PathNameEncode(prefix), linux.PathNameEncode(relativeDestPath))
 	devPath := filepath.Join(devicesPath, devName)
 
-	return shared.PathExists(devPath)
+	return util.PathExists(devPath)
 }
 
 // unixRemoveDevice identifies all files related to the supplied typePrefix and deviceName and then

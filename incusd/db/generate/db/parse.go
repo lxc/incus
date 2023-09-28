@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/incusd/db/generate/lex"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Packages returns the AST packages in which to search for structs.
@@ -76,7 +76,7 @@ func FiltersFromStmt(pkg *ast.Package, kind string, entity string, filters []*Fi
 	for _, filterGroup := range stmtFilters {
 		ignoredFilterGroup := []string{}
 		for _, filter := range filters {
-			if !shared.ValueInSlice(filter.Name, filterGroup) {
+			if !util.ValueInSlice(filter.Name, filterGroup) {
 				ignoredFilterGroup = append(ignoredFilterGroup, filter.Name)
 			}
 		}
@@ -108,7 +108,7 @@ func RefFiltersFromStmt(pkg *ast.Package, entity string, ref string, filters []*
 	for _, filterGroup := range stmtFilters {
 		ignoredFilterGroup := []string{}
 		for _, filter := range filters {
-			if !shared.ValueInSlice(filter.Name, filterGroup) {
+			if !util.ValueInSlice(filter.Name, filterGroup) {
 				ignoredFilterGroup = append(ignoredFilterGroup, filter.Name)
 			}
 		}
@@ -269,8 +269,8 @@ func tableType(pkg *ast.Package, name string, fields []*Field) TableType {
 		}
 	}
 
-	if shared.ValueInSlice("ReferenceID", fieldNames) {
-		if shared.ValueInSlice("Key", fieldNames) && shared.ValueInSlice("Value", fieldNames) {
+	if util.ValueInSlice("ReferenceID", fieldNames) {
+		if util.ValueInSlice("Key", fieldNames) && util.ValueInSlice("Value", fieldNames) {
 			return MapTable
 		}
 
@@ -410,9 +410,9 @@ func parseField(f *ast.Field, kind string) (*Field, error) {
 			stmtKind = "delete"
 		}
 
-		if shared.ValueInSlice(kind, omitFields) || shared.ValueInSlice(stmtKind, omitFields) {
+		if util.ValueInSlice(kind, omitFields) || util.ValueInSlice(stmtKind, omitFields) {
 			return nil, nil
-		} else if kind == "exists" && shared.ValueInSlice("id", omitFields) {
+		} else if kind == "exists" && util.ValueInSlice("id", omitFields) {
 			// Exists checks ID, so if we are omitting the field from ID, also omit it from Exists.
 			return nil, nil
 		}

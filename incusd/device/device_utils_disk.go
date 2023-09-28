@@ -14,13 +14,13 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/revert"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // RBDFormatPrefix is the prefix used in disk paths to identify RBD.
@@ -99,7 +99,7 @@ func DiskMount(srcPath string, dstPath string, recursive bool, propagation strin
 	flags, mountOptionsStr := linux.ResolveMountOptions(mountOptions)
 
 	var readonly bool
-	if shared.ValueInSlice("ro", mountOptions) {
+	if util.ValueInSlice("ro", mountOptions) {
 		readonly = true
 	}
 
@@ -161,7 +161,7 @@ func DiskMount(srcPath string, dstPath string, recursive bool, propagation strin
 
 // DiskMountClear unmounts and removes the mount path used for disk shares.
 func DiskMountClear(mntPath string) error {
-	if shared.PathExists(mntPath) {
+	if util.PathExists(mntPath) {
 		if linux.IsMountPoint(mntPath) {
 			err := storageDrivers.TryUnmount(mntPath, 0)
 			if err != nil {
@@ -310,9 +310,9 @@ func DiskVMVirtfsProxyStart(execPath string, pidPath string, sharePath string, i
 	// Locate virtfs-proxy-helper.
 	cmd, err := exec.LookPath("virtfs-proxy-helper")
 	if err != nil {
-		if shared.PathExists("/usr/lib/qemu/virtfs-proxy-helper") {
+		if util.PathExists("/usr/lib/qemu/virtfs-proxy-helper") {
 			cmd = "/usr/lib/qemu/virtfs-proxy-helper"
-		} else if shared.PathExists("/usr/libexec/virtfs-proxy-helper") {
+		} else if util.PathExists("/usr/libexec/virtfs-proxy-helper") {
 			cmd = "/usr/libexec/virtfs-proxy-helper"
 		}
 	}
@@ -402,7 +402,7 @@ func DiskVMVirtfsProxyStart(execPath string, pidPath string, sharePath string, i
 
 // DiskVMVirtfsProxyStop stops the virtfs-proxy-helper process.
 func DiskVMVirtfsProxyStop(pidPath string) error {
-	if shared.PathExists(pidPath) {
+	if util.PathExists(pidPath) {
 		proc, err := subprocess.ImportProcess(pidPath)
 		if err != nil {
 			return err
@@ -439,9 +439,9 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 	// Locate virtiofsd.
 	cmd, err := exec.LookPath("virtiofsd")
 	if err != nil {
-		if shared.PathExists("/usr/lib/qemu/virtiofsd") {
+		if util.PathExists("/usr/lib/qemu/virtiofsd") {
 			cmd = "/usr/lib/qemu/virtiofsd"
-		} else if shared.PathExists("/usr/libexec/virtiofsd") {
+		} else if util.PathExists("/usr/libexec/virtiofsd") {
 			cmd = "/usr/libexec/virtiofsd"
 		}
 	}
@@ -456,11 +456,11 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 		return nil, nil, UnsupportedError{msg: "Architecture unsupported"}
 	}
 
-	if shared.IsTrue(inst.ExpandedConfig()["migration.stateful"]) {
+	if util.IsTrue(inst.ExpandedConfig()["migration.stateful"]) {
 		return nil, nil, UnsupportedError{"Stateful migration unsupported"}
 	}
 
-	if shared.IsTrue(inst.ExpandedConfig()["security.sev"]) || shared.IsTrue(inst.ExpandedConfig()["security.sev.policy.es"]) {
+	if util.IsTrue(inst.ExpandedConfig()["security.sev"]) || util.IsTrue(inst.ExpandedConfig()["security.sev.policy.es"]) {
 		return nil, nil, UnsupportedError{"SEV unsupported"}
 	}
 
@@ -527,7 +527,7 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 
 // DiskVMVirtiofsdStop stops an existing virtiofsd process and cleans up.
 func DiskVMVirtiofsdStop(socketPath string, pidPath string) error {
-	if shared.PathExists(pidPath) {
+	if util.PathExists(pidPath) {
 		proc, err := subprocess.ImportProcess(pidPath)
 		if err != nil {
 			return err

@@ -10,9 +10,9 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 var archiveProfileTpl = template.Must(template.New("archiveProfile").Parse(`#include <tunables/global>
@@ -121,13 +121,13 @@ func archiveProfile(name string, outputPath string, allowedCommandPaths []string
 		outputPathFull = outputPath // Use requested path if cannot resolve it.
 	}
 
-	backupsPath := shared.VarPath("backups")
+	backupsPath := internalUtil.VarPath("backups")
 	backupsPathFull, err := filepath.EvalSymlinks(backupsPath)
 	if err == nil {
 		backupsPath = backupsPathFull
 	}
 
-	imagesPath := shared.VarPath("images")
+	imagesPath := internalUtil.VarPath("images")
 	imagesPathFull, err := filepath.EvalSymlinks(imagesPath)
 	if err == nil {
 		imagesPath = imagesPathFull

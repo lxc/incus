@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 )
@@ -158,7 +158,7 @@ func networkForwardsGet(d *Daemon, r *http.Request) response.Response {
 
 	memberSpecific := false // Get forwards for all cluster members.
 
-	if util.IsRecursionRequest(r) {
+	if localUtil.IsRecursionRequest(r) {
 		records, err := s.DB.Cluster.GetNetworkForwards(r.Context(), n.ID(), memberSpecific)
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading network forwards: %w", err))

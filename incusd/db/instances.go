@@ -15,7 +15,7 @@ import (
 	"github.com/lxc/incus/incusd/db/query"
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -74,8 +74,8 @@ func (c *ClusterTx) GetNodeAddressOfInstance(ctx context.Context, project string
 		args = append(args, instType)
 	}
 
-	if strings.Contains(name, shared.SnapshotDelimiter) {
-		parts := strings.SplitN(name, shared.SnapshotDelimiter, 2)
+	if strings.Contains(name, internalInstance.SnapshotDelimiter) {
+		parts := strings.SplitN(name, internalInstance.SnapshotDelimiter, 2)
 
 		// Instance name filter.
 		filters.WriteString(" AND instances.name = ?")
@@ -893,8 +893,8 @@ SELECT storage_pools.name FROM storage_pools
 
 // DeleteInstance removes the instance with the given name from the database.
 func (c *Cluster) DeleteInstance(project, name string) error {
-	if strings.Contains(name, shared.SnapshotDelimiter) {
-		parts := strings.SplitN(name, shared.SnapshotDelimiter, 2)
+	if strings.Contains(name, internalInstance.SnapshotDelimiter) {
+		parts := strings.SplitN(name, internalInstance.SnapshotDelimiter, 2)
 		return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
 			return cluster.DeleteInstanceSnapshot(ctx, tx.tx, project, parts[0], parts[1])
 		})
@@ -1004,7 +1004,7 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 	}
 
 	for _, r := range dbResults {
-		result = append(result, name+shared.SnapshotDelimiter+r[0].(string))
+		result = append(result, name+internalInstance.SnapshotDelimiter+r[0].(string))
 	}
 
 	return result, nil

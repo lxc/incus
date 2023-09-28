@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/db/query"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // GetStoragePoolVolumesWithType return a list of all volumes of the given type.
@@ -230,7 +231,7 @@ func (c *ClusterTx) GetStoragePoolVolumes(ctx context.Context, poolID int64, mem
 
 	// Populate config.
 	for _, volume := range volumes {
-		volume.Config, err = c.storageVolumeConfigGet(ctx, volume.ID, shared.IsSnapshot(volume.Name))
+		volume.Config, err = c.storageVolumeConfigGet(ctx, volume.ID, internalInstance.IsSnapshot(volume.Name))
 		if err != nil {
 			return nil, fmt.Errorf("Failed loading volume config for %q: %w", volume.Name, err)
 		}
@@ -306,7 +307,7 @@ func (c *Cluster) GetLocalStoragePoolVolumeSnapshotsWithType(projectName string,
 				return err
 			}
 
-			s.Name = volumeName + shared.SnapshotDelimiter + snapName
+			s.Name = volumeName + internalInstance.SnapshotDelimiter + snapName
 			s.PoolID = poolID
 			s.ProjectName = projectName
 			s.Snapshot = true
@@ -370,7 +371,7 @@ func storageVolumeSnapshotConfig(ctx context.Context, tx *ClusterTx, volumeSnaps
 func (c *Cluster) UpdateStoragePoolVolume(projectName string, volumeName string, volumeType int, poolID int64, volumeDescription string, volumeConfig map[string]string) error {
 	var err error
 
-	isSnapshot := strings.Contains(volumeName, shared.SnapshotDelimiter)
+	isSnapshot := strings.Contains(volumeName, internalInstance.SnapshotDelimiter)
 
 	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
 		volume, err := tx.GetStoragePoolVolume(ctx, poolID, projectName, volumeType, volumeName, true)
@@ -404,7 +405,7 @@ func (c *Cluster) UpdateStoragePoolVolume(projectName string, volumeName string,
 func (c *Cluster) RemoveStoragePoolVolume(projectName string, volumeName string, volumeType int, poolID int64) error {
 	var err error
 
-	isSnapshot := strings.Contains(volumeName, shared.SnapshotDelimiter)
+	isSnapshot := strings.Contains(volumeName, internalInstance.SnapshotDelimiter)
 	var stmt string
 	if isSnapshot {
 		stmt = "DELETE FROM storage_volumes_snapshots WHERE id=?"
@@ -433,10 +434,10 @@ func (c *Cluster) RemoveStoragePoolVolume(projectName string, volumeName string,
 func (c *Cluster) RenameStoragePoolVolume(projectName string, oldVolumeName string, newVolumeName string, volumeType int, poolID int64) error {
 	var err error
 
-	isSnapshot := strings.Contains(oldVolumeName, shared.SnapshotDelimiter)
+	isSnapshot := strings.Contains(oldVolumeName, internalInstance.SnapshotDelimiter)
 	var stmt string
 	if isSnapshot {
-		parts := strings.Split(newVolumeName, shared.SnapshotDelimiter)
+		parts := strings.Split(newVolumeName, internalInstance.SnapshotDelimiter)
 		newVolumeName = parts[1]
 		stmt = "UPDATE storage_volumes_snapshots SET name=? WHERE id=?"
 	} else {
@@ -464,7 +465,7 @@ func (c *Cluster) RenameStoragePoolVolume(projectName string, oldVolumeName stri
 func (c *Cluster) CreateStoragePoolVolume(projectName string, volumeName string, volumeDescription string, volumeType int, poolID int64, volumeConfig map[string]string, contentType int, creationDate time.Time) (int64, error) {
 	var volumeID int64
 
-	if shared.IsSnapshot(volumeName) {
+	if internalInstance.IsSnapshot(volumeName) {
 		return -1, fmt.Errorf("Volume name may not be a snapshot")
 	}
 
@@ -478,7 +479,7 @@ func (c *Cluster) CreateStoragePoolVolume(projectName string, volumeName string,
 
 		var result sql.Result
 
-		if shared.ValueInSlice(driver, remoteDrivers) {
+		if util.ValueInSlice(driver, remoteDrivers) {
 			result, err = tx.tx.Exec(`
 INSERT INTO storage_volumes (storage_pool_id, type, name, description, project_id, content_type, creation_date)
  VALUES (?, ?, ?, ?, (SELECT id FROM projects WHERE name = ?), ?, ?)
@@ -699,7 +700,7 @@ func (c *ClusterTx) GetStorageVolumeNodes(ctx context.Context, poolID int64, pro
 		}
 
 		remoteDrivers := StorageRemoteDriverNames()
-		if shared.ValueInSlice(driver, remoteDrivers) {
+		if util.ValueInSlice(driver, remoteDrivers) {
 			return nil, ErrNoClusterMember
 		}
 	}

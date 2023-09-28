@@ -13,11 +13,11 @@ import (
 
 	"github.com/lxc/incus/incusd/cgroup"
 	"github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 )
@@ -101,9 +101,9 @@ type OS struct {
 // DefaultOS returns a fresh uninitialized OS instance with default values.
 func DefaultOS() *OS {
 	newOS := &OS{
-		VarDir:   shared.VarPath(),
-		CacheDir: shared.CachePath(),
-		LogDir:   shared.LogPath(),
+		VarDir:   internalUtil.VarPath(),
+		CacheDir: internalUtil.CachePath(),
+		LogDir:   internalUtil.LogPath(),
 	}
 
 	newOS.InotifyWatch.Fd = -1
@@ -121,7 +121,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 		return nil, err
 	}
 
-	s.Architectures, err = util.GetArchitectures()
+	s.Architectures, err = localUtil.GetArchitectures()
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +167,8 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 	}
 
 	s.IdmapSet = idmap.GetIdmapSet()
-	s.ExecPath = util.GetExecPath()
-	s.RunningInUserNS = shared.RunningInUserNS()
+	s.ExecPath = localUtil.GetExecPath()
+	s.RunningInUserNS = linux.RunningInUserNS()
 
 	dbWarnings = s.initAppArmor()
 	cgroup.Init()

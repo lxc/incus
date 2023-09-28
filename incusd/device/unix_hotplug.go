@@ -11,8 +11,8 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -35,7 +35,7 @@ type unixHotplug struct {
 // isRequired indicates whether the device config requires this device to start OK.
 func (d *unixHotplug) isRequired() bool {
 	// Defaults to not required.
-	return shared.IsTrue(d.config["required"])
+	return util.IsTrue(d.config["required"])
 }
 
 // validateConfig checks the supplied config for correctness.

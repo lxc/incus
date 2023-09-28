@@ -10,15 +10,15 @@ import (
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/incusd/storage/quota"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied
@@ -29,7 +29,7 @@ func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 	revert := revert.New()
 	defer revert.Fail()
 
-	if shared.PathExists(vol.MountPath()) {
+	if util.PathExists(vol.MountPath()) {
 		return fmt.Errorf("Volume path %q already exists", vol.MountPath())
 	}
 
@@ -178,7 +178,7 @@ func (d *dir) DeleteVolume(vol Volume, op *operations.Operation) error {
 	volPath := vol.MountPath()
 
 	// If the volume doesn't exist, then nothing more to do.
-	if !shared.PathExists(volPath) {
+	if !util.PathExists(volPath) {
 		return nil
 	}
 
@@ -338,7 +338,7 @@ func (d *dir) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 
 		// Custom handling for filesystem volume associated with a VM.
 		volPath := vol.MountPath()
-		if sizeBytes > 0 && vol.volType == VolumeTypeVM && shared.PathExists(filepath.Join(volPath, genericVolumeDiskFile)) {
+		if sizeBytes > 0 && vol.volType == VolumeTypeVM && util.PathExists(filepath.Join(volPath, genericVolumeDiskFile)) {
 			// Get the size of the VM image.
 			blockSize, err := BlockDiskSizeBytes(filepath.Join(volPath, genericVolumeDiskFile))
 			if err != nil {
@@ -373,7 +373,7 @@ func (d *dir) MountVolume(vol Volume, op *operations.Operation) error {
 
 	// Don't attempt to modify the permission of an existing custom volume root.
 	// A user inside the instance may have modified this and we don't want to reset it on restart.
-	if !shared.PathExists(vol.MountPath()) || vol.volType != VolumeTypeCustom {
+	if !util.PathExists(vol.MountPath()) || vol.volType != VolumeTypeCustom {
 		err := vol.EnsureMountPath()
 		if err != nil {
 			return err
@@ -509,7 +509,7 @@ func (d *dir) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 
 	// Don't attempt to modify the permission of an existing custom volume root.
 	// A user inside the instance may have modified this and we don't want to reset it on restart.
-	if !shared.PathExists(snapPath) || snapVol.volType != VolumeTypeCustom {
+	if !util.PathExists(snapPath) || snapVol.volType != VolumeTypeCustom {
 		err := snapVol.EnsureMountPath()
 		if err != nil {
 			return err
@@ -560,7 +560,7 @@ func (d *dir) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 	}
 
 	srcPath := snapVol.MountPath()
-	if !shared.PathExists(srcPath) {
+	if !util.PathExists(srcPath) {
 		return fmt.Errorf("Snapshot not found")
 	}
 

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
 )
 
 // Code generation directives.
@@ -57,7 +57,7 @@ func (s *InstanceSnapshot) ToInstance(parentName string, parentNode string, pare
 	return Instance{
 		ID:           s.ID,
 		Project:      s.Project,
-		Name:         parentName + shared.SnapshotDelimiter + s.Name,
+		Name:         parentName + internalInstance.SnapshotDelimiter + s.Name,
 		Node:         parentNode,
 		Type:         parentType,
 		Snapshot:     true,

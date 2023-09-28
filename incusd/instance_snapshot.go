@@ -22,10 +22,10 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/validate"
 )
@@ -136,7 +136,7 @@ func instanceSnapshotsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(cname) {
+	if internalInstance.IsSnapshot(cname) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -150,7 +150,7 @@ func instanceSnapshotsGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 	resultString := []string{}
 	resultMap := []*api.InstanceSnapshot{}
 
@@ -244,7 +244,7 @@ func instanceSnapshotsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -314,7 +314,7 @@ func instanceSnapshotsPost(d *Daemon, r *http.Request) response.Response {
 	if req.ExpiresAt != nil {
 		expiry = *req.ExpiresAt
 	} else {
-		expiry, err = shared.GetExpiry(time.Now(), inst.ExpandedConfig()["snapshots.expiry"])
+		expiry, err = internalInstance.GetExpiry(time.Now(), inst.ExpandedConfig()["snapshots.expiry"])
 		if err != nil {
 			return response.BadRequest(err)
 		}
@@ -374,7 +374,7 @@ func instanceSnapshotHandler(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	snapInst, err := instance.LoadByProjectAndName(s, projectName, instName+shared.SnapshotDelimiter+snapshotName)
+	snapInst, err := instance.LoadByProjectAndName(s, projectName, instName+internalInstance.SnapshotDelimiter+snapshotName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -467,7 +467,7 @@ func snapshotPatch(s *state.State, r *http.Request, snapInst instance.Instance) 
 func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) response.Response {
 	// Validate the ETag
 	etag := []any{snapInst.ExpiryDate()}
-	err := util.EtagCheck(r, etag)
+	err := localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -721,7 +721,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 		return response.BadRequest(fmt.Errorf("Invalid snapshot name: %w", err))
 	}
 
-	fullName := parentName + shared.SnapshotDelimiter + newName
+	fullName := parentName + internalInstance.SnapshotDelimiter + newName
 
 	// Check that the name isn't already in use
 	id, _ := s.DB.Cluster.GetInstanceSnapshotID(snapInst.Project().Name, parentName, newName)

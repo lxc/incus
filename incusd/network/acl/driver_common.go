@@ -16,13 +16,14 @@ import (
 	dbCluster "github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/network/openvswitch"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -110,7 +111,7 @@ func (d *common) Info() *api.NetworkACL {
 	info.Description = d.info.Description
 	info.Ingress = append(make([]api.NetworkACLRule, 0, len(d.info.Ingress)), d.info.Ingress...)
 	info.Egress = append(make([]api.NetworkACLRule, 0, len(d.info.Egress)), d.info.Egress...)
-	info.Config = util.CopyConfig(d.info.Config)
+	info.Config = localUtil.CopyConfig(d.info.Config)
 	info.UsedBy = nil // To indicate its not populated (use Usedby() function to populate).
 
 	return &info
@@ -276,7 +277,7 @@ func (d *common) validateConfigMap(config map[string]string, rules map[string]fu
 		}
 
 		// User keys are not validated.
-		if shared.IsUserConfig(k) {
+		if internalInstance.IsUserConfig(k) {
 			continue
 		}
 
@@ -289,13 +290,13 @@ func (d *common) validateConfigMap(config map[string]string, rules map[string]fu
 // validateRule validates the rule supplied.
 func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) error {
 	// Validate Action field (required).
-	if !shared.ValueInSlice(rule.Action, ValidActions) {
+	if !util.ValueInSlice(rule.Action, ValidActions) {
 		return fmt.Errorf("Action must be one of: %s", strings.Join(ValidActions, ", "))
 	}
 
 	// Validate State field (required).
 	validStates := []string{"enabled", "disabled", "logged"}
-	if !shared.ValueInSlice(rule.State, validStates) {
+	if !util.ValueInSlice(rule.State, validStates) {
 		return fmt.Errorf("State must be one of: %s", strings.Join(validStates, ", "))
 	}
 
@@ -318,7 +319,7 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 
 	// Validate Source field.
 	if rule.Source != "" {
-		srcHasName, srcHasIPv4, srcHasIPv6, err = d.validateRuleSubjects("Source", direction, shared.SplitNTrimSpace(rule.Source, ",", -1, false), validSubjectNames)
+		srcHasName, srcHasIPv4, srcHasIPv6, err = d.validateRuleSubjects("Source", direction, util.SplitNTrimSpace(rule.Source, ",", -1, false), validSubjectNames)
 		if err != nil {
 			return fmt.Errorf("Invalid Source: %w", err)
 		}
@@ -326,7 +327,7 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 
 	// Validate Destination field.
 	if rule.Destination != "" {
-		dstHasName, dstHasIPv4, dstHasIPv6, err = d.validateRuleSubjects("Destination", direction, shared.SplitNTrimSpace(rule.Destination, ",", -1, false), validSubjectNames)
+		dstHasName, dstHasIPv4, dstHasIPv6, err = d.validateRuleSubjects("Destination", direction, util.SplitNTrimSpace(rule.Destination, ",", -1, false), validSubjectNames)
 		if err != nil {
 			return fmt.Errorf("Invalid Destination: %w", err)
 		}
@@ -345,13 +346,13 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 	// Validate Protocol field.
 	if rule.Protocol != "" {
 		validProtocols := []string{"icmp4", "icmp6", "tcp", "udp"}
-		if !shared.ValueInSlice(rule.Protocol, validProtocols) {
+		if !util.ValueInSlice(rule.Protocol, validProtocols) {
 			return fmt.Errorf("Protocol must be one of: %s", strings.Join(validProtocols, ", "))
 		}
 	}
 
 	// Validate protocol dependent fields.
-	if shared.ValueInSlice(rule.Protocol, []string{"tcp", "udp"}) {
+	if util.ValueInSlice(rule.Protocol, []string{"tcp", "udp"}) {
 		if rule.ICMPType != "" {
 			return fmt.Errorf("ICMP type cannot be used with non-ICMP protocol")
 		}
@@ -362,7 +363,7 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 
 		// Validate SourcePort field.
 		if rule.SourcePort != "" {
-			err := d.validatePorts(shared.SplitNTrimSpace(rule.SourcePort, ",", -1, false))
+			err := d.validatePorts(util.SplitNTrimSpace(rule.SourcePort, ",", -1, false))
 			if err != nil {
 				return fmt.Errorf("Invalid Source port: %w", err)
 			}
@@ -370,12 +371,12 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 
 		// Validate DestinationPort field.
 		if rule.DestinationPort != "" {
-			err := d.validatePorts(shared.SplitNTrimSpace(rule.DestinationPort, ",", -1, false))
+			err := d.validatePorts(util.SplitNTrimSpace(rule.DestinationPort, ",", -1, false))
 			if err != nil {
 				return fmt.Errorf("Invalid Destination port: %w", err)
 			}
 		}
-	} else if shared.ValueInSlice(rule.Protocol, []string{"icmp4", "icmp6"}) {
+	} else if util.ValueInSlice(rule.Protocol, []string{"icmp4", "icmp6"}) {
 		if rule.SourcePort != "" {
 			return fmt.Errorf("Source port cannot be used with %q protocol", rule.Protocol)
 		}
@@ -733,7 +734,7 @@ func (d *common) Delete() error {
 func (d *common) GetLog(clientType request.ClientType) (string, error) {
 	// ACLs aren't specific to a particular network type but the log only works with OVN.
 	logPath := "/var/log/ovn/ovn-controller.log"
-	if !shared.PathExists(logPath) {
+	if !util.PathExists(logPath) {
 		return "", fmt.Errorf("Only OVN log entries may be retrieved at this time")
 	}
 

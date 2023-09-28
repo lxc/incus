@@ -15,7 +15,6 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
@@ -151,7 +150,7 @@ func OperationCreate(s *state.State, projectName string, opClass OperationClass,
 		op.SetEventServer(s.Events)
 	}
 
-	newMetadata, err := shared.ParseMetadata(opMetadata)
+	newMetadata, err := parseMetadata(opMetadata)
 	if err != nil {
 		return nil, err
 	}
@@ -563,7 +562,7 @@ func (op *Operation) UpdateMetadata(opMetadata any) error {
 		return fmt.Errorf("Read-only operations can't be updated")
 	}
 
-	newMetadata, err := shared.ParseMetadata(opMetadata)
+	newMetadata, err := parseMetadata(opMetadata)
 	if err != nil {
 		return err
 	}
@@ -599,7 +598,7 @@ func (op *Operation) ExtendMetadata(metadata any) error {
 	}
 
 	// Parse the new metadata.
-	extraMetadata, err := shared.ParseMetadata(metadata)
+	extraMetadata, err := parseMetadata(metadata)
 	if err != nil {
 		return err
 	}
