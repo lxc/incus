@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -280,7 +279,7 @@ func TestColumns(t *testing.T) {
 			}
 
 			// Generate the column string, removing any leading, trailing or duplicate commas.
-			raw := shared.RemoveDuplicatesFromString(strings.Trim(buffer.String(), ","), ",")
+			raw := removeDuplicatesFromString(strings.Trim(buffer.String(), ","), ",")
 
 			list := cmdList{flagColumns: raw}
 
@@ -295,6 +294,15 @@ func TestColumns(t *testing.T) {
 			}
 		}()
 	}
+}
+
+func removeDuplicatesFromString(s string, sep string) string {
+	dup := sep + sep
+	for s = strings.Replace(s, dup, sep, -1); strings.Contains(s, dup); s = strings.Replace(s, dup, sep, -1) {
+
+	}
+
+	return s
 }
 
 func TestInvalidColumns(t *testing.T) {

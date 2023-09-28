@@ -11,11 +11,11 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdAdminInit struct {
@@ -145,7 +145,7 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 	// Check if the path to the cluster certificate is set
 	// If yes then read cluster certificate from file
 	if config.Cluster != nil && config.Cluster.ClusterCertificatePath != "" {
-		if !shared.PathExists(config.Cluster.ClusterCertificatePath) {
+		if !util.PathExists(config.Cluster.ClusterCertificatePath) {
 			return fmt.Errorf("Path %s doesn't exist", config.Cluster.ClusterCertificatePath)
 		}
 
@@ -159,7 +159,7 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 
 	// Check if we got a cluster join token, if so, fill in the config with it.
 	if config.Cluster != nil && config.Cluster.ClusterToken != "" {
-		joinToken, err := shared.JoinTokenDecode(config.Cluster.ClusterToken)
+		joinToken, err := internalUtil.JoinTokenDecode(config.Cluster.ClusterToken)
 		if err != nil {
 			return fmt.Errorf("Invalid cluster join token: %w", err)
 		}
@@ -171,7 +171,7 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 		// cluster certificate from each address in the join token until we succeed.
 		for _, clusterAddress := range joinToken.Addresses {
 			// Cluster URL
-			config.Cluster.ClusterAddress = util.CanonicalNetworkAddress(clusterAddress, ports.HTTPSDefaultPort)
+			config.Cluster.ClusterAddress = internalUtil.CanonicalNetworkAddress(clusterAddress, ports.HTTPSDefaultPort)
 
 			// Cluster certificate
 			cert, err := localtls.GetRemoteCertificate(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), version.UserAgent)
@@ -207,8 +207,8 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 	// cluster join API format, and use the dedicated API if so.
 	if config.Cluster != nil && config.Cluster.ClusterAddress != "" && config.Cluster.ServerAddress != "" {
 		// Ensure the server and cluster addresses are in canonical form.
-		config.Cluster.ServerAddress = util.CanonicalNetworkAddress(config.Cluster.ServerAddress, ports.HTTPSDefaultPort)
-		config.Cluster.ClusterAddress = util.CanonicalNetworkAddress(config.Cluster.ClusterAddress, ports.HTTPSDefaultPort)
+		config.Cluster.ServerAddress = internalUtil.CanonicalNetworkAddress(config.Cluster.ServerAddress, ports.HTTPSDefaultPort)
+		config.Cluster.ClusterAddress = internalUtil.CanonicalNetworkAddress(config.Cluster.ClusterAddress, ports.HTTPSDefaultPort)
 
 		op, err := d.UpdateCluster(config.Cluster.ClusterPut, "")
 		if err != nil {

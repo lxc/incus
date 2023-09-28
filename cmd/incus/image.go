@@ -16,11 +16,12 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/shared/util"
 )
 
 type imageColumn struct {
@@ -440,7 +441,7 @@ func (c *cmdImageEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -463,7 +464,7 @@ func (c *cmdImageEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -531,7 +532,7 @@ func (c *cmdImageExport) Run(cmd *cobra.Command, args []string) error {
 	targetMeta := fingerprint
 	if len(args) > 1 {
 		target = args[1]
-		if shared.IsDir(args[1]) {
+		if internalUtil.IsDir(args[1]) {
 			targetMeta = filepath.Join(args[1], targetMeta)
 		} else {
 			targetMeta = args[1]
@@ -600,7 +601,7 @@ func (c *cmdImageExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Rename files
-	if shared.IsDir(target) {
+	if internalUtil.IsDir(target) {
 		if resp.MetaName != "" {
 			err := os.Rename(targetMeta, filepath.Join(target, resp.MetaName))
 			if err != nil {
@@ -702,7 +703,7 @@ func (c *cmdImageImport) Run(cmd *cobra.Command, args []string) error {
 
 	for _, arg := range args {
 		split := strings.Split(arg, "=")
-		if len(split) == 1 || shared.PathExists(arg) {
+		if len(split) == 1 || util.PathExists(arg) {
 			if strings.HasSuffix(arg, ":") {
 				var err error
 				remote, _, err = conf.ParseRemote(arg)
@@ -729,11 +730,11 @@ func (c *cmdImageImport) Run(cmd *cobra.Command, args []string) error {
 		imageFile = args[0]
 	}
 
-	if shared.PathExists(filepath.Clean(imageFile)) {
+	if util.PathExists(filepath.Clean(imageFile)) {
 		imageFile = filepath.Clean(imageFile)
 	}
 
-	if rootfsFile != "" && shared.PathExists(filepath.Clean(rootfsFile)) {
+	if rootfsFile != "" && util.PathExists(filepath.Clean(rootfsFile)) {
 		rootfsFile = filepath.Clean(rootfsFile)
 	}
 
@@ -782,7 +783,7 @@ func (c *cmdImageImport) Run(cmd *cobra.Command, args []string) error {
 		var rootfs io.ReadCloser
 
 		// Open meta
-		if shared.IsDir(imageFile) {
+		if internalUtil.IsDir(imageFile) {
 			imageFile, err = c.packImageDir(imageFile)
 			if err != nil {
 				return err
@@ -949,19 +950,19 @@ func (c *cmdImageInfo) Run(cmd *cobra.Command, args []string) error {
 	fmt.Printf(i18n.G("Timestamps:") + "\n")
 
 	const layout = "2006/01/02 15:04 UTC"
-	if shared.TimeIsSet(info.CreatedAt) {
+	if info.CreatedAt.Unix() != 0 {
 		fmt.Printf("    "+i18n.G("Created: %s")+"\n", info.CreatedAt.UTC().Format(layout))
 	}
 
 	fmt.Printf("    "+i18n.G("Uploaded: %s")+"\n", info.UploadedAt.UTC().Format(layout))
 
-	if shared.TimeIsSet(info.ExpiresAt) {
+	if info.ExpiresAt.Unix() != 0 {
 		fmt.Printf("    "+i18n.G("Expires: %s")+"\n", info.ExpiresAt.UTC().Format(layout))
 	} else {
 		fmt.Printf("    " + i18n.G("Expires: never") + "\n")
 	}
 
-	if shared.TimeIsSet(info.LastUsedAt) {
+	if info.LastUsedAt.Unix() != 0 {
 		fmt.Printf("    "+i18n.G("Last used: %s")+"\n", info.LastUsedAt.UTC().Format(layout))
 	} else {
 		fmt.Printf("    " + i18n.G("Last used: never") + "\n")

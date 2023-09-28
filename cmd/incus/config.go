@@ -12,7 +12,7 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
 )
@@ -233,7 +233,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		// Spawn the editor
-		content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+		content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 		if err != nil {
 			return err
 		}
@@ -273,7 +273,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 					return err
 				}
 
-				content, err = shared.TextEditor("", content)
+				content, err = textEditor("", content)
 				if err != nil {
 					return err
 				}
@@ -325,7 +325,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := shared.TextEditor("", data)
+	content, err := textEditor("", data)
 	if err != nil {
 		return err
 	}
@@ -348,7 +348,7 @@ func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -785,9 +785,9 @@ func (c *cmdConfigShow) Run(cmd *cobra.Command, args []string) error {
 		// Instance or snapshot config
 		var brief any
 
-		if shared.IsSnapshot(resource.name) {
+		if instance.IsSnapshot(resource.name) {
 			// Snapshot
-			fields := strings.Split(resource.name, shared.SnapshotDelimiter)
+			fields := strings.Split(resource.name, instance.SnapshotDelimiter)
 
 			snap, _, err := resource.server.GetInstanceSnapshot(fields[0], fields[1])
 			if err != nil {

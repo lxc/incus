@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -17,10 +18,11 @@ import (
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	config "github.com/lxc/incus/shared/cliconfig"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdRemote struct {
@@ -124,7 +126,7 @@ func (c *cmdRemoteAdd) findProject(d incus.InstanceServer, project string) (stri
 			}
 
 			// Deal with multiple projects.
-			if shared.ValueInSlice("default", names) {
+			if util.ValueInSlice("default", names) {
 				// If we have access to the default project, use it.
 				return "", nil
 			}
@@ -178,7 +180,8 @@ func (c *cmdRemoteAdd) RunToken(server string, token string, rawToken *api.Certi
 	fmt.Println(i18n.G("All server addresses are unavailable"))
 	fmt.Printf(i18n.G("Please provide an alternate server address (empty to abort):") + " ")
 
-	line, err := shared.ReadStdin()
+	buf := bufio.NewReader(os.Stdin)
+	line, _, err := buf.ReadLine()
 	if err != nil {
 		return err
 	}
@@ -345,7 +348,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	} else if addr[0] == '/' {
 		rScheme = "unix"
 	} else {
-		if !shared.IsUnixSocket(addr) {
+		if !internalUtil.IsUnixSocket(addr) {
 			rScheme = "https"
 		} else {
 			rScheme = "unix"
@@ -442,7 +445,8 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 
 			fmt.Printf(i18n.G("Certificate fingerprint: %s")+"\n", digest)
 			fmt.Printf(i18n.G("ok (y/n/[fingerprint])?") + " ")
-			line, err := shared.ReadStdin()
+			buf := bufio.NewReader(os.Stdin)
+			line, _, err := buf.ReadLine()
 			if err != nil {
 				return err
 			}
@@ -504,13 +508,13 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 
 	// If not specified, the preferred order of authentication is 1) OIDC 2) TLS.
 	if c.flagAuthType == "" {
-		if !srv.Public && shared.ValueInSlice("oidc", srv.AuthMethods) {
+		if !srv.Public && util.ValueInSlice("oidc", srv.AuthMethods) {
 			c.flagAuthType = "oidc"
 		} else {
 			c.flagAuthType = "tls"
 		}
 
-		if shared.ValueInSlice(c.flagAuthType, []string{"oidc"}) {
+		if util.ValueInSlice(c.flagAuthType, []string{"oidc"}) {
 			// Update the remote configuration
 			remote := conf.Remotes[server]
 			remote.AuthType = c.flagAuthType
@@ -536,7 +540,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if !srv.Public && !shared.ValueInSlice(c.flagAuthType, srv.AuthMethods) {
+	if !srv.Public && !util.ValueInSlice(c.flagAuthType, srv.AuthMethods) {
 		return fmt.Errorf(i18n.G("Authentication type '%s' not supported by server"), c.flagAuthType)
 	}
 
@@ -765,7 +769,7 @@ func (c *cmdRemoteRename) Run(cmd *cobra.Command, args []string) error {
 	// Rename the certificate file
 	oldPath := conf.ServerCertPath(args[0])
 	newPath := conf.ServerCertPath(args[1])
-	if shared.PathExists(oldPath) {
+	if util.PathExists(oldPath) {
 		if conf.Remotes[args[0]].Global {
 			err := conf.CopyGlobalCert(args[0], args[1])
 			if err != nil {

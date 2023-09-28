@@ -17,10 +17,10 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdConfigTrust struct {
@@ -193,7 +193,7 @@ func (c *cmdConfigTrustAddCertificate) Run(cmd *cobra.Command, args []string) er
 	}
 
 	// Validate flags.
-	if !shared.ValueInSlice(c.flagType, []string{"client", "metrics"}) {
+	if !util.ValueInSlice(c.flagType, []string{"client", "metrics"}) {
 		return fmt.Errorf(i18n.G("Unknown certificate type %q"), c.flagType)
 	}
 
@@ -219,7 +219,7 @@ func (c *cmdConfigTrustAddCertificate) Run(cmd *cobra.Command, args []string) er
 	resource := resources[0]
 
 	// Check that the path exists.
-	if !shared.PathExists(path) {
+	if !util.PathExists(path) {
 		return fmt.Errorf(i18n.G("Provided certificate path doesn't exist: %s"), path)
 	}
 
@@ -334,7 +334,7 @@ func (c *cmdConfigTrustEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -357,7 +357,7 @@ func (c *cmdConfigTrustEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}

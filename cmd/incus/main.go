@@ -12,10 +12,11 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	config "github.com/lxc/incus/shared/cliconfig"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdGlobal struct {
@@ -330,7 +331,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 	// Load the configuration
 	if c.flagForceLocal {
 		c.conf = config.NewConfig("", true)
-	} else if shared.PathExists(c.confPath) {
+	} else if util.PathExists(c.confPath) {
 		c.conf, err = config.LoadConfig(c.confPath)
 		if err != nil {
 			return err
@@ -355,7 +356,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 	// and this is the first time the client has been run by the user, then check to see
 	// if the server has been properly configured.  Don't display the message if the var path
 	// does not exist (server missing), as the user may be targeting a remote daemon.
-	if !c.flagForceLocal && shared.PathExists(shared.VarPath("")) && !shared.PathExists(c.confPath) {
+	if !c.flagForceLocal && util.PathExists(internalUtil.VarPath("")) && !util.PathExists(c.confPath) {
 		// Create the config dir so that we don't get in here again for this user.
 		err = os.MkdirAll(c.conf.ConfigDir, 0750)
 		if err != nil {
@@ -389,7 +390,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 			flush = true
 		}
 
-		if !shared.ValueInSlice(cmd.Name(), []string{"init", "launch"}) {
+		if !util.ValueInSlice(cmd.Name(), []string{"init", "launch"}) {
 			fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:ubuntu/22.04
 Or for a virtual machine: incus launch images:ubuntu/22.04 --vm`)+"\n")
 			flush = true
@@ -419,7 +420,7 @@ Or for a virtual machine: incus launch images:ubuntu/22.04 --vm`)+"\n")
 }
 
 func (c *cmdGlobal) PostRun(cmd *cobra.Command, args []string) error {
-	if c.conf != nil && shared.PathExists(c.confPath) {
+	if c.conf != nil && util.PathExists(c.confPath) {
 		// Save OIDC tokens on exit
 		c.conf.SaveOIDCTokens()
 	}

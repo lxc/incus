@@ -16,10 +16,10 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdConsole struct {
@@ -104,7 +104,7 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate flags.
-	if !shared.ValueInSlice(c.flagType, []string{"console", "vga"}) {
+	if !util.ValueInSlice(c.flagType, []string{"console", "vga"}) {
 		return fmt.Errorf(i18n.G("Unknown output type %q"), c.flagType)
 	}
 
@@ -253,7 +253,7 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 	var listener net.Listener
 	if runtime.GOOS != "windows" {
 		// Create a temporary unix socket mirroring the instance's spice socket.
-		if !shared.PathExists(conf.ConfigPath("sockets")) {
+		if !util.PathExists(conf.ConfigPath("sockets")) {
 			err := os.MkdirAll(conf.ConfigPath("sockets"), 0700)
 			if err != nil {
 				return err

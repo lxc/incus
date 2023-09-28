@@ -12,9 +12,9 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdNetworkLoadBalancer struct {
@@ -618,7 +618,7 @@ func (c *cmdNetworkLoadBalancerEdit) Run(cmd *cobra.Command, args []string) erro
 	}
 
 	// Spawn the editor.
-	content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -642,7 +642,7 @@ func (c *cmdNetworkLoadBalancerEdit) Run(cmd *cobra.Command, args []string) erro
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -955,7 +955,7 @@ func (c *cmdNetworkLoadBalancerPort) RunAdd(cmd *cobra.Command, args []string) e
 	port := api.NetworkLoadBalancerPort{
 		Protocol:      args[2],
 		ListenPort:    args[3],
-		TargetBackend: shared.SplitNTrimSpace(args[4], ",", -1, false),
+		TargetBackend: util.SplitNTrimSpace(args[4], ",", -1, false),
 	}
 
 	loadBalancer.Ports = append(loadBalancer.Ports, port)

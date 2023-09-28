@@ -21,12 +21,13 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
+	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/termios"
 	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // DirMode represents the file mode for creating dirs on `incus file pull/push`.
@@ -209,7 +210,7 @@ func (c *cmdFileEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	_, err = shared.TextEditor(fname, []byte{})
+	_, err = textEditor(fname, []byte{})
 	if err != nil {
 		return err
 	}
@@ -311,7 +312,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 		// Deal with recursion
 		if resp.Type == "directory" {
 			if c.file.flagRecursive {
-				if !shared.PathExists(target) {
+				if !util.PathExists(target) {
 					err := os.MkdirAll(target, DirMode)
 					if err != nil {
 						return err
@@ -545,7 +546,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			mode, uid, gid := shared.GetOwnerMode(finfo)
+			mode, uid, gid := internalIO.GetOwnerMode(finfo)
 
 			err = c.file.recursiveMkdir(resource.server, resource.name, targetPath, &mode, int64(uid), int64(gid))
 			if err != nil {
@@ -611,7 +612,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			_, dUID, dGID := shared.GetOwnerMode(finfo)
+			_, dUID, dGID := internalIO.GetOwnerMode(finfo)
 			if c.file.flagUID == -1 || c.file.flagGID == -1 {
 				if c.file.flagUID == -1 {
 					uid = dUID
@@ -642,7 +643,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 					return err
 				}
 
-				fMode, fUID, fGID := shared.GetOwnerMode(finfo)
+				fMode, fUID, fGID := internalIO.GetOwnerMode(finfo)
 				if err != nil {
 					return err
 				}
@@ -677,7 +678,7 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 			Quiet:  c.global.flagQuiet,
 		}
 
-		args.Content = shared.NewReadSeeker(&ioprogress.ProgressReader{
+		args.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
 			ReadCloser: f,
 			Tracker: &ioprogress.ProgressTracker{
 				Length: fstat.Size(),
@@ -802,7 +803,7 @@ func (c *cmdFile) recursivePushFile(d incus.InstanceServer, inst string, source 
 
 		// Prepare for file transfer
 		targetPath := path.Join(target, filepath.ToSlash(p[sourceLen:]))
-		mode, uid, gid := shared.GetOwnerMode(fInfo)
+		mode, uid, gid := internalIO.GetOwnerMode(fInfo)
 		args := incus.InstanceFileArgs{
 			UID:  int64(uid),
 			GID:  int64(gid),
@@ -854,7 +855,7 @@ func (c *cmdFile) recursivePushFile(d incus.InstanceServer, inst string, source 
 				return err
 			}
 
-			args.Content = shared.NewReadSeeker(&ioprogress.ProgressReader{
+			args.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
 				ReadCloser: readCloser,
 				Tracker: &ioprogress.ProgressTracker{
 					Length: contentLength,

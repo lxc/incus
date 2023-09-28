@@ -12,14 +12,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/instance/instancetype"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	config "github.com/lxc/incus/shared/cliconfig"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 type column struct {
@@ -644,7 +643,7 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 
 			k := cc[0]
 			if colType == configColumnType {
-				_, err := instance.ConfigKeyChecker(k, instancetype.Any)
+				_, err := instance.ConfigKeyChecker(k, api.InstanceTypeAny)
 				if err != nil {
 					return nil, false, fmt.Errorf(i18n.G("Invalid config key '%s' in '%s'"), k, columnEntry)
 				}
@@ -766,7 +765,7 @@ func (c *cmdList) IP4ColumnData(cInfo api.InstanceFull) string {
 			}
 
 			for _, addr := range net.Addresses {
-				if shared.ValueInSlice(addr.Scope, []string{"link", "local"}) {
+				if util.ValueInSlice(addr.Scope, []string{"link", "local"}) {
 					continue
 				}
 
@@ -792,7 +791,7 @@ func (c *cmdList) IP6ColumnData(cInfo api.InstanceFull) string {
 			}
 
 			for _, addr := range net.Addresses {
-				if shared.ValueInSlice(addr.Scope, []string{"link", "local"}) {
+				if util.ValueInSlice(addr.Scope, []string{"link", "local"}) {
 					continue
 				}
 
@@ -907,7 +906,7 @@ func (c *cmdList) ProfilesColumnData(cInfo api.InstanceFull) string {
 func (c *cmdList) CreatedColumnData(cInfo api.InstanceFull) string {
 	layout := "2006/01/02 15:04 UTC"
 
-	if shared.TimeIsSet(cInfo.CreatedAt) {
+	if cInfo.CreatedAt.Unix() != 0 {
 		return cInfo.CreatedAt.UTC().Format(layout)
 	}
 
@@ -917,7 +916,7 @@ func (c *cmdList) CreatedColumnData(cInfo api.InstanceFull) string {
 func (c *cmdList) LastUsedColumnData(cInfo api.InstanceFull) string {
 	layout := "2006/01/02 15:04 UTC"
 
-	if !cInfo.LastUsedAt.IsZero() && shared.TimeIsSet(cInfo.LastUsedAt) {
+	if cInfo.LastUsedAt.Unix() != 0 {
 		return cInfo.LastUsedAt.UTC().Format(layout)
 	}
 

@@ -14,8 +14,8 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdQuery struct {
@@ -73,7 +73,7 @@ func (c *cmdQuery) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("--project cannot be used with the query command"))
 	}
 
-	if !shared.ValueInSlice(c.flagAction, []string{"GET", "PUT", "POST", "PATCH", "DELETE"}) {
+	if !util.ValueInSlice(c.flagAction, []string{"GET", "PUT", "POST", "PATCH", "DELETE"}) {
 		return fmt.Errorf(i18n.G("Action %q isn't supported by this tool"), c.flagAction)
 	}
 

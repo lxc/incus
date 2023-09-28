@@ -7,7 +7,7 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdClusterRole struct {
@@ -80,9 +80,9 @@ func (c *cmdClusterRoleAdd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	memberWritable := member.Writable()
-	newRoles := shared.SplitNTrimSpace(args[1], ",", -1, false)
+	newRoles := util.SplitNTrimSpace(args[1], ",", -1, false)
 	for _, newRole := range newRoles {
-		if shared.ValueInSlice(newRole, memberWritable.Roles) {
+		if util.ValueInSlice(newRole, memberWritable.Roles) {
 			return fmt.Errorf(i18n.G("Member %q already has role %q"), resource.name, newRole)
 		}
 	}
@@ -136,14 +136,14 @@ func (c *cmdClusterRoleRemove) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	memberWritable := member.Writable()
-	rolesToRemove := shared.SplitNTrimSpace(args[1], ",", -1, false)
+	rolesToRemove := util.SplitNTrimSpace(args[1], ",", -1, false)
 	for _, roleToRemove := range rolesToRemove {
-		if !shared.ValueInSlice(roleToRemove, memberWritable.Roles) {
+		if !util.ValueInSlice(roleToRemove, memberWritable.Roles) {
 			return fmt.Errorf(i18n.G("Member %q does not have role %q"), resource.name, roleToRemove)
 		}
 	}
 
-	memberWritable.Roles = shared.RemoveElementsFromSlice(memberWritable.Roles, rolesToRemove...)
+	memberWritable.Roles = removeElementsFromSlice(memberWritable.Roles, rolesToRemove...)
 
 	return resource.server.UpdateClusterMember(resource.name, memberWritable, etag)
 }
