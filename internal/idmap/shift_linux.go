@@ -20,12 +20,12 @@ package idmap
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "../../incusd/include/incus_posix_acl_xattr.h"
-#include "../../incusd/include/memory_utils.h"
-#include "../../incusd/include/mount_utils.h"
-#include "../../incusd/include/process_utils.h"
-#include "../../incusd/include/syscall_numbers.h"
-#include "../../incusd/include/syscall_wrappers.h"
+#include "../../internal/cgo/incus_posix_acl_xattr.h"
+#include "../../internal/cgo/memory_utils.h"
+#include "../../internal/cgo/mount_utils.h"
+#include "../../internal/cgo/process_utils.h"
+#include "../../internal/cgo/syscall_numbers.h"
+#include "../../internal/cgo/syscall_wrappers.h"
 
 // Needs to be included at the end
 #include <sys/acl.h>
@@ -348,7 +348,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	_ "github.com/lxc/incus/incusd/include" // Used by cgo
+	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared/logger"
 )

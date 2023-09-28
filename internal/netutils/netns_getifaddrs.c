@@ -20,7 +20,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "../../incusd/include/compiler.h"
+#include "../../internal/cgo/compiler.h"
 #include "network.c"
 
 struct netns_ifaddrs {
