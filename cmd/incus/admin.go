@@ -24,5 +24,9 @@ func (c *cmdAdmin) Command() *cobra.Command {
 	adminInitCmd := cmdAdminInit{global: c.global}
 	cmd.AddCommand(adminInitCmd.Command())
 
+	// shutdown sub-command
+	shutdownCmd := cmdAdminShutdown{global: c.global}
+	cmd.AddCommand(shutdownCmd.Command())
+
 	return cmd
 }
