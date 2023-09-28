@@ -8,7 +8,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdGlobal struct {
@@ -42,7 +42,7 @@ func (c *cmdGlobal) Run(cmd *cobra.Command, args []string) error {
 	// Setup report handling
 	if c.flagReportFile != "" {
 		c.report = &CSVReport{Filename: c.flagReportFile}
-		if shared.PathExists(c.flagReportFile) {
+		if util.PathExists(c.flagReportFile) {
 			err := c.report.Load()
 			if err != nil {
 				return err
