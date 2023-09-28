@@ -15,8 +15,8 @@ import (
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -69,7 +69,7 @@ func rsyncSendSetup(ctx context.Context, path string, rsyncArgs string, instance
 		return nil, nil, nil, err
 	}
 
-	if !shared.PathExists(execPath) {
+	if !util.PathExists(execPath) {
 		execPath = os.Args[0]
 	}
 
