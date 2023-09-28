@@ -35,7 +35,7 @@ test_image_expiry() {
   incus_remote image info "l2:${fp}" | grep -q "Expires.*3000"
 
   # Override the upload date for the image record in the default project.
-  INCUS_DIR="$INCUS2_DIR" incusd sql global "UPDATE images SET last_use_date='$(date --rfc-3339=seconds -u -d "2 days ago")' WHERE fingerprint='${fp}' AND project_id = 1" | grep -q "Rows affected: 1"
+  INCUS_DIR="$INCUS2_DIR" incus admin sql global "UPDATE images SET last_use_date='$(date --rfc-3339=seconds -u -d "2 days ago")' WHERE fingerprint='${fp}' AND project_id = 1" | grep -q "Rows affected: 1"
 
   # Trigger the expiry
   incus_remote config set l2: images.remote_cache_expiry 1
@@ -56,7 +56,7 @@ test_image_expiry() {
   incus_remote project switch l2:default
 
   # Override the upload date for the image record in the p1 project.
-  INCUS_DIR="$INCUS2_DIR" incusd sql global "UPDATE images SET last_use_date='$(date --rfc-3339=seconds -u -d "2 days ago")' WHERE fingerprint='${fp}' AND project_id > 1" | grep -q "Rows affected: 1"
+  INCUS_DIR="$INCUS2_DIR" incus admin sql global "UPDATE images SET last_use_date='$(date --rfc-3339=seconds -u -d "2 days ago")' WHERE fingerprint='${fp}' AND project_id > 1" | grep -q "Rows affected: 1"
   incus_remote project set l2:p1 images.remote_cache_expiry=1
 
   # Trigger the expiry in p1 project by changing global images.remote_cache_expiry.
@@ -162,8 +162,8 @@ test_image_refresh() {
 
   if [ "${poolDriver}" != "dir" ]; then
     # Check old storage volume record exists and new one doesn't.
-    incusd sql global 'select name from storage_volumes' | grep "${fp}"
-    ! incusd sql global 'select name from storage_volumes' | grep "${new_fp}" || false
+    incus admin sql global 'select name from storage_volumes' | grep "${fp}"
+    ! incus admin sql global 'select name from storage_volumes' | grep "${new_fp}" || false
   fi
 
   # Refresh image
@@ -174,8 +174,8 @@ test_image_refresh() {
 
   if [ "${poolDriver}" != "dir" ]; then
     # Check old storage volume record has been replaced with new one.
-    ! incusd sql global 'select name from storage_volumes' | grep "${fp}" || false
-    incusd sql global 'select name from storage_volumes' | grep "${new_fp}"
+    ! incus admin sql global 'select name from storage_volumes' | grep "${fp}" || false
+    incus admin sql global 'select name from storage_volumes' | grep "${new_fp}"
   fi
 
   # Cleanup

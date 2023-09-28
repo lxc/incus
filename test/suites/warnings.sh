@@ -30,7 +30,7 @@ test_warnings() {
     ensure_import_testimage
 
     # Get image ID from database instead of assuming it
-    image_id=$(incusd sql global 'select image_id from images_aliases where name="testimage"' | grep -Eo '[[:digit:]]+')
+    image_id=$(echo 'select image_id from images_aliases where name="testimage"' | incus admin sql global - | grep -Eo '[[:digit:]]+')
 
     # Create a warning with entity type "image" and entity ID ${image_id} (the imported testimage)
     incus query --wait -X POST -d "{\\\"type_code\\\": 0, \\\"message\\\": \\\"global warning\\\", \\\"entity_type_code\\\": 1, \\\"entity_id\\\": ${image_id}}" /internal/testing/warnings

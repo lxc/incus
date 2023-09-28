@@ -98,7 +98,7 @@ spawn_incus() {
   INCUS_DIR="$incusdir" incusd "${debug}" "${@}" > "$incusdir/incus.log" 2>&1 &
 
   echo "==> Confirming incusd on $addr is responsive"
-  INCUS_DIR="$incusdir" incusd waitready
+  INCUS_DIR="$incusdir" incus admin waitready
 
   echo "==> Binding to network"
   INCUS_DIR="$incusdir" incus config set core.https_address "$addr"

@@ -1,3 +1,5 @@
+//go:build linux
+
 package main
 
 import (
@@ -10,14 +12,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
+	internalSQL "github.com/lxc/incus/internal/sql"
 	"github.com/lxc/incus/shared/util"
 )
 
-type cmdSql struct {
+type cmdAdminSQL struct {
 	global *cmdGlobal
 }
 
-func (c *cmdSql) Command() *cobra.Command {
+func (c *cmdAdminSQL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "sql <local|global> <query>"
 	cmd.Short = "Execute a SQL query against the local or global database"
@@ -56,7 +59,7 @@ func (c *cmdSql) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 	if len(args) != 2 {
 		_ = cmd.Help()
 
@@ -107,7 +110,7 @@ func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to request dump: %w", err)
 		}
 
-		dump := internalSQLDump{}
+		dump := internalSQL.SQLDump{}
 		err = json.Unmarshal(response.Metadata, &dump)
 		if err != nil {
 			return fmt.Errorf("failed to parse dump response: %w", err)
@@ -117,7 +120,7 @@ func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	data := internalSQLQuery{
+	data := internalSQL.SQLQuery{
 		Database: database,
 		Query:    query,
 	}
@@ -127,7 +130,7 @@ func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	batch := internalSQLBatch{}
+	batch := internalSQL.SQLBatch{}
 	err = json.Unmarshal(response.Metadata, &batch)
 	if err != nil {
 		return err
@@ -151,7 +154,7 @@ func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func sqlPrintSelectResult(result internalSQLResult) {
+func sqlPrintSelectResult(result internalSQL.SQLResult) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAutoWrapText(false)

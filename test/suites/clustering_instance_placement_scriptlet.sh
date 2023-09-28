@@ -164,9 +164,9 @@ EOF
   INCUS_DIR="${INCUS_ONE_DIR}" incus storage delete data
 
   # Shut down cluster
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"

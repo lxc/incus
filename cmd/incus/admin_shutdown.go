@@ -1,3 +1,5 @@
+//go:build linux
+
 package main
 
 import (
@@ -12,14 +14,14 @@ import (
 	"github.com/lxc/incus/client"
 )
 
-type cmdShutdown struct {
+type cmdAdminShutdown struct {
 	global *cmdGlobal
 
 	flagForce   bool
 	flagTimeout int
 }
 
-func (c *cmdShutdown) Command() *cobra.Command {
+func (c *cmdAdminShutdown) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "shutdown"
 	cmd.Short = "Tell the daemon to shutdown all instances and exit"
@@ -39,7 +41,7 @@ func (c *cmdShutdown) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdShutdown) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminShutdown) Run(cmd *cobra.Command, args []string) error {
 	connArgs := &incus.ConnectionArgs{
 		SkipGetServer: true,
 	}
