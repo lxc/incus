@@ -8,7 +8,7 @@ import (
 
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Config holds settings to be used by a client or daemon.
@@ -84,7 +84,7 @@ func (c *Config) OIDCTokenPath(remote string) string {
 func (c *Config) SaveOIDCTokens() {
 	tokenParentPath := c.ConfigPath("oidctokens")
 
-	if !shared.PathExists(tokenParentPath) {
+	if !util.PathExists(tokenParentPath) {
 		_ = os.MkdirAll(tokenParentPath, 0755)
 	}
 

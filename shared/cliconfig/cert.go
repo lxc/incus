@@ -5,15 +5,15 @@ import (
 	"io"
 	"os"
 
-	"github.com/lxc/incus/shared"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // HasClientCertificate will return true if a client certificate has already been generated.
 func (c *Config) HasClientCertificate() bool {
 	certf := c.ConfigPath("client.crt")
 	keyf := c.ConfigPath("client.key")
-	if !shared.PathExists(certf) || !shared.PathExists(keyf) {
+	if !util.PathExists(certf) || !util.PathExists(keyf) {
 		return false
 	}
 

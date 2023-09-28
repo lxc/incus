@@ -13,7 +13,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Process struct. Has ability to set runtime arguments.
@@ -41,7 +41,7 @@ type Process struct {
 }
 
 func (p *Process) hasApparmor() bool {
-	if shared.IsFalse(os.Getenv("INCUS_SECURITY_APPARMOR")) {
+	if util.IsFalse(os.Getenv("INCUS_SECURITY_APPARMOR")) {
 		return false
 	}
 
@@ -50,7 +50,7 @@ func (p *Process) hasApparmor() bool {
 		return false
 	}
 
-	if !shared.PathExists("/sys/kernel/security/apparmor") {
+	if !util.PathExists("/sys/kernel/security/apparmor") {
 		return false
 	}
 

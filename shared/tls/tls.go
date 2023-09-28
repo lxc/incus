@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // connectErrorPrefix used as prefix to error returned from RFC3493Dialer.
@@ -63,7 +63,7 @@ func InitTLSConfig() *tls.Config {
 	config := &tls.Config{}
 
 	// Restrict to TLS 1.3 unless INCUS_INSECURE_TLS is set.
-	if shared.IsFalseOrEmpty(os.Getenv("INCUS_INSECURE_TLS")) {
+	if util.IsFalseOrEmpty(os.Getenv("INCUS_INSECURE_TLS")) {
 		config.MinVersion = tls.VersionTLS13
 	} else {
 		config.MinVersion = tls.VersionTLS12

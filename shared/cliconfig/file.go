@@ -7,7 +7,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // LoadConfig reads the configuration from the config path; if the path does
@@ -92,7 +92,7 @@ func LoadConfig(path string) (*Config, error) {
 func (c *Config) SaveConfig(path string) error {
 	// Create a new copy for the config file
 	conf := Config{}
-	err := shared.DeepCopy(c, &conf)
+	err := util.DeepCopy(c, &conf)
 	if err != nil {
 		return fmt.Errorf("Unable to copy the configuration: %w", err)
 	}

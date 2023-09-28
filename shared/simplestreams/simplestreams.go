@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 )
 
 var urlDefaultOS = map[string]string{
@@ -67,7 +67,7 @@ func (s *SimpleStreams) readCache(path string) ([]byte, bool) {
 		return nil, false
 	}
 
-	if !shared.PathExists(cacheName) {
+	if !util.PathExists(cacheName) {
 		return nil, false
 	}
 

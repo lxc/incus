@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Products represents the base of download.json.
@@ -96,7 +96,7 @@ func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 			addImage := func(meta *ProductVersionItem, root *ProductVersionItem) error {
 				// Look for deltas
 				deltas := []ProductVersionItem{}
-				if root != nil && shared.ValueInSlice(root.FileType, []string{"squashfs", "disk-kvm.img"}) {
+				if root != nil && util.ValueInSlice(root.FileType, []string{"squashfs", "disk-kvm.img"}) {
 					for _, item := range version.Items {
 						if item.FileType == fmt.Sprintf("%s.vcdiff", root.FileType) {
 							deltas = append(deltas, item)
@@ -274,7 +274,7 @@ func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 				if item.FileType == "incus.tar.xz" {
 					// Locate the root files
 					for _, subItem := range version.Items {
-						if shared.ValueInSlice(subItem.FileType, []string{"disk1.img", "disk-kvm.img", "uefi1.img", "root.tar.xz", "squashfs"}) {
+						if util.ValueInSlice(subItem.FileType, []string{"disk1.img", "disk-kvm.img", "uefi1.img", "root.tar.xz", "squashfs"}) {
 							err := addImage(&item, &subItem)
 							if err != nil {
 								continue
