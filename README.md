@@ -36,8 +36,7 @@ You can test the current state of Incus through an online session here: https://
 
 Type                | Service               | Status
 ---                 | ---                   | ---
-CI (client)         | GitHub                | [![Build Status](https://github.com/lxc/incus/workflows/Client%20build%20and%20unit%20tests/badge.svg)](https://github.com/lxc/incus/actions)
-CI (server)         | GitHub                | [![Build Status](https://github.com/lxc/incus/workflows/Tests/badge.svg)](https://github.com/lxc/incus/actions)
+Tests               | GitHub                | [![Build Status](https://github.com/lxc/incus/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/lxc/incus/actions?query=event%3Apush+branch%3Amain)
 Go documentation    | Godoc                 | [![GoDoc](https://godoc.org/github.com/lxc/incus/client?status.svg)](https://godoc.org/github.com/lxc/incus/client)
 Static analysis     | GoReport              | [![Go Report Card](https://goreportcard.com/badge/github.com/lxc/incus)](https://goreportcard.com/report/github.com/lxc/incus)
 
