@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/linux"
 )
 
 // Reader represents an io.Reader that handles EAGAIN.
@@ -24,7 +24,7 @@ again:
 	}
 
 	// keep retrying on EAGAIN
-	errno, ok := shared.GetErrno(err)
+	errno, ok := linux.GetErrno(err)
 	if ok && (errno == unix.EAGAIN || errno == unix.EINTR) {
 		goto again
 	}
@@ -46,7 +46,7 @@ again:
 	}
 
 	// keep retrying on EAGAIN
-	errno, ok := shared.GetErrno(err)
+	errno, ok := linux.GetErrno(err)
 	if ok && (errno == unix.EAGAIN || errno == unix.EINTR) {
 		goto again
 	}
