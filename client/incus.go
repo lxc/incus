@@ -14,10 +14,10 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/tcp"
+	"github.com/lxc/incus/shared/util"
 )
 
 // ProtocolIncus represents an Incus API server.
@@ -89,7 +89,7 @@ func (r *ProtocolIncus) GetConnectionInfo() (*ConnectionInfo, error) {
 			}
 
 			url := fmt.Sprintf("https://%s", addr)
-			if !shared.ValueInSlice(url, urls) {
+			if !util.ValueInSlice(url, urls) {
 				urls = append(urls, url)
 			}
 		}

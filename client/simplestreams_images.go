@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Image handling functions
@@ -64,7 +64,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 	}
 
 	// Attempt to download from host
-	if shared.PathExists("/dev/incus/sock") && os.Geteuid() == 0 {
+	if util.PathExists("/dev/incus/sock") && os.Geteuid() == 0 {
 		unixURI := fmt.Sprintf("http://unix.socket/1.0/images/%s/export", url.PathEscape(fingerprint))
 
 		// Setup the HTTP client
@@ -96,12 +96,12 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 	// Download function
 	download := func(path string, filename string, hash string, target io.WriteSeeker) (int64, error) {
 		// Try over http
-		url, err := url.JoinPath(fmt.Sprintf("http://%s", strings.TrimPrefix(r.httpHost, "https://")), path)
+		uri, err := url.JoinPath(fmt.Sprintf("http://%s", strings.TrimPrefix(r.httpHost, "https://")), path)
 		if err != nil {
 			return -1, err
 		}
 
-		size, err := shared.DownloadFileHash(context.TODO(), &httpClient, r.httpUserAgent, req.ProgressHandler, req.Canceler, filename, url, hash, sha256.New(), target)
+		size, err := util.DownloadFileHash(context.TODO(), &httpClient, r.httpUserAgent, req.ProgressHandler, req.Canceler, filename, uri, hash, sha256.New(), target)
 		if err != nil {
 			// Handle cancelation
 			if err.Error() == "net/http: request canceled" {
@@ -109,12 +109,12 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 			}
 
 			// Try over https
-			url, err := url.JoinPath(r.httpHost, path)
+			uri, err := url.JoinPath(r.httpHost, path)
 			if err != nil {
 				return -1, err
 			}
 
-			size, err = shared.DownloadFileHash(context.TODO(), &httpClient, r.httpUserAgent, req.ProgressHandler, req.Canceler, filename, url, hash, sha256.New(), target)
+			size, err = util.DownloadFileHash(context.TODO(), &httpClient, r.httpUserAgent, req.ProgressHandler, req.Canceler, filename, uri, hash, sha256.New(), target)
 			if err != nil {
 				return -1, err
 			}

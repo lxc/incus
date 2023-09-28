@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/ioprogress"
 	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Image handling functions
@@ -134,7 +134,7 @@ func (r *ProtocolIncus) GetPrivateImageFile(fingerprint string, secret string, r
 	}
 
 	// Attempt to download from host
-	if secret == "" && shared.PathExists("/dev/incus/sock") && os.Geteuid() == 0 {
+	if secret == "" && util.PathExists("/dev/incus/sock") && os.Geteuid() == 0 {
 		unixURI := fmt.Sprintf("http://unix.socket%s", uri)
 
 		// Setup the HTTP client
@@ -260,7 +260,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 			return nil, err
 		}
 
-		if !shared.ValueInSlice(part.FormName(), []string{"rootfs", "rootfs.img"}) {
+		if !util.ValueInSlice(part.FormName(), []string{"rootfs", "rootfs.img"}) {
 			return nil, fmt.Errorf("Invalid multipart image")
 		}
 

@@ -14,9 +14,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/simplestreams"
+	"github.com/lxc/incus/shared/util"
 )
 
 // ConnectionArgs represents a set of common connection properties.
@@ -273,7 +273,7 @@ func ConnectSimpleStreams(url string, args *ConnectionArgs) (ImageServer, error)
 
 	// Setup the cache
 	if args.CachePath != "" {
-		if !shared.PathExists(args.CachePath) {
+		if !util.PathExists(args.CachePath) {
 			return nil, fmt.Errorf("Cache directory %q doesn't exist", args.CachePath)
 		}
 
@@ -285,7 +285,7 @@ func ConnectSimpleStreams(url string, args *ConnectionArgs) (ImageServer, error)
 			cacheExpiry = time.Hour
 		}
 
-		if !shared.PathExists(cachePath) {
+		if !util.PathExists(cachePath) {
 			err := os.Mkdir(cachePath, 0755)
 			if err != nil {
 				return nil, err
@@ -325,7 +325,7 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 		eventListeners:     make(map[string][]*EventListener),
 	}
 
-	if shared.ValueInSlice(args.AuthType, []string{"oidc"}) {
+	if util.ValueInSlice(args.AuthType, []string{"oidc"}) {
 		server.RequireAuthenticated(true)
 	}
 
