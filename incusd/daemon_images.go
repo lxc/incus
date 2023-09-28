@@ -19,14 +19,16 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalIO "github.com/lxc/incus/internal/io"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // ImageDownloadArgs used with ImageDownload.
@@ -77,7 +79,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	fp := alias
 
 	// Attempt to resolve the alias
-	if shared.ValueInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
+	if util.ValueInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
 		clientArgs := &incus.ConnectionArgs{
 			TLSServerCert: args.Certificate,
 			UserAgent:     version.UserAgent,
@@ -86,7 +88,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 			CacheExpiry:   time.Hour,
 		}
 
-		if shared.ValueInSlice(protocol, []string{"incus", "lxd"}) {
+		if util.ValueInSlice(protocol, []string{"incus", "lxd"}) {
 			// Setup client
 			remote, err = incus.ConnectPublicIncus(args.Server, clientArgs)
 			if err != nil {
@@ -244,7 +246,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 			return nil, err
 		}
 
-		if shared.ValueInSlice(poolID, poolIDs) {
+		if util.ValueInSlice(poolID, poolIDs) {
 			logger.Debug("Image already exists on storage pool", ctxMap)
 			return info, nil
 		}
@@ -273,7 +275,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	logger.Info("Downloading image", ctxMap)
 
 	// Cleanup any leftover from a past attempt
-	destDir := shared.VarPath("images")
+	destDir := internalUtil.VarPath("images")
 	destName := filepath.Join(destDir, fp)
 
 	failure := true
@@ -308,7 +310,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		op.SetCanceler(canceler)
 	}
 
-	if shared.ValueInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
+	if util.ValueInSlice(protocol, []string{"incus", "lxd", "simplestreams"}) {
 		// Create the target files
 		dest, err := os.Create(destName)
 		if err != nil {
@@ -360,8 +362,8 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 			ProgressHandler: progress,
 			Canceler:        canceler,
 			DeltaSourceRetriever: func(fingerprint string, file string) string {
-				path := shared.VarPath("images", fmt.Sprintf("%s.%s", fingerprint, file))
-				if shared.PathExists(path) {
+				path := internalUtil.VarPath("images", fmt.Sprintf("%s.%s", fingerprint, file))
+				if util.PathExists(path) {
 					return path
 				}
 
@@ -411,7 +413,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		}
 	} else if protocol == "direct" {
 		// Setup HTTP client
-		httpClient, err := util.HTTPClient(args.Certificate, s.Proxy)
+		httpClient, err := localUtil.HTTPClient(args.Certificate, s.Proxy)
 		if err != nil {
 			return nil, err
 		}
@@ -462,7 +464,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		sha256 := sha256.New()
 
 		// Download the image
-		writer := shared.NewQuotaWriter(io.MultiWriter(f, sha256), args.Budget)
+		writer := internalIO.NewQuotaWriter(io.MultiWriter(f, sha256), args.Budget)
 		size, err := io.Copy(writer, body)
 		if err != nil {
 			return nil, err
@@ -519,13 +521,13 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	// Check if the image path changed (private images)
 	newDestName := filepath.Join(destDir, fp)
 	if newDestName != destName {
-		err = shared.FileMove(destName, newDestName)
+		err = internalUtil.FileMove(destName, newDestName)
 		if err != nil {
 			return nil, err
 		}
 
-		if shared.PathExists(destName + ".rootfs") {
-			err = shared.FileMove(destName+".rootfs", newDestName+".rootfs")
+		if util.PathExists(destName + ".rootfs") {
+			err = internalUtil.FileMove(destName+".rootfs", newDestName+".rootfs")
 			if err != nil {
 				return nil, err
 			}

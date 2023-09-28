@@ -10,12 +10,12 @@ import (
 
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -195,7 +195,7 @@ func (d *ceph) Create() error {
 		if volExists {
 			// ceph.osd.force_reuse is deprecated and should not be used. OSD pools are a logical
 			// construct there is no good reason not to create one for dedicated use by the daemon.
-			if shared.IsFalseOrEmpty(d.config["ceph.osd.force_reuse"]) {
+			if util.IsFalseOrEmpty(d.config["ceph.osd.force_reuse"]) {
 				return fmt.Errorf("Pool '%s' in cluster '%s' seems to be in use by another Incus instance. Use 'ceph.osd.force_reuse=true' to force", d.config["ceph.osd.pool_name"], d.config["ceph.cluster_name"])
 			}
 
@@ -253,7 +253,7 @@ func (d *ceph) Delete(op *operations.Operation) error {
 	}
 
 	// Check whether we own the pool and only remove in this case.
-	if shared.IsTrue(d.config["volatile.pool.pristine"]) {
+	if util.IsTrue(d.config["volatile.pool.pristine"]) {
 		// Delete the osd pool.
 		if poolExists {
 			err := d.osdDeletePool()
@@ -264,7 +264,7 @@ func (d *ceph) Delete(op *operations.Operation) error {
 	}
 
 	// If the user completely destroyed it, call it done.
-	if !shared.PathExists(GetPoolMountPath(d.name)) {
+	if !util.PathExists(GetPoolMountPath(d.name)) {
 		return nil
 	}
 
@@ -385,7 +385,7 @@ func (d *ceph) MigrationTypes(contentType ContentType, refresh bool, copySnapsho
 
 	// Do not pass compression argument to rsync if the associated
 	// config key, that is rsync.compression, is set to false.
-	if shared.IsFalse(d.Config()["rsync.compression"]) {
+	if util.IsFalse(d.Config()["rsync.compression"]) {
 		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
 	} else {
 		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}

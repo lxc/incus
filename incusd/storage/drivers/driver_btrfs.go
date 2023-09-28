@@ -11,13 +11,14 @@ import (
 
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -164,9 +165,9 @@ func (d *btrfs) Create() error {
 		if err != nil {
 			return fmt.Errorf("Failed to format sparse file: %w", err)
 		}
-	} else if shared.IsBlockdevPath(d.config["source"]) {
+	} else if linux.IsBlockdevPath(d.config["source"]) {
 		// Wipe if requested.
-		if shared.IsTrue(d.config["source.wipe"]) {
+		if util.IsTrue(d.config["source.wipe"]) {
 			err := wipeBlockHeaders(d.config["source"])
 			if err != nil {
 				return fmt.Errorf("Failed to wipe headers from disk %q: %w", d.config["source"], err)
@@ -208,9 +209,9 @@ func (d *btrfs) Create() error {
 		} else {
 			// New btrfs subvolume on existing btrfs filesystem.
 			cleanSource := filepath.Clean(hostPath)
-			daemonDir := shared.VarPath()
+			daemonDir := internalUtil.VarPath()
 
-			if shared.PathExists(hostPath) {
+			if util.PathExists(hostPath) {
 				hostPathFS, _ := linux.DetectFilesystem(hostPath)
 				if hostPathFS != "btrfs" {
 					return fmt.Errorf("Provided path does not reside on a btrfs filesystem")
@@ -219,10 +220,10 @@ func (d *btrfs) Create() error {
 
 			if strings.HasPrefix(cleanSource, daemonDir) {
 				if cleanSource != GetPoolMountPath(d.name) {
-					return fmt.Errorf("Only allowed source path under %q is %q", shared.VarPath(), GetPoolMountPath(d.name))
+					return fmt.Errorf("Only allowed source path under %q is %q", internalUtil.VarPath(), GetPoolMountPath(d.name))
 				}
 
-				storagePoolDirFS, _ := linux.DetectFilesystem(shared.VarPath("storage-pools"))
+				storagePoolDirFS, _ := linux.DetectFilesystem(internalUtil.VarPath("storage-pools"))
 				if storagePoolDirFS != "btrfs" {
 					return fmt.Errorf("Provided path does not reside on a btrfs filesystem")
 				}
@@ -251,7 +252,7 @@ func (d *btrfs) Create() error {
 // Delete removes the storage pool from the storage device.
 func (d *btrfs) Delete(op *operations.Operation) error {
 	// If the user completely destroyed it, call it done.
-	if !shared.PathExists(GetPoolMountPath(d.name)) {
+	if !util.PathExists(GetPoolMountPath(d.name)) {
 		return nil
 	}
 
@@ -259,7 +260,7 @@ func (d *btrfs) Delete(op *operations.Operation) error {
 	for _, volType := range d.Info().VolumeTypes {
 		for _, dir := range BaseDirectories[volType] {
 			path := filepath.Join(GetPoolMountPath(d.name), dir)
-			if !shared.PathExists(path) {
+			if !util.PathExists(path) {
 				continue
 			}
 
@@ -412,7 +413,7 @@ func (d *btrfs) Mount() (bool, error) {
 		// Bring up an existing device or path.
 		mntSrc = d.config["source"]
 
-		if !shared.IsBlockdevPath(mntSrc) {
+		if !linux.IsBlockdevPath(mntSrc) {
 			mntFilesystem = "none"
 
 			mntSrcFS, _ := linux.DetectFilesystem(mntSrc)
@@ -483,7 +484,7 @@ func (d *btrfs) MigrationTypes(contentType ContentType, refresh bool, copySnapsh
 
 	// Do not pass compression argument to rsync if the associated
 	// config key, that is rsync.compression, is set to false.
-	if shared.IsFalse(d.Config()["rsync.compression"]) {
+	if util.IsFalse(d.Config()["rsync.compression"]) {
 		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
 	} else {
 		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}

@@ -11,10 +11,10 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/storage/s3/miniod"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 )
 

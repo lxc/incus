@@ -7,9 +7,9 @@ import (
 
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/node"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Load information about the dqlite node associated with this cluster member.
@@ -39,7 +39,7 @@ func loadInfo(database *db.Node, cert *localtls.CertInfo) (*db.RaftNode, error) 
 
 	// Data directory
 	dir := filepath.Join(database.Dir(), "global")
-	if !shared.PathExists(dir) {
+	if !util.PathExists(dir) {
 		err := os.Mkdir(dir, 0750)
 		if err != nil {
 			return nil, err

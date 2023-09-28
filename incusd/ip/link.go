@@ -10,8 +10,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Link represents base arguments for link device.
@@ -272,7 +272,7 @@ func (l *Link) GetVFInfo(vfID int) (VirtFuncInfo, error) {
 
 				vf.Address = res[1]
 				vf.VLANs = append(vf.VLANs, map[string]int{"vlan": vlan})
-				vf.SpoofCheck = shared.IsTrue(res[3])
+				vf.SpoofCheck = util.IsTrue(res[3])
 
 				return vf, err
 			}
@@ -283,7 +283,7 @@ func (l *Link) GetVFInfo(vfID int) (VirtFuncInfo, error) {
 				vf.Address = res[1]
 				// Missing VLAN ID means 0 when resetting later.
 				vf.VLANs = append(vf.VLANs, map[string]int{"vlan": 0})
-				vf.SpoofCheck = shared.IsTrue(res[2])
+				vf.SpoofCheck = util.IsTrue(res[2])
 
 				return vf, err
 			}

@@ -17,8 +17,10 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/lxc/incus/shared"
+	"golang.org/x/sys/unix"
+
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 const VFS3FscapsUnsupported int32 = 0
@@ -379,7 +381,7 @@ func (m IdmapSet) ValidRanges() ([]*IdRange, error) {
 
 	// Sort the map
 	idmap := IdmapSet{}
-	err := shared.DeepCopy(&m, &idmap)
+	err := util.DeepCopy(&m, &idmap)
 	if err != nil {
 		return nil, err
 	}
@@ -473,7 +475,7 @@ func (m IdmapSet) ToLxcString() []string {
 	var lines []string
 	for _, e := range m.Idmap {
 		for _, l := range e.ToLxcString() {
-			if !shared.ValueInSlice(l, lines) {
+			if !util.ValueInSlice(l, lines) {
 				lines = append(lines, l)
 			}
 		}
@@ -607,24 +609,25 @@ func (set *IdmapSet) doUidshiftIntoContainer(dir string, testmode bool, how stri
 			return filepath.SkipDir
 		}
 
-		intUID, intGID, _, _, inode, nlink, err := shared.GetFileStat(path)
+		var stat unix.Stat_t
+		err = unix.Lstat(path, &stat)
 		if err != nil {
 			return err
 		}
 
-		if nlink >= 2 {
+		if stat.Nlink >= 2 {
 			for _, linkInode := range hardLinks {
 				// File was already shifted through hardlink
-				if linkInode == inode {
+				if linkInode == stat.Ino {
 					return nil
 				}
 			}
 
-			hardLinks = append(hardLinks, inode)
+			hardLinks = append(hardLinks, stat.Ino)
 		}
 
-		uid := int64(intUID)
-		gid := int64(intGID)
+		uid := int64(stat.Uid)
+		gid := int64(stat.Gid)
 		caps := []byte{}
 
 		var newuid, newgid int64
@@ -679,7 +682,7 @@ func (set *IdmapSet) doUidshiftIntoContainer(dir string, testmode bool, how stri
 		return nil
 	}
 
-	if !shared.PathExists(dir) {
+	if !util.PathExists(dir) {
 		return fmt.Errorf("No such file or directory: %q", dir)
 	}
 
@@ -830,7 +833,7 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 	// Check if shadow's uidmap tools are installed
 	subuidPath := path.Join(rootfs, "/etc/subuid")
 	subgidPath := path.Join(rootfs, "/etc/subgid")
-	if shared.PathExists(subuidPath) && shared.PathExists(subgidPath) {
+	if util.PathExists(subuidPath) && util.PathExists(subgidPath) {
 		// Parse the shadow uidmap
 		entries, err := getFromShadow(subuidPath, username)
 		if err != nil {
@@ -990,7 +993,7 @@ func kernelDefaultMap() (*IdmapSet, error) {
 func CurrentIdmapSet() (*IdmapSet, error) {
 	idmapset := new(IdmapSet)
 
-	if shared.PathExists("/proc/self/uid_map") {
+	if util.PathExists("/proc/self/uid_map") {
 		// Parse the uidmap
 		entries, err := getFromProc("/proc/self/uid_map")
 		if err != nil {
@@ -1007,7 +1010,7 @@ func CurrentIdmapSet() (*IdmapSet, error) {
 		idmapset.Idmap = Extend(idmapset.Idmap, e)
 	}
 
-	if shared.PathExists("/proc/self/gid_map") {
+	if util.PathExists("/proc/self/gid_map") {
 		// Parse the gidmap
 		entries, err := getFromProc("/proc/self/gid_map")
 		if err != nil {

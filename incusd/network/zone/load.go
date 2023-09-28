@@ -9,8 +9,8 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // LoadByName loads and initialises a Network zone from the database by name.
@@ -71,7 +71,7 @@ func Create(s *state.State, projectName string, zoneInfo *api.NetworkZonesPost) 
 	}
 
 	// Validate restrictions.
-	if shared.IsTrue(p.Config["restricted"]) {
+	if util.IsTrue(p.Config["restricted"]) {
 		found := false
 		for _, entry := range strings.Split(p.Config["restricted.networks.zones"], ",") {
 			entry = strings.TrimSpace(entry)

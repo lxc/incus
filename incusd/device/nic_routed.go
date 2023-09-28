@@ -13,10 +13,10 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/network"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -151,7 +151,7 @@ func (d *nicRouted) validateEnvironment() error {
 		if d.config["ipv6.address"] != "" {
 			// net.ipv6.conf.all.forwarding=1 is required to enable general packet forwarding for IPv6.
 			ipv6FwdPath := fmt.Sprintf("net/ipv6/conf/%s/forwarding", "all")
-			sysctlVal, err := util.SysctlGet(ipv6FwdPath)
+			sysctlVal, err := localUtil.SysctlGet(ipv6FwdPath)
 			if err != nil {
 				return fmt.Errorf("Error reading net sysctl %s: %w", ipv6FwdPath, err)
 			}
@@ -164,7 +164,7 @@ func (d *nicRouted) validateEnvironment() error {
 			// rejected This causes periodic latency spikes every 15-20s as the neighbour has to resort
 			// to using multicast NDP resolution and expires the previous neighbour entry.
 			ipv6ProxyNdpPath := fmt.Sprintf("net/ipv6/conf/%s/proxy_ndp", "all")
-			sysctlVal, err = util.SysctlGet(ipv6ProxyNdpPath)
+			sysctlVal, err = localUtil.SysctlGet(ipv6ProxyNdpPath)
 			if err != nil {
 				return fmt.Errorf("Error reading net sysctl %s: %w", ipv6ProxyNdpPath, err)
 			}
@@ -177,7 +177,7 @@ func (d *nicRouted) validateEnvironment() error {
 		// Check necessary sysctls are configured for use with l2proxy parent for routed mode.
 		if d.config["ipv4.address"] != "" {
 			ipv4FwdPath := fmt.Sprintf("net/ipv4/conf/%s/forwarding", d.effectiveParentName)
-			sysctlVal, err := util.SysctlGet(ipv4FwdPath)
+			sysctlVal, err := localUtil.SysctlGet(ipv4FwdPath)
 			if err != nil {
 				return fmt.Errorf("Error reading net sysctl %s: %w", ipv4FwdPath, err)
 			}
@@ -191,7 +191,7 @@ func (d *nicRouted) validateEnvironment() error {
 		// Check necessary devic specific sysctls are configured for use with l2proxy parent for routed mode.
 		if d.config["ipv6.address"] != "" {
 			ipv6FwdPath := fmt.Sprintf("net/ipv6/conf/%s/forwarding", d.effectiveParentName)
-			sysctlVal, err := util.SysctlGet(ipv6FwdPath)
+			sysctlVal, err := localUtil.SysctlGet(ipv6FwdPath)
 			if err != nil {
 				return fmt.Errorf("Error reading net sysctl %s: %w", ipv6FwdPath, err)
 			}
@@ -202,7 +202,7 @@ func (d *nicRouted) validateEnvironment() error {
 			}
 
 			ipv6ProxyNdpPath := fmt.Sprintf("net/ipv6/conf/%s/proxy_ndp", d.effectiveParentName)
-			sysctlVal, err = util.SysctlGet(ipv6ProxyNdpPath)
+			sysctlVal, err = localUtil.SysctlGet(ipv6ProxyNdpPath)
 			if err != nil {
 				return fmt.Errorf("Error reading net sysctl %s: %w", ipv6ProxyNdpPath, err)
 			}
@@ -221,15 +221,15 @@ func (d *nicRouted) validateEnvironment() error {
 func (d *nicRouted) checkIPAvailability(parent string) error {
 	var addresses []net.IP
 
-	if shared.IsTrueOrEmpty(d.config["ipv4.neighbor_probe"]) {
-		ipv4Addrs := shared.SplitNTrimSpace(d.config["ipv4.address"], ",", -1, true)
+	if util.IsTrueOrEmpty(d.config["ipv4.neighbor_probe"]) {
+		ipv4Addrs := util.SplitNTrimSpace(d.config["ipv4.address"], ",", -1, true)
 		for _, addr := range ipv4Addrs {
 			addresses = append(addresses, net.ParseIP(addr))
 		}
 	}
 
-	if shared.IsTrueOrEmpty(d.config["ipv6.neighbor_probe"]) {
-		ipv6Addrs := shared.SplitNTrimSpace(d.config["ipv6.address"], ",", -1, true)
+	if util.IsTrueOrEmpty(d.config["ipv6.neighbor_probe"]) {
+		ipv6Addrs := util.SplitNTrimSpace(d.config["ipv6.address"], ",", -1, true)
 		for _, addr := range ipv6Addrs {
 			addresses = append(addresses, net.ParseIP(addr))
 		}
@@ -281,7 +281,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 
 	// Decide which parent we should use based on VLAN setting.
 	if d.config["vlan"] != "" {
-		statusDev, err := networkCreateVlanDeviceIfNeeded(d.state, d.config["parent"], d.effectiveParentName, d.config["vlan"], shared.IsTrue(d.config["gvrp"]))
+		statusDev, err := networkCreateVlanDeviceIfNeeded(d.state, d.config["parent"], d.effectiveParentName, d.config["vlan"], util.IsTrue(d.config["gvrp"]))
 		if err != nil {
 			return nil, err
 		}
@@ -290,7 +290,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		saveData["last_state.created"] = fmt.Sprintf("%t", statusDev != "existing")
 
 		// If we created a VLAN interface, we need to setup the sysctls on that interface.
-		if shared.IsTrue(saveData["last_state.created"]) {
+		if util.IsTrue(saveData["last_state.created"]) {
 			revert.Add(func() {
 				_ = networkRemoveInterfaceIfNeeded(d.state, d.effectiveParentName, d.inst, d.config["parent"], d.config["vlan"])
 			})
@@ -352,13 +352,13 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	// Attempt to disable IPv6 router advertisement acceptance from instance.
-	err = util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
+	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
 
 	// Prevent source address spoofing by requiring a return path.
-	err = util.SysctlSet(fmt.Sprintf("net/ipv4/conf/%s/rp_filter", saveData["host_name"]), "1")
+	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv4/conf/%s/rp_filter", saveData["host_name"]), "1")
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
@@ -378,7 +378,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			ipFamilyArg = ip.FamilyV6
 		}
 
-		addresses := shared.SplitNTrimSpace(d.config[fmt.Sprintf("%s.address", keyPrefix)], ",", -1, true)
+		addresses := util.SplitNTrimSpace(d.config[fmt.Sprintf("%s.address", keyPrefix)], ",", -1, true)
 
 		// Add host-side gateway addresses.
 		if len(addresses) > 0 {
@@ -397,7 +397,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			}
 
 			// Enable IP forwarding on host_name.
-			err = util.SysctlSet(fmt.Sprintf("net/%s/conf/%s/forwarding", keyPrefix, saveData["host_name"]), "1")
+			err = localUtil.SysctlSet(fmt.Sprintf("net/%s/conf/%s/forwarding", keyPrefix, saveData["host_name"]), "1")
 			if err != nil {
 				return nil, err
 			}
@@ -453,7 +453,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		}
 
 		if d.config[fmt.Sprintf("%s.routes", keyPrefix)] != "" {
-			routes := shared.SplitNTrimSpace(d.config[fmt.Sprintf("%s.routes", keyPrefix)], ",", -1, true)
+			routes := util.SplitNTrimSpace(d.config[fmt.Sprintf("%s.routes", keyPrefix)], ",", -1, true)
 
 			if len(addresses) == 0 {
 				return nil, fmt.Errorf("%s.routes requires %s.address to be set", keyPrefix, keyPrefix)
@@ -494,7 +494,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 
 	if d.inst.Type() == instancetype.Container {
 		for _, keyPrefix := range []string{"ipv4", "ipv6"} {
-			ipAddresses := shared.SplitNTrimSpace(d.config[fmt.Sprintf("%s.address", keyPrefix)], ",", -1, true)
+			ipAddresses := util.SplitNTrimSpace(d.config[fmt.Sprintf("%s.address", keyPrefix)], ",", -1, true)
 
 			// Use a fixed address as the auto next-hop default gateway if using this IP family.
 			if len(ipAddresses) > 0 && nicHasAutoGateway(d.config[fmt.Sprintf("%s.gateway", keyPrefix)]) {
@@ -538,7 +538,7 @@ func (d *nicRouted) setupParentSysctls(parentName string) error {
 	if d.config["ipv4.address"] != "" {
 		// Set necessary sysctls for use with l2proxy parent in routed mode.
 		ipv4FwdPath := fmt.Sprintf("net/ipv4/conf/%s/forwarding", parentName)
-		err := util.SysctlSet(ipv4FwdPath, "1")
+		err := localUtil.SysctlSet(ipv4FwdPath, "1")
 		if err != nil {
 			return fmt.Errorf("Error setting net sysctl %s: %w", ipv4FwdPath, err)
 		}
@@ -547,13 +547,13 @@ func (d *nicRouted) setupParentSysctls(parentName string) error {
 	if d.config["ipv6.address"] != "" {
 		// Set necessary sysctls use with l2proxy parent in routed mode.
 		ipv6FwdPath := fmt.Sprintf("net/ipv6/conf/%s/forwarding", parentName)
-		err := util.SysctlSet(ipv6FwdPath, "1")
+		err := localUtil.SysctlSet(ipv6FwdPath, "1")
 		if err != nil {
 			return fmt.Errorf("Error setting net sysctl %s: %w", ipv6FwdPath, err)
 		}
 
 		ipv6ProxyNdpPath := fmt.Sprintf("net/ipv6/conf/%s/proxy_ndp", parentName)
-		err = util.SysctlSet(ipv6ProxyNdpPath, "1")
+		err = localUtil.SysctlSet(ipv6ProxyNdpPath, "1")
 		if err != nil {
 			return fmt.Errorf("Error setting net sysctl %s: %w", ipv6ProxyNdpPath, err)
 		}
@@ -626,7 +626,7 @@ func (d *nicRouted) postStop() error {
 	// Delete IP neighbour proxy entries on the parent.
 	if d.effectiveParentName != "" {
 		for _, key := range []string{"ipv4.address", "ipv6.address"} {
-			for _, addr := range shared.SplitNTrimSpace(d.config[key], ",", -1, true) {
+			for _, addr := range util.SplitNTrimSpace(d.config[key], ",", -1, true) {
 				neighProxy := &ip.NeighProxy{
 					DevName: d.effectiveParentName,
 					Addr:    net.ParseIP(addr),
@@ -638,7 +638,7 @@ func (d *nicRouted) postStop() error {
 	}
 
 	// This will delete the parent interface if we created it for VLAN parent.
-	if shared.IsTrue(v["last_state.created"]) {
+	if util.IsTrue(v["last_state.created"]) {
 		err := networkRemoveInterfaceIfNeeded(d.state, d.effectiveParentName, d.inst, d.config["parent"], d.config["vlan"])
 		if err != nil {
 			errs = append(errs, err)

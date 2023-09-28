@@ -15,8 +15,8 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/internal/idmap"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 func init() {
@@ -57,7 +57,7 @@ func (c *cmdActivateifneeded) Run(cmd *cobra.Command, args []string) error {
 
 	// Check if either the local database files exists.
 	path := d.os.LocalDatabasePath()
-	if !shared.PathExists(d.os.LocalDatabasePath()) {
+	if !util.PathExists(d.os.LocalDatabasePath()) {
 		logger.Debugf("No local database, so no need to start the daemon now")
 		return nil
 	}
@@ -98,7 +98,7 @@ func (c *cmdActivateifneeded) Run(cmd *cobra.Command, args []string) error {
 
 	// Look for auto-started or previously started instances
 	path = d.os.GlobalDatabasePath()
-	if !shared.PathExists(path) {
+	if !util.PathExists(path) {
 		logger.Debugf("No global database, so no need to start the daemon now")
 		return nil
 	}

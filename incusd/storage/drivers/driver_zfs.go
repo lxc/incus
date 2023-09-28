@@ -10,14 +10,15 @@ import (
 
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -113,7 +114,7 @@ func (d *zfs) Info() Info {
 		PreservesInodes:   true,
 		Remote:            d.isRemote(),
 		VolumeTypes:       []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
-		BlockBacking:      shared.IsTrue(d.config["volume.zfs.block_mode"]),
+		BlockBacking:      util.IsTrue(d.config["volume.zfs.block_mode"]),
 		RunningCopyFreeze: false,
 		DirectIO:          zfsDirectIO,
 		MountedRoot:       false,
@@ -143,7 +144,7 @@ func (d zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 
 	for _, dataset := range d.initialDatasets() {
 		properties := []string{"mountpoint=legacy"}
-		if shared.ValueInSlice(dataset, []string{"virtual-machines", "deleted/virtual-machines"}) {
+		if util.ValueInSlice(dataset, []string{"virtual-machines", "deleted/virtual-machines"}) {
 			if len(zfsVersion) >= 3 && zfsVersion[0:3] == "0.6" {
 				d.logger.Warn("Unable to set volmode on parent virtual-machines datasets due to ZFS being too old")
 			} else {
@@ -263,7 +264,7 @@ func (d *zfs) Create() error {
 		}
 	} else if filepath.IsAbs(d.config["source"]) {
 		// Handle existing block devices.
-		if !shared.IsBlockdevPath(d.config["source"]) {
+		if !linux.IsBlockdevPath(d.config["source"]) {
 			return fmt.Errorf("Custom loop file locations are not supported")
 		}
 
@@ -273,7 +274,7 @@ func (d *zfs) Create() error {
 		}
 
 		// Wipe if requested.
-		if shared.IsTrue(d.config["source.wipe"]) {
+		if util.IsTrue(d.config["source.wipe"]) {
 			err := wipeBlockHeaders(d.config["source"])
 			if err != nil {
 				return fmt.Errorf("Failed to wipe headers from disk %q: %w", d.config["source"], err)
@@ -378,7 +379,7 @@ func (d *zfs) Delete(op *operations.Operation) error {
 
 	initialDatasets := d.initialDatasets()
 	for _, dataset := range datasets {
-		if shared.ValueInSlice(dataset, initialDatasets) {
+		if util.ValueInSlice(dataset, initialDatasets) {
 			continue
 		}
 
@@ -505,7 +506,7 @@ func (d *zfs) importPool() (bool, error) {
 
 	// Import the pool.
 	if filepath.IsAbs(d.config["source"]) {
-		disksPath := shared.VarPath("disks")
+		disksPath := internalUtil.VarPath("disks")
 		_, err := subprocess.RunCommand("zpool", "import", "-f", "-d", disksPath, poolName)
 		if err != nil {
 			return false, err
@@ -550,7 +551,7 @@ func (d *zfs) Mount() (bool, error) {
 // Unmount unmounts the storage pool.
 func (d *zfs) Unmount() (bool, error) {
 	// Skip if zfs.export config is set to false
-	if shared.IsFalse(d.config["zfs.export"]) {
+	if util.IsFalse(d.config["zfs.export"]) {
 		return false, nil
 	}
 
@@ -617,7 +618,7 @@ func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshot
 
 	// Do not pass compression argument to rsync if the associated
 	// config key, that is rsync.compression, is set to false.
-	if shared.IsFalse(d.Config()["rsync.compression"]) {
+	if util.IsFalse(d.Config()["rsync.compression"]) {
 		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
 	} else {
 		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}

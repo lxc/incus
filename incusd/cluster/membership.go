@@ -17,11 +17,11 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/internal/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Bootstrap turns a non-clustered server into the first (and leader)
@@ -114,7 +114,7 @@ func Bootstrap(state *state.State, gateway *Gateway, serverName string) error {
 	}
 
 	// The cluster CA certificate is a symlink against the regular server CA certificate.
-	if shared.PathExists(filepath.Join(state.OS.VarDir, "server.ca")) {
+	if util.PathExists(filepath.Join(state.OS.VarDir, "server.ca")) {
 		err := os.Symlink("server.ca", filepath.Join(state.OS.VarDir, "cluster.ca"))
 		if err != nil {
 			return fmt.Errorf("Failed to symlink server CA cert to cluster CA cert: %w", err)
@@ -122,7 +122,7 @@ func Bootstrap(state *state.State, gateway *Gateway, serverName string) error {
 	}
 
 	// Generate a new cluster certificate.
-	clusterCert, err := util.LoadClusterCert(state.OS.VarDir)
+	clusterCert, err := internalUtil.LoadClusterCert(state.OS.VarDir)
 	if err != nil {
 		return fmt.Errorf("Failed to create cluster cert: %w", err)
 	}
@@ -469,7 +469,7 @@ func Join(state *state.State, gateway *Gateway, networkCert *localtls.CertInfo, 
 				return fmt.Errorf("Failed to get storage pool driver: %w", err)
 			}
 
-			if shared.ValueInSlice(driver, []string{"ceph", "cephfs"}) {
+			if util.ValueInSlice(driver, []string{"ceph", "cephfs"}) {
 				// For ceph pools we have to create volume
 				// entries for the joining node.
 				err := tx.UpdateCephStoragePoolAfterNodeJoin(ctx, id, node.ID)
@@ -1017,7 +1017,7 @@ func newRolesChanges(state *state.State, gateway *Gateway, nodes []db.RaftNode, 
 	cluster := map[client.NodeInfo]*client.NodeMetadata{}
 
 	for _, node := range nodes {
-		if !shared.ValueInSlice(node.Address, unavailableMembers) && HasConnectivity(gateway.networkCert, gateway.state().ServerCert(), node.Address) {
+		if !util.ValueInSlice(node.Address, unavailableMembers) && HasConnectivity(gateway.networkCert, gateway.state().ServerCert(), node.Address) {
 			cluster[node.NodeInfo] = &client.NodeMetadata{
 				FailureDomain: domains[node.Address],
 			}
@@ -1201,7 +1201,7 @@ func membershipCheckClusterStateForLeave(ctx context.Context, tx *db.ClusterTx, 
 func membershipCheckNoLeftoverClusterCert(dir string) error {
 	// Ensure that there's no leftover cluster certificate.
 	for _, basename := range []string{"cluster.crt", "cluster.key", "cluster.ca"} {
-		if shared.PathExists(filepath.Join(dir, basename)) {
+		if util.PathExists(filepath.Join(dir, basename)) {
 			return fmt.Errorf("Inconsistent state: found leftover cluster certificate")
 		}
 	}

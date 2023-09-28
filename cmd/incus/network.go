@@ -12,10 +12,10 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdNetwork struct {
@@ -668,7 +668,7 @@ func (c *cmdNetworkEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -691,7 +691,7 @@ func (c *cmdNetworkEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -950,7 +950,7 @@ func (c *cmdNetworkList) Run(cmd *cobra.Command, args []string) error {
 
 	data := [][]string{}
 	for _, network := range networks {
-		if shared.ValueInSlice(network.Type, []string{"loopback", "unknown"}) {
+		if util.ValueInSlice(network.Type, []string{"loopback", "unknown"}) {
 			continue
 		}
 

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Schema defines the available keys of a config Map, along with the types
@@ -101,7 +101,7 @@ func (v *Key) validate(value string) error {
 	switch v.Type {
 	case String:
 	case Bool:
-		if !shared.ValueInSlice(strings.ToLower(value), booleans) {
+		if !util.ValueInSlice(strings.ToLower(value), booleans) {
 			return fmt.Errorf("invalid boolean")
 		}
 

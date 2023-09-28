@@ -9,9 +9,10 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/incusd/sys"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 	cmdParse  = "Q"
 )
 
-var aaPath = shared.VarPath("security", "apparmor")
+var aaPath = internalUtil.VarPath("security", "apparmor")
 
 // runApparmor runs the relevant AppArmor command.
 func runApparmor(sysOS *sys.OS, command string, name string) error {
@@ -84,7 +85,7 @@ func hasProfile(sysOS *sys.OS, name string) (bool, error) {
 	mangled := strings.Replace(strings.Replace(strings.Replace(name, "/", ".", -1), "<", "", -1), ">", "", -1)
 
 	profilesPath := "/sys/kernel/security/apparmor/policy/profiles"
-	if shared.PathExists(profilesPath) {
+	if util.PathExists(profilesPath) {
 		entries, err := os.ReadDir(profilesPath)
 		if err != nil {
 			return false, err

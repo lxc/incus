@@ -58,18 +58,19 @@ import (
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/incusd/task"
 	"github.com/lxc/incus/incusd/ucred"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/idmap"
+	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/linux"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/proxy"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // A Daemon can respond to requests from a shared client.
@@ -285,7 +286,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	// Allow internal cluster traffic by checking against the trusted certfificates.
 	if r.TLS != nil {
 		for _, i := range r.TLS.PeerCertificates {
-			trusted, fingerprint := util.CheckTrustState(*i, trustedCerts[dbCluster.CertificateTypeServer], d.endpoints.NetworkCert(), false)
+			trusted, fingerprint := localUtil.CheckTrustState(*i, trustedCerts[dbCluster.CertificateTypeServer], d.endpoints.NetworkCert(), false)
 			if trusted {
 				return true, fingerprint, "cluster", nil
 			}
@@ -341,7 +342,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	// Validate metrics certificates.
 	if r.URL.Path == "/1.0/metrics" {
 		for _, i := range r.TLS.PeerCertificates {
-			trusted, username := util.CheckTrustState(*i, trustedCerts[dbCluster.CertificateTypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
+			trusted, username := localUtil.CheckTrustState(*i, trustedCerts[dbCluster.CertificateTypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
 			if trusted {
 				return true, username, "tls", nil
 			}
@@ -349,7 +350,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	}
 
 	for _, i := range r.TLS.PeerCertificates {
-		trusted, username := util.CheckTrustState(*i, trustedCerts[dbCluster.CertificateTypeClient], d.endpoints.NetworkCert(), trustCACertificates)
+		trusted, username := localUtil.CheckTrustState(*i, trustedCerts[dbCluster.CertificateTypeClient], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
 			return true, username, "tls", nil
 		}
@@ -451,7 +452,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		}
 
 		// Reject internal queries to remote, non-cluster, clients
-		if version == "internal" && !shared.ValueInSlice(protocol, []string{"unix", "cluster"}) {
+		if version == "internal" && !util.ValueInSlice(protocol, []string{"unix", "cluster"}) {
 			// Except for the initial cluster accept request (done over trusted TLS)
 			if !trusted || c.Path != "cluster/accept" || protocol != "tls" {
 				logger.Warn("Rejecting remote internal API request", logger.Ctx{"ip": r.RemoteAddr})
@@ -535,7 +536,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		}
 
 		// Dump full request JSON when in debug mode
-		if daemon.Debug && r.Method != "GET" && util.IsJSONRequest(r) {
+		if daemon.Debug && r.Method != "GET" && localUtil.IsJSONRequest(r) {
 			newBody := &bytes.Buffer{}
 			captured := &bytes.Buffer{}
 			multiW := io.MultiWriter(newBody, captured)
@@ -545,8 +546,8 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 				return
 			}
 
-			r.Body = shared.BytesReadCloser{Buf: newBody}
-			util.DebugJSON("API Request", captured, logger.AddContext(logCtx))
+			r.Body = internalIO.BytesReadCloser{Buf: newBody}
+			localUtil.DebugJSON("API Request", captured, logger.AddContext(logCtx))
 		}
 
 		// Actually process the request
@@ -650,7 +651,7 @@ func setupSharedMounts() error {
 	defer sharedMountsLock.Unlock()
 
 	// Check if already setup
-	path := shared.VarPath("shmounts")
+	path := internalUtil.VarPath("shmounts")
 	if linux.IsMountPoint(path) {
 		daemon.SharedMountsSetup = true
 		return nil
@@ -739,7 +740,7 @@ func (d *Daemon) init() error {
 		mode = "mock"
 	}
 
-	logger.Info("Starting up", logger.Ctx{"version": version.Version, "mode": mode, "path": shared.VarPath("")})
+	logger.Info("Starting up", logger.Ctx{"version": version.Version, "mode": mode, "path": internalUtil.VarPath("")})
 
 	/* List of sub-systems to trace */
 	trace := d.config.Trace
@@ -901,7 +902,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Detect idmapped mounts support.
-	if shared.IsTrue(os.Getenv("INCUS_IDMAPPED_MOUNTS_DISABLE")) {
+	if util.IsTrue(os.Getenv("INCUS_IDMAPPED_MOUNTS_DISABLE")) {
 		logger.Info(" - idmapped mounts kernel support: disabled")
 	} else if kernelSupportsIdmappedMounts() {
 		d.os.IdmappedMounts = true
@@ -919,7 +920,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Validate the devices storage.
-	testDev := shared.VarPath("devices", ".test")
+	testDev := internalUtil.VarPath("devices", ".test")
 	testDevNum := int(unix.Mkdev(0, 0))
 	_ = os.Remove(testDev)
 	err = unix.Mknod(testDev, 0600|unix.S_IFCHR, testDevNum)
@@ -981,7 +982,7 @@ func (d *Daemon) init() error {
 
 	/* Setup dqlite */
 	clusterLogLevel := "ERROR"
-	if shared.ValueInSlice("dqlite", trace) {
+	if util.ValueInSlice("dqlite", trace) {
 		clusterLogLevel = "TRACE"
 	}
 
@@ -1087,7 +1088,7 @@ func (d *Daemon) init() error {
 			driver.WithLogFunc(cluster.DqliteLog),
 		}
 
-		if shared.ValueInSlice("database", trace) {
+		if util.ValueInSlice("database", trace) {
 			options = append(options, driver.WithTracing(dqliteClient.LogDebug))
 		}
 
@@ -1137,8 +1138,8 @@ func (d *Daemon) init() error {
 
 	// This logic used to belong to patchUpdateFromV10, but has been moved
 	// here because it needs database access.
-	if shared.PathExists(shared.VarPath("lxc")) {
-		err := os.Rename(shared.VarPath("lxc"), shared.VarPath("containers"))
+	if util.PathExists(internalUtil.VarPath("lxc")) {
+		err := os.Rename(internalUtil.VarPath("lxc"), internalUtil.VarPath("containers"))
 		if err != nil {
 			return err
 		}
@@ -1377,7 +1378,7 @@ func (d *Daemon) init() error {
 
 		// Setup seccomp handler
 		if d.os.SeccompListener {
-			seccompServer, err := seccomp.NewSeccompServer(d.State(), shared.VarPath("seccomp.socket"), func(pid int32, state *state.State) (seccomp.Instance, error) {
+			seccompServer, err := seccomp.NewSeccompServer(d.State(), internalUtil.VarPath("seccomp.socket"), func(pid int32, state *state.State) (seccomp.Instance, error) {
 				return findContainerForPid(pid, state)
 			})
 			if err != nil {
@@ -1385,7 +1386,7 @@ func (d *Daemon) init() error {
 			}
 
 			d.seccomp = seccompServer
-			logger.Info("Started seccomp handler", logger.Ctx{"path": shared.VarPath("seccomp.socket")})
+			logger.Info("Started seccomp handler", logger.Ctx{"path": internalUtil.VarPath("seccomp.socket")})
 		}
 
 		// Read the trusted certificates
@@ -1658,8 +1659,8 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	if shouldUnmount {
 		logger.Info("Unmounting temporary filesystems")
 
-		_ = unix.Unmount(shared.VarPath("guestapi"), unix.MNT_DETACH)
-		_ = unix.Unmount(shared.VarPath("shmounts"), unix.MNT_DETACH)
+		_ = unix.Unmount(internalUtil.VarPath("guestapi"), unix.MNT_DETACH)
+		_ = unix.Unmount(internalUtil.VarPath("shmounts"), unix.MNT_DETACH)
 
 		logger.Info("Done unmounting temporary filesystems")
 	} else {

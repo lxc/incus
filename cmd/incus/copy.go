@@ -10,7 +10,6 @@ import (
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	config "github.com/lxc/incus/shared/cliconfig"
 )
@@ -149,7 +148,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 	var writable api.InstancePut
 	var start bool
 
-	if shared.IsSnapshot(sourceName) {
+	if instance.IsSnapshot(sourceName) {
 		if instanceOnly {
 			return fmt.Errorf(i18n.G("--instance-only can't be passed when the source is a snapshot"))
 		}
@@ -166,7 +165,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		}
 
 		// Copy of a snapshot into a new instance
-		srcFields := strings.SplitN(sourceName, shared.SnapshotDelimiter, 2)
+		srcFields := strings.SplitN(sourceName, instance.SnapshotDelimiter, 2)
 		entry, _, err := source.GetInstanceSnapshot(srcFields[0], srcFields[1])
 		if err != nil {
 			return err

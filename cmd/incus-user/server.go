@@ -8,13 +8,13 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 func serverIsConfigured(client incus.InstanceServer) (bool, error) {
@@ -24,7 +24,7 @@ func serverIsConfigured(client incus.InstanceServer) (bool, error) {
 		return false, fmt.Errorf("Failed to list networks: %w", err)
 	}
 
-	if !shared.ValueInSlice("incusbr0", networks) {
+	if !util.ValueInSlice("incusbr0", networks) {
 		// Couldn't find incusbr0.
 		return false, nil
 	}
@@ -35,7 +35,7 @@ func serverIsConfigured(client incus.InstanceServer) (bool, error) {
 		return false, fmt.Errorf("Failed to list storage pools: %w", err)
 	}
 
-	if !shared.ValueInSlice("default", pools) {
+	if !util.ValueInSlice("default", pools) {
 		// No storage pool found.
 		return false, nil
 	}
@@ -50,7 +50,7 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 		return fmt.Errorf("Failed to get server info: %w", err)
 	}
 
-	availableBackends := linux.AvailableStorageDrivers(info.Environment.StorageSupportedDrivers, util.PoolTypeLocal)
+	availableBackends := linux.AvailableStorageDrivers(internalUtil.VarPath(), info.Environment.StorageSupportedDrivers, internalUtil.PoolTypeLocal)
 
 	// Load the default profile.
 	profile, profileEtag, err := client.GetProfile("default")
@@ -70,7 +70,7 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 		pool.Name = "default"
 
 		// Check if ZFS supported.
-		if shared.ValueInSlice("zfs", availableBackends) {
+		if util.ValueInSlice("zfs", availableBackends) {
 			pool.Driver = "zfs"
 
 			// Check if zsys.
@@ -188,7 +188,7 @@ func serverSetupUser(uid uint32) error {
 		return fmt.Errorf("Unable to retrieve project list: %w", err)
 	}
 
-	if !shared.ValueInSlice(projectName, projects) {
+	if !util.ValueInSlice(projectName, projects) {
 		// Create the project.
 		err := client.CreateProject(api.ProjectsPost{
 			Name: projectName,

@@ -19,10 +19,11 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // swagger:operation GET /1.0/instances/{name}/metadata instances instance_metadata_get
@@ -79,7 +80,7 @@ func instanceMetadataGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -114,7 +115,7 @@ func instanceMetadataGet(d *Daemon, r *http.Request) response.Response {
 
 	// If missing, just return empty result
 	metadataPath := filepath.Join(c.Path(), "metadata.yaml")
-	if !shared.PathExists(metadataPath) {
+	if !util.PathExists(metadataPath) {
 		return response.SyncResponse(true, api.ImageMetadata{})
 	}
 
@@ -191,7 +192,7 @@ func instanceMetadataPatch(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -227,7 +228,7 @@ func instanceMetadataPatch(d *Daemon, r *http.Request) response.Response {
 	// Read the existing data.
 	metadataPath := filepath.Join(inst.Path(), "metadata.yaml")
 	metadata := api.ImageMetadata{}
-	if shared.PathExists(metadataPath) {
+	if util.PathExists(metadataPath) {
 		metadataFile, err := os.Open(metadataPath)
 		if err != nil {
 			return response.InternalError(err)
@@ -248,7 +249,7 @@ func instanceMetadataPatch(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Validate ETag
-	err = util.EtagCheck(r, metadata)
+	err = localUtil.EtagCheck(r, metadata)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -311,7 +312,7 @@ func instanceMetadataPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -435,7 +436,7 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -472,7 +473,7 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 	templateName := r.FormValue("path")
 	if templateName == "" {
 		templates := []string{}
-		if !shared.PathExists(filepath.Join(c.Path(), "templates")) {
+		if !util.PathExists(filepath.Join(c.Path(), "templates")) {
 			return response.SyncResponse(true, templates)
 		}
 
@@ -498,7 +499,7 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 		return response.SmartError(err)
 	}
 
-	if !shared.PathExists(templatePath) {
+	if !util.PathExists(templatePath) {
 		return response.NotFound(fmt.Errorf("Template %q not found", templateName))
 	}
 
@@ -587,7 +588,7 @@ func instanceMetadataTemplatesPost(d *Daemon, r *http.Request) response.Response
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -626,7 +627,7 @@ func instanceMetadataTemplatesPost(d *Daemon, r *http.Request) response.Response
 		return response.BadRequest(fmt.Errorf("missing path argument"))
 	}
 
-	if !shared.PathExists(filepath.Join(c.Path(), "templates")) {
+	if !util.PathExists(filepath.Join(c.Path(), "templates")) {
 		err := os.MkdirAll(filepath.Join(c.Path(), "templates"), 0711)
 		if err != nil {
 			return response.SmartError(err)
@@ -706,7 +707,7 @@ func instanceMetadataTemplatesDelete(d *Daemon, r *http.Request) response.Respon
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -750,7 +751,7 @@ func instanceMetadataTemplatesDelete(d *Daemon, r *http.Request) response.Respon
 		return response.SmartError(err)
 	}
 
-	if !shared.PathExists(templatePath) {
+	if !util.PathExists(templatePath) {
 		return response.NotFound(fmt.Errorf("Template %q not found", templateName))
 	}
 

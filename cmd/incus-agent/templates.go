@@ -8,13 +8,13 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 func templatesApply(path string) ([]string, error) {
 	metaName := filepath.Join(path, "metadata.yaml")
-	if !shared.PathExists(metaName) {
+	if !util.PathExists(metaName) {
 		return nil, nil
 	}
 
@@ -36,12 +36,12 @@ func templatesApply(path string) ([]string, error) {
 		err = func(tplPath string, tpl *api.ImageMetadataTemplate) error {
 			filePath := filepath.Join(path, fmt.Sprintf("%s.out", tpl.Template))
 
-			if !shared.PathExists(filePath) {
+			if !util.PathExists(filePath) {
 				return nil
 			}
 
 			var w *os.File
-			if shared.PathExists(tplPath) {
+			if util.PathExists(tplPath) {
 				if tpl.CreateOnly {
 					return nil
 				}

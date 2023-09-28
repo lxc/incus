@@ -14,14 +14,14 @@ import (
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -724,7 +724,7 @@ func (d *lvm) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 		}
 
 		volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
-		if !keepBlockDev && shared.PathExists(volDevPath) {
+		if !keepBlockDev && util.PathExists(volDevPath) {
 			if refCount > 0 {
 				d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": vol.name, "refCount": refCount})
 				return false, ErrInUse
@@ -773,7 +773,7 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 		if vol.contentType == ContentTypeFS {
 			srcSnapshotDir := GetVolumeSnapshotDir(d.name, vol.volType, vol.name)
 			dstSnapshotDir := GetVolumeSnapshotDir(d.name, vol.volType, newVolName)
-			if shared.PathExists(srcSnapshotDir) {
+			if util.PathExists(srcSnapshotDir) {
 				err = os.Rename(srcSnapshotDir, dstSnapshotDir)
 				if err != nil {
 					return fmt.Errorf("Error renaming LVM logical volume snapshot directory from %q to %q: %w", srcSnapshotDir, dstSnapshotDir, err)
@@ -1092,7 +1092,7 @@ func (d *lvm) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (b
 		}
 
 		volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], snapVol.volType, snapVol.contentType, snapVol.name)
-		if shared.PathExists(volDevPath) {
+		if util.PathExists(volDevPath) {
 			if refCount > 0 {
 				d.logger.Debug("Skipping unmount as in use", logger.Ctx{"volName": snapVol.name, "refCount": refCount})
 				return false, ErrInUse

@@ -12,9 +12,9 @@ import (
 
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/incusd/db/schema"
-	"github.com/lxc/incus/incusd/util"
+	daemonUtil "github.com/lxc/incus/incusd/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 )
@@ -94,7 +94,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 		// re-populated by replication.
 		if !clustered && !backupDone {
 			logger.Infof("Updating the global schema. Backup made as \"global.bak\"")
-			err := shared.DirCopy(
+			err := internalUtil.DirCopy(
 				filepath.Join(dir, "global"),
 				filepath.Join(dir, "global.bak"),
 			)
@@ -250,7 +250,7 @@ func checkClusterIsUpgradable(ctx context.Context, tx *sql.Tx, target [2]int) er
 	}
 
 	for _, version := range versions {
-		n, err := util.CompareVersions(target, version)
+		n, err := daemonUtil.CompareVersions(target, version)
 		if err != nil {
 			return err
 		}

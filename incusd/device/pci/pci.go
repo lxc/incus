@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Device represents info about a PCI uevent device.
@@ -63,7 +63,7 @@ func DeviceUnbind(pciDev Device) error {
 	driverUnbindPath := fmt.Sprintf("/sys/bus/pci/devices/%s/driver/unbind", pciDev.SlotName)
 	err := os.WriteFile(driverUnbindPath, []byte(pciDev.SlotName), 0600)
 	if err != nil {
-		if !os.IsNotExist(err) || !shared.PathExists(fmt.Sprintf("/sys/bus/pci/devices/%s/", pciDev.SlotName)) {
+		if !os.IsNotExist(err) || !util.PathExists(fmt.Sprintf("/sys/bus/pci/devices/%s/", pciDev.SlotName)) {
 			return fmt.Errorf("Failed unbinding device %q via %q: %w", pciDev.SlotName, driverUnbindPath, err)
 		}
 	}
@@ -148,7 +148,7 @@ func deviceProbeWait(pciDev Device) error {
 	driverPath := fmt.Sprintf("/sys/bus/pci/drivers/%s/%s", pciDev.Driver, pciDev.SlotName)
 
 	for i := 0; i < 10; i++ {
-		if shared.PathExists(driverPath) {
+		if util.PathExists(driverPath) {
 			return nil
 		}
 

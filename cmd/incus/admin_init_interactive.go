@@ -20,12 +20,12 @@ import (
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -122,12 +122,12 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		// Cluster server address
-		address := util.NetworkInterfaceAddress()
+		address := internalUtil.NetworkInterfaceAddress()
 		validateServerAddress := func(value string) error {
-			address := util.CanonicalNetworkAddress(value, ports.HTTPSDefaultPort)
+			address := internalUtil.CanonicalNetworkAddress(value, ports.HTTPSDefaultPort)
 
 			host, _, _ := net.SplitHostPort(address)
-			if shared.ValueInSlice(host, []string{"", "[::]", "0.0.0.0"}) {
+			if util.ValueInSlice(host, []string{"", "[::]", "0.0.0.0"}) {
 				return fmt.Errorf("Invalid IP address or DNS name")
 			}
 
@@ -152,7 +152,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			return err
 		}
 
-		serverAddress = util.CanonicalNetworkAddress(serverAddress, ports.HTTPSDefaultPort)
+		serverAddress = internalUtil.CanonicalNetworkAddress(serverAddress, ports.HTTPSDefaultPort)
 		config.Server.Config["core.https_address"] = serverAddress
 
 		clusterJoin, err := cli.AskBool("Are you joining an existing cluster? (yes/no) [default=no]: ", "no")
@@ -172,7 +172,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			var joinToken *api.ClusterMemberJoinToken
 
 			validJoinToken := func(input string) error {
-				j, err := shared.JoinTokenDecode(input)
+				j, err := internalUtil.JoinTokenDecode(input)
 				if err != nil {
 					return fmt.Errorf("Invalid join token: %w", err)
 				}
@@ -192,7 +192,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			// Attempt to find a working cluster member to use for joining by retrieving the
 			// cluster certificate from each address in the join token until we succeed.
 			for _, clusterAddress := range joinToken.Addresses {
-				config.Cluster.ClusterAddress = util.CanonicalNetworkAddress(clusterAddress, ports.HTTPSDefaultPort)
+				config.Cluster.ClusterAddress = internalUtil.CanonicalNetworkAddress(clusterAddress, ports.HTTPSDefaultPort)
 
 				// Cluster certificate
 				cert, err := localtls.GetRemoteCertificate(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), version.UserAgent)
@@ -229,7 +229,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			}
 
 			// Connect to existing cluster
-			serverCert, err := util.LoadServerCert(shared.VarPath(""))
+			serverCert, err := internalUtil.LoadServerCert(internalUtil.VarPath(""))
 			if err != nil {
 				return err
 			}
@@ -311,7 +311,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 					return err
 				}
 
-				if !shared.PathExists(fmt.Sprintf("/sys/class/net/%s", interfaceName)) {
+				if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", interfaceName)) {
 					fmt.Println("The requested interface doesn't exist. Please choose another one.")
 					continue
 				}
@@ -324,7 +324,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 					"parent":  interfaceName,
 				}
 
-				if shared.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", interfaceName)) {
+				if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", interfaceName)) {
 					config.Server.Profiles[0].Devices["eth0"]["nictype"] = "bridged"
 				}
 
@@ -362,7 +362,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 
 		// IPv4
 		net.Config["ipv4.address"], err = cli.AskString("What IPv4 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
-			if shared.ValueInSlice(value, []string{"auto", "none"}) {
+			if util.ValueInSlice(value, []string{"auto", "none"}) {
 				return nil
 			}
 
@@ -372,7 +372,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 			return err
 		}
 
-		if !shared.ValueInSlice(net.Config["ipv4.address"], []string{"auto", "none"}) {
+		if !util.ValueInSlice(net.Config["ipv4.address"], []string{"auto", "none"}) {
 			netIPv4UseNAT, err := cli.AskBool("Would you like to NAT IPv4 traffic on your bridge? [default=yes]: ", "yes")
 			if err != nil {
 				return err
@@ -383,7 +383,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 
 		// IPv6
 		net.Config["ipv6.address"], err = cli.AskString("What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
-			if shared.ValueInSlice(value, []string{"auto", "none"}) {
+			if util.ValueInSlice(value, []string{"auto", "none"}) {
 				return nil
 			}
 
@@ -393,7 +393,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 			return err
 		}
 
-		if !shared.ValueInSlice(net.Config["ipv6.address"], []string{"auto", "none"}) {
+		if !util.ValueInSlice(net.Config["ipv6.address"], []string{"auto", "none"}) {
 			netIPv6UseNAT, err := cli.AskBool("Would you like to NAT IPv6 traffic on your bridge? [default=yes]: ", "yes")
 			if err != nil {
 				return err
@@ -418,7 +418,7 @@ func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServe
 		}
 
 		if localStoragePool {
-			err := c.askStoragePool(config, d, server, util.PoolTypeLocal)
+			err := c.askStoragePool(config, d, server, internalUtil.PoolTypeLocal)
 			if err != nil {
 				return err
 			}
@@ -430,7 +430,7 @@ func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServe
 		}
 
 		if remoteStoragePool {
-			err := c.askStoragePool(config, d, server, util.PoolTypeRemote)
+			err := c.askStoragePool(config, d, server, internalUtil.PoolTypeRemote)
 			if err != nil {
 				return err
 			}
@@ -448,7 +448,7 @@ func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServe
 		return nil
 	}
 
-	return c.askStoragePool(config, d, server, util.PoolTypeAny)
+	return c.askStoragePool(config, d, server, internalUtil.PoolTypeAny)
 }
 
 func (c *cmdAdminInit) setupClusterTrust(serverCert *localtls.CertInfo, serverName string, targetAddress string, targetCert string, targetToken string) error {
@@ -481,29 +481,29 @@ func (c *cmdAdminInit) setupClusterTrust(serverCert *localtls.CertInfo, serverNa
 	return nil
 }
 
-func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer, server *api.Server, poolType util.PoolType) error {
+func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceServer, server *api.Server, poolType internalUtil.PoolType) error {
 	// Figure out the preferred storage driver
-	availableBackends := linux.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, poolType)
+	availableBackends := linux.AvailableStorageDrivers(internalUtil.VarPath(), server.Environment.StorageSupportedDrivers, poolType)
 
 	if len(availableBackends) == 0 {
-		if poolType != util.PoolTypeAny {
+		if poolType != internalUtil.PoolTypeAny {
 			return fmt.Errorf("No storage backends available")
 		}
 
 		return fmt.Errorf("No %s storage backends available", poolType)
 	}
 
-	backingFs, err := linux.DetectFilesystem(shared.VarPath())
+	backingFs, err := linux.DetectFilesystem(internalUtil.VarPath())
 	if err != nil {
 		backingFs = "dir"
 	}
 
 	defaultStorage := "dir"
-	if backingFs == "btrfs" && shared.ValueInSlice("btrfs", availableBackends) {
+	if backingFs == "btrfs" && util.ValueInSlice("btrfs", availableBackends) {
 		defaultStorage = "btrfs"
-	} else if shared.ValueInSlice("zfs", availableBackends) {
+	} else if util.ValueInSlice("zfs", availableBackends) {
 		defaultStorage = "zfs"
-	} else if shared.ValueInSlice("btrfs", availableBackends) {
+	} else if util.ValueInSlice("btrfs", availableBackends) {
 		defaultStorage = "btrfs"
 	}
 
@@ -512,7 +512,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		pool := api.StoragePoolsPost{}
 		pool.Config = map[string]string{}
 
-		if poolType == util.PoolTypeAny {
+		if poolType == internalUtil.PoolTypeAny {
 			pool.Name, err = cli.AskString("Name of the new storage pool [default=default]: ", "default", nil)
 			if err != nil {
 				return err
@@ -523,7 +523,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 		_, _, err := d.GetStoragePool(pool.Name)
 		if err == nil {
-			if poolType == util.PoolTypeAny {
+			if poolType == internalUtil.PoolTypeAny {
 				fmt.Printf("The requested storage pool \"%s\" already exists. Please choose another name.\n", pool.Name)
 				continue
 			}
@@ -543,8 +543,8 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		// Storage backend
 		if len(availableBackends) > 1 {
 			defaultBackend := defaultStorage
-			if poolType == util.PoolTypeRemote {
-				if shared.ValueInSlice("ceph", availableBackends) {
+			if poolType == internalUtil.PoolTypeRemote {
+				if util.ValueInSlice("ceph", availableBackends) {
 					defaultBackend = "ceph"
 				} else {
 					defaultBackend = availableBackends[0] // Default to first remote driver.
@@ -567,13 +567,13 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 		// Optimization for btrfs on btrfs
 		if pool.Driver == "btrfs" && backingFs == "btrfs" {
-			btrfsSubvolume, err := cli.AskBool(fmt.Sprintf("Would you like to create a new btrfs subvolume under %s? (yes/no) [default=yes]: ", shared.VarPath("")), "yes")
+			btrfsSubvolume, err := cli.AskBool(fmt.Sprintf("Would you like to create a new btrfs subvolume under %s? (yes/no) [default=yes]: ", internalUtil.VarPath("")), "yes")
 			if err != nil {
 				return err
 			}
 
 			if btrfsSubvolume {
-				pool.Config["source"] = shared.VarPath("storage-pools", pool.Name)
+				pool.Config["source"] = internalUtil.VarPath("storage-pools", pool.Name)
 				config.Server.StoragePools = append(config.Server.StoragePools, pool)
 				break
 			}
@@ -640,7 +640,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 				if useEmptyBlockDev {
 					pool.Config["source"], err = cli.AskString("Path to the existing block device: ", "", func(path string) error {
-						if !shared.IsBlockdevPath(path) {
+						if !linux.IsBlockdevPath(path) {
 							return fmt.Errorf("%q is not a block device", path)
 						}
 
@@ -651,9 +651,9 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 					}
 				} else {
 					st := unix.Statfs_t{}
-					err := unix.Statfs(shared.VarPath(), &st)
+					err := unix.Statfs(internalUtil.VarPath(), &st)
 					if err != nil {
-						return fmt.Errorf("Couldn't statfs %s: %w", shared.VarPath(), err)
+						return fmt.Errorf("Couldn't statfs %s: %w", internalUtil.VarPath(), err)
 					}
 
 					/* choose 5 GiB < x < 30GiB, where x is 20% of the disk size */
@@ -751,7 +751,7 @@ and make sure that your user can see and run the "thin_check" command before run
 
 func (c *cmdAdminInit) askDaemon(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
 	// Detect lack of uid/gid
-	if shared.RunningInUserNS() {
+	if linux.RunningInUserNS() {
 		fmt.Print(`
 We detected that you are running inside an unprivileged container.
 This means that unless you manually configured your host otherwise,
@@ -804,7 +804,7 @@ they otherwise would.
 			}
 
 			netPort, err := cli.AskInt(fmt.Sprintf("Port to bind to [default=%d]: ", ports.HTTPSDefaultPort), 1, 65535, fmt.Sprintf("%d", ports.HTTPSDefaultPort), func(netPort int64) error {
-				address := util.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
+				address := internalUtil.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
 
 				if err == nil {
 					if server.Config["cluster.https_address"] == address || server.Config["core.https_address"] == address {
@@ -825,7 +825,7 @@ they otherwise would.
 				return err
 			}
 
-			config.Server.Config["core.https_address"] = util.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
+			config.Server.Config["core.https_address"] = internalUtil.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
 		}
 	}
 

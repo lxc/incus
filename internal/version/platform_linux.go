@@ -6,15 +6,16 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 )
 
 func getPlatformVersionStrings() []string {
 	versions := []string{}
 
 	// Add kernel version
-	uname, err := shared.Uname()
+	uname, err := linux.Uname()
 	if err != nil {
 		return versions
 	}
@@ -33,7 +34,7 @@ func getPlatformVersionStrings() []string {
 	}
 
 	// Add chromebook info
-	if len(versions) == 1 && shared.PathExists("/run/cros_milestone") {
+	if len(versions) == 1 && util.PathExists("/run/cros_milestone") {
 		content, err := os.ReadFile("/run/cros_milestone")
 		if err == nil {
 			versions = append(versions, "Chrome OS")

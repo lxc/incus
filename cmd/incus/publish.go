@@ -11,7 +11,6 @@ import (
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -97,7 +96,7 @@ func (c *cmdPublish) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if !shared.IsSnapshot(cName) {
+	if !instance.IsSnapshot(cName) {
 		ct, etag, err := s.GetInstance(cName)
 		if err != nil {
 			return err
@@ -210,7 +209,7 @@ func (c *cmdPublish) Run(cmd *cobra.Command, args []string) error {
 
 	req.Properties = properties
 
-	if shared.IsSnapshot(cName) {
+	if instance.IsSnapshot(cName) {
 		req.Source.Type = "snapshot"
 	} else if !s.HasExtension("instances") {
 		req.Source.Type = "container"

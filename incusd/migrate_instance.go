@@ -15,7 +15,7 @@ import (
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 )
@@ -69,7 +69,7 @@ func newMigrationSource(inst instance.Instance, stateful bool, instanceOnly bool
 
 			ret.conns[connName] = newMigrationConn(ret.pushSecrets[connName], dialer, u)
 		} else {
-			secret, err := shared.RandomCryptoString()
+			secret, err := internalUtil.RandomHexString(32)
 			if err != nil {
 				return nil, fmt.Errorf("Failed creating migration source secret for %q connection: %w", connName, err)
 			}
@@ -194,7 +194,7 @@ func newMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 
 			sink.conns[connName] = newMigrationConn(args.Secrets[connName], args.Dialer, u)
 		} else {
-			secret, err := shared.RandomCryptoString()
+			secret, err := internalUtil.RandomHexString(32)
 			if err != nil {
 				return nil, fmt.Errorf("Failed creating migration sink secret for %q connection: %w", connName, err)
 			}

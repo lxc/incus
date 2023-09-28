@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -21,9 +22,10 @@ import (
 	"github.com/lxc/incus/incusd/sys"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdCluster struct {
@@ -179,7 +181,7 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 			data = []byte(fmt.Sprintf(SegmentComment, segmentID) + "\n\n" + string(data))
 		}
 
-		content, err = shared.TextEditor("", data)
+		content, err = textEditor("", data)
 		if err != nil {
 			return err
 		}
@@ -218,7 +220,7 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -432,7 +434,7 @@ Do you want to proceed? (yes/no): `)
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !shared.ValueInSlice(strings.ToLower(input), []string{"yes"}) {
+	if !util.ValueInSlice(strings.ToLower(input), []string{"yes"}) {
 		return fmt.Errorf("Recover operation aborted")
 	}
 
@@ -462,7 +464,7 @@ func (c *cmdClusterRemoveRaftNode) Run(cmd *cobra.Command, args []string) error 
 		return fmt.Errorf("Missing required arguments")
 	}
 
-	address := util.CanonicalNetworkAddress(args[0], ports.HTTPSDefaultPort)
+	address := internalUtil.CanonicalNetworkAddress(args[0], ports.HTTPSDefaultPort)
 
 	// Prompt for confirmation unless --quiet was passed.
 	if !c.flagNonInteractive {
@@ -496,9 +498,92 @@ Do you want to proceed? (yes/no): `)
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !shared.ValueInSlice(strings.ToLower(input), []string{"yes"}) {
+	if !util.ValueInSlice(strings.ToLower(input), []string{"yes"}) {
 		return fmt.Errorf("Remove raft node operation aborted")
 	}
 
 	return nil
+}
+
+// Spawn the editor with a temporary YAML file for editing configs.
+func textEditor(inPath string, inContent []byte) ([]byte, error) {
+	var f *os.File
+	var err error
+	var path string
+
+	// Detect the text editor to use
+	editor := os.Getenv("VISUAL")
+	if editor == "" {
+		editor = os.Getenv("EDITOR")
+		if editor == "" {
+			for _, p := range []string{"editor", "vi", "emacs", "nano"} {
+				_, err := exec.LookPath(p)
+				if err == nil {
+					editor = p
+					break
+				}
+			}
+			if editor == "" {
+				return []byte{}, fmt.Errorf("No text editor found, please set the EDITOR environment variable")
+			}
+		}
+	}
+
+	if inPath == "" {
+		// If provided input, create a new file
+		f, err = os.CreateTemp("", "incus_editor_")
+		if err != nil {
+			return []byte{}, err
+		}
+
+		revert := revert.New()
+		defer revert.Fail()
+		revert.Add(func() {
+			_ = f.Close()
+			_ = os.Remove(f.Name())
+		})
+
+		err = os.Chmod(f.Name(), 0600)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		_, err = f.Write(inContent)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		err = f.Close()
+		if err != nil {
+			return []byte{}, err
+		}
+
+		path = fmt.Sprintf("%s.yaml", f.Name())
+		err = os.Rename(f.Name(), path)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		revert.Success()
+		revert.Add(func() { _ = os.Remove(path) })
+	} else {
+		path = inPath
+	}
+
+	cmdParts := strings.Fields(editor)
+	cmd := exec.Command(cmdParts[0], append(cmdParts[1:], path)...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return []byte{}, err
+	}
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return content, nil
 }

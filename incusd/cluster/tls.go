@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 )
@@ -71,13 +71,13 @@ func tlsCheckCert(r *http.Request, networkCert *localtls.CertInfo, serverCert *l
 		// member before the database is available. It also allows us to switch the server certificate to
 		// the network certificate during cluster upgrade to per-server certificates, and it be trusted.
 		trustedServerCert, _ := x509.ParseCertificate(serverCert.KeyPair().Certificate[0])
-		trusted, _ := util.CheckTrustState(*i, map[string]x509.Certificate{serverCert.Fingerprint(): *trustedServerCert}, networkCert, false)
+		trusted, _ := localUtil.CheckTrustState(*i, map[string]x509.Certificate{serverCert.Fingerprint(): *trustedServerCert}, networkCert, false)
 		if trusted {
 			return true
 		}
 
 		// Check the trusted server certficates list provided.
-		trusted, _ = util.CheckTrustState(*i, trustedCerts[cluster.CertificateTypeServer], networkCert, false)
+		trusted, _ = localUtil.CheckTrustState(*i, trustedCerts[cluster.CertificateTypeServer], networkCert, false)
 		if trusted {
 			return true
 		}

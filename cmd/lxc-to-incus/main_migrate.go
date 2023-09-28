@@ -14,9 +14,9 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdMigrate struct {
@@ -73,7 +73,7 @@ func (c *cmdMigrate) RunE(cmd *cobra.Command, args []string) error {
 
 	// Retrieve LXC containers
 	for _, container := range liblxc.Containers(c.flagLXCPath) {
-		if !c.flagAll && !shared.ValueInSlice(container.Name(), c.flagContainers) {
+		if !c.flagAll && !util.ValueInSlice(container.Name(), c.flagContainers) {
 			continue
 		}
 
@@ -157,7 +157,7 @@ func validateConfig(conf []string, container *liblxc.Container) error {
 		return err
 	}
 
-	if !shared.PathExists(rootfs) {
+	if !util.PathExists(rootfs) {
 		return fmt.Errorf("Couldn't find the container rootfs '%s'", rootfs)
 	}
 
@@ -336,7 +336,7 @@ func convertContainer(d incus.InstanceServer, container *liblxc.Container, stora
 	if value != nil {
 		for _, cap := range strings.Split(value[0], " ") {
 			// Ignore capabilities that are dropped in containers by default.
-			if shared.ValueInSlice(cap, []string{"mac_admin", "mac_override", "sys_module",
+			if util.ValueInSlice(cap, []string{"mac_admin", "mac_override", "sys_module",
 				"sys_time"}) {
 				continue
 			}
@@ -571,7 +571,7 @@ func convertStorageConfig(conf []string, devices map[string]map[string]string) e
 		}
 
 		// Ignore mounts that are present in containers by default.
-		if shared.ValueInSlice(parts[0], []string{"proc", "sysfs"}) {
+		if util.ValueInSlice(parts[0], []string{"proc", "sysfs"}) {
 			continue
 		}
 
@@ -579,16 +579,16 @@ func convertStorageConfig(conf []string, devices map[string]map[string]string) e
 		device["type"] = "disk"
 
 		// Deal with read-only mounts
-		if shared.ValueInSlice("ro", strings.Split(parts[3], ",")) {
+		if util.ValueInSlice("ro", strings.Split(parts[3], ",")) {
 			device["readonly"] = "true"
 		}
 
 		// Deal with optional mounts
-		if shared.ValueInSlice("optional", strings.Split(parts[3], ",")) {
+		if util.ValueInSlice("optional", strings.Split(parts[3], ",")) {
 			device["optional"] = "true"
 		} else {
 			if strings.HasPrefix(parts[0], "/") {
-				if !shared.PathExists(parts[0]) {
+				if !util.PathExists(parts[0]) {
 					return fmt.Errorf("Invalid path: %s", parts[0])
 				}
 			} else {

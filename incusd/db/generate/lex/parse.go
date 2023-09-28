@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 // Parse runs the Go parser against the given package directory.
 func Parse(dir string) (*ast.Package, error) {
-	if !shared.IsDir(dir) {
+	if !internalUtil.IsDir(dir) {
 		return nil, fmt.Errorf("Package directory does not exist %q", dir)
 	}
 

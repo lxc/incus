@@ -7,11 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/validate"
 )
+
+// IsUserConfig returns true if the config key is a user configuration.
+func IsUserConfig(key string) bool {
+	return strings.HasPrefix(key, "user.")
+}
 
 // ConfigVolatilePrefix indicates the prefix used for volatile config keys.
 const ConfigVolatilePrefix = "volatile."
@@ -82,7 +86,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	"snapshots.pattern":          validate.IsAny,
 	"snapshots.expiry": func(value string) error {
 		// Validate expression
-		_, err := shared.GetExpiry(time.Time{}, value)
+		_, err := GetExpiry(time.Time{}, value)
 		return err
 	},
 
@@ -224,20 +228,20 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 // syntactic checking of the value, semantic and usage checking must
 // be done by the caller.  User defined keys are always considered to
 // be valid, e.g. user.* and environment.* keys.
-func ConfigKeyChecker(key string, instanceType instancetype.Type) (func(value string) error, error) {
+func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value string) error, error) {
 	f, ok := InstanceConfigKeysAny[key]
 	if ok {
 		return f, nil
 	}
 
-	if instanceType == instancetype.Any || instanceType == instancetype.Container {
+	if instanceType == api.InstanceTypeAny || instanceType == api.InstanceTypeContainer {
 		f, ok := InstanceConfigKeysContainer[key]
 		if ok {
 			return f, nil
 		}
 	}
 
-	if instanceType == instancetype.Any || instanceType == instancetype.VM {
+	if instanceType == api.InstanceTypeAny || instanceType == api.InstanceTypeVM {
 		f, ok := InstanceConfigKeysVM[key]
 		if ok {
 			return f, nil
@@ -323,7 +327,7 @@ func ConfigKeyChecker(key string, instanceType instancetype.Type) (func(value st
 		return validate.IsAny, nil
 	}
 
-	if (instanceType == instancetype.Any || instanceType == instancetype.Container) &&
+	if (instanceType == api.InstanceTypeAny || instanceType == api.InstanceTypeContainer) &&
 		strings.HasPrefix(key, "linux.sysctl.") {
 		return validate.IsAny, nil
 	}

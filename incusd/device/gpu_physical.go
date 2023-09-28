@@ -16,7 +16,7 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 const gpuDRIDevPath = "/dev/dri"
@@ -77,7 +77,7 @@ func (d *gpuPhysical) validateConfig(instConf instance.ConfigReader) error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *gpuPhysical) validateEnvironment() error {
-	if d.inst.Type() == instancetype.VM && shared.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
+	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return fmt.Errorf("GPU devices cannot be used when migration.stateful is enabled")
 	}
 
@@ -121,7 +121,7 @@ func (d *gpuPhysical) startContainer() (*deviceConfig.RunConfig, error) {
 
 		// Setup DRM unix-char devices if present.
 		if gpu.DRM != nil {
-			if gpu.DRM.CardName != "" && gpu.DRM.CardDevice != "" && shared.PathExists(filepath.Join(gpuDRIDevPath, gpu.DRM.CardName)) {
+			if gpu.DRM.CardName != "" && gpu.DRM.CardDevice != "" && util.PathExists(filepath.Join(gpuDRIDevPath, gpu.DRM.CardName)) {
 				path := filepath.Join(gpuDRIDevPath, gpu.DRM.CardName)
 				major, minor, err := d.deviceNumStringToUint32(gpu.DRM.CardDevice)
 				if err != nil {
@@ -134,7 +134,7 @@ func (d *gpuPhysical) startContainer() (*deviceConfig.RunConfig, error) {
 				}
 			}
 
-			if gpu.DRM.RenderName != "" && gpu.DRM.RenderDevice != "" && shared.PathExists(filepath.Join(gpuDRIDevPath, gpu.DRM.RenderName)) {
+			if gpu.DRM.RenderName != "" && gpu.DRM.RenderDevice != "" && util.PathExists(filepath.Join(gpuDRIDevPath, gpu.DRM.RenderName)) {
 				path := filepath.Join(gpuDRIDevPath, gpu.DRM.RenderName)
 				major, minor, err := d.deviceNumStringToUint32(gpu.DRM.RenderDevice)
 				if err != nil {
@@ -147,7 +147,7 @@ func (d *gpuPhysical) startContainer() (*deviceConfig.RunConfig, error) {
 				}
 			}
 
-			if gpu.DRM.ControlName != "" && gpu.DRM.ControlDevice != "" && shared.PathExists(filepath.Join(gpuDRIDevPath, gpu.DRM.ControlName)) {
+			if gpu.DRM.ControlName != "" && gpu.DRM.ControlDevice != "" && util.PathExists(filepath.Join(gpuDRIDevPath, gpu.DRM.ControlName)) {
 				path := filepath.Join(gpuDRIDevPath, gpu.DRM.ControlName)
 				major, minor, err := d.deviceNumStringToUint32(gpu.DRM.ControlDevice)
 				if err != nil {
@@ -162,7 +162,7 @@ func (d *gpuPhysical) startContainer() (*deviceConfig.RunConfig, error) {
 		}
 
 		// Add Nvidia device if present.
-		if gpu.Nvidia != nil && gpu.Nvidia.CardName != "" && gpu.Nvidia.CardDevice != "" && shared.PathExists(filepath.Join("/dev", gpu.Nvidia.CardName)) {
+		if gpu.Nvidia != nil && gpu.Nvidia.CardName != "" && gpu.Nvidia.CardDevice != "" && util.PathExists(filepath.Join("/dev", gpu.Nvidia.CardName)) {
 			sawNvidia = true
 			path := filepath.Join("/dev", gpu.Nvidia.CardName)
 			major, minor, err := d.deviceNumStringToUint32(gpu.Nvidia.CardDevice)
@@ -181,7 +181,7 @@ func (d *gpuPhysical) startContainer() (*deviceConfig.RunConfig, error) {
 	// No need to mount additional nvidia non-card devices as the nvidia.runtime setting will do this for us.
 	if sawNvidia {
 		instanceConfig := d.inst.ExpandedConfig()
-		if shared.IsFalseOrEmpty(instanceConfig["nvidia.runtime"]) {
+		if util.IsFalseOrEmpty(instanceConfig["nvidia.runtime"]) {
 			nvidiaDevices, err := d.getNvidiaNonCardDevices()
 			if err != nil {
 				return nil, err
@@ -279,7 +279,7 @@ func (d *gpuPhysical) startVM() (*deviceConfig.RunConfig, error) {
 func (d *gpuPhysical) pciDeviceDriverOverrideIOMMU(pciDev pcidev.Device, driverOverride string, restore bool) error {
 	iommuGroupPath := filepath.Join("/sys/bus/pci/devices", pciDev.SlotName, "iommu_group", "devices")
 
-	if shared.PathExists(iommuGroupPath) {
+	if util.PathExists(iommuGroupPath) {
 		// Extract parent slot name by removing any virtual function ID.
 		parts := strings.SplitN(pciDev.SlotName, ".", 2)
 		prefix := parts[0]

@@ -12,8 +12,9 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdSnapshot struct {
@@ -106,9 +107,9 @@ func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if shared.IsSnapshot(name) {
+	if instance.IsSnapshot(name) {
 		if snapname == "" {
-			fields := strings.SplitN(name, shared.SnapshotDelimiter, 2)
+			fields := strings.SplitN(name, instance.SnapshotDelimiter, 2)
 			name = fields[0]
 			snapname = fields[1]
 		} else {
@@ -211,7 +212,7 @@ func (c *cmdSnapshotDelete) promptDelete(instName string, name string) error {
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !shared.ValueInSlice(strings.ToLower(input), []string{i18n.G("yes")}) {
+	if !util.ValueInSlice(strings.ToLower(input), []string{i18n.G("yes")}) {
 		return fmt.Errorf(i18n.G("User aborted delete operation"))
 	}
 
@@ -294,16 +295,16 @@ func (c *cmdSnapshotList) listSnapshots(d incus.InstanceServer, name string) err
 
 		var row []string
 
-		fields := strings.Split(snap.Name, shared.SnapshotDelimiter)
+		fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
 		row = append(row, fields[len(fields)-1])
 
-		if shared.TimeIsSet(snap.CreatedAt) {
+		if snap.CreatedAt.Unix() != 0 {
 			row = append(row, snap.CreatedAt.Local().Format(layout))
 		} else {
 			row = append(row, " ")
 		}
 
-		if shared.TimeIsSet(snap.ExpiresAt) {
+		if snap.ExpiresAt.Unix() != 0 {
 			row = append(row, snap.ExpiresAt.Local().Format(layout))
 		} else {
 			row = append(row, " ")
@@ -430,7 +431,7 @@ func (c *cmdSnapshotRestore) Run(cmd *cobra.Command, args []string) error {
 
 	// Setup the snapshot restore
 	snapname := args[1]
-	if !shared.IsSnapshot(snapname) {
+	if !instance.IsSnapshot(snapname) {
 		snapname = fmt.Sprintf("%s/%s", name, snapname)
 	}
 

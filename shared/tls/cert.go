@@ -26,9 +26,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/proxy"
+	"github.com/lxc/incus/shared/util"
 )
 
 // KeyPairAndCA returns a CertInfo object with a reference to the key pair and
@@ -66,7 +66,7 @@ func KeyPairAndCA(dir, prefix string, kind CertKind, addHosts bool) (*CertInfo, 
 	// If available, load the CA data as well.
 	caFilename := filepath.Join(dir, prefix+".ca")
 	var ca *x509.Certificate
-	if shared.PathExists(caFilename) {
+	if util.PathExists(caFilename) {
 		ca, err = ReadCert(caFilename)
 		if err != nil {
 			return nil, err
@@ -75,7 +75,7 @@ func KeyPairAndCA(dir, prefix string, kind CertKind, addHosts bool) (*CertInfo, 
 
 	crlFilename := filepath.Join(dir, "ca.crl")
 	var crl *x509.RevocationList
-	if shared.PathExists(crlFilename) {
+	if util.PathExists(crlFilename) {
 		data, err := os.ReadFile(crlFilename)
 		if err != nil {
 			return nil, err
@@ -240,7 +240,7 @@ func mynames() ([]string, error) {
 // FindOrGenCert generates a keypair if needed.
 // The type argument is false for server, true for client.
 func FindOrGenCert(certf string, keyf string, certtype bool, addHosts bool) error {
-	if shared.PathExists(certf) && shared.PathExists(keyf) {
+	if util.PathExists(certf) && util.PathExists(keyf) {
 		return nil
 	}
 

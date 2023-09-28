@@ -12,8 +12,8 @@ import (
 
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/warningtype"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 var warningCreate = cluster.RegisterStmt(`
@@ -193,7 +193,7 @@ func (c *ClusterTx) createWarning(ctx context.Context, object cluster.Warning) (
 			return -1, fmt.Errorf("Failed to get project names: %w", err)
 		}
 
-		if !shared.ValueInSlice(object.Project, projects) {
+		if !util.ValueInSlice(object.Project, projects) {
 			return -1, fmt.Errorf("Unknown project %q", object.Project)
 		}
 

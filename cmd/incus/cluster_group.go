@@ -12,9 +12,9 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdClusterGroup struct {
@@ -320,7 +320,7 @@ func (c *cmdClusterGroupEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -344,7 +344,7 @@ func (c *cmdClusterGroupEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -487,7 +487,7 @@ func (c *cmdClusterGroupRemove) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if !shared.ValueInSlice(args[1], member.Groups) {
+	if !util.ValueInSlice(args[1], member.Groups) {
 		return fmt.Errorf(i18n.G("Cluster group %s isn't currently applied to %s"), args[1], resource.name)
 	}
 
@@ -661,7 +661,7 @@ func (c *cmdClusterGroupAdd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if shared.ValueInSlice(args[1], member.Groups) {
+	if util.ValueInSlice(args[1], member.Groups) {
 		return fmt.Errorf(i18n.G("Cluster member %s is already in group %s"), resource.name, args[1])
 	}
 

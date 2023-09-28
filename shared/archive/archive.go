@@ -14,7 +14,6 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
@@ -130,7 +129,7 @@ func CompressedTarReader(ctx context.Context, r io.ReadSeeker, unpacker []string
 }
 
 // Unpack extracts image from archive.
-func Unpack(file string, path string, blockBackend bool, tracker *ioprogress.ProgressTracker) error {
+func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracker *ioprogress.ProgressTracker) error {
 	extractArgs, extension, unpacker, err := DetectCompression(file)
 	if err != nil {
 		return err
@@ -187,12 +186,12 @@ func Unpack(file string, path string, blockBackend bool, tracker *ioprogress.Pro
 		command = "unsquashfs"
 		args = append(args, "-f", "-d", path, "-n")
 
-		// Limit unsquashfs chunk size to 10% of memory and up to 256MiB (default)
-		// When running on a low memory system, also disable multi-processing
-		mem, err := shared.DeviceTotalMemory()
-		mem = mem / 1024 / 1024 / 10
-		if err == nil && mem < 256 {
-			args = append(args, "-da", fmt.Sprintf("%d", mem), "-fr", fmt.Sprintf("%d", mem), "-p", "1")
+		if maxMemory != 0 {
+			// If maximum memory consumption is less than 256MiB, restrict unsquashfs and limit to a single thread.
+			mem := maxMemory / 1024 / 1024
+			if err == nil && mem < 256 {
+				args = append(args, "-da", fmt.Sprintf("%d", mem), "-fr", fmt.Sprintf("%d", mem), "-p", "1")
+			}
 		}
 
 		args = append(args, file)

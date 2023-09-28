@@ -19,10 +19,11 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -132,7 +133,7 @@ func instanceBackupsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(cname) {
+	if internalInstance.IsSnapshot(cname) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -146,7 +147,7 @@ func instanceBackupsGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	c, err := instance.LoadByProjectAndName(s, projectName, cname)
 	if err != nil {
@@ -225,7 +226,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -284,7 +285,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 			return response.BadRequest(err)
 		}
 
-		base := name + shared.SnapshotDelimiter + "backup"
+		base := name + internalInstance.SnapshotDelimiter + "backup"
 		length := len(base)
 		max := 0
 
@@ -314,7 +315,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
 	}
 
-	fullName := name + shared.SnapshotDelimiter + req.Name
+	fullName := name + internalInstance.SnapshotDelimiter + req.Name
 	instanceOnly := req.InstanceOnly
 
 	backup := func(op *operations.Operation) error {
@@ -408,7 +409,7 @@ func instanceBackupGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -427,7 +428,7 @@ func instanceBackupGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	fullName := name + shared.SnapshotDelimiter + backupName
+	fullName := name + internalInstance.SnapshotDelimiter + backupName
 	backup, err := instance.BackupLoadByName(s, projectName, fullName)
 	if err != nil {
 		return response.SmartError(err)
@@ -482,7 +483,7 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -512,13 +513,13 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
 	}
 
-	oldName := name + shared.SnapshotDelimiter + backupName
+	oldName := name + internalInstance.SnapshotDelimiter + backupName
 	backup, err := instance.BackupLoadByName(s, projectName, oldName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	newName := name + shared.SnapshotDelimiter + req.Name
+	newName := name + internalInstance.SnapshotDelimiter + req.Name
 
 	rename := func(op *operations.Operation) error {
 		err := backup.Rename(newName)
@@ -584,7 +585,7 @@ func instanceBackupDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -603,7 +604,7 @@ func instanceBackupDelete(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	fullName := name + shared.SnapshotDelimiter + backupName
+	fullName := name + internalInstance.SnapshotDelimiter + backupName
 	backup, err := instance.BackupLoadByName(s, projectName, fullName)
 	if err != nil {
 		return response.SmartError(err)
@@ -669,7 +670,7 @@ func instanceBackupExportGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -688,14 +689,14 @@ func instanceBackupExportGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	fullName := name + shared.SnapshotDelimiter + backupName
+	fullName := name + internalInstance.SnapshotDelimiter + backupName
 	backup, err := instance.BackupLoadByName(s, projectName, fullName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	ent := response.FileResponseEntry{
-		Path: shared.VarPath("backups", "instances", project.Instance(projectName, backup.Name())),
+		Path: internalUtil.VarPath("backups", "instances", project.Instance(projectName, backup.Name())),
 	}
 
 	s.Events.SendLifecycle(projectName, lifecycle.InstanceBackupRetrieved.Event(fullName, backup.Instance(), nil))

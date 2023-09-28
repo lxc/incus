@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/internal/idmap"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 func mockStartDaemon() (*Daemon, error) {
@@ -23,7 +23,7 @@ func mockStartDaemon() (*Daemon, error) {
 	// Setup test certificates. We re-use the ones already on disk under
 	// the test/ directory, to avoid generating new ones, which is
 	// expensive.
-	err := sys.SetupTestCerts(shared.VarPath())
+	err := sys.SetupTestCerts(internalUtil.VarPath())
 	if err != nil {
 		return nil, err
 	}

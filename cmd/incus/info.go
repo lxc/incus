@@ -12,7 +12,7 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
 	config "github.com/lxc/incus/shared/cliconfig"
 	"github.com/lxc/incus/shared/units"
@@ -483,11 +483,11 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 		fmt.Printf(i18n.G("PID: %d")+"\n", inst.State.Pid)
 	}
 
-	if shared.TimeIsSet(inst.CreatedAt) {
+	if inst.CreatedAt.Unix() != 0 {
 		fmt.Printf(i18n.G("Created: %s")+"\n", inst.CreatedAt.Local().Format(layout))
 	}
 
-	if shared.TimeIsSet(inst.LastUsedAt) {
+	if inst.LastUsedAt.Unix() != 0 {
 		fmt.Printf(i18n.G("Last Used: %s")+"\n", inst.LastUsedAt.Local().Format(layout))
 	}
 
@@ -599,16 +599,16 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 
 			var row []string
 
-			fields := strings.Split(snap.Name, shared.SnapshotDelimiter)
+			fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
 			row = append(row, fields[len(fields)-1])
 
-			if shared.TimeIsSet(snap.CreatedAt) {
+			if snap.CreatedAt.Unix() != 0 {
 				row = append(row, snap.CreatedAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
 			}
 
-			if shared.TimeIsSet(snap.ExpiresAt) {
+			if snap.ExpiresAt.Unix() != 0 {
 				row = append(row, snap.ExpiresAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
@@ -647,13 +647,13 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 			var row []string
 			row = append(row, backup.Name)
 
-			if shared.TimeIsSet(backup.CreatedAt) {
+			if backup.CreatedAt.Unix() != 0 {
 				row = append(row, backup.CreatedAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
 			}
 
-			if shared.TimeIsSet(backup.ExpiresAt) {
+			if backup.ExpiresAt.Unix() != 0 {
 				row = append(row, backup.ExpiresAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")

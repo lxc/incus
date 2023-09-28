@@ -12,9 +12,9 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/resources"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/shared/util"
 )
 
 type gpuSRIOV struct {
@@ -64,7 +64,7 @@ func (d *gpuSRIOV) validateConfig(instConf instance.ConfigReader) error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *gpuSRIOV) validateEnvironment() error {
-	if d.inst.Type() == instancetype.VM && shared.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
+	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return fmt.Errorf("GPU devices cannot be used when migration.stateful is enabled")
 	}
 

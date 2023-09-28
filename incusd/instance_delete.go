@@ -12,8 +12,8 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -60,7 +60,7 @@ func instanceDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 

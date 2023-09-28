@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/incusd/db/generate/lex"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Mapping holds information for mapping database tables to a Go structure.
@@ -153,7 +153,7 @@ func (m *Mapping) ColumnFields(exclude ...string) []*Field {
 	fields := []*Field{}
 
 	for _, field := range m.Fields {
-		if shared.ValueInSlice(field.Name, exclude) {
+		if util.ValueInSlice(field.Name, exclude) {
 			continue
 		}
 
@@ -239,7 +239,7 @@ func (m *Mapping) FieldParamsMarshal(fields []*Field) string {
 			name = lex.Minuscule(m.Name) + field.Name
 		}
 
-		if shared.IsTrue(field.Config.Get("marshal")) {
+		if util.IsTrue(field.Config.Get("marshal")) {
 			name = fmt.Sprintf("marshaled%s", field.Name)
 		}
 

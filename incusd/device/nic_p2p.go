@@ -8,9 +8,9 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/network"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/shared/util"
 )
 
 type nicP2P struct {
@@ -115,7 +115,7 @@ func (d *nicP2P) Start() (*deviceConfig.RunConfig, error) {
 	revert.Add(func() { _ = network.InterfaceRemove(saveData["host_name"]) })
 
 	// Attempt to disable router advertisement acceptance.
-	err = util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
+	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func (d *nicP2P) Start() (*deviceConfig.RunConfig, error) {
 	networkVethFillFromVolatile(d.config, saveData)
 
 	// Apply host-side routes to veth interface.
-	err = networkNICRouteAdd(d.config["host_name"], append(shared.SplitNTrimSpace(d.config["ipv4.routes"], ",", -1, true), shared.SplitNTrimSpace(d.config["ipv6.routes"], ",", -1, true)...)...)
+	err = networkNICRouteAdd(d.config["host_name"], append(util.SplitNTrimSpace(d.config["ipv4.routes"], ",", -1, true), util.SplitNTrimSpace(d.config["ipv6.routes"], ",", -1, true)...)...)
 	if err != nil {
 		return nil, err
 	}
@@ -180,10 +180,10 @@ func (d *nicP2P) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 	networkVethFillFromVolatile(oldConfig, v)
 
 	// Remove old host-side routes from veth interface.
-	networkNICRouteDelete(oldConfig["host_name"], append(shared.SplitNTrimSpace(oldConfig["ipv4.routes"], ",", -1, true), shared.SplitNTrimSpace(oldConfig["ipv6.routes"], ",", -1, true)...)...)
+	networkNICRouteDelete(oldConfig["host_name"], append(util.SplitNTrimSpace(oldConfig["ipv4.routes"], ",", -1, true), util.SplitNTrimSpace(oldConfig["ipv6.routes"], ",", -1, true)...)...)
 
 	// Apply host-side routes to veth interface.
-	err = networkNICRouteAdd(d.config["host_name"], append(shared.SplitNTrimSpace(d.config["ipv4.routes"], ",", -1, true), shared.SplitNTrimSpace(d.config["ipv6.routes"], ",", -1, true)...)...)
+	err = networkNICRouteAdd(d.config["host_name"], append(util.SplitNTrimSpace(d.config["ipv4.routes"], ",", -1, true), util.SplitNTrimSpace(d.config["ipv6.routes"], ",", -1, true)...)...)
 	if err != nil {
 		return err
 	}

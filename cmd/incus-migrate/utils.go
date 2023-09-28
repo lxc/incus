@@ -18,8 +18,8 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/internal/ports"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/ws"
@@ -73,7 +73,7 @@ func transferRootfs(ctx context.Context, dst incus.InstanceServer, op incus.Oper
 
 		size := stat.Size()
 		offerHeader.VolumeSize = &size
-		rootfs = shared.AddSlash(rootfs)
+		rootfs = internalUtil.AddSlash(rootfs)
 	}
 
 	err = migration.ProtoSend(wsControl, &offerHeader)

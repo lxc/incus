@@ -43,16 +43,19 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/task"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/filter"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/jmap"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 )
 
 var imagesCmd = APIEndpoint{
@@ -174,7 +177,7 @@ func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 			args = append(args, fields[1:]...)
 		}
 
-		if shared.ValueInSlice(fields[0], reproducible) {
+		if util.ValueInSlice(fields[0], reproducible) {
 			args = append(args, "-n")
 		}
 
@@ -206,12 +209,12 @@ func imgPostInstanceInfo(s *state.State, r *http.Request, req api.ImagesPost, op
 
 	switch ctype {
 	case "snapshot":
-		if !shared.IsSnapshot(name) {
+		if !internalInstance.IsSnapshot(name) {
 			return nil, fmt.Errorf("Not a snapshot")
 		}
 
 	case "container", "virtual-machine", "instance":
-		if shared.IsSnapshot(name) {
+		if internalInstance.IsSnapshot(name) {
 			return nil, fmt.Errorf("This is a snapshot")
 		}
 
@@ -272,7 +275,7 @@ func imgPostInstanceInfo(s *state.State, r *http.Request, req api.ImagesPost, op
 					processed = value
 				}
 
-				shared.SetProgressMetadata(metadata, "create_image_from_container_pack", "Image pack", percent, processed, speed)
+				operations.SetProgressMetadata(metadata, "create_image_from_container_pack", "Image pack", percent, processed, speed)
 				_ = op.UpdateMetadata(metadata)
 			},
 			Length: totalSize,
@@ -334,7 +337,7 @@ func imgPostInstanceInfo(s *state.State, r *http.Request, req api.ImagesPost, op
 	// Export instance to writer.
 	var meta api.ImageMetadata
 
-	writer = shared.NewQuotaWriter(writer, budget)
+	writer = internalIO.NewQuotaWriter(writer, budget)
 	meta, err = c.Export(writer, req.Properties, req.ExpiresAt)
 
 	// Get ExpiresAt
@@ -378,8 +381,8 @@ func imgPostInstanceInfo(s *state.State, r *http.Request, req api.ImagesPost, op
 	}
 
 	/* rename the file to the expected name so our caller can use it */
-	finalName := shared.VarPath("images", info.Fingerprint)
-	err = shared.FileMove(imageFile.Name(), finalName)
+	finalName := internalUtil.VarPath("images", info.Fingerprint)
+	err = internalUtil.FileMove(imageFile.Name(), finalName)
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +473,7 @@ func imgPostURLInfo(s *state.State, r *http.Request, req api.ImagesPost, op *ope
 		return nil, fmt.Errorf("Missing URL")
 	}
 
-	myhttp, err := util.HTTPClient("", s.Proxy)
+	myhttp, err := localUtil.HTTPClient("", s.Proxy)
 	if err != nil {
 		return nil, err
 	}
@@ -549,7 +552,7 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 	var imageMeta *api.ImageMetadata
 	l := logger.AddContext(logger.Ctx{"function": "getImgPostInfo"})
 
-	info.Public = shared.IsTrue(r.Header.Get("X-Incus-public"))
+	info.Public = util.IsTrue(r.Header.Get("X-Incus-public"))
 	propHeaders := r.Header[http.CanonicalHeaderKey("X-Incus-properties")]
 	profilesHeaders := r.Header.Get("X-Incus-profiles")
 	ctype, ctypeParams, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
@@ -644,8 +647,8 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 			return nil, err
 		}
 
-		imgfname := shared.VarPath("images", info.Fingerprint)
-		err = shared.FileMove(imageTarf.Name(), imgfname)
+		imgfname := internalUtil.VarPath("images", info.Fingerprint)
+		err = internalUtil.FileMove(imageTarf.Name(), imgfname)
 		if err != nil {
 			l.Error("Failed to move the image tarfile", logger.Ctx{
 				"err":    err,
@@ -654,8 +657,8 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 			return nil, err
 		}
 
-		rootfsfname := shared.VarPath("images", info.Fingerprint+".rootfs")
-		err = shared.FileMove(rootfsTarf.Name(), rootfsfname)
+		rootfsfname := internalUtil.VarPath("images", info.Fingerprint+".rootfs")
+		err = internalUtil.FileMove(rootfsTarf.Name(), rootfsfname)
 		if err != nil {
 			l.Error("Failed to move the rootfs tarfile", logger.Ctx{
 				"err":    err,
@@ -698,8 +701,8 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 
 		info.Type = imageType
 
-		imgfname := shared.VarPath("images", info.Fingerprint)
-		err = shared.FileMove(post.Name(), imgfname)
+		imgfname := internalUtil.VarPath("images", info.Fingerprint)
+		err = internalUtil.FileMove(post.Name(), imgfname)
 		if err != nil {
 			l.Error("Failed to move the tarfile", logger.Ctx{
 				"err":    err,
@@ -947,7 +950,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// create a directory under which we keep everything while building
-	builddir, err := os.MkdirTemp(shared.VarPath("images"), "incus_build_")
+	builddir, err := os.MkdirTemp(internalUtil.VarPath("images"), "incus_build_")
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -981,7 +984,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	_, err = io.Copy(shared.NewQuotaWriter(post, budget), r.Body)
+	_, err = io.Copy(internalIO.NewQuotaWriter(post, budget), r.Body)
 	if err != nil {
 		logger.Errorf("Store image POST data to disk: %v", err)
 		cleanup(builddir, post)
@@ -1021,13 +1024,13 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		return createTokenResponse(s, r, projectName, req.Source.Fingerprint, metadata)
 	}
 
-	if !imageUpload && !shared.ValueInSlice(req.Source.Type, []string{"container", "instance", "virtual-machine", "snapshot", "image", "url"}) {
+	if !imageUpload && !util.ValueInSlice(req.Source.Type, []string{"container", "instance", "virtual-machine", "snapshot", "image", "url"}) {
 		cleanup(builddir, post)
 		return response.InternalError(fmt.Errorf("Invalid images JSON"))
 	}
 
 	/* Forward requests for containers on other nodes */
-	if !imageUpload && shared.ValueInSlice(req.Source.Type, []string{"container", "instance", "virtual-machine", "snapshot"}) {
+	if !imageUpload && util.ValueInSlice(req.Source.Type, []string{"container", "instance", "virtual-machine", "snapshot"}) {
 		name := req.Source.Name
 		if name != "" {
 			_, err = post.Seek(0, io.SeekStart)
@@ -1147,7 +1150,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 	var metadata any
 
 	if imageUpload && imageMetadata != nil {
-		secret, _ := shared.RandomCryptoString()
+		secret, _ := internalUtil.RandomHexString(32)
 		if secret != "" {
 			metadata = map[string]string{
 				"secret": secret,
@@ -1547,7 +1550,7 @@ func imagesGet(d *Daemon, r *http.Request) response.Response {
 
 	var result any
 	err = d.State().DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		result, err = doImagesGet(ctx, tx, util.IsRecursionRequest(r), projectName, public, clauses)
+		result, err = doImagesGet(ctx, tx, localUtil.IsRecursionRequest(r), projectName, public, clauses)
 		if err != nil {
 			return err
 		}
@@ -1659,7 +1662,7 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 
 			// If multiple nodes have the image, select one to deal with it.
 			if len(nodeIDs) > 1 {
-				selectedNode, err := util.GetStableRandomInt64FromList(int64(len(images)), nodeIDs)
+				selectedNode, err := localUtil.GetStableRandomInt64FromList(int64(len(images)), nodeIDs)
 				if err != nil {
 					logger.Error("Failed to select cluster member for image update", logger.Ctx{"err": err})
 					continue
@@ -1759,7 +1762,7 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 
 			// Add the volume to the list if the pool is backed by remote
 			// storage as only then the volumes are shared.
-			if shared.ValueInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
+			if util.ValueInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
 				imageVolumes = append(imageVolumes, vol)
 			}
 		}
@@ -1841,7 +1844,7 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 				if err != nil {
 					logger.Error("Failed to get storage pool info", logger.Ctx{"err": err, "pool": fields[0]})
 				} else {
-					if shared.ValueInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
+					if util.ValueInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
 						imageVolumes = append(imageVolumes, vol)
 					}
 				}
@@ -1849,8 +1852,8 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 		}
 
 		createArgs := &incus.ImageCreateArgs{}
-		imageMetaPath := shared.VarPath("images", newImage.Fingerprint)
-		imageRootfsPath := shared.VarPath("images", newImage.Fingerprint+".rootfs")
+		imageMetaPath := internalUtil.VarPath("images", newImage.Fingerprint)
+		imageRootfsPath := internalUtil.VarPath("images", newImage.Fingerprint+".rootfs")
 
 		metaFile, err := os.Open(imageMetaPath)
 		if err != nil {
@@ -1863,7 +1866,7 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 		createArgs.MetaName = filepath.Base(imageMetaPath)
 		createArgs.Type = newImage.Type
 
-		if shared.PathExists(imageRootfsPath) {
+		if util.PathExists(imageRootfsPath) {
 			rootfsFile, err := os.Open(imageRootfsPath)
 			if err != nil {
 				return err
@@ -2107,7 +2110,7 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 
 	// Remove main image file.
 	fname := filepath.Join(s.OS.VarDir, "images", fingerprint)
-	if shared.PathExists(fname) {
+	if util.PathExists(fname) {
 		err = os.Remove(fname)
 		if err != nil {
 			logger.Error("Error deleting image file", logger.Ctx{"fingerprint": fingerprint, "file": fname, "err": err})
@@ -2116,7 +2119,7 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 
 	// Remove the rootfs file for the image.
 	fname = filepath.Join(s.OS.VarDir, "images", fingerprint) + ".rootfs"
-	if shared.PathExists(fname) {
+	if util.PathExists(fname) {
 		err = os.Remove(fname)
 		if err != nil {
 			logger.Error("Error deleting image rootfs file", logger.Ctx{"fingerprint": fingerprint, "file": fname, "err": err})
@@ -2232,7 +2235,7 @@ func pruneLeftoverImages(s *state.State) {
 		}
 
 		// Look at what's in the images directory
-		entries, err := os.ReadDir(shared.VarPath("images"))
+		entries, err := os.ReadDir(internalUtil.VarPath("images"))
 		if err != nil {
 			return fmt.Errorf("Unable to list the images directory: %w", err)
 		}
@@ -2240,8 +2243,8 @@ func pruneLeftoverImages(s *state.State) {
 		// Check and delete leftovers
 		for _, entry := range entries {
 			fp := strings.Split(entry.Name(), ".")[0]
-			if !shared.ValueInSlice(fp, images) {
-				err = os.RemoveAll(shared.VarPath("images", entry.Name()))
+			if !util.ValueInSlice(fp, images) {
+				err = os.RemoveAll(internalUtil.VarPath("images", entry.Name()))
 				if err != nil {
 					return fmt.Errorf("Unable to remove leftover image: %v: %w", entry.Name(), err)
 				}
@@ -2585,8 +2588,8 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 // Helper to delete an image file from the local images directory.
 func imageDeleteFromDisk(fingerprint string) {
 	// Remove main image file.
-	fname := shared.VarPath("images", fingerprint)
-	if shared.PathExists(fname) {
+	fname := internalUtil.VarPath("images", fingerprint)
+	if util.PathExists(fname) {
 		err := os.Remove(fname)
 		if err != nil && !os.IsNotExist(err) {
 			logger.Errorf("Error deleting image file %s: %s", fname, err)
@@ -2594,8 +2597,8 @@ func imageDeleteFromDisk(fingerprint string) {
 	}
 
 	// Remove the rootfs file for the image.
-	fname = shared.VarPath("images", fingerprint) + ".rootfs"
-	if shared.PathExists(fname) {
+	fname = internalUtil.VarPath("images", fingerprint) + ".rootfs"
+	if util.PathExists(fname) {
 		err := os.Remove(fname)
 		if err != nil && !os.IsNotExist(err) {
 			logger.Errorf("Error deleting image file %s: %s", fname, err)
@@ -2636,7 +2639,7 @@ func imageValidSecret(s *state.State, r *http.Request, projectName string, finge
 			continue
 		}
 
-		if !shared.StringPrefixInSlice(api.NewURL().Path(version.APIVersion, "images", fingerprint).String(), opImages) {
+		if !stringPrefixInSlice(api.NewURL().Path(version.APIVersion, "images", fingerprint).String(), opImages) {
 			continue
 		}
 
@@ -2657,6 +2660,17 @@ func imageValidSecret(s *state.State, r *http.Request, projectName string, finge
 	}
 
 	return nil, nil
+}
+
+// stringPrefixInSlice returns true if any element in the list has the given prefix.
+func stringPrefixInSlice(key string, list []string) bool {
+	for _, entry := range list {
+		if strings.HasPrefix(entry, key) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // swagger:operation GET /1.0/images/{fingerprint}?public images image_get_untrusted
@@ -2834,7 +2848,7 @@ func imagePut(d *Daemon, r *http.Request) response.Response {
 
 	// Validate ETag
 	etag := []any{info.Public, info.AutoUpdate, info.Properties}
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -2929,7 +2943,7 @@ func imagePatch(d *Daemon, r *http.Request) response.Response {
 
 	// Validate ETag
 	etag := []any{info.Public, info.AutoUpdate, info.Properties}
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -3164,7 +3178,7 @@ func imageAliasesPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/InternalServerError"
 func imageAliasesGet(d *Daemon, r *http.Request) response.Response {
 	projectName := projectParam(r)
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	var err error
 	var responseStr []string
@@ -3431,7 +3445,7 @@ func imageAliasPut(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Validate ETag
-		err = util.EtagCheck(r, imgAlias)
+		err = localUtil.EtagCheck(r, imgAlias)
 		if err != nil {
 			return err
 		}
@@ -3517,7 +3531,7 @@ func imageAliasPatch(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Validate ETag
-		err = util.EtagCheck(r, imgAlias)
+		err = localUtil.EtagCheck(r, imgAlias)
 		if err != nil {
 			return err
 		}
@@ -3754,7 +3768,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 		return response.ForwardedResponse(client, r)
 	}
 
-	imagePath := shared.VarPath("images", imgInfo.Fingerprint)
+	imagePath := internalUtil.VarPath("images", imgInfo.Fingerprint)
 	rootfsPath := imagePath + ".rootfs"
 
 	_, ext, _, err := archive.DetectCompression(imagePath)
@@ -3764,7 +3778,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 
 	filename := fmt.Sprintf("%s%s", imgInfo.Fingerprint, ext)
 
-	if shared.PathExists(rootfsPath) {
+	if util.PathExists(rootfsPath) {
 		files := make([]response.FileResponseEntry, 2)
 
 		files[0].Identifier = "metadata"
@@ -3872,8 +3886,8 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 
 	run := func(op *operations.Operation) error {
 		createArgs := &incus.ImageCreateArgs{}
-		imageMetaPath := shared.VarPath("images", fingerprint)
-		imageRootfsPath := shared.VarPath("images", fingerprint+".rootfs")
+		imageMetaPath := internalUtil.VarPath("images", fingerprint)
+		imageRootfsPath := internalUtil.VarPath("images", fingerprint+".rootfs")
 
 		metaFile, err := os.Open(imageMetaPath)
 		if err != nil {
@@ -3885,7 +3899,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 		createArgs.MetaFile = metaFile
 		createArgs.MetaName = filepath.Base(imageMetaPath)
 
-		if shared.PathExists(imageRootfsPath) {
+		if util.PathExists(imageRootfsPath) {
 			rootfsFile, err := os.Open(imageRootfsPath)
 			if err != nil {
 				return err
@@ -4037,7 +4051,7 @@ func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerpr
 	if getResp.RootfsSize == 0 {
 		// This is a unified image.
 		rootfsPath := filepath.Join(imagesDir, fingerprint)
-		err := shared.FileMove(metaFile.Name(), rootfsPath)
+		err := internalUtil.FileMove(metaFile.Name(), rootfsPath)
 		if err != nil {
 			return err
 		}
@@ -4046,12 +4060,12 @@ func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerpr
 		metaPath := filepath.Join(imagesDir, fingerprint)
 		rootfsPath := filepath.Join(imagesDir, fingerprint+".rootfs")
 
-		err := shared.FileMove(metaFile.Name(), metaPath)
+		err := internalUtil.FileMove(metaFile.Name(), metaPath)
 		if err != nil {
 			return nil
 		}
 
-		err = shared.FileMove(rootfsFile.Name(), rootfsPath)
+		err = internalUtil.FileMove(rootfsFile.Name(), rootfsPath)
 		if err != nil {
 			return nil
 		}
@@ -4327,7 +4341,7 @@ func imageSyncBetweenNodes(s *state.State, r *http.Request, project string, fing
 }
 
 func createTokenResponse(s *state.State, r *http.Request, projectName string, fingerprint string, metadata jmap.Map) response.Response {
-	secret, err := shared.RandomCryptoString()
+	secret, err := internalUtil.RandomHexString(32)
 	if err != nil {
 		return response.InternalError(err)
 	}

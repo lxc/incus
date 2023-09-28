@@ -10,7 +10,6 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
 )
@@ -130,7 +129,7 @@ func (c *cmdConfigMetadataEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(origContent)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(origContent)))
 	if err != nil {
 		return err
 	}
@@ -152,7 +151,7 @@ func (c *cmdConfigMetadataEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}

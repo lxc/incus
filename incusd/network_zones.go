@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 )
@@ -137,7 +137,7 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	// Get list of Network zones.
 	zoneNames, err := s.DB.Cluster.GetNetworkZonesByProject(projectName)
@@ -448,7 +448,7 @@ func networkZonePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Validate the ETag.
-	err = util.EtagCheck(r, netzone.Etag())
+	err = localUtil.EtagCheck(r, netzone.Etag())
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}

@@ -10,8 +10,8 @@ import (
 
 	in "k8s.io/utils/inotify"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 var inotifyLoaded bool
@@ -147,7 +147,7 @@ func (d *inotify) getEvents(ctx context.Context) {
 }
 
 func (d *inotify) watchFSTree(path string) error {
-	if !shared.PathExists(path) {
+	if !util.PathExists(path) {
 		return errors.New("Path doesn't exist")
 	}
 

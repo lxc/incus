@@ -13,10 +13,10 @@ import (
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type nicMACVLAN struct {
@@ -127,7 +127,7 @@ func (d *nicMACVLAN) validateEnvironment() error {
 		return fmt.Errorf("Requires name property to start")
 	}
 
-	if !shared.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
+	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
 		return fmt.Errorf("Parent device '%s' doesn't exist", d.config["parent"])
 	}
 
@@ -160,7 +160,7 @@ func (d *nicMACVLAN) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	// Create VLAN parent device if needed.
-	statusDev, err := networkCreateVlanDeviceIfNeeded(d.state, d.config["parent"], actualParentName, d.config["vlan"], shared.IsTrue(d.config["gvrp"]))
+	statusDev, err := networkCreateVlanDeviceIfNeeded(d.state, d.config["parent"], actualParentName, d.config["vlan"], util.IsTrue(d.config["gvrp"]))
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (d *nicMACVLAN) Start() (*deviceConfig.RunConfig, error) {
 	// Record whether we created the parent device or not so it can be removed on stop.
 	saveData["last_state.created"] = fmt.Sprintf("%t", statusDev != "existing")
 
-	if shared.IsTrue(saveData["last_state.created"]) {
+	if util.IsTrue(saveData["last_state.created"]) {
 		revert.Add(func() {
 			_ = networkRemoveInterfaceIfNeeded(d.state, actualParentName, d.inst, d.config["parent"], d.config["vlan"])
 		})
@@ -231,7 +231,7 @@ func (d *nicMACVLAN) Start() (*deviceConfig.RunConfig, error) {
 
 	if d.inst.Type() == instancetype.VM {
 		// Disable IPv6 on host interface to avoid getting IPv6 link-local addresses unnecessarily.
-		err = util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", link.Name), "1")
+		err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", link.Name), "1")
 		if err != nil && !os.IsNotExist(err) {
 			return nil, fmt.Errorf("Failed to disable IPv6 on host interface %q: %w", link.Name, err)
 		}
@@ -291,7 +291,7 @@ func (d *nicMACVLAN) postStop() error {
 	v := d.volatileGet()
 
 	// Delete the detached device.
-	if v["host_name"] != "" && shared.PathExists(fmt.Sprintf("/sys/class/net/%s", v["host_name"])) {
+	if v["host_name"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s", v["host_name"])) {
 		err := network.InterfaceRemove(v["host_name"])
 		if err != nil {
 			errs = append(errs, err)
@@ -299,7 +299,7 @@ func (d *nicMACVLAN) postStop() error {
 	}
 
 	// This will delete the parent interface if we created it for VLAN parent.
-	if shared.IsTrue(v["last_state.created"]) {
+	if util.IsTrue(v["last_state.created"]) {
 		actualParentName := network.GetHostDevice(d.config["parent"], d.config["vlan"])
 		err := networkRemoveInterfaceIfNeeded(d.state, actualParentName, d.inst, d.config["parent"], d.config["vlan"])
 		if err != nil {

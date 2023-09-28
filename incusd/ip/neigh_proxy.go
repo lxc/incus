@@ -4,8 +4,8 @@ import (
 	"net"
 	"strings"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // NeighProxy represents arguments for neighbour proxy manipulation.
@@ -21,7 +21,7 @@ func (n *NeighProxy) Show() ([]NeighProxy, error) {
 		return nil, err
 	}
 
-	lines := shared.SplitNTrimSpace(out, "\n", -1, true)
+	lines := util.SplitNTrimSpace(out, "\n", -1, true)
 	entries := make([]NeighProxy, 0, len(lines))
 
 	for _, line := range lines {

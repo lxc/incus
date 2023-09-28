@@ -9,7 +9,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdForkstart struct {
@@ -79,8 +80,8 @@ func (c *cmdForkstart) Run(cmd *cobra.Command, args []string) error {
 	_ = os.Stdout.Close()
 
 	// Redirect stdout and stderr to a log file
-	logPath := shared.LogPath(name, "forkstart.log")
-	if shared.PathExists(logPath) {
+	logPath := internalUtil.LogPath(name, "forkstart.log")
+	if util.PathExists(logPath) {
 		_ = os.Remove(logPath)
 	}
 

@@ -25,25 +25,26 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/scriptlet"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	apiScriptlet "github.com/lxc/incus/shared/api/scriptlet"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 )
 
 func ensureDownloadedImageFitWithinBudget(s *state.State, r *http.Request, op *operations.Operation, p api.Project, img *api.Image, imgAlias string, source api.InstanceSource, imgType string) (*api.Image, error) {
 	var autoUpdate bool
 	var err error
 	if p.Config["images.auto_update_cached"] != "" {
-		autoUpdate = shared.IsTrue(p.Config["images.auto_update_cached"])
+		autoUpdate = util.IsTrue(p.Config["images.auto_update_cached"])
 	} else {
 		autoUpdate = s.GlobalConfig.ImagesAutoUpdateCached()
 	}
@@ -565,7 +566,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	defer revert.Fail()
 
 	// Create temporary file to store uploaded backup data.
-	backupFile, err := os.CreateTemp(shared.VarPath("backups"), fmt.Sprintf("%s_", backup.WorkingDirPrefix))
+	backupFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_", backup.WorkingDirPrefix))
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -595,7 +596,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		decomArgs := append(decomArgs, backupFile.Name())
 
 		// Create temporary file to store the decompressed tarball in.
-		tarFile, err := os.CreateTemp(shared.VarPath("backups"), fmt.Sprintf("%s_decompress_", backup.WorkingDirPrefix))
+		tarFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_decompress_", backup.WorkingDirPrefix))
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -1008,7 +1009,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			for {
 				i++
 				req.Name = strings.ToLower(petname.Generate(2, "-"))
-				if !shared.ValueInSlice(req.Name, names) {
+				if !util.ValueInSlice(req.Name, names) {
 					break
 				}
 
@@ -1237,7 +1238,7 @@ func clusterCopyContainerInternal(s *state.State, r *http.Request, source instan
 
 	// Setup websockets
 	var opAPI api.Operation
-	if shared.IsSnapshot(req.Source.Source) {
+	if internalInstance.IsSnapshot(req.Source.Source) {
 		cName, sName, _ := api.GetParentAndSnapshotName(req.Source.Source)
 
 		pullReq := api.InstanceSnapshotPost{

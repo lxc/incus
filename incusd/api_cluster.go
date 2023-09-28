@@ -33,22 +33,22 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/scriptlet"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/incusd/task"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	apiScriptlet "github.com/lxc/incus/shared/api/scriptlet"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -808,7 +808,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 	// Update our TLS configuration using our original certificate.
 	for _, suffix := range []string{"crt", "key", "ca"} {
 		path := filepath.Join(s.OS.VarDir, "cluster."+suffix)
-		if !shared.PathExists(path) {
+		if !util.PathExists(path) {
 			continue
 		}
 
@@ -848,7 +848,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 			os.Exit(0)
 		} else {
 			logger.Info("Restarting daemon following removal from cluster")
-			err = util.ReplaceDaemon()
+			err = localUtil.ReplaceDaemon()
 			if err != nil {
 				logger.Error("Failed restarting daemon", logger.Ctx{"err": err})
 			}
@@ -914,7 +914,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 				continue
 			}
 
-			if !shared.ValueInSlice(config.Key, db.NodeSpecificStorageConfig) {
+			if !util.ValueInSlice(config.Key, db.NodeSpecificStorageConfig) {
 				logger.Warnf("Ignoring config key %q for storage pool %q", config.Key, config.Name)
 				continue
 			}
@@ -931,7 +931,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 	}
 
 	for _, p := range projects {
-		if shared.IsFalseOrEmpty(p.Config["features.networks"]) && p.Name != project.Default {
+		if util.IsFalseOrEmpty(p.Config["features.networks"]) && p.Name != project.Default {
 			// Skip non-default projects that can't have their own networks so we don't try
 			// and add the same default project networks twice.
 			continue
@@ -980,7 +980,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 						continue
 					}
 
-					if !shared.ValueInSlice(config.Key, db.NodeSpecificNetworkConfig) {
+					if !util.ValueInSlice(config.Key, db.NodeSpecificNetworkConfig) {
 						logger.Warnf("Ignoring config key %q for network %q in project %q", config.Key, config.Name, p.Name)
 						continue
 					}
@@ -1115,7 +1115,7 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodesGet(d *Daemon, r *http.Request) response.Response {
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 	s := d.State()
 
 	leaderAddress, err := d.gateway.LeaderAddress()
@@ -1248,7 +1248,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("This server is not clustered"))
 	}
 
-	expiry, err := shared.GetExpiry(time.Now(), s.GlobalConfig.ClusterJoinTokenExpiry())
+	expiry, err := internalInstance.GetExpiry(time.Now(), s.GlobalConfig.ClusterJoinTokenExpiry())
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -1321,7 +1321,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 	// Generate join secret for new member. This will be stored inside the join token operation and will be
 	// supplied by the joining member (encoded inside the join token) which will allow us to lookup the correct
 	// operation in order to validate the requested joining server name is correct and authorised.
-	joinSecret, err := shared.RandomCryptoString()
+	joinSecret, err := internalUtil.RandomHexString(32)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -1594,7 +1594,7 @@ func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request
 	}
 
 	// Validate the request is fine
-	err = util.EtagCheck(r, memberInfo.ClusterMemberPut)
+	err = localUtil.EtagCheck(r, memberInfo.ClusterMemberPut)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -1607,11 +1607,11 @@ func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request
 	}
 
 	// Validate the request
-	if shared.ValueInSlice(string(db.ClusterRoleDatabase), memberInfo.Roles) && !shared.ValueInSlice(string(db.ClusterRoleDatabase), req.Roles) {
+	if util.ValueInSlice(string(db.ClusterRoleDatabase), memberInfo.Roles) && !util.ValueInSlice(string(db.ClusterRoleDatabase), req.Roles) {
 		return response.BadRequest(fmt.Errorf("The %q role cannot be dropped at this time", db.ClusterRoleDatabase))
 	}
 
-	if !shared.ValueInSlice(string(db.ClusterRoleDatabase), memberInfo.Roles) && shared.ValueInSlice(string(db.ClusterRoleDatabase), req.Roles) {
+	if !util.ValueInSlice(string(db.ClusterRoleDatabase), memberInfo.Roles) && util.ValueInSlice(string(db.ClusterRoleDatabase), req.Roles) {
 		return response.BadRequest(fmt.Errorf("The %q role cannot be added at this time", db.ClusterRoleDatabase))
 	}
 
@@ -2159,7 +2159,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 	revert := revert.New()
 	defer revert.Fail()
 
-	newClusterCertFilename := shared.VarPath(acme.ClusterCertFilename)
+	newClusterCertFilename := internalUtil.VarPath(acme.ClusterCertFilename)
 
 	// First node forwards request to all other cluster nodes
 	if r == nil || !isClusterNotification(r) {
@@ -2169,12 +2169,12 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 			_ = s.DB.Cluster.UpsertWarningLocalNode("", -1, -1, warningtype.UnableToUpdateClusterCertificate, err.Error())
 		})
 
-		oldCertBytes, err := os.ReadFile(shared.VarPath("cluster.crt"))
+		oldCertBytes, err := os.ReadFile(internalUtil.VarPath("cluster.crt"))
 		if err != nil {
 			return err
 		}
 
-		keyBytes, err := os.ReadFile(shared.VarPath("cluster.key"))
+		keyBytes, err := os.ReadFile(internalUtil.VarPath("cluster.key"))
 		if err != nil {
 			return err
 		}
@@ -2255,7 +2255,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 		return err
 	}
 
-	if shared.PathExists(newClusterCertFilename) {
+	if util.PathExists(newClusterCertFilename) {
 		err := os.Remove(newClusterCertFilename)
 		if err != nil {
 			return fmt.Errorf("Failed to remove cluster certificate: %w", err)
@@ -2716,7 +2716,7 @@ func clusterCheckStoragePoolsMatch(cluster *db.Cluster, reqPools []api.StoragePo
 			}
 			// Exclude the keys which are node-specific.
 			exclude := db.NodeSpecificStorageConfig
-			err = util.CompareConfigs(pool.Config, reqPool.Config, exclude)
+			err = localUtil.CompareConfigs(pool.Config, reqPool.Config, exclude)
 			if err != nil {
 				return fmt.Errorf("Mismatching config for storage pool %s: %w", name, err)
 			}
@@ -2772,7 +2772,7 @@ func clusterCheckNetworksMatch(cluster *db.Cluster, reqNetworks []api.InitNetwor
 
 				// Exclude the keys which are node-specific.
 				exclude := db.NodeSpecificNetworkConfig
-				err = util.CompareConfigs(network.Config, reqNetwork.Config, exclude)
+				err = localUtil.CompareConfigs(network.Config, reqNetwork.Config, exclude)
 				if err != nil {
 					return fmt.Errorf("Mismatching config for network %q in project %q: %w", networkName, networkProjectName, err)
 				}
@@ -3680,7 +3680,7 @@ func clusterGroupsGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("This server is not clustered"))
 	}
 
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	var result any
 
@@ -3976,7 +3976,7 @@ func clusterGroupPut(d *Daemon, r *http.Request) response.Response {
 		skipMembers := []string{}
 
 		for _, oldMember := range members {
-			if !shared.ValueInSlice(oldMember, req.Members) {
+			if !util.ValueInSlice(oldMember, req.Members) {
 				// Get all cluster groups this member belongs to.
 				groups, err := tx.GetClusterGroupsWithNode(ctx, oldMember)
 				if err != nil {
@@ -3999,7 +3999,7 @@ func clusterGroupPut(d *Daemon, r *http.Request) response.Response {
 
 		for _, member := range req.Members {
 			// Skip these members as they already belong to this group.
-			if shared.ValueInSlice(member, skipMembers) {
+			if util.ValueInSlice(member, skipMembers) {
 				continue
 			}
 
@@ -4102,7 +4102,7 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 
 	// Validate the ETag.
 	etag := []any{clusterGroup.Description, clusterGroup.Members}
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -4154,7 +4154,7 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 		skipMembers := []string{}
 
 		for _, oldMember := range members {
-			if !shared.ValueInSlice(oldMember, req.Members) {
+			if !util.ValueInSlice(oldMember, req.Members) {
 				// Get all cluster groups this member belongs to.
 				groups, err := tx.GetClusterGroupsWithNode(ctx, oldMember)
 				if err != nil {
@@ -4178,7 +4178,7 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 
 		for _, member := range req.Members {
 			// Skip these members as they already belong to this group.
-			if shared.ValueInSlice(member, skipMembers) {
+			if util.ValueInSlice(member, skipMembers) {
 				continue
 			}
 
@@ -4280,7 +4280,7 @@ func clusterGroupValidateName(name string) error {
 		return fmt.Errorf("Reserved cluster group name")
 	}
 
-	if shared.ValueInSlice(name, []string{".", ".."}) {
+	if util.ValueInSlice(name, []string{".", ".."}) {
 		return fmt.Errorf("Invalid cluster group name %q", name)
 	}
 

@@ -12,10 +12,10 @@ import (
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type nicPhysical struct {
@@ -100,7 +100,7 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *nicPhysical) validateEnvironment() error {
-	if d.inst.Type() == instancetype.VM && shared.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
+	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return fmt.Errorf("Network physical devices cannot be used when migration.stateful is enabled")
 	}
 
@@ -108,7 +108,7 @@ func (d *nicPhysical) validateEnvironment() error {
 		return fmt.Errorf("Requires name property to start")
 	}
 
-	if !shared.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
+	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
 		return fmt.Errorf("Parent device '%s' doesn't exist", d.config["parent"])
 	}
 
@@ -146,7 +146,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 	saveData["host_name"] = network.GetHostDevice(d.config["parent"], d.config["vlan"])
 
 	if d.inst.Type() == instancetype.Container {
-		statusDev, err := networkCreateVlanDeviceIfNeeded(d.state, d.config["parent"], saveData["host_name"], d.config["vlan"], shared.IsTrue(d.config["gvrp"]))
+		statusDev, err := networkCreateVlanDeviceIfNeeded(d.state, d.config["parent"], saveData["host_name"], d.config["vlan"], util.IsTrue(d.config["gvrp"]))
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		// Record whether we created this device or not so it can be removed on stop.
 		saveData["last_state.created"] = fmt.Sprintf("%t", statusDev != "existing")
 
-		if shared.IsTrue(saveData["last_state.created"]) {
+		if util.IsTrue(saveData["last_state.created"]) {
 			revert.Add(func() {
 				_ = networkRemoveInterfaceIfNeeded(d.state, saveData["host_name"], d.inst, d.config["parent"], d.config["vlan"])
 			})
@@ -162,7 +162,7 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 
 		// If we didn't create the device we should track various properties so we can restore them when the
 		// instance is stopped or the device is detached.
-		if shared.IsFalse(saveData["last_state.created"]) {
+		if util.IsFalse(saveData["last_state.created"]) {
 			err = networkSnapshotPhysicalNIC(saveData["host_name"], saveData)
 			if err != nil {
 				return nil, err
@@ -287,7 +287,7 @@ func (d *nicPhysical) postStop() error {
 		hostName := network.GetHostDevice(d.config["parent"], d.config["vlan"])
 
 		// This will delete the parent interface if we created it for VLAN parent.
-		if shared.IsTrue(v["last_state.created"]) {
+		if util.IsTrue(v["last_state.created"]) {
 			err := networkRemoveInterfaceIfNeeded(d.state, hostName, d.inst, d.config["parent"], d.config["vlan"])
 			if err != nil {
 				return err

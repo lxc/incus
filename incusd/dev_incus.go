@@ -26,10 +26,10 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/ucred"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	apiGuest "github.com/lxc/incus/shared/api/guest"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -58,7 +58,7 @@ type devIncusHandler struct {
 }
 
 var devIncusConfigGet = devIncusHandler{"/1.0/config", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
+	if util.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
@@ -73,7 +73,7 @@ var devIncusConfigGet = devIncusHandler{"/1.0/config", func(d *Daemon, c instanc
 }}
 
 var devIncusConfigKeyGet = devIncusHandler{"/1.0/config/{key}", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
+	if util.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
@@ -95,11 +95,11 @@ var devIncusConfigKeyGet = devIncusHandler{"/1.0/config/{key}", func(d *Daemon, 
 }}
 
 var devIncusImageExport = devIncusHandler{"/1.0/images/{fingerprint}/export", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
+	if util.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
-	if shared.IsFalseOrEmpty(c.ExpandedConfig()["security.guestapi.images"]) {
+	if util.IsFalseOrEmpty(c.ExpandedConfig()["security.guestapi.images"]) {
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
@@ -117,7 +117,7 @@ var devIncusImageExport = devIncusHandler{"/1.0/images/{fingerprint}/export", fu
 }}
 
 var devIncusMetadataGet = devIncusHandler{"/1.0/meta-data", func(d *Daemon, inst instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(inst.ExpandedConfig()["security.guestapi"]) {
+	if util.IsFalse(inst.ExpandedConfig()["security.guestapi"]) {
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), inst.Type() == instancetype.VM)
 	}
 
@@ -127,7 +127,7 @@ var devIncusMetadataGet = devIncusHandler{"/1.0/meta-data", func(d *Daemon, inst
 }}
 
 var devIncusEventsGet = devIncusHandler{"/1.0/events", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
+	if util.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
@@ -204,7 +204,7 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 
 		var state api.StatusCode
 
-		if shared.IsTrue(c.LocalConfig()["volatile.last_state.ready"]) {
+		if util.IsTrue(c.LocalConfig()["volatile.last_state.ready"]) {
 			state = api.Ready
 		} else {
 			state = api.Started
@@ -212,7 +212,7 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 
 		return response.DevIncusResponse(http.StatusOK, apiGuest.DevIncusGet{APIVersion: version.APIVersion, Location: location, InstanceType: c.Type().String(), DevIncusPut: apiGuest.DevIncusPut{State: state.String()}}, "json", c.Type() == instancetype.VM)
 	} else if r.Method == "PATCH" {
-		if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
+		if util.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 		}
 
@@ -246,7 +246,7 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 }}
 
 var devIncusDevicesGet = devIncusHandler{"/1.0/devices", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
-	if shared.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
+	if util.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 

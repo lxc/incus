@@ -10,9 +10,10 @@ import (
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -177,7 +178,7 @@ func (d *cephfs) Create() error {
 	}
 
 	// Check that the existing path is empty.
-	ok, _ := shared.PathIsEmpty(filepath.Join(mountPoint, fsPath))
+	ok, _ := internalUtil.PathIsEmpty(filepath.Join(mountPoint, fsPath))
 	if !ok {
 		return fmt.Errorf("Only empty CEPHFS paths can be used as a storage pool")
 	}
@@ -236,7 +237,7 @@ func (d *cephfs) Delete(op *operations.Operation) error {
 	}
 
 	// Delete the pool from the parent.
-	if shared.PathExists(filepath.Join(mountPoint, fsPath)) {
+	if util.PathExists(filepath.Join(mountPoint, fsPath)) {
 		// Delete the path itself.
 		if fsPath != "" && fsPath != "/" {
 			err = os.Remove(filepath.Join(mountPoint, fsPath))
@@ -296,7 +297,7 @@ func (d *cephfs) Mount() (bool, error) {
 
 	// Mount options.
 	options := fmt.Sprintf("name=%s,secret=%s,mds_namespace=%s", d.config["cephfs.user.name"], userSecret, fsName)
-	if shared.IsTrue(d.config["cephfs.fscache"]) {
+	if util.IsTrue(d.config["cephfs.fscache"]) {
 		options += ",fsc"
 	}
 
@@ -326,7 +327,7 @@ func (d *cephfs) MigrationTypes(contentType ContentType, refresh bool, copySnaps
 
 	// Do not pass compression argument to rsync if the associated
 	// config key, that is rsync.compression, is set to false.
-	if shared.IsFalse(d.Config()["rsync.compression"]) {
+	if util.IsFalse(d.Config()["rsync.compression"]) {
 		rsyncFeatures = []string{"delete", "bidirectional"}
 	} else {
 		rsyncFeatures = []string{"delete", "compress", "bidirectional"}

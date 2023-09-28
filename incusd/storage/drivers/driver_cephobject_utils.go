@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
 )
@@ -36,7 +36,7 @@ func (d *cephobject) radosgwadminGetUser(ctx context.Context, user string) (*S3C
 	out, err := d.radosgwadmin(ctx, "user", "info", "--uid", user)
 
 	if err != nil {
-		status, _ := shared.ExitStatus(err)
+		status, _ := linux.ExitStatus(err)
 		if status == 22 {
 			return nil, nil, api.StatusErrorf(http.StatusNotFound, "User not found")
 		}

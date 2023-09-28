@@ -13,11 +13,12 @@ import (
 	"github.com/pborman/uuid"
 
 	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Debug controls additional debugging in rsync output.
@@ -100,7 +101,7 @@ func LocalCopy(source string, dest string, bwlimit string, xattrs bool, rsyncArg
 
 	args = append(args,
 		rsyncVerbosity,
-		shared.AddSlash(source),
+		internalUtil.AddSlash(source),
 		dest)
 
 	msg, err := rsync(args...)
@@ -415,18 +416,18 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 
 func rsyncFeatureArgs(features []string) []string {
 	args := []string{}
-	if shared.ValueInSlice("xattrs", features) {
+	if util.ValueInSlice("xattrs", features) {
 		args = append(args, "--xattrs")
 		if AtLeast("3.1.3") {
 			args = append(args, "--filter=-x security.selinux")
 		}
 	}
 
-	if shared.ValueInSlice("delete", features) {
+	if util.ValueInSlice("delete", features) {
 		args = append(args, "--delete")
 	}
 
-	if shared.ValueInSlice("compress", features) {
+	if util.ValueInSlice("compress", features) {
 		args = append(args, "--compress")
 		args = append(args, "--compress-level=2")
 	}

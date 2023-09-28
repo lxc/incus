@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	config "github.com/lxc/incus/shared/cliconfig"
+	"github.com/lxc/incus/shared/util"
 )
 
 var numberedArgRegex = regexp.MustCompile(`@ARG(\d+)@`)
@@ -179,7 +179,7 @@ func execIfAliases() error {
 	// Load the configuration
 	var conf *config.Config
 	var err error
-	if shared.PathExists(confPath) {
+	if util.PathExists(confPath) {
 		conf, err = config.LoadConfig(confPath)
 		if err != nil {
 			return nil

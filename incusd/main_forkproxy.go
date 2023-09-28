@@ -259,8 +259,8 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	_ "github.com/lxc/incus/incusd/include" // Used by cgo
 	"github.com/lxc/incus/incusd/network"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/netutils"
-	"github.com/lxc/incus/shared"
 )
 
 const forkproxyUDSSockFDNum int = C.FORKPROXY_UDS_SOCK_FD_NUM
@@ -479,7 +479,7 @@ func (c *cmdForkproxy) Run(cmd *cobra.Command, args []string) error {
 		sAgain:
 			err = netutils.AbstractUnixSendFd(forkproxyUDSSockFDNum, int(file.Fd()))
 			if err != nil {
-				errno, ok := shared.GetErrno(err)
+				errno, ok := linux.GetErrno(err)
 				if ok && (errno == unix.EAGAIN) {
 					goto sAgain
 				}
@@ -544,7 +544,7 @@ func (c *cmdForkproxy) Run(cmd *cobra.Command, args []string) error {
 	rAgain:
 		f, err := netutils.AbstractUnixReceiveFd(forkproxyUDSSockFDNum, netutils.UnixFdsAcceptExact)
 		if err != nil {
-			errno, ok := shared.GetErrno(err)
+			errno, ok := linux.GetErrno(err)
 			if ok && (errno == unix.EAGAIN) {
 				goto rAgain
 			}
@@ -753,7 +753,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 		}
 
 		// keep retrying on EAGAIN
-		errno, ok := shared.GetErrno(er)
+		errno, ok := linux.GetErrno(er)
 		if ok && (errno == unix.EAGAIN) {
 			goto rAgain
 		}
@@ -789,7 +789,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 			}
 
 			// keep retrying on EAGAIN
-			errno, ok := shared.GetErrno(ew)
+			errno, ok := linux.GetErrno(ew)
 			if ok && (errno == unix.EAGAIN) {
 				goto wAgain
 			}
@@ -863,7 +863,7 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 	readAgain:
 		sData, sOob, _, _, err := src.ReadMsgUnix(dataBuf, oobBuf)
 		if err != nil {
-			errno, ok := shared.GetErrno(err)
+			errno, ok := linux.GetErrno(err)
 			if ok && errno == unix.EAGAIN {
 				goto readAgain
 			}
@@ -893,7 +893,7 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 	writeAgain:
 		tData, tOob, err := dst.WriteMsgUnix(dataBuf[:sData], oobBuf[:sOob], nil)
 		if err != nil {
-			errno, ok := shared.GetErrno(err)
+			errno, ok := linux.GetErrno(err)
 			if ok && errno == unix.EAGAIN {
 				goto writeAgain
 			}

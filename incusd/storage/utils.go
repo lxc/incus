@@ -25,11 +25,14 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -44,7 +47,7 @@ func ConfigDiff(oldConfig map[string]string, newConfig map[string]string) ([]str
 				userOnly = false
 			}
 
-			if !shared.ValueInSlice(key, changedConfig) {
+			if !util.ValueInSlice(key, changedConfig) {
 				changedConfig = append(changedConfig, key)
 			}
 		}
@@ -56,7 +59,7 @@ func ConfigDiff(oldConfig map[string]string, newConfig map[string]string) ([]str
 				userOnly = false
 			}
 
-			if !shared.ValueInSlice(key, changedConfig) {
+			if !util.ValueInSlice(key, changedConfig) {
 				changedConfig = append(changedConfig, key)
 			}
 		}
@@ -433,7 +436,7 @@ func poolAndVolumeCommonRules(vol *drivers.Volume) map[string]func(string) error
 		"size": validate.Optional(validate.IsSize),
 		"snapshots.expiry": func(value string) error {
 			// Validate expression
-			_, err := shared.GetExpiry(time.Time{}, value)
+			_, err := internalInstance.GetExpiry(time.Time{}, value)
 			return err
 		},
 		"snapshots.schedule": validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly"})),
@@ -513,6 +516,15 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 	l.Info("Image unpack started")
 	defer l.Info("Image unpack stopped")
 
+	// Check available memory.
+	maxMemory, err := linux.DeviceTotalMemory()
+	if err == nil {
+		// Cap the memory to 10%.
+		maxMemory = maxMemory / 10
+	} else {
+		maxMemory = 0
+	}
+
 	// For all formats, first unpack the metadata (or combined) tarball into destPath.
 	imageRootfsFile := imageFile + ".rootfs"
 	destPath := vol.MountPath()
@@ -522,26 +534,26 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 		rootfsPath := filepath.Join(destPath, "rootfs")
 
 		// Unpack the main image file.
-		err := archive.Unpack(imageFile, destPath, blockBackend, tracker)
+		err := archive.Unpack(imageFile, destPath, blockBackend, maxMemory, tracker)
 		if err != nil {
 			return -1, err
 		}
 
 		// Check for separate root file.
-		if shared.PathExists(imageRootfsFile) {
+		if util.PathExists(imageRootfsFile) {
 			err = os.MkdirAll(rootfsPath, 0755)
 			if err != nil {
 				return -1, fmt.Errorf("Error creating rootfs directory")
 			}
 
-			err = archive.Unpack(imageRootfsFile, rootfsPath, blockBackend, tracker)
+			err = archive.Unpack(imageRootfsFile, rootfsPath, blockBackend, maxMemory, tracker)
 			if err != nil {
 				return -1, err
 			}
 		}
 
 		// Check that the container image unpack has resulted in a rootfs dir.
-		if !shared.PathExists(rootfsPath) {
+		if !util.PathExists(rootfsPath) {
 			return -1, fmt.Errorf("Image is missing a rootfs: %s", imageFile)
 		}
 
@@ -605,7 +617,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 			return -1, err
 		}
 
-		if shared.PathExists(dstPath) {
+		if util.PathExists(dstPath) {
 			volSizeBytes, err := drivers.BlockDiskSizeBytes(dstPath)
 			if err != nil {
 				return -1, fmt.Errorf("Error getting current size of %q: %w", dstPath, err)
@@ -644,7 +656,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 		}
 
 		// Check if we should do parallel unpacking.
-		if shared.IsBlockdevPath(dstPath) {
+		if linux.IsBlockdevPath(dstPath) {
 			cmd = append(cmd, "-W")
 		}
 
@@ -661,9 +673,9 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 
 	var imgSize int64
 
-	if shared.PathExists(imageRootfsFile) {
+	if util.PathExists(imageRootfsFile) {
 		// Unpack the main image file.
-		err := archive.Unpack(imageFile, destPath, blockBackend, tracker)
+		err := archive.Unpack(imageFile, destPath, blockBackend, maxMemory, tracker)
 		if err != nil {
 			return -1, err
 		}
@@ -675,7 +687,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 		}
 	} else {
 		// Dealing with unified tarballs require an initial unpack to a temporary directory.
-		tempDir, err := os.MkdirTemp(shared.VarPath("images"), "incus_image_unpack_")
+		tempDir, err := os.MkdirTemp(internalUtil.VarPath("images"), "incus_image_unpack_")
 		if err != nil {
 			return -1, err
 		}
@@ -683,7 +695,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, blo
 		defer func() { _ = os.RemoveAll(tempDir) }()
 
 		// Unpack the whole image.
-		err = archive.Unpack(imageFile, tempDir, blockBackend, tracker)
+		err = archive.Unpack(imageFile, tempDir, blockBackend, maxMemory, tracker)
 		if err != nil {
 			return -1, err
 		}

@@ -9,8 +9,8 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 var supportedVolumeTypes = []int{db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM, db.StoragePoolVolumeTypeCustom, db.StoragePoolVolumeTypeImage}
@@ -58,7 +58,7 @@ func storagePoolVolumeUpdateUsers(s *state.State, projectName string, oldPoolNam
 	// Update all profiles that are using the volume with a device.
 	err = storagePools.VolumeUsedByProfileDevices(s, oldPoolName, projectName, oldVol, func(profileID int64, profile api.Profile, p api.Project, usedByDevices []string) error {
 		for name, dev := range profile.Devices {
-			if shared.ValueInSlice(name, usedByDevices) {
+			if util.ValueInSlice(name, usedByDevices) {
 				dev["pool"] = newPoolName
 				dev["source"] = newVol.Name
 			}

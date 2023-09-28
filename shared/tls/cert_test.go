@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // A new key pair is generated if none exists and saved to the appropriate files.
@@ -32,11 +32,11 @@ func TestKeyPairAndCA(t *testing.T) {
 		t.Errorf("expected key pair to be non-empty")
 	}
 
-	if !shared.PathExists(filepath.Join(dir, "test.crt")) {
+	if !util.PathExists(filepath.Join(dir, "test.crt")) {
 		t.Errorf("no public key file was saved")
 	}
 
-	if !shared.PathExists(filepath.Join(dir, "test.key")) {
+	if !util.PathExists(filepath.Join(dir, "test.key")) {
 		t.Errorf("no secret key file was saved")
 	}
 

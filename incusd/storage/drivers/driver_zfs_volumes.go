@@ -21,16 +21,17 @@ import (
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -377,7 +378,7 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 	unpackVolume := func(v Volume, r io.ReadSeeker, unpacker []string, srcFile string, target string) error {
 		d.Logger().Debug("Unpacking optimized volume", logger.Ctx{"source": srcFile, "target": target})
 
-		targetPath := fmt.Sprintf("%s/storage-pools/%s", shared.VarPath(""), target)
+		targetPath := fmt.Sprintf("%s/storage-pools/%s", internalUtil.VarPath(""), target)
 		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, targetPath)
 		if err != nil {
 			return err
@@ -610,7 +611,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 		}
 
 		// If zfs.clone_copy is disabled delete the snapshot at the end.
-		if shared.IsFalse(d.config["zfs.clone_copy"]) || len(snapshots) > 0 {
+		if util.IsFalse(d.config["zfs.clone_copy"]) || len(snapshots) > 0 {
 			// Delete the snapshot at the end.
 			defer func() {
 				// Delete snapshot (or mark for deferred deletion if cannot be deleted currently).
@@ -640,7 +641,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 	revert.Add(func() { _ = d.DeleteVolume(vol, op) })
 
 	// If zfs.clone_copy is disabled or source volume has snapshots, then use full copy mode.
-	if shared.IsFalse(d.config["zfs.clone_copy"]) || len(snapshots) > 0 {
+	if util.IsFalse(d.config["zfs.clone_copy"]) || len(snapshots) > 0 {
 		snapName := strings.SplitN(srcSnapshot, "@", 2)[1]
 
 		// Send/receive the snapshot.
@@ -758,7 +759,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 				// Check if expected snapshot.
 				if strings.HasPrefix(entry, "@snapshot-") {
 					name := strings.TrimPrefix(entry, "@snapshot-")
-					if shared.ValueInSlice(name, snapshots) {
+					if util.ValueInSlice(name, snapshots) {
 						continue
 					}
 				}
@@ -867,7 +868,7 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 	// 2) Snapshots shouldn't be copied (--instance-only flag)
 	volumeOnly := len(volTargetArgs.Snapshots) == 0
 
-	if shared.ValueInSlice(migration.ZFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
+	if util.ValueInSlice(migration.ZFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
 		// The source will send all of its snapshots with their respective GUID.
 		buf, err := io.ReadAll(conn)
 		if err != nil {
@@ -881,7 +882,7 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 	}
 
 	// If we're refreshing, send back all snapshots of the target.
-	if volTargetArgs.Refresh && shared.ValueInSlice(migration.ZFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
+	if volTargetArgs.Refresh && util.ValueInSlice(migration.ZFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
 		snapshots, err := vol.Snapshots(op)
 		if err != nil {
 			return fmt.Errorf("Failed getting volume snapshots: %w", err)
@@ -1528,7 +1529,7 @@ func (d *zfs) GetVolumeUsage(vol Volume) (int64, error) {
 	// Snapshots should also use the "used" ZFS property because the snapshot usage size represents the CoW
 	// usage not the size of the snapshot volume.
 	if !vol.IsSnapshot() {
-		if shared.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
+		if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
 			key = "referenced"
 		}
 
@@ -1718,7 +1719,7 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 	// Apply the new quota.
 	quotaKey := "quota"
 	reservationKey := "reservation"
-	if shared.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
+	if util.IsTrue(vol.ExpandedConfig("zfs.use_refquota")) {
 		quotaKey = "refquota"
 		reservationKey = "refreservation"
 	}
@@ -1728,7 +1729,7 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 		return err
 	}
 
-	if shared.IsTrue(vol.ExpandedConfig("zfs.reserve_space")) {
+	if util.IsTrue(vol.ExpandedConfig("zfs.reserve_space")) {
 		err = d.setDatasetProperties(d.dataset(vol, false), fmt.Sprintf("%s=%s", reservationKey, value))
 		if err != nil {
 			return err
@@ -1740,13 +1741,13 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 
 func (d *zfs) getVolumeDiskPathFromDataset(dataset string) (string, error) {
 	// Shortcut for udev.
-	if shared.PathExists(filepath.Join("/dev/zvol", dataset)) {
+	if util.PathExists(filepath.Join("/dev/zvol", dataset)) {
 		return filepath.Join("/dev/zvol", dataset), nil
 	}
 
 	// Locate zvol_id.
 	zvolid := "/lib/udev/zvol_id"
-	if !shared.PathExists(zvolid) {
+	if !util.PathExists(zvolid) {
 		var err error
 
 		zvolid, err = exec.LookPath("zvol_id")
@@ -1976,7 +1977,7 @@ func (d *zfs) deactivateVolume(vol Volume) (bool, error) {
 				return false, err
 			}
 
-			if !shared.PathExists(devPath) {
+			if !util.PathExists(devPath) {
 				d.logger.Debug("Deactivated ZFS volume", logger.Ctx{"volName": vol.name, "dev": dataset})
 				break
 			}
@@ -2269,7 +2270,7 @@ func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 	var srcMigrationHeader *ZFSMetaDataHeader
 
 	// The target will validate the GUIDs and if successful proceed with the refresh.
-	if shared.ValueInSlice(migration.ZFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
+	if util.ValueInSlice(migration.ZFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
 		snapshots, err := d.VolumeSnapshots(vol, op)
 		if err != nil {
 			return err
@@ -2299,14 +2300,14 @@ func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 	}
 
 	// If we haven't negotiated zvol support, ensure volume is not a zvol.
-	if !shared.ValueInSlice(migration.ZFSFeatureZvolFilesystems, volSrcArgs.MigrationType.Features) && d.isBlockBacked(vol) {
+	if !util.ValueInSlice(migration.ZFSFeatureZvolFilesystems, volSrcArgs.MigrationType.Features) && d.isBlockBacked(vol) {
 		return fmt.Errorf("Filesystem zvol detected in source but target does not support receiving zvols")
 	}
 
 	incrementalStream := true
 	var migrationHeader ZFSMetaDataHeader
 
-	if volSrcArgs.Refresh && shared.ValueInSlice(migration.ZFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
+	if volSrcArgs.Refresh && util.ValueInSlice(migration.ZFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
 		buf, err := io.ReadAll(conn)
 		if err != nil {
 			return fmt.Errorf("Failed reading ZFS migration header: %w", err)
@@ -2553,7 +2554,7 @@ func (d *zfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWrit
 		args = append(args, path)
 
 		// Create temporary file to store output of ZFS send.
-		backupsPath := shared.VarPath("backups")
+		backupsPath := internalUtil.VarPath("backups")
 		tmpFile, err := os.CreateTemp(backupsPath, fmt.Sprintf("%s_zfs", backup.WorkingDirPrefix))
 		if err != nil {
 			return fmt.Errorf("Failed to open temporary file for ZFS backup: %w", err)
@@ -3107,7 +3108,7 @@ func (d *zfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 
 	// Check if snapshot removal is allowed.
 	if len(snapshots) > 0 {
-		if shared.IsFalseOrEmpty(vol.ExpandedConfig("zfs.remove_snapshots")) {
+		if util.IsFalseOrEmpty(vol.ExpandedConfig("zfs.remove_snapshots")) {
 			return fmt.Errorf("Snapshot %q cannot be restored due to subsequent snapshot(s). Set zfs.remove_snapshots to override", snapshotName)
 		}
 
@@ -3253,5 +3254,5 @@ func (d *zfs) FillVolumeConfig(vol Volume) error {
 }
 
 func (d *zfs) isBlockBacked(vol Volume) bool {
-	return shared.IsTrue(vol.Config()["zfs.block_mode"])
+	return util.IsTrue(vol.Config()["zfs.block_mode"])
 }

@@ -22,9 +22,11 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/internal/jmap"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -71,7 +73,7 @@ func execPost(d *Daemon, r *http.Request) response.Response {
 		env["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 	}
 
-	if shared.PathExists("/snap/bin") {
+	if util.PathExists("/snap/bin") {
 		env["PATH"] = fmt.Sprintf("%s:/snap/bin", env["PATH"])
 	}
 
@@ -119,7 +121,7 @@ func execPost(d *Daemon, r *http.Request) response.Response {
 	ws.interactive = post.Interactive
 
 	for i := range ws.conns {
-		ws.fds[i], err = shared.RandomCryptoString()
+		ws.fds[i], err = internalUtil.RandomHexString(32)
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -256,7 +258,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 	if s.interactive {
 		ttys = make([]*os.File, 1)
 		ptys = make([]*os.File, 1)
-		ptys[0], ttys[0], err = shared.OpenPty(int64(s.uid), int64(s.gid))
+		ptys[0], ttys[0], err = linux.OpenPty(int64(s.uid), int64(s.gid))
 		if err != nil {
 			return err
 		}
@@ -266,7 +268,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 		stderr = ttys[0]
 
 		if s.width > 0 && s.height > 0 {
-			_ = shared.SetSize(int(ptys[0].Fd()), s.width, s.height)
+			_ = linux.SetPtySize(int(ptys[0].Fd()), s.width, s.height)
 		}
 	} else {
 		ttys = make([]*os.File, 3)
@@ -441,7 +443,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 					continue
 				}
 
-				err = shared.SetSize(int(ptys[0].Fd()), winchWidth, winchHeight)
+				err = linux.SetPtySize(int(ptys[0].Fd()), winchWidth, winchHeight)
 				if err != nil {
 					l.Debug("Failed to set window size", logger.Ctx{"err": err, "width": winchWidth, "height": winchHeight})
 					continue
@@ -503,7 +505,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 		}
 	}
 
-	exitStatus, err := shared.ExitStatus(cmd.Wait())
+	exitStatus, err := linux.ExitStatus(cmd.Wait())
 
 	l.Debug("Instance process stopped", logger.Ctx{"err": err, "exitStatus": exitStatus})
 	return finisher(exitStatus, nil)

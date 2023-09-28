@@ -12,8 +12,8 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdMonitor struct {
@@ -67,7 +67,7 @@ func (c *cmdMonitor) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if !shared.ValueInSlice(c.flagFormat, []string{"json", "pretty", "yaml"}) {
+	if !util.ValueInSlice(c.flagFormat, []string{"json", "pretty", "yaml"}) {
 		return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
 	}
 

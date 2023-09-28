@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/incusd/db/generate/lex"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Return the table name for the given database entity.
@@ -106,7 +106,7 @@ func destFunc(slice string, typ string, fields []*Field) string {
 	declVarNames := make([]string, 0, len(fields))
 	for i, field := range fields {
 		var arg string
-		if shared.IsTrue(field.Config.Get("marshal")) {
+		if util.IsTrue(field.Config.Get("marshal")) {
 			declVarName := fmt.Sprintf("%sStr", lex.Minuscule(field.Name))
 			declVarNames = append(declVarNames, declVarName)
 			declVars[declVarName] = field

@@ -9,8 +9,8 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/resources"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type gpuMIG struct {
@@ -76,7 +76,7 @@ func (d *gpuMIG) validateConfig(instConf instance.ConfigReader) error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *gpuMIG) validateEnvironment() error {
-	if shared.IsFalseOrEmpty(d.inst.ExpandedConfig()["nvidia.runtime"]) {
+	if util.IsFalseOrEmpty(d.inst.ExpandedConfig()["nvidia.runtime"]) {
 		return fmt.Errorf("nvidia.runtime must be set to true for MIG GPUs to work")
 	}
 
@@ -145,7 +145,7 @@ func (d *gpuMIG) Start() (*deviceConfig.RunConfig, error) {
 		gpuID := fields[1]
 
 		if d.config["mig.uuid"] == "" {
-			if !shared.PathExists(fmt.Sprintf("/proc/driver/nvidia/capabilities/gpu%s/mig/gi%s/ci%s/access", gpuID, d.config["mig.gi"], d.config["mig.ci"])) {
+			if !util.PathExists(fmt.Sprintf("/proc/driver/nvidia/capabilities/gpu%s/mig/gi%s/ci%s/access", gpuID, d.config["mig.gi"], d.config["mig.ci"])) {
 				return nil, fmt.Errorf("MIG device gi=%s ci=%s doesn't exist on GPU %s", d.config["mig.gi"], d.config["mig.ci"], gpuID)
 			}
 		}

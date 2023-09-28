@@ -19,7 +19,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/incusd/backup"
-	"github.com/lxc/incus/incusd/revert"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"

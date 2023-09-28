@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/revert"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 )
 

@@ -22,7 +22,7 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	scriptletLoad "github.com/lxc/incus/incusd/scriptlet/load"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -238,7 +238,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 
 	localHTTPSAddress := s.LocalConfig.HTTPSAddress()
 
-	addresses, err := util.ListenAddresses(localHTTPSAddress)
+	addresses, err := localUtil.ListenAddresses(localHTTPSAddress)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -468,7 +468,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	err = util.EtagCheck(r, render)
+	err = localUtil.EtagCheck(r, render)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -527,7 +527,7 @@ func api10Patch(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	err = util.EtagCheck(r, render)
+	err = localUtil.EtagCheck(r, render)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}

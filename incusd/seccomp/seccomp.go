@@ -466,15 +466,16 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/ucred"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/netutils"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 const incusSeccompNotifyMknod = C.INCUS_SECCOMP_NOTIFY_MKNOD
@@ -621,7 +622,7 @@ type Instance interface {
 	InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid int) error
 }
 
-var seccompPath = shared.VarPath("security", "seccomp")
+var seccompPath = internalUtil.VarPath("security", "seccomp")
 
 // ProfilePath returns the seccomp path for the instance.
 func ProfilePath(c Instance) string {
@@ -661,7 +662,7 @@ func InstanceNeedsPolicy(c Instance) bool {
 	}
 
 	for _, k := range keys {
-		if shared.IsTrue(config[k]) {
+		if util.IsTrue(config[k]) {
 			return true
 		}
 	}
@@ -672,7 +673,7 @@ func InstanceNeedsPolicy(c Instance) bool {
 		value, ok = config["security.syscalls.blacklist_default"]
 	}
 
-	if !ok || shared.IsTrue(value) {
+	if !ok || util.IsTrue(value) {
 		return true
 	}
 
@@ -704,7 +705,7 @@ func InstanceNeedsIntercept(s *state.State, c Instance) (bool, error) {
 
 	needed := false
 	for key, check := range keys {
-		if shared.IsFalseOrEmpty(config[key]) {
+		if util.IsFalseOrEmpty(config[key]) {
 			continue
 		}
 
@@ -769,7 +770,7 @@ func seccompGetPolicyContent(s *state.State, c Instance) (string, error) {
 			defaultFlag, ok = config["security.syscalls.blacklist_default"]
 		}
 
-		if !ok || shared.IsTrue(defaultFlag) {
+		if !ok || util.IsTrue(defaultFlag) {
 			policy += defaultSeccompPolicy
 		}
 	}
@@ -785,23 +786,23 @@ func seccompGetPolicyContent(s *state.State, c Instance) (string, error) {
 		// supervision.
 		policy += seccompNotifyDisallow
 
-		if shared.IsTrue(config["security.syscalls.intercept.mknod"]) {
+		if util.IsTrue(config["security.syscalls.intercept.mknod"]) {
 			policy += seccompNotifyMknod
 		}
 
-		if shared.IsTrue(config["security.syscalls.intercept.sched_setscheduler"]) {
+		if util.IsTrue(config["security.syscalls.intercept.sched_setscheduler"]) {
 			policy += seccompNotifySchedSetscheduler
 		}
 
-		if shared.IsTrue(config["security.syscalls.intercept.setxattr"]) {
+		if util.IsTrue(config["security.syscalls.intercept.setxattr"]) {
 			policy += seccompNotifySetxattr
 		}
 
-		if shared.IsTrue(config["security.syscalls.intercept.sysinfo"]) {
+		if util.IsTrue(config["security.syscalls.intercept.sysinfo"]) {
 			policy += seccompNotifySysinfo
 		}
 
-		if shared.IsTrue(config["security.syscalls.intercept.mount"]) {
+		if util.IsTrue(config["security.syscalls.intercept.mount"]) {
 			policy += seccompNotifyMount
 			// We block the new mount api for now to simplify mount
 			// syscall interception. Since it keeps state over
@@ -810,7 +811,7 @@ func seccompGetPolicyContent(s *state.State, c Instance) (string, error) {
 			policy += seccompBlockNewMountAPI
 		}
 
-		if shared.IsTrue(config["security.syscalls.intercept.bpf"]) {
+		if util.IsTrue(config["security.syscalls.intercept.bpf"]) {
 			policy += seccompNotifyBpf
 		}
 	}
@@ -825,7 +826,7 @@ func seccompGetPolicyContent(s *state.State, c Instance) (string, error) {
 		compat = config["security.syscalls.blacklist_compat"]
 	}
 
-	if shared.IsTrue(compat) {
+	if util.IsTrue(compat) {
 		arch, err := osarch.ArchitectureName(c.Architecture())
 		if err != nil {
 			return "", err
@@ -1042,7 +1043,7 @@ func NewSeccompServer(s *state.State, path string, findPID func(pid int32, state
 	}
 
 	// Cleanup existing sockets
-	if shared.PathExists(path) {
+	if util.PathExists(path) {
 		err := os.Remove(path)
 		if err != nil {
 			return nil, err
@@ -1247,7 +1248,7 @@ func CallForkmknod(c Instance, dev deviceConfig.Device, requestPID int, s *state
 		context.TODO(),
 		nil,
 		[]*os.File{pidFd},
-		util.GetExecPath(),
+		localUtil.GetExecPath(),
 		"forksyscall",
 		"mknod",
 		dev["pid"],
@@ -1555,7 +1556,7 @@ func (s *Server) HandleSetxattrSyscall(c Instance, siov *Iovec) int {
 		context.TODO(),
 		nil,
 		[]*os.File{pidFd},
-		util.GetExecPath(),
+		localUtil.GetExecPath(),
 		"forksyscall",
 		"setxattr",
 		fmt.Sprintf("%d", args.pid),
@@ -1707,7 +1708,7 @@ func (s *Server) HandleSchedSetschedulerSyscall(c Instance, siov *Iovec) int {
 		context.TODO(),
 		nil,
 		[]*os.File{pidFd},
-		util.GetExecPath(),
+		localUtil.GetExecPath(),
 		"forksyscall",
 		"sched_setscheduler",
 		fmt.Sprintf("%d", args.pidCaller),
@@ -2186,7 +2187,7 @@ func (s *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 			context.TODO(),
 			nil,
 			[]*os.File{pidFd},
-			util.GetExecPath(),
+			localUtil.GetExecPath(),
 			"forksyscall",
 			"mount",
 			fmt.Sprintf("%d", args.pid),
@@ -2204,7 +2205,7 @@ func (s *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 			context.TODO(),
 			nil,
 			[]*os.File{pidFd},
-			util.GetExecPath(),
+			localUtil.GetExecPath(),
 			"forksyscall",
 			"mount",
 			fmt.Sprintf("%d", args.pid),
@@ -2251,7 +2252,7 @@ func (s *Server) HandleBpfSyscall(c Instance, siov *Iovec) int {
 	defer logger.Debug("Handling bpf syscall", ctx)
 	var bpfCmd, bpfProgType, bpfAttachType C.int
 
-	if shared.IsFalseOrEmpty(c.ExpandedConfig()["security.syscalls.intercept.bpf.devices"]) {
+	if util.IsFalseOrEmpty(c.ExpandedConfig()["security.syscalls.intercept.bpf.devices"]) {
 		ctx["syscall_continue"] = "true"
 		ctx["syscall_handler_reason"] = "No bpf policy specified"
 		C.seccomp_notify_update_response(siov.resp, 0, C.uint32_t(seccompUserNotifFlagContinue))
@@ -2393,7 +2394,7 @@ func lxcSupportSeccompNotify(state *state.State) error {
 		return fmt.Errorf("Failed to load seccomp notify test container")
 	}
 
-	err = c.SetConfigItem("lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", shared.VarPath("seccomp.socket")))
+	err = c.SetConfigItem("lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", internalUtil.VarPath("seccomp.socket")))
 	if err != nil {
 		return fmt.Errorf("LXC doesn't support notify proxy: %w", err)
 	}
@@ -2406,7 +2407,7 @@ func lxcSupportSeccompNotify(state *state.State) error {
 func MountSyscallFilter(config map[string]string) []string {
 	fs := []string{}
 
-	if shared.IsFalseOrEmpty(config["security.syscalls.intercept.mount"]) {
+	if util.IsFalseOrEmpty(config["security.syscalls.intercept.mount"]) {
 		return fs
 	}
 
@@ -2420,7 +2421,7 @@ func MountSyscallFilter(config map[string]string) []string {
 
 // SyscallInterceptMountFilter creates a new mount syscall interception filter
 func SyscallInterceptMountFilter(config map[string]string) (map[string]string, error) {
-	if shared.IsFalseOrEmpty(config["security.syscalls.intercept.mount"]) {
+	if util.IsFalseOrEmpty(config["security.syscalls.intercept.mount"]) {
 		return map[string]string{}, nil
 	}
 
@@ -2470,7 +2471,7 @@ func (s *Server) MountSyscallValid(c Instance, args *MountArgs) (bool, string) {
 
 // MountSyscallShift checks whether this mount syscall needs shifting.
 func (s *Server) MountSyscallShift(c Instance, path string) idmap.IdmapStorageType {
-	if shared.IsTrue(c.ExpandedConfig()["security.syscalls.intercept.mount.shift"]) {
+	if util.IsTrue(c.ExpandedConfig()["security.syscalls.intercept.mount.shift"]) {
 		diskIdmap, err := c.DiskIdmap()
 		if err != nil {
 			return idmap.IdmapStorageNone

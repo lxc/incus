@@ -10,7 +10,7 @@ import (
 
 	"github.com/lxc/incus/incusd/db/node"
 	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 func TestUpdateFromV38_RaftNodes(t *testing.T) {
@@ -60,7 +60,7 @@ func TestUpdateFromV36_DropTables(t *testing.T) {
 	}
 
 	for _, name := range deleted {
-		assert.False(t, shared.ValueInSlice(name, current))
+		assert.False(t, util.ValueInSlice(name, current))
 	}
 }
 

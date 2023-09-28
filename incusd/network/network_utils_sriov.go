@@ -19,10 +19,10 @@ import (
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/network/openvswitch"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // sriovReservedDevicesMutex used to coordinate access for checking reserved devices.
@@ -110,7 +110,7 @@ func SRIOVFindFreeVirtualFunction(s *state.State, parentDev string) (string, int
 	sriovTotalVFsFile := fmt.Sprintf("/sys/class/net/%s/device/sriov_totalvfs", parentDev)
 
 	// Verify that this is indeed a SR-IOV enabled device.
-	if !shared.PathExists(sriovNumVFsFile) {
+	if !util.PathExists(sriovNumVFsFile) {
 		return "", -1, fmt.Errorf("Parent device %q doesn't support SR-IOV", parentDev)
 	}
 
@@ -197,7 +197,7 @@ func sriovGetFreeVFInterface(reservedDevices map[string]struct{}, parentDev stri
 	for vfID := startVFID; vfID < vfCount; vfID++ {
 		vfListPath := fmt.Sprintf("/sys/class/net/%s/device/virtfn%d/net", parentDev, vfID)
 
-		if !shared.PathExists(vfListPath) {
+		if !util.PathExists(vfListPath) {
 			continue // The vfListPath won't exist if the VF has been unbound and used with a VM.
 		}
 

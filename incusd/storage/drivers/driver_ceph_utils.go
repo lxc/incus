@@ -16,12 +16,12 @@ import (
 
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // cephBlockVolSuffix suffix used for block content type volumes.
@@ -105,7 +105,7 @@ func (d *ceph) rbdCreateVolume(vol Volume, size string) error {
 	}
 
 	if d.config["ceph.rbd.features"] != "" {
-		for _, feature := range shared.SplitNTrimSpace(d.config["ceph.rbd.features"], ",", -1, true) {
+		for _, feature := range util.SplitNTrimSpace(d.config["ceph.rbd.features"], ",", -1, true) {
 			cmd = append(cmd, "--image-feature", feature)
 		}
 	} else {
@@ -349,7 +349,7 @@ func (d *ceph) rbdCreateClone(sourceVol Volume, sourceSnapshotName string, targe
 	}
 
 	if d.config["ceph.rbd.features"] != "" {
-		for _, feature := range shared.SplitNTrimSpace(d.config["ceph.rbd.features"], ",", -1, true) {
+		for _, feature := range util.SplitNTrimSpace(d.config["ceph.rbd.features"], ",", -1, true) {
 			cmd = append(cmd, "--image-feature", feature)
 		}
 	} else {
@@ -1052,7 +1052,7 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 			if len(rbdNameParts) == 2 && rbdNameParts[1] == devSnapName {
 				return false, fmt.Sprintf("/dev/rbd%d", idx), nil // We found a match.
 			}
-		} else if shared.ValueInSlice(devSnapName, []string{"-", ""}) {
+		} else if util.ValueInSlice(devSnapName, []string{"-", ""}) {
 			// Volume is not a snapshot and neither is this device.
 			return false, fmt.Sprintf("/dev/rbd%d", idx), nil // We found a match.
 		}

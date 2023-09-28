@@ -10,18 +10,18 @@ import (
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Quick checks.
-	if c.flagStorageBackend != "" && !shared.ValueInSlice(c.flagStorageBackend, []string{"dir", "btrfs", "lvm", "zfs"}) {
+	if c.flagStorageBackend != "" && !util.ValueInSlice(c.flagStorageBackend, []string{"dir", "btrfs", "lvm", "zfs"}) {
 		return nil, fmt.Errorf("The requested backend '%s' isn't supported by init", c.flagStorageBackend)
 	}
 
-	if c.flagStorageBackend != "" && !shared.ValueInSlice(c.flagStorageBackend, linux.AvailableStorageDrivers(server.Environment.StorageSupportedDrivers, util.PoolTypeAny)) {
+	if c.flagStorageBackend != "" && !util.ValueInSlice(c.flagStorageBackend, linux.AvailableStorageDrivers(internalUtil.VarPath(), server.Environment.StorageSupportedDrivers, internalUtil.PoolTypeAny)) {
 		return nil, fmt.Errorf("The requested backend '%s' isn't available on your system (missing tools)", c.flagStorageBackend)
 	}
 
@@ -65,7 +65,7 @@ func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.Instan
 
 	// Network listening
 	if c.flagNetworkAddress != "" {
-		config.Config["core.https_address"] = util.CanonicalNetworkAddressFromAddressAndPort(c.flagNetworkAddress, c.flagNetworkPort, ports.HTTPSDefaultPort)
+		config.Config["core.https_address"] = internalUtil.CanonicalNetworkAddressFromAddressAndPort(c.flagNetworkAddress, c.flagNetworkPort, ports.HTTPSDefaultPort)
 	}
 
 	// Storage configuration
@@ -139,7 +139,7 @@ func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.Instan
 		// Find a new name
 		idx := 0
 		for {
-			if shared.PathExists(fmt.Sprintf("/sys/class/net/incusbr%d", idx)) {
+			if util.PathExists(fmt.Sprintf("/sys/class/net/incusbr%d", idx)) {
 				idx++
 				continue
 			}

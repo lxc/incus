@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -35,7 +35,7 @@ func EnsureSchema(db *sql.DB, dir string) (int, error) {
 		if !backupDone {
 			logger.Infof("Updating the database schema. Backup made as \"local.db.bak\"")
 			path := filepath.Join(dir, "local.db")
-			err := shared.FileCopy(path, path+".bak")
+			err := internalUtil.FileCopy(path, path+".bak")
 			if err != nil {
 				return err
 			}

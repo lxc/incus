@@ -12,13 +12,13 @@ import (
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 type common struct {
@@ -196,7 +196,7 @@ func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnaps
 
 	// Do not pass compression argument to rsync if the associated
 	// config key, that is rsync.compression, is set to false.
-	if shared.IsFalse(d.Config()["rsync.compression"]) {
+	if util.IsFalse(d.Config()["rsync.compression"]) {
 		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
 	} else {
 		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}
@@ -480,7 +480,7 @@ func (d *common) ValidateBucketKey(keyName string, creds S3Credentials, roleName
 	}
 
 	validRoles := []string{"admin", "read-only"}
-	if !shared.ValueInSlice(roleName, validRoles) {
+	if !util.ValueInSlice(roleName, validRoles) {
 		return fmt.Errorf("Invalid key role")
 	}
 

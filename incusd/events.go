@@ -14,9 +14,9 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -45,7 +45,7 @@ func (r *eventsServe) String() string {
 func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error {
 	// Detect project mode.
 	projectName := queryParam(r, "project")
-	allProjects := shared.IsTrue(queryParam(r, "all-projects"))
+	allProjects := util.IsTrue(queryParam(r, "all-projects"))
 
 	if allProjects && projectName != "" {
 		return api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects")
@@ -64,7 +64,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 	if len(types) == 1 && types[0] == "" {
 		types = []string{}
 		for _, entry := range eventTypes {
-			if !auth.UserIsAdmin(r) && shared.ValueInSlice(entry, privilegedEventTypes) {
+			if !auth.UserIsAdmin(r) && util.ValueInSlice(entry, privilegedEventTypes) {
 				continue
 			}
 
@@ -74,12 +74,12 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 
 	// Validate event types.
 	for _, entry := range types {
-		if !shared.ValueInSlice(entry, eventTypes) {
+		if !util.ValueInSlice(entry, eventTypes) {
 			return api.StatusErrorf(http.StatusBadRequest, "%q isn't a supported event type", entry)
 		}
 	}
 
-	if shared.ValueInSlice(api.EventTypeLogging, types) && !auth.UserIsAdmin(r) {
+	if util.ValueInSlice(api.EventTypeLogging, types) && !auth.UserIsAdmin(r) {
 		return api.StatusErrorf(http.StatusForbidden, "Forbidden")
 	}
 

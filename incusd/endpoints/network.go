@@ -9,10 +9,10 @@ import (
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // NetworkPublicKey returns the public key of the TLS certificate used by the
@@ -59,7 +59,7 @@ func (e *Endpoints) NetworkAddress() string {
 // it down and restarting it.
 func (e *Endpoints) NetworkUpdateAddress(address string) error {
 	if address != "" {
-		address = util.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
+		address = internalUtil.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
 	}
 
 	oldAddress := e.NetworkAddress()
@@ -84,7 +84,7 @@ func (e *Endpoints) NetworkUpdateAddress(address string) error {
 
 	// If the new address covers the cluster one, turn off the cluster
 	// listener.
-	if clusterAddress != "" && util.IsAddressCovered(clusterAddress, address) {
+	if clusterAddress != "" && internalUtil.IsAddressCovered(clusterAddress, address) {
 		_ = e.closeListener(cluster)
 	}
 
@@ -151,7 +151,7 @@ func (e *Endpoints) NetworkUpdateCert(cert *localtls.CertInfo) {
 // NetworkUpdateTrustedProxy updates the https trusted proxy used by the network endpoint.
 func (e *Endpoints) NetworkUpdateTrustedProxy(trustedProxy string) {
 	var proxies []net.IP
-	for _, p := range shared.SplitNTrimSpace(trustedProxy, ",", -1, true) {
+	for _, p := range util.SplitNTrimSpace(trustedProxy, ",", -1, true) {
 		proxyIP := net.ParseIP(p)
 		if proxyIP == nil {
 			continue
@@ -183,7 +183,7 @@ func networkCreateListener(address string, cert *localtls.CertInfo) (net.Listene
 	// Listening on `tcp` network with address 0.0.0.0 will end up with listening
 	// on both IPv4 and IPv6 interfaces. Pass `tcp4` to make it
 	// work only on 0.0.0.0. https://go-review.googlesource.com/c/go/+/45771/
-	listenAddress := util.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
+	listenAddress := internalUtil.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
 	protocol := "tcp"
 
 	if strings.HasPrefix(listenAddress, "0.0.0.0") {

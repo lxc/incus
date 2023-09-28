@@ -11,7 +11,7 @@ import (
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 type infinibandPhysical struct {
@@ -50,7 +50,7 @@ func (d *infinibandPhysical) validateEnvironment() error {
 		return fmt.Errorf("Requires name property to start")
 	}
 
-	if !shared.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
+	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["parent"])) {
 		return fmt.Errorf("Parent device '%s' doesn't exist", d.config["parent"])
 	}
 

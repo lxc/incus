@@ -18,9 +18,9 @@ import (
 	"github.com/lxc/incus/incusd/locking"
 	"github.com/lxc/incus/incusd/metrics"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 type metricsCacheEntry struct {
@@ -274,7 +274,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	for _, project := range projectsToFetch {
-		if shared.ValueInSlice(*project.Project, updatedProjects) {
+		if util.ValueInSlice(*project.Project, updatedProjects) {
 			continue
 		}
 

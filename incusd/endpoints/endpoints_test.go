@@ -17,10 +17,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/lxc/incus/incusd/endpoints"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/shared/api"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Return a new unstarted Endpoints instance, a Config with stub rest/devIncus
@@ -51,7 +51,7 @@ func newEndpoints(t *testing.T) (*endpoints.Endpoints, *endpoints.Config, func()
 		// that detects socket activation.
 		runtime.GC()
 
-		if shared.PathExists(dir) {
+		if util.PathExists(dir) {
 			require.NoError(t, os.RemoveAll(dir))
 		}
 	}
@@ -85,7 +85,7 @@ func newServer() *http.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/1.0/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_ = util.WriteJSON(w, api.ResponseRaw{}, nil)
+		_ = localUtil.WriteJSON(w, api.ResponseRaw{}, nil)
 	})
 	return &http.Server{Handler: mux, ErrorLog: log.New(io.Discard, "", 0)}
 }

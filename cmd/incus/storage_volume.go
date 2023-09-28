@@ -17,11 +17,12 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/termios"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 type volumeColumn struct {
@@ -131,7 +132,7 @@ func (c *cmdStorageVolume) parseVolume(defaultType string, name string) (string,
 	fields := strings.SplitN(name, "/", 2)
 	if len(fields) == 1 {
 		return fields[0], defaultType
-	} else if len(fields) == 2 && !shared.ValueInSlice(fields[0], []string{"custom", "image", "container", "virtual-machine"}) {
+	} else if len(fields) == 2 && !util.ValueInSlice(fields[0], []string{"custom", "image", "container", "virtual-machine"}) {
 		return name, defaultType
 	}
 
@@ -952,7 +953,7 @@ func (c *cmdStorageVolumeEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -976,7 +977,7 @@ func (c *cmdStorageVolumeEdit) Run(cmd *cobra.Command, args []string) error {
 					return err
 				}
 
-				content, err = shared.TextEditor("", content)
+				content, err = textEditor("", content)
 				if err != nil {
 					return err
 				}
@@ -1008,7 +1009,7 @@ func (c *cmdStorageVolumeEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -1264,7 +1265,7 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if shared.TimeIsSet(vol.CreatedAt) {
+	if vol.CreatedAt.Unix() != 0 {
 		fmt.Printf(i18n.G("Created: %s")+"\n", vol.CreatedAt.Local().Format(layout))
 	}
 
@@ -1280,7 +1281,7 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 
 			var row []string
 
-			fields := strings.Split(snap.Name, shared.SnapshotDelimiter)
+			fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
 			row = append(row, fields[len(fields)-1])
 			row = append(row, snap.Description)
 
@@ -1317,13 +1318,13 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 			var row []string
 			row = append(row, backup.Name)
 
-			if shared.TimeIsSet(backup.CreatedAt) {
+			if backup.CreatedAt.Unix() != 0 {
 				row = append(row, backup.CreatedAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
 			}
 
-			if shared.TimeIsSet(backup.ExpiresAt) {
+			if backup.ExpiresAt.Unix() != 0 {
 				row = append(row, backup.ExpiresAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
@@ -1451,7 +1452,7 @@ func (c *cmdStorageVolumeList) Run(cmd *cobra.Command, args []string) error {
 	for _, vol := range volumes {
 		row := []string{}
 		for _, column := range columns {
-			if column.NeedsState && !shared.IsSnapshot(vol.Name) && vol.Type != "image" {
+			if column.NeedsState && !instance.IsSnapshot(vol.Name) && vol.Type != "image" {
 				state, err := resource.server.GetStoragePoolVolumeState(resource.name, vol.Type, vol.Name)
 				if err != nil {
 					return err
@@ -1531,7 +1532,7 @@ func (c *cmdStorageVolumeList) parseColumns(clustered bool) ([]volumeColumn, err
 }
 
 func (c *cmdStorageVolumeList) typeColumnData(vol api.StorageVolume, state api.StorageVolumeState) string {
-	if shared.IsSnapshot(vol.Name) {
+	if instance.IsSnapshot(vol.Name) {
 		return fmt.Sprintf("%s (snapshot)", vol.Type)
 	}
 
@@ -2251,16 +2252,16 @@ func (c *cmdStorageVolumeSnapshotList) listSnapshots(d incus.InstanceServer, poo
 	for _, snap := range snapshots {
 		var row []string
 
-		fields := strings.Split(snap.Name, shared.SnapshotDelimiter)
+		fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
 		row = append(row, fields[len(fields)-1])
 
-		if shared.TimeIsSet(snap.CreatedAt) {
+		if snap.CreatedAt.Unix() != 0 {
 			row = append(row, snap.CreatedAt.Local().Format(layout))
 		} else {
 			row = append(row, " ")
 		}
 
-		if snap.ExpiresAt != nil && shared.TimeIsSet(*snap.ExpiresAt) {
+		if snap.ExpiresAt != nil && snap.ExpiresAt.Unix() != 0 {
 			row = append(row, snap.ExpiresAt.Local().Format(layout))
 		} else {
 			row = append(row, " ")
@@ -2728,7 +2729,7 @@ func (c *cmdStorageVolumeImport) Run(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		// Validate type flag
-		if !shared.ValueInSlice(c.flagType, []string{"backup", "iso"}) {
+		if !util.ValueInSlice(c.flagType, []string{"backup", "iso"}) {
 			return fmt.Errorf("Import type needs to be \"backup\" or \"iso\"")
 		}
 	}

@@ -6,9 +6,9 @@ import (
 	"github.com/miekg/dns"
 
 	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/util"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -48,7 +48,7 @@ func (s *Server) Start(address string) error {
 
 func (s *Server) start(address string) error {
 	// Set default port if needed.
-	address = util.CanonicalNetworkAddress(address, ports.DNSDefaultPort)
+	address = internalUtil.CanonicalNetworkAddress(address, ports.DNSDefaultPort)
 
 	// Setup the handler.
 	handler := dnsHandler{}

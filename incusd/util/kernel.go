@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // SupportsFilesystem checks whether a given filesystem is already supported
@@ -59,7 +59,7 @@ func HugepagesPath() (string, error) {
 	}
 
 	if len(matches) > 1 {
-		if shared.ValueInSlice("/dev/hugepages", matches) {
+		if util.ValueInSlice("/dev/hugepages", matches) {
 			return "/dev/hugepages", nil
 		}
 

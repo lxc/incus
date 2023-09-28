@@ -12,10 +12,10 @@ import (
 	"sync"
 
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // iptablesChainNICFilterPrefix chain prefix used for NIC specific filtering rules.
@@ -593,7 +593,7 @@ func (d Xtables) aclRuleCriteriaToArgs(networkName string, ipVersion uint, rule 
 
 	// Add subject filters.
 	if rule.Source != "" {
-		matchArgs, err := d.aclRuleSubjectToACLMatch("source", ipVersion, shared.SplitNTrimSpace(rule.Source, ",", -1, false)...)
+		matchArgs, err := d.aclRuleSubjectToACLMatch("source", ipVersion, util.SplitNTrimSpace(rule.Source, ",", -1, false)...)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -606,7 +606,7 @@ func (d Xtables) aclRuleCriteriaToArgs(networkName string, ipVersion uint, rule 
 	}
 
 	if rule.Destination != "" {
-		matchArgs, err := d.aclRuleSubjectToACLMatch("destination", ipVersion, shared.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
+		matchArgs, err := d.aclRuleSubjectToACLMatch("destination", ipVersion, util.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -619,17 +619,17 @@ func (d Xtables) aclRuleCriteriaToArgs(networkName string, ipVersion uint, rule 
 	}
 
 	// Add protocol filters.
-	if shared.ValueInSlice(rule.Protocol, []string{"tcp", "udp"}) {
+	if util.ValueInSlice(rule.Protocol, []string{"tcp", "udp"}) {
 		args = append(args, "-p", rule.Protocol)
 
 		if rule.SourcePort != "" {
-			args = append(args, d.aclRulePortToACLMatch("sports", shared.SplitNTrimSpace(rule.SourcePort, ",", -1, false)...)...)
+			args = append(args, d.aclRulePortToACLMatch("sports", util.SplitNTrimSpace(rule.SourcePort, ",", -1, false)...)...)
 		}
 
 		if rule.DestinationPort != "" {
-			args = append(args, d.aclRulePortToACLMatch("dports", shared.SplitNTrimSpace(rule.DestinationPort, ",", -1, false)...)...)
+			args = append(args, d.aclRulePortToACLMatch("dports", util.SplitNTrimSpace(rule.DestinationPort, ",", -1, false)...)...)
 		}
-	} else if shared.ValueInSlice(rule.Protocol, []string{"icmp4", "icmp6"}) {
+	} else if util.ValueInSlice(rule.Protocol, []string{"icmp4", "icmp6"}) {
 		var icmpIPVersion uint
 		var protoName string
 		var extName string
@@ -1262,7 +1262,7 @@ func (d Xtables) iptablesClear(ipVersion uint, comments []string, fromTables ...
 	}
 
 	// Detect kernels that lack IPv6 support.
-	if !shared.PathExists("/proc/sys/net/ipv6") && ipVersion == 6 {
+	if !util.PathExists("/proc/sys/net/ipv6") && ipVersion == 6 {
 		return nil
 	}
 
@@ -1288,7 +1288,7 @@ func (d Xtables) iptablesClear(ipVersion uint, comments []string, fromTables ...
 	}
 
 	for _, fromTable := range fromTables {
-		if tables != nil && !shared.ValueInSlice(fromTable, tables) {
+		if tables != nil && !util.ValueInSlice(fromTable, tables) {
 			// If we successfully opened the tables file, and the requested table is not present,
 			// then skip trying to get a list of rules from that table.
 			continue
@@ -1342,7 +1342,7 @@ func (d Xtables) InstanceSetupRPFilter(projectName string, instanceName string, 
 	}
 
 	// IPv6 filter if IPv6 is enabled.
-	if shared.PathExists("/proc/sys/net/ipv6") {
+	if util.PathExists("/proc/sys/net/ipv6") {
 		err = d.iptablesPrepend(6, comment, "raw", "PREROUTING", args...)
 		if err != nil {
 			return err
@@ -1393,7 +1393,7 @@ func (d Xtables) iptablesChainExists(ipVersion uint, table string, chain string)
 		return false, false, nil
 	}
 
-	for _, rule := range shared.SplitNTrimSpace(strings.TrimSpace(rules), "\n", -1, true) {
+	for _, rule := range util.SplitNTrimSpace(strings.TrimSpace(rules), "\n", -1, true) {
 		if strings.HasPrefix(rule, "-A") {
 			return true, true, nil
 		}

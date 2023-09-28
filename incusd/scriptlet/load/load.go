@@ -6,7 +6,7 @@ import (
 
 	"go.starlark.net/starlark"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // nameInstancePlacement is the name used in Starlark for the instance placement scriptlet.
@@ -15,7 +15,7 @@ const nameInstancePlacement = "instance_placement"
 // InstancePlacementCompile compiles the instance placement scriptlet.
 func InstancePlacementCompile(src string) (*starlark.Program, error) {
 	isPreDeclared := func(name string) bool {
-		return shared.ValueInSlice(name, []string{
+		return util.ValueInSlice(name, []string{
 			"log_info",
 			"log_warn",
 			"log_error",

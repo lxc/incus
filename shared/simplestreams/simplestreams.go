@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -12,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 )
 
 var urlDefaultOS = map[string]string{
@@ -66,7 +67,7 @@ func (s *SimpleStreams) readCache(path string) ([]byte, bool) {
 		return nil, false
 	}
 
-	if !shared.PathExists(cacheName) {
+	if !util.PathExists(cacheName) {
 		return nil, false
 	}
 
@@ -98,7 +99,7 @@ func (s *SimpleStreams) cachedDownload(path string) ([]byte, error) {
 	}
 
 	// Download from the source
-	uri, err := shared.JoinUrls(s.url, path)
+	uri, err := url.JoinPath(s.url, path)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func (s *SimpleStreams) parseStream() (*Stream, error) {
 		return nil, err
 	}
 
-	pathURL, _ := shared.JoinUrls(s.url, path)
+	pathURL, _ := url.JoinPath(s.url, path)
 
 	// Parse the idnex
 	stream := Stream{}

@@ -16,9 +16,9 @@ import (
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/incusd/warnings"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Simple cache used to store the activated drivers on this server.
@@ -178,7 +178,7 @@ func storagePoolDriversCacheUpdate(s *state.State) {
 			Remote:  entry.Remote,
 		})
 
-		if shared.ValueInSlice(entry.Name, drivers) {
+		if util.ValueInSlice(entry.Name, drivers) {
 			usedDrivers[entry.Name] = entry.Version
 		}
 	}

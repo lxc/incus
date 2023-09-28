@@ -19,9 +19,9 @@ import (
 	"github.com/grafana/dskit/backoff"
 	"github.com/sirupsen/logrus"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // This is a modified version of https://github.com/grafana/loki/blob/v1.6.1/pkg/promtail/client/.
@@ -229,7 +229,7 @@ func (c *Client) Stop() {
 
 // HandleEvent handles the event received from the internal event listener.
 func (c *Client) HandleEvent(event api.Event) {
-	if !shared.ValueInSlice(event.Type, c.cfg.types) {
+	if !util.ValueInSlice(event.Type, c.cfg.types) {
 		return
 	}
 
@@ -271,7 +271,7 @@ func (c *Client) HandleEvent(event api.Event) {
 
 		// Add key-value pairs as labels but don't override any labels.
 		for k, v := range context {
-			if shared.ValueInSlice(k, c.cfg.labels) {
+			if util.ValueInSlice(k, c.cfg.labels) {
 				_, ok := entry.labels[k]
 				if !ok {
 					entry.labels[k] = v
@@ -322,7 +322,7 @@ func (c *Client) HandleEvent(event api.Event) {
 
 		// Add key-value pairs as labels but don't override any labels.
 		for k, v := range context {
-			if shared.ValueInSlice(k, c.cfg.labels) {
+			if util.ValueInSlice(k, c.cfg.labels) {
 				_, ok := entry.labels[k]
 				if !ok {
 					entry.labels[k] = v

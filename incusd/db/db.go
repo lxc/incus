@@ -19,7 +19,7 @@ import (
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/node"
 	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -429,7 +429,7 @@ func TxCommit(tx *sql.Tx) error {
 
 // DqliteLatestSegment returns the latest segment ID in the global database.
 func DqliteLatestSegment() (string, error) {
-	dir := shared.VarPath("database", "global")
+	dir := internalUtil.VarPath("database", "global")
 	file, err := os.Open(dir)
 	if err != nil {
 		return "", fmt.Errorf("Unable to open directory %s with error %v", dir, err)

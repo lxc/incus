@@ -15,11 +15,13 @@ import (
 
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/idmap"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // MinBlockBoundary minimum block boundary size to use.
@@ -202,7 +204,7 @@ func TryUnmount(path string, flags int) error {
 func tryExists(path string) bool {
 	// Attempt 20 checks over 10s
 	for i := 0; i < 20; i++ {
-		if shared.PathExists(path) {
+		if util.PathExists(path) {
 			return true
 		}
 
@@ -235,28 +237,28 @@ func fsProbe(path string) (string, error) {
 // GetPoolMountPath returns the mountpoint of the given pool.
 // {INCUS_DIR}/storage-pools/<pool>.
 func GetPoolMountPath(poolName string) string {
-	return shared.VarPath("storage-pools", poolName)
+	return internalUtil.VarPath("storage-pools", poolName)
 }
 
 // GetVolumeMountPath returns the mount path for a specific volume based on its pool and type and
 // whether it is a snapshot or not. For VolumeTypeImage the volName is the image fingerprint.
 func GetVolumeMountPath(poolName string, volType VolumeType, volName string) string {
-	if shared.IsSnapshot(volName) {
-		return shared.VarPath("storage-pools", poolName, fmt.Sprintf("%s-snapshots", string(volType)), volName)
+	if internalInstance.IsSnapshot(volName) {
+		return internalUtil.VarPath("storage-pools", poolName, fmt.Sprintf("%s-snapshots", string(volType)), volName)
 	}
 
-	return shared.VarPath("storage-pools", poolName, string(volType), volName)
+	return internalUtil.VarPath("storage-pools", poolName, string(volType), volName)
 }
 
 // GetVolumeSnapshotDir gets the snapshot mount directory for the parent volume.
 func GetVolumeSnapshotDir(poolName string, volType VolumeType, volName string) string {
 	parent, _, _ := api.GetParentAndSnapshotName(volName)
-	return shared.VarPath("storage-pools", poolName, fmt.Sprintf("%s-snapshots", string(volType)), parent)
+	return internalUtil.VarPath("storage-pools", poolName, fmt.Sprintf("%s-snapshots", string(volType)), parent)
 }
 
 // GetSnapshotVolumeName returns the full volume name for a parent volume and snapshot name.
 func GetSnapshotVolumeName(parentName, snapshotName string) string {
-	return fmt.Sprintf("%s%s%s", parentName, shared.SnapshotDelimiter, snapshotName)
+	return fmt.Sprintf("%s%s%s", parentName, internalInstance.SnapshotDelimiter, snapshotName)
 }
 
 // createParentSnapshotDirIfMissing creates the parent directory for volume snapshots.
@@ -264,7 +266,7 @@ func createParentSnapshotDirIfMissing(poolName string, volType VolumeType, volNa
 	snapshotsPath := GetVolumeSnapshotDir(poolName, volType, volName)
 
 	// If it's missing, create it.
-	if !shared.PathExists(snapshotsPath) {
+	if !util.PathExists(snapshotsPath) {
 		err := os.Mkdir(snapshotsPath, 0700)
 		if err != nil {
 			return fmt.Errorf("Failed to create parent snapshot directory %q: %w", snapshotsPath, err)
@@ -282,8 +284,8 @@ func deleteParentSnapshotDirIfEmpty(poolName string, volType VolumeType, volName
 	snapshotsPath := GetVolumeSnapshotDir(poolName, volType, volName)
 
 	// If it exists, try to delete it.
-	if shared.PathExists(snapshotsPath) {
-		isEmpty, err := shared.PathIsEmpty(snapshotsPath)
+	if util.PathExists(snapshotsPath) {
+		isEmpty, err := internalUtil.PathIsEmpty(snapshotsPath)
 		if err != nil {
 			return err
 		}
@@ -330,7 +332,7 @@ func ensureVolumeBlockFile(vol Volume, path string, sizeBytes int64, allowUnsafe
 	// Get rounded block size to avoid QEMU boundary issues.
 	sizeBytes = vol.driver.roundVolumeBlockSizeBytes(sizeBytes)
 
-	if shared.PathExists(path) {
+	if util.PathExists(path) {
 		fi, err := os.Stat(path)
 		if err != nil {
 			return false, err
@@ -421,7 +423,7 @@ func filesystemTypeCanBeShrunk(fsType string) bool {
 		fsType = DefaultFilesystem
 	}
 
-	if shared.ValueInSlice(fsType, []string{"ext4", "btrfs"}) {
+	if util.ValueInSlice(fsType, []string{"ext4", "btrfs"}) {
 		return true
 	}
 
@@ -628,7 +630,7 @@ func copyDevice(inputPath string, outputPath string) error {
 
 // loopFilePath returns the loop file path for a storage pool.
 func loopFilePath(poolName string) string {
-	return filepath.Join(shared.VarPath("disks"), fmt.Sprintf("%s.img", poolName))
+	return filepath.Join(internalUtil.VarPath("disks"), fmt.Sprintf("%s.img", poolName))
 }
 
 // ShiftBtrfsRootfs shifts the BTRFS root filesystem.
@@ -762,7 +764,7 @@ func ShiftZFSSkipper(dir string, absPath string, fi os.FileInfo) bool {
 
 // BlockDiskSizeBytes returns the size of a block disk (path can be either block device or raw file).
 func BlockDiskSizeBytes(blockDiskPath string) (int64, error) {
-	if shared.IsBlockdevPath(blockDiskPath) {
+	if linux.IsBlockdevPath(blockDiskPath) {
 		// Attempt to open the device path.
 		f, err := os.Open(blockDiskPath)
 		if err != nil {
@@ -799,9 +801,9 @@ func OperationLockName(operationName string, poolName string, volType VolumeType
 // This is based on the size of the filesystem of daemon's VarPath().
 func loopFileSizeDefault() (uint64, error) {
 	st := unix.Statfs_t{}
-	err := unix.Statfs(shared.VarPath(), &st)
+	err := unix.Statfs(internalUtil.VarPath(), &st)
 	if err != nil {
-		return 0, fmt.Errorf("Failed getting free space of %q: %w", shared.VarPath(), err)
+		return 0, fmt.Errorf("Failed getting free space of %q: %w", internalUtil.VarPath(), err)
 	}
 
 	gibAvailable := uint64(st.Frsize) * st.Bavail / (1024 * 1024 * 1024)

@@ -5,9 +5,9 @@ import (
 
 	firewallDrivers "github.com/lxc/incus/incusd/firewall/drivers"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // FirewallApplyACLRules applies ACL rules to network firewall.
@@ -59,7 +59,7 @@ func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName 
 	logPrefix := aclNet.Name
 
 	// Load ACLs specified by network.
-	for _, aclName := range shared.SplitNTrimSpace(aclNet.Config["security.acls"], ",", -1, true) {
+	for _, aclName := range util.SplitNTrimSpace(aclNet.Config["security.acls"], ",", -1, true) {
 		_, aclInfo, err := s.DB.Cluster.GetNetworkACL(aclProjectName, aclName)
 		if err != nil {
 			return fmt.Errorf("Failed loading ACL %q for network %q: %w", aclName, aclNet.Name, err)
@@ -117,5 +117,5 @@ func firewallACLDefaults(netConfig map[string]string, direction string) (string,
 		}
 	}
 
-	return defaults[fmt.Sprintf("security.acls.default.%s.action", direction)], shared.IsTrue(defaults[fmt.Sprintf("security.acls.default.%s.logged", direction)])
+	return defaults[fmt.Sprintf("security.acls.default.%s.action", direction)], util.IsTrue(defaults[fmt.Sprintf("security.acls.default.%s.logged", direction)])
 }

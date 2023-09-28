@@ -12,9 +12,10 @@ import (
 
 	"github.com/lxc/incus/incusd/db/cluster"
 	"github.com/lxc/incus/incusd/db/warningtype"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Initialize AppArmor-specific attributes.
@@ -23,13 +24,13 @@ func (s *OS) initAppArmor() []cluster.Warning {
 
 	/* Detect AppArmor availability */
 	_, err := exec.LookPath("apparmor_parser")
-	if shared.IsFalse(os.Getenv("INCUS_SECURITY_APPARMOR")) {
+	if util.IsFalse(os.Getenv("INCUS_SECURITY_APPARMOR")) {
 		logger.Warnf("AppArmor support has been manually disabled")
 		dbWarnings = append(dbWarnings, cluster.Warning{
 			TypeCode:    warningtype.AppArmorNotAvailable,
 			LastMessage: "Manually disabled",
 		})
-	} else if !shared.IsDir("/sys/kernel/security/apparmor") {
+	} else if !internalUtil.IsDir("/sys/kernel/security/apparmor") {
 		logger.Warnf("AppArmor support has been disabled because of lack of kernel support")
 		dbWarnings = append(dbWarnings, cluster.Warning{
 			TypeCode:    warningtype.AppArmorNotAvailable,
@@ -49,7 +50,7 @@ func (s *OS) initAppArmor() []cluster.Warning {
 	s.AppArmorStacking = appArmorCanStack()
 
 	/* Detect existing AppArmor stack */
-	if shared.PathExists("/sys/kernel/security/apparmor/.ns_stacked") {
+	if util.PathExists("/sys/kernel/security/apparmor/.ns_stacked") {
 		contentBytes, err := os.ReadFile("/sys/kernel/security/apparmor/.ns_stacked")
 		if err == nil && string(contentBytes) == "yes\n" {
 			s.AppArmorStacked = true
@@ -70,7 +71,7 @@ func (s *OS) initAppArmor() []cluster.Warning {
 	}
 
 	/* Detect AppArmor confinment */
-	profile := util.AppArmorProfile()
+	profile := localUtil.AppArmorProfile()
 	if profile != "unconfined" && profile != "" {
 		if s.AppArmorAvailable {
 			logger.Warnf("Per-container AppArmor profiles are disabled because Incus is already protected by AppArmor")

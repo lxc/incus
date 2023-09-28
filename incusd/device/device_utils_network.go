@@ -21,11 +21,11 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/ip"
 	"github.com/lxc/incus/incusd/network"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -104,7 +104,7 @@ func networkRemoveInterfaceIfNeeded(state *state.State, nic string, current inst
 			}
 
 			// Check if another running instance created the device, if so, don't touch it.
-			if shared.IsTrue(inst.ExpandedConfig()[fmt.Sprintf("volatile.%s.last_state.created", devName)]) {
+			if util.IsTrue(inst.ExpandedConfig()[fmt.Sprintf("volatile.%s.last_state.created", devName)]) {
 				return nil
 			}
 		}
@@ -138,7 +138,7 @@ func networkCreateVlanDeviceIfNeeded(state *state.State, parent string, vlanDevi
 				}
 
 				// Check if another running instance created the device, if so, mark it as created.
-				if shared.IsTrue(inst.ExpandedConfig()[fmt.Sprintf("volatile.%s.last_state.created", devName)]) {
+				if util.IsTrue(inst.ExpandedConfig()[fmt.Sprintf("volatile.%s.last_state.created", devName)]) {
 					return "reused", nil
 				}
 			}
@@ -171,7 +171,7 @@ func networkSnapshotPhysicalNIC(hostName string, volatile map[string]string) err
 // networkRestorePhysicalNIC restores NIC properties from volatile to what they were before it was attached.
 func networkRestorePhysicalNIC(hostName string, volatile map[string]string) error {
 	// If we created the "physical" device and then it should be removed.
-	if shared.IsTrue(volatile["last_state.created"]) {
+	if util.IsTrue(volatile["last_state.created"]) {
 		return network.InterfaceRemove(hostName)
 	}
 
@@ -565,7 +565,7 @@ func networkSetupHostVethLimits(m deviceConfig.Device) error {
 
 // networkValidGateway validates the gateway value.
 func networkValidGateway(value string) error {
-	if shared.ValueInSlice(value, []string{"none", "auto"}) {
+	if util.ValueInSlice(value, []string{"none", "auto"}) {
 		return nil
 	}
 
@@ -599,7 +599,7 @@ func bgpAddPrefix(d *deviceCommon, n network.Network, config map[string]string) 
 	// Add the prefixes.
 	bgpOwner := fmt.Sprintf("instance_%d_%s", d.inst.ID(), d.name)
 	if config["ipv4.routes.external"] != "" {
-		for _, prefix := range shared.SplitNTrimSpace(config["ipv4.routes.external"], ",", -1, true) {
+		for _, prefix := range util.SplitNTrimSpace(config["ipv4.routes.external"], ",", -1, true) {
 			_, prefixNet, err := net.ParseCIDR(prefix)
 			if err != nil {
 				return err
@@ -613,7 +613,7 @@ func bgpAddPrefix(d *deviceCommon, n network.Network, config map[string]string) 
 	}
 
 	if config["ipv6.routes.external"] != "" {
-		for _, prefix := range shared.SplitNTrimSpace(config["ipv6.routes.external"], ",", -1, true) {
+		for _, prefix := range util.SplitNTrimSpace(config["ipv6.routes.external"], ",", -1, true) {
 			_, prefixNet, err := net.ParseCIDR(prefix)
 			if err != nil {
 				return err
@@ -711,7 +711,7 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 	// Setup VF MAC spoofing protection if specified.
 	// The ordering of this section is very important, as Intel cards require a very specific
 	// order of setup to allow setting custom MACs when using spoof check mode.
-	if shared.IsTrue(d.config["security.mac_filtering"]) {
+	if util.IsTrue(d.config["security.mac_filtering"]) {
 		if !useSpoofCheck {
 			return pcidev.Device{}, 0, fmt.Errorf("security.mac_filtering cannot be enabled when VF spoof check not enabled")
 		}
@@ -860,7 +860,7 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 	// to avoid any issues with zero MACs refusing to be set whilst spoof check is on.
 	if useSpoofCheck && volatile["last_state.vf.spoofcheck"] != "" {
 		mode := "off"
-		if shared.IsTrue(volatile["last_state.vf.spoofcheck"]) {
+		if util.IsTrue(volatile["last_state.vf.spoofcheck"]) {
 			mode = "on"
 		}
 

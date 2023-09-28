@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // StorageRemoteDriverNames returns a list of remote storage driver names.
@@ -533,7 +533,7 @@ WHERE storage_pools.id = ? AND storage_pools.state = ?
 	// Figure which nodes are missing
 	missing := []string{}
 	for _, node := range nodes {
-		if !shared.ValueInSlice(node.Name, defined) {
+		if !util.ValueInSlice(node.Name, defined) {
 			missing = append(missing, node.Name)
 		}
 	}
@@ -827,7 +827,7 @@ func storagePoolConfigAdd(tx *sql.Tx, poolID, nodeID int64, poolConfig map[strin
 		}
 
 		var nodeIDValue any
-		if !shared.ValueInSlice(k, NodeSpecificStorageConfig) {
+		if !util.ValueInSlice(k, NodeSpecificStorageConfig) {
 			nodeIDValue = nil
 		} else {
 			nodeIDValue = nodeID
@@ -923,7 +923,7 @@ func (c *Cluster) IsRemoteStorage(poolID int64) (bool, error) {
 			return err
 		}
 
-		isRemoteStorage = shared.ValueInSlice(driver, StorageRemoteDriverNames())
+		isRemoteStorage = util.ValueInSlice(driver, StorageRemoteDriverNames())
 
 		return nil
 	})

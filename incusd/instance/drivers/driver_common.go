@@ -28,14 +28,15 @@ import (
 	"github.com/lxc/incus/incusd/locking"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // ErrExecCommandNotFound indicates the command is not found.
@@ -372,13 +373,13 @@ func (d *common) ConsoleBufferLogPath() string {
 // DevicesPath returns the instance's devices path.
 func (d *common) DevicesPath() string {
 	name := project.Instance(d.project.Name, d.name)
-	return shared.VarPath("devices", name)
+	return internalUtil.VarPath("devices", name)
 }
 
 // LogPath returns the instance's log path.
 func (d *common) LogPath() string {
 	name := project.Instance(d.project.Name, d.name)
-	return shared.LogPath(name)
+	return internalUtil.LogPath(name)
 }
 
 // Path returns the instance's path.
@@ -399,7 +400,7 @@ func (d *common) RootfsPath() string {
 // ShmountsPath returns the instance's shared mounts path.
 func (d *common) ShmountsPath() string {
 	name := project.Instance(d.project.Name, d.name)
-	return shared.VarPath("shmounts", name)
+	return internalUtil.VarPath("shmounts", name)
 }
 
 // StatePath returns the instance's state path.
@@ -688,7 +689,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 		Snapshot:     true,
 		Devices:      inst.LocalDevices(),
 		Ephemeral:    inst.IsEphemeral(),
-		Name:         inst.Name() + shared.SnapshotDelimiter + name,
+		Name:         inst.Name() + internalInstance.SnapshotDelimiter + name,
 		Profiles:     inst.Profiles(),
 		Stateful:     stateful,
 		ExpiryDate:   expiry,
@@ -806,11 +807,11 @@ func (d *common) getStartupSnapNameAndExpiry(inst instance.Instance) (string, *t
 	}
 
 	triggers := strings.Split(schedule, ", ")
-	if !shared.ValueInSlice("@startup", triggers) {
+	if !util.ValueInSlice("@startup", triggers) {
 		return "", nil, nil
 	}
 
-	expiry, err := shared.GetExpiry(time.Now(), d.expandedConfig["snapshots.expiry"])
+	expiry, err := internalInstance.GetExpiry(time.Now(), d.expandedConfig["snapshots.expiry"])
 	if err != nil {
 		return "", nil, err
 	}
@@ -937,7 +938,7 @@ func (d *common) canMigrate(inst instance.Instance) (bool, bool) {
 	// Limit automatic live-migration to virtual machines for now.
 	live := false
 	if inst.Type() == instancetype.VM {
-		live = shared.IsTrue(config["migration.stateful"])
+		live = util.IsTrue(config["migration.stateful"])
 	}
 
 	return true, live
@@ -1034,7 +1035,7 @@ func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices d
 		"user.user-data",
 		"user.network-config",
 	} {
-		if shared.ValueInSlice(key, changedConfig) {
+		if util.ValueInSlice(key, changedConfig) {
 			return true
 		}
 	}
@@ -1069,13 +1070,13 @@ func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices d
 	newNames := getNICNames(d.expandedDevices)
 
 	for _, entry := range oldNames {
-		if !shared.ValueInSlice(entry, newNames) {
+		if !util.ValueInSlice(entry, newNames) {
 			return true
 		}
 	}
 
 	for _, entry := range newNames {
-		if !shared.ValueInSlice(entry, oldNames) {
+		if !util.ValueInSlice(entry, oldNames) {
 			return true
 		}
 	}
@@ -1111,7 +1112,7 @@ func (d *common) deviceLoad(inst instance.Instance, deviceName string, rawConfig
 	var err error
 
 	// Create copy of config and load some fields from volatile if device is nic or infiniband.
-	if shared.ValueInSlice(rawConfig["type"], []string{"nic", "infiniband"}) {
+	if util.ValueInSlice(rawConfig["type"], []string{"nic", "infiniband"}) {
 		configCopy, err = inst.FillNetworkDevice(deviceName, rawConfig)
 		if err != nil {
 			return nil, err

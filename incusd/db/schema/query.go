@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // DoesSchemaTableExist return whether the schema table is present in the
@@ -83,7 +83,7 @@ INSERT INTO schema (version, updated_at) VALUES (?, strftime("%s"))
 
 // Read the given file (if it exists) and executes all queries it contains.
 func execFromFile(ctx context.Context, tx *sql.Tx, path string, hook Hook) error {
-	if !shared.PathExists(path) {
+	if !util.PathExists(path) {
 		return nil
 	}
 

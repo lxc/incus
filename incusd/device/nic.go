@@ -6,7 +6,7 @@ import (
 
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/network/acl"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -115,7 +115,7 @@ func nicCheckNamesUnique(instConf instance.ConfigReader) error {
 			continue
 		}
 
-		if shared.ValueInSlice(devConfig["name"], seenNICNames) {
+		if util.ValueInSlice(devConfig["name"], seenNICNames) {
 			return fmt.Errorf("Duplicate NIC name detected %q", devConfig["name"])
 		}
 

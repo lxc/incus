@@ -1,6 +1,5 @@
 github.com/gorilla/websocket
 github.com/lxc/incus/client
-github.com/lxc/incus/shared
 github.com/lxc/incus/shared/api
 github.com/lxc/incus/shared/cancel
 github.com/lxc/incus/shared/ioprogress
@@ -11,6 +10,7 @@ github.com/lxc/incus/shared/subprocess
 github.com/lxc/incus/shared/tcp
 github.com/lxc/incus/shared/tls
 github.com/lxc/incus/shared/units
+github.com/lxc/incus/shared/util
 github.com/lxc/incus/shared/ws
 github.com/pkg/sftp
 github.com/zitadel/oidc/v2/pkg/client/rp

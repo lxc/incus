@@ -11,9 +11,10 @@ import (
 
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 const staticAllocationDeviceSeparator = "."
@@ -51,7 +52,7 @@ func UpdateStaticEntry(network string, projectName string, instanceName string, 
 	}
 
 	deviceStaticFileName := StaticAllocationFileName(projectName, instanceName, deviceName)
-	err := os.WriteFile(shared.VarPath("networks", network, "dnsmasq.hosts", deviceStaticFileName), []byte(line+"\n"), 0644)
+	err := os.WriteFile(internalUtil.VarPath("networks", network, "dnsmasq.hosts", deviceStaticFileName), []byte(line+"\n"), 0644)
 	if err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func UpdateStaticEntry(network string, projectName string, instanceName string, 
 // RemoveStaticEntry removes a single dhcp-host line for a network/instance combination.
 func RemoveStaticEntry(network string, projectName string, instanceName string, deviceName string) error {
 	deviceStaticFileName := StaticAllocationFileName(projectName, instanceName, deviceName)
-	err := os.Remove(shared.VarPath("networks", network, "dnsmasq.hosts", deviceStaticFileName))
+	err := os.Remove(internalUtil.VarPath("networks", network, "dnsmasq.hosts", deviceStaticFileName))
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -72,10 +73,10 @@ func RemoveStaticEntry(network string, projectName string, instanceName string, 
 
 // Kill kills dnsmasq for a particular network (or optionally reloads it).
 func Kill(name string, reload bool) error {
-	pidPath := shared.VarPath("networks", name, "dnsmasq.pid")
+	pidPath := internalUtil.VarPath("networks", name, "dnsmasq.pid")
 
 	// If the pid file doesn't exist, there is no process to kill.
-	if !shared.PathExists(pidPath) {
+	if !util.PathExists(pidPath) {
 		return nil
 	}
 
@@ -117,7 +118,7 @@ func GetVersion() (*version.DottedVersion, error) {
 
 // DHCPStaticAllocationPath returns the path to the DHCP static allocation file.
 func DHCPStaticAllocationPath(network string, deviceStaticFileName string) string {
-	return shared.VarPath("networks", network, "dnsmasq.hosts", deviceStaticFileName)
+	return internalUtil.VarPath("networks", network, "dnsmasq.hosts", deviceStaticFileName)
 }
 
 // DHCPStaticAllocation retrieves the dnsmasq statically allocated MAC and IPs for an instance device static file.
@@ -187,7 +188,7 @@ func DHCPAllAllocations(network string) (map[[4]byte]DHCPAllocation, map[[16]byt
 	IPv6s := make(map[[16]byte]DHCPAllocation)
 
 	// First read all statically allocated IPs.
-	files, err := os.ReadDir(shared.VarPath("networks", network, "dnsmasq.hosts"))
+	files, err := os.ReadDir(internalUtil.VarPath("networks", network, "dnsmasq.hosts"))
 	if err != nil && os.IsNotExist(err) {
 		return nil, nil, err
 	}
@@ -212,7 +213,7 @@ func DHCPAllAllocations(network string) (map[[4]byte]DHCPAllocation, map[[16]byt
 	}
 
 	// Next read all dynamic allocated IPs.
-	file, err := os.Open(shared.VarPath("networks", network, "dnsmasq.leases"))
+	file, err := os.Open(internalUtil.VarPath("networks", network, "dnsmasq.leases"))
 	if err != nil {
 		return nil, nil, err
 	}

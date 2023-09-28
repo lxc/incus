@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 var stdin = bufio.NewReader(os.Stdin)
@@ -22,9 +22,9 @@ func AskBool(question string, defaultAnswer string) (bool, error) {
 			return false, err
 		}
 
-		if shared.ValueInSlice(strings.ToLower(answer), []string{"yes", "y"}) {
+		if util.ValueInSlice(strings.ToLower(answer), []string{"yes", "y"}) {
 			return true, nil
-		} else if shared.ValueInSlice(strings.ToLower(answer), []string{"no", "n"}) {
+		} else if util.ValueInSlice(strings.ToLower(answer), []string{"no", "n"}) {
 			return false, nil
 		}
 
@@ -40,7 +40,7 @@ func AskChoice(question string, choices []string, defaultAnswer string) (string,
 			return "", err
 		}
 
-		if shared.ValueInSlice(answer, choices) {
+		if util.ValueInSlice(answer, choices) {
 			return answer, nil
 		}
 

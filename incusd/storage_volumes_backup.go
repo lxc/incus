@@ -20,10 +20,11 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	storagePools "github.com/lxc/incus/incusd/storage"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 )
@@ -199,7 +200,7 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 		return resp
 	}
 
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	volumeBackups, err := s.DB.Cluster.GetStoragePoolVolumeBackups(projectName, volumeName, poolID)
 	if err != nil {
@@ -370,7 +371,7 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 			return response.BadRequest(err)
 		}
 
-		base := volumeName + shared.SnapshotDelimiter + "backup"
+		base := volumeName + internalInstance.SnapshotDelimiter + "backup"
 		length := len(base)
 		max := 0
 
@@ -400,7 +401,7 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
 	}
 
-	fullName := volumeName + shared.SnapshotDelimiter + req.Name
+	fullName := volumeName + internalInstance.SnapshotDelimiter + req.Name
 	volumeOnly := req.VolumeOnly
 
 	backup := func(op *operations.Operation) error {
@@ -534,7 +535,7 @@ func storagePoolVolumeTypeCustomBackupGet(d *Daemon, r *http.Request) response.R
 		return resp
 	}
 
-	fullName := volumeName + shared.SnapshotDelimiter + backupName
+	fullName := volumeName + internalInstance.SnapshotDelimiter + backupName
 
 	backup, err := storagePoolVolumeBackupLoadByName(s, projectName, poolName, fullName)
 	if err != nil {
@@ -645,14 +646,14 @@ func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.
 		return response.BadRequest(fmt.Errorf("Backup names may not contain slashes"))
 	}
 
-	oldName := volumeName + shared.SnapshotDelimiter + backupName
+	oldName := volumeName + internalInstance.SnapshotDelimiter + backupName
 
 	backup, err := storagePoolVolumeBackupLoadByName(s, projectName, poolName, oldName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	newName := volumeName + shared.SnapshotDelimiter + req.Name
+	newName := volumeName + internalInstance.SnapshotDelimiter + req.Name
 
 	rename := func(op *operations.Operation) error {
 		err := backup.Rename(newName)
@@ -761,7 +762,7 @@ func storagePoolVolumeTypeCustomBackupDelete(d *Daemon, r *http.Request) respons
 		return resp
 	}
 
-	fullName := volumeName + shared.SnapshotDelimiter + backupName
+	fullName := volumeName + internalInstance.SnapshotDelimiter + backupName
 
 	backup, err := storagePoolVolumeBackupLoadByName(s, projectName, poolName, fullName)
 	if err != nil {
@@ -871,7 +872,7 @@ func storagePoolVolumeTypeCustomBackupExportGet(d *Daemon, r *http.Request) resp
 		return resp
 	}
 
-	fullName := volumeName + shared.SnapshotDelimiter + backupName
+	fullName := volumeName + internalInstance.SnapshotDelimiter + backupName
 
 	// Ensure the volume exists
 	_, err = storagePoolVolumeBackupLoadByName(s, projectName, poolName, fullName)
@@ -880,7 +881,7 @@ func storagePoolVolumeTypeCustomBackupExportGet(d *Daemon, r *http.Request) resp
 	}
 
 	ent := response.FileResponseEntry{
-		Path: shared.VarPath("backups", "custom", poolName, project.StorageVolume(projectName, fullName)),
+		Path: internalUtil.VarPath("backups", "custom", poolName, project.StorageVolume(projectName, fullName)),
 	}
 
 	s.Events.SendLifecycle(projectName, lifecycle.StorageVolumeBackupRetrieved.Event(poolName, volumeTypeName, fullName, projectName, request.CreateRequestor(r), nil))

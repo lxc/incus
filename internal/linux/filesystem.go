@@ -4,12 +4,14 @@ package linux
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 
+	"github.com/pkg/xattr"
 	"golang.org/x/sys/unix"
 )
 
@@ -220,4 +222,46 @@ func ResolveMountOptions(options []string) (uintptr, string) {
 	}
 
 	return mountFlags, strings.Join(mountOptions, ",")
+}
+
+// GetAllXattr retrieves all extended attributes associated with a file, directory or symbolic link.
+func GetAllXattr(path string) (map[string]string, error) {
+	xattrNames, err := xattr.LList(path)
+	if err != nil {
+		// Some filesystems don't support llistxattr() for various reasons.
+		// Interpret this as a set of no xattrs, instead of an error.
+		if errors.Is(err, unix.EOPNOTSUPP) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("Failed getting extended attributes from %q: %w", path, err)
+	}
+
+	var xattrs = make(map[string]string, len(xattrNames))
+	for _, xattrName := range xattrNames {
+		value, err := xattr.LGet(path, xattrName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting %q extended attribute from %q: %w", xattrName, path, err)
+		}
+
+		xattrs[xattrName] = string(value)
+	}
+
+	return xattrs, nil
+}
+
+// IsBlockdev checks if the provided file is a block device.
+func IsBlockdev(fm os.FileMode) bool {
+	return ((fm&os.ModeDevice != 0) && (fm&os.ModeCharDevice == 0))
+}
+
+// IsBlockdevPath checks if the provided path is a block device.
+func IsBlockdevPath(pathName string) bool {
+	sb, err := os.Stat(pathName)
+	if err != nil {
+		return false
+	}
+
+	fm := sb.Mode()
+	return ((fm&os.ModeDevice != 0) && (fm&os.ModeCharDevice == 0))
 }

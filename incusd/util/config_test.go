@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 )
 
 func Test_CompareConfigsMismatch(t *testing.T) {
@@ -28,7 +28,7 @@ func Test_CompareConfigsMismatch(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.error, func(t *testing.T) {
-			err := util.CompareConfigs(c.config1, c.config2, nil)
+			err := localUtil.CompareConfigs(c.config1, c.config2, nil)
 			assert.EqualError(t, err, c.error)
 		})
 	}
@@ -37,6 +37,6 @@ func Test_CompareConfigsMismatch(t *testing.T) {
 func Test_CompareConfigs(t *testing.T) {
 	config1 := map[string]string{"foo": "bar", "baz": "buz"}
 	config2 := map[string]string{"foo": "egg", "baz": "buz"}
-	err := util.CompareConfigs(config1, config2, []string{"foo"})
+	err := localUtil.CompareConfigs(config1, config2, []string{"foo"})
 	assert.NoError(t, err)
 }

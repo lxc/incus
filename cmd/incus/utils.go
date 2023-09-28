@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	config "github.com/lxc/incus/shared/cliconfig"
 	"github.com/lxc/incus/shared/termios"
@@ -251,7 +253,7 @@ func usage(name string, args ...string) string {
 func instancesExist(resources []remoteResource) error {
 	for _, resource := range resources {
 		// Handle snapshots.
-		if shared.IsSnapshot(resource.name) {
+		if instance.IsSnapshot(resource.name) {
 			parent, snap, _ := api.GetParentAndSnapshotName(resource.name)
 
 			_, _, err := resource.server.GetInstanceSnapshot(parent, snap)
@@ -387,4 +389,109 @@ func getImgInfo(d incus.InstanceServer, conf *config.Config, imgRemote string, i
 	}
 
 	return imgRemoteServer, imgInfo, nil
+}
+
+// Spawn the editor with a temporary YAML file for editing configs.
+func textEditor(inPath string, inContent []byte) ([]byte, error) {
+	var f *os.File
+	var err error
+	var path string
+
+	// Detect the text editor to use
+	editor := os.Getenv("VISUAL")
+	if editor == "" {
+		editor = os.Getenv("EDITOR")
+		if editor == "" {
+			for _, p := range []string{"editor", "vi", "emacs", "nano"} {
+				_, err := exec.LookPath(p)
+				if err == nil {
+					editor = p
+					break
+				}
+			}
+			if editor == "" {
+				return []byte{}, fmt.Errorf("No text editor found, please set the EDITOR environment variable")
+			}
+		}
+	}
+
+	if inPath == "" {
+		// If provided input, create a new file
+		f, err = os.CreateTemp("", "incus_editor_")
+		if err != nil {
+			return []byte{}, err
+		}
+
+		revert := revert.New()
+		defer revert.Fail()
+		revert.Add(func() {
+			_ = f.Close()
+			_ = os.Remove(f.Name())
+		})
+
+		err = os.Chmod(f.Name(), 0600)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		_, err = f.Write(inContent)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		err = f.Close()
+		if err != nil {
+			return []byte{}, err
+		}
+
+		path = fmt.Sprintf("%s.yaml", f.Name())
+		err = os.Rename(f.Name(), path)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		revert.Success()
+		revert.Add(func() { _ = os.Remove(path) })
+	} else {
+		path = inPath
+	}
+
+	cmdParts := strings.Fields(editor)
+	cmd := exec.Command(cmdParts[0], append(cmdParts[1:], path)...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return []byte{}, err
+	}
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return content, nil
+}
+
+// removeElementsFromSlice returns a slice equivalent to removing the given elements from the given list.
+// Elements not present in the list are ignored.
+func removeElementsFromSlice[T comparable](list []T, elements ...T) []T {
+	for i := len(elements) - 1; i >= 0; i-- {
+		element := elements[i]
+		match := false
+		for j := len(list) - 1; j >= 0; j-- {
+			if element == list[j] {
+				match = true
+				list = append(list[:j], list[j+1:]...)
+				break
+			}
+		}
+
+		if match {
+			elements = append(elements[:i], elements[i+1:]...)
+		}
+	}
+
+	return list
 }

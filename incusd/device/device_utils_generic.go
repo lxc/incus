@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // deviceJoinPath joins together prefix and text delimited by a "." for device path generation.
@@ -15,7 +15,7 @@ func deviceJoinPath(parts ...string) string {
 // validatePCIDevice returns whether a configured PCI device exists under the given address.
 // It also returns nil, if an empty address is supplied.
 func validatePCIDevice(address string) error {
-	if address != "" && !shared.PathExists(fmt.Sprintf("/sys/bus/pci/devices/%s", address)) {
+	if address != "" && !util.PathExists(fmt.Sprintf("/sys/bus/pci/devices/%s", address)) {
 		return fmt.Errorf("Invalid PCI address (no device found): %s", address)
 	}
 

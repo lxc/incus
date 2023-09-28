@@ -31,14 +31,14 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/incusd/warnings"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Lock to prevent concurent networks creation.
@@ -175,7 +175,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	clustered, err := cluster.Enabled(s.DB.Node)
 	if err != nil {
@@ -202,7 +202,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			// Append to the list of networks if a managed network of same name doesn't exist.
-			if !shared.ValueInSlice(iface.Name, networkNames) {
+			if !util.ValueInSlice(iface.Name, networkNames) {
 				networkNames = append(networkNames, iface.Name)
 			}
 		}
@@ -339,7 +339,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		// Only check network limits if the new network name doesn't exist already in networks list.
 		// If it does then this create request will either be for adding a target node to an existing
 		// pending network or it will fail anyway as it is a duplicate.
-		if !shared.ValueInSlice(req.Name, networks) && len(networks) >= networksLimit {
+		if !util.ValueInSlice(req.Name, networks) && len(networks) >= networksLimit {
 			return response.BadRequest(fmt.Errorf("Networks limit has been reached for project"))
 		}
 	}
@@ -375,7 +375,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		// A targetNode was specified, let's just define the node's network without actually creating it.
 		// Check that only NodeSpecificNetworkConfig keys are specified.
 		for key := range req.Config {
-			if !shared.ValueInSlice(key, db.NodeSpecificNetworkConfig) {
+			if !util.ValueInSlice(key, db.NodeSpecificNetworkConfig) {
 				return response.BadRequest(fmt.Errorf("Config key %q may not be used as member-specific key", key))
 			}
 		}
@@ -493,7 +493,7 @@ func networkPartiallyCreated(netInfo *api.Network) bool {
 	// If the network has global config keys, then it has previously been created by having its global config
 	// inserted, and this means it is partialled created.
 	for key := range netInfo.Config {
-		if !shared.ValueInSlice(key, db.NodeSpecificNetworkConfig) {
+		if !util.ValueInSlice(key, db.NodeSpecificNetworkConfig) {
 			return true
 		}
 	}
@@ -507,7 +507,7 @@ func networkPartiallyCreated(netInfo *api.Network) bool {
 func networksPostCluster(s *state.State, projectName string, netInfo *api.Network, req api.NetworksPost, clientType clusterRequest.ClientType, netType network.Type) error {
 	// Check that no node-specific config key has been supplied in request.
 	for key := range req.Config {
-		if shared.ValueInSlice(key, db.NodeSpecificNetworkConfig) {
+		if util.ValueInSlice(key, db.NodeSpecificNetworkConfig) {
 			return fmt.Errorf("Config key %q is cluster member specific", key)
 		}
 	}
@@ -849,13 +849,13 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 		}
 	} else if osInfo != nil && int(osInfo.Flags&net.FlagLoopback) > 0 {
 		apiNet.Type = "loopback"
-	} else if shared.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", apiNet.Name)) {
+	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", apiNet.Name)) {
 		apiNet.Type = "bridge"
-	} else if shared.PathExists(fmt.Sprintf("/proc/net/vlan/%s", apiNet.Name)) {
+	} else if util.PathExists(fmt.Sprintf("/proc/net/vlan/%s", apiNet.Name)) {
 		apiNet.Type = "vlan"
-	} else if shared.PathExists(fmt.Sprintf("/sys/class/net/%s/device", apiNet.Name)) {
+	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/device", apiNet.Name)) {
 		apiNet.Type = "physical"
-	} else if shared.PathExists(fmt.Sprintf("/sys/class/net/%s/bonding", apiNet.Name)) {
+	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bonding", apiNet.Name)) {
 		apiNet.Type = "bond"
 	} else {
 		ovs := openvswitch.NewOVS()
@@ -1113,7 +1113,7 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	if shared.ValueInSlice(req.Name, networks) {
+	if util.ValueInSlice(req.Name, networks) {
 		return response.Conflict(fmt.Errorf("Network %q already exists", req.Name))
 	}
 
@@ -1210,7 +1210,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Duplicate config for etag modification and generation.
-	etagConfig := util.CopyConfig(n.Config())
+	etagConfig := localUtil.CopyConfig(n.Config())
 
 	// If no target node is specified and the daemon is clustered, we omit the node-specific fields so that
 	// the e-tag can be generated correctly. This is because the GET request used to populate the request
@@ -1223,7 +1223,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 
 	// Validate the ETag.
 	etag := []any{n.Name(), n.IsManaged(), n.Type(), n.Description(), etagConfig}
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -1241,7 +1241,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 		if targetNode == "" {
 			// If no target is specified, then ensure only non-node-specific config keys are changed.
 			for k := range req.Config {
-				if shared.ValueInSlice(k, db.NodeSpecificNetworkConfig) {
+				if util.ValueInSlice(k, db.NodeSpecificNetworkConfig) {
 					return response.BadRequest(fmt.Errorf("Config key %q is cluster member specific", k))
 				}
 			}
@@ -1250,7 +1250,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 
 			// If a target is specified, then ensure only node-specific config keys are changed.
 			for k, v := range req.Config {
-				if !shared.ValueInSlice(k, db.NodeSpecificNetworkConfig) && curConfig[k] != v {
+				if !util.ValueInSlice(k, db.NodeSpecificNetworkConfig) && curConfig[k] != v {
 					return response.BadRequest(fmt.Errorf("Config key %q may not be used as member-specific key", k))
 				}
 			}
@@ -1324,7 +1324,7 @@ func doNetworkUpdate(projectName string, n network.Network, req api.NetworkPut, 
 		// node-specific network config with the submitted config to allow validation.
 		// This allows removal of non-node specific keys when they are absent from request config.
 		for k, v := range n.Config() {
-			if shared.ValueInSlice(k, db.NodeSpecificNetworkConfig) {
+			if util.ValueInSlice(k, db.NodeSpecificNetworkConfig) {
 				req.Config[k] = v
 			}
 		}

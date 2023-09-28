@@ -7,7 +7,7 @@ import (
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -31,7 +31,7 @@ func (e *Endpoints) ClusterUpdateAddress(address string) error {
 	networkAddress := e.NetworkAddress()
 
 	if address != "" {
-		address = util.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
+		address = internalUtil.CanonicalNetworkAddress(address, ports.HTTPSDefaultPort)
 	}
 
 	oldAddress := e.clusterAddress()
@@ -53,7 +53,7 @@ func (e *Endpoints) ClusterUpdateAddress(address string) error {
 	}
 
 	// If networkAddress is set and address is covered, we don't need a new listener.
-	if networkAddress != "" && util.IsAddressCovered(address, networkAddress) {
+	if networkAddress != "" && internalUtil.IsAddressCovered(address, networkAddress) {
 		return nil
 	}
 

@@ -12,10 +12,10 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdProject struct {
@@ -297,7 +297,7 @@ func (c *cmdProjectEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -320,7 +320,7 @@ func (c *cmdProjectEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -454,32 +454,32 @@ func (c *cmdProjectList) Run(cmd *cobra.Command, args []string) error {
 	data := [][]string{}
 	for _, project := range projects {
 		images := i18n.G("NO")
-		if shared.IsTrue(project.Config["features.images"]) {
+		if util.IsTrue(project.Config["features.images"]) {
 			images = i18n.G("YES")
 		}
 
 		profiles := i18n.G("NO")
-		if shared.IsTrue(project.Config["features.profiles"]) {
+		if util.IsTrue(project.Config["features.profiles"]) {
 			profiles = i18n.G("YES")
 		}
 
 		storageVolumes := i18n.G("NO")
-		if shared.IsTrue(project.Config["features.storage.volumes"]) {
+		if util.IsTrue(project.Config["features.storage.volumes"]) {
 			storageVolumes = i18n.G("YES")
 		}
 
 		storageBuckets := i18n.G("NO")
-		if shared.IsTrue(project.Config["features.storage.buckets"]) {
+		if util.IsTrue(project.Config["features.storage.buckets"]) {
 			storageBuckets = i18n.G("YES")
 		}
 
 		networks := i18n.G("NO")
-		if shared.IsTrue(project.Config["features.networks"]) {
+		if util.IsTrue(project.Config["features.networks"]) {
 			networks = i18n.G("YES")
 		}
 
 		networkZones := i18n.G("NO")
-		if shared.IsTrue(project.Config["features.networks.zones"]) {
+		if util.IsTrue(project.Config["features.networks.zones"]) {
 			networkZones = i18n.G("YES")
 		}
 
@@ -839,7 +839,7 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 	for k, v := range projectState.Resources {
 		limit := i18n.G("UNLIMITED")
 		if v.Limit >= 0 {
-			if shared.ValueInSlice(k, byteLimits) {
+			if util.ValueInSlice(k, byteLimits) {
 				limit = units.GetByteSizeStringIEC(v.Limit, 2)
 			} else {
 				limit = fmt.Sprintf("%d", v.Limit)
@@ -847,7 +847,7 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		usage := ""
-		if shared.ValueInSlice(k, byteLimits) {
+		if util.ValueInSlice(k, byteLimits) {
 			usage = units.GetByteSizeStringIEC(v.Usage, 2)
 		} else {
 			usage = fmt.Sprintf("%d", v.Usage)

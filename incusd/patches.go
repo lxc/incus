@@ -18,14 +18,14 @@ import (
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/revert"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 type patchStage int
@@ -127,7 +127,7 @@ func patchesApply(d *Daemon, stage patchStage) error {
 			return fmt.Errorf("Patch %q has no stage set: %d", patch.name, patch.stage)
 		}
 
-		if shared.ValueInSlice(patch.name, appliedPatches) {
+		if util.ValueInSlice(patch.name, appliedPatches) {
 			continue
 		}
 
@@ -196,7 +196,7 @@ func patchClusteringServerCertTrust(name string, d *Daemon) error {
 	}
 
 	// Add our server cert to DB trust store.
-	serverCert, err := util.LoadServerCert(d.os.VarDir)
+	serverCert, err := internalUtil.LoadServerCert(d.os.VarDir)
 	if err != nil {
 		return err
 	}
@@ -630,22 +630,22 @@ func patchNetworkOVNEnableNAT(name string, d *Daemon) error {
 	return nil
 }
 
-// Moves backups from shared.VarPath("backups") to shared.VarPath("backups", "instances").
+// Moves backups from internalUtil.VarPath("backups") to internalUtil.VarPath("backups", "instances").
 func patchMoveBackupsInstances(name string, d *Daemon) error {
-	if !shared.PathExists(shared.VarPath("backups")) {
+	if !util.PathExists(internalUtil.VarPath("backups")) {
 		return nil // Nothing to do, no backups directory.
 	}
 
-	backupsPath := shared.VarPath("backups", "instances")
+	backupsPath := internalUtil.VarPath("backups", "instances")
 
 	err := os.MkdirAll(backupsPath, 0700)
 	if err != nil {
 		return fmt.Errorf("Failed creating instances backup directory %q: %w", backupsPath, err)
 	}
 
-	backups, err := os.ReadDir(shared.VarPath("backups"))
+	backups, err := os.ReadDir(internalUtil.VarPath("backups"))
 	if err != nil {
-		return fmt.Errorf("Failed listing existing backup directory %q: %w", shared.VarPath("backups"), err)
+		return fmt.Errorf("Failed listing existing backup directory %q: %w", internalUtil.VarPath("backups"), err)
 	}
 
 	for _, backupDir := range backups {
@@ -653,7 +653,7 @@ func patchMoveBackupsInstances(name string, d *Daemon) error {
 			continue // Don't try and move our new instances directory or temporary directories.
 		}
 
-		oldPath := shared.VarPath("backups", backupDir.Name())
+		oldPath := internalUtil.VarPath("backups", backupDir.Name())
 		newPath := filepath.Join(backupsPath, backupDir.Name())
 		logger.Debugf("Moving backup from %q to %q", oldPath, newPath)
 		err = os.Rename(oldPath, newPath)
@@ -865,9 +865,9 @@ func patchZfsSetContentTypeUserProperty(name string, d *Daemon) error {
 // patchSnapshotsRename renames the "snapshots" directory to "container-snapshots".
 func patchSnapshotsRename(name string, d *Daemon) error {
 	// Remove what should be an empty directory.
-	os.Remove(shared.VarPath("containers-snapshots"))
+	os.Remove(internalUtil.VarPath("containers-snapshots"))
 
-	return os.Rename(shared.VarPath("snapshots"), shared.VarPath("containers-snapshots"))
+	return os.Rename(internalUtil.VarPath("snapshots"), internalUtil.VarPath("containers-snapshots"))
 }
 
 // Patches end here

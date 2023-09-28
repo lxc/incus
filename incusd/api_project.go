@@ -24,12 +24,12 @@ import (
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -137,7 +137,7 @@ var projectStateCmd = APIEndpoint{
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func projectsGet(d *Daemon, r *http.Request) response.Response {
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	var result any
 	err := d.State().DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -315,7 +315,7 @@ func projectsPost(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Unable to create project config for project %q: %w", project.Name, err)
 		}
 
-		if shared.IsTrue(project.Config["features.profiles"]) {
+		if util.IsTrue(project.Config["features.profiles"]) {
 			err = projectCreateDefaultProfile(tx, project.Name)
 			if err != nil {
 				return err
@@ -503,7 +503,7 @@ func projectPut(d *Daemon, r *http.Request) response.Response {
 		project.Config,
 	}
 
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -594,7 +594,7 @@ func projectPatch(d *Daemon, r *http.Request) response.Response {
 		project.Config,
 	}
 
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -683,13 +683,13 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 			for _, featureChanged := range featuresChanged {
 				// If feature is currently enabled, and it is being changed in the request, it
 				// must be being disabled. So prevent it on non-empty projects.
-				if shared.IsTrue(project.Config[featureChanged]) {
+				if util.IsTrue(project.Config[featureChanged]) {
 					return response.BadRequest(fmt.Errorf("Project feature %q cannot be disabled on non-empty projects", featureChanged))
 				}
 
 				// If feature is currently disabled, and it is being changed in the request, it
 				// must be being enabled. So check if feature can be enabled on non-empty projects.
-				if shared.IsFalse(project.Config[featureChanged]) && !cluster.ProjectFeatures[featureChanged].CanEnableNonEmpty {
+				if util.IsFalse(project.Config[featureChanged]) && !cluster.ProjectFeatures[featureChanged].CanEnableNonEmpty {
 					return response.BadRequest(fmt.Errorf("Project feature %q cannot be enabled on non-empty projects", featureChanged))
 				}
 			}
@@ -714,8 +714,8 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 			return fmt.Errorf("Persist profile changes: %w", err)
 		}
 
-		if shared.ValueInSlice("features.profiles", configChanged) {
-			if shared.IsTrue(req.Config["features.profiles"]) {
+		if util.ValueInSlice("features.profiles", configChanged) {
+			if util.IsTrue(req.Config["features.profiles"]) {
 				err = projectCreateDefaultProfile(tx, project.Name)
 				if err != nil {
 					return err
@@ -729,7 +729,7 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 			}
 		}
 
-		if shared.ValueInSlice("features.images", configChanged) && shared.IsFalse(req.Config["features.images"]) && shared.IsTrue(req.Config["features.profiles"]) {
+		if util.ValueInSlice("features.images", configChanged) && util.IsFalse(req.Config["features.images"]) && util.IsTrue(req.Config["features.profiles"]) {
 			err = cluster.InitProjectWithoutImages(ctx, tx.Tx(), project.Name)
 			if err != nil {
 				return err
@@ -1119,7 +1119,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 	// Ensure that restricted projects have their own profiles. Otherwise restrictions in this project could
 	// be bypassed by settings from the default project's profiles that are not checked against this project's
 	// restrictions when they are configured.
-	if shared.IsTrue(config["restricted"]) && shared.IsFalse(config["features.profiles"]) {
+	if util.IsTrue(config["restricted"]) && util.IsFalse(config["features.profiles"]) {
 		return fmt.Errorf("Projects without their own profiles cannot be restricted")
 	}
 
@@ -1151,7 +1151,7 @@ func projectValidateName(name string) error {
 		return fmt.Errorf("Reserved project name")
 	}
 
-	if shared.ValueInSlice(name, []string{".", ".."}) {
+	if util.ValueInSlice(name, []string{".", ".."}) {
 		return fmt.Errorf("Invalid project name %q", name)
 	}
 
@@ -1161,7 +1161,7 @@ func projectValidateName(name string) error {
 // projectValidateRestrictedSubnets checks that the project's restricted.networks.subnets are properly formatted
 // and are within the specified uplink network's routes.
 func projectValidateRestrictedSubnets(s *state.State, value string) error {
-	for _, subnetRaw := range shared.SplitNTrimSpace(value, ",", -1, false) {
+	for _, subnetRaw := range util.SplitNTrimSpace(value, ",", -1, false) {
 		subnetParts := strings.SplitN(subnetRaw, ":", 2)
 		if len(subnetParts) != 2 {
 			return fmt.Errorf(`Subnet %q invalid, must be in the format of "<uplink network>:<subnet>"`, subnetRaw)
@@ -1192,7 +1192,7 @@ func projectValidateRestrictedSubnets(s *state.State, value string) error {
 				continue
 			}
 
-			uplinkRoutes, err = network.SubnetParseAppend(uplinkRoutes, shared.SplitNTrimSpace(uplink.Config[k], ",", -1, false)...)
+			uplinkRoutes, err = network.SubnetParseAppend(uplinkRoutes, util.SplitNTrimSpace(uplink.Config[k], ",", -1, false)...)
 			if err != nil {
 				return err
 			}

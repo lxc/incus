@@ -12,8 +12,8 @@ import (
 	"github.com/digitalocean/go-smbios/smbios"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 var sysDevicesCPU = "/sys/devices/system/cpu"
@@ -441,7 +441,7 @@ func GetCPU() (*api.ResourcesCPU, error) {
 			}
 		}
 		thread.ID = threadNumber
-		thread.Isolated = shared.ValueInSlice(threadNumber, isolated)
+		thread.Isolated = util.ValueInSlice(threadNumber, isolated)
 		thread.Thread = uint64(len(resCore.Threads))
 
 		// NUMA node

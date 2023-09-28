@@ -8,7 +8,7 @@ import (
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
 	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 )
@@ -17,7 +17,7 @@ func metricsCreateListener(address string, cert *localtls.CertInfo) (net.Listene
 	// Listening on `tcp` network with address 0.0.0.0 will end up with listening
 	// on both IPv4 and IPv6 interfaces. Pass `tcp4` to make it
 	// work only on 0.0.0.0. https://go-review.googlesource.com/c/go/+/45771/
-	listenAddress := util.CanonicalNetworkAddress(address, ports.HTTPSMetricsDefaultPort)
+	listenAddress := internalUtil.CanonicalNetworkAddress(address, ports.HTTPSMetricsDefaultPort)
 	protocol := "tcp"
 
 	if strings.HasPrefix(listenAddress, "0.0.0.0") {
@@ -49,7 +49,7 @@ func (e *Endpoints) MetricsAddress() string {
 // MetricsUpdateAddress updates the address for the metrics endpoint, shutting it down and restarting it.
 func (e *Endpoints) MetricsUpdateAddress(address string, cert *localtls.CertInfo) error {
 	if address != "" {
-		address = util.CanonicalNetworkAddress(address, ports.HTTPSMetricsDefaultPort)
+		address = internalUtil.CanonicalNetworkAddress(address, ports.HTTPSMetricsDefaultPort)
 	}
 
 	oldAddress := e.MetricsAddress()

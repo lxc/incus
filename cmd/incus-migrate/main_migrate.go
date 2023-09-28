@@ -18,14 +18,14 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/revert"
 	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
 	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdMigrate struct {
@@ -137,7 +137,9 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 
 	fmt.Println("Certificate fingerprint:", digest)
 	fmt.Print("ok (y/n)? ")
-	line, err := shared.ReadStdin()
+
+	buf := bufio.NewReader(os.Stdin)
+	line, _, err := buf.ReadLine()
 	if err != nil {
 		return nil, "", err
 	}
@@ -172,7 +174,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 
 	i := 1
 
-	if shared.ValueInSlice("tls", apiServer.AuthMethods) {
+	if util.ValueInSlice("tls", apiServer.AuthMethods) {
 		fmt.Printf("%d) Use a certificate token\n", i)
 		availableAuthMethods = append(availableAuthMethods, authMethodTLSCertificateToken)
 		i++
@@ -183,7 +185,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		availableAuthMethods = append(availableAuthMethods, authMethodTLSTemporaryCertificate)
 	}
 
-	if len(apiServer.AuthMethods) > 1 || shared.ValueInSlice("tls", apiServer.AuthMethods) {
+	if len(apiServer.AuthMethods) > 1 || util.ValueInSlice("tls", apiServer.AuthMethods) {
 		authMethodInt, err := cli.AskInt("Please pick an authentication mechanism above: ", 1, int64(i), "", nil)
 		if err != nil {
 			return nil, "", err
@@ -198,7 +200,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 
 	if authMethod == authMethodTLSCertificate {
 		certPath, err = cli.AskString("Please provide the certificate path: ", "", func(path string) error {
-			if !shared.PathExists(path) {
+			if !util.PathExists(path) {
 				return errors.New("File does not exist")
 			}
 
@@ -209,7 +211,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		}
 
 		keyPath, err = cli.AskString("Please provide the keyfile path: ", "", func(path string) error {
-			if !shared.PathExists(path) {
+			if !util.PathExists(path) {
 				return errors.New("File does not exist")
 			}
 
@@ -298,7 +300,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 			return cmdMigrateData{}, err
 		}
 
-		if shared.ValueInSlice(instanceName, instanceNames) {
+		if util.ValueInSlice(instanceName, instanceNames) {
 			fmt.Printf("Instance %q already exists\n", instanceName)
 			continue
 		}
@@ -317,7 +319,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 	}
 
 	config.SourcePath, err = cli.AskString(question, "", func(s string) error {
-		if !shared.PathExists(s) {
+		if !util.PathExists(s) {
 			return errors.New("Path does not exist")
 		}
 
@@ -335,7 +337,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 	if config.InstanceArgs.Type == api.InstanceTypeVM {
 		architectureName, _ := osarch.ArchitectureGetLocal()
 
-		if shared.ValueInSlice(architectureName, []string{"x86_64", "aarch64"}) {
+		if util.ValueInSlice(architectureName, []string{"x86_64", "aarch64"}) {
 			hasSecureBoot, err := cli.AskBool("Does the VM support UEFI Secure Boot? [default=no]: ", "no")
 			if err != nil {
 				return cmdMigrateData{}, err
@@ -360,7 +362,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 			for {
 				path, err := cli.AskString("Please provide a path the filesystem mount path [empty value to continue]: ", "", func(s string) error {
 					if s != "" {
-						if shared.PathExists(s) {
+						if util.PathExists(s) {
 							return nil
 						}
 
@@ -596,7 +598,7 @@ func (c *cmdMigrate) askProfiles(server incus.InstanceServer, config *cmdMigrate
 		profiles := strings.Split(s, " ")
 
 		for _, profile := range profiles {
-			if !shared.ValueInSlice(profile, profileNames) {
+			if !util.ValueInSlice(profile, profileNames) {
 				return fmt.Errorf("Unknown profile %q", profile)
 			}
 		}

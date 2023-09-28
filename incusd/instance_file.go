@@ -18,10 +18,12 @@ import (
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/lifecycle"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
@@ -33,7 +35,7 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -438,9 +440,9 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 	defer func() { _ = client.Close() }()
 
 	// Extract file ownership and mode from headers
-	uid, gid, mode, type_, write := shared.ParseFileHeaders(r.Header)
+	uid, gid, mode, type_, write := api.ParseFileHeaders(r.Header)
 
-	if !shared.ValueInSlice(write, []string{"overwrite", "append"}) {
+	if !util.ValueInSlice(write, []string{"overwrite", "append"}) {
 		return response.BadRequest(fmt.Errorf("Bad file write mode: %s", write))
 	}
 

@@ -12,7 +12,7 @@ import (
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Remote holds details for communication with a remote daemon.
@@ -36,7 +36,7 @@ func (c *Config) ParseRemote(raw string) (string, string, error) {
 	_, ok := c.Remotes[result[0]]
 	if !ok {
 		// Attempt to play nice with snapshots containing ":"
-		if shared.IsSnapshot(raw) && shared.IsSnapshot(result[0]) {
+		if strings.Contains(raw, "/") && strings.Contains(result[0], "/") {
 			return c.DefaultRemote, raw, nil
 		}
 
@@ -89,7 +89,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 	}
 
 	// HTTPs
-	if !shared.ValueInSlice(remote.AuthType, []string{"oidc"}) && (args.TLSClientCert == "" || args.TLSClientKey == "") {
+	if !util.ValueInSlice(remote.AuthType, []string{"oidc"}) && (args.TLSClientCert == "" || args.TLSClientKey == "") {
 		return nil, fmt.Errorf("Missing TLS client certificate and key")
 	}
 
@@ -202,7 +202,7 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 		tokenPath := c.OIDCTokenPath(name)
 
 		if c.oidcTokens[name] == nil {
-			if shared.PathExists(tokenPath) {
+			if util.PathExists(tokenPath) {
 				content, err := os.ReadFile(tokenPath)
 				if err != nil {
 					return nil, err
@@ -230,7 +230,7 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	}
 
 	// Server certificate
-	if shared.PathExists(c.ServerCertPath(name)) {
+	if util.PathExists(c.ServerCertPath(name)) {
 		content, err := os.ReadFile(c.ServerCertPath(name))
 		if err != nil {
 			return nil, err
@@ -240,12 +240,12 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	}
 
 	// Stop here if no client certificate involved
-	if remote.Protocol == "simplestreams" || shared.ValueInSlice(remote.AuthType, []string{"oidc"}) {
+	if remote.Protocol == "simplestreams" || util.ValueInSlice(remote.AuthType, []string{"oidc"}) {
 		return &args, nil
 	}
 
 	// Client certificate
-	if shared.PathExists(c.ConfigPath("client.crt")) {
+	if util.PathExists(c.ConfigPath("client.crt")) {
 		content, err := os.ReadFile(c.ConfigPath("client.crt"))
 		if err != nil {
 			return nil, err
@@ -255,7 +255,7 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	}
 
 	// Client CA
-	if shared.PathExists(c.ConfigPath("client.ca")) {
+	if util.PathExists(c.ConfigPath("client.ca")) {
 		content, err := os.ReadFile(c.ConfigPath("client.ca"))
 		if err != nil {
 			return nil, err
@@ -265,7 +265,7 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	}
 
 	// Client key
-	if shared.PathExists(c.ConfigPath("client.key")) {
+	if util.PathExists(c.ConfigPath("client.key")) {
 		content, err := os.ReadFile(c.ConfigPath("client.key"))
 		if err != nil {
 			return nil, err

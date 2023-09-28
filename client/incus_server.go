@@ -7,9 +7,9 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Server handling functions
@@ -196,24 +196,17 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 	// Apply server configuration.
 	if config.Server.Config != nil && len(config.Server.Config) > 0 {
 		// Get current config.
-		currentServer, etag, err := r.GetServer()
+		server, etag, err := r.GetServer()
 		if err != nil {
 			return fmt.Errorf("Failed to retrieve current server configuration: %w", err)
 		}
 
-		// Prepare the update.
-		newServer := api.ServerPut{}
-		err = shared.DeepCopy(currentServer.Writable(), &newServer)
-		if err != nil {
-			return fmt.Errorf("Failed to copy server configuration: %w", err)
-		}
-
 		for k, v := range config.Server.Config {
-			newServer.Config[k] = fmt.Sprintf("%v", v)
+			server.Config[k] = fmt.Sprintf("%v", v)
 		}
 
 		// Apply it.
-		err = r.UpdateServer(newServer, etag)
+		err = r.UpdateServer(server.Writable(), etag)
 		if err != nil {
 			return fmt.Errorf("Failed to update server configuration: %w", err)
 		}
@@ -239,39 +232,32 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 		}
 
 		// StoragePool updater.
-		updateStoragePool := func(storagePool api.StoragePoolsPost) error {
+		updateStoragePool := func(target api.StoragePoolsPost) error {
 			// Get the current storagePool.
-			currentStoragePool, etag, err := r.GetStoragePool(storagePool.Name)
+			storagePool, etag, err := r.GetStoragePool(target.Name)
 			if err != nil {
-				return fmt.Errorf("Failed to retrieve current storage pool %q: %w", storagePool.Name, err)
+				return fmt.Errorf("Failed to retrieve current storage pool %q: %w", target.Name, err)
 			}
 
 			// Quick check.
-			if currentStoragePool.Driver != storagePool.Driver {
-				return fmt.Errorf("Storage pool %q is of type %q instead of %q", currentStoragePool.Name, currentStoragePool.Driver, storagePool.Driver)
-			}
-
-			// Prepare the update.
-			newStoragePool := api.StoragePoolPut{}
-			err = shared.DeepCopy(currentStoragePool.Writable(), &newStoragePool)
-			if err != nil {
-				return fmt.Errorf("Failed to copy configuration of storage pool %q: %w", storagePool.Name, err)
+			if storagePool.Driver != target.Driver {
+				return fmt.Errorf("Storage pool %q is of type %q instead of %q", storagePool.Name, storagePool.Driver, target.Driver)
 			}
 
 			// Description override.
-			if storagePool.Description != "" {
-				newStoragePool.Description = storagePool.Description
+			if target.Description != "" {
+				storagePool.Description = target.Description
 			}
 
 			// Config overrides.
-			for k, v := range storagePool.Config {
-				newStoragePool.Config[k] = fmt.Sprintf("%v", v)
+			for k, v := range target.Config {
+				storagePool.Config[k] = fmt.Sprintf("%v", v)
 			}
 
 			// Apply it.
-			err = r.UpdateStoragePool(currentStoragePool.Name, newStoragePool, etag)
+			err = r.UpdateStoragePool(target.Name, storagePool.Writable(), etag)
 			if err != nil {
-				return fmt.Errorf("Failed to update storage pool %q: %w", storagePool.Name, err)
+				return fmt.Errorf("Failed to update storage pool %q: %w", target.Name, err)
 			}
 
 			return nil
@@ -279,7 +265,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 
 		for _, storagePool := range config.Server.StoragePools {
 			// New storagePool.
-			if !shared.ValueInSlice(storagePool.Name, storagePoolNames) {
+			if !util.ValueInSlice(storagePool.Name, storagePoolNames) {
 				err := createStoragePool(storagePool)
 				if err != nil {
 					return err
@@ -297,36 +283,29 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 	}
 
 	// Apply network configuration function.
-	applyNetwork := func(network api.InitNetworksProjectPost) error {
-		currentNetwork, etag, err := r.UseProject(network.Project).GetNetwork(network.Name)
+	applyNetwork := func(target api.InitNetworksProjectPost) error {
+		network, etag, err := r.UseProject(target.Project).GetNetwork(target.Name)
 		if err != nil {
 			// Create the network if doesn't exist.
-			err := r.UseProject(network.Project).CreateNetwork(network.NetworksPost)
+			err := r.UseProject(target.Project).CreateNetwork(target.NetworksPost)
 			if err != nil {
-				return fmt.Errorf("Failed to create local member network %q in project %q: %w", network.Name, network.Project, err)
+				return fmt.Errorf("Failed to create local member network %q in project %q: %w", target.Name, target.Project, err)
 			}
 		} else {
-			// Prepare the update.
-			newNetwork := api.NetworkPut{}
-			err = shared.DeepCopy(currentNetwork.Writable(), &newNetwork)
-			if err != nil {
-				return fmt.Errorf("Failed to copy configuration of network %q in project %q: %w", network.Name, network.Project, err)
-			}
-
 			// Description override.
-			if network.Description != "" {
-				newNetwork.Description = network.Description
+			if target.Description != "" {
+				network.Description = target.Description
 			}
 
 			// Config overrides.
-			for k, v := range network.Config {
-				newNetwork.Config[k] = fmt.Sprintf("%v", v)
+			for k, v := range target.Config {
+				network.Config[k] = fmt.Sprintf("%v", v)
 			}
 
 			// Apply it.
-			err = r.UseProject(network.Project).UpdateNetwork(currentNetwork.Name, newNetwork, etag)
+			err = r.UseProject(target.Project).UpdateNetwork(target.Name, network.Writable(), etag)
 			if err != nil {
-				return fmt.Errorf("Failed to update local member network %q in project %q: %w", network.Name, network.Project, err)
+				return fmt.Errorf("Failed to update local member network %q in project %q: %w", target.Name, target.Project, err)
 			}
 		}
 
@@ -372,34 +351,27 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 		}
 
 		// Project updater.
-		updateProject := func(project api.ProjectsPost) error {
+		updateProject := func(target api.ProjectsPost) error {
 			// Get the current project.
-			currentProject, etag, err := r.GetProject(project.Name)
+			project, etag, err := r.GetProject(target.Name)
 			if err != nil {
-				return fmt.Errorf("Failed to retrieve current project %q: %w", project.Name, err)
-			}
-
-			// Prepare the update.
-			newProject := api.ProjectPut{}
-			err = shared.DeepCopy(currentProject.Writable(), &newProject)
-			if err != nil {
-				return fmt.Errorf("Failed to copy configuration of project %q: %w", project.Name, err)
+				return fmt.Errorf("Failed to retrieve current project %q: %w", target.Name, err)
 			}
 
 			// Description override.
-			if project.Description != "" {
-				newProject.Description = project.Description
+			if target.Description != "" {
+				project.Description = target.Description
 			}
 
 			// Config overrides.
-			for k, v := range project.Config {
-				newProject.Config[k] = fmt.Sprintf("%v", v)
+			for k, v := range target.Config {
+				project.Config[k] = fmt.Sprintf("%v", v)
 			}
 
 			// Apply it.
-			err = r.UpdateProject(currentProject.Name, newProject, etag)
+			err = r.UpdateProject(target.Name, project.Writable(), etag)
 			if err != nil {
-				return fmt.Errorf("Failed to update local member project %q: %w", project.Name, err)
+				return fmt.Errorf("Failed to update local member project %q: %w", target.Name, err)
 			}
 
 			return nil
@@ -407,7 +379,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 
 		for _, project := range config.Server.Projects {
 			// New project.
-			if !shared.ValueInSlice(project.Name, projectNames) {
+			if !util.ValueInSlice(project.Name, projectNames) {
 				err := createProject(project)
 				if err != nil {
 					return err
@@ -456,49 +428,42 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 		}
 
 		// Profile updater.
-		updateProfile := func(profile api.ProfilesPost) error {
+		updateProfile := func(target api.ProfilesPost) error {
 			// Get the current profile.
-			currentProfile, etag, err := r.GetProfile(profile.Name)
+			profile, etag, err := r.GetProfile(target.Name)
 			if err != nil {
-				return fmt.Errorf("Failed to retrieve current profile %q: %w", profile.Name, err)
-			}
-
-			// Prepare the update.
-			newProfile := api.ProfilePut{}
-			err = shared.DeepCopy(currentProfile.Writable(), &newProfile)
-			if err != nil {
-				return fmt.Errorf("Failed to copy configuration of profile %q: %w", profile.Name, err)
+				return fmt.Errorf("Failed to retrieve current profile %q: %w", target.Name, err)
 			}
 
 			// Description override.
-			if profile.Description != "" {
-				newProfile.Description = profile.Description
+			if target.Description != "" {
+				profile.Description = target.Description
 			}
 
 			// Config overrides.
-			for k, v := range profile.Config {
-				newProfile.Config[k] = fmt.Sprintf("%v", v)
+			for k, v := range target.Config {
+				profile.Config[k] = fmt.Sprintf("%v", v)
 			}
 
 			// Device overrides.
-			for k, v := range profile.Devices {
+			for k, v := range target.Devices {
 				// New device.
-				_, ok := newProfile.Devices[k]
+				_, ok := profile.Devices[k]
 				if !ok {
-					newProfile.Devices[k] = v
+					profile.Devices[k] = v
 					continue
 				}
 
 				// Existing device.
 				for configKey, configValue := range v {
-					newProfile.Devices[k][configKey] = fmt.Sprintf("%v", configValue)
+					profile.Devices[k][configKey] = fmt.Sprintf("%v", configValue)
 				}
 			}
 
 			// Apply it.
-			err = r.UpdateProfile(currentProfile.Name, newProfile, etag)
+			err = r.UpdateProfile(target.Name, profile.Writable(), etag)
 			if err != nil {
-				return fmt.Errorf("Failed to update profile %q: %w", profile.Name, err)
+				return fmt.Errorf("Failed to update profile %q: %w", target.Name, err)
 			}
 
 			return nil
@@ -506,7 +471,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 
 		for _, profile := range config.Server.Profiles {
 			// New profile.
-			if !shared.ValueInSlice(profile.Name, profileNames) {
+			if !util.ValueInSlice(profile.Name, profileNames) {
 				err := createProfile(profile)
 				if err != nil {
 					return err

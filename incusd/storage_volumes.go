@@ -29,18 +29,20 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/filter"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	internalIO "github.com/lxc/incus/internal/io"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 var storagePoolVolumesCmd = APIEndpoint{
@@ -329,7 +331,7 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 
 	// Detect project mode.
 	requestProjectName := queryParam(r, "project")
-	allProjects := shared.IsTrue(queryParam(r, "all-projects"))
+	allProjects := util.IsTrue(queryParam(r, "all-projects"))
 
 	if allProjects && requestProjectName != "" {
 		return response.SmartError(api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects"))
@@ -434,7 +436,7 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 		return volA.Name < volB.Name
 	})
 
-	if util.IsRecursionRequest(r) {
+	if localUtil.IsRecursionRequest(r) {
 		volumes := make([]*api.StorageVolume, 0, len(dbVolumes))
 		for _, dbVol := range dbVolumes {
 			vol := &dbVol.StorageVolume
@@ -471,13 +473,13 @@ func filterVolumes(volumes []*db.StorageVolume, clauses *filter.ClauseSet, allPr
 	filtered := []*db.StorageVolume{}
 	for _, volume := range volumes {
 		// Filter out image volumes that are not used by this project.
-		if volume.Type == db.StoragePoolVolumeTypeNameImage && !allProjects && !shared.ValueInSlice(volume.Name, filterProjectImages) {
+		if volume.Type == db.StoragePoolVolumeTypeNameImage && !allProjects && !util.ValueInSlice(volume.Name, filterProjectImages) {
 			continue
 		}
 
 		tmpVolume := FilterStorageVolume{
 			StorageVolume: volume.StorageVolume,
-			Snapshot:      strconv.FormatBool(strings.Contains(volume.Name, shared.SnapshotDelimiter)),
+			Snapshot:      strconv.FormatBool(strings.Contains(volume.Name, internalInstance.SnapshotDelimiter)),
 		}
 
 		match, err := filter.Match(tmpVolume, *clauses)
@@ -985,7 +987,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(volumeName) {
+	if internalInstance.IsSnapshot(volumeName) {
 		return response.BadRequest(fmt.Errorf("Invalid volume name"))
 	}
 
@@ -1009,7 +1011,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check requested new volume name is not a snapshot volume.
-	if shared.IsSnapshot(req.Name) {
+	if internalInstance.IsSnapshot(req.Name) {
 		return response.BadRequest(fmt.Errorf("Storage volume names may not contain slashes"))
 	}
 
@@ -1057,7 +1059,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	r.Body = shared.BytesReadCloser{Buf: &buf}
+	r.Body = internalIO.BytesReadCloser{Buf: &buf}
 
 	resp := forwardedResponseIfTargetIsRemote(s, r)
 	if resp != nil {
@@ -1355,7 +1357,7 @@ func storagePoolVolumeGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check that the storage volume type is valid.
-	if !shared.ValueInSlice(volumeType, supportedVolumeTypes) {
+	if !util.ValueInSlice(volumeType, supportedVolumeTypes) {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 
@@ -1475,7 +1477,7 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check that the storage volume type is valid.
-	if !shared.ValueInSlice(volumeType, supportedVolumeTypes) {
+	if !util.ValueInSlice(volumeType, supportedVolumeTypes) {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 
@@ -1507,7 +1509,7 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 	// Validate the ETag
 	etag := []any{volumeName, dbVolume.Type, dbVolume.Config}
 
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -1627,7 +1629,7 @@ func storagePoolVolumePatch(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(volumeName) {
+	if internalInstance.IsSnapshot(volumeName) {
 		return response.BadRequest(fmt.Errorf("Invalid volume name"))
 	}
 
@@ -1681,7 +1683,7 @@ func storagePoolVolumePatch(d *Daemon, r *http.Request) response.Response {
 	// Validate the ETag.
 	etag := []any{volumeName, dbVolume.Type, dbVolume.Config}
 
-	err = util.EtagCheck(r, etag)
+	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
 	}
@@ -1759,7 +1761,7 @@ func storagePoolVolumeDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(volumeName) {
+	if internalInstance.IsSnapshot(volumeName) {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume %q", volumeName))
 	}
 
@@ -1782,7 +1784,7 @@ func storagePoolVolumeDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check that the storage volume type is valid.
-	if !shared.ValueInSlice(volumeType, supportedVolumeTypes) {
+	if !util.ValueInSlice(volumeType, supportedVolumeTypes) {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 
@@ -1867,15 +1869,15 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 	}
 
 	// Create isos directory if needed.
-	if !shared.PathExists(shared.VarPath("isos")) {
-		err := os.MkdirAll(shared.VarPath("isos"), 0644)
+	if !util.PathExists(internalUtil.VarPath("isos")) {
+		err := os.MkdirAll(internalUtil.VarPath("isos"), 0644)
 		if err != nil {
 			return response.InternalError(err)
 		}
 	}
 
 	// Create temporary file to store uploaded ISO data.
-	isoFile, err := os.CreateTemp(shared.VarPath("isos"), fmt.Sprintf("%s_", "incus_iso"))
+	isoFile, err := os.CreateTemp(internalUtil.VarPath("isos"), fmt.Sprintf("%s_", "incus_iso"))
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -1928,7 +1930,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 	defer revert.Fail()
 
 	// Create temporary file to store uploaded backup data.
-	backupFile, err := os.CreateTemp(shared.VarPath("backups"), fmt.Sprintf("%s_", backup.WorkingDirPrefix))
+	backupFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_", backup.WorkingDirPrefix))
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -1958,7 +1960,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		decomArgs := append(decomArgs, backupFile.Name())
 
 		// Create temporary file to store the decompressed tarball in.
-		tarFile, err := os.CreateTemp(shared.VarPath("backups"), fmt.Sprintf("%s_decompress_", backup.WorkingDirPrefix))
+		tarFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_decompress_", backup.WorkingDirPrefix))
 		if err != nil {
 			return response.InternalError(err)
 		}

@@ -6,7 +6,7 @@ import (
 	"text/template"
 
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 var dnsmasqProfileTpl = template.Must(template.New("dnsmasqProfile").Parse(`#include <tunables/global>
@@ -71,8 +71,8 @@ func dnsmasqProfile(sysOS *sys.OS, n network) (string, error) {
 	err := dnsmasqProfileTpl.Execute(sb, map[string]any{
 		"name":        DnsmasqProfileName(n),
 		"networkName": n.Name(),
-		"logPath":     shared.LogPath(""),
-		"varPath":     shared.VarPath(""),
+		"logPath":     internalUtil.LogPath(""),
+		"varPath":     internalUtil.VarPath(""),
 	})
 	if err != nil {
 		return "", err
@@ -83,7 +83,7 @@ func dnsmasqProfile(sysOS *sys.OS, n network) (string, error) {
 
 // DnsmasqProfileName returns the AppArmor profile name.
 func DnsmasqProfileName(n network) string {
-	path := shared.VarPath("")
+	path := internalUtil.VarPath("")
 	name := fmt.Sprintf("%s_<%s>", n.Name(), path)
 	return profileName("dnsmasq", name)
 }

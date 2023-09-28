@@ -11,7 +11,7 @@ import (
 
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
 )
 
 // swagger:operation GET /1.0/instances/{name} instances instance_get
@@ -111,7 +111,7 @@ func instanceGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 

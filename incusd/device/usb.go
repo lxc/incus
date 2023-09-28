@@ -9,8 +9,8 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -36,7 +36,7 @@ type usb struct {
 // isRequired indicates whether the device config requires this device to start OK.
 func (d *usb) isRequired() bool {
 	// Defaults to not required.
-	return shared.IsTrue(d.config["required"])
+	return util.IsTrue(d.config["required"])
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -159,7 +159,7 @@ func (d *usb) startContainer() (*deviceConfig.RunConfig, error) {
 }
 
 func (d *usb) startVM() (*deviceConfig.RunConfig, error) {
-	if d.inst.Type() == instancetype.VM && shared.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
+	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return nil, fmt.Errorf("USB devices cannot be used when migration.stateful is enabled")
 	}
 

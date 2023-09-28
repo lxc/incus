@@ -17,15 +17,15 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
 	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Define API endpoints for recover actions.
@@ -145,7 +145,7 @@ func internalRecoverScan(s *state.State, userPools []api.StoragePoolsPost, valid
 	addDependencyError := func(err error) {
 		errStr := err.Error()
 
-		if !shared.ValueInSlice(errStr, res.DependencyErrors) {
+		if !util.ValueInSlice(errStr, res.DependencyErrors) {
 			res.DependencyErrors = append(res.DependencyErrors, errStr)
 		}
 	}
@@ -584,7 +584,7 @@ func internalRecoverImportInstanceSnapshot(s *state.State, pool storagePools.Poo
 		Devices:      deviceConfig.NewDevices(snap.Devices),
 		Ephemeral:    snap.Ephemeral,
 		LastUsedDate: snap.LastUsedAt,
-		Name:         poolVol.Container.Name + shared.SnapshotDelimiter + snap.Name,
+		Name:         poolVol.Container.Name + internalInstance.SnapshotDelimiter + snap.Name,
 		Profiles:     profiles,
 		Stateful:     snap.Stateful,
 	}, false)

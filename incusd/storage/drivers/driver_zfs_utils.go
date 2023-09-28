@@ -11,11 +11,11 @@ import (
 	"github.com/pborman/uuid"
 
 	"github.com/lxc/incus/incusd/migration"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 const (
@@ -291,7 +291,7 @@ func (d *zfs) version() (string, error) {
 	}
 
 	// Loaded kernel module version
-	if shared.PathExists("/sys/module/zfs/version") {
+	if util.PathExists("/sys/module/zfs/version") {
 		out, err := os.ReadFile("/sys/module/zfs/version")
 		if err == nil {
 			return strings.TrimSpace(string(out)), nil
@@ -325,7 +325,7 @@ func (d *zfs) sendDataset(dataset string, parent string, volSrcArgs *migration.V
 
 	// Assemble zfs send command.
 	args := []string{"send"}
-	if shared.ValueInSlice("compress", volSrcArgs.MigrationType.Features) {
+	if util.ValueInSlice("compress", volSrcArgs.MigrationType.Features) {
 		args = append(args, "-c")
 		args = append(args, "-L")
 	}

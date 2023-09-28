@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdSql struct {
@@ -70,7 +70,7 @@ func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
 	database := args[0]
 	query := args[1]
 
-	if !shared.ValueInSlice(database, []string{"local", "global"}) {
+	if !util.ValueInSlice(database, []string{"local", "global"}) {
 		_ = cmd.Help()
 
 		return fmt.Errorf("Invalid database type")

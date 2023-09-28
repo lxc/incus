@@ -10,9 +10,10 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 // Internal copy of the instance interface.
@@ -28,7 +29,7 @@ type instance interface {
 
 // InstanceProfileName returns the instance's AppArmor profile name.
 func InstanceProfileName(inst instance) string {
-	path := shared.VarPath("")
+	path := internalUtil.VarPath("")
 	name := fmt.Sprintf("%s_<%s>", project.Instance(inst.Project().Name, inst.Name()), path)
 	return profileName("", name)
 }
@@ -36,7 +37,7 @@ func InstanceProfileName(inst instance) string {
 // InstanceNamespaceName returns the instance's AppArmor namespace.
 func InstanceNamespaceName(inst instance) string {
 	// Unlike in profile names, / isn't an allowed character so replace with a -.
-	path := strings.Replace(strings.Trim(shared.VarPath(""), "/"), "/", "-", -1)
+	path := strings.Replace(strings.Trim(internalUtil.VarPath(""), "/"), "/", "-", -1)
 	name := fmt.Sprintf("%s_<%s>", project.Instance(inst.Project().Name, inst.Name()), path)
 	return profileName("", name)
 }
@@ -174,9 +175,9 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"feature_unix":     unixSupported,
 			"name":             InstanceProfileName(inst),
 			"namespace":        InstanceNamespaceName(inst),
-			"nesting":          shared.IsTrue(inst.ExpandedConfig()["security.nesting"]),
+			"nesting":          util.IsTrue(inst.ExpandedConfig()["security.nesting"]),
 			"raw":              rawContent,
-			"unprivileged":     shared.IsFalseOrEmpty(inst.ExpandedConfig()["security.privileged"]) || sysOS.RunningInUserNS,
+			"unprivileged":     util.IsFalseOrEmpty(inst.ExpandedConfig()["security.privileged"]) || sysOS.RunningInUserNS,
 		})
 		if err != nil {
 			return "", err
@@ -198,7 +199,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			return "", err
 		}
 
-		execPath := util.GetExecPath()
+		execPath := localUtil.GetExecPath()
 		execPathFull, err := filepath.EvalSymlinks(execPath)
 		if err == nil {
 			execPath = execPathFull

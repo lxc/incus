@@ -9,8 +9,8 @@ import (
 
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/iprange"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // OVNRouter OVN router name.
@@ -649,7 +649,7 @@ func (o *OVN) logicalSwitchFindAssociatedPortGroups(switchName OVNSwitch) ([]OVN
 		return nil, err
 	}
 
-	lines := shared.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
+	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
 	portGroups := make([]OVNPortGroup, 0, len(lines))
 
 	for _, line := range lines {
@@ -782,7 +782,7 @@ func (o *OVN) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]iprang
 		return nil, fmt.Errorf("Failed unquoting exclude_ips: %w", err)
 	}
 
-	excludeIPsParts := shared.SplitNTrimSpace(strings.TrimSpace(excludeIPsRaw), " ", -1, true)
+	excludeIPsParts := util.SplitNTrimSpace(strings.TrimSpace(excludeIPsRaw), " ", -1, true)
 	excludeIPs := make([]iprange.Range, 0, len(excludeIPsParts))
 
 	for _, excludeIPsPart := range excludeIPsParts {
@@ -1007,7 +1007,7 @@ func (o *OVN) logicalSwitchDNSRecordsDelete(switchName OVNSwitch) error {
 
 	args := []string{}
 
-	for _, uuid := range shared.SplitNTrimSpace(strings.TrimSpace(uuids), "\n", -1, true) {
+	for _, uuid := range util.SplitNTrimSpace(strings.TrimSpace(uuids), "\n", -1, true) {
 		if len(args) > 0 {
 			args = append(args, "--")
 		}
@@ -1055,7 +1055,7 @@ func (o *OVN) logicalSwitchPortACLRules(portName OVNSwitchPort) ([]string, error
 		return nil, err
 	}
 
-	ruleUUIDs := shared.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
+	ruleUUIDs := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
 
 	return ruleUUIDs, nil
 }
@@ -1068,7 +1068,7 @@ func (o *OVN) LogicalSwitchPorts(switchName OVNSwitch) (map[OVNSwitchPort]OVNSwi
 		return nil, err
 	}
 
-	lines := shared.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
+	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
 	ports := make(map[OVNSwitchPort]OVNSwitchPortUUID, len(lines))
 
 	for _, line := range lines {
@@ -1096,17 +1096,17 @@ func (o *OVN) LogicalSwitchPortIPs(switchName OVNSwitch) (map[OVNSwitchPort][]ne
 		return nil, err
 	}
 
-	lines := shared.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
+	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
 	portIPs := make(map[OVNSwitchPort][]net.IP, len(lines))
 
 	for _, line := range lines {
-		fields := shared.SplitNTrimSpace(line, ",", -1, true)
+		fields := util.SplitNTrimSpace(line, ",", -1, true)
 		portName := OVNSwitchPort(fields[0])
 		var ips []net.IP
 
 		// Parse all IPs mentioned in addresses and dynamic_addresses fields.
 		for i := 1; i < len(fields); i++ {
-			for _, address := range shared.SplitNTrimSpace(fields[i], " ", -1, true) {
+			for _, address := range util.SplitNTrimSpace(fields[i], " ", -1, true) {
 				ip := net.ParseIP(address)
 				if ip != nil {
 					ips = append(ips, ip)
@@ -1129,7 +1129,7 @@ func (o *OVN) LogicalSwitchPortUUID(portName OVNSwitchPort) (OVNSwitchPortUUID, 
 		return "", err
 	}
 
-	portParts := shared.SplitNTrimSpace(portInfo, ",", 2, false)
+	portParts := util.SplitNTrimSpace(portInfo, ",", 2, false)
 	if len(portParts) == 2 {
 		if portParts[1] == string(portName) {
 			return OVNSwitchPortUUID(portParts[0]), nil
@@ -1515,13 +1515,13 @@ func (o *OVN) ChassisGroupChassisDelete(haChassisGroupName OVNChassisGroup, chas
 		return err
 	}
 
-	lines := shared.SplitNTrimSpace(output, "\n", -1, true)
+	lines := util.SplitNTrimSpace(output, "\n", -1, true)
 	if len(lines) > 1 {
 		existingChassisGroup := lines[0]
-		members := shared.SplitNTrimSpace(lines[1], " ", -1, true)
+		members := util.SplitNTrimSpace(lines[1], " ", -1, true)
 
 		// Remove chassis from group if exists.
-		if existingChassisGroup == string(haChassisGroupName) && shared.ValueInSlice(chassisID, members) {
+		if existingChassisGroup == string(haChassisGroupName) && util.ValueInSlice(chassisID, members) {
 			_, err := o.nbctl("ha-chassis-group-remove-chassis", string(haChassisGroupName), chassisID)
 			if err != nil {
 				return err
@@ -1543,10 +1543,10 @@ func (o *OVN) PortGroupInfo(portGroupName OVNPortGroup) (OVNPortGroupUUID, bool,
 		return "", false, err
 	}
 
-	groupParts := shared.SplitNTrimSpace(groupInfo, ",", 3, true)
+	groupParts := util.SplitNTrimSpace(groupInfo, ",", 3, true)
 	if len(groupParts) == 3 {
 		if groupParts[1] == string(portGroupName) {
-			aclParts := shared.SplitNTrimSpace(groupParts[2], ",", -1, true)
+			aclParts := util.SplitNTrimSpace(groupParts[2], ",", -1, true)
 
 			return OVNPortGroupUUID(groupParts[0]), len(aclParts) > 0, nil
 		}
@@ -1613,7 +1613,7 @@ func (o *OVN) PortGroupListByProject(projectID int64) ([]OVNPortGroup, error) {
 		return nil, err
 	}
 
-	lines := shared.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
+	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
 	portGroups := make([]OVNPortGroup, 0, len(lines))
 
 	for _, line := range lines {
@@ -2043,7 +2043,7 @@ func (o *OVN) LogicalRouterRoutes(routerName OVNRouter) ([]OVNRouterRoute, error
 		return nil, err
 	}
 
-	lines := shared.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
+	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
 	routes := make([]OVNRouterRoute, 0)
 
 	mainTable := true // Assume output starts with main table (supports ovn versions without multiple tables).

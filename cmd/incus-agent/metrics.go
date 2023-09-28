@@ -14,8 +14,8 @@ import (
 	"github.com/lxc/incus/incusd/metrics"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // These mountpoints are excluded as they are irrelevant for metrics.
@@ -259,7 +259,7 @@ func getFilesystemMetrics(d *Daemon) (map[string]metrics.FilesystemMetrics, erro
 		fields := strings.Fields(scanner.Text())
 
 		// Skip uninteresting mounts
-		if shared.ValueInSlice(fields[2], defFSTypesExcluded) || defMountPointsExcluded.MatchString(fields[1]) {
+		if util.ValueInSlice(fields[2], defFSTypesExcluded) || defMountPointsExcluded.MatchString(fields[1]) {
 			continue
 		}
 

@@ -12,7 +12,7 @@ import (
 
 	"github.com/lxc/incus/incusd/db/query"
 	"github.com/lxc/incus/incusd/db/schema"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // WriteTempFile creates a temp file with the specified content.
@@ -404,7 +404,7 @@ INSERT INTO test VALUES (2);
 	require.NoError(t, err)
 
 	// The file does not exist anymore.
-	assert.False(t, shared.PathExists(path))
+	assert.False(t, util.PathExists(path))
 
 	// The table was created, and the extra row inserted as well.
 	tx, err := db.Begin()

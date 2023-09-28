@@ -11,7 +11,7 @@ import (
 
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/shared/api"
 )
@@ -78,7 +78,7 @@ func operationGet(d *Daemon, r *http.Request) response.Response {
 }
 
 func operationsGet(d *Daemon, r *http.Request) response.Response {
-	recursion := util.IsRecursionRequest(r)
+	recursion := localUtil.IsRecursionRequest(r)
 
 	localOperationURLs := func() (jmap.Map, error) {
 		// Get all the operations

@@ -6,9 +6,9 @@ import (
 
 	"github.com/lxc/incus/incusd/cluster/request"
 	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 )

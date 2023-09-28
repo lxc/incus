@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/shared/util"
 )
 
 // If no socket-based activation is detected, a new local unix socket will be
@@ -24,7 +24,7 @@ func TestEndpoints_LocalCreateUnixSocket(t *testing.T) {
 
 	// The unix socket file gets removed after shutdown.
 	cleanup()
-	assert.Equal(t, false, shared.PathExists(path))
+	assert.Equal(t, false, util.PathExists(path))
 }
 
 // If socket-based activation is detected, it will be used for binding the API
@@ -57,7 +57,7 @@ func TestEndpoints_LocalSocketBasedActivation(t *testing.T) {
 	// which prevents listeners created from file descriptors from removing
 	// their socket files on close).
 	cleanup()
-	assert.Equal(t, true, shared.PathExists(path))
+	assert.Equal(t, true, util.PathExists(path))
 }
 
 // If a custom group for the unix socket is specified, but no such one exists,

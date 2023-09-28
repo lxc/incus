@@ -11,8 +11,9 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/lxc/incus/incusd/ucred"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/shared/util"
 )
 
 func tlsConfig(uid uint32) (*tls.Config, error) {
@@ -33,9 +34,9 @@ func tlsConfig(uid uint32) (*tls.Config, error) {
 	tlsClientKey := string(content)
 
 	// Load the server certificate.
-	certPath := shared.VarPath("cluster.crt")
-	if !shared.PathExists(certPath) {
-		certPath = shared.VarPath("server.crt")
+	certPath := internalUtil.VarPath("cluster.crt")
+	if !util.PathExists(certPath) {
+		certPath = internalUtil.VarPath("server.crt")
 	}
 
 	content, err = os.ReadFile(certPath)
@@ -81,7 +82,7 @@ func proxyConnection(conn *net.UnixConn) {
 	defer logger.Debug("Disconnected")
 
 	// Check if the user was setup.
-	if !shared.PathExists(filepath.Join("users", fmt.Sprintf("%d", creds.Uid))) {
+	if !util.PathExists(filepath.Join("users", fmt.Sprintf("%d", creds.Uid))) {
 		log.Infof("Setting up for uid %d", creds.Uid)
 		err := serverSetupUser(creds.Uid)
 		if err != nil {
@@ -91,7 +92,7 @@ func proxyConnection(conn *net.UnixConn) {
 	}
 
 	// Connect to the daemon.
-	unixAddr, err := net.ResolveUnixAddr("unix", shared.VarPath("unix.socket"))
+	unixAddr, err := net.ResolveUnixAddr("unix", internalUtil.VarPath("unix.socket"))
 	if err != nil {
 		log.Errorf("Unable to resolve the target server: %v", err)
 		return

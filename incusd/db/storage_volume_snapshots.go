@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/shared"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -21,7 +21,7 @@ func (c *Cluster) CreateStorageVolumeSnapshot(projectName string, volumeName str
 	var volumeID int64
 
 	var snapshotName string
-	parts := strings.Split(volumeName, shared.SnapshotDelimiter)
+	parts := strings.Split(volumeName, internalInstance.SnapshotDelimiter)
 	volumeName = parts[0]
 	snapshotName = parts[1]
 
@@ -66,7 +66,7 @@ func (c *Cluster) CreateStorageVolumeSnapshot(projectName string, volumeName str
 func (c *Cluster) UpdateStorageVolumeSnapshot(projectName string, volumeName string, volumeType int, poolID int64, volumeDescription string, volumeConfig map[string]string, expiryDate time.Time) error {
 	var err error
 
-	if !strings.Contains(volumeName, shared.SnapshotDelimiter) {
+	if !strings.Contains(volumeName, internalInstance.SnapshotDelimiter) {
 		return fmt.Errorf("Volume is not a snapshot")
 	}
 
@@ -129,7 +129,7 @@ WHERE volumes.id=?
 		return args, err
 	}
 
-	if !strings.Contains(args.Name, shared.SnapshotDelimiter) {
+	if !strings.Contains(args.Name, internalInstance.SnapshotDelimiter) {
 		return args, fmt.Errorf("Volume is not a snapshot")
 	}
 
@@ -200,7 +200,7 @@ func (c *ClusterTx) GetExpiredStorageVolumeSnapshots(ctx context.Context, member
 			return err
 		}
 
-		snap.Name = volName + shared.SnapshotDelimiter + snapName
+		snap.Name = volName + internalInstance.SnapshotDelimiter + snapName
 		snap.ExpiryDate = expiryTime.Time // Convert nulls to zero.
 
 		// Since zero time causes some issues due to timezones, we check the

@@ -18,11 +18,13 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/incusd/state"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/iprange"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -146,7 +148,7 @@ func (n *common) validate(config map[string]string, driverRules map[string]func(
 		}
 
 		// User keys are not validated.
-		if shared.IsUserConfig(k) {
+		if internalInstance.IsUserConfig(k) {
 			continue
 		}
 
@@ -178,7 +180,7 @@ func (n *common) validateZoneNames(config map[string]string) error {
 	}
 
 	for _, keyName := range []string{"dns.zone.forward", "dns.zone.reverse.ipv4", "dns.zone.reverse.ipv6"} {
-		keyZoneNames := shared.SplitNTrimSpace(config[keyName], ",", -1, true)
+		keyZoneNames := util.SplitNTrimSpace(config[keyName], ",", -1, true)
 		keyZoneNamesLen := len(keyZoneNames)
 		if keyZoneNamesLen < 1 {
 			continue
@@ -375,7 +377,7 @@ func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientTy
 			sendNetwork.Config = make(map[string]string)
 			for k, v := range applyNetwork.Config {
 				// Don't forward node specific keys (these will be merged in on recipient node).
-				if shared.ValueInSlice(k, db.NodeSpecificNetworkConfig) {
+				if util.ValueInSlice(k, db.NodeSpecificNetworkConfig) {
 					continue
 				}
 
@@ -410,7 +412,7 @@ func (n *common) configChanged(newNetwork api.NetworkPut) (bool, []string, api.N
 		Config:      map[string]string{},
 	}
 
-	err := shared.DeepCopy(&n.config, &oldNetwork.Config)
+	err := util.DeepCopy(&n.config, &oldNetwork.Config)
 	if err != nil {
 		return false, nil, oldNetwork, err
 	}
@@ -428,7 +430,7 @@ func (n *common) configChanged(newNetwork api.NetworkPut) (bool, []string, api.N
 			dbUpdateNeeded = true
 
 			// Add non-user changed key to list of changed keys.
-			if !strings.HasPrefix(k, "user.") && !shared.ValueInSlice(k, changedKeys) {
+			if !strings.HasPrefix(k, "user.") && !util.ValueInSlice(k, changedKeys) {
 				changedKeys = append(changedKeys, k)
 			}
 		}
@@ -439,7 +441,7 @@ func (n *common) configChanged(newNetwork api.NetworkPut) (bool, []string, api.N
 			dbUpdateNeeded = true
 
 			// Add non-user changed key to list of changed keys.
-			if !strings.HasPrefix(k, "user.") && !shared.ValueInSlice(k, changedKeys) {
+			if !strings.HasPrefix(k, "user.") && !util.ValueInSlice(k, changedKeys) {
 				changedKeys = append(changedKeys, k)
 			}
 		}
@@ -451,13 +453,13 @@ func (n *common) configChanged(newNetwork api.NetworkPut) (bool, []string, api.N
 // rename the network directory, update database record and update internal variables.
 func (n *common) rename(newName string) error {
 	// Clear new directory if exists.
-	if shared.PathExists(shared.VarPath("networks", newName)) {
-		_ = os.RemoveAll(shared.VarPath("networks", newName))
+	if util.PathExists(internalUtil.VarPath("networks", newName)) {
+		_ = os.RemoveAll(internalUtil.VarPath("networks", newName))
 	}
 
 	// Rename directory to new name.
-	if shared.PathExists(shared.VarPath("networks", n.name)) {
-		err := os.Rename(shared.VarPath("networks", n.name), shared.VarPath("networks", newName))
+	if util.PathExists(internalUtil.VarPath("networks", n.name)) {
+		err := os.Rename(internalUtil.VarPath("networks", n.name), internalUtil.VarPath("networks", newName))
 		if err != nil {
 			return err
 		}
@@ -496,8 +498,8 @@ func (n *common) delete(clientType request.ClientType) error {
 	}
 
 	// Cleanup storage.
-	if shared.PathExists(shared.VarPath("networks", n.name)) {
-		_ = os.RemoveAll(shared.VarPath("networks", n.name))
+	if util.PathExists(internalUtil.VarPath("networks", n.name)) {
+		_ = os.RemoveAll(internalUtil.VarPath("networks", n.name))
 	}
 
 	pn := ProjectNetwork{
@@ -675,7 +677,7 @@ func (n *common) bgpSetupPeers(oldConfig map[string]string) error {
 
 	// Remove old peers.
 	for _, peer := range oldPeers {
-		if shared.ValueInSlice(peer, newPeers) {
+		if util.ValueInSlice(peer, newPeers) {
 			continue
 		}
 
@@ -689,7 +691,7 @@ func (n *common) bgpSetupPeers(oldConfig map[string]string) error {
 
 	// Add new peers.
 	for _, peer := range newPeers {
-		if shared.ValueInSlice(peer, oldPeers) {
+		if util.ValueInSlice(peer, oldPeers) {
 			continue
 		}
 
@@ -751,7 +753,7 @@ func (n *common) bgpSetupPrefixes(oldConfig map[string]string) error {
 		nextHopAddr := n.bgpNextHopAddress(ipVersion)
 
 		// If network has NAT enabled, then export network's NAT address if specified.
-		if shared.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)]) {
+		if util.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)]) {
 			natAddressKey := fmt.Sprintf("ipv%d.nat.address", ipVersion)
 			if n.config[natAddressKey] != "" {
 				subnetSize := 128
@@ -769,7 +771,7 @@ func (n *common) bgpSetupPrefixes(oldConfig map[string]string) error {
 					return err
 				}
 			}
-		} else if !shared.ValueInSlice(n.config[fmt.Sprintf("ipv%d.address", ipVersion)], []string{"", "none"}) {
+		} else if !util.ValueInSlice(n.config[fmt.Sprintf("ipv%d.address", ipVersion)], []string{"", "none"}) {
 			// If network has NAT disabled, then export the network's subnet if specified.
 			netAddress := n.config[fmt.Sprintf("ipv%d.address", ipVersion)]
 			_, subnet, err := net.ParseCIDR(netAddress)
@@ -797,7 +799,7 @@ func (n *common) bgpGetPeers(config map[string]string) []string {
 		}
 
 		fields := strings.Split(k, ".")
-		if !shared.ValueInSlice(fields[2], peerNames) {
+		if !util.ValueInSlice(fields[2], peerNames) {
 			peerNames = append(peerNames, fields[2])
 		}
 	}
@@ -854,7 +856,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 		}
 
 		// User keys are not validated.
-		if shared.IsUserConfig(k) {
+		if internalInstance.IsUserConfig(k) {
 			continue
 		}
 
@@ -892,7 +894,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 	// Maps portSpecID to a portMap struct.
 	portMaps := make([]*forwardPortMap, 0, len(forward.Ports))
 	for portSpecID, portSpec := range forward.Ports {
-		if !shared.ValueInSlice(portSpec.Protocol, validPortProcols) {
+		if !util.ValueInSlice(portSpec.Protocol, validPortProcols) {
 			return nil, fmt.Errorf("Invalid port protocol in port specification %d, protocol must be one of: %s", portSpecID, strings.Join(validPortProcols, ", "))
 		}
 
@@ -916,7 +918,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 		}
 
 		// Check valid listen port(s) supplied.
-		listenPortRanges := shared.SplitNTrimSpace(portSpec.ListenPort, ",", -1, true)
+		listenPortRanges := util.SplitNTrimSpace(portSpec.ListenPort, ",", -1, true)
 		if len(listenPortRanges) <= 0 {
 			return nil, fmt.Errorf("Missing listen port in port specification %d", portSpecID)
 		}
@@ -948,7 +950,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 		}
 
 		// Check valid target port(s) supplied.
-		targetPortRanges := shared.SplitNTrimSpace(portSpec.TargetPort, ",", -1, true)
+		targetPortRanges := util.SplitNTrimSpace(portSpec.TargetPort, ",", -1, true)
 
 		if len(targetPortRanges) > 0 {
 			// Target ports can be at maximum the same length as listen ports.
@@ -1029,7 +1031,7 @@ func (n *common) forwardBGPSetupPrefixes() error {
 	// Add the new prefixes.
 	for _, ipVersion := range []uint{4, 6} {
 		nextHopAddr := n.bgpNextHopAddress(ipVersion)
-		natEnabled := shared.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)])
+		natEnabled := util.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)])
 		_, netSubnet, _ := net.ParseCIDR(n.config[fmt.Sprintf("ipv%d.address", ipVersion)])
 
 		routeSubnetSize := 128
@@ -1158,7 +1160,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 	// Look for any unknown config fields.
 	for k := range forward.Config {
 		// User keys are not validated.
-		if shared.IsUserConfig(k) {
+		if internalInstance.IsUserConfig(k) {
 			continue
 		}
 
@@ -1208,7 +1210,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 			address: targetAddress,
 		}
 
-		for portSpecID, portSpec := range shared.SplitNTrimSpace(backendSpec.TargetPort, ",", -1, true) {
+		for portSpecID, portSpec := range util.SplitNTrimSpace(backendSpec.TargetPort, ",", -1, true) {
 			portFirst, portRange, err := ParsePortRange(portSpec)
 			if err != nil {
 				return nil, fmt.Errorf("Invalid backend port specification %d in backend specification %d: %w", portSpecID, backendSpecID, err)
@@ -1226,12 +1228,12 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 	// Check ports config.
 	portMaps := make([]*loadBalancerPortMap, 0, len(forward.Ports))
 	for portSpecID, portSpec := range forward.Ports {
-		if !shared.ValueInSlice(portSpec.Protocol, validPortProcols) {
+		if !util.ValueInSlice(portSpec.Protocol, validPortProcols) {
 			return nil, fmt.Errorf("Invalid port protocol in port specification %d, protocol must be one of: %s", portSpecID, strings.Join(validPortProcols, ", "))
 		}
 
 		// Check valid listen port(s) supplied.
-		listenPortRanges := shared.SplitNTrimSpace(portSpec.ListenPort, ",", -1, true)
+		listenPortRanges := util.SplitNTrimSpace(portSpec.ListenPort, ",", -1, true)
 		if len(listenPortRanges) <= 0 {
 			return nil, fmt.Errorf("Missing listen port in port specification %d", portSpecID)
 		}
@@ -1334,7 +1336,7 @@ func (n *common) loadBalancerBGPSetupPrefixes() error {
 	// Add the new prefixes.
 	for _, ipVersion := range []uint{4, 6} {
 		nextHopAddr := n.bgpNextHopAddress(ipVersion)
-		natEnabled := shared.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)])
+		natEnabled := util.IsTrue(n.config[fmt.Sprintf("ipv%d.nat", ipVersion)])
 		_, netSubnet, _ := net.ParseCIDR(n.config[fmt.Sprintf("ipv%d.address", ipVersion)])
 
 		routeSubnetSize := 128
@@ -1393,7 +1395,7 @@ func (n *common) peerValidate(peerName string, peer *api.NetworkPeerPut) error {
 		return err
 	}
 
-	if shared.ValueInSlice(peerName, acl.ReservedNetworkSubects) {
+	if util.ValueInSlice(peerName, acl.ReservedNetworkSubects) {
 		return fmt.Errorf("Name cannot be one of the reserved network subjects: %v", acl.ReservedNetworkSubects)
 	}
 
@@ -1404,7 +1406,7 @@ func (n *common) peerValidate(peerName string, peer *api.NetworkPeerPut) error {
 		}
 
 		// User keys are not validated.
-		if shared.IsUserConfig(k) {
+		if internalInstance.IsUserConfig(k) {
 			continue
 		}
 
@@ -1435,7 +1437,7 @@ func (n *common) peerUsedBy(peerName string, firstOnly bool) ([]string, error) {
 
 	rulesUsePeer := func(rules []api.NetworkACLRule) bool {
 		for _, rule := range rules {
-			for _, subject := range shared.SplitNTrimSpace(rule.Source, ",", -1, true) {
+			for _, subject := range util.SplitNTrimSpace(rule.Source, ",", -1, true) {
 				if !strings.HasPrefix(subject, "@") {
 					continue
 				}

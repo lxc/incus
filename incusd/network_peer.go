@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/request"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 )
@@ -155,7 +155,7 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support peering", n.Type()))
 	}
 
-	if util.IsRecursionRequest(r) {
+	if localUtil.IsRecursionRequest(r) {
 		records, err := s.DB.Cluster.GetNetworkPeers(n.ID())
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading network peers: %w", err))

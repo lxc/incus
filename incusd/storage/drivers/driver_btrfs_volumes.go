@@ -20,16 +20,17 @@ import (
 	"github.com/lxc/incus/incusd/backup"
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied filler function.
@@ -503,7 +504,7 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 	var syncSubvolumes []BTRFSSubVolume
 
 	// Inspect negotiated features to see if we are expecting to get a metadata migration header frame.
-	if shared.ValueInSlice(migration.BTRFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
+	if util.ValueInSlice(migration.BTRFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
 		buf, err := io.ReadAll(conn)
 		if err != nil {
 			return fmt.Errorf("Failed reading BTRFS migration header: %w", err)
@@ -532,7 +533,7 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 		})
 	}
 
-	if volTargetArgs.Refresh && shared.ValueInSlice(migration.BTRFSFeatureSubvolumeUUIDs, volTargetArgs.MigrationType.Features) {
+	if volTargetArgs.Refresh && util.ValueInSlice(migration.BTRFSFeatureSubvolumeUUIDs, volTargetArgs.MigrationType.Features) {
 		snapshots, err := d.volumeSnapshotsSorted(vol, op)
 		if err != nil {
 			return err
@@ -918,7 +919,7 @@ func (d *btrfs) DeleteVolume(vol Volume, op *operations.Operation) error {
 
 	// If the volume doesn't exist, then nothing more to do.
 	volPath := GetVolumeMountPath(d.name, vol.volType, volName)
-	if !shared.PathExists(volPath) {
+	if !util.PathExists(volPath) {
 		return nil
 	}
 
@@ -1084,7 +1085,7 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 	// Modify the limit.
 	if sizeBytes > 0 {
 		// Custom handling for filesystem volume associated with a VM.
-		if vol.volType == VolumeTypeVM && shared.PathExists(filepath.Join(volPath, genericVolumeDiskFile)) {
+		if vol.volType == VolumeTypeVM && util.PathExists(filepath.Join(volPath, genericVolumeDiskFile)) {
 			// Get the size of the VM image.
 			blockSize, err := BlockDiskSizeBytes(filepath.Join(volPath, genericVolumeDiskFile))
 			if err != nil {
@@ -1140,7 +1141,7 @@ func (d *btrfs) MountVolume(vol Volume, op *operations.Operation) error {
 
 	// Don't attempt to modify the permission of an existing custom volume root.
 	// A user inside the instance may have modified this and we don't want to reset it on restart.
-	if !shared.PathExists(vol.MountPath()) || vol.volType != VolumeTypeCustom {
+	if !util.PathExists(vol.MountPath()) || vol.volType != VolumeTypeCustom {
 		err := vol.EnsureMountPath()
 		if err != nil {
 			return err
@@ -1264,7 +1265,7 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *m
 
 	// If we haven't negotiated subvolume support, check if we have any subvolumes in source and fail,
 	// otherwise we would end up not materialising all of the source's files on the target.
-	if !shared.ValueInSlice(migration.BTRFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) || !shared.ValueInSlice(migration.BTRFSFeatureSubvolumes, volSrcArgs.MigrationType.Features) {
+	if !util.ValueInSlice(migration.BTRFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) || !util.ValueInSlice(migration.BTRFSFeatureSubvolumes, volSrcArgs.MigrationType.Features) {
 		for _, subVol := range migrationHeader.Subvolumes {
 			if subVol.Path != string(filepath.Separator) {
 				return fmt.Errorf("Subvolumes detected in source but target does not support receiving subvolumes")
@@ -1273,7 +1274,7 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *m
 	}
 
 	// Send metadata migration header frame with subvolume info if we have negotiated that feature.
-	if shared.ValueInSlice(migration.BTRFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
+	if util.ValueInSlice(migration.BTRFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
 		headerJSON, err := json.Marshal(migrationHeader)
 		if err != nil {
 			return fmt.Errorf("Failed encoding BTRFS migration header: %w", err)
@@ -1292,7 +1293,7 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *m
 		d.logger.Debug("Sent migration meta data header", logger.Ctx{"name": vol.name})
 	}
 
-	if volSrcArgs.Refresh && shared.ValueInSlice(migration.BTRFSFeatureSubvolumeUUIDs, volSrcArgs.MigrationType.Features) {
+	if volSrcArgs.Refresh && util.ValueInSlice(migration.BTRFSFeatureSubvolumeUUIDs, volSrcArgs.MigrationType.Features) {
 		migrationHeader = &BTRFSMetaDataHeader{}
 
 		buf, err := io.ReadAll(conn)
@@ -1345,7 +1346,7 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 				continue // Only sending subvolumes related to snapshot name (empty for main vol).
 			}
 
-			if subVolume.Path != string(filepath.Separator) && !shared.ValueInSlice(migration.BTRFSFeatureSubvolumes, volSrcArgs.MigrationType.Features) {
+			if subVolume.Path != string(filepath.Separator) && !util.ValueInSlice(migration.BTRFSFeatureSubvolumes, volSrcArgs.MigrationType.Features) {
 				continue // Skip sending subvolumes of volume if subvolumes feature not negotiated.
 			}
 
@@ -1536,7 +1537,7 @@ func (d *btrfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWr
 		args = append(args, path)
 
 		// Create temporary file to store output of btrfs send.
-		backupsPath := shared.VarPath("backups")
+		backupsPath := internalUtil.VarPath("backups")
 		tmpFile, err := os.CreateTemp(backupsPath, fmt.Sprintf("%s_btrfs", backup.WorkingDirPrefix))
 		if err != nil {
 			return fmt.Errorf("Failed to open temporary file for BTRFS backup: %w", err)
@@ -1799,7 +1800,7 @@ func (d *btrfs) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 
 	// Don't attempt to modify the permission of an existing custom volume root.
 	// A user inside the instance may have modified this and we don't want to reset it on restart.
-	if !shared.PathExists(snapPath) || snapVol.volType != VolumeTypeCustom {
+	if !util.PathExists(snapPath) || snapVol.volType != VolumeTypeCustom {
 		err := snapVol.EnsureMountPath()
 		if err != nil {
 			return err

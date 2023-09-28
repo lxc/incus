@@ -14,8 +14,8 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 var networkAllocationsCmd = APIEndpoint{
@@ -76,7 +76,7 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	allProjects := shared.IsTrue(queryParam(r, "all-projects"))
+	allProjects := util.IsTrue(queryParam(r, "all-projects"))
 
 	var projectNames []string
 	err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -106,10 +106,10 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if ip.To4() != nil {
-			return fmt.Sprintf("%s/32", ip.String()), shared.IsTrue(netConf["ipv4.nat"]), nil
+			return fmt.Sprintf("%s/32", ip.String()), util.IsTrue(netConf["ipv4.nat"]), nil
 		}
 
-		return fmt.Sprintf("%s/128", ip.String()), shared.IsTrue(netConf["ipv6.nat"]), nil
+		return fmt.Sprintf("%s/128", ip.String()), util.IsTrue(netConf["ipv6.nat"]), nil
 	}
 
 	result := make([]api.NetworkAllocations, 0)
@@ -140,7 +140,7 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 					Address: ipNet.String(),
 					UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName).Project(projectName).String(),
 					Type:    "network",
-					NAT:     shared.IsTrue(netConf[fmt.Sprintf("%s.nat", keyPrefix)]),
+					NAT:     util.IsTrue(netConf[fmt.Sprintf("%s.nat", keyPrefix)]),
 				})
 			}
 
@@ -150,7 +150,7 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			for _, lease := range leases {
-				if shared.ValueInSlice(lease.Type, []string{"static", "dynamic"}) {
+				if util.ValueInSlice(lease.Type, []string{"static", "dynamic"}) {
 					cidrAddr, nat, err := ipToCIDR(lease.Address, netConf)
 					if err != nil {
 						return response.SmartError(err)

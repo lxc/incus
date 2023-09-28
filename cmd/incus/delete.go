@@ -11,8 +11,8 @@ import (
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdDelete struct {
@@ -44,7 +44,7 @@ func (c *cmdDelete) promptDelete(name string) error {
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !shared.ValueInSlice(strings.ToLower(input), []string{i18n.G("yes")}) {
+	if !util.ValueInSlice(strings.ToLower(input), []string{i18n.G("yes")}) {
 		return fmt.Errorf(i18n.G("User aborted delete operation"))
 	}
 
@@ -120,7 +120,7 @@ func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		if c.flagForceProtected && shared.IsTrue(ct.ExpandedConfig["security.protection.delete"]) {
+		if c.flagForceProtected && util.IsTrue(ct.ExpandedConfig["security.protection.delete"]) {
 			// Refresh in case we had to stop it above.
 			ct, etag, err := resource.server.GetInstance(resource.name)
 			if err != nil {

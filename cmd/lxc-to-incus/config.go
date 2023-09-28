@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
+	"github.com/lxc/incus/shared/util"
 )
 
 var checkedKeys = []string{
@@ -164,8 +165,8 @@ func parseConfig(path string) ([]string, error) {
 				continue
 			}
 
-			if shared.PathExists(value) {
-				if shared.IsDir(value) {
+			if util.PathExists(value) {
+				if internalUtil.IsDir(value) {
 					files, err := os.ReadDir(value)
 					if err != nil {
 						return nil, err
@@ -192,7 +193,7 @@ func parseConfig(path string) ([]string, error) {
 			}
 		// Expand any fstab
 		case "lxc.mount":
-			if !shared.PathExists(value) {
+			if !util.PathExists(value) {
 				fmt.Println("Container fstab file doesn't exist, skipping...")
 				continue
 			}

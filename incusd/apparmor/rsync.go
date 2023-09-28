@@ -10,9 +10,9 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 var rsyncProfileTpl = template.Must(template.New("rsyncProfile").Parse(`#include <tunables/global>
@@ -153,7 +153,7 @@ func rsyncProfileLoad(sysOS *sys.OS, sourcePath string, dstPath string) (string,
 // rsyncProfile generates the AppArmor profile template from the given destination path.
 func rsyncProfile(sysOS *sys.OS, name string, sourcePath string, dstPath string) (string, error) {
 	// Render the profile.
-	logPath := shared.LogPath("")
+	logPath := internalUtil.LogPath("")
 
 	// Fully deref the executable path.
 	execPath := sysOS.ExecPath

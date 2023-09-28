@@ -23,12 +23,12 @@ import (
 	"github.com/lxc/incus/incusd/network/openvswitch"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/resources"
-	"github.com/lxc/incus/incusd/revert"
-	"github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // ovnNet defines an interface for accessing instance specific functions on OVN network.
@@ -162,7 +162,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 
 	if d.config["ipv6.address"] != "" {
 		// Check that DHCPv6 is enabled on parent network (needed to use static assigned IPs).
-		if n.DHCPv6Subnet() == nil || shared.IsFalseOrEmpty(netConfig["ipv6.dhcp.stateful"]) {
+		if n.DHCPv6Subnet() == nil || util.IsFalseOrEmpty(netConfig["ipv6.dhcp.stateful"]) {
 			return fmt.Errorf("Cannot specify %q when DHCP or %q are disabled on network %q", "ipv6.address", "ipv6.dhcp.stateful", d.config["network"])
 		}
 
@@ -253,7 +253,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 			continue
 		}
 
-		externalRoutes, err = network.SubnetParseAppend(externalRoutes, shared.SplitNTrimSpace(d.config[k], ",", -1, false)...)
+		externalRoutes, err = network.SubnetParseAppend(externalRoutes, util.SplitNTrimSpace(d.config[k], ",", -1, false)...)
 		if err != nil {
 			return err
 		}
@@ -268,7 +268,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 
 	// Check Security ACLs exist.
 	if d.config["security.acls"] != "" {
-		err = acl.Exists(d.state, networkProjectName, shared.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)...)
+		err = acl.Exists(d.state, networkProjectName, util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)...)
 		if err != nil {
 			return err
 		}
@@ -365,7 +365,7 @@ func (d *nicOVN) validateEnvironment() error {
 
 	integrationBridge := d.state.GlobalConfig.NetworkOVNIntegrationBridge()
 
-	if !shared.PathExists(fmt.Sprintf("/sys/class/net/%s", integrationBridge)) {
+	if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", integrationBridge)) {
 		return fmt.Errorf("OVS integration bridge device %q doesn't exist", integrationBridge)
 	}
 
@@ -548,7 +548,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 	// Retrieve any last state IPs from volatile and pass them to OVN driver for potential use with sticky
 	// DHCPv4 allocations.
 	var lastStateIPs []net.IP
-	for _, ipStr := range shared.SplitNTrimSpace(v["last_state.ip_addresses"], ",", -1, true) {
+	for _, ipStr := range util.SplitNTrimSpace(v["last_state.ip_addresses"], ",", -1, true) {
 		lastStateIP := net.ParseIP(ipStr)
 		if lastStateIP != nil {
 			lastStateIPs = append(lastStateIPs, lastStateIP)
@@ -720,11 +720,11 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 	// Apply any changes needed when assigned ACLs change.
 	if d.config["security.acls"] != oldConfig["security.acls"] {
 		// Work out which ACLs have been removed and remove logical port from those groups.
-		oldACLs := shared.SplitNTrimSpace(oldConfig["security.acls"], ",", -1, true)
-		newACLs := shared.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
+		oldACLs := util.SplitNTrimSpace(oldConfig["security.acls"], ",", -1, true)
+		newACLs := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
 		removedACLs := []string{}
 		for _, oldACL := range oldACLs {
-			if !shared.ValueInSlice(oldACL, newACLs) {
+			if !util.ValueInSlice(oldACL, newACLs) {
 				removedACLs = append(removedACLs, oldACL)
 			}
 		}
@@ -940,7 +940,7 @@ func (d *nicOVN) postStop() error {
 		if err != nil {
 			return fmt.Errorf("Failed to bring down the host interface %q: %w", d.config["host_name"], err)
 		}
-	} else if d.config["host_name"] != "" && shared.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["host_name"])) {
+	} else if d.config["host_name"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["host_name"])) {
 		// Removing host-side end of veth pair will delete the peer end too.
 		err := network.InterfaceRemove(d.config["host_name"])
 		if err != nil {
@@ -954,7 +954,7 @@ func (d *nicOVN) postStop() error {
 // Remove is run when the device is removed from the instance or the instance is deleted.
 func (d *nicOVN) Remove() error {
 	// Check for port groups that will become unused (and need deleting) as this NIC is deleted.
-	securityACLs := shared.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
+	securityACLs := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
 	if len(securityACLs) > 0 {
 		client, err := openvswitch.NewOVN(d.state)
 		if err != nil {
@@ -1037,7 +1037,7 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 				Netmask: v6mask,
 				Scope:   "global",
 			})
-		} else if shared.IsFalseOrEmpty(netConfig["ipv6.dhcp.stateful"]) && d.config["hwaddr"] != "" && v6subnet != nil {
+		} else if util.IsFalseOrEmpty(netConfig["ipv6.dhcp.stateful"]) && d.config["hwaddr"] != "" && v6subnet != nil {
 			// If no static DHCPv6 allocation and stateful DHCPv6 is disabled, and IPv6 is enabled on
 			// the bridge, the NIC is likely to use its MAC and SLAAC to configure its address.
 			hwAddr, err := net.ParseMAC(d.config["hwaddr"])
@@ -1107,13 +1107,13 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName openvswitch.OVNSwitch
 
 	// Disable IPv6 on host-side veth interface (prevents host-side interface getting link-local address and
 	// accepting router advertisements) as not needed because the host-side interface is connected to a bridge.
-	err := util.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", hostName), "1")
+	err := localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", hostName), "1")
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
 
 	// Attempt to disable IPv4 forwarding.
-	err = util.SysctlSet(fmt.Sprintf("net/ipv4/conf/%s/forwarding", hostName), "0")
+	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv4/conf/%s/forwarding", hostName), "0")
 	if err != nil {
 		return nil, err
 	}

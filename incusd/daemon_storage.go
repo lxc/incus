@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 func daemonStorageVolumesUnmount(s *state.State) error {
@@ -227,7 +227,7 @@ func daemonStorageValidate(s *state.State, target string) error {
 }
 
 func daemonStorageMove(s *state.State, storageType string, target string) error {
-	destPath := shared.VarPath(storageType)
+	destPath := internalUtil.VarPath(storageType)
 
 	// Track down the current storage.
 	var sourcePool string
@@ -338,17 +338,17 @@ func daemonStorageMove(s *state.State, storageType string, target string) error 
 	}
 
 	// Handle changes.
-	if sourcePath != shared.VarPath(storageType) {
+	if sourcePath != internalUtil.VarPath(storageType) {
 		// Remove the symlink.
-		err := os.Remove(shared.VarPath(storageType))
+		err := os.Remove(internalUtil.VarPath(storageType))
 		if err != nil {
-			return fmt.Errorf("Failed to remove the new symlink at %q: %w", shared.VarPath(storageType), err)
+			return fmt.Errorf("Failed to remove the new symlink at %q: %w", internalUtil.VarPath(storageType), err)
 		}
 
 		// Create the new symlink.
-		err = os.Symlink(destPath, shared.VarPath(storageType))
+		err = os.Symlink(destPath, internalUtil.VarPath(storageType))
 		if err != nil {
-			return fmt.Errorf("Failed to create the new symlink at %q: %w", shared.VarPath(storageType), err)
+			return fmt.Errorf("Failed to create the new symlink at %q: %w", internalUtil.VarPath(storageType), err)
 		}
 
 		// Move the data across.
@@ -372,18 +372,18 @@ func daemonStorageMove(s *state.State, storageType string, target string) error 
 		return nil
 	}
 
-	sourcePath = shared.VarPath(storageType) + ".temp"
+	sourcePath = internalUtil.VarPath(storageType) + ".temp"
 
 	// Rename the existing storage.
-	err = os.Rename(shared.VarPath(storageType), sourcePath)
+	err = os.Rename(internalUtil.VarPath(storageType), sourcePath)
 	if err != nil {
-		return fmt.Errorf("Failed to rename existing storage %q: %w", shared.VarPath(storageType), err)
+		return fmt.Errorf("Failed to rename existing storage %q: %w", internalUtil.VarPath(storageType), err)
 	}
 
 	// Create the new symlink.
-	err = os.Symlink(destPath, shared.VarPath(storageType))
+	err = os.Symlink(destPath, internalUtil.VarPath(storageType))
 	if err != nil {
-		return fmt.Errorf("Failed to create the new symlink at %q: %w", shared.VarPath(storageType), err)
+		return fmt.Errorf("Failed to create the new symlink at %q: %w", internalUtil.VarPath(storageType), err)
 	}
 
 	// Move the data across.

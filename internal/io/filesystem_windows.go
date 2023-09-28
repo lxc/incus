@@ -1,6 +1,6 @@
 //go:build windows
 
-package shared
+package io
 
 import (
 	"os"

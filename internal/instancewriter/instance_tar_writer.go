@@ -9,8 +9,10 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/lxc/incus/internal/idmap"
-	"github.com/lxc/incus/shared"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -71,9 +73,21 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 		hdr.Size = fi.Size()
 	}
 
-	hdr.Uid, hdr.Gid, major, minor, ino, nlink, err = shared.GetFileStat(srcPath)
+	// Get file stat.
+	var stat unix.Stat_t
+	err = unix.Lstat(srcPath, &stat)
 	if err != nil {
-		return fmt.Errorf("Failed to get file stat %q: %w", srcPath, err)
+		return fmt.Errorf("Failed to get file stat: %w", err)
+	}
+
+	hdr.Uid = int(stat.Uid)
+	hdr.Gid = int(stat.Gid)
+	ino = stat.Ino
+	nlink = int(stat.Nlink)
+
+	if stat.Mode&unix.S_IFBLK != 0 || stat.Mode&unix.S_IFCHR != 0 {
+		major = unix.Major(uint64(stat.Rdev))
+		minor = unix.Minor(uint64(stat.Rdev))
 	}
 
 	// Unshift the id under rootfs/ for unpriv containers.
@@ -103,7 +117,7 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 
 	// Handle xattrs (for real files only).
 	if link == "" {
-		xattrs, err := shared.GetAllXattr(srcPath)
+		xattrs, err := linux.GetAllXattr(srcPath)
 		if err != nil {
 			return fmt.Errorf("Failed to read xattr for %q: %w", srcPath, err)
 		}

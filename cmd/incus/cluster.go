@@ -13,9 +13,9 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/shared/util"
 )
 
 type cmdCluster struct {
@@ -548,7 +548,7 @@ Are you really sure you want to force removing %s? (yes/no): `), name)
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !shared.ValueInSlice(strings.ToLower(input), []string{i18n.G("yes")}) {
+	if !util.ValueInSlice(strings.ToLower(input), []string{i18n.G("yes")}) {
 		return fmt.Errorf(i18n.G("User aborted delete operation"))
 	}
 
@@ -752,7 +752,7 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Spawn the editor
-	content, err := shared.TextEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
+	content, err := textEditor("", []byte(c.helpTemplate()+"\n\n"+string(data)))
 	if err != nil {
 		return err
 	}
@@ -775,7 +775,7 @@ func (c *cmdClusterEdit) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			content, err = shared.TextEditor("", content)
+			content, err = textEditor("", content)
 			if err != nil {
 				return err
 			}
@@ -1086,11 +1086,11 @@ func (c *cmdClusterUpdateCertificate) Run(cmd *cobra.Command, args []string) err
 		return fmt.Errorf(i18n.G("Server isn't part of a cluster"))
 	}
 
-	if !shared.PathExists(certFile) {
+	if !util.PathExists(certFile) {
 		return fmt.Errorf(i18n.G("Could not find certificate file path: %s"), certFile)
 	}
 
-	if !shared.PathExists(keyFile) {
+	if !util.PathExists(keyFile) {
 		return fmt.Errorf(i18n.G("Could not find certificate key file path: %s"), keyFile)
 	}
 
@@ -1115,7 +1115,7 @@ func (c *cmdClusterUpdateCertificate) Run(cmd *cobra.Command, args []string) err
 	}
 
 	certf := conf.ServerCertPath(resource.remote)
-	if shared.PathExists(certf) {
+	if util.PathExists(certf) {
 		err = os.WriteFile(certf, cert, 0644)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Could not write new remote certificate for remote '%s' with error: %v"), resource.remote, err)

@@ -13,8 +13,9 @@ import (
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/task"
-	"github.com/lxc/incus/shared"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 // This task function expires logs when executed. It's started by the Daemon
@@ -112,14 +113,14 @@ func expireLogs(ctx context.Context, state *state.State) error {
 		}
 
 		// Check if the instance still exists.
-		if shared.ValueInSlice(fi.Name(), names) {
-			instDirEntries, err := os.ReadDir(shared.LogPath(fi.Name()))
+		if util.ValueInSlice(fi.Name(), names) {
+			instDirEntries, err := os.ReadDir(internalUtil.LogPath(fi.Name()))
 			if err != nil {
 				return err
 			}
 
 			for _, instDirEntry := range instDirEntries {
-				path := shared.LogPath(fi.Name(), instDirEntry.Name())
+				path := internalUtil.LogPath(fi.Name(), instDirEntry.Name())
 
 				instInfo, err := instDirEntry.Info()
 				if err != nil {
@@ -152,7 +153,7 @@ func expireLogs(ctx context.Context, state *state.State) error {
 			}
 		} else {
 			// Empty directory if unchanged in the past 24 hours.
-			path := shared.LogPath(fi.Name())
+			path := internalUtil.LogPath(fi.Name())
 			newest := newestFile(path, fi)
 			if time.Since(newest).Hours() >= 24 {
 				err := os.RemoveAll(path)

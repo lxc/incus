@@ -153,15 +153,3 @@ func TryRunCommand(name string, arg ...string) (string, error) {
 
 	return output, err
 }
-
-func TimeIsSet(ts time.Time) bool {
-	if ts.Unix() <= 0 {
-		return false
-	}
-
-	if ts.UTC().Unix() <= 0 {
-		return false
-	}
-
-	return true
-}

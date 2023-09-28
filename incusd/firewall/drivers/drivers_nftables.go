@@ -14,9 +14,10 @@ import (
 	"github.com/pborman/uuid"
 
 	"github.com/lxc/incus/incusd/project"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -42,7 +43,7 @@ func (d Nftables) String() string {
 // Compat returns whether the driver backend is in use, and any host compatibility errors.
 func (d Nftables) Compat() (bool, error) {
 	// Get the kernel version.
-	uname, err := shared.Uname()
+	uname, err := linux.Uname()
 	if err != nil {
 		return false, err
 	}
@@ -614,7 +615,7 @@ func (d Nftables) removeChains(families []string, chainSuffix string, chains ...
 	foundChains := make(map[string]nftGenericItem)
 	for _, family := range families {
 		for _, item := range ruleset {
-			if item.ItemType == "chain" && item.Family == family && item.Table == nftablesNamespace && shared.ValueInSlice(item.Name, fullChains) {
+			if item.ItemType == "chain" && item.Family == family && item.Table == nftablesNamespace && util.ValueInSlice(item.Name, fullChains) {
 				foundChains[item.Name] = item
 			}
 		}
@@ -736,7 +737,7 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 	isPartialRule := false
 
 	if rule.Source != "" {
-		matchArgs, partial, err := d.aclRuleSubjectToACLMatch("saddr", ipVersion, shared.SplitNTrimSpace(rule.Source, ",", -1, false)...)
+		matchArgs, partial, err := d.aclRuleSubjectToACLMatch("saddr", ipVersion, util.SplitNTrimSpace(rule.Source, ",", -1, false)...)
 		if err != nil {
 			return "", false, err
 		}
@@ -753,7 +754,7 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 	}
 
 	if rule.Destination != "" {
-		matchArgs, partial, err := d.aclRuleSubjectToACLMatch("daddr", ipVersion, shared.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
+		matchArgs, partial, err := d.aclRuleSubjectToACLMatch("daddr", ipVersion, util.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
 		if err != nil {
 			return "", false, err
 		}
@@ -770,17 +771,17 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 	}
 
 	// Add protocol filters.
-	if shared.ValueInSlice(rule.Protocol, []string{"tcp", "udp"}) {
+	if util.ValueInSlice(rule.Protocol, []string{"tcp", "udp"}) {
 		args = append(args, "meta", "l4proto", rule.Protocol)
 
 		if rule.SourcePort != "" {
-			args = append(args, d.aclRulePortToACLMatch("sport", shared.SplitNTrimSpace(rule.SourcePort, ",", -1, false)...)...)
+			args = append(args, d.aclRulePortToACLMatch("sport", util.SplitNTrimSpace(rule.SourcePort, ",", -1, false)...)...)
 		}
 
 		if rule.DestinationPort != "" {
-			args = append(args, d.aclRulePortToACLMatch("dport", shared.SplitNTrimSpace(rule.DestinationPort, ",", -1, false)...)...)
+			args = append(args, d.aclRulePortToACLMatch("dport", util.SplitNTrimSpace(rule.DestinationPort, ",", -1, false)...)...)
 		}
-	} else if shared.ValueInSlice(rule.Protocol, []string{"icmp4", "icmp6"}) {
+	} else if util.ValueInSlice(rule.Protocol, []string{"icmp4", "icmp6"}) {
 		var icmpIPVersion uint
 		var protoName string
 

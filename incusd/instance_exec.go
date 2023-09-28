@@ -27,13 +27,16 @@ import (
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
+	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/tcp"
+	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -204,11 +207,11 @@ func (s *execWs) Do(op *operations.Operation) error {
 			devptsFd, _ = c.DevptsFd()
 
 			if devptsFd != nil && s.s.OS.NativeTerminals {
-				ptys[0], ttys[0], err = shared.OpenPtyInDevpts(int(devptsFd.Fd()), rootUID, rootGID)
+				ptys[0], ttys[0], err = linux.OpenPtyInDevpts(int(devptsFd.Fd()), rootUID, rootGID)
 				_ = devptsFd.Close()
 				devptsFd = nil
 			} else {
-				ptys[0], ttys[0], err = shared.OpenPty(rootUID, rootGID)
+				ptys[0], ttys[0], err = linux.OpenPty(rootUID, rootGID)
 			}
 
 			if err != nil {
@@ -220,7 +223,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 			stderr = ttys[0]
 
 			if s.req.Width > 0 && s.req.Height > 0 {
-				_ = shared.SetSize(int(ptys[0].Fd()), s.req.Width, s.req.Height)
+				_ = linux.SetPtySize(int(ptys[0].Fd()), s.req.Width, s.req.Height)
 			}
 		} else {
 			// For VMs we rely on the agent PTY running inside the VM guest.
@@ -528,7 +531,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	if shared.IsSnapshot(name) {
+	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
@@ -610,7 +613,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 
 			instPID := inst.InitPID()
 			for k, v := range extraPaths {
-				if shared.PathExists(fmt.Sprintf("/proc/%d/root%s", instPID, k)) {
+				if util.PathExists(fmt.Sprintf("/proc/%d/root%s", instPID, k)) {
 					post.Environment["PATH"] = fmt.Sprintf("%s:%s", post.Environment["PATH"], v)
 				}
 			}
@@ -655,7 +658,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 		ws.waitControlConnected = cancel.New(context.Background())
 
 		for i := range ws.conns {
-			ws.fds[i], err = shared.RandomCryptoString()
+			ws.fds[i], err = internalUtil.RandomHexString(32)
 			if err != nil {
 				return response.InternalError(err)
 			}
