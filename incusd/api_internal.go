@@ -35,6 +35,7 @@ import (
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/revert"
+	internalSQL "github.com/lxc/incus/internal/sql"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -395,26 +396,6 @@ func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
 	return response.EmptySyncResponse
 }
 
-type internalSQLDump struct {
-	Text string `json:"text" yaml:"text"`
-}
-
-type internalSQLQuery struct {
-	Database string `json:"database" yaml:"database"`
-	Query    string `json:"query" yaml:"query"`
-}
-
-type internalSQLBatch struct {
-	Results []internalSQLResult
-}
-
-type internalSQLResult struct {
-	Type         string   `json:"type" yaml:"type"`
-	Columns      []string `json:"columns" yaml:"columns"`
-	Rows         [][]any  `json:"rows" yaml:"rows"`
-	RowsAffected int64    `json:"rows_affected" yaml:"rows_affected"`
-}
-
 // Perform a database dump.
 func internalSQLGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
@@ -450,14 +431,14 @@ func internalSQLGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Failed dump database %s: %w", database, err))
 	}
 
-	return response.SyncResponse(true, internalSQLDump{Text: dump})
+	return response.SyncResponse(true, internalSQL.SQLDump{Text: dump})
 }
 
 // Execute queries.
 func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	req := &internalSQLQuery{}
+	req := &internalSQL.SQLQuery{}
 	// Parse the request.
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -479,7 +460,7 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 		db = s.DB.Node.DB()
 	}
 
-	batch := internalSQLBatch{}
+	batch := internalSQL.SQLBatch{}
 
 	if req.Query == ".sync" {
 		d.gateway.Sync()
@@ -493,7 +474,7 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 			continue
 		}
 
-		result := internalSQLResult{}
+		result := internalSQL.SQLResult{}
 
 		tx, err := db.Begin()
 		if err != nil {
@@ -521,7 +502,7 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 	return response.SyncResponse(true, batch)
 }
 
-func internalSQLSelect(tx *sql.Tx, query string, result *internalSQLResult) error {
+func internalSQLSelect(tx *sql.Tx, query string, result *internalSQL.SQLResult) error {
 	result.Type = "select"
 
 	rows, err := tx.Query(query)
@@ -568,7 +549,7 @@ func internalSQLSelect(tx *sql.Tx, query string, result *internalSQLResult) erro
 	return nil
 }
 
-func internalSQLExec(tx *sql.Tx, query string, result *internalSQLResult) error {
+func internalSQLExec(tx *sql.Tx, query string, result *internalSQL.SQLResult) error {
 	result.Type = "exec"
 	r, err := tx.Exec(query)
 	if err != nil {
