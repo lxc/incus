@@ -19,3 +19,13 @@ func SplitNTrimSpace(s string, sep string, n int, nilIfEmpty bool) []string {
 
 	return parts
 }
+
+// StringHasPrefix returns true if value has one of the supplied prefixes.
+func StringHasPrefix(value string, prefixes ...string) bool {
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(value, prefix) {
+			return true
+		}
+	}
+	return false
+}
