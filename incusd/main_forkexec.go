@@ -333,7 +333,7 @@ import (
 	"github.com/spf13/cobra"
 
 	// Used by cgo
-	_ "github.com/lxc/incus/incusd/include"
+	_ "github.com/lxc/incus/internal/cgo"
 )
 
 type cmdForkexec struct {

@@ -8,7 +8,7 @@ package main
 // #cgo CFLAGS: -Werror=implicit-function-declaration
 // #cgo CFLAGS: -Werror=return-type -Wendif-labels -Werror=overflow
 // #cgo CFLAGS: -Wnested-externs -fexceptions
-// #cgo CFLAGS: -I include
+// #cgo CFLAGS: -I ../internal/cgo
 // #cgo pkg-config: lxc
 // #cgo pkg-config: libcap
 import "C"

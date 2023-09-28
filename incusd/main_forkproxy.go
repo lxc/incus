@@ -257,8 +257,8 @@ import (
 
 	"github.com/lxc/incus/incusd/daemon"
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	_ "github.com/lxc/incus/incusd/include" // Used by cgo
 	"github.com/lxc/incus/incusd/network"
+	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/netutils"
 )
