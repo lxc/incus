@@ -181,14 +181,10 @@ func main() {
 	recoverCmd := cmdRecover{global: &globalCmd}
 	app.AddCommand(recoverCmd.Command())
 
-	// sql sub-command
-	sqlCmd := cmdSql{global: &globalCmd}
-	app.AddCommand(sqlCmd.Command())
-
 	// version sub-command
 	versionCmd := cmdVersion{global: &globalCmd}
 	app.AddCommand(versionCmd.Command())
-	
+
 	// cluster sub-command
 	clusterCmd := cmdCluster{global: &globalCmd}
 	app.AddCommand(clusterCmd.Command())

@@ -1,3 +1,5 @@
+//go:build linux
+
 package main
 
 import (
@@ -14,11 +16,11 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-type cmdSql struct {
+type cmdAdminSQL struct {
 	global *cmdGlobal
 }
 
-func (c *cmdSql) Command() *cobra.Command {
+func (c *cmdAdminSQL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "sql <local|global> <query>"
 	cmd.Short = "Execute a SQL query against the local or global database"
@@ -57,7 +59,7 @@ func (c *cmdSql) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdSql) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 	if len(args) != 2 {
 		_ = cmd.Help()
 
