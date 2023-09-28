@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/util"
 )
 
 var stateCmd = APIEndpoint{
@@ -47,7 +47,7 @@ func cpuState() api.InstanceStateCPU {
 	var err error
 	cpu := api.InstanceStateCPU{}
 
-	if shared.PathExists("/sys/fs/cgroup/cpuacct/cpuacct.usage") {
+	if util.PathExists("/sys/fs/cgroup/cpuacct/cpuacct.usage") {
 		// CPU usage in seconds
 		value, err = os.ReadFile("/sys/fs/cgroup/cpuacct/cpuacct.usage")
 		if err != nil {
@@ -64,7 +64,7 @@ func cpuState() api.InstanceStateCPU {
 		cpu.Usage = valueInt
 
 		return cpu
-	} else if shared.PathExists("/sys/fs/cgroup/cpu.stat") {
+	} else if util.PathExists("/sys/fs/cgroup/cpu.stat") {
 		stats, err := os.ReadFile("/sys/fs/cgroup/cpu.stat")
 		if err != nil {
 			cpu.Usage = -1

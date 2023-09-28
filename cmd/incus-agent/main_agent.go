@@ -18,9 +18,9 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 var servers = make(map[string]*http.Server, 2)
@@ -63,7 +63,7 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Sync the hostname.
-	if shared.PathExists("/proc/sys/kernel/hostname") && shared.ValueInSlice("/etc/hostname", files) {
+	if util.PathExists("/proc/sys/kernel/hostname") && util.ValueInSlice("/etc/hostname", files) {
 		// Open the two files.
 		src, err := os.Open("/etc/hostname")
 		if err != nil {
@@ -90,11 +90,11 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Run cloud-init.
-	if shared.PathExists("/etc/cloud") && shared.ValueInSlice("/var/lib/cloud/seed/nocloud-net/meta-data", files) {
+	if util.PathExists("/etc/cloud") && util.ValueInSlice("/var/lib/cloud/seed/nocloud-net/meta-data", files) {
 		logger.Info("Seeding cloud-init")
 
 		cloudInitPath := "/run/cloud-init"
-		if shared.PathExists(cloudInitPath) {
+		if util.PathExists(cloudInitPath) {
 			logger.Info(fmt.Sprintf("Removing %q", cloudInitPath))
 			err = os.RemoveAll(cloudInitPath)
 			if err != nil {
@@ -120,7 +120,7 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 
 	// Wait for vsock device to appear.
 	for i := 0; i < 5; i++ {
-		if !shared.PathExists("/dev/vsock") {
+		if !util.PathExists("/dev/vsock") {
 			time.Sleep(1 * time.Second)
 		}
 	}
@@ -163,7 +163,7 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 
 	// Check whether we should start the DevIncus server in the early setup. This way, /dev/incus/sock
 	// will be available for any systemd services starting after the agent.
-	if shared.PathExists("agent.conf") {
+	if util.PathExists("agent.conf") {
 		f, err := os.Open("agent.conf")
 		if err != nil {
 			return err
@@ -263,7 +263,7 @@ func (c *cmdAgent) startStatusNotifier(ctx context.Context, chConnected <-chan s
 
 // writeStatus writes a status code to the vserial ring buffer used to detect agent status on host.
 func (c *cmdAgent) writeStatus(status string) error {
-	if shared.PathExists("/dev/virtio-ports/org.linuxcontainers.incus") {
+	if util.PathExists("/dev/virtio-ports/org.linuxcontainers.incus") {
 		vSerial, err := os.OpenFile("/dev/virtio-ports/org.linuxcontainers.incus", os.O_RDWR, 0600)
 		if err != nil {
 			return err
@@ -283,7 +283,7 @@ func (c *cmdAgent) writeStatus(status string) error {
 // mountHostShares reads the agent-mounts.json file from config share and mounts the shares requested.
 func (c *cmdAgent) mountHostShares() {
 	agentMountsFile := "./agent-mounts.json"
-	if !shared.PathExists(agentMountsFile) {
+	if !util.PathExists(agentMountsFile) {
 		return
 	}
 
@@ -305,7 +305,7 @@ func (c *cmdAgent) mountHostShares() {
 			mount.Target = fmt.Sprintf("/%s", mount.Target)
 		}
 
-		if !shared.PathExists(mount.Target) {
+		if !util.PathExists(mount.Target) {
 			err := os.MkdirAll(mount.Target, 0755)
 			if err != nil {
 				logger.Errorf("Failed to create mount target %q", mount.Target)

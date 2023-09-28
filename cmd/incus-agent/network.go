@@ -10,8 +10,8 @@ import (
 
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/ip"
-	"github.com/lxc/incus/incusd/revert"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 )

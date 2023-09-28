@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/util"
-	"github.com/lxc/incus/shared"
+	localUtil "github.com/lxc/incus/incusd/util"
+	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -51,7 +51,7 @@ func createCmd(restAPI *mux.Router, version string, c APIEndpoint, cert *x509.Ce
 		}
 
 		// Dump full request JSON when in debug mode
-		if r.Method != "GET" && util.IsJSONRequest(r) {
+		if r.Method != "GET" && localUtil.IsJSONRequest(r) {
 			newBody := &bytes.Buffer{}
 			captured := &bytes.Buffer{}
 			multiW := io.MultiWriter(newBody, captured)
@@ -61,8 +61,8 @@ func createCmd(restAPI *mux.Router, version string, c APIEndpoint, cert *x509.Ce
 				return
 			}
 
-			r.Body = shared.BytesReadCloser{Buf: newBody}
-			util.DebugJSON("API Request", captured, logger.Log)
+			r.Body = internalIO.BytesReadCloser{Buf: newBody}
+			localUtil.DebugJSON("API Request", captured, logger.Log)
 		}
 
 		// Actually process the request
@@ -112,7 +112,7 @@ func authenticate(r *http.Request, cert *x509.Certificate) bool {
 	clientCerts := map[string]x509.Certificate{"0": *cert}
 
 	for _, cert := range r.TLS.PeerCertificates {
-		trusted, _ := util.CheckTrustState(*cert, clientCerts, nil, false)
+		trusted, _ := localUtil.CheckTrustState(*cert, clientCerts, nil, false)
 		if trusted {
 			return true
 		}
