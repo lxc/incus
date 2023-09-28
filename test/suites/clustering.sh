@@ -274,10 +274,10 @@ test_clustering_membership() {
 
   # Gracefully remove a node and check trust certificate is removed.
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep node4
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster remove node4
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep node4 || false
-  ! INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4 || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4 || false
 
   # The node isn't clustered anymore.
   ! INCUS_DIR="${INCUS_FOUR_DIR}" incus cluster list || false
@@ -598,8 +598,8 @@ test_clustering_storage() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus storage list | grep data | grep -q CREATED
 
   # Check both nodes show preseeded storage pool created.
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
   # Trying to pass config values other than 'source' results in an error
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus storage create pool1 dir source=/foo size=123 --target node1 || false
@@ -609,19 +609,19 @@ test_clustering_storage() {
     # Create pending nodes.
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage create pool1 "${poolDriver}" --target node1
     INCUS_DIR="${INCUS_TWO_DIR}" incus storage create pool1 "${poolDriver}" --target node2
-    INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
 
     # Modify first pending node with invalid config and check it fails and all nodes are pending.
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage set pool1 source=/tmp/not/exist --target node1
     ! INCUS_DIR="${INCUS_ONE_DIR}" incus storage create pool1 "${poolDriver}" || false
-    INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
 
     # Run create on second node, so it succeeds and then fails notifying first node.
     ! INCUS_DIR="${INCUS_TWO_DIR}" incus storage create pool1 "${poolDriver}" || false
-    INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
     # Check we cannot update global config while in pending state.
     ! INCUS_DIR="${INCUS_ONE_DIR}" incus storage set pool1 rsync.bwlimit 10 || false
@@ -650,8 +650,8 @@ test_clustering_storage() {
     stat "${INCUS_TWO_SOURCE}/containers"
 
     # Check both nodes marked created.
-    INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
     # Check copying storage volumes works.
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume create pool1 vol1 --target=node1
@@ -1041,8 +1041,8 @@ test_clustering_network() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus network list| grep "${bridge}" | grep -q CREATED
 
   # Check both nodes show network created.
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
   # Trying to pass config values other than
   # 'bridge.external_interfaces' results in an error
@@ -1091,15 +1091,15 @@ test_clustering_network() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep status: | grep -q Errored # Check has errored status.
 
   # Check each node status (expect both node1 and node2 to be pending as local member running created failed first).
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
 
   # Run network create on other node2 (still excpect to fail on node1, but expect node2 create to succeed).
   ! INCUS_DIR="${INCUS_TWO_DIR}" incus network create "${net}" || false
 
   # Check each node status (expect node1 to be pending and node2 to be created).
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
   # Check interfaces are expected types (dummy on node1 and bridge on node2).
   nsenter -n -t "${INCUS_PID1}" -- ip -details link show "${net}" | grep dummy
@@ -1140,8 +1140,8 @@ test_clustering_network() {
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" || false # Check re-create is blocked after success.
 
   # Check both nodes marked created.
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
 
   # Check instance can be connected to created network and assign static DHCP allocations.
   INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}"
@@ -1807,7 +1807,7 @@ test_clustering_projects() {
 
   # Remove the image file and DB record from node1.
   rm "${INCUS_ONE_DIR}"/images/*
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd sql global 'delete from images_nodes where node_id = 1'
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin sql global 'delete from images_nodes where node_id = 1'
 
   # Check image import from node2 by creating container on node1 in other project.
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list
@@ -2210,7 +2210,7 @@ test_clustering_handover() {
   echo "Stopped member 1"
 
   # The fourth node has been promoted, while the first one demoted.
-  INCUS_DIR="${INCUS_THREE_DIR}" incusd sql local 'select * from raft_nodes'
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin sql local 'select * from raft_nodes'
   INCUS_DIR="${INCUS_THREE_DIR}" incus cluster ls
   INCUS_DIR="${INCUS_TWO_DIR}" incus cluster show node4
   INCUS_DIR="${INCUS_THREE_DIR}" incus cluster show node1
@@ -2425,7 +2425,7 @@ test_clustering_remove_raft_node() {
   # Remove the second node from the database but not from the raft configuration.
   retries=10
   while [ "${retries}" != "0" ]; do
-    INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global "DELETE FROM nodes WHERE address = '10.1.1.102:8443'" && break
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "DELETE FROM nodes WHERE address = '10.1.1.102:8443'" && break
     sleep 0.5
     retries=$((retries-1))
   done
@@ -2448,7 +2448,7 @@ test_clustering_remove_raft_node() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node4 | grep -q "\- database$"
 
   # The second node is still in the raft_nodes table.
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102"
 
   # Force removing the raft node.
   INCUS_DIR="${INCUS_ONE_DIR}" incusd cluster remove-raft-node -q "10.1.1.102"
@@ -2463,7 +2463,7 @@ test_clustering_remove_raft_node() {
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node4 | grep -q "\- database$"
 
   # The second node is gone from the raft_nodes_table.
-  ! INCUS_DIR="${INCUS_ONE_DIR}" incusd sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql local "SELECT * FROM raft_nodes" | grep -q "10.1.1.102" || false
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
   INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
@@ -2684,11 +2684,11 @@ test_clustering_image_refresh() {
 
   if [ "${poolDriver}" != "dir" ]; then
     # Check image storage volume records exist.
-    incusd sql global 'select name from storage_volumes'
+    incus admin sql global 'select name from storage_volumes'
     if [ "${poolDriver}" = "ceph" ]; then
-      incusd sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
+      incus admin sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
     else
-      incusd sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 3
+      incus admin sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 3
     fi
   fi
 
@@ -2705,14 +2705,14 @@ test_clustering_image_refresh() {
   done
 
   if [ "${poolDriver}" != "dir" ]; then
-    incusd sql global 'select name from storage_volumes'
+    incus admin sql global 'select name from storage_volumes'
     # Check image storage volume records actually removed from relevant members and replaced with new fingerprint.
     if [ "${poolDriver}" = "ceph" ]; then
-      incusd sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 0
-      incusd sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 1
+      incus admin sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 0
+      incus admin sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 1
     else
-      incusd sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
-      incusd sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 2
+      incus admin sql global 'select name from storage_volumes' | grep -Fc "${old_fingerprint}" | grep -Fx 1
+      incus admin sql global 'select name from storage_volumes' | grep -Fc "${new_fingerprint}" | grep -Fx 2
     fi
   fi
 
@@ -2720,12 +2720,12 @@ test_clustering_image_refresh() {
   # while project foo should still have the old image.
   # Also, it should only show 1 entry for the old image and 2 entries
   # for the new one.
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | grep "${old_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
+  echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${old_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | grep "${new_fingerprint}"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | grep "${new_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
+  echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${new_fingerprint}"
+  echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${new_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
 
   pids=""
 
@@ -2742,12 +2742,12 @@ test_clustering_image_refresh() {
     wait "${pid}" || true
   done
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | grep "${old_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
+  echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${old_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | grep "${new_fingerprint}"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | grep "${new_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
+  echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${new_fingerprint}"
+  echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${new_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
 
   # Modify public testimage
   dd if=/dev/urandom count=32 | INCUS_DIR="${INCUS_REMOTE_DIR}" incus file push - c1/foo
@@ -2770,12 +2770,12 @@ test_clustering_image_refresh() {
 
   pids=""
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | grep "${old_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
+  echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="foo"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${old_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'select images.fingerprint from images' | grep -c "${old_fingerprint}")" -eq 1 ] || false
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | grep "${new_fingerprint}"
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | grep "${new_fingerprint}"
-  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incusd sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
+  echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="default"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${new_fingerprint}"
+  echo 'select images.fingerprint from images join projects on images.project_id=projects.id where projects.name="bar"' | INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global - | grep "${new_fingerprint}"
+  [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'select images.fingerprint from images' | grep -c "${new_fingerprint}")" -eq 2 ] || false
 
   # Clean up everything
   for project in default foo bar; do

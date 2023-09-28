@@ -14,8 +14,8 @@ test_storage_volume_recover() {
   incus storage volume import "${poolName}" ./foo.iso vol2 --type=iso
 
   # Delete database entry of the created custom block volume.
-  incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol1'"
-  incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol2'"
+  incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol1'"
+  incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol2'"
 
   # Ensure the custom block volume is no longer listed.
   ! incus storage volume show "${poolName}" vol1 || false
@@ -29,8 +29,8 @@ test_storage_volume_recover() {
     incus storage volume create "${poolName}" vol4 zfs.block_mode=true size=200MiB
 
     # Delete database entries of the created custom volumes.
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol3'"
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol4'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol3'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol4'"
 
     # Ensure the custom volumes are no longer listed.
     ! incus storage volume show "${poolName}" vol3 || false
@@ -111,8 +111,8 @@ EOF
     incus storage volume snapshot show "${poolName}" vol1_test/snap0
 
     # Remove container DB records and symlink.
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
     rm "${INCUS_DIR}/containers/test_c1"
 
     # Remove mount directories if block backed storage.
@@ -123,7 +123,7 @@ EOF
     fi
 
     # Remove custom volume DB record.
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol1_test'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='vol1_test'"
 
     # Remove mount directories if block backed storage.
     if [ "$poolDriver" != "dir" ] && [ "$poolDriver" != "btrfs" ] && [ "$poolDriver" != "cephfs" ]; then
@@ -195,8 +195,8 @@ EOF
     incus exec c1 --project test -- hostname
 
     # Recover container that is running.
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
 
     # Restart Incus so internal mount counters are cleared for deleted (but running) container.
     shutdown_incus "${INCUS_DIR}"
@@ -215,7 +215,7 @@ EOF
     incus exec c1 --project test -- hostname
 
     # Test recover after pool DB config deletion too.
-    poolConfigBefore=$(incusd sql global "SELECT key,value FROM storage_pools_config JOIN storage_pools ON storage_pools.id = storage_pools_config.storage_pool_id WHERE storage_pools.name = '${poolName}' ORDER BY key")
+    poolConfigBefore=$(incus admin sql global "SELECT key,value FROM storage_pools_config JOIN storage_pools ON storage_pools.id = storage_pools_config.storage_pool_id WHERE storage_pools.name = '${poolName}' ORDER BY key")
     poolSource=$(incus storage get "${poolName}" source)
     poolExtraConfig=""
 
@@ -236,9 +236,9 @@ ceph.user.name=$(incus storage get "${poolName}" ceph.user.name)
       ;;
     esac
 
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
-    incusd sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_pools WHERE name='${poolName}'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM instances WHERE name='c1'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
+    incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_pools WHERE name='${poolName}'"
 
     cat <<EOF |incusd recover
 yes
@@ -253,7 +253,7 @@ EOF
 
     # Check recovered pool config (from instance backup file) matches what originally was there.
     incus storage show "${poolName}"
-    poolConfigAfter=$(incusd sql global "SELECT key,value FROM storage_pools_config JOIN storage_pools ON storage_pools.id = storage_pools_config.storage_pool_id WHERE storage_pools.name = '${poolName}' ORDER BY key")
+    poolConfigAfter=$(incus admin sql global "SELECT key,value FROM storage_pools_config JOIN storage_pools ON storage_pools.id = storage_pools_config.storage_pool_id WHERE storage_pools.name = '${poolName}' ORDER BY key")
     echo "Before:"
     echo "${poolConfigBefore}"
 
@@ -309,7 +309,7 @@ test_bucket_recover() {
     key2_secretKey=$(echo "$key2" | awk '/^Secret key/ { print $3 }')
 
     # Remove bucket from global DB
-    incusd sql global "delete from storage_buckets where name = '${bucketName}'"
+    incus admin sql global "delete from storage_buckets where name = '${bucketName}'"
 
     # Recover bucket
     cat <<EOF | incusd recover

@@ -382,8 +382,8 @@ test_snap_volume_db_recovery() {
   incus snapshot create c1
   incus start c1
   incus stop -f c1
-  incusd sql global 'DELETE FROM storage_volumes_snapshots' # Remove volume snapshot DB records.
-  incusd sql local 'DELETE FROM  patches WHERE name = "storage_missing_snapshot_records"' # Clear patch indicator.
+  echo 'DELETE FROM storage_volumes_snapshots' | incus admin sql global - # Remove volume snapshot DB records.
+  echo 'DELETE FROM patches WHERE name = "storage_missing_snapshot_records"' | incus admin sql local - # Clear patch indicator.
   ! incus start c1 || false # Shouldn't be able to start as backup.yaml generation checks for DB consistency.
   incus admin shutdown
   respawn_incus "${INCUS_DIR}" true
