@@ -1234,7 +1234,7 @@ test_clustering_upgrade() {
   INCUS_NETNS="${ns2}" respawn_incus "${INCUS_TWO_DIR}" false
 
   # The second daemon is blocked waiting for the other to be upgraded
-  ! INCUS_DIR="${INCUS_TWO_DIR}" incusd waitready --timeout=5 || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" incus admin waitready --timeout=5 || false
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node1 | grep -q "message: Fully operational"
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "message: waiting for other nodes to be upgraded"
@@ -1245,7 +1245,7 @@ test_clustering_upgrade() {
   INCUS_NETNS="${ns1}" respawn_incus "${INCUS_ONE_DIR}" true
 
   # The second daemon has now unblocked
-  INCUS_DIR="${INCUS_TWO_DIR}" incusd waitready --timeout=30
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin waitready --timeout=30
 
   # The cluster is again operational
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "OFFLINE" || false
@@ -1265,7 +1265,7 @@ test_clustering_upgrade() {
 
   # The second daemon is blocked waiting for the other two to be
   # upgraded
-  ! INCUS_DIR="${INCUS_TWO_DIR}" incusd waitready --timeout=5 || false
+  ! INCUS_DIR="${INCUS_TWO_DIR}" incus admin waitready --timeout=5 || false
 
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node1 | grep -q "message: Fully operational"
   INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "message: waiting for other nodes to be upgraded"
@@ -1335,7 +1335,7 @@ test_clustering_upgrade_large() {
     INCUS_NETNS="${prefix}${i}" respawn_incus "${INCUS_CLUSTER_DIR}/${i}" false
   done
 
-  INCUS_DIR="${INCUS_ONE_DIR}" incusd waitready --timeout=10
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin waitready --timeout=10
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "OFFLINE" || false
 
   for i in $(seq "${N}" -1 1); do

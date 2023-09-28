@@ -47,7 +47,7 @@ spawn_incus() {
     echo "==> Spawned Incus (PID is ${INCUS_PID})"
 
     echo "==> Confirming incusd is responsive (PID is ${INCUS_PID})"
-    INCUS_DIR="${incusdir}" incusd waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
+    INCUS_DIR="${incusdir}" incus admin waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
 
     if [ "${INCUS_NETNS}" = "" ]; then
         echo "==> Binding to network"
@@ -103,7 +103,7 @@ respawn_incus() {
 
     if [ "${wait}" = true ]; then
         echo "==> Confirming incusd is responsive (PID is ${INCUS_PID})"
-        INCUS_DIR="${incusdir}" incusd waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
+        INCUS_DIR="${incusdir}" incus admin waitready --timeout=300 || (echo "Killing PID ${INCUS_PID}" ; kill -9 "${INCUS_PID}" ; false)
     fi
 
     if [ -n "${DEBUG:-}" ]; then
