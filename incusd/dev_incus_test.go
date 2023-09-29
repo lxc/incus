@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/sys"
-	"github.com/lxc/incus/incusd/ucred"
+	"github.com/lxc/incus/internal/linux"
 )
 
 var testDir string
@@ -111,7 +111,7 @@ func TestCredsSendRecv(t *testing.T) {
 
 		defer func() { _ = conn.Close() }()
 
-		cred, err := ucred.GetCred(conn)
+		cred, err := linux.GetUcred(conn)
 		if err != nil {
 			t.Log(err)
 			result <- -1
