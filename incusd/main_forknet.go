@@ -109,8 +109,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	_ "github.com/lxc/incus/incusd/include" // Used by cgo
 	"github.com/lxc/incus/incusd/ip"
+	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
 	"github.com/lxc/incus/internal/netutils"
 )
 

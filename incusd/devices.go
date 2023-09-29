@@ -7,7 +7,7 @@ package main
 #include <stdio.h>
 #include <linux/hidraw.h>
 
-#include "include/memory_utils.h"
+#include "../internal/cgo/memory_utils.h"
 
 #ifndef HIDIOCGRAWINFO
 #define HIDIOCGRAWINFO _IOR('H', 0x03, struct hidraw_devinfo)
@@ -45,11 +45,11 @@ import (
 
 	"github.com/lxc/incus/incusd/cgroup"
 	"github.com/lxc/incus/incusd/device"
-	_ "github.com/lxc/incus/incusd/include" // Used by cgo
 	"github.com/lxc/incus/incusd/instance"
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/incusd/state"
+	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
 )

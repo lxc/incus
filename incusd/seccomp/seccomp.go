@@ -25,11 +25,11 @@ package seccomp
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../include/incus_bpf.h"
-#include "../include/incus_seccomp.h"
-#include "../include/memory_utils.h"
-#include "../include/process_utils.h"
-#include "../include/syscall_wrappers.h"
+#include "../../internal/cgo/incus_bpf.h"
+#include "../../internal/cgo/incus_seccomp.h"
+#include "../../internal/cgo/memory_utils.h"
+#include "../../internal/cgo/process_utils.h"
+#include "../../internal/cgo/syscall_wrappers.h"
 
 struct seccomp_notif_sizes expected_sizes;
 
@@ -462,11 +462,11 @@ import (
 
 	"github.com/lxc/incus/incusd/cgroup"
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	_ "github.com/lxc/incus/incusd/include" // Used by cgo
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/ucred"
 	localUtil "github.com/lxc/incus/incusd/util"
+	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/netutils"
