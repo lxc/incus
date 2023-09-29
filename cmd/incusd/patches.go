@@ -939,6 +939,10 @@ func patchStorageZfsUnsetInvalidBlockSettings(_ string, d *Daemon) error {
 
 	for pool, volumes := range poolVolumes {
 		for _, vol := range volumes {
+			if vol.Location != s.ServerName {
+				continue
+			}
+
 			config := vol.Config
 
 			if util.IsTrue(config["zfs.block_mode"]) {
