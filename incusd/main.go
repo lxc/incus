@@ -161,10 +161,6 @@ func main() {
 	forkzfsCmd := cmdForkZFS{global: &globalCmd}
 	app.AddCommand(forkzfsCmd.Command())
 
-	// import sub-command
-	importCmd := cmdImport{global: &globalCmd}
-	app.AddCommand(importCmd.Command())
-
 	// manpage sub-command
 	manpageCmd := cmdManpage{global: &globalCmd}
 	app.AddCommand(manpageCmd.Command())
