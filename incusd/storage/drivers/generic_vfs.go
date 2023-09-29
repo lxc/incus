@@ -11,12 +11,12 @@ import (
 
 	"github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/rsync"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
