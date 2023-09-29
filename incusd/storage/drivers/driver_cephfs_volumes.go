@@ -8,11 +8,12 @@ import (
 	"strconv"
 
 	"github.com/lxc/incus/incusd/backup"
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/internal/instancewriter"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/rsync"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
@@ -156,7 +157,7 @@ func (d *cephfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots b
 }
 
 // CreateVolumeFromMigration creates a new volume (with or without snapshots) from a migration data stream.
-func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs migration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
+func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	if volTargetArgs.MigrationType.FSType != migration.MigrationFSType_RSYNC {
 		return ErrNotSupported
 	}
@@ -195,7 +196,7 @@ func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, 
 			// Receive the snapshot.
 			var wrapper *ioprogress.ProgressTracker
 			if volTargetArgs.TrackProgress {
-				wrapper = migration.ProgressTracker(op, "fs_progress", snapName)
+				wrapper = localMigration.ProgressTracker(op, "fs_progress", snapName)
 			}
 
 			err = rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
@@ -227,7 +228,7 @@ func (d *cephfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, 
 		// Receive the main volume from sender.
 		var wrapper *ioprogress.ProgressTracker
 		if volTargetArgs.TrackProgress {
-			wrapper = migration.ProgressTracker(op, "fs_progress", vol.name)
+			wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.name)
 		}
 
 		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
@@ -466,7 +467,7 @@ func (d *cephfs) RenameVolume(vol Volume, newVolName string, op *operations.Oper
 }
 
 // MigrateVolume streams the volume (with or without snapshots).
-func (d *cephfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
+func (d *cephfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	return genericVFSMigrateVolume(d, d.state, vol, conn, volSrcArgs, op)
 }
 

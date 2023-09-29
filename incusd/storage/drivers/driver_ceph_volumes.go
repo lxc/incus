@@ -15,11 +15,12 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/backup"
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
@@ -517,7 +518,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 }
 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
-func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs migration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
+func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	if volTargetArgs.ClusterMoveSourceName != "" {
 		err := vol.EnsureMountPath()
 		if err != nil {
@@ -580,7 +581,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 		// Transfer the snapshots.
 		for _, snapName := range volTargetArgs.Snapshots {
 			fullSnapshotName := d.getRBDVolumeName(vol, snapName, false, true)
-			wrapper := migration.ProgressWriter(op, "fs_progress", fullSnapshotName)
+			wrapper := localMigration.ProgressWriter(op, "fs_progress", fullSnapshotName)
 
 			err = d.receiveVolume(recvName, conn, wrapper)
 			if err != nil {
@@ -615,7 +616,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 		}
 	}()
 
-	wrapper := migration.ProgressWriter(op, "fs_progress", vol.name)
+	wrapper := localMigration.ProgressWriter(op, "fs_progress", vol.name)
 
 	err = d.receiveVolume(recvName, conn, wrapper)
 	if err != nil {
@@ -1328,7 +1329,7 @@ func (d *ceph) RenameVolume(vol Volume, newVolName string, op *operations.Operat
 }
 
 // MigrateVolume sends a volume for migration.
-func (d *ceph) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
+func (d *ceph) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	if volSrcArgs.ClusterMove {
 		return nil // When performing a cluster member move don't do anything on the source member.
 	}
@@ -1383,7 +1384,7 @@ func (d *ceph) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mi
 		// Setup progress tracking.
 		var wrapper *ioprogress.ProgressTracker
 		if volSrcArgs.TrackProgress {
-			wrapper = migration.ProgressTracker(op, "fs_progress", vol.name)
+			wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.name)
 		}
 
 		err = d.sendVolume(conn, sendName, "", wrapper)
@@ -1412,7 +1413,7 @@ func (d *ceph) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mi
 		var wrapper *ioprogress.ProgressTracker
 
 		if volSrcArgs.TrackProgress {
-			wrapper = migration.ProgressTracker(op, "fs_progress", snapshot.name)
+			wrapper = localMigration.ProgressTracker(op, "fs_progress", snapshot.name)
 		}
 
 		err := d.sendVolume(conn, sendSnapName, prev, wrapper)
@@ -1424,7 +1425,7 @@ func (d *ceph) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mi
 	// Setup progress tracking.
 	var wrapper *ioprogress.ProgressTracker
 	if volSrcArgs.TrackProgress {
-		wrapper = migration.ProgressTracker(op, "fs_progress", vol.name)
+		wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.name)
 	}
 
 	runningSnapName := fmt.Sprintf("migration-send-%s", uuid.New())

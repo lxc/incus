@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 )
 
 var mu sync.RWMutex
@@ -62,7 +62,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 	client.Disconnect()
 
 	// Setup the unix socket.
-	listeners := util.GetListeners(util.SystemdListenFDsStart)
+	listeners := linux.GetSystemdListeners(linux.SystemdListenFDsStart)
 	if len(listeners) > 1 {
 		return fmt.Errorf("More than one socket-activation FD received")
 	}

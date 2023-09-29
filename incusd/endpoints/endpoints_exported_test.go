@@ -1,14 +1,14 @@
 package endpoints
 
 import (
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	localtls "github.com/lxc/incus/shared/tls"
 )
 
 // New creates a new Endpoints instance without bringing it up.
 func Unstarted() *Endpoints {
 	return &Endpoints{
-		systemdListenFDsStart: util.SystemdListenFDsStart,
+		systemdListenFDsStart: linux.SystemdListenFDsStart,
 	}
 }
 

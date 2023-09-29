@@ -464,7 +464,6 @@ import (
 	deviceConfig "github.com/lxc/incus/incusd/device/config"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/ucred"
 	localUtil "github.com/lxc/incus/incusd/util"
 	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
 	"github.com/lxc/incus/internal/idmap"
@@ -1077,7 +1076,7 @@ func NewSeccompServer(s *state.State, path string, findPID func(pid int32, state
 			}
 
 			go func() {
-				ucred, err := ucred.GetCred(c.(*net.UnixConn))
+				ucred, err := linux.GetUcred(c.(*net.UnixConn))
 				if err != nil {
 					logger.Errorf("Unable to get ucred from seccomp socket client: %v", err)
 					return

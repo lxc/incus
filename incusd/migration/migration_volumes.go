@@ -7,6 +7,7 @@ import (
 
 	backupConfig "github.com/lxc/incus/incusd/backup/config"
 	"github.com/lxc/incus/incusd/operations"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/units"
@@ -40,8 +41,8 @@ func (r *InfoResponse) Err() error {
 // Type represents the migration transport type. It indicates the method by which the migration can
 // take place and what optional features are available.
 type Type struct {
-	FSType   MigrationFSType // Transport mode selected.
-	Features []string        // Feature hints for selected FSType transport mode.
+	FSType   migration.MigrationFSType // Transport mode selected.
+	Features []string                  // Feature hints for selected FSType transport mode.
 }
 
 // VolumeSourceArgs represents the arguments needed to setup a volume migration source.
@@ -85,7 +86,7 @@ type VolumeTargetArgs struct {
 // If the fallback Rsync type is present in any of the types even if it is not preferred, then its
 // optional features are added to the header's RsyncFeatures, allowing for fallback negotiation to
 // take place on the farside.
-func TypesToHeader(types ...Type) *MigrationHeader {
+func TypesToHeader(types ...Type) *migration.MigrationHeader {
 	missingFeature := false
 	hasFeature := true
 	var preferredType Type
@@ -94,20 +95,20 @@ func TypesToHeader(types ...Type) *MigrationHeader {
 		preferredType = types[0]
 	}
 
-	header := MigrationHeader{Fs: &preferredType.FSType}
+	header := migration.MigrationHeader{Fs: &preferredType.FSType}
 
 	// Add ZFS features if preferred type is ZFS.
-	if preferredType.FSType == MigrationFSType_ZFS {
-		features := ZfsFeatures{
+	if preferredType.FSType == migration.MigrationFSType_ZFS {
+		features := migration.ZfsFeatures{
 			Compress: &missingFeature,
 		}
 
 		for _, feature := range preferredType.Features {
 			if feature == "compress" {
 				features.Compress = &hasFeature
-			} else if feature == ZFSFeatureMigrationHeader {
+			} else if feature == migration.ZFSFeatureMigrationHeader {
 				features.MigrationHeader = &hasFeature
-			} else if feature == ZFSFeatureZvolFilesystems {
+			} else if feature == migration.ZFSFeatureZvolFilesystems {
 				features.HeaderZvols = &hasFeature
 			}
 		}
@@ -116,18 +117,18 @@ func TypesToHeader(types ...Type) *MigrationHeader {
 	}
 
 	// Add BTRFS features if preferred type is BTRFS.
-	if preferredType.FSType == MigrationFSType_BTRFS {
-		features := BtrfsFeatures{
+	if preferredType.FSType == migration.MigrationFSType_BTRFS {
+		features := migration.BtrfsFeatures{
 			MigrationHeader:  &missingFeature,
 			HeaderSubvolumes: &missingFeature,
 		}
 
 		for _, feature := range preferredType.Features {
-			if feature == BTRFSFeatureMigrationHeader {
+			if feature == migration.BTRFSFeatureMigrationHeader {
 				features.MigrationHeader = &hasFeature
-			} else if feature == BTRFSFeatureSubvolumes {
+			} else if feature == migration.BTRFSFeatureSubvolumes {
 				features.HeaderSubvolumes = &hasFeature
-			} else if feature == BTRFSFeatureSubvolumeUUIDs {
+			} else if feature == migration.BTRFSFeatureSubvolumeUUIDs {
 				features.HeaderSubvolumeUuids = &hasFeature
 			}
 		}
@@ -137,11 +138,11 @@ func TypesToHeader(types ...Type) *MigrationHeader {
 
 	// Check all the types for an Rsync method, if found add its features to the header's RsyncFeatures list.
 	for _, t := range types {
-		if t.FSType != MigrationFSType_RSYNC && t.FSType != MigrationFSType_BLOCK_AND_RSYNC {
+		if t.FSType != migration.MigrationFSType_RSYNC && t.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC {
 			continue
 		}
 
-		features := RsyncFeatures{
+		features := migration.RsyncFeatures{
 			Xattrs:        &missingFeature,
 			Delete:        &missingFeature,
 			Compress:      &missingFeature,
@@ -173,10 +174,10 @@ func TypesToHeader(types ...Type) *MigrationHeader {
 // fallback type which is used as an additional offer type preference in case the preferred remote type is not
 // compatible with the local type available. It is expected that both sides of the migration will support the
 // fallback type for the volume's content type that is being migrated.
-func MatchTypes(offer *MigrationHeader, fallbackType MigrationFSType, ourTypes []Type) ([]Type, error) {
+func MatchTypes(offer *migration.MigrationHeader, fallbackType migration.MigrationFSType, ourTypes []Type) ([]Type, error) {
 	// Generate an offer types slice from the preferred type supplied from remote and the
 	// fallback type supplied based on the content type of the transfer.
-	offeredFSTypes := []MigrationFSType{offer.GetFs(), fallbackType}
+	offeredFSTypes := []migration.MigrationFSType{offer.GetFs(), fallbackType}
 
 	matchedTypes := []Type{}
 
@@ -189,11 +190,11 @@ func MatchTypes(offer *MigrationHeader, fallbackType MigrationFSType, ourTypes [
 
 			// We got a match, now extract the relevant offered features.
 			var offeredFeatures []string
-			if offerFSType == MigrationFSType_ZFS {
+			if offerFSType == migration.MigrationFSType_ZFS {
 				offeredFeatures = offer.GetZfsFeaturesSlice()
-			} else if offerFSType == MigrationFSType_BTRFS {
+			} else if offerFSType == migration.MigrationFSType_BTRFS {
 				offeredFeatures = offer.GetBtrfsFeaturesSlice()
-			} else if offerFSType == MigrationFSType_RSYNC {
+			} else if offerFSType == migration.MigrationFSType_RSYNC {
 				offeredFeatures = offer.GetRsyncFeaturesSlice()
 			}
 
@@ -207,12 +208,12 @@ func MatchTypes(offer *MigrationHeader, fallbackType MigrationFSType, ourTypes [
 
 			if offer.GetRefresh() {
 				// Optimized refresh with zfs only works if ZfsFeatureMigrationHeader is available.
-				if ourType.FSType == MigrationFSType_ZFS && !util.ValueInSlice(ZFSFeatureMigrationHeader, commonFeatures) {
+				if ourType.FSType == migration.MigrationFSType_ZFS && !util.ValueInSlice(migration.ZFSFeatureMigrationHeader, commonFeatures) {
 					continue
 				}
 
 				// Optimized refresh with btrfs only works if BtrfsFeatureSubvolumeUUIDs is available.
-				if ourType.FSType == MigrationFSType_BTRFS && !util.ValueInSlice(BTRFSFeatureSubvolumeUUIDs, commonFeatures) {
+				if ourType.FSType == migration.MigrationFSType_BTRFS && !util.ValueInSlice(migration.BTRFSFeatureSubvolumeUUIDs, commonFeatures) {
 					continue
 				}
 			}

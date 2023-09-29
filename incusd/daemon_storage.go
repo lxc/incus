@@ -10,10 +10,10 @@ import (
 	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/incusd/node"
 	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
+	"github.com/lxc/incus/internal/rsync"
 	internalUtil "github.com/lxc/incus/internal/util"
 )
 

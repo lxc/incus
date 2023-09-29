@@ -12,9 +12,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pborman/uuid"
 
-	"github.com/lxc/incus/incusd/migration"
-	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
+	"github.com/lxc/incus/internal/rsync"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"

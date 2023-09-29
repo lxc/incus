@@ -11,6 +11,7 @@ import (
 
 	"github.com/lxc/incus/incusd/endpoints/listeners"
 	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 )
@@ -138,7 +139,7 @@ func Up(config *Config) (*Endpoints, error) {
 	}
 
 	endpoints := &Endpoints{
-		systemdListenFDsStart: util.SystemdListenFDsStart,
+		systemdListenFDsStart: linux.SystemdListenFDsStart,
 	}
 
 	err := endpoints.up(config)
@@ -185,7 +186,7 @@ func (e *Endpoints) up(config *Config) error {
 	var err error
 
 	// Check for socket activation.
-	systemdListeners := util.GetListeners(e.systemdListenFDsStart)
+	systemdListeners := linux.GetSystemdListeners(e.systemdListenFDsStart)
 	if len(systemdListeners) > 0 {
 		e.listeners = activatedListeners(systemdListeners, e.cert)
 		for kind := range e.listeners {

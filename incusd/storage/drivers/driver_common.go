@@ -9,12 +9,13 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/incusd/backup"
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
@@ -190,7 +191,7 @@ func (d *common) validateVolume(vol Volume, driverRules map[string]func(value st
 
 // MigrationType returns the type of transfer methods to be used when doing migrations between pools
 // in preference order.
-func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []migration.Type {
+func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
 	var transportType migration.MigrationFSType
 	var rsyncFeatures []string
 
@@ -208,7 +209,7 @@ func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnaps
 		transportType = migration.MigrationFSType_RSYNC
 	}
 
-	return []migration.Type{
+	return []localMigration.Type{
 		{
 			FSType:   transportType,
 			Features: rsyncFeatures,
@@ -324,7 +325,7 @@ func (d *common) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots b
 }
 
 // CreateVolumeFromMigration creates a new volume (with or without snapshots) from a migration data stream.
-func (d *common) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs migration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
+func (d *common) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	return ErrNotSupported
 }
 
@@ -390,7 +391,7 @@ func (d *common) RenameVolume(vol Volume, newVolName string, op *operations.Oper
 }
 
 // MigrateVolume streams the volume (with or without snapshots).
-func (d *common) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
+func (d *common) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	return ErrNotSupported
 }
 

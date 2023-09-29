@@ -9,14 +9,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/rsync"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/rsync"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
@@ -148,7 +149,7 @@ func genericVFSRenameVolumeSnapshot(d Driver, snapVol Volume, newSnapshotName st
 }
 
 // genericVFSMigrateVolume is a generic MigrateVolume implementation for VFS-only drivers.
-func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
+func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	bwlimit := d.Config()["rsync.bwlimit"]
 	var rsyncArgs []string
 
@@ -168,7 +169,7 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 	sendFSVol := func(vol Volume, conn io.ReadWriteCloser, mountPath string) error {
 		var wrapper *ioprogress.ProgressTracker
 		if volSrcArgs.TrackProgress {
-			wrapper = migration.ProgressTracker(op, "fs_progress", vol.name)
+			wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.name)
 		}
 
 		path := internalUtil.AddSlash(mountPath)
@@ -191,7 +192,7 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 
 		var wrapper *ioprogress.ProgressTracker
 		if volSrcArgs.TrackProgress {
-			wrapper = migration.ProgressTracker(op, "block_progress", vol.name)
+			wrapper = localMigration.ProgressTracker(op, "block_progress", vol.name)
 		}
 
 		path, err := d.GetVolumeDiskPath(vol)
@@ -281,7 +282,7 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 
 // genericVFSCreateVolumeFromMigration receives a volume and its snapshots over a non-optimized method.
 // initVolume is run against the main volume (not the snapshots) and is often used for quota initialization.
-func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (revert.Hook, error), vol Volume, conn io.ReadWriteCloser, volTargetArgs migration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
+func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (revert.Hook, error), vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	// Check migration transport type matches volume type.
 	if IsContentBlock(vol.contentType) {
 		if volTargetArgs.MigrationType.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC {
@@ -307,7 +308,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 	recvFSVol := func(volName string, conn io.ReadWriteCloser, path string) error {
 		var wrapper *ioprogress.ProgressTracker
 		if volTargetArgs.TrackProgress {
-			wrapper = migration.ProgressTracker(op, "fs_progress", volName)
+			wrapper = localMigration.ProgressTracker(op, "fs_progress", volName)
 		}
 
 		d.Logger().Debug("Receiving filesystem volume started", logger.Ctx{"volName": volName, "path": path, "features": volTargetArgs.MigrationType.Features})
@@ -319,7 +320,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 	recvBlockVol := func(volName string, conn io.ReadWriteCloser, path string) error {
 		var wrapper *ioprogress.ProgressTracker
 		if volTargetArgs.TrackProgress {
-			wrapper = migration.ProgressTracker(op, "block_progress", volName)
+			wrapper = localMigration.ProgressTracker(op, "block_progress", volName)
 		}
 
 		to, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0)

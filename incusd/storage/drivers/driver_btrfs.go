@@ -9,9 +9,10 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
@@ -478,7 +479,7 @@ func (d *btrfs) GetResources() (*api.ResourcesStoragePool, error) {
 }
 
 // MigrationType returns the type of transfer methods to be used when doing migrations between pools in preference order.
-func (d *btrfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []migration.Type {
+func (d *btrfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
 	var rsyncFeatures []string
 	btrfsFeatures := []string{migration.BTRFSFeatureMigrationHeader, migration.BTRFSFeatureSubvolumes, migration.BTRFSFeatureSubvolumeUUIDs}
 
@@ -500,7 +501,7 @@ func (d *btrfs) MigrationTypes(contentType ContentType, refresh bool, copySnapsh
 			transportType = migration.MigrationFSType_RSYNC
 		}
 
-		return []migration.Type{
+		return []localMigration.Type{
 			{
 				FSType:   transportType,
 				Features: rsyncFeatures,
@@ -509,7 +510,7 @@ func (d *btrfs) MigrationTypes(contentType ContentType, refresh bool, copySnapsh
 	}
 
 	if IsContentBlock(contentType) {
-		return []migration.Type{
+		return []localMigration.Type{
 			{
 				FSType:   migration.MigrationFSType_BTRFS,
 				Features: btrfsFeatures,
@@ -522,7 +523,7 @@ func (d *btrfs) MigrationTypes(contentType ContentType, refresh bool, copySnapsh
 	}
 
 	if refresh && !copySnapshots {
-		return []migration.Type{
+		return []localMigration.Type{
 			{
 				FSType:   migration.MigrationFSType_RSYNC,
 				Features: rsyncFeatures,
@@ -530,7 +531,7 @@ func (d *btrfs) MigrationTypes(contentType ContentType, refresh bool, copySnapsh
 		}
 	}
 
-	return []migration.Type{
+	return []localMigration.Type{
 		{
 			FSType:   migration.MigrationFSType_BTRFS,
 			Features: btrfsFeatures,

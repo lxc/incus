@@ -16,7 +16,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/migration"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/ports"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"

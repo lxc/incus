@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/incusd/ucred"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	apiGuest "github.com/lxc/incus/shared/api/guest"
@@ -360,7 +361,7 @@ func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, state http.ConnState) {
 	unixConn := conn.(*net.UnixConn)
 	switch state {
 	case http.StateNew:
-		cred, err := ucred.GetCred(unixConn)
+		cred, err := linux.GetUcred(unixConn)
 		if err != nil {
 			logger.Debugf("Error getting ucred for conn %s", err)
 		} else {

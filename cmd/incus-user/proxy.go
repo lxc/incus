@@ -10,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/lxc/incus/incusd/ucred"
+	"github.com/lxc/incus/internal/linux"
 	internalUtil "github.com/lxc/incus/internal/util"
 	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/util"
@@ -65,7 +65,7 @@ func proxyConnection(conn *net.UnixConn) {
 	mu.Unlock()
 
 	// Get credentials.
-	creds, err := ucred.GetCred(conn)
+	creds, err := linux.GetUcred(conn)
 	if err != nil {
 		log.Errorf("Unable to get user credentials: %s", err)
 		return

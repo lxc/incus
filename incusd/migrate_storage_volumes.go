@@ -10,11 +10,12 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/state"
 	storagePools "github.com/lxc/incus/incusd/storage"
 	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
+	"github.com/lxc/incus/internal/migration"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -86,7 +87,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 	defer l.Info("Migration channels disconnected on source")
 	defer s.disconnect()
 
-	var poolMigrationTypes []migration.Type
+	var poolMigrationTypes []localMigration.Type
 
 	pool, err := storagePools.LoadByName(state, poolName)
 	if err != nil {
@@ -108,10 +109,10 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 	}
 
 	// Convert the pool's migration type options to an offer header to target.
-	offerHeader := migration.TypesToHeader(poolMigrationTypes...)
+	offerHeader := localMigration.TypesToHeader(poolMigrationTypes...)
 
 	// Offer to send index header.
-	indexHeaderVersion := migration.IndexHeaderVersion
+	indexHeaderVersion := localMigration.IndexHeaderVersion
 	offerHeader.IndexHeaderVersion = &indexHeaderVersion
 
 	// Only send snapshots when requested.
@@ -142,21 +143,21 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 		return err
 	}
 
-	migrationTypes, err := migration.MatchTypes(respHeader, storagePools.FallbackMigrationType(storageDrivers.ContentType(srcConfig.Volume.ContentType)), poolMigrationTypes)
+	migrationTypes, err := localMigration.MatchTypes(respHeader, storagePools.FallbackMigrationType(storageDrivers.ContentType(srcConfig.Volume.ContentType)), poolMigrationTypes)
 	if err != nil {
 		logger.Errorf("Failed to negotiate migration type: %v", err)
 		s.sendControl(err)
 		return err
 	}
 
-	volSourceArgs := &migration.VolumeSourceArgs{
+	volSourceArgs := &localMigration.VolumeSourceArgs{
 		IndexHeaderVersion: respHeader.GetIndexHeaderVersion(), // Enable index header frame if supported.
 		Name:               volName,
 		MigrationType:      migrationTypes[0],
 		Snapshots:          offerHeader.SnapshotNames,
 		TrackProgress:      true,
 		ContentType:        srcConfig.Volume.ContentType,
-		Info:               &migration.Info{Config: srcConfig},
+		Info:               &localMigration.Info{Config: srcConfig},
 		VolumeOnly:         s.volumeOnly,
 	}
 
@@ -295,20 +296,20 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 	// Extract the source's migration type and then match it against our pool's
 	// supported types and features. If a match is found the combined features list
 	// will be sent back to requester.
-	respTypes, err := migration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, c.refresh, !c.volumeOnly))
+	respTypes, err := localMigration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, c.refresh, !c.volumeOnly))
 	if err != nil {
 		return err
 	}
 
 	// The migration header to be sent back to source with our target options.
 	// Convert response type to response header and copy snapshot info into it.
-	respHeader := migration.TypesToHeader(respTypes...)
+	respHeader := localMigration.TypesToHeader(respTypes...)
 
 	// Respond with our maximum supported header version if the requested version is higher than ours.
 	// Otherwise just return the requested header version to the source.
 	indexHeaderVersion := offerHeader.GetIndexHeaderVersion()
-	if indexHeaderVersion > migration.IndexHeaderVersion {
-		indexHeaderVersion = migration.IndexHeaderVersion
+	if indexHeaderVersion > localMigration.IndexHeaderVersion {
+		indexHeaderVersion = localMigration.IndexHeaderVersion
 	}
 
 	respHeader.IndexHeaderVersion = &indexHeaderVersion
@@ -319,7 +320,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 	// Translate the legacy MigrationSinkArgs to a VolumeTargetArgs suitable for use
 	// with the new storage layer.
 	myTarget = func(conn io.ReadWriteCloser, op *operations.Operation, args migrationSinkArgs) error {
-		volTargetArgs := migration.VolumeTargetArgs{
+		volTargetArgs := localMigration.VolumeTargetArgs{
 			IndexHeaderVersion: respHeader.GetIndexHeaderVersion(),
 			Name:               req.Name,
 			Config:             req.Config,

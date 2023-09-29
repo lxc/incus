@@ -8,8 +8,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -380,7 +381,7 @@ func (d *ceph) GetResources() (*api.ResourcesStoragePool, error) {
 }
 
 // MigrationType returns the type of transfer methods to be used when doing migrations between pools in preference order.
-func (d *ceph) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []migration.Type {
+func (d *ceph) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
 	var rsyncFeatures []string
 
 	// Do not pass compression argument to rsync if the associated
@@ -400,7 +401,7 @@ func (d *ceph) MigrationTypes(contentType ContentType, refresh bool, copySnapsho
 			transportType = migration.MigrationFSType_RSYNC
 		}
 
-		return []migration.Type{
+		return []localMigration.Type{
 			{
 				FSType:   transportType,
 				Features: rsyncFeatures,
@@ -409,7 +410,7 @@ func (d *ceph) MigrationTypes(contentType ContentType, refresh bool, copySnapsho
 	}
 
 	if contentType == ContentTypeBlock {
-		return []migration.Type{
+		return []localMigration.Type{
 			{
 				FSType: migration.MigrationFSType_RBD,
 			},
@@ -420,7 +421,7 @@ func (d *ceph) MigrationTypes(contentType ContentType, refresh bool, copySnapsho
 		}
 	}
 
-	return []migration.Type{
+	return []localMigration.Type{
 		{
 			FSType: migration.MigrationFSType_RBD,
 		},

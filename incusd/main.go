@@ -10,7 +10,7 @@ import (
 	"github.com/lxc/incus/incusd/events"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/rsync"
+	"github.com/lxc/incus/internal/rsync"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/logger"
 )
