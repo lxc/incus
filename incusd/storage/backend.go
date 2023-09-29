@@ -33,7 +33,7 @@ import (
 	"github.com/lxc/incus/incusd/instance/instancetype"
 	"github.com/lxc/incus/incusd/lifecycle"
 	"github.com/lxc/incus/incusd/locking"
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/incusd/response"
@@ -47,6 +47,7 @@ import (
 	"github.com/lxc/incus/internal/instancewriter"
 	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
@@ -159,7 +160,7 @@ func (b *backend) Driver() drivers.Driver {
 // based on the migration method requested by the driver's ability. The snapshots argument
 // indicates whether snapshots are migrated as well. It is used to determine whether to use
 // optimized migration.
-func (b *backend) MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool) []migration.Type {
+func (b *backend) MigrationTypes(contentType drivers.ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
 	return b.driver.MigrationTypes(contentType, refresh, copySnapshots)
 }
 
@@ -1047,8 +1048,8 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 
 		// Negotiate the migration type to use.
 		offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots)
-		offerHeader := migration.TypesToHeader(offeredTypes...)
-		migrationTypes, err := migration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots))
+		offerHeader := localMigration.TypesToHeader(offeredTypes...)
+		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots))
 		if err != nil {
 			return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 		}
@@ -1075,21 +1076,21 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 
 		// Start each side of the migration concurrently and collect any errors.
 		g.Go(func() error {
-			return srcPool.MigrateInstance(src, aEnd, &migration.VolumeSourceArgs{
-				IndexHeaderVersion: migration.IndexHeaderVersion,
+			return srcPool.MigrateInstance(src, aEnd, &localMigration.VolumeSourceArgs{
+				IndexHeaderVersion: localMigration.IndexHeaderVersion,
 				Name:               src.Name(),
 				Snapshots:          snapshotNames,
 				MigrationType:      migrationTypes[0],
 				TrackProgress:      true, // Do use a progress tracker on sender.
 				AllowInconsistent:  allowInconsistent,
 				VolumeOnly:         !snapshots,
-				Info:               &migration.Info{Config: srcConfig},
+				Info:               &localMigration.Info{Config: srcConfig},
 			}, op)
 		})
 
 		g.Go(func() error {
-			return b.CreateInstanceFromMigration(inst, bEnd, migration.VolumeTargetArgs{
-				IndexHeaderVersion: migration.IndexHeaderVersion,
+			return b.CreateInstanceFromMigration(inst, bEnd, localMigration.VolumeTargetArgs{
+				IndexHeaderVersion: localMigration.IndexHeaderVersion,
 				Name:               inst.Name(),
 				Snapshots:          snapshotNames,
 				MigrationType:      migrationTypes[0],
@@ -1287,8 +1288,8 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 
 		// Negotiate the migration type to use.
 		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots)
-		offerHeader := migration.TypesToHeader(offeredTypes...)
-		migrationTypes, err := migration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots))
+		offerHeader := localMigration.TypesToHeader(offeredTypes...)
+		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots))
 		if err != nil {
 			return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 		}
@@ -1328,14 +1329,14 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 		aEndErrCh := make(chan error, 1)
 		bEndErrCh := make(chan error, 1)
 		go func() {
-			err := srcPool.MigrateCustomVolume(srcProjectName, aEnd, &migration.VolumeSourceArgs{
-				IndexHeaderVersion: migration.IndexHeaderVersion,
+			err := srcPool.MigrateCustomVolume(srcProjectName, aEnd, &localMigration.VolumeSourceArgs{
+				IndexHeaderVersion: localMigration.IndexHeaderVersion,
 				Name:               srcVolName,
 				Snapshots:          snapshotNames,
 				MigrationType:      migrationTypes[0],
 				TrackProgress:      true, // Do use a progress tracker on sender.
 				ContentType:        string(contentType),
-				Info:               &migration.Info{Config: srcConfig},
+				Info:               &localMigration.Info{Config: srcConfig},
 			}, op)
 
 			if err != nil {
@@ -1346,8 +1347,8 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 		}()
 
 		go func() {
-			err := b.CreateCustomVolumeFromMigration(projectName, bEnd, migration.VolumeTargetArgs{
-				IndexHeaderVersion: migration.IndexHeaderVersion,
+			err := b.CreateCustomVolumeFromMigration(projectName, bEnd, localMigration.VolumeTargetArgs{
+				IndexHeaderVersion: localMigration.IndexHeaderVersion,
 				Name:               volName,
 				Description:        desc,
 				Config:             config,
@@ -1526,8 +1527,8 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 
 		// Negotiate the migration type to use.
 		offeredTypes := srcPool.MigrationTypes(contentType, true, snapshots)
-		offerHeader := migration.TypesToHeader(offeredTypes...)
-		migrationTypes, err := migration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots))
+		offerHeader := localMigration.TypesToHeader(offeredTypes...)
+		migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, true, snapshots))
 		if err != nil {
 			return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 		}
@@ -1544,22 +1545,22 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 
 		// Start each side of the migration concurrently and collect any errors.
 		g.Go(func() error {
-			return srcPool.MigrateInstance(src, aEnd, &migration.VolumeSourceArgs{
-				IndexHeaderVersion: migration.IndexHeaderVersion,
+			return srcPool.MigrateInstance(src, aEnd, &localMigration.VolumeSourceArgs{
+				IndexHeaderVersion: localMigration.IndexHeaderVersion,
 				Name:               src.Name(),
 				Snapshots:          snapshotNames,
 				MigrationType:      migrationTypes[0],
 				TrackProgress:      true, // Do use a progress tracker on sender.
 				AllowInconsistent:  allowInconsistent,
 				Refresh:            true, // Indicate to sender to use incremental streams.
-				Info:               &migration.Info{Config: srcConfig},
+				Info:               &localMigration.Info{Config: srcConfig},
 				VolumeOnly:         !snapshots,
 			}, op)
 		})
 
 		g.Go(func() error {
-			return b.CreateInstanceFromMigration(inst, bEnd, migration.VolumeTargetArgs{
-				IndexHeaderVersion: migration.IndexHeaderVersion,
+			return b.CreateInstanceFromMigration(inst, bEnd, localMigration.VolumeTargetArgs{
+				IndexHeaderVersion: localMigration.IndexHeaderVersion,
 				Name:               inst.Name(),
 				Snapshots:          snapshotNames,
 				MigrationType:      migrationTypes[0],
@@ -1749,7 +1750,7 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 
 // CreateInstanceFromMigration receives an instance being migrated.
 // The args.Name and args.Config fields are ignored and, instance properties are used instead.
-func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.ReadWriteCloser, args migration.VolumeTargetArgs, op *operations.Operation) error {
+func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.ReadWriteCloser, args localMigration.VolumeTargetArgs, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "args": fmt.Sprintf("%+v", args)})
 	l.Debug("CreateInstanceFromMigration started")
 	defer l.Debug("CreateInstanceFromMigration finished")
@@ -2296,7 +2297,7 @@ func (b *backend) UpdateInstanceSnapshot(inst instance.Instance, newDesc string,
 
 // MigrateInstance sends an instance volume for migration.
 // The args.Name field is ignored and the name of the instance is used instead.
-func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteCloser, args *migration.VolumeSourceArgs, op *operations.Operation) error {
+func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteCloser, args *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "args": fmt.Sprintf("%+v", args)})
 	l.Debug("MigrateInstance started")
 	defer l.Debug("MigrateInstance finished")
@@ -4447,8 +4448,8 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 
 	// Negotiate the migration type to use.
 	offeredTypes := srcPool.MigrationTypes(contentType, false, snapshots)
-	offerHeader := migration.TypesToHeader(offeredTypes...)
-	migrationTypes, err := migration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots))
+	offerHeader := localMigration.TypesToHeader(offeredTypes...)
+	migrationTypes, err := localMigration.MatchTypes(offerHeader, FallbackMigrationType(contentType), b.MigrationTypes(contentType, false, snapshots))
 	if err != nil {
 		return fmt.Errorf("Failed to negotiate copy migration type: %w", err)
 	}
@@ -4491,14 +4492,14 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 	aEndErrCh := make(chan error, 1)
 	bEndErrCh := make(chan error, 1)
 	go func() {
-		err := srcPool.MigrateCustomVolume(srcProjectName, aEnd, &migration.VolumeSourceArgs{
-			IndexHeaderVersion: migration.IndexHeaderVersion,
+		err := srcPool.MigrateCustomVolume(srcProjectName, aEnd, &localMigration.VolumeSourceArgs{
+			IndexHeaderVersion: localMigration.IndexHeaderVersion,
 			Name:               srcVolName,
 			Snapshots:          snapshotNames,
 			MigrationType:      migrationTypes[0],
 			TrackProgress:      true, // Do use a progress tracker on sender.
 			ContentType:        string(contentType),
-			Info:               &migration.Info{Config: srcConfig},
+			Info:               &localMigration.Info{Config: srcConfig},
 			VolumeOnly:         !snapshots,
 		}, op)
 
@@ -4510,8 +4511,8 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 	}()
 
 	go func() {
-		err := b.CreateCustomVolumeFromMigration(projectName, bEnd, migration.VolumeTargetArgs{
-			IndexHeaderVersion: migration.IndexHeaderVersion,
+		err := b.CreateCustomVolumeFromMigration(projectName, bEnd, localMigration.VolumeTargetArgs{
+			IndexHeaderVersion: localMigration.IndexHeaderVersion,
 			Name:               volName,
 			Description:        desc,
 			Config:             config,
@@ -4554,8 +4555,8 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 }
 
 // migrationIndexHeaderSend sends the migration index header to target and waits for confirmation of receipt.
-func (b *backend) migrationIndexHeaderSend(l logger.Logger, indexHeaderVersion uint32, conn io.ReadWriteCloser, info *migration.Info) (*migration.InfoResponse, error) {
-	infoResp := migration.InfoResponse{}
+func (b *backend) migrationIndexHeaderSend(l logger.Logger, indexHeaderVersion uint32, conn io.ReadWriteCloser, info *localMigration.Info) (*localMigration.InfoResponse, error) {
+	infoResp := localMigration.InfoResponse{}
 
 	// Send migration index header frame to target if applicable and wait for receipt.
 	if indexHeaderVersion > 0 {
@@ -4598,8 +4599,8 @@ func (b *backend) migrationIndexHeaderSend(l logger.Logger, indexHeaderVersion u
 
 // migrationIndexHeaderReceive receives migration index header from source and sends confirmation of receipt.
 // Returns the received source index header info.
-func (b *backend) migrationIndexHeaderReceive(l logger.Logger, indexHeaderVersion uint32, conn io.ReadWriteCloser, refresh bool) (*migration.Info, error) {
-	info := migration.Info{}
+func (b *backend) migrationIndexHeaderReceive(l logger.Logger, indexHeaderVersion uint32, conn io.ReadWriteCloser, refresh bool) (*localMigration.Info, error) {
+	info := localMigration.Info{}
 
 	// Receive index header from source if applicable and respond confirming receipt.
 	if indexHeaderVersion > 0 {
@@ -4617,7 +4618,7 @@ func (b *backend) migrationIndexHeaderReceive(l logger.Logger, indexHeaderVersio
 
 		l.Info("Received migration index header, sending response", logger.Ctx{"version": indexHeaderVersion})
 
-		infoResp := migration.InfoResponse{StatusCode: http.StatusOK, Refresh: &refresh}
+		infoResp := localMigration.InfoResponse{StatusCode: http.StatusOK, Refresh: &refresh}
 		headerJSON, err := json.Marshal(infoResp)
 		if err != nil {
 			return nil, fmt.Errorf("Failed encoding migration index header response: %w", err)
@@ -4640,7 +4641,7 @@ func (b *backend) migrationIndexHeaderReceive(l logger.Logger, indexHeaderVersio
 }
 
 // MigrateCustomVolume sends a volume for migration.
-func (b *backend) MigrateCustomVolume(projectName string, conn io.ReadWriteCloser, args *migration.VolumeSourceArgs, op *operations.Operation) error {
+func (b *backend) MigrateCustomVolume(projectName string, conn io.ReadWriteCloser, args *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": args.Name, "args": fmt.Sprintf("%+v", args)})
 	l.Debug("MigrateCustomVolume started")
 	defer l.Debug("MigrateCustomVolume finished")
@@ -4690,7 +4691,7 @@ func (b *backend) MigrateCustomVolume(projectName string, conn io.ReadWriteClose
 }
 
 // CreateCustomVolumeFromMigration receives a volume being migrated.
-func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.ReadWriteCloser, args migration.VolumeTargetArgs, op *operations.Operation) error {
+func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.ReadWriteCloser, args localMigration.VolumeTargetArgs, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": args.Name, "args": fmt.Sprintf("%+v", args)})
 	l.Debug("CreateCustomVolumeFromMigration started")
 	defer l.Debug("CreateCustomVolumeFromMigration finished")

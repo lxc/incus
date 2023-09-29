@@ -19,10 +19,11 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/incusd/backup"
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
@@ -853,7 +854,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 }
 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
-func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs migration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
+func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
 	// Handle simple rsync and block_and_rsync through generic.
 	if volTargetArgs.MigrationType.FSType == migration.MigrationFSType_RSYNC || volTargetArgs.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
 		return genericVFSCreateVolumeFromMigration(d, nil, vol, conn, volTargetArgs, preFiller, op)
@@ -1004,7 +1005,7 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 	return d.createVolumeFromMigrationOptimized(vol, conn, volTargetArgs, volumeOnly, preFiller, op)
 }
 
-func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCloser, volTargetArgs migration.VolumeTargetArgs, volumeOnly bool, preFiller *VolumeFiller, op *operations.Operation) error {
+func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, volumeOnly bool, preFiller *VolumeFiller, op *operations.Operation) error {
 	if vol.IsVMBlock() {
 		fsVol := vol.NewVMBlockFilesystemVolume()
 		err := d.createVolumeFromMigrationOptimized(fsVol, conn, volTargetArgs, volumeOnly, preFiller, op)
@@ -1052,7 +1053,7 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 				return err
 			}
 
-			wrapper := migration.ProgressWriter(op, "fs_progress", snapVol.Name())
+			wrapper := localMigration.ProgressWriter(op, "fs_progress", snapVol.Name())
 
 			err = d.receiveDataset(snapVol, conn, wrapper)
 			if err != nil {
@@ -1073,7 +1074,7 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 	}
 
 	// Transfer the main volume.
-	wrapper := migration.ProgressWriter(op, "fs_progress", vol.name)
+	wrapper := localMigration.ProgressWriter(op, "fs_progress", vol.name)
 	err = d.receiveDataset(vol, conn, wrapper)
 	if err != nil {
 		return fmt.Errorf("Failed receiving volume %q: %w", vol.Name(), err)
@@ -2221,7 +2222,7 @@ func (d *zfs) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 }
 
 // MigrateVolume sends a volume for migration.
-func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
+func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	if !volSrcArgs.AllowInconsistent && vol.contentType == ContentTypeFS && vol.IsBlockBacked() {
 		// When migrating using zfs volumes (not datasets), ensure that the filesystem is synced
 		// otherwise the source and target volumes may differ. Tests have shown that only calling
@@ -2348,7 +2349,7 @@ func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 	return d.migrateVolumeOptimized(vol, conn, volSrcArgs, incrementalStream, op)
 }
 
-func (d *zfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, incremental bool, op *operations.Operation) error {
+func (d *zfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, incremental bool, op *operations.Operation) error {
 	if vol.IsVMBlock() {
 		fsVol := vol.NewVMBlockFilesystemVolume()
 		err := d.migrateVolumeOptimized(fsVol, conn, volSrcArgs, incremental, op)
@@ -2390,7 +2391,7 @@ func (d *zfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volSrc
 		// Setup progress tracking.
 		var wrapper *ioprogress.ProgressTracker
 		if volSrcArgs.TrackProgress {
-			wrapper = migration.ProgressTracker(op, "fs_progress", snapshot.name)
+			wrapper = localMigration.ProgressTracker(op, "fs_progress", snapshot.name)
 		}
 
 		// Send snapshot to recipient (ensure local snapshot volume is mounted if needed).
@@ -2405,7 +2406,7 @@ func (d *zfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volSrc
 	// Setup progress tracking.
 	var wrapper *ioprogress.ProgressTracker
 	if volSrcArgs.TrackProgress {
-		wrapper = migration.ProgressTracker(op, "fs_progress", vol.name)
+		wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.name)
 	}
 
 	srcSnapshot := d.dataset(vol, false)

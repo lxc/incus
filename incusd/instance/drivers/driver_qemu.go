@@ -53,7 +53,7 @@ import (
 	"github.com/lxc/incus/incusd/instance/operationlock"
 	"github.com/lxc/incus/incusd/lifecycle"
 	"github.com/lxc/incus/incusd/metrics"
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/network"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/incusd/project"
@@ -70,6 +70,7 @@ import (
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/internal/revert"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -5975,10 +5976,10 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 	// Convert the pool's migration type options to an offer header to target.
 	// Populate the Fs, ZfsFeatures and RsyncFeatures fields.
-	offerHeader := migration.TypesToHeader(poolMigrationTypes...)
+	offerHeader := localMigration.TypesToHeader(poolMigrationTypes...)
 
 	// Offer to send index header.
-	indexHeaderVersion := migration.IndexHeaderVersion
+	indexHeaderVersion := localMigration.IndexHeaderVersion
 	offerHeader.IndexHeaderVersion = &indexHeaderVersion
 
 	// For VMs, send block device size hint in offer header so that target can create the volume the same size.
@@ -6032,12 +6033,12 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	d.logger.Debug("Got migration offer response from target")
 
 	// Negotiated migration types.
-	migrationTypes, err := migration.MatchTypes(respHeader, migration.MigrationFSType_RSYNC, poolMigrationTypes)
+	migrationTypes, err := localMigration.MatchTypes(respHeader, migration.MigrationFSType_RSYNC, poolMigrationTypes)
 	if err != nil {
 		return fmt.Errorf("Failed to negotiate migration type: %w", err)
 	}
 
-	volSourceArgs := &migration.VolumeSourceArgs{
+	volSourceArgs := &localMigration.VolumeSourceArgs{
 		IndexHeaderVersion: respHeader.GetIndexHeaderVersion(), // Enable index header frame if supported.
 		Name:               d.Name(),
 		MigrationType:      migrationTypes[0],
@@ -6046,7 +6047,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		Refresh:            respHeader.GetRefresh(),
 		AllowInconsistent:  args.AllowInconsistent,
 		VolumeOnly:         !args.Snapshots,
-		Info:               &migration.Info{Config: srcConfig},
+		Info:               &localMigration.Info{Config: srcConfig},
 		ClusterMove:        args.ClusterMoveSourceName != "",
 	}
 
@@ -6172,7 +6173,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 }
 
 // migrateSendLive performs live migration send process.
-func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *migration.VolumeSourceArgs) error {
+func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs) error {
 	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
 	if err != nil {
 		return err
@@ -6529,20 +6530,20 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	// Extract the source's migration type and then match it against our pool's supported types and features.
 	// If a match is found the combined features list will be sent back to requester.
 	contentType := storagePools.InstanceContentType(d)
-	respTypes, err := migration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, args.Refresh, args.Snapshots))
+	respTypes, err := localMigration.MatchTypes(offerHeader, storagePools.FallbackMigrationType(contentType), pool.MigrationTypes(contentType, args.Refresh, args.Snapshots))
 	if err != nil {
 		return err
 	}
 
 	// The migration header to be sent back to source with our target options.
 	// Convert response type to response header and copy snapshot info into it.
-	respHeader := migration.TypesToHeader(respTypes...)
+	respHeader := localMigration.TypesToHeader(respTypes...)
 
 	// Respond with our maximum supported header version if the requested version is higher than ours.
 	// Otherwise just return the requested header version to the source.
 	indexHeaderVersion := offerHeader.GetIndexHeaderVersion()
-	if indexHeaderVersion > migration.IndexHeaderVersion {
-		indexHeaderVersion = migration.IndexHeaderVersion
+	if indexHeaderVersion > localMigration.IndexHeaderVersion {
+		indexHeaderVersion = localMigration.IndexHeaderVersion
 	}
 
 	respHeader.IndexHeaderVersion = &indexHeaderVersion
@@ -6720,7 +6721,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			snapshots = offerHeader.Snapshots
 		}
 
-		volTargetArgs := migration.VolumeTargetArgs{
+		volTargetArgs := localMigration.VolumeTargetArgs{
 			IndexHeaderVersion:    respHeader.GetIndexHeaderVersion(),
 			Name:                  d.Name(),
 			MigrationType:         respTypes[0],

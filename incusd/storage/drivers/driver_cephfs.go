@@ -7,9 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
@@ -322,7 +323,7 @@ func (d *cephfs) GetResources() (*api.ResourcesStoragePool, error) {
 }
 
 // MigrationTypes returns the supported migration types and options supported by the driver.
-func (d *cephfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []migration.Type {
+func (d *cephfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
 	var rsyncFeatures []string
 
 	// Do not pass compression argument to rsync if the associated
@@ -338,7 +339,7 @@ func (d *cephfs) MigrationTypes(contentType ContentType, refresh bool, copySnaps
 	}
 
 	// Do not support xattr transfer on cephfs
-	return []migration.Type{
+	return []localMigration.Type{
 		{
 			FSType:   migration.MigrationFSType_RSYNC,
 			Features: rsyncFeatures,

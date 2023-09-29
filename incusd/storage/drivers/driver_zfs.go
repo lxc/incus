@@ -8,9 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
@@ -613,7 +614,7 @@ func (d *zfs) GetResources() (*api.ResourcesStoragePool, error) {
 }
 
 // MigrationType returns the type of transfer methods to be used when doing migrations between pools in preference order.
-func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []migration.Type {
+func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool) []localMigration.Type {
 	var rsyncFeatures []string
 
 	// Do not pass compression argument to rsync if the associated
@@ -636,7 +637,7 @@ func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshot
 	}
 
 	if IsContentBlock(contentType) {
-		return []migration.Type{
+		return []localMigration.Type{
 			{
 				FSType:   migration.MigrationFSType_ZFS,
 				Features: features,
@@ -649,7 +650,7 @@ func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshot
 	}
 
 	if refresh && !copySnapshots {
-		return []migration.Type{
+		return []localMigration.Type{
 			{
 				FSType:   migration.MigrationFSType_RSYNC,
 				Features: rsyncFeatures,
@@ -657,7 +658,7 @@ func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshot
 		}
 	}
 
-	return []migration.Type{
+	return []localMigration.Type{
 		{
 			FSType:   migration.MigrationFSType_ZFS,
 			Features: features,

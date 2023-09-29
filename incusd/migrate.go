@@ -16,10 +16,11 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/migration"
+	localMigration "github.com/lxc/incus/incusd/migration"
 	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -116,10 +117,10 @@ func (c *migrationFields) sendControl(err error) {
 	}
 }
 
-func (c *migrationFields) controlChannel() <-chan *migration.ControlResponse {
-	ch := make(chan *migration.ControlResponse)
+func (c *migrationFields) controlChannel() <-chan *localMigration.ControlResponse {
+	ch := make(chan *localMigration.ControlResponse)
 	go func() {
-		resp := migration.ControlResponse{}
+		resp := localMigration.ControlResponse{}
 		err := c.recv(&resp.MigrationControl)
 		if err != nil {
 			resp.Err = err
