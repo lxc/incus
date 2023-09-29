@@ -42,6 +42,7 @@ func (c *cmdActivateifneeded) Command() *cobra.Command {
   socket which will cause a socket-activated daemon to be spawned.
 `
 	cmd.RunE = c.Run
+	cmd.Hidden = true
 
 	return cmd
 }
