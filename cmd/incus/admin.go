@@ -24,6 +24,10 @@ func (c *cmdAdmin) Command() *cobra.Command {
 	adminInitCmd := cmdAdminInit{global: c.global}
 	cmd.AddCommand(adminInitCmd.Command())
 
+	// recover sub-command
+	adminRecoverCmd := cmdAdminRecover{global: c.global}
+	cmd.AddCommand(adminRecoverCmd.Command())
+
 	// shutdown sub-command
 	shutdownCmd := cmdAdminShutdown{global: c.global}
 	cmd.AddCommand(shutdownCmd.Command())

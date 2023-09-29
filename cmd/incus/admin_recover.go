@@ -1,3 +1,5 @@
+//go:build linux
+
 package main
 
 import (
@@ -15,11 +17,11 @@ import (
 	"github.com/lxc/incus/shared/validate"
 )
 
-type cmdRecover struct {
+type cmdAdminRecover struct {
 	global *cmdGlobal
 }
 
-func (c *cmdRecover) Command() *cobra.Command {
+func (c *cmdAdminRecover) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "recover"
 	cmd.Short = "Recover missing instances and volumes from existing and unknown storage pools"
@@ -35,7 +37,7 @@ func (c *cmdRecover) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) > 0 {
 		return fmt.Errorf("Invalid arguments")
