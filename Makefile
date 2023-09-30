@@ -105,7 +105,7 @@ endif
 
 .PHONY: update-protobuf
 update-protobuf:
-	protoc --go_out=. ./incusd/migration/migrate.proto
+	protoc --go_out=. ./internal/migration/migrate.proto
 
 .PHONY: update-schema
 update-schema:
