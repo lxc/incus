@@ -8,12 +8,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incusd/lifecycle"
-	"github.com/lxc/incus/incusd/network"
-	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/request"
-	"github.com/lxc/incus/incusd/response"
-	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/server/lifecycle"
+	"github.com/lxc/incus/internal/server/network"
+	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
+	"github.com/lxc/incus/internal/server/response"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 )

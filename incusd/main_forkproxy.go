@@ -255,12 +255,12 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/incusd/daemon"
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/network"
 	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/netutils"
+	"github.com/lxc/incus/internal/server/daemon"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/network"
 )
 
 const forkproxyUDSSockFDNum int = C.FORKPROXY_UDS_SOCK_FD_NUM

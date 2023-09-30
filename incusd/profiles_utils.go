@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/db/cluster"
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/state"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/db/cluster"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 )
 

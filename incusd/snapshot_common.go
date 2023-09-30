@@ -8,7 +8,7 @@ import (
 
 	"github.com/robfig/cron/v3"
 
-	localUtil "github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/util"
 )
 

@@ -9,14 +9,14 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incusd/db"
-	dbCluster "github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/incusd/db/operationtype"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/response"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/server/db"
+	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
+	"github.com/lxc/incus/internal/server/db/operationtype"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/operations"
+	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 )

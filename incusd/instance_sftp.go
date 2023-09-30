@@ -11,10 +11,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incusd/cluster"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/response"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/server/cluster"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/tcp"

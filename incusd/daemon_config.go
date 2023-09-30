@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 
-	clusterConfig "github.com/lxc/incus/incusd/cluster/config"
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/node"
-	"github.com/lxc/incus/incusd/state"
+	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/node"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/proxy"
 )
 

@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/incusd/sys"
+	"github.com/lxc/incus/internal/server/sys"
 	"github.com/lxc/incus/shared/logger"
 )
 

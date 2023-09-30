@@ -9,14 +9,14 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/db/cluster"
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/project"
-	storagePools "github.com/lxc/incus/incusd/storage"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/db/cluster"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/project"
+	storagePools "github.com/lxc/incus/internal/server/storage"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 )

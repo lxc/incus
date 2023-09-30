@@ -10,14 +10,14 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/lifecycle"
-	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/request"
-	"github.com/lxc/incus/incusd/response"
-	storagePools "github.com/lxc/incus/incusd/storage"
-	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/lifecycle"
+	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
+	"github.com/lxc/incus/internal/server/response"
+	storagePools "github.com/lxc/incus/internal/server/storage"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 )

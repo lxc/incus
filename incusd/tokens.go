@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/lxc/incus/incusd/db/operationtype"
-	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/state"
-	"github.com/lxc/incus/incusd/task"
+	"github.com/lxc/incus/internal/server/db/operationtype"
+	"github.com/lxc/incus/internal/server/operations"
+	"github.com/lxc/incus/internal/server/state"
+	"github.com/lxc/incus/internal/server/task"
 	"github.com/lxc/incus/shared/logger"
 )
 

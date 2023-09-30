@@ -10,12 +10,12 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	localMigration "github.com/lxc/incus/incusd/migration"
-	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/state"
-	storagePools "github.com/lxc/incus/incusd/storage"
-	storageDrivers "github.com/lxc/incus/incusd/storage/drivers"
 	"github.com/lxc/incus/internal/migration"
+	localMigration "github.com/lxc/incus/internal/server/migration"
+	"github.com/lxc/incus/internal/server/operations"
+	"github.com/lxc/incus/internal/server/state"
+	storagePools "github.com/lxc/incus/internal/server/storage"
+	storageDrivers "github.com/lxc/incus/internal/server/storage/drivers"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"

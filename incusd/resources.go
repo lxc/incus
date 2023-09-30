@@ -6,9 +6,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incusd/resources"
-	"github.com/lxc/incus/incusd/response"
-	storagePools "github.com/lxc/incus/incusd/storage"
+	"github.com/lxc/incus/internal/server/resources"
+	"github.com/lxc/incus/internal/server/response"
+	storagePools "github.com/lxc/incus/internal/server/storage"
 	"github.com/lxc/incus/shared/api"
 )
 

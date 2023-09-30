@@ -7,12 +7,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incusd/acme"
-	"github.com/lxc/incus/incusd/cluster"
-	"github.com/lxc/incus/incusd/db/operationtype"
-	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/task"
+	"github.com/lxc/incus/internal/server/acme"
+	"github.com/lxc/incus/internal/server/cluster"
+	"github.com/lxc/incus/internal/server/db/operationtype"
+	"github.com/lxc/incus/internal/server/operations"
+	"github.com/lxc/incus/internal/server/response"
+	"github.com/lxc/incus/internal/server/task"
 	"github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"

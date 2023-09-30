@@ -11,15 +11,15 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/db/cluster"
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/instance"
-	projecthelpers "github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/response"
-	localUtil "github.com/lxc/incus/incusd/util"
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/db/cluster"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/instance"
+	projecthelpers "github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/response"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
 )

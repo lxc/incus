@@ -7,12 +7,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/response"
-	storagePools "github.com/lxc/incus/incusd/storage"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/response"
+	storagePools "github.com/lxc/incus/internal/server/storage"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"
 )

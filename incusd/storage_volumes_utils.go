@@ -3,11 +3,11 @@ package main
 import (
 	"strings"
 
-	"github.com/lxc/incus/incusd/backup"
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/state"
-	storagePools "github.com/lxc/incus/incusd/storage"
+	"github.com/lxc/incus/internal/server/backup"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/state"
+	storagePools "github.com/lxc/incus/internal/server/storage"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"

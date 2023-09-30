@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/lxc/incus/incusd/cluster"
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/network"
-	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/server/cluster"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/network"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/logger"
 )
 

@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/incusd/sys"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/db/cluster"
+	"github.com/lxc/incus/internal/server/sys"
 	internalUtil "github.com/lxc/incus/internal/util"
 )
 
