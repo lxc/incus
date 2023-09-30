@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lxc/incus/incusd/events"
-	"github.com/lxc/incus/incusd/response"
+	"github.com/lxc/incus/internal/server/events"
+	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ws"
 )

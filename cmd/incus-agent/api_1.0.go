@@ -11,10 +11,10 @@ import (
 	"github.com/mdlayher/vsock"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/response"
-	localvsock "github.com/lxc/incus/incusd/vsock"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/server/response"
+	localvsock "github.com/lxc/incus/internal/server/vsock"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	agentAPI "github.com/lxc/incus/shared/api/agent"
