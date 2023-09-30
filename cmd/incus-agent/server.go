@@ -10,9 +10,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/incusd/response"
-	localUtil "github.com/lxc/incus/incusd/util"
 	internalIO "github.com/lxc/incus/internal/io"
+	"github.com/lxc/incus/internal/server/response"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/logger"
 )
 

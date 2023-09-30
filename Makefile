@@ -55,7 +55,7 @@ incus-migrate:
 .PHONY: incus-doc
 incus-doc:
 	@$(GO) version > /dev/null 2>&1 || { echo "go is not installed for incus-doc installation."; exit 1; }
-	cd incusd/config/generate && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/incus-doc
+	cd internal/server/config/generate && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/incus-doc
 	@echo "Incus documentation generator built successfully"
 
 .PHONY: deps
@@ -105,14 +105,14 @@ endif
 
 .PHONY: update-protobuf
 update-protobuf:
-	protoc --go_out=. ./incusd/migration/migrate.proto
+	protoc --go_out=. ./internal/migration/migrate.proto
 
 .PHONY: update-schema
 update-schema:
-	cd incusd/db/generate && $(GO) build -o $(GOPATH)/bin/incus-generate -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
+	cd internal/server/db/generate && $(GO) build -o $(GOPATH)/bin/incus-generate -tags "$(TAG_SQLITE3)" $(DEBUG) && cd -
 	$(GO) generate ./...
-	gofmt -s -w ./incusd/db/
-	goimports -w ./incusd/db/
+	gofmt -s -w ./internal/server/db/
+	goimports -w ./internal/server/db/
 	@echo "Code generation completed"
 
 .PHONY: update-api
@@ -120,7 +120,7 @@ update-api:
 ifeq "$(INCUS_OFFLINE)" ""
 	(cd / ; $(GO) install -v -x github.com/go-swagger/go-swagger/cmd/swagger@latest)
 endif
-	swagger generate spec -o doc/rest-api.yaml -w ./incusd -m
+	swagger generate spec -o doc/rest-api.yaml -w ./cmd/incusd -m
 
 .PHONY: doc-setup
 doc-setup:
@@ -135,7 +135,7 @@ doc: incus-doc doc-setup doc-incremental
 .PHONY: doc-incremental
 doc-incremental:
 	@echo "Build the documentation"
-	$(GOPATH)/bin/incus-doc ./incusd -y ./doc/config_options.yaml -t ./doc/config_options.txt
+	$(GOPATH)/bin/incus-doc ./cmd/incusd -y ./doc/config_options.yaml -t ./doc/config_options.txt
 	. $(SPHINXENV) ; sphinx-build -c doc/ -b dirhtml doc/ doc/html/ -w doc/.sphinx/warnings.txt
 
 .PHONY: doc-serve
@@ -277,5 +277,5 @@ endif
 	run-parts --exit-on-error --regex '.sh' test/lint
 
 .PHONY: tags
-tags: *.go incusd/*.go shared/*.go cmd/incus/*.go
+tags: *.go cmd/incusd/*.go shared/*.go cmd/incus/*.go
 	find . -type f -name '*.go' | xargs gotags > tags

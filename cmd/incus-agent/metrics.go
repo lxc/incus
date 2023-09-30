@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/incusd/metrics"
-	"github.com/lxc/incus/incusd/response"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/server/metrics"
+	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
 )

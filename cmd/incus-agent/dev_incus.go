@@ -13,9 +13,9 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/daemon"
-	"github.com/lxc/incus/incusd/device/config"
-	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/server/daemon"
+	"github.com/lxc/incus/internal/server/device/config"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/api/guest"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"

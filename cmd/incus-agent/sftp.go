@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/sftp"
 
-	"github.com/lxc/incus/incusd/response"
+	"github.com/lxc/incus/internal/server/response"
 )
 
 var sftpCmd = APIEndpoint{
