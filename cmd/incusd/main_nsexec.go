@@ -35,13 +35,13 @@ package main
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "../internal/cgo/incus.h"
-#include "../internal/cgo/file_utils.h"
-#include "../internal/cgo/memory_utils.h"
-#include "../internal/cgo/mount_utils.h"
-#include "../internal/cgo/process_utils.h"
-#include "../internal/cgo/syscall_numbers.h"
-#include "../internal/cgo/syscall_wrappers.h"
+#include "../../internal/cgo/incus.h"
+#include "../../internal/cgo/file_utils.h"
+#include "../../internal/cgo/memory_utils.h"
+#include "../../internal/cgo/mount_utils.h"
+#include "../../internal/cgo/process_utils.h"
+#include "../../internal/cgo/syscall_numbers.h"
+#include "../../internal/cgo/syscall_wrappers.h"
 
 // Command line parsing and tracking
 char *cmdline_buf = NULL;

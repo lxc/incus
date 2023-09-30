@@ -7,7 +7,7 @@ package main
 #include <stdio.h>
 #include <linux/hidraw.h>
 
-#include "../internal/cgo/memory_utils.h"
+#include "../../internal/cgo/memory_utils.h"
 
 #ifndef HIDIOCGRAWINFO
 #define HIDIOCGRAWINFO _IOR('H', 0x03, struct hidraw_devinfo)

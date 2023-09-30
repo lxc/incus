@@ -22,8 +22,8 @@ package main
 #include <time.h>
 #include <unistd.h>
 
-#include "../internal/netutils/network.c"
-#include "../internal/cgo/memory_utils.h"
+#include "../../internal/netutils/network.c"
+#include "../../internal/cgo/memory_utils.h"
 
 #ifndef UEVENT_SEND
 #define UEVENT_SEND 16
