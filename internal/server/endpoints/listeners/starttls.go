@@ -7,7 +7,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/server/util"
 	localtls "github.com/lxc/incus/shared/tls"
 )
 

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/lxc/incus/incusd/response"
-	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/server/response"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"

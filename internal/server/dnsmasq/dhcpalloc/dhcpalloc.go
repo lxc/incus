@@ -12,8 +12,8 @@ import (
 
 	"github.com/mdlayher/netx/eui64"
 
-	"github.com/lxc/incus/incusd/dnsmasq"
 	"github.com/lxc/incus/internal/iprange"
+	"github.com/lxc/incus/internal/server/dnsmasq"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"

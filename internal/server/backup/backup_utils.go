@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/lxc/incus/incusd/sys"
+	"github.com/lxc/incus/internal/server/sys"
 	"github.com/lxc/incus/shared/archive"
 )
 

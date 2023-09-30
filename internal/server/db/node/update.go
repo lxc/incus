@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/incusd/db/schema"
+	"github.com/lxc/incus/internal/server/db/query"
+	"github.com/lxc/incus/internal/server/db/schema"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"

@@ -10,7 +10,7 @@ import (
 	"github.com/mdlayher/vsock"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/incusd/endpoints/listeners"
+	"github.com/lxc/incus/internal/server/endpoints/listeners"
 	localtls "github.com/lxc/incus/shared/tls"
 )
 

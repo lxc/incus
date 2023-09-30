@@ -10,7 +10,7 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/lxc/incus/incusd/migration"
+	"github.com/lxc/incus/internal/server/migration"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/subprocess"

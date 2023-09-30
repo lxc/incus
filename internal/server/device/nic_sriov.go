@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/network"
-	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/internal/linux"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/network"
+	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"
 )

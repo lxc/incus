@@ -11,8 +11,8 @@ import (
 	"github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	localtls "github.com/lxc/incus/shared/tls"

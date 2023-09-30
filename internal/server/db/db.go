@@ -16,9 +16,9 @@ import (
 
 	"github.com/cowsql/go-cowsql/driver"
 
-	"github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/incusd/db/node"
-	"github.com/lxc/incus/incusd/db/query"
+	"github.com/lxc/incus/internal/server/db/cluster"
+	"github.com/lxc/incus/internal/server/db/node"
+	"github.com/lxc/incus/internal/server/db/query"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 )

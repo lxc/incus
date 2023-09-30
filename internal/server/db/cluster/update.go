@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/incusd/db/schema"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/server/db/query"
+	"github.com/lxc/incus/internal/server/db/schema"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 )

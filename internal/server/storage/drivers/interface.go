@@ -4,12 +4,12 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/lxc/incus/incusd/backup"
-	"github.com/lxc/incus/incusd/migration"
-	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/backup"
+	"github.com/lxc/incus/internal/server/migration"
+	"github.com/lxc/incus/internal/server/operations"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 )

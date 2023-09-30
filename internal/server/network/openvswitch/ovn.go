@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/iprange"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"
 )

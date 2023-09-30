@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/incusd/instance/instancetype"
+	"github.com/lxc/incus/internal/server/db/cluster"
+	"github.com/lxc/incus/internal/server/db/query"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
 )

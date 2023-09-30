@@ -9,11 +9,11 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/lxc/incus/incusd/db/operationtype"
-	"github.com/lxc/incus/incusd/events"
-	"github.com/lxc/incus/incusd/request"
-	"github.com/lxc/incus/incusd/response"
-	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/server/db/operationtype"
+	"github.com/lxc/incus/internal/server/events"
+	"github.com/lxc/incus/internal/server/request"
+	"github.com/lxc/incus/internal/server/response"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"

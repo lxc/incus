@@ -5,7 +5,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/lxc/incus/incusd/cluster/request"
+	"github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"
 )

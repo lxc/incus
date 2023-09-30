@@ -10,9 +10,9 @@ import (
 
 	driver "github.com/cowsql/go-cowsql/driver"
 
-	"github.com/lxc/incus/incusd/db/query"
-	"github.com/lxc/incus/incusd/db/schema"
-	daemonUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/server/db/query"
+	"github.com/lxc/incus/internal/server/db/schema"
+	daemonUtil "github.com/lxc/incus/internal/server/util"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/logger"

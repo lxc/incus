@@ -1,7 +1,7 @@
 package cluster
 
 import (
-	"github.com/lxc/incus/incusd/db"
+	"github.com/lxc/incus/internal/server/db"
 	localtls "github.com/lxc/incus/shared/tls"
 )
 

@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	localMigration "github.com/lxc/incus/incusd/migration"
-	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/migration"
+	localMigration "github.com/lxc/incus/internal/server/migration"
+	"github.com/lxc/incus/internal/server/operations"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"

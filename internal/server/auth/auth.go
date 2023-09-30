@@ -3,7 +3,7 @@ package auth
 import (
 	"net/http"
 
-	"github.com/lxc/incus/incusd/request"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/shared/util"
 )
 

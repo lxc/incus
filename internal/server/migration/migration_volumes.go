@@ -5,9 +5,9 @@ import (
 	"io"
 	"net/http"
 
-	backupConfig "github.com/lxc/incus/incusd/backup/config"
-	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/migration"
+	backupConfig "github.com/lxc/incus/internal/server/backup/config"
+	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/units"

@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/server/project"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/subprocess"

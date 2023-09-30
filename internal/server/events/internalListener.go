@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/lxc/incus/incusd/storage/memorypipe"
+	"github.com/lxc/incus/internal/server/storage/memorypipe"
 	"github.com/lxc/incus/shared/api"
 )
 

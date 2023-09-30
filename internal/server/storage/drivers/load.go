@@ -1,7 +1,7 @@
 package drivers
 
 import (
-	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/logger"
 )
 

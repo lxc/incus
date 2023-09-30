@@ -5,9 +5,9 @@ package nictype
 import (
 	"fmt"
 
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/state"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/state"
 )
 
 // NICType resolves the NIC Type for the supplied NIC device config.

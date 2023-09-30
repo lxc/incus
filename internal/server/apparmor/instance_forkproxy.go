@@ -7,10 +7,10 @@ import (
 	"strings"
 	"text/template"
 
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/sys"
-	localUtil "github.com/lxc/incus/incusd/util"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/sys"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	internalUtil "github.com/lxc/incus/internal/util"
 	util "github.com/lxc/incus/shared/util"
 )

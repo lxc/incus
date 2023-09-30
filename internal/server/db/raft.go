@@ -9,7 +9,7 @@ import (
 
 	"github.com/cowsql/go-cowsql/client"
 
-	"github.com/lxc/incus/incusd/db/query"
+	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/shared/api"
 )
 

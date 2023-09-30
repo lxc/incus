@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/db/query"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"

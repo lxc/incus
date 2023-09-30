@@ -1,7 +1,7 @@
 package firewall
 
 import (
-	"github.com/lxc/incus/incusd/firewall/drivers"
+	"github.com/lxc/incus/internal/server/firewall/drivers"
 	"github.com/lxc/incus/shared/logger"
 )
 

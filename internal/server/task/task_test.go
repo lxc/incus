@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/lxc/incus/incusd/task"
+	"github.com/lxc/incus/internal/server/task"
 )
 
 // The given task is executed immediately by the scheduler.

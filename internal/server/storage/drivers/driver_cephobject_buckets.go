@@ -14,9 +14,9 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
-	"github.com/lxc/incus/incusd/operations"
-	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/operations"
+	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/units"
 )

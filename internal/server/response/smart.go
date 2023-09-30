@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/lxc/incus/incusd/db"
+	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/shared/api"
 )
 

@@ -5,7 +5,7 @@ package operations
 import (
 	"fmt"
 
-	"github.com/lxc/incus/incusd/db/operationtype"
+	"github.com/lxc/incus/internal/server/db/operationtype"
 	"github.com/lxc/incus/shared/api"
 )
 

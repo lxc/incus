@@ -8,12 +8,12 @@ import (
 
 	"github.com/pborman/uuid"
 
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	pcidev "github.com/lxc/incus/incusd/device/pci"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/resources"
 	"github.com/lxc/incus/internal/revert"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	pcidev "github.com/lxc/incus/internal/server/device/pci"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/resources"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
 )

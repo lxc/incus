@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/incusd/instance/drivers/qmp"
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/metrics"
+	"github.com/lxc/incus/internal/server/instance/drivers/qmp"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/metrics"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/util"

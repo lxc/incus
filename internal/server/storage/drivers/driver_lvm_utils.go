@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/locking"
-	"github.com/lxc/incus/incusd/operations"
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/locking"
+	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"

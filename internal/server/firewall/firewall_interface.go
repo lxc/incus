@@ -3,7 +3,7 @@ package firewall
 import (
 	"net"
 
-	drivers "github.com/lxc/incus/incusd/firewall/drivers"
+	drivers "github.com/lxc/incus/internal/server/firewall/drivers"
 )
 
 // Firewall represents an Incus firewall.

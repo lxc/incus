@@ -12,7 +12,7 @@ import (
 
 	dqliteDriver "github.com/cowsql/go-cowsql/driver"
 
-	"github.com/lxc/incus/incusd/db/query"
+	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/shared/api"
 )
 

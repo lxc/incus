@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/lxc/incus/incusd/migration"
-	"github.com/lxc/incus/incusd/operations"
+	"github.com/lxc/incus/internal/server/migration"
+	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"

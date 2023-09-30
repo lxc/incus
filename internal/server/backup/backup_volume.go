@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/incusd/project"
-	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/state"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"

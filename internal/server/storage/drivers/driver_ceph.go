@@ -8,10 +8,10 @@ import (
 	"os/exec"
 	"strings"
 
-	localMigration "github.com/lxc/incus/incusd/migration"
-	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
+	localMigration "github.com/lxc/incus/internal/server/migration"
+	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"

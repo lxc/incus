@@ -1,8 +1,8 @@
 package acl
 
 import (
-	"github.com/lxc/incus/incusd/cluster/request"
-	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/server/cluster/request"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 )
 

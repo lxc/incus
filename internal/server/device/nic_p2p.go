@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/network"
-	localUtil "github.com/lxc/incus/incusd/util"
 	"github.com/lxc/incus/internal/revert"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/network"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/util"
 )
 

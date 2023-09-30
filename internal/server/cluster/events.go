@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/endpoints"
-	"github.com/lxc/incus/incusd/events"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/endpoints"
+	"github.com/lxc/incus/internal/server/events"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"

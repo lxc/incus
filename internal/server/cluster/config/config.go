@@ -9,10 +9,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/lxc/incus/incusd/config"
-	"github.com/lxc/incus/incusd/db"
-	scriptletLoad "github.com/lxc/incus/incusd/scriptlet/load"
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/server/config"
+	"github.com/lxc/incus/internal/server/db"
+	scriptletLoad "github.com/lxc/incus/internal/server/scriptlet/load"
 	"github.com/lxc/incus/shared/validate"
 )
 

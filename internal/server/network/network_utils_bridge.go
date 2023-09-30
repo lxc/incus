@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lxc/incus/incusd/ip"
-	"github.com/lxc/incus/incusd/network/openvswitch"
+	"github.com/lxc/incus/internal/server/ip"
+	"github.com/lxc/incus/internal/server/network/openvswitch"
 	"github.com/lxc/incus/shared/util"
 )
 

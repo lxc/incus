@@ -5,8 +5,8 @@ package db
 import (
 	"context"
 
-	"github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/incusd/db/query"
+	"github.com/lxc/incus/internal/server/db/cluster"
+	"github.com/lxc/incus/internal/server/db/query"
 )
 
 // UpdateCertificate updates a certificate in the db.

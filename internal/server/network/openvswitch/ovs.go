@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/lxc/incus/incusd/ip"
+	"github.com/lxc/incus/internal/server/ip"
 	"github.com/lxc/incus/shared/subprocess"
 )
 

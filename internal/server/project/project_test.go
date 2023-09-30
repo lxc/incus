@@ -3,7 +3,7 @@ package project_test
 import (
 	"fmt"
 
-	"github.com/lxc/incus/incusd/project"
+	"github.com/lxc/incus/internal/server/project"
 )
 
 func ExampleInstance() {

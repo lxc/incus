@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"

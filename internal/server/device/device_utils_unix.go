@@ -9,11 +9,11 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/idmap"
 	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/linux"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
 )

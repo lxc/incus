@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/client"
-	localUtil "github.com/lxc/incus/incusd/util"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 )

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lxc/incus/incusd/db/cluster"
-	localUtil "github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/server/db/cluster"
+	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 )

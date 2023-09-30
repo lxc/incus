@@ -5,9 +5,9 @@ package db
 import (
 	"context"
 
-	"github.com/lxc/incus/incusd/db/cluster"
-	"github.com/lxc/incus/incusd/db/operationtype"
-	"github.com/lxc/incus/incusd/db/query"
+	"github.com/lxc/incus/internal/server/db/cluster"
+	"github.com/lxc/incus/internal/server/db/operationtype"
+	"github.com/lxc/incus/internal/server/db/query"
 )
 
 // GetNodesWithOperations returns a list of nodes that have operations.

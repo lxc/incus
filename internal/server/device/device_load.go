@@ -3,10 +3,10 @@ package device
 import (
 	"fmt"
 
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/device/nictype"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/state"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/device/nictype"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/validate"
 )
 

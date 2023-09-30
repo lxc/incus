@@ -3,7 +3,7 @@ package device
 import (
 	"fmt"
 
-	"github.com/lxc/incus/incusd/device/config"
+	"github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/validate"
 )

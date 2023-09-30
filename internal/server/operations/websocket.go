@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/incusd/response"
+	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/shared/ws"
 )
 

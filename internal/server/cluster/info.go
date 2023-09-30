@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/node"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/node"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/util"

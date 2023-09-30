@@ -3,11 +3,11 @@ package network
 import (
 	"net"
 
-	"github.com/lxc/incus/incusd/cluster"
-	"github.com/lxc/incus/incusd/cluster/request"
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/state"
 	"github.com/lxc/incus/internal/iprange"
+	"github.com/lxc/incus/internal/server/cluster"
+	"github.com/lxc/incus/internal/server/cluster/request"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 )
 

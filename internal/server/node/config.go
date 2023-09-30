@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lxc/incus/incusd/config"
-	"github.com/lxc/incus/incusd/db"
 	"github.com/lxc/incus/internal/ports"
+	"github.com/lxc/incus/internal/server/config"
+	"github.com/lxc/incus/internal/server/db"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/validate"
 )

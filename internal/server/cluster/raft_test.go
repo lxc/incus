@@ -9,8 +9,8 @@ import (
 	"github.com/cowsql/go-cowsql/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/util"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/util"
 	localtls "github.com/lxc/incus/shared/tls"
 )
 

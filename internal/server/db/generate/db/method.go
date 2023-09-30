@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lxc/incus/incusd/db/generate/file"
-	"github.com/lxc/incus/incusd/db/generate/lex"
+	"github.com/lxc/incus/internal/server/db/generate/file"
+	"github.com/lxc/incus/internal/server/db/generate/lex"
 	"github.com/lxc/incus/shared/util"
 )
 

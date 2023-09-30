@@ -16,7 +16,7 @@ import (
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/registration"
 
-	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/server/state"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"

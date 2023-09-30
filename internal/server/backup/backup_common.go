@@ -3,7 +3,7 @@ package backup
 import (
 	"time"
 
-	"github.com/lxc/incus/incusd/state"
+	"github.com/lxc/incus/internal/server/state"
 )
 
 // WorkingDirPrefix is used when temporary working directories are needed.

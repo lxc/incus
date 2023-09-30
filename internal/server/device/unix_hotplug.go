@@ -8,9 +8,9 @@ import (
 
 	"github.com/jochenvg/go-udev"
 
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/instance/instancetype"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"

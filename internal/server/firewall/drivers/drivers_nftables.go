@@ -13,8 +13,8 @@ import (
 
 	"github.com/pborman/uuid"
 
-	"github.com/lxc/incus/incusd/project"
 	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"

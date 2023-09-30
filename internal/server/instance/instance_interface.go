@@ -12,15 +12,15 @@ import (
 	"github.com/pkg/sftp"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/lxc/incus/incusd/backup"
-	"github.com/lxc/incus/incusd/cgroup"
-	"github.com/lxc/incus/incusd/db"
-	deviceConfig "github.com/lxc/incus/incusd/device/config"
-	"github.com/lxc/incus/incusd/instance/instancetype"
-	"github.com/lxc/incus/incusd/instance/operationlock"
-	"github.com/lxc/incus/incusd/metrics"
-	"github.com/lxc/incus/incusd/operations"
 	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/internal/server/backup"
+	"github.com/lxc/incus/internal/server/cgroup"
+	"github.com/lxc/incus/internal/server/db"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/instance/operationlock"
+	"github.com/lxc/incus/internal/server/metrics"
+	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/shared/api"
 )
 

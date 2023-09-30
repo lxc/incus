@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/lxc/incus/incusd/db/generate/lex"
+	"github.com/lxc/incus/internal/server/db/generate/lex"
 	"github.com/lxc/incus/shared/util"
 )
 

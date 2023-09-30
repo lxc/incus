@@ -5,7 +5,7 @@ package cluster
 import (
 	"time"
 
-	"github.com/lxc/incus/incusd/db/warningtype"
+	"github.com/lxc/incus/internal/server/db/warningtype"
 	"github.com/lxc/incus/shared/api"
 )
 

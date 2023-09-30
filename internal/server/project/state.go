@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/lxc/incus/incusd/db"
-	"github.com/lxc/incus/incusd/instance/instancetype"
+	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/shared/api"
 )
 

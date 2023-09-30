@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lxc/incus/incusd/instance"
-	"github.com/lxc/incus/incusd/network/acl"
+	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/network/acl"
 	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )

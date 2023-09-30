@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lxc/incus/incusd/resources"
+	"github.com/lxc/incus/internal/server/resources"
 	"github.com/lxc/incus/shared/osarch"
 )
 

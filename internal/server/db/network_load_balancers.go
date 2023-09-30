@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lxc/incus/incusd/db/query"
+	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/shared/api"
 )
 

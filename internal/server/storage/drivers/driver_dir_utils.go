@@ -3,8 +3,8 @@ package drivers
 import (
 	"fmt"
 
-	"github.com/lxc/incus/incusd/storage/quota"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/storage/quota"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"
 )

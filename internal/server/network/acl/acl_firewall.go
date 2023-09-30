@@ -3,8 +3,8 @@ package acl
 import (
 	"fmt"
 
-	firewallDrivers "github.com/lxc/incus/incusd/firewall/drivers"
-	"github.com/lxc/incus/incusd/state"
+	firewallDrivers "github.com/lxc/incus/internal/server/firewall/drivers"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"

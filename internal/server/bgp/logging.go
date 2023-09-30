@@ -3,7 +3,7 @@ package bgp
 import (
 	"github.com/osrg/gobgp/v3/pkg/log"
 
-	"github.com/lxc/incus/incusd/daemon"
+	"github.com/lxc/incus/internal/server/daemon"
 	"github.com/lxc/incus/shared/logger"
 )
 
