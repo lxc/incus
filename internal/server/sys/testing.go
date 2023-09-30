@@ -47,7 +47,7 @@ func NewTestOS(t *testing.T) (*OS, func()) {
 //		instead.
 func SetupTestCerts(dir string) error {
 	_, filename, _, _ := runtime.Caller(0)
-	deps := filepath.Join(filepath.Dir(filename), "..", "..", "test", "deps")
+	deps := filepath.Join(filepath.Dir(filename), "..", "..", "..", "test", "deps")
 	for _, f := range []string{"server.crt", "server.key"} {
 		err := os.Symlink(filepath.Join(deps, f), filepath.Join(dir, f))
 		if err != nil {

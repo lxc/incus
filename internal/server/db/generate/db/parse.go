@@ -18,14 +18,14 @@ import (
 
 // Packages returns the AST packages in which to search for structs.
 //
-// By default it includes the incusd/db and shared/api packages.
+// By default it includes the internal/server/db and shared/api packages.
 func Packages() (map[string]*ast.Package, error) {
 	packages := map[string]*ast.Package{}
 
 	_, filename, _, _ := runtime.Caller(0)
 
 	for _, name := range defaultPackages {
-		pkg, err := lex.Parse(filepath.Join(filepath.Dir(filename), "..", "..", "..", "..", name))
+		pkg, err := lex.Parse(filepath.Join(filepath.Dir(filename), "..", "..", "..", "..", "..", name))
 		if err != nil {
 			return nil, fmt.Errorf("Parse %q: %w", name, err)
 		}
@@ -49,7 +49,7 @@ func ParsePackage(pkgPath string) (*ast.Package, error) {
 
 var defaultPackages = []string{
 	"shared/api",
-	"incusd/db",
+	"internal/server/db",
 }
 
 // FiltersFromStmt parses all filtering statement defined for the given entity. It
