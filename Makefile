@@ -98,9 +98,12 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -d -u ./...
-	$(GO) mod tidy
+	go get github.com/dustinkirkland/golang-petname@e794b93
+	go get github.com/mdlayher/socket@v0.4.1
+	$(GO) mod tidy --go=1.20
+
 	cd cmd/lxd-to-incus && $(GO) get -t -v -d -u ./...
-	cd cmd/lxd-to-incus && $(GO) mod tidy
+	cd cmd/lxd-to-incus && $(GO) mod tidy --go=1.20
 	@echo "Dependencies updated"
 
 .PHONY: update-protobuf
