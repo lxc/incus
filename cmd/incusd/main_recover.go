@@ -10,6 +10,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/recover"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/validate"
 )
@@ -167,7 +168,7 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 	fmt.Println("Scanning for unknown volumes...")
 
 	// Send /internal/recover/validate request to the daemon.
-	reqValidate := internalRecoverValidatePost{
+	reqValidate := recover.ValidatePost{
 		Pools: make([]api.StoragePoolsPost, 0, len(existingPools)+len(unknownPools)),
 	}
 
@@ -187,7 +188,7 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed validation request: %w", err)
 		}
 
-		var res internalRecoverValidateResult
+		var res recover.ValidateResult
 
 		err = resp.MetadataAsStruct(&res)
 		if err != nil {
@@ -237,9 +238,9 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 	fmt.Println("Starting recovery...")
 
 	// Send /internal/recover/import request to the daemon.
-	// Don't lint next line with gosimple. It says we should convert reqValidate directly to an internalRecoverImportPost
+	// Don't lint next line with gosimple. It says we should convert reqValidate directly to an RecoverImportPost
 	// because their types are identical. This is less clear and will not work if either type changes in the future.
-	reqImport := internalRecoverImportPost{ //nolint:gosimple
+	reqImport := recover.ImportPost{ //nolint:gosimple
 		Pools: reqValidate.Pools,
 	}
 
