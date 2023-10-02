@@ -225,6 +225,24 @@ func (d *gpuPhysical) startVM() (*deviceConfig.RunConfig, error) {
 			continue
 		}
 
+		// Check for existing running processes tied to the GPU.
+		// Failing early here in case of attached running processes to the card
+		// avoids a blocking call to os.WriteFile() when unbinding the device.
+		if gpu.Nvidia != nil && gpu.Nvidia.CardName != "" && util.PathExists(filepath.Join("/dev", gpu.Nvidia.CardName)) {
+			devPath := filepath.Join("/dev", gpu.Nvidia.CardName)
+			runningProcs, err := checkAttachedRunningProcesses(devPath)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(runningProcs) > 0 {
+				return nil, fmt.Errorf(
+					"Cannot use device %q, %d processes are still attached to it:\n\t%s",
+					devPath, len(runningProcs), strings.Join(runningProcs, "\n\t"),
+				)
+			}
+		}
+
 		if pciAddress != "" {
 			return nil, fmt.Errorf("VMs cannot match multiple GPUs per device")
 		}

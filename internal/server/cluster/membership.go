@@ -469,23 +469,23 @@ func Join(state *state.State, gateway *Gateway, networkCert *localtls.CertInfo, 
 				return fmt.Errorf("Failed to get storage pool driver: %w", err)
 			}
 
+			// For all pools we add the config provided by the joining node.
+			config, ok := pools[name]
+			if !ok {
+				return fmt.Errorf("Joining member has no config for pool %s", name)
+			}
+
+			err = tx.CreateStoragePoolConfig(id, node.ID, config)
+			if err != nil {
+				return fmt.Errorf("Failed to add joining node's pool config: %w", err)
+			}
+
 			if util.ValueInSlice(driver, []string{"ceph", "cephfs"}) {
 				// For ceph pools we have to create volume
 				// entries for the joining node.
 				err := tx.UpdateCephStoragePoolAfterNodeJoin(ctx, id, node.ID)
 				if err != nil {
 					return fmt.Errorf("Failed to create ceph volumes for joining node: %w", err)
-				}
-			} else {
-				// For other pools we add the config provided by the joining node.
-				config, ok := pools[name]
-				if !ok {
-					return fmt.Errorf("Joining member has no config for pool %s", name)
-				}
-
-				err = tx.CreateStoragePoolConfig(id, node.ID, config)
-				if err != nil {
-					return fmt.Errorf("Failed to add joining node's pool config: %w", err)
 				}
 			}
 		}
