@@ -166,7 +166,7 @@ test_config_profiles() {
 
   # Look at the LXC version to decide whether to use the new
   # or the new config key for apparmor.
-  lxc_version=$(lxc info | awk '/driver_version:/ {print $NF}')
+  lxc_version=$(incus info | awk '/driver_version:/ {print $NF}')
   lxc_major=$(echo "${lxc_version}" | cut -d. -f1)
   lxc_minor=$(echo "${lxc_version}" | cut -d. -f2)
   if [ "${lxc_major}" -lt 2 ] || { [ "${lxc_major}" = "2" ] && [ "${lxc_minor}" -lt "1" ]; }; then
