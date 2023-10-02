@@ -98,7 +98,6 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -d -u ./...
-	go get github.com/dustinkirkland/golang-petname@e794b93
 	go get github.com/mdlayher/socket@v0.4.1
 	$(GO) mod tidy --go=1.20
 
