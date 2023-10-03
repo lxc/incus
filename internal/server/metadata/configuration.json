@@ -28,13 +28,13 @@
 						"boot.autostart": {
 							"liveupdate": "no",
 							"longdesc": "If set to `false`, restore the last state.",
-							"shortdesc": "Whether to always start the instance when LXD starts",
+							"shortdesc": "Whether to always start the instance when the daemon starts",
 							"type": "bool"
 						}
 					},
 					{
 						"boot.autostart.delay": {
-							"defaultdesc": "\"0\"",
+							"defaultdesc": 0,
 							"liveupdate": "no",
 							"longdesc": "The number of seconds to wait after the instance started before starting the next one.",
 							"shortdesc": "Delay after starting the instance",
@@ -43,7 +43,7 @@
 					},
 					{
 						"boot.autostart.priority": {
-							"defaultdesc": "\"0\"",
+							"defaultdesc": 0,
 							"liveupdate": "no",
 							"longdesc": "The instance with the highest value is started first.",
 							"shortdesc": "What order to start the instances in",
@@ -52,7 +52,7 @@
 					},
 					{
 						"boot.host_shutdown_timeout": {
-							"defaultdesc": "\"30\"",
+							"defaultdesc": 30,
 							"liveupdate": "yes",
 							"longdesc": "Number of seconds to wait for the instance to shut down before it is force-stopped.",
 							"shortdesc": "How long to wait for the instance to shut down",
@@ -61,7 +61,7 @@
 					},
 					{
 						"boot.stop.priority": {
-							"defaultdesc": "\"0\"",
+							"defaultdesc": 0,
 							"liveupdate": "no",
 							"longdesc": "The instance with the highest value is shut down first.",
 							"shortdesc": "What order to shut down the instances in",
@@ -488,7 +488,7 @@
 							"defaultdesc": "`true`",
 							"liveupdate": "no",
 							"longdesc": "",
-							"shortdesc": "Whether the `lxd-agent` is queried for state information and metrics",
+							"shortdesc": "Whether the `incus-agent` is queried for state information and metrics",
 							"type": "bool"
 						}
 					},
@@ -503,21 +503,21 @@
 						}
 					},
 					{
-						"security.dev_incus": {
+						"security.guestapi": {
 							"defaultdesc": "`true`",
 							"liveupdate": "no",
 							"longdesc": "See {ref}`dev-incus` for more information.",
-							"shortdesc": "Whether `/dev/lxd` is present in the instance",
+							"shortdesc": "Whether `/dev/incus` is present in the instance",
 							"type": "bool"
 						}
 					},
 					{
-						"security.dev_incus.images": {
+						"security.guestapi.images": {
 							"condition": "container",
 							"defaultdesc": "`false`",
 							"liveupdate": "no",
 							"longdesc": "",
-							"shortdesc": "Controls the availability of the `/1.0/images` API over `dev_incus`",
+							"shortdesc": "Controls the availability of the `/1.0/images` API over `guestapi`",
 							"type": "bool"
 						}
 					},
@@ -555,7 +555,7 @@
 							"defaultdesc": "`false`",
 							"liveupdate": "yes",
 							"longdesc": "",
-							"shortdesc": "Whether to support running LXD (nested) inside the instance",
+							"shortdesc": "Whether to support running Incus (nested) inside the instance",
 							"type": "bool"
 						}
 					},
@@ -1041,101 +1041,6 @@
 					}
 				]
 			},
-			"candid-and-rbac": {
-				"keys": [
-					{
-						"candid.api_key": {
-							"condition": "required for HTTP-only servers",
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "Public key of the Candid server",
-							"type": "string"
-						}
-					},
-					{
-						"candid.api_url": {
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "URL of the external authentication endpoint using Candid",
-							"type": "string"
-						}
-					},
-					{
-						"candid.domains": {
-							"longdesc": "Specify a comma-separated list of allowed Candid domains.\nAn empty string means all domains are valid.",
-							"scope": "global",
-							"shortdesc": "Allowed Candid domains",
-							"type": "string"
-						}
-					},
-					{
-						"candid.expiry": {
-							"defaultdesc": "`3600`",
-							"longdesc": "Specify the expiry time in seconds.",
-							"scope": "global",
-							"shortdesc": "Candid macaroon expiry",
-							"type": "integer"
-						}
-					},
-					{
-						"rbac.agent.private_key": {
-							"longdesc": "Specify the private key as provided during RBAC registration.",
-							"scope": "global",
-							"shortdesc": "Private key of the Candid agent",
-							"type": "string"
-						}
-					},
-					{
-						"rbac.agent.public_key": {
-							"longdesc": "Specify the public key as provided during RBAC registration.",
-							"scope": "global",
-							"shortdesc": "Public key of the Candid agent",
-							"type": "string"
-						}
-					},
-					{
-						"rbac.agent.url": {
-							"longdesc": "Specify the URL as provided during RBAC registration.",
-							"scope": "global",
-							"shortdesc": "URL of the Candid agent",
-							"type": "string"
-						}
-					},
-					{
-						"rbac.agent.username": {
-							"longdesc": "Specify the user name as provided during RBAC registration.",
-							"scope": "global",
-							"shortdesc": "User name of the Candid agent",
-							"type": "string"
-						}
-					},
-					{
-						"rbac.api.expiry": {
-							"longdesc": "Specify the expiry time in seconds.",
-							"scope": "global",
-							"shortdesc": "RBAC macaroon expiry",
-							"type": "integer"
-						}
-					},
-					{
-						"rbac.api.key": {
-							"condition": "required for HTTP-only servers",
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "Public key of the RBAC server",
-							"type": "string"
-						}
-					},
-					{
-						"rbac.api.url": {
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "URL of the external RBAC server",
-							"type": "string"
-						}
-					}
-				]
-			},
 			"cluster": {
 				"keys": [
 					{
@@ -1311,7 +1216,7 @@
 					},
 					{
 						"core.proxy_http": {
-							"longdesc": "If this option is not specified, LXD falls back to the `HTTP_PROXY` environment variable (if set).",
+							"longdesc": "If this option is not specified, the daemon falls back to the `HTTP_PROXY` environment variable (if set).",
 							"scope": "global",
 							"shortdesc": "HTTP proxy to use",
 							"type": "string"
@@ -1319,7 +1224,7 @@
 					},
 					{
 						"core.proxy_https": {
-							"longdesc": "If this option is not specified, LXD falls back to the `HTTPS_PROXY` environment variable (if set).",
+							"longdesc": "If this option is not specified, the daemon falls back to the `HTTPS_PROXY` environment variable (if set).",
 							"scope": "global",
 							"shortdesc": "HTTPS proxy to use",
 							"type": "string"
@@ -1327,7 +1232,7 @@
 					},
 					{
 						"core.proxy_ignore_hosts": {
-							"longdesc": "Specify this option in a similar format to `NO_PROXY` (for example, `1.2.3.4,1.2.3.5`)\n\nIf this option is not specified, LXD falls back to the `NO_PROXY` environment variable (if set).",
+							"longdesc": "Specify this option in a similar format to `NO_PROXY` (for example, `1.2.3.4,1.2.3.5`)\n\nIf this option is not specified, the daemon falls back to the `NO_PROXY` environment variable (if set).",
 							"scope": "global",
 							"shortdesc": "Hosts that don't need the proxy",
 							"type": "string"
@@ -1345,7 +1250,7 @@
 					{
 						"core.shutdown_timeout": {
 							"defaultdesc": "`5`",
-							"longdesc": "Specify the number of minutes to wait for running operations to complete before the LXD server shuts down.",
+							"longdesc": "Specify the number of minutes to wait for running operations to complete before the daemon shuts down.",
 							"scope": "global",
 							"shortdesc": "How long to wait before shutdown",
 							"type": "integer"
@@ -1365,14 +1270,6 @@
 							"scope": "global",
 							"shortdesc": "Whether to automatically trust clients signed by the CA",
 							"type": "bool"
-						}
-					},
-					{
-						"core.trust_password": {
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "Password to be provided by clients to set up a trust",
-							"type": "string"
 						}
 					}
 				]
@@ -1500,7 +1397,7 @@
 					{
 						"instances.nic.host_name": {
 							"defaultdesc": "`random`",
-							"longdesc": "Possible values are `random` and `mac`.\n\nIf set to `random`, use the random host interface name as the host name.\nIf set to `mac`, generate a host name in the form `lxd\u003cmac_address\u003e` (MAC without leading two digits).",
+							"longdesc": "Possible values are `random` and `mac`.\n\nIf set to `random`, use the random host interface name as the host name.\nIf set to `mac`, generate a host name in the form `inc\u003cmac_address\u003e` (MAC without leading two digits).",
 							"scope": "global",
 							"shortdesc": "How to set the host name for a NIC",
 							"type": "string"
@@ -1511,31 +1408,6 @@
 							"longdesc": "When using custom automatic instance placement logic, this option stores the scriptlet.\nSee {ref}`clustering-instance-placement-scriptlet` for more information.",
 							"scope": "global",
 							"shortdesc": "Instance placement scriptlet for automatic instance placement",
-							"type": "string"
-						}
-					},
-					{
-						"maas.api.key": {
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "API key to manage MAAS",
-							"type": "string"
-						}
-					},
-					{
-						"maas.api.url": {
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "URL of the MAAS server",
-							"type": "string"
-						}
-					},
-					{
-						"maas.machine": {
-							"defaultdesc": "host name",
-							"longdesc": "",
-							"scope": "local",
-							"shortdesc": "Name of this LXD host in MAAS",
 							"type": "string"
 						}
 					},
