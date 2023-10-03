@@ -1732,7 +1732,7 @@ func clusterRolesChanged(oldRoles []db.ClusterRole, newRoles []db.ClusterRole) b
 // clusterValidateConfig validates the configuration keys/values for cluster members.
 func clusterValidateConfig(config map[string]string) error {
 	clusterConfigKeys := map[string]func(value string) error{
-		// gendoc:generate(group=cluster, key=scheduler.instance)
+		// gendoc:generate(entity=cluster, group=cluster, key=scheduler.instance)
 		// Possible values are `all`, `manual`, and `group`. See
 		// {ref}`clustering-instance-placement` for more information.
 		// ---
@@ -1745,7 +1745,7 @@ func clusterValidateConfig(config map[string]string) error {
 	for k, v := range config {
 		// User keys are free for all.
 
-		// gendoc:generate(group=cluster, key=user.*)
+		// gendoc:generate(entity=cluster, group=cluster, key=user.*)
 		// User keys can be used in search.
 		// ---
 		//  type: string

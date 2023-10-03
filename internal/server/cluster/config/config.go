@@ -274,7 +274,7 @@ func (c *Config) update(values map[string]string) (map[string]string, error) {
 
 // ConfigSchema defines available server configuration keys.
 var ConfigSchema = config.Schema{
-	// gendoc:generate(group=server-acme, key=acme.ca_url)
+	// gendoc:generate(entity=server, group=acme, key=acme.ca_url)
 	//
 	// ---
 	//  type: string
@@ -283,7 +283,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Agree to ACME terms of service
 	"acme.ca_url": {},
 
-	// gendoc:generate(group=server-acme, key=acme.domain)
+	// gendoc:generate(entity=server, group=acme, key=acme.domain)
 	//
 	// ---
 	//  type: string
@@ -291,7 +291,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Domain for which the certificate is issued
 	"acme.domain": {},
 
-	// gendoc:generate(group=server-acme, key=acme.email)
+	// gendoc:generate(entity=server, group=acme, key=acme.email)
 	//
 	// ---
 	//  type: string
@@ -299,7 +299,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Email address used for the account registration
 	"acme.email": {},
 
-	// gendoc:generate(group=server-acme, key=acme.agree_tos)
+	// gendoc:generate(entity=server, group=acme, key=acme.agree_tos)
 	//
 	// ---
 	//  type: bool
@@ -308,7 +308,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Agree to ACME terms of service
 	"acme.agree_tos": {Type: config.Bool, Default: "false"},
 
-	// gendoc:generate(group=server-miscellaneous, key=backups.compression_algorithm)
+	// gendoc:generate(entity=server, group=miscellaneous, key=backups.compression_algorithm)
 	// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
 	// ---
 	//  type: string
@@ -317,7 +317,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Compression algorithm to use for backups
 	"backups.compression_algorithm": {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
 
-	// gendoc:generate(group=server-cluster, key=cluster.offline_threshold)
+	// gendoc:generate(entity=server, group=cluster, key=cluster.offline_threshold)
 	// Specify the number of seconds after which an unresponsive member is considered offline.
 	// ---
 	//  type: integer
@@ -326,7 +326,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Threshold when an unresponsive member is considered offline
 	"cluster.offline_threshold": {Type: config.Int64, Default: offlineThresholdDefault(), Validator: offlineThresholdValidator},
 
-	// gendoc:generate(group=server-cluster, key=cluster.images_minimal_replica)
+	// gendoc:generate(entity=server, group=cluster, key=cluster.images_minimal_replica)
 	// Specify the minimal number of cluster members that keep a copy of a particular image.
 	// Set this option to `1` for no replication, or to `-1` to replicate images on all members.
 	// ---
@@ -336,7 +336,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Number of cluster members that replicate an image
 	"cluster.images_minimal_replica": {Type: config.Int64, Default: "3", Validator: imageMinimalReplicaValidator},
 
-	// gendoc:generate(group=server-cluster, key=cluster.healing_threshold)
+	// gendoc:generate(entity=server, group=cluster, key=cluster.healing_threshold)
 	// Specify the number of seconds after which an offline cluster member is to be evacuated.
 	// To disable evacuating offline members, set this option to `0`.
 	// ---
@@ -346,7 +346,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Threshold when to evacuate an offline cluster member
 	"cluster.healing_threshold": {Type: config.Int64, Default: "0"},
 
-	// gendoc:generate(group=server-cluster, key=cluster.join_token_expiry)
+	// gendoc:generate(entity=server, group=cluster, key=cluster.join_token_expiry)
 	//
 	// ---
 	//  type: string
@@ -355,7 +355,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Time after which a cluster join token expires
 	"cluster.join_token_expiry": {Type: config.String, Default: "3H", Validator: expiryValidator},
 
-	// gendoc:generate(group=server-cluster, key=cluster.max_voters)
+	// gendoc:generate(entity=server, group=cluster, key=cluster.max_voters)
 	// Specify the maximum number of cluster members that are assigned the database voter role.
 	// This must be an odd number >= `3`.
 	// ---
@@ -365,7 +365,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Number of database voter members
 	"cluster.max_voters": {Type: config.Int64, Default: "3", Validator: maxVotersValidator},
 
-	// gendoc:generate(group=server-cluster, key=cluster.max_standby)
+	// gendoc:generate(entity=server, group=cluster, key=cluster.max_standby)
 	// Specify the maximum number of cluster members that are assigned the database stand-by role.
 	// This must be a number between `0` and `5`.
 	// ---
@@ -375,7 +375,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Number of database stand-by members
 	"cluster.max_standby": {Type: config.Int64, Default: "2", Validator: maxStandByValidator},
 
-	// gendoc:generate(group=server-core, key=core.metrics_authentication)
+	// gendoc:generate(entity=server, group=core, key=core.metrics_authentication)
 	//
 	// ---
 	//  type: bool
@@ -384,7 +384,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Whether to enforce authentication on the metrics endpoint
 	"core.metrics_authentication": {Type: config.Bool, Default: "true"},
 
-	// gendoc:generate(group=server-core, key=core.bgp_asn)
+	// gendoc:generate(entity=server, group=core, key=core.bgp_asn)
 	//
 	// ---
 	//  type: string
@@ -392,7 +392,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: BGP Autonomous System Number for the local server
 	"core.bgp_asn": {Type: config.Int64, Default: "0", Validator: validate.Optional(validate.IsInRange(0, 4294967294))},
 
-	// gendoc:generate(group=server-core, key=core.https_allowed_headers)
+	// gendoc:generate(entity=server, group=core, key=core.https_allowed_headers)
 	//
 	// ---
 	//  type: string
@@ -400,7 +400,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: `Access-Control-Allow-Headers` HTTP header value
 	"core.https_allowed_headers": {},
 
-	// gendoc:generate(group=server-core, key=core.https_allowed_methods)
+	// gendoc:generate(entity=server, group=core, key=core.https_allowed_methods)
 	//
 	// ---
 	//  type: string
@@ -408,7 +408,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: `Access-Control-Allow-Methods` HTTP header value
 	"core.https_allowed_methods": {},
 
-	// gendoc:generate(group=server-core, key=core.https_allowed_origin)
+	// gendoc:generate(entity=server, group=core, key=core.https_allowed_origin)
 	//
 	// ---
 	//  type: string
@@ -416,7 +416,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: `Access-Control-Allow-Origin` HTTP header value
 	"core.https_allowed_origin": {},
 
-	// gendoc:generate(group=server-core, key=core.https_allowed_credentials)
+	// gendoc:generate(entity=server, group=core, key=core.https_allowed_credentials)
 	// If enabled, the `Access-Control-Allow-Credentials` HTTP header value is set to `true`.
 	// ---
 	//  type: bool
@@ -424,7 +424,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Whether to set `Access-Control-Allow-Credentials`
 	"core.https_allowed_credentials": {Type: config.Bool},
 
-	// gendoc:generate(group=server-core, key=core.https_trusted_proxy)
+	// gendoc:generate(entity=server, group=core, key=core.https_trusted_proxy)
 	// Specify a comma-separated list of IP addresses of trusted servers that provide the client's address through the proxy connection header.
 	// ---
 	//  type: string
@@ -432,7 +432,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Trusted servers to provide the client's address
 	"core.https_trusted_proxy": {},
 
-	// gendoc:generate(group=server-core, key=core.proxy_http)
+	// gendoc:generate(entity=server, group=core, key=core.proxy_http)
 	// If this option is not specified, the daemon falls back to the `HTTP_PROXY` environment variable (if set).
 	// ---
 	//  type: string
@@ -440,7 +440,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: HTTP proxy to use
 	"core.proxy_http": {},
 
-	// gendoc:generate(group=server-core, key=core.proxy_https)
+	// gendoc:generate(entity=server, group=core, key=core.proxy_https)
 	// If this option is not specified, the daemon falls back to the `HTTPS_PROXY` environment variable (if set).
 	// ---
 	//  type: string
@@ -448,7 +448,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: HTTPS proxy to use
 	"core.proxy_https": {},
 
-	// gendoc:generate(group=server-core, key=core.proxy_ignore_hosts)
+	// gendoc:generate(entity=server, group=core, key=core.proxy_ignore_hosts)
 	// Specify this option in a similar format to `NO_PROXY` (for example, `1.2.3.4,1.2.3.5`)
 	//
 	// If this option is not specified, the daemon falls back to the `NO_PROXY` environment variable (if set).
@@ -458,7 +458,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Hosts that don't need the proxy
 
 	"core.proxy_ignore_hosts": {},
-	// gendoc:generate(group=server-core, key=core.remote_token_expiry)
+	// gendoc:generate(entity=server, group=core, key=core.remote_token_expiry)
 	//
 	// ---
 	//  type: string
@@ -467,7 +467,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Time after which a remote add token expires
 	"core.remote_token_expiry": {Type: config.String, Validator: validate.Optional(expiryValidator)},
 
-	// gendoc:generate(group=server-core, key=core.shutdown_timeout)
+	// gendoc:generate(entity=server, group=core, key=core.shutdown_timeout)
 	// Specify the number of minutes to wait for running operations to complete before the daemon shuts down.
 	// ---
 	//  type: integer
@@ -476,7 +476,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: How long to wait before shutdown
 	"core.shutdown_timeout": {Type: config.Int64, Default: "5"},
 
-	// gendoc:generate(group=server-core, key=core.trust_ca_certificates)
+	// gendoc:generate(entity=server, group=core, key=core.trust_ca_certificates)
 	//
 	// ---
 	//  type: bool
@@ -484,7 +484,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Whether to automatically trust clients signed by the CA
 	"core.trust_ca_certificates": {Type: config.Bool},
 
-	// gendoc:generate(group=server-images, key=images.auto_update_cached)
+	// gendoc:generate(entity=server, group=images, key=images.auto_update_cached)
 	//
 	// ---
 	//  type: bool
@@ -493,7 +493,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Whether to automatically update cached images
 	"images.auto_update_cached": {Type: config.Bool, Default: "true"},
 
-	// gendoc:generate(group=server-images, key=images.auto_update_interval)
+	// gendoc:generate(entity=server, group=images, key=images.auto_update_interval)
 	// Specify the interval in hours.
 	// To disable looking for updates to cached images, set this option to `0`.
 	// ---
@@ -503,7 +503,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Interval at which to look for updates to cached images
 	"images.auto_update_interval": {Type: config.Int64, Default: "6"},
 
-	// gendoc:generate(group=server-images, key=images.compression_algorithm)
+	// gendoc:generate(entity=server, group=images, key=images.compression_algorithm)
 	// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
 	// ---
 	//  type: string
@@ -512,14 +512,14 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Compression algorithm to use for new images
 	"images.compression_algorithm": {Default: "gzip", Validator: validate.IsCompressionAlgorithm},
 
-	// gendoc:generate(group=server-images, key=images.default_architecture)
+	// gendoc:generate(entity=server, group=images, key=images.default_architecture)
 	//
 	// ---
 	//  type: string
 	//  shortdesc: Default architecture to use in a mixed-architecture cluster
 	"images.default_architecture": {Validator: validate.Optional(validate.IsArchitecture)},
 
-	// gendoc:generate(group=server-images, key=images.remote_cache_expiry)
+	// gendoc:generate(entity=server, group=images, key=images.remote_cache_expiry)
 	// Specify the number of days after which the unused cached image expires.
 	// ---
 	//  type: integer
@@ -528,7 +528,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: When an unused cached remote image is flushed
 	"images.remote_cache_expiry": {Type: config.Int64, Default: "10"},
 
-	// gendoc:generate(group=server-miscellaneous, key=instances.nic.host_name)
+	// gendoc:generate(entity=server, group=miscellaneous, key=instances.nic.host_name)
 	// Possible values are `random` and `mac`.
 	//
 	// If set to `random`, use the random host interface name as the host name.
@@ -540,7 +540,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: How to set the host name for a NIC
 	"instances.nic.host_name": {Validator: validate.Optional(validate.IsOneOf("random", "mac"))},
 
-	// gendoc:generate(group=server-miscellaneous, key=instances.placement.scriptlet)
+	// gendoc:generate(entity=server, group=miscellaneous, key=instances.placement.scriptlet)
 	// When using custom automatic instance placement logic, this option stores the scriptlet.
 	// See {ref}`clustering-instance-placement-scriptlet` for more information.
 	// ---
@@ -549,7 +549,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Instance placement scriptlet for automatic instance placement
 	"instances.placement.scriptlet": {Validator: validate.Optional(scriptletLoad.InstancePlacementValidate)},
 
-	// gendoc:generate(group=server-loki, key=loki.auth.username)
+	// gendoc:generate(entity=server, group=loki, key=loki.auth.username)
 	//
 	// ---
 	//  type: string
@@ -557,7 +557,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: User name used for Loki authentication
 	"loki.auth.username": {},
 
-	// gendoc:generate(group=server-loki, key=loki.auth.password)
+	// gendoc:generate(entity=server, group=loki, key=loki.auth.password)
 	//
 	// ---
 	//  type: string
@@ -565,7 +565,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Password used for Loki authentication
 	"loki.auth.password": {},
 
-	// gendoc:generate(group=server-loki, key=loki.api.ca_cert)
+	// gendoc:generate(entity=server, group=loki, key=loki.api.ca_cert)
 	//
 	// ---
 	//  type: string
@@ -573,7 +573,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: CA certificate for the Loki server
 	"loki.api.ca_cert": {},
 
-	// gendoc:generate(group=server-loki, key=loki.api.url)
+	// gendoc:generate(entity=server, group=loki, key=loki.api.url)
 	//
 	// ---
 	//  type: string
@@ -581,7 +581,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: URL to the Loki server
 	"loki.api.url": {},
 
-	// gendoc:generate(group=server-loki, key=loki.labels)
+	// gendoc:generate(entity=server, group=loki, key=loki.labels)
 	// Specify a comma-separated list of values that should be used as labels for a Loki log entry.
 	// ---
 	//  type: string
@@ -589,7 +589,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Labels for a Loki log entry
 	"loki.labels": {},
 
-	// gendoc:generate(group=server-loki, key=loki.loglevel)
+	// gendoc:generate(entity=server, group=loki, key=loki.loglevel)
 	//
 	// ---
 	//  type: string
@@ -598,7 +598,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Minimum log level to send to the Loki server
 	"loki.loglevel": {Validator: logLevelValidator, Default: logrus.InfoLevel.String()},
 
-	// gendoc:generate(group=server-loki, key=loki.types)
+	// gendoc:generate(entity=server, group=loki, key=loki.types)
 	// Specify a comma-separated list of events to send to the Loki server.
 	// The events can be `lifecycle` and/or `logging`.
 	// ---
@@ -608,7 +608,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Events to send to the Loki server
 	"loki.types": {Validator: validate.Optional(validate.IsListOf(validate.IsOneOf("lifecycle", "logging"))), Default: "lifecycle,logging"},
 
-	// gendoc:generate(group=server-oidc, key=oidc.client.id)
+	// gendoc:generate(entity=server, group=oidc, key=oidc.client.id)
 	//
 	// ---
 	//  type: string
@@ -616,7 +616,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: OpenID Connect client ID
 	"oidc.client.id": {},
 
-	// gendoc:generate(group=server-oidc, key=oidc.issuer)
+	// gendoc:generate(entity=server, group=oidc, key=oidc.issuer)
 	//
 	// ---
 	//  type: string
@@ -624,7 +624,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: OpenID Connect Discovery URL for the provider
 	"oidc.issuer": {},
 
-	// gendoc:generate(group=server-oidc, key=oidc.audience)
+	// gendoc:generate(entity=server, group=oidc, key=oidc.audience)
 	// This value is required by some providers.
 	// ---
 	//  type: string
@@ -634,7 +634,7 @@ var ConfigSchema = config.Schema{
 
 	// OVN networking global keys.
 
-	// gendoc:generate(group=server-miscellaneous, key=network.ovn.integration_bridge)
+	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovn.integration_bridge)
 	//
 	// ---
 	//  type: string
@@ -643,7 +643,7 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: OVS integration bridge to use for OVN networks
 	"network.ovn.integration_bridge": {Default: "br-int"},
 
-	// gendoc:generate(group=server-miscellaneous, key=network.ovn.northbound_connection)
+	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovn.northbound_connection)
 	//
 	// ---
 	//  type: string

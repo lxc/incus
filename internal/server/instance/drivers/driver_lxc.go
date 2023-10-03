@@ -1041,7 +1041,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup environment
 	for k, v := range d.expandedConfig {
-		// gendoc:generate(group=instance-miscellaneous, key=environment.*)
+		// gendoc:generate(entity=instance, group=miscellaneous, key=environment.*)
 		// The specified key/value environment variables are exported to the instance and set for `incus exec`.
 
 		// ---
@@ -1293,7 +1293,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup sysctls
 	for k, v := range d.expandedConfig {
-		// gendoc:generate(group=instance-miscellaneous, key=linux.sysctl.*)
+		// gendoc:generate(entity=instance, group=miscellaneous, key=linux.sysctl.*)
 		//
 		// ---
 		//  type: string
