@@ -36,7 +36,7 @@ The tool can create both containers and virtual machines:
 
 Complete the following steps to migrate an existing machine to a LXD instance:
 
-1. Download the [`bin.linux.lxd-migrate`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus-migrate) tool from the **Assets** section of the latest [Incus release](https://github.com/lxc/incus/releases).
+1. Download the `bin.linux.lxd-migrate` tool from the **Assets** section of the latest [LXD release](https://github.com/canonical/lxd/releases).
 1. Place the tool on the machine that you want to use to create the instance.
    Make it executable (usually by running `chmod u+x bin.linux.lxd-migrate`).
 1. Make sure that the machine has `rsync` installed.

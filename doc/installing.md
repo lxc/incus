@@ -138,12 +138,7 @@ To install it:
 
 ````
 
-You can also find native builds of the LXD client on [GitHub](https://github.com/lxc/incus/actions):
-
-- [Incus client for Linux](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus)
-- [Incus client for Windows](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.exe)
-- [Incus client for macOS](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus)
-
+You can also find native builds of the LXD client on [GitHub](https://github.com/canonical/lxd/actions).
 To download a specific build:
 
 1. Make sure that you are logged into your GitHub account.
