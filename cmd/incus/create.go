@@ -19,7 +19,7 @@ import (
 	"github.com/lxc/incus/shared/termios"
 )
 
-type cmdInit struct {
+type cmdCreate struct {
 	global *cmdGlobal
 
 	flagConfig     []string
@@ -35,17 +35,18 @@ type cmdInit struct {
 	flagVM         bool
 }
 
-func (c *cmdInit) Command() *cobra.Command {
+func (c *cmdCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = usage("init", i18n.G("[<remote>:]<image> [<remote>:][<name>]"))
+	cmd.Use = usage("create", i18n.G("[<remote>:]<image> [<remote>:][<name>]"))
 	cmd.Short = i18n.G("Create instances from images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create instances from images`))
-	cmd.Example = cli.FormatSection("", i18n.G(`incus init images:ubuntu/22.04 u1
+	cmd.Example = cli.FormatSection("", i18n.G(`incus create images:ubuntu/22.04 u1
 
-incus init images:ubuntu/22.04 u1 < config.yaml
+incus create images:ubuntu/22.04 u1 < config.yaml
     Create the instance with configuration from config.yaml`))
 	cmd.Hidden = true
 
+	cmd.Aliases = []string{"init"}
 	cmd.RunE = c.Run
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new instance")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagProfile, "profile", "p", nil, i18n.G("Profile to apply to the new instance")+"``")
@@ -62,7 +63,7 @@ incus init images:ubuntu/22.04 u1 < config.yaml
 	return cmd
 }
 
-func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdCreate) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 0, 2)
 	if exit {
@@ -78,7 +79,7 @@ func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func (c *cmdInit) create(conf *config.Config, args []string) (incus.InstanceServer, string, error) {
+func (c *cmdCreate) create(conf *config.Config, args []string) (incus.InstanceServer, string, error) {
 	var name string
 	var image string
 	var remote string
@@ -424,7 +425,7 @@ func (c *cmdInit) create(conf *config.Config, args []string) (incus.InstanceServ
 	return d, name, nil
 }
 
-func (c *cmdInit) checkNetwork(d incus.InstanceServer, name string) {
+func (c *cmdCreate) checkNetwork(d incus.InstanceServer, name string) {
 	ct, _, err := d.GetInstance(name)
 	if err != nil {
 		return

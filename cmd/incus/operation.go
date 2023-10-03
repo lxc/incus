@@ -22,6 +22,7 @@ func (c *cmdOperation) Command() *cobra.Command {
 	cmd.Short = i18n.G("List, show and delete background operations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List, show and delete background operations`))
+	cmd.Hidden = true
 
 	// Delete
 	operationDeleteCmd := cmdOperationDelete{global: c.global, operation: c}
