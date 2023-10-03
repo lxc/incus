@@ -9959,7 +9959,7 @@ paths:
                 - instances
     /1.0/metadata/configuration:
         get:
-            description: Returns the generated LXD metadata configuration in YAML format.
+            description: Returns the generated metadata configuration in YAML format.
             operationId: metadata_configuration_get
             produces:
                 - text/plain
