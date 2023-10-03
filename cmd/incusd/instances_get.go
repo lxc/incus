@@ -7,11 +7,8 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
-
-	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/internal/filter"
 	"github.com/lxc/incus/internal/server/auth"
@@ -35,11 +32,7 @@ import (
 // explicitly via the instance-type query param or implicitly via the endpoint URL used.
 func urlInstanceTypeDetect(r *http.Request) (instancetype.Type, error) {
 	reqInstanceType := r.URL.Query().Get("instance-type")
-	if strings.HasPrefix(mux.CurrentRoute(r).GetName(), "container") {
-		return instancetype.Container, nil
-	} else if strings.HasPrefix(mux.CurrentRoute(r).GetName(), "vm") {
-		return instancetype.VM, nil
-	} else if reqInstanceType != "" {
+	if reqInstanceType != "" {
 		instanceType, err := instancetype.New(reqInstanceType)
 		if err != nil {
 			return instancetype.Any, err
@@ -497,14 +490,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 	if recursion == 0 {
 		resultList := make([]string, 0, len(resultFullList))
 		for i := range resultFullList {
-			instancePath := "instances"
-			if strings.HasPrefix(mux.CurrentRoute(r).GetName(), "container") {
-				instancePath = "containers"
-			} else if strings.HasPrefix(mux.CurrentRoute(r).GetName(), "vm") {
-				instancePath = "virtual-machines"
-			}
-
-			url := api.NewURL().Path(version.APIVersion, instancePath, resultFullList[i].Name).Project(resultFullList[i].Project)
+			url := api.NewURL().Path(version.APIVersion, "instances", resultFullList[i].Name).Project(resultFullList[i].Project)
 			resultList = append(resultList, url.String())
 		}
 
