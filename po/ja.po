@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-10-03 01:56-0400\n"
+"POT-Creation-Date: 2023-10-03 17:50-0400\n"
 "PO-Revision-Date: 2023-03-10 15:14+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/linux-"
@@ -597,19 +597,19 @@ msgstr "- パーティション %d"
 msgid "- Port %d (%s)"
 msgstr "- ポート %d (%s)"
 
-#: cmd/incus/action.go:220
+#: cmd/incus/action.go:219
 msgid "--console can't be used while forcing instance shutdown"
 msgstr "インスタンスの強制シャットダウンの際は --console は使えません"
 
-#: cmd/incus/action.go:369
+#: cmd/incus/action.go:368
 msgid "--console can't be used with --all"
 msgstr "--console と --all は同時に指定できません"
 
-#: cmd/incus/action.go:373
+#: cmd/incus/action.go:372
 msgid "--console only works with a single instance"
 msgstr "--console は単一のインスタンスのときのみ指定できます"
 
-#: cmd/incus/create.go:127 cmd/incus/rebuild.go:64
+#: cmd/incus/create.go:126 cmd/incus/rebuild.go:64
 msgid "--empty cannot be combined with an image name"
 msgstr "--empty はイメージ名と同時に指定できません"
 
@@ -918,7 +918,7 @@ msgstr ""
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "どちらもみつかりませんでした。raw SPICE ソケットはこちらにあります:"
 
-#: cmd/incus/create.go:348 cmd/incus/rebuild.go:131
+#: cmd/incus/create.go:347 cmd/incus/rebuild.go:131
 msgid "Asked for a VM but image is of type container"
 msgstr "VMを要求しましたが、イメージタイプがコンテナです"
 
@@ -1026,7 +1026,7 @@ msgstr ""
 msgid "Bad key/value pair: %s"
 msgstr "不適切なキー/値のペア: %s"
 
-#: cmd/incus/copy.go:136 cmd/incus/create.go:218 cmd/incus/project.go:129
+#: cmd/incus/copy.go:136 cmd/incus/create.go:217 cmd/incus/project.go:129
 #, fuzzy, c-format
 msgid "Bad key=value pair: %q"
 msgstr "不適切な キー=値 のペア: %s"
@@ -1046,7 +1046,7 @@ msgstr "不正なイメージプロパティ形式: %s"
 msgid "Bond:"
 msgstr "ボンディング:"
 
-#: cmd/incus/action.go:148 cmd/incus/action.go:325
+#: cmd/incus/action.go:147 cmd/incus/action.go:324
 msgid "Both --all and instance name given"
 msgstr "--all とインスタンス名を両方同時に指定することはできません"
 
@@ -1067,7 +1067,7 @@ msgstr "受信バイト数"
 msgid "Bytes sent"
 msgstr "送信バイト数"
 
-#: cmd/incus/operation.go:166
+#: cmd/incus/operation.go:175
 msgid "CANCELABLE"
 msgstr "CANCELABLE"
 
@@ -1105,7 +1105,7 @@ msgstr "CPU使用量:"
 msgid "CPUs (%s):"
 msgstr "CPUs (%s):"
 
-#: cmd/incus/operation.go:167
+#: cmd/incus/operation.go:176
 msgid "CREATED"
 msgstr "CREATED"
 
@@ -1179,7 +1179,7 @@ msgstr "キー '%s' が設定されていないので削除できません"
 msgid "Can't use an image with --empty"
 msgstr ""
 
-#: cmd/incus/create.go:317
+#: cmd/incus/create.go:316
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -1296,7 +1296,7 @@ msgstr "クラスターメンバー %s がグループ %s から削除されま�
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:385 cmd/incus/config.go:517
 #: cmd/incus/config.go:723 cmd/incus/config.go:846 cmd/incus/copy.go:60
-#: cmd/incus/create.go:58 cmd/incus/info.go:45 cmd/incus/move.go:64
+#: cmd/incus/create.go:57 cmd/incus/info.go:45 cmd/incus/move.go:64
 #: cmd/incus/network.go:300 cmd/incus/network.go:723 cmd/incus/network.go:792
 #: cmd/incus/network.go:1134 cmd/incus/network.go:1219
 #: cmd/incus/network.go:1283 cmd/incus/network_forward.go:169
@@ -1342,12 +1342,12 @@ msgstr "クラスタリングが有効になりました"
 msgid "Columns"
 msgstr "カラムレイアウト"
 
-#: cmd/incus/main.go:79
+#: cmd/incus/main.go:82
 #, fuzzy
 msgid "Command line client for Incus"
 msgstr "LXD のコマンドラインクライアント"
 
-#: cmd/incus/main.go:80
+#: cmd/incus/main.go:83
 #, fuzzy
 msgid ""
 "Command line client for Incus\n"
@@ -1368,7 +1368,7 @@ msgstr "圧縮アルゴリズムを指定します: (圧縮しない場合は `n
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "使用する圧縮アルゴリズムを指定します (圧縮しない場合は none)"
 
-#: cmd/incus/copy.go:52 cmd/incus/create.go:51
+#: cmd/incus/copy.go:52 cmd/incus/create.go:50
 msgid "Config key/value to apply to the new instance"
 msgstr "新しいインスタンスに適用するキー/値の設定"
 
@@ -1564,7 +1564,7 @@ msgstr "一致するエントリを見つけられませんでした"
 msgid "Create a cluster group"
 msgstr "クラスターグループを作成します"
 
-#: cmd/incus/create.go:61
+#: cmd/incus/create.go:60
 msgid "Create a virtual machine"
 msgstr "仮想マシンを作成します"
 
@@ -1572,7 +1572,7 @@ msgstr "仮想マシンを作成します"
 msgid "Create aliases for existing images"
 msgstr "既存のイメージに対するエイリアスを作成します"
 
-#: cmd/incus/create.go:60
+#: cmd/incus/create.go:59
 msgid "Create an empty instance"
 msgstr "空のインスタンスを作成"
 
@@ -1663,7 +1663,7 @@ msgstr "プロジェクトを作成します"
 msgid "Create storage pools"
 msgstr "ストレージプールを作成します"
 
-#: cmd/incus/copy.go:62 cmd/incus/create.go:59
+#: cmd/incus/copy.go:62 cmd/incus/create.go:58
 msgid "Create the instance with no profiles applied"
 msgstr "プロファイルを適用しないインスタンスを作成します"
 
@@ -1673,12 +1673,12 @@ msgstr "プロファイルを適用しないインスタンスを作成します
 msgid "Created: %s"
 msgstr "作成日時: %s"
 
-#: cmd/incus/create.go:164
+#: cmd/incus/create.go:163
 #, c-format
 msgid "Creating %s"
 msgstr "%s を作成中"
 
-#: cmd/incus/create.go:162
+#: cmd/incus/create.go:161
 msgid "Creating the instance"
 msgstr "インスタンスを作成中"
 
@@ -1696,7 +1696,7 @@ msgstr "DEFAULT TARGET ADDRESS"
 #: cmd/incus/network.go:985 cmd/incus/network_acl.go:147
 #: cmd/incus/network_forward.go:144 cmd/incus/network_load_balancer.go:148
 #: cmd/incus/network_peer.go:139 cmd/incus/network_zone.go:138
-#: cmd/incus/network_zone.go:741 cmd/incus/operation.go:164
+#: cmd/incus/network_zone.go:741 cmd/incus/operation.go:173
 #: cmd/incus/profile.go:658 cmd/incus/project.go:505 cmd/incus/storage.go:645
 #: cmd/incus/storage_bucket.go:506 cmd/incus/storage_bucket.go:826
 #: cmd/incus/storage_volume.go:1494
@@ -1723,7 +1723,7 @@ msgstr "デフォルト VLAN ID"
 msgid "Define a compression algorithm: for backup or none"
 msgstr "圧縮アルゴリズムを指定します: backup or none"
 
-#: cmd/incus/operation.go:55 cmd/incus/operation.go:56
+#: cmd/incus/operation.go:56 cmd/incus/operation.go:57
 msgid "Delete a background operation (will attempt to cancel)"
 msgstr "バックグラウンドの操作を削除します（キャンセルを試みます）"
 
@@ -1823,8 +1823,8 @@ msgstr "ストレージボリュームを削除します"
 msgid "Delete warning"
 msgstr "警告を削除します"
 
-#: cmd/incus/action.go:32 cmd/incus/action.go:53 cmd/incus/action.go:76
-#: cmd/incus/action.go:99 cmd/incus/admin.go:20 cmd/incus/admin_other.go:20
+#: cmd/incus/action.go:32 cmd/incus/action.go:53 cmd/incus/action.go:75
+#: cmd/incus/action.go:98 cmd/incus/admin.go:20 cmd/incus/admin_other.go:20
 #: cmd/incus/alias.go:23 cmd/incus/alias.go:61 cmd/incus/alias.go:111
 #: cmd/incus/alias.go:160 cmd/incus/alias.go:215 cmd/incus/cluster.go:29
 #: cmd/incus/cluster.go:122 cmd/incus/cluster.go:206 cmd/incus/cluster.go:255
@@ -1867,7 +1867,7 @@ msgstr "警告を削除します"
 #: cmd/incus/image_alias.go:60 cmd/incus/image_alias.go:107
 #: cmd/incus/image_alias.go:152 cmd/incus/image_alias.go:255
 #: cmd/incus/import.go:27 cmd/incus/info.go:33 cmd/incus/launch.go:24
-#: cmd/incus/list.go:49 cmd/incus/main.go:80 cmd/incus/manpage.go:21
+#: cmd/incus/list.go:49 cmd/incus/main.go:83 cmd/incus/manpage.go:21
 #: cmd/incus/monitor.go:33 cmd/incus/move.go:35 cmd/incus/network.go:32
 #: cmd/incus/network.go:135 cmd/incus/network.go:220 cmd/incus/network.go:293
 #: cmd/incus/network.go:372 cmd/incus/network.go:422 cmd/incus/network.go:507
@@ -1916,9 +1916,9 @@ msgstr "警告を削除します"
 #: cmd/incus/network_zone.go:951 cmd/incus/network_zone.go:1027
 #: cmd/incus/network_zone.go:1057 cmd/incus/network_zone.go:1175
 #: cmd/incus/network_zone.go:1224 cmd/incus/network_zone.go:1239
-#: cmd/incus/network_zone.go:1285 cmd/incus/operation.go:23
-#: cmd/incus/operation.go:56 cmd/incus/operation.go:105
-#: cmd/incus/operation.go:185 cmd/incus/profile.go:29 cmd/incus/profile.go:104
+#: cmd/incus/network_zone.go:1285 cmd/incus/operation.go:24
+#: cmd/incus/operation.go:57 cmd/incus/operation.go:107
+#: cmd/incus/operation.go:194 cmd/incus/profile.go:29 cmd/incus/profile.go:104
 #: cmd/incus/profile.go:167 cmd/incus/profile.go:250 cmd/incus/profile.go:320
 #: cmd/incus/profile.go:374 cmd/incus/profile.go:424 cmd/incus/profile.go:552
 #: cmd/incus/profile.go:613 cmd/incus/profile.go:674 cmd/incus/profile.go:750
@@ -2040,7 +2040,7 @@ msgstr "プロファイルのデバイスは個々のインスタンスでは取
 msgid "Device: %s"
 msgstr "デバイス: %s"
 
-#: cmd/incus/create.go:408
+#: cmd/incus/create.go:407
 msgid "Didn't get any affected image, instance or snapshot from server"
 msgstr ""
 "サーバから変更されたイメージ、インスタンス、スナップショットを取得できません"
@@ -2091,7 +2091,7 @@ msgstr "すべてのプロジェクトのインスタンスを表示します"
 msgid "Don't require user confirmation for using --force"
 msgstr "--force を使う際にユーザーの確認を必要としない"
 
-#: cmd/incus/main.go:98
+#: cmd/incus/main.go:101
 msgid "Don't show progress information"
 msgstr "進捗情報を表示しません"
 
@@ -2258,7 +2258,7 @@ msgstr "TTLを指定します"
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr "環境変数を設定します (例: HOME=/home/foo)"
 
-#: cmd/incus/copy.go:55 cmd/incus/create.go:54
+#: cmd/incus/copy.go:55 cmd/incus/create.go:53
 msgid "Ephemeral instance"
 msgstr "Ephemeral インスタンス"
 
@@ -2472,7 +2472,7 @@ msgstr "SSH ホスト鍵の生成に失敗しました: %w"
 msgid "Failed getting peer's status: %w"
 msgstr "ピアのステータスの取得に失敗しました: %w"
 
-#: cmd/incus/create.go:296
+#: cmd/incus/create.go:295
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr "デバイス上書きのためのプロファイル %q のロードに失敗しました: %w"
@@ -2565,7 +2565,7 @@ msgid "Fast mode (same as --columns=nsacPt)"
 msgstr "Fast モード (--columns=nsacPt と同じ)"
 
 #: cmd/incus/network.go:943 cmd/incus/network_acl.go:123
-#: cmd/incus/network_zone.go:114 cmd/incus/operation.go:134
+#: cmd/incus/network_zone.go:114 cmd/incus/operation.go:137
 msgid "Filtering isn't supported yet"
 msgstr "情報表示のフィルタリングはまだサポートされていません"
 
@@ -2590,7 +2590,7 @@ msgstr "強制的に擬似端末を割り当てます"
 msgid "Force removing a member, even if degraded"
 msgstr "degraded 状態であっても強制的にメンバを削除します"
 
-#: cmd/incus/action.go:136
+#: cmd/incus/action.go:135
 msgid "Force the instance to stop"
 msgstr "インスタンスを強制停止します"
 
@@ -2598,7 +2598,7 @@ msgstr "インスタンスを強制停止します"
 msgid "Force the removal of running instances"
 msgstr "稼働中のインスタンスを強制的に削除します"
 
-#: cmd/incus/main.go:94
+#: cmd/incus/main.go:97
 msgid "Force using the local unix socket"
 msgstr "強制的にローカルのUNIXソケットを使います"
 
@@ -2649,7 +2649,7 @@ msgstr ""
 #: cmd/incus/network_acl.go:96 cmd/incus/network_allocations.go:58
 #: cmd/incus/network_forward.go:88 cmd/incus/network_load_balancer.go:93
 #: cmd/incus/network_peer.go:83 cmd/incus/network_zone.go:87
-#: cmd/incus/network_zone.go:691 cmd/incus/operation.go:107
+#: cmd/incus/network_zone.go:691 cmd/incus/operation.go:109
 #: cmd/incus/profile.go:617 cmd/incus/project.go:412 cmd/incus/project.go:804
 #: cmd/incus/remote.go:657 cmd/incus/snapshot.go:250 cmd/incus/storage.go:587
 #: cmd/incus/storage_bucket.go:453 cmd/incus/storage_bucket.go:768
@@ -2895,7 +2895,7 @@ msgstr "インスタンスから sshfs への I/O コピーに失敗しました
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "sshfs からインスタンスへの I/O コピーに失敗しました: %v"
 
-#: cmd/incus/network.go:873 cmd/incus/operation.go:162
+#: cmd/incus/network.go:873 cmd/incus/operation.go:171
 msgid "ID"
 msgstr "ID"
 
@@ -2954,7 +2954,7 @@ msgstr ""
 "存在するスナップショット名の場合は既存のスナップショットを削除したあとに新し"
 "いスナップショットを作成します"
 
-#: cmd/incus/main.go:390
+#: cmd/incus/main.go:393
 #, fuzzy
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
@@ -2973,7 +2973,7 @@ msgstr "設定されている自動でのストレージボリュームの有効
 msgid "Ignore copy errors for volatile files"
 msgstr "コピー中にファイルが更新された場合のエラーを無視します"
 
-#: cmd/incus/action.go:127
+#: cmd/incus/action.go:126
 msgid "Ignore the instance state"
 msgstr "インスタンスの状態を無視します"
 
@@ -3011,7 +3011,7 @@ msgstr "イメージは以下のフィンガープリントでインポートさ
 msgid "Image refreshed successfully!"
 msgstr "イメージの更新が成功しました!"
 
-#: cmd/incus/action.go:131 cmd/incus/launch.go:41
+#: cmd/incus/action.go:130 cmd/incus/launch.go:41
 msgid "Immediately attach to the console"
 msgstr "起動直後にインスタンスのコンソールに接続します"
 
@@ -3093,7 +3093,7 @@ msgstr "クライアント %q に対するインスタンスが切断されま�
 msgid "Instance name is mandatory"
 msgstr "インスタンス名を指定する必要があります"
 
-#: cmd/incus/copy.go:420 cmd/incus/create.go:419
+#: cmd/incus/copy.go:420 cmd/incus/create.go:418
 #, c-format
 msgid "Instance name is: %s"
 msgstr "インスタンス名: %s"
@@ -3112,7 +3112,7 @@ msgstr "インスタンスは以下のフィンガープリントで publish さ
 msgid "Instance snapshots cannot be rebuilt: %s"
 msgstr "インスタンス名: %s"
 
-#: cmd/incus/create.go:57
+#: cmd/incus/create.go:56
 msgid "Instance type"
 msgstr "インスタンスタイプ"
 
@@ -3180,7 +3180,7 @@ msgid ""
 msgstr ""
 "'%s' は不正な名前です。空文字列は maxWidth を指定しているときのみ指定できます"
 
-#: cmd/incus/main.go:485
+#: cmd/incus/main.go:488
 msgid "Invalid number of arguments"
 msgstr "引数の数が不正です"
 
@@ -3237,7 +3237,7 @@ msgstr "LISTEN ADDRESS"
 
 #: cmd/incus/list.go:598 cmd/incus/network.go:1059
 #: cmd/incus/network_forward.go:150 cmd/incus/network_load_balancer.go:153
-#: cmd/incus/operation.go:169 cmd/incus/storage_bucket.go:510
+#: cmd/incus/operation.go:178 cmd/incus/storage_bucket.go:510
 #: cmd/incus/storage_volume.go:1501 cmd/incus/warning.go:221
 msgid "LOCATION"
 msgstr "LOCATION"
@@ -3334,7 +3334,7 @@ msgstr "利用可能なネットワークを一覧表示します"
 msgid "List available storage pools"
 msgstr "利用可能なストレージプールを一覧表示します"
 
-#: cmd/incus/operation.go:104 cmd/incus/operation.go:105
+#: cmd/incus/operation.go:106 cmd/incus/operation.go:107
 msgid "List background operations"
 msgstr "バックグラウンド操作を一覧表示します"
 
@@ -3594,6 +3594,11 @@ msgstr "ネットワーク設定をYAMLで編集します"
 msgid "List of projects to restrict the certificate to"
 msgstr "証明書の使用を制限するプロジェクトのリスト"
 
+#: cmd/incus/operation.go:110
+#, fuzzy
+msgid "List operations from all projects"
+msgstr "すべてのプロジェクトのインスタンスを表示します"
+
 #: cmd/incus/profile.go:612 cmd/incus/profile.go:613
 msgid "List profiles"
 msgstr "プロファイルを一覧表示します"
@@ -3738,7 +3743,7 @@ msgstr ""
 "    u - UUID\n"
 "    t - タイプ"
 
-#: cmd/incus/operation.go:22 cmd/incus/operation.go:23
+#: cmd/incus/operation.go:23 cmd/incus/operation.go:24
 msgid "List, show and delete background operations"
 msgstr "バックグラウンド操作の一覧表示、表示、削除を行います"
 
@@ -4369,7 +4374,7 @@ msgstr ""
 msgid "Must run as root to import from directory"
 msgstr "ディレクトリからのインポートは root で実行する必要があります"
 
-#: cmd/incus/action.go:234
+#: cmd/incus/action.go:233
 msgid "Must supply instance name for: "
 msgstr "インスタンス名を指定する必要があります: "
 
@@ -4404,7 +4409,7 @@ msgstr "NIC:"
 msgid "NICs:"
 msgstr "NICs:"
 
-#: cmd/incus/network.go:957 cmd/incus/operation.go:146 cmd/incus/project.go:456
+#: cmd/incus/network.go:957 cmd/incus/operation.go:155 cmd/incus/project.go:456
 #: cmd/incus/project.go:461 cmd/incus/project.go:466 cmd/incus/project.go:471
 #: cmd/incus/project.go:476 cmd/incus/project.go:481 cmd/incus/remote.go:674
 #: cmd/incus/remote.go:679 cmd/incus/remote.go:684
@@ -4515,7 +4520,7 @@ msgstr "ネットワークロードバランサー %s を作成しました"
 msgid "Network load balancer %s deleted"
 msgstr "ネットワークロードバランサー %s を削除しました"
 
-#: cmd/incus/create.go:55
+#: cmd/incus/create.go:54
 msgid "Network name"
 msgstr "ネットワーク名:"
 
@@ -4568,7 +4573,7 @@ msgstr "新しいエイリアスを定義する"
 msgid "New aliases to add to the image"
 msgstr "イメージに新しいエイリアスを追加します"
 
-#: cmd/incus/copy.go:53 cmd/incus/create.go:53 cmd/incus/move.go:57
+#: cmd/incus/copy.go:53 cmd/incus/create.go:52 cmd/incus/move.go:57
 msgid "New key/value to apply to a specific device"
 msgstr "指定するデバイスに適用する新しいキー/値"
 
@@ -4653,7 +4658,7 @@ msgstr "インスタンスもしくはカスタムボリュームのみをサポ
 msgid "Only managed networks can be modified"
 msgstr "管理対象のネットワークのみ変更できます"
 
-#: cmd/incus/operation.go:86
+#: cmd/incus/operation.go:87
 #, c-format
 msgid "Operation %s deleted"
 msgstr "バックグラウンド操作 %s を削除しました"
@@ -4662,7 +4667,7 @@ msgstr "バックグラウンド操作 %s を削除しました"
 msgid "Optimized Storage"
 msgstr "最適化されたストレージ"
 
-#: cmd/incus/main.go:95
+#: cmd/incus/main.go:98
 msgid "Override the source project"
 msgstr "プロジェクトを指定します"
 
@@ -4725,7 +4730,7 @@ msgstr "送信パケット"
 msgid "Partitions:"
 msgstr "パーティション:"
 
-#: cmd/incus/main.go:353
+#: cmd/incus/main.go:356
 #, c-format
 msgid "Password for %s: "
 msgstr "%s のパスワード: "
@@ -4779,7 +4784,7 @@ msgstr ""
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr "Pretty レンダリング（--format=pretty の短縮系）"
 
-#: cmd/incus/main.go:93
+#: cmd/incus/main.go:96
 msgid "Print help"
 msgstr "ヘルプを表示します"
 
@@ -4787,7 +4792,7 @@ msgstr "ヘルプを表示します"
 msgid "Print the raw response"
 msgstr "レスポンスをそのまま表示します"
 
-#: cmd/incus/main.go:92
+#: cmd/incus/main.go:95
 msgid "Print version number"
 msgstr "バージョン番号を表示します"
 
@@ -4840,7 +4845,7 @@ msgstr "プロファイル名 %s を %s に変更しました"
 msgid "Profile to apply to the new image"
 msgstr "新しいイメージに適用するプロファイル"
 
-#: cmd/incus/copy.go:54 cmd/incus/create.go:52
+#: cmd/incus/copy.go:54 cmd/incus/create.go:51
 msgid "Profile to apply to the new instance"
 msgstr "新しいインスタンスに適用するプロファイル"
 
@@ -5301,11 +5306,11 @@ msgstr "ユーザの確認を要求する"
 msgid "Resources:"
 msgstr "リソース:"
 
-#: cmd/incus/action.go:75
+#: cmd/incus/action.go:74
 msgid "Restart instances"
 msgstr "インスタンスを再起動します"
 
-#: cmd/incus/action.go:76
+#: cmd/incus/action.go:75
 #, fuzzy
 msgid ""
 "Restart instances\n"
@@ -5353,7 +5358,7 @@ msgstr "証明書の使用を1つ以上のプロジェクトに制限します"
 msgid "Retrieve the instance's console log"
 msgstr "インスタンスのコンソールログを取得します"
 
-#: cmd/incus/create.go:362
+#: cmd/incus/create.go:361
 #, c-format
 msgid "Retrieving image: %s"
 msgstr "イメージの取得中: %s"
@@ -5374,7 +5379,7 @@ msgstr "ロール（admin または read-only）"
 msgid "Run again a specific project"
 msgstr ""
 
-#: cmd/incus/action.go:122
+#: cmd/incus/action.go:121
 msgid "Run against all instances"
 msgstr "すべてのインスタンスに対してコマンドを実行します"
 
@@ -5422,7 +5427,7 @@ msgstr "STATE"
 msgid "STATIC"
 msgstr "STATIC"
 
-#: cmd/incus/operation.go:165 cmd/incus/warning.go:215
+#: cmd/incus/operation.go:174 cmd/incus/warning.go:215
 msgid "STATUS"
 msgstr "STATUS"
 
@@ -5836,11 +5841,11 @@ msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 "マウントの代わりに address:port で SSH SFTP リスナーをセットアップします"
 
-#: cmd/incus/main.go:96
+#: cmd/incus/main.go:99
 msgid "Show all debug messages"
 msgstr "デバッグメッセージをすべて表示します"
 
-#: cmd/incus/main.go:97
+#: cmd/incus/main.go:100
 msgid "Show all information messages"
 msgstr "詳細な情報を出力します"
 
@@ -5856,7 +5861,7 @@ msgstr "インスタンスのファイルテンプレートの内容を表示し
 msgid "Show details of a cluster member"
 msgstr "クラスタメンバの詳細を表示します"
 
-#: cmd/incus/operation.go:184 cmd/incus/operation.go:185
+#: cmd/incus/operation.go:193 cmd/incus/operation.go:194
 msgid "Show details on a background operation"
 msgstr "バックグラウンド操作の詳細を表示します"
 
@@ -5884,7 +5889,7 @@ msgstr "インスタンスもしくはサーバの設定を表示します"
 msgid "Show instance or server information"
 msgstr "インスタンスもしくはサーバの情報を表示します"
 
-#: cmd/incus/main.go:264 cmd/incus/main.go:265
+#: cmd/incus/main.go:267 cmd/incus/main.go:268
 msgid "Show less common commands"
 msgstr "全てのコマンドを表示します (主なコマンドだけではなく)"
 
@@ -6030,7 +6035,7 @@ msgstr "スナップショット:"
 msgid "Socket %d:"
 msgstr "ソケット %d:"
 
-#: cmd/incus/action.go:402
+#: cmd/incus/action.go:401
 #, c-format
 msgid "Some instances failed to %s"
 msgstr "一部のインスタンスで %s が失敗しました"
@@ -6066,7 +6071,7 @@ msgstr "ステートフル"
 msgid "Status: %s"
 msgstr "状態: %s"
 
-#: cmd/incus/action.go:98 cmd/incus/action.go:99
+#: cmd/incus/action.go:97 cmd/incus/action.go:98
 msgid "Stop instances"
 msgstr "インスタンスを停止します"
 
@@ -6118,7 +6123,7 @@ msgstr "ストレージプール %s を削除しました"
 msgid "Storage pool %s pending on member %s"
 msgstr "ストレージプール %s はメンバ %s 上でペンディング状態です"
 
-#: cmd/incus/copy.go:59 cmd/incus/create.go:56 cmd/incus/import.go:34
+#: cmd/incus/copy.go:59 cmd/incus/create.go:55 cmd/incus/import.go:34
 #: cmd/incus/move.go:63
 msgid "Storage pool name"
 msgstr "ストレージプール名"
@@ -6146,7 +6151,7 @@ msgstr "ストレージボリュームの移動が成功しました!"
 msgid "Storage volume snapshot %s deleted from %s"
 msgstr "ストレージボリューム %s を削除しました"
 
-#: cmd/incus/action.go:125
+#: cmd/incus/action.go:124
 msgid "Store the instance state"
 msgstr "インスタンスの状態を保存します"
 
@@ -6192,7 +6197,7 @@ msgstr "TOKEN"
 #: cmd/incus/config_trust.go:446 cmd/incus/image.go:1064
 #: cmd/incus/image_alias.go:236 cmd/incus/list.go:571 cmd/incus/network.go:981
 #: cmd/incus/network.go:1055 cmd/incus/network_allocations.go:27
-#: cmd/incus/operation.go:163 cmd/incus/storage_volume.go:1492
+#: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1492
 #: cmd/incus/warning.go:216
 msgid "TYPE"
 msgstr "TYPE"
@@ -6272,7 +6277,7 @@ msgstr ""
 "インスタンスは現在実行中です。停止して、再起動するために --force を使用してく"
 "ださい"
 
-#: cmd/incus/create.go:440
+#: cmd/incus/create.go:439
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr "起動しようとしたインスタンスに接続されているネットワークがありません。"
 
@@ -6407,7 +6412,7 @@ msgstr ""
 "publish 先にはイメージ名は指定できません。\"--alias\" オプションを使ってくだ"
 "さい。"
 
-#: cmd/incus/main.go:286
+#: cmd/incus/main.go:289
 #, fuzzy
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
@@ -6441,7 +6446,7 @@ msgstr "この LXD サーバはネットワークから利用できません"
 msgid "Threads:"
 msgstr "スレッド:"
 
-#: cmd/incus/action.go:137
+#: cmd/incus/action.go:136
 msgid "Time to wait for the instance to shutdown cleanly"
 msgstr "インスタンスがクリーンにシャットダウンするまで待つ時間"
 
@@ -6449,14 +6454,14 @@ msgstr "インスタンスがクリーンにシャットダウンするまで待
 msgid "Timestamps:"
 msgstr "タイムスタンプ:"
 
-#: cmd/incus/create.go:442
+#: cmd/incus/create.go:441
 #, fuzzy
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 "インスタンスにネットワークを接続するには、lxc network attach を使用してくださ"
 "い"
 
-#: cmd/incus/create.go:441
+#: cmd/incus/create.go:440
 #, fuzzy
 msgid "To create a new network, use: incus network create"
 msgstr ""
@@ -6466,7 +6471,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "コンソールから切り離すには <ctrl>+a q を押します"
 
-#: cmd/incus/main.go:395
+#: cmd/incus/main.go:398
 #, fuzzy
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
@@ -6539,7 +6544,7 @@ msgstr "通信ポリシー"
 msgid "Trust token for %s: "
 msgstr "%s:%s のクラスターに join するためのトークンが削除されました"
 
-#: cmd/incus/action.go:288 cmd/incus/launch.go:110
+#: cmd/incus/action.go:287 cmd/incus/launch.go:110
 #, fuzzy, c-format
 msgid "Try `incus info --show-log %s` for more info"
 msgstr "更に情報を得るために `lxc info --show-log %s` を実行してみてください"
@@ -6839,7 +6844,7 @@ msgstr ""
 "最適化された形でストレージドライバを使います (同様のプール上にのみリストアで"
 "きます)"
 
-#: cmd/incus/main.go:99
+#: cmd/incus/main.go:102
 msgid "Use with help or --help to view sub-commands"
 msgstr "サブコマンドを見るには help もしくは --help を使ってください"
 
@@ -6931,7 +6936,7 @@ msgid ""
 "re-initialize the instance if a different image or --empty is not specified."
 msgstr ""
 
-#: cmd/incus/network.go:959 cmd/incus/operation.go:148 cmd/incus/project.go:458
+#: cmd/incus/network.go:959 cmd/incus/operation.go:157 cmd/incus/project.go:458
 #: cmd/incus/project.go:463 cmd/incus/project.go:468 cmd/incus/project.go:473
 #: cmd/incus/project.go:478 cmd/incus/project.go:483 cmd/incus/remote.go:676
 #: cmd/incus/remote.go:681 cmd/incus/remote.go:686
@@ -6974,7 +6979,7 @@ msgstr "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 #: cmd/incus/cluster_group.go:379 cmd/incus/config_trust.go:385
 #: cmd/incus/config_trust.go:468 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:909 cmd/incus/network_acl.go:90
-#: cmd/incus/network_zone.go:81 cmd/incus/operation.go:102
+#: cmd/incus/network_zone.go:81 cmd/incus/operation.go:104
 #: cmd/incus/profile.go:610 cmd/incus/project.go:407 cmd/incus/storage.go:582
 #: cmd/incus/version.go:20 cmd/incus/warning.go:69
 msgid "[<remote>:]"
@@ -7180,8 +7185,8 @@ msgstr "[<remote>:]<instance> [[<remote>:]<instance>...]"
 msgid "[<remote>:]<instance> [<snapshot name>]"
 msgstr "[<remote>:]<instance> [<snapshot name>]"
 
-#: cmd/incus/action.go:30 cmd/incus/action.go:51 cmd/incus/action.go:74
-#: cmd/incus/action.go:97 cmd/incus/delete.go:28
+#: cmd/incus/action.go:30 cmd/incus/action.go:51 cmd/incus/action.go:73
+#: cmd/incus/action.go:96 cmd/incus/delete.go:28
 msgid "[<remote>:]<instance> [[<remote>:]<instance>...]"
 msgstr "[<remote>:]<instance> [[<remote>:]<instance>...]"
 
@@ -7362,7 +7367,7 @@ msgstr "[<remote>:]<network> <profile> [<device name>] [<interface name>]"
 msgid "[<remote>:]<network> [key=value...]"
 msgstr "[<remote>:]<network> [key=value...]"
 
-#: cmd/incus/operation.go:53 cmd/incus/operation.go:183
+#: cmd/incus/operation.go:54 cmd/incus/operation.go:192
 msgid "[<remote>:]<operation>"
 msgstr "[<remote>:]<operation>"
 
@@ -7616,7 +7621,7 @@ msgstr "ドライバ"
 msgid "enabled"
 msgstr "有効"
 
-#: cmd/incus/action.go:394
+#: cmd/incus/action.go:393
 #, c-format
 msgid "error: %v"
 msgstr "エラー: %v"
@@ -7916,7 +7921,7 @@ msgid ""
 "    Create a new OVN network called bar using baz as its uplink network"
 msgstr ""
 
-#: cmd/incus/operation.go:187
+#: cmd/incus/operation.go:196
 #, fuzzy
 msgid ""
 "incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a\n"
