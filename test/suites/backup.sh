@@ -38,7 +38,7 @@ test_storage_volume_recover() {
   fi
 
   # Recover custom block volume.
-  cat <<EOF | incusd recover
+  cat <<EOF | incus admin recover
 no
 yes
 yes
@@ -89,7 +89,7 @@ test_container_recover() {
     incus project switch test
 
     # Basic no-op check.
-    cat <<EOF | incusd recover | grep "No unknown storage pools or volumes found. Nothing to do."
+    cat <<EOF | incus admin recover | grep "No unknown storage pools or volumes found. Nothing to do."
 no
 yes
 EOF
@@ -158,7 +158,7 @@ EOF
 
     respawn_incus "${INCUS_DIR}" true
 
-    cat <<EOF | incusd recover
+    cat <<EOF | incus admin recover
 no
 yes
 yes
@@ -202,7 +202,7 @@ EOF
     shutdown_incus "${INCUS_DIR}"
     respawn_incus "${INCUS_DIR}" true
 
-    cat <<EOF | incusd recover
+    cat <<EOF | incus admin recover
 no
 yes
 yes
@@ -240,7 +240,7 @@ ceph.user.name=$(incus storage get "${poolName}" ceph.user.name)
     incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_volumes WHERE name='c1'"
     incus admin sql global "PRAGMA foreign_keys=ON; DELETE FROM storage_pools WHERE name='${poolName}'"
 
-    cat <<EOF |incusd recover
+    cat <<EOF |incus admin recover
 yes
 ${poolName}
 ${poolDriver}
@@ -312,7 +312,7 @@ test_bucket_recover() {
     incus admin sql global "delete from storage_buckets where name = '${bucketName}'"
 
     # Recover bucket
-    cat <<EOF | incusd recover
+    cat <<EOF | incus admin recover
 no
 yes
 yes
@@ -982,7 +982,7 @@ test_backup_export_import_recover() {
     incus admin sql global "delete from storage_volumes where name = 'c2'"
 
     # Recover removed instance.
-    cat <<EOF | incusd recover
+    cat <<EOF | incus admin recover
 no
 yes
 yes

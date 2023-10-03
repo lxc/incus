@@ -1,3 +1,5 @@
+//go:build linux
+
 package main
 
 import (
@@ -10,15 +12,16 @@ import (
 
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/recover"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/validate"
 )
 
-type cmdRecover struct {
+type cmdAdminRecover struct {
 	global *cmdGlobal
 }
 
-func (c *cmdRecover) Command() *cobra.Command {
+func (c *cmdAdminRecover) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "recover"
 	cmd.Short = "Recover missing instances and volumes from existing and unknown storage pools"
@@ -34,7 +37,7 @@ func (c *cmdRecover) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) > 0 {
 		return fmt.Errorf("Invalid arguments")
@@ -167,7 +170,7 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 	fmt.Println("Scanning for unknown volumes...")
 
 	// Send /internal/recover/validate request to the daemon.
-	reqValidate := internalRecoverValidatePost{
+	reqValidate := recover.ValidatePost{
 		Pools: make([]api.StoragePoolsPost, 0, len(existingPools)+len(unknownPools)),
 	}
 
@@ -187,7 +190,7 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed validation request: %w", err)
 		}
 
-		var res internalRecoverValidateResult
+		var res recover.ValidateResult
 
 		err = resp.MetadataAsStruct(&res)
 		if err != nil {
@@ -237,9 +240,9 @@ func (c *cmdRecover) Run(cmd *cobra.Command, args []string) error {
 	fmt.Println("Starting recovery...")
 
 	// Send /internal/recover/import request to the daemon.
-	// Don't lint next line with gosimple. It says we should convert reqValidate directly to an internalRecoverImportPost
+	// Don't lint next line with gosimple. It says we should convert reqValidate directly to an RecoverImportPost
 	// because their types are identical. This is less clear and will not work if either type changes in the future.
-	reqImport := internalRecoverImportPost{ //nolint:gosimple
+	reqImport := recover.ImportPost{ //nolint:gosimple
 		Pools: reqValidate.Pools,
 	}
 

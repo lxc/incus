@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	internalInstance "github.com/lxc/incus/internal/instance"
+	internalRecover "github.com/lxc/incus/internal/recover"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/backup"
 	backupConfig "github.com/lxc/incus/internal/server/backup/config"
@@ -44,31 +45,6 @@ var internalRecoverImportCmd = APIEndpoint{
 // init recover adds API endpoints to handler slice.
 func init() {
 	apiInternal = append(apiInternal, internalRecoverValidateCmd, internalRecoverImportCmd)
-}
-
-// internalRecoverValidatePost is used to initiate a recovery validation scan.
-type internalRecoverValidatePost struct {
-	Pools []api.StoragePoolsPost `json:"pools" yaml:"pools"`
-}
-
-// internalRecoverValidateVolume provides info about a missing volume that the recovery validation scan found.
-type internalRecoverValidateVolume struct {
-	Name          string `json:"name" yaml:"name"`                   // Name of volume.
-	Type          string `json:"type" yaml:"type"`                   // Same as Type from StorageVolumesPost (container, custom or virtual-machine).
-	SnapshotCount int    `json:"snapshotCount" yaml:"snapshotCount"` // Count of snapshots found for volume.
-	Project       string `json:"project" yaml:"project"`             // Project the volume belongs to.
-	Pool          string `json:"pool" yaml:"pool"`                   // Pool the volume belongs to.
-}
-
-// internalRecoverValidateResult returns the result of the validation scan.
-type internalRecoverValidateResult struct {
-	UnknownVolumes   []internalRecoverValidateVolume // Volumes that could be imported.
-	DependencyErrors []string                        // Errors that are preventing import from proceeding.
-}
-
-// internalRecoverImportPost is used to initiate a recovert import.
-type internalRecoverImportPost struct {
-	Pools []api.StoragePoolsPost `json:"pools" yaml:"pools"`
 }
 
 // internalRecoverScan provides the discovery and import functionality for both recovery validate and import steps.
@@ -136,7 +112,7 @@ func internalRecoverScan(s *state.State, userPools []api.StoragePoolsPost, valid
 		return response.SmartError(err)
 	}
 
-	res := internalRecoverValidateResult{}
+	res := internalRecover.ValidateResult{}
 
 	revert := revert.New()
 	defer revert.Fail()
@@ -320,7 +296,7 @@ func internalRecoverScan(s *state.State, userPools []api.StoragePoolsPost, valid
 						displaySnapshotCount = len(poolVol.VolumeSnapshots)
 					}
 
-					res.UnknownVolumes = append(res.UnknownVolumes, internalRecoverValidateVolume{
+					res.UnknownVolumes = append(res.UnknownVolumes, internalRecover.ValidateVolume{
 						Pool:          poolName,
 						Project:       projectName,
 						Type:          displayType,
@@ -605,7 +581,7 @@ func internalRecoverImportInstanceSnapshot(s *state.State, pool storagePools.Poo
 // internalRecoverValidate validates the requested pools to be recovered.
 func internalRecoverValidate(d *Daemon, r *http.Request) response.Response {
 	// Parse the request.
-	req := &internalRecoverValidatePost{}
+	req := &internalRecover.ValidatePost{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
@@ -617,7 +593,7 @@ func internalRecoverValidate(d *Daemon, r *http.Request) response.Response {
 // internalRecoverImport performs the pool volume recovery.
 func internalRecoverImport(d *Daemon, r *http.Request) response.Response {
 	// Parse the request.
-	req := &internalRecoverImportPost{}
+	req := &internalRecover.ImportPost{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
