@@ -1,8 +1,15 @@
 #!/bin/sh -eu
 
-hash_before="gendoc/metadata-before.txt"
-hash_after="gendoc/metadata-after.txt"
-json_metadata="gendoc/metadata/configuration.json"
+TEMPDIR=$(mktemp -d)
+
+cleanup() {
+  rm -Rf "${TEMPDIR}"
+}
+trap cleanup EXIT HUP INT TERM
+
+hash_before="${TEMPDIR}/metadata-before.txt"
+hash_after="${TEMPDIR}/metadata-after.txt"
+json_metadata="internal/server/metadata/configuration.json"
 doc_config_options="doc/config_options.txt"
 
 metadata_hash() {
