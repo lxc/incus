@@ -419,7 +419,7 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 				return response.SmartError(err)
 			}
 
-			vol.UsedBy = project.FilterUsedBy(r, volumeUsedBy)
+			vol.UsedBy = project.FilterUsedBy(s.Authorizer, r, volumeUsedBy)
 
 			tmp := &api.StorageVolumeSnapshot{}
 			tmp.Config = vol.Config
@@ -550,6 +550,16 @@ func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Resp
 
 	if strings.Contains(req.Name, "/") {
 		return response.BadRequest(fmt.Errorf("Storage volume names may not contain slashes"))
+	}
+
+	// This is a migration request so send back requested secrets.
+	if req.Migration {
+		req := api.StorageVolumePost{
+			Name:   req.Name,
+			Target: req.Target,
+		}
+
+		return storagePoolVolumeTypePostMigration(s, r, projectParam(r), projectName, poolName, fullSnapshotName, req)
 	}
 
 	// Rename the snapshot.

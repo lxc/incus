@@ -125,6 +125,7 @@ Key                     | Type      | Condition                 | Default       
 `snapshots.schedule`    | string    | custom volume             | same as `snapshots.schedule`                   | {{snapshot_schedule_format}}
 `zfs.blocksize`         | string    |                           | same as `volume.zfs.blocksize`                 | Size of the ZFS block in range from 512 to 16 MiB (must be power of 2) - for block volume, a maximum value of 128 KiB will be used even if a higher value is set
 `zfs.block_mode`        | bool      |                           | same as `volume.zfs.block_mode`                | Whether to use a formatted `zvol` rather than a {spellexception}`dataset` (`zfs.block_mode` can be set only for custom storage volumes; use `volume.zfs.block_mode` to enable ZFS block mode for all storage volumes in the pool, including instance volumes)
+`zfs.delegate`          | bool      | ZFS 2.2 or higher         | same as `volume.zfs.delegate`                  | Controls whether to delegate the ZFS dataset and anything underneath it to the container(s) using it. Allows the use of the `zfs` command in the container.
 `zfs.remove_snapshots`  | bool      |                           | same as `volume.zfs.remove_snapshots` or `false` | Remove snapshots as needed
 `zfs.use_refquota`      | bool      |                           | same as `volume.zfs.use_refquota` or `false`   | Use `refquota` instead of `quota` for space
 `zfs.reserve_space`     | bool      |                           | same as `volume.zfs.reserve_space` or `false`  | Use `reservation`/`refreservation` along with `quota`/`refquota`
@@ -133,7 +134,7 @@ Key                     | Type      | Condition                 | Default       
 
 ### Storage bucket configuration
 
-To enable storage buckets for local storage pool drivers and allow applications to access the buckets via the S3 protocol, you must configure the [`core.storage_buckets_address`](server-options-core) server setting.
+To enable storage buckets for local storage pool drivers and allow applications to access the buckets via the S3 protocol, you must configure the {config:option}`server-core:core.storage_buckets_address` server setting.
 
 Key                     | Type      | Condition                 | Default                                        | Description
 :--                     | :---      | :--------                 | :------                                        | :----------

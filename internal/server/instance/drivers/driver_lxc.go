@@ -804,6 +804,12 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		"/sys/kernel/tracing",
 	}
 
+	// Pass in /dev/zfs to the container if delegation is supported on the system.
+	// This is only done for unprivileged containers as delegation is tied to the user namespace.
+	if !d.IsPrivileged() && storageDrivers.ZFSSupportsDelegation() && util.PathExists("/dev/zfs") {
+		bindMounts = append(bindMounts, "/dev/zfs")
+	}
+
 	if d.IsPrivileged() && !d.state.OS.RunningInUserNS {
 		err = lxcSetConfigItem(cc, "lxc.mount.entry", "mqueue dev/mqueue mqueue rw,relatime,create=dir,optional 0 0")
 		if err != nil {
@@ -870,6 +876,10 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 			"c 5:2 rwm",    // /dev/ptmx
 			"c 10:229 rwm", // /dev/fuse
 			"c 10:200 rwm", // /dev/net/tun
+		}
+
+		if storageDrivers.ZFSSupportsDelegation() {
+			devices = append(devices, "c 10:249 rwm")
 		}
 
 		for _, dev := range devices {
@@ -1031,6 +1041,13 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup environment
 	for k, v := range d.expandedConfig {
+		// gendoc:generate(group=instance-miscellaneous, key=environment.*)
+		// The specified key/value environment variables are exported to the instance and set for `incus exec`.
+
+		// ---
+		//  type: string
+		//  liveupdate: yes (exec)
+		//  shortdesc: Environment variables to export
 		if strings.HasPrefix(k, "environment.") {
 			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("%s=%s", strings.TrimPrefix(k, "environment."), v))
 			if err != nil {
@@ -1276,6 +1293,13 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 	// Setup sysctls
 	for k, v := range d.expandedConfig {
+		// gendoc:generate(group=instance-miscellaneous, key=linux.sysctl.*)
+		//
+		// ---
+		//  type: string
+		//  liveupdate: no
+		//  condition: container
+		//  shortdesc: Override for the corresponding `sysctl` setting in the container
 		if strings.HasPrefix(k, "linux.sysctl.") {
 			sysctlSuffix := strings.TrimPrefix(k, "linux.sysctl.")
 			sysctlKey := fmt.Sprintf("lxc.sysctl.%s", sysctlSuffix)
@@ -1876,6 +1900,8 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.IdmapSet, 
 
 // Start functions.
 func (d *lxc) startCommon() (string, []func() error, error) {
+	postStartHooks := []func() error{}
+
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -1918,10 +1944,22 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	d.stopForkfile(false)
 
 	// Mount instance root volume.
-	_, err = d.mount()
+	mountInfo, err := d.mount()
 	if err != nil {
 		return "", nil, err
 	}
+
+	// Handle post hooks.
+	postStartHooks = append(postStartHooks, func() error {
+		for _, hook := range mountInfo.PostHooks {
+			err := hook(d)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 
 	revert.Add(func() { _ = d.unmount() })
 
@@ -1996,7 +2034,6 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	}
 
 	// Create the devices
-	postStartHooks := []func() error{}
 	nicID := -1
 	nvidiaDevices := []string{}
 
@@ -7818,7 +7855,7 @@ func (d *lxc) setNetworkPriority() error {
 	}
 
 	// Check that the container is running
-	if !d.IsRunning() {
+	if d.InitPID() <= 0 {
 		return fmt.Errorf("Can't set network priority on stopped container")
 	}
 

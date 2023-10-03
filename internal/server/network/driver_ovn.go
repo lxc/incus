@@ -2878,12 +2878,12 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return fmt.Errorf("Failed generating auto config: %w", err)
 	}
 
-	dbUpdateNeeeded, changedKeys, oldNetwork, err := n.common.configChanged(newNetwork)
+	dbUpdateNeeded, changedKeys, oldNetwork, err := n.common.configChanged(newNetwork)
 	if err != nil {
 		return err
 	}
 
-	if !dbUpdateNeeeded {
+	if !dbUpdateNeeded {
 		return nil // Nothing changed.
 	}
 

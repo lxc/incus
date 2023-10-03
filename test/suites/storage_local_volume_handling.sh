@@ -238,7 +238,7 @@ test_storage_local_volume_handling() {
           ! incus storage volume get "incustest-$(basename "${INCUS_DIR}")-${target_driver}" vol5/snapremove user.foo || false
 
           # copy ISO custom volumes
-          truncate -s 25MiB foo.iso
+          truncate -s 8MiB foo.iso
           incus storage volume import "incustest-$(basename "${INCUS_DIR}")-${source_driver}" ./foo.iso iso1
           incus storage volume copy "incustest-$(basename "${INCUS_DIR}")-${source_driver}"/iso1 "incustest-$(basename "${INCUS_DIR}")-${target_driver}"/iso1
           incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${target_driver}" iso1 | grep -q 'content_type: iso'

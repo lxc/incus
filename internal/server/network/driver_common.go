@@ -582,14 +582,14 @@ func (n *common) bgpValidationRules(config map[string]string) (map[string]func(v
 	rules := map[string]func(value string) error{}
 	for k := range config {
 		// BGP keys have the peer name in their name, extract the suffix.
-		if !strings.HasPrefix(k, "bgp.") {
+		if !strings.HasPrefix(k, "bgp.peers.") {
 			continue
 		}
 
 		// Validate remote name in key.
 		fields := strings.Split(k, ".")
 		if len(fields) != 4 {
-			return nil, fmt.Errorf("Invalid network configuration key: %s", k)
+			return nil, fmt.Errorf("Invalid network configuration key: %q", k)
 		}
 
 		bgpKey := fields[3]

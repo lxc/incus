@@ -151,11 +151,12 @@ _have incus && {
       cephfs.fscache cephfs.vg_name lvm.thinpool_name lvm.thinpool_metadata_size lvm.use_thinpool \
       lvm.vg_name rsync.bwlimit volatile.initial_source \
       volatile.pool.pristine volume.block.filesystem \
-      volume.block.mount_options volume.size volume.zfs.remove_snapshots \
+      volume.block.mount_options volume.size volume.zfs.remove_snapshots volume.zfs.delegate \
       volume.zfs.use_refquota zfs.clone_copy zfs.pool_name volume.zfs.reserve_space"
 
     storage_volume_keys="size block.filesystem block.mount_options \
-      security.unmapped security.shifted zfs.remove_snapshots zfs.use_refquota zfs.reserve_space"
+      security.unmapped security.shifted zfs.remove_snapshots zfs.use_refquota zfs.reserve_space
+      zfs.delegate"
 
     if [ $COMP_CWORD -eq 1 ]; then
       COMPREPLY=( $(compgen -W "$incus_cmds" -- ${COMP_WORDS[COMP_CWORD]}) )

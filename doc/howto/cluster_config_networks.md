@@ -33,12 +33,13 @@ Creating additional networks is a two-step process:
 
 Also see {ref}`network-create-cluster`.
 
+(cluster-https-address)=
 ## Separate REST API and clustering networks
 
 You can configure different networks for the REST API endpoint of your clients and for internal traffic between the members of your cluster.
 This separation can be useful, for example, to use a virtual address for your REST API, with DNS round robin.
 
-To do so, you must specify different addresses for [`cluster.https_address`](server) (the address for internal cluster traffic) and [`core.https_address`](server) (the address for the REST API):
+To do so, you must specify different addresses for {config:option}`server-cluster:cluster.https_address` (the address for internal cluster traffic) and {config:option}`server-core:core.https_address` (the address for the REST API):
 
 1. Create your cluster as usual, and make sure to use the address that you want to use for internal cluster traffic as the cluster address.
    This address is set as the `cluster.https_address` configuration.

@@ -336,8 +336,72 @@ func internalRecoverScan(s *state.State, userPools []api.StoragePoolsPost, valid
 
 	// If in import mode and no dependency errors, then re-create missing DB records.
 
-	// Create any missing instance and storage volume records.
 	for _, pool := range pools {
+		// Create missing storage pool DB record if neeed.
+		if pool.ID() == storagePools.PoolIDTemporary {
+			var instPoolVol *backupConfig.Config // Instance volume used for new pool record.
+			var poolID int64                     // Pool ID of created pool record.
+
+			var poolVols []*backupConfig.Config
+			for _, value := range poolsProjectVols[pool.Name()] {
+				poolVols = append(poolVols, value...)
+			}
+
+			// Search unknown volumes looking for an instance volume that can be used to
+			// restore the pool DB config from. This is preferable over using the user
+			// supplied config as it will include any additional settings not supplied.
+			for _, poolVol := range poolVols {
+				if poolVol.Pool != nil && poolVol.Pool.Config != nil {
+					instPoolVol = poolVol
+					break // Stop search once we've found an instance with pool config.
+				}
+			}
+
+			if instPoolVol != nil {
+				// Create storage pool DB record from config in the instance.
+				logger.Info("Creating storage pool DB record from instance config", logger.Ctx{"name": instPoolVol.Pool.Name, "description": instPoolVol.Pool.Description, "driver": instPoolVol.Pool.Driver, "config": instPoolVol.Pool.Config})
+				poolID, err = dbStoragePoolCreateAndUpdateCache(s, instPoolVol.Pool.Name, instPoolVol.Pool.Description, instPoolVol.Pool.Driver, instPoolVol.Pool.Config)
+				if err != nil {
+					return response.SmartError(fmt.Errorf("Failed creating storage pool %q database entry: %w", pool.Name(), err))
+				}
+			} else {
+				// Create storage pool DB record from config supplied by user if not
+				// instance volume pool config found.
+				poolDriverName := pool.Driver().Info().Name
+				poolDriverConfig := pool.Driver().Config()
+				logger.Info("Creating storage pool DB record from user config", logger.Ctx{"name": pool.Name(), "driver": poolDriverName, "config": poolDriverConfig})
+				poolID, err = dbStoragePoolCreateAndUpdateCache(s, pool.Name(), "", poolDriverName, poolDriverConfig)
+				if err != nil {
+					return response.SmartError(fmt.Errorf("Failed creating storage pool %q database entry: %w", pool.Name(), err))
+				}
+			}
+
+			revert.Add(func() {
+				_ = dbStoragePoolDeleteAndUpdateCache(s, pool.Name())
+			})
+
+			// Set storage pool node to storagePoolCreated.
+			// Must come before storage pool is loaded from the database.
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.StoragePoolNodeCreated(poolID)
+			})
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Failed marking storage pool %q local status as created: %w", pool.Name(), err))
+			}
+
+			logger.Debug("Marked storage pool local status as created", logger.Ctx{"pool": pool.Name()})
+
+			newPool, err := storagePools.LoadByName(s, pool.Name())
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Failed loading created storage pool %q: %w", pool.Name(), err))
+			}
+
+			// Record this newly created pool so that defer doesn't unmount on return.
+			pools[pool.Name()] = newPool
+			pool = newPool // Replace temporary pool handle with proper one from DB.
+		}
+
+		// Create any missing instance, storage volume, and storage bucket records.
 		for projectName, poolVols := range poolsProjectVols[pool.Name()] {
 			projectInfo := projects[projectName]
 
@@ -348,65 +412,6 @@ func internalRecoverScan(s *state.State, userPools []api.StoragePoolsPost, valid
 
 			profileProjectName := project.ProfileProjectFromRecord(projectInfo)
 			customStorageProjectName := project.StorageVolumeProjectFromRecord(projectInfo, db.StoragePoolVolumeTypeCustom)
-
-			// Create missing storage pool DB record if neeed.
-			if pool.ID() == storagePools.PoolIDTemporary {
-				var instPoolVol *backupConfig.Config // Instance volume used for new pool record.
-				var poolID int64                     // Pool ID of created pool record.
-
-				// Search unknown volumes looking for an instance volume that can be used to
-				// restore the pool DB config from. This is preferable over using the user
-				// supplied config as it will include any additional settings not supplied.
-				for _, poolVol := range poolVols {
-					if poolVol.Pool != nil && poolVol.Pool.Config != nil {
-						instPoolVol = poolVol
-						break // Stop search once we've found an instance with pool config.
-					}
-				}
-
-				if instPoolVol != nil {
-					// Create storage pool DB record from config in the instance.
-					logger.Info("Creating storage pool DB record from instance config", logger.Ctx{"name": instPoolVol.Pool.Name, "description": instPoolVol.Pool.Description, "driver": instPoolVol.Pool.Driver, "config": instPoolVol.Pool.Config})
-					poolID, err = dbStoragePoolCreateAndUpdateCache(s, instPoolVol.Pool.Name, instPoolVol.Pool.Description, instPoolVol.Pool.Driver, instPoolVol.Pool.Config)
-					if err != nil {
-						return response.SmartError(fmt.Errorf("Failed creating storage pool %q database entry: %w", pool.Name(), err))
-					}
-				} else {
-					// Create storage pool DB record from config supplied by user if not
-					// instance volume pool config found.
-					poolDriverName := pool.Driver().Info().Name
-					poolDriverConfig := pool.Driver().Config()
-					logger.Info("Creating storage pool DB record from user config", logger.Ctx{"name": pool.Name(), "driver": poolDriverName, "config": poolDriverConfig})
-					poolID, err = dbStoragePoolCreateAndUpdateCache(s, pool.Name(), "", poolDriverName, poolDriverConfig)
-					if err != nil {
-						return response.SmartError(fmt.Errorf("Failed creating storage pool %q database entry: %w", pool.Name(), err))
-					}
-				}
-
-				revert.Add(func() {
-					_ = dbStoragePoolDeleteAndUpdateCache(s, pool.Name())
-				})
-
-				// Set storage pool node to storagePoolCreated.
-				// Must come before storage pool is loaded from the database.
-				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					return tx.StoragePoolNodeCreated(poolID)
-				})
-				if err != nil {
-					return response.SmartError(fmt.Errorf("Failed marking storage pool %q local status as created: %w", pool.Name(), err))
-				}
-
-				logger.Debug("Marked storage pool local status as created", logger.Ctx{"pool": pool.Name()})
-
-				newPool, err := storagePools.LoadByName(s, pool.Name())
-				if err != nil {
-					return response.SmartError(fmt.Errorf("Failed loading created storage pool %q: %w", pool.Name(), err))
-				}
-
-				// Record this newly created pool so that defer doesn't unmount on return.
-				pools[pool.Name()] = newPool
-				pool = newPool // Replace temporary pool handle with proper one from DB.
-			}
 
 			// Recover unknown custom volumes (do this first before recovering instances so that any
 			// instances that reference unknown custom volume disk devices can be created).

@@ -174,7 +174,7 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			apiProfiles[i].UsedBy = project.FilterUsedBy(r, apiProfiles[i].UsedBy)
+			apiProfiles[i].UsedBy = project.FilterUsedBy(s.Authorizer, r, apiProfiles[i].UsedBy)
 		}
 
 		if recursion {
@@ -400,7 +400,7 @@ func profileGet(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		resp.UsedBy = project.FilterUsedBy(r, resp.UsedBy)
+		resp.UsedBy = project.FilterUsedBy(s.Authorizer, r, resp.UsedBy)
 
 		return nil
 	})

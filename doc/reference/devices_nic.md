@@ -373,7 +373,7 @@ IP addresses, gateways and routes
       169.254.0.1
       fe80::1
 
-  For VMs, the gateways must be configured manually or via a mechanism like `cloud-init`.
+  For VMs, the gateways must be configured manually or via a mechanism like `cloud-init` (see the {ref}`how to guide <instances-routed-nic-vm>`).
 
   ```{note}
   If your container image is configured to perform DHCP on the interface, it will likely remove the automatically added configuration.
@@ -392,11 +392,8 @@ Multiple IP addresses
 Parent interface
 : This NIC can operate with and without a `parent` network interface set.
 
-  With the `parent` network interface set, proxy ARP/NDP entries of the instance's IPs are added to the parent interface, which allows the instance to join the parent interface's network at layer 2.
-
-DNS
-: The name servers must be configured inside the instance, because they are not set automatically.
-  To do this, set the following `sysctls`:
+: With the `parent` network interface set, proxy ARP/NDP entries of the instance's IPs are added to the parent interface, which allows the instance to join the parent interface's network at layer 2.
+: To enable this, the following network configuration must be applied on the host via `sysctl`:
 
    - When using IPv4 addresses:
 

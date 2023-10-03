@@ -38,4 +38,4 @@ Usually, this includes the following data:
 
 For building your own images, you can use [`distrobuilder`](https://github.com/lxc/distrobuilder).
 
-See the [`distrobuilder` documentation](https://distrobuilder.readthedocs.io/en/latest/) for instructions for installing and using the tool.
+See the [`distrobuilder` documentation](https://linuxcontainers.org/distrobuilder/docs/latest/) for instructions for installing and using the tool.

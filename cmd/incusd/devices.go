@@ -689,7 +689,8 @@ func deviceEventListener(stateFunc func() *state.State) {
 
 			s := stateFunc()
 
-			if !s.OS.CGInfo.Supports(cgroup.NetPrio, nil) {
+			// we want to catch all new devices at the host and process them in networkAutoAttach
+			if e[1] != "add" {
 				continue
 			}
 

@@ -1,87 +1,125 @@
----
-discourse: 11296
----
-
 (backups)=
-# Backing up a LXD server
+# How to back up a LXD server
+
+```{youtube} https://www.youtube.com/watch?v=IFOZpAxckPo
+```
+
+In a production setup, you should always back up the contents of your LXD server.
+
+The LXD server contains a variety of different entities, and when choosing your backup strategy, you must decide which of these entities you want to back up and how frequently you want to save them.
 
 ## What to back up
 
-When planning to back up a LXD server, consider all the different entities
-that are stored/managed by LXD:
+The various contents of your LXD server are located on your file system and, in addition, recorded in the {ref}`LXD database <database>`.
+Therefore, only backing up the database or only backing up the files on disk does not give you a full functional backup.
+
+Your LXD server contains the following entities:
 
 - Instances (database records and file systems)
-- Images (database records, image files and file systems)
+- Images (database records, image files, and file systems)
 - Networks (database records and state files)
 - Profiles (database records)
 - Storage volumes (database records and file systems)
 
-Only backing up the database or only backing up the instances will not
-get you a fully functional backup.
-
-In some disaster recovery scenarios, that may be reasonable but if your
-goal is to get back online quickly, consider all the different pieces of
-LXD you're using.
+Consider which of these you need to back up.
+For example, if you don't use custom images, you don't need to back up your images since they are available on the image server.
+If you use only the `default` profile, or only the standard `lxdbr0` network bridge, you might not need to worry about backing them up, because they can easily be re-created.
 
 ## Full backup
 
-A full backup would include the entirety of `/var/lib/lxd` or `/var/snap/lxd/common/lxd` for snap users.
+To create a full backup of all contents of your LXD server, back up the `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/lxd` (otherwise) directory.
 
-You will also need to appropriately back up any external storage that you
-made LXD use, this can be LVM volume groups, ZFS zpools or any other
-resource which isn't directly self-contained to LXD.
+This directory contains your local storage, the LXD database, and your configuration.
+It does not contain separate storage devices, however.
+That means that whether the directory also contains the data of your instances depends on the storage drivers that you use.
 
-Restoring involves stopping LXD on the target server, wiping the `lxd`
-directory, restoring the backup and any external dependency it requires.
+```{important}
+If your LXD server uses any external storage (for example, LVM volume groups, ZFS zpools, or any other resource that isn't directly self-contained to LXD), you must back this up separately.
 
-If not using the snap package and your source system has a `/etc/subuid`
-and `/etc/subgid` file, restoring those or at least the entries inside
-them for both the `lxd` and `root` user is also a good idea
-(avoids needless shifting of container file systems).
+See {ref}`howto-storage-backup-volume` for instructions.
+```
 
-Then start LXD again and check that everything works fine.
+To back up your data, create a tarball of `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/lxd` (otherwise).
+If you are not using the snap package and your source system has a `/etc/subuid` and `/etc/subgid` file, you should also back up these files.
+Restoring them avoids needless shifting of instance file systems.
 
-## Secondary backup LXD server
+To restore your data, complete the following steps:
+
+1. Stop LXD on your server (for example, with `sudo snap stop lxd`).
+1. Delete the directory (`/var/snap/lxd/common/lxd` for snap users or `/var/lib/lxd` otherwise).
+1. Restore the directory from the backup.
+1. Delete and restore any external storage devices.
+1. If you are not using the snap, restore the `/etc/subuid` and `/etc/subgid` files.
+1. Restart LXD (for example, with `sudo snap start lxd` or by restarting your machine).
+
+### Export a snapshot
+
+If you are using the LXD snap, you can also create a full backup by exporting a snapshot of the snap:
+
+1. Create a snapshot:
+
+       sudo snap save lxd
+
+   Note down the ID of the snapshot (shown in the `Set` column).
+1. Export the snapshot to a file:
+
+       sudo snap export-snapshot <ID> <output_file>
+
+See [Snapshots](https://snapcraft.io/docs/snapshots) in the Snapcraft documentation for details.
+
+## Partial backup
+
+If you decide to only back up specific entities, you have different options for how to do this.
+You should consider doing some of these partial backups even if you are doing full backups in addition.
+It can be easier and safer to, for example, restore a single instance or reconfigure a profile than to restore the full LXD server.
+
+### Back up instances and volumes
+
+Instances and storage volumes are backed up in a very similar way (because when backing up an instance, you basically back up its instance volume, see {ref}`storage-volume-types`).
+
+See {ref}`instances-backup` and {ref}`howto-storage-backup-volume` for detailed information.
+The following sections give a brief summary of the options you have for backing up instances and volumes.
+
+#### Secondary backup LXD server
 
 LXD supports copying and moving instances and storage volumes between two hosts.
+See {ref}`move-instances` and {ref}`howto-storage-move-volume` for instructions.
 
-So with a spare server, you can copy your instances and storage volumes
-to that secondary server every so often, allowing it to act as either an
-offline spare or just as a storage server that you can copy your
-instances back from if needed.
+So if you have a spare server, you can regularly copy your instances and storage volumes to that secondary server to back them up.
+If needed, you can either switch over to the secondary server or copy your instances or storage volumes back from it.
 
-## Instance backups
+If you use the secondary server as a pure storage server, it doesn't need to be as powerful as your main LXD server.
 
-The `lxc export` command can be used to export instances to a backup tarball.
-Those tarballs will include all snapshots by default and an "optimized"
-tarball can be obtained if you know that you'll be restoring on a LXD
-server using the same storage pool backend.
+#### Export tarballs
 
-You can use any compressor installed on the server using the `--compression` flag.
-There is no validation on the LXD side, any command that is available
-to LXD and supports `-c` for stdout should work.
+You can use the `export` command to export instances and volumes to a backup tarball.
+By default, those tarballs include all snapshots.
 
-Those tarballs can be saved any way you want on any file system you want
-and can be imported back into LXD using the `lxc import` command.
+You can use an optimized export option, which is usually quicker and results in a smaller size of the tarball.
+However, you must then use the same storage driver when restoring the backup tarball.
 
-## Disaster recovery
+See {ref}`instances-backup-export` and {ref}`storage-backup-export` for instructions.
 
-LXD provides the `lxd recover` command (note the `lxd` command rather than the normal `lxc` command).
-This is an interactive CLI tool that will attempt to scan all storage pools that exist in the database looking for
-missing volumes that can be recovered. It also provides the ability for the user to specify the details of any
-unknown storage pools (those that exist on disk but do not exist in the database) and it will attempt to scan those
-too.
+#### Snapshots
 
-Because LXD maintains a `backup.yaml` file in each instance's storage volume which contains all necessary
-information to recover a given instance (including instance configuration, attached devices, storage volume and
-pool configuration) it can be used to rebuild the instance, storage volume and storage pool database records.
+Snapshots save the state of an instance or volume at a specific point in time.
+However, they are stored in the same storage pool and are therefore likely to be lost if the original data is deleted or lost.
+This means that while snapshots are very quick and easy to create and restore, they don't constitute a secure backup.
 
-The `lxd recover` tool will attempt to mount the storage pool (if not already mounted) and scan it for unknown
-volumes that look like they are associated with LXD. For each instance volume LXD will attempt to mount it and
-access the `backup.yaml` file. From there it will perform some consistency checks to compare what is in the
-`backup.yaml` file with what is actually on disk (such as matching snapshots) and if all checks out then the
-database records are recreated.
+See {ref}`instances-snapshots` and {ref}`storage-backup-snapshots` for more information.
 
-If the storage pool database record also needs to be created then it will prefer to use an instance `backup.yaml`
-file as the basis of its configuration, rather than what the user provided during the discovery phase, however if not
-available then it will fallback to restoring the pool's database record with what was provided by the user.
+(backup-database)=
+### Back up the database
+
+While there is no trivial method to restore the contents of the {ref}`LXD database <database>`, it can still be very convenient to keep a backup of its content.
+Such a backup can make it much easier to re-create, for example, networks or profiles if the need arises.
+
+Use the following command to dump the content of the local database to a file:
+
+    lxd sql local .dump > <output_file>
+
+Use the following command to dump the content of the global database to a file:
+
+    lxd sql global .dump > <output_file>
+
+You should include these two commands in your regular LXD backup.

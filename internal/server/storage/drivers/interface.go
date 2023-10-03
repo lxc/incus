@@ -81,6 +81,12 @@ type Driver interface {
 	// MountVolumeSnapshot mounts a storage volume snapshot as readonly.
 	MountVolumeSnapshot(snapVol Volume, op *operations.Operation) error
 
+	// CanDelegateVolume checks whether the volume can be delegated.
+	CanDelegateVolume(vol Volume) bool
+
+	// DelegateVolume allows for the volume to be managed by the instance.
+	DelegateVolume(vol Volume, pid int) error
+
 	// UnmountVolume unmounts a storage volume, returns true if unmounted, false if was not
 	// mounted.
 	UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operation) (bool, error)

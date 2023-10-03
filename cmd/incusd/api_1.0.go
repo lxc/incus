@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/auth/oidc"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
@@ -367,7 +366,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	fullSrv.AuthUserName = requestor.Username
 	fullSrv.AuthUserMethod = requestor.Protocol
 
-	if auth.UserIsAdmin(r) {
+	if s.Authorizer.UserIsAdmin(r) {
 		fullSrv.Config, err = daemonConfigRender(s)
 		if err != nil {
 			return response.InternalError(err)

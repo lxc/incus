@@ -633,12 +633,15 @@ func (d *common) rebuildCommon(inst instance.Instance, img *api.Image, op *opera
 
 	// Rebuild as empty if there is no image provided.
 	if img == nil {
-		return pool.CreateInstance(inst, nil)
-	}
-
-	err = pool.CreateInstanceFromImage(inst, img.Fingerprint, op)
-	if err != nil {
-		return err
+		err = pool.CreateInstance(inst, nil)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = pool.CreateInstanceFromImage(inst, img.Fingerprint, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -647,9 +650,11 @@ func (d *common) rebuildCommon(inst instance.Instance, img *api.Image, op *opera
 			return err
 		}
 
-		err = tx.UpdateImageLastUseDate(ctx, inst.Project().Name, img.Fingerprint, time.Now().UTC())
-		if err != nil {
-			return err
+		if img != nil {
+			err = tx.UpdateImageLastUseDate(ctx, inst.Project().Name, img.Fingerprint, time.Now().UTC())
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -899,7 +904,9 @@ func (d *common) warningsDelete() error {
 	return nil
 }
 
-// canMigrate returns whether the instance can be migrated.
+// canMigrate determines if the given instance can be migrated and whether the migration
+// can be live. In "auto" mode, the function checks each attached device of the instance
+// to ensure they are all migratable.
 func (d *common) canMigrate(inst instance.Instance) (bool, bool) {
 	// Check policy for the instance.
 	config := d.ExpandedConfig()
@@ -926,10 +933,12 @@ func (d *common) canMigrate(inst instance.Instance) (bool, bool) {
 	for deviceName, rawConfig := range d.ExpandedDevices() {
 		dev, err := device.New(inst, d.state, deviceName, rawConfig, volatileGet, volatileSet)
 		if err != nil {
+			logger.Warn("Instance will not be migrated due to a device error", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "device": dev.Name(), "err": err})
 			return false, false
 		}
 
 		if !dev.CanMigrate() {
+			logger.Warn("Instance will not be migrated because its device cannot be migrated", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "device": dev.Name()})
 			return false, false
 		}
 	}

@@ -81,7 +81,7 @@ To do so, copy the client certificate to the server and register it using `lxc c
 (authentication-token)=
 #### Adding client certificates using tokens
 
-You can also add new clients by using tokens. This is a safer way than using the trust password, because tokens expire after a configurable time ([`core.remote_token_expiry`](server-options-core)) or once they've been used.
+You can also add new clients by using tokens. This is a safer way than using the trust password, because tokens expire after a configurable time ({config:option}`server-core:core.remote_token_expiry`) or once they've been used.
 
 To use this method, generate a token for each client by calling `lxc config trust add`, which will prompt for the client name.
 The clients can then add their certificates to the server's trust store by providing the generated token when prompted for the trust password.
@@ -148,12 +148,12 @@ The LXD client then retrieves and stores the access and refresh tokens and provi
 
 LXD supports issuing server certificates using {abbr}`ACME (Automatic Certificate Management Environment)` services, for example, [Let's Encrypt](https://letsencrypt.org/).
 
-To enable this feature, set the following {ref}`server configuration <server-options-acme>`:
+To enable this feature, set the following server configuration:
 
-- `acme.domain`: The domain for which the certificate should be issued.
-- `acme.email`: The email address used for the account of the ACME service.
-- `acme.agree_tos`: Must be set to `true` to agree to the ACME service's terms of service.
-- `acme.ca_url`: The directory URL of the ACME service. By default, LXD uses "Let's Encrypt".
+- {config:option}`server-acme:acme.domain`: The domain for which the certificate should be issued.
+- {config:option}`server-acme:acme.email`: The email address used for the account of the ACME service.
+- {config:option}`server-acme:acme.agree_tos`: Must be set to `true` to agree to the ACME service's terms of service.
+- {config:option}`server-acme:acme.ca_url`: The directory URL of the ACME service. By default, LXD uses "Let's Encrypt".
 
 For this feature to work, LXD must be reachable from port 80.
 This can be achieved by using a reverse proxy such as [HAProxy](http://www.haproxy.org/).

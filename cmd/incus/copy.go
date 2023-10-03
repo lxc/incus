@@ -131,12 +131,12 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 	// Parse the config overrides
 	configMap := map[string]string{}
 	for _, entry := range c.flagConfig {
-		if !strings.Contains(entry, "=") {
-			return fmt.Errorf(i18n.G("Bad key=value pair: %s"), entry)
+		key, value, found := strings.Cut(entry, "=")
+		if !found {
+			return fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
 		}
 
-		fields := strings.SplitN(entry, "=", 2)
-		configMap[fields[0]] = fields[1]
+		configMap[key] = value
 	}
 
 	deviceMap, err := parseDeviceOverrides(c.flagDevice)

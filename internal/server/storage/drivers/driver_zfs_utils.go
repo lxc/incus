@@ -175,8 +175,8 @@ func (d *zfs) getClones(dataset string) ([]string, error) {
 	return clones, nil
 }
 
-func (d *zfs) getDatasets(dataset string) ([]string, error) {
-	out, err := subprocess.RunCommand("zfs", "get", "-H", "-r", "-o", "name", "name", dataset)
+func (d *zfs) getDatasets(dataset string, types string) ([]string, error) {
+	out, err := subprocess.RunCommand("zfs", "get", "-H", "-r", "-o", "name", "-t", types, "name", dataset)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,6 @@ func (d *zfs) getDatasets(dataset string) ([]string, error) {
 		}
 
 		line = strings.TrimPrefix(line, dataset)
-		line = strings.TrimPrefix(line, "/")
 		children = append(children, line)
 	}
 
@@ -320,11 +319,38 @@ func (d *zfs) initialDatasets() []string {
 	return entries
 }
 
+func (d *zfs) needsRecursion(dataset string) bool {
+	// Ignore snapshots for the test.
+	dataset = strings.Split(dataset, "@")[0]
+
+	entries, err := d.getDatasets(dataset, "filesystem,volume")
+	if err != nil {
+		return false
+	}
+
+	if len(entries) == 0 {
+		return false
+	}
+
+	return true
+}
+
 func (d *zfs) sendDataset(dataset string, parent string, volSrcArgs *migration.VolumeSourceArgs, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTracker) error {
 	defer func() { _ = conn.Close() }()
 
 	// Assemble zfs send command.
 	args := []string{"send"}
+
+	// Check if nesting is required.
+	// We only want to use recursion (and possible raw) mode if required as it can interfere with ZFS encryption.
+	if d.needsRecursion(dataset) {
+		args = append(args, "-R")
+
+		if zfsRaw {
+			args = append(args, "-w")
+		}
+	}
+
 	if util.ValueInSlice("compress", volSrcArgs.MigrationType.Features) {
 		args = append(args, "-c")
 		args = append(args, "-L")
@@ -474,4 +500,18 @@ func (d *zfs) datasetHeader(vol Volume, snapshots []string) (*ZFSMetaDataHeader,
 
 func (d *zfs) randomVolumeName(vol Volume) string {
 	return fmt.Sprintf("%s_%s", vol.name, uuid.New())
+}
+
+func (d *zfs) delegateDataset(vol Volume, pid int) error {
+	_, err := subprocess.RunCommand("zfs", "zone", fmt.Sprintf("/proc/%d/ns/user", pid), d.dataset(vol, false))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ZFSSupportsDelegation returns true if the ZFS version on the system supports user namespace delegation.
+func ZFSSupportsDelegation() bool {
+	return zfsDelegate
 }

@@ -12,7 +12,7 @@ For example, you can manage instances or update the server configuration on the 
 
 ## Authentication
 
-To be able to add a LXD server as a remote server, the server's API must be exposed, which means that its [`core.https_address`](server-options-core) server configuration option must be set.
+To be able to add a LXD server as a remote server, the server's API must be exposed, which means that its {config:option}`server-core:core.https_address` server configuration option must be set.
 
 When adding the server, you must then authenticate with it using the chosen method for {ref}`authentication`.
 

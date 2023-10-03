@@ -1419,9 +1419,9 @@ var aggregateLimitConfigValuePrinters = map[string]func(int64) string{
 }
 
 // FilterUsedBy filters a UsedBy list based on project access.
-func FilterUsedBy(r *http.Request, entries []string) []string {
+func FilterUsedBy(authorizer auth.Authorizer, r *http.Request, entries []string) []string {
 	// Shortcut for admins and environments without access control.
-	if auth.UserIsAdmin(r) {
+	if authorizer.UserIsAdmin(r) {
 		return entries
 	}
 
@@ -1443,7 +1443,7 @@ func FilterUsedBy(r *http.Request, entries []string) []string {
 			projectName = val
 		}
 
-		if !auth.UserHasPermission(r, projectName) {
+		if !authorizer.UserHasPermission(r, projectName, "") {
 			continue
 		}
 
@@ -1472,9 +1472,9 @@ func projectHasRestriction(project *api.Project, restrictionKey string, blockVal
 }
 
 // CheckClusterTargetRestriction check if user is allowed to use cluster member targeting.
-func CheckClusterTargetRestriction(r *http.Request, project *api.Project, targetFlag string) error {
+func CheckClusterTargetRestriction(authorizer auth.Authorizer, r *http.Request, project *api.Project, targetFlag string) error {
 	// Allow server administrators to move instances around even when restricted (node evacuation, ...)
-	if auth.UserIsAdmin(r) {
+	if authorizer.UserIsAdmin(r) {
 		return nil
 	}
 
@@ -1599,7 +1599,7 @@ func CheckTargetGroup(ctx context.Context, tx *db.ClusterTx, p *api.Project, gro
 // If target is a cluster member and is found in allMembers it returns the resolved node information object.
 // If target is a cluster group it returns the cluster group name.
 // In case of error, neither node information nor cluster group name gets returned.
-func CheckTarget(ctx context.Context, r *http.Request, tx *db.ClusterTx, p *api.Project, target string, allMembers []db.NodeInfo) (*db.NodeInfo, string, error) {
+func CheckTarget(ctx context.Context, authorizer auth.Authorizer, r *http.Request, tx *db.ClusterTx, p *api.Project, target string, allMembers []db.NodeInfo) (*db.NodeInfo, string, error) {
 	// Extract the target.
 	var targetGroupName string
 	var targetMemberName string
@@ -1610,7 +1610,7 @@ func CheckTarget(ctx context.Context, r *http.Request, tx *db.ClusterTx, p *api.
 	}
 
 	// Check manual cluster member targeting restrictions.
-	err := CheckClusterTargetRestriction(r, p, target)
+	err := CheckClusterTargetRestriction(authorizer, r, p, target)
 	if err != nil {
 		return nil, "", err
 	}

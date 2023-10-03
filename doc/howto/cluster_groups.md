@@ -38,7 +38,7 @@ For example, to add `server1` to the `gpu` group and also keep it in the `defaul
 With cluster groups, you can target an instance to run on one of the members of the cluster group, instead of targeting it to run on a specific member.
 
 ```{note}
-[`scheduler.instance`](cluster-member-config) must be set to either `all` (the default) or `group` to allow instances to be targeted to a cluster group.
+{config:option}`cluster:scheduler.instance` must be set to either `all` (the default) or `group` to allow instances to be targeted to a cluster group.
 
 See {ref}`clustering-instance-placement` for more information.
 ```

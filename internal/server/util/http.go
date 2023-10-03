@@ -23,7 +23,7 @@ import (
 )
 
 // DebugJSON helper to log JSON.
-// Accepts a title to prefix the JSON log with, a *bytes.Bufffer containing the JSON and a logger to use for
+// Accepts a title to prefix the JSON log with, a *bytes.Buffer containing the JSON and a logger to use for
 // logging the JSON (allowing for custom context to be added to the log).
 func DebugJSON(title string, r *bytes.Buffer, l logger.Logger) {
 	pretty := &bytes.Buffer{}

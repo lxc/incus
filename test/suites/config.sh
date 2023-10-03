@@ -164,16 +164,7 @@ test_config_profiles() {
   incus profile assign foo onenic
   incus profile create unconfined
 
-  # Look at the LXC version to decide whether to use the new
-  # or the new config key for apparmor.
-  lxc_version=$(lxc info | awk '/driver_version:/ {print $NF}')
-  lxc_major=$(echo "${lxc_version}" | cut -d. -f1)
-  lxc_minor=$(echo "${lxc_version}" | cut -d. -f2)
-  if [ "${lxc_major}" -lt 2 ] || { [ "${lxc_major}" = "2" ] && [ "${lxc_minor}" -lt "1" ]; }; then
-      incus profile set unconfined raw.lxc "lxc.aa_profile=unconfined"
-  else
-      incus profile set unconfined raw.lxc "lxc.apparmor.profile=unconfined"
-  fi
+  incus profile set unconfined raw.lxc "lxc.apparmor.profile=unconfined"
 
   incus profile assign foo onenic,unconfined
 
@@ -266,7 +257,7 @@ test_config_profiles() {
 
 test_config_edit() {
     if ! tty -s; then
-        echo "==> SKIP: Test requires a terminal"
+        echo "==> SKIP: test_config_edit requires a terminal"
         return
     fi
 
@@ -315,6 +306,7 @@ test_property() {
   # Create a snap of the instance to set its expiration timestamp
   incus snapshot create foo s1
   incus config set foo/s1 expires_at="2024-03-23T17:38:37.753398689-04:00" --property
+  incus config get foo/s1 expires_at --property | grep -q "2024-03-23 17:38:37.753398689 -0400 -0400"
   incus config show foo/s1 | grep -q "expires_at: 2024-03-23T17:38:37.753398689-04:00"
   incus config unset foo/s1 expires_at --property
   incus config show foo/s1 | grep -q "expires_at: 0001-01-01T00:00:00Z"
@@ -397,7 +389,7 @@ test_container_metadata() {
 
 test_container_snapshot_config() {
     if ! tty -s; then
-        echo "==> SKIP: Test requires a terminal"
+        echo "==> SKIP: test_container_snapshot_config requires a terminal"
         return
     fi
 

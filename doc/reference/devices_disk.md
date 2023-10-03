@@ -61,7 +61,7 @@ ISO file
       lxc config device add <instance_name> <device_name> disk source=<file_path_on_host>
 
 VM `cloud-init`
-: You can generate a `cloud-init` configuration ISO from the `cloud-init.vendor-data` and `cloud-init.user-data` configuration keys (see {ref}`instance-options`) and attach it to a virtual machine.
+: You can generate a `cloud-init` configuration ISO from the {config:option}`instance-cloud-init:cloud-init.vendor-data` and {config:option}`instance-cloud-init:cloud-init.user-data` configuration keys and attach it to a virtual machine.
   The `cloud-init` that is running inside the VM then detects the drive on boot and applies the configuration.
 
   This source type is applicable only to VMs.

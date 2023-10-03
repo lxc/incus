@@ -1,6 +1,7 @@
 # incus CLI related test helpers.
 
 incus() {
+    set +x
     INC_LOCAL=1 incus_remote "$@"
 }
 
@@ -31,9 +32,10 @@ incus_remote() {
         cmd="${cmd} ${DEBUG-}"
     fi
     if [ -n "${DEBUG:-}" ]; then
-        set -x
+        eval "set -x;timeout --foreground 120 ${cmd}"
+    else
+        eval "timeout --foreground 120 ${cmd}"
     fi
-    eval "timeout --foreground 120 ${cmd}"
 }
 
 gen_cert() {

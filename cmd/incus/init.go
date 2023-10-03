@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -210,12 +212,12 @@ func (c *cmdInit) create(conf *config.Config, args []string) (incus.InstanceServ
 	}
 
 	for _, entry := range c.flagConfig {
-		if !strings.Contains(entry, "=") {
-			return nil, "", fmt.Errorf(i18n.G("Bad key=value pair: %s"), entry)
+		key, value, found := strings.Cut(entry, "=")
+		if !found {
+			return nil, "", fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
 		}
 
-		fields := strings.SplitN(entry, "=", 2)
-		configMap[fields[0]] = fields[1]
+		configMap[key] = value
 	}
 
 	// Check if the specified storage pool exists.
@@ -407,8 +409,12 @@ func (c *cmdInit) create(conf *config.Config, args []string) (incus.InstanceServ
 	}
 
 	if len(instances) == 1 && name == "" {
-		fields := strings.Split(instances[0], "/")
-		name = fields[len(fields)-1]
+		url, err := url.Parse(instances[0])
+		if err != nil {
+			return nil, "", err
+		}
+
+		name = path.Base(url.Path)
 		fmt.Printf(i18n.G("Instance name is: %s")+"\n", name)
 	}
 

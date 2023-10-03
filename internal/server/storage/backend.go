@@ -746,9 +746,9 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 		})
 	}
 
-	// Update pool information in the backup.yaml file.
+	// Update information in the backup.yaml file.
 	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
-		return backup.UpdateInstanceConfigStoragePool(b.state.DB.Cluster, srcBackup, mountPath)
+		return backup.UpdateInstanceConfig(b.state.DB.Cluster, srcBackup, mountPath)
 	}, op)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Error updating backup file: %w", err)
@@ -1606,7 +1606,7 @@ func (b *backend) imageFiller(fingerprint string, op *operations.Operation) func
 		}
 
 		imageFile := internalUtil.VarPath("images", fingerprint)
-		return ImageUnpack(imageFile, vol, rootBlockPath, b.driver.Info().BlockBacking, b.state.OS, allowUnsafeResize, tracker)
+		return ImageUnpack(imageFile, vol, rootBlockPath, b.state.OS, allowUnsafeResize, tracker)
 	}
 }
 
@@ -2677,6 +2677,21 @@ func (b *backend) MountInstance(inst instance.Instance, op *operations.Operation
 	}
 
 	revert.Success() // From here on it is up to caller to call UnmountInstance() when done.
+
+	// Handle delegation.
+	if b.driver.CanDelegateVolume(vol) {
+		mountInfo.PostHooks = append(mountInfo.PostHooks, func(inst instance.Instance) error {
+			pid := inst.InitPID()
+
+			// Only apply to running instances.
+			if pid < 1 {
+				return nil
+			}
+
+			return b.driver.DelegateVolume(vol, pid)
+		})
+	}
+
 	return mountInfo, nil
 }
 
@@ -3164,15 +3179,6 @@ func (b *backend) UnmountInstanceSnapshot(inst instance.Instance, op *operations
 	return err
 }
 
-// poolBlockFilesystem returns the filesystem used for new block device filesystems.
-func (b *backend) poolBlockFilesystem() string {
-	if b.db.Config["volume.block.filesystem"] != "" {
-		return b.db.Config["volume.block.filesystem"]
-	}
-
-	return drivers.DefaultFilesystem
-}
-
 // EnsureImage creates an optimized volume of the image if supported by the storage pool driver and the volume
 // doesn't already exist. If the volume already exists then it is checked to ensure it matches the pools current
 // volume settings ("volume.size" and "block.filesystem" if applicable). If not the optimized volume is removed
@@ -3225,15 +3231,23 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 	// If not we need to delete the existing cached image volume and re-create using new filesystem.
 	// We need to do this for VM block images too, as they create a filesystem based config volume too.
 	if imgDBVol != nil {
+		// Generate a temporary volume instance that represents how a new volume using pool defaults would
+		// be configured.
+		tmpImgVol := imgVol.Clone()
+		err := b.Driver().FillVolumeConfig(tmpImgVol)
+		if err != nil {
+			return err
+		}
+
 		// Add existing image volume's config to imgVol.
 		imgVol = b.GetVolume(drivers.VolumeTypeImage, contentType, fingerprint, imgDBVol.Config)
 
 		// Check if the volume's block backed mode differs from the pool's current setting for new volumes.
-		blockModeChanged := b.Driver().Info().BlockBacking != imgVol.IsBlockBacked()
+		blockModeChanged := tmpImgVol.IsBlockBacked() != imgVol.IsBlockBacked()
 
 		// Check if the volume is block backed and its filesystem is different from the pool's current
 		// setting for new volumes.
-		blockFSChanged := imgVol.IsBlockBacked() && imgVol.Config()["block.filesystem"] != b.poolBlockFilesystem()
+		blockFSChanged := imgVol.IsBlockBacked() && imgVol.Config()["block.filesystem"] != tmpImgVol.Config()["block.filesystem"]
 
 		// If the existing image volume no longer matches the pool's settings for new volumes then we need
 		// to delete and re-create it.
@@ -5247,26 +5261,47 @@ func (b *backend) GetCustomVolumeUsage(projectName, volName string) (*VolumeUsag
 }
 
 // MountCustomVolume mounts a custom volume.
-func (b *backend) MountCustomVolume(projectName, volName string, op *operations.Operation) error {
+func (b *backend) MountCustomVolume(projectName, volName string, op *operations.Operation) (*MountInfo, error) {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName})
 	l.Debug("MountCustomVolume started")
 	defer l.Debug("MountCustomVolume finished")
 
 	err := b.isStatusReady()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	volume, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, volName)
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
 
-	return b.driver.MountVolume(vol, op)
+	// Perform the mount.
+	mountInfo := &MountInfo{}
+	err = b.driver.MountVolume(vol, op)
+	if err != nil {
+		return nil, err
+	}
+
+	// Handle delegation.
+	if b.driver.CanDelegateVolume(vol) {
+		mountInfo.PostHooks = append(mountInfo.PostHooks, func(inst instance.Instance) error {
+			pid := inst.InitPID()
+
+			// Only apply to running instances.
+			if pid < 1 {
+				return nil
+			}
+
+			return b.driver.DelegateVolume(vol, pid)
+		})
+	}
+
+	return mountInfo, nil
 }
 
 // UnmountCustomVolume unmounts a custom volume.

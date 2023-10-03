@@ -57,8 +57,8 @@ Automatic roles are assigned by LXD itself and cannot be modified by the user.
 | `event-hub`           | no            | Exchange point (hub) for the internal LXD events (requires at least two) |
 | `ovn-chassis`         | no            | Uplink gateway candidate for OVN networks |
 
-The default number of voter members ([`cluster.max_voters`](server-options-cluster)) is three.
-The default number of stand-by members ([`cluster.max_standby`](server-options-cluster)) is two.
+The default number of voter members ({config:option}`server-cluster:cluster.max_voters`) is three.
+The default number of stand-by members ({config:option}`server-cluster:cluster.max_standby`) is two.
 With this configuration, your cluster will remain operational as long as you switch off at most one voting member at a time.
 
 See {ref}`cluster-manage` for more information.
@@ -75,11 +75,11 @@ If the member that goes offline is the leader itself, the other members will ele
 
 If you can't or don't want to bring the server back online, you can [delete it from the cluster](cluster-manage-delete-members).
 
-You can tweak the amount of seconds after which a non-responding member is considered offline by setting the [`cluster.offline_threshold`](server-options-cluster) configuration.
+You can tweak the amount of seconds after which a non-responding member is considered offline by setting the {config:option}`server-cluster:cluster.offline_threshold` configuration.
 The default value is 20 seconds.
 The minimum value is 10 seconds.
 
-To automatically {ref}`evacuate <cluster-evacuate>` instances from an offline member, set the [`cluster.healing_threshold`](server-options-cluster) configuration to a non-zero value.
+To automatically {ref}`evacuate <cluster-evacuate>` instances from an offline member, set the {config:option}`server-cluster:cluster.healing_threshold` configuration to a non-zero value.
 
 See {ref}`cluster-recover` for more information.
 
@@ -119,7 +119,7 @@ By default, LXD replicates images on as many cluster members as there are databa
 This typically means up to three copies within the cluster.
 
 You can increase that number to improve fault tolerance and the likelihood of the image being locally available.
-To do so, set the [`cluster.images_minimal_replica`](server-options-cluster) configuration.
+To do so, set the {config:option}`server-cluster:cluster.images_minimal_replica` configuration.
 The special value of `-1` can be used to have the image copied to all cluster members.
 
 (cluster-groups)=
@@ -142,7 +142,7 @@ When you launch an instance, you can target it to a specific cluster member, to 
 By default, the automatic assignment picks the cluster member that has the lowest number of instances.
 If several members have the same amount of instances, one of the members is chosen at random.
 
-However, you can control this behavior with the [`scheduler.instance`](cluster-member-config) configuration option:
+However, you can control this behavior with the {config:option}`cluster:scheduler.instance` configuration option:
 
 - If `scheduler.instance` is set to `all` for a cluster member, this cluster member is selected for an instance if:
 

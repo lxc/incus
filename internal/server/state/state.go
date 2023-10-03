@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/bgp"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
 	"github.com/lxc/incus/internal/server/db"
@@ -73,4 +74,7 @@ type State struct {
 
 	// Local server start time.
 	StartTime time.Time
+
+	// Authorizer.
+	Authorizer auth.Authorizer
 }

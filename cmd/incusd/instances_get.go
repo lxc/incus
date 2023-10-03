@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/lxc/incus/internal/filter"
-	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
@@ -281,7 +280,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 			}
 
 			for _, project := range projects {
-				if !auth.UserHasPermission(r, project.Name) {
+				if !s.Authorizer.UserHasPermission(r, project.Name, "") {
 					continue
 				}
 

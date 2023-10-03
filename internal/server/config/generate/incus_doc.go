@@ -9,7 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
@@ -28,9 +31,73 @@ type doc struct {
 	Configs map[string][]any
 }
 
+func detectType(s string) any {
+	i, err := strconv.Atoi(s)
+	if err == nil {
+		return i
+	}
+
+	b, err := strconv.ParseBool(s)
+	if err == nil {
+		return b
+	}
+
+	f, err := strconv.ParseFloat(s, 64)
+	if err == nil {
+		return f
+	}
+
+	t, err := time.Parse(time.RFC3339, s)
+	if err == nil {
+		return t
+	}
+
+	// special characters handling
+	if s == "-" {
+		return ""
+	}
+
+	// If all conversions fail, it's a string
+	return s
+}
+
+// sortConfigKeys alphabetically sorts the entries by key (config option key) within each config group.
+func sortConfigKeys(projectEntries map[string][]any) map[string][]any {
+	orderedProjectEntries := make(map[string][]any, len(projectEntries))
+	for groupKey, entries := range projectEntries {
+		var sortedConfigOptionKeysPerGroup []string
+		for _, configEntry := range entries {
+			for k := range configEntry.(map[string]any) {
+				sortedConfigOptionKeysPerGroup = append(sortedConfigOptionKeysPerGroup, k)
+			}
+		}
+
+		sort.Strings(sortedConfigOptionKeysPerGroup)
+		for _, configOptionKey := range sortedConfigOptionKeysPerGroup {
+			for _, configEntry := range entries {
+				c := configEntry.(map[string]any)
+				for k := range c {
+					if k == configOptionKey {
+						_, ok := orderedProjectEntries[groupKey]
+						if !ok {
+							orderedProjectEntries[groupKey] = []any{c}
+						} else {
+							orderedProjectEntries[groupKey] = append(orderedProjectEntries[groupKey], c)
+						}
+
+						break
+					}
+				}
+			}
+		}
+	}
+
+	return orderedProjectEntries
+}
+
 func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, error) {
 	yamlDoc := &doc{}
-	docKeys := make([]string, 0)
+	docKeys := make(map[string]struct{}, 0)
 	projectEntries := make(map[string][]any)
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -85,6 +152,8 @@ func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, er
 				data := match[3]
 				// process metadata
 				metadataMap := make(map[string]string)
+				var groupKey string
+				var simpleKey string
 				for _, mdKVMatch := range genDocMetadataRegex.FindAllStringSubmatch(metadata, -1) {
 					if len(mdKVMatch) != len(mdKeys)+1 {
 						continue
@@ -97,21 +166,29 @@ func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, er
 						continue
 					}
 
+					if mdKey == "group" {
+						groupKey = mdValue
+					}
+
 					if mdKey == "key" {
-						// check that the metadata key 'key' is not already present as these are meant to be unique
-						if util.ValueInSlice(mdValue, docKeys) {
-							return fmt.Errorf("Duplicate key '%s' found at %s", mdValue, fset.Position(cg.Pos()).String())
-						} else {
-							docKeys = append(docKeys, mdValue)
-						}
+						simpleKey = mdValue
 					}
 
 					metadataMap[mdKey] = mdValue
 				}
 
+				// Check that this metadata is not already present
+				mdKeyHash := fmt.Sprintf("%s/%s", groupKey, simpleKey)
+				_, ok := docKeys[mdKeyHash]
+				if ok {
+					return fmt.Errorf("Duplicate key '%s' found at %s", mdKeyHash, fset.Position(cg.Pos()).String())
+				}
+
+				docKeys[mdKeyHash] = struct{}{}
+
 				configKeyEntry := make(map[string]any)
-				configKeyEntry[metadataMap["key"]] = make(map[string]string)
-				configKeyEntry[metadataMap["key"]].(map[string]string)["longdesc"] = strings.TrimLeft(longdesc, "\n\t\v\f\r")
+				configKeyEntry[metadataMap["key"]] = make(map[string]any)
+				configKeyEntry[metadataMap["key"]].(map[string]any)["longdesc"] = strings.TrimLeft(longdesc, "\n\t\v\f\r")
 				entry[metadataMap["group"]] = configKeyEntry
 
 				// process data
@@ -120,7 +197,7 @@ func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, er
 						continue
 					}
 
-					entry[metadataMap["group"]].(map[string]any)[metadataMap["key"]].(map[string]string)[dataKVMatch[1]] = dataKVMatch[2]
+					entry[metadataMap["group"]].(map[string]any)[metadataMap["key"]].(map[string]any)[dataKVMatch[1]] = detectType(dataKVMatch[2])
 				}
 			}
 
@@ -148,7 +225,7 @@ func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, er
 		return nil, err
 	}
 
-	yamlDoc.Configs = projectEntries
+	yamlDoc.Configs = sortConfigKeys(projectEntries)
 	data, err := yaml.Marshal(yamlDoc)
 	if err != nil {
 		return nil, fmt.Errorf("Error while marshaling project documentation: %v", err)
@@ -170,7 +247,7 @@ func parse(path string, outputYAMLPath string, excludedPaths []string) (*doc, er
 	return yamlDoc, nil
 }
 
-func writeDocFile(path string, yaml *doc) error {
+func writeDocFile(inputYamlPath, outputTxtPath string) error {
 	countMaxBackTicks := func(s string) int {
 		count, curr_count := 0, 0
 		n := len(s)
@@ -190,31 +267,72 @@ func writeDocFile(path string, yaml *doc) error {
 		return count
 	}
 
+	specialChars := []string{"", "*", "_", "#", "+", "-", ".", "!", "no", "yes"}
+
+	// read the YAML file which is the source of truth for the generation of the .txt file
+	yamlData, err := os.ReadFile(inputYamlPath)
+	if err != nil {
+		return err
+	}
+
+	var yamlDoc doc
+
+	err = yaml.Unmarshal(yamlData, &yamlDoc)
+	if err != nil {
+		return err
+	}
+
 	// create a string buffer
 	buffer := bytes.NewBufferString("// Code generated by incus-doc; DO NOT EDIT.\n\n")
-	for groupKey, groupEntries := range yaml.Configs {
+	for groupKey, groupEntries := range yamlDoc.Configs {
 		buffer.WriteString(fmt.Sprintf("<!-- config group %s start -->\n", groupKey))
 		for _, configEntry := range groupEntries {
 			for configKey, configEntryContent := range configEntry.(map[string]any) {
 				kvBuffer := bytes.NewBufferString("")
 				var backticksCount int
 				var longDescContent string
-				for configEntryContentKey, configEntryContentValue := range configEntryContent.(map[string]string) {
+				for configEntryContentKey, configEntryContentValue := range configEntryContent.(map[string]any) {
 					if configEntryContentKey == "longdesc" {
-						backticksCount = countMaxBackTicks(configEntryContentValue)
-						longDescContent = configEntryContentValue
+						backticksCount = countMaxBackTicks(configEntryContentValue.(string))
+						longDescContent = configEntryContentValue.(string)
 						continue
 					}
 
-					if strings.HasSuffix(configEntryContentValue, "`") && strings.HasPrefix(configEntryContentValue, "`") {
-						configEntryContentValue = fmt.Sprintf("\"%s\"", configEntryContentValue)
+					configEntryContentValueStr, ok := configEntryContentValue.(string)
+					if ok {
+						if (strings.HasSuffix(configEntryContentValueStr, "`") && strings.HasPrefix(configEntryContentValueStr, "`")) || util.ValueInSlice(configEntryContentValueStr, specialChars) {
+							configEntryContentValueStr = fmt.Sprintf("\"%s\"", configEntryContentValueStr)
+						}
+					} else {
+						switch configEntryContentTyped := configEntryContentValue.(type) {
+						case int, float64, bool:
+							configEntryContentValueStr = fmt.Sprint(configEntryContentTyped)
+						case time.Time:
+							configEntryContentValueStr = fmt.Sprint(configEntryContentTyped.Format(time.RFC3339))
+						}
+					}
+
+					var quoteFormattedValue string
+					if strings.Contains(configEntryContentValueStr, `"`) {
+						if strings.HasPrefix(configEntryContentValueStr, `"`) && strings.HasSuffix(configEntryContentValueStr, `"`) {
+							for i, s := range configEntryContentValueStr[1 : len(configEntryContentValueStr)-1] {
+								if s == '"' {
+									_ = strings.Replace(configEntryContentValueStr, `"`, `\"`, i)
+								}
+							}
+							quoteFormattedValue = configEntryContentValueStr
+						} else {
+							quoteFormattedValue = strings.ReplaceAll(configEntryContentValueStr, `"`, `\"`)
+						}
+					} else {
+						quoteFormattedValue = fmt.Sprintf("\"%s\"", configEntryContentValueStr)
 					}
 
 					kvBuffer.WriteString(
 						fmt.Sprintf(
 							":%s: %s\n",
 							configEntryContentKey,
-							configEntryContentValue,
+							quoteFormattedValue,
 						),
 					)
 				}
@@ -245,7 +363,7 @@ func writeDocFile(path string, yaml *doc) error {
 		buffer.WriteString(fmt.Sprintf("<!-- config group %s end -->\n", groupKey))
 	}
 
-	err := os.WriteFile(path, buffer.Bytes(), 0644)
+	err = os.WriteFile(outputTxtPath, buffer.Bytes(), 0644)
 	if err != nil {
 		return fmt.Errorf("Error while writing the Markdown project documentation: %v", err)
 	}

@@ -28,6 +28,7 @@ var zfsLoaded bool
 var zfsDirectIO bool
 var zfsTrim bool
 var zfsRaw bool
+var zfsDelegate bool
 
 var zfsDefaultSettings = map[string]string{
 	"relatime":   "on",
@@ -99,6 +100,16 @@ func (d *zfs) load() error {
 		zfsDirectIO = true
 		zfsTrim = true
 		zfsRaw = true
+	}
+
+	// Detect support for ZFS delegation.
+	ver220, err := version.Parse("2.2.0")
+	if err != nil {
+		return err
+	}
+
+	if ourVer.Compare(ver220) >= 0 {
+		zfsDelegate = true
 	}
 
 	zfsLoaded = true
@@ -334,7 +345,7 @@ func (d *zfs) Create() error {
 		}
 
 		// Confirm that the existing pool/dataset is all empty.
-		datasets, err := d.getDatasets(d.config["zfs.pool_name"])
+		datasets, err := d.getDatasets(d.config["zfs.pool_name"], "all")
 		if err != nil {
 			return err
 		}
@@ -373,13 +384,15 @@ func (d *zfs) Delete(op *operations.Operation) error {
 	}
 
 	// Confirm that nothing's been left behind
-	datasets, err := d.getDatasets(d.config["zfs.pool_name"])
+	datasets, err := d.getDatasets(d.config["zfs.pool_name"], "all")
 	if err != nil {
 		return err
 	}
 
 	initialDatasets := d.initialDatasets()
 	for _, dataset := range datasets {
+		dataset = strings.TrimPrefix(dataset, "/")
+
 		if util.ValueInSlice(dataset, initialDatasets) {
 			continue
 		}

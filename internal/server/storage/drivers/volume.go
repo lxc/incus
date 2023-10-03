@@ -478,7 +478,7 @@ func (v Volume) ConfigSize() string {
 
 	// If volume size isn't defined in either volume or pool config, then for block volumes or block-backed
 	// volumes return the defaultBlockSize.
-	if (size == "" || size == "0") && (v.contentType == ContentTypeBlock || v.driver.Info().BlockBacking) {
+	if (size == "" || size == "0") && (v.contentType == ContentTypeBlock || v.IsBlockBacked()) {
 		return DefaultBlockSize
 	}
 

@@ -30,6 +30,17 @@ type StorageVolumeSnapshotPost struct {
 	// New snapshot name
 	// Example: snap1
 	Name string `json:"name" yaml:"name"`
+
+	// Initiate volume snapshot migration
+	// Example: false
+	//
+	// API extension: storage_api_remote_volume_snapshot_copy
+	Migration bool `json:"migration" yaml:"migration"`
+
+	// Migration target (for push mode)
+	//
+	// API extension: storage_api_remote_volume_snapshot_copy
+	Target *StorageVolumePostTarget `json:"target" yaml:"target"`
 }
 
 // StorageVolumeSnapshot represents a storage volume snapshot

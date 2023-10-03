@@ -13,7 +13,6 @@ import (
 
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
-	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
@@ -215,7 +214,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 			var targetGroupName string
 
-			targetMemberInfo, targetGroupName, err = project.CheckTarget(ctx, r, tx, targetProject, target, allMembers)
+			targetMemberInfo, targetGroupName, err = project.CheckTarget(ctx, s.Authorizer, r, tx, targetProject, target, allMembers)
 			if err != nil {
 				return err
 			}
@@ -262,8 +261,18 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 		// If no member was selected yet, pick the member with the least number of instances.
 		if targetMemberInfo == nil {
+			var filteredCandidateMembers []db.NodeInfo
+
+			// The instance might already be placed on the node with least number of instances.
+			// Therefore remove it from the list of possible candidates if existent.
+			for _, candidateMember := range candidateMembers {
+				if candidateMember.Name != inst.Location() {
+					filteredCandidateMembers = append(filteredCandidateMembers, candidateMember)
+				}
+			}
+
 			err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-				targetMemberInfo, err = tx.GetNodeWithLeastInstances(ctx, candidateMembers)
+				targetMemberInfo, err = tx.GetNodeWithLeastInstances(ctx, filteredCandidateMembers)
 				return err
 			})
 			if err != nil {
@@ -334,7 +343,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		// Server-side project migration.
 		if req.Project != "" {
 			// Check if user has access to target project
-			if !auth.UserHasPermission(r, req.Project) {
+			if !s.Authorizer.UserHasPermission(r, req.Project, "") {
 				return response.Forbidden(nil)
 			}
 

@@ -666,18 +666,17 @@ test_clustering_storage() {
     ! stat "${INCUS_TWO_SOURCE}/containers" || false
   fi
 
-  # Define storage pools on the two nodes
+  # Set up node-specific storage pool keys for the selected backend.
   driver_config=""
-  if [ "${poolDriver}" = "btrfs" ]; then
+  if [ "${poolDriver}" = "btrfs" ] || [ "${poolDriver}" = "lvm" ] || [ "${poolDriver}" = "zfs" ]; then
       driver_config="size=1GiB"
   fi
-  if [ "${poolDriver}" = "zfs" ]; then
-      driver_config="size=1GiB"
-  fi
+
   if [ "${poolDriver}" = "ceph" ]; then
       driver_config="source=incustest-$(basename "${TEST_DIR}")-pool1"
   fi
 
+  # Define storage pools on the two nodes
   driver_config_node1="${driver_config}"
   driver_config_node2="${driver_config}"
 
@@ -775,13 +774,46 @@ test_clustering_storage() {
     INCUS_DIR="${INCUS_TWO_DIR}" incus start egg
     INCUS_DIR="${INCUS_ONE_DIR}" incus stop egg --force
     INCUS_DIR="${INCUS_ONE_DIR}" incus delete egg
+  fi
 
+  # If the driver has the same per-node storage pool config (e.g. size), make sure it's included in the
+  # member_config, and actually added to a joining node so we can validate it.
+  if [ "${poolDriver}" = "zfs" ] || [ "${poolDriver}" = "btrfs" ] || [ "${poolDriver}" = "ceph" ] || [ "${poolDriver}" = "lvm" ]; then
     # Spawn a third node
     setup_clustering_netns 3
     INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
     chmod +x "${INCUS_THREE_DIR}"
     ns3="${prefix}3"
-    spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
+    INCUS_NETNS="${ns3}" spawn_incus "${INCUS_THREE_DIR}" false
+
+    key=$(echo "${driver_config}" | cut -d'=' -f1)
+    value=$(echo "${driver_config}" | cut -d'=' -f2-)
+
+    # Set member_config to match `spawn_incus_and_join_cluster` for 'data' and `driver_config` for 'pool1'.
+    member_config="{\"entity\": \"storage-pool\",\"name\":\"pool1\",\"key\":\"${key}\",\"value\":\"${value}\"}"
+    if [ "${poolDriver}" = "zfs" ] || [ "${poolDriver}" = "btrfs" ] || [ "${poolDriver}" = "lvm" ] ; then
+      member_config="{\"entity\": \"storage-pool\",\"name\":\"data\",\"key\":\"size\",\"value\":\"1GiB\"},${member_config}"
+    fi
+
+    # Manually send the join request.
+    cert=$(sed ':a;N;$!ba;s/\n/\\n/g' "${INCUS_ONE_DIR}/cluster.crt")
+    token="$(incus cluster add node3 --quiet)"
+    op=$(curl --unix-socket "${INCUS_THREE_DIR}/unix.socket" -X PUT "incus/1.0/cluster" -d "{\"server_name\":\"node3\",\"enabled\":true,\"member_config\":[${member_config}],\"server_address\":\"10.1.1.103:8443\",\"cluster_address\":\"10.1.1.101:8443\",\"cluster_certificate\":\"${cert}\",\"cluster_token\":\"${token}\"}" | jq -r .operation)
+    curl --unix-socket "${INCUS_THREE_DIR}/unix.socket" "incus${op}/wait"
+
+    # Ensure that node-specific config appears on all nodes,
+    # regardless of the pool being created before or after the node joined.
+    for n in node1 node2 node3 ; do
+      INCUS_DIR="${INCUS_ONE_DIR}" incus storage get pool1 "${key}" --target "${n}" | grep -q "${value}"
+    done
+
+    # Other storage backends will be finished with the third node, so we can remove it.
+    if [ "${poolDriver}" != "ceph" ]; then
+      INCUS_DIR="${INCUS_ONE_DIR}" incus cluster remove node3 --yes
+    fi
+  fi
+
+  if [ "${poolDriver}" = "ceph" ]; then
 
     # Move the container to node3, renaming it
     INCUS_DIR="${INCUS_TWO_DIR}" incus move foo bar --target node3
@@ -3142,59 +3174,105 @@ test_clustering_remove_members() {
   ns2="${prefix}2"
   spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
 
-  # Ensure successful communication
-  INCUS_DIR="${INCUS_ONE_DIR}" incus info --target node2 | grep -q "server_name: node2"
-  INCUS_DIR="${INCUS_TWO_DIR}" incus info --target node1 | grep -q "server_name: node1"
-
-  # Remove the leader, via the stand-by node
-  INCUS_DIR="${INCUS_TWO_DIR}" incus cluster rm node1
-
-  # Ensure the remaining node is working
-  ! INCUS_DIR="${INCUS_TWO_DIR}" incus cluster list | grep -q "node1" || false
-  INCUS_DIR="${INCUS_TWO_DIR}" incus cluster list | grep -q "node2"
-
-  # Previous leader should no longer be clustered
-  ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list || false
-
-  # Spawn a third node, joining the cluster with node2
+  # Spawn a three node
   setup_clustering_netns 3
   INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
   chmod +x "${INCUS_THREE_DIR}"
   ns3="${prefix}3"
-  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 2 "${INCUS_THREE_DIR}" "${INCUS_TWO_DIR}"
+  spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
 
-  # Ensure successful communication
-  INCUS_DIR="${INCUS_TWO_DIR}" incus info --target node3 | grep -q "server_name: node3"
-  INCUS_DIR="${INCUS_THREE_DIR}" incus info --target node2 | grep -q "server_name: node2"
+  # Spawn a four node
+  setup_clustering_netns 4
+  INCUS_FOUR_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_FOUR_DIR}"
+  ns4="${prefix}4"
+  spawn_incus_and_join_cluster "${ns4}" "${bridge}" "${cert}" 4 1 "${INCUS_FOUR_DIR}" "${INCUS_ONE_DIR}"
 
-  # Remove the third node, via itself
-  INCUS_DIR="${INCUS_THREE_DIR}" incus cluster rm node3
+  # Spawn a five node
+  setup_clustering_netns 5
+  INCUS_FIVE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_FIVE_DIR}"
+  ns5="${prefix}5"
+  spawn_incus_and_join_cluster "${ns5}" "${bridge}" "${cert}" 5 1 "${INCUS_FIVE_DIR}" "${INCUS_ONE_DIR}"
 
-  # Ensure only node2 is left in the cluster
-  INCUS_DIR="${INCUS_TWO_DIR}" incus cluster ls | grep -q node2
-  ! INCUS_DIR="${INCUS_TWO_DIR}" incus cluster ls -f csv | grep -qv node2 || false
+  # Spawn a sixth node
+  setup_clustering_netns 6
+  INCUS_SIX_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_SIX_DIR}"
+  ns6="${prefix}6"
+  spawn_incus_and_join_cluster "${ns6}" "${bridge}" "${cert}" 6 1 "${INCUS_SIX_DIR}" "${INCUS_ONE_DIR}"
 
-  # Ensure clustering is disabled (no output) on node1 and node3
-  ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster ls | grep -qv "." || false
-  ! INCUS_DIR="${INCUS_THREE_DIR}" incus cluster ls | grep -qv "." || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus info --target node2 | grep -q "server_name: node2"
+  INCUS_DIR="${INCUS_TWO_DIR}" incus info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_THREE_DIR}" incus info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_FOUR_DIR}" incus info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_FIVE_DIR}" incus info --target node1 | grep -q "server_name: node1"
+  INCUS_DIR="${INCUS_SIX_DIR}" incus info --target node1 | grep -q "server_name: node1"
+
+  # stop node 6
+  shutdown_incus "${INCUS_SIX_DIR}"
+
+  # Remove node2 node3 node4 node5
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster rm node2
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster rm node3
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster rm node4
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster rm node5
+
+  # Ensure the remaining node is working and node2, node3, node4,node5 successful reomve from cluster
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node2" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node3" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node4" || false
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node5" || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node1"
+
+  # Start node 6
+  INCUS_NETNS="${ns6}" respawn_incus "${INCUS_SIX_DIR}" true
+
+  # make sure node6 is a spare ndoe
+  INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep -q "node6"
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node6 | grep -qE "\- database-standy$|\- database-leader$|\- database$" || false
+
+  # waite for leader update table raft_node of local database by heartbeat
+  sleep 10s
+
+  # Remove the leader, via the spare node
+  INCUS_DIR="${INCUS_SIX_DIR}" incus cluster rm node1
+
+  # Ensure the remaining node is working and node1 had successful remove
+  ! INCUS_DIR="${INCUS_SIX_DIR}" incus cluster list | grep -q "node1" || false
+  INCUS_DIR="${INCUS_SIX_DIR}" incus cluster list | grep -q "node6"
+
+  # Check whether node6 is changed from a spare node to a leader node.
+  INCUS_DIR="${INCUS_SIX_DIR}" incus cluster show node6 | grep -q "\- database-leader$"
+  INCUS_DIR="${INCUS_SIX_DIR}" incus cluster show node6 | grep -q "\- database$"
+
+  # Spawn a sixth node
+  setup_clustering_netns 7
+  INCUS_SEVEN_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+  chmod +x "${INCUS_SEVEN_DIR}"
+  ns7="${prefix}7"
+  spawn_incus_and_join_cluster "${ns7}" "${bridge}" "${cert}" 7 6 "${INCUS_SEVEN_DIR}" "${INCUS_SIX_DIR}"
+
+  # Ensure the remaining node is working by join a new node7
+  INCUS_DIR="${INCUS_SIX_DIR}" incus info --target node7 | grep -q "server_name: node7"
+  INCUS_DIR="${INCUS_SEVEN_DIR}" incus info --target node6 | grep -q "server_name: node6"
 
   # Clean up
-  daemon_pid1=$(cat "${INCUS_ONE_DIR}/incus.pid")
   shutdown_incus "${INCUS_ONE_DIR}"
-
-  daemon_pid2=$(cat "${INCUS_TWO_DIR}/incus.pid")
   shutdown_incus "${INCUS_TWO_DIR}"
-
-  daemon_pid3=$(cat "${INCUS_THREE_DIR}/incus.pid")
   shutdown_incus "${INCUS_THREE_DIR}"
-
-  wait "${daemon_pid1}"
-  wait "${daemon_pid2}"
-  wait "${daemon_pid3}"
+  shutdown_incus "${INCUS_FOUR_DIR}"
+  shutdown_incus "${INCUS_FIVE_DIR}"
+  shutdown_incus "${INCUS_SIX_DIR}"
+  shutdown_incus "${INCUS_SEVEN_DIR}"
 
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
   rm -f "${INCUS_THREE_DIR}/unix.socket"
+  rm -f "${INCUS_FOUR_DIR}/unix.socket"
+  rm -f "${INCUS_FIVE_DIR}/unix.socket"
+  rm -f "${INCUS_SIX_DIR}/unix.socket"
+  rm -f "${INCUS_SEVEN_DIR}/unix.socket"
 
   teardown_clustering_netns
   teardown_clustering_bridge
@@ -3202,6 +3280,10 @@ test_clustering_remove_members() {
   kill_incus "${INCUS_ONE_DIR}"
   kill_incus "${INCUS_TWO_DIR}"
   kill_incus "${INCUS_THREE_DIR}"
+  kill_incus "${INCUS_FOUR_DIR}"
+  kill_incus "${INCUS_FIVE_DIR}"
+  kill_incus "${INCUS_SIX_DIR}"
+  kill_incus "${INCUS_SEVEN_DIR}"
 }
 
 test_clustering_autotarget() {

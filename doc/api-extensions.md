@@ -1006,7 +1006,7 @@ redirect file-system mounts to their fuse implementation. To this end, set e.g.
 
 This allows for existing a Ceph RBD or CephFS to be directly connected to a LXD container.
 
-## `virtual_machines`
+## `virtual-machines`
 
 Add virtual machine support.
 
@@ -1646,6 +1646,9 @@ The following network configurations keys (`bridge` and `physical`):
 * `bgp.peers.<name>.address`
 * `bgp.peers.<name>.asn`
 * `bgp.peers.<name>.password`
+
+The `nexthop` configuration keys (`bridge`):
+
 * `bgp.ipv4.nexthop`
 * `bgp.ipv6.nexthop`
 
@@ -2224,3 +2227,16 @@ This adds the possibility to list a LXD deployment's network allocations.
 Through the `lxc network list-allocations` command and the `--project <PROJECT> | --all-projects` flags,
 you can list all the used IP addresses, hardware addresses (for instances), resource URIs and whether it uses NAT for
 each `instance`, `network`, `network forward` and `network load-balancer`.
+
+## `zfs_delegate`
+This implements a new `zfs.delegate` volume Boolean for volumes on a ZFS storage driver.
+When enabled and a suitable system is in use (requires ZFS 2.2 or higher), the ZFS dataset will be delegated to the container, allowing for its use through the `zfs` command line tool.
+
+## `storage_api_remote_volume_snapshot_copy`
+
+This allows copying storage volume snapshots to and from remotes.
+
+## `operations_get_query_all_projects`
+
+This introduces support for the `all-projects` query parameter for the GET API calls to both `/1.0/operations` and `/1.0/operations?recursion=1`.
+This parameter allows bypassing the project name filter.

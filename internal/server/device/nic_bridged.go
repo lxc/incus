@@ -55,7 +55,7 @@ func (d *nicBridged) CanHotPlug() bool {
 
 // CanMigrate returns whether the device can be migrated to any other cluster member.
 func (d *nicBridged) CanMigrate() bool {
-	return d.config["network"] != ""
+	return d.network != nil
 }
 
 // validateConfig checks the supplied config for correctness.

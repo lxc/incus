@@ -146,6 +146,9 @@ type Daemon struct {
 
 	// HTTP-01 challenge provider for ACME
 	http01Provider acme.HTTP01Provider
+
+	// Authorization.
+	authorizer auth.Authorizer
 }
 
 // DaemonConfig holds configuration values for Daemon.
@@ -234,8 +237,10 @@ func allowAuthenticated(d *Daemon, r *http.Request) response.Response {
 // allowProjectPermission is a wrapper to check access against the project.
 func allowProjectPermission() func(d *Daemon, r *http.Request) response.Response {
 	return func(d *Daemon, r *http.Request) response.Response {
+		s := d.State()
+
 		// Shortcut for speed
-		if auth.UserIsAdmin(r) {
+		if s.Authorizer.UserIsAdmin(r) {
 			return response.EmptySyncResponse
 		}
 
@@ -243,7 +248,7 @@ func allowProjectPermission() func(d *Daemon, r *http.Request) response.Response
 		projectName := projectParam(r)
 
 		// Validate whether the user access to the project.
-		if !auth.UserHasPermission(r, projectName) {
+		if !s.Authorizer.UserHasPermission(r, projectName, "") {
 			return response.Forbidden(nil)
 		}
 
@@ -397,6 +402,7 @@ func (d *Daemon) State() *state.State {
 		LocalConfig:            localConfig,
 		ServerName:             d.serverName,
 		StartTime:              d.startTime,
+		Authorizer:             d.authorizer,
 	}
 }
 
@@ -493,7 +499,12 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 						projects, ok := certProjects[username]
 						if ok {
 							ua.Admin = false
-							ua.Projects = projects
+							projectMap := map[string][]string{}
+							for _, projectName := range projects {
+								projectMap[projectName] = nil
+							}
+
+							ua.Projects = projectMap
 						}
 					}
 
@@ -594,7 +605,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 				}
 			} else if !action.AllowUntrusted {
 				// Require admin privileges
-				if !auth.UserIsAdmin(r) {
+				if !d.authorizer.UserIsAdmin(r) {
 					return response.Forbidden(nil)
 				}
 			}
@@ -714,7 +725,15 @@ func (d *Daemon) setupLoki(URL string, cert string, key string, caCert string, l
 }
 
 func (d *Daemon) init() error {
+	var err error
+
 	var dbWarnings []dbCluster.Warning
+
+	// Set default authorizer.
+	d.authorizer, err = auth.LoadAuthorizer("tls", nil, logger.Log, nil)
+	if err != nil {
+		return err
+	}
 
 	// Setup logger
 	events.LoggingServer = d.events
@@ -723,7 +742,7 @@ func (d *Daemon) init() error {
 	d.internalListener = events.NewInternalListener(d.shutdownCtx, d.events)
 
 	// Lets check if there's an existing daemon running
-	err := endpoints.CheckAlreadyRunning(d.UnixSocket())
+	err = endpoints.CheckAlreadyRunning(d.UnixSocket())
 	if err != nil {
 		return err
 	}

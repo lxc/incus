@@ -273,12 +273,12 @@ func (n *physical) Stop() error {
 func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientType request.ClientType) error {
 	n.logger.Debug("Update", logger.Ctx{"clientType": clientType, "newNetwork": newNetwork})
 
-	dbUpdateNeeeded, changedKeys, oldNetwork, err := n.common.configChanged(newNetwork)
+	dbUpdateNeeded, changedKeys, oldNetwork, err := n.common.configChanged(newNetwork)
 	if err != nil {
 		return err
 	}
 
-	if !dbUpdateNeeeded {
+	if !dbUpdateNeeded {
 		return nil // Nothing changed.
 	}
 

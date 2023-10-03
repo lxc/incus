@@ -5898,11 +5898,18 @@ definitions:
     StorageVolumeSnapshotPost:
         description: StorageVolumeSnapshotPost represents the fields required to rename/move a storage volume snapshot
         properties:
+            migration:
+                description: Initiate volume snapshot migration
+                example: false
+                type: boolean
+                x-go-name: Migration
             name:
                 description: New snapshot name
                 example: snap1
                 type: string
                 x-go-name: Name
+            target:
+                $ref: '#/definitions/StorageVolumePostTarget'
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     StorageVolumeSnapshotPut:
@@ -8272,27 +8279,6 @@ paths:
             summary: Bulk instance state update
             tags:
                 - instances
-    /1.0/instances/{instance_name}/rebuild:
-        post:
-            consumes:
-                - application/octet-stream
-            operationId: instance_post
-            parameters:
-                - description: Project name
-                  example: default
-                  in: query
-                  name: project
-                  type: string
-                - $ref: '#/definitions/InstanceRebuildPost'
-                  description: InstanceRebuild request
-                  in: body
-                  name: instance
-                  required: true
-            produces:
-                - application/json
-            summary: Rebuild an instance.
-            tags:
-                - instances
     /1.0/instances/{name}:
         delete:
             description: |-
@@ -9401,6 +9387,42 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Create or replace a template file
+            tags:
+                - instances
+    /1.0/instances/{name}/rebuild:
+        post:
+            consumes:
+                - application/octet-stream
+            description: Rebuild an instance using an alternate image or as empty.
+            operationId: instance_rebuild_post
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: InstanceRebuild request
+                  in: body
+                  name: instance
+                  required: true
+                  schema:
+                    $ref: '#/definitions/InstanceRebuildPost'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "202":
+                    $ref: '#/responses/Operation'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Rebuild an instance
             tags:
                 - instances
     /1.0/instances/{name}/sftp:
@@ -11973,6 +11995,16 @@ paths:
         get:
             description: Returns a JSON object of operation type to operation list (URLs).
             operationId: operations_get
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Retrieve operations from all projects
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -12212,6 +12244,16 @@ paths:
         get:
             description: Returns a list of operations (structs).
             operationId: operations_get_recursion1
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Retrieve operations from all projects
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:

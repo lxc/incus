@@ -383,6 +383,10 @@ func (c *cmdStorageVolumeCopy) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if srcIsSnapshot && c.flagVolumeOnly {
+		return fmt.Errorf("Cannot set --volume-only when copying a snapshot")
+	}
+
 	// If the volume is in local storage, set the target to its location (or provide a helpful error
 	// message if the target is incorrect). If the volume is in remote storage (and the source server is clustered) we
 	// can use any provided target. Note that for standalone servers, this will set the target to "none".

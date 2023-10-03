@@ -105,7 +105,7 @@ Basically, the initialization process consists of the following steps:
 
        lxc cluster add <new_member_name>
 
-   This command returns a single-use join token that is valid for a configurable time (see [`cluster.join_token_expiry`](server-options-cluster)).
+   This command returns a single-use join token that is valid for a configurable time (see {config:option}`server-cluster:cluster.join_token_expiry`).
    Enter this token when `lxd init` prompts you for the join token.
 
    The join token contains the addresses of the existing online members, as well as a single-use secret and the fingerprint of the cluster certificate.
@@ -208,6 +208,8 @@ config:
 storage_pools:
 - name: default
   driver: dir
+- name: my-pool
+  driver: zfs
 networks:
 - name: lxdbr0
   type: bridge
@@ -216,7 +218,7 @@ profiles:
   devices:
     root:
       path: /
-      pool: default
+      pool: my-pool
       type: disk
     eth0:
       name: eth0
@@ -260,6 +262,15 @@ cluster:
     name: default
     key: source
     value: ""
+  - entity: storage-pool
+    name: my-pool
+    key: source
+    value: ""
+  - entity: storage-pool
+    name: my-pool
+    key: driver
+    value: "zfs"
+
 ```
 
 ````

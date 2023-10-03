@@ -18,7 +18,9 @@ Unless specified differently during creation (with the `source` configuration op
 (storage-dir-quotas)=
 ### Quotas
 
+<!-- Include start dir quotas -->
 The `dir` driver supports storage quotas when running on either ext4 or XFS with project quotas enabled at the file system level.
+<!-- Include end dir quotas -->
 
 ## Configuration options
 
@@ -49,7 +51,7 @@ Key                     | Type      | Condition                 | Default       
 
 ### Storage bucket configuration
 
-To enable storage buckets for local storage pool drivers and allow applications to access the buckets via the S3 protocol, you must configure the [`core.storage_buckets_address`](server-options-core) server setting.
+To enable storage buckets for local storage pool drivers and allow applications to access the buckets via the S3 protocol, you must configure the {config:option}`server-core:core.storage_buckets_address` server setting.
 
 Storage buckets do not have any configuration for `dir` pools.
 Unlike the other storage pool drivers, the `dir` driver does not support bucket quotas via the `size` setting.

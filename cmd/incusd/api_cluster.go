@@ -1733,11 +1733,12 @@ func clusterRolesChanged(oldRoles []db.ClusterRole, newRoles []db.ClusterRole) b
 func clusterValidateConfig(config map[string]string) error {
 	clusterConfigKeys := map[string]func(value string) error{
 		// gendoc:generate(group=cluster, key=scheduler.instance)
-		//
+		// Possible values are `all`, `manual`, and `group`. See
+		// {ref}`clustering-instance-placement` for more information.
 		// ---
-		//  shortdesc: Possible values are `all`, `manual` and `group`. See {ref}`clustering-instance-placement` for more information.
-		//  default: `all`
 		//  type: string
+		//  default: `all`
+		//  shortdesc: Controls how instances are scheduled to run on this member
 		"scheduler.instance": validate.Optional(validate.IsOneOf("all", "group", "manual")),
 	}
 
@@ -1745,11 +1746,10 @@ func clusterValidateConfig(config map[string]string) error {
 		// User keys are free for all.
 
 		// gendoc:generate(group=cluster, key=user.*)
-		//
+		// User keys can be used in search.
 		// ---
-		//  shortdesc: Free form user key/value storage (can be used in search).
-		//  default: -
 		//  type: string
+		//  shortdesc: Free form user key/value storage
 		if strings.HasPrefix(k, "user.") {
 			continue
 		}
@@ -1968,7 +1968,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 	// If we are removing the leader of a 2 node cluster, ensure the other node can be a leader.
 	if name == leaderInfo.Name && len(nodes) == 2 {
 		for i := range nodes {
-			if nodes[i].Address != leader && nodes[i].Role == db.RaftStandBy {
+			if nodes[i].Address != leader && nodes[i].Role != db.RaftVoter {
 				// Promote the remaining node.
 				nodes[i].Role = db.RaftVoter
 				err := changeMemberRole(s, r, nodes[i].Address, nodes)

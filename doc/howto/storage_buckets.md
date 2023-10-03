@@ -11,7 +11,7 @@ See the following sections for instructions on how to create, configure, view an
 If you want to use storage buckets on local storage (thus in a `dir`, `btrfs`, `lvm`, or `zfs` pool), you must configure the S3 address for your LXD server.
 This is the address that you can then use to access the buckets through the S3 protocol.
 
-To configure the S3 address, set the [`core.storage_buckets_address`](server-options-core) server configuration option.
+To configure the S3 address, set the {config:option}`server-core:core.storage_buckets_address` server configuration option.
 For example:
 
     lxc config set core.storage_buckets_address :8555

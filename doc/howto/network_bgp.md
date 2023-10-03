@@ -41,11 +41,11 @@ If you need this, filter prefixes on the upstream routers.
 
 ## Configure the BGP server
 
-To configure LXD as a BGP server, set the following server configuration options (see {ref}`server-options-core`) on all cluster members:
+To configure LXD as a BGP server, set the following server configuration options on all cluster members:
 
-- `core.bgp_address` - the IP address for the BGP server
-- `core.bgp_asn` - the {abbr}`ASN (Autonomous System Number)` for the local server
-- `core.bgp_routerid` - the unique identifier for the BGP server
+- {config:option}`server-core:core.bgp_address` - the IP address for the BGP server
+- {config:option}`server-core:core.bgp_asn` - the {abbr}`ASN (Autonomous System Number)` for the local server
+- {config:option}`server-core:core.bgp_routerid` - the unique identifier for the BGP server
 
 For example, set the following values:
 

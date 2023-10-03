@@ -74,7 +74,7 @@ There are two ways to prevent accidental deletion of instances:
 
        lxc alias add delete "delete -i"
 
-- To protect a specific instance from being deleted, set [`security.protection.delete`](instance-options-security) to `true` for the instance.
+- To protect a specific instance from being deleted, set {config:option}`instance-security:security.protection.delete` to `true` for the instance.
   See {ref}`instances-configure` for instructions.
 
 ## Rebuild an instance

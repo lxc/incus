@@ -52,12 +52,6 @@ incus-migrate:
 	CGO_ENABLED=0 $(GO) install -v -tags netgo ./cmd/incus-migrate
 	@echo "Incus migration tool built successfully"
 
-.PHONY: incus-doc
-incus-doc:
-	@$(GO) version > /dev/null 2>&1 || { echo "go is not installed for incus-doc installation."; exit 1; }
-	cd internal/server/config/generate && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/incus-doc
-	@echo "Incus documentation generator built successfully"
-
 .PHONY: deps
 deps:
 	@if [ ! -e "$(RAFT_PATH)" ]; then \
@@ -98,9 +92,11 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -d -u ./...
-	$(GO) mod tidy
+	go get github.com/mdlayher/socket@v0.4.1
+	$(GO) mod tidy --go=1.20
+
 	cd cmd/lxd-to-incus && $(GO) get -t -v -d -u ./...
-	cd cmd/lxd-to-incus && $(GO) mod tidy
+	cd cmd/lxd-to-incus && $(GO) mod tidy --go=1.20
 	@echo "Dependencies updated"
 
 .PHONY: update-protobuf
@@ -129,13 +125,18 @@ doc-setup:
 	. $(SPHINXENV) ; pip install --upgrade -r doc/.sphinx/requirements.txt
 	rm -Rf doc/html
 
+.PHONY: generate-config
+generate-config:
+	@echo "Generating golang documentation"
+	cd internal/server/config/generate && CGO_ENABLED=0 go build -o $(GOPATH)/bin/incus-doc
+	$(GOPATH)/bin/incus-doc . -y ./doc/config_options.yaml -t ./doc/config_options.txt
+
 .PHONY: doc
-doc: incus-doc doc-setup doc-incremental
+doc: doc-setup doc-incremental
 
 .PHONY: doc-incremental
 doc-incremental:
 	@echo "Build the documentation"
-	$(GOPATH)/bin/incus-doc ./cmd/incusd -y ./doc/config_options.yaml -t ./doc/config_options.txt
 	. $(SPHINXENV) ; sphinx-build -c doc/ -b dirhtml doc/ doc/html/ -w doc/.sphinx/warnings.txt
 
 .PHONY: doc-serve
@@ -256,17 +257,17 @@ build-mo: $(MOFILES)
 
 .PHONY: static-analysis
 static-analysis:
-ifeq ($(shell command -v golangci-lint 2> /dev/null),)
+ifeq ($(shell command -v golangci-lint),)
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$($(GO) env GOPATH)/bin
 endif
-ifeq ($(shell command -v shellcheck 2> /dev/null),)
+ifeq ($(shell command -v shellcheck),)
 	echo "Please install shellcheck"
 	exit 1
 endif
 ifneq "$(shell shellcheck --version | grep version: | cut -d ' ' -f2)" "0.8.0"
 	@echo "WARN: shellcheck version is not 0.8.0"
 endif
-ifeq ($(shell command -v flake8 2> /dev/null),)
+ifeq ($(shell command -v flake8),)
 	echo "Please install flake8"
 	exit 1
 endif

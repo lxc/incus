@@ -4,7 +4,7 @@
 By default, LXD can be used only by local users through a Unix socket and is not accessible over the network.
 
 To expose LXD to the network, you must configure it to listen to addresses other than the local Unix socket.
-To do so, set the [`core.https_address`](server) server configuration option.
+To do so, set the {config:option}`server-core:core.https_address` server configuration option.
 
 For example, to allow access to the LXD server on port `8443`, enter the following command:
 

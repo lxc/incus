@@ -358,6 +358,10 @@ func (s *SimpleStreams) GetFiles(fingerprint string) (map[string]DownloadableFil
 				files := map[string]DownloadableFile{}
 
 				for _, path := range downloads[image.Fingerprint] {
+					if len(path) < 4 {
+						return nil, fmt.Errorf("Invalid path content: %q", path)
+					}
+
 					size, err := strconv.ParseInt(path[3], 10, 64)
 					if err != nil {
 						return nil, err

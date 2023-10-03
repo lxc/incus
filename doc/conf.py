@@ -1,6 +1,9 @@
+import contextlib
 import datetime
 import os
+import subprocess
 import sys
+import tempfile
 import yaml
 from git import Repo
 import wget
@@ -103,7 +106,8 @@ html_theme_options = {
         "color-highlighted-background": "#EbEbEb",
         "color-link-underline": "var(--color-background-primary)",
         "color-link-underline--hover": "var(--color-background-primary)",
-        "color-version-popup": "#772953"
+        "color-version-popup": "#772953",
+        "color-orange": "#FBDDD2",
     },
     "dark_css_variables": {
         "color-foreground-secondary": "var(--color-foreground-primary)",
@@ -127,7 +131,8 @@ html_theme_options = {
         "color-highlighted-background": "#666",
         "color-link-underline": "var(--color-background-primary)",
         "color-link-underline--hover": "var(--color-background-primary)",
-        "color-version-popup": "#F29879"
+        "color-version-popup": "#F29879",
+        "color-orange": "#E95420",
     },
 }
 
@@ -136,7 +141,9 @@ html_context = {
     "github_version": "main",
     "github_folder": "/doc/",
     "github_filetype": "md",
-    "discourse_prefix": "https://discuss.linuxcontainers.org/t/"
+    "discourse_prefix": {
+        "lxc": "https://discuss.linuxcontainers.org/t/",
+        "ubuntu": "https://discourse.ubuntu.com/t/"}
 }
 
 source_suffix = ".md"
@@ -161,4 +168,56 @@ linkcheck_ignore = [
 
 # Setup redirects (https://documatt.gitlab.io/sphinx-reredirects/usage.html)
 redirects = {
+    "howto/instances_snapshots/index": "../instances_backup/",
 }
+
+
+@contextlib.contextmanager
+def pushd(new_dir):
+    previous_dir = os.getcwd()
+    os.chdir(new_dir)
+    try:
+        yield
+    finally:
+        os.chdir(previous_dir)
+
+
+def generate_go_docs(app):
+    """
+        This function calls the `incus-doc` tool to generate
+        the documentation elements from an annotated Golang codebase.
+    """
+    try:
+        subprocess.run(["go", "version"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        raise ValueError("go is not installed for incus-doc installation.")
+
+    os.environ['CGO_ENABLED'] = '0'
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        if os.getcwd().endswith("/doc"):
+            incusDocDir = "../internal/server/config/generate"
+            incusBaseDir = ".."
+            outputBaseDir = ""
+        else:
+            incusDocDir = "internal/server/config/generate"
+            incusBaseDir = "."
+            outputBaseDir = "./doc/"
+
+        with pushd(incusDocDir):
+            try:
+                subprocess.run(["go", "build", "-o", os.path.join(tempdir, "incus-doc")], check=True)
+            except subprocess.CalledProcessError:
+                raise ValueError("Building incus-doc failed.")
+
+        # Generate the documentation
+        try:
+            subprocess.run([os.path.join(tempdir, "incus-doc"), incusBaseDir, "-y", f"{outputBaseDir}config_options.yaml", "-t", f"{outputBaseDir}config_options.txt"], check=True)
+        except subprocess.CalledProcessError:
+            raise ValueError("Generating the codebase documentation failed.")
+
+        print("Codebase documentation generated successfully")
+
+
+def setup(app):
+    app.connect('builder-inited', generate_go_docs)
