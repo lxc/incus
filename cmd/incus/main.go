@@ -113,6 +113,7 @@ For help with any of those, simply call them with --help.`))
 	// admin sub-command
 	adminCmd := cmdAdmin{global: &globalCmd}
 	app.AddCommand(adminCmd.Command())
+
 	// cluster sub-command
 	clusterCmd := cmdCluster{global: &globalCmd}
 	app.AddCommand(clusterCmd.Command())
