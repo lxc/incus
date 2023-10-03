@@ -28,6 +28,7 @@ func (c *cmdWarning) Command() *cobra.Command {
 	cmd.Short = i18n.G("Manage warnings")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage warnings`))
+	cmd.Hidden = true
 
 	// List
 	warningListCmd := cmdWarningList{global: c.global, warning: c}

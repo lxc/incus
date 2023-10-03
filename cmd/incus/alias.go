@@ -22,6 +22,7 @@ func (c *cmdAlias) Command() *cobra.Command {
 	cmd.Short = i18n.G("Manage command aliases")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage command aliases`))
+	cmd.Hidden = true
 
 	// Add
 	aliasAddCmd := cmdAliasAdd{global: c.global, alias: c}
