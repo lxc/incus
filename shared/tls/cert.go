@@ -81,7 +81,12 @@ func KeyPairAndCA(dir, prefix string, kind CertKind, addHosts bool) (*CertInfo, 
 			return nil, err
 		}
 
-		crl, err = x509.ParseRevocationList(data)
+		pemData, _ := pem.Decode(data)
+		if pemData == nil {
+			return nil, fmt.Errorf("Invalid revocation list")
+		}
+
+		crl, err = x509.ParseRevocationList(pemData.Bytes)
 		if err != nil {
 			return nil, err
 		}
