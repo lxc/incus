@@ -12,7 +12,7 @@ import (
 
 type cmdLaunch struct {
 	global *cmdGlobal
-	init   *cmdInit
+	init   *cmdCreate
 
 	flagConsole string
 }

@@ -126,6 +126,10 @@ For help with any of those, simply call them with --help.`))
 	consoleCmd := cmdConsole{global: &globalCmd}
 	app.AddCommand(consoleCmd.Command())
 
+	// create sub-command
+	createCmd := cmdCreate{global: &globalCmd}
+	app.AddCommand(createCmd.Command())
+
 	// copy sub-command
 	copyCmd := cmdCopy{global: &globalCmd}
 	app.AddCommand(copyCmd.Command())
@@ -158,12 +162,8 @@ For help with any of those, simply call them with --help.`))
 	imageCmd := cmdImage{global: &globalCmd}
 	app.AddCommand(imageCmd.Command())
 
-	// init sub-command
-	initCmd := cmdInit{global: &globalCmd}
-	app.AddCommand(initCmd.Command())
-
 	// launch sub-command
-	launchCmd := cmdLaunch{global: &globalCmd, init: &initCmd}
+	launchCmd := cmdLaunch{global: &globalCmd, init: &createCmd}
 	app.AddCommand(launchCmd.Command())
 
 	// list sub-command
