@@ -433,7 +433,7 @@ var ConfigSchema = config.Schema{
 	"core.https_trusted_proxy": {},
 
 	// gendoc:generate(group=server-core, key=core.proxy_http)
-	// If this option is not specified, LXD falls back to the `HTTP_PROXY` environment variable (if set).
+	// If this option is not specified, the daemon falls back to the `HTTP_PROXY` environment variable (if set).
 	// ---
 	//  type: string
 	//  scope: global
@@ -441,7 +441,7 @@ var ConfigSchema = config.Schema{
 	"core.proxy_http": {},
 
 	// gendoc:generate(group=server-core, key=core.proxy_https)
-	// If this option is not specified, LXD falls back to the `HTTPS_PROXY` environment variable (if set).
+	// If this option is not specified, the daemon falls back to the `HTTPS_PROXY` environment variable (if set).
 	// ---
 	//  type: string
 	//  scope: global
@@ -451,7 +451,7 @@ var ConfigSchema = config.Schema{
 	// gendoc:generate(group=server-core, key=core.proxy_ignore_hosts)
 	// Specify this option in a similar format to `NO_PROXY` (for example, `1.2.3.4,1.2.3.5`)
 	//
-	// If this option is not specified, LXD falls back to the `NO_PROXY` environment variable (if set).
+	// If this option is not specified, the daemon falls back to the `NO_PROXY` environment variable (if set).
 	// ---
 	//  type: string
 	//  scope: global
@@ -468,7 +468,7 @@ var ConfigSchema = config.Schema{
 	"core.remote_token_expiry": {Type: config.String, Validator: validate.Optional(expiryValidator)},
 
 	// gendoc:generate(group=server-core, key=core.shutdown_timeout)
-	// Specify the number of minutes to wait for running operations to complete before the LXD server shuts down.
+	// Specify the number of minutes to wait for running operations to complete before the daemon shuts down.
 	// ---
 	//  type: integer
 	//  scope: global
@@ -532,7 +532,7 @@ var ConfigSchema = config.Schema{
 	// Possible values are `random` and `mac`.
 	//
 	// If set to `random`, use the random host interface name as the host name.
-	// If set to `mac`, generate a host name in the form `lxd<mac_address>` (MAC without leading two digits).
+	// If set to `mac`, generate a host name in the form `inc<mac_address>` (MAC without leading two digits).
 	// ---
 	//  type: string
 	//  scope: global

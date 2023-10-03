@@ -33,7 +33,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// ---
 	//  type: bool
 	//  liveupdate: no
-	//  shortdesc: Whether to always start the instance when LXD starts
+	//  shortdesc: Whether to always start the instance when the daemon starts
 	"boot.autostart": validate.Optional(validate.IsBool),
 
 	// gendoc:generate(group=instance-boot, key=boot.autostart.delay)
