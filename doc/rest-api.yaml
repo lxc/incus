@@ -9957,6 +9957,39 @@ paths:
             summary: Get the instances
             tags:
                 - instances
+    /1.0/metadata/configuration:
+        get:
+            description: Returns the generated metadata configuration in YAML format.
+            operationId: metadata_configuration_get
+            produces:
+                - text/plain
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: The generated metadata configuration
+                                type: string
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the metadata configuration
     /1.0/metrics:
         get:
             description: Gets metrics of instances.

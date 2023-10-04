@@ -1,7 +1,7 @@
 (images-remote)=
 # How to use remote images
 
-The `lxc` CLI command is pre-configured with several remote image servers.
+The [`lxc`](incus.md) CLI command is pre-configured with several remote image servers.
 See {ref}`remote-image-servers` for an overview.
 
 ## List configured remotes
@@ -44,7 +44,7 @@ To add a LXD server as a remote, enter the following command:
 
     lxc remote add <remote_name> <IP|FQDN|URL> [flags]
 
-Some authentication methods require specific flags (for example, use `lxc remote add <remote_name> <IP|FQDN|URL> --auth-type=tls` for TLS authentication).
+Some authentication methods require specific flags (for example, use [`lxc remote add <remote_name> <IP|FQDN|URL> --auth-type=oidc`](incus_remote_add.md) for OIDC authentication).
 See {ref}`server-authenticate` and {ref}`authentication` for more information.
 
 For example, enter the following command to add a remote through an IP address:

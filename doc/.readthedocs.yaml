@@ -11,6 +11,9 @@ build:
   tools:
     golang: "1.18"
     python: "3.11"
+  jobs:
+    pre_build:
+      - go build -o lxc.bin ./lxc
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:

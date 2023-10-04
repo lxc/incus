@@ -6,7 +6,7 @@ relatedlinks: https://www.youtube.com/watch?v=pM0EgUqj2a0
 (remote-image-servers)=
 # Remote image servers
 
-The `lxc` CLI command comes pre-configured with the following default remote image servers:
+The [`lxc`](incus.md) CLI command comes pre-configured with the following default remote image servers:
 
 `ubuntu:`
 : This server provides official stable Ubuntu images.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/user"
@@ -20,6 +21,8 @@ import (
 )
 
 type cmdGlobal struct {
+	asker cli.Asker
+
 	conf     *config.Config
 	confPath string
 	cmd      *cobra.Command
@@ -87,7 +90,7 @@ For help with any of those, simply call them with --help.`))
 	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 
 	// Global flags
-	globalCmd := cmdGlobal{cmd: app}
+	globalCmd := cmdGlobal{cmd: app, asker: cli.NewAsker(bufio.NewReader(os.Stdin))}
 
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, i18n.G("Print version number"))
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, i18n.G("Print help"))

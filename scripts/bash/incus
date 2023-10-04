@@ -5,9 +5,12 @@ _have incus && {
     {
       local state=$1
       local keys=$2
+      local project
+      project=$(incus project list -f csv | sed -n 's/^\([^(]\+\) (current),.*/\1/ p')
+      project=${project:-"default"}
 
-      local cmd="incus list --format=csv --columns=ns"
-      [ -n "$state" ] && cmd="$cmd | grep -E '$state$'"
+      local cmd="incus list --format=csv --columns=ns --project $project"
+      [ -n "$state" ] && cmd="$cmd | grep -E ',$state$'"
 
       COMPREPLY=( $( compgen -W \
         "$( eval $cmd | cut -d, -f1 ) $keys" "$cur" )
@@ -31,7 +34,7 @@ _have incus && {
 
     _incus_projects()
     {
-      COMPREPLY=( $( compgen -W "$( incus project list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( incus project list --format=csv | sed 's/,.\+//; s/ (current)$//' )" "$cur" ) )
     }
 
     _incus_networks()
@@ -238,7 +241,7 @@ _have incus && {
         _incus_names "(STOPPED|FROZEN)"
         ;;
       "exec"|"console"|"stop"|"shell")
-        _incus_names "RUNNING|READY"
+        _incus_names "(RUNNING|READY)"
         ;;
       "file")
         COMPREPLY=( $(compgen -W "pull push edit delete mount" -- $cur) )

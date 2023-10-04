@@ -10,6 +10,7 @@ import (
 
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
+	"github.com/lxc/incus/shared/api"
 )
 
 type cmdOperation struct {
@@ -94,7 +95,8 @@ type cmdOperationList struct {
 	global    *cmdGlobal
 	operation *cmdOperation
 
-	flagFormat string
+	flagFormat      string
+	flagAllProjects bool
 }
 
 func (c *cmdOperationList) Command() *cobra.Command {
@@ -105,6 +107,7 @@ func (c *cmdOperationList) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List background operations`))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("List operations from all projects")+"``")
 
 	cmd.RunE = c.Run
 
@@ -135,7 +138,13 @@ func (c *cmdOperationList) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get operations
-	operations, err := resource.server.GetOperations()
+	var operations []api.Operation
+	if c.flagAllProjects {
+		operations, err = resource.server.GetOperationsAllProjects()
+	} else {
+		operations, err = resource.server.GetOperations()
+	}
+
 	if err != nil {
 		return err
 	}

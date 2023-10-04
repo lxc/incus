@@ -88,14 +88,16 @@ func getCPUMetrics(d *Daemon) (map[string]metrics.CPUMetrics, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
-		if len(fields) < 9 {
-			return nil, fmt.Errorf("Invalid /proc/stat content: %q", line)
-		}
 
 		// Only consider CPU info, skip everything else. Skip aggregated CPU stats since there will
 		// be stats for each individual CPU.
 		if !strings.HasPrefix(fields[0], "cpu") || fields[0] == "cpu" {
 			continue
+		}
+
+		// Validate the number of fields only for lines starting with "cpu".
+		if len(fields) < 9 {
+			return nil, fmt.Errorf("Invalid /proc/stat content: %q", line)
 		}
 
 		stats := metrics.CPUMetrics{}

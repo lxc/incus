@@ -12,12 +12,19 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-var stdin = bufio.NewReader(os.Stdin)
+// Asker holds a reader for reading input into CLI questions.
+type Asker struct {
+	reader *bufio.Reader
+}
+
+func NewAsker(reader *bufio.Reader) Asker {
+	return Asker{reader: reader}
+}
 
 // AskBool asks a question and expect a yes/no answer.
-func AskBool(question string, defaultAnswer string) (bool, error) {
+func (a *Asker) AskBool(question string, defaultAnswer string) (bool, error) {
 	for {
-		answer, err := askQuestion(question, defaultAnswer)
+		answer, err := a.askQuestion(question, defaultAnswer)
 		if err != nil {
 			return false, err
 		}
@@ -33,9 +40,9 @@ func AskBool(question string, defaultAnswer string) (bool, error) {
 }
 
 // AskChoice asks the user to select one of multiple options.
-func AskChoice(question string, choices []string, defaultAnswer string) (string, error) {
+func (a *Asker) AskChoice(question string, choices []string, defaultAnswer string) (string, error) {
 	for {
-		answer, err := askQuestion(question, defaultAnswer)
+		answer, err := a.askQuestion(question, defaultAnswer)
 		if err != nil {
 			return "", err
 		}
@@ -49,9 +56,9 @@ func AskChoice(question string, choices []string, defaultAnswer string) (string,
 }
 
 // AskInt asks the user to enter an integer between a min and max value.
-func AskInt(question string, min int64, max int64, defaultAnswer string, validate func(int64) error) (int64, error) {
+func (a *Asker) AskInt(question string, min int64, max int64, defaultAnswer string, validate func(int64) error) (int64, error) {
 	for {
-		answer, err := askQuestion(question, defaultAnswer)
+		answer, err := a.askQuestion(question, defaultAnswer)
 		if err != nil {
 			return -1, err
 		}
@@ -81,9 +88,9 @@ func AskInt(question string, min int64, max int64, defaultAnswer string, validat
 
 // AskString asks the user to enter a string, which optionally
 // conforms to a validation function.
-func AskString(question string, defaultAnswer string, validate func(string) error) (string, error) {
+func (a *Asker) AskString(question string, defaultAnswer string, validate func(string) error) (string, error) {
 	for {
-		answer, err := askQuestion(question, defaultAnswer)
+		answer, err := a.askQuestion(question, defaultAnswer)
 		if err != nil {
 			return "", err
 		}
@@ -151,15 +158,15 @@ func AskPasswordOnce(question string) string {
 }
 
 // Ask a question on the output stream and read the answer from the input stream.
-func askQuestion(question, defaultAnswer string) (string, error) {
+func (a *Asker) askQuestion(question, defaultAnswer string) (string, error) {
 	fmt.Print(question)
 
-	return readAnswer(defaultAnswer)
+	return a.readAnswer(defaultAnswer)
 }
 
 // Read the user's answer from the input stream, trimming newline and providing a default.
-func readAnswer(defaultAnswer string) (string, error) {
-	answer, err := stdin.ReadString('\n')
+func (a *Asker) readAnswer(defaultAnswer string) (string, error) {
+	answer, err := a.reader.ReadString('\n')
 	answer = strings.TrimSpace(strings.TrimSuffix(answer, "\n"))
 	if answer == "" {
 		answer = defaultAnswer

@@ -1,6 +1,6 @@
 test_storage_volume_import() {
-  truncate -s 8MiB foo.iso
-  truncate -s 8MiB foo.img
+  truncate -s 25MiB foo.iso
+  truncate -s 25MiB foo.img
 
   ensure_import_testimage
 

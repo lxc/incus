@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/subprocess"
 )
 
 var sysClassDMIID = "/sys/class/dmi/id"
@@ -26,7 +28,14 @@ func GetSystem() (*api.ResourcesSystem, error) {
 	system.Type = systemType
 
 	if !sysfsExists(sysClassDMIID) {
-		return &system, nil
+		lshwSystem := getSystemFromLshw()
+		if lshwSystem == nil {
+			return &system, nil
+		}
+
+		lshwSystem.Type = systemType
+
+		return lshwSystem, nil
 	}
 
 	// Product UUID
@@ -122,6 +131,92 @@ func GetSystem() (*api.ResourcesSystem, error) {
 	}
 
 	return &system, nil
+}
+
+// getSystemFromLshw gets the system information from the `lshw` command.
+func getSystemFromLshw() *api.ResourcesSystem {
+	output, err := subprocess.RunCommandCLocale("lshw", "-json")
+	if err != nil {
+		return nil
+	}
+
+	type systemConfiguration struct {
+		Chassis string `json:"chassis"` // system.chassis.type
+		Family  string `json:"family"`  // system.family
+		SKU     string `json:"sku"`     // system.sku
+		UUID    string `json:"uuid"`    // system.uuid
+	}
+
+	type systemChildren struct {
+		Children    []systemChildren `json:"children"`
+		Description string           `json:"description"`
+		ID          string           `json:"id"`
+		Date        string           `json:"date"`    // system.firmware.date
+		Product     string           `json:"product"` // system.motherboard.product
+		Serial      string           `json:"serial"`  // system.motherboard.serial
+		Vendor      string           `json:"vendor"`  // system.firmware.vendor, system.motherboard.vendor
+		Version     string           `json:"version"` // system.firmware.version, system.motherboard.version
+	}
+
+	type system struct {
+		Configuration systemConfiguration `json:"configuration"`
+		Children      []systemChildren    `json:"children"`
+		Product       string              `json:"product"` // system.product
+		Serial        string              `json:"serial"`  // system.serial
+		Vendor        string              `json:"vendor"`  // system.vendor
+		Version       string              `json:"version"` // system.version
+	}
+
+	systemInfo := system{}
+
+	err = json.Unmarshal([]byte(output), &systemInfo)
+	if err != nil {
+		return nil
+	}
+
+	ret := api.ResourcesSystem{
+		Chassis: &api.ResourcesSystemChassis{
+			Type: systemInfo.Configuration.Chassis,
+		},
+		Family:  systemInfo.Configuration.Family,
+		Product: systemInfo.Product,
+		Serial:  systemInfo.Serial,
+		Sku:     systemInfo.Configuration.SKU,
+		UUID:    systemInfo.Configuration.UUID,
+		Vendor:  systemInfo.Vendor,
+		Version: systemInfo.Version,
+	}
+
+	for _, child := range systemInfo.Children {
+		if child.Description != "Motherboard" {
+			continue
+		}
+
+		for _, subChild := range child.Children {
+			if subChild.ID != "firmware" {
+				continue
+			}
+
+			ret.Firmware = &api.ResourcesSystemFirmware{
+				Vendor:  subChild.Vendor,
+				Date:    subChild.Date,
+				Version: subChild.Version,
+			}
+
+			break
+		}
+
+		ret.Motherboard = &api.ResourcesSystemMotherboard{
+			Product: child.Product,
+			Serial:  child.Serial,
+			Vendor:  child.Vendor,
+			Version: child.Version,
+		}
+
+		break
+	}
+
+	return &ret
 }
 
 func systemGetType() string {

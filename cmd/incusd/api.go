@@ -78,6 +78,17 @@ func restServer(d *Daemon) *http.Server {
 		})
 	}
 
+	// Serving the documentation.
+	documentationPath := os.Getenv("INCUS_DOCUMENTATION")
+	docEnabled := documentationPath != "" && util.PathExists(documentationPath)
+	if docEnabled {
+		documentationHttpDir := documentationHttpDir{http.Dir(documentationPath)}
+		mux.PathPrefix("/documentation/").Handler(http.StripPrefix("/documentation/", http.FileServer(documentationHttpDir)))
+		mux.HandleFunc("/documentation", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/documentation/", 301)
+		})
+	}
+
 	// OIDC browser login (code flow).
 	mux.HandleFunc("/oidc/login", func(w http.ResponseWriter, r *http.Request) {
 		if d.oidcVerifier == nil {
@@ -435,6 +446,19 @@ type uiHttpDir struct {
 }
 
 func (fs uiHttpDir) Open(name string) (http.File, error) {
+	fsFile, err := fs.FileSystem.Open(name)
+	if err != nil && os.IsNotExist(err) {
+		return fs.FileSystem.Open("index.html")
+	}
+
+	return fsFile, err
+}
+
+type documentationHttpDir struct {
+	http.FileSystem
+}
+
+func (fs documentationHttpDir) Open(name string) (http.File, error) {
 	fsFile, err := fs.FileSystem.Open(name)
 	if err != nil && os.IsNotExist(err) {
 		return fs.FileSystem.Open("index.html")

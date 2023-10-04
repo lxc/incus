@@ -16,13 +16,13 @@ It parses the comments from the AST and extracts their documentation.
 A comment is formatted this way:
 
 ```go
-	// gendoc:generate(group=cluster, key=scheduler.instance)
+	// gendoc:generate(entity=cluster, group=cluster, key=scheduler.instance)
 	//
 	//  <Possibly a very long documentation on multiple lines with Markdown tables, etc.>
 	// ---
 	//  shortdesc: Possible values are all, manual and group. See Automatic placement of instances for more information.
     	//  condition: container
-	//  default: `all`
+	//  defaultdesc: `all`
 	//  type: integer
 	//  liveupdate: `yes`
 	//  <ANY_KEY>: <ANY_VALUE>
@@ -31,7 +31,7 @@ A comment is formatted this way:
 	}
 
     for k, v := range config {
-		// gendoc:generate(group=cluster, key=user.*)
+		// gendoc:generate(entity=cluster, group=cluster, key=user.*)
 		//
 		// This is the real long desc.
 		//
@@ -82,46 +82,54 @@ In a swagger fashion, `incus-doc` can associate metadata key-value pairs (here f
 
 ## Output
 
-Here is the YAML output of the example shown above:
+Here is the JSON output of the example shown above:
 
-```yaml
-configs:
-    cluster:
-        - scheduler.instance:
-            condition: container
-            default: '`all`'
-            liveupdate: '`yes`'
-            longdesc: |4-
-                <Possibly a very long documentation on multiple lines with Markdown tables, etc.>
-            shortdesc: Possible values are all, manual and group. See Automatic placement of instances for more information.
-            type: integer
-        - user.*:
-            condition: container
-            default: '-'
-            liveupdate: '`yes`'
-            longdesc: |4+
-                This is the real long desc.
+```json
+{
+	"configs": {
+		"cluster": [
+			{
+				"scheduler.instance": {
+					"condition": "container",
+					"defaultdesc": "`all`",
+					"liveupdate": "`yes`",
+					"longdesc": "<Possibly a very long documentation on multiple lines with Markdown tables, etc.>",
+					"shortdesc": " Possible values are all, manual and group. See Automatic placement of instances for more",
+					"type": "integer"
+				}
+			},
+			{
+				"user.*": {
+					"condition": "container",
+					"defaultdesc": "-",
+					"liveupdate": "`yes`",
+					"longdesc": "
+						This is the real long desc.
 
-                With two paragraphs.
+						With two paragraphs.
 
-                And a list:
+						And a list:
 
-                - Item
-                - Item
-                - Item
+						- Item
+						- Item
+						- Item
 
-                And a table:
+						And a table:
 
-                Key                                 | Type      | Scope     | Default                                          | Description
-                :--                                 | :---      | :----     | :------                                          | :----------
-                `acme.agree_tos`                    | bool      | global    | `false`                                          | Agree to ACME terms of service
-                `acme.ca_url`                       | string    | global    | `https://acme-v02.api.letsencrypt.org/directory` | URL to the directory resource of the ACME service
-                `acme.domain`                       | string    | global    | -                                                | Domain for which the certificate is issued
-                `acme.email`                        | string    | global    | -                                                | Email address used for the account registration
-
-            shortdesc: Free form user key/value storage (can be used in search).
-            type: string
-
+						Key                                 | Type      | Scope     | Default                                          | Description
+						:--                                 | :---      | :----     | :------                                          | :----------
+						`acme.agree_tos`                    | bool      | global    | `false`                                          | Agree to ACME terms of service
+						`acme.ca_url`                       | string    | global    | `https://acme-v02.api.letsencrypt.org/directory` | URL to the directory resource of the ACME service
+						`acme.domain`                       | string    | global    | -                                                | Domain for which the certificate is issued
+						`acme.email`                        | string    | global    | -                                                | Email address used for the account registration
+					",
+					"shortdesc": "Free form user key/value storage (can be used in search).",
+					"type": "string"
+				}
+			}
+		],
+	}
+}
 ```
 
 Here is the `.txt` output of the example shown above:

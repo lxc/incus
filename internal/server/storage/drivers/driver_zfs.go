@@ -157,11 +157,7 @@ func (d zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 	for _, dataset := range d.initialDatasets() {
 		properties := []string{"mountpoint=legacy"}
 		if util.ValueInSlice(dataset, []string{"virtual-machines", "deleted/virtual-machines"}) {
-			if len(zfsVersion) >= 3 && zfsVersion[0:3] == "0.6" {
-				d.logger.Warn("Unable to set volmode on parent virtual-machines datasets due to ZFS being too old")
-			} else {
-				properties = append(properties, "volmode=none")
-			}
+			properties = append(properties, "volmode=none")
 		}
 
 		datasetPath := filepath.Join(d.config["zfs.pool_name"], dataset)
@@ -639,14 +635,10 @@ func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshot
 	}
 
 	// Detect ZFS features.
-	features := []string{migration.ZFSFeatureMigrationHeader}
+	features := []string{migration.ZFSFeatureMigrationHeader, "compress"}
 
 	if contentType == ContentTypeFS {
 		features = append(features, migration.ZFSFeatureZvolFilesystems)
-	}
-
-	if len(zfsVersion) >= 3 && zfsVersion[0:3] != "0.6" {
-		features = append(features, "compress")
 	}
 
 	if IsContentBlock(contentType) {

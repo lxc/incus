@@ -11,6 +11,7 @@ import (
 	"github.com/pborman/uuid"
 
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/db/operationtype"
@@ -91,6 +92,14 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
+	revert := revert.New()
+	defer revert.Fail()
+
+	unlock := instanceOperationLock(s.ShutdownCtx, projectName, name)
+	revert.Add(func() {
+		unlock()
+	})
+
 	inst, err := instance.LoadByProjectAndName(s, projectName, name)
 	if err != nil {
 		return response.SmartError(err)
@@ -142,6 +151,8 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 
 		// Update container configuration
 		do = func(op *operations.Operation) error {
+			defer unlock()
+
 			args := db.InstanceArgs{
 				Architecture: architecture,
 				Config:       configRaw.Config,
@@ -164,6 +175,8 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 	} else {
 		// Snapshot Restore
 		do = func(op *operations.Operation) error {
+			defer unlock()
+
 			return instanceSnapRestore(s, projectName, name, configRaw.Restore, configRaw.Stateful)
 		}
 
@@ -182,6 +195,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
+	revert.Success()
 	return operations.OperationResponse(op)
 }
 

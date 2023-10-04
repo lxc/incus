@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/instance/operationlock"
+	"github.com/lxc/incus/internal/server/locking"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/state"
@@ -730,4 +731,13 @@ func getSourceImageFromInstanceSource(ctx context.Context, s *state.State, tx *d
 	}
 
 	return sourceImage, nil
+}
+
+// instanceOperationLock acquires a lock for operating on an instance and returns the unlock function.
+func instanceOperationLock(ctx context.Context, projectName string, instanceName string) locking.UnlockFunc {
+	l := logger.AddContext(logger.Ctx{"project": projectName, "instance": instanceName})
+	l.Debug("Acquiring lock for instance")
+	defer l.Debug("Lock acquired for instance")
+
+	return locking.Lock(ctx, fmt.Sprintf("InstanceOperation_%s", project.Instance(projectName, instanceName)))
 }

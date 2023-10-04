@@ -196,18 +196,6 @@ func (d *zfs) getDatasets(dataset string, types string) ([]string, error) {
 }
 
 func (d *zfs) setDatasetProperties(dataset string, options ...string) error {
-	if len(zfsVersion) >= 3 && zfsVersion[0:3] == "0.6" {
-		// Slow path for ZFS 0.6
-		for _, option := range options {
-			_, err := subprocess.RunCommand("zfs", "set", option, dataset)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
 	args := []string{"set"}
 	args = append(args, options...)
 	args = append(args, dataset)

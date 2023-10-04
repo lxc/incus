@@ -228,11 +228,11 @@ test_basic_usage() {
   curl -k -s --cert "${INCUS_CONF}/client3.crt" --key "${INCUS_CONF}/client3.key" -X GET "https://${INCUS_ADDR}/1.0/images" | grep -F "/1.0/images/"
   incus image delete foo-image2
 
-  # Test invalid container names
+  # Test invalid instance names
   ! incus init testimage -abc || false
   ! incus init testimage abc- || false
   ! incus init testimage 1234 || false
-  ! incus init testimage 12test || false
+  ! incus init testimage foo.bar || false
   ! incus init testimage a_b_c || false
   ! incus init testimage aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa || false
 

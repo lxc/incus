@@ -44,7 +44,6 @@ func (c *cmdCreate) Command() *cobra.Command {
 
 incus create images:ubuntu/22.04 u1 < config.yaml
     Create the instance with configuration from config.yaml`))
-	cmd.Hidden = true
 
 	cmd.Aliases = []string{"init"}
 	cmd.RunE = c.Run

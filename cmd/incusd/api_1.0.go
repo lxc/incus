@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/auth/oidc"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
@@ -74,6 +75,7 @@ var api10 = []APIEndpoint{
 	imageRefreshCmd,
 	imagesCmd,
 	imageSecretCmd,
+	metadataConfigurationCmd,
 	networkCmd,
 	networkLeasesCmd,
 	networksCmd,
@@ -565,11 +567,18 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 
 	nodeChanged := map[string]string{}
 	var newNodeConfig *node.Config
+	oldNodeConfig := make(map[string]string)
+
 	err = s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
 		var err error
 		newNodeConfig, err = node.ConfigLoad(ctx, tx)
 		if err != nil {
 			return fmt.Errorf("Failed to load node config: %w", err)
+		}
+
+		// Keep old config around in case something goes wrong. In that case the config will be reverted.
+		for k, v := range newNodeConfig.Dump() {
+			oldNodeConfig[k] = v
 		}
 
 		// We currently don't allow changing the cluster.https_address once it's set.
@@ -623,14 +632,53 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		}
 	}
 
+	revert := revert.New()
+	defer revert.Fail()
+
+	revert.Add(func() {
+		for key := range nodeValues {
+			val, ok := oldNodeConfig[key]
+			if !ok {
+				nodeValues[key] = ""
+			} else {
+				nodeValues[key] = val
+			}
+		}
+
+		err = s.DB.Node.Transaction(r.Context(), func(ctx context.Context, tx *db.NodeTx) error {
+			newNodeConfig, err := node.ConfigLoad(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("Failed to load node config: %w", err)
+			}
+
+			_, err = newNodeConfig.Replace(nodeValues)
+			if err != nil {
+				return fmt.Errorf("Failed updating node config: %w", err)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			logger.Warn("Failed reverting node config", logger.Ctx{"err": err})
+		}
+	})
+
 	// Then deal with cluster wide configuration
 	var clusterChanged map[string]string
 	var newClusterConfig *clusterConfig.Config
+	oldClusterConfig := make(map[string]string)
+
 	err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 		newClusterConfig, err = clusterConfig.Load(ctx, tx)
 		if err != nil {
 			return fmt.Errorf("Failed to load cluster config: %w", err)
+		}
+
+		// Keep old config around in case something goes wrong. In that case the config will be reverted.
+		for k, v := range newClusterConfig.Dump() {
+			oldClusterConfig[k] = v
 		}
 
 		if patch {
@@ -649,6 +697,35 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 			return response.SmartError(err)
 		}
 	}
+
+	revert.Add(func() {
+		for key := range req.Config {
+			val, ok := oldClusterConfig[key]
+			if !ok {
+				req.Config[key] = ""
+			} else {
+				req.Config[key] = val
+			}
+		}
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			newClusterConfig, err = clusterConfig.Load(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("Failed to load cluster config: %w", err)
+			}
+
+			_, err = newClusterConfig.Replace(req.Config)
+			if err != nil {
+				return fmt.Errorf("Failed updating cluster config: %w", err)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			logger.Warn("Failed reverting cluster config", logger.Ctx{"err": err})
+		}
+	})
 
 	// Notify the other nodes about changes
 	notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
@@ -688,6 +765,8 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		return response.SmartError(err)
 	}
 
+	revert.Success()
+
 	s.Events.SendLifecycle(project.Default, lifecycle.ConfigUpdated.Event(request.CreateRequestor(r), nil))
 
 	return response.EmptySyncResponse
@@ -702,6 +781,7 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	acmeDomainChanged := false
 	acmeCAURLChanged := false
 	oidcChanged := false
+	syslogSocketChanged := false
 
 	for key := range clusterChanged {
 		switch key {
@@ -762,6 +842,8 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			bgpChanged = true
 		case "core.dns_address":
 			dnsChanged = true
+		case "core.syslog_socket":
+			syslogSocketChanged = true
 		}
 	}
 
@@ -886,6 +968,13 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			d.oidcVerifier = nil
 		} else {
 			d.oidcVerifier = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcAudience)
+		}
+	}
+
+	if syslogSocketChanged {
+		err := d.setupSyslogSocket(nodeConfig.SyslogSocket())
+		if err != nil {
+			return err
 		}
 	}
 

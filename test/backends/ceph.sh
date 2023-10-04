@@ -15,7 +15,7 @@ ceph_configure() {
 
   echo "==> Configuring CEPH backend in ${INCUS_DIR}"
 
-  incus storage create "incustest-$(basename "${INCUS_DIR}")" ceph volume.size=25MiB ceph.osd.pg_num=16
+  incus storage create "incustest-$(basename "${INCUS_DIR}")" ceph volume.size=25MiB ceph.osd.pg_num=8
   incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 }
 

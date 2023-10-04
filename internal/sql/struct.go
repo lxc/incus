@@ -8,7 +8,7 @@ type SQLDump struct {
 // SQLQuery represents a DB query.
 type SQLQuery struct {
 	Database string `json:"database" yaml:"database"`
-	Query    string `json:"query" yaml:"query"`
+	Query    string `json:"query"    yaml:"query"`
 }
 
 // SQLBatch represents a batch result.
@@ -18,8 +18,8 @@ type SQLBatch struct {
 
 // SQLResult reprents a query result.
 type SQLResult struct {
-	Type         string   `json:"type" yaml:"type"`
-	Columns      []string `json:"columns" yaml:"columns"`
-	Rows         [][]any  `json:"rows" yaml:"rows"`
+	Type         string   `json:"type"          yaml:"type"`
+	Columns      []string `json:"columns"       yaml:"columns"`
+	Rows         [][]any  `json:"rows"          yaml:"rows"`
 	RowsAffected int64    `json:"rows_affected" yaml:"rows_affected"`
 }

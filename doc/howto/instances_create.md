@@ -1,8 +1,8 @@
 (instances-create)=
 # How to create instances
 
-To create an instance, you can use either the `lxc init` or the `lxc launch` command.
-The `lxc init` command only creates the instance, while the `lxc launch` command creates and starts it.
+To create an instance, you can use either the [`lxc init`](incus_create.md) or the [`lxc launch`](incus_launch.md) command.
+The [`lxc init`](incus_create.md) command only creates the instance, while the [`lxc launch`](incus_launch.md) command creates and starts it.
 
 ## Usage
 
@@ -22,7 +22,7 @@ Instance name
   See {ref}`instance-properties` for additional requirements.
 
 Flags
-: See `lxc launch --help` or `lxc init --help` for a full list of flags.
+: See [`lxc launch --help`](incus_launch.md) or [`lxc init --help`](incus_create.md) for a full list of flags.
   The most common flags are:
 
   - `--config` to specify a configuration option for the new instance
@@ -41,12 +41,12 @@ For example, to launch a container with the configuration from `config.yaml`, en
     lxc launch ubuntu:22.04 ubuntu-config < config.yaml
 
 ```{tip}
-Check the contents of an existing instance configuration (`lxc config show <instance_name> -e`) to see the required syntax of the YAML file.
+Check the contents of an existing instance configuration ([`lxc config show <instance_name> --expanded`](incus_config_show.md)) to see the required syntax of the YAML file.
 ```
 
 ## Examples
 
-The following examples use `lxc launch`, but you can use `lxc init` in the same way.
+The following examples use [`lxc launch`](incus_launch.md), but you can use [`lxc init`](incus_create.md) in the same way.
 
 ### Launch a container
 

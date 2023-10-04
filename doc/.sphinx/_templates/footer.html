@@ -30,7 +30,6 @@
 </div>
 <div class="bottom-of-page">
   <div class="left-details">
-
     {%- if show_copyright %}
     <div class="copyright">
       {%- if hasdoc('copyright') %}
@@ -61,24 +60,30 @@
          rel="nofollow">Show source</a>
     </div>
     {%- endif %}
-
   </div>
   <div class="right-details">
 
     {# ru-fu: replaced RTD icons with our links #}
 
+    {% if discourse %}
     <div class="ask-discourse">
-      <a class="muted-link" href="https://discourse.ubuntu.com/c/lxd/">Ask a question</a>
-    </div>
-
-    {% if github_url and github_version and github_folder and github_filetype %}
-    <div class="issue-github">
-      <a class="muted-link" href="{{ github_url }}/issues/new?title=doc%3A+ADD+A+TITLE&body=DESCRIBE+THE+ISSUE%0A%0A---%0ADocument: {{ pagename }}.{{ github_filetype }}">Open an issue</a>
-    </div>
-    <div class="edit-github">
-      <a class="muted-link" href="{{ github_url }}/edit/{{ github_version }}{{ github_folder }}{{ pagename }}.{{ github_filetype }}">Edit on GitHub</a>
+      <a class="muted-link" href="{{ discourse }}">Ask a question on Discourse</a>
     </div>
     {% endif %}
+
+    {% if github_url and github_version and github_folder %}
+
+    {% if github_issues %}
+    <div class="issue-github">
+      <a class="muted-link" href="{{ github_url }}/issues/new?title=doc%3A+ADD+A+TITLE&body=DESCRIBE+THE+ISSUE%0A%0A---%0ADocument: {{ pagename }}{{ page_source_suffix }}">Open a GitHub issue for this page</a>
+    </div>
+    {% endif %}
+
+    <div class="edit-github">
+      <a class="muted-link" href="{{ github_url }}/edit/{{ github_version }}{{ github_folder }}{{ pagename }}{{ page_source_suffix }}">Edit this page on GitHub</a>
+    </div>
+    {% endif %}
+
 
     </div>
   </div>

@@ -901,18 +901,36 @@ func networkSRIOVRestoreVF(d deviceCommon, useSpoofCheck bool, volatile map[stri
 func networkPCIBindWaitInterface(pciDev pcidev.Device, ifName string) error {
 	var err error
 
+	waitDuration := time.Second * 10
+	waitUntil := time.Now().Add(waitDuration)
+
 	// Keep requesting the device driver be probed in case it was not ready previously or the expected
 	// interface has not appeared yet. The device can be probed multiple times safely.
-	for i := 0; i < 10; i++ {
+
+	i := 0
+	for {
 		err = pcidev.DeviceProbe(pciDev)
 		if err == nil && network.InterfaceExists(ifName) {
 			return nil
 		}
 
-		time.Sleep(50 * time.Millisecond)
-	}
+		if time.Now().After(waitUntil) {
+			if err != nil {
+				return fmt.Errorf("Failed binding interface %q after %v: %w", ifName, waitDuration, err)
+			}
 
-	return fmt.Errorf("Failed to bind interface %q: %w", ifName, err)
+			return fmt.Errorf("Failed binding interface %q after %v", ifName, waitDuration)
+		}
+
+		if i <= 5 {
+			// Retry more quickly early on.
+			time.Sleep(time.Millisecond * time.Duration(i) * 10)
+		} else {
+			time.Sleep(time.Second)
+		}
+
+		i++
+	}
 }
 
 // networkSRIOVSetupContainerVFNIC configures the VF NIC interface ready for moving into container.

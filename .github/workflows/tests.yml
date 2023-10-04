@@ -116,7 +116,7 @@ jobs:
 
       - name: Install Go (tip)
         run: |
-          curl -sL https://storage.googleapis.com/go-build-snap/go/linux-amd64/$(git ls-remote https://github.com/golang/go.git HEAD | awk '{print $1;}').tar.gz -o gotip.tar.gz
+          curl -sSfL https://storage.googleapis.com/go-build-snap/go/linux-amd64/$(git ls-remote https://github.com/golang/go.git HEAD | awk '{print $1;}').tar.gz -o gotip.tar.gz
           ls -lah gotip.tar.gz
           mkdir -p ~/sdk/gotip
           tar -C ~/sdk/gotip -xzf gotip.tar.gz
@@ -132,6 +132,7 @@ jobs:
           sudo apt-get update
 
           sudo snap remove lxd --purge
+          sudo snap remove core20 --purge || true
           sudo apt-get autopurge moby-containerd docker uidmap -y
           sudo ip link delete docker0
           sudo nft flush ruleset
@@ -141,7 +142,6 @@ jobs:
 
           sudo apt-get install --no-install-recommends -y \
             curl \
-            dnsutils \
             git \
             libacl1-dev \
             libcap-dev \
@@ -200,7 +200,18 @@ jobs:
         if: ${{ matrix.backend == 'ceph' }}
         run: |
           set -x
-          sudo apt-get install --no-install-recommends -y snapd ceph-common
+
+          # If the rootfs and the ephemeral part are on the same physical disk, giving the whole
+          # disk to microceph would wipe our rootfs. Since it is pretty rare for GitHub Action
+          # runners to have a single disk, we immediately bail rather than trying to gracefully
+          # handle it. Once snapd releases with https://github.com/snapcore/snapd/pull/13150,
+          # we will be able to stop worrying about that special case.
+          if [ "$(stat -c '%d' /)" = "$(stat -c '%d' /mnt)" ]; then
+            echo "FAIL: rootfs and ephemeral part on the same disk, aborting"
+            exit 1
+          fi
+
+          sudo apt-get install --no-install-recommends -y ceph-common
           sudo snap install microceph --edge
           sleep 5
           sudo microceph cluster bootstrap
@@ -212,17 +223,11 @@ jobs:
           for flag in nosnaptrim noscrub nobackfill norebalance norecover noscrub nodeep-scrub; do
               sudo microceph.ceph osd set $flag
           done
-          # Use ephemeral disk mounted on /mnt for ceph OSD.
-          # The block-devices plug doesn't allow accessing /dev/loopX devices so we make those same devices
-          # available under alternate names (/dev/sdiY) that are not used inside GitHub Action runners.
+          # Repurpose the ephemeral disk for ceph OSD.
           sudo swapoff /mnt/swapfile
-          sudo rm -f /mnt/swapfile
-          loop_file="/mnt/ceph-osd.img"
-          sudo fallocate -l 10G "${loop_file}"
-          loop_dev="$(sudo losetup --show --direct-io=on --nooverlap -f "${loop_file}")"
-          devInfo=($(sudo stat -c '%t %T' "${loop_dev}"))
-          sudo mknod -m 0660 /dev/sdia b 0x"${devInfo[0]}" 0x"${devInfo[1]}"
-          sudo microceph disk add --wipe /dev/sdia
+          ephemeral_disk="$(findmnt --noheadings --output SOURCE --target /mnt | sed 's/[0-9]\+$//')"
+          sudo umount /mnt
+          sudo microceph disk add --wipe "${ephemeral_disk}"
           sudo rm -rf /etc/ceph
           sudo ln -s /var/snap/microceph/current/conf/ /etc/ceph
           sudo microceph enable rgw
@@ -326,7 +331,7 @@ jobs:
         uses: get-woke/woke-action@v0
         with:
           fail-on-error: true
-          woke-args: "*.md **/*.md -c https://github.com/canonical-web-and-design/Inclusive-naming/raw/main/config.yml"
+          woke-args: "*.md **/*.md -c https://github.com/canonical/Inclusive-naming/raw/main/config.yml"
 
       - name: Run link checker
         run: |

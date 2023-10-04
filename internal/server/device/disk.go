@@ -104,11 +104,6 @@ func (d *disk) CanMigrate() bool {
 	return false
 }
 
-// sourceIsDir returns true if the disks source config setting is a directory.
-func (d *disk) sourceIsDir() bool {
-	return internalUtil.IsDir(d.config["source"])
-}
-
 // sourceIsCephFs returns true if the disks source config setting is a CephFS share.
 func (d *disk) sourceIsCephFs() bool {
 	return strings.HasPrefix(d.config["source"], "cephfs:")
@@ -121,7 +116,19 @@ func (d *disk) sourceIsCeph() bool {
 
 // CanHotPlug returns whether the device can be managed whilst the instance is running.
 func (d *disk) CanHotPlug() bool {
-	return !(d.sourceIsDir() || d.sourceIsCephFs()) || d.inst.Type() == instancetype.Container
+	// Containers support hot-plugging all disk types.
+	if d.inst.Type() == instancetype.Container {
+		return true
+	}
+
+	// A mount path indicates a filesystem disk being attached, which cannot be hot-plugged for VMs due to
+	// limitations with virtiofs.
+	if d.config["path"] != "" {
+		return false
+	}
+
+	// Block disks can be hot-plugged into VMs.
+	return true
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -855,6 +862,10 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			// directory sharing feature to mount the directory inside the VM, and as such we need to
 			// indicate to the VM the target path to mount to.
 			if internalUtil.IsDir(mount.DevPath) || d.sourceIsCephFs() {
+				if d.config["path"] == "" {
+					return nil, fmt.Errorf(`Missing mount "path" setting`)
+				}
+
 				// Mount the source in the instance devices directory.
 				// This will ensure that if the exported directory configured as readonly that this
 				// takes effect event if using virtio-fs (which doesn't support read only mode) by

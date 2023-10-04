@@ -52,6 +52,7 @@ The following restrictions apply:
 - Custom storage volumes of {ref}`content type <storage-content-types>` `block` or `iso` cannot be attached to containers, but only to virtual machines.
 - To avoid data corruption, storage volumes of {ref}`content type <storage-content-types>` `block` should never be attached to more than one virtual machine at a time.
 - Storage volumes of {ref}`content type <storage-content-types>` `iso` are always read-only, and can therefore be attached to more than one virtual machine at a time without corrupting data.
+- File system storage volumes can't be attached to virtual machines while they're running.
 
 For custom storage volumes with the content type `filesystem`, use the following command, where `<location>` is the path for accessing the storage volume inside the instance (for example, `/data`):
 
@@ -69,7 +70,7 @@ If you want to use a different device name, you can add it to the command:
 
 #### Attach the volume as a device
 
-The `lxc storage volume attach` command is a shortcut for adding a disk device to an instance.
+The [`lxc storage volume attach`](incus_storage_volume_attach.md) command is a shortcut for adding a disk device to an instance.
 Alternatively, you can add a disk device for the storage volume in the usual way:
 
     lxc config device add <instance_name> <device_name> disk pool=<pool_name> source=<volume_name> [path=<location>]

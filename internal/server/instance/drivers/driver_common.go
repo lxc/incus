@@ -40,13 +40,13 @@ import (
 )
 
 // ErrExecCommandNotFound indicates the command is not found.
-var ErrExecCommandNotFound = fmt.Errorf("Command not found")
+var ErrExecCommandNotFound = api.StatusErrorf(http.StatusBadRequest, "Command not found")
 
 // ErrExecCommandNotExecutable indicates the command is not executable.
-var ErrExecCommandNotExecutable = fmt.Errorf("Command not executable")
+var ErrExecCommandNotExecutable = api.StatusErrorf(http.StatusBadRequest, "Command not executable")
 
 // ErrInstanceIsStopped indicates that the instance is stopped.
-var ErrInstanceIsStopped error = fmt.Errorf("The instance is already stopped")
+var ErrInstanceIsStopped error = api.StatusErrorf(http.StatusBadRequest, "The instance is already stopped")
 
 // deviceManager is an interface that allows managing device lifecycle.
 type deviceManager interface {

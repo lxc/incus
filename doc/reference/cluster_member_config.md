@@ -10,6 +10,6 @@ The following keys are currently supported:
 
 % Include content from [../config_options.txt](../config_options.txt)
 ```{include} ../config_options.txt
-    :start-after: <!-- config group cluster start -->
-    :end-before: <!-- config group cluster end -->
+    :start-after: <!-- config group cluster-cluster start -->
+    :end-before: <!-- config group cluster-cluster end -->
 ```

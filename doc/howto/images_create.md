@@ -19,7 +19,7 @@ To publish an image from a snapshot, enter the following command:
 
 In both cases, you can specify an alias for the new image with the `--alias` flag, set an expiration date with `--expire` and make the image publicly available with `--public`.
 If an image with the same name already exists, add the `--reuse` flag to overwrite it.
-See `lxc publish --help` for a full list of available flags.
+See [`lxc publish --help`](incus_publish.md) for a full list of available flags.
 
 The publishing process can take quite a while because it generates a tarball from the instance or snapshot and then compresses it.
 As this can be particularly I/O and CPU intensive, publish operations are serialized by LXD.
@@ -29,8 +29,8 @@ As this can be particularly I/O and CPU intensive, publish operations are serial
 Before you publish an image from an instance, clean up all data that should not be included in the image.
 Usually, this includes the following data:
 
-- Instance metadata (use `lxc config metadata` to edit)
-- File templates (use `lxc config template` to edit)
+- Instance metadata (use [`lxc config metadata`](incus_config_metadata.md) to edit)
+- File templates (use [`lxc config template`](incus_config_template.md) to edit)
 - Instance-specific data inside the instance itself (for example, host SSH keys and `dbus/systemd machine-id`)
 
 (images-create-build)=

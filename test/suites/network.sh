@@ -4,6 +4,18 @@ test_network() {
 
   incus init testimage nettest
 
+  # Test DNS resolution of instance names
+  incus network create inct$$
+  incus launch testimage 0abc -n inct$$
+  incus launch testimage def0 -n inct$$
+  v4_addr="$(incus network get inct$$ ipv4.address | cut -d/ -f1)"
+  sleep 2
+  dig @"${v4_addr}" 0abc.incus
+  dig @"${v4_addr}" def0.incus
+  incus delete -f 0abc
+  incus delete -f def0
+  incus network delete inct$$
+
   # Standard bridge with random subnet and a bunch of options
   incus network create inct$$
   incus network set inct$$ dns.mode dynamic

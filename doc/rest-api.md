@@ -9,9 +9,9 @@ This API is encapsulated over either TLS (for remote operations) or a Unix socke
 See {ref}`authentication` for information about how to access the API remotely.
 
 ```{tip}
-- For examples on how the API is used, run any command of the LXD client (`lxc`) with the `--debug` flag.
+- For examples on how the API is used, run any command of the LXD client ([`lxc`](incus.md)) with the `--debug` flag.
 The debug information displays the API calls and the return values.
-- For quickly querying the API, the LXD client provides a `lxc query` command.
+- For quickly querying the API, the LXD client provides a [`lxc query`](incus_query.md) command.
 ```
 
 ## API versioning
@@ -155,6 +155,7 @@ Code  | Meaning
 400   | Failure
 401   | Canceled
 
+(rest-api-recursion)=
 ## Recursion
 
 To optimize queries of large lists, recursion is implemented for collections.
@@ -167,6 +168,7 @@ they point to (typically another JSON object).
 Recursion is implemented by simply replacing any pointer to an job (URL)
 by the object itself.
 
+(rest-api-filtering)=
 ## Filtering
 
 To filter your results on certain values, filter is implemented for collections.

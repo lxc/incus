@@ -59,10 +59,6 @@ Then use the following commands to make sure that trimming is automatically enab
 
 The `zfs` driver has the following limitations:
 
-Delegating part of a pool
-: ZFS doesn't support delegating part of a pool to a container user.
-  Upstream is actively working on providing this functionality.
-
 Restoring from older snapshots
 : ZFS doesn't support restoring from snapshots other than the latest one.
   You can, however, create new instances from older snapshots.
@@ -80,6 +76,9 @@ Restoring from older snapshots
 Observing I/O quotas
 : I/O quotas are unlikely to affect {spellexception}`ZFS filesystems` very much.
   That's because ZFS is a port of a Solaris module (using SPL) and not a native Linux file system using the Linux VFS API, which is where I/O limits are applied.
+
+Feature support in ZFS
+: Some features, like the use of idmaps or delegation of a ZFS dataset, require ZFS 2.2 or higher and are therefore not widely available yet.
 
 ### Quotas
 
@@ -115,8 +114,8 @@ Key                           | Type                          | Default         
 
 Key                     | Type      | Condition                 | Default                                        | Description
 :--                     | :---      | :--------                 | :------                                        | :----------
-`block.filesystem`      | string    | `zfs.block_mode` enabled  | same as `volume.block.filesystem`              | {{block_filesystem}}
-`block.mount_options`   | string    | `zfs.block_mode` enabled  | same as `volume.block.mount_options`           | Mount options for block-backed file system volumes
+`block.filesystem`      | string    | block-based volume with content type `filesystem` (`zfs.block_mode` enabled) | same as `volume.block.filesystem`              | {{block_filesystem}}
+`block.mount_options`   | string    | block-based volume with content type `filesystem` (`zfs.block_mode` enabled) | same as `volume.block.mount_options`           | Mount options for block-backed file system volumes
 `security.shifted`      | bool      | custom volume             | same as `volume.security.shifted` or `false`   | {{enable_ID_shifting}}
 `security.unmapped`     | bool      | custom volume             | same as `volume.security.unmapped` or `false`  | Disable ID mapping for the volume
 `size`                  | string    |                           | same as `volume.size`                          | Size/quota of the storage volume

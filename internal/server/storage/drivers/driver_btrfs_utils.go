@@ -2,10 +2,10 @@ package drivers
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -91,38 +91,39 @@ func (d *btrfs) isSubvolume(path string) bool {
 }
 
 func (d *btrfs) getSubvolumes(path string) ([]string, error) {
-	result := []string{}
+	poolMountPath := GetPoolMountPath(d.name)
+	if !strings.HasPrefix(path, poolMountPath+"/") {
+		return nil, fmt.Errorf("%q is outside pool mount path %q", path, poolMountPath)
+	}
+
+	path = strings.TrimPrefix(path, poolMountPath+"/")
 
 	// Make sure the path has a trailing slash.
 	if !strings.HasSuffix(path, "/") {
 		path = path + "/"
 	}
 
-	// Walk through the entire tree looking for subvolumes.
-	err := filepath.WalkDir(path, func(fpath string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Ignore the base path.
-		if strings.TrimRight(fpath, "/") == strings.TrimRight(path, "/") {
-			return nil
-		}
-
-		// Subvolumes can only be directories.
-		if !entry.IsDir() {
-			return nil
-		}
-
-		// Check if a subvolume.
-		if d.isSubvolume(fpath) {
-			result = append(result, strings.TrimPrefix(fpath, path))
-		}
-
-		return nil
-	})
+	var stdout bytes.Buffer
+	err := subprocess.RunCommandWithFds(d.state.ShutdownCtx, nil, &stdout, "btrfs", "subvolume", "list", poolMountPath)
 	if err != nil {
 		return nil, err
+	}
+
+	result := []string{}
+
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+
+		if len(fields) != 9 {
+			continue
+		}
+
+		if !strings.HasPrefix(fields[8], path) {
+			continue
+		}
+
+		result = append(result, strings.TrimPrefix(fields[8], path))
 	}
 
 	return result, nil

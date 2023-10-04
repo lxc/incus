@@ -17,7 +17,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
-	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -73,7 +72,7 @@ func (c *cmdAdminInit) RunInteractive(cmd *cobra.Command, args []string, d incus
 	}
 
 	// Print the YAML
-	preSeedPrint, err := cli.AskBool("Would you like a YAML \"init\" preseed to be printed? (yes/no) [default=no]: ", "no")
+	preSeedPrint, err := c.global.asker.AskBool("Would you like a YAML \"init\" preseed to be printed? (yes/no) [default=no]: ", "no")
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +102,7 @@ func (c *cmdAdminInit) RunInteractive(cmd *cobra.Command, args []string, d incus
 }
 
 func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
-	clustering, err := cli.AskBool("Would you like to use clustering? (yes/no) [default=no]: ", "no")
+	clustering, err := c.global.asker.AskBool("Would you like to use clustering? (yes/no) [default=no]: ", "no")
 	if err != nil {
 		return err
 	}
@@ -113,7 +112,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 		config.Cluster.Enabled = true
 
 		askForServerName := func() error {
-			config.Cluster.ServerName, err = cli.AskString(fmt.Sprintf("What member name should be used to identify this server in the cluster? [default=%s]: ", c.defaultHostname()), c.defaultHostname(), nil)
+			config.Cluster.ServerName, err = c.global.asker.AskString(fmt.Sprintf("What member name should be used to identify this server in the cluster? [default=%s]: ", c.defaultHostname()), c.defaultHostname(), nil)
 			if err != nil {
 				return err
 			}
@@ -147,7 +146,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			return nil
 		}
 
-		serverAddress, err := cli.AskString(fmt.Sprintf("What IP address or DNS name should be used to reach this server? [default=%s]: ", address), address, validateServerAddress)
+		serverAddress, err := c.global.asker.AskString(fmt.Sprintf("What IP address or DNS name should be used to reach this server? [default=%s]: ", address), address, validateServerAddress)
 		if err != nil {
 			return err
 		}
@@ -155,7 +154,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 		serverAddress = internalUtil.CanonicalNetworkAddress(serverAddress, ports.HTTPSDefaultPort)
 		config.Server.Config["core.https_address"] = serverAddress
 
-		clusterJoin, err := cli.AskBool("Are you joining an existing cluster? (yes/no) [default=no]: ", "no")
+		clusterJoin, err := c.global.asker.AskBool("Are you joining an existing cluster? (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
@@ -181,7 +180,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 				return nil
 			}
 
-			clusterJoinToken, err := cli.AskString("Please provide join token: ", "", validJoinToken)
+			clusterJoinToken, err := c.global.asker.AskString("Please provide join token: ", "", validJoinToken)
 			if err != nil {
 				return err
 			}
@@ -219,7 +218,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			config.Cluster.ClusterToken = clusterJoinToken
 
 			// Confirm wiping
-			clusterWipeMember, err := cli.AskBool("All existing data is lost when joining a cluster, continue? (yes/no) [default=no] ", "no")
+			clusterWipeMember, err := c.global.asker.AskBool("All existing data is lost when joining a cluster, continue? (yes/no) [default=no] ", "no")
 			if err != nil {
 				return err
 			}
@@ -266,7 +265,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 				question := fmt.Sprintf("Choose %s: ", config.Description)
 
 				// Allow for empty values.
-				configValue, err := cli.AskString(question, "", validate.Optional())
+				configValue, err := c.global.asker.AskString(question, "", validate.Optional())
 				if err != nil {
 					return err
 				}
@@ -292,21 +291,21 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 	localBridgeCreate := false
 
 	if config.Cluster == nil {
-		localBridgeCreate, err = cli.AskBool("Would you like to create a new local network bridge? (yes/no) [default=yes]: ", "yes")
+		localBridgeCreate, err = c.global.asker.AskBool("Would you like to create a new local network bridge? (yes/no) [default=yes]: ", "yes")
 		if err != nil {
 			return err
 		}
 	}
 
 	if !localBridgeCreate {
-		useExistingInterface, err := cli.AskBool("Would you like to use an existing bridge or host interface? (yes/no) [default=no]: ", "no")
+		useExistingInterface, err := c.global.asker.AskBool("Would you like to use an existing bridge or host interface? (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
 
 		if useExistingInterface {
 			for {
-				interfaceName, err := cli.AskString("Name of the existing bridge or host interface: ", "", nil)
+				interfaceName, err := c.global.asker.AskString("Name of the existing bridge or host interface: ", "", nil)
 				if err != nil {
 					return err
 				}
@@ -342,7 +341,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		net.Project = "default"
 
 		// Network name
-		net.Name, err = cli.AskString("What should the new bridge be called? [default=incusbr0]: ", "incusbr0", validate.IsNetworkName)
+		net.Name, err = c.global.asker.AskString("What should the new bridge be called? [default=incusbr0]: ", "incusbr0", validate.IsNetworkName)
 		if err != nil {
 			return err
 		}
@@ -361,7 +360,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		// IPv4
-		net.Config["ipv4.address"], err = cli.AskString("What IPv4 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
+		net.Config["ipv4.address"], err = c.global.asker.AskString("What IPv4 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
 			if util.ValueInSlice(value, []string{"auto", "none"}) {
 				return nil
 			}
@@ -373,7 +372,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		if !util.ValueInSlice(net.Config["ipv4.address"], []string{"auto", "none"}) {
-			netIPv4UseNAT, err := cli.AskBool("Would you like to NAT IPv4 traffic on your bridge? [default=yes]: ", "yes")
+			netIPv4UseNAT, err := c.global.asker.AskBool("Would you like to NAT IPv4 traffic on your bridge? [default=yes]: ", "yes")
 			if err != nil {
 				return err
 			}
@@ -382,7 +381,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		// IPv6
-		net.Config["ipv6.address"], err = cli.AskString("What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
+		net.Config["ipv6.address"], err = c.global.asker.AskString("What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
 			if util.ValueInSlice(value, []string{"auto", "none"}) {
 				return nil
 			}
@@ -394,7 +393,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		if !util.ValueInSlice(net.Config["ipv6.address"], []string{"auto", "none"}) {
-			netIPv6UseNAT, err := cli.AskBool("Would you like to NAT IPv6 traffic on your bridge? [default=yes]: ", "yes")
+			netIPv6UseNAT, err := c.global.asker.AskBool("Would you like to NAT IPv6 traffic on your bridge? [default=yes]: ", "yes")
 			if err != nil {
 				return err
 			}
@@ -412,7 +411,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 
 func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
 	if config.Cluster != nil {
-		localStoragePool, err := cli.AskBool("Do you want to configure a new local storage pool? (yes/no) [default=yes]: ", "yes")
+		localStoragePool, err := c.global.asker.AskBool("Do you want to configure a new local storage pool? (yes/no) [default=yes]: ", "yes")
 		if err != nil {
 			return err
 		}
@@ -424,7 +423,7 @@ func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServe
 			}
 		}
 
-		remoteStoragePool, err := cli.AskBool("Do you want to configure a new remote storage pool? (yes/no) [default=no]: ", "no")
+		remoteStoragePool, err := c.global.asker.AskBool("Do you want to configure a new remote storage pool? (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
@@ -439,7 +438,7 @@ func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServe
 		return nil
 	}
 
-	storagePool, err := cli.AskBool("Do you want to configure a new storage pool? (yes/no) [default=yes]: ", "yes")
+	storagePool, err := c.global.asker.AskBool("Do you want to configure a new storage pool? (yes/no) [default=yes]: ", "yes")
 	if err != nil {
 		return err
 	}
@@ -513,7 +512,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		pool.Config = map[string]string{}
 
 		if poolType == internalUtil.PoolTypeAny {
-			pool.Name, err = cli.AskString("Name of the new storage pool [default=default]: ", "default", nil)
+			pool.Name, err = c.global.asker.AskString("Name of the new storage pool [default=default]: ", "default", nil)
 			if err != nil {
 				return err
 			}
@@ -551,7 +550,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 				}
 			}
 
-			pool.Driver, err = cli.AskChoice(fmt.Sprintf("Name of the storage backend to use (%s) [default=%s]: ", strings.Join(availableBackends, ", "), defaultBackend), availableBackends, defaultBackend)
+			pool.Driver, err = c.global.asker.AskChoice(fmt.Sprintf("Name of the storage backend to use (%s) [default=%s]: ", strings.Join(availableBackends, ", "), defaultBackend), availableBackends, defaultBackend)
 			if err != nil {
 				return err
 			}
@@ -567,7 +566,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 		// Optimization for btrfs on btrfs
 		if pool.Driver == "btrfs" && backingFs == "btrfs" {
-			btrfsSubvolume, err := cli.AskBool(fmt.Sprintf("Would you like to create a new btrfs subvolume under %s? (yes/no) [default=yes]: ", internalUtil.VarPath("")), "yes")
+			btrfsSubvolume, err := c.global.asker.AskBool(fmt.Sprintf("Would you like to create a new btrfs subvolume under %s? (yes/no) [default=yes]: ", internalUtil.VarPath("")), "yes")
 			if err != nil {
 				return err
 			}
@@ -583,7 +582,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		if pool.Driver == "zfs" && backingFs == "zfs" {
 			poolName, _ := subprocess.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
 			if strings.TrimSpace(poolName) == "rpool" {
-				zfsDataset, err := cli.AskBool("Would you like to create a new zfs dataset under rpool/incus? (yes/no) [default=yes]: ", "yes")
+				zfsDataset, err := c.global.asker.AskBool("Would you like to create a new zfs dataset under rpool/incus? (yes/no) [default=yes]: ", "yes")
 				if err != nil {
 					return err
 				}
@@ -596,7 +595,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 			}
 		}
 
-		poolCreate, err := cli.AskBool(fmt.Sprintf("Create a new %s pool? (yes/no) [default=yes]: ", strings.ToUpper(pool.Driver)), "yes")
+		poolCreate, err := c.global.asker.AskBool(fmt.Sprintf("Create a new %s pool? (yes/no) [default=yes]: ", strings.ToUpper(pool.Driver)), "yes")
 		if err != nil {
 			return err
 		}
@@ -604,42 +603,42 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		if poolCreate {
 			if pool.Driver == "ceph" {
 				// Ask for the name of the cluster
-				pool.Config["ceph.cluster_name"], err = cli.AskString("Name of the existing CEPH cluster [default=ceph]: ", "ceph", nil)
+				pool.Config["ceph.cluster_name"], err = c.global.asker.AskString("Name of the existing CEPH cluster [default=ceph]: ", "ceph", nil)
 				if err != nil {
 					return err
 				}
 
 				// Ask for the name of the osd pool
-				pool.Config["ceph.osd.pool_name"], err = cli.AskString("Name of the OSD storage pool [default=incus]: ", "incus", nil)
+				pool.Config["ceph.osd.pool_name"], err = c.global.asker.AskString("Name of the OSD storage pool [default=incus]: ", "incus", nil)
 				if err != nil {
 					return err
 				}
 
 				// Ask for the number of placement groups
-				pool.Config["ceph.osd.pg_num"], err = cli.AskString("Number of placement groups [default=32]: ", "32", nil)
+				pool.Config["ceph.osd.pg_num"], err = c.global.asker.AskString("Number of placement groups [default=32]: ", "32", nil)
 				if err != nil {
 					return err
 				}
 			} else if pool.Driver == "cephfs" {
 				// Ask for the name of the cluster
-				pool.Config["cephfs.cluster_name"], err = cli.AskString("Name of the existing CEPHfs cluster [default=ceph]: ", "ceph", nil)
+				pool.Config["cephfs.cluster_name"], err = c.global.asker.AskString("Name of the existing CEPHfs cluster [default=ceph]: ", "ceph", nil)
 				if err != nil {
 					return err
 				}
 
 				// Ask for the name of the cluster
-				pool.Config["source"], err = cli.AskString("Name of the CEPHfs volume: ", "", nil)
+				pool.Config["source"], err = c.global.asker.AskString("Name of the CEPHfs volume: ", "", nil)
 				if err != nil {
 					return err
 				}
 			} else {
-				useEmptyBlockDev, err := cli.AskBool("Would you like to use an existing empty block device (e.g. a disk or partition)? (yes/no) [default=no]: ", "no")
+				useEmptyBlockDev, err := c.global.asker.AskBool("Would you like to use an existing empty block device (e.g. a disk or partition)? (yes/no) [default=no]: ", "no")
 				if err != nil {
 					return err
 				}
 
 				if useEmptyBlockDev {
-					pool.Config["source"], err = cli.AskString("Path to the existing block device: ", "", func(path string) error {
+					pool.Config["source"], err = c.global.asker.AskString("Path to the existing block device: ", "", func(path string) error {
 						if !linux.IsBlockdevPath(path) {
 							return fmt.Errorf("%q is not a block device", path)
 						}
@@ -666,7 +665,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 						defaultSize = 5
 					}
 
-					pool.Config["size"], err = cli.AskString(
+					pool.Config["size"], err = c.global.asker.AskString(
 						fmt.Sprintf("Size in GiB of the new loop device (1GiB minimum) [default=%dGiB]: ", defaultSize),
 						fmt.Sprintf("%dGiB", defaultSize),
 						func(input string) error {
@@ -696,13 +695,13 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		} else {
 			if pool.Driver == "ceph" {
 				// ask for the name of the cluster
-				pool.Config["ceph.cluster_name"], err = cli.AskString("Name of the existing CEPH cluster [default=ceph]: ", "ceph", nil)
+				pool.Config["ceph.cluster_name"], err = c.global.asker.AskString("Name of the existing CEPH cluster [default=ceph]: ", "ceph", nil)
 				if err != nil {
 					return err
 				}
 
 				// ask for the name of the existing pool
-				pool.Config["source"], err = cli.AskString("Name of the existing OSD storage pool [default=incus]: ", "incus", nil)
+				pool.Config["source"], err = c.global.asker.AskString("Name of the existing OSD storage pool [default=incus]: ", "incus", nil)
 				if err != nil {
 					return err
 				}
@@ -710,7 +709,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 				pool.Config["ceph.osd.pool_name"] = pool.Config["source"]
 			} else {
 				question := fmt.Sprintf("Name of the existing %s pool or dataset: ", strings.ToUpper(pool.Driver))
-				pool.Config["source"], err = cli.AskString(question, "", nil)
+				pool.Config["source"], err = c.global.asker.AskString(question, "", nil)
 				if err != nil {
 					return err
 				}
@@ -729,7 +728,7 @@ If you wish to use thin provisioning, abort now, install the tools from your Lin
 and make sure that your user can see and run the "thin_check" command before running "init" again.
 
 `)
-				lvmContinueNoThin, err := cli.AskBool("Do you want to continue without thin provisioning? (yes/no) [default=yes]: ", "yes")
+				lvmContinueNoThin, err := c.global.asker.AskBool("Do you want to continue without thin provisioning? (yes/no) [default=yes]: ", "yes")
 				if err != nil {
 					return err
 				}
@@ -764,7 +763,7 @@ they otherwise would.
 
 `)
 
-		shareParentAllocation, err := cli.AskBool("Would you like to have your containers share their parent's allocation? (yes/no) [default=yes]: ", "yes")
+		shareParentAllocation, err := c.global.asker.AskBool("Would you like to have your containers share their parent's allocation? (yes/no) [default=yes]: ", "yes")
 		if err != nil {
 			return err
 		}
@@ -776,7 +775,7 @@ they otherwise would.
 
 	// Network listener
 	if config.Cluster == nil {
-		overNetwork, err := cli.AskBool("Would you like the server to be available over the network? (yes/no) [default=no]: ", "no")
+		overNetwork, err := c.global.asker.AskBool("Would you like the server to be available over the network? (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
@@ -790,7 +789,7 @@ they otherwise would.
 				return nil
 			}
 
-			netAddr, err := cli.AskString("Address to bind to (not including port) [default=all]: ", "all", isIPAddress)
+			netAddr, err := c.global.asker.AskString("Address to bind to (not including port) [default=all]: ", "all", isIPAddress)
 			if err != nil {
 				return err
 			}
@@ -803,7 +802,7 @@ they otherwise would.
 				netAddr = fmt.Sprintf("[%s]", netAddr)
 			}
 
-			netPort, err := cli.AskInt(fmt.Sprintf("Port to bind to [default=%d]: ", ports.HTTPSDefaultPort), 1, 65535, fmt.Sprintf("%d", ports.HTTPSDefaultPort), func(netPort int64) error {
+			netPort, err := c.global.asker.AskInt(fmt.Sprintf("Port to bind to [default=%d]: ", ports.HTTPSDefaultPort), 1, 65535, fmt.Sprintf("%d", ports.HTTPSDefaultPort), func(netPort int64) error {
 				address := internalUtil.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
 
 				if err == nil {
@@ -830,7 +829,7 @@ they otherwise would.
 	}
 
 	// Ask if the user wants images to be automatically refreshed
-	imageStaleRefresh, err := cli.AskBool("Would you like stale cached images to be updated automatically? (yes/no) [default=yes]: ", "yes")
+	imageStaleRefresh, err := c.global.asker.AskBool("Would you like stale cached images to be updated automatically? (yes/no) [default=yes]: ", "yes")
 	if err != nil {
 		return err
 	}

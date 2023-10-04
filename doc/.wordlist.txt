@@ -52,6 +52,7 @@ dereferenced
 devtmpfs
 DHCP
 DHCPv
+Diátaxis
 Diffie
 DNS
 DNSSEC
@@ -117,6 +118,7 @@ kbit
 KiB
 kibi
 Kibit
+KVM
 lookups
 LRU
 LTS
@@ -139,6 +141,7 @@ MicroCloud
 MII
 MITM
 MTU
+Mullvad
 multicast
 MyST
 namespace
@@ -190,6 +193,7 @@ qgroups
 RADOS
 RBAC
 RBD
+README
 reconfiguring
 requestor
 RESTful
@@ -245,6 +249,7 @@ symlinks
 syscall
 syscalls
 sysfs
+syslog
 Tbit
 TCP
 Telegraf
@@ -267,6 +272,7 @@ URI
 URIs
 unconfigured
 unevictable
+unixgram
 unmanaged
 unmount
 unmounting
@@ -287,6 +293,7 @@ VLANs
 VM
 VMs
 VPD
+VPN
 VPS
 vSwitch
 VXLAN

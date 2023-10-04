@@ -143,7 +143,7 @@ func transferRootfs(ctx context.Context, dst incus.InstanceServer, op incus.Oper
 	return nil
 }
 
-func connectTarget(url string, certPath string, keyPath string, authType string, token string) (incus.InstanceServer, string, error) {
+func (m *cmdMigrate) connectTarget(url string, certPath string, keyPath string, authType string, token string) (incus.InstanceServer, string, error) {
 	args := incus.ConnectionArgs{
 		AuthType: authType,
 	}

@@ -110,6 +110,11 @@ func (c *Config) StorageImagesVolume() string {
 	return c.m.GetString("storage.images_volume")
 }
 
+// SyslogSocket returns true if the syslog socket is enabled, otherwise false.
+func (c *Config) SyslogSocket() bool {
+	return c.m.GetBool("core.syslog_socket")
+}
+
 // Dump current configuration keys and their values. Keys with values matching
 // their defaults are omitted.
 func (c *Config) Dump() map[string]string {
@@ -149,7 +154,7 @@ func (c *Config) update(values map[string]string) (map[string]string, error) {
 var ConfigSchema = config.Schema{
 	// Network address for this server
 
-	// gendoc:generate(group=server-core, key=core.https_address)
+	// gendoc:generate(entity=server, group=core, key=core.https_address)
 	// See {ref}`server-expose`.
 	// ---
 	//  type: string
@@ -159,7 +164,7 @@ var ConfigSchema = config.Schema{
 
 	// Network address for cluster communication
 
-	// gendoc:generate(group=server-cluster, key=cluster.https_address)
+	// gendoc:generate(entity=server, group=cluster, key=cluster.https_address)
 	// See {ref}`cluster-https-address`.
 	// ---
 	//  type: string
@@ -169,7 +174,7 @@ var ConfigSchema = config.Schema{
 
 	// Network address for the BGP server
 
-	// gendoc:generate(group=server-core, key=core.bgp_address)
+	// gendoc:generate(entity=server, group=core, key=core.bgp_address)
 	// See {ref}`network-bgp`.
 	// ---
 	//  type: string
@@ -179,7 +184,7 @@ var ConfigSchema = config.Schema{
 
 	// Unique router ID for the BGP server
 
-	// gendoc:generate(group=server-core, key=core.bgp_routerid)
+	// gendoc:generate(entity=server, group=core, key=core.bgp_routerid)
 	// The identifier must be formatted as an IPv4 address.
 	// ---
 	//  type: string
@@ -189,7 +194,7 @@ var ConfigSchema = config.Schema{
 
 	// Network address for the debug server
 
-	// gendoc:generate(group=server-core, key=core.debug_address)
+	// gendoc:generate(entity=server, group=core, key=core.debug_address)
 	//
 	// ---
 	//  type: string
@@ -199,7 +204,7 @@ var ConfigSchema = config.Schema{
 
 	// Network address for the DNS server
 
-	// gendoc:generate(group=server-core, key=core.dns_address)
+	// gendoc:generate(entity=server, group=core, key=core.dns_address)
 	// See {ref}`network-dns-server`.
 	// ---
 	//  type: string
@@ -209,7 +214,7 @@ var ConfigSchema = config.Schema{
 
 	// Network address for the metrics server
 
-	// gendoc:generate(group=server-core, key=core.metrics_address)
+	// gendoc:generate(entity=server, group=core, key=core.metrics_address)
 	// See {ref}`metrics`.
 	// ---
 	//  type: string
@@ -219,7 +224,7 @@ var ConfigSchema = config.Schema{
 
 	// Network address for the storage buckets server
 
-	// gendoc:generate(group=server-core, key=core.storage_buckets_address)
+	// gendoc:generate(entity=server, group=core, key=core.storage_buckets_address)
 	// See {ref}`howto-storage-buckets`.
 	// ---
 	//  type: string
@@ -227,16 +232,26 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Address to bind the storage object server to (HTTPS)
 	"core.storage_buckets_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
+	// Syslog socket
+
+	// gendoc:generate(entity=server, group=core, key=core.syslog_socket)
+	// Set this option to `true` to enable the syslog unixgram socket to receive log messages from external processes.
+	// ---
+	//  type: bool
+	//  scope: local
+	//  shortdesc: Whether to enable the syslog unixgram socket listener
+	"core.syslog_socket": {Validator: validate.Optional(validate.IsBool), Type: config.Bool},
+
 	// Storage volumes to store backups/images on
 
-	// gendoc:generate(group=server-miscellaneous, key=storage.backups_volume)
+	// gendoc:generate(entity=server, group=miscellaneous, key=storage.backups_volume)
 	// Specify the volume using the syntax `POOL/VOLUME`.
 	// ---
 	//  type: string
 	//  scope: local
 	//  shortdesc: Volume to use to store backup tarballs
 	"storage.backups_volume": {},
-	// gendoc:generate(group=server-miscellaneous, key=storage.images_volume)
+	// gendoc:generate(entity=server, group=miscellaneous, key=storage.images_volume)
 	// Specify the volume using the syntax `POOL/VOLUME`.
 	// ---
 	//  type: string

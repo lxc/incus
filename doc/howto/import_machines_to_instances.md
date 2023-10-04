@@ -34,6 +34,30 @@ The tool can create both containers and virtual machines:
   It is also not possible to create a virtual machine from the physical machine that you are using to do the migration, because the migration tool would be using the disk that it is copying.
   Instead, you could provide a bootable image, or a bootable partition or disk that is currently not in use.
 
+   ````{tip}
+   If you want to convert a Windows VM from a foreign hypervisor (not from QEMU/KVM with Q35/`virtio-scsi`),
+   you must install the `virtio-win` drivers to your Windows. Otherwise, your VM won't boot.
+   <details>
+   <summary>Expand to see how to integrate the required drivers to your Windows VM</summary>
+   Install the required tools on the host:
+
+   1. Install `virt-v2v` version >= 2.3.4 (this is the minimal version that supports the `--block-driver` option).
+   1. Install the `virtio-win` package, or download the [`virtio-win.iso`](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso) image and put it into the `/usr/share/virtio-win` folder.
+   1. You might also need to install [`rhsrvany`](https://github.com/rwmjones/rhsrvany).
+
+   Now you can use `virt-v2v` to convert images from a foreign hypervisor to `raw` images for LXD and include the required drivers:
+
+   ```
+   # Example 1. Convert a vmdk disk image to a raw image suitable for lxd-migrate
+   sudo virt-v2v --block-driver virtio-scsi -o local -of raw -os ./os -i vmx ./test-vm.vmx
+   # Example 2. Convert a QEMU/KVM qcow2 image and integrate virtio-scsi driver
+   sudo virt-v2v --block-driver virtio-scsi -o local -of raw -os ./os -if qcow2 -i disk test-vm-disk.qcow2
+   ```
+
+   You can find the resulting image in the `os` directory and use it with `lxd-migrate` on the next steps.
+   </details>
+   ````
+
 Complete the following steps to migrate an existing machine to a LXD instance:
 
 1. Download the `bin.linux.lxd-migrate` tool from the **Assets** section of the latest [LXD release](https://github.com/canonical/lxd/releases).
@@ -63,7 +87,7 @@ Complete the following steps to migrate an existing machine to a LXD instance:
    1. Check and confirm the certificate fingerprint.
    1. Choose a method for authentication (see {ref}`authentication`).
 
-      For example, if you choose using a certificate token, log on to the LXD server and create a token for the machine on which you are running the migration tool with `lxc config trust add`.
+      For example, if you choose using a certificate token, log on to the LXD server and create a token for the machine on which you are running the migration tool with [`lxc config trust add`](incus_config_trust_add.md).
       Then use the generated token to authenticate the tool.
    1. Choose whether to create a container or a virtual machine.
       See {ref}`containers-and-vms`.

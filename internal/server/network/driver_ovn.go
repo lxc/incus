@@ -3449,7 +3449,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				// If the sticky IP isn't statically reserved, lets check its not used dynamically
 				// on any active port.
 				if !n.hasDHCPv4Reservation(dhcpReservations, dhcpV4StickyIP) {
-					existingPortIPs, err := client.LogicalSwitchPortIPs(n.getIntSwitchName())
+					existingPortIPs, err := client.LogicalSwitchIPs(n.getIntSwitchName())
 					if err != nil {
 						return "", nil, fmt.Errorf("Failed getting existing switch port IPs: %w", err)
 					}
@@ -3921,20 +3921,25 @@ func (n *ovn) instanceDeviceACLDefaults(deviceConfig deviceConfig.Device, direct
 	return defaults[fmt.Sprintf("security.acls.default.%s.action", direction)], util.IsTrue(defaults[fmt.Sprintf("security.acls.default.%s.logged", direction)])
 }
 
-// InstanceDevicePortDynamicIPs returns the dynamically allocated IPs for a device port.
-func (n *ovn) InstanceDevicePortDynamicIPs(instanceUUID string, deviceName string) ([]net.IP, error) {
+// InstanceDevicePortIPs returns the allocated IPs for a device port.
+func (n *ovn) InstanceDevicePortIPs(instanceUUID string, deviceName string) ([]net.IP, error) {
 	if instanceUUID == "" {
 		return nil, fmt.Errorf("Instance UUID is required")
 	}
-
-	instancePortName := n.getInstanceDevicePortName(instanceUUID, deviceName)
 
 	client, err := openvswitch.NewOVN(n.state)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get OVN client: %w", err)
 	}
 
-	return client.LogicalSwitchPortDynamicIPs(instancePortName)
+	instancePortName := n.getInstanceDevicePortName(instanceUUID, deviceName)
+
+	devIPs, err := client.LogicalSwitchPortIPs(instancePortName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get OVN switch port IPs: %w", err)
+	}
+
+	return devIPs, nil
 }
 
 // InstanceDevicePortStop deletes an instance device port from the internal logical switch.
@@ -5065,7 +5070,7 @@ func (n *ovn) Leases(projectName string, clientType request.ClientType) ([]api.N
 			return nil
 		}
 
-		devIPs, err := n.InstanceDevicePortDynamicIPs(instanceUUID, nicName)
+		devIPs, err := n.InstanceDevicePortIPs(instanceUUID, nicName)
 		if err != nil {
 			return nil // There is likely no active port and so no leases.
 		}

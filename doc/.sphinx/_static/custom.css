@@ -26,9 +26,9 @@ table.docutils td, table.docutils th, table.docutils td:last-child, table.docuti
     border-left: none;
 }
 
-/* center align table cells with ":-:" */
-td.text-center {
-    text-align: center;
+/* Allow to centre text horizontally in table data cells */
+table.align-center {
+    text-align: center !important;
 }
 
 /** No rounded corners **/

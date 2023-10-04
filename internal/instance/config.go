@@ -28,7 +28,7 @@ var HugePageSizeSuffix = [...]string{"64KB", "1MB", "2MB", "1GB"}
 
 // InstanceConfigKeysAny is a map of config key to validator. (keys applying to containers AND virtual machines).
 var InstanceConfigKeysAny = map[string]func(value string) error{
-	// gendoc:generate(group=instance-boot, key=boot.autostart)
+	// gendoc:generate(entity=instance, group=boot, key=boot.autostart)
 	// If set to `false`, restore the last state.
 	// ---
 	//  type: bool
@@ -36,100 +36,100 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Whether to always start the instance when the daemon starts
 	"boot.autostart": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-boot, key=boot.autostart.delay)
+	// gendoc:generate(entity=instance, group=boot, key=boot.autostart.delay)
 	// The number of seconds to wait after the instance started before starting the next one.
 	// ---
 	//  type: integer
-	//  default: 0
+	//  defaultdesc: 0
 	//  liveupdate: no
 	//  shortdesc: Delay after starting the instance
 	"boot.autostart.delay": validate.Optional(validate.IsInt64),
 
-	// gendoc:generate(group=instance-boot, key=boot.autostart.priority)
+	// gendoc:generate(entity=instance, group=boot, key=boot.autostart.priority)
 	// The instance with the highest value is started first.
 	// ---
 	//  type: integer
-	//  default: 0
+	//  defaultdesc: 0
 	//  liveupdate: no
 	//  shortdesc: What order to start the instances in
 	"boot.autostart.priority": validate.Optional(validate.IsInt64),
 
-	// gendoc:generate(group=instance-boot, key=boot.stop.priority)
+	// gendoc:generate(entity=instance, group=boot, key=boot.stop.priority)
 	// The instance with the highest value is shut down first.
 	// ---
 	//  type: integer
-	//  default: 0
+	//  defaultdesc: 0
 	//  liveupdate: no
 	//  shortdesc: What order to shut down the instances in
 	"boot.stop.priority": validate.Optional(validate.IsInt64),
 
-	// gendoc:generate(group=instance-boot, key=boot.host_shutdown_timeout)
+	// gendoc:generate(entity=instance, group=boot, key=boot.host_shutdown_timeout)
 	// Number of seconds to wait for the instance to shut down before it is force-stopped.
 	// ---
 	//  type: integer
-	//  default: 30
+	//  defaultdesc: 30
 	//  liveupdate: yes
 	//  shortdesc: How long to wait for the instance to shut down
 	"boot.host_shutdown_timeout": validate.Optional(validate.IsInt64),
 
-	// gendoc:generate(group=instance-cloud-init, key=cloud-init.network-config)
+	// gendoc:generate(entity=instance, group=cloud-init, key=cloud-init.network-config)
 	// The content is used as seed value for `cloud-init`.
 	// ---
 	//  type: string
-	//  default: `DHCP on eth0`
+	//  defaultdesc: `DHCP on eth0`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Network configuration for `cloud-init`
 	"cloud-init.network-config": validate.Optional(validate.IsYAML),
 
-	// gendoc:generate(group=instance-cloud-init, key=cloud-init.user-data)
+	// gendoc:generate(entity=instance, group=cloud-init, key=cloud-init.user-data)
 	// The content is used as seed value for `cloud-init`.
 	// ---
 	//  type: string
-	//  default: `#cloud-config`
+	//  defaultdesc: `#cloud-config`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: User data for `cloud-init`
 	"cloud-init.user-data": validate.Optional(validate.IsCloudInitUserData),
 
-	// gendoc:generate(group=instance-cloud-init, key=cloud-init.vendor-data)
+	// gendoc:generate(entity=instance, group=cloud-init, key=cloud-init.vendor-data)
 	// The content is used as seed value for `cloud-init`.
 	// ---
 	//  type: string
-	//  default: `#cloud-config`
+	//  defaultdesc: `#cloud-config`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Vendor data for `cloud-init`
 	"cloud-init.vendor-data": validate.Optional(validate.IsCloudInitUserData),
 
-	// gendoc:generate(group=instance-cloud-init, key=user.network-config)
+	// gendoc:generate(entity=instance, group=cloud-init, key=user.network-config)
 	//
 	// ---
 	//  type: string
-	//  default: `DHCP on eth0`
+	//  defaultdesc: `DHCP on eth0`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Legacy version of `cloud-init.network-config`
 
-	// gendoc:generate(group=instance-cloud-init, key=user.user-data)
+	// gendoc:generate(entity=instance, group=cloud-init, key=user.user-data)
 	//
 	// ---
 	//  type: string
-	//  default: `#cloud-config`
+	//  defaultdesc: `#cloud-config`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Legacy version of `cloud-init.user-data`
 
-	// gendoc:generate(group=instance-cloud-init, key=user.vendor-data)
+	// gendoc:generate(entity=instance, group=cloud-init, key=user.vendor-data)
 	//
 	// ---
 	//  type: string
-	//  default: `#cloud-config`
+	//  defaultdesc: `#cloud-config`
 	//  liveupdate: no
 	//  condition: If supported by image
 	//  shortdesc: Legacy version of `cloud-init.vendor-data`
 
-	// gendoc:generate(group=instance-miscellaneous, key=cluster.evacuate)
+	// gendoc:generate(entity=instance, group=miscellaneous, key=cluster.evacuate)
 	// The `cluster.evacuate` provides control over how instances are handled when a cluster member is being
 	// evacuated.
 	//
@@ -149,23 +149,23 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// See {ref}`cluster-evacuate` for more information.
 	// ---
 	//  type: string
-	//  default: `auto`
+	//  defaultdesc: `auto`
 	//  liveupdate: no
 	//  shortdesc: What to do when evacuating the instance
 	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "stop")),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.cpu)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu)
 	// A number or a specific range of CPUs to expose to the instance.
 	//
 	// See {ref}`instance-options-limits-cpu` for more information.
 	// ---
 	//  type: string
-	//  default: 1 (VMs)
+	//  defaultdesc: 1 (VMs)
 	//  liveupdate: yes
 	//  shortdesc: Which CPUs to expose to the instance
 	"limits.cpu": validate.Optional(validate.IsValidCPUSet),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.cpu.nodes)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu.nodes)
 	// A comma-separated list of NUMA node IDs or ranges to place the instance CPUs on.
 	//
 	// See {ref}`instance-options-limits-cpu-container` for more information.
@@ -175,25 +175,25 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Which NUMA nodes to place the instance CPUs on
 	"limits.cpu.nodes": validate.Optional(validate.IsValidCPUSet),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.disk.priority)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.disk.priority)
 	// Controls how much priority to give to the instance's I/O requests when under load.
 	//
 	// Specify an integer between 0 and 10.
 	// ---
 	//  type: integer
-	//  default: `5` (medium)
+	//  defaultdesc: `5` (medium)
 	//  liveupdate: yes
 	//  shortdesc: Priority of the instance's I/O requests
 	"limits.disk.priority": validate.Optional(validate.IsPriority),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.memory)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory)
 	// Percentage of the host's memory or a fixed value in bytes.
 	// Various suffixes are supported.
 	//
 	// See {ref}`instances-limit-units` for details.
 	// ---
 	//  type: string
-	//  default: `1Gib` (VMs)
+	//  defaultdesc: `1Gib` (VMs)
 	//  liveupdate: yes
 	//  shortdesc: Usage limit for the host's memory
 	"limits.memory": func(value string) error {
@@ -226,20 +226,20 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 		return nil
 	},
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.network.priority)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.network.priority)
 	// Controls how much priority to give to the instance's network requests when under load.
 	//
 	// Specify an integer between 0 and 10.
 	// ---
 	//  type: integer
-	//  default: `0` (minimum)
+	//  defaultdesc: `0` (minimum)
 	//  liveupdate: yes
 	//  shortdesc: Priority of the instance's network requests
 	"limits.network.priority": validate.Optional(validate.IsPriority),
 
 	// Caller is responsible for full validation of any raw.* value.
 
-	// gendoc:generate(group=instance-raw, key=raw.apparmor)
+	// gendoc:generate(entity=instance, group=raw, key=raw.apparmor)
 	// The specified entries are appended to the generated profile.
 	// ---
 	//  type: blob
@@ -247,7 +247,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: AppArmor profile entries
 	"raw.apparmor": validate.IsAny,
 
-	// gendoc:generate(group=instance-raw, key=raw.idmap)
+	// gendoc:generate(entity=instance, group=raw, key=raw.idmap)
 	// For example: `both 1000 1000`
 	// ---
 	//  type: blob
@@ -256,56 +256,56 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Raw idmap configuration
 	"raw.idmap": validate.IsAny,
 
-	// gendoc:generate(group=instance-security, key=security.guestapi)
+	// gendoc:generate(entity=instance, group=security, key=security.guestapi)
 	// See {ref}`dev-incus` for more information.
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  shortdesc: Whether `/dev/incus` is present in the instance
 	"security.guestapi": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.protection.delete)
+	// gendoc:generate(entity=instance, group=security, key=security.protection.delete)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  shortdesc: Prevents the instance from being deleted
 	"security.protection.delete": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-snapshots, key=snapshots.schedule)
+	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.schedule)
 	// Specify either a cron expression (`<minute> <hour> <dom> <month> <dow>`), a comma-separated list of schedule aliases (`@hourly`, `@daily`, `@midnight`, `@weekly`, `@monthly`, `@annually`, `@yearly`), or leave empty to disable automatic snapshots.
 	//
 	// ---
 	//  type: string
-	//  default: empty
+	//  defaultdesc: empty
 	//  liveupdate: no
 	//  shortdesc: Schedule for automatic instance snapshots
 	"snapshots.schedule": validate.Optional(validate.IsCron([]string{"@hourly", "@daily", "@midnight", "@weekly", "@monthly", "@annually", "@yearly", "@startup", "@never"})),
 
-	// gendoc:generate(group=instance-snapshots, key=snapshots.schedule.stopped)
+	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.schedule.stopped)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  shortdesc: Whether to automatically snapshot stopped instances
 	"snapshots.schedule.stopped": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-snapshots, key=snapshots.pattern)
+	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.pattern)
 	// Specify a Pongo2 template string that represents the snapshot name.
 	// This template is used for scheduled snapshots and for unnamed snapshots.
 	//
 	// See {ref}`instance-options-snapshots-names` for more information.
 	// ---
 	//  type: string
-	//  default: `snap%d`
+	//  defaultdesc: `snap%d`
 	//  liveupdate: no
 	//  shortdesc: Template for the snapshot name
 	"snapshots.pattern": validate.IsAny,
 
-	// gendoc:generate(group=instance-snapshots, key=snapshots.expiry)
+	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.expiry)
 	// Specify an expression like `1M 2H 3d 4w 5m 6y`.
 	// ---
 	//  type: string
@@ -319,35 +319,35 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 
 	// Volatile keys.
 
-	// gendoc:generate(group=instance-volatile, key=volatile.apply_template)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.apply_template)
 	// The template with the given name is triggered upon next startup.
 	// ---
 	//  type: string
 	//  shortdesc: Template hook
 	"volatile.apply_template": validate.IsAny,
 
-	// gendoc:generate(group=instance-volatile, key=volatile.base_image)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.base_image)
 	// The hash of the image that the instance was created from (empty if the instance was not created from an image).
 	// ---
 	//  type: string
 	//  shortdesc: Hash of the base image
 	"volatile.base_image": validate.IsAny,
 
-	// gendoc:generate(group=instance-volatile, key=volatile.cloud_init.instance-id)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.cloud_init.instance-id)
 	//
 	// ---
 	//  type: string
 	//  shortdesc: `instance-id` (UUID) exposed to `cloud-init`
 	"volatile.cloud-init.instance-id": validate.Optional(validate.IsUUID),
 
-	// gendoc:generate(group=instance-volatile, key=volatile.evacuate.origin)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.evacuate.origin)
 	// The cluster member that the instance lived on before evacuation.
 	// ---
 	//  type: string
 	//  shortdesc: The origin of the evacuated instance
 	"volatile.evacuate.origin": validate.IsAny,
 
-	// gendoc:generate(group=instance-volatile, key=volatile.last_state.power)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.last_state.power)
 	//
 	// ---
 	//  type: string
@@ -355,14 +355,14 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	"volatile.last_state.power": validate.IsAny,
 	"volatile.last_state.ready": validate.IsBool,
 	"volatile.apply_quota":      validate.IsAny,
-	// gendoc:generate(group=instance-volatile, key=volatile.uuid)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.uuid)
 	// The instance UUID is globally unique across all servers and projects.
 	// ---
 	//  type: string
 	//  shortdesc: Instance UUID
 	"volatile.uuid": validate.Optional(validate.IsUUID),
 
-	// gendoc:generate(group=instance-volatile, key=volatile.uuid.generation)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.uuid.generation)
 	// The instance generation UUID changes whenever the instance's place in time moves backwards.
 	// It is globally unique across all servers and projects.
 	// ---
@@ -373,14 +373,14 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 
 // InstanceConfigKeysContainer is a map of config key to validator. (keys applying to containers only).
 var InstanceConfigKeysContainer = map[string]func(value string) error{
-	// gendoc:generate(group=instance-resource-limits, key=limits.cpu.allowance)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu.allowance)
 	// To control how much of the CPU can be used, specify either a percentage (`50%`) for a soft limit
 	// or a chunk of time (`25ms/100ms`) for a hard limit.
 	//
 	// See {ref}`instance-options-limits-cpu-container` for more information.
 	// ---
 	//  type: string
-	//  default: 100%
+	//  defaultdesc: 100%
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: How much of the CPU can be used
@@ -418,20 +418,20 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 		return nil
 	},
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.cpu.priority)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu.priority)
 	// When overcommitting resources, specify the CPU scheduling priority compared to other instances that share the same CPUs.
 	// Specify an integer between 0 and 10.
 	//
 	// See {ref}`instance-options-limits-cpu-container` for more information.
 	// ---
 	//  type: integer
-	//  default: `10` (maximum)
+	//  defaultdesc: `10` (maximum)
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: CPU scheduling priority compared to other instances
 	"limits.cpu.priority": validate.Optional(validate.IsPriority),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.hugepages.64KB)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.hugepages.64KB)
 	// Fixed value (in bytes) to limit the number of 64 KB huge pages.
 	// Various suffixes are supported (see {ref}`instances-limit-units`).
 	//
@@ -443,7 +443,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Limit for the number of 64 KB huge pages
 	"limits.hugepages.64KB": validate.Optional(validate.IsSize),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.hugepages.1MB)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.hugepages.1MB)
 	// Fixed value (in bytes) to limit the number of 1 MB huge pages.
 	// Various suffixes are supported (see {ref}`instances-limit-units`).
 	//
@@ -455,7 +455,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Limit for the number of 1 MB huge pages
 	"limits.hugepages.1MB": validate.Optional(validate.IsSize),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.hugepages.2MB)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.hugepages.2MB)
 	// Fixed value (in bytes) to limit the number of 2 MB huge pages.
 	// Various suffixes are supported (see {ref}`instances-limit-units`).
 	//
@@ -467,7 +467,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Limit for the number of 2 MB huge pages
 	"limits.hugepages.2MB": validate.Optional(validate.IsSize),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.hugepages.1GB)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.hugepages.1GB)
 	// Fixed value (in bytes) to limit the number of 1 GB huge pages.
 	// Various suffixes are supported (see {ref}`instances-limit-units`).
 	//
@@ -479,48 +479,48 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Limit for the number of 1 GB huge pages
 	"limits.hugepages.1GB": validate.Optional(validate.IsSize),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.memory.enforce)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.enforce)
 	// If the instance's memory limit is `hard`, the instance cannot exceed its limit.
 	// If it is `soft`, the instance can exceed its memory limit when extra host memory is available.
 	// ---
 	//  type: string
-	//  default: `hard`
+	//  defaultdesc: `hard`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether the memory limit is `hard` or `soft`
 	"limits.memory.enforce": validate.Optional(validate.IsOneOf("soft", "hard")),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.memory.swap)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.swap)
 	//
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to encourage/discourage swapping less used pages for this instance
 	"limits.memory.swap": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-resource-limits, key=limits.memory.swap.priority)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.swap.priority)
 	// Specify an integer between 0 and 10.
 	// The higher the value, the less likely the instance is to be swapped to disk.
 	// ---
 	//  type: integer
-	//  default: `10` (maximum)
+	//  defaultdesc: `10` (maximum)
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Prevents the instance from being swapped to disk
 	"limits.memory.swap.priority": validate.Optional(validate.IsPriority),
-	// gendoc:generate(group=instance-resource-limits, key=limits.processes)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.processes)
 	// If left empty, no limit is set.
 	// ---
 	//  type: integer
-	//  default: empty
+	//  defaultdesc: empty
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Maximum number of processes that can run in the instance
 	"limits.processes": validate.Optional(validate.IsInt64),
 
-	// gendoc:generate(group=instance-miscellaneous, key=linux.kernel_modules)
+	// gendoc:generate(entity=instance, group=miscellaneous, key=linux.kernel_modules)
 	// Specify the kernel modules as a comma-separated list.
 	// ---
 	//  type: string
@@ -529,57 +529,57 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Kernel modules to load before starting the instance
 	"linux.kernel_modules": validate.IsAny,
 
-	// gendoc:generate(group=instance-migration, key=migration.incremental.memory)
+	// gendoc:generate(entity=instance, group=migration, key=migration.incremental.memory)
 	// Using incremental memory transfer of the instance's memory can reduce downtime.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to use incremental memory transfer
 	"migration.incremental.memory": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-migration, key=migration.incremental.memory.iterations)
+	// gendoc:generate(entity=instance, group=migration, key=migration.incremental.memory.iterations)
 	//
 	// ---
 	//  type: integer
-	//  default: `10`
+	//  defaultdesc: `10`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Maximum number of transfer operations to go through before stopping the instance
 	"migration.incremental.memory.iterations": validate.Optional(validate.IsUint32),
 
-	// gendoc:generate(group=instance-migration, key=migration.incremental.memory.goal)
+	// gendoc:generate(entity=instance, group=migration, key=migration.incremental.memory.goal)
 	//
 	// ---
 	//  type: integer
-	//  default: `70`
+	//  defaultdesc: `70`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Percentage of memory to have in sync before stopping the instance
 	"migration.incremental.memory.goal": validate.Optional(validate.IsUint32),
 
-	// gendoc:generate(group=instance-nvidia, key=nvidia.runtime)
+	// gendoc:generate(entity=instance, group=nvidia, key=nvidia.runtime)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to pass the host NVIDIA and CUDA runtime libraries into the instance
 	"nvidia.runtime": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-nvidia, key=nvidia.driver.capabilities)
+	// gendoc:generate(entity=instance, group=nvidia, key=nvidia.driver.capabilities)
 	// The specified driver capabilities are used to set `libnvidia-container NVIDIA_DRIVER_CAPABILITIES`.
 	// ---
 	//  type: string
-	//  default: `compute,utility`
+	//  defaultdesc: `compute,utility`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: What driver capabilities the instance needs
 	"nvidia.driver.capabilities": validate.IsAny,
 
-	// gendoc:generate(group=instance-nvidia, key=nvidia.require.cuda)
+	// gendoc:generate(entity=instance, group=nvidia, key=nvidia.require.cuda)
 	// The specified version expression is used to set `libnvidia-container NVIDIA_REQUIRE_CUDA`.
 	// ---
 	//  type: string
@@ -588,7 +588,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Required CUDA version
 	"nvidia.require.cuda": validate.IsAny,
 
-	// gendoc:generate(group=instance-nvidia, key=nvidia.require.driver)
+	// gendoc:generate(entity=instance, group=nvidia, key=nvidia.require.driver)
 	// The specified version expression is used to set `libnvidia-container NVIDIA_REQUIRE_DRIVER`.
 	// ---
 	//  type: string
@@ -599,7 +599,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 
 	// Caller is responsible for full validation of any raw.* value.
 
-	// gendoc:generate(group=instance-raw, key=raw.lxc)
+	// gendoc:generate(entity=instance, group=raw, key=raw.lxc)
 	//
 	// ---
 	//  type: blob
@@ -608,7 +608,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Raw LXC configuration to be appended to the generated one
 	"raw.lxc": validate.IsAny,
 
-	// gendoc:generate(group=instance-raw, key=raw.seccomp)
+	// gendoc:generate(entity=instance, group=raw, key=raw.seccomp)
 	//
 	// ---
 	//  type: blob
@@ -617,17 +617,17 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Raw Seccomp configuration
 	"raw.seccomp": validate.IsAny,
 
-	// gendoc:generate(group=instance-security, key=security.guestapi.images)
+	// gendoc:generate(entity=instance, group=security, key=security.guestapi.images)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Controls the availability of the `/1.0/images` API over `guestapi`
 	"security.guestapi.images": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.idmap.base)
+	// gendoc:generate(entity=instance, group=security, key=security.idmap.base)
 	// Setting this option overrides auto-detection.
 	// ---
 	//  type: integer
@@ -636,17 +636,17 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: The base host ID to use for the allocation
 	"security.idmap.base": validate.Optional(validate.IsUint32),
 
-	// gendoc:generate(group=instance-security, key=security.idmap.isolated)
+	// gendoc:generate(entity=instance, group=security, key=security.idmap.isolated)
 	// If specified, the idmap used for this instance is unique among instances that have this option set.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: unprivileged container
 	//  shortdesc: Whether to use a unique idmap for this instance
 	"security.idmap.isolated": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.idmap.size)
+	// gendoc:generate(entity=instance, group=security, key=security.idmap.size)
 	//
 	// ---
 	//  type: integer
@@ -655,37 +655,37 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: The size of the idmap to use
 	"security.idmap.size": validate.Optional(validate.IsUint32),
 
-	// gendoc:generate(group=instance-security, key=security.nesting)
+	// gendoc:generate(entity=instance, group=security, key=security.nesting)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to support running Incus (nested) inside the instance
 	"security.nesting": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.privileged)
+	// gendoc:generate(entity=instance, group=security, key=security.privileged)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to run the instance in privileged mode
 	"security.privileged": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.protection.shift)
+	// gendoc:generate(entity=instance, group=security, key=security.protection.shift)
 	// Set this option to `true` to prevent the instance's file system from being UID/GID shifted on startup.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to protect the file system from being UID/GID shifted
 	"security.protection.shift": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.allow)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.allow)
 	// A `\n`-separated list of syscalls to allow.
 	// This list must be mutually exclusive with `security.syscalls.deny*`.
 	// ---
@@ -699,28 +699,28 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"security.syscalls.blacklist_compat":  validate.Optional(validate.IsBool),
 	"security.syscalls.blacklist":         validate.IsAny,
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.deny_default)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.deny_default)
 	//
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to enable the default syscall deny
 	"security.syscalls.deny_default": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.deny_compat)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.deny_compat)
 	// On `x86_64`, this option controls whether to block `compat_*` syscalls.
 	// On other architectures, the option is ignored.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to block `compat_*` syscalls (`x86_64` only)
 	"security.syscalls.deny_compat": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.deny)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.deny)
 	// A `\n`-separated list of syscalls to deny.
 	// This list must be mutually exclusive with `security.syscalls.allow`.
 	// ---
@@ -730,47 +730,47 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: List of syscalls to deny
 	"security.syscalls.deny": validate.IsAny,
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.bpf)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.bpf)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `bpf()` system call
 	"security.syscalls.intercept.bpf": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.bpf.devices)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.bpf.devices)
 	// This option controls whether to allow BPF programs for the devices cgroup in the unified hierarchy to be loaded.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to allow BPF programs
 	"security.syscalls.intercept.bpf.devices": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mknod)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.mknod)
 	// These system calls allow creation of a limited subset of char/block devices.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `mknod` and `mknodat` system calls
 	"security.syscalls.intercept.mknod": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mount)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.mount)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `mount` system call
 	"security.syscalls.intercept.mount": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mount.allowed)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.mount.allowed)
 	// Specify a comma-separated list of file systems that are safe to mount for processes inside the instance.
 	// ---
 	//  type: string
@@ -779,7 +779,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: File systems that can be mounted
 	"security.syscalls.intercept.mount.allowed": validate.IsAny,
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mount.fuse)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.mount.fuse)
 	// Specify the mounts of a given file system that should be redirected to their FUSE implementation (for example, `ext4=fuse2fs`).
 	// ---
 	//  type: string
@@ -788,41 +788,41 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: File system that should be redirected to FUSE implementation
 	"security.syscalls.intercept.mount.fuse": validate.IsAny,
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.mount.shift)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.mount.shift)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: yes
 	//  condition: container
 	//  shortdesc: Whether to mount `shiftfs` on top of file systems handled through mount syscall interception
 	"security.syscalls.intercept.mount.shift": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.sched_setcheduler)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.sched_setcheduler)
 	// This system call allows increasing process priority.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `sched_setscheduler` system call
 	"security.syscalls.intercept.sched_setscheduler": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.setxattr)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.setxattr)
 	// This system call allows setting a limited subset of restricted extended attributes.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `setxattr` system call
 	"security.syscalls.intercept.setxattr": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.syscalls.intercept.sysinfo)
+	// gendoc:generate(entity=instance, group=security, key=security.syscalls.intercept.sysinfo)
 	// This system call can be used to get cgroup-based resource usage information.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Whether to handle the `sysinfo` system call
@@ -830,28 +830,28 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 
 	"security.syscalls.whitelist": validate.IsAny,
 
-	// gendoc:generate(group=instance-volatile, key=volatile.last_state.idmap)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.last_state.idmap)
 	//
 	// ---
 	//  type: string
 	//  shortdesc: Serialized instance UID/GID map
 	"volatile.last_state.idmap": validate.IsAny,
 
-	// gendoc:generate(group=instance-volatile, key=volatile.idmap.base)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.idmap.base)
 	//
 	// ---
 	//  type: integer
 	//  shortdesc: The first ID in the instance's primary idmap range
 	"volatile.idmap.base": validate.IsAny,
 
-	// gendoc:generate(group=instance-volatile, key=volatile.idmap.current)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.idmap.current)
 	//
 	// ---
 	//  type: string
 	//  shortdesc: The idmap currently in use by the instance
 	"volatile.idmap.current": validate.IsAny,
 
-	// gendoc:generate(group=instance-volatile, key=volatile.idmap.next)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.idmap.next)
 	//
 	// ---
 	//  type: string
@@ -861,21 +861,21 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 
 // InstanceConfigKeysVM is a map of config key to validator. (keys applying to VM only).
 var InstanceConfigKeysVM = map[string]func(value string) error{
-	// gendoc:generate(group=instance-resource-limits, key=limits.memory.hugepages)
+	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.hugepages)
 	// If this option is set to `false`, regular system memory is used.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether to back the instance using huge pages
 	"limits.memory.hugepages": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-migration, key=migration.stateful)
+	// gendoc:generate(entity=instance, group=migration, key=migration.stateful)
 	// Enabling this option prevents the use of some features that are incompatible with it.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether to allow for stateful stop/start and snapshots
@@ -883,7 +883,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 
 	// Caller is responsible for full validation of any raw.* value.
 
-	// gendoc:generate(group=instance-raw, key=raw.qemu)
+	// gendoc:generate(entity=instance, group=raw, key=raw.qemu)
 	//
 	// ---
 	//  type: blob
@@ -892,7 +892,7 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Raw QEMU configuration to be appended to the generated command line
 	"raw.qemu": validate.IsAny,
 
-	// gendoc:generate(group=instance-raw, key=raw.qemu.conf)
+	// gendoc:generate(entity=instance, group=raw, key=raw.qemu.conf)
 	// See {ref}`instance-options-qemu` for more information.
 	// ---
 	//  type: blob
@@ -901,102 +901,102 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Addition/override to the generated `qemu.conf` file
 	"raw.qemu.conf": validate.IsAny,
 
-	// gendoc:generate(group=instance-security, key=security.agent.metrics)
+	// gendoc:generate(entity=instance, group=security, key=security.agent.metrics)
 	//
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether the `incus-agent` is queried for state information and metrics
 	"security.agent.metrics": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.csm)
+	// gendoc:generate(entity=instance, group=security, key=security.csm)
 	// When enabling this option, set {config:option}`instance-security:security.secureboot` to `false`.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether to use a firmware that supports UEFI-incompatible operating systems
 	"security.csm": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.secureboot)
+	// gendoc:generate(entity=instance, group=security, key=security.secureboot)
 	// When disabling this option, consider enabling {config:option}`instance-security:security.csm`.
 	// ---
 	//  type: bool
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether UEFI secure boot is enabled with the default Microsoft keys
 	"security.secureboot": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.sev)
+	// gendoc:generate(entity=instance, group=security, key=security.sev)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether AMD SEV (Secure Encrypted Virtualization) is enabled for this VM
 	"security.sev": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.sev.policy.es)
+	// gendoc:generate(entity=instance, group=security, key=security.sev.policy.es)
 	//
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether AMD SEV-ES (SEV Encrypted State) is enabled for this VM
 	"security.sev.policy.es": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-security, key=security.sev.session.dh)
+	// gendoc:generate(entity=instance, group=security, key=security.sev.session.dh)
 	//
 	// ---
 	//  type: string
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: The guest owner's `base64`-encoded Diffie-Hellman key
 	"security.sev.session.dh": validate.Optional(validate.IsAny),
 
-	// gendoc:generate(group=instance-security, key=security.sev.session.data)
+	// gendoc:generate(entity=instance, group=security, key=security.sev.session.data)
 	//
 	// ---
 	//  type: string
-	//  default: `true`
+	//  defaultdesc: `true`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: The guest owner's `base64`-encoded session blob
 	"security.sev.session.data": validate.Optional(validate.IsAny),
 
-	// gendoc:generate(group=instance-miscellaneous, key=user.*)
+	// gendoc:generate(entity=instance, group=miscellaneous, key=user.*)
 	// User keys can be used in search.
 	// ---
 	//  type: string
 	//  liveupdate: no
 	//  shortdesc: Free-form user key/value storage
 
-	// gendoc:generate(group=instance-miscellaneous, key=agent.nic_config)
+	// gendoc:generate(entity=instance, group=miscellaneous, key=agent.nic_config)
 	// For containers, the name and MTU of the default network interfaces is used for the instance devices.
 	// For virtual machines, set this option to `true` to set the name and MTU of the default network interfaces to be the same as the instance devices.
 	// ---
 	//  type: bool
-	//  default: `false`
+	//  defaultdesc: `false`
 	//  liveupdate: no
 	//  condition: virtual machine
 	//  shortdesc: Whether to use the name and MTU of the default network interfaces
 	"agent.nic_config": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-volatile, key=volatile.apply_nvram)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.apply_nvram)
 	//
 	// ---
 	//  type: string
 	//  shortdesc: Whether to regenerate VM NVRAM the next time the instance starts
 	"volatile.apply_nvram": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(group=instance-volatile, key=volatile.vsock_id)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.vsock_id)
 	//
 	// ---
 	//  type: string
@@ -1031,19 +1031,19 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 	}
 
 	if strings.HasPrefix(key, ConfigVolatilePrefix) {
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.hwaddr)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.hwaddr)
 		// The original MAC that was used when moving a physical device into an instance.
 		// ---
 		//  type: string
 		//  shortdesc: Network device original MAC
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.hwaddr)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.hwaddr)
 		// The network device MAC address is used when no `hwaddr` property is set on the device itself.
 		// ---
 		//  type: string
 		//  shortdesc: Network device MAC address
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vf.hwaddr)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.vf.hwaddr)
 		// The original MAC used when moving a VF into an instance.
 		// ---
 		//  type: string
@@ -1052,7 +1052,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vdpa.name)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.vdpa.name)
 		// The VDPA device name used when moving a VDPA device file descriptor into an instance.
 		// ---
 		//  type: string
@@ -1061,7 +1061,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.host_name)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.host_name)
 		//
 		// ---
 		//  type: string
@@ -1070,7 +1070,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.mtu)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.mtu)
 		// The original MTU that was used when moving a physical device into an instance.
 		// ---
 		//  type: string
@@ -1079,7 +1079,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.created)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.created)
 		// Possible values are `true` or `false`.
 		// ---
 		//  type: string
@@ -1088,7 +1088,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vf.id)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.vf.id)
 		// The ID used when moving a VF into an instance.
 		// ---
 		//  type: string
@@ -1097,7 +1097,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vf.vlan)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.vf.vlan)
 		// The original VLAN used when moving a VF into an instance.
 		// ---
 		//  type: string
@@ -1106,7 +1106,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.vf.spoofcheck)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.vf.spoofcheck)
 		// The original spoof check setting used when moving a VF into an instance.
 		// ---
 		//  type: string
@@ -1119,7 +1119,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.last_state.ip_addresses)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.ip_addresses)
 		// Comma-separated list of the last used IP addresses of the network device.
 		// ---
 		//  type: string
@@ -1128,7 +1128,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsListOf(validate.IsNetworkAddress), nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.apply_quota)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.apply_quota)
 		// The disk quota is applied the next time the instance starts.
 		// ---
 		//  type: string
@@ -1137,7 +1137,7 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
-		// gendoc:generate(group=instance-volatile, key=volatile.<name>.ceph_rbd)
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.ceph_rbd)
 		//
 		// ---
 		//  type: string
