@@ -10,6 +10,7 @@ discourse: 13021
 
 /explanation/networks
 Create and configure a network </howto/network_create>
+Configure a network </howto/network_configure>
 Configure network ACLs </howto/network_acls>
 Configure network forwards </howto/network_forwards>
 Configure network zones </howto/network_zones>
