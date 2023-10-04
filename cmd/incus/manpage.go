@@ -12,6 +12,7 @@ type cmdManpage struct {
 	global *cmdGlobal
 
 	flagFormat string
+	flagAll    bool
 }
 
 func (c *cmdManpage) Command() *cobra.Command {
@@ -22,6 +23,7 @@ func (c *cmdManpage) Command() *cobra.Command {
 		`Generate manpages for all commands`))
 	cmd.Hidden = true
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "man", i18n.G("Format (man|md|rest|yaml)")+"``")
+	cmd.Flags().BoolVar(&c.flagAll, "all", false, i18n.G("Include less common commands"))
 
 	cmd.RunE = c.Run
 
@@ -33,6 +35,11 @@ func (c *cmdManpage) Run(cmd *cobra.Command, args []string) error {
 	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
 	if exit {
 		return err
+	}
+
+	// If asked to do all commands, mark them all visible.
+	for _, c := range c.global.cmd.Commands() {
+		c.Hidden = false
 	}
 
 	// Generate the documentation.
