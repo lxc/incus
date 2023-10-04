@@ -2639,7 +2639,7 @@ func imageValidSecret(s *state.State, r *http.Request, projectName string, finge
 			continue
 		}
 
-		if !stringPrefixInSlice(api.NewURL().Path(version.APIVersion, "images", fingerprint).String(), opImages) {
+		if !util.StringPrefixInSlice(api.NewURL().Path(version.APIVersion, "images", fingerprint).String(), opImages) {
 			continue
 		}
 
@@ -2660,17 +2660,6 @@ func imageValidSecret(s *state.State, r *http.Request, projectName string, finge
 	}
 
 	return nil, nil
-}
-
-// stringPrefixInSlice returns true if any element in the list has the given prefix.
-func stringPrefixInSlice(key string, list []string) bool {
-	for _, entry := range list {
-		if strings.HasPrefix(entry, key) {
-			return true
-		}
-	}
-
-	return false
 }
 
 // swagger:operation GET /1.0/images/{fingerprint}?public images image_get_untrusted
