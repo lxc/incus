@@ -99,7 +99,6 @@ The documentation of configuration options is extracted from comments in the Go 
 Look for comments that start with `gendoc:generate` in the code.
 
 When you add or change a configuration option, make sure to include the required documentation comment for it.
-See the [`incus-doc` README file](https://github.com/lxc/incus/blob/main/lxd/incus-doc/README.md) for information about the format.
 
 Then run `make generate-config` to re-generate the `doc/config_options.txt` file.
 The updated file should be checked in.
