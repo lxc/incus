@@ -24,24 +24,24 @@ if not os.path.islink('.sphinx/_static/swagger-ui/swagger-ui.css'):
 
 ### MAN PAGES ###
 
-# Find path to lxc client (different for local builds and on RTD)
+# Find path to incus client (different for local builds and on RTD)
 
 if ("LOCAL_SPHINX_BUILD" in os.environ and
     os.environ["LOCAL_SPHINX_BUILD"] == "True"):
     path = str(subprocess.check_output(['go', 'env', 'GOPATH'], encoding="utf-8").strip())
-    lxc = os.path.join(path, 'bin', 'lxc')
-    if os.path.isfile(lxc):
-        print("Using " + lxc + " to generate man pages.")
+    incus = os.path.join(path, 'bin', 'incus')
+    if os.path.isfile(incus):
+        print("Using " + incus + " to generate man pages.")
     else:
-        print("Cannot find lxc in " + lxc)
+        print("Cannot find incus in " + incus)
         exit(2)
 else:
-    lxc = "../lxc.bin"
+    incus = "../incus.bin"
 
 # Generate man pages content
 
 os.makedirs('.sphinx/deps/manpages', exist_ok=True)
-subprocess.run([lxc, 'manpage', '.sphinx/deps/manpages/', '--format=md'],
+subprocess.run([incus, 'manpage', '.sphinx/deps/manpages/', '--format=md'],
                check=True)
 
 # Preprocess man pages content
@@ -110,7 +110,7 @@ project = "LXD"
 author = "LXD contributors"
 copyright = "2014-%s %s" % (datetime.date.today().year, author)
 
-with open("../shared/version/flex.go") as fd:
+with open("../internal/version/flex.go") as fd:
     version = fd.read().split("\n")[-2].split()[-1].strip("\"")
 
 # Extensions.
@@ -165,7 +165,7 @@ myst_url_schemes = {
     "swagger": swagger_url_scheme,
 }
 
-remove_from_toctrees = ["reference/manpages/lxc/*.md"]
+remove_from_toctrees = ["reference/manpages/incus/*.md"]
 
 # Setup theme.
 templates_path = [".sphinx/_templates"]
