@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-10-03 17:50-0400\n"
+"POT-Creation-Date: 2023-10-04 02:12-0400\n"
 "PO-Revision-Date: 2022-03-10 15:08+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Hindi <https://hosted.weblate.org/projects/linux-containers/"
@@ -439,7 +439,7 @@ msgid ""
 "<tarball>|<directory>|<URL> [<rootfs tarball>] [<remote>:] [key=value...]"
 msgstr ""
 
-#: cmd/incus/manpage.go:19
+#: cmd/incus/manpage.go:20
 msgid "<target>"
 msgstr ""
 
@@ -1569,7 +1569,7 @@ msgstr ""
 #: cmd/incus/image_alias.go:60 cmd/incus/image_alias.go:107
 #: cmd/incus/image_alias.go:152 cmd/incus/image_alias.go:255
 #: cmd/incus/import.go:27 cmd/incus/info.go:33 cmd/incus/launch.go:24
-#: cmd/incus/list.go:49 cmd/incus/main.go:83 cmd/incus/manpage.go:21
+#: cmd/incus/list.go:49 cmd/incus/main.go:83 cmd/incus/manpage.go:22
 #: cmd/incus/monitor.go:33 cmd/incus/move.go:35 cmd/incus/network.go:32
 #: cmd/incus/network.go:135 cmd/incus/network.go:220 cmd/incus/network.go:293
 #: cmd/incus/network.go:372 cmd/incus/network.go:422 cmd/incus/network.go:507
@@ -2312,7 +2312,7 @@ msgstr ""
 msgid "Format (json|pretty|yaml)"
 msgstr ""
 
-#: cmd/incus/manpage.go:24
+#: cmd/incus/manpage.go:25
 msgid "Format (man|md|rest|yaml)"
 msgstr ""
 
@@ -2353,7 +2353,7 @@ msgstr ""
 msgid "GPUs:"
 msgstr ""
 
-#: cmd/incus/manpage.go:20 cmd/incus/manpage.go:21
+#: cmd/incus/manpage.go:21 cmd/incus/manpage.go:22
 msgid "Generate manpages for all commands"
 msgstr ""
 
@@ -2690,7 +2690,11 @@ msgstr ""
 msgid "Importing instance: %s"
 msgstr ""
 
-#: cmd/incus/manpage.go:42
+#: cmd/incus/manpage.go:26
+msgid "Include less common commands"
+msgstr ""
+
+#: cmd/incus/manpage.go:49
 msgid "Incus - Command line client"
 msgstr ""
 
