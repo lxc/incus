@@ -41,7 +41,7 @@ else:
 # Generate man pages content
 
 os.makedirs('.sphinx/deps/manpages', exist_ok=True)
-subprocess.run([incus, 'manpage', '.sphinx/deps/manpages/', '--format=md'],
+subprocess.run([incus, 'manpage', '.sphinx/deps/manpages/', '--format=md', '--all'],
                check=True)
 
 # Preprocess man pages content
