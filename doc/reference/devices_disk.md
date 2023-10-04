@@ -28,7 +28,7 @@ Storage volume
 
   The path is required for file system volumes, but not for block volumes.
 
-  Alternatively, you can use the [`lxc storage volume attach`](lxc_storage_volume_attach.md) command to {ref}`storage-attach-volume`.
+  Alternatively, you can use the [`lxc storage volume attach`](incus_storage_volume_attach.md) command to {ref}`storage-attach-volume`.
   Both commands use the same mechanism to add a storage volume as a disk device.
 
 Path on the host

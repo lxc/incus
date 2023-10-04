@@ -191,7 +191,7 @@ You can restrict projects to specific domains and sub-domains through the `restr
 A network zone automatically generates forward and reverse records for all instances, network gateways and downstream network ports.
 If required, you can manually add custom records to a zone.
 
-To do so, use the [`lxc network zone record`](lxc_network_zone_record.md) command.
+To do so, use the [`lxc network zone record`](incus_network_zone_record.md) command.
 
 ### Create a record
 
@@ -234,7 +234,7 @@ lxc network zone record entry add <network_zone> <record_name> AAAA 1234::1234
 You can use the `--ttl` flag to set a custom time-to-live (in seconds) for the entry.
 Otherwise, the default of 300 seconds is used.
 
-You cannot edit an entry (except if you edit the full record with [`lxc network zone record edit`](lxc_network_zone_record_edit.md)), but you can delete entries with the following command:
+You cannot edit an entry (except if you edit the full record with [`lxc network zone record edit`](incus_network_zone_record_edit.md)), but you can delete entries with the following command:
 
 ```bash
 lxc network zone record entry remove <network_zone> <record_name> <type> <value>

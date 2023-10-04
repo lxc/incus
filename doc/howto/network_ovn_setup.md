@@ -29,7 +29,7 @@ Complete the following steps to create a standalone OVN network that is connecte
        lxc config device override c1 eth0 network=ovntest
        lxc start c1
 
-1. Run [`lxc list`](lxc_list.md) to show the instance information:
+1. Run [`lxc list`](incus_list.md) to show the instance information:
 
    ```{terminal}
    :input: lxc list
@@ -125,7 +125,7 @@ See the linked YouTube video for the complete tutorial using four machines.
 
 1. Create a LXD cluster by running `lxd init` on all machines.
    On the first machine, create the cluster.
-   Then join the other machines with tokens by running [`lxc cluster add <machine_name>`](lxc_cluster_add.md) on the first machine and specifying the token when initializing LXD on the other machine.
+   Then join the other machines with tokens by running [`lxc cluster add <machine_name>`](incus_cluster_add.md) on the first machine and specifying the token when initializing LXD on the other machine.
 1. On the first machine, create and configure the uplink network:
 
        lxc network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_1>

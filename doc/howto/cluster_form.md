@@ -63,7 +63,7 @@ Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
 </details>
 
 After the initialization process finishes, your first cluster member should be up and available on your network.
-You can check this with [`lxc cluster list`](lxc_cluster_list.md).
+You can check this with [`lxc cluster list`](incus_cluster_list.md).
 
 ### Join additional servers
 
@@ -170,7 +170,7 @@ Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
 </details>
 
 After the initialization process finishes, your server is added as a new cluster member.
-You can check this with [`lxc cluster list`](lxc_cluster_list.md).
+You can check this with [`lxc cluster list`](incus_cluster_list.md).
 
 ## Configure the cluster through preseed files
 

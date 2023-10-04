@@ -10,7 +10,7 @@ discourse: 15728
 
 To spread the total workload over several servers, LXD can be run in clustering mode.
 In this scenario, any number of LXD servers share the same distributed database that holds the configuration for the cluster members and their instances.
-The LXD cluster can be managed uniformly using the [`lxc`](lxc.md) client or the REST API.
+The LXD cluster can be managed uniformly using the [`lxc`](incus.md) client or the REST API.
 
 This feature was introduced as part of the [`clustering`](../api-extensions.md#clustering) API extension and is available since LXD 3.0.
 
@@ -88,7 +88,7 @@ See {ref}`cluster-recover` for more information.
 You can use failure domains to indicate which cluster members should be given preference when assigning roles to a cluster member that has gone offline.
 For example, if a cluster member that currently has the database role gets shut down, LXD tries to assign its database role to another cluster member in the same failure domain, if one is available.
 
-To update the failure domain of a cluster member, use the [`lxc cluster edit <member>`](lxc_cluster_edit.md) command and change the `failure_domain` property from `default` to another string.
+To update the failure domain of a cluster member, use the [`lxc cluster edit <member>`](incus_cluster_edit.md) command and change the `failure_domain` property from `default` to another string.
 
 (clustering-member-config)=
 ### Member configuration

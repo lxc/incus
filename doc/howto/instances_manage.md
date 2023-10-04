@@ -22,7 +22,7 @@ For example:
 
     lxc list ubuntu.*
 
-Enter [`lxc list --help`](lxc_list.md) to see all filter options.
+Enter [`lxc list --help`](incus_list.md) to see all filter options.
 ```
 
 ```{group-tab} API
@@ -216,7 +216,7 @@ There are different ways to prevent accidental deletion of instances:
 
 - To protect a specific instance from being deleted, set {config:option}`instance-security:security.protection.delete` to `true` for the instance.
   See {ref}`instances-configure` for instructions.
-- In the CLI client, you can create an alias to be prompted for approval every time you use the [`lxc delete`](lxc_delete.md) command:
+- In the CLI client, you can create an alias to be prompted for approval every time you use the [`lxc delete`](incus_delete.md) command:
 
        lxc alias add delete "delete -i"
 
@@ -238,7 +238,7 @@ Enter the following command to rebuild the instance with an empty root disk:
 
     lxc rebuild <instance_name> --empty
 
-For more information about the `rebuild` command, see [`lxc rebuild --help`](lxc_rebuild.md).
+For more information about the `rebuild` command, see [`lxc rebuild --help`](incus_rebuild.md).
 ```
 
 ```{group-tab} API

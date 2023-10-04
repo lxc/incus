@@ -1,7 +1,7 @@
 (network-configure)=
 # How to configure a network
 
-To configure an existing network, use either the [`lxc network set`](lxc_network_set.md) and [`lxc network unset`](lxc_network_unset.md) commands (to configure single settings) or the `lxc network edit` command (to edit the full configuration).
+To configure an existing network, use either the [`lxc network set`](incus_network_set.md) and [`lxc network unset`](incus_network_unset.md) commands (to configure single settings) or the `lxc network edit` command (to edit the full configuration).
 To configure settings for specific cluster members, add the `--target` flag.
 
 For example, the following command configures a DNS server for a physical network:
