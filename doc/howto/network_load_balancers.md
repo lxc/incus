@@ -47,7 +47,7 @@ Property         | Type         | Required | Description
 
 The following requirements must be met for valid listen addresses:
 
-- Allowed listen addresses must be defined in the uplink network's `ipv{n}.routes` settings or the project's `restricted.networks.subnets` setting (if set).
+- Allowed listen addresses must be defined in the uplink network's `ipv{n}.routes` settings or the project's {config:option}`project-restricted:restricted.networks.subnets` setting (if set).
 - The listen address must not overlap with a subnet that is in use with another network or entity in that network.
 
 (network-load-balancers-backend-specifications)=

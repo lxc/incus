@@ -1613,7 +1613,7 @@ This adds supported storage driver info to server environment info.
 
 ## `event_lifecycle_requestor_address`
 
-Adds a new address field to life-cycle requestor.
+Adds a new address field to `lifecycle` requestor.
 
 ## `resources_gpu_usb`
 
@@ -2248,3 +2248,20 @@ Check the list of {doc}`configuration options </config-options>` to see which co
 ## `syslog_socket`
 
 This introduces a syslog socket that can receive syslog formatted log messages. These can be viewed in the events API and `incus monitor`, and can be forwarded to Loki. To enable this feature, set `core.syslog_socket` to `true`.
+
+## `event_lifecycle_name_and_project`
+
+This adds the fields `Name` and `Project` to `lifecycle` events.
+
+## `instances_nic_limits_priority`
+
+This introduces a new per-NIC `limits.priority` option that works with both cgroup1 and cgroup2 unlike the deprecated `limits.network.priority` instance setting, which only worked with cgroup1.
+
+## `disk_initial_volume_configuration`
+
+This API extension provides the capability to set initial volume configurations for instance root devices.
+Initial volume configurations are prefixed with `initial.` and can be specified either through profiles or directly
+during instance initialization using the `--device` flag.
+
+Note that these configuration are applied only at the time of instance creation and subsequent modifications have
+no effect on existing devices.

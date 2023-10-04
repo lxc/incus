@@ -166,6 +166,11 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 			return fmt.Errorf("Cannot specify %q when DHCP or %q are disabled on network %q", "ipv6.address", "ipv6.dhcp.stateful", d.config["network"])
 		}
 
+		// Static IPv6 is allowed only if static IPv4 is set as well.
+		if d.config["ipv4.address"] == "" {
+			return fmt.Errorf("Cannot specify %q when %q is not set", "ipv6.address", "ipv4.address")
+		}
+
 		ip, subnet, err := net.ParseCIDR(netConfig["ipv6.address"])
 		if err != nil {
 			return fmt.Errorf("Invalid network ipv6.address: %w", err)

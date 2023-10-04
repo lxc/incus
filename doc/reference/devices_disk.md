@@ -70,6 +70,24 @@ VM `cloud-init`
 
       lxc config device add <instance_name> <device_name> disk source=cloud-init:config
 
+(devices-disk-initial-config)=
+## Initial volume configuration for instance root disk devices
+
+Initial volume configuration allows setting specific configurations for the root disk devices of new instances.
+These settings are prefixed with `initial.` and are only applied when the instance is created.
+This method allows creating instances that have unique configurations, independent of the default storage pool settings.
+
+For example, you can add an initial volume configuration for `zfs.block_mode` to an existing profile, and this
+will then take effect for each new instance you create using this profile:
+
+    incus profile device set <profile_name> <device_name> initial.zfs.block_mode=true
+
+You can also set an initial configuration directly when creating an instance. For example:
+
+    incus init <image> <instance_name> --device <device_name>,initial.zfs.block_mode=true
+
+Note that you cannot use initial volume configurations with custom volume options or to set the volume's size.
+
 ## Device options
 
 `disk` devices have the following device options:
@@ -79,6 +97,7 @@ Key                 | Type      | Default   | Required  | Description
 `boot.priority`     | integer   | -         | no        | Boot priority for VMs (higher value boots first)
 `ceph.cluster_name` | string    | `ceph`    | no        | The cluster name of the Ceph cluster (required for Ceph or CephFS sources)
 `ceph.user_name`    | string    | `admin`   | no        | The user name of the Ceph cluster (required for Ceph or CephFS sources)
+`initial.*`         | n/a       | -         | no        | {ref}`devices-disk-initial-config` that allows setting unique configurations independent of default storage pool settings
 `io.cache`          | string    | `none`    | no        | Only for VMs: Override the caching mode for the device (`none`, `writeback` or `unsafe`)
 `limits.max`        | string    | -         | no        | I/O limit in byte/s or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)
 `limits.read`       | string    | -         | no        | I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`

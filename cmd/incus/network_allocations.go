@@ -5,7 +5,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/api"
@@ -52,7 +51,7 @@ func (c *cmdNetworkListAllocations) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("List network allocations in use"))
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
-	cmd.Args = cobra.NoArgs
+	cmd.Args = cobra.MaximumNArgs(1)
 	cmd.RunE = c.Run
 
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
@@ -62,18 +61,19 @@ func (c *cmdNetworkListAllocations) Command() *cobra.Command {
 }
 
 func (c *cmdNetworkListAllocations) Run(cmd *cobra.Command, args []string) error {
-	d, err := incus.ConnectIncusUnix("", nil)
-	if err != nil {
-		return nil
+	remote := ""
+	if len(args) > 0 {
+		remote = args[0]
 	}
 
-	// Check if server is initialized.
-	_, _, err = d.GetServer()
+	resources, err := c.global.ParseServers(remote)
 	if err != nil {
 		return err
 	}
 
-	addresses, err := d.UseProject(c.flagProject).GetNetworkAllocations(c.flagAllProjects)
+	resource := resources[0]
+	server := resource.server.UseProject(c.flagProject)
+	addresses, err := server.GetNetworkAllocations(c.flagAllProjects)
 	if err != nil {
 		return err
 	}

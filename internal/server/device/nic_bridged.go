@@ -76,6 +76,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 		"limits.ingress",
 		"limits.egress",
 		"limits.max",
+		"limits.priority",
 		"ipv4.address",
 		"ipv6.address",
 		"ipv4.routes",
@@ -442,7 +443,7 @@ func (d *nicBridged) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering"}
 }
 
 // Add is run when a device is added to a non-snapshot instance whether or not the instance is running.
@@ -543,7 +544,7 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	// Apply host-side limits.
-	err = networkSetupHostVethLimits(d.config)
+	err = networkSetupHostVethLimits(&d.deviceCommon, nil, true)
 	if err != nil {
 		return nil, err
 	}
@@ -727,7 +728,7 @@ func (d *nicBridged) Update(oldDevices deviceConfig.Devices, isRunning bool) err
 		}
 
 		// Apply host-side limits.
-		err = networkSetupHostVethLimits(d.config)
+		err = networkSetupHostVethLimits(&d.deviceCommon, oldConfig, true)
 		if err != nil {
 			return err
 		}
@@ -782,6 +783,14 @@ func (d *nicBridged) Update(oldDevices deviceConfig.Devices, isRunning bool) err
 func (d *nicBridged) Stop() (*deviceConfig.RunConfig, error) {
 	// Remove BGP announcements.
 	err := bgpRemovePrefix(&d.deviceCommon, d.config)
+	if err != nil {
+		return nil, err
+	}
+
+	// Populate device config with volatile fields (hwaddr and host_name) if needed.
+	networkVethFillFromVolatile(d.config, d.volatileGet())
+
+	err = networkClearHostVethLimits(&d.deviceCommon)
 	if err != nil {
 		return nil, err
 	}

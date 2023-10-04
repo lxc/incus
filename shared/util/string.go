@@ -29,3 +29,14 @@ func StringHasPrefix(value string, prefixes ...string) bool {
 	}
 	return false
 }
+
+// StringPrefixInSlice returns true if any element in the list has the given prefix.
+func StringPrefixInSlice(key string, list []string) bool {
+	for _, entry := range list {
+		if strings.HasPrefix(entry, key) {
+			return true
+		}
+	}
+
+	return false
+}

@@ -463,7 +463,7 @@
 						"limits.network.priority": {
 							"defaultdesc": "`0` (minimum)",
 							"liveupdate": "yes",
-							"longdesc": "Controls how much priority to give to the instance's network requests when under load.\n\nSpecify an integer between 0 and 10.",
+							"longdesc": "Controls how much priority to give to the instance's network requests when under load.\n\nSpecify an integer between 0 and 10.\nThis option is deprecated. Use the per-NIC `limits.priority` option instead.",
 							"shortdesc": "Priority of the instance's network requests",
 							"type": "integer"
 						}
@@ -996,6 +996,394 @@
 						"volatile.vsock_id": {
 							"longdesc": "",
 							"shortdesc": "Instance `vsock ID` used as of last start",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"project": {
+			"features": {
+				"keys": [
+					{
+						"features.images": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`true`",
+							"longdesc": "This setting applies to both images and image aliases.",
+							"shortdesc": "Whether to use a separate set of images for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.networks": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of networks for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.networks.zones": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of network zones for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.profiles": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of profiles for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.storage.buckets": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of storage buckets for the project",
+							"type": "bool"
+						}
+					},
+					{
+						"features.storage.volumes": {
+							"defaultdesc": "`false`",
+							"initialvaluedesc": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to use a separate set of storage volumes for the project",
+							"type": "bool"
+						}
+					}
+				]
+			},
+			"limits": {
+				"keys": [
+					{
+						"limits.containers": {
+							"longdesc": "",
+							"shortdesc": "Maximum number of containers that can be created in the project",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.cpu": {
+							"longdesc": "This value is the maximum value for the sum of the individual {config:option}`instance-resource-limits:limits.cpu` configurations set on the instances of the project.",
+							"shortdesc": "Maximum number of CPUs to use in the project",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.disk": {
+							"longdesc": "This value is the maximum value of the aggregate disk space used by all instance volumes, custom volumes, and images of the project.",
+							"shortdesc": "Maximum disk space used by the project",
+							"type": "string"
+						}
+					},
+					{
+						"limits.instances": {
+							"longdesc": "",
+							"shortdesc": "Maximum number of instances that can be created in the project",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.memory": {
+							"longdesc": "The value is the maximum value for the sum of the individual {config:option}`instance-resource-limits:limits.memory` configurations set on the instances of the project.",
+							"shortdesc": "Usage limit for the host's memory for the project",
+							"type": "string"
+						}
+					},
+					{
+						"limits.networks": {
+							"longdesc": "",
+							"shortdesc": "Maximum number of networks that the project can have",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.processes": {
+							"longdesc": "This value is the maximum value for the sum of the individual {config:option}`instance-resource-limits:limits.processes` configurations set on the instances of the project.",
+							"shortdesc": "Maximum number of processes within the project",
+							"type": "integer"
+						}
+					},
+					{
+						"limits.virtual-machines": {
+							"longdesc": "",
+							"shortdesc": "Maximum number of VMs that can be created in the project",
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"restricted": {
+				"keys": [
+					{
+						"restricted": {
+							"defaultdesc": "`false`",
+							"longdesc": "This option must be enabled to allow the `restricted.*` keys to take effect.\nTo temporarily remove the restrictions, you can disable this option instead of clearing the related keys.",
+							"shortdesc": "Whether to block access to security-sensitive features",
+							"type": "bool"
+						}
+					},
+					{
+						"restricted.backups": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent creating instance or volume backups",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.cluster.groups": {
+							"longdesc": "If specified, this option prevents targeting cluster groups other than the provided ones.",
+							"shortdesc": "Cluster groups that can be targeted",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.cluster.target": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, this option allows targeting of cluster members (either directly or via a group) when creating or moving instances.",
+							"shortdesc": "Whether to prevent targeting of cluster members",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.containers.interception": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow`, `block`, or `full`.\nWhen set to `allow`, interception options that are usually safe are allowed.\nFile system mounting remains blocked.",
+							"shortdesc": "Whether to prevent using system call interception options",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.containers.lowlevel": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, low-level container options like {config:option}`instance-raw:raw.lxc`, {config:option}`instance-raw:raw.idmap`, `volatile.*`, etc. can be used.",
+							"shortdesc": "Whether to prevent using low-level container options",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.containers.nesting": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, {config:option}`instance-security:security.nesting` can be set to `true` for an instance.",
+							"shortdesc": "Whether to prevent running nested LXD",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.containers.privilege": {
+							"defaultdesc": "`unprivileged`",
+							"longdesc": "Possible values are `unprivileged`, `isolated`, and `allow`.\n\n- When set to `unpriviliged`, this option prevents setting {config:option}`instance-security:security.privileged` to `true`.\n- When set to `isolated`, this option prevents setting {config:option}`instance-security:security.privileged` and {config:option}`instance-security:security.idmap.isolated` to `true`.\n- When set to `allow`, there is no restriction.",
+							"shortdesc": "Which settings for privileged containers to prevent",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.disk": {
+							"defaultdesc": "`managed`",
+							"longdesc": "Possible values are `allow`, `block`, or `managed`.\n\n- When set to `block`, this option prevents using all disk devices except the root one.\n- When set to `managed`, this option allows using disk devices only if `pool=` is set.\n- When set to `allow`, there is no restriction on which disk devices can be used.",
+							"shortdesc": "Which disk devices can be used",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.disk.paths": {
+							"longdesc": "If {config:option}`project-restricted:restricted.devices.disk` is set to `allow`, this option controls which `source` can be used for `disk` devices.\nSpecify a comma-separated list of path prefixes that restrict the `source` setting.\nIf this option is left empty, all paths are allowed.",
+							"shortdesc": "Which `source` can be used for `disk` devices",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.gpu": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `gpu`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.infiniband": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `infiniband`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.nic": {
+							"defaultdesc": "`managed`",
+							"longdesc": "Possible values are `allow`, `block`, or `managed`.\n\n- When set to `block`, this option prevents using all network devices.\n- When set to `managed`, this option allows using network devices only if `network=` is set.\n- When set to `allow`, there is no restriction on which network devices can be used.",
+							"shortdesc": "Which network devices can be used",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.pci": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `pci`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.proxy": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `proxy`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.unix-block": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `unix-block`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.unix-char": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `unix-char`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.unix-hotplug": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `unix-hotplug`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.devices.usb": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.",
+							"shortdesc": "Whether to prevent using devices of type `usb`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.idmap.gid": {
+							"longdesc": "This option specifies the host GID ranges that are allowed in the instance's {config:option}`instance-raw:raw.idmap` setting.",
+							"shortdesc": "Which host GID ranges are allowed in `raw.idmap`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.idmap.uid": {
+							"longdesc": "This option specifies the host UID ranges that are allowed in the instance's {config:option}`instance-raw:raw.idmap` setting.",
+							"shortdesc": "Which host UID ranges are allowed in `raw.idmap`",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.access": {
+							"longdesc": "Specify a comma-delimited list of network names that are allowed for use in this project.\nIf this option is not set, all networks are accessible.\n\nNote that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.",
+							"shortdesc": "Which network names are allowed for use in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.subnets": {
+							"defaultdesc": "`block`",
+							"longdesc": "Specify a comma-delimited list of network subnets from the uplink networks that are allocated for use in this project.\nUse the form `\u003cuplink\u003e:\u003csubnet\u003e`.",
+							"shortdesc": "Which network subnets are allocated for use in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.uplinks": {
+							"defaultdesc": "`block`",
+							"longdesc": "Specify a comma-delimited list of network names that can be used as uplink for networks in this project.",
+							"shortdesc": "Which network names can be used as uplink in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.zones": {
+							"defaultdesc": "`block`",
+							"longdesc": "Specify a comma-delimited list of network zones that can be used (or something under them) in this project.",
+							"shortdesc": "Which network zones can be used in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.snapshots": {
+							"defaultdesc": "`block`",
+							"longdesc": "",
+							"shortdesc": "Whether to prevent creating instance or volume snapshots",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.virtual-machines.lowlevel": {
+							"defaultdesc": "`block`",
+							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, low-level VM options like {config:option}`instance-raw:raw.qemu`, `volatile.*`, etc. can be used.",
+							"shortdesc": "Whether to prevent using low-level VM options",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"specific": {
+				"keys": [
+					{
+						"backups.compression_algorithm": {
+							"longdesc": "Specify which compression algorithm to use for backups in this project.\nPossible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"shortdesc": "Compression algorithm to use for backups",
+							"type": "string"
+						}
+					},
+					{
+						"images.auto_update_cached": {
+							"longdesc": "",
+							"shortdesc": "Whether to automatically update cached images in the project",
+							"type": "bool"
+						}
+					},
+					{
+						"images.auto_update_interval": {
+							"longdesc": "Specify the interval in hours.\nTo disable looking for updates to cached images, set this option to `0`.",
+							"shortdesc": "Interval at which to look for updates to cached images",
+							"type": "integer"
+						}
+					},
+					{
+						"images.compression_algorithm": {
+							"longdesc": "Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.",
+							"shortdesc": "Compression algorithm to use for new images in the project",
+							"type": "string"
+						}
+					},
+					{
+						"images.default_architecture": {
+							"longdesc": "",
+							"shortdesc": "Default architecture to use in a mixed-architecture cluster",
+							"type": "string"
+						}
+					},
+					{
+						"images.remote_cache_expiry": {
+							"longdesc": "Specify the number of days after which the unused cached image expires.",
+							"shortdesc": "When an unused cached remote image is flushed in the project",
+							"type": "integer"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "",
+							"shortdesc": "User-provided free-form key/value pairs",
 							"type": "string"
 						}
 					}

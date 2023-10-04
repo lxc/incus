@@ -43,7 +43,7 @@ func (d *nicRouted) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -69,6 +69,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader) error {
 		"limits.ingress",
 		"limits.egress",
 		"limits.max",
+		"limits.priority",
 		"ipv4.gateway",
 		"ipv6.gateway",
 		"ipv4.routes",
@@ -346,7 +347,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 	networkVethFillFromVolatile(d.config, saveData)
 
 	// Apply host-side limits.
-	err = networkSetupHostVethLimits(d.config)
+	err = networkSetupHostVethLimits(&d.deviceCommon, nil, false)
 	if err != nil {
 		return nil, err
 	}
@@ -577,7 +578,7 @@ func (d *nicRouted) Update(oldDevices deviceConfig.Devices, isRunning bool) erro
 		networkVethFillFromVolatile(d.config, v)
 
 		// Apply host-side limits.
-		err = networkSetupHostVethLimits(d.config)
+		err = networkSetupHostVethLimits(&d.deviceCommon, oldDevices[d.name], false)
 		if err != nil {
 			return err
 		}
@@ -588,6 +589,14 @@ func (d *nicRouted) Update(oldDevices deviceConfig.Devices, isRunning bool) erro
 
 // Stop is run when the device is removed from the instance.
 func (d *nicRouted) Stop() (*deviceConfig.RunConfig, error) {
+	// Populate device config with volatile fields (hwaddr and host_name) if needed.
+	networkVethFillFromVolatile(d.config, d.volatileGet())
+
+	err := networkClearHostVethLimits(&d.deviceCommon)
+	if err != nil {
+		return nil, err
+	}
+
 	runConf := deviceConfig.RunConfig{
 		PostHooks: []func() error{d.postStop},
 	}

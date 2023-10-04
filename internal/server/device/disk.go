@@ -352,6 +352,42 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 					return fmt.Errorf("Custom filesystem volumes require a path to be defined")
 				}
 			}
+
+			// Extract initial configuration from the profile and validate them against appropriate
+			// storage driver. Currently initial configuration is only applicable to root disk devices.
+			initialConfig := make(map[string]string)
+			for k, v := range d.config {
+				prefix, newKey, found := strings.Cut(k, "initial.")
+				if found && prefix == "" {
+					initialConfig[newKey] = v
+				}
+			}
+
+			if len(initialConfig) > 0 {
+				if !internalInstance.IsRootDiskDevice(d.config) {
+					return fmt.Errorf("Non-root disk device cannot contain initial.* configuration")
+				}
+
+				volumeType, err := storagePools.InstanceTypeToVolumeType(d.inst.Type())
+				if err != nil {
+					return err
+				}
+
+				// Create temporary volume definition.
+				vol := storageDrivers.NewVolume(
+					d.pool.Driver(),
+					d.pool.Name(),
+					volumeType,
+					storagePools.InstanceContentType(d.inst),
+					d.name,
+					initialConfig,
+					d.pool.Driver().Config())
+
+				err = d.pool.Driver().ValidateVolume(vol, true)
+				if err != nil {
+					return fmt.Errorf("Invalid initial device configuration: %v", err)
+				}
+			}
 		}
 	}
 

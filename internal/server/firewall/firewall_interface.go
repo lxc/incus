@@ -24,4 +24,7 @@ type Firewall interface {
 
 	InstanceSetupRPFilter(projectName string, instanceName string, deviceName string, hostName string) error
 	InstanceClearRPFilter(projectName string, instanceName string, deviceName string) error
+
+	InstanceSetupNetPrio(projectName string, instanceName string, deviceName string, netPrio uint32) error
+	InstanceClearNetPrio(projectName string, instanceName string, deviceName string) error
 }

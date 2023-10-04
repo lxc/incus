@@ -2,6 +2,13 @@ test_container_devices_nic_bridged() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
+  firewallDriver=$(incus info | awk -F ":" '/firewall:/{gsub(/ /, "", $0); print $2}')
+
+  if [ "$firewallDriver" != "xtables" ] && [ "$firewallDriver" != "nftables" ]; then
+    echo "Unrecognised firewall driver: ${firewallDriver}"
+    false
+  fi
+
   vethHostName="veth$$"
   ctName="nt$$"
   ctMAC="0a:92:a7:0d:b7:d9"
@@ -36,6 +43,7 @@ test_container_devices_nic_bridged() {
   incus profile device set "${ctName}" eth0 ipv6.routes "2001:db8::1${ipRand}/128"
   incus profile device set "${ctName}" eth0 limits.ingress 1Mbit
   incus profile device set "${ctName}" eth0 limits.egress 2Mbit
+  incus profile device set "${ctName}" eth0 limits.priority 5
   incus profile device set "${ctName}" eth0 host_name "${vethHostName}"
   incus profile device set "${ctName}" eth0 mtu "1400"
   incus profile device set "${ctName}" eth0 queue.tx.length "1200"
@@ -81,6 +89,15 @@ test_container_devices_nic_bridged() {
   if ! tc filter show dev "${vethHostName}" egress | grep "2Mbit" ; then
     echo "limits.egress invalid"
     false
+  fi
+
+  # Check that limits.priority was correctly configured in the firewall.
+  if [ "$firewallDriver" = "xtables" ]; then
+    iptables -t mangle -S | grep -c "${ctName} (${vethHostName}) netprio" | grep 1
+    iptables -t mangle -S | grep "${ctName} (${vethHostName}) netprio" | grep "0000:0005"
+  else
+    nft -nn list chain netdev incus "egress.netprio.${ctName}.${vethHostName}" | grep -c "meta priority set" | grep 1
+    nft -nn list chain netdev incus "egress.netprio.${ctName}.${vethHostName}" | grep "meta priority set 0:5"
   fi
 
   # Check profile custom MTU is applied in container on boot.
@@ -130,6 +147,7 @@ test_container_devices_nic_bridged() {
     ipv6.routes="2001:db8::2${ipRand}/128" \
     limits.ingress=3Mbit \
     limits.egress=4Mbit \
+    limits.priority=6 \
     host_name="${vethHostName}" \
     hwaddr="${ctMAC}" \
     mtu=1401
@@ -162,6 +180,15 @@ test_container_devices_nic_bridged() {
   if ! tc filter show dev "${vethHostName}" egress | grep "4Mbit" ; then
     echo "limits.egress invalid"
     false
+  fi
+
+  # Check that limits.priority was correctly configured in the firewall.
+  if [ "$firewallDriver" = "xtables" ]; then
+    iptables -t mangle -S | grep -c "${ctName} (${vethHostName}) netprio" | grep 1
+    iptables -t mangle -S | grep "${ctName} (${vethHostName}) netprio" | grep "0000:0006"
+  else
+    nft -nn list chain netdev incus "egress.netprio.${ctName}.${vethHostName}" | grep -c "meta priority set" | grep 1
+    nft -nn list chain netdev incus "egress.netprio.${ctName}.${vethHostName}" | grep "meta priority set 0:6"
   fi
 
   # Check custom MTU is applied on hot-plug.
@@ -215,6 +242,15 @@ test_container_devices_nic_bridged() {
     false
   fi
 
+  # Check that limits.priority was correctly configured in the firewall.
+  if [ "$firewallDriver" = "xtables" ]; then
+    iptables -t mangle -S | grep -c "${ctName} (${vethHostName}) netprio" | grep 1
+    iptables -t mangle -S | grep "${ctName} (${vethHostName}) netprio" | grep "0000:0005"
+  else
+    nft -nn list chain netdev incus "egress.netprio.${ctName}.${vethHostName}" | grep -c "meta priority set" | grep 1
+    nft -nn list chain netdev incus "egress.netprio.${ctName}.${vethHostName}" | grep "meta priority set 0:5"
+  fi
+
   # Check profile custom MTU is applied on hot-removal.
   if ! incus exec "${ctName}" -- grep "1400" /sys/class/net/eth0/mtu ; then
     echo "container veth mtu invalid"
@@ -264,6 +300,7 @@ test_container_devices_nic_bridged() {
   incus config device set "${ctName}" eth0 ipv6.routes "2001:db8::2${ipRand}/128"
   incus config device set "${ctName}" eth0 limits.ingress 3Mbit
   incus config device set "${ctName}" eth0 limits.egress 4Mbit
+  incus config device set "${ctName}" eth0 limits.priority 6
   incus config device set "${ctName}" eth0 mtu 1402
   incus config device set "${ctName}" eth0 hwaddr "${ctMAC}"
 
@@ -295,6 +332,15 @@ test_container_devices_nic_bridged() {
   if ! tc filter show dev "${vethHostName}" egress | grep "4Mbit" ; then
     echo "limits.egress invalid"
     false
+  fi
+
+  # Check that limits.priority was correctly configured in the firewall.
+  if [ "$firewallDriver" = "xtables" ]; then
+    iptables -t mangle -S | grep -c "${ctName} (${vethHostName}) netprio" | grep 1
+    iptables -t mangle -S | grep "${ctName} (${vethHostName}) netprio" | grep "0000:0006"
+  else
+    nft -nn list chain netdev incus "egress.netprio.${ctName}.${vethHostName}" | grep -c "meta priority set" | grep 1
+    nft -nn list chain netdev incus "egress.netprio.${ctName}.${vethHostName}" | grep "meta priority set 0:6"
   fi
 
   # Check custom MTU is applied update.

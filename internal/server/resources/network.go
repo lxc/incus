@@ -25,8 +25,13 @@ var netProtocols = map[uint64]string{
 }
 
 func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsname, card *api.ResourcesNetworkCard) error {
+	deviceDeviceDir, err := getDeviceDir(devicePath)
+	if err != nil {
+		return fmt.Errorf("Failed to read %q: %w", devicePath, err)
+	}
+
 	// VDPA
-	vDPAMatches, err := filepath.Glob(filepath.Join(devicePath, "vdpa*"))
+	vDPAMatches, err := filepath.Glob(filepath.Join(deviceDeviceDir, "vdpa*"))
 	if err != nil {
 		return fmt.Errorf("Malformed VDPA device name search pattern: %w", err)
 	}
@@ -53,18 +58,18 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 	}
 
 	// SRIOV
-	if sysfsExists(filepath.Join(devicePath, "sriov_numvfs")) {
+	if sysfsExists(filepath.Join(deviceDeviceDir, "sriov_numvfs")) {
 		sriov := api.ResourcesNetworkCardSRIOV{}
 
 		// Get maximum and current VF count
-		vfMaximum, err := readUint(filepath.Join(devicePath, "sriov_totalvfs"))
+		vfMaximum, err := readUint(filepath.Join(deviceDeviceDir, "sriov_totalvfs"))
 		if err != nil {
-			return fmt.Errorf("Failed to read %q: %w", filepath.Join(devicePath, "sriov_totalvfs"), err)
+			return fmt.Errorf("Failed to read %q: %w", filepath.Join(deviceDeviceDir, "sriov_totalvfs"), err)
 		}
 
-		vfCurrent, err := readUint(filepath.Join(devicePath, "sriov_numvfs"))
+		vfCurrent, err := readUint(filepath.Join(deviceDeviceDir, "sriov_numvfs"))
 		if err != nil {
-			return fmt.Errorf("Failed to read %q: %w", filepath.Join(devicePath, "sriov_numvfs"), err)
+			return fmt.Errorf("Failed to read %q: %w", filepath.Join(deviceDeviceDir, "sriov_numvfs"), err)
 		}
 
 		sriov.MaximumVFs = vfMaximum
@@ -75,10 +80,10 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 	}
 
 	// NUMA node
-	if sysfsExists(filepath.Join(devicePath, "numa_node")) {
-		numaNode, err := readInt(filepath.Join(devicePath, "numa_node"))
+	if sysfsExists(filepath.Join(deviceDeviceDir, "numa_node")) {
+		numaNode, err := readInt(filepath.Join(deviceDeviceDir, "numa_node"))
 		if err != nil {
-			return fmt.Errorf("Failed to read %q: %w", filepath.Join(devicePath, "numa_node"), err)
+			return fmt.Errorf("Failed to read %q: %w", filepath.Join(deviceDeviceDir, "numa_node"), err)
 		}
 
 		if numaNode > 0 {
@@ -87,9 +92,9 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 	}
 
 	// USB address
-	usbAddr, err := usbAddress(devicePath)
+	usbAddr, err := usbAddress(deviceDeviceDir)
 	if err != nil {
-		return fmt.Errorf("Failed to find USB address for %q: %w", devicePath, err)
+		return fmt.Errorf("Failed to find USB address for %q: %w", deviceDeviceDir, err)
 	}
 
 	if usbAddr != "" {
@@ -97,7 +102,7 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 	}
 
 	// Vendor and product
-	deviceVendorPath := filepath.Join(devicePath, "vendor")
+	deviceVendorPath := filepath.Join(deviceDeviceDir, "vendor")
 	if sysfsExists(deviceVendorPath) {
 		id, err := os.ReadFile(deviceVendorPath)
 		if err != nil {
@@ -107,7 +112,7 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 		card.VendorID = strings.TrimPrefix(strings.TrimSpace(string(id)), "0x")
 	}
 
-	deviceDevicePath := filepath.Join(devicePath, "device")
+	deviceDevicePath := filepath.Join(deviceDeviceDir, "device")
 	if sysfsExists(deviceDevicePath) {
 		id, err := os.ReadFile(deviceDevicePath)
 		if err != nil {
@@ -133,11 +138,11 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 	}
 
 	// Driver information
-	driverPath := filepath.Join(devicePath, "driver")
+	driverPath := filepath.Join(deviceDeviceDir, "driver")
 	if sysfsExists(driverPath) {
 		linkTarget, err := filepath.EvalSymlinks(driverPath)
 		if err != nil {
-			return fmt.Errorf("Failed to find %q: %w", driverPath, err)
+			return fmt.Errorf("Failed to find device directory %q: %w", driverPath, err)
 		}
 
 		// Set the driver name
@@ -179,9 +184,9 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 				protocol, ok := netProtocols[devType]
 				if !ok {
 					info.Protocol = "unknown"
+				} else {
+					info.Protocol = protocol
 				}
-
-				info.Protocol = protocol
 			}
 
 			// Add MAC address

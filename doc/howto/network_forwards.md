@@ -58,7 +58,7 @@ Bridge network
   - The listen address must not overlap with a subnet that is in use with another network.
 
 OVN network
-: - Allowed listen addresses must be defined in the uplink network's `ipv{n}.routes` settings or the project's `restricted.networks.subnets` setting (if set).
+: - Allowed listen addresses must be defined in the uplink network's `ipv{n}.routes` settings or the project's {config:option}`project-restricted:restricted.networks.subnets` setting (if set).
   - The listen address must not overlap with a subnet that is in use with another network.
 
 (network-forwards-port-specifications)=

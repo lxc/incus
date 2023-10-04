@@ -4,7 +4,7 @@ linkify-it-py
 lxd-sphinx-extensions
 myst-parser
 pyspelling
-sphinx==7.1.2
+sphinx
 sphinx-autobuild
 sphinx-copybutton
 sphinx-design

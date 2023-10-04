@@ -34,7 +34,7 @@ Other entities (images, profiles, networks, and storage) can be either isolated 
 To configure which entities are isolated, you enable or disable the respective *feature* in the project.
 If a feature is enabled, the corresponding entity is isolated in the project; if the feature is disabled, it is inherited from the `default` project.
 
-For example, if you enable `features.networks` for a project, the project uses a separate set of networks and not the networks defined in the `default` project. If you disable `features.images`, the project has access to the images defined in the `default` project, and any images you add while you're using the project are also added to the `default` project.
+For example, if you enable {config:option}`project-features:features.networks` for a project, the project uses a separate set of networks and not the networks defined in the `default` project. If you disable {config:option}`project-features:features.images`, the project has access to the images defined in the `default` project, and any images you add while you're using the project are also added to the `default` project.
 
 See the list of available {ref}`project-features` for information about which features are enabled or disabled when you create a project.
 

@@ -260,3 +260,11 @@ chain prert{{.chainSeparator}}{{.deviceLabel}} {
 	iif "{{.hostName}}" fib saddr . iif oif missing drop
 }
 `))
+
+// nftablesInstanceNetPrio defines the rules to perform setting of skb->priority.
+var nftablesInstanceNetPrio = template.Must(template.New("nftablesInstanceNetPrio").Parse(`
+chain egress{{.chainSeparator}}netprio{{.chainSeparator}}{{.deviceLabel}} {
+	type filter hook egress device "{{.deviceName}}" priority 0 ;
+	meta priority set "{{.netPrio}}"
+}
+`))

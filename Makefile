@@ -11,6 +11,7 @@ TAG_SQLITE3=$(shell printf "$(HASH)include <cowsql.h>\nvoid main(){cowsql_node_i
 GOPATH ?= $(shell $(GO) env GOPATH)
 CGO_LDFLAGS_ALLOW ?= (-Wl,-wrap,pthread_create)|(-Wl,-z,now)
 SPHINXENV=doc/.sphinx/venv/bin/activate
+SPHINXPIPPATH=doc/.sphinx/venv/bin/pip
 
 ifneq "$(wildcard vendor)" ""
 	RAFT_PATH=$(CURDIR)/vendor/raft
@@ -131,7 +132,7 @@ doc-setup: client
 	. $(SPHINXENV) ; pip install --require-virtualenv --upgrade -r doc/.sphinx/requirements.txt --log doc/.sphinx/venv/pip_install.log
 	@test ! -f doc/.sphinx/venv/pip_list.txt || \
         mv doc/.sphinx/venv/pip_list.txt doc/.sphinx/venv/pip_list.txt.bak
-	@pip list --local --format=freeze > doc/.sphinx/venv/pip_list.txt
+	$(SPHINXPIPPATH) list --local --format=freeze > doc/.sphinx/venv/pip_list.txt
 	find doc/reference/manpages/ -name "*.md" -type f -delete
 	rm -Rf doc/html
 	rm -Rf doc/.sphinx/.doctrees

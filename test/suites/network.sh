@@ -95,6 +95,9 @@ test_network() {
   incus network list-allocations | grep -e "${net_ipv4}" -e "${net_ipv6}"
   incus network list-allocations | grep -e "/1.0/networks/inct$$" -e "/1.0/instances/nettest"
   incus network list-allocations | grep -e "${v4_addr}" -e "${v6_addr}"
+  incus network list-allocations localhost: | grep -e "${net_ipv4}" -e "${net_ipv6}"
+  incus network list-allocations localhost: | grep -e "/1.0/networks/inct$$" -e "/1.0/instances/nettest"
+  incus network list-allocations localhost: | grep -e "${v4_addr}" -e "${v6_addr}"
 
   incus delete nettest -f
   incus network delete inct$$
