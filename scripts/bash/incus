@@ -94,7 +94,7 @@ _have incus && {
       limits.cpu limits.cpu.allowance limits.cpu.priority \
       limits.disk.priority limits.memory limits.memory.enforce \
       limits.memory.hugepages limits.kernel \
-      limits.memory.swap limits.memory.swap.priority limits.network.priority \
+      limits.memory.swap limits.memory.swap.priority \
       limits.processes linux.kernel_modules migration.incremental.memory \
       migration.incremental.memory.goal nvidia.runtime \
       nvidia.driver.capabilities nvidia.require.cuda nvidia.require.driver \

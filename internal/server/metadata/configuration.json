@@ -460,15 +460,6 @@
 						}
 					},
 					{
-						"limits.network.priority": {
-							"defaultdesc": "`0` (minimum)",
-							"liveupdate": "yes",
-							"longdesc": "Controls how much priority to give to the instance's network requests when under load.\n\nSpecify an integer between 0 and 10.\nThis option is deprecated. Use the per-NIC `limits.priority` option instead.",
-							"shortdesc": "Priority of the instance's network requests",
-							"type": "integer"
-						}
-					},
-					{
 						"limits.processes": {
 							"condition": "container",
 							"defaultdesc": "empty",
