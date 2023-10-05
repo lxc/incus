@@ -336,6 +336,71 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 	}
 
+	deprecatedInstanceConfigs := []string{
+		"limits.network.priority",
+	}
+
+	deprecatedInstanceDeviceConfigs := []string{
+		"maas.subnet.ipv4",
+		"maas.subnet.ipv6",
+	}
+
+	projects, err := srcClient.GetProjects()
+	if err != nil {
+		return fmt.Errorf("Couldn't list source projects: %w", err)
+	}
+
+	for _, project := range projects {
+		c := srcClient.UseProject(project.Name)
+
+		instances, err := c.GetInstances(lxdAPI.InstanceTypeAny)
+		if err != nil {
+			fmt.Errorf("Couldn't list instances in project %q: %w", err)
+		}
+
+		for _, inst := range instances {
+			for _, key := range deprecatedInstanceConfigs {
+				_, ok := inst.Config[key]
+				if ok {
+					errors = append(errors, fmt.Errorf("Source server has instance %q in project %q using deprecated key %q", inst.Name, project.Name, key))
+				}
+			}
+
+			for deviceName, device := range inst.Devices {
+				for _, key := range deprecatedInstanceDeviceConfigs {
+					_, ok := device[key]
+					if ok {
+						errors = append(errors, fmt.Errorf("Source server has device %q for instance %q in project %q using deprecated key %q", deviceName, inst.Name, project.Name, key))
+					}
+				}
+			}
+		}
+
+		profiles, err := c.GetProfiles()
+		if err != nil {
+			fmt.Errorf("Couldn't list profiles in project %q: %w", err)
+		}
+
+		for _, profile := range profiles {
+			for _, key := range deprecatedInstanceConfigs {
+				_, ok := profile.Config[key]
+				if ok {
+					errors = append(errors, fmt.Errorf("Source server has profile %q in project %q using deprecated key %q", profile.Name, project.Name, key))
+				}
+			}
+
+			for deviceName, device := range profile.Devices {
+				for _, key := range deprecatedInstanceDeviceConfigs {
+					_, ok := device[key]
+					if ok {
+						errors = append(errors, fmt.Errorf("Source server has device %q for profile %q in project %q using deprecated key %q", deviceName, profile.Name, project.Name, key))
+					}
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		fmt.Println("")
 		fmt.Println("Source server uses obsolete features:")
