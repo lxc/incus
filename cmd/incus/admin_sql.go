@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
+	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/i18n"
 	internalSQL "github.com/lxc/incus/internal/sql"
 	"github.com/lxc/incus/shared/util"
 )
@@ -22,10 +24,9 @@ type cmdAdminSQL struct {
 
 func (c *cmdAdminSQL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "sql <local|global> <query>"
-	cmd.Short = "Execute a SQL query against the local or global database"
-	cmd.Long = `Description:
-  Execute a SQL query against the local or global database
+	cmd.Use = usage("sql", i18n.G("<local|global> <query>"))
+	cmd.Short = i18n.G("Execute a SQL query against the local or global database")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Execute a SQL query against the local or global database
 
   The local database is specific to the cluster member you target the
   command to, and contains member-specific data (such as the member network
@@ -51,8 +52,7 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
   set of database queries to fix some data inconsistency.
 
   This command targets the global database and works in both local
-  and cluster mode.
-`
+  and cluster mode.`))
 	cmd.RunE = c.Run
 	cmd.Hidden = true
 

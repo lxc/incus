@@ -11,6 +11,8 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/lxc/incus/client"
+	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/internal/recover"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/validate"
@@ -22,15 +24,13 @@ type cmdAdminRecover struct {
 
 func (c *cmdAdminRecover) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "recover"
-	cmd.Short = "Recover missing instances and volumes from existing and unknown storage pools"
-	cmd.Long = `Description:
-	Recover missing instances and volumes from existing and unknown storage pools
+	cmd.Use = usage("recover")
+	cmd.Short = i18n.G("Recover missing instances and volumes from existing and unknown storage pools")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Recover missing instances and volumes from existing and unknown storage pools
 
   This command is mostly used for disaster recovery. It will ask you about unknown storage pools and attempt to
   access them, along with existing storage pools, and identify any missing instances and volumes that exist on the
-  pools but are not in the database. It will then offer to recreate these database records.
-`
+  pools but are not in the database. It will then offer to recreate these database records.`))
 	cmd.RunE = c.Run
 
 	return cmd
