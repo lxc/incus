@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -72,7 +73,28 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 
 	// Unix socket
 	if strings.HasPrefix(remote.Addr, "unix:") {
-		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
+		unixPath := remote.Addr
+		if unixPath == "unix://" {
+			// Handle unix socket path overrides.
+			unixPath = os.Getenv("INCUS_SOCKET")
+			if unixPath == "" {
+				incusDir := os.Getenv("INCUS_DIR")
+				if incusDir == "" {
+					incusDir = "/var/lib/incus/"
+				}
+
+				unixPath = filepath.Join(incusDir, "unix.socket")
+				userUnixPath := filepath.Join(incusDir, "unix.socket.user")
+				if !util.PathIsWritable(unixPath) && util.PathIsWritable(userUnixPath) {
+					// Handle the use of incus-user.
+					unixPath = userUnixPath
+				}
+			}
+		} else {
+			unixPath = strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//")
+		}
+
+		d, err := incus.ConnectIncusUnix(unixPath, args)
 		if err != nil {
 			return nil, err
 		}
