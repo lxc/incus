@@ -30,9 +30,6 @@ func (c *cmdDaemon) Command() *cobra.Command {
 
   This is the incus daemon command line. It's typically started directly by your
   init system and interacted with through a tool like ` + "`incus`" + `.
-
-  There are however a number of subcommands that let you interact directly with
-  the local Incus daemon and which may not be performed through the REST API alone.
 `
 	cmd.RunE = c.Run
 	cmd.Flags().StringVar(&c.flagGroup, "group", "", "The group of users that will be allowed to talk to Incus"+"``")
