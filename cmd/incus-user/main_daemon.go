@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/user"
+	"strconv"
 	"sync"
 	"time"
 
@@ -13,23 +15,32 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 var mu sync.RWMutex
 var connections uint64
 var transactions uint64
 
-type cmdDaemon struct{}
+type cmdDaemon struct {
+	flagGroup string
+}
 
 func (c *cmdDaemon) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "incus-user"
 	cmd.RunE = c.Run
+	cmd.Flags().StringVar(&c.flagGroup, "group", "", "The group of users that will be allowed to talk to incus-user"+"``")
 
 	return cmd
 }
 
 func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
+	// Only root should run this.
+	if os.Geteuid() != 0 {
+		return fmt.Errorf("This must be run as root")
+	}
+
 	// Setup logger.
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
@@ -108,7 +119,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		}()
 	} else {
 		// Create our own socket.
-		unixPath := "unix.socket"
+		unixPath := internalUtil.VarPath("unix.socket.user")
 		err := os.Remove(unixPath)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("Failed to delete pre-existing unix socket: %w", err)
@@ -122,6 +133,28 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		server, err := net.ListenUnix("unix", unixAddr)
 		if err != nil {
 			return fmt.Errorf("Unable to setup unix socket: %w", err)
+		}
+
+		err = os.Chmod(unixPath, 0660)
+		if err != nil {
+			return fmt.Errorf("Unable to set socket permissions: %w", err)
+		}
+
+		if c.flagGroup != "" {
+			g, err := user.LookupGroup(c.flagGroup)
+			if err != nil {
+				return fmt.Errorf("Cannot get group ID of '%s': %w", c.flagGroup, err)
+			}
+
+			gid, err := strconv.Atoi(g.Gid)
+			if err != nil {
+				return err
+			}
+
+			err = os.Chown(unixPath, os.Getuid(), gid)
+			if err != nil {
+				return fmt.Errorf("Cannot change ownership on local socket: %w", err)
+			}
 		}
 
 		server.SetUnlinkOnClose(true)
