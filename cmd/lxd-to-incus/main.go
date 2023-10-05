@@ -282,6 +282,11 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		return fmt.Errorf("Target server isn't empty, can't proceed with migration.")
 	}
 
+	fmt.Println("=> Checking that the source server isn't clustered")
+	if srcServerInfo.Environment.ServerClustered {
+		return fmt.Errorf("Migration of clustered servers isn't possible at this time")
+	}
+
 	// Validate configuration.
 	errors := []error{}
 
