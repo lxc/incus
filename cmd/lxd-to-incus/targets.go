@@ -25,7 +25,7 @@ func (s *targetSystemd) Present() bool {
 		return false
 	}
 
-	if !shared.PathExists("/etc/systemd/system/incus.service") {
+	if !shared.PathExists("/lib/systemd/system/incus.service") {
 		return false
 	}
 
