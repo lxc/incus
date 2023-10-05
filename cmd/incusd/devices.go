@@ -66,7 +66,7 @@ func (c deviceTaskCPUs) Len() int           { return len(c) }
 func (c deviceTaskCPUs) Less(i, j int) bool { return *c[i].count < *c[j].count }
 func (c deviceTaskCPUs) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 
-func deviceNetlinkListener() (chan []string, chan []string, chan device.USBEvent, chan device.UnixHotplugEvent, error) {
+func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.UnixHotplugEvent, error) {
 	NETLINK_KOBJECT_UEVENT := 15
 	UEVENT_BUFFER_SIZE := 2048
 
@@ -75,7 +75,7 @@ func deviceNetlinkListener() (chan []string, chan []string, chan device.USBEvent
 		NETLINK_KOBJECT_UEVENT,
 	)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	nl := unix.SockaddrNetlink{
@@ -86,15 +86,14 @@ func deviceNetlinkListener() (chan []string, chan []string, chan device.USBEvent
 
 	err = unix.Bind(fd, &nl)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	chCPU := make(chan []string, 1)
-	chNetwork := make(chan []string)
 	chUSB := make(chan device.USBEvent)
 	chUnix := make(chan device.UnixHotplugEvent)
 
-	go func(chCPU chan []string, chNetwork chan []string, chUSB chan device.USBEvent, chUnix chan device.UnixHotplugEvent) {
+	go func(chCPU chan []string, chUSB chan device.USBEvent, chUnix chan device.UnixHotplugEvent) {
 		b := make([]byte, UEVENT_BUFFER_SIZE*2)
 		for {
 			r, err := unix.Read(fd, b)
@@ -173,9 +172,6 @@ func deviceNetlinkListener() (chan []string, chan []string, chan device.USBEvent
 				if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", props["INTERFACE"])) {
 					continue
 				}
-
-				// Network balancing is interface specific, so queue everything
-				chNetwork <- []string{props["INTERFACE"], props["ACTION"]}
 			}
 
 			if props["SUBSYSTEM"] == "usb" && !udevEvent {
@@ -309,9 +305,9 @@ func deviceNetlinkListener() (chan []string, chan []string, chan device.USBEvent
 				chUnix <- unix
 			}
 		}
-	}(chCPU, chNetwork, chUSB, chUnix)
+	}(chCPU, chUSB, chUnix)
 
-	return chCPU, chNetwork, chUSB, chUnix, nil
+	return chCPU, chUSB, chUnix, nil
 }
 
 /*
@@ -623,43 +619,10 @@ func deviceTaskBalance(s *state.State) {
 	}
 }
 
-func deviceNetworkPriority(s *state.State, netif string) {
-	// Don't bother running when CGroup support isn't there
-	if !s.OS.CGInfo.Supports(cgroup.NetPrio, nil) {
-		return
-	}
-
-	instances, err := instance.LoadNodeAll(s, instancetype.Container)
-	if err != nil {
-		return
-	}
-
-	for _, c := range instances {
-		// Extract the current priority
-		networkPriority := c.ExpandedConfig()["limits.network.priority"]
-		if networkPriority == "" {
-			continue
-		}
-
-		networkInt, err := strconv.Atoi(networkPriority)
-		if err != nil {
-			continue
-		}
-
-		// Set the value for the new interface
-		cg, err := c.CGroup()
-		if err != nil {
-			continue
-		}
-
-		_ = cg.SetNetIfPrio(fmt.Sprintf("%s %d", netif, networkInt))
-	}
-}
-
 // deviceEventListener starts the event listener for resource scheduling.
 // Accepts stateFunc which will be called each time it needs a fresh state.State.
 func deviceEventListener(stateFunc func() *state.State) {
-	chNetlinkCPU, chNetlinkNetwork, chUSB, chUnix, err := deviceNetlinkListener()
+	chNetlinkCPU, chUSB, chUnix, err := deviceNetlinkListener()
 	if err != nil {
 		logger.Errorf("scheduler: Couldn't setup netlink listener: %v", err)
 		return
@@ -681,25 +644,6 @@ func deviceEventListener(stateFunc func() *state.State) {
 
 			logger.Debugf("Scheduler: cpu: %s is now %s: re-balancing", e[0], e[1])
 			deviceTaskBalance(s)
-		case e := <-chNetlinkNetwork:
-			if len(e) != 2 {
-				logger.Errorf("Scheduler: received an invalid network hotplug event")
-				continue
-			}
-
-			s := stateFunc()
-
-			// we want to catch all new devices at the host and process them in networkAutoAttach
-			if e[1] != "add" {
-				continue
-			}
-
-			logger.Debugf("Scheduler: network: %s has been added: updating network priorities", e[0])
-			deviceNetworkPriority(s, e[0])
-			err = networkAutoAttach(s.DB.Cluster, e[0])
-			if err != nil {
-				logger.Warn("Failed to auto-attach network", logger.Ctx{"err": err})
-			}
 
 		case e := <-chUSB:
 			device.USBRunHandlers(stateFunc(), &e)

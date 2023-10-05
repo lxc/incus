@@ -226,18 +226,6 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 		return nil
 	},
 
-	// gendoc:generate(entity=instance, group=resource-limits, key=limits.network.priority)
-	// Controls how much priority to give to the instance's network requests when under load.
-	//
-	// Specify an integer between 0 and 10.
-	// This option is deprecated. Use the per-NIC `limits.priority` option instead.
-	// ---
-	//  type: integer
-	//  defaultdesc: `0` (minimum)
-	//  liveupdate: yes
-	//  shortdesc: Priority of the instance's network requests
-	"limits.network.priority": validate.Optional(validate.IsPriority),
-
 	// Caller is responsible for full validation of any raw.* value.
 
 	// gendoc:generate(entity=instance, group=raw, key=raw.apparmor)

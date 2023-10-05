@@ -2543,17 +2543,6 @@ func (d *lxc) onStart(_ map[string]string) error {
 	// Trigger a rebalance
 	cgroup.TaskSchedulerTrigger("container", d.name, "started")
 
-	// Apply network priority
-	if d.expandedConfig["limits.network.priority"] != "" {
-		go func(d *lxc) {
-			d.fromHook = false
-			err := d.setNetworkPriority()
-			if err != nil {
-				d.logger.Error("Failed to apply network priority", logger.Ctx{"err": err})
-			}
-		}(d)
-	}
-
 	// Record last start state.
 	err = d.recordLastState()
 	if err != nil {
@@ -4547,11 +4536,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 							return err
 						}
 					}
-				}
-			} else if key == "limits.network.priority" {
-				err := d.setNetworkPriority()
-				if err != nil {
-					return err
 				}
 			} else if key == "limits.cpu" || key == "limits.cpu.nodes" {
 				// Trigger a scheduler re-run
@@ -7862,66 +7846,6 @@ func (d *lxc) removeDiskDevices() error {
 		if err != nil {
 			d.logger.Error("Failed to remove disk device path", logger.Ctx{"err": err, "path": diskPath})
 		}
-	}
-
-	return nil
-}
-
-// Network I/O limits.
-func (d *lxc) setNetworkPriority() error {
-	// Load the go-lxc struct.
-	cc, err := d.initLXC(false)
-	if err != nil {
-		return err
-	}
-
-	// Load the cgroup struct.
-	cg, err := d.cgroup(cc, true)
-	if err != nil {
-		return err
-	}
-
-	// Check that the container is running
-	if d.InitPID() <= 0 {
-		return fmt.Errorf("Can't set network priority on stopped container")
-	}
-
-	// Don't bother if the cgroup controller doesn't exist
-	if !d.state.OS.CGInfo.Supports(cgroup.NetPrio, cg) {
-		return nil
-	}
-
-	// Extract the current priority
-	networkPriority := d.expandedConfig["limits.network.priority"]
-	if networkPriority == "" {
-		networkPriority = "0"
-	}
-
-	networkInt, err := strconv.Atoi(networkPriority)
-	if err != nil {
-		return err
-	}
-
-	// Get all the interfaces
-	netifs, err := net.Interfaces()
-	if err != nil {
-		return err
-	}
-
-	// Check that we at least succeeded to set an entry
-	success := false
-	var lastError error
-	for _, netif := range netifs {
-		err = cg.SetNetIfPrio(fmt.Sprintf("%s %d", netif.Name, networkInt))
-		if err == nil {
-			success = true
-		} else {
-			lastError = err
-		}
-	}
-
-	if !success {
-		return fmt.Errorf("Failed to set network device priority: %s", lastError)
 	}
 
 	return nil
