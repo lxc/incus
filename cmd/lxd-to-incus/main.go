@@ -140,21 +140,12 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		return fmt.Errorf("Couldn't parse source server version: %w", err)
 	}
 
-	targetVersion, err := version.Parse(targetServerInfo.Environment.ServerVersion)
-	if err != nil {
-		return fmt.Errorf("Couldn't parse target server version: %w", err)
-	}
-
 	if srcVersion.Compare(minLXDVersion) < 0 {
 		return fmt.Errorf("LXD version is lower than minimal version %q", minLXDVersion)
 	}
 
 	if srcVersion.Compare(maxLXDVersion) > 0 {
 		return fmt.Errorf("LXD version is newer than maximum version %q", maxLXDVersion)
-	}
-
-	if srcVersion.Compare(targetVersion) > 0 {
-		return fmt.Errorf("Incus version is older than source LXD version")
 	}
 
 	// Validate source non-empty.
