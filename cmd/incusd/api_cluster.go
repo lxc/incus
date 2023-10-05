@@ -22,6 +22,7 @@ import (
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/acme"
 	"github.com/lxc/incus/internal/server/cluster"
+	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
@@ -739,6 +740,46 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 			return nil
 		})
+		if err != nil {
+			return err
+		}
+
+		var nodeConfig *node.Config
+		err = s.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
+			var err error
+			nodeConfig, err = node.ConfigLoad(ctx, tx)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		// Get the current (updated) config.
+		var currentClusterConfig *clusterConfig.Config
+		err = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			currentClusterConfig, err = clusterConfig.Load(ctx, tx)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		d.globalConfigMu.Lock()
+		d.localConfig = nodeConfig
+		d.globalConfig = currentClusterConfig
+		d.globalConfigMu.Unlock()
+
+		existingConfigDump := currentClusterConfig.Dump()
+		changes := make(map[string]string, len(existingConfigDump))
+		for k, v := range existingConfigDump {
+			changes[k] = v
+		}
+
+		err = doApi10UpdateTriggers(d, nil, changes, nodeConfig, currentClusterConfig)
 		if err != nil {
 			return err
 		}
