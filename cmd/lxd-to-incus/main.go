@@ -311,6 +311,31 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 	}
 
+	networks, err := srcClient.GetNetworks()
+	if err != nil {
+		return fmt.Errorf("Couldn't list source networks: %w", err)
+	}
+
+	deprecatedNetworkConfigs := []string{
+		"bridge.mode",
+		"fan.overlay_subnet",
+		"fan.underlay_subnet",
+		"fan.type",
+	}
+
+	for _, network := range networks {
+		if !network.Managed {
+			continue
+		}
+
+		for _, key := range deprecatedNetworkConfigs {
+			_, ok := network.Config[key]
+			if ok {
+				errors = append(errors, fmt.Errorf("Source server has network %q using deprecated key %q", network.Name, key))
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		fmt.Println("")
 		fmt.Println("Source server uses obsolete features:")
