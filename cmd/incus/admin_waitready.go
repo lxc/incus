@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
+	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/logger"
 )
 
@@ -20,15 +22,13 @@ type cmdAdminWaitready struct {
 
 func (c *cmdAdminWaitready) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "waitready"
-	cmd.Short = "Wait for the daemon to be ready to process requests"
-	cmd.Long = `Description:
-  Wait for the daemon to be ready to process requests
+	cmd.Use = usage("waitready")
+	cmd.Short = i18n.G("Wait for the daemon to be ready to process requests")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Wait for the daemon to be ready to process requests
 
   This command will block until the daemon is reachable over its REST API and
   is done with early start tasks like re-starting previously started
-  containers.
-`
+  containers.`))
 	cmd.RunE = c.Run
 	cmd.Flags().IntVarP(&c.flagTimeout, "timeout", "t", 0, "Number of seconds to wait before giving up"+"``")
 
@@ -51,14 +51,14 @@ func (c *cmdAdminWaitready) Run(cmd *cobra.Command, args []string) error {
 			}
 
 			if doLog {
-				logger.Debugf("Connecting to the daemon (attempt %d)", i)
+				logger.Debugf(i18n.G("Connecting to the daemon (attempt %d)"), i)
 			}
 
 			d, err := incus.ConnectIncusUnix("", nil)
 			if err != nil {
 				errLast = err
 				if doLog {
-					logger.Debugf("Failed connecting to the daemon (attempt %d): %v", i, err)
+					logger.Debugf(i18n.G("Failed connecting to the daemon (attempt %d): %v"), i, err)
 				}
 
 				time.Sleep(500 * time.Millisecond)
@@ -66,14 +66,14 @@ func (c *cmdAdminWaitready) Run(cmd *cobra.Command, args []string) error {
 			}
 
 			if doLog {
-				logger.Debugf("Checking if the daemon is ready (attempt %d)", i)
+				logger.Debugf(i18n.G("Checking if the daemon is ready (attempt %d)"), i)
 			}
 
 			_, _, err = d.RawQuery("GET", "/internal/ready", nil, "")
 			if err != nil {
 				errLast = err
 				if doLog {
-					logger.Debugf("Failed to check if the daemon is ready (attempt %d): %v", i, err)
+					logger.Debugf(i18n.G("Failed to check if the daemon is ready (attempt %d): %v"), i, err)
 				}
 
 				time.Sleep(500 * time.Millisecond)
@@ -90,7 +90,7 @@ func (c *cmdAdminWaitready) Run(cmd *cobra.Command, args []string) error {
 		case <-finger:
 			break
 		case <-time.After(time.Second * time.Duration(c.flagTimeout)):
-			return fmt.Errorf("Daemon still not running after %ds timeout (%v)", c.flagTimeout, errLast)
+			return fmt.Errorf(i18n.G("Daemon still not running after %ds timeout (%v)"), c.flagTimeout, errLast)
 		}
 	} else {
 		<-finger

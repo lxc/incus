@@ -987,9 +987,9 @@ func (c *cmdImageInfo) Run(cmd *cobra.Command, args []string) error {
 
 	if info.UpdateSource != nil {
 		fmt.Println(i18n.G("Source:"))
-		fmt.Printf("    Server: %s\n", info.UpdateSource.Server)
-		fmt.Printf("    Protocol: %s\n", info.UpdateSource.Protocol)
-		fmt.Printf("    Alias: %s\n", info.UpdateSource.Alias)
+		fmt.Printf("    "+i18n.G("Server: %s")+"\n", info.UpdateSource.Server)
+		fmt.Printf("    "+i18n.G("Protocol: %s")+"\n", info.UpdateSource.Protocol)
+		fmt.Printf("    "+i18n.G("Alias: %s")+"\n", info.UpdateSource.Alias)
 	}
 
 	if len(info.Profiles) == 0 {

@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -18,36 +19,36 @@ import (
 func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Quick checks.
 	if c.flagStorageBackend != "" && !util.ValueInSlice(c.flagStorageBackend, []string{"dir", "btrfs", "lvm", "zfs"}) {
-		return nil, fmt.Errorf("The requested backend '%s' isn't supported by init", c.flagStorageBackend)
+		return nil, fmt.Errorf(i18n.G("The requested backend '%s' isn't supported by init"), c.flagStorageBackend)
 	}
 
 	if c.flagStorageBackend != "" && !util.ValueInSlice(c.flagStorageBackend, linux.AvailableStorageDrivers(internalUtil.VarPath(), server.Environment.StorageSupportedDrivers, internalUtil.PoolTypeAny)) {
-		return nil, fmt.Errorf("The requested backend '%s' isn't available on your system (missing tools)", c.flagStorageBackend)
+		return nil, fmt.Errorf(i18n.G("The requested backend '%s' isn't available on your system (missing tools)"), c.flagStorageBackend)
 	}
 
 	if c.flagStorageBackend == "dir" || c.flagStorageBackend == "" {
 		if c.flagStorageLoopSize != -1 || c.flagStorageDevice != "" || c.flagStoragePool != "" {
-			return nil, fmt.Errorf("None of --storage-pool, --storage-create-device or --storage-create-loop may be used with the 'dir' backend")
+			return nil, fmt.Errorf(i18n.G("None of --storage-pool, --storage-create-device or --storage-create-loop may be used with the 'dir' backend"))
 		}
 	} else {
 		if c.flagStorageLoopSize != -1 && c.flagStorageDevice != "" {
-			return nil, fmt.Errorf("Only one of --storage-create-device or --storage-create-loop can be specified")
+			return nil, fmt.Errorf(i18n.G("Only one of --storage-create-device or --storage-create-loop can be specified"))
 		}
 	}
 
 	if c.flagNetworkAddress == "" {
 		if c.flagNetworkPort != -1 {
-			return nil, fmt.Errorf("--network-port can't be used without --network-address")
+			return nil, fmt.Errorf(i18n.G("--network-port can't be used without --network-address"))
 		}
 	}
 
 	storagePools, err := d.GetStoragePoolNames()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to retrieve list of storage pools: %w", err)
+		return nil, fmt.Errorf(i18n.G("Failed to retrieve list of storage pools: %w"), err)
 	}
 
 	if len(storagePools) > 0 && (c.flagStorageBackend != "" || c.flagStorageDevice != "" || c.flagStorageLoopSize != -1 || c.flagStoragePool != "") {
-		return nil, fmt.Errorf("Storage has already been configured")
+		return nil, fmt.Errorf(i18n.G("Storage has already been configured"))
 	}
 
 	// Defaults
@@ -111,7 +112,7 @@ func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.Instan
 	// Network configuration
 	networks, err := d.GetNetworks()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to retrieve list of networks: %w", err)
+		return nil, fmt.Errorf(i18n.G("Failed to retrieve list of networks: %w"), err)
 	}
 
 	// Extract managed networks

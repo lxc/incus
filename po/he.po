@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-10-04 02:12-0400\n"
+"POT-Creation-Date: 2023-10-05 01:22-0400\n"
 "PO-Revision-Date: 2022-03-10 15:11+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Hebrew <https://hosted.weblate.org/projects/linux-containers/"
@@ -327,6 +327,21 @@ msgstr ""
 msgid "%d (id: %d, online: %v, NUMA node: %v)"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:644
+#, c-format
+msgid "%q is not a block device"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:781
+#, c-format
+msgid "%q is not an IP address"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:209
+#, c-format
+msgid "%s %q on pool %q in project %q (includes %d snapshots)"
+msgstr ""
+
 #: cmd/incus/image.go:1091
 #, c-format
 msgid "%s (%d more)"
@@ -335,6 +350,11 @@ msgstr ""
 #: cmd/incus/info.go:161
 #, c-format
 msgid "%s (%s) (%d available)"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:65
+#, c-format
+msgid "%s (backend=%q, source=%q)"
 msgstr ""
 
 #: cmd/incus/file.go:911
@@ -390,6 +410,10 @@ msgstr ""
 msgid "--instance-only can't be passed when the source is a snapshot"
 msgstr ""
 
+#: cmd/incus/admin_init_auto.go:41
+msgid "--network-port can't be used without --network-address"
+msgstr ""
+
 #: cmd/incus/copy.go:94
 msgid "--no-profiles cannot be used with --refresh"
 msgstr ""
@@ -413,6 +437,10 @@ msgstr ""
 
 #: cmd/incus/alias.go:59
 msgid "<alias> <target>"
+msgstr ""
+
+#: cmd/incus/admin_sql.go:27
+msgid "<local|global> <query>"
 msgstr ""
 
 #: cmd/incus/alias.go:157
@@ -444,6 +472,11 @@ msgstr ""
 msgid "<target>"
 msgstr ""
 
+#: cmd/incus/admin_sql.go:141
+#, c-format
+msgid "=> Query %d:"
+msgstr ""
+
 #: cmd/incus/config_trust.go:119
 msgid "A client name must be provided"
 msgstr ""
@@ -452,7 +485,7 @@ msgstr ""
 msgid "A cluster member name must be provided"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:26
+#: cmd/incus/network_allocations.go:25
 msgid "ADDRESS"
 msgstr ""
 
@@ -596,6 +629,19 @@ msgstr ""
 msgid "Add rules to an ACL"
 msgstr ""
 
+#: cmd/incus/admin_recover.go:128
+msgid ""
+"Additional storage pool configuration property (KEY=VALUE, empty when done):"
+msgstr ""
+
+#: cmd/incus/admin_init.go:59
+msgid "Address to bind to (default: none)"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:787
+msgid "Address to bind to (not including port)"
+msgstr ""
+
 #: cmd/incus/info.go:201
 #, c-format
 msgid "Address: %s"
@@ -626,6 +672,11 @@ msgstr ""
 msgid "Alias name missing"
 msgstr ""
 
+#: cmd/incus/image.go:992
+#, c-format
+msgid "Alias: %s"
+msgstr ""
+
 #: cmd/incus/publish.go:242
 #, c-format
 msgid "Aliases already exists: %s"
@@ -633,6 +684,10 @@ msgstr ""
 
 #: cmd/incus/image.go:976
 msgid "Aliases:"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:222
+msgid "All existing data is lost when joining a cluster, continue?"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:1388 cmd/incus/storage_volume.go:2191
@@ -655,6 +710,10 @@ msgstr ""
 #: cmd/incus/info.go:127
 #, c-format
 msgid "Architecture: %v"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:158
+msgid "Are you joining an existing cluster?"
 msgstr ""
 
 #: cmd/incus/cluster.go:1208
@@ -727,6 +786,10 @@ msgstr ""
 #: cmd/incus/image.go:986
 #, c-format
 msgid "Auto update: %s"
+msgstr ""
+
+#: cmd/incus/admin_init.go:54
+msgid "Automatic (non-interactive) mode"
 msgstr ""
 
 #: cmd/incus/remote.go:135
@@ -869,6 +932,12 @@ msgstr ""
 msgid "Caches:"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:143
+#: cmd/incus/admin_init_interactive.go:812
+#, c-format
+msgid "Can't bind address %q: %w"
+msgstr ""
+
 #: cmd/incus/move.go:115
 msgid "Can't override configuration or profiles in local rename"
 msgstr ""
@@ -916,6 +985,22 @@ msgstr ""
 msgid "Can't unset key '%s', it's not currently set"
 msgstr ""
 
+#: cmd/incus/admin_init.go:72
+msgid "Can't use --auto and --preseed together"
+msgstr ""
+
+#: cmd/incus/admin_init.go:94
+msgid "Can't use --dump with other flags"
+msgstr ""
+
+#: cmd/incus/admin_init.go:80
+msgid "Can't use --minimal and --auto together"
+msgstr ""
+
+#: cmd/incus/admin_init.go:76
+msgid "Can't use --minimal and --preseed together"
+msgstr ""
+
 #: cmd/incus/rebuild.go:161
 msgid "Can't use an image with --empty"
 msgstr ""
@@ -933,6 +1018,10 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:366
 msgid "Cannot set --target when source server is not clustered"
+msgstr ""
+
+#: cmd/incus/storage_volume.go:387
+msgid "Cannot set --volume-only when copying a snapshot"
 msgstr ""
 
 #: cmd/incus/network_acl.go:818
@@ -961,6 +1050,12 @@ msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
 msgstr ""
 
+#: cmd/incus/admin_init.go:185 cmd/incus/admin_init_interactive.go:206
+#, c-format
+msgid ""
+"Certificate fingerprint mismatch between join token and cluster member %q"
+msgstr ""
+
 #: cmd/incus/remote.go:446
 #, c-format
 msgid "Certificate fingerprint: %s"
@@ -968,6 +1063,16 @@ msgstr ""
 
 #: cmd/incus/network.go:893
 msgid "Chassis"
+msgstr ""
+
+#: cmd/incus/admin_waitready.go:69
+#, c-format
+msgid "Checking if the daemon is ready (attempt %d)"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:266
+#, c-format
+msgid "Choose %s:"
 msgstr ""
 
 #: cmd/incus/config_trust.go:146
@@ -1109,6 +1214,10 @@ msgstr ""
 msgid "Config key/value to apply to the target instance"
 msgstr ""
 
+#: cmd/incus/admin_recover.go:131
+msgid "Config option should be in the format KEY=VALUE"
+msgstr ""
+
 #: cmd/incus/cluster.go:770 cmd/incus/cluster_group.go:339
 #: cmd/incus/config.go:268 cmd/incus/config.go:343
 #: cmd/incus/config_metadata.go:146 cmd/incus/config_trust.go:352
@@ -1121,6 +1230,19 @@ msgstr ""
 #: cmd/incus/storage_volume.go:976 cmd/incus/storage_volume.go:1008
 #, c-format
 msgid "Config parsing error: %s"
+msgstr ""
+
+#: cmd/incus/admin_init.go:86
+msgid "Configuration flags require --auto"
+msgstr ""
+
+#: cmd/incus/admin_init.go:44 cmd/incus/admin_init.go:45
+msgid "Configure the daemon"
+msgstr ""
+
+#: cmd/incus/admin_waitready.go:54
+#, c-format
+msgid "Connecting to the daemon (attempt %d)"
 msgstr ""
 
 #: cmd/incus/console.go:139
@@ -1272,8 +1394,18 @@ msgstr ""
 msgid "Couldn't find a matching entry"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:656
+#, c-format
+msgid "Couldn't statfs %s: %w"
+msgstr ""
+
 #: cmd/incus/cluster_group.go:156 cmd/incus/cluster_group.go:157
 msgid "Create a cluster group"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:599
+#, c-format
+msgid "Create a new %s pool?"
 msgstr ""
 
 #: cmd/incus/create.go:60
@@ -1294,6 +1426,11 @@ msgstr ""
 
 #: cmd/incus/file.go:245 cmd/incus/file.go:465
 msgid "Create any directories necessary"
+msgstr ""
+
+#: cmd/incus/export.go:80
+#, c-format
+msgid "Create instance backup: %w"
 msgstr ""
 
 #: cmd/incus/snapshot.go:70
@@ -1421,6 +1558,16 @@ msgstr ""
 msgid "DRM:"
 msgstr ""
 
+#: cmd/incus/admin_waitready.go:93
+#, c-format
+msgid "Daemon still not running after %ds timeout (%v)"
+msgstr ""
+
+#: cmd/incus/admin_shutdown.go:83
+#, c-format
+msgid "Daemon still running after %ds timeout"
+msgstr ""
+
 #: cmd/incus/network.go:876
 msgid "Default VLAN ID"
 msgstr ""
@@ -1527,7 +1674,10 @@ msgid "Delete warning"
 msgstr ""
 
 #: cmd/incus/action.go:32 cmd/incus/action.go:53 cmd/incus/action.go:75
-#: cmd/incus/action.go:98 cmd/incus/admin.go:20 cmd/incus/admin_other.go:20
+#: cmd/incus/action.go:98 cmd/incus/admin.go:20 cmd/incus/admin_cluster.go:25
+#: cmd/incus/admin_init.go:45 cmd/incus/admin_other.go:20
+#: cmd/incus/admin_recover.go:29 cmd/incus/admin_shutdown.go:30
+#: cmd/incus/admin_sql.go:29 cmd/incus/admin_waitready.go:27
 #: cmd/incus/alias.go:23 cmd/incus/alias.go:61 cmd/incus/alias.go:111
 #: cmd/incus/alias.go:160 cmd/incus/alias.go:215 cmd/incus/cluster.go:29
 #: cmd/incus/cluster.go:122 cmd/incus/cluster.go:206 cmd/incus/cluster.go:255
@@ -1584,7 +1734,7 @@ msgstr ""
 #: cmd/incus/network_acl.go:491 cmd/incus/network_acl.go:521
 #: cmd/incus/network_acl.go:652 cmd/incus/network_acl.go:701
 #: cmd/incus/network_acl.go:750 cmd/incus/network_acl.go:765
-#: cmd/incus/network_acl.go:886 cmd/incus/network_allocations.go:52
+#: cmd/incus/network_acl.go:886 cmd/incus/network_allocations.go:51
 #: cmd/incus/network_forward.go:28 cmd/incus/network_forward.go:85
 #: cmd/incus/network_forward.go:166 cmd/incus/network_forward.go:230
 #: cmd/incus/network_forward.go:328 cmd/incus/network_forward.go:397
@@ -1784,6 +1934,22 @@ msgstr ""
 msgid "Display instances from all projects"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:415
+msgid "Do you want to configure a new local storage pool?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:427
+msgid "Do you want to configure a new remote storage pool?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:442
+msgid "Do you want to configure a new storage pool?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:729
+msgid "Do you want to continue without thin provisioning?"
+msgstr ""
+
 #: cmd/incus/cluster.go:526
 msgid "Don't require user confirmation for using --force"
 msgstr ""
@@ -1801,12 +1967,21 @@ msgstr ""
 msgid "Driver: %v (%v)"
 msgstr ""
 
+#: cmd/incus/admin_init.go:57
+msgid "Dump YAML config to stdout"
+msgstr ""
+
 #: cmd/incus/network_zone.go:742
 msgid "ENTRIES"
 msgstr ""
 
 #: cmd/incus/list.go:866
 msgid "EPHEMERAL"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:153
+#, c-format
+msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr ""
 
 #: cmd/incus/cluster.go:952 cmd/incus/config_trust.go:554
@@ -1944,6 +2119,11 @@ msgstr ""
 msgid "Ephemeral instance"
 msgstr ""
 
+#: cmd/incus/admin_init.go:179 cmd/incus/admin_init_interactive.go:200
+#, c-format
+msgid "Error connecting to existing cluster member %q: %v"
+msgstr ""
+
 #: cmd/incus/utils_properties.go:206
 #, c-format
 msgid "Error creating decoder: %v"
@@ -1969,6 +2149,11 @@ msgstr ""
 #: cmd/incus/storage_volume.go:1811
 #, c-format
 msgid "Error setting properties: %v"
+msgstr ""
+
+#: cmd/incus/console_windows.go:25
+#, c-format
+msgid "Error setting term size %s"
 msgstr ""
 
 #: cmd/incus/config.go:603 cmd/incus/config.go:635
@@ -2005,6 +2190,42 @@ msgstr ""
 msgid "Event type to listen for"
 msgstr ""
 
+#: cmd/incus/admin_sql.go:28
+msgid "Execute a SQL query against the local or global database"
+msgstr ""
+
+#: cmd/incus/admin_sql.go:29
+msgid ""
+"Execute a SQL query against the local or global database\n"
+"\n"
+"  The local database is specific to the cluster member you target the\n"
+"  command to, and contains member-specific data (such as the member network\n"
+"  address).\n"
+"\n"
+"  The global database is common to all members in the cluster, and contains\n"
+"  cluster-specific data (such as profiles, containers, etc).\n"
+"\n"
+"  If you are running a non-clustered server, the same applies, as that\n"
+"  instance is effectively a single-member cluster.\n"
+"\n"
+"  If <query> is the special value \"-\", then the query is read from\n"
+"  standard input.\n"
+"\n"
+"  If <query> is the special value \".dump\", the command returns a SQL text\n"
+"  dump of the given database.\n"
+"\n"
+"  If <query> is the special value \".schema\", the command returns the SQL\n"
+"  text schema of the given database.\n"
+"\n"
+"  This internal command is mostly useful for debugging and disaster\n"
+"  recovery. The development team will occasionally provide hotfixes to users "
+"as a\n"
+"  set of database queries to fix some data inconsistency.\n"
+"\n"
+"  This command targets the global database and works in both local\n"
+"  and cluster mode."
+msgstr ""
+
 #: cmd/incus/exec.go:40
 msgid "Execute commands in instances"
 msgstr ""
@@ -2022,6 +2243,11 @@ msgid ""
 "\n"
 "Mode defaults to non-interactive, interactive mode is selected if both stdin "
 "AND stdout are terminals (stderr is ignored)."
+msgstr ""
+
+#: cmd/incus/utils_properties.go:95
+#, c-format
+msgid "Expected a struct, got a %v"
 msgstr ""
 
 #: cmd/incus/info.go:630 cmd/incus/info.go:681 cmd/incus/snapshot.go:326
@@ -2123,9 +2349,24 @@ msgstr ""
 msgid "Failed connecting to instance SFTP: %w"
 msgstr ""
 
+#: cmd/incus/admin_waitready.go:61
+#, c-format
+msgid "Failed connecting to the daemon (attempt %d): %v"
+msgstr ""
+
 #: cmd/incus/config_trust.go:142
 #, c-format
 msgid "Failed converting token operation to certificate add token: %w"
+msgstr ""
+
+#: cmd/incus/cluster.go:842
+#, c-format
+msgid "Failed converting token operation to join token: %w"
+msgstr ""
+
+#: cmd/incus/storage_volume.go:511
+#, c-format
+msgid "Failed deleting source volume after copy: %w"
 msgstr ""
 
 #: cmd/incus/file.go:1169
@@ -2133,9 +2374,29 @@ msgstr ""
 msgid "Failed generating SSH host key: %w"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:468
+#, c-format
+msgid "Failed generating trust certificate: %w"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:60
+#, c-format
+msgid "Failed getting existing storage pools: %w"
+msgstr ""
+
 #: cmd/incus/network_peer.go:303
 #, c-format
 msgid "Failed getting peer's status: %w"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:250
+#, c-format
+msgid "Failed import request: %w"
+msgstr ""
+
+#: cmd/incus/create.go:176
+#, c-format
+msgid "Failed loading network %q: %w"
 msgstr ""
 
 #: cmd/incus/create.go:295
@@ -2143,9 +2404,19 @@ msgstr ""
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
 
+#: cmd/incus/create.go:227
+#, c-format
+msgid "Failed loading storage pool %q: %w"
+msgstr ""
+
 #: cmd/incus/file.go:1174
 #, c-format
 msgid "Failed parsing SSH host key: %w"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:196
+#, c-format
+msgid "Failed parsing validation response: %w"
 msgstr ""
 
 #: cmd/incus/console.go:356
@@ -2167,14 +2438,49 @@ msgstr ""
 msgid "Failed to add remote"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:478
+#, c-format
+msgid "Failed to add server cert to cluster: %w"
+msgstr ""
+
+#: cmd/incus/admin_waitready.go:76
+#, c-format
+msgid "Failed to check if the daemon is ready (attempt %d): %v"
+msgstr ""
+
+#: cmd/incus/export.go:188
+#, c-format
+msgid "Failed to close export file: %w"
+msgstr ""
+
 #: cmd/incus/remote.go:241
 #, c-format
 msgid "Failed to close server cert file %q: %w"
 msgstr ""
 
+#: cmd/incus/cluster.go:667 cmd/incus/cluster.go:672
+#, c-format
+msgid "Failed to configure cluster: %w"
+msgstr ""
+
 #: cmd/incus/move.go:262 cmd/incus/move.go:338 cmd/incus/move.go:390
 #, c-format
 msgid "Failed to connect to cluster member: %w"
+msgstr ""
+
+#: cmd/incus/admin_init.go:105
+#, c-format
+msgid "Failed to connect to get server info: %w"
+msgstr ""
+
+#: cmd/incus/admin_init.go:100
+#, c-format
+msgid "Failed to connect to local daemon: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:463
+#, c-format
+msgid "Failed to connect to target cluster node %q: %w"
 msgstr ""
 
 #: cmd/incus/remote.go:231
@@ -2192,6 +2498,21 @@ msgstr ""
 msgid "Failed to create certificate: %w"
 msgstr ""
 
+#: cmd/incus/storage_volume.go:2574
+#, c-format
+msgid "Failed to create storage volume backup: %w"
+msgstr ""
+
+#: cmd/incus/move.go:229
+#, c-format
+msgid "Failed to delete original instance after copying it: %w"
+msgstr ""
+
+#: cmd/incus/storage_volume.go:2653
+#, c-format
+msgid "Failed to fetch storage volume backup file: %w"
+msgstr ""
+
 #: cmd/incus/remote.go:263
 #, c-format
 msgid "Failed to find project: %w"
@@ -2201,9 +2522,34 @@ msgstr ""
 msgid "Failed to get the new instance name"
 msgstr ""
 
+#: cmd/incus/admin_init.go:215 cmd/incus/admin_init.go:220
+#, c-format
+msgid "Failed to join cluster: %w"
+msgstr ""
+
 #: cmd/incus/file.go:1186
 #, c-format
 msgid "Failed to listen for connection: %w"
+msgstr ""
+
+#: cmd/incus/admin_sql.go:116
+#, c-format
+msgid "Failed to parse dump response: %w"
+msgstr ""
+
+#: cmd/incus/cluster.go:1198
+#, c-format
+msgid "Failed to parse servers: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_preseed.go:30
+#, c-format
+msgid "Failed to parse the preseed: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_preseed.go:22 cmd/incus/admin_sql.go:86
+#, c-format
+msgid "Failed to read from stdin: %w"
 msgstr ""
 
 #: cmd/incus/copy.go:358
@@ -2216,6 +2562,69 @@ msgstr ""
 msgid "Failed to remove alias %s: %w"
 msgstr ""
 
+#: cmd/incus/export.go:182
+#, c-format
+msgid "Failed to rename export file: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:96
+#, c-format
+msgid "Failed to render the config: %w"
+msgstr ""
+
+#: cmd/incus/admin_sql.go:110
+#, c-format
+msgid "Failed to request dump: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:262
+#, c-format
+msgid "Failed to retrieve cluster information: %w"
+msgstr ""
+
+#: cmd/incus/cluster.go:654
+#, c-format
+msgid "Failed to retrieve current cluster config: %w"
+msgstr ""
+
+#: cmd/incus/cluster.go:644
+#, c-format
+msgid "Failed to retrieve current server config: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
+#: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
+#: cmd/incus/admin_init_dump.go:93
+#, c-format
+msgid "Failed to retrieve current server configuration: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_dump.go:28
+#, c-format
+msgid ""
+"Failed to retrieve current server network configuration for project %q: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_auto.go:115
+#, c-format
+msgid "Failed to retrieve list of networks: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_auto.go:47
+#, c-format
+msgid "Failed to retrieve list of storage pools: %w"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:239
+#, c-format
+msgid "Failed to setup trust relationship with cluster: %w"
+msgstr ""
+
+#: cmd/incus/cluster.go:1225
+#, c-format
+msgid "Failed to update cluster member state: %w"
+msgstr ""
+
 #: cmd/incus/file.go:796
 #, c-format
 msgid "Failed to walk path for %s: %s"
@@ -2226,8 +2635,18 @@ msgstr ""
 msgid "Failed to write server cert file %q: %w"
 msgstr ""
 
+#: cmd/incus/admin_recover.go:189
+#, c-format
+msgid "Failed validation request: %w"
+msgstr ""
+
 #: cmd/incus/list.go:134
 msgid "Fast mode (same as --columns=nsacPt)"
+msgstr ""
+
+#: cmd/incus/export.go:165
+#, c-format
+msgid "Fetch instance backup file: %w"
 msgstr ""
 
 #: cmd/incus/network.go:943 cmd/incus/network_acl.go:123
@@ -2297,7 +2716,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:390 cmd/incus/config_trust.go:472
 #: cmd/incus/image.go:1047 cmd/incus/image_alias.go:157 cmd/incus/list.go:133
 #: cmd/incus/network.go:916 cmd/incus/network.go:1007
-#: cmd/incus/network_acl.go:96 cmd/incus/network_allocations.go:58
+#: cmd/incus/network_acl.go:96 cmd/incus/network_allocations.go:57
 #: cmd/incus/network_forward.go:88 cmd/incus/network_load_balancer.go:93
 #: cmd/incus/network_peer.go:83 cmd/incus/network_zone.go:87
 #: cmd/incus/network_zone.go:691 cmd/incus/operation.go:109
@@ -2500,7 +2919,7 @@ msgstr ""
 msgid "Group ID to run the command as (default 0)"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:29
+#: cmd/incus/network_allocations.go:28
 msgid "HARDWARE ADDRESS"
 msgstr ""
 
@@ -2677,8 +3096,16 @@ msgstr ""
 msgid "Import instance backups"
 msgstr ""
 
+#: cmd/incus/storage_volume.go:2737
+msgid "Import type needs to be \"backup\" or \"iso\""
+msgstr ""
+
 #: cmd/incus/storage_volume.go:2680
 msgid "Import type, backup or iso (default \"backup\")"
+msgstr ""
+
+#: cmd/incus/storage_volume.go:2742
+msgid "Importing ISO images requires a volume name to be set"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:2746
@@ -2747,6 +3174,15 @@ msgstr ""
 msgid "Instance type"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:131
+msgid "Invalid IP address or DNS name"
+msgstr ""
+
+#: cmd/incus/export.go:113 cmd/incus/storage_volume.go:2607
+#, c-format
+msgid "Invalid URL %q: %w"
+msgstr ""
+
 #: cmd/incus/remote.go:344
 #, c-format
 msgid "Invalid URL scheme \"%s\" in \"%s\""
@@ -2757,8 +3193,27 @@ msgstr ""
 msgid "Invalid argument %q"
 msgstr ""
 
+#: cmd/incus/admin_recover.go:42
+msgid "Invalid arguments"
+msgstr ""
+
+#: cmd/incus/export.go:118 cmd/incus/storage_volume.go:2612
+#, c-format
+msgid "Invalid backup name segment in path %q: %w"
+msgstr ""
+
+#: cmd/incus/utils_properties.go:47
+#, c-format
+msgid "Invalid boolean value: %s"
+msgstr ""
+
 #: cmd/incus/config_trust.go:429
 msgid "Invalid certificate"
+msgstr ""
+
+#: cmd/incus/admin_init.go:164
+#, c-format
+msgid "Invalid cluster join token: %w"
 msgstr ""
 
 #: cmd/incus/list.go:648
@@ -2769,6 +3224,15 @@ msgstr ""
 #: cmd/incus/list.go:641
 #, c-format
 msgid "Invalid config key column format (too many fields): '%s'"
+msgstr ""
+
+#: cmd/incus/admin_sql.go:79
+msgid "Invalid database type"
+msgstr ""
+
+#: cmd/incus/publish.go:225
+#, c-format
+msgid "Invalid expiration date: %w"
 msgstr ""
 
 #: cmd/incus/monitor.go:71
@@ -2784,6 +3248,11 @@ msgstr ""
 #: cmd/incus/file.go:1015
 #, c-format
 msgid "Invalid instance path: %q"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:177
+#, c-format
+msgid "Invalid join token: %w"
 msgstr ""
 
 #: cmd/incus/utils.go:226
@@ -2840,6 +3309,10 @@ msgstr ""
 #: cmd/incus/info.go:230
 #, c-format
 msgid "IsSM: %s (%s)"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:169
+msgid "Joining an existing cluster requires root privileges"
 msgstr ""
 
 #: cmd/incus/image.go:156
@@ -3106,7 +3579,7 @@ msgid ""
 "  Defaults to -1 (unlimited). Use 0 to limit to the column header size."
 msgstr ""
 
-#: cmd/incus/network_allocations.go:51 cmd/incus/network_allocations.go:52
+#: cmd/incus/network_allocations.go:50 cmd/incus/network_allocations.go:51
 msgid "List network allocations in use"
 msgstr ""
 
@@ -3229,6 +3702,23 @@ msgstr ""
 
 #: cmd/incus/info.go:710
 msgid "Log:"
+msgstr ""
+
+#: cmd/incus/file.go:1192
+#, c-format
+msgid "Login with username %q and password %q"
+msgstr ""
+
+#: cmd/incus/file.go:1194
+msgid "Login without username and password"
+msgstr ""
+
+#: cmd/incus/admin_cluster.go:25
+msgid "Low level administration tools for inspecting and recovering clusters."
+msgstr ""
+
+#: cmd/incus/admin_cluster.go:24
+msgid "Low-level cluster administration commands"
 msgstr ""
 
 #: cmd/incus/network.go:885
@@ -3542,9 +4032,17 @@ msgstr ""
 msgid "Migration operation failure: %w"
 msgstr ""
 
+#: cmd/incus/admin_init.go:55
+msgid "Minimal configuration (non-interactive)"
+msgstr ""
+
 #: cmd/incus/monitor.go:52
 msgid ""
 "Minimum level for log messages (only available when using pretty format)"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:681
+msgid "Minimum size is 1GiB"
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:110 cmd/incus/storage_bucket.go:210
@@ -3695,6 +4193,10 @@ msgstr ""
 msgid "Missing project name"
 msgstr ""
 
+#: cmd/incus/admin_sql.go:70
+msgid "Missing required arguments"
+msgstr ""
+
 #: cmd/incus/profile.go:277
 msgid "Missing source profile name"
 msgstr ""
@@ -3817,7 +4319,7 @@ msgstr ""
 msgid "NAME"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:28
+#: cmd/incus/network_allocations.go:27
 msgid "NAT"
 msgstr ""
 
@@ -3827,6 +4329,11 @@ msgstr ""
 
 #: cmd/incus/project.go:503
 msgid "NETWORKS"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:157
+#, c-format
+msgid "NEW: %q (backend=%q, source=%q)"
 msgstr ""
 
 #: cmd/incus/info.go:408
@@ -3868,8 +4375,56 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:631
+msgid "Name of the CEPHfs volume:"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:613
+msgid "Name of the OSD storage pool"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:712
+#, c-format
+msgid "Name of the existing %s pool or dataset:"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:607
+#: cmd/incus/admin_init_interactive.go:699
+msgid "Name of the existing CEPH cluster"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:625
+msgid "Name of the existing CEPHfs cluster"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:705
+msgid "Name of the existing OSD storage pool"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:309
+msgid "Name of the existing bridge or host interface:"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:516
+msgid "Name of the new storage pool"
+msgstr ""
+
 #: cmd/incus/remote.go:140
 msgid "Name of the project to use for this remote:"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:116
+#, c-format
+msgid "Name of the storage backend (%s):"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:554
+#, c-format
+msgid "Name of the storage backend to use (%s)"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:99
+msgid "Name of the storage pool:"
 msgstr ""
 
 #: cmd/incus/info.go:462 cmd/incus/network.go:833
@@ -4003,6 +4558,11 @@ msgstr ""
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:493
+#, c-format
+msgid "No %s storage backends available"
+msgstr ""
+
 #: cmd/incus/config_trust.go:675
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
@@ -4033,12 +4593,24 @@ msgstr ""
 msgid "No matching rule(s) found"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:490
+msgid "No storage backends available"
+msgstr ""
+
 #: cmd/incus/storage_volume.go:372
 msgid "No storage pool for source volume specified"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:422
 msgid "No storage pool for target volume specified"
+msgstr ""
+
+#: cmd/incus/utils.go:413
+msgid "No text editor found, please set the EDITOR environment variable"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:222
+msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 
 #: cmd/incus/config_device.go:130 cmd/incus/config_device.go:404
@@ -4049,6 +4621,16 @@ msgstr ""
 #: cmd/incus/info.go:376
 #, c-format
 msgid "Node %d:\n"
+msgstr ""
+
+#: cmd/incus/admin_init_auto.go:31
+msgid ""
+"None of --storage-pool, --storage-create-device or --storage-create-loop may "
+"be used with the 'dir' backend"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:619
+msgid "Number of placement groups"
 msgstr ""
 
 #: cmd/incus/network.go:892
@@ -4081,6 +4663,11 @@ msgstr ""
 
 #: cmd/incus/network.go:662 cmd/incus/network.go:1173
 msgid "Only managed networks can be modified"
+msgstr ""
+
+#: cmd/incus/admin_init_auto.go:35
+msgid ""
+"Only one of --storage-create-device or --storage-create-loop can be specified"
 msgstr ""
 
 #: cmd/incus/operation.go:87
@@ -4160,6 +4747,20 @@ msgstr ""
 msgid "Password for %s: "
 msgstr ""
 
+#: cmd/incus/file.go:1162
+#, c-format
+msgid "Password rejected for %q"
+msgstr ""
+
+#: cmd/incus/admin_init.go:149
+#, c-format
+msgid "Path %s doesn't exist"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:642
+msgid "Path to the existing block device:"
+msgstr ""
+
 #: cmd/incus/action.go:52 cmd/incus/action.go:53
 msgid "Pause instances"
 msgstr ""
@@ -4168,12 +4769,33 @@ msgstr ""
 msgid "Perform an incremental copy"
 msgstr ""
 
+#: cmd/incus/admin_recover.go:219
+msgid "Please create those missing entries and then hit ENTER:"
+msgstr ""
+
 #: cmd/incus/remote.go:181
 msgid "Please provide an alternate server address (empty to abort):"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:184
+msgid "Please provide join token:"
+msgstr ""
+
 #: cmd/incus/remote.go:458
 msgid "Please type 'y', 'n' or the fingerprint:"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:101
+msgid "Pool name cannot be empty"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:800
+msgid "Port to bind to"
+msgstr ""
+
+#: cmd/incus/admin_init.go:60
+#, c-format
+msgid "Port to bind to (default: %d)"
 msgstr ""
 
 #: cmd/incus/info.go:213
@@ -4183,6 +4805,10 @@ msgstr ""
 
 #: cmd/incus/info.go:195
 msgid "Ports:"
+msgstr ""
+
+#: cmd/incus/admin_init.go:56
+msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
 
 #: cmd/incus/file.go:1078
@@ -4314,6 +4940,11 @@ msgstr ""
 
 #: cmd/incus/image.go:1514
 msgid "Property not found"
+msgstr ""
+
+#: cmd/incus/image.go:991
+#, c-format
+msgid "Protocol: %s"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:2437
@@ -4483,6 +5114,24 @@ msgstr ""
 
 #: cmd/incus/rebuild.go:26
 msgid "Rebuild instances"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:28
+msgid ""
+"Recover missing instances and volumes from existing and unknown storage pools"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:29
+msgid ""
+"Recover missing instances and volumes from existing and unknown storage "
+"pools\n"
+"\n"
+"  This command is mostly used for disaster recovery. It will ask you about "
+"unknown storage pools and attempt to\n"
+"  access them, along with existing storage pools, and identify any missing "
+"instances and volumes that exist on the\n"
+"  pools but are not in the database. It will then offer to recreate these "
+"database records."
 msgstr ""
 
 #: cmd/incus/file.go:246 cmd/incus/file.go:464
@@ -4765,7 +5414,12 @@ msgstr ""
 msgid "Role (admin or read-only)"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:59
+#: cmd/incus/admin_sql.go:147
+#, c-format
+msgid "Rows affected: %d"
+msgstr ""
+
+#: cmd/incus/network_allocations.go:58
 msgid "Run again a specific project"
 msgstr ""
 
@@ -4773,7 +5427,7 @@ msgstr ""
 msgid "Run against all instances"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:60
+#: cmd/incus/network_allocations.go:59
 msgid "Run against all projects"
 msgstr ""
 
@@ -4795,6 +5449,11 @@ msgstr ""
 
 #: cmd/incus/info.go:136 cmd/incus/info.go:245
 msgid "SR-IOV information:"
+msgstr ""
+
+#: cmd/incus/file.go:1189
+#, c-format
+msgid "SSH SFTP listening on %v"
 msgstr ""
 
 #: cmd/incus/file.go:1206
@@ -4836,6 +5495,10 @@ msgstr ""
 msgid "STP"
 msgstr ""
 
+#: cmd/incus/admin_recover.go:169
+msgid "Scanning for unknown volumes..."
+msgstr ""
+
 #: cmd/incus/storage_bucket.go:852
 msgid "Secret key (auto-generated if empty)"
 msgstr ""
@@ -4873,6 +5536,11 @@ msgstr ""
 #: cmd/incus/version.go:58
 #, c-format
 msgid "Server version: %s\n"
+msgstr ""
+
+#: cmd/incus/image.go:990
+#, c-format
+msgid "Server: %s"
 msgstr ""
 
 #: cmd/incus/cluster.go:366
@@ -5146,6 +5814,14 @@ msgstr ""
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
+#: cmd/incus/admin_init.go:62
+msgid "Setup device based storage using DEVICE"
+msgstr ""
+
+#: cmd/incus/admin_init.go:63
+msgid "Setup loop based storage with SIZE in GiB"
+msgstr ""
+
 #: cmd/incus/main.go:99
 msgid "Show all debug messages"
 msgstr ""
@@ -5312,6 +5988,10 @@ msgstr ""
 msgid "Show warning"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:670
+msgid "Size in GiB of the new loop device"
+msgstr ""
+
 #: cmd/incus/image.go:946
 #, c-format
 msgid "Size: %.2fMiB"
@@ -5345,6 +6025,12 @@ msgstr ""
 msgid "Some instances failed to %s"
 msgstr ""
 
+#: cmd/incus/admin_recover.go:121
+msgid ""
+"Source of the storage pool (block device, volume group, dataset, path, ... "
+"as applicable):"
+msgstr ""
+
 #: cmd/incus/image.go:989
 msgid "Source:"
 msgstr ""
@@ -5356,6 +6042,10 @@ msgstr ""
 #: cmd/incus/launch.go:78
 #, c-format
 msgid "Starting %s"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:239
+msgid "Starting recovery..."
 msgstr ""
 
 #: cmd/incus/info.go:554
@@ -5393,6 +6083,10 @@ msgstr ""
 msgid "Stopping the instance failed: %s"
 msgstr ""
 
+#: cmd/incus/admin_init.go:61
+msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
+msgstr ""
+
 #: cmd/incus/storage_bucket.go:160
 #, c-format
 msgid "Storage bucket %s created"
@@ -5413,6 +6107,20 @@ msgstr ""
 msgid "Storage bucket key %s removed"
 msgstr ""
 
+#: cmd/incus/admin_init_auto.go:51
+msgid "Storage has already been configured"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:106
+#, c-format
+msgid "Storage pool %q is already on recover list"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:202
+#, c-format
+msgid "Storage pool %q of type %q"
+msgstr ""
+
 #: cmd/incus/storage.go:151
 #, c-format
 msgid "Storage pool %s created"
@@ -5431,6 +6139,10 @@ msgstr ""
 #: cmd/incus/copy.go:59 cmd/incus/create.go:55 cmd/incus/import.go:34
 #: cmd/incus/move.go:63
 msgid "Storage pool name"
+msgstr ""
+
+#: cmd/incus/admin_init.go:64
+msgid "Storage pool to use or create"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:592
@@ -5501,7 +6213,7 @@ msgstr ""
 
 #: cmd/incus/config_trust.go:446 cmd/incus/image.go:1064
 #: cmd/incus/image_alias.go:236 cmd/incus/list.go:571 cmd/incus/network.go:981
-#: cmd/incus/network.go:1055 cmd/incus/network_allocations.go:27
+#: cmd/incus/network.go:1055 cmd/incus/network_allocations.go:26
 #: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1492
 #: cmd/incus/warning.go:216
 msgid "TYPE"
@@ -5518,6 +6230,26 @@ msgstr ""
 
 #: cmd/incus/file.go:1002
 msgid "Target path must be a directory"
+msgstr ""
+
+#: cmd/incus/admin_shutdown.go:29
+msgid "Tell the daemon to shutdown all instances and exit"
+msgstr ""
+
+#: cmd/incus/admin_shutdown.go:30
+msgid ""
+"Tell the daemon to shutdown all instances and exit\n"
+"\n"
+"  This will tell the daemon to start a clean shutdown of all instances,\n"
+"  followed by having itself shutdown and exit.\n"
+"\n"
+"  This can take quite a while as instances can take a long time to\n"
+"  shutdown, especially if a non-standard timeout was configured for them."
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:531
+#, c-format
+msgid "The %s storage pool already exists"
 msgstr ""
 
 #: cmd/incus/move.go:145
@@ -5548,6 +6280,33 @@ msgstr ""
 msgid "The --target-project flag can't be used with --target"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:735
+msgid "The LVM thin provisioning tools couldn't be found on the system"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:723
+msgid ""
+"The LVM thin provisioning tools couldn't be found.\n"
+"LVM can still be used without thin provisioning but this will disable over-"
+"provisioning,\n"
+"increase the space requirements and creation time of images, instances and "
+"snapshots.\n"
+"\n"
+"If you wish to use thin provisioning, abort now, install the tools from your "
+"Linux distribution\n"
+"and make sure that your user can see and run the \"thin_check\" command "
+"before running \"init\" again."
+msgstr ""
+
+#: cmd/incus/admin_cluster.go:43
+msgid ""
+"The \"cluster\" subcommand requires access to internal server data.\n"
+"To do so, it's actually part of the \"incusd\" binary rather than "
+"\"incus\".\n"
+"\n"
+"You can invoke it through \"incusd cluster\"."
+msgstr ""
+
 #: cmd/incus/console.go:377
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
@@ -5564,6 +6323,14 @@ msgstr ""
 
 #: cmd/incus/network_acl.go:876 cmd/incus/network_acl.go:998
 msgid "The direction argument must be one of: ingress, egress"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:200
+msgid "The following unknown storage pools have been found:"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:207
+msgid "The following unknown volumes have been found:"
 msgstr ""
 
 #: cmd/incus/delete.go:99
@@ -5684,6 +6451,43 @@ msgid ""
 "The property %q does not exist on the storage pool volume snapshot %s/%s: %v"
 msgstr ""
 
+#: cmd/incus/utils_properties.go:100
+#, c-format
+msgid "The property with tag %q does not exist"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:151
+msgid "The recovery process will be scanning the following storage pools:"
+msgstr ""
+
+#: cmd/incus/admin_init_auto.go:26
+#, c-format
+msgid ""
+"The requested backend '%s' isn't available on your system (missing tools)"
+msgstr ""
+
+#: cmd/incus/admin_init_auto.go:22
+#, c-format
+msgid "The requested backend '%s' isn't supported by init"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:315
+msgid "The requested interface doesn't exist. Please choose another one."
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:352
+#, c-format
+msgid ""
+"The requested network bridge \"%s\" already exists. Please choose another "
+"name."
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:527
+#, c-format
+msgid ""
+"The requested storage pool \"%s\" already exists. Please choose another name."
+msgstr ""
+
 #: cmd/incus/info.go:344
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
@@ -5713,6 +6517,10 @@ msgid ""
 "\n"
 "If you already added a remote server, make it the default with \"incus "
 "remote switch NAME\"."
+msgstr ""
+
+#: cmd/incus/admin_recover.go:63
+msgid "This server currently has the following storage pools:"
 msgstr ""
 
 #: cmd/incus/cluster.go:658
@@ -5757,6 +6565,10 @@ msgstr ""
 #: cmd/incus/config.go:762 cmd/incus/copy.go:128 cmd/incus/info.go:336
 #: cmd/incus/network.go:821 cmd/incus/storage.go:445
 msgid "To use --target, the destination remote must be a cluster"
+msgstr ""
+
+#: cmd/incus/file.go:370
+msgid "Too many links"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:1268
@@ -5861,7 +6673,7 @@ msgid "USAGE"
 msgstr ""
 
 #: cmd/incus/network.go:986 cmd/incus/network_acl.go:148
-#: cmd/incus/network_allocations.go:25 cmd/incus/network_zone.go:139
+#: cmd/incus/network_allocations.go:24 cmd/incus/network_zone.go:139
 #: cmd/incus/profile.go:659 cmd/incus/project.go:506 cmd/incus/storage.go:646
 #: cmd/incus/storage_volume.go:1496
 msgid "USED BY"
@@ -5874,6 +6686,10 @@ msgstr ""
 #: cmd/incus/info.go:132
 #, c-format
 msgid "UUID: %v"
+msgstr ""
+
+#: cmd/incus/admin_init.go:194 cmd/incus/admin_init_interactive.go:215
+msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr ""
 
 #: cmd/incus/file.go:194
@@ -6113,6 +6929,10 @@ msgstr ""
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:228
+msgid "User aborted configuration"
+msgstr ""
+
 #: cmd/incus/cluster.go:552 cmd/incus/delete.go:48 cmd/incus/snapshot.go:216
 msgid "User aborted delete operation"
 msgstr ""
@@ -6163,8 +6983,54 @@ msgstr ""
 msgid "WWN: %s"
 msgstr ""
 
+#: cmd/incus/admin_waitready.go:26
+msgid "Wait for the daemon to be ready to process requests"
+msgstr ""
+
+#: cmd/incus/admin_waitready.go:27
+msgid ""
+"Wait for the daemon to be ready to process requests\n"
+"\n"
+"  This command will block until the daemon is reachable over its REST API "
+"and\n"
+"  is done with early start tasks like re-starting previously started\n"
+"  containers."
+msgstr ""
+
 #: cmd/incus/query.go:42
 msgid "Wait for the operation to complete"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:752
+msgid ""
+"We detected that you are running inside an unprivileged container.\n"
+"This means that unless you manually configured your host otherwise,\n"
+"you will not have enough uids and gids to allocate to your containers.\n"
+"\n"
+"Your container's own allocation can be re-used to avoid the problem.\n"
+"Doing so makes your nested containers slightly less safe as they could\n"
+"in theory attack their parent container and gain more privileges than\n"
+"they otherwise would."
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:150
+msgid "What IP address or DNS name should be used to reach this server?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:364
+msgid "What IPv4 address should be used?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:385
+msgid "What IPv6 address should be used?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:116
+msgid "What member name should be used to identify this server in the cluster?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:345
+msgid "What should the new bridge be called?"
 msgstr ""
 
 #: cmd/incus/export.go:40
@@ -6187,11 +7053,78 @@ msgid ""
 "re-initialize the instance if a different image or --empty is not specified."
 msgstr ""
 
+#: cmd/incus/admin_init_interactive.go:76
+msgid "Would you like a YAML \"init\" preseed to be printed?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:827
+msgid "Would you like stale cached images to be updated automatically?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:773
+msgid "Would you like the server to be available over the network?"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:230
+msgid "Would you like those to be recovered?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:376
+msgid "Would you like to NAT IPv4 traffic on your bridge?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:397
+msgid "Would you like to NAT IPv6 traffic on your bridge?"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:160
+msgid "Would you like to continue with scanning for lost volumes?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:570
+#, c-format
+msgid "Would you like to create a new btrfs subvolume under %s?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:295
+msgid "Would you like to create a new local network bridge?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:586
+msgid "Would you like to create a new zfs dataset under rpool/incus?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:761
+msgid "Would you like to have your containers share their parent's allocation?"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:77
+msgid "Would you like to recover another storage pool?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:302
+msgid "Would you like to use an existing bridge or host interface?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:636
+msgid ""
+"Would you like to use an existing empty block device (e.g. a disk or "
+"partition)?"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:106
+msgid "Would you like to use clustering?"
+msgstr ""
+
 #: cmd/incus/network.go:959 cmd/incus/operation.go:157 cmd/incus/project.go:458
 #: cmd/incus/project.go:463 cmd/incus/project.go:468 cmd/incus/project.go:473
 #: cmd/incus/project.go:478 cmd/incus/project.go:483 cmd/incus/remote.go:676
 #: cmd/incus/remote.go:681 cmd/incus/remote.go:686
 msgid "YES"
+msgstr ""
+
+#: cmd/incus/admin_recover.go:214
+msgid "You are currently missing the following:"
 msgstr ""
 
 #: cmd/incus/exec.go:93

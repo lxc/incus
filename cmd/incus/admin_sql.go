@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
+	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/i18n"
 	internalSQL "github.com/lxc/incus/internal/sql"
 	"github.com/lxc/incus/shared/util"
 )
@@ -22,10 +24,9 @@ type cmdAdminSQL struct {
 
 func (c *cmdAdminSQL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "sql <local|global> <query>"
-	cmd.Short = "Execute a SQL query against the local or global database"
-	cmd.Long = `Description:
-  Execute a SQL query against the local or global database
+	cmd.Use = usage("sql", i18n.G("<local|global> <query>"))
+	cmd.Short = i18n.G("Execute a SQL query against the local or global database")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Execute a SQL query against the local or global database
 
   The local database is specific to the cluster member you target the
   command to, and contains member-specific data (such as the member network
@@ -51,8 +52,7 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
   set of database queries to fix some data inconsistency.
 
   This command targets the global database and works in both local
-  and cluster mode.
-`
+  and cluster mode.`))
 	cmd.RunE = c.Run
 	cmd.Hidden = true
 
@@ -67,7 +67,7 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		return fmt.Errorf("Missing required arguments")
+		return fmt.Errorf(i18n.G("Missing required arguments"))
 	}
 
 	database := args[0]
@@ -76,14 +76,14 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 	if !util.ValueInSlice(database, []string{"local", "global"}) {
 		_ = cmd.Help()
 
-		return fmt.Errorf("Invalid database type")
+		return fmt.Errorf(i18n.G("Invalid database type"))
 	}
 
 	if query == "-" {
 		// Read from stdin
 		bytes, err := io.ReadAll(os.Stdin)
 		if err != nil {
-			return fmt.Errorf("Failed to read from stdin: %w", err)
+			return fmt.Errorf(i18n.G("Failed to read from stdin: %w"), err)
 		}
 
 		query = string(bytes)
@@ -107,13 +107,13 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 
 		response, _, err := d.RawQuery("GET", url, nil, "")
 		if err != nil {
-			return fmt.Errorf("failed to request dump: %w", err)
+			return fmt.Errorf(i18n.G("Failed to request dump: %w"), err)
 		}
 
 		dump := internalSQL.SQLDump{}
 		err = json.Unmarshal(response.Metadata, &dump)
 		if err != nil {
-			return fmt.Errorf("failed to parse dump response: %w", err)
+			return fmt.Errorf(i18n.G("Failed to parse dump response: %w"), err)
 		}
 
 		fmt.Print(dump.Text)
@@ -138,13 +138,13 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 
 	for i, result := range batch.Results {
 		if len(batch.Results) > 1 {
-			fmt.Printf("=> Query %d:\n\n", i)
+			fmt.Printf(i18n.G("=> Query %d:")+"\n\n", i)
 		}
 
 		if result.Type == "select" {
 			sqlPrintSelectResult(result)
 		} else {
-			fmt.Printf("Rows affected: %d\n", result.RowsAffected)
+			fmt.Printf(i18n.G("Rows affected: %d")+"\n", result.RowsAffected)
 		}
 
 		if len(batch.Results) > 1 {

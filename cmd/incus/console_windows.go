@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
+
+	"github.com/lxc/incus/internal/i18n"
 )
 
 func (c *cmdConsole) getTERM() (string, bool) {
@@ -22,7 +24,7 @@ func (c *cmdConsole) controlSocketHandler(control *websocket.Conn) {
 	// won't work quite correctly.
 	err := c.sendTermSize(control)
 	if err != nil {
-		fmt.Printf("error setting term size %s\n", err)
+		fmt.Printf(i18n.G("Error setting term size %s")+"\n", err)
 	}
 }
 

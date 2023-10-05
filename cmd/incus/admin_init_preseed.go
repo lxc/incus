@@ -11,6 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -18,7 +19,7 @@ func (c *cmdAdminInit) RunPreseed(cmd *cobra.Command, args []string, d incus.Ins
 	// Read the YAML
 	bytes, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read from stdin: %w", err)
+		return nil, fmt.Errorf(i18n.G("Failed to read from stdin: %w"), err)
 	}
 
 	// Parse the YAML
@@ -26,7 +27,7 @@ func (c *cmdAdminInit) RunPreseed(cmd *cobra.Command, args []string, d incus.Ins
 	// Use strict checking to notify about unknown keys.
 	err = yaml.UnmarshalStrict(bytes, &config)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse the preseed: %w", err)
+		return nil, fmt.Errorf(i18n.G("Failed to parse the preseed: %w"), err)
 	}
 
 	return &config, nil

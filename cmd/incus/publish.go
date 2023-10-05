@@ -222,7 +222,7 @@ func (c *cmdPublish) Run(cmd *cobra.Command, args []string) error {
 	if c.flagExpiresAt != "" {
 		expiresAt, err := time.Parse(time.RFC3339, c.flagExpiresAt)
 		if err != nil {
-			return fmt.Errorf("Invalid expiration date: %w", err)
+			return fmt.Errorf(i18n.G("Invalid expiration date: %w"), err)
 		}
 
 		req.ExpiresAt = expiresAt

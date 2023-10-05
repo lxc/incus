@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
+	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/i18n"
 )
 
 type cmdAdminShutdown struct {
@@ -23,17 +25,15 @@ type cmdAdminShutdown struct {
 
 func (c *cmdAdminShutdown) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "shutdown"
-	cmd.Short = "Tell the daemon to shutdown all instances and exit"
-	cmd.Long = `Description:
-  Tell the daemon to shutdown all instances and exit
+	cmd.Use = usage("shutdown")
+	cmd.Short = i18n.G("Tell the daemon to shutdown all instances and exit")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Tell the daemon to shutdown all instances and exit
 
   This will tell the daemon to start a clean shutdown of all instances,
   followed by having itself shutdown and exit.
 
   This can take quite a while as instances can take a long time to
-  shutdown, especially if a non-standard timeout was configured for them.
-`
+  shutdown, especially if a non-standard timeout was configured for them.`))
 	cmd.RunE = c.Run
 	cmd.Flags().IntVarP(&c.flagTimeout, "timeout", "t", 0, "Number of seconds to wait before giving up"+"``")
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, "Force shutdown instead of waiting for running operations to finish"+"``")
@@ -80,7 +80,7 @@ func (c *cmdAdminShutdown) Run(cmd *cobra.Command, args []string) error {
 		case err = <-chResult:
 			return err
 		case <-time.After(time.Second * time.Duration(c.flagTimeout)):
-			return fmt.Errorf("Daemon still running after %ds timeout", c.flagTimeout)
+			return fmt.Errorf(i18n.G("Daemon still running after %ds timeout"), c.flagTimeout)
 		}
 	}
 

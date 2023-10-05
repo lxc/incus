@@ -173,7 +173,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string) (incus.InstanceSe
 	if c.flagNetwork != "" {
 		network, _, err := d.GetNetwork(c.flagNetwork)
 		if err != nil {
-			return nil, "", fmt.Errorf("Failed loading network %q: %w", c.flagNetwork, err)
+			return nil, "", fmt.Errorf(i18n.G("Failed loading network %q: %w"), c.flagNetwork, err)
 		}
 
 		// Prepare the instance's NIC device entry.
@@ -224,7 +224,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string) (incus.InstanceSe
 	if c.flagStorage != "" {
 		_, _, err := d.GetStoragePool(c.flagStorage)
 		if err != nil {
-			return nil, "", fmt.Errorf("Failed loading storage pool %q: %w", c.flagStorage, err)
+			return nil, "", fmt.Errorf(i18n.G("Failed loading storage pool %q: %w"), c.flagStorage, err)
 		}
 
 		devicesMap["root"] = map[string]string{
