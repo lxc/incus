@@ -17,6 +17,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/ports"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -72,7 +73,7 @@ func (c *cmdAdminInit) RunInteractive(cmd *cobra.Command, args []string, d incus
 	}
 
 	// Print the YAML
-	preSeedPrint, err := c.global.asker.AskBool("Would you like a YAML \"init\" preseed to be printed? (yes/no) [default=no]: ", "no")
+	preSeedPrint, err := c.global.asker.AskBool(i18n.G("Would you like a YAML \"init\" preseed to be printed?")+" (yes/no) [default=no]: ", "no")
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +93,7 @@ func (c *cmdAdminInit) RunInteractive(cmd *cobra.Command, args []string, d incus
 
 		out, err := yaml.Marshal(object)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to render the config: %w", err)
+			return nil, fmt.Errorf(i18n.G("Failed to render the config: %w"), err)
 		}
 
 		fmt.Printf("%s\n", out)
@@ -102,7 +103,7 @@ func (c *cmdAdminInit) RunInteractive(cmd *cobra.Command, args []string, d incus
 }
 
 func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
-	clustering, err := c.global.asker.AskBool("Would you like to use clustering? (yes/no) [default=no]: ", "no")
+	clustering, err := c.global.asker.AskBool(i18n.G("Would you like to use clustering?")+" (yes/no) [default=no]: ", "no")
 	if err != nil {
 		return err
 	}
@@ -112,7 +113,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 		config.Cluster.Enabled = true
 
 		askForServerName := func() error {
-			config.Cluster.ServerName, err = c.global.asker.AskString(fmt.Sprintf("What member name should be used to identify this server in the cluster? [default=%s]: ", c.defaultHostname()), c.defaultHostname(), nil)
+			config.Cluster.ServerName, err = c.global.asker.AskString(fmt.Sprintf(i18n.G("What member name should be used to identify this server in the cluster?")+" [default=%s]: ", c.defaultHostname()), c.defaultHostname(), nil)
 			if err != nil {
 				return err
 			}
@@ -127,7 +128,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 
 			host, _, _ := net.SplitHostPort(address)
 			if util.ValueInSlice(host, []string{"", "[::]", "0.0.0.0"}) {
-				return fmt.Errorf("Invalid IP address or DNS name")
+				return fmt.Errorf(i18n.G("Invalid IP address or DNS name"))
 			}
 
 			if err == nil {
@@ -139,14 +140,14 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 
 			listener, err := net.Listen("tcp", address)
 			if err != nil {
-				return fmt.Errorf("Can't bind address %q: %w", address, err)
+				return fmt.Errorf(i18n.G("Can't bind address %q: %w"), address, err)
 			}
 
 			_ = listener.Close()
 			return nil
 		}
 
-		serverAddress, err := c.global.asker.AskString(fmt.Sprintf("What IP address or DNS name should be used to reach this server? [default=%s]: ", address), address, validateServerAddress)
+		serverAddress, err := c.global.asker.AskString(fmt.Sprintf(i18n.G("What IP address or DNS name should be used to reach this server?")+" [default=%s]: ", address), address, validateServerAddress)
 		if err != nil {
 			return err
 		}
@@ -154,7 +155,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 		serverAddress = internalUtil.CanonicalNetworkAddress(serverAddress, ports.HTTPSDefaultPort)
 		config.Server.Config["core.https_address"] = serverAddress
 
-		clusterJoin, err := c.global.asker.AskBool("Are you joining an existing cluster? (yes/no) [default=no]: ", "no")
+		clusterJoin, err := c.global.asker.AskBool(i18n.G("Are you joining an existing cluster?")+" (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
@@ -165,7 +166,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 
 			// Root is required to access the certificate files
 			if os.Geteuid() != 0 {
-				return fmt.Errorf("Joining an existing cluster requires root privileges")
+				return fmt.Errorf(i18n.G("Joining an existing cluster requires root privileges"))
 			}
 
 			var joinToken *api.ClusterMemberJoinToken
@@ -173,14 +174,14 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			validJoinToken := func(input string) error {
 				j, err := internalUtil.JoinTokenDecode(input)
 				if err != nil {
-					return fmt.Errorf("Invalid join token: %w", err)
+					return fmt.Errorf(i18n.G("Invalid join token: %w"), err)
 				}
 
 				joinToken = j // Store valid decoded join token
 				return nil
 			}
 
-			clusterJoinToken, err := c.global.asker.AskString("Please provide join token: ", "", validJoinToken)
+			clusterJoinToken, err := c.global.asker.AskString(i18n.G("Please provide join token:")+" ", "", validJoinToken)
 			if err != nil {
 				return err
 			}
@@ -196,13 +197,13 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 				// Cluster certificate
 				cert, err := localtls.GetRemoteCertificate(fmt.Sprintf("https://%s", config.Cluster.ClusterAddress), version.UserAgent)
 				if err != nil {
-					fmt.Printf("Error connecting to existing cluster member %q: %v\n", clusterAddress, err)
+					fmt.Printf(i18n.G("Error connecting to existing cluster member %q: %v")+"\n", clusterAddress, err)
 					continue
 				}
 
 				certDigest := localtls.CertFingerprint(cert)
 				if joinToken.Fingerprint != certDigest {
-					return fmt.Errorf("Certificate fingerprint mismatch between join token and cluster member %q", clusterAddress)
+					return fmt.Errorf(i18n.G("Certificate fingerprint mismatch between join token and cluster member %q"), clusterAddress)
 				}
 
 				config.Cluster.ClusterCertificate = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}))
@@ -211,20 +212,20 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			}
 
 			if config.Cluster.ClusterCertificate == "" {
-				return fmt.Errorf("Unable to connect to any of the cluster members specified in join token")
+				return fmt.Errorf(i18n.G("Unable to connect to any of the cluster members specified in join token"))
 			}
 
 			// Pass the raw join token.
 			config.Cluster.ClusterToken = clusterJoinToken
 
 			// Confirm wiping
-			clusterWipeMember, err := c.global.asker.AskBool("All existing data is lost when joining a cluster, continue? (yes/no) [default=no] ", "no")
+			clusterWipeMember, err := c.global.asker.AskBool(i18n.G("All existing data is lost when joining a cluster, continue?")+" (yes/no) [default=no] ", "no")
 			if err != nil {
 				return err
 			}
 
 			if !clusterWipeMember {
-				return fmt.Errorf("User aborted configuration")
+				return fmt.Errorf(i18n.G("User aborted configuration"))
 			}
 
 			// Connect to existing cluster
@@ -235,7 +236,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 
 			err = c.setupClusterTrust(serverCert, config.Cluster.ServerName, config.Cluster.ClusterAddress, config.Cluster.ClusterCertificate, config.Cluster.ClusterToken)
 			if err != nil {
-				return fmt.Errorf("Failed to setup trust relationship with cluster: %w", err)
+				return fmt.Errorf(i18n.G("Failed to setup trust relationship with cluster: %w"), err)
 			}
 
 			// Now we have setup trust, don't send to server, othwerwise it will try and setup trust
@@ -258,11 +259,11 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			// Get the list of required member config keys.
 			cluster, _, err := client.GetCluster()
 			if err != nil {
-				return fmt.Errorf("Failed to retrieve cluster information: %w", err)
+				return fmt.Errorf(i18n.G("Failed to retrieve cluster information: %w"), err)
 			}
 
 			for i, config := range cluster.MemberConfig {
-				question := fmt.Sprintf("Choose %s: ", config.Description)
+				question := fmt.Sprintf(i18n.G("Choose %s:")+" ", config.Description)
 
 				// Allow for empty values.
 				configValue, err := c.global.asker.AskString(question, "", validate.Optional())
@@ -291,27 +292,27 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 	localBridgeCreate := false
 
 	if config.Cluster == nil {
-		localBridgeCreate, err = c.global.asker.AskBool("Would you like to create a new local network bridge? (yes/no) [default=yes]: ", "yes")
+		localBridgeCreate, err = c.global.asker.AskBool(i18n.G("Would you like to create a new local network bridge?")+" (yes/no) [default=yes]: ", "yes")
 		if err != nil {
 			return err
 		}
 	}
 
 	if !localBridgeCreate {
-		useExistingInterface, err := c.global.asker.AskBool("Would you like to use an existing bridge or host interface? (yes/no) [default=no]: ", "no")
+		useExistingInterface, err := c.global.asker.AskBool(i18n.G("Would you like to use an existing bridge or host interface?")+" (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
 
 		if useExistingInterface {
 			for {
-				interfaceName, err := c.global.asker.AskString("Name of the existing bridge or host interface: ", "", nil)
+				interfaceName, err := c.global.asker.AskString(i18n.G("Name of the existing bridge or host interface:")+" ", "", nil)
 				if err != nil {
 					return err
 				}
 
 				if !util.PathExists(fmt.Sprintf("/sys/class/net/%s", interfaceName)) {
-					fmt.Println("The requested interface doesn't exist. Please choose another one.")
+					fmt.Println(i18n.G("The requested interface doesn't exist. Please choose another one."))
 					continue
 				}
 
@@ -341,14 +342,14 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		net.Project = "default"
 
 		// Network name
-		net.Name, err = c.global.asker.AskString("What should the new bridge be called? [default=incusbr0]: ", "incusbr0", validate.IsNetworkName)
+		net.Name, err = c.global.asker.AskString(i18n.G("What should the new bridge be called?")+" [default=incusbr0]: ", "incusbr0", validate.IsNetworkName)
 		if err != nil {
 			return err
 		}
 
 		_, _, err = d.GetNetwork(net.Name)
 		if err == nil {
-			fmt.Printf("The requested network bridge \"%s\" already exists. Please choose another name.\n", net.Name)
+			fmt.Printf(i18n.G("The requested network bridge \"%s\" already exists. Please choose another name.")+"\n", net.Name)
 			continue
 		}
 
@@ -360,7 +361,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		// IPv4
-		net.Config["ipv4.address"], err = c.global.asker.AskString("What IPv4 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
+		net.Config["ipv4.address"], err = c.global.asker.AskString(i18n.G("What IPv4 address should be used?")+" (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
 			if util.ValueInSlice(value, []string{"auto", "none"}) {
 				return nil
 			}
@@ -372,7 +373,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		if !util.ValueInSlice(net.Config["ipv4.address"], []string{"auto", "none"}) {
-			netIPv4UseNAT, err := c.global.asker.AskBool("Would you like to NAT IPv4 traffic on your bridge? [default=yes]: ", "yes")
+			netIPv4UseNAT, err := c.global.asker.AskBool(i18n.G("Would you like to NAT IPv4 traffic on your bridge?")+" [default=yes]: ", "yes")
 			if err != nil {
 				return err
 			}
@@ -381,7 +382,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		// IPv6
-		net.Config["ipv6.address"], err = c.global.asker.AskString("What IPv6 address should be used? (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
+		net.Config["ipv6.address"], err = c.global.asker.AskString(i18n.G("What IPv6 address should be used?")+" (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
 			if util.ValueInSlice(value, []string{"auto", "none"}) {
 				return nil
 			}
@@ -393,7 +394,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		if !util.ValueInSlice(net.Config["ipv6.address"], []string{"auto", "none"}) {
-			netIPv6UseNAT, err := c.global.asker.AskBool("Would you like to NAT IPv6 traffic on your bridge? [default=yes]: ", "yes")
+			netIPv6UseNAT, err := c.global.asker.AskBool(i18n.G("Would you like to NAT IPv6 traffic on your bridge?")+" [default=yes]: ", "yes")
 			if err != nil {
 				return err
 			}
@@ -411,7 +412,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 
 func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
 	if config.Cluster != nil {
-		localStoragePool, err := c.global.asker.AskBool("Do you want to configure a new local storage pool? (yes/no) [default=yes]: ", "yes")
+		localStoragePool, err := c.global.asker.AskBool(i18n.G("Do you want to configure a new local storage pool?")+" (yes/no) [default=yes]: ", "yes")
 		if err != nil {
 			return err
 		}
@@ -423,7 +424,7 @@ func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServe
 			}
 		}
 
-		remoteStoragePool, err := c.global.asker.AskBool("Do you want to configure a new remote storage pool? (yes/no) [default=no]: ", "no")
+		remoteStoragePool, err := c.global.asker.AskBool(i18n.G("Do you want to configure a new remote storage pool?")+" (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
@@ -438,7 +439,7 @@ func (c *cmdAdminInit) askStorage(config *api.InitPreseed, d incus.InstanceServe
 		return nil
 	}
 
-	storagePool, err := c.global.asker.AskBool("Do you want to configure a new storage pool? (yes/no) [default=yes]: ", "yes")
+	storagePool, err := c.global.asker.AskBool(i18n.G("Do you want to configure a new storage pool?")+" (yes/no) [default=yes]: ", "yes")
 	if err != nil {
 		return err
 	}
@@ -459,12 +460,12 @@ func (c *cmdAdminInit) setupClusterTrust(serverCert *localtls.CertInfo, serverNa
 
 	target, err := incus.ConnectIncus(fmt.Sprintf("https://%s", targetAddress), args)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to target cluster node %q: %w", targetAddress, err)
+		return fmt.Errorf(i18n.G("Failed to connect to target cluster node %q: %w"), targetAddress, err)
 	}
 
 	cert, err := localtls.GenerateTrustCertificate(serverCert, serverName)
 	if err != nil {
-		return fmt.Errorf("Failed generating trust certificate: %w", err)
+		return fmt.Errorf(i18n.G("Failed generating trust certificate: %w"), err)
 	}
 
 	post := api.CertificatesPost{
@@ -474,7 +475,7 @@ func (c *cmdAdminInit) setupClusterTrust(serverCert *localtls.CertInfo, serverNa
 
 	err = target.CreateCertificate(post)
 	if err != nil && !api.StatusErrorCheck(err, http.StatusConflict) {
-		return fmt.Errorf("Failed to add server cert to cluster: %w", err)
+		return fmt.Errorf(i18n.G("Failed to add server cert to cluster: %w"), err)
 	}
 
 	return nil
@@ -486,10 +487,10 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 	if len(availableBackends) == 0 {
 		if poolType != internalUtil.PoolTypeAny {
-			return fmt.Errorf("No storage backends available")
+			return fmt.Errorf(i18n.G("No storage backends available"))
 		}
 
-		return fmt.Errorf("No %s storage backends available", poolType)
+		return fmt.Errorf(i18n.G("No %s storage backends available"), poolType)
 	}
 
 	backingFs, err := linux.DetectFilesystem(internalUtil.VarPath())
@@ -512,7 +513,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		pool.Config = map[string]string{}
 
 		if poolType == internalUtil.PoolTypeAny {
-			pool.Name, err = c.global.asker.AskString("Name of the new storage pool [default=default]: ", "default", nil)
+			pool.Name, err = c.global.asker.AskString(i18n.G("Name of the new storage pool")+" [default=default]: ", "default", nil)
 			if err != nil {
 				return err
 			}
@@ -523,11 +524,11 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		_, _, err := d.GetStoragePool(pool.Name)
 		if err == nil {
 			if poolType == internalUtil.PoolTypeAny {
-				fmt.Printf("The requested storage pool \"%s\" already exists. Please choose another name.\n", pool.Name)
+				fmt.Printf(i18n.G("The requested storage pool \"%s\" already exists. Please choose another name.")+"\n", pool.Name)
 				continue
 			}
 
-			return fmt.Errorf("The %s storage pool already exists", poolType)
+			return fmt.Errorf(i18n.G("The %s storage pool already exists"), poolType)
 		}
 
 		// Add to the default profile
@@ -550,7 +551,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 				}
 			}
 
-			pool.Driver, err = c.global.asker.AskChoice(fmt.Sprintf("Name of the storage backend to use (%s) [default=%s]: ", strings.Join(availableBackends, ", "), defaultBackend), availableBackends, defaultBackend)
+			pool.Driver, err = c.global.asker.AskChoice(fmt.Sprintf(i18n.G("Name of the storage backend to use (%s)")+" [default=%s]: ", strings.Join(availableBackends, ", "), defaultBackend), availableBackends, defaultBackend)
 			if err != nil {
 				return err
 			}
@@ -566,7 +567,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 		// Optimization for btrfs on btrfs
 		if pool.Driver == "btrfs" && backingFs == "btrfs" {
-			btrfsSubvolume, err := c.global.asker.AskBool(fmt.Sprintf("Would you like to create a new btrfs subvolume under %s? (yes/no) [default=yes]: ", internalUtil.VarPath("")), "yes")
+			btrfsSubvolume, err := c.global.asker.AskBool(fmt.Sprintf(i18n.G("Would you like to create a new btrfs subvolume under %s?")+" (yes/no) [default=yes]: ", internalUtil.VarPath("")), "yes")
 			if err != nil {
 				return err
 			}
@@ -582,7 +583,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		if pool.Driver == "zfs" && backingFs == "zfs" {
 			poolName, _ := subprocess.RunCommand("zpool", "get", "-H", "-o", "value", "name", "rpool")
 			if strings.TrimSpace(poolName) == "rpool" {
-				zfsDataset, err := c.global.asker.AskBool("Would you like to create a new zfs dataset under rpool/incus? (yes/no) [default=yes]: ", "yes")
+				zfsDataset, err := c.global.asker.AskBool(i18n.G("Would you like to create a new zfs dataset under rpool/incus?")+" (yes/no) [default=yes]: ", "yes")
 				if err != nil {
 					return err
 				}
@@ -595,7 +596,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 			}
 		}
 
-		poolCreate, err := c.global.asker.AskBool(fmt.Sprintf("Create a new %s pool? (yes/no) [default=yes]: ", strings.ToUpper(pool.Driver)), "yes")
+		poolCreate, err := c.global.asker.AskBool(fmt.Sprintf(i18n.G("Create a new %s pool?")+" (yes/no) [default=yes]: ", strings.ToUpper(pool.Driver)), "yes")
 		if err != nil {
 			return err
 		}
@@ -603,44 +604,44 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		if poolCreate {
 			if pool.Driver == "ceph" {
 				// Ask for the name of the cluster
-				pool.Config["ceph.cluster_name"], err = c.global.asker.AskString("Name of the existing CEPH cluster [default=ceph]: ", "ceph", nil)
+				pool.Config["ceph.cluster_name"], err = c.global.asker.AskString(i18n.G("Name of the existing CEPH cluster")+" [default=ceph]: ", "ceph", nil)
 				if err != nil {
 					return err
 				}
 
 				// Ask for the name of the osd pool
-				pool.Config["ceph.osd.pool_name"], err = c.global.asker.AskString("Name of the OSD storage pool [default=incus]: ", "incus", nil)
+				pool.Config["ceph.osd.pool_name"], err = c.global.asker.AskString(i18n.G("Name of the OSD storage pool")+" [default=incus]: ", "incus", nil)
 				if err != nil {
 					return err
 				}
 
 				// Ask for the number of placement groups
-				pool.Config["ceph.osd.pg_num"], err = c.global.asker.AskString("Number of placement groups [default=32]: ", "32", nil)
+				pool.Config["ceph.osd.pg_num"], err = c.global.asker.AskString(i18n.G("Number of placement groups")+" [default=32]: ", "32", nil)
 				if err != nil {
 					return err
 				}
 			} else if pool.Driver == "cephfs" {
 				// Ask for the name of the cluster
-				pool.Config["cephfs.cluster_name"], err = c.global.asker.AskString("Name of the existing CEPHfs cluster [default=ceph]: ", "ceph", nil)
+				pool.Config["cephfs.cluster_name"], err = c.global.asker.AskString(i18n.G("Name of the existing CEPHfs cluster")+" [default=ceph]: ", "ceph", nil)
 				if err != nil {
 					return err
 				}
 
 				// Ask for the name of the cluster
-				pool.Config["source"], err = c.global.asker.AskString("Name of the CEPHfs volume: ", "", nil)
+				pool.Config["source"], err = c.global.asker.AskString(i18n.G("Name of the CEPHfs volume:")+" ", "", nil)
 				if err != nil {
 					return err
 				}
 			} else {
-				useEmptyBlockDev, err := c.global.asker.AskBool("Would you like to use an existing empty block device (e.g. a disk or partition)? (yes/no) [default=no]: ", "no")
+				useEmptyBlockDev, err := c.global.asker.AskBool(i18n.G("Would you like to use an existing empty block device (e.g. a disk or partition)?")+" (yes/no) [default=no]: ", "no")
 				if err != nil {
 					return err
 				}
 
 				if useEmptyBlockDev {
-					pool.Config["source"], err = c.global.asker.AskString("Path to the existing block device: ", "", func(path string) error {
+					pool.Config["source"], err = c.global.asker.AskString(i18n.G("Path to the existing block device:")+" ", "", func(path string) error {
 						if !linux.IsBlockdevPath(path) {
-							return fmt.Errorf("%q is not a block device", path)
+							return fmt.Errorf(i18n.G("%q is not a block device"), path)
 						}
 
 						return nil
@@ -652,7 +653,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 					st := unix.Statfs_t{}
 					err := unix.Statfs(internalUtil.VarPath(), &st)
 					if err != nil {
-						return fmt.Errorf("Couldn't statfs %s: %w", internalUtil.VarPath(), err)
+						return fmt.Errorf(i18n.G("Couldn't statfs %s: %w"), internalUtil.VarPath(), err)
 					}
 
 					/* choose 5 GiB < x < 30GiB, where x is 20% of the disk size */
@@ -666,7 +667,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 					}
 
 					pool.Config["size"], err = c.global.asker.AskString(
-						fmt.Sprintf("Size in GiB of the new loop device (1GiB minimum) [default=%dGiB]: ", defaultSize),
+						fmt.Sprintf(i18n.G("Size in GiB of the new loop device")+" (1GiB minimum) [default=%dGiB]: ", defaultSize),
 						fmt.Sprintf("%dGiB", defaultSize),
 						func(input string) error {
 							input = strings.Split(input, "GiB")[0]
@@ -677,7 +678,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 							}
 
 							if result < 1 {
-								return fmt.Errorf("Minimum size is 1GiB")
+								return fmt.Errorf(i18n.G("Minimum size is 1GiB"))
 							}
 
 							return nil
@@ -695,20 +696,20 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		} else {
 			if pool.Driver == "ceph" {
 				// ask for the name of the cluster
-				pool.Config["ceph.cluster_name"], err = c.global.asker.AskString("Name of the existing CEPH cluster [default=ceph]: ", "ceph", nil)
+				pool.Config["ceph.cluster_name"], err = c.global.asker.AskString(i18n.G("Name of the existing CEPH cluster")+" [default=ceph]: ", "ceph", nil)
 				if err != nil {
 					return err
 				}
 
 				// ask for the name of the existing pool
-				pool.Config["source"], err = c.global.asker.AskString("Name of the existing OSD storage pool [default=incus]: ", "incus", nil)
+				pool.Config["source"], err = c.global.asker.AskString(i18n.G("Name of the existing OSD storage pool")+" [default=incus]: ", "incus", nil)
 				if err != nil {
 					return err
 				}
 
 				pool.Config["ceph.osd.pool_name"] = pool.Config["source"]
 			} else {
-				question := fmt.Sprintf("Name of the existing %s pool or dataset: ", strings.ToUpper(pool.Driver))
+				question := fmt.Sprintf(i18n.G("Name of the existing %s pool or dataset:")+" ", strings.ToUpper(pool.Driver))
 				pool.Config["source"], err = c.global.asker.AskString(question, "", nil)
 				if err != nil {
 					return err
@@ -719,22 +720,19 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		if pool.Driver == "lvm" {
 			_, err := exec.LookPath("thin_check")
 			if err != nil {
-				fmt.Print(`
-The LVM thin provisioning tools couldn't be found.
+				fmt.Print("\n" + i18n.G(`The LVM thin provisioning tools couldn't be found.
 LVM can still be used without thin provisioning but this will disable over-provisioning,
 increase the space requirements and creation time of images, instances and snapshots.
 
 If you wish to use thin provisioning, abort now, install the tools from your Linux distribution
-and make sure that your user can see and run the "thin_check" command before running "init" again.
-
-`)
-				lvmContinueNoThin, err := c.global.asker.AskBool("Do you want to continue without thin provisioning? (yes/no) [default=yes]: ", "yes")
+and make sure that your user can see and run the "thin_check" command before running "init" again.`) + "\n\n")
+				lvmContinueNoThin, err := c.global.asker.AskBool(i18n.G("Do you want to continue without thin provisioning?")+" (yes/no) [default=yes]: ", "yes")
 				if err != nil {
 					return err
 				}
 
 				if !lvmContinueNoThin {
-					return fmt.Errorf("The LVM thin provisioning tools couldn't be found on the system")
+					return fmt.Errorf(i18n.G("The LVM thin provisioning tools couldn't be found on the system"))
 				}
 
 				pool.Config["lvm.use_thinpool"] = "false"
@@ -751,19 +749,16 @@ and make sure that your user can see and run the "thin_check" command before run
 func (c *cmdAdminInit) askDaemon(config *api.InitPreseed, d incus.InstanceServer, server *api.Server) error {
 	// Detect lack of uid/gid
 	if linux.RunningInUserNS() {
-		fmt.Print(`
-We detected that you are running inside an unprivileged container.
+		fmt.Print("\n" + i18n.G(`We detected that you are running inside an unprivileged container.
 This means that unless you manually configured your host otherwise,
 you will not have enough uids and gids to allocate to your containers.
 
 Your container's own allocation can be re-used to avoid the problem.
 Doing so makes your nested containers slightly less safe as they could
 in theory attack their parent container and gain more privileges than
-they otherwise would.
+they otherwise would.`) + "\n\n")
 
-`)
-
-		shareParentAllocation, err := c.global.asker.AskBool("Would you like to have your containers share their parent's allocation? (yes/no) [default=yes]: ", "yes")
+		shareParentAllocation, err := c.global.asker.AskBool(i18n.G("Would you like to have your containers share their parent's allocation?")+" (yes/no) [default=yes]: ", "yes")
 		if err != nil {
 			return err
 		}
@@ -775,7 +770,7 @@ they otherwise would.
 
 	// Network listener
 	if config.Cluster == nil {
-		overNetwork, err := c.global.asker.AskBool("Would you like the server to be available over the network? (yes/no) [default=no]: ", "no")
+		overNetwork, err := c.global.asker.AskBool(i18n.G("Would you like the server to be available over the network?")+" (yes/no) [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
@@ -783,13 +778,13 @@ they otherwise would.
 		if overNetwork {
 			isIPAddress := func(s string) error {
 				if s != "all" && net.ParseIP(s) == nil {
-					return fmt.Errorf("%q is not an IP address", s)
+					return fmt.Errorf(i18n.G("%q is not an IP address"), s)
 				}
 
 				return nil
 			}
 
-			netAddr, err := c.global.asker.AskString("Address to bind to (not including port) [default=all]: ", "all", isIPAddress)
+			netAddr, err := c.global.asker.AskString(i18n.G("Address to bind to (not including port)")+" [default=all]: ", "all", isIPAddress)
 			if err != nil {
 				return err
 			}
@@ -802,7 +797,7 @@ they otherwise would.
 				netAddr = fmt.Sprintf("[%s]", netAddr)
 			}
 
-			netPort, err := c.global.asker.AskInt(fmt.Sprintf("Port to bind to [default=%d]: ", ports.HTTPSDefaultPort), 1, 65535, fmt.Sprintf("%d", ports.HTTPSDefaultPort), func(netPort int64) error {
+			netPort, err := c.global.asker.AskInt(fmt.Sprintf(i18n.G("Port to bind to")+" [default=%d]: ", ports.HTTPSDefaultPort), 1, 65535, fmt.Sprintf("%d", ports.HTTPSDefaultPort), func(netPort int64) error {
 				address := internalUtil.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
 
 				if err == nil {
@@ -814,7 +809,7 @@ they otherwise would.
 
 				listener, err := net.Listen("tcp", address)
 				if err != nil {
-					return fmt.Errorf("Can't bind address %q: %w", address, err)
+					return fmt.Errorf(i18n.G("Can't bind address %q: %w"), address, err)
 				}
 
 				_ = listener.Close()
@@ -829,7 +824,7 @@ they otherwise would.
 	}
 
 	// Ask if the user wants images to be automatically refreshed
-	imageStaleRefresh, err := c.global.asker.AskBool("Would you like stale cached images to be updated automatically? (yes/no) [default=yes]: ", "yes")
+	imageStaleRefresh, err := c.global.asker.AskBool(i18n.G("Would you like stale cached images to be updated automatically?")+" (yes/no) [default=yes]: ", "yes")
 	if err != nil {
 		return err
 	}

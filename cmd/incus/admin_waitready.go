@@ -51,14 +51,14 @@ func (c *cmdAdminWaitready) Run(cmd *cobra.Command, args []string) error {
 			}
 
 			if doLog {
-				logger.Debugf("Connecting to the daemon (attempt %d)", i)
+				logger.Debugf(i18n.G("Connecting to the daemon (attempt %d)"), i)
 			}
 
 			d, err := incus.ConnectIncusUnix("", nil)
 			if err != nil {
 				errLast = err
 				if doLog {
-					logger.Debugf("Failed connecting to the daemon (attempt %d): %v", i, err)
+					logger.Debugf(i18n.G("Failed connecting to the daemon (attempt %d): %v"), i, err)
 				}
 
 				time.Sleep(500 * time.Millisecond)
@@ -66,14 +66,14 @@ func (c *cmdAdminWaitready) Run(cmd *cobra.Command, args []string) error {
 			}
 
 			if doLog {
-				logger.Debugf("Checking if the daemon is ready (attempt %d)", i)
+				logger.Debugf(i18n.G("Checking if the daemon is ready (attempt %d)"), i)
 			}
 
 			_, _, err = d.RawQuery("GET", "/internal/ready", nil, "")
 			if err != nil {
 				errLast = err
 				if doLog {
-					logger.Debugf("Failed to check if the daemon is ready (attempt %d): %v", i, err)
+					logger.Debugf(i18n.G("Failed to check if the daemon is ready (attempt %d): %v"), i, err)
 				}
 
 				time.Sleep(500 * time.Millisecond)
@@ -90,7 +90,7 @@ func (c *cmdAdminWaitready) Run(cmd *cobra.Command, args []string) error {
 		case <-finger:
 			break
 		case <-time.After(time.Second * time.Duration(c.flagTimeout)):
-			return fmt.Errorf("Daemon still not running after %ds timeout (%v)", c.flagTimeout, errLast)
+			return fmt.Errorf(i18n.G("Daemon still not running after %ds timeout (%v)"), c.flagTimeout, errLast)
 		}
 	} else {
 		<-finger

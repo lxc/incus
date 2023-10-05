@@ -80,7 +80,7 @@ func (c *cmdAdminShutdown) Run(cmd *cobra.Command, args []string) error {
 		case err = <-chResult:
 			return err
 		case <-time.After(time.Second * time.Duration(c.flagTimeout)):
-			return fmt.Errorf("Daemon still running after %ds timeout", c.flagTimeout)
+			return fmt.Errorf(i18n.G("Daemon still running after %ds timeout"), c.flagTimeout)
 		}
 	}
 

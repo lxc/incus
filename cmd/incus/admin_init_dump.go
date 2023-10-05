@@ -8,13 +8,14 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/api"
 )
 
 func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 	currentServer, _, err := d.GetServer()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve current server configuration: %w", err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)
 	}
 
 	var config api.InitLocalPreseed
@@ -24,7 +25,7 @@ func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 	// projects at this time.
 	networks, err := d.UseProject("default").GetNetworks()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve current server network configuration for project %q: %w", "default", err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current server network configuration for project %q: %w"), "default", err)
 	}
 
 	for _, network := range networks {
@@ -45,7 +46,7 @@ func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 
 	storagePools, err := d.GetStoragePools()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve current server configuration: %w", err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)
 	}
 
 	for _, storagePool := range storagePools {
@@ -60,7 +61,7 @@ func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 
 	profiles, err := d.GetProfiles()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve current server configuration: %w", err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)
 	}
 
 	for _, profile := range profiles {
@@ -75,7 +76,7 @@ func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 
 	projects, err := d.GetProjects()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve current server configuration: %w", err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)
 	}
 
 	for _, project := range projects {
@@ -89,7 +90,7 @@ func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
 
 	out, err := yaml.Marshal(config)
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve current server configuration: %w", err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)
 	}
 
 	fmt.Printf("%s\n", out)
