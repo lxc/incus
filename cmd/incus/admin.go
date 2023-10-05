@@ -20,6 +20,10 @@ func (c *cmdAdmin) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage incus daemon`))
 
+	// cluster
+	adminClusterCmd := cmdAdminCluster{global: c.global}
+	cmd.AddCommand(adminClusterCmd.Command())
+
 	// init
 	adminInitCmd := cmdAdminInit{global: c.global}
 	cmd.AddCommand(adminInitCmd.Command())
