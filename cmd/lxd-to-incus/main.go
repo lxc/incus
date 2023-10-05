@@ -283,6 +283,8 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	}
 
 	// Validate configuration.
+	errors := []error{}
+
 	fmt.Println("=> Validating source server configuration")
 	deprecatedConfigs := []string{
 		"candid.api.key",
@@ -305,8 +307,18 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	for _, key := range deprecatedConfigs {
 		_, ok := srcServerInfo.Config[key]
 		if ok {
-			return fmt.Errorf("Source server is using deprecated key %q, please unset and retry.", key)
+			errors = append(errors, fmt.Errorf("Source server is using deprecated key %q", key))
 		}
+	}
+
+	if len(errors) > 0 {
+		fmt.Println("")
+		fmt.Println("Source server uses obsolete features:")
+		for _, err := range errors {
+			fmt.Printf(" - %s\n", err.Error())
+		}
+
+		return fmt.Errorf("Source server is using incompatible configuration")
 	}
 
 	// Grab the path information.
