@@ -31,6 +31,11 @@ func (c *cmdDaemon) Command() *cobra.Command {
 }
 
 func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
+	// Only root should run this.
+	if os.Geteuid() != 0 {
+		return fmt.Errorf("This must be run as root")
+	}
+
 	// Setup logger.
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
