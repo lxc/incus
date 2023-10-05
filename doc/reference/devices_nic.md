@@ -88,7 +88,7 @@ Key                      | Type    | Default           | Managed | Description
 `limits.egress`          | string  | -                 | no      | I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)
 `limits.ingress`         | string  | -                 | no      | I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)
 `limits.max`             | string  | -                 | no      | I/O limit in bit/s for both incoming and outgoing traffic (same as setting both `limits.ingress` and `limits.egress`)
-`limits.priority`        | integer | -                 | The `skb->priority` value (32-bit unsigned integer) for outgoing traffic, to be used by the kernel queuing discipline (qdisc) to prioritize network packets (The effect of this value depends on the particular qdisc implementation, for example, `SKBPRIO` or `QFQ`. Consult the kernel qdisc documentation before setting this value.)
+`limits.priority`        | integer | -                 | no      | The `skb->priority` value (32-bit unsigned integer) for outgoing traffic, to be used by the kernel queuing discipline (qdisc) to prioritize network packets (The effect of this value depends on the particular qdisc implementation, for example, `SKBPRIO` or `QFQ`. Consult the kernel qdisc documentation before setting this value.)
 `mtu`                    | integer | parent MTU        | yes     | The MTU of the new interface
 `name`                   | string  | kernel assigned   | no      | The name of the interface inside the instance
 `network`                | string  | -                 | no      | The managed network to link the device to (instead of specifying the `nictype` directly)
