@@ -91,6 +91,12 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 				} else if util.PathIsWritable(userUnixPath) {
 					// Handle the use of incus-user.
 					unixPath = userUnixPath
+
+					// When using incus-user, the project list is typically restricted.
+					// So let's try to be smart about the project we're using.
+					if remote.Project == "" {
+						remote.Project = fmt.Sprintf("user-%d", os.Geteuid())
+					}
 				} else {
 					// Fallback to path as provided by user.
 					unixPath = strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//")
