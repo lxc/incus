@@ -13,6 +13,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/linux"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 var mu sync.RWMutex
@@ -108,7 +109,7 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		}()
 	} else {
 		// Create our own socket.
-		unixPath := "unix.socket"
+		unixPath := internalUtil.VarPath("unix.socket.user")
 		err := os.Remove(unixPath)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("Failed to delete pre-existing unix socket: %w", err)
