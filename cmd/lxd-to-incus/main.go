@@ -309,6 +309,38 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 	}
 
+	// Grab the path information.
+	sourcePaths, err := source.Paths()
+	if err != nil {
+		return fmt.Errorf("Failed to get source paths: %w", err)
+	}
+
+	targetPaths, err := target.Paths()
+	if err != nil {
+		return fmt.Errorf("Failed to get target paths: %w", err)
+	}
+
+	// Mangle storage pool sources.
+	rewriteStatements := []string{}
+	storagePools, err := srcClient.GetStoragePools()
+	if err != nil {
+		return fmt.Errorf("Failed to get list of source storage pools: %w", err)
+	}
+
+	for _, pool := range storagePools {
+		source := pool.Config["source"]
+		if source == "" || source[0] != byte('/') {
+			continue
+		}
+
+		if !strings.HasPrefix(source, sourcePaths.Daemon) {
+			continue
+		}
+
+		newSource := strings.Replace(source, sourcePaths.Daemon, targetPaths.Daemon, 1)
+		rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE storage_pools_config SET value='%s' WHERE value='%s'", newSource, source))
+	}
+
 	// Confirm migration.
 	if !c.flagYes {
 		fmt.Println(`
@@ -343,10 +375,6 @@ Instances will come back online once the migration is complete.
 
 	// Wipe the target.
 	fmt.Println("=> Wiping the target server")
-	targetPaths, err := target.Paths()
-	if err != nil {
-		return fmt.Errorf("Failed to get target paths: %w", err)
-	}
 
 	err = os.RemoveAll(targetPaths.Logs)
 	if err != nil && !os.IsNotExist(err) {
@@ -365,10 +393,6 @@ Instances will come back online once the migration is complete.
 
 	// Migrate data.
 	fmt.Println("=> Migrating the data")
-	sourcePaths, err := source.Paths()
-	if err != nil {
-		return fmt.Errorf("Failed to get source paths: %w", err)
-	}
 
 	_, err = subprocess.RunCommand("mv", sourcePaths.Logs, targetPaths.Logs)
 	if err != nil {
@@ -390,6 +414,12 @@ Instances will come back online once the migration is complete.
 	err = migrateDatabase(filepath.Join(targetPaths.Daemon, "database"))
 	if err != nil {
 		return fmt.Errorf("Failed to migrate database in %q: %w", filepath.Join(targetPaths.Daemon, "database"), err)
+	}
+
+	// Apply custom SQL statements.
+	err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")), 0600)
+	if err != nil {
+		return fmt.Errorf("Failed to write database path: %w", err)
 	}
 
 	// Cleanup paths.
