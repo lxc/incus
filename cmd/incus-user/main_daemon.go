@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/user"
+	"strconv"
 	"sync"
 	"time"
 
@@ -20,12 +22,15 @@ var mu sync.RWMutex
 var connections uint64
 var transactions uint64
 
-type cmdDaemon struct{}
+type cmdDaemon struct {
+	flagGroup string
+}
 
 func (c *cmdDaemon) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "incus-user"
 	cmd.RunE = c.Run
+	cmd.Flags().StringVar(&c.flagGroup, "group", "", "The group of users that will be allowed to talk to incus-user"+"``")
 
 	return cmd
 }
@@ -128,6 +133,28 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 		server, err := net.ListenUnix("unix", unixAddr)
 		if err != nil {
 			return fmt.Errorf("Unable to setup unix socket: %w", err)
+		}
+
+		err = os.Chmod(unixPath, 0660)
+		if err != nil {
+			return fmt.Errorf("Unable to set socket permissions: %w", err)
+		}
+
+		if c.flagGroup != "" {
+			g, err := user.LookupGroup(c.flagGroup)
+			if err != nil {
+				return fmt.Errorf("Cannot get group ID of '%s': %w", c.flagGroup, err)
+			}
+
+			gid, err := strconv.Atoi(g.Gid)
+			if err != nil {
+				return err
+			}
+
+			err = os.Chown(unixPath, os.Getuid(), gid)
+			if err != nil {
+				return fmt.Errorf("Cannot change ownership on local socket: %w", err)
+			}
 		}
 
 		server.SetUnlinkOnClose(true)
