@@ -641,7 +641,7 @@ func (c *cmdClusterEnable) Run(cmd *cobra.Command, args []string) error {
 	// Check if the server is available on the network.
 	server, _, err := resource.server.GetServer()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve current server config: %w", err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current server config: %w"), err)
 	}
 
 	if server.Config["core.https_address"] == "" && server.Config["cluster.https_address"] == "" {
@@ -651,7 +651,7 @@ func (c *cmdClusterEnable) Run(cmd *cobra.Command, args []string) error {
 	// Check if already enabled
 	currentCluster, etag, err := resource.server.GetCluster()
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve current cluster config: %w", err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current cluster config: %w"), err)
 	}
 
 	if currentCluster.Enabled {
@@ -664,12 +664,12 @@ func (c *cmdClusterEnable) Run(cmd *cobra.Command, args []string) error {
 	req.Enabled = true
 	op, err := resource.server.UpdateCluster(req, etag)
 	if err != nil {
-		return fmt.Errorf("Failed to configure cluster: %w", err)
+		return fmt.Errorf(i18n.G("Failed to configure cluster: %w"), err)
 	}
 
 	err = op.Wait()
 	if err != nil {
-		return fmt.Errorf("Failed to configure cluster: %w", err)
+		return fmt.Errorf(i18n.G("Failed to configure cluster: %w"), err)
 	}
 
 	fmt.Println(i18n.G("Clustering enabled"))
@@ -839,7 +839,7 @@ func (c *cmdClusterAdd) Run(cmd *cobra.Command, args []string) error {
 	opAPI := op.Get()
 	joinToken, err := opAPI.ToClusterJoinToken()
 	if err != nil {
-		return fmt.Errorf("Failed converting token operation to join token: %w", err)
+		return fmt.Errorf(i18n.G("Failed converting token operation to join token: %w"), err)
 	}
 
 	if !c.global.flagQuiet {
@@ -1195,7 +1195,7 @@ func (c *cmdClusterEvacuateAction) Run(cmd *cobra.Command, args []string) error 
 	// Parse remote.
 	resources, err := c.global.ParseServers(args[0])
 	if err != nil {
-		return fmt.Errorf("Failed to parse servers: %w", err)
+		return fmt.Errorf(i18n.G("Failed to parse servers: %w"), err)
 	}
 
 	resource := resources[0]
@@ -1222,7 +1222,7 @@ func (c *cmdClusterEvacuateAction) Run(cmd *cobra.Command, args []string) error 
 
 	op, err := resource.server.UpdateClusterMemberState(resource.name, state)
 	if err != nil {
-		return fmt.Errorf("Failed to update cluster member state: %w", err)
+		return fmt.Errorf(i18n.G("Failed to update cluster member state: %w"), err)
 	}
 
 	var format string

@@ -44,7 +44,7 @@ func stringToBoolHookFunc() mapstructure.DecodeHookFunc {
 		case "0", "f", "false":
 			return false, nil
 		default:
-			return false, fmt.Errorf("Invalid boolean value: %s", str)
+			return false, fmt.Errorf(i18n.G("Invalid boolean value: %s"), str)
 		}
 	}
 }
@@ -92,12 +92,12 @@ func getFieldByJsonTag(obj any, tag string) (any, error) {
 	}
 
 	if v.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("Expected a struct, got a %v", v.Kind())
+		return nil, fmt.Errorf(i18n.G("Expected a struct, got a %v"), v.Kind())
 	}
 
 	ok, res := getFromStruct(v, tag)
 	if !ok {
-		return nil, fmt.Errorf("The property with tag %q does not exist", tag)
+		return nil, fmt.Errorf(i18n.G("The property with tag %q does not exist"), tag)
 	}
 
 	return res, nil

@@ -367,7 +367,7 @@ func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
 
 					i++
 					if i > 255 {
-						return fmt.Errorf("Too many links")
+						return fmt.Errorf(i18n.G("Too many links"))
 					}
 
 					// Update link target for next iteration.
@@ -1159,7 +1159,7 @@ func (c *cmdFileMount) sshSFTPServer(ctx context.Context, instName string, resou
 				return nil, nil
 			}
 
-			return nil, fmt.Errorf("Password rejected for %q", c.User())
+			return nil, fmt.Errorf(i18n.G("Password rejected for %q"), c.User())
 		}
 	}
 
@@ -1186,12 +1186,12 @@ func (c *cmdFileMount) sshSFTPServer(ctx context.Context, instName string, resou
 		return fmt.Errorf(i18n.G("Failed to listen for connection: %w"), err)
 	}
 
-	fmt.Printf("SSH SFTP listening on %v\n", listener.Addr())
+	fmt.Printf(i18n.G("SSH SFTP listening on %v")+"\n", listener.Addr())
 
 	if config.PasswordCallback != nil {
-		fmt.Printf("Login with username %q and password %q\n", authUser, authPass)
+		fmt.Printf(i18n.G("Login with username %q and password %q")+"\n", authUser, authPass)
 	} else {
-		fmt.Println("Login without username and password")
+		fmt.Println(i18n.G("Login without username and password"))
 	}
 
 	for {

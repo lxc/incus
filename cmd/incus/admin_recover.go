@@ -62,7 +62,7 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 
 	fmt.Println(i18n.G("This server currently has the following storage pools:"))
 	for _, existingPool := range existingPools {
-		fmt.Printf(" - %s (backend=%q, source=%q)\n", existingPool.Name, existingPool.Driver, existingPool.Config["source"])
+		fmt.Printf(" - "+i18n.G("%s (backend=%q, source=%q)")+"\n", existingPool.Name, existingPool.Driver, existingPool.Config["source"])
 	}
 
 	unknownPools := make([]api.StoragePoolsPost, 0, len(existingPools))
@@ -150,11 +150,11 @@ func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
 
 	fmt.Println(i18n.G("The recovery process will be scanning the following storage pools:"))
 	for _, p := range existingPools {
-		fmt.Printf(" - EXISTING: %q (backend=%q, source=%q)\n", p.Name, p.Driver, p.Config["source"])
+		fmt.Printf(" - "+i18n.G("EXISTING: %q (backend=%q, source=%q)")+"\n", p.Name, p.Driver, p.Config["source"])
 	}
 
 	for _, p := range unknownPools {
-		fmt.Printf(" - NEW: %q (backend=%q, source=%q)\n", p.Name, p.Driver, p.Config["source"])
+		fmt.Printf(" - "+i18n.G("NEW: %q (backend=%q, source=%q)")+"\n", p.Name, p.Driver, p.Config["source"])
 	}
 
 	proceed, err := c.global.asker.AskBool(i18n.G("Would you like to continue with scanning for lost volumes?")+" (yes/no) [default=yes]: ", "yes")

@@ -226,7 +226,7 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 	del.flagForceProtected = true
 	err = del.Run(cmd, args[:1])
 	if err != nil {
-		return fmt.Errorf("Failed to delete original instance after copying it: %w", err)
+		return fmt.Errorf(i18n.G("Failed to delete original instance after copying it: %w"), err)
 	}
 
 	return nil

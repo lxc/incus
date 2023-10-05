@@ -384,7 +384,7 @@ func (c *cmdStorageVolumeCopy) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if srcIsSnapshot && c.flagVolumeOnly {
-		return fmt.Errorf("Cannot set --volume-only when copying a snapshot")
+		return fmt.Errorf(i18n.G("Cannot set --volume-only when copying a snapshot"))
 	}
 
 	// If the volume is in local storage, set the target to its location (or provide a helpful error
@@ -508,7 +508,7 @@ func (c *cmdStorageVolumeCopy) Run(cmd *cobra.Command, args []string) error {
 
 		if err != nil {
 			progress.Done("")
-			return fmt.Errorf("Failed deleting source volume after copy: %w", err)
+			return fmt.Errorf(i18n.G("Failed deleting source volume after copy: %w"), err)
 		}
 	}
 	progress.Done(finalMsg)
@@ -2571,7 +2571,7 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 
 	op, err := d.CreateStoragePoolVolumeBackup(name, volName, req)
 	if err != nil {
-		return fmt.Errorf("Failed to create storage volume backup: %w", err)
+		return fmt.Errorf(i18n.G("Failed to create storage volume backup: %w"), err)
 	}
 
 	// Watch the background operation
@@ -2604,12 +2604,12 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 	uStr := op.Get().Resources["backups"][0]
 	u, err := url.Parse(uStr)
 	if err != nil {
-		return fmt.Errorf("Invalid URL %q: %w", uStr, err)
+		return fmt.Errorf(i18n.G("Invalid URL %q: %w"), uStr, err)
 	}
 
 	backupName, err := url.PathUnescape(path.Base(u.EscapedPath()))
 	if err != nil {
-		return fmt.Errorf("Invalid backup name segment in path %q: %w", u.EscapedPath(), err)
+		return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), u.EscapedPath(), err)
 	}
 
 	defer func() {
@@ -2650,7 +2650,7 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		_ = os.Remove(targetName)
 		progress.Done("")
-		return fmt.Errorf("Failed to fetch storage volume backup file: %w", err)
+		return fmt.Errorf(i18n.G("Failed to fetch storage volume backup file: %w"), err)
 	}
 
 	progress.Done(i18n.G("Backup exported successfully!"))
@@ -2734,12 +2734,12 @@ func (c *cmdStorageVolumeImport) Run(cmd *cobra.Command, args []string) error {
 	} else {
 		// Validate type flag
 		if !util.ValueInSlice(c.flagType, []string{"backup", "iso"}) {
-			return fmt.Errorf("Import type needs to be \"backup\" or \"iso\"")
+			return fmt.Errorf(i18n.G("Import type needs to be \"backup\" or \"iso\""))
 		}
 	}
 
 	if c.flagType == "iso" && volName == "" {
-		return fmt.Errorf("Importing ISO images requires a volume name to be set")
+		return fmt.Errorf(i18n.G("Importing ISO images requires a volume name to be set"))
 	}
 
 	progress := cli.ProgressRenderer{
