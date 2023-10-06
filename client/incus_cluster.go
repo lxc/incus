@@ -33,7 +33,7 @@ func (r *ProtocolIncus) UpdateCluster(cluster api.ClusterPut, ETag string) (Oper
 		}
 	}
 
-	op, _, err := r.queryOperation("PUT", "/cluster", cluster, "")
+	op, _, err := r.queryOperation("PUT", "/cluster", cluster, "", true)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func (r *ProtocolIncus) CreateClusterMember(member api.ClusterMembersPost) (Oper
 		return nil, fmt.Errorf("The server is missing the required \"clustering_join_token\" API extension")
 	}
 
-	op, _, err := r.queryOperation("POST", "/cluster/members", member, "")
+	op, _, err := r.queryOperation("POST", "/cluster/members", member, "", true)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (r *ProtocolIncus) UpdateClusterMemberState(name string, state api.ClusterM
 		return nil, fmt.Errorf("The server is missing the required \"clustering_evacuation\" API extension")
 	}
 
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("/cluster/members/%s/state", name), state, "")
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("/cluster/members/%s/state", name), state, "", true)
 	if err != nil {
 		return nil, err
 	}
