@@ -27,7 +27,7 @@ To troubleshoot the problem, complete the following steps:
 1. Try starting your instance again.
    If the error occurs again, compare the logs to check if it is the same error.
 
-   If it is, and if you cannot figure out the source of the error from the log information, open a question in the [forum](https://discourse.ubuntu.com/c/lxd/).
+   If it is, and if you cannot figure out the source of the error from the log information, open a question in the [forum](https://discuss.linuxcontainers.org).
    Make sure to include the log files you collected.
 
 ## Troubleshooting example

@@ -110,7 +110,7 @@ against the local or global database, you can use the `incus admin sql` command 
 You should only need to do that in order to recover from broken updates or bugs.
 Please consult the Incus team first (creating a [GitHub
 issue](https://github.com/lxc/incus/issues/new) or
-[forum](https://discourse.ubuntu.com/c/lxd/) post).
+[forum](https://discuss.linuxcontainers.org) post).
 
 ### Running custom queries at Incus daemon startup
 

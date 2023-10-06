@@ -56,11 +56,11 @@ Typical ways to contribute are:
 - Add or update documentation for new features or feature improvements that you contribute to the code.
   We'll review the documentation update and merge it together with your code.
 - Add or update documentation that clarifies any doubts you had when working with the product.
-  Such contributions can be done through a pull request or through a post in the [Tutorials](https://discourse.ubuntu.com/c/lxd/tutorials/146) section on the forum.
+  Such contributions can be done through a pull request or through a post in the [Tutorials](https://discuss.linuxcontainers.org/c/tutorials/16) section on the forum.
   New tutorials will be considered for inclusion in the docs (through a link or by including the actual content).
 - To request a fix to the documentation, open a documentation issue on [GitHub](https://github.com/lxc/incus/issues).
   We'll evaluate the issue and update the documentation accordingly.
-- Post a question or a suggestion on the [forum](https://discourse.ubuntu.com/c/lxd/126).
+- Post a question or a suggestion on the [forum](https://discuss.linuxcontainers.org).
   We'll monitor the posts and, if needed, update the documentation accordingly.
 - Ask questions or provide suggestions in the `#lxd` channel on [IRC](https://web.libera.chat/#lxd).
   Given the dynamic nature of IRC, we cannot guarantee answers or reactions to IRC posts, but we monitor the channel and try to improve our documentation based on the received feedback.

@@ -33,12 +33,12 @@ It’s an open source project that warmly welcomes community projects, contribut
 
 - [Code of Conduct](https://github.com/lxc/incus/blob/main/CODE_OF_CONDUCT.md)
 - [Contribute to the project](contributing.md)
-- [Release announcements](https://discourse.ubuntu.com/c/lxd/news/)
+- [Release announcements](https://discuss.linuxcontainers.org/c/news/13)
 - [Release tarballs](https://github.com/lxc/incus/releases/)
 - [Get support](support.md)
 - [Watch tutorials and announcements on YouTube](https://www.youtube.com/c/Incusvideos)
 - [Discuss on IRC](https://web.libera.chat/#lxd) (see [Getting started with IRC](https://discuss.linuxcontainers.org/t/getting-started-with-irc/11920) if needed)
-- [Ask and answer questions on the forum](https://discourse.ubuntu.com/c/lxd/)
+- [Ask and answer questions on the forum](https://discuss.linuxcontainers.org)
 
 ```{toctree}
 :hidden:
