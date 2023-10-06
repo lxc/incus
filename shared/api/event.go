@@ -8,10 +8,10 @@ import (
 
 // Event types.
 const (
-	EventTypeLifecycle = "lifecycle"
-	EventTypeLogging   = "logging"
-	EventTypeOperation = "operation"
-	EventTypeOVN       = "ovn"
+	EventTypeLifecycle  = "lifecycle"
+	EventTypeLogging    = "logging"
+	EventTypeOperation  = "operation"
+	EventTypeNetworkACL = "network-acl"
 )
 
 // Event represents an event entry (over websocket)
@@ -45,7 +45,7 @@ type Event struct {
 
 // ToLogging creates log record for the event.
 func (event *Event) ToLogging() (EventLogRecord, error) {
-	if event.Type == EventTypeLogging || event.Type == EventTypeOVN {
+	if event.Type == EventTypeLogging || event.Type == EventTypeNetworkACL {
 		e := &EventLogging{}
 		err := json.Unmarshal(event.Metadata, &e)
 		if err != nil {
