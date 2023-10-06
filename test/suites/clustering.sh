@@ -770,7 +770,7 @@ test_clustering_storage() {
     INCUS_DIR="${INCUS_TWO_DIR}" incus stop foo --force
 
     # Init a new container on node2 using the snapshot on node1
-    INCUS_DIR="${INCUS_ONE_DIR}" incus copy foo/snap-test egg --target node2
+    INCUS_DIR="${INCUS_ONE_DIR}" incus copy foo/snap-test egg --target node2 --debug
     INCUS_DIR="${INCUS_TWO_DIR}" incus start egg
     INCUS_DIR="${INCUS_ONE_DIR}" incus stop egg --force
     INCUS_DIR="${INCUS_ONE_DIR}" incus delete egg
