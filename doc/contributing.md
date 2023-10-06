@@ -71,7 +71,6 @@ Typical ways to contribute are:
 ```
 
 When you open a pull request, a preview of the documentation output is built automatically.
-To see the output, view the details for the `docs/readthedocs.com:canonical-lxd` check on the pull request.
 
 ### Automatic documentation checks
 

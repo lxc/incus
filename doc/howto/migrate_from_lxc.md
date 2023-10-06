@@ -18,7 +18,7 @@ It is available as `lxc-to-incus`.
 
 Otherwise, make sure that you have `go` (version 1.18 or later) installed and get the tool with the following command:
 
-    go install github.com/canonical/lxc-to-incus@latest
+    go install github.com/lxc/incus/cmd/lxc-to-incus@latest
 
 ## Prepare your LXC containers
 
