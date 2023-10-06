@@ -38,7 +38,7 @@ To use `cloud-init`, you must base your instance on an image that has `cloud-ini
 
 ## Configuration options
 
-LXD supports two different sets of configuration options for configuring `cloud-init`: `cloud-init.*` and `user.*`.
+Incus supports two different sets of configuration options for configuring `cloud-init`: `cloud-init.*` and `user.*`.
 Which of these sets you must use depends on the `cloud-init` support in the image that you use.
 As a rule of thumb, newer images support the `cloud-init.*` configuration options, while older images support `user.*`.
 However, there might be exceptions to that rule.
@@ -49,7 +49,7 @@ The following configuration options are supported:
 * `cloud-init.user-data` or `user.user-data` (see {ref}`cloud-init:user_data_formats`)
 * `cloud-init.network-config` or `user.network-config` (see {ref}`cloud-init:network_config`)
 
-For more information about the configuration options, see the [`cloud-init` instance options](instance-options-cloud-init), and the documentation for the {ref}`LXD data source <cloud-init:datasource_lxd>` in the `cloud-init` documentation.
+For more information about the configuration options, see the [`cloud-init` instance options](instance-options-cloud-init), and the documentation for the {ref}`Incus data source <cloud-init:datasource_lxd>` in the `cloud-init` documentation.
 
 ### Vendor data and user data
 
@@ -57,7 +57,7 @@ Both `vendor-data` and `user-data` are used to provide {ref}`cloud configuration
 
 The main idea is that `vendor-data` is used for the general default configuration, while `user-data` is used for instance-specific configuration.
 This means that you should specify `vendor-data` in a profile and `user-data` in the instance configuration.
-LXD does not enforce this method, but allows using both `vendor-data` and `user-data` in profiles and in the instance configuration.
+Incus does not enforce this method, but allows using both `vendor-data` and `user-data` in profiles and in the instance configuration.
 
 If both `vendor-data` and `user-data` are supplied for an instance, `cloud-init` merges the two configurations.
 However, if you use the same keys in both configurations, merging might not be possible.

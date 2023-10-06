@@ -8,7 +8,7 @@ See the following sections for instructions on how to create, configure, view an
 
 ## Create a custom storage volume
 
-When you create an instance, LXD automatically creates a storage volume that is used as the root disk for the instance.
+When you create an instance, Incus automatically creates a storage volume that is used as the root disk for the instance.
 
 You can add custom storage volumes to your instances.
 Such custom storage volumes are independent of the instance, which means that they can be backed up separately and are retained until you delete them.

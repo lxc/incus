@@ -66,7 +66,7 @@ You can specify that the connect address should be the IP of the instance by set
 
 ```{note}
 The listen address can also use wildcard addresses when using non-NAT mode.
-However, when using NAT mode, you must specify an IP address on the LXD host.
+However, when using NAT mode, you must specify an IP address on the Incus host.
 ```
 
 ## Device options

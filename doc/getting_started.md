@@ -4,18 +4,18 @@ relatedlinks: https://www.youtube.com/watch?v=QyXOOE_4cm0
 
 # Getting started
 
-See the following sections for information on how to get started with LXD:
+See the following sections for information on how to get started with Incus:
 
 ```{toctree}
 :maxdepth: 1
 
 Access the documentation </howto/access_documentation>
 Access the UI </howto/access_ui>
-Contribute to LXD </contributing>
+Contribute to Incus </contributing>
 Get support </support>
-Initialize LXD </howto/initialize>
+Initialize Incus </howto/initialize>
 Requirements </requirements>
-Install LXD </installing>
+Install Incus </installing>
 Difference between containers and virtual machines </explanation/containers_and_vms>
 First steps </tutorial/first_steps>
 Frequently asked </faq>

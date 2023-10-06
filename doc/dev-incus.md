@@ -7,8 +7,8 @@
 Communication between the hosted workload (instance) and its host while
 not strictly needed is a pretty useful feature.
 
-In LXD, this feature is implemented through a `/dev/lxd/sock` node which is
-created and set up for all LXD instances.
+In Incus, this feature is implemented through a `/dev/lxd/sock` node which is
+created and set up for all Incus instances.
 
 This file is a Unix socket which processes inside the instance can
 connect to. It's multi-threaded so multiple clients can be connected at the
@@ -20,29 +20,29 @@ same time.
 
 ## Implementation details
 
-LXD on the host binds `/var/lib/lxd/devlxd/sock` and starts listening for new
+Incus on the host binds `/var/lib/lxd/devlxd/sock` and starts listening for new
 connections on it.
 
 This socket is then exposed into every single instance started by
-LXD at `/dev/lxd/sock`.
+Incus at `/dev/lxd/sock`.
 
 The single socket is required so we can exceed 4096 instances, otherwise,
-LXD would have to bind a different socket for every instance, quickly
+Incus would have to bind a different socket for every instance, quickly
 reaching the FD limit.
 
 ## Authentication
 
 Queries on `/dev/lxd/sock` will only return information related to the
-requesting instance. To figure out where a request comes from, LXD will
+requesting instance. To figure out where a request comes from, Incus will
 extract the initial socket's user credentials and compare that to the list of
 instances it manages.
 
 ## Protocol
 
 The protocol on `/dev/lxd/sock` is plain-text HTTP with JSON messaging, so very
-similar to the local version of the LXD protocol.
+similar to the local version of the Incus protocol.
 
-Unlike the main LXD API, there is no background operation and no
+Unlike the main Incus API, there is no background operation and no
 authentication support in the `/dev/lxd/sock` API.
 
 ## REST-API

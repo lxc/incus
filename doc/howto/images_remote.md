@@ -12,7 +12,7 @@ To see all configured remote servers, enter the following command:
     incus remote list
 
 Remote servers that use the [simple streams format](https://git.launchpad.net/simplestreams/tree/) are pure image servers.
-Servers that use the `lxd` format are LXD servers, which either serve solely as image servers or might provide some images in addition to serving as regular LXD servers.
+Servers that use the `lxd` format are Incus servers, which either serve solely as image servers or might provide some images in addition to serving as regular Incus servers.
 See {ref}`remote-image-server-types` for more information.
 <!-- Include end list remotes -->
 
@@ -37,10 +37,10 @@ To add a simple streams server as a remote, enter the following command:
 
 The URL must use HTTPS.
 
-### Add a remote LXD server
+### Add a remote Incus server
 
 <!-- Include start add remotes -->
-To add a LXD server as a remote, enter the following command:
+To add a Incus server as a remote, enter the following command:
 
     incus remote add <remote_name> <IP|FQDN|URL> [flags]
 

@@ -47,7 +47,7 @@ If you do not specify a `--type` argument, the default type of `bridge` is used.
 (network-create-cluster)=
 ### Create a network in a cluster
 
-If you are running a LXD cluster and want to create a network, you must create the network for each cluster member separately.
+If you are running a Incus cluster and want to create a network, you must create the network for each cluster member separately.
 The reason for this is that the network configuration, for example, the name of the parent network interface, might be different between cluster members.
 
 Therefore, you must first create a pending network on each member with the `--target=<cluster_member>` flag and the appropriate configuration for the member.
@@ -80,8 +80,8 @@ To do so, use the following command:
     incus network attach <network_name> <instance_name> [<device_name>] [<interface_name>]
 
 The device name and the interface name are optional, but we recommend specifying at least the device name.
-If not specified, LXD uses the network name as the device name, which might be confusing and cause problems.
-For example, LXD images perform IP auto-configuration on the `eth0` interface, which does not work if the interface is called differently.
+If not specified, Incus uses the network name as the device name, which might be confusing and cause problems.
+For example, Incus images perform IP auto-configuration on the `eth0` interface, which does not work if the interface is called differently.
 
 For example, to attach the network `my-network` to the instance `my-instance` as `eth0` device, enter the following command:
 

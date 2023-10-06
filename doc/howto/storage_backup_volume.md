@@ -19,7 +19,7 @@ Which method to choose depends both on your use case and on the storage driver y
 In general, snapshots are quick and space efficient (depending on the storage driver), but they are stored in the same storage pool as the {{type}} and therefore not too reliable.
 Export files can be stored on different disks and are therefore more reliable.
 They can also be used to restore the {{type}} into a different storage pool.
-If you have a separate, network-connected LXD server available, regularly copying {{type}}s to this other server gives high reliability as well, and this method can also be used to back up snapshots of the {{type}}.
+If you have a separate, network-connected Incus server available, regularly copying {{type}}s to this other server gives high reliability as well, and this method can also be used to back up snapshots of the {{type}}.
 <!-- Include end backup types -->
 
 ```{note}

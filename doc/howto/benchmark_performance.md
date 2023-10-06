@@ -4,11 +4,11 @@
 ```{youtube} https://www.youtube.com/watch?v=z_OKwO5TskA
 ```
 
-The performance of your LXD server or cluster depends on a lot of different factors, ranging from the hardware, the server configuration, the selected storage driver and the network bandwidth to the overall usage patterns.
+The performance of your Incus server or cluster depends on a lot of different factors, ranging from the hardware, the server configuration, the selected storage driver and the network bandwidth to the overall usage patterns.
 
 To find the optimal configuration, you should run benchmark tests to evaluate different setups.
 
-LXD provides a benchmarking tool for this purpose.
+Incus provides a benchmarking tool for this purpose.
 This tool allows you to initialize or launch a number of containers and measure the time it takes for the system to create the containers.
 If you run this tool repeatedly with different configurations, you can compare the performance and evaluate which is the ideal configuration.
 
@@ -17,17 +17,17 @@ If you run this tool repeatedly with different configurations, you can compare t
 If you’re using the snap, the benchmarking tool is automatically installed.
 It is available as `lxd.benchmark`.
 
-Otherwise, if you have installed LXD through your distribution's package manager or built from source, the tool should be available as `lxd-benchmark`.
+Otherwise, if you have installed Incus through your distribution's package manager or built from source, the tool should be available as `lxd-benchmark`.
 If it isn't, make sure that you have `go` (version 1.18 or later) installed and install the tool with the following command:
 
     go install github.com/canonical/lxd/lxd-benchmark@latest
 
 ## Run the tool
 
-Run `lxd.benchmark [action]` to measure the performance of your LXD setup.
+Run `lxd.benchmark [action]` to measure the performance of your Incus setup.
 (This command assumes that you are using the snap; otherwise, replace `lxd.benchmark` with `lxd-benchmark`, also in the following examples.)
 
-The benchmarking tool uses the current LXD configuration.
+The benchmarking tool uses the current Incus configuration.
 If you want to use a different project, specify it with `--project`.
 
 For all actions, you can specify the number of parallel threads to use (default is to use a dynamic batch size).

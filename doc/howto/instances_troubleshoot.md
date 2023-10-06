@@ -22,12 +22,12 @@ To troubleshoot the problem, complete the following steps:
          incus console <instance_name> --show-log
 
    Detailed server information
-   : The LXD snap includes a tool that collects the relevant server information for debugging.
+   : The Incus snap includes a tool that collects the relevant server information for debugging.
      Enter the following command to run it:
 
          sudo lxd.buginfo
 
-1. Reboot the machine that runs your LXD server.
+1. Reboot the machine that runs your Incus server.
 1. Try starting your instance again.
    If the error occurs again, compare the logs to check if it is the same error.
 
@@ -51,10 +51,10 @@ Failed to mount proc at /proc: Operation not permitted
 ```
 
 The errors here say that `/sys` and `/proc` cannot be mounted - which is correct in an unprivileged container.
-However, LXD mounts these file systems automatically if it can.
+However, Incus mounts these file systems automatically if it can.
 
 The {doc}`container requirements <../container-environment>` specify that every container must come with an empty `/dev`, `/proc` and `/sys` directory, and that `/sbin/init` must exist.
-If those directories don't exist, LXD cannot mount them, and `systemd` will then try to do so.
+If those directories don't exist, Incus cannot mount them, and `systemd` will then try to do so.
 As this is an unprivileged container, `systemd` does not have the ability to do this, and it then freezes.
 
 So you can see the environment before anything is changed, and you can explicitly change the init system in a container using the `raw.lxc` configuration parameter.
@@ -89,5 +89,5 @@ sys
 [root@systemd /]# exit
 ```
 
-Because LXD tries to auto-heal, it created some of the directories when it was starting up.
+Because Incus tries to auto-heal, it created some of the directories when it was starting up.
 Shutting down and restarting the container fixes the problem, but the original cause is still there - the template does not contain the required files.

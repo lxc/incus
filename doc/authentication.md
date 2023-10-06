@@ -6,9 +6,9 @@ relatedlinks: https://www.youtube.com/watch?v=6O0q3rSWr8A
 (authentication)=
 # Remote API authentication
 
-Remote communications with the LXD daemon happen using JSON over HTTPS.
+Remote communications with the Incus daemon happen using JSON over HTTPS.
 
-To be able to access the remote API, clients must authenticate with the LXD server.
+To be able to access the remote API, clients must authenticate with the Incus server.
 The following authentication methods are supported:
 
 - {ref}`authentication-tls-certs`
@@ -21,7 +21,7 @@ The following authentication methods are supported:
 ```
 
 When using {abbr}`TLS (Transport Layer Security)` client certificates for authentication, both the client and the server will generate a key pair the first time they're launched.
-The server will use that key pair for all HTTPS connections to the LXD socket.
+The server will use that key pair for all HTTPS connections to the Incus socket.
 The client will use its certificate as a client certificate for any client-server communication.
 
 To cause certificates to be regenerated, simply remove the old ones.
@@ -31,7 +31,7 @@ On the next connection, a new certificate is generated.
 
 The supported protocol must be TLS 1.3 or better.
 
-It's possible to force LXD to accept TLS 1.2 by setting the `LXD_INSECURE_TLS` environment variable on both client and server.
+It's possible to force Incus to accept TLS 1.2 by setting the `Incus_INSECURE_TLS` environment variable on both client and server.
 However this isn't a supported setup and should only ever be used when forced to use an outdated corporate proxy.
 
 All communications must use perfect forward secrecy, and ciphers must be limited to strong elliptic curve ones (such as ECDHE-RSA or ECDHE-ECDSA).
@@ -45,7 +45,7 @@ any backward compatibility to broken protocol or ciphers.
 (authentication-trusted-clients)=
 ### Trusted TLS clients
 
-You can obtain the list of TLS certificates trusted by a LXD server with [`incus config trust list`](incus_config_trust_list.md).
+You can obtain the list of TLS certificates trusted by a Incus server with [`incus config trust list`](incus_config_trust_list.md).
 
 Trusted clients can be added in either of the following ways:
 
@@ -89,13 +89,13 @@ The clients can then add their certificates to the server's trust store by provi
 <!-- Include start NAT authentication -->
 
 ```{note}
-If your LXD server is behind NAT, you must specify its external public address when adding it as a remote for a client:
+If your Incus server is behind NAT, you must specify its external public address when adding it as a remote for a client:
 
     incus remote add <name> <IP_address>
 
 When you are prompted for the admin password, specify the generated token.
 
-When generating the token on the server, LXD includes a list of IP addresses that the client can use to access the server.
+When generating the token on the server, Incus includes a list of IP addresses that the client can use to access the server.
 However, if the server is behind NAT, these addresses might be local addresses that the client cannot connect to.
 In this case, you must specify the external address manually.
 ```
@@ -106,7 +106,7 @@ Alternatively, the clients can provide the token directly when adding the remote
 
 ### Using a PKI system
 
-In a {abbr}`PKI (Public key infrastructure)` setup, a system administrator manages a central PKI that issues client certificates for all the LXD clients and server certificates for all the LXD daemons.
+In a {abbr}`PKI (Public key infrastructure)` setup, a system administrator manages a central PKI that issues client certificates for all the Incus clients and server certificates for all the Incus daemons.
 
 To enable PKI mode, complete the following steps:
 
@@ -117,7 +117,7 @@ To enable PKI mode, complete the following steps:
 1. Place the certificates issued by the CA on the clients and the server, replacing the automatically generated ones.
 1. Restart the server.
 
-In that mode, any connection to a LXD daemon will be done using the
+In that mode, any connection to a Incus daemon will be done using the
 pre-seeded CA certificate.
 
 If the server certificate isn't signed by the CA, the connection will simply go through the normal authentication mechanism.
@@ -128,38 +128,38 @@ Note that the generated certificates are not automatically trusted. You must sti
 (authentication-openid)=
 ## OpenID Connect authentication
 
-LXD supports using [OpenID Connect](https://openid.net/connect/) to authenticate users through an {abbr}`OIDC (OpenID Connect)` Identity Provider.
+Incus supports using [OpenID Connect](https://openid.net/connect/) to authenticate users through an {abbr}`OIDC (OpenID Connect)` Identity Provider.
 
 ```{note}
 OpenID Connect authentication is currently under development.
-Starting with LXD 5.13, authentication through OpenID Connect is supported, but there is no user role handling in place so far.
-Any user that authenticates through the configured OIDC Identity Provider gets full access to LXD.
+Starting with Incus 5.13, authentication through OpenID Connect is supported, but there is no user role handling in place so far.
+Any user that authenticates through the configured OIDC Identity Provider gets full access to Incus.
 ```
 
-To configure LXD to use OIDC authentication, set the [`oidc.*`](server-options-oidc) server configuration options.
+To configure Incus to use OIDC authentication, set the [`oidc.*`](server-options-oidc) server configuration options.
 Your OIDC provider must be configured to enable the [Device Authorization Grant](https://oauth.net/2/device-flow/) type.
 
-To add a remote pointing to a LXD server configured with OIDC authentication, run [`incus remote add <remote_name> <remote_address>`](incus_remote_add.md).
-You are then prompted to authenticate through your web browser, where you must confirm the device code that LXD uses.
-The LXD client then retrieves and stores the access and refresh tokens and provides those to LXD for all interactions.
+To add a remote pointing to a Incus server configured with OIDC authentication, run [`incus remote add <remote_name> <remote_address>`](incus_remote_add.md).
+You are then prompted to authenticate through your web browser, where you must confirm the device code that Incus uses.
+The Incus client then retrieves and stores the access and refresh tokens and provides those to Incus for all interactions.
 
 (authentication-server-certificate)=
 ## TLS server certificate
 
-LXD supports issuing server certificates using {abbr}`ACME (Automatic Certificate Management Environment)` services, for example, [Let's Encrypt](https://letsencrypt.org/).
+Incus supports issuing server certificates using {abbr}`ACME (Automatic Certificate Management Environment)` services, for example, [Let's Encrypt](https://letsencrypt.org/).
 
 To enable this feature, set the following server configuration:
 
 - {config:option}`server-acme:acme.domain`: The domain for which the certificate should be issued.
 - {config:option}`server-acme:acme.email`: The email address used for the account of the ACME service.
 - {config:option}`server-acme:acme.agree_tos`: Must be set to `true` to agree to the ACME service's terms of service.
-- {config:option}`server-acme:acme.ca_url`: The directory URL of the ACME service. By default, LXD uses "Let's Encrypt".
+- {config:option}`server-acme:acme.ca_url`: The directory URL of the ACME service. By default, Incus uses "Let's Encrypt".
 
-For this feature to work, LXD must be reachable from port 80.
+For this feature to work, Incus must be reachable from port 80.
 This can be achieved by using a reverse proxy such as [HAProxy](http://www.haproxy.org/).
 
 Here's a minimal HAProxy configuration that uses `lxd.example.net` as the domain.
-After the certificate has been issued, LXD will be reachable from `https://lxd.example.net/`.
+After the certificate has been issued, Incus will be reachable from `https://lxd.example.net/`.
 
 ```
 # Global configuration
@@ -223,7 +223,7 @@ frontend sni-dispatcher
   default_backend http-403
   use_backend lxd-nodes if { req.ssl_sni -i lxd.example.net }
 
-# LXD nodes
+# Incus nodes
 backend lxd-nodes
   mode tcp
 

@@ -12,10 +12,10 @@ Network zones are available for the {ref}`network-ovn` and the {ref}`network-bri
 ```{youtube} https://www.youtube.com/watch?v=2MqpJOogNVQ
 ```
 
-Network zones can be used to serve DNS records for LXD networks.
+Network zones can be used to serve DNS records for Incus networks.
 
 You can use network zones to automatically maintain valid forward and reverse records for all your instances.
-This can be useful if you are operating a LXD cluster with multiple instances across many networks.
+This can be useful if you are operating a Incus cluster with multiple instances across many networks.
 
 Having DNS records for each instance makes it easier to access network services running on an instance.
 It is also important when hosting, for example, an outbound SMTP service.
@@ -27,7 +27,7 @@ Each network can be associated to different zones:
 - IPv4 reverse DNS records - single zone
 - IPv6 reverse DNS records - single zone
 
-LXD will then automatically manage forward and reverse records for all instances, network gateways and downstream network ports and serve those zones for zone transfer to the operator’s production DNS servers.
+Incus will then automatically manage forward and reverse records for all instances, network gateways and downstream network ports and serve those zones for zone transfer to the operator’s production DNS servers.
 
 ## Project views
 
@@ -105,15 +105,15 @@ For example, running `dig @<DNS_server_IP> -p <DNS_server_PORT> axfr 2.0.192.in-
 
 To make use of network zones, you must enable the built-in DNS server.
 
-To do so, set the {config:option}`server-core:core.dns_address` configuration option to a local address on the LXD server.
+To do so, set the {config:option}`server-core:core.dns_address` configuration option to a local address on the Incus server.
 To avoid conflicts with an existing DNS we suggest not using the port 53.
 This is the address on which the DNS server will listen.
-Note that in a LXD cluster, the address may be different on each cluster member.
+Note that in a Incus cluster, the address may be different on each cluster member.
 
 ```{note}
 The built-in DNS server supports only zone transfers through AXFR.
 It cannot be directly queried for DNS records.
-Therefore, the built-in DNS server must be used in combination with an external DNS server (`bind9`, `nsd`, ...), which will transfer the entire zone from LXD, refresh it upon expiry and provide authoritative answers to DNS requests.
+Therefore, the built-in DNS server must be used in combination with an external DNS server (`bind9`, `nsd`, ...), which will transfer the entire zone from Incus, refresh it upon expiry and provide authoritative answers to DNS requests.
 
 Authentication for zone transfers is configured on a per-zone basis, with peers defined in the zone configuration and a combination of IP address matching and TSIG-key based authentication.
 ```

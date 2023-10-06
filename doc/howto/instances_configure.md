@@ -109,7 +109,7 @@ See [`PATCH /1.0/instances/{name}`](swagger:/instances/instance_patch) and [`PUT
 ```
 
 ```{group-tab} UI
-The LXD UI does not distinguish between instance options and instance properties.
+The Incus UI does not distinguish between instance options and instance properties.
 Therefore, you can configure instance properties in the same way as you {ref}`configure instance options <instances-configure-options>`.
 ```
 ````

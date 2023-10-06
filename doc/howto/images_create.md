@@ -26,7 +26,7 @@ If an image with the same name already exists, add the `--reuse` flag to overwri
 See [`incus publish --help`](incus_publish.md) for a full list of available flags.
 
 The publishing process can take quite a while because it generates a tarball from the instance or snapshot and then compresses it.
-As this can be particularly I/O and CPU intensive, publish operations are serialized by LXD.
+As this can be particularly I/O and CPU intensive, publish operations are serialized by Incus.
 
 ### Prepare the instance for publishing
 

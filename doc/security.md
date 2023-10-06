@@ -6,4 +6,4 @@
 
 explanation/security
 authentication
-Expose LXD to the network <howto/server_expose>
+Expose Incus to the network <howto/server_expose>

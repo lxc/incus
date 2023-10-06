@@ -1,14 +1,14 @@
 (first-steps)=
-# First steps with LXD
+# First steps with Incus
 
-This tutorial guides you through the first steps with LXD.
-It covers installing and initializing LXD, creating and configuring some instances, interacting with the instances, and creating snapshots.
+This tutorial guides you through the first steps with Incus.
+It covers installing and initializing Incus, creating and configuring some instances, interacting with the instances, and creating snapshots.
 
-After going through these steps, you will have a general idea of how to use LXD, and you can start exploring more advanced use cases!
+After going through these steps, you will have a general idea of how to use Incus, and you can start exploring more advanced use cases!
 
-## Install and initialize LXD
+## Install and initialize Incus
 
-The easiest way to install LXD is to install the snap package.
+The easiest way to install Incus is to install the snap package.
 If you prefer a different installation method, or use a Linux distribution that is not supported by the snap package, see {ref}`installing`.
 
 1. Install `snapd`:
@@ -25,7 +25,7 @@ If you prefer a different installation method, or use a Linux distribution that 
       kernel  5.15.0-73-generic
       ```
 
-      If you see a table of version numbers, snap is installed and you can continue with the next step of installing LXD.
+      If you see a table of version numbers, snap is installed and you can continue with the next step of installing Incus.
 
    1. If the command returns an error, run the following commands to install the latest version of ``snapd`` on Ubuntu:
 
@@ -36,7 +36,7 @@ If you prefer a different installation method, or use a Linux distribution that 
       For other Linux distributions, see the [installation instructions](https://snapcraft.io/docs/core/install) in the Snapcraft documentation.
       ```
 
-1. Enter the following command to install LXD:
+1. Enter the following command to install Incus:
 
        sudo snap install lxd
 
@@ -44,7 +44,7 @@ If you prefer a different installation method, or use a Linux distribution that 
 
        sudo snap refresh lxd
 
-1. Enter the following command to initialize LXD:
+1. Enter the following command to initialize Incus:
 
        incus admin init --minimal
 
@@ -53,20 +53,20 @@ If you prefer a different installation method, or use a Linux distribution that 
 
 ## Launch and inspect instances
 
-LXD is image based and can load images from different image servers.
+Incus is image based and can load images from different image servers.
 In this tutorial, we will use the official [`ubuntu:`](https://cloud-images.ubuntu.com/releases/) image server.
 
 You can list all images that are available on this server with:
 
     incus image list ubuntu:
 
-See {ref}`images` for more information about the images that LXD uses.
+See {ref}`images` for more information about the images that Incus uses.
 
 Now, let's start by launching a few instances.
 With *instance*, we mean either a container or a virtual machine.
 See {ref}`containers-and-vms` for information about the difference between the two instance types.
 
-For managing instances, we use the LXD command line client `lxc`.
+For managing instances, we use the Incus command line client `lxc`.
 
 1. Launch a container called `first` using the Ubuntu 22.04 image:
 
@@ -93,7 +93,7 @@ For managing instances, we use the LXD command line client `lxc`.
        incus launch ubuntu:22.04 ubuntu-vm --vm
 
    ```{note}
-   Even though you are using the same image name to launch the instance, LXD downloads a slightly different image that is compatible with VMs.
+   Even though you are using the same image name to launch the instance, Incus downloads a slightly different image that is compatible with VMs.
    ```
 
 1. Check the list of instances that you launched:

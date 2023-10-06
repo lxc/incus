@@ -9,7 +9,7 @@ By default, traffic between two OVN networks goes through the uplink network.
 This path is inefficient, however, because packets must leave the OVN subsystem and transit through the host's networking stack (and, potentially, an external network) and back into the OVN subsystem of the target network.
 Depending on how the host's networking is configured, this might limit the available bandwidth (if the OVN overlay network is on a higher bandwidth network than the host's external network).
 
-Therefore, LXD allows creating peer routing relationships between two OVN networks.
+Therefore, Incus allows creating peer routing relationships between two OVN networks.
 Using this method, traffic between the two networks can go directly from one OVN network to the other and thus stays within the OVN subsystem, rather than transiting through the uplink network.
 
 ## Create a routing relationship between networks

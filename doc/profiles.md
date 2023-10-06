@@ -64,7 +64,7 @@ Check the contents of an existing profile or instance configuration for the requ
 For example, the `default` profile might look like this:
 
     config: {}
-    description: Default LXD profile
+    description: Default Incus profile
     devices:
       eth0:
         name: eth0

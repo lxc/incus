@@ -11,14 +11,14 @@ Enter the following command to create a container:
     incus launch|init <image_server>:<image_name> <instance_name> [flags]
 
 Image
-: Images contain a basic operating system (for example, a Linux distribution) and some LXD-related information.
+: Images contain a basic operating system (for example, a Linux distribution) and some Incus-related information.
   Images for various operating systems are available on the built-in remote image servers.
   See {ref}`images` for more information.
 
   Unless the image is available locally, you must specify the name of the image server and the name of the image (for example, `ubuntu:22.04` for the official 22.04 Ubuntu image).
 
 Instance name
-: Instance names must be unique within a LXD deployment (also within a cluster).
+: Instance names must be unique within a Incus deployment (also within a cluster).
   See {ref}`instance-properties` for additional requirements.
 
 Flags
@@ -78,7 +78,7 @@ To launch a virtual machine on the cluster member `server2`, enter the following
 
 ### Launch a container with a specific instance type
 
-LXD supports simple instance types for clouds.
+Incus supports simple instance types for clouds.
 Those are represented as a string that can be passed at instance creation time.
 
 The syntax allows the three following forms:

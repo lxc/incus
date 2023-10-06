@@ -1,7 +1,7 @@
 (provided-metrics)=
 # Provided metrics
 
-LXD provides a number of instance metrics and internal metrics.
+Incus provides a number of instance metrics and internal metrics.
 See {ref}`metrics` for instructions on how to work with these metrics.
 
 ## Instance metrics

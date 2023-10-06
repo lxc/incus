@@ -1,18 +1,18 @@
 # How to add remote servers
 
-Remote servers are a concept in the LXD command-line client.
-By default, the command-line client interacts with the local LXD daemon, but you can add other servers or clusters to interact with.
+Remote servers are a concept in the Incus command-line client.
+By default, the command-line client interacts with the local Incus daemon, but you can add other servers or clusters to interact with.
 
 One use case for remote servers is to distribute images that can be used to create instances on local servers.
 See {ref}`remote-image-servers` for more information.
 
-You can also add a full LXD server as a remote server to your client.
+You can also add a full Incus server as a remote server to your client.
 In this case, you can interact with the remote server in the same way as with your local daemon.
 For example, you can manage instances or update the server configuration on the remote server.
 
 ## Authentication
 
-To be able to add a LXD server as a remote server, the server's API must be exposed, which means that its {config:option}`server-core:core.https_address` server configuration option must be set.
+To be able to add a Incus server as a remote server, the server's API must be exposed, which means that its {config:option}`server-core:core.https_address` server configuration option must be set.
 
 When adding the server, you must then authenticate with it using the chosen method for {ref}`authentication`.
 
@@ -26,7 +26,7 @@ See {ref}`server-expose` for more information.
    :end-before: <!-- Include end list remotes -->
 ```
 
-## Add a remote LXD server
+## Add a remote Incus server
 
 % Include parts of the content from file [howto/images_remote.md](howto/images_remote.md)
 ```{include} howto/images_remote.md
@@ -36,7 +36,7 @@ See {ref}`server-expose` for more information.
 
 ## Select a default remote
 
-The LXD command-line client is pre-configured with the `local` remote, which is the local LXD daemon.
+The Incus command-line client is pre-configured with the `local` remote, which is the local Incus daemon.
 
 To select a different remote as the default remote, enter the following command:
 
@@ -49,13 +49,13 @@ To see which server is configured as the default remote, enter the following com
 ## Configure a global remote
 
 You can configure remotes on a global, per-system basis.
-These remotes are available for every user of the LXD server for which you add the configuration.
+These remotes are available for every user of the Incus server for which you add the configuration.
 
 Users can override these system remotes (for example, by running [`incus remote rename`](incus_remote_rename.md) or [`incus remote set-url`](incus_remote_set-url.md)), which results in the remote and its associated certificates being copied to the user configuration.
 
 To configure a global remote, edit the `config.yml` file that is located in one of the following directories:
 
-- the directory specified by `LXD_GLOBAL_CONF` (if defined)
+- the directory specified by `Incus_GLOBAL_CONF` (if defined)
 - `/var/snap/lxd/common/global-conf/` (if you use the snap)
 - `/etc/lxd/` (otherwise)
 

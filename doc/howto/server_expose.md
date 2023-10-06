@@ -1,12 +1,12 @@
 (server-expose)=
-# How to expose LXD to the network
+# How to expose Incus to the network
 
-By default, LXD can be used only by local users through a Unix socket and is not accessible over the network.
+By default, Incus can be used only by local users through a Unix socket and is not accessible over the network.
 
-To expose LXD to the network, you must configure it to listen to addresses other than the local Unix socket.
+To expose Incus to the network, you must configure it to listen to addresses other than the local Unix socket.
 To do so, set the {config:option}`server-core:core.https_address` server configuration option.
 
-For example, to allow access to the LXD server on port `8443`, enter the following command:
+For example, to allow access to the Incus server on port `8443`, enter the following command:
 
     incus config set core.https_address :8443
 
@@ -39,12 +39,12 @@ For example:
 :input: incus config set core.https_address 10.68.216.12
 ```
 
-All remote clients can then connect to LXD and access any image that is marked for public use.
+All remote clients can then connect to Incus and access any image that is marked for public use.
 
 (server-authenticate)=
-## Authenticate with the LXD server
+## Authenticate with the Incus server
 
-To be able to access the remote API, clients must authenticate with the LXD server.
+To be able to access the remote API, clients must authenticate with the Incus server.
 There are several authentication methods; see {ref}`authentication` for detailed information.
 
 The recommended method is to add the client's TLS certificate to the server's trust store through a trust token.

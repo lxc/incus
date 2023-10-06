@@ -1,4 +1,4 @@
-# How to debug LXD
+# How to debug Incus
 
 For information on debugging instance issues, see {ref}`instances-troubleshoot`.
 
@@ -20,7 +20,7 @@ This command will monitor messages as they appear on remote server.
 
 ## REST API through local socket
 
-On server side the most easy way is to communicate with LXD through
+On server side the most easy way is to communicate with Incus through
 local socket. This command accesses `GET /1.0` and formats JSON into
 human readable form using [jq](https://stedolan.github.io/jq/tutorial/)
 utility:
@@ -39,7 +39,7 @@ See the [RESTful API](rest-api.md) for available API.
 
 ## REST API through HTTPS
 
-{ref}`HTTPS connection to LXD <security>` requires valid
+{ref}`HTTPS connection to Incus <security>` requires valid
 client certificate that is generated on first [`incus remote add`](incus_remote_add.md). This
 certificate should be passed to connection tools for authentication
 and encryption.
@@ -68,7 +68,7 @@ wget --no-check-certificate --certificate=$HOME/snap/lxd/common/config/client.cr
 ### With browser
 
 Some browser plugins provide convenient interface to create, modify
-and replay web requests. To authenticate against LXD server, convert
+and replay web requests. To authenticate against Incus server, convert
 `lxc` client certificate into importable format and import it into
 browser.
 
@@ -80,14 +80,14 @@ openssl pkcs12 -clcerts -inkey client.key -in client.crt -export -out client.pfx
 
 After that, opening [`https://127.0.0.1:8443/1.0`](https://127.0.0.1:8443/1.0) should work as expected.
 
-## Debug the LXD database
+## Debug the Incus database
 
 The files of the global {ref}`database <database>` are stored under the `./database/global`
-sub-directory of your LXD data directory (e.g. `/var/lib/lxd/database/global` or
+sub-directory of your Incus data directory (e.g. `/var/lib/lxd/database/global` or
 `/var/snap/lxd/common/lxd/database/global` for snap users).
 
 Since each member of the cluster also needs to keep some data which is specific
-to that member, LXD also uses a plain SQLite database (the "local" database),
+to that member, Incus also uses a plain SQLite database (the "local" database),
 which you can find in `./database/local.db`.
 
 Backups of the global database directory and of the local database file are made
@@ -108,13 +108,13 @@ against the local or global database, you can use the `incus admin sql` command 
 `incus admin sql --help` for details).
 
 You should only need to do that in order to recover from broken updates or bugs.
-Please consult the LXD team first (creating a [GitHub
+Please consult the Incus team first (creating a [GitHub
 issue](https://github.com/canonical/lxd/issues/new) or
 [forum](https://discourse.ubuntu.com/c/lxd/) post).
 
-### Running custom queries at LXD daemon startup
+### Running custom queries at Incus daemon startup
 
-In case the LXD daemon fails to start after an upgrade because of SQL data
+In case the Incus daemon fails to start after an upgrade because of SQL data
 migration bugs or similar problems, it's possible to recover the situation by
 creating `.sql` files containing queries that repair the broken update.
 
@@ -126,7 +126,7 @@ Those files will be loaded very early in the daemon startup sequence and deleted
 if the queries were successful (if they fail, no state will change as they are
 run in a SQL transaction).
 
-As above, please consult the LXD team first.
+As above, please consult the Incus team first.
 
 ### Syncing the cluster database to disk
 

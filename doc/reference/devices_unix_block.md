@@ -2,7 +2,7 @@
 # Type: `unix-block`
 
 ```{youtube} https://www.youtube.com/watch?v=C2e3LD5wLI8
-:title: LXD Unix devices - YouTube
+:title: Incus Unix devices - YouTube
 ```
 
 ```{note}

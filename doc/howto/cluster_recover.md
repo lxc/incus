@@ -10,15 +10,15 @@ If this is not possible, there are a few ways to recover the cluster, depending 
 See the following sections for details.
 
 ```{note}
-When your cluster is in a state that needs recovery, most `lxc` commands do not work, because the LXD client cannot connect to the LXD daemon.
+When your cluster is in a state that needs recovery, most `lxc` commands do not work, because the Incus client cannot connect to the Incus daemon.
 
-Therefore, the commands to recover the cluster are provided directly by the LXD daemon (`lxd`).
+Therefore, the commands to recover the cluster are provided directly by the Incus daemon (`lxd`).
 Run `incus admin cluster --help` for an overview of all available commands.
 ```
 
 ## Recover from quorum loss
 
-Every LXD cluster has a specific number of members (configured through {config:option}`server-cluster:cluster.max_voters`) that serve as voting members of the distributed database.
+Every Incus cluster has a specific number of members (configured through {config:option}`server-cluster:cluster.max_voters`) that serve as voting members of the distributed database.
 If you permanently lose a majority of these cluster members (for example, you have a three-member cluster and you lose two members), the cluster loses quorum and becomes unavailable.
 However, if at least one database member survives, it is possible to recover the cluster.
 
@@ -31,17 +31,17 @@ To do so, complete the following steps:
    This command shows which cluster members have one of the database roles.
 1. Pick one of the listed database members that is still online as the new leader.
    Log on to the machine (if it differs from the one you are already logged on to).
-1. Make sure that the LXD daemon is not running on the machine.
+1. Make sure that the Incus daemon is not running on the machine.
    For example, if you're using the snap:
 
        sudo snap stop lxd
 
-1. Log on to all other cluster members that are still online and stop the LXD daemon.
+1. Log on to all other cluster members that are still online and stop the Incus daemon.
 1. On the server that you picked as the new leader, run the following command:
 
        sudo incus admin cluster recover-from-quorum-loss
 
-1. Start the LXD daemon again on all machines, starting with the new leader.
+1. Start the Incus daemon again on all machines, starting with the new leader.
    For example, if you're using the snap:
 
        sudo snap start lxd
@@ -69,7 +69,7 @@ You can edit the {ref}`clustering-member-roles` of the different members, but wi
 
 Log on to each cluster member and complete the following steps:
 
-1. Stop the LXD daemon.
+1. Stop the Incus daemon.
    For example, if you're using the snap:
 
        sudo snap stop lxd
@@ -100,7 +100,7 @@ Log on to each cluster member and complete the following steps:
 
    You can edit the addresses and the roles.
 
-After doing the changes on all cluster members, start the LXD daemon on all members again.
+After doing the changes on all cluster members, start the Incus daemon on all members again.
 For example, if you're using the snap:
 
     sudo snap start lxd

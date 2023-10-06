@@ -1,7 +1,7 @@
 (server)=
 # Server configuration
 
-The LXD server can be configured through a set of key/value configuration options.
+The Incus server can be configured through a set of key/value configuration options.
 
 The key/value configuration is namespaced.
 The following options are available:

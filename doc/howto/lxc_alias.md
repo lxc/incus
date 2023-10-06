@@ -1,7 +1,7 @@
 (lxc-alias)=
 # How to add command aliases
 
-The LXD command-line client supports adding aliases for commands that you use frequently.
+The Incus command-line client supports adding aliases for commands that you use frequently.
 You can use aliases as shortcuts for longer commands, or to automatically add flags to existing commands.
 
 To manage command aliases, you use the [`incus alias`](incus_alias.md) command.

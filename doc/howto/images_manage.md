@@ -60,7 +60,7 @@ To set a specific image property that is located under the `properties` key, ent
 
 ```{note}
 These properties can be used to convey information about the image.
-They do not configure LXD's behavior in any way.
+They do not configure Incus's behavior in any way.
 ```
 
 To edit the full image properties, including the top-level properties, enter the following command:
@@ -95,7 +95,7 @@ If you want to keep the alias name, but point the alias to a different image (fo
 (images-manage-export)=
 ## Export an image to a file
 
-Images are located in the image store of your local server or a remote LXD server.
+Images are located in the image store of your local server or a remote Incus server.
 You can export them to a file though.
 This method can be useful to back up image files or to transfer them to an air-gapped environment.
 

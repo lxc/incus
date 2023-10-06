@@ -1,8 +1,8 @@
 (network-bridge-resolved)=
 # How to integrate with `systemd-resolved`
 
-If the system that runs LXD uses `systemd-resolved` to perform DNS lookups, you should notify `resolved` of the domains that LXD can resolve.
-To do so, add the DNS servers and domains provided by a LXD network bridge to the `resolved` configuration.
+If the system that runs Incus uses `systemd-resolved` to perform DNS lookups, you should notify `resolved` of the domains that Incus can resolve.
+To do so, add the DNS servers and domains provided by a Incus network bridge to the `resolved` configuration.
 
 ```{note}
 The `dns.mode` option (see {ref}`network-bridge-options`) must be set to `managed` or `dynamic` if you want to use this feature.
@@ -60,17 +60,17 @@ This command has been deprecated in newer releases of `systemd`, but it is still
 ```
 
 The `resolved` configuration persists as long as the bridge exists.
-You must repeat the commands after each reboot and after LXD is restarted, or make it persistent as described below.
+You must repeat the commands after each reboot and after Incus is restarted, or make it persistent as described below.
 
 ## Make the `resolved` configuration persistent
 
-You can automate the `systemd-resolved` DNS configuration, so that it is applied on system start and takes effect when LXD creates the network interface.
+You can automate the `systemd-resolved` DNS configuration, so that it is applied on system start and takes effect when Incus creates the network interface.
 
 To do so, create a `systemd` unit file named `/etc/systemd/system/lxd-dns-<network_bridge>.service` with the following content:
 
 ```
 [Unit]
-Description=LXD per-link DNS configuration for <network_bridge>
+Description=Incus per-link DNS configuration for <network_bridge>
 BindsTo=sys-subsystem-net-devices-<network_bridge>.device
 After=sys-subsystem-net-devices-<network_bridge>.device
 
@@ -93,7 +93,7 @@ Then enable and start the service with the following commands:
     sudo systemctl daemon-reload
     sudo systemctl enable --now lxd-dns-<network_bridge>
 
-If the respective bridge already exists (because LXD is already running), you can use the following command to check that the new service has started:
+If the respective bridge already exists (because Incus is already running), you can use the following command to check that the new service has started:
 
     sudo systemctl status lxd-dns-<network_bridge>.service
 
@@ -102,7 +102,7 @@ You should see output similar to the following:
 ```{terminal}
 :input: sudo systemctl status lxd-dns-lxdbr0.service
 
-● lxd-dns-lxdbr0.service - LXD per-link DNS configuration for lxdbr0
+● lxd-dns-lxdbr0.service - Incus per-link DNS configuration for lxdbr0
      Loaded: loaded (/etc/systemd/system/lxd-dns-lxdbr0.service; enabled; vendor preset: enabled)
      Active: inactive (dead) since Mon 2021-06-14 17:03:12 BST; 1min 2s ago
     Process: 9433 ExecStart=/usr/bin/resolvectl dns lxdbr0 n.n.n.n (code=exited, status=0/SUCCESS)

@@ -153,8 +153,8 @@ For external links, use only the URL, or Markdown syntax if you want to override
   - Output
 * - `https://ubuntu.com/lxd`
   - [{spellexception}`https://ubuntu.com/lxd`](https://ubuntu.com/lxd)
-* - `[LXD](https://ubuntu.com/lxd)`
-  - [LXD](https://ubuntu.com/lxd)
+* - `[Incus](https://ubuntu.com/lxd)`
+  - [Incus](https://ubuntu.com/lxd)
 ```
 
 To display a URL as text and prevent it from being linked, add a `<span></span>`:
@@ -192,13 +192,13 @@ To reference a documentation page, use MyST syntax to automatically extract the 
   - [](index)
   -
   - Do not use.
-* - `[LXD documentation](index)`
-  - [LXD documentation](index)
-  - [LXD documentation](index)
+* - `[Incus documentation](index)`
+  - [Incus documentation](index)
+  - [Incus documentation](index)
   - Preferred when overriding the link text.
-* - `` {doc}`LXD documentation <index>` ``
-  - {doc}`LXD documentation <index>`
-  - {doc}<span></span>`LXD documentation <index>`
+* - `` {doc}`Incus documentation <index>` ``
+  - {doc}`Incus documentation <index>`
+  - {doc}<span></span>`Incus documentation <index>`
   - Alternative when overriding the link text.
 
 ```

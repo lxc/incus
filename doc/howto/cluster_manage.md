@@ -58,7 +58,7 @@ For example:
     incus cluster role add server1 event-hub
 
 ```{note}
-You can add or remove only those roles that are not assigned automatically by LXD.
+You can add or remove only those roles that are not assigned automatically by Incus.
 ```
 
 ### Edit the cluster member configuration
@@ -108,13 +108,13 @@ To force-remove a cluster member, enter the following command on one of the clus
 
 ```{caution}
 Force-removing a cluster member will leave the member's database in an inconsistent state (for example, the storage pool on the member will not be removed).
-As a result, it will not be possible to re-initialize LXD later, and the server must be fully reinstalled.
+As a result, it will not be possible to re-initialize Incus later, and the server must be fully reinstalled.
 ```
 
 ## Upgrade cluster members
 
 To upgrade a cluster, you must upgrade all of its members.
-All members must be upgraded to the same version of LXD.
+All members must be upgraded to the same version of Incus.
 
 ```{caution}
 Do not attempt to upgrade your cluster if any of its members are offline.
@@ -123,13 +123,13 @@ Offline members cannot be upgraded, and your cluster will end up in a blocked st
 Also note that if you are using the snap, upgrades might happen automatically, so to prevent any issues you should always recover or remove offline members immediately.
 ```
 
-To upgrade a single member, simply upgrade the LXD package on the host and restart the LXD daemon.
-For example, if you are using the snap then refresh to the latest version and cohort in the current channel (also reloads LXD):
+To upgrade a single member, simply upgrade the Incus package on the host and restart the Incus daemon.
+For example, if you are using the snap then refresh to the latest version and cohort in the current channel (also reloads Incus):
 
     sudo snap refresh lxd --cohort="+"
 
 If the new version of the daemon has database schema or API changes, the upgraded member might transition into a "blocked" state.
-In this case, the member does not serve any LXD API requests (which means that `lxc` commands don't work on that member anymore), but any running instances will continue to run.
+In this case, the member does not serve any Incus API requests (which means that `lxc` commands don't work on that member anymore), but any running instances will continue to run.
 
 This happens if there are other cluster members that have not been upgraded and are therefore running an older version.
 Run [`incus cluster list`](incus_cluster_list.md) on a cluster member that is not blocked to see if any members are blocked.
@@ -139,7 +139,7 @@ When you upgrade the last member, the blocked members will notice that all serve
 
 ## Update the cluster certificate
 
-In a LXD cluster, the API on all servers responds with the same shared certificate, which is usually a standard self-signed certificate with an expiry set to ten years.
+In a Incus cluster, the API on all servers responds with the same shared certificate, which is usually a standard self-signed certificate with an expiry set to ten years.
 
 The certificate is stored at `/var/snap/lxd/common/lxd/cluster.crt` (if you use the snap) or `/var/lib/lxd/cluster.crt` (otherwise) and is the same on all cluster members.
 

@@ -39,14 +39,14 @@ Path on the host
   The path is required for file systems, but not for block devices.
 
 Ceph RBD
-: LXD can use Ceph to manage an internal file system for the instance, but if you have an existing, externally managed Ceph RBD that you would like to use for an instance, you can add it with the following command:
+: Incus can use Ceph to manage an internal file system for the instance, but if you have an existing, externally managed Ceph RBD that you would like to use for an instance, you can add it with the following command:
 
       incus config device add <instance_name> <device_name> disk source=ceph:<pool_name>/<volume_name> ceph.user_name=<user_name> ceph.cluster_name=<cluster_name> [path=<path_in_instance>]
 
   The path is required for file systems, but not for block devices.
 
 CephFS
-: LXD can use Ceph to manage an internal file system for the instance, but if you have an existing, externally managed Ceph file system that you would like to use for an instance, you can add it with the following command:
+: Incus can use Ceph to manage an internal file system for the instance, but if you have an existing, externally managed Ceph file system that you would like to use for an instance, you can add it with the following command:
 
       incus config device add <instance_name> <device_name> disk source=cephfs:<fs_name>/<path> ceph.user_name=<user_name> ceph.cluster_name=<cluster_name> path=<path_in_instance>
 
@@ -103,7 +103,7 @@ Key                 | Type      | Default   | Required  | Description
 `limits.read`       | string    | -         | no        | I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`
 `limits.write`      | string    | -         | no        | I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`
 `path`              | string    | -         | yes       | Path inside the instance where the disk will be mounted (only for containers)
-`pool`              | string    | -         | no        | The storage pool to which the disk device belongs (only applicable for storage volumes managed by LXD)
+`pool`              | string    | -         | no        | The storage pool to which the disk device belongs (only applicable for storage volumes managed by Incus)
 `propagation`       | string    | -         | no        | Controls how a bind-mount is shared between the instance and the host (can be one of `private`, the default, or `shared`, `slave`, `unbindable`,  `rshared`, `rslave`, `runbindable`,  `rprivate`; see the Linux Kernel [shared subtree](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt) documentation for a full explanation) <!-- wokeignore:rule=slave -->
 `raw.mount.options` | string    | -         | no        | File system specific mount options
 `readonly`          | bool      | `false`   | no        | Controls whether to make the mount read-only

@@ -1,9 +1,9 @@
 (run-commands)=
 # How to run commands in an instance
 
-LXD allows to run commands inside an instance using the LXD client, without needing to access the instance through the network.
+Incus allows to run commands inside an instance using the Incus client, without needing to access the instance through the network.
 
-For containers, this always works and is handled directly by LXD.
+For containers, this always works and is handled directly by Incus.
 For virtual machines, the `lxd-agent` process must be running inside of the virtual machine for this to work.
 
 To run commands inside your instance, use the [`incus exec`](incus_exec.md) command.
@@ -21,7 +21,7 @@ For example, enter the following command to update the package list on your cont
 
 ### Execution mode
 
-LXD can execute commands either interactively or non-interactively.
+Incus can execute commands either interactively or non-interactively.
 
 In interactive mode, a pseudo-terminal device (PTS) is used to handle input (stdin) and output (stdout, stderr).
 This mode is automatically selected by the CLI if connected to a terminal emulator (and not run from a script).
@@ -33,12 +33,12 @@ To force non-interactive mode, add either `--force-noninteractive` or `--mode no
 
 ### User, groups and working directory
 
-LXD has a policy not to read data from within the instances or trust anything that can be found in the instance.
-Therefore, LXD does not parse files like `/etc/passwd`, `/etc/group` or `/etc/nsswitch.conf` to handle user and group resolution.
+Incus has a policy not to read data from within the instances or trust anything that can be found in the instance.
+Therefore, Incus does not parse files like `/etc/passwd`, `/etc/group` or `/etc/nsswitch.conf` to handle user and group resolution.
 
-As a result, LXD doesn't know the home directory for the user or the supplementary groups the user is in.
+As a result, Incus doesn't know the home directory for the user or the supplementary groups the user is in.
 
-By default, LXD runs commands as `root` (UID 0) with the default group (GID 0) and the working directory set to `/root`.
+By default, Incus runs commands as `root` (UID 0) with the default group (GID 0) and the working directory set to `/root`.
 You can override the user, group and working directory by specifying absolute values through the following flags:
 
 - `--user` - the user ID for running the command
@@ -60,7 +60,7 @@ Pass environment variables to the exec command
 
       incus exec <instance_name> --env ENVVAR=VALUE -- <command>
 
-In addition, LXD sets the following default values (unless they are passed in one of the ways described above):
+In addition, Incus sets the following default values (unless they are passed in one of the ways described above):
 
 ```{list-table}
    :header-rows: 1

@@ -1,11 +1,11 @@
 (network-ovn-setup)=
-# How to set up OVN with LXD
+# How to set up OVN with Incus
 
-See the following sections for how to set up a basic OVN network, either as a standalone network or to host a small LXD cluster.
+See the following sections for how to set up a basic OVN network, either as a standalone network or to host a small Incus cluster.
 
 ## Set up a standalone OVN network
 
-Complete the following steps to create a standalone OVN network that is connected to a managed LXD parent bridge network (for example, `lxdbr0`) for outbound connectivity.
+Complete the following steps to create a standalone OVN network that is connected to a managed Incus parent bridge network (for example, `lxdbr0`) for outbound connectivity.
 
 1. Install the OVN tools on the local server:
 
@@ -42,16 +42,16 @@ Complete the following steps to create a standalone OVN network that is connecte
    +------+---------+---------------------+----------------------------------------------+-----------+-----------+
    ```
 
-## Set up a LXD cluster on OVN
+## Set up a Incus cluster on OVN
 
 ```{youtube} https://www.youtube.com/watch?v=1M__Rm9iZb8
 ```
 
-Complete the following steps to set up a LXD cluster that uses an OVN network.
+Complete the following steps to set up a Incus cluster that uses an OVN network.
 
-Just like LXD, the distributed database for OVN must be run on a cluster that consists of an odd number of members.
+Just like Incus, the distributed database for OVN must be run on a cluster that consists of an odd number of members.
 The following instructions use the minimum of three servers, which run both the distributed database for OVN and the OVN controller.
-In addition, you can add any number of servers to the LXD cluster that run only the OVN controller.
+In addition, you can add any number of servers to the Incus cluster that run only the OVN controller.
 See the linked YouTube video for the complete tutorial using four machines.
 
 1. Complete the following steps on the three machines that you want to run the distributed database for OVN:
@@ -123,9 +123,9 @@ See the linked YouTube video for the complete tutorial using four machines.
           external_ids:ovn-encap-type=geneve \
           external_ids:ovn-encap-ip=<local>
 
-1. Create a LXD cluster by running `incus admin init` on all machines.
+1. Create a Incus cluster by running `incus admin init` on all machines.
    On the first machine, create the cluster.
-   Then join the other machines with tokens by running [`incus cluster add <machine_name>`](incus_cluster_add.md) on the first machine and specifying the token when initializing LXD on the other machine.
+   Then join the other machines with tokens by running [`incus cluster add <machine_name>`](incus_cluster_add.md) on the first machine and specifying the token when initializing Incus on the other machine.
 1. On the first machine, create and configure the uplink network:
 
        incus network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_1>
@@ -157,8 +157,8 @@ See the linked YouTube video for the complete tutorial using four machines.
    IP ranges
    : Use suitable IP ranges based on the assigned IPs.
 
-1. Still on the first machine, configure LXD to be able to communicate with the OVN DB cluster.
-   To do so, find the value for `ovn-northd-nb-db` in `/etc/default/ovn-central` and provide it to LXD with the following command:
+1. Still on the first machine, configure Incus to be able to communicate with the OVN DB cluster.
+   To do so, find the value for `ovn-northd-nb-db` in `/etc/default/ovn-central` and provide it to Incus with the following command:
 
        incus config set network.ovn.northbound_connection <ovn-northd-nb-db>
 
@@ -178,9 +178,9 @@ See the linked YouTube video for the complete tutorial using four machines.
        ping <nameserver>
        ping6 -n www.example.com
 
-## Send OVN logs to LXD
+## Send OVN logs to Incus
 
-Complete the following steps to have the OVN controller send its logs to LXD.
+Complete the following steps to have the OVN controller send its logs to Incus.
 
 1. Enable the syslog socket:
 

@@ -29,20 +29,20 @@ The [`lxc`](incus.md) CLI command comes pre-configured with the following defaul
 (remote-image-server-types)=
 ## Remote server types
 
-LXD supports the following types of remote image servers:
+Incus supports the following types of remote image servers:
 
 Simple streams servers
 : Pure image servers that use the [simple streams format](https://git.launchpad.net/simplestreams/tree/).
   The default image servers are simple streams servers.
 
-Public LXD servers
-: LXD servers that are used solely to serve images and do not run instances themselves.
+Public Incus servers
+: Incus servers that are used solely to serve images and do not run instances themselves.
 
-  To make a LXD server publicly available over the network on port 8443, set the {config:option}`server-core:core.https_address` configuration option to `:8443` and do not configure any authentication methods (see {ref}`server-expose` for more information).
+  To make a Incus server publicly available over the network on port 8443, set the {config:option}`server-core:core.https_address` configuration option to `:8443` and do not configure any authentication methods (see {ref}`server-expose` for more information).
   Then set the images that you want to share to `public`.
 
-LXD servers
-: Regular LXD servers that you can manage over a network, and that can also be used as image servers.
+Incus servers
+: Regular Incus servers that you can manage over a network, and that can also be used as image servers.
 
   For security reasons, you should restrict the access to the remote API and configure an authentication method to control access.
   See {ref}`server-expose` and {ref}`authentication` for more information.

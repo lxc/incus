@@ -8,7 +8,7 @@ discourse: 11296
 ```{youtube} https://youtu.be/IFOZpAxckPo?t=796
 ```
 
-LXD provides a tool for disaster recovery in case the {ref}`LXD database <database>` is corrupted or otherwise lost.
+Incus provides a tool for disaster recovery in case the {ref}`Incus database <database>` is corrupted or otherwise lost.
 
 The tool scans the storage pools for instances and imports the instances that it finds back into the database.
 You need to re-create the required entities that are missing (usually profiles, projects, and networks).
@@ -27,8 +27,8 @@ The tool is available through the `incus admin recover` command (note the `lxd` 
 When you run the tool, it scans all storage pools that still exist in the database, looking for missing volumes that can be recovered.
 You can also specify the details of any unknown storage pools (those that exist on disk but do not exist in the database), and the tool attempts to scan those too.
 
-After mounting the specified storage pools (if not already mounted), the tool scans them for unknown volumes that look like they are associated with LXD.
-LXD maintains a `backup.yaml` file in each instance's storage volume, which contains all necessary information to recover a given instance (including instance configuration, attached devices, storage volume, and pool configuration).
+After mounting the specified storage pools (if not already mounted), the tool scans them for unknown volumes that look like they are associated with Incus.
+Incus maintains a `backup.yaml` file in each instance's storage volume, which contains all necessary information to recover a given instance (including instance configuration, attached devices, storage volume, and pool configuration).
 This data can be used to rebuild the instance, storage volume, and storage pool database records.
 Before recovering an instance, the tool performs some consistency checks to compare what is in the `backup.yaml` file with what is actually on disk (such as matching snapshots).
 If all checks out, the database records are re-created.
@@ -48,7 +48,7 @@ This is how a recovery process could look:
 ```{terminal}
 :input: incus admin recover
 
-This LXD server currently has the following storage pools:
+This Incus server currently has the following storage pools:
 Would you like to recover another storage pool? (yes/no) [default=no]: yes
 Name of the storage pool: default
 Name of the storage backend (btrfs, ceph, cephfs, cephobject, dir, lvm, zfs): zfs

@@ -1,10 +1,10 @@
 (projects-work)=
 # How to work with different projects
 
-If you have more projects than just the `default` profile, you must make sure to use or address the correct project when working with LXD.
+If you have more projects than just the `default` profile, you must make sure to use or address the correct project when working with Incus.
 
 ```{note}
-If you have projects that are {ref}`confined to specific users <projects-confined>`, only users with full access to LXD can see all projects.
+If you have projects that are {ref}`confined to specific users <projects-confined>`, only users with full access to Incus can see all projects.
 
 Users without full access can only see information for the projects to which they have access.
 ```
@@ -24,7 +24,7 @@ By default, the output is presented as a list:
 +----------------------+--------+----------+-----------------+-----------------+----------+---------------+---------------------+---------+
 |      NAME            | IMAGES | PROFILES | STORAGE VOLUMES | STORAGE BUCKETS | NETWORKS | NETWORK ZONES |     DESCRIPTION     | USED BY |
 +----------------------+--------+----------+-----------------+-----------------+----------+---------------+---------------------+---------+
-| default              | YES    | YES      | YES             | YES             | YES      | YES           | Default LXD project | 19      |
+| default              | YES    | YES      | YES             | YES             | YES      | YES           | Default Incus project | 19      |
 +----------------------+--------+----------+-----------------+-----------------+----------+---------------+---------------------+---------+
 | my-project (current) | YES    | NO       | NO              | NO              | YES      | YES           |                     | 0       |
 +----------------------+--------+----------+-----------------+-----------------+----------+---------------+---------------------+---------+
@@ -35,7 +35,7 @@ See [`incus project list --help`](incus_project_list.md) for more information.
 
 ## Switch projects
 
-By default, all commands that you issue in LXD affect the project that you are currently using.
+By default, all commands that you issue in Incus affect the project that you are currently using.
 To see which project you are in, use the [`incus project list`](incus_project_list.md) command.
 
 To switch to a different project, enter the following command:
@@ -45,7 +45,7 @@ To switch to a different project, enter the following command:
 ## Target a project
 
 Instead of switching to a different project, you can target a specific project when running a command.
-Many LXD commands support the `--project` flag to run an action in a different project.
+Many Incus commands support the `--project` flag to run an action in a different project.
 
 ```{note}
 You can target only projects that you have permission for.

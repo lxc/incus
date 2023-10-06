@@ -10,14 +10,14 @@ See the following sections for instructions on how to create, configure, view an
 (storage-create-pool)=
 ## Create a storage pool
 
-LXD creates a storage pool during initialization.
+Incus creates a storage pool during initialization.
 You can add more storage pools later, using the same driver or different drivers.
 
 To create a storage pool, use the following command:
 
     incus storage create <pool_name> <driver> [configuration_options...]
 
-Unless specified otherwise, LXD sets up loop-based storage with a sensible default size (20% of the free disk space, but at least 5 GiB and at most 30 GiB).
+Unless specified otherwise, Incus sets up loop-based storage with a sensible default size (20% of the free disk space, but at least 5 GiB and at most 30 GiB).
 
 See the {ref}`storage-drivers` documentation for a list of available configuration options for each driver.
 
@@ -156,7 +156,7 @@ Use the existing Ceph Object Gateway `https://www.example.com/radosgw` to create
 (storage-pools-cluster)=
 ### Create a storage pool in a cluster
 
-If you are running a LXD cluster and want to add a storage pool, you must create the storage pool for each cluster member separately.
+If you are running a Incus cluster and want to add a storage pool, you must create the storage pool for each cluster member separately.
 The reason for this is that the configuration, for example, the storage location or the size of the pool, might be different between cluster members.
 
 Therefore, you must first create a pending storage pool on each member with the `--target=<cluster_member>` flag and the appropriate configuration for the member.
@@ -229,5 +229,5 @@ If you need more storage, you can increase the size of your storage pool by chan
 
     incus storage set <pool_name> size=<new_size>
 
-This will only work for loop-backed storage pools that are managed by LXD.
+This will only work for loop-backed storage pools that are managed by Incus.
 You can only grow the pool (increase its size), not shrink it.

@@ -3,7 +3,7 @@ discourse: 11567
 ---
 
 (network-bgp)=
-# How to configure LXD as a BGP server
+# How to configure Incus as a BGP server
 
 ```{note}
 The BGP server feature is available for the {ref}`network-bridge` and the {ref}`network-physical`.
@@ -14,11 +14,11 @@ The BGP server feature is available for the {ref}`network-bridge` and the {ref}`
 
 {abbr}`BGP (Border Gateway Protocol)` is a protocol that allows exchanging routing information between autonomous systems.
 
-If you want to directly route external addresses to specific LXD servers or instances, you can configure LXD as a BGP server.
-LXD will then act as a BGP peer and advertise relevant routes and next hops to external routers, for example, your network router.
+If you want to directly route external addresses to specific Incus servers or instances, you can configure Incus as a BGP server.
+Incus will then act as a BGP peer and advertise relevant routes and next hops to external routers, for example, your network router.
 It automatically establishes sessions with upstream BGP routers and announces the addresses and subnets that it's using.
 
-The BGP server feature can be used to allow a LXD server or cluster to directly use internal/external address space by getting the specific subnets or addresses routed to the correct host.
+The BGP server feature can be used to allow a Incus server or cluster to directly use internal/external address space by getting the specific subnets or addresses routed to the correct host.
 This way, traffic can be forwarded to the target instance.
 
 For bridge networks, the following addresses and networks are being advertised:
@@ -41,7 +41,7 @@ If you need this, filter prefixes on the upstream routers.
 
 ## Configure the BGP server
 
-To configure LXD as a BGP server, set the following server configuration options on all cluster members:
+To configure Incus as a BGP server, set the following server configuration options on all cluster members:
 
 - {config:option}`server-core:core.bgp_address` - the IP address for the BGP server
 - {config:option}`server-core:core.bgp_asn` - the {abbr}`ASN (Autonomous System Number)` for the local server
@@ -55,7 +55,7 @@ incus config set core.bgp_asn=65536
 incus config set core.bgp_routerid=192.0.2.50
 ```
 
-Once these configuration options are set, LXD starts listening for BGP sessions.
+Once these configuration options are set, Incus starts listening for BGP sessions.
 
 ### Configure next-hop (`bridge` only)
 

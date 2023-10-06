@@ -2,7 +2,7 @@
 # Type: `usb`
 
 ```{youtube} https://www.youtube.com/watch?v=SAord28VS4g
-:title: LXD USB devices
+:title: Incus USB devices
 ```
 
 ```{note}

@@ -1,7 +1,7 @@
 (standard-devices)=
 # Standard devices
 
-LXD provides each instance with the basic devices that are required for a standard POSIX system to work.
+Incus provides each instance with the basic devices that are required for a standard POSIX system to work.
 These devices aren't visible in the instance or profile configuration, and they may not be overridden.
 
 The standard devices are:

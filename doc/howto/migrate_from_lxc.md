@@ -1,16 +1,16 @@
 (migrate-from-lxc)=
-# How to migrate containers from LXC to LXD
+# How to migrate containers from LXC to Incus
 
 ```{youtube} https://www.youtube.com/watch?v=F9GALjHtnUU
 ```
 
-LXD provides a tool (`lxc-to-lxd`) that you can use to import LXC containers into your LXD server.
-The LXC containers must exist on the same machine as the LXD server.
+Incus provides a tool (`lxc-to-lxd`) that you can use to import LXC containers into your Incus server.
+The LXC containers must exist on the same machine as the Incus server.
 
-The tool analyzes the LXC containers and migrates both their data and their configuration into new LXD containers.
+The tool analyzes the LXC containers and migrates both their data and their configuration into new Incus containers.
 
 ```{note}
-Alternatively, you can use the `lxd-migrate` tool within a LXC container to migrate it to LXD (see {ref}`import-machines-to-instances`).
+Alternatively, you can use the `lxd-migrate` tool within a LXC container to migrate it to Incus (see {ref}`import-machines-to-instances`).
 However, this tool does not migrate any of the LXC container configuration.
 ```
 
@@ -29,7 +29,7 @@ You can migrate one container at a time or all of your LXC containers at the sam
 
 ```{note}
 Migrated containers use the same name as the original containers.
-You cannot migrate containers with a name that already exists as an instance name in LXD.
+You cannot migrate containers with a name that already exists as an instance name in Incus.
 
 Therefore, rename any LXC containers that might cause name conflicts before you start the migration process.
 ```
@@ -49,7 +49,7 @@ To migrate only the `lxc1` container:
 
     sudo lxc-to-incus --containers lxc1
 
-To migrate two containers (`lxc1` and `lxc2`) and use the `my-storage` storage pool in LXD:
+To migrate two containers (`lxc1` and `lxc2`) and use the `my-storage` storage pool in Incus:
 
     sudo lxc-to-incus --containers lxc1,lxc2 --storage my-storage
 
@@ -96,4 +96,4 @@ Transferring container: lxc1: ...
 Container 'lxc1' successfully created
 ```
 
-After the migration process is complete, you can check and, if necessary, update the configuration in LXD before you start the migrated LXD container.
+After the migration process is complete, you can check and, if necessary, update the configuration in Incus before you start the migrated Incus container.

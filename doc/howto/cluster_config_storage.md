@@ -5,7 +5,7 @@ All members of a cluster must have identical storage pools.
 The only configuration keys that may differ between pools on different members are [`source`](storage-drivers), [`size`](storage-drivers), [`zfs.pool_name`](storage-zfs-pool-config), [`lvm.thinpool_name`](storage-lvm-pool-config) and [`lvm.vg_name`](storage-lvm-pool-config).
 See {ref}`clustering-member-config` for more information.
 
-LXD creates a default `local` storage pool for each cluster member during initialization.
+Incus creates a default `local` storage pool for each cluster member during initialization.
 
 Creating additional storage pools is a two-step process:
 

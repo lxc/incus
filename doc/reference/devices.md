@@ -6,7 +6,7 @@ Devices are attached to an instance (see {ref}`instances-configure-devices`) or 
 They include, for example, network interfaces, mount points, USB and GPU devices.
 These devices can have instance device options, depending on the type of the instance device.
 
-LXD supports the following device types:
+Incus supports the following device types:
 
 | ID (database) | Name                                   | Condition | Description                     |
 |:--------------|:---------------------------------------|:----------|:--------------------------------|

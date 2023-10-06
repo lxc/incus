@@ -80,7 +80,7 @@ Rules are provided as lists.
 However, the order of the rules in the list is not important and does not affect
 filtering.
 
-LXD automatically orders the rules based on the `action` property as follows:
+Incus automatically orders the rules based on the `action` property as follows:
 
 - `drop`
 - `reject`
@@ -216,7 +216,7 @@ incus config device set <instance_name> <device_name> security.acls.default.ingr
 
 When using network ACLs with a bridge network, be aware of the following limitations:
 
-- Unlike OVN ACLs, bridge ACLs are applied only on the boundary between the bridge and the LXD host.
+- Unlike OVN ACLs, bridge ACLs are applied only on the boundary between the bridge and the Incus host.
   This means they can only be used to apply network policies for traffic going to or from external networks.
   They cannot be used for to create {spellexception}`intra-bridge` firewalls, thus firewalls that control traffic between instances connected to the same bridge.
 - {ref}`ACL groups and network selectors <network-acls-selectors>` are not supported.

@@ -5,15 +5,15 @@ discourse: 15871
 (cluster-form)=
 # How to form a cluster
 
-When forming a LXD cluster, you start with a bootstrap server.
-This bootstrap server can be an existing LXD server or a newly installed one.
+When forming a Incus cluster, you start with a bootstrap server.
+This bootstrap server can be an existing Incus server or a newly installed one.
 
 After initializing the bootstrap server, you can join additional servers to the cluster.
 See {ref}`clustering-members` for more information.
 
-You can form the LXD cluster interactively by providing configuration information during the initialization process or by using preseed files that contain the full configuration.
+You can form the Incus cluster interactively by providing configuration information during the initialization process or by using preseed files that contain the full configuration.
 
-To quickly and automatically set up a basic LXD cluster, you can use MicroCloud.
+To quickly and automatically set up a basic Incus cluster, you can use MicroCloud.
 Note, however, that this project is still in an early phase.
 
 ## Configure the cluster interactively
@@ -28,7 +28,7 @@ To initialize the bootstrap server, run `incus admin init` and answer the questi
 
 You can accept the default values for most questions, but make sure to answer the following questions accordingly:
 
-- `Would you like to use LXD clustering?`
+- `Would you like to use Incus clustering?`
 
   Select **yes**.
 - `What IP address or DNS name should be used to reach this server?`
@@ -44,7 +44,7 @@ You can accept the default values for most questions, but make sure to answer th
 ```{terminal}
 :input: incus admin init
 
-Would you like to use LXD clustering? (yes/no) [default=no]: yes
+Would you like to use Incus clustering? (yes/no) [default=no]: yes
 What IP address or DNS name should be used to reach this server? [default=192.0.2.101]:
 Are you joining an existing cluster? (yes/no) [default=no]: no
 What member name should be used to identify this server in the cluster? [default=server1]:
@@ -55,7 +55,7 @@ Create a new ZFS pool? (yes/no) [default=yes]:
 Would you like to use an existing empty block device (e.g. a disk or partition)? (yes/no) [default=no]:
 Size in GiB of the new loop device (1GiB minimum) [default=9GiB]:
 Do you want to configure a new remote storage pool? (yes/no) [default=no]:
-Would you like to configure LXD to use an existing bridge or host interface? (yes/no) [default=no]:
+Would you like to configure Incus to use an existing bridge or host interface? (yes/no) [default=no]:
 Would you like stale cached images to be updated automatically? (yes/no) [default=yes]:
 Would you like a YAML "incus admin init" preseed to be printed? (yes/no) [default=no]:
 ```
@@ -70,7 +70,7 @@ You can check this with [`incus cluster list`](incus_cluster_list.md).
 You can now join further servers to the cluster.
 
 ```{note}
-The servers that you add should be newly installed LXD servers.
+The servers that you add should be newly installed Incus servers.
 If you are using existing servers, make sure to clear their contents before joining them, because any existing data on them will be lost.
 ```
 
@@ -83,7 +83,7 @@ Basically, the initialization process consists of the following steps:
 
    Answer the first questions that `incus admin init` asks accordingly:
 
-   - `Would you like to use LXD clustering?`
+   - `Would you like to use Incus clustering?`
 
      Select **yes**.
    - `What IP address or DNS name should be used to reach this server?`
@@ -129,7 +129,7 @@ Basically, the initialization process consists of the following steps:
 ```{terminal}
 :input: sudo incus admin init
 
-Would you like to use LXD clustering? (yes/no) [default=no]: yes
+Would you like to use Incus clustering? (yes/no) [default=no]: yes
 What IP address or DNS name should be used to reach this server? [default=192.0.2.102]:
 Are you joining an existing cluster? (yes/no) [default=no]: yes
 Do you have a join token? (yes/no/[token]) [default=no]: yes
@@ -147,7 +147,7 @@ Would you like a YAML "incus admin init" preseed to be printed? (yes/no) [defaul
 ```{terminal}
 :input: sudo incus admin init
 
-Would you like to use LXD clustering? (yes/no) [default=no]: yes
+Would you like to use Incus clustering? (yes/no) [default=no]: yes
 What IP address or DNS name should be used to reach this server? [default=192.0.2.102]:
 Are you joining an existing cluster? (yes/no) [default=no]: yes
 Do you have a join token? (yes/no/[token]) [default=no]: no
@@ -282,7 +282,7 @@ cluster:
 ```{youtube} https://www.youtube.com/watch?v=iWZYUU8lX5A
 ```
 
-Instead of setting up your LXD cluster manually, you can use [MicroCloud](https://microcloud.is/) to get a fully highly available LXD cluster with OVN and with Ceph storage up and running.
+Instead of setting up your Incus cluster manually, you can use [MicroCloud](https://microcloud.is/) to get a fully highly available Incus cluster with OVN and with Ceph storage up and running.
 
 To install the required snaps, run the following command:
 
@@ -294,6 +294,6 @@ Then start the bootstrapping process with the following command:
 
 During the initialization process, MicroCloud detects the other servers, sets up OVN networking and prompts you to add disks to Ceph.
 
-When the initialization is complete, you’ll have an OVN cluster, a Ceph cluster and a LXD cluster, and LXD itself will have been configured with both networking and storage suitable for use in a cluster.
+When the initialization is complete, you’ll have an OVN cluster, a Ceph cluster and a Incus cluster, and Incus itself will have been configured with both networking and storage suitable for use in a cluster.
 
 See the [MicroCloud documentation](https://canonical-microcloud.readthedocs-hosted.com/en/latest/) for more information.

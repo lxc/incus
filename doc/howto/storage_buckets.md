@@ -8,7 +8,7 @@ See the following sections for instructions on how to create, configure, view an
 
 ## Configure the S3 address
 
-If you want to use storage buckets on local storage (thus in a `dir`, `btrfs`, `lvm`, or `zfs` pool), you must configure the S3 address for your LXD server.
+If you want to use storage buckets on local storage (thus in a `dir`, `btrfs`, `lvm`, or `zfs` pool), you must configure the S3 address for your Incus server.
 This is the address that you can then use to access the buckets through the S3 protocol.
 
 To configure the S3 address, set the {config:option}`server-core:core.storage_buckets_address` server configuration option.
