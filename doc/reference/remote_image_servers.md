@@ -3,7 +3,7 @@
 
 The [`lxc`](incus.md) CLI command comes pre-configured with the following default remote image servers:
 
-`ubuntu:`
+`images:`
 : This server provides official stable Ubuntu images.
   All images are cloud images, which means that they include both `cloud-init` and the `lxd-agent`.
 

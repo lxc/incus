@@ -54,11 +54,11 @@ If you prefer a different installation method, or use a Linux distribution that 
 ## Launch and inspect instances
 
 Incus is image based and can load images from different image servers.
-In this tutorial, we will use the official [`ubuntu:`](https://cloud-images.ubuntu.com/releases/) image server.
+In this tutorial, we will use the [official image server](https://images.linuxcontainers.org/).
 
 You can list all images that are available on this server with:
 
-    incus image list ubuntu:
+    incus image list images:
 
 See {ref}`images` for more information about the images that Incus uses.
 
@@ -70,7 +70,7 @@ For managing instances, we use the Incus command line client `lxc`.
 
 1. Launch a container called `first` using the Ubuntu 22.04 image:
 
-       incus launch ubuntu:22.04 first
+       incus launch images:ubuntu/22.04 first
 
    ```{note}
    Launching this container takes a few seconds, because the image must be downloaded and unpacked first.
@@ -78,7 +78,7 @@ For managing instances, we use the Incus command line client `lxc`.
 
 1. Launch a container called `second` using the same image:
 
-       incus launch ubuntu:22.04 second
+       incus launch images:ubuntu/22.04 second
 
    ```{note}
    Launching this container is quicker than launching the first, because the image is already available.
@@ -90,7 +90,7 @@ For managing instances, we use the Incus command line client `lxc`.
 
 1. Launch a VM called `ubuntu-vm` using the Ubuntu 22.04 image:
 
-       incus launch ubuntu:22.04 ubuntu-vm --vm
+       incus launch images:ubuntu/22.04 ubuntu-vm --vm
 
    ```{note}
    Even though you are using the same image name to launch the instance, Incus downloads a slightly different image that is compatible with VMs.
@@ -144,7 +144,7 @@ Let's create another container with some resource limits:
 
 1. Launch a container and limit it to one vCPU and 192 MiB of RAM:
 
-       incus launch ubuntu:22.04 limited --config limits.cpu=1 --config limits.memory=192MiB
+       incus launch images:ubuntu/22.04 limited --config limits.cpu=1 --config limits.memory=192MiB
 
 1. Check the current configuration and compare it to the configuration of the first (unlimited) container:
 
