@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/lxc/incus/client"
@@ -143,7 +142,7 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 func serverSetupUser(uid uint32) error {
 	projectName := fmt.Sprintf("user-%d", uid)
 	networkName := fmt.Sprintf("incusbr-%d", uid)
-	userPath := filepath.Join("users", fmt.Sprintf("%d", uid))
+	userPath := internalUtil.VarPath("users", fmt.Sprintf("%d", uid))
 
 	// User account.
 	out, err := subprocess.RunCommand("getent", "passwd", fmt.Sprintf("%d", uid))
@@ -169,7 +168,7 @@ func serverSetupUser(uid uint32) error {
 	revert.Add(func() { _ = os.RemoveAll(userPath) })
 
 	// Generate certificate.
-	err = localtls.FindOrGenCert(filepath.Join(userPath, "client.crt"), filepath.Join(userPath, "client.key"), true, false)
+	err = localtls.FindOrGenCert(internalUtil.VarPath("users", userPath, "client.crt"), internalUtil.VarPath("users", userPath, "client.key"), true, false)
 	if err != nil {
 		return fmt.Errorf("Failed to generate user certificate: %w", err)
 	}
@@ -220,7 +219,7 @@ func serverSetupUser(uid uint32) error {
 	}
 
 	// Parse the certificate.
-	x509Cert, err := localtls.ReadCert(filepath.Join(userPath, "client.crt"))
+	x509Cert, err := localtls.ReadCert(internalUtil.VarPath("users", userPath, "client.crt"))
 	if err != nil {
 		return fmt.Errorf("Unable to read user certificate: %w", err)
 	}

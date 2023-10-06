@@ -48,6 +48,12 @@ func (c *cmdDaemon) Run(cmd *cobra.Command, args []string) error {
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
 
+	// Create storage.
+	err := os.MkdirAll(internalUtil.VarPath("users"), 0700)
+	if err != nil && !os.IsExist(err) {
+		return fmt.Errorf("Couldn't create storage: %w", err)
+	}
+
 	// Connect.
 	log.Debug("Connecting to the daemon")
 	client, err := incus.ConnectIncusUnix("", nil)
