@@ -197,14 +197,14 @@ Complete the following steps to have the OVN controller send its logs to LXD.
 
        systemctl restart ovn-controller.service
 
-You can now use [`incus monitor`](incus_monitor.md) to see logs from the OVN controller:
+You can now use [`incus monitor`](incus_monitor.md) to see logged network ACL traffic from the OVN controller:
 
-    incus monitor --type=ovn
+    incus monitor --type=network-acls
 
 You can also send the logs to Loki.
-To do so, add the `ovn` value to the {config:option}`server-loki:loki.types` configuration key, for example:
+To do so, add the `network-acl` value to the {config:option}`server-loki:loki.types` configuration key, for example:
 
-    incus config set loki.types=ovn
+    incus config set loki.types=network-acl
 
 ```{tip}
 You can include logs for OVN `northd`, OVN north-bound `ovsdb-server`, and OVN south-bound `ovsdb-server` as well.
