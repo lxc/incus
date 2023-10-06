@@ -25,7 +25,7 @@ func (s *targetSystemd) Present() bool {
 		return false
 	}
 
-	if !shared.PathExists("/etc/systemd/system/incus.service") {
+	if !shared.PathExists("/lib/systemd/system/incus.service") {
 		return false
 	}
 
@@ -33,12 +33,12 @@ func (s *targetSystemd) Present() bool {
 }
 
 func (s *targetSystemd) Stop() error {
-	_, err := subprocess.RunCommand("systemctl", "stop", "incus")
+	_, err := subprocess.RunCommand("systemctl", "stop", "incus.service", "incus.socket")
 	return err
 }
 
 func (s *targetSystemd) Start() error {
-	_, err := subprocess.RunCommand("systemctl", "start", "incus")
+	_, err := subprocess.RunCommand("systemctl", "start", "incus.service", "incus.socket")
 	if err != nil {
 		return err
 	}

@@ -16,7 +16,7 @@ import (
 )
 
 var minLXDVersion = &version.DottedVersion{4, 0, 0}
-var maxLXDVersion = &version.DottedVersion{5, 16, 0}
+var maxLXDVersion = &version.DottedVersion{5, 18, 0}
 
 type cmdGlobal struct {
 	flagHelp    bool
@@ -140,21 +140,12 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		return fmt.Errorf("Couldn't parse source server version: %w", err)
 	}
 
-	targetVersion, err := version.Parse(targetServerInfo.Environment.ServerVersion)
-	if err != nil {
-		return fmt.Errorf("Couldn't parse target server version: %w", err)
-	}
-
 	if srcVersion.Compare(minLXDVersion) < 0 {
 		return fmt.Errorf("LXD version is lower than minimal version %q", minLXDVersion)
 	}
 
 	if srcVersion.Compare(maxLXDVersion) > 0 {
 		return fmt.Errorf("LXD version is newer than maximum version %q", maxLXDVersion)
-	}
-
-	if srcVersion.Compare(targetVersion) > 0 {
-		return fmt.Errorf("Incus version is older than source LXD version")
 	}
 
 	// Validate source non-empty.
@@ -291,7 +282,14 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		return fmt.Errorf("Target server isn't empty, can't proceed with migration.")
 	}
 
+	fmt.Println("=> Checking that the source server isn't clustered")
+	if srcServerInfo.Environment.ServerClustered {
+		return fmt.Errorf("Migration of clustered servers isn't possible at this time")
+	}
+
 	// Validate configuration.
+	errors := []error{}
+
 	fmt.Println("=> Validating source server configuration")
 	deprecatedConfigs := []string{
 		"candid.api.key",
@@ -314,8 +312,140 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	for _, key := range deprecatedConfigs {
 		_, ok := srcServerInfo.Config[key]
 		if ok {
-			return fmt.Errorf("Source server is using deprecated key %q, please unset and retry.", key)
+			errors = append(errors, fmt.Errorf("Source server is using deprecated key %q", key))
 		}
+	}
+
+	networks, err := srcClient.GetNetworks()
+	if err != nil {
+		return fmt.Errorf("Couldn't list source networks: %w", err)
+	}
+
+	deprecatedNetworkConfigs := []string{
+		"bridge.mode",
+		"fan.overlay_subnet",
+		"fan.underlay_subnet",
+		"fan.type",
+	}
+
+	for _, network := range networks {
+		if !network.Managed {
+			continue
+		}
+
+		for _, key := range deprecatedNetworkConfigs {
+			_, ok := network.Config[key]
+			if ok {
+				errors = append(errors, fmt.Errorf("Source server has network %q using deprecated key %q", network.Name, key))
+			}
+		}
+	}
+
+	deprecatedInstanceConfigs := []string{
+		"limits.network.priority",
+	}
+
+	deprecatedInstanceDeviceConfigs := []string{
+		"maas.subnet.ipv4",
+		"maas.subnet.ipv6",
+	}
+
+	projects, err := srcClient.GetProjects()
+	if err != nil {
+		return fmt.Errorf("Couldn't list source projects: %w", err)
+	}
+
+	for _, project := range projects {
+		c := srcClient.UseProject(project.Name)
+
+		instances, err := c.GetInstances(lxdAPI.InstanceTypeAny)
+		if err != nil {
+			fmt.Errorf("Couldn't list instances in project %q: %w", err)
+		}
+
+		for _, inst := range instances {
+			for _, key := range deprecatedInstanceConfigs {
+				_, ok := inst.Config[key]
+				if ok {
+					errors = append(errors, fmt.Errorf("Source server has instance %q in project %q using deprecated key %q", inst.Name, project.Name, key))
+				}
+			}
+
+			for deviceName, device := range inst.Devices {
+				for _, key := range deprecatedInstanceDeviceConfigs {
+					_, ok := device[key]
+					if ok {
+						errors = append(errors, fmt.Errorf("Source server has device %q for instance %q in project %q using deprecated key %q", deviceName, inst.Name, project.Name, key))
+					}
+				}
+			}
+		}
+
+		profiles, err := c.GetProfiles()
+		if err != nil {
+			fmt.Errorf("Couldn't list profiles in project %q: %w", err)
+		}
+
+		for _, profile := range profiles {
+			for _, key := range deprecatedInstanceConfigs {
+				_, ok := profile.Config[key]
+				if ok {
+					errors = append(errors, fmt.Errorf("Source server has profile %q in project %q using deprecated key %q", profile.Name, project.Name, key))
+				}
+			}
+
+			for deviceName, device := range profile.Devices {
+				for _, key := range deprecatedInstanceDeviceConfigs {
+					_, ok := device[key]
+					if ok {
+						errors = append(errors, fmt.Errorf("Source server has device %q for profile %q in project %q using deprecated key %q", deviceName, profile.Name, project.Name, key))
+					}
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		fmt.Println("")
+		fmt.Println("Source server uses obsolete features:")
+		for _, err := range errors {
+			fmt.Printf(" - %s\n", err.Error())
+		}
+
+		return fmt.Errorf("Source server is using incompatible configuration")
+	}
+
+	// Grab the path information.
+	sourcePaths, err := source.Paths()
+	if err != nil {
+		return fmt.Errorf("Failed to get source paths: %w", err)
+	}
+
+	targetPaths, err := target.Paths()
+	if err != nil {
+		return fmt.Errorf("Failed to get target paths: %w", err)
+	}
+
+	// Mangle storage pool sources.
+	rewriteStatements := []string{}
+	storagePools, err := srcClient.GetStoragePools()
+	if err != nil {
+		return fmt.Errorf("Failed to get list of source storage pools: %w", err)
+	}
+
+	for _, pool := range storagePools {
+		source := pool.Config["source"]
+		if source == "" || source[0] != byte('/') {
+			continue
+		}
+
+		if !strings.HasPrefix(source, sourcePaths.Daemon) {
+			continue
+		}
+
+		newSource := strings.Replace(source, sourcePaths.Daemon, targetPaths.Daemon, 1)
+		rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE storage_pools_config SET value='%s' WHERE value='%s'", newSource, source))
 	}
 
 	// Confirm migration.
@@ -352,10 +482,6 @@ Instances will come back online once the migration is complete.
 
 	// Wipe the target.
 	fmt.Println("=> Wiping the target server")
-	targetPaths, err := target.Paths()
-	if err != nil {
-		return fmt.Errorf("Failed to get target paths: %w", err)
-	}
 
 	err = os.RemoveAll(targetPaths.Logs)
 	if err != nil && !os.IsNotExist(err) {
@@ -374,10 +500,6 @@ Instances will come back online once the migration is complete.
 
 	// Migrate data.
 	fmt.Println("=> Migrating the data")
-	sourcePaths, err := source.Paths()
-	if err != nil {
-		return fmt.Errorf("Failed to get source paths: %w", err)
-	}
 
 	_, err = subprocess.RunCommand("mv", sourcePaths.Logs, targetPaths.Logs)
 	if err != nil {
@@ -399,6 +521,12 @@ Instances will come back online once the migration is complete.
 	err = migrateDatabase(filepath.Join(targetPaths.Daemon, "database"))
 	if err != nil {
 		return fmt.Errorf("Failed to migrate database in %q: %w", filepath.Join(targetPaths.Daemon, "database"), err)
+	}
+
+	// Apply custom SQL statements.
+	err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")), 0600)
+	if err != nil {
+		return fmt.Errorf("Failed to write database path: %w", err)
 	}
 
 	// Cleanup paths.
