@@ -727,6 +727,10 @@ func (c *cmdStorageSet) Run(cmd *cobra.Command, args []string) error {
 			}
 		}
 	} else {
+		if writable.Config == nil {
+			writable.Config = make(map[string]string)
+		}
+
 		// Update the volume config keys.
 		for k, v := range keys {
 			writable.Config[k] = v
