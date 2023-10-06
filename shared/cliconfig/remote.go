@@ -73,6 +73,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 
 	// Unix socket
 	if strings.HasPrefix(remote.Addr, "unix:") {
+		fmt.Fprintf(os.Stderr, "STGRABER: in: remote.Addr=%s\n", remote.Addr)
 		unixPath := remote.Addr
 		if unixPath == "unix://" {
 			// Handle unix socket path overrides.
@@ -94,19 +95,25 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 			unixPath = strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//")
 		}
 
+		fmt.Fprintf(os.Stderr, "STGRABER: old: unixPath=%s\n", strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"))
+		fmt.Fprintf(os.Stderr, "STGRABER: final: unixPath=%s\n", unixPath)
 		d, err := incus.ConnectIncusUnix(unixPath, args)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "STGRABER: err: err=%v\n", err)
 			return nil, err
 		}
 
 		if remote.Project != "" && remote.Project != "default" {
+			fmt.Fprintf(os.Stderr, "STGRABER: remote.Project: project=%s\n", remote.Project)
 			d = d.UseProject(remote.Project)
 		}
 
 		if c.ProjectOverride != "" {
+			fmt.Fprintf(os.Stderr, "STGRABER: projectOverride: project=%s\n", c.ProjectOverride)
 			d = d.UseProject(c.ProjectOverride)
 		}
 
+		fmt.Fprintf(os.Stderr, "STGRABER: out: remote.Addr=%s\n", remote.Addr)
 		return d, nil
 	}
 
