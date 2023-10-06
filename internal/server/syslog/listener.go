@@ -117,11 +117,14 @@ func Listen(ctx context.Context, eventServer *events.Server) error {
 			logLevel := strings.ToLower(fields[len(fields)-2])
 			message := fields[len(fields)-1]
 
+			if !strings.HasPrefix(moduleName, "acl_log") {
+				continue
+			}
+
 			event := api.EventLogging{
 				Level:   logMap[logLevel].String(),
 				Message: message,
 				Context: map[string]string{
-					"module":   moduleName,
 					"sequence": sequenceNumber,
 				},
 			}
@@ -130,7 +133,7 @@ func Listen(ctx context.Context, eventServer *events.Server) error {
 				event.Context["application"] = applicationName
 			}
 
-			err = eventServer.Send("", api.EventTypeOVN, event)
+			err = eventServer.Send("", api.EventTypeNetworkACL, event)
 			if err != nil {
 				continue
 			}
