@@ -5,16 +5,17 @@ test_syslog_socket() {
   spawn_incus "${INCUS_DIR}" true
 
   incus config set core.syslog_socket=true
-  incus monitor --type=ovn > "${TEST_DIR}/ovn.log" &
+  incus monitor --type=network-acl > "${TEST_DIR}/ovn.log" &
   monitorOVNPID=$!
 
   sleep 1
-  echo "<29> ovs|ovn-controller|00017|rconn|INFO|unix:/var/run/openvswitch/br-int.mgmt: connected" | socat - unix-sendto:"${INCUS_DIR}/syslog.socket"
+  echo "<29> ovs|ovn-controller|00017|acl_log(foo)|INFO|name=\"some-acl\"" | socat - unix-sendto:"${INCUS_DIR}/syslog.socket"
+
   sleep 1
 
   kill -9 ${monitorOVNPID} || true
-  grep -qF "type: ovn" "${TEST_DIR}/ovn.log"
-  grep -qF "unix:/var/run/openvswitch/br-int.mgmt: connected" "${TEST_DIR}/ovn.log"
+  grep -qF "type: network-acl" "${TEST_DIR}/ovn.log"
+  grep -qF "name=\"some-acl\"" "${TEST_DIR}/ovn.log"
 
   shutdown_incus "${INCUS_DIR}"
 }
