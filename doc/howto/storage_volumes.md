@@ -1,9 +1,6 @@
 (howto-storage-volumes)=
 # How to manage storage volumes
 
-```{youtube} https://www.youtube.com/watch?v=dvQ111pbqtk
-```
-
 See the following sections for instructions on how to create, configure, view and resize {ref}`storage-volumes`.
 
 ## Create a custom storage volume

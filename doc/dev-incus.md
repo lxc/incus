@@ -1,9 +1,6 @@
 (dev-incus)=
 # Communication between instance and host
 
-```{youtube} https://www.youtube.com/watch?v=xZSnqqWykmo
-```
-
 Communication between the hosted workload (instance) and its host while
 not strictly needed is a pretty useful feature.
 

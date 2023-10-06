@@ -1,9 +1,6 @@
 (devices-disk)=
 # Type: `disk`
 
-```{youtube} https://www.youtube.com/watch?v=JhRw2OYTgtg
-```
-
 ```{note}
 The `disk` device type is supported for both containers and VMs.
 It supports hotplugging for both containers and VMs.

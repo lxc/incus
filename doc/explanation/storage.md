@@ -99,9 +99,6 @@ In the default profile, this pool is set to the storage pool that was created du
 (storage-volumes)=
 ## Storage volumes
 
-```{youtube} https://www.youtube.com/watch?v=dvQ111pbqtk
-```
-
 When you create an instance, Incus automatically creates the required storage volumes for it.
 You can create additional storage volumes.
 
@@ -165,9 +162,6 @@ Each storage volume uses one of the following content types:
 
 (storage-buckets)=
 ## Storage buckets
-
-```{youtube} https://www.youtube.com/watch?v=T1EeXPrjkEY
-```
 
 Storage buckets provide object storage functionality via the S3 protocol.
 

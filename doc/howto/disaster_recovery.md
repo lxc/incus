@@ -1,12 +1,5 @@
----
-discourse: 11296
----
-
 (disaster-recovery)=
 # How to recover instances in case of disaster
-
-```{youtube} https://youtu.be/IFOZpAxckPo?t=796
-```
 
 Incus provides a tool for disaster recovery in case the {ref}`Incus database <database>` is corrupted or otherwise lost.
 

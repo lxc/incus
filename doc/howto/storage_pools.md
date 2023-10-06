@@ -1,7 +1,3 @@
----
-discourse: 1333
----
-
 (howto-storage-pools)=
 # How to manage storage pools
 

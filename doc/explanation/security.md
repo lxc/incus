@@ -1,9 +1,6 @@
 (exp-security)=
 # About security
 
-```{youtube} https://www.youtube.com/watch?v=cOOzKdYHkus
-```
-
 % Include content from [../../README.md](../../README.md)
 ```{include} ../../README.md
     :start-after: <!-- Include start security -->

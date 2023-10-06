@@ -1,7 +1,3 @@
----
-discourse: 7362
----
-
 (instances-troubleshoot)=
 # How to troubleshoot failing instances
 

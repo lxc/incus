@@ -1,7 +1,3 @@
----
-relatedlinks: https://ubuntu.com/lxd, https://ubuntu.com/blog/open-source-for-beginners-dev-environment-with-lxd
----
-
 # Incus
 
 Incus is a modern, secure and powerful system container and virtual machine manager.

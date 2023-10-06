@@ -1,7 +1,3 @@
----
-relatedlinks: https://www.youtube.com/watch?v=QyXOOE_4cm0
----
-
 (performance-tuning)=
 # About performance tuning
 

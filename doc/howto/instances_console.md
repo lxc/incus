@@ -1,7 +1,3 @@
----
-discourse: 9223
----
-
 (instances-console)=
 # How to access the console
 
@@ -22,9 +18,6 @@ You can also immediately attach to the console when you start your instance:
     incus start <instance_name> --console=vga
 
 ## Access the graphical console (for virtual machines)
-
-```{youtube} https://www.youtube.com/watch?v=pEUsTMiq4B4
-```
 
 On virtual machines, log on to the console to get graphical output.
 Using the console you can, for example, install an operating system using a graphical interface or run a desktop environment.

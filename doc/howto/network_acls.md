@@ -1,15 +1,8 @@
----
-discourse: 13223
----
-
 (network-acls)=
 # How to configure network ACLs
 
 ```{note}
 Network ACLs are available for the {ref}`OVN NIC type <nic-ovn>`, the {ref}`network-ovn` and the {ref}`network-bridge` (with some exceptions, see {ref}`network-acls-bridge-limitations`).
-```
-
-```{youtube} https://www.youtube.com/watch?v=mu34G0cX6Io
 ```
 
 Network {abbr}`ACLs (Access Control Lists)` define traffic rules that allow controlling network access between different instances connected to the same network, and access to and from other networks.

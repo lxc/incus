@@ -1,12 +1,5 @@
----
-discourse: 15872
----
-
 (storage-zfs)=
 # ZFS - `zfs`
-
-```{youtube} https://www.youtube.com/watch?v=ysLi_LYAs_M
-```
 
 {abbr}`ZFS (Zettabyte file system)` combines both physical volume management and a file system.
 A ZFS installation can span across a series of storage devices and is very scalable, allowing you to add disks to expand the available space in the storage pool immediately.

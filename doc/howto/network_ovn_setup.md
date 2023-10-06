@@ -44,15 +44,11 @@ Complete the following steps to create a standalone OVN network that is connecte
 
 ## Set up a Incus cluster on OVN
 
-```{youtube} https://www.youtube.com/watch?v=1M__Rm9iZb8
-```
-
 Complete the following steps to set up a Incus cluster that uses an OVN network.
 
 Just like Incus, the distributed database for OVN must be run on a cluster that consists of an odd number of members.
 The following instructions use the minimum of three servers, which run both the distributed database for OVN and the OVN controller.
 In addition, you can add any number of servers to the Incus cluster that run only the OVN controller.
-See the linked YouTube video for the complete tutorial using four machines.
 
 1. Complete the following steps on the three machines that you want to run the distributed database for OVN:
 

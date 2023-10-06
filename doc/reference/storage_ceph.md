@@ -1,12 +1,5 @@
----
-discourse: 15457
----
-
 (storage-ceph)=
 # Ceph RBD - `ceph`
-
-```{youtube} https://youtube.com/watch?v=kVLGbvRU98A
-```
 
 <!-- Include start Ceph intro -->
 [Ceph](https://ceph.io/en/) is an open-source storage platform that stores its data in a storage cluster based on {abbr}`RADOS (Reliable Autonomic Distributed Object Store)`.

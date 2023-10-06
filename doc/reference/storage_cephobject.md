@@ -1,8 +1,3 @@
----
-discourse: 14579,15457
-relatedlinks: https://youtube.com/watch?v=kVLGbvRU98A
----
-
 (storage-cephobject)=
 # Ceph Object - `cephobject`
 

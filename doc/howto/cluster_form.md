@@ -1,7 +1,3 @@
----
-discourse: 15871
----
-
 (cluster-form)=
 # How to form a cluster
 
@@ -278,9 +274,6 @@ cluster:
 `````
 
 ## Use MicroCloud
-
-```{youtube} https://www.youtube.com/watch?v=iWZYUU8lX5A
-```
 
 Instead of setting up your Incus cluster manually, you can use [MicroCloud](https://microcloud.is/) to get a fully highly available Incus cluster with OVN and with Ceph storage up and running.
 

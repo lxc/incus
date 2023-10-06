@@ -1,10 +1,6 @@
 (devices-tpm)=
 # Type: `tpm`
 
-```{youtube} https://www.youtube.com/watch?v=iE1TN7YIqP0
-:title: Incus TPM devices
-```
-
 ```{note}
 The `tpm` device type is supported for both containers and VMs.
 It supports hotplugging only for containers, not for VMs.

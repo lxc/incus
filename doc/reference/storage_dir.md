@@ -1,9 +1,6 @@
 (storage-dir)=
 # Directory - `dir`
 
-```{youtube} https://www.youtube.com/watch?v=imWkPM9GjCY
-```
-
 The directory storage driver is a basic backend that stores its data in a standard file and directory structure.
 This driver is quick to set up and allows inspecting the files directly on the disk, which can be convenient for testing.
 However, Incus operations are {ref}`not optimized <storage-drivers-features>` for this driver.

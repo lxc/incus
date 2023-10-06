@@ -1,12 +1,5 @@
----
-discourse: 8355
----
-
 (devices-proxy)=
 # Type: `proxy`
-
-```{youtube} https://www.youtube.com/watch?v=IbAKwRBW8V0
-```
 
 ```{note}
 The `proxy` device type is supported for both containers (NAT and non-NAT modes) and VMs (NAT mode only).

@@ -1,7 +1,3 @@
----
-discourse: 12165
----
-
 (network-ovn-peers)=
 # How to create peer routing relationships
 

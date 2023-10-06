@@ -1,8 +1,3 @@
----
-discourse: 13114,15142
-relatedlinks: https://www.youtube.com/watch?v=6O0q3rSWr8A
----
-
 (authentication)=
 # Remote API authentication
 
@@ -16,9 +11,6 @@ The following authentication methods are supported:
 
 (authentication-tls-certs)=
 ## TLS client certificates
-
-```{youtube} https://www.youtube.com/watch?v=4iNpiL-lrXU
-```
 
 When using {abbr}`TLS (Transport Layer Security)` client certificates for authentication, both the client and the server will generate a key pair the first time they're launched.
 The server will use that key pair for all HTTPS connections to the Incus socket.

@@ -1,9 +1,6 @@
 (exp-projects)=
 # About projects
 
-```{youtube} https://www.youtube.com/watch?v=cUHkgg6TovM
-```
-
 You can use projects to keep your Incus server clean by grouping related instances together.
 In addition to isolated instances, each project can also have specific images, profiles, networks, and storage.
 

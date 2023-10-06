@@ -1,9 +1,6 @@
 (devices-gpu)=
 # Type: `gpu`
 
-```{youtube} https://www.youtube.com/watch?v=T0aV2LsMpoA
-```
-
 GPU devices make the specified GPU device or devices appear in the instance.
 
 ```{note}

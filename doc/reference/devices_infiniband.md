@@ -1,8 +1,5 @@
 (devices-infiniband)=
 # Type: `infiniband`
-
-```{youtube} https://www.youtube.com/watch?v=SDewhlRSOuM
-:title: Incus InfiniBand devices - YouTube
 ```
 
 ```{note}

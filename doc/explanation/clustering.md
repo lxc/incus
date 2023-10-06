@@ -1,12 +1,5 @@
----
-discourse: 15728
----
-
 (exp-clustering)=
 # About clustering
-
-```{youtube} https://www.youtube.com/watch?v=nrOR6yaO_MY
-```
 
 To spread the total workload over several servers, Incus can be run in clustering mode.
 In this scenario, any number of Incus servers share the same distributed database that holds the configuration for the cluster members and their instances.

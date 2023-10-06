@@ -1,12 +1,5 @@
----
-discourse: 12716
----
-
 (howto-cluster-groups)=
 # How to set up cluster groups
-
-```{youtube} https://www.youtube.com/watch?v=t_3YJo_xItM
-```
 
 Cluster members can be assigned to {ref}`cluster-groups`.
 By default, all cluster members belong to the `default` group.

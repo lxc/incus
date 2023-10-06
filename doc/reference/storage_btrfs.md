@@ -1,9 +1,6 @@
 (storage-btrfs)=
 # Btrfs - `btrfs`
 
-```{youtube} https://www.youtube.com/watch?v=2r5FYuusxNc
-```
-
 {abbr}`Btrfs (B-tree file system)` is a local file system based on the {abbr}`COW (copy-on-write)` principle.
 COW means that data is stored to a different block after it has been modified instead of overwriting the existing data, reducing the risk of data corruption.
 Unlike other file systems, Btrfs is extent-based, which means that it stores data in contiguous areas of memory.

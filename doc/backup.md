@@ -1,9 +1,6 @@
 (backups)=
 # How to back up a Incus server
 
-```{youtube} https://www.youtube.com/watch?v=IFOZpAxckPo
-```
-
 In a production setup, you should always back up the contents of your Incus server.
 
 The Incus server contains a variety of different entities, and when choosing your backup strategy, you must decide which of these entities you want to back up and how frequently you want to save them.

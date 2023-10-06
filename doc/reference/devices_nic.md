@@ -1,10 +1,6 @@
 (devices-nic)=
 # Type: `nic`
 
-```{youtube} https://www.youtube.com/watch?v=W62eno28KMY
-   :title: Incus NIC devices
-```
-
 ```{note}
 The `nic` device type is supported for both containers and VMs.
 

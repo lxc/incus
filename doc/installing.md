@@ -1,7 +1,3 @@
----
-discourse: ubuntu:37214, ubuntu:37327
----
-
 (installing)=
 # How to install Incus
 

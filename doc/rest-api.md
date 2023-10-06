@@ -1,8 +1,5 @@
 # REST API
 
-```{youtube} https://www.youtube.com/watch?v=YvGbvspXObI
-```
-
 All communication between Incus and its clients happens using a RESTful API over HTTP.
 This API is encapsulated over either TLS (for remote operations) or a Unix socket (for local operations).
 

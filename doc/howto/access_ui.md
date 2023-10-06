@@ -9,9 +9,6 @@ See the [Incus-UI GitHub repository](https://github.com/canonical/lxd-ui) for th
 
 ![Graphical console of an instance in the Incus web UI](../images/ui_console.png)
 
-```{youtube} https://www.youtube.com/watch?v=wqEH_d8LC1k
-```
-
 The Incus web UI provides you with a graphical interface to manage your Incus server and instances.
 It is currently in an early stage and does not provide full functionality yet, but eventually, it will be an alternative to the Incus command-line client.
 

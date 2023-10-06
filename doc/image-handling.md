@@ -1,9 +1,6 @@
 (about-images)=
 # About images
 
-```{youtube} https://www.youtube.com/watch?v=wT7IDjo0Wgg
-```
-
 Incus uses an image-based workflow.
 Each instance is based on an image, which contains a basic operating system (for example, a Linux distribution) and some Incus-related information.
 

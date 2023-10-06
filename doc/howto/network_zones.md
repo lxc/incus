@@ -1,15 +1,8 @@
----
-discourse: 12033,13128
----
-
 (network-zones)=
 # How to configure network zones
 
 ```{note}
 Network zones are available for the {ref}`network-ovn` and the {ref}`network-bridge`.
-```
-
-```{youtube} https://www.youtube.com/watch?v=2MqpJOogNVQ
 ```
 
 Network zones can be used to serve DNS records for Incus networks.

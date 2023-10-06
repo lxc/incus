@@ -1,13 +1,5 @@
----
-discourse: 12281,11735
-relatedlinks: https://grafana.com/grafana/dashboards/19131-lxd/
----
-
 (metrics)=
 # How to monitor metrics
-
-```{youtube} https://www.youtube.com/watch?v=EthK-8hm_fY
-```
 
 <!-- Include start metrics intro -->
 Incus collects metrics for all running instances as well as some internal metrics.

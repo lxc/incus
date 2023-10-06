@@ -1,9 +1,6 @@
 (migration)=
 # Migration
 
-```{youtube} https://www.youtube.com/watch?v=F9GALjHtnUU
-```
-
 Incus provides tools and functionality to migrate instances in different contexts.
 
 Migrate existing Incus instances between servers

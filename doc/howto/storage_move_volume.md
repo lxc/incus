@@ -1,7 +1,3 @@
----
-discourse: 10877
----
-
 (howto-storage-move-volume)=
 # How to move or copy storage volumes
 

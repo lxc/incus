@@ -1,7 +1,3 @@
----
-discourse: 14317
----
-
 (network-load-balancers)=
 # How to configure network load balancers
 

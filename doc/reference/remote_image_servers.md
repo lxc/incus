@@ -1,8 +1,3 @@
----
-discourse: 16647
-relatedlinks: https://www.youtube.com/watch?v=pM0EgUqj2a0
----
-
 (remote-image-servers)=
 # Remote image servers
 

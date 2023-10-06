@@ -1,9 +1,6 @@
 (benchmark-performance)=
 # How to benchmark performance
 
-```{youtube} https://www.youtube.com/watch?v=z_OKwO5TskA
-```
-
 The performance of your Incus server or cluster depends on a lot of different factors, ranging from the hardware, the server configuration, the selected storage driver and the network bandwidth to the overall usage patterns.
 
 To find the optimal configuration, you should run benchmark tests to evaluate different setups.

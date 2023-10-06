@@ -1,10 +1,6 @@
 (devices-pci)=
 # Type: `pci`
 
-```{youtube} https://www.youtube.com/watch?v=h3DZXbmsZHg
-:title: Incus PCI devices
-```
-
 ```{note}
 The `pci` device type is supported for VMs.
 It does not support hotplugging.

@@ -1,7 +1,3 @@
----
-relatedlinks: https://www.youtube.com/watch?v=QyXOOE_4cm0
----
-
 # Getting started
 
 See the following sections for information on how to get started with Incus:

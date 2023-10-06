@@ -1,15 +1,8 @@
----
-discourse: 11801
----
-
 (network-forwards)=
 # How to configure network forwards
 
 ```{note}
 Network forwards are available for the {ref}`network-ovn` and the {ref}`network-bridge`.
-```
-
-```{youtube} https://www.youtube.com/watch?v=B-Uzo9WldMs
 ```
 
 Network forwards allow an external IP address (or specific ports on it) to be forwarded to an internal IP address (or specific ports on it) in the network that the forward belongs to.

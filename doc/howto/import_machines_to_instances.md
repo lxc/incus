@@ -1,12 +1,5 @@
----
-discourse: 14345
----
-
 (import-machines-to-instances)=
 # How to import physical or virtual machines to Incus instances
-
-```{youtube} https://www.youtube.com/watch?v=F9GALjHtnUU
-```
 
 Incus provides a tool (`lxd-migrate`) to create a Incus instance based on an existing disk or image.
 

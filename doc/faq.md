@@ -1,7 +1,3 @@
----
-discourse: 14705
----
-
 # Frequently asked questions
 
 The following sections give answers to frequently asked questions.
@@ -52,9 +48,6 @@ Privileged containers do not have this issue because all UID/GID in the containe
 But that's also the cause of most of the security issues with such privileged containers.
 
 ## How can I run Docker inside a Incus container?
-
-```{youtube} https://www.youtube.com/watch?v=_fCSSEyiGro
-```
 
 To run Docker inside a Incus container, set the {config:option}`instance-security:security.nesting` property of the container to `true`:
 

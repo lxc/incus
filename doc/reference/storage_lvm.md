@@ -1,9 +1,6 @@
 (storage-lvm)=
 # LVM - `lvm`
 
-```{youtube} https://www.youtube.com/watch?v=AqLl2eMZE6U
-```
-
 {abbr}`LVM (Logical Volume Manager)` is a storage management framework rather than a file system.
 It is used to manage physical storage devices, allowing you to create a number of logical storage volumes that use and virtualize the underlying physical storage devices.
 
