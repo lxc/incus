@@ -25,7 +25,7 @@ See {ref}`network-acls-groups` for more information.
 Use the following command to create an ACL:
 
 ```bash
-lxc network acl create <ACL_name> [configuration_options...]
+incus network acl create <ACL_name> [configuration_options...]
 ```
 
 This command creates an ACL without rules.
@@ -61,7 +61,7 @@ Each ACL contains two lists of rules:
 To add a rule to an ACL, use the following command, where `<direction>` can be either `ingress` or `egress`:
 
 ```bash
-lxc network acl rule add <ACL_name> <direction> [properties...]
+incus network acl rule add <ACL_name> <direction> [properties...]
 ```
 
 This command adds a rule to the list for the specified direction.
@@ -69,7 +69,7 @@ This command adds a rule to the list for the specified direction.
 You cannot edit a rule (except if you {ref}`edit the full ACL <network-acls-edit>`), but you can delete rules with the following command:
 
 ```bash
-lxc network acl rule remove <ACL_name> <direction> [properties...]
+incus network acl rule remove <ACL_name> <direction> [properties...]
 ```
 
 You must either specify all properties needed to uniquely identify a rule or add `--force` to the command to delete all matching rules.
@@ -158,7 +158,7 @@ To add a rule for logging, create it with the `state=logged` property.
 You can then display the log output for all logging rules in the ACL with the following command:
 
 ```bash
-lxc network acl show-log <ACL_name>
+incus network acl show-log <ACL_name>
 ```
 
 (network-acls-edit)=
@@ -167,7 +167,7 @@ lxc network acl show-log <ACL_name>
 Use the following command to edit an ACL:
 
 ```bash
-lxc network acl edit <ACL_name>
+incus network acl edit <ACL_name>
 ```
 
 This command opens the ACL in YAML format for editing.
@@ -181,13 +181,13 @@ To do so, add it to the `security.acls` list of the network or NIC configuration
 For networks, use the following command:
 
 ```bash
-lxc network set <network_name> security.acls="<ACL_name>"
+incus network set <network_name> security.acls="<ACL_name>"
 ```
 
 For instance NICs, use the following command:
 
 ```bash
-lxc config device set <instance_name> <device_name> security.acls="<ACL_name>"
+incus config device set <instance_name> <device_name> security.acls="<ACL_name>"
 ```
 
 (network-acls-defaults)=
@@ -202,13 +202,13 @@ The NIC level settings override the network level settings.
 For example, to set the default action for inbound traffic to `allow` for all instances connected to a network, use the following command:
 
 ```bash
-lxc network set <network_name> security.acls.default.ingress.action=allow
+incus network set <network_name> security.acls.default.ingress.action=allow
 ```
 
 To configure the same default action for an instance NIC, use the following command:
 
 ```bash
-lxc config device set <instance_name> <device_name> security.acls.default.ingress.action=allow
+incus config device set <instance_name> <device_name> security.acls.default.ingress.action=allow
 ```
 
 (network-acls-bridge-limitations)=

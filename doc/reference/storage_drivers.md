@@ -39,7 +39,7 @@ Instant cloning                             | no        | yes   | yes   | yes   
 Storage driver usable inside a container    | yes       | yes   | no    | yes[^1] | no       | n/a    | n/a
 Restore from older snapshots (not latest)   | yes       | yes   | yes   | no      | yes      | yes    | n/a
 Storage quotas                              | yes[^2]   | yes   | yes   | yes     | yes      | yes    | yes
-Available on `lxd init`                     | yes       | yes   | yes   | yes     | yes      | no     | no
+Available on `incus admin init`                     | yes       | yes   | yes   | yes     | yes      | no     | no
 Object storage                              | yes       | yes   | yes   | yes     | no       | no     | yes
 
 [^1]: Requires [`zfs.delegate`](storage-zfs-vol-config) to be enabled.

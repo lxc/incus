@@ -88,7 +88,7 @@ See {ref}`cluster-recover` for more information.
 You can use failure domains to indicate which cluster members should be given preference when assigning roles to a cluster member that has gone offline.
 For example, if a cluster member that currently has the database role gets shut down, LXD tries to assign its database role to another cluster member in the same failure domain, if one is available.
 
-To update the failure domain of a cluster member, use the [`lxc cluster edit <member>`](incus_cluster_edit.md) command and change the `failure_domain` property from `default` to another string.
+To update the failure domain of a cluster member, use the [`incus cluster edit <member>`](incus_cluster_edit.md) command and change the `failure_domain` property from `default` to another string.
 
 (clustering-member-config)=
 ### Member configuration
@@ -99,7 +99,7 @@ This means that all LXD servers joining a cluster must have an identical configu
 To accommodate things like slightly different disk ordering or network interface naming, there is an exception for some configuration options related to storage and networks, which are member-specific.
 
 When such settings are present in a cluster, any server that is being added must provide a value for them.
-Most often, this is done through the interactive `lxd init` command, which asks the user for the value for a number of configuration keys related to storage or networks.
+Most often, this is done through the interactive `incus admin init` command, which asks the user for the value for a number of configuration keys related to storage or networks.
 
 Those settings typically include:
 
@@ -111,7 +111,7 @@ Those settings typically include:
 See {ref}`cluster-config-storage` and {ref}`cluster-config-networks` for more information.
 
 If you want to look up the questions ahead of time (which can be useful for scripting), query the `/1.0/cluster` API endpoint.
-This can be done through `lxc query /1.0/cluster` or through other API clients.
+This can be done through `incus query /1.0/cluster` or through other API clients.
 
 ## Images
 
@@ -201,9 +201,9 @@ The scriptlet must be applied to LXD by storing it in the `instances.placement.s
 
 For example, if the scriptlet is saved inside a file called `instance_placement.star`, then it can be applied to LXD with the following command:
 
-    cat instance_placement.star | lxc config set instances.placement.scriptlet=-
+    cat instance_placement.star | incus config set instances.placement.scriptlet=-
 
-To see the current scriptlet applied to LXD, use the `lxc config get instances.placement.scriptlet` command.
+To see the current scriptlet applied to LXD, use the `incus config get instances.placement.scriptlet` command.
 
 The following functions are available to the scriptlet (in addition to those provided by Starlark):
 

@@ -17,7 +17,7 @@ In this command, `my-parent-network` is your parent network, and the IPv4 and IP
 
 Next we will add some `netplan` configuration to the instance using the `cloud-init.network-config` configuration key:
 
-    cat <<EOF | lxc config set jammy cloud-init.network-config -
+    cat <<EOF | incus config set jammy cloud-init.network-config -
     network:
       version: 2
       ethernets:
@@ -47,7 +47,7 @@ If there is a `lxdbr0` network on the host, the name server can be set to that I
 
 You can then start your instance with:
 
-    lxc start jammy
+    incus start jammy
 
 ```{note}
 Before you start your instance, make sure that you have {ref}`configured the parent network <nic-routed>` to enable proxy ARP/NDP.

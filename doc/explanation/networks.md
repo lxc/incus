@@ -11,7 +11,7 @@ You can configure the network device in one of the following ways:
 - Use the default network bridge that you set up during the LXD initialization.
   Check the default profile to see the default configuration:
 
-        lxc profile show default
+        incus profile show default
 
   This method is used if you do not specify a network device for your instance.
 - Use an existing network interface by adding it as a network device to your instance.
@@ -20,24 +20,24 @@ You can configure the network device in one of the following ways:
 
   Use a command similar to the following:
 
-        lxc config device add <instance_name> <device_name> nic nictype=<nic_type> ...
+        incus config device add <instance_name> <device_name> nic nictype=<nic_type> ...
 
   See [Type: `nic`](devices-nic) for a list of available NIC types and their configuration properties.
 
   For example, you could add a pre-existing Linux bridge (`br0`) with the following command:
 
-        lxc config device add <instance_name> eth0 nic nictype=bridged parent=br0
+        incus config device add <instance_name> eth0 nic nictype=bridged parent=br0
 - {doc}`Create a managed network </howto/network_create>` and add it as a network device to your instance.
   With this method, LXD has all required information about the configured network, and you can directly attach it to your instance as a device:
 
-        lxc network attach <network_name> <instance_name> <device_name>
+        incus network attach <network_name> <instance_name> <device_name>
 
   See {ref}`network-attach` for more information.
 
 (managed-networks)=
 ## Managed networks
 
-Managed networks in LXD are created and configured with the `lxc network [create|edit|set]` command.
+Managed networks in LXD are created and configured with the `incus network [create|edit|set]` command.
 
 Depending on the network type, LXD either fully controls the network or just manages an external network interface.
 

@@ -50,9 +50,9 @@ To configure LXD as a BGP server, set the following server configuration options
 For example, set the following values:
 
 ```bash
-lxc config set core.bgp_address=192.0.2.50:179
-lxc config set core.bgp_asn=65536
-lxc config set core.bgp_routerid=192.0.2.50
+incus config set core.bgp_address=192.0.2.50:179
+incus config set core.bgp_asn=65536
+incus config set core.bgp_routerid=192.0.2.50
 ```
 
 Once these configuration options are set, LXD starts listening for BGP sessions.

@@ -7,13 +7,13 @@ To add images to an image store, you can either copy them from another server or
 
 To copy an image from one server to another, enter the following command:
 
-    lxc image copy [<source_remote>:]<image> <target_remote>:
+    incus image copy [<source_remote>:]<image> <target_remote>:
 
 ```{note}
 To copy the image to your local image store, specify `local:` as the target remote.
 ```
 
-See [`lxc image copy --help`](incus_image_copy.md) for a list of all available flags.
+See [`incus image copy --help`](incus_image_copy.md) for a list of all available flags.
 The most relevant ones are:
 
 `--alias`
@@ -40,19 +40,19 @@ There are several ways of obtaining such image files:
 
 ### Import from the local file system
 
-To import an image from the local file system, use the [`lxc image import`](incus_image_import.md) command.
+To import an image from the local file system, use the [`incus image import`](incus_image_import.md) command.
 This command supports both {ref}`unified images <image-format-unified>` (compressed file or directory) and {ref}`split images <image-format-split>` (two files).
 
 To import a unified image from one file or directory, enter the following command:
 
-    lxc image import <image_file_or_directory_path> [<target_remote>:]
+    incus image import <image_file_or_directory_path> [<target_remote>:]
 
 To import a split image, enter the following command:
 
-    lxc image import <metadata_tarball_path> <rootfs_tarball_path> [<target_remote>:]
+    incus image import <metadata_tarball_path> <rootfs_tarball_path> [<target_remote>:]
 
 In both cases, you can assign an alias with the `--alias` flag.
-See [`lxc image import --help`](incus_image_import.md) for all available flags.
+See [`incus image import --help`](incus_image_import.md) for all available flags.
 
 ### Import from a file on a remote web server
 
@@ -64,7 +64,7 @@ The image files must be provided as unified images (see {ref}`image-format-unifi
 
 To import an image file from a remote web server, enter the following command:
 
-    lxc image import <URL>
+    incus image import <URL>
 
 You can assign an alias to the local image with the `--alias` flag.
 

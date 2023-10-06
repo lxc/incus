@@ -8,7 +8,7 @@ Checking the IPAM information for your LXD setup can help you debug networking i
 To display IPAM information, enter the following command:
 
 ```bash
-lxc network list-allocations
+incus network list-allocations
 ```
 
 By default, this command shows the IPAM information for the `default` project. You can select a different project with the `--project` flag, or specify `--all-projects` to display the information for all projects.

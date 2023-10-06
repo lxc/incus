@@ -9,7 +9,7 @@ See {ref}`remote-image-servers` for an overview.
 <!-- Include start list remotes -->
 To see all configured remote servers, enter the following command:
 
-    lxc remote list
+    incus remote list
 
 Remote servers that use the [simple streams format](https://git.launchpad.net/simplestreams/tree/) are pure image servers.
 Servers that use the `lxd` format are LXD servers, which either serve solely as image servers or might provide some images in addition to serving as regular LXD servers.
@@ -20,7 +20,7 @@ See {ref}`remote-image-server-types` for more information.
 
 To list all remote images on a server, enter the following command:
 
-    lxc image list <remote>:
+    incus image list <remote>:
 
 You can filter the results.
 See {ref}`images-manage-filter` for instructions.
@@ -33,7 +33,7 @@ How to add a remote depends on the protocol that the server uses.
 
 To add a simple streams server as a remote, enter the following command:
 
-    lxc remote add <remote_name> <URL> --protocol=simplestreams
+    incus remote add <remote_name> <URL> --protocol=simplestreams
 
 The URL must use HTTPS.
 
@@ -42,14 +42,14 @@ The URL must use HTTPS.
 <!-- Include start add remotes -->
 To add a LXD server as a remote, enter the following command:
 
-    lxc remote add <remote_name> <IP|FQDN|URL> [flags]
+    incus remote add <remote_name> <IP|FQDN|URL> [flags]
 
-Some authentication methods require specific flags (for example, use [`lxc remote add <remote_name> <IP|FQDN|URL> --auth-type=oidc`](incus_remote_add.md) for OIDC authentication).
+Some authentication methods require specific flags (for example, use [`incus remote add <remote_name> <IP|FQDN|URL> --auth-type=oidc`](incus_remote_add.md) for OIDC authentication).
 See {ref}`server-authenticate` and {ref}`authentication` for more information.
 
 For example, enter the following command to add a remote through an IP address:
 
-    lxc remote add my-remote 192.0.2.10
+    incus remote add my-remote 192.0.2.10
 
 You are prompted to confirm the remote server fingerprint and then asked for the password or token, depending on the authentication method used by the remote.
 <!-- Include end add remotes -->
@@ -70,8 +70,8 @@ If you specify an image name without the name of the remote, the default image s
 
 To see which server is configured as the default image server, enter the following command:
 
-    lxc remote get-default
+    incus remote get-default
 
 To select a different remote as the default image server, enter the following command:
 
-    lxc remote switch <remote_name>
+    incus remote switch <remote_name>

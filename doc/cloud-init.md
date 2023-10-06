@@ -70,7 +70,7 @@ To configure `cloud-init` for an instance, add the corresponding configuration o
 
 When configuring `cloud-init` directly for an instance, keep in mind that `cloud-init` runs only on the first start of the instance.
 That means that you must configure `cloud-init` before you start the instance.
-To do so, create the instance with [`lxc init`](incus_create.md) instead of [`lxc launch`](incus_launch.md), and then start it after completing the configuration.
+To do so, create the instance with [`incus init`](incus_create.md) instead of [`incus launch`](incus_launch.md), and then start it after completing the configuration.
 
 ### YAML format for `cloud-init` configuration
 

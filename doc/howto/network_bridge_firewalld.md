@@ -45,8 +45,8 @@ See the following sections for instructions on how to disable LXD's firewall rul
 
 Run the following commands to prevent LXD from setting firewall rules for a specific network bridge (for example, `lxdbr0`):
 
-    lxc network set <network_bridge> ipv6.firewall false
-    lxc network set <network_bridge> ipv4.firewall false
+    incus network set <network_bridge> ipv6.firewall false
+    incus network set <network_bridge> ipv4.firewall false
 
 ### `firewalld`: Add the bridge to the trusted zone
 

@@ -20,7 +20,7 @@ Do not rely on this tool as an alternative to proper backups; you will lose data
 The tool must be run interactively and cannot be used in automated scripts.
 ```
 
-The tool is available through the `lxd recover` command (note the `lxd` command rather than the normal `lxc` command).
+The tool is available through the `incus admin recover` command (note the `lxd` command rather than the normal `lxc` command).
 
 ## Recovery process
 
@@ -46,7 +46,7 @@ For example, if the `lxdbr0` bridge is used in an instance and you are prompted 
 This is how a recovery process could look:
 
 ```{terminal}
-:input: lxd recover
+:input: incus admin recover
 
 This LXD server currently has the following storage pools:
 Would you like to recover another storage pool? (yes/no) [default=no]: yes
@@ -66,18 +66,18 @@ The following unknown volumes have been found:
 You are currently missing the following:
  - Network "lxdbr0" in project "default"
 Please create those missing entries and then hit ENTER: ^Z
-[1]+  Stopped                 lxd recover
-:input: lxc network create lxdbr0
+[1]+  Stopped                 incus admin recover
+:input: incus network create lxdbr0
 Network lxdbr0 created
 :input: fg
-lxd recover
+incus admin recover
 
 The following unknown volumes have been found:
  - Container "u1" on pool "default" in project "default" (includes 0 snapshots)
  - Container "u2" on pool "default" in project "default" (includes 0 snapshots)
 Would you like those to be recovered? (yes/no) [default=no]: yes
 Starting recovery...
-:input: lxc list
+:input: incus list
 +------+---------+------+------+-----------+-----------+
 | NAME |  STATE  | IPV4 | IPV6 |   TYPE    | SNAPSHOTS |
 +------+---------+------+------+-----------+-----------+
@@ -85,10 +85,10 @@ Starting recovery...
 +------+---------+------+------+-----------+-----------+
 | u2   | STOPPED |      |      | CONTAINER | 0         |
 +------+---------+------+------+-----------+-----------+
-:input: lxc profile device add default eth0 nic network=lxdbr0 name=eth0
+:input: incus profile device add default eth0 nic network=lxdbr0 name=eth0
 Device eth0 added to default
-:input: lxc start u1
-:input: lxc list
+:input: incus start u1
+:input: incus list
 +------+---------+-------------------+---------------------------------------------+-----------+-----------+
 | NAME |  STATE  |       IPV4        |                    IPV6                     |   TYPE    | SNAPSHOTS |
 +------+---------+-------------------+---------------------------------------------+-----------+-----------+

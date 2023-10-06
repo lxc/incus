@@ -17,11 +17,11 @@ However, this tool does not migrate any of the LXC container configuration.
 ## Get the tool
 
 If you're using the snap, the `lxc-to-lxd` is automatically installed.
-It is available as `lxd.lxc-to-lxd`.
+It is available as `lxc-to-incus`.
 
 Otherwise, make sure that you have `go` (version 1.18 or later) installed and get the tool with the following command:
 
-    go install github.com/canonical/lxd/lxc-to-lxd@latest
+    go install github.com/canonical/lxc-to-incus@latest
 
 ## Prepare your LXC containers
 
@@ -38,30 +38,30 @@ Before you start the migration process, stop the LXC containers that you want to
 
 ## Start the migration process
 
-Run `sudo lxd.lxc-to-lxd [flags]` to migrate the containers.
-(This command assumes that you are using the snap; otherwise, replace `lxd.lxc-to-lxd` with `lxc-to-lxd`, also in the following examples.)
+Run `sudo lxc-to-incus [flags]` to migrate the containers.
+(This command assumes that you are using the snap; otherwise, replace `lxc-to-incus` with `lxc-to-lxd`, also in the following examples.)
 
 For example, to migrate all containers:
 
-    sudo lxd.lxc-to-lxd --all
+    sudo lxc-to-incus --all
 
 To migrate only the `lxc1` container:
 
-    sudo lxd.lxc-to-lxd --containers lxc1
+    sudo lxc-to-incus --containers lxc1
 
 To migrate two containers (`lxc1` and `lxc2`) and use the `my-storage` storage pool in LXD:
 
-    sudo lxd.lxc-to-lxd --containers lxc1,lxc2 --storage my-storage
+    sudo lxc-to-incus --containers lxc1,lxc2 --storage my-storage
 
 To test the migration of all containers without actually running it:
 
-    sudo lxd.lxc-to-lxd --all --dry-run
+    sudo lxc-to-incus --all --dry-run
 
 To migrate all containers but limit the `rsync` bandwidth to 5000 KB/s:
 
-    sudo lxd.lxc-to-lxd --all --rsync-args --bwlimit=5000
+    sudo lxc-to-incus --all --rsync-args --bwlimit=5000
 
-Run `sudo lxd.lxc-to-lxd --help` to check all available flags.
+Run `sudo lxc-to-incus --help` to check all available flags.
 
 ```{note}
 If you get an error that the `linux64` architecture isn't supported, either update the tool to the latest version or change the architecture in the LXC container configuration from `linux64` to either `amd64` or `x86_64`.
@@ -73,7 +73,7 @@ The tool analyzes the LXC configuration and the configuration of the container (
 You will see output similar to the following:
 
 ```{terminal}
-:input: sudo lxd.lxc-to-lxd --containers lxc1
+:input: sudo lxc-to-incus --containers lxc1
 
 Parsing LXC configuration
 Checking for unsupported LXC configuration keys

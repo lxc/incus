@@ -22,16 +22,16 @@ DNS address
 
   To retrieve the IPv4 address for the bridge, use the following command:
 
-      lxc network get <network_bridge> ipv4.address
+      incus network get <network_bridge> ipv4.address
 
   To retrieve the IPv6 address for the bridge, use the following command:
 
-      lxc network get <network_bridge> ipv6.address
+      incus network get <network_bridge> ipv6.address
 
 DNS domain
 : To retrieve the DNS domain name for the bridge, use the following command:
 
-      lxc network get <network_bridge> dns.domain
+      incus network get <network_bridge> dns.domain
 
   If this option is not set, the default domain name is `lxd`.
 

@@ -116,10 +116,10 @@ Such a backup can make it much easier to re-create, for example, networks or pro
 
 Use the following command to dump the content of the local database to a file:
 
-    lxd sql local .dump > <output_file>
+    incus admin sql local .dump > <output_file>
 
 Use the following command to dump the content of the global database to a file:
 
-    lxd sql global .dump > <output_file>
+    incus admin sql global .dump > <output_file>
 
 You should include these two commands in your regular LXD backup.

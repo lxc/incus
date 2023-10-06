@@ -23,13 +23,13 @@ The name can be chosen freely, and you can use it later to edit or delete the re
 
 Use the following commands to create a peer routing relationship between networks in the same project:
 
-    lxc network peer create <network1> <peering_name> <network2> [configuration_options]
-    lxc network peer create <network2> <peering_name> <network1> [configuration_options]
+    incus network peer create <network1> <peering_name> <network2> [configuration_options]
+    incus network peer create <network2> <peering_name> <network1> [configuration_options]
 
 You can also create peer routing relationships between OVN networks in different projects:
 
-    lxc network peer create <network1> <peering_name> <project2/network2> [configuration_options] --project=<project1>
-    lxc network peer create <network2> <peering_name> <project1/network1> [configuration_options] --project=<project2>
+    incus network peer create <network1> <peering_name> <project2/network2> [configuration_options] --project=<project1>
+    incus network peer create <network2> <peering_name> <project1/network1> [configuration_options] --project=<project2>
 
 ```{important}
 If the project or the network name is incorrect, the command will not return any error indicating that the respective project/network does not exist, and the routing relationship will remain in pending state.
@@ -53,12 +53,12 @@ Property         | Type       | Required | Description
 
 To list all network peerings for a network, use the following command:
 
-    lxc network peer list <network>
+    incus network peer list <network>
 
 ## Edit a routing relationship
 
 Use the following command to edit a network peering:
 
-    lxc network peer edit <network> <peering_name>
+    incus network peer edit <network> <peering_name>
 
 This command opens the network peering in YAML format for editing.

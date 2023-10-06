@@ -24,31 +24,31 @@ Storage volume
 : The most common type of disk device is a storage volume.
   To add a storage volume, specify its name as the `source` of the device:
 
-      lxc config device add <instance_name> <device_name> disk pool=<pool_name> source=<volume_name> [path=<path_in_instance>]
+      incus config device add <instance_name> <device_name> disk pool=<pool_name> source=<volume_name> [path=<path_in_instance>]
 
   The path is required for file system volumes, but not for block volumes.
 
-  Alternatively, you can use the [`lxc storage volume attach`](incus_storage_volume_attach.md) command to {ref}`storage-attach-volume`.
+  Alternatively, you can use the [`incus storage volume attach`](incus_storage_volume_attach.md) command to {ref}`storage-attach-volume`.
   Both commands use the same mechanism to add a storage volume as a disk device.
 
 Path on the host
 : You can share a path on your host (either a file system or a block device) to your instance by adding it as a disk device with the host path as the `source`:
 
-      lxc config device add <instance_name> <device_name> disk source=<path_on_host> [path=<path_in_instance>]
+      incus config device add <instance_name> <device_name> disk source=<path_on_host> [path=<path_in_instance>]
 
   The path is required for file systems, but not for block devices.
 
 Ceph RBD
 : LXD can use Ceph to manage an internal file system for the instance, but if you have an existing, externally managed Ceph RBD that you would like to use for an instance, you can add it with the following command:
 
-      lxc config device add <instance_name> <device_name> disk source=ceph:<pool_name>/<volume_name> ceph.user_name=<user_name> ceph.cluster_name=<cluster_name> [path=<path_in_instance>]
+      incus config device add <instance_name> <device_name> disk source=ceph:<pool_name>/<volume_name> ceph.user_name=<user_name> ceph.cluster_name=<cluster_name> [path=<path_in_instance>]
 
   The path is required for file systems, but not for block devices.
 
 CephFS
 : LXD can use Ceph to manage an internal file system for the instance, but if you have an existing, externally managed Ceph file system that you would like to use for an instance, you can add it with the following command:
 
-      lxc config device add <instance_name> <device_name> disk source=cephfs:<fs_name>/<path> ceph.user_name=<user_name> ceph.cluster_name=<cluster_name> path=<path_in_instance>
+      incus config device add <instance_name> <device_name> disk source=cephfs:<fs_name>/<path> ceph.user_name=<user_name> ceph.cluster_name=<cluster_name> path=<path_in_instance>
 
 ISO file
 : You can add an ISO file as a disk device for a virtual machine.
@@ -58,7 +58,7 @@ ISO file
 
   To add an ISO file, specify its file path as the `source`:
 
-      lxc config device add <instance_name> <device_name> disk source=<file_path_on_host>
+      incus config device add <instance_name> <device_name> disk source=<file_path_on_host>
 
 VM `cloud-init`
 : You can generate a `cloud-init` configuration ISO from the {config:option}`instance-cloud-init:cloud-init.vendor-data` and {config:option}`instance-cloud-init:cloud-init.user-data` configuration keys and attach it to a virtual machine.
@@ -68,7 +68,7 @@ VM `cloud-init`
 
   To add such a device, use the following command:
 
-      lxc config device add <instance_name> <device_name> disk source=cloud-init:config
+      incus config device add <instance_name> <device_name> disk source=cloud-init:config
 
 (devices-disk-initial-config)=
 ## Initial volume configuration for instance root disk devices

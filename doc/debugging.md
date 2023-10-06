@@ -6,7 +6,7 @@ For information on debugging instance issues, see {ref}`instances-troubleshoot`.
 
 Here are different ways to help troubleshooting `lxc` and `lxd` code.
 
-### `lxc --debug`
+### `incus --debug`
 
 Adding `--debug` flag to any client command will give extra information
 about internals. If there is no useful info, it can be added with the
@@ -14,7 +14,7 @@ logging call:
 
     logger.Debugf("Hello: %s", "Debug")
 
-### `lxc monitor`
+### `incus monitor`
 
 This command will monitor messages as they appear on remote server.
 
@@ -40,7 +40,7 @@ See the [RESTful API](rest-api.md) for available API.
 ## REST API through HTTPS
 
 {ref}`HTTPS connection to LXD <security>` requires valid
-client certificate that is generated on first [`lxc remote add`](incus_remote_add.md). This
+client certificate that is generated on first [`incus remote add`](incus_remote_add.md). This
 certificate should be passed to connection tools for authentication
 and encryption.
 
@@ -97,15 +97,15 @@ you need to revert the state as it was before the upgrade.
 ### Dumping the database content or schema
 
 If you want to get a SQL text dump of the content or the schema of the databases,
-use the `lxd sql <local|global> [.dump|.schema]` command, which produces the
+use the `incus admin sql <local|global> [.dump|.schema]` command, which produces the
 equivalent output of the `.dump` or `.schema` directives of the `sqlite3`
 command line tool.
 
 ### Running custom queries from the console
 
 If you need to perform SQL queries (e.g. `SELECT`, `INSERT`, `UPDATE`)
-against the local or global database, you can use the `lxd sql` command (run
-`lxd sql --help` for details).
+against the local or global database, you can use the `incus admin sql` command (run
+`incus admin sql --help` for details).
 
 You should only need to do that in order to recover from broken updates or bugs.
 Please consult the LXD team first (creating a [GitHub

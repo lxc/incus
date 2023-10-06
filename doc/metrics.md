@@ -25,10 +25,10 @@ Fetching metrics is a relatively expensive operation for LXD to perform, so if t
 
 ## Query the raw data
 
-To view the raw data that LXD collects, use the [`lxc query`](incus_query.md) command to query the `/1.0/metrics` endpoint:
+To view the raw data that LXD collects, use the [`incus query`](incus_query.md) command to query the `/1.0/metrics` endpoint:
 
 ```{terminal}
-:input: lxc query /1.0/metrics
+:input: incus query /1.0/metrics
 
 # HELP lxd_cpu_seconds_total The total number of CPU time used in seconds.
 # TYPE lxd_cpu_seconds_total counter
@@ -68,15 +68,15 @@ So if you want to use a different address for the metrics API than for the full 
 
 For example, to expose the full API on the `8443` port, enter the following command:
 
-    lxc config set core.https_address ":8443"
+    incus config set core.https_address ":8443"
 
 To expose only the metrics API endpoint on the `8444` port, enter the following command:
 
-    lxc config set core.metrics_address ":8444"
+    incus config set core.metrics_address ":8444"
 
 To expose only the metrics API endpoint on a specific IP address and port, enter a command similar to the following:
 
-    lxc config set core.metrics_address "192.0.2.101:8444"
+    incus config set core.metrics_address "192.0.2.101:8444"
 
 ### Add a metrics certificate to LXD
 
@@ -93,14 +93,14 @@ The command requires OpenSSL version 1.1.0 or later.
 
 Then add this certificate to the list of trusted clients, specifying the type as `metrics`:
 
-    lxc config trust add metrics.crt --type=metrics
+    incus config trust add metrics.crt --type=metrics
 
 If requiring TLS client authentication isn't possible in your environment, the `/1.0/metrics` API endpoint can be made available to unauthenticated clients.
 While not recommended, this might be acceptable if you have other controls in place to restrict who can reach that API endpoint. To disable the authentication on the metrics API:
 
 ```bash
 # Disable authentication (NOT RECOMMENDED)
-lxc config set core.metrics_authentication false
+incus config set core.metrics_authentication false
 ```
 
 ### Make the metrics certificate available for Prometheus

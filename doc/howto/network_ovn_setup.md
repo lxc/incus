@@ -20,19 +20,19 @@ Complete the following steps to create a standalone OVN network that is connecte
 
 1. Create an OVN network:
 
-       lxc network set <parent_network> ipv4.dhcp.ranges=<IP_range> ipv4.ovn.ranges=<IP_range>
-       lxc network create ovntest --type=ovn network=<parent_network>
+       incus network set <parent_network> ipv4.dhcp.ranges=<IP_range> ipv4.ovn.ranges=<IP_range>
+       incus network create ovntest --type=ovn network=<parent_network>
 
 1. Create an instance that uses the `ovntest` network:
 
-       lxc init ubuntu:22.04 c1
-       lxc config device override c1 eth0 network=ovntest
-       lxc start c1
+       incus init ubuntu:22.04 c1
+       incus config device override c1 eth0 network=ovntest
+       incus start c1
 
-1. Run [`lxc list`](incus_list.md) to show the instance information:
+1. Run [`incus list`](incus_list.md) to show the instance information:
 
    ```{terminal}
-   :input: lxc list
+   :input: incus list
    :scroll:
 
    +------+---------+---------------------+----------------------------------------------+-----------+-----------+
@@ -123,16 +123,16 @@ See the linked YouTube video for the complete tutorial using four machines.
           external_ids:ovn-encap-type=geneve \
           external_ids:ovn-encap-ip=<local>
 
-1. Create a LXD cluster by running `lxd init` on all machines.
+1. Create a LXD cluster by running `incus admin init` on all machines.
    On the first machine, create the cluster.
-   Then join the other machines with tokens by running [`lxc cluster add <machine_name>`](incus_cluster_add.md) on the first machine and specifying the token when initializing LXD on the other machine.
+   Then join the other machines with tokens by running [`incus cluster add <machine_name>`](incus_cluster_add.md) on the first machine and specifying the token when initializing LXD on the other machine.
 1. On the first machine, create and configure the uplink network:
 
-       lxc network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_1>
-       lxc network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_2>
-       lxc network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_3>
-       lxc network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_4>
-       lxc network create UPLINK --type=physical \
+       incus network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_1>
+       incus network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_2>
+       incus network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_3>
+       incus network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_4>
+       incus network create UPLINK --type=physical \
           ipv4.ovn.ranges=<IP_range> \
           ipv6.ovn.ranges=<IP_range> \
           ipv4.gateway=<gateway> \
@@ -160,20 +160,20 @@ See the linked YouTube video for the complete tutorial using four machines.
 1. Still on the first machine, configure LXD to be able to communicate with the OVN DB cluster.
    To do so, find the value for `ovn-northd-nb-db` in `/etc/default/ovn-central` and provide it to LXD with the following command:
 
-       lxc config set network.ovn.northbound_connection <ovn-northd-nb-db>
+       incus config set network.ovn.northbound_connection <ovn-northd-nb-db>
 
 1. Finally, create the actual OVN network (on the first machine):
 
-       lxc network create my-ovn --type=ovn
+       incus network create my-ovn --type=ovn
 
 1. To test the OVN network, create some instances and check the network connectivity:
 
-       lxc launch ubuntu:22.04 c1 --network my-ovn
-       lxc launch ubuntu:22.04 c2 --network my-ovn
-       lxc launch ubuntu:22.04 c3 --network my-ovn
-       lxc launch ubuntu:22.04 c4 --network my-ovn
-       lxc list
-       lxc exec c4 bash
+       incus launch ubuntu:22.04 c1 --network my-ovn
+       incus launch ubuntu:22.04 c2 --network my-ovn
+       incus launch ubuntu:22.04 c3 --network my-ovn
+       incus launch ubuntu:22.04 c4 --network my-ovn
+       incus list
+       incus exec c4 bash
        ping <IP of c1>
        ping <nameserver>
        ping6 -n www.example.com

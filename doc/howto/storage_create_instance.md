@@ -9,7 +9,7 @@ To use a different storage pool when creating or launching an instance, add the 
 This flag overrides the root disk device from the profile.
 For example:
 
-    lxc launch <image> <instance_name> --storage <storage_pool>
+    incus launch <image> <instance_name> --storage <storage_pool>
 
 % Include content from [storage_move_volume.md](storage_move_volume.md)
 ```{include} storage_move_volume.md

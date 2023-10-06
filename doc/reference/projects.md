@@ -66,8 +66,8 @@ You can then use the various `restricted.*` options to pick individual features 
 
 For example, to restrict a project and block all security-sensitive features, but allow container nesting, enter the following commands:
 
-    lxc project set <project_name> restricted=true
-    lxc project set <project_name> restricted.containers.nesting=allow
+    incus project set <project_name> restricted=true
+    incus project set <project_name> restricted.containers.nesting=allow
 
 Each security-sensitive feature has an associated `restricted.*` project configuration option.
 If you want to allow the usage of a feature, change the value of its `restricted.*` option.

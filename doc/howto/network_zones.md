@@ -58,7 +58,7 @@ In order for the `dig` request to be allowed for a given zone, you must set the
 `peers.NAME.address` configuration option for that zone. `NAME` can be anything random. The value must match the
 IP address where your `dig` is calling from. You must leave `peers.NAME.key` for that same random `NAME` unset.
 
-For example: `lxc network zone set lxd.example.net peers.whatever.address=192.0.2.1`.
+For example: `incus network zone set lxd.example.net peers.whatever.address=192.0.2.1`.
 
 ```{note}
 It is not enough for the address to be of the same machine that `dig` is calling from; it needs to
@@ -123,15 +123,15 @@ Authentication for zone transfers is configured on a per-zone basis, with peers 
 Use the following command to create a network zone:
 
 ```bash
-lxc network zone create <network_zone> [configuration_options...]
+incus network zone create <network_zone> [configuration_options...]
 ```
 
 The following examples show how to configure a zone for forward DNS records, one for IPv4 reverse DNS records and one for IPv6 reverse DNS records, respectively:
 
 ```bash
-lxc network zone create lxd.example.net
-lxc network zone create 2.0.192.in-addr.arpa
-lxc network zone create 1.0.0.0.1.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa
+incus network zone create lxd.example.net
+incus network zone create 2.0.192.in-addr.arpa
+incus network zone create 1.0.0.0.1.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa
 ```
 
 ```{note}
@@ -142,13 +142,13 @@ If you get a creation error, it might be due to the zone already existing in ano
 You can either specify the configuration options when you create the network or configure them afterwards with the following command:
 
 ```bash
-lxc network zone set <network_zone> <key>=<value>
+incus network zone set <network_zone> <key>=<value>
 ```
 
 Use the following command to edit a network zone in YAML format:
 
 ```bash
-lxc network zone edit <network_zone>
+incus network zone edit <network_zone>
 ```
 
 ### Configuration options
@@ -180,7 +180,7 @@ To add a zone to a network, set the corresponding configuration option in the ne
 For example:
 
 ```bash
-lxc network set <network_name> dns.zone.forward="lxd.example.net"
+incus network set <network_name> dns.zone.forward="lxd.example.net"
 ```
 
 Zones belong to projects and are tied to the `networks` features of projects.
@@ -191,14 +191,14 @@ You can restrict projects to specific domains and sub-domains through the {confi
 A network zone automatically generates forward and reverse records for all instances, network gateways and downstream network ports.
 If required, you can manually add custom records to a zone.
 
-To do so, use the [`lxc network zone record`](incus_network_zone_record.md) command.
+To do so, use the [`incus network zone record`](incus_network_zone_record.md) command.
 
 ### Create a record
 
 Use the following command to create a record:
 
 ```bash
-lxc network zone record create <network_zone> <record_name>
+incus network zone record create <network_zone> <record_name>
 ```
 
 This command creates an empty record without entries and adds it to a network zone.
@@ -219,7 +219,7 @@ Property          | Type       | Required | Description
 To add an entry to the record, use the following command:
 
 ```bash
-lxc network zone record entry add <network_zone> <record_name> <type> <value> [--ttl <TTL>]
+incus network zone record entry add <network_zone> <record_name> <type> <value> [--ttl <TTL>]
 ```
 
 This command adds a DNS entry with the specified type and value to the record.
@@ -227,15 +227,15 @@ This command adds a DNS entry with the specified type and value to the record.
 For example, to create a dual-stack web server, add a record with two entries similar to the following:
 
 ```bash
-lxc network zone record entry add <network_zone> <record_name> A 1.2.3.4
-lxc network zone record entry add <network_zone> <record_name> AAAA 1234::1234
+incus network zone record entry add <network_zone> <record_name> A 1.2.3.4
+incus network zone record entry add <network_zone> <record_name> AAAA 1234::1234
 ```
 
 You can use the `--ttl` flag to set a custom time-to-live (in seconds) for the entry.
 Otherwise, the default of 300 seconds is used.
 
-You cannot edit an entry (except if you edit the full record with [`lxc network zone record edit`](incus_network_zone_record_edit.md)), but you can delete entries with the following command:
+You cannot edit an entry (except if you edit the full record with [`incus network zone record edit`](incus_network_zone_record_edit.md)), but you can delete entries with the following command:
 
 ```bash
-lxc network zone record entry remove <network_zone> <record_name> <type> <value>
+incus network zone record entry remove <network_zone> <record_name> <type> <value>
 ```

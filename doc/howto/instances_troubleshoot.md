@@ -14,12 +14,12 @@ To troubleshoot the problem, complete the following steps:
    Instance log
    : Enter the following command to display the instance log:
 
-         lxc info <instance_name> --show-log
+         incus info <instance_name> --show-log
 
    Console log
    : Enter the following command to display the console log:
 
-         lxc console <instance_name> --show-log
+         incus console <instance_name> --show-log
 
    Detailed server information
    : The LXD snap includes a tool that collects the relevant server information for debugging.
@@ -39,7 +39,7 @@ To troubleshoot the problem, complete the following steps:
 In this example, let's investigate a RHEL 7 system in which `systemd` cannot start.
 
 ```{terminal}
-:input: lxc console --show-log systemd
+:input: incus console --show-log systemd
 
 Console log:
 
@@ -60,15 +60,15 @@ As this is an unprivileged container, `systemd` does not have the ability to do 
 So you can see the environment before anything is changed, and you can explicitly change the init system in a container using the `raw.lxc` configuration parameter.
 This is equivalent to setting `init=/bin/bash` on the Linux kernel command line.
 
-    lxc config set systemd raw.lxc 'lxc.init.cmd = /bin/bash'
+    incus config set systemd raw.lxc 'lxc.init.cmd = /bin/bash'
 
 Here is what it looks like:
 
 ```{terminal}
-:input: lxc config set systemd raw.lxc 'lxc.init.cmd = /bin/bash'
+:input: incus config set systemd raw.lxc 'lxc.init.cmd = /bin/bash'
 
-:input: lxc start systemd
-:input: lxc console --show-log systemd
+:input: incus start systemd
+:input: incus console --show-log systemd
 
 Console log:
 
@@ -78,7 +78,7 @@ Console log:
 Now that the container has started, you can check it and see that things are not running as well as expected:
 
 ```{terminal}
-:input: lxc exec systemd bash
+:input: incus exec systemd bash
 
 [root@systemd ~]# ls
 [root@systemd ~]# mount

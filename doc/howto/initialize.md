@@ -7,7 +7,7 @@ Before you can create a LXD instance, you must configure and initialize LXD.
 
 Run the following command to start the interactive configuration process:
 
-    lxd init
+    incus admin init
 
 ```{note}
 For simple configurations, you can run this command as a normal user.
@@ -57,14 +57,14 @@ Automatic image update (see {ref}`about-images`)
 
   The default answer is `yes`, which means that LXD will update the downloaded images regularly.
 
-YAML `lxd init` preseed (see {ref}`initialize-preseed`)
+YAML `incus admin init` preseed (see {ref}`initialize-preseed`)
 : If you answer `yes`, the command displays a summary of your chosen configuration options in the terminal.
 
 ### Minimal setup
 
-To create a minimal setup with default options, you can skip the configuration steps by adding the `--minimal` flag to the `lxd init` command:
+To create a minimal setup with default options, you can skip the configuration steps by adding the `--minimal` flag to the `incus admin init` command:
 
-    lxd init --minimal
+    incus admin init --minimal
 
 ```{note}
 The minimal setup provides a basic configuration, but the configuration is not optimized for speed or functionality.
@@ -76,12 +76,12 @@ If you want to use an optimized setup, go through the interactive configuration 
 (initialize-preseed)=
 ## Non-interactive configuration
 
-The `lxd init` command supports a `--preseed` command line flag that makes it possible to fully configure the LXD daemon settings, storage pools, network devices and profiles, in a non-interactive way through a preseed YAML file.
+The `incus admin init` command supports a `--preseed` command line flag that makes it possible to fully configure the LXD daemon settings, storage pools, network devices and profiles, in a non-interactive way through a preseed YAML file.
 
 For example, starting from a brand new LXD installation, you could configure LXD with the following command:
 
 ```bash
-    cat <<EOF | lxd init --preseed
+    cat <<EOF | incus admin init --preseed
 config:
   core.https_address: 192.0.2.1:9999
   images.auto_update_interval: 15
@@ -125,7 +125,7 @@ You should therefore be careful when trying to reconfigure a LXD daemon via pres
 
 ### Default profile
 
-Unlike the interactive initialization mode, the `lxd init --preseed` command does not modify the default profile, unless you explicitly express that in the provided YAML payload.
+Unlike the interactive initialization mode, the `incus admin init --preseed` command does not modify the default profile, unless you explicitly express that in the provided YAML payload.
 
 For instance, you will typically want to attach a root disk device and a network interface to your default profile.
 See the following section for an example.

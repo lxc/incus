@@ -23,11 +23,11 @@ LXD supports two different kinds of network types for InfiniBand devices:
 
 To create a `physical` `infiniband` device, use the following command:
 
-    lxc config device add <instance_name> <device_name> infiniband nictype=physical parent=<device>
+    incus config device add <instance_name> <device_name> infiniband nictype=physical parent=<device>
 
 To create an `sriov` `infiniband` device, use the following command:
 
-    lxc config device add <instance_name> <device_name> infiniband nictype=sriov parent=<sriov_enabled_device>
+    incus config device add <instance_name> <device_name> infiniband nictype=sriov parent=<sriov_enabled_device>
 
 ## Device options
 

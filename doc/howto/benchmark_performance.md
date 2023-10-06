@@ -44,11 +44,11 @@ Local image
 
   To do so, run a command similar to the following and specify the fingerprint (for example, `2d21da400963`) of the image when you run `lxd.benchmark`:
 
-      lxc image copy ubuntu:22.04 local:
+      incus image copy ubuntu:22.04 local:
 
   You can also assign an alias to the image and specify that alias (for example, `ubuntu`) when you run `lxd.benchmark`:
 
-      lxc image copy ubuntu:22.04 local: --alias ubuntu
+      incus image copy ubuntu:22.04 local: --alias ubuntu
 
 Remote image
 : If you want to include the download time in the overall result, specify a remote image (for example, `ubuntu:22.04`).

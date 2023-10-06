@@ -23,22 +23,22 @@ Use the following command to add a restricted client certificate:
 
 ```{group-tab} Token authentication
 
-    lxc config trust add --projects <project_name> --restricted
+    incus config trust add --projects <project_name> --restricted
 
 ```
 
 ```{group-tab} Add client certificate
 
-    lxc config trust add <certificate_file> --projects <project_name> --restricted
+    incus config trust add <certificate_file> --projects <project_name> --restricted
 ```
 
 ````
 
-The client can then add the server as a remote in the usual way ([`lxc remote add <server_name> <token>`](incus_remote_add.md) or [`lxc remote add <server_name> <server_address>`](incus_remote_add.md)) and can only access the project or projects that have been specified.
+The client can then add the server as a remote in the usual way ([`incus remote add <server_name> <token>`](incus_remote_add.md) or [`incus remote add <server_name> <server_address>`](incus_remote_add.md)) and can only access the project or projects that have been specified.
 
 To confine access for an existing certificate (either because the access restrictions change or because the certificate was added with a trust password), use the following command:
 
-    lxc config trust edit <fingerprint>
+    incus config trust edit <fingerprint>
 
 Make sure that `restricted` is set to `true` and specify the projects that the certificate should give access to under `projects`.
 

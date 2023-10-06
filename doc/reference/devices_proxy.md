@@ -33,7 +33,7 @@ The supported connection types are:
 
 To add a `proxy` device, use the following command:
 
-    lxc config device add <instance_name> <device_name> proxy listen=<type>:<addr>:<port>[-<port>][,<port>] connect=<type>:<addr>:<port> bind=<host/instance_name>
+    incus config device add <instance_name> <device_name> proxy listen=<type>:<addr>:<port>[-<port>][,<port>] connect=<type>:<addr>:<port> bind=<host/instance_name>
 
 (devices-proxy-nat-mode)=
 ## NAT mode
@@ -54,7 +54,7 @@ When configuring a proxy device with `nat=true`, you must ensure that the target
 
 Use the following command to configure a static IP for an instance NIC:
 
-    lxc config device set <instance_name> <nic_name> ipv4.address=<ipv4_address> ipv6.address=<ipv6_address>
+    incus config device set <instance_name> <nic_name> ipv4.address=<ipv4_address> ipv6.address=<ipv6_address>
 
 To define a static IPv6 address, the parent managed network must have `ipv6.dhcp.stateful` enabled.
 

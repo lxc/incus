@@ -21,7 +21,7 @@ By default, the LXD server is not accessible from the network, because it only l
 
 You can enable it for remote access by following the instructions in {ref}`server-expose`.
 
-## When I do a `lxc remote add`, it asks for a token?
+## When I do a `incus remote add`, it asks for a token?
 
 To be able to access the remote API, clients must authenticate with the LXD server.
 
@@ -38,13 +38,13 @@ Almost everything can be run in an unprivileged container, or - in cases of thin
 
 Yes, you can do this by using a {ref}`disk device <devices-disk>`:
 
-    lxc config device add container-name home disk source=/home/${USER} path=/home/ubuntu
+    incus config device add container-name home disk source=/home/${USER} path=/home/ubuntu
 
 For unprivileged containers, you need to make sure that the user in the container has working read/write permissions.
 Otherwise, all files will show up as the overflow UID/GID (`65536:65536`) and access to anything that's not world-readable will fail.
 Use either of the following methods to grant the required permissions:
 
-- Pass `shift=true` to the [`lxc config device add`](incus_config_device_add.md) call. This depends on the kernel and file system supporting either idmapped mounts or shiftfs (see [`lxc info`](incus_info.md)).
+- Pass `shift=true` to the [`incus config device add`](incus_config_device_add.md) call. This depends on the kernel and file system supporting either idmapped mounts or shiftfs (see [`incus info`](incus_info.md)).
 - Add a `raw.idmap` entry (see [Idmaps for user namespace](userns-idmap.md)).
 - Place recursive POSIX ACLs on your home directory.
 
@@ -58,12 +58,12 @@ But that's also the cause of most of the security issues with such privileged co
 
 To run Docker inside a LXD container, set the {config:option}`instance-security:security.nesting` property of the container to `true`:
 
-    lxc config set <container> security.nesting true
+    incus config set <container> security.nesting true
 
 Note that LXD containers cannot load kernel modules, so depending on your Docker configuration, you might need to have extra kernel modules loaded by the host.
 You can do so by setting a comma-separated list of kernel modules that your container needs:
 
-    lxc config set <container_name> linux.kernel_modules <modules>
+    incus config set <container_name> linux.kernel_modules <modules>
 
 In addition, creating a `/.dockerenv` file in your container can help Docker ignore some errors it's getting due to running in a nested environment.
 
@@ -88,20 +88,20 @@ The way to diagnose this problem is to run a `tcpdump` on the uplink and you wil
 (faq-monitor)=
 ## How can I monitor what LXD is doing?
 
-To see detailed information about what LXD is doing and what processes it is running, use the [`lxc monitor`](incus_monitor.md) command.
+To see detailed information about what LXD is doing and what processes it is running, use the [`incus monitor`](incus_monitor.md) command.
 
 For example, to show a human-readable output of all types of messages, enter the following command:
 
-    lxc monitor --pretty
+    incus monitor --pretty
 
-See [`lxc monitor --help`](incus_monitor.md) for all options, and {doc}`debugging` for more information.
+See [`incus monitor --help`](incus_monitor.md) for all options, and {doc}`debugging` for more information.
 
 ## Why does LXD stall when creating an instance?
 
-Check if your storage pool is out of space (by running [`lxc storage info <pool_name>`](incus_storage_info.md)).
+Check if your storage pool is out of space (by running [`incus storage info <pool_name>`](incus_storage_info.md)).
 In that case, LXD cannot finish unpacking the image, and the instance that you're trying to create shows up as stopped.
 
-To get more insight into what is happening, run [`lxc monitor`](incus_monitor.md) (see {ref}`faq-monitor`), and check `sudo dmesg` for any I/O errors.
+To get more insight into what is happening, run [`incus monitor`](incus_monitor.md) (see {ref}`faq-monitor`), and check `sudo dmesg` for any I/O errors.
 
 ## Why does starting containers suddenly fail?
 

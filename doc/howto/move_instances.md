@@ -5,9 +5,9 @@ discourse: 16635
 (move-instances)=
 # How to move existing LXD instances between servers
 
-To move an instance from one LXD server to another, use the [`lxc move`](incus_move.md) command:
+To move an instance from one LXD server to another, use the [`incus move`](incus_move.md) command:
 
-    lxc move [<source_remote>:]<source_instance_name> <target_remote>:[<target_instance_name>]
+    incus move [<source_remote>:]<source_instance_name> <target_remote>:[<target_instance_name>]
 
 ```{note}
 When moving a container, you must stop it first.
@@ -16,9 +16,9 @@ See {ref}`live-migration-containers` for more information.
 When moving a virtual machine, you must either enable {ref}`live-migration-vms` or stop it first.
 ```
 
-Alternatively, you can use the [`lxc copy`](incus_copy.md) command if you want to duplicate the instance:
+Alternatively, you can use the [`incus copy`](incus_copy.md) command if you want to duplicate the instance:
 
-    lxc copy [<source_remote>:]<source_instance_name> <target_remote>:[<target_instance_name>]
+    incus copy [<source_remote>:]<source_instance_name> <target_remote>:[<target_instance_name>]
 
 In both cases, you don't need to specify the source remote if it is your default remote, and you can leave out the target instance name if you want to use the same instance name.
 If you want to move the instance to a specific cluster member, specify it with the `--target` flag.
@@ -35,7 +35,7 @@ You can add the `--mode` flag to choose a transfer mode, depending on your netwo
 `relay`
 : Instruct the client to connect to both the source and the target server and transfer the data through the client.
 
-If you need to adapt the configuration for the instance to run on the target server, you can either specify the new configuration directly (using `--config`, `--device`, `--storage` or `--target-project`) or through profiles (using `--no-profiles` or `--profile`). See [`lxc move --help`](incus_move.md) for all available flags.
+If you need to adapt the configuration for the instance to run on the target server, you can either specify the new configuration directly (using `--config`, `--device`, `--storage` or `--target-project`) or through profiles (using `--no-profiles` or `--profile`). See [`incus move --help`](incus_move.md) for all available flags.
 
 (live-migration)=
 ## Live migration

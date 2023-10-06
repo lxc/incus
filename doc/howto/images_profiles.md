@@ -4,7 +4,7 @@
 You can associate one or more profiles with a specific image.
 Instances that are created from the image will then automatically use the associated profiles in the order they were specified.
 
-To associate a list of profiles with an image, use the [`lxc image edit`](incus_image_edit.md) command and edit the `profiles:` section:
+To associate a list of profiles with an image, use the [`incus image edit`](incus_image_edit.md) command and edit the `profiles:` section:
 
 ```yaml
 profiles:

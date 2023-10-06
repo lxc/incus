@@ -6,18 +6,18 @@ LXD allows to run commands inside an instance using the LXD client, without need
 For containers, this always works and is handled directly by LXD.
 For virtual machines, the `lxd-agent` process must be running inside of the virtual machine for this to work.
 
-To run commands inside your instance, use the [`lxc exec`](incus_exec.md) command.
+To run commands inside your instance, use the [`incus exec`](incus_exec.md) command.
 By running a shell command (for example, `/bin/bash`), you can get shell access to your instance.
 
 ## Run commands inside your instance
 
-To run a single command from the terminal of the host machine, use the [`lxc exec`](incus_exec.md) command:
+To run a single command from the terminal of the host machine, use the [`incus exec`](incus_exec.md) command:
 
-    lxc exec <instance_name> -- <command>
+    incus exec <instance_name> -- <command>
 
 For example, enter the following command to update the package list on your container:
 
-    lxc exec ubuntu-container -- apt-get update
+    incus exec ubuntu-container -- apt-get update
 
 ### Execution mode
 
@@ -52,13 +52,13 @@ You can pass environment variables to an exec session in the following two ways:
 Set environment variables as instance options
 : To set the `ENVVAR` environment variable to `VALUE` in the instance, set the `environment.ENVVAR` instance option (see {config:option}`instance-miscellaneous:environment.*`):
 
-      lxc config set <instance_name> environment.ENVVAR=VALUE
+      incus config set <instance_name> environment.ENVVAR=VALUE
 
 Pass environment variables to the exec command
 : To pass an environment variable to the exec command, use the `--env` flag.
   For example:
 
-      lxc exec <instance_name> --env ENVVAR=VALUE -- <command>
+      incus exec <instance_name> --env ENVVAR=VALUE -- <command>
 
 In addition, LXD sets the following default values (unless they are passed in one of the ways described above):
 
@@ -95,12 +95,12 @@ In addition, LXD sets the following default values (unless they are passed in on
 If you want to run commands directly in your instance, run a shell command inside it.
 For example, enter the following command (assuming that the `/bin/bash` command exists in your instance):
 
-    lxc exec <instance_name> -- /bin/bash
+    incus exec <instance_name> -- /bin/bash
 
 By default, you are logged in as the `root` user.
 If you want to log in as a different user, enter the following command:
 
-    lxc exec <instance_name> -- su --login <user_name>
+    incus exec <instance_name> -- su --login <user_name>
 
 ```{note}
 Depending on the operating system that you run in your instance, you might need to create a user first.

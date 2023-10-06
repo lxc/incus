@@ -124,7 +124,7 @@ Key                      | Type      | Default           | Required  | Descripti
 One can override the default bridged NIC settings from the profile on a per-instance basis using:
 
 ```
-lxc config device override <instance> <NIC> security.mac_filtering=true
+incus config device override <instance> <NIC> security.mac_filtering=true
 ```
 
 Used together, these features can prevent an instance connected to a bridge from spoofing MAC and IP addresses.

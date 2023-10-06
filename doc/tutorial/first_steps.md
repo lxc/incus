@@ -46,7 +46,7 @@ If you prefer a different installation method, or use a Linux distribution that 
 
 1. Enter the following command to initialize LXD:
 
-       lxd init --minimal
+       incus admin init --minimal
 
    This will create a minimal setup with default options.
    If you want to tune the initialization options, see {ref}`initialize` for more information.
@@ -58,7 +58,7 @@ In this tutorial, we will use the official [`ubuntu:`](https://cloud-images.ubun
 
 You can list all images that are available on this server with:
 
-    lxc image list ubuntu:
+    incus image list ubuntu:
 
 See {ref}`images` for more information about the images that LXD uses.
 
@@ -70,7 +70,7 @@ For managing instances, we use the LXD command line client `lxc`.
 
 1. Launch a container called `first` using the Ubuntu 22.04 image:
 
-       lxc launch ubuntu:22.04 first
+       incus launch ubuntu:22.04 first
 
    ```{note}
    Launching this container takes a few seconds, because the image must be downloaded and unpacked first.
@@ -78,7 +78,7 @@ For managing instances, we use the LXD command line client `lxc`.
 
 1. Launch a container called `second` using the same image:
 
-       lxc launch ubuntu:22.04 second
+       incus launch ubuntu:22.04 second
 
    ```{note}
    Launching this container is quicker than launching the first, because the image is already available.
@@ -86,11 +86,11 @@ For managing instances, we use the LXD command line client `lxc`.
 
 1. Copy the first container into a container called `third`:
 
-       lxc copy first third
+       incus copy first third
 
 1. Launch a VM called `ubuntu-vm` using the Ubuntu 22.04 image:
 
-       lxc launch ubuntu:22.04 ubuntu-vm --vm
+       incus launch ubuntu:22.04 ubuntu-vm --vm
 
    ```{note}
    Even though you are using the same image name to launch the instance, LXD downloads a slightly different image that is compatible with VMs.
@@ -98,40 +98,40 @@ For managing instances, we use the LXD command line client `lxc`.
 
 1. Check the list of instances that you launched:
 
-       lxc list
+       incus list
 
    You will see that all but the third container are running.
    This is because you created the third container by copying the first, but you didn't start it.
 
    You can start the third container with:
 
-       lxc start third
+       incus start third
 
 1. Query more information about each instance with:
 
-       lxc info first
-       lxc info second
-       lxc info third
-       lxc info ubuntu-vm
+       incus info first
+       incus info second
+       incus info third
+       incus info ubuntu-vm
 
 1. We don't need all of these instances for the remainder of the tutorial, so let's clean some of them up:
 
    1. Stop the second container:
 
-          lxc stop second
+          incus stop second
 
    1. Delete the second container:
 
-          lxc delete second
+          incus delete second
 
    1. Delete the third container:
 
-          lxc delete third
+          incus delete third
 
       Since this container is running, you get an error message that you must stop it first.
       Alternatively, you can force-delete it:
 
-          lxc delete third --force
+          incus delete third --force
 
 See {ref}`instances-create` and {ref}`instances-manage` for more information.
 
@@ -144,18 +144,18 @@ Let's create another container with some resource limits:
 
 1. Launch a container and limit it to one vCPU and 192 MiB of RAM:
 
-       lxc launch ubuntu:22.04 limited --config limits.cpu=1 --config limits.memory=192MiB
+       incus launch ubuntu:22.04 limited --config limits.cpu=1 --config limits.memory=192MiB
 
 1. Check the current configuration and compare it to the configuration of the first (unlimited) container:
 
-       lxc config show limited
-       lxc config show first
+       incus config show limited
+       incus config show first
 
 1. Check the amount of free and used memory on the parent system and on the two containers:
 
        free -m
-       lxc exec first -- free -m
-       lxc exec limited -- free -m
+       incus exec first -- free -m
+       incus exec limited -- free -m
 
    ```{note}
    The total amount of memory is identical for the parent system and the first container, because by default, the container inherits the resources from its parent environment.
@@ -165,8 +165,8 @@ Let's create another container with some resource limits:
 1. Check the number of CPUs available on the parent system and on the two containers:
 
        nproc
-       lxc exec first -- nproc
-       lxc exec limited -- nproc
+       incus exec first -- nproc
+       incus exec limited -- nproc
 
    ```{note}
    Again, the number is identical for the parent system and the first container, but reduced for the limited container.
@@ -176,15 +176,15 @@ Let's create another container with some resource limits:
 
    1. Configure a memory limit for your container:
 
-          lxc config set limited limits.memory=128MiB
+          incus config set limited limits.memory=128MiB
 
    1. Check that the configuration has been applied:
 
-          lxc config show limited
+          incus config show limited
 
    1. Check the amount of memory that is available to the container:
 
-          lxc exec limited -- free -m
+          incus exec limited -- free -m
 
       Note that the number has changed.
 
@@ -194,7 +194,7 @@ Let's create another container with some resource limits:
    1. Check the current size of the root disk device of the Ubuntu VM:
 
       ```{terminal}
-      :input: lxc exec ubuntu-vm -- df -h
+      :input: incus exec ubuntu-vm -- df -h
 
       Filesystem      Size  Used Avail Use% Mounted on
       /dev/root       9.6G  1.4G  8.2G  15% /
@@ -207,16 +207,16 @@ Let's create another container with some resource limits:
 
    1. Override the size of the root disk device:
 
-          lxc config device override ubuntu-vm root size=30GiB
+          incus config device override ubuntu-vm root size=30GiB
 
    1. Restart the VM:
 
-          lxc restart ubuntu-vm
+          incus restart ubuntu-vm
 
    1. Check the size of the root disk device again:
 
        ```{terminal}
-       :input: lxc exec ubuntu-vm -- df -h
+       :input: incus exec ubuntu-vm -- df -h
 
        Filesystem      Size  Used Avail Use% Mounted on
        /dev/root        29G  1.4G   28G   5% /
@@ -237,7 +237,7 @@ Start by launching an interactive shell in your instance:
 
 1. Run the `bash` command in your container:
 
-       lxc exec first -- bash
+       incus exec first -- bash
 
 1. Enter some commands, for example, display information about the operating system:
 
@@ -251,9 +251,9 @@ Instead of logging on to the instance and running commands there, you can run co
 
 For example, you can install a command line tool on the instance and run it:
 
-    lxc exec first -- apt-get update
-    lxc exec first -- apt-get install sl -y
-    lxc exec first -- /usr/games/sl
+    incus exec first -- apt-get update
+    incus exec first -- apt-get install sl -y
+    incus exec first -- /usr/games/sl
 
 See {ref}`run-commands` for more information.
 
@@ -261,7 +261,7 @@ You can also access the files from your instance and interact with them:
 
 1. Pull a file from the container:
 
-       lxc file pull first/etc/hosts .
+       incus file pull first/etc/hosts .
 
 1. Add an entry to the file:
 
@@ -269,11 +269,11 @@ You can also access the files from your instance and interact with them:
 
 1. Push the file back to the container:
 
-       lxc file push hosts first/etc/hosts
+       incus file push hosts first/etc/hosts
 
 1. Use the same mechanism to access log files:
 
-       lxc file pull first/var/log/syslog - | less
+       incus file pull first/var/log/syslog - | less
 
    ```{note}
    Press `q` to exit the `less` command.
@@ -287,25 +287,25 @@ You can create a snapshot of your instance, which makes it easy to restore the i
 
 1. Create a snapshot called "clean":
 
-       lxc snapshot first clean
+       incus snapshot first clean
 
 1. Confirm that the snapshot has been created:
 
-       lxc list first
-       lxc info first
+       incus list first
+       incus info first
 
    ```{note}
-   `lxc list` shows the number of snapshots.
-   `lxc info` displays information about each snapshot.
+   `incus list` shows the number of snapshots.
+   `incus info` displays information about each snapshot.
    ```
 
 1. Break the container:
 
-       lxc exec first -- rm /usr/bin/bash
+       incus exec first -- rm /usr/bin/bash
 
 1. Confirm the breakage:
 
-       lxc exec first -- bash
+       incus exec first -- bash
 
    ```{note}
    You do not get a shell, because you deleted the `bash` command.
@@ -313,15 +313,15 @@ You can create a snapshot of your instance, which makes it easy to restore the i
 
 1. Restore the container to the state of the snapshot:
 
-       lxc restore first clean
+       incus restore first clean
 
 1. Confirm that everything is back to normal:
 
-       lxc exec first -- bash
+       incus exec first -- bash
        exit
 
 1. Delete the snapshot:
 
-       lxc delete first/clean
+       incus delete first/clean
 
 See {ref}`instances-snapshots` for more information.

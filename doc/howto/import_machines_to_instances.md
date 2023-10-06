@@ -87,7 +87,7 @@ Complete the following steps to migrate an existing machine to a LXD instance:
    1. Check and confirm the certificate fingerprint.
    1. Choose a method for authentication (see {ref}`authentication`).
 
-      For example, if you choose using a certificate token, log on to the LXD server and create a token for the machine on which you are running the migration tool with [`lxc config trust add`](incus_config_trust_add.md).
+      For example, if you choose using a certificate token, log on to the LXD server and create a token for the machine on which you are running the migration tool with [`incus config trust add`](incus_config_trust_add.md).
       Then use the generated token to authenticate the tool.
    1. Choose whether to create a container or a virtual machine.
       See {ref}`containers-and-vms`.
