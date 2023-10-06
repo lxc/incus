@@ -736,6 +736,11 @@ func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
 	// Get all storage pool names.
 	pools, err := s.DB.Cluster.GetStoragePoolNames()
 	if err != nil {
+		// Skip the rest of the patch if no storage pools were found.
+		if api.StatusErrorCheck(err, http.StatusNotFound) {
+			return nil
+		}
+
 		return fmt.Errorf("Failed getting storage pool names: %w", err)
 	}
 
