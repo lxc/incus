@@ -114,6 +114,10 @@ test_storage_local_volume_handling() {
     incus storage volume show "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol3
     incus storage volume get "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol3 user.foo | grep -Fx "snap0"
 
+    # Rename custom volume using `incus storage volume move`
+    incus storage volume move "incustest-$(basename "${INCUS_DIR}")-${driver}1"/vol1 "incustest-$(basename "${INCUS_DIR}")-${driver}1"/vol4
+    incus storage volume move "incustest-$(basename "${INCUS_DIR}")-${driver}1"/vol4 "incustest-$(basename "${INCUS_DIR}")-${driver}1"/vol1
+
     incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol1
     incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol2
     incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-${driver}1" vol3
