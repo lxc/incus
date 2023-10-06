@@ -1,7 +1,7 @@
 (migrate-from-lxc)=
 # How to migrate containers from LXC to Incus
 
-Incus provides a tool (`lxc-to-lxd`) that you can use to import LXC containers into your Incus server.
+Incus provides a tool (`lxc-to-incus`) that you can use to import LXC containers into your Incus server.
 The LXC containers must exist on the same machine as the Incus server.
 
 The tool analyzes the LXC containers and migrates both their data and their configuration into new Incus containers.
@@ -13,7 +13,7 @@ However, this tool does not migrate any of the LXC container configuration.
 
 ## Get the tool
 
-If you're using the snap, the `lxc-to-lxd` is automatically installed.
+If you're using the snap, the `lxc-to-incus` is automatically installed.
 It is available as `lxc-to-incus`.
 
 Otherwise, make sure that you have `go` (version 1.18 or later) installed and get the tool with the following command:
@@ -36,7 +36,7 @@ Before you start the migration process, stop the LXC containers that you want to
 ## Start the migration process
 
 Run `sudo lxc-to-incus [flags]` to migrate the containers.
-(This command assumes that you are using the snap; otherwise, replace `lxc-to-incus` with `lxc-to-lxd`, also in the following examples.)
+(This command assumes that you are using the snap; otherwise, replace `lxc-to-incus` with `lxc-to-incus`, also in the following examples.)
 
 For example, to migrate all containers:
 

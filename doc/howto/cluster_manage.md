@@ -125,7 +125,7 @@ For example, if you are using the snap then refresh to the latest version and co
     sudo snap refresh lxd --cohort="+"
 
 If the new version of the daemon has database schema or API changes, the upgraded member might transition into a "blocked" state.
-In this case, the member does not serve any Incus API requests (which means that `lxc` commands don't work on that member anymore), but any running instances will continue to run.
+In this case, the member does not serve any Incus API requests (which means that `incus` commands don't work on that member anymore), but any running instances will continue to run.
 
 This happens if there are other cluster members that have not been upgraded and are therefore running an older version.
 Run [`incus cluster list`](incus_cluster_list.md) on a cluster member that is not blocked to see if any members are blocked.

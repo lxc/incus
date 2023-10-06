@@ -13,7 +13,7 @@ Do not rely on this tool as an alternative to proper backups; you will lose data
 The tool must be run interactively and cannot be used in automated scripts.
 ```
 
-The tool is available through the `incus admin recover` command (note the `lxd` command rather than the normal `lxc` command).
+The tool is available through the `incus admin recover` command (note the `lxd` command rather than the normal `incus` command).
 
 ## Recovery process
 

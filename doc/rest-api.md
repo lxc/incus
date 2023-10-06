@@ -6,7 +6,7 @@ This API is encapsulated over either TLS (for remote operations) or a Unix socke
 See {ref}`authentication` for information about how to access the API remotely.
 
 ```{tip}
-- For examples on how the API is used, run any command of the Incus client ([`lxc`](incus.md)) with the `--debug` flag.
+- For examples on how the API is used, run any command of the Incus client ([`incus`](incus.md)) with the `--debug` flag.
 The debug information displays the API calls and the return values.
 - For quickly querying the API, the Incus client provides a [`incus query`](incus_query.md) command.
 ```

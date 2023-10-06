@@ -66,7 +66,7 @@ Now, let's start by launching a few instances.
 With *instance*, we mean either a container or a virtual machine.
 See {ref}`containers-and-vms` for information about the difference between the two instance types.
 
-For managing instances, we use the Incus command line client `lxc`.
+For managing instances, we use the Incus command line client `incus`.
 
 1. Launch a container called `first` using the Ubuntu 22.04 image:
 

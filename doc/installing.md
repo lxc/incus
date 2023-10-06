@@ -24,7 +24,7 @@ To get all the latest features and monthly updates to Incus, use the feature rel
 ## Install Incus from a package
 
 The Incus daemon only works on Linux.
-The client tool ([`lxc`](incus.md)) is available on most platforms.
+The client tool ([`incus`](incus.md)) is available on most platforms.
 
 ### Linux
 
@@ -233,7 +233,7 @@ export PATH="${PATH}:$(go env GOPATH)/bin"
 export LD_LIBRARY_PATH="$(go env GOPATH)/deps/dqlite/.libs/:$(go env GOPATH)/deps/raft/.libs/:${LD_LIBRARY_PATH}"
 ```
 
-Now, the `lxd` and `lxc` binaries will be available to you and can be used to set up Incus. The binaries will automatically find and use the dependencies built in `$(go env GOPATH)/deps` thanks to the `LD_LIBRARY_PATH` environment variable.
+Now, the `incusd` and `incus` binaries will be available to you and can be used to set up Incus. The binaries will automatically find and use the dependencies built in `$(go env GOPATH)/deps` thanks to the `LD_LIBRARY_PATH` environment variable.
 
 ### Machine setup
 

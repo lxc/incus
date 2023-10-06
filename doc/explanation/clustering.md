@@ -3,7 +3,7 @@
 
 To spread the total workload over several servers, Incus can be run in clustering mode.
 In this scenario, any number of Incus servers share the same distributed database that holds the configuration for the cluster members and their instances.
-The Incus cluster can be managed uniformly using the [`lxc`](incus.md) client or the REST API.
+The Incus cluster can be managed uniformly using the [`incus`](incus.md) client or the REST API.
 
 This feature was introduced as part of the [`clustering`](../api-extensions.md#clustering) API extension and is available since Incus 3.0.
 

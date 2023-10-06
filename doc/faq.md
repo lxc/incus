@@ -60,9 +60,9 @@ You can do so by setting a comma-separated list of kernel modules that your cont
 
 In addition, creating a `/.dockerenv` file in your container can help Docker ignore some errors it's getting due to running in a nested environment.
 
-## Where does the Incus client (`lxc`) store its configuration?
+## Where does the Incus client (`incus`) store its configuration?
 
-The [`lxc`](incus.md) command stores its configuration under `~/.config/lxc`, or in `~/snap/lxd/common/config` for snap users.
+The [`incus`](incus.md) command stores its configuration under `~/.config/incus`, or in `~/snap/lxd/common/config` for snap users.
 
 Various configuration files are stored in that directory, for example:
 

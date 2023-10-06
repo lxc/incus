@@ -7,7 +7,7 @@
 /database
 Configure the Incus server <howto/server_configure>
 Add remote servers <remotes>
-Add command aliases <howto/lxc_alias>
+Add command aliases <howto/incus_alias>
 /server
 /architectures
 /reference/manpages

@@ -2,9 +2,9 @@
 
 For information on debugging instance issues, see {ref}`instances-troubleshoot`.
 
-## Debugging `lxc` and `lxd`
+## Debugging `incus` and `incusd`
 
-Here are different ways to help troubleshooting `lxc` and `lxd` code.
+Here are different ways to help troubleshooting `incus` and `incusd` code.
 
 ### `incus --debug`
 
@@ -26,7 +26,7 @@ human readable form using [jq](https://stedolan.github.io/jq/tutorial/)
 utility:
 
 ```bash
-curl --unix-socket /var/lib/lxd/unix.socket lxd/1.0 | jq .
+curl --unix-socket /var/lib/incus/unix.socket incus/1.0 | jq .
 ```
 
 or for snap users:
@@ -44,7 +44,7 @@ client certificate that is generated on first [`incus remote add`](incus_remote_
 certificate should be passed to connection tools for authentication
 and encryption.
 
-If desired, `openssl` can be used to examine the certificate (`~/.config/lxc/client.crt`
+If desired, `openssl` can be used to examine the certificate (`~/.config/incus/client.crt`
 or `~/snap/lxd/common/config/client.crt` for snap users):
 
 ```bash
@@ -59,7 +59,7 @@ Among the lines you should see:
 ### With command line tools
 
 ```bash
-wget --no-check-certificate --certificate=$HOME/.config/lxc/client.crt --private-key=$HOME/.config/lxc/client.key -qO - https://127.0.0.1:8443/1.0
+wget --no-check-certificate --certificate=$HOME/.config/incus/client.crt --private-key=$HOME/.config/incus/client.key -qO - https://127.0.0.1:8443/1.0
 
 # or for snap users
 wget --no-check-certificate --certificate=$HOME/snap/lxd/common/config/client.crt --private-key=$HOME/snap/lxd/common/config/client.key -qO - https://127.0.0.1:8443/1.0
@@ -69,7 +69,7 @@ wget --no-check-certificate --certificate=$HOME/snap/lxd/common/config/client.cr
 
 Some browser plugins provide convenient interface to create, modify
 and replay web requests. To authenticate against Incus server, convert
-`lxc` client certificate into importable format and import it into
+`incus` client certificate into importable format and import it into
 browser.
 
 For example this produces `client.pfx` in Windows-compatible format:
@@ -83,7 +83,7 @@ After that, opening [`https://127.0.0.1:8443/1.0`](https://127.0.0.1:8443/1.0) s
 ## Debug the Incus database
 
 The files of the global {ref}`database <database>` are stored under the `./database/global`
-sub-directory of your Incus data directory (e.g. `/var/lib/lxd/database/global` or
+sub-directory of your Incus data directory (e.g. `/var/lib/incus/database/global` or
 `/var/snap/lxd/common/lxd/database/global` for snap users).
 
 Since each member of the cluster also needs to keep some data which is specific
@@ -130,7 +130,7 @@ As above, please consult the Incus team first.
 
 ### Syncing the cluster database to disk
 
-If you want to flush the content of the cluster database to disk, use the `lxd
-sql global .sync` command, that will write a plain SQLite database file into
+If you want to flush the content of the cluster database to disk, use the `incus
+admin sql global .sync` command, that will write a plain SQLite database file into
 `./database/global/db.bin`, which you can then inspect with the `sqlite3`
 command line tool.

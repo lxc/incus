@@ -1,4 +1,4 @@
-(lxc-alias)=
+(incus-alias)=
 # How to add command aliases
 
 The Incus command-line client supports adding aliases for commands that you use frequently.
