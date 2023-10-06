@@ -465,18 +465,18 @@ Adhere to the following conventions:
 * - Input
   - Output
 * - ```
-    ![Alt text](https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png)
+    ![Alt text](https://linuxcontainers.org/incus/docs/main/_static/tag.png)
     ```
-  - ![Alt text](https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png)
+  - ![Alt text](https://linuxcontainers.org/incus/docs/main/_static/tag.png)
 * - ````
-    ```{figure} https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png
+    ```{figure} https://linuxcontainers.org/incus/docs/main/_static/tag.png
        :width: 100px
        :alt: Alt text
 
        Figure caption
     ```
     ````
-  - ```{figure} https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png
+  - ```{figure} https://linuxcontainers.org/incus/docs/main/_static/tag.png
        :width: 100px
        :alt: Alt text
 

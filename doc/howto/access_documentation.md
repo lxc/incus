@@ -1,7 +1,7 @@
 (access-documentation)=
 # How to access the local Incus documentation
 
-The latest version of the Incus documentation is available at [`documentation.ubuntu.com/lxd`](https://documentation.ubuntu.com/lxd/).
+The latest version of the Incus documentation is available at [`https://linuxcontainers.org/incus/docs/main/`](https://linuxcontainers.org/incus/docs/main/).
 
 Alternatively, you can access a local version of the Incus documentation that is embedded in the Incus snap.
 This version of the documentation exactly matches the version of your Incus deployment, but might be missing additions, fixes, or clarifications that were added after the release of the snap.
