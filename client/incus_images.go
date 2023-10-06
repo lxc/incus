@@ -394,7 +394,7 @@ func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs)
 
 	// Send the JSON based request
 	if args == nil {
-		op, _, err := r.queryOperation("POST", "/images", image, "")
+		op, _, err := r.queryOperation("POST", "/images", image, "", true)
 		if err != nil {
 			return nil, err
 		}
@@ -917,7 +917,7 @@ func (r *ProtocolIncus) UpdateImage(fingerprint string, image api.ImagePut, ETag
 // DeleteImage requests that Incus removes an image from the store.
 func (r *ProtocolIncus) DeleteImage(fingerprint string) (Operation, error) {
 	// Send the request
-	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("/images/%s", url.PathEscape(fingerprint)), nil, "")
+	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("/images/%s", url.PathEscape(fingerprint)), nil, "", true)
 	if err != nil {
 		return nil, err
 	}
@@ -932,7 +932,7 @@ func (r *ProtocolIncus) RefreshImage(fingerprint string) (Operation, error) {
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("/images/%s/refresh", url.PathEscape(fingerprint)), nil, "")
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("/images/%s/refresh", url.PathEscape(fingerprint)), nil, "", true)
 	if err != nil {
 		return nil, err
 	}
@@ -943,7 +943,7 @@ func (r *ProtocolIncus) RefreshImage(fingerprint string) (Operation, error) {
 // CreateImageSecret requests that Incus issues a temporary image secret.
 func (r *ProtocolIncus) CreateImageSecret(fingerprint string) (Operation, error) {
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("/images/%s/secret", url.PathEscape(fingerprint)), nil, "")
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("/images/%s/secret", url.PathEscape(fingerprint)), nil, "", true)
 	if err != nil {
 		return nil, err
 	}
@@ -1002,7 +1002,7 @@ func (r *ProtocolIncus) ExportImage(fingerprint string, image api.ImageExportPos
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("/images/%s/export", url.PathEscape(fingerprint)), &image, "")
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("/images/%s/export", url.PathEscape(fingerprint)), &image, "", true)
 	if err != nil {
 		return nil, err
 	}
