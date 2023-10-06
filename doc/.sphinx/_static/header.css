@@ -132,17 +132,9 @@ ul.more-links-dropdown {
   width: 1rem;
 }
 
-.nav-ubuntu-com {
-  display: none;
-}
-
 @media only screen and (min-width: 480px) {
   ul.p-navigation__links li {
     width: 100%;
-  }
-
-  .nav-ubuntu-com {
-    display: inherit;
   }
 }
 
