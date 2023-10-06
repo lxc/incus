@@ -9,7 +9,7 @@
 
 See the following sections for detailed information.
 
-If you discover a security issue, see the [Incus security policy](https://github.com/canonical/lxd/blob/main/SECURITY.md) for information on how to report the issue.
+If you discover a security issue, see the [Incus security policy](https://github.com/lxc/incus/blob/main/SECURITY.md) for information on how to report the issue.
 
 ## Supported versions
 

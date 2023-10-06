@@ -167,8 +167,8 @@ An instance placement scriptlet must implement the `instance_placement` function
 
    `instance_placement(request, candidate_members)`:
 
-- `request` is an object that contains an expanded representation of [`scriptlet.InstancePlacement`](https://pkg.go.dev/github.com/canonical/lxd/shared/api/scriptlet/#InstancePlacement). This request includes `project` and `reason` fields. The `reason` can be `new`, `evacuation` or `relocation`.
-- `candidate_members` is a `list` of cluster member objects representing [`api.ClusterMember`](https://pkg.go.dev/github.com/canonical/lxd/shared/api#ClusterMember) entries.
+- `request` is an object that contains an expanded representation of [`scriptlet.InstancePlacement`](https://pkg.go.dev/github.com/lxc/incus/shared/api/scriptlet/#InstancePlacement). This request includes `project` and `reason` fields. The `reason` can be `new`, `evacuation` or `relocation`.
+- `candidate_members` is a `list` of cluster member objects representing [`api.ClusterMember`](https://pkg.go.dev/github.com/lxc/incus/shared/api#ClusterMember) entries.
 
 For example:
 
@@ -204,9 +204,9 @@ The following functions are available to the scriptlet (in addition to those pro
 - `log_warn(*messages)`: Add a log entry to Incus's log at `warn` level. `messages` is one or more message arguments.
 - `log_error(*messages)`: Add a log entry to Incus's log at `error` level. `messages` is one or more message arguments.
 - `set_cluster_member_target(member_name)`: Set the cluster member where the instance should be created. `member_name` is the name of the cluster member the instance should be created on. If this function is not called, then Incus will use its built-in instance placement logic.
-- `get_cluster_member_state(member_name)`: Get the cluster member's state. Returns an object with the cluster member's state in the form of [`api.ClusterMemberState`](https://pkg.go.dev/github.com/canonical/lxd/shared/api#ClusterMemberState). `member_name` is the name of the cluster member to get the state for.
-- `get_cluster_member_resources(member_name)`: Get information about resources on the cluster member. Returns an object with the resource information in the form of [`api.Resources`](https://pkg.go.dev/github.com/canonical/lxd/shared/api#Resources). `member_name` is the name of the cluster member to get the resource information for.
-- `get_instance_resources()`: Get information about the resources the instance will require. Returns an object with the resource information in the form of [`scriptlet.InstanceResources`](https://pkg.go.dev/github.com/canonical/lxd/shared/api/scriptlet/#InstanceResources).
+- `get_cluster_member_state(member_name)`: Get the cluster member's state. Returns an object with the cluster member's state in the form of [`api.ClusterMemberState`](https://pkg.go.dev/github.com/lxc/incus/shared/api#ClusterMemberState). `member_name` is the name of the cluster member to get the state for.
+- `get_cluster_member_resources(member_name)`: Get information about resources on the cluster member. Returns an object with the resource information in the form of [`api.Resources`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Resources). `member_name` is the name of the cluster member to get the resource information for.
+- `get_instance_resources()`: Get information about the resources the instance will require. Returns an object with the resource information in the form of [`scriptlet.InstanceResources`](https://pkg.go.dev/github.com/lxc/incus/shared/api/scriptlet/#InstanceResources).
 
 ```{note}
 Field names in the object types are equivalent to the JSON field names in the associated Go types.

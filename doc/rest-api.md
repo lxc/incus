@@ -246,5 +246,5 @@ much like `/1.0/containers` will only show you instances of that type.
 ## API structure
 
 Incus has an auto-generated [Swagger](https://swagger.io/) specification describing its API endpoints.
-The YAML version of this API specification can be found in [`rest-api.yaml`](https://github.com/canonical/lxd/blob/main/doc/rest-api.yaml).
+The YAML version of this API specification can be found in [`rest-api.yaml`](https://github.com/lxc/incus/blob/main/doc/rest-api.yaml).
 See {doc}`api` for a convenient web rendering of it.

@@ -17,7 +17,7 @@ It is available as `lxd.benchmark`.
 Otherwise, if you have installed Incus through your distribution's package manager or built from source, the tool should be available as `lxd-benchmark`.
 If it isn't, make sure that you have `go` (version 1.18 or later) installed and install the tool with the following command:
 
-    go install github.com/canonical/lxd/lxd-benchmark@latest
+    go install github.com/lxc/incus/lxd-benchmark@latest
 
 ## Run the tool
 

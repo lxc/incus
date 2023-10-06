@@ -134,7 +134,7 @@ To install it:
 
 ````
 
-You can also find native builds of the Incus client on [GitHub](https://github.com/canonical/lxd/actions).
+You can also find native builds of the Incus client on [GitHub](https://github.com/lxc/incus/actions).
 To download a specific build:
 
 1. Make sure that you are logged into your GitHub account.
@@ -178,7 +178,7 @@ integration into Linux distributions are not covered here and may be covered in 
 future.
 
 ```bash
-git clone https://github.com/canonical/lxd
+git clone https://github.com/lxc/incus
 cd lxd
 ```
 
