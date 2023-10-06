@@ -1610,7 +1610,7 @@ Specify a comma-separated list of values that should be used as labels for a Lok
 :shortdesc: "Events to send to the Loki server"
 :type: "string"
 Specify a comma-separated list of events to send to the Loki server.
-The events can be any combination of `lifecycle`, `logging`, and `ovn`.
+The events can be any combination of `lifecycle`, `logging`, and `network-acl`.
 ```
 
 <!-- config group server-loki end -->
