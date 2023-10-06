@@ -38,7 +38,7 @@ func (l *InternalListener) startListener() {
 	aEnd, bEnd := memorypipe.NewPipePair(l.listenerCtx)
 	listenerConnection := NewSimpleListenerConnection(aEnd)
 
-	l.listener, err = l.server.AddListener("", true, listenerConnection, []string{"lifecycle", "logging", "ovn"}, []EventSource{EventSourcePull}, nil, nil)
+	l.listener, err = l.server.AddListener("", true, listenerConnection, []string{"lifecycle", "logging", "network-acl"}, []EventSource{EventSourcePull}, nil, nil)
 	if err != nil {
 		return
 	}
