@@ -74,6 +74,14 @@ The following channels are available for you to interact with the Incus communit
 
 You can file bug reports and feature requests at: [`https://github.com/lxc/incus/issues/new`](https://github.com/lxc/incus/issues/new)
 
+### Community support
+
+Community support is handling at: [`https://discuss.linuxcontainers.org`](https://discuss.linuxcontainers.org)
+
+### Commercial support
+
+Commercial support is currently available from [Zabbly](https://zabbly.com) for users of their [Debian or Ubuntu packages](https://github.com/zabbly/incus).
+
 ## Documentation
 
 The official documentation is available at: [`https://github.com/lxc/incus/tree/main/doc`](https://github.com/lxc/incus/tree/main/doc)
