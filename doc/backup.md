@@ -24,7 +24,7 @@ If you use only the `default` profile, or only the standard `lxdbr0` network bri
 
 ## Full backup
 
-To create a full backup of all contents of your Incus server, back up the `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/lxd` (otherwise) directory.
+To create a full backup of all contents of your Incus server, back up the `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/incus` (otherwise) directory.
 
 This directory contains your local storage, the Incus database, and your configuration.
 It does not contain separate storage devices, however.
@@ -36,14 +36,14 @@ If your Incus server uses any external storage (for example, LVM volume groups, 
 See {ref}`howto-storage-backup-volume` for instructions.
 ```
 
-To back up your data, create a tarball of `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/lxd` (otherwise).
+To back up your data, create a tarball of `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/incus` (otherwise).
 If you are not using the snap package and your source system has a `/etc/subuid` and `/etc/subgid` file, you should also back up these files.
 Restoring them avoids needless shifting of instance file systems.
 
 To restore your data, complete the following steps:
 
 1. Stop Incus on your server (for example, with `sudo snap stop lxd`).
-1. Delete the directory (`/var/snap/lxd/common/lxd` for snap users or `/var/lib/lxd` otherwise).
+1. Delete the directory (`/var/snap/lxd/common/lxd` for snap users or `/var/lib/incus` otherwise).
 1. Restore the directory from the backup.
 1. Delete and restore any external storage devices.
 1. If you are not using the snap, restore the `/etc/subuid` and `/etc/subgid` files.

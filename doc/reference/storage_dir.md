@@ -10,7 +10,7 @@ However, Incus operations are {ref}`not optimized <storage-drivers-features>` fo
 The `dir` driver in Incus is fully functional and provides the same set of features as other drivers.
 However, it is much slower than all the other drivers because it must unpack images and do instant copies of instances, snapshots and images.
 
-Unless specified differently during creation (with the `source` configuration option), the data is stored in the `/var/snap/lxd/common/lxd/storage-pools/` (for snap installations) or `/var/lib/lxd/storage-pools/` directory.
+Unless specified differently during creation (with the `source` configuration option), the data is stored in the `/var/snap/lxd/common/lxd/storage-pools/` (for snap installations) or `/var/lib/incus/storage-pools/` directory.
 
 (storage-dir-quotas)=
 ### Quotas

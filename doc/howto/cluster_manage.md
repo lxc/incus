@@ -137,7 +137,7 @@ When you upgrade the last member, the blocked members will notice that all serve
 
 In a Incus cluster, the API on all servers responds with the same shared certificate, which is usually a standard self-signed certificate with an expiry set to ten years.
 
-The certificate is stored at `/var/snap/lxd/common/lxd/cluster.crt` (if you use the snap) or `/var/lib/lxd/cluster.crt` (otherwise) and is the same on all cluster members.
+The certificate is stored at `/var/snap/lxd/common/lxd/cluster.crt` (if you use the snap) or `/var/lib/incus/cluster.crt` (otherwise) and is the same on all cluster members.
 
 You can replace the standard certificate with another one, for example, a valid certificate obtained through ACME services (see {ref}`authentication-server-certificate` for more information).
 To do so, use the [`incus cluster update-certificate`](incus_cluster_update-certificate.md) command.

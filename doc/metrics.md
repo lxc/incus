@@ -100,7 +100,7 @@ incus config set core.metrics_authentication false
 If you run Prometheus on a different machine than your Incus server, you must copy the required certificates to the Prometheus machine:
 
 - The metrics certificate (`metrics.crt`) and key (`metrics.key`) that you created
-- The Incus server certificate (`server.crt`) located in `/var/snap/lxd/common/lxd/` (if you are using the snap) or `/var/lib/lxd/` (otherwise)
+- The Incus server certificate (`server.crt`) located in `/var/snap/lxd/common/lxd/` (if you are using the snap) or `/var/lib/incus/` (otherwise)
 
 Copy these files into a `tls` directory that is accessible to Prometheus, for example, `/var/snap/prometheus/common/tls` (if you are using the snap) or `/etc/prometheus/tls` (otherwise).
 See the following example commands:

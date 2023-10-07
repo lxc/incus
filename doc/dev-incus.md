@@ -17,7 +17,7 @@ same time.
 
 ## Implementation details
 
-Incus on the host binds `/var/lib/lxd/devlxd/sock` and starts listening for new
+Incus on the host binds `/var/lib/incus/devlxd/sock` and starts listening for new
 connections on it.
 
 This socket is then exposed into every single instance started by

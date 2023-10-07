@@ -61,7 +61,7 @@ Incus can create a loop file on your main drive and have the selected storage dr
 This method is functionally similar to using a disk or partition, but it uses a large file on your main drive instead.
 This means that every write must go through the storage driver and your main drive's file system, which leads to decreased performance.
 
-The loop files reside in `/var/snap/lxd/common/lxd/disks/` if you are using the snap, or in `/var/lib/lxd/disks/` otherwise.
+The loop files reside in `/var/snap/lxd/common/lxd/disks/` if you are using the snap, or in `/var/lib/incus/disks/` otherwise.
 
 Loop files usually cannot be shrunk.
 They will grow up to the configured limit, but deleting instances or images will not cause the file to shrink.
