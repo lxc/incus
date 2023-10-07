@@ -35,7 +35,7 @@ The easiest way to install Incus on Linux is to install the {ref}`installing-zab
 Currently the easiest way to install Incus is to use the Debian or Ubuntu packages provided by [Zabbly](https://zabbly.com).
 There are two repositories available, one for the current stable release and one for daily (untested) builds.
 
-Installation instructions may be found here: [https://github.com/zabbly/incus](https://github.com/zabbly/incus)
+Installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
 
 If you prefer a different installation method, see {ref}`installing`.
 

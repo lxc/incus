@@ -10,7 +10,7 @@ Incus allows you to easily set up a system that feels like a small private cloud
 
 You should consider using Incus if you want to containerize different environments or run virtual machines, or in general run and manage your infrastructure in a cost-effective way.
 
-You can try Incus online at: https://linuxcontainers.org/incus/try-it/
+You can try Incus online at: [`https://linuxcontainers.org/incus/try-it/`](https://linuxcontainers.org/incus/try-it/)
 
 <!-- Include end Incus intro -->
 
