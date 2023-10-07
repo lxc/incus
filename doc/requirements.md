@@ -42,16 +42,15 @@ For virtual machines, QEMU 6.0 or higher is required.
 
 ## Additional libraries (and development headers)
 
-Incus uses `dqlite` for its database, to build and set it up, you can
+Incus uses `cowsql` for its database, to build and set it up, you can
 run `make deps`.
 
 Incus itself also uses a number of (usually packaged) C libraries:
 
 * `libacl1`
 * `libcap2`
-* `liblz4` (for `dqlite`)
-* `libuv1` (for `dqlite`)
-* `libsqlite3` >= 3.25.0 (for `dqlite`)
+* `libuv1` (for `cowsql`)
+* `libsqlite3` >= 3.25.0 (for `cowsql`)
 
 Make sure you have all these libraries themselves and their development
 headers (`-dev` packages) installed.

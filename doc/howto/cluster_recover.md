@@ -75,7 +75,7 @@ Log on to each cluster member and complete the following steps:
 1. Edit the YAML representation of the information that this cluster member has about the rest of the cluster:
 
    ```yaml
-   # Latest dqlite segment ID: 1234
+   # Latest cowsql segment ID: 1234
 
    members:
      - id: 1             # Internal ID of the member (Read-only)

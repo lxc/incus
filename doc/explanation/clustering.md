@@ -15,12 +15,12 @@ If you want to quickly set up a basic Incus cluster, check out [MicroCloud](http
 ## Cluster members
 
 A Incus cluster consists of one bootstrap server and at least two further cluster members.
-It stores its state in a [distributed database](../database.md), which is a [Dqlite](https://dqlite.io/) database replicated using the Raft algorithm.
+It stores its state in a [distributed database](../database.md), which is a [Cowsql](https://github.com/cowsql/cowsql/) database replicated using the Raft algorithm.
 
 While you could create a cluster with only two members, it is strongly recommended that the number of cluster members be at least three.
 With this setup, the cluster can survive the loss of at least one member and still be able to establish quorum for its distributed state.
 
-When you create the cluster, the Dqlite database runs on only the bootstrap server until a third member joins the cluster.
+When you create the cluster, the Cowsql database runs on only the bootstrap server until a third member joins the cluster.
 Then both the second and the third server receive a replica of the database.
 
 See {ref}`cluster-form` for more information.

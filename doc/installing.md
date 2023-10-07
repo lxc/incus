@@ -144,7 +144,7 @@ Then proceed to the instructions below to actually build and install Incus.
 ### From source: Build a release
 
 The Incus release tarballs bundle a complete dependency tree as well as a
-local copy of `libraft` and `libdqlite` for Incus's database setup.
+local copy of `libraft` and `libcowsql` for Incus's database setup.
 
 ```bash
 tar zxvf incus-0.1.tar.gz
@@ -167,13 +167,13 @@ We recommend having at least 2GiB of RAM to allow the build to complete.
 :input: make deps
 
 ...
-make[1]: Leaving directory '/root/go/deps/dqlite'
+make[1]: Leaving directory '/root/go/deps/cowsql'
 # environment
 
 Please set the following in your environment (possibly ~/.bashrc)
-#  export CGO_CFLAGS="${CGO_CFLAGS} -I$(go env GOPATH)/deps/dqlite/include/ -I$(go env GOPATH)/deps/raft/include/"
-#  export CGO_LDFLAGS="${CGO_LDFLAGS} -L$(go env GOPATH)/deps/dqlite/.libs/ -L$(go env GOPATH)/deps/raft/.libs/"
-#  export LD_LIBRARY_PATH="$(go env GOPATH)/deps/dqlite/.libs/:$(go env GOPATH)/deps/raft/.libs/:${LD_LIBRARY_PATH}"
+#  export CGO_CFLAGS="${CGO_CFLAGS} -I$(go env GOPATH)/deps/cowsql/include/ -I$(go env GOPATH)/deps/raft/include/"
+#  export CGO_LDFLAGS="${CGO_LDFLAGS} -L$(go env GOPATH)/deps/cowsql/.libs/ -L$(go env GOPATH)/deps/raft/.libs/"
+#  export LD_LIBRARY_PATH="$(go env GOPATH)/deps/cowsql/.libs/:$(go env GOPATH)/deps/raft/.libs/:${LD_LIBRARY_PATH}"
 #  export CGO_LDFLAGS_ALLOW="(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
 :input: make
 ```
@@ -186,7 +186,7 @@ something like this for a `~/.bashrc` file:
 
 ```bash
 export PATH="${PATH}:$(go env GOPATH)/bin"
-export LD_LIBRARY_PATH="$(go env GOPATH)/deps/dqlite/.libs/:$(go env GOPATH)/deps/raft/.libs/:${LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="$(go env GOPATH)/deps/cowsql/.libs/:$(go env GOPATH)/deps/raft/.libs/:${LD_LIBRARY_PATH}"
 ```
 
 Now, the `incusd` and `incus` binaries will be available to you and can be used to set up Incus. The binaries will automatically find and use the dependencies built in `$(go env GOPATH)/deps` thanks to the `LD_LIBRARY_PATH` environment variable.

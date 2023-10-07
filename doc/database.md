@@ -1,7 +1,3 @@
----
-relatedlinks: "[Canonical&#32;Dqlite](https://dqlite.io/), https://github.com/canonical/dqlite"
----
-
 (database)=
 # About the Incus database
 
@@ -11,13 +7,13 @@ To understand the advantages, consider a query against the configuration of all 
 To answer that question without a database, you would have to iterate through every single instance, load and parse its configuration, and then check which network devices are defined in there.
 With a database, you can run a simple query on the database to retrieve this information.
 
-## Dqlite
+## Cowsql
 
 In a Incus cluster, all members of the cluster must share the same database state.
-Therefore, Incus uses [Dqlite](https://dqlite.io/), a distributed version of SQLite.
-Dqlite  provides replication, fault-tolerance, and automatic failover without the need of external database processes.
+Therefore, Incus uses [Cowsql](https://github.com/cowsql/cowsql), a distributed version of SQLite.
+Cowsql provides replication, fault-tolerance, and automatic failover without the need of external database processes.
 
-When using Incus as a single machine and not as a cluster, the Dqlite database effectively behaves like a regular SQLite database.
+When using Incus as a single machine and not as a cluster, the Cowsql database effectively behaves like a regular SQLite database.
 
 ## File location
 

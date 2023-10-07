@@ -36,6 +36,7 @@ cgroups
 checksum
 checksums
 Chocolatey
+Cowsql
 CIDR
 CLI
 COPR
@@ -57,7 +58,6 @@ Diffie
 DNS
 DNSSEC
 DoS
-Dqlite
 DRM
 EB
 Ebit
