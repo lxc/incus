@@ -28,7 +28,7 @@ Incus will keep monitoring and importing relevant changes from LXD over time tho
 
 ## Get started
 
-See [Getting started](https://linuxcontainers.org/incus/docs/main/getting_started/) in the Incus documentation for installation instructions and first steps.
+See [Getting started](https://linuxcontainers.org/incus/docs/main/tutorial/first_steps/) in the Incus documentation for installation instructions and first steps.
 
 - Release announcements: [`https://discuss.linuxcontainers.org/c/news/`](https://discuss.linuxcontainers.org/c/news/)
 - Release tarballs: [`https://github.com/lxc/incus/releases/`](https://github.com/lxc/incus/releases/)
