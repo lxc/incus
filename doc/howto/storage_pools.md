@@ -1,7 +1,3 @@
----
-discourse: 1333
----
-
 (howto-storage-pools)=
 # How to manage storage pools
 
@@ -10,14 +6,14 @@ See the following sections for instructions on how to create, configure, view an
 (storage-create-pool)=
 ## Create a storage pool
 
-LXD creates a storage pool during initialization.
+Incus creates a storage pool during initialization.
 You can add more storage pools later, using the same driver or different drivers.
 
 To create a storage pool, use the following command:
 
-    lxc storage create <pool_name> <driver> [configuration_options...]
+    incus storage create <pool_name> <driver> [configuration_options...]
 
-Unless specified otherwise, LXD sets up loop-based storage with a sensible default size (20% of the free disk space, but at least 5 GiB and at most 30 GiB).
+Unless specified otherwise, Incus sets up loop-based storage with a sensible default size (20% of the free disk space, but at least 5 GiB and at most 30 GiB).
 
 See the {ref}`storage-drivers` documentation for a list of available configuration options for each driver.
 
@@ -31,99 +27,99 @@ See the following examples for how to create a storage pool using different stor
 
 Create a directory pool named `pool1`:
 
-    lxc storage create pool1 dir
+    incus storage create pool1 dir
 
-Use the existing directory `/data/lxd` for `pool2`:
+Use the existing directory `/data/incus` for `pool2`:
 
-    lxc storage create pool2 dir source=/data/lxd
+    incus storage create pool2 dir source=/data/incus
 ````
 ````{group-tab} Btrfs
 
 Create a loop-backed pool named `pool1`:
 
-    lxc storage create pool1 btrfs
+    incus storage create pool1 btrfs
 
 Use the existing Btrfs file system at `/some/path` for `pool2`:
 
-    lxc storage create pool2 btrfs source=/some/path
+    incus storage create pool2 btrfs source=/some/path
 
 Create a pool named `pool3` on `/dev/sdX`:
 
-    lxc storage create pool3 btrfs source=/dev/sdX
+    incus storage create pool3 btrfs source=/dev/sdX
 ````
 ````{group-tab} LVM
 
 Create a loop-backed pool named `pool1` (the LVM volume group will also be called `pool1`):
 
-    lxc storage create pool1 lvm
+    incus storage create pool1 lvm
 
 Use the existing LVM volume group called `my-pool` for `pool2`:
 
-    lxc storage create pool2 lvm source=my-pool
+    incus storage create pool2 lvm source=my-pool
 
 Use the existing LVM thin pool called `my-pool` in volume group `my-vg` for `pool3`:
 
-    lxc storage create pool3 lvm source=my-vg lvm.thinpool_name=my-pool
+    incus storage create pool3 lvm source=my-vg lvm.thinpool_name=my-pool
 
 Create a pool named `pool4` on `/dev/sdX` (the LVM volume group will also be called `pool4`):
 
-    lxc storage create pool4 lvm source=/dev/sdX
+    incus storage create pool4 lvm source=/dev/sdX
 
 Create a pool named `pool5` on `/dev/sdX` with the LVM volume group name `my-pool`:
 
-    lxc storage create pool5 lvm source=/dev/sdX lvm.vg_name=my-pool
+    incus storage create pool5 lvm source=/dev/sdX lvm.vg_name=my-pool
 ````
 ````{group-tab} ZFS
 
 Create a loop-backed pool named `pool1` (the ZFS zpool will also be called `pool1`):
 
-    lxc storage create pool1 zfs
+    incus storage create pool1 zfs
 
 Create a loop-backed pool named `pool2` with the ZFS zpool name `my-tank`:
 
-    lxc storage create pool2 zfs zfs.pool_name=my-tank
+    incus storage create pool2 zfs zfs.pool_name=my-tank
 
 Use the existing ZFS zpool `my-tank` for `pool3`:
 
-    lxc storage create pool3 zfs source=my-tank
+    incus storage create pool3 zfs source=my-tank
 
 Use the existing ZFS dataset `my-tank/slice` for `pool4`:
 
-    lxc storage create pool4 zfs source=my-tank/slice
+    incus storage create pool4 zfs source=my-tank/slice
 
 Use the existing ZFS dataset `my-tank/zvol` for `pool5` and configure it to use ZFS block mode:
 
-    lxc storage create pool5 zfs source=my-tank/zvol volume.zfs.block_mode=yes
+    incus storage create pool5 zfs source=my-tank/zvol volume.zfs.block_mode=yes
 
 Create a pool named `pool6` on `/dev/sdX` (the ZFS zpool will also be called `pool6`):
 
-    lxc storage create pool6 zfs source=/dev/sdX
+    incus storage create pool6 zfs source=/dev/sdX
 
 Create a pool named `pool7` on `/dev/sdX` with the ZFS zpool name `my-tank`:
 
-    lxc storage create pool7 zfs source=/dev/sdX zfs.pool_name=my-tank
+    incus storage create pool7 zfs source=/dev/sdX zfs.pool_name=my-tank
 ````
 ````{group-tab} Ceph RBD
 
 Create an OSD storage pool named `pool1` in the default Ceph cluster (named `ceph`):
 
-    lxc storage create pool1 ceph
+    incus storage create pool1 ceph
 
 Create an OSD storage pool named `pool2` in the Ceph cluster `my-cluster`:
 
-    lxc storage create pool2 ceph ceph.cluster_name=my-cluster
+    incus storage create pool2 ceph ceph.cluster_name=my-cluster
 
 Create an OSD storage pool named `pool3` with the on-disk name `my-osd` in the default Ceph cluster:
 
-    lxc storage create pool3 ceph ceph.osd.pool_name=my-osd
+    incus storage create pool3 ceph ceph.osd.pool_name=my-osd
 
 Use the existing OSD storage pool `my-already-existing-osd` for `pool4`:
 
-    lxc storage create pool4 ceph source=my-already-existing-osd
+    incus storage create pool4 ceph source=my-already-existing-osd
 
 Use the existing OSD erasure-coded pool `ecpool` and the OSD replicated pool `rpl-pool` for `pool5`:
 
-    lxc storage create pool5 ceph source=rpl-pool ceph.osd.data_pool_name=ecpool
+    incus storage create pool5 ceph source=rpl-pool ceph.osd.data_pool_name=ecpool
 ````
 ````{group-tab} CephFS
 
@@ -134,11 +130,11 @@ This file system consists of two OSD storage pools, one for the actual data and 
 
 Use the existing CephFS file system `my-filesystem` for `pool1`:
 
-    lxc storage create pool1 cephfs source=my-filesystem
+    incus storage create pool1 cephfs source=my-filesystem
 
 Use the sub-directory `my-directory` from the `my-filesystem` file system for `pool2`:
 
-    lxc storage create pool2 cephfs source=my-filesystem/my-directory
+    incus storage create pool2 cephfs source=my-filesystem/my-directory
 
 ````
 ````{group-tab} Ceph Object
@@ -149,14 +145,14 @@ When using the Ceph Object driver, you must have a running Ceph Object Gateway [
 
 Use the existing Ceph Object Gateway `https://www.example.com/radosgw` to create `pool1`:
 
-    lxc storage create pool1 cephobject cephobject.radosgw.endpoint=https://www.example.com/radosgw
+    incus storage create pool1 cephobject cephobject.radosgw.endpoint=https://www.example.com/radosgw
 ````
 `````
 
 (storage-pools-cluster)=
 ### Create a storage pool in a cluster
 
-If you are running a LXD cluster and want to add a storage pool, you must create the storage pool for each cluster member separately.
+If you are running a Incus cluster and want to add a storage pool, you must create the storage pool for each cluster member separately.
 The reason for this is that the configuration, for example, the storage location or the size of the pool, might be different between cluster members.
 
 Therefore, you must first create a pending storage pool on each member with the `--target=<cluster_member>` flag and the appropriate configuration for the member.
@@ -166,13 +162,13 @@ Then create the storage pool without specifying the `--target` flag to actually 
 For example, the following series of commands sets up a storage pool with the name `my-pool` at different locations and with different sizes on three cluster members:
 
 ```{terminal}
-:input: lxc storage create my-pool zfs source=/dev/sdX size=10GiB --target=vm01
+:input: incus storage create my-pool zfs source=/dev/sdX size=10GiB --target=vm01
 Storage pool my-pool pending on member vm01
-:input: lxc storage create my-pool zfs source=/dev/sdX size=15GiB --target=vm02
+:input: incus storage create my-pool zfs source=/dev/sdX size=15GiB --target=vm02
 Storage pool my-pool pending on member vm02
-:input: lxc storage create my-pool zfs source=/dev/sdY size=10GiB --target=vm03
+:input: incus storage create my-pool zfs source=/dev/sdY size=10GiB --target=vm03
 Storage pool my-pool pending on member vm03
-:input: lxc storage create my-pool zfs
+:input: incus storage create my-pool zfs
 Storage pool my-pool created
 ```
 
@@ -194,15 +190,15 @@ Driver-specific keys are namespaced by the driver name.
 
 Use the following command to set configuration options for a storage pool:
 
-    lxc storage set <pool_name> <key> <value>
+    incus storage set <pool_name> <key> <value>
 
 For example, to turn off compression during storage pool migration for a `dir` storage pool, use the following command:
 
-    lxc storage set my-dir-pool rsync.compression false
+    incus storage set my-dir-pool rsync.compression false
 
 You can also edit the storage pool configuration by using the following command:
 
-    lxc storage edit <pool_name>
+    incus storage edit <pool_name>
 
 ## View storage pools
 
@@ -210,24 +206,24 @@ You can display a list of all available storage pools and check their configurat
 
 Use the following command to list all available storage pools:
 
-    lxc storage list
+    incus storage list
 
 The resulting table contains the storage pool that you created during initialization (usually called `default` or `local`) and any storage pools that you added.
 
 To show detailed information about a specific pool, use the following command:
 
-    lxc storage show <pool_name>
+    incus storage show <pool_name>
 
 To see usage information for a specific pool, run the following command:
 
-    lxc storage info <pool_name>
+    incus storage info <pool_name>
 
 (storage-resize-pool)=
 ## Resize a storage pool
 
 If you need more storage, you can increase the size of your storage pool by changing the `size` configuration key:
 
-    lxc storage set <pool_name> size=<new_size>
+    incus storage set <pool_name> size=<new_size>
 
-This will only work for loop-backed storage pools that are managed by LXD.
+This will only work for loop-backed storage pools that are managed by Incus.
 You can only grow the pool (increase its size), not shrink it.

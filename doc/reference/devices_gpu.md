@@ -1,9 +1,6 @@
 (devices-gpu)=
 # Type: `gpu`
 
-```{youtube} https://www.youtube.com/watch?v=T0aV2LsMpoA
-```
-
 GPU devices make the specified GPU device or devices appear in the instance.
 
 ```{note}
@@ -54,7 +51,7 @@ It does not support hotplugging.
 ```
 
 An `mdev` GPU device creates and passes a virtual GPU through into the instance.
-You can check the list of available `mdev` profiles by running [`lxc info --resources`](incus_info.md).
+You can check the list of available `mdev` profiles by running [`incus info --resources`](incus_info.md).
 
 ### Device options
 

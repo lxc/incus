@@ -1,12 +1,5 @@
----
-discourse: 15872
----
-
 (storage-zfs)=
 # ZFS - `zfs`
-
-```{youtube} https://www.youtube.com/watch?v=ysLi_LYAs_M
-```
 
 {abbr}`ZFS (Zettabyte file system)` combines both physical volume management and a file system.
 A ZFS installation can span across a series of storage devices and is very scalable, allowing you to add disks to expand the available space in the storage pool immediately.
@@ -31,21 +24,21 @@ These {spellexception}`datasets` can be of different types:
   ZFS snapshots are read-only.
 - A *ZFS clone* is a writable copy of a ZFS snapshot.
 
-## `zfs` driver in LXD
+## `zfs` driver in Incus
 
-The `zfs` driver in LXD uses {spellexception}`ZFS filesystems` and ZFS volumes for images and custom storage volumes, and ZFS snapshots and clones to create instances from images and for instance and custom volume snapshots.
-By default, LXD enables compression when creating a ZFS pool.
+The `zfs` driver in Incus uses {spellexception}`ZFS filesystems` and ZFS volumes for images and custom storage volumes, and ZFS snapshots and clones to create instances from images and for instance and custom volume snapshots.
+By default, Incus enables compression when creating a ZFS pool.
 
-LXD assumes that it has full control over the ZFS pool and {spellexception}`dataset`.
-Therefore, you should never maintain any {spellexception}`datasets` or file system entities that are not owned by LXD in a ZFS pool or {spellexception}`dataset`, because LXD might delete them.
+Incus assumes that it has full control over the ZFS pool and {spellexception}`dataset`.
+Therefore, you should never maintain any {spellexception}`datasets` or file system entities that are not owned by Incus in a ZFS pool or {spellexception}`dataset`, because Incus might delete them.
 
 Due to the way copy-on-write works in ZFS, parent {spellexception}`ZFS filesystems` can't be removed until all children are gone.
-As a result, LXD automatically renames any objects that are removed but still referenced.
+As a result, Incus automatically renames any objects that are removed but still referenced.
 Such objects are kept at a random `deleted/` path until all references are gone and the object can safely be removed.
 Note that this method might have ramifications for restoring snapshots.
 See {ref}`storage-zfs-limitations` below.
 
-LXD automatically enables trimming support on all newly created pools on ZFS 0.8 or later.
+Incus automatically enables trimming support on all newly created pools on ZFS 0.8 or later.
 This increases the lifetime of SSDs by allowing better block re-use by the controller, and it also allows to free space on the root file system when using a loop-backed ZFS pool.
 If you are running a ZFS version earlier than 0.8 and want to enable trimming, upgrade to at least version 0.8.
 Then use the following commands to make sure that trimming is automatically enabled for the ZFS pool in the future and trim all currently unused space:
@@ -65,7 +58,7 @@ Restoring from older snapshots
   This method makes it possible to confirm whether a specific snapshot contains what you need.
   After determining the correct snapshot, you can {ref}`remove the newer snapshots <storage-edit-snapshots>` so that the snapshot you need is the latest one and you can restore it.
 
-  Alternatively, you can configure LXD to automatically discard the newer snapshots during restore.
+  Alternatively, you can configure Incus to automatically discard the newer snapshots during restore.
   To do so, set the [`zfs.remove_snapshots`](storage-zfs-vol-config) configuration for the volume (or the corresponding `volume.zfs.remove_snapshots` configuration on the storage pool for all volumes in the pool).
 
   Note, however, that if [`zfs.clone_copy`](storage-zfs-pool-config) is set to `true`, instance copies use ZFS snapshots too.
@@ -86,7 +79,7 @@ ZFS provides two different quota properties: `quota` and `refquota`.
 `quota` restricts the total size of a {spellexception}`dataset`, including its snapshots and clones.
 `refquota` restricts only the size of the data in the {spellexception}`dataset`, not its snapshots and clones.
 
-By default, LXD uses the `quota` property when you set up a quota for your storage volume.
+By default, Incus uses the `quota` property when you set up a quota for your storage volume.
 If you want to use the `refquota` property instead, set the [`zfs.use_refquota`](storage-zfs-vol-config) configuration for the volume (or the corresponding `volume.zfs.use_refquota` configuration on the storage pool for all volumes in the pool).
 
 You can also set the [`zfs.use_reserve_space`](storage-zfs-vol-config) (or `volume.zfs.use_reserve_space`) configuration to use ZFS `reservation` or `refreservation` along with `quota` or `refquota`.

@@ -1244,7 +1244,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// ---
 		//  type: string
 		//  defaultdesc: `block`
-		//  shortdesc: Whether to prevent running nested LXD
+		//  shortdesc: Whether to prevent running nested Incus
 		"restricted.containers.nesting": isEitherAllowOrBlock,
 		// gendoc:generate(entity=project, group=restricted, key=restricted.containers.lowlevel)
 		// Possible values are `allow` or `block`.

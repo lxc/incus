@@ -24,7 +24,7 @@ The following instance properties are available:
 (instance-name-requirements)=
 ## Instance name requirements
 
-The instance name can be changed only by renaming the instance with the [`lxc rename`](incus_rename.md) command.
+The instance name can be changed only by renaming the instance with the [`incus rename`](incus_rename.md) command.
 
 Valid instance names must fulfill the following requirements:
 

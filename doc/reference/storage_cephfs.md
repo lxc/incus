@@ -1,12 +1,5 @@
----
-discourse: 15457
----
-
 (storage-cephfs)=
 # CephFS - `cephfs`
-
-```{youtube} https://youtube.com/watch?v=kVLGbvRU98A
-```
 
 % Include content from [storage_ceph.md](storage_ceph.md)
 ```{include} storage_ceph.md
@@ -27,7 +20,7 @@ Internally, it maps files to Ceph objects and stores file metadata (for example,
 
 A *CephFS file system* consists of two OSD storage pools, one for the actual data and one for the file metadata.
 
-## `cephfs` driver in LXD
+## `cephfs` driver in Incus
 
 ```{note}
 The `cephfs` driver can only be used for custom storage volumes with content type `filesystem`.
@@ -56,7 +49,7 @@ You must create the CephFS file system that you want to use beforehand and speci
     :end-before: <!-- Include end Ceph driver control -->
 ```
 
-The `cephfs` driver in LXD supports snapshots if snapshots are enabled on the server side.
+The `cephfs` driver in Incus supports snapshots if snapshots are enabled on the server side.
 
 ## Configuration options
 

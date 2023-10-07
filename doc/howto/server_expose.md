@@ -1,14 +1,14 @@
 (server-expose)=
-# How to expose LXD to the network
+# How to expose Incus to the network
 
-By default, LXD can be used only by local users through a Unix socket and is not accessible over the network.
+By default, Incus can be used only by local users through a Unix socket and is not accessible over the network.
 
-To expose LXD to the network, you must configure it to listen to addresses other than the local Unix socket.
+To expose Incus to the network, you must configure it to listen to addresses other than the local Unix socket.
 To do so, set the {config:option}`server-core:core.https_address` server configuration option.
 
-For example, to allow access to the LXD server on port `8443`, enter the following command:
+For example, to allow access to the Incus server on port `8443`, enter the following command:
 
-    lxc config set core.https_address :8443
+    incus config set core.https_address :8443
 
 To allow access through a specific IP address, use `ip addr` to find an available address and then set it.
 For example:
@@ -30,21 +30,21 @@ For example:
        valid_lft forever preferred_lft forever
     inet6 fe80::216:3eff:fee3:f33f/64 scope link
        valid_lft forever preferred_lft forever
-3: lxdbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+3: incusbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
     link/ether 00:16:3e:8d:f3:72 brd ff:ff:ff:ff:ff:ff
-    inet 10.64.82.1/24 scope global lxdbr0
+    inet 10.64.82.1/24 scope global incusbr0
        valid_lft forever preferred_lft forever
     inet6 fd42:f4ab:4399:e6eb::1/64 scope global
        valid_lft forever preferred_lft forever
-:input: lxc config set core.https_address 10.68.216.12
+:input: incus config set core.https_address 10.68.216.12
 ```
 
-All remote clients can then connect to LXD and access any image that is marked for public use.
+All remote clients can then connect to Incus and access any image that is marked for public use.
 
 (server-authenticate)=
-## Authenticate with the LXD server
+## Authenticate with the Incus server
 
-To be able to access the remote API, clients must authenticate with the LXD server.
+To be able to access the remote API, clients must authenticate with the Incus server.
 There are several authentication methods; see {ref}`authentication` for detailed information.
 
 The recommended method is to add the client's TLS certificate to the server's trust store through a trust token.
@@ -52,13 +52,13 @@ To authenticate a client using a trust token, complete the following steps:
 
 1. On the server, enter the following command:
 
-       lxc config trust add
+       incus config trust add
 
    Enter the name of the client that you want to add.
    The command generates and prints a token that can be used to add the client certificate.
 1. On the client, add the server with the following command:
 
-       lxc remote add <remote_name> <token>
+       incus remote add <remote_name> <token>
 
    % Include content from [../authentication.md](../authentication.md)
 ```{include} ../authentication.md

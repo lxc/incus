@@ -1,19 +1,16 @@
 (backups)=
-# How to back up a LXD server
+# How to back up a Incus server
 
-```{youtube} https://www.youtube.com/watch?v=IFOZpAxckPo
-```
+In a production setup, you should always back up the contents of your Incus server.
 
-In a production setup, you should always back up the contents of your LXD server.
-
-The LXD server contains a variety of different entities, and when choosing your backup strategy, you must decide which of these entities you want to back up and how frequently you want to save them.
+The Incus server contains a variety of different entities, and when choosing your backup strategy, you must decide which of these entities you want to back up and how frequently you want to save them.
 
 ## What to back up
 
-The various contents of your LXD server are located on your file system and, in addition, recorded in the {ref}`LXD database <database>`.
+The various contents of your Incus server are located on your file system and, in addition, recorded in the {ref}`Incus database <database>`.
 Therefore, only backing up the database or only backing up the files on disk does not give you a full functional backup.
 
-Your LXD server contains the following entities:
+Your Incus server contains the following entities:
 
 - Instances (database records and file systems)
 - Images (database records, image files, and file systems)
@@ -23,55 +20,40 @@ Your LXD server contains the following entities:
 
 Consider which of these you need to back up.
 For example, if you don't use custom images, you don't need to back up your images since they are available on the image server.
-If you use only the `default` profile, or only the standard `lxdbr0` network bridge, you might not need to worry about backing them up, because they can easily be re-created.
+If you use only the `default` profile, or only the standard `incusbr0` network bridge, you might not need to worry about backing them up, because they can easily be re-created.
 
 ## Full backup
 
-To create a full backup of all contents of your LXD server, back up the `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/lxd` (otherwise) directory.
+To create a full backup of all contents of your Incus server, back up the `/var/lib/incus` directory.
 
-This directory contains your local storage, the LXD database, and your configuration.
+This directory contains your local storage, the Incus database, and your configuration.
 It does not contain separate storage devices, however.
 That means that whether the directory also contains the data of your instances depends on the storage drivers that you use.
 
 ```{important}
-If your LXD server uses any external storage (for example, LVM volume groups, ZFS zpools, or any other resource that isn't directly self-contained to LXD), you must back this up separately.
+If your Incus server uses any external storage (for example, LVM volume groups, ZFS zpools, or any other resource that isn't directly self-contained to Incus), you must back this up separately.
 
 See {ref}`howto-storage-backup-volume` for instructions.
 ```
 
-To back up your data, create a tarball of `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/lxd` (otherwise).
-If you are not using the snap package and your source system has a `/etc/subuid` and `/etc/subgid` file, you should also back up these files.
+To back up your data, create a tarball of `/var/lib/incus`.
+If your system uses `/etc/subuid` and `/etc/subgid` file, you should also back up these files.
 Restoring them avoids needless shifting of instance file systems.
 
 To restore your data, complete the following steps:
 
-1. Stop LXD on your server (for example, with `sudo snap stop lxd`).
-1. Delete the directory (`/var/snap/lxd/common/lxd` for snap users or `/var/lib/lxd` otherwise).
+1. Stop Incus on your server (for example, with `sudo systemctl stop incus.service incus.socket`).
+1. Delete the directory (`/var/lib/incus/`).
 1. Restore the directory from the backup.
 1. Delete and restore any external storage devices.
-1. If you are not using the snap, restore the `/etc/subuid` and `/etc/subgid` files.
-1. Restart LXD (for example, with `sudo snap start lxd` or by restarting your machine).
-
-### Export a snapshot
-
-If you are using the LXD snap, you can also create a full backup by exporting a snapshot of the snap:
-
-1. Create a snapshot:
-
-       sudo snap save lxd
-
-   Note down the ID of the snapshot (shown in the `Set` column).
-1. Export the snapshot to a file:
-
-       sudo snap export-snapshot <ID> <output_file>
-
-See [Snapshots](https://snapcraft.io/docs/snapshots) in the Snapcraft documentation for details.
+1. Restore the `/etc/subuid` and `/etc/subgid` files if present.
+1. Restart Incus (for example, with `sudo systemctl start incus.socket incus.service` or by restarting your machine).
 
 ## Partial backup
 
 If you decide to only back up specific entities, you have different options for how to do this.
 You should consider doing some of these partial backups even if you are doing full backups in addition.
-It can be easier and safer to, for example, restore a single instance or reconfigure a profile than to restore the full LXD server.
+It can be easier and safer to, for example, restore a single instance or reconfigure a profile than to restore the full Incus server.
 
 ### Back up instances and volumes
 
@@ -80,15 +62,15 @@ Instances and storage volumes are backed up in a very similar way (because when 
 See {ref}`instances-backup` and {ref}`howto-storage-backup-volume` for detailed information.
 The following sections give a brief summary of the options you have for backing up instances and volumes.
 
-#### Secondary backup LXD server
+#### Secondary backup Incus server
 
-LXD supports copying and moving instances and storage volumes between two hosts.
+Incus supports copying and moving instances and storage volumes between two hosts.
 See {ref}`move-instances` and {ref}`howto-storage-move-volume` for instructions.
 
 So if you have a spare server, you can regularly copy your instances and storage volumes to that secondary server to back them up.
 If needed, you can either switch over to the secondary server or copy your instances or storage volumes back from it.
 
-If you use the secondary server as a pure storage server, it doesn't need to be as powerful as your main LXD server.
+If you use the secondary server as a pure storage server, it doesn't need to be as powerful as your main Incus server.
 
 #### Export tarballs
 
@@ -111,15 +93,15 @@ See {ref}`instances-snapshots` and {ref}`storage-backup-snapshots` for more info
 (backup-database)=
 ### Back up the database
 
-While there is no trivial method to restore the contents of the {ref}`LXD database <database>`, it can still be very convenient to keep a backup of its content.
+While there is no trivial method to restore the contents of the {ref}`Incus database <database>`, it can still be very convenient to keep a backup of its content.
 Such a backup can make it much easier to re-create, for example, networks or profiles if the need arises.
 
 Use the following command to dump the content of the local database to a file:
 
-    lxd sql local .dump > <output_file>
+    incus admin sql local .dump > <output_file>
 
 Use the following command to dump the content of the global database to a file:
 
-    lxd sql global .dump > <output_file>
+    incus admin sql global .dump > <output_file>
 
-You should include these two commands in your regular LXD backup.
+You should include these two commands in your regular Incus backup.

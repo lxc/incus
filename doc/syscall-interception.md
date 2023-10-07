@@ -1,11 +1,11 @@
 # System call interception
 
-LXD supports intercepting some specific system calls from unprivileged
+Incus supports intercepting some specific system calls from unprivileged
 containers. If they're considered to be safe, it executes them with
 elevated privileges on the host.
 
 Doing so comes with a performance impact for the syscall in question and
-will cause some work for LXD to evaluate the request and if allowed,
+will cause some work for Incus to evaluate the request and if allowed,
 process it with elevated privileges.
 
 Enabling of specific system call interception options is done on a
@@ -51,7 +51,7 @@ Those can be attached to a variety of kernel subsystems.
 In general, loading of eBPF programs that are not trusted can be problematic as it
 can facilitate timing based attacks.
 
-LXD's eBPF support is currently restricted to programs managing devices
+Incus' eBPF support is currently restricted to programs managing devices
 cgroup entries. To enable it, you need to set both
 `security.syscalls.intercept.bpf` and
 `security.syscalls.intercept.bpf.devices` to true.
@@ -63,7 +63,7 @@ By default, unprivileged containers are restricted by the kernel to just
 a handful of virtual and network file systems.
 
 To allow mounting physical file systems, system call interception can be used.
-LXD offers a variety of options to handle this.
+Incus offers a variety of options to handle this.
 
 `security.syscalls.intercept.mount` is used to control the entire
 feature and needs to be turned on for any of the other options to work.

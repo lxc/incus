@@ -7,13 +7,13 @@ To add images to an image store, you can either copy them from another server or
 
 To copy an image from one server to another, enter the following command:
 
-    lxc image copy [<source_remote>:]<image> <target_remote>:
+    incus image copy [<source_remote>:]<image> <target_remote>:
 
 ```{note}
 To copy the image to your local image store, specify `local:` as the target remote.
 ```
 
-See [`lxc image copy --help`](incus_image_copy.md) for a list of all available flags.
+See [`incus image copy --help`](incus_image_copy.md) for a list of all available flags.
 The most relevant ones are:
 
 `--alias`
@@ -40,49 +40,49 @@ There are several ways of obtaining such image files:
 
 ### Import from the local file system
 
-To import an image from the local file system, use the [`lxc image import`](incus_image_import.md) command.
+To import an image from the local file system, use the [`incus image import`](incus_image_import.md) command.
 This command supports both {ref}`unified images <image-format-unified>` (compressed file or directory) and {ref}`split images <image-format-split>` (two files).
 
 To import a unified image from one file or directory, enter the following command:
 
-    lxc image import <image_file_or_directory_path> [<target_remote>:]
+    incus image import <image_file_or_directory_path> [<target_remote>:]
 
 To import a split image, enter the following command:
 
-    lxc image import <metadata_tarball_path> <rootfs_tarball_path> [<target_remote>:]
+    incus image import <metadata_tarball_path> <rootfs_tarball_path> [<target_remote>:]
 
 In both cases, you can assign an alias with the `--alias` flag.
-See [`lxc image import --help`](incus_image_import.md) for all available flags.
+See [`incus image import --help`](incus_image_import.md) for all available flags.
 
 ### Import from a file on a remote web server
 
 You can import image files from a remote web server by URL.
-This method is an alternative to running a LXD server for the sole purpose of distributing an image to users.
+This method is an alternative to running a Incus server for the sole purpose of distributing an image to users.
 It only requires a basic web server with support for custom headers (see {ref}`images-copy-http-headers`).
 
 The image files must be provided as unified images (see {ref}`image-format-unified`).
 
 To import an image file from a remote web server, enter the following command:
 
-    lxc image import <URL>
+    incus image import <URL>
 
 You can assign an alias to the local image with the `--alias` flag.
 
 (images-copy-http-headers)=
 #### Custom HTTP headers
 
-LXD requires the following custom HTTP headers to be set by the web server:
+Incus requires the following custom HTTP headers to be set by the web server:
 
-`LXD-Image-Hash`
+`Incus-Image-Hash`
 : The SHA256 of the image that is being downloaded.
 
-`LXD-Image-URL`
+`Incus-Image-URL`
 : The URL from which to download the image.
 
-LXD sets the following headers when querying the server:
+Incus sets the following headers when querying the server:
 
-`LXD-Server-Architectures`
+`Incus-Server-Architectures`
 : A comma-separated list of architectures that the client supports.
 
-`LXD-Server-Version`
-: The version of LXD in use.
+`Incus-Server-Version`
+: The version of Incus in use.

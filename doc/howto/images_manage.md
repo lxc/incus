@@ -8,7 +8,7 @@ You can also export an image to a file, which can be useful to {ref}`copy or imp
 
 To list all images on a server, enter the following command:
 
-    lxc image list [<remote>:]
+    incus image list [<remote>:]
 
 If you do not specify a remote, the {ref}`default remote <images-remote-default>` is used.
 
@@ -18,54 +18,54 @@ If you do not specify a remote, the {ref}`default remote <images-remote-default>
 To filter the results that are displayed, specify a part of the alias or fingerprint after the command.
 For example, to show all Ubuntu 22.04 images, enter the following command:
 
-    lxc image list ubuntu: 22.04
+    incus image list images: 22.04
 
 You can specify several filters as well.
 For example, to show all Arm 64-bit Ubuntu 22.04 images, enter the following command:
 
-    lxc image list ubuntu: 22.04 arm64
+    incus image list images: 22.04 arm64
 
 To filter for properties other than alias or fingerprint, specify the filter in `<key>=<value>` format.
 For example:
 
-    lxc image list ubuntu: 22.04 architecture=x86_64
+    incus image list images: 22.04 architecture=x86_64
 
 ## View image information
 
 To view information about an image, enter the following command:
 
-    lxc image info <image_ID>
+    incus image info <image_ID>
 
 As the image ID, you can specify either the image's alias or its fingerprint.
-For a remote image, remember to include the remote server (for example, `ubuntu:22.04`).
+For a remote image, remember to include the remote server (for example, `images:ubuntu/22.04`).
 
 To display only the image properties, enter the following command:
 
-    lxc image show <image_ID>
+    incus image show <image_ID>
 
 You can also display a specific image property (located under the `properties` key) with the following command:
 
-    lxc image get-property <image_ID> <key>
+    incus image get-property <image_ID> <key>
 
 For example, to show the release name of the official Ubuntu 22.04 image, enter the following command:
 
-    lxc image get-property ubuntu:22.04 release
+    incus image get-property images:ubuntu/22.04 release
 
 (images-manage-edit)=
 ## Edit image properties
 
 To set a specific image property that is located under the `properties` key, enter the following command:
 
-    lxc image set-property <image_ID> <key>
+    incus image set-property <image_ID> <key>
 
 ```{note}
 These properties can be used to convey information about the image.
-They do not configure LXD's behavior in any way.
+They do not configure Incus' behavior in any way.
 ```
 
 To edit the full image properties, including the top-level properties, enter the following command:
 
-    lxc image edit <image_ID>
+    incus image edit <image_ID>
 
 ## Configure image aliases
 
@@ -75,36 +75,36 @@ Most importantly, however, you can change an alias to point to a different image
 You can see some of the existing aliases in the image list.
 To see the full list, enter the following command:
 
-    lxc image alias list
+    incus image alias list
 
 You can directly assign an alias to an image when you {ref}`copy or import <images-copy>` or {ref}`publish <images-create-publish>` it.
 Alternatively, enter the following command:
 
-    lxc image alias create <alias_name> <image_fingerprint>
+    incus image alias create <alias_name> <image_fingerprint>
 
 You can also delete an alias:
 
-    lxc image alias delete <alias_name>
+    incus image alias delete <alias_name>
 
 To rename an alias, enter the following command:
 
-    lxc image alias rename <alias_name> <new_alias_name>
+    incus image alias rename <alias_name> <new_alias_name>
 
 If you want to keep the alias name, but point the alias to a different image (for example, a newer version), you must delete the existing alias and then create a new one.
 
 (images-manage-export)=
 ## Export an image to a file
 
-Images are located in the image store of your local server or a remote LXD server.
+Images are located in the image store of your local server or a remote Incus server.
 You can export them to a file though.
 This method can be useful to back up image files or to transfer them to an air-gapped environment.
 
 To export a container image to a file, enter the following command:
 
-    lxc image export [<remote>:]<image> [<output_directory_path>]
+    incus image export [<remote>:]<image> [<output_directory_path>]
 
 To export a virtual machine image to a file, add the `--vm` flag:
 
-    lxc image export [<remote>:]<image> [<output_directory_path>] --vm
+    incus image export [<remote>:]<image> [<output_directory_path>] --vm
 
 See {ref}`image-format` for a description of the file structure used for the image.

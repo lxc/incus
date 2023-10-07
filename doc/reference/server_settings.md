@@ -1,15 +1,11 @@
 (server-settings)=
-# Server settings for a LXD production setup
+# Server settings for a Incus production setup
 
-To allow your LXD server to run a large number of instances, configure the following settings to avoid hitting server limits.
+To allow your Incus server to run a large number of instances, configure the following settings to avoid hitting server limits.
 
 The `Value` column contains the suggested value for each parameter.
 
 ## `/etc/security/limits.conf`
-
-```{note}
-For users of the snap, those limits are automatically raised.
-```
 
 Domain  | Type  | Item      | Value       | Default   | Description
 :-----  | :---  | :----     | :---------- | :-------- | :----------

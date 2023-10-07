@@ -1,14 +1,7 @@
----
-discourse: 11296
----
-
 (disaster-recovery)=
 # How to recover instances in case of disaster
 
-```{youtube} https://youtu.be/IFOZpAxckPo?t=796
-```
-
-LXD provides a tool for disaster recovery in case the {ref}`LXD database <database>` is corrupted or otherwise lost.
+Incus provides a tool for disaster recovery in case the {ref}`Incus database <database>` is corrupted or otherwise lost.
 
 The tool scans the storage pools for instances and imports the instances that it finds back into the database.
 You need to re-create the required entities that are missing (usually profiles, projects, and networks).
@@ -20,15 +13,13 @@ Do not rely on this tool as an alternative to proper backups; you will lose data
 The tool must be run interactively and cannot be used in automated scripts.
 ```
 
-The tool is available through the `lxd recover` command (note the `lxd` command rather than the normal `lxc` command).
-
 ## Recovery process
 
 When you run the tool, it scans all storage pools that still exist in the database, looking for missing volumes that can be recovered.
 You can also specify the details of any unknown storage pools (those that exist on disk but do not exist in the database), and the tool attempts to scan those too.
 
-After mounting the specified storage pools (if not already mounted), the tool scans them for unknown volumes that look like they are associated with LXD.
-LXD maintains a `backup.yaml` file in each instance's storage volume, which contains all necessary information to recover a given instance (including instance configuration, attached devices, storage volume, and pool configuration).
+After mounting the specified storage pools (if not already mounted), the tool scans them for unknown volumes that look like they are associated with Incus.
+Incus maintains a `backup.yaml` file in each instance's storage volume, which contains all necessary information to recover a given instance (including instance configuration, attached devices, storage volume, and pool configuration).
 This data can be used to rebuild the instance, storage volume, and storage pool database records.
 Before recovering an instance, the tool performs some consistency checks to compare what is in the `backup.yaml` file with what is actually on disk (such as matching snapshots).
 If all checks out, the database records are re-created.
@@ -39,45 +30,45 @@ However, if this information is not available, the tool falls back to restoring 
 The tool asks you to re-create missing entities like networks.
 However, the tool does not know how the instance was configured.
 That means that if some configuration was specified through the `default` profile, you must also re-add the required configuration to the profile.
-For example, if the `lxdbr0` bridge is used in an instance and you are prompted to re-create it, you must add it back to the `default` profile so that the recovered instance uses it.
+For example, if the `incusbr0` bridge is used in an instance and you are prompted to re-create it, you must add it back to the `default` profile so that the recovered instance uses it.
 
 ## Example
 
 This is how a recovery process could look:
 
 ```{terminal}
-:input: lxd recover
+:input: incus admin recover
 
-This LXD server currently has the following storage pools:
+This Incus server currently has the following storage pools:
 Would you like to recover another storage pool? (yes/no) [default=no]: yes
 Name of the storage pool: default
 Name of the storage backend (btrfs, ceph, cephfs, cephobject, dir, lvm, zfs): zfs
-Source of the storage pool (block device, volume group, dataset, path, ... as applicable): /var/snap/lxd/common/lxd/storage-pools/default/containers
+Source of the storage pool (block device, volume group, dataset, path, ... as applicable): /var/lib/incus/storage-pools/default/containers
 Additional storage pool configuration property (KEY=VALUE, empty when done): zfs.pool_name=default
 Additional storage pool configuration property (KEY=VALUE, empty when done):
 Would you like to recover another storage pool? (yes/no) [default=no]:
 The recovery process will be scanning the following storage pools:
- - NEW: "default" (backend="zfs", source="/var/snap/lxd/common/lxd/storage-pools/default/containers")
+ - NEW: "default" (backend="zfs", source="/var/lib/incus/storage-pools/default/containers")
 Would you like to continue with scanning for lost volumes? (yes/no) [default=yes]: yes
 Scanning for unknown volumes...
 The following unknown volumes have been found:
  - Container "u1" on pool "default" in project "default" (includes 0 snapshots)
  - Container "u2" on pool "default" in project "default" (includes 0 snapshots)
 You are currently missing the following:
- - Network "lxdbr0" in project "default"
+ - Network "incusbr0" in project "default"
 Please create those missing entries and then hit ENTER: ^Z
-[1]+  Stopped                 lxd recover
-:input: lxc network create lxdbr0
-Network lxdbr0 created
+[1]+  Stopped                 incus admin recover
+:input: incus network create incusbr0
+Network incusbr0 created
 :input: fg
-lxd recover
+incus admin recover
 
 The following unknown volumes have been found:
  - Container "u1" on pool "default" in project "default" (includes 0 snapshots)
  - Container "u2" on pool "default" in project "default" (includes 0 snapshots)
 Would you like those to be recovered? (yes/no) [default=no]: yes
 Starting recovery...
-:input: lxc list
+:input: incus list
 +------+---------+------+------+-----------+-----------+
 | NAME |  STATE  | IPV4 | IPV6 |   TYPE    | SNAPSHOTS |
 +------+---------+------+------+-----------+-----------+
@@ -85,10 +76,10 @@ Starting recovery...
 +------+---------+------+------+-----------+-----------+
 | u2   | STOPPED |      |      | CONTAINER | 0         |
 +------+---------+------+------+-----------+-----------+
-:input: lxc profile device add default eth0 nic network=lxdbr0 name=eth0
+:input: incus profile device add default eth0 nic network=incusbr0 name=eth0
 Device eth0 added to default
-:input: lxc start u1
-:input: lxc list
+:input: incus start u1
+:input: incus list
 +------+---------+-------------------+---------------------------------------------+-----------+-----------+
 | NAME |  STATE  |       IPV4        |                    IPV6                     |   TYPE    | SNAPSHOTS |
 +------+---------+-------------------+---------------------------------------------+-----------+-----------+

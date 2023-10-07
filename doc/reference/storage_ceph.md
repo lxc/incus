@@ -1,12 +1,5 @@
----
-discourse: 15457
----
-
 (storage-ceph)=
 # Ceph RBD - `ceph`
-
-```{youtube} https://youtube.com/watch?v=kVLGbvRU98A
-```
 
 <!-- Include start Ceph intro -->
 [Ceph](https://ceph.io/en/) is an open-source storage platform that stores its data in a storage cluster based on {abbr}`RADOS (Reliable Autonomic Distributed Object Store)`.
@@ -33,7 +26,7 @@ They are also referred to as *data pools*, *storage pools* or *OSD pools*.
 
 Ceph block devices are also called *RBD images*, and you can create *snapshots* and *clones* of these RBD images.
 
-## `ceph` driver in LXD
+## `ceph` driver in Incus
 
 ```{note}
 To use the Ceph RBD driver, you must specify it as `ceph`.
@@ -53,15 +46,15 @@ As a result and depending on the internal network, storage access might be a bit
 On the other hand, using remote storage has big advantages in a cluster setup, because all cluster members have access to the same storage pools with the exact same contents, without the need to synchronize storage pools.
 <!-- Include end Ceph driver remote -->
 
-The `ceph` driver in LXD uses RBD images for images, and snapshots and clones to create instances and snapshots.
+The `ceph` driver in Incus uses RBD images for images, and snapshots and clones to create instances and snapshots.
 
 <!-- Include start Ceph driver control -->
-LXD assumes that it has full control over the OSD storage pool.
-Therefore, you should never maintain any file system entities that are not owned by LXD in a LXD OSD storage pool, because LXD might delete them.
+Incus assumes that it has full control over the OSD storage pool.
+Therefore, you should never maintain any file system entities that are not owned by Incus in a Incus OSD storage pool, because Incus might delete them.
 <!-- Include end Ceph driver control -->
 
 Due to the way copy-on-write works in Ceph RBD, parent RBD images can't be removed until all children are gone.
-As a result, LXD automatically renames any objects that are removed but still referenced.
+As a result, Incus automatically renames any objects that are removed but still referenced.
 Such objects are kept with a  `zombie_` prefix until all references are gone and the object can safely be removed.
 
 ### Limitations
@@ -74,7 +67,7 @@ Sharing custom volumes between instances
   If you need to share a custom volume with content type `filesystem`, use the {ref}`CephFS <storage-cephfs>` driver instead.
 
 Sharing the OSD storage pool between installations
-: Sharing the same OSD storage pool between multiple LXD installations is not supported.
+: Sharing the same OSD storage pool between multiple Incus installations is not supported.
 
 Using an OSD pool of type "erasure"
 : To use a Ceph OSD pool of type "erasure", you must create the OSD pool beforehand.

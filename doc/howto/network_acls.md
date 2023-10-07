@@ -1,15 +1,8 @@
----
-discourse: 13223
----
-
 (network-acls)=
 # How to configure network ACLs
 
 ```{note}
 Network ACLs are available for the {ref}`OVN NIC type <nic-ovn>`, the {ref}`network-ovn` and the {ref}`network-bridge` (with some exceptions, see {ref}`network-acls-bridge-limitations`).
-```
-
-```{youtube} https://www.youtube.com/watch?v=mu34G0cX6Io
 ```
 
 Network {abbr}`ACLs (Access Control Lists)` define traffic rules that allow controlling network access between different instances connected to the same network, and access to and from other networks.
@@ -25,7 +18,7 @@ See {ref}`network-acls-groups` for more information.
 Use the following command to create an ACL:
 
 ```bash
-lxc network acl create <ACL_name> [configuration_options...]
+incus network acl create <ACL_name> [configuration_options...]
 ```
 
 This command creates an ACL without rules.
@@ -61,7 +54,7 @@ Each ACL contains two lists of rules:
 To add a rule to an ACL, use the following command, where `<direction>` can be either `ingress` or `egress`:
 
 ```bash
-lxc network acl rule add <ACL_name> <direction> [properties...]
+incus network acl rule add <ACL_name> <direction> [properties...]
 ```
 
 This command adds a rule to the list for the specified direction.
@@ -69,7 +62,7 @@ This command adds a rule to the list for the specified direction.
 You cannot edit a rule (except if you {ref}`edit the full ACL <network-acls-edit>`), but you can delete rules with the following command:
 
 ```bash
-lxc network acl rule remove <ACL_name> <direction> [properties...]
+incus network acl rule remove <ACL_name> <direction> [properties...]
 ```
 
 You must either specify all properties needed to uniquely identify a rule or add `--force` to the command to delete all matching rules.
@@ -80,7 +73,7 @@ Rules are provided as lists.
 However, the order of the rules in the list is not important and does not affect
 filtering.
 
-LXD automatically orders the rules based on the `action` property as follows:
+Incus automatically orders the rules based on the `action` property as follows:
 
 - `drop`
 - `reject`
@@ -158,7 +151,7 @@ To add a rule for logging, create it with the `state=logged` property.
 You can then display the log output for all logging rules in the ACL with the following command:
 
 ```bash
-lxc network acl show-log <ACL_name>
+incus network acl show-log <ACL_name>
 ```
 
 (network-acls-edit)=
@@ -167,7 +160,7 @@ lxc network acl show-log <ACL_name>
 Use the following command to edit an ACL:
 
 ```bash
-lxc network acl edit <ACL_name>
+incus network acl edit <ACL_name>
 ```
 
 This command opens the ACL in YAML format for editing.
@@ -181,13 +174,13 @@ To do so, add it to the `security.acls` list of the network or NIC configuration
 For networks, use the following command:
 
 ```bash
-lxc network set <network_name> security.acls="<ACL_name>"
+incus network set <network_name> security.acls="<ACL_name>"
 ```
 
 For instance NICs, use the following command:
 
 ```bash
-lxc config device set <instance_name> <device_name> security.acls="<ACL_name>"
+incus config device set <instance_name> <device_name> security.acls="<ACL_name>"
 ```
 
 (network-acls-defaults)=
@@ -202,13 +195,13 @@ The NIC level settings override the network level settings.
 For example, to set the default action for inbound traffic to `allow` for all instances connected to a network, use the following command:
 
 ```bash
-lxc network set <network_name> security.acls.default.ingress.action=allow
+incus network set <network_name> security.acls.default.ingress.action=allow
 ```
 
 To configure the same default action for an instance NIC, use the following command:
 
 ```bash
-lxc config device set <instance_name> <device_name> security.acls.default.ingress.action=allow
+incus config device set <instance_name> <device_name> security.acls.default.ingress.action=allow
 ```
 
 (network-acls-bridge-limitations)=
@@ -216,7 +209,7 @@ lxc config device set <instance_name> <device_name> security.acls.default.ingres
 
 When using network ACLs with a bridge network, be aware of the following limitations:
 
-- Unlike OVN ACLs, bridge ACLs are applied only on the boundary between the bridge and the LXD host.
+- Unlike OVN ACLs, bridge ACLs are applied only on the boundary between the bridge and the Incus host.
   This means they can only be used to apply network policies for traffic going to or from external networks.
   They cannot be used for to create {spellexception}`intra-bridge` firewalls, thus firewalls that control traffic between instances connected to the same bridge.
 - {ref}`ACL groups and network selectors <network-acls-selectors>` are not supported.

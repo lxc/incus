@@ -2,7 +2,7 @@
   "__inputs": [
     {
       "name": "DS_INCUS",
-      "label": "INCUS",
+      "label": "Incus",
       "description": "Prometheus instance for Incus",
       "type": "datasource",
       "pluginId": "prometheus",
@@ -81,7 +81,7 @@
       }
     ]
   },
-  "description": "Overview of INCUS instances",
+  "description": "Overview of Incus instances",
   "editable": false,
   "fiscalYearStartMonth": 0,
   "gnetId": 19131,
@@ -3894,7 +3894,7 @@
     ]
   },
   "timezone": "",
-  "title": "INCUS",
+  "title": "Incus",
   "uid": "bGY-LSB7k",
   "version": 15,
   "weekStart": ""

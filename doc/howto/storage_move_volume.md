@@ -1,7 +1,3 @@
----
-discourse: 10877
----
-
 (howto-storage-move-volume)=
 # How to move or copy storage volumes
 
@@ -16,7 +12,7 @@ When copying or moving a volume between storage pools that use different drivers
 
 Use the following command to copy a custom storage volume:
 
-    lxc storage volume copy <source_pool_name>/<source_volume_name> <target_pool_name>/<target_volume_name>
+    incus storage volume copy <source_pool_name>/<source_volume_name> <target_pool_name>/<target_volume_name>
 
 Add the `--volume-only` flag to copy only the volume and skip any snapshots that the volume might have.
 If the volume already exists in the target location, use the `--refresh` flag to update the copy.
@@ -33,7 +29,7 @@ Before you can move or rename a custom storage volume, all instances that use it
 
 Use the following command to move or rename a storage volume:
 
-    lxc storage volume move <source_pool_name>/<source_volume_name> <target_pool_name>/<target_volume_name>
+    incus storage volume move <source_pool_name>/<source_volume_name> <target_pool_name>/<target_volume_name>
 
 Specify the same pool as the source and target pool to rename the volume while keeping it in the same storage pool.
 You must specify different volume names for source and target in this case.
@@ -50,12 +46,12 @@ To copy or move a custom storage volume from one cluster member to another, add 
 
 Add the `--target-project` to copy or move a custom storage volume to a different project.
 
-## Copy or move between LXD servers
+## Copy or move between Incus servers
 
-You can copy or move custom storage volumes between different LXD servers by specifying the remote for each pool:
+You can copy or move custom storage volumes between different Incus servers by specifying the remote for each pool:
 
-    lxc storage volume copy <source_remote>:<source_pool_name>/<source_volume_name> <target_remote>:<target_pool_name>/<target_volume_name>
-    lxc storage volume move <source_remote>:<source_pool_name>/<source_volume_name> <target_remote>:<target_pool_name>/<target_volume_name>
+    incus storage volume copy <source_remote>:<source_pool_name>/<source_volume_name> <target_remote>:<target_pool_name>/<target_volume_name>
+    incus storage volume move <source_remote>:<source_pool_name>/<source_volume_name> <target_remote>:<target_pool_name>/<target_volume_name>
 
 You can add the `--mode` flag to choose a transfer mode, depending on your network setup:
 
@@ -74,4 +70,4 @@ You can add the `--mode` flag to choose a transfer mode, depending on your netwo
 To move an instance storage volume to another storage pool, make sure the instance is stopped.
 Then use the following command to move the instance to a different pool:
 
-    lxc move <instance_name> --storage <target_pool_name>
+    incus move <instance_name> --storage <target_pool_name>

@@ -1,6 +1,6 @@
 # API extensions
 
-The changes below were introduced to the LXD API after the 1.0 API was finalized.
+The changes below were introduced to the Incus API after the 1.0 API was finalized.
 
 They are all backward compatible and can be detected by client tools by
 looking at the `api_extensions` field in `GET /1.0`.
@@ -9,7 +9,7 @@ looking at the `api_extensions` field in `GET /1.0`.
 
 A `storage.zfs_remove_snapshots` daemon configuration key was introduced.
 
-It's a Boolean that defaults to `false` and that when set to `true` instructs LXD
+It's a Boolean that defaults to `false` and that when set to `true` instructs Incus
 to remove any needed snapshot when attempting to restore another.
 
 This is needed as ZFS will only let you restore the latest snapshot.
@@ -18,10 +18,10 @@ This is needed as ZFS will only let you restore the latest snapshot.
 
 A `boot.host_shutdown_timeout` container configuration key was introduced.
 
-It's an integer which indicates how long LXD should wait for the container
+It's an integer which indicates how long Incus should wait for the container
 to stop before killing it.
 
-Its value is only used on clean LXD daemon shutdown. It defaults to 30s.
+Its value is only used on clean Incus daemon shutdown. It defaults to 30s.
 
 ## `container_stop_priority`
 
@@ -73,8 +73,8 @@ And adds support for the following HTTP header on PUT requests:
 
 * If-Match (ETag value retrieved through previous GET)
 
-This makes it possible to GET a LXD object, modify it and PUT it without
-risking to hit a race condition where LXD or another client modified the
+This makes it possible to GET a Incus object, modify it and PUT it without
+risking to hit a race condition where Incus or another client modified the
 object in the meantime.
 
 ## `patch`
@@ -89,7 +89,7 @@ Add support for USB hotplug.
 
 ## `https_allowed_credentials`
 
-To use LXD API with all Web Browsers (via SPAs) you must send credentials
+To use Incus API with all Web Browsers (via SPAs) you must send credentials
 (certificate) with each XHR (in order for this to happen, you should set
 [`withCredentials=true`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/withCredentials)
 flag to each XHR Request).
@@ -106,8 +106,8 @@ Setting this property overrides the server default value (`images.compression_al
 
 ## `directory_manipulation`
 
-This allows for creating and listing directories via the LXD API, and exports
-the file type via the X-LXD-type header, which can be either `file` or
+This allows for creating and listing directories via the Incus API, and exports
+the file type via the X-Incus-type header, which can be either `file` or
 `directory` right now.
 
 ## `container_cpu_time`
@@ -116,9 +116,9 @@ This adds support for retrieving CPU time for a running container.
 
 ## `storage_zfs_use_refquota`
 
-Introduces a new server property `storage.zfs_use_refquota` which instructs LXD
+Introduces a new server property `storage.zfs_use_refquota` which instructs Incus
 to set the `refquota` property instead of `quota` when setting a size limit
-on a container. LXD will also then use `usedbydataset` in place of `used`
+on a container. Incus will also then use `usedbydataset` in place of `used`
 when being queried about disk utilization.
 
 This effectively controls whether disk usage by snapshots should be
@@ -132,7 +132,7 @@ options for the file system used by the LVM LV.
 
 ## `network`
 
-Network management API for LXD.
+Network management API for Incus.
 
 This includes:
 
@@ -214,11 +214,11 @@ Rules necessary for `dnsmasq` to work (DHCP/DNS) will always be applied if
 
 ## `network_routes`
 
-Introduces `ipv4.routes` and `ipv6.routes` which allow routing additional subnets to a LXD bridge.
+Introduces `ipv4.routes` and `ipv6.routes` which allow routing additional subnets to a Incus bridge.
 
 ## `storage`
 
-Storage management API for LXD.
+Storage management API for Incus.
 
 This includes:
 
@@ -250,7 +250,7 @@ Implements `DELETE` in `/1.0/containers/<name>/files`
 
 ## `file_append`
 
-Implements the `X-LXD-write` header which can be one of `overwrite` or `append`.
+Implements the `X-Incus-write` header which can be one of `overwrite` or `append`.
 
 ## `network_dhcp_expiry`
 
@@ -268,7 +268,7 @@ Introduces the ability to rename a thin pool name by setting `storage.thinpool_n
 
 This adds a new `vlan` property to `macvlan` network devices.
 
-When set, this will instruct LXD to attach to the specified VLAN. LXD
+When set, this will instruct Incus to attach to the specified VLAN. Incus
 will look for an existing interface for that VLAN on the host. If one
 can't be found it will create one itself and then use that as the
 macvlan parent.
@@ -281,7 +281,7 @@ be set at image creation/import time.
 ## `container_stateless_copy`
 
 This introduces a new `live` attribute in `POST /1.0/containers/<name>`.
-Setting it to `false` tells LXD not to attempt running state transfer.
+Setting it to `false` tells Incus not to attempt running state transfer.
 
 ## `container_only_migration`
 
@@ -347,21 +347,21 @@ UID/GID to use as the base.
 ## `file_symlinks`
 
 This adds support for transferring symlinks through the file API.
-X-LXD-type can now be `symlink` with the request content being the target path.
+X-Incus-type can now be `symlink` with the request content being the target path.
 
 ## `container_push_target`
 
 This adds the `target` field to `POST /1.0/containers/<name>` which can be
-used to have the source LXD host connect to the target during migration.
+used to have the source Incus host connect to the target during migration.
 
 ## `network_vlan_physical`
 
 Allows use of `vlan` property with `physical` network devices.
 
-When set, this will instruct LXD to attach to the specified VLAN on the `parent` interface.
-LXD will look for an existing interface for that `parent` and VLAN on the host.
+When set, this will instruct Incus to attach to the specified VLAN on the `parent` interface.
+Incus will look for an existing interface for that `parent` and VLAN on the host.
 If one can't be found it will create one itself.
-Then, LXD will directly attach this interface to the container.
+Then, Incus will directly attach this interface to the container.
 
 ## `storage_images_delete`
 
@@ -389,17 +389,17 @@ This adds the ability to specify the Ceph user.
 ## `instance_types`
 
 This adds the `instance_type` field to the container creation request.
-Its value is expanded to LXD resource limits.
+Its value is expanded to Incus resource limits.
 
 ## `storage_volatile_initial_source`
 
-This records the actual source passed to LXD during storage pool creation.
+This records the actual source passed to Incus during storage pool creation.
 
 ## `storage_ceph_force_osd_reuse`
 
 This introduces the `ceph.osd.force_reuse` property for the Ceph storage
-driver. When set to `true` LXD will reuse an OSD storage pool that is already in
-use by another LXD instance.
+driver. When set to `true` Incus will reuse an OSD storage pool that is already in
+use by another Incus instance.
 
 ## `storage_block_filesystem_btrfs`
 
@@ -408,7 +408,7 @@ and `xfs`.
 
 ## `resources`
 
-This adds support for querying a LXD daemon for the system resources it has
+This adds support for querying a Incus daemon for the system resources it has
 available.
 
 ## `kernel_limits`
@@ -428,11 +428,11 @@ This adds support for SR-IOV enabled network devices.
 
 This adds support to interact with the container console device and console log.
 
-## `restrict_devlxd`
+## `restrict_dev_incus`
 
-A new `security.devlxd` container configuration key was introduced.
-The key controls whether the `/dev/lxd` interface is made available to the container.
-If set to `false`, this effectively prevents the container from interacting with the LXD daemon.
+A new `security.guestapi` container configuration key was introduced.
+The key controls whether the `/dev/incus` interface is made available to the container.
+If set to `false`, this effectively prevents the container from interacting with the Incus daemon.
 
 ## `migration_pre_copy`
 
@@ -442,11 +442,11 @@ This adds support for optimized memory transfer during live migration.
 
 This adds support to use InfiniBand network devices.
 
-## `devlxd_events`
+## `dev_incus_events`
 
-This adds a WebSocket API to the `devlxd` socket.
+This adds a WebSocket API to the `/dev/incus` socket.
 
-When connecting to `/1.0/events` over the `devlxd` socket, you will now be
+When connecting to `/1.0/events` over the `/dev/incus` socket, you will now be
 getting a stream of events over WebSocket.
 
 ## `proxy`
@@ -465,7 +465,7 @@ This makes it possible to retrieve symlinks using the file API.
 ## `network_leases`
 
 Adds a new `/1.0/networks/NAME/leases` API endpoint to query the lease database on
-bridges which run a LXD-managed DHCP server.
+bridges which run a Incus-managed DHCP server.
 
 ## `unix_device_hotplug`
 
@@ -482,7 +482,7 @@ Adds a `description` field to all operations.
 
 ## `clustering`
 
-Clustering API for LXD.
+Clustering API for Incus.
 
 This includes the following new endpoints (see [RESTful API](rest-api.md) for details):
 
@@ -547,16 +547,16 @@ The following existing endpoint has been modified:
 
 * `POST /1.0/containers` accepts the new source type `backup`
 
-## `devlxd_images`
+## `dev_incus_images`
 
-Adds a `security.devlxd.images` configuration option for containers which
+Adds a `security.guestapi.images` configuration option for containers which
 controls the availability of a `/1.0/images/FINGERPRINT/export` API over
-`devlxd`. This can be used by a container running nested LXD to access raw
+`/dev/incus`. This can be used by a container running nested Incus to access raw
 images from the host.
 
 ## `container_local_cross_pool_handling`
 
-This enables copying or moving containers between storage pools on the same LXD
+This enables copying or moving containers between storage pools on the same Incus
 instance.
 
 ## `proxy_unix`
@@ -648,15 +648,15 @@ will be done via `iptables` instead of proxy devices.
 
 ## `network_nat_order`
 
-This introduces the `ipv4.nat.order` and `ipv6.nat.order` configuration keys for LXD bridges.
-Those keys control whether to put the LXD rules before or after any pre-existing rules in the chain.
+This introduces the `ipv4.nat.order` and `ipv6.nat.order` configuration keys for Incus bridges.
+Those keys control whether to put the Incus rules before or after any pre-existing rules in the chain.
 
 ## `container_full`
 
 This introduces a new `recursion=2` mode for `GET /1.0/containers` which allows for the retrieval of
 all container structs, including the state, snapshots and backup structs.
 
-This effectively allows for [`lxc list`](incus_list.md) to get all it needs in one query.
+This effectively allows for [`incus list`](incus_list.md) to get all it needs in one query.
 
 ## `backup_compression`
 
@@ -702,7 +702,7 @@ attaching it to the container which requires write access.
 Add a new project API, supporting creation, update and deletion of projects.
 
 Projects can hold containers, profiles or images at this point and let
-you get a separate view of your LXD resources by switching to it.
+you get a separate view of your Incus resources by switching to it.
 
 ## `network_vxlan_ttl`
 
@@ -772,7 +772,7 @@ parts have to be used.
 
 Snapshots which are then created will be given an expiry date based on the
 expression. This expiry date, defined by `expires_at`, can be manually edited
-using the API or [`lxc config edit`](incus_config_edit.md). Snapshots with a valid expiry date will be
+using the API or [`incus config edit`](incus_config_edit.md). Snapshots with a valid expiry date will be
 removed when the task in run. Expiry can be disabled by setting `expires_at` to
 an empty string or `0001-01-01T00:00:00Z` (zero time). This is the default if
 `snapshots.expiry` is not set.
@@ -832,7 +832,7 @@ This allows migrating storage volumes including their snapshots.
 
 ## `network_nat_address`
 
-This introduces the `ipv4.nat.address` and `ipv6.nat.address` configuration keys for LXD bridges.
+This introduces the `ipv4.nat.address` and `ipv6.nat.address` configuration keys for Incus bridges.
 Those keys control the source address used for outbound traffic from the bridge.
 
 ## `container_nic_routes`
@@ -843,18 +843,18 @@ This allows adding static routes on host to container's NIC.
 ## `cluster_internal_copy`
 
 This makes it possible to do a normal `POST /1.0/containers` to copy a
-container between cluster nodes with LXD internally detecting whether a
+container between cluster nodes with Incus internally detecting whether a
 migration is required.
 
 ## `seccomp_notify`
 
-If the kernel supports `seccomp`-based syscall interception LXD can be notified
-by a container that a registered syscall has been performed. LXD can then
+If the kernel supports `seccomp`-based syscall interception Incus can be notified
+by a container that a registered syscall has been performed. Incus can then
 decide to trigger various actions.
 
 ## `lxc_features`
 
-This introduces the `lxc_features` section output from the [`lxc info`](incus_info.md) command
+This introduces the `lxc_features` section output from the [`incus info`](incus_info.md) command
 via the `GET /1.0` route. It outputs the result of checks for key features being present in the
 underlying LXC library.
 
@@ -904,7 +904,7 @@ Adds support for specifying `User`, `Group` and `Cwd` during `POST /1.0/containe
 ## `container_syscall_intercept`
 
 Adds the `security.syscalls.intercept.*` configuration keys to control
-what system calls will be intercepted by LXD and processed with
+what system calls will be intercepted by Incus and processed with
 elevated permissions.
 
 ## `container_disk_shift`
@@ -981,7 +981,7 @@ in the pool specified by `pool_name`.
 Adds the `security.syscalls.intercept.mount`,
 `security.syscalls.intercept.mount.allowed`, and
 `security.syscalls.intercept.mount.shift` configuration keys to control whether
-and how the `mount` system call will be intercepted by LXD and processed with
+and how the `mount` system call will be intercepted by Incus and processed with
 elevated permissions.
 
 ## `compression_squashfs`
@@ -1004,7 +1004,7 @@ redirect file-system mounts to their fuse implementation. To this end, set e.g.
 
 ## `container_disk_ceph`
 
-This allows for existing a Ceph RBD or CephFS to be directly connected to a LXD container.
+This allows for existing a Ceph RBD or CephFS to be directly connected to a Incus container.
 
 ## `virtual-machines`
 
@@ -1057,14 +1057,14 @@ Adds the `Firewall` property to the `ServerEnvironment` struct indicating the fi
 ## `storage_lvm_vg_force_reuse`
 
 Introduces the ability to create a storage pool from an existing non-empty volume group.
-This option should be used with care, as LXD can then not guarantee that volume name conflicts won't occur
-with non-LXD created volumes in the same volume group.
-This could also potentially lead to LXD deleting a non-LXD volume should name conflicts occur.
+This option should be used with care, as Incus can then not guarantee that volume name conflicts won't occur
+with non-Incus created volumes in the same volume group.
+This could also potentially lead to Incus deleting a non-Incus volume should name conflicts occur.
 
 ## `container_syscall_intercept_hugetlbfs`
 
 When mount syscall interception is enabled and `hugetlbfs` is specified as an
-allowed file system type LXD will mount a separate `hugetlbfs` instance for the
+allowed file system type Incus will mount a separate `hugetlbfs` instance for the
 container with the UID and GID mount options set to the container's root UID
 and GID. This ensures that processes in the container can use huge pages.
 
@@ -1396,7 +1396,7 @@ This introduces the `tpm` device type.
 
 ## `storage_zfs_clone_copy_rebase`
 
-This introduces `rebase` as a value for `zfs.clone_copy` causing LXD to
+This introduces `rebase` as a value for `zfs.clone_copy` causing Incus to
 track down any `image` dataset in the ancestry line and then perform
 send/receive on top of that.
 
@@ -1536,7 +1536,7 @@ to specify what cluster member to place a workload on or the ability to move a w
 
 ## `images_default_architecture`
 
-Adds new `images.default_architecture` global configuration key and matching per-project key which lets user tell LXD
+Adds new `images.default_architecture` global configuration key and matching per-project key which lets user tell Incus
 what architecture to go with when no specific one is specified as part of the image request.
 
 ## `network_ovn_acl_defaults`
@@ -1562,7 +1562,7 @@ specifying the default behavior for unmatched traffic.
 
 ## `warnings`
 
-Warning API for LXD.
+Warning API for Incus.
 
 This includes the following endpoints (see  [Restful API](rest-api.md) for details):
 
@@ -1588,7 +1588,7 @@ Adds an editable description to the cluster members.
 
 ## `server_trusted_proxy`
 
-This introduces support for `core.https_trusted_proxy` which has LXD
+This introduces support for `core.https_trusted_proxy` which has Incus
 parse a HAProxy style connection header on such connections and if
 present, will rewrite the request's source address to that provided by
 the proxy server.
@@ -1605,7 +1605,7 @@ This adds support for copy/move custom storage volumes between projects.
 ## `server_instance_driver_operational`
 
 This modifies the `driver` output for the `/1.0` endpoint to only include drivers which are actually supported and
-operational on the server (as opposed to being included in LXD but not operational on the server).
+operational on the server (as opposed to being included in Incus but not operational on the server).
 
 ## `server_supported_storage_drivers`
 
@@ -1626,13 +1626,13 @@ It also adds the configuration keys `cluster.evacuate` and `volatile.evacuate.or
 
 ## `network_ovn_nat_address`
 
-This introduces the `ipv4.nat.address` and `ipv6.nat.address` configuration keys for LXD `ovn` networks.
+This introduces the `ipv4.nat.address` and `ipv6.nat.address` configuration keys for Incus `ovn` networks.
 Those keys control the source address used for outbound traffic from the OVN virtual network.
 These keys can only be specified when the OVN network's uplink network has `ovn.ingress_mode=routed`.
 
 ## `network_bgp`
 
-This introduces support for LXD acting as a BGP router to advertise
+This introduces support for Incus acting as a BGP router to advertise
 routes to `bridge` and `ovn` networks.
 
 This comes with the addition to global configuration of:
@@ -1672,7 +1672,7 @@ This adds the received and sent errors as well as inbound and outbound dropped p
 
 ## `metrics`
 
-This adds metrics to LXD. It returns metrics of running instances using the OpenMetrics format.
+This adds metrics to Incus. It returns metrics of running instances using the OpenMetrics format.
 
 This includes the following endpoints:
 
@@ -1698,7 +1698,7 @@ within containers.
 
 ## `network_dns`
 
-Introduces a built-in DNS server and zones API to provide DNS records for LXD instances.
+Introduces a built-in DNS server and zones API to provide DNS records for Incus instances.
 
 This introduces the following server configuration key:
 
@@ -1745,14 +1745,14 @@ This adds a new `cloud-init` configuration key namespace which contains the foll
 * `cloud-init.user-data`
 * `cloud-init.network-config`
 
- It also adds a new endpoint `/1.0/devices` to `devlxd` which shows an instance's devices.
+ It also adds a new endpoint `/1.0/devices` to `/dev/incus` which shows an instance's devices.
 
 ## `network_dns_nat`
 
 This introduces `network.nat` as a configuration option on network zones (DNS).
 
 It defaults to the current behavior of generating records for all
-instances NICs but if set to `false`, it will instruct LXD to only
+instances NICs but if set to `false`, it will instruct Incus to only
 generate records for externally reachable addresses.
 
 ## `database_leader`
@@ -1789,7 +1789,7 @@ all instance structs, including the state, snapshots and backup structs.
 ## `qemu_metrics`
 
 This adds a new `security.agent.metrics` Boolean which defaults to `true`.
-When set to `false`, it doesn't connect to the `lxd-agent` for metrics and other state information, but relies on stats from QEMU.
+When set to `false`, it doesn't connect to the `incus-agent` for metrics and other state information, but relies on stats from QEMU.
 
 ## `gpu_mig_uuid`
 
@@ -1860,7 +1860,7 @@ Introduces a new `zfs.blocksize` property for ZFS storage volumes which allows t
 
 ## `metrics_cpu_seconds`
 
-This is used to detect whether LXD was fixed to output used CPU time in seconds rather than as milliseconds.
+This is used to detect whether Incus was fixed to output used CPU time in seconds rather than as milliseconds.
 
 ## `instance_snapshot_never`
 
@@ -1884,7 +1884,7 @@ This adds support for `event-hub` cluster member role and the `ServerEventMode` 
 
 ## `agent_nic_config`
 
-If set to `true`, on VM start-up the `lxd-agent` will apply NIC configuration to change the names and MTU of the instance NIC
+If set to `true`, on VM start-up the `incus-agent` will apply NIC configuration to change the names and MTU of the instance NIC
 devices.
 
 ## `projects_restricted_intercept`
@@ -1932,7 +1932,7 @@ Implements HEAD on `/1.0/instances/NAME/file`.
 
 This introduces the `instances.nic.host_name` server configuration key that can take a value of either `random` or
 `mac`. The default value for the key if unspecified is `random`. If it is set to random then use the random host interface names.
-If it's set to `mac`, then generate a name in the form `lxd1122334455`.
+If it's set to `mac`, then generate a name in the form `inc1122334455`.
 
 ## `image_copy_profile`
 
@@ -1968,11 +1968,11 @@ IP addresses that can be forwarded to one or more internal IP(s) inside their re
 
 ## `vsock_api`
 
-This introduces a bidirectional `vsock` interface which allows the `lxd-agent` and the LXD server to communicate better.
+This introduces a bidirectional `vsock` interface which allows the `incus-agent` and the Incus server to communicate better.
 
 ## `instance_ready_state`
 
-This introduces a new `Ready` state for instances which can be set using `devlxd`.
+This introduces a new `Ready` state for instances which can be set using `/dev/incus`.
 
 ## `network_bgp_holdtime`
 
@@ -1984,7 +1984,7 @@ This introduces the ability to list storage volumes from all projects.
 
 ## `metrics_memory_oom_total`
 
-This introduces a new `lxd_memory_OOM_kills_total` metric to the `/1.0/metrics` API.
+This introduces a new `incus_memory_OOM_kills_total` metric to the `/1.0/metrics` API.
 It reports the number of times the out of memory killer (`OOM`) has been triggered.
 
 ## `storage_buckets`
@@ -1996,7 +1996,7 @@ This introduces the storage bucket API. It allows the management of S3 object st
 This updates the storage bucket API to return initial admin credentials at bucket creation time.
 
 ## `metrics_cpu_effective_total`
-This introduces a new `lxd_cpu_effective_total` metric to the `/1.0/metrics` API.
+This introduces a new `incus_cpu_effective_total` metric to the `/1.0/metrics` API.
 It reports the total number of effective CPUs.
 
 ## `projects_networks_restricted_access`
@@ -2101,13 +2101,13 @@ Adds `GET /1.0/cluster/members/<member>/state` API endpoint and associated `Clus
 
 ## `instances_placement_scriptlet`
 
-Adds support for a Starlark scriptlet to be provided to LXD to allow customized logic that controls placement of new instances in a cluster.
+Adds support for a Starlark scriptlet to be provided to Incus to allow customized logic that controls placement of new instances in a cluster.
 
-The Starlark scriptlet is provided to LXD via the new global configuration option `instances.placement.scriptlet`.
+The Starlark scriptlet is provided to Incus via the new global configuration option `instances.placement.scriptlet`.
 
 ## `storage_pool_source_wipe`
 Adds support for a `source.wipe` Boolean on the storage pool, indicating
-that LXD should wipe partition headers off the requested disk rather
+that Incus should wipe partition headers off the requested disk rather
 than potentially fail due to pre-existing file systems.
 
 ## `zfs_block_mode`
@@ -2204,10 +2204,10 @@ This introduces:
 ## `security_csm`
 Introduce a new `security.csm` configuration key to control the use of
 `CSM` (Compatibility Support Module) to allow legacy operating systems to
-be run in LXD VMs.
+be run in Incus VMs.
 
 ## `instances_rebuild`
-This extension adds the ability to rebuild an instance with the same origin image, alternate image or as empty. A new `POST /1.0/instances/<name>/rebuild?project=<project>` API endpoint has been added as well as a new CLI command [`lxc rebuild`](incus_rebuild.md).
+This extension adds the ability to rebuild an instance with the same origin image, alternate image or as empty. A new `POST /1.0/instances/<name>/rebuild?project=<project>` API endpoint has been added as well as a new CLI command [`incus rebuild`](incus_rebuild.md).
 
 ## `numa_cpu_placement`
 This adds the possibility to place a set of CPUs in a desired set of NUMA nodes.
@@ -2219,12 +2219,12 @@ This adds the following new configuration key:
 ## `custom_volume_iso`
 This adds the possibility to import ISO images as custom storage volumes.
 
-This adds the `--type` flag to [`lxc storage volume import`](incus_storage_volume_import.md).
+This adds the `--type` flag to [`incus storage volume import`](incus_storage_volume_import.md).
 
 ## `network_allocations`
-This adds the possibility to list a LXD deployment's network allocations.
+This adds the possibility to list a Incus deployment's network allocations.
 
-Through the [`lxc network list-allocations`](incus_network_list-allocations.md) command and the `--project <PROJECT> | --all-projects` flags,
+Through the [`incus network list-allocations`](incus_network_list-allocations.md) command and the `--project <PROJECT> | --all-projects` flags,
 you can list all the used IP addresses, hardware addresses (for instances), resource URIs and whether it uses NAT for
 each `instance`, `network`, `network forward` and `network load-balancer`.
 

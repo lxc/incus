@@ -1,27 +1,22 @@
 (migrate-from-lxc)=
-# How to migrate containers from LXC to LXD
+# How to migrate containers from LXC to Incus
 
-```{youtube} https://www.youtube.com/watch?v=F9GALjHtnUU
-```
+Incus provides a tool (`lxc-to-incus`) that you can use to import LXC containers into your Incus server.
+The LXC containers must exist on the same machine as the Incus server.
 
-LXD provides a tool (`lxc-to-lxd`) that you can use to import LXC containers into your LXD server.
-The LXC containers must exist on the same machine as the LXD server.
-
-The tool analyzes the LXC containers and migrates both their data and their configuration into new LXD containers.
+The tool analyzes the LXC containers and migrates both their data and their configuration into new Incus containers.
 
 ```{note}
-Alternatively, you can use the `lxd-migrate` tool within a LXC container to migrate it to LXD (see {ref}`import-machines-to-instances`).
+Alternatively, you can use the `incus-migrate` tool within a LXC container to migrate it to Incus (see {ref}`import-machines-to-instances`).
 However, this tool does not migrate any of the LXC container configuration.
 ```
 
 ## Get the tool
 
-If you're using the snap, the `lxc-to-lxd` is automatically installed.
-It is available as `lxd.lxc-to-lxd`.
+If the tool isn't provided alongside your Incus installation, you can build it yourself.
+Make sure that you have `go` (version 1.18 or later) installed and get the tool with the following command:
 
-Otherwise, make sure that you have `go` (version 1.18 or later) installed and get the tool with the following command:
-
-    go install github.com/canonical/lxd/lxc-to-lxd@latest
+    go install github.com/lxc/incus/cmd/lxc-to-incus@latest
 
 ## Prepare your LXC containers
 
@@ -29,7 +24,7 @@ You can migrate one container at a time or all of your LXC containers at the sam
 
 ```{note}
 Migrated containers use the same name as the original containers.
-You cannot migrate containers with a name that already exists as an instance name in LXD.
+You cannot migrate containers with a name that already exists as an instance name in Incus.
 
 Therefore, rename any LXC containers that might cause name conflicts before you start the migration process.
 ```
@@ -38,30 +33,29 @@ Before you start the migration process, stop the LXC containers that you want to
 
 ## Start the migration process
 
-Run `sudo lxd.lxc-to-lxd [flags]` to migrate the containers.
-(This command assumes that you are using the snap; otherwise, replace `lxd.lxc-to-lxd` with `lxc-to-lxd`, also in the following examples.)
+Run `sudo lxc-to-incus [flags]` to migrate the containers.
 
 For example, to migrate all containers:
 
-    sudo lxd.lxc-to-lxd --all
+    sudo lxc-to-incus --all
 
 To migrate only the `lxc1` container:
 
-    sudo lxd.lxc-to-lxd --containers lxc1
+    sudo lxc-to-incus --containers lxc1
 
-To migrate two containers (`lxc1` and `lxc2`) and use the `my-storage` storage pool in LXD:
+To migrate two containers (`lxc1` and `lxc2`) and use the `my-storage` storage pool in Incus:
 
-    sudo lxd.lxc-to-lxd --containers lxc1,lxc2 --storage my-storage
+    sudo lxc-to-incus --containers lxc1,lxc2 --storage my-storage
 
 To test the migration of all containers without actually running it:
 
-    sudo lxd.lxc-to-lxd --all --dry-run
+    sudo lxc-to-incus --all --dry-run
 
 To migrate all containers but limit the `rsync` bandwidth to 5000 KB/s:
 
-    sudo lxd.lxc-to-lxd --all --rsync-args --bwlimit=5000
+    sudo lxc-to-incus --all --rsync-args --bwlimit=5000
 
-Run `sudo lxd.lxc-to-lxd --help` to check all available flags.
+Run `sudo lxc-to-incus --help` to check all available flags.
 
 ```{note}
 If you get an error that the `linux64` architecture isn't supported, either update the tool to the latest version or change the architecture in the LXC container configuration from `linux64` to either `amd64` or `x86_64`.
@@ -73,7 +67,7 @@ The tool analyzes the LXC configuration and the configuration of the container (
 You will see output similar to the following:
 
 ```{terminal}
-:input: sudo lxd.lxc-to-lxd --containers lxc1
+:input: sudo lxc-to-incus --containers lxc1
 
 Parsing LXC configuration
 Checking for unsupported LXC configuration keys
@@ -96,4 +90,4 @@ Transferring container: lxc1: ...
 Container 'lxc1' successfully created
 ```
 
-After the migration process is complete, you can check and, if necessary, update the configuration in LXD before you start the migrated LXD container.
+After the migration process is complete, you can check and, if necessary, update the configuration in Incus before you start the migrated Incus container.

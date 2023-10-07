@@ -151,10 +151,10 @@ For external links, use only the URL, or Markdown syntax if you want to override
 
 * - Input
   - Output
-* - `https://ubuntu.com/lxd`
-  - [{spellexception}`https://ubuntu.com/lxd`](https://ubuntu.com/lxd)
-* - `[LXD](https://ubuntu.com/lxd)`
-  - [LXD](https://ubuntu.com/lxd)
+* - `https://linuxcontainers.org/incus`
+  - [{spellexception}`https://linuxcontainers.org/incus`](https://linuxcontainers.org/incus)
+* - `[Incus](https://linuxcontainers.org/incus)`
+  - [Incus](https://linuxcontainers.org/incus)
 ```
 
 To display a URL as text and prevent it from being linked, add a `<span></span>`:
@@ -164,8 +164,8 @@ To display a URL as text and prevent it from being linked, add a `<span></span>`
 
 * - Input
   - Output
-* - `https:/<span></span>/ubuntu.com/lxd`
-  - {spellexception}`https:/<span></span>/ubuntu.com/lxd`
+* - `https:/<span></span>/linuxcontainers.org/incus`
+  - {spellexception}`https:/<span></span>/linuxcontainers.org/incus`
 
 ```
 
@@ -192,13 +192,13 @@ To reference a documentation page, use MyST syntax to automatically extract the 
   - [](index)
   -
   - Do not use.
-* - `[LXD documentation](index)`
-  - [LXD documentation](index)
-  - [LXD documentation](index)
+* - `[Incus documentation](index)`
+  - [Incus documentation](index)
+  - [Incus documentation](index)
   - Preferred when overriding the link text.
-* - `` {doc}`LXD documentation <index>` ``
-  - {doc}`LXD documentation <index>`
-  - {doc}<span></span>`LXD documentation <index>`
+* - `` {doc}`Incus documentation <index>` ``
+  - {doc}`Incus documentation <index>`
+  - {doc}<span></span>`Incus documentation <index>`
   - Alternative when overriding the link text.
 
 ```
@@ -465,18 +465,18 @@ Adhere to the following conventions:
 * - Input
   - Output
 * - ```
-    ![Alt text](https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png)
+    ![Alt text](https://linuxcontainers.org/incus/docs/main/_static/tag.png)
     ```
-  - ![Alt text](https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png)
+  - ![Alt text](https://linuxcontainers.org/incus/docs/main/_static/tag.png)
 * - ````
-    ```{figure} https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png
+    ```{figure} https://linuxcontainers.org/incus/docs/main/_static/tag.png
        :width: 100px
        :alt: Alt text
 
        Figure caption
     ```
     ````
-  - ```{figure} https://documentation.ubuntu.com/lxd/en/latest/_static/tag.png
+  - ```{figure} https://linuxcontainers.org/incus/docs/main/_static/tag.png
        :width: 100px
        :alt: Alt text
 

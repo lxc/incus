@@ -1,19 +1,16 @@
 (storage-dir)=
 # Directory - `dir`
 
-```{youtube} https://www.youtube.com/watch?v=imWkPM9GjCY
-```
-
 The directory storage driver is a basic backend that stores its data in a standard file and directory structure.
 This driver is quick to set up and allows inspecting the files directly on the disk, which can be convenient for testing.
-However, LXD operations are {ref}`not optimized <storage-drivers-features>` for this driver.
+However, Incus operations are {ref}`not optimized <storage-drivers-features>` for this driver.
 
-## `dir` driver in LXD
+## `dir` driver in Incus
 
-The `dir` driver in LXD is fully functional and provides the same set of features as other drivers.
+The `dir` driver in Incus is fully functional and provides the same set of features as other drivers.
 However, it is much slower than all the other drivers because it must unpack images and do instant copies of instances, snapshots and images.
 
-Unless specified differently during creation (with the `source` configuration option), the data is stored in the `/var/snap/lxd/common/lxd/storage-pools/` (for snap installations) or `/var/lib/lxd/storage-pools/` directory.
+Unless specified differently during creation (with the `source` configuration option), the data is stored in the `/var/lib/incus/storage-pools/` directory.
 
 (storage-dir-quotas)=
 ### Quotas

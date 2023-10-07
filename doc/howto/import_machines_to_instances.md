@@ -1,17 +1,10 @@
----
-discourse: 14345
----
-
 (import-machines-to-instances)=
-# How to import physical or virtual machines to LXD instances
+# How to import physical or virtual machines to Incus instances
 
-```{youtube} https://www.youtube.com/watch?v=F9GALjHtnUU
-```
-
-LXD provides a tool (`lxd-migrate`) to create a LXD instance based on an existing disk or image.
+Incus provides a tool (`incus-migrate`) to create a Incus instance based on an existing disk or image.
 
 You can run the tool on any Linux machine.
-It connects to a LXD server and creates a blank instance, which you can configure during or after the migration.
+It connects to a Incus server and creates a blank instance, which you can configure during or after the migration.
 The tool then copies the data from the disk or image that you provide to the instance.
 
 ```{note}
@@ -45,49 +38,49 @@ The tool can create both containers and virtual machines:
    1. Install the `virtio-win` package, or download the [`virtio-win.iso`](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso) image and put it into the `/usr/share/virtio-win` folder.
    1. You might also need to install [`rhsrvany`](https://github.com/rwmjones/rhsrvany).
 
-   Now you can use `virt-v2v` to convert images from a foreign hypervisor to `raw` images for LXD and include the required drivers:
+   Now you can use `virt-v2v` to convert images from a foreign hypervisor to `raw` images for Incus and include the required drivers:
 
    ```
-   # Example 1. Convert a vmdk disk image to a raw image suitable for lxd-migrate
+   # Example 1. Convert a vmdk disk image to a raw image suitable for incus-migrate
    sudo virt-v2v --block-driver virtio-scsi -o local -of raw -os ./os -i vmx ./test-vm.vmx
    # Example 2. Convert a QEMU/KVM qcow2 image and integrate virtio-scsi driver
    sudo virt-v2v --block-driver virtio-scsi -o local -of raw -os ./os -if qcow2 -i disk test-vm-disk.qcow2
    ```
 
-   You can find the resulting image in the `os` directory and use it with `lxd-migrate` on the next steps.
+   You can find the resulting image in the `os` directory and use it with `incus-migrate` on the next steps.
    </details>
    ````
 
-Complete the following steps to migrate an existing machine to a LXD instance:
+Complete the following steps to migrate an existing machine to a Incus instance:
 
-1. Download the `bin.linux.lxd-migrate` tool from the **Assets** section of the latest [LXD release](https://github.com/canonical/lxd/releases).
+1. Download the `bin.linux.incus-migrate` tool from the **Assets** section of the latest [Incus release](https://github.com/lxc/incus/releases).
 1. Place the tool on the machine that you want to use to create the instance.
-   Make it executable (usually by running `chmod u+x bin.linux.lxd-migrate`).
+   Make it executable (usually by running `chmod u+x bin.linux.incus-migrate`).
 1. Make sure that the machine has `rsync` installed.
    If it is missing, install it (for example, with `sudo apt install rsync`).
 1. Run the tool:
 
-       sudo ./bin.linux.lxd-migrate
+       sudo ./bin.linux.incus-migrate
 
    The tool then asks you to provide the information required for the migration.
 
    ```{tip}
    As an alternative to running the tool interactively, you can provide the configuration as parameters to the command.
-   See `./bin.linux.lxd-migrate --help` for more information.
+   See `./bin.linux.incus-migrate --help` for more information.
    ```
 
-   1. Specify the LXD server URL, either as an IP address or as a DNS name.
+   1. Specify the Incus server URL, either as an IP address or as a DNS name.
 
       ```{note}
-      The LXD server must be {ref}`exposed to the network <server-expose>`.
-      If you want to import to a local LXD server, you must still expose it to the network.
+      The Incus server must be {ref}`exposed to the network <server-expose>`.
+      If you want to import to a local Incus server, you must still expose it to the network.
       You can then specify `127.0.0.1` as the IP address to access the local server.
       ```
 
    1. Check and confirm the certificate fingerprint.
    1. Choose a method for authentication (see {ref}`authentication`).
 
-      For example, if you choose using a certificate token, log on to the LXD server and create a token for the machine on which you are running the migration tool with [`lxc config trust add`](incus_config_trust_add.md).
+      For example, if you choose using a certificate token, log on to the Incus server and create a token for the machine on which you are running the migration tool with [`incus config trust add`](incus_config_trust_add.md).
       Then use the generated token to authenticate the tool.
    1. Choose whether to create a container or a virtual machine.
       See {ref}`containers-and-vms`.
@@ -105,9 +98,9 @@ Complete the following steps to migrate an existing machine to a LXD instance:
    <summary>Expand to see an example output for importing to a container</summary>
 
    ```{terminal}
-   :input: sudo ./bin.linux.lxd-migrate
+   :input: sudo ./bin.linux.incus-migrate
 
-   Please provide LXD server URL: https://192.0.2.7:8443
+   Please provide Incus server URL: https://192.0.2.7:8443
    Certificate fingerprint: xxxxxxxxxxxxxxxxx
    ok (y/n)? y
 
@@ -117,7 +110,7 @@ Complete the following steps to migrate an existing machine to a LXD instance:
    Please pick an authentication mechanism above: 1
    Please provide the certificate token: xxxxxxxxxxxxxxxx
 
-   Remote LXD server:
+   Remote Incus server:
      Hostname: bar
      Version: 5.4
 
@@ -180,7 +173,7 @@ Complete the following steps to migrate an existing machine to a LXD instance:
    5) Change instance network
 
    Please pick one of the options above [default=1]: 5
-   Please specify the network to use for the instance: lxdbr0
+   Please specify the network to use for the instance: incusbr0
 
    Instance to be created:
      Name: foo
@@ -189,7 +182,7 @@ Complete the following steps to migrate an existing machine to a LXD instance:
      Source: /
      Storage pool: default
      Storage pool size: 20GiB
-     Network name: lxdbr0
+     Network name: incusbr0
      Config:
        limits.cpu: "2"
 
@@ -209,9 +202,9 @@ Complete the following steps to migrate an existing machine to a LXD instance:
    <summary>Expand to see an example output for importing to a VM</summary>
 
    ```{terminal}
-   :input: sudo ./bin.linux.lxd-migrate
+   :input: sudo ./bin.linux.incus-migrate
 
-   Please provide LXD server URL: https://192.0.2.7:8443
+   Please provide Incus server URL: https://192.0.2.7:8443
    Certificate fingerprint: xxxxxxxxxxxxxxxxx
    ok (y/n)? y
 
@@ -221,7 +214,7 @@ Complete the following steps to migrate an existing machine to a LXD instance:
    Please pick an authentication mechanism above: 1
    Please provide the certificate token: xxxxxxxxxxxxxxxx
 
-   Remote LXD server:
+   Remote Incus server:
      Hostname: bar
      Version: 5.4
 
@@ -288,7 +281,7 @@ Complete the following steps to migrate an existing machine to a LXD instance:
    5) Change instance network
 
    Please pick one of the options above [default=1]: 5
-   Please specify the network to use for the instance: lxdbr0
+   Please specify the network to use for the instance: incusbr0
 
    Instance to be created:
      Name: foo
@@ -297,7 +290,7 @@ Complete the following steps to migrate an existing machine to a LXD instance:
      Source: ./virtual-machine.img
      Storage pool: default
      Storage pool size: 20GiB
-     Network name: lxdbr0
+     Network name: incusbr0
      Config:
        limits.cpu: "2"
        security.secureboot: "false"

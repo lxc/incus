@@ -1,10 +1,6 @@
 (devices-unix-char)=
 # Type: `unix-char`
 
-```{youtube} https://www.youtube.com/watch?v=C2e3LD5wLI8
-:title: LXD Unix devices - YouTube
-```
-
 ```{note}
 The `unix-char` device type is supported for containers.
 It supports hotplugging.

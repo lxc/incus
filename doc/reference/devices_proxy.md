@@ -1,12 +1,5 @@
----
-discourse: 8355
----
-
 (devices-proxy)=
 # Type: `proxy`
-
-```{youtube} https://www.youtube.com/watch?v=IbAKwRBW8V0
-```
 
 ```{note}
 The `proxy` device type is supported for both containers (NAT and non-NAT modes) and VMs (NAT mode only).
@@ -33,7 +26,7 @@ The supported connection types are:
 
 To add a `proxy` device, use the following command:
 
-    lxc config device add <instance_name> <device_name> proxy listen=<type>:<addr>:<port>[-<port>][,<port>] connect=<type>:<addr>:<port> bind=<host/instance_name>
+    incus config device add <instance_name> <device_name> proxy listen=<type>:<addr>:<port>[-<port>][,<port>] connect=<type>:<addr>:<port> bind=<host/instance_name>
 
 (devices-proxy-nat-mode)=
 ## NAT mode
@@ -41,7 +34,7 @@ To add a `proxy` device, use the following command:
 The proxy device also supports a NAT mode (`nat=true`), where packets are forwarded using NAT rather than being proxied through a separate connection.
 This mode has the benefit that the client address is maintained without the need for the target destination to support the HAProxy PROXY protocol (which is the only way to pass the client address through when using the proxy device in non-NAT mode).
 
-However, NAT mode is supported only if the host that the instance is running on is the gateway (which is the case if you're using `lxdbr0`, for example).
+However, NAT mode is supported only if the host that the instance is running on is the gateway (which is the case if you're using `incusbr0`, for example).
 
 In NAT mode, the supported connection types are:
 
@@ -54,7 +47,7 @@ When configuring a proxy device with `nat=true`, you must ensure that the target
 
 Use the following command to configure a static IP for an instance NIC:
 
-    lxc config device set <instance_name> <nic_name> ipv4.address=<ipv4_address> ipv6.address=<ipv6_address>
+    incus config device set <instance_name> <nic_name> ipv4.address=<ipv4_address> ipv6.address=<ipv6_address>
 
 To define a static IPv6 address, the parent managed network must have `ipv6.dhcp.stateful` enabled.
 
@@ -66,7 +59,7 @@ You can specify that the connect address should be the IP of the instance by set
 
 ```{note}
 The listen address can also use wildcard addresses when using non-NAT mode.
-However, when using NAT mode, you must specify an IP address on the LXD host.
+However, when using NAT mode, you must specify an IP address on the Incus host.
 ```
 
 ## Device options

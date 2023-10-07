@@ -10,15 +10,12 @@ If this is not possible, there are a few ways to recover the cluster, depending 
 See the following sections for details.
 
 ```{note}
-When your cluster is in a state that needs recovery, most `lxc` commands do not work, because the LXD client cannot connect to the LXD daemon.
-
-Therefore, the commands to recover the cluster are provided directly by the LXD daemon (`lxd`).
-Run `lxd cluster --help` for an overview of all available commands.
+Run `incus admin cluster --help` for an overview of all available commands.
 ```
 
 ## Recover from quorum loss
 
-Every LXD cluster has a specific number of members (configured through {config:option}`server-cluster:cluster.max_voters`) that serve as voting members of the distributed database.
+Every Incus cluster has a specific number of members (configured through {config:option}`server-cluster:cluster.max_voters`) that serve as voting members of the distributed database.
 If you permanently lose a majority of these cluster members (for example, you have a three-member cluster and you lose two members), the cluster loses quorum and becomes unavailable.
 However, if at least one database member survives, it is possible to recover the cluster.
 
@@ -26,25 +23,23 @@ To do so, complete the following steps:
 
 1. Log on to any surviving member of your cluster and run the following command:
 
-       sudo lxd cluster list-database
+       sudo incus admin cluster list-database
 
    This command shows which cluster members have one of the database roles.
 1. Pick one of the listed database members that is still online as the new leader.
    Log on to the machine (if it differs from the one you are already logged on to).
-1. Make sure that the LXD daemon is not running on the machine.
-   For example, if you're using the snap:
+1. Make sure that the Incus daemon is not running on the machine.
 
-       sudo snap stop lxd
+       sudo systemctl stop incus.service incus.socket
 
-1. Log on to all other cluster members that are still online and stop the LXD daemon.
+1. Log on to all other cluster members that are still online and stop the Incus daemon.
 1. On the server that you picked as the new leader, run the following command:
 
-       sudo lxd cluster recover-from-quorum-loss
+       sudo incus admin cluster recover-from-quorum-loss
 
-1. Start the LXD daemon again on all machines, starting with the new leader.
-   For example, if you're using the snap:
+1. Start the Incus daemon again on all machines, starting with the new leader.
 
-       sudo snap start lxd
+       sudo systemctl start incus.socket incus.service
 
 The database should now be back online.
 No information has been deleted from the database.
@@ -69,19 +64,18 @@ You can edit the {ref}`clustering-member-roles` of the different members, but wi
 
 Log on to each cluster member and complete the following steps:
 
-1. Stop the LXD daemon.
-   For example, if you're using the snap:
+1. Stop the Incus daemon.
 
-       sudo snap stop lxd
+       sudo systemctl stop incus.service incus.socket
 
 1. Run the following command:
 
-       sudo lxd cluster edit
+       sudo incus admin cluster edit
 
 1. Edit the YAML representation of the information that this cluster member has about the rest of the cluster:
 
    ```yaml
-   # Latest dqlite segment ID: 1234
+   # Latest cowsql segment ID: 1234
 
    members:
      - id: 1             # Internal ID of the member (Read-only)
@@ -100,10 +94,9 @@ Log on to each cluster member and complete the following steps:
 
    You can edit the addresses and the roles.
 
-After doing the changes on all cluster members, start the LXD daemon on all members again.
-For example, if you're using the snap:
+After doing the changes on all cluster members, start the Incus daemon on all members again.
 
-    sudo snap start lxd
+    sudo systemctl start incus.socket incus.service
 
 The cluster should now be fully available again with all members reporting in.
 No information has been deleted from the database.
@@ -113,11 +106,11 @@ All information about the cluster members and their instances is still there.
 
 In some situations, you might need to manually alter the Raft membership configuration of the cluster because of some unexpected behavior.
 
-For example, if you have a cluster member that was removed uncleanly, it might not show up in [`lxc cluster list`](incus_cluster_list.md) but still be part of the Raft configuration.
+For example, if you have a cluster member that was removed uncleanly, it might not show up in [`incus cluster list`](incus_cluster_list.md) but still be part of the Raft configuration.
 To see the Raft configuration, run the following command:
 
-    lxd sql local "SELECT * FROM raft_nodes"
+    incus admin sql local "SELECT * FROM raft_nodes"
 
 In that case, run the following command to remove the leftover node:
 
-    lxd cluster remove-raft-node <address>
+    incus admin cluster remove-raft-node <address>

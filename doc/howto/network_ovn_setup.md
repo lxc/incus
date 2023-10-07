@@ -1,11 +1,11 @@
 (network-ovn-setup)=
-# How to set up OVN with LXD
+# How to set up OVN with Incus
 
-See the following sections for how to set up a basic OVN network, either as a standalone network or to host a small LXD cluster.
+See the following sections for how to set up a basic OVN network, either as a standalone network or to host a small Incus cluster.
 
 ## Set up a standalone OVN network
 
-Complete the following steps to create a standalone OVN network that is connected to a managed LXD parent bridge network (for example, `lxdbr0`) for outbound connectivity.
+Complete the following steps to create a standalone OVN network that is connected to a managed Incus parent bridge network (for example, `incusbr0`) for outbound connectivity.
 
 1. Install the OVN tools on the local server:
 
@@ -20,19 +20,19 @@ Complete the following steps to create a standalone OVN network that is connecte
 
 1. Create an OVN network:
 
-       lxc network set <parent_network> ipv4.dhcp.ranges=<IP_range> ipv4.ovn.ranges=<IP_range>
-       lxc network create ovntest --type=ovn network=<parent_network>
+       incus network set <parent_network> ipv4.dhcp.ranges=<IP_range> ipv4.ovn.ranges=<IP_range>
+       incus network create ovntest --type=ovn network=<parent_network>
 
 1. Create an instance that uses the `ovntest` network:
 
-       lxc init ubuntu:22.04 c1
-       lxc config device override c1 eth0 network=ovntest
-       lxc start c1
+       incus init images:ubuntu/22.04 c1
+       incus config device override c1 eth0 network=ovntest
+       incus start c1
 
-1. Run [`lxc list`](incus_list.md) to show the instance information:
+1. Run [`incus list`](incus_list.md) to show the instance information:
 
    ```{terminal}
-   :input: lxc list
+   :input: incus list
    :scroll:
 
    +------+---------+---------------------+----------------------------------------------+-----------+-----------+
@@ -42,17 +42,13 @@ Complete the following steps to create a standalone OVN network that is connecte
    +------+---------+---------------------+----------------------------------------------+-----------+-----------+
    ```
 
-## Set up a LXD cluster on OVN
+## Set up a Incus cluster on OVN
 
-```{youtube} https://www.youtube.com/watch?v=1M__Rm9iZb8
-```
+Complete the following steps to set up a Incus cluster that uses an OVN network.
 
-Complete the following steps to set up a LXD cluster that uses an OVN network.
-
-Just like LXD, the distributed database for OVN must be run on a cluster that consists of an odd number of members.
+Just like Incus, the distributed database for OVN must be run on a cluster that consists of an odd number of members.
 The following instructions use the minimum of three servers, which run both the distributed database for OVN and the OVN controller.
-In addition, you can add any number of servers to the LXD cluster that run only the OVN controller.
-See the linked YouTube video for the complete tutorial using four machines.
+In addition, you can add any number of servers to the Incus cluster that run only the OVN controller.
 
 1. Complete the following steps on the three machines that you want to run the distributed database for OVN:
 
@@ -123,16 +119,16 @@ See the linked YouTube video for the complete tutorial using four machines.
           external_ids:ovn-encap-type=geneve \
           external_ids:ovn-encap-ip=<local>
 
-1. Create a LXD cluster by running `lxd init` on all machines.
+1. Create a Incus cluster by running `incus admin init` on all machines.
    On the first machine, create the cluster.
-   Then join the other machines with tokens by running [`lxc cluster add <machine_name>`](incus_cluster_add.md) on the first machine and specifying the token when initializing LXD on the other machine.
+   Then join the other machines with tokens by running [`incus cluster add <machine_name>`](incus_cluster_add.md) on the first machine and specifying the token when initializing Incus on the other machine.
 1. On the first machine, create and configure the uplink network:
 
-       lxc network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_1>
-       lxc network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_2>
-       lxc network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_3>
-       lxc network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_4>
-       lxc network create UPLINK --type=physical \
+       incus network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_1>
+       incus network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_2>
+       incus network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_3>
+       incus network create UPLINK --type=physical parent=<uplink_interface> --target=<machine_name_4>
+       incus network create UPLINK --type=physical \
           ipv4.ovn.ranges=<IP_range> \
           ipv6.ovn.ranges=<IP_range> \
           ipv4.gateway=<gateway> \
@@ -157,30 +153,30 @@ See the linked YouTube video for the complete tutorial using four machines.
    IP ranges
    : Use suitable IP ranges based on the assigned IPs.
 
-1. Still on the first machine, configure LXD to be able to communicate with the OVN DB cluster.
-   To do so, find the value for `ovn-northd-nb-db` in `/etc/default/ovn-central` and provide it to LXD with the following command:
+1. Still on the first machine, configure Incus to be able to communicate with the OVN DB cluster.
+   To do so, find the value for `ovn-northd-nb-db` in `/etc/default/ovn-central` and provide it to Incus with the following command:
 
-       lxc config set network.ovn.northbound_connection <ovn-northd-nb-db>
+       incus config set network.ovn.northbound_connection <ovn-northd-nb-db>
 
 1. Finally, create the actual OVN network (on the first machine):
 
-       lxc network create my-ovn --type=ovn
+       incus network create my-ovn --type=ovn
 
 1. To test the OVN network, create some instances and check the network connectivity:
 
-       lxc launch ubuntu:22.04 c1 --network my-ovn
-       lxc launch ubuntu:22.04 c2 --network my-ovn
-       lxc launch ubuntu:22.04 c3 --network my-ovn
-       lxc launch ubuntu:22.04 c4 --network my-ovn
-       lxc list
-       lxc exec c4 bash
+       incus launch images:ubuntu/22.04 c1 --network my-ovn
+       incus launch images:ubuntu/22.04 c2 --network my-ovn
+       incus launch images:ubuntu/22.04 c3 --network my-ovn
+       incus launch images:ubuntu/22.04 c4 --network my-ovn
+       incus list
+       incus exec c4 bash
        ping <IP of c1>
        ping <nameserver>
        ping6 -n www.example.com
 
-## Send OVN logs to LXD
+## Send OVN logs to Incus
 
-Complete the following steps to have the OVN controller send its logs to LXD.
+Complete the following steps to have the OVN controller send its logs to Incus.
 
 1. Enable the syslog socket:
 
@@ -191,7 +187,7 @@ Complete the following steps to have the OVN controller send its logs to LXD.
 1. Paste the following configuration:
 
        OVN_CTL_OPTS=" \
-              --ovn-controller-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket'"
+              --ovn-controller-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
 
 1. Restart the OVN controller:
 
@@ -211,9 +207,9 @@ You can include logs for OVN `northd`, OVN north-bound `ovsdb-server`, and OVN s
 To do so, edit `/etc/default/ovn-central`:
 
     OVN_CTL_OPTS=" \
-       --ovn-northd-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket' \
-       --ovn-nb-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket' \
-       --ovn-sb-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket'"
+       --ovn-northd-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+       --ovn-nb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+       --ovn-sb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
 
     sudo systemctl restart ovn-central.service
 ```

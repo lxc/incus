@@ -1,16 +1,12 @@
 (devices-infiniband)=
 # Type: `infiniband`
 
-```{youtube} https://www.youtube.com/watch?v=SDewhlRSOuM
-:title: LXD InfiniBand devices - YouTube
-```
-
 ```{note}
 The `infiniband` device type is supported for both containers and VMs.
 It supports hotplugging only for containers, not for VMs.
 ```
 
-LXD supports two different kinds of network types for InfiniBand devices:
+Incus supports two different kinds of network types for InfiniBand devices:
 
 - `physical`: Passes a physical device from the host through to the instance.
   The targeted device will vanish from the host and appear in the instance.
@@ -23,11 +19,11 @@ LXD supports two different kinds of network types for InfiniBand devices:
 
 To create a `physical` `infiniband` device, use the following command:
 
-    lxc config device add <instance_name> <device_name> infiniband nictype=physical parent=<device>
+    incus config device add <instance_name> <device_name> infiniband nictype=physical parent=<device>
 
 To create an `sriov` `infiniband` device, use the following command:
 
-    lxc config device add <instance_name> <device_name> infiniband nictype=sriov parent=<sriov_enabled_device>
+    incus config device add <instance_name> <device_name> infiniband nictype=sriov parent=<sriov_enabled_device>
 
 ## Device options
 

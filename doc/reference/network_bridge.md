@@ -1,21 +1,17 @@
----
-discourse: 7322
----
-
 (network-bridge)=
 # Bridge network
 
-As one of the possible network configuration types under LXD, LXD supports creating and managing network bridges.
+As one of the possible network configuration types under Incus, Incus supports creating and managing network bridges.
 <!-- Include start bridge intro -->
 A network bridge creates a virtual L2 Ethernet switch that instance NICs can connect to, making it possible for them to communicate with each other and the host.
-LXD bridges can leverage underlying native Linux bridges and Open vSwitch.
+Incus bridges can leverage underlying native Linux bridges and Open vSwitch.
 <!-- Include end bridge intro -->
 
 The `bridge` network type allows to create an L2 bridge that connects the instances that use it together into a single network L2 segment.
-Bridges created by LXD are managed, which means that in addition to creating the bridge interface itself, LXD also sets up a local `dnsmasq` process to provide DHCP, IPv6 route announcements and DNS services to the network.
+Bridges created by Incus are managed, which means that in addition to creating the bridge interface itself, Incus also sets up a local `dnsmasq` process to provide DHCP, IPv6 route announcements and DNS services to the network.
 By default, it also performs NAT for the bridge.
 
-See {ref}`network-bridge-firewall` for instructions on how to configure your firewall to work with LXD bridge networks.
+See {ref}`network-bridge-firewall` for instructions on how to configure your firewall to work with Incus bridge networks.
 
 <!-- Include start MAC identifier note -->
 
@@ -68,8 +64,8 @@ Key                                  | Type      | Condition             | Defau
 `bridge.external_interfaces`         | string    | -                     | -                         | Comma-separated list of unconfigured network interfaces to include in the bridge
 `bridge.hwaddr`                      | string    | -                     | -                         | MAC address for the bridge
 `bridge.mtu`                         | integer   | -                     | `1500`                    | Bridge MTU (default varies if tunnel in use)
-`dns.domain`                         | string    | -                     | `lxd`                     | Domain to advertise to DHCP clients and use for DNS resolution
-`dns.mode`                           | string    | -                     | `managed`                 | DNS registration mode: `none` for no DNS record, `managed` for LXD-generated static records or `dynamic` for client-generated records
+`dns.domain`                         | string    | -                     | `incus`                   | Domain to advertise to DHCP clients and use for DNS resolution
+`dns.mode`                           | string    | -                     | `managed`                 | DNS registration mode: `none` for no DNS record, `managed` for Incus-generated static records or `dynamic` for client-generated records
 `dns.search`                         | string    | -                     | -                         | Full comma-separated domain search list, defaulting to `dns.domain` value
 `dns.zone.forward`                   | string    | -                     | `managed`                 | Comma-separated list of DNS zone names for forward DNS records
 `dns.zone.reverse.ipv4`              | string    | -                     | `managed`                 | DNS zone name for IPv4 reverse DNS records

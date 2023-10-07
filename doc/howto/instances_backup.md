@@ -43,7 +43,7 @@ Instance snapshots are stored in the same storage pool as the instance volume it
 
 Use the following command to create a snapshot of an instance:
 
-    lxc snapshot <instance_name> [<snapshot name>]
+    incus snapshot create <instance_name> [<snapshot name>]
 
 % Include content from [storage_backup_volume.md](storage_backup_volume.md)
 ```{include} storage_backup_volume.md
@@ -58,17 +58,17 @@ Note that this feature is not fully supported for containers because of CRIU lim
 
 Use the following command to display the snapshots for an instance:
 
-    lxc info <instance_name>
+    incus info <instance_name>
 
 You can view or modify snapshots in a similar way to instances, by referring to the snapshot with `<instance_name>/<snapshot_name>`.
 
 To show configuration information about a snapshot, use the following command:
 
-    lxc config show <instance_name>/<snapshot_name>
+    incus config show <instance_name>/<snapshot_name>
 
 To change the expiry date of a snapshot, use the following command:
 
-    lxc config edit <instance_name>/<snapshot_name>
+    incus config edit <instance_name>/<snapshot_name>
 
 ```{note}
 In general, snapshots cannot be edited, because they preserve the state of the instance.
@@ -78,7 +78,7 @@ Other changes to the configuration are silently ignored.
 
 To delete a snapshot, use the following command:
 
-    lxc delete <instance_name>/<snapshot_name>
+    incus delete <instance_name>/<snapshot_name>
 
 ### Schedule instance snapshots
 
@@ -87,11 +87,11 @@ To do so, set the {config:option}`instance-snapshots:snapshots.schedule` instanc
 
 For example, to configure daily snapshots, use the following command:
 
-    lxc config set <instance_name> snapshots.schedule @daily
+    incus config set <instance_name> snapshots.schedule @daily
 
 To configure taking a snapshot every day at 6 am, use the following command:
 
-    lxc config set <instance_name> snapshots.schedule "0 6 * * *"
+    incus config set <instance_name> snapshots.schedule "0 6 * * *"
 
 When scheduling regular snapshots, consider setting an automatic expiry ({config:option}`instance-snapshots:snapshots.expiry`) and a naming pattern for snapshots ({config:option}`instance-snapshots:snapshots.pattern`).
 You should also configure whether you want to take snapshots of instances that are not running ({config:option}`instance-snapshots:snapshots.schedule.stopped`).
@@ -102,7 +102,7 @@ You can restore an instance to any of its snapshots.
 
 To do so, use the following command:
 
-    lxc restore <instance_name> <snapshot_name>
+    incus snapshot restore <instance_name> <snapshot_name>
 
 If the snapshot is stateful (which means that it contains information about the running state of the instance), you can add the `--stateful` flag to restore the state.
 
@@ -116,7 +116,7 @@ For highest reliability, store the backup file on a different file system to ens
 
 Use the following command to export an instance to a compressed file (for example, `/path/to/my-instance.tgz`):
 
-    lxc export <instance_name> [<file_path>]
+    incus export <instance_name> [<file_path>]
 
 If you do not specify a file path, the export file is saved as `<instance_name>.<extension>` in the working directory (for example, `my-container.tar.gz`).
 
@@ -139,7 +139,7 @@ If the output file (`<instance_name>.<extension>` or the specified file path) al
 You can import an export file (for example, `/path/to/my-backup.tgz`) as a new instance.
 To do so, use the following command:
 
-    lxc import <file_path> [<instance_name>]
+    incus import <file_path> [<instance_name>]
 
 If you do not specify an instance name, the original name of the exported instance is used for the new instance.
 If an instance with that name already (or still) exists in the specified storage pool, the command returns an error.

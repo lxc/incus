@@ -38,7 +38,7 @@ In addition to the configuration options listed in the following sections, these
 :shortdesc: "Environment variables for the instance"
 
 You can export key/value environment variables to the instance.
-These are then set for [`lxc exec`](incus_exec.md).
+These are then set for [`incus exec`](incus_exec.md).
 ```
 
 (instance-options-boot)=
@@ -113,25 +113,25 @@ You can specify either which CPUs or how many CPUs are visible and available to 
 - To specify which CPUs to use, set `limits.cpu` to either a set of CPUs (for example, `1,2,3`) or a CPU range (for example, `0-3`).
 
   To pin to a single CPU, use the range syntax (for example, `1-1`) to differentiate it from a number of CPUs.
-- If you specify a number (for example, `4`) of CPUs, LXD will do dynamic load-balancing of all instances that aren't pinned to specific CPUs, trying to spread the load on the machine.
+- If you specify a number (for example, `4`) of CPUs, Incus will do dynamic load-balancing of all instances that aren't pinned to specific CPUs, trying to spread the load on the machine.
   Instances are re-balanced every time an instance starts or stops, as well as whenever a CPU is added to the system.
 
 ##### CPU limits for virtual machines
 
 ```{note}
-LXD supports live-updating the `limits.cpu` option.
+Incus supports live-updating the `limits.cpu` option.
 However, for virtual machines, this only means that the respective CPUs are hotplugged.
 Depending on the guest operating system, you might need to either restart the instance or complete some manual actions to bring the new CPUs online.
 ```
 
-LXD virtual machines default to having just one vCPU allocated, which shows up as matching the host CPU vendor and type, but has a single core and no threads.
+Incus virtual machines default to having just one vCPU allocated, which shows up as matching the host CPU vendor and type, but has a single core and no threads.
 
-When `limits.cpu` is set to a single integer, LXD allocates multiple vCPUs and exposes them to the guest as full cores.
+When `limits.cpu` is set to a single integer, Incus allocates multiple vCPUs and exposes them to the guest as full cores.
 Those vCPUs are not pinned to specific physical cores on the host.
 The number of vCPUs can be updated while the VM is running.
 
-When `limits.cpu` is set to a range or comma-separated list of CPU IDs (as provided by [`lxc info --resources`](incus_info.md)), the vCPUs are pinned to those physical cores.
-In this scenario, LXD checks whether the CPU configuration lines up with a realistic hardware topology and if it does, it replicates that topology in the guest.
+When `limits.cpu` is set to a range or comma-separated list of CPU IDs (as provided by [`incus info --resources`](incus_info.md)), the vCPUs are pinned to those physical cores.
+In this scenario, Incus checks whether the CPU configuration lines up with a realistic hardware topology and if it does, it replicates that topology in the guest.
 When doing CPU pinning, it is not possible to change the configuration while the VM is running.
 
 For example, if the pinning configuration includes eight threads, with each pair of thread coming from the same core and an even number of cores spread across two CPUs, the guest will show two CPUs, each with two cores and each core with two threads.
@@ -161,13 +161,13 @@ To specify which NUMA nodes to use, set `limits.cpu.nodes` to either a set of NU
 (instance-options-limits-hugepages)=
 ### Huge page limits
 
-LXD allows to limit the number of huge pages available to a container through the `limits.hugepage.[size]` key.
+Incus allows to limit the number of huge pages available to a container through the `limits.hugepage.[size]` key.
 
 Architectures often expose multiple huge-page sizes.
 The available huge-page sizes depend on the architecture.
 
-Setting limits for huge pages is especially useful when LXD is configured to intercept the `mount` syscall for the `hugetlbfs` file system in unprivileged containers.
-When LXD intercepts a `hugetlbfs` `mount` syscall, it mounts the `hugetlbfs` file system for a container with correct `uid` and `gid` values as mount options.
+Setting limits for huge pages is especially useful when Incus is configured to intercept the `mount` syscall for the `hugetlbfs` file system in unprivileged containers.
+When Incus intercepts a `hugetlbfs` `mount` syscall, it mounts the `hugetlbfs` file system for a container with correct `uid` and `gid` values as mount options.
 This makes it possible to use huge pages from unprivileged containers.
 However, it is recommended to limit the number of huge pages available to the container through `limits.hugepages.[size]` to stop the container from being able to exhaust the huge pages available to the host.
 
@@ -176,11 +176,11 @@ Limiting huge pages is done through the `hugetlb` cgroup controller, which means
 (instance-options-limits-kernel)=
 ### Kernel resource limits
 
-LXD exposes a generic namespaced key `limits.kernel.*` that can be used to set resource limits for an instance.
+Incus exposes a generic namespaced key `limits.kernel.*` that can be used to set resource limits for an instance.
 
-It is generic in the sense that LXD does not perform any validation on the resource that is specified following the `limits.kernel.*` prefix.
-LXD cannot know about all the possible resources that a given kernel supports.
-Instead, LXD simply passes down the corresponding resource key after the `limits.kernel.*` prefix and its value to the kernel.
+It is generic in the sense that Incus does not perform any validation on the resource that is specified following the `limits.kernel.*` prefix.
+Incus cannot know about all the possible resources that a given kernel supports.
+Instead, Incus simply passes down the corresponding resource key after the `limits.kernel.*` prefix and its value to the kernel.
 The kernel does the appropriate validation.
 This allows users to specify any supported limit on their system.
 
@@ -210,12 +210,12 @@ A limit is specified as two colon-separated values that are either numeric or th
 A single value can be used as a shortcut to set both soft and hard limit to the same value (for example, `limits.kernel.nofile=3000`).
 
 A resource with no explicitly configured limit will inherit its limit from the process that starts up the instance.
-Note that this inheritance is not enforced by LXD but by the kernel.
+Note that this inheritance is not enforced by Incus but by the kernel.
 
 (instance-options-migration)=
 ## Migration options
 
-The following instance options control the behavior if the instance is {ref}`moved from one LXD server to another <move-instances>`:
+The following instance options control the behavior if the instance is {ref}`moved from one Incus server to another <move-instances>`:
 
 % Include content from [../config_options.txt](../config_options.txt)
 ```{include} ../config_options.txt
@@ -237,7 +237,7 @@ The following instance options specify the NVIDIA and CUDA configuration of the 
 (instance-options-raw)=
 ## Raw instance configuration overrides
 
-The following instance options allow direct interaction with the backend features that LXD itself uses:
+The following instance options allow direct interaction with the backend features that Incus itself uses:
 
 % Include content from [../config_options.txt](../config_options.txt)
 ```{include} ../config_options.txt
@@ -246,24 +246,24 @@ The following instance options allow direct interaction with the backend feature
 ```
 
 ```{important}
-Setting these `raw.*` keys might break LXD in non-obvious ways.
+Setting these `raw.*` keys might break Incus in non-obvious ways.
 Therefore, you should avoid setting any of these keys.
 ```
 
 (instance-options-qemu)=
 ### Override QEMU configuration
 
-For VM instances, LXD configures QEMU through a configuration file that is passed to QEMU with the `-readconfig` command-line option.
+For VM instances, Incus configures QEMU through a configuration file that is passed to QEMU with the `-readconfig` command-line option.
 This configuration file is generated for each instance before boot.
-It can be found at `/var/log/lxd/<instance_name>/qemu.conf`.
+It can be found at `/var/log/incus/<instance_name>/qemu.conf`.
 
-The default configuration works fine for LXD's most common use case: modern UEFI guests with VirtIO devices.
+The default configuration works fine for Incus' most common use case: modern UEFI guests with VirtIO devices.
 In some situations, however, you might need to override the generated configuration.
 For example:
 
 - To run an old guest OS that doesn't support UEFI.
 - To specify custom virtual devices when VirtIO is not supported by the guest OS.
-- To add devices that are not supported by LXD before the machines boots.
+- To add devices that are not supported by Incus before the machines boots.
 - To remove devices that conflict with the guest OS.
 
 To override the configuration, set the `raw.qemu.conf` option.
@@ -300,7 +300,7 @@ Since it is a multi-line configuration option, you can use it to modify multiple
 - To add a new section, specify a section name that is not present in the configuration file.
 
 The configuration file format used by QEMU allows multiple sections with the same name.
-Here's a piece of the configuration generated by LXD:
+Here's a piece of the configuration generated by Incus:
 
 ```
 [global]
@@ -367,7 +367,7 @@ The following instance options control the creation and expiry of {ref}`instance
 (instance-options-volatile)=
 ## Volatile internal data
 
-The following volatile keys are currently used internally by LXD to store internal data specific to an instance:
+The following volatile keys are currently used internally by Incus to store internal data specific to an instance:
 
 % Include content from [../config_options.txt](../config_options.txt)
 ```{include} ../config_options.txt

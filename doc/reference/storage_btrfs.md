@@ -1,9 +1,6 @@
 (storage-btrfs)=
 # Btrfs - `btrfs`
 
-```{youtube} https://www.youtube.com/watch?v=2r5FYuusxNc
-```
-
 {abbr}`Btrfs (B-tree file system)` is a local file system based on the {abbr}`COW (copy-on-write)` principle.
 COW means that data is stored to a different block after it has been modified instead of overwriting the existing data, reducing the risk of data corruption.
 Unlike other file systems, Btrfs is extent-based, which means that it stores data in contiguous areas of memory.
@@ -18,18 +15,18 @@ A Btrfs file system can have *subvolumes*, which are named binary subtrees of th
 A *Btrfs snapshot* is a special type of subvolume that captures a specific state of another subvolume.
 Snapshots can be read-write or read-only.
 
-## `btrfs` driver in LXD
+## `btrfs` driver in Incus
 
-The `btrfs` driver in LXD uses a subvolume per instance, image and snapshot.
+The `btrfs` driver in Incus uses a subvolume per instance, image and snapshot.
 When creating a new entity (for example, launching a new instance), it creates a Btrfs snapshot.
 
 Btrfs doesn't natively support storing block devices.
-Therefore, when using Btrfs for VMs, LXD creates a big file on disk to store the VM.
+Therefore, when using Btrfs for VMs, Incus creates a big file on disk to store the VM.
 This approach is not very efficient and might cause issues when creating snapshots.
 
-Btrfs can be used as a storage backend inside a container in a nested LXD environment.
+Btrfs can be used as a storage backend inside a container in a nested Incus environment.
 In this case, the parent container itself must use Btrfs.
-Note, however, that the nested LXD setup does not inherit the Btrfs quotas from the parent (see {ref}`storage-btrfs-quotas` below).
+Note, however, that the nested Incus setup does not inherit the Btrfs quotas from the parent (see {ref}`storage-btrfs-quotas` below).
 
 (storage-btrfs-quotas)=
 ### Quotas

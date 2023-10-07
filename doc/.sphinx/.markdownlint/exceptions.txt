@@ -1,9 +1,9 @@
-.tmp/doc/howto/import_machines_to_instances.md:110: MD034 Bare URL used
-.tmp/doc/howto/import_machines_to_instances.md:214: MD034 Bare URL used
-.tmp/doc/howto/network_forwards.md:58: MD004 Unordered list style
-.tmp/doc/howto/network_forwards.md:62: MD004 Unordered list style
-.tmp/doc/howto/network_forwards.md:59: MD005 Inconsistent indentation for list items at the same level
-.tmp/doc/howto/network_forwards.md:63: MD005 Inconsistent indentation for list items at the same level
-.tmp/doc/howto/network_forwards.md:59: MD032 Lists should be surrounded by blank lines
-.tmp/doc/howto/network_forwards.md:63: MD032 Lists should be surrounded by blank lines
+.tmp/doc/howto/import_machines_to_instances.md:104: MD034 Bare URL used
+.tmp/doc/howto/import_machines_to_instances.md:208: MD034 Bare URL used
+.tmp/doc/howto/network_forwards.md:52: MD004 Unordered list style
+.tmp/doc/howto/network_forwards.md:56: MD004 Unordered list style
+.tmp/doc/howto/network_forwards.md:53: MD005 Inconsistent indentation for list items at the same level
+.tmp/doc/howto/network_forwards.md:57: MD005 Inconsistent indentation for list items at the same level
+.tmp/doc/howto/network_forwards.md:53: MD032 Lists should be surrounded by blank lines
+.tmp/doc/howto/network_forwards.md:57: MD032 Lists should be surrounded by blank lines
 .tmp/doc/contributing.md:9: MD002 First header should be a top level header

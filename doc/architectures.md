@@ -1,9 +1,9 @@
 (architectures)=
 # Architectures
 
-LXD can run on just about any architecture that is supported by the Linux kernel and by Go.
+Incus can run on just about any architecture that is supported by the Linux kernel and by Go.
 
-Some entities in LXD are tied to an architecture, for example, the instances, instance snapshots and images.
+Some entities in Incus are tied to an architecture, for example, the instances, instance snapshots and images.
 
 The following table lists all supported architectures including their unique identifier and the name used to refer to them.
 The architecture names are typically aligned with the Linux kernel architecture names.
@@ -24,8 +24,8 @@ ID    | Name          | Notes                           | Personalities
 12    | `riscv64`     | 64bit RISC-V little-endian      |
 
 ```{note}
-LXD cares only about the kernel architecture, not the particular userspace flavor as determined by the toolchain.
+Incus cares only about the kernel architecture, not the particular userspace flavor as determined by the toolchain.
 
-That means that LXD considers ARMv7 hard-float to be the same as ARMv7 soft-float and refers to both as `armv7`.
+That means that Incus considers ARMv7 hard-float to be the same as ARMv7 soft-float and refers to both as `armv7`.
 If useful to the user, the exact userspace ABI may be set as an image and container property, allowing easy query.
 ```

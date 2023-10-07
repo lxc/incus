@@ -39,6 +39,7 @@ Chocolatey
 CIDR
 CLI
 COPR
+Cowsql
 CPUs
 CRIU
 CRL
@@ -57,7 +58,6 @@ Diffie
 DNS
 DNSSEC
 DoS
-Dqlite
 DRM
 EB
 Ebit
@@ -72,6 +72,7 @@ ESA
 ETag
 failover
 FQDNs
+Furo
 gapped
 GARP
 GbE
@@ -94,12 +95,12 @@ hotplugged
 hotplugging
 HTTPS
 ICMP
-IPAM
 idmap
 idmapped
 idmaps
 incrementing
 Incus
+Incus'
 InfiniBand
 InfluxDB
 init
@@ -107,6 +108,7 @@ initramfs
 integrations
 IOPS
 IOV
+IPAM
 IPs
 IPv
 IPVLAN
@@ -125,8 +127,8 @@ LTS
 LV
 LVM
 LXC
-LXC's
 LXCFS
+LXC's
 LXD
 LXD's
 macOS
@@ -187,6 +189,7 @@ preseed
 proxied
 proxying
 PTS
+qdisc
 QEMU
 qgroup
 qgroups
@@ -223,8 +226,8 @@ SPL
 SquashFS
 SSDs
 SSL
-stateful
 Starlark
+stateful
 stderr
 stdin
 stdout
@@ -268,8 +271,6 @@ UFW
 UI
 UID
 UIDs
-URI
-URIs
 unconfigured
 unevictable
 unixgram
@@ -278,6 +279,8 @@ unmount
 unmounting
 uplink
 uptime
+URI
+URIs
 userspace
 UUID
 vCPU
@@ -303,8 +306,8 @@ XFS
 XHR
 YAML
 YAML's
+Zabbly
 Zettabyte
 ZFS
 zpool
 zpools
-qdisc

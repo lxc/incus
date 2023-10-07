@@ -1,9 +1,6 @@
 (devices-none)=
 # Type: `none`
 
-```{youtube} https://www.youtube.com/watch?v=6NCLnd5_guQ
-```
-
 ```{note}
 The `none` device type is supported for both containers and VMs.
 ```

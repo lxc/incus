@@ -61,7 +61,7 @@ Compression algorithm to use for new images (`bzip2`, `gzip`, `lzma`, `xz` or `n
 :scope: global
 :default: "`random`"
 
-If set to `random`, use the random host interface name as the host name; if set to `mac`, generate a host name in the form `lxd<mac_address>` (MAC without leading two digits)
+If set to `random`, use the random host interface name as the host name; if set to `mac`, generate a host name in the form `inc<mac_address>` (MAC without leading two digits)
 ```
 
 ```{config:option} instances.placement.scriptlet

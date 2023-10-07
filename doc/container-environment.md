@@ -1,13 +1,13 @@
 (container-runtime-environment)=
 # Container runtime environment
 
-LXD attempts to present a consistent environment to all containers it runs.
+Incus attempts to present a consistent environment to all containers it runs.
 
 The exact environment will differ slightly based on kernel features and user configuration, but otherwise, it is identical for all containers.
 
 ## File system
 
-LXD assumes that any image it uses to create a new container comes with at least the following root-level directories:
+Incus assumes that any image it uses to create a new container comes with at least the following root-level directories:
 
 - `/dev` (empty)
 - `/proc` (empty)
@@ -16,7 +16,7 @@ LXD assumes that any image it uses to create a new container comes with at least
 
 ## Devices
 
-LXD containers have a minimal and ephemeral `/dev` based on a `tmpfs` file system.
+Incus containers have a minimal and ephemeral `/dev` based on a `tmpfs` file system.
 Since this is a `tmpfs` and not a `devtmpfs` file system, device nodes appear only if manually created.
 
 The following standard set of device nodes is set up automatically:
@@ -43,12 +43,12 @@ In addition to the standard set of devices, the following devices are also set u
 
 ### Network
 
-LXD containers may have any number of network devices attached to them.
+Incus containers may have any number of network devices attached to them.
 The naming for those (unless overridden by the user) is `ethX`, where `X` is an incrementing number.
 
 ### Container-to-host communication
 
-LXD sets up a socket at `/dev/lxd/sock` that the root user in the container can use to communicate with LXD on the host.
+Incus sets up a socket at `/dev/incus/sock` that the root user in the container can use to communicate with Incus on the host.
 
 See {doc}`dev-incus` for the API documentation.
 
@@ -83,10 +83,10 @@ On older kernels, a virtual version of `/sys/fs/cgroup` might also be set up by 
 
 ## PID1
 
-LXD spawns whatever is located at `/sbin/init` as the initial process of the container (PID 1).
+Incus spawns whatever is located at `/sbin/init` as the initial process of the container (PID 1).
 This binary should act as a proper init system, including handling re-parented processes.
 
-LXD's communication with PID1 in the container is limited to two signals:
+Incus' communication with PID1 in the container is limited to two signals:
 
 - `SIGINT` to trigger a reboot of the container
 - `SIGPWR` (or alternatively `SIGRTMIN`+3) to trigger a clean shutdown of the container

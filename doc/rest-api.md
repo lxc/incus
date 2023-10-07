@@ -1,17 +1,14 @@
 # REST API
 
-```{youtube} https://www.youtube.com/watch?v=YvGbvspXObI
-```
-
-All communication between LXD and its clients happens using a RESTful API over HTTP.
+All communication between Incus and its clients happens using a RESTful API over HTTP.
 This API is encapsulated over either TLS (for remote operations) or a Unix socket (for local operations).
 
 See {ref}`authentication` for information about how to access the API remotely.
 
 ```{tip}
-- For examples on how the API is used, run any command of the LXD client ([`lxc`](incus.md)) with the `--debug` flag.
+- For examples on how the API is used, run any command of the Incus client ([`incus`](incus.md)) with the `--debug` flag.
 The debug information displays the API calls and the return values.
-- For quickly querying the API, the LXD client provides a [`lxc query`](incus_query.md) command.
+- For quickly querying the API, the Incus client provides a [`incus query`](incus_query.md) command.
 ```
 
 ## API versioning
@@ -112,7 +109,7 @@ HTTP code must be one of of 400, 401, 403, 404, 409, 412 or 500.
 
 ## Status codes
 
-The LXD REST API often has to return status information, be that the
+The Incus REST API often has to return status information, be that the
 reason for an error, the current state of an operation or the state of
 the various resources it exports.
 
@@ -220,13 +217,13 @@ have to then poll for their status.
 
 ## PUT vs PATCH
 
-The LXD API supports both PUT and PATCH to modify existing objects.
+The Incus API supports both PUT and PATCH to modify existing objects.
 
 PUT replaces the entire object with a new definition, it's typically
 called after the current object state was retrieved through GET.
 
 To avoid race conditions, the ETag header should be read from the GET
-response and sent as If-Match for the PUT request. This will cause LXD
+response and sent as If-Match for the PUT request. This will cause Incus
 to fail the request if the object was modified between GET and PUT.
 
 PATCH can be used to modify a single field inside an object by only
@@ -236,10 +233,10 @@ won't work and PUT needs to be used instead.
 
 ## Instances, containers and virtual-machines
 
-The documentation shows paths such as `/1.0/instances/...`, which were introduced with LXD 3.19.
+The documentation shows paths such as `/1.0/instances/...`, which were introduced with Incus 3.19.
 Older releases that supported only containers and not virtual machines supply the exact same API at `/1.0/containers/...`.
 
-For backward compatibility reasons, LXD does still expose and support
+For backward compatibility reasons, Incus does still expose and support
 that `/1.0/containers` API, though for the sake of brevity, we decided
 not to double-document everything.
 
@@ -248,6 +245,6 @@ much like `/1.0/containers` will only show you instances of that type.
 
 ## API structure
 
-LXD has an auto-generated [Swagger](https://swagger.io/) specification describing its API endpoints.
-The YAML version of this API specification can be found in [`rest-api.yaml`](https://github.com/canonical/lxd/blob/main/doc/rest-api.yaml).
+Incus has an auto-generated [Swagger](https://swagger.io/) specification describing its API endpoints.
+The YAML version of this API specification can be found in [`rest-api.yaml`](https://github.com/lxc/incus/blob/main/doc/rest-api.yaml).
 See {doc}`api` for a convenient web rendering of it.

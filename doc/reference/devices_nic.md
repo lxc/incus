@@ -1,10 +1,6 @@
 (devices-nic)=
 # Type: `nic`
 
-```{youtube} https://www.youtube.com/watch?v=W62eno28KMY
-   :title: LXD NIC devices
-```
-
 ```{note}
 The `nic` device type is supported for both containers and VMs.
 
@@ -12,7 +8,7 @@ NICs support hotplugging for both containers and VMs (with the exception of the 
 ```
 
 Network devices, also referred to as *Network Interface Controllers* or *NICs*, supply a connection to a network.
-LXD supports several different types of network devices (*NIC types*).
+Incus supports several different types of network devices (*NIC types*).
 
 ## `nictype` vs. `network`
 
@@ -22,16 +18,16 @@ These two device options are mutually exclusive, and you can specify only one of
 However, note that when you specify the `network` option, the `nictype` option is derived automatically from the network type.
 
 `nictype`
-: When using the `nictype` device option, you can specify a network interface that is not controlled by LXD.
-  Therefore, you must specify all information that LXD needs to use the network interface.
+: When using the `nictype` device option, you can specify a network interface that is not controlled by Incus.
+  Therefore, you must specify all information that Incus needs to use the network interface.
 
   When using this method, the `nictype` option must be specified when creating the device, and it cannot be changed later.
 
 `network`
 : When using the `network` device option, the NIC is linked to an existing {ref}`managed network <managed-networks>`.
-  In this case, LXD has all required information about the network, and you need to specify only the network name when adding the device.
+  In this case, Incus has all required information about the network, and you need to specify only the network name when adding the device.
 
-  When using this method, LXD derives the `nictype` option automatically.
+  When using this method, Incus derives the `nictype` option automatically.
   The value is read-only and cannot be changed.
 
   Other device options that are inherited from the network are marked with a "yes" in the "Managed" column of the NIC-specific tables of device options.
@@ -110,7 +106,7 @@ You can select this NIC type through the `nictype` option or the `network` optio
 
 A `macvlan` NIC sets up a new network device based on an existing one, but using a different MAC address.
 
-If you are using a `macvlan` NIC, communication between the LXD host and the instances is not possible.
+If you are using a `macvlan` NIC, communication between the Incus host and the instances is not possible.
 Both the host and the instances can talk to the gateway, but they cannot communicate directly.
 
 #### Device options
@@ -146,14 +142,14 @@ Given that VFs appear as regular PCIe devices to the system, they can be passed 
 
 VF allocation
 : The `sriov` interface type expects to be passed the name of an SR-IOV enabled network device on the system via the `parent` property.
-  LXD then checks for any available VFs on the system.
+  Incus then checks for any available VFs on the system.
 
-  By default, LXD allocates the first free VF it finds.
+  By default, Incus allocates the first free VF it finds.
   If it detects that either none are enabled or all currently enabled VFs are in use, it bumps the number of supported VFs to the maximum value and uses the first free VF.
-  If all possible VFs are in use or the kernel or card doesn't support incrementing the number of VFs, LXD returns an error.
+  If all possible VFs are in use or the kernel or card doesn't support incrementing the number of VFs, Incus returns an error.
 
   ```{note}
-  If you need LXD to use a specific VF, use a `physical` NIC instead of a `sriov` NIC and set its `parent` option to the VF name.
+  If you need Incus to use a specific VF, use a `physical` NIC instead of a `sriov` NIC and set its `parent` option to the VF name.
   ```
 
 #### Device options
@@ -182,8 +178,8 @@ An `ovn` NIC uses an existing OVN network and creates a virtual device pair to c
 
 (devices-nic-hw-acceleration)=
 SR-IOV hardware acceleration
-: To use `acceleration=sriov`, you must have a compatible SR-IOV physical NIC that supports the Ethernet switch device driver model (`switchdev`) in your LXD host.
-  LXD assumes that the physical NIC (PF) is configured in `switchdev` mode and connected to the OVN integration OVS bridge, and that it has one or more virtual functions (VFs) active.
+: To use `acceleration=sriov`, you must have a compatible SR-IOV physical NIC that supports the Ethernet switch device driver model (`switchdev`) in your Incus host.
+  Incus assumes that the physical NIC (PF) is configured in `switchdev` mode and connected to the OVN integration OVS bridge, and that it has one or more virtual functions (VFs) active.
 
   To achieve this, follow these basic prerequisite setup steps:
 
@@ -281,11 +277,11 @@ Key                     | Type    | Default           | Managed | Description
 
 An `ipvlan` NIC sets up a new network device based on an existing one, using the same MAC address but a different IP.
 
-If you are using an `ipvlan` NIC, communication between the LXD host and the instances is not possible.
+If you are using an `ipvlan` NIC, communication between the Incus host and the instances is not possible.
 Both the host and the instances can talk to the gateway, but they cannot communicate directly.
 
-LXD currently supports IPVLAN in L2 and L3S mode.
-In this mode, the gateway is automatically set by LXD, but the IP addresses must be manually specified using the `ipv4.address` and/or `ipv6.address` options before the container is started.
+Incus currently supports IPVLAN in L2 and L3S mode.
+In this mode, the gateway is automatically set by Incus, but the IP addresses must be manually specified using the `ipv4.address` and/or `ipv6.address` options before the container is started.
 
 DNS
 : The name servers must be configured inside the container, because they are not set automatically.

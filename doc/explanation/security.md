@@ -1,9 +1,6 @@
 (exp-security)=
 # About security
 
-```{youtube} https://www.youtube.com/watch?v=cOOzKdYHkus
-```
-
 % Include content from [../../README.md](../../README.md)
 ```{include} ../../README.md
     :start-after: <!-- Include start security -->
@@ -12,11 +9,11 @@
 
 See the following sections for detailed information.
 
-If you discover a security issue, see the [LXD security policy](https://github.com/canonical/lxd/blob/main/SECURITY.md) for information on how to report the issue.
+If you discover a security issue, see the [Incus security policy](https://github.com/lxc/incus/blob/main/SECURITY.md) for information on how to report the issue.
 
 ## Supported versions
 
-Never use unsupported LXD versions in a production environment.
+Never use unsupported Incus versions in a production environment.
 
 % Include content from [../../SECURITY.md](../../SECURITY.md)
 ```{include} ../../SECURITY.md
@@ -25,18 +22,18 @@ Never use unsupported LXD versions in a production environment.
 ```
 
 (security-daemon-access)=
-## Access to the LXD daemon
+## Access to the Incus daemon
 
-LXD is a daemon that can be accessed locally over a Unix socket or, if configured, remotely over a {abbr}`TLS (Transport Layer Security)` socket.
-Anyone with access to the socket can fully control LXD, which includes the ability to attach host devices and file systems or to tweak the security features for all instances.
+Incus is a daemon that can be accessed locally over a Unix socket or, if configured, remotely over a {abbr}`TLS (Transport Layer Security)` socket.
+Anyone with access to the socket can fully control Incus, which includes the ability to attach host devices and file systems or to tweak the security features for all instances.
 
 Therefore, make sure to restrict the access to the daemon to trusted users.
 
-### Local access to the LXD daemon
+### Local access to the Incus daemon
 
-The LXD daemon runs as root and provides a Unix socket for local communication.
-Access control for LXD is based on group membership.
-The root user and all members of the `lxd` group can interact with the local daemon.
+The Incus daemon runs as root and provides a Unix socket for local communication.
+Access control for Incus is based on group membership.
+The root user and all members of the `incus-admin` group can interact with the local daemon.
 
 ````{important}
 % Include content from [../../README.md](../../README.md)
@@ -52,24 +49,24 @@ The root user and all members of the `lxd` group can interact with the local dae
 By default, access to the daemon is only possible locally.
 By setting the `core.https_address` configuration option, you can expose the same API over the network on a {abbr}`TLS (Transport Layer Security)` socket.
 See {ref}`server-expose` for instructions.
-Remote clients can then connect to LXD and access any image that is marked for public use.
+Remote clients can then connect to Incus and access any image that is marked for public use.
 
 There are several ways to authenticate remote clients as trusted clients to allow them to access the API.
 See {ref}`authentication` for details.
 
 In a production setup, you should set `core.https_address` to the single address where the server should be available (rather than any address on the host).
-In addition, you should set firewall rules to allow access to the LXD port only from authorized hosts/subnets.
+In addition, you should set firewall rules to allow access to the Incus port only from authorized hosts/subnets.
 
 (container-security)=
 ## Container security
 
-LXD containers can use a wide range of features for security.
+Incus containers can use a wide range of features for security.
 
 By default, containers are *unprivileged*, meaning that they operate inside a user namespace, restricting the abilities of users in the container to that of regular users on the host with limited privileges on the devices that the container owns.
 
 If data sharing between containers isn't needed, you can enable {config:option}`instance-security:security.idmap.isolated`, which will use non-overlapping UID/GID maps for each container, preventing potential {abbr}`DoS (Denial of Service)` attacks on other containers.
 
-LXD can also run *privileged* containers.
+Incus can also run *privileged* containers.
 Note, however, that those aren't root safe, and a user with root access in such a container will be able to DoS the host as well as find ways to escape confinement.
 
 More details on container security and the kernel features we use can be found on the
@@ -92,8 +89,8 @@ Which aspects you should consider depends on the networking mode you decide to u
 
 ### Bridged NIC security
 
-The default networking mode in LXD is to provide a "managed" private network bridge that each instance connects to.
-In this mode, there is an interface on the host called `lxdbr0` that acts as the bridge for the instances.
+The default networking mode in Incus is to provide a "managed" private network bridge that each instance connects to.
+In this mode, there is an interface on the host called `incusbr0` that acts as the bridge for the instances.
 
 The host runs an instance of `dnsmasq` for each managed bridge, which is responsible for allocating IP addresses and providing both authoritative and recursive DNS services.
 
@@ -107,10 +104,10 @@ This assumes that the instances are not using any IPv6 privacy extensions when g
 
 In this default configuration, whilst DNS names cannot not be spoofed, the instance is connected to an Ethernet bridge and can transmit any layer 2 traffic that it wishes, which means an instance that is not trusted can effectively do MAC or IP spoofing on the bridge.
 
-In the default configuration, it is also possible for instances connected to the bridge to modify the LXD host's IPv6 routing table by sending (potentially malicious) IPv6 router advertisements to the bridge.
-This is because the `lxdbr0` interface is created with `/proc/sys/net/ipv6/conf/lxdbr0/accept_ra` set to `2`, meaning that the LXD host will accept router advertisements even though `forwarding` is enabled (see [`/proc/sys/net/ipv4/*` Variables](https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt) for more information).
+In the default configuration, it is also possible for instances connected to the bridge to modify the Incus host's IPv6 routing table by sending (potentially malicious) IPv6 router advertisements to the bridge.
+This is because the `incusbr0` interface is created with `/proc/sys/net/ipv6/conf/incusbr0/accept_ra` set to `2`, meaning that the Incus host will accept router advertisements even though `forwarding` is enabled (see [`/proc/sys/net/ipv4/*` Variables](https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt) for more information).
 
-However, LXD offers several bridged {abbr}`NIC (Network interface controller)` security features that can be used to control the type of traffic that an instance is allowed to send onto the network.
+However, Incus offers several bridged {abbr}`NIC (Network interface controller)` security features that can be used to control the type of traffic that an instance is allowed to send onto the network.
 These NIC settings should be added to the profile that the instance is using, or they can be added to individual instances, as shown below.
 
 The following security features are available for bridged NICs:
@@ -124,7 +121,7 @@ Key                      | Type      | Default           | Required  | Descripti
 One can override the default bridged NIC settings from the profile on a per-instance basis using:
 
 ```
-lxc config device override <instance> <NIC> security.mac_filtering=true
+incus config device override <instance> <NIC> security.mac_filtering=true
 ```
 
 Used together, these features can prevent an instance connected to a bridge from spoofing MAC and IP addresses.
@@ -145,7 +142,7 @@ This prevents stacked VLAN Q-in-Q (802.1ad) frames from bypassing the IP filteri
 
 An alternative networking mode is available called "routed".
 It provides a virtual Ethernet device pair between container and host.
-In this networking mode, the LXD host functions as a router, and static routes are added to the host directing traffic for the container's IPs towards the container's `veth` interface.
+In this networking mode, the Incus host functions as a router, and static routes are added to the host directing traffic for the container's IPs towards the container's `veth` interface.
 
-By default, the `veth` interface created on the host has its `accept_ra` setting disabled to prevent router advertisements from the container modifying the IPv6 routing table on the LXD host.
+By default, the `veth` interface created on the host has its `accept_ra` setting disabled to prevent router advertisements from the container modifying the IPv6 routing table on the Incus host.
 In addition to that, the `rp_filter` on the host is set to `1` to prevent source address spoofing for IPs that the host does not know the container has.

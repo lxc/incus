@@ -1,11 +1,11 @@
 (network-increase-bandwidth)=
 # How to increase the network bandwidth
 
-You can increase the network bandwidth of your LXD setup by configuring the transmit queue length (`txqueuelen`).
+You can increase the network bandwidth of your Incus setup by configuring the transmit queue length (`txqueuelen`).
 This change makes sense in the following scenarios:
 
-- You have a NIC with 1 GbE or higher on a LXD host with a lot of local activity (instance-instance connections or host-instance connections).
-- You have an internet connection with 1 GbE or higher on your LXD host.
+- You have a NIC with 1 GbE or higher on a Incus host with a lot of local activity (instance-instance connections or host-instance connections).
+- You have an internet connection with 1 GbE or higher on your Incus host.
 
 The more instances you use, the more you can benefit from this tweak.
 
@@ -17,11 +17,11 @@ In general, you should use small `txqueuelen` values with slow devices with a hi
 For the `net.core.netdev_max_backlog` value, a good guideline is to use the minimum value of the `net.ipv4.tcp_mem` configuration.
 ```
 
-## Increase the network bandwidth on the LXD host
+## Increase the network bandwidth on the Incus host
 
-Complete the following steps to increase the network bandwidth on the LXD host:
+Complete the following steps to increase the network bandwidth on the Incus host:
 
-1. Increase the transmit queue length (`txqueuelen`) of both the real NIC and the LXD NIC (for example, `lxdbr0`).
+1. Increase the transmit queue length (`txqueuelen`) of both the real NIC and the Incus NIC (for example, `incusbr0`).
    You can do this temporarily for testing with the following command:
 
        ifconfig <interface> txqueuelen 10000
@@ -44,5 +44,5 @@ Complete the following steps to increase the network bandwidth on the LXD host:
 You must also change the `txqueuelen` value for all Ethernet interfaces in your instances.
 To do this, use one of the following methods:
 
-- Apply the same changes as described above for the LXD host.
+- Apply the same changes as described above for the Incus host.
 - Set the `queue.tx.length` device option on the instance profile or configuration.

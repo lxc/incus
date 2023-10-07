@@ -2,16 +2,16 @@
 
 <!-- Include start release -->
 
-LXD maintains different release branches in parallel:
+Incus maintains different release branches in parallel:
 
-- Long term support (LTS) releases: currently LXD 5.0.x and LXD 4.0.x
-- Feature releases: LXD 5.x
+- Long term support (LTS) releases: upcoming
+- Feature releases: Incus 0.x
 
 <!-- Include end release -->
 
-The current LTS release is LXD 5.0, which is supported until June 2027 and gets frequent bugfix and security updates, but does not receive any feature additions.
+The upcoming LTS release will be Incus 6.0, which will supported until June 2029 and will get frequent bugfix and security updates, but won't receive any feature additions.
 
-Feature releases are pushed out about every month and contain new features as well as bugfixes.
+Feature releases will be pushed out about every quarter and contain new features as well as bugfixes.
 The normal support length for those releases is until the next release comes out.
 Some Linux distributions might offer longer support for particular feature releases that they decided to ship.
 

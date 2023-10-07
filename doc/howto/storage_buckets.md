@@ -1,20 +1,17 @@
 (howto-storage-buckets)=
 # How to manage storage buckets and keys
 
-```{youtube} https://www.youtube.com/watch?v=T1EeXPrjkEY
-```
-
 See the following sections for instructions on how to create, configure, view and resize {ref}`storage-buckets` and how to manage storage bucket keys.
 
 ## Configure the S3 address
 
-If you want to use storage buckets on local storage (thus in a `dir`, `btrfs`, `lvm`, or `zfs` pool), you must configure the S3 address for your LXD server.
+If you want to use storage buckets on local storage (thus in a `dir`, `btrfs`, `lvm`, or `zfs` pool), you must configure the S3 address for your Incus server.
 This is the address that you can then use to access the buckets through the S3 protocol.
 
 To configure the S3 address, set the {config:option}`server-core:core.storage_buckets_address` server configuration option.
 For example:
 
-    lxc config set core.storage_buckets_address :8555
+    incus config set core.storage_buckets_address :8555
 
 ## Manage storage buckets
 
@@ -28,13 +25,13 @@ See {ref}`storage-buckets` for detailed information.
 
 Use the following command to create a storage bucket in a storage pool:
 
-    lxc storage bucket create <pool_name> <bucket_name> [configuration_options...]
+    incus storage bucket create <pool_name> <bucket_name> [configuration_options...]
 
 See the {ref}`storage-drivers` documentation for a list of available storage bucket configuration options for each driver that supports object storage.
 
 To add a storage bucket on a cluster member, add the `--target` flag:
 
-    lxc storage bucket create <pool_name> <bucket_name> --target=<cluster_member> [configuration_options...]
+    incus storage bucket create <pool_name> <bucket_name> --target=<cluster_member> [configuration_options...]
 
 ```{note}
 For most storage drivers, storage buckets are not replicated across the cluster and exist only on the member for which they were created.
@@ -47,19 +44,19 @@ See the {ref}`storage-drivers` documentation for the available configuration opt
 
 Use the following command to set configuration options for a storage bucket:
 
-    lxc storage bucket set <pool_name> <bucket_name> <key> <value>
+    incus storage bucket set <pool_name> <bucket_name> <key> <value>
 
 For example, to set the quota size of a bucket, use the following command:
 
-    lxc storage bucket set my-pool my-bucket size 1MiB
+    incus storage bucket set my-pool my-bucket size 1MiB
 
 You can also edit the storage bucket configuration by using the following command:
 
-    lxc storage bucket edit <pool_name> <bucket_name>
+    incus storage bucket edit <pool_name> <bucket_name>
 
 Use the following command to delete a storage bucket and its keys:
 
-    lxc storage bucket delete <pool_name> <bucket_name>
+    incus storage bucket delete <pool_name> <bucket_name>
 
 ### View storage buckets
 
@@ -67,11 +64,11 @@ You can display a list of all available storage buckets in a storage pool and ch
 
 To list all available storage buckets in a storage pool, use the following command:
 
-    lxc storage bucket list <pool_name>
+    incus storage bucket list <pool_name>
 
 To show detailed information about a specific bucket, use the following command:
 
-    lxc storage bucket show <pool_name> <bucket_name>
+    incus storage bucket show <pool_name> <bucket_name>
 
 ### Resize a storage bucket
 
@@ -79,7 +76,7 @@ By default, storage buckets do not have a quota applied.
 
 To set or change a quota for a storage bucket, set its size configuration:
 
-    lxc storage bucket set <pool_name> <bucket_name> size <new_size>
+    incus storage bucket set <pool_name> <bucket_name> size <new_size>
 
 ```{important}
 - Growing a storage bucket usually works (if the storage pool has sufficient storage).
@@ -108,11 +105,11 @@ If the role is not specified when creating a bucket key, the role used is `read-
 
 Use the following command to create a set of credentials for a storage bucket:
 
-    lxc storage bucket key create <pool_name> <bucket_name> <key_name> [configuration_options...]
+    incus storage bucket key create <pool_name> <bucket_name> <key_name> [configuration_options...]
 
 Use the following command to create a set of credentials for a storage bucket with a specific role:
 
-    lxc storage bucket key create <pool_name> <bucket_name> <key_name> --role=admin [configuration_options...]
+    incus storage bucket key create <pool_name> <bucket_name> <key_name> --role=admin [configuration_options...]
 
 These commands will generate and display a random set of credential keys.
 
@@ -120,18 +117,18 @@ These commands will generate and display a random set of credential keys.
 
 Use the following command to edit an existing bucket key:
 
-    lxc storage bucket key edit <pool_name> <bucket_name> <key_name>
+    incus storage bucket key edit <pool_name> <bucket_name> <key_name>
 
 Use the following command to delete an existing bucket key:
 
-    lxc storage bucket key delete <pool_name> <bucket_name> <key_name>
+    incus storage bucket key delete <pool_name> <bucket_name> <key_name>
 
 ### View storage bucket keys
 
 Use the following command to see the keys defined for an existing bucket:
 
-    lxc storage bucket key list <pool_name> <bucket_name>
+    incus storage bucket key list <pool_name> <bucket_name>
 
 Use the following command to see a specific bucket key:
 
-    lxc storage bucket key show <pool_name> <bucket_name> <key_name>
+    incus storage bucket key show <pool_name> <bucket_name> <key_name>

@@ -2,16 +2,16 @@
 
 ## Introduction
 
-Events are messages about actions that have occurred over LXD. Using the API endpoint `/1.0/events` directly or via
-[`lxc monitor`](incus_monitor.md) will connect to a WebSocket through which logs and life-cycle messages will be streamed.
+Events are messages about actions that have occurred over Incus. Using the API endpoint `/1.0/events` directly or via
+[`incus monitor`](incus_monitor.md) will connect to a WebSocket through which logs and life-cycle messages will be streamed.
 
 ## Event types
 
-LXD Currently supports three event types.
+Incus Currently supports three event types.
 
 - `logging`: Shows all logging messages regardless of the server logging level.
 - `operation`: Shows all ongoing operations from creation to completion (including updates to their state and progress metadata).
-- `lifecycle`: Shows an audit trail for specific actions occurring over LXD.
+- `lifecycle`: Shows an audit trail for specific actions occurring over Incus.
 
 ## Event structure
 
@@ -24,7 +24,7 @@ metadata:
   requestor:
     protocol: unix
     username: root
-  source: /1.0/networks/lxdbr0
+  source: /1.0/networks/incusbr0
 timestamp: "2021-03-14T00:00:00Z"
 type: lifecycle
 ```

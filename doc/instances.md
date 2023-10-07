@@ -1,7 +1,3 @@
----
-relatedlinks: https://ubuntu.com/tutorials/how-to-install-a-windows-11-vm-using-lxd
----
-
 (instances)=
 # Instances
 
@@ -22,4 +18,5 @@ Add a routed NIC to a VM </howto/instances_routed_nic_vm.md>
 Troubleshoot errors <howto/instances_troubleshoot.md>
 explanation/instance_config.md
 Container environment <container-environment>
+migration
 ```

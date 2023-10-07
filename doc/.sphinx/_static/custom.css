@@ -169,21 +169,12 @@ details summary {
     color: var(--color-link);
 }
 
-/** Fix the styling of the version box for readthedocs **/
-
-#furo-readthedocs-versions .rst-versions, #furo-readthedocs-versions .rst-current-version, #furo-readthedocs-versions:focus-within .rst-current-version, #furo-readthedocs-versions:hover .rst-current-version  {
-    background: var(--color-sidebar-item-background--hover);
-}
-
-.rst-versions .rst-other-versions dd a {
-    color: var(--color-link);
-}
-
-#furo-readthedocs-versions:focus-within .rst-current-version .fa-book, #furo-readthedocs-versions:hover .rst-current-version .fa-book, .rst-versions .rst-other-versions {
-    color: var(--color-sidebar-link-text);
-}
-
 .rst-versions .rst-current-version {
     color: var(--color-version-popup);
     font-weight: bolder;
+}
+
+/** Hide Expand all options **/
+#expand-options {
+    display: none;
 }

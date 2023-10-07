@@ -1,8 +1,3 @@
----
-discourse: 14579,15457
-relatedlinks: https://youtube.com/watch?v=kVLGbvRU98A
----
-
 (storage-cephobject)=
 # Ceph Object - `cephobject`
 
@@ -25,7 +20,7 @@ It provides object storage functionality with an interface that is compatible wi
 
 A *Ceph Object Gateway* consists of several OSD pools and one or more *Ceph Object Gateway daemon* (`radosgw`) processes that provide object gateway functionality.
 
-## `cephobject` driver in LXD
+## `cephobject` driver in Incus
 
 ```{note}
 The `cephobject` driver can only be used for buckets.
@@ -39,12 +34,12 @@ For storage volumes, use the {ref}`Ceph <storage-ceph>` or {ref}`CephFS <storage
     :end-before: <!-- Include end Ceph driver cluster -->
 ```
 
-You must set up a `radosgw` environment beforehand and ensure that its HTTP/HTTPS endpoint URL is reachable from the LXD server or servers.
+You must set up a `radosgw` environment beforehand and ensure that its HTTP/HTTPS endpoint URL is reachable from the Incus server or servers.
 See [Manual Deployment](https://docs.ceph.com/en/latest/install/manual-deployment/) for information on how to set up a Ceph cluster and [Ceph Object Gateway](https://docs.ceph.com/en/latest/radosgw/) on how to set up a `radosgw` environment.
 
 The `radosgw` URL can be specified at pool creation time using the [`cephobject.radosgw.endpoint`](storage-cephobject-pool-config) option.
 
-LXD uses the `radosgw-admin` command to manage buckets. So this command must be available and operational on the LXD servers.
+Incus uses the `radosgw-admin` command to manage buckets. So this command must be available and operational on the Incus servers.
 
 % Include content from [storage_ceph.md](storage_ceph.md)
 ```{include} storage_ceph.md
@@ -72,7 +67,7 @@ Key                                      | Type                          | Defau
 `cephobject.radosgw.endpoint`            | string                        | -       | URL of the `radosgw` gateway process
 `cephobject.radosgw.endpoint_cert_file`  | string                        | -       | Path to the file containing the TLS client certificate to use for endpoint communication
 `cephobject.user.name`                   | string                        | `admin` | The Ceph user to use
-`volatile.pool.pristine`                 | string                        | `true`  | Whether the `radosgw` `lxd-admin` user existed at creation time
+`volatile.pool.pristine`                 | string                        | `true`  | Whether the `radosgw` `incus-admin` user existed at creation time
 
 ### Storage bucket configuration
 

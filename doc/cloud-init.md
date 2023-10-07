@@ -1,13 +1,9 @@
 ---
-discourse: 12559
 relatedlinks: https://cloudinit.readthedocs.org/
 ---
 
 (cloud-init)=
 # How to use `cloud-init`
-
-```{youtube} https://www.youtube.com/watch?v=8OCG15TAldI
-```
 
 [`cloud-init`](https://cloud-init.io/) is a tool for automatically initializing and customizing an instance of a Linux distribution.
 
@@ -38,7 +34,7 @@ To use `cloud-init`, you must base your instance on an image that has `cloud-ini
 
 ## Configuration options
 
-LXD supports two different sets of configuration options for configuring `cloud-init`: `cloud-init.*` and `user.*`.
+Incus supports two different sets of configuration options for configuring `cloud-init`: `cloud-init.*` and `user.*`.
 Which of these sets you must use depends on the `cloud-init` support in the image that you use.
 As a rule of thumb, newer images support the `cloud-init.*` configuration options, while older images support `user.*`.
 However, there might be exceptions to that rule.
@@ -57,7 +53,7 @@ Both `vendor-data` and `user-data` are used to provide {ref}`cloud configuration
 
 The main idea is that `vendor-data` is used for the general default configuration, while `user-data` is used for instance-specific configuration.
 This means that you should specify `vendor-data` in a profile and `user-data` in the instance configuration.
-LXD does not enforce this method, but allows using both `vendor-data` and `user-data` in profiles and in the instance configuration.
+Incus does not enforce this method, but allows using both `vendor-data` and `user-data` in profiles and in the instance configuration.
 
 If both `vendor-data` and `user-data` are supplied for an instance, `cloud-init` merges the two configurations.
 However, if you use the same keys in both configurations, merging might not be possible.
@@ -70,7 +66,7 @@ To configure `cloud-init` for an instance, add the corresponding configuration o
 
 When configuring `cloud-init` directly for an instance, keep in mind that `cloud-init` runs only on the first start of the instance.
 That means that you must configure `cloud-init` before you start the instance.
-To do so, create the instance with [`lxc init`](incus_create.md) instead of [`lxc launch`](incus_launch.md), and then start it after completing the configuration.
+To do so, create the instance with [`incus init`](incus_create.md) instead of [`incus launch`](incus_launch.md), and then start it after completing the configuration.
 
 ### YAML format for `cloud-init` configuration
 

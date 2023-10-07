@@ -1165,7 +1165,7 @@
 						"restricted.containers.nesting": {
 							"defaultdesc": "`block`",
 							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, {config:option}`instance-security:security.nesting` can be set to `true` for an instance.",
-							"shortdesc": "Whether to prevent running nested LXD",
+							"shortdesc": "Whether to prevent running nested Incus",
 							"type": "string"
 						}
 					},
@@ -1720,7 +1720,7 @@
 					},
 					{
 						"loki.api.url": {
-							"longdesc": "Specify the protocol, name or IP and port. For example `https://loki.example.com:3100`. LXD will automatically add the `/loki/api/v1/push` suffix so there's no need to add it here.",
+							"longdesc": "Specify the protocol, name or IP and port. For example `https://loki.example.com:3100`. Incus will automatically add the `/loki/api/v1/push` suffix so there's no need to add it here.",
 							"scope": "global",
 							"shortdesc": "URL to the Loki server",
 							"type": "string"

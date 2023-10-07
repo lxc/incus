@@ -1,26 +1,23 @@
 (migration)=
 # Migration
 
-```{youtube} https://www.youtube.com/watch?v=F9GALjHtnUU
-```
+Incus provides tools and functionality to migrate instances in different contexts.
 
-LXD provides tools and functionality to migrate instances in different contexts.
-
-Migrate existing LXD instances between servers
-: The most basic kind of migration is if you have a LXD instance on one server and want to move it to a different LXD server.
+Migrate existing Incus instances between servers
+: The most basic kind of migration is if you have a Incus instance on one server and want to move it to a different Incus server.
   For virtual machines, you can do that as a live migration, which means that you can migrate your VM while it is running and there will be no downtime.
 
   See {ref}`move-instances` for more information.
 
-Migrate physical or virtual machines to LXD instances
-: If you have an existing machine, either physical or virtual (VM or container), you can use the `lxd-migrate` tool to create a LXD instance based on your existing machine.
-  The tool copies the provided partition, disk or image to the LXD storage pool of the provided LXD server, sets up an instance using that storage and allows you to configure additional settings for the new instance.
+Migrate physical or virtual machines to Incus instances
+: If you have an existing machine, either physical or virtual (VM or container), you can use the `incus-migrate` tool to create a Incus instance based on your existing machine.
+  The tool copies the provided partition, disk or image to the Incus storage pool of the provided Incus server, sets up an instance using that storage and allows you to configure additional settings for the new instance.
 
   See {ref}`import-machines-to-instances` for more information.
 
-Migrate instances from LXC to LXD
-: If you are using LXC and want to migrate all or some of your LXC containers to a LXD installation on the same machine, you can use the `lxc-to-lxd` tool.
-  The tool analyzes the LXC configuration and copies the data and configuration of your existing LXC containers into new LXD containers.
+Migrate instances from LXC to Incus
+: If you are using LXC and want to migrate all or some of your LXC containers to a Incus installation on the same machine, you can use the `lxc-to-incus` tool.
+  The tool analyzes the LXC configuration and copies the data and configuration of your existing LXC containers into new Incus containers.
 
   See {ref}`migrate-from-lxc` for more information.
 

@@ -1,14 +1,11 @@
 (howto-storage-volumes)=
 # How to manage storage volumes
 
-```{youtube} https://www.youtube.com/watch?v=dvQ111pbqtk
-```
-
 See the following sections for instructions on how to create, configure, view and resize {ref}`storage-volumes`.
 
 ## Create a custom storage volume
 
-When you create an instance, LXD automatically creates a storage volume that is used as the root disk for the instance.
+When you create an instance, Incus automatically creates a storage volume that is used as the root disk for the instance.
 
 You can add custom storage volumes to your instances.
 Such custom storage volumes are independent of the instance, which means that they can be backed up separately and are retained until you delete them.
@@ -20,18 +17,18 @@ See {ref}`storage-volumes` for detailed information.
 
 Use the following command to create a custom storage volume of type `block` or `filesystem` in a storage pool:
 
-    lxc storage volume create <pool_name> <volume_name> [configuration_options...]
+    incus storage volume create <pool_name> <volume_name> [configuration_options...]
 
 See the {ref}`storage-drivers` documentation for a list of available storage volume configuration options for each driver.
 
 By default, custom storage volumes use the `filesystem` {ref}`content type <storage-content-types>`.
 To create a custom storage volume with the content type `block`, add the `--type` flag:
 
-    lxc storage volume create <pool_name> <volume_name> --type=block [configuration_options...]
+    incus storage volume create <pool_name> <volume_name> --type=block [configuration_options...]
 
 To add a custom storage volume on a cluster member, add the `--target` flag:
 
-    lxc storage volume create <pool_name> <volume_name> --target=<cluster_member> [configuration_options...]
+    incus storage volume create <pool_name> <volume_name> --target=<cluster_member> [configuration_options...]
 
 ```{note}
 For most storage drivers, custom storage volumes are not replicated across the cluster and exist only on the member for which they were created.
@@ -40,7 +37,7 @@ This behavior is different for Ceph-based storage pools (`ceph` and `cephfs`), w
 
 To create a custom storage volume of type `iso`, use the `import` command instead of the `create` command:
 
-    lxc storage volume import <pool_name> <iso_path> <volume_name> --type=iso
+    incus storage volume import <pool_name> <iso_path> <volume_name> --type=iso
 
 (storage-attach-volume)=
 ### Attach the volume to an instance
@@ -56,24 +53,24 @@ The following restrictions apply:
 
 For custom storage volumes with the content type `filesystem`, use the following command, where `<location>` is the path for accessing the storage volume inside the instance (for example, `/data`):
 
-    lxc storage volume attach <pool_name> <filesystem_volume_name> <instance_name> <location>
+    incus storage volume attach <pool_name> <filesystem_volume_name> <instance_name> <location>
 
 Custom storage volumes with the content type `block` do not take a location:
 
-    lxc storage volume attach <pool_name> <block_volume_name> <instance_name>
+    incus storage volume attach <pool_name> <block_volume_name> <instance_name>
 
 By default, the custom storage volume is added to the instance with the volume name as the {ref}`device <devices>` name.
 If you want to use a different device name, you can add it to the command:
 
-    lxc storage volume attach <pool_name> <filesystem_volume_name> <instance_name> <device_name> <location>
-    lxc storage volume attach <pool_name> <block_volume_name> <instance_name> <device_name>
+    incus storage volume attach <pool_name> <filesystem_volume_name> <instance_name> <device_name> <location>
+    incus storage volume attach <pool_name> <block_volume_name> <instance_name> <device_name>
 
 #### Attach the volume as a device
 
-The [`lxc storage volume attach`](incus_storage_volume_attach.md) command is a shortcut for adding a disk device to an instance.
+The [`incus storage volume attach`](incus_storage_volume_attach.md) command is a shortcut for adding a disk device to an instance.
 Alternatively, you can add a disk device for the storage volume in the usual way:
 
-    lxc config device add <instance_name> <device_name> disk pool=<pool_name> source=<volume_name> [path=<location>]
+    incus config device add <instance_name> <device_name> disk pool=<pool_name> source=<volume_name> [path=<location>]
 
 When using this way, you can add further configuration to the command if needed.
 See {ref}`disk device <devices-disk>` for all available device options.
@@ -108,11 +105,11 @@ To do so, you must set the corresponding {ref}`server configuration <server-opti
 
 - To use a custom volume to store the backup tarballs:
 
-      lxc config set storage.backups_volume <pool_name>/<volume_name>
+      incus config set storage.backups_volume <pool_name>/<volume_name>
 
 - To use a custom volume to store the image tarballs:
 
-      lxc config set storage.images_volume <pool_name>/<volume_name>
+      incus config set storage.images_volume <pool_name>/<volume_name>
 
 (storage-configure-volume)=
 ## Configure storage volume settings
@@ -121,21 +118,21 @@ See the {ref}`storage-drivers` documentation for the available configuration opt
 
 Use the following command to set configuration options for a storage volume:
 
-    lxc storage volume set <pool_name> [<volume_type>/]<volume_name> <key> <value>
+    incus storage volume set <pool_name> [<volume_type>/]<volume_name> <key> <value>
 
 The default {ref}`storage volume type <storage-volume-types>` is `custom`, so you can leave out the `<volume_type>/` when configuring a custom storage volume.
 
 For example, to set the size of your custom storage volume `my-volume` to 1 GiB, use the following command:
 
-    lxc storage volume set my-pool my-volume size=1GiB
+    incus storage volume set my-pool my-volume size=1GiB
 
 To set the snapshot expiry time for your virtual machine `my-vm` to one month, use the following command:
 
-    lxc storage volume set my-pool virtual-machine/my-vm snapshots.expiry 1M
+    incus storage volume set my-pool virtual-machine/my-vm snapshots.expiry 1M
 
 You can also edit the storage volume configuration by using the following command:
 
-    lxc storage volume edit <pool_name> [<volume_type>/]<volume_name>
+    incus storage volume edit <pool_name> [<volume_type>/]<volume_name>
 
 (storage-configure-vol-default)=
 ### Configure default values for storage volumes
@@ -148,7 +145,7 @@ In general, the defaults set on a storage pool level (before the volume was crea
 
 For example, to set a default volume size for a storage pool, use the following command:
 
-    lxc storage set [<remote>:]<pool_name> volume.size <value>
+    incus storage set [<remote>:]<pool_name> volume.size <value>
 
 ## View storage volumes
 
@@ -156,7 +153,7 @@ You can display a list of all available storage volumes in a storage pool and ch
 
 To list all available storage volumes in a storage pool, use the following command:
 
-    lxc storage volume list <pool_name>
+    incus storage volume list <pool_name>
 
 To display the storage volumes for all projects (not only the default project), add the `--all-projects` flag.
 
@@ -169,11 +166,11 @@ Therefore, to distinguish between instance storage volumes and custom storage vo
 
 To show detailed configuration information about a specific volume, use the following command:
 
-    lxc storage volume show <pool_name> [<volume_type>/]<volume_name>
+    incus storage volume show <pool_name> [<volume_type>/]<volume_name>
 
 To show state information about a specific volume, use the following command:
 
-    lxc storage volume info <pool_name> [<volume_type>/]<volume_name>
+    incus storage volume info <pool_name> [<volume_type>/]<volume_name>
 
 In both commands, the default {ref}`storage volume type <storage-volume-types>` is `custom`, so you can leave out the `<volume_type>/` when displaying information about a custom storage volume.
 
@@ -184,7 +181,7 @@ In some cases, it is also possible to reduce the size of a storage volume.
 
 To resize a storage volume, set its size configuration:
 
-    lxc storage volume set <pool_name> <volume_name> size <new_size>
+    incus storage volume set <pool_name> <volume_name> size <new_size>
 
 ```{important}
 - Growing a storage volume usually works (if the storage pool has sufficient storage).

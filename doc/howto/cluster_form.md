@@ -1,34 +1,30 @@
----
-discourse: 15871
----
-
 (cluster-form)=
 # How to form a cluster
 
-When forming a LXD cluster, you start with a bootstrap server.
-This bootstrap server can be an existing LXD server or a newly installed one.
+When forming a Incus cluster, you start with a bootstrap server.
+This bootstrap server can be an existing Incus server or a newly installed one.
 
 After initializing the bootstrap server, you can join additional servers to the cluster.
 See {ref}`clustering-members` for more information.
 
-You can form the LXD cluster interactively by providing configuration information during the initialization process or by using preseed files that contain the full configuration.
+You can form the Incus cluster interactively by providing configuration information during the initialization process or by using preseed files that contain the full configuration.
 
-To quickly and automatically set up a basic LXD cluster, you can use MicroCloud.
+To quickly and automatically set up a basic Incus cluster, you can use MicroCloud.
 Note, however, that this project is still in an early phase.
 
 ## Configure the cluster interactively
 
-To form your cluster, you must first run `lxd init` on the bootstrap server. After that, run it on the other servers that you want to join to the cluster.
+To form your cluster, you must first run `incus admin init` on the bootstrap server. After that, run it on the other servers that you want to join to the cluster.
 
-When forming a cluster interactively, you answer the questions that `lxd init` prompts you with to configure the cluster.
+When forming a cluster interactively, you answer the questions that `incus admin init` prompts you with to configure the cluster.
 
 ### Initialize the bootstrap server
 
-To initialize the bootstrap server, run `lxd init` and answer the questions according to your desired configuration.
+To initialize the bootstrap server, run `incus admin init` and answer the questions according to your desired configuration.
 
 You can accept the default values for most questions, but make sure to answer the following questions accordingly:
 
-- `Would you like to use LXD clustering?`
+- `Would you like to use Incus clustering?`
 
   Select **yes**.
 - `What IP address or DNS name should be used to reach this server?`
@@ -39,12 +35,12 @@ You can accept the default values for most questions, but make sure to answer th
   Select **no**.
 
 <details>
-<summary>Expand to see a full example for <code>lxd init</code> on the bootstrap server</summary>
+<summary>Expand to see a full example for <code>incus admin init</code> on the bootstrap server</summary>
 
 ```{terminal}
-:input: lxd init
+:input: incus admin init
 
-Would you like to use LXD clustering? (yes/no) [default=no]: yes
+Would you like to use Incus clustering? (yes/no) [default=no]: yes
 What IP address or DNS name should be used to reach this server? [default=192.0.2.101]:
 Are you joining an existing cluster? (yes/no) [default=no]: no
 What member name should be used to identify this server in the cluster? [default=server1]:
@@ -55,35 +51,35 @@ Create a new ZFS pool? (yes/no) [default=yes]:
 Would you like to use an existing empty block device (e.g. a disk or partition)? (yes/no) [default=no]:
 Size in GiB of the new loop device (1GiB minimum) [default=9GiB]:
 Do you want to configure a new remote storage pool? (yes/no) [default=no]:
-Would you like to configure LXD to use an existing bridge or host interface? (yes/no) [default=no]:
+Would you like to configure Incus to use an existing bridge or host interface? (yes/no) [default=no]:
 Would you like stale cached images to be updated automatically? (yes/no) [default=yes]:
-Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
+Would you like a YAML "incus admin init" preseed to be printed? (yes/no) [default=no]:
 ```
 
 </details>
 
 After the initialization process finishes, your first cluster member should be up and available on your network.
-You can check this with [`lxc cluster list`](incus_cluster_list.md).
+You can check this with [`incus cluster list`](incus_cluster_list.md).
 
 ### Join additional servers
 
 You can now join further servers to the cluster.
 
 ```{note}
-The servers that you add should be newly installed LXD servers.
+The servers that you add should be newly installed Incus servers.
 If you are using existing servers, make sure to clear their contents before joining them, because any existing data on them will be lost.
 ```
 
-To join a server to the cluster, run `lxd init` on the cluster.
+To join a server to the cluster, run `incus admin init` on the cluster.
 Joining an existing cluster requires root privileges, so make sure to run the command as root or with `sudo`.
 
 Basically, the initialization process consists of the following steps:
 
 1. Request to join an existing cluster.
 
-   Answer the first questions that `lxd init` asks accordingly:
+   Answer the first questions that `incus admin init` asks accordingly:
 
-   - `Would you like to use LXD clustering?`
+   - `Would you like to use Incus clustering?`
 
      Select **yes**.
    - `What IP address or DNS name should be used to reach this server?`
@@ -103,13 +99,13 @@ Basically, the initialization process consists of the following steps:
    If you configured your cluster to use {ref}`authentication tokens <authentication-token>`, you must generate a join token for each new member.
    To do so, run the following command on an existing cluster member (for example, the bootstrap server):
 
-       lxc cluster add <new_member_name>
+       incus cluster add <new_member_name>
 
    This command returns a single-use join token that is valid for a configurable time (see {config:option}`server-cluster:cluster.join_token_expiry`).
-   Enter this token when `lxd init` prompts you for the join token.
+   Enter this token when `incus admin init` prompts you for the join token.
 
    The join token contains the addresses of the existing online members, as well as a single-use secret and the fingerprint of the cluster certificate.
-   This reduces the amount of questions that you must answer during `lxd init`, because the join token can be used to answer these questions automatically.
+   This reduces the amount of questions that you must answer during `incus admin init`, because the join token can be used to answer these questions automatically.
    ````
 
    `````
@@ -120,16 +116,16 @@ Basically, the initialization process consists of the following steps:
    You can accept the default values or specify custom values for each server.
 
 <details>
-<summary>Expand to see full examples for <code>lxd init</code> on additional servers</summary>
+<summary>Expand to see full examples for <code>incus admin init</code> on additional servers</summary>
 
 `````{tabs}
 
 ````{group-tab} Authentication tokens (recommended)
 
 ```{terminal}
-:input: sudo lxd init
+:input: sudo incus admin init
 
-Would you like to use LXD clustering? (yes/no) [default=no]: yes
+Would you like to use Incus clustering? (yes/no) [default=no]: yes
 What IP address or DNS name should be used to reach this server? [default=192.0.2.102]:
 Are you joining an existing cluster? (yes/no) [default=no]: yes
 Do you have a join token? (yes/no/[token]) [default=no]: yes
@@ -138,30 +134,30 @@ All existing data is lost when joining a cluster, continue? (yes/no) [default=no
 Choose "size" property for storage pool "local":
 Choose "source" property for storage pool "local":
 Choose "zfs.pool_name" property for storage pool "local":
-Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
+Would you like a YAML "incus admin init" preseed to be printed? (yes/no) [default=no]:
 ```
 
 ````
 ````{group-tab} Trust password
 
 ```{terminal}
-:input: sudo lxd init
+:input: sudo incus admin init
 
-Would you like to use LXD clustering? (yes/no) [default=no]: yes
+Would you like to use Incus clustering? (yes/no) [default=no]: yes
 What IP address or DNS name should be used to reach this server? [default=192.0.2.102]:
 Are you joining an existing cluster? (yes/no) [default=no]: yes
 Do you have a join token? (yes/no/[token]) [default=no]: no
 What member name should be used to identify this server in the cluster? [default=server2]:
 IP address or FQDN of an existing cluster member (may include port): 192.0.2.101:8443
 Cluster fingerprint: 2915dafdf5c159681a9086f732644fb70680533b0fb9005b8c6e9bca51533113
-You can validate this fingerprint by running "lxc info" locally on an existing cluster member.
+You can validate this fingerprint by running "incus info" locally on an existing cluster member.
 Is this the correct fingerprint? (yes/no/[fingerprint]) [default=no]: yes
 Cluster trust password:
 All existing data is lost when joining a cluster, continue? (yes/no) [default=no] yes
 Choose "size" property for storage pool "local":
 Choose "source" property for storage pool "local":
 Choose "zfs.pool_name" property for storage pool "local":
-Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
+Would you like a YAML "incus admin init" preseed to be printed? (yes/no) [default=no]:
 ```
 
 ````
@@ -170,17 +166,17 @@ Would you like a YAML "lxd init" preseed to be printed? (yes/no) [default=no]:
 </details>
 
 After the initialization process finishes, your server is added as a new cluster member.
-You can check this with [`lxc cluster list`](incus_cluster_list.md).
+You can check this with [`incus cluster list`](incus_cluster_list.md).
 
 ## Configure the cluster through preseed files
 
-To form your cluster, you must first run `lxd init` on the bootstrap server.
+To form your cluster, you must first run `incus admin init` on the bootstrap server.
 After that, run it on the other servers that you want to join to the cluster.
 
-Instead of answering the `lxd init` questions interactively, you can provide the required information through preseed files.
-You can feed a file to `lxd init` with the following command:
+Instead of answering the `incus admin init` questions interactively, you can provide the required information through preseed files.
+You can feed a file to `incus admin init` with the following command:
 
-    cat <preseed-file> | lxd init --preseed
+    cat <preseed-file> | incus admin init --preseed
 
 You need a different preseed file for every server.
 
@@ -211,7 +207,7 @@ storage_pools:
 - name: my-pool
   driver: zfs
 networks:
-- name: lxdbr0
+- name: incusbr0
   type: bridge
 profiles:
 - name: default
@@ -223,7 +219,7 @@ profiles:
     eth0:
       name: eth0
       nictype: bridged
-      parent: lxdbr0
+      parent: incusbr0
       type: nic
 cluster:
   server_name: server1
@@ -276,24 +272,3 @@ cluster:
 ````
 
 `````
-
-## Use MicroCloud
-
-```{youtube} https://www.youtube.com/watch?v=iWZYUU8lX5A
-```
-
-Instead of setting up your LXD cluster manually, you can use [MicroCloud](https://microcloud.is/) to get a fully highly available LXD cluster with OVN and with Ceph storage up and running.
-
-To install the required snaps, run the following command:
-
-    snap install lxd microceph microovn microcloud
-
-Then start the bootstrapping process with the following command:
-
-    microcloud init
-
-During the initialization process, MicroCloud detects the other servers, sets up OVN networking and prompts you to add disks to Ceph.
-
-When the initialization is complete, you’ll have an OVN cluster, a Ceph cluster and a LXD cluster, and LXD itself will have been configured with both networking and storage suitable for use in a cluster.
-
-See the [MicroCloud documentation](https://canonical-microcloud.readthedocs-hosted.com/en/latest/) for more information.

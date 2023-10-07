@@ -1,13 +1,13 @@
 (network-configure)=
 # How to configure a network
 
-To configure an existing network, use either the [`lxc network set`](incus_network_set.md) and [`lxc network unset`](incus_network_unset.md) commands (to configure single settings) or the `lxc network edit` command (to edit the full configuration).
+To configure an existing network, use either the [`incus network set`](incus_network_set.md) and [`incus network unset`](incus_network_unset.md) commands (to configure single settings) or the `incus network edit` command (to edit the full configuration).
 To configure settings for specific cluster members, add the `--target` flag.
 
 For example, the following command configures a DNS server for a physical network:
 
 ```bash
-lxc network set UPLINK dns.nameservers=8.8.8.8
+incus network set UPLINK dns.nameservers=8.8.8.8
 ```
 
 The available configuration options differ depending on the network type.

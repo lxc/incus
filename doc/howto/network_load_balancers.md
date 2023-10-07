@@ -1,7 +1,3 @@
----
-discourse: 14317
----
-
 (network-load-balancers)=
 # How to configure network load balancers
 
@@ -24,7 +20,7 @@ A load balancer is made up of:
 Use the following command to create a network load balancer:
 
 ```bash
-lxc network load-balancer create <network_name> <listen_address> [configuration_options...]
+incus network load-balancer create <network_name> <listen_address> [configuration_options...]
 ```
 
 Each load balancer is assigned to a network.
@@ -59,7 +55,7 @@ The backend target address must be within the same subnet as the network that th
 Use the following command to add a backend specification:
 
 ```bash
-lxc network load-balancer backend add <network_name> <listen_address> <backend_name> <listen_ports> <target_address> [<target_ports>]
+incus network load-balancer backend add <network_name> <listen_address> <backend_name> <listen_ports> <target_address> [<target_ports>]
 ```
 
 The target ports are optional.
@@ -89,7 +85,7 @@ You can add port specifications to the network load balancer to forward traffic 
 Use the following command to add a port specification:
 
 ```bash
-lxc network load-balancer port add <network_name> <listen_address> <protocol> <listen_ports> <backend_name>[,<backend_name>...]
+incus network load-balancer port add <network_name> <listen_address> <protocol> <listen_ports> <backend_name>[,<backend_name>...]
 ```
 
 You can specify a single listen port or a set of ports.
@@ -111,7 +107,7 @@ Property          | Type         | Required | Description
 Use the following command to edit a network load balancer:
 
 ```bash
-lxc network load-balancer edit <network_name> <listen_address>
+incus network load-balancer edit <network_name> <listen_address>
 ```
 
 This command opens the network load balancer in YAML format for editing.
@@ -122,5 +118,5 @@ You can edit both the general configuration, backend and the port specifications
 Use the following command to delete a network load balancer:
 
 ```bash
-lxc network load-balancer delete <network_name> <listen_address>
+incus network load-balancer delete <network_name> <listen_address>
 ```
