@@ -43,7 +43,7 @@ Instance snapshots are stored in the same storage pool as the instance volume it
 
 Use the following command to create a snapshot of an instance:
 
-    incus snapshot <instance_name> [<snapshot name>]
+    incus snapshot create <instance_name> [<snapshot name>]
 
 % Include content from [storage_backup_volume.md](storage_backup_volume.md)
 ```{include} storage_backup_volume.md
@@ -102,7 +102,7 @@ You can restore an instance to any of its snapshots.
 
 To do so, use the following command:
 
-    incus restore <instance_name> <snapshot_name>
+    incus snapshot restore <instance_name> <snapshot_name>
 
 If the snapshot is stateful (which means that it contains information about the running state of the instance), you can add the `--stateful` flag to restore the state.
 
