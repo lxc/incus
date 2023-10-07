@@ -171,6 +171,29 @@ func ConnectIncusUnixWithContext(ctx context.Context, path string, args *Connect
 
 	ctxConnected, ctxConnectedCancel := context.WithCancel(context.Background())
 
+	// Determine the socket path
+	var projectName string
+	if path == "" {
+		path = os.Getenv("INCUS_SOCKET")
+		if path == "" {
+			incusDir := os.Getenv("INCUS_DIR")
+			if incusDir == "" {
+				incusDir = "/var/lib/incus"
+			}
+
+			path = filepath.Join(incusDir, "unix.socket")
+			userPath := filepath.Join(incusDir, "unix.socket.user")
+			if !util.PathIsWritable(path) && util.PathIsWritable(userPath) {
+				// Handle the use of incus-user.
+				path = userPath
+
+				// When using incus-user, the project list is typically restricted.
+				// So let's try to be smart about the project we're using.
+				projectName = fmt.Sprintf("user-%d", os.Geteuid())
+			}
+		}
+	}
+
 	// Initialize the client struct
 	server := ProtocolIncus{
 		ctx:                ctx,
@@ -182,19 +205,7 @@ func ConnectIncusUnixWithContext(ctx context.Context, path string, args *Connect
 		ctxConnectedCancel: ctxConnectedCancel,
 		eventConns:         make(map[string]*websocket.Conn),
 		eventListeners:     make(map[string][]*EventListener),
-	}
-
-	// Determine the socket path
-	if path == "" {
-		path = os.Getenv("INCUS_SOCKET")
-		if path == "" {
-			incusDir := os.Getenv("INCUS_DIR")
-			if incusDir == "" {
-				incusDir = "/var/lib/incus"
-			}
-
-			path = filepath.Join(incusDir, "unix.socket")
-		}
+		project:            projectName,
 	}
 
 	// Setup the HTTP client
