@@ -233,7 +233,7 @@ After editing the configuration, restart Prometheus (for example, `systemctl res
 ## Set up a Grafana dashboard
 
 To visualize the metrics data, set up [Grafana](https://grafana.com/).
-Incus provides a [Grafana dashboard](https://grafana.com/grafana/dashboards/19131-lxd/) that is configured to display the Incus metrics scraped by Prometheus.
+Incus provides a [Grafana dashboard](https://grafana.com/grafana/dashboards/19727-incus/) that is configured to display the Incus metrics scraped by Prometheus.
 
 ```{note}
 The dashboard requires Grafana 8.4 or later.
@@ -244,7 +244,7 @@ See the Grafana documentation for instructions on installing and signing in:
 - [Install Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/installation/)
 - [Sign in to Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/sign-in-to-grafana/)
 
-Complete the following steps to import the [Incus dashboard](https://grafana.com/grafana/dashboards/19131-lxd/):
+Complete the following steps to import the [Incus dashboard](https://grafana.com/grafana/dashboards/19727-incus/):
 
 1. Configure Prometheus as the data source:
 
@@ -270,7 +270,7 @@ Complete the following steps to import the [Incus dashboard](https://grafana.com
 
       ![Import a dashboard in Grafana](images/grafana_dashboard_import.png)
 
-   1. In the {guilabel}`Import via grafana.com` field, enter the dashboard ID `19131`.
+   1. In the {guilabel}`Import via grafana.com` field, enter the dashboard ID `19727`.
 
       ![Enter the Incus dashboard ID](images/grafana_dashboard_id.png)
 
