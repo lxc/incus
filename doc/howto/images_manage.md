@@ -60,7 +60,7 @@ To set a specific image property that is located under the `properties` key, ent
 
 ```{note}
 These properties can be used to convey information about the image.
-They do not configure Incus's behavior in any way.
+They do not configure Incus' behavior in any way.
 ```
 
 To edit the full image properties, including the top-level properties, enter the following command:

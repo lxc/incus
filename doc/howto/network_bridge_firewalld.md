@@ -22,7 +22,7 @@ Therefore, rules in one namespace can still affect rules in another namespace, a
 If your system supports and uses `nftables`, Incus detects this and switches to `nftables` mode.
 In this mode, Incus adds its rules into the `nftables`, using its own `nftables` namespace.
 
-## Use Incus's firewall
+## Use Incus' firewall
 
 By default, managed Incus bridges add firewall rules to ensure full functionality.
 If you do not run another firewall on your system, you can let Incus manage its firewall rules.
@@ -32,12 +32,12 @@ To enable or disable this behavior, use the `ipv4.firewall` or `ipv6.firewall` {
 ## Use another firewall
 
 Firewall rules added by other applications might interfere with the firewall rules that Incus adds.
-Therefore, if you use another firewall, you should disable Incus's firewall rules.
+Therefore, if you use another firewall, you should disable Incus' firewall rules.
 You must also configure your firewall to allow network traffic between the instances and the Incus bridge, so that the Incus instances can access the DHCP and DNS server that Incus runs on the host.
 
-See the following sections for instructions on how to disable Incus's firewall rules and how to properly configure `firewalld` and UFW, respectively.
+See the following sections for instructions on how to disable Incus' firewall rules and how to properly configure `firewalld` and UFW, respectively.
 
-### Disable Incus's firewall rules
+### Disable Incus' firewall rules
 
 Run the following commands to prevent Incus from setting firewall rules for a specific network bridge (for example, `incusbr0`):
 

@@ -10,7 +10,7 @@ GitHub provides a basic rendering of the documentation as well, but important fe
 
 ### Documentation framework
 
-Incus's documentation is built with [Sphinx](https://www.sphinx-doc.org/en/master/index.html).
+Incus' documentation is built with [Sphinx](https://www.sphinx-doc.org/en/master/index.html).
 
 It is written in [Markdown](https://commonmark.org/) with [MyST](https://myst-parser.readthedocs.io/) extensions.
 For syntax help and guidelines, see the [documentation cheat sheet](https://linuxcontainers.org/incus/docs/main/doc-cheat-sheet/) ([source](https://raw.githubusercontent.com/lxc/incus/main/doc/doc-cheat-sheet.md)).

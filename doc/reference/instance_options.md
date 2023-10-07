@@ -257,7 +257,7 @@ For VM instances, Incus configures QEMU through a configuration file that is pas
 This configuration file is generated for each instance before boot.
 It can be found at `/var/log/incus/<instance_name>/qemu.conf`.
 
-The default configuration works fine for Incus's most common use case: modern UEFI guests with VirtIO devices.
+The default configuration works fine for Incus' most common use case: modern UEFI guests with VirtIO devices.
 In some situations, however, you might need to override the generated configuration.
 For example:
 

@@ -144,7 +144,7 @@ Then proceed to the instructions below to actually build and install Incus.
 ### From source: Build a release
 
 The Incus release tarballs bundle a complete dependency tree as well as a
-local copy of `libraft` and `libcowsql` for Incus's database setup.
+local copy of `libraft` and `libcowsql` for Incus' database setup.
 
 ```bash
 tar zxvf incus-0.1.tar.gz

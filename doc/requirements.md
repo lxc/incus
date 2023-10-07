@@ -30,7 +30,7 @@ As well as any other kernel feature required by the LXC version in use.
 
 Incus requires LXC 4.0.0 or higher with the following build options:
 
-* `apparmor` (if using Incus's AppArmor support)
+* `apparmor` (if using Incus' AppArmor support)
 * `seccomp`
 
 To run recent version of various distributions, including Ubuntu, LXCFS

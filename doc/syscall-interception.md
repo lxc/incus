@@ -51,7 +51,7 @@ Those can be attached to a variety of kernel subsystems.
 In general, loading of eBPF programs that are not trusted can be problematic as it
 can facilitate timing based attacks.
 
-Incus's eBPF support is currently restricted to programs managing devices
+Incus' eBPF support is currently restricted to programs managing devices
 cgroup entries. To enable it, you need to set both
 `security.syscalls.intercept.bpf` and
 `security.syscalls.intercept.bpf.devices` to true.
