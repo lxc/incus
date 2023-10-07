@@ -428,9 +428,9 @@ This adds support for SR-IOV enabled network devices.
 
 This adds support to interact with the container console device and console log.
 
-## `restrict_devlxd`
+## `restrict_dev_incus`
 
-A new `security.devlxd` container configuration key was introduced.
+A new `security.guestapi` container configuration key was introduced.
 The key controls whether the `/dev/lxd` interface is made available to the container.
 If set to `false`, this effectively prevents the container from interacting with the Incus daemon.
 
@@ -442,11 +442,11 @@ This adds support for optimized memory transfer during live migration.
 
 This adds support to use InfiniBand network devices.
 
-## `devlxd_events`
+## `dev_incus_events`
 
-This adds a WebSocket API to the `devlxd` socket.
+This adds a WebSocket API to the `/dev/incus` socket.
 
-When connecting to `/1.0/events` over the `devlxd` socket, you will now be
+When connecting to `/1.0/events` over the `/dev/incus` socket, you will now be
 getting a stream of events over WebSocket.
 
 ## `proxy`
@@ -547,11 +547,11 @@ The following existing endpoint has been modified:
 
 * `POST /1.0/containers` accepts the new source type `backup`
 
-## `devlxd_images`
+## `dev_incus_images`
 
-Adds a `security.devlxd.images` configuration option for containers which
+Adds a `security.guestapi.images` configuration option for containers which
 controls the availability of a `/1.0/images/FINGERPRINT/export` API over
-`devlxd`. This can be used by a container running nested Incus to access raw
+`/dev/incus`. This can be used by a container running nested Incus to access raw
 images from the host.
 
 ## `container_local_cross_pool_handling`
@@ -1745,7 +1745,7 @@ This adds a new `cloud-init` configuration key namespace which contains the foll
 * `cloud-init.user-data`
 * `cloud-init.network-config`
 
- It also adds a new endpoint `/1.0/devices` to `devlxd` which shows an instance's devices.
+ It also adds a new endpoint `/1.0/devices` to `/dev/incus` which shows an instance's devices.
 
 ## `network_dns_nat`
 
@@ -1972,7 +1972,7 @@ This introduces a bidirectional `vsock` interface which allows the `lxd-agent` a
 
 ## `instance_ready_state`
 
-This introduces a new `Ready` state for instances which can be set using `devlxd`.
+This introduces a new `Ready` state for instances which can be set using `/dev/incus`.
 
 ## `network_bgp_holdtime`
 
