@@ -272,21 +272,3 @@ cluster:
 ````
 
 `````
-
-## Use MicroCloud
-
-Instead of setting up your Incus cluster manually, you can use [MicroCloud](https://microcloud.is/) to get a fully highly available Incus cluster with OVN and with Ceph storage up and running.
-
-To install the required snaps, run the following command:
-
-    snap install lxd microceph microovn microcloud
-
-Then start the bootstrapping process with the following command:
-
-    microcloud init
-
-During the initialization process, MicroCloud detects the other servers, sets up OVN networking and prompts you to add disks to Ceph.
-
-When the initialization is complete, you’ll have an OVN cluster, a Ceph cluster and a Incus cluster, and Incus itself will have been configured with both networking and storage suitable for use in a cluster.
-
-See the [MicroCloud documentation](https://canonical-microcloud.readthedocs-hosted.com/en/latest/) for more information.
