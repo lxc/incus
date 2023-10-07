@@ -1,8 +1,6 @@
 body {
     --color-code-background: #f8f8f8;
     --color-code-foreground: black;
-    --font-stack: Ubuntu, -apple-system, Segoe UI, Roboto, Oxygen, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-    --font-stack--monospace: Ubuntu Mono, Consolas, Monaco, Courier, monospace;
     --color-foreground-primary: #111;
     --color-foreground-secondary: var(--color-foreground-primary);
     --color-foreground-muted: #333;
@@ -28,7 +26,6 @@ body {
     --color-link-underline: var(--color-background-primary);
     --color-link-underline--hover: var(--color-background-primary);
     --color-version-popup: #772953;
-    --color-orange: #FBDDD2;
 }
 
 @media not print {
@@ -57,7 +54,6 @@ body {
         --color-link-underline: var(--color-background-primary);
         --color-link-underline--hover: var(--color-background-primary);
         --color-version-popup: #F29879;
-        --color-orange: #E95420;
     }
     @media (prefers-color-scheme: dark) {
         body:not([data-theme="light"]) {
@@ -85,7 +81,6 @@ body {
             --color-link-underline: var(--color-background-primary);
             --color-link-underline--hover: var(--color-background-primary);
             --color-version-popup: #F29879;
-            --color-orange: #E95420;
         }
     }
 }

@@ -22,9 +22,7 @@ if not os.path.islink('.sphinx/_static/swagger-ui/swagger-ui.css'):
     os.symlink('../../deps/swagger-ui/dist/swagger-ui.css', '.sphinx/_static/swagger-ui/swagger-ui.css')
 
 ### MAN PAGES ###
-
 # Find path to incus client (different for local builds and on RTD)
-
 if ("LOCAL_SPHINX_BUILD" in os.environ and
     os.environ["LOCAL_SPHINX_BUILD"] == "True"):
     path = str(subprocess.check_output(['go', 'env', 'GOPATH'], encoding="utf-8").strip())
@@ -38,13 +36,11 @@ else:
     incus = "../incus.bin"
 
 # Generate man pages content
-
 os.makedirs('.sphinx/deps/manpages', exist_ok=True)
 subprocess.run([incus, 'manpage', '.sphinx/deps/manpages/', '--format=md', '--all'],
                check=True)
 
 # Preprocess man pages content
-
 for page in [x for x in os.listdir('.sphinx/deps/manpages')
              if os.path.isfile(os.path.join('.sphinx/deps/manpages/', x))]:
 
@@ -76,7 +72,6 @@ for page in [x for x in os.listdir('.sphinx/deps/manpages')
         os.remove(os.path.join('.sphinx/deps/manpages/', page))
 
 # Complete and copy man pages content
-
 for folder, subfolders, files in os.walk('.sphinx/deps/manpages'):
 
     # for each subfolder, add toctrees to the parent page that
@@ -137,7 +132,7 @@ myst_enable_extensions = [
     "substitution"
 ]
 
-myst_linkify_fuzzy_links=False
+myst_linkify_fuzzy_links = False
 myst_heading_anchors = 7
 
 if os.path.exists("./substitutions.yaml"):
@@ -165,15 +160,12 @@ myst_url_schemes = {
 remove_from_toctrees = ["reference/manpages/incus/*.md"]
 
 # Setup theme.
-templates_path = [".sphinx/_templates"]
-
 html_theme = "furo"
 html_show_sphinx = False
 html_last_updated_fmt = ""
 html_favicon = ".sphinx/_static/favicon.ico"
 html_static_path = ['.sphinx/_static']
-html_css_files = ['custom.css', 'header.css', 'furo_colors.css']
-html_js_files = ['header-nav.js']
+html_css_files = ['custom.css', 'furo_colors.css']
 html_extra_path = ['.sphinx/_extra']
 
 html_theme_options = {

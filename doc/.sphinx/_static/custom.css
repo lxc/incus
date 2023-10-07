@@ -173,3 +173,8 @@ details summary {
     color: var(--color-version-popup);
     font-weight: bolder;
 }
+
+/** Hide Expand all options **/
+#expand-options {
+    display: none;
+}
