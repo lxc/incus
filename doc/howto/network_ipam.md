@@ -34,4 +34,3 @@ The resulting output will look something like this:
 Each listed entry lists the IP address (in CIDR notation) of one of the following Incus entities: `network`, `network-forward`, `network-load-balancer`, and `instance`.
 An entry contains an IP address using the CIDR notation.
 It also contains a Incus resource URI, the type of the entity, whether it is in NAT mode, and the hardware address (only for the `instance` entity).
-

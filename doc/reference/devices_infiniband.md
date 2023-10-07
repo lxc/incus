@@ -1,6 +1,5 @@
 (devices-infiniband)=
 # Type: `infiniband`
-```
 
 ```{note}
 The `infiniband` device type is supported for both containers and VMs.
