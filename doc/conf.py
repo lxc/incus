@@ -22,18 +22,14 @@ if not os.path.islink('.sphinx/_static/swagger-ui/swagger-ui.css'):
     os.symlink('../../deps/swagger-ui/dist/swagger-ui.css', '.sphinx/_static/swagger-ui/swagger-ui.css')
 
 ### MAN PAGES ###
-# Find path to incus client (different for local builds and on RTD)
-if ("LOCAL_SPHINX_BUILD" in os.environ and
-    os.environ["LOCAL_SPHINX_BUILD"] == "True"):
-    path = str(subprocess.check_output(['go', 'env', 'GOPATH'], encoding="utf-8").strip())
-    incus = os.path.join(path, 'bin', 'incus')
-    if os.path.isfile(incus):
-        print("Using " + incus + " to generate man pages.")
-    else:
-        print("Cannot find incus in " + incus)
-        exit(2)
+# Find the path to the incus binary
+path = str(subprocess.check_output(['go', 'env', 'GOPATH'], encoding="utf-8").strip())
+incus = os.path.join(path, 'bin', 'incus')
+if os.path.isfile(incus):
+    print("Using " + incus + " to generate man pages.")
 else:
-    incus = "../incus.bin"
+    print("Cannot find incus in " + incus)
+    exit(2)
 
 # Generate man pages content
 os.makedirs('.sphinx/deps/manpages', exist_ok=True)
