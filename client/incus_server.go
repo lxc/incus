@@ -110,6 +110,7 @@ func (r *ProtocolIncus) UseProject(name string) InstanceServer {
 		httpBaseURL:          r.httpBaseURL,
 		httpProtocol:         r.httpProtocol,
 		httpUserAgent:        r.httpUserAgent,
+		httpUnixPath:         r.httpUnixPath,
 		requireAuthenticated: r.requireAuthenticated,
 		clusterTarget:        r.clusterTarget,
 		project:              name,
@@ -133,6 +134,7 @@ func (r *ProtocolIncus) UseTarget(name string) InstanceServer {
 		httpBaseURL:          r.httpBaseURL,
 		httpProtocol:         r.httpProtocol,
 		httpUserAgent:        r.httpUserAgent,
+		httpUnixPath:         r.httpUnixPath,
 		requireAuthenticated: r.requireAuthenticated,
 		project:              r.project,
 		eventConns:           make(map[string]*websocket.Conn),  // New target specific listener conns.
