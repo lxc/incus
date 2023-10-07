@@ -17,7 +17,7 @@ same time.
 
 ## Implementation details
 
-Incus on the host binds `/var/lib/incus/devlxd/sock` and starts listening for new
+Incus on the host binds `/var/lib/incus/guestapi/sock` and starts listening for new
 connections on it.
 
 This socket is then exposed into every single instance started by
@@ -211,7 +211,7 @@ This never returns. Each notification is sent as a separate JSON object:
 
 * Description: Download a public/cached image from the host
 * Return: raw image or error
-* Access: Requires `security.devlxd.images` set to `true`
+* Access: Requires `security.guestapi.images` set to `true`
 
 Return value:
 
