@@ -15,5 +15,5 @@ Display Incus IPAM information </howto/network_ipam>
 /reference/network_bridge
 /reference/network_ovn
 /reference/network_external
-
+Increase bandwidth <howto/network_increase_bandwidth>
 ```

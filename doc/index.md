@@ -45,18 +45,18 @@ It’s an open source project that warmly welcomes community projects, contribut
 :titlesonly:
 
 self
-getting_started
-Server and client <operation>
-security
-instances
-images
-storage
-networks
-projects
-clustering
-production-setup
-migration
-restapi_landing
-internals
-external_resources
+Getting Started </tutorial/first_steps>
+General </general>
+Client </client>
+Server </server>
+Instances </instances>
+Storage </storage>
+Networks </networks>
+Images </images>
+Projects </projects>
+Clustering </clustering>
+API </api>
+Security </security>
+Internals </internals>
+External resources </external_resources>
 ```
