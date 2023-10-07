@@ -6,7 +6,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -73,40 +72,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 
 	// Unix socket
 	if strings.HasPrefix(remote.Addr, "unix:") {
-		unixPath := remote.Addr
-		if unixPath == "unix://" {
-			// Handle unix socket path overrides.
-			unixPath = os.Getenv("INCUS_SOCKET")
-			if unixPath == "" {
-				incusDir := os.Getenv("INCUS_DIR")
-				if incusDir == "" {
-					incusDir = "/var/lib/incus/"
-				}
-
-				newUnixPath := filepath.Join(incusDir, "unix.socket")
-				userUnixPath := filepath.Join(incusDir, "unix.socket.user")
-				if util.PathIsWritable(unixPath) {
-					// Use the new computed path.
-					unixPath = newUnixPath
-				} else if util.PathIsWritable(userUnixPath) {
-					// Handle the use of incus-user.
-					unixPath = userUnixPath
-
-					// When using incus-user, the project list is typically restricted.
-					// So let's try to be smart about the project we're using.
-					if remote.Project == "" {
-						remote.Project = fmt.Sprintf("user-%d", os.Geteuid())
-					}
-				} else {
-					// Fallback to path as provided by user.
-					unixPath = strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//")
-				}
-			}
-		} else {
-			unixPath = strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//")
-		}
-
-		d, err := incus.ConnectIncusUnix(unixPath, args)
+		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
 		if err != nil {
 			return nil, err
 		}
