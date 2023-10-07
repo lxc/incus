@@ -1,4 +1,4 @@
-(lxd-client)=
+(incus-client)=
 # Incus client
 
 ```{toctree}

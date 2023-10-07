@@ -22,8 +22,8 @@ You can also immediately attach to the console when you start your instance:
 On virtual machines, log on to the console to get graphical output.
 Using the console you can, for example, install an operating system using a graphical interface or run a desktop environment.
 
-An additional advantage is that the console is available even if the `lxd-agent` process is not running.
-This means that you can access the VM through the console before the `lxd-agent` starts up, and also if the `lxd-agent` is not available at all.
+An additional advantage is that the console is available even if the `incus-agent` process is not running.
+This means that you can access the VM through the console before the `incus-agent` starts up, and also if the `incus-agent` is not available at all.
 
 To start the VGA console with graphical output for your VM, you must install a SPICE client (for example, `virt-viewer` or `spice-gtk-client`).
 Then enter the following command:

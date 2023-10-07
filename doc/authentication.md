@@ -150,8 +150,8 @@ To enable this feature, set the following server configuration:
 For this feature to work, Incus must be reachable from port 80.
 This can be achieved by using a reverse proxy such as [HAProxy](http://www.haproxy.org/).
 
-Here's a minimal HAProxy configuration that uses `lxd.example.net` as the domain.
-After the certificate has been issued, Incus will be reachable from `https://lxd.example.net/`.
+Here's a minimal HAProxy configuration that uses `incus.example.net` as the domain.
+After the certificate has been issued, Incus will be reachable from `https://incus.example.net/`.
 
 ```
 # Global configuration
@@ -198,7 +198,7 @@ frontend http-dispatcher
 
   # Dispatch
   default_backend http-403
-  use_backend http-301 if { hdr(host) -i lxd.example.net }
+  use_backend http-301 if { hdr(host) -i incus.example.net }
 
 # SNI dispatcher
 frontend sni-dispatcher
@@ -213,18 +213,18 @@ frontend sni-dispatcher
 
   # Dispatch
   default_backend http-403
-  use_backend lxd-nodes if { req.ssl_sni -i lxd.example.net }
+  use_backend incus-nodes if { req.ssl_sni -i incus.example.net }
 
 # Incus nodes
-backend lxd-nodes
+backend incus-nodes
   mode tcp
 
   option tcp-check
 
   # Multiple servers should be listed when running a cluster
-  server lxd-node01 1.2.3.4:8443 check
-  server lxd-node02 1.2.3.5:8443 check
-  server lxd-node03 1.2.3.6:8443 check
+  server incus-node01 1.2.3.4:8443 check
+  server incus-node02 1.2.3.5:8443 check
+  server incus-node03 1.2.3.6:8443 check
 ```
 
 ## Failure scenarios

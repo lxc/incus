@@ -42,7 +42,7 @@ For more information on `netplan`, see [their documentation](https://netplan.rea
 ```{note}
 This `netplan` configuration does not include a name server.
 To enable DNS within the instance, you must set a valid DNS IP address.
-If there is a `lxdbr0` network on the host, the name server can be set to that IP instead.
+If there is a `incusbr0` network on the host, the name server can be set to that IP instead.
 ```
 
 You can then start your instance with:

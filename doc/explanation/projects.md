@@ -51,8 +51,8 @@ This method isolates the instances and other entities (depending on the feature 
 It also confines users to their own user space and prevents them from gaining access to other users' instances or data.
 Any changes that affect the Incus server and its configuration, for example, adding or removing storage, are not permitted.
 
-In addition, this method allows users to work with Incus without being a member of the `lxd` group (see {ref}`security-daemon-access`).
-Members of the `lxd` group have full access to Incus, including permission to attach file system paths and tweak the security features of an instance, which makes it possible to gain root access to the host system.
+In addition, this method allows users to work with Incus without being a member of the `incus-admin` group (see {ref}`security-daemon-access`).
+Members of the `incus-admin` group have full access to Incus, including permission to attach file system paths and tweak the security features of an instance, which makes it possible to gain root access to the host system.
 Using confined projects limits what users can do in Incus, but it also prevents users from gaining root access.
 
 ### Authentication methods for projects

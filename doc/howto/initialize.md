@@ -86,7 +86,7 @@ config:
   core.https_address: 192.0.2.1:9999
   images.auto_update_interval: 15
 networks:
-- name: lxdbr0
+- name: incusbr0
   type: bridge
   config:
     ipv4.address: auto
@@ -94,7 +94,7 @@ networks:
 EOF
 ```
 
-This preseed configuration initializes the Incus daemon to listen for HTTPS connections on port 9999 of the 192.0.2.1 address, to automatically update images every 15 hours and to create a network bridge device named `lxdbr0`, which gets assigned an IPv4 address automatically.
+This preseed configuration initializes the Incus daemon to listen for HTTPS connections on port 9999 of the 192.0.2.1 address, to automatically update images every 15 hours and to create a network bridge device named `incusbr0`, which gets assigned an IPv4 address automatically.
 
 ### Re-configuring an existing Incus installation
 
@@ -154,7 +154,7 @@ storage_pools:
 
 # Network devices
 networks:
-- name: lxd-my-bridge
+- name: incus-my-bridge
   type: bridge
   config:
     ipv4.address: auto
@@ -176,6 +176,6 @@ profiles:
     test0:
       name: test0
       nictype: bridged
-      parent: lxd-my-bridge
+      parent: incus-my-bridge
       type: nic
 ```

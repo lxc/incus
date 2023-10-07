@@ -4,18 +4,6 @@
 The [`incus`](incus.md) CLI command comes pre-configured with the following default remote image servers:
 
 `images:`
-: This server provides official stable Ubuntu images.
-  All images are cloud images, which means that they include both `cloud-init` and the `lxd-agent`.
-
-  See [`cloud-images.ubuntu.com/releases`](https://cloud-images.ubuntu.com/releases/) for an overview of available images.
-
-`ubuntu-daily:`
-: This server provides official daily Ubuntu images.
-  All images are cloud images, which means that they include both `cloud-init` and the `lxd-agent`.
-
-  See [`cloud-images.ubuntu.com/daily`](https://cloud-images.ubuntu.com/daily/) for an overview of available images.
-
-`images:`
 : This server provides unofficial images for a variety of Linux distributions.
   The images are maintained by the [Linux Containers](https://linuxcontainers.org/) team and are built to be compact and minimal.
 

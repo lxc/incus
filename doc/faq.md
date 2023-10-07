@@ -9,7 +9,7 @@ Most likely, your firewall blocks network access for your instances.
 See {ref}`network-bridge-firewall` for more information about the problem and how to fix it.
 
 Another frequent reason for connectivity issues is running Incus and Docker on the same host.
-See {ref}`network-lxd-docker` for instructions on how to fix such issues.
+See {ref}`network-incus-docker` for instructions on how to fix such issues.
 
 ## How to enable the Incus server for remote access?
 

@@ -1,7 +1,3 @@
----
-relatedlinks: https://ubuntu.com/blog/directly-interacting-with-the-lxd-api
----
-
 # REST API
 
 ```{toctree}

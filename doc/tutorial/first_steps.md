@@ -186,7 +186,7 @@ Let's create another container with some resource limits:
       tmpfs           483M     0  483M   0% /dev/shm
       tmpfs           193M  604K  193M   1% /run
       tmpfs           5.0M     0  5.0M   0% /run/lock
-      tmpfs            50M   14M   37M  27% /run/lxd_agent
+      tmpfs            50M   14M   37M  27% /run/incus_agent
       /dev/sda15      105M  6.1M   99M   6% /boot/efi
       ```
 
@@ -208,7 +208,7 @@ Let's create another container with some resource limits:
        tmpfs           483M     0  483M   0% /dev/shm
        tmpfs           193M  588K  193M   1% /run
        tmpfs           5.0M     0  5.0M   0% /run/lock
-       tmpfs            50M   14M   37M  27% /run/lxd_agent
+       tmpfs            50M   14M   37M  27% /run/incus_agent
        /dev/sda15      105M  6.1M   99M   6% /boot/efi
        ```
 

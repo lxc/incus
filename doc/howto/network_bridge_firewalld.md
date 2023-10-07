@@ -39,7 +39,7 @@ See the following sections for instructions on how to disable Incus's firewall r
 
 ### Disable Incus's firewall rules
 
-Run the following commands to prevent Incus from setting firewall rules for a specific network bridge (for example, `lxdbr0`):
+Run the following commands to prevent Incus from setting firewall rules for a specific network bridge (for example, `incusbr0`):
 
     incus network set <network_bridge> ipv6.firewall false
     incus network set <network_bridge> ipv4.firewall false
@@ -54,7 +54,7 @@ To do this permanently (so that it persists after a reboot), run the following c
 
 For example:
 
-    sudo firewall-cmd --zone=trusted --change-interface=lxdbr0 --permanent
+    sudo firewall-cmd --zone=trusted --change-interface=incusbr0 --permanent
     sudo firewall-cmd --reload
 
 <!-- Include start warning -->
@@ -79,9 +79,9 @@ To do so, run the following commands:
 
 For example:
 
-    sudo ufw allow in on lxdbr0
-    sudo ufw route allow in on lxdbr0
-    sudo ufw route allow out on lxdbr0
+    sudo ufw allow in on incusbr0
+    sudo ufw route allow in on incusbr0
+    sudo ufw route allow out on incusbr0
 
 % Repeat warning from above
 ```{include} network_bridge_firewalld.md
@@ -89,7 +89,7 @@ For example:
     :end-before: <!-- Include end warning -->
 ```
 
-(network-lxd-docker)=
+(network-incus-docker)=
 ## Prevent connectivity issues with Incus and Docker
 
 Running Incus and Docker on the same host can cause connectivity issues.
@@ -135,10 +135,10 @@ Allow egress network traffic flows
       iptables -I DOCKER-USER -i <network_bridge> -j ACCEPT
       iptables -I DOCKER-USER -o <network_bridge> -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
-  For example, if your Incus managed bridge is called `lxdbr0`, you can allow egress traffic to flow using the following commands:
+  For example, if your Incus managed bridge is called `incusbr0`, you can allow egress traffic to flow using the following commands:
 
-      iptables -I DOCKER-USER -i lxdbr0 -j ACCEPT
-      iptables -I DOCKER-USER -o lxdbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+      iptables -I DOCKER-USER -i incusbr0 -j ACCEPT
+      iptables -I DOCKER-USER -o incusbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
   ```{important}
   You  must make these firewall rules persistent across host reboots.

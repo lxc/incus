@@ -6,7 +6,7 @@ Files can be individually edited or deleted, pushed from or pulled to the local 
 Alternatively, you can mount the instance's file system onto the local machine.
 
 For containers, these file operations always work and are handled directly by Incus.
-For virtual machines, the `lxd-agent` process must be running inside of the virtual machine for them to work.
+For virtual machines, the `incus-agent` process must be running inside of the virtual machine for them to work.
 
 ## Edit instance files
 

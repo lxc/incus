@@ -33,7 +33,7 @@ Therefore, make sure to restrict the access to the daemon to trusted users.
 
 The Incus daemon runs as root and provides a Unix socket for local communication.
 Access control for Incus is based on group membership.
-The root user and all members of the `lxd` group can interact with the local daemon.
+The root user and all members of the `incus-admin` group can interact with the local daemon.
 
 ````{important}
 % Include content from [../../README.md](../../README.md)
@@ -90,7 +90,7 @@ Which aspects you should consider depends on the networking mode you decide to u
 ### Bridged NIC security
 
 The default networking mode in Incus is to provide a "managed" private network bridge that each instance connects to.
-In this mode, there is an interface on the host called `lxdbr0` that acts as the bridge for the instances.
+In this mode, there is an interface on the host called `incusbr0` that acts as the bridge for the instances.
 
 The host runs an instance of `dnsmasq` for each managed bridge, which is responsible for allocating IP addresses and providing both authoritative and recursive DNS services.
 
@@ -105,7 +105,7 @@ This assumes that the instances are not using any IPv6 privacy extensions when g
 In this default configuration, whilst DNS names cannot not be spoofed, the instance is connected to an Ethernet bridge and can transmit any layer 2 traffic that it wishes, which means an instance that is not trusted can effectively do MAC or IP spoofing on the bridge.
 
 In the default configuration, it is also possible for instances connected to the bridge to modify the Incus host's IPv6 routing table by sending (potentially malicious) IPv6 router advertisements to the bridge.
-This is because the `lxdbr0` interface is created with `/proc/sys/net/ipv6/conf/lxdbr0/accept_ra` set to `2`, meaning that the Incus host will accept router advertisements even though `forwarding` is enabled (see [`/proc/sys/net/ipv4/*` Variables](https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt) for more information).
+This is because the `incusbr0` interface is created with `/proc/sys/net/ipv6/conf/incusbr0/accept_ra` set to `2`, meaning that the Incus host will accept router advertisements even though `forwarding` is enabled (see [`/proc/sys/net/ipv4/*` Variables](https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt) for more information).
 
 However, Incus offers several bridged {abbr}`NIC (Network interface controller)` security features that can be used to control the type of traffic that an instance is allowed to send onto the network.
 These NIC settings should be added to the profile that the instance is using, or they can be added to individual instances, as shown below.

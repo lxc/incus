@@ -68,7 +68,7 @@ For example, the `default` profile might look like this:
     devices:
       eth0:
         name: eth0
-        network: lxdbr0
+        network: incusbr0
         type: nic
       root:
         path: /

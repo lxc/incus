@@ -13,8 +13,6 @@ Do not rely on this tool as an alternative to proper backups; you will lose data
 The tool must be run interactively and cannot be used in automated scripts.
 ```
 
-The tool is available through the `incus admin recover` command (note the `lxd` command rather than the normal `incus` command).
-
 ## Recovery process
 
 When you run the tool, it scans all storage pools that still exist in the database, looking for missing volumes that can be recovered.
@@ -32,7 +30,7 @@ However, if this information is not available, the tool falls back to restoring 
 The tool asks you to re-create missing entities like networks.
 However, the tool does not know how the instance was configured.
 That means that if some configuration was specified through the `default` profile, you must also re-add the required configuration to the profile.
-For example, if the `lxdbr0` bridge is used in an instance and you are prompted to re-create it, you must add it back to the `default` profile so that the recovered instance uses it.
+For example, if the `incusbr0` bridge is used in an instance and you are prompted to re-create it, you must add it back to the `default` profile so that the recovered instance uses it.
 
 ## Example
 
@@ -57,11 +55,11 @@ The following unknown volumes have been found:
  - Container "u1" on pool "default" in project "default" (includes 0 snapshots)
  - Container "u2" on pool "default" in project "default" (includes 0 snapshots)
 You are currently missing the following:
- - Network "lxdbr0" in project "default"
+ - Network "incusbr0" in project "default"
 Please create those missing entries and then hit ENTER: ^Z
 [1]+  Stopped                 incus admin recover
-:input: incus network create lxdbr0
-Network lxdbr0 created
+:input: incus network create incusbr0
+Network incusbr0 created
 :input: fg
 incus admin recover
 
@@ -78,7 +76,7 @@ Starting recovery...
 +------+---------+------+------+-----------+-----------+
 | u2   | STOPPED |      |      | CONTAINER | 0         |
 +------+---------+------+------+-----------+-----------+
-:input: incus profile device add default eth0 nic network=lxdbr0 name=eth0
+:input: incus profile device add default eth0 nic network=incusbr0 name=eth0
 Device eth0 added to default
 :input: incus start u1
 :input: incus list

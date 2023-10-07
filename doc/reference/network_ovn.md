@@ -44,7 +44,7 @@ Key                                  | Type      | Condition             | Defau
 `network`                            | string    | -                     | -                         | Uplink network to use for external network access
 `bridge.hwaddr`                      | string    | -                     | -                         | MAC address for the bridge
 `bridge.mtu`                         | integer   | -                     | `1442`                    | Bridge MTU (default allows host to host Geneve tunnels)
-`dns.domain`                         | string    | -                     | `lxd`                     | Domain to advertise to DHCP clients and use for DNS resolution
+`dns.domain`                         | string    | -                     | `incus`                   | Domain to advertise to DHCP clients and use for DNS resolution
 `dns.search`                         | string    | -                     | -                         | Full comma-separated domain search list, defaulting to `dns.domain` value
 `dns.zone.forward`                   | string    | -                     | -                         | Comma-separated list of DNS zone names for forward DNS records
 `dns.zone.reverse.ipv4`              | string    | -                     | -                         | DNS zone name for IPv4 reverse DNS records

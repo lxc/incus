@@ -56,4 +56,4 @@ Once a member of the group issues a Incus command, Incus creates a confined proj
 If Incus has not been {ref}`initialized <initialize>` at this point, it is automatically initialized (with the default settings).
 
 If you want to customize the project settings, for example, to impose limits or restrictions, you can do so after the project has been created.
-To modify the project configuration, you must have full access to Incus, which means you must be part of the `lxd` group and not only the group that you configured as the Incus user group.
+To modify the project configuration, you must have full access to Incus, which means you must be part of the `incus-admin` group and not only the group that you configured as the Incus user group.

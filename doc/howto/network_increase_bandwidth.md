@@ -21,7 +21,7 @@ For the `net.core.netdev_max_backlog` value, a good guideline is to use the mini
 
 Complete the following steps to increase the network bandwidth on the Incus host:
 
-1. Increase the transmit queue length (`txqueuelen`) of both the real NIC and the Incus NIC (for example, `lxdbr0`).
+1. Increase the transmit queue length (`txqueuelen`) of both the real NIC and the Incus NIC (for example, `incusbr0`).
    You can do this temporarily for testing with the following command:
 
        ifconfig <interface> txqueuelen 10000

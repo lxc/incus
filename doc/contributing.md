@@ -15,7 +15,7 @@ To build the dependencies, follow the instructions in {ref}`installing_from_sour
 
 After setting up your build environment, add your GitHub fork as a remote:
 
-    git remote add myfork git@github.com:<your_username>/lxd.git
+    git remote add myfork git@github.com:<your_username>/incus.git
     git remote update
 
 Then switch to it:
@@ -39,7 +39,7 @@ git push myfork [name_of_your_new_branch]
   The `Incus_DIR` defaults to `/var/lib/incus`.
 - As you develop, you may want to change the `Incus_DIR` for your fork of Incus so as to avoid version conflicts.
 - Binaries compiled from your source will be generated in the `$(go env GOPATH)/bin` directory by default.
-   - You will need to explicitly invoke these binaries (not the global `lxd` you may have installed) when testing your changes.
+   - You will need to explicitly invoke these binaries (not the global `incusd` you may have installed) when testing your changes.
    - You may choose to create an alias in your `~/.bashrc` to call these binaries with the appropriate flags more conveniently.
 - If you have a `systemd` service configured to run the Incus daemon from a previous installation of Incus, you may want to disable it to avoid version conflicts.
 

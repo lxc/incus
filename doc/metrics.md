@@ -22,26 +22,26 @@ To view the raw data that Incus collects, use the [`incus query`](incus_query.md
 ```{terminal}
 :input: incus query /1.0/metrics
 
-# HELP lxd_cpu_seconds_total The total number of CPU time used in seconds.
-# TYPE lxd_cpu_seconds_total counter
-lxd_cpu_seconds_total{cpu="0",mode="system",name="u1",project="default",type="container"} 60.304517
-lxd_cpu_seconds_total{cpu="0",mode="user",name="u1",project="default",type="container"} 145.647502
-lxd_cpu_seconds_total{cpu="0",mode="iowait",name="vm",project="default",type="virtual-machine"} 4614.78
-lxd_cpu_seconds_total{cpu="0",mode="irq",name="vm",project="default",type="virtual-machine"} 0
-lxd_cpu_seconds_total{cpu="0",mode="idle",name="vm",project="default",type="virtual-machine"} 412762
-lxd_cpu_seconds_total{cpu="0",mode="nice",name="vm",project="default",type="virtual-machine"} 35.06
-lxd_cpu_seconds_total{cpu="0",mode="softirq",name="vm",project="default",type="virtual-machine"} 2.41
-lxd_cpu_seconds_total{cpu="0",mode="steal",name="vm",project="default",type="virtual-machine"} 9.84
-lxd_cpu_seconds_total{cpu="0",mode="system",name="vm",project="default",type="virtual-machine"} 340.84
-lxd_cpu_seconds_total{cpu="0",mode="user",name="vm",project="default",type="virtual-machine"} 261.25
-# HELP lxd_cpu_effective_total The total number of effective CPUs.
-# TYPE lxd_cpu_effective_total gauge
-lxd_cpu_effective_total{name="u1",project="default",type="container"} 4
-lxd_cpu_effective_total{name="vm",project="default",type="virtual-machine"} 0
-# HELP lxd_disk_read_bytes_total The total number of bytes read.
-# TYPE lxd_disk_read_bytes_total counter
-lxd_disk_read_bytes_total{device="loop5",name="u1",project="default",type="container"} 2048
-lxd_disk_read_bytes_total{device="loop3",name="vm",project="default",type="virtual-machine"} 353280
+# HELP incus_cpu_seconds_total The total number of CPU time used in seconds.
+# TYPE incus_cpu_seconds_total counter
+incus_cpu_seconds_total{cpu="0",mode="system",name="u1",project="default",type="container"} 60.304517
+incus_cpu_seconds_total{cpu="0",mode="user",name="u1",project="default",type="container"} 145.647502
+incus_cpu_seconds_total{cpu="0",mode="iowait",name="vm",project="default",type="virtual-machine"} 4614.78
+incus_cpu_seconds_total{cpu="0",mode="irq",name="vm",project="default",type="virtual-machine"} 0
+incus_cpu_seconds_total{cpu="0",mode="idle",name="vm",project="default",type="virtual-machine"} 412762
+incus_cpu_seconds_total{cpu="0",mode="nice",name="vm",project="default",type="virtual-machine"} 35.06
+incus_cpu_seconds_total{cpu="0",mode="softirq",name="vm",project="default",type="virtual-machine"} 2.41
+incus_cpu_seconds_total{cpu="0",mode="steal",name="vm",project="default",type="virtual-machine"} 9.84
+incus_cpu_seconds_total{cpu="0",mode="system",name="vm",project="default",type="virtual-machine"} 340.84
+incus_cpu_seconds_total{cpu="0",mode="user",name="vm",project="default",type="virtual-machine"} 261.25
+# HELP incus_cpu_effective_total The total number of effective CPUs.
+# TYPE incus_cpu_effective_total gauge
+incus_cpu_effective_total{name="u1",project="default",type="container"} 4
+incus_cpu_effective_total{name="vm",project="default",type="virtual-machine"} 0
+# HELP incus_disk_read_bytes_total The total number of bytes read.
+# TYPE incus_disk_read_bytes_total counter
+incus_disk_read_bytes_total{device="loop5",name="u1",project="default",type="container"} 2048
+incus_disk_read_bytes_total{device="loop3",name="vm",project="default",type="virtual-machine"} 353280
 ...
 ```
 
@@ -129,7 +129,7 @@ Here's what the configuration needs to look like:
 
 ```yaml
 scrape_configs:
-  - job_name: lxd
+  - job_name: incus
     metrics_path: '/1.0/metrics'
     scheme: 'https'
     static_configs:
@@ -175,8 +175,8 @@ scrape_configs:
   #       or when multiple projects are used.
   #
   # Note: each member of the cluster only provide metrics for instances it runs locally
-  #       this is why the `lxd-hdc` cluster lists 3 targets
-  - job_name: "lxd-hdc"
+  #       this is why the `incus-hdc` cluster lists 3 targets
+  - job_name: "incus-hdc"
     metrics_path: '/1.0/metrics'
     params:
       project: ['jdoe']
@@ -194,7 +194,7 @@ scrape_configs:
 
   # jupiter, mars and saturn are 3 standalone Incus servers.
   # Note: only the `default` project is used on them, so it is not specified.
-  - job_name: "lxd-jupiter"
+  - job_name: "incus-jupiter"
     metrics_path: '/1.0/metrics'
     scheme: 'https'
     static_configs:
@@ -205,7 +205,7 @@ scrape_configs:
       key_file: 'tls/metrics.key'
       server_name: 'jupiter'
 
-  - job_name: "lxd-mars"
+  - job_name: "incus-mars"
     metrics_path: '/1.0/metrics'
     scheme: 'https'
     static_configs:
@@ -216,7 +216,7 @@ scrape_configs:
       key_file: 'tls/metrics.key'
       server_name: 'mars'
 
-  - job_name: "lxd-saturn"
+  - job_name: "incus-saturn"
     metrics_path: '/1.0/metrics'
     scheme: 'https'
     static_configs:

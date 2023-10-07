@@ -34,7 +34,7 @@ To add a `proxy` device, use the following command:
 The proxy device also supports a NAT mode (`nat=true`), where packets are forwarded using NAT rather than being proxied through a separate connection.
 This mode has the benefit that the client address is maintained without the need for the target destination to support the HAProxy PROXY protocol (which is the only way to pass the client address through when using the proxy device in non-NAT mode).
 
-However, NAT mode is supported only if the host that the instance is running on is the gateway (which is the case if you're using `lxdbr0`, for example).
+However, NAT mode is supported only if the host that the instance is running on is the gateway (which is the case if you're using `incusbr0`, for example).
 
 In NAT mode, the supported connection types are:
 

@@ -5,7 +5,7 @@ See the following sections for how to set up a basic OVN network, either as a st
 
 ## Set up a standalone OVN network
 
-Complete the following steps to create a standalone OVN network that is connected to a managed Incus parent bridge network (for example, `lxdbr0`) for outbound connectivity.
+Complete the following steps to create a standalone OVN network that is connected to a managed Incus parent bridge network (for example, `incusbr0`) for outbound connectivity.
 
 1. Install the OVN tools on the local server:
 

@@ -45,7 +45,7 @@ The following configuration options are supported:
 * `cloud-init.user-data` or `user.user-data` (see {ref}`cloud-init:user_data_formats`)
 * `cloud-init.network-config` or `user.network-config` (see {ref}`cloud-init:network_config`)
 
-For more information about the configuration options, see the [`cloud-init` instance options](instance-options-cloud-init), and the documentation for the {ref}`Incus data source <cloud-init:datasource_lxd>` in the `cloud-init` documentation.
+For more information about the configuration options, see the [`cloud-init` instance options](instance-options-cloud-init), and the documentation for the {ref}`LXD data source <cloud-init:datasource_lxd>` in the `cloud-init` documentation.
 
 ### Vendor data and user data
 

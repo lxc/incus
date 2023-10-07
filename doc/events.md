@@ -24,7 +24,7 @@ metadata:
   requestor:
     protocol: unix
     username: root
-  source: /1.0/networks/lxdbr0
+  source: /1.0/networks/incusbr0
 timestamp: "2021-03-14T00:00:00Z"
 type: lifecycle
 ```

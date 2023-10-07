@@ -7,7 +7,7 @@ The LXC containers must exist on the same machine as the Incus server.
 The tool analyzes the LXC containers and migrates both their data and their configuration into new Incus containers.
 
 ```{note}
-Alternatively, you can use the `lxd-migrate` tool within a LXC container to migrate it to Incus (see {ref}`import-machines-to-instances`).
+Alternatively, you can use the `incus-migrate` tool within a LXC container to migrate it to Incus (see {ref}`import-machines-to-instances`).
 However, this tool does not migrate any of the LXC container configuration.
 ```
 

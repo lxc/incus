@@ -10,7 +10,7 @@ Migrate existing Incus instances between servers
   See {ref}`move-instances` for more information.
 
 Migrate physical or virtual machines to Incus instances
-: If you have an existing machine, either physical or virtual (VM or container), you can use the `lxd-migrate` tool to create a Incus instance based on your existing machine.
+: If you have an existing machine, either physical or virtual (VM or container), you can use the `incus-migrate` tool to create a Incus instance based on your existing machine.
   The tool copies the provided partition, disk or image to the Incus storage pool of the provided Incus server, sets up an instance using that storage and allows you to configure additional settings for the new instance.
 
   See {ref}`import-machines-to-instances` for more information.

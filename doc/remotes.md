@@ -55,7 +55,7 @@ Users can override these system remotes (for example, by running [`incus remote 
 
 To configure a global remote, create or edit a `config.yml` file that is located in `/etc/incus/`.
 
-Certificates for the remotes must be stored in the `servercerts` directory in the same location (for example, `/etc/lxd/servercerts/`).
+Certificates for the remotes must be stored in the `servercerts` directory in the same location (for example, `/etc/incus/servercerts/`).
 They must match the remote name (for example, `foo.crt`).
 
 See the following example configuration:
@@ -66,12 +66,12 @@ remotes:
     addr: https://192.0.2.4:8443
     auth_type: tls
     project: default
-    protocol: lxd
+    protocol: incus
     public: false
   bar:
     addr: https://192.0.2.5:8443
     auth_type: tls
     project: default
-    protocol: lxd
+    protocol: incus
     public: false
 ```

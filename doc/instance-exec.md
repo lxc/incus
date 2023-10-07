@@ -4,7 +4,7 @@
 Incus allows to run commands inside an instance using the Incus client, without needing to access the instance through the network.
 
 For containers, this always works and is handled directly by Incus.
-For virtual machines, the `lxd-agent` process must be running inside of the virtual machine for this to work.
+For virtual machines, the `incus-agent` process must be running inside of the virtual machine for this to work.
 
 To run commands inside your instance, use the [`incus exec`](incus_exec.md) command.
 By running a shell command (for example, `/bin/bash`), you can get shell access to your instance.

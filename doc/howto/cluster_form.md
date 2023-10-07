@@ -207,7 +207,7 @@ storage_pools:
 - name: my-pool
   driver: zfs
 networks:
-- name: lxdbr0
+- name: incusbr0
   type: bridge
 profiles:
 - name: default
@@ -219,7 +219,7 @@ profiles:
     eth0:
       name: eth0
       nictype: bridged
-      parent: lxdbr0
+      parent: incusbr0
       type: nic
 cluster:
   server_name: server1

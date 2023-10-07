@@ -1,7 +1,3 @@
----
-relatedlinks: https://ubuntu.com/tutorials/how-to-install-a-windows-11-vm-using-lxd
----
-
 (instances)=
 # Instances
 

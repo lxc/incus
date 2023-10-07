@@ -4,7 +4,7 @@
 Communication between the hosted workload (instance) and its host while
 not strictly needed is a pretty useful feature.
 
-In Incus, this feature is implemented through a `/dev/lxd/sock` node which is
+In Incus, this feature is implemented through a `/dev/incus/sock` node which is
 created and set up for all Incus instances.
 
 This file is a Unix socket which processes inside the instance can
@@ -21,7 +21,7 @@ Incus on the host binds `/var/lib/incus/guestapi/sock` and starts listening for 
 connections on it.
 
 This socket is then exposed into every single instance started by
-Incus at `/dev/lxd/sock`.
+Incus at `/dev/incus/sock`.
 
 The single socket is required so we can exceed 4096 instances, otherwise,
 Incus would have to bind a different socket for every instance, quickly
@@ -29,18 +29,18 @@ reaching the FD limit.
 
 ## Authentication
 
-Queries on `/dev/lxd/sock` will only return information related to the
+Queries on `/dev/incus/sock` will only return information related to the
 requesting instance. To figure out where a request comes from, Incus will
 extract the initial socket's user credentials and compare that to the list of
 instances it manages.
 
 ## Protocol
 
-The protocol on `/dev/lxd/sock` is plain-text HTTP with JSON messaging, so very
+The protocol on `/dev/incus/sock` is plain-text HTTP with JSON messaging, so very
 similar to the local version of the Incus protocol.
 
 Unlike the main Incus API, there is no background operation and no
-authentication support in the `/dev/lxd/sock` API.
+authentication support in the `/dev/incus/sock` API.
 
 ## REST-API
 
@@ -112,7 +112,7 @@ Return value:
 
 Note that the configuration key names match those in the instance
 configuration, however not all configuration namespaces will be exported to
-`/dev/lxd/sock`.
+`/dev/incus/sock`.
 Currently only the `cloud-init.*` and `user.*` keys are accessible to the instance.
 
 At this time, there also aren't any instance-writable namespace.
@@ -149,7 +149,7 @@ Return value:
 {
     "eth0": {
         "name": "eth0",
-        "network": "lxdbr0",
+        "network": "incusbr0",
         "type": "nic"
     },
     "root": {

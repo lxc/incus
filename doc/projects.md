@@ -1,7 +1,3 @@
----
-relatedlinks: https://ubuntu.com/tutorials/introduction-to-lxd-projects
----
-
 (projects)=
 # Projects
 

@@ -29,9 +29,9 @@ Create a directory pool named `pool1`:
 
     incus storage create pool1 dir
 
-Use the existing directory `/data/lxd` for `pool2`:
+Use the existing directory `/data/incus` for `pool2`:
 
-    incus storage create pool2 dir source=/data/lxd
+    incus storage create pool2 dir source=/data/incus
 ````
 ````{group-tab} Btrfs
 

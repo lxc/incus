@@ -151,10 +151,10 @@ For external links, use only the URL, or Markdown syntax if you want to override
 
 * - Input
   - Output
-* - `https://ubuntu.com/lxd`
-  - [{spellexception}`https://ubuntu.com/lxd`](https://ubuntu.com/lxd)
-* - `[Incus](https://ubuntu.com/lxd)`
-  - [Incus](https://ubuntu.com/lxd)
+* - `https://linuxcontainers.org/incus`
+  - [{spellexception}`https://linuxcontainers.org/incus`](https://linuxcontainers.org/incus)
+* - `[Incus](https://linuxcontainers.org/incus)`
+  - [Incus](https://linuxcontainers.org/incus)
 ```
 
 To display a URL as text and prevent it from being linked, add a `<span></span>`:
@@ -164,8 +164,8 @@ To display a URL as text and prevent it from being linked, add a `<span></span>`
 
 * - Input
   - Output
-* - `https:/<span></span>/ubuntu.com/lxd`
-  - {spellexception}`https:/<span></span>/ubuntu.com/lxd`
+* - `https:/<span></span>/linuxcontainers.org/incus`
+  - {spellexception}`https:/<span></span>/linuxcontainers.org/incus`
 
 ```
 

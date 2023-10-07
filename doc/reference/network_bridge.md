@@ -64,7 +64,7 @@ Key                                  | Type      | Condition             | Defau
 `bridge.external_interfaces`         | string    | -                     | -                         | Comma-separated list of unconfigured network interfaces to include in the bridge
 `bridge.hwaddr`                      | string    | -                     | -                         | MAC address for the bridge
 `bridge.mtu`                         | integer   | -                     | `1500`                    | Bridge MTU (default varies if tunnel in use)
-`dns.domain`                         | string    | -                     | `lxd`                     | Domain to advertise to DHCP clients and use for DNS resolution
+`dns.domain`                         | string    | -                     | `incus`                   | Domain to advertise to DHCP clients and use for DNS resolution
 `dns.mode`                           | string    | -                     | `managed`                 | DNS registration mode: `none` for no DNS record, `managed` for Incus-generated static records or `dynamic` for client-generated records
 `dns.search`                         | string    | -                     | -                         | Full comma-separated domain search list, defaulting to `dns.domain` value
 `dns.zone.forward`                   | string    | -                     | `managed`                 | Comma-separated list of DNS zone names for forward DNS records

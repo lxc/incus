@@ -10,9 +10,6 @@ If this is not possible, there are a few ways to recover the cluster, depending 
 See the following sections for details.
 
 ```{note}
-When your cluster is in a state that needs recovery, most `incus` commands do not work, because the Incus client cannot connect to the Incus daemon.
-
-Therefore, the commands to recover the cluster are provided directly by the Incus daemon (`lxd`).
 Run `incus admin cluster --help` for an overview of all available commands.
 ```
 

@@ -12,7 +12,7 @@ To see all configured remote servers, enter the following command:
     incus remote list
 
 Remote servers that use the [simple streams format](https://git.launchpad.net/simplestreams/tree/) are pure image servers.
-Servers that use the `lxd` format are Incus servers, which either serve solely as image servers or might provide some images in addition to serving as regular Incus servers.
+Servers that use the `incus` format are Incus servers, which either serve solely as image servers or might provide some images in addition to serving as regular Incus servers.
 See {ref}`remote-image-server-types` for more information.
 <!-- Include end list remotes -->
 

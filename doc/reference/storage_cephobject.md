@@ -67,7 +67,7 @@ Key                                      | Type                          | Defau
 `cephobject.radosgw.endpoint`            | string                        | -       | URL of the `radosgw` gateway process
 `cephobject.radosgw.endpoint_cert_file`  | string                        | -       | Path to the file containing the TLS client certificate to use for endpoint communication
 `cephobject.user.name`                   | string                        | `admin` | The Ceph user to use
-`volatile.pool.pristine`                 | string                        | `true`  | Whether the `radosgw` `lxd-admin` user existed at creation time
+`volatile.pool.pristine`                 | string                        | `true`  | Whether the `radosgw` `incus-admin` user existed at creation time
 
 ### Storage bucket configuration
 

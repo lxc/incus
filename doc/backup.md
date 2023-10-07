@@ -20,7 +20,7 @@ Your Incus server contains the following entities:
 
 Consider which of these you need to back up.
 For example, if you don't use custom images, you don't need to back up your images since they are available on the image server.
-If you use only the `default` profile, or only the standard `lxdbr0` network bridge, you might not need to worry about backing them up, because they can easily be re-created.
+If you use only the `default` profile, or only the standard `incusbr0` network bridge, you might not need to worry about backing them up, because they can easily be re-created.
 
 ## Full backup
 

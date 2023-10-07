@@ -30,9 +30,9 @@ For example:
        valid_lft forever preferred_lft forever
     inet6 fe80::216:3eff:fee3:f33f/64 scope link
        valid_lft forever preferred_lft forever
-3: lxdbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+3: incusbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
     link/ether 00:16:3e:8d:f3:72 brd ff:ff:ff:ff:ff:ff
-    inet 10.64.82.1/24 scope global lxdbr0
+    inet 10.64.82.1/24 scope global incusbr0
        valid_lft forever preferred_lft forever
     inet6 fd42:f4ab:4399:e6eb::1/64 scope global
        valid_lft forever preferred_lft forever

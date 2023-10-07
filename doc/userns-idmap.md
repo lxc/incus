@@ -25,7 +25,7 @@ kernels but will refuse to start containers.
 ## Allowed ranges
 
 On most hosts, Incus will check `/etc/subuid` and `/etc/subgid` for
-allocations for the `lxd` user and on first start, set the default
+allocations for the `incus` user and on first start, set the default
 profile to use the first 65536 UIDs and GIDs from that range.
 
 If the range is shorter than 65536 (which includes no range at all),

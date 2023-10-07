@@ -1,4 +1,4 @@
-(lxd-server)=
+(incus-server)=
 # Incus server
 
 ```{toctree}

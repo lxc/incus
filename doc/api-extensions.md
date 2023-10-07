@@ -431,7 +431,7 @@ This adds support to interact with the container console device and console log.
 ## `restrict_dev_incus`
 
 A new `security.guestapi` container configuration key was introduced.
-The key controls whether the `/dev/lxd` interface is made available to the container.
+The key controls whether the `/dev/incus` interface is made available to the container.
 If set to `false`, this effectively prevents the container from interacting with the Incus daemon.
 
 ## `migration_pre_copy`
@@ -1789,7 +1789,7 @@ all instance structs, including the state, snapshots and backup structs.
 ## `qemu_metrics`
 
 This adds a new `security.agent.metrics` Boolean which defaults to `true`.
-When set to `false`, it doesn't connect to the `lxd-agent` for metrics and other state information, but relies on stats from QEMU.
+When set to `false`, it doesn't connect to the `incus-agent` for metrics and other state information, but relies on stats from QEMU.
 
 ## `gpu_mig_uuid`
 
@@ -1884,7 +1884,7 @@ This adds support for `event-hub` cluster member role and the `ServerEventMode` 
 
 ## `agent_nic_config`
 
-If set to `true`, on VM start-up the `lxd-agent` will apply NIC configuration to change the names and MTU of the instance NIC
+If set to `true`, on VM start-up the `incus-agent` will apply NIC configuration to change the names and MTU of the instance NIC
 devices.
 
 ## `projects_restricted_intercept`
@@ -1932,7 +1932,7 @@ Implements HEAD on `/1.0/instances/NAME/file`.
 
 This introduces the `instances.nic.host_name` server configuration key that can take a value of either `random` or
 `mac`. The default value for the key if unspecified is `random`. If it is set to random then use the random host interface names.
-If it's set to `mac`, then generate a name in the form `lxd1122334455`.
+If it's set to `mac`, then generate a name in the form `inc1122334455`.
 
 ## `image_copy_profile`
 
@@ -1968,7 +1968,7 @@ IP addresses that can be forwarded to one or more internal IP(s) inside their re
 
 ## `vsock_api`
 
-This introduces a bidirectional `vsock` interface which allows the `lxd-agent` and the Incus server to communicate better.
+This introduces a bidirectional `vsock` interface which allows the `incus-agent` and the Incus server to communicate better.
 
 ## `instance_ready_state`
 
@@ -1984,7 +1984,7 @@ This introduces the ability to list storage volumes from all projects.
 
 ## `metrics_memory_oom_total`
 
-This introduces a new `lxd_memory_OOM_kills_total` metric to the `/1.0/metrics` API.
+This introduces a new `incus_memory_OOM_kills_total` metric to the `/1.0/metrics` API.
 It reports the number of times the out of memory killer (`OOM`) has been triggered.
 
 ## `storage_buckets`
@@ -1996,7 +1996,7 @@ This introduces the storage bucket API. It allows the management of S3 object st
 This updates the storage bucket API to return initial admin credentials at bucket creation time.
 
 ## `metrics_cpu_effective_total`
-This introduces a new `lxd_cpu_effective_total` metric to the `/1.0/metrics` API.
+This introduces a new `incus_cpu_effective_total` metric to the `/1.0/metrics` API.
 It reports the total number of effective CPUs.
 
 ## `projects_networks_restricted_access`
