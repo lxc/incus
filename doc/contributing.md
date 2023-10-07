@@ -62,7 +62,7 @@ Typical ways to contribute are:
   We'll evaluate the issue and update the documentation accordingly.
 - Post a question or a suggestion on the [forum](https://discuss.linuxcontainers.org).
   We'll monitor the posts and, if needed, update the documentation accordingly.
-- Ask questions or provide suggestions in the `#lxd` channel on [IRC](https://web.libera.chat/#lxd).
+- Ask questions or provide suggestions in the `#lxc` channel on [IRC](https://web.libera.chat/#lxc).
   Given the dynamic nature of IRC, we cannot guarantee answers or reactions to IRC posts, but we monitor the channel and try to improve our documentation based on the received feedback.
 
 % Include content from [README.md](README.md)
