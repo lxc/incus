@@ -7,10 +7,6 @@ The `Value` column contains the suggested value for each parameter.
 
 ## `/etc/security/limits.conf`
 
-```{note}
-For users of the snap, those limits are automatically raised.
-```
-
 Domain  | Type  | Item      | Value       | Default   | Description
 :-----  | :---  | :----     | :---------- | :-------- | :----------
 `*`     | soft  | `nofile`  | `1048576`   | unset     | Maximum number of open files

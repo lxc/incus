@@ -104,8 +104,8 @@ To enable PKI mode, complete the following steps:
 
 1. Add the {abbr}`CA (Certificate authority)` certificate to all machines:
 
-   - Place the `client.ca` file in the clients' configuration directories (`~/.config/incus` or `~/snap/lxd/common/config` for snap users).
-   - Place the `server.ca` file in the server's configuration directory (`/var/lib/incus` or `/var/snap/lxd/common/lxd` for snap users).
+   - Place the `client.ca` file in the clients' configuration directories (`~/.config/incus`).
+   - Place the `server.ca` file in the server's configuration directory (`/var/lib/incus`).
 1. Place the certificates issued by the CA on the clients and the server, replacing the automatically generated ones.
 1. Restart the server.
 

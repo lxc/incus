@@ -62,7 +62,7 @@ In addition, creating a `/.dockerenv` file in your container can help Docker ign
 
 ## Where does the Incus client (`incus`) store its configuration?
 
-The [`incus`](incus.md) command stores its configuration under `~/.config/incus`, or in `~/snap/lxd/common/config` for snap users.
+The [`incus`](incus.md) command stores its configuration under `~/.config/incus`.
 
 Various configuration files are stored in that directory, for example:
 

@@ -187,7 +187,7 @@ Complete the following steps to have the OVN controller send its logs to Incus.
 1. Paste the following configuration:
 
        OVN_CTL_OPTS=" \
-              --ovn-controller-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket'"
+              --ovn-controller-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
 
 1. Restart the OVN controller:
 
@@ -207,9 +207,9 @@ You can include logs for OVN `northd`, OVN north-bound `ovsdb-server`, and OVN s
 To do so, edit `/etc/default/ovn-central`:
 
     OVN_CTL_OPTS=" \
-       --ovn-northd-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket' \
-       --ovn-nb-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket' \
-       --ovn-sb-log='-vsyslog:info --syslog-method=unix:/var/snap/lxd/common/lxd/syslog.socket'"
+       --ovn-northd-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+       --ovn-nb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket' \
+       --ovn-sb-log='-vsyslog:info --syslog-method=unix:/var/lib/incus/syslog.socket'"
 
     sudo systemctl restart ovn-central.service
 ```

@@ -58,13 +58,7 @@ For containers, there is limited support for live migration using [{abbr}`CRIU (
 However, because of extensive kernel dependencies, only very basic containers (non-`systemd` containers without a network device) can be migrated reliably.
 In most real-world scenarios, you should stop the container, move it over and then start it again.
 
-If you want to use live migration for containers, you must enable CRIU on both the source and the target server.
-If you are using the snap, use the following commands to enable CRIU:
-
-    snap set lxd criu.enable=true
-    sudo systemctl reload snap.lxd.daemon
-
-Otherwise, make sure you have CRIU installed on both systems.
+If you want to use live migration for containers, you must first make sure that CRIU is installed on both systems.
 
 To optimize the memory transfer for a container, set the {config:option}`instance-migration:migration.incremental.memory` property to `true` to make use of the pre-copy features in CRIU.
 With this configuration, Incus instructs CRIU to perform a series of memory dumps for the container.

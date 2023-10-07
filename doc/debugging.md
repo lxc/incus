@@ -29,12 +29,6 @@ utility:
 curl --unix-socket /var/lib/incus/unix.socket incus/1.0 | jq .
 ```
 
-or for snap users:
-
-```bash
-curl --unix-socket /var/snap/lxd/common/lxd/unix.socket lxd/1.0 | jq .
-```
-
 See the [RESTful API](rest-api.md) for available API.
 
 ## REST API through HTTPS
@@ -44,8 +38,7 @@ client certificate that is generated on first [`incus remote add`](incus_remote_
 certificate should be passed to connection tools for authentication
 and encryption.
 
-If desired, `openssl` can be used to examine the certificate (`~/.config/incus/client.crt`
-or `~/snap/lxd/common/config/client.crt` for snap users):
+If desired, `openssl` can be used to examine the certificate (`~/.config/incus/client.crt`):
 
 ```bash
 openssl x509 -text -noout -in client.crt
@@ -60,9 +53,6 @@ Among the lines you should see:
 
 ```bash
 wget --no-check-certificate --certificate=$HOME/.config/incus/client.crt --private-key=$HOME/.config/incus/client.key -qO - https://127.0.0.1:8443/1.0
-
-# or for snap users
-wget --no-check-certificate --certificate=$HOME/snap/lxd/common/config/client.crt --private-key=$HOME/snap/lxd/common/config/client.key -qO - https://127.0.0.1:8443/1.0
 ```
 
 ### With browser
@@ -83,8 +73,7 @@ After that, opening [`https://127.0.0.1:8443/1.0`](https://127.0.0.1:8443/1.0) s
 ## Debug the Incus database
 
 The files of the global {ref}`database <database>` are stored under the `./database/global`
-sub-directory of your Incus data directory (e.g. `/var/lib/incus/database/global` or
-`/var/snap/lxd/common/lxd/database/global` for snap users).
+sub-directory of your Incus data directory (`/var/lib/incus/database/global`).
 
 Since each member of the cluster also needs to keep some data which is specific
 to that member, Incus also uses a plain SQLite database (the "local" database),

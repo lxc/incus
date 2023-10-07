@@ -65,11 +65,9 @@ Client certificates
   A client that connects using a restricted certificate can see only the project or projects that the client has been granted access to.
 
 Multi-user Incus daemon
-: The Incus snap contains a multi-user Incus daemon that allows dynamic project creation on a per-user basis.
-  You can configure a specific user group other than the `lxd` group to give restricted Incus access to every user in the group.
+: A multi-user Incus daemon allows dynamic project creation on a per-user basis.
+  This is usually used for users that are a member of the `incus` group but aren't in the more privileged `incus-admin` group.
 
   When a user that is a member of this group starts using Incus, Incus automatically creates a confined project for this user.
-
-  If you're not using the snap, you can still use this feature if your distribution supports it.
 
 See {ref}`projects-confine` for instructions on how to enable and configure the different authentication methods.

@@ -32,9 +32,8 @@ To do so, complete the following steps:
 1. Pick one of the listed database members that is still online as the new leader.
    Log on to the machine (if it differs from the one you are already logged on to).
 1. Make sure that the Incus daemon is not running on the machine.
-   For example, if you're using the snap:
 
-       sudo snap stop lxd
+       sudo systemctl stop incus.service incus.socket
 
 1. Log on to all other cluster members that are still online and stop the Incus daemon.
 1. On the server that you picked as the new leader, run the following command:
@@ -42,9 +41,8 @@ To do so, complete the following steps:
        sudo incus admin cluster recover-from-quorum-loss
 
 1. Start the Incus daemon again on all machines, starting with the new leader.
-   For example, if you're using the snap:
 
-       sudo snap start lxd
+       sudo systemctl start incus.socket incus.service
 
 The database should now be back online.
 No information has been deleted from the database.
@@ -70,9 +68,8 @@ You can edit the {ref}`clustering-member-roles` of the different members, but wi
 Log on to each cluster member and complete the following steps:
 
 1. Stop the Incus daemon.
-   For example, if you're using the snap:
 
-       sudo snap stop lxd
+       sudo systemctl stop incus.service incus.socket
 
 1. Run the following command:
 
@@ -101,9 +98,8 @@ Log on to each cluster member and complete the following steps:
    You can edit the addresses and the roles.
 
 After doing the changes on all cluster members, start the Incus daemon on all members again.
-For example, if you're using the snap:
 
-    sudo snap start lxd
+    sudo systemctl start incus.socket incus.service
 
 The cluster should now be fully available again with all members reporting in.
 No information has been deleted from the database.

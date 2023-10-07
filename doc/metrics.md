@@ -100,31 +100,30 @@ incus config set core.metrics_authentication false
 If you run Prometheus on a different machine than your Incus server, you must copy the required certificates to the Prometheus machine:
 
 - The metrics certificate (`metrics.crt`) and key (`metrics.key`) that you created
-- The Incus server certificate (`server.crt`) located in `/var/snap/lxd/common/lxd/` (if you are using the snap) or `/var/lib/incus/` (otherwise)
+- The Incus server certificate (`server.crt`) located in `/var/lib/incus/`
 
-Copy these files into a `tls` directory that is accessible to Prometheus, for example, `/var/snap/prometheus/common/tls` (if you are using the snap) or `/etc/prometheus/tls` (otherwise).
+Copy these files into a `tls` directory that is accessible to Prometheus, for example, `/etc/prometheus/tls`.
 See the following example commands:
 
 ```bash
 # Create tls directory
-mkdir /var/snap/prometheus/common/tls
+mkdir /etc/prometheus/tls/
 
 # Copy newly created certificate and key to tls directory
-cp metrics.crt metrics.key /var/snap/prometheus/common/tls/
+cp metrics.crt metrics.key /etc/prometheus/tls/
 
 # Copy Incus server certificate to tls directory
-cp /var/snap/lxd/common/lxd/server.crt /var/snap/prometheus/common/tls/
+cp /var/lib/incus/server.crt /etc/prometheus/tls/
+
+# Make the files accessible by prometheus
+chown -R prometheus:prometheus /etc/prometheus/tls
 ```
-
-If you are not using the snap, you must also make sure that Prometheus can read these files (usually, Prometheus is run as user `prometheus`):
-
-    chown -R prometheus:prometheus /etc/prometheus/tls
 
 ### Configure Prometheus to scrape from Incus
 
 Finally, you must add Incus as a target to the Prometheus configuration.
 
-To do so, edit `/var/snap/prometheus/current/prometheus.yml` (if you are using the snap) or `/etc/prometheus/prometheus.yaml` (otherwise) and add a job for Incus.
+To do so, edit `/etc/prometheus/prometheus.yaml` and add a job for Incus.
 
 Here's what the configuration needs to look like:
 
@@ -151,7 +150,7 @@ To verify this, open `server.crt` and check the Subject Alternative Name (SAN) s
 For example, assume that `server.crt` has the following content:
 
 ```{terminal}
-:input: openssl x509 -noout -text -in /var/snap/prometheus/common/tls/server.crt
+:input: openssl x509 -noout -text -in /etc/prometheus/tls/server.crt
 
 ...
             X509v3 Subject Alternative Name:
@@ -169,7 +168,7 @@ scrape_configs:
   # abydos, langara and orilla are part of a single cluster (called `hdc` here)
   # initially bootstrapped by abydos which is why all 3 targets
   # share the same `ca_file` and `server_name`. That `ca_file` corresponds
-  # to the `/var/snap/lxd/common/lxd/cluster.crt` file found on every member of
+  # to the `/var/lib/incus/cluster.crt` file found on every member of
   # the Incus cluster.
   #
   # Note: the `project` param is are provided when not using the `default` project
@@ -229,7 +228,7 @@ scrape_configs:
       server_name: 'saturn'
 ```
 
-After editing the configuration, restart Prometheus (for example, `snap restart prometheus`) to start scraping.
+After editing the configuration, restart Prometheus (for example, `systemctl restart prometheus`) to start scraping.
 
 ## Set up a Grafana dashboard
 

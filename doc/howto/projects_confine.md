@@ -47,11 +47,8 @@ However, it does not confine the client to this project.
 
 ## Confine projects to specific Incus users
 
-If you use the [Incus snap](https://snapcraft.io/lxd), you can configure the multi-user Incus daemon contained in the snap to dynamically create projects for all users in a specific user group.
-
-To do so, set the `daemon.user.group` configuration option to the corresponding user group:
-
-    sudo snap set lxd daemon.user.group=<user_group>
+Incus can be configured to dynamically create projects for all users in a specific user group.
+This is usually achived by having some users be a member of the `incus` group but not the `incus-admin` group.
 
 Make sure that all user accounts that you want to be able to use Incus are a member of this group.
 

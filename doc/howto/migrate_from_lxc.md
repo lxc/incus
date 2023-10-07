@@ -13,10 +13,8 @@ However, this tool does not migrate any of the LXC container configuration.
 
 ## Get the tool
 
-If you're using the snap, the `lxc-to-incus` is automatically installed.
-It is available as `lxc-to-incus`.
-
-Otherwise, make sure that you have `go` (version 1.18 or later) installed and get the tool with the following command:
+If the tool isn't provided alongside your Incus installation, you can build it yourself.
+Make sure that you have `go` (version 1.18 or later) installed and get the tool with the following command:
 
     go install github.com/lxc/incus/cmd/lxc-to-incus@latest
 
@@ -36,7 +34,6 @@ Before you start the migration process, stop the LXC containers that you want to
 ## Start the migration process
 
 Run `sudo lxc-to-incus [flags]` to migrate the containers.
-(This command assumes that you are using the snap; otherwise, replace `lxc-to-incus` with `lxc-to-incus`, also in the following examples.)
 
 For example, to migrate all containers:
 

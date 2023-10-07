@@ -53,11 +53,7 @@ These remotes are available for every user of the Incus server for which you add
 
 Users can override these system remotes (for example, by running [`incus remote rename`](incus_remote_rename.md) or [`incus remote set-url`](incus_remote_set-url.md)), which results in the remote and its associated certificates being copied to the user configuration.
 
-To configure a global remote, edit the `config.yml` file that is located in one of the following directories:
-
-- the directory specified by `Incus_GLOBAL_CONF` (if defined)
-- `/var/snap/lxd/common/global-conf/` (if you use the snap)
-- `/etc/lxd/` (otherwise)
+To configure a global remote, create or edit a `config.yml` file that is located in `/etc/incus/`.
 
 Certificates for the remotes must be stored in the `servercerts` directory in the same location (for example, `/etc/lxd/servercerts/`).
 They must match the remote name (for example, `foo.crt`).

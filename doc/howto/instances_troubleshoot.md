@@ -17,12 +17,6 @@ To troubleshoot the problem, complete the following steps:
 
          incus console <instance_name> --show-log
 
-   Detailed server information
-   : The Incus snap includes a tool that collects the relevant server information for debugging.
-     Enter the following command to run it:
-
-         sudo lxd.buginfo
-
 1. Reboot the machine that runs your Incus server.
 1. Try starting your instance again.
    If the error occurs again, compare the logs to check if it is the same error.

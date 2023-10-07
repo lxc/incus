@@ -3,7 +3,7 @@
 
 The easiest way to install Incus is to {ref}`install one of the available packages <installing-from-package>`, but you can also {ref}`install Incus from the sources <installing_from_source>`.
 
-After installing Incus, make sure you have a `lxd` group on your system.
+After installing Incus, make sure you have an `incus-admin` group on your system.
 Users in this group can interact with Incus.
 See {ref}`installing-manage-access` for instructions.
 
@@ -28,81 +28,37 @@ The client tool ([`incus`](incus.md)) is available on most platforms.
 
 ### Linux
 
-The easiest way to install Incus on Linux is to install the {ref}`installing-snap-package`, which is available for different Linux distributions.
+The easiest way to install Incus on Linux is to install the {ref}`installing-zabbly-package`, which is available for both Debian and Ubuntu.
 
-If this option does not work for you, see the {ref}`installing-other`.
+(installing-zabbly-package)=
+#### Debian and Ubuntu package from Zabbly
+Currently the easiest way to install Incus is to use the Debian or Ubuntu packages provided by [Zabbly](https://zabbly.com).
+There are two repositories available, one for the current stable release and one for daily (untested) builds.
 
-(installing-snap-package)=
-#### Snap package
+Installation instructions may be found here: [https://github.com/zabbly/incus](https://github.com/zabbly/incus)
 
-Incus publishes and tests [snap packages](https://snapcraft.io/lxd) that work for a number of Linux distributions (for example, Ubuntu, Arch Linux, Debian, Fedora, and OpenSUSE).
+If you prefer a different installation method, see {ref}`installing`.
 
-Complete the following steps to install the snap:
+1. Allow your user to control Incus
 
-1. Check the [Incus snap page on Snapcraft](https://snapcraft.io/lxd) to see if a snap is available for your Linux distribution.
-   If it is not, use one of the {ref}`installing-other`.
+   Access to Incus in the packages above is controlled through two groups:
 
-1. Install `snapd`.
-   See the [installation instructions](https://snapcraft.io/docs/core/install) in the Snapcraft documentation.
+   - `incus` allows basic user access, no configuration and all actions restricted to a per-user project.
+   - `incus-admin` allows full control over Incus.
 
-1. Install the snap package.
-   For the latest feature release, use:
+   To control Incus without having to run all commands as root, you can add yourself to the `incus-admin` group:
 
-        sudo snap install lxd
+       sudo adduser YOUR-USERNAME incus-admin
+       newgrp incus-admin
 
-   For the Incus 5.0 LTS release, use:
+   The `newgrp` step is needed in any terminal that interacts with Incus until you restart your user session.
 
-        sudo snap install lxd --channel=5.0/stable
+1. Initialize Incus with:
 
-For more information about Incus snap packages (regarding more versions, update management etc.), see [Managing the Incus snap](https://discuss.linuxcontainers.org/t/managing-the-lxd-snap/8178).
+       incus admin init --minimal
 
-```{note}
-On Ubuntu 18.04, if you previously had the Incus deb package installed, you can migrate all your existing data over with the following command:
-
-        sudo lxd.migrate
-```
-
-(installing-other)=
-#### Other installation options
-
-Some Linux distributions provide installation options other than the snap package.
-
-````{tabs}
-
-```{group-tab} Alpine Linux
-
-To install the feature branch of Incus on Alpine Linux, run:
-
-    apk add lxd
-```
-
-```{group-tab} Arch Linux
-
-To install the feature branch of Incus on Arch Linux, run:
-
-    pacman -S lxd
-```
-
-```{group-tab} Fedora
-
-Fedora RPM packages for LXC/Incus are available in the [COPR repository](https://copr.fedorainfracloud.org/coprs/ganto/lxc4/).
-
-To install the Incus package for the feature branch, run:
-
-    dnf copr enable ganto/lxc4
-    dnf install lxd
-
-See the [Installation Guide](https://github.com/ganto/copr-lxc4/wiki) for more detailed installation instructions.
-```
-
-```{group-tab} Gentoo
-
-To install the feature branch of Incus on Gentoo, run:
-
-    emerge --ask lxd
-```
-
-````
+   This will create a minimal setup with default options.
+   If you want to tune the initialization options, see {ref}`initialize` for more information.
 
 ### Other operating systems
 
@@ -118,7 +74,7 @@ Incus publishes builds of the Incus client for macOS through [Homebrew](https://
 
 To install the feature branch of Incus, run:
 
-    brew install lxc
+    brew install incus
 ```
 
 ```{group-tab} Windows
@@ -129,7 +85,7 @@ To install it:
 1. Install Chocolatey by following the [installation instructions](https://docs.chocolatey.org/en-us/choco/setup).
 1. Install the Incus client:
 
-        choco install lxc
+        choco install incus
 ```
 
 ````
@@ -179,7 +135,7 @@ future.
 
 ```bash
 git clone https://github.com/lxc/incus
-cd lxd
+cd incus
 ```
 
 This will download the current development tree of Incus and place you in the source tree.
@@ -191,8 +147,8 @@ The Incus release tarballs bundle a complete dependency tree as well as a
 local copy of `libraft` and `libdqlite` for Incus's database setup.
 
 ```bash
-tar zxvf lxd-4.18.tar.gz
-cd lxd-4.18
+tar zxvf incus-0.1.tar.gz
+cd incus-0.1
 ```
 
 This will unpack the release tarball and place you inside of the source tree.
@@ -247,7 +203,7 @@ Now you can run the daemon (the `--group sudo` bit allows everyone in the `sudo`
 group to talk to Incus; you can create your own group if you want):
 
 ```bash
-sudo -E PATH=${PATH} LD_LIBRARY_PATH=${LD_LIBRARY_PATH} $(go env GOPATH)/bin/lxd --group sudo
+sudo -E PATH=${PATH} LD_LIBRARY_PATH=${LD_LIBRARY_PATH} $(go env GOPATH)/bin/incus --group sudo
 ```
 
 ```{note}
@@ -258,14 +214,14 @@ If `newuidmap/newgidmap` tools are present on your system and `/etc/subuid`, `et
 ## Manage access to Incus
 
 Access control for Incus is based on group membership.
-The root user and all members of the `lxd` group can interact with the local daemon.
+The root user and all members of the `incus-admin` group can interact with the local daemon.
 See {ref}`security-daemon-access` for more information.
 
-If the `lxd` group is missing on your system, create it and restart the Incus daemon.
+If the `incus-admin` group is missing on your system, create it and restart the Incus daemon.
 You can then add trusted users to the group.
 Anyone added to this group will have full control over Incus.
 
-Because group membership is normally only applied at login, you might need to either re-open your user session or use the `newgrp lxd` command in the shell you're using to talk to Incus.
+Because group membership is normally only applied at login, you might need to either re-open your user session or use the `newgrp incus-admin` command in the shell you're using to talk to Incus.
 
 ````{important}
 % Include content from [../README.md](../README.md)
@@ -280,7 +236,7 @@ Because group membership is normally only applied at login, you might need to ei
 
 After upgrading Incus to a newer version, Incus might need to update its database to a new schema.
 This update happens automatically when the daemon starts up after a Incus upgrade.
-A backup of the database before the update is stored in the same location as the active database (for example, at `/var/snap/lxd/common/lxd/database` for the snap installation).
+A backup of the database before the update is stored in the same location as the active database (at `/var/lib/incus/database`).
 
 ```{important}
 After a schema update, older versions of Incus might regard the database as invalid.

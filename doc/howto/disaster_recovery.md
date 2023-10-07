@@ -45,12 +45,12 @@ This Incus server currently has the following storage pools:
 Would you like to recover another storage pool? (yes/no) [default=no]: yes
 Name of the storage pool: default
 Name of the storage backend (btrfs, ceph, cephfs, cephobject, dir, lvm, zfs): zfs
-Source of the storage pool (block device, volume group, dataset, path, ... as applicable): /var/snap/lxd/common/lxd/storage-pools/default/containers
+Source of the storage pool (block device, volume group, dataset, path, ... as applicable): /var/lib/incus/storage-pools/default/containers
 Additional storage pool configuration property (KEY=VALUE, empty when done): zfs.pool_name=default
 Additional storage pool configuration property (KEY=VALUE, empty when done):
 Would you like to recover another storage pool? (yes/no) [default=no]:
 The recovery process will be scanning the following storage pools:
- - NEW: "default" (backend="zfs", source="/var/snap/lxd/common/lxd/storage-pools/default/containers")
+ - NEW: "default" (backend="zfs", source="/var/lib/incus/storage-pools/default/containers")
 Would you like to continue with scanning for lost volumes? (yes/no) [default=yes]: yes
 Scanning for unknown volumes...
 The following unknown volumes have been found:

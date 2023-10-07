@@ -63,7 +63,6 @@ To push a directory with all contents, enter the following command:
 You can mount an instance file system into a local path on your client.
 
 To do so, make sure that you have `sshfs` installed.
-Then run the following command (note that if you're using the snap, the command requires root permissions):
 
     incus file mount <instance_name>/<path_to_directory> <local_location>
 
@@ -73,7 +72,6 @@ You can then access the files from your local machine.
 
 Alternatively, you can set up an SSH SFTP listener.
 This method allows you to connect with any SFTP client and with a dedicated user name.
-Also, if you're using the snap, it does not require root permission.
 
 To do so, first set up the listener by entering the following command:
 

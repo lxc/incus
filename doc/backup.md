@@ -24,7 +24,7 @@ If you use only the `default` profile, or only the standard `lxdbr0` network bri
 
 ## Full backup
 
-To create a full backup of all contents of your Incus server, back up the `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/incus` (otherwise) directory.
+To create a full backup of all contents of your Incus server, back up the `/var/lib/incus` directory.
 
 This directory contains your local storage, the Incus database, and your configuration.
 It does not contain separate storage devices, however.
@@ -36,33 +36,18 @@ If your Incus server uses any external storage (for example, LVM volume groups, 
 See {ref}`howto-storage-backup-volume` for instructions.
 ```
 
-To back up your data, create a tarball of `/var/snap/lxd/common/lxd` (for snap users) or `/var/lib/incus` (otherwise).
-If you are not using the snap package and your source system has a `/etc/subuid` and `/etc/subgid` file, you should also back up these files.
+To back up your data, create a tarball of `/var/lib/incus`.
+If your system uses `/etc/subuid` and `/etc/subgid` file, you should also back up these files.
 Restoring them avoids needless shifting of instance file systems.
 
 To restore your data, complete the following steps:
 
-1. Stop Incus on your server (for example, with `sudo snap stop lxd`).
-1. Delete the directory (`/var/snap/lxd/common/lxd` for snap users or `/var/lib/incus` otherwise).
+1. Stop Incus on your server (for example, with `sudo systemctl stop incus.service incus.socket`).
+1. Delete the directory (`/var/lib/incus/`).
 1. Restore the directory from the backup.
 1. Delete and restore any external storage devices.
-1. If you are not using the snap, restore the `/etc/subuid` and `/etc/subgid` files.
-1. Restart Incus (for example, with `sudo snap start lxd` or by restarting your machine).
-
-### Export a snapshot
-
-If you are using the Incus snap, you can also create a full backup by exporting a snapshot of the snap:
-
-1. Create a snapshot:
-
-       sudo snap save lxd
-
-   Note down the ID of the snapshot (shown in the `Set` column).
-1. Export the snapshot to a file:
-
-       sudo snap export-snapshot <ID> <output_file>
-
-See [Snapshots](https://snapcraft.io/docs/snapshots) in the Snapcraft documentation for details.
+1. Restore the `/etc/subuid` and `/etc/subgid` files if present.
+1. Restart Incus (for example, with `sudo systemctl start incus.socket incus.service` or by restarting your machine).
 
 ## Partial backup
 

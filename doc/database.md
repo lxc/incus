@@ -21,7 +21,7 @@ When using Incus as a single machine and not as a cluster, the Dqlite database e
 
 ## File location
 
-The database files are stored in the `database` sub-directory of your Incus data directory (thus `/var/snap/lxd/common/lxd/database/` if you use the snap, or `/var/lib/incus/database/` otherwise).
+The database files are stored in the `database` sub-directory of your Incus data directory (`/var/lib/incus/database/`).
 
 Upgrading Incus to a newer version might require updating the database schema.
 In this case, Incus automatically stores a backup of the database and then runs the update.

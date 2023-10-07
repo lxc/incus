@@ -115,15 +115,9 @@ All members must be upgraded to the same version of Incus.
 ```{caution}
 Do not attempt to upgrade your cluster if any of its members are offline.
 Offline members cannot be upgraded, and your cluster will end up in a blocked state.
-
-Also note that if you are using the snap, upgrades might happen automatically, so to prevent any issues you should always recover or remove offline members immediately.
 ```
 
 To upgrade a single member, simply upgrade the Incus package on the host and restart the Incus daemon.
-For example, if you are using the snap then refresh to the latest version and cohort in the current channel (also reloads Incus):
-
-    sudo snap refresh lxd --cohort="+"
-
 If the new version of the daemon has database schema or API changes, the upgraded member might transition into a "blocked" state.
 In this case, the member does not serve any Incus API requests (which means that `incus` commands don't work on that member anymore), but any running instances will continue to run.
 
@@ -137,7 +131,7 @@ When you upgrade the last member, the blocked members will notice that all serve
 
 In a Incus cluster, the API on all servers responds with the same shared certificate, which is usually a standard self-signed certificate with an expiry set to ten years.
 
-The certificate is stored at `/var/snap/lxd/common/lxd/cluster.crt` (if you use the snap) or `/var/lib/incus/cluster.crt` (otherwise) and is the same on all cluster members.
+The certificate is stored at `/var/lib/incus/cluster.crt` and is the same on all cluster members.
 
 You can replace the standard certificate with another one, for example, a valid certificate obtained through ACME services (see {ref}`authentication-server-certificate` for more information).
 To do so, use the [`incus cluster update-certificate`](incus_cluster_update-certificate.md) command.
