@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,7 +10,7 @@ import (
 	lxdAPI "github.com/canonical/lxd/shared/api"
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/internal/cmd"
+	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/version"
 	incusAPI "github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
@@ -19,15 +20,17 @@ var minLXDVersion = &version.DottedVersion{4, 0, 0}
 var maxLXDVersion = &version.DottedVersion{5, 18, 0}
 
 type cmdGlobal struct {
+	asker cli.Asker
+
 	flagHelp    bool
 	flagVersion bool
 }
 
 func main() {
 	// Setup command line parser.
-	daemonCmd := cmdMigrate{}
+	migrateCmd := cmdMigrate{}
 
-	app := daemonCmd.Command()
+	app := migrateCmd.Command()
 	app.Use = "lxd-to-incus"
 	app.Short = "LXD to Incus migration tool"
 	app.Long = `Description:
@@ -39,7 +42,8 @@ func main() {
 	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 
 	// Global flags.
-	globalCmd := cmdGlobal{}
+	globalCmd := cmdGlobal{asker: cli.NewAsker(bufio.NewReader(os.Stdin))}
+	migrateCmd.global = globalCmd
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, "Print version number")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")
 
@@ -55,6 +59,8 @@ func main() {
 }
 
 type cmdMigrate struct {
+	global cmdGlobal
+
 	flagYes bool
 }
 
@@ -456,7 +462,7 @@ At this point, the source server and all its instances will be stopped.
 Instances will come back online once the migration is complete.
 `)
 
-		ok, err := cmd.AskBool("Proceed with the migration? [default=no]: ", "no")
+		ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
@@ -585,7 +591,7 @@ Instances will come back online once the migration is complete.
 
 	// Confirm uninstall.
 	if !c.flagYes {
-		ok, err := cmd.AskBool("Uninstall the LXD package? [default=no]: ", "no")
+		ok, err := c.global.asker.AskBool("Uninstall the LXD package? [default=no]: ", "no")
 		if err != nil {
 			return err
 		}
