@@ -8,43 +8,28 @@ After going through these steps, you will have a general idea of how to use Incu
 
 ## Install and initialize Incus
 
-The easiest way to install Incus is to install the snap package.
-If you prefer a different installation method, or use a Linux distribution that is not supported by the snap package, see {ref}`installing`.
+Currently the easiest way to install Incus is to use the Debian or Ubuntu packages provided by [Zabbly](https://zabbly.com).
+There are two repositories available, one for the current stable release and one for daily (untested) builds.
 
-1. Install `snapd`:
+Installation instructions may be found here: [https://github.com/zabbly/incus](https://github.com/zabbly/incus)
 
-   1. Run `snap version` to find out if snap is installed on your system:
+If you prefer a different installation method, see {ref}`installing`.
 
-      ```{terminal}
-      :input: snap version
+1. Allow your user to control Incus
 
-      snap    2.59.4
-      snapd   2.59.4
-      series  16
-      ubuntu  22.04
-      kernel  5.15.0-73-generic
-      ```
+   Access to Incus in the packages above is controlled through two groups:
 
-      If you see a table of version numbers, snap is installed and you can continue with the next step of installing Incus.
+   - `incus` allows basic user access, no configuration and all actions restricted to a per-user project.
+   - `incus-admin` allows full control over Incus.
 
-   1. If the command returns an error, run the following commands to install the latest version of ``snapd`` on Ubuntu:
+   To control Incus without having to run all commands as root, you can add yourself to the `incus-admin` group:
 
-          sudo apt update
-          sudo apt install snapd
+       sudo adduser YOUR-USERNAME incus-admin
+       newgrp incus-admin
 
-      ```{note}
-      For other Linux distributions, see the [installation instructions](https://snapcraft.io/docs/core/install) in the Snapcraft documentation.
-      ```
+   The `newgrp` step is needed in any terminal that interacts with Incus until you restart your user session.
 
-1. Enter the following command to install Incus:
-
-       sudo snap install lxd
-
-   If you get an error message that the snap is already installed, run the following command to refresh it and ensure that you are running an up-to-date version:
-
-       sudo snap refresh lxd
-
-1. Enter the following command to initialize Incus:
+1. Initialize Incus with:
 
        incus admin init --minimal
 
@@ -287,7 +272,7 @@ You can create a snapshot of your instance, which makes it easy to restore the i
 
 1. Create a snapshot called "clean":
 
-       incus snapshot first clean
+       incus snapshot create first clean
 
 1. Confirm that the snapshot has been created:
 
@@ -313,7 +298,7 @@ You can create a snapshot of your instance, which makes it easy to restore the i
 
 1. Restore the container to the state of the snapshot:
 
-       incus restore first clean
+       incus snapshot restore first clean
 
 1. Confirm that everything is back to normal:
 
