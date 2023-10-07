@@ -48,7 +48,7 @@ However, it does not confine the client to this project.
 ## Confine projects to specific Incus users
 
 Incus can be configured to dynamically create projects for all users in a specific user group.
-This is usually achived by having some users be a member of the `incus` group but not the `incus-admin` group.
+This is usually achieved by having some users be a member of the `incus` group but not the `incus-admin` group.
 
 Make sure that all user accounts that you want to be able to use Incus are a member of this group.
 
