@@ -3,19 +3,19 @@ package main
 import (
 	"github.com/canonical/lxd/client"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 type srcSnap struct{}
 
 func (s *srcSnap) Present() bool {
 	// Validate that the snap is installed.
-	if !shared.PathExists("/snap/lxd") {
+	if !util.PathExists("/snap/lxd") {
 		return false
 	}
 
-	if !shared.PathExists("/var/snap/lxd") {
+	if !util.PathExists("/var/snap/lxd") {
 		return false
 	}
 

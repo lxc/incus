@@ -1,10 +1,12 @@
 module github.com/lxc/incus/cmd/lxd-to-incus
 
+replace github.com/lxc/incus => ../../
+
 go 1.20
 
 require (
 	github.com/canonical/lxd v0.0.0-20230925202117-188c290d29fc
-	github.com/lxc/incus v0.0.0-20230926032748-f97f7f9d68ac
+	github.com/lxc/incus v0.0.0-20231007153324-7181b0fd8650
 	github.com/pierrec/lz4/v4 v4.1.18
 	github.com/spf13/cobra v1.7.0
 )

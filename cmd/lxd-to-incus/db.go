@@ -9,7 +9,8 @@ import (
 
 	"github.com/pierrec/lz4/v4"
 
-	"github.com/lxc/incus/shared"
+	internalIO "github.com/lxc/incus/internal/io"
+	internalUtil "github.com/lxc/incus/internal/util"
 )
 
 // Uncompress the raft snapshot files in the given database directory.
@@ -18,7 +19,7 @@ import (
 func migrateDatabase(dir string) error {
 	global := filepath.Join(dir, "global")
 
-	err := shared.DirCopy(global, global+".bak")
+	err := internalUtil.DirCopy(global, global+".bak")
 	if err != nil {
 		return fmt.Errorf("Failed to backup database directory %q: %w", global, err)
 	}
@@ -97,7 +98,7 @@ func lz4Uncompress(zfilename string) error {
 	// use the same mode for the output file
 	mode := zinfo.Mode()
 
-	_, uid, gid := shared.GetOwnerMode(zinfo)
+	_, uid, gid := internalIO.GetOwnerMode(zinfo)
 
 	filename := zfilename + ".uncompressed"
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)

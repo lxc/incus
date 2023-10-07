@@ -3,19 +3,19 @@ package main
 import (
 	"github.com/canonical/lxd/client"
 
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 type srcDeb struct{}
 
 func (s *srcDeb) Present() bool {
 	// Validate that the Debian package is installed.
-	if !shared.PathExists("/var/lib/dpkg/info/lxd.list") {
+	if !util.PathExists("/var/lib/dpkg/info/lxd.list") {
 		return false
 	}
 
-	if !shared.PathExists("/var/lib/lxd") {
+	if !util.PathExists("/var/lib/lxd") {
 		return false
 	}
 

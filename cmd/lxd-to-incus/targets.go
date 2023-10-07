@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 type Target interface {
@@ -21,11 +21,11 @@ var targets = []Target{&targetSystemd{}}
 type targetSystemd struct{}
 
 func (s *targetSystemd) Present() bool {
-	if !shared.PathExists("/var/lib/incus/") {
+	if !util.PathExists("/var/lib/incus/") {
 		return false
 	}
 
-	if !shared.PathExists("/lib/systemd/system/incus.service") {
+	if !util.PathExists("/lib/systemd/system/incus.service") {
 		return false
 	}
 
