@@ -62,7 +62,7 @@ To push a directory with all contents, enter the following command:
 
 You can mount an instance file system into a local path on your client.
 
-To do so, make sure that you have `sshfs` installed.
+To do so, make sure that you have `sshfs` installed. Then run the following command:
 
     incus file mount <instance_name>/<path_to_directory> <local_location>
 
