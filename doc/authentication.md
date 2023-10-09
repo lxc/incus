@@ -23,7 +23,7 @@ On the next connection, a new certificate is generated.
 
 The supported protocol must be TLS 1.3 or better.
 
-It's possible to force Incus to accept TLS 1.2 by setting the `Incus_INSECURE_TLS` environment variable on both client and server.
+It's possible to force Incus to accept TLS 1.2 by setting the `INCUS_INSECURE_TLS` environment variable on both client and server.
 However this isn't a supported setup and should only ever be used when forced to use an outdated corporate proxy.
 
 All communications must use perfect forward secrecy, and ciphers must be limited to strong elliptic curve ones (such as ECDHE-RSA or ECDHE-ECDSA).
