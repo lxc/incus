@@ -208,5 +208,4 @@ linkcheck_anchors_ignore_for_url = [
 # Setup redirects (https://documatt.gitlab.io/sphinx-reredirects/usage.html)
 redirects = {
     "howto/instances_snapshots/index": "../instances_backup/",
-    "reference/network_external/index": "../networks/",
 }
