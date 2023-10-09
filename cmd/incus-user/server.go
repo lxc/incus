@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/lxc/incus/client"
@@ -168,7 +169,7 @@ func serverSetupUser(uid uint32) error {
 	revert.Add(func() { _ = os.RemoveAll(userPath) })
 
 	// Generate certificate.
-	err = localtls.FindOrGenCert(internalUtil.VarPath("users", userPath, "client.crt"), internalUtil.VarPath("users", userPath, "client.key"), true, false)
+	err = localtls.FindOrGenCert(filepath.Join(userPath, "client.crt"), filepath.Join(userPath, "client.key"), true, false)
 	if err != nil {
 		return fmt.Errorf("Failed to generate user certificate: %w", err)
 	}
@@ -219,7 +220,7 @@ func serverSetupUser(uid uint32) error {
 	}
 
 	// Parse the certificate.
-	x509Cert, err := localtls.ReadCert(internalUtil.VarPath("users", userPath, "client.crt"))
+	x509Cert, err := localtls.ReadCert(filepath.Join(userPath, "client.crt"))
 	if err != nil {
 		return fmt.Errorf("Unable to read user certificate: %w", err)
 	}
