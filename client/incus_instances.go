@@ -209,7 +209,7 @@ func (r *ProtocolIncus) rebuildInstance(instanceName string, instance api.Instan
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/rebuild?project=%s", path, url.PathEscape(instanceName), r.project), instance, "")
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/rebuild", path, url.PathEscape(instanceName)), instance, "")
 	if err != nil {
 		return nil, err
 	}
