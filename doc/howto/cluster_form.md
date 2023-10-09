@@ -44,7 +44,6 @@ Would you like to use Incus clustering? (yes/no) [default=no]: yes
 What IP address or DNS name should be used to reach this server? [default=192.0.2.101]:
 Are you joining an existing cluster? (yes/no) [default=no]: no
 What member name should be used to identify this server in the cluster? [default=server1]:
-Setup password authentication on the cluster? (yes/no) [default=no]: no
 Do you want to configure a new local storage pool? (yes/no) [default=yes]:
 Name of the storage backend to use (btrfs, dir, lvm, zfs) [default=zfs]:
 Create a new ZFS pool? (yes/no) [default=yes]:
@@ -95,7 +94,7 @@ Basically, the initialization process consists of the following steps:
 
    `````{tabs}
 
-   ````{group-tab} Authentication tokens (recommended)
+   ````{group-tab} Authentication tokens
    If you configured your cluster to use {ref}`authentication tokens <authentication-token>`, you must generate a join token for each new member.
    To do so, run the following command on an existing cluster member (for example, the bootstrap server):
 
@@ -120,7 +119,7 @@ Basically, the initialization process consists of the following steps:
 
 `````{tabs}
 
-````{group-tab} Authentication tokens (recommended)
+````{group-tab} Authentication tokens
 
 ```{terminal}
 :input: sudo incus admin init
@@ -130,29 +129,6 @@ What IP address or DNS name should be used to reach this server? [default=192.0.
 Are you joining an existing cluster? (yes/no) [default=no]: yes
 Do you have a join token? (yes/no/[token]) [default=no]: yes
 Please provide join token: eyJzZXJ2ZXJfbmFtZSI6InJwaTAxIiwiZmluZ2VycHJpbnQiOiIyNjZjZmExZDk0ZDZiMjk2Nzk0YjU0YzJlYzdjOTMwNDA5ZjIzNjdmNmM1YjRhZWVjOGM0YjAxYTc2NjU0MjgxIiwiYWRkcmVzc2VzIjpbIjE3Mi4xNy4zMC4xODM6ODQ0MyJdLCJzZWNyZXQiOiJmZGI1OTgyNjgxNTQ2ZGQyNGE2ZGE0Mzg5MTUyOGM1ZGUxNWNmYmQ5M2M3OTU3ODNkNGI5OGU4MTQ4MWMzNmUwIn0=
-All existing data is lost when joining a cluster, continue? (yes/no) [default=no] yes
-Choose "size" property for storage pool "local":
-Choose "source" property for storage pool "local":
-Choose "zfs.pool_name" property for storage pool "local":
-Would you like a YAML "incus admin init" preseed to be printed? (yes/no) [default=no]:
-```
-
-````
-````{group-tab} Trust password
-
-```{terminal}
-:input: sudo incus admin init
-
-Would you like to use Incus clustering? (yes/no) [default=no]: yes
-What IP address or DNS name should be used to reach this server? [default=192.0.2.102]:
-Are you joining an existing cluster? (yes/no) [default=no]: yes
-Do you have a join token? (yes/no/[token]) [default=no]: no
-What member name should be used to identify this server in the cluster? [default=server2]:
-IP address or FQDN of an existing cluster member (may include port): 192.0.2.101:8443
-Cluster fingerprint: 2915dafdf5c159681a9086f732644fb70680533b0fb9005b8c6e9bca51533113
-You can validate this fingerprint by running "incus info" locally on an existing cluster member.
-Is this the correct fingerprint? (yes/no/[fingerprint]) [default=no]: yes
-Cluster trust password:
 All existing data is lost when joining a cluster, continue? (yes/no) [default=no] yes
 Choose "size" property for storage pool "local":
 Choose "source" property for storage pool "local":
@@ -184,7 +160,7 @@ You need a different preseed file for every server.
 
 `````{tabs}
 
-````{group-tab} Authentication tokens (recommended)
+````{group-tab} Authentication tokens
 To enable clustering, the preseed file for the bootstrap server must contain the following fields:
 
 ```yaml
@@ -236,7 +212,7 @@ The preseed files for new cluster members require only a `cluster` section with 
 
 `````{tabs}
 
-````{group-tab} Authentication tokens (recommended)
+````{group-tab} Authentication tokens
 The preseed file for additional servers must include the following fields:
 
 ```yaml

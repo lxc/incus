@@ -49,7 +49,7 @@ Remote access (see {ref}`security_remote_access` and {ref}`authentication`)
   The default answer is `no`, which means remote access is not allowed.
   If you answer `yes`, you can connect to the server over the network.
 
-  You can choose to add client certificates to the server (manually or through tokens, the recommended way) or set a trust password.
+  You can choose to add client certificates to the server (manually or through tokens).
 
 Automatic image update (see {ref}`about-images`)
 : You can download images from image servers.

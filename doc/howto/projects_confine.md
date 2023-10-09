@@ -12,7 +12,6 @@ You can confine access to specific projects by restricting the TLS client certif
 See {ref}`authentication-tls-certs` for detailed information.
 
 To confine the access from the time the client certificate is added, you must either use token authentication or add the client certificate to the server directly.
-If you use password authentication, you can restrict the client certificate only after it has been added.
 
 Use the following command to add a restricted client certificate:
 
@@ -33,7 +32,7 @@ Use the following command to add a restricted client certificate:
 
 The client can then add the server as a remote in the usual way ([`incus remote add <server_name> <token>`](incus_remote_add.md) or [`incus remote add <server_name> <server_address>`](incus_remote_add.md)) and can only access the project or projects that have been specified.
 
-To confine access for an existing certificate (either because the access restrictions change or because the certificate was added with a trust password), use the following command:
+To confine access for an existing certificate, use the following command:
 
     incus config trust edit <fingerprint>
 

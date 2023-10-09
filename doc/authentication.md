@@ -51,8 +51,8 @@ The workflow to authenticate with the server is similar to that of SSH, where an
 1. The server attempts to authenticate the client:
 
    - If the client certificate is in the server's trust store, the connection is granted.
-   - If the client certificate is not in the server's trust store, the server prompts the user for a token or the trust password.
-     If the provided token or trust password matches, the client certificate is added to the server's trust store and the connection is granted.
+   - If the client certificate is not in the server's trust store, the server prompts the user for a token.
+     If the provided token matches, the client certificate is added to the server's trust store and the connection is granted.
      Otherwise, the connection is rejected.
 
 To revoke trust to a client, remove its certificate from the server with [`incus config trust remove <fingerprint>`](incus_config_trust_remove.md).
@@ -73,10 +73,10 @@ To do so, copy the client certificate to the server and register it using [`incu
 (authentication-token)=
 #### Adding client certificates using tokens
 
-You can also add new clients by using tokens. This is a safer way than using the trust password, because tokens expire after a configurable time ({config:option}`server-core:core.remote_token_expiry`) or once they've been used.
+You can also add new clients by using tokens. Tokens expire after a configurable time ({config:option}`server-core:core.remote_token_expiry`) or once they've been used.
 
 To use this method, generate a token for each client by calling [`incus config trust add`](incus_config_trust_add.md), which will prompt for the client name.
-The clients can then add their certificates to the server's trust store by providing the generated token when prompted for the trust password.
+The clients can then add their certificates to the server's trust store by providing the generated token when prompted.
 
 <!-- Include start NAT authentication -->
 
@@ -84,8 +84,6 @@ The clients can then add their certificates to the server's trust store by provi
 If your Incus server is behind NAT, you must specify its external public address when adding it as a remote for a client:
 
     incus remote add <name> <IP_address>
-
-When you are prompted for the admin password, specify the generated token.
 
 When generating the token on the server, Incus includes a list of IP addresses that the client can use to access the server.
 However, if the server is behind NAT, these addresses might be local addresses that the client cannot connect to.
