@@ -627,6 +627,39 @@ func storagePoolVolumesTypePost(d *Daemon, r *http.Request) response.Response {
 		return response.Conflict(fmt.Errorf("Volume by that name already exists"))
 	}
 
+	target := queryParam(r, "target")
+
+	// Check if we need to switch to migration
+	clustered, err := lxdCluster.Enabled(s.DB.Node)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	serverName := s.ServerName
+	var nodeAddress string
+
+	if clustered && target != "" && !req.Source.Refresh && (req.Source.Location != "" && serverName != req.Source.Location) {
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			nodeInfo, err := tx.GetNodeByName(ctx, req.Source.Location)
+			if err != nil {
+				return err
+			}
+
+			nodeAddress = nodeInfo.Address
+
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		if nodeAddress == "" {
+			return response.BadRequest(fmt.Errorf("The source is currently offline"))
+		}
+
+		return clusterCopyCustomVolumeInternal(s, r, nodeAddress, projectName, poolName, &req)
+	}
+
 	switch req.Source.Type {
 	case "":
 		return doVolumeCreateOrCopy(s, r, projectParam(r), projectName, poolName, &req)
@@ -641,6 +674,49 @@ func storagePoolVolumesTypePost(d *Daemon, r *http.Request) response.Response {
 	default:
 		return response.BadRequest(fmt.Errorf("Unknown source type %q", req.Source.Type))
 	}
+}
+
+func clusterCopyCustomVolumeInternal(s *state.State, r *http.Request, sourceAddress string, projectName string, poolName string, req *api.StorageVolumesPost) response.Response {
+	websockets := map[string]string{}
+
+	client, err := lxdCluster.Connect(sourceAddress, s.Endpoints.NetworkCert(), s.ServerCert(), r, false)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	client = client.UseProject(req.Source.Project)
+
+	pullReq := api.StorageVolumePost{
+		Name:       req.Source.Name,
+		Pool:       req.Source.Pool,
+		Migration:  true,
+		VolumeOnly: req.Source.VolumeOnly,
+		Project:    req.Source.Project,
+		Source: api.StorageVolumeSource{
+			Location: req.Source.Location,
+		},
+	}
+
+	op, err := client.MigrateStoragePoolVolume(req.Source.Pool, pullReq)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	opAPI := op.Get()
+
+	for k, v := range opAPI.Metadata {
+		websockets[k] = v.(string)
+	}
+
+	// Reset the source for a migration
+	req.Source.Type = "migration"
+	req.Source.Certificate = string(s.Endpoints.NetworkCert().PublicKey())
+	req.Source.Mode = "pull"
+	req.Source.Operation = fmt.Sprintf("https://%s/%s/operations/%s", sourceAddress, version.APIVersion, opAPI.ID)
+	req.Source.Websockets = websockets
+	req.Source.Project = ""
+
+	return doVolumeMigration(s, r, req.Source.Project, projectName, poolName, req)
 }
 
 func doCustomVolumeRefresh(s *state.State, r *http.Request, requestProjectName string, projectName string, poolName string, req *api.StorageVolumesPost) response.Response {
@@ -1071,9 +1147,12 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	resp = forwardedResponseIfVolumeIsRemote(s, r, srcPoolName, projectName, volumeName, volumeType)
-	if resp != nil {
-		return resp
+	// If source is set, there's no need to forward the request to a specific cluster member.
+	if req.Source.Location == "" {
+		resp = forwardedResponseIfVolumeIsRemote(s, r, srcPoolName, projectName, volumeName, volumeType)
+		if resp != nil {
+			return resp
+		}
 	}
 
 	// This is a migration request so send back requested secrets.
