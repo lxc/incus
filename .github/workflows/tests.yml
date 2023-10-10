@@ -288,18 +288,27 @@ jobs:
         run: |
             mkdir bin
 
-      - name: Build static incus
+      - name: Build static x86_64 incus
         env:
           CGO_ENABLED: 0
+          GOARCH: amd64
         run: |
-          go build -o bin ./cmd/incus
+          go build -o bin/incus.x86_64 ./cmd/incus
+
+      - name: Build static aarch64 incus
+        env:
+          CGO_ENABLED: 0
+          GOARCH: arm64
+        run: |
+          go build -o bin/incus.aarch64 ./cmd/incus
 
       - name: Build static incus-migrate
         if: runner.os == 'Linux'
         env:
           CGO_ENABLED: 0
         run: |
-          go build -o bin ./cmd/incus-migrate
+          GOARCH=amd64 go build -o bin/incus-migrate.x86_64 ./cmd/incus-migrate
+          GOARCH=arm64 go build -o bin/incus-migrate.aarch64 ./cmd/incus-migrate
 
       - name: Unit tests (client)
         env:
