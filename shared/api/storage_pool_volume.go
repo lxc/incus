@@ -70,6 +70,11 @@ type StorageVolumePost struct {
 	//
 	// API extension: storage_volume_project_move
 	Project string `json:"project,omitempty" yaml:"project,omitempty"`
+
+	// Migration source
+	//
+	// API extension: cluster_internal_custom_volume_copy
+	Source StorageVolumeSource `json:"source" yaml:"source"`
 }
 
 // StorageVolumePostTarget represents the migration target host and operation
