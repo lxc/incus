@@ -1,7 +1,7 @@
 (projects-work)=
 # How to work with different projects
 
-If you have more projects than just the `default` profile, you must make sure to use or address the correct project when working with Incus.
+If you have more projects than just the `default` project, you must make sure to use or address the correct project when working with Incus.
 
 ```{note}
 If you have projects that are {ref}`confined to specific users <projects-confined>`, only users with full access to Incus can see all projects.
