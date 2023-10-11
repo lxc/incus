@@ -62,7 +62,7 @@ EOF
   rm -f foo.iso
   incus storage volume delete "${poolName}" vol1
   incus storage volume delete "${poolName}" vol2
-  shutdown_incus "${INCUS_DIR}"
+  shutdown_incus "${INCUS_IMPORT_DIR}"
 }
 
 test_container_recover() {
