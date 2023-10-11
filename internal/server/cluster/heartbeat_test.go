@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
 	"github.com/lxc/incus/internal/server/db"
-	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/node"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/internal/version"
@@ -214,7 +214,7 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 	mux := http.NewServeMux()
 	server := newServer(serverCert, mux)
 
-	trustedCerts := func() map[dbCluster.CertificateType]map[string]x509.Certificate {
+	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
 		return nil
 	}
 

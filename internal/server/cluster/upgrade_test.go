@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
-	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/node"
 	"github.com/lxc/incus/internal/server/state"
 	localtls "github.com/lxc/incus/shared/tls"
@@ -158,7 +158,7 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	gateway := newGateway(t, state.DB.Node, serverCert, state)
 	defer func() { _ = gateway.Shutdown() }()
 
-	trustedCerts := func() map[dbCluster.CertificateType]map[string]x509.Certificate {
+	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
 		return nil
 	}
 

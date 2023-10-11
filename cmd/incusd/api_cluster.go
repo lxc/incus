@@ -21,6 +21,7 @@ import (
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/acme"
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
@@ -675,7 +676,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		for _, trustedCert := range trustedCerts {
 			if trustedCert.Type == api.CertificateTypeServer {
-				dbType, err := dbCluster.CertificateAPITypeToDBType(trustedCert.Type)
+				dbType, err := certificate.FromAPIType(trustedCert.Type)
 				if err != nil {
 					return err
 				}

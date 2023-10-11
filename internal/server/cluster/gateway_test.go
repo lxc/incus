@@ -15,9 +15,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
-	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/state"
 	localtls "github.com/lxc/incus/shared/tls"
 )
@@ -37,7 +37,7 @@ func TestGateway_Single(t *testing.T) {
 	gateway := newGateway(t, node, cert, s)
 	defer func() { _ = gateway.Shutdown() }()
 
-	trustedCerts := func() map[dbCluster.CertificateType]map[string]x509.Certificate {
+	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
 		return nil
 	}
 
@@ -101,7 +101,7 @@ func TestGateway_SingleWithNetworkAddress(t *testing.T) {
 	gateway := newGateway(t, node, cert, s)
 	defer func() { _ = gateway.Shutdown() }()
 
-	trustedCerts := func() map[dbCluster.CertificateType]map[string]x509.Certificate {
+	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
 		return nil
 	}
 
@@ -146,7 +146,7 @@ func TestGateway_NetworkAuth(t *testing.T) {
 	gateway := newGateway(t, node, cert, s)
 	defer func() { _ = gateway.Shutdown() }()
 
-	trustedCerts := func() map[dbCluster.CertificateType]map[string]x509.Certificate {
+	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
 		return nil
 	}
 

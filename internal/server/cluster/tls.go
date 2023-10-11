@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lxc/incus/internal/server/db/cluster"
+	"github.com/lxc/incus/internal/server/certificate"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
@@ -53,7 +53,7 @@ func tlsClientConfig(networkCert *localtls.CertInfo, serverCert *localtls.CertIn
 }
 
 // tlsCheckCert checks certificate access, returns true if certificate is trusted.
-func tlsCheckCert(r *http.Request, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, trustedCerts map[cluster.CertificateType]map[string]x509.Certificate) bool {
+func tlsCheckCert(r *http.Request, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, trustedCerts map[certificate.Type]map[string]x509.Certificate) bool {
 	_, err := x509.ParseCertificate(networkCert.KeyPair().Certificate[0])
 	if err != nil {
 		// Since we have already loaded this certificate, typically
@@ -77,7 +77,7 @@ func tlsCheckCert(r *http.Request, networkCert *localtls.CertInfo, serverCert *l
 		}
 
 		// Check the trusted server certficates list provided.
-		trusted, _ = localUtil.CheckTrustState(*i, trustedCerts[cluster.CertificateTypeServer], networkCert, false)
+		trusted, _ = localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeServer], networkCert, false)
 		if trusted {
 			return true
 		}

@@ -33,6 +33,7 @@ import (
 	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/auth/oidc"
 	"github.com/lxc/incus/internal/server/bgp"
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
 	"github.com/lxc/incus/internal/server/daemon"
@@ -275,7 +276,7 @@ func (d *Daemon) checkTrustedClient(r *http.Request) error {
 }
 
 // getTrustedCertificates returns trusted certificates key on DB type and fingerprint.
-func (d *Daemon) getTrustedCertificates() map[dbCluster.CertificateType]map[string]x509.Certificate {
+func (d *Daemon) getTrustedCertificates() map[certificate.Type]map[string]x509.Certificate {
 	d.clientCerts.Lock.Lock()
 	defer d.clientCerts.Lock.Unlock()
 
@@ -295,7 +296,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	// Allow internal cluster traffic by checking against the trusted certfificates.
 	if r.TLS != nil {
 		for _, i := range r.TLS.PeerCertificates {
-			trusted, fingerprint := localUtil.CheckTrustState(*i, trustedCerts[dbCluster.CertificateTypeServer], d.endpoints.NetworkCert(), false)
+			trusted, fingerprint := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeServer], d.endpoints.NetworkCert(), false)
 			if trusted {
 				return true, fingerprint, "cluster", nil
 			}
@@ -351,7 +352,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	// Validate metrics certificates.
 	if r.URL.Path == "/1.0/metrics" {
 		for _, i := range r.TLS.PeerCertificates {
-			trusted, username := localUtil.CheckTrustState(*i, trustedCerts[dbCluster.CertificateTypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
+			trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
 			if trusted {
 				return true, username, "tls", nil
 			}
@@ -359,7 +360,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	}
 
 	for _, i := range r.TLS.PeerCertificates {
-		trusted, username := localUtil.CheckTrustState(*i, trustedCerts[dbCluster.CertificateTypeClient], d.endpoints.NetworkCert(), trustCACertificates)
+		trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
 			return true, username, "tls", nil
 		}
@@ -988,7 +989,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Detect if clustered, but not yet upgraded to per-server client certificates.
-	if clustered && len(d.clientCerts.Certificates[dbCluster.CertificateTypeServer]) < 1 {
+	if clustered && len(d.clientCerts.Certificates[certificate.TypeServer]) < 1 {
 		// If the cluster has not yet upgraded to per-server client certificates (by running patch
 		// patchClusteringServerCertTrust) then temporarily use the network (cluster) certificate as client
 		// certificate, and cause us to trust it for use as client certificate from the other members.
