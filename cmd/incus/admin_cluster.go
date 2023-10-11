@@ -30,12 +30,14 @@ func (c *cmdAdminCluster) Command() *cobra.Command {
 }
 
 func (c *cmdAdminCluster) Run(cmd *cobra.Command, args []string) {
+	env := getEnviron()
 	path, _ := exec.LookPath("incusd")
 	if path == "" {
 		if util.PathExists("/usr/lib/incus/incusd") {
 			path = "/usr/lib/incus/incusd"
 		} else if util.PathExists("/opt/incus/bin/incusd") {
 			path = "/opt/incus/bin/incusd"
+			env = append(env, "LD_LIBRARY_PATH=/opt/incus/lib/")
 		}
 	}
 
@@ -47,5 +49,5 @@ You can invoke it through "incusd cluster".`))
 		os.Exit(1)
 	}
 
-	_ = doExec(path, []string{"incusd", "cluster"}, getEnviron())
+	_ = doExec(path, append([]string{"incusd", "cluster"}, args...), env)
 }
