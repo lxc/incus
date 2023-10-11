@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 
@@ -20,12 +21,17 @@ type operation struct {
 	listener     *EventListener
 	handlerReady bool
 	handlerLock  sync.Mutex
+	skipListener bool
 
 	chActive chan bool
 }
 
 // AddHandler adds a function to be called whenever an event is received.
 func (op *operation) AddHandler(function func(api.Operation)) (*EventTarget, error) {
+	if op.skipListener {
+		return nil, fmt.Errorf("Cannot add handler, client operation does not support event listeners")
+	}
+
 	// Make sure we have a listener setup
 	err := op.setupListener()
 	if err != nil {
@@ -77,6 +83,10 @@ func (op *operation) GetWebsocket(secret string) (*websocket.Conn, error) {
 
 // RemoveHandler removes a function to be called whenever an event is received.
 func (op *operation) RemoveHandler(target *EventTarget) error {
+	if op.skipListener {
+		return fmt.Errorf("Cannot remove handler, client operation does not support event listeners")
+	}
+
 	// Make sure we're not racing with ourselves
 	op.handlerLock.Lock()
 	defer op.handlerLock.Unlock()
@@ -110,6 +120,27 @@ func (op *operation) Wait() error {
 
 // WaitContext lets you wait until the operation reaches a final state with context.Context.
 func (op *operation) WaitContext(ctx context.Context) error {
+	if op.skipListener {
+		timeout := -1
+		deadline, ok := ctx.Deadline()
+		if ok {
+			timeout = int(time.Until(deadline).Seconds())
+		}
+
+		opAPI, _, err := op.r.GetOperationWait(op.ID, timeout)
+		if err != nil {
+			return err
+		}
+
+		op.Operation = *opAPI
+
+		if opAPI.Err != "" {
+			return errors.New(opAPI.Err)
+		}
+
+		return nil
+	}
+
 	op.handlerLock.Lock()
 	// Check if not done already
 	if op.StatusCode.IsFinal() {
@@ -148,6 +179,10 @@ func (op *operation) WaitContext(ctx context.Context) error {
 // It adds handlers to process events, monitors the listener for completion or errors,
 // and triggers a manual refresh of the operation's state to prevent race conditions.
 func (op *operation) setupListener() error {
+	if op.skipListener {
+		return fmt.Errorf("Cannot set up event listener, client operation does not support event listeners")
+	}
+
 	// Make sure we're not racing with ourselves
 	op.handlerLock.Lock()
 	defer op.handlerLock.Unlock()

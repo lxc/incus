@@ -97,7 +97,7 @@ func (r *ProtocolIncus) CreateCertificateToken(certificate api.CertificatesPost)
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", "/certificates", certificate, "")
+	op, _, err := r.queryOperation("POST", "/certificates", certificate, "", true)
 	if err != nil {
 		return nil, err
 	}
