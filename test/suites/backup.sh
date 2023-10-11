@@ -50,8 +50,8 @@ EOF
 
   if [ "$poolDriver" = "zfs" ]; then
     # Ensure custom storage volumes have been recovered.
-    incus storage volume show "${poolName}" vol3| grep -q 'content_type: filesystem'
-    incus storage volume show "${poolName}" vol4| grep -q 'content_type: filesystem'
+    incus storage volume show "${poolName}" vol3 | grep -q 'content_type: filesystem'
+    incus storage volume show "${poolName}" vol4 | grep -q 'content_type: filesystem'
 
     # Cleanup
     incus storage volume delete "${poolName}" vol3
