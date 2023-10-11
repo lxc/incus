@@ -19,6 +19,13 @@ To create a project called `my-restricted-project` that blocks access to securit
 
     incus project create my-restricted-project --config restricted=true --config restricted.backups=allow
 
+```{tip}
+When you create a project without specifying configuration options, {config:option}`project-features:features.profiles` is set to `true`, which means that profiles are isolated in the project.
+
+Consequently, the new project does not have access to the `default` profile of the `default` project and therefore misses required configuration for creating instances (like the root disk).
+To fix this, use the [`incus profile device add`](incus_profile_device_add.md) command to add a root disk device to the project's `default` profile.
+```
+
 (projects-configure)=
 ## Configure a project
 
