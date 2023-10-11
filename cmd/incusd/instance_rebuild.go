@@ -70,6 +70,21 @@ func instanceRebuildPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
+	instanceType, err := urlInstanceTypeDetect(r)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Handle requests targeted to a container on a different node
+	resp, err := forwardedResponseIfInstanceIsRemote(s, r, targetProjectName, name, instanceType)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if resp != nil {
+		return resp
+	}
+
 	// Parse the request
 	req := api.InstanceRebuildPost{}
 	err = json.NewDecoder(r.Body).Decode(&req)
