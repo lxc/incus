@@ -77,7 +77,7 @@ import (
 
 // A Daemon can respond to requests from a shared client.
 type Daemon struct {
-	clientCerts *certificateCache
+	clientCerts *certificate.Cache
 	os          *sys.OS
 	db          *db.DB
 	firewall    firewall.Firewall
@@ -171,7 +171,7 @@ func newDaemon(config *DaemonConfig, os *sys.OS) *Daemon {
 	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
 
 	d := &Daemon{
-		clientCerts:    &certificateCache{},
+		clientCerts:    &certificate.Cache{},
 		config:         config,
 		devIncusEvents: devIncusEvents,
 		events:         incusEvents,
@@ -277,10 +277,7 @@ func (d *Daemon) checkTrustedClient(r *http.Request) error {
 
 // getTrustedCertificates returns trusted certificates key on DB type and fingerprint.
 func (d *Daemon) getTrustedCertificates() map[certificate.Type]map[string]x509.Certificate {
-	d.clientCerts.Lock.Lock()
-	defer d.clientCerts.Lock.Unlock()
-
-	return d.clientCerts.Certificates
+	return d.clientCerts.GetCertificates()
 }
 
 // Authenticate validates an incoming http Request
@@ -495,9 +492,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 
 				// Regular TLS clients.
 				if protocol == "tls" {
-					d.clientCerts.Lock.Lock()
-					certProjects := d.clientCerts.Projects
-					d.clientCerts.Lock.Unlock()
+					certProjects := d.clientCerts.GetProjects()
 
 					// Check if we have restrictions on the key.
 					if certProjects != nil {
@@ -989,7 +984,8 @@ func (d *Daemon) init() error {
 	}
 
 	// Detect if clustered, but not yet upgraded to per-server client certificates.
-	if clustered && len(d.clientCerts.Certificates[certificate.TypeServer]) < 1 {
+	certificates := d.clientCerts.GetCertificates()
+	if clustered && len(certificates[certificate.TypeServer]) < 1 {
 		// If the cluster has not yet upgraded to per-server client certificates (by running patch
 		// patchClusteringServerCertTrust) then temporarily use the network (cluster) certificate as client
 		// certificate, and cause us to trust it for use as client certificate from the other members.

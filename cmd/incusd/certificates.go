@@ -11,7 +11,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -37,12 +36,6 @@ import (
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
 )
-
-type certificateCache struct {
-	Certificates map[certificate.Type]map[string]x509.Certificate
-	Projects     map[string][]string
-	Lock         sync.Mutex
-}
 
 var certificatesCmd = APIEndpoint{
 	Path: "certificates",
@@ -257,10 +250,7 @@ func updateCertificateCache(d *Daemon) {
 		// continue functioning, and hopefully the write will succeed on next update.
 	}
 
-	d.clientCerts.Lock.Lock()
-	d.clientCerts.Certificates = newCerts
-	d.clientCerts.Projects = newProjects
-	d.clientCerts.Lock.Unlock()
+	d.clientCerts.SetCertificatesAndProjects(newCerts, newProjects)
 }
 
 // updateCertificateCacheFromLocal loads trusted server certificates from local database into memory.
@@ -301,9 +291,7 @@ func updateCertificateCacheFromLocal(d *Daemon) error {
 		newCerts[dbCert.Type][localtls.CertFingerprint(cert)] = *cert
 	}
 
-	d.clientCerts.Lock.Lock()
-	d.clientCerts.Certificates = newCerts
-	d.clientCerts.Lock.Unlock()
+	d.clientCerts.SetCertificates(newCerts)
 
 	return nil
 }
