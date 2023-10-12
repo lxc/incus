@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -33,6 +36,11 @@ var operationWebsocket = APIEndpoint{
 	Path: "operations/{id}/websocket",
 
 	Get: APIEndpointAction{Handler: operationWebsocketGet},
+}
+
+var operationWait = APIEndpoint{
+	Path: "operations/{id}/wait",
+	Get:  APIEndpointAction{Handler: operationWaitGet},
 }
 
 func operationDelete(d *Daemon, r *http.Request) response.Response {
@@ -157,4 +165,46 @@ func operationWebsocketGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	return operations.OperationWebSocket(r, op)
+}
+
+func operationWaitGet(d *Daemon, r *http.Request) response.Response {
+	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	if err != nil {
+		return response.InternalError(fmt.Errorf("Failed to extract operation ID from URL: %w", err))
+	}
+
+	timeoutSecs := -1
+	if r.FormValue("timeout") != "" {
+		timeoutSecs, err = strconv.Atoi(r.FormValue("timeout"))
+		if err != nil {
+			return response.InternalError(fmt.Errorf("Failed to extract operation wait timeout from URL: %w", err))
+		}
+	}
+
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if timeoutSecs > -1 {
+		ctx, cancel = context.WithDeadline(r.Context(), time.Now().Add(time.Second*time.Duration(timeoutSecs)))
+	} else {
+		ctx, cancel = context.WithCancel(r.Context())
+	}
+
+	defer cancel()
+
+	op, err := operations.OperationGetInternal(id)
+	if err != nil {
+		return response.NotFound(err)
+	}
+
+	err = op.Wait(ctx)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	_, opAPI, err := op.Render()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	return response.SyncResponse(true, opAPI)
 }
