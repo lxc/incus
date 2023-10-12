@@ -255,6 +255,13 @@ jobs:
           sudo microceph.ceph status
           sudo rm -f /snap/bin/rbd
 
+      - name: "Ensure offline mode (block image server)"
+        run: |
+          sudo nft add table inet filter
+          sudo nft add chain 'inet filter output { type filter hook output priority 10 ; }'
+          sudo nft add rule inet filter output ip daddr 45.45.148.8 reject
+          sudo nft add rule inet filter output ip6 daddr 2602:fc62:a:1::8 reject
+
       - name: "Run system tests (${{ matrix.go }}, ${{ matrix.suite }}, ${{ matrix.backend }})"
         run: |
           chmod +x ~
