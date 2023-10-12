@@ -5,8 +5,8 @@ replace github.com/lxc/incus => ../../
 go 1.20
 
 require (
-	github.com/canonical/lxd v0.0.0-20231006151814-7d7624dd00a8
-	github.com/lxc/incus v0.0.0-20231007153324-7181b0fd8650
+	github.com/canonical/lxd v0.0.0-20231011095837-d2067ea54073
+	github.com/lxc/incus v0.0.0-20231012022731-40fde5748b59
 	github.com/pierrec/lz4/v4 v4.1.18
 	github.com/spf13/cobra v1.7.0
 )
@@ -40,7 +40,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zitadel/oidc/v2 v2.11.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/net v0.16.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.13.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
