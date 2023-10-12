@@ -1,9 +1,4 @@
 test_syslog_socket() {
-  INCUS_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
-  export INCUS_DIR
-  chmod +x "${INCUS_DIR}"
-  spawn_incus "${INCUS_DIR}" true
-
   incus config set core.syslog_socket=true
   incus monitor --type=network-acl > "${TEST_DIR}/ovn.log" &
   monitorOVNPID=$!
@@ -17,5 +12,5 @@ test_syslog_socket() {
   grep -qF "type: network-acl" "${TEST_DIR}/ovn.log"
   grep -qF "name=\"some-acl\"" "${TEST_DIR}/ovn.log"
 
-  shutdown_incus "${INCUS_DIR}"
+  incus config unset core.syslog_socket
 }
