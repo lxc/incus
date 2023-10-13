@@ -121,6 +121,31 @@ jobs:
             backend: dir
 
     steps:
+      - name: Performance tuning
+        run: |
+          set -eux
+          # optimize ext4 FSes for performance, not reliability
+          for fs in $(findmnt --noheading --type ext4 --list --uniq | awk '{print $1}'); do
+            # nombcache and data=writeback cannot be changed on remount
+            sudo mount -o remount,noatime,barrier=0,commit=6000 "${fs}"
+          done
+
+          # disable dpkg from calling sync()
+          echo "force-unsafe-io" | sudo tee /etc/dpkg/dpkg.cfg.d/force-unsafe-io
+
+      - name: Reclaim some space
+        run: |
+          # This was inspired from https://github.com/easimon/maximize-build-space
+          set -eux
+          df -h /
+          # dotnet
+          sudo rm -rf /usr/share/dotnet
+          # android
+          sudo rm -rf /usr/local/lib/android
+          # haskell
+          sudo rm -rf /opt/ghc
+          df -h /
+
       - name: Checkout
         uses: actions/checkout@v4
 
