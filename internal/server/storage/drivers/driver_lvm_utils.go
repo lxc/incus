@@ -61,7 +61,11 @@ func (d *lvm) openLoopFile(source string) (string, error) {
 	}
 
 	if filepath.IsAbs(source) && !linux.IsBlockdevPath(source) {
-		unlock := locking.Lock(context.TODO(), OperationLockName("openLoopFile", d.name, "", "", ""))
+		unlock, err := locking.Lock(context.TODO(), OperationLockName("openLoopFile", d.name, "", "", ""))
+		if err != nil {
+			return "", err
+		}
+
 		defer unlock()
 
 		loopDeviceName, err := loopDeviceSetup(source)
