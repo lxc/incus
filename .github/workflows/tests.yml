@@ -256,6 +256,15 @@ jobs:
           sudo microceph.ceph fs ls
           sleep 30
           sudo microceph.ceph status
+          # Wait until there are no more "unkowns" pgs
+          for _ in $(seq 60); do
+            if sudo microceph.ceph pg stat | grep -wF unknown; then
+              sleep 1
+            else
+              break
+            fi
+          done
+          sudo microceph.ceph status
           sudo rm -f /snap/bin/rbd
 
       - name: "Ensure offline mode (block image server)"
