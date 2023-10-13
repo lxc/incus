@@ -251,7 +251,7 @@ static inline int pidfd_getfd(int pidfd, int fd, int flags)
 	return syscall(__NR_pidfd_getfd, pidfd, fd, flags);
 }
 
-#define ptr_to_u64(p) ((__aligned_u64)((uintptr_t)(p)))
+#define ptr_to_u64(p) ((__u64)((uintptr_t)(p)))
 
 static inline int bpf(int cmd, union bpf_attr *attr, size_t size)
 {
