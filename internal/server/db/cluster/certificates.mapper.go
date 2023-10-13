@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/shared/api"
 )
@@ -336,7 +337,7 @@ func DeleteCertificate(ctx context.Context, tx *sql.Tx, fingerprint string) erro
 
 // DeleteCertificates deletes the certificate matching the given key parameters.
 // generator: certificate DeleteMany-by-Name-and-Type
-func DeleteCertificates(ctx context.Context, tx *sql.Tx, name string, certificateType CertificateType) error {
+func DeleteCertificates(ctx context.Context, tx *sql.Tx, name string, certificateType certificate.Type) error {
 	stmt, err := Stmt(tx, certificateDeleteByNameAndType)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"certificateDeleteByNameAndType\" prepared statement: %w", err)

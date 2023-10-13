@@ -21,8 +21,8 @@ import (
 	client "github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
 	localUtil "github.com/lxc/incus/internal/server/util"
@@ -154,7 +154,7 @@ func setDqliteVersionHeader(request *http.Request) {
 // These handlers might return 404, either because this server is a
 // non-clustered member not available over the network or because it is not a
 // database node part of the dqlite cluster.
-func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts func() map[cluster.CertificateType]map[string]x509.Certificate) map[string]http.HandlerFunc {
+func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts func() map[certificate.Type]map[string]x509.Certificate) map[string]http.HandlerFunc {
 	database := func(w http.ResponseWriter, r *http.Request) {
 		g.lock.RLock()
 		if !tlsCheckCert(r, g.networkCert, g.state().ServerCert(), trustedCerts()) {

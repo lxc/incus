@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
 	"github.com/lxc/incus/internal/server/db"
@@ -131,7 +132,7 @@ func TestBootstrap(t *testing.T) {
 	// The cluster certificate is in place.
 	assert.True(t, util.PathExists(filepath.Join(state.OS.VarDir, "cluster.crt")))
 
-	trustedCerts := func() map[dbCluster.CertificateType]map[string]x509.Certificate {
+	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
 		return nil
 	}
 
@@ -289,9 +290,9 @@ func TestJoin(t *testing.T) {
 	altServerCert := localtls.TestingAltKeyPair()
 	trustedAltServerCert, _ := x509.ParseCertificate(altServerCert.KeyPair().Certificate[0])
 
-	trustedCerts := func() map[dbCluster.CertificateType]map[string]x509.Certificate {
-		return map[dbCluster.CertificateType]map[string]x509.Certificate{
-			dbCluster.CertificateTypeServer: {
+	trustedCerts := func() map[certificate.Type]map[string]x509.Certificate {
+		return map[certificate.Type]map[string]x509.Certificate{
+			certificate.TypeServer: {
 				altServerCert.Fingerprint(): *trustedAltServerCert,
 			},
 		}

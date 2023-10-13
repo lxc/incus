@@ -12,6 +12,7 @@ import (
 
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/backup"
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
@@ -228,7 +229,7 @@ func patchClusteringServerCertTrust(name string, d *Daemon) error {
 		trustedServerCerts := make(map[string]*dbCluster.Certificate)
 
 		for _, c := range dbCerts {
-			if c.Type == dbCluster.CertificateTypeServer {
+			if c.Type == certificate.TypeServer {
 				trustedServerCerts[c.Name] = &c
 			}
 		}

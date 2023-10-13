@@ -20,8 +20,11 @@ mdl .tmp/doc -sdoc/.sphinx/.markdownlint/style.rb -udoc/.sphinx/.markdownlint/ru
 
 ## Postprocessing
 
-filtered_errors="$(grep -vxFf doc/.sphinx/.markdownlint/exceptions.txt .tmp/errors.txt)"
-if [ "$(echo "$filtered_errors" | wc -l)" = "2" ]; then
+sed -i '/^$/,$d' .tmp/errors.txt
+
+filtered_errors="$(grep -vxFf doc/.sphinx/.markdownlint/exceptions.txt .tmp/errors.txt)" || true
+
+if [ -z "$filtered_errors" ]; then
     echo "Passed!"
     exit 0
 else

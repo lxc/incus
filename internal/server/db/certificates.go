@@ -5,6 +5,7 @@ package db
 import (
 	"context"
 
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/db/query"
 )
@@ -32,7 +33,7 @@ func (db *DB) UpdateCertificate(ctx context.Context, fingerprint string, cert cl
 func (n *NodeTx) GetCertificates(ctx context.Context) ([]cluster.Certificate, error) {
 	type cert struct {
 		fingerprint string
-		certType    cluster.CertificateType
+		certType    certificate.Type
 		name        string
 		certificate string
 	}

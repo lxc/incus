@@ -5,6 +5,8 @@ package cluster
 import (
 	"context"
 	"database/sql"
+
+	"github.com/lxc/incus/internal/server/certificate"
 )
 
 // CertificateGenerated is an interface of generated methods for Certificate.
@@ -35,7 +37,7 @@ type CertificateGenerated interface {
 
 	// DeleteCertificates deletes the certificate matching the given key parameters.
 	// generator: certificate DeleteMany-by-Name-and-Type
-	DeleteCertificates(ctx context.Context, tx *sql.Tx, name string, certificateType CertificateType) error
+	DeleteCertificates(ctx context.Context, tx *sql.Tx, name string, certificateType certificate.Type) error
 
 	// UpdateCertificate updates the certificate matching the given key parameters.
 	// generator: certificate Update

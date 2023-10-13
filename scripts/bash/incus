@@ -184,7 +184,7 @@ _have incus && {
           3)
             case ${no_dashargs[2]} in
               "trust")
-                COMPREPLY=( $(compgen -W "list add remove" -- $cur) )
+                COMPREPLY=( $(compgen -W "add add-certificate edit list list-tokens remove revoke-token show" -- $cur) )
                 ;;
               "device")
                 COMPREPLY=( $(compgen -W "add get set unset list show remove" -- $cur) )
