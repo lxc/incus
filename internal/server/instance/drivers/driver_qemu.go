@@ -2498,8 +2498,7 @@ func (d *qemu) generateConfigShare() error {
 	agentServiceUnit := `[Unit]
 Description=Incus - agent
 Documentation=https://linuxcontainers.org/incus/docs/main/
-ConditionPathExists=/dev/virtio-ports/org.linuxcontainers.incus
-Before=cloud-init.target cloud-init.service cloud-init-local.service
+Before=multi-user.target cloud-init.target cloud-init.service cloud-init-local.service
 DefaultDependencies=no
 
 [Service]
@@ -2511,9 +2510,6 @@ Restart=on-failure
 RestartSec=5s
 StartLimitInterval=60
 StartLimitBurst=10
-
-[Install]
-WantedBy=multi-user.target
 `
 
 	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent.service"), []byte(agentServiceUnit), 0400)
@@ -2573,7 +2569,11 @@ chown -R root:root "${PREFIX}"
 		return err
 	}
 
-	agentRules := `ACTION=="add", SYMLINK=="virtio-ports/org.linuxcontainers.incus", TAG+="systemd", ACTION=="add", RUN+="/bin/systemctl start incus-agent.service"`
+	agentRules := `SYMLINK=="virtio-ports/org.linuxcontainers.incus", TAG+="systemd", ENV{SYSTEMD_WANTS}+="incus-agent.service"
+
+# Legacy.
+SYMLINK=="virtio-ports/org.linuxcontainers.lxd", TAG+="systemd", ENV{SYSTEMD_WANTS}+="incus-agent.service"
+`
 	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-incus-agent.rules"), []byte(agentRules), 0400)
 	if err != nil {
 		return err
