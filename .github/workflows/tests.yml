@@ -132,8 +132,11 @@ jobs:
 
       - name: Install Go (tip)
         run: |
-          curl -sSfL https://storage.googleapis.com/go-build-snap/go/linux-amd64/$(git ls-remote https://github.com/golang/go.git HEAD | awk '{print $1;}').tar.gz -o gotip.tar.gz
-          ls -lah gotip.tar.gz
+          for i in $(seq 20); do
+              curl -sSfL https://storage.googleapis.com/go-build-snap/go/linux-amd64/$(git ls-remote https://github.com/golang/go.git HEAD | awk '{print $1;}').tar.gz -o gotip.tar.gz && break
+              sleep 30
+          done
+
           mkdir -p ~/sdk/gotip
           tar -C ~/sdk/gotip -xzf gotip.tar.gz
           ~/sdk/gotip/bin/go version
