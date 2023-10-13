@@ -1400,7 +1400,7 @@ func (d *common) devicesRemove(inst instance.Instance) {
 }
 
 // updateBackupFileLock acquires the update backup file lock that protects concurrent access to actions that will call UpdateBackupFile() as part of their operation.
-func (d *common) updateBackupFileLock(ctx context.Context) locking.UnlockFunc {
+func (d *common) updateBackupFileLock(ctx context.Context) (locking.UnlockFunc, error) {
 	parentName, _, _ := api.GetParentAndSnapshotName(d.Name())
 	return locking.Lock(ctx, fmt.Sprintf("instance_updatebackupfile_%s_%s", d.Project().Name, parentName))
 }
