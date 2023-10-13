@@ -2,6 +2,7 @@ package locking
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ type UnlockFunc func()
 // Will block until the lock is established or the context is cancelled.
 // On successfully acquiring the lock, it returns an unlock function which needs to be called to unlock the lock.
 // If the context is canceled then nil will be returned.
-func Lock(ctx context.Context, lockName string) UnlockFunc {
+func Lock(ctx context.Context, lockName string) (UnlockFunc, error) {
 	for {
 		// Get exclusive access to the map and see if there is already an operation ongoing.
 		locksMutex.Lock()
@@ -53,7 +54,7 @@ func Lock(ctx context.Context, lockName string) UnlockFunc {
 				// map entry has been deleted, this will allow any waiting users
 				// to try and get access to the map to create a new operation.
 				locksMutex.Unlock()
-			}
+			}, nil
 		}
 
 		// An existing operation is ongoing, lets wait for that to finish and then try
@@ -64,7 +65,7 @@ func Lock(ctx context.Context, lockName string) UnlockFunc {
 		case <-waitCh:
 			continue
 		case <-ctx.Done():
-			return nil
+			return nil, fmt.Errorf("Failed to obtain lock %q: %w", lockName, ctx.Err())
 		}
 	}
 }
