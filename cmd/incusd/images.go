@@ -2475,7 +2475,11 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 	do := func(op *operations.Operation) error {
 		// Lock this operation to ensure that concurrent image operations don't conflict.
 		// Other operations will wait for this one to finish.
-		unlock := imageOperationLock(imgInfo.Fingerprint)
+		unlock, err := imageOperationLock(imgInfo.Fingerprint)
+		if err != nil {
+			return err
+		}
+
 		defer unlock()
 
 		// Check image still exists and another request hasn't removed it since we resolved the image
