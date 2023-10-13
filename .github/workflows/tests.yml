@@ -230,9 +230,8 @@ jobs:
             exit 1
           fi
 
-          sudo apt-get install --no-install-recommends -y ceph-common
           sudo snap install microceph --edge
-          sleep 5
+          sudo apt-get install --no-install-recommends -y ceph-common
           sudo microceph cluster bootstrap
           sudo microceph.ceph config set global osd_pool_default_size 1
           sudo microceph.ceph config set global mon_allow_pool_delete true
