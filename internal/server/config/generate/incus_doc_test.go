@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Test the alphabetical sorting of a `lxd-metadata` JSON structure.
+// Test the alphabetical sorting of a `incus-doc` JSON structure.
 func TestJSONSorted(t *testing.T) {
 	projectEntries := make(map[string]any)
 	projectEntries["entityKey1"] = map[string]any{
