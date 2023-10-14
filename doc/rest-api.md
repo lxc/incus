@@ -231,18 +231,6 @@ specifying the property that you want to change. To unset a key, setting
 it to empty will usually do the trick, but there are cases where PATCH
 won't work and PUT needs to be used instead.
 
-## Instances, containers and virtual-machines
-
-The documentation shows paths such as `/1.0/instances/...`, which were introduced with Incus 3.19.
-Older releases that supported only containers and not virtual machines supply the exact same API at `/1.0/containers/...`.
-
-For backward compatibility reasons, Incus does still expose and support
-that `/1.0/containers` API, though for the sake of brevity, we decided
-not to double-document everything.
-
-An additional endpoint at `/1.0/virtual-machines` is also present and
-much like `/1.0/containers` will only show you instances of that type.
-
 ## API structure
 
 Incus has an auto-generated [Swagger](https://swagger.io/) specification describing its API endpoints.
