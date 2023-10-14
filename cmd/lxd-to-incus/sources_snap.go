@@ -22,6 +22,10 @@ func (s *srcSnap) Present() bool {
 	return true
 }
 
+func (s *srcSnap) Name() string {
+	return "snap package"
+}
+
 func (s *srcSnap) Stop() error {
 	_, err := subprocess.RunCommand("snap", "stop", "lxd")
 	return err
