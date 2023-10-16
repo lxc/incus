@@ -472,7 +472,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 			conn := s.conns[0]
 			s.connsLock.Unlock()
 
-			readDone, writeDone := ws.Mirror(context.Background(), conn, ptys[0])
+			readDone, writeDone := ws.Mirror(conn, ptys[0])
 
 			<-readDone
 			<-writeDone
@@ -490,14 +490,14 @@ func (s *execWs) Do(op *operations.Operation) error {
 					conn := s.conns[i]
 					s.connsLock.Unlock()
 
-					<-ws.MirrorWrite(context.Background(), conn, ttys[i])
+					<-ws.MirrorWrite(conn, ttys[i])
 					_ = ttys[i].Close()
 				} else {
 					s.connsLock.Lock()
 					conn := s.conns[i]
 					s.connsLock.Unlock()
 
-					<-ws.MirrorRead(context.Background(), conn, ptys[i])
+					<-ws.MirrorRead(conn, ptys[i])
 					_ = ptys[i].Close()
 					wgEOF.Done()
 				}
