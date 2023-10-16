@@ -31,7 +31,7 @@ func rsyncSend(ctx context.Context, conn *websocket.Conn, path string, rsyncArgs
 		defer func() { _ = dataSocket.Close() }()
 	}
 
-	readDone, writeDone := ws.Mirror(ctx, conn, dataSocket)
+	readDone, writeDone := ws.Mirror(conn, dataSocket)
 	<-writeDone
 	_ = dataSocket.Close()
 
