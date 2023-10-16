@@ -20,6 +20,7 @@ const (
 	ARCH_64BIT_RISCV_LITTLE_ENDIAN   = 12
 	ARCH_32BIT_ARMV6_LITTLE_ENDIAN   = 13
 	ARCH_32BIT_ARMV8_LITTLE_ENDIAN   = 14
+	ARCH_64BIT_LOONGARCH             = 15
 )
 
 var architectureNames = map[int]string{
@@ -37,6 +38,7 @@ var architectureNames = map[int]string{
 	ARCH_64BIT_MIPS:                  "mips64",
 	ARCH_32BIT_RISCV_LITTLE_ENDIAN:   "riscv32",
 	ARCH_64BIT_RISCV_LITTLE_ENDIAN:   "riscv64",
+	ARCH_64BIT_LOONGARCH:             "loongarch64",
 }
 
 var architectureAliases = map[int][]string{
@@ -53,6 +55,7 @@ var architectureAliases = map[int][]string{
 	ARCH_64BIT_MIPS:                  {"mips64el", "mips64le"},
 	ARCH_32BIT_RISCV_LITTLE_ENDIAN:   {},
 	ARCH_64BIT_RISCV_LITTLE_ENDIAN:   {},
+	ARCH_64BIT_LOONGARCH:             {"loong64"},
 }
 
 var architecturePersonalities = map[int]string{
@@ -70,6 +73,7 @@ var architecturePersonalities = map[int]string{
 	ARCH_64BIT_MIPS:                  "linux64",
 	ARCH_32BIT_RISCV_LITTLE_ENDIAN:   "linux32",
 	ARCH_64BIT_RISCV_LITTLE_ENDIAN:   "linux64",
+	ARCH_64BIT_LOONGARCH:             "linux64",
 }
 
 var architectureSupportedPersonalities = map[int][]int{
@@ -87,6 +91,7 @@ var architectureSupportedPersonalities = map[int][]int{
 	ARCH_64BIT_MIPS:                  {ARCH_32BIT_MIPS},
 	ARCH_32BIT_RISCV_LITTLE_ENDIAN:   {},
 	ARCH_64BIT_RISCV_LITTLE_ENDIAN:   {},
+	ARCH_64BIT_LOONGARCH:             {},
 }
 
 const ArchitectureDefault = "x86_64"
