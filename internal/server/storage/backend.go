@@ -2519,7 +2519,7 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 	}
 
 	// Ensure the backup file reflects current config.
-	err = b.UpdateInstanceBackupFile(inst, op)
+	err = b.UpdateInstanceBackupFile(inst, snapshots, op)
 	if err != nil {
 		return err
 	}
@@ -2946,7 +2946,7 @@ func (b *backend) RenameInstanceSnapshot(inst instance.Instance, newName string,
 	})
 
 	// Ensure the backup file reflects current config.
-	err = b.UpdateInstanceBackupFile(inst, op)
+	err = b.UpdateInstanceBackupFile(inst, true, op)
 	if err != nil {
 		return err
 	}
@@ -5937,7 +5937,7 @@ func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots
 }
 
 // UpdateInstanceBackupFile writes the instance's config to the backup.yaml file on the storage device.
-func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, op *operations.Operation) error {
+func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots bool, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 	l.Debug("UpdateInstanceBackupFile started")
 	defer l.Debug("UpdateInstanceBackupFile finished")
@@ -5947,7 +5947,7 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, op *operation
 		return nil
 	}
 
-	config, err := b.GenerateInstanceBackupConfig(inst, true, op)
+	config, err := b.GenerateInstanceBackupConfig(inst, snapshots, op)
 	if err != nil {
 		return err
 	}
