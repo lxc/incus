@@ -417,10 +417,10 @@ func (s *execWs) Do(op *operations.Operation) error {
 			if s.instance.Type() == instancetype.Container {
 				// For containers, we are running the command via the locally managed PTY and so
 				// need to use the same PTY handle for both read and write.
-				readDone, writeDone = ws.Mirror(context.Background(), conn, ptys[0])
+				readDone, writeDone = ws.Mirror(conn, ptys[0])
 			} else {
-				readDone = ws.MirrorRead(context.Background(), conn, ptys[execWSStdout])
-				writeDone = ws.MirrorWrite(context.Background(), conn, ttys[execWSStdin])
+				readDone = ws.MirrorRead(conn, ptys[execWSStdout])
+				writeDone = ws.MirrorWrite(conn, ttys[execWSStdin])
 			}
 
 			<-readDone
@@ -462,10 +462,10 @@ func (s *execWs) Do(op *operations.Operation) error {
 				}
 
 				if i == execWSStdin {
-					<-ws.MirrorWrite(context.Background(), conn, ttys[i])
+					<-ws.MirrorWrite(conn, ttys[i])
 					_ = ttys[i].Close()
 				} else {
-					<-ws.MirrorRead(context.Background(), conn, ptys[i])
+					<-ws.MirrorRead(conn, ptys[i])
 					_ = ptys[i].Close()
 					wgEOF.Done()
 				}
