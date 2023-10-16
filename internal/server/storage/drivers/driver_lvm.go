@@ -12,6 +12,7 @@ import (
 
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/revert"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -86,18 +87,19 @@ func (d *lvm) load() error {
 // Info returns info about the driver and its environment.
 func (d *lvm) Info() Info {
 	return Info{
-		Name:              "lvm",
-		Version:           lvmVersion,
-		OptimizedImages:   d.usesThinpool(), // Only thinpool pools support optimized images.
-		PreservesInodes:   false,
-		Remote:            d.isRemote(),
-		VolumeTypes:       []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
-		BlockBacking:      true,
-		RunningCopyFreeze: true,
-		DirectIO:          true,
-		IOUring:           true,
-		MountedRoot:       false,
-		Buckets:           true,
+		Name:                         "lvm",
+		Version:                      lvmVersion,
+		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
+		OptimizedImages:              d.usesThinpool(), // Only thinpool pools support optimized images.
+		PreservesInodes:              false,
+		Remote:                       d.isRemote(),
+		VolumeTypes:                  []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
+		BlockBacking:                 true,
+		RunningCopyFreeze:            true,
+		DirectIO:                     true,
+		IOUring:                      true,
+		MountedRoot:                  false,
+		Buckets:                      true,
 	}
 }
 
