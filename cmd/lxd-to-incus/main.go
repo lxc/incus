@@ -95,6 +95,8 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		return fmt.Errorf("No source server could be found")
 	}
 
+	fmt.Printf("==> Detected: %s\n", source.Name())
+
 	// Iterate through potential targets.
 	fmt.Println("=> Looking for target server")
 	var target Target

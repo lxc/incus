@@ -22,6 +22,10 @@ func (s *srcDeb) Present() bool {
 	return true
 }
 
+func (s *srcDeb) Name() string {
+	return ".deb package"
+}
+
 func (s *srcDeb) Stop() error {
 	_, err := subprocess.RunCommand("systemctl", "stop", "lxd-containers.service", "lxd.service", "lxd.socket")
 	return err
