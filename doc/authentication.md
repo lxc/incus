@@ -121,8 +121,7 @@ Note that the generated certificates are not automatically trusted. You must sti
 Incus supports using [OpenID Connect](https://openid.net/connect/) to authenticate users through an {abbr}`OIDC (OpenID Connect)` Identity Provider.
 
 ```{note}
-OpenID Connect authentication is currently under development.
-Starting with Incus 5.13, authentication through OpenID Connect is supported, but there is no user role handling in place so far.
+Authentication through OpenID Connect is supported, but there is no user role handling in place so far.
 Any user that authenticates through the configured OIDC Identity Provider gets full access to Incus.
 ```
 
