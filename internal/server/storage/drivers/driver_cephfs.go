@@ -9,6 +9,7 @@ import (
 
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/migration"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	localMigration "github.com/lxc/incus/internal/server/migration"
 	"github.com/lxc/incus/internal/server/operations"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -78,17 +79,18 @@ func (d *cephfs) isRemote() bool {
 // Info returns the pool driver information.
 func (d *cephfs) Info() Info {
 	return Info{
-		Name:              "cephfs",
-		Version:           cephfsVersion,
-		OptimizedImages:   false,
-		PreservesInodes:   false,
-		Remote:            d.isRemote(),
-		VolumeTypes:       []VolumeType{VolumeTypeCustom},
-		VolumeMultiNode:   true,
-		BlockBacking:      false,
-		RunningCopyFreeze: false,
-		DirectIO:          true,
-		MountedRoot:       true,
+		Name:                         "cephfs",
+		Version:                      cephfsVersion,
+		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
+		OptimizedImages:              false,
+		PreservesInodes:              false,
+		Remote:                       d.isRemote(),
+		VolumeTypes:                  []VolumeType{VolumeTypeCustom},
+		VolumeMultiNode:              true,
+		BlockBacking:                 false,
+		RunningCopyFreeze:            false,
+		DirectIO:                     true,
+		MountedRoot:                  true,
 	}
 }
 
