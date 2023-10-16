@@ -6,6 +6,7 @@ import (
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/backup"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/migration"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/shared/api"
@@ -23,16 +24,17 @@ func (d *mock) load() error {
 // Info returns info about the driver and its environment.
 func (d *mock) Info() Info {
 	return Info{
-		Name:              "mock",
-		Version:           "1",
-		OptimizedImages:   false,
-		PreservesInodes:   false,
-		Remote:            d.isRemote(),
-		VolumeTypes:       []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
-		BlockBacking:      false,
-		RunningCopyFreeze: true,
-		DirectIO:          true,
-		MountedRoot:       true,
+		Name:                         "mock",
+		Version:                      "1",
+		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
+		OptimizedImages:              false,
+		PreservesInodes:              false,
+		Remote:                       d.isRemote(),
+		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
+		BlockBacking:                 false,
+		RunningCopyFreeze:            true,
+		DirectIO:                     true,
+		MountedRoot:                  true,
 	}
 }
 
