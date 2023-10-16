@@ -254,13 +254,13 @@ func (s *execWs) Do(op *operations.Operation) error {
 		stderr = ttys[execWSStderr]
 	}
 
-	waitAttachedChildIsDead := cancel.New(context.Background())
+	waitAttachedChildIsDead, markAttachedChildIsDead := context.WithCancel(context.Background())
 	var wgEOF sync.WaitGroup
 
 	// Define a function to clean up TTYs and sockets when done.
 	finisher := func(cmdResult int, cmdErr error) error {
-		// Close this before closing the control connection so control handler can detect command ending.
-		waitAttachedChildIsDead.Cancel()
+		// Cancel this before closing the control connection so control handler can detect command ending.
+		markAttachedChildIsDead()
 
 		for _, tty := range ttys {
 			_ = tty.Close()
