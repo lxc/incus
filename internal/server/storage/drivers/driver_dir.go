@@ -7,6 +7,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/operations"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
@@ -34,18 +35,19 @@ func (d *dir) load() error {
 // Info returns info about the driver and its environment.
 func (d *dir) Info() Info {
 	return Info{
-		Name:              "dir",
-		Version:           "1",
-		OptimizedImages:   false,
-		PreservesInodes:   false,
-		Remote:            d.isRemote(),
-		VolumeTypes:       []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
-		BlockBacking:      false,
-		RunningCopyFreeze: true,
-		DirectIO:          true,
-		IOUring:           true,
-		MountedRoot:       true,
-		Buckets:           true,
+		Name:                         "dir",
+		Version:                      "1",
+		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
+		OptimizedImages:              false,
+		PreservesInodes:              false,
+		Remote:                       d.isRemote(),
+		VolumeTypes:                  []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
+		BlockBacking:                 false,
+		RunningCopyFreeze:            true,
+		DirectIO:                     true,
+		IOUring:                      true,
+		MountedRoot:                  true,
+		Buckets:                      true,
 	}
 }
 
