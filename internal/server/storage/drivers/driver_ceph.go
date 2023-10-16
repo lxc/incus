@@ -10,6 +10,7 @@ import (
 
 	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	localMigration "github.com/lxc/incus/internal/server/migration"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/shared/api"
@@ -80,17 +81,18 @@ func (d *ceph) isRemote() bool {
 // Info returns info about the driver and its environment.
 func (d *ceph) Info() Info {
 	return Info{
-		Name:              "ceph",
-		Version:           cephVersion,
-		OptimizedImages:   true,
-		PreservesInodes:   false,
-		Remote:            d.isRemote(),
-		VolumeTypes:       []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
-		BlockBacking:      true,
-		RunningCopyFreeze: true,
-		DirectIO:          true,
-		IOUring:           true,
-		MountedRoot:       false,
+		Name:                         "ceph",
+		Version:                      cephVersion,
+		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
+		OptimizedImages:              true,
+		PreservesInodes:              false,
+		Remote:                       d.isRemote(),
+		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
+		BlockBacking:                 true,
+		RunningCopyFreeze:            true,
+		DirectIO:                     true,
+		IOUring:                      true,
+		MountedRoot:                  false,
 	}
 }
 
