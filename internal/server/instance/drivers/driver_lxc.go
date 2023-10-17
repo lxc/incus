@@ -2320,7 +2320,11 @@ func (d *lxc) detachInterfaceRename(netns string, ifName string, hostName string
 
 // Start starts the instance.
 func (d *lxc) Start(stateful bool) error {
-	unlock := d.updateBackupFileLock(context.Background())
+	unlock, err := d.updateBackupFileLock(context.Background())
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	d.logger.Debug("Start started", logger.Ctx{"stateful": stateful})
@@ -2329,7 +2333,7 @@ func (d *lxc) Start(stateful bool) error {
 	// Check that we are startable before creating an operation lock.
 	// Must happen before creating operation Start lock to avoid the status check returning Stopped due to the
 	// existence of a Start operation lock.
-	err := d.validateStartup(stateful, d.statusCode())
+	err = d.validateStartup(stateful, d.statusCode())
 	if err != nil {
 		return err
 	}
@@ -3403,7 +3407,11 @@ func (d *lxc) snapshot(name string, expiry time.Time, stateful bool) error {
 
 // Snapshot takes a new snapshot.
 func (d *lxc) Snapshot(name string, expiry time.Time, stateful bool) error {
-	unlock := d.updateBackupFileLock(context.Background())
+	unlock, err := d.updateBackupFileLock(context.Background())
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	return d.snapshot(name, expiry, stateful)
@@ -3626,7 +3634,11 @@ func (d *lxc) cleanup() {
 
 // Delete deletes the instance.
 func (d *lxc) Delete(force bool) error {
-	unlock := d.updateBackupFileLock(context.Background())
+	unlock, err := d.updateBackupFileLock(context.Background())
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	// Setup a new operation.
@@ -3770,7 +3782,11 @@ func (d *lxc) delete(force bool) error {
 
 // Rename renames the instance. Accepts an argument to enable applying deferred TemplateTriggerRename.
 func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
-	unlock := d.updateBackupFileLock(context.Background())
+	unlock, err := d.updateBackupFileLock(context.Background())
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	oldName := d.Name()
@@ -3783,7 +3799,7 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 	d.logger.Info("Renaming instance", ctxMap)
 
 	// Quick checks.
-	err := instance.ValidName(newName, d.IsSnapshot())
+	err = instance.ValidName(newName, d.IsSnapshot())
 	if err != nil {
 		return err
 	}
@@ -3954,7 +3970,11 @@ func (d *lxc) CGroupSet(key string, value string) error {
 
 // Update applies updated config.
 func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
-	unlock := d.updateBackupFileLock(context.Background())
+	unlock, err := d.updateBackupFileLock(context.Background())
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	// Setup a new operation
@@ -6594,11 +6614,15 @@ func (d *lxc) inheritInitPidFd() (int, *os.File) {
 // FileSFTPConn returns a connection to the forkfile handler.
 func (d *lxc) FileSFTPConn() (net.Conn, error) {
 	// Lock to avoid concurrent spawning.
-	spawnUnlock := locking.Lock(context.TODO(), fmt.Sprintf("forkfile_%d", d.id))
+	spawnUnlock, err := locking.Lock(context.TODO(), fmt.Sprintf("forkfile_%d", d.id))
+	if err != nil {
+		return nil, err
+	}
+
 	defer spawnUnlock()
 
 	// Create any missing directories in case the instance has never been started before.
-	err := os.MkdirAll(d.LogPath(), 0700)
+	err = os.MkdirAll(d.LogPath(), 0700)
 	if err != nil {
 		return nil, err
 	}
@@ -6655,7 +6679,12 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 	chReady := make(chan error)
 	go func() {
 		// Lock to avoid concurrent running forkfile.
-		runUnlock := locking.Lock(context.TODO(), d.forkfileRunningLockName())
+		runUnlock, err := locking.Lock(context.TODO(), d.forkfileRunningLockName())
+		if err != nil {
+			chReady <- err
+			return
+		}
+
 		defer runUnlock()
 
 		// Mount the filesystem if needed.
@@ -6826,7 +6855,14 @@ func (d *lxc) FileSFTP() (*sftp.Client, error) {
 func (d *lxc) stopForkfile(force bool) {
 	// Make sure that when the function exits, no forkfile is running by acquiring the lock (which indicates
 	// that forkfile isn't running and holding the lock) and then releasing it.
-	defer func() { locking.Lock(context.TODO(), d.forkfileRunningLockName())() }()
+	defer func() {
+		unlock, err := locking.Lock(context.TODO(), d.forkfileRunningLockName())
+		if err != nil {
+			return
+		}
+
+		unlock()
+	}()
 
 	content, err := os.ReadFile(filepath.Join(d.LogPath(), "forkfile.pid"))
 	if err != nil {

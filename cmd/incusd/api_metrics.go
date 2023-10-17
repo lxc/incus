@@ -166,9 +166,9 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	lockCtx, lockCtxCancel := context.WithTimeout(r.Context(), cacheDuration)
 	defer lockCtxCancel()
 
-	unlock := locking.Lock(lockCtx, "metricsGet")
-	if unlock == nil {
-		return response.SmartError(api.StatusErrorf(http.StatusLocked, "Metrics are currently being built by another request"))
+	unlock, err := locking.Lock(lockCtx, "metricsGet")
+	if err != nil {
+		return response.SmartError(api.StatusErrorf(http.StatusLocked, "Metrics are currently being built by another request: %s", err))
 	}
 
 	defer unlock()

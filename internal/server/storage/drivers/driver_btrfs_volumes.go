@@ -1137,7 +1137,11 @@ func (d *btrfs) ListVolumes() ([]Volume, error) {
 
 // MountVolume simulates mounting a volume.
 func (d *btrfs) MountVolume(vol Volume, op *operations.Operation) error {
-	unlock := vol.MountLock()
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	// Don't attempt to modify the permission of an existing custom volume root.
@@ -1156,7 +1160,11 @@ func (d *btrfs) MountVolume(vol Volume, op *operations.Operation) error {
 // UnmountVolume simulates unmounting a volume.
 // As driver doesn't have volumes to unmount it returns false indicating the volume was already unmounted.
 func (d *btrfs) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operation) (bool, error) {
-	unlock := vol.MountLock()
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
 	defer unlock()
 
 	refCount := vol.MountRefCountDecrement()
@@ -1794,7 +1802,11 @@ func (d *btrfs) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) e
 
 // MountVolumeSnapshot sets up a read-only mount on top of the snapshot to avoid accidental modifications.
 func (d *btrfs) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
-	unlock := snapVol.MountLock()
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	snapPath := snapVol.MountPath()
@@ -1808,7 +1820,7 @@ func (d *btrfs) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 		}
 	}
 
-	_, err := mountReadOnly(snapPath, snapPath)
+	_, err = mountReadOnly(snapPath, snapPath)
 	if err != nil {
 		return err
 	}
@@ -1819,7 +1831,11 @@ func (d *btrfs) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 
 // UnmountVolumeSnapshot removes the read-only mount placed on top of a snapshot.
 func (d *btrfs) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
-	unlock := snapVol.MountLock()
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
 	defer unlock()
 
 	refCount := snapVol.MountRefCountDecrement()

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net"
@@ -29,7 +28,7 @@ func rsyncSend(conn *websocket.Conn, path string, rsyncArgs string) error {
 		defer func() { _ = dataSocket.Close() }()
 	}
 
-	readDone, writeDone := ws.Mirror(context.Background(), conn, dataSocket)
+	readDone, writeDone := ws.Mirror(conn, dataSocket)
 	<-writeDone
 	_ = dataSocket.Close()
 

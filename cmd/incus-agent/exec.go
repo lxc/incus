@@ -285,12 +285,12 @@ func (s *execWs) Do(op *operations.Operation) error {
 		stderr = ttys[execWSStderr]
 	}
 
-	attachedChildIsDead := make(chan struct{})
+	waitAttachedChildIsDead, markAttachedChildIsDead := context.WithCancel(context.Background())
 	var wgEOF sync.WaitGroup
 
 	finisher := func(cmdResult int, cmdErr error) error {
-		// Close this before closing the control connection so control handler can detect command ending.
-		close(attachedChildIsDead)
+		// Cancel this before closing the control connection so control handler can detect command ending.
+		markAttachedChildIsDead()
 
 		for _, tty := range ttys {
 			_ = tty.Close()
@@ -387,10 +387,8 @@ func (s *execWs) Do(op *operations.Operation) error {
 			mt, r, err := conn.NextReader()
 			if err != nil || mt == websocket.CloseMessage {
 				// Check if command process has finished normally, if so, no need to kill it.
-				select {
-				case <-attachedChildIsDead:
+				if waitAttachedChildIsDead.Err() != nil {
 					return
-				default:
 				}
 
 				if mt == websocket.CloseMessage {
@@ -412,10 +410,8 @@ func (s *execWs) Do(op *operations.Operation) error {
 			buf, err := io.ReadAll(r)
 			if err != nil {
 				// Check if command process has finished normally, if so, no need to kill it.
-				select {
-				case <-attachedChildIsDead:
+				if waitAttachedChildIsDead.Err() != nil {
 					return
-				default:
 				}
 
 				l.Warn("Failed reading control websocket message, killing command", logger.Ctx{"err": err})
@@ -472,7 +468,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 			conn := s.conns[0]
 			s.connsLock.Unlock()
 
-			readDone, writeDone := ws.Mirror(context.Background(), conn, ptys[0])
+			readDone, writeDone := ws.Mirror(conn, linux.NewExecWrapper(waitAttachedChildIsDead, ptys[0]))
 
 			<-readDone
 			<-writeDone
@@ -490,14 +486,14 @@ func (s *execWs) Do(op *operations.Operation) error {
 					conn := s.conns[i]
 					s.connsLock.Unlock()
 
-					<-ws.MirrorWrite(context.Background(), conn, ttys[i])
+					<-ws.MirrorWrite(conn, ttys[i])
 					_ = ttys[i].Close()
 				} else {
 					s.connsLock.Lock()
 					conn := s.conns[i]
 					s.connsLock.Unlock()
 
-					<-ws.MirrorRead(context.Background(), conn, ptys[i])
+					<-ws.MirrorRead(conn, ptys[i])
 					_ = ptys[i].Close()
 					wgEOF.Done()
 				}

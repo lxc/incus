@@ -618,7 +618,11 @@ func (d *lvm) ListVolumes() ([]Volume, error) {
 
 // MountVolume mounts a volume and increments ref counter. Please call UnmountVolume() when done with the volume.
 func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
-	unlock := vol.MountLock()
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	revert := revert.New()
@@ -680,10 +684,13 @@ func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
 // UnmountVolume unmounts volume if mounted and not in use. Returns true if this unmounted the volume.
 // keepBlockDev indicates if backing block device should be not be deactivated when volume is unmounted.
 func (d *lvm) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operation) (bool, error) {
-	unlock := vol.MountLock()
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
 	defer unlock()
 
-	var err error
 	ourUnmount := false
 	mountPath := vol.MountPath()
 
@@ -927,13 +934,16 @@ func (d *lvm) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 
 // MountVolumeSnapshot sets up a read-only mount on top of the snapshot to avoid accidental modifications.
 func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
-	unlock := snapVol.MountLock()
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	revert := revert.New()
 	defer revert.Fail()
 
-	var err error
 	mountPath := snapVol.MountPath()
 
 	// Check if already mounted.
@@ -1035,10 +1045,13 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 // UnmountVolumeSnapshot removes the read-only mount placed on top of a snapshot.
 // If a temporary snapshot volume exists then it will attempt to remove it.
 func (d *lvm) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
-	unlock := snapVol.MountLock()
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
 	defer unlock()
 
-	var err error
 	ourUnmount := false
 	mountPath := snapVol.MountPath()
 

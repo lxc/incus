@@ -91,7 +91,11 @@ func ensureImageIsLocallyAvailable(s *state.State, r *http.Request, img *api.Ima
 	// time may also arrive at the conclusion that the image doesn't exist on this cluster member and then
 	// think it needs to download the image and store the record in the database as well, which will lead to
 	// duplicate record errors.
-	unlock := imageOperationLock(img.Fingerprint)
+	unlock, err := imageOperationLock(img.Fingerprint)
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	memberAddress, err := s.DB.Cluster.LocateImage(img.Fingerprint)
@@ -734,7 +738,7 @@ func getSourceImageFromInstanceSource(ctx context.Context, s *state.State, tx *d
 }
 
 // instanceOperationLock acquires a lock for operating on an instance and returns the unlock function.
-func instanceOperationLock(ctx context.Context, projectName string, instanceName string) locking.UnlockFunc {
+func instanceOperationLock(ctx context.Context, projectName string, instanceName string) (locking.UnlockFunc, error) {
 	l := logger.AddContext(logger.Ctx{"project": projectName, "instance": instanceName})
 	l.Debug("Acquiring lock for instance")
 	defer l.Debug("Lock acquired for instance")

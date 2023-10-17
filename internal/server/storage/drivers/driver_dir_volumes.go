@@ -368,7 +368,11 @@ func (d *dir) ListVolumes() ([]Volume, error) {
 
 // MountVolume simulates mounting a volume.
 func (d *dir) MountVolume(vol Volume, op *operations.Operation) error {
-	unlock := vol.MountLock()
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	// Don't attempt to modify the permission of an existing custom volume root.
@@ -387,7 +391,11 @@ func (d *dir) MountVolume(vol Volume, op *operations.Operation) error {
 // UnmountVolume simulates unmounting a volume.
 // As driver doesn't have volumes to unmount it returns false indicating the volume was already unmounted.
 func (d *dir) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operation) (bool, error) {
-	unlock := vol.MountLock()
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
 	defer unlock()
 
 	refCount := vol.MountRefCountDecrement()
@@ -502,7 +510,11 @@ func (d *dir) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 
 // MountVolumeSnapshot sets up a read-only mount on top of the snapshot to avoid accidental modifications.
 func (d *dir) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
-	unlock := snapVol.MountLock()
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	snapPath := snapVol.MountPath()
@@ -516,7 +528,7 @@ func (d *dir) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 		}
 	}
 
-	_, err := mountReadOnly(snapPath, snapPath)
+	_, err = mountReadOnly(snapPath, snapPath)
 	if err != nil {
 		return err
 	}
@@ -527,7 +539,11 @@ func (d *dir) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 
 // UnmountVolumeSnapshot removes the read-only mount placed on top of a snapshot.
 func (d *dir) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
-	unlock := snapVol.MountLock()
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
 	defer unlock()
 
 	mountPath := snapVol.MountPath()

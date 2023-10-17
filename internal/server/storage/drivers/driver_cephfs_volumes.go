@@ -348,7 +348,11 @@ func (d *cephfs) ListVolumes() ([]Volume, error) {
 
 // MountVolume sets up the volume for use.
 func (d *cephfs) MountVolume(vol Volume, op *operations.Operation) error {
-	unlock := vol.MountLock()
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	vol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolume() when done.
@@ -358,7 +362,11 @@ func (d *cephfs) MountVolume(vol Volume, op *operations.Operation) error {
 // UnmountVolume clears any runtime state for the volume.
 // As driver doesn't have volumes to unmount it returns false indicating the volume was already unmounted.
 func (d *cephfs) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operation) (bool, error) {
-	unlock := vol.MountLock()
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
 	defer unlock()
 
 	refCount := vol.MountRefCountDecrement()
@@ -530,7 +538,11 @@ func (d *cephfs) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 
 // MountVolumeSnapshot makes the snapshot available for use.
 func (d *cephfs) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) error {
-	unlock := snapVol.MountLock()
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return err
+	}
+
 	defer unlock()
 
 	snapVol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolumeSnapshot() when done.
@@ -539,7 +551,11 @@ func (d *cephfs) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) e
 
 // UnmountVolumeSnapshot clears any runtime state for the snapshot.
 func (d *cephfs) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
-	unlock := snapVol.MountLock()
+	unlock, err := snapVol.MountLock()
+	if err != nil {
+		return false, err
+	}
+
 	defer unlock()
 
 	refCount := snapVol.MountRefCountDecrement()

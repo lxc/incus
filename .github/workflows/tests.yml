@@ -121,6 +121,31 @@ jobs:
             backend: dir
 
     steps:
+      - name: Performance tuning
+        run: |
+          set -eux
+          # optimize ext4 FSes for performance, not reliability
+          for fs in $(findmnt --noheading --type ext4 --list --uniq | awk '{print $1}'); do
+            # nombcache and data=writeback cannot be changed on remount
+            sudo mount -o remount,noatime,barrier=0,commit=6000 "${fs}"
+          done
+
+          # disable dpkg from calling sync()
+          echo "force-unsafe-io" | sudo tee /etc/dpkg/dpkg.cfg.d/force-unsafe-io
+
+      - name: Reclaim some space
+        run: |
+          # This was inspired from https://github.com/easimon/maximize-build-space
+          set -eux
+          df -h /
+          # dotnet
+          sudo rm -rf /usr/share/dotnet
+          # android
+          sudo rm -rf /usr/local/lib/android
+          # haskell
+          sudo rm -rf /opt/ghc
+          df -h /
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -230,9 +255,8 @@ jobs:
             exit 1
           fi
 
-          sudo apt-get install --no-install-recommends -y ceph-common
           sudo snap install microceph --edge
-          sleep 5
+          sudo apt-get install --no-install-recommends -y ceph-common
           sudo microceph cluster bootstrap
           sudo microceph.ceph config set global osd_pool_default_size 1
           sudo microceph.ceph config set global mon_allow_pool_delete true
@@ -255,6 +279,15 @@ jobs:
           sudo microceph.ceph fs new cephfs cephfs_meta cephfs_data
           sudo microceph.ceph fs ls
           sleep 30
+          sudo microceph.ceph status
+          # Wait until there are no more "unkowns" pgs
+          for _ in $(seq 60); do
+            if sudo microceph.ceph pg stat | grep -wF unknown; then
+              sleep 1
+            else
+              break
+            fi
+          done
           sudo microceph.ceph status
           sudo rm -f /snap/bin/rbd
 

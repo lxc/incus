@@ -2265,3 +2265,9 @@ during instance initialization using the `--device` flag.
 
 Note that these configuration are applied only at the time of instance creation and subsequent modifications have
 no effect on existing devices.
+
+## `operation_wait`
+
+This API extension indicates that the `/1.0/operations/{id}/wait` endpoint exists on the server. This indicates to the client
+that the endpoint can be used to wait for an operation to complete rather than waiting for an operation event via the
+`/1.0/events` endpoint.

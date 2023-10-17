@@ -50,7 +50,7 @@ type ImageDownloadArgs struct {
 }
 
 // imageOperationLock acquires a lock for operating on an image and returns the unlock function.
-func imageOperationLock(fingerprint string) locking.UnlockFunc {
+func imageOperationLock(fingerprint string) (locking.UnlockFunc, error) {
 	l := logger.AddContext(logger.Ctx{"fingerprint": fingerprint})
 	l.Debug("Acquiring lock for image")
 	defer l.Debug("Lock acquired for image")
@@ -126,7 +126,11 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	}
 
 	// Ensure we are the only ones operating on this image.
-	unlock := imageOperationLock(fp)
+	unlock, err := imageOperationLock(fp)
+	if err != nil {
+		return nil, err
+	}
+
 	defer unlock()
 
 	// If auto-update is on and we're being given the image by
