@@ -116,7 +116,7 @@ func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
 			}
 
 			if ct.Ephemeral {
-				return nil
+				continue
 			}
 		}
 
