@@ -129,44 +129,11 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 
 	d := newDaemon(c.global.flagLogDebug, c.global.flagLogVerbose)
 
-	// Wait up to 30s to get a valid local vsock context ID.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-	d.localCID, err = waitVsockContextID(ctx)
-	if err != nil {
-		cancel()
-		return fmt.Errorf("Failed getting vsock context ID: %w", err)
-	}
-
-	cancel()
-
 	// Start the server.
 	err = startHTTPServer(d, c.global.flagLogDebug)
 	if err != nil {
 		return fmt.Errorf("Failed to start HTTP server: %w", err)
 	}
-
-	// Check context ID periodically, and restart the HTTP server if needed.
-	go func() {
-		for {
-			time.Sleep(30 * time.Second)
-			cid, err := waitVsockContextID(context.Background())
-			if err != nil || d.localCID == cid {
-				continue
-			}
-
-			// Restart server
-			logger.Warn("Restarting the vsock server due to context ID change", logger.Ctx{"oldID": d.localCID, "newID": cid})
-			servers["http"].Close()
-
-			// Update context ID.
-			d.localCID = cid
-
-			err = startHTTPServer(d, c.global.flagLogDebug)
-			if err != nil {
-				errChan <- err
-			}
-		}
-	}()
 
 	// Check whether we should start the DevIncus server in the early setup. This way, /dev/incus/sock
 	// will be available for any systemd services starting after the agent.

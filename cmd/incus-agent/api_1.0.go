@@ -1,14 +1,12 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/mdlayher/vsock"
 
@@ -195,41 +193,19 @@ func getClient(CID uint32, port int, serverCertificate string) (*http.Client, er
 	return client, nil
 }
 
-// waitVsockContextID checks for valid local context ID and returns it.
-// If no valid context ID has been ascertained when the context is cancelled, the last error is returned.
-func waitVsockContextID(ctx context.Context) (uint32, error) {
+func startHTTPServer(d *Daemon, debug bool) error {
 	const CIDAny uint32 = 4294967295 // Equivalent to VMADDR_CID_ANY.
 
-	for {
-		cid, err := vsock.ContextID()
-		if cid == CIDAny {
-			// Ignore VMADDR_CID_ANY as this seems to indicate the vsock module is still initialising.
-			err = fmt.Errorf("Invalid context ID %d", cid)
-		} else if err == nil {
-			return cid, nil
-		}
-
-		ctxErr := ctx.Err()
-		if ctxErr != nil {
-			if err != nil {
-				return 0, err
-			}
-
-			return 0, ctxErr
-		}
-
-		time.Sleep(time.Second)
-	}
-}
-
-func startHTTPServer(d *Daemon, debug bool) error {
-	// Setup the listener on VM's context ID for inbound connections from the host.
-	l, err := vsock.ListenContextID(d.localCID, ports.HTTPSDefaultPort, nil)
+	// Setup the listener on wildcard CID for inbound connections from LXD.
+	// We use the VMADDR_CID_ANY CID so that if the VM's CID changes in the future the listener still works.
+	// A CID change can occur when restoring a stateful VM that was previously using one CID but is
+	// subsequently restored using a different one.
+	l, err := vsock.ListenContextID(CIDAny, ports.HTTPSDefaultPort, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to listen on vsock: %w", err)
 	}
 
-	logger.Info("Started vsock listener", logger.Ctx{"contextID": d.localCID})
+	logger.Info("Started vsock listener")
 
 	// Load the expected server certificate.
 	cert, err := localtls.ReadCert("server.crt")

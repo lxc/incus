@@ -16,8 +16,6 @@ type Daemon struct {
 	serverPort        uint32
 	serverCertificate string
 
-	localCID uint32
-
 	// The channel which is used to indicate that the agent was able to connect to the host.
 	chConnected chan struct{}
 
