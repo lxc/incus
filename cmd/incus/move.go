@@ -170,35 +170,20 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Support for server-side pool move.
-	if c.flagStorage != "" && sourceRemote == destRemote {
+	// Support for server-side move. Currently, such migration can only move an instance to different project
+	// or storage pool. If specific profile, device or config is provided, the instance should be copied (move using copy).
+	if sourceRemote == destRemote && (c.flagStorage != "" || c.flagTargetProject != "") && (len(c.flagConfig) == 0 && len(c.flagDevice) == 0 && len(c.flagProfile) == 0 && !c.flagNoProfiles) {
 		source, err := conf.GetInstanceServer(sourceRemote)
 		if err != nil {
 			return err
 		}
 
-		if source.HasExtension("instance_pool_move") {
+		if source.HasExtension("instance_pool_move") && source.HasExtension("instance_project_move") {
 			if c.flagMode != moveDefaultMode {
-				return fmt.Errorf(i18n.G("The --mode flag can't be used with --storage"))
+				return fmt.Errorf(i18n.G("The --mode flag can't be used with --storage or --target-project"))
 			}
 
-			return moveInstancePool(conf, sourceResource, destResource, c.flagInstanceOnly, c.flagStorage, stateful)
-		}
-	}
-
-	// Support for server-side project move.
-	if c.flagTargetProject != "" && sourceRemote == destRemote {
-		source, err := conf.GetInstanceServer(sourceRemote)
-		if err != nil {
-			return err
-		}
-
-		if source.HasExtension("instance_project_move") {
-			if c.flagMode != moveDefaultMode {
-				return fmt.Errorf(i18n.G("The --mode flag can't be used with --target-project"))
-			}
-
-			return moveInstanceProject(conf, sourceResource, destResource, c.flagTargetProject, c.flagInstanceOnly, stateful)
+			return moveInstance(conf, sourceResource, destResource, c.flagStorage, c.flagTargetProject, c.flagInstanceOnly, stateful)
 		}
 	}
 
@@ -308,8 +293,8 @@ func moveClusterInstance(conf *config.Config, sourceResource string, destResourc
 	return nil
 }
 
-// Move an instance between pools using special POST /instances/<name> API.
-func moveInstancePool(conf *config.Config, sourceResource string, destResource string, instanceOnly bool, storage string, stateful bool) error {
+// Move an instance between pools and projects using special POST /instances/<name> API.
+func moveInstance(conf *config.Config, sourceResource string, destResource string, storage string, targetProject string, instanceOnly bool, stateful bool) error {
 	// Parse the source.
 	sourceRemote, sourceName, err := conf.ParseRemote(sourceResource)
 	if err != nil {
@@ -342,60 +327,9 @@ func moveInstancePool(conf *config.Config, sourceResource string, destResource s
 	req := api.InstancePost{
 		Name:         destName,
 		Migration:    true,
+		InstanceOnly: instanceOnly,
 		Pool:         storage,
-		InstanceOnly: instanceOnly,
-		Live:         stateful,
-	}
-
-	op, err := source.MigrateInstance(sourceName, req)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Migration API failure: %w"), err)
-	}
-
-	err = op.Wait()
-	if err != nil {
-		return fmt.Errorf(i18n.G("Migration operation failure: %w"), err)
-	}
-
-	return nil
-}
-
-// Move an instance between projects using special POST /instances/<name> API.
-func moveInstanceProject(conf *config.Config, sourceResource string, destResource string, targetProject string, instanceOnly bool, stateful bool) error {
-	// Parse the source.
-	sourceRemote, sourceName, err := conf.ParseRemote(sourceResource)
-	if err != nil {
-		return err
-	}
-
-	// Parse the destination.
-	_, destName, err := conf.ParseRemote(destResource)
-	if err != nil {
-		return err
-	}
-
-	// Make sure we have an instance or snapshot name.
-	if sourceName == "" {
-		return fmt.Errorf(i18n.G("You must specify a source instance name"))
-	}
-
-	// The destination name is optional.
-	if destName == "" {
-		destName = sourceName
-	}
-
-	// Connect to the source host.
-	source, err := conf.GetInstanceServer(sourceRemote)
-	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to connect to cluster member: %w"), err)
-	}
-
-	// Pass the new project to the migration API.
-	req := api.InstancePost{
-		Name:         destName,
-		Migration:    true,
 		Project:      targetProject,
-		InstanceOnly: instanceOnly,
 		Live:         stateful,
 	}
 
