@@ -1,10 +1,10 @@
 linters:
   enable:
+    - gci
+    - godot
     - gofmt
     - misspell
-    - godot
     - whitespace
-    - gci
 linters-settings:
   gci:
     sections:
