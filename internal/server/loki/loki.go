@@ -89,7 +89,7 @@ func NewClient(ctx context.Context, url *url.URL, username string, password stri
 	}
 
 	if caCert != "" {
-		tlsConfig, err := localtls.GetTLSConfigMem("", "", caCert, "", true)
+		tlsConfig, err := localtls.GetTLSConfigMem("", "", caCert, "", false)
 		if err != nil {
 			return nil
 		}
