@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/mdlayher/vsock"
 
@@ -193,14 +195,41 @@ func getClient(CID uint32, port int, serverCertificate string) (*http.Client, er
 	return client, nil
 }
 
+// waitVsockContextID checks for valid local context ID and returns it.
+// If no valid context ID has been ascertained when the context is cancelled, the last error is returned.
+func waitVsockContextID(ctx context.Context) (uint32, error) {
+	const CIDAny uint32 = 4294967295 // Equivalent to VMADDR_CID_ANY.
+
+	for {
+		cid, err := vsock.ContextID()
+		if cid == CIDAny {
+			// Ignore VMADDR_CID_ANY as this seems to indicate the vsock module is still initialising.
+			err = fmt.Errorf("Invalid context ID %d", cid)
+		} else if err == nil {
+			return cid, nil
+		}
+
+		ctxErr := ctx.Err()
+		if ctxErr != nil {
+			if err != nil {
+				return 0, err
+			}
+
+			return 0, ctxErr
+		}
+
+		time.Sleep(time.Second)
+	}
+}
+
 func startHTTPServer(d *Daemon, debug bool) error {
 	// Setup the listener on VM's context ID for inbound connections from the host.
-	l, err := vsock.Listen(ports.HTTPSDefaultPort, nil)
+	l, err := vsock.ListenContextID(d.localCID, ports.HTTPSDefaultPort, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to listen on vsock: %w", err)
 	}
 
-	logger.Info("Started vsock listener")
+	logger.Info("Started vsock listener", logger.Ctx{"contextID": d.localCID})
 
 	// Load the expected server certificate.
 	cert, err := localtls.ReadCert("server.crt")

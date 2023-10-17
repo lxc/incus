@@ -17,7 +17,6 @@ import (
 
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/internal/server/vsock"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"
@@ -130,6 +129,16 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 
 	d := newDaemon(c.global.flagLogDebug, c.global.flagLogVerbose)
 
+	// Wait up to 30s to get a valid local vsock context ID.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	d.localCID, err = waitVsockContextID(ctx)
+	if err != nil {
+		cancel()
+		return fmt.Errorf("Failed getting vsock context ID: %w", err)
+	}
+
+	cancel()
+
 	// Start the server.
 	err = startHTTPServer(d, c.global.flagLogDebug)
 	if err != nil {
@@ -138,26 +147,24 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 
 	// Check context ID periodically, and restart the HTTP server if needed.
 	go func() {
-		for range time.Tick(30 * time.Second) {
-			cid, err := vsock.ContextID()
-			if err != nil {
-				continue
-			}
-
-			if d.localCID == cid {
+		for {
+			time.Sleep(30 * time.Second)
+			cid, err := waitVsockContextID(context.Background())
+			if err != nil || d.localCID == cid {
 				continue
 			}
 
 			// Restart server
+			logger.Warn("Restarting the vsock server due to context ID change", logger.Ctx{"oldID": d.localCID, "newID": cid})
 			servers["http"].Close()
+
+			// Update context ID.
+			d.localCID = cid
 
 			err = startHTTPServer(d, c.global.flagLogDebug)
 			if err != nil {
 				errChan <- err
 			}
-
-			// Update context ID.
-			d.localCID = cid
 		}
 	}()
 
