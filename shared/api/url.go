@@ -32,14 +32,20 @@ func (u *URL) Host(host string) *URL {
 // Path sets the path of the URL from one or more path parts.
 // It appends each of the pathParts (escaped using url.PathEscape) prefixed with "/" to the URL path.
 func (u *URL) Path(pathParts ...string) *URL {
-	var b strings.Builder
+	var path, rawPath strings.Builder
 
 	for _, pathPart := range pathParts {
-		b.WriteString("/") // Build an absolute URL.
-		b.WriteString(url.PathEscape(pathPart))
+		// Generate unencoded path.
+		path.WriteString("/") // Build an absolute URL.
+		path.WriteString(pathPart)
+
+		// Generate encoded path hint (this will be used by u.URL.EncodedPath() to decide its methodology).
+		rawPath.WriteString("/") // Build an absolute URL.
+		rawPath.WriteString(url.PathEscape(pathPart))
 	}
 
-	u.URL.Path = b.String()
+	u.URL.Path = path.String()
+	u.URL.RawPath = rawPath.String()
 
 	return u
 }
