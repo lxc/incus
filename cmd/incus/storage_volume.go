@@ -1644,8 +1644,9 @@ func (c *cmdStorageVolumeMove) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("No storage pool for target volume specified"))
 	}
 
-	// Rename volume if both remotes and pools of source and target are equal.
-	if srcRemote == dstRemote && srcVolPool == dstVolPool {
+	// Rename volume if both remotes and pools of source and target are equal
+	// and no destination cluster member name is set.
+	if srcRemote == dstRemote && srcVolPool == dstVolPool && c.storageVolume.flagDestinationTarget == "" {
 		var args []string
 
 		if srcRemote != "" {
