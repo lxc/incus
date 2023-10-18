@@ -540,6 +540,11 @@ Instances will come back online once the migration is complete.
 	// Cleanup paths.
 	fmt.Println("=> Cleaning up target paths")
 
+	for _, dir := range []string{"backups", "images"} {
+		// Remove any potential symlink (ignore errors for real directories).
+		_ = os.Remove(filepath.Join(targetPaths.Daemon, dir))
+	}
+
 	for _, dir := range []string{"devices", "devlxd", "security", "shmounts"} {
 		err = os.RemoveAll(filepath.Join(targetPaths.Daemon, dir))
 		if err != nil && !os.IsNotExist(err) {
