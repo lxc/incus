@@ -218,7 +218,7 @@ endif
 .PHONY: dist
 dist: doc
 	# Cleanup
-	rm -Rf $(ARCHIVE).gz
+	rm -Rf $(ARCHIVE).xz
 
 	# Create build dir
 	$(eval TMP := $(shell mktemp -d))
@@ -227,6 +227,7 @@ dist: doc
 
 	# Download dependencies
 	(cd $(TMP)/incus-$(VERSION) ; $(GO) mod vendor)
+	(cd $(TMP)/incus-$(VERSION)/cmd/lxd-to-incus ; $(GO) mod vendor)
 
 	# Download the cowsql libraries
 	git clone --depth=1 https://github.com/cowsql/cowsql $(TMP)/incus-$(VERSION)/vendor/cowsql
@@ -239,7 +240,7 @@ dist: doc
 	cp -r doc/html $(TMP)/incus-$(VERSION)/doc/html/
 
 	# Assemble tarball
-	tar --exclude-vcs -C $(TMP) -zcf $(ARCHIVE).gz incus-$(VERSION)/
+	tar --exclude-vcs -C $(TMP) -Jcf $(ARCHIVE).xz incus-$(VERSION)/
 
 	# Cleanup
 	rm -Rf $(TMP)
