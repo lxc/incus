@@ -227,6 +227,7 @@ dist: doc
 
 	# Download dependencies
 	(cd $(TMP)/incus-$(VERSION) ; $(GO) mod vendor)
+	(cd $(TMP)/incus-$(VERSION)/cmd/lxd-to-incus ; $(GO) mod vendor)
 
 	# Download the cowsql libraries
 	git clone --depth=1 https://github.com/cowsql/cowsql $(TMP)/incus-$(VERSION)/vendor/cowsql
