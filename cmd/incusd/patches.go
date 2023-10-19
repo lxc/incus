@@ -1056,8 +1056,18 @@ func patchStorageZfsUnsetInvalidBlockSettingsV2(_ string, d *Daemon) error {
 				continue
 			}
 
-			delete(config, "block.filesystem")
-			delete(config, "block.mount_options")
+			update := false
+			for _, k := range []string{"block.filesystem", "block.mount_options"} {
+				_, found := config[k]
+				if found {
+					delete(config, k)
+					update = true
+				}
+			}
+
+			if !update {
+				continue
+			}
 
 			if vol.Type == db.StoragePoolVolumeTypeNameVM {
 				volType = volTypeVM
