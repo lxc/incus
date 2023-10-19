@@ -1207,12 +1207,6 @@ func (d *Daemon) init() error {
 		return err
 	}
 
-	// Apply all patches that need to be run after daemon storage is initialised.
-	err = patchesApply(d, patchPostDaemonStorage)
-	if err != nil {
-		return err
-	}
-
 	// Get daemon configuration.
 	bgpAddress := d.localConfig.BGPAddress()
 	bgpRouterID := d.localConfig.BGPRouterID()
@@ -1239,6 +1233,12 @@ func (d *Daemon) init() error {
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	// Apply all patches that need to be run after daemon storage is initialised.
+	err = patchesApply(d, patchPostDaemonStorage)
 	if err != nil {
 		return err
 	}
