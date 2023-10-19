@@ -1,7 +1,7 @@
 *.swp
 po/*.mo
 po/*.po~
-incus-*.tar.gz
+incus-*.tar.xz
 .vagrant
 *~
 tags
