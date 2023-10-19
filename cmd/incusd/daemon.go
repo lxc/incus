@@ -960,6 +960,30 @@ func (d *Daemon) init() error {
 		return err
 	}
 
+	/* Get the server name and initial configuration */
+	err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		config, err := clusterConfig.Load(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		// Get the local node (will be used if clustered).
+		serverName, err := tx.GetLocalNodeName(ctx)
+		if err != nil {
+			return err
+		}
+
+		d.globalConfigMu.Lock()
+		d.serverName = serverName
+		d.globalConfig = config
+		d.globalConfigMu.Unlock()
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	/* Setup network endpoint certificate */
 	networkCert, err := internalUtil.LoadCert(d.os.VarDir)
 	if err != nil {
@@ -1232,6 +1256,7 @@ func (d *Daemon) init() error {
 			return err
 		}
 
+		// Refresh global config and server name in case a patch changed it.
 		d.globalConfigMu.Lock()
 		d.serverName = serverName
 		d.globalConfig = config
