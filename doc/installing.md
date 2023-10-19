@@ -111,6 +111,13 @@ sudo apt update
 sudo apt install acl attr autoconf automake dnsmasq-base git golang libacl1-dev libcap-dev liblxc1 liblxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
 ```
 
+```{note}
+If you use the `liblxc-dev` package and get compile time errors when building the `go-lxc` module,
+ensure that the value for `INC_DEVEL` is `0` for your `liblxc` build. To check that, look at `/usr/include/lxc/version.h`.
+If the `INC_DEVEL` value is `1`, replace it with `0` to work around the problem. It's a packaging bug, and
+we are aware of it for Ubuntu 22.04/22.10. Ubuntu 23.04/23.10 does not have this problem.
+```
+
 There are a few storage drivers for Incus besides the default `dir` driver.
 Installing these tools adds a bit to initramfs and may slow down your
 host boot, but are needed if you'd like to use a particular driver:
