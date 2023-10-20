@@ -2271,3 +2271,7 @@ no effect on existing devices.
 This API extension indicates that the `/1.0/operations/{id}/wait` endpoint exists on the server. This indicates to the client
 that the endpoint can be used to wait for an operation to complete rather than waiting for an operation event via the
 `/1.0/events` endpoint.
+
+## `image_restriction_privileged`
+
+This extension adds a new image restriction, `requirements.privileged` which when `false` indicates that an image cannot be run in a privileged container.

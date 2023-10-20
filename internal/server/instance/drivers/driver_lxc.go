@@ -1916,6 +1916,11 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		return "", nil, fmt.Errorf("The image used by this instance requires a CGroupV1 host system")
 	}
 
+	// Ensure privileged is turned off for images that cannot work privileged
+	if util.IsFalse(d.localConfig["image.requirements.privileged"]) && util.IsTrue(d.expandedConfig["security.privileged"]) {
+		return "", nil, fmt.Errorf("The image used by this instance is incompatible with privileged containers. Please unset security.privileged on the instance")
+	}
+
 	// Load any required kernel modules
 	kernelModules := d.expandedConfig["linux.kernel_modules"]
 	if kernelModules != "" {
