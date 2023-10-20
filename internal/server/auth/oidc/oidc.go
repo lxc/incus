@@ -211,7 +211,7 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 
 		// Send to the UI.
 		// NOTE: Once the UI does the redirection on its own, we may be able to use the referer here instead.
-		http.Redirect(w, r, "/ui/", 301)
+		http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
 	}, provider)
 
 	handler(w, r)
