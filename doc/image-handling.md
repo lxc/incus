@@ -56,5 +56,5 @@ The following requirements are supported:
 
 Key                                         | Type      | Default      | Description
 :--                                         | :---      | :------      | :----------
-`requirements.secureboot`                   | string    | -            | If set to `false`, indicates that the image cannot boot under secure boot.
+`requirements.secureboot`                   | bool      | -            | If set to `false`, indicates that the image cannot boot under secure boot.
 `requirements.cgroup`                       | string    | -            | If set to `v1`, indicates that the image requires the host to run cgroup v1.
