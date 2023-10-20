@@ -784,6 +784,11 @@ func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
 		}
 
 		for _, vol := range volumes {
+			// In a non-clusted environment ServerName will be empty.
+			if s.ServerName != "" && vol.Location != s.ServerName {
+				continue
+			}
+
 			// Exclude non-ISO custom volumes.
 			if vol.ContentType != db.StoragePoolVolumeContentTypeNameISO {
 				continue
@@ -859,6 +864,11 @@ func patchZfsSetContentTypeUserProperty(name string, d *Daemon) error {
 		}
 
 		for _, vol := range volumes {
+			// In a non-clusted environment ServerName will be empty.
+			if s.ServerName != "" && vol.Location != s.ServerName {
+				continue
+			}
+
 			zfsPoolName := p.Driver().Config()["zfs.pool_name"]
 			if zfsPoolName != "" {
 				poolName = zfsPoolName
@@ -946,7 +956,8 @@ func patchStorageZfsUnsetInvalidBlockSettings(_ string, d *Daemon) error {
 
 	for pool, volumes := range poolVolumes {
 		for _, vol := range volumes {
-			if vol.Location != s.ServerName {
+			// In a non-clusted environment ServerName will be empty.
+			if s.ServerName != "" && vol.Location != s.ServerName {
 				continue
 			}
 
