@@ -624,7 +624,7 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 		poolAPI.Status = pool.LocalStatus()
 	}
 
-	etag := []any{pool.Name, pool.Driver, poolAPI.Config}
+	etag := []any{pool.Name(), pool.Driver().Info().Name, pool.Description(), poolAPI.Config}
 
 	return response.SyncResponseETag(true, &poolAPI, etag)
 }
@@ -711,7 +711,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Validate the ETag.
-	etag := []any{pool.Name(), pool.Driver().Info().Name, etagConfig}
+	etag := []any{pool.Name(), pool.Driver().Info().Name, pool.Description(), etagConfig}
 
 	err = localUtil.EtagCheck(r, etag)
 	if err != nil {
