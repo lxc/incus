@@ -305,7 +305,7 @@ func hoistReq(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Requ
 		}
 
 		if rootUID != cred.Uid {
-			http.Error(w, "Access denied for non-root user", 401)
+			http.Error(w, "Access denied for non-root user", http.StatusUnauthorized)
 			return
 		}
 
