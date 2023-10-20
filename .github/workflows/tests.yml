@@ -1,7 +1,10 @@
 name: Tests
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - main
+      - stable-*
+  pull_request:
 
 permissions:
   contents: read
@@ -45,7 +48,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo add-apt-repository ppa:ubuntu-lxc/lxc-git-master -y --no-update
+          sudo add-apt-repository ppa:ubuntu-lxc/daily -y --no-update
           sudo add-apt-repository ppa:cowsql/stable -y --no-update
           sudo apt-get update
 
@@ -171,7 +174,7 @@ jobs:
       - name: Install dependencies
         run: |
           set -x
-          sudo add-apt-repository ppa:ubuntu-lxc/lxc-git-master -y --no-update
+          sudo add-apt-repository ppa:ubuntu-lxc/daily -y --no-update
           sudo add-apt-repository ppa:cowsql/stable -y --no-update
           sudo apt-get update
 

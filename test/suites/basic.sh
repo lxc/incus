@@ -655,4 +655,13 @@ test_basic_usage() {
   ! incus profile assign c1 foo || false
   incus profile delete foo
   incus delete -f c1
+
+  # Multiple ephemeral instances delete
+  incus launch testimage c1
+  incus launch testimage c2
+  incus launch testimage c3
+
+  incus delete -f c1 c2 c3
+  remaining_instances="$(incus list --format csv)"
+  [ -z "${remaining_instances}" ]
 }

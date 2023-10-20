@@ -8125,7 +8125,7 @@ func (d *lxc) UpdateBackupFile() error {
 		return err
 	}
 
-	return pool.UpdateInstanceBackupFile(d, nil)
+	return pool.UpdateInstanceBackupFile(d, true, nil)
 }
 
 // Info returns "lxc" and the currently loaded version of LXC.

@@ -658,9 +658,19 @@ test_clustering_storage() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume copy pool1/vol1 pool1/vol1 --target=node1 --destination-target=node2
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume copy pool1/vol1 pool1/vol1 --target=node1 --destination-target=node2 --refresh
 
+    # Check renaming storage volume works.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume create pool1 vol2 --target=node1
+    INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume move pool1/vol2 pool1/vol3 --target=node1
+    INCUS_DIR="${INCUS_TWO_DIR}" incus storage volume show pool1 vol3 | grep -q node1
+    INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume move pool1/vol3 pool1/vol2 --target=node1 --destination-target=node2
+    INCUS_DIR="${INCUS_TWO_DIR}" incus storage volume show pool1 vol2 | grep -q node2
+    INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume rename pool1 vol2 vol3 --target=node2
+    INCUS_DIR="${INCUS_TWO_DIR}" incus storage volume show pool1 vol3 | grep -q node2
+
     # Delete pool and check cleaned up.
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume delete pool1 vol1 --target=node1
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume delete pool1 vol1 --target=node2
+    INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume delete pool1 vol3 --target=node2
     INCUS_DIR="${INCUS_TWO_DIR}" incus storage delete pool1
     ! stat "${INCUS_ONE_SOURCE}/containers" || false
     ! stat "${INCUS_TWO_SOURCE}/containers" || false

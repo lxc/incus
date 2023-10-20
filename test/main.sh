@@ -339,6 +339,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_backup_export "backup export"
     run_test test_backup_rename "backup rename"
     run_test test_backup_volume_export "backup volume export"
+    run_test test_backup_export_import_instance_only "backup export and import instance only"
     run_test test_backup_volume_rename_delete "backup volume rename and delete"
     run_test test_backup_different_instance_uuid "backup instance and check instance UUIDs"
     run_test test_backup_volume_expiry "backup volume expiry"

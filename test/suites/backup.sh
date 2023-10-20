@@ -971,7 +971,7 @@ test_backup_export_import_recover() {
     # Create and export an instance.
     incus launch testimage c1
     incus export c1 "${INCUS_DIR}/c1.tar.gz"
-    incus rm -f c1
+    incus delete -f c1
 
     # Import instance and remove no longer required tarball.
     incus import "${INCUS_DIR}/c1.tar.gz" c2
@@ -991,4 +991,28 @@ EOF
     # Remove recovered instance.
     incus rm -f c2
   )
+}
+
+test_backup_export_import_instance_only() {
+  poolName=$(incus profile device get default root pool)
+
+  ensure_import_testimage
+  ensure_has_localhost_remote "${INCUS_ADDR}"
+
+  # Create an instance with snapshot.
+  incus init testimage c1
+  incus snapshot create c1
+
+  # Export the instance and remove it.
+  incus export c1 "${INCUS_DIR}/c1.tar.gz" --instance-only
+  incus delete -f c1
+
+  # Import the instance from tarball.
+  incus import "${INCUS_DIR}/c1.tar.gz"
+
+  # Verify imported instance has no snapshots.
+  [ "$(incus query "/1.0/storage-pools/${poolName}/volumes/container/c1/snapshots" | jq "length == 0")" = "true" ]
+
+  rm "${INCUS_DIR}/c1.tar.gz"
+  incus delete -f c1
 }

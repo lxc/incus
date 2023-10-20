@@ -148,7 +148,7 @@ func (b *mockBackend) GenerateInstanceBackupConfig(inst instance.Instance, snaps
 	return nil, nil
 }
 
-func (b *mockBackend) UpdateInstanceBackupFile(inst instance.Instance, op *operations.Operation) error {
+func (b *mockBackend) UpdateInstanceBackupFile(inst instance.Instance, snapshot bool, op *operations.Operation) error {
 	return nil
 }
 

@@ -12,11 +12,6 @@ import (
 	localtls "github.com/lxc/incus/shared/tls"
 )
 
-// ContextID returns the local VM sockets context ID.
-func ContextID() (uint32, error) {
-	return vsock.ContextID()
-}
-
 // Dial connects to a remote vsock.
 func Dial(cid, port uint32) (net.Conn, error) {
 	return vsock.Dial(cid, port, nil)

@@ -7724,7 +7724,7 @@ func (d *qemu) UpdateBackupFile() error {
 		return err
 	}
 
-	return pool.UpdateInstanceBackupFile(d, nil)
+	return pool.UpdateInstanceBackupFile(d, true, nil)
 }
 
 type cpuTopology struct {

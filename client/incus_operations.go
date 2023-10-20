@@ -89,6 +89,14 @@ func (r *ProtocolIncus) GetOperation(uuid string) (*api.Operation, string, error
 func (r *ProtocolIncus) GetOperationWait(uuid string, timeout int) (*api.Operation, string, error) {
 	op := api.Operation{}
 
+	// Unset the response header timeout so that the request does not time out.
+	transport, err := r.getUnderlyingHTTPTransport()
+	if err != nil {
+		return nil, "", err
+	}
+
+	transport.ResponseHeaderTimeout = 0
+
 	// Fetch the raw value
 	etag, err := r.queryStruct("GET", fmt.Sprintf("/operations/%s/wait?timeout=%d", url.PathEscape(uuid), timeout), nil, "", &op)
 	if err != nil {

@@ -14,11 +14,11 @@ func ExampleURL() {
 	fmt.Println(u.Host("example.com"))
 	fmt.Println(u.Scheme("https"))
 
-	// Output: /1.0/networks/name-with-%252F-in-it
-	// /1.0/networks/name-with-%252F-in-it
-	// /1.0/networks/name-with-%252F-in-it?project=project-with-%25-in-it
-	// /1.0/networks/name-with-%252F-in-it?project=project-with-%25-in-it
-	// /1.0/networks/name-with-%252F-in-it?project=project-with-%25-in-it&target=member-with-%25-in-it
-	// //example.com/1.0/networks/name-with-%252F-in-it?project=project-with-%25-in-it&target=member-with-%25-in-it
-	// https://example.com/1.0/networks/name-with-%252F-in-it?project=project-with-%25-in-it&target=member-with-%25-in-it
+	// Output: /1.0/networks/name-with-%2F-in-it
+	// /1.0/networks/name-with-%2F-in-it
+	// /1.0/networks/name-with-%2F-in-it?project=project-with-%25-in-it
+	// /1.0/networks/name-with-%2F-in-it?project=project-with-%25-in-it
+	// /1.0/networks/name-with-%2F-in-it?project=project-with-%25-in-it&target=member-with-%25-in-it
+	// //example.com/1.0/networks/name-with-%2F-in-it?project=project-with-%25-in-it&target=member-with-%25-in-it
+	// https://example.com/1.0/networks/name-with-%2F-in-it?project=project-with-%25-in-it&target=member-with-%25-in-it
 }

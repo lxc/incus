@@ -1972,7 +1972,7 @@ func (n *bridge) getExternalSubnetInUse() ([]externalSubnetUsage, error) {
 
 			proxySubnet, err := ParseIPToNet(proxyListenAddr.Address)
 			if err != nil {
-				return err
+				continue // If proxy listen isn't a valid IP it can't conflict.
 			}
 
 			externalSubnets = append(externalSubnets, externalSubnetUsage{

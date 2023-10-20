@@ -17,7 +17,6 @@ import (
 
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/internal/server/vsock"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"
@@ -135,31 +134,6 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to start HTTP server: %w", err)
 	}
-
-	// Check context ID periodically, and restart the HTTP server if needed.
-	go func() {
-		for range time.Tick(30 * time.Second) {
-			cid, err := vsock.ContextID()
-			if err != nil {
-				continue
-			}
-
-			if d.localCID == cid {
-				continue
-			}
-
-			// Restart server
-			servers["http"].Close()
-
-			err = startHTTPServer(d, c.global.flagLogDebug)
-			if err != nil {
-				errChan <- err
-			}
-
-			// Update context ID.
-			d.localCID = cid
-		}
-	}()
 
 	// Check whether we should start the DevIncus server in the early setup. This way, /dev/incus/sock
 	// will be available for any systemd services starting after the agent.
