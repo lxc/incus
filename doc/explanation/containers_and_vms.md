@@ -7,6 +7,14 @@ When running a system container, Incus simulates a virtual version of a full ope
 
 When running a virtual machine, Incus uses the hardware of the host system, but the kernel is provided by the virtual machine. Therefore, virtual machines can be used to run, for example, a different operating system.
 
+| Virtual Machines                | Application Containers      | System Containers                 |
+| :--:                            | :--:                        | :--:                              |
+| Uses a dedicated kernel         | Uses the kernel of the host | Uses the kernel of the host       |
+| Can host different types of OS  | Can only host Linux         | Can only host Linux               |
+| Uses more resources             | Uses less resources         | Uses less resources               |
+| Can host multiple applications  | Can host a single app       | Can host multiple applications    |
+| Supported by Incus              | Supported by Docker         | Supported by Incus                |
+
 ## Application containers vs. system containers
 
 Application containers (as provided by, for example, Docker) package a single process or application. System containers, on the other hand, simulate a full operating system and let you run multiple processes at the same time.
