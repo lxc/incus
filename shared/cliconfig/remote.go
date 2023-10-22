@@ -4,7 +4,9 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"net"
 	"os"
 	"runtime"
 	"strings"
@@ -74,6 +76,12 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 	if strings.HasPrefix(remote.Addr, "unix:") {
 		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(strings.TrimPrefix(remote.Addr, "unix:"), "//"), args)
 		if err != nil {
+			var netErr *net.OpError
+
+			if errors.As(err, &netErr) {
+				return nil, fmt.Errorf("The incus daemon doesn't appear to be started (socket path: %s)", netErr.Addr)
+			}
+
 			return nil, err
 		}
 
