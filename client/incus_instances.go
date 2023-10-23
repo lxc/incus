@@ -1226,7 +1226,7 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 			}
 		} else {
 			// Handle non-interactive sessions
-			dones := make(map[int]chan struct{})
+			dones := make(map[int]chan error)
 			conns := []*websocket.Conn{}
 
 			// Handle stdin
