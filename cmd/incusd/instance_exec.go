@@ -465,7 +465,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 					<-ws.MirrorWrite(conn, ttys[i])
 					_ = ttys[i].Close()
 				} else {
-					<-ws.MirrorRead(conn, ptys[i])
+					<-ws.MirrorRead(conn, linux.NewExecWrapper(waitAttachedChildIsDead, ptys[i]))
 					_ = ptys[i].Close()
 					wgEOF.Done()
 				}
