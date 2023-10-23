@@ -84,19 +84,21 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		return fmt.Errorf(i18n.G("You must specify a source instance name"))
 	}
 
-	// Check that a destination instance was specified, if --target is passed.
-	if destName == "" && c.flagTarget != "" {
-		return fmt.Errorf(i18n.G("You must specify a destination instance name when using --target"))
-	}
-
 	// Don't allow refreshing without profiles.
 	if c.flagRefresh && c.flagNoProfiles {
 		return fmt.Errorf(i18n.G("--no-profiles cannot be used with --refresh"))
 	}
 
-	// If no destination name was provided, use the same as the source
-	if destName == "" && destResource != "" {
-		destName = sourceName
+	// If the instance is being copied to a different remote and no destination name is
+	// specified, use the source name with snapshot suffix trimmed (in case a new instance
+	// is being created from a snapshot).
+	if destName == "" && destResource != "" && c.flagTarget == "" {
+		destName = strings.SplitN(sourceName, instance.SnapshotDelimiter, 2)[0]
+	}
+
+	// Ensure that a destination name is provided.
+	if destName == "" {
+		return fmt.Errorf(i18n.G("You must specify a destination instance name"))
 	}
 
 	// Connect to the source host
@@ -395,29 +397,6 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		}
 
 		progress.Done("")
-	}
-
-	// If choosing a random name, show it to the user
-	if destResource == "" && c.flagTargetProject == "" {
-		// Get the successful operation data
-		opInfo, err := op.GetTarget()
-		if err != nil {
-			return err
-		}
-
-		// Extract the list of affected instances
-		instances, ok := opInfo.Resources["instances"]
-		if !ok || len(instances) != 1 {
-			// Extract the list of affected instances using old "containers" field
-			instances, ok = opInfo.Resources["containers"]
-			if !ok || len(instances) != 1 {
-				return fmt.Errorf(i18n.G("Failed to get the new instance name"))
-			}
-		}
-
-		// Extract the name of the instance
-		fields := strings.Split(instances[0], "/")
-		fmt.Printf(i18n.G("Instance name is: %s")+"\n", fields[len(fields)-1])
 	}
 
 	// Start the instance if needed
