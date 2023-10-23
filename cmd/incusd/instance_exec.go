@@ -406,14 +406,17 @@ func (s *execWs) Do(op *operations.Operation) error {
 		go func() {
 			defer wgEOF.Done()
 
+			var readErr, writeErr error
 			l.Debug("Exec mirror websocket started", logger.Ctx{"number": 0})
-			defer l.Debug("Exec mirror websocket finished", logger.Ctx{"number": 0})
+			defer func() {
+				l.Debug("Exec mirror websocket finished", logger.Ctx{"number": 0, "readErr": readErr, "writeErr": writeErr})
+			}()
 
 			s.connsLock.Lock()
 			conn := s.conns[0]
 			s.connsLock.Unlock()
 
-			var readDone, writeDone chan struct{}
+			var readDone, writeDone chan error
 			if s.instance.Type() == instancetype.Container {
 				// For containers, we are running the command via the locally managed PTY and so
 				// need to use the same PTY handle for both read and write.
@@ -423,16 +426,19 @@ func (s *execWs) Do(op *operations.Operation) error {
 				writeDone = ws.MirrorWrite(conn, ttys[execWSStdin])
 			}
 
-			<-readDone
-			<-writeDone
+			readErr = <-readDone
+			writeErr = <-writeDone
 			_ = conn.Close()
 		}()
 	} else {
 		wgEOF.Add(len(ttys) - 1)
 		for i := 0; i < len(ttys); i++ {
 			go func(i int) {
+				var err error
 				l.Debug("Exec mirror websocket started", logger.Ctx{"number": i})
-				defer l.Debug("Exec mirror websocket finished", logger.Ctx{"number": i})
+				defer func() {
+					l.Debug("Exec mirror websocket finished", logger.Ctx{"number": i, "err": err})
+				}()
 
 				s.connsLock.Lock()
 				conn := s.conns[i]
@@ -462,10 +468,10 @@ func (s *execWs) Do(op *operations.Operation) error {
 				}
 
 				if i == execWSStdin {
-					<-ws.MirrorWrite(conn, ttys[i])
+					err = <-ws.MirrorWrite(conn, ttys[i])
 					_ = ttys[i].Close()
 				} else {
-					<-ws.MirrorRead(conn, linux.NewExecWrapper(waitAttachedChildIsDead, ptys[i]))
+					err = <-ws.MirrorRead(conn, linux.NewExecWrapper(waitAttachedChildIsDead, ptys[i]))
 					_ = ptys[i].Close()
 					wgEOF.Done()
 				}
