@@ -1529,7 +1529,7 @@ func (d *lxc) deviceAddCgroupRules(cgroups []deviceConfig.RunConfigItem) error {
 		// Add the new device cgroup rule.
 		err := d.CGroupSet(rule.Key, rule.Value)
 		if err != nil {
-			return fmt.Errorf("Failed to add cgroup rule for device")
+			return fmt.Errorf("Failed to add cgroup rule for device: %w", err)
 		}
 	}
 
