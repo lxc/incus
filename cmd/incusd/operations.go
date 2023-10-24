@@ -19,7 +19,6 @@ import (
 	"github.com/lxc/incus/internal/server/db/operationtype"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
@@ -255,7 +254,7 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 	if err == nil {
 		projectName := op.Project()
 		if projectName == "" {
-			projectName = project.Default
+			projectName = api.ProjectDefaultName
 		}
 
 		if !s.Authorizer.UserHasPermission(r, projectName, op.Permission()) {
@@ -478,7 +477,7 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 			api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects"),
 		)
 	} else if !allProjects && projectName == "" {
-		projectName = project.Default
+		projectName = api.ProjectDefaultName
 	}
 
 	localOperationURLs := func() (jmap.Map, error) {

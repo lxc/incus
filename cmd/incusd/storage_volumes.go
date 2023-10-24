@@ -335,7 +335,7 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 	if allProjects && requestProjectName != "" {
 		return response.SmartError(api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects"))
 	} else if !allProjects && requestProjectName == "" {
-		requestProjectName = project.Default
+		requestProjectName = api.ProjectDefaultName
 	}
 
 	var dbVolumes []*db.StorageVolume

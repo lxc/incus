@@ -9,7 +9,6 @@ import (
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/events"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
@@ -49,10 +48,10 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 	if allProjects && projectName != "" {
 		return api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects")
 	} else if !allProjects && projectName == "" {
-		projectName = project.Default
+		projectName = api.ProjectDefaultName
 	}
 
-	if !allProjects && projectName != project.Default {
+	if !allProjects && projectName != api.ProjectDefaultName {
 		_, err := s.DB.GetProject(context.Background(), projectName)
 		if err != nil {
 			return err

@@ -440,7 +440,7 @@ func imgPostRemoteInfo(s *state.State, r *http.Request, req api.ImagesPost, op *
 
 	// Get profile IDs
 	if req.Profiles == nil {
-		req.Profiles = []string{projectutils.Default}
+		req.Profiles = []string{api.ProjectDefaultName}
 	}
 
 	profileIds := make([]int64, len(req.Profiles))

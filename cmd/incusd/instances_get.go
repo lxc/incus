@@ -17,7 +17,6 @@ import (
 	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/internal/version"
@@ -265,7 +264,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 	if allProjects && projectName != "" {
 		return nil, api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects")
 	} else if !allProjects && projectName == "" {
-		projectName = project.Default
+		projectName = api.ProjectDefaultName
 	}
 
 	// Get the list and location of all instances.

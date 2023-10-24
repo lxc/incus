@@ -15,6 +15,7 @@ import (
 	storagePools "github.com/lxc/incus/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/internal/server/storage/drivers"
 	internalUtil "github.com/lxc/incus/internal/util"
+	"github.com/lxc/incus/shared/api"
 )
 
 func daemonStorageVolumesUnmount(s *state.State) error {
@@ -49,7 +50,7 @@ func daemonStorageVolumesUnmount(s *state.State) error {
 		}
 
 		// Mount volume.
-		_, err = pool.UnmountCustomVolume(project.Default, volumeName, nil)
+		_, err = pool.UnmountCustomVolume(api.ProjectDefaultName, volumeName, nil)
 		if err != nil {
 			return fmt.Errorf("Failed to unmount storage volume %q: %w", source, err)
 		}
@@ -105,7 +106,7 @@ func daemonStorageMount(s *state.State) error {
 		}
 
 		// Mount volume.
-		_, err = pool.MountCustomVolume(project.Default, volumeName, nil)
+		_, err = pool.MountCustomVolume(api.ProjectDefaultName, volumeName, nil)
 		if err != nil {
 			return fmt.Errorf("Failed to mount storage volume %q: %w", source, err)
 		}
@@ -161,13 +162,13 @@ func daemonStorageValidate(s *state.State, target string) error {
 
 	// Confirm volume exists.
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		dbVol, err := tx.GetStoragePoolVolume(ctx, poolID, project.Default, db.StoragePoolVolumeTypeCustom, volumeName, true)
+		dbVol, err := tx.GetStoragePoolVolume(ctx, poolID, api.ProjectDefaultName, db.StoragePoolVolumeTypeCustom, volumeName, true)
 		if err != nil {
-			return fmt.Errorf("Failed loading storage volume %q in %q project: %w", target, project.Default, err)
+			return fmt.Errorf("Failed loading storage volume %q in %q project: %w", target, api.ProjectDefaultName, err)
 		}
 
 		if dbVol.ContentType != db.StoragePoolVolumeContentTypeNameFS {
-			return fmt.Errorf("Storage volume %q in %q project is not filesystem content type", target, project.Default)
+			return fmt.Errorf("Storage volume %q in %q project is not filesystem content type", target, api.ProjectDefaultName)
 		}
 
 		return nil
@@ -176,9 +177,9 @@ func daemonStorageValidate(s *state.State, target string) error {
 		return err
 	}
 
-	snapshots, err := s.DB.Cluster.GetLocalStoragePoolVolumeSnapshotsWithType(project.Default, volumeName, db.StoragePoolVolumeTypeCustom, poolID)
+	snapshots, err := s.DB.Cluster.GetLocalStoragePoolVolumeSnapshotsWithType(api.ProjectDefaultName, volumeName, db.StoragePoolVolumeTypeCustom, poolID)
 	if err != nil {
-		return fmt.Errorf("Unable to load storage volume snapshots %q in %q project: %w", target, project.Default, err)
+		return fmt.Errorf("Unable to load storage volume snapshots %q in %q project: %w", target, api.ProjectDefaultName, err)
 	}
 
 	if len(snapshots) != 0 {
@@ -191,15 +192,15 @@ func daemonStorageValidate(s *state.State, target string) error {
 	}
 
 	// Mount volume.
-	_, err = pool.MountCustomVolume(project.Default, volumeName, nil)
+	_, err = pool.MountCustomVolume(api.ProjectDefaultName, volumeName, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to mount storage volume %q: %w", target, err)
 	}
 
-	defer func() { _, _ = pool.UnmountCustomVolume(project.Default, volumeName, nil) }()
+	defer func() { _, _ = pool.UnmountCustomVolume(api.ProjectDefaultName, volumeName, nil) }()
 
 	// Validate volume is empty (ignore lost+found).
-	volStorageName := project.StorageVolume(project.Default, volumeName)
+	volStorageName := project.StorageVolume(api.ProjectDefaultName, volumeName)
 	mountpoint := storageDrivers.GetVolumeMountPath(poolName, storageDrivers.VolumeTypeCustom, volStorageName)
 
 	entries, err := os.ReadDir(mountpoint)
@@ -317,13 +318,13 @@ func daemonStorageMove(s *state.State, storageType string, target string) error 
 	}
 
 	// Mount volume.
-	_, err = pool.MountCustomVolume(project.Default, volumeName, nil)
+	_, err = pool.MountCustomVolume(api.ProjectDefaultName, volumeName, nil)
 	if err != nil {
 		return fmt.Errorf("Failed to mount storage volume %q: %w", target, err)
 	}
 
 	// Set ownership & mode.
-	volStorageName := project.StorageVolume(project.Default, volumeName)
+	volStorageName := project.StorageVolume(api.ProjectDefaultName, volumeName)
 	mountpoint := storageDrivers.GetVolumeMountPath(poolName, storageDrivers.VolumeTypeCustom, volStorageName)
 	destPath = mountpoint
 

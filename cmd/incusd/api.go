@@ -14,7 +14,6 @@ import (
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	storagePools "github.com/lxc/incus/internal/server/storage"
@@ -414,7 +413,7 @@ func isClusterNotification(r *http.Request) bool {
 func projectParam(request *http.Request) string {
 	projectParam := queryParam(request, "project")
 	if projectParam == "" {
-		projectParam = project.Default
+		projectParam = api.ProjectDefaultName
 	}
 
 	return projectParam

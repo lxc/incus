@@ -353,7 +353,7 @@ func projectCreateDefaultProfile(tx *db.ClusterTx, project string) error {
 	// Create a default profile
 	profile := cluster.Profile{}
 	profile.Project = project
-	profile.Name = projecthelpers.Default
+	profile.Name = api.ProjectDefaultName
 	profile.Description = fmt.Sprintf("Default Incus profile for project %s", project)
 
 	_, err := cluster.CreateProfile(context.TODO(), tx.Tx(), profile)
@@ -679,7 +679,7 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 
 	// Quick checks.
 	if len(featuresChanged) > 0 {
-		if project.Name == projecthelpers.Default {
+		if project.Name == api.ProjectDefaultName {
 			return response.BadRequest(fmt.Errorf("You can't change the features of the default project"))
 		}
 
@@ -730,7 +730,7 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 				}
 			} else {
 				// Delete the project-specific default profile.
-				err = cluster.DeleteProfile(ctx, tx.Tx(), project.Name, projecthelpers.Default)
+				err = cluster.DeleteProfile(ctx, tx.Tx(), project.Name, api.ProjectDefaultName)
 				if err != nil {
 					return fmt.Errorf("Delete project default profile: %w", err)
 				}
@@ -798,7 +798,7 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Quick checks.
-	if name == projecthelpers.Default {
+	if name == api.ProjectDefaultName {
 		return response.Forbidden(fmt.Errorf("The 'default' project cannot be renamed"))
 	}
 
@@ -891,7 +891,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Quick checks.
-	if name == projecthelpers.Default {
+	if name == api.ProjectDefaultName {
 		return response.Forbidden(fmt.Errorf("The 'default' project cannot be deleted"))
 	}
 
@@ -1503,7 +1503,7 @@ func projectValidateRestrictedSubnets(s *state.State, value string) error {
 		}
 
 		// Check uplink exists and load config to compare subnets.
-		_, uplink, _, err := s.DB.Cluster.GetNetworkInAnyState(projecthelpers.Default, uplinkName)
+		_, uplink, _, err := s.DB.Cluster.GetNetworkInAnyState(api.ProjectDefaultName, uplinkName)
 		if err != nil {
 			return fmt.Errorf("Invalid uplink network %q: %w", uplinkName, err)
 		}

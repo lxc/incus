@@ -188,7 +188,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Get list of actual network interfaces on the host as well if the effective project is Default.
-	if projectName == project.Default {
+	if projectName == api.ProjectDefaultName {
 		ifaces, err := net.Interfaces()
 		if err != nil {
 			return response.InternalError(err)
@@ -297,7 +297,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if req.Type == "" {
-		if projectName != project.Default {
+		if projectName != api.ProjectDefaultName {
 			req.Type = "ovn" // Only OVN networks are allowed inside network enabled projects.
 		} else {
 			req.Type = "bridge" // Default to bridge for non-network enabled projects.
@@ -319,12 +319,12 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	netTypeInfo := netType.Info()
-	if projectName != project.Default && !netTypeInfo.Projects {
+	if projectName != api.ProjectDefaultName && !netTypeInfo.Projects {
 		return response.BadRequest(fmt.Errorf("Network type does not support non-default projects"))
 	}
 
 	// Check if project has limits.network and if so check we are allowed to create another network.
-	if projectName != project.Default && reqProject.Config != nil && reqProject.Config["limits.networks"] != "" {
+	if projectName != api.ProjectDefaultName && reqProject.Config != nil && reqProject.Config["limits.networks"] != "" {
 		networksLimit, err := strconv.Atoi(reqProject.Config["limits.networks"])
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Invalid project limits.network value: %w", err))
@@ -807,7 +807,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 	}
 
 	// Don't allow retrieving info about the local server interfaces when not using default project.
-	if projectName != project.Default && n == nil {
+	if projectName != api.ProjectDefaultName && n == nil {
 		return api.Network{}, api.StatusErrorf(http.StatusNotFound, "Network not found")
 	}
 
