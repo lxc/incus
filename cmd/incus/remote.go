@@ -387,7 +387,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 	// Finally, actually add the remote, almost...  If the remote is a private
 	// HTTPS server then we need to ensure we have a client certificate before
 	// adding the remote server.
-	if rScheme != "unix" && !c.flagPublic && (c.flagAuthType == "tls" || c.flagAuthType == "") {
+	if rScheme != "unix" && !c.flagPublic && (c.flagAuthType == api.AuthenticationMethodTLS || c.flagAuthType == "") {
 		if !conf.HasClientCertificate() {
 			fmt.Fprintf(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
 			err = conf.GenerateClientCertificate()
@@ -414,7 +414,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		remote := conf.Remotes[server]
-		remote.AuthType = "tls"
+		remote.AuthType = api.AuthenticationMethodTLS
 
 		// Handle project.
 		project, err := c.findProject(d.(incus.InstanceServer), c.flagProject)
@@ -511,7 +511,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 		if !srv.Public && util.ValueInSlice(api.AuthenticationMethodOIDC, srv.AuthMethods) {
 			c.flagAuthType = api.AuthenticationMethodOIDC
 		} else {
-			c.flagAuthType = "tls"
+			c.flagAuthType = api.AuthenticationMethodTLS
 		}
 
 		if util.ValueInSlice(c.flagAuthType, []string{api.AuthenticationMethodOIDC}) {
@@ -552,7 +552,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 
 	// Check if additional authentication is required.
 	if srv.Auth != "trusted" {
-		if c.flagAuthType == "tls" {
+		if c.flagAuthType == api.AuthenticationMethodTLS {
 			// Prompt for trust token
 			if c.flagToken == "" {
 				c.flagToken, err = c.global.asker.AskString(fmt.Sprintf(i18n.G("Trust token for %s: "), server), "", nil)
@@ -586,7 +586,7 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf(i18n.G("Server doesn't trust us after authentication"))
 		}
 
-		if c.flagAuthType == "tls" {
+		if c.flagAuthType == api.AuthenticationMethodTLS {
 			fmt.Println(i18n.G("Client certificate now trusted by server:"), server)
 		}
 	}
@@ -696,7 +696,7 @@ func (c *cmdRemoteList) Run(cmd *cobra.Command, args []string) error {
 			} else if rc.Protocol == "simplestreams" {
 				rc.AuthType = "none"
 			} else {
-				rc.AuthType = "tls"
+				rc.AuthType = api.AuthenticationMethodTLS
 			}
 		}
 
