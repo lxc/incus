@@ -12,24 +12,22 @@ test_dev_incus() {
   ! incus exec dev-incus -- test -S /dev/incus/sock || false
   incus config unset dev-incus security.guestapi
   incus exec dev-incus -- test -S /dev/incus/sock
-  incus file push "dev_incus-client/dev_incus-client" dev-incus/bin/
-
-  incus exec dev-incus chmod +x /bin/dev_incus-client
+  incus file push --mode 0755 "dev_incus-client/dev_incus-client" dev-incus/bin/
 
   incus config set dev-incus user.foo bar
-  incus exec dev-incus dev_incus-client user.foo | grep bar
+  incus exec dev-incus -- dev_incus-client user.foo | grep bar
 
   incus config set dev-incus user.foo "bar %s bar"
-  incus exec dev-incus dev_incus-client user.foo | grep "bar %s bar"
+  incus exec dev-incus -- dev_incus-client user.foo | grep "bar %s bar"
 
   incus config set dev-incus security.nesting true
-  ! incus exec dev-incus dev_incus-client security.nesting | grep true || false
+  ! incus exec dev-incus -- dev_incus-client security.nesting | grep true || false
 
   cmd=$(unset -f incus; command -v incus)
-  ${cmd} exec dev-incus dev_incus-client monitor-websocket > "${TEST_DIR}/dev_incus-websocket.log" &
+  ${cmd} exec dev-incus -- dev_incus-client monitor-websocket > "${TEST_DIR}/dev_incus-websocket.log" &
   client_websocket=$!
 
-  ${cmd} exec dev-incus dev_incus-client monitor-stream > "${TEST_DIR}/dev_incus-stream.log" &
+  ${cmd} exec dev-incus -- dev_incus-client monitor-stream > "${TEST_DIR}/dev_incus-stream.log" &
   client_stream=$!
 
   (
@@ -95,13 +93,13 @@ EOF
 
   # Test instance Ready state
   incus info dev-incus | grep -q 'Status: RUNNING'
-  incus exec dev-incus dev_incus-client ready-state true
+  incus exec dev-incus -- dev_incus-client ready-state true
   [ "$(incus config get dev-incus volatile.last_state.ready)" = "true" ]
 
   grep -Fc "instance-ready" "${TEST_DIR}/dev_incus.log" | grep -Fx 1
 
   incus info dev-incus | grep -q 'Status: READY'
-  incus exec dev-incus dev_incus-client ready-state false
+  incus exec dev-incus -- dev_incus-client ready-state false
   [ "$(incus config get dev-incus volatile.last_state.ready)" = "false" ]
 
   grep -Fc "instance-ready" "${TEST_DIR}/dev_incus.log" | grep -Fx 1
@@ -119,7 +117,7 @@ EOF
   incus monitor --type=lifecycle > "${TEST_DIR}/dev_incus.log" &
   monitorDevIncusPID=$!
 
-  incus exec dev-incus dev_incus-client ready-state true
+  incus exec dev-incus -- dev_incus-client ready-state true
   [ "$(incus config get dev-incus volatile.last_state.ready)" = "true" ]
 
   grep -Fc "instance-ready" "${TEST_DIR}/dev_incus.log" | grep -Fx 1
@@ -128,14 +126,14 @@ EOF
   [ "$(incus config get dev-incus volatile.last_state.ready)" = "false" ]
 
   incus start dev-incus
-  incus exec dev-incus dev_incus-client ready-state true
+  incus exec dev-incus -- dev_incus-client ready-state true
   [ "$(incus config get dev-incus volatile.last_state.ready)" = "true" ]
 
   grep -Fc "instance-ready" "${TEST_DIR}/dev_incus.log" | grep -Fx 2
 
   # Check device configs are available and that NIC hwaddr is available even if volatile.
   hwaddr=$(incus config get dev-incus volatile.eth0.hwaddr)
-  incus exec dev-incus dev_incus-client devices | jq -r .eth0.hwaddr | grep -Fx "${hwaddr}"
+  incus exec dev-incus -- dev_incus-client devices | jq -r .eth0.hwaddr | grep -Fx "${hwaddr}"
 
   incus delete dev-incus --force
   kill -9 ${monitorDevIncusPID} || true
