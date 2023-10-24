@@ -4006,7 +4006,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 	// Set sane defaults for unset keys
 	if args.Project == "" {
-		args.Project = project.Default
+		args.Project = api.ProjectDefaultName
 	}
 
 	if args.Architecture == 0 {
