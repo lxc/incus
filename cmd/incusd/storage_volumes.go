@@ -946,7 +946,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 		}
 	}
 
-	config, err := localtls.GetTLSConfig("", "", "", cert)
+	config, err := localtls.GetTLSConfig(cert)
 	if err != nil {
 		return response.InternalError(err)
 	}
