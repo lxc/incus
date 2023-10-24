@@ -424,7 +424,7 @@ func (d *disk) validateEnvironmentSourcePath() error {
 	// If project not default then check if using restricted disk paths.
 	// Default project cannot be restricted, so don't bother loading the project config in that case.
 	instProject := d.inst.Project()
-	if instProject.Name != project.Default {
+	if instProject.Name != api.ProjectDefaultName {
 		// If restricted disk paths are in force, then check the disk's source is allowed, and record the
 		// allowed parent path for later user during device start up sequence.
 		if util.IsTrue(instProject.Config["restricted"]) && instProject.Config["restricted.devices.disk.paths"] != "" {

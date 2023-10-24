@@ -392,7 +392,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 	// Load uplink network config.
 	uplinkNetworkName := d.network.Config()["network"]
-	_, uplink, _, err := d.state.DB.Cluster.GetNetworkInAnyState(project.Default, uplinkNetworkName)
+	_, uplink, _, err := d.state.DB.Cluster.GetNetworkInAnyState(api.ProjectDefaultName, uplinkNetworkName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
 	}
@@ -738,7 +738,7 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		if isRunning {
 			// Load uplink network config.
 			uplinkNetworkName := d.network.Config()["network"]
-			_, uplink, _, err := d.state.DB.Cluster.GetNetworkInAnyState(project.Default, uplinkNetworkName)
+			_, uplink, _, err := d.state.DB.Cluster.GetNetworkInAnyState(api.ProjectDefaultName, uplinkNetworkName)
 			if err != nil {
 				return fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
 			}
