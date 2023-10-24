@@ -1172,8 +1172,8 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 	// If the project has the profiles feature enabled, we use its own
 	// profiles to expand the instances configs, otherwise we use the
 	// profiles from the default project.
-	defaultProject := Default
-	if projectName == Default || util.IsTrue(project.Config["features.profiles"]) {
+	defaultProject := api.ProjectDefaultName
+	if projectName == api.ProjectDefaultName || util.IsTrue(project.Config["features.profiles"]) {
 		profilesFilter.Project = &projectName
 	} else {
 		profilesFilter.Project = &defaultProject
@@ -1428,7 +1428,7 @@ func FilterUsedBy(authorizer auth.Authorizer, r *http.Request, entries []string)
 	// Filter the entries.
 	usedBy := []string{}
 	for _, entry := range entries {
-		projectName := Default
+		projectName := api.ProjectDefaultName
 
 		// Try to parse the query part of the URL.
 		u, err := url.Parse(entry)

@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/shared/api"
 )
 
 func ExampleInstance() {
-	prefixed := project.Instance(project.Default, "test")
+	prefixed := project.Instance(api.ProjectDefaultName, "test")
 	fmt.Println(prefixed)
 
 	prefixed = project.Instance("project_name", "test1")
@@ -20,7 +21,7 @@ func ExampleInstanceParts() {
 	projectName, name := project.InstanceParts("unprefixed")
 	fmt.Println(projectName, name)
 
-	projectName, name = project.InstanceParts(project.Instance(project.Default, "test"))
+	projectName, name = project.InstanceParts(project.Instance(api.ProjectDefaultName, "test"))
 	fmt.Println(projectName, name)
 
 	projectName, name = project.InstanceParts("project_name_test")
@@ -36,7 +37,7 @@ func ExampleInstanceParts() {
 }
 
 func ExampleStorageVolume() {
-	prefixed := project.StorageVolume(project.Default, "test")
+	prefixed := project.StorageVolume(api.ProjectDefaultName, "test")
 	fmt.Println(prefixed)
 
 	prefixed = project.StorageVolume("project_name", "test1")
