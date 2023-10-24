@@ -11,9 +11,6 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-// Default is the string used for a default project.
-const Default = "default"
-
 // separator is used to delimit the project name from the suffix.
 const separator = "_"
 
