@@ -67,6 +67,7 @@ import (
 	"github.com/lxc/incus/internal/server/warnings"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
@@ -340,7 +341,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 			return false, "", "", err
 		}
 
-		return true, userName, "oidc", nil
+		return true, userName, api.AuthenticationMethodOIDC, nil
 	}
 
 	// Validate normal TLS access.

@@ -212,7 +212,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 
 	oidcIssuer, oidcClientID, _ := s.GlobalConfig.OIDCServer()
 	if oidcIssuer != "" && oidcClientID != "" {
-		authMethods = append(authMethods, "oidc")
+		authMethods = append(authMethods, api.AuthenticationMethodOIDC)
 	}
 
 	srv := api.ServerUntrusted{
