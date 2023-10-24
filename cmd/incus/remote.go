@@ -508,13 +508,13 @@ func (c *cmdRemoteAdd) Run(cmd *cobra.Command, args []string) error {
 
 	// If not specified, the preferred order of authentication is 1) OIDC 2) TLS.
 	if c.flagAuthType == "" {
-		if !srv.Public && util.ValueInSlice("oidc", srv.AuthMethods) {
-			c.flagAuthType = "oidc"
+		if !srv.Public && util.ValueInSlice(api.AuthenticationMethodOIDC, srv.AuthMethods) {
+			c.flagAuthType = api.AuthenticationMethodOIDC
 		} else {
 			c.flagAuthType = "tls"
 		}
 
-		if util.ValueInSlice(c.flagAuthType, []string{"oidc"}) {
+		if util.ValueInSlice(c.flagAuthType, []string{api.AuthenticationMethodOIDC}) {
 			// Update the remote configuration
 			remote := conf.Remotes[server]
 			remote.AuthType = c.flagAuthType
