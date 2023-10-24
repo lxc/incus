@@ -106,7 +106,7 @@ test_storage_volume_snapshots() {
   incus launch testimage "c1"
   incus storage volume create "${storage_pool}" "vol1"
   incus storage volume attach "${storage_pool}" "vol1" "c1" /mnt
-  incus exec "c1" touch /mnt/foo
+  incus exec "c1" -- touch /mnt/foo
   incus delete -f "c1"
   incus storage volume snapshot create "${storage_pool}" "vol1" "snap0"
   incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --mode pull
