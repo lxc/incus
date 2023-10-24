@@ -144,7 +144,7 @@ var profileCmd = APIEndpoint{
 func profilesGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	p, err := project.ProfileProject(s.DB.Cluster, projectParam(r))
+	p, err := project.ProfileProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -248,7 +248,7 @@ func profileUsedBy(ctx context.Context, tx *db.ClusterTx, profile dbCluster.Prof
 func profilesPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	p, err := project.ProfileProject(s.DB.Cluster, projectParam(r))
+	p, err := project.ProfileProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -372,7 +372,7 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 func profileGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	p, err := project.ProfileProject(s.DB.Cluster, projectParam(r))
+	p, err := project.ProfileProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -449,7 +449,7 @@ func profileGet(d *Daemon, r *http.Request) response.Response {
 func profilePut(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	p, err := project.ProfileProject(s.DB.Cluster, projectParam(r))
+	p, err := project.ProfileProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -567,7 +567,7 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 func profilePatch(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	p, err := project.ProfileProject(s.DB.Cluster, projectParam(r))
+	p, err := project.ProfileProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -697,7 +697,7 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 func profilePost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	p, err := project.ProfileProject(s.DB.Cluster, projectParam(r))
+	p, err := project.ProfileProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -777,7 +777,7 @@ func profilePost(d *Daemon, r *http.Request) response.Response {
 func profileDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	p, err := project.ProfileProject(s.DB.Cluster, projectParam(r))
+	p, err := project.ProfileProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}

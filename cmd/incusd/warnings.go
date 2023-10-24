@@ -167,7 +167,7 @@ func warningsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Parse the project field
-	projectName := queryParam(r, "project")
+	projectName := request.QueryParam(r, "project")
 
 	var warnings []api.Warning
 	err = d.State().DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {

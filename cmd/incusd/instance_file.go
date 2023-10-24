@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/lifecycle"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
@@ -29,7 +30,7 @@ import (
 func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)

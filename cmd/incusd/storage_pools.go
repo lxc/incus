@@ -271,7 +271,7 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 
 	ctx := logger.Ctx{}
 
-	targetNode := queryParam(r, "target")
+	targetNode := request.QueryParam(r, "target")
 	if targetNode != "" {
 		ctx["target"] = targetNode
 	}
@@ -590,7 +590,7 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	memberSpecific := false
-	if queryParam(r, "target") != "" {
+	if request.QueryParam(r, "target") != "" {
 		memberSpecific = true
 	}
 
@@ -688,7 +688,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	targetNode := queryParam(r, "target")
+	targetNode := request.QueryParam(r, "target")
 	clustered, err := cluster.Enabled(s.DB.Node)
 	if err != nil {
 		return response.SmartError(err)

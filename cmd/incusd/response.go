@@ -5,6 +5,7 @@ import (
 
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
 )
@@ -32,7 +33,7 @@ func forwardedResponseToNode(s *state.State, r *http.Request, memberName string)
 // forwardedResponseIfTargetIsRemote forwards a request to the request has a target parameter pointing to a member
 // which is not the local one.
 func forwardedResponseIfTargetIsRemote(s *state.State, r *http.Request) response.Response {
-	targetNode := queryParam(r, "target")
+	targetNode := request.QueryParam(r, "target")
 	if targetNode == "" {
 		return nil
 	}
@@ -64,7 +65,7 @@ func forwardedResponseIfInstanceIsRemote(s *state.State, r *http.Request, projec
 // This is used when no targetNode is specified, and saves users some typing
 // when the volume name/type is unique to a node.
 func forwardedResponseIfVolumeIsRemote(s *state.State, r *http.Request, poolName string, projectName string, volumeName string, volumeType int) response.Response {
-	if queryParam(r, "target") != "" {
+	if request.QueryParam(r, "target") != "" {
 		return nil
 	}
 

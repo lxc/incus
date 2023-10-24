@@ -42,8 +42,8 @@ func (r *eventsServe) String() string {
 
 func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error {
 	// Detect project mode.
-	projectName := queryParam(r, "project")
-	allProjects := util.IsTrue(queryParam(r, "all-projects"))
+	projectName := request.QueryParam(r, "project")
+	allProjects := util.IsTrue(request.QueryParam(r, "all-projects"))
 
 	if allProjects && projectName != "" {
 		return api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects")

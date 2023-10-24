@@ -17,6 +17,7 @@ import (
 	instanceDrivers "github.com/lxc/incus/internal/server/instance/drivers"
 	"github.com/lxc/incus/internal/server/locking"
 	"github.com/lxc/incus/internal/server/metrics"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -82,7 +83,7 @@ func allowMetrics(d *Daemon, r *http.Request) response.Response {
 func metricsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := queryParam(r, "project")
+	projectName := request.QueryParam(r, "project")
 	compress := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip")
 
 	// Forward if requested.

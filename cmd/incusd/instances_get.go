@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/internal/version"
@@ -258,7 +259,7 @@ func doInstancesGet(s *state.State, r *http.Request) (any, error) {
 	mustLoadObjects := recursion > 0 || (recursion == 0 && clauses != nil)
 
 	// Detect project mode.
-	projectName := queryParam(r, "project")
+	projectName := request.QueryParam(r, "project")
 	allProjects := util.IsTrue(r.FormValue("all-projects"))
 
 	if allProjects && projectName != "" {

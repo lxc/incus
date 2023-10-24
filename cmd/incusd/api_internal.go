@@ -31,6 +31,7 @@ import (
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
 	storagePools "github.com/lxc/incus/internal/server/storage"
@@ -236,7 +237,7 @@ func internalWaitReady(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalShutdown(d *Daemon, r *http.Request) response.Response {
-	force := queryParam(r, "force")
+	force := request.QueryParam(r, "force")
 	logger.Info("Asked to shutdown by API", logger.Ctx{"force": force})
 
 	if d.State().ShutdownCtx.Err() != nil {
@@ -288,7 +289,7 @@ func internalContainerHookLoadFromReference(s *state.State, r *http.Request) (in
 		return nil, err
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 
 	instanceID, err := strconv.Atoi(instanceRef)
 	if err == nil {
@@ -348,12 +349,12 @@ func internalContainerOnStopNS(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	target := queryParam(r, "target")
+	target := request.QueryParam(r, "target")
 	if target == "" {
 		target = "unknown"
 	}
 
-	netns := queryParam(r, "netns")
+	netns := request.QueryParam(r, "netns")
 
 	args := map[string]string{
 		"target": target,
@@ -378,7 +379,7 @@ func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	target := queryParam(r, "target")
+	target := request.QueryParam(r, "target")
 	if target == "" {
 		target = "unknown"
 	}
