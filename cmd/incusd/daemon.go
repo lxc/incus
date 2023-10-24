@@ -352,7 +352,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		for _, i := range r.TLS.PeerCertificates {
 			trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
 			if trusted {
-				return true, username, "tls", nil
+				return true, username, api.AuthenticationMethodTLS, nil
 			}
 		}
 	}
@@ -360,7 +360,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	for _, i := range r.TLS.PeerCertificates {
 		trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
-			return true, username, "tls", nil
+			return true, username, api.AuthenticationMethodTLS, nil
 		}
 	}
 
@@ -463,7 +463,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		// Reject internal queries to remote, non-cluster, clients
 		if version == "internal" && !util.ValueInSlice(protocol, []string{"unix", "cluster"}) {
 			// Except for the initial cluster accept request (done over trusted TLS)
-			if !trusted || c.Path != "cluster/accept" || protocol != "tls" {
+			if !trusted || c.Path != "cluster/accept" || protocol != api.AuthenticationMethodTLS {
 				logger.Warn("Rejecting remote internal API request", logger.Ctx{"ip": r.RemoteAddr})
 				_ = response.Forbidden(nil).Render(w)
 				return
@@ -492,7 +492,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 				}
 
 				// Regular TLS clients.
-				if protocol == "tls" {
+				if protocol == api.AuthenticationMethodTLS {
 					certProjects := d.clientCerts.GetProjects()
 
 					// Check if we have restrictions on the key.

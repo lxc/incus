@@ -208,7 +208,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get the authentication methods.
-	authMethods := []string{"tls"}
+	authMethods := []string{api.AuthenticationMethodTLS}
 
 	oidcIssuer, oidcClientID, _ := s.GlobalConfig.OIDCServer()
 	if oidcIssuer != "" && oidcClientID != "" {
