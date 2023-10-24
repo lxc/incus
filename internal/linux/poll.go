@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"golang.org/x/sys/unix"
 )
@@ -45,9 +46,9 @@ func NewExecWrapper(ctx context.Context, f *os.File) io.ReadWriteCloser {
 
 // execWrapper implements a ReadWriteCloser wrapper for an os.File connected to a PTY.
 type execWrapper struct {
-	f      *os.File
-	ctx    context.Context
-	hangup bool
+	f              *os.File
+	ctx            context.Context
+	finishDeadline time.Time
 }
 
 // Read uses the poll syscall with a timeout of 1s to check if there is any data to read.
@@ -68,34 +69,36 @@ func (w *execWrapper) Read(p []byte) (int, error) {
 			// background processes running that are not outputting anything.
 			_, revents, err := GetPollRevents(int(fd), 1000, (unix.POLLIN | unix.POLLPRI | unix.POLLERR | unix.POLLNVAL | unix.POLLHUP | unix.POLLRDHUP))
 
-			if revents&(unix.POLLHUP|unix.POLLRDHUP) > 0 {
-				w.hangup = true // Record a hangup event if seen.
-			}
-
-			if err != nil {
+			switch {
+			case err != nil:
 				opErr = err
-				return true
-			} else if revents&unix.POLLERR > 0 {
+			case revents&unix.POLLERR > 0:
 				opErr = fmt.Errorf("Got POLLERR event")
-				return true
-			} else if revents&unix.POLLNVAL > 0 {
+			case revents&unix.POLLNVAL > 0:
 				opErr = fmt.Errorf("Got POLLNVAL event")
-				return true
-			} else if !w.hangup && w.ctx.Err() != nil {
-				// If we've not seen a hangup event and context has been cancelled then return EOF.
-				// This ensures that if there is a background process generating lots of output it
-				// doesn't block the session from finishing when the process has ended.
-				opErr = io.EOF
-				return true
-			} else if revents&(unix.POLLIN|unix.POLLPRI) > 0 {
+			case revents&(unix.POLLIN|unix.POLLPRI) > 0:
 				// If there is something to read then read it.
 				n, opErr = unix.Read(int(fd), p)
-				return true
-			} else if w.hangup {
-				// If we've seen a hangup event and there's nothing to read then return EOF.
+				if opErr == nil && w.ctx.Err() != nil {
+					if w.finishDeadline.IsZero() {
+						// When the parent process finishes set a deadline to complete
+						// future reads by.
+						w.finishDeadline = time.Now().Add(time.Second)
+					} else if time.Now().After(w.finishDeadline) {
+						// If there is still output being received after the parent
+						// process has finished then return EOF to prevent background
+						// processes from keeping the reads ongoing.
+						opErr = io.EOF
+					}
+				}
+			case w.ctx.Err() != nil:
+				// Nothing to read after process exited then return EOF.
 				opErr = io.EOF
-				return true
+			default:
+				continue
 			}
+
+			return true
 		}
 	})
 	if err != nil {
