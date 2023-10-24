@@ -19,9 +19,9 @@ import (
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
 	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/util"
@@ -338,7 +338,7 @@ func TestJoin(t *testing.T) {
 
 	err = cluster.Bootstrap(targetState, targetGateway, "buzz")
 	require.NoError(t, err)
-	_, err = targetState.DB.Cluster.GetNetworks(project.Default)
+	_, err = targetState.DB.Cluster.GetNetworks(api.ProjectDefaultName)
 	require.NoError(t, err)
 
 	// Setup a joining node
