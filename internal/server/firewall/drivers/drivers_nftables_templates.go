@@ -136,7 +136,7 @@ table {{.family}} {{.namespace}} {
 		# Allow core ICMPv6 to Incus host.
 		iifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 133, 135, 136, 143} accept
 
-		iifname {{.networkName}} jump acl{{.chainSeparator}}{{.networkName}}
+		iifname "{{.networkName}}" jump acl{{.chainSeparator}}{{.networkName}}
 	}
 
 	chain aclout{{.chainSeparator}}{{.networkName}} {
@@ -150,12 +150,12 @@ table {{.family}} {{.namespace}} {
 		# Allow ICMPv6 ping from host into network as dnsmasq uses this to probe IP allocations.
 		oifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 128, 134, 135, 136, 143}  accept
 
-		oifname {{.networkName}} jump acl{{.chainSeparator}}{{.networkName}}
+		oifname "{{.networkName}}" jump acl{{.chainSeparator}}{{.networkName}}
 	}
 
 	chain aclfwd{{.chainSeparator}}{{.networkName}} {
-		iifname {{.networkName}} jump acl{{.chainSeparator}}{{.networkName}}
-		oifname {{.networkName}} jump acl{{.chainSeparator}}{{.networkName}}
+		iifname "{{.networkName}}" jump acl{{.chainSeparator}}{{.networkName}}
+		oifname "{{.networkName}}" jump acl{{.chainSeparator}}{{.networkName}}
 	}
 }
 `))

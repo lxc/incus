@@ -1529,7 +1529,7 @@ func (d *lxc) deviceAddCgroupRules(cgroups []deviceConfig.RunConfigItem) error {
 		// Add the new device cgroup rule.
 		err := d.CGroupSet(rule.Key, rule.Value)
 		if err != nil {
-			return fmt.Errorf("Failed to add cgroup rule for device")
+			return fmt.Errorf("Failed to add cgroup rule for device: %w", err)
 		}
 	}
 
@@ -1752,7 +1752,10 @@ func (d *lxc) deviceHandleMounts(mounts []deviceConfig.MountEntryItem) error {
 // DeviceEventHandler actions the results of a RunConfig after an event has occurred on a device.
 func (d *lxc) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 	// Device events can only be processed when the container is running.
-	if !d.IsRunning() {
+	// We use InitPID here rather than IsRunning because this task can be triggered during the
+	// container startup process, which is during the time that the start lock is held, which causes
+	// IsRunning to return false (because the container hasn't fully started yet).
+	if d.InitPID() <= 0 {
 		return nil
 	}
 
@@ -3967,8 +3970,12 @@ func (d *lxc) CGroupSet(key string, value string) error {
 		return err
 	}
 
-	// Make sure the container is running
-	if !d.IsRunning() {
+	// Make sure the container is running.
+	// We use InitPID here rather than IsRunning because this task can be triggered during the container's
+	// startup process, which is during the time that the start lock is held, which causes IsRunning to
+	// return false (because the container hasn't fully started yet) but it is sufficiently started to
+	// have its cgroup disk limits set.
+	if d.InitPID() <= 0 {
 		return fmt.Errorf("Can't set cgroups on a stopped container")
 	}
 

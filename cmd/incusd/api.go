@@ -74,7 +74,7 @@ func restServer(d *Daemon) *http.Server {
 		uiHttpDir := uiHttpDir{http.Dir(uiPath)}
 		mux.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(uiHttpDir)))
 		mux.HandleFunc("/ui", func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, "/ui/", 301)
+			http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
 		})
 	}
 
@@ -85,7 +85,7 @@ func restServer(d *Daemon) *http.Server {
 		documentationHttpDir := documentationHttpDir{http.Dir(documentationPath)}
 		mux.PathPrefix("/documentation/").Handler(http.StripPrefix("/documentation/", http.FileServer(documentationHttpDir)))
 		mux.HandleFunc("/documentation", func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, "/documentation/", 301)
+			http.Redirect(w, r, "/documentation/", http.StatusMovedPermanently)
 		})
 	}
 
@@ -123,7 +123,7 @@ func restServer(d *Daemon) *http.Server {
 		ua := r.Header.Get("User-Agent")
 		if uiEnabled && strings.Contains(ua, "Gecko") {
 			// Web browser handling.
-			http.Redirect(w, r, "/ui/", 301)
+			http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
 		} else {
 			// Normal client handling.
 			_ = response.SyncResponse(true, []string{"/1.0"}).Render(w)
