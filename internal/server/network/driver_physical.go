@@ -10,7 +10,6 @@ import (
 	"github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/ip"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
@@ -81,7 +80,7 @@ func (n *physical) checkParentUse(ourConfig map[string]string) (bool, error) {
 	}
 
 	for projectName, networks := range projectNetworks {
-		if projectName != project.Default {
+		if projectName != api.ProjectDefaultName {
 			continue // Only default project networks can possibly reference a physical interface.
 		}
 
