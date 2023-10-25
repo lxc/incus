@@ -278,14 +278,14 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 	}
 
 	if len(projectNames) > 1 {
-		project, err := c.global.asker.AskChoice("Project to create the instance in [default=default]: ", projectNames, "default")
+		project, err := c.global.asker.AskChoice("Project to create the instance in [default=default]: ", projectNames, api.ProjectDefaultName)
 		if err != nil {
 			return cmdMigrateData{}, err
 		}
 
 		config.Project = project
 	} else {
-		config.Project = "default"
+		config.Project = api.ProjectDefaultName
 	}
 
 	// Instance name
