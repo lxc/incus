@@ -14,7 +14,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 
@@ -49,7 +49,12 @@ func setReceivedUUID(path string, UUID string) error {
 
 	args := btrfsIoctlReceivedSubvolArgs{}
 
-	binUUID, err := uuid.Parse(UUID).MarshalBinary()
+	strUUID, err := uuid.Parse(UUID)
+	if err != nil {
+		return fmt.Errorf("Failed parsing UUID: %w", err)
+	}
+
+	binUUID, err := strUUID.MarshalBinary()
 	if err != nil {
 		return fmt.Errorf("Failed coverting UUID: %w", err)
 	}
