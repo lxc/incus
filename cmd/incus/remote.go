@@ -126,7 +126,7 @@ func (c *cmdRemoteAdd) findProject(d incus.InstanceServer, project string) (stri
 			}
 
 			// Deal with multiple projects.
-			if util.ValueInSlice("default", names) {
+			if util.ValueInSlice(api.ProjectDefaultName, names) {
 				// If we have access to the default project, use it.
 				return "", nil
 			}

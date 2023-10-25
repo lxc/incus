@@ -151,7 +151,7 @@ func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.Instan
 		// Define the new network
 		network := api.InitNetworksProjectPost{}
 		network.Name = fmt.Sprintf("incusbr%d", idx)
-		network.Project = "default"
+		network.Project = api.ProjectDefaultName
 		config.Networks = append(config.Networks, network)
 
 		// Add it to the profile

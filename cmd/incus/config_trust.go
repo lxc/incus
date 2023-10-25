@@ -497,7 +497,7 @@ func (c *cmdConfigTrustListTokens) Run(cmd *cobra.Command, args []string) error 
 	resource := resources[0]
 
 	// Get the certificate add tokens. Use default project as join tokens are created in default project.
-	ops, err := resource.server.UseProject("default").GetOperations()
+	ops, err := resource.server.UseProject(api.ProjectDefaultName).GetOperations()
 	if err != nil {
 		return err
 	}
@@ -638,7 +638,7 @@ func (c *cmdConfigTrustRevokeToken) Run(cmd *cobra.Command, args []string) error
 	resource := resources[0]
 
 	// Get the certificate add tokens. Use default project as certificate add tokens are created in default project.
-	ops, err := resource.server.UseProject("default").GetOperations()
+	ops, err := resource.server.UseProject(api.ProjectDefaultName).GetOperations()
 	if err != nil {
 		return err
 	}

@@ -902,7 +902,7 @@ func (c *cmdClusterListTokens) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get the cluster member join tokens. Use default project as join tokens are created in default project.
-	ops, err := resource.server.UseProject("default").GetOperations()
+	ops, err := resource.server.UseProject(api.ProjectDefaultName).GetOperations()
 	if err != nil {
 		return err
 	}
@@ -996,7 +996,7 @@ func (c *cmdClusterRevokeToken) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get the cluster member join tokens. Use default project as join tokens are created in default project.
-	ops, err := resource.server.UseProject("default").GetOperations()
+	ops, err := resource.server.UseProject(api.ProjectDefaultName).GetOperations()
 	if err != nil {
 		return err
 	}
