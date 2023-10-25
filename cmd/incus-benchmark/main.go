@@ -8,6 +8,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"
 )
 
@@ -112,7 +113,7 @@ func main() {
 	app.PersistentFlags().IntVarP(&globalCmd.flagParallel, "parallel", "P", -1, "Number of threads to use"+"``")
 	app.PersistentFlags().StringVar(&globalCmd.flagReportFile, "report-file", "", "Path to the CSV report file"+"``")
 	app.PersistentFlags().StringVar(&globalCmd.flagReportLabel, "report-label", "", "Label for the new entry in the report [default=ACTION]"+"``")
-	app.PersistentFlags().StringVar(&globalCmd.flagProject, "project", "default", "Project to use")
+	app.PersistentFlags().StringVar(&globalCmd.flagProject, "project", api.ProjectDefaultName, "Project to use")
 
 	// Version handling
 	app.SetVersionTemplate("{{.Version}}\n")
