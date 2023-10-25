@@ -422,7 +422,7 @@ var ConfigSchema = config.Schema{
 	//  type: bool
 	//  scope: global
 	//  shortdesc: Whether to set `Access-Control-Allow-Credentials`
-	"core.https_allowed_credentials": {Type: config.Bool},
+	"core.https_allowed_credentials": {Type: config.Bool, Default: "false"},
 
 	// gendoc:generate(entity=server, group=core, key=core.https_trusted_proxy)
 	// Specify a comma-separated list of IP addresses of trusted servers that provide the client's address through the proxy connection header.
@@ -482,7 +482,7 @@ var ConfigSchema = config.Schema{
 	//  type: bool
 	//  scope: global
 	//  shortdesc: Whether to automatically trust clients signed by the CA
-	"core.trust_ca_certificates": {Type: config.Bool},
+	"core.trust_ca_certificates": {Type: config.Bool, Default: "false"},
 
 	// gendoc:generate(entity=server, group=images, key=images.auto_update_cached)
 	//
