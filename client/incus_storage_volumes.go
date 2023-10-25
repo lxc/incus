@@ -63,7 +63,7 @@ func (r *ProtocolIncus) GetStoragePoolVolumeNamesAllProjects(pool string) (map[s
 
 		project := resourceURL.Query().Get("project")
 		if project == "" {
-			project = "default"
+			project = api.ProjectDefaultName
 		}
 
 		_, after, found := strings.Cut(resourceURL.Path, fmt.Sprintf("%s/", u.URL.Path))

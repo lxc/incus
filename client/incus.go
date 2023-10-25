@@ -69,7 +69,7 @@ func (r *ProtocolIncus) GetConnectionInfo() (*ConnectionInfo, error) {
 
 	info.Project = r.project
 	if info.Project == "" {
-		info.Project = "default"
+		info.Project = api.ProjectDefaultName
 	}
 
 	info.Target = r.clusterTarget
