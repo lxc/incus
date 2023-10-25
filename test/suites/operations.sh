@@ -5,7 +5,7 @@ wait_no_operations() {
   while [ "${retries}" -gt 0 ]; do
     echo "Waiting operations to complete (${retries} retries left) ..."
     count=$(incus query "/1.0/operations?all-projects=true" | jq '.success | length')
-    if [ "${count}" -eq 0 ]; then
+    if [ -z "${count}" ] || [ "${count}" -eq 0 ]; then
       return 0
     fi
 
