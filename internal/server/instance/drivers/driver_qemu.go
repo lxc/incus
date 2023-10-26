@@ -28,10 +28,10 @@ import (
 	"unsafe"
 
 	"github.com/flosch/pongo2"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/kballard/go-shellquote"
 	"github.com/mdlayher/vsock"
-	"github.com/pborman/uuid"
 	"github.com/pkg/sftp"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
@@ -1192,7 +1192,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Generate UUID if not present (do this before UpdateBackupFile() call).
 	instUUID := d.localConfig["volatile.uuid"]
 	if instUUID == "" {
-		instUUID = uuid.New()
+		instUUID = uuid.New().String()
 		volatileSet["volatile.uuid"] = instUUID
 	}
 
@@ -7571,9 +7571,9 @@ func (d *qemu) nextVsockID() (uint32, *os.File, error) {
 	}
 
 	// Ignore the error from before and start to acquire a new Context ID.
-	instanceUUID := uuid.Parse(d.localConfig["volatile.uuid"])
-	if instanceUUID == nil {
-		return 0, nil, fmt.Errorf("Failed to parse instance UUID from volatile.uuid")
+	instanceUUID, err := uuid.Parse(d.localConfig["volatile.uuid"])
+	if err != nil {
+		return 0, nil, fmt.Errorf("Failed to parse instance UUID from volatile.uuid: %w", err)
 	}
 
 	r, err := localUtil.GetStableRandomGenerator(instanceUUID.String())
