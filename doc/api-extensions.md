@@ -2281,3 +2281,6 @@ This extension adds a new image restriction, `requirements.privileged` which whe
 This extension adds support for copying and moving custom storage volumes within a cluster with a single API call.
 Calling `POST /1.0/storage-pools/<pool>/custom?target=<target>` will copy the custom volume specified in the `source` part of the request.
 Calling `POST /1.0/storage-pools/<pool>/custom/<volume>?target=<target>` will move the custom volume from the source, specified in the `source` part of the request, to the target.
+
+## `disk_io_bus`
+This introduces a new `io.bus` property to disk devices which can be used to override the bus the disk is attached to.
