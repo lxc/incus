@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 
 	"github.com/lxc/incus/internal/linux"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -137,7 +137,7 @@ func sendSetup(name string, path string, bwlimit string, execPath string, featur
 	 * stdin/stdout, but that also seemed messy. In any case, this seems to
 	 * work just fine.
 	 */
-	auds := fmt.Sprintf("@incusd/%s", uuid.New())
+	auds := fmt.Sprintf("@incusd/%s", uuid.New().String())
 	// We simply copy a part of the uuid if it's longer than the allowed
 	// maximum. That should be safe enough for our purposes.
 	if len(auds) > linux.ABSTRACT_UNIX_SOCK_LEN-1 {
