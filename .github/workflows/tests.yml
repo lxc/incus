@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   code-tests:
-    name: Code tests
+    name: Code
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -101,7 +101,7 @@ jobs:
       INCUS_OFFLINE: "1"
       INCUS_TMPFS: "1"
       INCUS_REQUIRED_TESTS: "test_storage_buckets"
-    name: System tests
+    name: System
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -317,7 +317,7 @@ jobs:
           sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS,INCUS_SHIFTFS_DISABLE INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
 
   client:
-    name: Client tests
+    name: Client
     strategy:
       fail-fast: false
       matrix:
@@ -387,7 +387,7 @@ jobs:
           path: bin/
 
   documentation:
-    name: Documentation tests
+    name: Documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
