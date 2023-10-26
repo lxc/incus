@@ -688,19 +688,19 @@ func (d *zfs) patchDropBlockVolumeFilesystemExtension() error {
 	}
 
 	for _, volume := range strings.Split(out, "\n") {
-		fields := strings.SplitN(volume, "/", 3)
+		fields := strings.SplitN(volume, fmt.Sprintf("%s/images/", poolName), 2)
 
-		if len(fields) != 3 {
+		if len(fields) != 2 || fields[1] == "" {
 			continue
 		}
 
 		// Ignore non-block images, and images without filesystem extension
-		if !strings.HasSuffix(fields[2], ".block") || !strings.Contains(fields[2], "_") {
+		if !strings.HasSuffix(fields[1], ".block") || !strings.Contains(fields[1], "_") {
 			continue
 		}
 
 		// Rename zfs dataset. Snapshots will automatically be renamed.
-		newName := fmt.Sprintf("%s/images/%s.block", poolName, strings.Split(fields[2], "_")[0])
+		newName := fmt.Sprintf("%s/images/%s.block", poolName, strings.Split(fields[1], "_")[0])
 
 		_, err = subprocess.RunCommand("zfs", "rename", volume, newName)
 		if err != nil {
