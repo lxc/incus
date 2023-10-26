@@ -9,8 +9,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/pborman/uuid"
 
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/migration"
@@ -54,7 +54,7 @@ func rsyncSend(ctx context.Context, conn *websocket.Conn, path string, rsyncArgs
 
 // Spawn the rsync process.
 func rsyncSendSetup(ctx context.Context, path string, rsyncArgs string, instanceType api.InstanceType) (*exec.Cmd, net.Conn, io.ReadCloser, error) {
-	auds := fmt.Sprintf("@incus-migrate/%s", uuid.New())
+	auds := fmt.Sprintf("@incus-migrate/%s", uuid.New().String())
 	if len(auds) > linux.ABSTRACT_UNIX_SOCK_LEN-1 {
 		auds = auds[:linux.ABSTRACT_UNIX_SOCK_LEN-1]
 	}
