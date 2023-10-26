@@ -17,7 +17,7 @@ import (
 )
 
 var minLXDVersion = &version.DottedVersion{4, 0, 0}
-var maxLXDVersion = &version.DottedVersion{5, 18, 0}
+var maxLXDVersion = &version.DottedVersion{5, 19, 0}
 
 type cmdGlobal struct {
 	asker cli.Asker
