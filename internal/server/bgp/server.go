@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/google/uuid"
 	bgpAPI "github.com/osrg/gobgp/v3/api"
 	bgpPacket "github.com/osrg/gobgp/v3/pkg/packet/bgp"
 	bgpServer "github.com/osrg/gobgp/v3/pkg/server"
-	"github.com/pborman/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/lxc/incus/internal/ports"
@@ -305,7 +305,7 @@ func (s *Server) addPrefix(subnet net.IPNet, nexthop net.IP, owner string) error
 		}
 	} else {
 		// Generate a dummy UUID.
-		pathUUID = uuid.New()
+		pathUUID = uuid.New().String()
 	}
 
 	// Add path to the map.
