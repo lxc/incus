@@ -4,12 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/canonical/lxd/client"
 	lxdAPI "github.com/canonical/lxd/shared/api"
 	"github.com/spf13/cobra"
 
+	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/version"
 	incusAPI "github.com/lxc/incus/shared/api"
@@ -17,7 +21,7 @@ import (
 )
 
 var minLXDVersion = &version.DottedVersion{4, 0, 0}
-var maxLXDVersion = &version.DottedVersion{5, 18, 0}
+var maxLXDVersion = &version.DottedVersion{5, 19, 0}
 
 type cmdGlobal struct {
 	asker cli.Asker
@@ -61,7 +65,8 @@ func main() {
 type cmdMigrate struct {
 	global cmdGlobal
 
-	flagYes bool
+	flagYes           bool
+	flagClusterMember bool
 }
 
 func (c *cmdMigrate) Command() *cobra.Command {
@@ -69,63 +74,12 @@ func (c *cmdMigrate) Command() *cobra.Command {
 	cmd.Use = "lxd-to-incus"
 	cmd.RunE = c.Run
 	cmd.PersistentFlags().BoolVar(&c.flagYes, "yes", false, "Migrate without prompting")
+	cmd.PersistentFlags().BoolVar(&c.flagClusterMember, "cluster-member", false, "Used internally for cluster migrations")
 
 	return cmd
 }
 
-func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
-	// Confirm that we're root.
-	if os.Geteuid() != 0 {
-		return fmt.Errorf("This tool must be run as root")
-	}
-
-	// Iterate through potential sources.
-	fmt.Println("=> Looking for source server")
-	var source Source
-	for _, candidate := range sources {
-		if !candidate.Present() {
-			continue
-		}
-
-		source = candidate
-		break
-	}
-
-	if source == nil {
-		return fmt.Errorf("No source server could be found")
-	}
-
-	fmt.Printf("==> Detected: %s\n", source.Name())
-
-	// Iterate through potential targets.
-	fmt.Println("=> Looking for target server")
-	var target Target
-	for _, candidate := range targets {
-		if !candidate.Present() {
-			continue
-		}
-
-		target = candidate
-		break
-	}
-
-	if target == nil {
-		return fmt.Errorf("No target server could be found")
-	}
-
-	// Connect to the servers.
-	fmt.Println("=> Connecting to source server")
-	srcClient, err := source.Connect()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to the source: %w", err)
-	}
-
-	fmt.Println("=> Connecting to the target server")
-	targetClient, err := target.Connect()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to the target: %w", err)
-	}
-
+func (c *cmdMigrate) validate(srcClient lxd.InstanceServer, targetClient incus.InstanceServer) error {
 	// Get versions.
 	fmt.Println("=> Checking server versions")
 	srcServerInfo, _, err := srcClient.GetServer()
@@ -290,11 +244,6 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		return fmt.Errorf("Target server isn't empty, can't proceed with migration.")
 	}
 
-	fmt.Println("=> Checking that the source server isn't clustered")
-	if srcServerInfo.Environment.ServerClustered {
-		return fmt.Errorf("Migration of clustered servers isn't possible at this time")
-	}
-
 	// Validate configuration.
 	errors := []error{}
 
@@ -345,6 +294,35 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			_, ok := network.Config[key]
 			if ok {
 				errors = append(errors, fmt.Errorf("Source server has network %q using deprecated key %q", network.Name, key))
+			}
+		}
+	}
+
+	storagePools, err := srcClient.GetStoragePools()
+	if err != nil {
+		return fmt.Errorf("Couldn't list storage pools: %w", err)
+	}
+
+	for _, pool := range storagePools {
+		if pool.Driver == "zfs" {
+			_, err = exec.LookPath("zfs")
+			if err != nil {
+				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "zfs", pool.Name))
+			}
+		} else if pool.Driver == "btrfs" {
+			_, err = exec.LookPath("btrfs")
+			if err != nil {
+				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "btrfs", pool.Name))
+			}
+		} else if pool.Driver == "ceph" || pool.Driver == "cephfs" || pool.Driver == "cephobject" {
+			_, err = exec.LookPath("ceph")
+			if err != nil {
+				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "ceph", pool.Name))
+			}
+		} else if pool.Driver == "lvm" {
+			_, err = exec.LookPath("lvm")
+			if err != nil {
+				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "lvm", pool.Name))
 			}
 		}
 	}
@@ -411,7 +389,20 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 				}
 			}
 		}
+	}
 
+	// Cluster validation.
+	if !srcServerInfo.Environment.ServerClustered {
+		clusterMembers, err := srcClient.GetClusterMembers()
+		if err != nil {
+			return fmt.Errorf("Failed to retrieve the list of cluster members")
+		}
+
+		for _, member := range clusterMembers {
+			if member.Status != "Online" {
+				errors = append(errors, fmt.Errorf("Cluster member %q isn't in the online state", member.ServerName))
+			}
+		}
 	}
 
 	if len(errors) > 0 {
@@ -422,6 +413,84 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 
 		return fmt.Errorf("Source server is using incompatible configuration")
+	}
+
+	return nil
+}
+
+func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
+	var err error
+	var srcClient lxd.InstanceServer
+	var targetClient incus.InstanceServer
+
+	// Confirm that we're root.
+	if os.Geteuid() != 0 {
+		return fmt.Errorf("This tool must be run as root")
+	}
+
+	// Iterate through potential sources.
+	fmt.Println("=> Looking for source server")
+	var source Source
+	for _, candidate := range sources {
+		if !candidate.Present() {
+			continue
+		}
+
+		source = candidate
+		break
+	}
+
+	if source == nil {
+		return fmt.Errorf("No source server could be found")
+	}
+
+	fmt.Printf("==> Detected: %s\n", source.Name())
+
+	// Iterate through potential targets.
+	fmt.Println("=> Looking for target server")
+	var target Target
+	for _, candidate := range targets {
+		if !candidate.Present() {
+			continue
+		}
+
+		target = candidate
+		break
+	}
+
+	if target == nil {
+		return fmt.Errorf("No target server could be found")
+	}
+
+	// Connect to the servers.
+	clustered := c.flagClusterMember
+	if !c.flagClusterMember {
+		fmt.Println("=> Connecting to source server")
+		srcClient, err = source.Connect()
+		if err != nil {
+			return fmt.Errorf("Failed to connect to the source: %w", err)
+		}
+
+		srcServerInfo, _, err := srcClient.GetServer()
+		if err != nil {
+			return fmt.Errorf("Failed to get source server info: %w", err)
+		}
+
+		clustered = srcServerInfo.Environment.ServerClustered
+	}
+
+	fmt.Println("=> Connecting to the target server")
+	targetClient, err = target.Connect()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to the target: %w", err)
+	}
+
+	// Configuration validation.
+	if !c.flagClusterMember {
+		err = c.validate(srcClient, targetClient)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Grab the path information.
@@ -437,40 +506,114 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	// Mangle storage pool sources.
 	rewriteStatements := []string{}
-	storagePools, err := srcClient.GetStoragePools()
-	if err != nil {
-		return fmt.Errorf("Failed to get list of source storage pools: %w", err)
-	}
 
-	for _, pool := range storagePools {
-		source := pool.Config["source"]
-		if source == "" || source[0] != byte('/') {
-			continue
+	if !c.flagClusterMember {
+		var storagePools []lxdAPI.StoragePool
+		if !clustered {
+			storagePools, err = srcClient.GetStoragePools()
+			if err != nil {
+				return fmt.Errorf("Couldn't list storage pools: %w", err)
+			}
+		} else {
+			clusterMembers, err := srcClient.GetClusterMembers()
+			if err != nil {
+				return fmt.Errorf("Failed to retrieve the list of cluster members")
+			}
+
+			for _, member := range clusterMembers {
+				poolNames, err := srcClient.UseTarget(member.ServerName).GetStoragePoolNames()
+				if err != nil {
+					return fmt.Errorf("Couldn't list storage pools: %w", err)
+				}
+
+				for _, poolName := range poolNames {
+					pool, _, err := srcClient.UseTarget(member.ServerName).GetStoragePool(poolName)
+					if err != nil {
+						return fmt.Errorf("Couldn't get storage pool: %w", err)
+					}
+
+					storagePools = append(storagePools, *pool)
+				}
+			}
 		}
 
-		if !strings.HasPrefix(source, sourcePaths.Daemon) {
-			continue
-		}
+		for _, pool := range storagePools {
+			source := pool.Config["source"]
+			if source == "" || source[0] != byte('/') {
+				continue
+			}
 
-		newSource := strings.Replace(source, sourcePaths.Daemon, targetPaths.Daemon, 1)
-		rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE storage_pools_config SET value='%s' WHERE value='%s'", newSource, source))
+			if !strings.HasPrefix(source, sourcePaths.Daemon) {
+				continue
+			}
+
+			newSource := strings.Replace(source, sourcePaths.Daemon, targetPaths.Daemon, 1)
+			rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE storage_pools_config SET value='%s' WHERE value='%s';", newSource, source))
+		}
 	}
 
 	// Confirm migration.
-	if !c.flagYes {
-		fmt.Println(`
+	if !c.flagClusterMember && !c.flagYes {
+		if !clustered {
+			fmt.Println(`
 The migration is now ready to proceed.
 At this point, the source server and all its instances will be stopped.
 Instances will come back online once the migration is complete.
 `)
 
-		ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
+			ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
+			if err != nil {
+				return err
+			}
+
+			if !ok {
+				os.Exit(1)
+			}
+		} else {
+			fmt.Println(`
+The migration is now ready to proceed.
+
+A cluster environment was detected.
+Manual action will be needed on each of the server prior to Incus being functional.
+The migration will begin by shutting down instances on all servers.
+It will then convert the current server over to Incus and then wait for the other servers to be converted.
+
+Do not attempt to manually run this tool on any of the other servers in the cluster.
+Instead this tool will be providing specific commands for each of the servers.
+`)
+
+			ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
+			if err != nil {
+				return err
+			}
+
+			if !ok {
+				os.Exit(1)
+			}
+		}
+	}
+
+	// Cluster evacuation.
+	if !c.flagClusterMember && clustered {
+		fmt.Println("=> Stopping all workloads on the cluster")
+
+		clusterMembers, err := srcClient.GetClusterMembers()
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to retrieve the list of cluster members")
 		}
 
-		if !ok {
-			os.Exit(1)
+		for _, member := range clusterMembers {
+			fmt.Printf("==> Stopping all workloads on server %q\n", member.ServerName)
+
+			op, err := srcClient.UpdateClusterMemberState(member.ServerName, lxdAPI.ClusterMemberStatePost{Action: "evacuate", Mode: "stop"})
+			if err != nil {
+				return fmt.Errorf("Failed to stop workloads %q: %w", member.ServerName, err)
+			}
+
+			err = op.Wait()
+			if err != nil {
+				return fmt.Errorf("Failed to stop workloads %q: %w", member.ServerName, err)
+			}
 		}
 	}
 
@@ -532,9 +675,11 @@ Instances will come back online once the migration is complete.
 	}
 
 	// Apply custom SQL statements.
-	err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")), 0600)
-	if err != nil {
-		return fmt.Errorf("Failed to write database path: %w", err)
+	if !c.flagClusterMember {
+		err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0600)
+		if err != nil {
+			return fmt.Errorf("Failed to write database path: %w", err)
+		}
 	}
 
 	// Cleanup paths.
@@ -589,11 +734,92 @@ Instances will come back online once the migration is complete.
 		return fmt.Errorf("Failed to start the target server: %w", err)
 	}
 
+	// Cluster handling.
+	if clustered {
+		if !c.flagClusterMember {
+			fmt.Println("=> Waiting for other cluster servers\n")
+			fmt.Printf("Please run `lxd-to-incus --cluster-member` on all other servers in the cluster\n\n")
+			for {
+				ok, err := c.global.asker.AskBool("The command has been started on all other servers? [default=no]: ", "no")
+				if !ok || err != nil {
+					continue
+				}
+
+				break
+			}
+
+			fmt.Println("")
+		}
+
+		// Wait long enough that we get accurate heartbeat information.
+		fmt.Println("=> Waiting for cluster to be fully migrated")
+		time.Sleep(30 * time.Second)
+
+		for {
+			clusterMembers, err := targetClient.GetClusterMembers()
+			if err != nil {
+				time.Sleep(30 * time.Second)
+				continue
+			}
+
+			ready := true
+			for _, member := range clusterMembers {
+				info, _, err := targetClient.UseTarget(member.ServerName).GetServer()
+				if err != nil || info.Environment.Server != "incus" {
+					ready = false
+					break
+				}
+
+				if member.Status == "Evacuated" && member.Message == "Unavailable due to maintenance" {
+					continue
+				}
+
+				if member.Status == "Online" && member.Message == "Fully operational" {
+					continue
+				}
+
+				ready = false
+				break
+			}
+
+			if !ready {
+				time.Sleep(30 * time.Second)
+				continue
+			}
+
+			break
+		}
+	}
+
 	// Validate target.
 	fmt.Println("=> Checking the target server")
 	_, _, err = targetClient.GetServer()
 	if err != nil {
 		return fmt.Errorf("Failed to get target server info: %w", err)
+	}
+
+	// Cluster restore.
+	if !c.flagClusterMember && clustered {
+		fmt.Println("=> Restoring the cluster")
+
+		clusterMembers, err := targetClient.GetClusterMembers()
+		if err != nil {
+			return fmt.Errorf("Failed to retrieve the list of cluster members")
+		}
+
+		for _, member := range clusterMembers {
+			fmt.Printf("==> Restoring workloads on server %q\n", member.ServerName)
+
+			op, err := targetClient.UpdateClusterMemberState(member.ServerName, incusAPI.ClusterMemberStatePost{Action: "restore"})
+			if err != nil {
+				return fmt.Errorf("Failed to restore %q: %w", member.ServerName, err)
+			}
+
+			err = op.Wait()
+			if err != nil {
+				return fmt.Errorf("Failed to restore %q: %w", member.ServerName, err)
+			}
+		}
 	}
 
 	// Confirm uninstall.
