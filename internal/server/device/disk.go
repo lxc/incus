@@ -198,11 +198,16 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		"boot.priority":     validate.Optional(validate.IsUint32),
 		"path":              validate.IsAny,
 		"io.cache":          validate.Optional(validate.IsOneOf("none", "writeback", "unsafe")),
+		"io.bus":            validate.Optional(validate.IsOneOf("virtio-scsi", "nvme")),
 	}
 
 	err := d.config.Validate(rules)
 	if err != nil {
 		return err
+	}
+
+	if instConf.Type() == instancetype.Container && d.config["io.bus"] != "" {
+		return fmt.Errorf("IO bus configuration cannot be applied to containers")
 	}
 
 	if instConf.Type() == instancetype.Container && d.config["io.cache"] != "" {
@@ -737,6 +742,11 @@ func (d *disk) detectVMPoolMountOpts() []string {
 
 	if d.pool.Driver().Info().IOUring {
 		opts = append(opts, DiskIOUring)
+	}
+
+	// Allow the user to override the bus.
+	if d.config["io.bus"] != "" {
+		opts = append(opts, fmt.Sprintf("bus=%s", d.config["io.bus"]))
 	}
 
 	// Allow the user to override the caching mode.
