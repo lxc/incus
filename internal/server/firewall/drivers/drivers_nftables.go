@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/server/project"
@@ -99,7 +99,7 @@ func (d Nftables) Compat() (bool, error) {
 	}
 
 	// Check that nftables works at all (some kernels let you list ruleset despite missing support).
-	testTable := fmt.Sprintf("incus_test_%s", uuid.New())
+	testTable := fmt.Sprintf("incus_test_%s", uuid.New().String())
 
 	_, err = subprocess.RunCommandCLocale("nft", "create", "table", testTable)
 	if err != nil {
