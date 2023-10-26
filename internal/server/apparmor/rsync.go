@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/sys"
@@ -123,7 +123,7 @@ func rsyncProfileLoad(sysOS *sys.OS, sourcePath string, dstPath string) (string,
 	defer revert.Fail()
 
 	// Generate a temporary profile name.
-	name := profileName("rsync", uuid.New())
+	name := profileName("rsync", uuid.New().String())
 	profilePath := filepath.Join(aaPath, "profiles", name)
 
 	// Generate the profile
