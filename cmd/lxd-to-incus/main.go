@@ -478,7 +478,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 
 		newSource := strings.Replace(source, sourcePaths.Daemon, targetPaths.Daemon, 1)
-		rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE storage_pools_config SET value='%s' WHERE value='%s'", newSource, source))
+		rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE storage_pools_config SET value='%s' WHERE value='%s';", newSource, source))
 	}
 
 	// Confirm migration.
@@ -557,7 +557,7 @@ Instances will come back online once the migration is complete.
 	}
 
 	// Apply custom SQL statements.
-	err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")), 0600)
+	err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0600)
 	if err != nil {
 		return fmt.Errorf("Failed to write database path: %w", err)
 	}
