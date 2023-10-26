@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/db/warningtype"
@@ -93,7 +93,7 @@ func (c *Cluster) UpsertWarning(nodeName string, projectName string, entityTypeC
 				Project:        projectName,
 				EntityTypeCode: entityTypeCode,
 				EntityID:       entityID,
-				UUID:           uuid.New(),
+				UUID:           uuid.New().String(),
 				TypeCode:       typeCode,
 				Status:         warningtype.StatusNew,
 				FirstSeenDate:  now,
