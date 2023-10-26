@@ -411,7 +411,6 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 				}
 			}
 		}
-
 	}
 
 	if len(errors) > 0 {
