@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -349,6 +350,35 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 	}
 
+	storagePools, err := srcClient.GetStoragePools()
+	if err != nil {
+		return fmt.Errorf("Couldn't list storage pools: %w", err)
+	}
+
+	for _, pool := range storagePools {
+		if pool.Driver == "zfs" {
+			_, err = exec.LookPath("zfs")
+			if err != nil {
+				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "zfs", pool.Name))
+			}
+		} else if pool.Driver == "btrfs" {
+			_, err = exec.LookPath("btrfs")
+			if err != nil {
+				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "btrfs", pool.Name))
+			}
+		} else if pool.Driver == "ceph" || pool.Driver == "cephfs" || pool.Driver == "cephobject" {
+			_, err = exec.LookPath("ceph")
+			if err != nil {
+				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "ceph", pool.Name))
+			}
+		} else if pool.Driver == "lvm" {
+			_, err = exec.LookPath("lvm")
+			if err != nil {
+				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "lvm", pool.Name))
+			}
+		}
+	}
+
 	deprecatedInstanceConfigs := []string{
 		"limits.network.priority",
 	}
@@ -436,10 +466,6 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	// Mangle storage pool sources.
 	rewriteStatements := []string{}
-	storagePools, err := srcClient.GetStoragePools()
-	if err != nil {
-		return fmt.Errorf("Failed to get list of source storage pools: %w", err)
-	}
 
 	for _, pool := range storagePools {
 		source := pool.Config["source"]
