@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/simplestreams"
 	"github.com/lxc/incus/shared/util"
@@ -336,7 +337,7 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 		eventListeners:     make(map[string][]*EventListener),
 	}
 
-	if util.ValueInSlice(args.AuthType, []string{"oidc"}) {
+	if util.ValueInSlice(args.AuthType, []string{api.AuthenticationMethodOIDC}) {
 		server.RequireAuthenticated(true)
 	}
 
@@ -351,7 +352,7 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 	}
 
 	server.http = httpClient
-	if args.AuthType == "oidc" {
+	if args.AuthType == api.AuthenticationMethodOIDC {
 		server.setupOIDCClient(args.OIDCTokens)
 	}
 

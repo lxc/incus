@@ -32,6 +32,7 @@ import (
 	internalInstance "github.com/lxc/incus/internal/instance"
 	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
@@ -68,46 +69,46 @@ var imagesCmd = APIEndpoint{
 var imageCmd = APIEndpoint{
 	Path: "images/{fingerprint}",
 
-	Delete: APIEndpointAction{Handler: imageDelete, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: imageDelete, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
 	Get:    APIEndpointAction{Handler: imageGet, AllowUntrusted: true},
-	Patch:  APIEndpointAction{Handler: imagePatch, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: imagePut, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: imagePatch, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
+	Put:    APIEndpointAction{Handler: imagePut, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
 }
 
 var imageExportCmd = APIEndpoint{
 	Path: "images/{fingerprint}/export",
 
 	Get:  APIEndpointAction{Handler: imageExport, AllowUntrusted: true},
-	Post: APIEndpointAction{Handler: imageExportPost, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: imageExportPost, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
 }
 
 var imageSecretCmd = APIEndpoint{
 	Path: "images/{fingerprint}/secret",
 
-	Post: APIEndpointAction{Handler: imageSecret, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: imageSecret, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
 }
 
 var imageRefreshCmd = APIEndpoint{
 	Path: "images/{fingerprint}/refresh",
 
-	Post: APIEndpointAction{Handler: imageRefresh, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: imageRefresh, AccessHandler: allowPermission(auth.ObjectTypeImage, auth.EntitlementCanEdit, "fingerprint")},
 }
 
 var imageAliasesCmd = APIEndpoint{
 	Path: "images/aliases",
 
-	Get:  APIEndpointAction{Handler: imageAliasesGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: imageAliasesPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: imageAliasesGet, AccessHandler: allowAuthenticated},
+	Post: APIEndpointAction{Handler: imageAliasesPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateImageAliases)},
 }
 
 var imageAliasCmd = APIEndpoint{
 	Path: "images/aliases/{name:.*}",
 
-	Delete: APIEndpointAction{Handler: imageAliasDelete, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: imageAliasDelete, AccessHandler: allowPermission(auth.ObjectTypeImageAlias, auth.EntitlementCanEdit, "name")},
 	Get:    APIEndpointAction{Handler: imageAliasGet, AllowUntrusted: true},
-	Patch:  APIEndpointAction{Handler: imageAliasPatch, AccessHandler: allowProjectPermission()},
-	Post:   APIEndpointAction{Handler: imageAliasPost, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: imageAliasPut, AccessHandler: allowProjectPermission()},
+	Patch:  APIEndpointAction{Handler: imageAliasPatch, AccessHandler: allowPermission(auth.ObjectTypeImageAlias, auth.EntitlementCanEdit, "name")},
+	Post:   APIEndpointAction{Handler: imageAliasPost, AccessHandler: allowPermission(auth.ObjectTypeImageAlias, auth.EntitlementCanEdit, "name")},
+	Put:    APIEndpointAction{Handler: imageAliasPut, AccessHandler: allowPermission(auth.ObjectTypeImageAlias, auth.EntitlementCanEdit, "name")},
 }
 
 /*
@@ -200,7 +201,7 @@ func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 func imgPostInstanceInfo(s *state.State, r *http.Request, req api.ImagesPost, op *operations.Operation, builddir string, budget int64) (*api.Image, error) {
 	info := api.Image{}
 	info.Properties = map[string]string{}
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name := req.Source.Name
 	ctype := req.Source.Type
 	if ctype == "" || name == "" {
@@ -440,7 +441,7 @@ func imgPostRemoteInfo(s *state.State, r *http.Request, req api.ImagesPost, op *
 
 	// Get profile IDs
 	if req.Profiles == nil {
-		req.Profiles = []string{projectutils.Default}
+		req.Profiles = []string{api.ProjectDefaultName}
 	}
 
 	profileIds := make([]int64, len(req.Profiles))
@@ -920,11 +921,20 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 func imagesPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	trusted := d.checkTrustedClient(r) == nil && allowProjectPermission()(d, r) == response.EmptySyncResponse
+	projectName := request.ProjectParam(r)
+
+	var userCanCreateImages bool
+	err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanCreateImages)
+	if err == nil {
+		userCanCreateImages = true
+	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
+	}
+
+	trusted := d.checkTrustedClient(r) == nil && userCanCreateImages
 
 	secret := r.Header.Get("X-Incus-secret")
 	fingerprint := r.Header.Get("X-Incus-fingerprint")
-	projectName := projectParam(r)
 
 	var imageMetadata map[string]any
 
@@ -1142,6 +1152,12 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Failed syncing image between nodes: %w", err)
 		}
 
+		// Add the image to the authorizer.
+		err = s.Authorizer.AddImage(r.Context(), projectName, info.Fingerprint)
+		if err != nil {
+			logger.Error("Failed to add image to authorizer", logger.Ctx{"fingerprint": info.Fingerprint, "project": projectName, "error": err})
+		}
+
 		s.Events.SendLifecycle(projectName, lifecycle.ImageCreated.Event(info.Fingerprint, projectName, op.Requestor(), logger.Ctx{"type": info.Type}))
 
 		return nil
@@ -1281,7 +1297,7 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 	return &result, imageType, nil
 }
 
-func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectName string, public bool, clauses *filter.ClauseSet) (any, error) {
+func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectName string, public bool, clauses *filter.ClauseSet, hasPermission auth.PermissionChecker) (any, error) {
 	mustLoadObjects := recursion || clauses != nil
 
 	fingerprints, err := tx.GetImagesFingerprints(ctx, projectName, public)
@@ -1299,14 +1315,18 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 	}
 
 	for _, fingerprint := range fingerprints {
+		image, err := doImageGet(ctx, tx, projectName, fingerprint, public)
+		if err != nil {
+			continue
+		}
+
+		if !image.Public && !hasPermission(auth.ObjectImage(projectName, fingerprint)) {
+			continue
+		}
+
 		if !mustLoadObjects {
 			resultString = append(resultString, api.NewURL().Path(version.APIVersion, "images", fingerprint).String())
 		} else {
-			image, err := doImageGet(ctx, tx, projectName, fingerprint, public)
-			if err != nil {
-				continue
-			}
-
 			if clauses != nil {
 				match, err := filter.Match(*image, *clauses)
 				if err != nil {
@@ -1539,9 +1559,17 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func imagesGet(d *Daemon, r *http.Request) response.Response {
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	filterStr := r.FormValue("filter")
-	public := d.checkTrustedClient(r) != nil || allowProjectPermission()(d, r) != response.EmptySyncResponse
+
+	s := d.State()
+
+	hasPermission, authorizationErr := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeImage)
+	if authorizationErr != nil && !api.StatusErrorCheck(authorizationErr, http.StatusForbidden) {
+		return response.SmartError(authorizationErr)
+	}
+
+	public := d.checkTrustedClient(r) != nil || authorizationErr != nil
 
 	clauses, err := filter.Parse(filterStr, filter.QueryOperatorSet())
 	if err != nil {
@@ -1549,8 +1577,8 @@ func imagesGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var result any
-	err = d.State().DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		result, err = doImagesGet(ctx, tx, localUtil.IsRecursionRequest(r), projectName, public, clauses)
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		result, err = doImagesGet(ctx, tx, localUtil.IsRecursionRequest(r), projectName, public, clauses, hasPermission)
 		if err != nil {
 			return err
 		}
@@ -2458,7 +2486,7 @@ func pruneExpiredImages(ctx context.Context, s *state.State, op *operations.Oper
 func imageDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 
 	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
 	if err != nil {
@@ -2572,6 +2600,12 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 
 		// Remove main image file from disk.
 		imageDeleteFromDisk(imgInfo.Fingerprint)
+
+		// Remove image from authorizer.
+		err = s.Authorizer.DeleteImage(r.Context(), projectName, imgInfo.Fingerprint)
+		if err != nil {
+			logger.Error("Failed to remove image from authorizer", logger.Ctx{"fingerprint": imgInfo.Fingerprint, "project": projectName, "error": err})
+		}
 
 		s.Events.SendLifecycle(projectName, lifecycle.ImageDeleted.Event(imgInfo.Fingerprint, projectName, op.Requestor(), nil))
 
@@ -2755,13 +2789,21 @@ func imageValidSecret(s *state.State, r *http.Request, projectName string, finge
 func imageGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	public := d.checkTrustedClient(r) != nil || allowProjectPermission()(d, r) != response.EmptySyncResponse
+	var userCanViewImage bool
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(projectName, fingerprint), auth.EntitlementCanView)
+	if err == nil {
+		userCanViewImage = true
+	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
+	}
+
+	public := d.checkTrustedClient(r) != nil || !userCanViewImage
 	secret := r.FormValue("secret")
 
 	var info *api.Image
@@ -2828,7 +2870,7 @@ func imagePut(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get current value
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
 	if err != nil {
 		return response.SmartError(err)
@@ -2923,7 +2965,7 @@ func imagePatch(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get current value
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
 	if err != nil {
 		return response.SmartError(err)
@@ -3032,7 +3074,7 @@ func imagePatch(d *Daemon, r *http.Request) response.Response {
 func imageAliasesPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	req := api.ImageAliasesPost{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -3068,6 +3110,12 @@ func imageAliasesPost(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Add the image alias to the authorizer.
+	err = s.Authorizer.AddImageAlias(r.Context(), projectName, req.Name)
+	if err != nil {
+		logger.Error("Failed to add image alias to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
 	}
 
 	requestor := request.CreateRequestor(r)
@@ -3170,13 +3218,18 @@ func imageAliasesPost(d *Daemon, r *http.Request) response.Response {
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func imageAliasesGet(d *Daemon, r *http.Request) response.Response {
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	recursion := localUtil.IsRecursionRequest(r)
 
-	var err error
+	s := d.State()
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeImageAlias)
+	if err != nil {
+		return response.InternalError(fmt.Errorf("Failed to get a permission checker: %w", err))
+	}
+
 	var responseStr []string
 	var responseMap []api.ImageAliasesEntry
-	err = d.State().DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		names, err := tx.GetImageAliases(ctx, projectName)
 		if err != nil {
 			return err
@@ -3189,6 +3242,10 @@ func imageAliasesGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		for _, name := range names {
+			if !userHasPermission(auth.ObjectImageAlias(projectName, name)) {
+				continue
+			}
+
 			if !recursion {
 				responseStr = append(responseStr, api.NewURL().Path(version.APIVersion, "images", "aliases", name).String())
 			} else {
@@ -3297,13 +3354,23 @@ func imageAliasesGet(d *Daemon, r *http.Request) response.Response {
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func imageAliasGet(d *Daemon, r *http.Request) response.Response {
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	public := d.checkTrustedClient(r) != nil || allowProjectPermission()(d, r) != response.EmptySyncResponse
+	s := d.State()
+
+	var userCanViewImageAlias bool
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImageAlias(projectName, name), auth.EntitlementCanView)
+	if err == nil {
+		userCanViewImageAlias = true
+	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
+	}
+
+	public := d.checkTrustedClient(r) != nil || !userCanViewImageAlias
 
 	var alias api.ImageAliasesEntry
 	err = d.State().DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -3345,7 +3412,7 @@ func imageAliasGet(d *Daemon, r *http.Request) response.Response {
 func imageAliasDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -3366,6 +3433,12 @@ func imageAliasDelete(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Remove image alias from authorizer.
+	err = s.Authorizer.DeleteImageAlias(r.Context(), projectName, name)
+	if err != nil {
+		logger.Error("Failed to remove image alias from authorizer", logger.Ctx{"name": name, "project": projectName, "error": err})
 	}
 
 	requestor := request.CreateRequestor(r)
@@ -3412,7 +3485,7 @@ func imageAliasPut(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get current value
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -3503,7 +3576,7 @@ func imageAliasPatch(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get current value
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -3606,7 +3679,7 @@ func imageAliasPatch(d *Daemon, r *http.Request) response.Response {
 func imageAliasPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -3643,6 +3716,12 @@ func imageAliasPost(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Rename image alias in authorizer.
+	err = s.Authorizer.RenameImageAlias(r.Context(), projectName, name, req.Name)
+	if err != nil {
+		logger.Error("Failed to rename image alias in authorizer", logger.Ctx{"old_name": name, "new_name": req.Name, "project": projectName})
 	}
 
 	requestor := request.CreateRequestor(r)
@@ -3709,13 +3788,21 @@ func imageAliasPost(d *Daemon, r *http.Request) response.Response {
 func imageExport(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	public := d.checkTrustedClient(r) != nil || allowProjectPermission()(d, r) != response.EmptySyncResponse
+	var userCanViewImage bool
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(projectName, fingerprint), auth.EntitlementCanView)
+	if err == nil {
+		userCanViewImage = true
+	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
+	}
+
+	public := d.checkTrustedClient(r) != nil || !userCanViewImage
 	secret := r.FormValue("secret")
 
 	var imgInfo *api.Image
@@ -3841,7 +3928,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 func imageExportPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
 	if err != nil {
 		return response.SmartError(err)
@@ -3981,7 +4068,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func imageSecret(d *Daemon, r *http.Request) response.Response {
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
 	if err != nil {
 		return response.SmartError(err)
@@ -4094,7 +4181,7 @@ func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerpr
 func imageRefresh(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	fingerprint, err := url.PathUnescape(mux.Vars(r)["fingerprint"])
 	if err != nil {
 		return response.SmartError(err)

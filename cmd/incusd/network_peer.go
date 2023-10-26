@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network"
 	"github.com/lxc/incus/internal/server/project"
@@ -21,17 +22,17 @@ import (
 var networkPeersCmd = APIEndpoint{
 	Path: "networks/{networkName}/peers",
 
-	Get:  APIEndpointAction{Handler: networkPeersGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: networkPeersPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: networkPeersGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+	Post: APIEndpointAction{Handler: networkPeersPost, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 }
 
 var networkPeerCmd = APIEndpoint{
 	Path: "networks/{networkName}/peers/{peerName}",
 
-	Delete: APIEndpointAction{Handler: networkPeerDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: networkPeerGet, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: networkPeerDelete, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
+	Get:    APIEndpointAction{Handler: networkPeerGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+	Put:    APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
+	Patch:  APIEndpointAction{Handler: networkPeerPut, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 }
 
 // API endpoints
@@ -131,7 +132,7 @@ var networkPeerCmd = APIEndpoint{
 func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -225,7 +226,7 @@ func networkPeersPost(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -299,7 +300,7 @@ func networkPeerDelete(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -386,7 +387,7 @@ func networkPeerGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -502,7 +503,7 @@ func networkPeerPut(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}

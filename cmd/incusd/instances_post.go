@@ -811,7 +811,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 func instancesPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	targetProjectName := projectParam(r)
+	targetProjectName := request.ProjectParam(r)
 	clusterNotification := isClusterNotification(r)
 
 	logger.Debug("Responding to instance create")
@@ -878,7 +878,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 	var targetMemberInfo *db.NodeInfo
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		target := queryParam(r, "target")
+		target := request.QueryParam(r, "target")
 		if !clustered && target != "" {
 			return api.StatusErrorf(http.StatusBadRequest, "Target only allowed when clustered")
 		}

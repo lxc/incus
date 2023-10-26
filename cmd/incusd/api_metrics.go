@@ -11,13 +11,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/instance"
 	instanceDrivers "github.com/lxc/incus/internal/server/instance/drivers"
 	"github.com/lxc/incus/internal/server/locking"
 	"github.com/lxc/incus/internal/server/metrics"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
@@ -40,13 +43,11 @@ var metricsCmd = APIEndpoint{
 func allowMetrics(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	// Check if API is wide open.
 	if !s.GlobalConfig.MetricsAuthentication() {
 		return response.EmptySyncResponse
 	}
 
-	// If not wide open, apply project access restrictions.
-	return allowProjectPermission()(d, r)
+	return allowPermission(auth.ObjectTypeServer, auth.EntitlementCanViewMetrics)(d, r)
 }
 
 // swagger:operation GET /1.0/metrics metrics metrics_get
@@ -82,7 +83,7 @@ func allowMetrics(d *Daemon, r *http.Request) response.Response {
 func metricsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := queryParam(r, "project")
+	projectName := request.QueryParam(r, "project")
 	compress := strings.Contains(r.Header.Get("Accept-Encoding"), "gzip")
 
 	// Forward if requested.
@@ -157,7 +158,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 
 	// If all valid, return immediately.
 	if len(projectsToFetch) == 0 {
-		return response.SyncResponsePlain(true, compress, metricSet.String())
+		return getFilteredMetrics(s, r, compress, metricSet)
 	}
 
 	cacheDuration := time.Duration(8) * time.Second
@@ -182,7 +183,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 
 	// If all valid, return immediately.
 	if len(projectsToFetch) == 0 {
-		return response.SyncResponsePlain(true, compress, metricSet.String())
+		return getFilteredMetrics(s, r, compress, metricSet)
 	}
 
 	// Gather information about host interfaces once.
@@ -284,6 +285,27 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	metricsCacheLock.Unlock()
+
+	return getFilteredMetrics(s, r, compress, metricSet)
+}
+
+func getFilteredMetrics(s *state.State, r *http.Request, compress bool, metricSet *metrics.MetricSet) response.Response {
+	if !s.GlobalConfig.MetricsAuthentication() {
+		return response.SyncResponsePlain(true, compress, metricSet.String())
+	}
+
+	// Get instances the user is allowed to view.
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeInstance)
+	if err != nil && !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
+	} else if err != nil {
+		// This is counterintuitive. We are unauthorized to get a permission checker for viewing instances because a metric type certificate
+		// can't view instances. However, in order to get to this point we must already have auth.EntitlementCanViewMetrics. So we can view
+		// the metrics but we can't do any filtering, so just return the metrics.
+		return response.SyncResponsePlain(true, compress, metricSet.String())
+	}
+
+	metricSet.FilterSamples(userHasPermission)
 
 	return response.SyncResponsePlain(true, compress, metricSet.String())
 }

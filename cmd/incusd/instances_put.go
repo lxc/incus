@@ -9,11 +9,13 @@ import (
 	"sync"
 
 	internalInstance "github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/operations"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
@@ -73,7 +75,7 @@ func coalesceErrors(local bool, errors map[string]error) error {
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instancesPut(d *Daemon, r *http.Request) response.Response {
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 
 	// Don't mess with instances while in setup mode.
 	<-d.waitReady.Done()
@@ -95,10 +97,20 @@ func instancesPut(d *Daemon, r *http.Request) response.Response {
 
 	action := internalInstance.InstanceAction(req.State.Action)
 
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanUpdateState, auth.ObjectTypeInstance)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	var names []string
 	var instances []instance.Instance
 	for _, inst := range c {
 		if inst.Project().Name != projectName {
+			continue
+		}
+
+		// Only allow changing the state of instances the user has permission for.
+		if !userHasPermission(auth.ObjectInstance(inst.Project().Name, inst.Name())) {
 			continue
 		}
 

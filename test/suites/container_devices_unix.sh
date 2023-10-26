@@ -96,7 +96,7 @@ test_container_devices_unix() {
   incus start "${ctName}"
   ! ls "${INCUS_DIR}"/devices/"${ctName}"/unix.test--dev--dynamic.tmp-testdev
   mknod "${testDev}" "${deviceTypeCode}" 0 0
-  sleep 1
+  sleep 2
   incus exec "${ctName}" -- mount | grep "/tmp/testdev"
   incus exec "${ctName}" -- stat -c '%F %a %t %T' /tmp/testdev | grep "${deviceTypeDesc} 660 0 0"
   stat -c '%F %a %t %T' "${INCUS_DIR}"/devices/"${ctName}"/unix.test--dev--dynamic.tmp-testdev | grep "${deviceTypeDesc} 660 0 0"
@@ -112,7 +112,7 @@ test_container_devices_unix() {
   shutdown_incus "${INCUS_DIR}"
   respawn_incus "${INCUS_DIR}" true
   mknod "${testDev}" "${deviceTypeCode}" 0 0
-  sleep 1
+  sleep 2
   incus exec "${ctName}" -- mount | grep "/tmp/testdev"
   incus exec "${ctName}" -- stat -c '%F %a %t %T' /tmp/testdev | grep "${deviceTypeDesc} 660 0 0"
   stat -c '%F %a %t %T' "${INCUS_DIR}"/devices/"${ctName}"/unix.test--dev--dynamic.tmp-testdev | grep "${deviceTypeDesc} 660 0 0"
@@ -128,7 +128,7 @@ test_container_devices_unix() {
 
   mkdir "${testDev}"
   mknod "${testDevSubDir}" "${deviceTypeCode}" 0 0
-  sleep 1
+  sleep 2
   incus exec "${ctName}" -- mount | grep "/tmp/testdev"
   incus exec "${ctName}" -- stat -c '%F %a %t %T' /tmp/testdev | grep "${deviceTypeDesc} 660 0 0"
   stat -c '%F %a %t %T' "${INCUS_DIR}"/devices/"${ctName}"/unix.test--dev--dynamic.tmp-testdev | grep "${deviceTypeDesc} 660 0 0"
@@ -147,7 +147,7 @@ test_container_devices_unix() {
   incus launch testimage "${ctName}2"
   incus config device add "${ctName}2" test-dev-dynamic "${deviceType}" required=false source="${testDev}" path=/tmp/testdev2
   mknod "${testDev}" "${deviceTypeCode}" 0 0
-  sleep 1
+  sleep 2
   incus exec "${ctName}1" -- mount | grep "/tmp/testdev1"
   incus exec "${ctName}1" -- stat -c '%F %a %t %T' /tmp/testdev1 | grep "${deviceTypeDesc} 660 0 0"
   stat -c '%F %a %t %T' "${INCUS_DIR}"/devices/"${ctName}"1/unix.test--dev--dynamic.tmp-testdev1 | grep "${deviceTypeDesc} 660 0 0"

@@ -174,7 +174,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 
 	i := 1
 
-	if util.ValueInSlice("tls", apiServer.AuthMethods) {
+	if util.ValueInSlice(api.AuthenticationMethodTLS, apiServer.AuthMethods) {
 		fmt.Printf("%d) Use a certificate token\n", i)
 		availableAuthMethods = append(availableAuthMethods, authMethodTLSCertificateToken)
 		i++
@@ -185,7 +185,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		availableAuthMethods = append(availableAuthMethods, authMethodTLSTemporaryCertificate)
 	}
 
-	if len(apiServer.AuthMethods) > 1 || util.ValueInSlice("tls", apiServer.AuthMethods) {
+	if len(apiServer.AuthMethods) > 1 || util.ValueInSlice(api.AuthenticationMethodTLS, apiServer.AuthMethods) {
 		authMethodInt, err := c.global.asker.AskInt("Please pick an authentication mechanism above: ", 1, int64(i), "", nil)
 		if err != nil {
 			return nil, "", err
@@ -238,7 +238,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 
 	switch authMethod {
 	case authMethodTLSCertificate, authMethodTLSTemporaryCertificate, authMethodTLSCertificateToken:
-		authType = "tls"
+		authType = api.AuthenticationMethodTLS
 	}
 
 	return c.connectTarget(serverURL, certPath, keyPath, authType, token)
@@ -278,14 +278,14 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 	}
 
 	if len(projectNames) > 1 {
-		project, err := c.global.asker.AskChoice("Project to create the instance in [default=default]: ", projectNames, "default")
+		project, err := c.global.asker.AskChoice("Project to create the instance in [default=default]: ", projectNames, api.ProjectDefaultName)
 		if err != nil {
 			return cmdMigrateData{}, err
 		}
 
 		config.Project = project
 	} else {
-		config.Project = "default"
+		config.Project = api.ProjectDefaultName
 	}
 
 	// Instance name

@@ -2,6 +2,7 @@ package project_test
 
 import (
 	"context"
+	"crypto/x509"
 	"net/http"
 	"testing"
 
@@ -9,11 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/lxc/incus/internal/server/auth"
+	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/logger"
 )
 
 // If there's no limit configured on the project, the check passes.
@@ -172,11 +176,52 @@ func TestCheckClusterTargetRestriction_RestrictedTrue(t *testing.T) {
 	require.NoError(t, err)
 
 	req := &http.Request{}
-	authorizer, err := auth.LoadAuthorizer("tls", nil, nil, nil)
+	authorizer, err := auth.LoadAuthorizer(context.Background(), auth.DriverTLS, logger.Log, &certificate.Cache{})
 	require.NoError(t, err)
 
 	err = project.CheckClusterTargetRestriction(authorizer, req, p, "n1")
 	assert.EqualError(t, err, "This project doesn't allow cluster member targeting")
+}
+
+// If a direct targeting is blocked but the user can override it, the check passes.
+func TestCheckClusterTargetRestriction_RestrictedTrueWithOverride(t *testing.T) {
+	tx, cleanup := db.NewTestClusterTx(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	id, err := cluster.CreateProject(ctx, tx.Tx(), cluster.Project{Name: "p1"})
+	require.NoError(t, err)
+
+	err = cluster.CreateProjectConfig(ctx, tx.Tx(), id, map[string]string{"restricted": "true", "restricted.cluster.target": "block"})
+	require.NoError(t, err)
+
+	dbProject, err := cluster.GetProject(ctx, tx.Tx(), "p1")
+	require.NoError(t, err)
+
+	p, err := dbProject.ToAPI(ctx, tx.Tx())
+	require.NoError(t, err)
+
+	req := &http.Request{
+		URL: &api.NewURL().Path("1.0", "instances").WithQuery("target", "node01").URL,
+	}
+
+	req = req.WithContext(context.WithValue(req.Context(), request.CtxProtocol, "tls"))
+	req = req.WithContext(context.WithValue(req.Context(), request.CtxUsername, "my-certificate-fingerprint"))
+	certificateCache := &certificate.Cache{}
+
+	// Setting the certificate and not projects means the certificate is not restricted and therefore the user is an
+	// admin that can override the cluster targer restriction.
+	certificateCache.SetCertificates(map[certificate.Type]map[string]x509.Certificate{
+		certificate.TypeClient: {
+			"my-certificate-fingerprint": x509.Certificate{},
+		},
+	})
+
+	authorizer, err := auth.LoadAuthorizer(context.Background(), auth.DriverTLS, logger.Log, certificateCache)
+	require.NoError(t, err)
+
+	err = project.CheckClusterTargetRestriction(authorizer, req, p, "n1")
+	assert.Nil(t, err)
 }
 
 // If a direct targeting is allowed, the check passes.
@@ -198,7 +243,7 @@ func TestCheckClusterTargetRestriction_RestrictedFalse(t *testing.T) {
 	require.NoError(t, err)
 
 	req := &http.Request{}
-	authorizer, err := auth.LoadAuthorizer("tls", nil, nil, nil)
+	authorizer, err := auth.LoadAuthorizer(context.Background(), auth.DriverTLS, logger.Log, &certificate.Cache{})
 	require.NoError(t, err)
 
 	err = project.CheckClusterTargetRestriction(authorizer, req, p, "n1")

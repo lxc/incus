@@ -63,7 +63,7 @@ func (r *ProtocolIncus) GetStoragePoolVolumeNamesAllProjects(pool string) (map[s
 
 		project := resourceURL.Query().Get("project")
 		if project == "" {
-			project = "default"
+			project = api.ProjectDefaultName
 		}
 
 		_, after, found := strings.Cut(resourceURL.Path, fmt.Sprintf("%s/", u.URL.Path))
@@ -555,8 +555,10 @@ func (r *ProtocolIncus) CopyStoragePoolVolume(pool string, source InstanceServer
 		return nil, fmt.Errorf("Failed to get destination connection info: %w", err)
 	}
 
+	clusterInternalVolumeCopy := r.CheckExtension("cluster_internal_custom_volume_copy") == nil
+
 	// Copy the storage pool volume locally.
-	if destInfo.URL == sourceInfo.URL && destInfo.SocketPath == sourceInfo.SocketPath && (volume.Location == r.clusterTarget || (volume.Location == "none" && r.clusterTarget == "")) {
+	if destInfo.URL == sourceInfo.URL && destInfo.SocketPath == sourceInfo.SocketPath && (volume.Location == r.clusterTarget || (volume.Location == "none" && r.clusterTarget == "") || clusterInternalVolumeCopy) {
 		// Project handling
 		if destInfo.Project != sourceInfo.Project {
 			if !r.HasExtension("storage_api_project") {
@@ -564,6 +566,10 @@ func (r *ProtocolIncus) CopyStoragePoolVolume(pool string, source InstanceServer
 			}
 
 			req.Source.Project = sourceInfo.Project
+		}
+
+		if clusterInternalVolumeCopy {
+			req.Source.Location = sourceInfo.Target
 		}
 
 		// Send the request

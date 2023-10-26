@@ -448,7 +448,7 @@ func (c *cmdProjectList) Run(cmd *cobra.Command, args []string) error {
 
 	currentProject := conf.Remotes[remoteName].Project
 	if currentProject == "" {
-		currentProject = "default"
+		currentProject = api.ProjectDefaultName
 	}
 
 	data := [][]string{}

@@ -30,7 +30,6 @@ import (
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/instance/operationlock"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/seccomp"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/internal/server/sys"
@@ -707,7 +706,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 
 	// Set default values.
 	if args.Project == "" {
-		args.Project = project.Default
+		args.Project = api.ProjectDefaultName
 	}
 
 	if args.Profiles == nil {

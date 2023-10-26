@@ -14,7 +14,6 @@ import (
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	storagePools "github.com/lxc/incus/internal/server/storage"
@@ -408,37 +407,6 @@ func setCORSHeaders(rw http.ResponseWriter, req *http.Request, config *clusterCo
 // taken on this node as well.
 func isClusterNotification(r *http.Request) bool {
 	return r.Header.Get("User-Agent") == clusterRequest.UserAgentNotifier
-}
-
-// projectParam returns the project query parameter from the given request or "default" if parameter is not set.
-func projectParam(request *http.Request) string {
-	projectParam := queryParam(request, "project")
-	if projectParam == "" {
-		projectParam = project.Default
-	}
-
-	return projectParam
-}
-
-// Extract the given query parameter directly from the URL, never from an
-// encoded body.
-func queryParam(req *http.Request, key string) string {
-	var values url.Values
-	var err error
-
-	if req.URL != nil {
-		values, err = url.ParseQuery(req.URL.RawQuery)
-		if err != nil {
-			logger.Warnf("Failed to parse query string %q: %v", req.URL.RawQuery, err)
-			return ""
-		}
-	}
-
-	if values == nil {
-		values = make(url.Values)
-	}
-
-	return values.Get(key)
 }
 
 type uiHttpDir struct {

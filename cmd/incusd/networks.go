@@ -17,6 +17,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
@@ -46,30 +47,30 @@ var networkCreateLock sync.Mutex
 var networksCmd = APIEndpoint{
 	Path: "networks",
 
-	Get:  APIEndpointAction{Handler: networksGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: networksPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: networksGet, AccessHandler: allowAuthenticated},
+	Post: APIEndpointAction{Handler: networksPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateNetworks)},
 }
 
 var networkCmd = APIEndpoint{
 	Path: "networks/{networkName}",
 
-	Delete: APIEndpointAction{Handler: networkDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: networkGet, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: networkPatch, AccessHandler: allowProjectPermission()},
-	Post:   APIEndpointAction{Handler: networkPost, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: networkPut, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: networkDelete, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
+	Get:    APIEndpointAction{Handler: networkGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+	Patch:  APIEndpointAction{Handler: networkPatch, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
+	Post:   APIEndpointAction{Handler: networkPost, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
+	Put:    APIEndpointAction{Handler: networkPut, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanEdit, "networkName")},
 }
 
 var networkLeasesCmd = APIEndpoint{
 	Path: "networks/{networkName}/leases",
 
-	Get: APIEndpointAction{Handler: networkLeasesGet, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: networkLeasesGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
 }
 
 var networkStateCmd = APIEndpoint{
 	Path: "networks/{networkName}/state",
 
-	Get: APIEndpointAction{Handler: networkStateGet, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: networkStateGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
 }
 
 // API endpoints
@@ -169,7 +170,7 @@ var networkStateCmd = APIEndpoint{
 func networksGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -188,7 +189,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Get list of actual network interfaces on the host as well if the effective project is Default.
-	if projectName == project.Default {
+	if projectName == api.ProjectDefaultName {
 		ifaces, err := net.Interfaces()
 		if err != nil {
 			return response.InternalError(err)
@@ -207,9 +208,18 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeNetwork)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
 	resultString := []string{}
 	resultMap := []api.Network{}
 	for _, networkName := range networkNames {
+		if !userHasPermission(auth.ObjectNetwork(projectName, networkName)) {
+			continue
+		}
+
 		if !recursion {
 			resultString = append(resultString, fmt.Sprintf("/%s/networks/%s", version.APIVersion, networkName))
 		} else {
@@ -270,7 +280,7 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 func networksPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -297,7 +307,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if req.Type == "" {
-		if projectName != project.Default {
+		if projectName != api.ProjectDefaultName {
 			req.Type = "ovn" // Only OVN networks are allowed inside network enabled projects.
 		} else {
 			req.Type = "bridge" // Default to bridge for non-network enabled projects.
@@ -319,12 +329,12 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	netTypeInfo := netType.Info()
-	if projectName != project.Default && !netTypeInfo.Projects {
+	if projectName != api.ProjectDefaultName && !netTypeInfo.Projects {
 		return response.BadRequest(fmt.Errorf("Network type does not support non-default projects"))
 	}
 
 	// Check if project has limits.network and if so check we are allowed to create another network.
-	if projectName != project.Default && reqProject.Config != nil && reqProject.Config["limits.networks"] != "" {
+	if projectName != api.ProjectDefaultName && reqProject.Config != nil && reqProject.Config["limits.networks"] != "" {
 		networksLimit, err := strconv.Atoi(reqProject.Config["limits.networks"])
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Invalid project limits.network value: %w", err))
@@ -365,7 +375,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	targetNode := queryParam(r, "target")
+	targetNode := request.QueryParam(r, "target")
 	if targetNode != "" {
 		if !netTypeInfo.NodeSpecificConfig {
 			return response.BadRequest(fmt.Errorf("Network type %q does not support member specific config", netType.Type()))
@@ -471,6 +481,11 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	err = doNetworksCreate(s, n, clientType)
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	err = s.Authorizer.AddNetwork(r.Context(), projectName, req.Name)
+	if err != nil {
+		logger.Error("Failed to add network to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
 	}
 
 	requestor := request.CreateRequestor(r)
@@ -761,7 +776,7 @@ func networkGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -777,7 +792,7 @@ func networkGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	allNodes := false
-	if clustered && queryParam(r, "target") == "" {
+	if clustered && request.QueryParam(r, "target") == "" {
 		allNodes = true
 	}
 
@@ -807,7 +822,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 	}
 
 	// Don't allow retrieving info about the local server interfaces when not using default project.
-	if projectName != project.Default && n == nil {
+	if projectName != api.ProjectDefaultName && n == nil {
 		return api.Network{}, api.StatusErrorf(http.StatusNotFound, "Network not found")
 	}
 
@@ -835,9 +850,12 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 		apiNet.Description = n.Description()
 		apiNet.Type = n.Type()
 
-		if s.Authorizer.UserIsAdmin(r) || s.Authorizer.UserHasPermission(r, projectName, "") {
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectNetwork(projectName, networkName), auth.EntitlementCanEdit)
+		if err == nil {
 			// Only allow admins to see network config as sensitive info can be stored there.
 			apiNet.Config = n.Config()
+		} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+			return api.Network{}, err
 		}
 
 		// If no member is specified, we omit the node-specific fields.
@@ -921,7 +939,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 func networkDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -996,6 +1014,11 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	err = s.Authorizer.DeleteNetwork(r.Context(), projectName, networkName)
+	if err != nil {
+		logger.Error("Failed to remove network from authorizer", logger.Ctx{"name": networkName, "project": projectName, "error": err})
+	}
+
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(projectName, lifecycle.NetworkDeleted.Event(n, requestor, nil))
 
@@ -1053,7 +1076,7 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Renaming clustered network not supported"))
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1122,6 +1145,11 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	err = s.Authorizer.RenameNetwork(r.Context(), projectName, networkName, req.Name)
+	if err != nil {
+		logger.Error("Failed to rename network in authorizer", logger.Ctx{"old_name": networkName, "new_name": req.Name, "project": projectName, "error": err})
+	}
+
 	requestor := request.CreateRequestor(r)
 	lc := lifecycle.NetworkRenamed.Event(n, requestor, map[string]any{"old_name": networkName})
 	s.Events.SendLifecycle(projectName, lc)
@@ -1177,7 +1205,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1198,7 +1226,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(api.StatusErrorf(http.StatusNotFound, "Network not found"))
 	}
 
-	targetNode := queryParam(r, "target")
+	targetNode := request.QueryParam(r, "target")
 	clustered, err := cluster.Enabled(s.DB.Node)
 	if err != nil {
 		return response.SmartError(err)
@@ -1404,7 +1432,7 @@ func doNetworkUpdate(projectName string, n network.Network, req api.NetworkPut, 
 func networkLeasesGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1774,7 +1802,7 @@ func networkStateGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, projectParam(r))
+	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}

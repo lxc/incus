@@ -7,11 +7,13 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/lxc/incus/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/network"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
@@ -21,7 +23,7 @@ import (
 var networkAllocationsCmd = APIEndpoint{
 	Path: "network-allocations",
 
-	Get: APIEndpointAction{Handler: networkAllocationsGet, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: networkAllocationsGet, AccessHandler: allowAuthenticated},
 }
 
 // swagger:operation GET /1.0/network-allocations network-allocations network_allocations_get
@@ -71,12 +73,14 @@ var networkAllocationsCmd = APIEndpoint{
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
-	projectName, _, err := project.NetworkProject(d.State().DB.Cluster, projectParam(r))
+	s := d.State()
+
+	projectName, _, err := project.NetworkProject(d.State().DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	allProjects := util.IsTrue(queryParam(r, "all-projects"))
+	allProjects := util.IsTrue(request.QueryParam(r, "all-projects"))
 
 	var projectNames []string
 	err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -114,6 +118,11 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 
 	result := make([]api.NetworkAllocations, 0)
 
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanView, auth.ObjectTypeNetwork)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// Then, get all the networks, their network forwards and their network load balancers.
 	for _, projectName := range projectNames {
 		networkNames, err := d.db.Cluster.GetNetworks(projectName)
@@ -123,6 +132,10 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 
 		// Get all the networks, their attached instances, their network forwards and their network load balancers.
 		for _, networkName := range networkNames {
+			if !userHasPermission(auth.ObjectNetwork(projectName, networkName)) {
+				continue
+			}
+
 			n, err := network.LoadByName(d.State(), projectName, networkName)
 			if err != nil {
 				return response.SmartError(fmt.Errorf("Failed loading network %q in project %q: %w", networkName, projectName, err))

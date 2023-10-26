@@ -10,6 +10,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/auth/oidc"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
@@ -18,7 +19,6 @@ import (
 	instanceDrivers "github.com/lxc/incus/internal/server/instance/drivers"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/node"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	scriptletLoad "github.com/lxc/incus/internal/server/scriptlet/load"
@@ -32,8 +32,8 @@ import (
 
 var api10Cmd = APIEndpoint{
 	Get:   APIEndpointAction{Handler: api10Get, AllowUntrusted: true},
-	Patch: APIEndpointAction{Handler: api10Patch},
-	Put:   APIEndpointAction{Handler: api10Put},
+	Patch: APIEndpointAction{Handler: api10Patch, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Put:   APIEndpointAction{Handler: api10Put, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var api10 = []APIEndpoint{
@@ -208,11 +208,11 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get the authentication methods.
-	authMethods := []string{"tls"}
+	authMethods := []string{api.AuthenticationMethodTLS}
 
 	oidcIssuer, oidcClientID, _ := s.GlobalConfig.OIDCServer()
 	if oidcIssuer != "" && oidcClientID != "" {
-		authMethods = append(authMethods, "oidc")
+		authMethods = append(authMethods, api.AuthenticationMethodOIDC)
 	}
 
 	srv := api.ServerUntrusted{
@@ -227,6 +227,12 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	// If untrusted, return now
 	if d.checkTrustedClient(r) != nil {
 		return response.SyncResponseETag(true, srv, nil)
+	}
+
+	// If not authorized, return now.
+	err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanView)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	// If a target was specified, forward the request to the relevant node.
@@ -284,7 +290,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 
 	projectName := r.FormValue("project")
 	if projectName == "" {
-		projectName = project.Default
+		projectName = api.ProjectDefaultName
 	}
 
 	env := api.ServerEnvironment{
@@ -368,11 +374,14 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	fullSrv.AuthUserName = requestor.Username
 	fullSrv.AuthUserMethod = requestor.Protocol
 
-	if s.Authorizer.UserIsAdmin(r) {
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanEdit)
+	if err == nil {
 		fullSrv.Config, err = daemonConfigRender(s)
 		if err != nil {
 			return response.InternalError(err)
 		}
+	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
 	}
 
 	return response.SyncResponseETag(true, fullSrv, fullSrv.Config)
@@ -767,7 +776,7 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 
 	revert.Success()
 
-	s.Events.SendLifecycle(project.Default, lifecycle.ConfigUpdated.Event(request.CreateRequestor(r), nil))
+	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ConfigUpdated.Event(request.CreateRequestor(r), nil))
 
 	return response.EmptySyncResponse
 }

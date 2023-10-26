@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -127,7 +128,7 @@ func instanceBackupsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	cname, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -220,7 +221,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -403,7 +404,7 @@ func instanceBackupGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -477,7 +478,7 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -579,7 +580,7 @@ func instanceBackupDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -664,7 +665,7 @@ func instanceBackupExportGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)

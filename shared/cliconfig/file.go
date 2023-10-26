@@ -7,6 +7,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"
 )
 
@@ -28,7 +29,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	for k, r := range c.Remotes {
 		if !r.Public && r.AuthType == "" {
-			r.AuthType = "tls"
+			r.AuthType = api.AuthenticationMethodTLS
 			c.Remotes[k] = r
 		}
 	}

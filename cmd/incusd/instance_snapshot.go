@@ -21,6 +21,7 @@ import (
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
 	storagePools "github.com/lxc/incus/internal/server/storage"
@@ -130,7 +131,7 @@ func instanceSnapshotsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	cname, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -162,7 +163,7 @@ func instanceSnapshotsGet(d *Daemon, r *http.Request) response.Response {
 
 		for _, snap := range snaps {
 			_, snapName, _ := api.GetParentAndSnapshotName(snap)
-			if projectName == project.Default {
+			if projectName == api.ProjectDefaultName {
 				url := fmt.Sprintf("/%s/instances/%s/snapshots/%s", version.APIVersion, cname, snapName)
 				resultString = append(resultString, url)
 			} else {
@@ -238,7 +239,7 @@ func instanceSnapshotsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -349,7 +350,7 @@ func instanceSnapshotHandler(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	instName, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)

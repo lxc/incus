@@ -339,7 +339,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		// Define the network
 		net := api.InitNetworksProjectPost{}
 		net.Config = map[string]string{}
-		net.Project = "default"
+		net.Project = api.ProjectDefaultName
 
 		// Network name
 		net.Name, err = c.global.asker.AskString(i18n.G("What should the new bridge be called?")+" [default=incusbr0]: ", "incusbr0", validate.IsNetworkName)

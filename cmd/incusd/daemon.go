@@ -67,6 +67,7 @@ import (
 	"github.com/lxc/incus/internal/server/warnings"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
@@ -231,30 +232,34 @@ type APIEndpointAction struct {
 	AllowUntrusted bool
 }
 
-// allowAuthenticated is an AccessHandler which allows all requests.
-// This function doesn't do anything itself, except return the EmptySyncResponse that allows the request to
-// proceed. However in order to access any API route you must be authenticated, unless the handler's AllowUntrusted
-// property is set to true or you are an admin.
+// allowAuthenticated is an AccessHandler which allows only authenticated requests. This should be used in conjunction
+// with further access control within the handler (e.g. to filter resources the user is able to view/edit).
 func allowAuthenticated(d *Daemon, r *http.Request) response.Response {
+	err := d.checkTrustedClient(r)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	return response.EmptySyncResponse
 }
 
-// allowProjectPermission is a wrapper to check access against the project.
-func allowProjectPermission() func(d *Daemon, r *http.Request) response.Response {
+// allowPermission is a wrapper to check access against a given object, an object being an image, instance, network, etc.
+// Mux vars should be passed in so that the object we are checking can be created. For example, a certificate object requires
+// a fingerprint, the mux var for certificate fingerprints is "fingerprint", so that string should be passed in.
+// Mux vars should always be passed in with the same order they appear in the API route.
+func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, muxVars ...string) func(d *Daemon, r *http.Request) response.Response {
 	return func(d *Daemon, r *http.Request) response.Response {
-		s := d.State()
-
-		// Shortcut for speed
-		if s.Authorizer.UserIsAdmin(r) {
-			return response.EmptySyncResponse
+		objectName, err := auth.ObjectFromRequest(r, objectType, muxVars...)
+		if err != nil {
+			return response.InternalError(fmt.Errorf("Failed to create authentication object: %w", err))
 		}
 
-		// Get the project
-		projectName := projectParam(r)
+		s := d.State()
 
-		// Validate whether the user access to the project.
-		if !s.Authorizer.UserHasPermission(r, projectName, "") {
-			return response.Forbidden(nil)
+		// Validate whether the user has the needed permission
+		err = s.Authorizer.CheckPermission(r.Context(), r, objectName, entitlement)
+		if err != nil {
+			return response.SmartError(err)
 		}
 
 		return response.EmptySyncResponse
@@ -340,7 +345,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 			return false, "", "", err
 		}
 
-		return true, userName, "oidc", nil
+		return true, userName, api.AuthenticationMethodOIDC, nil
 	}
 
 	// Validate normal TLS access.
@@ -351,7 +356,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		for _, i := range r.TLS.PeerCertificates {
 			trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
 			if trusted {
-				return true, username, "tls", nil
+				return true, username, api.AuthenticationMethodTLS, nil
 			}
 		}
 	}
@@ -359,7 +364,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	for _, i := range r.TLS.PeerCertificates {
 		trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
-			return true, username, "tls", nil
+			return true, username, api.AuthenticationMethodTLS, nil
 		}
 	}
 
@@ -462,7 +467,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		// Reject internal queries to remote, non-cluster, clients
 		if version == "internal" && !util.ValueInSlice(protocol, []string{"unix", "cluster"}) {
 			// Except for the initial cluster accept request (done over trusted TLS)
-			if !trusted || c.Path != "cluster/accept" || protocol != "tls" {
+			if !trusted || c.Path != "cluster/accept" || protocol != api.AuthenticationMethodTLS {
 				logger.Warn("Rejecting remote internal API request", logger.Ctx{"ip": r.RemoteAddr})
 				_ = response.Forbidden(nil).Render(w)
 				return
@@ -480,50 +485,9 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		if trusted {
 			logger.Debug("Handling API request", logCtx)
 
-			// Get user access data.
-			userAccess, err := func() (*auth.UserAccess, error) {
-				ua := &auth.UserAccess{}
-				ua.Admin = true
-
-				// Internal cluster communications.
-				if protocol == "cluster" {
-					return ua, nil
-				}
-
-				// Regular TLS clients.
-				if protocol == "tls" {
-					certProjects := d.clientCerts.GetProjects()
-
-					// Check if we have restrictions on the key.
-					if certProjects != nil {
-						projects, ok := certProjects[username]
-						if ok {
-							ua.Admin = false
-							projectMap := map[string][]string{}
-							for _, projectName := range projects {
-								projectMap[projectName] = nil
-							}
-
-							ua.Projects = projectMap
-						}
-					}
-
-					return ua, nil
-				}
-
-				return ua, nil
-			}()
-			if err != nil {
-				logCtx["err"] = err
-				logger.Warn("Rejecting remote API request", logCtx)
-				_ = response.Forbidden(nil).Render(w)
-				return
-			}
-
 			// Add authentication/authorization context data.
 			ctx := context.WithValue(r.Context(), request.CtxUsername, username)
 			ctx = context.WithValue(ctx, request.CtxProtocol, protocol)
-			ctx = context.WithValue(ctx, request.CtxAccess, userAccess)
 
 			// Add forwarded requestor data.
 			if protocol == "cluster" {
@@ -604,10 +568,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 					return resp
 				}
 			} else if !action.AllowUntrusted {
-				// Require admin privileges
-				if !d.authorizer.UserIsAdmin(r) {
-					return response.Forbidden(nil)
-				}
+				return response.Forbidden(nil)
 			}
 
 			return action.Handler(d, r)
@@ -730,7 +691,7 @@ func (d *Daemon) init() error {
 	var dbWarnings []dbCluster.Warning
 
 	// Set default authorizer.
-	d.authorizer, err = auth.LoadAuthorizer("tls", nil, logger.Log, nil)
+	d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
 	if err != nil {
 		return err
 	}

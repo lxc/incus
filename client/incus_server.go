@@ -35,7 +35,7 @@ func (r *ProtocolIncus) GetServer() (*api.Server, string, error) {
 
 	if !server.Public && len(server.AuthMethods) == 0 {
 		// TLS is always available for Incus servers
-		server.AuthMethods = []string{"tls"}
+		server.AuthMethods = []string{api.AuthenticationMethodTLS}
 	}
 
 	// Add the value to the cache
@@ -315,10 +315,10 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 		// Populate default project if not specified for backwards compatbility with earlier
 		// preseed dump files.
 		if config.Server.Networks[i].Project == "" {
-			config.Server.Networks[i].Project = "default"
+			config.Server.Networks[i].Project = api.ProjectDefaultName
 		}
 
-		if config.Server.Networks[i].Project != "default" {
+		if config.Server.Networks[i].Project != api.ProjectDefaultName {
 			continue
 		}
 
@@ -395,7 +395,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 
 	// Apply networks in non-default projects after project config applied (so that their projects exist).
 	for i := range config.Server.Networks {
-		if config.Server.Networks[i].Project == "default" {
+		if config.Server.Networks[i].Project == api.ProjectDefaultName {
 			continue
 		}
 

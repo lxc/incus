@@ -5798,6 +5798,8 @@ definitions:
                 example: foo
                 type: string
                 x-go-name: Project
+            source:
+                $ref: '#/definitions/StorageVolumeSource'
             target:
                 $ref: '#/definitions/StorageVolumePostTarget'
             volume_only:
@@ -5952,6 +5954,11 @@ definitions:
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
+            location:
+                description: What cluster member this record was found on
+                example: server01
+                type: string
+                x-go-name: Location
             mode:
                 description: Whether to use pull or push mode (for migration)
                 example: pull

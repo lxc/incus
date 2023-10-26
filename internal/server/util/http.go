@@ -111,7 +111,7 @@ func HTTPClient(certificate string, proxy proxyFunc) (*http.Client, error) {
 		}
 	}
 
-	tlsConfig, err := localtls.GetTLSConfig("", "", "", cert)
+	tlsConfig, err := localtls.GetTLSConfig(cert)
 	if err != nil {
 		return nil, err
 	}

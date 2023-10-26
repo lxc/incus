@@ -33,7 +33,7 @@ func volIDFuncMake(state *state.State, poolID int64) func(volType drivers.Volume
 		// format <project>_<volume>. However not all volume types currently use this
 		// encoding format, so if there is no underscore in the volume name then we assume
 		// the project is default.
-		projectName := project.Default
+		projectName := api.ProjectDefaultName
 
 		// Currently only Containers, VMs and custom volumes support project level volumes.
 		// This means that other volume types may have underscores in their names that don't

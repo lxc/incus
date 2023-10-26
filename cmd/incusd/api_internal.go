@@ -22,6 +22,7 @@ import (
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/backup"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
@@ -31,6 +32,7 @@ import (
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
 	storagePools "github.com/lxc/incus/internal/server/storage"
@@ -68,74 +70,74 @@ var apiInternal = []APIEndpoint{
 var internalShutdownCmd = APIEndpoint{
 	Path: "shutdown",
 
-	Put: APIEndpointAction{Handler: internalShutdown},
+	Put: APIEndpointAction{Handler: internalShutdown, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalReadyCmd = APIEndpoint{
 	Path: "ready",
 
-	Get: APIEndpointAction{Handler: internalWaitReady},
+	Get: APIEndpointAction{Handler: internalWaitReady, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalContainerOnStartCmd = APIEndpoint{
 	Path: "containers/{instanceRef}/onstart",
 
-	Get: APIEndpointAction{Handler: internalContainerOnStart},
+	Get: APIEndpointAction{Handler: internalContainerOnStart, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalContainerOnStopNSCmd = APIEndpoint{
 	Path: "containers/{instanceRef}/onstopns",
 
-	Get: APIEndpointAction{Handler: internalContainerOnStopNS},
+	Get: APIEndpointAction{Handler: internalContainerOnStopNS, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalContainerOnStopCmd = APIEndpoint{
 	Path: "containers/{instanceRef}/onstop",
 
-	Get: APIEndpointAction{Handler: internalContainerOnStop},
+	Get: APIEndpointAction{Handler: internalContainerOnStop, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalSQLCmd = APIEndpoint{
 	Path: "sql",
 
-	Get:  APIEndpointAction{Handler: internalSQLGet},
-	Post: APIEndpointAction{Handler: internalSQLPost},
+	Get:  APIEndpointAction{Handler: internalSQLGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Post: APIEndpointAction{Handler: internalSQLPost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalGarbageCollectorCmd = APIEndpoint{
 	Path: "gc",
 
-	Get: APIEndpointAction{Handler: internalGC},
+	Get: APIEndpointAction{Handler: internalGC, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalRAFTSnapshotCmd = APIEndpoint{
 	Path: "raft-snapshot",
 
-	Get: APIEndpointAction{Handler: internalRAFTSnapshot},
+	Get: APIEndpointAction{Handler: internalRAFTSnapshot, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalImageRefreshCmd = APIEndpoint{
 	Path: "testing/image-refresh",
 
-	Get: APIEndpointAction{Handler: internalRefreshImage},
+	Get: APIEndpointAction{Handler: internalRefreshImage, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalImageOptimizeCmd = APIEndpoint{
 	Path: "image-optimize",
 
-	Post: APIEndpointAction{Handler: internalOptimizeImage},
+	Post: APIEndpointAction{Handler: internalOptimizeImage, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalWarningCreateCmd = APIEndpoint{
 	Path: "testing/warnings",
 
-	Post: APIEndpointAction{Handler: internalCreateWarning},
+	Post: APIEndpointAction{Handler: internalCreateWarning, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalBGPStateCmd = APIEndpoint{
 	Path: "testing/bgp",
 
-	Get: APIEndpointAction{Handler: internalBGPState},
+	Get: APIEndpointAction{Handler: internalBGPState, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 type internalImageOptimizePost struct {
@@ -236,7 +238,7 @@ func internalWaitReady(d *Daemon, r *http.Request) response.Response {
 }
 
 func internalShutdown(d *Daemon, r *http.Request) response.Response {
-	force := queryParam(r, "force")
+	force := request.QueryParam(r, "force")
 	logger.Info("Asked to shutdown by API", logger.Ctx{"force": force})
 
 	if d.State().ShutdownCtx.Err() != nil {
@@ -288,7 +290,7 @@ func internalContainerHookLoadFromReference(s *state.State, r *http.Request) (in
 		return nil, err
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 
 	instanceID, err := strconv.Atoi(instanceRef)
 	if err == nil {
@@ -348,12 +350,12 @@ func internalContainerOnStopNS(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	target := queryParam(r, "target")
+	target := request.QueryParam(r, "target")
 	if target == "" {
 		target = "unknown"
 	}
 
-	netns := queryParam(r, "netns")
+	netns := request.QueryParam(r, "netns")
 
 	args := map[string]string{
 		"target": target,
@@ -378,7 +380,7 @@ func internalContainerOnStop(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	target := queryParam(r, "target")
+	target := request.QueryParam(r, "target")
 	if target == "" {
 		target = "unknown"
 	}

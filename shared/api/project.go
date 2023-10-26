@@ -1,5 +1,8 @@
 package api
 
+// ProjectDefaultName is the name of the default project that can never be deleted.
+const ProjectDefaultName = "default"
+
 // ProjectsPost represents the fields of a new project
 //
 // swagger:model

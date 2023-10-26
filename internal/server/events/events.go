@@ -8,6 +8,7 @@ import (
 
 	"github.com/pborman/uuid"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
@@ -65,9 +66,15 @@ func (s *Server) SetLocalLocation(location string) {
 }
 
 // AddListener creates and returns a new event listener.
-func (s *Server) AddListener(projectName string, allProjects bool, connection EventListenerConnection, messageTypes []string, excludeSources []EventSource, recvFunc EventHandler, excludeLocations []string) (*Listener, error) {
+func (s *Server) AddListener(projectName string, allProjects bool, projectPermissionFunc auth.PermissionChecker, connection EventListenerConnection, messageTypes []string, excludeSources []EventSource, recvFunc EventHandler, excludeLocations []string) (*Listener, error) {
 	if allProjects && projectName != "" {
 		return nil, fmt.Errorf("Cannot specify project name when listening for events on all projects")
+	}
+
+	if projectPermissionFunc == nil {
+		projectPermissionFunc = func(auth.Object) bool {
+			return true
+		}
 	}
 
 	listener := &Listener{
@@ -79,10 +86,11 @@ func (s *Server) AddListener(projectName string, allProjects bool, connection Ev
 			recvFunc:                recvFunc,
 		},
 
-		allProjects:      allProjects,
-		projectName:      projectName,
-		excludeSources:   excludeSources,
-		excludeLocations: excludeLocations,
+		allProjects:           allProjects,
+		projectName:           projectName,
+		projectPermissionFunc: projectPermissionFunc,
+		excludeSources:        excludeSources,
+		excludeLocations:      excludeLocations,
 	}
 
 	s.lock.Lock()
@@ -179,6 +187,11 @@ func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 			continue
 		}
 
+		// If the event is project specific, ensure we have permission to view it.
+		if event.Project != "" && !listener.projectPermissionFunc(auth.ObjectProject(event.Project)) {
+			continue
+		}
+
 		if sourceInSlice(eventSource, listener.excludeSources) {
 			continue
 		}
@@ -228,8 +241,9 @@ func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 type Listener struct {
 	listenerCommon
 
-	allProjects      bool
-	projectName      string
-	excludeSources   []EventSource
-	excludeLocations []string
+	allProjects           bool
+	projectName           string
+	projectPermissionFunc auth.PermissionChecker
+	excludeSources        []EventSource
+	excludeLocations      []string
 }

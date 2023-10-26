@@ -27,6 +27,7 @@ import (
 	"github.com/lxc/incus/internal/server/network"
 	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/warnings"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"
@@ -135,7 +136,7 @@ func (d *proxy) validateConfig(instConf instance.ConfigReader) error {
 			// Default project always has networks feature so don't bother loading the project config
 			// in that case.
 			instProject := d.inst.Project()
-			if instProject.Name != project.Default && util.IsTrue(instProject.Config["features.networks"]) {
+			if instProject.Name != api.ProjectDefaultName && util.IsTrue(instProject.Config["features.networks"]) {
 				// Prevent use of NAT mode on non-default projects with networks feature.
 				// This is because OVN networks don't allow the host to communicate directly with
 				// instance NICs and so DNAT rules on the host won't work.

@@ -11,15 +11,12 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-// Default is the string used for a default project.
-const Default = "default"
-
 // separator is used to delimit the project name from the suffix.
 const separator = "_"
 
 // Instance adds the "<project>_" prefix to instance name when the given project name is not "default".
 func Instance(projectName string, instanceName string) string {
-	if projectName != Default {
+	if projectName != api.ProjectDefaultName {
 		return fmt.Sprintf("%s%s%s", projectName, separator, instanceName)
 	}
 
@@ -28,7 +25,7 @@ func Instance(projectName string, instanceName string) string {
 
 // DNS adds ".<project>" as a suffix to instance name when the given project name is not "default".
 func DNS(projectName string, instanceName string) string {
-	if projectName != Default {
+	if projectName != api.ProjectDefaultName {
 		return fmt.Sprintf("%s.%s", instanceName, projectName)
 	}
 
@@ -44,7 +41,7 @@ func InstanceParts(projectInstanceName string) (string, string) {
 	i := strings.LastIndex(projectInstanceName, separator)
 	if i < 0 {
 		// This string is not project prefixed or is part of default project.
-		return Default, projectInstanceName
+		return api.ProjectDefaultName, projectInstanceName
 	}
 
 	// As project names can container separator, we effectively split once from the right hand side as
@@ -73,7 +70,7 @@ func StorageVolumeProject(c *db.Cluster, projectName string, volumeType int) (st
 	// Image volumes are effectively a cache and so are always linked to default project.
 	// Optimisation to avoid loading project record.
 	if volumeType == db.StoragePoolVolumeTypeImage {
-		return Default, nil
+		return api.ProjectDefaultName, nil
 	}
 
 	// Non-custom volumes always use the project specified. Optimisation to avoid loading project record.
@@ -107,7 +104,7 @@ func StorageVolumeProject(c *db.Cluster, projectName string, volumeType int) (st
 func StorageVolumeProjectFromRecord(p *api.Project, volumeType int) string {
 	// Image volumes are effectively a cache and so are always linked to default project.
 	if volumeType == db.StoragePoolVolumeTypeImage {
-		return Default
+		return api.ProjectDefaultName
 	}
 
 	// Non-custom volumes always use the project specified.
@@ -121,7 +118,7 @@ func StorageVolumeProjectFromRecord(p *api.Project, volumeType int) string {
 		return p.Name
 	}
 
-	return Default
+	return api.ProjectDefaultName
 }
 
 // StorageBucketProject returns the effective project name to use to for the bucket based on the requested project.
@@ -156,7 +153,7 @@ func StorageBucketProjectFromRecord(p *api.Project) string {
 		return p.Name
 	}
 
-	return Default
+	return api.ProjectDefaultName
 }
 
 // NetworkProject returns the effective project name to use for the network based on the requested project.
@@ -194,7 +191,7 @@ func NetworkProjectFromRecord(p *api.Project) string {
 		return p.Name
 	}
 
-	return Default
+	return api.ProjectDefaultName
 }
 
 // NetworkAllowed returns whether access is allowed to a particular network based on projectConfig.
@@ -242,7 +239,7 @@ func ProfileProject(c *db.Cluster, projectName string) (*api.Project, error) {
 
 		effectiveProjectName := ProfileProjectFromRecord(p)
 
-		if effectiveProjectName == Default {
+		if effectiveProjectName == api.ProjectDefaultName {
 			dbProject, err = cluster.GetProject(ctx, tx.Tx(), effectiveProjectName)
 			if err != nil {
 				return fmt.Errorf("Failed loading project %q: %w", effectiveProjectName, err)
@@ -273,7 +270,7 @@ func ProfileProjectFromRecord(p *api.Project) string {
 		return p.Name
 	}
 
-	return Default
+	return api.ProjectDefaultName
 }
 
 // NetworkZoneProject returns the effective project name to use for network zone based on the requested project.
@@ -311,5 +308,5 @@ func NetworkZoneProjectFromRecord(p *api.Project) string {
 		return p.Name
 	}
 
-	return Default
+	return api.ProjectDefaultName
 }

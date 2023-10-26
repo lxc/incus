@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
@@ -339,6 +339,11 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.I
 	if d.isSnapshot {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceSnapshotCreated.Event(d, nil))
 	} else {
+		err = d.state.Authorizer.AddInstance(d.state.ShutdownCtx, d.project.Name, d.Name())
+		if err != nil {
+			logger.Error("Failed to add instance to authorizer", logger.Ctx{"name": d.Name(), "project": d.project.Name, "error": err})
+		}
+
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceCreated.Event(d, map[string]any{
 			"type":         api.InstanceTypeVM,
 			"storage-pool": d.storagePool.Name(),
@@ -4892,6 +4897,11 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 	if d.isSnapshot {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceSnapshotRenamed.Event(d, map[string]any{"old_name": oldName}))
 	} else {
+		err = d.state.Authorizer.RenameInstance(d.state.ShutdownCtx, d.project.Name, oldName, newName)
+		if err != nil {
+			logger.Error("Failed to rename instance in authorizer", logger.Ctx{"old_name": oldName, "new_name": newName, "project": d.project.Name, "error": err})
+		}
+
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceRenamed.Event(d, map[string]any{"old_name": oldName}))
 	}
 
@@ -4922,7 +4932,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 
 	// Set sane defaults for unset keys.
 	if args.Project == "" {
-		args.Project = project.Default
+		args.Project = api.ProjectDefaultName
 	}
 
 	if args.Architecture == 0 {
@@ -5708,6 +5718,11 @@ func (d *qemu) delete(force bool) error {
 	if d.isSnapshot {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceSnapshotDeleted.Event(d, nil))
 	} else {
+		err = d.state.Authorizer.DeleteInstance(d.state.ShutdownCtx, d.project.Name, d.Name())
+		if err != nil {
+			logger.Error("Failed to remove instance from authorizer", logger.Ctx{"name": d.Name(), "project": d.project.Name, "error": err})
+		}
+
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceDeleted.Event(d, nil))
 	}
 
@@ -8296,14 +8311,14 @@ func (d *qemu) deviceDetachUSB(usbDev deviceConfig.USBDeviceItem) error {
 // Block node names may only be up to 31 characters long, so use a hash if longer.
 func (d *qemu) blockNodeName(name string) string {
 	if len(name) > 27 {
-		// If the name is too long, hash it as SHA-1 (20 bytes).
-		// Then encode the SHA-1 binary hash as Base64 Raw URL format (maximum 27 characters).
-		// Raw URL avoids the use of "+" character and the padding "=" character which QEMU doesn't allow,
-		// and keeps the length to 27 characters.
-		hash := sha1.New()
+		// If the name is too long, hash it as SHA-256 (32 bytes).
+		// Then encode the SHA-256 binary hash as Base64 Raw URL format and trim down to 27 chars.
+		// Raw URL avoids the use of "+" character and the padding "=" character which QEMU doesn't allow.
+		hash := sha256.New()
 		hash.Write([]byte(name))
 		binaryHash := hash.Sum(nil)
 		name = base64.RawURLEncoding.EncodeToString(binaryHash)
+		name = name[0:27]
 	}
 
 	// Apply the prefix.

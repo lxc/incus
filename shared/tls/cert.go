@@ -434,7 +434,7 @@ func CertFingerprintStr(c string) (string, error) {
 
 func GetRemoteCertificate(address string, useragent string) (*x509.Certificate, error) {
 	// Setup a permissive TLS config
-	tlsConfig, err := GetTLSConfig("", "", "", nil)
+	tlsConfig, err := GetTLSConfig(nil)
 	if err != nil {
 		return nil, err
 	}

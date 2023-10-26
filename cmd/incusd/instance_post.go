@@ -13,6 +13,7 @@ import (
 
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
@@ -21,6 +22,7 @@ import (
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/scriptlet"
 	"github.com/lxc/incus/internal/server/state"
@@ -79,7 +81,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
@@ -103,7 +105,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	var targetMemberInfo *db.NodeInfo
 	var candidateMembers []db.NodeInfo
 
-	target := queryParam(r, "target")
+	target := request.QueryParam(r, "target")
 	if !clustered && target != "" {
 		return response.BadRequest(fmt.Errorf("Target only allowed when clustered"))
 	}
@@ -343,8 +345,9 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		// Server-side project migration.
 		if req.Project != "" {
 			// Check if user has access to target project
-			if !s.Authorizer.UserHasPermission(r, req.Project, "") {
-				return response.Forbidden(nil)
+			err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(req.Project), auth.EntitlementCanCreateInstances)
+			if err != nil {
+				return response.SmartError(err)
 			}
 
 			// Setup the instance move operation.

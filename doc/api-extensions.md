@@ -2275,3 +2275,9 @@ that the endpoint can be used to wait for an operation to complete rather than w
 ## `image_restriction_privileged`
 
 This extension adds a new image restriction, `requirements.privileged` which when `false` indicates that an image cannot be run in a privileged container.
+
+## `cluster_internal_custom_volume_copy`
+
+This extension adds support for copying and moving custom storage volumes within a cluster with a single API call.
+Calling `POST /1.0/storage-pools/<pool>/custom?target=<target>` will copy the custom volume specified in the `source` part of the request.
+Calling `POST /1.0/storage-pools/<pool>/custom/<volume>?target=<target>` will move the custom volume from the source, specified in the `source` part of the request, to the target.

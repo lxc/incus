@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/internal/i18n"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared/api"
 	config "github.com/lxc/incus/shared/cliconfig"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
@@ -380,7 +381,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 			// Detect usable project.
 			names, err := d.GetProjectNames()
 			if err == nil {
-				if len(names) == 1 && names[0] != "default" {
+				if len(names) == 1 && names[0] != api.ProjectDefaultName {
 					remote := c.conf.Remotes["local"]
 					remote.Project = names[0]
 					c.conf.Remotes["local"] = remote

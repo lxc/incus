@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network/zone"
@@ -21,17 +22,17 @@ import (
 var networkZoneRecordsCmd = APIEndpoint{
 	Path: "network-zones/{zone}/records",
 
-	Get:  APIEndpointAction{Handler: networkZoneRecordsGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: networkZoneRecordsPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: networkZoneRecordsGet, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanView, "zone")},
+	Post: APIEndpointAction{Handler: networkZoneRecordsPost, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanEdit, "zone")},
 }
 
 var networkZoneRecordCmd = APIEndpoint{
 	Path: "network-zones/{zone}/records/{name}",
 
-	Delete: APIEndpointAction{Handler: networkZoneRecordDelete, AccessHandler: allowProjectPermission()},
-	Get:    APIEndpointAction{Handler: networkZoneRecordGet, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: networkZoneRecordPut, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: networkZoneRecordPut, AccessHandler: allowProjectPermission()},
+	Delete: APIEndpointAction{Handler: networkZoneRecordDelete, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanEdit, "zone")},
+	Get:    APIEndpointAction{Handler: networkZoneRecordGet, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanView, "zone")},
+	Put:    APIEndpointAction{Handler: networkZoneRecordPut, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanEdit, "zone")},
+	Patch:  APIEndpointAction{Handler: networkZoneRecordPut, AccessHandler: allowPermission(auth.ObjectTypeNetworkZone, auth.EntitlementCanEdit, "zone")},
 }
 
 // API endpoints.
@@ -131,7 +132,7 @@ var networkZoneRecordCmd = APIEndpoint{
 func networkZoneRecordsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, projectParam(r))
+	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -207,7 +208,7 @@ func networkZoneRecordsGet(d *Daemon, r *http.Request) response.Response {
 func networkZoneRecordsPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, projectParam(r))
+	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -269,7 +270,7 @@ func networkZoneRecordsPost(d *Daemon, r *http.Request) response.Response {
 func networkZoneRecordDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, projectParam(r))
+	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -344,7 +345,7 @@ func networkZoneRecordDelete(d *Daemon, r *http.Request) response.Response {
 func networkZoneRecordGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, projectParam(r))
+	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -446,7 +447,7 @@ func networkZoneRecordGet(d *Daemon, r *http.Request) response.Response {
 func networkZoneRecordPut(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, projectParam(r))
+	projectName, _, err := project.NetworkZoneProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}

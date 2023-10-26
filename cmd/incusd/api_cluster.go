@@ -21,6 +21,7 @@ import (
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/acme"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
@@ -34,7 +35,6 @@ import (
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/node"
 	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/scriptlet"
@@ -74,91 +74,91 @@ var targetGroupPrefix = "@"
 var clusterCmd = APIEndpoint{
 	Path: "cluster",
 
-	Get: APIEndpointAction{Handler: clusterGet, AccessHandler: allowAuthenticated},
-	Put: APIEndpointAction{Handler: clusterPut},
+	Get: APIEndpointAction{Handler: clusterGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanView)},
+	Put: APIEndpointAction{Handler: clusterPut, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var clusterNodesCmd = APIEndpoint{
 	Path: "cluster/members",
 
-	Get:  APIEndpointAction{Handler: clusterNodesGet, AccessHandler: allowAuthenticated},
-	Post: APIEndpointAction{Handler: clusterNodesPost},
+	Get:  APIEndpointAction{Handler: clusterNodesGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanView)},
+	Post: APIEndpointAction{Handler: clusterNodesPost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var clusterNodeCmd = APIEndpoint{
 	Path: "cluster/members/{name}",
 
-	Delete: APIEndpointAction{Handler: clusterNodeDelete},
-	Get:    APIEndpointAction{Handler: clusterNodeGet, AccessHandler: allowAuthenticated},
-	Patch:  APIEndpointAction{Handler: clusterNodePatch},
-	Put:    APIEndpointAction{Handler: clusterNodePut},
-	Post:   APIEndpointAction{Handler: clusterNodePost},
+	Delete: APIEndpointAction{Handler: clusterNodeDelete, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Get:    APIEndpointAction{Handler: clusterNodeGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanView)},
+	Patch:  APIEndpointAction{Handler: clusterNodePatch, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Put:    APIEndpointAction{Handler: clusterNodePut, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Post:   APIEndpointAction{Handler: clusterNodePost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var clusterNodeStateCmd = APIEndpoint{
 	Path: "cluster/members/{name}/state",
 
-	Get:  APIEndpointAction{Handler: clusterNodeStateGet, AccessHandler: allowAuthenticated},
-	Post: APIEndpointAction{Handler: clusterNodeStatePost},
+	Get:  APIEndpointAction{Handler: clusterNodeStateGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanView)},
+	Post: APIEndpointAction{Handler: clusterNodeStatePost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var clusterCertificateCmd = APIEndpoint{
 	Path: "cluster/certificate",
 
-	Put: APIEndpointAction{Handler: clusterCertificatePut},
+	Put: APIEndpointAction{Handler: clusterCertificatePut, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var clusterGroupsCmd = APIEndpoint{
 	Path: "cluster/groups",
 
-	Get:  APIEndpointAction{Handler: clusterGroupsGet, AccessHandler: allowAuthenticated},
-	Post: APIEndpointAction{Handler: clusterGroupsPost},
+	Get:  APIEndpointAction{Handler: clusterGroupsGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanView)},
+	Post: APIEndpointAction{Handler: clusterGroupsPost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var clusterGroupCmd = APIEndpoint{
 	Path: "cluster/groups/{name}",
 
-	Get:    APIEndpointAction{Handler: clusterGroupGet, AccessHandler: allowAuthenticated},
-	Post:   APIEndpointAction{Handler: clusterGroupPost},
-	Put:    APIEndpointAction{Handler: clusterGroupPut},
-	Patch:  APIEndpointAction{Handler: clusterGroupPatch},
-	Delete: APIEndpointAction{Handler: clusterGroupDelete},
+	Get:    APIEndpointAction{Handler: clusterGroupGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanView)},
+	Post:   APIEndpointAction{Handler: clusterGroupPost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Put:    APIEndpointAction{Handler: clusterGroupPut, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Patch:  APIEndpointAction{Handler: clusterGroupPatch, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Delete: APIEndpointAction{Handler: clusterGroupDelete, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalClusterAcceptCmd = APIEndpoint{
 	Path: "cluster/accept",
 
-	Post: APIEndpointAction{Handler: internalClusterPostAccept},
+	Post: APIEndpointAction{Handler: internalClusterPostAccept, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalClusterRebalanceCmd = APIEndpoint{
 	Path: "cluster/rebalance",
 
-	Post: APIEndpointAction{Handler: internalClusterPostRebalance},
+	Post: APIEndpointAction{Handler: internalClusterPostRebalance, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalClusterAssignCmd = APIEndpoint{
 	Path: "cluster/assign",
 
-	Post: APIEndpointAction{Handler: internalClusterPostAssign},
+	Post: APIEndpointAction{Handler: internalClusterPostAssign, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalClusterHandoverCmd = APIEndpoint{
 	Path: "cluster/handover",
 
-	Post: APIEndpointAction{Handler: internalClusterPostHandover},
+	Post: APIEndpointAction{Handler: internalClusterPostHandover, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalClusterRaftNodeCmd = APIEndpoint{
 	Path: "cluster/raft-node/{address}",
 
-	Delete: APIEndpointAction{Handler: internalClusterRaftNodeDelete},
+	Delete: APIEndpointAction{Handler: internalClusterRaftNodeDelete, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalClusterHealCmd = APIEndpoint{
 	Path: "cluster/heal/{name}",
 
-	Post: APIEndpointAction{Handler: internalClusterHeal},
+	Post: APIEndpointAction{Handler: internalClusterHeal, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 // swagger:operation GET /1.0/cluster cluster cluster_get
@@ -384,7 +384,7 @@ func clusterPutBootstrap(d *Daemon, r *http.Request, req api.ClusterPut) respons
 			return err
 		}
 
-		s.Events.SendLifecycle(projectParam(r), lifecycle.ClusterEnabled.Event(req.ServerName, op.Requestor(), nil))
+		s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterEnabled.Event(req.ServerName, op.Requestor(), nil))
 
 		return nil
 	}
@@ -817,7 +817,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		// Update the cert cache again to add client and metric certs to the cache.
 		s.UpdateCertificateCache()
 
-		s.Events.SendLifecycle(projectParam(r), lifecycle.ClusterMemberAdded.Event(req.ServerName, op.Requestor(), nil))
+		s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterMemberAdded.Event(req.ServerName, op.Requestor(), nil))
 
 		revert.Success()
 		return nil
@@ -876,7 +876,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 	}
 
 	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(projectParam(r), lifecycle.ClusterDisabled.Event(req.ServerName, requestor, nil))
+	s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterDisabled.Event(req.ServerName, requestor, nil))
 
 	// Stop database cluster connection.
 	d.gateway.Kill()
@@ -977,7 +977,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 	}
 
 	for _, p := range projects {
-		if util.IsFalseOrEmpty(p.Config["features.networks"]) && p.Name != project.Default {
+		if util.IsFalseOrEmpty(p.Config["features.networks"]) && p.Name != api.ProjectDefaultName {
 			// Skip non-default projects that can't have their own networks so we don't try
 			// and add the same default project networks twice.
 			continue
@@ -1016,7 +1016,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 
 			// Apply the node-specific config supplied by the user for networks in the default project.
 			// At this time project specific networks don't have node specific config options.
-			if p.Name == project.Default {
+			if p.Name == api.ProjectDefaultName {
 				for _, config := range memberConfig {
 					if config.Entity != "network" {
 						continue
@@ -1339,7 +1339,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 	// Remove any existing join tokens for the requested cluster member, this way we only ever have one active
 	// join token for each potential new member, and it has the most recent active members list for joining.
 	// This also ensures any historically unused (but potentially published) join tokens are removed.
-	ops, err := operationsGetByType(s, r, project.Default, operationtype.ClusterJoinToken)
+	ops, err := operationsGetByType(s, r, api.ProjectDefaultName, operationtype.ClusterJoinToken)
 	if err != nil {
 		return response.InternalError(fmt.Errorf("Failed getting cluster join token operations: %w", err))
 	}
@@ -1357,7 +1357,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 		if opServerName == req.ServerName {
 			// Join token operation matches requested server name, so lets cancel it.
 			logger.Warn("Cancelling duplicate join token operation", logger.Ctx{"operation": op.ID, "serverName": opServerName})
-			err = operationCancel(s, r, project.Default, op)
+			err = operationCancel(s, r, api.ProjectDefaultName, op)
 			if err != nil {
 				return response.InternalError(fmt.Errorf("Failed to cancel operation %q: %w", op.ID, err))
 			}
@@ -1390,12 +1390,12 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 	resources := map[string][]api.URL{}
 	resources["cluster"] = []api.URL{}
 
-	op, err := operations.OperationCreate(s, project.Default, operations.OperationClassToken, operationtype.ClusterJoinToken, resources, meta, nil, nil, nil, r)
+	op, err := operations.OperationCreate(s, api.ProjectDefaultName, operations.OperationClassToken, operationtype.ClusterJoinToken, resources, meta, nil, nil, nil, r)
 	if err != nil {
 		return response.InternalError(err)
 	}
 
-	s.Events.SendLifecycle(projectParam(r), lifecycle.ClusterTokenCreated.Event("members", op.Requestor(), nil))
+	s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterTokenCreated.Event("members", op.Requestor(), nil))
 
 	return operations.OperationResponse(op)
 }
@@ -1741,7 +1741,7 @@ func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request
 	}
 
 	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(projectParam(r), lifecycle.ClusterMemberUpdated.Event(name, requestor, nil))
+	s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterMemberUpdated.Event(name, requestor, nil))
 
 	return response.EmptySyncResponse
 }
@@ -1876,7 +1876,7 @@ func clusterNodePost(d *Daemon, r *http.Request) response.Response {
 	d.globalConfigMu.Unlock()
 
 	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(projectParam(r), lifecycle.ClusterMemberRenamed.Event(req.ServerName, requestor, logger.Ctx{"old_name": memberName}))
+	s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterMemberRenamed.Event(req.ServerName, requestor, logger.Ctx{"old_name": memberName}))
 
 	return response.EmptySyncResponse
 }
@@ -2134,7 +2134,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(projectParam(r), lifecycle.ClusterMemberRemoved.Event(name, requestor, nil))
+	s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterMemberRemoved.Event(name, requestor, nil))
 
 	return response.EmptySyncResponse
 }
@@ -2196,7 +2196,7 @@ func clusterCertificatePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(projectParam(r), lifecycle.ClusterCertificateUpdated.Event("certificate", requestor, nil))
+	s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterCertificateUpdated.Event("certificate", requestor, nil))
 
 	return response.EmptySyncResponse
 }
@@ -3629,7 +3629,7 @@ func clusterGroupsPost(d *Daemon, r *http.Request) response.Response {
 
 	requestor := request.CreateRequestor(r)
 	lc := lifecycle.ClusterGroupCreated.Event(req.Name, requestor, nil)
-	s.Events.SendLifecycle(project.Default, lc)
+	s.Events.SendLifecycle(api.ProjectDefaultName, lc)
 
 	return response.SyncResponseLocation(true, nil, lc.Source)
 }
@@ -3938,7 +3938,7 @@ func clusterGroupPost(d *Daemon, r *http.Request) response.Response {
 
 	requestor := request.CreateRequestor(r)
 	lc := lifecycle.ClusterGroupRenamed.Event(req.Name, requestor, logger.Ctx{"old_name": name})
-	s.Events.SendLifecycle(project.Default, lc)
+	s.Events.SendLifecycle(api.ProjectDefaultName, lc)
 
 	return response.SyncResponseLocation(true, nil, lc.Source)
 }
@@ -4063,7 +4063,7 @@ func clusterGroupPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(project.Default, lifecycle.ClusterGroupUpdated.Event(name, requestor, logger.Ctx{"description": req.Description, "members": req.Members}))
+	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterGroupUpdated.Event(name, requestor, logger.Ctx{"description": req.Description, "members": req.Members}))
 
 	return response.EmptySyncResponse
 }
@@ -4242,7 +4242,7 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 	}
 
 	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(project.Default, lifecycle.ClusterGroupUpdated.Event(name, requestor, logger.Ctx{"description": req.Description, "members": req.Members}))
+	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterGroupUpdated.Event(name, requestor, logger.Ctx{"description": req.Description, "members": req.Members}))
 
 	return response.EmptySyncResponse
 }

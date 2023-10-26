@@ -13,13 +13,13 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/internal/jmap"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/db/operationtype"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
@@ -255,11 +255,29 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 	if err == nil {
 		projectName := op.Project()
 		if projectName == "" {
-			projectName = project.Default
+			projectName = api.ProjectDefaultName
 		}
 
-		if !s.Authorizer.UserHasPermission(r, projectName, op.Permission()) {
-			return response.Forbidden(nil)
+		objectType, entitlement := op.Permission()
+		if objectType != "" {
+			for _, v := range op.Resources() {
+				for _, u := range v {
+					_, _, pathArgs, err := dbCluster.URLToEntityType(u.String())
+					if err != nil {
+						return response.InternalError(fmt.Errorf("Unable to parse operation resource URL: %w", err))
+					}
+
+					object, err := auth.NewObject(objectType, projectName, pathArgs...)
+					if err != nil {
+						return response.InternalError(fmt.Errorf("Unable to create authorization object for operation: %w", err))
+					}
+
+					err = s.Authorizer.CheckPermission(r.Context(), r, object, entitlement)
+					if err != nil {
+						return response.SmartError(err)
+					}
+				}
+			}
 		}
 
 		_, err = op.Cancel()
@@ -469,8 +487,8 @@ func operationCancel(s *state.State, r *http.Request, projectName string, op *ap
 func operationsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName := queryParam(r, "project")
-	allProjects := util.IsTrue(queryParam(r, "all-projects"))
+	projectName := request.QueryParam(r, "project")
+	allProjects := util.IsTrue(request.QueryParam(r, "all-projects"))
 	recursion := localUtil.IsRecursionRequest(r)
 
 	if allProjects && projectName != "" {
@@ -478,7 +496,12 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 			api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects"),
 		)
 	} else if !allProjects && projectName == "" {
-		projectName = project.Default
+		projectName = api.ProjectDefaultName
+	}
+
+	userHasPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanViewOperations, auth.ObjectTypeProject)
+	if err != nil {
+		return response.InternalError(fmt.Errorf("Failed to get operation permission checker: %w", err))
 	}
 
 	localOperationURLs := func() (jmap.Map, error) {
@@ -490,6 +513,10 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 
 		for _, v := range localOps {
 			if !allProjects && v.Project() != "" && v.Project() != projectName {
+				continue
+			}
+
+			if !userHasPermission(auth.ObjectProject(v.Project())) {
 				continue
 			}
 
@@ -514,6 +541,10 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 
 		for _, v := range localOps {
 			if !allProjects && v.Project() != "" && v.Project() != projectName {
+				continue
+			}
+
+			if !userHasPermission(auth.ObjectProject(v.Project())) {
 				continue
 			}
 
@@ -558,7 +589,6 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 
 	// Start with local operations.
 	var md jmap.Map
-	var err error
 
 	if recursion {
 		md, err = localOperations()

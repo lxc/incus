@@ -47,7 +47,7 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 		APIVersion:    version.APIVersion,
 		Public:        false,
 		Auth:          "trusted",
-		AuthMethods:   []string{"tls"},
+		AuthMethods:   []string{api.AuthenticationMethodTLS},
 	}
 
 	uname, err := linux.Uname()

@@ -7,10 +7,12 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	storagePools "github.com/lxc/incus/internal/server/storage"
 	"github.com/lxc/incus/shared/api"
@@ -20,7 +22,7 @@ import (
 var storagePoolVolumeTypeStateCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/volumes/{type}/{volumeName}/state",
 
-	Get: APIEndpointAction{Handler: storagePoolVolumeTypeStateGet, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: storagePoolVolumeTypeStateGet, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanView, "poolName", "type", "volumeName")},
 }
 
 // swagger:operation GET /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/state storage storage_pool_volume_type_state_get
@@ -101,7 +103,7 @@ func storagePoolVolumeTypeStateGet(d *Daemon, r *http.Request) response.Response
 	}
 
 	// Get the storage project name.
-	projectName, err := project.StorageVolumeProject(s.DB.Cluster, projectParam(r), volumeType)
+	projectName, err := project.StorageVolumeProject(s.DB.Cluster, request.ProjectParam(r), volumeType)
 	if err != nil {
 		return response.SmartError(err)
 	}

@@ -1856,7 +1856,7 @@ func (n *bridge) bridgedNICExternalRoutes(bridgeProjectNetworks map[string][]*ap
 		// Get the instance's effective network project name.
 		instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-		if instNetworkProject != project.Default {
+		if instNetworkProject != api.ProjectDefaultName {
 			return nil // Managed bridge networks can only exist in default project.
 		}
 
@@ -2107,7 +2107,7 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 					// Get the instance's effective network project name.
 					instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-					if instNetworkProject != project.Default {
+					if instNetworkProject != api.ProjectDefaultName {
 						return nil // Managed bridge networks can only exist in default project.
 					}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/lxc/incus/internal/server/db/operationtype"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/operations"
+	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
@@ -72,7 +73,7 @@ func instanceState(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -146,7 +147,7 @@ func instanceStatePut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	projectName := projectParam(r)
+	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)

@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/db/warningtype"
@@ -29,129 +30,129 @@ var instancesCmd = APIEndpoint{
 	Name: "instances",
 	Path: "instances",
 
-	Get:  APIEndpointAction{Handler: instancesGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: instancesPost, AccessHandler: allowProjectPermission()},
-	Put:  APIEndpointAction{Handler: instancesPut, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: instancesGet, AccessHandler: allowAuthenticated},
+	Post: APIEndpointAction{Handler: instancesPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateInstances)},
+	Put:  APIEndpointAction{Handler: instancesPut, AccessHandler: allowAuthenticated},
 }
 
 var instanceCmd = APIEndpoint{
 	Name: "instance",
 	Path: "instances/{name}",
 
-	Get:    APIEndpointAction{Handler: instanceGet, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: instancePut, AccessHandler: allowProjectPermission()},
-	Delete: APIEndpointAction{Handler: instanceDelete, AccessHandler: allowProjectPermission()},
-	Post:   APIEndpointAction{Handler: instancePost, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: instancePatch, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: instanceGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Put:    APIEndpointAction{Handler: instancePut, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+	Delete: APIEndpointAction{Handler: instanceDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+	Post:   APIEndpointAction{Handler: instancePost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+	Patch:  APIEndpointAction{Handler: instancePatch, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
 }
 
 var instanceRebuildCmd = APIEndpoint{
 	Name: "instanceRebuild",
 	Path: "instances/{name}/rebuild",
 
-	Post: APIEndpointAction{Handler: instanceRebuildPost, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: instanceRebuildPost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
 }
 
 var instanceStateCmd = APIEndpoint{
 	Name: "instanceState",
 	Path: "instances/{name}/state",
 
-	Get: APIEndpointAction{Handler: instanceState, AccessHandler: allowProjectPermission()},
-	Put: APIEndpointAction{Handler: instanceStatePut, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: instanceState, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Put: APIEndpointAction{Handler: instanceStatePut, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanUpdateState, "name")},
 }
 
 var instanceSFTPCmd = APIEndpoint{
 	Name: "instanceFile",
 	Path: "instances/{name}/sftp",
 
-	Get: APIEndpointAction{Handler: instanceSFTPHandler, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: instanceSFTPHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanConnectSFTP, "name")},
 }
 
 var instanceFileCmd = APIEndpoint{
 	Name: "instanceFile",
 	Path: "instances/{name}/files",
 
-	Get:    APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission()},
-	Head:   APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission()},
-	Post:   APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission()},
-	Delete: APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanAccessFiles, "name")},
+	Head:   APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanAccessFiles, "name")},
+	Post:   APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanAccessFiles, "name")},
+	Delete: APIEndpointAction{Handler: instanceFileHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanAccessFiles, "name")},
 }
 
 var instanceSnapshotsCmd = APIEndpoint{
 	Name: "instanceSnapshots",
 	Path: "instances/{name}/snapshots",
 
-	Get:  APIEndpointAction{Handler: instanceSnapshotsGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: instanceSnapshotsPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: instanceSnapshotsGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Post: APIEndpointAction{Handler: instanceSnapshotsPost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageSnapshots, "name")},
 }
 
 var instanceSnapshotCmd = APIEndpoint{
 	Name: "instanceSnapshot",
 	Path: "instances/{name}/snapshots/{snapshotName}",
 
-	Get:    APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
-	Post:   APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
-	Delete: APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
-	Patch:  APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
-	Put:    APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Post:   APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageSnapshots, "name")},
+	Delete: APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageSnapshots, "name")},
+	Patch:  APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageSnapshots, "name")},
+	Put:    APIEndpointAction{Handler: instanceSnapshotHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageSnapshots, "name")},
 }
 
 var instanceConsoleCmd = APIEndpoint{
 	Name: "instanceConsole",
 	Path: "instances/{name}/console",
 
-	Get:    APIEndpointAction{Handler: instanceConsoleLogGet, AccessHandler: allowProjectPermission()},
-	Post:   APIEndpointAction{Handler: instanceConsolePost, AccessHandler: allowProjectPermission()},
-	Delete: APIEndpointAction{Handler: instanceConsoleLogDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: instanceConsoleLogGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Post:   APIEndpointAction{Handler: instanceConsolePost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanAccessConsole, "name")},
+	Delete: APIEndpointAction{Handler: instanceConsoleLogDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
 }
 
 var instanceExecCmd = APIEndpoint{
 	Name: "instanceExec",
 	Path: "instances/{name}/exec",
 
-	Post: APIEndpointAction{Handler: instanceExecPost, AccessHandler: allowProjectPermission()},
+	Post: APIEndpointAction{Handler: instanceExecPost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanExec, "name")},
 }
 
 var instanceMetadataCmd = APIEndpoint{
 	Name: "instanceMetadata",
 	Path: "instances/{name}/metadata",
 
-	Get:   APIEndpointAction{Handler: instanceMetadataGet, AccessHandler: allowProjectPermission()},
-	Patch: APIEndpointAction{Handler: instanceMetadataPatch, AccessHandler: allowProjectPermission()},
-	Put:   APIEndpointAction{Handler: instanceMetadataPut, AccessHandler: allowProjectPermission()},
+	Get:   APIEndpointAction{Handler: instanceMetadataGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Patch: APIEndpointAction{Handler: instanceMetadataPatch, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+	Put:   APIEndpointAction{Handler: instanceMetadataPut, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
 }
 
 var instanceMetadataTemplatesCmd = APIEndpoint{
 	Name: "instanceMetadataTemplates",
 	Path: "instances/{name}/metadata/templates",
 
-	Get:    APIEndpointAction{Handler: instanceMetadataTemplatesGet, AccessHandler: allowProjectPermission()},
-	Post:   APIEndpointAction{Handler: instanceMetadataTemplatesPost, AccessHandler: allowProjectPermission()},
-	Delete: APIEndpointAction{Handler: instanceMetadataTemplatesDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: instanceMetadataTemplatesGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Post:   APIEndpointAction{Handler: instanceMetadataTemplatesPost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+	Delete: APIEndpointAction{Handler: instanceMetadataTemplatesDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
 }
 
 var instanceBackupsCmd = APIEndpoint{
 	Name: "instanceBackups",
 	Path: "instances/{name}/backups",
 
-	Get:  APIEndpointAction{Handler: instanceBackupsGet, AccessHandler: allowProjectPermission()},
-	Post: APIEndpointAction{Handler: instanceBackupsPost, AccessHandler: allowProjectPermission()},
+	Get:  APIEndpointAction{Handler: instanceBackupsGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Post: APIEndpointAction{Handler: instanceBackupsPost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageBackups, "name")},
 }
 
 var instanceBackupCmd = APIEndpoint{
 	Name: "instanceBackup",
 	Path: "instances/{name}/backups/{backupName}",
 
-	Get:    APIEndpointAction{Handler: instanceBackupGet, AccessHandler: allowProjectPermission()},
-	Post:   APIEndpointAction{Handler: instanceBackupPost, AccessHandler: allowProjectPermission()},
-	Delete: APIEndpointAction{Handler: instanceBackupDelete, AccessHandler: allowProjectPermission()},
+	Get:    APIEndpointAction{Handler: instanceBackupGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Post:   APIEndpointAction{Handler: instanceBackupPost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageBackups, "name")},
+	Delete: APIEndpointAction{Handler: instanceBackupDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageBackups, "name")},
 }
 
 var instanceBackupExportCmd = APIEndpoint{
 	Name: "instanceBackupExport",
 	Path: "instances/{name}/backups/{backupName}/export",
 
-	Get: APIEndpointAction{Handler: instanceBackupExportGet, AccessHandler: allowProjectPermission()},
+	Get: APIEndpointAction{Handler: instanceBackupExportGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageBackups, "name")},
 }
 
 type instanceAutostartList []instance.Instance

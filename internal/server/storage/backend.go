@@ -1722,7 +1722,7 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 		}
 
 		// Try and load existing volume config on this storage pool so we can compare filesystems if needed.
-		imgDBVol, err := VolumeDBGet(b, project.Default, fingerprint, drivers.VolumeTypeImage)
+		imgDBVol, err := VolumeDBGet(b, api.ProjectDefaultName, fingerprint, drivers.VolumeTypeImage)
 		if err != nil {
 			return err
 		}
@@ -3259,7 +3259,7 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 	}
 
 	// Try and load any existing volume config on this storage pool so we can compare filesystems if needed.
-	imgDBVol, err := VolumeDBGet(b, project.Default, fingerprint, drivers.VolumeTypeImage)
+	imgDBVol, err := VolumeDBGet(b, api.ProjectDefaultName, fingerprint, drivers.VolumeTypeImage)
 	if err != nil && !response.IsNotFoundError(err) {
 		return err
 	}
@@ -3373,12 +3373,12 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 	defer revert.Fail()
 
 	// Validate config and create database entry for new storage volume.
-	err = VolumeDBCreate(b, project.Default, fingerprint, "", drivers.VolumeTypeImage, false, imgVol.Config(), time.Now().UTC(), time.Time{}, contentType, false, false)
+	err = VolumeDBCreate(b, api.ProjectDefaultName, fingerprint, "", drivers.VolumeTypeImage, false, imgVol.Config(), time.Now().UTC(), time.Time{}, contentType, false, false)
 	if err != nil {
 		return err
 	}
 
-	revert.Add(func() { _ = VolumeDBDelete(b, project.Default, fingerprint, drivers.VolumeTypeImage) })
+	revert.Add(func() { _ = VolumeDBDelete(b, api.ProjectDefaultName, fingerprint, drivers.VolumeTypeImage) })
 
 	err = b.driver.CreateVolume(imgVol, &volFiller, op)
 	if err != nil {
@@ -3391,7 +3391,7 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 	if volFiller.Size != 0 {
 		imgVol.Config()["volatile.rootfs.size"] = fmt.Sprintf("%d", volFiller.Size)
 
-		err = b.state.DB.Cluster.UpdateStoragePoolVolume(project.Default, fingerprint, db.StoragePoolVolumeTypeImage, b.id, "", imgVol.Config())
+		err = b.state.DB.Cluster.UpdateStoragePoolVolume(api.ProjectDefaultName, fingerprint, db.StoragePoolVolumeTypeImage, b.id, "", imgVol.Config())
 		if err != nil {
 			return err
 		}
@@ -3434,7 +3434,7 @@ func (b *backend) shouldUseOptimizedImage(fingerprint string, contentType driver
 	}
 
 	// Load existing optimized image, if it exists.
-	imgDBVol, err := VolumeDBGet(b, project.Default, fingerprint, drivers.VolumeTypeImage)
+	imgDBVol, err := VolumeDBGet(b, api.ProjectDefaultName, fingerprint, drivers.VolumeTypeImage)
 	if err != nil && !response.IsNotFoundError(err) {
 		return false, err
 	}
@@ -3482,7 +3482,7 @@ func (b *backend) DeleteImage(fingerprint string, op *operations.Operation) erro
 	defer unlock()
 
 	// Load the storage volume in order to get the volume config which is needed for some drivers.
-	imgDBVol, err := VolumeDBGet(b, project.Default, fingerprint, drivers.VolumeTypeImage)
+	imgDBVol, err := VolumeDBGet(b, api.ProjectDefaultName, fingerprint, drivers.VolumeTypeImage)
 	if err != nil {
 		return err
 	}
@@ -3512,12 +3512,12 @@ func (b *backend) DeleteImage(fingerprint string, op *operations.Operation) erro
 		}
 	}
 
-	err = VolumeDBDelete(b, project.Default, fingerprint, vol.Type())
+	err = VolumeDBDelete(b, api.ProjectDefaultName, fingerprint, vol.Type())
 	if err != nil {
 		return err
 	}
 
-	b.state.Events.SendLifecycle(project.Default, lifecycle.StorageVolumeDeleted.Event(vol, string(vol.Type()), project.Default, op, nil))
+	b.state.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.StorageVolumeDeleted.Event(vol, string(vol.Type()), api.ProjectDefaultName, op, nil))
 
 	return nil
 }
@@ -3581,7 +3581,7 @@ func (b *backend) UpdateImage(fingerprint, newDesc string, newConfig map[string]
 	l.Debug("UpdateImage started")
 	defer l.Debug("UpdateImage finished")
 
-	return b.updateVolumeDescriptionOnly(project.Default, fingerprint, drivers.VolumeTypeImage, newDesc, newConfig, op)
+	return b.updateVolumeDescriptionOnly(api.ProjectDefaultName, fingerprint, drivers.VolumeTypeImage, newDesc, newConfig, op)
 }
 
 // CreateBucket creates an object bucket.
@@ -4436,6 +4436,11 @@ func (b *backend) CreateCustomVolume(projectName string, volName string, desc st
 		eventCtx["location"] = b.state.ServerName
 	}
 
+	err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName)
+	if err != nil {
+		logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": volName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
+	}
+
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), projectName, op, eventCtx))
 
 	revert.Success()
@@ -4567,6 +4572,11 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 		eventCtx := logger.Ctx{"type": vol.Type()}
 		if !b.Driver().Info().Remote {
 			eventCtx["location"] = b.state.ServerName
+		}
+
+		err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName)
+		if err != nil {
+			logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": volName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
 		}
 
 		b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), projectName, op, eventCtx))
@@ -4967,6 +4977,11 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 		eventCtx["location"] = b.state.ServerName
 	}
 
+	err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), args.Name)
+	if err != nil {
+		logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": args.Name, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
+	}
+
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), projectName, op, eventCtx))
 
 	revert.Success()
@@ -5053,6 +5068,11 @@ func (b *backend) RenameCustomVolume(projectName string, volName string, newVolN
 	err = b.driver.RenameVolume(vol, newVolStorageName, op)
 	if err != nil {
 		return err
+	}
+
+	err = b.state.Authorizer.RenameStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName, newVolStorageName)
+	if err != nil {
+		logger.Error("Failed to rename storage volume in authorizer", logger.Ctx{"old_name": volName, "new_name": newVolStorageName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
 	}
 
 	vol = b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), newVolStorageName, nil)
@@ -5307,6 +5327,11 @@ func (b *backend) DeleteCustomVolume(projectName string, volName string, op *ope
 	err = VolumeDBDelete(b, projectName, volName, vol.Type())
 	if err != nil {
 		return err
+	}
+
+	err = b.state.Authorizer.DeleteStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName)
+	if err != nil {
+		logger.Error("Failed to remove storage volume from authorizer", logger.Ctx{"name": volName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
 	}
 
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeDeleted.Event(vol, string(vol.Type()), projectName, op, nil))
@@ -6731,6 +6756,11 @@ func (b *backend) CreateCustomVolumeFromISO(projectName string, volName string, 
 		eventCtx["location"] = b.state.ServerName
 	}
 
+	err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, projectName, b.Name(), string(vol.Type()), volName)
+	if err != nil {
+		logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": volName, "type": vol.Type(), "pool": b.Name(), "project": projectName, "error": err})
+	}
+
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), projectName, op, eventCtx))
 
 	revert.Success()
@@ -6827,6 +6857,11 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 	eventCtx := logger.Ctx{"type": vol.Type()}
 	if !b.Driver().Info().Remote {
 		eventCtx["location"] = b.state.ServerName
+	}
+
+	err = b.state.Authorizer.AddStoragePoolVolume(b.state.ShutdownCtx, srcBackup.Project, b.Name(), string(vol.Type()), srcBackup.Name)
+	if err != nil {
+		logger.Error("Failed to add storage volume to authorizer", logger.Ctx{"name": srcBackup.Name, "type": vol.Type(), "pool": b.Name(), "project": srcBackup.Project, "error": err})
 	}
 
 	b.state.Events.SendLifecycle(srcBackup.Project, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), srcBackup.Project, op, eventCtx))

@@ -129,7 +129,7 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 	}
 
 	// Only networks defined in the default project can be used by other networks. Cheapest to do.
-	if networkProjectName == project.Default {
+	if networkProjectName == api.ProjectDefaultName {
 		// Get all managed networks across all projects.
 		var projectNetworks map[string]map[int64]api.Network
 
@@ -377,8 +377,8 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 	if networkName == "" {
 		var err error
 
-		// Pass project.Default here, as currently dnsmasq (bridged) networks do not support projects.
-		networks, err = s.DB.Cluster.GetNetworks(project.Default)
+		// Pass api.ProjectDefaultName here, as currently dnsmasq (bridged) networks do not support projects.
+		networks, err = s.DB.Cluster.GetNetworks(api.ProjectDefaultName)
 		if err != nil {
 			return err
 		}
@@ -458,10 +458,10 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 			continue
 		}
 
-		// Pass project.Default here, as currently dnsmasq (bridged) networks do not support projects.
-		n, err := LoadByName(s, project.Default, network)
+		// Pass api.ProjectDefaultName here, as currently dnsmasq (bridged) networks do not support projects.
+		n, err := LoadByName(s, api.ProjectDefaultName, network)
 		if err != nil {
-			return fmt.Errorf("Failed to load network %q in project %q for dnsmasq update: %w", project.Default, network, err)
+			return fmt.Errorf("Failed to load network %q in project %q for dnsmasq update: %w", api.ProjectDefaultName, network, err)
 		}
 
 		config := n.Config()

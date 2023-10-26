@@ -13,13 +13,13 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/internal/filter"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/db/operationtype"
 	"github.com/lxc/incus/internal/server/db/warningtype"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
@@ -32,16 +32,16 @@ import (
 var warningsCmd = APIEndpoint{
 	Path: "warnings",
 
-	Get: APIEndpointAction{Handler: warningsGet},
+	Get: APIEndpointAction{Handler: warningsGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var warningCmd = APIEndpoint{
 	Path: "warnings/{id}",
 
-	Get:    APIEndpointAction{Handler: warningGet},
-	Patch:  APIEndpointAction{Handler: warningPatch},
-	Put:    APIEndpointAction{Handler: warningPut},
-	Delete: APIEndpointAction{Handler: warningDelete},
+	Get:    APIEndpointAction{Handler: warningGet, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Patch:  APIEndpointAction{Handler: warningPatch, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Put:    APIEndpointAction{Handler: warningPut, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Delete: APIEndpointAction{Handler: warningDelete, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 func filterWarnings(warnings []api.Warning, clauses *filter.ClauseSet) ([]api.Warning, error) {
@@ -168,7 +168,7 @@ func warningsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Parse the project field
-	projectName := queryParam(r, "project")
+	projectName := request.QueryParam(r, "project")
 
 	var warnings []api.Warning
 	err = d.State().DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -388,9 +388,9 @@ func warningPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if status == warningtype.StatusAcknowledged {
-		s.Events.SendLifecycle(project.Default, lifecycle.WarningAcknowledged.Event(id, request.CreateRequestor(r), nil))
+		s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.WarningAcknowledged.Event(id, request.CreateRequestor(r), nil))
 	} else {
-		s.Events.SendLifecycle(project.Default, lifecycle.WarningReset.Event(id, request.CreateRequestor(r), nil))
+		s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.WarningReset.Event(id, request.CreateRequestor(r), nil))
 	}
 
 	return response.EmptySyncResponse
@@ -430,7 +430,7 @@ func warningDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	s.Events.SendLifecycle(project.Default, lifecycle.WarningDeleted.Event(id, request.CreateRequestor(r), nil))
+	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.WarningDeleted.Event(id, request.CreateRequestor(r), nil))
 
 	return response.EmptySyncResponse
 }

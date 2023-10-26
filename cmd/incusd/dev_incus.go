@@ -21,7 +21,6 @@ import (
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/lifecycle"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
@@ -428,7 +427,7 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 			parts := strings.Split(string(cmdline), " ")
 			name := strings.TrimSuffix(parts[len(parts)-1], "\x00")
 
-			projectName := project.Default
+			projectName := api.ProjectDefaultName
 			if strings.Contains(name, "_") {
 				fields := strings.SplitN(name, "_", 2)
 				projectName = fields[0]

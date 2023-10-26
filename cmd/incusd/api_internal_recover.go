@@ -10,6 +10,7 @@ import (
 	internalInstance "github.com/lxc/incus/internal/instance"
 	internalRecover "github.com/lxc/incus/internal/recover"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/backup"
 	backupConfig "github.com/lxc/incus/internal/server/backup/config"
 	"github.com/lxc/incus/internal/server/cluster"
@@ -33,13 +34,13 @@ import (
 var internalRecoverValidateCmd = APIEndpoint{
 	Path: "recover/validate",
 
-	Post: APIEndpointAction{Handler: internalRecoverValidate},
+	Post: APIEndpointAction{Handler: internalRecoverValidate, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 var internalRecoverImportCmd = APIEndpoint{
 	Path: "recover/import",
 
-	Post: APIEndpointAction{Handler: internalRecoverImport},
+	Post: APIEndpointAction{Handler: internalRecoverImport, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
 }
 
 // init recover adds API endpoints to handler slice.

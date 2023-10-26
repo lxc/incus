@@ -17,7 +17,6 @@ import (
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/network/acl"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/resources"
 	"github.com/lxc/incus/internal/server/state"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -527,7 +526,7 @@ func (n *common) HandleHeartbeat(heartbeatData *cluster.APIHeartbeat) error {
 
 // notifyDependentNetworks allows any dependent networks to apply changes to themselves when this network changes.
 func (n *common) notifyDependentNetworks(changedKeys []string) {
-	if n.Project() != project.Default {
+	if n.Project() != api.ProjectDefaultName {
 		return // Only networks in the default project can be used as dependent networks.
 	}
 

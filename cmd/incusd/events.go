@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/events"
-	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/internal/server/state"
@@ -43,27 +43,43 @@ func (r *eventsServe) String() string {
 
 func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error {
 	// Detect project mode.
-	projectName := queryParam(r, "project")
-	allProjects := util.IsTrue(queryParam(r, "all-projects"))
+	projectName := request.QueryParam(r, "project")
+	allProjects := util.IsTrue(request.QueryParam(r, "all-projects"))
 
 	if allProjects && projectName != "" {
 		return api.StatusErrorf(http.StatusBadRequest, "Cannot specify a project when requesting all projects")
 	} else if !allProjects && projectName == "" {
-		projectName = project.Default
+		projectName = api.ProjectDefaultName
 	}
 
-	if !allProjects && projectName != project.Default {
+	if !allProjects && projectName != api.ProjectDefaultName {
 		_, err := s.DB.GetProject(context.Background(), projectName)
 		if err != nil {
 			return err
 		}
 	}
 
+	var projectPermissionFunc auth.PermissionChecker
+	if projectName != "" {
+		err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanViewEvents)
+		if err != nil {
+			return err
+		}
+	} else if allProjects {
+		var err error
+		projectPermissionFunc, err = s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanViewEvents, auth.ObjectTypeProject)
+		if err != nil {
+			return err
+		}
+	}
+
+	canViewPrivilegedEvents := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanViewPrivilegedEvents) == nil
+
 	types := strings.Split(r.FormValue("type"), ",")
 	if len(types) == 1 && types[0] == "" {
 		types = []string{}
 		for _, entry := range eventTypes {
-			if !s.Authorizer.UserIsAdmin(r) && util.ValueInSlice(entry, privilegedEventTypes) {
+			if !canViewPrivilegedEvents && util.ValueInSlice(entry, privilegedEventTypes) {
 				continue
 			}
 
@@ -78,7 +94,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		}
 	}
 
-	if util.ValueInSlice(api.EventTypeLogging, types) && !s.Authorizer.UserIsAdmin(r) {
+	if util.ValueInSlice(api.EventTypeLogging, types) && !canViewPrivilegedEvents {
 		return api.StatusErrorf(http.StatusForbidden, "Forbidden")
 	}
 
@@ -140,7 +156,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 
 	listenerConnection := events.NewWebsocketListenerConnection(conn)
 
-	listener, err := s.Events.AddListener(projectName, allProjects, listenerConnection, types, excludeSources, recvFunc, excludeLocations)
+	listener, err := s.Events.AddListener(projectName, allProjects, projectPermissionFunc, listenerConnection, types, excludeSources, recvFunc, excludeLocations)
 	if err != nil {
 		l.Warn("Failed to add event listener", logger.Ctx{"err": err})
 		return nil

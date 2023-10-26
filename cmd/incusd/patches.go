@@ -703,8 +703,8 @@ func patchClusteringDropDatabaseRole(name string, d *Daemon) error {
 
 // patchNetworkClearBridgeVolatileHwaddr removes the unsupported `volatile.bridge.hwaddr` config key from networks.
 func patchNetworkClearBridgeVolatileHwaddr(name string, d *Daemon) error {
-	// Use project.Default, as bridge networks don't support projects.
-	projectName := project.Default
+	// Use api.ProjectDefaultName, as bridge networks don't support projects.
+	projectName := api.ProjectDefaultName
 
 	// Get the list of networks.
 	networks, err := d.db.Cluster.GetNetworks(projectName)
