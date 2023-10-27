@@ -392,7 +392,7 @@ func (c *cmdMigrate) validate(srcClient lxd.InstanceServer, targetClient incus.I
 	}
 
 	// Cluster validation.
-	if !srcServerInfo.Environment.ServerClustered {
+	if srcServerInfo.Environment.ServerClustered {
 		clusterMembers, err := srcClient.GetClusterMembers()
 		if err != nil {
 			return fmt.Errorf("Failed to retrieve the list of cluster members")
