@@ -449,7 +449,7 @@ import (
 	"io"
 	"net"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -625,7 +625,7 @@ var seccompPath = internalUtil.VarPath("security", "seccomp")
 
 // ProfilePath returns the seccomp path for the instance.
 func ProfilePath(c Instance) string {
-	return path.Join(seccompPath, project.Instance(c.Project().Name, c.Name()))
+	return filepath.Join(seccompPath, project.Instance(c.Project().Name, c.Name()))
 }
 
 // InstanceNeedsPolicy returns whether the instance needs a policy or not.
@@ -2070,7 +2070,6 @@ func (s *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 	}
 	args.source = C.GoString(&mntSource[0])
 	ctx["source"] = args.source
-	args.idmapType = s.MountSyscallShift(c, args.source)
 
 	// const char *target
 	if siov.req.data.args[1] != 0 {
@@ -2097,6 +2096,14 @@ func (s *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 	}
 	args.fstype = C.GoString(&mntFs[0])
 	ctx["fstype"] = args.fstype
+
+	// idmap shift
+	fullSrcPath := filepath.Join(fmt.Sprintf("/proc/%d/root/", args.pid), args.source)
+	if util.PathExists(fullSrcPath) {
+		args.idmapType = s.MountSyscallShift(c, fullSrcPath, args.fstype)
+	} else {
+		args.idmapType = s.MountSyscallShift(c, args.source, args.fstype)
+	}
 
 	// unsigned long mountflags
 	args.flags = int(siov.req.data.args[3])
@@ -2469,7 +2476,7 @@ func (s *Server) MountSyscallValid(c Instance, args *MountArgs) (bool, string) {
 }
 
 // MountSyscallShift checks whether this mount syscall needs shifting.
-func (s *Server) MountSyscallShift(c Instance, path string) idmap.IdmapStorageType {
+func (s *Server) MountSyscallShift(c Instance, path string, fsType string) idmap.IdmapStorageType {
 	if util.IsTrue(c.ExpandedConfig()["security.syscalls.intercept.mount.shift"]) {
 		diskIdmap, err := c.DiskIdmap()
 		if err != nil {
@@ -2477,7 +2484,7 @@ func (s *Server) MountSyscallShift(c Instance, path string) idmap.IdmapStorageTy
 		}
 
 		if diskIdmap == nil {
-			return c.IdmappedStorage(path, "none")
+			return c.IdmappedStorage(path, fsType)
 		}
 	}
 
