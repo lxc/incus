@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 
 	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db/operationtype"
@@ -135,7 +135,7 @@ func OperationCreate(s *state.State, projectName string, opClass OperationClass,
 	// Main attributes
 	op := Operation{}
 	op.projectName = projectName
-	op.id = uuid.New()
+	op.id = uuid.New().String()
 	op.description = opType.Description()
 	op.objectType, op.entitlement = opType.Permission()
 	op.dbOpType = opType

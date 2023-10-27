@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/internal/instancewriter"
@@ -844,7 +844,7 @@ func (d *btrfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, 
 	}
 
 	// Create temporary snapshot of the source volume.
-	snapUUID := uuid.New()
+	snapUUID := uuid.New().String()
 
 	srcSnap, err := srcVol.NewSnapshot(snapUUID)
 	if err != nil {

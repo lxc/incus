@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/kballard/go-shellquote"
-	"github.com/pborman/uuid"
 	"github.com/robfig/cron/v3"
 	"gopkg.in/yaml.v2"
 
@@ -546,7 +546,8 @@ func IsURLSegmentSafe(value string) error {
 
 // IsUUID validates whether a value is a UUID.
 func IsUUID(value string) error {
-	if uuid.Parse(value) == nil {
+	_, err := uuid.Parse(value)
+	if err != nil {
 		return fmt.Errorf("Invalid UUID")
 	}
 

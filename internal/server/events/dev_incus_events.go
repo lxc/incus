@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
@@ -40,7 +40,7 @@ func (s *DevIncusServer) AddListener(instanceID int, connection EventListenerCon
 			EventListenerConnection: connection,
 			messageTypes:            messageTypes,
 			done:                    cancel.New(context.Background()),
-			id:                      uuid.New(),
+			id:                      uuid.New().String(),
 		},
 		instanceID: instanceID,
 	}

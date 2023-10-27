@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 	"github.com/zitadel/oidc/v2/pkg/client"
 	"github.com/zitadel/oidc/v2/pkg/client/rp"
 	httphelper "github.com/zitadel/oidc/v2/pkg/http"
@@ -145,7 +145,7 @@ func (o *Verifier) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handler := rp.AuthURLHandler(func() string { return uuid.New() }, provider, rp.WithURLParam("audience", o.audience))
+	handler := rp.AuthURLHandler(func() string { return uuid.New().String() }, provider, rp.WithURLParam("audience", o.audience))
 	handler(w, r)
 }
 
@@ -296,10 +296,14 @@ func getAccessTokenVerifier(issuer string) (op.AccessTokenVerifier, error) {
 }
 
 // NewVerifier returns a Verifier.
-func NewVerifier(issuer string, clientid string, audience string) *Verifier {
-	cookieKey := []byte(uuid.New())[0:16]
+func NewVerifier(issuer string, clientid string, audience string) (*Verifier, error) {
+	cookieKey, err := uuid.New().MarshalBinary()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create UUID: %w", err)
+	}
+
 	verifier := &Verifier{issuer: issuer, clientID: clientid, audience: audience, cookieKey: cookieKey}
 	verifier.accessTokenVerifier, _ = getAccessTokenVerifier(issuer)
 
-	return verifier
+	return verifier, nil
 }

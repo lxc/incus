@@ -1261,7 +1261,10 @@ func (d *Daemon) init() error {
 
 	// Setup OIDC authentication.
 	if oidcIssuer != "" && oidcClientID != "" {
-		d.oidcVerifier = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcAudience)
+		d.oidcVerifier, err = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcAudience)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Setup BGP listener.

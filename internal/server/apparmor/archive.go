@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/sys"
@@ -86,7 +86,7 @@ func archiveProfileLoad(sysOS *sys.OS, output string, allowedCommandPaths []stri
 	defer revert.Fail()
 
 	// Generate a temporary profile name.
-	name := profileName("archive", uuid.New())
+	name := profileName("archive", uuid.New().String())
 	profilePath := filepath.Join(aaPath, "profiles", name)
 
 	// Generate the profile

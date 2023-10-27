@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/flosch/pongo2"
+	"github.com/google/uuid"
 	liblxc "github.com/lxc/go-lxc"
-	"github.com/pborman/uuid"
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/idmap"
@@ -725,7 +725,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 	}
 
 	if args.Config["volatile.uuid"] == "" {
-		args.Config["volatile.uuid"] = uuid.New()
+		args.Config["volatile.uuid"] = uuid.New().String()
 	}
 
 	args.Config["volatile.uuid.generation"] = args.Config["volatile.uuid"]
@@ -754,7 +754,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 		// Existing instances will keep using their instance name as instance-id to
 		// avoid triggering cloud-init on upgrade.
 		if args.Config["volatile.cloud-init.instance-id"] == "" {
-			args.Config["volatile.cloud-init.instance-id"] = uuid.New()
+			args.Config["volatile.cloud-init.instance-id"] = uuid.New().String()
 		}
 	}
 
@@ -1043,7 +1043,7 @@ func temporaryName(instUUID string) string {
 func MoveTemporaryName(inst Instance) (string, error) {
 	instUUID := inst.LocalConfig()["volatile.uuid"]
 	if instUUID == "" {
-		instUUID = uuid.New()
+		instUUID = uuid.New().String()
 		err := inst.VolatileSet(map[string]string{"volatile.uuid": instUUID})
 		if err != nil {
 			return "", fmt.Errorf("Failed generating instance UUID: %w", err)

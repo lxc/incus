@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/internal/instancewriter"
@@ -612,7 +612,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 		srcSnapshot = d.dataset(srcVol, false)
 	} else {
 		// Create a new snapshot for copy.
-		srcSnapshot = fmt.Sprintf("%s@copy-%s", d.dataset(srcVol, false), uuid.New())
+		srcSnapshot = fmt.Sprintf("%s@copy-%s", d.dataset(srcVol, false), uuid.New().String())
 
 		_, err := subprocess.RunCommand("zfs", "snapshot", "-r", srcSnapshot)
 		if err != nil {
@@ -1360,7 +1360,7 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 	}
 
 	// Create temporary snapshot of the source volume.
-	snapUUID := uuid.New()
+	snapUUID := uuid.New().String()
 
 	srcSnap, err := srcVol.NewSnapshot(snapUUID)
 	if err != nil {
@@ -2534,7 +2534,7 @@ func (d *zfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volSrc
 	srcSnapshot := d.dataset(vol, false)
 	if !vol.IsSnapshot() {
 		// Create a temporary read-only snapshot.
-		srcSnapshot = fmt.Sprintf("%s@migration-%s", d.dataset(vol, false), uuid.New())
+		srcSnapshot = fmt.Sprintf("%s@migration-%s", d.dataset(vol, false), uuid.New().String())
 		_, err := subprocess.RunCommand("zfs", "snapshot", "-r", srcSnapshot)
 		if err != nil {
 			return err
@@ -2589,7 +2589,7 @@ func (d *zfs) readonlySnapshot(vol Volume) (string, revert.Hook, error) {
 		return "", nil, err
 	}
 
-	snapshotOnlyName := fmt.Sprintf("temp_ro-%s", uuid.New())
+	snapshotOnlyName := fmt.Sprintf("temp_ro-%s", uuid.New().String())
 
 	snapVol, err := vol.NewSnapshot(snapshotOnlyName)
 	if err != nil {
@@ -2755,7 +2755,7 @@ func (d *zfs) BackupVolume(vol Volume, tarWriter *instancewriter.InstanceTarWrit
 	}
 
 	// Create a temporary read-only snapshot.
-	srcSnapshot := fmt.Sprintf("%s@backup-%s", d.dataset(vol, false), uuid.New())
+	srcSnapshot := fmt.Sprintf("%s@backup-%s", d.dataset(vol, false), uuid.New().String())
 	_, err := subprocess.RunCommand("zfs", "snapshot", "-r", srcSnapshot)
 	if err != nil {
 		return err
