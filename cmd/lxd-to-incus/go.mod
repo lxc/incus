@@ -5,8 +5,8 @@ replace github.com/lxc/incus => ../../
 go 1.20
 
 require (
-	github.com/canonical/lxd v0.0.0-20231016192422-4c7185a4135a
-	github.com/lxc/incus v0.0.0-20231016135443-d428606e3b35
+	github.com/canonical/lxd v0.0.0-20231026171650-499c98d31fd9
+	github.com/lxc/incus v0.0.0-20231026135142-ef811e65be07
 	github.com/pierrec/lz4/v4 v4.1.18
 	github.com/spf13/cobra v1.7.0
 )
@@ -17,7 +17,7 @@ require (
 	github.com/go-macaroon-bakery/macaroon-bakery/v3 v3.0.1 // indirect
 	github.com/go-macaroon-bakery/macaroonpb v1.0.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/uuid v1.3.1 // indirect
+	github.com/google/uuid v1.4.0 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
@@ -30,7 +30,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pkg/sftp v1.13.6 // indirect
 	github.com/pkg/xattr v0.4.9 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
