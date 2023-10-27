@@ -383,6 +383,7 @@ var APIExtensions = []string{
 	"operation_wait",
 	"image_restriction_privileged",
 	"cluster_internal_custom_volume_copy",
+	"disk_io_bus",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

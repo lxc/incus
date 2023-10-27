@@ -2136,7 +2136,7 @@ func (d *qemu) deviceAttachBlockDevice(deviceName string, configCopy map[string]
 		return fmt.Errorf("Failed to connect to QMP monitor: %w", err)
 	}
 
-	monHook, err := d.addDriveConfig(nil, mount)
+	monHook, err := d.addDriveConfig(nil, nil, mount)
 	if err != nil {
 		return fmt.Errorf("Failed to add drive config: %w", err)
 	}
@@ -3133,12 +3133,38 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 			for _, drive := range runConf.Mounts {
 				var monHook monitorHook
 
+				// Check if the user has overridden the bus.
+				busName := "virtio-scsi"
+				for _, opt := range drive.Opts {
+					if !strings.HasPrefix(opt, "bus=") {
+						continue
+					}
+
+					busName = strings.TrimPrefix(opt, "bus=")
+					break
+				}
+
+				qemuDev := make(map[string]string)
+				if busName == "nvme" {
+					// Allocate a PCI(e) port and write it to the config file so QMP can "hotplug" the
+					// NVME drive into it later.
+					devBus, devAddr, multi := bus.allocate(busFunctionGroupNone)
+
+					// Populate the qemu device with port info.
+					qemuDev["bus"] = devBus
+					qemuDev["addr"] = devAddr
+
+					if multi {
+						qemuDev["multifunction"] = "on"
+					}
+				}
+
 				if drive.TargetPath == "/" {
-					monHook, err = d.addRootDriveConfig(mountInfo, bootIndexes, drive)
+					monHook, err = d.addRootDriveConfig(qemuDev, mountInfo, bootIndexes, drive)
 				} else if drive.FSType == "9p" {
 					err = d.addDriveDirConfig(&cfg, bus, fdFiles, &agentMounts, drive)
 				} else {
-					monHook, err = d.addDriveConfig(bootIndexes, drive)
+					monHook, err = d.addDriveConfig(qemuDev, bootIndexes, drive)
 				}
 
 				if err != nil {
@@ -3370,7 +3396,7 @@ func (d *qemu) addFileDescriptor(fdFiles *[]*os.File, file *os.File) int {
 }
 
 // addRootDriveConfig adds the qemu config required for adding the root drive.
-func (d *qemu) addRootDriveConfig(mountInfo *storagePools.MountInfo, bootIndexes map[string]int, rootDriveConf deviceConfig.MountEntryItem) (monitorHook, error) {
+func (d *qemu) addRootDriveConfig(qemuDev map[string]string, mountInfo *storagePools.MountInfo, bootIndexes map[string]int, rootDriveConf deviceConfig.MountEntryItem) (monitorHook, error) {
 	if rootDriveConf.TargetPath != "/" {
 		return nil, fmt.Errorf("Non-root drive config supplied")
 	}
@@ -3405,7 +3431,7 @@ func (d *qemu) addRootDriveConfig(mountInfo *storagePools.MountInfo, bootIndexes
 		driveConf.DevPath = device.DiskGetRBDFormat(clusterName, userName, config["ceph.osd.pool_name"], vol.Name())
 	}
 
-	return d.addDriveConfig(bootIndexes, driveConf)
+	return d.addDriveConfig(qemuDev, bootIndexes, driveConf)
 }
 
 // addDriveDirConfig adds the qemu config required for adding a supplementary drive directory share.
@@ -3497,7 +3523,7 @@ func (d *qemu) addDriveDirConfig(cfg *[]cfgSection, bus *qemuBus, fdFiles *[]*os
 }
 
 // addDriveConfig adds the qemu config required for adding a supplementary drive.
-func (d *qemu) addDriveConfig(bootIndexes map[string]int, driveConf deviceConfig.MountEntryItem) (monitorHook, error) {
+func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]int, driveConf deviceConfig.MountEntryItem) (monitorHook, error) {
 	aioMode := "native" // Use native kernel async IO and O_DIRECT by default.
 	cacheMode := "none" // Bypass host cache, use O_DIRECT semantics by default.
 	media := "disk"
@@ -3592,6 +3618,17 @@ func (d *qemu) addDriveConfig(bootIndexes map[string]int, driveConf deviceConfig
 		if driveConf.FSType == "iso9660" {
 			media = "cdrom"
 		}
+	}
+
+	// Check if the user has overridden the bus.
+	bus := "virtio-scsi"
+	for _, opt := range driveConf.Opts {
+		if !strings.HasPrefix(opt, "bus=") {
+			continue
+		}
+
+		bus = strings.TrimPrefix(opt, "bus=")
+		break
 	}
 
 	// Check if the user has overridden the cache mode.
@@ -3723,23 +3760,51 @@ func (d *qemu) addDriveConfig(bootIndexes map[string]int, driveConf deviceConfig
 		blockDev["locking"] = "off"
 	}
 
-	device := map[string]string{
-		"id":      fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName),
-		"drive":   blockDev["node-name"].(string),
-		"bus":     "qemu_scsi.0",
-		"channel": "0",
-		"lun":     "1",
-		"serial":  fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, escapedDeviceName),
+	if qemuDev == nil {
+		qemuDev = map[string]string{}
+	}
+
+	qemuDev["id"] = fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
+	qemuDev["drive"] = blockDev["node-name"].(string)
+	qemuDev["serial"] = fmt.Sprintf("%s%s", qemuBlockDevIDPrefix, escapedDeviceName)
+
+	if bus == "virtio-scsi" {
+		qemuDev["channel"] = "0"
+		qemuDev["lun"] = "1"
+		qemuDev["bus"] = "qemu_scsi.0"
+
+		if media == "disk" {
+			qemuDev["driver"] = "scsi-hd"
+		} else if media == "cdrom" {
+			qemuDev["driver"] = "scsi-cd"
+		}
+	} else if bus == "nvme" {
+		if qemuDev["bus"] == "" {
+			// Figure out a hotplug slot.
+			pciDevID := qemuPCIDeviceIDStart
+
+			// Iterate through all the instance devices in the same sorted order as is used when allocating the
+			// boot time devices in order to find the PCI bus slot device we would have used at boot time.
+			// Then attempt to use that same device, assuming it is available.
+			for _, dev := range d.expandedDevices.Sorted() {
+				if dev.Name == driveConf.DevName {
+					break // Found our device.
+				}
+
+				pciDevID++
+			}
+
+			pciDeviceName := fmt.Sprintf("%s%d", busDevicePortPrefix, pciDevID)
+			d.logger.Debug("Using PCI bus device to hotplug NVME into", logger.Ctx{"device": driveConf.DevName, "port": pciDeviceName})
+			qemuDev["bus"] = pciDeviceName
+			qemuDev["addr"] = "00.0"
+		}
+
+		qemuDev["driver"] = "nvme"
 	}
 
 	if bootIndexes != nil {
-		device["bootindex"] = strconv.Itoa(bootIndexes[driveConf.DevName])
-	}
-
-	if media == "disk" {
-		device["driver"] = "scsi-hd"
-	} else if media == "cdrom" {
-		device["driver"] = "scsi-cd"
+		qemuDev["bootindex"] = strconv.Itoa(bootIndexes[driveConf.DevName])
 	}
 
 	monHook := func(m *qmp.Monitor) error {
@@ -3783,7 +3848,7 @@ func (d *qemu) addDriveConfig(bootIndexes map[string]int, driveConf deviceConfig
 			blockDev["filename"] = fmt.Sprintf("/dev/fdset/%d", info.ID)
 		}
 
-		err := m.AddBlockDevice(blockDev, device)
+		err := m.AddBlockDevice(blockDev, qemuDev)
 		if err != nil {
 			return fmt.Errorf("Failed adding block device for disk device %q: %w", driveConf.DevName, err)
 		}
