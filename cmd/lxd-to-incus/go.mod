@@ -5,8 +5,8 @@ replace github.com/lxc/incus => ../../
 go 1.20
 
 require (
-	github.com/canonical/lxd v0.0.0-20231026171650-499c98d31fd9
-	github.com/lxc/incus v0.0.0-20231026135142-ef811e65be07
+	github.com/canonical/lxd v0.0.0-20231027142446-db2afaa873fc
+	github.com/lxc/incus v0.0.0-20231027143506-03aed12a8aee
 	github.com/pierrec/lz4/v4 v4.1.18
 	github.com/spf13/cobra v1.7.0
 )
