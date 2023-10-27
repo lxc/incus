@@ -6,4 +6,5 @@
 
 explanation/security
 authentication
+authorization
 Expose Incus to the network <howto/server_expose>
