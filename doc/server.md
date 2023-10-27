@@ -4,6 +4,7 @@
 ```{toctree}
 :maxdepth: 1
 
+Migrating from LXD </howto/server_migrate_lxd>
 Configure the server <howto/server_configure>
 /server_config
 System settings <reference/server_settings>
