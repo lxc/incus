@@ -55,14 +55,8 @@ The workflow to authenticate with the server is similar to that of SSH, where an
      If the provided token matches, the client certificate is added to the server's trust store and the connection is granted.
      Otherwise, the connection is rejected.
 
+It is possible to restrict a TLS clients access to Incus via {ref}`authorization-tls`.
 To revoke trust to a client, remove its certificate from the server with [`incus config trust remove <fingerprint>`](incus_config_trust_remove.md).
-
-It's possible to restrict a TLS client to one or multiple projects.
-In this case, the client will also be prevented from performing global configuration changes or altering the configuration (limits, restrictions) of the projects it's allowed access to.
-
-To restrict access, use [`incus config trust edit <fingerprint>`](incus_config_trust_edit.md).
-Set the `restricted` key to `true` and specify a list of projects to restrict the client to.
-If the list of projects is empty, the client will not be allowed access to any of them.
 
 (authentication-add-certs)=
 #### Adding trusted certificates to the server
@@ -131,6 +125,12 @@ Your OIDC provider must be configured to enable the [Device Authorization Grant]
 To add a remote pointing to a Incus server configured with OIDC authentication, run [`incus remote add <remote_name> <remote_address>`](incus_remote_add.md).
 You are then prompted to authenticate through your web browser, where you must confirm the device code that Incus uses.
 The Incus client then retrieves and stores the access and refresh tokens and provides those to Incus for all interactions.
+
+```{important}
+Any user that authenticates through the configured OIDC Identity Provider gets full access to Incus.
+To restrict user access, you must also configure {ref}`authorization`.
+Currently, the only authorization method that is compatible with OIDC is {ref}`authorization-openfga`.
+```
 
 (authentication-server-certificate)=
 ## TLS server certificate
