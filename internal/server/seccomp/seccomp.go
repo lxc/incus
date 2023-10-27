@@ -449,7 +449,7 @@ import (
 	"io"
 	"net"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -625,7 +625,7 @@ var seccompPath = internalUtil.VarPath("security", "seccomp")
 
 // ProfilePath returns the seccomp path for the instance.
 func ProfilePath(c Instance) string {
-	return path.Join(seccompPath, project.Instance(c.Project().Name, c.Name()))
+	return filepath.Join(seccompPath, project.Instance(c.Project().Name, c.Name()))
 }
 
 // InstanceNeedsPolicy returns whether the instance needs a policy or not.
