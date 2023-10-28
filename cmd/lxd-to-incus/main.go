@@ -12,6 +12,7 @@ import (
 	"github.com/canonical/lxd/client"
 	lxdAPI "github.com/canonical/lxd/shared/api"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
@@ -629,6 +630,11 @@ Instead this tool will be providing specific commands for each of the servers.
 	err = target.Stop()
 	if err != nil {
 		fmt.Errorf("Failed to stop the target server: %w", err)
+	}
+
+	// Unmount potential mount points.
+	for _, mount := range []string{"guestapi", "shmounts"} {
+		_ = unix.Unmount(filepath.Join(targetPaths.Daemon, mount), unix.MNT_DETACH)
 	}
 
 	// Wipe the target.
