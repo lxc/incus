@@ -25,7 +25,8 @@ func (s *targetSystemd) Present() bool {
 		return false
 	}
 
-	if !util.PathExists("/lib/systemd/system/incus.service") {
+	_, err := subprocess.RunCommand("systemctl", "list-unit-files", "incus.service")
+	if err != nil {
 		return false
 	}
 
