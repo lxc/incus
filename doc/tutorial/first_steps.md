@@ -36,6 +36,10 @@ If you prefer a different installation method, see {ref}`installing`.
    This will create a minimal setup with default options.
    If you want to tune the initialization options, see {ref}`initialize` for more information.
 
+   ```{note}
+   If you are migrating from an existing LXD installation, skip this step and refer to {ref}`server-migrate-lxd` instead.
+   ```
+
 ## Launch and inspect instances
 
 Incus is image based and can load images from different image servers.
