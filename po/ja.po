@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-10-25 14:13-0400\n"
+"POT-Creation-Date: 2023-10-30 10:05+0800\n"
 "PO-Revision-Date: 2023-03-10 15:14+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/linux-"
@@ -280,7 +280,7 @@ msgid ""
 "### config:\n"
 "###   target_address: 198.51.100.2\n"
 "### description: test desc\n"
-"### port:\n"
+"### ports:\n"
 "### - description: port forward\n"
 "###   protocol: tcp\n"
 "###   listen_port: 80,81,8080-8090\n"
@@ -325,7 +325,7 @@ msgid ""
 "### config:\n"
 "###   target_address: 198.51.100.2\n"
 "### description: test desc\n"
-"### port:\n"
+"### ports:\n"
 "### - description: port forward\n"
 "###   protocol: tcp\n"
 "###   listen_port: 80,81,8080-8090\n"
@@ -1450,12 +1450,12 @@ msgstr "クラスタリングが有効になりました"
 msgid "Columns"
 msgstr "カラムレイアウト"
 
-#: cmd/incus/main.go:82
+#: cmd/incus/main.go:83
 #, fuzzy
 msgid "Command line client for Incus"
 msgstr "LXD のコマンドラインクライアント"
 
-#: cmd/incus/main.go:83
+#: cmd/incus/main.go:84
 #, fuzzy
 msgid ""
 "Command line client for Incus\n"
@@ -2020,7 +2020,7 @@ msgstr "警告を削除します"
 #: cmd/incus/image_alias.go:60 cmd/incus/image_alias.go:107
 #: cmd/incus/image_alias.go:152 cmd/incus/image_alias.go:255
 #: cmd/incus/import.go:27 cmd/incus/info.go:33 cmd/incus/launch.go:24
-#: cmd/incus/list.go:49 cmd/incus/main.go:83 cmd/incus/manpage.go:22
+#: cmd/incus/list.go:49 cmd/incus/main.go:84 cmd/incus/manpage.go:22
 #: cmd/incus/monitor.go:33 cmd/incus/move.go:35 cmd/incus/network.go:32
 #: cmd/incus/network.go:135 cmd/incus/network.go:220 cmd/incus/network.go:293
 #: cmd/incus/network.go:372 cmd/incus/network.go:422 cmd/incus/network.go:507
@@ -2260,7 +2260,7 @@ msgstr ""
 msgid "Don't require user confirmation for using --force"
 msgstr "--force を使う際にユーザーの確認を必要としない"
 
-#: cmd/incus/main.go:101
+#: cmd/incus/main.go:102
 msgid "Don't show progress information"
 msgstr "進捗情報を表示しません"
 
@@ -3016,7 +3016,7 @@ msgstr "インスタンスを強制停止します"
 msgid "Force the removal of running instances"
 msgstr "稼働中のインスタンスを強制的に削除します"
 
-#: cmd/incus/main.go:97
+#: cmd/incus/main.go:98
 msgid "Force using the local unix socket"
 msgstr "強制的にローカルのUNIXソケットを使います"
 
@@ -3372,7 +3372,7 @@ msgstr ""
 "存在するスナップショット名の場合は既存のスナップショットを削除したあとに新し"
 "いスナップショットを作成します"
 
-#: cmd/incus/main.go:393
+#: cmd/incus/main.go:394
 #, fuzzy
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
@@ -3656,7 +3656,7 @@ msgid ""
 msgstr ""
 "'%s' は不正な名前です。空文字列は maxWidth を指定しているときのみ指定できます"
 
-#: cmd/incus/main.go:488
+#: cmd/incus/main.go:489
 msgid "Invalid number of arguments"
 msgstr "引数の数が不正です"
 
@@ -5265,7 +5265,7 @@ msgstr "バックグラウンド操作 %s を削除しました"
 msgid "Optimized Storage"
 msgstr "最適化されたストレージ"
 
-#: cmd/incus/main.go:98
+#: cmd/incus/main.go:99
 msgid "Override the source project"
 msgstr "プロジェクトを指定します"
 
@@ -5328,7 +5328,7 @@ msgstr "送信パケット"
 msgid "Partitions:"
 msgstr "パーティション:"
 
-#: cmd/incus/main.go:356
+#: cmd/incus/main.go:357
 #, c-format
 msgid "Password for %s: "
 msgstr "%s のパスワード: "
@@ -5422,7 +5422,7 @@ msgstr ""
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr "Pretty レンダリング（--format=pretty の短縮系）"
 
-#: cmd/incus/main.go:96
+#: cmd/incus/main.go:97
 msgid "Print help"
 msgstr "ヘルプを表示します"
 
@@ -5430,7 +5430,7 @@ msgstr "ヘルプを表示します"
 msgid "Print the raw response"
 msgstr "レスポンスをそのまま表示します"
 
-#: cmd/incus/main.go:95
+#: cmd/incus/main.go:96
 msgid "Print version number"
 msgstr "バージョン番号を表示します"
 
@@ -6529,11 +6529,11 @@ msgstr ""
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr ""
 
-#: cmd/incus/main.go:99
+#: cmd/incus/main.go:100
 msgid "Show all debug messages"
 msgstr "デバッグメッセージをすべて表示します"
 
-#: cmd/incus/main.go:100
+#: cmd/incus/main.go:101
 msgid "Show all information messages"
 msgstr "詳細な情報を出力します"
 
@@ -6577,7 +6577,7 @@ msgstr "インスタンスもしくはサーバの設定を表示します"
 msgid "Show instance or server information"
 msgstr "インスタンスもしくはサーバの情報を表示します"
 
-#: cmd/incus/main.go:267 cmd/incus/main.go:268
+#: cmd/incus/main.go:268 cmd/incus/main.go:269
 msgid "Show less common commands"
 msgstr "全てのコマンドを表示します (主なコマンドだけではなく)"
 
@@ -7229,7 +7229,7 @@ msgstr ""
 "publish 先にはイメージ名は指定できません。\"--alias\" オプションを使ってくだ"
 "さい。"
 
-#: cmd/incus/main.go:289
+#: cmd/incus/main.go:290
 #, fuzzy
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
@@ -7292,7 +7292,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "コンソールから切り離すには <ctrl>+a q を押します"
 
-#: cmd/incus/main.go:398
+#: cmd/incus/main.go:399
 #, fuzzy
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
@@ -7674,7 +7674,7 @@ msgstr ""
 "最適化された形でストレージドライバを使います (同様のプール上にのみリストアで"
 "きます)"
 
-#: cmd/incus/main.go:102
+#: cmd/incus/main.go:103
 msgid "Use with help or --help to view sub-commands"
 msgstr "サブコマンドを見るには help もしくは --help を使ってください"
 
