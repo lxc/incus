@@ -12,6 +12,7 @@ The following options are available:
 - {ref}`server-options-images`
 - {ref}`server-options-loki`
 - {ref}`server-options-misc`
+- {ref}`server-options-oidc`
 - {ref}`server-options-openfga`
 
 See {ref}`server-configure` for instructions on how to set the configuration options.

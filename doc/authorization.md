@@ -1,7 +1,7 @@
 (authorization)=
 # Authorization
 
-When interacting with Incus over the Unix socket, members of the `incus-admin` group will have full access to Incus API.
+When interacting with Incus over the Unix socket, members of the `incus-admin` group will have full access to the Incus API.
 Those who are only members of the `incus` group will instead be restricted to a single project tied to their user.
 
 When interacting with Incus over the network (see {ref}`server-expose` for instructions), it is possible to further authenticate and restrict user access.
@@ -36,9 +36,9 @@ Incus will connect to the OpenFGA server, write the {ref}`openfga-model`, and qu
 (openfga-model)=
 ### OpenFGA model
 
-With OpenFGA, access to a particular API resource is determined by the users relationship to it.
+With OpenFGA, access to a particular API resource is determined by the user's relationship to it.
 These relationships are determined by an [OpenFGA authorization model](https://openfga.dev/docs/concepts#what-is-an-authorization-model).
-The Incus OpenFGA authorization model describes API resources in terms of their relationship to other resources, and a relationship a user or group may have with that resource.
+The Incus OpenFGA authorization model describes API resources in terms of their relationship to other resources, and a relationship a user or group might have with that resource.
 Some convenient relations have also been built into the model:
 
 - `server -> admin`: Full access to Incus.
@@ -65,10 +65,11 @@ Users that you do not trust with root access to the host should not be granted t
 - `storage_pool -> can_edit`
 - `project -> manager`
 
-Remaining relations may be granted, however you must apply appropriate {ref}`project-restrictions`.
+The remaining relations may be granted.
+However, you must apply appropriate {ref}`project-restrictions`.
 ```
 
-The full Incus OpenFGA authorization model is shown below.
+The full Incus OpenFGA authorization model is defined in `internal/server/auth/driver_openfga_model.openfga`:
 
 ```{literalinclude} ../internal/server/auth/driver_openfga_model.openfga
 ---
