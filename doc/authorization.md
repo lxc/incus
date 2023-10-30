@@ -1,10 +1,11 @@
 (authorization)=
 # Authorization
 
-When interacting with Incus over the Unix socket, clients have full access to Incus API.
+When interacting with Incus over the Unix socket, members of the `incus-admin` group will have full access to Incus API.
+Those who are only members of the `incus` group will instead be restricted to a single project tied to their user.
 
-However, it is possible to restrict user access to the Incus API when communicating via remote HTTPS (see {ref}`server-expose` for instructions).
-There are three supported authorization methods:
+When interacting with Incus over the network (see {ref}`server-expose` for instructions), it is possible to further authenticate and restrict user access.
+There are two supported authorization methods:
 
 - {ref}`authorization-tls`
 - {ref}`authorization-openfga`
