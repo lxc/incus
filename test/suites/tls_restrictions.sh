@@ -43,7 +43,7 @@ test_certificate_edit() {
 
   FINGERPRINT="$(incus config trust list --format csv | cut -d, -f4)"
 
-  # Try replacing the own certificate with a new one.
+  # Try replacing the old certificate with a new one.
   # This should succeed as the user is listed as an admin.
   curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" -X PATCH -d "{\"certificate\":\"$(sed ':a;N;$!ba;s/\n/\\n/g' "${INCUS_CONF}/client.crt.new")\"}" "https://${INCUS_ADDR}/1.0/certificates/${FINGERPRINT}"
 
@@ -65,11 +65,11 @@ test_certificate_edit() {
   # a normal user instead of an admin.
   incus config trust show "${FINGERPRINT}" | sed -e "s/projects: \[\]/projects: \[blah\]/" | incus config trust edit "${FINGERPRINT}"
 
-  # Try replacing the own certificate with the old one.
-  # This should succeed as well as the own certificate may be changed.
+  # Try replacing the new certificate with the old one.
+  # This should succeed as well as the certificate may be changed.
   curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" -X PATCH -d "{\"certificate\":\"$(sed ':a;N;$!ba;s/\n/\\n/g' "${INCUS_CONF}/client.crt.bak")\"}" "https://${INCUS_ADDR}/1.0/certificates/${FINGERPRINT}"
 
-  # Move new certificate and key to INCUS_CONF and back up old ones.
+  # Move new certificate and key to INCUS_CONF.
   mv "${INCUS_CONF}/client.crt.bak" "${INCUS_CONF}/client.crt"
   mv "${INCUS_CONF}/client.key.bak" "${INCUS_CONF}/client.key"
 
