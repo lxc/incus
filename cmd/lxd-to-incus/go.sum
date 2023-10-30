@@ -1,7 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/canonical/lxd v0.0.0-20231026171650-499c98d31fd9 h1:L6VfXkTvKLEv/CjRKOKTwPw/5a1nmKG2cjg943qEjHY=
-github.com/canonical/lxd v0.0.0-20231026171650-499c98d31fd9/go.mod h1:l6wQfoI5cPPiN6uxdknId2KUh4LrQpoDd6ditM6dS1E=
+github.com/canonical/lxd v0.0.0-20231027142446-db2afaa873fc h1:iUujb6QrfavX46/qBXl0Jk/aQEJYCRlgon4iAcFOAVI=
+github.com/canonical/lxd v0.0.0-20231027142446-db2afaa873fc/go.mod h1:Ae5ZOPef5H2C2Tr3jQuz46x3Pejbm7atWC+t/X7hGdI=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
@@ -19,7 +19,7 @@ github.com/frankban/quicktest v1.10.0/go.mod h1:ui7WezCLWMWxVWr1GETZY3smRy0G4KWq
 github.com/frankban/quicktest v1.11.3 h1:8sXhOn0uLys67V8EsXLc6eszDs8VXWxL3iRvebPhedY=
 github.com/fvbommel/sortorder v1.1.0 h1:fUmoe+HLsBTctBDoaBwpQo5N+nrCp8g/BjKb/6ZQmYw=
 github.com/fvbommel/sortorder v1.1.0/go.mod h1:uk88iVf1ovNn1iLfgUVU2F9o5eO30ui720w+kxuqRs0=
-github.com/go-logr/logr v1.2.4 h1:g01GSCwiDw2xSZfjJ2/T9M+S6pFdcNtFYsp+Y43HYDQ=
+github.com/go-logr/logr v1.3.0 h1:2y3SDp0ZXuc6/cjLSZ+Q3ir+QB9T/iG5yYRXqsagWSY=
 github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
 github.com/go-macaroon-bakery/macaroon-bakery/v3 v3.0.1 h1:uvQJoKTHrFFu8zxoaopNKedRzwdy3+8H72we4T/5cGs=
 github.com/go-macaroon-bakery/macaroon-bakery/v3 v3.0.1/go.mod h1:H59IYeChwvD1po3dhGUPvq5na+4NVD7SJlbhGKvslr0=

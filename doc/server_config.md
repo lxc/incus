@@ -12,6 +12,7 @@ The following options are available:
 - {ref}`server-options-images`
 - {ref}`server-options-loki`
 - {ref}`server-options-misc`
+- {ref}`server-options-openfga`
 
 See {ref}`server-configure` for instructions on how to set the configuration options.
 
@@ -51,6 +52,17 @@ The following server options configure external user authentication through {ref
 ```{include} config_options.txt
     :start-after: <!-- config group server-oidc start -->
     :end-before: <!-- config group server-oidc end -->
+```
+
+(server-options-openfga)=
+## OpenFGA configuration
+
+The following server options configure external user authorization through {ref}`authorization-openfga`:
+
+% Include content from [config_options.txt](config_options.txt)
+```{include} config_options.txt
+    :start-after: <!-- config group server-openfga start -->
+    :end-before: <!-- config group server-openfga end -->
 ```
 
 (server-options-cluster)=

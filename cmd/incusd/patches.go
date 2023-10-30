@@ -746,6 +746,30 @@ func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
 		return fmt.Errorf("Failed getting storage pool names: %w", err)
 	}
 
+	// Only apply patch on leader.
+	var localConfig *node.Config
+	isLeader := false
+
+	err = d.db.Node.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
+		localConfig, err = node.ConfigLoad(ctx, tx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	leaderAddress, err := d.gateway.LeaderAddress()
+	if err != nil {
+		// If we're not clustered, we're the leader.
+		if errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			isLeader = true
+		} else {
+			return err
+		}
+	} else if localConfig.ClusterAddress() == leaderAddress {
+		isLeader = true
+	}
+
 	volTypeCustom := db.StoragePoolVolumeTypeCustom
 	customPoolVolumes := make(map[string][]*db.StorageVolume, 0)
 
@@ -781,6 +805,11 @@ func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
 		p, err := storagePools.LoadByName(s, poolName)
 		if err != nil {
 			return fmt.Errorf("Failed loading pool %q: %w", poolName, err)
+		}
+
+		// Ensure the renaming is done only on the cluster leader for remote storage pools.
+		if p.Driver().Info().Remote && !isLeader {
+			continue
 		}
 
 		for _, vol := range volumes {
