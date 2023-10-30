@@ -2,6 +2,19 @@ test_tls_restrictions() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
+  gen_cert_and_key "${INCUS_CONF}/metrics.key" "${INCUS_CONF}/metrics.crt" "metrics.local"
+
+  # Ensure type=metrics certificates cannot access anything besides /1.0/metrics.
+  curl -k -s --cert "${INCUS_CONF}/metrics.crt" --key "${INCUS_CONF}/metrics.key" "https://${INCUS_ADDR}/1.0/metrics" | grep -F '"error_code":403'
+  incus config trust add-certificate "${INCUS_CONF}/metrics.crt" --type=metrics
+  curl -k -s --cert "${INCUS_CONF}/metrics.crt" --key "${INCUS_CONF}/metrics.key" "https://${INCUS_ADDR}/1.0/metrics" | grep -Fx '# EOF'
+
+  curl -k -s --cert "${INCUS_CONF}/metrics.crt" --key "${INCUS_CONF}/metrics.key" "https://${INCUS_ADDR}/1.0/certificates" | grep -F '"error_code":403'
+
+  # Cleanup type=metrics certificate.
+  METRICS_FINGERPRINT="$(incus config trust list --format csv | grep -F metrics.local | cut -d, -f4)"
+  incus config trust remove "${METRICS_FINGERPRINT}"
+
   FINGERPRINT="$(incus config trust list --format csv | cut -d, -f4)"
 
   # Validate admin rights with no restrictions
