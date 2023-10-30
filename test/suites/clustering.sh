@@ -3798,6 +3798,9 @@ test_clustering_uuid() {
 }
 
 test_clustering_openfga() {
+  echo "==> SKIP: OpenFGA tests require a functional OIDC backend"
+  return
+
   # shellcheck disable=2039,3043
   local INCUS_DIR
 
