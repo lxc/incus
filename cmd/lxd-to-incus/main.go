@@ -16,6 +16,7 @@ import (
 
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
 	incusAPI "github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
@@ -668,9 +669,32 @@ Instead this tool will be providing specific commands for each of the servers.
 		return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.Cache, targetPaths.Cache, err)
 	}
 
-	_, err = subprocess.RunCommand("mv", sourcePaths.Daemon, targetPaths.Daemon)
-	if err != nil {
-		return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.Daemon, targetPaths.Daemon, err)
+	if linux.IsMountPoint(sourcePaths.Daemon) {
+		err = os.MkdirAll(targetPaths.Daemon, 0711)
+		if err != nil {
+			return fmt.Errorf("Failed to create target directory: %w", err)
+		}
+
+		err = unix.Mount(sourcePaths.Daemon, targetPaths.Daemon, "none", unix.MS_BIND|unix.MS_REC, "")
+		if err != nil {
+			return fmt.Errorf("Failed to bind mount %q to %q: %w", sourcePaths.Daemon, targetPaths.Daemon, err)
+		}
+
+		err = unix.Unmount(sourcePaths.Daemon, unix.MNT_DETACH)
+		if err != nil {
+			return fmt.Errorf("Failed to unmount source mount %q: %w", sourcePaths.Daemon, err)
+		}
+
+		fmt.Println("")
+		fmt.Printf("WARNING: %s was detected to be a mountpoint.\n", sourcePaths.Daemon)
+		fmt.Printf("The migration logic has moved this mount to the new target path at %s.\n", targetPaths.Daemon)
+		fmt.Printf("However it is your responsability to modify your system settings to ensure this mount will be properly restored on reboot.\n")
+		fmt.Println("")
+	} else {
+		_, err = subprocess.RunCommand("mv", sourcePaths.Daemon, targetPaths.Daemon)
+		if err != nil {
+			return fmt.Errorf("Failed to move %q to %q: %w", sourcePaths.Daemon, targetPaths.Daemon, err)
+		}
 	}
 
 	// Migrate database format.
