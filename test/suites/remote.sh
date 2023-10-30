@@ -80,7 +80,7 @@ test_remote_url_with_token() {
   token="$(incus config trust list-tokens -f json | jq '.[].Token')"
 
   # create new certificate
-  openssl req -x509 -newkey rsa:2048 -keyout "${TEST_DIR}/token-client.key" -nodes -out "${TEST_DIR}/token-client.crt" -subj "/CN=incus.local"
+  gen_cert_and_key "${TEST_DIR}/token-client.key" "${TEST_DIR}/token-client.crt" "incus.local"
 
   # Try accessing instances (this should fail)
   [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.error_code')" -eq 403 ]
