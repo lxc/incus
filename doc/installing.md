@@ -109,12 +109,14 @@ To download a specific build:
 Follow these instructions if you want to build and install Incus from the source code.
 
 We recommend having the latest versions of `liblxc` (>= 4.0.0 required)
-available for Incus development. Additionally, Incus requires Golang 1.18 or
-later to work. On Ubuntu, you can get those with:
+available for Incus development. Additionally, Incus requires a modern Golang (see {ref}`requirements-go`)
+version to work. On Ubuntu, you can get those with:
 
 ```bash
 sudo apt update
-sudo apt install acl attr autoconf automake dnsmasq-base git golang libacl1-dev libcap-dev liblxc1 liblxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
+sudo apt install acl attr autoconf automake dnsmasq-base git libacl1-dev libcap-dev liblxc1 liblxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
+command -v snap >/dev/null || sudo apt-get install snapd
+sudo snap install --classic go
 ```
 
 ```{note}
