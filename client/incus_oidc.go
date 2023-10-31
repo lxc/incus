@@ -218,14 +218,12 @@ func (o *oidcClient) authenticate(issuer string, clientID string, audience strin
 		return err
 	}
 
-	fmt.Printf("Code: %s\n\n", resp.UserCode)
-
 	u, _ := url.Parse(resp.VerificationURIComplete)
 
-	err = openBrowser(u.String())
-	if err != nil {
-		return err
-	}
+	fmt.Printf("URL: %s\n", u.String())
+	fmt.Printf("Code: %s\n\n", resp.UserCode)
+
+	_ = openBrowser(u.String())
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT)
 	defer stop()
