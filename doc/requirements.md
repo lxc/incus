@@ -1,5 +1,6 @@
 # Requirements
 
+(requirements-go)=
 ## Go
 
 Incus requires Go 1.18 or higher and is only tested with the Golang compiler.
