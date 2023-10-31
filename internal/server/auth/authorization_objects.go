@@ -218,7 +218,7 @@ func ObjectUser(userName string) Object {
 }
 
 func ObjectServer() Object {
-	object, _ := NewObject(ObjectTypeServer, "", "lxd")
+	object, _ := NewObject(ObjectTypeServer, "", "incus")
 	return object
 }
 
