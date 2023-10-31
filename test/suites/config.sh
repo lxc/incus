@@ -240,6 +240,11 @@ test_config_profiles() {
   incus config unset core.metrics_authentication
   [ -z "$(incus config get core.metrics_authentication)" ]
 
+  # Validate user.* keys
+  ! incus config set user.⍾ foo || false
+  incus config set user.foo bar
+  incus config unset user.foo
+
   testunixdevs
 
   testloopmounts
