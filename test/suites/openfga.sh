@@ -1,7 +1,4 @@
 test_openfga() {
-  echo "==> SKIP: OpenFGA tests require a functional OIDC backend"
-  return
-
   incus config set core.https_address "${INCUS_ADDR}"
   ensure_has_localhost_remote "${INCUS_ADDR}"
   ensure_import_testimage
