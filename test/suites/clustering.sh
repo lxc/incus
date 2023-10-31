@@ -3798,11 +3798,19 @@ test_clustering_uuid() {
 }
 
 test_clustering_openfga() {
+  if ! command -v openfga >/dev/null 2>&1 || ! command -v fga >/dev/null 2>&1; then
+    echo "==> SKIP: Missing OpenFGA"
+    return
+  fi
+
+  echo "==> SKIP: Can't validate due to netns"
+  return
+
   # shellcheck disable=2039,3043
   local INCUS_DIR
 
   setup_clustering_bridge
-  prefix="lxd$$"
+  prefix="inc$$"
   bridge="${prefix}"
 
   setup_clustering_netns 1
@@ -3811,15 +3819,25 @@ test_clustering_openfga() {
   ns1="${prefix}1"
   spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}"
 
+  # Run OIDC server.
+  spawn_oidc
+  set_oidc user1
+
+  INCUS_DIR="${INCUS_ONE_DIR}" incus config set "oidc.issuer=http://127.0.0.1:$(cat "${TEST_DIR}/oidc.port")/"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus config set "oidc.client.id=device"
+
+  BROWSER=curl incus remote add --accept-certificate oidc-openfga "https://10.1.1.101:8443" --auth-type oidc
+  ! incus_remote info oidc-openfga: | grep -Fq 'core.https_address' || false
+
   run_openfga
 
   # Create store and get store ID.
   OPENFGA_STORE_ID="$(fga store create --name "test" | jq -r '.store.id')"
 
-  # Configure OpenFGA using the candid-openfga remote.
-  INCUS_DIR="${INCUS_ONE_DIR}" incus config set candid-openfga: openfga.api.url "$(fga_address)"
-  INCUS_DIR="${INCUS_ONE_DIR}" incus config set candid-openfga: openfga.api.token "$(fga_token)"
-  INCUS_DIR="${INCUS_ONE_DIR}" incus config set candid-openfga: openfga.store.id "${OPENFGA_STORE_ID}"
+  # Configure OpenFGA using the oidc-openfga remote.
+  INCUS_DIR="${INCUS_ONE_DIR}" incus config set oidc-openfga: openfga.api.url "$(fga_address)"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus config set oidc-openfga: openfga.api.token "$(fga_token)"
+  INCUS_DIR="${INCUS_ONE_DIR}" incus config set oidc-openfga: openfga.store.id "${OPENFGA_STORE_ID}"
   sleep 1
 
   # Add a newline at the end of each line. YAML as weird rules..
@@ -3835,18 +3853,11 @@ test_clustering_openfga() {
   # After the second node has joined there should exist only one authorization model.
   [ "$(fga model list --store-id "${OPENFGA_STORE_ID}" | jq '.authorization_models | length')" = 1 ]
 
-  # Add node2 as another candid remote. OpenFGA should be loaded and we should not be able to see any config as we have not given
-  # any permissions to the user.
-  (
-  cat <<EOF
-user1
-pass1
-EOF
-  ) | incus remote add node2 "https://10.1.1.102:8443" --auth-type candid --accept-certificate
+  BROWSER=curl incus remote add --accept-certificate node2 "https://10.1.1.102:8443" --auth-type oidc
   ! incus_remote info node2: | grep -Fq 'core.https_address' || false
 
   # Add self as server admin. Should be able to see config now.
-  fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 admin server:lxd
+  fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 admin server:incus
   incus_remote info node2: | grep -Fq 'core.https_address'
 
   # Spawn a third node. Should be able to join while OpenFGA is running.
@@ -3858,11 +3869,11 @@ EOF
 
   # cleanup
   incus remote rm node2
-  incus remote rm candid-openfga
+  incus remote rm oidc-openfga
   shutdown_openfga
-  INCUS_DIR="${INCUS_ONE_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_TWO_DIR}" lxd shutdown
-  INCUS_DIR="${INCUS_THREE_DIR}" lxd shutdown
+  INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+  INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
   sleep 0.5
   rm -f "${INCUS_ONE_DIR}/unix.socket"
   rm -f "${INCUS_TWO_DIR}/unix.socket"
