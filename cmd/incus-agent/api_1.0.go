@@ -196,7 +196,7 @@ func getClient(CID uint32, port int, serverCertificate string) (*http.Client, er
 func startHTTPServer(d *Daemon, debug bool) error {
 	const CIDAny uint32 = 4294967295 // Equivalent to VMADDR_CID_ANY.
 
-	// Setup the listener on wildcard CID for inbound connections from LXD.
+	// Setup the listener on wildcard CID for inbound connections from Incus.
 	// We use the VMADDR_CID_ANY CID so that if the VM's CID changes in the future the listener still works.
 	// A CID change can occur when restoring a stateful VM that was previously using one CID but is
 	// subsequently restored using a different one.
