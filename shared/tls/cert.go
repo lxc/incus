@@ -35,11 +35,12 @@ import (
 // (optionally) CA certificate located in the given directory and having the
 // given name prefix
 //
-// The naming conversion for the various files is:
+// The naming conversion for the various PEM encoded files is:
 //
 // <prefix>.crt -> public key
 // <prefix>.key -> private key
-// <prefix>.ca -> CA certificate
+// <prefix>.ca  -> CA certificate (optional)
+// ca.crl       -> CA certificate revocation list (optional)
 //
 // If no public/private key files are found, a new key pair will be generated
 // and saved on disk.
@@ -116,7 +117,7 @@ func KeyPairFromRaw(certificate []byte, key []byte) (*CertInfo, error) {
 // CertInfo captures TLS certificate information about a certain public/private
 // keypair and an optional CA certificate and CRL.
 //
-// Given support for PKI setups, these two bits of information are
+// Given support for PKI setups, these few bits of information are
 // normally used and passed around together, so this structure helps with that
 // (see doc/security.md for more details).
 type CertInfo struct {
