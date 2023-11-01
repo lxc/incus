@@ -739,6 +739,11 @@ Instead this tool will be providing specific commands for each of the servers.
 
 		for _, entry := range entries {
 			srcPath := filepath.Join(targetPaths.Daemon, dir, entry.Name())
+
+			if entry.Type()&os.ModeSymlink != os.ModeSymlink {
+				continue
+			}
+
 			oldTarget, err := os.Readlink(srcPath)
 			if err != nil {
 				return fmt.Errorf("Failed to resolve symlink %q: %w", srcPath, err)
