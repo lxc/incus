@@ -99,6 +99,9 @@ endif
 
 	cd cmd/lxd-to-incus && $(GO) get -t -v -d -u ./...
 	cd cmd/lxd-to-incus && $(GO) mod tidy --go=1.20
+
+	cd test/mini-oidc && $(GO) get -t -v -d -u ./...
+	cd test/mini-oidc && $(GO) mod tidy --go=1.20
 	@echo "Dependencies updated"
 
 .PHONY: update-protobuf

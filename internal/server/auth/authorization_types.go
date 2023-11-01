@@ -42,7 +42,7 @@ const (
 	EntitlementCanManageBackups   Entitlement = "can_manage_backups"
 )
 
-// ObjectType is a type of resource within LXD.
+// ObjectType is a type of resource within Incus.
 type ObjectType string
 
 const (
@@ -62,7 +62,7 @@ const (
 	ObjectTypeStorageVolume ObjectType = "storage_volume"
 )
 
-// Permission is a type representation of general permission levels in LXD. Used with TLS and RBAC drivers.
+// Permission is a type representation of general permission levels in Incus. Used with TLS and RBAC drivers.
 type Permission string
 
 const (

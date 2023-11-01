@@ -17,6 +17,8 @@ cmd/incus-migrate/incus-migrate
 cmd/incus-user/incus-user
 test/dev_incus-client/dev_incus-client
 test/syscall/sysinfo/sysinfo
+test/mini-oidc/mini-oidc
+test/mini-oidc/user.data
 
 # Sphinx
 doc/html/

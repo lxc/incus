@@ -85,7 +85,7 @@ func (s *objectSuite) TestObjectProject() {
 func (s *objectSuite) TestObjectServer() {
 	s.Assert().NotPanics(func() {
 		o := ObjectServer()
-		s.Equal("server:lxd", string(o))
+		s.Equal("server:incus", string(o))
 	})
 }
 
@@ -124,8 +124,8 @@ func (s *objectSuite) TestObjectFromString() {
 		err error
 	}{
 		{
-			in:  "server:lxd",
-			out: Object("server:lxd"),
+			in:  "server:incus",
+			out: Object("server:incus"),
 		},
 		{
 			in:  "certificate:weaowiejfoiawefpajewfpoawjfepojawef",

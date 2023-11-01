@@ -200,6 +200,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_database_no_disk_space "database out of disk space"
     run_test test_sql "SQL"
     run_test test_tls_restrictions "TLS restrictions"
+    run_test test_oidc "OpenID Connect"
     run_test test_openfga "OpenFGA"
     run_test test_certificate_edit "Certificate edit"
     run_test test_basic_usage "basic usage"

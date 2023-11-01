@@ -1,7 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/canonical/lxd v0.0.0-20231027142446-db2afaa873fc h1:iUujb6QrfavX46/qBXl0Jk/aQEJYCRlgon4iAcFOAVI=
-github.com/canonical/lxd v0.0.0-20231027142446-db2afaa873fc/go.mod h1:Ae5ZOPef5H2C2Tr3jQuz46x3Pejbm7atWC+t/X7hGdI=
+github.com/canonical/lxd v0.0.0-20231029190415-18b3c3f349ab h1:XCFZ/Rd0FEH7IP5/rrDfaWl6nvzR1tqPZP/653ZmiwY=
+github.com/canonical/lxd v0.0.0-20231029190415-18b3c3f349ab/go.mod h1:Ae5ZOPef5H2C2Tr3jQuz46x3Pejbm7atWC+t/X7hGdI=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
