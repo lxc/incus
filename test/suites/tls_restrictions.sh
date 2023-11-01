@@ -36,10 +36,7 @@ test_certificate_edit() {
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
   # Generate a certificate
-  openssl req -x509 -newkey ec \
-    -pkeyopt ec_paramgen_curve:secp384r1 -sha384 -nodes \
-    -keyout "${INCUS_CONF}/client.key.new" -out "${INCUS_CONF}/client.crt.new" \
-    -days 3650 -subj "/CN=test.local"
+  gen_cert_and_key "${INCUS_CONF}/client.key.new" "${INCUS_CONF}/client.crt.new" "test.local"
 
   FINGERPRINT="$(incus config trust list --format csv | cut -d, -f4)"
 
