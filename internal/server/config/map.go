@@ -204,6 +204,12 @@ func (m *Map) set(name string, value string, initial bool) (bool, error) {
 		return false, fmt.Errorf("unknown key")
 	}
 
+	// When unsetting a config key, the value argument will be empty.
+	// This ensures that the default value is set if the provided value is empty.
+	if value == "" {
+		value = key.Default
+	}
+
 	err := key.validate(value)
 	if err != nil {
 		return false, err

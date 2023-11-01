@@ -233,6 +233,13 @@ test_config_profiles() {
     false
   fi
 
+  # Test unsetting config keys
+  incus config set core.metrics_authentication false
+  [ "$(incus config get core.metrics_authentication)" = "false" ]
+
+  incus config unset core.metrics_authentication
+  [ -z "$(incus config get core.metrics_authentication)" ]
+
   testunixdevs
 
   testloopmounts
