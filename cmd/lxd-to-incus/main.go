@@ -81,7 +81,17 @@ func (c *cmdMigrate) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdMigrate) validate(srcClient lxd.InstanceServer, targetClient incus.InstanceServer) error {
+func (c *cmdMigrate) validate(source Source, target Target) error {
+	srcClient, err := source.Connect()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to source: %v", err)
+	}
+
+	targetClient, err := target.Connect()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to target: %v", err)
+	}
+
 	// Get versions.
 	fmt.Println("=> Checking server versions")
 	srcServerInfo, _, err := srcClient.GetServer()
@@ -417,6 +427,16 @@ func (c *cmdMigrate) validate(srcClient lxd.InstanceServer, targetClient incus.I
 		return fmt.Errorf("Source server is using incompatible configuration")
 	}
 
+	// Storage validation.
+	targetPaths, err := target.Paths()
+	if err != nil {
+		return fmt.Errorf("Failed to get target paths: %w", err)
+	}
+
+	if linux.IsMountPoint(targetPaths.Daemon) {
+		return fmt.Errorf("The target path %q is a mountpoint. This isn't currently supported as the target path needs to be deleted during the migration.", targetPaths.Daemon)
+	}
+
 	return nil
 }
 
@@ -489,7 +509,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	// Configuration validation.
 	if !c.flagClusterMember {
-		err = c.validate(srcClient, targetClient)
+		err = c.validate(source, target)
 		if err != nil {
 			return err
 		}
