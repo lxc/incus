@@ -584,10 +584,10 @@ type InstanceExecArgs struct {
 	Stdin io.ReadCloser
 
 	// Standard output
-	Stdout io.WriteCloser
+	Stdout io.Writer
 
 	// Standard error
-	Stderr io.WriteCloser
+	Stderr io.Writer
 
 	// Control message handler (window resize, signals, ...)
 	Control func(conn *websocket.Conn)
