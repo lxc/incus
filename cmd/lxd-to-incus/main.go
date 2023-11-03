@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/internal/version"
 	incusAPI "github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 var minLXDVersion = &version.DottedVersion{4, 0, 0}
@@ -528,6 +529,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	// Mangle storage pool sources.
 	rewriteStatements := []string{}
+	rewriteCommands := [][]string{}
 
 	if !c.flagClusterMember {
 		var storagePools []lxdAPI.StoragePool
@@ -559,7 +561,31 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			}
 		}
 
+		rbdRenamed := []string{}
 		for _, pool := range storagePools {
+			if pool.Driver == "ceph" {
+				cluster, ok := pool.Config["ceph.cluster_name"]
+				if !ok {
+					cluster = "ceph"
+				}
+
+				client, ok := pool.Config["ceph.user.name"]
+				if !ok {
+					client = "admin"
+				}
+
+				rbdPool, ok := pool.Config["ceph.osd.pool_name"]
+				if !ok {
+					rbdPool = pool.Name
+				}
+
+				renameCmd := []string{"rbd", "rename", "--cluster", cluster, "--name", client, fmt.Sprintf("%s/lxd_%s", rbdPool, rbdPool), fmt.Sprintf("%s/incus_%s", rbdPool, rbdPool)}
+				if !util.ValueInSlice(pool.Name, rbdRenamed) {
+					rewriteCommands = append(rewriteCommands, renameCmd)
+					rbdRenamed = append(rbdRenamed, pool.Name)
+				}
+			}
+
 			source := pool.Config["source"]
 			if source == "" || source[0] != byte('/') {
 				continue
@@ -726,9 +752,22 @@ Instead this tool will be providing specific commands for each of the servers.
 
 	// Apply custom SQL statements.
 	if !c.flagClusterMember {
-		err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0600)
-		if err != nil {
-			return fmt.Errorf("Failed to write database path: %w", err)
+		if len(rewriteStatements) > 0 {
+			fmt.Println("=> Writing database patch")
+			err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0600)
+			if err != nil {
+				return fmt.Errorf("Failed to write database path: %w", err)
+			}
+		}
+
+		if len(rewriteCommands) > 0 {
+			fmt.Println("=> Running data migration commands")
+			for _, cmd := range rewriteCommands {
+				_, err := subprocess.RunCommand(cmd[0], cmd[1:]...)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
