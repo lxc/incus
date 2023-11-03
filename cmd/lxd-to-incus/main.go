@@ -259,8 +259,13 @@ Instances will come back online once the migration is complete.
 The migration is now ready to proceed.
 
 A cluster environment was detected.
-Manual action will be needed on each of the server prior to Incus being functional.
-The migration will begin by shutting down instances on all servers.
+Manual action will be needed on each of the server prior to Incus being functional.`)
+
+			if os.Getenv("CLUSTER_NO_STOP") != "1" {
+				fmt.Println("The migration will begin by shutting down instances on all servers.")
+			}
+
+			fmt.Println(`
 It will then convert the current server over to Incus and then wait for the other servers to be converted.
 
 Do not attempt to manually run this tool on any of the other servers in the cluster.
@@ -279,7 +284,7 @@ Instead this tool will be providing specific commands for each of the servers.
 	}
 
 	// Cluster evacuation.
-	if !c.flagClusterMember && clustered {
+	if !c.flagClusterMember && clustered && os.Getenv("CLUSTER_NO_EVACUTE") != "1" {
 		fmt.Println("=> Stopping all workloads on the cluster")
 
 		clusterMembers, err := srcClient.GetClusterMembers()
