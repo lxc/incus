@@ -1052,13 +1052,21 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				return err
 			}
 
-			// First set accept_ra to 2 for everything.
+			// First set accept_ra to 2 for all interfaces (if not disabled).
+			// This ensures that the host can still receive IPv6 router advertisements even with
+			// forwarding enabled (which enable below), as the default is to ignore router adverts
+			// when forward is enabled, and this could render the host unreachable if it uses
+			// SLAAC generated IPs.
 			for _, entry := range entries {
+				// Check that IPv6 router advertisement acceptance is enabled currently.
+				// If its set to 0 then we don't want to enable, and if its already set to 2 then
+				// we don't need to do anything.
 				content, err := os.ReadFile(fmt.Sprintf("/proc/sys/net/ipv6/conf/%s/accept_ra", entry.Name()))
 				if err == nil && string(content) != "1\n" {
 					continue
 				}
 
+				// If IPv6 router acceptance is enabled (set to 1) then we now set it to 2.
 				err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", entry.Name()), "2")
 				if err != nil && !os.IsNotExist(err) {
 					return err
