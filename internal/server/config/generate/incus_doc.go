@@ -128,7 +128,6 @@ func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, er
 
 		// Only process go files
 		if !info.IsDir() && filepath.Ext(path) != ".go" {
-			log.Printf("Skipping non-golang file: %v", path)
 			return nil
 		}
 
