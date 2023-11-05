@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/lxc/incus/internal/server/certificate"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
@@ -170,6 +171,12 @@ func (t *tls) certificateDetails(fingerprint string) (certificate.Type, bool, []
 	_, ok = metricCerts[fingerprint]
 	if ok {
 		return certificate.TypeMetrics, false, nil, nil
+	}
+
+	// If we're in a CA environment, it's possible for a certificate to be trusted despite not being present in the trust store.
+	// We rely on the validation of the certificate (and its potential revocation) having been done in CheckTrustState.
+	if util.PathExists(internalUtil.VarPath("server.ca")) {
+		return certificate.TypeClient, true, nil, nil
 	}
 
 	return -1, false, nil, api.StatusErrorf(http.StatusForbidden, "Client certificate not found")
