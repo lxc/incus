@@ -238,11 +238,11 @@ jobs:
           mkdir -p "$(go env GOPATH)/bin"
           curl -sSfL https://dl.min.io/server/minio/release/linux-amd64/minio --output "$(go env GOPATH)/bin/minio"
           chmod +x "$(go env GOPATH)/bin/minio"
-          
+
           # Download latest release of openfga server.
           curl -s https://api.github.com/repos/openfga/openfga/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -L {} -o openfga.tar.gz
           tar -xzf openfga.tar.gz -C "$(go env GOPATH)/bin/"
-          
+
           # Download latest release of openfga cli.
           curl -s https://api.github.com/repos/openfga/cli/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -L {} -o fga.tar.gz
           tar -xzf fga.tar.gz -C "$(go env GOPATH)/bin/"
