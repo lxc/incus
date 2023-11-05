@@ -64,6 +64,8 @@ test_pki() {
     token="$(INCUS_DIR=${INCUS5_DIR} incus config trust add foo -q)"
     incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token "${token}"
     incus_remote config trust ls pki-incus: | grep incus-client
+    fingerprint="$(incus_remote config trust ls pki-incus: --format csv | cut -d, -f4)"
+    incus_remote config trust remove pki-incus:"${fingerprint}"
     incus_remote remote remove pki-incus
 
     # Add remote using a CA-signed client certificate, and not providing a token.
@@ -71,19 +73,13 @@ test_pki() {
     # store without a token would normally fail.
     INCUS_DIR=${INCUS5_DIR} incus config set core.trust_ca_certificates true
     incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate
-    incus_remote config trust ls pki-incus: | grep incus-client
+    ! incus_remote config trust ls pki-incus: | grep incus-client || false
     incus_remote remote remove pki-incus
 
     # Add remote using a CA-signed client certificate, and providing an incorrect token.
     # This should succeed as is the same as the test above but with an incorrect token rather than no token.
     incus_remote remote add pki-incus "${INCUS5_ADDR}" --accept-certificate --token=bar
-    incus_remote config trust ls pki-incus: | grep incus-client
-
-    # Try removing the fingerprint.
-    # This should succeed as the admin can delete all certificates.
-    fingerprint="$(incus_remote config trust ls pki-incus: --format csv | cut -d, -f4)"
-    incus_remote config trust rm pki-incus:"${fingerprint}"
-
+    ! incus_remote config trust ls pki-incus: | grep incus-client || false
     incus_remote remote remove pki-incus
 
     # Replace the client certificate with a revoked certificate in the CRL.
