@@ -23,12 +23,14 @@ type Group struct {
 func (g *Group) Add(f Func, schedule Schedule) *Task {
 	g.mu.Lock()
 	defer g.mu.Unlock()
+
 	i := len(g.tasks)
 	g.tasks = append(g.tasks, Task{
 		f:        f,
 		schedule: schedule,
 		reset:    make(chan struct{}, 16), // Buffered to not block senders
 	})
+
 	return &g.tasks[i]
 }
 
@@ -60,10 +62,12 @@ func (g *Group) Start(ctx context.Context) {
 
 			// Ensure running map is updated before wait group Done() is called.
 			g.mu.Lock()
-			g.running[i] = false
-			g.mu.Unlock()
+			defer g.mu.Unlock()
 
-			g.wg.Done()
+			if g.running != nil {
+				g.running[i] = false
+				g.wg.Done()
+			}
 		}(i)
 	}
 }
@@ -101,14 +105,16 @@ func (g *Group) Stop(timeout time.Duration) error {
 	defer cancel()
 	select {
 	case <-ctx.Done():
-		running := []string{}
 		g.mu.Lock()
 		defer g.mu.Unlock()
+
+		running := []string{}
 		for i, value := range g.running {
 			if value {
 				running = append(running, strconv.Itoa(i))
 			}
 		}
+
 		return fmt.Errorf("Task(s) still running: IDs %v", running)
 	case <-graceful:
 		return nil
