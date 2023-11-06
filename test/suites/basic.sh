@@ -446,6 +446,10 @@ test_basic_usage() {
 
   echo foo | incus exec foo -- tee /tmp/foo
 
+  # test exec with/without "--" separator
+  incus exec foo -- true
+  incus exec foo true
+
   # Detect regressions/hangs in exec
   sum=$(ps aux | tee "${INCUS_DIR}/out" | incus exec foo -- md5sum | cut -d' ' -f1)
   [ "${sum}" = "$(md5sum "${INCUS_DIR}/out" | cut -d' ' -f1)" ]
