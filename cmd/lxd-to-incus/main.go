@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -20,10 +19,8 @@ import (
 	"github.com/lxc/incus/internal/version"
 	incusAPI "github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
-
-var minLXDVersion = &version.DottedVersion{4, 0, 0}
-var maxLXDVersion = &version.DottedVersion{5, 19, 0}
 
 type cmdGlobal struct {
 	asker cli.Asker
@@ -79,345 +76,6 @@ func (c *cmdMigrate) Command() *cobra.Command {
 	cmd.PersistentFlags().BoolVar(&c.flagClusterMember, "cluster-member", false, "Used internally for cluster migrations")
 
 	return cmd
-}
-
-func (c *cmdMigrate) validate(srcClient lxd.InstanceServer, targetClient incus.InstanceServer) error {
-	// Get versions.
-	fmt.Println("=> Checking server versions")
-	srcServerInfo, _, err := srcClient.GetServer()
-	if err != nil {
-		return fmt.Errorf("Failed getting source server info: %w", err)
-	}
-
-	targetServerInfo, _, err := targetClient.GetServer()
-	if err != nil {
-		return fmt.Errorf("Failed getting target server info: %w", err)
-	}
-
-	fmt.Printf("==> Source version: %s\n", srcServerInfo.Environment.ServerVersion)
-	fmt.Printf("==> Target version: %s\n", targetServerInfo.Environment.ServerVersion)
-
-	// Compare versions.
-	fmt.Println("=> Validating version compatibility")
-	srcVersion, err := version.Parse(srcServerInfo.Environment.ServerVersion)
-	if err != nil {
-		return fmt.Errorf("Couldn't parse source server version: %w", err)
-	}
-
-	if srcVersion.Compare(minLXDVersion) < 0 {
-		return fmt.Errorf("LXD version is lower than minimal version %q", minLXDVersion)
-	}
-
-	if srcVersion.Compare(maxLXDVersion) > 0 {
-		return fmt.Errorf("LXD version is newer than maximum version %q", maxLXDVersion)
-	}
-
-	// Validate source non-empty.
-	srcCheckEmpty := func() (bool, error) {
-		// Check if more than one project.
-		names, err := srcClient.GetProjectNames()
-		if err != nil {
-			return false, err
-		}
-
-		if len(names) > 1 {
-			return false, nil
-		}
-
-		// Check if more than one profile.
-		names, err = srcClient.GetProfileNames()
-		if err != nil {
-			return false, err
-		}
-
-		if len(names) > 1 {
-			return false, nil
-		}
-
-		// Check if any instance is persent.
-		names, err = srcClient.GetInstanceNames(lxdAPI.InstanceTypeAny)
-		if err != nil {
-			return false, err
-		}
-
-		if len(names) > 0 {
-			return false, nil
-		}
-
-		// Check if any storage pool is present.
-		names, err = srcClient.GetStoragePoolNames()
-		if err != nil {
-			return false, err
-		}
-
-		if len(names) > 0 {
-			return false, nil
-		}
-
-		// Check if any network is present.
-		networks, err := srcClient.GetNetworks()
-		if err != nil {
-			return false, err
-		}
-
-		for _, network := range networks {
-			if network.Managed {
-				return false, nil
-			}
-		}
-
-		return true, nil
-	}
-
-	fmt.Println("=> Checking that the source server isn't empty")
-	isEmpty, err := srcCheckEmpty()
-	if err != nil {
-		return fmt.Errorf("Failed to check source server: %w", err)
-	}
-
-	if isEmpty {
-		return fmt.Errorf("Source server is empty, migration not needed")
-	}
-
-	// Validate target empty.
-	targetCheckEmpty := func() (bool, error) {
-		// Check if more than one project.
-		names, err := targetClient.GetProjectNames()
-		if err != nil {
-			return false, err
-		}
-
-		if len(names) > 1 {
-			return false, nil
-		}
-
-		// Check if more than one profile.
-		names, err = targetClient.GetProfileNames()
-		if err != nil {
-			return false, err
-		}
-
-		if len(names) > 1 {
-			return false, nil
-		}
-
-		// Check if any instance is present.
-		names, err = targetClient.GetInstanceNames(incusAPI.InstanceTypeAny)
-		if err != nil {
-			return false, err
-		}
-
-		if len(names) > 0 {
-			return false, nil
-		}
-
-		// Check if any storage pool is present.
-		names, err = targetClient.GetStoragePoolNames()
-		if err != nil {
-			return false, err
-		}
-
-		if len(names) > 0 {
-			return false, nil
-		}
-
-		// Check if any network is present.
-		networks, err := targetClient.GetNetworks()
-		if err != nil {
-			return false, err
-		}
-
-		for _, network := range networks {
-			if network.Managed {
-				return false, nil
-			}
-		}
-
-		return true, nil
-	}
-
-	fmt.Println("=> Checking that the target server is empty")
-	isEmpty, err = targetCheckEmpty()
-	if err != nil {
-		return fmt.Errorf("Failed to check target server: %w", err)
-	}
-
-	if !isEmpty {
-		return fmt.Errorf("Target server isn't empty, can't proceed with migration.")
-	}
-
-	// Validate configuration.
-	errors := []error{}
-
-	fmt.Println("=> Validating source server configuration")
-	deprecatedConfigs := []string{
-		"candid.api.key",
-		"candid.api.url",
-		"candid.domains",
-		"candid.expiry",
-		"core.trust_password",
-		"maas.api.key",
-		"maas.api.url",
-		"rbac.agent.url",
-		"rbac.agent.username",
-		"rbac.agent.private_key",
-		"rbac.agent.public_key",
-		"rbac.api.expiry",
-		"rbac.api.key",
-		"rbac.api.url",
-		"rbac.expiry",
-	}
-
-	for _, key := range deprecatedConfigs {
-		_, ok := srcServerInfo.Config[key]
-		if ok {
-			errors = append(errors, fmt.Errorf("Source server is using deprecated key %q", key))
-		}
-	}
-
-	networks, err := srcClient.GetNetworks()
-	if err != nil {
-		return fmt.Errorf("Couldn't list source networks: %w", err)
-	}
-
-	deprecatedNetworkConfigs := []string{
-		"bridge.mode",
-		"fan.overlay_subnet",
-		"fan.underlay_subnet",
-		"fan.type",
-	}
-
-	for _, network := range networks {
-		if !network.Managed {
-			continue
-		}
-
-		for _, key := range deprecatedNetworkConfigs {
-			_, ok := network.Config[key]
-			if ok {
-				errors = append(errors, fmt.Errorf("Source server has network %q using deprecated key %q", network.Name, key))
-			}
-		}
-	}
-
-	storagePools, err := srcClient.GetStoragePools()
-	if err != nil {
-		return fmt.Errorf("Couldn't list storage pools: %w", err)
-	}
-
-	for _, pool := range storagePools {
-		if pool.Driver == "zfs" {
-			_, err = exec.LookPath("zfs")
-			if err != nil {
-				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "zfs", pool.Name))
-			}
-		} else if pool.Driver == "btrfs" {
-			_, err = exec.LookPath("btrfs")
-			if err != nil {
-				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "btrfs", pool.Name))
-			}
-		} else if pool.Driver == "ceph" || pool.Driver == "cephfs" || pool.Driver == "cephobject" {
-			_, err = exec.LookPath("ceph")
-			if err != nil {
-				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "ceph", pool.Name))
-			}
-		} else if pool.Driver == "lvm" {
-			_, err = exec.LookPath("lvm")
-			if err != nil {
-				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "lvm", pool.Name))
-			}
-		}
-	}
-
-	deprecatedInstanceConfigs := []string{
-		"limits.network.priority",
-	}
-
-	deprecatedInstanceDeviceConfigs := []string{
-		"maas.subnet.ipv4",
-		"maas.subnet.ipv6",
-	}
-
-	projects, err := srcClient.GetProjects()
-	if err != nil {
-		return fmt.Errorf("Couldn't list source projects: %w", err)
-	}
-
-	for _, project := range projects {
-		c := srcClient.UseProject(project.Name)
-
-		instances, err := c.GetInstances(lxdAPI.InstanceTypeAny)
-		if err != nil {
-			fmt.Errorf("Couldn't list instances in project %q: %w", err)
-		}
-
-		for _, inst := range instances {
-			for _, key := range deprecatedInstanceConfigs {
-				_, ok := inst.Config[key]
-				if ok {
-					errors = append(errors, fmt.Errorf("Source server has instance %q in project %q using deprecated key %q", inst.Name, project.Name, key))
-				}
-			}
-
-			for deviceName, device := range inst.Devices {
-				for _, key := range deprecatedInstanceDeviceConfigs {
-					_, ok := device[key]
-					if ok {
-						errors = append(errors, fmt.Errorf("Source server has device %q for instance %q in project %q using deprecated key %q", deviceName, inst.Name, project.Name, key))
-					}
-				}
-			}
-		}
-
-		profiles, err := c.GetProfiles()
-		if err != nil {
-			fmt.Errorf("Couldn't list profiles in project %q: %w", err)
-		}
-
-		for _, profile := range profiles {
-			for _, key := range deprecatedInstanceConfigs {
-				_, ok := profile.Config[key]
-				if ok {
-					errors = append(errors, fmt.Errorf("Source server has profile %q in project %q using deprecated key %q", profile.Name, project.Name, key))
-				}
-			}
-
-			for deviceName, device := range profile.Devices {
-				for _, key := range deprecatedInstanceDeviceConfigs {
-					_, ok := device[key]
-					if ok {
-						errors = append(errors, fmt.Errorf("Source server has device %q for profile %q in project %q using deprecated key %q", deviceName, profile.Name, project.Name, key))
-					}
-				}
-			}
-		}
-	}
-
-	// Cluster validation.
-	if srcServerInfo.Environment.ServerClustered {
-		clusterMembers, err := srcClient.GetClusterMembers()
-		if err != nil {
-			return fmt.Errorf("Failed to retrieve the list of cluster members")
-		}
-
-		for _, member := range clusterMembers {
-			if member.Status != "Online" {
-				errors = append(errors, fmt.Errorf("Cluster member %q isn't in the online state", member.ServerName))
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		fmt.Println("")
-		fmt.Println("Source server uses obsolete features:")
-		for _, err := range errors {
-			fmt.Printf(" - %s\n", err.Error())
-		}
-
-		return fmt.Errorf("Source server is using incompatible configuration")
-	}
-
-	return nil
 }
 
 func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
@@ -489,7 +147,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	// Configuration validation.
 	if !c.flagClusterMember {
-		err = c.validate(srcClient, targetClient)
+		err = c.validate(source, target)
 		if err != nil {
 			return err
 		}
@@ -508,6 +166,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 
 	// Mangle storage pool sources.
 	rewriteStatements := []string{}
+	rewriteCommands := [][]string{}
 
 	if !c.flagClusterMember {
 		var storagePools []lxdAPI.StoragePool
@@ -539,7 +198,31 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			}
 		}
 
+		rbdRenamed := []string{}
 		for _, pool := range storagePools {
+			if pool.Driver == "ceph" {
+				cluster, ok := pool.Config["ceph.cluster_name"]
+				if !ok {
+					cluster = "ceph"
+				}
+
+				client, ok := pool.Config["ceph.user.name"]
+				if !ok {
+					client = "admin"
+				}
+
+				rbdPool, ok := pool.Config["ceph.osd.pool_name"]
+				if !ok {
+					rbdPool = pool.Name
+				}
+
+				renameCmd := []string{"rbd", "rename", "--cluster", cluster, "--name", client, fmt.Sprintf("%s/lxd_%s", rbdPool, rbdPool), fmt.Sprintf("%s/incus_%s", rbdPool, rbdPool)}
+				if !util.ValueInSlice(pool.Name, rbdRenamed) {
+					rewriteCommands = append(rewriteCommands, renameCmd)
+					rbdRenamed = append(rbdRenamed, pool.Name)
+				}
+			}
+
 			source := pool.Config["source"]
 			if source == "" || source[0] != byte('/') {
 				continue
@@ -576,8 +259,13 @@ Instances will come back online once the migration is complete.
 The migration is now ready to proceed.
 
 A cluster environment was detected.
-Manual action will be needed on each of the server prior to Incus being functional.
-The migration will begin by shutting down instances on all servers.
+Manual action will be needed on each of the server prior to Incus being functional.`)
+
+			if os.Getenv("CLUSTER_NO_STOP") != "1" {
+				fmt.Println("The migration will begin by shutting down instances on all servers.")
+			}
+
+			fmt.Println(`
 It will then convert the current server over to Incus and then wait for the other servers to be converted.
 
 Do not attempt to manually run this tool on any of the other servers in the cluster.
@@ -596,7 +284,7 @@ Instead this tool will be providing specific commands for each of the servers.
 	}
 
 	// Cluster evacuation.
-	if !c.flagClusterMember && clustered {
+	if !c.flagClusterMember && clustered && os.Getenv("CLUSTER_NO_EVACUTE") != "1" {
 		fmt.Println("=> Stopping all workloads on the cluster")
 
 		clusterMembers, err := srcClient.GetClusterMembers()
@@ -706,9 +394,22 @@ Instead this tool will be providing specific commands for each of the servers.
 
 	// Apply custom SQL statements.
 	if !c.flagClusterMember {
-		err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0600)
-		if err != nil {
-			return fmt.Errorf("Failed to write database path: %w", err)
+		if len(rewriteStatements) > 0 {
+			fmt.Println("=> Writing database patch")
+			err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0600)
+			if err != nil {
+				return fmt.Errorf("Failed to write database path: %w", err)
+			}
+		}
+
+		if len(rewriteCommands) > 0 {
+			fmt.Println("=> Running data migration commands")
+			for _, cmd := range rewriteCommands {
+				_, err := subprocess.RunCommand(cmd[0], cmd[1:]...)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
@@ -739,6 +440,11 @@ Instead this tool will be providing specific commands for each of the servers.
 
 		for _, entry := range entries {
 			srcPath := filepath.Join(targetPaths.Daemon, dir, entry.Name())
+
+			if entry.Type()&os.ModeSymlink != os.ModeSymlink {
+				continue
+			}
+
 			oldTarget, err := os.Readlink(srcPath)
 			if err != nil {
 				return fmt.Errorf("Failed to resolve symlink %q: %w", srcPath, err)
