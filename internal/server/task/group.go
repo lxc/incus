@@ -62,10 +62,12 @@ func (g *Group) Start(ctx context.Context) {
 
 			// Ensure running map is updated before wait group Done() is called.
 			g.mu.Lock()
-			g.running[i] = false
-			g.mu.Unlock()
+			defer g.mu.Unlock()
 
-			g.wg.Done()
+			if g.running != nil {
+				g.running[i] = false
+				g.wg.Done()
+			}
 		}(i)
 	}
 }
