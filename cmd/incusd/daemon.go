@@ -563,14 +563,22 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 				return response.NotImplemented(nil)
 			}
 
+			// All APIEndpointActions should have an access handler or should allow untrusted requests.
+			if action.AccessHandler == nil && !action.AllowUntrusted {
+				return response.InternalError(fmt.Errorf("Access handler not defined for %s %s", r.Method, r.URL.RequestURI()))
+			}
+
+			// If the request is not trusted, only call the handler if the action allows it.
+			if !trusted && !action.AllowUntrusted {
+				return response.Forbidden(errors.New("You must be authenticated"))
+			}
+
+			// Call the access handler if there is one.
 			if action.AccessHandler != nil {
-				// Defer access control to custom handler
 				resp := action.AccessHandler(d, r)
 				if resp != response.EmptySyncResponse {
 					return resp
 				}
-			} else if !action.AllowUntrusted {
-				return response.Forbidden(nil)
 			}
 
 			return action.Handler(d, r)
