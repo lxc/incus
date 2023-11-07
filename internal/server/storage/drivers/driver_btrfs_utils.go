@@ -95,6 +95,17 @@ func (d *btrfs) isSubvolume(path string) bool {
 	return true
 }
 
+func (d *btrfs) hasSubvolumes(path string) (bool, error) {
+	var stdout strings.Builder
+
+	err := subprocess.RunCommandWithFds(d.state.ShutdownCtx, nil, &stdout, "btrfs", "subvolume", "list", "-o", path)
+	if err != nil {
+		return false, err
+	}
+
+	return stdout.Len() > 0, nil
+}
+
 func (d *btrfs) getSubvolumes(path string) ([]string, error) {
 	poolMountPath := GetPoolMountPath(d.name)
 	if !strings.HasPrefix(path, poolMountPath+"/") {
