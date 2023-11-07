@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-10-30 10:05+0800\n"
+"POT-Creation-Date: 2023-11-10 21:45-0500\n"
 "PO-Revision-Date: 2022-03-10 15:06+0000\n"
 "Last-Translator: Wivik <seb+weblate@zedas.fr>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/linux-containers/"
@@ -2773,6 +2773,11 @@ msgstr ""
 #: cmd/incus/cluster.go:842
 #, fuzzy, c-format
 msgid "Failed converting token operation to join token: %w"
+msgstr "Profil à appliquer au nouveau conteneur"
+
+#: cmd/incus/delete.go:149
+#, fuzzy, c-format
+msgid "Failed deleting instance %q in project %q: %w"
 msgstr "Profil à appliquer au nouveau conteneur"
 
 #: cmd/incus/storage_volume.go:511
@@ -6825,7 +6830,7 @@ msgstr "Arrêter le conteneur s'il est en cours d'exécution"
 msgid "Stopping instance failed!"
 msgstr "L'arrêt du conteneur a échoué !"
 
-#: cmd/incus/delete.go:115
+#: cmd/incus/delete.go:120
 #, fuzzy, c-format
 msgid "Stopping the instance failed: %s"
 msgstr "L'arrêt du conteneur a échoué !"
@@ -7088,7 +7093,7 @@ msgstr ""
 msgid "The following unknown volumes have been found:"
 msgstr ""
 
-#: cmd/incus/delete.go:99
+#: cmd/incus/delete.go:104
 #, fuzzy
 msgid "The instance is currently running, stop it first or pass --force"
 msgstr ""
