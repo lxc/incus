@@ -148,7 +148,7 @@ _have incus && {
       restricted.devices.gpu restricted.devices.usb restricted.devices.nic restricted.devices.disk \
       restricted.devices.pci restricted.devices.proxy"
 
-    storage_pool_keys="source size btrfs.mount_options ceph.cluster_name \
+    storage_pool_keys="source size btrfs.mount_options btrfs.nodatacow ceph.cluster_name \
       ceph.osd.pg_num ceph.osd.pool_name ceph.osd.data_pool_name \
       ceph.rbd.clone_copy ceph.rbd.du ceph.rbd.features ceph.user.name cephfs.cluster_name cephfs.path \
       cephfs.fscache cephfs.vg_name lvm.thinpool_name lvm.thinpool_metadata_size lvm.use_thinpool \

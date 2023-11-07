@@ -325,6 +325,13 @@ This introduces the `btrfs.mount_options` property for Btrfs storage pools.
 
 This key controls what mount options will be used for the Btrfs storage pool.
 
+## `storage_btrfs_nodatacow`
+
+This introduces the `btrfs.nodatacow` property for Btrfs storage pools.
+
+This key controls if `chattr +C` will be invoked for storage volumes on Btrfs
+storage pools. The default value is `true`.
+
 ## `entity_description`
 
 This adds descriptions to entities like containers, snapshots, networks, storage pools and volumes.

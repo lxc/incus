@@ -64,6 +64,7 @@ var APIExtensions = []string{
 	"storage_rsync_bwlimit",
 	"network_vxlan_interface",
 	"storage_btrfs_mount_options",
+	"storage_btrfs_nodatacow",
 	"entity_description",
 	"image_force_refresh",
 	"storage_lvm_lv_resizing",

@@ -318,6 +318,7 @@ func (d *btrfs) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
 		"size":                validate.Optional(validate.IsSize),
 		"btrfs.mount_options": validate.IsAny,
+		"btrfs.nodatacow":     validate.Optional(validate.IsBool),
 	}
 
 	return d.validatePool(config, rules, nil)
@@ -342,6 +343,11 @@ func (d *btrfs) Update(changedConfig map[string]string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	nodatacow, ok := changedConfig["btrfs.nodatacow"]
+	if ok {
+		d.config["btrfs.nodatacow"] = nodatacow
 	}
 
 	size, ok := changedConfig["size"]
