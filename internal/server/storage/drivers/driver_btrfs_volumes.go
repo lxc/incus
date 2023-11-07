@@ -68,6 +68,8 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 			return err
 		}
 
+		mountOptions := strings.Split(d.getMountOptions(), ",")
+
 		// Enable nodatacow on the parent directory so that when the root disk file is created the setting
 		// is inherited and random writes don't cause fragmentation and old extents to be kept.
 		// BTRFS extents are immutable so when blocks are written they end up in new extents and the old
@@ -79,7 +81,7 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 		// data being referenced.
 		//
 		// An exception is made for when compression is enabled on the underlying storage.
-		if !strings.Contains(mountinfo[len(mountinfo)-1], "compress") {
+		if !util.ValueInSlice("datacow", mountOptions) && !strings.Contains(mountinfo[len(mountinfo)-1], "compress") {
 			_, err = subprocess.RunCommand("chattr", "+C", volPath)
 			if err != nil {
 				return fmt.Errorf("Failed setting nodatacow on %q: %w", volPath, err)
