@@ -198,13 +198,13 @@ func (d *btrfs) Create() error {
 		hostPath := d.config["source"]
 		if d.isSubvolume(hostPath) {
 			// Existing btrfs subvolume.
-			subvols, err := d.getSubvolumes(hostPath)
+			hasSubvolumes, err := d.hasSubvolumes(hostPath)
 			if err != nil {
 				return fmt.Errorf("Could not determine if existing btrfs subvolume is empty: %w", err)
 			}
 
 			// Check that the provided subvolume is empty.
-			if len(subvols) > 0 {
+			if hasSubvolumes {
 				return fmt.Errorf("Requested btrfs subvolume exists but is not empty")
 			}
 		} else {
