@@ -72,7 +72,7 @@ func FSTypeToName(fsType int32) (string, error) {
 	return fmt.Sprintf("0x%x", fsType), nil
 }
 
-func parseMountinfo(name string) int {
+func hasMountEntry(name string) int {
 	// In case someone uses symlinks we need to look for the actual
 	// mountpoint.
 	actualPath, err := filepath.EvalSymlinks(name)
@@ -107,7 +107,7 @@ func parseMountinfo(name string) int {
 // IsMountPoint returns true if path is a mount point.
 func IsMountPoint(path string) bool {
 	// If we find a mount entry, it is obviously a mount point.
-	ret := parseMountinfo(path)
+	ret := hasMountEntry(path)
 	if ret == 1 {
 		return true
 	}
