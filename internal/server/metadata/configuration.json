@@ -731,7 +731,7 @@
 							"defaultdesc": "`false`",
 							"liveupdate": "yes",
 							"longdesc": "",
-							"shortdesc": "Whether to mount `shiftfs` on top of file systems handled through mount syscall interception",
+							"shortdesc": "Whether to use idmapped mounts for syscall interception",
 							"type": "bool"
 						}
 					},

@@ -686,7 +686,7 @@ Specify the mounts of a given file system that should be redirected to their FUS
 :condition: "container"
 :defaultdesc: "`false`"
 :liveupdate: "yes"
-:shortdesc: "Whether to mount `shiftfs` on top of file systems handled through mount syscall interception"
+:shortdesc: "Whether to use idmapped mounts for syscall interception"
 :type: "bool"
 
 ```
