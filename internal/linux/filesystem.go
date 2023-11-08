@@ -72,7 +72,7 @@ func FSTypeToName(fsType int32) (string, error) {
 	return fmt.Sprintf("0x%x", fsType), nil
 }
 
-func parseMountinfo(name string) int {
+func hasMountEntry(name string) int {
 	// In case someone uses symlinks we need to look for the actual
 	// mountpoint.
 	actualPath, err := filepath.EvalSymlinks(name)
@@ -107,7 +107,7 @@ func parseMountinfo(name string) int {
 // IsMountPoint returns true if path is a mount point.
 func IsMountPoint(path string) bool {
 	// If we find a mount entry, it is obviously a mount point.
-	ret := parseMountinfo(path)
+	ret := hasMountEntry(path)
 	if ret == 1 {
 		return true
 	}
@@ -264,4 +264,36 @@ func IsBlockdevPath(pathName string) bool {
 
 	fm := sb.Mode()
 	return ((fm&os.ModeDevice != 0) && (fm&os.ModeCharDevice == 0))
+}
+
+// GetMountinfo tracks down the mount entry for the path and returns all MountInfo fields.
+func GetMountinfo(path string) ([]string, error) {
+	stat := &unix.Statx_t{}
+	err := unix.Statx(0, path, 0, 0, stat)
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := os.Open("/proc/self/mountinfo")
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		tokens := strings.Fields(line)
+		if len(tokens) < 5 {
+			continue
+		}
+
+		if tokens[0] == fmt.Sprintf("%d", stat.Mnt_id) {
+			return tokens, nil
+		}
+	}
+
+	return nil, fmt.Errorf("No mountinfo entry found")
 }
