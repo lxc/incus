@@ -172,13 +172,17 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 
 	// Support for server-side move. Currently, such migration can only move an instance to different project
 	// or storage pool. If specific profile, device or config is provided, the instance should be copied (move using copy).
-	if sourceRemote == destRemote && (c.flagStorage != "" || c.flagTargetProject != "") && (len(c.flagConfig) == 0 && len(c.flagDevice) == 0 && len(c.flagProfile) == 0 && !c.flagNoProfiles) {
+	if sourceRemote == destRemote && c.flagStorage != "" || c.flagTargetProject != "" {
 		source, err := conf.GetInstanceServer(sourceRemote)
 		if err != nil {
 			return err
 		}
 
 		if source.HasExtension("instance_pool_move") && source.HasExtension("instance_project_move") {
+			if len(c.flagConfig) != 0 || len(c.flagDevice) != 0 || len(c.flagProfile) != 0 || c.flagNoProfiles {
+				return fmt.Errorf("The move command does not support flags --config, --device, --profile, and --no-profiles. Please use copy instead")
+			}
+
 			if c.flagMode != moveDefaultMode {
 				return fmt.Errorf(i18n.G("The --mode flag can't be used with --storage or --target-project"))
 			}
