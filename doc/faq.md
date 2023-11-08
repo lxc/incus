@@ -40,7 +40,7 @@ For unprivileged containers, you need to make sure that the user in the containe
 Otherwise, all files will show up as the overflow UID/GID (`65536:65536`) and access to anything that's not world-readable will fail.
 Use either of the following methods to grant the required permissions:
 
-- Pass `shift=true` to the [`incus config device add`](incus_config_device_add.md) call. This depends on the kernel and file system supporting either idmapped mounts or shiftfs (see [`incus info`](incus_info.md)).
+- Pass `shift=true` to the [`incus config device add`](incus_config_device_add.md) call. This depends on the kernel and file system supporting either idmapped mounts (see [`incus info`](incus_info.md)).
 - Add a `raw.idmap` entry (see [Idmaps for user namespace](userns-idmap.md)).
 - Place recursive POSIX ACLs on your home directory.
 
