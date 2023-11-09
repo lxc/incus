@@ -1645,8 +1645,8 @@ func (c *cmdStorageVolumeMove) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Rename volume if both remotes and pools of source and target are equal
-	// and no destination cluster member name is set.
-	if srcRemote == dstRemote && srcVolPool == dstVolPool && c.storageVolume.flagDestinationTarget == "" {
+	// and neither destination cluster member name nor target project are set.
+	if srcRemote == dstRemote && srcVolPool == dstVolPool && c.storageVolume.flagDestinationTarget == "" && c.storageVolumeCopy.flagTargetProject == "" {
 		var args []string
 
 		if srcRemote != "" {
