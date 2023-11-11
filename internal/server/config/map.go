@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
+	"unicode"
 
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/util"
@@ -184,6 +186,13 @@ func (m *Map) update(values map[string]string) ([]string, error) {
 func (m *Map) set(name string, value string, initial bool) (bool, error) {
 	// Bypass schema for user.* keys
 	if internalInstance.IsUserConfig(name) {
+		for _, r := range strings.TrimPrefix(name, "user.") {
+			// Only allow letters, digits, and punctuation characters.
+			if !unicode.In(r, unicode.Letter, unicode.Digit, unicode.Punct) {
+				return false, fmt.Errorf("Invalid key name")
+			}
+		}
+
 		current, ok := m.values[name]
 		if ok && value == current {
 			// Value is unchanged

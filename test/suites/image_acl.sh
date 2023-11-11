@@ -4,7 +4,7 @@ test_image_acl() {
   # Launch a new container with an ACL applied file
   incus launch testimage c1
   CONTAINER_PID="$(incus query /1.0/instances/c1?recursion=1 | jq '.state.pid')"
-  incus exec c1 touch foo
+  incus exec c1 -- touch foo
   setfacl -m user:1000001:rwx "/proc/$CONTAINER_PID/root/root/foo"
   setfacl -m group:1000001:rwx "/proc/$CONTAINER_PID/root/root/foo"
 

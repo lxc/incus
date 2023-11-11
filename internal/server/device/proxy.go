@@ -407,7 +407,8 @@ func (d *proxy) setupNAT() error {
 			return err
 		}
 
-		if nicType != "bridged" {
+		// Check if the instance has a NIC with a static IP that is reachable from the host.
+		if !util.ValueInSlice(nicType, []string{"bridged", "routed"}) {
 			continue
 		}
 

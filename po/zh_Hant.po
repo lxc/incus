@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-10-30 10:05+0800\n"
+"POT-Creation-Date: 2023-11-10 21:45-0500\n"
 "PO-Revision-Date: 2022-03-10 15:11+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Chinese (Traditional) <https://hosted.weblate.org/projects/"
@@ -2361,6 +2361,11 @@ msgstr ""
 #: cmd/incus/cluster.go:842
 #, c-format
 msgid "Failed converting token operation to join token: %w"
+msgstr ""
+
+#: cmd/incus/delete.go:149
+#, c-format
+msgid "Failed deleting instance %q in project %q: %w"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:511
@@ -6073,7 +6078,7 @@ msgstr ""
 msgid "Stopping instance failed!"
 msgstr ""
 
-#: cmd/incus/delete.go:115
+#: cmd/incus/delete.go:120
 #, c-format
 msgid "Stopping the instance failed: %s"
 msgstr ""
@@ -6328,7 +6333,7 @@ msgstr ""
 msgid "The following unknown volumes have been found:"
 msgstr ""
 
-#: cmd/incus/delete.go:99
+#: cmd/incus/delete.go:104
 msgid "The instance is currently running, stop it first or pass --force"
 msgstr ""
 

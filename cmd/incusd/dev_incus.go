@@ -407,7 +407,7 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 	 * 1. Walk up the process tree until you see something that looks like
 	 *    an lxc monitor process and extract its name from there.
 	 *
-	 * 2. If this fails, it may be that someone did an `lxc exec foo bash`,
+	 * 2. If this fails, it may be that someone did an `incus exec foo -- bash`,
 	 *    so the process isn't actually a descendant of the container's
 	 *    init. In this case we just look through all the containers until
 	 *    we find an init with a matching pid namespace. This is probably

@@ -14,7 +14,7 @@ test_metrics() {
   ! incus query "/1.0/metrics" | grep "name=\"c2\"" || false
 
   # create new certificate
-  openssl req -x509 -newkey rsa:2048 -keyout "${TEST_DIR}/metrics.key" -nodes -out "${TEST_DIR}/metrics.crt" -subj "/CN=incus.local"
+  gen_cert_and_key "${TEST_DIR}/metrics.key" "${TEST_DIR}/metrics.crt" "metrics.local"
 
   # this should fail as the certificate is not trusted yet
   curl -k -s --cert "${TEST_DIR}/metrics.crt" --key "${TEST_DIR}/metrics.key" -X GET "https://${INCUS_ADDR}/1.0/metrics" | grep "\"error_code\":403"
@@ -48,6 +48,9 @@ test_metrics() {
   ! curl -k -s -X GET "https://${metrics_addr}/1.0/metrics" | grep "name=\"c1\"" || false
   incus config set core.metrics_authentication=false
   curl -k -s -X GET "https://${metrics_addr}/1.0/metrics" | grep "name=\"c1\""
+
+  # Filesystem metrics should contain instance type
+  curl -k -s -X GET "https://${metrics_addr}/1.0/metrics" | grep "incus_filesystem_avail_bytes" | grep "type=\"container\""
 
   incus delete -f c1 c2
 }

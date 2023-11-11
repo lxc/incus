@@ -8351,7 +8351,7 @@ func (d *lxc) getFSStats() (*metrics.MetricSet, error) {
 		FSType     string
 	}
 
-	out := metrics.NewMetricSet(map[string]string{"project": d.project.Name, "name": d.name})
+	out := metrics.NewMetricSet(nil)
 
 	mounts, err := os.ReadFile("/proc/mounts")
 	if err != nil {

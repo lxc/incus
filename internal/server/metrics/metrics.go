@@ -61,14 +61,24 @@ func (m *MetricSet) AddSamples(metricType MetricType, samples ...Sample) {
 	m.set[metricType] = append(m.set[metricType], samples...)
 }
 
-// Merge merges two MetricSets.
+// Merge merges two MetricSets. Missing labels from m's samples are added to all samples in n.
 func (m *MetricSet) Merge(metricSet *MetricSet) {
 	if metricSet == nil {
 		return
 	}
 
-	for k := range metricSet.set {
-		m.set[k] = append(m.set[k], metricSet.set[k]...)
+	for metricType := range metricSet.set {
+		for _, sample := range metricSet.set[metricType] {
+			// Add missing labels from m.
+			for k, v := range m.labels {
+				_, ok := sample.Labels[k]
+				if !ok {
+					sample.Labels[k] = v
+				}
+			}
+
+			m.set[metricType] = append(m.set[metricType], sample)
+		}
 	}
 }
 

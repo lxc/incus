@@ -82,6 +82,11 @@ func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
 
 	// Process with deletion.
 	for _, resource := range resources {
+		connInfo, err := resource.server.GetConnectionInfo()
+		if err != nil {
+			return err
+		}
+
 		if c.flagInteractive {
 			err := c.promptDelete(resource.name)
 			if err != nil {
@@ -141,7 +146,7 @@ func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
 
 		err = c.doDelete(resource.server, resource.name)
 		if err != nil {
-			return err
+			return fmt.Errorf(i18n.G("Failed deleting instance %q in project %q: %w"), resource.name, connInfo.Project, err)
 		}
 	}
 	return nil

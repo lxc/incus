@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-10-30 10:05+0800\n"
+"POT-Creation-Date: 2023-11-10 21:45-0500\n"
 "PO-Revision-Date: 2022-03-10 15:08+0000\n"
 "Last-Translator: Renato dos Santos <renato.santos@wplex.com.br>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -2702,6 +2702,11 @@ msgstr ""
 #, fuzzy, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "Nome de membro do cluster"
+
+#: cmd/incus/delete.go:149
+#, fuzzy, c-format
+msgid "Failed deleting instance %q in project %q: %w"
+msgstr "Aceitar certificado"
 
 #: cmd/incus/storage_volume.go:511
 #, c-format
@@ -6565,7 +6570,7 @@ msgstr ""
 msgid "Stopping instance failed!"
 msgstr ""
 
-#: cmd/incus/delete.go:115
+#: cmd/incus/delete.go:120
 #, fuzzy, c-format
 msgid "Stopping the instance failed: %s"
 msgstr "Copiar a imagem: %s"
@@ -6827,7 +6832,7 @@ msgstr ""
 msgid "The following unknown volumes have been found:"
 msgstr ""
 
-#: cmd/incus/delete.go:99
+#: cmd/incus/delete.go:104
 msgid "The instance is currently running, stop it first or pass --force"
 msgstr ""
 

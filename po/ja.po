@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-10-30 10:05+0800\n"
+"POT-Creation-Date: 2023-11-10 21:45-0500\n"
 "PO-Revision-Date: 2023-03-10 15:14+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/linux-"
@@ -2700,6 +2700,11 @@ msgstr "証明書追加トークンのトークン変換操作に失敗しまし
 #, fuzzy, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "証明書追加トークンのトークン変換操作に失敗しました: %w"
+
+#: cmd/incus/delete.go:149
+#, fuzzy, c-format
+msgid "Failed deleting instance %q in project %q: %w"
+msgstr "新しいインスタンス名が取得できません"
 
 #: cmd/incus/storage_volume.go:511
 #, fuzzy, c-format
@@ -6785,7 +6790,7 @@ msgstr "実行中の場合、インスタンスを停止します"
 msgid "Stopping instance failed!"
 msgstr "インスタンスの停止に失敗しました！"
 
-#: cmd/incus/delete.go:115
+#: cmd/incus/delete.go:120
 #, c-format
 msgid "Stopping the instance failed: %s"
 msgstr "インスタンスの停止に失敗しました: %s"
@@ -7045,7 +7050,7 @@ msgstr ""
 msgid "The following unknown volumes have been found:"
 msgstr ""
 
-#: cmd/incus/delete.go:99
+#: cmd/incus/delete.go:104
 msgid "The instance is currently running, stop it first or pass --force"
 msgstr "インスタンスは実行中です。先に停止させるか、--force を指定してください"
 

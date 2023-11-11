@@ -429,7 +429,7 @@ test_clustering_containers() {
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus cluster remove node2 || false
 
   # Exec a command in the container via node1
-  INCUS_DIR="${INCUS_ONE_DIR}" incus exec foo ls / | grep -q proc
+  INCUS_DIR="${INCUS_ONE_DIR}" incus exec foo -- ls / | grep -qxF proc
 
   # Pull, push and delete files from the container via node1
   ! INCUS_DIR="${INCUS_ONE_DIR}" incus file pull foo/non-existing-file "${TEST_DIR}/non-existing-file" || false
@@ -1503,8 +1503,8 @@ used_by:
 EOF
   ) | INCUS_DIR="${INCUS_TWO_DIR}" incus profile edit web
 
-  INCUS_DIR="${INCUS_TWO_DIR}" incus exec c1 ls /mnt | grep -q hello
-  INCUS_DIR="${INCUS_TWO_DIR}" incus exec c2 ls /mnt | grep -q hello
+  INCUS_DIR="${INCUS_TWO_DIR}" incus exec c1 -- ls /mnt | grep -qxF hello
+  INCUS_DIR="${INCUS_TWO_DIR}" incus exec c2 -- ls /mnt | grep -qxF hello
 
   INCUS_DIR="${INCUS_TWO_DIR}" incus stop c1 --force
   INCUS_DIR="${INCUS_ONE_DIR}" incus stop c2 --force

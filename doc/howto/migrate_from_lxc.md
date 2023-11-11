@@ -14,7 +14,7 @@ However, this tool does not migrate any of the LXC container configuration.
 ## Get the tool
 
 If the tool isn't provided alongside your Incus installation, you can build it yourself.
-Make sure that you have `go` (version 1.18 or later) installed and get the tool with the following command:
+Make sure that you have `go` ({ref}`requirements-go`) installed and get the tool with the following command:
 
     go install github.com/lxc/incus/cmd/lxc-to-incus@latest
 

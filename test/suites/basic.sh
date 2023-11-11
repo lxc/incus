@@ -151,7 +151,7 @@ test_basic_usage() {
   incus publish bar --alias=foo-image --alias=foo-image2
   incus launch testimage baz
   # change the container filesystem so the resulting image is different
-  incus exec baz touch /somefile
+  incus exec baz -- touch /somefile
   incus stop baz --force
   # publishing another image with same alias should fail
   ! incus publish baz --alias=foo-image || false
@@ -173,7 +173,7 @@ test_basic_usage() {
   incus publish bar --alias=foo-image --alias=foo-image2
   incus launch testimage baz
   # change the container filesystem so the resulting image is different
-  incus exec baz touch /somefile
+  incus exec baz -- touch /somefile
   incus stop baz --force
   # publishing another image with same aliases
   incus publish baz --alias=foo-image --alias=foo-image2 --reuse
@@ -379,10 +379,10 @@ test_basic_usage() {
 
   # cycle it a few times
   incus start foo
-  mac1=$(incus exec foo cat /sys/class/net/eth0/address)
+  mac1=$(incus exec foo -- cat /sys/class/net/eth0/address)
   incus stop foo --force
   incus start foo
-  mac2=$(incus exec foo cat /sys/class/net/eth0/address)
+  mac2=$(incus exec foo -- cat /sys/class/net/eth0/address)
 
   if [ -n "${mac1}" ] && [ -n "${mac2}" ] && [ "${mac1}" != "${mac2}" ]; then
     echo "==> MAC addresses didn't match across restarts (${mac1} vs ${mac2})"
@@ -414,9 +414,9 @@ test_basic_usage() {
   [ "$(incus exec foo --user 1234 --group 5678 --cwd /blah -- pwd)" = "/blah" ] || false
 
   # check that we can set the environment
-  incus exec foo pwd | grep /root
-  incus exec --env BEST_BAND=meshuggah foo env | grep meshuggah
-  incus exec foo ip link show | grep eth0
+  incus exec foo -- pwd | grep /root
+  incus exec --env BEST_BAND=meshuggah foo -- env | grep meshuggah
+  incus exec foo -- ip link show | grep eth0
 
   # check that we can get the return code for a non- wait-for-websocket exec
   op=$(my_curl -X POST "https://${INCUS_ADDR}/1.0/instances/foo/exec" -d '{"command": ["echo", "test"], "environment": {}, "wait-for-websocket": false, "interactive": false}' | jq -r .operation)
@@ -426,11 +426,11 @@ test_basic_usage() {
   echo abc > "${INCUS_DIR}/in"
 
   incus file push "${INCUS_DIR}/in" foo/root/
-  incus exec foo /bin/cat /root/in | grep abc
+  incus exec foo -- /bin/cat /root/in | grep -xF abc
   incus exec foo -- /bin/rm -f root/in
 
   incus file push "${INCUS_DIR}/in" foo/root/in1
-  incus exec foo /bin/cat /root/in1 | grep abc
+  incus exec foo -- /bin/cat /root/in1 | grep -xF abc
   incus exec foo -- /bin/rm -f root/in1
 
   # test incus file edit doesn't change target file's owner and permissions
@@ -444,10 +444,14 @@ test_basic_usage() {
   # make sure stdin is chowned to our container root uid (Issue #590)
   [ -t 0 ] && [ -t 1 ] && incus exec foo -- chown 1000:1000 /proc/self/fd/0
 
-  echo foo | incus exec foo tee /tmp/foo
+  echo foo | incus exec foo -- tee /tmp/foo
+
+  # test exec with/without "--" separator
+  incus exec foo -- true
+  incus exec foo true
 
   # Detect regressions/hangs in exec
-  sum=$(ps aux | tee "${INCUS_DIR}/out" | incus exec foo md5sum | cut -d' ' -f1)
+  sum=$(ps aux | tee "${INCUS_DIR}/out" | incus exec foo -- md5sum | cut -d' ' -f1)
   [ "${sum}" = "$(md5sum "${INCUS_DIR}/out" | cut -d' ' -f1)" ]
   rm "${INCUS_DIR}/out"
 
@@ -568,7 +572,7 @@ test_basic_usage() {
         REBOOTED="true"
         break
       else
-        incus exec foo reboot || true  # Signal to running old init process to reboot if not rebooted yet.
+        incus exec foo -- reboot || true  # Signal to running old init process to reboot if not rebooted yet.
       fi
     fi
 
