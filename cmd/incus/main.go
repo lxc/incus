@@ -395,7 +395,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 			flush = true
 		}
 
-		if !util.ValueInSlice(cmd.Name(), []string{"init", "launch"}) {
+		if !util.ValueInSlice(cmd.Name(), []string{"create", "launch"}) {
 			fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:ubuntu/22.04
 Or for a virtual machine: incus launch images:ubuntu/22.04 --vm`)+"\n")
 			flush = true
