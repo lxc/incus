@@ -41,6 +41,7 @@ test_storage_local_volume_handling() {
 
     driver="${incus_backend}"
     pool="${pool_base}-${driver}"
+    project="${pool_base}-project"
     pool_opts=
 
     if [ "$driver" = "btrfs" ] || [ "$driver" = "zfs" ]; then
@@ -120,6 +121,14 @@ test_storage_local_volume_handling() {
     incus storage volume move "${pool}1/vol1" "${pool}1/vol4"
     incus storage volume move "${pool}1/vol4" "${pool}1/vol1"
 
+    # Move volume between projects
+    incus project create "${project}"
+    incus storage volume move "${pool}1/vol1" "${pool}1/vol1" --project default --target-project "${project}"
+    incus storage volume show "${pool}1" vol1 --project "${project}"
+    incus storage volume move "${pool}1/vol1" "${pool}1/vol1" --project "${project}" --target-project default
+    incus storage volume show "${pool}1" vol1 --project default
+
+    incus project delete "${project}"
     incus storage volume delete "${pool}1" vol1
     incus storage volume delete "${pool}1" vol2
     incus storage volume delete "${pool}1" vol3
