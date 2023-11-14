@@ -390,12 +390,12 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 		}
 
 		flush := false
-		if runInit {
+		if runInit && (cmd.Name() != "init" || cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
 			fmt.Fprintf(os.Stderr, i18n.G("If this is your first time running Incus on this machine, you should also run: incus admin init")+"\n")
 			flush = true
 		}
 
-		if !util.ValueInSlice(cmd.Name(), []string{"init", "launch"}) {
+		if !util.ValueInSlice(cmd.Name(), []string{"admin", "create", "launch"}) && (cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
 			fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:ubuntu/22.04
 Or for a virtual machine: incus launch images:ubuntu/22.04 --vm`)+"\n")
 			flush = true
