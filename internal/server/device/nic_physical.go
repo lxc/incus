@@ -40,10 +40,11 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader) error {
 		"name",
 		"boot.priority",
 		"gvrp",
+		"mtu",
 	}
 
 	if instConf.Type() == instancetype.Container || instConf.Type() == instancetype.Any {
-		optionalFields = append(optionalFields, "mtu", "hwaddr", "vlan")
+		optionalFields = append(optionalFields, "hwaddr", "vlan")
 	}
 
 	if d.config["network"] != "" {
