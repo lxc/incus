@@ -17,8 +17,8 @@ func Mirror(conn *websocket.Conn, rwc io.ReadWriteCloser) (chan error, chan erro
 	return chRead, chWrite
 }
 
-// MirrorRead is a uni-directional mirror which replicates an io.ReadCloser to a websocket.
-func MirrorRead(conn *websocket.Conn, rc io.ReadCloser) chan error {
+// MirrorRead is a uni-directional mirror which replicates an io.Reader to a websocket.
+func MirrorRead(conn *websocket.Conn, rc io.Reader) chan error {
 	chDone := make(chan error, 1)
 	if rc == nil {
 		close(chDone)

@@ -581,7 +581,7 @@ type InstanceConsoleLogArgs struct {
 // The InstanceExecArgs struct is used to pass additional options during instance exec.
 type InstanceExecArgs struct {
 	// Standard input
-	Stdin io.ReadCloser
+	Stdin io.Reader
 
 	// Standard output
 	Stdout io.Writer
