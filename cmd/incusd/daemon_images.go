@@ -66,13 +66,13 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	var remote incus.ImageServer
 	var info *api.Image
 
-	// Default protocol is Incus. Copy so that local modifications aren't propgated to args.
+	// Default protocol is Incus. Copy so that local modifications aren't propagated to args.
 	protocol := args.Protocol
 	if protocol == "" {
 		protocol = "incus"
 	}
 
-	// Copy so that local modifications aren't propgated to args.
+	// Copy so that local modifications aren't propagated to args.
 	alias := args.Alias
 
 	// Default the fingerprint to the alias string we received
