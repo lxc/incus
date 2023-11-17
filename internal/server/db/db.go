@@ -481,12 +481,25 @@ func dbQueryRowScan(c *Cluster, q string, args []any, outargs []any) error {
 	})
 }
 
-func doDbScan(c *Cluster, q string, args []any, outargs []any) ([][]any, error) {
+/*
+ * . db a reference to a sql.DB instance
+ * . q is the database query
+ * . inargs is an array of interfaces containing the query arguments
+ * . outfmt is an array of interfaces containing the right types of output
+ *   arguments, i.e.
+ *      var arg1 string
+ *      var arg2 int
+ *      outfmt := {}any{arg1, arg2}
+ *
+ * The result will be an array (one per output row) of arrays (one per output argument)
+ * of interfaces, containing pointers to the actual output arguments.
+ */
+func queryScan(c *Cluster, q string, inargs []any, outfmt []any) ([][]any, error) {
 	result := [][]any{}
 
 	err := c.retry(func() error {
 		return query.Transaction(context.TODO(), c.db, func(ctx context.Context, tx *sql.Tx) error {
-			rows, err := tx.QueryContext(ctx, q, args...)
+			rows, err := tx.QueryContext(ctx, q, inargs...)
 			if err != nil {
 				return err
 			}
@@ -494,9 +507,9 @@ func doDbScan(c *Cluster, q string, args []any, outargs []any) ([][]any, error) 
 			defer func() { _ = rows.Close() }()
 
 			for rows.Next() {
-				ptrargs := make([]any, len(outargs))
-				for i := range outargs {
-					switch t := outargs[i].(type) {
+				ptrargs := make([]any, len(outfmt))
+				for i := range outfmt {
+					switch t := outfmt[i].(type) {
 					case string:
 						str := ""
 						ptrargs[i] = &str
@@ -518,9 +531,9 @@ func doDbScan(c *Cluster, q string, args []any, outargs []any) ([][]any, error) 
 					return err
 				}
 
-				newargs := make([]any, len(outargs))
+				newargs := make([]any, len(outfmt))
 				for i := range ptrargs {
-					switch t := outargs[i].(type) {
+					switch t := outfmt[i].(type) {
 					case string:
 						newargs[i] = *ptrargs[i].(*string)
 					case int:
@@ -549,23 +562,6 @@ func doDbScan(c *Cluster, q string, args []any, outargs []any) ([][]any, error) 
 	}
 
 	return result, nil
-}
-
-/*
- * . db a reference to a sql.DB instance
- * . q is the database query
- * . inargs is an array of interfaces containing the query arguments
- * . outfmt is an array of interfaces containing the right types of output
- *   arguments, i.e.
- *      var arg1 string
- *      var arg2 int
- *      outfmt := {}any{arg1, arg2}
- *
- * The result will be an array (one per output row) of arrays (one per output argument)
- * of interfaces, containing pointers to the actual output arguments.
- */
-func queryScan(c *Cluster, q string, inargs []any, outfmt []any) ([][]any, error) {
-	return doDbScan(c, q, inargs, outfmt)
 }
 
 func exec(c *Cluster, q string, args ...any) error {
