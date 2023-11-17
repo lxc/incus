@@ -577,7 +577,13 @@ func (c *Cluster) storagePools(where string, args ...any) ([]string, error) {
 		inargs = append(inargs, args...)
 	}
 
-	result, err := queryScan(c, stmt, inargs, outargs)
+	var result [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		result, err = queryScan(ctx, tx, stmt, inargs, outargs)
+		return err
+	})
 	if err != nil {
 		return []string{}, err
 	}
@@ -602,7 +608,13 @@ func (c *Cluster) GetStoragePoolDrivers() ([]string, error) {
 	inargs := []any{}
 	outargs := []any{poolDriver}
 
-	result, err := queryScan(c, query, inargs, outargs)
+	var result [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		result, err = queryScan(ctx, tx, query, inargs, outargs)
+		return err
+	})
 	if err != nil {
 		return []string{}, err
 	}

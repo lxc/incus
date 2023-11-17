@@ -150,7 +150,14 @@ JOIN projects ON projects.id=instances.project_id
 WHERE projects.name=? AND instances.name=?`
 	inargs := []any{projectName, name}
 	outfmt := []any{name}
-	dbResults, err := queryScan(c, q, inargs, outfmt)
+
+	var dbResults [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		dbResults, err = queryScan(ctx, tx, q, inargs, outfmt)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +264,14 @@ func (c *Cluster) GetExpiredInstanceBackups() ([]InstanceBackup, error) {
 
 	q := `SELECT instances_backups.name, instances_backups.expiry_date, instances_backups.instance_id FROM instances_backups`
 	outfmt := []any{name, expiryDate, instanceID}
-	dbResults, err := queryScan(c, q, nil, outfmt)
+
+	var dbResults [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		dbResults, err = queryScan(ctx, tx, q, nil, outfmt)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +398,14 @@ WHERE projects.name=? AND storage_volumes.name=?
 ORDER BY storage_volumes_backups.id`
 	inargs := []any{projectName, volumeName}
 	outfmt := []any{volumeName}
-	dbResults, err := queryScan(c, q, inargs, outfmt)
+
+	var dbResults [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		dbResults, err = queryScan(ctx, tx, q, inargs, outfmt)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

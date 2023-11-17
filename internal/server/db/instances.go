@@ -998,7 +998,14 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 `
 	inargs := []any{project, name}
 	outfmt := []any{name}
-	dbResults, err := queryScan(c, q, inargs, outfmt)
+
+	var dbResults [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		dbResults, err = queryScan(ctx, tx, q, inargs, outfmt)
+		return err
+	})
 	if err != nil {
 		return result, err
 	}
@@ -1024,7 +1031,14 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 	var numstr string
 	inargs := []any{project, name}
 	outfmt := []any{numstr}
-	results, err := queryScan(c, q, inargs, outfmt)
+
+	var results [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		results, err = queryScan(ctx, tx, q, inargs, outfmt)
+		return err
+	})
 	if err != nil {
 		return 0
 	}

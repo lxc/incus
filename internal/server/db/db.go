@@ -482,69 +482,60 @@ func dbQueryRowScan(ctx context.Context, c *ClusterTx, q string, args []any, out
  * The result will be an array (one per output row) of arrays (one per output argument)
  * of interfaces, containing pointers to the actual output arguments.
  */
-func queryScan(c *Cluster, q string, inargs []any, outfmt []any) ([][]any, error) {
+func queryScan(ctx context.Context, c *ClusterTx, q string, inargs []any, outfmt []any) ([][]any, error) {
 	result := [][]any{}
 
-	err := query.Retry(context.TODO(), func(ctx context.Context) error {
-		return query.Transaction(ctx, c.db, func(ctx context.Context, tx *sql.Tx) error {
-			rows, err := tx.QueryContext(ctx, q, inargs...)
-			if err != nil {
-				return err
+	rows, err := c.tx.QueryContext(ctx, q, inargs...)
+	if err != nil {
+		return [][]any{}, err
+	}
+
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		ptrargs := make([]any, len(outfmt))
+		for i := range outfmt {
+			switch t := outfmt[i].(type) {
+			case string:
+				str := ""
+				ptrargs[i] = &str
+			case int:
+				integer := 0
+				ptrargs[i] = &integer
+			case int64:
+				integer := int64(0)
+				ptrargs[i] = &integer
+			case bool:
+				boolean := bool(false)
+				ptrargs[i] = &boolean
+			default:
+				return [][]any{}, fmt.Errorf("Bad interface type: %s", t)
 			}
+		}
+		err = rows.Scan(ptrargs...)
+		if err != nil {
+			return [][]any{}, err
+		}
 
-			defer func() { _ = rows.Close() }()
-
-			for rows.Next() {
-				ptrargs := make([]any, len(outfmt))
-				for i := range outfmt {
-					switch t := outfmt[i].(type) {
-					case string:
-						str := ""
-						ptrargs[i] = &str
-					case int:
-						integer := 0
-						ptrargs[i] = &integer
-					case int64:
-						integer := int64(0)
-						ptrargs[i] = &integer
-					case bool:
-						boolean := bool(false)
-						ptrargs[i] = &boolean
-					default:
-						return fmt.Errorf("Bad interface type: %s", t)
-					}
-				}
-				err = rows.Scan(ptrargs...)
-				if err != nil {
-					return err
-				}
-
-				newargs := make([]any, len(outfmt))
-				for i := range ptrargs {
-					switch t := outfmt[i].(type) {
-					case string:
-						newargs[i] = *ptrargs[i].(*string)
-					case int:
-						newargs[i] = *ptrargs[i].(*int)
-					case int64:
-						newargs[i] = *ptrargs[i].(*int64)
-					case bool:
-						newargs[i] = *ptrargs[i].(*bool)
-					default:
-						return fmt.Errorf("Bad interface type: %s", t)
-					}
-				}
-				result = append(result, newargs)
+		newargs := make([]any, len(outfmt))
+		for i := range ptrargs {
+			switch t := outfmt[i].(type) {
+			case string:
+				newargs[i] = *ptrargs[i].(*string)
+			case int:
+				newargs[i] = *ptrargs[i].(*int)
+			case int64:
+				newargs[i] = *ptrargs[i].(*int64)
+			case bool:
+				newargs[i] = *ptrargs[i].(*bool)
+			default:
+				return [][]any{}, fmt.Errorf("Bad interface type: %s", t)
 			}
+		}
+		result = append(result, newargs)
+	}
 
-			err = rows.Err()
-			if err != nil {
-				return err
-			}
-
-			return nil
-		})
-	})
+	err = rows.Err()
 	if err != nil {
 		return [][]any{}, err
 	}
