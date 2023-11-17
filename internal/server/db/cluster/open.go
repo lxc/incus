@@ -155,7 +155,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 	schema.Hook(hook)
 
 	var initial int
-	err := query.Retry(func() error {
+	err := query.Retry(context.TODO(), func(_ context.Context) error {
 		var err error
 		initial, err = schema.Ensure(db)
 		return err

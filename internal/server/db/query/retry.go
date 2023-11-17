@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -21,12 +22,16 @@ const maxRetries = 250
 // case a transient error is hit.
 //
 // This should by typically used to wrap transactions.
-func Retry(f func() error) error {
+func Retry(ctx context.Context, f func(ctx context.Context) error) error {
 	// TODO: the retry loop should be configurable.
 	var err error
 	for i := 0; i < maxRetries; i++ {
-		err = f()
+		err = f(ctx)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				break
+			}
+
 			// No point in re-trying or logging a no-row or not found error.
 			if errors.Is(err, sql.ErrNoRows) || api.StatusErrorCheck(err, http.StatusNotFound) {
 				break

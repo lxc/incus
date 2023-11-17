@@ -338,7 +338,7 @@ func (c *Cluster) transaction(ctx context.Context, f func(context.Context, *Clus
 		nodeID: c.nodeID,
 	}
 
-	return c.retry(func() error {
+	return query.Retry(ctx, func(ctx context.Context) error {
 		txFunc := func(ctx context.Context, tx *sql.Tx) error {
 			clusterTx.tx = tx
 			return f(ctx, clusterTx)
@@ -355,14 +355,6 @@ func (c *Cluster) transaction(ctx context.Context, f func(context.Context, *Clus
 
 		return err
 	})
-}
-
-func (c *Cluster) retry(f func() error) error {
-	if c.closingCtx.Err() != nil {
-		return f()
-	}
-
-	return query.Retry(f)
 }
 
 // NodeID sets the node NodeID associated with this cluster instance. It's used for
@@ -474,8 +466,8 @@ func DqliteLatestSegment() (string, error) {
 }
 
 func dbQueryRowScan(c *Cluster, q string, args []any, outargs []any) error {
-	return c.retry(func() error {
-		return query.Transaction(context.TODO(), c.db, func(ctx context.Context, tx *sql.Tx) error {
+	return query.Retry(context.TODO(), func(ctx context.Context) error {
+		return query.Transaction(ctx, c.db, func(ctx context.Context, tx *sql.Tx) error {
 			return tx.QueryRowContext(ctx, q, args...).Scan(outargs...)
 		})
 	})
@@ -497,8 +489,8 @@ func dbQueryRowScan(c *Cluster, q string, args []any, outargs []any) error {
 func queryScan(c *Cluster, q string, inargs []any, outfmt []any) ([][]any, error) {
 	result := [][]any{}
 
-	err := c.retry(func() error {
-		return query.Transaction(context.TODO(), c.db, func(ctx context.Context, tx *sql.Tx) error {
+	err := query.Retry(context.TODO(), func(ctx context.Context) error {
+		return query.Transaction(ctx, c.db, func(ctx context.Context, tx *sql.Tx) error {
 			rows, err := tx.QueryContext(ctx, q, inargs...)
 			if err != nil {
 				return err
@@ -565,8 +557,8 @@ func queryScan(c *Cluster, q string, inargs []any, outfmt []any) ([][]any, error
 }
 
 func exec(c *Cluster, q string, args ...any) error {
-	err := c.retry(func() error {
-		return query.Transaction(context.TODO(), c.db, func(ctx context.Context, tx *sql.Tx) error {
+	err := query.Retry(context.TODO(), func(ctx context.Context) error {
+		return query.Transaction(ctx, c.db, func(ctx context.Context, tx *sql.Tx) error {
 			_, err := tx.Exec(q, args...)
 			return err
 		})
