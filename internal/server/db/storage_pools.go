@@ -908,7 +908,10 @@ func (c *Cluster) RemoveStoragePool(poolName string) (*api.StoragePool, error) {
 		return nil, err
 	}
 
-	err = exec(c, "DELETE FROM storage_pools WHERE id=?", poolID)
+	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, "DELETE FROM storage_pools WHERE id=?", poolID)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

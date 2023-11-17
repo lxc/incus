@@ -219,7 +219,10 @@ func (c *Cluster) DeleteInstanceBackup(name string) error {
 		return err
 	}
 
-	err = exec(c, "DELETE FROM instances_backups WHERE id=?", id)
+	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, "DELETE FROM instances_backups WHERE id=?", id)
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -484,7 +487,10 @@ func (c *Cluster) DeleteStoragePoolVolumeBackup(name string) error {
 		return err
 	}
 
-	err = exec(c, "DELETE FROM storage_volumes_backups WHERE id=?", id)
+	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, "DELETE FROM storage_volumes_backups WHERE id=?", id)
+		return err
+	})
 	if err != nil {
 		return err
 	}

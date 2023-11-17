@@ -542,13 +542,3 @@ func queryScan(ctx context.Context, c *ClusterTx, q string, inargs []any, outfmt
 
 	return result, nil
 }
-
-func exec(c *Cluster, q string, args ...any) error {
-	err := query.Retry(context.TODO(), func(ctx context.Context) error {
-		return query.Transaction(ctx, c.db, func(ctx context.Context, tx *sql.Tx) error {
-			_, err := tx.Exec(q, args...)
-			return err
-		})
-	})
-	return err
-}

@@ -978,8 +978,11 @@ func (c *Cluster) UpdateInstanceStatefulFlag(id int, stateful bool) error {
 // UpdateInstanceSnapshotCreationDate updates the creation_date field of the instance snapshot with ID.
 func (c *Cluster) UpdateInstanceSnapshotCreationDate(instanceID int, date time.Time) error {
 	stmt := `UPDATE instances_snapshots SET creation_date=? WHERE id=?`
-	err := exec(c, stmt, date, instanceID)
-	return err
+
+	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, stmt, date, instanceID)
+		return err
+	})
 }
 
 // GetInstanceSnapshotsNames returns the names of all snapshots of the instance

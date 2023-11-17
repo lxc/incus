@@ -898,12 +898,10 @@ func (c *Cluster) DeleteNetwork(project string, name string) error {
 		return err
 	}
 
-	err = exec(c, "DELETE FROM networks WHERE id=?", id)
-	if err != nil {
+	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, "DELETE FROM networks WHERE id=?", id)
 		return err
-	}
-
-	return nil
+	})
 }
 
 // RenameNetwork renames a network.

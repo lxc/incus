@@ -168,12 +168,11 @@ DELETE FROM profiles_config WHERE profile_id NOT IN (SELECT id FROM profiles);
 DELETE FROM profiles_devices WHERE profile_id NOT IN (SELECT id FROM profiles);
 DELETE FROM profiles_devices_config WHERE profile_device_id NOT IN (SELECT id FROM profiles_devices);
 `
-	err := exec(c, stmt)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, stmt)
+		return err
+	})
 }
 
 // ExpandInstanceConfig expands the given instance config with the config
