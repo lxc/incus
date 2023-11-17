@@ -171,6 +171,7 @@ jobs:
 
           mkdir -p ~/sdk/gotip
           tar -C ~/sdk/gotip -xzf gotip.tar.gz
+          rm gotip.tar.gz
           ~/sdk/gotip/bin/go version
           echo "PATH=$HOME/go/bin:$HOME/sdk/gotip/bin/:$PATH" >> $GITHUB_ENV
         if: matrix.go == 'tip'
