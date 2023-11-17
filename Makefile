@@ -96,6 +96,7 @@ endif
 	go get github.com/mdlayher/socket@v0.4.1
 	go get github.com/openfga/go-sdk@v0.2.2
 	$(GO) mod tidy --go=1.20
+	$(GO) get toolchain@none
 
 	cd cmd/lxd-to-incus && $(GO) get -t -v -d -u ./...
 	cd cmd/lxd-to-incus && $(GO) mod tidy --go=1.20
