@@ -120,7 +120,10 @@ WHERE volumes.id=?
 `
 	arg1 := []any{snapshotID}
 	outfmt := []any{&args.ID, &args.Name, &args.CreationDate, &args.PoolName, &args.Type, &args.ProjectName}
-	err := dbQueryRowScan(c, q, arg1, outfmt)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, outfmt)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage pool volume snapshot not found")
@@ -146,7 +149,9 @@ func (c *Cluster) GetStorageVolumeSnapshotExpiry(volumeID int64) (time.Time, err
 	inargs := []any{volumeID}
 	outargs := []any{&expiry}
 
-	err := dbQueryRowScan(c, query, inargs, outargs)
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, query, inargs, outargs)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return expiry, api.StatusErrorf(http.StatusNotFound, "Storage pool volume snapshot not found")

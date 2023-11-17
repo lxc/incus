@@ -626,7 +626,9 @@ func (c *Cluster) GetStoragePoolID(poolName string) (int64, error) {
 	inargs := []any{poolName}
 	outargs := []any{&poolID}
 
-	err := dbQueryRowScan(c, query, inargs, outargs)
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, query, inargs, outargs)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return -1, api.StatusErrorf(http.StatusNotFound, "Storage pool not found")

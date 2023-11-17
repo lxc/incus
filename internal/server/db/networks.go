@@ -208,7 +208,9 @@ func (c *Cluster) GetNetworkNameAndProjectWithID(networkID int) (string, string,
 	inargs := []any{networkID}
 	outargs := []any{&networkName, &projectName}
 
-	err := dbQueryRowScan(c, q, inargs, outargs)
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, inargs, outargs)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", "", api.StatusErrorf(http.StatusNotFound, "Network not found")

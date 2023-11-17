@@ -44,7 +44,10 @@ func (c *Cluster) getInstanceBackupID(name string) (int, error) {
 	id := -1
 	arg1 := []any{name}
 	arg2 := []any{&id}
-	err := dbQueryRowScan(c, q, arg1, arg2)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, arg2)
+	})
 	if err == sql.ErrNoRows {
 		return -1, api.StatusErrorf(http.StatusNotFound, "Instance backup not found")
 	}
@@ -71,7 +74,10 @@ SELECT instances_backups.id, instances_backups.instance_id,
 	arg1 := []any{projectName, name}
 	arg2 := []any{&args.ID, &args.InstanceID, &args.CreationDate,
 		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt}
-	err := dbQueryRowScan(c, q, arg1, arg2)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, arg2)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Instance backup not found")
@@ -110,7 +116,10 @@ SELECT instances_backups.name, instances_backups.instance_id,
 	arg1 := []any{backupID}
 	arg2 := []any{&args.Name, &args.InstanceID, &args.CreationDate,
 		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt}
-	err := dbQueryRowScan(c, q, arg1, arg2)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, arg2)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Instance backup not found")
@@ -436,7 +445,10 @@ func (c *Cluster) getStoragePoolVolumeBackupID(name string) (int, error) {
 	id := -1
 	arg1 := []any{name}
 	arg2 := []any{&id}
-	err := dbQueryRowScan(c, q, arg1, arg2)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, arg2)
+	})
 	if err == sql.ErrNoRows {
 		return -1, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")
 	}
@@ -478,7 +490,10 @@ WHERE projects.name=? AND backups.name=?
 `
 	arg1 := []any{projectName, backupName}
 	outfmt := []any{&args.ID, &args.VolumeID, &args.Name, &args.CreationDate, &args.ExpiryDate, &args.VolumeOnly, &args.OptimizedStorage}
-	err := dbQueryRowScan(c, q, arg1, outfmt)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, outfmt)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")
@@ -509,7 +524,10 @@ WHERE backups.id=?
 `
 	arg1 := []any{backupID}
 	outfmt := []any{&args.ID, &args.VolumeID, &args.Name, &args.CreationDate, &args.ExpiryDate, &args.VolumeOnly, &args.OptimizedStorage}
-	err := dbQueryRowScan(c, q, arg1, outfmt)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, outfmt)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")

@@ -465,12 +465,8 @@ func DqliteLatestSegment() (string, error) {
 	return "none", nil
 }
 
-func dbQueryRowScan(c *Cluster, q string, args []any, outargs []any) error {
-	return query.Retry(context.TODO(), func(ctx context.Context) error {
-		return query.Transaction(ctx, c.db, func(ctx context.Context, tx *sql.Tx) error {
-			return tx.QueryRowContext(ctx, q, args...).Scan(outargs...)
-		})
-	})
+func dbQueryRowScan(ctx context.Context, c *ClusterTx, q string, args []any, outargs []any) error {
+	return c.tx.QueryRowContext(ctx, q, args...).Scan(outargs...)
 }
 
 /*
