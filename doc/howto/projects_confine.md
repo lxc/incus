@@ -25,7 +25,7 @@ Use the following command to add a restricted client certificate:
 
 ```{group-tab} Add client certificate
 
-    incus config trust add <certificate_file> --projects <project_name> --restricted
+    incus config trust add-certificate <certificate_file> --projects <project_name> --restricted
 ```
 
 ````

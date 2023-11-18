@@ -85,7 +85,7 @@ The command requires OpenSSL version 1.1.0 or later.
 
 Then add this certificate to the list of trusted clients, specifying the type as `metrics`:
 
-    incus config trust add metrics.crt --type=metrics
+    incus config trust add-certificate metrics.crt --type=metrics
 
 If requiring TLS client authentication isn't possible in your environment, the `/1.0/metrics` API endpoint can be made available to unauthenticated clients.
 While not recommended, this might be acceptable if you have other controls in place to restrict who can reach that API endpoint. To disable the authentication on the metrics API:
