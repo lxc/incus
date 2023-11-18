@@ -93,8 +93,8 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -d -u ./...
-	go get github.com/mdlayher/socket@v0.4.1
-	go get github.com/openfga/go-sdk@v0.2.2
+	$(GO) get github.com/mdlayher/socket@v0.4.1
+	$(GO) get github.com/openfga/go-sdk@v0.2.2
 	$(GO) mod tidy --go=1.20
 	$(GO) get toolchain@none
 
@@ -127,7 +127,7 @@ endif
 .PHONY: update-metadata
 update-metadata: build
 	@echo "Generating golang documentation metadata"
-	cd internal/server/config/generate && CGO_ENABLED=0 go build -o $(GOPATH)/bin/incus-doc
+	cd internal/server/config/generate && CGO_ENABLED=0 $(GO) build -o $(GOPATH)/bin/incus-doc
 	$(GOPATH)/bin/incus-doc . --json ./internal/server/metadata/configuration.json --txt ./doc/config_options.txt
 
 .PHONY: doc-setup
@@ -302,7 +302,7 @@ endif
 .PHONY: staticcheck
 staticcheck:
 ifeq ($(shell command -v staticcheck),)
-	(cd / ; go install -v -x honnef.co/go/tools/cmd/staticcheck@latest)
+	(cd / ; $(GO) install -v -x honnef.co/go/tools/cmd/staticcheck@latest)
 endif
 	# To get advance notice of deprecated function usage, consider running:
 	#   sed -i 's/^go 1\.[0-9]\+$/go 1.18/' go.mod
