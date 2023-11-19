@@ -237,6 +237,38 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 	}
 
+	// Mangle OVS/OVN.
+	srcServerInfo, _, err := srcClient.GetServer()
+	if err != nil {
+		return fmt.Errorf("Failed to get source server info: %w", err)
+	}
+
+	ovnNB, ok := srcServerInfo.Config["network.ovn.northbound_connection"].(string)
+	if ok && ovnNB != "" {
+		if !c.flagClusterMember {
+			out, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-remote")
+			if err != nil {
+				return fmt.Errorf("Failed to get OVN southbound database address: %w", err)
+			}
+
+			ovnSB := strings.TrimSpace(strings.Replace(out, "\"", "", -1))
+
+			commands, err := ovnConvert(ovnNB, ovnSB)
+			if err != nil {
+				return fmt.Errorf("Failed to prepare OVN conversion: %v", err)
+			}
+
+			rewriteCommands = append(rewriteCommands, commands...)
+		}
+
+		commands, err := ovsConvert()
+		if err != nil {
+			return fmt.Errorf("Failed to prepare OVS conversion: %v", err)
+		}
+
+		rewriteCommands = append(rewriteCommands, commands...)
+	}
+
 	// Confirm migration.
 	if !c.flagClusterMember && !c.flagYes {
 		if !clustered {
@@ -392,23 +424,21 @@ Instead this tool will be providing specific commands for each of the servers.
 		return fmt.Errorf("Failed to migrate database in %q: %w", filepath.Join(targetPaths.Daemon, "database"), err)
 	}
 
-	// Apply custom SQL statements.
-	if !c.flagClusterMember {
-		if len(rewriteStatements) > 0 {
-			fmt.Println("=> Writing database patch")
-			err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0600)
-			if err != nil {
-				return fmt.Errorf("Failed to write database path: %w", err)
-			}
+	// Apply custom migration statements.
+	if len(rewriteStatements) > 0 {
+		fmt.Println("=> Writing database patch")
+		err = os.WriteFile(filepath.Join(targetPaths.Daemon, "database", "patch.global.sql"), []byte(strings.Join(rewriteStatements, "\n")+"\n"), 0600)
+		if err != nil {
+			return fmt.Errorf("Failed to write database path: %w", err)
 		}
+	}
 
-		if len(rewriteCommands) > 0 {
-			fmt.Println("=> Running data migration commands")
-			for _, cmd := range rewriteCommands {
-				_, err := subprocess.RunCommand(cmd[0], cmd[1:]...)
-				if err != nil {
-					return err
-				}
+	if len(rewriteCommands) > 0 {
+		fmt.Println("=> Running data migration commands")
+		for _, cmd := range rewriteCommands {
+			_, err := subprocess.RunCommand(cmd[0], cmd[1:]...)
+			if err != nil {
+				return err
 			}
 		}
 	}
