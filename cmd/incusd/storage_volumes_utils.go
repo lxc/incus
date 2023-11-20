@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"strings"
 
 	"github.com/lxc/incus/internal/server/backup"
@@ -134,7 +135,13 @@ func storagePoolVolumeUsedByGet(s *state.State, requestProjectName string, poolN
 }
 
 func storagePoolVolumeBackupLoadByName(s *state.State, projectName, poolName, backupName string) (*backup.VolumeBackup, error) {
-	b, err := s.DB.Cluster.GetStoragePoolVolumeBackup(projectName, poolName, backupName)
+	var b db.StoragePoolVolumeBackup
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		b, err = tx.GetStoragePoolVolumeBackup(ctx, projectName, poolName, backupName)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -203,7 +203,12 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 
 	recursion := localUtil.IsRecursionRequest(r)
 
-	volumeBackups, err := s.DB.Cluster.GetStoragePoolVolumeBackups(projectName, volumeName, poolID)
+	var volumeBackups []db.StoragePoolVolumeBackup
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		volumeBackups, err = tx.GetStoragePoolVolumeBackups(ctx, projectName, volumeName, poolID)
+		return err
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -366,8 +371,13 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 	}
 
 	if req.Name == "" {
+		var backups []string
+
 		// come up with a name.
-		backups, err := s.DB.Cluster.GetStoragePoolVolumeBackupsNames(projectName, volumeName, poolID)
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			backups, err = tx.GetStoragePoolVolumeBackupsNames(ctx, projectName, volumeName, poolID)
+			return err
+		})
 		if err != nil {
 			return response.BadRequest(err)
 		}

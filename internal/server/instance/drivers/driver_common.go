@@ -210,8 +210,14 @@ func (d *common) Operation() *operations.Operation {
 
 // Backups returns a list of backups.
 func (d *common) Backups() ([]backup.InstanceBackup, error) {
+	var backupNames []string
+
 	// Get all the backups
-	backupNames, err := d.state.DB.Cluster.GetInstanceBackups(d.project.Name, d.name)
+	err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		backupNames, err = tx.GetInstanceBackups(ctx, d.project.Name, d.name)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
