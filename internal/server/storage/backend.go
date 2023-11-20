@@ -5129,8 +5129,14 @@ func (b *backend) RenameCustomVolume(projectName string, volName string, newVolN
 		})
 	}
 
+	var backups []db.StoragePoolVolumeBackup
+
 	// Rename each backup to have the new parent volume prefix.
-	backups, err := b.state.DB.Cluster.GetStoragePoolVolumeBackups(projectName, volName, b.ID())
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		backups, err = tx.GetStoragePoolVolumeBackups(ctx, projectName, volName, b.ID())
+		return err
+	})
 	if err != nil {
 		return err
 	}

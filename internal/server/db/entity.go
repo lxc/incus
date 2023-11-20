@@ -164,23 +164,24 @@ func (c *Cluster) GetURIFromEntity(entityType int, entityID int) (string, error)
 		}
 
 	case cluster.TypeInstanceBackup:
-		instanceBackup, err := c.GetInstanceBackupWithID(entityID)
-		if err != nil {
-			return "", fmt.Errorf("Failed to get instance backup: %w", err)
-		}
-
 		var instances []cluster.Instance
+		var instanceBackup InstanceBackup
 
 		err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+			instanceBackup, err = tx.GetInstanceBackupWithID(ctx, entityID)
+			if err != nil {
+				return fmt.Errorf("Failed to get instance backup: %w", err)
+			}
+
 			instances, err = cluster.GetInstances(ctx, tx.tx)
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed to get instances: %w", err)
 			}
 
 			return nil
 		})
 		if err != nil {
-			return "", fmt.Errorf("Failed to get instances: %w", err)
+			return "", err
 		}
 
 		for _, instance := range instances {
@@ -301,23 +302,24 @@ func (c *Cluster) GetURIFromEntity(entityType int, entityID int) (string, error)
 
 		uri = fmt.Sprintf(cluster.EntityURIs[entityType], args.PoolName, args.TypeName, args.Name, args.ProjectName)
 	case cluster.TypeStorageVolumeBackup:
-		backup, err := c.GetStoragePoolVolumeBackupWithID(entityID)
-		if err != nil {
-			return "", fmt.Errorf("Failed to get volume backup: %w", err)
-		}
-
 		var volume StorageVolumeArgs
+		var backup StoragePoolVolumeBackup
 
 		err = c.Transaction(c.closingCtx, func(ctx context.Context, tx *ClusterTx) error {
+			backup, err := tx.GetStoragePoolVolumeBackupWithID(ctx, entityID)
+			if err != nil {
+				return fmt.Errorf("Failed to get volume backup: %w", err)
+			}
+
 			volume, err = tx.GetStoragePoolVolumeWithID(ctx, int(backup.VolumeID))
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed to get storage volume: %w", err)
 			}
 
 			return nil
 		})
 		if err != nil {
-			return "", fmt.Errorf("Failed to get storage volume: %w", err)
+			return "", err
 		}
 
 		uri = fmt.Sprintf(cluster.EntityURIs[entityType], volume.PoolName, volume.TypeName, volume.Name, backup.Name, volume.ProjectName)

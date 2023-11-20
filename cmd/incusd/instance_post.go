@@ -346,8 +346,13 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if targetMemberInfo != nil {
+			var backups []string
+
 			// Check if instance has backups.
-			backups, err := s.DB.Cluster.GetInstanceBackups(projectName, name)
+			err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				backups, err = tx.GetInstanceBackups(ctx, projectName, name)
+				return err
+			})
 			if err != nil {
 				err = fmt.Errorf("Failed to fetch instance's backups: %w", err)
 				return response.SmartError(err)
