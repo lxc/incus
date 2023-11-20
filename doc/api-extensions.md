@@ -2284,3 +2284,6 @@ Calling `POST /1.0/storage-pools/<pool>/custom/<volume>?target=<target>` will mo
 
 ## `disk_io_bus`
 This introduces a new `io.bus` property to disk devices which can be used to override the bus the disk is attached to.
+
+## `storage_cephfs_create_missing`
+This introduces the configuration keys `cephfs.create_missing`, `cephfs.osd_pg_num`, `cephfs.meta_pool` and `cephfs.osd_pool` to be used when adding a `cephfs` storage pool to instruct Incus to create the necessary entities for the storage pool, if they do not exist.
