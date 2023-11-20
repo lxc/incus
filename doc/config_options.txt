@@ -1284,7 +1284,7 @@ Specify the number of days after which the unused cached image expires.
 ```{config:option} acme.ca_url server-acme
 :defaultdesc: "`https://acme-v02.api.letsencrypt.org/directory`"
 :scope: "global"
-:shortdesc: "Agree to ACME terms of service"
+:shortdesc: "URL to the directory resource of the ACME service"
 :type: "string"
 
 ```
