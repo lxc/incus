@@ -264,6 +264,10 @@ func (d *cephfs) Validate(config map[string]string) error {
 		"cephfs.fscache":         validate.Optional(validate.IsBool),
 		"cephfs.path":            validate.IsAny,
 		"cephfs.user.name":       validate.IsAny,
+		"cephfs.create_missing":  validate.Optional(validate.IsBool),
+		"cephfs.osd_pg_num":      validate.Optional(validate.IsInt64),
+		"cephfs.meta_pool":       validate.IsAny,
+		"cephfs.data_pool":       validate.IsAny,
 		"volatile.pool.pristine": validate.IsAny,
 	}
 
