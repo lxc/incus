@@ -218,7 +218,7 @@ Now you can run the daemon (the `--group sudo` bit allows everyone in the `sudo`
 group to talk to Incus; you can create your own group if you want):
 
 ```bash
-sudo -E PATH=${PATH} LD_LIBRARY_PATH=${LD_LIBRARY_PATH} $(go env GOPATH)/bin/incus --group sudo
+sudo -E PATH=${PATH} LD_LIBRARY_PATH=${LD_LIBRARY_PATH} $(go env GOPATH)/bin/incusd --group sudo
 ```
 
 ```{note}
