@@ -510,6 +510,12 @@ Instead this tool will be providing specific commands for each of the servers.
 	fmt.Println("=> Migrating database")
 	_, _ = logFile.WriteString("Migrating database files\n")
 
+	_, err = subprocess.RunCommand("cp", "-R", filepath.Join(targetPaths.Daemon, "database"), filepath.Join(targetPaths.Daemon, "database.pre-migrate"))
+	if err != nil {
+		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %w\n", err))
+		return fmt.Errorf("Failed to backup the database: %w", err)
+	}
+
 	err = migrateDatabase(filepath.Join(targetPaths.Daemon, "database"))
 	if err != nil {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %w\n", err))
