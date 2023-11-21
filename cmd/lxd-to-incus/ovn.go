@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/lxc/incus/shared/subprocess"
@@ -32,6 +35,46 @@ func ovsConvert() ([][]string, error) {
 	}
 
 	return commands, nil
+}
+
+func ovnBackup(nbDB string, sbDB string, target string) error {
+	// Backup the Northbound database.
+	nbStdout, err := os.Create(filepath.Join(target, "lxd-to-incus.ovn-nb.backup"))
+	if err != nil {
+		return err
+	}
+
+	defer nbStdout.Close()
+
+	err = nbStdout.Chmod(0600)
+	if err != nil {
+		return err
+	}
+
+	err = subprocess.RunCommandWithFds(context.Background(), nil, nbStdout, "ovsdb-client", "dump", "-f", "csv", nbDB, "OVN_Northbound")
+	if err != nil {
+		return err
+	}
+
+	// Backup the Southbound database.
+	sbStdout, err := os.Create(filepath.Join(target, "lxd-to-incus.ovn-sb.backup"))
+	if err != nil {
+		return err
+	}
+
+	defer sbStdout.Close()
+
+	err = sbStdout.Chmod(0600)
+	if err != nil {
+		return err
+	}
+
+	err = subprocess.RunCommandWithFds(context.Background(), nil, sbStdout, "ovsdb-client", "dump", "-f", "csv", sbDB, "OVN_Southbound")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func ovnConvert(nbDB string, sbDB string) ([][]string, error) {

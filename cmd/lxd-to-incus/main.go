@@ -303,6 +303,12 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			}
 
 			rewriteCommands = append(rewriteCommands, commands...)
+
+			err = ovnBackup(ovnNB, ovnSB, "/var/backups/")
+			if err != nil {
+				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %w\n", err))
+				return fmt.Errorf("Failed to backup the OVN database: %v", err)
+			}
 		}
 
 		commands, err := ovsConvert()
