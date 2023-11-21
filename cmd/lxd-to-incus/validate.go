@@ -370,5 +370,16 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 		return fmt.Errorf("The target path %q is a mountpoint. This isn't currently supported as the target path needs to be deleted during the migration.", targetPaths.Daemon)
 	}
 
+	sourcePaths, err := source.Paths()
+	if err != nil {
+		return fmt.Errorf("Failed to get source paths: %w", err)
+	}
+
+	srcFilesystem, _ := linux.DetectFilesystem(sourcePaths.Daemon)
+	targetFilesystem, _ := linux.DetectFilesystem(targetPaths.Daemon)
+	if srcFilesystem == "btrfs" && targetFilesystem != "btrfs" && !linux.IsMountPoint(sourcePaths.Daemon) {
+		return fmt.Errorf("Source daemon running on btrfs but being moved to non-btrfs target")
+	}
+
 	return nil
 }
