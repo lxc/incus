@@ -318,7 +318,7 @@ Instead this tool will be providing specific commands for each of the servers.
 	}
 
 	// Cluster evacuation.
-	if !c.flagClusterMember && clustered && os.Getenv("CLUSTER_NO_EVACUTE") != "1" {
+	if !c.flagClusterMember && clustered && os.Getenv("CLUSTER_NO_STOP") != "1" {
 		fmt.Println("=> Stopping all workloads on the cluster")
 
 		clusterMembers, err := srcClient.GetClusterMembers()
