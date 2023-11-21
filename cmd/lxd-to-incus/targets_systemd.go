@@ -51,3 +51,7 @@ func (s *targetSystemd) Paths() (*DaemonPaths, error) {
 		Cache:  "/var/cache/incus/",
 	}, nil
 }
+
+func (s *targetSystemd) Name() string {
+	return "systemd"
+}

@@ -10,6 +10,7 @@ type Target interface {
 	Start() error
 	Connect() (incus.InstanceServer, error)
 	Paths() (*DaemonPaths, error)
+	Name() string
 }
 
 var targets = []Target{&targetSystemd{}, &targetOpenRC{}}
