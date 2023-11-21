@@ -3803,8 +3803,10 @@ test_clustering_openfga() {
     return
   fi
 
-  echo "==> SKIP: Can't validate due to netns"
-  return
+  if true; then
+      echo "==> SKIP: Can't validate due to netns"
+      return
+  fi
 
   # shellcheck disable=2039,3043
   local INCUS_DIR
