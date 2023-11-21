@@ -122,6 +122,8 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		return fmt.Errorf("No target server could be found")
 	}
 
+	fmt.Printf("==> Detected: %s\n", target.Name())
+
 	// Connect to the servers.
 	clustered := c.flagClusterMember
 	if !c.flagClusterMember {

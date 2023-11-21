@@ -51,3 +51,7 @@ func (s *targetOpenRC) Paths() (*DaemonPaths, error) {
 		Cache:  "/var/cache/incus/",
 	}, nil
 }
+
+func (s *targetOpenRC) Name() string {
+	return "openrc"
+}
