@@ -598,7 +598,7 @@ Instead this tool will be providing specific commands for each of the servers.
 		}
 
 		if !ok {
-			os.Exit(1)
+			os.Exit(0)
 		}
 	}
 
