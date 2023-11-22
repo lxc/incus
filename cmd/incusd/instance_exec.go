@@ -103,23 +103,23 @@ func (s *execWs) Connect(op *operations.Operation, r *http.Request, w http.Respo
 					if err != nil {
 						logger.Warn("Failed setting TCP timeouts on remote connection", logger.Ctx{"err": err})
 					}
-
-					// Start channel keep alive to run until channel is closed.
-					go func() {
-						pingInterval := time.Second * 10
-						t := time.NewTicker(pingInterval)
-						defer t.Stop()
-
-						for {
-							err := conn.WriteControl(websocket.PingMessage, []byte("keepalive"), time.Now().Add(5*time.Second))
-							if err != nil {
-								return
-							}
-
-							<-t.C
-						}
-					}()
 				}
+
+				// Start channel keep alive to run until channel is closed.
+				go func() {
+					pingInterval := time.Second * 10
+					t := time.NewTicker(pingInterval)
+					defer t.Stop()
+
+					for {
+						err := conn.WriteControl(websocket.PingMessage, []byte("keepalive"), time.Now().Add(5*time.Second))
+						if err != nil {
+							return
+						}
+
+						<-t.C
+					}
+				}()
 
 				if fd == execWSControl {
 					s.waitControlConnected.Cancel() // Control connection connected.
