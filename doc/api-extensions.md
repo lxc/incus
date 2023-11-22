@@ -2287,3 +2287,8 @@ This introduces a new `io.bus` property to disk devices which can be used to ove
 
 ## `storage_cephfs_create_missing`
 This introduces the configuration keys `cephfs.create_missing`, `cephfs.osd_pg_num`, `cephfs.meta_pool` and `cephfs.osd_pool` to be used when adding a `cephfs` storage pool to instruct Incus to create the necessary entities for the storage pool, if they do not exist.
+
+## `instance_move_config`
+
+This API extension provides the ability to use flags `--profile`, `--no-profile`, `--device`, and `--config`
+when moving an instance between projects and/or storage pools.
