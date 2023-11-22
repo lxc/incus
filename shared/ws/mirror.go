@@ -30,8 +30,6 @@ func MirrorRead(conn *websocket.Conn, rc io.Reader) chan error {
 	connRWC := NewWrapper(conn)
 
 	go func() {
-		defer close(chDone)
-
 		_, err := io.Copy(connRWC, rc)
 
 		logger.Debug("Websocket: Stopped read mirror", logger.Ctx{"address": conn.RemoteAddr().String(), "err": err})
@@ -40,6 +38,7 @@ func MirrorRead(conn *websocket.Conn, rc io.Reader) chan error {
 		connRWC.Close()
 
 		chDone <- err
+		close(chDone)
 	}()
 
 	return chDone
@@ -58,11 +57,11 @@ func MirrorWrite(conn *websocket.Conn, wc io.Writer) chan error {
 	connRWC := NewWrapper(conn)
 
 	go func() {
-		defer close(chDone)
 		_, err := io.Copy(wc, connRWC)
 
 		logger.Debug("Websocket: Stopped write mirror", logger.Ctx{"address": conn.RemoteAddr().String(), "err": err})
 		chDone <- err
+		close(chDone)
 	}()
 
 	return chDone
