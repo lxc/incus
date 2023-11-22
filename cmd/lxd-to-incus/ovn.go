@@ -31,7 +31,7 @@ func ovsConvert() ([][]string, error) {
 	newValue := strings.Join(values, ",")
 
 	if oldValue != newValue {
-		commands = append(commands, []string{"ovs-vsctl", "set", "openv_vswitch", ".", fmt.Sprintf("external-ids:ovn-bridge-mappings=%s", newValue)})
+		commands = append(commands, []string{"ovs-vsctl", "set", "open_vswitch", ".", fmt.Sprintf("external-ids:ovn-bridge-mappings=%s", newValue)})
 	}
 
 	return commands, nil
