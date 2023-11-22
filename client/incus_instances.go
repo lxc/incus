@@ -1240,6 +1240,8 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 				dones[0] = ws.MirrorRead(conn, args.Stdin)
 			}
 
+			waitConns := 0 // Used for keeping track of when stdout and stderr have finished.
+
 			// Handle stdout
 			if fds["1"] != "" {
 				conn, err := r.GetOperationWebsocket(opAPI.ID, fds["1"])
@@ -1249,6 +1251,7 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 
 				conns = append(conns, conn)
 				dones[1] = ws.MirrorWrite(conn, args.Stdout)
+				waitConns++
 			}
 
 			// Handle stderr
@@ -1260,29 +1263,36 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 
 				conns = append(conns, conn)
 				dones[2] = ws.MirrorWrite(conn, args.Stderr)
+				waitConns++
 			}
 
 			// Wait for everything to be done
 			go func() {
-				for i, chDone := range dones {
-					// Skip stdin, dealing with it separately below
-					if i == 0 {
-						continue
+				for {
+					select {
+					case <-dones[0]:
+						// Handle stdin finish, but don't wait for it if output channels
+						// have all finished.
+						dones[0] = nil
+						_ = conns[0].Close()
+					case <-dones[1]:
+						dones[1] = nil
+						_ = conns[1].Close()
+						waitConns--
+					case <-dones[2]:
+						dones[2] = nil
+						_ = conns[2].Close()
+						waitConns--
 					}
 
-					<-chDone
-				}
+					if waitConns <= 0 {
+						// Close stdin websocket if defined and not already closed.
+						if dones[0] != nil {
+							conns[0].Close()
+						}
 
-				if fds["0"] != "" {
-					// Empty the stdin channel but don't block on it as
-					// stdin may be stuck in Read()
-					go func() {
-						<-dones[0]
-					}()
-				}
-
-				for _, conn := range conns {
-					_ = conn.Close()
+						break
+					}
 				}
 
 				if args.DataDone != nil {
