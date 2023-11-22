@@ -2489,7 +2489,7 @@ func (c *cmdStorageVolumeSnapshotShow) Command() *cobra.Command {
 
 	Add the name of the snapshot if type is one of custom, container or virtual-machine.
 
-	lxc storage volume show default virtual-machine/data/snap0
+	incus storage volume show default virtual-machine/data/snap0
 		Will show the properties of snapshot "snap0" for a virtual machine called "data" in the "default" pool.`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
