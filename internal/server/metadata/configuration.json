@@ -903,7 +903,7 @@
 						"volatile.apply_nvram": {
 							"longdesc": "",
 							"shortdesc": "Whether to regenerate VM NVRAM the next time the instance starts",
-							"type": "string"
+							"type": "bool"
 						}
 					},
 					{

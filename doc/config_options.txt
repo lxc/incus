@@ -837,7 +837,7 @@ The original VLAN used when moving a VF into an instance.
 
 ```{config:option} volatile.apply_nvram instance-volatile
 :shortdesc: "Whether to regenerate VM NVRAM the next time the instance starts"
-:type: "string"
+:type: "bool"
 
 ```
 
