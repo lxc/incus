@@ -166,10 +166,10 @@ func (c *cmdExec) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	var stdin io.ReadCloser
+	var stdin io.Reader
 	stdin = os.Stdin
 	if c.flagDisableStdin {
-		stdin = io.NopCloser(bytes.NewReader(nil))
+		stdin = bytes.NewReader(nil)
 	}
 
 	stdout := getStdout()
