@@ -166,7 +166,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	}
 
 	if clustered {
-		_, _ = logFile.WriteString("Source server is a cluster")
+		_, _ = logFile.WriteString("Source server is a cluster\n")
 	}
 
 	fmt.Println("=> Connecting to the target server")
@@ -432,7 +432,7 @@ Instead this tool will be providing specific commands for each of the servers.
 
 	// Unmount potential mount points.
 	for _, mount := range []string{"guestapi", "shmounts"} {
-		_, _ = logFile.WriteString(fmt.Sprintf("Unmounting %q", filepath.Join(targetPaths.Daemon, mount)))
+		_, _ = logFile.WriteString(fmt.Sprintf("Unmounting %q\n", filepath.Join(targetPaths.Daemon, mount)))
 		_ = unix.Unmount(filepath.Join(targetPaths.Daemon, mount), unix.MNT_DETACH)
 	}
 
