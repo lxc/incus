@@ -278,46 +278,40 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 	}
 
-	// Mangle OVS/OVN.
-	srcServerInfo, _, err := srcClient.GetServer()
-	if err != nil {
-		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-		return fmt.Errorf("Failed to get source server info: %w", err)
-	}
-
-	ovnNB, ok := srcServerInfo.Config["network.ovn.northbound_connection"].(string)
-	if ok && ovnNB != "" {
-		if !c.flagClusterMember {
-			out, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-remote")
-			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-				return fmt.Errorf("Failed to get OVN southbound database address: %w", err)
-			}
-
-			ovnSB := strings.TrimSpace(strings.Replace(out, "\"", "", -1))
-
-			commands, err := ovnConvert(ovnNB, ovnSB)
-			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-				return fmt.Errorf("Failed to prepare OVN conversion: %v", err)
-			}
-
-			rewriteCommands = append(rewriteCommands, commands...)
-
-			err = ovnBackup(ovnNB, ovnSB, "/var/backups/")
-			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-				return fmt.Errorf("Failed to backup the OVN database: %v", err)
-			}
-		}
-
-		commands, err := ovsConvert()
+	// Mangle OVN.
+	if !c.flagClusterMember {
+		srcServerInfo, _, err := srcClient.GetServer()
 		if err != nil {
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
-			return fmt.Errorf("Failed to prepare OVS conversion: %v", err)
+			return fmt.Errorf("Failed to get source server info: %w", err)
 		}
 
-		rewriteCommands = append(rewriteCommands, commands...)
+		ovnNB, ok := srcServerInfo.Config["network.ovn.northbound_connection"].(string)
+		if ok && ovnNB != "" {
+			if !c.flagClusterMember {
+				out, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-remote")
+				if err != nil {
+					_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+					return fmt.Errorf("Failed to get OVN southbound database address: %w", err)
+				}
+
+				ovnSB := strings.TrimSpace(strings.Replace(out, "\"", "", -1))
+
+				commands, err := ovnConvert(ovnNB, ovnSB)
+				if err != nil {
+					_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+					return fmt.Errorf("Failed to prepare OVN conversion: %v", err)
+				}
+
+				rewriteCommands = append(rewriteCommands, commands...)
+
+				err = ovnBackup(ovnNB, ovnSB, "/var/backups/")
+				if err != nil {
+					_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+					return fmt.Errorf("Failed to backup the OVN database: %v", err)
+				}
+			}
+		}
 	}
 
 	// Log rewrite actions.
@@ -694,10 +688,31 @@ Instead this tool will be providing specific commands for each of the servers.
 	fmt.Println("=> Checking the target server")
 	_, _ = logFile.WriteString("Checking target server\n")
 
-	_, _, err = targetClient.GetServer()
+	targetServerInfo, _, err := targetClient.GetServer()
 	if err != nil {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 		return fmt.Errorf("Failed to get target server info: %w", err)
+	}
+
+	// Fix OVS.
+	ovnNB, ok := targetServerInfo.Config["network.ovn.northbound_connection"]
+	if ok && ovnNB != "" {
+		commands, err := ovsConvert()
+		if err != nil {
+			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			return fmt.Errorf("Failed to prepare OVS conversion: %v", err)
+		}
+
+		_, _ = logFile.WriteString("Running OVS conversion commands:\n")
+		for _, cmd := range commands {
+			_, _ = logFile.WriteString(fmt.Sprintf(" - %+v\n", cmd))
+
+			_, err := subprocess.RunCommand(cmd[0], cmd[1:]...)
+			if err != nil {
+				_, _ = logFile.WriteString(fmt.Sprintf("Failed to run command: %v\n", err))
+				fmt.Fprintf(os.Stderr, "Failed to run command: %v\n", err)
+			}
+		}
 	}
 
 	// Cluster restore.
