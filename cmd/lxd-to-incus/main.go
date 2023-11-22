@@ -549,8 +549,8 @@ Instead this tool will be providing specific commands for each of the servers.
 
 			_, err := subprocess.RunCommand(cmd[0], cmd[1:]...)
 			if err != nil {
-				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %w\n", err))
-				return err
+				_, _ = logFile.WriteString(fmt.Sprintf("Failed to run command: %v\n", err))
+				fmt.Fprintf(os.Stderr, "Failed to run command: %v\n", err)
 			}
 		}
 	}
