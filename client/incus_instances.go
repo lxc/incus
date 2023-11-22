@@ -1197,6 +1197,10 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 				return nil, err
 			}
 
+			go func() {
+				_, _, _ = conn.ReadMessage() // Consume pings from server.
+			}()
+
 			go args.Control(conn)
 		}
 
@@ -1235,6 +1239,10 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 				if err != nil {
 					return nil, err
 				}
+
+				go func() {
+					_, _, _ = conn.ReadMessage() // Consume pings from server.
+				}()
 
 				conns = append(conns, conn)
 				dones[0] = ws.MirrorRead(conn, args.Stdin)
