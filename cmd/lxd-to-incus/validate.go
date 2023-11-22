@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 
 	lxdAPI "github.com/canonical/lxd/shared/api"
@@ -345,6 +346,10 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 
 		for _, member := range clusterMembers {
 			if member.Status != "Online" {
+				if os.Getenv("CLUSTER_NO_STOP") == "1" && member.Status == "Evacuated" {
+					continue
+				}
+
 				errors = append(errors, fmt.Errorf("Cluster member %q isn't in the online state", member.ServerName))
 			}
 		}
