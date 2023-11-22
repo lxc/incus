@@ -257,7 +257,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 					rbdPool = pool.Name
 				}
 
-				renameCmd := []string{"rbd", "rename", "--cluster", cluster, "--name", client, fmt.Sprintf("%s/lxd_%s", rbdPool, rbdPool), fmt.Sprintf("%s/incus_%s", rbdPool, rbdPool)}
+				renameCmd := []string{"rbd", "rename", "--cluster", cluster, "--name", fmt.Sprintf("client.%s", client), fmt.Sprintf("%s/lxd_%s", rbdPool, rbdPool), fmt.Sprintf("%s/incus_%s", rbdPool, rbdPool)}
 				if !util.ValueInSlice(pool.Name, rbdRenamed) {
 					rewriteCommands = append(rewriteCommands, renameCmd)
 					rbdRenamed = append(rbdRenamed, pool.Name)
