@@ -177,12 +177,15 @@ func qemuSerial(opts *qemuSerialOpts) []cfgSection {
 		comment: "Virtual serial bus",
 		entries: qemuDeviceEntries(&entriesOpts),
 	}, {
+		// Ring buffer used by the incus agent to report (write) its status to. Incus server will read
+		// its content via QMP using "ringbuf-read" command.
 		name:    fmt.Sprintf(`chardev "%s"`, opts.charDevName),
 		comment: "Serial identifier",
 		entries: []cfgEntry{
 			{key: "backend", value: "ringbuf"},
 			{key: "size", value: fmt.Sprintf("%dB", opts.ringbufSizeBytes)}},
 	}, {
+		// QEMU serial device connected to the above ring buffer.
 		name: `device "qemu_serial"`,
 		entries: []cfgEntry{
 			{key: "driver", value: "virtserialport"},
@@ -191,6 +194,10 @@ func qemuSerial(opts *qemuSerialOpts) []cfgSection {
 			{key: "bus", value: "dev-qemu_serial.0"},
 		},
 	}, {
+		// Legacy QEMU serial device, not connected to any ring buffer. Its purpose is to
+		// create a symlink in /dev/virtio-ports/, triggering a udev rule to start incus-agent.
+		// This is necessary for backward compatibility with virtual machines lacking the
+		// updated incus-agent-loader package, which includes updated udev rules and a systemd unit.
 		name: `device "qemu_serial_legacy"`,
 		entries: []cfgEntry{
 			{key: "driver", value: "virtserialport"},
