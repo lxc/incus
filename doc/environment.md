@@ -31,6 +31,7 @@ Name                            | Description
 :---                            | :----
 `INCUS_CLUSTER_UPDATE`          | Script to call on a cluster update
 `INCUS_DEVMONITOR_DIR`          | Path to be monitored by the device monitor. This is primarily for testing
+`INCUS_DOCUMENTATION`           | Path to the documentation to serve through the web server
 `INCUS_EXEC_PATH`               | Full path to the Incus binary (used when forking subcommands)
 `INCUS_IDMAPPED_MOUNTS_DISABLE` | Disable idmapped mounts support (useful when testing traditional UID shifting)
 `INCUS_LXC_TEMPLATE_CONFIG`     | Path to the LXC template configuration directory
