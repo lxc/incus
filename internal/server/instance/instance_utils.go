@@ -1056,7 +1056,7 @@ func MoveTemporaryName(inst Instance) (string, error) {
 		instUUID = uuid.New().String()
 		err := inst.VolatileSet(map[string]string{"volatile.uuid": instUUID})
 		if err != nil {
-			return "", fmt.Errorf("Failed generating instance UUID: %w", err)
+			return "", fmt.Errorf("Failed setting volatile.uuid to %s: %w", instUUID, err)
 		}
 	}
 
