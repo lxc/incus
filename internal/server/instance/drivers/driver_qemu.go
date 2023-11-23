@@ -2683,12 +2683,12 @@ PREFIX="/run/incus_agent"
 
 # Functions.
 mount_virtiofs() {
-    mount -t virtiofs config "${PREFIX}/.mnt" >/dev/null 2>&1
+    mount -t virtiofs config "${PREFIX}/.mnt" -o ro >/dev/null 2>&1
 }
 
 mount_9p() {
     modprobe 9pnet_virtio >/dev/null 2>&1 || true
-    mount -t 9p config "${PREFIX}/.mnt" -o access=0,trans=virtio,size=1048576 >/dev/null 2>&1
+    mount -t 9p config "${PREFIX}/.mnt" -o ro,access=0,trans=virtio,size=1048576 >/dev/null 2>&1
 }
 
 fail() {
