@@ -2752,7 +2752,8 @@ fi
 rm -f /lib/systemd/system/incus-agent-9p.service \
     /lib/systemd/system/incus-agent-virtiofs.service \
     /etc/systemd/system/multi-user.target.wants/incus-agent-9p.service \
-    /etc/systemd/system/multi-user.target.wants/incus-agent-virtiofs.service
+    /etc/systemd/system/multi-user.target.wants/incus-agent-virtiofs.service \
+    /etc/systemd/system/multi-user.target.wants/incus-agent.service
 
 # Install the units.
 cp udev/99-incus-agent.rules /lib/udev/rules.d/
