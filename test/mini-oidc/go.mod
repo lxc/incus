@@ -6,7 +6,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/google/uuid v1.4.0
-	github.com/zitadel/oidc/v3 v3.3.1
+	github.com/zitadel/oidc/v3 v3.4.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 	golang.org/x/text v0.14.0
 )
