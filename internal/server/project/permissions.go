@@ -1251,7 +1251,7 @@ func expandInstancesConfigAndDevices(instances []api.Instance, profiles []api.Pr
 }
 
 // Sum of the effective values for the given limits across all project
-// enties (instances and custom volumes).
+// entities (instances and custom volumes).
 func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset bool) (map[string]int64, error) {
 	totals := map[string]int64{}
 
