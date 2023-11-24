@@ -121,9 +121,9 @@ func (d *disk) CanHotPlug() bool {
 		return true
 	}
 
-	// A mount path indicates a filesystem disk being attached, which cannot be hot-plugged for VMs due to
-	// limitations with virtiofs.
-	if d.config["path"] != "" {
+	// Only VirtioFS works with path hotplug.
+	// As migration.stateful turns off VirtioFS, this also turns off hotplugging of paths.
+	if util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return false
 	}
 
