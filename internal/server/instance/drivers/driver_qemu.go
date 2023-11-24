@@ -5432,6 +5432,46 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				return err
 			}
 		}
+
+		// Device changes
+		for k, m := range removeDevices {
+			msg := map[string]any{
+				"action": "removed",
+				"name":   k,
+				"config": m,
+			}
+
+			err = d.devIncusEventSend("device", msg)
+			if err != nil {
+				return err
+			}
+		}
+
+		for k, m := range updateDevices {
+			msg := map[string]any{
+				"action": "updated",
+				"name":   k,
+				"config": m,
+			}
+
+			err = d.devIncusEventSend("device", msg)
+			if err != nil {
+				return err
+			}
+		}
+
+		for k, m := range addDevices {
+			msg := map[string]any{
+				"action": "added",
+				"name":   k,
+				"config": m,
+			}
+
+			err = d.devIncusEventSend("device", msg)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if userRequested {
