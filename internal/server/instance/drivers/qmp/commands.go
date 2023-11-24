@@ -519,6 +519,38 @@ func (m *Monitor) RemoveBlockDevice(blockDevName string) error {
 	return nil
 }
 
+// AddCharDevice adds a new character device.
+func (m *Monitor) AddCharDevice(device map[string]any) error {
+	if device != nil {
+		err := m.run("chardev-add", device, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// RemoveCharDevice removes a character device.
+func (m *Monitor) RemoveCharDevice(deviceID string) error {
+	if deviceID != "" {
+		deviceID := map[string]string{
+			"id": deviceID,
+		}
+
+		err := m.run("chardev-remove", deviceID, nil)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				return nil
+			}
+
+			return err
+		}
+	}
+
+	return nil
+}
+
 // AddDevice adds a new device.
 func (m *Monitor) AddDevice(device map[string]string) error {
 	if device != nil {
