@@ -903,7 +903,7 @@
 						"volatile.apply_nvram": {
 							"longdesc": "",
 							"shortdesc": "Whether to regenerate VM NVRAM the next time the instance starts",
-							"type": "string"
+							"type": "bool"
 						}
 					},
 					{
@@ -1398,7 +1398,7 @@
 							"defaultdesc": "`https://acme-v02.api.letsencrypt.org/directory`",
 							"longdesc": "",
 							"scope": "global",
-							"shortdesc": "Agree to ACME terms of service",
+							"shortdesc": "URL to the directory resource of the ACME service",
 							"type": "string"
 						}
 					},

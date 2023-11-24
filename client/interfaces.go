@@ -581,13 +581,13 @@ type InstanceConsoleLogArgs struct {
 // The InstanceExecArgs struct is used to pass additional options during instance exec.
 type InstanceExecArgs struct {
 	// Standard input
-	Stdin io.ReadCloser
+	Stdin io.Reader
 
 	// Standard output
-	Stdout io.WriteCloser
+	Stdout io.Writer
 
 	// Standard error
-	Stderr io.WriteCloser
+	Stderr io.Writer
 
 	// Control message handler (window resize, signals, ...)
 	Control func(conn *websocket.Conn)
