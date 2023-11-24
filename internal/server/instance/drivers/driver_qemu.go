@@ -2103,9 +2103,16 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 			}
 
 			for _, mount := range runConf.Mounts {
-				err = d.deviceAttachBlockDevice(dev.Name(), configCopy, mount)
-				if err != nil {
-					return nil, err
+				if mount.FSType == "9p" {
+					err = d.deviceAttachPath(dev.Name(), configCopy, mount)
+					if err != nil {
+						return nil, err
+					}
+				} else {
+					err = d.deviceAttachBlockDevice(dev.Name(), configCopy, mount)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 
@@ -2129,6 +2136,106 @@ func (d *qemu) deviceStart(dev device.Device, instanceRunning bool) (*deviceConf
 	return runConf, nil
 }
 
+func (d *qemu) deviceAttachPath(deviceName string, configCopy map[string]string, mount deviceConfig.MountEntryItem) error {
+	escapedDeviceName := linux.PathNameEncode(deviceName)
+	deviceID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
+	mountTag := fmt.Sprintf("incus_%s", deviceName)
+
+	// Detect virtiofsd path.
+	virtiofsdSockPath := filepath.Join(d.DevicesPath(), fmt.Sprintf("virtio-fs.%s.sock", deviceName))
+	if !util.PathExists(virtiofsdSockPath) {
+		return fmt.Errorf("Virtiofsd isn't running")
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+	if err != nil {
+		return fmt.Errorf("Failed to connect to QMP monitor: %w", err)
+	}
+
+	addr, err := net.ResolveUnixAddr("unix", virtiofsdSockPath)
+	if err != nil {
+		return err
+	}
+
+	virtiofsSock, err := net.DialUnix("unix", nil, addr)
+	if err != nil {
+		return fmt.Errorf("Error connecting to virtiofs socket %q: %w", virtiofsdSockPath, err)
+	}
+
+	defer func() { _ = virtiofsSock.Close() }() // Close file after device has been added.
+
+	virtiofsFile, err := virtiofsSock.File()
+	if err != nil {
+		return fmt.Errorf("Error opening virtiofs socket %q: %w", virtiofsdSockPath, err)
+	}
+
+	err = monitor.SendFile(virtiofsdSockPath, virtiofsFile)
+	if err != nil {
+		return fmt.Errorf("Failed to send virtiofs file descriptor: %w", err)
+	}
+
+	reverter.Add(func() { _ = monitor.CloseFile(virtiofsdSockPath) })
+
+	err = monitor.AddCharDevice(map[string]any{
+		"id": mountTag,
+		"backend": map[string]any{
+			"type": "socket",
+			"data": map[string]any{
+				"addr": map[string]any{
+					"type": "fd",
+					"data": map[string]any{
+						"str": virtiofsdSockPath,
+					},
+				},
+				"server": false,
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("Failed to add the character device: %w", err)
+	}
+
+	reverter.Add(func() { _ = monitor.RemoveCharDevice(mountTag) })
+
+	// Figure out a hotplug slot.
+	pciDevID := qemuPCIDeviceIDStart
+
+	// Iterate through all the instance devices in the same sorted order as is used when allocating the
+	// boot time devices in order to find the PCI bus slot device we would have used at boot time.
+	// Then attempt to use that same device, assuming it is available.
+	for _, dev := range d.expandedDevices.Sorted() {
+		if dev.Name == deviceName {
+			break // Found our device.
+		}
+
+		pciDevID++
+	}
+
+	pciDeviceName := fmt.Sprintf("%s%d", busDevicePortPrefix, pciDevID)
+	d.logger.Debug("Using PCI bus device to hotplug virtiofs into", logger.Ctx{"device": deviceName, "port": pciDeviceName})
+
+	qemuDev := map[string]string{
+		"driver":  "vhost-user-fs-pci",
+		"bus":     pciDeviceName,
+		"addr":    "00.0",
+		"tag":     mountTag,
+		"chardev": mountTag,
+		"id":      deviceID,
+	}
+
+	err = monitor.AddDevice(qemuDev)
+	if err != nil {
+		return fmt.Errorf("Failed to add the virtiofs device: %w", err)
+	}
+
+	reverter.Success()
+	return nil
+}
+
 func (d *qemu) deviceAttachBlockDevice(deviceName string, configCopy map[string]string, mount deviceConfig.MountEntryItem) error {
 	// Check if the agent is running.
 	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
@@ -2144,6 +2251,43 @@ func (d *qemu) deviceAttachBlockDevice(deviceName string, configCopy map[string]
 	err = monHook(monitor)
 	if err != nil {
 		return fmt.Errorf("Failed to call monitor hook for block device: %w", err)
+	}
+
+	return nil
+}
+
+func (d *qemu) deviceDetachPath(deviceName string, rawConfig deviceConfig.Device) error {
+	escapedDeviceName := linux.PathNameEncode(deviceName)
+	deviceID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
+	mountTag := fmt.Sprintf("incus_%s", deviceName)
+
+	// Check if the agent is running.
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+	if err != nil {
+		return err
+	}
+
+	err = monitor.RemoveDevice(deviceID)
+	if err != nil {
+		return err
+	}
+
+	waitDuration := time.Duration(time.Second * time.Duration(10))
+	waitUntil := time.Now().Add(waitDuration)
+	for {
+		err = monitor.RemoveCharDevice(mountTag)
+		if err == nil {
+			break
+		}
+
+		if api.StatusErrorCheck(err, http.StatusLocked) {
+			time.Sleep(time.Second * time.Duration(2))
+			continue
+		}
+
+		if time.Now().After(waitUntil) {
+			return fmt.Errorf("Failed to detach path device after %v: %w", waitDuration, err)
+		}
 	}
 
 	return nil
@@ -2288,9 +2432,16 @@ func (d *qemu) deviceStop(dev device.Device, instanceRunning bool, _ string) err
 
 		// Detach disk from running instance.
 		if configCopy["type"] == "disk" {
-			err = d.deviceDetachBlockDevice(dev.Name(), configCopy)
-			if err != nil {
-				return err
+			if configCopy["path"] != "" {
+				err = d.deviceDetachPath(dev.Name(), configCopy)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = d.deviceDetachBlockDevice(dev.Name(), configCopy)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
