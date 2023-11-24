@@ -34,7 +34,6 @@ import (
 	"github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/lifecycle"
@@ -918,7 +917,7 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 				// filesystem volume as well, allowing a former quota to be removed from both
 				// volumes.
 				if vmStateSize == "" && size != "" {
-					vmStateSize = deviceConfig.DefaultVMBlockFilesystemSize
+					vmStateSize = b.driver.Info().DefaultVMBlockFilesystemSize
 				}
 
 				l.Debug("Applying filesystem volume quota from root disk config", logger.Ctx{"size.state": vmStateSize})
