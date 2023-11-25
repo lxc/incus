@@ -18,7 +18,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.1
 	github.com/gosexy/gettext v0.0.0-20160830220431-74466a0a0c4a
-	github.com/grafana/dskit v0.0.0-20231120170505-765e343eda4f
+	github.com/grafana/dskit v0.0.0-20231124112300-b5ae864febe7
 	github.com/j-keck/arping v1.0.3
 	github.com/jaypipes/pcidb v1.0.0
 	github.com/jochenvg/go-udev v0.0.0-20171110120927-d6b62d56d37b
@@ -45,7 +45,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/zitadel/oidc/v2 v2.12.0
-	go.starlark.net v0.0.0-20231101134539-556fd59b42f6
+	go.starlark.net v0.0.0-20231121155337-90ade8b19d09
 	golang.org/x/crypto v0.15.0
 	golang.org/x/oauth2 v0.14.0
 	golang.org/x/sync v0.5.0
@@ -55,7 +55,7 @@ require (
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
+	k8s.io/utils v0.0.0-20231121161247-cf03d44ff3cf
 )
 
 require (

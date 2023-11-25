@@ -121,9 +121,9 @@ func (d *disk) CanHotPlug() bool {
 		return true
 	}
 
-	// A mount path indicates a filesystem disk being attached, which cannot be hot-plugged for VMs due to
-	// limitations with virtiofs.
-	if d.config["path"] != "" {
+	// Only VirtioFS works with path hotplug.
+	// As migration.stateful turns off VirtioFS, this also turns off hotplugging of paths.
+	if util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return false
 	}
 
@@ -999,26 +999,29 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					return nil, fmt.Errorf("Failed to setup virtiofsd for device %q: %w", d.name, err)
 				}
 
-				// Start virtfs-proxy-helper for 9p share (this will rewrite mount.DevPath with
-				// socket FD number so must come after starting virtiofsd).
-				err = func() error {
-					sockFile, cleanup, err := DiskVMVirtfsProxyStart(d.state.OS.ExecPath, d.vmVirtfsProxyHelperPaths(), mount.DevPath, rawIDMaps)
+				// We can't hotplug 9p shares, so only do 9p for stopped instances.
+				if !d.inst.IsRunning() {
+					// Start virtfs-proxy-helper for 9p share (this will rewrite mount.DevPath with
+					// socket FD number so must come after starting virtiofsd).
+					err = func() error {
+						sockFile, cleanup, err := DiskVMVirtfsProxyStart(d.state.OS.ExecPath, d.vmVirtfsProxyHelperPaths(), mount.DevPath, rawIDMaps)
+						if err != nil {
+							return err
+						}
+
+						revert.Add(cleanup)
+
+						// Request the unix socket is closed after QEMU has connected on startup.
+						runConf.PostHooks = append(runConf.PostHooks, sockFile.Close)
+
+						// Use 9p socket FD number as dev path so qemu can connect to the proxy.
+						mount.DevPath = fmt.Sprintf("%d", sockFile.Fd())
+
+						return nil
+					}()
 					if err != nil {
-						return err
+						return nil, fmt.Errorf("Failed to setup virtfs-proxy-helper for device %q: %w", d.name, err)
 					}
-
-					revert.Add(cleanup)
-
-					// Request the unix socket is closed after QEMU has connected on startup.
-					runConf.PostHooks = append(runConf.PostHooks, sockFile.Close)
-
-					// Use 9p socket FD number as dev path so qemu can connect to the proxy.
-					mount.DevPath = fmt.Sprintf("%d", sockFile.Fd())
-
-					return nil
-				}()
-				if err != nil {
-					return nil, fmt.Errorf("Failed to setup virtfs-proxy-helper for device %q: %w", d.name, err)
 				}
 			} else {
 				f, err := d.localSourceOpen(mount.DevPath)
