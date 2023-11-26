@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -28,6 +29,10 @@ func Match(obj any, set ClauseSet) (bool, error) {
 
 	if set.ParseRegexp == nil {
 		set.ParseRegexp = DefaultParseRegexp
+	}
+
+	if set.ParseStringSlice == nil {
+		set.ParseStringSlice = DefaultParseStringSlice
 	}
 
 	match := true
@@ -87,12 +92,25 @@ func DefaultParseRegexp(c Clause) (*regexp.Regexp, error) {
 	return regexp.Compile("(?i)" + regexpValue)
 }
 
+// DefaultParseStringSlice converts the value of the clause to a slice of string.
+func DefaultParseStringSlice(c Clause) ([]string, error) {
+	var val []string
+
+	err := json.Unmarshal([]byte(c.Value), &val)
+	if err != nil {
+		return nil, err
+	}
+
+	return val, nil
+}
+
 func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 	var valueStr string
 	var valueRegexp *regexp.Regexp
 	var valueInt int64
 	var valueUint uint64
 	var valueBool bool
+	var valueSlice []string
 	var err error
 
 	// If 'value' is type of string try to test value as a regexp.
@@ -112,6 +130,13 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 		valueUint, err = s.ParseUint(c)
 	case reflect.Bool:
 		valueBool, err = s.ParseBool(c)
+	case reflect.Slice:
+		if reflect.TypeOf(objValue).Elem().Kind() == reflect.String {
+			valueSlice, err = s.ParseStringSlice(c)
+		} else {
+			return false, fmt.Errorf("Invalid slice type %q for field %q", reflect.TypeOf(objValue).Elem().Kind(), c.Field)
+		}
+
 	default:
 		return false, fmt.Errorf("Invalid type %q for field %q", kind.String(), c.Field)
 	}
@@ -136,6 +161,22 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 			return objValue == valueUint, nil
 		case bool:
 			return objValue == valueBool, nil
+		case []string:
+			match := func() bool {
+				if len(objValue.([]string)) != len(valueSlice) {
+					return false
+				}
+
+				for k, v := range objValue.([]string) {
+					if valueSlice[k] != v {
+						return false
+					}
+				}
+
+				return true
+			}()
+
+			return match, nil
 		}
 
 	case s.Ops.NotEquals:
@@ -153,11 +194,27 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 			return objValue != valueUint, nil
 		case bool:
 			return objValue != valueBool, nil
+		case []string:
+			match := func() bool {
+				if len(objValue.([]string)) != len(valueSlice) {
+					return false
+				}
+
+				for k, v := range objValue.([]string) {
+					if valueSlice[k] != v {
+						return false
+					}
+				}
+
+				return true
+			}()
+
+			return !match, nil
 		}
 
 	case s.Ops.GreaterThan:
 		switch objValue.(type) {
-		case string, bool:
+		case string, bool, []string:
 			return false, fmt.Errorf("Invalid operator %q for field %q", c.Operator, c.Field)
 		case int, int8, int16, int32, int64:
 			return valInfo.Int() > valueInt, nil
@@ -167,7 +224,7 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 
 	case s.Ops.LessThan:
 		switch objValue.(type) {
-		case string, bool:
+		case string, bool, []string:
 			return false, fmt.Errorf("Invalid operator %q for field %q", c.Operator, c.Field)
 		case int, int8, int16, int32, int64:
 			return valInfo.Int() < valueInt, nil
@@ -177,7 +234,7 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 
 	case s.Ops.GreaterEqual:
 		switch objValue.(type) {
-		case string, bool:
+		case string, bool, []string:
 			return false, fmt.Errorf("Invalid operator %q for field %q", c.Operator, c.Field)
 		case int, int8, int16, int32, int64:
 			return valInfo.Int() >= valueInt, nil
@@ -187,7 +244,7 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 
 	case s.Ops.LessEqual:
 		switch objValue.(type) {
-		case string, bool:
+		case string, bool, []string:
 			return false, fmt.Errorf("Invalid operator %q for field %q", c.Operator, c.Field)
 		case int, int8, int16, int32, int64:
 			return valInfo.Int() <= valueInt, nil

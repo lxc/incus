@@ -23,11 +23,12 @@ type ClauseSet struct {
 	Clauses []Clause
 	Ops     OperatorSet
 
-	ParseInt    func(Clause) (int64, error)
-	ParseUint   func(Clause) (uint64, error)
-	ParseString func(Clause) (string, error)
-	ParseBool   func(Clause) (bool, error)
-	ParseRegexp func(Clause) (*regexp.Regexp, error)
+	ParseInt         func(Clause) (int64, error)
+	ParseUint        func(Clause) (uint64, error)
+	ParseString      func(Clause) (string, error)
+	ParseBool        func(Clause) (bool, error)
+	ParseRegexp      func(Clause) (*regexp.Regexp, error)
+	ParseStringSlice func(Clause) ([]string, error)
 }
 
 // Parse a user-provided filter string.
