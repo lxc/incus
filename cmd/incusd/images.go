@@ -1298,7 +1298,7 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 }
 
 func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectName string, public bool, clauses *filter.ClauseSet, hasPermission auth.PermissionChecker) (any, error) {
-	mustLoadObjects := recursion || clauses != nil
+	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
 
 	fingerprints, err := tx.GetImagesFingerprints(ctx, projectName, public)
 	if err != nil {
@@ -1327,7 +1327,7 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 		if !mustLoadObjects {
 			resultString = append(resultString, api.NewURL().Path(version.APIVersion, "images", fingerprint).String())
 		} else {
-			if clauses != nil {
+			if clauses != nil && len(clauses.Clauses) > 0 {
 				match, err := filter.Match(*image, *clauses)
 				if err != nil {
 					return nil, err
