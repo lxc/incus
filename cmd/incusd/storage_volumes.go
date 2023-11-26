@@ -420,6 +420,19 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Pre-fill UsedBy if using filtering.
+	if clauses != nil && len(clauses.Clauses) > 0 {
+		for i, vol := range dbVolumes {
+			volumeUsedBy, err := storagePoolVolumeUsedByGet(s, requestProjectName, poolName, vol)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			dbVolumes[i].UsedBy = project.FilterUsedBy(s.Authorizer, r, volumeUsedBy)
+		}
+	}
+
+	// Filter the results.
 	dbVolumes, err = filterVolumes(dbVolumes, clauses, allProjects, projectImages)
 	if err != nil {
 		return response.SmartError(err)
@@ -452,12 +465,16 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 				continue
 			}
 
-			volumeUsedBy, err := storagePoolVolumeUsedByGet(s, requestProjectName, poolName, dbVol)
-			if err != nil {
-				return response.InternalError(err)
+			// Fill in UsedBy if we haven't previously done so.
+			if clauses == nil || len(clauses.Clauses) == 0 {
+				volumeUsedBy, err := storagePoolVolumeUsedByGet(s, requestProjectName, poolName, dbVol)
+				if err != nil {
+					return response.InternalError(err)
+				}
+
+				vol.UsedBy = project.FilterUsedBy(s.Authorizer, r, volumeUsedBy)
 			}
 
-			vol.UsedBy = project.FilterUsedBy(s.Authorizer, r, volumeUsedBy)
 			volumes = append(volumes, vol)
 		}
 
