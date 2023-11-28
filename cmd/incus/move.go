@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -178,6 +179,23 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
+		if source.HasExtension("instance_move_config") {
+			if c.flagMode != moveDefaultMode {
+				return fmt.Errorf(i18n.G("The --mode flag can't be used with --storage or --target-project"))
+			}
+
+			// Evaluate provided profiles. If no profiles were provided and flag noProfiles is false,
+			// existing instance profiles will be retained. Otherwise, flags are respected.
+			var profiles *[]string
+			if len(c.flagProfile) > 0 {
+				profiles = &c.flagProfile
+			} else if c.flagNoProfiles {
+				profiles = &[]string{}
+			}
+
+			return moveInstance(conf, sourceResource, destResource, c.flagStorage, c.flagTargetProject, c.flagConfig, c.flagDevice, profiles, c.flagInstanceOnly, stateful)
+		}
+
 		if source.HasExtension("instance_pool_move") && source.HasExtension("instance_project_move") {
 			if len(c.flagConfig) != 0 || len(c.flagDevice) != 0 || len(c.flagProfile) != 0 || c.flagNoProfiles {
 				return fmt.Errorf("The move command does not support flags --config, --device, --profile, and --no-profiles. Please use copy instead")
@@ -187,7 +205,7 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf(i18n.G("The --mode flag can't be used with --storage or --target-project"))
 			}
 
-			return moveInstance(conf, sourceResource, destResource, c.flagStorage, c.flagTargetProject, c.flagInstanceOnly, stateful)
+			return moveInstance(conf, sourceResource, destResource, c.flagStorage, c.flagTargetProject, []string{}, []string{}, nil, c.flagInstanceOnly, stateful)
 		}
 	}
 
@@ -298,7 +316,7 @@ func moveClusterInstance(conf *config.Config, sourceResource string, destResourc
 }
 
 // Move an instance between pools and projects using special POST /instances/<name> API.
-func moveInstance(conf *config.Config, sourceResource string, destResource string, storage string, targetProject string, instanceOnly bool, stateful bool) error {
+func moveInstance(conf *config.Config, sourceResource string, destResource string, storage string, targetProject string, config []string, devices []string, profiles *[]string, instanceOnly bool, stateful bool) error {
 	// Parse the source.
 	sourceRemote, sourceName, err := conf.ParseRemote(sourceResource)
 	if err != nil {
@@ -327,6 +345,44 @@ func moveInstance(conf *config.Config, sourceResource string, destResource strin
 		return fmt.Errorf(i18n.G("Failed to connect to cluster member: %w"), err)
 	}
 
+	// Copy of an instance into a new instance.
+	inst, _, err := source.GetInstance(sourceName)
+	if err != nil {
+		return err
+	}
+
+	// Overwrite the config values.
+	for _, entry := range config {
+		key, value, found := strings.Cut(entry, "=")
+		if !found {
+			return fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
+		}
+
+		inst.Config[key] = value
+	}
+
+	// Overwrite profiles.
+	if profiles != nil {
+		inst.Profiles = *profiles
+	}
+
+	// Parse device map and overwrite device settings.
+	deviceMap, err := parseDeviceOverrides(devices)
+	if err != nil {
+		return err
+	}
+
+	for k, m := range deviceMap {
+		if inst.Devices[k] == nil {
+			inst.Devices[k] = m
+			continue
+		}
+
+		for key, value := range m {
+			inst.Devices[k][key] = value
+		}
+	}
+
 	// Pass the new pool to the migration API.
 	req := api.InstancePost{
 		Name:         destName,
@@ -335,6 +391,9 @@ func moveInstance(conf *config.Config, sourceResource string, destResource strin
 		Pool:         storage,
 		Project:      targetProject,
 		Live:         stateful,
+		Config:       inst.Config,
+		Devices:      inst.Devices,
+		Profiles:     inst.Profiles,
 	}
 
 	op, err := source.MigrateInstance(sourceName, req)
