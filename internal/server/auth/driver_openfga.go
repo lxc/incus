@@ -779,14 +779,27 @@ func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	opts := client.ClientWriteOptions{AuthorizationModelId: openfga.PtrString(f.authModelID)}
+	opts := client.ClientWriteOptions{
+		AuthorizationModelId: openfga.PtrString(f.authModelID),
+		Transaction: &client.TransactionOptions{
+			Disable:             true,
+			MaxParallelRequests: 5,
+			MaxPerChunk:         50,
+		},
+	}
+
 	body := client.ClientWriteRequest{}
+
 	if writes != nil {
 		body.Writes = &writes
+	} else {
+		body.Writes = &[]client.ClientTupleKey{}
 	}
 
 	if deletions != nil {
 		body.Deletes = &deletions
+	} else {
+		body.Deletes = &[]client.ClientTupleKey{}
 	}
 
 	clientWriteResponse, err := f.client.Write(ctx).Options(opts).Body(body).Execute()
