@@ -39,7 +39,7 @@ func ovsConvert() ([][]string, error) {
 
 func ovnBackup(nbDB string, sbDB string, target string) error {
 	// Backup the Northbound database.
-	nbStdout, err := os.Create(filepath.Join(target, "lxd-to-incus.ovn-nb.backup"))
+	nbStdout, err := os.Create(filepath.Join(target, fmt.Sprintf("lxd-to-incus.ovn-nb.%d.backup", os.Getpid())))
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func ovnBackup(nbDB string, sbDB string, target string) error {
 	}
 
 	// Backup the Southbound database.
-	sbStdout, err := os.Create(filepath.Join(target, "lxd-to-incus.ovn-sb.backup"))
+	sbStdout, err := os.Create(filepath.Join(target, fmt.Sprintf("lxd-to-incus.ovn-sb.%d.backup", os.Getpid())))
 	if err != nil {
 		return err
 	}
