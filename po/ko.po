@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-11-27 14:20-0500\n"
+"POT-Creation-Date: 2023-12-06 16:49-0500\n"
 "PO-Revision-Date: 2022-03-10 15:09+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Korean <https://hosted.weblate.org/projects/linux-containers/"
@@ -830,7 +830,8 @@ msgstr ""
 msgid "Bad key/value pair: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:138 cmd/incus/create.go:217 cmd/incus/project.go:129
+#: cmd/incus/copy.go:138 cmd/incus/create.go:217 cmd/incus/move.go:358
+#: cmd/incus/project.go:129
 #, c-format
 msgid "Bad key=value pair: %q"
 msgstr ""
@@ -937,7 +938,7 @@ msgstr ""
 msgid "Can't bind address %q: %w"
 msgstr ""
 
-#: cmd/incus/move.go:115
+#: cmd/incus/move.go:116
 msgid "Can't override configuration or profiles in local rename"
 msgstr ""
 
@@ -1135,7 +1136,7 @@ msgstr ""
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:385 cmd/incus/config.go:517
 #: cmd/incus/config.go:723 cmd/incus/config.go:846 cmd/incus/copy.go:60
-#: cmd/incus/create.go:57 cmd/incus/info.go:45 cmd/incus/move.go:64
+#: cmd/incus/create.go:57 cmd/incus/info.go:45 cmd/incus/move.go:65
 #: cmd/incus/network.go:300 cmd/incus/network.go:723 cmd/incus/network.go:792
 #: cmd/incus/network.go:1134 cmd/incus/network.go:1219
 #: cmd/incus/network.go:1283 cmd/incus/network_forward.go:169
@@ -1209,7 +1210,7 @@ msgstr ""
 msgid "Config key/value to apply to the new project"
 msgstr ""
 
-#: cmd/incus/move.go:56
+#: cmd/incus/move.go:57
 msgid "Config key/value to apply to the target instance"
 msgstr ""
 
@@ -1262,7 +1263,7 @@ msgstr ""
 msgid "Control: %s (%s)"
 msgstr ""
 
-#: cmd/incus/copy.go:58 cmd/incus/move.go:62
+#: cmd/incus/copy.go:58 cmd/incus/move.go:63
 msgid "Copy a stateful instance stateless"
 msgstr ""
 
@@ -1322,7 +1323,7 @@ msgstr ""
 msgid "Copy the volume without its snapshots"
 msgstr ""
 
-#: cmd/incus/copy.go:61 cmd/incus/image.go:160 cmd/incus/move.go:65
+#: cmd/incus/copy.go:61 cmd/incus/image.go:160 cmd/incus/move.go:66
 #: cmd/incus/profile.go:252 cmd/incus/storage_volume.go:335
 msgid "Copy to a project different from the source"
 msgstr ""
@@ -1720,7 +1721,7 @@ msgstr ""
 #: cmd/incus/image_alias.go:152 cmd/incus/image_alias.go:255
 #: cmd/incus/import.go:27 cmd/incus/info.go:33 cmd/incus/launch.go:24
 #: cmd/incus/list.go:49 cmd/incus/main.go:84 cmd/incus/manpage.go:22
-#: cmd/incus/monitor.go:33 cmd/incus/move.go:35 cmd/incus/network.go:32
+#: cmd/incus/monitor.go:33 cmd/incus/move.go:36 cmd/incus/network.go:32
 #: cmd/incus/network.go:135 cmd/incus/network.go:220 cmd/incus/network.go:293
 #: cmd/incus/network.go:372 cmd/incus/network.go:422 cmd/incus/network.go:507
 #: cmd/incus/network.go:592 cmd/incus/network.go:720 cmd/incus/network.go:789
@@ -2467,7 +2468,7 @@ msgstr ""
 msgid "Failed to configure cluster: %w"
 msgstr ""
 
-#: cmd/incus/move.go:251 cmd/incus/move.go:327
+#: cmd/incus/move.go:269 cmd/incus/move.go:345
 #, c-format
 msgid "Failed to connect to cluster member: %w"
 msgstr ""
@@ -2507,7 +2508,7 @@ msgstr ""
 msgid "Failed to create storage volume backup: %w"
 msgstr ""
 
-#: cmd/incus/move.go:218
+#: cmd/incus/move.go:236
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr ""
@@ -3023,7 +3024,7 @@ msgstr ""
 msgid "Ignore any configured auto-expiry for the storage volume"
 msgstr ""
 
-#: cmd/incus/copy.go:64 cmd/incus/move.go:66
+#: cmd/incus/copy.go:64 cmd/incus/move.go:67
 msgid "Ignore copy errors for volatile files"
 msgstr ""
 
@@ -4022,12 +4023,12 @@ msgstr ""
 msgid "Memory:"
 msgstr ""
 
-#: cmd/incus/move.go:269 cmd/incus/move.go:342
+#: cmd/incus/move.go:287 cmd/incus/move.go:401
 #, c-format
 msgid "Migration API failure: %w"
 msgstr ""
 
-#: cmd/incus/move.go:294 cmd/incus/move.go:347
+#: cmd/incus/move.go:312 cmd/incus/move.go:406
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr ""
@@ -4255,11 +4256,11 @@ msgstr ""
 msgid "Mount files from instances"
 msgstr ""
 
-#: cmd/incus/move.go:34
+#: cmd/incus/move.go:35
 msgid "Move instances within or in between servers"
 msgstr ""
 
-#: cmd/incus/move.go:35
+#: cmd/incus/move.go:36
 msgid ""
 "Move instances within or in between servers\n"
 "\n"
@@ -4279,7 +4280,7 @@ msgstr ""
 msgid "Move storage volumes between pools"
 msgstr ""
 
-#: cmd/incus/move.go:60
+#: cmd/incus/move.go:61
 msgid "Move the instance without its snapshots"
 msgstr ""
 
@@ -4554,7 +4555,7 @@ msgstr ""
 msgid "New aliases to add to the image"
 msgstr ""
 
-#: cmd/incus/copy.go:53 cmd/incus/create.go:52 cmd/incus/move.go:57
+#: cmd/incus/copy.go:53 cmd/incus/create.go:52 cmd/incus/move.go:58
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
@@ -4898,7 +4899,7 @@ msgstr ""
 msgid "Profile to apply to the new instance"
 msgstr ""
 
-#: cmd/incus/move.go:58
+#: cmd/incus/move.go:59
 msgid "Profile to apply to the target instance"
 msgstr ""
 
@@ -6137,7 +6138,7 @@ msgid "Storage pool %s pending on member %s"
 msgstr ""
 
 #: cmd/incus/copy.go:59 cmd/incus/create.go:55 cmd/incus/import.go:34
-#: cmd/incus/move.go:63
+#: cmd/incus/move.go:64
 msgid "Storage pool name"
 msgstr ""
 
@@ -6252,15 +6253,15 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr ""
 
-#: cmd/incus/move.go:145
+#: cmd/incus/move.go:146
 msgid "The --instance-only flag can't be used with --target"
 msgstr ""
 
-#: cmd/incus/move.go:187
+#: cmd/incus/move.go:184 cmd/incus/move.go:205
 msgid "The --mode flag can't be used with --storage or --target-project"
 msgstr ""
 
-#: cmd/incus/move.go:157
+#: cmd/incus/move.go:158
 msgid "The --mode flag can't be used with --target"
 msgstr ""
 
@@ -6268,11 +6269,11 @@ msgstr ""
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
-#: cmd/incus/move.go:149
+#: cmd/incus/move.go:150
 msgid "The --storage flag can't be used with --target"
 msgstr ""
 
-#: cmd/incus/move.go:153
+#: cmd/incus/move.go:154
 msgid "The --target-project flag can't be used with --target"
 msgstr ""
 
@@ -6308,7 +6309,7 @@ msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
 
-#: cmd/incus/move.go:169
+#: cmd/incus/move.go:170
 msgid "The destination server is not clustered"
 msgstr ""
 
@@ -6488,7 +6489,7 @@ msgstr ""
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
 
-#: cmd/incus/move.go:256
+#: cmd/incus/move.go:274
 msgid "The source server is not clustered"
 msgstr ""
 
@@ -6599,7 +6600,7 @@ msgstr ""
 msgid "Transfer mode. One of pull, push or relay"
 msgstr ""
 
-#: cmd/incus/move.go:61
+#: cmd/incus/move.go:62
 msgid "Transfer mode. One of pull, push or relay."
 msgstr ""
 
@@ -6608,7 +6609,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:338 cmd/incus/move.go:274
+#: cmd/incus/copy.go:338 cmd/incus/move.go:292
 #, c-format
 msgid "Transferring instance: %s"
 msgstr ""
@@ -6737,7 +6738,7 @@ msgstr ""
 msgid "Unset a cluster member's configuration keys"
 msgstr ""
 
-#: cmd/incus/move.go:59
+#: cmd/incus/move.go:60
 msgid "Unset all profiles on the target instance"
 msgstr ""
 
@@ -7135,7 +7136,7 @@ msgstr ""
 msgid "You must specify a destination instance name"
 msgstr ""
 
-#: cmd/incus/copy.go:84 cmd/incus/move.go:240 cmd/incus/move.go:316
+#: cmd/incus/copy.go:84 cmd/incus/move.go:258 cmd/incus/move.go:334
 msgid "You must specify a source instance name"
 msgstr ""
 
@@ -7345,7 +7346,7 @@ msgstr ""
 msgid "[<remote>:]<instance> <template>"
 msgstr ""
 
-#: cmd/incus/move.go:32
+#: cmd/incus/move.go:33
 msgid "[<remote>:]<instance> [<remote>:][<instance>]"
 msgstr ""
 
@@ -7933,7 +7934,7 @@ msgid ""
 "    Only show lifecycle events."
 msgstr ""
 
-#: cmd/incus/move.go:45
+#: cmd/incus/move.go:46
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
