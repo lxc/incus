@@ -91,7 +91,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	}
 
 	// Create log file.
-	logFile, err := os.Create("/var/log/lxd-to-incus.log")
+	logFile, err := os.Create(fmt.Sprintf("/var/log/lxd-to-incus.%d.log", os.Getpid()))
 	if err != nil {
 		return fmt.Errorf("Failed to create log file: %w", err)
 	}
