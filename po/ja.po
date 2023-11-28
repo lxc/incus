@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2023-11-22 20:42+0900\n"
+"POT-Creation-Date: 2023-11-27 14:20-0500\n"
 "PO-Revision-Date: 2023-03-10 15:14+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/linux-"
@@ -2805,7 +2805,7 @@ msgstr "サーバー証明書ファイル %q のクローズに失敗しまし�
 msgid "Failed to configure cluster: %w"
 msgstr "クラスタメンバへの接続に失敗しました: %w"
 
-#: cmd/incus/move.go:262 cmd/incus/move.go:338 cmd/incus/move.go:390
+#: cmd/incus/move.go:251 cmd/incus/move.go:327
 #, c-format
 msgid "Failed to connect to cluster member: %w"
 msgstr "クラスタメンバへの接続に失敗しました: %w"
@@ -2845,7 +2845,7 @@ msgstr "証明書の作成に失敗しました: %w"
 msgid "Failed to create storage volume backup: %w"
 msgstr "エイリアス %s の作成に失敗しました: %w"
 
-#: cmd/incus/move.go:229
+#: cmd/incus/move.go:218
 #, fuzzy, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "新しいインスタンス名が取得できません"
@@ -4584,12 +4584,12 @@ msgstr "メモリ消費量:"
 msgid "Memory:"
 msgstr "メモリ:"
 
-#: cmd/incus/move.go:280 cmd/incus/move.go:352 cmd/incus/move.go:404
+#: cmd/incus/move.go:269 cmd/incus/move.go:342
 #, c-format
 msgid "Migration API failure: %w"
 msgstr "マイグレーション API が失敗しました: %w"
 
-#: cmd/incus/move.go:305 cmd/incus/move.go:357 cmd/incus/move.go:409
+#: cmd/incus/move.go:294 cmd/incus/move.go:347
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr "マイグレーションが失敗しました: %w"
@@ -6969,17 +6969,14 @@ msgstr "デバイスはすでに存在します"
 msgid "The --instance-only flag can't be used with --target"
 msgstr "--instance-only と --target は同時に指定できません"
 
-#: cmd/incus/move.go:182
-msgid "The --mode flag can't be used with --storage"
-msgstr "--mode と --storage は同時に指定できません"
+#: cmd/incus/move.go:187
+#, fuzzy
+msgid "The --mode flag can't be used with --storage or --target-project"
+msgstr "--mode と --target-project は同時に指定できません"
 
 #: cmd/incus/move.go:157
 msgid "The --mode flag can't be used with --target"
 msgstr "--mode と --target は同時に指定できません"
-
-#: cmd/incus/move.go:198
-msgid "The --mode flag can't be used with --target-project"
-msgstr "--mode と --target-project は同時に指定できません"
 
 #: cmd/incus/console.go:125
 msgid "The --show-log flag is only supported for by 'console' output type"
@@ -7214,7 +7211,7 @@ msgstr ""
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr "サーバには新しい v2 resource API が実装されていません"
 
-#: cmd/incus/move.go:267
+#: cmd/incus/move.go:256
 #, fuzzy
 msgid "The source server is not clustered"
 msgstr "移動元の LXD サーバはクラスタに属していません"
@@ -7360,7 +7357,7 @@ msgstr "転送モード。pull, push, relay のいずれか。"
 msgid "Transferring image: %s"
 msgstr "イメージを転送中: %s"
 
-#: cmd/incus/copy.go:338 cmd/incus/move.go:285
+#: cmd/incus/copy.go:338 cmd/incus/move.go:274
 #, c-format
 msgid "Transferring instance: %s"
 msgstr "インスタンスを転送中: %s"
@@ -7910,8 +7907,7 @@ msgstr "--mode と同時に -t または -T は指定できません"
 msgid "You must specify a destination instance name"
 msgstr "コピー元のインスタンス名を指定してください"
 
-#: cmd/incus/copy.go:84 cmd/incus/move.go:251 cmd/incus/move.go:327
-#: cmd/incus/move.go:379
+#: cmd/incus/copy.go:84 cmd/incus/move.go:240 cmd/incus/move.go:316
 msgid "You must specify a source instance name"
 msgstr "コピー元のインスタンス名を指定してください"
 
@@ -9098,6 +9094,9 @@ msgstr "y"
 #: cmd/incus/image.go:932 cmd/incus/image.go:1117 cmd/incus/snapshot.go:215
 msgid "yes"
 msgstr "yes"
+
+#~ msgid "The --mode flag can't be used with --storage"
+#~ msgstr "--mode と --storage は同時に指定できません"
 
 #~ msgid "Failed to get the new instance name"
 #~ msgstr "新しいインスタンス名が取得できません"
