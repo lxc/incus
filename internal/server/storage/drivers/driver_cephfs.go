@@ -9,6 +9,7 @@ import (
 
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/migration"
+	"github.com/lxc/incus/internal/revert"
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	localMigration "github.com/lxc/incus/internal/server/migration"
 	"github.com/lxc/incus/internal/server/operations"
@@ -110,6 +111,9 @@ func (d *cephfs) FillConfig() error {
 // Create is called during pool creation and is effectively using an empty driver struct.
 // WARNING: The Create() function cannot rely on any of the struct attributes being set.
 func (d *cephfs) Create() error {
+	revert := revert.New()
+	defer revert.Fail()
+
 	err := d.FillConfig()
 	if err != nil {
 		return err
@@ -186,6 +190,20 @@ func (d *cephfs) Create() error {
 				if err != nil {
 					return fmt.Errorf("Failed to create ceph OSD pool %q: %w", pool, err)
 				}
+
+				revert.Add(func() {
+					// Delete the OSD pool.
+					_, _ = subprocess.RunCommand("ceph",
+						"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
+						"--cluster", d.config["cephfs.cluster_name"],
+						"osd",
+						"pool",
+						"delete",
+						pool,
+						pool,
+						"--yes-i-really-really-mean-it",
+					)
+				})
 			}
 		}
 
@@ -202,6 +220,27 @@ func (d *cephfs) Create() error {
 		if err != nil {
 			return fmt.Errorf("Failed to create CephFS %q: %w", fsName, err)
 		}
+
+		revert.Add(func() {
+			// Set the FS to fail so that we can remove it.
+			_, _ = subprocess.RunCommand("ceph",
+				"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
+				"--cluster", d.config["cephfs.cluster_name"],
+				"fs",
+				"fail",
+				fsName,
+			)
+
+			// Delete the FS.
+			_, _ = subprocess.RunCommand("ceph",
+				"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
+				"--cluster", d.config["cephfs.cluster_name"],
+				"fs",
+				"rm",
+				fsName,
+				"--yes-i-really-mean-it",
+			)
+		})
 	}
 
 	// Create a temporary mountpoint.
@@ -250,6 +289,8 @@ func (d *cephfs) Create() error {
 	if !ok {
 		return fmt.Errorf("Only empty CephFS paths can be used as a storage pool")
 	}
+
+	revert.Success()
 
 	return nil
 }
