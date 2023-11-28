@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -107,39 +108,70 @@ func (d *btrfs) hasSubvolumes(path string) (bool, error) {
 }
 
 func (d *btrfs) getSubvolumes(path string) ([]string, error) {
-	poolMountPath := GetPoolMountPath(d.name)
-	if !strings.HasPrefix(path, poolMountPath+"/") {
-		return nil, fmt.Errorf("%q is outside pool mount path %q", path, poolMountPath)
-	}
-
-	path = strings.TrimPrefix(path, poolMountPath+"/")
-
 	// Make sure the path has a trailing slash.
 	if !strings.HasSuffix(path, "/") {
 		path = path + "/"
 	}
 
-	var stdout bytes.Buffer
-	err := subprocess.RunCommandWithFds(d.state.ShutdownCtx, nil, &stdout, "btrfs", "subvolume", "list", poolMountPath)
-	if err != nil {
-		return nil, err
+	poolMountPath := GetPoolMountPath(d.name)
+	if !strings.HasPrefix(path, poolMountPath+"/") {
+		return nil, fmt.Errorf("%q is outside pool mount path %q", path, poolMountPath)
 	}
 
-	result := []string{}
+	var result []string
 
-	scanner := bufio.NewScanner(&stdout)
-	for scanner.Scan() {
-		fields := strings.Fields(scanner.Text())
+	if d.state.OS.RunningInUserNS {
+		// If using BTRFS in a nested container we cannot use "btrfs subvolume list" due to a permission error.
+		// So instead walk the directory tree testing each directory to see if it is subvolume.
+		err := filepath.Walk(path, func(fpath string, entry fs.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
 
-		if len(fields) != 9 {
-			continue
+			// Ignore the base path.
+			if strings.TrimRight(fpath, "/") == strings.TrimRight(path, "/") {
+				return nil
+			}
+
+			// Subvolumes can only be directories.
+			if !entry.IsDir() {
+				return nil
+			}
+
+			// Check if directory is a subvolume.
+			if d.isSubvolume(fpath) {
+				result = append(result, strings.TrimPrefix(fpath, path))
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// If not running inside a nested container we can use "btrfs subvolume list" to get subvolumes which is more
+		// performant than walking the directory tree.
+		var stdout bytes.Buffer
+		err := subprocess.RunCommandWithFds(d.state.ShutdownCtx, nil, &stdout, "btrfs", "subvolume", "list", poolMountPath)
+		if err != nil {
+			return nil, err
 		}
 
-		if !strings.HasPrefix(fields[8], path) {
-			continue
-		}
+		path = strings.TrimPrefix(path, poolMountPath+"/")
+		scanner := bufio.NewScanner(&stdout)
+		for scanner.Scan() {
+			fields := strings.Fields(scanner.Text())
 
-		result = append(result, strings.TrimPrefix(fields[8], path))
+			if len(fields) != 9 {
+				continue
+			}
+
+			if !strings.HasPrefix(fields[8], path) {
+				continue
+			}
+
+			result = append(result, strings.TrimPrefix(fields[8], path))
+		}
 	}
 
 	return result, nil
