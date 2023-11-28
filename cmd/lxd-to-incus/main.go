@@ -64,8 +64,9 @@ func main() {
 type cmdMigrate struct {
 	global cmdGlobal
 
-	flagYes           bool
-	flagClusterMember bool
+	flagYes                bool
+	flagClusterMember      bool
+	flagIgnoreVersionCheck bool
 }
 
 func (c *cmdMigrate) Command() *cobra.Command {
@@ -74,6 +75,7 @@ func (c *cmdMigrate) Command() *cobra.Command {
 	cmd.RunE = c.Run
 	cmd.PersistentFlags().BoolVar(&c.flagYes, "yes", false, "Migrate without prompting")
 	cmd.PersistentFlags().BoolVar(&c.flagClusterMember, "cluster-member", false, "Used internally for cluster migrations")
+	cmd.PersistentFlags().BoolVar(&c.flagIgnoreVersionCheck, "ignore-version-check", false, "Bypass source version check")
 
 	return cmd
 }

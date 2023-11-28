@@ -52,8 +52,12 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 		return fmt.Errorf("LXD version is lower than minimal version %q", minLXDVersion)
 	}
 
-	if srcVersion.Compare(maxLXDVersion) > 0 {
-		return fmt.Errorf("LXD version is newer than maximum version %q", maxLXDVersion)
+	if !c.flagIgnoreVersionCheck {
+		if srcVersion.Compare(maxLXDVersion) > 0 {
+			return fmt.Errorf("LXD version is newer than maximum version %q", maxLXDVersion)
+		}
+	} else {
+		fmt.Println("==> WARNING: User asked to bypass version check")
 	}
 
 	// Validate source non-empty.
