@@ -1329,6 +1329,8 @@ func getInstanceLimits(inst api.Instance, keys []string, skipUnset bool) (map[st
 			if inst.Type == instancetype.VM.String() {
 				sizeStateValue, ok := device["size.state"]
 				if !ok {
+					// TODO: In case the VMs storage drivers config drive size isn't the default,
+					// the limits accounting will be incorrect.
 					sizeStateValue = deviceconfig.DefaultVMBlockFilesystemSize
 				}
 
