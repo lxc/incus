@@ -113,7 +113,7 @@ The second step is to import an ISO image that can later be attached to the VM a
 
 Lastly, you need to attach the custom ISO volume to the VM using the following command:
 
-    incus config device add iso-vm iso-volume disk pool=default source=iso-volume boot.priority=10
+    incus config device add iso-vm iso-volume disk pool=<pool> source=iso-volume boot.priority=10
 
 The `boot.priority` configuration key ensures that the VM will boot from the ISO first.
 Start the VM and connect to the console as there might be a menu you need to interact with:

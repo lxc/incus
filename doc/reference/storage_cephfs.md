@@ -64,6 +64,10 @@ Key                           | Type                          | Default         
 `cephfs.fscache`              | bool                          | `false`                                 | Enable use of kernel `fscache` and `cachefilesd`
 `cephfs.path`                 | string                        | `/`                                     | The base path for the CephFS mount
 `cephfs.user.name`            | string                        | `admin`                                 | The Ceph user to use
+`cephfs.create_missing`       | bool                          | `false`                                 | Create the file-system and missing data and metadata OSD pools
+`cephfs.osd_pg_num`           | string                        | -                                       | OSD pool `pg_num` to use when creating missing OSD pools
+`cephfs.meta_pool`            | string                        | -                                       | Metadata OSD pool name to create for the file-system
+`cephfs.data_pool`            | string                        | -                                       | Data OSD pool name to create for the file-system
 `source`                      | string                        | -                                       | Existing CephFS file system or file system path to use
 `volatile.pool.pristine`      | string                        | `true`                                  | Whether the CephFS file system was empty on creation time
 

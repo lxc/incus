@@ -12,6 +12,7 @@ import (
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	localMigration "github.com/lxc/incus/internal/server/migration"
 	"github.com/lxc/incus/internal/server/operations"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -91,20 +92,21 @@ func (d *btrfs) load() error {
 // Info returns info about the driver and its environment.
 func (d *btrfs) Info() Info {
 	return Info{
-		Name:                  "btrfs",
-		Version:               btrfsVersion,
-		OptimizedImages:       true,
-		OptimizedBackups:      true,
-		OptimizedBackupHeader: true,
-		PreservesInodes:       !d.state.OS.RunningInUserNS,
-		Remote:                d.isRemote(),
-		VolumeTypes:           []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
-		BlockBacking:          false,
-		RunningCopyFreeze:     false,
-		DirectIO:              true,
-		IOUring:               true,
-		MountedRoot:           true,
-		Buckets:               true,
+		Name:                         "btrfs",
+		Version:                      btrfsVersion,
+		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
+		OptimizedImages:              true,
+		OptimizedBackups:             true,
+		OptimizedBackupHeader:        true,
+		PreservesInodes:              !d.state.OS.RunningInUserNS,
+		Remote:                       d.isRemote(),
+		VolumeTypes:                  []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
+		BlockBacking:                 false,
+		RunningCopyFreeze:            false,
+		DirectIO:                     true,
+		IOUring:                      true,
+		MountedRoot:                  true,
+		Buckets:                      true,
 	}
 }
 

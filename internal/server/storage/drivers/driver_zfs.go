@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/revert"
+	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	localMigration "github.com/lxc/incus/internal/server/migration"
 	"github.com/lxc/incus/internal/server/operations"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -119,18 +120,19 @@ func (d *zfs) load() error {
 // Info returns info about the driver and its environment.
 func (d *zfs) Info() Info {
 	info := Info{
-		Name:              "zfs",
-		Version:           zfsVersion,
-		OptimizedImages:   true,
-		OptimizedBackups:  true,
-		PreservesInodes:   true,
-		Remote:            d.isRemote(),
-		VolumeTypes:       []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
-		BlockBacking:      util.IsTrue(d.config["volume.zfs.block_mode"]),
-		RunningCopyFreeze: false,
-		DirectIO:          zfsDirectIO,
-		MountedRoot:       false,
-		Buckets:           true,
+		Name:                         "zfs",
+		Version:                      zfsVersion,
+		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
+		OptimizedImages:              true,
+		OptimizedBackups:             true,
+		PreservesInodes:              true,
+		Remote:                       d.isRemote(),
+		VolumeTypes:                  []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
+		BlockBacking:                 util.IsTrue(d.config["volume.zfs.block_mode"]),
+		RunningCopyFreeze:            false,
+		DirectIO:                     zfsDirectIO,
+		MountedRoot:                  false,
+		Buckets:                      true,
 	}
 
 	return info
