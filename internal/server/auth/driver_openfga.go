@@ -809,13 +809,13 @@ func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, 
 
 	for _, write := range clientWriteResponse.Writes {
 		if write.Error != nil {
-			return fmt.Errorf("Failed to write tuple to OpenFGA store (user: %q; relation: %q; object: %q): %w", write.TupleKey.User, write.TupleKey.Relation, write.TupleKey.Object, err)
+			return fmt.Errorf("Failed to write tuple to OpenFGA store (user: %q; relation: %q; object: %q): %w", write.TupleKey.User, write.TupleKey.Relation, write.TupleKey.Object, write.Error)
 		}
 	}
 
 	for _, deletion := range clientWriteResponse.Deletes {
 		if deletion.Error != nil {
-			return fmt.Errorf("Failed to delete tuple from OpenFGA store (user: %q; relation: %q; object: %q): %w", deletion.TupleKey.User, deletion.TupleKey.Relation, deletion.TupleKey.Object, err)
+			return fmt.Errorf("Failed to delete tuple from OpenFGA store (user: %q; relation: %q; object: %q): %w", deletion.TupleKey.User, deletion.TupleKey.Relation, deletion.TupleKey.Object, deletion.Error)
 		}
 	}
 
