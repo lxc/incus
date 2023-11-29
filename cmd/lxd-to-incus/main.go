@@ -565,6 +565,7 @@ Instead this tool will be providing specific commands for each of the servers.
 	for _, dir := range []string{"devices", "devlxd", "security", "shmounts"} {
 		_, _ = logFile.WriteString(fmt.Sprintf("Cleaning up path %q\n", filepath.Join(targetPaths.Daemon, dir)))
 
+		_ = unix.Unmount(filepath.Join(targetPaths.Daemon, dir), unix.MNT_DETACH)
 		err = os.RemoveAll(filepath.Join(targetPaths.Daemon, dir))
 		if err != nil && !os.IsNotExist(err) {
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
