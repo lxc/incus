@@ -126,6 +126,6 @@ Once you're done in the serial console, you need to disconnect from the console 
 
 You should now see the installer. After the installation is done, you need to detach the custom ISO volume:
 
-    incus storage volume detach default iso-volume iso-vm
+    incus storage volume detach <pool> iso-volume iso-vm
 
 Now the VM can be rebooted, and it will boot from disk.
