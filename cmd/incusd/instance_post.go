@@ -473,10 +473,11 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 
 	localDevices := inst.LocalDevices().Clone()
 
-	// Check if root disk device is present in the instance config. If instance config has not
-	// root disk device configured, check if any of the profiles that will be applied in the
-	// target project contain a root disk device. Lastly, set current root disk device in the
-	// instance's config.
+	// Check if root disk device is present in the instance config. If instance config has no
+	// root disk device configured, check if the same root disk device will be applied with new
+	// profiles in the target project. If the new root disk device differs from the existing
+	// one, add the existing one as a local device to the instance (we don't want to move root
+	// disk device if not necessary, as this is an expensive operation).
 	rootDevKey, rootDev, err := internalInstance.GetRootDiskDevice(inst.LocalDevices().CloneNative())
 	if err != nil && !errors.Is(err, internalInstance.ErrNoRootDisk) {
 		return err
@@ -486,6 +487,14 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 			instProfiles = append(instProfiles, p.Name)
 		}
 
+		// Get current root disk device from expanded devices.
+		rootDevKey, rootDev, err = internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+		if err != nil {
+			return err
+		}
+
+		var profileRootDev map[string]string
+
 		// Find profiles that will be applied in target project and check if any of them contains
 		// root disk device.
 		err := s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -494,14 +503,14 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 				return err
 			}
 
-			for _, p := range profiles {
+			for i := len(profiles) - 1; i >= 0; i-- {
 				// Get disk devices of the matching profile.
 				devDiskType := dbCluster.TypeDisk
 				devDiskfilter := dbCluster.DeviceFilter{
 					Type: &devDiskType,
 				}
 
-				disks, err := dbCluster.GetProfileDevices(ctx, tx.Tx(), p.ID, devDiskfilter)
+				disks, err := dbCluster.GetProfileDevices(ctx, tx.Tx(), profiles[i].ID, devDiskfilter)
 				if err != nil {
 					return err
 				}
@@ -511,11 +520,12 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 					devices[d.Name] = d.Config
 				}
 
-				rootDevKey, rootDev, err = internalInstance.GetRootDiskDevice(devices)
+				_, dev, err := internalInstance.GetRootDiskDevice(devices)
 				if err != nil {
 					continue
 				}
 
+				profileRootDev = dev
 				break
 			}
 
@@ -525,14 +535,12 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 			return err
 		}
 
-		// If root disk device was not found in target project profiles, apply current root disk device
-		// to the instance's config.
-		if rootDev == nil {
-			rootDevKey, rootDev, err = internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
-			if err != nil {
-				return err
-			}
-
+		// If current root disk device differs from the one found in target project profiles,
+		// set the current one as a local device.
+		if profileRootDev == nil ||
+			profileRootDev["pool"] != rootDev["pool"] ||
+			profileRootDev["size"] != rootDev["size"] ||
+			profileRootDev["size.state"] != rootDev["size.state"] {
 			localDevices[rootDevKey] = rootDev
 		}
 	}
