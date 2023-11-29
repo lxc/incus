@@ -17,5 +17,6 @@ type Source interface {
 var sources = []Source{
 	&srcSnap{},
 	&srcDeb{},
+	&srcCOPR{},
 	&srcManual{},
 }
