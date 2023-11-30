@@ -66,6 +66,46 @@ If you prefer a different installation method, see {ref}`installing`.
    This will create a minimal setup with default options.
    If you want to tune the initialization options, see {ref}`initialize` for more information.
 
+#### Gentoo
+Incus and all of its dependencies are available in Gentoo's main repository as [`app-containers/incus`](https://packages.gentoo.org/packages/app-containers/incus).
+
+Install Incus with:
+
+    emerge -av app-containers/incus
+
+Note: Installing LTS vs. feature-release will be explained later, when Incus upstream and Gentoo's repository has those releases available.
+
+There will be two newly created groups associated to Incus:
+`incus` to allow basic user access (launch containers), and `incus-admin` for `incus admin` controls. Add your regular users to either, or both, depending on your setup and use cases.
+
+After installation, you may want to configure Incus. This is optional though, as the defaults should also just work.
+
+- **`openrc`**: Edit `/etc/conf.d/incus`
+- **`systemd`**: `systemctl edit --full incus.service`
+
+Set up `/etc/subuid` and `/etc/subgid`:
+
+    echo "root:1000000:1000000000" | tee -a /etc/subuid /etc/subgid
+
+For more information: {ref}`Idmaps for user namespace <userns-idmap>`
+
+Start the daemon:
+
+- **`openrc`**: `rc-service incus start`
+- **`systemd`**: `systemctl start incus`
+
+Initialize Incus, needs to be done once after a new installation:
+
+    incus admin init
+
+or
+
+    incus admin init --minimal
+
+which will just use default settings without prompting for choices. See {ref}`initialize` for more information.
+
+Log in to your user and start using Incus through `incus` command.
+
 ### Other operating systems
 
 ```{important}
