@@ -1,7 +1,9 @@
 package drivers
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"strconv"
 
 	"golang.org/x/sys/unix"
@@ -72,6 +74,13 @@ func (c *qemuCmd) Wait() (int, error) {
 	}
 
 	if err != nil {
+		// Error of type EOF indicates the session ended unexpectedly,
+		// so we inform the client of the disconnection with a more
+		// descriptive message.
+		if errors.Is(err, io.EOF) {
+			return exitStatus, fmt.Errorf("Disconnected")
+		}
+
 		return exitStatus, err
 	}
 
