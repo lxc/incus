@@ -1,3 +1,4 @@
+(userns-idmap)=
 # Idmaps for user namespace
 
 Incus runs safe containers. This is achieved mostly through the use of
