@@ -28,17 +28,13 @@ The client tool ([`incus`](incus.md)) is available on most platforms.
 
 ### Linux
 
-The easiest way to install Incus on Linux is to install the {ref}`installing-zabbly-package`, which is available for both Debian and Ubuntu.
+Packages are available for a number of Linux distributions, either in their main repository or through third party repositories.
 
-You can also find native builds of the Incus client on [GitHub](https://github.com/lxc/incus/actions):
+````{tabs}
 
-- Incus client for Linux: [`bin.linux.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.aarch64), [`bin.linux.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.x86_64)
-- Incus client for Windows: [`bin.windows.incus.aarch64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.aarch64.exe), [`bin.windows.incus.x86_64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.x86_64.exe)
-- Incus client for macOS: [`bin.macos.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.aarch64), [`bin.macos.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.x86_64)
-
-(installing-zabbly-package)=
-#### Debian and Ubuntu package from Zabbly
+```{group-tab} Debian and Ubuntu
 Currently the easiest way to install Incus is to use the Debian or Ubuntu packages provided by [Zabbly](https://zabbly.com).
+
 There are two repositories available, one for the current stable release and one for daily (untested) builds.
 
 Installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
@@ -65,8 +61,9 @@ If you prefer a different installation method, see {ref}`installing`.
 
    This will create a minimal setup with default options.
    If you want to tune the initialization options, see {ref}`initialize` for more information.
+```
 
-#### Gentoo
+```{group-tab} Gentoo
 Incus and all of its dependencies are available in Gentoo's main repository as [`app-containers/incus`](https://packages.gentoo.org/packages/app-containers/incus).
 
 Install Incus with:
@@ -105,6 +102,9 @@ or
 which will just use default settings without prompting for choices. See {ref}`initialize` for more information.
 
 Log in to your user and start using Incus through `incus` command.
+```
+
+````
 
 ### Other operating systems
 
@@ -136,12 +136,11 @@ To install it:
 
 ````
 
-You can also find native builds of the Incus client on [GitHub](https://github.com/lxc/incus/actions).
-To download a specific build:
+You can also find native builds of the Incus client on [GitHub](https://github.com/lxc/incus/actions):
 
-1. Make sure that you are logged into your GitHub account.
-1. Filter for the branch or tag that you are interested in (for example, the latest release tag or `main`).
-1. Select the latest build and download the suitable artifact.
+- Incus client for Linux: [`bin.linux.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.aarch64), [`bin.linux.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.x86_64)
+- Incus client for Windows: [`bin.windows.incus.aarch64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.aarch64.exe), [`bin.windows.incus.x86_64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.x86_64.exe)
+- Incus client for macOS: [`bin.macos.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.aarch64), [`bin.macos.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.x86_64)
 
 (installing_from_source)=
 ## Install Incus from source
