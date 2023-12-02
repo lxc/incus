@@ -167,13 +167,13 @@ func MetricSetFromAPI(metrics *Metrics, labels map[string]string) (*MetricSet, e
 	set := NewMetricSet(labels)
 
 	// CPU stats
-	for dev, stats := range metrics.CPU {
+	for _, stats := range metrics.CPU {
 		getLabels := func(mode string) map[string]string {
 			labels := map[string]string{"mode": mode}
 			cpu := ""
 
-			if dev != "cpu" {
-				_, _ = fmt.Sscanf(dev, "cpu%s", &cpu)
+			if stats.CPU != "cpu" {
+				_, _ = fmt.Sscanf(stats.CPU, "cpu%s", &cpu)
 			}
 
 			if cpu != "" {
@@ -223,8 +223,8 @@ func MetricSetFromAPI(metrics *Metrics, labels map[string]string) (*MetricSet, e
 	set.AddSamples(CPUs, Sample{Value: float64(metrics.CPUs)})
 
 	// Disk stats
-	for dev, stats := range metrics.Disk {
-		labels := map[string]string{"device": dev}
+	for _, stats := range metrics.Disk {
+		labels := map[string]string{"device": stats.Device}
 
 		set.AddSamples(DiskReadBytesTotal, Sample{Value: float64(stats.ReadBytes), Labels: labels})
 		set.AddSamples(DiskReadsCompletedTotal, Sample{Value: float64(stats.ReadsCompleted), Labels: labels})
@@ -233,8 +233,8 @@ func MetricSetFromAPI(metrics *Metrics, labels map[string]string) (*MetricSet, e
 	}
 
 	// Filesystem stats
-	for dev, stats := range metrics.Filesystem {
-		labels := map[string]string{"device": dev, "fstype": stats.FSType, "mountpoint": stats.Mountpoint}
+	for _, stats := range metrics.Filesystem {
+		labels := map[string]string{"device": stats.Device, "fstype": stats.FSType, "mountpoint": stats.Mountpoint}
 
 		set.AddSamples(FilesystemAvailBytes, Sample{Value: float64(stats.AvailableBytes), Labels: labels})
 		set.AddSamples(FilesystemFreeBytes, Sample{Value: float64(stats.FreeBytes), Labels: labels})
@@ -264,8 +264,8 @@ func MetricSetFromAPI(metrics *Metrics, labels map[string]string) (*MetricSet, e
 	set.AddSamples(MemoryOOMKillsTotal, Sample{Value: float64(metrics.Memory.OOMKills)})
 
 	// Network stats
-	for dev, stats := range metrics.Network {
-		labels := map[string]string{"device": dev}
+	for _, stats := range metrics.Network {
+		labels := map[string]string{"device": stats.Device}
 
 		set.AddSamples(NetworkReceiveBytesTotal, Sample{Value: float64(stats.ReceiveBytes), Labels: labels})
 		set.AddSamples(NetworkReceiveDropTotal, Sample{Value: float64(stats.ReceiveDrop), Labels: labels})

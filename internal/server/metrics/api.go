@@ -2,17 +2,18 @@ package metrics
 
 // Metrics represents instance metrics.
 type Metrics struct {
-	CPU            map[string]CPUMetrics        `json:"cpu_seconds_total" yaml:"cpu_seconds_total"`
-	CPUs           int                          `json:"cpus" yaml:"cpus"`
-	Disk           map[string]DiskMetrics       `json:"disk" yaml:"disk"`
-	Filesystem     map[string]FilesystemMetrics `json:"filesystem" yaml:"filesystem"`
-	Memory         MemoryMetrics                `json:"memory" yaml:"memory"`
-	Network        map[string]NetworkMetrics    `json:"network" yaml:"network"`
-	ProcessesTotal uint64                       `json:"procs_total" yaml:"procs_total"`
+	CPU            []CPUMetrics        `json:"cpu_seconds_total" yaml:"cpu_seconds_total"`
+	CPUs           int                 `json:"cpus" yaml:"cpus"`
+	Disk           []DiskMetrics       `json:"disk" yaml:"disk"`
+	Filesystem     []FilesystemMetrics `json:"filesystem" yaml:"filesystem"`
+	Memory         MemoryMetrics       `json:"memory" yaml:"memory"`
+	Network        []NetworkMetrics    `json:"network" yaml:"network"`
+	ProcessesTotal uint64              `json:"procs_total" yaml:"procs_total"`
 }
 
 // CPUMetrics represents CPU metrics for an instance.
 type CPUMetrics struct {
+	CPU            string  `json:"cpu" yaml:"cpu"`
 	SecondsUser    float64 `json:"cpu_seconds_user" yaml:"cpu_seconds_user"`
 	SecondsNice    float64 `json:"cpu_seconds_nice" yaml:"cpu_seconds_nice"`
 	SecondsSystem  float64 `json:"cpu_seconds_system" yaml:"cpu_seconds_system"`
@@ -25,6 +26,7 @@ type CPUMetrics struct {
 
 // DiskMetrics represents disk metrics for an instance.
 type DiskMetrics struct {
+	Device          string `json:"device" yaml:"device"`
 	ReadBytes       uint64 `json:"disk_read_bytes" yaml:"disk_read_bytes"`
 	ReadsCompleted  uint64 `json:"disk_reads_completed" yaml:"disk_reads_completes"`
 	WrittenBytes    uint64 `json:"disk_written_bytes" yaml:"disk_written_bytes"`
@@ -33,6 +35,7 @@ type DiskMetrics struct {
 
 // FilesystemMetrics represents filesystem metrics for an instance.
 type FilesystemMetrics struct {
+	Device         string `json:"device" yaml:"device"`
 	Mountpoint     string `json:"mountpoint" yaml:"mountpoint"`
 	FSType         string `json:"fstype" yaml:"fstype"`
 	AvailableBytes uint64 `json:"filesystem_avail_bytes" yaml:"filesystem_avail_bytes"`
@@ -66,6 +69,7 @@ type MemoryMetrics struct {
 
 // NetworkMetrics represents network metrics for an instance.
 type NetworkMetrics struct {
+	Device          string `json:"device" yaml:"device"`
 	ReceiveBytes    uint64 `json:"network_receive_bytes" yaml:"network_receive_bytes"`
 	ReceiveDrop     uint64 `json:"network_receive_drop" yaml:"network_receive_drop"`
 	ReceiveErrors   uint64 `json:"network_receive_errs" yaml:"network_receive_errs"`
