@@ -44,7 +44,10 @@ func (c *Cluster) getInstanceBackupID(name string) (int, error) {
 	id := -1
 	arg1 := []any{name}
 	arg2 := []any{&id}
-	err := dbQueryRowScan(c, q, arg1, arg2)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, arg2)
+	})
 	if err == sql.ErrNoRows {
 		return -1, api.StatusErrorf(http.StatusNotFound, "Instance backup not found")
 	}
@@ -71,7 +74,10 @@ SELECT instances_backups.id, instances_backups.instance_id,
 	arg1 := []any{projectName, name}
 	arg2 := []any{&args.ID, &args.InstanceID, &args.CreationDate,
 		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt}
-	err := dbQueryRowScan(c, q, arg1, arg2)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, arg2)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Instance backup not found")
@@ -110,7 +116,10 @@ SELECT instances_backups.name, instances_backups.instance_id,
 	arg1 := []any{backupID}
 	arg2 := []any{&args.Name, &args.InstanceID, &args.CreationDate,
 		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt}
-	err := dbQueryRowScan(c, q, arg1, arg2)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, arg2)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Instance backup not found")
@@ -141,7 +150,14 @@ JOIN projects ON projects.id=instances.project_id
 WHERE projects.name=? AND instances.name=?`
 	inargs := []any{projectName, name}
 	outfmt := []any{name}
-	dbResults, err := queryScan(c, q, inargs, outfmt)
+
+	var dbResults [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		dbResults, err = queryScan(ctx, tx, q, inargs, outfmt)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +219,10 @@ func (c *Cluster) DeleteInstanceBackup(name string) error {
 		return err
 	}
 
-	err = exec(c, "DELETE FROM instances_backups WHERE id=?", id)
+	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, "DELETE FROM instances_backups WHERE id=?", id)
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -248,7 +267,14 @@ func (c *Cluster) GetExpiredInstanceBackups() ([]InstanceBackup, error) {
 
 	q := `SELECT instances_backups.name, instances_backups.expiry_date, instances_backups.instance_id FROM instances_backups`
 	outfmt := []any{name, expiryDate, instanceID}
-	dbResults, err := queryScan(c, q, nil, outfmt)
+
+	var dbResults [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		dbResults, err = queryScan(ctx, tx, q, nil, outfmt)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -375,7 +401,14 @@ WHERE projects.name=? AND storage_volumes.name=?
 ORDER BY storage_volumes_backups.id`
 	inargs := []any{projectName, volumeName}
 	outfmt := []any{volumeName}
-	dbResults, err := queryScan(c, q, inargs, outfmt)
+
+	var dbResults [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		dbResults, err = queryScan(ctx, tx, q, inargs, outfmt)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -436,7 +469,10 @@ func (c *Cluster) getStoragePoolVolumeBackupID(name string) (int, error) {
 	id := -1
 	arg1 := []any{name}
 	arg2 := []any{&id}
-	err := dbQueryRowScan(c, q, arg1, arg2)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, arg2)
+	})
 	if err == sql.ErrNoRows {
 		return -1, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")
 	}
@@ -451,7 +487,10 @@ func (c *Cluster) DeleteStoragePoolVolumeBackup(name string) error {
 		return err
 	}
 
-	err = exec(c, "DELETE FROM storage_volumes_backups WHERE id=?", id)
+	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, "DELETE FROM storage_volumes_backups WHERE id=?", id)
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -478,7 +517,10 @@ WHERE projects.name=? AND backups.name=?
 `
 	arg1 := []any{projectName, backupName}
 	outfmt := []any{&args.ID, &args.VolumeID, &args.Name, &args.CreationDate, &args.ExpiryDate, &args.VolumeOnly, &args.OptimizedStorage}
-	err := dbQueryRowScan(c, q, arg1, outfmt)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, outfmt)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")
@@ -509,7 +551,10 @@ WHERE backups.id=?
 `
 	arg1 := []any{backupID}
 	outfmt := []any{&args.ID, &args.VolumeID, &args.Name, &args.CreationDate, &args.ExpiryDate, &args.VolumeOnly, &args.OptimizedStorage}
-	err := dbQueryRowScan(c, q, arg1, outfmt)
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, arg1, outfmt)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")

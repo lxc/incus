@@ -338,7 +338,7 @@ func (c *Cluster) transaction(ctx context.Context, f func(context.Context, *Clus
 		nodeID: c.nodeID,
 	}
 
-	return c.retry(func() error {
+	return query.Retry(ctx, func(ctx context.Context) error {
 		txFunc := func(ctx context.Context, tx *sql.Tx) error {
 			clusterTx.tx = tx
 			return f(ctx, clusterTx)
@@ -355,14 +355,6 @@ func (c *Cluster) transaction(ctx context.Context, f func(context.Context, *Clus
 
 		return err
 	})
-}
-
-func (c *Cluster) retry(f func() error) error {
-	if c.closingCtx.Err() != nil {
-		return f()
-	}
-
-	return query.Retry(f)
 }
 
 // NodeID sets the node NodeID associated with this cluster instance. It's used for
@@ -473,82 +465,8 @@ func DqliteLatestSegment() (string, error) {
 	return "none", nil
 }
 
-func dbQueryRowScan(c *Cluster, q string, args []any, outargs []any) error {
-	return c.retry(func() error {
-		return query.Transaction(context.TODO(), c.db, func(ctx context.Context, tx *sql.Tx) error {
-			return tx.QueryRowContext(ctx, q, args...).Scan(outargs...)
-		})
-	})
-}
-
-func doDbScan(c *Cluster, q string, args []any, outargs []any) ([][]any, error) {
-	result := [][]any{}
-
-	err := c.retry(func() error {
-		return query.Transaction(context.TODO(), c.db, func(ctx context.Context, tx *sql.Tx) error {
-			rows, err := tx.QueryContext(ctx, q, args...)
-			if err != nil {
-				return err
-			}
-
-			defer func() { _ = rows.Close() }()
-
-			for rows.Next() {
-				ptrargs := make([]any, len(outargs))
-				for i := range outargs {
-					switch t := outargs[i].(type) {
-					case string:
-						str := ""
-						ptrargs[i] = &str
-					case int:
-						integer := 0
-						ptrargs[i] = &integer
-					case int64:
-						integer := int64(0)
-						ptrargs[i] = &integer
-					case bool:
-						boolean := bool(false)
-						ptrargs[i] = &boolean
-					default:
-						return fmt.Errorf("Bad interface type: %s", t)
-					}
-				}
-				err = rows.Scan(ptrargs...)
-				if err != nil {
-					return err
-				}
-
-				newargs := make([]any, len(outargs))
-				for i := range ptrargs {
-					switch t := outargs[i].(type) {
-					case string:
-						newargs[i] = *ptrargs[i].(*string)
-					case int:
-						newargs[i] = *ptrargs[i].(*int)
-					case int64:
-						newargs[i] = *ptrargs[i].(*int64)
-					case bool:
-						newargs[i] = *ptrargs[i].(*bool)
-					default:
-						return fmt.Errorf("Bad interface type: %s", t)
-					}
-				}
-				result = append(result, newargs)
-			}
-
-			err = rows.Err()
-			if err != nil {
-				return err
-			}
-
-			return nil
-		})
-	})
-	if err != nil {
-		return [][]any{}, err
-	}
-
-	return result, nil
+func dbQueryRowScan(ctx context.Context, c *ClusterTx, q string, args []any, outargs []any) error {
+	return c.tx.QueryRowContext(ctx, q, args...).Scan(outargs...)
 }
 
 /*
@@ -564,16 +482,63 @@ func doDbScan(c *Cluster, q string, args []any, outargs []any) ([][]any, error) 
  * The result will be an array (one per output row) of arrays (one per output argument)
  * of interfaces, containing pointers to the actual output arguments.
  */
-func queryScan(c *Cluster, q string, inargs []any, outfmt []any) ([][]any, error) {
-	return doDbScan(c, q, inargs, outfmt)
-}
+func queryScan(ctx context.Context, c *ClusterTx, q string, inargs []any, outfmt []any) ([][]any, error) {
+	result := [][]any{}
 
-func exec(c *Cluster, q string, args ...any) error {
-	err := c.retry(func() error {
-		return query.Transaction(context.TODO(), c.db, func(ctx context.Context, tx *sql.Tx) error {
-			_, err := tx.Exec(q, args...)
-			return err
-		})
-	})
-	return err
+	rows, err := c.tx.QueryContext(ctx, q, inargs...)
+	if err != nil {
+		return [][]any{}, err
+	}
+
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		ptrargs := make([]any, len(outfmt))
+		for i := range outfmt {
+			switch t := outfmt[i].(type) {
+			case string:
+				str := ""
+				ptrargs[i] = &str
+			case int:
+				integer := 0
+				ptrargs[i] = &integer
+			case int64:
+				integer := int64(0)
+				ptrargs[i] = &integer
+			case bool:
+				boolean := bool(false)
+				ptrargs[i] = &boolean
+			default:
+				return [][]any{}, fmt.Errorf("Bad interface type: %s", t)
+			}
+		}
+		err = rows.Scan(ptrargs...)
+		if err != nil {
+			return [][]any{}, err
+		}
+
+		newargs := make([]any, len(outfmt))
+		for i := range ptrargs {
+			switch t := outfmt[i].(type) {
+			case string:
+				newargs[i] = *ptrargs[i].(*string)
+			case int:
+				newargs[i] = *ptrargs[i].(*int)
+			case int64:
+				newargs[i] = *ptrargs[i].(*int64)
+			case bool:
+				newargs[i] = *ptrargs[i].(*bool)
+			default:
+				return [][]any{}, fmt.Errorf("Bad interface type: %s", t)
+			}
+		}
+		result = append(result, newargs)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return [][]any{}, err
+	}
+
+	return result, nil
 }

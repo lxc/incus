@@ -577,7 +577,13 @@ func (c *Cluster) storagePools(where string, args ...any) ([]string, error) {
 		inargs = append(inargs, args...)
 	}
 
-	result, err := queryScan(c, stmt, inargs, outargs)
+	var result [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		result, err = queryScan(ctx, tx, stmt, inargs, outargs)
+		return err
+	})
 	if err != nil {
 		return []string{}, err
 	}
@@ -602,7 +608,13 @@ func (c *Cluster) GetStoragePoolDrivers() ([]string, error) {
 	inargs := []any{}
 	outargs := []any{poolDriver}
 
-	result, err := queryScan(c, query, inargs, outargs)
+	var result [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		result, err = queryScan(ctx, tx, query, inargs, outargs)
+		return err
+	})
 	if err != nil {
 		return []string{}, err
 	}
@@ -626,7 +638,9 @@ func (c *Cluster) GetStoragePoolID(poolName string) (int64, error) {
 	inargs := []any{poolName}
 	outargs := []any{&poolID}
 
-	err := dbQueryRowScan(c, query, inargs, outargs)
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, query, inargs, outargs)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return -1, api.StatusErrorf(http.StatusNotFound, "Storage pool not found")
@@ -894,7 +908,10 @@ func (c *Cluster) RemoveStoragePool(poolName string) (*api.StoragePool, error) {
 		return nil, err
 	}
 
-	err = exec(c, "DELETE FROM storage_pools WHERE id=?", poolID)
+	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, "DELETE FROM storage_pools WHERE id=?", poolID)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

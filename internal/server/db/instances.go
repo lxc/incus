@@ -978,8 +978,11 @@ func (c *Cluster) UpdateInstanceStatefulFlag(id int, stateful bool) error {
 // UpdateInstanceSnapshotCreationDate updates the creation_date field of the instance snapshot with ID.
 func (c *Cluster) UpdateInstanceSnapshotCreationDate(instanceID int, date time.Time) error {
 	stmt := `UPDATE instances_snapshots SET creation_date=? WHERE id=?`
-	err := exec(c, stmt, date, instanceID)
-	return err
+
+	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, stmt, date, instanceID)
+		return err
+	})
 }
 
 // GetInstanceSnapshotsNames returns the names of all snapshots of the instance
@@ -998,7 +1001,14 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 `
 	inargs := []any{project, name}
 	outfmt := []any{name}
-	dbResults, err := queryScan(c, q, inargs, outfmt)
+
+	var dbResults [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		dbResults, err = queryScan(ctx, tx, q, inargs, outfmt)
+		return err
+	})
 	if err != nil {
 		return result, err
 	}
@@ -1024,7 +1034,14 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 	var numstr string
 	inargs := []any{project, name}
 	outfmt := []any{numstr}
-	results, err := queryScan(c, q, inargs, outfmt)
+
+	var results [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		results, err = queryScan(ctx, tx, q, inargs, outfmt)
+		return err
+	})
 	if err != nil {
 		return 0
 	}

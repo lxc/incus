@@ -208,7 +208,9 @@ func (c *Cluster) GetNetworkNameAndProjectWithID(networkID int) (string, string,
 	inargs := []any{networkID}
 	outargs := []any{&networkName, &projectName}
 
-	err := dbQueryRowScan(c, q, inargs, outargs)
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		return dbQueryRowScan(ctx, tx, q, inargs, outargs)
+	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", "", api.StatusErrorf(http.StatusNotFound, "Network not found")
@@ -515,7 +517,14 @@ func (c *Cluster) networks(project string, where string, args ...any) ([]string,
 
 	var name string
 	outfmt := []any{name}
-	result, err := queryScan(c, q, inargs, outfmt)
+
+	var result [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		result, err = queryScan(ctx, tx, q, inargs, outfmt)
+		return err
+	})
 	if err != nil {
 		return []string{}, err
 	}
@@ -703,7 +712,14 @@ func (c *Cluster) GetNetworkWithInterface(devName string) (int64, *api.Network, 
 	q := "SELECT networks.id, networks.name, networks_config.value FROM networks LEFT JOIN networks_config ON networks.id=networks_config.network_id WHERE networks_config.key=\"bridge.external_interfaces\" AND networks_config.node_id=?"
 	arg1 := []any{c.nodeID}
 	arg2 := []any{id, name, value}
-	result, err := queryScan(c, q, arg1, arg2)
+
+	var result [][]any
+
+	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		result, err = queryScan(ctx, tx, q, arg1, arg2)
+		return err
+	})
 	if err != nil {
 		return -1, nil, err
 	}
@@ -882,12 +898,10 @@ func (c *Cluster) DeleteNetwork(project string, name string) error {
 		return err
 	}
 
-	err = exec(c, "DELETE FROM networks WHERE id=?", id)
-	if err != nil {
+	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, err := tx.tx.ExecContext(ctx, "DELETE FROM networks WHERE id=?", id)
 		return err
-	}
-
-	return nil
+	})
 }
 
 // RenameNetwork renames a network.

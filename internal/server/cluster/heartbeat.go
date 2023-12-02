@@ -452,7 +452,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 	// Initialise slice to indicate to HeartbeatNodeHook that its being called from leader.
 	unavailableMembers := make([]string, 0)
 
-	err = query.Retry(func() error {
+	err = query.Retry(ctx, func(ctx context.Context) error {
 		// Durating cluster member fluctuations/upgrades the cluster can become unavailable so check here.
 		if g.Cluster == nil {
 			return fmt.Errorf("Cluster unavailable")
