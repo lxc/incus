@@ -265,6 +265,58 @@ sudo -E PATH=${PATH} LD_LIBRARY_PATH=${LD_LIBRARY_PATH} $(go env GOPATH)/bin/inc
 If `newuidmap/newgidmap` tools are present on your system and `/etc/subuid`, `etc/subgid` exist, they must be configured to allow the root user a contiguous range of at least 10M UID/GID.
 ```
 
+### Other distributions: Alpine Linux
+
+The overall procedure follows the Ubuntu instruction above.
+You can get the development resources required to build Incus on your Alpine Linux via the following command:
+
+```sh
+apk add acl-dev autoconf automake eudev-dev gettext-dev go intltool libcap-dev libtool libuv-dev linux-headers lz4-dev tcl-dev sqlite-dev lxc-dev make xz
+```
+
+To take advantage of all the necessary features of Incus, you must install additional packages.
+You can reference the list of packages you need to use specific functions from [LXD package definition in Alpine Linux repository](https://gitlab.alpinelinux.org/alpine/infra/aports/-/blob/master/community/lxd/APKBUILD). <!-- wokeignore:rule=master -->
+Also you can find the package you need with the binary name from [Alpine Linux packages contents filter](https://pkgs.alpinelinux.org/contents).
+
+```sh
+# Install `depends`
+apk add acl attr ca-certificates cgmanager dbus dnsmasq lxc iproute2 iptables netcat-openbsd rsync squashfs-tools shadow-uidmap tar xz
+
+# Install `depends` for vms
+apk add qemu-system-x86_64 qemu-chardev-spice qemu-hw-usb-redirect qemu-hw-display-virtio-vga qemu-img qemu-ui-spice-core ovmf sgdisk util-linux-misc virtiofsd
+```
+
+After preparing the source from a release tarball or git repository, you need follow the below steps to avoid known issues during build time:
+
+```sh
+# cc1: error: /usr/local/include: No such file or directory [-Werror=missing-include-dirs]
+mkdir -p /usr/local/include
+
+# paste output `export` commands on console to set required environment variables
+make deps
+
+# gettext.cgo2.c:(.text+0x2b9): undefined reference to `libintl_gettext'
+# - related issue: https://github.com/gosexy/gettext/issues/1
+export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/lib -lintl"
+export CGO_CPPFLAGS="-I/usr/include"
+
+make
+```
+
+You can continue to `From source: Install` and `Machine setup` sections to finalize setting up your Incus instance.
+If you still encounter issues, the following details may help you:
+
+#### `make: gettext.cgo2.c:(.text+0x2b9): undefined reference to 'libintl_gettext'`
+
+If you didn't install `libintl` from the package manager, the location of the required library and header file can be different.
+You can find the default location of `libintl.h` and `libintl.so` file from [Alpine Linux packages contents filter](https://pkgs.alpinelinux.org/contents?file=libintl*&path=&name=gettext-dev&branch=edge).
+Also according to [GNU `gettext` FAQ: integrating undefined](https://www.gnu.org/software/gettext/FAQ.html#integrating_undefined), the `-lintl` flag should be located at the near end of the link command line.
+
+```sh
+export CGO_LDFLAGS="$CGO_LDFLAGS -L/directory/path/to/lib -lintl"
+export CGO_CPPFLAGS="-I/directory/path/to/header"
+```
+
 (installing-manage-access)=
 ## Manage access to Incus
 
