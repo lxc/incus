@@ -50,10 +50,11 @@ func (d *qemu) getQemuMetrics() (*metrics.MetricSet, error) {
 	if err != nil {
 		d.logger.Warn("Failed to get network metrics", logger.Ctx{"err": err})
 	} else {
-		out.Network = make(map[string]metrics.NetworkMetrics)
+		out.Network = make([]metrics.NetworkMetrics, 0, len(networkState))
 
 		for name, state := range networkState {
-			out.Network[name] = metrics.NetworkMetrics{
+			out.Network = append(out.Network, metrics.NetworkMetrics{
+				Device:          name,
 				ReceiveBytes:    uint64(state.Counters.BytesReceived),
 				ReceiveDrop:     uint64(state.Counters.PacketsDroppedInbound),
 				ReceiveErrors:   uint64(state.Counters.ErrorsReceived),
@@ -62,7 +63,7 @@ func (d *qemu) getQemuMetrics() (*metrics.MetricSet, error) {
 				TransmitDrop:    uint64(state.Counters.PacketsDroppedOutbound),
 				TransmitErrors:  uint64(state.Counters.ErrorsSent),
 				TransmitPackets: uint64(state.Counters.PacketsSent),
-			}
+			})
 		}
 	}
 
@@ -74,21 +75,22 @@ func (d *qemu) getQemuMetrics() (*metrics.MetricSet, error) {
 	return metricSet, nil
 }
 
-func (d *qemu) getQemuDiskMetrics(monitor *qmp.Monitor) (map[string]metrics.DiskMetrics, error) {
+func (d *qemu) getQemuDiskMetrics(monitor *qmp.Monitor) ([]metrics.DiskMetrics, error) {
 	stats, err := monitor.GetBlockStats()
 	if err != nil {
 		return nil, err
 	}
 
-	out := make(map[string]metrics.DiskMetrics)
+	out := make([]metrics.DiskMetrics, 0, len(stats))
 
 	for dev, stat := range stats {
-		out[dev] = metrics.DiskMetrics{
+		out = append(out, metrics.DiskMetrics{
+			Device:          dev,
 			ReadBytes:       uint64(stat.BytesRead),
 			ReadsCompleted:  uint64(stat.ReadsCompleted),
 			WrittenBytes:    uint64(stat.BytesWritten),
 			WritesCompleted: uint64(stat.WritesCompleted),
-		}
+		})
 	}
 
 	return out, nil
@@ -162,14 +164,14 @@ func (d *qemu) getQemuMemoryMetrics(monitor *qmp.Monitor) (metrics.MemoryMetrics
 	return out, nil
 }
 
-func (d *qemu) getQemuCPUMetrics(monitor *qmp.Monitor) (map[string]metrics.CPUMetrics, error) {
+func (d *qemu) getQemuCPUMetrics(monitor *qmp.Monitor) ([]metrics.CPUMetrics, error) {
 	// Get CPU metrics
 	threadIDs, err := monitor.GetCPUs()
 	if err != nil {
 		return nil, err
 	}
 
-	cpuMetrics := map[string]metrics.CPUMetrics{}
+	cpuMetrics := make([]metrics.CPUMetrics, 0, len(threadIDs))
 
 	for i, threadID := range threadIDs {
 		pid, err := os.ReadFile(d.pidFilePath())
@@ -213,7 +215,9 @@ func (d *qemu) getQemuCPUMetrics(monitor *qmp.Monitor) (map[string]metrics.CPUMe
 
 		stats.SecondsSystem /= 100
 
-		cpuMetrics[fmt.Sprintf("cpu%d", i)] = stats
+		stats.CPU = fmt.Sprintf("cpu%d", i)
+
+		cpuMetrics = append(cpuMetrics, stats)
 	}
 
 	return cpuMetrics, nil

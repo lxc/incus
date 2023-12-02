@@ -76,13 +76,13 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	return response.SyncResponse(true, &out)
 }
 
-func getCPUMetrics(d *Daemon) (map[string]metrics.CPUMetrics, error) {
+func getCPUMetrics(d *Daemon) ([]metrics.CPUMetrics, error) {
 	stats, err := os.ReadFile("/proc/stat")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read /proc/stat: %w", err)
 	}
 
-	out := map[string]metrics.CPUMetrics{}
+	out := []metrics.CPUMetrics{}
 	scanner := bufio.NewScanner(bytes.NewReader(stats))
 
 	for scanner.Scan() {
@@ -158,7 +158,8 @@ func getCPUMetrics(d *Daemon) (map[string]metrics.CPUMetrics, error) {
 
 		stats.SecondsSteal /= 100
 
-		out[fields[0]] = stats
+		stats.CPU = fields[0]
+		out = append(out, stats)
 	}
 
 	return out, nil
@@ -203,13 +204,13 @@ func getTotalProcesses(d *Daemon) (uint64, error) {
 	return pidCount, nil
 }
 
-func getDiskMetrics(d *Daemon) (map[string]metrics.DiskMetrics, error) {
+func getDiskMetrics(d *Daemon) ([]metrics.DiskMetrics, error) {
 	diskStats, err := os.ReadFile("/proc/diskstats")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read /proc/diskstats: %w", err)
 	}
 
-	out := map[string]metrics.DiskMetrics{}
+	out := []metrics.DiskMetrics{}
 	scanner := bufio.NewScanner(bytes.NewReader(diskStats))
 
 	for scanner.Scan() {
@@ -250,19 +251,20 @@ func getDiskMetrics(d *Daemon) (map[string]metrics.DiskMetrics, error) {
 
 		stats.WrittenBytes = sectorsWritten * 512
 
-		out[fields[2]] = stats
+		stats.Device = fields[2]
+		out = append(out, stats)
 	}
 
 	return out, nil
 }
 
-func getFilesystemMetrics(d *Daemon) (map[string]metrics.FilesystemMetrics, error) {
+func getFilesystemMetrics(d *Daemon) ([]metrics.FilesystemMetrics, error) {
 	mounts, err := os.ReadFile("/proc/mounts")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read /proc/mounts: %w", err)
 	}
 
-	out := map[string]metrics.FilesystemMetrics{}
+	out := []metrics.FilesystemMetrics{}
 	scanner := bufio.NewScanner(bytes.NewReader(mounts))
 
 	for scanner.Scan() {
@@ -296,7 +298,9 @@ func getFilesystemMetrics(d *Daemon) (map[string]metrics.FilesystemMetrics, erro
 		stats.FreeBytes = statfs.Bfree * uint64(statfs.Bsize)
 		stats.SizeBytes = statfs.Blocks * uint64(statfs.Bsize)
 
-		out[fields[0]] = stats
+		stats.Device = fields[0]
+
+		out = append(out, stats)
 	}
 
 	return out, nil
@@ -375,8 +379,8 @@ func getMemoryMetrics(d *Daemon) (metrics.MemoryMetrics, error) {
 	return out, nil
 }
 
-func getNetworkMetrics(d *Daemon) (map[string]metrics.NetworkMetrics, error) {
-	out := map[string]metrics.NetworkMetrics{}
+func getNetworkMetrics(d *Daemon) ([]metrics.NetworkMetrics, error) {
+	out := []metrics.NetworkMetrics{}
 
 	for dev, state := range networkState() {
 		stats := metrics.NetworkMetrics{}
@@ -390,7 +394,9 @@ func getNetworkMetrics(d *Daemon) (map[string]metrics.NetworkMetrics, error) {
 		stats.TransmitErrors = uint64(state.Counters.ErrorsSent)
 		stats.TransmitPackets = uint64(state.Counters.PacketsSent)
 
-		out[dev] = stats
+		stats.Device = dev
+
+		out = append(out, stats)
 	}
 
 	return out, nil
