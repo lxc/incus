@@ -57,6 +57,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 {{- end }}
 {{- end }}
 
+  # The binary itself (for nesting)
+  /{,usr/}bin/rsync mr,
+
   # Silence denials on files that aren't required.
   deny /etc/ssl/openssl.cnf r,
   deny /sys/devices/virtual/dmi/id/product_uuid r,
