@@ -28,17 +28,13 @@ The client tool ([`incus`](incus.md)) is available on most platforms.
 
 ### Linux
 
-The easiest way to install Incus on Linux is to install the {ref}`installing-zabbly-package`, which is available for both Debian and Ubuntu.
+Packages are available for a number of Linux distributions, either in their main repository or through third party repositories.
 
-You can also find native builds of the Incus client on [GitHub](https://github.com/lxc/incus/actions):
+````{tabs}
 
-- Incus client for Linux: [`bin.linux.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.aarch64), [`bin.linux.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.x86_64)
-- Incus client for Windows: [`bin.windows.incus.aarch64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.aarch64.exe), [`bin.windows.incus.x86_64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.x86_64.exe)
-- Incus client for macOS: [`bin.macos.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.aarch64), [`bin.macos.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.x86_64)
-
-(installing-zabbly-package)=
-#### Debian and Ubuntu package from Zabbly
+```{group-tab} Debian and Ubuntu
 Currently the easiest way to install Incus is to use the Debian or Ubuntu packages provided by [Zabbly](https://zabbly.com).
+
 There are two repositories available, one for the current stable release and one for daily (untested) builds.
 
 Installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
@@ -65,8 +61,9 @@ If you prefer a different installation method, see {ref}`installing`.
 
    This will create a minimal setup with default options.
    If you want to tune the initialization options, see {ref}`initialize` for more information.
+```
 
-#### Gentoo
+```{group-tab} Gentoo
 Incus and all of its dependencies are available in Gentoo's main repository as [`app-containers/incus`](https://packages.gentoo.org/packages/app-containers/incus).
 
 Install Incus with:
@@ -105,6 +102,9 @@ or
 which will just use default settings without prompting for choices. See {ref}`initialize` for more information.
 
 Log in to your user and start using Incus through `incus` command.
+```
+
+````
 
 ### Other operating systems
 
@@ -136,12 +136,11 @@ To install it:
 
 ````
 
-You can also find native builds of the Incus client on [GitHub](https://github.com/lxc/incus/actions).
-To download a specific build:
+You can also find native builds of the Incus client on [GitHub](https://github.com/lxc/incus/actions):
 
-1. Make sure that you are logged into your GitHub account.
-1. Filter for the branch or tag that you are interested in (for example, the latest release tag or `main`).
-1. Select the latest build and download the suitable artifact.
+- Incus client for Linux: [`bin.linux.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.aarch64), [`bin.linux.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.x86_64)
+- Incus client for Windows: [`bin.windows.incus.aarch64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.aarch64.exe), [`bin.windows.incus.x86_64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.x86_64.exe)
+- Incus client for macOS: [`bin.macos.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.aarch64), [`bin.macos.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.x86_64)
 
 (installing_from_source)=
 ## Install Incus from source
@@ -150,36 +149,65 @@ Follow these instructions if you want to build and install Incus from the source
 
 We recommend having the latest versions of `liblxc` (>= 4.0.0 required)
 available for Incus development. Additionally, Incus requires a modern Golang (see {ref}`requirements-go`)
-version to work. On Ubuntu, you can get those with:
+version to work.
 
-```bash
-sudo apt update
-sudo apt install acl attr autoconf automake dnsmasq-base git libacl1-dev libcap-dev liblxc1 liblxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
-command -v snap >/dev/null || sudo apt-get install snapd
-sudo snap install --classic go
-```
+````{tabs}
 
-```{note}
-If you use the `liblxc-dev` package and get compile time errors when building the `go-lxc` module,
-ensure that the value for `INC_DEVEL` is `0` for your `liblxc` build. To check that, look at `/usr/include/lxc/version.h`.
-If the `INC_DEVEL` value is `1`, replace it with `0` to work around the problem. It's a packaging bug, and
-we are aware of it for Ubuntu 22.04/22.10. Ubuntu 23.04/23.10 does not have this problem.
-```
+```{group-tab} Debian and Ubuntu
+Install the build and required runtime dependencies with:
+
+    sudo apt update
+    sudo apt install acl attr autoconf automake dnsmasq-base git golang-go libacl1-dev libcap-dev liblxc1 liblxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
 
 There are a few storage drivers for Incus besides the default `dir` driver.
 Installing these tools adds a bit to initramfs and may slow down your
 host boot, but are needed if you'd like to use a particular driver:
 
-```bash
-sudo apt install lvm2 thin-provisioning-tools
-sudo apt install btrfs-progs
-```
+    sudo apt install btrfs-progs
+    sudo apt install ceph-common
+    sudo apt install lvm2 thin-provisioning-tools
+    sudo apt install zfsutils-linux
 
 To run the test suite, you'll also need:
 
-```bash
-sudo apt install busybox-static curl gettext jq sqlite3 socat bind9-dnsutils
+    sudo apt install busybox-static curl gettext jq sqlite3 socat bind9-dnsutils
+
+****NOTE:**** If you use the `liblxc-dev` package and get compile time errors when building the `go-lxc` module,
+ensure that the value for `LXC_DEVEL` is `0` for your `liblxc` build. To check that, look at `/usr/include/lxc/version.h`.
+If the `LXC_DEVEL` value is `1`, replace it with `0` to work around the problem. It's a packaging bug, and
+we are aware of it for Ubuntu 22.04/22.10. Ubuntu 23.04/23.10 does not have this problem.
+
 ```
+
+
+```{group-tab} Alpine Linux
+You can get the development resources required to build Incus on your Alpine Linux via the following command:
+
+    apk add acl-dev autoconf automake eudev-dev gettext-dev go intltool libcap-dev libtool libuv-dev linux-headers lz4-dev tcl-dev sqlite-dev lxc-dev make xz
+
+To take advantage of all the necessary features of Incus, you must install additional packages.
+You can reference the list of packages you need to use specific functions from [LXD package definition in Alpine Linux repository](https://gitlab.alpinelinux.org/alpine/infra/aports/-/blob/master/community/lxd/APKBUILD). <!-- wokeignore:rule=master -->
+Also you can find the package you need with the binary name from [Alpine Linux packages contents filter](https://pkgs.alpinelinux.org/contents).
+
+Install the main dependencies:
+
+    apk add acl attr ca-certificates cgmanager dbus dnsmasq lxc libintl iproute2 iptables netcat-openbsd rsync squashfs-tools shadow-uidmap tar xz
+
+Install the extra dependencies for running virtual machines:
+
+    apk add qemu-system-x86_64 qemu-chardev-spice qemu-hw-usb-redirect qemu-hw-display-virtio-vga qemu-img qemu-ui-spice-core ovmf sgdisk util-linux-misc virtiofsd
+
+After preparing the source from a release tarball or git repository, you need follow the below steps to avoid known issues during build time:
+
+
+****NOTE:**** Some build errors may occur if `/usr/local/include` doesn't exist on the system.
+Also, due to a [`gettext` issue](https://github.com/gosexy/gettext/issues/1), you may need to set those additional environment variables:
+
+    export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/lib -lintl"
+    export CGO_CPPFLAGS="-I/usr/include"
+```
+
+````
 
 ### From source: Build the latest version
 
@@ -263,58 +291,6 @@ sudo -E PATH=${PATH} LD_LIBRARY_PATH=${LD_LIBRARY_PATH} $(go env GOPATH)/bin/inc
 
 ```{note}
 If `newuidmap/newgidmap` tools are present on your system and `/etc/subuid`, `etc/subgid` exist, they must be configured to allow the root user a contiguous range of at least 10M UID/GID.
-```
-
-### Other distributions: Alpine Linux
-
-The overall procedure follows the Ubuntu instruction above.
-You can get the development resources required to build Incus on your Alpine Linux via the following command:
-
-```sh
-apk add acl-dev autoconf automake eudev-dev gettext-dev go intltool libcap-dev libtool libuv-dev linux-headers lz4-dev tcl-dev sqlite-dev lxc-dev make xz
-```
-
-To take advantage of all the necessary features of Incus, you must install additional packages.
-You can reference the list of packages you need to use specific functions from [LXD package definition in Alpine Linux repository](https://gitlab.alpinelinux.org/alpine/infra/aports/-/blob/master/community/lxd/APKBUILD). <!-- wokeignore:rule=master -->
-Also you can find the package you need with the binary name from [Alpine Linux packages contents filter](https://pkgs.alpinelinux.org/contents).
-
-```sh
-# Install `depends`
-apk add acl attr ca-certificates cgmanager dbus dnsmasq lxc iproute2 iptables netcat-openbsd rsync squashfs-tools shadow-uidmap tar xz
-
-# Install `depends` for vms
-apk add qemu-system-x86_64 qemu-chardev-spice qemu-hw-usb-redirect qemu-hw-display-virtio-vga qemu-img qemu-ui-spice-core ovmf sgdisk util-linux-misc virtiofsd
-```
-
-After preparing the source from a release tarball or git repository, you need follow the below steps to avoid known issues during build time:
-
-```sh
-# cc1: error: /usr/local/include: No such file or directory [-Werror=missing-include-dirs]
-mkdir -p /usr/local/include
-
-# paste output `export` commands on console to set required environment variables
-make deps
-
-# gettext.cgo2.c:(.text+0x2b9): undefined reference to `libintl_gettext'
-# - related issue: https://github.com/gosexy/gettext/issues/1
-export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/lib -lintl"
-export CGO_CPPFLAGS="-I/usr/include"
-
-make
-```
-
-You can continue to `From source: Install` and `Machine setup` sections to finalize setting up your Incus instance.
-If you still encounter issues, the following details may help you:
-
-#### `make: gettext.cgo2.c:(.text+0x2b9): undefined reference to 'libintl_gettext'`
-
-If you didn't install `libintl` from the package manager, the location of the required library and header file can be different.
-You can find the default location of `libintl.h` and `libintl.so` file from [Alpine Linux packages contents filter](https://pkgs.alpinelinux.org/contents?file=libintl*&path=&name=gettext-dev&branch=edge).
-Also according to [GNU `gettext` FAQ: integrating undefined](https://www.gnu.org/software/gettext/FAQ.html#integrating_undefined), the `-lintl` flag should be located at the near end of the link command line.
-
-```sh
-export CGO_LDFLAGS="$CGO_LDFLAGS -L/directory/path/to/lib -lintl"
-export CGO_CPPFLAGS="-I/directory/path/to/header"
 ```
 
 (installing-manage-access)=
