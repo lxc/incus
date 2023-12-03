@@ -62,7 +62,7 @@ To revoke trust to a client, remove its certificate from the server with [`incus
 #### Adding trusted certificates to the server
 
 The preferred way to add trusted clients is to directly add their certificates to the trust store on the server.
-To do so, copy the client certificate to the server and register it using [`incus config trust add <file>`](incus_config_trust_add.md).
+To do so, copy the client certificate to the server and register it using [`incus config trust add-certificate <file>`](incus_config_trust_add-certificate.md).
 
 (authentication-token)=
 #### Adding client certificates using tokens
