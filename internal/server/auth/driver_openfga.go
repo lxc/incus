@@ -906,7 +906,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 				return err
 			}
 
-			if !util.ValueInSlice(remoteObject, resources.CertificateObjects) {
+			if !util.ValueInSlice(remoteObject, localObjects) {
 				if relation == relationProject {
 					user = ObjectProject(remoteObject.Project()).String()
 				}
