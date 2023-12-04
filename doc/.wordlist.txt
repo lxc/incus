@@ -156,6 +156,7 @@ netmask
 NFS
 NIC
 NICs
+NixOS
 NUMA
 NVRAM
 OData
