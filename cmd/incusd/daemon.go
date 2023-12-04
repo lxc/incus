@@ -1767,6 +1767,34 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, au
 		d.authorizer, _ = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
 	})
 
+	// Check if we're a cluster leader.
+	isLeader := false
+
+	leaderAddress, err := d.gateway.LeaderAddress()
+	if err != nil {
+		if errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			isLeader = true
+		} else {
+			return err
+		}
+	} else if leaderAddress == d.localConfig.ClusterAddress() {
+		isLeader = true
+	}
+
+	// If clustered and not running on a leader, just load the driver.
+	if !isLeader {
+		openfgaAuthorizer, err := auth.LoadAuthorizer(d.shutdownCtx, auth.DriverOpenFGA, logger.Log, d.clientCerts, auth.WithConfig(config))
+		if err != nil {
+			return err
+		}
+
+		d.authorizer = openfgaAuthorizer
+
+		revert.Success()
+		return nil
+	}
+
+	// Build the list of resources to update the model.
 	var resources auth.Resources
 	err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
 		err := query.Scan(ctx, tx.Tx(), "SELECT certificates.fingerprint from certificates", func(scan func(dest ...any) error) error {
