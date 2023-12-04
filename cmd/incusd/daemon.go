@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/x509"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -1944,12 +1945,13 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, au
 			return err
 		}
 
-		err = query.Scan(ctx, tx.Tx(), "SELECT storage_volumes.name, storage_volumes.type, storage_pools.name, projects.name FROM storage_volumes JOIN projects ON projects.id=storage_volumes.project_id JOIN storage_pools ON storage_pools.id=storage_volumes.storage_pool_id", func(scan func(dest ...any) error) error {
+		err = query.Scan(ctx, tx.Tx(), "SELECT storage_volumes.name, storage_volumes.type, storage_pools.name, projects.name, nodes.name FROM storage_volumes JOIN projects ON projects.id=storage_volumes.project_id JOIN storage_pools ON storage_pools.id=storage_volumes.storage_pool_id LEFT JOIN nodes ON storage_volumes.node_id=nodes.id", func(scan func(dest ...any) error) error {
 			var storageVolumeName string
 			var storageVolumeType int
+			var storageVolumeLocation sql.NullString
 			var storagePoolName string
 			var projectName string
-			err := scan(&storageVolumeName, &storageVolumeType, &storagePoolName, &projectName)
+			err := scan(&storageVolumeName, &storageVolumeType, &storagePoolName, &projectName, &storageVolumeLocation)
 			if err != nil {
 				return err
 			}
@@ -1959,23 +1961,34 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, au
 				return err
 			}
 
-			resources.StoragePoolVolumeObjects = append(resources.StoragePoolVolumeObjects, auth.ObjectStorageVolume(projectName, storagePoolName, storageVolumeTypeName, storageVolumeName))
+			var location string
+			if d.serverClustered && storageVolumeType != db.StoragePoolVolumeTypeContainer && storageVolumeType != db.StoragePoolVolumeTypeVM && storageVolumeLocation.Valid {
+				location = storageVolumeLocation.String
+			}
+
+			resources.StoragePoolVolumeObjects = append(resources.StoragePoolVolumeObjects, auth.ObjectStorageVolume(projectName, storagePoolName, storageVolumeTypeName, storageVolumeName, location))
 			return nil
 		})
 		if err != nil {
 			return err
 		}
 
-		err = query.Scan(ctx, tx.Tx(), "SELECT storage_buckets.name, storage_pools.name, projects.name FROM storage_buckets JOIN projects ON projects.id=storage_buckets.project_id JOIN storage_pools ON storage_pools.id=storage_buckets.storage_pool_id", func(scan func(dest ...any) error) error {
+		err = query.Scan(ctx, tx.Tx(), "SELECT storage_buckets.name, storage_pools.name, projects.name, nodes.name FROM storage_buckets JOIN projects ON projects.id=storage_buckets.project_id JOIN storage_pools ON storage_pools.id=storage_buckets.storage_pool_id LEFT JOIN nodes ON storage_buckets.node_id=nodes.id", func(scan func(dest ...any) error) error {
 			var storageBucketName string
+			var storageBucketLocation sql.NullString
 			var storagePoolName string
 			var projectName string
-			err := scan(&storageBucketName, &storagePoolName, &projectName)
+			err := scan(&storageBucketName, &storagePoolName, &projectName, &storageBucketLocation)
 			if err != nil {
 				return err
 			}
 
-			resources.StorageBucketObjects = append(resources.StorageBucketObjects, auth.ObjectStorageBucket(projectName, storagePoolName, storageBucketName))
+			var location string
+			if d.serverClustered && storageBucketLocation.Valid {
+				location = storageBucketLocation.String
+			}
+
+			resources.StorageBucketObjects = append(resources.StorageBucketObjects, auth.ObjectStorageBucket(projectName, storagePoolName, storageBucketName, location))
 			return nil
 		})
 		if err != nil {
