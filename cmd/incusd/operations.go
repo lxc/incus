@@ -262,7 +262,7 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 		if objectType != "" {
 			for _, v := range op.Resources() {
 				for _, u := range v {
-					_, _, pathArgs, err := dbCluster.URLToEntityType(u.String())
+					_, _, _, pathArgs, err := dbCluster.URLToEntityType(u.String())
 					if err != nil {
 						return response.InternalError(fmt.Errorf("Unable to parse operation resource URL: %w", err))
 					}
