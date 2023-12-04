@@ -173,21 +173,6 @@ func ObjectFromRequest(r *http.Request, objectType ObjectType, muxVars ...string
 		return ObjectServer(), nil
 	}
 
-	muxValues := make([]string, 0, len(muxVars))
-	vars := mux.Vars(r)
-	for _, muxVar := range muxVars {
-		muxValue, err := url.PathUnescape(vars[muxVar])
-		if err != nil {
-			return "", fmt.Errorf("Failed to unescape mux var %q for object type %q: %w", muxVar, objectType, err)
-		}
-
-		if muxValue == "" {
-			return "", fmt.Errorf("Mux var %q not found for object type %q", muxVar, objectType)
-		}
-
-		muxValues = append(muxValues, muxValue)
-	}
-
 	values, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		return "", err
@@ -196,6 +181,35 @@ func ObjectFromRequest(r *http.Request, objectType ObjectType, muxVars ...string
 	projectName := values.Get("project")
 	if projectName == "" {
 		projectName = "default"
+	}
+
+	location := values.Get("target")
+
+	muxValues := make([]string, 0, len(muxVars))
+	vars := mux.Vars(r)
+	for _, muxVar := range muxVars {
+		var err error
+		var muxValue string
+
+		if muxVar == "location" {
+			// Special handling for the location which is not present as a real mux var.
+			if location == "" {
+				continue
+			}
+
+			muxValue = location
+		} else {
+			muxValue, err = url.PathUnescape(vars[muxVar])
+			if err != nil {
+				return "", fmt.Errorf("Failed to unescape mux var %q for object type %q: %w", muxVar, objectType, err)
+			}
+
+			if muxValue == "" {
+				return "", fmt.Errorf("Mux var %q not found for object type %q", muxVar, objectType)
+			}
+		}
+
+		muxValues = append(muxValues, muxValue)
 	}
 
 	// If using projects API we want to pass in the mux var, not the query parameter.
