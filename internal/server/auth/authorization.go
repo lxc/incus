@@ -80,9 +80,9 @@ type Authorizer interface {
 	DeleteProfile(ctx context.Context, projectName string, profileName string) error
 	RenameProfile(ctx context.Context, projectName string, oldProfileName string, newProfileName string) error
 
-	AddStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string) error
-	DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string) error
-	RenameStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, oldStorageVolumeName string, newStorageVolumeName string) error
+	AddStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error
+	DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error
+	RenameStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, oldStorageVolumeName string, newStorageVolumeName string, storageVolumeLocation string) error
 
 	AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error
 	DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error

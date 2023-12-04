@@ -277,8 +277,14 @@ func ObjectStorageBucket(projectName string, poolName string, bucketName string)
 	return object
 }
 
-func ObjectStorageVolume(projectName string, poolName string, volumeType string, volumeName string) Object {
-	object, _ := NewObject(ObjectTypeStorageVolume, projectName, poolName, volumeType, volumeName)
+func ObjectStorageVolume(projectName string, poolName string, volumeType string, volumeName string, location string) Object {
+	var object Object
+	if location != "" {
+		object, _ = NewObject(ObjectTypeStorageVolume, projectName, poolName, volumeType, volumeName, location)
+	} else {
+		object, _ = NewObject(ObjectTypeStorageVolume, projectName, poolName, volumeType, volumeName)
+	}
+
 	return object
 }
 

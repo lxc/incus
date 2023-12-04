@@ -105,8 +105,13 @@ func (s *objectSuite) TestObjectStoragePool() {
 
 func (s *objectSuite) TestObjectStorageVolume() {
 	s.Assert().NotPanics(func() {
-		o := ObjectStorageVolume("default", "pool_name", "volume_type", "volume_name")
+		o := ObjectStorageVolume("default", "pool_name", "volume_type", "volume_name", "")
 		s.Equal("storage_volume:default/pool_name/volume_type/volume_name", string(o))
+	})
+
+	s.Assert().NotPanics(func() {
+		o := ObjectStorageVolume("default", "pool_name", "volume_type", "volume_name", "location")
+		s.Equal("storage_volume:default/pool_name/volume_type/volume_name/location", string(o))
 	})
 }
 
