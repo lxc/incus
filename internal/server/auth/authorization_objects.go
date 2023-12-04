@@ -167,7 +167,7 @@ func NewObject(objectType ObjectType, projectName string, identifierElements ...
 // Mux vars must be provided in the order that they are found in the endpoint path. If the object
 // requires a project name, this is taken from the project query parameter unless the URL begins
 // with /1.0/projects.
-func ObjectFromRequest(r *http.Request, objectType ObjectType, muxVars ...string) (Object, error) {
+func ObjectFromRequest(r *http.Request, objectType ObjectType, expand func(string, string) string, muxVars ...string) (Object, error) {
 	// Shortcut for server objects which don't require any arguments.
 	if objectType == ObjectTypeServer {
 		return ObjectServer(), nil
@@ -206,6 +206,11 @@ func ObjectFromRequest(r *http.Request, objectType ObjectType, muxVars ...string
 
 			if muxValue == "" {
 				return "", fmt.Errorf("Mux var %q not found for object type %q", muxVar, objectType)
+			}
+
+			// Expand fingerprints.
+			if muxVar == "fingerprint" {
+				muxValue = expand(projectName, muxValue)
 			}
 		}
 

@@ -253,7 +253,35 @@ func allowAuthenticated(d *Daemon, r *http.Request) response.Response {
 // Mux vars should always be passed in with the same order they appear in the API route.
 func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, muxVars ...string) func(d *Daemon, r *http.Request) response.Response {
 	return func(d *Daemon, r *http.Request) response.Response {
-		objectName, err := auth.ObjectFromRequest(r, objectType, muxVars...)
+		// Expansion function to deal with partial fingerprints.
+		expander := func(projectName string, fingerprint string) string {
+			if objectType == auth.ObjectTypeImage {
+				_, imgInfo, err := d.db.Cluster.GetImage(fingerprint, dbCluster.ImageFilter{Project: &projectName})
+				if err != nil {
+					return fingerprint
+				}
+
+				fingerprint = imgInfo.Fingerprint
+			} else if objectType == auth.ObjectTypeCertificate {
+				err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+					dbCertInfo, err := dbCluster.GetCertificateByFingerprintPrefix(ctx, tx.Tx(), fingerprint)
+					if err != nil {
+						return err
+					}
+
+					fingerprint = dbCertInfo.Fingerprint
+					return nil
+				})
+				if err != nil {
+					return fingerprint
+				}
+			}
+
+			// Fallback to no expansion.
+			return fingerprint
+		}
+
+		objectName, err := auth.ObjectFromRequest(r, objectType, expander, muxVars...)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed to create authentication object: %w", err))
 		}
