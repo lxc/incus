@@ -104,6 +104,24 @@ which will just use default settings without prompting for choices. See {ref}`in
 Log in to your user and start using Incus through `incus` command.
 ```
 
+```{group-tab} NixOS
+Incus and its dependencies are packaged in NixOS and are configurable through NixOS options. See [`virtualisation.incus`](https://search.nixos.org/options?query=virtualisation.incus) for a complete set of available options.
+
+The service can be enabled and started by adding the following to your NixOS configuration.
+
+    virtualisation.incus.enable = true;
+
+Incus initialization can be done manually using `incus admin init`, or through the preseed option in your NixOS configuration. See the NixOS documentation for an example preseed.
+
+    virtualisation.incus.preseed = {};
+
+Finally, you can add users to the `incus-admin` group to provide non-root access to the Incus socket. In your NixOS configuration:
+
+    users.users.YOUR_USERNAME.extraGroups = ["incus-admin"];
+
+For any NixOS specific issues, please [file an issue](https://github.com/NixOS/nixpkgs/issues/new/choose) in the package repository.
+```
+
 ````
 
 ### Other operating systems
