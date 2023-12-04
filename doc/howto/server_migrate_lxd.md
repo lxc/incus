@@ -8,6 +8,11 @@ Instead, make sure that both `incus info` and `lxc info` both work properly, the
 
 This process transfers the entire database and all storage from LXD to Incus, resulting in an identical setup after the migration.
 
+```{note}
+Following the migration, you will need to add any user that was in the `lxd` group into the equivalent `incus-admin` group.
+As group membership only updates on login, users may need to close their session and re-open it for it to take effect.
+```
+
 ```{terminal}
 :input: lxd-to-incus
 :user: root
