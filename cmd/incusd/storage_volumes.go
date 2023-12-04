@@ -665,15 +665,10 @@ func storagePoolVolumesTypePost(d *Daemon, r *http.Request) response.Response {
 	target := request.QueryParam(r, "target")
 
 	// Check if we need to switch to migration
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
 	serverName := s.ServerName
 	var nodeAddress string
 
-	if clustered && target != "" && !req.Source.Refresh && (req.Source.Location != "" && serverName != req.Source.Location) {
+	if s.ServerClustered && target != "" && !req.Source.Refresh && (req.Source.Location != "" && serverName != req.Source.Location) {
 		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			nodeInfo, err := tx.GetNodeByName(ctx, req.Source.Location)
 			if err != nil {
@@ -1175,12 +1170,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	target := request.QueryParam(r, "target")
 
 	// Check if clustered.
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.InternalError(fmt.Errorf("Failed checking cluster state: %w", err))
-	}
-
-	if clustered && target != "" && req.Source.Location != "" && req.Migration {
+	if s.ServerClustered && target != "" && req.Source.Location != "" && req.Migration {
 		var sourceNodeOffline bool
 
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1242,9 +1232,8 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 					// Check if the user provided an incorrect target query parameter and return a helpful error message.
 					_, volumeNotFound := api.StatusErrorMatch(err, http.StatusNotFound)
 					targetIsSet := r.URL.Query().Get("target") != ""
-					serverIsClustered, _ := cluster.Enabled(s.DB.Node)
 
-					if serverIsClustered && targetIsSet && volumeNotFound {
+					if s.ServerClustered && targetIsSet && volumeNotFound {
 						return response.NotFound(fmt.Errorf("Storage volume not found on this cluster member"))
 					}
 
@@ -1385,9 +1374,8 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		// Check if the user provided an incorrect target query parameter and return a helpful error message.
 		_, volumeNotFound := api.StatusErrorMatch(err, http.StatusNotFound)
 		targetIsSet := r.URL.Query().Get("target") != ""
-		serverIsClustered, _ := cluster.Enabled(s.DB.Node)
 
-		if serverIsClustered && targetIsSet && volumeNotFound {
+		if s.ServerClustered && targetIsSet && volumeNotFound {
 			return response.NotFound(fmt.Errorf("Storage volume not found on this cluster member"))
 		}
 

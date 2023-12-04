@@ -181,17 +181,13 @@ func patchRemoveWarningsWithEmptyNode(name string, d *Daemon) error {
 }
 
 func patchClusteringServerCertTrust(name string, d *Daemon) error {
-	clustered, err := cluster.Enabled(d.db.Node)
-	if err != nil {
-		return err
-	}
-
-	if !clustered {
+	if !d.serverClustered {
 		return nil
 	}
 
 	var serverName string
-	err = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
 		serverName, err = tx.GetLocalNodeName(ctx)
 		return err
 	})

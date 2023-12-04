@@ -425,14 +425,8 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 		return response.SmartError(err)
 	}
 
-	// Check if we need to redirect to migration
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
 	// When clustered, use the node name, otherwise use the hostname.
-	if clustered {
+	if s.ServerClustered {
 		serverName := s.ServerName
 
 		if serverName != source.Location() {
@@ -863,12 +857,6 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	// Check if clustered.
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.InternalError(fmt.Errorf("Failed to check for cluster state: %w", err))
-	}
-
 	var targetProject *api.Project
 	var profiles []api.Profile
 	var sourceInst *dbCluster.Instance
@@ -879,7 +867,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		target := request.QueryParam(r, "target")
-		if !clustered && target != "" {
+		if !s.ServerClustered && target != "" {
 			return api.StatusErrorf(http.StatusBadRequest, "Target only allowed when clustered")
 		}
 
@@ -896,7 +884,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		var targetGroupName string
 		var allMembers []db.NodeInfo
 
-		if clustered && !clusterNotification {
+		if s.ServerClustered && !clusterNotification {
 			allMembers, err = tx.GetNodes(ctx)
 			if err != nil {
 				return fmt.Errorf("Failed getting cluster members: %w", err)
@@ -1025,7 +1013,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			logger.Debug("No name provided for new instance, using auto-generated name", logger.Ctx{"project": targetProjectName, "instance": req.Name})
 		}
 
-		if clustered && !clusterNotification && targetMemberInfo == nil {
+		if s.ServerClustered && !clusterNotification && targetMemberInfo == nil {
 			architectures, err := instance.SuitableArchitectures(ctx, s, tx, targetProjectName, sourceInst, sourceImageRef, req)
 			if err != nil {
 				return err
@@ -1081,7 +1069,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	if clustered && !clusterNotification && targetMemberInfo == nil {
+	if s.ServerClustered && !clusterNotification && targetMemberInfo == nil {
 		// Run instance placement scriptlet if enabled and no cluster member selected yet.
 		if s.GlobalConfig.InstancesPlacementScriptlet() != "" {
 			leaderAddress, err := d.gateway.LeaderAddress()

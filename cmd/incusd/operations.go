@@ -602,14 +602,8 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	// Check if clustered.
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.InternalError(err)
-	}
-
 	// If not clustered, then just return local operations.
-	if !clustered {
+	if !s.ServerClustered {
 		return response.SyncResponse(true, md)
 	}
 
@@ -731,21 +725,17 @@ func operationsGetByType(s *state.State, r *http.Request, projectName string, op
 		ops = append(ops, apiOp)
 	}
 
-	// Check if clustered.
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return nil, err
-	}
-
 	// Return just local operations if not clustered.
-	if !clustered {
+	if !s.ServerClustered {
 		return ops, nil
 	}
 
 	// Get all operations of the specified type in project.
 	var members []db.NodeInfo
 	memberOps := make(map[string]map[string]dbCluster.Operation)
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
 		members, err = tx.GetNodes(ctx)
 		if err != nil {
 			return fmt.Errorf("Failed getting cluster members: %w", err)

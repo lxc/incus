@@ -150,11 +150,6 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
 	hasEditPermission, err := s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanEdit, auth.ObjectTypeStoragePool)
 	if err != nil {
 		return response.InternalError(err)
@@ -186,7 +181,7 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			// If no member is specified and the daemon is clustered, we omit the node-specific fields.
-			if clustered {
+			if s.ServerClustered {
 				for _, key := range db.NodeSpecificStorageConfig {
 					delete(poolAPI.Config, key)
 				}
@@ -596,11 +591,6 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
 	memberSpecific := false
 	if request.QueryParam(r, "target") != "" {
 		memberSpecific = true
@@ -630,7 +620,7 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// If no member is specified and the daemon is clustered, we omit the node-specific fields.
-	if clustered && !memberSpecific {
+	if s.ServerClustered && !memberSpecific {
 		for _, key := range db.NodeSpecificStorageConfig {
 			delete(poolAPI.Config, key)
 		}
@@ -704,10 +694,6 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	targetNode := request.QueryParam(r, "target")
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.SmartError(err)
-	}
 
 	if targetNode == "" && pool.Status() != api.StoragePoolStatusCreated {
 		return response.BadRequest(fmt.Errorf("Cannot update storage pool global config when not in created state"))
@@ -719,7 +705,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 	// If no target node is specified and the daemon is clustered, we omit the node-specific fields so that
 	// the e-tag can be generated correctly. This is because the GET request used to populate the request
 	// will also remove node-specific keys when no target is specified.
-	if targetNode == "" && clustered {
+	if targetNode == "" && s.ServerClustered {
 		for _, key := range db.NodeSpecificStorageConfig {
 			delete(etagConfig, key)
 		}
@@ -742,7 +728,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 
 	// In clustered mode, we differentiate between node specific and non-node specific config keys based on
 	// whether the user has specified a target to apply the config to.
-	if clustered {
+	if s.ServerClustered {
 		if targetNode == "" {
 			// If no target is specified, then ensure only non-node-specific config keys are changed.
 			for k := range req.Config {
@@ -764,7 +750,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 
 	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
 
-	response := doStoragePoolUpdate(s, pool, req, targetNode, clientType, r.Method, clustered)
+	response := doStoragePoolUpdate(s, pool, req, targetNode, clientType, r.Method, s.ServerClustered)
 
 	requestor := request.CreateRequestor(r)
 

@@ -96,18 +96,12 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	// Flag indicating whether the node running the container is offline.
 	sourceNodeOffline := false
 
-	// Check if clustered.
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.InternalError(fmt.Errorf("Failed checking cluster state: %w", err))
-	}
-
 	var targetProject *api.Project
 	var targetMemberInfo *db.NodeInfo
 	var candidateMembers []db.NodeInfo
 
 	target := request.QueryParam(r, "target")
-	if !clustered && target != "" {
+	if !s.ServerClustered && target != "" {
 		return response.BadRequest(fmt.Errorf("Target only allowed when clustered"))
 	}
 
@@ -198,7 +192,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Run the cluster placement after potentially forwarding the request to another member.
-	if target != "" && clustered {
+	if target != "" && s.ServerClustered {
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			p, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
 			if err != nil {

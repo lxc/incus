@@ -37,14 +37,7 @@ func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	// If we're clustered, forwared the request to the leader if necessary.
-	// That is because only the leader knows the token, and any other node will return 404.
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	if clustered {
+	if s.ServerClustered {
 		leader, err := d.gateway.LeaderAddress()
 		if err != nil {
 			return response.SmartError(err)
@@ -89,13 +82,8 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 		return nil
 	}
 
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return err
-	}
-
 	// If we are clustered, let the leader handle the certificate renewal.
-	if clustered {
+	if s.ServerClustered {
 		leader, err := d.gateway.LeaderAddress()
 		if err != nil {
 			return err
@@ -110,7 +98,7 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 	}
 
 	opRun := func(op *operations.Operation) error {
-		newCert, err := acme.UpdateCertificate(s, d.http01Provider, clustered, domain, email, caURL, force)
+		newCert, err := acme.UpdateCertificate(s, d.http01Provider, s.ServerClustered, domain, email, caURL, force)
 		if err != nil {
 			return err
 		}
@@ -120,7 +108,7 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 			return nil
 		}
 
-		if clustered {
+		if s.ServerClustered {
 			req := api.ClusterCertificatePut{
 				ClusterCertificate:    string(newCert.Certificate),
 				ClusterCertificateKey: string(newCert.PrivateKey),
