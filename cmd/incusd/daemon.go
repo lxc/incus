@@ -54,6 +54,7 @@ import (
 	"github.com/lxc/incus/internal/server/loki"
 	networkZone "github.com/lxc/incus/internal/server/network/zone"
 	"github.com/lxc/incus/internal/server/node"
+	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	scriptletLoad "github.com/lxc/incus/internal/server/scriptlet/load"
@@ -254,7 +255,7 @@ func allowAuthenticated(d *Daemon, r *http.Request) response.Response {
 func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, muxVars ...string) func(d *Daemon, r *http.Request) response.Response {
 	return func(d *Daemon, r *http.Request) response.Response {
 		// Expansion function to deal with partial fingerprints.
-		expander := func(projectName string, fingerprint string) string {
+		expandFingerprint := func(projectName string, fingerprint string) string {
 			if objectType == auth.ObjectTypeImage {
 				_, imgInfo, err := d.db.Cluster.GetImage(fingerprint, dbCluster.ImageFilter{Project: &projectName})
 				if err != nil {
@@ -281,7 +282,55 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 			return fingerprint
 		}
 
-		objectName, err := auth.ObjectFromRequest(r, objectType, expander, muxVars...)
+		// Expansion function to deal with project inheritance.
+		expandProject := func(projectName string) string {
+			// Object types that aren't part of projects.
+			if util.ValueInSlice(objectType, []auth.ObjectType{auth.ObjectTypeUser, auth.ObjectTypeServer, auth.ObjectTypeCertificate, auth.ObjectTypeStoragePool}) {
+				return projectName
+			}
+
+			// Load the project.
+			var p *api.Project
+			err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+				if err != nil {
+					return err
+				}
+
+				p, err = dbProject.ToAPI(ctx, tx.Tx())
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+			if err != nil {
+				return projectName
+			}
+
+			if objectType == auth.ObjectTypeProfile {
+				projectName = project.ProfileProjectFromRecord(p)
+			} else if objectType == auth.ObjectTypeStorageBucket {
+				projectName = project.StorageBucketProjectFromRecord(p)
+			} else if objectType == auth.ObjectTypeStorageVolume {
+				dbVolType, err := storagePools.VolumeTypeNameToDBType(muxVars[1])
+				if err != nil {
+					return projectName
+				}
+
+				projectName = project.StorageVolumeProjectFromRecord(p, dbVolType)
+			} else if objectType == auth.ObjectTypeNetworkZone {
+				projectName = project.NetworkZoneProjectFromRecord(p)
+			} else if util.ValueInSlice(objectType, []auth.ObjectType{auth.ObjectTypeImage, auth.ObjectTypeImageAlias}) {
+				projectName = project.ImageProjectFromRecord(p)
+			} else if util.ValueInSlice(objectType, []auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL}) {
+				projectName = project.NetworkProjectFromRecord(p)
+			}
+
+			return projectName
+		}
+
+		objectName, err := auth.ObjectFromRequest(r, objectType, expandProject, expandFingerprint, muxVars...)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed to create authentication object: %w", err))
 		}
