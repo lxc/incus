@@ -84,8 +84,8 @@ type Authorizer interface {
 	DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error
 	RenameStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, oldStorageVolumeName string, newStorageVolumeName string, storageVolumeLocation string) error
 
-	AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error
-	DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error
+	AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error
+	DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error
 }
 
 // Opts is used as part of the LoadAuthorizer function so that only the relevant configuration fields are passed into a

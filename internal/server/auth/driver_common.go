@@ -280,11 +280,11 @@ func (c *commonAuthorizer) RenameStoragePoolVolume(ctx context.Context, projectN
 }
 
 // AddStorageBucket is a no-op.
-func (c *commonAuthorizer) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error {
+func (c *commonAuthorizer) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	return nil
 }
 
 // DeleteStorageBucket is a no-op.
-func (c *commonAuthorizer) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error {
+func (c *commonAuthorizer) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	return nil
 }

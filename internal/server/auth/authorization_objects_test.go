@@ -91,8 +91,13 @@ func (s *objectSuite) TestObjectServer() {
 
 func (s *objectSuite) TestObjectStorageBucket() {
 	s.Assert().NotPanics(func() {
-		o := ObjectStorageBucket("default", "pool_name", "storage_bucket_name")
+		o := ObjectStorageBucket("default", "pool_name", "storage_bucket_name", "")
 		s.Equal("storage_bucket:default/pool_name/storage_bucket_name", string(o))
+	})
+
+	s.Assert().NotPanics(func() {
+		o := ObjectStorageBucket("default", "pool_name", "storage_bucket_name", "location")
+		s.Equal("storage_bucket:default/pool_name/storage_bucket_name/location", string(o))
 	})
 }
 

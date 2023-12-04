@@ -746,12 +746,12 @@ func (f *fga) RenameStoragePoolVolume(ctx context.Context, projectName string, s
 }
 
 // AddStorageBucket is a no-op.
-func (f *fga) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error {
+func (f *fga) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	writes := []client.ClientTupleKey{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName).String(),
+			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName, storageBucketLocation).String(),
 		},
 	}
 
@@ -759,12 +759,12 @@ func (f *fga) AddStorageBucket(ctx context.Context, projectName string, storageP
 }
 
 // DeleteStorageBucket is a no-op.
-func (f *fga) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error {
+func (f *fga) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	deletions := []client.ClientTupleKey{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName).String(),
+			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName, storageBucketLocation).String(),
 		},
 	}
 

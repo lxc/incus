@@ -272,8 +272,14 @@ func ObjectProfile(projectName string, profileName string) Object {
 	return object
 }
 
-func ObjectStorageBucket(projectName string, poolName string, bucketName string) Object {
-	object, _ := NewObject(ObjectTypeStorageBucket, projectName, poolName, bucketName)
+func ObjectStorageBucket(projectName string, poolName string, bucketName string, location string) Object {
+	var object Object
+	if location != "" {
+		object, _ = NewObject(ObjectTypeStorageBucket, projectName, poolName, bucketName, location)
+	} else {
+		object, _ = NewObject(ObjectTypeStorageBucket, projectName, poolName, bucketName)
+	}
+
 	return object
 }
 
