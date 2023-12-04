@@ -221,6 +221,19 @@ func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isMa
 	return util.ValueInSlice(networkName, allowedRestrictedNetworks)
 }
 
+// ImageProjectFromRecord returns the project name to use for the image based on the supplied project.
+// If the project supplied has the "features.images" flag enabled then the project name is returned,
+// otherwise the default project name is returned.
+func ImageProjectFromRecord(p *api.Project) string {
+	// Images only use the project specified if the project has the features.images feature enabled,
+	// otherwise the default project for profiles is used.
+	if util.IsTrue(p.Config["features.image"]) {
+		return p.Name
+	}
+
+	return api.ProjectDefaultName
+}
+
 // ProfileProject returns the effective project to use for the profile based on the requested project.
 // If the requested project has the "features.profiles" flag enabled then the requested project's info is returned,
 // otherwise the default project's info is returned.
