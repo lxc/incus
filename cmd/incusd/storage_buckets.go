@@ -640,11 +640,6 @@ func storagePoolBucketDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Failed deleting storage bucket: %w", err))
 	}
 
-	err = s.Authorizer.DeleteStorageBucket(r.Context(), bucketProjectName, poolName, bucketName)
-	if err != nil {
-		logger.Error("Failed to add storage bucket to authorizer", logger.Ctx{"name": bucketName, "pool": poolName, "project": bucketProjectName, "error": err})
-	}
-
 	s.Events.SendLifecycle(bucketProjectName, lifecycle.StorageBucketDeleted.Event(pool, bucketProjectName, bucketName, request.CreateRequestor(r), nil))
 
 	return response.EmptySyncResponse
