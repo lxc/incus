@@ -34,25 +34,25 @@ var storagePoolBucketsCmd = APIEndpoint{
 var storagePoolBucketCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets/{bucketName}",
 
-	Delete: APIEndpointAction{Handler: storagePoolBucketDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
-	Get:    APIEndpointAction{Handler: storagePoolBucketGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName")},
-	Patch:  APIEndpointAction{Handler: storagePoolBucketPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
-	Put:    APIEndpointAction{Handler: storagePoolBucketPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
+	Delete: APIEndpointAction{Handler: storagePoolBucketDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
+	Get:    APIEndpointAction{Handler: storagePoolBucketGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName", "location")},
+	Patch:  APIEndpointAction{Handler: storagePoolBucketPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
+	Put:    APIEndpointAction{Handler: storagePoolBucketPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
 }
 
 var storagePoolBucketKeysCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets/{bucketName}/keys",
 
-	Get:  APIEndpointAction{Handler: storagePoolBucketKeysGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName")},
-	Post: APIEndpointAction{Handler: storagePoolBucketKeysPost, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
+	Get:  APIEndpointAction{Handler: storagePoolBucketKeysGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName", "location")},
+	Post: APIEndpointAction{Handler: storagePoolBucketKeysPost, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
 }
 
 var storagePoolBucketKeyCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets/{bucketName}/keys/{keyName}",
 
-	Delete: APIEndpointAction{Handler: storagePoolBucketKeyDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
-	Get:    APIEndpointAction{Handler: storagePoolBucketKeyGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName")},
-	Put:    APIEndpointAction{Handler: storagePoolBucketKeyPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName")},
+	Delete: APIEndpointAction{Handler: storagePoolBucketKeyDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
+	Get:    APIEndpointAction{Handler: storagePoolBucketKeyGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName", "location")},
+	Put:    APIEndpointAction{Handler: storagePoolBucketKeyPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
 }
 
 // API endpoints
@@ -203,7 +203,12 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 	var filteredDBBuckets []*db.StorageBucket
 
 	for _, bucket := range dbBuckets {
-		if !userHasPermission(auth.ObjectStorageBucket(requestProjectName, poolName, bucket.Name)) {
+		var location string
+		if s.ServerClustered && !pool.Driver().Info().Remote {
+			location = bucket.Location
+		}
+
+		if !userHasPermission(auth.ObjectStorageBucket(requestProjectName, poolName, bucket.Name, location)) {
 			continue
 		}
 
@@ -418,7 +423,12 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Failed creating storage bucket admin key: %w", err))
 	}
 
-	err = s.Authorizer.AddStorageBucket(r.Context(), bucketProjectName, poolName, req.Name)
+	var location string
+	if s.ServerClustered && !pool.Driver().Info().Remote {
+		location = s.ServerName
+	}
+
+	err = s.Authorizer.AddStorageBucket(r.Context(), bucketProjectName, poolName, req.Name, location)
 	if err != nil {
 		logger.Error("Failed to add storage bucket to authorizer", logger.Ctx{"name": req.Name, "pool": poolName, "project": bucketProjectName, "error": err})
 	}
@@ -638,11 +648,6 @@ func storagePoolBucketDelete(d *Daemon, r *http.Request) response.Response {
 	err = pool.DeleteBucket(bucketProjectName, bucketName, nil)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed deleting storage bucket: %w", err))
-	}
-
-	err = s.Authorizer.DeleteStorageBucket(r.Context(), bucketProjectName, poolName, bucketName)
-	if err != nil {
-		logger.Error("Failed to add storage bucket to authorizer", logger.Ctx{"name": bucketName, "pool": poolName, "project": bucketProjectName, "error": err})
 	}
 
 	s.Events.SendLifecycle(bucketProjectName, lifecycle.StorageBucketDeleted.Event(pool, bucketProjectName, bucketName, request.CreateRequestor(r), nil))

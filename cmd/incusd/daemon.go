@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/x509"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -145,7 +146,8 @@ type Daemon struct {
 	globalConfigMu sync.Mutex
 
 	// Cluster.
-	serverName string
+	serverName      string
+	serverClustered bool
 
 	lokiClient *loki.Client
 
@@ -410,6 +412,7 @@ func (d *Daemon) State() *state.State {
 		GlobalConfig:           globalConfig,
 		LocalConfig:            localConfig,
 		ServerName:             d.serverName,
+		ServerClustered:        d.serverClustered,
 		StartTime:              d.startTime,
 		Authorizer:             d.authorizer,
 	}
@@ -949,14 +952,14 @@ func (d *Daemon) init() error {
 		return err
 	}
 
-	clustered, err := cluster.Enabled(d.db.Node)
+	d.serverClustered, err = cluster.Enabled(d.db.Node)
 	if err != nil {
 		return fmt.Errorf("Failed checking if clustered: %w", err)
 	}
 
 	// Detect if clustered, but not yet upgraded to per-server client certificates.
 	certificates := d.clientCerts.GetCertificates()
-	if clustered && len(certificates[certificate.TypeServer]) < 1 {
+	if d.serverClustered && len(certificates[certificate.TypeServer]) < 1 {
 		// If the cluster has not yet upgraded to per-server client certificates (by running patch
 		// patchClusteringServerCertTrust) then temporarily use the network (cluster) certificate as client
 		// certificate, and cause us to trust it for use as client certificate from the other members.
@@ -1064,7 +1067,7 @@ func (d *Daemon) init() error {
 		store := d.gateway.NodeStore()
 
 		contextTimeout := 30 * time.Second
-		if !clustered {
+		if !d.serverClustered {
 			// FIXME: this is a workaround for #5234. We set a very
 			// high timeout when we're not clustered, since there's
 			// actually no networking involved.
@@ -1148,7 +1151,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Setup the user-agent.
-	if clustered {
+	if d.serverClustered {
 		version.UserAgentFeatures([]string{"cluster"})
 	}
 
@@ -1457,7 +1460,7 @@ func (d *Daemon) init() error {
 	}
 
 	// Start cluster tasks if needed.
-	if clustered {
+	if d.serverClustered {
 		d.startClusterTasks()
 	}
 
@@ -1765,6 +1768,34 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, au
 		d.authorizer, _ = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
 	})
 
+	// Check if we're a cluster leader.
+	isLeader := false
+
+	leaderAddress, err := d.gateway.LeaderAddress()
+	if err != nil {
+		if errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			isLeader = true
+		} else {
+			return err
+		}
+	} else if leaderAddress == d.localConfig.ClusterAddress() {
+		isLeader = true
+	}
+
+	// If clustered and not running on a leader, just load the driver.
+	if !isLeader {
+		openfgaAuthorizer, err := auth.LoadAuthorizer(d.shutdownCtx, auth.DriverOpenFGA, logger.Log, d.clientCerts, auth.WithConfig(config))
+		if err != nil {
+			return err
+		}
+
+		d.authorizer = openfgaAuthorizer
+
+		revert.Success()
+		return nil
+	}
+
+	// Build the list of resources to update the model.
 	var resources auth.Resources
 	err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
 		err := query.Scan(ctx, tx.Tx(), "SELECT certificates.fingerprint from certificates", func(scan func(dest ...any) error) error {
@@ -1914,12 +1945,13 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, au
 			return err
 		}
 
-		err = query.Scan(ctx, tx.Tx(), "SELECT storage_volumes.name, storage_volumes.type, storage_pools.name, projects.name FROM storage_volumes JOIN projects ON projects.id=storage_volumes.project_id JOIN storage_pools ON storage_pools.id=storage_volumes.storage_pool_id", func(scan func(dest ...any) error) error {
+		err = query.Scan(ctx, tx.Tx(), "SELECT storage_volumes.name, storage_volumes.type, storage_pools.name, projects.name, nodes.name FROM storage_volumes JOIN projects ON projects.id=storage_volumes.project_id JOIN storage_pools ON storage_pools.id=storage_volumes.storage_pool_id LEFT JOIN nodes ON storage_volumes.node_id=nodes.id", func(scan func(dest ...any) error) error {
 			var storageVolumeName string
 			var storageVolumeType int
+			var storageVolumeLocation sql.NullString
 			var storagePoolName string
 			var projectName string
-			err := scan(&storageVolumeName, &storageVolumeType, &storagePoolName, &projectName)
+			err := scan(&storageVolumeName, &storageVolumeType, &storagePoolName, &projectName, &storageVolumeLocation)
 			if err != nil {
 				return err
 			}
@@ -1929,23 +1961,34 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, au
 				return err
 			}
 
-			resources.StoragePoolVolumeObjects = append(resources.StoragePoolVolumeObjects, auth.ObjectStorageVolume(projectName, storagePoolName, storageVolumeTypeName, storageVolumeName))
+			var location string
+			if d.serverClustered && storageVolumeType != db.StoragePoolVolumeTypeContainer && storageVolumeType != db.StoragePoolVolumeTypeVM && storageVolumeLocation.Valid {
+				location = storageVolumeLocation.String
+			}
+
+			resources.StoragePoolVolumeObjects = append(resources.StoragePoolVolumeObjects, auth.ObjectStorageVolume(projectName, storagePoolName, storageVolumeTypeName, storageVolumeName, location))
 			return nil
 		})
 		if err != nil {
 			return err
 		}
 
-		err = query.Scan(ctx, tx.Tx(), "SELECT storage_buckets.name, storage_pools.name, projects.name FROM storage_buckets JOIN projects ON projects.id=storage_buckets.project_id JOIN storage_pools ON storage_pools.id=storage_buckets.storage_pool_id", func(scan func(dest ...any) error) error {
+		err = query.Scan(ctx, tx.Tx(), "SELECT storage_buckets.name, storage_pools.name, projects.name, nodes.name FROM storage_buckets JOIN projects ON projects.id=storage_buckets.project_id JOIN storage_pools ON storage_pools.id=storage_buckets.storage_pool_id LEFT JOIN nodes ON storage_buckets.node_id=nodes.id", func(scan func(dest ...any) error) error {
 			var storageBucketName string
+			var storageBucketLocation sql.NullString
 			var storagePoolName string
 			var projectName string
-			err := scan(&storageBucketName, &storagePoolName, &projectName)
+			err := scan(&storageBucketName, &storagePoolName, &projectName, &storageBucketLocation)
 			if err != nil {
 				return err
 			}
 
-			resources.StorageBucketObjects = append(resources.StorageBucketObjects, auth.ObjectStorageBucket(projectName, storagePoolName, storageBucketName))
+			var location string
+			if d.serverClustered && storageBucketLocation.Valid {
+				location = storageBucketLocation.String
+			}
+
+			resources.StorageBucketObjects = append(resources.StorageBucketObjects, auth.ObjectStorageBucket(projectName, storagePoolName, storageBucketName, location))
 			return nil
 		})
 		if err != nil {

@@ -16,7 +16,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/events"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
@@ -187,15 +186,12 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 	s := d.State()
 
 	if r.Method == "GET" {
-		clustered, err := cluster.Enabled(s.DB.Node)
-		if err != nil {
-			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusInternalServerError, "internal server error"), c.Type() == instancetype.VM)
-		}
-
 		var location string
-		if clustered {
+		if d.serverClustered {
 			location = c.Location()
 		} else {
+			var err error
+
 			location, err = os.Hostname()
 			if err != nil {
 				return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusInternalServerError, "internal server error"), c.Type() == instancetype.VM)

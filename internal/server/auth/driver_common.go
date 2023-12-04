@@ -265,26 +265,26 @@ func (c *commonAuthorizer) RenameProfile(ctx context.Context, projectName string
 }
 
 // AddStoragePoolVolume is a no-op.
-func (c *commonAuthorizer) AddStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string) error {
+func (c *commonAuthorizer) AddStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error {
 	return nil
 }
 
 // DeleteStoragePoolVolume is a no-op.
-func (c *commonAuthorizer) DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string) error {
+func (c *commonAuthorizer) DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error {
 	return nil
 }
 
 // RenameStoragePoolVolume is a no-op.
-func (c *commonAuthorizer) RenameStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, oldStorageVolumeName string, newStorageVolumeName string) error {
+func (c *commonAuthorizer) RenameStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, oldStorageVolumeName string, newStorageVolumeName string, storageVolumeLocation string) error {
 	return nil
 }
 
 // AddStorageBucket is a no-op.
-func (c *commonAuthorizer) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error {
+func (c *commonAuthorizer) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	return nil
 }
 
 // DeleteStorageBucket is a no-op.
-func (c *commonAuthorizer) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error {
+func (c *commonAuthorizer) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	return nil
 }

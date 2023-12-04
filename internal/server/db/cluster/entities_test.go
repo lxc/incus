@@ -12,6 +12,7 @@ func TestURLToEntityType(t *testing.T) {
 		rawURL             string
 		expectedEntityType int
 		expectedProject    string
+		expectedLocation   string
 		expectedPathArgs   []string
 		expectedErr        error
 	}{
@@ -128,6 +129,15 @@ func TestURLToEntityType(t *testing.T) {
 			expectedErr:        nil,
 		},
 		{
+			name:               "storage volumes",
+			rawURL:             "/1.0/storage-pools/my-storage-pool/volumes/custom/my-storage-volume?project=my-project&target=foo",
+			expectedEntityType: TypeStorageVolume,
+			expectedProject:    "my-project",
+			expectedLocation:   "foo",
+			expectedPathArgs:   []string{"my-storage-pool", "custom", "my-storage-volume"},
+			expectedErr:        nil,
+		},
+		{
 			name:               "storage volume backups",
 			rawURL:             "/1.0/storage-pools/my-storage-pool/volumes/custom/my-storage-volume/backups/my-backup?project=my-project",
 			expectedEntityType: TypeStorageVolumeBackup,
@@ -163,10 +173,11 @@ func TestURLToEntityType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actualEntityType, actualProject, actualPathArgs, actualErr := URLToEntityType(tt.rawURL)
+			actualEntityType, actualProject, actualLocation, actualPathArgs, actualErr := URLToEntityType(tt.rawURL)
 
 			assert.Equal(t, tt.expectedEntityType, actualEntityType)
 			assert.Equal(t, tt.expectedProject, actualProject)
+			assert.Equal(t, tt.expectedLocation, actualLocation)
 			for i, pathArg := range actualPathArgs {
 				assert.Equal(t, tt.expectedPathArgs[i], pathArg)
 			}

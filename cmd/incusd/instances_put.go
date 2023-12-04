@@ -182,14 +182,8 @@ func instancesPut(d *Daemon, r *http.Request) response.Response {
 			return localAction(false)
 		}
 
-		// Check if clustered.
-		clustered, err := cluster.Enabled(s.DB.Node)
-		if err != nil {
-			return err
-		}
-
 		// If not clustered, return the local data.
-		if !clustered {
+		if !s.ServerClustered {
 			return localAction(true)
 		}
 

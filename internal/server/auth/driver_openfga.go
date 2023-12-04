@@ -115,10 +115,6 @@ func (f *fga) configure(opts Opts) error {
 		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "openfga.store.model_id", val)
 	}
 
-	if opts.resources == nil {
-		return fmt.Errorf("Missing resources for OpenFGA sync")
-	}
-
 	return nil
 }
 
@@ -194,7 +190,11 @@ func (f *fga) load(ctx context.Context, certificateCache *certificate.Cache, opt
 		return fmt.Errorf("Existing OpenFGA model does not equal new model")
 	}
 
-	return f.syncResources(ctx, *opts.resources)
+	if opts.resources != nil {
+		return f.syncResources(ctx, *opts.resources)
+	}
+
+	return nil
 }
 
 func (f *fga) CheckPermission(ctx context.Context, r *http.Request, object Object, entitlement Entitlement) error {
@@ -699,12 +699,12 @@ func (f *fga) RenameProfile(ctx context.Context, projectName string, oldProfileN
 }
 
 // AddStoragePoolVolume is a no-op.
-func (f *fga) AddStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string) error {
+func (f *fga) AddStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error {
 	writes := []client.ClientTupleKey{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, storageVolumeName).String(),
+			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, storageVolumeName, storageVolumeLocation).String(),
 		},
 	}
 
@@ -712,12 +712,12 @@ func (f *fga) AddStoragePoolVolume(ctx context.Context, projectName string, stor
 }
 
 // DeleteStoragePoolVolume is a no-op.
-func (f *fga) DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string) error {
+func (f *fga) DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error {
 	deletions := []client.ClientTupleKey{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, storageVolumeName).String(),
+			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, storageVolumeName, storageVolumeLocation).String(),
 		},
 	}
 
@@ -725,12 +725,12 @@ func (f *fga) DeleteStoragePoolVolume(ctx context.Context, projectName string, s
 }
 
 // RenameStoragePoolVolume is a no-op.
-func (f *fga) RenameStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, oldStorageVolumeName string, newStorageVolumeName string) error {
+func (f *fga) RenameStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, oldStorageVolumeName string, newStorageVolumeName string, storageVolumeLocation string) error {
 	writes := []client.ClientTupleKey{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, newStorageVolumeName).String(),
+			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, newStorageVolumeName, storageVolumeLocation).String(),
 		},
 	}
 
@@ -738,7 +738,7 @@ func (f *fga) RenameStoragePoolVolume(ctx context.Context, projectName string, s
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, oldStorageVolumeName).String(),
+			Object:   ObjectStorageVolume(projectName, storagePoolName, storageVolumeType, oldStorageVolumeName, storageVolumeLocation).String(),
 		},
 	}
 
@@ -746,12 +746,12 @@ func (f *fga) RenameStoragePoolVolume(ctx context.Context, projectName string, s
 }
 
 // AddStorageBucket is a no-op.
-func (f *fga) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error {
+func (f *fga) AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	writes := []client.ClientTupleKey{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName).String(),
+			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName, storageBucketLocation).String(),
 		},
 	}
 
@@ -759,12 +759,12 @@ func (f *fga) AddStorageBucket(ctx context.Context, projectName string, storageP
 }
 
 // DeleteStorageBucket is a no-op.
-func (f *fga) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string) error {
+func (f *fga) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
 	deletions := []client.ClientTupleKey{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName).String(),
+			Object:   ObjectStorageBucket(projectName, storagePoolName, storageBucketName, storageBucketLocation).String(),
 		},
 	}
 

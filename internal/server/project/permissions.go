@@ -1424,7 +1424,7 @@ func FilterUsedBy(authorizer auth.Authorizer, r *http.Request, entries []string)
 	// Filter the entries.
 	usedBy := []string{}
 	for _, entry := range entries {
-		entityType, projectName, pathArgs, err := cluster.URLToEntityType(entry)
+		entityType, projectName, location, pathArgs, err := cluster.URLToEntityType(entry)
 		if err != nil {
 			continue
 		}
@@ -1442,9 +1442,9 @@ func FilterUsedBy(authorizer auth.Authorizer, r *http.Request, entries []string)
 		case cluster.TypeStoragePool:
 			object = auth.ObjectStoragePool(pathArgs[0])
 		case cluster.TypeStorageVolume:
-			object = auth.ObjectStorageVolume(projectName, pathArgs[0], pathArgs[1], pathArgs[2])
+			object = auth.ObjectStorageVolume(projectName, pathArgs[0], pathArgs[1], pathArgs[2], location)
 		case cluster.TypeStorageBucket:
-			object = auth.ObjectStorageBucket(projectName, pathArgs[0], pathArgs[1])
+			object = auth.ObjectStorageBucket(projectName, pathArgs[0], pathArgs[1], location)
 		default:
 			continue
 		}

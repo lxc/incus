@@ -72,6 +72,9 @@ type State struct {
 	// Local server name.
 	ServerName string
 
+	// Whether the server is clustered.
+	ServerClustered bool
+
 	// Local server start time.
 	StartTime time.Time
 

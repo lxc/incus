@@ -86,13 +86,13 @@ func init() {
 	}
 }
 
-// URLToEntityType parses a raw URL string and returns the entity type, the project, and the path arguments. The
+// URLToEntityType parses a raw URL string and returns the entity type, the project, the location and the path arguments. The
 // returned project is set to "default" if it is not present (unless the entity type is TypeProject, in which case it is
 // set to the value of the path parameter). An error is returned if the URL is not recognised.
-func URLToEntityType(rawURL string) (int, string, []string, error) {
+func URLToEntityType(rawURL string) (int, string, string, []string, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
-		return -1, "", nil, fmt.Errorf("Failed to parse url %q into an entity type: %w", rawURL, err)
+		return -1, "", "", nil, fmt.Errorf("Failed to parse url %q into an entity type: %w", rawURL, err)
 	}
 
 	// We need to space separate the path because fmt.Sscanf uses this as a delimiter.
@@ -130,13 +130,15 @@ func URLToEntityType(rawURL string) (int, string, []string, error) {
 				projectName = "default"
 			}
 
+			location := u.Query().Get("target")
+
 			if entityType == TypeProject {
-				return TypeProject, pathArgs[0], pathArgs, nil
+				return TypeProject, pathArgs[0], location, pathArgs, nil
 			}
 
-			return entityType, projectName, pathArgs, nil
+			return entityType, projectName, location, pathArgs, nil
 		}
 	}
 
-	return -1, "", nil, fmt.Errorf("Unknown entity URL %q", u.String())
+	return -1, "", "", nil, fmt.Errorf("Unknown entity URL %q", u.String())
 }

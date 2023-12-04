@@ -63,11 +63,11 @@ var storagePoolVolumesTypeCmd = APIEndpoint{
 var storagePoolVolumeTypeCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/volumes/{type}/{volumeName}",
 
-	Delete: APIEndpointAction{Handler: storagePoolVolumeDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName")},
-	Get:    APIEndpointAction{Handler: storagePoolVolumeGet, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanView, "poolName", "type", "volumeName")},
-	Patch:  APIEndpointAction{Handler: storagePoolVolumePatch, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName")},
-	Post:   APIEndpointAction{Handler: storagePoolVolumePost, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName")},
-	Put:    APIEndpointAction{Handler: storagePoolVolumePut, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName")},
+	Delete: APIEndpointAction{Handler: storagePoolVolumeDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
+	Get:    APIEndpointAction{Handler: storagePoolVolumeGet, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanView, "poolName", "type", "volumeName", "location")},
+	Patch:  APIEndpointAction{Handler: storagePoolVolumePatch, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
+	Post:   APIEndpointAction{Handler: storagePoolVolumePost, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
+	Put:    APIEndpointAction{Handler: storagePoolVolumePut, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
 }
 
 // swagger:operation GET /1.0/storage-pools/{poolName}/volumes storage storage_pool_volumes_get
@@ -324,8 +324,8 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Invalid filter: %w", err))
 	}
 
-	// Retrieve ID of the storage pool (and check if the storage pool exists).
-	poolID, err := s.DB.Cluster.GetStoragePoolID(poolName)
+	// Retrieve the storage pool (and check if the storage pool exists).
+	pool, err := storagePools.LoadByName(s, poolName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -409,7 +409,7 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
-		dbVolumes, err = tx.GetStoragePoolVolumes(ctx, poolID, memberSpecific, filters...)
+		dbVolumes, err = tx.GetStoragePoolVolumes(ctx, pool.ID(), memberSpecific, filters...)
 		if err != nil {
 			return fmt.Errorf("Failed loading storage volumes: %w", err)
 		}
@@ -460,8 +460,13 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 		for _, dbVol := range dbVolumes {
 			vol := &dbVol.StorageVolume
 
+			var location string
+			if s.ServerClustered && !pool.Driver().Info().Remote {
+				location = vol.Location
+			}
+
 			volumeName, _, _ := api.GetParentAndSnapshotName(vol.Name)
-			if !userHasPermission(auth.ObjectStorageVolume(vol.Project, poolName, dbVol.Type, volumeName)) {
+			if !userHasPermission(auth.ObjectStorageVolume(vol.Project, poolName, dbVol.Type, volumeName, location)) {
 				continue
 			}
 
@@ -485,7 +490,12 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 	for _, dbVol := range dbVolumes {
 		volumeName, _, _ := api.GetParentAndSnapshotName(dbVol.Name)
 
-		if !userHasPermission(auth.ObjectStorageVolume(dbVol.Project, poolName, dbVol.Type, volumeName)) {
+		var location string
+		if s.ServerClustered && !pool.Driver().Info().Remote {
+			location = dbVol.Location
+		}
+
+		if !userHasPermission(auth.ObjectStorageVolume(dbVol.Project, poolName, dbVol.Type, volumeName, location)) {
 			continue
 		}
 
@@ -665,15 +675,10 @@ func storagePoolVolumesTypePost(d *Daemon, r *http.Request) response.Response {
 	target := request.QueryParam(r, "target")
 
 	// Check if we need to switch to migration
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.SmartError(err)
-	}
-
 	serverName := s.ServerName
 	var nodeAddress string
 
-	if clustered && target != "" && !req.Source.Refresh && (req.Source.Location != "" && serverName != req.Source.Location) {
+	if s.ServerClustered && target != "" && !req.Source.Refresh && (req.Source.Location != "" && serverName != req.Source.Location) {
 		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			nodeInfo, err := tx.GetNodeByName(ctx, req.Source.Location)
 			if err != nil {
@@ -1175,12 +1180,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	target := request.QueryParam(r, "target")
 
 	// Check if clustered.
-	clustered, err := cluster.Enabled(s.DB.Node)
-	if err != nil {
-		return response.InternalError(fmt.Errorf("Failed checking cluster state: %w", err))
-	}
-
-	if clustered && target != "" && req.Source.Location != "" && req.Migration {
+	if s.ServerClustered && target != "" && req.Source.Location != "" && req.Migration {
 		var sourceNodeOffline bool
 
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1242,9 +1242,8 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 					// Check if the user provided an incorrect target query parameter and return a helpful error message.
 					_, volumeNotFound := api.StatusErrorMatch(err, http.StatusNotFound)
 					targetIsSet := r.URL.Query().Get("target") != ""
-					serverIsClustered, _ := cluster.Enabled(s.DB.Node)
 
-					if serverIsClustered && targetIsSet && volumeNotFound {
+					if s.ServerClustered && targetIsSet && volumeNotFound {
 						return response.NotFound(fmt.Errorf("Storage volume not found on this cluster member"))
 					}
 
@@ -1385,9 +1384,8 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		// Check if the user provided an incorrect target query parameter and return a helpful error message.
 		_, volumeNotFound := api.StatusErrorMatch(err, http.StatusNotFound)
 		targetIsSet := r.URL.Query().Get("target") != ""
-		serverIsClustered, _ := cluster.Enabled(s.DB.Node)
 
-		if serverIsClustered && targetIsSet && volumeNotFound {
+		if s.ServerClustered && targetIsSet && volumeNotFound {
 			return response.NotFound(fmt.Errorf("Storage volume not found on this cluster member"))
 		}
 
