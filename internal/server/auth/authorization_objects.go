@@ -87,8 +87,12 @@ func (o Object) validate() error {
 		return fmt.Errorf("Authorization objects of type %q require a project", objectType)
 	}
 
-	if len(identifierElements) != v.nIdentifierElements {
-		return fmt.Errorf("Authorization objects of type %q require %d components to be uniquely identifiable", objectType, v.nIdentifierElements)
+	if len(identifierElements) < v.minIdentifierElements {
+		return fmt.Errorf("Authorization objects of type %q require at least %d components to be uniquely identifiable", objectType, v.minIdentifierElements)
+	}
+
+	if len(identifierElements) > v.maxIdentifierElements {
+		return fmt.Errorf("Authorization objects of type %q require at most %d components to be uniquely identifiable", objectType, v.maxIdentifierElements)
 	}
 
 	return nil
@@ -96,25 +100,26 @@ func (o Object) validate() error {
 
 // objectValidator contains fields that can be used to determine if a string is a valid Object.
 type objectValidator struct {
-	nIdentifierElements int
-	requireProject      bool
+	minIdentifierElements int
+	maxIdentifierElements int
+	requireProject        bool
 }
 
 var objectValidators = map[ObjectType]objectValidator{
-	ObjectTypeUser:          {nIdentifierElements: 1, requireProject: false},
-	ObjectTypeServer:        {nIdentifierElements: 1, requireProject: false},
-	ObjectTypeCertificate:   {nIdentifierElements: 1, requireProject: false},
-	ObjectTypeStoragePool:   {nIdentifierElements: 1, requireProject: false},
-	ObjectTypeProject:       {nIdentifierElements: 0, requireProject: true},
-	ObjectTypeImage:         {nIdentifierElements: 1, requireProject: true},
-	ObjectTypeImageAlias:    {nIdentifierElements: 1, requireProject: true},
-	ObjectTypeInstance:      {nIdentifierElements: 1, requireProject: true},
-	ObjectTypeNetwork:       {nIdentifierElements: 1, requireProject: true},
-	ObjectTypeNetworkACL:    {nIdentifierElements: 1, requireProject: true},
-	ObjectTypeNetworkZone:   {nIdentifierElements: 1, requireProject: true},
-	ObjectTypeProfile:       {nIdentifierElements: 1, requireProject: true},
-	ObjectTypeStorageBucket: {nIdentifierElements: 2, requireProject: true},
-	ObjectTypeStorageVolume: {nIdentifierElements: 3, requireProject: true},
+	ObjectTypeUser:          {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeServer:        {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeCertificate:   {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeStoragePool:   {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeProject:       {minIdentifierElements: 0, maxIdentifierElements: 0, requireProject: true},
+	ObjectTypeImage:         {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeImageAlias:    {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeInstance:      {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeNetwork:       {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeNetworkACL:    {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeNetworkZone:   {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeProfile:       {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeStorageBucket: {minIdentifierElements: 2, maxIdentifierElements: 3, requireProject: true},
+	ObjectTypeStorageVolume: {minIdentifierElements: 3, maxIdentifierElements: 4, requireProject: true},
 }
 
 // NewObject returns an Object of the given type. The passed in arguments must be in the correct
@@ -130,8 +135,12 @@ func NewObject(objectType ObjectType, projectName string, identifierElements ...
 		return "", fmt.Errorf("Authorization objects of type %q require a project", objectType)
 	}
 
-	if len(identifierElements) != v.nIdentifierElements {
-		return "", fmt.Errorf("Authorization objects of type %q require %d components to be uniquely identifiable", objectType, v.nIdentifierElements)
+	if len(identifierElements) < v.minIdentifierElements {
+		return "", fmt.Errorf("Authorization objects of type %q require at least %d components to be uniquely identifiable", objectType, v.minIdentifierElements)
+	}
+
+	if len(identifierElements) > v.maxIdentifierElements {
+		return "", fmt.Errorf("Authorization objects of type %q require at most %d components to be uniquely identifiable", objectType, v.maxIdentifierElements)
 	}
 
 	builder := strings.Builder{}
