@@ -236,8 +236,19 @@ func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, 
 		return fmt.Errorf("Existing OpenFGA model does not equal new model")
 	}
 
-	if opts.resources != nil {
-		return f.syncResources(ctx, *opts.resources)
+	if opts.resourcesFunc != nil {
+		resources, err := opts.resourcesFunc()
+		if err != nil {
+			return err
+		}
+
+		// resources is nil if we're not supposed to perform an update.
+		if resources != nil {
+			err := f.syncResources(ctx, *resources)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
