@@ -577,7 +577,7 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 	}
 
 	// Add the image to the authorizer.
-	err = s.Authorizer.AddImage(r.Context(), args.ProjectName, info.Fingerprint)
+	err = s.Authorizer.AddImage(s.ShutdownCtx, args.ProjectName, info.Fingerprint)
 	if err != nil {
 		logger.Error("Failed to add image to authorizer", logger.Ctx{"fingerprint": info.Fingerprint, "project": args.ProjectName, "error": err})
 	}

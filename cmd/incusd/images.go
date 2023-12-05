@@ -1153,7 +1153,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Add the image to the authorizer.
-		err = s.Authorizer.AddImage(r.Context(), projectName, info.Fingerprint)
+		err = s.Authorizer.AddImage(s.ShutdownCtx, projectName, info.Fingerprint)
 		if err != nil {
 			logger.Error("Failed to add image to authorizer", logger.Ctx{"fingerprint": info.Fingerprint, "project": projectName, "error": err})
 		}
@@ -2602,7 +2602,7 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 		imageDeleteFromDisk(imgInfo.Fingerprint)
 
 		// Remove image from authorizer.
-		err = s.Authorizer.DeleteImage(r.Context(), projectName, imgInfo.Fingerprint)
+		err = s.Authorizer.DeleteImage(s.ShutdownCtx, projectName, imgInfo.Fingerprint)
 		if err != nil {
 			logger.Error("Failed to remove image from authorizer", logger.Ctx{"fingerprint": imgInfo.Fingerprint, "project": projectName, "error": err})
 		}
