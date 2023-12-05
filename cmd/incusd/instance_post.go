@@ -482,7 +482,15 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 		localDevices[devName] = dev
 	}
 
-	var apiProfiles []api.Profile
+	// Apply previous profiles, if provided profiles are nil.
+	if profiles == nil {
+		profiles = make([]string, 0, len(inst.Profiles()))
+		for _, p := range inst.Profiles() {
+			profiles = append(profiles, p.Name)
+		}
+	}
+
+	apiProfiles := []api.Profile{}
 	if len(profiles) > 0 {
 		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			profiles, err := dbCluster.GetProfilesIfEnabled(ctx, tx.Tx(), newProject, profiles)
