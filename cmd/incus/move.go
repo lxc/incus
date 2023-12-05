@@ -361,11 +361,6 @@ func moveInstance(conf *config.Config, sourceResource string, destResource strin
 		inst.Config[key] = value
 	}
 
-	// Overwrite profiles.
-	if profiles != nil {
-		inst.Profiles = *profiles
-	}
-
 	// Parse device map and overwrite device settings.
 	deviceMap, err := parseDeviceOverrides(devices)
 	if err != nil {
@@ -393,7 +388,11 @@ func moveInstance(conf *config.Config, sourceResource string, destResource strin
 		Live:         stateful,
 		Config:       inst.Config,
 		Devices:      inst.Devices,
-		Profiles:     inst.Profiles,
+	}
+
+	// Overwrite profiles.
+	if profiles != nil {
+		req.Profiles = *profiles
 	}
 
 	op, err := source.MigrateInstance(sourceName, req)
