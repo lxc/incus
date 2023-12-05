@@ -242,9 +242,12 @@ func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, 
 			for {
 				resources, err := resourcesFunc()
 				if err == nil {
-					err := f.syncResources(f.shutdownCtx, *resources)
-					if err != nil {
-						logger.Error("Failed background OpenFGA resource sync", logger.Ctx{"err": err})
+					// resources will be nil on cluster members that shouldn't be performing updates.
+					if resources != nil {
+						err := f.syncResources(f.shutdownCtx, *resources)
+						if err != nil {
+							logger.Error("Failed background OpenFGA resource sync", logger.Ctx{"err": err})
+						}
 					}
 				} else {
 					logger.Error("Failed getting local OpenFGA resources", logger.Ctx{"err": err})
