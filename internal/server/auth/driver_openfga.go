@@ -237,18 +237,27 @@ func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, 
 	}
 
 	if opts.resourcesFunc != nil {
-		resources, err := opts.resourcesFunc()
-		if err != nil {
-			return err
-		}
+		// Start resource sync routine.
+		go func(resourcesFunc func() (*Resources, error)) {
+			for {
+				resources, err := resourcesFunc()
+				if err == nil {
+					err := f.syncResources(f.shutdownCtx, *resources)
+					if err != nil {
+						logger.Error("Failed background OpenFGA resource sync", logger.Ctx{"err": err})
+					}
+				} else {
+					logger.Error("Failed getting local OpenFGA resources", logger.Ctx{"err": err})
+				}
 
-		// resources is nil if we're not supposed to perform an update.
-		if resources != nil {
-			err := f.syncResources(ctx, *resources)
-			if err != nil {
-				return err
+				select {
+				case <-time.After(time.Hour):
+					continue
+				case <-f.shutdownCtx.Done():
+					return
+				}
 			}
-		}
+		}(opts.resourcesFunc)
 	}
 
 	return nil
