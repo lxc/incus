@@ -836,7 +836,7 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		err = s.Authorizer.RenameProject(r.Context(), id, name, req.Name)
+		err = s.Authorizer.RenameProject(s.ShutdownCtx, id, name, req.Name)
 		if err != nil {
 			return err
 		}
