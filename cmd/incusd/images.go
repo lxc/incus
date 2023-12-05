@@ -1153,7 +1153,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Add the image to the authorizer.
-		err = s.Authorizer.AddImage(r.Context(), projectName, info.Fingerprint)
+		err = s.Authorizer.AddImage(s.ShutdownCtx, projectName, info.Fingerprint)
 		if err != nil {
 			logger.Error("Failed to add image to authorizer", logger.Ctx{"fingerprint": info.Fingerprint, "project": projectName, "error": err})
 		}
@@ -2602,7 +2602,7 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 		imageDeleteFromDisk(imgInfo.Fingerprint)
 
 		// Remove image from authorizer.
-		err = s.Authorizer.DeleteImage(r.Context(), projectName, imgInfo.Fingerprint)
+		err = s.Authorizer.DeleteImage(s.ShutdownCtx, projectName, imgInfo.Fingerprint)
 		if err != nil {
 			logger.Error("Failed to remove image from authorizer", logger.Ctx{"fingerprint": imgInfo.Fingerprint, "project": projectName, "error": err})
 		}
@@ -2795,17 +2795,7 @@ func imageGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	var userCanViewImage bool
-	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(projectName, fingerprint), auth.EntitlementCanView)
-	if err == nil {
-		userCanViewImage = true
-	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
-		return response.SmartError(err)
-	}
-
-	public := d.checkTrustedClient(r) != nil || !userCanViewImage
-	secret := r.FormValue("secret")
-
+	// Get the image (expand partial fingerprints).
 	var info *api.Image
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		info, err = doImageGet(ctx, tx, projectName, fingerprint, false)
@@ -2818,6 +2808,17 @@ func imageGet(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	var userCanViewImage bool
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(projectName, info.Fingerprint), auth.EntitlementCanView)
+	if err == nil {
+		userCanViewImage = true
+	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return response.SmartError(err)
+	}
+
+	public := d.checkTrustedClient(r) != nil || !userCanViewImage
+	secret := r.FormValue("secret")
 
 	op, err := imageValidSecret(s, r, projectName, info.Fingerprint, secret)
 	if err != nil {
@@ -3794,8 +3795,15 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Get the image (expand the fingerprint).
+	_, imgInfo, err := s.DB.Cluster.GetImage(fingerprint, dbCluster.ImageFilter{Project: &projectName})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Access control.
 	var userCanViewImage bool
-	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(projectName, fingerprint), auth.EntitlementCanView)
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectImage(projectName, imgInfo.Fingerprint), auth.EntitlementCanView)
 	if err == nil {
 		userCanViewImage = true
 	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
@@ -3805,23 +3813,16 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 	public := d.checkTrustedClient(r) != nil || !userCanViewImage
 	secret := r.FormValue("secret")
 
-	var imgInfo *api.Image
 	if r.RemoteAddr == "@dev_incus" {
 		// /dev/incus API requires exact match
-		_, imgInfo, err = s.DB.Cluster.GetImage(fingerprint, dbCluster.ImageFilter{Project: &projectName})
-		if err != nil {
-			return response.SmartError(err)
+		if imgInfo.Fingerprint != fingerprint {
+			return response.NotFound(fmt.Errorf("Image %q not found", fingerprint))
 		}
 
 		if !imgInfo.Public && !imgInfo.Cached {
 			return response.NotFound(fmt.Errorf("Image %q not found", fingerprint))
 		}
 	} else {
-		_, imgInfo, err = s.DB.Cluster.GetImage(fingerprint, dbCluster.ImageFilter{Project: &projectName})
-		if err != nil {
-			return response.SmartError(err)
-		}
-
 		op, err := imageValidSecret(s, r, projectName, imgInfo.Fingerprint, secret)
 		if err != nil {
 			return response.SmartError(err)

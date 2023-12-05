@@ -93,7 +93,7 @@ type Authorizer interface {
 type Opts struct {
 	config          map[string]any
 	projectsGetFunc func(ctx context.Context) (map[int64]string, error)
-	resources       *Resources
+	resourcesFunc   func() (*Resources, error)
 }
 
 // Resources represents a set of current API resources as Object slices for use when loading an Authorizer.
@@ -126,10 +126,10 @@ func WithProjectsGetFunc(f func(ctx context.Context) (map[int64]string, error)) 
 	}
 }
 
-// WithResources should be passed into LoadAuthorizer when DriverOpenFGA is used.
-func WithResources(r Resources) func(*Opts) {
+// WithResourcesFunc should be passed into LoadAuthorizer when DriverOpenFGA is used.
+func WithResourcesFunc(f func() (*Resources, error)) func(*Opts) {
 	return func(o *Opts) {
-		o.resources = &r
+		o.resourcesFunc = f
 	}
 }
 

@@ -67,6 +67,10 @@ type fga struct {
 	storeID     string
 	authModelID string
 
+	online         bool
+	shutdownCtx    context.Context
+	shutdownCancel context.CancelFunc
+
 	client *client.OpenFgaClient
 }
 
@@ -155,9 +159,51 @@ func (f *fga) load(ctx context.Context, certificateCache *certificate.Cache, opt
 		return fmt.Errorf("Failed to create OpenFGA client: %w", err)
 	}
 
+	f.shutdownCtx, f.shutdownCancel = context.WithCancel(context.Background())
+
+	// Connect in the background.
+	go func(ctx context.Context, certificateCache *certificate.Cache, opts Opts) {
+		first := true
+
+		for {
+			err := f.connect(ctx, certificateCache, opts)
+			if err == nil {
+				if !first {
+					logger.Warn("Connection with OpenFGA established")
+				}
+
+				f.online = true
+				return
+			}
+
+			if first {
+				logger.Warn("Unable to connect to the OpenFGA server, will retry every 30s", logger.Ctx{"err": err})
+				first = false
+			}
+
+			select {
+			case <-time.After(30 * time.Second):
+				continue
+			case <-f.shutdownCtx.Done():
+				return
+			}
+		}
+	}(f.shutdownCtx, certificateCache, opts)
+
+	return nil
+}
+
+func (f *fga) StopService(ctx context.Context) error {
+	// Cancel any background routine.
+	f.shutdownCancel()
+
+	return nil
+}
+
+func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
 	var builtinAuthorizationModel client.ClientWriteAuthorizationModelRequest
 
-	err = json.Unmarshal([]byte(authModel), &builtinAuthorizationModel)
+	err := json.Unmarshal([]byte(authModel), &builtinAuthorizationModel)
 	if err != nil {
 		return err
 	}
@@ -190,8 +236,28 @@ func (f *fga) load(ctx context.Context, certificateCache *certificate.Cache, opt
 		return fmt.Errorf("Existing OpenFGA model does not equal new model")
 	}
 
-	if opts.resources != nil {
-		return f.syncResources(ctx, *opts.resources)
+	if opts.resourcesFunc != nil {
+		// Start resource sync routine.
+		go func(resourcesFunc func() (*Resources, error)) {
+			for {
+				resources, err := resourcesFunc()
+				if err == nil {
+					err := f.syncResources(f.shutdownCtx, *resources)
+					if err != nil {
+						logger.Error("Failed background OpenFGA resource sync", logger.Ctx{"err": err})
+					}
+				} else {
+					logger.Error("Failed getting local OpenFGA resources", logger.Ctx{"err": err})
+				}
+
+				select {
+				case <-time.After(time.Hour):
+					continue
+				case <-f.shutdownCtx.Done():
+					return
+				}
+			}
+		}(opts.resourcesFunc)
 	}
 
 	return nil
@@ -214,6 +280,11 @@ func (f *fga) CheckPermission(ctx context.Context, r *http.Request, object Objec
 	// Use the TLS driver if the user authenticated with TLS.
 	if details.authenticationProtocol() == api.AuthenticationMethodTLS {
 		return f.tls.CheckPermission(ctx, r, object, entitlement)
+	}
+
+	// If offline, return a clear error to the user.
+	if !f.online {
+		return api.StatusErrorf(http.StatusForbidden, "The authorization server is currently offline, please try again later")
 	}
 
 	username := details.username()
@@ -772,6 +843,11 @@ func (f *fga) DeleteStorageBucket(ctx context.Context, projectName string, stora
 }
 
 func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKey) error {
+	// If offline, skip updating as a full sync will happen after connection.
+	if !f.online {
+		return nil
+	}
+
 	if len(writes) == 0 && len(deletions) == 0 {
 		return nil
 	}
@@ -906,7 +982,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 				return err
 			}
 
-			if !util.ValueInSlice(remoteObject, resources.CertificateObjects) {
+			if !util.ValueInSlice(remoteObject, localObjects) {
 				if relation == relationProject {
 					user = ObjectProject(remoteObject.Project()).String()
 				}
