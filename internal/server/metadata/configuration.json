@@ -1802,6 +1802,33 @@
 						}
 					},
 					{
+						"network.ovn.ca_cert": {
+							"defaultdesc": "Content of `/etc/ovn/ovn-central.crt` if present",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL certificate authority",
+							"type": "string"
+						}
+					},
+					{
+						"network.ovn.client_cert": {
+							"defaultdesc": "Content of `/etc/ovn/cert_host` if present",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL client certificate",
+							"type": "string"
+						}
+					},
+					{
+						"network.ovn.client_key": {
+							"defaultdesc": "Content of `/etc/ovn/key_host` if present",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL client key",
+							"type": "string"
+						}
+					},
+					{
 						"network.ovn.integration_bridge": {
 							"defaultdesc": "`br-int`",
 							"longdesc": "",
