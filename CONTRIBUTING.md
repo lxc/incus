@@ -118,4 +118,4 @@ even when part of a larger set. You may find `git commit -s` useful.
 
 ## More information
 
-For more information, see [Contributing](https://linuxcontainers.org/incus/doc/main/contributing/) in the documentation.
+For more information, see [Contributing](https://linuxcontainers.org/incus/docs/main/contributing/) in the documentation.
