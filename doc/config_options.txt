@@ -1409,6 +1409,7 @@ See {ref}`server-expose`.
 ```
 
 ```{config:option} core.https_allowed_credentials server-core
+:defaultdesc: "`false`"
 :scope: "global"
 :shortdesc: "Whether to set `Access-Control-Allow-Credentials`"
 :type: "bool"
@@ -1505,6 +1506,7 @@ See {ref}`howto-storage-buckets`.
 ```
 
 ```{config:option} core.syslog_socket server-core
+:defaultdesc: "`false`"
 :scope: "local"
 :shortdesc: "Whether to enable the syslog unixgram socket listener"
 :type: "bool"
@@ -1512,6 +1514,7 @@ Set this option to `true` to enable the syslog unixgram socket to receive log me
 ```
 
 ```{config:option} core.trust_ca_certificates server-core
+:defaultdesc: "`false`"
 :scope: "global"
 :shortdesc: "Whether to automatically trust clients signed by the CA"
 :type: "bool"
