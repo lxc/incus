@@ -1134,7 +1134,7 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 		}
 
 		var userCanEditCertificate bool
-		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectCertificate(fingerprint), auth.EntitlementCanEdit)
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectCertificate(certInfo.Fingerprint), auth.EntitlementCanEdit)
 		if err == nil {
 			userCanEditCertificate = true
 		} else if api.StatusErrorCheck(err, http.StatusForbidden) {
