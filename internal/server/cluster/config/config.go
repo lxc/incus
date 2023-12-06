@@ -135,6 +135,11 @@ func (c *Config) NetworkOVNNorthboundConnection() string {
 	return c.m.GetString("network.ovn.northbound_connection")
 }
 
+// NetworkOVNSSL returns all three SSL configuration keys needed for a connection.
+func (c *Config) NetworkOVNSSL() (string, string, string) {
+	return c.m.GetString("network.ovn.ca_cert"), c.m.GetString("network.ovn.client_cert"), c.m.GetString("network.ovn.client_key")
+}
+
 // ShutdownTimeout returns the number of minutes to wait for running operation to complete
 // before the server shuts down.
 func (c *Config) ShutdownTimeout() time.Duration {
@@ -690,6 +695,33 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: `unix:/var/run/ovn/ovnnb_db.sock`
 	//  shortdesc: OVN northbound database connection string
 	"network.ovn.northbound_connection": {Default: "unix:/var/run/ovn/ovnnb_db.sock"},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovn.ca_cert)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: Content of `/etc/ovn/ovn-central.crt` if present
+	//  shortdesc: OVN SSL certificate authority
+	"network.ovn.ca_cert": {Default: ""},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovn.client_cert)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: Content of `/etc/ovn/cert_host` if present
+	//  shortdesc: OVN SSL client certificate
+	"network.ovn.client_cert": {Default: ""},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovn.client_key)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: Content of `/etc/ovn/key_host` if present
+	//  shortdesc: OVN SSL client key
+	"network.ovn.client_key": {Default: ""},
 }
 
 func expiryValidator(value string) error {
