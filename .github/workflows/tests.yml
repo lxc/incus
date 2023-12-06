@@ -240,8 +240,8 @@ jobs:
           curl -sSfL https://dl.min.io/server/minio/release/linux-amd64/minio --output "$(go env GOPATH)/bin/minio"
           chmod +x "$(go env GOPATH)/bin/minio"
 
-          # Download the v1.3.7 build of openfga server.
-          curl -sL https://github.com/openfga/openfga/releases/download/v1.3.7/openfga_1.3.7_linux_amd64.tar.gz -o openfga.tar.gz
+          # Download latest release of openfga server.
+          curl -s https://api.github.com/repos/openfga/openfga/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -L {} -o openfga.tar.gz
           tar -xzf openfga.tar.gz -C "$(go env GOPATH)/bin/"
 
           # Download latest release of openfga cli.
