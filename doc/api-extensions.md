@@ -2292,3 +2292,7 @@ This introduces the configuration keys `cephfs.create_missing`, `cephfs.osd_pg_n
 
 This API extension provides the ability to use flags `--profile`, `--no-profile`, `--device`, and `--config`
 when moving an instance between projects and/or storage pools.
+
+## `ovn_ssl_config`
+This introduces new server configuration keys to provide the SSL CA and client key pair to access the OVN databases.
+The new configuration keys are `network.ovn.ca_cert`, `network.ovn.client_cert` and `network.ovn.client_key`.
