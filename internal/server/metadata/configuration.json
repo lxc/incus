@@ -731,7 +731,7 @@
 							"defaultdesc": "`false`",
 							"liveupdate": "yes",
 							"longdesc": "",
-							"shortdesc": "Whether to mount `shiftfs` on top of file systems handled through mount syscall interception",
+							"shortdesc": "Whether to use idmapped mounts for syscall interception",
 							"type": "bool"
 						}
 					},
@@ -1538,6 +1538,7 @@
 					},
 					{
 						"core.https_allowed_credentials": {
+							"defaultdesc": "`false`",
 							"longdesc": "If enabled, the `Access-Control-Allow-Credentials` HTTP header value is set to `true`.",
 							"scope": "global",
 							"shortdesc": "Whether to set `Access-Control-Allow-Credentials`",
@@ -1645,6 +1646,7 @@
 					},
 					{
 						"core.syslog_socket": {
+							"defaultdesc": "`false`",
 							"longdesc": "Set this option to `true` to enable the syslog unixgram socket to receive log messages from external processes.",
 							"scope": "local",
 							"shortdesc": "Whether to enable the syslog unixgram socket listener",
@@ -1653,6 +1655,7 @@
 					},
 					{
 						"core.trust_ca_certificates": {
+							"defaultdesc": "`false`",
 							"longdesc": "",
 							"scope": "global",
 							"shortdesc": "Whether to automatically trust clients signed by the CA",

@@ -239,6 +239,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: bool
 	//  scope: local
+	//  defaultdesc: `false`
 	//  shortdesc: Whether to enable the syslog unixgram socket listener
 	"core.syslog_socket": {Validator: validate.Optional(validate.IsBool), Type: config.Bool},
 

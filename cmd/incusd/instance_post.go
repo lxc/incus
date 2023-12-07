@@ -332,7 +332,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 			// Setup the instance move operation.
 			run := func(op *operations.Operation) error {
-				return instancePostMigration(s, inst, req.Name, req.Pool, req.Project, req.InstanceOnly, req.Live, req.AllowInconsistent, op)
+				return instancePostMigration(s, inst, req.Name, req.Pool, req.Project, req.Config, req.Devices, req.Profiles, req.InstanceOnly, req.Live, req.AllowInconsistent, op)
 			}
 
 			resources := map[string][]api.URL{}
@@ -443,7 +443,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 }
 
 // Move an instance.
-func instancePostMigration(s *state.State, inst instance.Instance, newName string, newPool string, newProject string, instanceOnly bool, stateful bool, allowInconsistent bool, op *operations.Operation) error {
+func instancePostMigration(s *state.State, inst instance.Instance, newName string, newPool string, newProject string, config map[string]string, devices map[string]map[string]string, profiles []string, instanceOnly bool, stateful bool, allowInconsistent bool, op *operations.Operation) error {
 	if inst.IsSnapshot() {
 		return fmt.Errorf("Instance snapshots cannot be moved between pools")
 	}
@@ -471,52 +471,41 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 		localConfig[k] = v
 	}
 
+	// Set user defined configuration entries.
+	for k, v := range config {
+		localConfig[k] = v
+	}
+
+	// Get instance local devices and then set user defined devices.
 	localDevices := inst.LocalDevices().Clone()
+	for devName, dev := range devices {
+		localDevices[devName] = dev
+	}
 
-	// Check if root disk device is present in the instance config. If instance config has not
-	// root disk device configured, check if any of the profiles that will be applied in the
-	// target project contain a root disk device. Lastly, set current root disk device in the
-	// instance's config.
-	rootDevKey, rootDev, err := internalInstance.GetRootDiskDevice(inst.LocalDevices().CloneNative())
-	if err != nil && !errors.Is(err, internalInstance.ErrNoRootDisk) {
-		return err
-	} else if errors.Is(err, internalInstance.ErrNoRootDisk) {
-		instProfiles := make([]string, 0, len(inst.Profiles()))
+	// Apply previous profiles, if provided profiles are nil.
+	if profiles == nil {
+		profiles = make([]string, 0, len(inst.Profiles()))
 		for _, p := range inst.Profiles() {
-			instProfiles = append(instProfiles, p.Name)
+			profiles = append(profiles, p.Name)
 		}
+	}
 
-		// Find profiles that will be applied in target project and check if any of them contains
-		// root disk device.
-		err := s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-			profiles, err := dbCluster.GetProfilesIfEnabled(ctx, tx.Tx(), newProject, instProfiles)
+	apiProfiles := []api.Profile{}
+	if len(profiles) > 0 {
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			profiles, err := dbCluster.GetProfilesIfEnabled(ctx, tx.Tx(), newProject, profiles)
 			if err != nil {
 				return err
 			}
 
-			for _, p := range profiles {
-				// Get disk devices of the matching profile.
-				devDiskType := dbCluster.TypeDisk
-				devDiskfilter := dbCluster.DeviceFilter{
-					Type: &devDiskType,
-				}
-
-				disks, err := dbCluster.GetProfileDevices(ctx, tx.Tx(), p.ID, devDiskfilter)
+			apiProfiles = make([]api.Profile, 0, len(profiles))
+			for _, profile := range profiles {
+				apiProfile, err := profile.ToAPI(ctx, tx.Tx())
 				if err != nil {
 					return err
 				}
 
-				devices := make(map[string]map[string]string)
-				for _, d := range disks {
-					devices[d.Name] = d.Config
-				}
-
-				rootDevKey, rootDev, err = internalInstance.GetRootDiskDevice(devices)
-				if err != nil {
-					continue
-				}
-
-				break
+				apiProfiles = append(apiProfiles, *apiProfile)
 			}
 
 			return nil
@@ -524,15 +513,40 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 		if err != nil {
 			return err
 		}
+	}
 
-		// If root disk device was not found in target project profiles, apply current root disk device
-		// to the instance's config.
-		if rootDev == nil {
-			rootDevKey, rootDev, err = internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
-			if err != nil {
-				return err
+	// Check if root disk device is present in the instance config. If instance config has no
+	// root disk device configured, check if the same root disk device will be applied with new
+	// profiles in the target project. If the new root disk device differs from the existing
+	// one, add the existing one as a local device to the instance (we don't want to move root
+	// disk device if not necessary, as this is an expensive operation).
+	rootDevKey, rootDev, err := internalInstance.GetRootDiskDevice(localDevices.CloneNative())
+	if err != nil && !errors.Is(err, internalInstance.ErrNoRootDisk) {
+		return err
+	} else if errors.Is(err, internalInstance.ErrNoRootDisk) {
+		// Find currently applied root disk device from expanded devices.
+		rootDevKey, rootDev, err = internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+		if err != nil {
+			return err
+		}
+
+		// Iterate over profiles that will be applied in the target project and find
+		// the new root disk device. Iterate in reverse order to respect profile
+		// precedence.
+		var profileRootDev map[string]string
+		for i := len(apiProfiles) - 1; i >= 0; i-- {
+			_, profileRootDev, err = internalInstance.GetRootDiskDevice(apiProfiles[i].Devices)
+			if err == nil {
+				break
 			}
+		}
 
+		// If current root disk device would be replaced according to the new profiles,
+		// add current root disk device to local instance devices (to retain it).
+		if profileRootDev == nil ||
+			profileRootDev["pool"] != rootDev["pool"] ||
+			profileRootDev["size"] != rootDev["size"] ||
+			profileRootDev["size.state"] != rootDev["size.state"] {
 			localDevices[rootDevKey] = rootDev
 		}
 	}
@@ -549,12 +563,12 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 		BaseImage:    localConfig["volatile.base_image"],
 		Config:       localConfig,
 		Devices:      localDevices,
+		Profiles:     apiProfiles,
 		Project:      newProject,
 		Type:         inst.Type(),
 		Architecture: inst.Architecture(),
 		Description:  inst.Description(),
 		Ephemeral:    inst.IsEphemeral(),
-		Profiles:     inst.Profiles(),
 		Stateful:     inst.IsStateful(),
 	}
 

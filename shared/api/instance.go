@@ -103,6 +103,24 @@ type InstancePost struct {
 	//
 	// API extension: instance_allow_inconsistent_copy
 	AllowInconsistent bool `json:"allow_inconsistent" yaml:"allow_inconsistent"`
+
+	// Instance configuration file.
+	// Example: {"security.nesting": "true"}
+	//
+	// API extension: instance_move_config
+	Config map[string]string
+
+	// Instance devices.
+	// Example: {"root": {"type": "disk", "pool": "default", "path": "/"}}
+	//
+	// API extension: instance_move_config
+	Devices map[string]map[string]string
+
+	// List of profiles applied to the instance.
+	// Example: ["default"]
+	//
+	// API extension: instance_move_config
+	Profiles []string
 }
 
 // InstancePostTarget represents the migration target host and operation.

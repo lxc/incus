@@ -820,7 +820,7 @@ This effectively gives us:
 * `volatile.idmap.next` => Next on-disk idmap
 
 This is required to implement environments where the on-disk map isn't
-changed but the kernel map is (e.g. `shiftfs`).
+changed but the kernel map is (e.g. `idmapped mounts`).
 
 ## `event_location`
 
@@ -909,7 +909,7 @@ elevated permissions.
 
 ## `container_disk_shift`
 
-Adds the `shift` property on `disk` devices which controls the use of the `shiftfs` overlay.
+Adds the `shift` property on `disk` devices which controls the use of the `idmapped mounts` overlay.
 
 ## `storage_shifted`
 
@@ -919,7 +919,7 @@ Setting it to `true` will allow multiple isolated containers to attach the
 same storage volume while keeping the file system writable from all of
 them.
 
-This makes use of `shiftfs` as an overlay file system.
+This makes use of `idmapped mounts` as an overlay file system.
 
 ## `resources_infiniband`
 
@@ -2287,3 +2287,8 @@ This introduces a new `io.bus` property to disk devices which can be used to ove
 
 ## `storage_cephfs_create_missing`
 This introduces the configuration keys `cephfs.create_missing`, `cephfs.osd_pg_num`, `cephfs.meta_pool` and `cephfs.osd_pool` to be used when adding a `cephfs` storage pool to instruct Incus to create the necessary entities for the storage pool, if they do not exist.
+
+## `instance_move_config`
+
+This API extension provides the ability to use flags `--profile`, `--no-profile`, `--device`, and `--config`
+when moving an instance between projects and/or storage pools.

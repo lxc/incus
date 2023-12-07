@@ -426,6 +426,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: bool
 	//  scope: global
+	//  defaultdesc: `false`
 	//  shortdesc: Whether to set `Access-Control-Allow-Credentials`
 	"core.https_allowed_credentials": {Type: config.Bool, Default: "false"},
 
@@ -486,6 +487,7 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: bool
 	//  scope: global
+	//  defaultdesc: `false`
 	//  shortdesc: Whether to automatically trust clients signed by the CA
 	"core.trust_ca_certificates": {Type: config.Bool, Default: "false"},
 

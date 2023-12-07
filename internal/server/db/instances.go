@@ -49,9 +49,9 @@ func (c *ClusterTx) GetInstanceNames(ctx context.Context, project string) ([]str
 	stmt := `
 SELECT instances.name FROM instances
   JOIN projects ON projects.id = instances.project_id
-  WHERE projects.name = ? AND instances.type = ?
+  WHERE projects.name = ?
 `
-	return query.SelectStrings(ctx, c.tx, stmt, project, instancetype.Any)
+	return query.SelectStrings(ctx, c.tx, stmt, project)
 }
 
 // GetNodeAddressOfInstance returns the address of the node hosting the

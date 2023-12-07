@@ -1645,6 +1645,32 @@ definitions:
         x-go-package: github.com/lxc/incus/shared/api
     InstancePost:
         properties:
+            Config:
+                additionalProperties:
+                    type: string
+                description: Instance configuration file.
+                example:
+                    security.nesting: "true"
+                type: object
+            Devices:
+                additionalProperties:
+                    additionalProperties:
+                        type: string
+                    type: object
+                description: Instance devices.
+                example:
+                    root:
+                        path: /
+                        pool: default
+                        type: disk
+                type: object
+            Profiles:
+                description: List of profiles applied to the instance.
+                example:
+                    - default
+                items:
+                    type: string
+                type: array
             allow_inconsistent:
                 description: AllowInconsistent allow inconsistent copies when migrating.
                 example: false

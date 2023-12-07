@@ -88,7 +88,7 @@ config:
 ```
 
 ```{tip}
-See {doc}`cloud-init:howto/debug_user_data` for information on how to check whether the syntax is correct.
+See {doc}`How to validate user data cloud configuration <cloud-init:howto/debug_user_data>` for information on how to check whether the syntax is correct.
 ```
 
 ## How to check the `cloud-init` status

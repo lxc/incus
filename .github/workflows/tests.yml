@@ -96,7 +96,6 @@ jobs:
   system-tests:
     env:
       CGO_LDFLAGS_ALLOW: "(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
-      INCUS_SHIFTFS_DISABLE: "true"
       INCUS_CEPH_CLUSTER: "ceph"
       INCUS_CEPH_CEPHFS: "cephfs"
       INCUS_CEPH_CEPHOBJECT_RADOSGW: "http://127.0.0.1"
@@ -241,11 +240,11 @@ jobs:
           chmod +x "$(go env GOPATH)/bin/minio"
 
           # Download latest release of openfga server.
-          curl -s https://api.github.com/repos/openfga/openfga/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -L {} -o openfga.tar.gz
+          curl -sSfL https://api.github.com/repos/openfga/openfga/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -sSfL {} -o openfga.tar.gz
           tar -xzf openfga.tar.gz -C "$(go env GOPATH)/bin/"
 
           # Download latest release of openfga cli.
-          curl -s https://api.github.com/repos/openfga/cli/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -L {} -o fga.tar.gz
+          curl -sSfL https://api.github.com/repos/openfga/cli/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -sSfL {} -o fga.tar.gz
           tar -xzf fga.tar.gz -C "$(go env GOPATH)/bin/"
 
       - name: Download go dependencies
@@ -319,7 +318,7 @@ jobs:
           chmod +x ~
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
-          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS,INCUS_SHIFTFS_DISABLE INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
+          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} ./main.sh ${{ matrix.suite }}
 
   client:
     name: Client
