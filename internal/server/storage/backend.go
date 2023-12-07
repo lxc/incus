@@ -2017,8 +2017,12 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 			imageExists := false
 
 			if fingerprint != "" {
-				// Confirm that the image is present in the project.
-				_, _, err = b.state.DB.Cluster.GetImage(fingerprint, cluster.ImageFilter{Project: &projectName})
+				err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					// Confirm that the image is present in the project.
+					_, _, err = tx.GetImage(ctx, fingerprint, cluster.ImageFilter{Project: &projectName})
+
+					return err
+				})
 				if err != nil && !response.IsNotFoundError(err) {
 					return err
 				}
@@ -3305,8 +3309,14 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 
 	defer unlock()
 
-	// Load image info from database.
-	_, image, err := b.state.DB.Cluster.GetImageFromAnyProject(fingerprint)
+	var image *api.Image
+
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Load image info from database.
+		_, image, err = tx.GetImageFromAnyProject(ctx, fingerprint)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
