@@ -947,19 +947,37 @@ func operationWaitGet(d *Daemon, r *http.Request) response.Response {
 			ctx, cancel = context.WithCancel(r.Context())
 		}
 
-		defer cancel()
+		waitResponse := func(w http.ResponseWriter) error {
+			defer cancel()
 
-		err = op.Wait(ctx)
-		if err != nil {
-			return response.SmartError(err)
+			// Write header to avoid client side timeouts.
+			w.Header().Set("Connection", "keep-alive")
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.WriteHeader(http.StatusOK)
+			f, ok := w.(http.Flusher)
+			if ok {
+				f.Flush()
+			}
+
+			// Wait for the operation.
+			err = op.Wait(ctx)
+			if err != nil {
+				_ = response.SmartError(err).Render(w)
+				return nil
+			}
+
+			_, body, err := op.Render()
+			if err != nil {
+				_ = response.SmartError(err).Render(w)
+				return nil
+			}
+
+			_ = response.SyncResponse(true, body).Render(w)
+			return nil
 		}
 
-		_, body, err := op.Render()
-		if err != nil {
-			return response.SmartError(err)
-		}
-
-		return response.SyncResponse(true, body)
+		return response.ManualResponse(waitResponse)
 	}
 
 	// Then check if the query is from an operation on another node, and, if so, forward it
