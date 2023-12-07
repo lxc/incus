@@ -1645,6 +1645,30 @@ When using custom automatic instance placement logic, this option stores the scr
 See {ref}`clustering-instance-placement-scriptlet` for more information.
 ```
 
+```{config:option} network.ovn.ca_cert server-miscellaneous
+:defaultdesc: "Content of `/etc/ovn/ovn-central.crt` if present"
+:scope: "global"
+:shortdesc: "OVN SSL certificate authority"
+:type: "string"
+
+```
+
+```{config:option} network.ovn.client_cert server-miscellaneous
+:defaultdesc: "Content of `/etc/ovn/cert_host` if present"
+:scope: "global"
+:shortdesc: "OVN SSL client certificate"
+:type: "string"
+
+```
+
+```{config:option} network.ovn.client_key server-miscellaneous
+:defaultdesc: "Content of `/etc/ovn/key_host` if present"
+:scope: "global"
+:shortdesc: "OVN SSL client key"
+:type: "string"
+
+```
+
 ```{config:option} network.ovn.integration_bridge server-miscellaneous
 :defaultdesc: "`br-int`"
 :scope: "global"
