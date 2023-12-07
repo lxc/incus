@@ -279,6 +279,8 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 
 	deprecatedInstanceConfigs := []string{
 		"limits.network.priority",
+		"security.devlxd",
+		"security.devlxd.images",
 	}
 
 	deprecatedInstanceDeviceConfigs := []string{
