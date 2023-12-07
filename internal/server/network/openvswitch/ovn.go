@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/internal/iprange"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"
@@ -313,49 +314,31 @@ func (o *OVN) xbctl(southbound bool, extraArgs ...string) (string, error) {
 	files := []*os.File{}
 	if strings.Contains(dbAddr, "ssl:") {
 		// Handle client certificate.
-		clientCertFile, err := os.CreateTemp("", "ovn")
+		clientCertFile, err := linux.CreateMemfd([]byte(o.sslClientCert))
 		if err != nil {
 			return "", err
 		}
 
 		defer clientCertFile.Close()
-		_ = os.Remove(clientCertFile.Name())
 		files = append(files, clientCertFile)
 
-		_, err = clientCertFile.WriteString(o.sslClientCert)
-		if err != nil {
-			return "", err
-		}
-
 		// Handle client key.
-		clientKeyFile, err := os.CreateTemp("", "ovn")
+		clientKeyFile, err := linux.CreateMemfd([]byte(o.sslClientKey))
 		if err != nil {
 			return "", err
 		}
 
 		defer clientKeyFile.Close()
-		_ = os.Remove(clientKeyFile.Name())
 		files = append(files, clientKeyFile)
 
-		_, err = clientKeyFile.WriteString(o.sslClientKey)
-		if err != nil {
-			return "", err
-		}
-
 		// Handle CA certificate.
-		caCertFile, err := os.CreateTemp("", "ovn")
+		caCertFile, err := linux.CreateMemfd([]byte(o.sslCACert))
 		if err != nil {
 			return "", err
 		}
 
 		defer caCertFile.Close()
-		_ = os.Remove(caCertFile.Name())
 		files = append(files, caCertFile)
-
-		_, err = caCertFile.WriteString(o.sslCACert)
-		if err != nil {
-			return "", err
-		}
 
 		args = append(args,
 			"-c", "/proc/self/fd/3",
