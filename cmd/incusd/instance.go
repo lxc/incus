@@ -98,7 +98,13 @@ func ensureImageIsLocallyAvailable(s *state.State, r *http.Request, img *api.Ima
 
 	defer unlock()
 
-	memberAddress, err := s.DB.Cluster.LocateImage(img.Fingerprint)
+	var memberAddress string
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		memberAddress, err = tx.LocateImage(ctx, img.Fingerprint)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed locating image %q: %w", img.Fingerprint, err)
 	}
@@ -110,8 +116,10 @@ func ensureImageIsLocallyAvailable(s *state.State, r *http.Request, img *api.Ima
 			return fmt.Errorf("Failed transferring image %q from %q: %w", img.Fingerprint, memberAddress, err)
 		}
 
-		// As the image record already exists in the project, just add the node ID to the image.
-		err = s.DB.Cluster.AddImageToLocalNode(projectName, img.Fingerprint)
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// As the image record already exists in the project, just add the node ID to the image.
+			return tx.AddImageToLocalNode(ctx, projectName, img.Fingerprint)
+		})
 		if err != nil {
 			return fmt.Errorf("Failed adding transferred image %q record to local cluster member: %w", img.Fingerprint, err)
 		}

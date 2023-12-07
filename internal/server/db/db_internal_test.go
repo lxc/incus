@@ -186,11 +186,15 @@ func (s *dbTestSuite) Test_deleting_an_image_cascades_on_related_tables() {
 }
 
 func (s *dbTestSuite) Test_ImageGet_finds_image_for_fingerprint() {
-	var err error
 	var result *api.Image
 	project := "default"
 
-	_, result, err = s.db.GetImage("fingerprint", cluster.ImageFilter{Project: &project})
+	err := s.db.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		_, result, err = tx.GetImage(ctx, "fingerprint", cluster.ImageFilter{Project: &project})
+		return err
+	})
+
 	s.Nil(err)
 	s.NotNil(result)
 	s.Equal(result.Filename, "filename")
@@ -201,24 +205,37 @@ func (s *dbTestSuite) Test_ImageGet_finds_image_for_fingerprint() {
 
 func (s *dbTestSuite) Test_ImageGet_for_missing_fingerprint() {
 	project := "default"
-	var err error
 
-	_, _, err = s.db.GetImage("unknown", cluster.ImageFilter{Project: &project})
+	err := s.db.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		_, _, err := tx.GetImage(ctx, "unknown", cluster.ImageFilter{Project: &project})
+		return err
+	})
+
 	s.True(api.StatusErrorCheck(err, http.StatusNotFound))
 }
 
 func (s *dbTestSuite) Test_ImageExists_true() {
-	var err error
+	var exists bool
 
-	exists, err := s.db.ImageExists("default", "fingerprint")
+	err := s.db.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		exists, err = tx.ImageExists(ctx, "default", "fingerprint")
+		return err
+	})
+
 	s.Nil(err)
 	s.True(exists)
 }
 
 func (s *dbTestSuite) Test_ImageExists_false() {
-	var err error
+	var exists bool
 
-	exists, err := s.db.ImageExists("default", "foobar")
+	err := s.db.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		var err error
+		exists, err = tx.ImageExists(ctx, "default", "foobar")
+		return err
+	})
+
 	s.Nil(err)
 	s.False(exists)
 }
@@ -257,13 +274,14 @@ func (s *dbTestSuite) Test_CreateImageAlias() {
 
 func (s *dbTestSuite) Test_GetCachedImageSourceFingerprint() {
 	project := "default"
-	imageID, _, err := s.db.GetImage("fingerprint", cluster.ImageFilter{Project: &project})
-	s.Nil(err)
-
-	err = s.db.CreateImageSource(imageID, "server.remote", "simplestreams", "", "test")
-	s.Nil(err)
 
 	_ = s.db.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		imageID, _, err := tx.GetImage(ctx, "fingerprint", cluster.ImageFilter{Project: &project})
+		s.Nil(err)
+
+		err = tx.CreateImageSource(ctx, imageID, "server.remote", "simplestreams", "", "test")
+		s.Nil(err)
+
 		fingerprint, err := tx.GetCachedImageSourceFingerprint(ctx, "server.remote", "simplestreams", "test", "container", 0)
 		s.Nil(err)
 		s.Equal(fingerprint, "fingerprint")
@@ -273,13 +291,14 @@ func (s *dbTestSuite) Test_GetCachedImageSourceFingerprint() {
 
 func (s *dbTestSuite) Test_GetCachedImageSourceFingerprint_no_match() {
 	project := "default"
-	imageID, _, err := s.db.GetImage("fingerprint", cluster.ImageFilter{Project: &project})
-	s.Nil(err)
-
-	err = s.db.CreateImageSource(imageID, "server.remote", "simplestreams", "", "test")
-	s.Nil(err)
 
 	_ = s.db.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+		imageID, _, err := tx.GetImage(ctx, "fingerprint", cluster.ImageFilter{Project: &project})
+		s.Nil(err)
+
+		err = tx.CreateImageSource(ctx, imageID, "server.remote", "simplestreams", "", "test")
+		s.Nil(err)
+
 		_, err = tx.GetCachedImageSourceFingerprint(ctx, "server.remote", "incus", "test", "container", 0)
 		s.True(api.StatusErrorCheck(err, http.StatusNotFound))
 		return nil

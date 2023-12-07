@@ -157,11 +157,23 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		}
 	}
 
-	// Check if the image already exists in this project (partial hash match).
-	_, imgInfo, err := s.DB.Cluster.GetImage(fp, cluster.ImageFilter{Project: &args.ProjectName})
+	var imgInfo *api.Image
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Check if the image already exists in this project (partial hash match).
+		_, imgInfo, err = tx.GetImage(ctx, fp, cluster.ImageFilter{Project: &args.ProjectName})
+
+		return err
+	})
 	if err == nil {
-		// Check if the image is available locally or it's on another node.
-		nodeAddress, err := s.DB.Cluster.LocateImage(imgInfo.Fingerprint)
+		var nodeAddress string
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Check if the image is available locally or it's on another node.
+			nodeAddress, err = tx.LocateImage(ctx, imgInfo.Fingerprint)
+
+			return err
+		})
 		if err != nil {
 			return nil, fmt.Errorf("Failed locating image %q in the cluster: %w", imgInfo.Fingerprint, err)
 		}
@@ -173,48 +185,66 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 				return nil, fmt.Errorf("Failed transferring image %q from %q: %w", imgInfo.Fingerprint, nodeAddress, err)
 			}
 
-			// As the image record already exists in the project, just add the node ID to the image.
-			err = s.DB.Cluster.AddImageToLocalNode(args.ProjectName, imgInfo.Fingerprint)
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				// As the image record already exists in the project, just add the node ID to the image.
+				return tx.AddImageToLocalNode(ctx, args.ProjectName, imgInfo.Fingerprint)
+			})
 			if err != nil {
 				return nil, fmt.Errorf("Failed adding transferred image %q to local cluster member: %w", imgInfo.Fingerprint, err)
 			}
 		}
 	} else if response.IsNotFoundError(err) {
-		// Check if the image already exists in some other project.
-		_, imgInfo, err = s.DB.Cluster.GetImageFromAnyProject(fp)
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Check if the image already exists in some other project.
+			_, imgInfo, err = tx.GetImageFromAnyProject(ctx, fp)
+
+			return err
+		})
 		if err == nil {
-			// Check if the image is available locally or it's on another node. Do this before creating
-			// the missing DB record so we don't include ourself in the search results.
-			nodeAddress, err := s.DB.Cluster.LocateImage(imgInfo.Fingerprint)
+			var nodeAddress string
+
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				// Check if the image is available locally or it's on another node. Do this before creating
+				// the missing DB record so we don't include ourself in the search results.
+				nodeAddress, err = tx.LocateImage(ctx, imgInfo.Fingerprint)
+
+				return err
+			})
 			if err != nil {
 				return nil, fmt.Errorf("Locate image %q in the cluster: %w", imgInfo.Fingerprint, err)
 			}
 
-			// We need to insert the database entry for this project, including the node ID entry.
-			err = s.DB.Cluster.CreateImage(args.ProjectName, imgInfo.Fingerprint, imgInfo.Filename, imgInfo.Size, args.Public, imgInfo.AutoUpdate, imgInfo.Architecture, imgInfo.CreatedAt, imgInfo.ExpiresAt, imgInfo.Properties, imgInfo.Type, nil)
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				// We need to insert the database entry for this project, including the node ID entry.
+				return tx.CreateImage(ctx, args.ProjectName, imgInfo.Fingerprint, imgInfo.Filename, imgInfo.Size, args.Public, imgInfo.AutoUpdate, imgInfo.Architecture, imgInfo.CreatedAt, imgInfo.ExpiresAt, imgInfo.Properties, imgInfo.Type, nil)
+			})
 			if err != nil {
 				return nil, fmt.Errorf("Failed creating image record for project: %w", err)
 			}
 
 			// Mark the image as "cached" if downloading for an instance.
 			if args.SetCached {
-				err := s.DB.Cluster.SetImageCachedAndLastUseDate(args.ProjectName, imgInfo.Fingerprint, time.Now().UTC())
+				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.SetImageCachedAndLastUseDate(ctx, args.ProjectName, imgInfo.Fingerprint, time.Now().UTC())
+				})
 				if err != nil {
 					return nil, fmt.Errorf("Failed setting cached flag and last use date: %w", err)
 				}
 			}
 
 			var id int
-			id, imgInfo, err = s.DB.Cluster.GetImage(fp, cluster.ImageFilter{Project: &args.ProjectName})
+
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				id, imgInfo, err = tx.GetImage(ctx, fp, cluster.ImageFilter{Project: &args.ProjectName})
+				if err != nil {
+					return err
+				}
+
+				return tx.CreateImageSource(ctx, id, args.Server, args.Protocol, args.Certificate, alias)
+			})
 			if err != nil {
 				return nil, err
 			}
-
-			err = s.DB.Cluster.CreateImageSource(id, args.Server, args.Protocol, args.Certificate, alias)
-			if err != nil {
-				return nil, err
-			}
-
 			// Transfer image if needed (after database record has been created above).
 			if nodeAddress != "" {
 				// The image is available from another node, let's try to import it.
@@ -244,8 +274,14 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 			return nil, err
 		}
 
-		// Check if the image is already in the pool.
-		poolIDs, err := s.DB.Cluster.GetPoolsWithImage(info.Fingerprint)
+		var poolIDs []int64
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Check if the image is already in the pool.
+			poolIDs, err = tx.GetPoolsWithImage(ctx, info.Fingerprint)
+
+			return err
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -513,8 +549,10 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		info.AutoUpdate = args.AutoUpdate
 	}
 
-	// Create the database entry
-	err = s.DB.Cluster.CreateImage(args.ProjectName, info.Fingerprint, info.Filename, info.Size, info.Public, info.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, info.Type, nil)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create the database entry
+		return tx.CreateImage(ctx, args.ProjectName, info.Fingerprint, info.Filename, info.Size, info.Public, info.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, info.Type, nil)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed creating image record: %w", err)
 	}
@@ -540,12 +578,14 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 
 	// Record the image source
 	if alias != fp {
-		id, _, err := s.DB.Cluster.GetImage(fp, cluster.ImageFilter{Project: &args.ProjectName})
-		if err != nil {
-			return nil, err
-		}
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			id, _, err := tx.GetImage(ctx, fp, cluster.ImageFilter{Project: &args.ProjectName})
+			if err != nil {
+				return err
+			}
 
-		err = s.DB.Cluster.CreateImageSource(id, args.Server, protocol, args.Certificate, alias)
+			return tx.CreateImageSource(ctx, id, args.Server, protocol, args.Certificate, alias)
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -561,7 +601,9 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 
 	// Mark the image as "cached" if downloading for an instance
 	if args.SetCached {
-		err := s.DB.Cluster.SetImageCachedAndLastUseDate(args.ProjectName, fp, time.Now().UTC())
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.SetImageCachedAndLastUseDate(ctx, args.ProjectName, fp, time.Now().UTC())
+		})
 		if err != nil {
 			return nil, fmt.Errorf("Failed setting cached flag and last use date: %w", err)
 		}
