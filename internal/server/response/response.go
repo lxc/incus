@@ -187,7 +187,9 @@ func (r *syncResponse) Render(w http.ResponseWriter) error {
 		code = http.StatusOK
 	}
 
-	w.WriteHeader(code)
+	if w.Header().Get("Connection") != "keep-alive" {
+		w.WriteHeader(code)
+	}
 
 	// Handle plain text responses.
 	if r.plaintext {
@@ -347,7 +349,9 @@ func (r *errorResponse) Render(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
-	w.WriteHeader(r.code) // Set the error code in the HTTP header response.
+	if w.Header().Get("Connection") != "keep-alive" {
+		w.WriteHeader(r.code) // Set the error code in the HTTP header response.
+	}
 
 	_, err = fmt.Fprintln(w, buf.String())
 
@@ -524,7 +528,10 @@ func (r *forwardedResponse) Render(w http.ResponseWriter) error {
 		w.Header().Set(key, response.Header.Get(key))
 	}
 
-	w.WriteHeader(response.StatusCode)
+	if w.Header().Get("Connection") != "keep-alive" {
+		w.WriteHeader(response.StatusCode)
+	}
+
 	_, err = io.Copy(w, response.Body)
 	return err
 }
