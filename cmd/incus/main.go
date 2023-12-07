@@ -206,7 +206,7 @@ For help with any of those, simply call them with --help.`))
 	profileCmd := cmdProfile{global: &globalCmd}
 	app.AddCommand(profileCmd.Command())
 
-	// profile sub-command
+	// project sub-command
 	projectCmd := cmdProject{global: &globalCmd}
 	app.AddCommand(projectCmd.Command())
 
