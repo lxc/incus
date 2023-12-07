@@ -171,7 +171,11 @@ func stopDevIncusServer(d *Daemon) error {
 	d.DevIncusRunning = false
 	d.DevIncusMu.Unlock()
 
-	return servers["DevIncus"].Close()
+	if servers["DevIncus"] != nil {
+		return servers["DevIncus"].Close()
+	}
+
+	return nil
 }
 
 func getClient(CID uint32, port int, serverCertificate string) (*http.Client, error) {
