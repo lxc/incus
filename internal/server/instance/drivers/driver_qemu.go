@@ -1044,7 +1044,13 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 			return err
 		}
 
-		stateDiskSizeStr := d.storagePool.Driver().Info().DefaultVMBlockFilesystemSize
+		// Don't access d.storagePool directly since it isn't populated at this stage.
+		pool, err := d.getStoragePool()
+		if err != nil {
+			return err
+		}
+
+		stateDiskSizeStr := pool.Driver().Info().DefaultVMBlockFilesystemSize
 		if rootDiskDevice["size.state"] != "" {
 			stateDiskSizeStr = rootDiskDevice["size.state"]
 		}
