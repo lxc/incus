@@ -316,6 +316,12 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 	}
 
+	// Mangle profiles and projects.
+	if !c.flagClusterMember {
+		rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE profiles SET description='Default Incus profile' WHERE description='Default LXD profile';"))
+		rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE projects SET description='Default Incus project' WHERE description='Default LXD project';"))
+	}
+
 	// Log rewrite actions.
 	_, _ = logFile.WriteString("Rewrite SQL statements:\n")
 	for _, entry := range rewriteStatements {
