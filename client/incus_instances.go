@@ -1112,7 +1112,8 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", uri, exec, "", true)
+	useEventListener := r.CheckExtension("operation_wait") != nil
+	op, _, err := r.queryOperation("POST", uri, exec, "", useEventListener)
 	if err != nil {
 		return nil, err
 	}
