@@ -364,6 +364,19 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 		return nil
 	}
 
+	// For VMs, also copy the filesystem volume.
+	if vol.IsVMBlock() {
+		srcFSVol := srcVol.NewVMBlockFilesystemVolume()
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err := d.CreateVolumeFromCopy(fsVol, srcFSVol, copySnapshots, false, op)
+		if err != nil {
+			return err
+		}
+
+		// Delete on revert.
+		revert.Add(func() { _ = d.DeleteVolume(fsVol, op) })
+	}
+
 	// Retrieve snapshots on the source.
 	snapshots := []string{}
 	if !srcVol.IsSnapshot() && copySnapshots {
@@ -431,16 +444,6 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 			}
 
 			revert.Add(func() { _ = d.DeleteVolume(vol, op) })
-		}
-
-		// For VMs, also copy the filesystem volume.
-		if vol.IsVMBlock() {
-			srcFSVol := srcVol.NewVMBlockFilesystemVolume()
-			fsVol := vol.NewVMBlockFilesystemVolume()
-			err := d.CreateVolumeFromCopy(fsVol, srcFSVol, false, false, op)
-			if err != nil {
-				return err
-			}
 		}
 
 		err = postCreateTasks(vol)

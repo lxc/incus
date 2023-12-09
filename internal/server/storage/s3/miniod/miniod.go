@@ -30,7 +30,7 @@ import (
 )
 
 // minioHost is the host address that the local MinIO processes will listen on.
-const minioHost = "[::1]"
+const minioHost = "127.0.0.1"
 
 // minioLockPrefix is the prefix used for per-bucket MinIO spawn lock.
 const minioLockPrefix = "minio_"
