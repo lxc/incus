@@ -3764,11 +3764,11 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 			aioMode = "threads"
 			cacheMode = "unsafe" // Use host cache, but ignore all sync requests from guest.
 		}
+	}
 
-		// Special case ISO images as cdroms.
-		if driveConf.FSType == "iso9660" {
-			media = "cdrom"
-		}
+	// Special case ISO images as cdroms.
+	if driveConf.FSType == "iso9660" {
+		media = "cdrom"
 	}
 
 	// Check if the user has overridden the bus.
