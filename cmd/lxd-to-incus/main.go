@@ -316,6 +316,12 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 	}
 
+	// Mangle profiles and projects.
+	if !c.flagClusterMember {
+		rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE profiles SET description='Default Incus profile' WHERE description='Default LXD profile';"))
+		rewriteStatements = append(rewriteStatements, fmt.Sprintf("UPDATE projects SET description='Default Incus project' WHERE description='Default LXD project';"))
+	}
+
 	// Log rewrite actions.
 	_, _ = logFile.WriteString("Rewrite SQL statements:\n")
 	for _, entry := range rewriteStatements {
@@ -540,14 +546,22 @@ Instead this tool will be providing specific commands for each of the servers.
 		fmt.Println("=> Running data migration commands")
 		_, _ = logFile.WriteString("Running data migration commands:\n")
 
+		failures := 0
 		for _, cmd := range rewriteCommands {
 			_, _ = logFile.WriteString(fmt.Sprintf(" - %+v\n", cmd))
 
 			_, err := subprocess.RunCommand(cmd[0], cmd[1:]...)
 			if err != nil {
 				_, _ = logFile.WriteString(fmt.Sprintf("Failed to run command: %v\n", err))
-				fmt.Fprintf(os.Stderr, "Failed to run command: %v\n", err)
+				failures++
 			}
+		}
+
+		if failures > 0 {
+			fmt.Printf("==> WARNING: %d commands out of %d succeeded (%d failures)\n", len(rewriteCommands)-failures, len(rewriteCommands), failures)
+			fmt.Println("    Please review the log file for details.")
+			fmt.Println("    Note that in OVN environments, it's normal to see some failures")
+			fmt.Println("    related to Flow Rules and Switch Ports as those often change during the migration.")
 		}
 	}
 
