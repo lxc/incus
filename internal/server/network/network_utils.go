@@ -79,28 +79,30 @@ func MACDevName(mac net.HardwareAddr) string {
 // UsedByInstanceDevices looks for instance NIC devices using the network and runs the supplied usageFunc for each.
 // Accepts optional filter arguments to specify a subset of instances.
 func UsedByInstanceDevices(s *state.State, networkProjectName string, networkName string, networkType string, usageFunc func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error, filters ...cluster.InstanceFilter) error {
-	return s.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-		// Get the instance's effective network project name.
-		instNetworkProject := project.NetworkProjectFromRecord(&p)
+	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// Get the instance's effective network project name.
+			instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-		// Skip instances who's effective network project doesn't match this Network's project.
-		if instNetworkProject != networkProjectName {
-			return nil
-		}
+			// Skip instances who's effective network project doesn't match this Network's project.
+			if instNetworkProject != networkProjectName {
+				return nil
+			}
 
-		// Look for NIC devices using this network.
-		devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
-		for devName, devConfig := range devices {
-			if isInUseByDevice(networkName, networkType, devConfig) {
-				err := usageFunc(inst, devName, devConfig)
-				if err != nil {
-					return err
+			// Look for NIC devices using this network.
+			devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
+			for devName, devConfig := range devices {
+				if isInUseByDevice(networkName, networkType, devConfig) {
+					err := usageFunc(inst, devName, devConfig)
+					if err != nil {
+						return err
+					}
 				}
 			}
-		}
 
-		return nil
-	}, filters...)
+			return nil
+		}, filters...)
+	})
 }
 
 // UsedBy returns list of API resources using network. Accepts firstOnly argument to indicate that only the first

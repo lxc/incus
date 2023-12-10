@@ -156,7 +156,15 @@ func instanceSnapshotsGet(d *Daemon, r *http.Request) response.Response {
 	resultMap := []*api.InstanceSnapshot{}
 
 	if !recursion {
-		snaps, err := s.DB.Cluster.GetInstanceSnapshotsNames(projectName, cname)
+		var snaps []string
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			snaps, err = tx.GetInstanceSnapshotsNames(ctx, projectName, cname)
+
+			return err
+		})
 		if err != nil {
 			return response.SmartError(err)
 		}

@@ -422,8 +422,14 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		return operations.OperationResponse(op)
 	}
 
-	// Check that the name isn't already in use.
-	id, _ := s.DB.Cluster.GetInstanceID(projectName, req.Name)
+	var id int
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Check that the name isn't already in use.
+		id, _ = tx.GetInstanceID(ctx, projectName, req.Name)
+
+		return nil
+	})
 	if id > 0 {
 		return response.Conflict(fmt.Errorf("Name %q already in use", req.Name))
 	}
@@ -797,7 +803,7 @@ func instancePostClusteringMigrate(s *state.State, r *http.Request, srcPool stor
 				return fmt.Errorf("Failed to get ID of moved instance: %w", err)
 			}
 
-			err = tx.DeleteInstanceConfigKey(id, "volatile.apply_template")
+			err = tx.DeleteInstanceConfigKey(ctx, id, "volatile.apply_template")
 			if err != nil {
 				return fmt.Errorf("Failed to remove volatile.apply_template config key: %w", err)
 			}
@@ -807,7 +813,7 @@ func instancePostClusteringMigrate(s *state.State, r *http.Request, srcPool stor
 					"volatile.apply_template": origVolatileApplyTemplate,
 				}
 
-				err = tx.CreateInstanceConfig(int(id), config)
+				err = tx.CreateInstanceConfig(ctx, int(id), config)
 				if err != nil {
 					return fmt.Errorf("Failed to set volatile.apply_template config key: %w", err)
 				}

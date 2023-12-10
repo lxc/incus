@@ -190,16 +190,18 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	hostInterfaces, _ := net.Interfaces()
 
 	var instances []instance.Instance
-	err = s.DB.Cluster.InstanceList(r.Context(), func(dbInst db.InstanceArgs, p api.Project) error {
-		inst, err := instance.Load(s, dbInst, p)
-		if err != nil {
-			return fmt.Errorf("Failed loading instance %q in project %q: %w", dbInst.Name, dbInst.Project, err)
-		}
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
+			inst, err := instance.Load(s, dbInst, p)
+			if err != nil {
+				return fmt.Errorf("Failed loading instance %q in project %q: %w", dbInst.Name, dbInst.Project, err)
+			}
 
-		instances = append(instances, inst)
+			instances = append(instances, inst)
 
-		return nil
-	}, projectsToFetch...)
+			return nil
+		}, projectsToFetch...)
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}
