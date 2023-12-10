@@ -20,13 +20,14 @@ import (
 
 // Remote holds details for communication with a remote daemon.
 type Remote struct {
-	Addr     string `yaml:"addr"`
-	AuthType string `yaml:"auth_type,omitempty"`
-	Project  string `yaml:"project,omitempty"`
-	Protocol string `yaml:"protocol,omitempty"`
-	Public   bool   `yaml:"public"`
-	Global   bool   `yaml:"-"`
-	Static   bool   `yaml:"-"`
+	Addr      string `yaml:"addr"`
+	AuthType  string `yaml:"auth_type,omitempty"`
+	KeepAlive int    `yaml:"keepalive,omitempty"`
+	Project   string `yaml:"project,omitempty"`
+	Protocol  string `yaml:"protocol,omitempty"`
+	Public    bool   `yaml:"public"`
+	Global    bool   `yaml:"-"`
+	Static    bool   `yaml:"-"`
 }
 
 // ParseRemote splits remote and object.
