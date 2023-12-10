@@ -7,6 +7,11 @@ definitions:
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
+            description:
+                description: Certificate description
+                example: X509 certificate
+                type: string
+                x-go-name: Description
             fingerprint:
                 description: SHA256 fingerprint of the certificate
                 example: fd200419b271f1dc2a5591b693cc5774b7f234e1ff8c6b78ad703b6888fe2b69
@@ -82,6 +87,11 @@ definitions:
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
+            description:
+                description: Certificate description
+                example: X509 certificate
+                type: string
+                x-go-name: Description
             name:
                 description: Name associated with the certificate
                 example: castiana
@@ -117,6 +127,11 @@ definitions:
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
+            description:
+                description: Certificate description
+                example: X509 certificate
+                type: string
+                x-go-name: Description
             name:
                 description: Name associated with the certificate
                 example: castiana
