@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -47,6 +48,12 @@ func (c *cmdRemote) Command() *cobra.Command {
 	// List
 	remoteListCmd := cmdRemoteList{global: c.global, remote: c}
 	cmd.AddCommand(remoteListCmd.Command())
+
+	if runtime.GOOS != "windows" {
+		// Proxy
+		remoteProxyCmd := cmdRemoteProxy{global: c.global, remote: c}
+		cmd.AddCommand(remoteProxyCmd.Command())
+	}
 
 	// Rename
 	remoteRenameCmd := cmdRemoteRename{global: c.global, remote: c}
