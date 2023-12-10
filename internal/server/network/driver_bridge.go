@@ -1864,52 +1864,54 @@ func (n *bridge) bridgeNetworkExternalSubnets(bridgeProjectNetworks map[string][
 func (n *bridge) bridgedNICExternalRoutes(bridgeProjectNetworks map[string][]*api.Network) ([]externalSubnetUsage, error) {
 	externalRoutes := make([]externalSubnetUsage, 0)
 
-	err := n.state.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-		// Get the instance's effective network project name.
-		instNetworkProject := project.NetworkProjectFromRecord(&p)
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// Get the instance's effective network project name.
+			instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-		if instNetworkProject != api.ProjectDefaultName {
-			return nil // Managed bridge networks can only exist in default project.
-		}
-
-		devices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
-
-		// Iterate through each of the instance's devices, looking for bridged NICs that are linked to
-		// networks specified.
-		for devName, devConfig := range devices {
-			if devConfig["type"] != "nic" {
-				continue
+			if instNetworkProject != api.ProjectDefaultName {
+				return nil // Managed bridge networks can only exist in default project.
 			}
 
-			// Check whether the NIC device references one of the networks supplied.
-			if !NICUsesNetwork(devConfig, bridgeProjectNetworks[instNetworkProject]...) {
-				continue
-			}
+			devices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
 
-			// For bridged NICs that are connected to networks specified, check if they have any
-			// routes or external routes configured, and if so add them to the list to return.
-			for _, key := range []string{"ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external"} {
-				for _, cidr := range util.SplitNTrimSpace(devConfig[key], ",", -1, true) {
-					_, ipNet, _ := net.ParseCIDR(cidr)
-					if ipNet == nil {
-						// Skip if NIC device doesn't have a valid route.
-						continue
+			// Iterate through each of the instance's devices, looking for bridged NICs that are linked to
+			// networks specified.
+			for devName, devConfig := range devices {
+				if devConfig["type"] != "nic" {
+					continue
+				}
+
+				// Check whether the NIC device references one of the networks supplied.
+				if !NICUsesNetwork(devConfig, bridgeProjectNetworks[instNetworkProject]...) {
+					continue
+				}
+
+				// For bridged NICs that are connected to networks specified, check if they have any
+				// routes or external routes configured, and if so add them to the list to return.
+				for _, key := range []string{"ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external"} {
+					for _, cidr := range util.SplitNTrimSpace(devConfig[key], ",", -1, true) {
+						_, ipNet, _ := net.ParseCIDR(cidr)
+						if ipNet == nil {
+							// Skip if NIC device doesn't have a valid route.
+							continue
+						}
+
+						externalRoutes = append(externalRoutes, externalSubnetUsage{
+							subnet:          *ipNet,
+							networkProject:  instNetworkProject,
+							networkName:     devConfig["network"],
+							instanceProject: inst.Project,
+							instanceName:    inst.Name,
+							instanceDevice:  devName,
+							usageType:       subnetUsageInstance,
+						})
 					}
-
-					externalRoutes = append(externalRoutes, externalSubnetUsage{
-						subnet:          *ipNet,
-						networkProject:  instNetworkProject,
-						networkName:     devConfig["network"],
-						instanceProject: inst.Project,
-						instanceName:    inst.Name,
-						instanceDevice:  devName,
-						usageType:       subnetUsageInstance,
-					})
 				}
 			}
-		}
 
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, err
@@ -1968,35 +1970,37 @@ func (n *bridge) getExternalSubnetInUse() ([]externalSubnetUsage, error) {
 	externalSubnets = append(externalSubnets, bridgeNetworkExternalSubnets...)
 	externalSubnets = append(externalSubnets, bridgedNICExternalRoutes...)
 
-	// Detect if there are any conflicting proxy devices on all instances with the to be created network forward
-	err = n.state.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-		devices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Detect if there are any conflicting proxy devices on all instances with the to be created network forward
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			devices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
 
-		for devName, devConfig := range devices {
-			if devConfig["type"] != "proxy" {
-				continue
+			for devName, devConfig := range devices {
+				if devConfig["type"] != "proxy" {
+					continue
+				}
+
+				proxyListenAddr, err := ProxyParseAddr(devConfig["listen"])
+				if err != nil {
+					return err
+				}
+
+				proxySubnet, err := ParseIPToNet(proxyListenAddr.Address)
+				if err != nil {
+					continue // If proxy listen isn't a valid IP it can't conflict.
+				}
+
+				externalSubnets = append(externalSubnets, externalSubnetUsage{
+					usageType:       subnetUsageProxy,
+					subnet:          *proxySubnet,
+					instanceProject: inst.Project,
+					instanceName:    inst.Name,
+					instanceDevice:  devName,
+				})
 			}
 
-			proxyListenAddr, err := ProxyParseAddr(devConfig["listen"])
-			if err != nil {
-				return err
-			}
-
-			proxySubnet, err := ParseIPToNet(proxyListenAddr.Address)
-			if err != nil {
-				continue // If proxy listen isn't a valid IP it can't conflict.
-			}
-
-			externalSubnets = append(externalSubnets, externalSubnetUsage{
-				usageType:       subnetUsageProxy,
-				subnet:          *proxySubnet,
-				instanceProject: inst.Project,
-				instanceName:    inst.Name,
-				instanceDevice:  devName,
-			})
-		}
-
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, err
@@ -2115,42 +2119,45 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 			// If we are the first forward on this bridge, enable hairpin mode on active NIC ports.
 			if len(listenAddresses) <= 1 {
 				filter := dbCluster.InstanceFilter{Node: &n.state.ServerName}
-				err = n.state.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-					// Get the instance's effective network project name.
-					instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-					if instNetworkProject != api.ProjectDefaultName {
-						return nil // Managed bridge networks can only exist in default project.
-					}
+				err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+						// Get the instance's effective network project name.
+						instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-					devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
-
-					// Iterate through each of the instance's devices, looking for bridged NICs
-					// that are linked to this network.
-					for devName, devConfig := range devices {
-						if devConfig["type"] != "nic" {
-							continue
+						if instNetworkProject != api.ProjectDefaultName {
+							return nil // Managed bridge networks can only exist in default project.
 						}
 
-						// Check whether the NIC device references our network..
-						if !NICUsesNetwork(devConfig, &api.Network{Name: n.Name()}) {
-							continue
-						}
+						devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
 
-						hostName := inst.Config[fmt.Sprintf("volatile.%s.host_name", devName)]
-						if InterfaceExists(hostName) {
-							link := &ip.Link{Name: hostName}
-							err = link.BridgeLinkSetHairpin(true)
-							if err != nil {
-								return fmt.Errorf("Error enabling hairpin mode on bridge port %q: %w", link.Name, err)
+						// Iterate through each of the instance's devices, looking for bridged NICs
+						// that are linked to this network.
+						for devName, devConfig := range devices {
+							if devConfig["type"] != "nic" {
+								continue
 							}
 
-							n.logger.Debug("Enabled hairpin mode on NIC bridge port", logger.Ctx{"inst": inst.Name, "project": inst.Project, "device": devName, "dev": link.Name})
-						}
-					}
+							// Check whether the NIC device references our network..
+							if !NICUsesNetwork(devConfig, &api.Network{Name: n.Name()}) {
+								continue
+							}
 
-					return nil
-				}, filter)
+							hostName := inst.Config[fmt.Sprintf("volatile.%s.host_name", devName)]
+							if InterfaceExists(hostName) {
+								link := &ip.Link{Name: hostName}
+								err = link.BridgeLinkSetHairpin(true)
+								if err != nil {
+									return fmt.Errorf("Error enabling hairpin mode on bridge port %q: %w", link.Name, err)
+								}
+
+								n.logger.Debug("Enabled hairpin mode on NIC bridge port", logger.Ctx{"inst": inst.Name, "project": inst.Project, "device": devName, "dev": link.Name})
+							}
+						}
+
+						return nil
+					}, filter)
+				})
 				if err != nil {
 					return err
 				}

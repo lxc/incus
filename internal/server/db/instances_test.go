@@ -264,13 +264,16 @@ func TestInstanceList(t *testing.T) {
 	require.NoError(t, err)
 
 	var instances []db.InstanceArgs
-	err = c.InstanceList(context.TODO(), func(dbInst db.InstanceArgs, p api.Project) error {
-		dbInst.Config = db.ExpandInstanceConfig(dbInst.Config, dbInst.Profiles)
-		dbInst.Devices = db.ExpandInstanceDevices(dbInst.Devices, dbInst.Profiles)
 
-		instances = append(instances, dbInst)
+	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
+			dbInst.Config = db.ExpandInstanceConfig(dbInst.Config, dbInst.Profiles)
+			dbInst.Devices = db.ExpandInstanceDevices(dbInst.Devices, dbInst.Profiles)
 
-		return nil
+			instances = append(instances, dbInst)
+
+			return nil
+		})
 	})
 	require.NoError(t, err)
 
@@ -464,13 +467,20 @@ func TestGetInstancePool(t *testing.T) {
 				},
 			},
 		})
-		return err
+		if err != nil {
+			return err
+		}
+
+		poolName, err := tx.GetInstancePool(ctx, "default", "c1")
+		if err != nil {
+			return err
+		}
+
+		assert.Equal(t, "default", poolName)
+
+		return nil
 	})
 	require.NoError(t, err)
-
-	poolName, err := dbCluster.GetInstancePool("default", "c1")
-	require.NoError(t, err)
-	assert.Equal(t, "default", poolName)
 }
 
 // All containers on a node are loaded in bulk.

@@ -49,79 +49,81 @@ func patchMissingSnapshotRecords(b *backend) error {
 	// Get instances on this local server (as the DB helper functions return volumes on local server), also
 	// avoids running the same queries on every cluster member for instances on shared storage.
 	filter := cluster.InstanceFilter{Node: &localNode}
-	err = b.state.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-		// Check we can convert the instance to the volume type needed.
-		volType, err := InstanceTypeToVolumeType(inst.Type)
-		if err != nil {
-			return err
-		}
-
-		contentType := drivers.ContentTypeFS
-		if inst.Type == instancetype.VM {
-			contentType = drivers.ContentTypeBlock
-		}
-
-		// Get all the instance snapshot DB records.
-		var instPoolName string
-		var snapshots []cluster.Instance
-		err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			instPoolName, err = tx.GetInstancePool(ctx, p.Name, inst.Name)
-			if err != nil {
-				if api.StatusErrorCheck(err, http.StatusNotFound) {
-					// If the instance cannot be associated to a pool its got bigger problems
-					// outside the scope of this patch. Will skip due to empty instPoolName.
-					return nil
-				}
-
-				return fmt.Errorf("Failed finding pool for instance %q in project %q: %w", inst.Name, p.Name, err)
-			}
-
-			snapshots, err = tx.GetInstanceSnapshotsWithName(ctx, p.Name, inst.Name)
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// Check we can convert the instance to the volume type needed.
+			volType, err := InstanceTypeToVolumeType(inst.Type)
 			if err != nil {
 				return err
 			}
 
-			return nil
-		})
-		if err != nil {
-			return err
-		}
-
-		if instPoolName != b.Name() {
-			return nil // This instance isn't hosted on this storage pool, skip.
-		}
-
-		dbVol, err := VolumeDBGet(b, p.Name, inst.Name, volType)
-		if err != nil {
-			return fmt.Errorf("Failed loading storage volume record %q: %w", inst.Name, err)
-		}
-
-		// Get all the instance volume snapshot DB records.
-		dbVolSnaps, err := VolumeDBSnapshotsGet(b, p.Name, inst.Name, volType)
-		if err != nil {
-			return fmt.Errorf("Failed loading storage volume snapshot records %q: %w", inst.Name, err)
-		}
-
-		for i := range snapshots {
-			foundVolumeSnapshot := false
-			for _, dbVolSnap := range dbVolSnaps {
-				if dbVolSnap.Name == snapshots[i].Name {
-					foundVolumeSnapshot = true
-					break
-				}
+			contentType := drivers.ContentTypeFS
+			if inst.Type == instancetype.VM {
+				contentType = drivers.ContentTypeBlock
 			}
 
-			if !foundVolumeSnapshot {
-				b.logger.Info("Creating missing volume snapshot record", logger.Ctx{"project": snapshots[i].Project, "instance": snapshots[i].Name})
-				err = VolumeDBCreate(b, snapshots[i].Project, snapshots[i].Name, "Auto repaired", volType, true, dbVol.Config, snapshots[i].CreationDate, time.Time{}, contentType, false, true)
+			// Get all the instance snapshot DB records.
+			var instPoolName string
+			var snapshots []cluster.Instance
+			err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				instPoolName, err = tx.GetInstancePool(ctx, p.Name, inst.Name)
+				if err != nil {
+					if api.StatusErrorCheck(err, http.StatusNotFound) {
+						// If the instance cannot be associated to a pool its got bigger problems
+						// outside the scope of this patch. Will skip due to empty instPoolName.
+						return nil
+					}
+
+					return fmt.Errorf("Failed finding pool for instance %q in project %q: %w", inst.Name, p.Name, err)
+				}
+
+				snapshots, err = tx.GetInstanceSnapshotsWithName(ctx, p.Name, inst.Name)
 				if err != nil {
 					return err
 				}
-			}
-		}
 
-		return nil
-	}, filter)
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			if instPoolName != b.Name() {
+				return nil // This instance isn't hosted on this storage pool, skip.
+			}
+
+			dbVol, err := VolumeDBGet(b, p.Name, inst.Name, volType)
+			if err != nil {
+				return fmt.Errorf("Failed loading storage volume record %q: %w", inst.Name, err)
+			}
+
+			// Get all the instance volume snapshot DB records.
+			dbVolSnaps, err := VolumeDBSnapshotsGet(b, p.Name, inst.Name, volType)
+			if err != nil {
+				return fmt.Errorf("Failed loading storage volume snapshot records %q: %w", inst.Name, err)
+			}
+
+			for i := range snapshots {
+				foundVolumeSnapshot := false
+				for _, dbVolSnap := range dbVolSnaps {
+					if dbVolSnap.Name == snapshots[i].Name {
+						foundVolumeSnapshot = true
+						break
+					}
+				}
+
+				if !foundVolumeSnapshot {
+					b.logger.Info("Creating missing volume snapshot record", logger.Ctx{"project": snapshots[i].Project, "instance": snapshots[i].Name})
+					err = VolumeDBCreate(b, snapshots[i].Project, snapshots[i].Name, "Auto repaired", volType, true, dbVol.Config, snapshots[i].CreationDate, time.Time{}, contentType, false, true)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			return nil
+		}, filter)
+	})
 	if err != nil {
 		return err
 	}

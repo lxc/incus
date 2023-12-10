@@ -4302,47 +4302,49 @@ func (n *ovn) ovnNetworkExternalSubnets(ovnProjectNetworksWithOurUplink map[stri
 func (n *ovn) ovnNICExternalRoutes(ovnProjectNetworksWithOurUplink map[string][]*api.Network) ([]externalSubnetUsage, error) {
 	externalRoutes := make([]externalSubnetUsage, 0)
 
-	err := n.state.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-		// Get the instance's effective network project name.
-		instNetworkProject := project.NetworkProjectFromRecord(&p)
-		devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// Get the instance's effective network project name.
+			instNetworkProject := project.NetworkProjectFromRecord(&p)
+			devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
 
-		// Iterate through each of the instance's devices, looking for OVN NICs that are linked to networks
-		// that use our uplink.
-		for devName, devConfig := range devices {
-			if devConfig["type"] != "nic" {
-				continue
-			}
+			// Iterate through each of the instance's devices, looking for OVN NICs that are linked to networks
+			// that use our uplink.
+			for devName, devConfig := range devices {
+				if devConfig["type"] != "nic" {
+					continue
+				}
 
-			// Check whether the NIC device references one of the OVN networks supplied.
-			if !NICUsesNetwork(devConfig, ovnProjectNetworksWithOurUplink[instNetworkProject]...) {
-				continue
-			}
+				// Check whether the NIC device references one of the OVN networks supplied.
+				if !NICUsesNetwork(devConfig, ovnProjectNetworksWithOurUplink[instNetworkProject]...) {
+					continue
+				}
 
-			// For OVN NICs that are connected to networks that use the same uplink as we do, check
-			// if they have any external routes configured, and if so add them to the list to return.
-			for _, key := range []string{"ipv4.routes.external", "ipv6.routes.external"} {
-				for _, cidr := range util.SplitNTrimSpace(devConfig[key], ",", -1, true) {
-					_, ipNet, _ := net.ParseCIDR(cidr)
-					if ipNet == nil {
-						// Sip if NIC device doesn't have a valid route.
-						continue
+				// For OVN NICs that are connected to networks that use the same uplink as we do, check
+				// if they have any external routes configured, and if so add them to the list to return.
+				for _, key := range []string{"ipv4.routes.external", "ipv6.routes.external"} {
+					for _, cidr := range util.SplitNTrimSpace(devConfig[key], ",", -1, true) {
+						_, ipNet, _ := net.ParseCIDR(cidr)
+						if ipNet == nil {
+							// Sip if NIC device doesn't have a valid route.
+							continue
+						}
+
+						externalRoutes = append(externalRoutes, externalSubnetUsage{
+							subnet:          *ipNet,
+							networkProject:  instNetworkProject,
+							networkName:     devConfig["network"],
+							instanceProject: inst.Project,
+							instanceName:    inst.Name,
+							instanceDevice:  devName,
+							usageType:       subnetUsageInstance,
+						})
 					}
-
-					externalRoutes = append(externalRoutes, externalSubnetUsage{
-						subnet:          *ipNet,
-						networkProject:  instNetworkProject,
-						networkName:     devConfig["network"],
-						instanceProject: inst.Project,
-						instanceName:    inst.Name,
-						instanceDevice:  devName,
-						usageType:       subnetUsageInstance,
-					})
 				}
 			}
-		}
 
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, err
@@ -4420,54 +4422,56 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 
 			// Find all instance NICs that use this network, and re-add the logical OVN instance port.
 			// This will restore the l2proxy DNAT_AND_SNAT rules.
-			err = n.state.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-				// Get the instance's effective network project name.
-				instNetworkProject := project.NetworkProjectFromRecord(&p)
+			err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+					// Get the instance's effective network project name.
+					instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-				// Skip instances who's effective network project doesn't match this network's
-				// project.
-				if n.Project() != instNetworkProject {
+					// Skip instances who's effective network project doesn't match this network's
+					// project.
+					if n.Project() != instNetworkProject {
+						return nil
+					}
+
+					devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
+
+					// Iterate through each of the instance's devices, looking for NICs that are linked
+					// this network.
+					for devName, devConfig := range devices {
+						if devConfig["type"] != "nic" || n.Name() != devConfig["network"] {
+							continue
+						}
+
+						// Check if instance port exists, if not then we can skip.
+						instanceUUID := inst.Config["volatile.uuid"]
+						instancePortName := n.getInstanceDevicePortName(instanceUUID, devName)
+						_, found := activePorts[instancePortName]
+						if !found {
+							continue // No need to update a port that isn't started yet.
+						}
+
+						if devConfig["hwaddr"] == "" {
+							// Load volatile MAC if no static MAC specified.
+							devConfig["hwaddr"] = inst.Config[fmt.Sprintf("volatile.%s.hwaddr", devName)]
+						}
+
+						// Re-add logical switch port to apply the l2proxy DNAT_AND_SNAT rules.
+						n.logger.Debug("Re-adding instance OVN NIC port to apply ingress mode changes", logger.Ctx{"project": inst.Project, "instance": inst.Name, "device": devName})
+						_, _, err = n.InstanceDevicePortStart(&OVNInstanceNICSetupOpts{
+							InstanceUUID: instanceUUID,
+							DNSName:      inst.Name,
+							DeviceName:   devName,
+							DeviceConfig: devConfig,
+							UplinkConfig: uplinkConfig,
+						}, nil)
+						if err != nil {
+							n.logger.Error("Failed re-adding instance OVN NIC port", logger.Ctx{"project": inst.Project, "instance": inst.Name, "err": err})
+							continue
+						}
+					}
+
 					return nil
-				}
-
-				devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
-
-				// Iterate through each of the instance's devices, looking for NICs that are linked
-				// this network.
-				for devName, devConfig := range devices {
-					if devConfig["type"] != "nic" || n.Name() != devConfig["network"] {
-						continue
-					}
-
-					// Check if instance port exists, if not then we can skip.
-					instanceUUID := inst.Config["volatile.uuid"]
-					instancePortName := n.getInstanceDevicePortName(instanceUUID, devName)
-					_, found := activePorts[instancePortName]
-					if !found {
-						continue // No need to update a port that isn't started yet.
-					}
-
-					if devConfig["hwaddr"] == "" {
-						// Load volatile MAC if no static MAC specified.
-						devConfig["hwaddr"] = inst.Config[fmt.Sprintf("volatile.%s.hwaddr", devName)]
-					}
-
-					// Re-add logical switch port to apply the l2proxy DNAT_AND_SNAT rules.
-					n.logger.Debug("Re-adding instance OVN NIC port to apply ingress mode changes", logger.Ctx{"project": inst.Project, "instance": inst.Name, "device": devName})
-					_, _, err = n.InstanceDevicePortStart(&OVNInstanceNICSetupOpts{
-						InstanceUUID: instanceUUID,
-						DNSName:      inst.Name,
-						DeviceName:   devName,
-						DeviceConfig: devConfig,
-						UplinkConfig: uplinkConfig,
-					}, nil)
-					if err != nil {
-						n.logger.Error("Failed re-adding instance OVN NIC port", logger.Ctx{"project": inst.Project, "instance": inst.Name, "err": err})
-						continue
-					}
-				}
-
-				return nil
+				})
 			})
 			if err != nil {
 				return fmt.Errorf("Failed adding instance NIC ingress mode l2proxy rules: %w", err)

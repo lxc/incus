@@ -846,59 +846,61 @@ func VolumeUsedByInstanceDevices(s *state.State, poolName string, projectName st
 		return err
 	}
 
-	return s.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-		// If the volume has a specific cluster member which is different than the instance then skip as
-		// instance cannot be using this volume.
-		if vol.Location != "" && inst.Node != vol.Location {
-			return nil
-		}
-
-		instStorageProject := project.StorageVolumeProjectFromRecord(&p, volumeType)
-		if err != nil {
-			return err
-		}
-
-		// Check instance's storage project is the same as the volume's project.
-		// If not then the volume names mentioned in the instance's config cannot be referring to volumes
-		// in the volume's project we are trying to match, and this instance cannot possibly be using it.
-		if projectName != instStorageProject {
-			return nil
-		}
-
-		// Use local devices for usage check by if expandDevices is false (but don't modify instance).
-		devices := inst.Devices
-
-		// Expand devices for usage check if expandDevices is true.
-		if expandDevices {
-			devices = db.ExpandInstanceDevices(devices.Clone(), inst.Profiles)
-		}
-
-		var usedByDevices []string
-
-		// Iterate through each of the instance's devices, looking for disks in the same pool as volume.
-		// Then try and match the volume name against the instance device's "source" property.
-		for devName, dev := range devices {
-			if dev["type"] != "disk" {
-				continue
+	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// If the volume has a specific cluster member which is different than the instance then skip as
+			// instance cannot be using this volume.
+			if vol.Location != "" && inst.Node != vol.Location {
+				return nil
 			}
 
-			if dev["pool"] != poolName {
-				continue
-			}
-
-			if dev["source"] == vol.Name {
-				usedByDevices = append(usedByDevices, devName)
-			}
-		}
-
-		if len(usedByDevices) > 0 {
-			err = instanceFunc(inst, p, usedByDevices)
+			instStorageProject := project.StorageVolumeProjectFromRecord(&p, volumeType)
 			if err != nil {
 				return err
 			}
-		}
 
-		return nil
+			// Check instance's storage project is the same as the volume's project.
+			// If not then the volume names mentioned in the instance's config cannot be referring to volumes
+			// in the volume's project we are trying to match, and this instance cannot possibly be using it.
+			if projectName != instStorageProject {
+				return nil
+			}
+
+			// Use local devices for usage check by if expandDevices is false (but don't modify instance).
+			devices := inst.Devices
+
+			// Expand devices for usage check if expandDevices is true.
+			if expandDevices {
+				devices = db.ExpandInstanceDevices(devices.Clone(), inst.Profiles)
+			}
+
+			var usedByDevices []string
+
+			// Iterate through each of the instance's devices, looking for disks in the same pool as volume.
+			// Then try and match the volume name against the instance device's "source" property.
+			for devName, dev := range devices {
+				if dev["type"] != "disk" {
+					continue
+				}
+
+				if dev["pool"] != poolName {
+					continue
+				}
+
+				if dev["source"] == vol.Name {
+					usedByDevices = append(usedByDevices, devName)
+				}
+			}
+
+			if len(usedByDevices) > 0 {
+				err = instanceFunc(inst, p, usedByDevices)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
 	})
 }
 

@@ -1522,8 +1522,10 @@ func (d *Daemon) init() error {
 		updateCertificateCache(d)
 	}
 
-	// Remove volatile.last_state.ready key as we don't know if the instances are ready.
-	err = d.db.Cluster.DeleteReadyStateFromLocalInstances()
+	err = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Remove volatile.last_state.ready key as we don't know if the instances are ready.
+		return tx.DeleteReadyStateFromLocalInstances(ctx)
+	})
 	if err != nil {
 		return fmt.Errorf("Failed deleting volatile.last_state.ready: %w", err)
 	}

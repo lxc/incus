@@ -451,16 +451,18 @@ func instanceLoadNodeProjectAll(ctx context.Context, s *state.State, project str
 		filter.Node = &s.ServerName
 	}
 
-	err = s.DB.Cluster.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
-		inst, err := instance.Load(s, dbInst, p)
-		if err != nil {
-			return fmt.Errorf("Failed loading instance %q in project %q: %w", dbInst.Name, dbInst.Project, err)
-		}
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
+			inst, err := instance.Load(s, dbInst, p)
+			if err != nil {
+				return fmt.Errorf("Failed loading instance %q in project %q: %w", dbInst.Name, dbInst.Project, err)
+			}
 
-		instances = append(instances, inst)
+			instances = append(instances, inst)
 
-		return nil
-	}, filter)
+			return nil
+		}, filter)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -606,38 +608,41 @@ func pruneExpiredAndAutoCreateInstanceSnapshotsTask(d *Daemon) (task.Func, task.
 
 		// Get list of instances on the local member that are due to have snaphots creating.
 		filter := dbCluster.InstanceFilter{Node: &s.ServerName}
-		err = s.DB.Cluster.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
-			err = project.AllowSnapshotCreation(&p)
-			if err != nil {
+
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
+				err = project.AllowSnapshotCreation(&p)
+				if err != nil {
+					return nil
+				}
+
+				inst, err := instance.Load(s, dbInst, p)
+				if err != nil {
+					return fmt.Errorf("Failed loading instance %q (project %q) for snapshot task: %w", dbInst.Name, dbInst.Project, err)
+				}
+
+				// Check if instance has snapshot schedule enabled.
+				schedule, ok := inst.ExpandedConfig()["snapshots.schedule"]
+				if !ok || schedule == "" {
+					return nil
+				}
+
+				// Check if snapshot is scheduled.
+				if !snapshotIsScheduledNow(schedule, int64(inst.ID())) {
+					return nil
+				}
+
+				// If snapshot should only be taken if instance is running, check if running.
+				if util.IsFalseOrEmpty(inst.ExpandedConfig()["snapshots.schedule.stopped"]) && !inst.IsRunning() {
+					return nil
+				}
+
+				logger.Debug("Scheduling auto instance snapshot", logger.Ctx{"instance": inst.Name(), "project": inst.Project().Name})
+				instances = append(instances, inst)
+
 				return nil
-			}
-
-			inst, err := instance.Load(s, dbInst, p)
-			if err != nil {
-				return fmt.Errorf("Failed loading instance %q (project %q) for snapshot task: %w", dbInst.Name, dbInst.Project, err)
-			}
-
-			// Check if instance has snapshot schedule enabled.
-			schedule, ok := inst.ExpandedConfig()["snapshots.schedule"]
-			if !ok || schedule == "" {
-				return nil
-			}
-
-			// Check if snapshot is scheduled.
-			if !snapshotIsScheduledNow(schedule, int64(inst.ID())) {
-				return nil
-			}
-
-			// If snapshot should only be taken if instance is running, check if running.
-			if util.IsFalseOrEmpty(inst.ExpandedConfig()["snapshots.schedule.stopped"]) && !inst.IsRunning() {
-				return nil
-			}
-
-			logger.Debug("Scheduling auto instance snapshot", logger.Ctx{"instance": inst.Name(), "project": inst.Project().Name})
-			instances = append(instances, inst)
-
-			return nil
-		}, filter)
+			}, filter)
+		})
 		if err != nil {
 			logger.Error("Failed getting instance snapshot schedule info", logger.Ctx{"err": err})
 			return

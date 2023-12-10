@@ -221,7 +221,7 @@ var ErrInstanceListStop = fmt.Errorf("search stopped")
 
 // InstanceList loads all instances across all projects and for each instance runs the instanceFunc passing in the
 // instance and it's project and profiles. Accepts optional filter arguments to specify a subset of instances.
-func (c *Cluster) InstanceList(ctx context.Context, instanceFunc func(inst InstanceArgs, project api.Project) error, filters ...cluster.InstanceFilter) error {
+func (c *ClusterTx) InstanceList(ctx context.Context, instanceFunc func(inst InstanceArgs, project api.Project) error, filters ...cluster.InstanceFilter) error {
 	projectsByName := make(map[string]*api.Project)
 	var instances map[int]InstanceArgs
 
@@ -238,52 +238,45 @@ func (c *Cluster) InstanceList(ctx context.Context, instanceFunc func(inst Insta
 	}
 
 	// Retrieve required info from the database in single transaction for performance.
-	err := c.Transaction(ctx, func(ctx context.Context, tx *ClusterTx) error {
-		// Get all projects.
-		projects, err := cluster.GetProjects(ctx, tx.tx)
-		if err != nil {
-			return fmt.Errorf("Failed loading projects: %w", err)
+	// Get all projects.
+	projects, err := cluster.GetProjects(ctx, c.tx)
+	if err != nil {
+		return fmt.Errorf("Failed loading projects: %w", err)
+	}
+
+	// Get all instances using supplied filter.
+	dbInstances, err := cluster.GetInstances(ctx, c.tx, validFilters...)
+	if err != nil {
+		return fmt.Errorf("Failed loading instances: %w", err)
+	}
+
+	// Fill instances with config, devices and profiles.
+	instances, err = c.InstancesToInstanceArgs(ctx, true, dbInstances...)
+	if err != nil {
+		return err
+	}
+
+	// Record which projects are referenced by at least one instance in the list.
+	for _, instance := range instances {
+		_, ok := projectsByName[instance.Project]
+		if !ok {
+			projectsByName[instance.Project] = nil
+		}
+	}
+
+	// Populate projectsByName map entry for referenced projects.
+	// This way we only call ToAPI() on the projects actually referenced by the instances in
+	// the list, which can reduce the number of queries run.
+	for _, project := range projects {
+		_, ok := projectsByName[project.Name]
+		if !ok {
+			continue
 		}
 
-		// Get all instances using supplied filter.
-		dbInstances, err := cluster.GetInstances(ctx, tx.tx, validFilters...)
-		if err != nil {
-			return fmt.Errorf("Failed loading instances: %w", err)
-		}
-
-		// Fill instances with config, devices and profiles.
-		instances, err = tx.InstancesToInstanceArgs(ctx, true, dbInstances...)
+		projectsByName[project.Name], err = project.ToAPI(ctx, c.tx)
 		if err != nil {
 			return err
 		}
-
-		// Record which projects are referenced by at least one instance in the list.
-		for _, instance := range instances {
-			_, ok := projectsByName[instance.Project]
-			if !ok {
-				projectsByName[instance.Project] = nil
-			}
-		}
-
-		// Populate projectsByName map entry for referenced projects.
-		// This way we only call ToAPI() on the projects actually referenced by the instances in
-		// the list, which can reduce the number of queries run.
-		for _, project := range projects {
-			_, ok := projectsByName[project.Name]
-			if !ok {
-				continue
-			}
-
-			projectsByName[project.Name], err = project.ToAPI(ctx, tx.tx)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	// Call the instanceFunc provided for each instance after the transaction has ended, as we don't know if
@@ -706,8 +699,8 @@ func (c *ClusterTx) GetLocalInstancesInProject(ctx context.Context, filter clust
 }
 
 // CreateInstanceConfig inserts a new config for the container with the given ID.
-func (c *ClusterTx) CreateInstanceConfig(id int, config map[string]string) error {
-	return CreateInstanceConfig(c.tx, id, config)
+func (c *ClusterTx) CreateInstanceConfig(ctx context.Context, id int, config map[string]string) error {
+	return CreateInstanceConfig(ctx, c.tx, id, config)
 }
 
 // UpdateInstanceConfig inserts/updates/deletes the provided keys.
@@ -768,9 +761,9 @@ func (c *ClusterTx) configUpdate(id int, values map[string]string, insertSQL, de
 
 // DeleteInstanceConfigKey removes the given key from the config of the instance
 // with the given ID.
-func (c *ClusterTx) DeleteInstanceConfigKey(id int64, key string) error {
+func (c *ClusterTx) DeleteInstanceConfigKey(ctx context.Context, id int64, key string) error {
 	q := "DELETE FROM instances_config WHERE key=? AND instance_id=?"
-	_, err := c.tx.Exec(q, key, id)
+	_, err := c.tx.ExecContext(ctx, q, key, id)
 	return err
 }
 
@@ -892,22 +885,18 @@ SELECT storage_pools.name FROM storage_pools
 }
 
 // DeleteInstance removes the instance with the given name from the database.
-func (c *Cluster) DeleteInstance(project, name string) error {
+func (c *ClusterTx) DeleteInstance(ctx context.Context, project, name string) error {
 	if strings.Contains(name, internalInstance.SnapshotDelimiter) {
 		parts := strings.SplitN(name, internalInstance.SnapshotDelimiter, 2)
-		return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-			return cluster.DeleteInstanceSnapshot(ctx, tx.tx, project, parts[0], parts[1])
-		})
+		return cluster.DeleteInstanceSnapshot(ctx, c.tx, project, parts[0], parts[1])
 	}
 
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return cluster.DeleteInstance(ctx, tx.tx, project, name)
-	})
+	return cluster.DeleteInstance(ctx, c.tx, project, name)
 }
 
 // GetInstanceProjectAndName returns the project and the name of the instance
 // with the given ID.
-func (c *Cluster) GetInstanceProjectAndName(id int) (string, string, error) {
+func (c *ClusterTx) GetInstanceProjectAndName(ctx context.Context, id int) (string, string, error) {
 	var project string
 	var name string
 	q := `
@@ -916,10 +905,7 @@ SELECT projects.name, instances.name
   JOIN projects ON projects.id = instances.project_id
 WHERE instances.id=?
 `
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return tx.tx.QueryRowContext(ctx, q, id).Scan(&project, &name)
-	})
-
+	err := c.tx.QueryRowContext(ctx, q, id).Scan(&project, &name)
 	if err == sql.ErrNoRows {
 		return "", "", api.StatusErrorf(http.StatusNotFound, "Instance not found")
 	}
@@ -928,24 +914,19 @@ WHERE instances.id=?
 }
 
 // GetInstanceID returns the ID of the instance with the given name.
-func (c *Cluster) GetInstanceID(project, name string) (int, error) {
-	var id int64
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		var err error
-		id, err = cluster.GetInstanceID(ctx, tx.tx, project, name)
-		return err
-	})
+func (c *ClusterTx) GetInstanceID(ctx context.Context, project, name string) (int, error) {
+	id, err := cluster.GetInstanceID(ctx, c.tx, project, name)
+
 	return int(id), err
 }
 
 // GetInstanceConfig returns the value of the given key in the configuration
 // of the instance with the given ID.
-func (c *Cluster) GetInstanceConfig(id int, key string) (string, error) {
+func (c *ClusterTx) GetInstanceConfig(ctx context.Context, id int, key string) (string, error) {
 	q := "SELECT value FROM instances_config WHERE instance_id=? AND key=?"
 	value := ""
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return tx.tx.QueryRowContext(ctx, q, id, key).Scan(&value)
-	})
+
+	err := c.tx.QueryRowContext(ctx, q, id, key).Scan(&value)
 	if err == sql.ErrNoRows {
 		return "", api.StatusErrorf(http.StatusNotFound, "Instance config not found")
 	}
@@ -953,42 +934,38 @@ func (c *Cluster) GetInstanceConfig(id int, key string) (string, error) {
 	return value, err
 }
 
-// DeleteInstanceConfigKey removes the given key from the config of the instance
-// with the given ID.
-func (c *Cluster) DeleteInstanceConfigKey(id int, key string) error {
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return tx.DeleteInstanceConfigKey(int64(id), key)
-	})
-}
-
 // UpdateInstanceStatefulFlag toggles the stateful flag of the instance with
 // the given ID.
-func (c *Cluster) UpdateInstanceStatefulFlag(id int, stateful bool) error {
+func (c *ClusterTx) UpdateInstanceStatefulFlag(ctx context.Context, id int, stateful bool) error {
 	statefulInt := 0
 	if stateful {
 		statefulInt = 1
 	}
 
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		_, err := tx.tx.Exec("UPDATE instances SET stateful=? WHERE id=?", statefulInt, id)
-		return err
-	})
+	_, err := c.tx.ExecContext(ctx, "UPDATE instances SET stateful=? WHERE id=?", statefulInt, id)
+	if err != nil {
+		return fmt.Errorf("Failed updating instance stateful flag: %w", err)
+	}
+
+	return nil
 }
 
 // UpdateInstanceSnapshotCreationDate updates the creation_date field of the instance snapshot with ID.
-func (c *Cluster) UpdateInstanceSnapshotCreationDate(instanceID int, date time.Time) error {
+func (c *ClusterTx) UpdateInstanceSnapshotCreationDate(ctx context.Context, instanceID int, date time.Time) error {
 	stmt := `UPDATE instances_snapshots SET creation_date=? WHERE id=?`
 
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		_, err := tx.tx.ExecContext(ctx, stmt, date, instanceID)
-		return err
-	})
+	_, err := c.tx.ExecContext(ctx, stmt, date, instanceID)
+	if err != nil {
+		return fmt.Errorf("Failed updating instance snapshot creation date: %w", err)
+	}
+
+	return nil
 }
 
 // GetInstanceSnapshotsNames returns the names of all snapshots of the instance
 // in the given project with the given name.
 // Returns snapshots slice ordered by when they were created, oldest first.
-func (c *Cluster) GetInstanceSnapshotsNames(project, name string) ([]string, error) {
+func (c *ClusterTx) GetInstanceSnapshotsNames(ctx context.Context, project, name string) ([]string, error) {
 	result := []string{}
 
 	q := `
@@ -1002,13 +979,7 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 	inargs := []any{project, name}
 	outfmt := []any{name}
 
-	var dbResults [][]any
-
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		var err error
-		dbResults, err = queryScan(ctx, tx, q, inargs, outfmt)
-		return err
-	})
+	dbResults, err := queryScan(ctx, c, q, inargs, outfmt)
 	if err != nil {
 		return result, err
 	}
@@ -1022,7 +993,7 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 
 // GetNextInstanceSnapshotIndex returns the index that the next snapshot of the
 // instance with the given name and pattern should have.
-func (c *Cluster) GetNextInstanceSnapshotIndex(project string, name string, pattern string) int {
+func (c *ClusterTx) GetNextInstanceSnapshotIndex(ctx context.Context, project string, name string, pattern string) int {
 	q := `
 SELECT instances_snapshots.name
   FROM instances_snapshots
@@ -1035,13 +1006,7 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 	inargs := []any{project, name}
 	outfmt := []any{numstr}
 
-	var results [][]any
-
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		var err error
-		results, err = queryScan(ctx, tx, q, inargs, outfmt)
-		return err
-	})
+	results, err := queryScan(ctx, c, q, inargs, outfmt)
 	if err != nil {
 		return 0
 	}
@@ -1066,26 +1031,12 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 	return max
 }
 
-// GetInstancePool returns the storage pool of a given instance.
-//
-// This is a non-transactional variant of ClusterTx.GetInstancePool().
-func (c *Cluster) GetInstancePool(project, instanceName string) (string, error) {
-	var poolName string
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		var err error
-		poolName, err = tx.GetInstancePool(ctx, project, instanceName)
-		return err
-	})
-	return poolName, err
-}
-
 // DeleteReadyStateFromLocalInstances deletes the volatile.last_state.ready config key
 // from all local instances.
-func (c *Cluster) DeleteReadyStateFromLocalInstances() error {
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		nodeID := tx.GetNodeID()
+func (c *ClusterTx) DeleteReadyStateFromLocalInstances(ctx context.Context) error {
+	nodeID := c.GetNodeID()
 
-		_, err := tx.Tx().Exec(`
+	_, err := c.tx.ExecContext(ctx, `
 DELETE FROM instances_config
 WHERE instances_config.id IN (
 	SELECT instances_config.id FROM instances_config
@@ -1093,22 +1044,22 @@ WHERE instances_config.id IN (
 	JOIN nodes ON instances.node_id=nodes.id
 	WHERE key="volatile.last_state.ready" AND nodes.id=?
 )`, nodeID)
+	if err != nil {
+		return fmt.Errorf("Failed deleting ready state from local instances: %w", err)
+	}
 
-		return err
-	})
-
-	return err
+	return nil
 }
 
 // CreateInstanceConfig inserts a new config for the instance with the given ID.
-func CreateInstanceConfig(tx *sql.Tx, id int, config map[string]string) error {
+func CreateInstanceConfig(ctx context.Context, tx *sql.Tx, id int, config map[string]string) error {
 	sql := "INSERT INTO instances_config (instance_id, key, value) values (?, ?, ?)"
 	for k, v := range config {
 		if v == "" {
 			continue
 		}
 
-		_, err := tx.Exec(sql, id, k, v)
+		_, err := tx.ExecContext(ctx, sql, id, k, v)
 		if err != nil {
 			return fmt.Errorf("Error adding configuration item %q = %q to instance %d: %w", k, v, id, err)
 		}
