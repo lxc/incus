@@ -20,20 +20,20 @@ import (
 var _ = api.ServerEnvironment{}
 
 var certificateObjects = RegisterStmt(`
-SELECT certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted
+SELECT certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted, certificates.description
   FROM certificates
   ORDER BY certificates.fingerprint
 `)
 
 var certificateObjectsByID = RegisterStmt(`
-SELECT certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted
+SELECT certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted, certificates.description
   FROM certificates
   WHERE ( certificates.id = ? )
   ORDER BY certificates.fingerprint
 `)
 
 var certificateObjectsByFingerprint = RegisterStmt(`
-SELECT certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted
+SELECT certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted, certificates.description
   FROM certificates
   WHERE ( certificates.fingerprint = ? )
   ORDER BY certificates.fingerprint
@@ -45,8 +45,8 @@ SELECT certificates.id FROM certificates
 `)
 
 var certificateCreate = RegisterStmt(`
-INSERT INTO certificates (fingerprint, type, name, certificate, restricted)
-  VALUES (?, ?, ?, ?, ?)
+INSERT INTO certificates (fingerprint, type, name, certificate, restricted, description)
+  VALUES (?, ?, ?, ?, ?, ?)
 `)
 
 var certificateDeleteByFingerprint = RegisterStmt(`
@@ -59,14 +59,14 @@ DELETE FROM certificates WHERE name = ? AND type = ?
 
 var certificateUpdate = RegisterStmt(`
 UPDATE certificates
-  SET fingerprint = ?, type = ?, name = ?, certificate = ?, restricted = ?
+  SET fingerprint = ?, type = ?, name = ?, certificate = ?, restricted = ?, description = ?
  WHERE id = ?
 `)
 
 // certificateColumns returns a string of column names to be used with a SELECT statement for the entity.
 // Use this function when building statements to retrieve database entries matching the Certificate entity.
 func certificateColumns() string {
-	return "certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted"
+	return "certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted, certificates.description"
 }
 
 // getCertificates can be used to run handwritten sql.Stmts to return a slice of objects.
@@ -75,7 +75,7 @@ func getCertificates(ctx context.Context, stmt *sql.Stmt, args ...any) ([]Certif
 
 	dest := func(scan func(dest ...any) error) error {
 		c := Certificate{}
-		err := scan(&c.ID, &c.Fingerprint, &c.Type, &c.Name, &c.Certificate, &c.Restricted)
+		err := scan(&c.ID, &c.Fingerprint, &c.Type, &c.Name, &c.Certificate, &c.Restricted, &c.Description)
 		if err != nil {
 			return err
 		}
@@ -99,7 +99,7 @@ func getCertificatesRaw(ctx context.Context, tx *sql.Tx, sql string, args ...any
 
 	dest := func(scan func(dest ...any) error) error {
 		c := Certificate{}
-		err := scan(&c.ID, &c.Fingerprint, &c.Type, &c.Name, &c.Certificate, &c.Restricted)
+		err := scan(&c.ID, &c.Fingerprint, &c.Type, &c.Name, &c.Certificate, &c.Restricted, &c.Description)
 		if err != nil {
 			return err
 		}
@@ -279,7 +279,7 @@ func CreateCertificate(ctx context.Context, tx *sql.Tx, object Certificate) (int
 		return -1, api.StatusErrorf(http.StatusConflict, "This \"certificates\" entry already exists")
 	}
 
-	args := make([]any, 5)
+	args := make([]any, 6)
 
 	// Populate the statement arguments.
 	args[0] = object.Fingerprint
@@ -287,6 +287,7 @@ func CreateCertificate(ctx context.Context, tx *sql.Tx, object Certificate) (int
 	args[2] = object.Name
 	args[3] = object.Certificate
 	args[4] = object.Restricted
+	args[5] = object.Description
 
 	// Prepared statement to use.
 	stmt, err := Stmt(tx, certificateCreate)
@@ -369,7 +370,7 @@ func UpdateCertificate(ctx context.Context, tx *sql.Tx, fingerprint string, obje
 		return fmt.Errorf("Failed to get \"certificateUpdate\" prepared statement: %w", err)
 	}
 
-	result, err := stmt.Exec(object.Fingerprint, object.Type, object.Name, object.Certificate, object.Restricted, id)
+	result, err := stmt.Exec(object.Fingerprint, object.Type, object.Name, object.Certificate, object.Restricted, object.Description, id)
 	if err != nil {
 		return fmt.Errorf("Update \"certificates\" entry failed: %w", err)
 	}

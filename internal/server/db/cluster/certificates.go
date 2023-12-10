@@ -44,6 +44,7 @@ type Certificate struct {
 	Name        string
 	Certificate string
 	Restricted  bool
+	Description string
 }
 
 // CertificateFilter specifies potential query parameter fields.
@@ -77,6 +78,7 @@ func (cert *Certificate) ToAPI(ctx context.Context, tx *sql.Tx) (*api.Certificat
 	resp.Name = cert.Name
 	resp.Restricted = cert.Restricted
 	resp.Type = cert.ToAPIType()
+	resp.Description = cert.Description
 
 	projects, err := GetCertificateProjects(ctx, tx, cert.ID)
 	if err != nil {

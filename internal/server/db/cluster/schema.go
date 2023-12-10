@@ -13,6 +13,7 @@ CREATE TABLE certificates (
     name TEXT NOT NULL,
     certificate TEXT NOT NULL,
     restricted INTEGER NOT NULL DEFAULT 0,
+    description TEXT NOT NULL DEFAULT "",
     UNIQUE (fingerprint)
 );
 CREATE TABLE "certificates_projects" (
@@ -621,5 +622,5 @@ CREATE TABLE "warnings" (
 );
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
-INSERT INTO schema (version, updated_at) VALUES (69, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (70, strftime("%s"))
 `
