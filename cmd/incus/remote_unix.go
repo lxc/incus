@@ -59,6 +59,10 @@ func (c *cmdRemoteProxy) Run(cmd *cobra.Command, args []string) error {
 
 	path := args[1]
 
+	remote := c.global.conf.Remotes[strings.TrimSuffix(remoteName, ":")]
+	remote.KeepAlive = 0
+	c.global.conf.Remotes[strings.TrimSuffix(remoteName, ":")] = remote
+
 	resources, err := c.global.ParseServers(remoteName)
 	if err != nil {
 		return err
