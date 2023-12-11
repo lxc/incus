@@ -1195,8 +1195,7 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 			}
 		}
 
-		// Call the control handler with a connection to the control socket
-		if args.Control != nil && fds[api.SecretNameControl] != "" {
+		if fds[api.SecretNameControl] != "" {
 			conn, err := r.GetOperationWebsocket(opAPI.ID, fds[api.SecretNameControl])
 			if err != nil {
 				return nil, err
@@ -1206,7 +1205,10 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 				_, _, _ = conn.ReadMessage() // Consume pings from server.
 			}()
 
-			go args.Control(conn)
+			if args.Control != nil {
+				// Call the control handler with a connection to the control socket
+				go args.Control(conn)
+			}
 		}
 
 		if exec.Interactive {
