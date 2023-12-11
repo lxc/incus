@@ -290,42 +290,49 @@ func patchNetworkACLRemoveDefaults(name string, d *Daemon) error {
 		return err
 	}
 
-	// Get ACLs in projects.
-	for _, projectName := range projectNames {
-		aclNames, err := d.db.Cluster.GetNetworkACLs(projectName)
-		if err != nil {
-			return err
-		}
-
-		for _, aclName := range aclNames {
-			aclID, acl, err := d.db.Cluster.GetNetworkACL(projectName, aclName)
+	err = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get ACLs in projects.
+		for _, projectName := range projectNames {
+			aclNames, err := tx.GetNetworkACLs(ctx, projectName)
 			if err != nil {
 				return err
 			}
 
-			modified := false
-
-			// Remove the offending keys if found.
-			_, found := acl.Config["default.action"]
-			if found {
-				delete(acl.Config, "default.action")
-				modified = true
-			}
-
-			_, found = acl.Config["default.logged"]
-			if found {
-				delete(acl.Config, "default.logged")
-				modified = true
-			}
-
-			// Write back modified config if needed.
-			if modified {
-				err = d.db.Cluster.UpdateNetworkACL(aclID, &acl.NetworkACLPut)
+			for _, aclName := range aclNames {
+				aclID, acl, err := tx.GetNetworkACL(ctx, projectName, aclName)
 				if err != nil {
-					return fmt.Errorf("Failed updating network ACL %d: %w", aclID, err)
+					return err
+				}
+
+				modified := false
+
+				// Remove the offending keys if found.
+				_, found := acl.Config["default.action"]
+				if found {
+					delete(acl.Config, "default.action")
+					modified = true
+				}
+
+				_, found = acl.Config["default.logged"]
+				if found {
+					delete(acl.Config, "default.logged")
+					modified = true
+				}
+
+				// Write back modified config if needed.
+				if modified {
+					err = tx.UpdateNetworkACL(ctx, aclID, &acl.NetworkACLPut)
+					if err != nil {
+						return fmt.Errorf("Failed updating network ACL %d: %w", aclID, err)
+					}
 				}
 			}
 		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

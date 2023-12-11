@@ -1,8 +1,10 @@
 package acl
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/lxc/incus/internal/server/db"
 	firewallDrivers "github.com/lxc/incus/internal/server/firewall/drivers"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
@@ -60,7 +62,15 @@ func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName 
 
 	// Load ACLs specified by network.
 	for _, aclName := range util.SplitNTrimSpace(aclNet.Config["security.acls"], ",", -1, true) {
-		_, aclInfo, err := s.DB.Cluster.GetNetworkACL(aclProjectName, aclName)
+		var aclInfo *api.NetworkACL
+
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			_, aclInfo, err = tx.GetNetworkACL(ctx, aclProjectName, aclName)
+
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("Failed loading ACL %q for network %q: %w", aclName, aclNet.Name, err)
 		}

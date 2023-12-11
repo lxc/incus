@@ -133,8 +133,14 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 		}
 
 		if portGroupUUID == "" {
-			// Load the config we'll need to create the port group with ACL rules.
-			_, aclInfo, err := s.DB.Cluster.GetNetworkACL(aclProjectName, aclName)
+			var aclInfo *api.NetworkACL
+
+			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				// Load the config we'll need to create the port group with ACL rules.
+				_, aclInfo, err = tx.GetNetworkACL(ctx, aclProjectName, aclName)
+
+				return err
+			})
 			if err != nil {
 				return nil, fmt.Errorf("Failed loading Network ACL %q: %w", aclName, err)
 			}
@@ -164,7 +170,11 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 			// the default rule we add. We also need to reapply the rules if we are adding any
 			// new per-ACL-per-network port groups.
 			if reapplyRules || !portGroupHasACLs || len(addACLNets) > 0 {
-				_, aclInfo, err = s.DB.Cluster.GetNetworkACL(aclProjectName, aclName)
+				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					_, aclInfo, err = tx.GetNetworkACL(ctx, aclProjectName, aclName)
+
+					return err
+				})
 				if err != nil {
 					return nil, fmt.Errorf("Failed loading Network ACL %q: %w", aclName, err)
 				}
@@ -747,8 +757,16 @@ func OVNApplyNetworkBaselineRules(client *ovn.NB, switchName ovn.OVNSwitch, rout
 // the desired ACLs are considered unused by the usage type even if the referring config has not yet been removed
 // from the database.
 func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB, aclProjectName string, ignoreUsageType any, ignoreUsageNicName string, keepACLs ...string) error {
-	// Get map of ACL names to DB IDs (used for generating OVN port group names).
-	aclNameIDs, err := s.DB.Cluster.GetNetworkACLIDsByNames(aclProjectName)
+	var aclNameIDs map[string]int64
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get map of ACL names to DB IDs (used for generating OVN port group names).
+		aclNameIDs, err = tx.GetNetworkACLIDsByNames(ctx, aclProjectName)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed getting network ACL IDs for security ACL port group removal: %w", err)
 	}
