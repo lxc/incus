@@ -66,6 +66,12 @@ type CertificatePut struct {
 	//
 	// API extension: certificate_self_renewal
 	Certificate string `json:"certificate" yaml:"certificate"`
+
+	// Certificate description
+	// Example: X509 certificate
+	//
+	// API extension: certificate_description
+	Description string `json:"description" yaml:"description"`
 }
 
 // Certificate represents a certificate

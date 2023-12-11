@@ -106,6 +106,20 @@ var updates = map[int]schema.Update{
 	67: updateFromV66,
 	68: updateFromV67,
 	69: updateFromV68,
+	70: updateFromV69,
+}
+
+// updateFromV69 adds description column to certificate.
+func updateFromV69(ctx context.Context, tx *sql.Tx) error {
+	q := `
+	ALTER TABLE certificates ADD COLUMN description TEXT NOT NULL DEFAULT "";
+	`
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed adding description column to certificate: %w", err)
+	}
+
+	return nil
 }
 
 // updateFromV68 fixes unique index for record name to make it zone specific.
