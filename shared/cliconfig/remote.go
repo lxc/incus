@@ -20,13 +20,14 @@ import (
 
 // Remote holds details for communication with a remote daemon.
 type Remote struct {
-	Addr     string `yaml:"addr"`
-	AuthType string `yaml:"auth_type,omitempty"`
-	Project  string `yaml:"project,omitempty"`
-	Protocol string `yaml:"protocol,omitempty"`
-	Public   bool   `yaml:"public"`
-	Global   bool   `yaml:"-"`
-	Static   bool   `yaml:"-"`
+	Addr      string `yaml:"addr"`
+	AuthType  string `yaml:"auth_type,omitempty"`
+	KeepAlive int    `yaml:"keepalive,omitempty"`
+	Project   string `yaml:"project,omitempty"`
+	Protocol  string `yaml:"protocol,omitempty"`
+	Public    bool   `yaml:"public"`
+	Global    bool   `yaml:"-"`
+	Static    bool   `yaml:"-"`
 }
 
 // ParseRemote splits remote and object.
@@ -102,9 +103,21 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 		return nil, fmt.Errorf("Missing TLS client certificate and key")
 	}
 
-	d, err := incus.ConnectIncus(remote.Addr, args)
-	if err != nil {
-		return nil, err
+	var d incus.InstanceServer
+	if remote.KeepAlive > 0 {
+		d, err = c.handleKeepAlive(remote, name, args)
+		if err != nil {
+			// On proxy failure, just fallback to regular client.
+			d, err = incus.ConnectIncus(remote.Addr, args)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		d, err = incus.ConnectIncus(remote.Addr, args)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if remote.Project != "" && remote.Project != "default" {
