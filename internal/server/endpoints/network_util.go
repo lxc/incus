@@ -13,7 +13,7 @@ type networkServerErrorLogWriter struct {
 }
 
 // Regex for the log we want to ignore.
-var unwantedLogRegex = regexp.MustCompile(`^http: TLS handshake error from ([^\[:]+?|\[([^\]]+?)\]):[0-9]+: .+write: connection reset by peer$`)
+var unwantedLogRegex = regexp.MustCompile(`^http: TLS handshake error from ([^\[:]+?|\[([^\]]+?)\]):[0-9]+: .+: connection reset by peer$`)
 
 func (d networkServerErrorLogWriter) Write(p []byte) (int, error) {
 	strippedLog := d.stripLog(p)
