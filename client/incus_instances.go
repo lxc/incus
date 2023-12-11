@@ -1264,6 +1264,11 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 					return nil, err
 				}
 
+				// Discard Stdout from remote command if output writer not supplied.
+				if args.Stdout == nil {
+					args.Stdout = io.Discard
+				}
+
 				conns = append(conns, conn)
 				dones[1] = ws.MirrorWrite(conn, args.Stdout)
 				waitConns++
@@ -1274,6 +1279,11 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 				conn, err := r.GetOperationWebsocket(opAPI.ID, fds["2"])
 				if err != nil {
 					return nil, err
+				}
+
+				// Discard Stderr from remote command if output writer not supplied.
+				if args.Stderr == nil {
+					args.Stderr = io.Discard
 				}
 
 				conns = append(conns, conn)
