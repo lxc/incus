@@ -2,6 +2,7 @@ package acl
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -299,8 +300,16 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 		return fmt.Errorf("State must be one of: %s", strings.Join(validStates, ", "))
 	}
 
-	// Get map of ACL names to DB IDs (used for generating OVN port group names).
-	acls, err := d.state.DB.Cluster.GetNetworkACLIDsByNames(d.Project())
+	var acls map[string]int64
+
+	err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get map of ACL names to DB IDs (used for generating OVN port group names).
+		acls, err = tx.GetNetworkACLIDsByNames(ctx, d.Project())
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed getting network ACLs for security ACL subject validation: %w", err)
 	}
@@ -583,9 +592,11 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 	if clientType == request.ClientTypeNormal {
 		oldConfig := d.info.NetworkACLPut
 
-		// Update database. Its important this occurs before we attempt to apply to networks using the ACL
-		// as usage functions will inspect the database.
-		err = d.state.DB.Cluster.UpdateNetworkACL(d.id, config)
+		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Update database. Its important this occurs before we attempt to apply to networks using the ACL
+			// as usage functions will inspect the database.
+			return tx.UpdateNetworkACL(ctx, d.id, config)
+		})
 		if err != nil {
 			return err
 		}
@@ -595,7 +606,10 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		d.init(d.state, d.id, d.projectName, d.info)
 
 		revert.Add(func() {
-			_ = d.state.DB.Cluster.UpdateNetworkACL(d.id, &oldConfig)
+			_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.UpdateNetworkACL(ctx, d.id, &oldConfig)
+			})
+
 			d.info.NetworkACLPut = oldConfig
 			d.init(d.state, d.id, d.projectName, d.info)
 		})
@@ -636,8 +650,14 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
 
-		// Get map of ACL names to DB IDs (used for generating OVN port group names).
-		aclNameIDs, err := d.state.DB.Cluster.GetNetworkACLIDsByNames(d.Project())
+		var aclNameIDs map[string]int64
+
+		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Get map of ACL names to DB IDs (used for generating OVN port group names).
+			aclNameIDs, err = tx.GetNetworkACLIDsByNames(ctx, d.Project())
+
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("Failed getting network ACL IDs for security ACL update: %w", err)
 		}
@@ -704,7 +724,9 @@ func (d *common) Rename(newName string) error {
 		return err
 	}
 
-	err = d.state.DB.Cluster.RenameNetworkACL(d.id, newName)
+	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.RenameNetworkACL(ctx, d.id, newName)
+	})
 	if err != nil {
 		return err
 	}
@@ -726,7 +748,9 @@ func (d *common) Delete() error {
 		return fmt.Errorf("Cannot delete an ACL that is in use")
 	}
 
-	return d.state.DB.Cluster.DeleteNetworkACL(d.id)
+	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.DeleteNetworkACL(ctx, d.id)
+	})
 }
 
 // GetLog gets the ACL log.

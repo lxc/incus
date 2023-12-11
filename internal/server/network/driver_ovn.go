@@ -2447,8 +2447,16 @@ func (n *ovn) setup(update bool) error {
 	// Ensure any network assigned security ACL port groups are created ready for instance NICs to use.
 	securityACLS := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, true)
 	if len(securityACLS) > 0 {
-		// Get map of ACL names to DB IDs (used for generating OVN port group names).
-		aclNameIDs, err := n.state.DB.Cluster.GetNetworkACLIDsByNames(n.Project())
+		var aclNameIDs map[string]int64
+
+		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			// Get map of ACL names to DB IDs (used for generating OVN port group names).
+			aclNameIDs, err = tx.GetNetworkACLIDsByNames(ctx, n.Project())
+
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("Failed getting network ACL IDs for security ACL setup: %w", err)
 		}
@@ -3033,8 +3041,14 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 			}
 		}
 
-		// Get map of ACL names to DB IDs (used for generating OVN port group names).
-		aclNameIDs, err := n.state.DB.Cluster.GetNetworkACLIDsByNames(n.Project())
+		var aclNameIDs map[string]int64
+
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Get map of ACL names to DB IDs (used for generating OVN port group names).
+			aclNameIDs, err = tx.GetNetworkACLIDsByNames(ctx, n.Project())
+
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("Failed getting network ACL IDs for security ACL update: %w", err)
 		}
@@ -3885,8 +3899,14 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	n.logger.Debug("Scheduled logical port for network port group addition", logger.Ctx{"portGroup": acl.OVNIntSwitchPortGroupName(n.ID()), "port": instancePortName})
 
 	if len(nicACLNames) > 0 || len(securityACLsRemove) > 0 {
-		// Get map of ACL names to DB IDs (used for generating OVN port group names).
-		aclNameIDs, err := n.state.DB.Cluster.GetNetworkACLIDsByNames(n.Project())
+		var aclNameIDs map[string]int64
+
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Get map of ACL names to DB IDs (used for generating OVN port group names).
+			aclNameIDs, err = tx.GetNetworkACLIDsByNames(ctx, n.Project())
+
+			return err
+		})
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed getting network ACL IDs for security ACL setup: %w", err)
 		}

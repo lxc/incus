@@ -16,7 +16,16 @@ import (
 
 // LoadByName loads and initialises a Network ACL from the database by project and name.
 func LoadByName(s *state.State, projectName string, name string) (NetworkACL, error) {
-	id, aclInfo, err := s.DB.Cluster.GetNetworkACL(projectName, name)
+	var id int64
+	var aclInfo *api.NetworkACL
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		id, aclInfo, err = tx.GetNetworkACL(ctx, projectName, name)
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +51,12 @@ func Create(s *state.State, projectName string, aclInfo *api.NetworkACLsPost) er
 		return err
 	}
 
-	// Insert DB record.
-	_, err = s.DB.Cluster.CreateNetworkACL(projectName, aclInfo)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Insert DB record.
+		_, err := tx.CreateNetworkACL(ctx, projectName, aclInfo)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -54,7 +67,15 @@ func Create(s *state.State, projectName string, aclInfo *api.NetworkACLsPost) er
 // Exists checks the ACL name(s) provided exists in the project.
 // If multiple names are provided, also checks that duplicate names aren't specified in the list.
 func Exists(s *state.State, projectName string, name ...string) error {
-	existingACLNames, err := s.DB.Cluster.GetNetworkACLs(projectName)
+	var existingACLNames []string
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		existingACLNames, err = tx.GetNetworkACLs(ctx, projectName)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -160,14 +181,26 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(matchedACLName
 		}
 	}
 
-	// Find ACLs that have rules that reference the ACLs.
-	aclNames, err := s.DB.Cluster.GetNetworkACLs(aclProjectName)
+	var aclNames []string
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Find ACLs that have rules that reference the ACLs.
+		aclNames, err = tx.GetNetworkACLs(ctx, aclProjectName)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
 
 	for _, aclName := range aclNames {
-		_, aclInfo, err := s.DB.Cluster.GetNetworkACL(aclProjectName, aclName)
+		var aclInfo *api.NetworkACL
+
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_, aclInfo, err = tx.GetNetworkACL(ctx, aclProjectName, aclName)
+
+			return err
+		})
 		if err != nil {
 			return err
 		}
