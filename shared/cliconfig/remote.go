@@ -103,9 +103,21 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 		return nil, fmt.Errorf("Missing TLS client certificate and key")
 	}
 
-	d, err := incus.ConnectIncus(remote.Addr, args)
-	if err != nil {
-		return nil, err
+	var d incus.InstanceServer
+	if remote.KeepAlive > 0 {
+		d, err = c.handleKeepAlive(remote, name, args)
+		if err != nil {
+			// On proxy failure, just fallback to regular client.
+			d, err = incus.ConnectIncus(remote.Addr, args)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		d, err = incus.ConnectIncus(remote.Addr, args)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if remote.Project != "" && remote.Project != "default" {
