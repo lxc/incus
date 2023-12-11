@@ -1086,6 +1086,11 @@ func (r *ProtocolIncus) DeleteInstance(name string) (Operation, error) {
 
 // ExecInstance requests that Incus spawns a command inside the instance.
 func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecPost, args *InstanceExecArgs) (Operation, error) {
+	// Ensure args are equivalent to empty InstanceExecArgs.
+	if args == nil {
+		args = &InstanceExecArgs{}
+	}
+
 	if exec.RecordOutput {
 		if !r.HasExtension("container_exec_recording") {
 			return nil, fmt.Errorf("The server is missing the required \"container_exec_recording\" API extension")
