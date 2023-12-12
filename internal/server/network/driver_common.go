@@ -998,8 +998,16 @@ func (n *common) ForwardDelete(listenAddress string, clientType request.ClientTy
 
 // forwardBGPSetupPrefixes exports external forward addresses as prefixes.
 func (n *common) forwardBGPSetupPrefixes() error {
-	// Retrieve network forwards before clearing existing prefixes, and separate them by IP family.
-	fwdListenAddresses, err := n.state.DB.Cluster.GetNetworkForwardListenAddresses(n.ID(), true)
+	var fwdListenAddresses map[int64]string
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Retrieve network forwards before clearing existing prefixes, and separate them by IP family.
+		fwdListenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, n.ID(), true)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed loading network forwards: %w", err)
 	}
