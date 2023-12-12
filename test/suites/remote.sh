@@ -4,7 +4,7 @@ test_remote_url() {
     token="$(incus config trust add foo -q)"
     incus_remote remote add test "${url}" --accept-certificate --token "${token}"
     incus_remote info test:
-    incus_remote config trust list | awk '/@/ {print $8}' | while read -r line ; do
+    incus_remote config trust list -cf -fcsv | while read -r line ; do
       incus_remote config trust remove "\"${line}\""
     done
     incus_remote remote remove test
@@ -71,7 +71,9 @@ test_remote_url_with_token() {
 
   # Clean up
   incus_remote remote remove test
-  incus config trust rm "$(incus config trust list -f json | jq -r '.[].fingerprint')"
+  incus incus config trust list -cf -fcsv | while read -r line ; do
+    incus config trust remove "\"${line}\""
+  done
 
   # Generate new token
   incus config trust add -q foo
@@ -91,7 +93,9 @@ test_remote_url_with_token() {
   # Check if we can see instances
   [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.status_code')" -eq 200 ]
 
-  incus config trust rm "$(incus config trust list -f json | jq -r '.[].fingerprint')"
+  incus incus config trust list -cf -fcsv | while read -r line ; do
+    incus config trust remove "\"${line}\""
+  done
 
   # Generate new token
   incus config trust add -q --projects foo --restricted foo
@@ -108,7 +112,9 @@ test_remote_url_with_token() {
   # Check if we can see instances in the default project (this should fail)
   [ "$(curl -k -s --key "${TEST_DIR}/token-client.key" --cert "${TEST_DIR}/token-client.crt" "https://${INCUS_ADDR}/1.0/instances" | jq '.error_code')" -eq 403 ]
 
-  incus config trust rm "$(incus config trust list -f json | jq -r '.[].fingerprint')"
+  incus incus config trust list -cf -fcsv | while read -r line ; do
+    incus config trust remove "\"${line}\""
+  done
 
   # Set token expiry to 5 seconds
   incus config set core.remote_token_expiry 5S
@@ -120,7 +126,9 @@ test_remote_url_with_token() {
   incus_remote remote add test "${token}"
 
   # Remove all trusted clients
-  incus config trust rm "$(incus config trust list -f json | jq -r '.[].fingerprint')"
+  incus incus config trust list -cf -fcsv | while read -r line ; do
+    incus config trust remove "\"${line}\""
+  done
 
   # Remove remote
   incus_remote remote rm test
@@ -174,7 +182,7 @@ test_remote_admin() {
 
   # now re-add under a different alias
   incus_remote config trust add-certificate "${INCUS_CONF}/client2.crt"
-  if [ "$(incus_remote config trust list | wc -l)" -ne 7 ]; then
+  if [ "$(incus_remote config trust list -fcsv -cn | wc -l)" -ne 2 ]; then
     echo "wrong number of certs"
     false
   fi
