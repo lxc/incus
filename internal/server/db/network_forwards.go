@@ -18,7 +18,7 @@ import (
 // CreateNetworkForward creates a new Network Forward.
 // If memberSpecific is true, then the forward is associated to the current member, rather than being associated to
 // all members.
-func (c *Cluster) CreateNetworkForward(networkID int64, memberSpecific bool, info *api.NetworkForwardsPost) (int64, error) {
+func (c *ClusterTx) CreateNetworkForward(ctx context.Context, networkID int64, memberSpecific bool, info *api.NetworkForwardsPost) (int64, error) {
 	var err error
 	var forwardID int64
 	var nodeID any
@@ -36,30 +36,23 @@ func (c *Cluster) CreateNetworkForward(networkID int64, memberSpecific bool, inf
 		}
 	}
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Insert a new Network forward record.
-		result, err := tx.tx.Exec(`
+	// Insert a new Network forward record.
+	result, err := c.tx.ExecContext(ctx, `
 		INSERT INTO networks_forwards
 		(network_id, node_id, listen_address, description, ports)
 		VALUES (?, ?, ?, ?, ?)
 		`, networkID, nodeID, info.ListenAddress, info.Description, string(portsJSON))
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return -1, err
+	}
 
-		forwardID, err = result.LastInsertId()
-		if err != nil {
-			return err
-		}
+	forwardID, err = result.LastInsertId()
+	if err != nil {
+		return -1, err
+	}
 
-		// Save config.
-		err = networkForwardConfigAdd(tx.tx, forwardID, info.Config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	// Save config.
+	err = networkForwardConfigAdd(c.tx, forwardID, info.Config)
 	if err != nil {
 		return -1, err
 	}
@@ -95,7 +88,7 @@ func networkForwardConfigAdd(tx *sql.Tx, forwardID int64, config map[string]stri
 }
 
 // UpdateNetworkForward updates an existing Network Forward.
-func (c *Cluster) UpdateNetworkForward(networkID int64, forwardID int64, info *api.NetworkForwardPut) error {
+func (c *ClusterTx) UpdateNetworkForward(ctx context.Context, networkID int64, forwardID int64, info *api.NetworkForwardPut) error {
 	var err error
 	var portsJSON []byte
 
@@ -106,39 +99,32 @@ func (c *Cluster) UpdateNetworkForward(networkID int64, forwardID int64, info *a
 		}
 	}
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Update existing Network forward record.
-		res, err := tx.tx.Exec(`
+	// Update existing Network forward record.
+	res, err := c.tx.ExecContext(ctx, `
 		UPDATE networks_forwards
 		SET description = ?, ports = ?
 		WHERE network_id = ? and id = ?
 		`, info.Description, string(portsJSON), networkID, forwardID)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-		if rowsAffected <= 0 {
-			return api.StatusErrorf(http.StatusNotFound, "Network forward not found")
-		}
+	if rowsAffected <= 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Network forward not found")
+	}
 
-		// Save config.
-		_, err = tx.tx.Exec("DELETE FROM networks_forwards_config WHERE network_forward_id=?", forwardID)
-		if err != nil {
-			return err
-		}
+	// Save config.
+	_, err = c.tx.ExecContext(ctx, "DELETE FROM networks_forwards_config WHERE network_forward_id=?", forwardID)
+	if err != nil {
+		return err
+	}
 
-		err = networkForwardConfigAdd(tx.tx, forwardID, info.Config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	err = networkForwardConfigAdd(c.tx, forwardID, info.Config)
 	if err != nil {
 		return err
 	}
@@ -147,34 +133,32 @@ func (c *Cluster) UpdateNetworkForward(networkID int64, forwardID int64, info *a
 }
 
 // DeleteNetworkForward deletes an existing Network Forward.
-func (c *Cluster) DeleteNetworkForward(networkID int64, forwardID int64) error {
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Delete existing Network forward record.
-		res, err := tx.tx.Exec(`
+func (c *ClusterTx) DeleteNetworkForward(ctx context.Context, networkID int64, forwardID int64) error {
+	// Delete existing Network forward record.
+	res, err := c.tx.ExecContext(ctx, `
 			DELETE FROM networks_forwards
 			WHERE network_id = ? and id = ?
 		`, networkID, forwardID)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-		if rowsAffected <= 0 {
-			return api.StatusErrorf(http.StatusNotFound, "Network forward not found")
-		}
+	if rowsAffected <= 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Network forward not found")
+	}
 
-		return nil
-	})
+	return nil
 }
 
 // GetNetworkForward returns the Network Forward ID and info for the given network ID and listen address.
 // If memberSpecific is true, then the search is restricted to forwards that belong to this member or belong to
 // all members.
-func (c *Cluster) GetNetworkForward(ctx context.Context, networkID int64, memberSpecific bool, listenAddress string) (int64, *api.NetworkForward, error) {
+func (c *ClusterTx) GetNetworkForward(ctx context.Context, networkID int64, memberSpecific bool, listenAddress string) (int64, *api.NetworkForward, error) {
 	forwards, err := c.GetNetworkForwards(ctx, networkID, memberSpecific, listenAddress)
 	if (err == nil && len(forwards) <= 0) || errors.Is(err, sql.ErrNoRows) {
 		return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network forward not found")
@@ -225,7 +209,7 @@ func networkForwardConfig(ctx context.Context, tx *ClusterTx, forwardID int64, f
 // on Forward ID.
 // If memberSpecific is true, then the search is restricted to forwards that belong to this member or belong to
 // all members.
-func (c *Cluster) GetNetworkForwardListenAddresses(networkID int64, memberSpecific bool) (map[int64]string, error) {
+func (c *ClusterTx) GetNetworkForwardListenAddresses(ctx context.Context, networkID int64, memberSpecific bool) (map[int64]string, error) {
 	var q *strings.Builder = &strings.Builder{}
 	args := []any{networkID}
 
@@ -244,21 +228,19 @@ func (c *Cluster) GetNetworkForwardListenAddresses(networkID int64, memberSpecif
 
 	forwards := make(map[int64]string)
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return query.Scan(ctx, tx.Tx(), q.String(), func(scan func(dest ...any) error) error {
-			var forwardID int64 = int64(-1)
-			var listenAddress string
+	err := query.Scan(ctx, c.tx, q.String(), func(scan func(dest ...any) error) error {
+		var forwardID int64 = int64(-1)
+		var listenAddress string
 
-			err := scan(&forwardID, &listenAddress)
-			if err != nil {
-				return err
-			}
+		err := scan(&forwardID, &listenAddress)
+		if err != nil {
+			return err
+		}
 
-			forwards[forwardID] = listenAddress
+		forwards[forwardID] = listenAddress
 
-			return nil
-		}, args...)
-	})
+		return nil
+	}, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +359,7 @@ func (c *ClusterTx) GetProjectNetworkForwardListenAddressesOnMember(ctx context.
 // GetNetworkForwards returns map of Network Forwards for the given network ID keyed on Forward ID.
 // If memberSpecific is true, then the search is restricted to forwards that belong to this member or belong to
 // all members. Can optionally retrieve only specific network forwards by listen address.
-func (c *Cluster) GetNetworkForwards(ctx context.Context, networkID int64, memberSpecific bool, listenAddresses ...string) (map[int64]*api.NetworkForward, error) {
+func (c *ClusterTx) GetNetworkForwards(ctx context.Context, networkID int64, memberSpecific bool, listenAddresses ...string) (map[int64]*api.NetworkForward, error) {
 	var q *strings.Builder = &strings.Builder{}
 	args := []any{networkID}
 
@@ -408,45 +390,38 @@ func (c *Cluster) GetNetworkForwards(ctx context.Context, networkID int64, membe
 	var err error
 	forwards := make(map[int64]*api.NetworkForward)
 
-	err = c.Transaction(ctx, func(ctx context.Context, tx *ClusterTx) error {
-		err = query.Scan(ctx, tx.Tx(), q.String(), func(scan func(dest ...any) error) error {
-			var forwardID int64 = int64(-1)
-			var portsJSON string
-			var forward api.NetworkForward
+	err = query.Scan(ctx, c.tx, q.String(), func(scan func(dest ...any) error) error {
+		var forwardID int64 = int64(-1)
+		var portsJSON string
+		var forward api.NetworkForward
 
-			err := scan(&forwardID, &forward.ListenAddress, &forward.Description, &forward.Location, &portsJSON)
-			if err != nil {
-				return err
-			}
-
-			forward.Ports = []api.NetworkForwardPort{}
-			if portsJSON != "" {
-				err = json.Unmarshal([]byte(portsJSON), &forward.Ports)
-				if err != nil {
-					return fmt.Errorf("Failed unmarshalling ports: %w", err)
-				}
-			}
-
-			forwards[forwardID] = &forward
-
-			return nil
-		}, args...)
+		err := scan(&forwardID, &forward.ListenAddress, &forward.Description, &forward.Location, &portsJSON)
 		if err != nil {
 			return err
 		}
 
-		// Populate config.
-		for forwardID := range forwards {
-			err = networkForwardConfig(ctx, tx, forwardID, forwards[forwardID])
+		forward.Ports = []api.NetworkForwardPort{}
+		if portsJSON != "" {
+			err = json.Unmarshal([]byte(portsJSON), &forward.Ports)
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed unmarshalling ports: %w", err)
 			}
 		}
 
+		forwards[forwardID] = &forward
+
 		return nil
-	})
+	}, args...)
 	if err != nil {
 		return nil, err
+	}
+
+	// Populate config.
+	for forwardID := range forwards {
+		err = networkForwardConfig(ctx, c, forwardID, forwards[forwardID])
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return forwards, nil

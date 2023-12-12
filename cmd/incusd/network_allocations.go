@@ -179,7 +179,13 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 				}
 			}
 
-			forwards, err := d.db.Cluster.GetNetworkForwards(r.Context(), n.ID(), false)
+			var forwards map[int64]*api.NetworkForward
+
+			err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				forwards, err = tx.GetNetworkForwards(ctx, n.ID(), false)
+
+				return err
+			})
 			if err != nil {
 				return response.SmartError(fmt.Errorf("Failed getting forwards for network %q in project %q: %w", networkName, projectName, err))
 			}
