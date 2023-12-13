@@ -13,7 +13,7 @@ import (
 )
 
 var minLXDVersion = &version.DottedVersion{4, 0, 0}
-var maxLXDVersion = &version.DottedVersion{5, 19, 0}
+var maxLXDVersion = &version.DottedVersion{5, 20, 0}
 
 func (c *cmdMigrate) validate(source Source, target Target) error {
 	srcClient, err := source.Connect()
