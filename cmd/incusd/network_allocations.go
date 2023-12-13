@@ -207,7 +207,13 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 				)
 			}
 
-			loadBalancers, err := d.db.Cluster.GetNetworkLoadBalancers(r.Context(), n.ID(), false)
+			var loadBalancers map[int64]*api.NetworkLoadBalancer
+
+			err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				loadBalancers, err = tx.GetNetworkLoadBalancers(ctx, n.ID(), false)
+
+				return err
+			})
 			if err != nil {
 				return response.SmartError(fmt.Errorf("Failed getting load-balancers for network %q in project %q: %w", networkName, projectName, err))
 			}

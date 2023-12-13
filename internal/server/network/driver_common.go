@@ -1311,8 +1311,16 @@ func (n *common) LoadBalancerDelete(listenAddress string, clientType request.Cli
 
 // loadBalancerBGPSetupPrefixes exports external load balancer addresses as prefixes.
 func (n *common) loadBalancerBGPSetupPrefixes() error {
-	// Retrieve network forwards before clearing existing prefixes, and separate them by IP family.
-	listenAddresses, err := n.state.DB.Cluster.GetNetworkLoadBalancerListenAddresses(n.ID(), true)
+	var listenAddresses map[int64]string
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Retrieve network forwards before clearing existing prefixes, and separate them by IP family.
+		listenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), true)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed loading network forwards: %w", err)
 	}
