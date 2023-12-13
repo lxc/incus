@@ -1086,6 +1086,11 @@ func (r *ProtocolIncus) DeleteInstance(name string) (Operation, error) {
 
 // ExecInstance requests that Incus spawns a command inside the instance.
 func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecPost, args *InstanceExecArgs) (Operation, error) {
+	// Ensure args are equivalent to empty InstanceExecArgs.
+	if args == nil {
+		args = &InstanceExecArgs{}
+	}
+
 	if exec.RecordOutput {
 		if !r.HasExtension("container_exec_recording") {
 			return nil, fmt.Errorf("The server is missing the required \"container_exec_recording\" API extension")
@@ -1121,78 +1126,123 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 	opAPI := op.Get()
 
 	// Process additional arguments
-	if args != nil {
-		// Parse the fds
-		fds := map[string]string{}
 
-		value, ok := opAPI.Metadata["fds"]
+	// Parse the fds
+	fds := map[string]string{}
+
+	value, ok := opAPI.Metadata["fds"]
+	if ok {
+		values := value.(map[string]any)
+		for k, v := range values {
+			fds[k] = v.(string)
+		}
+	}
+
+	if exec.RecordOutput && (args.Stdout != nil || args.Stderr != nil) {
+		err = op.Wait()
+		if err != nil {
+			return nil, err
+		}
+
+		opAPI = op.Get()
+		outputFiles := map[string]string{}
+		outputs, ok := opAPI.Metadata["output"].(map[string]any)
 		if ok {
-			values := value.(map[string]any)
-			for k, v := range values {
-				fds[k] = v.(string)
+			for k, v := range outputs {
+				outputFiles[k] = v.(string)
 			}
 		}
 
-		if exec.RecordOutput && (args.Stdout != nil || args.Stderr != nil) {
-			err = op.Wait()
+		if outputFiles["1"] != "" {
+			reader, _ := r.getInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["1"]))
+			if args.Stdout != nil {
+				_, errCopy := io.Copy(args.Stdout, reader)
+				// Regardless of errCopy value, we want to delete the file after a copy operation
+				errDelete := r.deleteInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["1"]))
+				if errDelete != nil {
+					return nil, errDelete
+				}
+
+				if errCopy != nil {
+					return nil, fmt.Errorf("Could not copy the content of the exec output log file to stdout: %w", err)
+				}
+			}
+
+			err = r.deleteInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["1"]))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if outputFiles["2"] != "" {
+			reader, _ := r.getInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["2"]))
+			if args.Stderr != nil {
+				_, errCopy := io.Copy(args.Stderr, reader)
+				errDelete := r.deleteInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["1"]))
+				if errDelete != nil {
+					return nil, errDelete
+				}
+
+				if errCopy != nil {
+					return nil, fmt.Errorf("Could not copy the content of the exec output log file to stderr: %w", err)
+				}
+			}
+
+			err = r.deleteInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["2"]))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if fds[api.SecretNameControl] != "" {
+		conn, err := r.GetOperationWebsocket(opAPI.ID, fds[api.SecretNameControl])
+		if err != nil {
+			return nil, err
+		}
+
+		go func() {
+			_, _, _ = conn.ReadMessage() // Consume pings from server.
+		}()
+
+		if args.Control != nil {
+			// Call the control handler with a connection to the control socket
+			go args.Control(conn)
+		}
+	}
+
+	if exec.Interactive {
+		// Handle interactive sections
+		if args.Stdin != nil && args.Stdout != nil {
+			// Connect to the websocket
+			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["0"])
 			if err != nil {
 				return nil, err
 			}
 
-			opAPI = op.Get()
-			outputFiles := map[string]string{}
-			outputs, ok := opAPI.Metadata["output"].(map[string]any)
-			if ok {
-				for k, v := range outputs {
-					outputFiles[k] = v.(string)
+			// And attach stdin and stdout to it
+			go func() {
+				ws.MirrorRead(conn, args.Stdin)
+				<-ws.MirrorWrite(conn, args.Stdout)
+				_ = conn.Close()
+
+				if args.DataDone != nil {
+					close(args.DataDone)
 				}
-			}
-
-			if outputFiles["1"] != "" {
-				reader, _ := r.getInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["1"]))
-				if args.Stdout != nil {
-					_, errCopy := io.Copy(args.Stdout, reader)
-					// Regardless of errCopy value, we want to delete the file after a copy operation
-					errDelete := r.deleteInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["1"]))
-					if errDelete != nil {
-						return nil, errDelete
-					}
-
-					if errCopy != nil {
-						return nil, fmt.Errorf("Could not copy the content of the exec output log file to stdout: %w", err)
-					}
-				}
-
-				err = r.deleteInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["1"]))
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			if outputFiles["2"] != "" {
-				reader, _ := r.getInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["2"]))
-				if args.Stderr != nil {
-					_, errCopy := io.Copy(args.Stderr, reader)
-					errDelete := r.deleteInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["1"]))
-					if errDelete != nil {
-						return nil, errDelete
-					}
-
-					if errCopy != nil {
-						return nil, fmt.Errorf("Could not copy the content of the exec output log file to stderr: %w", err)
-					}
-				}
-
-				err = r.deleteInstanceExecOutputLogFile(instanceName, filepath.Base(outputFiles["2"]))
-				if err != nil {
-					return nil, err
-				}
+			}()
+		} else {
+			if args.DataDone != nil {
+				close(args.DataDone)
 			}
 		}
+	} else {
+		// Handle non-interactive sessions
+		dones := make(map[int]chan error)
+		conns := []*websocket.Conn{}
 
-		// Call the control handler with a connection to the control socket
-		if args.Control != nil && fds[api.SecretNameControl] != "" {
-			conn, err := r.GetOperationWebsocket(opAPI.ID, fds[api.SecretNameControl])
+		// Handle stdin
+		if fds["0"] != "" {
+			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["0"])
 			if err != nil {
 				return nil, err
 			}
@@ -1201,113 +1251,79 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 				_, _, _ = conn.ReadMessage() // Consume pings from server.
 			}()
 
-			go args.Control(conn)
+			conns = append(conns, conn)
+			dones[0] = ws.MirrorRead(conn, args.Stdin)
 		}
 
-		if exec.Interactive {
-			// Handle interactive sections
-			if args.Stdin != nil && args.Stdout != nil {
-				// Connect to the websocket
-				conn, err := r.GetOperationWebsocket(opAPI.ID, fds["0"])
-				if err != nil {
-					return nil, err
-				}
+		waitConns := 0 // Used for keeping track of when stdout and stderr have finished.
 
-				// And attach stdin and stdout to it
-				go func() {
-					ws.MirrorRead(conn, args.Stdin)
-					<-ws.MirrorWrite(conn, args.Stdout)
-					_ = conn.Close()
-
-					if args.DataDone != nil {
-						close(args.DataDone)
-					}
-				}()
-			} else {
-				if args.DataDone != nil {
-					close(args.DataDone)
-				}
-			}
-		} else {
-			// Handle non-interactive sessions
-			dones := make(map[int]chan error)
-			conns := []*websocket.Conn{}
-
-			// Handle stdin
-			if fds["0"] != "" {
-				conn, err := r.GetOperationWebsocket(opAPI.ID, fds["0"])
-				if err != nil {
-					return nil, err
-				}
-
-				go func() {
-					_, _, _ = conn.ReadMessage() // Consume pings from server.
-				}()
-
-				conns = append(conns, conn)
-				dones[0] = ws.MirrorRead(conn, args.Stdin)
+		// Handle stdout
+		if fds["1"] != "" {
+			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["1"])
+			if err != nil {
+				return nil, err
 			}
 
-			waitConns := 0 // Used for keeping track of when stdout and stderr have finished.
-
-			// Handle stdout
-			if fds["1"] != "" {
-				conn, err := r.GetOperationWebsocket(opAPI.ID, fds["1"])
-				if err != nil {
-					return nil, err
-				}
-
-				conns = append(conns, conn)
-				dones[1] = ws.MirrorWrite(conn, args.Stdout)
-				waitConns++
+			// Discard Stdout from remote command if output writer not supplied.
+			if args.Stdout == nil {
+				args.Stdout = io.Discard
 			}
 
-			// Handle stderr
-			if fds["2"] != "" {
-				conn, err := r.GetOperationWebsocket(opAPI.ID, fds["2"])
-				if err != nil {
-					return nil, err
-				}
-
-				conns = append(conns, conn)
-				dones[2] = ws.MirrorWrite(conn, args.Stderr)
-				waitConns++
-			}
-
-			// Wait for everything to be done
-			go func() {
-				for {
-					select {
-					case <-dones[0]:
-						// Handle stdin finish, but don't wait for it if output channels
-						// have all finished.
-						dones[0] = nil
-						_ = conns[0].Close()
-					case <-dones[1]:
-						dones[1] = nil
-						_ = conns[1].Close()
-						waitConns--
-					case <-dones[2]:
-						dones[2] = nil
-						_ = conns[2].Close()
-						waitConns--
-					}
-
-					if waitConns <= 0 {
-						// Close stdin websocket if defined and not already closed.
-						if dones[0] != nil {
-							conns[0].Close()
-						}
-
-						break
-					}
-				}
-
-				if args.DataDone != nil {
-					close(args.DataDone)
-				}
-			}()
+			conns = append(conns, conn)
+			dones[1] = ws.MirrorWrite(conn, args.Stdout)
+			waitConns++
 		}
+
+		// Handle stderr
+		if fds["2"] != "" {
+			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["2"])
+			if err != nil {
+				return nil, err
+			}
+
+			// Discard Stderr from remote command if output writer not supplied.
+			if args.Stderr == nil {
+				args.Stderr = io.Discard
+			}
+
+			conns = append(conns, conn)
+			dones[2] = ws.MirrorWrite(conn, args.Stderr)
+			waitConns++
+		}
+
+		// Wait for everything to be done
+		go func() {
+			for {
+				select {
+				case <-dones[0]:
+					// Handle stdin finish, but don't wait for it if output channels
+					// have all finished.
+					dones[0] = nil
+					_ = conns[0].Close()
+				case <-dones[1]:
+					dones[1] = nil
+					_ = conns[1].Close()
+					waitConns--
+				case <-dones[2]:
+					dones[2] = nil
+					_ = conns[2].Close()
+					waitConns--
+				}
+
+				if waitConns <= 0 {
+					// Close stdin websocket if defined and not already closed.
+					if dones[0] != nil {
+						conns[0].Close()
+					}
+
+					break
+				}
+			}
+
+			if args.DataDone != nil {
+				close(args.DataDone)
+			}
+		}()
 	}
 
 	return op, nil

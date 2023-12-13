@@ -994,10 +994,8 @@ func (d Nftables) NetworkApplyForwards(networkName string, rules []AddressForwar
 				rule.TargetPorts = rule.ListenPorts
 			case 1:
 				// Single target port specified, OK.
-				break
 			case len(rule.ListenPorts):
 				// One-to-one match with listen ports, OK.
-				break
 			default:
 				return fmt.Errorf("Invalid rule %d, mismatch between listen port(s) and target port(s) count", ruleIndex)
 			}

@@ -35,7 +35,7 @@ That driver can also be used for custom storage volumes with content type `files
     :end-before: <!-- Include end Ceph driver cluster -->
 ```
 
-You must create the CephFS file system that you want to use beforehand and specify it through the [`source`](storage-cephfs-pool-config) option.
+You can either create the CephFS file system that you want to use beforehand and specify it through the [`source`](storage-cephfs-pool-config) option, or specify the [`cephfs.create_missing`](storage-cephfs-pool-config) option to automatically create the file system and the data and metadata OSD pools (with the names given in [`cephfs.data_pool`](storage-cephfs-pool-config) and [`cephfs.meta_pool`](storage-cephfs-pool-config)).
 
 % Include content from [storage_ceph.md](storage_ceph.md)
 ```{include} storage_ceph.md
@@ -61,13 +61,13 @@ The following configuration options are available for storage pools that use the
 Key                           | Type                          | Default                                 | Description
 :--                           | :---                          | :------                                 | :----------
 `cephfs.cluster_name`         | string                        | `ceph`                                  | Name of the Ceph cluster that contains the CephFS file system
+`cephfs.create_missing`       | bool                          | `false`                                 | Create the file system and the missing data and metadata OSD pools
+`cephfs.data_pool`            | string                        | -                                       | Data OSD pool name to create for the file system
 `cephfs.fscache`              | bool                          | `false`                                 | Enable use of kernel `fscache` and `cachefilesd`
+`cephfs.meta_pool`            | string                        | -                                       | Metadata OSD pool name to create for the file system
+`cephfs.osd_pg_num`           | string                        | -                                       | OSD pool `pg_num` to use when creating missing OSD pools
 `cephfs.path`                 | string                        | `/`                                     | The base path for the CephFS mount
 `cephfs.user.name`            | string                        | `admin`                                 | The Ceph user to use
-`cephfs.create_missing`       | bool                          | `false`                                 | Create the file-system and missing data and metadata OSD pools
-`cephfs.osd_pg_num`           | string                        | -                                       | OSD pool `pg_num` to use when creating missing OSD pools
-`cephfs.meta_pool`            | string                        | -                                       | Metadata OSD pool name to create for the file-system
-`cephfs.data_pool`            | string                        | -                                       | Data OSD pool name to create for the file-system
 `source`                      | string                        | -                                       | Existing CephFS file system or file system path to use
 `volatile.pool.pristine`      | string                        | `true`                                  | Whether the CephFS file system was empty on creation time
 
