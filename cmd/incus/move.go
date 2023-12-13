@@ -173,7 +173,7 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 
 	// Support for server-side move. Currently, such migration can only move an instance to different project
 	// or storage pool. If specific profile, device or config is provided, the instance should be copied (move using copy).
-	if sourceRemote == destRemote && c.flagStorage != "" || c.flagTargetProject != "" {
+	if sourceRemote == destRemote && (c.flagStorage != "" || c.flagTargetProject != "") {
 		source, err := conf.GetInstanceServer(sourceRemote)
 		if err != nil {
 			return err
