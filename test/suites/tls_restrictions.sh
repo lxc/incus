@@ -12,10 +12,10 @@ test_tls_restrictions() {
   curl -k -s --cert "${INCUS_CONF}/metrics.crt" --key "${INCUS_CONF}/metrics.key" "https://${INCUS_ADDR}/1.0/certificates" | grep -F '"error_code":403'
 
   # Cleanup type=metrics certificate.
-  METRICS_FINGERPRINT="$(incus config trust list --format csv | grep -F metrics.local | cut -d, -f4)"
+  METRICS_FINGERPRINT="$(incus config trust list --format csv --columns cf | grep -F metrics.local | cut -d, -f2)"
   incus config trust remove "${METRICS_FINGERPRINT}"
 
-  FINGERPRINT="$(incus config trust list --format csv | cut -d, -f4)"
+  FINGERPRINT="$(incus config trust list --format csv --columns f)"
 
   # Validate admin rights with no restrictions
   incus_remote project create localhost:blah
@@ -51,14 +51,14 @@ test_certificate_edit() {
   # Generate a certificate
   gen_cert_and_key "${INCUS_CONF}/client.key.new" "${INCUS_CONF}/client.crt.new" "test.local"
 
-  FINGERPRINT="$(incus config trust list --format csv | cut -d, -f4)"
+  FINGERPRINT="$(incus config trust list --format csv --columns f)"
 
   # Try replacing the old certificate with a new one.
   # This should succeed as the user is listed as an admin.
   curl -k -s --cert "${INCUS_CONF}/client.crt" --key "${INCUS_CONF}/client.key" -X PATCH -d "{\"certificate\":\"$(sed ':a;N;$!ba;s/\n/\\n/g' "${INCUS_CONF}/client.crt.new")\"}" "https://${INCUS_ADDR}/1.0/certificates/${FINGERPRINT}"
 
   # Record new fingerprint
-  FINGERPRINT="$(incus config trust list --format csv | cut -d, -f4)"
+  FINGERPRINT="$(incus config trust list --format csv --columns f)"
 
   # Move new certificate and key to INCUS_CONF and back up old files.
   mv "${INCUS_CONF}/client.crt" "${INCUS_CONF}/client.crt.bak"
@@ -84,7 +84,7 @@ test_certificate_edit() {
   mv "${INCUS_CONF}/client.key.bak" "${INCUS_CONF}/client.key"
 
   # Record new fingerprint
-  FINGERPRINT="$(incus config trust list --format csv | cut -d, -f4)"
+  FINGERPRINT="$(incus config trust list --format csv --columns f)"
 
   # Trying to change other fields should fail as a non-admin.
   ! incus_remote config trust show "${FINGERPRINT}" | sed -e "s/restricted: true/restricted: false/" | incus_remote config trust edit localhost:"${FINGERPRINT}" || false

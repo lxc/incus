@@ -124,10 +124,10 @@ user_is_not_server_admin() {
   ! incus storage create oidc-openfga:test dir || false
 
   # Should still be able to list certificates.
-  [ "$(incus config trust list oidc-openfga: -f csv | wc -l)" = 1 ]
+  [ "$(incus config trust list oidc-openfga: -f csv -cf | wc -l)" = 1 ]
 
   # Cannot edit certificates.
-  fingerprint="$(incus config trust list -f csv | cut -d, -f4)"
+  fingerprint="$(incus config trust list -f csv -cf)"
   ! incus config trust show "${fingerprint}" | sed -e "s/restricted: false/restricted: true/" | incus config trust edit "oidc-openfga:${fingerprint}" || false
 }
 
