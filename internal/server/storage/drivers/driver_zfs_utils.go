@@ -420,7 +420,7 @@ func ValidateZfsBlocksize(value string) error {
 	}
 
 	if sizeBytes < zfsMinBlocksize || sizeBytes > zfsMaxBlocksize || (sizeBytes&(sizeBytes-1)) != 0 {
-		return fmt.Errorf("Value should be between 512 and 16MiB, and be power of 2")
+		return fmt.Errorf("Value should be between 512B and 16MiB, and be power of 2")
 	}
 
 	return nil
