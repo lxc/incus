@@ -674,8 +674,14 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 			return response.InternalError(fmt.Errorf("Storage pool not found: %w", err))
 		}
 
-		// Otherwise try and restore to the project's default profile pool.
-		_, profile, err := s.DB.Cluster.GetProfile(bInfo.Project, "default")
+		var profile *api.Profile
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Otherwise try and restore to the project's default profile pool.
+			_, profile, err = tx.GetProfile(ctx, bInfo.Project, "default")
+
+			return err
+		})
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed to get default profile: %w", err))
 		}
@@ -1161,18 +1167,25 @@ func instanceFindStoragePool(s *state.State, projectName string, req *api.Instan
 
 	// If we don't have a valid pool yet, look through profiles
 	if storagePool == "" {
-		for _, pName := range req.Profiles {
-			_, p, err := s.DB.Cluster.GetProfile(projectName, pName)
-			if err != nil {
-				return "", "", "", nil, response.SmartError(err)
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			for _, pName := range req.Profiles {
+				_, p, err := tx.GetProfile(ctx, projectName, pName)
+				if err != nil {
+					return err
+				}
+
+				k, v, _ := internalInstance.GetRootDiskDevice(p.Devices)
+				if k != "" && v["pool"] != "" {
+					// Keep going as we want the last one in the profile chain
+					storagePool = v["pool"]
+					storagePoolProfile = pName
+				}
 			}
 
-			k, v, _ := internalInstance.GetRootDiskDevice(p.Devices)
-			if k != "" && v["pool"] != "" {
-				// Keep going as we want the last one in the profile chain
-				storagePool = v["pool"]
-				storagePoolProfile = pName
-			}
+			return nil
+		})
+		if err != nil {
+			return "", "", "", nil, response.SmartError(err)
 		}
 	}
 
