@@ -113,7 +113,13 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 
 	// If managed network being passed in, check if it has any peerings in a created state.
 	if networkID > 0 {
-		peers, err := s.DB.Cluster.GetNetworkPeers(networkID)
+		var peers map[int64]*api.NetworkPeer
+
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			peers, err = tx.GetNetworkPeers(ctx, networkID)
+
+			return err
+		})
 		if err != nil {
 			return nil, fmt.Errorf("Failed getting network peers: %w", err)
 		}
