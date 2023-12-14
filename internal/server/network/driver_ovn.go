@@ -5325,9 +5325,17 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 		return api.StatusErrorf(http.StatusBadRequest, "Target network is required")
 	}
 
-	// Check if there is an existing peer using the same name, or whether there is already a peering (in any
-	// state) to the target network.
-	peers, err := n.state.DB.Cluster.GetNetworkPeers(n.ID())
+	var peers map[int64]*api.NetworkPeer
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Check if there is an existing peer using the same name, or whether there is already a peering (in any
+		// state) to the target network.
+		peers, err = tx.GetNetworkPeers(ctx, n.ID())
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -5348,8 +5356,14 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 		return err
 	}
 
-	// Create peer DB record.
-	peerID, mutualExists, err := n.state.DB.Cluster.CreateNetworkPeer(n.ID(), &peer)
+	var peerID int64
+	var mutualExists bool
+
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error { // Create peer DB record.
+		peerID, mutualExists, err = tx.CreateNetworkPeer(ctx, n.ID(), &peer)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -5359,8 +5373,14 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 	})
 
 	if mutualExists {
-		// Load peering to get mutual peering info.
-		_, peerInfo, err := n.state.DB.Cluster.GetNetworkPeer(n.ID(), peer.Name)
+		var peerInfo *api.NetworkPeer
+
+		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Load peering to get mutual peering info.
+			_, peerInfo, err = tx.GetNetworkPeer(ctx, n.ID(), peer.Name)
+
+			return err
+		})
 		if err != nil {
 			return err
 		}
@@ -5572,7 +5592,16 @@ func (n *ovn) PeerUpdate(peerName string, req api.NetworkPeerPut) error {
 	revert := revert.New()
 	defer revert.Fail()
 
-	curPeerID, curPeer, err := n.state.DB.Cluster.GetNetworkPeer(n.ID(), peerName)
+	var curPeerID int64
+	var curPeer *api.NetworkPeer
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		curPeerID, curPeer, err = tx.GetNetworkPeer(ctx, n.ID(), peerName)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -5601,7 +5630,9 @@ func (n *ovn) PeerUpdate(peerName string, req api.NetworkPeerPut) error {
 		return nil // Nothing has changed.
 	}
 
-	err = n.state.DB.Cluster.UpdateNetworkPeer(n.ID(), curPeerID, &newPeer.NetworkPeerPut)
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.UpdateNetworkPeer(ctx, n.ID(), curPeerID, &newPeer.NetworkPeerPut)
+	})
 	if err != nil {
 		return err
 	}
@@ -5612,7 +5643,16 @@ func (n *ovn) PeerUpdate(peerName string, req api.NetworkPeerPut) error {
 
 // PeerDelete deletes a network peering.
 func (n *ovn) PeerDelete(peerName string) error {
-	peerID, peer, err := n.state.DB.Cluster.GetNetworkPeer(n.ID(), peerName)
+	var peerID int64
+	var peer *api.NetworkPeer
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		peerID, peer, err = tx.GetNetworkPeer(ctx, n.ID(), peerName)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -5675,7 +5715,15 @@ func (n *ovn) PeerDelete(peerName string) error {
 
 // forPeers runs f for each target peer network that this network is connected to.
 func (n *ovn) forPeers(f func(targetOVNNet *ovn) error) error {
-	peers, err := n.state.DB.Cluster.GetNetworkPeers(n.ID())
+	var peers map[int64]*api.NetworkPeer
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		peers, err = tx.GetNetworkPeers(ctx, n.ID())
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
