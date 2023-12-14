@@ -77,7 +77,13 @@ func (suite *containerTestSuite) TestContainer_ProfilesMulti() {
 		})
 	}()
 
-	testProfiles, err := suite.d.db.Cluster.GetProfiles("default", []string{"default", "unprivileged"})
+	var testProfiles []api.Profile
+
+	err = suite.d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		testProfiles, err = tx.GetProfiles(ctx, "default", []string{"default", "unprivileged"})
+
+		return err
+	})
 	suite.Req.Nil(err)
 
 	args := db.InstanceArgs{
@@ -245,7 +251,15 @@ func (suite *containerTestSuite) TestContainer_AddRoutedNicValidation() {
 		"ipv6.gateway": "none", "nictype": "routed", "parent": "unknownbr0"}
 	eth2 := deviceConfig.Device{"name": "eth2", "type": "nic", "nictype": "bridged", "parent": "unknownbr0"}
 
-	testProfiles, err := suite.d.db.Cluster.GetProfiles("default", []string{"default"})
+	var testProfiles []api.Profile
+
+	err := suite.d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		testProfiles, err = tx.GetProfiles(ctx, "default", []string{"default"})
+
+		return err
+	})
 	suite.Req.Nil(err)
 
 	args := db.InstanceArgs{

@@ -737,7 +737,13 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 		}
 	}
 
-	profiles, err := s.DB.Cluster.GetProfiles(projectName, backupConf.Container.Profiles)
+	var profiles []api.Profile
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		profiles, err = tx.GetProfiles(ctx, projectName, backupConf.Container.Profiles)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed loading profiles for instance: %w", err)
 	}
@@ -839,7 +845,11 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 			return err
 		}
 
-		profiles, err := s.DB.Cluster.GetProfiles(projectName, snap.Profiles)
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			profiles, err = tx.GetProfiles(ctx, projectName, snap.Profiles)
+
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("Failed loading profiles for instance snapshot %q: %w", snapInstName, err)
 		}

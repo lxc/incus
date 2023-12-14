@@ -55,25 +55,32 @@ func doProfileUpdate(s *state.State, p api.Project, profileName string, id int64
 				continue
 			}
 
-			// Check what profile the device comes from by working backwards along the profiles list.
-			for i := len(inst.Profiles) - 1; i >= 0; i-- {
-				_, profile, err := s.DB.Cluster.GetProfile(p.Name, inst.Profiles[i].Name)
-				if err != nil {
-					return err
-				}
-
-				// Check if we find a match for the device.
-				_, ok := profile.Devices[oldProfileRootDiskDeviceKey]
-				if ok {
-					// Found the profile.
-					if inst.Profiles[i].Name == profileName {
-						// If it's the current profile, then we can't modify that root device.
-						return fmt.Errorf("At least one instance relies on this profile's root disk device")
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				// Check what profile the device comes from by working backwards along the profiles list.
+				for i := len(inst.Profiles) - 1; i >= 0; i-- {
+					_, profile, err := tx.GetProfile(ctx, p.Name, inst.Profiles[i].Name)
+					if err != nil {
+						return err
 					}
 
-					// If it's not, then move on to the next instance.
-					break
+					// Check if we find a match for the device.
+					_, ok := profile.Devices[oldProfileRootDiskDeviceKey]
+					if ok {
+						// Found the profile.
+						if inst.Profiles[i].Name == profileName {
+							// If it's the current profile, then we can't modify that root device.
+							return fmt.Errorf("At least one instance relies on this profile's root disk device")
+						}
+
+						// If it's not, then move on to the next instance.
+						break
+					}
 				}
+
+				return nil
+			})
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -204,7 +211,15 @@ func doProfileUpdateInstance(s *state.State, args db.InstanceArgs, p api.Project
 		profileNames = append(profileNames, profile.Name)
 	}
 
-	profiles, err := s.DB.Cluster.GetProfiles(args.Project, profileNames)
+	var profiles []api.Profile
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		profiles, err = tx.GetProfiles(ctx, args.Project, profileNames)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -231,8 +246,16 @@ func doProfileUpdateInstance(s *state.State, args db.InstanceArgs, p api.Project
 
 // Query the db for information about instances associated with the given profile.
 func getProfileInstancesInfo(dbCluster *db.Cluster, projectName string, profileName string) (map[int]db.InstanceArgs, map[string]*api.Project, error) {
+	var projectInstNames map[string][]string
+
 	// Query the db for information about instances associated with the given profile.
-	projectInstNames, err := dbCluster.GetInstancesWithProfile(projectName, profileName)
+	err := dbCluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		projectInstNames, err = tx.GetInstancesWithProfile(ctx, projectName, profileName)
+
+		return err
+	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to query instances with profile %q: %w", profileName, err)
 	}

@@ -731,7 +731,11 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 	}
 
 	if args.Profiles == nil {
-		args.Profiles, err = s.DB.Cluster.GetProfiles(args.Project, []string{"default"})
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			args.Profiles, err = tx.GetProfiles(ctx, args.Project, []string{"default"})
+
+			return err
+		})
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("Failed to get default profile for new instance")
 		}
@@ -797,8 +801,14 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 		return nil, nil, nil, fmt.Errorf("Requested architecture isn't supported by this host")
 	}
 
-	// Validate profiles.
-	profiles, err := s.DB.Cluster.GetProfileNames(args.Project)
+	var profiles []string
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Validate profiles.
+		profiles, err = tx.GetProfileNames(ctx, args.Project)
+
+		return err
+	})
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -1206,7 +1216,15 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 		devices[ent.GetName()] = props
 	}
 
-	profiles, err := s.DB.Cluster.GetProfiles(inst.Project().Name, snap.Profiles)
+	var profiles []api.Profile
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		profiles, err = tx.GetProfiles(ctx, inst.Project().Name, snap.Profiles)
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

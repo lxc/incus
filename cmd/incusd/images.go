@@ -457,15 +457,23 @@ func imgPostRemoteInfo(s *state.State, r *http.Request, req api.ImagesPost, op *
 	}
 
 	profileIds := make([]int64, len(req.Profiles))
-	for i, profile := range req.Profiles {
-		profileID, _, err := s.DB.Cluster.GetProfile(project, profile)
-		if response.IsNotFoundError(err) {
-			return nil, fmt.Errorf("Profile '%s' doesn't exist", profile)
-		} else if err != nil {
-			return nil, err
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		for i, profile := range req.Profiles {
+			profileID, _, err := tx.GetProfile(ctx, project, profile)
+			if response.IsNotFoundError(err) {
+				return fmt.Errorf("Profile '%s' doesn't exist", profile)
+			} else if err != nil {
+				return err
+			}
+
+			profileIds[i] = profileID
 		}
 
-		profileIds[i] = profileID
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	// Update the DB record if needed
@@ -766,15 +774,22 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 		p, _ := url.ParseQuery(profilesHeaders)
 		profileIds = make([]int64, len(p["profile"]))
 
-		for i, val := range p["profile"] {
-			profileID, _, err := s.DB.Cluster.GetProfile(project, val)
-			if response.IsNotFoundError(err) {
-				return nil, fmt.Errorf("Profile '%s' doesn't exist", val)
-			} else if err != nil {
-				return nil, err
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			for i, val := range p["profile"] {
+				profileID, _, err := tx.GetProfile(ctx, project, val)
+				if response.IsNotFoundError(err) {
+					return fmt.Errorf("Profile '%s' doesn't exist", val)
+				} else if err != nil {
+					return err
+				}
+
+				profileIds[i] = profileID
 			}
 
-			profileIds[i] = profileID
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -3036,15 +3051,27 @@ func imagePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	profileIds := make([]int64, len(req.Profiles))
-	for i, profile := range req.Profiles {
-		profileID, _, err := s.DB.Cluster.GetProfile(projectName, profile)
-		if response.IsNotFoundError(err) {
-			return response.BadRequest(fmt.Errorf("Profile '%s' doesn't exist", profile))
-		} else if err != nil {
-			return response.SmartError(err)
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		for i, profile := range req.Profiles {
+			profileID, _, err := tx.GetProfile(ctx, projectName, profile)
+			if response.IsNotFoundError(err) {
+				return fmt.Errorf("Profile '%s' doesn't exist", profile)
+			} else if err != nil {
+				return err
+			}
+
+			profileIds[i] = profileID
 		}
 
-		profileIds[i] = profileID
+		return nil
+	})
+	if err != nil {
+		if response.IsNotFoundError(err) {
+			return response.BadRequest(err)
+		}
+
+		return response.SmartError(err)
 	}
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
