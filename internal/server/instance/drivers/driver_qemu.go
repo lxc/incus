@@ -2734,11 +2734,7 @@ rmdir "${PREFIX}/.mnt"
 	}
 
 	// Udev rules to start the incus-agent.service when QEMU serial devices (symlinks in virtio-ports) appear.
-	agentRules := `SYMLINK=="virtio-ports/org.linuxcontainers.incus", TAG+="systemd", ENV{SYSTEMD_WANTS}+="incus-agent.service"
-
-# Legacy.
-SYMLINK=="virtio-ports/org.linuxcontainers.lxd", TAG+="systemd", ENV{SYSTEMD_WANTS}+="incus-agent.service"
-`
+	agentRules := `SYMLINK=="virtio-ports/org.linuxcontainers.incus", TAG+="systemd", ENV{SYSTEMD_WANTS}+="incus-agent.service"\n`
 	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-incus-agent.rules"), []byte(agentRules), 0400)
 	if err != nil {
 		return err
