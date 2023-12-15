@@ -9,7 +9,7 @@ Feel free to remove anything which doesn't apply to you and add more information
 
  * Distribution:
  * Distribution version:
- * The output of "inc info" or if that fails:
+ * The output of "incus info" or if that fails:
    * Kernel version:
    * LXC version:
    * Incus version:
@@ -30,8 +30,8 @@ see happen.
 # Information to attach
 
  - [ ] Any relevant kernel output (`dmesg`)
- - [ ] Container log (`inc info NAME --show-log`)
- - [ ] Container configuration (`inc config show NAME --expanded`)
- - [ ] Main daemon log (at /var/log/incus/incus.log)
+ - [ ] Container log (`incus info NAME --show-log`)
+ - [ ] Container configuration (`incus config show NAME --expanded`)
+ - [ ] Main daemon log (at /var/log/incus/incusd.log)
  - [ ] Output of the client with --debug
- - [ ] Output of the daemon with --debug (alternatively output of `inc monitor` while reproducing the issue)
+ - [ ] Output of the daemon with --debug (alternatively output of `incus monitor --pretty` while reproducing the issue)
