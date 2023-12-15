@@ -348,7 +348,6 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/internal/linux"
 	_ "github.com/lxc/incus/shared/cgo" // Used by cgo
 	"github.com/lxc/incus/shared/logger"
 )
@@ -371,7 +370,7 @@ func ShiftOwner(basepath string, path string, uid int, gid int) error {
 
 // GetCaps extracts the list of capabilities effective on the file
 func GetCaps(path string) ([]byte, error) {
-	xattrs, err := linux.GetAllXattr(path)
+	xattrs, err := getAllXattr(path)
 	if err != nil {
 		return nil, err
 	}
@@ -512,7 +511,7 @@ func SupportsVFS3Fscaps(prefix string) bool {
 	cmd := exec.Command(tmpfile.Name())
 	err = cmd.Run()
 	if err != nil {
-		errno, isErrno := linux.GetErrno(err)
+		errno, isErrno := getErrno(err)
 		if isErrno && (errno == unix.ERANGE || errno == unix.EOVERFLOW) {
 			return false
 		}
