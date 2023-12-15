@@ -638,39 +638,43 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		// Get a list of projects for networks.
 		var projects []dbCluster.Project
+		networks := []api.InitNetworksProjectPost{}
 
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			projects, err = dbCluster.GetProjects(ctx, tx.Tx())
-			return err
-		})
-		if err != nil {
-			return fmt.Errorf("Failed to load projects for networks: %w", err)
-		}
-
-		networks := []api.InitNetworksProjectPost{}
-		for _, p := range projects {
-			networkNames, err := s.DB.Cluster.GetNetworks(p.Name)
-			if err != nil && !response.IsNotFoundError(err) {
-				return err
+			if err != nil {
+				return fmt.Errorf("Failed to load projects for networks: %w", err)
 			}
 
-			for _, name := range networkNames {
-				_, network, _, err := s.DB.Cluster.GetNetworkInAnyState(p.Name, name)
-				if err != nil {
+			for _, p := range projects {
+				networkNames, err := tx.GetNetworks(ctx, p.Name)
+				if err != nil && !response.IsNotFoundError(err) {
 					return err
 				}
 
-				internalNetwork := api.InitNetworksProjectPost{
-					NetworksPost: api.NetworksPost{
-						NetworkPut: network.NetworkPut,
-						Name:       network.Name,
-						Type:       network.Type,
-					},
-					Project: p.Name,
-				}
+				for _, name := range networkNames {
+					_, network, _, err := tx.GetNetworkInAnyState(ctx, p.Name, name)
+					if err != nil {
+						return err
+					}
 
-				networks = append(networks, internalNetwork)
+					internalNetwork := api.InitNetworksProjectPost{
+						NetworksPost: api.NetworksPost{
+							NetworkPut: network.NetworkPut,
+							Name:       network.Name,
+							Type:       network.Type,
+						},
+						Project: p.Name,
+					}
+
+					networks = append(networks, internalNetwork)
+				}
 			}
+
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 
 		// Now request for this node to be added to the list of cluster nodes.
@@ -2088,7 +2092,13 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 		}
 
 		for _, networkProjectName := range networkProjectNames {
-			networks, err := s.DB.Cluster.GetNetworks(networkProjectName)
+			var networks []string
+
+			err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				networks, err = tx.GetNetworks(ctx, networkProjectName)
+
+				return err
+			})
 			if err != nil {
 				return response.SmartError(err)
 			}
@@ -2801,52 +2811,56 @@ func clusterCheckNetworksMatch(cluster *db.Cluster, reqNetworks []api.InitNetwor
 	var networkProjectNames []string
 
 	err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		networkProjectNames, err = dbCluster.GetProjectNames(context.Background(), tx.Tx())
-		return err
+		networkProjectNames, err = dbCluster.GetProjectNames(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed to load projects for networks: %w", err)
+		}
+
+		for _, networkProjectName := range networkProjectNames {
+			networkNames, err := tx.GetCreatedNetworkNamesByProject(ctx, networkProjectName)
+			if err != nil && !response.IsNotFoundError(err) {
+				return err
+			}
+
+			for _, networkName := range networkNames {
+				found := false
+
+				for _, reqNetwork := range reqNetworks {
+					if reqNetwork.Name != networkName || reqNetwork.Project != networkProjectName {
+						continue
+					}
+
+					found = true
+
+					_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
+					if err != nil {
+						return err
+					}
+
+					if reqNetwork.Type != network.Type {
+						return fmt.Errorf("Mismatching type for network %q in project %q", networkName, networkProjectName)
+					}
+
+					// Exclude the keys which are node-specific.
+					exclude := db.NodeSpecificNetworkConfig
+					err = localUtil.CompareConfigs(network.Config, reqNetwork.Config, exclude)
+					if err != nil {
+						return fmt.Errorf("Mismatching config for network %q in project %q: %w", network.Name, networkProjectName, err)
+					}
+
+					break
+				}
+
+				if !found {
+					return fmt.Errorf("Missing network %q in project %q", networkName, networkProjectName)
+				}
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to load projects for networks: %w", err)
-	}
-
-	for _, networkProjectName := range networkProjectNames {
-		networkNames, err := cluster.GetCreatedNetworks(networkProjectName)
-		if err != nil && !response.IsNotFoundError(err) {
-			return err
-		}
-
-		for _, networkName := range networkNames {
-			found := false
-
-			for _, reqNetwork := range reqNetworks {
-				if reqNetwork.Name != networkName || reqNetwork.Project != networkProjectName {
-					continue
-				}
-
-				found = true
-
-				_, network, _, err := cluster.GetNetworkInAnyState(networkProjectName, networkName)
-				if err != nil {
-					return err
-				}
-
-				if reqNetwork.Type != network.Type {
-					return fmt.Errorf("Mismatching type for network %q in project %q", networkName, networkProjectName)
-				}
-
-				// Exclude the keys which are node-specific.
-				exclude := db.NodeSpecificNetworkConfig
-				err = localUtil.CompareConfigs(network.Config, reqNetwork.Config, exclude)
-				if err != nil {
-					return fmt.Errorf("Mismatching config for network %q in project %q: %w", networkName, networkProjectName, err)
-				}
-
-				break
-			}
-
-			if !found {
-				return fmt.Errorf("Missing network %q in project %q", networkName, networkProjectName)
-			}
-		}
+		return err
 	}
 
 	return nil

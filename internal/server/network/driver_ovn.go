@@ -392,8 +392,14 @@ func (n *ovn) Validate(config map[string]string) error {
 		return err
 	}
 
-	// Get uplink routes.
-	_, uplink, _, err := n.state.DB.Cluster.GetNetworkInAnyState(api.ProjectDefaultName, uplinkNetworkName)
+	var uplink *api.Network
+
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get uplink routes.
+		_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, uplinkNetworkName)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
 	}
@@ -1057,7 +1063,7 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 				n.config[ovnVolatileUplinkIPv6] = routerExtPortIPv6.String()
 			}
 
-			err = tx.UpdateNetwork(n.id, n.description, n.config)
+			err = tx.UpdateNetwork(ctx, n.project, n.name, n.description, n.config)
 			if err != nil {
 				return fmt.Errorf("Failed saving allocated uplink network IPs: %w", err)
 			}
@@ -1974,7 +1980,7 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			err = tx.UpdateNetwork(n.id, n.description, n.config)
+			err = tx.UpdateNetwork(ctx, n.project, n.name, n.description, n.config)
 			if err != nil {
 				return fmt.Errorf("Failed saving updated network config: %w", err)
 			}
@@ -3312,11 +3318,17 @@ func (n *ovn) instanceDevicePortRoutesParse(deviceConfig map[string]string) ([]*
 
 // InstanceDevicePortValidateExternalRoutes validates the external routes for an OVN instance port.
 func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.Instance, deviceName string, portExternalRoutes []*net.IPNet) error {
-	var err error
 	var p *api.Project
+	var uplink *api.Network
 
-	// Get uplink routes.
-	_, uplink, _, err := n.state.DB.Cluster.GetNetworkInAnyState(api.ProjectDefaultName, n.config["network"])
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get uplink routes.
+		_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.config["network"])
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
 	}
@@ -4096,8 +4108,14 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		return fmt.Errorf("Failed parsing NIC device routes: %w", err)
 	}
 
-	// Load uplink network config.
-	_, uplink, _, err := n.state.DB.Cluster.GetNetworkInAnyState(api.ProjectDefaultName, n.config["network"])
+	var uplink *api.Network
+
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Load uplink network config.
+		_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.config["network"])
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
 	}
@@ -4623,8 +4641,14 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
 		}
 
-		// Get uplink routes.
-		_, uplink, _, err := n.state.DB.Cluster.GetNetworkInAnyState(api.ProjectDefaultName, n.config["network"])
+		var uplink *api.Network
+
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Get uplink routes.
+			_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.config["network"])
+
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
 		}
@@ -4973,8 +4997,14 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
 		}
 
-		// Get uplink routes.
-		_, uplink, _, err := n.state.DB.Cluster.GetNetworkInAnyState(api.ProjectDefaultName, n.config["network"])
+		var uplink *api.Network
+
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Get uplink routes.
+			_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.config["network"])
+
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
 		}

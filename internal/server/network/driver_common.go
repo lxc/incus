@@ -391,8 +391,10 @@ func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientTy
 			}
 		}
 
-		// Update the database.
-		err := n.state.DB.Cluster.UpdateNetwork(n.project, n.name, applyNetwork.Description, applyNetwork.Config)
+		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Update the database.
+			return tx.UpdateNetwork(ctx, n.project, n.name, applyNetwork.Description, applyNetwork.Config)
+		})
 		if err != nil {
 			return err
 		}
@@ -464,8 +466,10 @@ func (n *common) rename(newName string) error {
 		}
 	}
 
-	// Rename the database entry.
-	err := n.state.DB.Cluster.RenameNetwork(n.project, n.name, newName)
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Rename the database entry.
+		return tx.RenameNetwork(ctx, n.project, n.name, newName)
+	})
 	if err != nil {
 		return err
 	}
@@ -544,8 +548,14 @@ func (n *common) notifyDependentNetworks(changedKeys []string) {
 	}
 
 	for _, projectName := range projectNames {
-		// Get a list of managed networks in project.
-		depNets, err := n.state.DB.Cluster.GetCreatedNetworks(projectName)
+		var depNets []string
+
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Get a list of managed networks in project.
+			depNets, err = tx.GetCreatedNetworkNamesByProject(ctx, projectName)
+
+			return err
+		})
 		if err != nil {
 			n.logger.Error("Failed to load networks in project", logger.Ctx{"project": projectName, "err": err})
 			continue // Continue to next project.

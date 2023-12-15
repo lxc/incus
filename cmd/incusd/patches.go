@@ -548,7 +548,7 @@ func patchNetworkOVNRemoveRoutes(name string, d *Daemon) error {
 			return err
 		}
 
-		for _, networks := range projectNetworks {
+		for projectName, networks := range projectNetworks {
 			for networkID, network := range networks {
 				if network.Type != "ovn" {
 					continue
@@ -570,7 +570,7 @@ func patchNetworkOVNRemoveRoutes(name string, d *Daemon) error {
 				}
 
 				if modified {
-					err = tx.UpdateNetwork(networkID, network.Description, network.Config)
+					err = tx.UpdateNetwork(ctx, projectName, network.Name, network.Description, network.Config)
 					if err != nil {
 						return fmt.Errorf("Failed removing OVN external route settings for %q (%d): %w", network.Name, networkID, err)
 					}
@@ -600,7 +600,7 @@ func patchNetworkOVNEnableNAT(name string, d *Daemon) error {
 			return err
 		}
 
-		for _, networks := range projectNetworks {
+		for projectName, networks := range projectNetworks {
 			for networkID, network := range networks {
 				if network.Type != "ovn" {
 					continue
@@ -620,7 +620,7 @@ func patchNetworkOVNEnableNAT(name string, d *Daemon) error {
 				}
 
 				if modified {
-					err = tx.UpdateNetwork(networkID, network.Description, network.Config)
+					err = tx.UpdateNetwork(ctx, projectName, network.Name, network.Description, network.Config)
 					if err != nil {
 						return fmt.Errorf("Failed saving OVN NAT settings for %q (%d): %w", network.Name, networkID, err)
 					}
@@ -711,25 +711,32 @@ func patchNetworkClearBridgeVolatileHwaddr(name string, d *Daemon) error {
 	// Use api.ProjectDefaultName, as bridge networks don't support projects.
 	projectName := api.ProjectDefaultName
 
-	// Get the list of networks.
-	networks, err := d.db.Cluster.GetNetworks(projectName)
-	if err != nil {
-		return fmt.Errorf("Failed loading networks for network_clear_bridge_volatile_hwaddr patch: %w", err)
-	}
-
-	for _, networkName := range networks {
-		_, net, _, err := d.db.Cluster.GetNetworkInAnyState(projectName, networkName)
+	err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get the list of networks.
+		networks, err := tx.GetNetworks(ctx, projectName)
 		if err != nil {
-			return fmt.Errorf("Failed loading network %q for network_clear_bridge_volatile_hwaddr patch: %w", networkName, err)
+			return fmt.Errorf("Failed loading networks for network_clear_bridge_volatile_hwaddr patch: %w", err)
 		}
 
-		if net.Config["volatile.bridge.hwaddr"] != "" {
-			delete(net.Config, "volatile.bridge.hwaddr")
-			err = d.db.Cluster.UpdateNetwork(projectName, net.Name, net.Description, net.Config)
+		for _, networkName := range networks {
+			_, net, _, err := tx.GetNetworkInAnyState(ctx, projectName, networkName)
 			if err != nil {
-				return fmt.Errorf("Failed updating network %q for network_clear_bridge_volatile_hwaddr patch: %w", networkName, err)
+				return fmt.Errorf("Failed loading network %q for network_clear_bridge_volatile_hwaddr patch: %w", networkName, err)
+			}
+
+			if net.Config["volatile.bridge.hwaddr"] != "" {
+				delete(net.Config, "volatile.bridge.hwaddr")
+				err = tx.UpdateNetwork(ctx, projectName, net.Name, net.Description, net.Config)
+				if err != nil {
+					return fmt.Errorf("Failed updating network %q for network_clear_bridge_volatile_hwaddr patch: %w", networkName, err)
+				}
 			}
 		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

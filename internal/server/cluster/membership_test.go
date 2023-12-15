@@ -338,7 +338,12 @@ func TestJoin(t *testing.T) {
 
 	err = cluster.Bootstrap(targetState, targetGateway, "buzz")
 	require.NoError(t, err)
-	_, err = targetState.DB.Cluster.GetNetworks(api.ProjectDefaultName)
+
+	err = targetState.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err = tx.GetNetworks(ctx, api.ProjectDefaultName)
+
+		return err
+	})
 	require.NoError(t, err)
 
 	// Setup a joining node

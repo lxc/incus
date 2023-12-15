@@ -385,8 +385,12 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 	if networkName == "" {
 		var err error
 
-		// Pass api.ProjectDefaultName here, as currently dnsmasq (bridged) networks do not support projects.
-		networks, err = s.DB.Cluster.GetNetworks(api.ProjectDefaultName)
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Pass api.ProjectDefaultName here, as currently dnsmasq (bridged) networks do not support projects.
+			networks, err = tx.GetNetworks(ctx, api.ProjectDefaultName)
+
+			return err
+		})
 		if err != nil {
 			return err
 		}

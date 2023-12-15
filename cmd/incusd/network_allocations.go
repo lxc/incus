@@ -125,7 +125,15 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 
 	// Then, get all the networks, their network forwards and their network load balancers.
 	for _, projectName := range projectNames {
-		networkNames, err := d.db.Cluster.GetNetworks(projectName)
+		var networkNames []string
+
+		err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			networkNames, err = tx.GetNetworks(ctx, projectName)
+
+			return err
+		})
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading networks: %w", err))
 		}

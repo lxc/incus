@@ -1499,8 +1499,14 @@ func projectValidateRestrictedSubnets(s *state.State, value string) error {
 			return fmt.Errorf("Not an IP network address %q", subnetStr)
 		}
 
-		// Check uplink exists and load config to compare subnets.
-		_, uplink, _, err := s.DB.Cluster.GetNetworkInAnyState(api.ProjectDefaultName, uplinkName)
+		var uplink *api.Network
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Check uplink exists and load config to compare subnets.
+			_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, uplinkName)
+
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("Invalid uplink network %q: %w", uplinkName, err)
 		}
