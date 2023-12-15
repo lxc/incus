@@ -50,7 +50,7 @@ The `ceph` driver in Incus uses RBD images for images, and snapshots and clones 
 
 <!-- Include start Ceph driver control -->
 Incus assumes that it has full control over the OSD storage pool.
-Therefore, you should never maintain any file system entities that are not owned by Incus in a Incus OSD storage pool, because Incus might delete them.
+Therefore, you should never maintain any file system entities that are not owned by Incus in an Incus OSD storage pool, because Incus might delete them.
 <!-- Include end Ceph driver control -->
 
 Due to the way copy-on-write works in Ceph RBD, parent RBD images can't be removed until all children are gone.

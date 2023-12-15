@@ -42,9 +42,9 @@ Complete the following steps to create a standalone OVN network that is connecte
    +------+---------+---------------------+----------------------------------------------+-----------+-----------+
    ```
 
-## Set up a Incus cluster on OVN
+## Set up an Incus cluster on OVN
 
-Complete the following steps to set up a Incus cluster that uses an OVN network.
+Complete the following steps to set up an Incus cluster that uses an OVN network.
 
 Just like Incus, the distributed database for OVN must be run on a cluster that consists of an odd number of members.
 The following instructions use the minimum of three servers, which run both the distributed database for OVN and the OVN controller.
@@ -119,7 +119,7 @@ In addition, you can add any number of servers to the Incus cluster that run onl
           external_ids:ovn-encap-type=geneve \
           external_ids:ovn-encap-ip=<local>
 
-1. Create a Incus cluster by running `incus admin init` on all machines.
+1. Create an Incus cluster by running `incus admin init` on all machines.
    On the first machine, create the cluster.
    Then join the other machines with tokens by running [`incus cluster add <machine_name>`](incus_cluster_add.md) on the first machine and specifying the token when initializing Incus on the other machine.
 1. On the first machine, create and configure the uplink network:

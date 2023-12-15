@@ -11,7 +11,7 @@ If you want to directly route external addresses to specific Incus servers or in
 Incus will then act as a BGP peer and advertise relevant routes and next hops to external routers, for example, your network router.
 It automatically establishes sessions with upstream BGP routers and announces the addresses and subnets that it's using.
 
-The BGP server feature can be used to allow a Incus server or cluster to directly use internal/external address space by getting the specific subnets or addresses routed to the correct host.
+The BGP server feature can be used to allow an Incus server or cluster to directly use internal/external address space by getting the specific subnets or addresses routed to the correct host.
 This way, traffic can be forwarded to the target instance.
 
 For bridge networks, the following addresses and networks are being advertised:

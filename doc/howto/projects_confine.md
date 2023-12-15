@@ -51,7 +51,7 @@ This is usually achieved by having some users be a member of the `incus` group b
 
 Make sure that all user accounts that you want to be able to use Incus are a member of this group.
 
-Once a member of the group issues a Incus command, Incus creates a confined project for this user and switches to this project.
+Once a member of the group issues an Incus command, Incus creates a confined project for this user and switches to this project.
 If Incus has not been {ref}`initialized <initialize>` at this point, it is automatically initialized (with the default settings).
 
 If you want to customize the project settings, for example, to impose limits or restrictions, you can do so after the project has been created.

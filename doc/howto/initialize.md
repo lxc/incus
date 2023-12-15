@@ -1,7 +1,7 @@
 (initialize)=
 # How to initialize Incus
 
-Before you can create a Incus instance, you must configure and initialize Incus.
+Before you can create an Incus instance, you must configure and initialize Incus.
 
 ## Interactive configuration
 
@@ -120,7 +120,7 @@ Failure modes when overwriting entities are the same as for the `PUT` requests i
 
 ```{note}
 The rollback process might potentially fail, although rarely (typically due to backend bugs or limitations).
-You should therefore be careful when trying to reconfigure a Incus daemon via preseed.
+You should therefore be careful when trying to reconfigure an Incus daemon via preseed.
 ```
 
 ### Default profile

@@ -21,7 +21,7 @@ Simple streams servers
 Public Incus servers
 : Incus servers that are used solely to serve images and do not run instances themselves.
 
-  To make a Incus server publicly available over the network on port 8443, set the {config:option}`server-core:core.https_address` configuration option to `:8443` and do not configure any authentication methods (see {ref}`server-expose` for more information).
+  To make an Incus server publicly available over the network on port 8443, set the {config:option}`server-core:core.https_address` configuration option to `:8443` and do not configure any authentication methods (see {ref}`server-expose` for more information).
   Then set the images that you want to share to `public`.
 
 Incus servers

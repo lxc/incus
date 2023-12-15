@@ -18,7 +18,7 @@ Image
   Unless the image is available locally, you must specify the name of the image server and the name of the image (for example, `images:ubuntu/22.04` for the official 22.04 Ubuntu image).
 
 Instance name
-: Instance names must be unique within a Incus deployment (also within a cluster).
+: Instance names must be unique within an Incus deployment (also within a cluster).
   See {ref}`instance-properties` for additional requirements.
 
 Flags

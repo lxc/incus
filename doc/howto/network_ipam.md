@@ -1,5 +1,5 @@
 (network-ipam)=
-# How to display IPAM information of a Incus deployment
+# How to display IPAM information of an Incus deployment
 
 {abbr}`IPAM (IP Address Management)` is a method used to plan, track, and manage the information associated with a computer network's IP address space. In essence, it's a way of organizing, monitoring, and manipulating the IP space in a network.
 
@@ -33,4 +33,4 @@ The resulting output will look something like this:
 
 Each listed entry lists the IP address (in CIDR notation) of one of the following Incus entities: `network`, `network-forward`, `network-load-balancer`, and `instance`.
 An entry contains an IP address using the CIDR notation.
-It also contains a Incus resource URI, the type of the entity, whether it is in NAT mode, and the hardware address (only for the `instance` entity).
+It also contains an Incus resource URI, the type of the entity, whether it is in NAT mode, and the hardware address (only for the `instance` entity).

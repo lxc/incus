@@ -57,7 +57,7 @@ See [`incus image import --help`](incus_image_import.md) for all available flags
 ### Import from a file on a remote web server
 
 You can import image files from a remote web server by URL.
-This method is an alternative to running a Incus server for the sole purpose of distributing an image to users.
+This method is an alternative to running an Incus server for the sole purpose of distributing an image to users.
 It only requires a basic web server with support for custom headers (see {ref}`images-copy-http-headers`).
 
 The image files must be provided as unified images (see {ref}`image-format-unified`).

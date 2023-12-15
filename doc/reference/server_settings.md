@@ -1,5 +1,5 @@
 (server-settings)=
-# Server settings for a Incus production setup
+# Server settings for an Incus production setup
 
 To allow your Incus server to run a large number of instances, configure the following settings to avoid hitting server limits.
 

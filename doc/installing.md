@@ -336,7 +336,7 @@ Because group membership is normally only applied at login, you might need to ei
 ## Upgrade Incus
 
 After upgrading Incus to a newer version, Incus might need to update its database to a new schema.
-This update happens automatically when the daemon starts up after a Incus upgrade.
+This update happens automatically when the daemon starts up after an Incus upgrade.
 A backup of the database before the update is stored in the same location as the active database (at `/var/lib/incus/database`).
 
 ```{important}

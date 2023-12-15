@@ -12,7 +12,7 @@ If you want to quickly set up a basic Incus cluster, check out [MicroCloud](http
 (clustering-members)=
 ## Cluster members
 
-A Incus cluster consists of one bootstrap server and at least two further cluster members.
+An Incus cluster consists of one bootstrap server and at least two further cluster members.
 It stores its state in a [distributed database](../database.md), which is a [Cowsql](https://github.com/cowsql/cowsql/) database replicated using the Raft algorithm.
 
 While you could create a cluster with only two members, it is strongly recommended that the number of cluster members be at least three.
@@ -116,7 +116,7 @@ The special value of `-1` can be used to have the image copied to all cluster me
 (cluster-groups)=
 ## Cluster groups
 
-In a Incus cluster, you can add members to cluster groups.
+In an Incus cluster, you can add members to cluster groups.
 You can use these cluster groups to launch instances on a cluster member that belongs to a subset of all available members.
 For example, you could create a cluster group for all members that have a GPU and then launch all instances that require a GPU on this cluster group.
 

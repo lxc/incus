@@ -4,7 +4,7 @@
 You can increase the network bandwidth of your Incus setup by configuring the transmit queue length (`txqueuelen`).
 This change makes sense in the following scenarios:
 
-- You have a NIC with 1 GbE or higher on a Incus host with a lot of local activity (instance-instance connections or host-instance connections).
+- You have a NIC with 1 GbE or higher on an Incus host with a lot of local activity (instance-instance connections or host-instance connections).
 - You have an internet connection with 1 GbE or higher on your Incus host.
 
 The more instances you use, the more you can benefit from this tweak.

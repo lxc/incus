@@ -47,7 +47,7 @@ If you do not specify a `--type` argument, the default type of `bridge` is used.
 (network-create-cluster)=
 ### Create a network in a cluster
 
-If you are running a Incus cluster and want to create a network, you must create the network for each cluster member separately.
+If you are running an Incus cluster and want to create a network, you must create the network for each cluster member separately.
 The reason for this is that the network configuration, for example, the name of the parent network interface, might be different between cluster members.
 
 Therefore, you must first create a pending network on each member with the `--target=<cluster_member>` flag and the appropriate configuration for the member.

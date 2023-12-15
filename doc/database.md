@@ -9,7 +9,7 @@ With a database, you can run a simple query on the database to retrieve this inf
 
 ## Cowsql
 
-In a Incus cluster, all members of the cluster must share the same database state.
+In an Incus cluster, all members of the cluster must share the same database state.
 Therefore, Incus uses [Cowsql](https://github.com/cowsql/cowsql), a distributed version of SQLite.
 Cowsql provides replication, fault-tolerance, and automatic failover without the need of external database processes.
 

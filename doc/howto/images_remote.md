@@ -40,7 +40,7 @@ The URL must use HTTPS.
 ### Add a remote Incus server
 
 <!-- Include start add remotes -->
-To add a Incus server as a remote, enter the following command:
+To add an Incus server as a remote, enter the following command:
 
     incus remote add <remote_name> <IP|FQDN|URL> [flags]
 
