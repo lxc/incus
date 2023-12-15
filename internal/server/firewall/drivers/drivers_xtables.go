@@ -559,7 +559,7 @@ func (d Xtables) NetworkApplyACLRules(networkName string, rules []ACLRule) error
 
 		// Add rules to chain in table.
 		for _, iptRule := range iptRules {
-			_, err := subprocess.RunCommand(cmd, append([]string{"-t", "filter", "-A", chain}, iptRule...)...)
+			_, err := subprocess.RunCommand(cmd, append([]string{"-w", "-t", "filter", "-A", chain}, iptRule...)...)
 			if err != nil {
 				return fmt.Errorf("Failed adding rule to %q chain %q in table %q: %w", cmd, chain, "filter", err)
 			}
@@ -1438,7 +1438,7 @@ func (d Xtables) iptablesChainExists(ipVersion uint, table string, chain string)
 	}
 
 	// Attempt to dump the rules of the chain, if this fails then chain doesn't exist.
-	rules, err := subprocess.RunCommand(cmd, "-t", table, "-S", chain)
+	rules, err := subprocess.RunCommand(cmd, "-w", "-t", table, "-S", chain)
 	if err != nil {
 		return false, false, nil
 	}
@@ -1464,7 +1464,7 @@ func (d Xtables) iptablesChainCreate(ipVersion uint, table string, chain string)
 	}
 
 	// Attempt to create chain in table.
-	_, err := subprocess.RunCommand(cmd, "-t", table, "-N", chain)
+	_, err := subprocess.RunCommand(cmd, "-w", "-t", table, "-N", chain)
 	if err != nil {
 		return fmt.Errorf("Failed creating %q chain %q in table %q: %w", cmd, chain, table, err)
 	}
@@ -1485,14 +1485,14 @@ func (d Xtables) iptablesChainDelete(ipVersion uint, table string, chain string,
 
 	// Attempt to flush rules from chain in table.
 	if flushFirst {
-		_, err := subprocess.RunCommand(cmd, "-t", table, "-F", chain)
+		_, err := subprocess.RunCommand(cmd, "-w", "-t", table, "-F", chain)
 		if err != nil {
 			return fmt.Errorf("Failed flushing %q chain %q in table %q: %w", cmd, chain, table, err)
 		}
 	}
 
 	// Attempt to delete chain in table.
-	_, err := subprocess.RunCommand(cmd, "-t", table, "-X", chain)
+	_, err := subprocess.RunCommand(cmd, "-w", "-t", table, "-X", chain)
 	if err != nil {
 		return fmt.Errorf("Failed deleting %q chain %q in table %q: %w", cmd, chain, table, err)
 	}
