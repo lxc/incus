@@ -10,11 +10,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/node"
+	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
 )

@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
@@ -18,6 +17,7 @@ import (
 	storagePools "github.com/lxc/incus/internal/server/storage"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 )
 
 type containerTestSuite struct {

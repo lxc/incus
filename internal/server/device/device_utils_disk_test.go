@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/lxc/incus/internal/idmap"
+	"github.com/lxc/incus/shared/idmap"
 )
 
 func TestDiskAddRootUserNSEntry(t *testing.T) {

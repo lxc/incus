@@ -10,7 +10,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/instancewriter"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/backup"
@@ -27,6 +26,7 @@ import (
 	"github.com/lxc/incus/internal/server/task"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/units"

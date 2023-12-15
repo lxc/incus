@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/sftp"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/server/backup"
 	"github.com/lxc/incus/internal/server/cgroup"
 	"github.com/lxc/incus/internal/server/db"
@@ -22,6 +21,7 @@ import (
 	"github.com/lxc/incus/internal/server/metrics"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 )
 
 // HookStart hook used when instance has started.

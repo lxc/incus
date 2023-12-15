@@ -15,13 +15,13 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/jmap"
 	"github.com/lxc/incus/internal/migration"
 	"github.com/lxc/incus/internal/server/instance"
 	localMigration "github.com/lxc/incus/internal/server/migration"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 )
 
 type migrationFields struct {
