@@ -11,13 +11,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/server/cgroup"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 )

@@ -34,7 +34,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/internal/idmap"
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/instancewriter"
 	internalIO "github.com/lxc/incus/internal/io"
@@ -72,6 +71,7 @@ import (
 	localUtil "github.com/lxc/incus/internal/server/util"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"

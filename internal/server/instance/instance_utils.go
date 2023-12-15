@@ -19,7 +19,6 @@ import (
 	liblxc "github.com/lxc/go-lxc"
 
 	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/instance"
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/migration"
@@ -37,6 +36,7 @@ import (
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/util"

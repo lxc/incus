@@ -25,7 +25,6 @@ import (
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/internal/idmap"
 	internalIO "github.com/lxc/incus/internal/io"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/revert"
@@ -74,6 +73,7 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/archive"
 	"github.com/lxc/incus/shared/cancel"
+	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/proxy"
 	localtls "github.com/lxc/incus/shared/tls"

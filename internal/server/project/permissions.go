@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
@@ -16,6 +15,7 @@ import (
 	deviceconfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"

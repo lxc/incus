@@ -25,11 +25,11 @@ package seccomp
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../../cgo/incus_bpf.h"
-#include "../../cgo/incus_seccomp.h"
-#include "../../cgo/memory_utils.h"
-#include "../../cgo/process_utils.h"
-#include "../../cgo/syscall_wrappers.h"
+#include "../../../shared/cgo/incus_bpf.h"
+#include "../../../shared/cgo/incus_seccomp.h"
+#include "../../../shared/cgo/memory_utils.h"
+#include "../../../shared/cgo/process_utils.h"
+#include "../../../shared/cgo/syscall_wrappers.h"
 
 struct seccomp_notif_sizes expected_sizes;
 
@@ -460,8 +460,6 @@ import (
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
 
-	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
-	"github.com/lxc/incus/internal/idmap"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/netutils"
 	"github.com/lxc/incus/internal/server/cgroup"
@@ -471,6 +469,8 @@ import (
 	localUtil "github.com/lxc/incus/internal/server/util"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	_ "github.com/lxc/incus/shared/cgo" // Used by cgo
+	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/subprocess"
