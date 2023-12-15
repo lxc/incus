@@ -155,7 +155,7 @@ Use the existing Ceph Object Gateway `https://www.example.com/radosgw` to create
 (storage-pools-cluster)=
 ### Create a storage pool in a cluster
 
-If you are running a Incus cluster and want to add a storage pool, you must create the storage pool for each cluster member separately.
+If you are running an Incus cluster and want to add a storage pool, you must create the storage pool for each cluster member separately.
 The reason for this is that the configuration, for example, the storage location or the size of the pool, might be different between cluster members.
 
 Therefore, you must first create a pending storage pool on each member with the `--target=<cluster_member>` flag and the appropriate configuration for the member.

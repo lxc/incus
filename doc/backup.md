@@ -1,5 +1,5 @@
 (backups)=
-# How to back up a Incus server
+# How to back up an Incus server
 
 In a production setup, you should always back up the contents of your Incus server.
 

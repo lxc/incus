@@ -1,10 +1,10 @@
 (import-machines-to-instances)=
 # How to import physical or virtual machines to Incus instances
 
-Incus provides a tool (`incus-migrate`) to create a Incus instance based on an existing disk or image.
+Incus provides a tool (`incus-migrate`) to create an Incus instance based on an existing disk or image.
 
 You can run the tool on any Linux machine.
-It connects to a Incus server and creates a blank instance, which you can configure during or after the migration.
+It connects to an Incus server and creates a blank instance, which you can configure during or after the migration.
 The tool then copies the data from the disk or image that you provide to the instance.
 
 ```{note}
@@ -51,7 +51,7 @@ The tool can create both containers and virtual machines:
    </details>
    ````
 
-Complete the following steps to migrate an existing machine to a Incus instance:
+Complete the following steps to migrate an existing machine to an Incus instance:
 
 1. Download the `bin.linux.incus-migrate` tool ([`bin.linux.incus-migrate.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus-migrate.aarch64) or [`bin.linux.incus-migrate.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus-migrate.x86_64)) from the **Assets** section of the latest [Incus release](https://github.com/lxc/incus/releases).
 1. Place the tool on the machine that you want to use to create the instance.

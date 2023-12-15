@@ -1,7 +1,7 @@
 (cluster-form)=
 # How to form a cluster
 
-When forming a Incus cluster, you start with a bootstrap server.
+When forming an Incus cluster, you start with a bootstrap server.
 This bootstrap server can be an existing Incus server or a newly installed one.
 
 After initializing the bootstrap server, you can join additional servers to the cluster.

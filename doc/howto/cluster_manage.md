@@ -129,7 +129,7 @@ When you upgrade the last member, the blocked members will notice that all serve
 
 ## Update the cluster certificate
 
-In a Incus cluster, the API on all servers responds with the same shared certificate, which is usually a standard self-signed certificate with an expiry set to ten years.
+In an Incus cluster, the API on all servers responds with the same shared certificate, which is usually a standard self-signed certificate with an expiry set to ten years.
 
 The certificate is stored at `/var/lib/incus/cluster.crt` and is the same on all cluster members.
 

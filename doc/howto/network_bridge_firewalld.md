@@ -117,7 +117,7 @@ There are different ways of working around this problem:
 
 Uninstall Docker
 : The easiest way to prevent such issues is to uninstall Docker from the system that runs Incus and restart the system.
-  You can run Docker inside a Incus container or virtual machine instead.
+  You can run Docker inside an Incus container or virtual machine instead.
 
 Enable IPv4 forwarding
 : If uninstalling Docker is not an option, enabling IPv4 forwarding before the Docker service starts will prevent Docker from modifying the global FORWARD policy.

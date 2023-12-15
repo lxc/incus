@@ -10,7 +10,7 @@ See [`www.ovn.org`](https://www.ovn.org/) for more information.
 The `ovn` network type allows to create logical networks using the OVN {abbr}`SDN (software-defined networking)`.
 This kind of network can be useful for labs and multi-tenant environments where the same logical subnets are used in multiple discrete networks.
 
-A Incus OVN network can be connected to an existing managed {ref}`network-bridge` or {ref}`network-physical` to gain access to the wider network.
+An Incus OVN network can be connected to an existing managed {ref}`network-bridge` or {ref}`network-physical` to gain access to the wider network.
 By default, all connections from the OVN logical networks are NATed to an IP allocated from the uplink network.
 
 See {ref}`network-ovn-setup` for basic instructions for setting up an OVN network.

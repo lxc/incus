@@ -8,7 +8,7 @@ Network zones are available for the {ref}`network-ovn` and the {ref}`network-bri
 Network zones can be used to serve DNS records for Incus networks.
 
 You can use network zones to automatically maintain valid forward and reverse records for all your instances.
-This can be useful if you are operating a Incus cluster with multiple instances across many networks.
+This can be useful if you are operating an Incus cluster with multiple instances across many networks.
 
 Having DNS records for each instance makes it easier to access network services running on an instance.
 It is also important when hosting, for example, an outbound SMTP service.
@@ -101,7 +101,7 @@ To make use of network zones, you must enable the built-in DNS server.
 To do so, set the {config:option}`server-core:core.dns_address` configuration option to a local address on the Incus server.
 To avoid conflicts with an existing DNS we suggest not using the port 53.
 This is the address on which the DNS server will listen.
-Note that in a Incus cluster, the address may be different on each cluster member.
+Note that in an Incus cluster, the address may be different on each cluster member.
 
 ```{note}
 The built-in DNS server supports only zone transfers through AXFR.

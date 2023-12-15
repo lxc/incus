@@ -2,7 +2,7 @@
 # How to integrate with `systemd-resolved`
 
 If the system that runs Incus uses `systemd-resolved` to perform DNS lookups, you should notify `resolved` of the domains that Incus can resolve.
-To do so, add the DNS servers and domains provided by a Incus network bridge to the `resolved` configuration.
+To do so, add the DNS servers and domains provided by an Incus network bridge to the `resolved` configuration.
 
 ```{note}
 The `dns.mode` option (see {ref}`network-bridge-options`) must be set to `managed` or `dynamic` if you want to use this feature.

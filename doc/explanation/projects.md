@@ -10,7 +10,7 @@ For example, projects can be useful in the following scenarios:
   You want to keep these instances separate to make it easier to locate and maintain them, and you might want to reuse the same instance names in each customer project for consistency reasons.
   Each instance in a customer project should use the same base configuration (for example, networks and storage), but the configuration might differ between customer projects.
 
-  In this case, you can create a Incus project for each customer project (thus each group of instances) and use different profiles, networks, and storage for each Incus project.
+  In this case, you can create an Incus project for each customer project (thus each group of instances) and use different profiles, networks, and storage for each Incus project.
 - Your Incus server is shared between multiple users.
   Each user runs their own instances, and might want to configure their own profiles.
   You want to keep the user instances confined, so that each user can interact only with their own instances and cannot see the instances created by other users.

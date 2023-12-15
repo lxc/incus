@@ -73,7 +73,7 @@ And adds support for the following HTTP header on PUT requests:
 
 * If-Match (ETag value retrieved through previous GET)
 
-This makes it possible to GET a Incus object, modify it and PUT it without
+This makes it possible to GET an Incus object, modify it and PUT it without
 risking to hit a race condition where Incus or another client modified the
 object in the meantime.
 
@@ -214,7 +214,7 @@ Rules necessary for `dnsmasq` to work (DHCP/DNS) will always be applied if
 
 ## `network_routes`
 
-Introduces `ipv4.routes` and `ipv6.routes` which allow routing additional subnets to a Incus bridge.
+Introduces `ipv4.routes` and `ipv6.routes` which allow routing additional subnets to an Incus bridge.
 
 ## `storage`
 
@@ -408,7 +408,7 @@ and `xfs`.
 
 ## `resources`
 
-This adds support for querying a Incus daemon for the system resources it has
+This adds support for querying an Incus daemon for the system resources it has
 available.
 
 ## `kernel_limits`
@@ -465,7 +465,7 @@ This makes it possible to retrieve symlinks using the file API.
 ## `network_leases`
 
 Adds a new `/1.0/networks/NAME/leases` API endpoint to query the lease database on
-bridges which run a Incus-managed DHCP server.
+bridges which run an Incus-managed DHCP server.
 
 ## `unix_device_hotplug`
 
@@ -1004,7 +1004,7 @@ redirect file-system mounts to their fuse implementation. To this end, set e.g.
 
 ## `container_disk_ceph`
 
-This allows for existing a Ceph RBD or CephFS to be directly connected to a Incus container.
+This allows for existing a Ceph RBD or CephFS to be directly connected to an Incus container.
 
 ## `virtual-machines`
 
@@ -2222,7 +2222,7 @@ This adds the possibility to import ISO images as custom storage volumes.
 This adds the `--type` flag to [`incus storage volume import`](incus_storage_volume_import.md).
 
 ## `network_allocations`
-This adds the possibility to list a Incus deployment's network allocations.
+This adds the possibility to list an Incus deployment's network allocations.
 
 Through the [`incus network list-allocations`](incus_network_list-allocations.md) command and the `--project <PROJECT> | --all-projects` flags,
 you can list all the used IP addresses, hardware addresses (for instances), resource URIs and whether it uses NAT for

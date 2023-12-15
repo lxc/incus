@@ -37,7 +37,7 @@ any backward compatibility to broken protocol or ciphers.
 (authentication-trusted-clients)=
 ### Trusted TLS clients
 
-You can obtain the list of TLS certificates trusted by a Incus server with [`incus config trust list`](incus_config_trust_list.md).
+You can obtain the list of TLS certificates trusted by an Incus server with [`incus config trust list`](incus_config_trust_list.md).
 
 Trusted clients can be added in either of the following ways:
 
@@ -101,7 +101,7 @@ To enable PKI mode, complete the following steps:
 1. Place the certificates issued by the CA on the clients and the server, replacing the automatically generated ones.
 1. Restart the server.
 
-In that mode, any connection to a Incus daemon will be done using the
+In that mode, any connection to an Incus daemon will be done using the
 pre-seeded CA certificate.
 
 If the server certificate isn't signed by the CA, the connection will simply go through the normal authentication mechanism.
@@ -122,7 +122,7 @@ Any user that authenticates through the configured OIDC Identity Provider gets f
 To configure Incus to use OIDC authentication, set the [`oidc.*`](server-options-oidc) server configuration options.
 Your OIDC provider must be configured to enable the [Device Authorization Grant](https://oauth.net/2/device-flow/) type.
 
-To add a remote pointing to a Incus server configured with OIDC authentication, run [`incus remote add <remote_name> <remote_address>`](incus_remote_add.md).
+To add a remote pointing to an Incus server configured with OIDC authentication, run [`incus remote add <remote_name> <remote_address>`](incus_remote_add.md).
 You are then prompted to authenticate through your web browser, where you must confirm the device code that Incus uses.
 The Incus client then retrieves and stores the access and refresh tokens and provides those to Incus for all interactions.
 
