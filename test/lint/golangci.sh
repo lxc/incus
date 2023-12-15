@@ -7,6 +7,9 @@ if [ -n "${GITHUB_BASE_REF:-}" ]; then
 elif [ -n "${GITHUB_BEFORE:-}" ]; then
   # Target branch when scanning a Github merge
   target_branch="${GITHUB_BEFORE}"
+
+  # Attempt to fetch the reference (Github uses a shallow clone).
+  git fetch -q origin "${GITHUB_BEFORE}" || true
 elif [ -n "${1:-}" ]; then
   # Allow a target branch parameter.
   target_branch="${1}"
