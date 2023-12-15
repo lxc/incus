@@ -3,11 +3,14 @@
 package nictype
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/lxc/incus/internal/server/db"
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/state"
+	"github.com/lxc/incus/shared/api"
 )
 
 // NICType resolves the NIC Type for the supplied NIC device config.
@@ -24,7 +27,13 @@ func NICType(s *state.State, deviceProjectName string, d deviceConfig.Device) (s
 				return "", fmt.Errorf("Failed to translate device project %q into network project: %w", deviceProjectName, err)
 			}
 
-			_, netInfo, _, err := s.DB.Cluster.GetNetworkInAnyState(networkProjectName, d["network"])
+			var netInfo *api.Network
+
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				_, netInfo, _, err = tx.GetNetworkInAnyState(ctx, networkProjectName, d["network"])
+
+				return err
+			})
 			if err != nil {
 				return "", fmt.Errorf("Failed to load network %q for project %q: %w", d["network"], networkProjectName, err)
 			}

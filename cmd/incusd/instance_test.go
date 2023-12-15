@@ -122,7 +122,11 @@ func (suite *containerTestSuite) TestContainer_ProfilesOverwriteDefaultNic() {
 		Name: "testFoo",
 	}
 
-	_, err := suite.d.State().DB.Cluster.CreateNetwork(api.ProjectDefaultName, "unknownbr0", "", db.NetworkTypeBridge, nil)
+	err := suite.d.State().DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err := tx.CreateNetwork(ctx, api.ProjectDefaultName, "unknownbr0", "", db.NetworkTypeBridge, nil)
+
+		return err
+	})
 	suite.Req.Nil(err)
 
 	c, op, _, err := instance.CreateInternal(suite.d.State(), args, true)
@@ -157,7 +161,11 @@ func (suite *containerTestSuite) TestContainer_LoadFromDB() {
 
 	state := suite.d.State()
 
-	_, err := state.DB.Cluster.CreateNetwork(api.ProjectDefaultName, "unknownbr0", "", db.NetworkTypeBridge, nil)
+	err := state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err := tx.CreateNetwork(ctx, api.ProjectDefaultName, "unknownbr0", "", db.NetworkTypeBridge, nil)
+
+		return err
+	})
 	suite.Req.Nil(err)
 
 	// Create the container

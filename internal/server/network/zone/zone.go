@@ -90,26 +90,41 @@ func (d *zone) networkUsesZone(netConfig map[string]string) bool {
 func (d *zone) usedBy(firstOnly bool) ([]string, error) {
 	usedBy := []string{}
 
-	// Find networks using the zone.
-	networkNames, err := d.state.DB.Cluster.GetCreatedNetworks(d.projectName)
+	var networkNames []string
+
+	err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Find networks using the zone.
+		networkNames, err = tx.GetCreatedNetworkNamesByProject(ctx, d.projectName)
+
+		return err
+	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return nil, fmt.Errorf("Failed loading networks for project %q: %w", d.projectName, err)
 	}
 
-	for _, networkName := range networkNames {
-		_, network, _, err := d.state.DB.Cluster.GetNetworkInAnyState(d.projectName, networkName)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to get network config for %q: %w", networkName, err)
-		}
+	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		for _, networkName := range networkNames {
+			_, network, _, err := tx.GetNetworkInAnyState(ctx, d.projectName, networkName)
+			if err != nil {
+				return fmt.Errorf("Failed to get network config for %q: %w", networkName, err)
+			}
 
-		// Check if the network is using this zone.
-		if d.networkUsesZone(network.Config) {
-			u := api.NewURL().Path(version.APIVersion, "networks", networkName)
-			usedBy = append(usedBy, u.String())
-			if firstOnly {
-				return usedBy, nil
+			// Check if the network is using this zone.
+			if d.networkUsesZone(network.Config) {
+				u := api.NewURL().Path(version.APIVersion, "networks", networkName)
+				usedBy = append(usedBy, u.String())
+				if firstOnly {
+					return nil
+				}
 			}
 		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return usedBy, nil

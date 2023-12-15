@@ -226,7 +226,14 @@ func (c *Cluster) GetURIFromEntity(entityType int, entityID int) (string, error)
 		}
 
 	case cluster.TypeNetwork:
-		networkName, projectName, err := c.GetNetworkNameAndProjectWithID(entityID)
+		var networkName string
+		var projectName string
+
+		err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+			networkName, projectName, err = tx.GetNetworkNameAndProjectWithID(ctx, entityID)
+
+			return err
+		})
 		if err != nil {
 			return "", fmt.Errorf("Failed to get network name and project name: %w", err)
 		}

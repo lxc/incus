@@ -847,7 +847,14 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 				return nil
 			}
 
-			netID, network, _, err := s.DB.Cluster.GetNetworkInAnyState(aclProjectName, nicConfig["network"])
+			var netID int64
+			var network *api.Network
+
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				netID, network, _, err = tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
+
+				return err
+			})
 			if err != nil {
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
 			}
@@ -876,7 +883,13 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 			}
 
 			if u.Type == "ovn" {
-				netID, _, _, err := s.DB.Cluster.GetNetworkInAnyState(aclProjectName, u.Name)
+				var netID int64
+
+				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					netID, _, _, err = tx.GetNetworkInAnyState(ctx, aclProjectName, u.Name)
+
+					return err
+				})
 				if err != nil {
 					return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
 				}
@@ -903,7 +916,14 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 				return nil
 			}
 
-			netID, network, _, err := s.DB.Cluster.GetNetworkInAnyState(aclProjectName, nicConfig["network"])
+			var netID int64
+			var network *api.Network
+
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				netID, network, _, err = tx.GetNetworkInAnyState(ctx, aclProjectName, nicConfig["network"])
+
+				return err
+			})
 			if err != nil {
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
 			}
