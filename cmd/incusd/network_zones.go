@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/lxc/incus/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
+	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network/zone"
 	"github.com/lxc/incus/internal/server/project"
@@ -141,8 +143,14 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 
 	recursion := localUtil.IsRecursionRequest(r)
 
-	// Get list of Network zones.
-	zoneNames, err := s.DB.Cluster.GetNetworkZonesByProject(projectName)
+	var zoneNames []string
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get list of Network zones.
+		zoneNames, err = tx.GetNetworkZonesByProject(ctx, projectName)
+
+		return err
+	})
 	if err != nil {
 		return response.InternalError(err)
 	}
