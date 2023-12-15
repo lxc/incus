@@ -45,7 +45,7 @@ func (c *ClusterTx) GetNetworkZones(ctx context.Context) (map[string]string, err
 }
 
 // GetNetworkZonesByProject returns the names of existing Network zones.
-func (c *Cluster) GetNetworkZonesByProject(project string) ([]string, error) {
+func (c *ClusterTx) GetNetworkZonesByProject(ctx context.Context, project string) ([]string, error) {
 	q := `SELECT name FROM networks_zones
 		WHERE project_id = (SELECT id FROM projects WHERE name = ? LIMIT 1)
 		ORDER BY id
@@ -53,20 +53,18 @@ func (c *Cluster) GetNetworkZonesByProject(project string) ([]string, error) {
 
 	var zoneNames []string
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return query.Scan(ctx, tx.Tx(), q, func(scan func(dest ...any) error) error {
-			var zoneName string
+	err := query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
+		var zoneName string
 
-			err := scan(&zoneName)
-			if err != nil {
-				return err
-			}
+		err := scan(&zoneName)
+		if err != nil {
+			return err
+		}
 
-			zoneNames = append(zoneNames, zoneName)
+		zoneNames = append(zoneNames, zoneName)
 
-			return nil
-		}, project)
-	})
+		return nil
+	}, project)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +73,7 @@ func (c *Cluster) GetNetworkZonesByProject(project string) ([]string, error) {
 }
 
 // GetNetworkZoneKeys returns a map of key names to keys.
-func (c *Cluster) GetNetworkZoneKeys() (map[string]string, error) {
+func (c *ClusterTx) GetNetworkZoneKeys(ctx context.Context) (map[string]string, error) {
 	q := `SELECT networks_zones.name, networks_zones_config.key, networks_zones_config.value
 		FROM networks_zones
 		JOIN networks_zones_config ON networks_zones_config.network_zone_id=networks_zones.id
@@ -83,28 +81,27 @@ func (c *Cluster) GetNetworkZoneKeys() (map[string]string, error) {
 	`
 
 	secrets := map[string]string{}
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return query.Scan(ctx, tx.Tx(), q, func(scan func(dest ...any) error) error {
-			var name string
-			var peer string
-			var secret string
 
-			err := scan(&name, &peer, &secret)
-			if err != nil {
-				return err
-			}
+	err := query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
+		var name string
+		var peer string
+		var secret string
 
-			fields := strings.SplitN(peer, ".", 3)
-			if len(fields) != 3 {
-				// Skip invalid values.
-				return nil
-			}
+		err := scan(&name, &peer, &secret)
+		if err != nil {
+			return err
+		}
 
-			// Format as a valid TSIG secret (encode domain name, key name and make valid FQDN).
-			secrets[fmt.Sprintf("%s_%s.", name, fields[1])] = secret
-
+		fields := strings.SplitN(peer, ".", 3)
+		if len(fields) != 3 {
+			// Skip invalid values.
 			return nil
-		})
+		}
+
+		// Format as a valid TSIG secret (encode domain name, key name and make valid FQDN).
+		secrets[fmt.Sprintf("%s_%s.", name, fields[1])] = secret
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -114,7 +111,7 @@ func (c *Cluster) GetNetworkZoneKeys() (map[string]string, error) {
 }
 
 // GetNetworkZone returns the Network zone with the given name.
-func (c *Cluster) GetNetworkZone(name string) (int64, string, *api.NetworkZone, error) {
+func (c *ClusterTx) GetNetworkZone(ctx context.Context, name string) (int64, string, *api.NetworkZone, error) {
 	var id int64 = int64(-1)
 
 	zone := api.NetworkZone{
@@ -130,19 +127,8 @@ func (c *Cluster) GetNetworkZone(name string) (int64, string, *api.NetworkZone, 
 	`
 
 	var projectName string
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		err := tx.tx.QueryRowContext(ctx, q, name).Scan(&id, &projectName, &zone.Description)
-		if err != nil {
-			return err
-		}
 
-		err = networkZoneConfig(ctx, tx, id, &zone)
-		if err != nil {
-			return fmt.Errorf("Failed loading config: %w", err)
-		}
-
-		return nil
-	})
+	err := c.tx.QueryRowContext(ctx, q, name).Scan(&id, &projectName, &zone.Description)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return -1, "", nil, api.StatusErrorf(http.StatusNotFound, "Network zone not found")
@@ -151,11 +137,20 @@ func (c *Cluster) GetNetworkZone(name string) (int64, string, *api.NetworkZone, 
 		return -1, "", nil, err
 	}
 
+	err = networkZoneConfig(ctx, c, id, &zone)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return -1, "", nil, api.StatusErrorf(http.StatusNotFound, "Network zone not found")
+		}
+
+		return -1, "", nil, fmt.Errorf("Failed loading config: %w", err)
+	}
+
 	return id, projectName, &zone, nil
 }
 
 // GetNetworkZoneByProject returns the Network zone with the given name in the given project.
-func (c *Cluster) GetNetworkZoneByProject(projectName string, name string) (int64, *api.NetworkZone, error) {
+func (c *ClusterTx) GetNetworkZoneByProject(ctx context.Context, projectName string, name string) (int64, *api.NetworkZone, error) {
 	var id int64 = int64(-1)
 
 	zone := api.NetworkZone{
@@ -169,25 +164,22 @@ func (c *Cluster) GetNetworkZoneByProject(projectName string, name string) (int6
 		LIMIT 1
 	`
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		err := tx.tx.QueryRowContext(ctx, q, projectName, name).Scan(&id, &zone.Description)
-		if err != nil {
-			return err
-		}
-
-		err = networkZoneConfig(ctx, tx, id, &zone)
-		if err != nil {
-			return fmt.Errorf("Failed loading config: %w", err)
-		}
-
-		return nil
-	})
+	err := c.tx.QueryRowContext(ctx, q, projectName, name).Scan(&id, &zone.Description)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network zone not found")
 		}
 
 		return -1, nil, err
+	}
+
+	err = networkZoneConfig(ctx, c, id, &zone)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network zone not found")
+		}
+
+		return -1, nil, fmt.Errorf("Failed loading config: %w", err)
 	}
 
 	return id, &zone, nil
@@ -222,36 +214,27 @@ func networkZoneConfig(ctx context.Context, tx *ClusterTx, id int64, zone *api.N
 }
 
 // CreateNetworkZone creates a new Network zone.
-func (c *Cluster) CreateNetworkZone(projectName string, info *api.NetworkZonesPost) (int64, error) {
-	var id int64
-
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Insert a new Network zone record.
-		result, err := tx.tx.Exec(`
+func (c *ClusterTx) CreateNetworkZone(ctx context.Context, projectName string, info *api.NetworkZonesPost) (int64, error) {
+	// Insert a new Network zone record.
+	result, err := c.tx.ExecContext(ctx, `
 			INSERT INTO networks_zones (project_id, name, description)
 			VALUES ((SELECT id FROM projects WHERE name = ? LIMIT 1), ?, ?)
 		`, projectName, info.Name, info.Description)
-		if err != nil {
-			return err
-		}
-
-		id, err := result.LastInsertId()
-		if err != nil {
-			return err
-		}
-
-		err = networkzoneConfigAdd(tx.tx, id, info.Config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
 	if err != nil {
-		id = -1
+		return -1, err
 	}
 
-	return id, err
+	id, err := result.LastInsertId()
+	if err != nil {
+		return -1, err
+	}
+
+	err = networkzoneConfigAdd(c.tx, id, info.Config)
+	if err != nil {
+		return -1, err
+	}
+
+	return id, nil
 }
 
 // networkzoneConfigAdd inserts Network zone config keys.
@@ -305,35 +288,33 @@ func (c *Cluster) UpdateNetworkZone(id int64, config *api.NetworkZonePut) error 
 }
 
 // DeleteNetworkZone deletes the Network zone.
-func (c *Cluster) DeleteNetworkZone(id int64) error {
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		_, err := tx.tx.Exec("DELETE FROM networks_zones WHERE id=?", id)
-		return err
-	})
+func (c *ClusterTx) DeleteNetworkZone(ctx context.Context, id int64) error {
+	_, err := c.tx.ExecContext(ctx, "DELETE FROM networks_zones WHERE id=?", id)
+
+	return err
 }
 
 // GetNetworkZoneRecordNames returns the names of existing Network zone records.
-func (c *Cluster) GetNetworkZoneRecordNames(zone int64) ([]string, error) {
+func (c *ClusterTx) GetNetworkZoneRecordNames(ctx context.Context, zone int64) ([]string, error) {
 	q := `SELECT name FROM networks_zones_records
 		WHERE network_zone_id=?
 		ORDER BY name
 	`
 
 	var recordNames []string
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return query.Scan(ctx, tx.Tx(), q, func(scan func(dest ...any) error) error {
-			var recordName string
 
-			err := scan(&recordName)
-			if err != nil {
-				return err
-			}
+	err := query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
+		var recordName string
 
-			recordNames = append(recordNames, recordName)
+		err := scan(&recordName)
+		if err != nil {
+			return err
+		}
 
-			return nil
-		}, zone)
-	})
+		recordNames = append(recordNames, recordName)
+
+		return nil
+	}, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +323,7 @@ func (c *Cluster) GetNetworkZoneRecordNames(zone int64) ([]string, error) {
 }
 
 // GetNetworkZoneRecord returns the network zone record for the given zone and name.
-func (c *Cluster) GetNetworkZoneRecord(zone int64, name string) (int64, *api.NetworkZoneRecord, error) {
+func (c *ClusterTx) GetNetworkZoneRecord(ctx context.Context, zone int64, name string) (int64, *api.NetworkZoneRecord, error) {
 	var id int64 = int64(-1)
 
 	record := api.NetworkZoneRecord{
@@ -357,25 +338,23 @@ func (c *Cluster) GetNetworkZoneRecord(zone int64, name string) (int64, *api.Net
 	`
 
 	var entries string
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		err := tx.tx.QueryRowContext(ctx, q, zone, name).Scan(&id, &record.Description, &entries)
-		if err != nil {
-			return err
-		}
 
-		err = networkZoneRecordConfig(ctx, tx, id, &record)
-		if err != nil {
-			return fmt.Errorf("Failed loading config: %w", err)
-		}
-
-		return nil
-	})
+	err := c.tx.QueryRowContext(ctx, q, zone, name).Scan(&id, &record.Description, &entries)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network zone record not found")
 		}
 
 		return -1, nil, err
+	}
+
+	err = networkZoneRecordConfig(ctx, c, id, &record)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network zone record not found")
+		}
+
+		return -1, nil, fmt.Errorf("Failed loading config: %w", err)
 	}
 
 	// Decode the JSON record.
@@ -416,43 +395,33 @@ func networkZoneRecordConfig(ctx context.Context, tx *ClusterTx, id int64, recor
 }
 
 // CreateNetworkZoneRecord creates a new network zone record.
-func (c *Cluster) CreateNetworkZoneRecord(zone int64, info api.NetworkZoneRecordsPost) (int64, error) {
-	var id int64
-	var err error
-
+func (c *ClusterTx) CreateNetworkZoneRecord(ctx context.Context, zone int64, info api.NetworkZoneRecordsPost) (int64, error) {
 	// Turn the entries into JSON.
 	entries, err := json.Marshal(info.Entries)
 	if err != nil {
 		return -1, err
 	}
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Insert a new network zone record.
-		result, err := tx.tx.Exec(`
+	// Insert a new network zone record.
+	result, err := c.tx.ExecContext(ctx, `
 			INSERT INTO networks_zones_records (network_zone_id, name, description, entries)
 			VALUES (?, ?, ?, ?)
 		`, zone, info.Name, info.Description, string(entries))
-		if err != nil {
-			return err
-		}
-
-		id, err := result.LastInsertId()
-		if err != nil {
-			return err
-		}
-
-		err = networkZoneRecordConfigAdd(tx.tx, id, info.Config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
 	if err != nil {
-		id = -1
+		return -1, err
 	}
 
-	return id, err
+	id, err := result.LastInsertId()
+	if err != nil {
+		return -1, err
+	}
+
+	err = networkZoneRecordConfigAdd(c.tx, id, info.Config)
+	if err != nil {
+		return -1, err
+	}
+
+	return id, nil
 }
 
 // networkzoneConfigAdd inserts Network zone config keys.
@@ -480,41 +449,38 @@ func networkZoneRecordConfigAdd(tx *sql.Tx, id int64, config map[string]string) 
 }
 
 // UpdateNetworkZoneRecord updates the network zone record with the given ID.
-func (c *Cluster) UpdateNetworkZoneRecord(id int64, config api.NetworkZoneRecordPut) error {
+func (c *ClusterTx) UpdateNetworkZoneRecord(ctx context.Context, id int64, config api.NetworkZoneRecordPut) error {
 	// Turn the entries into JSON.
 	entries, err := json.Marshal(config.Entries)
 	if err != nil {
 		return err
 	}
 
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		_, err := tx.tx.Exec(`
+	_, err = c.tx.ExecContext(ctx, `
 			UPDATE networks_zones_records
 			SET description=?, entries=?
 			WHERE id=?
 		`, config.Description, string(entries), id)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		_, err = tx.tx.Exec("DELETE FROM networks_zones_records_config WHERE network_zone_record_id=?", id)
-		if err != nil {
-			return err
-		}
+	_, err = c.tx.ExecContext(ctx, "DELETE FROM networks_zones_records_config WHERE network_zone_record_id=?", id)
+	if err != nil {
+		return err
+	}
 
-		err = networkZoneRecordConfigAdd(tx.tx, id, config.Config)
-		if err != nil {
-			return err
-		}
+	err = networkZoneRecordConfigAdd(c.tx, id, config.Config)
+	if err != nil {
+		return err
+	}
 
-		return nil
-	})
+	return nil
 }
 
 // DeleteNetworkZoneRecord deletes the network zone record.
-func (c *Cluster) DeleteNetworkZoneRecord(id int64) error {
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		_, err := tx.tx.Exec("DELETE FROM networks_zones_records WHERE id=?", id)
-		return err
-	})
+func (c *ClusterTx) DeleteNetworkZoneRecord(ctx context.Context, id int64) error {
+	_, err := c.tx.ExecContext(ctx, "DELETE FROM networks_zones_records WHERE id=?", id)
+
+	return err
 }

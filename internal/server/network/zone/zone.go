@@ -283,8 +283,12 @@ func (d *zone) Delete() error {
 		return fmt.Errorf("Cannot delete a zone that is in use")
 	}
 
-	// Delete the database record.
-	err = d.state.DB.Cluster.DeleteNetworkZone(d.id)
+	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Delete the database record.
+		err = tx.DeleteNetworkZone(ctx, d.id)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
