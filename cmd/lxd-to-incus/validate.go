@@ -10,6 +10,7 @@ import (
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
 	incusAPI "github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/util"
 )
 
 var minLXDVersion = &version.DottedVersion{4, 0, 0}
@@ -390,6 +391,22 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 	targetFilesystem, _ := linux.DetectFilesystem(targetPaths.Daemon)
 	if srcFilesystem == "btrfs" && targetFilesystem != "btrfs" && !linux.IsMountPoint(sourcePaths.Daemon) {
 		return fmt.Errorf("Source daemon running on btrfs but being moved to non-btrfs target")
+	}
+
+	// Shiftfs check.
+	if util.PathExists("/sys/module/shiftfs/") {
+		fmt.Println("")
+		fmt.Println("WARNING: The shiftfs kernel module was detected on your system.")
+		fmt.Println("         This may indicate that your LXD installation is using shiftfs")
+		fmt.Println("         to allow shifted passthrough of some disks to your instance.")
+		fmt.Println("")
+		fmt.Println("         Incus does not support shiftfs but instead relies on a recent")
+		fmt.Println("         feature of the Linux kernel instead, VFS idmap.")
+		fmt.Println("")
+		fmt.Println("         If your instances actively rely on shiftfs today, you may need")
+		fmt.Println("         to update to a more recent Linux kernel or ZFS version to keep")
+		fmt.Println("         using this shifted passthrough features.")
+		fmt.Println("")
 	}
 
 	return nil
