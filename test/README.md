@@ -17,7 +17,7 @@ Name                             | Default                   | Description
 `INCUS_CEPH_CEPHFS`              | ""                        | Enables the CephFS tests using the specified cephfs filesystem for `cephfs` pools
 `INCUS_CEPH_CEPHOBJECT_RADOSGW`  | ""                        | Enables the Ceph Object tests using the specified radosgw HTTP endpoint for `cephobject` pools
 `INCUS_CONCURRENT`               | 0                         | Run concurrency tests, very CPU intensive
-`INCUS_DEBUG`                    | 0                         | Run incus, inc and the shell in debug mode (very verbose)
+`INCUS_DEBUG`                    | 0                         | Run incusd, incus and the shell in debug mode (very verbose)
 `INCUS_INSPECT`                  | 0                         | Don't teardown the test environment on failure
 `INCUS_LOGS `                    | ""                        | Path to a directory to copy all the Incus logs to
 `INCUS_OFFLINE`                  | 0                         | Skip anything that requires network access
@@ -29,4 +29,4 @@ Name                             | Default                   | Description
 `INCUS_IB_SRIOV_PARENT`          | ""                        | Enables Infiniband SR-IOV tests using the specified parent device
 `INCUS_NIC_BRIDGED_DRIVER`       | ""                        | Specifies bridged NIC driver for tests (either native or openvswitch, defaults to native)
 `INCUS_REQUIRED_TESTS`           | ""                        | Space-delimited list of test names that must not be skipped if their prerequisites are not met
-`INCUS_VERBOSE`                  | 0                         | Run incus, inc and the shell in verbose mode
+`INCUS_VERBOSE`                  | 0                         | Run incusd, incus and the shell in verbose mode
