@@ -1,9 +1,12 @@
 #!/bin/sh -eu
 
 target_branch=""
-if [ -n "${GITHUB_ACTIONS:-}" ]; then
-  # Target branch when running in github actions (see https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables).
+if [ -n "${GITHUB_BASE_REF:-}" ]; then
+  # Target branch when scanning a Github pull request
   target_branch="${GITHUB_BASE_REF}"
+elif [ -n "${GITHUB_BEFORE:-}" ]; then
+  # Target branch when scanning a Github merge
+  target_branch="${GITHUB_BEFORE}"
 elif [ -n "${1:-}" ]; then
   # Allow a target branch parameter.
   target_branch="${1}"
