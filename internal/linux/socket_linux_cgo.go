@@ -22,8 +22,8 @@ package linux
 #include <sys/types.h>
 #include <sys/un.h>
 
-#include "../cgo/process_utils.h"
-#include "../cgo/syscall_wrappers.h"
+#include "../../shared/cgo/process_utils.h"
+#include "../../shared/cgo/syscall_wrappers.h"
 
 #define ABSTRACT_UNIX_SOCK_LEN sizeof(((struct sockaddr_un *)0)->sun_path)
 
@@ -51,7 +51,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
+	_ "github.com/lxc/incus/shared/cgo" // Used by cgo
 )
 
 const ABSTRACT_UNIX_SOCK_LEN int = C.ABSTRACT_UNIX_SOCK_LEN

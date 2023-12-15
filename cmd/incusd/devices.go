@@ -7,7 +7,7 @@ package main
 #include <stdio.h>
 #include <linux/hidraw.h>
 
-#include "../../internal/cgo/memory_utils.h"
+#include "../../shared/cgo/memory_utils.h"
 
 #ifndef HIDIOCGRAWINFO
 #define HIDIOCGRAWINFO _IOR('H', 0x03, struct hidraw_devinfo)
@@ -43,13 +43,13 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
 	"github.com/lxc/incus/internal/server/cgroup"
 	"github.com/lxc/incus/internal/server/device"
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/resources"
 	"github.com/lxc/incus/internal/server/state"
+	_ "github.com/lxc/incus/shared/cgo" // Used by cgo
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
 )

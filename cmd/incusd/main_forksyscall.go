@@ -21,11 +21,11 @@ package main
 #include <sys/xattr.h>
 #include <unistd.h>
 
-#include "../../internal/cgo/macro.h"
-#include "../../internal/cgo/memory_utils.h"
-#include "../../internal/cgo/mount_utils.h"
-#include "../../internal/cgo/syscall_numbers.h"
-#include "../../internal/cgo/syscall_wrappers.h"
+#include "../../shared/cgo/macro.h"
+#include "../../shared/cgo/memory_utils.h"
+#include "../../shared/cgo/mount_utils.h"
+#include "../../shared/cgo/syscall_numbers.h"
+#include "../../shared/cgo/syscall_wrappers.h"
 
 extern char* advance_arg(bool required);
 extern void attach_userns_fd(int ns_fd);
@@ -556,7 +556,7 @@ import (
 	"github.com/spf13/cobra"
 
 	// Used by cgo
-	_ "github.com/lxc/incus/internal/cgo"
+	_ "github.com/lxc/incus/shared/cgo"
 )
 
 type cmdForksyscall struct {

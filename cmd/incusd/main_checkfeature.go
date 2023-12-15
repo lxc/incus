@@ -579,7 +579,7 @@ static bool kernel_supports_idmapped_mounts(void)
 import "C"
 
 import (
-	_ "github.com/lxc/incus/internal/cgo" // Used by cgo
+	_ "github.com/lxc/incus/shared/cgo" // Used by cgo
 	"github.com/lxc/incus/shared/logger"
 )
 
