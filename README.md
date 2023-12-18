@@ -14,14 +14,18 @@ You can try Incus online at: [`https://linuxcontainers.org/incus/try-it/`](https
 
 <!-- Include end Incus intro -->
 
-## Fork of Canonical LXD
-Incus, which is named after the [Cumulonimbus incus](https://en.wikipedia.org/wiki/Cumulonimbus_incus) or anvil cloud is a community fork of Canonical's LXD.
+## Project history
+Incus, which is named after the [Cumulonimbus incus](https://en.wikipedia.org/wiki/Cumulonimbus_incus) or anvil cloud
+started as community fork of Canonical's LXD following [Canonical's takeover](https://linuxcontainers.org/lxd/) of the LXD project from the
+Linux Containers community.
 
-This fork was made in response to [Canonical's takeover](https://linuxcontainers.org/lxd/) of the LXD project from the Linux Containers community.
+The project was then adopted by the Linux Containers community, taking back the spot left empty by LXD's departure.
 
-The main aim of this fork is to provide once again a real community project where everyone's contributions are welcome and no one single commercial entity is in charge of the project.
+Incus is a true open source community project, free of any [CLA](https://en.wikipedia.org/wiki/Contributor_License_Agreement) and
+remains released under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0).
+It's maintained by the same team of developers that first created LXD.
 
-A migration tool called `lxd-to-incus` is provided to aid with migrating an existing LXD environment over to Incus.
+LXD users wishing to migrate to Incus can easily do so through a migration tool called [`lxd-to-incus`](https://linuxcontainers.org/incus/docs/main/howto/server_migrate_lxd/).
 
 ## Get started
 

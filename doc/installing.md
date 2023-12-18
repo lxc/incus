@@ -39,8 +39,6 @@ There are two repositories available, one for the current stable release and one
 
 Installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
 
-If you prefer a different installation method, see {ref}`installing`.
-
 1. Allow your user to control Incus
 
    Access to Incus in the packages above is controlled through two groups:
