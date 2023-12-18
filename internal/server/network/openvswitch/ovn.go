@@ -87,6 +87,12 @@ type OVN struct {
 	sslClientKey  string
 }
 
+// ovnDatabase represents the OVN database to connect to.
+type ovnDatabase string
+
+const ovnDatabaseNorthbound = ovnDatabase("nortbound")
+const ovnDatabaseSouthbound = ovnDatabase("southbound")
+
 // getNorthboundDB returns connection string to use for northbound database.
 func (o *OVN) getNorthboundDB() string {
 	if o.nbDBAddr == "" {
@@ -107,21 +113,27 @@ func (o *OVN) getSouthboundDB() string {
 
 // sbctl executes ovn-sbctl with arguments to connect to wrapper's southbound database.
 func (o *OVN) sbctl(args ...string) (string, error) {
-	return o.xbctl(true, args...)
+	return o.xbctl(ovnDatabaseSouthbound, args...)
 }
 
 // nbctl executes ovn-nbctl with arguments to connect to wrapper's northbound database.
 func (o *OVN) nbctl(args ...string) (string, error) {
-	return o.xbctl(false, append([]string{"--wait=sb"}, args...)...)
+	return o.xbctl(ovnDatabaseNorthbound, append([]string{"--wait=sb"}, args...)...)
 }
 
 // xbctl optionally executes either ovn-nbctl or ovn-sbctl with arguments to connect to wrapper's northbound or southbound database.
-func (o *OVN) xbctl(southbound bool, extraArgs ...string) (string, error) {
-	dbAddr := o.getNorthboundDB()
-	cmd := "ovn-nbctl"
-	if southbound {
+func (o *OVN) xbctl(database ovnDatabase, extraArgs ...string) (string, error) {
+	// Figure out the command.
+	var dbAddr string
+	var cmd string
+	if database == ovnDatabaseNorthbound {
+		dbAddr = o.getNorthboundDB()
+		cmd = "ovn-nbctl"
+	} else if database == ovnDatabaseSouthbound {
 		dbAddr = o.getSouthboundDB()
 		cmd = "ovn-sbctl"
+	} else {
+		return "", fmt.Errorf("Unsupported database type %q", database)
 	}
 
 	// Figure out args.
