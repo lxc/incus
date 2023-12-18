@@ -192,7 +192,7 @@ func (o *OVN) LogicalRouterAdd(routerName OVNRouter, mayExist bool) error {
 }
 
 // LogicalRouterDelete deletes a named logical router.
-func (o OVN) LogicalRouterDelete(routerName OVNRouter) error {
+func (o *OVN) LogicalRouterDelete(routerName OVNRouter) error {
 	_, err := o.nbctl("--if-exists", "lr-del", string(routerName))
 	if err != nil {
 		return err
