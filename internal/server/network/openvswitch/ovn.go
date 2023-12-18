@@ -293,10 +293,6 @@ func (o *OVN) xbctl(southbound bool, extraArgs ...string) (string, error) {
 		cmd = "ovn-sbctl"
 	}
 
-	if strings.HasPrefix(dbAddr, "unix:") {
-		dbAddr = fmt.Sprintf("unix:%s", strings.TrimPrefix(dbAddr, "unix:"))
-	}
-
 	// Figure out args.
 	args := []string{"--timeout=10", "--db", dbAddr}
 
