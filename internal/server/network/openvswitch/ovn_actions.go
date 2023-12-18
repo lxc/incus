@@ -700,19 +700,19 @@ func (o *OVN) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]iprang
 		if ip == nil {
 			// Check if IP range part.
 			start, end, found := strings.Cut(excludeIPsPart, "..")
-			if found {
-				startIP := net.ParseIP(start)
-				endIP := net.ParseIP(end)
-
-				if startIP == nil || endIP == nil {
-					return nil, fmt.Errorf("Invalid exclude_ips range: %q", excludeIPsPart)
-				}
-
-				// Add range IP part to list.
-				excludeIPs = append(excludeIPs, iprange.Range{Start: startIP, End: endIP})
-			} else {
+			if !found {
 				return nil, fmt.Errorf("Unrecognised exclude_ips part: %q", excludeIPsPart)
 			}
+
+			startIP := net.ParseIP(start)
+			endIP := net.ParseIP(end)
+
+			if startIP == nil || endIP == nil {
+				return nil, fmt.Errorf("Invalid exclude_ips range: %q", excludeIPsPart)
+			}
+
+			// Add range IP part to list.
+			excludeIPs = append(excludeIPs, iprange.Range{Start: startIP, End: endIP})
 		} else {
 			// Add single IP part to list.
 			excludeIPs = append(excludeIPs, iprange.Range{Start: ip})
