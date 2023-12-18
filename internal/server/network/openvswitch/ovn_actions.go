@@ -1,13 +1,17 @@
 package openvswitch
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/ovn-org/libovsdb/ovsdb"
+
 	"github.com/lxc/incus/internal/iprange"
+	ovnNB "github.com/lxc/incus/internal/server/network/openvswitch/schema/ovn-nb"
 	"github.com/lxc/incus/shared/util"
 )
 
@@ -1429,9 +1433,80 @@ func (o *OVN) ChassisGroupDelete(haChassisGroupName OVNChassisGroup) error {
 
 // ChassisGroupChassisAdd adds a chassis ID to an HA chassis group with the specified priority.
 func (o *OVN) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisID string, priority uint) error {
-	_, err := o.nbctl("ha-chassis-group-add-chassis", string(haChassisGroupName), chassisID, fmt.Sprintf("%d", priority))
+	// Get the client.
+	client, cleanup, err := o.client(ovnDatabaseNorthbound)
 	if err != nil {
 		return err
+	}
+
+	defer cleanup()
+
+	ctx := context.TODO()
+	operations := []ovsdb.Operation{}
+
+	// Get the chassis group.
+	haGroup := &ovnNB.HAChassisGroup{Name: string(haChassisGroupName)}
+	err = client.Get(ctx, haGroup)
+	if err != nil {
+		return err
+	}
+
+	// Look for the chassis in the group.
+	var haChassis *ovnNB.HAChassis
+
+	for _, entry := range haGroup.HaChassis {
+		chassis := &ovnNB.HAChassis{UUID: entry}
+		err = client.Get(ctx, chassis)
+		if err != nil {
+			return err
+		}
+
+		if chassis.ChassisName == chassisID {
+			haChassis = chassis
+			break
+		}
+	}
+
+	if haChassis == nil {
+		// No entry found, add a new one.
+		haChassis = &ovnNB.HAChassis{
+			UUID:        "chassis",
+			ChassisName: chassisID,
+			Priority:    int(priority),
+		}
+
+		createOps, err := client.Create(haChassis)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+
+		// Add the HA Chassis to the group.
+		haGroup.HaChassis = append(haGroup.HaChassis, "chassis")
+		updateOps, err := client.Where(haGroup).Update(haGroup)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	} else if haChassis.Priority != int(priority) {
+		// Found but wrong priority, correct it.
+		haChassis.Priority = int(priority)
+		updateOps, err := client.Where(haChassis).Update(haChassis)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Apply the changes.
+	if len(operations) > 0 {
+		_, err := client.Transact(ctx, operations...)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
