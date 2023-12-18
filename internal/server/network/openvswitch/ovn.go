@@ -2,11 +2,21 @@ package openvswitch
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"os"
 	"strings"
+	"sync"
+
+	"github.com/go-logr/logr"
+	ovsdbClient "github.com/ovn-org/libovsdb/client"
+	ovsdbModel "github.com/ovn-org/libovsdb/model"
 
 	"github.com/lxc/incus/internal/linux"
+	ovnNB "github.com/lxc/incus/internal/server/network/openvswitch/schema/ovn-nb"
+	ovnSB "github.com/lxc/incus/internal/server/network/openvswitch/schema/ovn-sb"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/subprocess"
 )
@@ -79,12 +89,21 @@ func NewOVN(s *state.State) (*OVN, error) {
 
 // OVN command wrapper.
 type OVN struct {
+	mu sync.Mutex
+
 	nbDBAddr string
 	sbDBAddr string
 
 	sslCACert     string
 	sslClientCert string
 	sslClientKey  string
+
+	ovsdbClient map[ovnDatabase]*ovnClient
+}
+
+type ovnClient struct {
+	client ovsdbClient.Client
+	group  sync.WaitGroup
 }
 
 // ovnDatabase represents the OVN database to connect to.
@@ -92,6 +111,148 @@ type ovnDatabase string
 
 const ovnDatabaseNorthbound = ovnDatabase("nortbound")
 const ovnDatabaseSouthbound = ovnDatabase("southbound")
+
+func (o *OVN) client(database ovnDatabase) (ovsdbClient.Client, func(), error) {
+	// Check if we already have a client.
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	client, ok := o.ovsdbClient[database]
+	if ok {
+		client.group.Add(1)
+		return client.client, func() { client.group.Done() }, nil
+	}
+
+	// Figure out the database address and schema.
+	var dbAddr string
+	var dbSchema ovsdbModel.ClientDBModel
+
+	if database == ovnDatabaseNorthbound {
+		var err error
+		dbAddr = o.getNorthboundDB()
+
+		dbSchema, err = ovnNB.FullDatabaseModel()
+		if err != nil {
+			return nil, nil, err
+		}
+	} else if database == ovnDatabaseSouthbound {
+		var err error
+		dbAddr = o.getSouthboundDB()
+
+		dbSchema, err = ovnSB.FullDatabaseModel()
+		if err != nil {
+			return nil, nil, err
+		}
+	} else {
+		return nil, nil, fmt.Errorf("Unsupported database type %q", database)
+	}
+
+	// Prepare the client.
+	discard := logr.Discard()
+
+	options := []ovsdbClient.Option{ovsdbClient.WithLogger(&discard)}
+	for _, entry := range strings.Split(dbAddr, ",") {
+		options = append(options, ovsdbClient.WithEndpoint(entry))
+	}
+
+	// Handle SSL.
+	if strings.Contains(dbAddr, "ssl:") {
+		clientCert, err := tls.X509KeyPair([]byte(o.sslClientCert), []byte(o.sslClientKey))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		tlsConfig := &tls.Config{
+			Certificates:       []tls.Certificate{clientCert},
+			InsecureSkipVerify: true,
+		}
+
+		// If provided with a CA certificate, setup a validator for the cert chain (but not the name).
+		if o.sslCACert != "" {
+			tlsCAder, _ := pem.Decode([]byte(o.sslCACert))
+			if tlsCAder == nil {
+				return nil, nil, fmt.Errorf("Couldn't parse CA certificate")
+			}
+
+			tlsCAcert, err := x509.ParseCertificate(tlsCAder.Bytes)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			tlsCAcert.IsCA = true
+			tlsCAcert.KeyUsage = x509.KeyUsageCertSign
+
+			clientCAPool := x509.NewCertPool()
+			clientCAPool.AddCert(tlsCAcert)
+
+			tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, chains [][]*x509.Certificate) error {
+				if len(rawCerts) < 1 {
+					return fmt.Errorf("Missing server certificate")
+				}
+
+				// Load the chain.
+				roots := x509.NewCertPool()
+				for _, rawCert := range rawCerts {
+					cert, _ := x509.ParseCertificate(rawCert)
+					if cert != nil {
+						roots.AddCert(cert)
+					}
+				}
+
+				// Load the main server certificate.
+				cert, _ := x509.ParseCertificate(rawCerts[0])
+				if cert == nil {
+					return fmt.Errorf("Bad server certificate")
+				}
+
+				// Validate.
+				opts := x509.VerifyOptions{
+					Roots: roots,
+				}
+
+				_, err := cert.Verify(opts)
+				return err
+			}
+		}
+
+		options = append(options, ovsdbClient.WithTLSConfig(tlsConfig))
+	}
+
+	ovn, err := ovsdbClient.NewOVSDBClient(dbSchema, options...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = ovn.Connect(context.Background())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = ovn.Echo(context.TODO())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	monitorCookie, err := ovn.MonitorAll(context.TODO())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dbClient := &ovnClient{
+		client: ovn,
+		group:  sync.WaitGroup{},
+	}
+
+	dbClient.group.Add(1)
+
+	go func() {
+		dbClient.group.Wait()
+		_ = ovn.MonitorCancel(context.TODO(), monitorCookie)
+	}()
+
+	o.ovsdbClient[database] = dbClient
+
+	return ovn, func() { dbClient.group.Done() }, nil
+}
 
 // getNorthboundDB returns connection string to use for northbound database.
 func (o *OVN) getNorthboundDB() string {
