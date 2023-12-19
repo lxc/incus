@@ -16,7 +16,7 @@ import (
 	"github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/network/openvswitch"
+	"github.com/lxc/incus/internal/server/network/ovn"
 	"github.com/lxc/incus/internal/server/state"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/internal/version"
@@ -631,7 +631,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 	// If there are affected OVN networks, then apply the changes, but only if the request type is normal.
 	// This way we won't apply the same changes multiple times for each cluster member.
 	if len(aclOVNNets) > 0 && clientType == request.ClientTypeNormal {
-		client, err := openvswitch.NewOVN(d.state)
+		client, err := ovn.NewOVN(d.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
