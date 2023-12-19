@@ -130,7 +130,7 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		})
 	}
 
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return nil, err
 	}
@@ -1843,7 +1843,7 @@ func (n *ovn) setup(update bool) error {
 	revert := revert.New()
 	defer revert.Fail()
 
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return fmt.Errorf("Failed to get OVN client: %w", err)
 	}
@@ -2423,7 +2423,7 @@ func (n *ovn) setup(update bool) error {
 // Optionally excludePeers takes a list of peer network IDs to exclude from the router policy. This is useful
 // when removing a peer connection as it allows the security policy to be removed from OVN for that peer before the
 // peer connection has been removed from the database.
-func (n *ovn) logicalRouterPolicySetup(ovnnb *networkOVN.OVN, excludePeers ...int64) error {
+func (n *ovn) logicalRouterPolicySetup(ovnnb *networkOVN.NB, excludePeers ...int64) error {
 	extRouterPort := n.getRouterExtPortName()
 	intRouterPort := n.getRouterIntPortName()
 	addrSetPrefix := acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID())
@@ -2486,7 +2486,7 @@ func (n *ovn) logicalRouterPolicySetup(ovnnb *networkOVN.OVN, excludePeers ...in
 // ensureNetworkPortGroup ensures that the network level port group (used for classifying NICs connected to this
 // network as internal) exists.
 func (n *ovn) ensureNetworkPortGroup(projectID int64) error {
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return fmt.Errorf("Failed to get OVN client: %w", err)
 	}
@@ -2514,7 +2514,7 @@ func (n *ovn) ensureNetworkPortGroup(projectID int64) error {
 // The chassis priority value is a stable-random value derived from chassis group name and node ID. This is so we
 // don't end up using the same chassis for the primary uplink chassis for all OVN networks in a cluster.
 func (n *ovn) addChassisGroupEntry() error {
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return fmt.Errorf("Failed to get OVN client: %w", err)
 	}
@@ -2579,7 +2579,7 @@ func (n *ovn) addChassisGroupEntry() error {
 
 // deleteChassisGroupEntry deletes an entry for the local OVS chassis from the OVN logical network's chassis group.
 func (n *ovn) deleteChassisGroupEntry() error {
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return fmt.Errorf("Failed to get OVN client: %w", err)
 	}
@@ -2609,7 +2609,7 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	}
 
 	if clientType == request.ClientTypeNormal {
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -2983,7 +2983,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		addChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
 		removeChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -3325,7 +3325,7 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devi
 	revert := revert.New()
 	defer revert.Fail()
 
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return fmt.Errorf("Failed to get OVN client: %w", err)
 	}
@@ -3406,7 +3406,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	revert := revert.New()
 	defer revert.Fail()
 
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return "", nil, fmt.Errorf("Failed to get OVN client: %w", err)
 	}
@@ -3940,7 +3940,7 @@ func (n *ovn) InstanceDevicePortIPs(instanceUUID string, deviceName string) ([]n
 		return nil, fmt.Errorf("Instance UUID is required")
 	}
 
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get OVN client: %w", err)
 	}
@@ -3969,7 +3969,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		source = "internal"
 	}
 
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return fmt.Errorf("Failed to get OVN client: %w", err)
 	}
@@ -4094,7 +4094,7 @@ func (n *ovn) InstanceDevicePortRemove(instanceUUID string, deviceName string, d
 	revert := revert.New()
 	defer revert.Fail()
 
-	ovnnb, err := networkOVN.NewOVN(n.state)
+	ovnnb, err := networkOVN.NewNB(n.state)
 	if err != nil {
 		return fmt.Errorf("Failed to get OVN client: %w", err)
 	}
@@ -4347,7 +4347,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 	if util.ValueInSlice("ovn.ingress_mode", changedKeys) {
 		n.logger.Debug("Applying ingress mode changes from uplink network to instance NICs", logger.Ctx{"uplink": uplinkName})
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -4557,7 +4557,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			}
 		}
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -4641,7 +4641,7 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 			return nil // Nothing has changed.
 		}
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -4704,7 +4704,7 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 			return err
 		}
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -4868,7 +4868,7 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			}
 		}
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -4952,7 +4952,7 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 			return nil // Nothing has changed.
 		}
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -5016,7 +5016,7 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 			return err
 		}
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -5182,7 +5182,7 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 			return fmt.Errorf("Only peerings in %q state can be setup", api.NetworkStatusCreated)
 		}
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
@@ -5297,7 +5297,7 @@ func (n *ovn) peerGetLocalOpts(localNICRoutes []net.IPNet) (*networkOVN.OVNRoute
 
 // peerSetup applies the network peering configuration to both networks.
 // Accepts an OVN client, a target OVN network, and a set of OVNRouterPeering options pre-filled with local config.
-func (n *ovn) peerSetup(ovnnb *networkOVN.OVN, targetOVNNet *ovn, opts networkOVN.OVNRouterPeering) error {
+func (n *ovn) peerSetup(ovnnb *networkOVN.NB, targetOVNNet *ovn, opts networkOVN.OVNRouterPeering) error {
 	targetRouterMAC, err := targetOVNNet.getRouterMAC()
 	if err != nil {
 		return fmt.Errorf("Failed getting target router MAC address: %w", err)
@@ -5457,7 +5457,7 @@ func (n *ovn) PeerDelete(peerName string) error {
 			TargetRouterPort: targetOVNNet.getLogicalRouterPeerPortName(n.ID()),
 		}
 
-		ovnnb, err := networkOVN.NewOVN(n.state)
+		ovnnb, err := networkOVN.NewNB(n.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}

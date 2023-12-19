@@ -631,7 +631,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 	// If there are affected OVN networks, then apply the changes, but only if the request type is normal.
 	// This way we won't apply the same changes multiple times for each cluster member.
 	if len(aclOVNNets) > 0 && clientType == request.ClientTypeNormal {
-		ovnnb, err := ovn.NewOVN(d.state)
+		ovnnb, err := ovn.NewNB(d.state)
 		if err != nil {
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
