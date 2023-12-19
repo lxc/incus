@@ -2264,20 +2264,3 @@ func (o *OVN) GetHardwareAddress(ovnRouterPort OVNRouterPort) (string, error) {
 
 	return strings.TrimSpace(hwaddr), nil
 }
-
-// GetLogicalRouterPortActiveChassisHostname gets the hostname of the chassis managing the logical router port.
-func (o *OVN) GetLogicalRouterPortActiveChassisHostname(ovnRouterPort OVNRouterPort) (string, error) {
-	// Get the chassis ID from port bindings where the logical port is a chassis redirect (prepended "cr-") of the logical router port name.
-	filter := fmt.Sprintf("logical_port=cr-%s", ovnRouterPort)
-	chassisID, err := o.sbctl("--no-headings", "--columns=chassis", "--data=bare", "--format=csv", "find", "Port_Binding", filter)
-	if err != nil {
-		return "", err
-	}
-
-	hostname, err := o.sbctl("get", "Chassis", strings.TrimSpace(chassisID), "hostname")
-	if err != nil {
-		return "", err
-	}
-
-	return strings.TrimSpace(hostname), err
-}
