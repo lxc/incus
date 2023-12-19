@@ -1,4 +1,4 @@
-package openvswitch
+package ovs
 
 import (
 	"strconv"
