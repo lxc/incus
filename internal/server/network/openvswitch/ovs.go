@@ -137,7 +137,7 @@ func (o *OVS) BridgePortSet(portName string, options ...string) error {
 
 // InterfaceAssociateOVNSwitchPort removes any existing OVS ports associated to the specified ovnSwitchPortName
 // and then associates the specified interfaceName to the OVN switch port.
-func (o *OVS) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitchPortName OVNSwitchPort) error {
+func (o *OVS) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitchPortName string) error {
 	// Clear existing ports that were formerly associated to ovnSwitchPortName.
 	existingPorts, err := subprocess.RunCommand("ovs-vsctl", "--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "interface", fmt.Sprintf("external-ids:iface-id=%s", string(ovnSwitchPortName)))
 	if err != nil {
@@ -169,13 +169,13 @@ func (o *OVS) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitchPor
 }
 
 // InterfaceAssociatedOVNSwitchPort returns the OVN switch port associated to the OVS interface.
-func (o *OVS) InterfaceAssociatedOVNSwitchPort(interfaceName string) (OVNSwitchPort, error) {
+func (o *OVS) InterfaceAssociatedOVNSwitchPort(interfaceName string) (string, error) {
 	ovnSwitchPort, err := subprocess.RunCommand("ovs-vsctl", "get", "interface", interfaceName, "external_ids:iface-id")
 	if err != nil {
 		return "", err
 	}
 
-	return OVNSwitchPort(strings.TrimSpace(ovnSwitchPort)), nil
+	return strings.TrimSpace(ovnSwitchPort), nil
 }
 
 // ChassisID returns the local chassis ID.
