@@ -143,7 +143,12 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		}
 	}
 
-	chassis, err := ovnnb.GetLogicalRouterPortActiveChassisHostname(n.getRouterExtPortName())
+	ovnsb, err := networkOVN.NewSB(n.state)
+	if err != nil {
+		return nil, err
+	}
+
+	chassis, err := ovnsb.GetLogicalRouterPortActiveChassisHostname(n.getRouterExtPortName())
 	if err != nil {
 		return nil, err
 	}
