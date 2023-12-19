@@ -112,11 +112,11 @@ endif
 update-ovsdb:
 	go install github.com/ovn-org/libovsdb/cmd/modelgen@main
 
-	rm -Rf internal/server/network/openvswitch/schema
-	mkdir internal/server/network/openvswitch/schema
-	curl -s https://raw.githubusercontent.com/openvswitch/ovs/v$(OVS_MINVER)/vswitchd/vswitch.ovsschema -o internal/server/network/openvswitch/schema/ovs.json
-	modelgen -o internal/server/network/openvswitch/schema/ovs internal/server/network/openvswitch/schema/ovs.json
-	rm internal/server/network/openvswitch/schema/*.json
+	rm -Rf internal/server/network/ovs/schema
+	mkdir internal/server/network/ovs/schema
+	curl -s https://raw.githubusercontent.com/openvswitch/ovs/v$(OVS_MINVER)/vswitchd/vswitch.ovsschema -o internal/server/network/ovs/schema/ovs.json
+	modelgen -o internal/server/network/ovs/schema/ovs internal/server/network/ovs/schema/ovs.json
+	rm internal/server/network/ovs/schema/*.json
 
 	rm -Rf internal/server/network/ovn/schema
 	mkdir internal/server/network/ovn/schema
