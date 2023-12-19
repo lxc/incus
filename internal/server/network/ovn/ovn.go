@@ -26,7 +26,7 @@ import (
 func NewOVN(s *state.State) (*OVN, error) {
 	// Get database connection strings.
 	nbConnection := s.GlobalConfig.NetworkOVNNorthboundConnection()
-	sbConnection, err := ovs.NewOVS().OVNSouthboundDBRemoteAddress()
+	sbConnection, err := ovs.NewVSwitch().OVNSouthboundDBRemoteAddress()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get OVN southbound connection string: %w", err)
 	}

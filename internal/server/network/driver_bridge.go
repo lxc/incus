@@ -581,7 +581,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	// Create the bridge interface if doesn't exist.
 	if !n.isRunning() {
 		if n.config["bridge.driver"] == "openvswitch" {
-			vswitch := ovs.NewOVS()
+			vswitch := ovs.NewVSwitch()
 			if !vswitch.Installed() {
 				return fmt.Errorf("Open vSwitch isn't installed on this system")
 			}
@@ -1440,7 +1440,7 @@ func (n *bridge) Stop() error {
 
 	// Destroy the bridge interface
 	if n.config["bridge.driver"] == "openvswitch" {
-		vswitch := ovs.NewOVS()
+		vswitch := ovs.NewVSwitch()
 		err := vswitch.BridgeDelete(n.name)
 		if err != nil {
 			return err

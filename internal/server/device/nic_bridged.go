@@ -1529,7 +1529,7 @@ func (d *nicBridged) setupNativeBridgePortVLANs(hostName string) error {
 
 // setupOVSBridgePortVLANs configures the bridge port with the specified VLAN settings on the openvswitch bridge.
 func (d *nicBridged) setupOVSBridgePortVLANs(hostName string) error {
-	vswitch := ovs.NewOVS()
+	vswitch := ovs.NewVSwitch()
 
 	// Set port on bridge to specified untagged PVID.
 	if d.config["vlan"] != "" {

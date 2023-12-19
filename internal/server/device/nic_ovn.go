@@ -409,7 +409,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		delete(saveData, "host_name") // Nested NICs don't have a host side interface.
 	} else {
 		if d.config["acceleration"] == "sriov" {
-			vswitch := ovs.NewOVS()
+			vswitch := ovs.NewVSwitch()
 			if !vswitch.HardwareOffloadingEnabled() {
 				return nil, fmt.Errorf("SR-IOV acceleration requires hardware offloading be enabled in OVS")
 			}
@@ -456,7 +456,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			integrationBridgeNICName = vfRepresentor
 			peerName = vfDev
 		} else if d.config["acceleration"] == "vdpa" {
-			vswitch := ovs.NewOVS()
+			vswitch := ovs.NewVSwitch()
 			if !vswitch.HardwareOffloadingEnabled() {
 				return nil, fmt.Errorf("SR-IOV acceleration requires hardware offloading be enabled in OVS")
 			}
@@ -609,7 +609,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 	runConf := deviceConfig.RunConfig{}
 
 	// Get local chassis ID for chassis group.
-	vswitch := ovs.NewOVS()
+	vswitch := ovs.NewVSwitch()
 	chassisID, err := vswitch.ChassisID()
 	if err != nil {
 		return nil, fmt.Errorf("Failed getting OVS Chassis ID: %w", err)
@@ -825,7 +825,7 @@ func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
 	// port name using the same regime it does for new ports. This part is only here in order to allow
 	// instance ports generated under an older regime to be cleaned up properly.
 	networkVethFillFromVolatile(d.config, v)
-	vswitch := ovs.NewOVS()
+	vswitch := ovs.NewVSwitch()
 	var ovsExternalOVNPort string
 	if d.config["nested"] == "" {
 		ovsExternalOVNPort, err = vswitch.InterfaceAssociatedOVNSwitchPort(d.config["host_name"])
@@ -1127,7 +1127,7 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort, up
 	// Attach host side veth interface to bridge.
 	integrationBridge := d.state.GlobalConfig.NetworkOVNIntegrationBridge()
 
-	vswitch := ovs.NewOVS()
+	vswitch := ovs.NewVSwitch()
 	err = vswitch.BridgePortAdd(integrationBridge, hostName, true)
 	if err != nil {
 		return nil, err
