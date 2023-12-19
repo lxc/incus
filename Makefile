@@ -94,7 +94,7 @@ ifneq "$(INCUS_OFFLINE)" ""
 endif
 	$(GO) get -t -v -d -u ./...
 	$(GO) get github.com/mdlayher/socket@v0.4.1
-	$(GO) get github.com/openfga/go-sdk@v0.2.2
+	$(GO) get github.com/openfga/go-sdk@v0.3.1-go1.20
 	$(GO) mod tidy --go=1.20
 	$(GO) get toolchain@none
 
