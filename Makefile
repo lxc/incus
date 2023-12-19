@@ -111,15 +111,20 @@ endif
 .PHONY: update-ovsdb
 update-ovsdb:
 	go install github.com/ovn-org/libovsdb/cmd/modelgen@main
+
 	rm -Rf internal/server/network/openvswitch/schema
 	mkdir internal/server/network/openvswitch/schema
-	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-nb.ovsschema -o internal/server/network/openvswitch/schema/ovn-nb.json
-	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-sb.ovsschema -o internal/server/network/openvswitch/schema/ovn-sb.json
 	curl -s https://raw.githubusercontent.com/openvswitch/ovs/v$(OVS_MINVER)/vswitchd/vswitch.ovsschema -o internal/server/network/openvswitch/schema/ovs.json
-	modelgen -o internal/server/network/openvswitch/schema/ovn-nb internal/server/network/openvswitch/schema/ovn-nb.json
-	modelgen -o internal/server/network/openvswitch/schema/ovn-sb internal/server/network/openvswitch/schema/ovn-sb.json
 	modelgen -o internal/server/network/openvswitch/schema/ovs internal/server/network/openvswitch/schema/ovs.json
 	rm internal/server/network/openvswitch/schema/*.json
+
+	rm -Rf internal/server/network/ovn/schema
+	mkdir internal/server/network/ovn/schema
+	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-nb.ovsschema -o internal/server/network/ovn/schema/ovn-nb.json
+	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-sb.ovsschema -o internal/server/network/ovn/schema/ovn-sb.json
+	modelgen -o internal/server/network/ovn/schema/ovn-nb internal/server/network/ovn/schema/ovn-nb.json
+	modelgen -o internal/server/network/ovn/schema/ovn-sb internal/server/network/ovn/schema/ovn-sb.json
+	rm internal/server/network/ovn/schema/*.json
 
 .PHONY: update-protobuf
 update-protobuf:
