@@ -222,6 +222,26 @@ func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, 
 		return fmt.Errorf("Existing OpenFGA model has schema version %q, but our model has version %q", readModelResponse.AuthorizationModel.SchemaVersion, builtinAuthorizationModel.SchemaVersion)
 	}
 
+	// Clear condition field from older servers.
+	for _, entry := range readModelResponse.AuthorizationModel.TypeDefinitions {
+		if entry.Metadata == nil || entry.Metadata.Relations == nil {
+			continue
+		}
+
+		for _, relation := range *entry.Metadata.Relations {
+			if relation.DirectlyRelatedUserTypes == nil {
+				continue
+			}
+
+			for i, reference := range *relation.DirectlyRelatedUserTypes {
+				if reference.Condition != nil && *reference.Condition == "" {
+					rel := *relation.DirectlyRelatedUserTypes
+					rel[i].Condition = nil
+				}
+			}
+		}
+	}
+
 	existingTypeDefinitions, err := json.Marshal(readModelResponse.AuthorizationModel.TypeDefinitions)
 	if err != nil {
 		return fmt.Errorf("Failed to compare OpenFGA model type definitions: %w", err)
