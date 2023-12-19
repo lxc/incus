@@ -64,8 +64,8 @@ func AttachInterface(bridgeName string, devName string) error {
 			return err
 		}
 	} else {
-		ovs := ovs.NewOVS()
-		err := ovs.BridgePortAdd(bridgeName, devName, true)
+		vswitch := ovs.NewOVS()
+		err := vswitch.BridgePortAdd(bridgeName, devName, true)
 		if err != nil {
 			return err
 		}
@@ -83,8 +83,8 @@ func DetachInterface(bridgeName string, devName string) error {
 			return err
 		}
 	} else {
-		ovs := ovs.NewOVS()
-		err := ovs.BridgePortDelete(bridgeName, devName)
+		vswitch := ovs.NewOVS()
+		err := vswitch.BridgePortDelete(bridgeName, devName)
 		if err != nil {
 			return err
 		}

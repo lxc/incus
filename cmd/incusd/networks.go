@@ -865,8 +865,8 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bonding", apiNet.Name)) {
 		apiNet.Type = "bond"
 	} else {
-		ovs := ovs.NewOVS()
-		exists, _ := ovs.BridgeExists(apiNet.Name)
+		vswitch := ovs.NewOVS()
+		exists, _ := vswitch.BridgeExists(apiNet.Name)
 		if exists {
 			apiNet.Type = "bridge"
 		} else {
