@@ -27,7 +27,7 @@ import (
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network"
-	"github.com/lxc/incus/internal/server/network/openvswitch"
+	"github.com/lxc/incus/internal/server/network/ovs"
 	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/resources"
@@ -865,7 +865,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bonding", apiNet.Name)) {
 		apiNet.Type = "bond"
 	} else {
-		ovs := openvswitch.NewOVS()
+		ovs := ovs.NewOVS()
 		exists, _ := ovs.BridgeExists(apiNet.Name)
 		if exists {
 			apiNet.Type = "bridge"

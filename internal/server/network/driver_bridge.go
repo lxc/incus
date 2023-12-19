@@ -28,7 +28,7 @@ import (
 	firewallDrivers "github.com/lxc/incus/internal/server/firewall/drivers"
 	"github.com/lxc/incus/internal/server/ip"
 	"github.com/lxc/incus/internal/server/network/acl"
-	"github.com/lxc/incus/internal/server/network/openvswitch"
+	"github.com/lxc/incus/internal/server/network/ovs"
 	"github.com/lxc/incus/internal/server/project"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/internal/server/warnings"
@@ -581,7 +581,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	// Create the bridge interface if doesn't exist.
 	if !n.isRunning() {
 		if n.config["bridge.driver"] == "openvswitch" {
-			ovs := openvswitch.NewOVS()
+			ovs := ovs.NewOVS()
 			if !ovs.Installed() {
 				return fmt.Errorf("Open vSwitch isn't installed on this system")
 			}
@@ -1440,7 +1440,7 @@ func (n *bridge) Stop() error {
 
 	// Destroy the bridge interface
 	if n.config["bridge.driver"] == "openvswitch" {
-		ovs := openvswitch.NewOVS()
+		ovs := ovs.NewOVS()
 		err := ovs.BridgeDelete(n.name)
 		if err != nil {
 			return err

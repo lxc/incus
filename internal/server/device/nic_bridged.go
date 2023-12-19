@@ -27,7 +27,7 @@ import (
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/ip"
 	"github.com/lxc/incus/internal/server/network"
-	"github.com/lxc/incus/internal/server/network/openvswitch"
+	"github.com/lxc/incus/internal/server/network/ovs"
 	"github.com/lxc/incus/internal/server/resources"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -1529,7 +1529,7 @@ func (d *nicBridged) setupNativeBridgePortVLANs(hostName string) error {
 
 // setupOVSBridgePortVLANs configures the bridge port with the specified VLAN settings on the openvswitch bridge.
 func (d *nicBridged) setupOVSBridgePortVLANs(hostName string) error {
-	ovs := openvswitch.NewOVS()
+	ovs := ovs.NewOVS()
 
 	// Set port on bridge to specified untagged PVID.
 	if d.config["vlan"] != "" {

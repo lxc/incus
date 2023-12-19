@@ -17,7 +17,7 @@ import (
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/device/pci"
 	"github.com/lxc/incus/internal/server/ip"
-	"github.com/lxc/incus/internal/server/network/openvswitch"
+	"github.com/lxc/incus/internal/server/network/ovs"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -375,7 +375,7 @@ func SRIOVFindFreeVFAndRepresentor(state *state.State, ovsBridgeName string) (st
 		return "", "", "", -1, fmt.Errorf("Failed to read directory %q: %w", sysClassNet, err)
 	}
 
-	ovs := openvswitch.NewOVS()
+	ovs := ovs.NewOVS()
 
 	// Get all ports on the integration bridge.
 	ports, err := ovs.BridgePortList(ovsBridgeName)
