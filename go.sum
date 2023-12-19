@@ -344,6 +344,7 @@ github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/openfga/go-sdk v0.2.2 h1:zzQPdcX/CNLXwycqYNx5LvP78kzVs6R8p5GXw/0II3s=
 github.com/openfga/go-sdk v0.2.2/go.mod h1:ZB13O8GilPc0ITWssOszgxmz6CnIe8PQLZqbqAnx2IY=
+github.com/openfga/go-sdk v0.3.1-go1.20/go.mod h1:W4SNYMSxptGOtA9aGYxsYUmSC7LaZYP7y9qbT36ouCc=
 github.com/osrg/gobgp/v3 v3.21.0 h1:OCjDIz2duA36tLoQElm8S2ZfxClPqcM9B4SfIlfYQTI=
 github.com/osrg/gobgp/v3 v3.21.0/go.mod h1:4fbscYpsCk14EO16nTWAdJyErO4MbAZ2zLJmsmeXu/k=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
