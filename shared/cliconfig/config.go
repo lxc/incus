@@ -21,7 +21,7 @@ type Config struct {
 	// communication with the named daemon
 	Remotes map[string]Remote `yaml:"remotes"`
 
-	// Command line aliases for `lxc`
+	// Command line aliases for `incus`
 	Aliases map[string]string `yaml:"aliases"`
 
 	// Configuration directory
