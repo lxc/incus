@@ -1134,24 +1134,23 @@ func (o *NB) LogicalSwitchPortIPs(portName OVNSwitchPort) ([]net.IP, error) {
 
 // LogicalSwitchPortDynamicIPs returns a list of dynamc IPs for a switch port.
 func (o *NB) LogicalSwitchPortDynamicIPs(portName OVNSwitchPort) ([]net.IP, error) {
-	dynamicAddressesRaw, err := o.nbctl("get", "logical_switch_port", string(portName), "dynamic_addresses")
-	if err != nil {
-		return nil, err
+	ctx := context.TODO()
+
+	lsp := &ovnNB.LogicalSwitchPort{
+		Name: string(portName),
 	}
 
-	dynamicAddressesRaw = strings.TrimSpace(dynamicAddressesRaw)
+	err := o.client.Get(ctx, lsp)
+	if err != nil {
+		return []net.IP{}, err
+	}
 
 	// Check if no dynamic IPs set.
-	if dynamicAddressesRaw == "[]" {
+	if lsp.DynamicAddresses == nil {
 		return []net.IP{}, nil
 	}
 
-	dynamicAddressesRaw, err = unquote(dynamicAddressesRaw)
-	if err != nil {
-		return nil, fmt.Errorf("Failed unquoting: %w", err)
-	}
-
-	dynamicAddresses := strings.Split(strings.TrimSpace(dynamicAddressesRaw), " ")
+	dynamicAddresses := strings.Split(*lsp.DynamicAddresses, " ")
 	dynamicIPs := make([]net.IP, 0, len(dynamicAddresses))
 
 	for _, dynamicAddress := range dynamicAddresses {
