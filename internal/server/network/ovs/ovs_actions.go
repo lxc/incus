@@ -1,13 +1,17 @@
 package ovs
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os/exec"
 	"strings"
 	"sync"
 
+	ovsdbClient "github.com/ovn-org/libovsdb/client"
+
 	"github.com/lxc/incus/internal/server/ip"
+	ovsSwitch "github.com/lxc/incus/internal/server/network/ovs/schema/ovs"
 	"github.com/lxc/incus/shared/subprocess"
 )
 
@@ -22,16 +26,13 @@ func (o *VSwitch) Installed() bool {
 
 // BridgeExists returns true if the bridge exists.
 func (o *VSwitch) BridgeExists(bridgeName string) (bool, error) {
-	_, err := subprocess.RunCommand("ovs-vsctl", "br-exists", bridgeName)
-	if err != nil {
-		runErr, ok := err.(subprocess.RunError)
-		if ok {
-			exitError, ok := runErr.Unwrap().(*exec.ExitError)
+	ctx := context.TODO()
+	bridge := &ovsSwitch.Bridge{Name: bridgeName}
 
-			// ovs-vsctl manpage says that br-exists exits with code 2 if bridge doesn't exist.
-			if ok && exitError.ExitCode() == 2 {
-				return false, nil
-			}
+	err := o.client.Get(ctx, bridge)
+	if err != nil {
+		if err == ovsdbClient.ErrNotFound {
+			return false, nil
 		}
 
 		return false, err
