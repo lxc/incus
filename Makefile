@@ -12,6 +12,8 @@ GOPATH ?= $(shell $(GO) env GOPATH)
 CGO_LDFLAGS_ALLOW ?= (-Wl,-wrap,pthread_create)|(-Wl,-z,now)
 SPHINXENV=doc/.sphinx/venv/bin/activate
 SPHINXPIPPATH=doc/.sphinx/venv/bin/pip
+OVN_MINVER=23.03.0
+OVS_MINVER=2.15.0
 
 ifneq "$(wildcard vendor)" ""
 	RAFT_PATH=$(CURDIR)/vendor/raft
@@ -105,6 +107,24 @@ endif
 	cd test/mini-oidc && $(GO) get -t -v -d -u ./...
 	cd test/mini-oidc && $(GO) mod tidy --go=1.20
 	@echo "Dependencies updated"
+
+.PHONY: update-ovsdb
+update-ovsdb:
+	go install github.com/ovn-org/libovsdb/cmd/modelgen@main
+
+	rm -Rf internal/server/network/ovs/schema
+	mkdir internal/server/network/ovs/schema
+	curl -s https://raw.githubusercontent.com/openvswitch/ovs/v$(OVS_MINVER)/vswitchd/vswitch.ovsschema -o internal/server/network/ovs/schema/ovs.json
+	modelgen -o internal/server/network/ovs/schema/ovs internal/server/network/ovs/schema/ovs.json
+	rm internal/server/network/ovs/schema/*.json
+
+	rm -Rf internal/server/network/ovn/schema
+	mkdir internal/server/network/ovn/schema
+	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-nb.ovsschema -o internal/server/network/ovn/schema/ovn-nb.json
+	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-sb.ovsschema -o internal/server/network/ovn/schema/ovn-sb.json
+	modelgen -o internal/server/network/ovn/schema/ovn-nb internal/server/network/ovn/schema/ovn-nb.json
+	modelgen -o internal/server/network/ovn/schema/ovn-sb internal/server/network/ovn/schema/ovn-sb.json
+	rm internal/server/network/ovn/schema/*.json
 
 .PHONY: update-protobuf
 update-protobuf:

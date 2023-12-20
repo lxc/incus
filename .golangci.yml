@@ -32,9 +32,6 @@ linters-settings:
           - "checkPrivateReceivers"
           - "disableStutteringCheck"
 
-      # https://github.com/mgechev/revive/blob/2a1701aadbedfcc175cb92836a51407bec382652/RULES_DESCRIPTIONS.md#unused-receiver
-      - name: unused-receiver
-
       # https://github.com/mgechev/revive/blob/2a1701aadbedfcc175cb92836a51407bec382652/RULES_DESCRIPTIONS.md#import-shadowing
       - name: import-shadowing
 

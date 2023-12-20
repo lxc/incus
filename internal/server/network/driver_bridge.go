@@ -28,7 +28,7 @@ import (
 	firewallDrivers "github.com/lxc/incus/internal/server/firewall/drivers"
 	"github.com/lxc/incus/internal/server/ip"
 	"github.com/lxc/incus/internal/server/network/acl"
-	"github.com/lxc/incus/internal/server/network/openvswitch"
+	"github.com/lxc/incus/internal/server/network/ovs"
 	"github.com/lxc/incus/internal/server/project"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/internal/server/warnings"
@@ -581,19 +581,19 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	// Create the bridge interface if doesn't exist.
 	if !n.isRunning() {
 		if n.config["bridge.driver"] == "openvswitch" {
-			ovs := openvswitch.NewOVS()
-			if !ovs.Installed() {
+			vswitch, err := ovs.NewVSwitch()
+			if err != nil || !vswitch.Installed() {
 				return fmt.Errorf("Open vSwitch isn't installed on this system")
 			}
 
 			// Add and configure the interface in one operation to reduce the number of executions and
 			// to avoid systemd-udevd from applying the default MACAddressPolicy=persistent policy.
-			err := ovs.BridgeAdd(n.name, false, bridge.Address, bridge.MTU)
+			err = vswitch.BridgeAdd(n.name, false, bridge.Address, bridge.MTU)
 			if err != nil {
 				return err
 			}
 
-			revert.Add(func() { _ = ovs.BridgeDelete(n.name) })
+			revert.Add(func() { _ = vswitch.BridgeDelete(n.name) })
 		} else {
 			// Add and configure the interface in one operation to reduce the number of executions and
 			// to avoid systemd-udevd from applying the default MACAddressPolicy=persistent policy.
@@ -1440,8 +1440,12 @@ func (n *bridge) Stop() error {
 
 	// Destroy the bridge interface
 	if n.config["bridge.driver"] == "openvswitch" {
-		ovs := openvswitch.NewOVS()
-		err := ovs.BridgeDelete(n.name)
+		vswitch, err := ovs.NewVSwitch()
+		if err != nil {
+			return err
+		}
+
+		err = vswitch.BridgeDelete(n.name)
 		if err != nil {
 			return err
 		}

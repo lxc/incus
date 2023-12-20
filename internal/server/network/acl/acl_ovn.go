@@ -12,7 +12,7 @@ import (
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/network/openvswitch"
+	"github.com/lxc/incus/internal/server/network/ovn"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -36,27 +36,27 @@ const ovnACLPriorityPortGroupDrop = 500
 const ovnACLPortGroupPrefix = "incus_acl"
 
 // OVNACLPortGroupName returns the port group name for a Network ACL ID.
-func OVNACLPortGroupName(networkACLID int64) openvswitch.OVNPortGroup {
+func OVNACLPortGroupName(networkACLID int64) ovn.OVNPortGroup {
 	// OVN doesn't match port groups that have a "-" in them. So use an "_" for the separator.
 	// This is because OVN port group names must match: [a-zA-Z_.][a-zA-Z_.0-9]*.
-	return openvswitch.OVNPortGroup(fmt.Sprintf("%s%d", ovnACLPortGroupPrefix, networkACLID))
+	return ovn.OVNPortGroup(fmt.Sprintf("%s%d", ovnACLPortGroupPrefix, networkACLID))
 }
 
 // OVNACLNetworkPortGroupName returns the port group name for a Network ACL ID and Network ID.
-func OVNACLNetworkPortGroupName(networkACLID int64, networkID int64) openvswitch.OVNPortGroup {
+func OVNACLNetworkPortGroupName(networkACLID int64, networkID int64) ovn.OVNPortGroup {
 	// OVN doesn't match port groups that have a "-" in them. So use an "_" for the separator.
 	// This is because OVN port group names must match: [a-zA-Z_.][a-zA-Z_.0-9]*.
-	return openvswitch.OVNPortGroup(fmt.Sprintf("%s%d_net%d", ovnACLPortGroupPrefix, networkACLID, networkID))
+	return ovn.OVNPortGroup(fmt.Sprintf("%s%d_net%d", ovnACLPortGroupPrefix, networkACLID, networkID))
 }
 
 // OVNIntSwitchPortGroupName returns the port group name for a Network ID.
-func OVNIntSwitchPortGroupName(networkID int64) openvswitch.OVNPortGroup {
-	return openvswitch.OVNPortGroup(fmt.Sprintf("incus_net%d", networkID))
+func OVNIntSwitchPortGroupName(networkID int64) ovn.OVNPortGroup {
+	return ovn.OVNPortGroup(fmt.Sprintf("incus_net%d", networkID))
 }
 
 // OVNIntSwitchPortGroupAddressSetPrefix returns the internal switch routes address set prefix for a Network ID.
-func OVNIntSwitchPortGroupAddressSetPrefix(networkID int64) openvswitch.OVNAddressSet {
-	return openvswitch.OVNAddressSet(fmt.Sprintf("%s_routes", OVNIntSwitchPortGroupName(networkID)))
+func OVNIntSwitchPortGroupAddressSetPrefix(networkID int64) ovn.OVNAddressSet {
+	return ovn.OVNAddressSet(fmt.Sprintf("%s_routes", OVNIntSwitchPortGroupName(networkID)))
 }
 
 // OVNNetworkPrefix returns the prefix used for OVN entities related to a Network ID.
@@ -65,13 +65,13 @@ func OVNNetworkPrefix(networkID int64) string {
 }
 
 // OVNIntSwitchName returns the internal logical switch name for a Network ID.
-func OVNIntSwitchName(networkID int64) openvswitch.OVNSwitch {
-	return openvswitch.OVNSwitch(fmt.Sprintf("%s-ls-int", OVNNetworkPrefix(networkID)))
+func OVNIntSwitchName(networkID int64) ovn.OVNSwitch {
+	return ovn.OVNSwitch(fmt.Sprintf("%s-ls-int", OVNNetworkPrefix(networkID)))
 }
 
 // OVNIntSwitchRouterPortName returns OVN logical internal switch router port name.
-func OVNIntSwitchRouterPortName(networkID int64) openvswitch.OVNSwitchPort {
-	return openvswitch.OVNSwitchPort(fmt.Sprintf("%s-lsp-router", OVNIntSwitchName(networkID)))
+func OVNIntSwitchRouterPortName(networkID int64) ovn.OVNSwitchPort {
+	return ovn.OVNSwitchPort(fmt.Sprintf("%s-lsp-router", OVNIntSwitchName(networkID)))
 }
 
 // OVNEnsureACLs ensures that the requested aclNames exist as OVN port groups (creates & applies ACL rules if not),
@@ -81,7 +81,7 @@ func OVNIntSwitchRouterPortName(networkID int64) openvswitch.OVNSwitchPort {
 // of the database and applied. For each network provided in aclNets, the network specific port group for each ACL
 // is checked for existence (it is created & applies network specific ACL rules if not).
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-func OVNEnsureACLs(s *state.State, l logger.Logger, client *openvswitch.OVN, aclProjectName string, aclNameIDs map[string]int64, aclNets map[string]NetworkACLUsage, aclNames []string, reapplyRules bool) (revert.Hook, error) {
+func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectName string, aclNameIDs map[string]int64, aclNets map[string]NetworkACLUsage, aclNames []string, reapplyRules bool) (revert.Hook, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -115,7 +115,7 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *openvswitch.OVN, acl
 	// Next check which OVN port groups need creating and which exist already.
 	type aclStatus struct {
 		name       string
-		uuid       openvswitch.OVNPortGroupUUID
+		uuid       ovn.OVNPortGroupUUID
 		aclInfo    *api.NetworkACL
 		addACLNets map[string]NetworkACLUsage
 	}
@@ -323,10 +323,10 @@ func ovnAddReferencedACLs(info *api.NetworkACL, referencedACLNames map[string]st
 }
 
 // ovnApplyToPortGroup applies the rules in the specified ACL to the specified port group.
-func ovnApplyToPortGroup(l logger.Logger, client *openvswitch.OVN, aclInfo *api.NetworkACL, portGroupName openvswitch.OVNPortGroup, aclNameIDs map[string]int64, aclNets map[string]NetworkACLUsage, peerTargetNetIDs map[db.NetworkPeer]int64) error {
+func ovnApplyToPortGroup(l logger.Logger, client *ovn.NB, aclInfo *api.NetworkACL, portGroupName ovn.OVNPortGroup, aclNameIDs map[string]int64, aclNets map[string]NetworkACLUsage, peerTargetNetIDs map[db.NetworkPeer]int64) error {
 	// Create slice for port group rules that has the capacity for ingress and egress rules, plus default rule.
-	portGroupRules := make([]openvswitch.OVNACLRule, 0, len(aclInfo.Ingress)+len(aclInfo.Egress)+1)
-	networkRules := make([]openvswitch.OVNACLRule, 0)
+	portGroupRules := make([]ovn.OVNACLRule, 0, len(aclInfo.Ingress)+len(aclInfo.Egress)+1)
+	networkRules := make([]ovn.OVNACLRule, 0)
 	networkPeersNeeded := make([]db.NetworkPeer, 0)
 
 	// convertACLRules converts the ACL rules to OVN ACL rules.
@@ -373,7 +373,7 @@ func ovnApplyToPortGroup(l logger.Logger, client *openvswitch.OVN, aclInfo *api.
 	defaultAction := "drop"
 	defaultLogged := false
 
-	portGroupRules = append(portGroupRules, openvswitch.OVNACLRule{
+	portGroupRules = append(portGroupRules, ovn.OVNACLRule{
 		Direction: "to-lport", // Always use this so that outport is available to Match.
 		Action:    defaultAction,
 		Priority:  ovnACLPriorityPortGroupDefaultAction, // Lowest priority to catch only unmatched traffic.
@@ -419,10 +419,10 @@ func ovnApplyToPortGroup(l logger.Logger, client *openvswitch.OVN, aclInfo *api.
 
 // ovnRuleCriteriaToOVNACLRule converts an ACL rule into an OVNACLRule for an OVN port group or network.
 // Returns a bool indicating if any of the rule subjects are network specific.
-func ovnRuleCriteriaToOVNACLRule(direction string, rule *api.NetworkACLRule, portGroupName openvswitch.OVNPortGroup, aclNameIDs map[string]int64, peerTargetNetIDs map[db.NetworkPeer]int64) (openvswitch.OVNACLRule, bool, []db.NetworkPeer, error) {
+func ovnRuleCriteriaToOVNACLRule(direction string, rule *api.NetworkACLRule, portGroupName ovn.OVNPortGroup, aclNameIDs map[string]int64, peerTargetNetIDs map[db.NetworkPeer]int64) (ovn.OVNACLRule, bool, []db.NetworkPeer, error) {
 	networkSpecific := false
 	networkPeersNeeded := make([]db.NetworkPeer, 0)
-	portGroupRule := openvswitch.OVNACLRule{
+	portGroupRule := ovn.OVNACLRule{
 		Direction: "to-lport", // Always use this so that outport is available to Match.
 	}
 
@@ -455,7 +455,7 @@ func ovnRuleCriteriaToOVNACLRule(direction string, rule *api.NetworkACLRule, por
 	if rule.Source != "" {
 		match, netSpecificMatch, networkPeers, err := ovnRuleSubjectToOVNACLMatch("src", aclNameIDs, peerTargetNetIDs, util.SplitNTrimSpace(rule.Source, ",", -1, false)...)
 		if err != nil {
-			return openvswitch.OVNACLRule{}, false, nil, err
+			return ovn.OVNACLRule{}, false, nil, err
 		}
 
 		if netSpecificMatch {
@@ -469,7 +469,7 @@ func ovnRuleCriteriaToOVNACLRule(direction string, rule *api.NetworkACLRule, por
 	if rule.Destination != "" {
 		match, netSpecificMatch, networkPeers, err := ovnRuleSubjectToOVNACLMatch("dst", aclNameIDs, peerTargetNetIDs, util.SplitNTrimSpace(rule.Destination, ",", -1, false)...)
 		if err != nil {
-			return openvswitch.OVNACLRule{}, false, nil, err
+			return ovn.OVNACLRule{}, false, nil, err
 		}
 
 		if netSpecificMatch {
@@ -566,18 +566,18 @@ func ovnRuleSubjectToOVNACLMatch(direction string, aclNameIDs map[string]int64, 
 				fieldParts = append(fieldParts, fmt.Sprintf("%s.%s == %s", protocol, direction, subjectCriterion))
 			} else {
 				// If not valid IP subnet, check if subject is ACL name or network peer name.
-				var subjectPortSelector openvswitch.OVNPortGroup
+				var subjectPortSelector ovn.OVNPortGroup
 				if util.ValueInSlice(subjectCriterion, ruleSubjectInternalAliases) {
 					// Use pseudo port group name for special reserved port selector types.
 					// These will be expanded later for each network specific rule.
 					// Convert deprecated #internal to non-deprecated @internal if needed.
-					subjectPortSelector = openvswitch.OVNPortGroup(ruleSubjectInternal)
+					subjectPortSelector = ovn.OVNPortGroup(ruleSubjectInternal)
 					networkSpecific = true
 				} else if util.ValueInSlice(subjectCriterion, ruleSubjectExternalAliases) {
 					// Use pseudo port group name for special reserved port selector types.
 					// These will be expanded later for each network specific rule.
 					// Convert deprecated #external to non-deprecated @external if needed.
-					subjectPortSelector = openvswitch.OVNPortGroup(ruleSubjectExternal)
+					subjectPortSelector = ovn.OVNPortGroup(ruleSubjectExternal)
 					networkSpecific = true
 				} else if strings.HasPrefix(subjectCriterion, "@") {
 					// Subject is a network peer name. Convert to address set criteria.
@@ -626,8 +626,8 @@ func ovnRuleSubjectToOVNACLMatch(direction string, aclNameIDs map[string]int64, 
 }
 
 // OVNApplyNetworkBaselineRules applies preset baseline logical switch rules to a allow access to network services.
-func OVNApplyNetworkBaselineRules(client *openvswitch.OVN, switchName openvswitch.OVNSwitch, routerPortName openvswitch.OVNSwitchPort, intRouterIPs []*net.IPNet, dnsIPs []net.IP) error {
-	rules := []openvswitch.OVNACLRule{
+func OVNApplyNetworkBaselineRules(client *ovn.NB, switchName ovn.OVNSwitch, routerPortName ovn.OVNSwitchPort, intRouterIPs []*net.IPNet, dnsIPs []net.IP) error {
+	rules := []ovn.OVNACLRule{
 		{
 			Direction: "to-lport",
 			Action:    "allow",
@@ -684,7 +684,7 @@ func OVNApplyNetworkBaselineRules(client *openvswitch.OVN, switchName openvswitc
 			Direction: "to-lport",
 			Action:    "allow",
 			Priority:  ovnACLPrioritySwitchAllow,
-			Match:     fmt.Sprintf("tcp && tcp.flags == %#.03x", openvswitch.TCPRST|openvswitch.TCPACK), // TCP RST|ACK messages for ACL reject.
+			Match:     fmt.Sprintf("tcp && tcp.flags == %#.03x", ovn.TCPRST|ovn.TCPACK), // TCP RST|ACK messages for ACL reject.
 		},
 	}
 
@@ -700,13 +700,13 @@ func OVNApplyNetworkBaselineRules(client *openvswitch.OVN, switchName openvswitc
 		}
 
 		rules = append(rules,
-			openvswitch.OVNACLRule{
+			ovn.OVNACLRule{
 				Direction: "to-lport",
 				Action:    "allow",
 				Priority:  ovnACLPrioritySwitchAllow,
 				Match:     fmt.Sprintf(`outport == "%s" && icmp%d.type == %d && ip%d.dst == %s`, routerPortName, ipVersion, icmpPingType, ipVersion, intRouterIP.IP),
 			},
-			openvswitch.OVNACLRule{
+			ovn.OVNACLRule{
 				Direction: "to-lport",
 				Action:    "allow",
 				Priority:  ovnACLPrioritySwitchAllow,
@@ -723,7 +723,7 @@ func OVNApplyNetworkBaselineRules(client *openvswitch.OVN, switchName openvswitc
 		}
 
 		rules = append(rules,
-			openvswitch.OVNACLRule{
+			ovn.OVNACLRule{
 				Direction: "to-lport",
 				Action:    "allow",
 				Priority:  ovnACLPrioritySwitchAllow,
@@ -746,7 +746,7 @@ func OVNApplyNetworkBaselineRules(client *openvswitch.OVN, switchName openvswitc
 // The combination of ignoring the specifified usage type and explicit keep ACLs allows the caller to ensure that
 // the desired ACLs are considered unused by the usage type even if the referring config has not yet been removed
 // from the database.
-func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *openvswitch.OVN, aclProjectName string, ignoreUsageType any, ignoreUsageNicName string, keepACLs ...string) error {
+func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB, aclProjectName string, ignoreUsageType any, ignoreUsageNicName string, keepACLs ...string) error {
 	// Get map of ACL names to DB IDs (used for generating OVN port group names).
 	aclNameIDs, err := s.DB.Cluster.GetNetworkACLIDsByNames(aclProjectName)
 	if err != nil {
@@ -777,7 +777,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *openvsw
 
 	// hasKeeperPrefix indicates if the port group provided matches the prefix of one of the keepACLs.
 	// This will include ACL network port groups too.
-	hasKeeperPrefix := func(portGroup openvswitch.OVNPortGroup) bool {
+	hasKeeperPrefix := func(portGroup ovn.OVNPortGroup) bool {
 		for _, keepACLName := range keepACLs {
 			keepACLPortGroup := OVNACLPortGroupName(aclNameIDs[keepACLName])
 			if strings.HasPrefix(string(portGroup), string(keepACLPortGroup)) {
@@ -790,7 +790,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *openvsw
 
 	// Filter project port group list by ACL related ones, and store them in a map keyed by port group name.
 	// This contains the initial candidates for removal. But any found to be in use will be removed from list.
-	removeACLPortGroups := make(map[openvswitch.OVNPortGroup]struct{}, 0)
+	removeACLPortGroups := make(map[ovn.OVNPortGroup]struct{}, 0)
 	for _, portGroup := range portGroups {
 		// If port group is related to an ACL and is not related to one of keepACLs, then add it as a
 		// candidate for removal.
@@ -944,7 +944,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *openvsw
 	}
 
 	// Now remove any remaining port groups left in removeACLPortGroups.
-	removePortGroups := make([]openvswitch.OVNPortGroup, 0, len(removeACLPortGroups))
+	removePortGroups := make([]ovn.OVNPortGroup, 0, len(removeACLPortGroups))
 	for removeACLPortGroup := range removeACLPortGroups {
 		removePortGroups = append(removePortGroups, removeACLPortGroup)
 		l.Debug("Scheduled deletion of unused ACL OVN port group", logger.Ctx{"portGroup": removeACLPortGroup})
@@ -961,11 +961,11 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *openvsw
 }
 
 // OVNPortGroupInstanceNICSchedule adds the specified NIC port to the specified port groups in the changeSet.
-func OVNPortGroupInstanceNICSchedule(portUUID openvswitch.OVNSwitchPortUUID, changeSet map[openvswitch.OVNPortGroup][]openvswitch.OVNSwitchPortUUID, portGroups ...openvswitch.OVNPortGroup) {
+func OVNPortGroupInstanceNICSchedule(portUUID ovn.OVNSwitchPortUUID, changeSet map[ovn.OVNPortGroup][]ovn.OVNSwitchPortUUID, portGroups ...ovn.OVNPortGroup) {
 	for _, portGroupName := range portGroups {
 		_, found := changeSet[portGroupName]
 		if !found {
-			changeSet[portGroupName] = []openvswitch.OVNSwitchPortUUID{}
+			changeSet[portGroupName] = []ovn.OVNSwitchPortUUID{}
 		}
 
 		changeSet[portGroupName] = append(changeSet[portGroupName], portUUID)
@@ -973,7 +973,7 @@ func OVNPortGroupInstanceNICSchedule(portUUID openvswitch.OVNSwitchPortUUID, cha
 }
 
 // OVNApplyInstanceNICDefaultRules applies instance NIC default rules to per-network port group.
-func OVNApplyInstanceNICDefaultRules(client *openvswitch.OVN, switchPortGroup openvswitch.OVNPortGroup, logPrefix string, nicPortName openvswitch.OVNSwitchPort, ingressAction string, ingressLogged bool, egressAction string, egressLogged bool) error {
+func OVNApplyInstanceNICDefaultRules(client *ovn.NB, switchPortGroup ovn.OVNPortGroup, logPrefix string, nicPortName ovn.OVNSwitchPort, ingressAction string, ingressLogged bool, egressAction string, egressLogged bool) error {
 	if !util.ValueInSlice(ingressAction, ValidActions) {
 		return fmt.Errorf("Invalid ingress action %q", ingressAction)
 	}
@@ -982,7 +982,7 @@ func OVNApplyInstanceNICDefaultRules(client *openvswitch.OVN, switchPortGroup op
 		return fmt.Errorf("Invalid egress action %q", egressAction)
 	}
 
-	rules := []openvswitch.OVNACLRule{
+	rules := []ovn.OVNACLRule{
 		{
 			Direction: "to-lport",
 			Action:    egressAction,
