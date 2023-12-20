@@ -375,7 +375,10 @@ func SRIOVFindFreeVFAndRepresentor(state *state.State, ovsBridgeName string) (st
 		return "", "", "", -1, fmt.Errorf("Failed to read directory %q: %w", sysClassNet, err)
 	}
 
-	vswitch := ovs.NewVSwitch()
+	vswitch, err := ovs.NewVSwitch()
+	if err != nil {
+		return "", "", "", -1, fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
 
 	// Get all ports on the integration bridge.
 	ports, err := vswitch.BridgePortList(ovsBridgeName)

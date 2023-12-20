@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovn-org/libovsdb/ovsdb"
 	ovsClient "github.com/ovn-org/libovsdb/client"
+	"github.com/ovn-org/libovsdb/ovsdb"
 
 	"github.com/lxc/incus/internal/iprange"
 	ovnNB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-nb"

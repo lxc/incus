@@ -27,7 +27,12 @@ type SB struct {
 // NewSB initialises new OVN client for Southbound operations.
 func NewSB(s *state.State) (*SB, error) {
 	// Get the database connection string.
-	dbAddr, err := ovs.NewVSwitch().OVNSouthboundDBRemoteAddress()
+	vswitch, err := ovs.NewVSwitch()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	dbAddr, err := vswitch.OVNSouthboundDBRemoteAddress()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get OVN southbound connection string: %w", err)
 	}

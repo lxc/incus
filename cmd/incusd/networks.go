@@ -865,7 +865,11 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 	} else if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bonding", apiNet.Name)) {
 		apiNet.Type = "bond"
 	} else {
-		vswitch := ovs.NewVSwitch()
+		vswitch, err := ovs.NewVSwitch()
+		if err != nil {
+			return api.Network{}, fmt.Errorf("Failed to connect to OVS: %w", err)
+		}
+
 		exists, _ := vswitch.BridgeExists(apiNet.Name)
 		if exists {
 			apiNet.Type = "bridge"
