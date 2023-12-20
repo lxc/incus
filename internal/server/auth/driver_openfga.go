@@ -222,6 +222,26 @@ func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, 
 		return fmt.Errorf("Existing OpenFGA model has schema version %q, but our model has version %q", readModelResponse.AuthorizationModel.SchemaVersion, builtinAuthorizationModel.SchemaVersion)
 	}
 
+	// Clear condition field from older servers.
+	for _, entry := range readModelResponse.AuthorizationModel.TypeDefinitions {
+		if entry.Metadata == nil || entry.Metadata.Relations == nil {
+			continue
+		}
+
+		for _, relation := range *entry.Metadata.Relations {
+			if relation.DirectlyRelatedUserTypes == nil {
+				continue
+			}
+
+			for i, reference := range *relation.DirectlyRelatedUserTypes {
+				if reference.Condition != nil && *reference.Condition == "" {
+					rel := *relation.DirectlyRelatedUserTypes
+					rel[i].Condition = nil
+				}
+			}
+		}
+	}
+
 	existingTypeDefinitions, err := json.Marshal(readModelResponse.AuthorizationModel.TypeDefinitions)
 	if err != nil {
 		return fmt.Errorf("Failed to compare OpenFGA model type definitions: %w", err)
@@ -384,7 +404,7 @@ func (f *fga) AddProject(ctx context.Context, _ int64, projectName string) error
 
 func (f *fga) DeleteProject(ctx context.Context, _ int64, projectName string) error {
 	// Only empty projects can be deleted, so we don't need to worry about any tuples with this project as a parent.
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			// Remove the default profile
 			User:     ObjectProject(projectName).String(),
@@ -416,7 +436,7 @@ func (f *fga) RenameProject(ctx context.Context, _ int64, oldName string, newNam
 	}
 
 	// Only empty projects can be renamed, so we don't need to worry about any tuples with this project as a parent.
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			// Remove the default profile
 			User:     ObjectProject(oldName).String(),
@@ -448,7 +468,7 @@ func (f *fga) AddCertificate(ctx context.Context, fingerprint string) error {
 
 // DeleteCertificate is a no-op.
 func (f *fga) DeleteCertificate(ctx context.Context, fingerprint string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectServer().String(),
 			Relation: relationServer,
@@ -474,7 +494,7 @@ func (f *fga) AddStoragePool(ctx context.Context, storagePoolName string) error 
 
 // DeleteStoragePool is a no-op.
 func (f *fga) DeleteStoragePool(ctx context.Context, storagePoolName string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectServer().String(),
 			Relation: relationServer,
@@ -500,7 +520,7 @@ func (f *fga) AddImage(ctx context.Context, projectName string, fingerprint stri
 
 // DeleteImage is a no-op.
 func (f *fga) DeleteImage(ctx context.Context, projectName string, fingerprint string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -526,7 +546,7 @@ func (f *fga) AddImageAlias(ctx context.Context, projectName string, imageAliasN
 
 // DeleteImageAlias is a no-op.
 func (f *fga) DeleteImageAlias(ctx context.Context, projectName string, imageAliasName string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -547,7 +567,7 @@ func (f *fga) RenameImageAlias(ctx context.Context, projectName string, oldAlias
 		},
 	}
 
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -573,7 +593,7 @@ func (f *fga) AddInstance(ctx context.Context, projectName string, instanceName 
 
 // DeleteInstance is a no-op.
 func (f *fga) DeleteInstance(ctx context.Context, projectName string, instanceName string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -594,7 +614,7 @@ func (f *fga) RenameInstance(ctx context.Context, projectName string, oldInstanc
 		},
 	}
 
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -620,7 +640,7 @@ func (f *fga) AddNetwork(ctx context.Context, projectName string, networkName st
 
 // DeleteNetwork is a no-op.
 func (f *fga) DeleteNetwork(ctx context.Context, projectName string, networkName string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -641,7 +661,7 @@ func (f *fga) RenameNetwork(ctx context.Context, projectName string, oldNetworkN
 		},
 	}
 
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -667,7 +687,7 @@ func (f *fga) AddNetworkZone(ctx context.Context, projectName string, networkZon
 
 // DeleteNetworkZone is a no-op.
 func (f *fga) DeleteNetworkZone(ctx context.Context, projectName string, networkZoneName string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -693,7 +713,7 @@ func (f *fga) AddNetworkACL(ctx context.Context, projectName string, networkACLN
 
 // DeleteNetworkACL is a no-op.
 func (f *fga) DeleteNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -714,7 +734,7 @@ func (f *fga) RenameNetworkACL(ctx context.Context, projectName string, oldNetwo
 		},
 	}
 
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -740,7 +760,7 @@ func (f *fga) AddProfile(ctx context.Context, projectName string, profileName st
 
 // DeleteProfile is a no-op.
 func (f *fga) DeleteProfile(ctx context.Context, projectName string, profileName string) error {
-	deletes := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -748,7 +768,7 @@ func (f *fga) DeleteProfile(ctx context.Context, projectName string, profileName
 		},
 	}
 
-	return f.updateTuples(ctx, nil, deletes)
+	return f.updateTuples(ctx, nil, deletions)
 }
 
 // RenameProfile is a no-op.
@@ -761,7 +781,7 @@ func (f *fga) RenameProfile(ctx context.Context, projectName string, oldProfileN
 		},
 	}
 
-	deletes := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -769,7 +789,7 @@ func (f *fga) RenameProfile(ctx context.Context, projectName string, oldProfileN
 		},
 	}
 
-	return f.updateTuples(ctx, writes, deletes)
+	return f.updateTuples(ctx, writes, deletions)
 }
 
 // AddStoragePoolVolume is a no-op.
@@ -787,7 +807,7 @@ func (f *fga) AddStoragePoolVolume(ctx context.Context, projectName string, stor
 
 // DeleteStoragePoolVolume is a no-op.
 func (f *fga) DeleteStoragePoolVolume(ctx context.Context, projectName string, storagePoolName string, storageVolumeType string, storageVolumeName string, storageVolumeLocation string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -808,7 +828,7 @@ func (f *fga) RenameStoragePoolVolume(ctx context.Context, projectName string, s
 		},
 	}
 
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -834,7 +854,7 @@ func (f *fga) AddStorageBucket(ctx context.Context, projectName string, storageP
 
 // DeleteStorageBucket is a no-op.
 func (f *fga) DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error {
-	deletions := []client.ClientTupleKey{
+	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
@@ -845,7 +865,7 @@ func (f *fga) DeleteStorageBucket(ctx context.Context, projectName string, stora
 	return f.updateTuples(ctx, nil, deletions)
 }
 
-func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKey) error {
+func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKeyWithoutCondition) error {
 	// If offline, skip updating as a full sync will happen after connection.
 	if !f.online {
 		return nil
@@ -870,15 +890,15 @@ func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, 
 	body := client.ClientWriteRequest{}
 
 	if writes != nil {
-		body.Writes = &writes
+		body.Writes = writes
 	} else {
-		body.Writes = &[]client.ClientTupleKey{}
+		body.Writes = []client.ClientTupleKey{}
 	}
 
 	if deletions != nil {
-		body.Deletes = &deletions
+		body.Deletes = deletions
 	} else {
-		body.Deletes = &[]client.ClientTupleKey{}
+		body.Deletes = []openfga.TupleKeyWithoutCondition{}
 	}
 
 	clientWriteResponse, err := f.client.Write(ctx).Options(opts).Body(body).Execute()
@@ -938,7 +958,7 @@ func (f *fga) projectObjects(ctx context.Context, projectName string) ([]string,
 
 func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	var writes []client.ClientTupleKey
-	var deletions []client.ClientTupleKey
+	var deletions []client.ClientTupleKeyWithoutCondition
 
 	// Check if the type-bound public access is set.
 	resp, err := f.client.Check(ctx).Options(client.ClientCheckOptions{AuthorizationModelId: openfga.PtrString(f.authModelID)}).Body(client.ClientCheckRequest{
@@ -990,7 +1010,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 					user = ObjectProject(remoteObject.Project()).String()
 				}
 
-				deletions = append(deletions, client.ClientTupleKey{
+				deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
 					User:     user,
 					Relation: relation,
 					Object:   remoteObject.String(),

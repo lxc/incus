@@ -28,7 +28,8 @@ func main() {
 	// Setup the OIDC provider.
 	key := sha256.Sum256([]byte("test"))
 	router := chi.NewRouter()
-	storage := storage.NewStorage(storage.NewUserStore(issuer))
+	users := &userStore{}
+	storage := storage.NewStorage(users)
 
 	// Create the provider.
 	config := &op.Config{
@@ -74,6 +75,8 @@ func main() {
 }
 
 func userCodeHandler(storage *storage.Storage, w http.ResponseWriter, r *http.Request) {
+	name := username()
+
 	err := r.ParseForm()
 	if err != nil {
 		return
@@ -84,21 +87,47 @@ func userCodeHandler(storage *storage.Storage, w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	err = storage.CompleteDeviceAuthorization(r.Context(), userCode, name)
+	if err != nil {
+		return
+	}
+
+	fmt.Printf("%s => %s\n", userCode, name)
+
+	return
+}
+
+func username() string {
 	userName := "unknown"
 
 	content, err := os.ReadFile(os.Args[2])
 	if err == nil {
 		userName = strings.TrimSpace(string(content))
-	} else if !os.IsNotExist(err) {
-		return
 	}
 
-	err = storage.CompleteDeviceAuthorization(r.Context(), userCode, userName)
-	if err != nil {
-		return
+	return userName
+}
+
+type userStore struct{}
+
+func (u userStore) ExampleClientID() string {
+	return "service"
+}
+
+func (u userStore) GetUserByID(string) *storage.User {
+	name := username()
+
+	return &storage.User{
+		ID:       name,
+		Username: name,
 	}
+}
 
-	fmt.Printf("%s => %s\n", userCode, userName)
+func (u userStore) GetUserByUsername(string) *storage.User {
+	name := username()
 
-	return
+	return &storage.User{
+		ID:       name,
+		Username: name,
+	}
 }
