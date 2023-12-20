@@ -160,22 +160,19 @@ func (o *VSwitch) InterfaceAssociatedOVNSwitchPort(interfaceName string) (string
 
 // ChassisID returns the local chassis ID.
 func (o *VSwitch) ChassisID() (string, error) {
-	// ovs-vsctl's get command doesn't support its --format flag, so we always get the output quoted.
-	// However ovs-vsctl's find and list commands don't support retrieving a single column's map field.
-	// And ovs-vsctl's JSON output is unfriendly towards statically typed languages as it mixes data types
-	// in a slice. So stick with "get" command and use Go's strconv.Unquote to return the actual values.
-	chassisID, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:system-id")
+	ctx := context.TODO()
+
+	vSwitch := &ovsSwitch.OpenvSwitch{
+		UUID: o.rootUUID,
+	}
+
+	err := o.client.Get(ctx, vSwitch)
 	if err != nil {
 		return "", err
 	}
 
-	chassisID = strings.TrimSpace(chassisID)
-	chassisID, err = unquote(chassisID)
-	if err != nil {
-		return "", fmt.Errorf("Failed unquoting: %w", err)
-	}
-
-	return chassisID, nil
+	val := vSwitch.ExternalIDs["system-id"]
+	return val, nil
 }
 
 // OVNEncapIP returns the enscapsulation IP used for OVN underlay tunnels.
