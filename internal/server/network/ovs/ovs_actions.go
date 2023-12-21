@@ -214,6 +214,10 @@ func (o *VSwitch) OVNBridgeMappings(bridgeName string) ([]string, error) {
 	}
 
 	val := vSwitch.ExternalIDs["ovn-bridge-mappings"]
+	if val == "" {
+		return []string{}, nil
+	}
+
 	return strings.SplitN(val, ",", -1), nil
 }
 
