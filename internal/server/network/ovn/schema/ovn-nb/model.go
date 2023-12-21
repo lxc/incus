@@ -16,7 +16,6 @@ func FullDatabaseModel() (model.ClientDBModel, error) {
 		"ACL":                         &ACL{},
 		"Address_Set":                 &AddressSet{},
 		"BFD":                         &BFD{},
-		"Chassis_Template_Var":        &ChassisTemplateVar{},
 		"Connection":                  &Connection{},
 		"Copp":                        &Copp{},
 		"DHCP_Options":                &DHCPOptions{},
@@ -36,19 +35,17 @@ func FullDatabaseModel() (model.ClientDBModel, error) {
 		"Logical_Switch_Port":         &LogicalSwitchPort{},
 		"Meter":                       &Meter{},
 		"Meter_Band":                  &MeterBand{},
-		"Mirror":                      &Mirror{},
 		"NAT":                         &NAT{},
 		"NB_Global":                   &NBGlobal{},
 		"Port_Group":                  &PortGroup{},
 		"QoS":                         &QoS{},
 		"SSL":                         &SSL{},
-		"Static_MAC_Binding":          &StaticMACBinding{},
 	})
 }
 
 var schema = `{
   "name": "OVN_Northbound",
-  "version": "7.0.0",
+  "version": "6.1.0",
   "tables": {
     "ACL": {
       "columns": {
@@ -289,42 +286,6 @@ var schema = `{
         [
           "logical_port",
           "dst_ip"
-        ]
-      ]
-    },
-    "Chassis_Template_Var": {
-      "columns": {
-        "chassis": {
-          "type": "string"
-        },
-        "external_ids": {
-          "type": {
-            "key": {
-              "type": "string"
-            },
-            "value": {
-              "type": "string"
-            },
-            "min": 0,
-            "max": "unlimited"
-          }
-        },
-        "variables": {
-          "type": {
-            "key": {
-              "type": "string"
-            },
-            "value": {
-              "type": "string"
-            },
-            "min": 0,
-            "max": "unlimited"
-          }
-        }
-      },
-      "indexes": [
-        [
-          "chassis"
         ]
       ]
     },
@@ -1363,17 +1324,6 @@ var schema = `{
             "max": 1
           }
         },
-        "mirror_rules": {
-          "type": {
-            "key": {
-              "type": "uuid",
-              "refTable": "Mirror",
-              "refType": "weak"
-            },
-            "min": 0,
-            "max": "unlimited"
-          }
-        },
         "name": {
           "type": "string"
         },
@@ -1548,64 +1498,6 @@ var schema = `{
         }
       }
     },
-    "Mirror": {
-      "columns": {
-        "external_ids": {
-          "type": {
-            "key": {
-              "type": "string"
-            },
-            "value": {
-              "type": "string"
-            },
-            "min": 0,
-            "max": "unlimited"
-          }
-        },
-        "filter": {
-          "type": {
-            "key": {
-              "type": "string",
-              "enum": [
-                "set",
-                [
-                  "from-lport",
-                  "to-lport"
-                ]
-              ]
-            }
-          }
-        },
-        "index": {
-          "type": "integer"
-        },
-        "name": {
-          "type": "string"
-        },
-        "sink": {
-          "type": "string"
-        },
-        "type": {
-          "type": {
-            "key": {
-              "type": "string",
-              "enum": [
-                "set",
-                [
-                  "gre",
-                  "erspan"
-                ]
-              ]
-            }
-          }
-        }
-      },
-      "indexes": [
-        [
-          "name"
-        ]
-      ]
-    },
     "NAT": {
       "columns": {
         "allowed_ext_ips": {
@@ -1656,17 +1548,6 @@ var schema = `{
         },
         "external_port_range": {
           "type": "string"
-        },
-        "gateway_port": {
-          "type": {
-            "key": {
-              "type": "uuid",
-              "refTable": "Logical_Router_Port",
-              "refType": "weak"
-            },
-            "min": 0,
-            "max": 1
-          }
         },
         "logical_ip": {
           "type": "string"
@@ -1938,28 +1819,6 @@ var schema = `{
           "type": "string"
         }
       }
-    },
-    "Static_MAC_Binding": {
-      "columns": {
-        "ip": {
-          "type": "string"
-        },
-        "logical_port": {
-          "type": "string"
-        },
-        "mac": {
-          "type": "string"
-        },
-        "override_dynamic_mac": {
-          "type": "boolean"
-        }
-      },
-      "indexes": [
-        [
-          "logical_port",
-          "ip"
-        ]
-      ]
     }
   }
 }`
