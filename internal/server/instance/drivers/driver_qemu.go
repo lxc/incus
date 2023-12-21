@@ -8182,6 +8182,11 @@ func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) 
 
 	client, err := d.getAgentClient()
 	if err != nil {
+		// Don't fail if the VM simply doesn't have an agent.
+		if err == errQemuAgentOffline {
+			return nil
+		}
+
 		return err
 	}
 
