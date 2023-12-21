@@ -12,5 +12,4 @@ type MACBinding struct {
 	IP          string `ovsdb:"ip"`
 	LogicalPort string `ovsdb:"logical_port"`
 	MAC         string `ovsdb:"mac"`
-	Timestamp   int    `ovsdb:"timestamp"`
 }
