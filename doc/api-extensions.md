@@ -2300,3 +2300,22 @@ The new configuration keys are `network.ovn.ca_cert`, `network.ovn.client_cert` 
 ## `certificate_description`
 
 Adds a `description` field to certificate.
+
+## `storage_bucket_backup`
+
+Add storage bucket backup support.
+
+This includes the following new endpoints (see [RESTful API](rest-api.md) for details):
+
+* `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups`
+* `POST /1.0/storage-pools/<pool>/buckets/<bucket>/backups`
+
+* `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
+* `POST /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
+* `DELETE /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
+
+* `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>/export`
+
+The following existing endpoint has been modified:
+
+* `POST /1.0/storage-pools/<pool>/buckets/<bucket>` accepts the new source type `backup`

@@ -453,6 +453,15 @@ CREATE TABLE "storage_buckets" (
 	FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
 	FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
 );
+CREATE TABLE "storage_buckets_backups" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    storage_bucket_id INTEGER NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    creation_date DATETIME,
+    expiry_date DATETIME,
+    FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE,
+    UNIQUE (storage_bucket_id, name)
+);
 CREATE TABLE "storage_buckets_config" (
 	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	storage_bucket_id INTEGER NOT NULL,
@@ -622,5 +631,5 @@ CREATE TABLE "warnings" (
 );
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
-INSERT INTO schema (version, updated_at) VALUES (70, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (71, strftime("%s"))
 `

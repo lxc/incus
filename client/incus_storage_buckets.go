@@ -1,6 +1,14 @@
 package incus
 
 import (
+	"fmt"
+	"github.com/lxc/incus/shared/cancel"
+	"github.com/lxc/incus/shared/ioprogress"
+	"github.com/lxc/incus/shared/units"
+	"io"
+	"net/http"
+	"net/url"
+
 	"github.com/lxc/incus/shared/api"
 )
 
@@ -232,4 +240,96 @@ func (r *ProtocolIncus) DeleteStoragePoolBucketKey(poolName string, bucketName s
 	}
 
 	return nil
+}
+
+// CreateStoragePoolBucketBackup creates a new storage bucket backup.
+func (r *ProtocolIncus) CreateStoragePoolBucketBackup(poolName string, bucketName string, backup api.StorageBucketBackupsPost) (Operation, error) {
+	if err := r.CheckExtension("storage_bucket_backup"); err != nil {
+		return nil, err
+	}
+
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("/storage-pools/%s/buckets/%s/backups", url.PathEscape(poolName), url.PathEscape(bucketName)), backup, "", true)
+	if err != nil {
+		return nil, err
+	}
+
+	return op, nil
+}
+
+// DeleteStorageBucketBackup deletes an existing storage bucket backup.
+func (r *ProtocolIncus) DeleteStoragePoolBucketBackup(pool string, bucketName string, name string) (Operation, error) {
+	if err := r.CheckExtension("storage_bucket_backup"); err != nil {
+		return nil, err
+	}
+
+	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("/storage-pools/%s/buckets/%s/backups/%s", url.PathEscape(pool), url.PathEscape(bucketName), url.PathEscape(name)), nil, "", true)
+	if err != nil {
+		return nil, err
+	}
+
+	return op, nil
+}
+
+// GetStoragePoolBucketBackupFile returns the storage bucket file.
+func (r *ProtocolIncus) GetStoragePoolBucketBackupFile(pool string, bucketName string, name string, req *BackupFileRequest) (*BackupFileResponse, error) {
+	if err := r.CheckExtension("storage_bucket_backup"); err != nil {
+		return nil, err
+	}
+
+	// Build the URL
+	uri := fmt.Sprintf("%s/1.0/storage-pools/%s/buckets/%s/backups/%s/export", r.httpBaseURL.String(), url.PathEscape(pool), url.PathEscape(bucketName), url.PathEscape(name))
+
+	if r.project != "" {
+		uri += fmt.Sprintf("?project=%s", url.QueryEscape(r.project))
+	}
+
+	// Prepare the download request
+	request, err := http.NewRequest("GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.httpUserAgent != "" {
+		request.Header.Set("User-Agent", r.httpUserAgent)
+	}
+
+	// Start the request
+	response, doneCh, err := cancel.CancelableDownload(req.Canceler, r.DoHTTP, request)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = response.Body.Close() }()
+	defer close(doneCh)
+
+	if response.StatusCode != http.StatusOK {
+		_, _, err := incusParseResponse(response)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Handle the data
+	body := response.Body
+	if req.ProgressHandler != nil {
+		body = &ioprogress.ProgressReader{
+			ReadCloser: response.Body,
+			Tracker: &ioprogress.ProgressTracker{
+				Length: response.ContentLength,
+				Handler: func(percent int64, speed int64) {
+					req.ProgressHandler(ioprogress.ProgressData{Text: fmt.Sprintf("%d%% (%s/s)", percent, units.GetByteSizeString(speed, 2))})
+				},
+			},
+		}
+	}
+
+	size, err := io.Copy(req.BackupFile, body)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := BackupFileResponse{}
+	resp.Size = size
+
+	return &resp, nil
 }
