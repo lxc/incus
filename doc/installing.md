@@ -120,6 +120,24 @@ Finally, you can add users to the `incus-admin` group to provide non-root access
 For any NixOS specific issues, please [file an issue](https://github.com/NixOS/nixpkgs/issues/new/choose) in the package repository.
 ```
 
+```{group-tab} Fedora
+RPM packages of Incus and its dependencies are not yet available via official Fedora repositories but via the [`ganto/lxc4`](https://copr.fedorainfracloud.org/coprs/ganto/lxc4/) Community Project (COPR) repository.
+
+Install the COPR plugin for `dnf` and then enable the COPR repository:
+
+    dnf install 'dnf-command(copr)'
+    dnf copr enable ganto/lxc4
+
+Install Incus with:
+
+    dnf install incus
+
+For the additional setup steps see [Getting started with Incus on Fedora](https://github.com/ganto/copr-lxc4/wiki/Getting-Started-with-Incus-on-Fedora).
+
+Note that this is not an official project of Incus nor Fedora.
+Please report packaging issues [here](https://github.com/ganto/copr-lxc4/issues).
+```
+
 ````
 
 ### Other operating systems
