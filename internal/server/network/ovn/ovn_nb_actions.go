@@ -9,6 +9,7 @@ import (
 	"time"
 
 	ovsClient "github.com/ovn-org/libovsdb/client"
+	ovsModel "github.com/ovn-org/libovsdb/model"
 	"github.com/ovn-org/libovsdb/ovsdb"
 
 	"github.com/lxc/incus/internal/iprange"
@@ -1114,14 +1115,28 @@ func (o *NB) LogicalSwitchPortAdd(switchName OVNSwitch, portName OVNSwitchPort, 
 
 // LogicalSwitchPortIPs returns a list of IPs for a switch port.
 func (o *NB) LogicalSwitchPortIPs(portName OVNSwitchPort) ([]net.IP, error) {
-	addressesRaw, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--column=addresses,dynamic_addresses", "find", "logical_switch_port", fmt.Sprintf("name=%s", string(portName)))
+	ctx := context.TODO()
+
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
+	}
+
+	err := o.client.Get(ctx, &lsp)
 	if err != nil {
+		if err == ovsClient.ErrNotFound {
+			// Don't fail on missing port.
+			return []net.IP{}, nil
+		}
+
 		return nil, err
 	}
 
-	addresses := strings.Split(strings.Replace(strings.TrimSpace(addressesRaw), ",", " ", 1), " ")
-	ips := make([]net.IP, 0)
+	addresses := lsp.Addresses
+	if lsp.DynamicAddresses != nil {
+		addresses = append(addresses, strings.Split(*lsp.DynamicAddresses, " ")...)
+	}
 
+	ips := make([]net.IP, 0)
 	for _, address := range addresses {
 		ip := net.ParseIP(address)
 		if ip != nil {
@@ -1475,8 +1490,11 @@ func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisI
 		operations = append(operations, createOps...)
 
 		// Add the HA Chassis to the group.
-		haGroup.HaChassis = append(haGroup.HaChassis, "chassis")
-		updateOps, err := o.client.Where(haGroup).Update(haGroup)
+		updateOps, err := o.client.Where(haGroup).Mutate(haGroup, ovsModel.Mutation{
+			Field:   haGroup.HaChassis,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{haChassis.UUID},
+		})
 		if err != nil {
 			return err
 		}

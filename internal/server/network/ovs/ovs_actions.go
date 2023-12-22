@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
+	ovsdbModel "github.com/ovn-org/libovsdb/model"
+	"github.com/ovn-org/libovsdb/ovsdb"
 
 	"github.com/lxc/incus/internal/server/ip"
 	ovsSwitch "github.com/lxc/incus/internal/server/network/ovs/schema/ovs"
@@ -43,23 +45,83 @@ func (o *VSwitch) BridgeExists(bridgeName string) (bool, error) {
 
 // BridgeAdd adds a new bridge.
 func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.HardwareAddr, mtu uint32) error {
-	args := []string{}
+	ctx := context.TODO()
 
-	if mayExist {
-		args = append(args, "--may-exist")
-	}
-
-	args = append(args, "add-br", bridgeName)
-
-	if hwaddr != nil {
-		args = append(args, "--", "set", "bridge", bridgeName, fmt.Sprintf(`other-config:hwaddr="%s"`, hwaddr.String()))
+	// Interface
+	iface := ovsSwitch.Interface{
+		UUID: "interface",
+		Name: bridgeName,
 	}
 
 	if mtu > 0 {
-		args = append(args, "--", "set", "int", bridgeName, fmt.Sprintf(`mtu_request=%d`, mtu))
+		mtu := int(mtu)
+		iface.MTURequest = &mtu
 	}
 
-	_, err := subprocess.RunCommand("ovs-vsctl", args...)
+	interfaceOps, err := o.client.Create(&iface)
+	if err != nil {
+		return err
+	}
+
+	// Port
+	port := ovsSwitch.Port{
+		UUID:       "port",
+		Name:       bridgeName,
+		Interfaces: []string{"interface"},
+	}
+
+	portOps, err := o.client.Create(&port)
+	if err != nil {
+		return err
+	}
+
+	// Bridge
+	bridge := ovsSwitch.Bridge{
+		UUID:  "bridge",
+		Name:  bridgeName,
+		Ports: []string{port.UUID},
+	}
+
+	if hwaddr != nil {
+		bridge.OtherConfig = map[string]string{"hwaddr": hwaddr.String()}
+	}
+
+	bridgeOps, err := o.client.Create(&bridge)
+	if err != nil {
+		return err
+	}
+
+	if mayExist {
+		err = o.client.Get(ctx, &bridge)
+		if err != nil && err != ovsdbClient.ErrNotFound {
+			return err
+		}
+
+		if bridge.UUID != "" {
+			// Bridge already exists.
+			return nil
+		}
+	}
+
+	// Switch entry
+	ovsRow := ovsSwitch.OpenvSwitch{
+		UUID: o.rootUUID,
+	}
+
+	mutateOps, err := o.client.Where(&ovsRow).Mutate(&ovsRow, ovsdbModel.Mutation{
+		Field:   &ovsRow.Bridges,
+		Mutator: ovsdb.MutateOperationInsert,
+		Value:   []string{bridge.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations := append(interfaceOps, portOps...)
+	operations = append(operations, bridgeOps...)
+	operations = append(operations, mutateOps...)
+
+	_, err = o.client.Transact(ctx, operations...)
 	if err != nil {
 		return err
 	}
@@ -69,7 +131,31 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 
 // BridgeDelete deletes a bridge.
 func (o *VSwitch) BridgeDelete(bridgeName string) error {
-	_, err := subprocess.RunCommand("ovs-vsctl", "del-br", bridgeName)
+	ctx := context.TODO()
+
+	bridge := ovsSwitch.Bridge{
+		Name: bridgeName,
+	}
+
+	err := o.client.Get(ctx, &bridge)
+	if err != nil {
+		return err
+	}
+
+	ovsRow := ovsSwitch.OpenvSwitch{
+		UUID: o.rootUUID,
+	}
+
+	operations, err := o.client.Where(&ovsRow).Mutate(&ovsRow, ovsdbModel.Mutation{
+		Field:   &ovsRow.Bridges,
+		Mutator: "delete",
+		Value:   []string{bridge.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = o.client.Transact(ctx, operations...)
 	if err != nil {
 		return err
 	}
@@ -79,15 +165,69 @@ func (o *VSwitch) BridgeDelete(bridgeName string) error {
 
 // BridgePortAdd adds a port to the bridge (if already attached does nothing).
 func (o *VSwitch) BridgePortAdd(bridgeName string, portName string, mayExist bool) error {
-	args := []string{}
+	ctx := context.TODO()
 
-	if mayExist {
-		args = append(args, "--may-exist")
+	// Get the bridge.
+	bridge := ovsSwitch.Bridge{
+		Name: bridgeName,
 	}
 
-	args = append(args, "add-port", bridgeName, portName)
+	err := o.client.Get(ctx, &bridge)
+	if err != nil {
+		return err
+	}
 
-	_, err := subprocess.RunCommand("ovs-vsctl", args...)
+	// Create the interface.
+	iface := ovsSwitch.Interface{
+		UUID: "interface",
+		Name: portName,
+	}
+
+	interfaceOps, err := o.client.Create(&iface)
+	if err != nil {
+		return err
+	}
+
+	// Create the port.
+	port := ovsSwitch.Port{
+		Name: portName,
+	}
+
+	err = o.client.Get(ctx, &port)
+	if err != nil && err != ovsdbClient.ErrNotFound {
+		return err
+	}
+
+	if port.UUID != "" {
+		if mayExist {
+			// Already exists.
+			return nil
+		}
+
+		return fmt.Errorf("OVS port %q already exists on %q", portName, bridgeName)
+	}
+
+	port.UUID = "port"
+	port.Interfaces = []string{iface.UUID}
+	portOps, err := o.client.Create(&port)
+	if err != nil {
+		return err
+	}
+
+	// Create the bridge port entry.
+	mutateOps, err := o.client.Where(&bridge).Mutate(&bridge, ovsdbModel.Mutation{
+		Field:   &bridge.Ports,
+		Mutator: ovsdb.MutateOperationInsert,
+		Value:   []string{port.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations := append(interfaceOps, portOps...)
+	operations = append(operations, mutateOps...)
+
+	_, err = o.client.Transact(ctx, operations...)
 	if err != nil {
 		return err
 	}
