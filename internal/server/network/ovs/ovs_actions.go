@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
+	ovsdbModel "github.com/ovn-org/libovsdb/model"
 
 	"github.com/lxc/incus/internal/server/ip"
 	ovsSwitch "github.com/lxc/incus/internal/server/network/ovs/schema/ovs"
@@ -69,7 +70,31 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 
 // BridgeDelete deletes a bridge.
 func (o *VSwitch) BridgeDelete(bridgeName string) error {
-	_, err := subprocess.RunCommand("ovs-vsctl", "del-br", bridgeName)
+	ctx := context.TODO()
+
+	bridge := ovsSwitch.Bridge{
+		Name: bridgeName,
+	}
+
+	err := o.client.Get(ctx, &bridge)
+	if err != nil {
+		return err
+	}
+
+	ovsRow := ovsSwitch.OpenvSwitch{
+		UUID: o.rootUUID,
+	}
+
+	operations, err := o.client.Where(&ovsRow).Mutate(&ovsRow, ovsdbModel.Mutation{
+		Field:   &ovsRow.Bridges,
+		Mutator: "delete",
+		Value:   []string{bridge.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = o.client.Transact(ctx, operations...)
 	if err != nil {
 		return err
 	}
