@@ -197,6 +197,7 @@ func NewSB(s *state.State) (*SB, error) {
 	// Set finalizer to stop the monitor.
 	runtime.SetFinalizer(client, func(o *SB) {
 		_ = ovn.MonitorCancel(context.Background(), o.cookie)
+		ovn.Close()
 	})
 
 	return client, nil

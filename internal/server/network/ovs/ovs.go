@@ -63,6 +63,7 @@ func NewVSwitch() (*VSwitch, error) {
 	// Set finalizer to stop the monitor.
 	runtime.SetFinalizer(client, func(o *VSwitch) {
 		_ = ovs.MonitorCancel(context.Background(), o.cookie)
+		ovs.Close()
 	})
 
 	// Get the root UUID.
