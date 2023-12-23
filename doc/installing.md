@@ -138,6 +138,16 @@ Note that this is not an official project of Incus nor Fedora.
 Please report packaging issues [here](https://github.com/ganto/copr-lxc4/issues).
 ```
 
+```{group-tab} Arch Linux
+Incus and all of its dependencies are available in Arch Linux's main repository as `incus`.
+
+Install Incus with:
+
+    pacman -S incus
+
+Please report packaging issues [here](https://gitlab.archlinux.org/archlinux/packaging/packages/incus).
+```
+
 ````
 
 ### Other operating systems
