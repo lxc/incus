@@ -1513,7 +1513,12 @@ func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisI
 
 	// Apply the changes.
 	if len(operations) > 0 {
-		_, err := o.client.Transact(ctx, operations...)
+		resp, err := o.client.Transact(ctx, operations...)
+		if err != nil {
+			return err
+		}
+
+		_, err = ovsdb.CheckOperationResults(resp, operations)
 		if err != nil {
 			return err
 		}
