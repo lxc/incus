@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -35,37 +34,6 @@ type IterableAny interface {
 // doc is the structure of the JSON file that contains the generated configuration metadata.
 type doc struct {
 	Configs map[string]any `json:"configs"`
-}
-
-// detectType detects the type of a string and returns the corresponding value.
-func detectType(s string) any {
-	i, err := strconv.Atoi(s)
-	if err == nil {
-		return i
-	}
-
-	b, err := strconv.ParseBool(s)
-	if err == nil {
-		return b
-	}
-
-	f, err := strconv.ParseFloat(s, 64)
-	if err == nil {
-		return f
-	}
-
-	t, err := time.Parse(time.RFC3339, s)
-	if err == nil {
-		return t
-	}
-
-	// special characters handling
-	if s == "-" {
-		return ""
-	}
-
-	// If all conversions fail, it's a string
-	return s
 }
 
 // sortConfigKeys alphabetically sorts the entries by key (config option key) within each config group in an entity.
@@ -210,7 +178,7 @@ func parse(path string, outputJSONPath string, excludedPaths []string) (*doc, er
 						continue
 					}
 
-					configKeyEntry[metadataMap["key"]].(map[string]any)[dataKVMatch[1]] = detectType(dataKVMatch[2])
+					configKeyEntry[metadataMap["key"]].(map[string]any)[dataKVMatch[1]] = dataKVMatch[2]
 				}
 
 				_, ok = groupKeyEntry[metadataMap["group"]]

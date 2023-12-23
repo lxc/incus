@@ -34,7 +34,7 @@
 					},
 					{
 						"boot.autostart.delay": {
-							"defaultdesc": 0,
+							"defaultdesc": "0",
 							"liveupdate": "no",
 							"longdesc": "The number of seconds to wait after the instance started before starting the next one.",
 							"shortdesc": "Delay after starting the instance",
@@ -43,7 +43,7 @@
 					},
 					{
 						"boot.autostart.priority": {
-							"defaultdesc": 0,
+							"defaultdesc": "0",
 							"liveupdate": "no",
 							"longdesc": "The instance with the highest value is started first.",
 							"shortdesc": "What order to start the instances in",
@@ -52,7 +52,7 @@
 					},
 					{
 						"boot.host_shutdown_timeout": {
-							"defaultdesc": 30,
+							"defaultdesc": "30",
 							"liveupdate": "yes",
 							"longdesc": "Number of seconds to wait for the instance to shut down before it is force-stopped.",
 							"shortdesc": "How long to wait for the instance to shut down",
@@ -61,7 +61,7 @@
 					},
 					{
 						"boot.stop.priority": {
-							"defaultdesc": 0,
+							"defaultdesc": "0",
 							"liveupdate": "no",
 							"longdesc": "The instance with the highest value is shut down first.",
 							"shortdesc": "What order to shut down the instances in",
