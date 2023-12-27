@@ -220,7 +220,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 	for _, key := range deprecatedConfigs {
 		_, ok := srcServerInfo.Config[key]
 		if ok {
-			errors = append(errors, fmt.Errorf("Source server is using deprecated key %q", key))
+			errors = append(errors, fmt.Errorf("Source server is using deprecated server configuration key %q", key))
 		}
 	}
 
@@ -244,7 +244,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 		for _, key := range deprecatedNetworkConfigs {
 			_, ok := network.Config[key]
 			if ok {
-				errors = append(errors, fmt.Errorf("Source server has network %q using deprecated key %q", network.Name, key))
+				errors = append(errors, fmt.Errorf("Source server has network %q using deprecated configuration key %q", network.Name, key))
 			}
 		}
 	}
@@ -306,7 +306,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 			for _, key := range deprecatedInstanceConfigs {
 				_, ok := inst.Config[key]
 				if ok {
-					errors = append(errors, fmt.Errorf("Source server has instance %q in project %q using deprecated key %q", inst.Name, project.Name, key))
+					errors = append(errors, fmt.Errorf("Source server has instance %q in project %q using deprecated configuration key %q", inst.Name, project.Name, key))
 				}
 			}
 
@@ -314,7 +314,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 				for _, key := range deprecatedInstanceDeviceConfigs {
 					_, ok := device[key]
 					if ok {
-						errors = append(errors, fmt.Errorf("Source server has device %q for instance %q in project %q using deprecated key %q", deviceName, inst.Name, project.Name, key))
+						errors = append(errors, fmt.Errorf("Source server has device %q for instance %q in project %q using deprecated configuration key %q", deviceName, inst.Name, project.Name, key))
 					}
 				}
 			}
@@ -329,7 +329,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 			for _, key := range deprecatedInstanceConfigs {
 				_, ok := profile.Config[key]
 				if ok {
-					errors = append(errors, fmt.Errorf("Source server has profile %q in project %q using deprecated key %q", profile.Name, project.Name, key))
+					errors = append(errors, fmt.Errorf("Source server has profile %q in project %q using deprecated configuration key %q", profile.Name, project.Name, key))
 				}
 			}
 
@@ -337,7 +337,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 				for _, key := range deprecatedInstanceDeviceConfigs {
 					_, ok := device[key]
 					if ok {
-						errors = append(errors, fmt.Errorf("Source server has device %q for profile %q in project %q using deprecated key %q", deviceName, profile.Name, project.Name, key))
+						errors = append(errors, fmt.Errorf("Source server has device %q for profile %q in project %q using deprecated configuration key %q", deviceName, profile.Name, project.Name, key))
 					}
 				}
 			}
