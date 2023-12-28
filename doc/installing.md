@@ -169,7 +169,7 @@ To install the feature branch of Incus, run:
 
 ```{group-tab} Windows
 
-The Incus client on Windows is provided as a [Chocolatey](https://community.chocolatey.org/packages/lxc) package.
+The Incus client on Windows is provided as a [Chocolatey](https://community.chocolatey.org/packages/incus) package.
 To install it:
 
 1. Install Chocolatey by following the [installation instructions](https://docs.chocolatey.org/en-us/choco/setup).
