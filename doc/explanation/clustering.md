@@ -5,10 +5,6 @@ To spread the total workload over several servers, Incus can be run in clusterin
 In this scenario, any number of Incus servers share the same distributed database that holds the configuration for the cluster members and their instances.
 The Incus cluster can be managed uniformly using the [`incus`](incus.md) client or the REST API.
 
-```{tip}
-If you want to quickly set up a basic Incus cluster, check out [MicroCloud](https://microcloud.is).
-```
-
 (clustering-members)=
 ## Cluster members
 
