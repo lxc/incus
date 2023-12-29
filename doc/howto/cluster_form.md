@@ -9,9 +9,6 @@ See {ref}`clustering-members` for more information.
 
 You can form the Incus cluster interactively by providing configuration information during the initialization process or by using preseed files that contain the full configuration.
 
-To quickly and automatically set up a basic Incus cluster, you can use MicroCloud.
-Note, however, that this project is still in an early phase.
-
 ## Configure the cluster interactively
 
 To form your cluster, you must first run `incus admin init` on the bootstrap server. After that, run it on the other servers that you want to join to the cluster.
