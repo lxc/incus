@@ -990,7 +990,16 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 					return fmt.Errorf(`Missing required "ipv4.ovn.ranges" config key on uplink network`)
 				}
 
-				ipRanges, err := parseIPRanges(uplinkNetConf["ipv4.ovn.ranges"], uplinkNet.DHCPv4Subnet())
+				dhcpSubnet := uplinkNet.DHCPv4Subnet()
+				allowedNets := []*net.IPNet{}
+
+				if dhcpSubnet != nil {
+					allowedNets = append(allowedNets, dhcpSubnet)
+				} else {
+					allowedNets = append(allowedNets, uplinkIPv4Net)
+				}
+
+				ipRanges, err := parseIPRanges(uplinkNetConf["ipv4.ovn.ranges"], allowedNets...)
 				if err != nil {
 					return fmt.Errorf("Failed to parse uplink IPv4 OVN ranges: %w", err)
 				}
@@ -1006,7 +1015,16 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 			if uplinkIPv6Net != nil && routerExtPortIPv6 == nil {
 				// If IPv6 OVN ranges are specified by the uplink, allocate from them.
 				if uplinkNetConf["ipv6.ovn.ranges"] != "" {
-					ipRanges, err := parseIPRanges(uplinkNetConf["ipv6.ovn.ranges"], uplinkNet.DHCPv6Subnet())
+					dhcpSubnet := uplinkNet.DHCPv6Subnet()
+					allowedNets := []*net.IPNet{}
+
+					if dhcpSubnet != nil {
+						allowedNets = append(allowedNets, dhcpSubnet)
+					} else {
+						allowedNets = append(allowedNets, uplinkIPv6Net)
+					}
+
+					ipRanges, err := parseIPRanges(uplinkNetConf["ipv6.ovn.ranges"], allowedNets...)
 					if err != nil {
 						return fmt.Errorf("Failed to parse uplink IPv6 OVN ranges: %w", err)
 					}
