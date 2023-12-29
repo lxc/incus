@@ -67,7 +67,7 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 	port := ovsSwitch.Port{
 		UUID:       "port",
 		Name:       bridgeName,
-		Interfaces: []string{"interface"},
+		Interfaces: []string{iface.UUID},
 	}
 
 	portOps, err := o.client.Create(&port)
@@ -97,7 +97,7 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 			return err
 		}
 
-		if bridge.UUID != "" {
+		if bridge.UUID != "bridge" {
 			// Bridge already exists.
 			return nil
 		}
