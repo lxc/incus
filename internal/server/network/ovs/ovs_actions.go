@@ -67,7 +67,7 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 	port := ovsSwitch.Port{
 		UUID:       "port",
 		Name:       bridgeName,
-		Interfaces: []string{"interface"},
+		Interfaces: []string{iface.UUID},
 	}
 
 	portOps, err := o.client.Create(&port)
@@ -97,7 +97,7 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 			return err
 		}
 
-		if bridge.UUID != "" {
+		if bridge.UUID != "bridge" {
 			// Bridge already exists.
 			return nil
 		}
@@ -121,7 +121,12 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 	operations = append(operations, bridgeOps...)
 	operations = append(operations, mutateOps...)
 
-	_, err = o.client.Transact(ctx, operations...)
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -155,7 +160,12 @@ func (o *VSwitch) BridgeDelete(bridgeName string) error {
 		return err
 	}
 
-	_, err = o.client.Transact(ctx, operations...)
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -227,7 +237,12 @@ func (o *VSwitch) BridgePortAdd(bridgeName string, portName string, mayExist boo
 	operations := append(interfaceOps, portOps...)
 	operations = append(operations, mutateOps...)
 
-	_, err = o.client.Transact(ctx, operations...)
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}

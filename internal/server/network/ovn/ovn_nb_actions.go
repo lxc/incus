@@ -1452,18 +1452,21 @@ func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisI
 	operations := []ovsdb.Operation{}
 
 	// Get the chassis group.
-	haGroup := &ovnNB.HAChassisGroup{Name: string(haChassisGroupName)}
-	err := o.client.Get(ctx, haGroup)
+	haGroup := ovnNB.HAChassisGroup{
+		Name: string(haChassisGroupName),
+	}
+
+	err := o.client.Get(ctx, &haGroup)
 	if err != nil {
 		return err
 	}
 
 	// Look for the chassis in the group.
-	var haChassis *ovnNB.HAChassis
+	var haChassis ovnNB.HAChassis
 
 	for _, entry := range haGroup.HaChassis {
-		chassis := &ovnNB.HAChassis{UUID: entry}
-		err = o.client.Get(ctx, chassis)
+		chassis := ovnNB.HAChassis{UUID: entry}
+		err = o.client.Get(ctx, &chassis)
 		if err != nil {
 			return err
 		}
@@ -1474,15 +1477,15 @@ func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisI
 		}
 	}
 
-	if haChassis == nil {
+	if haChassis.UUID == "" {
 		// No entry found, add a new one.
-		haChassis = &ovnNB.HAChassis{
+		haChassis = ovnNB.HAChassis{
 			UUID:        "chassis",
 			ChassisName: chassisID,
 			Priority:    int(priority),
 		}
 
-		createOps, err := o.client.Create(haChassis)
+		createOps, err := o.client.Create(&haChassis)
 		if err != nil {
 			return err
 		}
@@ -1490,8 +1493,8 @@ func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisI
 		operations = append(operations, createOps...)
 
 		// Add the HA Chassis to the group.
-		updateOps, err := o.client.Where(haGroup).Mutate(haGroup, ovsModel.Mutation{
-			Field:   haGroup.HaChassis,
+		updateOps, err := o.client.Where(&haGroup).Mutate(&haGroup, ovsModel.Mutation{
+			Field:   &haGroup.HaChassis,
 			Mutator: ovsdb.MutateOperationInsert,
 			Value:   []string{haChassis.UUID},
 		})
@@ -1503,7 +1506,7 @@ func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisI
 	} else if haChassis.Priority != int(priority) {
 		// Found but wrong priority, correct it.
 		haChassis.Priority = int(priority)
-		updateOps, err := o.client.Where(haChassis).Update(haChassis)
+		updateOps, err := o.client.Where(&haChassis).Update(&haChassis)
 		if err != nil {
 			return err
 		}
@@ -1513,7 +1516,12 @@ func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisI
 
 	// Apply the changes.
 	if len(operations) > 0 {
-		_, err := o.client.Transact(ctx, operations...)
+		resp, err := o.client.Transact(ctx, operations...)
+		if err != nil {
+			return err
+		}
+
+		_, err = ovsdb.CheckOperationResults(resp, operations)
 		if err != nil {
 			return err
 		}
