@@ -11,7 +11,7 @@ type srcSnap struct{}
 
 func (s *srcSnap) Present() bool {
 	// Validate that the snap is installed.
-	if !util.PathExists("/snap/lxd") {
+	if !util.PathExists("/snap/lxd") && !util.PathExists("/var/lib/snapd/snap/lxd") {
 		return false
 	}
 
