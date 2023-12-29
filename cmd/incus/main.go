@@ -361,48 +361,51 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 	// and this is the first time the client has been run by the user, then check to see
 	// if the server has been properly configured.  Don't display the message if the var path
 	// does not exist (server missing), as the user may be targeting a remote daemon.
-	if !c.flagForceLocal && util.PathExists(internalUtil.VarPath("")) && !util.PathExists(c.confPath) {
+	if !c.flagForceLocal && !util.PathExists(c.confPath) {
 		// Create the config dir so that we don't get in here again for this user.
 		err = os.MkdirAll(c.conf.ConfigDir, 0750)
 		if err != nil {
 			return err
 		}
 
-		// Attempt to connect to the local server
-		runInit := true
-		d, err := incus.ConnectIncusUnix("", nil)
-		if err == nil {
-			// Check if server is initialized.
-			info, _, err := d.GetServer()
-			if err == nil && info.Environment.Storage != "" {
-				runInit = false
-			}
-
-			// Detect usable project.
-			names, err := d.GetProjectNames()
+		// Handle local servers.
+		if util.PathExists(internalUtil.VarPath("")) {
+			// Attempt to connect to the local server
+			runInit := true
+			d, err := incus.ConnectIncusUnix("", nil)
 			if err == nil {
-				if len(names) == 1 && names[0] != api.ProjectDefaultName {
-					remote := c.conf.Remotes["local"]
-					remote.Project = names[0]
-					c.conf.Remotes["local"] = remote
+				// Check if server is initialized.
+				info, _, err := d.GetServer()
+				if err == nil && info.Environment.Storage != "" {
+					runInit = false
+				}
+
+				// Detect usable project.
+				names, err := d.GetProjectNames()
+				if err == nil {
+					if len(names) == 1 && names[0] != api.ProjectDefaultName {
+						remote := c.conf.Remotes["local"]
+						remote.Project = names[0]
+						c.conf.Remotes["local"] = remote
+					}
 				}
 			}
-		}
 
-		flush := false
-		if runInit && (cmd.Name() != "init" || cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
-			fmt.Fprintf(os.Stderr, i18n.G("If this is your first time running Incus on this machine, you should also run: incus admin init")+"\n")
-			flush = true
-		}
+			flush := false
+			if runInit && (cmd.Name() != "init" || cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
+				fmt.Fprintf(os.Stderr, i18n.G("If this is your first time running Incus on this machine, you should also run: incus admin init")+"\n")
+				flush = true
+			}
 
-		if !util.ValueInSlice(cmd.Name(), []string{"admin", "create", "launch"}) && (cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
-			fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:ubuntu/22.04
+			if !util.ValueInSlice(cmd.Name(), []string{"admin", "create", "launch"}) && (cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
+				fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:ubuntu/22.04
 Or for a virtual machine: incus launch images:ubuntu/22.04 --vm`)+"\n")
-			flush = true
-		}
+				flush = true
+			}
 
-		if flush {
-			fmt.Fprintf(os.Stderr, "\n")
+			if flush {
+				fmt.Fprintf(os.Stderr, "\n")
+			}
 		}
 
 		// And save the initial configuration
