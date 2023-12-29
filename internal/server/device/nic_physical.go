@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/revert"
@@ -13,6 +14,7 @@ import (
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/ip"
 	"github.com/lxc/incus/internal/server/network"
+	"github.com/lxc/incus/internal/server/resources"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"
 )
@@ -197,10 +199,15 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 			}
 		}
 	} else if d.inst.Type() == instancetype.VM {
-		// Get PCI information about the network interface.
+		// Try to get PCI information about the network interface.
 		ueventPath := fmt.Sprintf("/sys/class/net/%s/device/uevent", saveData["host_name"])
 		pciDev, err := pcidev.ParseUeventFile(ueventPath)
 		if err != nil {
+			if err == pcidev.ErrDeviceIsUSB {
+				// Device is USB rather than PCI.
+				return d.startVMUSB(saveData["host_name"])
+			}
+
 			return nil, fmt.Errorf("Failed to get PCI device info for %q: %w", saveData["host_name"], err)
 		}
 
@@ -244,14 +251,87 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 	return &runConf, nil
 }
 
+func (d *nicPhysical) startVMUSB(name string) (*deviceConfig.RunConfig, error) {
+	// Get the list of network interfaces.
+	interfaces, err := resources.GetNetwork()
+	if err != nil {
+		return nil, err
+	}
+
+	// Look for our USB device.
+	var addr string
+	for _, card := range interfaces.Cards {
+		for _, port := range card.Ports {
+			if port.ID == name {
+				addr = card.USBAddress
+				break
+			}
+		}
+
+		if addr != "" {
+			break
+		}
+	}
+
+	if addr == "" {
+		return nil, fmt.Errorf("Failed to get USB device info for %q", name)
+	}
+
+	// Parse the USB address.
+	fields := strings.Split(addr, ":")
+	if len(fields) != 2 {
+		return nil, fmt.Errorf("Bad USB device info for %q", name)
+	}
+
+	usbBus, err := strconv.Atoi(fields[0])
+	if err != nil {
+		return nil, fmt.Errorf("Bad USB device info for %q: %w", name, err)
+	}
+
+	usbDev, err := strconv.Atoi(fields[1])
+	if err != nil {
+		return nil, fmt.Errorf("Bad USB device info for %q: %w", name, err)
+	}
+
+	// Record the addresses.
+	saveData := map[string]string{}
+	saveData["last_state.usb.bus"] = fmt.Sprintf("%03d", usbBus)
+	saveData["last_state.usb.device"] = fmt.Sprintf("%03d", usbDev)
+
+	err = d.volatileSet(saveData)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate a config.
+	runConf := deviceConfig.RunConfig{}
+	runConf.USBDevice = append(runConf.USBDevice, deviceConfig.USBDeviceItem{
+		DeviceName:     fmt.Sprintf("%s-%03d-%03d", d.name, usbBus, usbDev),
+		HostDevicePath: fmt.Sprintf("/dev/bus/usb/%03d/%03d", usbBus, usbDev),
+	})
+
+	return &runConf, nil
+}
+
 // Stop is run when the device is removed from the instance.
 func (d *nicPhysical) Stop() (*deviceConfig.RunConfig, error) {
 	v := d.volatileGet()
+
 	runConf := deviceConfig.RunConfig{
 		PostHooks: []func() error{d.postStop},
-		NetworkInterface: []deviceConfig.RunConfigItem{
+	}
+
+	if v["last_state.usb.bus"] != "" && v["last_state.usb.device"] != "" {
+		// Handle USB NICs.
+		runConf.USBDevice = append(runConf.USBDevice, deviceConfig.USBDeviceItem{
+			DeviceName:     fmt.Sprintf("%s-%s-%s", d.name, v["last_state.usb.bus"], v["last_state.usb.device"]),
+			HostDevicePath: fmt.Sprintf("/dev/bus/usb/%s/%s", v["last_state.usb.bus"], v["last_state.usb.device"]),
+		})
+	} else {
+		// Handle all other NICs.
+		runConf.NetworkInterface = []deviceConfig.RunConfigItem{
 			{Key: "link", Value: v["host_name"]},
-		},
+		}
 	}
 
 	return &runConf, nil
@@ -267,6 +347,8 @@ func (d *nicPhysical) postStop() error {
 			"last_state.created":       "",
 			"last_state.pci.slot.name": "",
 			"last_state.pci.driver":    "",
+			"last_state.usb.bus":       "",
+			"last_state.usb.device":    "",
 		})
 	}()
 
