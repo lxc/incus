@@ -13,6 +13,9 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
+// ErrDeviceIsUSB is returned when dealing with a USB device.
+var ErrDeviceIsUSB = fmt.Errorf("Device is USB instead of PCI")
+
 // Device represents info about a PCI uevent device.
 type Device struct {
 	ID       string
@@ -40,6 +43,8 @@ func ParseUeventFile(ueventFilePath string) (Device, error) {
 				dev.SlotName = fields[1]
 			} else if fields[0] == "PCI_ID" {
 				dev.ID = fields[1]
+			} else if fields[0] == "DEVTYPE" && fields[1] == "usb_interface" {
+				return dev, ErrDeviceIsUSB
 			} else if fields[0] == "DRIVER" {
 				dev.Driver = fields[1]
 			}

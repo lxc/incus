@@ -2416,13 +2416,20 @@ func (d *qemu) deviceStop(dev device.Device, instanceRunning bool, _ string) err
 	if instanceRunning {
 		// Detach NIC from running instance.
 		if configCopy["type"] == "nic" {
+			for _, usbDev := range runConf.USBDevice {
+				err = d.deviceDetachUSB(usbDev)
+				if err != nil {
+					return err
+				}
+			}
+
 			err = d.deviceDetachNIC(dev.Name())
 			if err != nil {
 				return err
 			}
 		}
 
-		// Detach USB drom running instance.
+		// Detach USB from running instance.
 		if configCopy["type"] == "usb" && runConf != nil {
 			for _, usbDev := range runConf.USBDevice {
 				err = d.deviceDetachUSB(usbDev)

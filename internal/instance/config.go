@@ -1139,6 +1139,14 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 			return validate.IsAny, nil
 		}
 
+		if strings.HasSuffix(key, ".bus") {
+			return validate.IsAny, nil
+		}
+
+		if strings.HasSuffix(key, ".device") {
+			return validate.IsAny, nil
+		}
+
 		if strings.HasSuffix(key, ".uuid") {
 			return validate.IsAny, nil
 		}
