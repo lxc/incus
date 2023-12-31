@@ -8,7 +8,7 @@ Some entities in Incus are tied to an architecture, for example, the instances, 
 The following table lists all supported architectures including their unique identifier and the name used to refer to them.
 The architecture names are typically aligned with the Linux kernel architecture names.
 
-ID    | Name          | Notes                           | Personalities
+ID    | Kernel name   | Description                     | Personalities
 :---  | :---          | :----                           | :------------
 1     | `i686`        | 32bit Intel x86                 |
 2     | `x86_64`      | 64bit Intel x86                 | `x86`
