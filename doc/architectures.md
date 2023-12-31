@@ -32,3 +32,15 @@ Incus cares only about the kernel architecture, not the particular userspace fla
 That means that Incus considers ARMv7 hard-float to be the same as ARMv7 soft-float and refers to both as `armv7l`.
 If useful to the user, the exact userspace ABI may be set as an image and container property, allowing easy query.
 ```
+
+## Virtual-machine support
+
+Incus only supports running virtual-machines on the following host architectures:
+
+- `x86_64`
+- `aarch64`
+- `ppc64le`
+- `s390x`
+
+The virtual machine guest architecture can usually be the 32bit personality of the host architecture,
+so long as the virtual machine firmware is capable of booting it.
