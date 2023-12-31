@@ -122,6 +122,7 @@ kibi
 Kibit
 KVM
 lookups
+Loongarch
 LRU
 LTS
 LV
