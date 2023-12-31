@@ -145,10 +145,6 @@ func (c *cmdCreate) create(conf *config.Config, args []string) (incus.InstanceSe
 		return nil, "", err
 	}
 
-	if c.flagTarget != "" {
-		d = d.UseTarget(c.flagTarget)
-	}
-
 	// Overwrite profiles.
 	if c.flagProfile != nil {
 		profiles = c.flagProfile
@@ -238,6 +234,11 @@ func (c *cmdCreate) create(conf *config.Config, args []string) (incus.InstanceSe
 	instanceDBType := api.InstanceTypeContainer
 	if c.flagVM {
 		instanceDBType = api.InstanceTypeVM
+	}
+
+	// Set the target if provided.
+	if c.flagTarget != "" {
+		d = d.UseTarget(c.flagTarget)
 	}
 
 	// Setup instance creation request
