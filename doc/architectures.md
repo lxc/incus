@@ -22,6 +22,9 @@ ID    | Name          | Notes                           | Personalities
 10    | `mips64`      | 64bit MIPS                      | `mips`
 11    | `riscv32`     | 32bit RISC-V little-endian      |
 12    | `riscv64`     | 64bit RISC-V little-endian      |
+13    | `armv6l`      | 32bit ARMv6 little-endian       |
+14    | `armv8l`      | 32bit ARMv8 little-endian       |
+15    | `loongarch64` | 64bit Loongarch                 |
 
 ```{note}
 Incus cares only about the kernel architecture, not the particular userspace flavor as determined by the toolchain.
