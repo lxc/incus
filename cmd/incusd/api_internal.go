@@ -793,8 +793,12 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 	for _, snap := range existingSnapshots {
 		snapInstName := fmt.Sprintf("%s%s%s", backupConf.Container.Name, internalInstance.SnapshotDelimiter, snap.Name)
 
-		// Check if an entry for the snapshot already exists in the db.
-		_, snapErr := s.DB.Cluster.GetInstanceSnapshotID(projectName, backupConf.Container.Name, snap.Name)
+		snapErr := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Check if an entry for the snapshot already exists in the db.
+			_, err := tx.GetInstanceSnapshotID(ctx, projectName, backupConf.Container.Name, snap.Name)
+
+			return err
+		})
 		if snapErr != nil && !response.IsNotFoundError(snapErr) {
 			return snapErr
 		}

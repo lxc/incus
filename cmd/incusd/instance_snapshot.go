@@ -732,10 +732,17 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 
 	fullName := parentName + internalInstance.SnapshotDelimiter + newName
 
-	// Check that the name isn't already in use
-	id, _ := s.DB.Cluster.GetInstanceSnapshotID(snapInst.Project().Name, parentName, newName)
-	if id > 0 {
-		return response.Conflict(fmt.Errorf("Name '%s' already in use", fullName))
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Check that the name isn't already in use
+		id, _ := tx.GetInstanceSnapshotID(ctx, snapInst.Project().Name, parentName, newName)
+		if id > 0 {
+			return fmt.Errorf("Name '%s' already in use", fullName)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.Conflict(err)
 	}
 
 	rename := func(op *operations.Operation) error {
