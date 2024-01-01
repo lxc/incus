@@ -403,8 +403,14 @@ func BucketDBCreate(ctx context.Context, pool Pool, projectName string, memberSp
 		return -1, err
 	}
 
-	// Create the database entry for the storage bucket.
-	bucketID, err := p.state.DB.Cluster.CreateStoragePoolBucket(ctx, p.ID(), projectName, memberSpecific, *bucket)
+	var bucketID int64
+
+	err = p.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create the database entry for the storage bucket.
+		bucketID, err = tx.CreateStoragePoolBucket(ctx, p.ID(), projectName, memberSpecific, *bucket)
+
+		return err
+	})
 	if err != nil {
 		return -1, fmt.Errorf("Failed inserting storage bucket %q for project %q in pool %q into database: %w", bucket.Name, projectName, pool.Name(), err)
 	}
@@ -419,7 +425,9 @@ func BucketDBDelete(ctx context.Context, pool Pool, bucketID int64) error {
 		return fmt.Errorf("Pool is not a backend")
 	}
 
-	err := p.state.DB.Cluster.DeleteStoragePoolBucket(ctx, p.ID(), bucketID)
+	err := p.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.DeleteStoragePoolBucket(ctx, p.ID(), bucketID)
+	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return fmt.Errorf("Failed deleting storage bucket from database: %w", err)
 	}

@@ -3866,8 +3866,10 @@ func (b *backend) UpdateBucket(projectName string, bucketName string, bucket api
 		}
 	}
 
-	// Update the database record.
-	err = b.state.DB.Cluster.UpdateStoragePoolBucket(context.TODO(), b.id, curBucket.ID, &bucket)
+	b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Update the database record.
+		return tx.UpdateStoragePoolBucket(ctx, b.id, curBucket.ID, &bucket)
+	})
 	if err != nil {
 		return err
 	}
@@ -3997,12 +3999,22 @@ func (b *backend) ImportBucket(projectName string, poolVol *backupConfig.Config,
 
 		// Insert keys into the database.
 		for _, key := range keys {
-			keyID, err := b.state.DB.Cluster.CreateStoragePoolBucketKey(b.state.ShutdownCtx, bucketID, key)
+			var keyID int64
+
+			err := b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+				keyID, err = tx.CreateStoragePoolBucketKey(ctx, bucketID, key)
+
+				return err
+			})
 			if err != nil {
 				return nil, err
 			}
 
-			revert.Add(func() { _ = b.state.DB.Cluster.DeleteStoragePoolBucketKey(b.state.ShutdownCtx, bucketID, keyID) })
+			revert.Add(func() {
+				_ = b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.DeleteStoragePoolBucketKey(ctx, bucketID, keyID)
+				})
+			})
 		}
 	} else {
 		return nil, fmt.Errorf("Importing buckets from a remote storage is not supported")
@@ -4213,7 +4225,11 @@ func (b *backend) CreateBucketKey(projectName string, bucketName string, key api
 		},
 	}
 
-	_, err = b.state.DB.Cluster.CreateStoragePoolBucketKey(context.TODO(), bucket.ID, key)
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err = tx.CreateStoragePoolBucketKey(ctx, bucket.ID, key)
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -4355,8 +4371,10 @@ func (b *backend) UpdateBucketKey(projectName string, bucketName string, keyName
 		key.SecretKey = newCreds.SecretKey
 	}
 
-	// Update the database record.
-	err = b.state.DB.Cluster.UpdateStoragePoolBucketKey(context.TODO(), bucket.ID, curBucketKey.ID, &key)
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Update the database record.
+		return tx.UpdateStoragePoolBucketKey(ctx, bucket.ID, curBucketKey.ID, &key)
+	})
 	if err != nil {
 		return err
 	}
@@ -4434,7 +4452,9 @@ func (b *backend) DeleteBucketKey(projectName string, bucketName string, keyName
 		}
 	}
 
-	err = b.state.DB.Cluster.DeleteStoragePoolBucketKey(context.TODO(), bucket.ID, bucketKey.ID)
+	b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.DeleteStoragePoolBucketKey(ctx, bucket.ID, bucketKey.ID)
+	})
 	if err != nil {
 		return fmt.Errorf("Failed deleting bucket key from database: %w", err)
 	}
