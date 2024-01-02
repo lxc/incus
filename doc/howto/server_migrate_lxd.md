@@ -13,6 +13,13 @@ Following the migration, you will need to add any user that was in the `lxd` gro
 As group membership only updates on login, users may need to close their session and re-open it for it to take effect.
 ```
 
+```{note}
+Additionally, this process doesn't migrate the command line tool configuration.
+For this you may want to transfer the content of `~/.config/lxc/` or `~/snap/lxd/common/config/` over to `~/.config/incus/`.
+
+This is mostly useful to those who interact with other remote servers or have configured custom aliases.
+```
+
 ```{terminal}
 :input: lxd-to-incus
 :user: root
