@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
@@ -47,6 +48,10 @@ func (c *cmdSnapshot) Command() *cobra.Command {
 	// Restore.
 	snapshotRestoreCmd := cmdSnapshotRestore{global: c.global, snapshot: c}
 	cmd.AddCommand(snapshotRestoreCmd.Command())
+
+	// Show.
+	snapshotShowCmd := cmdSnapshotShow{global: c.global, snapshot: c}
+	cmd.AddCommand(snapshotShowCmd.Command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -440,4 +445,55 @@ func (c *cmdSnapshotRestore) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	return op.Wait()
+}
+
+// Show.
+type cmdSnapshotShow struct {
+	global   *cmdGlobal
+	snapshot *cmdSnapshot
+
+	flagExpanded bool
+}
+
+func (c *cmdSnapshotShow) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("show", i18n.G("[<remote>:]<instance> <snapshot>"))
+	cmd.Short = i18n.G("Show instance snapshot configuration")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`Show instance snapshot configuration`))
+
+	cmd.RunE = c.Run
+
+	return cmd
+}
+
+func (c *cmdSnapshotShow) Run(cmd *cobra.Command, args []string) error {
+	// Quick checks.
+	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	if exit {
+		return err
+	}
+
+	// Parse remote
+	resources, err := c.global.ParseServers(args[0])
+	if err != nil {
+		return err
+	}
+
+	resource := resources[0]
+
+	// Snapshot
+	snap, _, err := resource.server.GetInstanceSnapshot(resource.name, args[1])
+	if err != nil {
+		return err
+	}
+
+	data, err := yaml.Marshal(&snap)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s", data)
+
+	return nil
 }
