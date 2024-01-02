@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/internal/server/db/cluster"
+	"github.com/lxc/incus/shared/api"
 )
 
 // ErrUnknownEntityID describes the unknown entity ID error.
@@ -295,7 +296,13 @@ func (c *Cluster) GetURIFromEntity(entityType int, entityID int) (string, error)
 
 		uri = fmt.Sprintf(cluster.EntityURIs[entityType], op.UUID)
 	case cluster.TypeStoragePool:
-		_, pool, _, err := c.GetStoragePoolWithID(entityID)
+		var pool *api.StoragePool
+
+		err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+			_, pool, _, err = tx.GetStoragePoolWithID(ctx, entityID)
+
+			return err
+		})
 		if err != nil {
 			return "", fmt.Errorf("Failed to get storage pool: %w", err)
 		}

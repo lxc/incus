@@ -1729,7 +1729,16 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 
 			// Unmount storage pools after instances stopped.
 			logger.Info("Stopping storage pools")
-			pools, err := s.DB.Cluster.GetStoragePoolNames()
+
+			var pools []string
+
+			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+
+				pools, err = tx.GetStoragePoolNames(ctx)
+
+				return err
+			})
 			if err != nil && !response.IsNotFoundError(err) {
 				logger.Error("Failed to get storage pools", logger.Ctx{"err": err})
 			}

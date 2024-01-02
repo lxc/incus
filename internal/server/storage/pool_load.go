@@ -181,8 +181,18 @@ func LoadByName(s *state.State, name string) (Pool, error) {
 		return &pool, nil
 	}
 
-	// Load the database record.
-	poolID, dbPool, poolNodes, err := s.DB.Cluster.GetStoragePoolInAnyState(name)
+	var poolID int64
+	var dbPool *api.StoragePool
+	var poolNodes map[int64]db.StoragePoolNode
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Load the database record.
+		poolID, dbPool, poolNodes, err = tx.GetStoragePoolInAnyState(ctx, name)
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -246,8 +256,16 @@ func Patch(s *state.State, patchName string) error {
 
 	unavailablePoolsMu.Unlock()
 
-	// Load all the pools.
-	pools, err := s.DB.Cluster.GetStoragePoolNames()
+	var pools []string
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Load all the pools.
+		pools, err = tx.GetStoragePoolNames(ctx)
+
+		return err
+	})
 	if err != nil {
 		if response.IsNotFoundError(err) {
 			return nil

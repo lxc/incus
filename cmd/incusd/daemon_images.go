@@ -268,8 +268,14 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 
 		ctxMap["pool"] = args.StoragePool
 
-		// Get the ID of the target storage pool.
-		poolID, err := s.DB.Cluster.GetStoragePoolID(args.StoragePool)
+		var poolID int64
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Get the ID of the target storage pool.
+			poolID, err = tx.GetStoragePoolID(ctx, args.StoragePool)
+
+			return err
+		})
 		if err != nil {
 			return nil, err
 		}

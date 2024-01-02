@@ -310,7 +310,9 @@ func (b *backend) Update(clientType request.ClientType, newDesc string, newConfi
 
 	// Update the database if something changed and we're in ClientTypeNormal mode.
 	if clientType == request.ClientTypeNormal && (len(changedConfig) > 0 || newDesc != b.db.Description) {
-		err = b.state.DB.Cluster.UpdateStoragePool(b.name, newDesc, newConfig)
+		err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.UpdateStoragePool(ctx, b.name, newDesc, newConfig)
+		})
 		if err != nil {
 			return err
 		}

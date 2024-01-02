@@ -444,7 +444,13 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 				return clusterCopyContainerInternal(s, r, source, projectName, profiles, req)
 			}
 
-			_, pool, _, err := s.DB.Cluster.GetStoragePoolInAnyState(sourcePoolName)
+			var pool *api.StoragePool
+
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				_, pool, _, err = tx.GetStoragePoolInAnyState(ctx, sourcePoolName)
+
+				return err
+			})
 			if err != nil {
 				err = fmt.Errorf("Failed to fetch instance's pool info: %w", err)
 				return response.SmartError(err)
@@ -664,8 +670,12 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		"snapshots": bInfo.Snapshots,
 	})
 
-	// Check storage pool exists.
-	_, _, _, err = s.DB.Cluster.GetStoragePoolInAnyState(bInfo.Pool)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Check storage pool exists.
+		_, _, _, err = tx.GetStoragePoolInAnyState(ctx, bInfo.Pool)
+
+		return err
+	})
 	if response.IsNotFoundError(err) {
 		// The storage pool doesn't exist. If backup is in binary format (so we cannot alter
 		// the backup.yaml) or the pool has been specified directly from the user restoring
@@ -1156,7 +1166,11 @@ func instanceFindStoragePool(s *state.State, projectName string, req *api.Instan
 
 	// Handle copying/moving between two storage-api instances.
 	if storagePool != "" {
-		_, err := s.DB.Cluster.GetStoragePoolID(storagePool)
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_, err := tx.GetStoragePoolID(ctx, storagePool)
+
+			return err
+		})
 		if response.IsNotFoundError(err) {
 			storagePool = ""
 			// Unset the local root disk device storage pool if not
@@ -1192,7 +1206,16 @@ func instanceFindStoragePool(s *state.State, projectName string, req *api.Instan
 	// If there is just a single pool in the database, use that
 	if storagePool == "" {
 		logger.Debug("No valid storage pool in the container's local root disk device and profiles found")
-		pools, err := s.DB.Cluster.GetStoragePoolNames()
+
+		var pools []string
+
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			pools, err = tx.GetStoragePoolNames(ctx)
+
+			return err
+		})
 		if err != nil {
 			if response.IsNotFoundError(err) {
 				return "", "", "", nil, response.BadRequest(fmt.Errorf("This instance does not have any storage pools configured"))
