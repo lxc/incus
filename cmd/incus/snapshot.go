@@ -285,14 +285,8 @@ func (c *cmdSnapshotList) listSnapshots(d incus.InstanceServer, name string) err
 	const layout = "2006/01/02 15:04 MST"
 
 	// List snapshots
-	firstSnapshot := true
 	snapData := [][]string{}
-
 	for _, snap := range snapshots {
-		if firstSnapshot {
-			fmt.Println("\n" + i18n.G("Snapshots:"))
-		}
-
 		var row []string
 
 		fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
@@ -316,7 +310,6 @@ func (c *cmdSnapshotList) listSnapshots(d incus.InstanceServer, name string) err
 			row = append(row, "NO")
 		}
 
-		firstSnapshot = false
 		snapData = append(snapData, row)
 	}
 
@@ -327,7 +320,7 @@ func (c *cmdSnapshotList) listSnapshots(d incus.InstanceServer, name string) err
 		i18n.G("Stateful"),
 	}
 
-	_ = cli.RenderTable(cli.TableFormatTable, snapHeader, snapData, snapshots)
+	_ = cli.RenderTable(c.flagFormat, snapHeader, snapData, snapshots)
 
 	return nil
 }
