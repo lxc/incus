@@ -747,8 +747,16 @@ func patchNetworkClearBridgeVolatileHwaddr(name string, d *Daemon) error {
 func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
 	s := d.State()
 
-	// Get all storage pool names.
-	pools, err := s.DB.Cluster.GetStoragePoolNames()
+	var pools []string
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get all storage pool names.
+		pools, err = tx.GetStoragePoolNames(ctx)
+
+		return err
+	})
 	if err != nil {
 		// Skip the rest of the patch if no storage pools were found.
 		if api.StatusErrorCheck(err, http.StatusNotFound) {
@@ -852,8 +860,16 @@ func patchStorageRenameCustomISOBlockVolumes(name string, d *Daemon) error {
 func patchZfsSetContentTypeUserProperty(name string, d *Daemon) error {
 	s := d.State()
 
-	// Get all storage pool names.
-	pools, err := s.DB.Cluster.GetStoragePoolNames()
+	var pools []string
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get all storage pool names.
+		pools, err = tx.GetStoragePoolNames(ctx)
+
+		return err
+	})
 	if err != nil {
 		// Skip the rest of the patch if no storage pools were found.
 		if api.StatusErrorCheck(err, http.StatusNotFound) {
@@ -939,8 +955,16 @@ func patchSnapshotsRename(name string, d *Daemon) error {
 func patchStorageZfsUnsetInvalidBlockSettings(_ string, d *Daemon) error {
 	s := d.State()
 
-	// Get all storage pool names.
-	pools, err := s.DB.Cluster.GetStoragePoolNames()
+	var pools []string
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get all storage pool names.
+		pools, err = tx.GetStoragePoolNames(ctx)
+
+		return err
+	})
 	if err != nil {
 		// Skip the rest of the patch if no storage pools were found.
 		if api.StatusErrorCheck(err, http.StatusNotFound) {
@@ -1047,8 +1071,16 @@ func patchStorageZfsUnsetInvalidBlockSettings(_ string, d *Daemon) error {
 func patchStorageZfsUnsetInvalidBlockSettingsV2(_ string, d *Daemon) error {
 	s := d.State()
 
-	// Get all storage pool names.
-	pools, err := s.DB.Cluster.GetStoragePoolNames()
+	var pools []string
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get all storage pool names.
+		pools, err = tx.GetStoragePoolNames(ctx)
+
+		return err
+	})
 	if err != nil {
 		// Skip the rest of the patch if no storage pools were found.
 		if api.StatusErrorCheck(err, http.StatusNotFound) {

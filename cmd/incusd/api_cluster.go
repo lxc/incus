@@ -622,18 +622,31 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		// Get all defined storage pools and networks, so they can be compared to the ones in the cluster.
 		pools := []api.StoragePool{}
-		poolNames, err := s.DB.Cluster.GetStoragePoolNames()
+		var poolNames []string
+
+		s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			poolNames, err = tx.GetStoragePoolNames(ctx)
+
+			return err
+		})
 		if err != nil && !response.IsNotFoundError(err) {
 			return err
 		}
 
-		for _, name := range poolNames {
-			_, pool, _, err := s.DB.Cluster.GetStoragePoolInAnyState(name)
-			if err != nil {
-				return err
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			for _, name := range poolNames {
+				_, pool, _, err := tx.GetStoragePoolInAnyState(ctx, name)
+				if err != nil {
+					return err
+				}
+
+				pools = append(pools, *pool)
 			}
 
-			pools = append(pools, *pool)
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 
 		// Get a list of projects for networks.
@@ -2111,8 +2124,14 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
-		// Delete all the pools on this node
-		pools, err := s.DB.Cluster.GetStoragePoolNames()
+		var pools []string
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Delete all the pools on this node
+			pools, err = tx.GetStoragePoolNames(ctx)
+
+			return err
+		})
 		if err != nil && !response.IsNotFoundError(err) {
 			return response.SmartError(err)
 		}
@@ -2766,7 +2785,14 @@ type internalClusterPostHandoverRequest struct {
 }
 
 func clusterCheckStoragePoolsMatch(cluster *db.Cluster, reqPools []api.StoragePool) error {
-	poolNames, err := cluster.GetCreatedStoragePoolNames()
+	var err error
+	var poolNames []string
+
+	err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		poolNames, err = tx.GetCreatedStoragePoolNames(ctx)
+
+		return err
+	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return err
 	}
@@ -2779,7 +2805,14 @@ func clusterCheckStoragePoolsMatch(cluster *db.Cluster, reqPools []api.StoragePo
 			}
 
 			found = true
-			_, pool, _, err := cluster.GetStoragePoolInAnyState(name)
+
+			var pool *api.StoragePool
+
+			err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				_, pool, _, err = tx.GetStoragePoolInAnyState(ctx, name)
+
+				return err
+			})
 			if err != nil {
 				return err
 			}

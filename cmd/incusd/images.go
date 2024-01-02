@@ -1844,7 +1844,13 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 		if vol != "" {
 			fields := strings.Split(vol, "/")
 
-			_, pool, _, err := s.DB.Cluster.GetStoragePool(fields[0])
+			var pool *api.StoragePool
+
+			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+				_, pool, _, err = tx.GetStoragePool(ctx, fields[0])
+
+				return err
+			})
 			if err != nil {
 				return fmt.Errorf("Failed to get storage pool info: %w", err)
 			}
