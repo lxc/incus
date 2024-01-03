@@ -7020,6 +7020,21 @@ func (d *lxc) ConsoleLog(opts liblxc.ConsoleLogOptions) (string, error) {
 
 // Exec executes a command inside the instance.
 func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, stderr *os.File) (instance.Cmd, error) {
+	// Generate the LXC config if missing.
+	configPath := filepath.Join(d.LogPath(), "lxc.conf")
+	if !util.PathExists(configPath) {
+		cc, err := d.initLXC(true)
+		if err != nil {
+			return nil, fmt.Errorf("Load go-lxc struct: %w", err)
+		}
+
+		err = cc.SaveConfigFile(configPath)
+		if err != nil {
+			_ = os.Remove(configPath)
+			return nil, err
+		}
+	}
+
 	// Prepare the environment
 	envSlice := []string{}
 
