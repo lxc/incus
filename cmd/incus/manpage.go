@@ -39,6 +39,10 @@ func (c *cmdManpage) Run(cmd *cobra.Command, args []string) error {
 
 	// If asked to do all commands, mark them all visible.
 	for _, c := range c.global.cmd.Commands() {
+		if c.Name() == "completion" {
+			continue
+		}
+
 		c.Hidden = false
 	}
 
