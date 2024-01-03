@@ -26,6 +26,7 @@ import (
 	"github.com/lxc/incus/internal/server/cluster"
 	"github.com/lxc/incus/internal/server/db/operationtype"
 	"github.com/lxc/incus/internal/server/instance"
+	"github.com/lxc/incus/internal/server/instance/drivers"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/internal/server/request"
@@ -286,7 +287,14 @@ func (s *execWs) Do(op *operations.Operation) error {
 			_ = pty.Close()
 		}
 
+		// Make VM disconnections (shutdown/reboot) match containers.
+		if cmdErr == drivers.ErrExecDisconnected {
+			cmdResult = 129
+			cmdErr = nil
+		}
+
 		metadata := jmap.Map{"return": cmdResult}
+
 		err = op.ExtendMetadata(metadata)
 		if err != nil {
 			return err
