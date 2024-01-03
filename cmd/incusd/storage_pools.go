@@ -362,7 +362,7 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 	// Add the storage pool to the authorizer.
 	err = s.Authorizer.AddStoragePool(r.Context(), req.Name)
 	if err != nil {
-		logger.Error("Failed to add storage pool to authorizer", logger.Ctx{"name": pool.Name, "error": err})
+		logger.Error("Failed to add storage pool to authorizer", logger.Ctx{"name": req.Name, "error": err})
 	}
 
 	s.Events.SendLifecycle(api.ProjectDefaultName, lc)
