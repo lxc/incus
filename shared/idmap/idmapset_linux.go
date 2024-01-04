@@ -830,16 +830,8 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 		}
 
 		for _, entry := range entries {
-			// Check that it's big enough to be useful
-			if int(entry[1]) < 65536 {
-				continue
-			}
-
 			e := IdmapEntry{Isuid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
 			idmapset.Idmap = append(idmapset.Idmap, e)
-
-			// NOTE: Remove once we can deal with multiple shadow maps
-			break
 		}
 
 		// Parse the shadow gidmap
@@ -854,16 +846,8 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 		}
 
 		for _, entry := range entries {
-			// Check that it's big enough to be useful
-			if int(entry[1]) < 65536 {
-				continue
-			}
-
 			e := IdmapEntry{Isgid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
 			idmapset.Idmap = append(idmapset.Idmap, e)
-
-			// NOTE: Remove once we can deal with multiple shadow maps
-			break
 		}
 
 		return idmapset, nil
