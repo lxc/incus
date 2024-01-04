@@ -765,6 +765,12 @@ Instead this tool will be providing specific commands for each of the servers.
 		}
 	}
 
+	completeFile, err := os.Create(filepath.Join(targetPaths.Daemon, ".migrated-from-lxd"))
+	defer completeFile.Close()
+	if err != nil {
+		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+	}
+
 	// Confirm uninstall.
 	if !c.flagYes {
 		ok, err := c.global.asker.AskBool("Uninstall the LXD package? [default=no]: ", "no")
