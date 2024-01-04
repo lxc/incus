@@ -48,8 +48,8 @@ func (s *srcCOPR) Connect() (lxd.InstanceServer, error) {
 
 func (s *srcCOPR) Paths() (*DaemonPaths, error) {
 	return &DaemonPaths{
-		Daemon: "/var/lib/lxd/",
-		Logs:   "/var/log/lxd/",
-		Cache:  "/var/cache/lxd/",
+		Daemon: "/var/lib/lxd",
+		Logs:   "/var/log/lxd",
+		Cache:  "/var/cache/lxd",
 	}, nil
 }

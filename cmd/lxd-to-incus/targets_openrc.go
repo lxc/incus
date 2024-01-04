@@ -46,9 +46,9 @@ func (s *targetOpenRC) Connect() (incus.InstanceServer, error) {
 
 func (s *targetOpenRC) Paths() (*DaemonPaths, error) {
 	return &DaemonPaths{
-		Daemon: "/var/lib/incus/",
-		Logs:   "/var/log/incus/",
-		Cache:  "/var/cache/incus/",
+		Daemon: "/var/lib/incus",
+		Logs:   "/var/log/incus",
+		Cache:  "/var/cache/incus",
 	}, nil
 }
 

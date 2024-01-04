@@ -47,8 +47,8 @@ func (s *srcSnap) Connect() (lxd.InstanceServer, error) {
 
 func (s *srcSnap) Paths() (*DaemonPaths, error) {
 	return &DaemonPaths{
-		Daemon: "/var/snap/lxd/common/lxd/",
-		Logs:   "/var/snap/lxd/common/lxd/logs/",
-		Cache:  "/var/snap/lxd/common/lxd/cache/",
+		Daemon: "/var/snap/lxd/common/lxd",
+		Logs:   "/var/snap/lxd/common/lxd/logs",
+		Cache:  "/var/snap/lxd/common/lxd/cache",
 	}, nil
 }

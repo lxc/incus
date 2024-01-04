@@ -437,7 +437,7 @@ Instead this tool will be providing specific commands for each of the servers.
 	}
 
 	// Unmount potential mount points.
-	for _, mount := range []string{"guestapi", "shmounts"} {
+	for _, mount := range []string{"devlxd", "shmounts"} {
 		_, _ = logFile.WriteString(fmt.Sprintf("Unmounting %q\n", filepath.Join(targetPaths.Daemon, mount)))
 		_ = unix.Unmount(filepath.Join(targetPaths.Daemon, mount), unix.MNT_DETACH)
 	}
