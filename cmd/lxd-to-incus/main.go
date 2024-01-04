@@ -289,7 +289,11 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 
 		ovnNB, ok := srcServerInfo.Config["network.ovn.northbound_connection"].(string)
-		if ok && ovnNB != "" {
+		if !ok && util.PathExists("/run/ovn/ovnnb_db.sock") {
+			ovnNB = "unix:/run/ovn/ovnnb_db.sock"
+		}
+
+		if ovnNB != "" {
 			if !c.flagClusterMember {
 				out, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-remote")
 				if err != nil {
