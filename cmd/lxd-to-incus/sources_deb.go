@@ -47,8 +47,8 @@ func (s *srcDeb) Connect() (lxd.InstanceServer, error) {
 
 func (s *srcDeb) Paths() (*DaemonPaths, error) {
 	return &DaemonPaths{
-		Daemon: "/var/lib/lxd/",
-		Logs:   "/var/log/lxd/",
-		Cache:  "/var/cache/lxd/",
+		Daemon: "/var/lib/lxd",
+		Logs:   "/var/log/lxd",
+		Cache:  "/var/cache/lxd",
 	}, nil
 }

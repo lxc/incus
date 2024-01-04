@@ -59,8 +59,8 @@ func (s *srcManual) Connect() (lxd.InstanceServer, error) {
 
 func (s *srcManual) Paths() (*DaemonPaths, error) {
 	return &DaemonPaths{
-		Daemon: "/var/lib/lxd/",
-		Logs:   "/var/log/lxd/",
-		Cache:  "/var/cache/lxd/",
+		Daemon: "/var/lib/lxd",
+		Logs:   "/var/log/lxd",
+		Cache:  "/var/cache/lxd",
 	}, nil
 }
