@@ -378,13 +378,22 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 		return fmt.Errorf("Failed to get target paths: %w", err)
 	}
 
-	if linux.IsMountPoint(targetPaths.Daemon) {
-		return fmt.Errorf("The target path %q is a mountpoint. This isn't currently supported as the target path needs to be deleted during the migration.", targetPaths.Daemon)
-	}
-
 	sourcePaths, err := source.Paths()
 	if err != nil {
 		return fmt.Errorf("Failed to get source paths: %w", err)
+	}
+
+	fi, err := os.Lstat(sourcePaths.Daemon)
+	if err != nil {
+		return err
+	}
+
+	if fi.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("The source path %q is a symlink. Incus does not support its daemon directory being a symlink, please switch to a bind-mount.", sourcePaths.Daemon)
+	}
+
+	if linux.IsMountPoint(targetPaths.Daemon) {
+		return fmt.Errorf("The target path %q is a mountpoint. This isn't currently supported as the target path needs to be deleted during the migration.", targetPaths.Daemon)
 	}
 
 	srcFilesystem, _ := linux.DetectFilesystem(sourcePaths.Daemon)
