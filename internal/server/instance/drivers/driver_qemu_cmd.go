@@ -13,6 +13,9 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
+// ErrExecDisconnected is returned when the guest disconnects the exec session.
+var ErrExecDisconnected = fmt.Errorf("Disconnected")
+
 // Cmd represents a running command for an Qemu VM.
 type qemuCmd struct {
 	attachedChildPid int
@@ -78,7 +81,7 @@ func (c *qemuCmd) Wait() (int, error) {
 		// so we inform the client of the disconnection with a more
 		// descriptive message.
 		if errors.Is(err, io.EOF) {
-			return exitStatus, fmt.Errorf("Disconnected")
+			return exitStatus, ErrExecDisconnected
 		}
 
 		return exitStatus, err
