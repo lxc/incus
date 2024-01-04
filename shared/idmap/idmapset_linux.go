@@ -283,22 +283,6 @@ func (s ByHostid) Less(i, j int) bool {
 	return s[i].Hostid < s[j].Hostid
 }
 
-/* taken from http://blog.golang.org/slices (which is under BSD licence). */
-func Extend(slice []IdmapEntry, element IdmapEntry) []IdmapEntry {
-	n := len(slice)
-	if n == cap(slice) {
-		// Slice is full; must grow.
-		// We double its size and add 1, so if the size is zero we still grow.
-		newSlice := make([]IdmapEntry, len(slice), 2*len(slice)+1)
-		copy(newSlice, slice)
-		slice = newSlice
-	}
-
-	slice = slice[0 : n+1]
-	slice[n] = element
-	return slice
-}
-
 func (m *IdmapSet) Equals(other *IdmapSet) bool {
 	// Get comparable maps
 	expandSortIdmap := func(input *IdmapSet) IdmapSet {
@@ -531,7 +515,7 @@ func (m IdmapSet) Append(s string) (IdmapSet, error) {
 		return m, fmt.Errorf("Conflicting id mapping")
 	}
 
-	m.Idmap = Extend(m.Idmap, e)
+	m.Idmap = append(m.Idmap, e)
 	return m, nil
 }
 
@@ -852,7 +836,7 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 			}
 
 			e := IdmapEntry{Isuid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
-			idmapset.Idmap = Extend(idmapset.Idmap, e)
+			idmapset.Idmap = append(idmapset.Idmap, e)
 
 			// NOTE: Remove once we can deal with multiple shadow maps
 			break
@@ -876,7 +860,7 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 			}
 
 			e := IdmapEntry{Isgid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
-			idmapset.Idmap = Extend(idmapset.Idmap, e)
+			idmapset.Idmap = append(idmapset.Idmap, e)
 
 			// NOTE: Remove once we can deal with multiple shadow maps
 			break
@@ -896,10 +880,10 @@ func kernelDefaultMap() (*IdmapSet, error) {
 	if err != nil {
 		// Hardcoded fallback map
 		e := IdmapEntry{Isuid: true, Isgid: false, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
-		idmapset.Idmap = Extend(idmapset.Idmap, e)
+		idmapset.Idmap = append(idmapset.Idmap, e)
 
 		e = IdmapEntry{Isuid: false, Isgid: true, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
-		idmapset.Idmap = Extend(idmapset.Idmap, e)
+		idmapset.Idmap = append(idmapset.Idmap, e)
 		return idmapset, nil
 	}
 
@@ -917,10 +901,10 @@ func kernelDefaultMap() (*IdmapSet, error) {
 	if reflect.DeepEqual(kernelRanges, fullKernelRanges) {
 		// Hardcoded fallback map
 		e := IdmapEntry{Isuid: true, Isgid: false, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
-		idmapset.Idmap = Extend(idmapset.Idmap, e)
+		idmapset.Idmap = append(idmapset.Idmap, e)
 
 		e = IdmapEntry{Isuid: false, Isgid: true, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
-		idmapset.Idmap = Extend(idmapset.Idmap, e)
+		idmapset.Idmap = append(idmapset.Idmap, e)
 		return idmapset, nil
 	}
 
@@ -948,7 +932,7 @@ func kernelDefaultMap() (*IdmapSet, error) {
 
 		// Add the map
 		e := IdmapEntry{Isuid: true, Isgid: false, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
-		idmapset.Idmap = Extend(idmapset.Idmap, e)
+		idmapset.Idmap = append(idmapset.Idmap, e)
 
 		// NOTE: Remove once we can deal with multiple shadow maps
 		break
@@ -978,7 +962,7 @@ func kernelDefaultMap() (*IdmapSet, error) {
 
 		// Add the map
 		e := IdmapEntry{Isuid: false, Isgid: true, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
-		idmapset.Idmap = Extend(idmapset.Idmap, e)
+		idmapset.Idmap = append(idmapset.Idmap, e)
 
 		// NOTE: Remove once we can deal with multiple shadow maps
 		break
@@ -1002,12 +986,12 @@ func CurrentIdmapSet() (*IdmapSet, error) {
 
 		for _, entry := range entries {
 			e := IdmapEntry{Isuid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
-			idmapset.Idmap = Extend(idmapset.Idmap, e)
+			idmapset.Idmap = append(idmapset.Idmap, e)
 		}
 	} else {
 		// Fallback map
 		e := IdmapEntry{Isuid: true, Nsid: 0, Hostid: 0, Maprange: 0}
-		idmapset.Idmap = Extend(idmapset.Idmap, e)
+		idmapset.Idmap = append(idmapset.Idmap, e)
 	}
 
 	if util.PathExists("/proc/self/gid_map") {
@@ -1019,12 +1003,12 @@ func CurrentIdmapSet() (*IdmapSet, error) {
 
 		for _, entry := range entries {
 			e := IdmapEntry{Isgid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
-			idmapset.Idmap = Extend(idmapset.Idmap, e)
+			idmapset.Idmap = append(idmapset.Idmap, e)
 		}
 	} else {
 		// Fallback map
 		e := IdmapEntry{Isgid: true, Nsid: 0, Hostid: 0, Maprange: 0}
-		idmapset.Idmap = Extend(idmapset.Idmap, e)
+		idmapset.Idmap = append(idmapset.Idmap, e)
 	}
 
 	return idmapset, nil
