@@ -129,6 +129,41 @@ func NewSetFromIncusIDMap(value string) (*Set, error) {
 	return ret, nil
 }
 
+// NewSetFromCurrentProcess returns a Set from the process' current uid/gid map.
+func NewSetFromCurrentProcess() (*Set, error) {
+	// Check if system doesn't have user namespaces.
+	if !util.PathExists("/proc/self/uid_map") || !util.PathExists("/proc/self/gid_map") {
+		// Without a user namespace, just return the full map.
+		return DefaultFullKernelSet, nil
+	}
+
+	ret := &Set{}
+
+	// Parse the uidmap.
+	entries, err := getFromProc("/proc/self/uid_map")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		e := Entry{IsUID: true, NSID: entry[0], HostID: entry[1], MapRange: entry[2]}
+		ret.Entries = append(ret.Entries, e)
+	}
+
+	// Parse the gidmap.
+	entries, err = getFromProc("/proc/self/gid_map")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		e := Entry{IsGID: true, NSID: entry[0], HostID: entry[1], MapRange: entry[2]}
+		ret.Entries = append(ret.Entries, e)
+	}
+
+	return ret, nil
+}
+
 // GetSet reads the system uid/gid allocation.
 func GetSet() *Set {
 	idmapSet, err := DefaultSet("", "")
@@ -137,7 +172,7 @@ func GetSet() *Set {
 		logger.Warnf("Only privileged containers will be able to run")
 		idmapSet = nil
 	} else {
-		kernelSet, err := CurrentSet()
+		kernelSet, err := NewSetFromCurrentProcess()
 		if err == nil {
 			logger.Infof("Kernel uid/gid map:")
 			for _, lxcmap := range kernelSet.ToLXCString() {
@@ -229,47 +264,6 @@ func DefaultSet(rootfs string, username string) (*Set, error) {
 
 	// No shadow available, figure out a default map.
 	return kernelDefaultMap()
-}
-
-// CurrentSet returns the current process' idmapset.
-func CurrentSet() (*Set, error) {
-	idmapset := new(Set)
-
-	if util.PathExists("/proc/self/uid_map") {
-		// Parse the uidmap.
-		entries, err := getFromProc("/proc/self/uid_map")
-		if err != nil {
-			return nil, err
-		}
-
-		for _, entry := range entries {
-			e := Entry{IsUID: true, NSID: entry[0], HostID: entry[1], MapRange: entry[2]}
-			idmapset.Entries = append(idmapset.Entries, e)
-		}
-	} else {
-		// Fallback map.
-		e := Entry{IsUID: true, NSID: 0, HostID: 0, MapRange: 0}
-		idmapset.Entries = append(idmapset.Entries, e)
-	}
-
-	if util.PathExists("/proc/self/gid_map") {
-		// Parse the gidmap.
-		entries, err := getFromProc("/proc/self/gid_map")
-		if err != nil {
-			return nil, err
-		}
-
-		for _, entry := range entries {
-			e := Entry{IsGID: true, NSID: entry[0], HostID: entry[1], MapRange: entry[2]}
-			idmapset.Entries = append(idmapset.Entries, e)
-		}
-	} else {
-		// Fallback map.
-		e := Entry{IsGID: true, NSID: 0, HostID: 0, MapRange: 0}
-		idmapset.Entries = append(idmapset.Entries, e)
-	}
-
-	return idmapset, nil
 }
 
 func getFromShadow(fname string, username string) ([][]int64, error) {
@@ -375,7 +369,7 @@ func getFromProc(fname string) ([][]int64, error) {
 func kernelDefaultMap() (*Set, error) {
 	idmapset := new(Set)
 
-	kernelMap, err := CurrentSet()
+	kernelMap, err := NewSetFromCurrentProcess()
 	if err != nil {
 		// Hardcoded fallback map.
 		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: 1000000, MapRange: 1000000000}

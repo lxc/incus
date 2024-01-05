@@ -117,7 +117,7 @@ func (e *Entry) HostIDsCoveredBy(allowedHostUIDs []Entry, allowedHostGIDs []Entr
 
 // Usable checks whether the entry is usable on this system.
 func (e *Entry) Usable() error {
-	kernelIdmap, err := CurrentSet()
+	kernelIdmap, err := NewSetFromCurrentProcess()
 	if err != nil {
 		return err
 	}
