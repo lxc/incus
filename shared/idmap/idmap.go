@@ -8,8 +8,3 @@ type IdmapEntry struct {
 	Nsid     int64 // id as seen in the ns - i.e. 0
 	Maprange int64
 }
-
-// IdmapSet is a list of IdmapEntry with some functions on it.
-type IdmapSet struct {
-	Idmap []IdmapEntry
-}
