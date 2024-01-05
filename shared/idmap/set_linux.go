@@ -181,24 +181,24 @@ func CurrentSet() (*Set, error) {
 	return idmapset, nil
 }
 
-// UIDShiftIntoContainer shiftfs a host filesystem tree.
-func (m *Set) UIDShiftIntoContainer(dir string, testmode bool) error {
-	return m.doUIDShiftIntoContainer(dir, testmode, "in", nil)
+// ShiftIntoContainer shiftfs a host filesystem tree.
+func (m *Set) ShiftIntoContainer(dir string, testmode bool) error {
+	return m.doShiftIntoContainer(dir, testmode, "in", nil)
 }
 
-// UIDShiftFromContainer shiftfs a container filesystem tree.
-func (m *Set) UIDShiftFromContainer(dir string, testmode bool) error {
-	return m.doUIDShiftIntoContainer(dir, testmode, "out", nil)
+// ShiftFromContainer shiftfs a container filesystem tree.
+func (m *Set) ShiftFromContainer(dir string, testmode bool) error {
+	return m.doShiftIntoContainer(dir, testmode, "out", nil)
 }
 
 // ShiftRootfs shiftfs a whole container filesystem tree.
 func (m *Set) ShiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	return m.doUIDShiftIntoContainer(p, false, "in", skipper)
+	return m.doShiftIntoContainer(p, false, "in", skipper)
 }
 
 // UnshiftRootfs unshiftfs a whole container filesystem tree.
 func (m *Set) UnshiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	return m.doUIDShiftIntoContainer(p, false, "out", skipper)
+	return m.doShiftIntoContainer(p, false, "out", skipper)
 }
 
 // ShiftFile shiftfs a single file.
@@ -244,7 +244,7 @@ func (m Set) ToGIDMappings() []syscall.SysProcIDMap {
 	return mapping
 }
 
-func (m *Set) doUIDShiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
+func (m *Set) doShiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
 	if how == "in" && atomic.LoadInt32(&VFS3FSCaps) == VFS3FSCapsUnknown {
 		if SupportsVFS3FSCaps(dir) {
 			atomic.StoreInt32(&VFS3FSCaps, VFS3FSCapsSupported)
