@@ -103,6 +103,25 @@ func (m *Set) Usable() error {
 	return nil
 }
 
+// FilterPOSIX returns a copy of the set with only entries that have a minimum of 65536 IDs.
+func (m *Set) FilterPOSIX() (*Set) {
+	filtered := &Set{Entries: []Entry{}}
+
+	for _, entry := range m.Entries {
+		if entry.MapRange < 65536 {
+			continue
+		}
+
+		filtered.Entries = append(filtered.Entries, entry)
+	}
+
+	if len(filtered.Entries) == 0 {
+		return nil
+	}
+
+	return filtered
+}
+
 // ValidRanges turns the set into a slice of Range.
 func (m *Set) ValidRanges() ([]*Range, error) {
 	ranges := []*Range{}
