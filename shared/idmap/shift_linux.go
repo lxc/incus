@@ -352,7 +352,7 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
-// ShiftOwner updates uid and gid for a file when entering/exiting a namespace
+// ShiftOwner updates the uid and gid for a file within a specific basepath.
 func ShiftOwner(basepath string, path string, uid int, gid int) error {
 	cbasepath := C.CString(basepath)
 	defer C.free(unsafe.Pointer(cbasepath))
@@ -368,7 +368,7 @@ func ShiftOwner(basepath string, path string, uid int, gid int) error {
 	return nil
 }
 
-// GetCaps extracts the list of capabilities effective on the file
+// GetCaps extracts the list of capabilities effective on the file.
 func GetCaps(path string) ([]byte, error) {
 	xattrs, err := getAllXattr(path)
 	if err != nil {
@@ -383,7 +383,7 @@ func GetCaps(path string) ([]byte, error) {
 	return []byte(valueStr), nil
 }
 
-// SetCaps applies the caps for a particular root uid
+// SetCaps applies the caps for a particular root uid.
 func SetCaps(path string, caps []byte, uid int64) error {
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
@@ -399,7 +399,7 @@ func SetCaps(path string, caps []byte, uid int64) error {
 	return nil
 }
 
-// ShiftACL updates uid and gid for file ACLs when entering/exiting a namespace
+// ShiftACL updates the uid and gid for ACL entries through the provided mapper function.
 func ShiftACL(path string, shiftIds func(uid int64, gid int64) (int64, int64)) error {
 	err := shiftAclType(path, C.ACL_TYPE_ACCESS, shiftIds)
 	if err != nil {
@@ -486,6 +486,7 @@ func shiftAclType(path string, aclType int, shiftIds func(uid int64, gid int64) 
 	return nil
 }
 
+// SupportsVFS3FSCaps checks whether the kernel supports VFS v3 fscaps.
 func SupportsVFS3FSCaps(prefix string) bool {
 	tmpfile, err := os.CreateTemp(prefix, ".incus_fcaps_v3_")
 	if err != nil {
@@ -522,6 +523,7 @@ func SupportsVFS3FSCaps(prefix string) bool {
 	return true
 }
 
+// UnshiftACL unshiftfs the uid/gid in the raw ACL entry.
 func UnshiftACL(value string, set *Set) (string, error) {
 	if set == nil {
 		return "", fmt.Errorf("Invalid Set supplied")
@@ -591,6 +593,7 @@ func UnshiftACL(value string, set *Set) (string, error) {
 	return string(buf), nil
 }
 
+// UnshiftCaps unshiftfs the uid/gid in the raw fscaps.
 func UnshiftCaps(value string, set *Set) (string, error) {
 	if set == nil {
 		return "", fmt.Errorf("Invalid Set supplied")
