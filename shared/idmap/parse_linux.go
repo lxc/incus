@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// ParseRawIdmap parses an IDMAP string.
-func ParseRawIdmap(value string) ([]Entry, error) {
+// ParseRawIDMap parses an idmap string.
+func ParseRawIDMap(value string) ([]Entry, error) {
 	getRange := func(r string) (int64, int64, error) {
 		entries := strings.Split(r, "-")
 		if len(entries) > 2 {
@@ -62,29 +62,29 @@ func ParseRawIdmap(value string) ([]Entry, error) {
 		}
 
 		entry := Entry{
-			Hostid:   outsideBase,
-			Nsid:     insideBase,
-			Maprange: insideSize,
+			HostID:   outsideBase,
+			NSID:     insideBase,
+			MapRange: insideSize,
 		}
 
 		switch entries[0] {
 		case "both":
-			entry.Isuid = true
-			entry.Isgid = true
+			entry.IsUID = true
+			entry.IsGID = true
 			err := ret.AddSafe(entry)
 			if err != nil {
 				return nil, err
 			}
 
 		case "uid":
-			entry.Isuid = true
+			entry.IsUID = true
 			err := ret.AddSafe(entry)
 			if err != nil {
 				return nil, err
 			}
 
 		case "gid":
-			entry.Isgid = true
+			entry.IsGID = true
 			err := ret.AddSafe(entry)
 			if err != nil {
 				return nil, err
@@ -95,5 +95,5 @@ func ParseRawIdmap(value string) ([]Entry, error) {
 		}
 	}
 
-	return ret.Idmap, nil
+	return ret.Entries, nil
 }

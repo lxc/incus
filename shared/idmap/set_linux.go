@@ -49,25 +49,25 @@ func GetSet() *Set {
 		kernelSet, err := CurrentSet()
 		if err == nil {
 			logger.Infof("Kernel uid/gid map:")
-			for _, lxcmap := range kernelSet.ToLxcString() {
+			for _, lxcmap := range kernelSet.ToLXCString() {
 				logger.Infof(fmt.Sprintf(" - %s", lxcmap))
 			}
 		}
 
-		if len(idmapSet.Idmap) == 0 {
+		if len(idmapSet.Entries) == 0 {
 			logger.Warnf("No available uid/gid map could be found")
 			logger.Warnf("Only privileged containers will be able to run")
 			idmapSet = nil
 		} else {
 			logger.Infof("Configured uid/gid map:")
-			for _, lxcmap := range idmapSet.Idmap {
+			for _, lxcmap := range idmapSet.Entries {
 				suffix := ""
 
 				if lxcmap.Usable() != nil {
 					suffix = " (unusable)"
 				}
 
-				for _, lxcEntry := range lxcmap.ToLxcString() {
+				for _, lxcEntry := range lxcmap.ToLXCString() {
 					logger.Infof(" - %s%s", lxcEntry, suffix)
 				}
 			}
@@ -113,8 +113,8 @@ func DefaultSet(rootfs string, username string) (*Set, error) {
 		}
 
 		for _, entry := range entries {
-			e := Entry{Isuid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
-			idmapset.Idmap = append(idmapset.Idmap, e)
+			e := Entry{IsUID: true, NSID: 0, HostID: entry[0], MapRange: entry[1]}
+			idmapset.Entries = append(idmapset.Entries, e)
 		}
 
 		// Parse the shadow gidmap.
@@ -129,8 +129,8 @@ func DefaultSet(rootfs string, username string) (*Set, error) {
 		}
 
 		for _, entry := range entries {
-			e := Entry{Isgid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
-			idmapset.Idmap = append(idmapset.Idmap, e)
+			e := Entry{IsGID: true, NSID: 0, HostID: entry[0], MapRange: entry[1]}
+			idmapset.Entries = append(idmapset.Entries, e)
 		}
 
 		return idmapset, nil
@@ -152,13 +152,13 @@ func CurrentSet() (*Set, error) {
 		}
 
 		for _, entry := range entries {
-			e := Entry{Isuid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
-			idmapset.Idmap = append(idmapset.Idmap, e)
+			e := Entry{IsUID: true, NSID: entry[0], HostID: entry[1], MapRange: entry[2]}
+			idmapset.Entries = append(idmapset.Entries, e)
 		}
 	} else {
 		// Fallback map.
-		e := Entry{Isuid: true, Nsid: 0, Hostid: 0, Maprange: 0}
-		idmapset.Idmap = append(idmapset.Idmap, e)
+		e := Entry{IsUID: true, NSID: 0, HostID: 0, MapRange: 0}
+		idmapset.Entries = append(idmapset.Entries, e)
 	}
 
 	if util.PathExists("/proc/self/gid_map") {
@@ -169,36 +169,36 @@ func CurrentSet() (*Set, error) {
 		}
 
 		for _, entry := range entries {
-			e := Entry{Isgid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
-			idmapset.Idmap = append(idmapset.Idmap, e)
+			e := Entry{IsGID: true, NSID: entry[0], HostID: entry[1], MapRange: entry[2]}
+			idmapset.Entries = append(idmapset.Entries, e)
 		}
 	} else {
 		// Fallback map.
-		e := Entry{Isgid: true, Nsid: 0, Hostid: 0, Maprange: 0}
-		idmapset.Idmap = append(idmapset.Idmap, e)
+		e := Entry{IsGID: true, NSID: 0, HostID: 0, MapRange: 0}
+		idmapset.Entries = append(idmapset.Entries, e)
 	}
 
 	return idmapset, nil
 }
 
-// UidshiftIntoContainer shiftfs a host filesystem tree.
-func (m *Set) UidshiftIntoContainer(dir string, testmode bool) error {
-	return m.doUidshiftIntoContainer(dir, testmode, "in", nil)
+// UIDShiftIntoContainer shiftfs a host filesystem tree.
+func (m *Set) UIDShiftIntoContainer(dir string, testmode bool) error {
+	return m.doUIDShiftIntoContainer(dir, testmode, "in", nil)
 }
 
-// UidshiftFromContainer shiftfs a container filesystem tree.
-func (m *Set) UidshiftFromContainer(dir string, testmode bool) error {
-	return m.doUidshiftIntoContainer(dir, testmode, "out", nil)
+// UIDShiftFromContainer shiftfs a container filesystem tree.
+func (m *Set) UIDShiftFromContainer(dir string, testmode bool) error {
+	return m.doUIDShiftIntoContainer(dir, testmode, "out", nil)
 }
 
 // ShiftRootfs shiftfs a whole container filesystem tree.
 func (m *Set) ShiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	return m.doUidshiftIntoContainer(p, false, "in", skipper)
+	return m.doUIDShiftIntoContainer(p, false, "in", skipper)
 }
 
 // UnshiftRootfs unshiftfs a whole container filesystem tree.
 func (m *Set) UnshiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	return m.doUidshiftIntoContainer(p, false, "out", skipper)
+	return m.doUIDShiftIntoContainer(p, false, "out", skipper)
 }
 
 // ShiftFile shiftfs a single file.
@@ -206,45 +206,45 @@ func (m *Set) ShiftFile(p string) error {
 	return m.ShiftRootfs(p, nil)
 }
 
-// ToUidMappings converts an idmapset to a slice of syscall.SysProcIDMap.
-func (m Set) ToUidMappings() []syscall.SysProcIDMap {
+// ToUIDMappings converts an idmapset to a slice of syscall.SysProcIDMap.
+func (m Set) ToUIDMappings() []syscall.SysProcIDMap {
 	mapping := []syscall.SysProcIDMap{}
 
-	for _, e := range m.Idmap {
-		if !e.Isuid {
+	for _, e := range m.Entries {
+		if !e.IsUID {
 			continue
 		}
 
 		mapping = append(mapping, syscall.SysProcIDMap{
-			ContainerID: int(e.Nsid),
-			HostID:      int(e.Hostid),
-			Size:        int(e.Maprange),
+			ContainerID: int(e.NSID),
+			HostID:      int(e.HostID),
+			Size:        int(e.MapRange),
 		})
 	}
 
 	return mapping
 }
 
-// ToGidMappings converts an idmapset to a slice of syscall.SysProcIDMap.
-func (m Set) ToGidMappings() []syscall.SysProcIDMap {
+// ToGIDMappings converts an idmapset to a slice of syscall.SysProcIDMap.
+func (m Set) ToGIDMappings() []syscall.SysProcIDMap {
 	mapping := []syscall.SysProcIDMap{}
 
-	for _, e := range m.Idmap {
-		if !e.Isgid {
+	for _, e := range m.Entries {
+		if !e.IsGID {
 			continue
 		}
 
 		mapping = append(mapping, syscall.SysProcIDMap{
-			ContainerID: int(e.Nsid),
-			HostID:      int(e.Hostid),
-			Size:        int(e.Maprange),
+			ContainerID: int(e.NSID),
+			HostID:      int(e.HostID),
+			Size:        int(e.MapRange),
 		})
 	}
 
 	return mapping
 }
 
-func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
+func (m *Set) doUIDShiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
 	if how == "in" && atomic.LoadInt32(&VFS3FSCaps) == VFS3FSCapsUnknown {
 		if SupportsVFS3FSCaps(dir) {
 			atomic.StoreInt32(&VFS3FSCaps, VFS3FSCapsSupported)
@@ -297,9 +297,9 @@ func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, ski
 		var newuid, newgid int64
 		switch how {
 		case "in":
-			newuid, newgid = m.ShiftIntoNs(uid, gid)
+			newuid, newgid = m.ShiftIntoNS(uid, gid)
 		case "out":
-			newuid, newgid = m.ShiftFromNs(uid, gid)
+			newuid, newgid = m.ShiftFromNS(uid, gid)
 		}
 
 		if testmode {
@@ -321,7 +321,7 @@ func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, ski
 
 			if fi.Mode()&os.ModeSymlink == 0 {
 				// Shift POSIX ACLs
-				err = ShiftACL(p, func(uid int64, gid int64) (int64, int64) { return m.doShiftIntoNs(uid, gid, how) })
+				err = ShiftACL(p, func(uid int64, gid int64) (int64, int64) { return m.doShiftIntoNS(uid, gid, how) })
 				if err != nil {
 					return err
 				}
@@ -330,7 +330,7 @@ func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, ski
 				if len(caps) != 0 {
 					rootUID := int64(0)
 					if how == "in" {
-						rootUID, _ = m.ShiftIntoNs(0, 0)
+						rootUID, _ = m.ShiftIntoNS(0, 0)
 					}
 
 					if how != "in" || atomic.LoadInt32(&VFS3FSCaps) == VFS3FSCapsSupported {
@@ -459,11 +459,11 @@ func kernelDefaultMap() (*Set, error) {
 	kernelMap, err := CurrentSet()
 	if err != nil {
 		// Hardcoded fallback map
-		e := Entry{Isuid: true, Isgid: false, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
-		idmapset.Idmap = append(idmapset.Idmap, e)
+		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: 1000000, MapRange: 1000000000}
+		idmapset.Entries = append(idmapset.Entries, e)
 
-		e = Entry{Isuid: false, Isgid: true, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
-		idmapset.Idmap = append(idmapset.Idmap, e)
+		e = Entry{IsUID: false, IsGID: true, NSID: 0, HostID: 1000000, MapRange: 1000000000}
+		idmapset.Entries = append(idmapset.Entries, e)
 		return idmapset, nil
 	}
 
@@ -480,39 +480,39 @@ func kernelDefaultMap() (*Set, error) {
 
 	if reflect.DeepEqual(kernelRanges, fullKernelRanges) {
 		// Hardcoded fallback map
-		e := Entry{Isuid: true, Isgid: false, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
-		idmapset.Idmap = append(idmapset.Idmap, e)
+		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: 1000000, MapRange: 1000000000}
+		idmapset.Entries = append(idmapset.Entries, e)
 
-		e = Entry{Isuid: false, Isgid: true, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
-		idmapset.Idmap = append(idmapset.Idmap, e)
+		e = Entry{IsUID: false, IsGID: true, NSID: 0, HostID: 1000000, MapRange: 1000000000}
+		idmapset.Entries = append(idmapset.Entries, e)
 		return idmapset, nil
 	}
 
 	// Find a suitable uid range
 	for _, entry := range kernelRanges {
 		// We only care about uids right now
-		if !entry.Isuid {
+		if !entry.IsUID {
 			continue
 		}
 
 		// We want a map that's separate from the system's own POSIX allocation
-		if entry.Endid < 100000 {
+		if entry.EndID < 100000 {
 			continue
 		}
 
 		// Don't use the first 65536 ids
-		if entry.Startid < 100000 {
-			entry.Startid = 100000
+		if entry.StartID < 100000 {
+			entry.StartID = 100000
 		}
 
 		// Check if we have enough ids
-		if entry.Endid-entry.Startid < 65536 {
+		if entry.EndID-entry.StartID < 65536 {
 			continue
 		}
 
 		// Add the map
-		e := Entry{Isuid: true, Isgid: false, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
-		idmapset.Idmap = append(idmapset.Idmap, e)
+		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: entry.StartID, MapRange: entry.EndID - entry.StartID + 1}
+		idmapset.Entries = append(idmapset.Entries, e)
 
 		// NOTE: Remove once we can deal with multiple shadow maps
 		break
@@ -521,28 +521,28 @@ func kernelDefaultMap() (*Set, error) {
 	// Find a suitable gid range
 	for _, entry := range kernelRanges {
 		// We only care about gids right now
-		if !entry.Isgid {
+		if !entry.IsGID {
 			continue
 		}
 
 		// We want a map that's separate from the system's own POSIX allocation
-		if entry.Endid < 100000 {
+		if entry.EndID < 100000 {
 			continue
 		}
 
 		// Don't use the first 65536 ids
-		if entry.Startid < 100000 {
-			entry.Startid = 100000
+		if entry.StartID < 100000 {
+			entry.StartID = 100000
 		}
 
 		// Check if we have enough ids
-		if entry.Endid-entry.Startid < 65536 {
+		if entry.EndID-entry.StartID < 65536 {
 			continue
 		}
 
 		// Add the map
-		e := Entry{Isuid: false, Isgid: true, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
-		idmapset.Idmap = append(idmapset.Idmap, e)
+		e := Entry{IsUID: false, IsGID: true, NSID: 0, HostID: entry.StartID, MapRange: entry.EndID - entry.StartID + 1}
+		idmapset.Entries = append(idmapset.Entries, e)
 
 		// NOTE: Remove once we can deal with multiple shadow maps
 		break

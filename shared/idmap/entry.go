@@ -8,40 +8,40 @@ import (
 
 // Entry is a single idmap entry (line).
 type Entry struct {
-	Isuid    bool
-	Isgid    bool
-	Hostid   int64 // id as seen on the host - i.e. 100000
-	Nsid     int64 // id as seen in the ns - i.e. 0
-	Maprange int64
+	IsUID    bool
+	IsGID    bool
+	HostID   int64 // id as seen on the host - i.e. 100000
+	NSID     int64 // id as seen in the ns - i.e. 0
+	MapRange int64
 }
 
-// ToLxcString converts an Entry into its LXC representation.
-func (e *Entry) ToLxcString() []string {
-	if e.Isuid && e.Isgid {
+// ToLXCString converts an Entry into its LXC representation.
+func (e *Entry) ToLXCString() []string {
+	if e.IsUID && e.IsGID {
 		return []string{
-			fmt.Sprintf("u %d %d %d", e.Nsid, e.Hostid, e.Maprange),
-			fmt.Sprintf("g %d %d %d", e.Nsid, e.Hostid, e.Maprange),
+			fmt.Sprintf("u %d %d %d", e.NSID, e.HostID, e.MapRange),
+			fmt.Sprintf("g %d %d %d", e.NSID, e.HostID, e.MapRange),
 		}
 	}
 
-	if e.Isuid {
-		return []string{fmt.Sprintf("u %d %d %d", e.Nsid, e.Hostid, e.Maprange)}
+	if e.IsUID {
+		return []string{fmt.Sprintf("u %d %d %d", e.NSID, e.HostID, e.MapRange)}
 	}
 
-	return []string{fmt.Sprintf("g %d %d %d", e.Nsid, e.Hostid, e.Maprange)}
+	return []string{fmt.Sprintf("g %d %d %d", e.NSID, e.HostID, e.MapRange)}
 }
 
-// HostidsIntersect checks whether the provided entry intersects with the host IDs of the existing one.
-func (e *Entry) HostidsIntersect(i Entry) bool {
-	if (e.Isuid && i.Isuid) || (e.Isgid && i.Isgid) {
+// HostIDsIntersect checks whether the provided entry intersects with the host IDs of the existing one.
+func (e *Entry) HostIDsIntersect(i Entry) bool {
+	if (e.IsUID && i.IsUID) || (e.IsGID && i.IsGID) {
 		switch {
-		case isBetween(e.Hostid, i.Hostid, i.Hostid+i.Maprange):
+		case isBetween(e.HostID, i.HostID, i.HostID+i.MapRange):
 			return true
-		case isBetween(i.Hostid, e.Hostid, e.Hostid+e.Maprange):
+		case isBetween(i.HostID, e.HostID, e.HostID+e.MapRange):
 			return true
-		case isBetween(e.Hostid+e.Maprange, i.Hostid, i.Hostid+i.Maprange):
+		case isBetween(e.HostID+e.MapRange, i.HostID, i.HostID+i.MapRange):
 			return true
-		case isBetween(i.Hostid+i.Maprange, e.Hostid, e.Hostid+e.Maprange):
+		case isBetween(i.HostID+i.MapRange, e.HostID, e.HostID+e.MapRange):
 			return true
 		}
 	}
@@ -51,23 +51,23 @@ func (e *Entry) HostidsIntersect(i Entry) bool {
 
 // Intersects checks whether the provided entry intersects with the existing one.
 func (e *Entry) Intersects(i Entry) bool {
-	if (e.Isuid && i.Isuid) || (e.Isgid && i.Isgid) {
+	if (e.IsUID && i.IsUID) || (e.IsGID && i.IsGID) {
 		switch {
-		case isBetween(e.Hostid, i.Hostid, i.Hostid+i.Maprange-1):
+		case isBetween(e.HostID, i.HostID, i.HostID+i.MapRange-1):
 			return true
-		case isBetween(i.Hostid, e.Hostid, e.Hostid+e.Maprange-1):
+		case isBetween(i.HostID, e.HostID, e.HostID+e.MapRange-1):
 			return true
-		case isBetween(e.Hostid+e.Maprange-1, i.Hostid, i.Hostid+i.Maprange-1):
+		case isBetween(e.HostID+e.MapRange-1, i.HostID, i.HostID+i.MapRange-1):
 			return true
-		case isBetween(i.Hostid+i.Maprange-1, e.Hostid, e.Hostid+e.Maprange-1):
+		case isBetween(i.HostID+i.MapRange-1, e.HostID, e.HostID+e.MapRange-1):
 			return true
-		case isBetween(e.Nsid, i.Nsid, i.Nsid+i.Maprange-1):
+		case isBetween(e.NSID, i.NSID, i.NSID+i.MapRange-1):
 			return true
-		case isBetween(i.Nsid, e.Nsid, e.Nsid+e.Maprange-1):
+		case isBetween(i.NSID, e.NSID, e.NSID+e.MapRange-1):
 			return true
-		case isBetween(e.Nsid+e.Maprange-1, i.Nsid, i.Nsid+i.Maprange-1):
+		case isBetween(e.NSID+e.MapRange-1, i.NSID, i.NSID+i.MapRange-1):
 			return true
-		case isBetween(i.Nsid+i.Maprange-1, e.Nsid, e.Nsid+e.Maprange-1):
+		case isBetween(i.NSID+i.MapRange-1, e.NSID, e.NSID+e.MapRange-1):
 			return true
 		}
 	}
@@ -75,22 +75,22 @@ func (e *Entry) Intersects(i Entry) bool {
 }
 
 // HostIDsCoveredBy returns whether or not the entry is covered by the supplied host UID and GID ID maps.
-// If e.Isuid is true then host IDs must be covered by an entry in allowedHostUIDs, and if e.Isgid is true then
+// If e.IsUID is true then host IDs must be covered by an entry in allowedHostUIDs, and if e.IsGID is true then
 // host IDs must be covered by an entry in allowedHostGIDs.
 func (e *Entry) HostIDsCoveredBy(allowedHostUIDs []Entry, allowedHostGIDs []Entry) bool {
-	if !e.Isuid && !e.Isgid {
+	if !e.IsUID && !e.IsGID {
 		return false // This is an invalid idmap entry.
 	}
 
 	isUIDAllowed := false
 
-	if e.Isuid {
+	if e.IsUID {
 		for _, allowedIDMap := range allowedHostUIDs {
-			if !allowedIDMap.Isuid {
+			if !allowedIDMap.IsUID {
 				continue
 			}
 
-			if e.Hostid >= allowedIDMap.Hostid && (e.Hostid+e.Maprange) <= (allowedIDMap.Hostid+allowedIDMap.Maprange) {
+			if e.HostID >= allowedIDMap.HostID && (e.HostID+e.MapRange) <= (allowedIDMap.HostID+allowedIDMap.MapRange) {
 				isUIDAllowed = true
 				break
 			}
@@ -99,20 +99,20 @@ func (e *Entry) HostIDsCoveredBy(allowedHostUIDs []Entry, allowedHostGIDs []Entr
 
 	isGIDAllowed := false
 
-	if e.Isgid {
+	if e.IsGID {
 		for _, allowedIDMap := range allowedHostGIDs {
-			if !allowedIDMap.Isgid {
+			if !allowedIDMap.IsGID {
 				continue
 			}
 
-			if e.Hostid >= allowedIDMap.Hostid && (e.Hostid+e.Maprange) <= (allowedIDMap.Hostid+allowedIDMap.Maprange) {
+			if e.HostID >= allowedIDMap.HostID && (e.HostID+e.MapRange) <= (allowedIDMap.HostID+allowedIDMap.MapRange) {
 				isGIDAllowed = true
 				break
 			}
 		}
 	}
 
-	return e.Isuid == isUIDAllowed && e.Isgid == isGIDAllowed
+	return e.IsUID == isUIDAllowed && e.IsGID == isGIDAllowed
 }
 
 // Usable checks whether the entry is usable on this system.
@@ -128,40 +128,40 @@ func (e *Entry) Usable() error {
 	}
 
 	// Validate the uid map.
-	if e.Isuid {
+	if e.IsUID {
 		valid := false
 		for _, kernelRange := range kernelRanges {
-			if !kernelRange.Isuid {
+			if !kernelRange.IsUID {
 				continue
 			}
 
-			if kernelRange.Contains(e.Hostid) && kernelRange.Contains(e.Hostid+e.Maprange-1) {
+			if kernelRange.Contains(e.HostID) && kernelRange.Contains(e.HostID+e.MapRange-1) {
 				valid = true
 				break
 			}
 		}
 
 		if !valid {
-			return fmt.Errorf("The '%s' map can't work in the current user namespace", e.ToLxcString())
+			return fmt.Errorf("The '%s' map can't work in the current user namespace", e.ToLXCString())
 		}
 	}
 
 	// Validate the gid map.
-	if e.Isgid {
+	if e.IsGID {
 		valid := false
 		for _, kernelRange := range kernelRanges {
-			if !kernelRange.Isgid {
+			if !kernelRange.IsGID {
 				continue
 			}
 
-			if kernelRange.Contains(e.Hostid) && kernelRange.Contains(e.Hostid+e.Maprange-1) {
+			if kernelRange.Contains(e.HostID) && kernelRange.Contains(e.HostID+e.MapRange-1) {
 				valid = true
 				break
 			}
 		}
 
 		if !valid {
-			return fmt.Errorf("The '%s' map can't work in the current user namespace", e.ToLxcString())
+			return fmt.Errorf("The '%s' map can't work in the current user namespace", e.ToLXCString())
 		}
 	}
 
@@ -178,12 +178,12 @@ func (e *Entry) parse(s string) error {
 
 	switch split[0] {
 	case "u":
-		e.Isuid = true
+		e.IsUID = true
 	case "g":
-		e.Isgid = true
+		e.IsGID = true
 	case "b":
-		e.Isuid = true
-		e.Isgid = true
+		e.IsUID = true
+		e.IsGID = true
 	default:
 		return fmt.Errorf("Bad idmap type in %q", s)
 	}
@@ -193,24 +193,24 @@ func (e *Entry) parse(s string) error {
 		return err
 	}
 
-	e.Nsid = int64(nsid)
+	e.NSID = int64(nsid)
 
 	hostid, err := strconv.ParseUint(split[2], 10, 32)
 	if err != nil {
 		return err
 	}
 
-	e.Hostid = int64(hostid)
+	e.HostID = int64(hostid)
 
 	maprange, err := strconv.ParseUint(split[3], 10, 32)
 	if err != nil {
 		return err
 	}
 
-	e.Maprange = int64(maprange)
+	e.MapRange = int64(maprange)
 
 	// Wrap around.
-	if e.Hostid+e.Maprange < e.Hostid || e.Nsid+e.Maprange < e.Nsid {
+	if e.HostID+e.MapRange < e.HostID || e.NSID+e.MapRange < e.NSID {
 		return fmt.Errorf("Bad mapping: id wraparound")
 	}
 
@@ -220,21 +220,21 @@ func (e *Entry) parse(s string) error {
 // Shift a uid from the host into the container
 // I.e. 0 -> 1000 -> 101000.
 func (e *Entry) shiftIntoNS(id int64) (int64, error) {
-	if id < e.Nsid || id >= e.Nsid+e.Maprange {
+	if id < e.NSID || id >= e.NSID+e.MapRange {
 		// This mapping doesn't apply.
 		return 0, fmt.Errorf("ID mapping doesn't apply")
 	}
 
-	return id - e.Nsid + e.Hostid, nil
+	return id - e.NSID + e.HostID, nil
 }
 
 // Shift a uid from the container back to the host
 // I.e. 101000 -> 1000.
 func (e *Entry) shiftFromNS(id int64) (int64, error) {
-	if id < e.Hostid || id >= e.Hostid+e.Maprange {
+	if id < e.HostID || id >= e.HostID+e.MapRange {
 		// This mapping doesn't apply.
 		return 0, fmt.Errorf("ID mapping doesn't apply")
 	}
 
-	return id - e.Hostid + e.Nsid, nil
+	return id - e.HostID + e.NSID, nil
 }

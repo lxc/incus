@@ -14,7 +14,7 @@ var ErrHostIDIsSubID = fmt.Errorf("Host ID is in the range of subids")
 
 // Set is a list of Entry with some functions on it.
 type Set struct {
-	Idmap []Entry
+	Entries []Entry
 }
 
 // Equals checks if two Set are functionally identical.
@@ -27,16 +27,16 @@ func (m *Set) Equals(other *Set) bool {
 
 		newEntries := []Entry{}
 
-		for _, entry := range input.Idmap {
-			if entry.Isuid && entry.Isgid {
-				newEntries = append(newEntries, Entry{true, false, entry.Hostid, entry.Nsid, entry.Maprange})
-				newEntries = append(newEntries, Entry{false, true, entry.Hostid, entry.Nsid, entry.Maprange})
+		for _, entry := range input.Entries {
+			if entry.IsUID && entry.IsGID {
+				newEntries = append(newEntries, Entry{true, false, entry.HostID, entry.NSID, entry.MapRange})
+				newEntries = append(newEntries, Entry{false, true, entry.HostID, entry.NSID, entry.MapRange})
 			} else {
 				newEntries = append(newEntries, entry)
 			}
 		}
 
-		output := &Set{Idmap: newEntries}
+		output := &Set{Entries: newEntries}
 		sort.Sort(output)
 
 		return output
@@ -48,30 +48,30 @@ func (m *Set) Equals(other *Set) bool {
 
 // Len returns the number of Entry contained in the set.
 func (m *Set) Len() int {
-	return len(m.Idmap)
+	return len(m.Entries)
 }
 
 // Swap allows swapping two Entry in the set (used for sorting).
 func (m *Set) Swap(i, j int) {
-	m.Idmap[i], m.Idmap[j] = m.Idmap[j], m.Idmap[i]
+	m.Entries[i], m.Entries[j] = m.Entries[j], m.Entries[i]
 }
 
 // Less compares two Entry in the set (used for sorting).
 func (m *Set) Less(i, j int) bool {
-	if m.Idmap[i].Isuid != m.Idmap[j].Isuid {
-		return m.Idmap[i].Isuid
+	if m.Entries[i].IsUID != m.Entries[j].IsUID {
+		return m.Entries[i].IsUID
 	}
 
-	if m.Idmap[i].Isgid != m.Idmap[j].Isgid {
-		return m.Idmap[i].Isgid
+	if m.Entries[i].IsGID != m.Entries[j].IsGID {
+		return m.Entries[i].IsGID
 	}
 
-	return m.Idmap[i].Nsid < m.Idmap[j].Nsid
+	return m.Entries[i].NSID < m.Entries[j].NSID
 }
 
 // Intersects checks if any of the Entry in the set intersects with the provided entry.
 func (m *Set) Intersects(i Entry) bool {
-	for _, e := range m.Idmap {
+	for _, e := range m.Entries {
 		if i.Intersects(e) {
 			return true
 		}
@@ -80,10 +80,10 @@ func (m *Set) Intersects(i Entry) bool {
 	return false
 }
 
-// HostidsIntersect checks if any of the Entry hostids in the set intersects with the provided entry.
-func (m *Set) HostidsIntersect(i Entry) bool {
-	for _, e := range m.Idmap {
-		if i.HostidsIntersect(e) {
+// HostIDsIntersect checks if any of the Entry hostids in the set intersects with the provided entry.
+func (m *Set) HostIDsIntersect(i Entry) bool {
+	for _, e := range m.Entries {
+		if i.HostIDsIntersect(e) {
 			return true
 		}
 	}
@@ -93,7 +93,7 @@ func (m *Set) HostidsIntersect(i Entry) bool {
 
 // Usable checks that all Entry in the set are usable.
 func (m *Set) Usable() error {
-	for _, e := range m.Idmap {
+	for _, e := range m.Entries {
 		err := e.Usable()
 		if err != nil {
 			return err
@@ -116,30 +116,30 @@ func (m *Set) ValidRanges() ([]*Range, error) {
 
 	sort.Sort(idmap)
 
-	for _, mapEntry := range idmap.Idmap {
+	for _, mapEntry := range idmap.Entries {
 		var entry *Range
 
 		for _, idEntry := range ranges {
-			if mapEntry.Isuid != idEntry.Isuid || mapEntry.Isgid != idEntry.Isgid {
+			if mapEntry.IsUID != idEntry.IsUID || mapEntry.IsGID != idEntry.IsGID {
 				continue
 			}
 
-			if idEntry.Endid+1 == mapEntry.Nsid {
+			if idEntry.EndID+1 == mapEntry.NSID {
 				entry = idEntry
 				break
 			}
 		}
 
 		if entry != nil {
-			entry.Endid = entry.Endid + mapEntry.Maprange
+			entry.EndID = entry.EndID + mapEntry.MapRange
 			continue
 		}
 
 		ranges = append(ranges, &Range{
-			Isuid:   mapEntry.Isuid,
-			Isgid:   mapEntry.Isgid,
-			Startid: mapEntry.Nsid,
-			Endid:   mapEntry.Nsid + mapEntry.Maprange - 1,
+			IsUID:   mapEntry.IsUID,
+			IsGID:   mapEntry.IsGID,
+			StartID: mapEntry.NSID,
+			EndID:   mapEntry.NSID + mapEntry.MapRange - 1,
 		})
 	}
 
@@ -151,40 +151,40 @@ func (m *Set) ValidRanges() ([]*Range, error) {
 func (m *Set) AddSafe(i Entry) error {
 	result := []Entry{}
 	added := false
-	for _, e := range m.Idmap {
+	for _, e := range m.Entries {
 		if !e.Intersects(i) {
 			result = append(result, e)
 			continue
 		}
 
-		if e.HostidsIntersect(i) {
+		if e.HostIDsIntersect(i) {
 			return ErrHostIDIsSubID
 		}
 
 		added = true
 
 		lower := Entry{
-			Isuid:    e.Isuid,
-			Isgid:    e.Isgid,
-			Hostid:   e.Hostid,
-			Nsid:     e.Nsid,
-			Maprange: i.Nsid - e.Nsid,
+			IsUID:    e.IsUID,
+			IsGID:    e.IsGID,
+			HostID:   e.HostID,
+			NSID:     e.NSID,
+			MapRange: i.NSID - e.NSID,
 		}
 
 		upper := Entry{
-			Isuid:    e.Isuid,
-			Isgid:    e.Isgid,
-			Hostid:   e.Hostid + lower.Maprange + i.Maprange,
-			Nsid:     i.Nsid + i.Maprange,
-			Maprange: e.Maprange - i.Maprange - lower.Maprange,
+			IsUID:    e.IsUID,
+			IsGID:    e.IsGID,
+			HostID:   e.HostID + lower.MapRange + i.MapRange,
+			NSID:     i.NSID + i.MapRange,
+			MapRange: e.MapRange - i.MapRange - lower.MapRange,
 		}
 
-		if lower.Maprange > 0 {
+		if lower.MapRange > 0 {
 			result = append(result, lower)
 		}
 
 		result = append(result, i)
-		if upper.Maprange > 0 {
+		if upper.MapRange > 0 {
 			result = append(result, upper)
 		}
 	}
@@ -193,16 +193,16 @@ func (m *Set) AddSafe(i Entry) error {
 		result = append(result, i)
 	}
 
-	m.Idmap = result
+	m.Entries = result
 
 	return nil
 }
 
-// ToLxcString converts the set to a slice of LXC configuration entries.
-func (m *Set) ToLxcString() []string {
+// ToLXCString converts the set to a slice of LXC configuration entries.
+func (m *Set) ToLXCString() []string {
 	var lines []string
-	for _, e := range m.Idmap {
-		for _, l := range e.ToLxcString() {
+	for _, e := range m.Entries {
+		for _, l := range e.ToLXCString() {
 			if !util.ValueInSlice(l, lines) {
 				lines = append(lines, l)
 			}
@@ -225,18 +225,18 @@ func (m *Set) Append(s string) (*Set, error) {
 		return m, fmt.Errorf("Conflicting id mapping")
 	}
 
-	m.Idmap = append(m.Idmap, e)
+	m.Entries = append(m.Entries, e)
 	return m, nil
 }
 
-func (m Set) doShiftIntoNs(uid int64, gid int64, how string) (int64, int64) {
+func (m Set) doShiftIntoNS(uid int64, gid int64, how string) (int64, int64) {
 	u := int64(-1)
 	g := int64(-1)
 
-	for _, e := range m.Idmap {
+	for _, e := range m.Entries {
 		var err error
 		var tmpu, tmpg int64
-		if e.Isuid && u == -1 {
+		if e.IsUID && u == -1 {
 			switch how {
 			case "in":
 				tmpu, err = e.shiftIntoNS(uid)
@@ -249,7 +249,7 @@ func (m Set) doShiftIntoNs(uid int64, gid int64, how string) (int64, int64) {
 			}
 		}
 
-		if e.Isgid && g == -1 {
+		if e.IsGID && g == -1 {
 			switch how {
 			case "in":
 				tmpg, err = e.shiftIntoNS(gid)
@@ -266,25 +266,25 @@ func (m Set) doShiftIntoNs(uid int64, gid int64, how string) (int64, int64) {
 	return u, g
 }
 
-// ShiftIntoNs shiftfs the provided uid and gid into their container equivalent.
-func (m Set) ShiftIntoNs(uid int64, gid int64) (int64, int64) {
-	return m.doShiftIntoNs(uid, gid, "in")
+// ShiftIntoNS shiftfs the provided uid and gid into their container equivalent.
+func (m Set) ShiftIntoNS(uid int64, gid int64) (int64, int64) {
+	return m.doShiftIntoNS(uid, gid, "in")
 }
 
-// ShiftFromNs shiftfs the provided uid and gid into their host equivalent.
-func (m Set) ShiftFromNs(uid int64, gid int64) (int64, int64) {
-	return m.doShiftIntoNs(uid, gid, "out")
+// ShiftFromNS shiftfs the provided uid and gid into their host equivalent.
+func (m Set) ShiftFromNS(uid int64, gid int64) (int64, int64) {
+	return m.doShiftIntoNS(uid, gid, "out")
 }
 
 // JSONUnmarshal unmarshals an IDMAP encoded as JSON.
 func JSONUnmarshal(idmapJSON string) (*Set, error) {
 	lastIdmap := new(Set)
-	err := json.Unmarshal([]byte(idmapJSON), &lastIdmap.Idmap)
+	err := json.Unmarshal([]byte(idmapJSON), &lastIdmap.Entries)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(lastIdmap.Idmap) == 0 {
+	if len(lastIdmap.Entries) == 0 {
 		return nil, nil
 	}
 
@@ -293,7 +293,7 @@ func JSONUnmarshal(idmapJSON string) (*Set, error) {
 
 // JSONMarshal marshals an IDMAP to JSON string.
 func JSONMarshal(idmapSet *Set) (string, error) {
-	idmapBytes, err := json.Marshal(idmapSet.Idmap)
+	idmapBytes, err := json.Marshal(idmapSet.Entries)
 	if err != nil {
 		return "", err
 	}
@@ -305,13 +305,13 @@ func JSONMarshal(idmapSet *Set) (string, error) {
 type ByHostID Set
 
 func (s ByHostID) Len() int {
-	return len(s.Idmap)
+	return len(s.Entries)
 }
 
 func (s ByHostID) Swap(i, j int) {
-	s.Idmap[i], s.Idmap[j] = s.Idmap[j], s.Idmap[i]
+	s.Entries[i], s.Entries[j] = s.Entries[j], s.Entries[i]
 }
 
 func (s ByHostID) Less(i, j int) bool {
-	return s.Idmap[i].Hostid < s.Idmap[j].Hostid
+	return s.Entries[i].HostID < s.Entries[j].HostID
 }

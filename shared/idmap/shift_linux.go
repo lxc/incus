@@ -559,7 +559,7 @@ func UnshiftACL(value string, set *Set) (string, error) {
 		switch C.le16_to_native(entry.e_tag) {
 		case C.ACL_USER:
 			ouid := int64(C.le32_to_native(entry.e_id))
-			uid, _ := set.ShiftFromNs(ouid, -1)
+			uid, _ := set.ShiftFromNS(ouid, -1)
 			if int(uid) != -1 {
 				entry.e_id = C.native_to_le32(C.int(uid))
 				logger.Debugf("Unshifting ACL_USER from uid %d to uid %d", ouid, uid)
@@ -567,7 +567,7 @@ func UnshiftACL(value string, set *Set) (string, error) {
 
 		case C.ACL_GROUP:
 			ogid := int64(C.le32_to_native(entry.e_id))
-			_, gid := set.ShiftFromNs(-1, ogid)
+			_, gid := set.ShiftFromNS(-1, ogid)
 			if int(gid) != -1 {
 				entry.e_id = C.native_to_le32(C.int(gid))
 				logger.Debugf("Unshifting ACL_GROUP from gid %d to gid %d", ogid, gid)
@@ -610,7 +610,7 @@ func UnshiftCaps(value string, set *Set) (string, error) {
 		return value, nil
 	}
 
-	uid, _ := set.ShiftFromNs(int64(ouid), -1)
+	uid, _ := set.ShiftFromNS(int64(ouid), -1)
 	if int(uid) != -1 {
 		C.update_vfs_ns_caps_uid(cBuf, size, &nsXattr, C.uid_t(uid))
 		logger.Debugf("Unshifting vfs capabilities from uid %d to uid %d", ouid, uid)

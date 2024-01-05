@@ -10,104 +10,104 @@ import (
 )
 
 func TestSetAddSafe_split(t *testing.T) {
-	orig := Set{Idmap: []Entry{{Isuid: true, Hostid: 1000, Nsid: 0, Maprange: 1000}}}
+	orig := Set{Entries: []Entry{{IsUID: true, HostID: 1000, NSID: 0, MapRange: 1000}}}
 
-	err := orig.AddSafe(Entry{Isuid: true, Hostid: 500, Nsid: 500, Maprange: 10})
+	err := orig.AddSafe(Entry{IsUID: true, HostID: 500, NSID: 500, MapRange: 10})
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	if orig.Idmap[0].Hostid != 1000 || orig.Idmap[0].Nsid != 0 || orig.Idmap[0].Maprange != 500 {
-		t.Error(fmt.Errorf("bad range: %v", orig.Idmap[0]))
+	if orig.Entries[0].HostID != 1000 || orig.Entries[0].NSID != 0 || orig.Entries[0].MapRange != 500 {
+		t.Error(fmt.Errorf("bad range: %v", orig.Entries[0]))
 		return
 	}
 
-	if orig.Idmap[1].Hostid != 500 || orig.Idmap[1].Nsid != 500 || orig.Idmap[1].Maprange != 10 {
-		t.Error(fmt.Errorf("bad range: %v", orig.Idmap[1]))
+	if orig.Entries[1].HostID != 500 || orig.Entries[1].NSID != 500 || orig.Entries[1].MapRange != 10 {
+		t.Error(fmt.Errorf("bad range: %v", orig.Entries[1]))
 		return
 	}
 
-	if orig.Idmap[2].Hostid != 1510 || orig.Idmap[2].Nsid != 510 || orig.Idmap[2].Maprange != 490 {
-		t.Error(fmt.Errorf("bad range: %v", orig.Idmap[2]))
+	if orig.Entries[2].HostID != 1510 || orig.Entries[2].NSID != 510 || orig.Entries[2].MapRange != 490 {
+		t.Error(fmt.Errorf("bad range: %v", orig.Entries[2]))
 		return
 	}
 
-	if len(orig.Idmap) != 3 {
+	if len(orig.Entries) != 3 {
 		t.Error("too many idmap entries")
 		return
 	}
 }
 
 func TestSetAddSafe_lower(t *testing.T) {
-	orig := Set{Idmap: []Entry{{Isuid: true, Hostid: 1000, Nsid: 0, Maprange: 1000}}}
+	orig := Set{Entries: []Entry{{IsUID: true, HostID: 1000, NSID: 0, MapRange: 1000}}}
 
-	err := orig.AddSafe(Entry{Isuid: true, Hostid: 500, Nsid: 0, Maprange: 10})
+	err := orig.AddSafe(Entry{IsUID: true, HostID: 500, NSID: 0, MapRange: 10})
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	if orig.Idmap[0].Hostid != 500 || orig.Idmap[0].Nsid != 0 || orig.Idmap[0].Maprange != 10 {
-		t.Error(fmt.Errorf("bad range: %v", orig.Idmap[0]))
+	if orig.Entries[0].HostID != 500 || orig.Entries[0].NSID != 0 || orig.Entries[0].MapRange != 10 {
+		t.Error(fmt.Errorf("bad range: %v", orig.Entries[0]))
 		return
 	}
 
-	if orig.Idmap[1].Hostid != 1010 || orig.Idmap[1].Nsid != 10 || orig.Idmap[1].Maprange != 990 {
-		t.Error(fmt.Errorf("bad range: %v", orig.Idmap[1]))
+	if orig.Entries[1].HostID != 1010 || orig.Entries[1].NSID != 10 || orig.Entries[1].MapRange != 990 {
+		t.Error(fmt.Errorf("bad range: %v", orig.Entries[1]))
 		return
 	}
 
-	if len(orig.Idmap) != 2 {
+	if len(orig.Entries) != 2 {
 		t.Error("too many idmap entries")
 		return
 	}
 }
 
 func TestSetAddSafe_upper(t *testing.T) {
-	orig := Set{Idmap: []Entry{{Isuid: true, Hostid: 1000, Nsid: 0, Maprange: 1000}}}
+	orig := Set{Entries: []Entry{{IsUID: true, HostID: 1000, NSID: 0, MapRange: 1000}}}
 
-	err := orig.AddSafe(Entry{Isuid: true, Hostid: 500, Nsid: 995, Maprange: 10})
+	err := orig.AddSafe(Entry{IsUID: true, HostID: 500, NSID: 995, MapRange: 10})
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	if orig.Idmap[0].Hostid != 1000 || orig.Idmap[0].Nsid != 0 || orig.Idmap[0].Maprange != 995 {
-		t.Error(fmt.Errorf("bad range: %v", orig.Idmap[0]))
+	if orig.Entries[0].HostID != 1000 || orig.Entries[0].NSID != 0 || orig.Entries[0].MapRange != 995 {
+		t.Error(fmt.Errorf("bad range: %v", orig.Entries[0]))
 		return
 	}
 
-	if orig.Idmap[1].Hostid != 500 || orig.Idmap[1].Nsid != 995 || orig.Idmap[1].Maprange != 10 {
-		t.Error(fmt.Errorf("bad range: %v", orig.Idmap[1]))
+	if orig.Entries[1].HostID != 500 || orig.Entries[1].NSID != 995 || orig.Entries[1].MapRange != 10 {
+		t.Error(fmt.Errorf("bad range: %v", orig.Entries[1]))
 		return
 	}
 
-	if len(orig.Idmap) != 2 {
+	if len(orig.Entries) != 2 {
 		t.Error("too many idmap entries")
 		return
 	}
 }
 
 func TestSetIntersects(t *testing.T) {
-	orig := Set{Idmap: []Entry{{Isuid: true, Hostid: 165536, Nsid: 0, Maprange: 65536}}}
+	orig := Set{Entries: []Entry{{IsUID: true, HostID: 165536, NSID: 0, MapRange: 65536}}}
 
-	if !orig.Intersects(Entry{Isuid: true, Hostid: 231071, Nsid: 0, Maprange: 65536}) {
+	if !orig.Intersects(Entry{IsUID: true, HostID: 231071, NSID: 0, MapRange: 65536}) {
 		t.Error("ranges don't intersect")
 		return
 	}
 
-	if !orig.Intersects(Entry{Isuid: true, Hostid: 231072, Nsid: 0, Maprange: 65536}) {
+	if !orig.Intersects(Entry{IsUID: true, HostID: 231072, NSID: 0, MapRange: 65536}) {
 		t.Error("ranges don't intersect")
 		return
 	}
 
-	if !orig.Intersects(Entry{Isuid: true, Hostid: 231072, Nsid: 65535, Maprange: 65536}) {
+	if !orig.Intersects(Entry{IsUID: true, HostID: 231072, NSID: 65535, MapRange: 65536}) {
 		t.Error("ranges don't intersect")
 		return
 	}
 
-	if orig.Intersects(Entry{Isuid: true, Hostid: 231072, Nsid: 65536, Maprange: 65536}) {
+	if orig.Intersects(Entry{IsUID: true, HostID: 231072, NSID: 65536, MapRange: 65536}) {
 		t.Error("ranges intersect")
 		return
 	}
@@ -119,19 +119,19 @@ func TestIdmapHostIDMapRange(t *testing.T) {
 	assert.Equal(t, false, idmap.HostIDsCoveredBy(nil, nil))
 
 	// Check nil allowed lists are not covered.
-	idmap = Entry{Isuid: true, Hostid: 1000, Maprange: 1}
+	idmap = Entry{IsUID: true, HostID: 1000, MapRange: 1}
 	assert.Equal(t, false, idmap.HostIDsCoveredBy(nil, nil))
 
 	// Check that UID/GID specific host IDs are covered by equivalent UID/GID specific host ID rule.
-	uidOnlyEntry := Entry{Isuid: true, Hostid: 1000, Maprange: 1}
-	gidOnlyEntry := Entry{Isgid: true, Hostid: 1000, Maprange: 1}
+	uidOnlyEntry := Entry{IsUID: true, HostID: 1000, MapRange: 1}
+	gidOnlyEntry := Entry{IsGID: true, HostID: 1000, MapRange: 1}
 
 	allowedUIDMaps := []Entry{
-		{Isuid: true, Hostid: 1000, Maprange: 1},
+		{IsUID: true, HostID: 1000, MapRange: 1},
 	}
 
 	allowedGIDMaps := []Entry{
-		{Isgid: true, Hostid: 1000, Maprange: 1},
+		{IsGID: true, HostID: 1000, MapRange: 1},
 	}
 
 	assert.Equal(t, true, uidOnlyEntry.HostIDsCoveredBy(allowedUIDMaps, nil))
@@ -151,8 +151,8 @@ func TestIdmapHostIDMapRange(t *testing.T) {
 	assert.Equal(t, false, gidOnlyEntry.HostIDsCoveredBy(allowedUIDMaps, allowedUIDMaps))
 
 	// Check ranges are correctly blocked when not covered by single ID allow list.
-	uidOnlyRangeEntry := Entry{Isuid: true, Hostid: 1000, Maprange: 2}
-	gidOnlyRangeEntry := Entry{Isgid: true, Hostid: 1000, Maprange: 2}
+	uidOnlyRangeEntry := Entry{IsUID: true, HostID: 1000, MapRange: 2}
+	gidOnlyRangeEntry := Entry{IsGID: true, HostID: 1000, MapRange: 2}
 
 	assert.Equal(t, false, uidOnlyRangeEntry.HostIDsCoveredBy(allowedUIDMaps, nil))
 	assert.Equal(t, false, uidOnlyRangeEntry.HostIDsCoveredBy(nil, allowedUIDMaps))
@@ -164,11 +164,11 @@ func TestIdmapHostIDMapRange(t *testing.T) {
 
 	// Check ranges are allowed when fully covered.
 	allowedUIDMaps = []Entry{
-		{Isuid: true, Hostid: 1000, Maprange: 2},
+		{IsUID: true, HostID: 1000, MapRange: 2},
 	}
 
 	allowedGIDMaps = []Entry{
-		{Isgid: true, Hostid: 1000, Maprange: 2},
+		{IsGID: true, HostID: 1000, MapRange: 2},
 	}
 
 	assert.Equal(t, true, uidOnlyRangeEntry.HostIDsCoveredBy(allowedUIDMaps, nil))
@@ -181,7 +181,7 @@ func TestIdmapHostIDMapRange(t *testing.T) {
 
 	// Check ranges for combined allowed ID maps are correctly validated.
 	allowedCombinedMaps := []Entry{
-		{Isuid: true, Isgid: true, Hostid: 1000, Maprange: 2},
+		{IsUID: true, IsGID: true, HostID: 1000, MapRange: 2},
 	}
 
 	assert.Equal(t, true, uidOnlyRangeEntry.HostIDsCoveredBy(allowedCombinedMaps, nil))
@@ -192,7 +192,7 @@ func TestIdmapHostIDMapRange(t *testing.T) {
 	assert.Equal(t, true, gidOnlyRangeEntry.HostIDsCoveredBy(nil, allowedCombinedMaps))
 	assert.Equal(t, true, gidOnlyRangeEntry.HostIDsCoveredBy(allowedCombinedMaps, allowedCombinedMaps))
 
-	combinedEntry := Entry{Isuid: true, Isgid: true, Hostid: 1000, Maprange: 1}
+	combinedEntry := Entry{IsUID: true, IsGID: true, HostID: 1000, MapRange: 1}
 
 	assert.Equal(t, false, combinedEntry.HostIDsCoveredBy(allowedCombinedMaps, nil))
 	assert.Equal(t, false, combinedEntry.HostIDsCoveredBy(nil, allowedCombinedMaps))
