@@ -1,5 +1,3 @@
-//go:build linux && cgo
-
 package idmap
 
 import (
