@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/util"
 )
 
@@ -162,52 +161,6 @@ func NewSetFromCurrentProcess() (*Set, error) {
 	}
 
 	return ret, nil
-}
-
-// GetSet reads the system uid/gid allocation.
-func GetSet() *Set {
-	idmapSet, err := DefaultSet("", "")
-	if err != nil {
-		logger.Warn("Error reading default uid/gid map", map[string]any{"err": err.Error()})
-		logger.Warnf("Only privileged containers will be able to run")
-		idmapSet = nil
-	} else {
-		kernelSet, err := NewSetFromCurrentProcess()
-		if err == nil {
-			logger.Infof("Kernel uid/gid map:")
-			for _, lxcmap := range kernelSet.ToLXCString() {
-				logger.Infof(fmt.Sprintf(" - %s", lxcmap))
-			}
-		}
-
-		if len(idmapSet.Entries) == 0 {
-			logger.Warnf("No available uid/gid map could be found")
-			logger.Warnf("Only privileged containers will be able to run")
-			idmapSet = nil
-		} else {
-			logger.Infof("Configured uid/gid map:")
-			for _, lxcmap := range idmapSet.Entries {
-				suffix := ""
-
-				if lxcmap.Usable() != nil {
-					suffix = " (unusable)"
-				}
-
-				for _, lxcEntry := range lxcmap.ToLXCString() {
-					logger.Infof(" - %s%s", lxcEntry, suffix)
-				}
-			}
-
-			err = idmapSet.Usable()
-			if err != nil {
-				logger.Warnf("One or more uid/gid map entry isn't usable (typically due to nesting)")
-				logger.Warnf("Only privileged containers will be able to run")
-				idmapSet = nil
-			}
-		}
-	}
-
-	return idmapSet
 }
 
 // DefaultSet returns the system's idmapset.
