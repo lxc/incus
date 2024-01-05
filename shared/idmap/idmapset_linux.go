@@ -30,17 +30,6 @@ const VFS3FscapsUnknown int32 = -1
 var VFS3Fscaps int32 = VFS3FscapsUnknown
 var ErrNoUserMap = fmt.Errorf("No map found for user")
 
-type IdRange struct {
-	Isuid   bool
-	Isgid   bool
-	Startid int64
-	Endid   int64
-}
-
-func (i *IdRange) Contains(id int64) bool {
-	return id >= i.Startid && id <= i.Endid
-}
-
 func (e *IdmapEntry) ToLxcString() []string {
 	if e.Isuid && e.Isgid {
 		return []string{
