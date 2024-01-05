@@ -103,9 +103,9 @@ func (m *IdmapSet) Usable() error {
 	return nil
 }
 
-// ValidRanges turns the set into a slice of IDRange.
-func (m *IdmapSet) ValidRanges() ([]*IDRange, error) {
-	ranges := []*IDRange{}
+// ValidRanges turns the set into a slice of Range.
+func (m *IdmapSet) ValidRanges() ([]*Range, error) {
+	ranges := []*Range{}
 
 	// Sort the map.
 	idmap := &IdmapSet{}
@@ -117,7 +117,7 @@ func (m *IdmapSet) ValidRanges() ([]*IDRange, error) {
 	sort.Sort(idmap)
 
 	for _, mapEntry := range idmap.Idmap {
-		var entry *IDRange
+		var entry *Range
 
 		for _, idEntry := range ranges {
 			if mapEntry.Isuid != idEntry.Isuid || mapEntry.Isgid != idEntry.Isgid {
@@ -135,7 +135,7 @@ func (m *IdmapSet) ValidRanges() ([]*IDRange, error) {
 			continue
 		}
 
-		ranges = append(ranges, &IDRange{
+		ranges = append(ranges, &Range{
 			Isuid:   mapEntry.Isuid,
 			Isgid:   mapEntry.Isgid,
 			Startid: mapEntry.Nsid,

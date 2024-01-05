@@ -466,7 +466,7 @@ func kernelDefaultMap() (*IdmapSet, error) {
 	}
 
 	// Special case for when we have the full kernel range
-	fullKernelRanges := []*IDRange{
+	fullKernelRanges := []*Range{
 		{true, false, int64(0), int64(4294967294)},
 		{false, true, int64(0), int64(4294967294)}}
 
