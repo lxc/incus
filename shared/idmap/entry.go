@@ -168,6 +168,11 @@ func (e *Entry) Usable() error {
 	return nil
 }
 
+// Clone gets a distinct copy of the entry.
+func (e *Entry) Clone() *Entry {
+	return &Entry{e.IsUID, e.IsGID, e.HostID, e.NSID, e.MapRange}
+}
+
 func (e *Entry) parse(s string) error {
 	split := strings.Split(s, ":")
 	var err error
