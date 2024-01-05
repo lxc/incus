@@ -1,10 +1,26 @@
 package idmap
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 )
+
+// NewSetFromJSON unpacks an idmap Set from its JSON representation.
+func NewSetFromJSON(data string) (*Set, error) {
+	ret := &Set{}
+	err := json.Unmarshal([]byte(data), &ret.Entries)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ret.Entries) == 0 {
+		return nil, nil
+	}
+
+	return ret, nil
+}
 
 // NewSetFromIncusIDMap parses an Incus raw.idmap into a new idmap Set.
 func NewSetFromIncusIDMap(value string) (*Set, error) {
