@@ -12,6 +12,9 @@ import (
 // ErrHostIDIsSubID indicates that an expected host ID is part of a subid range.
 var ErrHostIDIsSubID = fmt.Errorf("Host ID is in the range of subids")
 
+// ErrNoSuitableSubmap indicates that it was impossible to split a submap with the requested characteristics.
+var ErrNoSuitableSubmap = fmt.Errorf("Couldn't find a suitable submap")
+
 // Set is a list of Entry with some functions on it.
 type Set struct {
 	Entries []Entry
@@ -307,4 +310,61 @@ func (m *Set) ToJSON() (string, error) {
 	}
 
 	return string(out), nil
+}
+
+// Split returns a new Set made from a subset of the original set.
+// The minimum and maximum number of uid/gid included is configurable as is the minimum and maximum host ID.
+func (m *Set) Split(minSize int64, maxSize int64, minHost int64, maxHost int64) (*Set, error) {
+	var uidEntry *Entry
+	var gidEntry *Entry
+
+	for _, entry := range m.Entries {
+		// Make a local copy we can modify.
+		newEntry := entry.Clone()
+
+		// Check if too small.
+		if minSize != -1 && newEntry.MapRange < minSize {
+			continue
+		}
+
+		// Check if host id is too high.
+		if maxHost != -1 && newEntry.HostID > maxHost {
+			continue
+		}
+
+		// Check if host id is too low.
+		if minHost != -1 && newEntry.HostID < minHost {
+			// Check if we can just shift the beginning to match.
+			delta := minHost - newEntry.HostID
+			if newEntry.MapRange-delta < minSize {
+				continue
+			}
+
+			// Update the beginning size of the range to match.
+			newEntry.HostID = minHost
+			newEntry.MapRange -= delta
+		}
+
+		// Cap to maxSize if set.
+		if maxSize != -1 && newEntry.MapRange > maxSize {
+			newEntry.MapRange = maxSize
+		}
+
+		// Pick the range if it's larger than what we currently have.
+		if newEntry.IsUID && (uidEntry == nil || uidEntry.MapRange < newEntry.MapRange) {
+			newEntry.IsGID = false
+			uidEntry = newEntry
+		}
+
+		if newEntry.IsGID && (gidEntry == nil || gidEntry.MapRange < newEntry.MapRange) {
+			newEntry.IsUID = false
+			gidEntry = newEntry
+		}
+	}
+
+	if uidEntry == nil || gidEntry == nil {
+		return nil, ErrNoSuitableSubmap
+	}
+
+	return &Set{Entries: []Entry{*uidEntry, *gidEntry}}, nil
 }
