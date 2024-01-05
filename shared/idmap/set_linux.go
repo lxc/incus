@@ -207,7 +207,7 @@ func (m *Set) ShiftFile(p string) error {
 }
 
 // ToUIDMappings converts an idmapset to a slice of syscall.SysProcIDMap.
-func (m Set) ToUIDMappings() []syscall.SysProcIDMap {
+func (m *Set) ToUIDMappings() []syscall.SysProcIDMap {
 	mapping := []syscall.SysProcIDMap{}
 
 	for _, e := range m.Entries {
@@ -226,7 +226,7 @@ func (m Set) ToUIDMappings() []syscall.SysProcIDMap {
 }
 
 // ToGIDMappings converts an idmapset to a slice of syscall.SysProcIDMap.
-func (m Set) ToGIDMappings() []syscall.SysProcIDMap {
+func (m *Set) ToGIDMappings() []syscall.SysProcIDMap {
 	mapping := []syscall.SysProcIDMap{}
 
 	for _, e := range m.Entries {

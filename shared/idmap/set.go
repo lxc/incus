@@ -248,7 +248,7 @@ func (m *Set) Append(s string) (*Set, error) {
 	return m, nil
 }
 
-func (m Set) doShiftIntoNS(uid int64, gid int64, how string) (int64, int64) {
+func (m *Set) doShiftIntoNS(uid int64, gid int64, how string) (int64, int64) {
 	u := int64(-1)
 	g := int64(-1)
 
@@ -286,12 +286,12 @@ func (m Set) doShiftIntoNS(uid int64, gid int64, how string) (int64, int64) {
 }
 
 // ShiftIntoNS shiftfs the provided uid and gid into their container equivalent.
-func (m Set) ShiftIntoNS(uid int64, gid int64) (int64, int64) {
+func (m *Set) ShiftIntoNS(uid int64, gid int64) (int64, int64) {
 	return m.doShiftIntoNS(uid, gid, "in")
 }
 
 // ShiftFromNS shiftfs the provided uid and gid into their host equivalent.
-func (m Set) ShiftFromNS(uid int64, gid int64) (int64, int64) {
+func (m *Set) ShiftFromNS(uid int64, gid int64) (int64, int64) {
 	return m.doShiftIntoNS(uid, gid, "out")
 }
 
