@@ -486,7 +486,7 @@ func shiftAclType(path string, aclType int, shiftIds func(uid int64, gid int64) 
 	return nil
 }
 
-func SupportsVFS3Fscaps(prefix string) bool {
+func SupportsVFS3FSCaps(prefix string) bool {
 	tmpfile, err := os.CreateTemp(prefix, ".incus_fcaps_v3_")
 	if err != nil {
 		return false

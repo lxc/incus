@@ -21,11 +21,19 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-const VFS3FscapsUnsupported int32 = 0
-const VFS3FscapsSupported int32 = 1
-const VFS3FscapsUnknown int32 = -1
+const (
+	// VFS3FSCapsUnknown indicates unknown support for VFS v3 fscaps.
+	VFS3FSCapsUnknown = int32(-1)
 
-var VFS3Fscaps int32 = VFS3FscapsUnknown
+	// VFS3FSCapsUnsupported indicates the kernel does not support VFS v3 fscaps.
+	VFS3FSCapsUnsupported = int32(0)
+
+	// VFS3FSCapsSupported indicates the kernel supports VFS v3 fscaps.
+	VFS3FSCapsSupported = int32(1)
+)
+
+// VFS3FSCaps can be set to tell the shifter if VFS v3 fscaps are supported.
+var VFS3FSCaps = VFS3FSCapsUnknown
 
 // ErrNoUserMap indicates that no entry could be found for the user.
 var ErrNoUserMap = fmt.Errorf("No map found for user")
@@ -237,11 +245,11 @@ func (m Set) ToGidMappings() []syscall.SysProcIDMap {
 }
 
 func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	if how == "in" && atomic.LoadInt32(&VFS3Fscaps) == VFS3FscapsUnknown {
-		if SupportsVFS3Fscaps(dir) {
-			atomic.StoreInt32(&VFS3Fscaps, VFS3FscapsSupported)
+	if how == "in" && atomic.LoadInt32(&VFS3FSCaps) == VFS3FSCapsUnknown {
+		if SupportsVFS3FSCaps(dir) {
+			atomic.StoreInt32(&VFS3FSCaps, VFS3FSCapsSupported)
 		} else {
-			atomic.StoreInt32(&VFS3Fscaps, VFS3FscapsUnsupported)
+			atomic.StoreInt32(&VFS3FSCaps, VFS3FSCapsUnsupported)
 		}
 	}
 
@@ -325,7 +333,7 @@ func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, ski
 						rootUID, _ = m.ShiftIntoNs(0, 0)
 					}
 
-					if how != "in" || atomic.LoadInt32(&VFS3Fscaps) == VFS3FscapsSupported {
+					if how != "in" || atomic.LoadInt32(&VFS3FSCaps) == VFS3FSCapsSupported {
 						err = SetCaps(p, caps, rootUID)
 						if err != nil {
 							logger.Warnf("Unable to set file capabilities on %q: %v", p, err)
