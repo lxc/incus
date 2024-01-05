@@ -256,17 +256,17 @@ func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, ski
 	dir = strings.TrimRight(dir, "/")
 
 	hardLinks := []uint64{}
-	convert := func(path string, fi os.FileInfo, err error) (e error) {
+	convert := func(p string, fi os.FileInfo, err error) (e error) {
 		if err != nil {
 			return err
 		}
 
-		if skipper != nil && skipper(dir, path, fi) {
+		if skipper != nil && skipper(dir, p, fi) {
 			return filepath.SkipDir
 		}
 
 		var stat unix.Stat_t
-		err = unix.Lstat(path, &stat)
+		err = unix.Lstat(p, &stat)
 		if err != nil {
 			return err
 		}
@@ -295,25 +295,25 @@ func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, ski
 		}
 
 		if testmode {
-			fmt.Printf("I would shift %q to %d %d\n", path, newuid, newgid)
+			fmt.Printf("I would shift %q to %d %d\n", p, newuid, newgid)
 		} else {
 			// Dump capabilities
 			if fi.Mode()&os.ModeSymlink == 0 {
-				caps, err = GetCaps(path)
+				caps, err = GetCaps(p)
 				if err != nil {
 					return err
 				}
 			}
 
 			// Shift owner
-			err = ShiftOwner(dir, path, int(newuid), int(newgid))
+			err = ShiftOwner(dir, p, int(newuid), int(newgid))
 			if err != nil {
 				return err
 			}
 
 			if fi.Mode()&os.ModeSymlink == 0 {
 				// Shift POSIX ACLs
-				err = ShiftACL(path, func(uid int64, gid int64) (int64, int64) { return m.doShiftIntoNs(uid, gid, how) })
+				err = ShiftACL(p, func(uid int64, gid int64) (int64, int64) { return m.doShiftIntoNs(uid, gid, how) })
 				if err != nil {
 					return err
 				}
@@ -326,9 +326,9 @@ func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, ski
 					}
 
 					if how != "in" || atomic.LoadInt32(&VFS3Fscaps) == VFS3FscapsSupported {
-						err = SetCaps(path, caps, rootUID)
+						err = SetCaps(p, caps, rootUID)
 						if err != nil {
-							logger.Warnf("Unable to set file capabilities on %q: %v", path, err)
+							logger.Warnf("Unable to set file capabilities on %q: %v", p, err)
 						}
 					}
 				}
