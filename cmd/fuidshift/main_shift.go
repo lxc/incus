@@ -62,8 +62,16 @@ func (c *cmdShift) Run(cmd *cobra.Command, args []string) error {
 
 	directory := args[0]
 
+	var skipper func(dir string, absPath string, fi os.FileInfo, newuid int64, newgid int64) error
+	if c.flagTestMode {
+		skipper = func(dir string, absPath string, fi os.FileInfo, newuid int64, newgid int64) error {
+			fmt.Printf("I would shift %q to %d %d\n", absPath, newuid, newgid)
+			return fmt.Errorf("dry run")
+		}
+	}
+
 	// Parse the maps
-	idmapSet := idmap.IdmapSet{}
+	idmapSet := &idmap.Set{}
 	for _, arg := range args[1:] {
 		var err error
 		idmapSet, err = idmapSet.Append(arg)
@@ -74,7 +82,7 @@ func (c *cmdShift) Run(cmd *cobra.Command, args []string) error {
 
 	// Reverse shifting
 	if c.flagReverse {
-		err := idmapSet.UidshiftFromContainer(directory, c.flagTestMode)
+		err := idmapSet.UnshiftPath(directory, skipper)
 		if err != nil {
 			return err
 		}
@@ -83,7 +91,7 @@ func (c *cmdShift) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Normal shifting
-	err := idmapSet.UidshiftIntoContainer(directory, c.flagTestMode)
+	err := idmapSet.ShiftPath(directory, skipper)
 	if err != nil {
 		return err
 	}
