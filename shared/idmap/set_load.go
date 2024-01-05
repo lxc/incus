@@ -1,5 +1,3 @@
-//go:build linux && cgo
-
 package idmap
 
 import (
@@ -8,12 +6,12 @@ import (
 	"strings"
 )
 
-// ParseRawIDMap parses an idmap string.
-func ParseRawIDMap(value string) ([]Entry, error) {
+// NewSetFromIncusIDMap parses an Incus raw.idmap into a new idmap Set.
+func NewSetFromIncusIDMap(value string) (*Set, error) {
 	getRange := func(r string) (int64, int64, error) {
 		entries := strings.Split(r, "-")
 		if len(entries) > 2 {
-			return -1, -1, fmt.Errorf("Invalid ID Map range %q", r)
+			return -1, -1, fmt.Errorf("Invalid ID map range: %s", r)
 		}
 
 		base, err := strconv.ParseInt(entries[0], 10, 64)
@@ -35,7 +33,7 @@ func ParseRawIDMap(value string) ([]Entry, error) {
 		return base, size, nil
 	}
 
-	ret := Set{}
+	ret := &Set{}
 
 	for _, line := range strings.Split(value, "\n") {
 		if line == "" {
@@ -44,7 +42,7 @@ func ParseRawIDMap(value string) ([]Entry, error) {
 
 		entries := strings.Split(line, " ")
 		if len(entries) != 3 {
-			return nil, fmt.Errorf("Invalid ID map line %q", line)
+			return nil, fmt.Errorf("Invalid ID map line: %s", line)
 		}
 
 		outsideBase, outsideSize, err := getRange(entries[1])
@@ -58,7 +56,7 @@ func ParseRawIDMap(value string) ([]Entry, error) {
 		}
 
 		if insideSize != outsideSize {
-			return nil, fmt.Errorf("The ID map ranges are of different sizes %q", line)
+			return nil, fmt.Errorf("The ID map ranges are of different sizes: %s", line)
 		}
 
 		entry := Entry{
@@ -91,9 +89,9 @@ func ParseRawIDMap(value string) ([]Entry, error) {
 			}
 
 		default:
-			return nil, fmt.Errorf("Invalid ID map type %q", line)
+			return nil, fmt.Errorf("Invalid ID map type: %s", line)
 		}
 	}
 
-	return ret.Entries, nil
+	return ret, nil
 }
