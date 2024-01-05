@@ -104,7 +104,7 @@ func (m *Set) Usable() error {
 }
 
 // FilterPOSIX returns a copy of the set with only entries that have a minimum of 65536 IDs.
-func (m *Set) FilterPOSIX() (*Set) {
+func (m *Set) FilterPOSIX() *Set {
 	filtered := &Set{Entries: []Entry{}}
 
 	for _, entry := range m.Entries {
@@ -295,29 +295,18 @@ func (m Set) ShiftFromNS(uid int64, gid int64) (int64, int64) {
 	return m.doShiftIntoNS(uid, gid, "out")
 }
 
-// JSONUnmarshal unmarshals an IDMAP encoded as JSON.
-func JSONUnmarshal(idmapJSON string) (*Set, error) {
-	lastIdmap := new(Set)
-	err := json.Unmarshal([]byte(idmapJSON), &lastIdmap.Entries)
-	if err != nil {
-		return nil, err
+// ToJSON marshals a Set to its JSON reprensetation.
+func (m *Set) ToJSON() (string, error) {
+	if m == nil {
+		return "[]", nil
 	}
 
-	if len(lastIdmap.Entries) == 0 {
-		return nil, nil
-	}
-
-	return lastIdmap, nil
-}
-
-// JSONMarshal marshals an IDMAP to JSON string.
-func JSONMarshal(idmapSet *Set) (string, error) {
-	idmapBytes, err := json.Marshal(idmapSet.Entries)
+	out, err := json.Marshal(m.Entries)
 	if err != nil {
 		return "", err
 	}
 
-	return string(idmapBytes), nil
+	return string(out), nil
 }
 
 // ByHostID allows for sorting an Set by host id.
