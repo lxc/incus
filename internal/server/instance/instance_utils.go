@@ -263,13 +263,13 @@ func lxcValidConfig(rawLxc string) error {
 
 // AllowedUnprivilegedOnlyMap checks that root user is not mapped into instance.
 func AllowedUnprivilegedOnlyMap(rawIdmap string) error {
-	rawMaps, err := idmap.ParseRawIdmap(rawIdmap)
+	rawMaps, err := idmap.NewSetFromIncusIDMap(rawIdmap)
 	if err != nil {
 		return err
 	}
 
-	for _, ent := range rawMaps {
-		if ent.Hostid == 0 {
+	for _, ent := range rawMaps.Entries {
+		if ent.HostID == 0 {
 			return fmt.Errorf("Cannot map root user into container as the server was configured to only allow unprivileged containers")
 		}
 	}

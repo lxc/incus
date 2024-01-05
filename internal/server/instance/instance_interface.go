@@ -173,9 +173,9 @@ type Instance interface {
 type Container interface {
 	Instance
 
-	CurrentIdmap() (*idmap.IdmapSet, error)
-	DiskIdmap() (*idmap.IdmapSet, error)
-	NextIdmap() (*idmap.IdmapSet, error)
+	CurrentIdmap() (*idmap.Set, error)
+	DiskIdmap() (*idmap.Set, error)
+	NextIdmap() (*idmap.Set, error)
 	ConsoleLog(opts liblxc.ConsoleLogOptions) (string, error)
 	InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid int) error
 	DevptsFd() (*os.File, error)

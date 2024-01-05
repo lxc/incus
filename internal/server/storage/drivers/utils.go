@@ -634,17 +634,17 @@ func loopFilePath(poolName string) string {
 }
 
 // ShiftBtrfsRootfs shifts the BTRFS root filesystem.
-func ShiftBtrfsRootfs(path string, diskIdmap *idmap.IdmapSet) error {
+func ShiftBtrfsRootfs(path string, diskIdmap *idmap.Set) error {
 	return shiftBtrfsRootfs(path, diskIdmap, true)
 }
 
 // UnshiftBtrfsRootfs unshifts the BTRFS root filesystem.
-func UnshiftBtrfsRootfs(path string, diskIdmap *idmap.IdmapSet) error {
+func UnshiftBtrfsRootfs(path string, diskIdmap *idmap.Set) error {
 	return shiftBtrfsRootfs(path, diskIdmap, false)
 }
 
 // shiftBtrfsRootfs shifts a filesystem that main include read-only subvolumes.
-func shiftBtrfsRootfs(path string, diskIdmap *idmap.IdmapSet, shift bool) error {
+func shiftBtrfsRootfs(path string, diskIdmap *idmap.Set, shift bool) error {
 	var err error
 	roSubvols := []string{}
 	subvols, _ := BTRFSSubVolumesGet(path)
@@ -661,9 +661,9 @@ func shiftBtrfsRootfs(path string, diskIdmap *idmap.IdmapSet, shift bool) error 
 	}
 
 	if shift {
-		err = diskIdmap.ShiftRootfs(path, nil)
+		err = diskIdmap.ShiftPath(path, nil)
 	} else {
-		err = diskIdmap.UnshiftRootfs(path, nil)
+		err = diskIdmap.UnshiftPath(path, nil)
 	}
 
 	for _, subvol := range roSubvols {
@@ -749,17 +749,17 @@ func BTRFSSubVolumeMakeRw(path string) error {
 }
 
 // ShiftZFSSkipper indicates which files not to shift for ZFS.
-func ShiftZFSSkipper(dir string, absPath string, fi os.FileInfo) bool {
+func ShiftZFSSkipper(dir string, absPath string, fi os.FileInfo, newuid int64, newgid int64) error {
 	strippedPath := absPath
 	if dir != "" {
 		strippedPath = absPath[len(dir):]
 	}
 
 	if fi.IsDir() && strippedPath == "/.zfs/snapshot" {
-		return true
+		return filepath.SkipDir
 	}
 
-	return false
+	return nil
 }
 
 // BlockDiskSizeBytes returns the size of a block disk (path can be either block device or raw file).

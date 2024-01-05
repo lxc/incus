@@ -91,11 +91,8 @@ func (c *cmdActivateifneeded) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Load the idmap for unprivileged instances
-	d.os.IdmapSet, err = idmap.DefaultIdmapSet("", "")
-	if err != nil {
-		return err
-	}
+	// Set a non-nil IdmapSet to be able to load unprivileged instances
+	d.os.IdmapSet = &idmap.Set{}
 
 	// Look for auto-started or previously started instances
 	path = d.os.GlobalDatabasePath()

@@ -123,10 +123,10 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	revert.Add(func() { _ = os.Remove(target) })
 
 	// Get IDMap to unshift container as the tarball is created.
-	var idmap *idmap.IdmapSet
+	var idmapSet *idmap.Set
 	if sourceInst.Type() == instancetype.Container {
 		c := sourceInst.(instance.Container)
-		idmap, err = c.DiskIdmap()
+		idmapSet, err = c.DiskIdmap()
 		if err != nil {
 			return fmt.Errorf("Error getting container IDMAP: %w", err)
 		}
@@ -135,7 +135,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	// Create the tarball.
 	tarPipeReader, tarPipeWriter := io.Pipe()
 	defer func() { _ = tarPipeWriter.Close() }() // Ensure that go routine below always ends.
-	tarWriter := instancewriter.NewInstanceTarWriter(tarPipeWriter, idmap)
+	tarWriter := instancewriter.NewInstanceTarWriter(tarPipeWriter, idmapSet)
 
 	// Setup tar writer go routine, with optional compression.
 	tarWriterRes := make(chan error)

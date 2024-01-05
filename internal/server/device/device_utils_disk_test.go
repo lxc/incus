@@ -10,15 +10,15 @@ import (
 
 func TestDiskAddRootUserNSEntry(t *testing.T) {
 	// Check adds a combined uid/gid root entry to an empty list.
-	var idmaps []idmap.IdmapEntry
+	var idmaps []idmap.Entry
 	idmaps = diskAddRootUserNSEntry(idmaps, 65534)
-	expected := []idmap.IdmapEntry{
+	expected := []idmap.Entry{
 		{
-			Isuid:    true,
-			Isgid:    true,
-			Hostid:   65534,
-			Maprange: 1,
-			Nsid:     0,
+			IsUID:    true,
+			IsGID:    true,
+			HostID:   65534,
+			MapRange: 1,
+			NSID:     0,
 		},
 	}
 
@@ -29,62 +29,62 @@ func TestDiskAddRootUserNSEntry(t *testing.T) {
 	assert.Equal(t, idmaps, expected)
 
 	// Check adds a root gid entry if root uid entry already exists.
-	idmaps = []idmap.IdmapEntry{
+	idmaps = []idmap.Entry{
 		{
-			Isuid:    true,
-			Isgid:    false,
-			Hostid:   65534,
-			Maprange: 1,
-			Nsid:     0,
+			IsUID:    true,
+			IsGID:    false,
+			HostID:   65534,
+			MapRange: 1,
+			NSID:     0,
 		},
 	}
 
 	idmaps = diskAddRootUserNSEntry(idmaps, 65534)
-	expected = []idmap.IdmapEntry{
+	expected = []idmap.Entry{
 		{
-			Isuid:    true,
-			Isgid:    false,
-			Hostid:   65534,
-			Maprange: 1,
-			Nsid:     0,
+			IsUID:    true,
+			IsGID:    false,
+			HostID:   65534,
+			MapRange: 1,
+			NSID:     0,
 		},
 		{
-			Isuid:    false,
-			Isgid:    true,
-			Hostid:   65534,
-			Maprange: 1,
-			Nsid:     0,
+			IsUID:    false,
+			IsGID:    true,
+			HostID:   65534,
+			MapRange: 1,
+			NSID:     0,
 		},
 	}
 
 	assert.Equal(t, idmaps, expected)
 
 	// Check adds a root uid entry if root gid entry already exists.
-	idmaps = []idmap.IdmapEntry{
+	idmaps = []idmap.Entry{
 		{
-			Isuid:    false,
-			Isgid:    true,
-			Hostid:   65534,
-			Maprange: 1,
-			Nsid:     0,
+			IsUID:    false,
+			IsGID:    true,
+			HostID:   65534,
+			MapRange: 1,
+			NSID:     0,
 		},
 	}
 
 	idmaps = diskAddRootUserNSEntry(idmaps, 65534)
-	expected = []idmap.IdmapEntry{
+	expected = []idmap.Entry{
 		{
-			Isuid:    false,
-			Isgid:    true,
-			Hostid:   65534,
-			Maprange: 1,
-			Nsid:     0,
+			IsUID:    false,
+			IsGID:    true,
+			HostID:   65534,
+			MapRange: 1,
+			NSID:     0,
 		},
 		{
-			Isuid:    true,
-			Isgid:    false,
-			Hostid:   65534,
-			Maprange: 1,
-			Nsid:     0,
+			IsUID:    true,
+			IsGID:    false,
+			HostID:   65534,
+			MapRange: 1,
+			NSID:     0,
 		},
 	}
 

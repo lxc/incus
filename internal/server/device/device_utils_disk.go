@@ -264,18 +264,18 @@ func diskCephfsOptions(clusterName string, userName string, fsName string, fsPat
 
 // diskAddRootUserNSEntry takes a set of idmap entries, and adds host -> userns root uid/gid mappings if needed.
 // Returns the supplied idmap entries with any added root entries.
-func diskAddRootUserNSEntry(idmaps []idmap.IdmapEntry, hostRootID int64) []idmap.IdmapEntry {
+func diskAddRootUserNSEntry(idmaps []idmap.Entry, hostRootID int64) []idmap.Entry {
 	needsNSUIDRootEntry := true
 	needsNSGIDRootEntry := true
 
 	for _, idmap := range idmaps {
 		// Check if the idmap entry contains the userns root user.
-		if idmap.Nsid == 0 {
-			if idmap.Isuid {
+		if idmap.NSID == 0 {
+			if idmap.IsUID {
 				needsNSUIDRootEntry = false // Root UID mapping already present.
 			}
 
-			if idmap.Isgid {
+			if idmap.IsGID {
 				needsNSGIDRootEntry = false // Root GID mapping already present.
 			}
 
@@ -287,12 +287,12 @@ func diskAddRootUserNSEntry(idmaps []idmap.IdmapEntry, hostRootID int64) []idmap
 
 	// Add UID/GID/both mapping entry if needed.
 	if needsNSUIDRootEntry || needsNSGIDRootEntry {
-		idmaps = append(idmaps, idmap.IdmapEntry{
-			Hostid:   hostRootID,
-			Isuid:    needsNSUIDRootEntry,
-			Isgid:    needsNSGIDRootEntry,
-			Nsid:     0,
-			Maprange: 1,
+		idmaps = append(idmaps, idmap.Entry{
+			HostID:   hostRootID,
+			IsUID:    needsNSUIDRootEntry,
+			IsGID:    needsNSGIDRootEntry,
+			NSID:     0,
+			MapRange: 1,
 		})
 	}
 
@@ -303,7 +303,7 @@ func diskAddRootUserNSEntry(idmaps []idmap.IdmapEntry, hostRootID int64) []idmap
 // If the idmaps slice is supplied then the proxy process is run inside a user namespace using the supplied maps.
 // Returns a file handle to the proxy process and a revert fail function that can be used to undo this function if
 // a subsequent step fails,.
-func DiskVMVirtfsProxyStart(execPath string, pidPath string, sharePath string, idmaps []idmap.IdmapEntry) (*os.File, revert.Hook, error) {
+func DiskVMVirtfsProxyStart(execPath string, pidPath string, sharePath string, idmaps []idmap.Entry) (*os.File, revert.Hook, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -379,8 +379,8 @@ func DiskVMVirtfsProxyStart(execPath string, pidPath string, sharePath string, i
 	}
 
 	if len(idmaps) > 0 {
-		idmapSet := &idmap.IdmapSet{Idmap: idmaps}
-		proc.SetUserns(idmapSet.ToUidMappings(), idmapSet.ToGidMappings())
+		idmapSet := &idmap.Set{Entries: idmaps}
+		proc.SetUserns(idmapSet.ToUIDMappings(), idmapSet.ToGIDMappings())
 	}
 
 	err = proc.StartWithFiles(context.Background(), []*os.File{acceptFile})
@@ -425,7 +425,7 @@ func DiskVMVirtfsProxyStop(pidPath string) error {
 // Returns UnsupportedError error if the host system or instance does not support virtiosfd, returns normal error
 // type if process cannot be started for other reasons.
 // Returns revert function and listener file handle on success.
-func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath string, pidPath string, logPath string, sharePath string, idmaps []idmap.IdmapEntry) (func(), net.Listener, error) {
+func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath string, pidPath string, logPath string, sharePath string, idmaps []idmap.Entry) (func(), net.Listener, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -506,8 +506,8 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 	}
 
 	if len(idmaps) > 0 {
-		idmapSet := &idmap.IdmapSet{Idmap: idmaps}
-		proc.SetUserns(idmapSet.ToUidMappings(), idmapSet.ToGidMappings())
+		idmapSet := &idmap.Set{Entries: idmaps}
+		proc.SetUserns(idmapSet.ToUIDMappings(), idmapSet.ToGIDMappings())
 	}
 
 	err = proc.StartWithFiles(context.Background(), []*os.File{unixFile})

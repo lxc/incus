@@ -295,7 +295,7 @@ func hoistReq(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Requ
 
 		idmapset, err := c.CurrentIdmap()
 		if err == nil && idmapset != nil {
-			uid, _ := idmapset.ShiftIntoNs(0, 0)
+			uid, _ := idmapset.ShiftIntoNS(0, 0)
 			rootUID = uint32(uid)
 		}
 

@@ -198,7 +198,7 @@ type migrationSinkArgs struct {
 	// Instance specific fields
 	Instance              instance.Instance
 	InstanceOnly          bool
-	Idmap                 *idmap.IdmapSet
+	Idmap                 *idmap.Set
 	Live                  bool
 	Refresh               bool
 	ClusterMoveSourceName string

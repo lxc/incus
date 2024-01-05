@@ -259,11 +259,11 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.In
 		return nil, nil, fmt.Errorf("Storage pool does not support instance type")
 	}
 
-	// Setup initial idmap config
-	var idmap *idmap.IdmapSet
+	// Setup the initial idmap config.
+	var idmapSet *idmap.Set
 	base := int64(0)
 	if !d.IsPrivileged() {
-		idmap, base, err = findIdmap(
+		idmapSet, base, err = findIdmap(
 			s,
 			args.Name,
 			d.expandedConfig["security.idmap.isolated"],
@@ -278,8 +278,8 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.In
 	}
 
 	var jsonIdmap string
-	if idmap != nil {
-		idmapBytes, err := json.Marshal(idmap.Idmap)
+	if idmapSet != nil {
+		idmapBytes, err := json.Marshal(idmapSet.Entries)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -294,7 +294,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.In
 		"volatile.idmap.base": fmt.Sprintf("%v", base),
 	}
 
-	// Invalid idmap cache.
+	// Invalidate the idmap cache.
 	d.idmapset = nil
 
 	// Set last_state if not currently set.
@@ -444,7 +444,7 @@ type lxc struct {
 	c *liblxc.Container // Use d.initLXC() instead of accessing this directly.
 
 	cConfig  bool
-	idmapset *idmap.IdmapSet
+	idmapset *idmap.Set
 }
 
 func idmapSize(state *state.State, isolatedStr string, size string) (int64, error) {
@@ -458,11 +458,11 @@ func idmapSize(state *state.State, isolatedStr string, size string) (int64, erro
 		if isolated {
 			idMapSize = 65536
 		} else {
-			if len(state.OS.IdmapSet.Idmap) != 2 {
-				return 0, fmt.Errorf("bad initial idmap: %v", state.OS.IdmapSet)
+			if len(state.OS.IdmapSet.Entries) != 2 {
+				return 0, fmt.Errorf("Bad initial idmap: %v", state.OS.IdmapSet)
 			}
 
-			idMapSize = state.OS.IdmapSet.Idmap[0].Maprange
+			idMapSize = state.OS.IdmapSet.Entries[0].MapRange
 		}
 	} else {
 		size, err := strconv.ParseInt(size, 10, 64)
@@ -478,24 +478,24 @@ func idmapSize(state *state.State, isolatedStr string, size string) (int64, erro
 
 var idmapLock sync.Mutex
 
-func findIdmap(state *state.State, cName string, isolatedStr string, configBase string, configSize string, rawIdmap string) (*idmap.IdmapSet, int64, error) {
+func findIdmap(s *state.State, cName string, isolatedStr string, configBase string, configSize string, rawIdmap string) (*idmap.Set, int64, error) {
 	isolated := false
 	if util.IsTrue(isolatedStr) {
 		isolated = true
 	}
 
-	rawMaps, err := idmap.ParseRawIdmap(rawIdmap)
+	rawMaps, err := idmap.NewSetFromIncusIDMap(rawIdmap)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	if !isolated {
-		newIdmapset := idmap.IdmapSet{Idmap: make([]idmap.IdmapEntry, len(state.OS.IdmapSet.Idmap))}
-		copy(newIdmapset.Idmap, state.OS.IdmapSet.Idmap)
+		newIdmapset := idmap.Set{Entries: make([]idmap.Entry, len(s.OS.IdmapSet.Entries))}
+		copy(newIdmapset.Entries, s.OS.IdmapSet.Entries)
 
-		for _, ent := range rawMaps {
+		for _, ent := range rawMaps.Entries {
 			err := newIdmapset.AddSafe(ent)
-			if err != nil && err == idmap.ErrHostIdIsSubId {
+			if err != nil && err == idmap.ErrHostIDIsSubID {
 				return nil, 0, err
 			}
 		}
@@ -503,20 +503,20 @@ func findIdmap(state *state.State, cName string, isolatedStr string, configBase 
 		return &newIdmapset, 0, nil
 	}
 
-	size, err := idmapSize(state, isolatedStr, configSize)
+	size, err := idmapSize(s, isolatedStr, configSize)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	mkIdmap := func(offset int64, size int64) (*idmap.IdmapSet, error) {
-		set := &idmap.IdmapSet{Idmap: []idmap.IdmapEntry{
-			{Isuid: true, Nsid: 0, Hostid: offset, Maprange: size},
-			{Isgid: true, Nsid: 0, Hostid: offset, Maprange: size},
+	mkIdmap := func(offset int64, size int64) (*idmap.Set, error) {
+		set := &idmap.Set{Entries: []idmap.Entry{
+			{IsUID: true, NSID: 0, HostID: offset, MapRange: size},
+			{IsGID: true, NSID: 0, HostID: offset, MapRange: size},
 		}}
 
-		for _, ent := range rawMaps {
+		for _, ent := range rawMaps.Entries {
 			err := set.AddSafe(ent)
-			if err != nil && err == idmap.ErrHostIdIsSubId {
+			if err != nil && err == idmap.ErrHostIDIsSubID {
 				return nil, err
 			}
 		}
@@ -531,7 +531,7 @@ func findIdmap(state *state.State, cName string, isolatedStr string, configBase 
 		}
 
 		set, err := mkIdmap(offset, size)
-		if err != nil && err == idmap.ErrHostIdIsSubId {
+		if err != nil && err == idmap.ErrHostIDIsSubID {
 			return nil, 0, err
 		}
 
@@ -541,14 +541,14 @@ func findIdmap(state *state.State, cName string, isolatedStr string, configBase 
 	idmapLock.Lock()
 	defer idmapLock.Unlock()
 
-	cts, err := instance.LoadNodeAll(state, instancetype.Container)
+	cts, err := instance.LoadNodeAll(s, instancetype.Container)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	offset := state.OS.IdmapSet.Idmap[0].Hostid + 65536
+	offset := s.OS.IdmapSet.Entries[0].HostID + 65536
 
-	mapentries := idmap.ByHostid{}
+	mapentries := idmap.ByHostID{}
 	for _, container := range cts {
 		if container.Type() != instancetype.Container {
 			continue
@@ -577,52 +577,52 @@ func findIdmap(state *state.State, cName string, isolatedStr string, configBase 
 			}
 		}
 
-		cSize, err := idmapSize(state, container.ExpandedConfig()["security.idmap.isolated"], container.ExpandedConfig()["security.idmap.size"])
+		cSize, err := idmapSize(s, container.ExpandedConfig()["security.idmap.isolated"], container.ExpandedConfig()["security.idmap.size"])
 		if err != nil {
 			return nil, 0, err
 		}
 
-		mapentries = append(mapentries, &idmap.IdmapEntry{Hostid: int64(cBase), Maprange: cSize})
+		mapentries.Entries = append(mapentries.Entries, idmap.Entry{HostID: int64(cBase), MapRange: cSize})
 	}
 
 	sort.Sort(mapentries)
 
-	for i := range mapentries {
+	for i := range mapentries.Entries {
 		if i == 0 {
-			if mapentries[0].Hostid < offset+size {
-				offset = mapentries[0].Hostid + mapentries[0].Maprange
+			if mapentries.Entries[0].HostID < offset+size {
+				offset = mapentries.Entries[0].HostID + mapentries.Entries[0].MapRange
 				continue
 			}
 
 			set, err := mkIdmap(offset, size)
-			if err != nil && err == idmap.ErrHostIdIsSubId {
+			if err != nil && err == idmap.ErrHostIDIsSubID {
 				return nil, 0, err
 			}
 
 			return set, offset, nil
 		}
 
-		if mapentries[i-1].Hostid+mapentries[i-1].Maprange > offset {
-			offset = mapentries[i-1].Hostid + mapentries[i-1].Maprange
+		if mapentries.Entries[i-1].HostID+mapentries.Entries[i-1].MapRange > offset {
+			offset = mapentries.Entries[i-1].HostID + mapentries.Entries[i-1].MapRange
 			continue
 		}
 
-		offset = mapentries[i-1].Hostid + mapentries[i-1].Maprange
-		if offset+size < mapentries[i].Hostid {
+		offset = mapentries.Entries[i-1].HostID + mapentries.Entries[i-1].MapRange
+		if offset+size < mapentries.Entries[i].HostID {
 			set, err := mkIdmap(offset, size)
-			if err != nil && err == idmap.ErrHostIdIsSubId {
+			if err != nil && err == idmap.ErrHostIDIsSubID {
 				return nil, 0, err
 			}
 
 			return set, offset, nil
 		}
 
-		offset = mapentries[i].Hostid + mapentries[i].Maprange
+		offset = mapentries.Entries[i].HostID + mapentries.Entries[i].MapRange
 	}
 
-	if offset+size < state.OS.IdmapSet.Idmap[0].Hostid+state.OS.IdmapSet.Idmap[0].Maprange {
+	if offset+size < s.OS.IdmapSet.Entries[0].HostID+s.OS.IdmapSet.Entries[0].MapRange {
 		set, err := mkIdmap(offset, size)
-		if err != nil && err == idmap.ErrHostIdIsSubId {
+		if err != nil && err == idmap.ErrHostIDIsSubID {
 			return nil, 0, err
 		}
 
@@ -1038,7 +1038,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	if idmapset != nil {
-		lines := idmapset.ToLxcString()
+		lines := idmapset.ToLXCString()
 		for _, line := range lines {
 			err := lxcSetConfigItem(cc, "lxc.idmap", line)
 			if err != nil {
@@ -1505,7 +1505,7 @@ func (d *lxc) deviceStaticShiftMounts(mounts []deviceConfig.MountEntryItem) erro
 				continue
 			}
 
-			err := idmapSet.ShiftFile(mount.DevPath)
+			err := idmapSet.ShiftPath(mount.DevPath, nil)
 			if err != nil {
 				// uidshift failing is weird, but not a big problem. Log and proceed.
 				d.logger.Debug("Failed to uidshift device", logger.Ctx{"mountDevPath": mount.DevPath, "err": err})
@@ -1829,7 +1829,7 @@ func (d *lxc) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 	return nil
 }
 
-func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.IdmapSet, error) {
+func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.Set, error) {
 	diskIdmap, err := d.DiskIdmap()
 	if err != nil {
 		return idmap.IdmapStorageNone, nil, fmt.Errorf("Set last ID map: %w", err)
@@ -1869,11 +1869,11 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.IdmapSet, 
 	// Revert the currently applied on-disk idmap.
 	if diskIdmap != nil {
 		if storageType == "zfs" {
-			err = diskIdmap.UnshiftRootfs(d.RootfsPath(), storageDrivers.ShiftZFSSkipper)
+			err = diskIdmap.UnshiftPath(d.RootfsPath(), storageDrivers.ShiftZFSSkipper)
 		} else if storageType == "btrfs" {
 			err = storageDrivers.UnshiftBtrfsRootfs(d.RootfsPath(), diskIdmap)
 		} else {
-			err = diskIdmap.UnshiftRootfs(d.RootfsPath(), nil)
+			err = diskIdmap.UnshiftPath(d.RootfsPath(), nil)
 		}
 
 		if err != nil {
@@ -1888,18 +1888,18 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.IdmapSet, 
 	// make use of idmapped storage.
 	if nextIdmap != nil && idmapType == idmap.IdmapStorageNone {
 		if storageType == "zfs" {
-			err = nextIdmap.ShiftRootfs(d.RootfsPath(), storageDrivers.ShiftZFSSkipper)
+			err = nextIdmap.ShiftPath(d.RootfsPath(), storageDrivers.ShiftZFSSkipper)
 		} else if storageType == "btrfs" {
 			err = storageDrivers.ShiftBtrfsRootfs(d.RootfsPath(), nextIdmap)
 		} else {
-			err = nextIdmap.ShiftRootfs(d.RootfsPath(), nil)
+			err = nextIdmap.ShiftPath(d.RootfsPath(), nil)
 		}
 
 		if err != nil {
 			return idmap.IdmapStorageNone, nil, err
 		}
 
-		idmapBytes, err := json.Marshal(nextIdmap.Idmap)
+		idmapBytes, err := json.Marshal(nextIdmap.Entries)
 		if err != nil {
 			return idmap.IdmapStorageNone, nil, err
 		}
@@ -1995,7 +1995,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	if nextIdmap == nil {
 		idmapBytes = []byte("[]")
 	} else {
-		idmapBytes, err = json.Marshal(nextIdmap.Idmap)
+		idmapBytes, err = json.Marshal(nextIdmap.Entries)
 		if err != nil {
 			return "", nil, err
 		}
@@ -2272,7 +2272,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 	uid := int64(0)
 	if currentIdmapset != nil {
-		uid, _ = currentIdmapset.ShiftFromNs(0, 0)
+		uid, _ = currentIdmapset.ShiftFromNS(0, 0)
 	}
 
 	err = os.Chown(d.Path(), int(uid), 0)
@@ -4315,11 +4315,11 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	if util.ValueInSlice("security.idmap.isolated", changedConfig) || util.ValueInSlice("security.idmap.base", changedConfig) || util.ValueInSlice("security.idmap.size", changedConfig) || util.ValueInSlice("raw.idmap", changedConfig) || util.ValueInSlice("security.privileged", changedConfig) {
-		var idmap *idmap.IdmapSet
+		var idmapSet *idmap.Set
 		base := int64(0)
 		if !d.IsPrivileged() {
-			// update the idmap
-			idmap, base, err = findIdmap(
+			// Update the idmap.
+			idmapSet, base, err = findIdmap(
 				d.state,
 				d.Name(),
 				d.expandedConfig["security.idmap.isolated"],
@@ -4333,8 +4333,8 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 		}
 
 		var jsonIdmap string
-		if idmap != nil {
-			idmapBytes, err := json.Marshal(idmap.Idmap)
+		if idmapSet != nil {
+			idmapBytes, err := json.Marshal(idmapSet.Entries)
 			if err != nil {
 				return err
 			}
@@ -4347,7 +4347,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 		d.localConfig["volatile.idmap.next"] = jsonIdmap
 		d.localConfig["volatile.idmap.base"] = fmt.Sprintf("%v", base)
 
-		// Invalid idmap cache
+		// Invalidate the idmap cache.
 		d.idmapset = nil
 	}
 
@@ -5212,14 +5212,14 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	if err != nil {
 		return fmt.Errorf("Failed getting container disk idmap: %w", err)
 	} else if idmapset != nil {
-		offerHeader.Idmap = make([]*migration.IDMapType, 0, len(idmapset.Idmap))
-		for _, ctnIdmap := range idmapset.Idmap {
+		offerHeader.Idmap = make([]*migration.IDMapType, 0, len(idmapset.Entries))
+		for _, ctnIdmap := range idmapset.Entries {
 			idmap := migration.IDMapType{
-				Isuid:    proto.Bool(ctnIdmap.Isuid),
-				Isgid:    proto.Bool(ctnIdmap.Isgid),
-				Hostid:   proto.Int32(int32(ctnIdmap.Hostid)),
-				Nsid:     proto.Int32(int32(ctnIdmap.Nsid)),
-				Maprange: proto.Int32(int32(ctnIdmap.Maprange)),
+				Isuid:    proto.Bool(ctnIdmap.IsUID),
+				Isgid:    proto.Bool(ctnIdmap.IsGID),
+				Hostid:   proto.Int32(int32(ctnIdmap.HostID)),
+				Nsid:     proto.Int32(int32(ctnIdmap.NSID)),
+				Maprange: proto.Int32(int32(ctnIdmap.MapRange)),
 			}
 
 			offerHeader.Idmap = append(offerHeader.Idmap, &idmap)
@@ -5710,20 +5710,20 @@ func (d *lxc) migrateSendPreDumpLoop(args *preDumpLoopArgs) (bool, error) {
 	return final, nil
 }
 
-func (d *lxc) resetContainerDiskIdmap(srcIdmap *idmap.IdmapSet) error {
+func (d *lxc) resetContainerDiskIdmap(srcIdmap *idmap.Set) error {
 	dstIdmap, err := d.DiskIdmap()
 	if err != nil {
 		return err
 	}
 
 	if dstIdmap == nil {
-		dstIdmap = new(idmap.IdmapSet)
+		dstIdmap = new(idmap.Set)
 	}
 
 	if !srcIdmap.Equals(dstIdmap) {
 		var jsonIdmap string
 		if srcIdmap != nil {
-			idmapBytes, err := json.Marshal(srcIdmap.Idmap)
+			idmapBytes, err := json.Marshal(srcIdmap.Entries)
 			if err != nil {
 				return err
 			}
@@ -5909,17 +5909,17 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 	d.logger.Debug("Sent migration response to source")
 
-	srcIdmap := new(idmap.IdmapSet)
+	srcIdmap := new(idmap.Set)
 	for _, idmapSet := range offerHeader.Idmap {
-		e := idmap.IdmapEntry{
-			Isuid:    *idmapSet.Isuid,
-			Isgid:    *idmapSet.Isgid,
-			Nsid:     int64(*idmapSet.Nsid),
-			Hostid:   int64(*idmapSet.Hostid),
-			Maprange: int64(*idmapSet.Maprange),
+		e := idmap.Entry{
+			IsUID:    *idmapSet.Isuid,
+			IsGID:    *idmapSet.Isgid,
+			NSID:     int64(*idmapSet.Nsid),
+			HostID:   int64(*idmapSet.Hostid),
+			MapRange: int64(*idmapSet.Maprange),
 		}
 
-		srcIdmap.Idmap = idmap.Extend(srcIdmap.Idmap, e)
+		srcIdmap.Entries = append(srcIdmap.Entries, e)
 	}
 
 	revert := revert.New()
@@ -6362,11 +6362,11 @@ func (d *lxc) migrate(args *instance.CriuMigrationArgs) error {
 			}
 
 			if storageType == "zfs" {
-				err = idmapset.ShiftRootfs(args.StateDir, storageDrivers.ShiftZFSSkipper)
+				err = idmapset.ShiftPath(args.StateDir, storageDrivers.ShiftZFSSkipper)
 			} else if storageType == "btrfs" {
 				err = storageDrivers.ShiftBtrfsRootfs(args.StateDir, idmapset)
 			} else {
-				err = idmapset.ShiftRootfs(args.StateDir, nil)
+				err = idmapset.ShiftPath(args.StateDir, nil)
 			}
 
 			if err != nil {
@@ -6511,7 +6511,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 
 	// Get the right uid and gid for the container
 	if idmapset != nil {
-		rootUID, rootGID = idmapset.ShiftIntoNs(0, 0)
+		rootUID, rootGID = idmapset.ShiftIntoNS(0, 0)
 	}
 
 	// Figure out the container architecture
@@ -6815,8 +6815,8 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 						Uid: uint32(0),
 						Gid: uint32(0),
 					},
-					UidMappings: idmapset.ToUidMappings(),
-					GidMappings: idmapset.ToGidMappings(),
+					UidMappings: idmapset.ToUIDMappings(),
+					GidMappings: idmapset.ToGIDMappings(),
 				}
 			}
 		}
@@ -6954,7 +6954,7 @@ func (d *lxc) Console(protocol string) (*os.File, chan error, error) {
 
 	var rootUID, rootGID int64
 	if idmapset != nil {
-		rootUID, rootGID = idmapset.ShiftIntoNs(0, 0)
+		rootUID, rootGID = idmapset.ShiftIntoNS(0, 0)
 	}
 
 	// Create a PTS pair.
@@ -7712,7 +7712,7 @@ func (d *lxc) InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid 
 		return err
 	}
 
-	nsuid, nsgid := idmapset.ShiftFromNs(uid, gid)
+	nsuid, nsgid := idmapset.ShiftFromNS(uid, gid)
 	m["uid"] = fmt.Sprintf("%d", nsuid)
 	m["gid"] = fmt.Sprintf("%d", nsgid)
 
@@ -8043,33 +8043,33 @@ func (d *lxc) DevptsFd() (*os.File, error) {
 }
 
 // CurrentIdmap returns current IDMAP.
-func (d *lxc) CurrentIdmap() (*idmap.IdmapSet, error) {
+func (d *lxc) CurrentIdmap() (*idmap.Set, error) {
 	jsonIdmap, ok := d.LocalConfig()["volatile.idmap.current"]
 	if !ok {
 		return d.DiskIdmap()
 	}
 
-	return idmap.JSONUnmarshal(jsonIdmap)
+	return idmap.NewSetFromJSON(jsonIdmap)
 }
 
 // DiskIdmap returns DISK IDMAP.
-func (d *lxc) DiskIdmap() (*idmap.IdmapSet, error) {
+func (d *lxc) DiskIdmap() (*idmap.Set, error) {
 	jsonIdmap, ok := d.LocalConfig()["volatile.last_state.idmap"]
 	if !ok {
 		return nil, nil
 	}
 
-	return idmap.JSONUnmarshal(jsonIdmap)
+	return idmap.NewSetFromJSON(jsonIdmap)
 }
 
 // NextIdmap returns next IDMAP.
-func (d *lxc) NextIdmap() (*idmap.IdmapSet, error) {
+func (d *lxc) NextIdmap() (*idmap.Set, error) {
 	jsonIdmap, ok := d.LocalConfig()["volatile.idmap.next"]
 	if !ok {
 		return d.CurrentIdmap()
 	}
 
-	return idmap.JSONUnmarshal(jsonIdmap)
+	return idmap.NewSetFromJSON(jsonIdmap)
 }
 
 // statusCode returns instance status code.
