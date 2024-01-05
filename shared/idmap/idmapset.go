@@ -9,7 +9,8 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-var ErrHostIdIsSubId = fmt.Errorf("Host id is in the range of subids")
+// ErrHostIDIsSubID indicates that an expected host ID is part of a subid range.
+var ErrHostIDIsSubID = fmt.Errorf("Host ID is in the range of subids")
 
 // IdmapSet is a list of IdmapEntry with some functions on it.
 type IdmapSet struct {
@@ -79,7 +80,7 @@ func (m *IdmapSet) Intersects(i IdmapEntry) bool {
 	return false
 }
 
-// HostidsIntersects checks if any of the IdmapEntry hostids in the set intersects with the provided entry.
+// HostidsIntersect checks if any of the IdmapEntry hostids in the set intersects with the provided entry.
 func (m *IdmapSet) HostidsIntersect(i IdmapEntry) bool {
 	for _, e := range m.Idmap {
 		if i.HostidsIntersect(e) {
@@ -157,7 +158,7 @@ func (m *IdmapSet) AddSafe(i IdmapEntry) error {
 		}
 
 		if e.HostidsIntersect(i) {
-			return ErrHostIdIsSubId
+			return ErrHostIDIsSubID
 		}
 
 		added = true
@@ -238,9 +239,9 @@ func (m IdmapSet) doShiftIntoNs(uid int64, gid int64, how string) (int64, int64)
 		if e.Isuid && u == -1 {
 			switch how {
 			case "in":
-				tmpu, err = e.shift_into_ns(uid)
+				tmpu, err = e.shiftIntoNS(uid)
 			case "out":
-				tmpu, err = e.shift_from_ns(uid)
+				tmpu, err = e.shiftFromNS(uid)
 			}
 
 			if err == nil {
@@ -251,9 +252,9 @@ func (m IdmapSet) doShiftIntoNs(uid int64, gid int64, how string) (int64, int64)
 		if e.Isgid && g == -1 {
 			switch how {
 			case "in":
-				tmpg, err = e.shift_into_ns(gid)
+				tmpg, err = e.shiftIntoNS(gid)
 			case "out":
-				tmpg, err = e.shift_from_ns(gid)
+				tmpg, err = e.shiftFromNS(gid)
 			}
 
 			if err == nil {
@@ -270,7 +271,7 @@ func (m IdmapSet) ShiftIntoNs(uid int64, gid int64) (int64, int64) {
 	return m.doShiftIntoNs(uid, gid, "in")
 }
 
-// ShiftFromNS shiftfs the provided uid and gid into their host equivalent.
+// ShiftFromNs shiftfs the provided uid and gid into their host equivalent.
 func (m IdmapSet) ShiftFromNs(uid int64, gid int64) (int64, int64) {
 	return m.doShiftIntoNs(uid, gid, "out")
 }

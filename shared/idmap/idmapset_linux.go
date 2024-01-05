@@ -27,9 +27,10 @@ const VFS3FscapsUnknown int32 = -1
 
 var VFS3Fscaps int32 = VFS3FscapsUnknown
 
+// ErrNoUserMap indicates that no entry could be found for the user.
 var ErrNoUserMap = fmt.Errorf("No map found for user")
 
-// GetIdmapSet reads the uid/gid allocation.
+// GetIdmapSet reads the system uid/gid allocation.
 func GetIdmapSet() *IdmapSet {
 	idmapSet, err := DefaultIdmapSet("", "")
 	if err != nil {
@@ -75,9 +76,7 @@ func GetIdmapSet() *IdmapSet {
 	return idmapSet
 }
 
-/*
- * Create a new default idmap.
- */
+// DefaultIdmapSet returns the system's idmapset.
 func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 	idmapset := new(IdmapSet)
 
@@ -90,15 +89,15 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 		username = currentUser.Username
 	}
 
-	// Check if shadow's uidmap tools are installed
+	// Check if shadow's uidmap tools are installed.
 	subuidPath := path.Join(rootfs, "/etc/subuid")
 	subgidPath := path.Join(rootfs, "/etc/subgid")
 	if util.PathExists(subuidPath) && util.PathExists(subgidPath) {
-		// Parse the shadow uidmap
+		// Parse the shadow uidmap.
 		entries, err := getFromShadow(subuidPath, username)
 		if err != nil {
 			if username == "root" && err == ErrNoUserMap {
-				// No root map available, figure out a default map
+				// No root map available, figure out a default map.
 				return kernelDefaultMap()
 			}
 
@@ -110,11 +109,11 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 			idmapset.Idmap = append(idmapset.Idmap, e)
 		}
 
-		// Parse the shadow gidmap
+		// Parse the shadow gidmap.
 		entries, err = getFromShadow(subgidPath, username)
 		if err != nil {
 			if username == "root" && err == ErrNoUserMap {
-				// No root map available, figure out a default map
+				// No root map available, figure out a default map.
 				return kernelDefaultMap()
 			}
 
@@ -129,8 +128,321 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 		return idmapset, nil
 	}
 
-	// No shadow available, figure out a default map
+	// No shadow available, figure out a default map.
 	return kernelDefaultMap()
+}
+
+// CurrentIdmapSet returns the current process' idmapset.
+func CurrentIdmapSet() (*IdmapSet, error) {
+	idmapset := new(IdmapSet)
+
+	if util.PathExists("/proc/self/uid_map") {
+		// Parse the uidmap.
+		entries, err := getFromProc("/proc/self/uid_map")
+		if err != nil {
+			return nil, err
+		}
+
+		for _, entry := range entries {
+			e := IdmapEntry{Isuid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
+			idmapset.Idmap = append(idmapset.Idmap, e)
+		}
+	} else {
+		// Fallback map.
+		e := IdmapEntry{Isuid: true, Nsid: 0, Hostid: 0, Maprange: 0}
+		idmapset.Idmap = append(idmapset.Idmap, e)
+	}
+
+	if util.PathExists("/proc/self/gid_map") {
+		// Parse the gidmap.
+		entries, err := getFromProc("/proc/self/gid_map")
+		if err != nil {
+			return nil, err
+		}
+
+		for _, entry := range entries {
+			e := IdmapEntry{Isgid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
+			idmapset.Idmap = append(idmapset.Idmap, e)
+		}
+	} else {
+		// Fallback map.
+		e := IdmapEntry{Isgid: true, Nsid: 0, Hostid: 0, Maprange: 0}
+		idmapset.Idmap = append(idmapset.Idmap, e)
+	}
+
+	return idmapset, nil
+}
+
+// UidshiftIntoContainer shiftfs a host filesystem tree.
+func (m *IdmapSet) UidshiftIntoContainer(dir string, testmode bool) error {
+	return m.doUidshiftIntoContainer(dir, testmode, "in", nil)
+}
+
+// UidshiftFromContainer shiftfs a container filesystem tree.
+func (m *IdmapSet) UidshiftFromContainer(dir string, testmode bool) error {
+	return m.doUidshiftIntoContainer(dir, testmode, "out", nil)
+}
+
+// ShiftRootfs shiftfs a whole container filesystem tree.
+func (m *IdmapSet) ShiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
+	return m.doUidshiftIntoContainer(p, false, "in", skipper)
+}
+
+// UnshiftRootfs unshiftfs a whole container filesystem tree.
+func (m *IdmapSet) UnshiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
+	return m.doUidshiftIntoContainer(p, false, "out", skipper)
+}
+
+// ShiftFile shiftfs a single file.
+func (m *IdmapSet) ShiftFile(p string) error {
+	return m.ShiftRootfs(p, nil)
+}
+
+// ToUidMappings converts an idmapset to a slice of syscall.SysProcIDMap.
+func (m IdmapSet) ToUidMappings() []syscall.SysProcIDMap {
+	mapping := []syscall.SysProcIDMap{}
+
+	for _, e := range m.Idmap {
+		if !e.Isuid {
+			continue
+		}
+
+		mapping = append(mapping, syscall.SysProcIDMap{
+			ContainerID: int(e.Nsid),
+			HostID:      int(e.Hostid),
+			Size:        int(e.Maprange),
+		})
+	}
+
+	return mapping
+}
+
+// ToGidMappings converts an idmapset to a slice of syscall.SysProcIDMap.
+func (m IdmapSet) ToGidMappings() []syscall.SysProcIDMap {
+	mapping := []syscall.SysProcIDMap{}
+
+	for _, e := range m.Idmap {
+		if !e.Isgid {
+			continue
+		}
+
+		mapping = append(mapping, syscall.SysProcIDMap{
+			ContainerID: int(e.Nsid),
+			HostID:      int(e.Hostid),
+			Size:        int(e.Maprange),
+		})
+	}
+
+	return mapping
+}
+
+func (m *IdmapSet) doUidshiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
+	if how == "in" && atomic.LoadInt32(&VFS3Fscaps) == VFS3FscapsUnknown {
+		if SupportsVFS3Fscaps(dir) {
+			atomic.StoreInt32(&VFS3Fscaps, VFS3FscapsSupported)
+		} else {
+			atomic.StoreInt32(&VFS3Fscaps, VFS3FscapsUnsupported)
+		}
+	}
+
+	// Expand any symlink before the final path component
+	tmp := filepath.Dir(dir)
+	tmp, err := filepath.EvalSymlinks(tmp)
+	if err != nil {
+		return fmt.Errorf("Failed expanding symlinks of %q: %w", tmp, err)
+	}
+
+	dir = filepath.Join(tmp, filepath.Base(dir))
+	dir = strings.TrimRight(dir, "/")
+
+	hardLinks := []uint64{}
+	convert := func(path string, fi os.FileInfo, err error) (e error) {
+		if err != nil {
+			return err
+		}
+
+		if skipper != nil && skipper(dir, path, fi) {
+			return filepath.SkipDir
+		}
+
+		var stat unix.Stat_t
+		err = unix.Lstat(path, &stat)
+		if err != nil {
+			return err
+		}
+
+		if stat.Nlink >= 2 {
+			for _, linkInode := range hardLinks {
+				// File was already shifted through hardlink
+				if linkInode == stat.Ino {
+					return nil
+				}
+			}
+
+			hardLinks = append(hardLinks, stat.Ino)
+		}
+
+		uid := int64(stat.Uid)
+		gid := int64(stat.Gid)
+		caps := []byte{}
+
+		var newuid, newgid int64
+		switch how {
+		case "in":
+			newuid, newgid = m.ShiftIntoNs(uid, gid)
+		case "out":
+			newuid, newgid = m.ShiftFromNs(uid, gid)
+		}
+
+		if testmode {
+			fmt.Printf("I would shift %q to %d %d\n", path, newuid, newgid)
+		} else {
+			// Dump capabilities
+			if fi.Mode()&os.ModeSymlink == 0 {
+				caps, err = GetCaps(path)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Shift owner
+			err = ShiftOwner(dir, path, int(newuid), int(newgid))
+			if err != nil {
+				return err
+			}
+
+			if fi.Mode()&os.ModeSymlink == 0 {
+				// Shift POSIX ACLs
+				err = ShiftACL(path, func(uid int64, gid int64) (int64, int64) { return m.doShiftIntoNs(uid, gid, how) })
+				if err != nil {
+					return err
+				}
+
+				// Shift capabilities
+				if len(caps) != 0 {
+					rootUID := int64(0)
+					if how == "in" {
+						rootUID, _ = m.ShiftIntoNs(0, 0)
+					}
+
+					if how != "in" || atomic.LoadInt32(&VFS3Fscaps) == VFS3FscapsSupported {
+						err = SetCaps(path, caps, rootUID)
+						if err != nil {
+							logger.Warnf("Unable to set file capabilities on %q: %v", path, err)
+						}
+					}
+				}
+			}
+		}
+
+		return nil
+	}
+
+	if !util.PathExists(dir) {
+		return fmt.Errorf("No such file or directory: %q", dir)
+	}
+
+	return filepath.Walk(dir, convert)
+}
+
+func getFromShadow(fname string, username string) ([][]int64, error) {
+	entries := [][]int64{}
+
+	f, err := os.Open(fname)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		// Skip comments
+		s := strings.Split(scanner.Text(), "#")
+		if len(s[0]) == 0 {
+			continue
+		}
+
+		// Validate format
+		s = strings.Split(s[0], ":")
+		if len(s) < 3 {
+			return nil, fmt.Errorf("Unexpected values in %q: %q", fname, s)
+		}
+
+		if strings.EqualFold(s[0], username) {
+			// Get range start
+			entryStart, err := strconv.ParseUint(s[1], 10, 32)
+			if err != nil {
+				continue
+			}
+
+			// Get range size
+			entrySize, err := strconv.ParseUint(s[2], 10, 32)
+			if err != nil {
+				continue
+			}
+
+			entries = append(entries, []int64{int64(entryStart), int64(entrySize)})
+		}
+	}
+
+	if len(entries) == 0 {
+		return nil, ErrNoUserMap
+	}
+
+	return entries, nil
+}
+
+func getFromProc(fname string) ([][]int64, error) {
+	entries := [][]int64{}
+
+	f, err := os.Open(fname)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		// Skip comments
+		s := strings.Split(scanner.Text(), "#")
+		if len(s[0]) == 0 {
+			continue
+		}
+
+		// Validate format
+		s = strings.Fields(s[0])
+		if len(s) < 3 {
+			return nil, fmt.Errorf("Unexpected values in %q: %q", fname, s)
+		}
+
+		// Get range start
+		entryStart, err := strconv.ParseUint(s[0], 10, 32)
+		if err != nil {
+			continue
+		}
+
+		// Get range size
+		entryHost, err := strconv.ParseUint(s[1], 10, 32)
+		if err != nil {
+			continue
+		}
+
+		// Get range size
+		entrySize, err := strconv.ParseUint(s[2], 10, 32)
+		if err != nil {
+			continue
+		}
+
+		entries = append(entries, []int64{int64(entryStart), int64(entryHost), int64(entrySize)})
+	}
+
+	if len(entries) == 0 {
+		return nil, fmt.Errorf("Namespace doesn't have any map set")
+	}
+
+	return entries, nil
 }
 
 func kernelDefaultMap() (*IdmapSet, error) {
@@ -154,7 +466,7 @@ func kernelDefaultMap() (*IdmapSet, error) {
 	}
 
 	// Special case for when we have the full kernel range
-	fullKernelRanges := []*IdRange{
+	fullKernelRanges := []*IDRange{
 		{true, false, int64(0), int64(4294967294)},
 		{false, true, int64(0), int64(4294967294)}}
 
@@ -229,318 +541,4 @@ func kernelDefaultMap() (*IdmapSet, error) {
 	}
 
 	return idmapset, nil
-}
-
-/*
- * Create an idmap of the current allocation.
- */
-func CurrentIdmapSet() (*IdmapSet, error) {
-	idmapset := new(IdmapSet)
-
-	if util.PathExists("/proc/self/uid_map") {
-		// Parse the uidmap
-		entries, err := getFromProc("/proc/self/uid_map")
-		if err != nil {
-			return nil, err
-		}
-
-		for _, entry := range entries {
-			e := IdmapEntry{Isuid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
-			idmapset.Idmap = append(idmapset.Idmap, e)
-		}
-	} else {
-		// Fallback map
-		e := IdmapEntry{Isuid: true, Nsid: 0, Hostid: 0, Maprange: 0}
-		idmapset.Idmap = append(idmapset.Idmap, e)
-	}
-
-	if util.PathExists("/proc/self/gid_map") {
-		// Parse the gidmap
-		entries, err := getFromProc("/proc/self/gid_map")
-		if err != nil {
-			return nil, err
-		}
-
-		for _, entry := range entries {
-			e := IdmapEntry{Isgid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
-			idmapset.Idmap = append(idmapset.Idmap, e)
-		}
-	} else {
-		// Fallback map
-		e := IdmapEntry{Isgid: true, Nsid: 0, Hostid: 0, Maprange: 0}
-		idmapset.Idmap = append(idmapset.Idmap, e)
-	}
-
-	return idmapset, nil
-}
-
-func (set *IdmapSet) doUidshiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	if how == "in" && atomic.LoadInt32(&VFS3Fscaps) == VFS3FscapsUnknown {
-		if SupportsVFS3Fscaps(dir) {
-			atomic.StoreInt32(&VFS3Fscaps, VFS3FscapsSupported)
-		} else {
-			atomic.StoreInt32(&VFS3Fscaps, VFS3FscapsUnsupported)
-		}
-	}
-
-	// Expand any symlink before the final path component
-	tmp := filepath.Dir(dir)
-	tmp, err := filepath.EvalSymlinks(tmp)
-	if err != nil {
-		return fmt.Errorf("Failed expanding symlinks of %q: %w", tmp, err)
-	}
-
-	dir = filepath.Join(tmp, filepath.Base(dir))
-	dir = strings.TrimRight(dir, "/")
-
-	hardLinks := []uint64{}
-	convert := func(path string, fi os.FileInfo, err error) (e error) {
-		if err != nil {
-			return err
-		}
-
-		if skipper != nil && skipper(dir, path, fi) {
-			return filepath.SkipDir
-		}
-
-		var stat unix.Stat_t
-		err = unix.Lstat(path, &stat)
-		if err != nil {
-			return err
-		}
-
-		if stat.Nlink >= 2 {
-			for _, linkInode := range hardLinks {
-				// File was already shifted through hardlink
-				if linkInode == stat.Ino {
-					return nil
-				}
-			}
-
-			hardLinks = append(hardLinks, stat.Ino)
-		}
-
-		uid := int64(stat.Uid)
-		gid := int64(stat.Gid)
-		caps := []byte{}
-
-		var newuid, newgid int64
-		switch how {
-		case "in":
-			newuid, newgid = set.ShiftIntoNs(uid, gid)
-		case "out":
-			newuid, newgid = set.ShiftFromNs(uid, gid)
-		}
-
-		if testmode {
-			fmt.Printf("I would shift %q to %d %d\n", path, newuid, newgid)
-		} else {
-			// Dump capabilities
-			if fi.Mode()&os.ModeSymlink == 0 {
-				caps, err = GetCaps(path)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Shift owner
-			err = ShiftOwner(dir, path, int(newuid), int(newgid))
-			if err != nil {
-				return err
-			}
-
-			if fi.Mode()&os.ModeSymlink == 0 {
-				// Shift POSIX ACLs
-				err = ShiftACL(path, func(uid int64, gid int64) (int64, int64) { return set.doShiftIntoNs(uid, gid, how) })
-				if err != nil {
-					return err
-				}
-
-				// Shift capabilities
-				if len(caps) != 0 {
-					rootUID := int64(0)
-					if how == "in" {
-						rootUID, _ = set.ShiftIntoNs(0, 0)
-					}
-
-					if how != "in" || atomic.LoadInt32(&VFS3Fscaps) == VFS3FscapsSupported {
-						err = SetCaps(path, caps, rootUID)
-						if err != nil {
-							logger.Warnf("Unable to set file capabilities on %q: %v", path, err)
-						}
-					}
-				}
-			}
-		}
-
-		return nil
-	}
-
-	if !util.PathExists(dir) {
-		return fmt.Errorf("No such file or directory: %q", dir)
-	}
-
-	return filepath.Walk(dir, convert)
-}
-
-func (set *IdmapSet) UidshiftIntoContainer(dir string, testmode bool) error {
-	return set.doUidshiftIntoContainer(dir, testmode, "in", nil)
-}
-
-func (m IdmapSet) ToUidMappings() []syscall.SysProcIDMap {
-	mapping := []syscall.SysProcIDMap{}
-
-	for _, e := range m.Idmap {
-		if !e.Isuid {
-			continue
-		}
-
-		mapping = append(mapping, syscall.SysProcIDMap{
-			ContainerID: int(e.Nsid),
-			HostID:      int(e.Hostid),
-			Size:        int(e.Maprange),
-		})
-	}
-
-	return mapping
-}
-
-func (m IdmapSet) ToGidMappings() []syscall.SysProcIDMap {
-	mapping := []syscall.SysProcIDMap{}
-
-	for _, e := range m.Idmap {
-		if !e.Isgid {
-			continue
-		}
-
-		mapping = append(mapping, syscall.SysProcIDMap{
-			ContainerID: int(e.Nsid),
-			HostID:      int(e.Hostid),
-			Size:        int(e.Maprange),
-		})
-	}
-
-	return mapping
-}
-
-func (set *IdmapSet) UidshiftFromContainer(dir string, testmode bool) error {
-	return set.doUidshiftIntoContainer(dir, testmode, "out", nil)
-}
-
-func (set *IdmapSet) ShiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	return set.doUidshiftIntoContainer(p, false, "in", skipper)
-}
-
-func (set *IdmapSet) UnshiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	return set.doUidshiftIntoContainer(p, false, "out", skipper)
-}
-
-func (set *IdmapSet) ShiftFile(p string) error {
-	return set.ShiftRootfs(p, nil)
-}
-
-/*
- * get a uid or gid mapping from /etc/subxid.
- */
-func getFromShadow(fname string, username string) ([][]int64, error) {
-	entries := [][]int64{}
-
-	f, err := os.Open(fname)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() { _ = f.Close() }()
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		// Skip comments
-		s := strings.Split(scanner.Text(), "#")
-		if len(s[0]) == 0 {
-			continue
-		}
-
-		// Validate format
-		s = strings.Split(s[0], ":")
-		if len(s) < 3 {
-			return nil, fmt.Errorf("Unexpected values in %q: %q", fname, s)
-		}
-
-		if strings.EqualFold(s[0], username) {
-			// Get range start
-			entryStart, err := strconv.ParseUint(s[1], 10, 32)
-			if err != nil {
-				continue
-			}
-
-			// Get range size
-			entrySize, err := strconv.ParseUint(s[2], 10, 32)
-			if err != nil {
-				continue
-			}
-
-			entries = append(entries, []int64{int64(entryStart), int64(entrySize)})
-		}
-	}
-
-	if len(entries) == 0 {
-		return nil, ErrNoUserMap
-	}
-
-	return entries, nil
-}
-
-/*
- * get a uid or gid mapping from /proc/self/{g,u}id_map.
- */
-func getFromProc(fname string) ([][]int64, error) {
-	entries := [][]int64{}
-
-	f, err := os.Open(fname)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() { _ = f.Close() }()
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		// Skip comments
-		s := strings.Split(scanner.Text(), "#")
-		if len(s[0]) == 0 {
-			continue
-		}
-
-		// Validate format
-		s = strings.Fields(s[0])
-		if len(s) < 3 {
-			return nil, fmt.Errorf("Unexpected values in %q: %q", fname, s)
-		}
-
-		// Get range start
-		entryStart, err := strconv.ParseUint(s[0], 10, 32)
-		if err != nil {
-			continue
-		}
-
-		// Get range size
-		entryHost, err := strconv.ParseUint(s[1], 10, 32)
-		if err != nil {
-			continue
-		}
-
-		// Get range size
-		entrySize, err := strconv.ParseUint(s[2], 10, 32)
-		if err != nil {
-			continue
-		}
-
-		entries = append(entries, []int64{int64(entryStart), int64(entryHost), int64(entrySize)})
-	}
-
-	if len(entries) == 0 {
-		return nil, fmt.Errorf("Namespace doesn't have any map set")
-	}
-
-	return entries, nil
 }
