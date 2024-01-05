@@ -18,6 +18,12 @@ import (
 // ErrNoUserMap indicates that no entry could be found for the user.
 var ErrNoUserMap = fmt.Errorf("No map found for user")
 
+// DefaultFullKernelSet is the default Set of uid/gid with no mapping at all.
+var DefaultFullKernelSet = &Set{Entries: []Entry{
+	{true, false, int64(0), int64(0), int64(4294967294)},
+	{false, true, int64(0), int64(0), int64(4294967294)},
+}}
+
 // NewSetFromJSON unpacks an idmap Set from its JSON representation.
 func NewSetFromJSON(data string) (*Set, error) {
 	ret := &Set{}
