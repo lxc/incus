@@ -30,20 +30,6 @@ const VFS3FscapsUnknown int32 = -1
 var VFS3Fscaps int32 = VFS3FscapsUnknown
 var ErrNoUserMap = fmt.Errorf("No map found for user")
 
-type ByHostid []*IdmapEntry
-
-func (s ByHostid) Len() int {
-	return len(s)
-}
-
-func (s ByHostid) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (s ByHostid) Less(i, j int) bool {
-	return s[i].Hostid < s[j].Hostid
-}
-
 func (m *IdmapSet) Equals(other *IdmapSet) bool {
 	// Get comparable maps
 	expandSortIdmap := func(input *IdmapSet) IdmapSet {
