@@ -15,6 +15,7 @@ type IdmapEntry struct {
 	Maprange int64
 }
 
+// ToLxcString converts an IdmapEntry into its LXC representation.
 func (e *IdmapEntry) ToLxcString() []string {
 	if e.Isuid && e.Isgid {
 		return []string{
@@ -30,6 +31,7 @@ func (e *IdmapEntry) ToLxcString() []string {
 	return []string{fmt.Sprintf("g %d %d %d", e.Nsid, e.Hostid, e.Maprange)}
 }
 
+// HostidsIntersect checks whether the provided entry intersects with the host IDs of the existing one.
 func (e *IdmapEntry) HostidsIntersect(i IdmapEntry) bool {
 	if (e.Isuid && i.Isuid) || (e.Isgid && i.Isgid) {
 		switch {
@@ -47,6 +49,7 @@ func (e *IdmapEntry) HostidsIntersect(i IdmapEntry) bool {
 	return false
 }
 
+// Intersects checks whether the provided entry intersects with the existing one.
 func (e *IdmapEntry) Intersects(i IdmapEntry) bool {
 	if (e.Isuid && i.Isuid) || (e.Isgid && i.Isgid) {
 		switch {
@@ -112,6 +115,7 @@ func (e *IdmapEntry) HostIDsCoveredBy(allowedHostUIDs []IdmapEntry, allowedHostG
 	return e.Isuid == isUIDAllowed && e.Isgid == isGIDAllowed
 }
 
+// Usable checks whether the entry is usable on this system.
 func (e *IdmapEntry) Usable() error {
 	kernelIdmap, err := CurrentIdmapSet()
 	if err != nil {
@@ -123,7 +127,7 @@ func (e *IdmapEntry) Usable() error {
 		return err
 	}
 
-	// Validate the uid map
+	// Validate the uid map.
 	if e.Isuid {
 		valid := false
 		for _, kernelRange := range kernelRanges {
@@ -142,7 +146,7 @@ func (e *IdmapEntry) Usable() error {
 		}
 	}
 
-	// Validate the gid map
+	// Validate the gid map.
 	if e.Isgid {
 		valid := false
 		for _, kernelRange := range kernelRanges {
@@ -205,7 +209,7 @@ func (e *IdmapEntry) parse(s string) error {
 
 	e.Maprange = int64(maprange)
 
-	// wraparound
+	// Wrap around.
 	if e.Hostid+e.Maprange < e.Hostid || e.Nsid+e.Maprange < e.Nsid {
 		return fmt.Errorf("Bad mapping: id wraparound")
 	}
@@ -213,26 +217,22 @@ func (e *IdmapEntry) parse(s string) error {
 	return nil
 }
 
-/*
- * Shift a uid from the host into the container
- * I.e. 0 -> 1000 -> 101000.
- */
-func (e *IdmapEntry) shift_into_ns(id int64) (int64, error) {
+// Shift a uid from the host into the container
+// I.e. 0 -> 1000 -> 101000.
+func (e *IdmapEntry) shiftIntoNS(id int64) (int64, error) {
 	if id < e.Nsid || id >= e.Nsid+e.Maprange {
-		// this mapping doesn't apply
+		// This mapping doesn't apply.
 		return 0, fmt.Errorf("ID mapping doesn't apply")
 	}
 
 	return id - e.Nsid + e.Hostid, nil
 }
 
-/*
- * Shift a uid from the container back to the host
- * I.e. 101000 -> 1000.
- */
-func (e *IdmapEntry) shift_from_ns(id int64) (int64, error) {
+// Shift a uid from the container back to the host
+// I.e. 101000 -> 1000.
+func (e *IdmapEntry) shiftFromNS(id int64) (int64, error) {
 	if id < e.Hostid || id >= e.Hostid+e.Maprange {
-		// this mapping doesn't apply
+		// This mapping doesn't apply.
 		return 0, fmt.Errorf("ID mapping doesn't apply")
 	}
 
