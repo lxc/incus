@@ -1,12 +1,14 @@
 package idmap
 
-type IdRange struct {
+// IDRange represents a range of uid or gid.
+type IDRange struct {
 	Isuid   bool
 	Isgid   bool
 	Startid int64
 	Endid   int64
 }
 
-func (i *IdRange) Contains(id int64) bool {
+// Contains checks whether the range contains a particular uid/gid.
+func (i *IDRange) Contains(id int64) bool {
 	return id >= i.Startid && id <= i.Endid
 }
