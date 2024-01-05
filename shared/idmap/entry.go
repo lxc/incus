@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// IdmapEntry is a single idmap entry (line).
-type IdmapEntry struct {
+// Entry is a single idmap entry (line).
+type Entry struct {
 	Isuid    bool
 	Isgid    bool
 	Hostid   int64 // id as seen on the host - i.e. 100000
@@ -15,8 +15,8 @@ type IdmapEntry struct {
 	Maprange int64
 }
 
-// ToLxcString converts an IdmapEntry into its LXC representation.
-func (e *IdmapEntry) ToLxcString() []string {
+// ToLxcString converts an Entry into its LXC representation.
+func (e *Entry) ToLxcString() []string {
 	if e.Isuid && e.Isgid {
 		return []string{
 			fmt.Sprintf("u %d %d %d", e.Nsid, e.Hostid, e.Maprange),
@@ -32,7 +32,7 @@ func (e *IdmapEntry) ToLxcString() []string {
 }
 
 // HostidsIntersect checks whether the provided entry intersects with the host IDs of the existing one.
-func (e *IdmapEntry) HostidsIntersect(i IdmapEntry) bool {
+func (e *Entry) HostidsIntersect(i Entry) bool {
 	if (e.Isuid && i.Isuid) || (e.Isgid && i.Isgid) {
 		switch {
 		case isBetween(e.Hostid, i.Hostid, i.Hostid+i.Maprange):
@@ -50,7 +50,7 @@ func (e *IdmapEntry) HostidsIntersect(i IdmapEntry) bool {
 }
 
 // Intersects checks whether the provided entry intersects with the existing one.
-func (e *IdmapEntry) Intersects(i IdmapEntry) bool {
+func (e *Entry) Intersects(i Entry) bool {
 	if (e.Isuid && i.Isuid) || (e.Isgid && i.Isgid) {
 		switch {
 		case isBetween(e.Hostid, i.Hostid, i.Hostid+i.Maprange-1):
@@ -77,7 +77,7 @@ func (e *IdmapEntry) Intersects(i IdmapEntry) bool {
 // HostIDsCoveredBy returns whether or not the entry is covered by the supplied host UID and GID ID maps.
 // If e.Isuid is true then host IDs must be covered by an entry in allowedHostUIDs, and if e.Isgid is true then
 // host IDs must be covered by an entry in allowedHostGIDs.
-func (e *IdmapEntry) HostIDsCoveredBy(allowedHostUIDs []IdmapEntry, allowedHostGIDs []IdmapEntry) bool {
+func (e *Entry) HostIDsCoveredBy(allowedHostUIDs []Entry, allowedHostGIDs []Entry) bool {
 	if !e.Isuid && !e.Isgid {
 		return false // This is an invalid idmap entry.
 	}
@@ -116,7 +116,7 @@ func (e *IdmapEntry) HostIDsCoveredBy(allowedHostUIDs []IdmapEntry, allowedHostG
 }
 
 // Usable checks whether the entry is usable on this system.
-func (e *IdmapEntry) Usable() error {
+func (e *Entry) Usable() error {
 	kernelIdmap, err := CurrentIdmapSet()
 	if err != nil {
 		return err
@@ -168,7 +168,7 @@ func (e *IdmapEntry) Usable() error {
 	return nil
 }
 
-func (e *IdmapEntry) parse(s string) error {
+func (e *Entry) parse(s string) error {
 	split := strings.Split(s, ":")
 	var err error
 
@@ -219,7 +219,7 @@ func (e *IdmapEntry) parse(s string) error {
 
 // Shift a uid from the host into the container
 // I.e. 0 -> 1000 -> 101000.
-func (e *IdmapEntry) shiftIntoNS(id int64) (int64, error) {
+func (e *Entry) shiftIntoNS(id int64) (int64, error) {
 	if id < e.Nsid || id >= e.Nsid+e.Maprange {
 		// This mapping doesn't apply.
 		return 0, fmt.Errorf("ID mapping doesn't apply")
@@ -230,7 +230,7 @@ func (e *IdmapEntry) shiftIntoNS(id int64) (int64, error) {
 
 // Shift a uid from the container back to the host
 // I.e. 101000 -> 1000.
-func (e *IdmapEntry) shiftFromNS(id int64) (int64, error) {
+func (e *Entry) shiftFromNS(id int64) (int64, error) {
 	if id < e.Hostid || id >= e.Hostid+e.Maprange {
 		// This mapping doesn't apply.
 		return 0, fmt.Errorf("ID mapping doesn't apply")

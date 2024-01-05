@@ -105,7 +105,7 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 		}
 
 		for _, entry := range entries {
-			e := IdmapEntry{Isuid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
+			e := Entry{Isuid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
 			idmapset.Idmap = append(idmapset.Idmap, e)
 		}
 
@@ -121,7 +121,7 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 		}
 
 		for _, entry := range entries {
-			e := IdmapEntry{Isgid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
+			e := Entry{Isgid: true, Nsid: 0, Hostid: entry[0], Maprange: entry[1]}
 			idmapset.Idmap = append(idmapset.Idmap, e)
 		}
 
@@ -144,12 +144,12 @@ func CurrentIdmapSet() (*IdmapSet, error) {
 		}
 
 		for _, entry := range entries {
-			e := IdmapEntry{Isuid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
+			e := Entry{Isuid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
 			idmapset.Idmap = append(idmapset.Idmap, e)
 		}
 	} else {
 		// Fallback map.
-		e := IdmapEntry{Isuid: true, Nsid: 0, Hostid: 0, Maprange: 0}
+		e := Entry{Isuid: true, Nsid: 0, Hostid: 0, Maprange: 0}
 		idmapset.Idmap = append(idmapset.Idmap, e)
 	}
 
@@ -161,12 +161,12 @@ func CurrentIdmapSet() (*IdmapSet, error) {
 		}
 
 		for _, entry := range entries {
-			e := IdmapEntry{Isgid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
+			e := Entry{Isgid: true, Nsid: entry[0], Hostid: entry[1], Maprange: entry[2]}
 			idmapset.Idmap = append(idmapset.Idmap, e)
 		}
 	} else {
 		// Fallback map.
-		e := IdmapEntry{Isgid: true, Nsid: 0, Hostid: 0, Maprange: 0}
+		e := Entry{Isgid: true, Nsid: 0, Hostid: 0, Maprange: 0}
 		idmapset.Idmap = append(idmapset.Idmap, e)
 	}
 
@@ -451,10 +451,10 @@ func kernelDefaultMap() (*IdmapSet, error) {
 	kernelMap, err := CurrentIdmapSet()
 	if err != nil {
 		// Hardcoded fallback map
-		e := IdmapEntry{Isuid: true, Isgid: false, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
+		e := Entry{Isuid: true, Isgid: false, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
 		idmapset.Idmap = append(idmapset.Idmap, e)
 
-		e = IdmapEntry{Isuid: false, Isgid: true, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
+		e = Entry{Isuid: false, Isgid: true, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
 		idmapset.Idmap = append(idmapset.Idmap, e)
 		return idmapset, nil
 	}
@@ -472,10 +472,10 @@ func kernelDefaultMap() (*IdmapSet, error) {
 
 	if reflect.DeepEqual(kernelRanges, fullKernelRanges) {
 		// Hardcoded fallback map
-		e := IdmapEntry{Isuid: true, Isgid: false, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
+		e := Entry{Isuid: true, Isgid: false, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
 		idmapset.Idmap = append(idmapset.Idmap, e)
 
-		e = IdmapEntry{Isuid: false, Isgid: true, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
+		e = Entry{Isuid: false, Isgid: true, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}
 		idmapset.Idmap = append(idmapset.Idmap, e)
 		return idmapset, nil
 	}
@@ -503,7 +503,7 @@ func kernelDefaultMap() (*IdmapSet, error) {
 		}
 
 		// Add the map
-		e := IdmapEntry{Isuid: true, Isgid: false, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
+		e := Entry{Isuid: true, Isgid: false, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
 		idmapset.Idmap = append(idmapset.Idmap, e)
 
 		// NOTE: Remove once we can deal with multiple shadow maps
@@ -533,7 +533,7 @@ func kernelDefaultMap() (*IdmapSet, error) {
 		}
 
 		// Add the map
-		e := IdmapEntry{Isuid: false, Isgid: true, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
+		e := Entry{Isuid: false, Isgid: true, Nsid: 0, Hostid: entry.Startid, Maprange: entry.Endid - entry.Startid + 1}
 		idmapset.Idmap = append(idmapset.Idmap, e)
 
 		// NOTE: Remove once we can deal with multiple shadow maps

@@ -12,9 +12,9 @@ import (
 // ErrHostIDIsSubID indicates that an expected host ID is part of a subid range.
 var ErrHostIDIsSubID = fmt.Errorf("Host ID is in the range of subids")
 
-// IdmapSet is a list of IdmapEntry with some functions on it.
+// IdmapSet is a list of Entry with some functions on it.
 type IdmapSet struct {
-	Idmap []IdmapEntry
+	Idmap []Entry
 }
 
 // Equals checks if two IdmapSet are functionally identical.
@@ -25,12 +25,12 @@ func (m *IdmapSet) Equals(other *IdmapSet) bool {
 			input = &IdmapSet{}
 		}
 
-		newEntries := []IdmapEntry{}
+		newEntries := []Entry{}
 
 		for _, entry := range input.Idmap {
 			if entry.Isuid && entry.Isgid {
-				newEntries = append(newEntries, IdmapEntry{true, false, entry.Hostid, entry.Nsid, entry.Maprange})
-				newEntries = append(newEntries, IdmapEntry{false, true, entry.Hostid, entry.Nsid, entry.Maprange})
+				newEntries = append(newEntries, Entry{true, false, entry.Hostid, entry.Nsid, entry.Maprange})
+				newEntries = append(newEntries, Entry{false, true, entry.Hostid, entry.Nsid, entry.Maprange})
 			} else {
 				newEntries = append(newEntries, entry)
 			}
@@ -46,17 +46,17 @@ func (m *IdmapSet) Equals(other *IdmapSet) bool {
 	return reflect.DeepEqual(expandSortIdmap(m), expandSortIdmap(other))
 }
 
-// Len returns the number of IdmapEntry contained in the set.
+// Len returns the number of Entry contained in the set.
 func (m *IdmapSet) Len() int {
 	return len(m.Idmap)
 }
 
-// Swap allows swapping two IdmapEntry in the set (used for sorting).
+// Swap allows swapping two Entry in the set (used for sorting).
 func (m *IdmapSet) Swap(i, j int) {
 	m.Idmap[i], m.Idmap[j] = m.Idmap[j], m.Idmap[i]
 }
 
-// Less compares two IdmapEntry in the set (used for sorting).
+// Less compares two Entry in the set (used for sorting).
 func (m *IdmapSet) Less(i, j int) bool {
 	if m.Idmap[i].Isuid != m.Idmap[j].Isuid {
 		return m.Idmap[i].Isuid
@@ -69,8 +69,8 @@ func (m *IdmapSet) Less(i, j int) bool {
 	return m.Idmap[i].Nsid < m.Idmap[j].Nsid
 }
 
-// Intersects checks if any of the IdmapEntry in the set intersects with the provided entry.
-func (m *IdmapSet) Intersects(i IdmapEntry) bool {
+// Intersects checks if any of the Entry in the set intersects with the provided entry.
+func (m *IdmapSet) Intersects(i Entry) bool {
 	for _, e := range m.Idmap {
 		if i.Intersects(e) {
 			return true
@@ -80,8 +80,8 @@ func (m *IdmapSet) Intersects(i IdmapEntry) bool {
 	return false
 }
 
-// HostidsIntersect checks if any of the IdmapEntry hostids in the set intersects with the provided entry.
-func (m *IdmapSet) HostidsIntersect(i IdmapEntry) bool {
+// HostidsIntersect checks if any of the Entry hostids in the set intersects with the provided entry.
+func (m *IdmapSet) HostidsIntersect(i Entry) bool {
 	for _, e := range m.Idmap {
 		if i.HostidsIntersect(e) {
 			return true
@@ -91,7 +91,7 @@ func (m *IdmapSet) HostidsIntersect(i IdmapEntry) bool {
 	return false
 }
 
-// Usable checks that all IdmapEntry in the set are usable.
+// Usable checks that all Entry in the set are usable.
 func (m *IdmapSet) Usable() error {
 	for _, e := range m.Idmap {
 		err := e.Usable()
@@ -148,8 +148,8 @@ func (m *IdmapSet) ValidRanges() ([]*IDRange, error) {
 
 // AddSafe adds an entry to the idmap set, breaking apart any ranges that the
 // new idmap intersects with in the process.
-func (m *IdmapSet) AddSafe(i IdmapEntry) error {
-	result := []IdmapEntry{}
+func (m *IdmapSet) AddSafe(i Entry) error {
+	result := []Entry{}
 	added := false
 	for _, e := range m.Idmap {
 		if !e.Intersects(i) {
@@ -163,7 +163,7 @@ func (m *IdmapSet) AddSafe(i IdmapEntry) error {
 
 		added = true
 
-		lower := IdmapEntry{
+		lower := Entry{
 			Isuid:    e.Isuid,
 			Isgid:    e.Isgid,
 			Hostid:   e.Hostid,
@@ -171,7 +171,7 @@ func (m *IdmapSet) AddSafe(i IdmapEntry) error {
 			Maprange: i.Nsid - e.Nsid,
 		}
 
-		upper := IdmapEntry{
+		upper := Entry{
 			Isuid:    e.Isuid,
 			Isgid:    e.Isgid,
 			Hostid:   e.Hostid + lower.Maprange + i.Maprange,
@@ -214,7 +214,7 @@ func (m *IdmapSet) ToLxcString() []string {
 
 // Append adds an entry to the set.
 func (m *IdmapSet) Append(s string) (*IdmapSet, error) {
-	e := IdmapEntry{}
+	e := Entry{}
 
 	err := e.parse(s)
 	if err != nil {

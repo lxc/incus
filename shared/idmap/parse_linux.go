@@ -9,7 +9,7 @@ import (
 )
 
 // ParseRawIdmap parses an IDMAP string.
-func ParseRawIdmap(value string) ([]IdmapEntry, error) {
+func ParseRawIdmap(value string) ([]Entry, error) {
 	getRange := func(r string) (int64, int64, error) {
 		entries := strings.Split(r, "-")
 		if len(entries) > 2 {
@@ -61,7 +61,7 @@ func ParseRawIdmap(value string) ([]IdmapEntry, error) {
 			return nil, fmt.Errorf("The ID map ranges are of different sizes %q", line)
 		}
 
-		entry := IdmapEntry{
+		entry := Entry{
 			Hostid:   outsideBase,
 			Nsid:     insideBase,
 			Maprange: insideSize,
