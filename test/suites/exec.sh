@@ -79,3 +79,19 @@ test_concurrent_exec() {
   incus stop "${name}" --force
   incus delete "${name}"
 }
+
+test_exec_exit_code() {
+  ensure_import_testimage
+  incus launch testimage x1
+
+  incus exec x1 -- true || exitCode=$?
+  [ "${exitCode:-0}" -eq 0 ]
+
+  incus exec x1 -- false || exitCode=$?
+  [ "${exitCode:-0}" -eq 1 ]
+
+  incus exec x1 -- invalid-command || exitCode=$?
+  [ "${exitCode:-0}" -eq 127 ]
+
+  incus delete --force x1
+}
