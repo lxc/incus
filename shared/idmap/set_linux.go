@@ -30,18 +30,18 @@ var VFS3Fscaps int32 = VFS3FscapsUnknown
 // ErrNoUserMap indicates that no entry could be found for the user.
 var ErrNoUserMap = fmt.Errorf("No map found for user")
 
-// GetIdmapSet reads the system uid/gid allocation.
-func GetIdmapSet() *IdmapSet {
-	idmapSet, err := DefaultIdmapSet("", "")
+// GetSet reads the system uid/gid allocation.
+func GetSet() *Set {
+	idmapSet, err := DefaultSet("", "")
 	if err != nil {
 		logger.Warn("Error reading default uid/gid map", map[string]any{"err": err.Error()})
 		logger.Warnf("Only privileged containers will be able to run")
 		idmapSet = nil
 	} else {
-		kernelIdmapSet, err := CurrentIdmapSet()
+		kernelSet, err := CurrentSet()
 		if err == nil {
 			logger.Infof("Kernel uid/gid map:")
-			for _, lxcmap := range kernelIdmapSet.ToLxcString() {
+			for _, lxcmap := range kernelSet.ToLxcString() {
 				logger.Infof(fmt.Sprintf(" - %s", lxcmap))
 			}
 		}
@@ -76,9 +76,9 @@ func GetIdmapSet() *IdmapSet {
 	return idmapSet
 }
 
-// DefaultIdmapSet returns the system's idmapset.
-func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
-	idmapset := new(IdmapSet)
+// DefaultSet returns the system's idmapset.
+func DefaultSet(rootfs string, username string) (*Set, error) {
+	idmapset := new(Set)
 
 	if username == "" {
 		currentUser, err := user.Current()
@@ -132,9 +132,9 @@ func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
 	return kernelDefaultMap()
 }
 
-// CurrentIdmapSet returns the current process' idmapset.
-func CurrentIdmapSet() (*IdmapSet, error) {
-	idmapset := new(IdmapSet)
+// CurrentSet returns the current process' idmapset.
+func CurrentSet() (*Set, error) {
+	idmapset := new(Set)
 
 	if util.PathExists("/proc/self/uid_map") {
 		// Parse the uidmap.
@@ -174,32 +174,32 @@ func CurrentIdmapSet() (*IdmapSet, error) {
 }
 
 // UidshiftIntoContainer shiftfs a host filesystem tree.
-func (m *IdmapSet) UidshiftIntoContainer(dir string, testmode bool) error {
+func (m *Set) UidshiftIntoContainer(dir string, testmode bool) error {
 	return m.doUidshiftIntoContainer(dir, testmode, "in", nil)
 }
 
 // UidshiftFromContainer shiftfs a container filesystem tree.
-func (m *IdmapSet) UidshiftFromContainer(dir string, testmode bool) error {
+func (m *Set) UidshiftFromContainer(dir string, testmode bool) error {
 	return m.doUidshiftIntoContainer(dir, testmode, "out", nil)
 }
 
 // ShiftRootfs shiftfs a whole container filesystem tree.
-func (m *IdmapSet) ShiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
+func (m *Set) ShiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
 	return m.doUidshiftIntoContainer(p, false, "in", skipper)
 }
 
 // UnshiftRootfs unshiftfs a whole container filesystem tree.
-func (m *IdmapSet) UnshiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
+func (m *Set) UnshiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
 	return m.doUidshiftIntoContainer(p, false, "out", skipper)
 }
 
 // ShiftFile shiftfs a single file.
-func (m *IdmapSet) ShiftFile(p string) error {
+func (m *Set) ShiftFile(p string) error {
 	return m.ShiftRootfs(p, nil)
 }
 
 // ToUidMappings converts an idmapset to a slice of syscall.SysProcIDMap.
-func (m IdmapSet) ToUidMappings() []syscall.SysProcIDMap {
+func (m Set) ToUidMappings() []syscall.SysProcIDMap {
 	mapping := []syscall.SysProcIDMap{}
 
 	for _, e := range m.Idmap {
@@ -218,7 +218,7 @@ func (m IdmapSet) ToUidMappings() []syscall.SysProcIDMap {
 }
 
 // ToGidMappings converts an idmapset to a slice of syscall.SysProcIDMap.
-func (m IdmapSet) ToGidMappings() []syscall.SysProcIDMap {
+func (m Set) ToGidMappings() []syscall.SysProcIDMap {
 	mapping := []syscall.SysProcIDMap{}
 
 	for _, e := range m.Idmap {
@@ -236,7 +236,7 @@ func (m IdmapSet) ToGidMappings() []syscall.SysProcIDMap {
 	return mapping
 }
 
-func (m *IdmapSet) doUidshiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
+func (m *Set) doUidshiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
 	if how == "in" && atomic.LoadInt32(&VFS3Fscaps) == VFS3FscapsUnknown {
 		if SupportsVFS3Fscaps(dir) {
 			atomic.StoreInt32(&VFS3Fscaps, VFS3FscapsSupported)
@@ -445,10 +445,10 @@ func getFromProc(fname string) ([][]int64, error) {
 	return entries, nil
 }
 
-func kernelDefaultMap() (*IdmapSet, error) {
-	idmapset := new(IdmapSet)
+func kernelDefaultMap() (*Set, error) {
+	idmapset := new(Set)
 
-	kernelMap, err := CurrentIdmapSet()
+	kernelMap, err := CurrentSet()
 	if err != nil {
 		// Hardcoded fallback map
 		e := Entry{Isuid: true, Isgid: false, Nsid: 0, Hostid: 1000000, Maprange: 1000000000}

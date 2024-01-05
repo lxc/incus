@@ -9,17 +9,17 @@ import (
 // ErrNoIdmapSupport is an indicating that the host os does not support idmaps
 var ErrNoIdmapSupport = fmt.Errorf("No idmap support for non-linux hosts")
 
-// GetIdmapSet reads the uid/gid allocation.
-func GetIdmapSet() *IdmapSet {
+// GetSet reads the uid/gid allocation.
+func GetSet() *Set {
 	return nil
 }
 
-// CurrentIdmapSet creates an idmap of the current allocation.
-func CurrentIdmapSet() (*IdmapSet, error) {
+// CurrentSet creates an idmap of the current allocation.
+func CurrentSet() (*Set, error) {
 	return nil, ErrNoIdmapSupport
 }
 
-// DefaultIdmapSet creates a new default idmap.
-func DefaultIdmapSet(rootfs string, username string) (*IdmapSet, error) {
+// DefaultSet creates a new default idmap.
+func DefaultSet(rootfs string, username string) (*Set, error) {
 	return nil, ErrNoIdmapSupport
 }

@@ -522,9 +522,9 @@ func SupportsVFS3Fscaps(prefix string) bool {
 	return true
 }
 
-func UnshiftACL(value string, set *IdmapSet) (string, error) {
+func UnshiftACL(value string, set *Set) (string, error) {
 	if set == nil {
-		return "", fmt.Errorf("Invalid IdmapSet supplied")
+		return "", fmt.Errorf("Invalid Set supplied")
 	}
 
 	buf := []byte(value)
@@ -591,9 +591,9 @@ func UnshiftACL(value string, set *IdmapSet) (string, error) {
 	return string(buf), nil
 }
 
-func UnshiftCaps(value string, set *IdmapSet) (string, error) {
+func UnshiftCaps(value string, set *Set) (string, error) {
 	if set == nil {
-		return "", fmt.Errorf("Invalid IdmapSet supplied")
+		return "", fmt.Errorf("Invalid Set supplied")
 	}
 
 	buf := []byte(value)
