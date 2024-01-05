@@ -1,15 +1,16 @@
 package idmap
 
-type ByHostid []*IdmapEntry
+// ByHostID allows for sorting an IdmapSet by host id.
+type ByHostID IdmapSet
 
-func (s ByHostid) Len() int {
-	return len(s)
+func (s ByHostID) Len() int {
+	return len(s.Idmap)
 }
 
-func (s ByHostid) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
+func (s ByHostID) Swap(i, j int) {
+	s.Idmap[i], s.Idmap[j] = s.Idmap[j], s.Idmap[i]
 }
 
-func (s ByHostid) Less(i, j int) bool {
-	return s[i].Hostid < s[j].Hostid
+func (s ByHostID) Less(i, j int) bool {
+	return s.Idmap[i].Hostid < s.Idmap[j].Hostid
 }
