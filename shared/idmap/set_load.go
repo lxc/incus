@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/user"
-	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -16,6 +16,9 @@ import (
 
 // ErrNoUserMap indicates that no entry could be found for the user.
 var ErrNoUserMap = fmt.Errorf("No map found for user")
+
+// ErrSubidUnsupported indicates that the system is lacking support for subuid/subgid.
+var ErrSubidUnsupported = fmt.Errorf("System doesn't support subuid/subgid")
 
 // DefaultFullKernelSet is the default Set of uid/gid with no mapping at all.
 var DefaultFullKernelSet = &Set{Entries: []Entry{
@@ -163,10 +166,17 @@ func NewSetFromCurrentProcess() (*Set, error) {
 	return ret, nil
 }
 
-// DefaultSet returns the system's idmapset.
-func DefaultSet(rootfs string, username string) (*Set, error) {
-	idmapset := new(Set)
+// NewSetFromSystem returns a Set for the specified user from the system's subuid/subgid configuration.
+func NewSetFromSystem(rootfs string, username string) (*Set, error) {
+	// Check if the system supports subuid/subgid.
+	pathNewUIDMap, _ := exec.LookPath("newuidmap")
+	pathNewGIDMap, _ := exec.LookPath("newgidmap")
 
+	if !util.PathExists("/etc/subuid") || !util.PathExists("/etc/subgid") || pathNewUIDMap == "" || pathNewGIDMap == "" {
+		return nil, ErrSubidUnsupported
+	}
+
+	// If no username specified, use the current user.
 	if username == "" {
 		currentUser, err := user.Current()
 		if err != nil {
@@ -176,47 +186,31 @@ func DefaultSet(rootfs string, username string) (*Set, error) {
 		username = currentUser.Username
 	}
 
-	// Check if shadow's uidmap tools are installed.
-	subuidPath := path.Join(rootfs, "/etc/subuid")
-	subgidPath := path.Join(rootfs, "/etc/subgid")
-	if util.PathExists(subuidPath) && util.PathExists(subgidPath) {
-		// Parse the shadow uidmap.
-		entries, err := getFromShadow(subuidPath, username)
-		if err != nil {
-			if username == "root" && err == ErrNoUserMap {
-				// No root map available, figure out a default map.
-				return kernelDefaultMap()
-			}
+	ret := &Set{}
 
-			return nil, err
-		}
-
-		for _, entry := range entries {
-			e := Entry{IsUID: true, NSID: 0, HostID: entry[0], MapRange: entry[1]}
-			idmapset.Entries = append(idmapset.Entries, e)
-		}
-
-		// Parse the shadow gidmap.
-		entries, err = getFromShadow(subgidPath, username)
-		if err != nil {
-			if username == "root" && err == ErrNoUserMap {
-				// No root map available, figure out a default map.
-				return kernelDefaultMap()
-			}
-
-			return nil, err
-		}
-
-		for _, entry := range entries {
-			e := Entry{IsGID: true, NSID: 0, HostID: entry[0], MapRange: entry[1]}
-			idmapset.Entries = append(idmapset.Entries, e)
-		}
-
-		return idmapset, nil
+	// Parse the shadow uidmap.
+	entries, err := getFromShadow("/etc/subuid", username)
+	if err != nil {
+		return nil, err
 	}
 
-	// No shadow available, figure out a default map.
-	return kernelDefaultMap()
+	for _, entry := range entries {
+		e := Entry{IsUID: true, NSID: 0, HostID: entry[0], MapRange: entry[1]}
+		ret.Entries = append(ret.Entries, e)
+	}
+
+	// Parse the shadow gidmap.
+	entries, err = getFromShadow("/etc/subgid", username)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		e := Entry{IsGID: true, NSID: 0, HostID: entry[0], MapRange: entry[1]}
+		ret.Entries = append(ret.Entries, e)
+	}
+
+	return ret, nil
 }
 
 func getFromShadow(fname string, username string) ([][]int64, error) {
