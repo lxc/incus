@@ -30,29 +30,17 @@ const (
 // VFS3FSCaps can be set to tell the shifter if VFS v3 fscaps are supported.
 var VFS3FSCaps = VFS3FSCapsUnknown
 
-// ShiftIntoContainer shiftfs a host filesystem tree.
-func (m *Set) ShiftIntoContainer(dir string, testmode bool) error {
-	return m.doShiftIntoContainer(dir, testmode, "in", nil)
+// ShiftSkipper is a function used to skip shifting or unshifting specific paths.
+type ShiftSkipper func(dir string, absPath string, fi os.FileInfo, newuid int64, newgid int64) error
+
+// ShiftPath shiftfs a whole filesystem tree.
+func (m *Set) ShiftPath(p string, skipper ShiftSkipper) error {
+	return m.doShiftIntoContainer(p, "in", skipper)
 }
 
-// ShiftFromContainer shiftfs a container filesystem tree.
-func (m *Set) ShiftFromContainer(dir string, testmode bool) error {
-	return m.doShiftIntoContainer(dir, testmode, "out", nil)
-}
-
-// ShiftRootfs shiftfs a whole container filesystem tree.
-func (m *Set) ShiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	return m.doShiftIntoContainer(p, false, "in", skipper)
-}
-
-// UnshiftRootfs unshiftfs a whole container filesystem tree.
-func (m *Set) UnshiftRootfs(p string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
-	return m.doShiftIntoContainer(p, false, "out", skipper)
-}
-
-// ShiftFile shiftfs a single file.
-func (m *Set) ShiftFile(p string) error {
-	return m.ShiftRootfs(p, nil)
+// UnshiftPath unshiftfs a whole filesystem tree.
+func (m *Set) UnshiftPath(p string, skipper ShiftSkipper) error {
+	return m.doShiftIntoContainer(p, "out", skipper)
 }
 
 // ToUIDMappings converts an idmapset to a slice of syscall.SysProcIDMap.
@@ -93,7 +81,7 @@ func (m *Set) ToGIDMappings() []syscall.SysProcIDMap {
 	return mapping
 }
 
-func (m *Set) doShiftIntoContainer(dir string, testmode bool, how string, skipper func(dir string, absPath string, fi os.FileInfo) bool) error {
+func (m *Set) doShiftIntoContainer(dir string, how string, skipper ShiftSkipper) error {
 	if how == "in" && atomic.LoadInt32(&VFS3FSCaps) == VFS3FSCapsUnknown {
 		if SupportsVFS3FSCaps(dir) {
 			atomic.StoreInt32(&VFS3FSCaps, VFS3FSCapsSupported)
@@ -116,10 +104,6 @@ func (m *Set) doShiftIntoContainer(dir string, testmode bool, how string, skippe
 	convert := func(p string, fi os.FileInfo, err error) (e error) {
 		if err != nil {
 			return err
-		}
-
-		if skipper != nil && skipper(dir, p, fi) {
-			return filepath.SkipDir
 		}
 
 		var stat unix.Stat_t
@@ -151,42 +135,52 @@ func (m *Set) doShiftIntoContainer(dir string, testmode bool, how string, skippe
 			newuid, newgid = m.ShiftFromNS(uid, gid)
 		}
 
-		if testmode {
-			fmt.Printf("I would shift %q to %d %d\n", p, newuid, newgid)
-		} else {
-			// Dump capabilities.
-			if fi.Mode()&os.ModeSymlink == 0 {
-				caps, err = GetCaps(p)
-				if err != nil {
-					return err
-				}
+		// Handle skipping.
+		if skipper != nil {
+			err := skipper(dir, p, fi, newuid, newgid)
+			// Pass through SkipAll and SkipDir.
+			if err == filepath.SkipAll || err == filepath.SkipDir {
+				return err
 			}
 
-			// Shift owner.
-			err = ShiftOwner(dir, p, int(newuid), int(newgid))
+			// All other errors result in simple file skipping.
+			if err != nil {
+				return nil
+			}
+		}
+
+		// Dump capabilities.
+		if fi.Mode()&os.ModeSymlink == 0 {
+			caps, err = GetCaps(p)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Shift owner.
+		err = ShiftOwner(dir, p, int(newuid), int(newgid))
+		if err != nil {
+			return err
+		}
+
+		if fi.Mode()&os.ModeSymlink == 0 {
+			// Shift POSIX ACLs.
+			err = ShiftACL(p, func(uid int64, gid int64) (int64, int64) { return m.doShiftIntoNS(uid, gid, how) })
 			if err != nil {
 				return err
 			}
 
-			if fi.Mode()&os.ModeSymlink == 0 {
-				// Shift POSIX ACLs.
-				err = ShiftACL(p, func(uid int64, gid int64) (int64, int64) { return m.doShiftIntoNS(uid, gid, how) })
-				if err != nil {
-					return err
+			// Shift capabilities.
+			if len(caps) != 0 {
+				rootUID := int64(0)
+				if how == "in" {
+					rootUID, _ = m.ShiftIntoNS(0, 0)
 				}
 
-				// Shift capabilities.
-				if len(caps) != 0 {
-					rootUID := int64(0)
-					if how == "in" {
-						rootUID, _ = m.ShiftIntoNS(0, 0)
-					}
-
-					if how != "in" || atomic.LoadInt32(&VFS3FSCaps) == VFS3FSCapsSupported {
-						err = SetCaps(p, caps, rootUID)
-						if err != nil {
-							logger.Warnf("Unable to set file capabilities on %q: %v", p, err)
-						}
+				if how != "in" || atomic.LoadInt32(&VFS3FSCaps) == VFS3FSCapsSupported {
+					err = SetCaps(p, caps, rootUID)
+					if err != nil {
+						logger.Warnf("Unable to set file capabilities on %q: %v", p, err)
 					}
 				}
 			}
