@@ -253,7 +253,7 @@ func (m *Set) doShiftIntoContainer(dir string, testmode bool, how string, skippe
 		}
 	}
 
-	// Expand any symlink before the final path component
+	// Expand any symlink before the final path component.
 	tmp := filepath.Dir(dir)
 	tmp, err := filepath.EvalSymlinks(tmp)
 	if err != nil {
@@ -281,7 +281,7 @@ func (m *Set) doShiftIntoContainer(dir string, testmode bool, how string, skippe
 
 		if stat.Nlink >= 2 {
 			for _, linkInode := range hardLinks {
-				// File was already shifted through hardlink
+				// File was already shifted through hardlink.
 				if linkInode == stat.Ino {
 					return nil
 				}
@@ -305,7 +305,7 @@ func (m *Set) doShiftIntoContainer(dir string, testmode bool, how string, skippe
 		if testmode {
 			fmt.Printf("I would shift %q to %d %d\n", p, newuid, newgid)
 		} else {
-			// Dump capabilities
+			// Dump capabilities.
 			if fi.Mode()&os.ModeSymlink == 0 {
 				caps, err = GetCaps(p)
 				if err != nil {
@@ -313,20 +313,20 @@ func (m *Set) doShiftIntoContainer(dir string, testmode bool, how string, skippe
 				}
 			}
 
-			// Shift owner
+			// Shift owner.
 			err = ShiftOwner(dir, p, int(newuid), int(newgid))
 			if err != nil {
 				return err
 			}
 
 			if fi.Mode()&os.ModeSymlink == 0 {
-				// Shift POSIX ACLs
+				// Shift POSIX ACLs.
 				err = ShiftACL(p, func(uid int64, gid int64) (int64, int64) { return m.doShiftIntoNS(uid, gid, how) })
 				if err != nil {
 					return err
 				}
 
-				// Shift capabilities
+				// Shift capabilities.
 				if len(caps) != 0 {
 					rootUID := int64(0)
 					if how == "in" {
@@ -365,26 +365,26 @@ func getFromShadow(fname string, username string) ([][]int64, error) {
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		// Skip comments
+		// Skip comments.
 		s := strings.Split(scanner.Text(), "#")
 		if len(s[0]) == 0 {
 			continue
 		}
 
-		// Validate format
+		// Validate format.
 		s = strings.Split(s[0], ":")
 		if len(s) < 3 {
 			return nil, fmt.Errorf("Unexpected values in %q: %q", fname, s)
 		}
 
 		if strings.EqualFold(s[0], username) {
-			// Get range start
+			// Get range start.
 			entryStart, err := strconv.ParseUint(s[1], 10, 32)
 			if err != nil {
 				continue
 			}
 
-			// Get range size
+			// Get range size.
 			entrySize, err := strconv.ParseUint(s[2], 10, 32)
 			if err != nil {
 				continue
@@ -413,31 +413,31 @@ func getFromProc(fname string) ([][]int64, error) {
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		// Skip comments
+		// Skip comments.
 		s := strings.Split(scanner.Text(), "#")
 		if len(s[0]) == 0 {
 			continue
 		}
 
-		// Validate format
+		// Validate format.
 		s = strings.Fields(s[0])
 		if len(s) < 3 {
 			return nil, fmt.Errorf("Unexpected values in %q: %q", fname, s)
 		}
 
-		// Get range start
+		// Get range start.
 		entryStart, err := strconv.ParseUint(s[0], 10, 32)
 		if err != nil {
 			continue
 		}
 
-		// Get range size
+		// Get range size.
 		entryHost, err := strconv.ParseUint(s[1], 10, 32)
 		if err != nil {
 			continue
 		}
 
-		// Get range size
+		// Get range size.
 		entrySize, err := strconv.ParseUint(s[2], 10, 32)
 		if err != nil {
 			continue
@@ -458,7 +458,7 @@ func kernelDefaultMap() (*Set, error) {
 
 	kernelMap, err := CurrentSet()
 	if err != nil {
-		// Hardcoded fallback map
+		// Hardcoded fallback map.
 		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: 1000000, MapRange: 1000000000}
 		idmapset.Entries = append(idmapset.Entries, e)
 
@@ -467,19 +467,19 @@ func kernelDefaultMap() (*Set, error) {
 		return idmapset, nil
 	}
 
-	// Look for mapped ranges
+	// Look for mapped ranges.
 	kernelRanges, err := kernelMap.ValidRanges()
 	if err != nil {
 		return nil, err
 	}
 
-	// Special case for when we have the full kernel range
+	// Special case for when we have the full kernel range.
 	fullKernelRanges := []*Range{
 		{true, false, int64(0), int64(4294967294)},
 		{false, true, int64(0), int64(4294967294)}}
 
 	if reflect.DeepEqual(kernelRanges, fullKernelRanges) {
-		// Hardcoded fallback map
+		// Hardcoded fallback map.
 		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: 1000000, MapRange: 1000000000}
 		idmapset.Entries = append(idmapset.Entries, e)
 
@@ -488,56 +488,56 @@ func kernelDefaultMap() (*Set, error) {
 		return idmapset, nil
 	}
 
-	// Find a suitable uid range
+	// Find a suitable uid range.
 	for _, entry := range kernelRanges {
-		// We only care about uids right now
+		// We only care about uids right now.
 		if !entry.IsUID {
 			continue
 		}
 
-		// We want a map that's separate from the system's own POSIX allocation
+		// We want a map that's separate from the system's own POSIX allocation.
 		if entry.EndID < 100000 {
 			continue
 		}
 
-		// Don't use the first 65536 ids
+		// Don't use the first 100000 ids.
 		if entry.StartID < 100000 {
 			entry.StartID = 100000
 		}
 
-		// Check if we have enough ids
+		// Check if we have enough ids.
 		if entry.EndID-entry.StartID < 65536 {
 			continue
 		}
 
-		// Add the map
+		// Add the map.
 		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: entry.StartID, MapRange: entry.EndID - entry.StartID + 1}
 		idmapset.Entries = append(idmapset.Entries, e)
 	}
 
-	// Find a suitable gid range
+	// Find a suitable gid range.
 	for _, entry := range kernelRanges {
-		// We only care about gids right now
+		// We only care about gids right now.
 		if !entry.IsGID {
 			continue
 		}
 
-		// We want a map that's separate from the system's own POSIX allocation
+		// We want a map that's separate from the system's own POSIX allocation.
 		if entry.EndID < 100000 {
 			continue
 		}
 
-		// Don't use the first 65536 ids
+		// Don't use the first 100000 ids.
 		if entry.StartID < 100000 {
 			entry.StartID = 100000
 		}
 
-		// Check if we have enough ids
+		// Check if we have enough ids.
 		if entry.EndID-entry.StartID < 65536 {
 			continue
 		}
 
-		// Add the map
+		// Add the map.
 		e := Entry{IsUID: false, IsGID: true, NSID: 0, HostID: entry.StartID, MapRange: entry.EndID - entry.StartID + 1}
 		idmapset.Entries = append(idmapset.Entries, e)
 	}
