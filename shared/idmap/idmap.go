@@ -35,13 +35,13 @@ func (e *IdmapEntry) ToLxcString() []string {
 func (e *IdmapEntry) HostidsIntersect(i IdmapEntry) bool {
 	if (e.Isuid && i.Isuid) || (e.Isgid && i.Isgid) {
 		switch {
-		case is_between(e.Hostid, i.Hostid, i.Hostid+i.Maprange):
+		case isBetween(e.Hostid, i.Hostid, i.Hostid+i.Maprange):
 			return true
-		case is_between(i.Hostid, e.Hostid, e.Hostid+e.Maprange):
+		case isBetween(i.Hostid, e.Hostid, e.Hostid+e.Maprange):
 			return true
-		case is_between(e.Hostid+e.Maprange, i.Hostid, i.Hostid+i.Maprange):
+		case isBetween(e.Hostid+e.Maprange, i.Hostid, i.Hostid+i.Maprange):
 			return true
-		case is_between(i.Hostid+i.Maprange, e.Hostid, e.Hostid+e.Maprange):
+		case isBetween(i.Hostid+i.Maprange, e.Hostid, e.Hostid+e.Maprange):
 			return true
 		}
 	}
@@ -53,21 +53,21 @@ func (e *IdmapEntry) HostidsIntersect(i IdmapEntry) bool {
 func (e *IdmapEntry) Intersects(i IdmapEntry) bool {
 	if (e.Isuid && i.Isuid) || (e.Isgid && i.Isgid) {
 		switch {
-		case is_between(e.Hostid, i.Hostid, i.Hostid+i.Maprange-1):
+		case isBetween(e.Hostid, i.Hostid, i.Hostid+i.Maprange-1):
 			return true
-		case is_between(i.Hostid, e.Hostid, e.Hostid+e.Maprange-1):
+		case isBetween(i.Hostid, e.Hostid, e.Hostid+e.Maprange-1):
 			return true
-		case is_between(e.Hostid+e.Maprange-1, i.Hostid, i.Hostid+i.Maprange-1):
+		case isBetween(e.Hostid+e.Maprange-1, i.Hostid, i.Hostid+i.Maprange-1):
 			return true
-		case is_between(i.Hostid+i.Maprange-1, e.Hostid, e.Hostid+e.Maprange-1):
+		case isBetween(i.Hostid+i.Maprange-1, e.Hostid, e.Hostid+e.Maprange-1):
 			return true
-		case is_between(e.Nsid, i.Nsid, i.Nsid+i.Maprange-1):
+		case isBetween(e.Nsid, i.Nsid, i.Nsid+i.Maprange-1):
 			return true
-		case is_between(i.Nsid, e.Nsid, e.Nsid+e.Maprange-1):
+		case isBetween(i.Nsid, e.Nsid, e.Nsid+e.Maprange-1):
 			return true
-		case is_between(e.Nsid+e.Maprange-1, i.Nsid, i.Nsid+i.Maprange-1):
+		case isBetween(e.Nsid+e.Maprange-1, i.Nsid, i.Nsid+i.Maprange-1):
 			return true
-		case is_between(i.Nsid+i.Maprange-1, e.Nsid, e.Nsid+e.Maprange-1):
+		case isBetween(i.Nsid+i.Maprange-1, e.Nsid, e.Nsid+e.Maprange-1):
 			return true
 		}
 	}
