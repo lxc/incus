@@ -513,9 +513,6 @@ func kernelDefaultMap() (*Set, error) {
 		// Add the map
 		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: entry.StartID, MapRange: entry.EndID - entry.StartID + 1}
 		idmapset.Entries = append(idmapset.Entries, e)
-
-		// NOTE: Remove once we can deal with multiple shadow maps
-		break
 	}
 
 	// Find a suitable gid range
@@ -543,9 +540,6 @@ func kernelDefaultMap() (*Set, error) {
 		// Add the map
 		e := Entry{IsUID: false, IsGID: true, NSID: 0, HostID: entry.StartID, MapRange: entry.EndID - entry.StartID + 1}
 		idmapset.Entries = append(idmapset.Entries, e)
-
-		// NOTE: Remove once we can deal with multiple shadow maps
-		break
 	}
 
 	return idmapset, nil
