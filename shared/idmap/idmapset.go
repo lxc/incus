@@ -9,14 +9,17 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
+var ErrHostIdIsSubId = fmt.Errorf("Host id is in the range of subids")
+
 // IdmapSet is a list of IdmapEntry with some functions on it.
 type IdmapSet struct {
 	Idmap []IdmapEntry
 }
 
+// Equals checks if two IdmapSet are functionally identical.
 func (m *IdmapSet) Equals(other *IdmapSet) bool {
-	// Get comparable maps
-	expandSortIdmap := func(input *IdmapSet) IdmapSet {
+	// Get comparable maps.
+	expandSortIdmap := func(input *IdmapSet) *IdmapSet {
 		if input == nil {
 			input = &IdmapSet{}
 		}
@@ -32,25 +35,28 @@ func (m *IdmapSet) Equals(other *IdmapSet) bool {
 			}
 		}
 
-		output := IdmapSet{Idmap: newEntries}
+		output := &IdmapSet{Idmap: newEntries}
 		sort.Sort(output)
 
 		return output
 	}
 
-	// Actually compare
+	// Actually compare.
 	return reflect.DeepEqual(expandSortIdmap(m), expandSortIdmap(other))
 }
 
-func (m IdmapSet) Len() int {
+// Len returns the number of IdmapEntry contained in the set.
+func (m *IdmapSet) Len() int {
 	return len(m.Idmap)
 }
 
-func (m IdmapSet) Swap(i, j int) {
+// Swap allows swapping two IdmapEntry in the set (used for sorting).
+func (m *IdmapSet) Swap(i, j int) {
 	m.Idmap[i], m.Idmap[j] = m.Idmap[j], m.Idmap[i]
 }
 
-func (m IdmapSet) Less(i, j int) bool {
+// Less compares two IdmapEntry in the set (used for sorting).
+func (m *IdmapSet) Less(i, j int) bool {
 	if m.Idmap[i].Isuid != m.Idmap[j].Isuid {
 		return m.Idmap[i].Isuid
 	}
@@ -62,25 +68,30 @@ func (m IdmapSet) Less(i, j int) bool {
 	return m.Idmap[i].Nsid < m.Idmap[j].Nsid
 }
 
-func (m IdmapSet) Intersects(i IdmapEntry) bool {
+// Intersects checks if any of the IdmapEntry in the set intersects with the provided entry.
+func (m *IdmapSet) Intersects(i IdmapEntry) bool {
 	for _, e := range m.Idmap {
 		if i.Intersects(e) {
 			return true
 		}
 	}
+
 	return false
 }
 
-func (m IdmapSet) HostidsIntersect(i IdmapEntry) bool {
+// HostidsIntersects checks if any of the IdmapEntry hostids in the set intersects with the provided entry.
+func (m *IdmapSet) HostidsIntersect(i IdmapEntry) bool {
 	for _, e := range m.Idmap {
 		if i.HostidsIntersect(e) {
 			return true
 		}
 	}
+
 	return false
 }
 
-func (m IdmapSet) Usable() error {
+// Usable checks that all IdmapEntry in the set are usable.
+func (m *IdmapSet) Usable() error {
 	for _, e := range m.Idmap {
 		err := e.Usable()
 		if err != nil {
@@ -91,11 +102,12 @@ func (m IdmapSet) Usable() error {
 	return nil
 }
 
-func (m IdmapSet) ValidRanges() ([]*IdRange, error) {
+// ValidRanges turns the set into a slice of IdRange.
+func (m *IdmapSet) ValidRanges() ([]*IdRange, error) {
 	ranges := []*IdRange{}
 
-	// Sort the map
-	idmap := IdmapSet{}
+	// Sort the map.
+	idmap := &IdmapSet{}
 	err := util.DeepCopy(&m, &idmap)
 	if err != nil {
 		return nil, err
@@ -105,6 +117,7 @@ func (m IdmapSet) ValidRanges() ([]*IdRange, error) {
 
 	for _, mapEntry := range idmap.Idmap {
 		var entry *IdRange
+
 		for _, idEntry := range ranges {
 			if mapEntry.Isuid != idEntry.Isuid || mapEntry.Isgid != idEntry.Isgid {
 				continue
@@ -132,11 +145,8 @@ func (m IdmapSet) ValidRanges() ([]*IdRange, error) {
 	return ranges, nil
 }
 
-var ErrHostIdIsSubId = fmt.Errorf("Host id is in the range of subids")
-
-/* AddSafe adds an entry to the idmap set, breaking apart any ranges that the
- * new idmap intersects with in the process.
- */
+// AddSafe adds an entry to the idmap set, breaking apart any ranges that the
+// new idmap intersects with in the process.
 func (m *IdmapSet) AddSafe(i IdmapEntry) error {
 	result := []IdmapEntry{}
 	added := false
@@ -183,10 +193,12 @@ func (m *IdmapSet) AddSafe(i IdmapEntry) error {
 	}
 
 	m.Idmap = result
+
 	return nil
 }
 
-func (m IdmapSet) ToLxcString() []string {
+// ToLxcString converts the set to a slice of LXC configuration entries.
+func (m *IdmapSet) ToLxcString() []string {
 	var lines []string
 	for _, e := range m.Idmap {
 		for _, l := range e.ToLxcString() {
@@ -199,8 +211,10 @@ func (m IdmapSet) ToLxcString() []string {
 	return lines
 }
 
-func (m IdmapSet) Append(s string) (IdmapSet, error) {
+// Append adds an entry to the set.
+func (m *IdmapSet) Append(s string) (*IdmapSet, error) {
 	e := IdmapEntry{}
+
 	err := e.parse(s)
 	if err != nil {
 		return m, err
@@ -251,10 +265,12 @@ func (m IdmapSet) doShiftIntoNs(uid int64, gid int64, how string) (int64, int64)
 	return u, g
 }
 
+// ShiftIntoNs shiftfs the provided uid and gid into their container equivalent.
 func (m IdmapSet) ShiftIntoNs(uid int64, gid int64) (int64, int64) {
 	return m.doShiftIntoNs(uid, gid, "in")
 }
 
+// ShiftFromNS shiftfs the provided uid and gid into their host equivalent.
 func (m IdmapSet) ShiftFromNs(uid int64, gid int64) (int64, int64) {
 	return m.doShiftIntoNs(uid, gid, "out")
 }
