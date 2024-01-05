@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -311,96 +310,4 @@ func getFromProc(fname string) ([][]int64, error) {
 	}
 
 	return entries, nil
-}
-
-func kernelDefaultMap() (*Set, error) {
-	idmapset := new(Set)
-
-	kernelMap, err := NewSetFromCurrentProcess()
-	if err != nil {
-		// Hardcoded fallback map.
-		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: 1000000, MapRange: 1000000000}
-		idmapset.Entries = append(idmapset.Entries, e)
-
-		e = Entry{IsUID: false, IsGID: true, NSID: 0, HostID: 1000000, MapRange: 1000000000}
-		idmapset.Entries = append(idmapset.Entries, e)
-		return idmapset, nil
-	}
-
-	// Look for mapped ranges.
-	kernelRanges, err := kernelMap.ValidRanges()
-	if err != nil {
-		return nil, err
-	}
-
-	// Special case for when we have the full kernel range.
-	fullKernelRanges := []*Range{
-		{true, false, int64(0), int64(4294967294)},
-		{false, true, int64(0), int64(4294967294)}}
-
-	if reflect.DeepEqual(kernelRanges, fullKernelRanges) {
-		// Hardcoded fallback map.
-		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: 1000000, MapRange: 1000000000}
-		idmapset.Entries = append(idmapset.Entries, e)
-
-		e = Entry{IsUID: false, IsGID: true, NSID: 0, HostID: 1000000, MapRange: 1000000000}
-		idmapset.Entries = append(idmapset.Entries, e)
-		return idmapset, nil
-	}
-
-	// Find a suitable uid range.
-	for _, entry := range kernelRanges {
-		// We only care about uids right now.
-		if !entry.IsUID {
-			continue
-		}
-
-		// We want a map that's separate from the system's own POSIX allocation.
-		if entry.EndID < 100000 {
-			continue
-		}
-
-		// Don't use the first 100000 ids.
-		if entry.StartID < 100000 {
-			entry.StartID = 100000
-		}
-
-		// Check if we have enough ids.
-		if entry.EndID-entry.StartID < 65536 {
-			continue
-		}
-
-		// Add the map.
-		e := Entry{IsUID: true, IsGID: false, NSID: 0, HostID: entry.StartID, MapRange: entry.EndID - entry.StartID + 1}
-		idmapset.Entries = append(idmapset.Entries, e)
-	}
-
-	// Find a suitable gid range.
-	for _, entry := range kernelRanges {
-		// We only care about gids right now.
-		if !entry.IsGID {
-			continue
-		}
-
-		// We want a map that's separate from the system's own POSIX allocation.
-		if entry.EndID < 100000 {
-			continue
-		}
-
-		// Don't use the first 100000 ids.
-		if entry.StartID < 100000 {
-			entry.StartID = 100000
-		}
-
-		// Check if we have enough ids.
-		if entry.EndID-entry.StartID < 65536 {
-			continue
-		}
-
-		// Add the map.
-		e := Entry{IsUID: false, IsGID: true, NSID: 0, HostID: entry.StartID, MapRange: entry.EndID - entry.StartID + 1}
-		idmapset.Entries = append(idmapset.Entries, e)
-	}
-
-	return idmapset, nil
 }
