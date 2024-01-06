@@ -1721,14 +1721,10 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 		d.logger.Debug("Shifted storage volume")
 	}
 
-	jsonIdmap := "[]"
-	if nextIdmap != nil {
-		var err error
-		jsonIdmap, err = nextIdmap.ToJSON()
-		if err != nil {
-			d.logger.Error("Failed to marshal idmap", logger.Ctx{"idmap": nextIdmap, "err": err})
-			return err
-		}
+	jsonIdmap, err := nextIdmap.ToJSON()
+	if err != nil {
+		d.logger.Error("Failed to marshal idmap", logger.Ctx{"idmap": nextIdmap, "err": err})
+		return err
 	}
 
 	// Update last idmap.

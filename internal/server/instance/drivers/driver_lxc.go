@@ -277,20 +277,13 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.In
 		}
 	}
 
-	var jsonIdmap string
-	if idmapSet != nil {
-		idmapBytes, err := json.Marshal(idmapSet.Entries)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		jsonIdmap = string(idmapBytes)
-	} else {
-		jsonIdmap = "[]"
+	idmapSetJSON, err := idmapSet.ToJSON()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to encode ID map: %w", err)
 	}
 
 	v := map[string]string{
-		"volatile.idmap.next": jsonIdmap,
+		"volatile.idmap.next": idmapSetJSON,
 		"volatile.idmap.base": fmt.Sprintf("%v", base),
 	}
 
@@ -1899,12 +1892,12 @@ func (d *lxc) handleIdmappedStorage() (idmap.IdmapStorageType, *idmap.Set, error
 			return idmap.IdmapStorageNone, nil, err
 		}
 
-		idmapBytes, err := json.Marshal(nextIdmap.Entries)
+		idmapJSON, err := nextIdmap.ToJSON()
 		if err != nil {
 			return idmap.IdmapStorageNone, nil, err
 		}
 
-		jsonDiskIdmap = string(idmapBytes)
+		jsonDiskIdmap = idmapJSON
 	}
 
 	err = d.VolatileSet(map[string]string{"volatile.last_state.idmap": jsonDiskIdmap})
@@ -1991,18 +1984,13 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		return "", nil, fmt.Errorf("Failed to handle idmapped storage: %w", err)
 	}
 
-	var idmapBytes []byte
-	if nextIdmap == nil {
-		idmapBytes = []byte("[]")
-	} else {
-		idmapBytes, err = json.Marshal(nextIdmap.Entries)
-		if err != nil {
-			return "", nil, err
-		}
+	nextIdmapJSON, err := nextIdmap.ToJSON()
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed to encode ID map: %w", err)
 	}
 
-	if d.localConfig["volatile.idmap.current"] != string(idmapBytes) {
-		err = d.VolatileSet(map[string]string{"volatile.idmap.current": string(idmapBytes)})
+	if d.localConfig["volatile.idmap.current"] != nextIdmapJSON {
+		err = d.VolatileSet(map[string]string{"volatile.idmap.current": nextIdmapJSON})
 		if err != nil {
 			return "", nil, fmt.Errorf("Set volatile.idmap.current config key on container %q (id %d): %w", d.name, d.id, err)
 		}
@@ -4332,16 +4320,9 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			}
 		}
 
-		var jsonIdmap string
-		if idmapSet != nil {
-			idmapBytes, err := json.Marshal(idmapSet.Entries)
-			if err != nil {
-				return err
-			}
-
-			jsonIdmap = string(idmapBytes)
-		} else {
-			jsonIdmap = "[]"
+		jsonIdmap, err := idmapSet.ToJSON()
+		if err != nil {
+			return fmt.Errorf("Failed to encode ID map: %w", err)
 		}
 
 		d.localConfig["volatile.idmap.next"] = jsonIdmap
@@ -5721,20 +5702,13 @@ func (d *lxc) resetContainerDiskIdmap(srcIdmap *idmap.Set) error {
 	}
 
 	if !srcIdmap.Equals(dstIdmap) {
-		var jsonIdmap string
-		if srcIdmap != nil {
-			idmapBytes, err := json.Marshal(srcIdmap.Entries)
-			if err != nil {
-				return err
-			}
-
-			jsonIdmap = string(idmapBytes)
-		} else {
-			jsonIdmap = "[]"
+		jsonIdmap, err := srcIdmap.ToJSON()
+		if err != nil {
+			return fmt.Errorf("Failed to encode ID map: %w", err)
 		}
 
 		d.logger.Debug("Setting new volatile.last_state.idmap from source instance", logger.Ctx{"sourceIdmap": srcIdmap})
-		err := d.VolatileSet(map[string]string{"volatile.last_state.idmap": jsonIdmap})
+		err = d.VolatileSet(map[string]string{"volatile.last_state.idmap": jsonIdmap})
 		if err != nil {
 			return err
 		}
