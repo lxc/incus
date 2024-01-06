@@ -169,6 +169,9 @@ static const struct incus_seccomp_data_arch seccomp_notify_syscall_table[] = {
 #ifdef AUDIT_ARCH_MIPSEL64N32
 	{ AUDIT_ARCH_MIPSEL64N32, 131, 253, 180, 160,  -1, 141, 4116 },
 #endif
+#ifdef AUDIT_ARCH_LOONGARCH64
+	{ AUDIT_ARCH_LOONGARCH64, -1,  33,   5,  40, 280, 119, 179 },
+#endif
 };
 
 static int seccomp_notify_get_syscall(struct seccomp_notif *req,
