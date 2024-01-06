@@ -1916,6 +1916,46 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
+	// Check if idmap needs changing.
+	if !d.IsPrivileged() {
+		nextMap, err := d.NextIdmap()
+		if err != nil {
+			return "", nil, err
+		}
+
+		// Check if we need to change idmap.
+		if nextMap != nil && d.state.OS.IdmapSet != nil && !d.state.OS.IdmapSet.Includes(nextMap) {
+			// Update the idmap.
+			idmapSet, base, err := findIdmap(
+				d.state,
+				d.Name(),
+				d.expandedConfig["security.idmap.isolated"],
+				d.expandedConfig["security.idmap.base"],
+				d.expandedConfig["security.idmap.size"],
+				d.expandedConfig["raw.idmap"],
+			)
+			if err != nil {
+				return "", nil, fmt.Errorf("Failed to get ID map: %w", err)
+			}
+
+			idmapSetJSON, err := idmapSet.ToJSON()
+			if err != nil {
+				return "", nil, fmt.Errorf("Failed to encode ID map: %w", err)
+			}
+
+			err = d.VolatileSet(map[string]string{
+				"volatile.idmap.next": idmapSetJSON,
+				"volatile.idmap.base": fmt.Sprintf("%v", base),
+			})
+			if err != nil {
+				return "", nil, fmt.Errorf("Failed to update volatile idmap: %w", err)
+			}
+
+			// Invalidate the idmap cache.
+			d.idmapset = nil
+		}
+	}
+
 	// Load the go-lxc struct
 	cc, err := d.initLXC(true)
 	if err != nil {
