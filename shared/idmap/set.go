@@ -368,3 +368,29 @@ func (m *Set) Split(minSize int64, maxSize int64, minHost int64, maxHost int64) 
 
 	return &Set{Entries: []Entry{*uidEntry, *gidEntry}}, nil
 }
+
+// Includes checks whether the provided Set is fully covered by the current Set.
+func (m *Set) Includes(sub *Set) bool {
+	// Populate the allowed entries.
+	allowedUIDs := []Entry{}
+	allowedGIDs := []Entry{}
+
+	for _, entry := range m.Entries {
+		if entry.IsUID {
+			allowedUIDs = append(allowedUIDs, entry)
+		}
+
+		if entry.IsGID {
+			allowedGIDs = append(allowedGIDs, entry)
+		}
+	}
+
+	// Check for coverage.
+	for _, entry := range sub.Entries {
+		if !entry.HostIDsCoveredBy(allowedUIDs, allowedGIDs) {
+			return false
+		}
+	}
+
+	return true
+}
