@@ -711,7 +711,13 @@ func storagePoolVolumeSnapshotTypeGet(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
-	expiry, err := s.DB.Cluster.GetStorageVolumeSnapshotExpiry(dbVolume.ID)
+	var expiry time.Time
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		expiry, err = tx.GetStorageVolumeSnapshotExpiry(ctx, dbVolume.ID)
+
+		return err
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -840,7 +846,13 @@ func storagePoolVolumeSnapshotTypePut(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
-	expiry, err := s.DB.Cluster.GetStorageVolumeSnapshotExpiry(dbVolume.ID)
+	var expiry time.Time
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		expiry, err = tx.GetStorageVolumeSnapshotExpiry(ctx, dbVolume.ID)
+
+		return err
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -971,7 +983,13 @@ func storagePoolVolumeSnapshotTypePatch(d *Daemon, r *http.Request) response.Res
 		return err
 	})
 
-	expiry, err := s.DB.Cluster.GetStorageVolumeSnapshotExpiry(dbVolume.ID)
+	var expiry time.Time
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		expiry, err = tx.GetStorageVolumeSnapshotExpiry(ctx, dbVolume.ID)
+
+		return err
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}
