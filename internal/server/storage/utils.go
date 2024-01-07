@@ -285,7 +285,11 @@ func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDesc
 
 	// Create the database entry for the storage volume.
 	if snapshot {
-		_, err = p.state.DB.Cluster.CreateStorageVolumeSnapshot(projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), creationDate, expiryDate)
+		err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_, err = tx.CreateStorageVolumeSnapshot(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), creationDate, expiryDate)
+
+			return err
+		})
 	} else {
 		_, err = p.state.DB.Cluster.CreateStoragePoolVolume(projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), volDBContentType, creationDate)
 	}

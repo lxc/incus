@@ -347,7 +347,13 @@ func (c *Cluster) GetURIFromEntity(entityType int, entityID int) (string, error)
 
 		uri = fmt.Sprintf(cluster.EntityURIs[entityType], volume.PoolName, volume.TypeName, volume.Name, backup.Name, volume.ProjectName)
 	case cluster.TypeStorageVolumeSnapshot:
-		snapshot, err := c.GetStorageVolumeSnapshotWithID(entityID)
+		var snapshot StorageVolumeArgs
+
+		err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
+			snapshot, err = tx.GetStorageVolumeSnapshotWithID(ctx, entityID)
+
+			return err
+		})
 		if err != nil {
 			return "", fmt.Errorf("Failed to get volume snapshot: %w", err)
 		}
