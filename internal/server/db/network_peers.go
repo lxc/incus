@@ -9,9 +9,20 @@ import (
 	"fmt"
 	"net/http"
 
+	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/shared/api"
 )
+
+const (
+	networkPeerTypeLocal = iota
+	networkPeerTypeRemote
+)
+
+var networkPeerTypeNames = map[int]string{
+	networkPeerTypeLocal:  "local",
+	networkPeerTypeRemote: "remote",
+}
 
 // CreateNetworkPeer creates a new Network Peer and returns its ID.
 // If there is a mutual peering on the target network side the both peer entries are upated to link to each other's
@@ -22,19 +33,48 @@ func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info
 	var localPeerID int64
 	var targetPeerNetworkID int64 = -1 // -1 means no mutual peering exists.
 
-	// Insert a new Network pending peer record.
-	result, err := c.tx.ExecContext(ctx, `
+	if info.Type == "" || info.Type == networkPeerTypeNames[networkPeerTypeLocal] {
+		// Insert a new pending local peer record.
+		result, err := c.tx.ExecContext(ctx, `
 		INSERT INTO networks_peers
-		(network_id, name, description, target_network_project, target_network_name)
-		VALUES (?, ?, ?, ?, ?)
-		`, networkID, info.Name, info.Description, info.TargetProject, info.TargetNetwork)
-	if err != nil {
-		return -1, false, err
-	}
+		(network_id, name, description, type, target_network_project, target_network_name)
+		VALUES (?, ?, ?, ?, ?, ?)
+		`, networkID, info.Name, info.Description, networkPeerTypeLocal, info.TargetProject, info.TargetNetwork)
+		if err != nil {
+			return -1, false, err
+		}
 
-	localPeerID, err = result.LastInsertId()
-	if err != nil {
-		return -1, false, err
+		localPeerID, err = result.LastInsertId()
+		if err != nil {
+			return -1, false, err
+		}
+	} else if info.Type == networkPeerTypeNames[networkPeerTypeRemote] {
+		// Get the target integration.
+		if info.TargetIntegration == "" {
+			return -1, false, fmt.Errorf("Missing network integration name")
+		}
+
+		networkIntegration, err := dbCluster.GetNetworkIntegration(ctx, c.tx, info.TargetIntegration)
+		if err != nil {
+			return -1, false, err
+		}
+
+		// Insert a new remote peer record.
+		result, err := c.tx.ExecContext(ctx, `
+		INSERT INTO networks_peers
+		(network_id, name, description, type, target_network_integration_id)
+		VALUES (?, ?, ?, ?, ?)
+		`, networkID, info.Name, info.Description, networkPeerTypeRemote, networkIntegration.ID)
+		if err != nil {
+			return -1, false, err
+		}
+
+		localPeerID, err = result.LastInsertId()
+		if err != nil {
+			return -1, false, err
+		}
+	} else {
+		return -1, false, fmt.Errorf("Invalid network peer type %q", info.Type)
 	}
 
 	// Save config.
@@ -43,13 +83,14 @@ func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info
 		return -1, false, err
 	}
 
-	// Check if we are creating a mutual peering of an existing peer and if so then update both sides
-	// with the respective network IDs. This query looks up our network peer's network name and project
-	// name and then checks if there are any unlinked (target_network_id IS NULL) peers that have
-	// matching target network and project names for the network this peer belongs to. If so then it
-	// returns the target peer's ID and network ID. This can then be used to update both our local peer
-	// and the target peer itself with the respective network IDs of each side.
-	q := `
+	if info.Type == "" || info.Type == networkPeerTypeNames[networkPeerTypeLocal] {
+		// Check if we are creating a mutual peering of an existing peer and if so then update both sides
+		// with the respective network IDs. This query looks up our network peer's network name and project
+		// name and then checks if there are any unlinked (target_network_id IS NULL) peers that have
+		// matching target network and project names for the network this peer belongs to. If so then it
+		// returns the target peer's ID and network ID. This can then be used to update both our local peer
+		// and the target peer itself with the respective network IDs of each side.
+		q := `
 		SELECT
 			target_peer.id,
 			target_peer.network_id
@@ -74,38 +115,39 @@ func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info
 		LIMIT 1
 		`
 
-	var targetPeerID int64 = -1
+		var targetPeerID int64 = -1
 
-	err = c.tx.QueryRowContext(ctx, q, info.TargetProject, info.TargetNetwork, networkID, localPeerID).Scan(&targetPeerID, &targetPeerNetworkID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return -1, false, fmt.Errorf("Failed looking up mutual peering: %w", err)
-	} else if err == nil {
-		peerNetworkMap := map[int64]struct {
-			localNetworkID      int64
-			targetPeerNetworkID int64
-		}{
-			localPeerID: {
-				localNetworkID:      networkID,
-				targetPeerNetworkID: targetPeerNetworkID,
-			},
-			targetPeerID: {
-				localNetworkID:      targetPeerNetworkID,
-				targetPeerNetworkID: networkID,
-			},
-		}
+		err = c.tx.QueryRowContext(ctx, q, info.TargetProject, info.TargetNetwork, networkID, localPeerID).Scan(&targetPeerID, &targetPeerNetworkID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return -1, false, fmt.Errorf("Failed looking up mutual peering: %w", err)
+		} else if err == nil {
+			peerNetworkMap := map[int64]struct {
+				localNetworkID      int64
+				targetPeerNetworkID int64
+			}{
+				localPeerID: {
+					localNetworkID:      networkID,
+					targetPeerNetworkID: targetPeerNetworkID,
+				},
+				targetPeerID: {
+					localNetworkID:      targetPeerNetworkID,
+					targetPeerNetworkID: networkID,
+				},
+			}
 
-		// A mutual peering has been found, update both sides with their respective network IDs
-		// and clear the joining target project and network names.
-		for peerID, peerMap := range peerNetworkMap {
-			_, err := c.tx.ExecContext(ctx, `
+			// A mutual peering has been found, update both sides with their respective network IDs
+			// and clear the joining target project and network names.
+			for peerID, peerMap := range peerNetworkMap {
+				_, err := c.tx.Exec(`
 				UPDATE networks_peers SET
 					target_network_id = ?,
 					target_network_project = NULL,
 					target_network_name = NULL
 				WHERE networks_peers.network_id = ? AND networks_peers.id = ?
 				`, peerMap.targetPeerNetworkID, peerMap.localNetworkID, peerID)
-			if err != nil {
-				return -1, false, fmt.Errorf("Failed updating mutual peering: %w", err)
+				if err != nil {
+					return -1, false, fmt.Errorf("Failed updating mutual peering: %w", err)
+				}
 			}
 		}
 	}
@@ -153,11 +195,15 @@ func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerNam
 		local_peer.id,
 		local_peer.name,
 		local_peer.description,
+		local_peer.type,
 		IFNULL(local_peer.target_network_project, ""),
 		IFNULL(local_peer.target_network_name, ""),
 		IFNULL(target_peer_network.name, "") AS target_peer_network_name,
-		IFNULL(target_peer_project.name, "") AS target_peer_network_project
+		IFNULL(target_peer_project.name, "") AS target_peer_network_project,
+		IFNULL(target_integration.name, "")
 	FROM networks_peers AS local_peer
+	LEFT JOIN networks_integrations AS target_integration
+		ON target_integration.id = local_peer.target_network_integration_id
 	LEFT JOIN networks_peers AS target_peer
 		ON target_peer.network_id = local_peer.target_network_id
 		AND target_peer.target_network_id = local_peer.network_id
@@ -171,11 +217,13 @@ func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerNam
 
 	var err error
 	var peerID int64 = -1
+	var peerType = -1
 	var peer api.NetworkPeer
 	var targetPeerNetworkName string
 	var targetPeerNetworkProject string
 
-	err = c.tx.QueryRowContext(ctx, q, networkID, peerName).Scan(&peerID, &peer.Name, &peer.Description, &peer.TargetProject, &peer.TargetNetwork, &targetPeerNetworkName, &targetPeerNetworkProject)
+	// Get all the DB fields.
+	err = c.tx.QueryRowContext(ctx, q, networkID, peerName).Scan(&peerID, &peer.Name, &peer.Description, &peerType, &peer.TargetProject, &peer.TargetNetwork, &targetPeerNetworkName, &targetPeerNetworkProject, &peer.TargetIntegration)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network peer not found")
@@ -184,11 +232,16 @@ func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerNam
 		return -1, nil, err
 	}
 
+	// Convert the type to a string.
+	peer.Type = networkPeerTypeNames[peerType]
+
+	// Add in the peer config.
 	err = networkPeerConfig(ctx, c, peerID, &peer)
 	if err != nil {
 		return -1, nil, err
 	}
 
+	// Add the peer info.
 	networkPeerPopulatePeerInfo(&peer, targetPeerNetworkProject, targetPeerNetworkName)
 
 	return peerID, &peer, nil
@@ -198,6 +251,12 @@ func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerNam
 // It uses the state of the targetPeerNetworkProject and targetPeerNetworkName arguments to decide whether the
 // peering is mutually created and whether to use those values rather than the values contained in the peer.
 func networkPeerPopulatePeerInfo(peer *api.NetworkPeer, targetPeerNetworkProject string, targetPeerNetworkName string) {
+	// The rest of this function doesn't apply to remote peerings.
+	if peer.Type == networkPeerTypeNames[networkPeerTypeRemote] {
+		peer.Status = api.NetworkStatusCreated
+		return
+	}
+
 	// Peer has mutual peering from target network.
 	if targetPeerNetworkName != "" && targetPeerNetworkProject != "" {
 		if peer.TargetNetwork != "" || peer.TargetProject != "" {
@@ -267,11 +326,15 @@ func (c *ClusterTx) GetNetworkPeers(ctx context.Context, networkID int64) (map[i
 		local_peer.id,
 		local_peer.name,
 		local_peer.description,
+		local_peer.type,
 		IFNULL(local_peer.target_network_project, ""),
 		IFNULL(local_peer.target_network_name, ""),
 		IFNULL(target_peer_network.name, "") AS target_peer_network_name,
-		IFNULL(target_peer_project.name, "") AS target_peer_network_project
+		IFNULL(target_peer_project.name, "") AS target_peer_network_project,
+		IFNULL(target_integration.name, "")
 	FROM networks_peers AS local_peer
+	LEFT JOIN networks_integrations AS target_integration
+		ON target_integration.id = local_peer.target_network_integration_id
 	LEFT JOIN networks_peers AS target_peer
 		ON target_peer.network_id = local_peer.target_network_id
 		AND target_peer.target_network_id = local_peer.network_id
@@ -287,15 +350,21 @@ func (c *ClusterTx) GetNetworkPeers(ctx context.Context, networkID int64) (map[i
 
 	err = query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
 		var peerID int64 = -1
+		var peerType = -1
 		var peer api.NetworkPeer
 		var targetPeerNetworkName string
 		var targetPeerNetworkProject string
 
-		err := scan(&peerID, &peer.Name, &peer.Description, &peer.TargetProject, &peer.TargetNetwork, &targetPeerNetworkName, &targetPeerNetworkProject)
+		// Get all the DB fields.
+		err := scan(&peerID, &peer.Name, &peer.Description, &peerType, &peer.TargetProject, &peer.TargetNetwork, &targetPeerNetworkName, &targetPeerNetworkProject, &peer.TargetIntegration)
 		if err != nil {
 			return err
 		}
 
+		// Convert the type to a string.
+		peer.Type = networkPeerTypeNames[peerType]
+
+		// Add the peer info.
 		networkPeerPopulatePeerInfo(&peer, targetPeerNetworkProject, targetPeerNetworkName)
 
 		peers[peerID] = &peer
