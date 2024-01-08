@@ -1274,17 +1274,19 @@ func (d Xtables) iptablesClear(ipVersion uint, comments []string, fromTables ...
 
 	// Check which tables exist.
 	var tables []string // Uninitialised slice indicates we haven't opened the table file yet.
-	file, err := os.Open(tablesFile)
-	if err != nil {
-		logger.Warnf("Failed getting list of tables from %q, assuming all requested tables exist", tablesFile)
-	} else {
-		tables = []string{} // Initialise the tables slice indcating we were able to open the tables file.
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			tables = append(tables, scanner.Text())
-		}
+	if !d.xtablesIsNftables(cmd) {
+		file, err := os.Open(tablesFile)
+		if err != nil {
+			logger.Warnf("Failed getting list of tables from %q, assuming all requested tables exist", tablesFile)
+		} else {
+			tables = []string{} // Initialise the tables slice indcating we were able to open the tables file.
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				tables = append(tables, scanner.Text())
+			}
 
-		_ = file.Close()
+			_ = file.Close()
+		}
 	}
 
 	for _, fromTable := range fromTables {
