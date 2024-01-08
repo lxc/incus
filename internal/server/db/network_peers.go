@@ -143,7 +143,7 @@ func networkPeerConfigAdd(tx *sql.Tx, peerID int64, config map[string]string) er
 // GetNetworkPeer returns the Network Peer ID and info for the given network ID and peer name.
 func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerName string) (int64, *api.NetworkPeer, error) {
 	// This query loads the specified local peer as well as trying to ascertain whether there is a mutual
-	// target peer, and if so what are it's project and network names. This is used to populate the
+	// target peer, and if so what are its project and network names. This is used to populate the
 	// TargetProject, TargetNetwork fields and indicates the Status is api.NetworkStatusCreated if available.
 	// If the peer is not mutually configured, then the local target_network_project and target_network_name
 	// fields will be used to populate TargetProject and TargetNetwork and the Status will be set to
@@ -257,7 +257,7 @@ func networkPeerConfig(ctx context.Context, tx *ClusterTx, peerID int64, peer *a
 // GetNetworkPeers returns map of Network Peers for the given network ID keyed on Peer ID.
 func (c *ClusterTx) GetNetworkPeers(ctx context.Context, networkID int64) (map[int64]*api.NetworkPeer, error) {
 	// This query loads the local peers for the network as well as trying to ascertain whether there is a
-	// mutual target peer, and if so what are it's project and network names. This is used to populate the
+	// mutual target peer, and if so what are its project and network names. This is used to populate the
 	// TargetProject, TargetNetwork fields and indicates the Status is api.NetworkStatusCreated if available.
 	// If the peer is not mutually configured, then the local target_network_project and target_network_name
 	// fields will be used to populate TargetProject and TargetNetwork and the Status will be set to
