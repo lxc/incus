@@ -125,7 +125,15 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 
 	// Then, get all the networks, their network forwards and their network load balancers.
 	for _, projectName := range projectNames {
-		networkNames, err := d.db.Cluster.GetNetworks(projectName)
+		var networkNames []string
+
+		err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			networkNames, err = tx.GetNetworks(ctx, projectName)
+
+			return err
+		})
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading networks: %w", err))
 		}
@@ -179,7 +187,13 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 				}
 			}
 
-			forwards, err := d.db.Cluster.GetNetworkForwards(r.Context(), n.ID(), false)
+			var forwards map[int64]*api.NetworkForward
+
+			err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				forwards, err = tx.GetNetworkForwards(ctx, n.ID(), false)
+
+				return err
+			})
 			if err != nil {
 				return response.SmartError(fmt.Errorf("Failed getting forwards for network %q in project %q: %w", networkName, projectName, err))
 			}
@@ -201,7 +215,13 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 				)
 			}
 
-			loadBalancers, err := d.db.Cluster.GetNetworkLoadBalancers(r.Context(), n.ID(), false)
+			var loadBalancers map[int64]*api.NetworkLoadBalancer
+
+			err = d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				loadBalancers, err = tx.GetNetworkLoadBalancers(ctx, n.ID(), false)
+
+				return err
+			})
 			if err != nil {
 				return response.SmartError(fmt.Errorf("Failed getting load-balancers for network %q in project %q: %w", networkName, projectName, err))
 			}

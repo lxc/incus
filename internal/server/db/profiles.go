@@ -12,7 +12,7 @@ import (
 )
 
 // GetProfileNames returns the names of all profiles in the given project.
-func (c *Cluster) GetProfileNames(project string) ([]string, error) {
+func (c *ClusterTx) GetProfileNames(ctx context.Context, project string) ([]string, error) {
 	q := `
 SELECT profiles.name
  FROM profiles
@@ -21,27 +21,20 @@ WHERE projects.name = ?
 `
 	var result [][]any
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		enabled, err := cluster.ProjectHasProfiles(context.Background(), tx.tx, project)
-		if err != nil {
-			return fmt.Errorf("Check if project has profiles: %w", err)
-		}
+	enabled, err := cluster.ProjectHasProfiles(context.Background(), c.tx, project)
+	if err != nil {
+		return nil, fmt.Errorf("Check if project has profiles: %w", err)
+	}
 
-		if !enabled {
-			project = "default"
-		}
+	if !enabled {
+		project = "default"
+	}
 
-		inargs := []any{project}
-		var name string
-		outfmt := []any{name}
+	inargs := []any{project}
+	var name string
+	outfmt := []any{name}
 
-		result, err = queryScan(ctx, tx, q, inargs, outfmt)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	result, err = queryScan(ctx, c, q, inargs, outfmt)
 	if err != nil {
 		return nil, err
 	}
@@ -55,27 +48,20 @@ WHERE projects.name = ?
 }
 
 // GetProfile returns the profile with the given name.
-func (c *Cluster) GetProfile(project, name string) (int64, *api.Profile, error) {
-	var result *api.Profile
-	var id int64
+func (c *ClusterTx) GetProfile(ctx context.Context, project, name string) (int64, *api.Profile, error) {
+	profiles, err := cluster.GetProfilesIfEnabled(ctx, c.tx, project, []string{name})
+	if err != nil {
+		return -1, nil, err
+	}
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		var err error
-		profiles, err := cluster.GetProfilesIfEnabled(ctx, tx.Tx(), project, []string{name})
-		if err != nil {
-			return err
-		}
+	if len(profiles) != 1 {
+		return -1, nil, fmt.Errorf("Expected one profile with name %q, got %d profiles", name, len(profiles))
+	}
 
-		if len(profiles) != 1 {
-			return fmt.Errorf("Expected one profile with name %q, got %d profiles", name, len(profiles))
-		}
+	profile := profiles[0]
+	id := int64(profile.ID)
 
-		profile := profiles[0]
-		id = int64(profile.ID)
-		result, err = profile.ToAPI(ctx, tx.Tx())
-
-		return err
-	})
+	result, err := profile.ToAPI(ctx, c.tx)
 	if err != nil {
 		return -1, nil, err
 	}
@@ -84,28 +70,21 @@ func (c *Cluster) GetProfile(project, name string) (int64, *api.Profile, error) 
 }
 
 // GetProfiles returns the profiles with the given names in the given project.
-func (c *Cluster) GetProfiles(projectName string, profileNames []string) ([]api.Profile, error) {
+func (c *ClusterTx) GetProfiles(ctx context.Context, projectName string, profileNames []string) ([]api.Profile, error) {
 	profiles := make([]api.Profile, len(profileNames))
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		dbProfiles, err := cluster.GetProfilesIfEnabled(ctx, tx.Tx(), projectName, profileNames)
-		if err != nil {
-			return err
-		}
-
-		for i, profile := range dbProfiles {
-			apiProfile, err := profile.ToAPI(ctx, tx.Tx())
-			if err != nil {
-				return err
-			}
-
-			profiles[i] = *apiProfile
-		}
-
-		return nil
-	})
+	dbProfiles, err := cluster.GetProfilesIfEnabled(ctx, c.tx, projectName, profileNames)
 	if err != nil {
 		return nil, err
+	}
+
+	for i, profile := range dbProfiles {
+		apiProfile, err := profile.ToAPI(ctx, c.tx)
+		if err != nil {
+			return nil, err
+		}
+
+		profiles[i] = *apiProfile
 	}
 
 	return profiles, nil
@@ -113,7 +92,7 @@ func (c *Cluster) GetProfiles(projectName string, profileNames []string) ([]api.
 
 // GetInstancesWithProfile gets the names of the instance associated with the
 // profile with the given name in the given project.
-func (c *Cluster) GetInstancesWithProfile(project, profile string) (map[string][]string, error) {
+func (c *ClusterTx) GetInstancesWithProfile(ctx context.Context, project, profile string) (map[string][]string, error) {
 	q := `SELECT instances.name, projects.name FROM instances
 		JOIN instances_profiles ON instances.id == instances_profiles.instance_id
 		JOIN projects ON projects.id == instances.project_id
@@ -125,27 +104,20 @@ func (c *Cluster) GetInstancesWithProfile(project, profile string) (map[string][
 	results := map[string][]string{}
 	var output [][]any
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		enabled, err := cluster.ProjectHasProfiles(context.Background(), tx.tx, project)
-		if err != nil {
-			return fmt.Errorf("Check if project has profiles: %w", err)
-		}
+	enabled, err := cluster.ProjectHasProfiles(context.Background(), c.tx, project)
+	if err != nil {
+		return nil, fmt.Errorf("Check if project has profiles: %w", err)
+	}
 
-		if !enabled {
-			project = "default"
-		}
+	if !enabled {
+		project = "default"
+	}
 
-		inargs := []any{profile, project}
-		var name string
-		outfmt := []any{name, name}
+	inargs := []any{profile, project}
+	var name string
+	outfmt := []any{name, name}
 
-		output, err = queryScan(ctx, tx, q, inargs, outfmt)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	output, err = queryScan(ctx, c, q, inargs, outfmt)
 	if err != nil {
 		return nil, err
 	}
@@ -162,17 +134,16 @@ func (c *Cluster) GetInstancesWithProfile(project, profile string) (map[string][
 }
 
 // RemoveUnreferencedProfiles removes unreferenced profiles.
-func (c *Cluster) RemoveUnreferencedProfiles() error {
+func (c *ClusterTx) RemoveUnreferencedProfiles(ctx context.Context) error {
 	stmt := `
 DELETE FROM profiles_config WHERE profile_id NOT IN (SELECT id FROM profiles);
 DELETE FROM profiles_devices WHERE profile_id NOT IN (SELECT id FROM profiles);
 DELETE FROM profiles_devices_config WHERE profile_device_id NOT IN (SELECT id FROM profiles_devices);
 `
 
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		_, err := tx.tx.ExecContext(ctx, stmt)
-		return err
-	})
+	_, err := c.tx.ExecContext(ctx, stmt)
+
+	return err
 }
 
 // ExpandInstanceConfig expands the given instance config with the config

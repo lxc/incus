@@ -15,7 +15,17 @@ import (
 
 // LoadByName loads and initialises a Network zone from the database by name.
 func LoadByName(s *state.State, name string) (NetworkZone, error) {
-	id, projectName, zoneInfo, err := s.DB.Cluster.GetNetworkZone(name)
+	var id int64
+	var projectName string
+	var zoneInfo *api.NetworkZone
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		id, projectName, zoneInfo, err = tx.GetNetworkZone(ctx, name)
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +38,16 @@ func LoadByName(s *state.State, name string) (NetworkZone, error) {
 
 // LoadByNameAndProject loads and initialises a Network zone from the database by project and name.
 func LoadByNameAndProject(s *state.State, projectName string, name string) (NetworkZone, error) {
-	id, zoneInfo, err := s.DB.Cluster.GetNetworkZoneByProject(projectName, name)
+	var id int64
+	var zoneInfo *api.NetworkZone
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		id, zoneInfo, err = tx.GetNetworkZoneByProject(ctx, projectName, name)
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +106,12 @@ func Create(s *state.State, projectName string, zoneInfo *api.NetworkZonesPost) 
 		}
 	}
 
-	// Insert DB record.
-	_, err = s.DB.Cluster.CreateNetworkZone(projectName, zoneInfo)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Insert DB record.
+		_, err = tx.CreateNetworkZone(ctx, projectName, zoneInfo)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -106,18 +129,26 @@ func Create(s *state.State, projectName string, zoneInfo *api.NetworkZonesPost) 
 // If multiple names are provided, also checks that duplicate names aren't specified in the list.
 func Exists(s *state.State, name ...string) error {
 	checkedzoneNames := make(map[string]struct{}, len(name))
-	for _, zoneName := range name {
-		_, _, _, err := s.DB.Cluster.GetNetworkZone(zoneName)
-		if err != nil {
-			return fmt.Errorf("Network zone %q does not exist", zoneName)
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		for _, zoneName := range name {
+			_, _, _, err := tx.GetNetworkZone(ctx, zoneName)
+			if err != nil {
+				return fmt.Errorf("Network zone %q does not exist", zoneName)
+			}
+
+			_, found := checkedzoneNames[zoneName]
+			if found {
+				return fmt.Errorf("Network zone %q specified multiple times", zoneName)
+			}
+
+			checkedzoneNames[zoneName] = struct{}{}
 		}
 
-		_, found := checkedzoneNames[zoneName]
-		if found {
-			return fmt.Errorf("Network zone %q specified multiple times", zoneName)
-		}
-
-		checkedzoneNames[zoneName] = struct{}{}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

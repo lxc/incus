@@ -18,7 +18,7 @@ import (
 // CreateNetworkLoadBalancer creates a new Network Load Balancer.
 // If memberSpecific is true, then the load balancer is associated to the current member, rather than being
 // associated to all members.
-func (c *Cluster) CreateNetworkLoadBalancer(networkID int64, memberSpecific bool, info *api.NetworkLoadBalancersPost) (int64, error) {
+func (c *ClusterTx) CreateNetworkLoadBalancer(ctx context.Context, networkID int64, memberSpecific bool, info *api.NetworkLoadBalancersPost) (int64, error) {
 	var err error
 	var loadBalancerID int64
 	var nodeID any
@@ -43,30 +43,23 @@ func (c *Cluster) CreateNetworkLoadBalancer(networkID int64, memberSpecific bool
 		}
 	}
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Insert a new Network Load Balancer record.
-		result, err := tx.tx.Exec(`
+	// Insert a new Network Load Balancer record.
+	result, err := c.tx.ExecContext(ctx, `
 		INSERT INTO networks_load_balancers
 		(network_id, node_id, listen_address, description, backends, ports)
 		VALUES (?, ?, ?, ?, ?, ?)
 		`, networkID, nodeID, info.ListenAddress, info.Description, string(backendsJSON), string(portsJSON))
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return -1, err
+	}
 
-		loadBalancerID, err = result.LastInsertId()
-		if err != nil {
-			return err
-		}
+	loadBalancerID, err = result.LastInsertId()
+	if err != nil {
+		return -1, err
+	}
 
-		// Save config.
-		err = networkLoadBalancerConfigAdd(tx.tx, loadBalancerID, info.Config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	// Save config.
+	err = networkLoadBalancerConfigAdd(c.tx, loadBalancerID, info.Config)
 	if err != nil {
 		return -1, err
 	}
@@ -102,7 +95,7 @@ func networkLoadBalancerConfigAdd(tx *sql.Tx, loadBalancerID int64, config map[s
 }
 
 // UpdateNetworkLoadBalancer updates an existing Network Load Balancer.
-func (c *Cluster) UpdateNetworkLoadBalancer(networkID int64, loadBalancerID int64, info *api.NetworkLoadBalancerPut) error {
+func (c *ClusterTx) UpdateNetworkLoadBalancer(ctx context.Context, networkID int64, loadBalancerID int64, info *api.NetworkLoadBalancerPut) error {
 	var err error
 	var backendsJSON, portsJSON []byte
 
@@ -120,39 +113,32 @@ func (c *Cluster) UpdateNetworkLoadBalancer(networkID int64, loadBalancerID int6
 		}
 	}
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Update existing Network Load Balancer record.
-		res, err := tx.tx.Exec(`
+	// Update existing Network Load Balancer record.
+	res, err := c.tx.ExecContext(ctx, `
 		UPDATE networks_load_balancers
 		SET description = ?, backends = ?, ports = ?
 		WHERE network_id = ? and id = ?
 		`, info.Description, string(backendsJSON), string(portsJSON), networkID, loadBalancerID)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-		if rowsAffected <= 0 {
-			return api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
-		}
+	if rowsAffected <= 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
+	}
 
-		// Save config.
-		_, err = tx.tx.Exec("DELETE FROM networks_load_balancers_config WHERE network_load_balancer_id=?", loadBalancerID)
-		if err != nil {
-			return err
-		}
+	// Save config.
+	_, err = c.tx.ExecContext(ctx, "DELETE FROM networks_load_balancers_config WHERE network_load_balancer_id=?", loadBalancerID)
+	if err != nil {
+		return err
+	}
 
-		err = networkLoadBalancerConfigAdd(tx.tx, loadBalancerID, info.Config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	err = networkLoadBalancerConfigAdd(c.tx, loadBalancerID, info.Config)
 	if err != nil {
 		return err
 	}
@@ -161,34 +147,32 @@ func (c *Cluster) UpdateNetworkLoadBalancer(networkID int64, loadBalancerID int6
 }
 
 // DeleteNetworkLoadBalancer deletes an existing Network Load Balancer.
-func (c *Cluster) DeleteNetworkLoadBalancer(networkID int64, loadBalancerID int64) error {
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Delete existing Network Load Balancer record.
-		res, err := tx.tx.Exec(`
+func (c *ClusterTx) DeleteNetworkLoadBalancer(ctx context.Context, networkID int64, loadBalancerID int64) error {
+	// Delete existing Network Load Balancer record.
+	res, err := c.tx.ExecContext(ctx, `
 			DELETE FROM networks_load_balancers
 			WHERE network_id = ? and id = ?
 		`, networkID, loadBalancerID)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-		if rowsAffected <= 0 {
-			return api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
-		}
+	if rowsAffected <= 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
+	}
 
-		return nil
-	})
+	return nil
 }
 
 // GetNetworkLoadBalancer returns the Network Load Balancer ID and info for the given network ID and listen address.
 // If memberSpecific is true, then the search is restricted to load balancers that belong to this member or belong
 // to all members.
-func (c *Cluster) GetNetworkLoadBalancer(ctx context.Context, networkID int64, memberSpecific bool, listenAddress string) (int64, *api.NetworkLoadBalancer, error) {
+func (c *ClusterTx) GetNetworkLoadBalancer(ctx context.Context, networkID int64, memberSpecific bool, listenAddress string) (int64, *api.NetworkLoadBalancer, error) {
 	loadBalancers, err := c.GetNetworkLoadBalancers(ctx, networkID, memberSpecific, listenAddress)
 	if (err == nil && len(loadBalancers) <= 0) || errors.Is(err, sql.ErrNoRows) {
 		return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network load balancer not found")
@@ -239,7 +223,7 @@ func networkLoadBalancerConfig(ctx context.Context, tx *ClusterTx, loadBalancerI
 // network ID keyed on Load Balancer ID.
 // If memberSpecific is true, then the search is restricted to load balancers that belong to this member or belong
 // to all members.
-func (c *Cluster) GetNetworkLoadBalancerListenAddresses(networkID int64, memberSpecific bool) (map[int64]string, error) {
+func (c *ClusterTx) GetNetworkLoadBalancerListenAddresses(ctx context.Context, networkID int64, memberSpecific bool) (map[int64]string, error) {
 	var q *strings.Builder = &strings.Builder{}
 	args := []any{networkID}
 
@@ -258,21 +242,19 @@ func (c *Cluster) GetNetworkLoadBalancerListenAddresses(networkID int64, memberS
 
 	loadBalancers := make(map[int64]string)
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return query.Scan(ctx, tx.Tx(), q.String(), func(scan func(dest ...any) error) error {
-			var loadBalancerID int64 = int64(-1)
-			var listenAddress string
+	err := query.Scan(ctx, c.tx, q.String(), func(scan func(dest ...any) error) error {
+		var loadBalancerID int64 = int64(-1)
+		var listenAddress string
 
-			err := scan(&loadBalancerID, &listenAddress)
-			if err != nil {
-				return err
-			}
+		err := scan(&loadBalancerID, &listenAddress)
+		if err != nil {
+			return err
+		}
 
-			loadBalancers[loadBalancerID] = listenAddress
+		loadBalancers[loadBalancerID] = listenAddress
 
-			return nil
-		}, args...)
-	})
+		return nil
+	}, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -391,7 +373,7 @@ func (c *ClusterTx) GetProjectNetworkLoadBalancerListenAddressesOnMember(ctx con
 // GetNetworkLoadBalancers returns map of Network Load Balancers for the given network ID keyed on Load Balancer ID.
 // If memberSpecific is true, then the search is restricted to load balancers that belong to this member or belong
 // to all members. Can optionally retrieve only specific network load balancers by listen address.
-func (c *Cluster) GetNetworkLoadBalancers(ctx context.Context, networkID int64, memberSpecific bool, listenAddresses ...string) (map[int64]*api.NetworkLoadBalancer, error) {
+func (c *ClusterTx) GetNetworkLoadBalancers(ctx context.Context, networkID int64, memberSpecific bool, listenAddresses ...string) (map[int64]*api.NetworkLoadBalancer, error) {
 	var q *strings.Builder = &strings.Builder{}
 	args := []any{networkID}
 
@@ -423,53 +405,46 @@ func (c *Cluster) GetNetworkLoadBalancers(ctx context.Context, networkID int64, 
 	var err error
 	loadBalancers := make(map[int64]*api.NetworkLoadBalancer)
 
-	err = c.Transaction(ctx, func(ctx context.Context, tx *ClusterTx) error {
-		err = query.Scan(ctx, tx.Tx(), q.String(), func(scan func(dest ...any) error) error {
-			var loadBalancerID int64 = int64(-1)
-			var backendsJSON, portsJSON string
-			var loadBalancer api.NetworkLoadBalancer
+	err = query.Scan(ctx, c.tx, q.String(), func(scan func(dest ...any) error) error {
+		var loadBalancerID int64 = int64(-1)
+		var backendsJSON, portsJSON string
+		var loadBalancer api.NetworkLoadBalancer
 
-			err := scan(&loadBalancerID, &loadBalancer.ListenAddress, &loadBalancer.Description, &loadBalancer.Location, &backendsJSON, &portsJSON)
-			if err != nil {
-				return err
-			}
-
-			loadBalancer.Backends = []api.NetworkLoadBalancerBackend{}
-			if backendsJSON != "" {
-				err = json.Unmarshal([]byte(backendsJSON), &loadBalancer.Backends)
-				if err != nil {
-					return fmt.Errorf("Failed unmarshalling backends: %w", err)
-				}
-			}
-
-			loadBalancer.Ports = []api.NetworkLoadBalancerPort{}
-			if portsJSON != "" {
-				err = json.Unmarshal([]byte(portsJSON), &loadBalancer.Ports)
-				if err != nil {
-					return fmt.Errorf("Failed unmarshalling ports: %w", err)
-				}
-			}
-
-			loadBalancers[loadBalancerID] = &loadBalancer
-
-			return nil
-		}, args...)
+		err := scan(&loadBalancerID, &loadBalancer.ListenAddress, &loadBalancer.Description, &loadBalancer.Location, &backendsJSON, &portsJSON)
 		if err != nil {
 			return err
 		}
 
-		// Populate config.
-		for loadBalancerID := range loadBalancers {
-			err = networkLoadBalancerConfig(ctx, tx, loadBalancerID, loadBalancers[loadBalancerID])
+		loadBalancer.Backends = []api.NetworkLoadBalancerBackend{}
+		if backendsJSON != "" {
+			err = json.Unmarshal([]byte(backendsJSON), &loadBalancer.Backends)
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed unmarshalling backends: %w", err)
 			}
 		}
 
+		loadBalancer.Ports = []api.NetworkLoadBalancerPort{}
+		if portsJSON != "" {
+			err = json.Unmarshal([]byte(portsJSON), &loadBalancer.Ports)
+			if err != nil {
+				return fmt.Errorf("Failed unmarshalling ports: %w", err)
+			}
+		}
+
+		loadBalancers[loadBalancerID] = &loadBalancer
+
 		return nil
-	})
+	}, args...)
 	if err != nil {
 		return nil, err
+	}
+
+	// Populate config.
+	for loadBalancerID := range loadBalancers {
+		err = networkLoadBalancerConfig(ctx, c, loadBalancerID, loadBalancers[loadBalancerID])
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return loadBalancers, nil

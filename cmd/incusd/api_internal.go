@@ -703,8 +703,12 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 		return fmt.Errorf(`Storage volume for instance %q already exists in the database`, backupConf.Container.Name)
 	}
 
-	// Check if an entry for the instance already exists in the db.
-	_, err = s.DB.Cluster.GetInstanceID(projectName, backupConf.Container.Name)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Check if an entry for the instance already exists in the db.
+		_, err := tx.GetInstanceID(ctx, projectName, backupConf.Container.Name)
+
+		return err
+	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return err
 	}
@@ -733,7 +737,13 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 		}
 	}
 
-	profiles, err := s.DB.Cluster.GetProfiles(projectName, backupConf.Container.Profiles)
+	var profiles []api.Profile
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		profiles, err = tx.GetProfiles(ctx, projectName, backupConf.Container.Profiles)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed loading profiles for instance: %w", err)
 	}
@@ -783,8 +793,12 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 	for _, snap := range existingSnapshots {
 		snapInstName := fmt.Sprintf("%s%s%s", backupConf.Container.Name, internalInstance.SnapshotDelimiter, snap.Name)
 
-		// Check if an entry for the snapshot already exists in the db.
-		_, snapErr := s.DB.Cluster.GetInstanceSnapshotID(projectName, backupConf.Container.Name, snap.Name)
+		snapErr := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Check if an entry for the snapshot already exists in the db.
+			_, err := tx.GetInstanceSnapshotID(ctx, projectName, backupConf.Container.Name, snap.Name)
+
+			return err
+		})
 		if snapErr != nil && !response.IsNotFoundError(snapErr) {
 			return snapErr
 		}
@@ -813,7 +827,9 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 		}
 
 		if snapErr == nil {
-			err := s.DB.Cluster.DeleteInstance(projectName, snapInstName)
+			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.DeleteInstance(ctx, projectName, snapInstName)
+			})
 			if err != nil {
 				return err
 			}
@@ -833,7 +849,11 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 			return err
 		}
 
-		profiles, err := s.DB.Cluster.GetProfiles(projectName, snap.Profiles)
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			profiles, err = tx.GetProfiles(ctx, projectName, snap.Profiles)
+
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("Failed loading profiles for instance snapshot %q: %w", snapInstName, err)
 		}

@@ -154,8 +154,14 @@ func daemonStorageValidate(s *state.State, target string) error {
 		return err
 	}
 
-	// Validate pool exists.
-	poolID, _, _, err := s.DB.Cluster.GetStoragePool(poolName)
+	var poolID int64
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Validate pool exists.
+		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Unable to load storage pool %q: %w", poolName, err)
 	}

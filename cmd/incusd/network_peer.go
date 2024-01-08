@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/internal/server/auth"
+	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network"
 	"github.com/lxc/incus/internal/server/project"
@@ -157,7 +159,13 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if localUtil.IsRecursionRequest(r) {
-		records, err := s.DB.Cluster.GetNetworkPeers(n.ID())
+		var records map[int64]*api.NetworkPeer
+
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			records, err = tx.GetNetworkPeers(ctx, n.ID())
+
+			return err
+		})
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading network peers: %w", err))
 		}
@@ -171,7 +179,13 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 		return response.SyncResponse(true, peers)
 	}
 
-	peerNames, err := s.DB.Cluster.GetNetworkPeerNames(n.ID())
+	var peerNames map[int64]string
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		peerNames, err = tx.GetNetworkPeerNames(ctx, n.ID())
+
+		return err
+	})
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network peers: %w", err))
 	}
@@ -416,7 +430,13 @@ func networkPeerGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	_, peer, err := s.DB.Cluster.GetNetworkPeer(n.ID(), peerName)
+	var peer *api.NetworkPeer
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, peer, err = tx.GetNetworkPeer(ctx, n.ID(), peerName)
+
+		return err
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}

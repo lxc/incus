@@ -257,7 +257,15 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 		// Expansion function to deal with partial fingerprints.
 		expandFingerprint := func(projectName string, fingerprint string) string {
 			if objectType == auth.ObjectTypeImage {
-				_, imgInfo, err := d.db.Cluster.GetImage(fingerprint, dbCluster.ImageFilter{Project: &projectName})
+				var imgInfo *api.Image
+
+				err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					var err error
+
+					_, imgInfo, err = tx.GetImage(ctx, fingerprint, dbCluster.ImageFilter{Project: &projectName})
+
+					return err
+				})
 				if err != nil {
 					return fingerprint
 				}
@@ -1514,8 +1522,10 @@ func (d *Daemon) init() error {
 		updateCertificateCache(d)
 	}
 
-	// Remove volatile.last_state.ready key as we don't know if the instances are ready.
-	err = d.db.Cluster.DeleteReadyStateFromLocalInstances()
+	err = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Remove volatile.last_state.ready key as we don't know if the instances are ready.
+		return tx.DeleteReadyStateFromLocalInstances(ctx)
+	})
 	if err != nil {
 		return fmt.Errorf("Failed deleting volatile.last_state.ready: %w", err)
 	}
@@ -1719,7 +1729,16 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 
 			// Unmount storage pools after instances stopped.
 			logger.Info("Stopping storage pools")
-			pools, err := s.DB.Cluster.GetStoragePoolNames()
+
+			var pools []string
+
+			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+
+				pools, err = tx.GetStoragePoolNames(ctx)
+
+				return err
+			})
 			if err != nil && !response.IsNotFoundError(err) {
 				logger.Error("Failed to get storage pools", logger.Ctx{"err": err})
 			}

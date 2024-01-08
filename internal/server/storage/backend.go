@@ -310,7 +310,9 @@ func (b *backend) Update(clientType request.ClientType, newDesc string, newConfi
 
 	// Update the database if something changed and we're in ClientTypeNormal mode.
 	if clientType == request.ClientTypeNormal && (len(changedConfig) > 0 || newDesc != b.db.Description) {
-		err = b.state.DB.Cluster.UpdateStoragePool(b.name, newDesc, newConfig)
+		err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.UpdateStoragePool(ctx, b.name, newDesc, newConfig)
+		})
 		if err != nil {
 			return err
 		}
@@ -2017,8 +2019,12 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 			imageExists := false
 
 			if fingerprint != "" {
-				// Confirm that the image is present in the project.
-				_, _, err = b.state.DB.Cluster.GetImage(fingerprint, cluster.ImageFilter{Project: &projectName})
+				err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					// Confirm that the image is present in the project.
+					_, _, err = tx.GetImage(ctx, fingerprint, cluster.ImageFilter{Project: &projectName})
+
+					return err
+				})
 				if err != nil && !response.IsNotFoundError(err) {
 					return err
 				}
@@ -2106,8 +2112,16 @@ func (b *backend) RenameInstance(inst instance.Instance, newName string, op *ope
 		return err
 	}
 
-	// Get any snapshots the instance has in the format <instance name>/<snapshot name>.
-	snapshots, err := b.state.DB.Cluster.GetInstanceSnapshotsNames(inst.Project().Name, inst.Name())
+	var snapshots []string
+
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get any snapshots the instance has in the format <instance name>/<snapshot name>.
+		snapshots, err = tx.GetInstanceSnapshotsNames(ctx, inst.Project().Name, inst.Name())
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -3305,8 +3319,14 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 
 	defer unlock()
 
-	// Load image info from database.
-	_, image, err := b.state.DB.Cluster.GetImageFromAnyProject(fingerprint)
+	var image *api.Image
+
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Load image info from database.
+		_, image, err = tx.GetImageFromAnyProject(ctx, fingerprint)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -3848,8 +3868,10 @@ func (b *backend) UpdateBucket(projectName string, bucketName string, bucket api
 		}
 	}
 
-	// Update the database record.
-	err = b.state.DB.Cluster.UpdateStoragePoolBucket(context.TODO(), b.id, curBucket.ID, &bucket)
+	b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Update the database record.
+		return tx.UpdateStoragePoolBucket(ctx, b.id, curBucket.ID, &bucket)
+	})
 	if err != nil {
 		return err
 	}
@@ -3979,12 +4001,22 @@ func (b *backend) ImportBucket(projectName string, poolVol *backupConfig.Config,
 
 		// Insert keys into the database.
 		for _, key := range keys {
-			keyID, err := b.state.DB.Cluster.CreateStoragePoolBucketKey(b.state.ShutdownCtx, bucketID, key)
+			var keyID int64
+
+			err := b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+				keyID, err = tx.CreateStoragePoolBucketKey(ctx, bucketID, key)
+
+				return err
+			})
 			if err != nil {
 				return nil, err
 			}
 
-			revert.Add(func() { _ = b.state.DB.Cluster.DeleteStoragePoolBucketKey(b.state.ShutdownCtx, bucketID, keyID) })
+			revert.Add(func() {
+				_ = b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.DeleteStoragePoolBucketKey(ctx, bucketID, keyID)
+				})
+			})
 		}
 	} else {
 		return nil, fmt.Errorf("Importing buckets from a remote storage is not supported")
@@ -4195,7 +4227,11 @@ func (b *backend) CreateBucketKey(projectName string, bucketName string, key api
 		},
 	}
 
-	_, err = b.state.DB.Cluster.CreateStoragePoolBucketKey(context.TODO(), bucket.ID, key)
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err = tx.CreateStoragePoolBucketKey(ctx, bucket.ID, key)
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -4337,8 +4373,10 @@ func (b *backend) UpdateBucketKey(projectName string, bucketName string, keyName
 		key.SecretKey = newCreds.SecretKey
 	}
 
-	// Update the database record.
-	err = b.state.DB.Cluster.UpdateStoragePoolBucketKey(context.TODO(), bucket.ID, curBucketKey.ID, &key)
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Update the database record.
+		return tx.UpdateStoragePoolBucketKey(ctx, bucket.ID, curBucketKey.ID, &key)
+	})
 	if err != nil {
 		return err
 	}
@@ -4416,7 +4454,9 @@ func (b *backend) DeleteBucketKey(projectName string, bucketName string, keyName
 		}
 	}
 
-	err = b.state.DB.Cluster.DeleteStoragePoolBucketKey(context.TODO(), bucket.ID, bucketKey.ID)
+	b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.DeleteStoragePoolBucketKey(ctx, bucket.ID, bucketKey.ID)
+	})
 	if err != nil {
 		return fmt.Errorf("Failed deleting bucket key from database: %w", err)
 	}
@@ -5129,8 +5169,14 @@ func (b *backend) RenameCustomVolume(projectName string, volName string, newVolN
 		})
 	}
 
+	var backups []db.StoragePoolVolumeBackup
+
 	// Rename each backup to have the new parent volume prefix.
-	backups, err := b.state.DB.Cluster.GetStoragePoolVolumeBackups(projectName, volName, b.ID())
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		backups, err = tx.GetStoragePoolVolumeBackups(ctx, projectName, volName, b.ID())
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -5332,7 +5378,13 @@ func (b *backend) UpdateCustomVolumeSnapshot(projectName string, volName string,
 		return err
 	}
 
-	curExpiryDate, err := b.state.DB.Cluster.GetStorageVolumeSnapshotExpiry(curVol.ID)
+	var curExpiryDate time.Time
+
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		curExpiryDate, err = tx.GetStorageVolumeSnapshotExpiry(ctx, curVol.ID)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -5346,7 +5398,9 @@ func (b *backend) UpdateCustomVolumeSnapshot(projectName string, volName string,
 
 	// Update the database if description changed. Use current config.
 	if newDesc != curVol.Description || newExpiryDate != curExpiryDate {
-		err = b.state.DB.Cluster.UpdateStorageVolumeSnapshot(projectName, volName, db.StoragePoolVolumeTypeCustom, b.ID(), newDesc, curVol.Config, newExpiryDate)
+		err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.UpdateStorageVolumeSnapshot(ctx, projectName, volName, db.StoragePoolVolumeTypeCustom, b.ID(), newDesc, curVol.Config, newExpiryDate)
+		})
 		if err != nil {
 			return err
 		}
@@ -6287,13 +6341,25 @@ func (b *backend) detectUnknownInstanceVolume(vol *drivers.Volume, projectVols m
 
 	projectName, instName := project.InstanceParts(vol.Name())
 
-	// Check if an entry for the instance already exists in the DB.
-	instID, err := b.state.DB.Cluster.GetInstanceID(projectName, instName)
-	if err != nil && !response.IsNotFoundError(err) {
-		return err
-	}
+	var instID int
+	var instSnapshots []string
 
-	instSnapshots, err := b.state.DB.Cluster.GetInstanceSnapshotsNames(projectName, instName)
+	err := b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Check if an entry for the instance already exists in the DB.
+		instID, err = tx.GetInstanceID(ctx, projectName, instName)
+		if err != nil && !response.IsNotFoundError(err) {
+			return err
+		}
+
+		instSnapshots, err = tx.GetInstanceSnapshotsNames(ctx, projectName, instName)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
@@ -6591,8 +6657,16 @@ func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.C
 		return nil, err
 	}
 
-	// Get any snapshots the instance has in the format <instance name>/<snapshot name>.
-	snapshots, err := b.state.DB.Cluster.GetInstanceSnapshotsNames(inst.Project().Name, inst.Name())
+	var snapshots []string
+
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get any snapshots the instance has in the format <instance name>/<snapshot name>.
+		snapshots, err = tx.GetInstanceSnapshotsNames(ctx, inst.Project().Name, inst.Name())
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
