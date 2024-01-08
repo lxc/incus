@@ -288,12 +288,12 @@ func (m *Set) doShiftIntoNS(uid int64, gid int64, how string) (int64, int64) {
 	return u, g
 }
 
-// ShiftIntoNS shiftfs the provided uid and gid into their container equivalent.
+// ShiftIntoNS shifts the provided uid and gid into their container equivalent.
 func (m *Set) ShiftIntoNS(uid int64, gid int64) (int64, int64) {
 	return m.doShiftIntoNS(uid, gid, "in")
 }
 
-// ShiftFromNS shiftfs the provided uid and gid into their host equivalent.
+// ShiftFromNS shifts the provided uid and gid into their host equivalent.
 func (m *Set) ShiftFromNS(uid int64, gid int64) (int64, int64) {
 	return m.doShiftIntoNS(uid, gid, "out")
 }

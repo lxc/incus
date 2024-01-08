@@ -523,7 +523,7 @@ func SupportsVFS3FSCaps(prefix string) bool {
 	return true
 }
 
-// UnshiftACL unshiftfs the uid/gid in the raw ACL entry.
+// UnshiftACL unshifts the uid/gid in the raw ACL entry.
 func UnshiftACL(value string, set *Set) (string, error) {
 	if set == nil {
 		return "", fmt.Errorf("Invalid Set supplied")
@@ -593,7 +593,7 @@ func UnshiftACL(value string, set *Set) (string, error) {
 	return string(buf), nil
 }
 
-// UnshiftCaps unshiftfs the uid/gid in the raw fscaps.
+// UnshiftCaps unshifts the uid/gid in the raw fscaps.
 func UnshiftCaps(value string, set *Set) (string, error) {
 	if set == nil {
 		return "", fmt.Errorf("Invalid Set supplied")

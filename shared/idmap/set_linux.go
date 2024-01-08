@@ -33,12 +33,12 @@ var VFS3FSCaps = VFS3FSCapsUnknown
 // ShiftSkipper is a function used to skip shifting or unshifting specific paths.
 type ShiftSkipper func(dir string, absPath string, fi os.FileInfo, newuid int64, newgid int64) error
 
-// ShiftPath shiftfs a whole filesystem tree.
+// ShiftPath shifts a whole filesystem tree.
 func (m *Set) ShiftPath(p string, skipper ShiftSkipper) error {
 	return m.doShiftIntoContainer(p, "in", skipper)
 }
 
-// UnshiftPath unshiftfs a whole filesystem tree.
+// UnshiftPath unshifts a whole filesystem tree.
 func (m *Set) UnshiftPath(p string, skipper ShiftSkipper) error {
 	return m.doShiftIntoContainer(p, "out", skipper)
 }
