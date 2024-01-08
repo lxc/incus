@@ -295,6 +295,7 @@ migration() {
   incus_remote copy l1:c1 l2:c2 --refresh
   incus_remote start l2:c2
   incus_remote file pull l2:c2/root/testfile1 .
+  [ "$(cat testfile1)" = "test" ]
   rm testfile1
   incus_remote stop -f l2:c2
 
