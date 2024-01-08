@@ -397,6 +397,7 @@ var APIExtensions = []string{
 	"agent_config_drive",
 	"network_state_ovn_lr",
 	"image_template_permissions",
+	"storage_bucket_backup",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
