@@ -8306,7 +8306,20 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 	}
 
 	if d.architectureSupportsUEFI(hostArch) {
-		qemuArgs = append(qemuArgs, "-drive", fmt.Sprintf("if=pflash,format=raw,readonly=on,file=%s", filepath.Join(d.ovmfPath(), "OVMF_CODE.fd")))
+		// Try to locate a UEFI firmware.
+		var ovmfPath string
+		for _, entry := range ovmfGenericFirmwares {
+			if util.PathExists(filepath.Join(d.ovmfPath(), entry.code)) {
+				ovmfPath = filepath.Join(d.ovmfPath(), entry.code)
+				break
+			}
+		}
+
+		if ovmfPath == "" {
+			return nil, fmt.Errorf("Unable to locate a UEFI firmware")
+		}
+
+		qemuArgs = append(qemuArgs, "-drive", fmt.Sprintf("if=pflash,format=raw,readonly=on,file=%s", ovmfPath))
 	}
 
 	var stderr bytes.Buffer
