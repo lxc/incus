@@ -12,7 +12,7 @@ import (
 //
 // All tasks in a group will be started and stopped at the same time.
 type Group struct {
-	cancel  func()
+	cancel  context.CancelFunc
 	wg      sync.WaitGroup
 	tasks   []Task
 	running map[int]bool
