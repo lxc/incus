@@ -360,18 +360,18 @@ func (suite *containerTestSuite) TestContainer_findIdmap_isolated() {
 	map2, err := c2.(instance.Container).NextIdmap()
 	suite.Req.Nil(err)
 
-	host := suite.d.os.IdmapSet.Idmap[0]
+	host := suite.d.os.IdmapSet.Entries[0]
 
 	for i := 0; i < 2; i++ {
-		suite.Req.Equal(host.Hostid+65536, map1.Idmap[i].Hostid, "hostids don't match %d", i)
-		suite.Req.Equal(int64(0), map1.Idmap[i].Nsid, "nsid nonzero")
-		suite.Req.Equal(int64(65536), map1.Idmap[i].Maprange, "incorrect maprange")
+		suite.Req.Equal(host.HostID+65536, map1.Entries[i].HostID, "hostids don't match %d", i)
+		suite.Req.Equal(int64(0), map1.Entries[i].NSID, "nsid nonzero")
+		suite.Req.Equal(int64(65536), map1.Entries[i].MapRange, "incorrect maprange")
 	}
 
 	for i := 0; i < 2; i++ {
-		suite.Req.Equal(host.Hostid+65536*2, map2.Idmap[i].Hostid, "hostids don't match")
-		suite.Req.Equal(int64(0), map2.Idmap[i].Nsid, "nsid nonzero")
-		suite.Req.Equal(int64(65536), map2.Idmap[i].Maprange, "incorrect maprange")
+		suite.Req.Equal(host.HostID+65536*2, map2.Entries[i].HostID, "hostids don't match")
+		suite.Req.Equal(int64(0), map2.Entries[i].NSID, "nsid nonzero")
+		suite.Req.Equal(int64(65536), map2.Entries[i].MapRange, "incorrect maprange")
 	}
 }
 
@@ -403,18 +403,18 @@ func (suite *containerTestSuite) TestContainer_findIdmap_mixed() {
 	map2, err := c2.(instance.Container).NextIdmap()
 	suite.Req.Nil(err)
 
-	host := suite.d.os.IdmapSet.Idmap[0]
+	host := suite.d.os.IdmapSet.Entries[0]
 
 	for i := 0; i < 2; i++ {
-		suite.Req.Equal(host.Hostid, map1.Idmap[i].Hostid, "hostids don't match %d", i)
-		suite.Req.Equal(int64(0), map1.Idmap[i].Nsid, "nsid nonzero")
-		suite.Req.Equal(host.Maprange, map1.Idmap[i].Maprange, "incorrect maprange")
+		suite.Req.Equal(host.HostID, map1.Entries[i].HostID, "hostids don't match %d", i)
+		suite.Req.Equal(int64(0), map1.Entries[i].NSID, "nsid nonzero")
+		suite.Req.Equal(host.MapRange, map1.Entries[i].MapRange, "incorrect maprange")
 	}
 
 	for i := 0; i < 2; i++ {
-		suite.Req.Equal(host.Hostid+65536, map2.Idmap[i].Hostid, "hostids don't match")
-		suite.Req.Equal(int64(0), map2.Idmap[i].Nsid, "nsid nonzero")
-		suite.Req.Equal(int64(65536), map2.Idmap[i].Maprange, "incorrect maprange")
+		suite.Req.Equal(host.HostID+65536, map2.Entries[i].HostID, "hostids don't match")
+		suite.Req.Equal(int64(0), map2.Entries[i].NSID, "nsid nonzero")
+		suite.Req.Equal(int64(65536), map2.Entries[i].MapRange, "incorrect maprange")
 	}
 }
 
@@ -434,29 +434,29 @@ func (suite *containerTestSuite) TestContainer_findIdmap_raw() {
 	map1, err := c1.(instance.Container).NextIdmap()
 	suite.Req.Nil(err)
 
-	host := suite.d.os.IdmapSet.Idmap[0]
+	host := suite.d.os.IdmapSet.Entries[0]
 
 	for _, i := range []int{0, 3} {
-		suite.Req.Equal(host.Hostid, map1.Idmap[i].Hostid, "hostids don't match")
-		suite.Req.Equal(int64(0), map1.Idmap[i].Nsid, "nsid nonzero")
-		suite.Req.Equal(int64(1000), map1.Idmap[i].Maprange, "incorrect maprange")
+		suite.Req.Equal(host.HostID, map1.Entries[i].HostID, "hostids don't match")
+		suite.Req.Equal(int64(0), map1.Entries[i].NSID, "nsid nonzero")
+		suite.Req.Equal(int64(1000), map1.Entries[i].MapRange, "incorrect maprange")
 	}
 
 	for _, i := range []int{1, 4} {
-		suite.Req.Equal(int64(1000), map1.Idmap[i].Hostid, "hostids don't match")
-		suite.Req.Equal(int64(1000), map1.Idmap[i].Nsid, "invalid nsid")
-		suite.Req.Equal(int64(1), map1.Idmap[i].Maprange, "incorrect maprange")
+		suite.Req.Equal(int64(1000), map1.Entries[i].HostID, "hostids don't match")
+		suite.Req.Equal(int64(1000), map1.Entries[i].NSID, "invalid nsid")
+		suite.Req.Equal(int64(1), map1.Entries[i].MapRange, "incorrect maprange")
 	}
 
 	for _, i := range []int{2, 5} {
-		suite.Req.Equal(host.Hostid+1001, map1.Idmap[i].Hostid, "hostids don't match")
-		suite.Req.Equal(int64(1001), map1.Idmap[i].Nsid, "invalid nsid")
-		suite.Req.Equal(host.Maprange-1000-1, map1.Idmap[i].Maprange, "incorrect maprange")
+		suite.Req.Equal(host.HostID+1001, map1.Entries[i].HostID, "hostids don't match")
+		suite.Req.Equal(int64(1001), map1.Entries[i].NSID, "invalid nsid")
+		suite.Req.Equal(host.MapRange-1000-1, map1.Entries[i].MapRange, "incorrect maprange")
 	}
 }
 
 func (suite *containerTestSuite) TestContainer_findIdmap_maxed() {
-	maps := []*idmap.IdmapSet{}
+	maps := []*idmap.Set{}
 
 	for i := 0; i < 7; i++ {
 		c, op, _, err := instance.CreateInternal(suite.d.State(), db.InstanceArgs{
@@ -490,8 +490,8 @@ func (suite *containerTestSuite) TestContainer_findIdmap_maxed() {
 				continue
 			}
 
-			for _, e := range m2.Idmap {
-				suite.Req.False(m1.HostidsIntersect(e), "%d and %d's idmaps intersect %v %v", i, j, m1, m2)
+			for _, e := range m2.Entries {
+				suite.Req.False(m1.HostIDsIntersect(e), "%d and %d's idmaps intersect %v %v", i, j, m1, m2)
 			}
 		}
 	}

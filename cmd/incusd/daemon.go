@@ -954,12 +954,12 @@ func (d *Daemon) init() error {
 	 * so we don't need to bother with atomic.StoreInt32() when touching
 	 * VFS3Fscaps.
 	 */
-	d.os.VFS3Fscaps = idmap.SupportsVFS3Fscaps("")
+	d.os.VFS3Fscaps = idmap.SupportsVFS3FSCaps("")
 	if d.os.VFS3Fscaps {
-		idmap.VFS3Fscaps = idmap.VFS3FscapsSupported
+		idmap.VFS3FSCaps = idmap.VFS3FSCapsSupported
 		logger.Infof(" - unprivileged file capabilities: yes")
 	} else {
-		idmap.VFS3Fscaps = idmap.VFS3FscapsUnsupported
+		idmap.VFS3FSCaps = idmap.VFS3FSCapsUnsupported
 		logger.Infof(" - unprivileged file capabilities: no")
 	}
 

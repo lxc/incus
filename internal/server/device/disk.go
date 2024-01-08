@@ -936,7 +936,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				mount.TargetPath = d.config["path"]
 				mount.FSType = "9p"
 
-				rawIDMaps, err := idmap.ParseRawIdmap(d.inst.ExpandedConfig()["raw.idmap"])
+				rawIDMaps, err := idmap.NewSetFromIncusIDMap(d.inst.ExpandedConfig()["raw.idmap"])
 				if err != nil {
 					return nil, fmt.Errorf(`Failed parsing instance "raw.idmap": %w`, err)
 				}
@@ -946,8 +946,8 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				// inside a user namespace as the root userns user. Therefore we need to ensure
 				// that there is a root UID and GID mapping in the raw ID maps, and if not then add
 				// one mapping the root userns user to the nouser/nogroup host ID.
-				if d.restrictedParentSourcePath != "" || len(rawIDMaps) > 0 {
-					rawIDMaps = diskAddRootUserNSEntry(rawIDMaps, 65534)
+				if d.restrictedParentSourcePath != "" || len(rawIDMaps.Entries) > 0 {
+					rawIDMaps.Entries = diskAddRootUserNSEntry(rawIDMaps.Entries, 65534)
 				}
 
 				// Start virtiofsd for virtio-fs share. The agent prefers to use this over the
@@ -957,7 +957,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					logPath := filepath.Join(d.inst.LogPath(), fmt.Sprintf("disk.%s.log", d.name))
 					_ = os.Remove(logPath) // Remove old log if needed.
 
-					revertFunc, unixListener, err := DiskVMVirtiofsdStart(d.state.OS.ExecPath, d.inst, sockPath, pidPath, logPath, mount.DevPath, rawIDMaps)
+					revertFunc, unixListener, err := DiskVMVirtiofsdStart(d.state.OS.ExecPath, d.inst, sockPath, pidPath, logPath, mount.DevPath, rawIDMaps.Entries)
 					if err != nil {
 						var errUnsupported UnsupportedError
 						if errors.As(err, &errUnsupported) {
@@ -1004,7 +1004,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					// Start virtfs-proxy-helper for 9p share (this will rewrite mount.DevPath with
 					// socket FD number so must come after starting virtiofsd).
 					err = func() error {
-						sockFile, cleanup, err := DiskVMVirtfsProxyStart(d.state.OS.ExecPath, d.vmVirtfsProxyHelperPaths(), mount.DevPath, rawIDMaps)
+						sockFile, cleanup, err := DiskVMVirtfsProxyStart(d.state.OS.ExecPath, d.vmVirtfsProxyHelperPaths(), mount.DevPath, rawIDMaps.Entries)
 						if err != nil {
 							return err
 						}
@@ -1596,16 +1596,16 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 	}
 
 	// Get the on-disk idmap for the volume.
-	var lastIdmap *idmap.IdmapSet
+	var lastIdmap *idmap.Set
 	if poolVolumePut.Config["volatile.idmap.last"] != "" {
-		lastIdmap, err = idmap.JSONUnmarshal(poolVolumePut.Config["volatile.idmap.last"])
+		lastIdmap, err = idmap.NewSetFromJSON(poolVolumePut.Config["volatile.idmap.last"])
 		if err != nil {
 			d.logger.Error("Failed to unmarshal last idmapping", logger.Ctx{"idmap": poolVolumePut.Config["volatile.idmap.last"], "err": err})
 			return err
 		}
 	}
 
-	var nextIdmap *idmap.IdmapSet
+	var nextIdmap *idmap.Set
 	nextJSONMap := "[]"
 	if util.IsFalseOrEmpty(poolVolumePut.Config["security.shifted"]) {
 		c := d.inst.(instance.Container)
@@ -1621,7 +1621,7 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 		}
 
 		if nextIdmap != nil {
-			nextJSONMap, err = idmap.JSONMarshal(nextIdmap)
+			nextJSONMap, err = nextIdmap.ToJSON()
 			if err != nil {
 				return err
 			}
@@ -1656,7 +1656,7 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 
 					ct := inst.(instance.Container)
 
-					var ctNextIdmap *idmap.IdmapSet
+					var ctNextIdmap *idmap.Set
 
 					if ct.IsRunning() {
 						ctNextIdmap, err = ct.CurrentIdmap()
@@ -1687,9 +1687,9 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 			var err error
 
 			if d.pool.Driver().Info().Name == "zfs" {
-				err = lastIdmap.UnshiftRootfs(remapPath, storageDrivers.ShiftZFSSkipper)
+				err = lastIdmap.UnshiftPath(remapPath, storageDrivers.ShiftZFSSkipper)
 			} else {
-				err = lastIdmap.UnshiftRootfs(remapPath, nil)
+				err = lastIdmap.UnshiftPath(remapPath, nil)
 			}
 
 			if err != nil {
@@ -1705,9 +1705,9 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 			var err error
 
 			if d.pool.Driver().Info().Name == "zfs" {
-				err = nextIdmap.ShiftRootfs(remapPath, storageDrivers.ShiftZFSSkipper)
+				err = nextIdmap.ShiftPath(remapPath, storageDrivers.ShiftZFSSkipper)
 			} else {
-				err = nextIdmap.ShiftRootfs(remapPath, nil)
+				err = nextIdmap.ShiftPath(remapPath, nil)
 			}
 
 			if err != nil {
@@ -1721,14 +1721,10 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 		d.logger.Debug("Shifted storage volume")
 	}
 
-	jsonIdmap := "[]"
-	if nextIdmap != nil {
-		var err error
-		jsonIdmap, err = idmap.JSONMarshal(nextIdmap)
-		if err != nil {
-			d.logger.Error("Failed to marshal idmap", logger.Ctx{"idmap": nextIdmap, "err": err})
-			return err
-		}
+	jsonIdmap, err := nextIdmap.ToJSON()
+	if err != nil {
+		d.logger.Error("Failed to marshal idmap", logger.Ctx{"idmap": nextIdmap, "err": err})
+		return err
 	}
 
 	// Update last idmap.

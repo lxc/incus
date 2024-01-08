@@ -407,9 +407,9 @@ func checkAggregateLimits(info *projectInfo, aggregateKeys []string) error {
 	return nil
 }
 
-// parseHostIDMapRange parse the supplied list of host ID map ranges into a idmap.IdmapEntry slice.
-func parseHostIDMapRange(isUID bool, isGID bool, listValue string) ([]idmap.IdmapEntry, error) {
-	var idmaps []idmap.IdmapEntry
+// parseHostIDMapRange parse the supplied list of host ID map ranges into a idmap.Entry slice.
+func parseHostIDMapRange(isUID bool, isGID bool, listValue string) ([]idmap.Entry, error) {
+	var idmaps []idmap.Entry
 
 	for _, listItem := range util.SplitNTrimSpace(listValue, ",", -1, true) {
 		rangeStart, rangeSize, err := validate.ParseUint32Range(listItem)
@@ -417,12 +417,12 @@ func parseHostIDMapRange(isUID bool, isGID bool, listValue string) ([]idmap.Idma
 			return nil, err
 		}
 
-		idmaps = append(idmaps, idmap.IdmapEntry{
-			Hostid:   int64(rangeStart),
-			Maprange: int64(rangeSize),
-			Isuid:    isUID,
-			Isgid:    isGID,
-			Nsid:     -1, // We don't have this as we are just parsing host IDs.
+		idmaps = append(idmaps, idmap.Entry{
+			HostID:   int64(rangeStart),
+			MapRange: int64(rangeSize),
+			IsUID:    isUID,
+			IsGID:    isGID,
+			NSID:     -1, // We don't have this as we are just parsing host IDs.
 		})
 	}
 
@@ -437,7 +437,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 
 	allowContainerLowLevel := false
 	allowVMLowLevel := false
-	var allowedIDMapHostUIDs, allowedIDMapHostGIDs []idmap.IdmapEntry
+	var allowedIDMapHostUIDs, allowedIDMapHostGIDs []idmap.Entry
 
 	for i := range allRestrictions {
 		// Check if this particular restriction is defined explicitly in the project config.
@@ -666,14 +666,14 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 				if key == "raw.idmap" {
 					// If the low-level raw.idmap is used check whether the raw.idmap host IDs
 					// are allowed based on the project's allowed ID map Host UIDs and GIDs.
-					idmaps, err := idmap.ParseRawIdmap(value)
+					idmaps, err := idmap.NewSetFromIncusIDMap(value)
 					if err != nil {
 						return err
 					}
 
-					for idmapIndex, idmap := range idmaps {
-						if !idmap.HostIDsCoveredBy(allowedIDMapHostUIDs, allowedIDMapHostGIDs) {
-							return fmt.Errorf(`Use of low-level "raw.idmap" element %d on %s %q of project %q is forbidden`, idmapIndex, entityTypeLabel, entityName, project.Name)
+					for i, entry := range idmaps.Entries {
+						if !entry.HostIDsCoveredBy(allowedIDMapHostUIDs, allowedIDMapHostGIDs) {
+							return fmt.Errorf(`Use of low-level "raw.idmap" element %d on %s %q of project %q is forbidden`, i, entityTypeLabel, entityName, project.Name)
 						}
 					}
 				} else if (isContainerOrProfile && isContainerLowLevelOptionForbidden(key)) || (isVMOrProfile && isVMLowLevelOptionForbidden(key)) {

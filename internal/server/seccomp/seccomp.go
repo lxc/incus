@@ -615,8 +615,8 @@ type Instance interface {
 	Architecture() int
 	RootfsPath() string
 	CGroup() (*cgroup.CGroup, error)
-	CurrentIdmap() (*idmap.IdmapSet, error)
-	DiskIdmap() (*idmap.IdmapSet, error)
+	CurrentIdmap() (*idmap.Set, error)
+	DiskIdmap() (*idmap.Set, error)
 	IdmappedStorage(path string, fstype string) idmap.IdmapStorageType
 	InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid int) error
 }
@@ -1487,8 +1487,8 @@ func (s *Server) HandleSetxattrSyscall(c Instance, siov *Iovec) int {
 		return int(-C.EINVAL)
 	}
 
-	args.nsuid, args.nsgid = idmapset.ShiftFromNs(uid, gid)
-	args.nsfsuid, args.nsfsgid = idmapset.ShiftFromNs(fsuid, fsgid)
+	args.nsuid, args.nsgid = idmapset.ShiftFromNS(uid, gid)
+	args.nsfsuid, args.nsfsgid = idmapset.ShiftFromNS(fsuid, fsgid)
 
 	// const char *path
 	cBuf := [unix.PathMax]C.char{}
@@ -1639,7 +1639,7 @@ func (s *Server) HandleSchedSetschedulerSyscall(c Instance, siov *Iovec) int {
 	}
 
 	// Only care about userns root for now.
-	args.nsuid, args.nsgid = idmapset.ShiftFromNs(uid, gid)
+	args.nsuid, args.nsgid = idmapset.ShiftFromNS(uid, gid)
 	if args.nsuid != 0 || args.nsgid != 0 {
 		if s.s.OS.SeccompListenerContinue {
 			ctx["syscall_continue"] = "true"
@@ -1988,7 +1988,7 @@ func (s *Server) mountHandleHugetlbfsArgs(c Instance, args *MountArgs, nsuid int
 					return nil
 				}
 
-				uidOpt, _ = idmapset.ShiftIntoNs(n, 0)
+				uidOpt, _ = idmapset.ShiftIntoNS(n, 0)
 				if uidOpt < 0 {
 					// If the user specified garbage, let the kernel tell em whats what.
 					return nil
@@ -2005,7 +2005,7 @@ func (s *Server) mountHandleHugetlbfsArgs(c Instance, args *MountArgs, nsuid int
 					return nil
 				}
 
-				gidOpt, _ = idmapset.ShiftIntoNs(n, 0)
+				gidOpt, _ = idmapset.ShiftIntoNS(n, 0)
 				if gidOpt < 0 {
 					// If the user specified garbage, let the kernel tell em whats what.
 					return nil
@@ -2155,8 +2155,8 @@ func (s *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 	ctx["host_fsuid"] = args.fsuid
 	ctx["host_fsgid"] = args.fsgid
 
-	args.nsuid, args.nsgid = idmapset.ShiftFromNs(args.uid, args.gid)
-	args.nsfsuid, args.nsfsgid = idmapset.ShiftFromNs(args.fsuid, args.fsgid)
+	args.nsuid, args.nsgid = idmapset.ShiftFromNS(args.uid, args.gid)
+	args.nsfsuid, args.nsfsgid = idmapset.ShiftFromNS(args.fsuid, args.fsgid)
 	ctx["ns_uid"] = args.nsuid
 	ctx["ns_gid"] = args.nsgid
 	ctx["ns_fsuid"] = args.nsfsuid

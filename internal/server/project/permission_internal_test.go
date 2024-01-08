@@ -26,13 +26,13 @@ func TestParseHostIDMapRange(t *testing.T) {
 		assert.Nil(t, idmaps)
 
 		idmaps, err = parseHostIDMapRange(isUID, isGID, "1000")
-		expected := []idmap.IdmapEntry{
+		expected := []idmap.Entry{
 			{
-				Isuid:    isUID,
-				Isgid:    isGID,
-				Hostid:   1000,
-				Maprange: 1,
-				Nsid:     -1,
+				IsUID:    isUID,
+				IsGID:    isGID,
+				HostID:   1000,
+				MapRange: 1,
+				NSID:     -1,
 			},
 		}
 
@@ -40,13 +40,13 @@ func TestParseHostIDMapRange(t *testing.T) {
 		assert.Equal(t, idmaps, expected)
 
 		idmaps, err = parseHostIDMapRange(isUID, isGID, "1000-1001")
-		expected = []idmap.IdmapEntry{
+		expected = []idmap.Entry{
 			{
-				Isuid:    isUID,
-				Isgid:    isGID,
-				Hostid:   1000,
-				Maprange: 2,
-				Nsid:     -1,
+				IsUID:    isUID,
+				IsGID:    isGID,
+				HostID:   1000,
+				MapRange: 2,
+				NSID:     -1,
 			},
 		}
 
@@ -54,20 +54,20 @@ func TestParseHostIDMapRange(t *testing.T) {
 		assert.Equal(t, idmaps, expected)
 
 		idmaps, err = parseHostIDMapRange(isUID, isGID, "1000-1001,1002")
-		expected = []idmap.IdmapEntry{
+		expected = []idmap.Entry{
 			{
-				Isuid:    isUID,
-				Isgid:    isGID,
-				Hostid:   1000,
-				Maprange: 2,
-				Nsid:     -1,
+				IsUID:    isUID,
+				IsGID:    isGID,
+				HostID:   1000,
+				MapRange: 2,
+				NSID:     -1,
 			},
 			{
-				Isuid:    isUID,
-				Isgid:    isGID,
-				Hostid:   1002,
-				Maprange: 1,
-				Nsid:     -1,
+				IsUID:    isUID,
+				IsGID:    isGID,
+				HostID:   1002,
+				MapRange: 1,
+				NSID:     -1,
 			},
 		}
 

@@ -72,9 +72,6 @@ linters-settings:
       # https://github.com/mgechev/revive/blob/2a1701aadbedfcc175cb92836a51407bec382652/RULES_DESCRIPTIONS.md#comment-spacings
       - name: comment-spacings
 
-      # https://github.com/mgechev/revive/blob/2a1701aadbedfcc175cb92836a51407bec382652/RULES_DESCRIPTIONS.md#confusing-results
-      - name: confusing-results
-
       # https://github.com/mgechev/revive/blob/2a1701aadbedfcc175cb92836a51407bec382652/RULES_DESCRIPTIONS.md#use-any
       - name: use-any
 

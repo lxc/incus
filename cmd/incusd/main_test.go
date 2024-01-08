@@ -33,9 +33,9 @@ func mockStartDaemon() (*Daemon, error) {
 		return nil, err
 	}
 
-	d.os.IdmapSet = &idmap.IdmapSet{Idmap: []idmap.IdmapEntry{
-		{Isuid: true, Hostid: 100000, Nsid: 0, Maprange: 500000},
-		{Isgid: true, Hostid: 100000, Nsid: 0, Maprange: 500000},
+	d.os.IdmapSet = &idmap.Set{Entries: []idmap.Entry{
+		{IsUID: true, HostID: 100000, NSID: 0, MapRange: 500000},
+		{IsGID: true, HostID: 100000, NSID: 0, MapRange: 500000},
 	}}
 
 	return d, nil

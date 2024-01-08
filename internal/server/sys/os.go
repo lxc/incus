@@ -46,10 +46,10 @@ type OS struct {
 	VarDir   string // Data directory (e.g. /var/lib/incus/).
 
 	// Daemon environment
-	Architectures   []int           // Cache of detected system architectures
-	BackingFS       string          // Backing filesystem of $INCUS_DIR/containers
-	ExecPath        string          // Absolute path to the daemon
-	IdmapSet        *idmap.IdmapSet // Information about user/group ID mapping
+	Architectures   []int      // Cache of detected system architectures
+	BackingFS       string     // Backing filesystem of $INCUS_DIR/containers
+	ExecPath        string     // Absolute path to the daemon
+	IdmapSet        *idmap.Set // Information about user/group ID mapping
 	InotifyWatch    InotifyInfo
 	LxcPath         string // Path to the $INCUS_DIR/containers directory
 	MockMode        bool   // If true some APIs will be mocked (for testing)
@@ -166,7 +166,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 		break
 	}
 
-	s.IdmapSet = idmap.GetIdmapSet()
+	s.IdmapSet = getIdmapset()
 	s.ExecPath = localUtil.GetExecPath()
 	s.RunningInUserNS = linux.RunningInUserNS()
 
@@ -225,4 +225,88 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 // InitStorage initialises the storage layer after it has been mounted.
 func (s *OS) InitStorage() error {
 	return s.initStorageDirs()
+}
+
+func getIdmapset() *idmap.Set {
+	// Try getting the system map.
+	idmapset, err := idmap.NewSetFromSystem("", "root")
+	if err != nil && err != idmap.ErrSubidUnsupported {
+		logger.Error("Unable to parse system idmap", logger.Ctx{"err": err})
+		return nil
+	}
+
+	if idmapset != nil {
+		logger.Info("System idmap (root user):")
+		for _, entry := range idmapset.ToLXCString() {
+			logger.Infof(" - %s", entry)
+		}
+
+		// Only keep the POSIX ranges.
+		submap := idmapset.FilterPOSIX()
+
+		if submap == nil {
+			logger.Warn("No valid subuid/subgid map, only privileged containers will be functional")
+			return nil
+		}
+
+		logger.Info("Selected idmap:")
+		for _, entry := range submap.ToLXCString() {
+			logger.Infof(" - %s", entry)
+		}
+
+		return submap
+	}
+
+	// Try getting the process map.
+	idmapset, err = idmap.NewSetFromCurrentProcess()
+	if err != nil {
+		logger.Error("Unable to parse process idmap", logger.Ctx{"err": err})
+		return nil
+	}
+
+	// Swap HostID for NSID and clear NSID (to turn into a usable map).
+	for i, entry := range idmapset.Entries {
+		idmapset.Entries[i].HostID = entry.NSID
+		idmapset.Entries[i].NSID = 0
+	}
+
+	logger.Info("Current process idmap:")
+	for _, entry := range idmapset.ToLXCString() {
+		logger.Infof(" - %s", entry)
+	}
+
+	// Try splitting a larger chunk from the current map.
+	submap, err := idmapset.Split(65536, 1000000000, 1000000, -1)
+	if err != nil && err != idmap.ErrNoSuitableSubmap {
+		logger.Error("Unable to split a submap", logger.Ctx{"err": err})
+		return nil
+	}
+
+	if submap != nil {
+		logger.Info("Selected idmap:")
+		for _, entry := range submap.ToLXCString() {
+			logger.Infof(" - %s", entry)
+		}
+
+		return submap
+	}
+
+	// Try splitting a smaller chunk from the current map.
+	submap, err = idmapset.Split(65536, 1000000000, 65536, -1)
+	if err != nil {
+		if err == idmap.ErrNoSuitableSubmap {
+			logger.Warn("Not enough uid/gid available, only privileged containers will be functional")
+			return nil
+		}
+
+		logger.Error("Unable to split a submap", logger.Ctx{"err": err})
+		return nil
+	}
+
+	logger.Info("Selected idmap:")
+	for _, entry := range submap.ToLXCString() {
+		logger.Infof(" - %s", entry)
+	}
+
+	return submap
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/client"
@@ -12,6 +13,7 @@ import (
 	"github.com/lxc/incus/internal/revert"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/subprocess"
 	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/util"
@@ -254,11 +256,8 @@ func serverSetupUser(uid uint32) error {
 	}
 
 	// Setup default profile.
-	err = client.UseProject(projectName).UpdateProfile("default", api.ProfilePut{
+	req := api.ProfilePut{
 		Description: "Default Incus profile",
-		Config: map[string]string{
-			"raw.idmap": fmt.Sprintf("uid %s %s\ngid %s %s", pw[2], pw[2], pw[3], pw[3]),
-		},
 		Devices: map[string]map[string]string{
 			"root": {
 				"type": "disk",
@@ -271,7 +270,43 @@ func serverSetupUser(uid uint32) error {
 				"network": networkName,
 			},
 		},
-	}, "")
+	}
+
+	// Add uid/gid map if possible.
+	pwUID, err := strconv.ParseInt(pw[2], 10, 64)
+	if err != nil {
+		return err
+	}
+
+	pwGID, err := strconv.ParseInt(pw[3], 10, 64)
+	if err != nil {
+		return err
+	}
+
+	idmapset, err := idmap.NewSetFromSystem("", "root")
+	if err != nil && err != idmap.ErrSubidUnsupported {
+		return fmt.Errorf("Failed to load system idmap: %w", err)
+	}
+
+	idmapAllowed := true
+	if idmapset != nil {
+		entries := []idmap.Entry{
+			{IsUID: true, HostID: pwUID, MapRange: 1},
+			{IsGID: true, HostID: pwGID, MapRange: 1},
+		}
+
+		if !idmapset.Includes(&idmap.Set{Entries: entries}) {
+			idmapAllowed = false
+		}
+	}
+
+	if idmapAllowed {
+		req.Config = map[string]string{
+			"raw.idmap": fmt.Sprintf("uid %d %d\ngid %d %d", pwUID, pwUID, pwGID, pwGID),
+		}
+	}
+
+	err = client.UseProject(projectName).UpdateProfile("default", req, "")
 	if err != nil {
 		return fmt.Errorf("Unable to update the default profile: %w", err)
 	}

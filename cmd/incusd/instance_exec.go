@@ -203,7 +203,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 			}
 
 			if idmapset != nil {
-				rootUID, rootGID = idmapset.ShiftIntoNs(0, 0)
+				rootUID, rootGID = idmapset.ShiftIntoNS(0, 0)
 			}
 
 			devptsFd, _ = c.DevptsFd()

@@ -19,12 +19,12 @@ import (
 // InstanceTarWriter provides a TarWriter implementation that handles ID shifting and hardlink tracking.
 type InstanceTarWriter struct {
 	tarWriter *tar.Writer
-	idmapSet  *idmap.IdmapSet
+	idmapSet  *idmap.Set
 	linkMap   map[uint64]string
 }
 
 // NewInstanceTarWriter returns a ContainerTarWriter for the provided target Writer and id map.
-func NewInstanceTarWriter(writer io.Writer, idmapSet *idmap.IdmapSet) *InstanceTarWriter {
+func NewInstanceTarWriter(writer io.Writer, idmapSet *idmap.Set) *InstanceTarWriter {
 	ctw := new(InstanceTarWriter)
 	ctw.tarWriter = tar.NewWriter(writer)
 	ctw.idmapSet = idmapSet
@@ -92,7 +92,7 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 
 	// Unshift the id under rootfs/ for unpriv containers.
 	if strings.HasPrefix(hdr.Name, "rootfs") && ctw.idmapSet != nil {
-		hUID, hGID := ctw.idmapSet.ShiftFromNs(int64(hdr.Uid), int64(hdr.Gid))
+		hUID, hGID := ctw.idmapSet.ShiftFromNS(int64(hdr.Uid), int64(hdr.Gid))
 		hdr.Uid = int(hUID)
 		hdr.Gid = int(hGID)
 		if hdr.Uid == -1 || hdr.Gid == -1 {

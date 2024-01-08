@@ -100,7 +100,7 @@ func unixDeviceDestPath(m deviceConfig.Device) string {
 // type field then it defaults to created a unix-char device. The ownership of the created device
 // defaults to root (0) but can be specified with the uid and gid fields in the device config map.
 // It returns a UnixDevice containing information about the device created.
-func UnixDeviceCreate(s *state.State, idmapSet *idmap.IdmapSet, devicesPath string, prefix string, m deviceConfig.Device, defaultMode bool) (*UnixDevice, error) {
+func UnixDeviceCreate(s *state.State, idmapSet *idmap.Set, devicesPath string, prefix string, m deviceConfig.Device, defaultMode bool) (*UnixDevice, error) {
 	var err error
 	d := UnixDevice{}
 
@@ -223,7 +223,7 @@ func UnixDeviceCreate(s *state.State, idmapSet *idmap.IdmapSet, devicesPath stri
 		}
 
 		if idmapSet != nil {
-			err := idmapSet.ShiftFile(devPath)
+			err := idmapSet.ShiftPath(devPath, nil)
 			if err != nil {
 				// uidshift failing is weird, but not a big problem. Log and proceed.
 				logger.Debugf("Failed to uidshift device %s: %s\n", srcPath, err)
