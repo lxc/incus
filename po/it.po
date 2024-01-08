@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-01-02 18:29-0500\n"
+"POT-Creation-Date: 2024-01-08 19:57+0100\n"
 "PO-Revision-Date: 2022-03-10 15:07+0000\n"
 "Last-Translator: Luigi Operoso <brokenpip3@gmail.com>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/linux-containers/"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 4.12-dev\n"
 
-#: cmd/incus/storage_bucket.go:254 cmd/incus/storage_bucket.go:999
+#: cmd/incus/storage_bucket.go:262 cmd/incus/storage_bucket.go:1007
 #, fuzzy
 msgid ""
 "### This is a YAML representation of a storage bucket.\n"
@@ -751,11 +751,11 @@ msgstr ""
 msgid "Accept certificate"
 msgstr "Accetta certificato"
 
-#: cmd/incus/storage_bucket.go:851
+#: cmd/incus/storage_bucket.go:859
 msgid "Access key (auto-generated if empty)"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:907
+#: cmd/incus/storage_bucket.go:915
 #, c-format
 msgid "Access key: %s"
 msgstr ""
@@ -894,12 +894,12 @@ msgstr ""
 msgid "Address: %s"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:163
+#: cmd/incus/storage_bucket.go:171
 #, fuzzy, c-format
 msgid "Admin access key: %s"
 msgstr "Password amministratore per %s: "
 
-#: cmd/incus/storage_bucket.go:164
+#: cmd/incus/storage_bucket.go:172
 #, fuzzy, c-format
 msgid "Admin secret key: %s"
 msgstr "Aggiornamento automatico: %s"
@@ -1054,12 +1054,18 @@ msgstr ""
 msgid "Backing up instance: %s"
 msgstr "Creazione del container in corso"
 
+#: cmd/incus/storage_bucket.go:1262
+#, fuzzy, c-format
+msgid "Backing up storage bucket %s"
+msgstr "Creazione del container in corso"
+
 #: cmd/incus/storage_volume.go:2628
 #, fuzzy, c-format
 msgid "Backing up storage volume: %s"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/export.go:191 cmd/incus/storage_volume.go:2705
+#: cmd/incus/export.go:191 cmd/incus/storage_bucket.go:1334
+#: cmd/incus/storage_volume.go:2705
 msgid "Backup exported successfully!"
 msgstr ""
 
@@ -1075,7 +1081,7 @@ msgstr ""
 #: cmd/incus/network.go:333 cmd/incus/network_acl.go:381
 #: cmd/incus/network_forward.go:283 cmd/incus/network_load_balancer.go:286
 #: cmd/incus/network_peer.go:279 cmd/incus/network_zone.go:323
-#: cmd/incus/network_zone.go:921 cmd/incus/storage_bucket.go:135
+#: cmd/incus/network_zone.go:921 cmd/incus/storage_bucket.go:143
 #, c-format
 msgid "Bad key/value pair: %s"
 msgstr ""
@@ -1406,21 +1412,22 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:976 cmd/incus/storage.go:98
 #: cmd/incus/storage.go:346 cmd/incus/storage.go:417 cmd/incus/storage.go:670
 #: cmd/incus/storage.go:764 cmd/incus/storage.go:849
-#: cmd/incus/storage_bucket.go:84 cmd/incus/storage_bucket.go:184
-#: cmd/incus/storage_bucket.go:247 cmd/incus/storage_bucket.go:378
-#: cmd/incus/storage_bucket.go:535 cmd/incus/storage_bucket.go:628
-#: cmd/incus/storage_bucket.go:694 cmd/incus/storage_bucket.go:769
-#: cmd/incus/storage_bucket.go:849 cmd/incus/storage_bucket.go:927
-#: cmd/incus/storage_bucket.go:992 cmd/incus/storage_bucket.go:1128
-#: cmd/incus/storage_volume.go:332 cmd/incus/storage_volume.go:534
-#: cmd/incus/storage_volume.go:613 cmd/incus/storage_volume.go:843
-#: cmd/incus/storage_volume.go:1057 cmd/incus/storage_volume.go:1170
-#: cmd/incus/storage_volume.go:1600 cmd/incus/storage_volume.go:1680
-#: cmd/incus/storage_volume.go:1760 cmd/incus/storage_volume.go:1903
-#: cmd/incus/storage_volume.go:1983 cmd/incus/storage_volume.go:2068
-#: cmd/incus/storage_volume.go:2165 cmd/incus/storage_volume.go:2352
-#: cmd/incus/storage_volume.go:2422 cmd/incus/storage_volume.go:2495
-#: cmd/incus/storage_volume.go:2575 cmd/incus/storage_volume.go:2727
+#: cmd/incus/storage_bucket.go:92 cmd/incus/storage_bucket.go:192
+#: cmd/incus/storage_bucket.go:255 cmd/incus/storage_bucket.go:386
+#: cmd/incus/storage_bucket.go:543 cmd/incus/storage_bucket.go:636
+#: cmd/incus/storage_bucket.go:702 cmd/incus/storage_bucket.go:777
+#: cmd/incus/storage_bucket.go:857 cmd/incus/storage_bucket.go:935
+#: cmd/incus/storage_bucket.go:1000 cmd/incus/storage_bucket.go:1136
+#: cmd/incus/storage_bucket.go:1211 cmd/incus/storage_volume.go:332
+#: cmd/incus/storage_volume.go:534 cmd/incus/storage_volume.go:613
+#: cmd/incus/storage_volume.go:843 cmd/incus/storage_volume.go:1057
+#: cmd/incus/storage_volume.go:1170 cmd/incus/storage_volume.go:1600
+#: cmd/incus/storage_volume.go:1680 cmd/incus/storage_volume.go:1760
+#: cmd/incus/storage_volume.go:1903 cmd/incus/storage_volume.go:1983
+#: cmd/incus/storage_volume.go:2068 cmd/incus/storage_volume.go:2165
+#: cmd/incus/storage_volume.go:2352 cmd/incus/storage_volume.go:2422
+#: cmd/incus/storage_volume.go:2495 cmd/incus/storage_volume.go:2575
+#: cmd/incus/storage_volume.go:2727
 msgid "Cluster member name"
 msgstr ""
 
@@ -1478,7 +1485,7 @@ msgstr ""
 #: cmd/incus/network_peer.go:609 cmd/incus/network_zone.go:550
 #: cmd/incus/network_zone.go:1142 cmd/incus/profile.go:518
 #: cmd/incus/project.go:315 cmd/incus/storage.go:309
-#: cmd/incus/storage_bucket.go:342 cmd/incus/storage_bucket.go:1091
+#: cmd/incus/storage_bucket.go:350 cmd/incus/storage_bucket.go:1099
 #: cmd/incus/storage_volume.go:976 cmd/incus/storage_volume.go:1008
 #, c-format
 msgid "Config parsing error: %s"
@@ -1706,11 +1713,11 @@ msgstr ""
 msgid "Create instances from images"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:845 cmd/incus/storage_bucket.go:846
+#: cmd/incus/storage_bucket.go:853 cmd/incus/storage_bucket.go:854
 msgid "Create key for a storage bucket"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:81 cmd/incus/storage_bucket.go:82
+#: cmd/incus/storage_bucket.go:89 cmd/incus/storage_bucket.go:90
 #, fuzzy
 msgid "Create new custom storage buckets"
 msgstr "Creazione del container in corso"
@@ -1803,8 +1810,8 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:148 cmd/incus/network_peer.go:139
 #: cmd/incus/network_zone.go:138 cmd/incus/network_zone.go:741
 #: cmd/incus/operation.go:173 cmd/incus/profile.go:658 cmd/incus/project.go:505
-#: cmd/incus/storage.go:645 cmd/incus/storage_bucket.go:506
-#: cmd/incus/storage_bucket.go:826 cmd/incus/storage_volume.go:1494
+#: cmd/incus/storage.go:645 cmd/incus/storage_bucket.go:514
+#: cmd/incus/storage_bucket.go:834 cmd/incus/storage_volume.go:1494
 msgid "DESCRIPTION"
 msgstr "DESCRIZIONE"
 
@@ -1834,7 +1841,7 @@ msgstr ""
 msgid "Default VLAN ID"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2574
+#: cmd/incus/storage_bucket.go:1210 cmd/incus/storage_volume.go:2574
 msgid "Define a compression algorithm: for backup or none"
 msgstr ""
 
@@ -1877,7 +1884,7 @@ msgstr "Creazione del container in corso"
 msgid "Delete instances"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:923 cmd/incus/storage_bucket.go:924
+#: cmd/incus/storage_bucket.go:931 cmd/incus/storage_bucket.go:932
 msgid "Delete key from a storage bucket"
 msgstr ""
 
@@ -1920,7 +1927,7 @@ msgstr ""
 msgid "Delete projects"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:181 cmd/incus/storage_bucket.go:182
+#: cmd/incus/storage_bucket.go:189 cmd/incus/storage_bucket.go:190
 #, fuzzy
 msgid "Delete storage buckets"
 msgstr "Il nome del container è: %s"
@@ -2060,30 +2067,30 @@ msgstr ""
 #: cmd/incus/storage.go:169 cmd/incus/storage.go:219 cmd/incus/storage.go:343
 #: cmd/incus/storage.go:413 cmd/incus/storage.go:585 cmd/incus/storage.go:664
 #: cmd/incus/storage.go:760 cmd/incus/storage.go:846
-#: cmd/incus/storage_bucket.go:28 cmd/incus/storage_bucket.go:82
-#: cmd/incus/storage_bucket.go:182 cmd/incus/storage_bucket.go:243
-#: cmd/incus/storage_bucket.go:376 cmd/incus/storage_bucket.go:452
-#: cmd/incus/storage_bucket.go:529 cmd/incus/storage_bucket.go:623
-#: cmd/incus/storage_bucket.go:692 cmd/incus/storage_bucket.go:726
-#: cmd/incus/storage_bucket.go:767 cmd/incus/storage_bucket.go:846
-#: cmd/incus/storage_bucket.go:924 cmd/incus/storage_bucket.go:988
-#: cmd/incus/storage_bucket.go:1123 cmd/incus/storage_volume.go:44
-#: cmd/incus/storage_volume.go:162 cmd/incus/storage_volume.go:237
-#: cmd/incus/storage_volume.go:328 cmd/incus/storage_volume.go:531
-#: cmd/incus/storage_volume.go:610 cmd/incus/storage_volume.go:671
-#: cmd/incus/storage_volume.go:753 cmd/incus/storage_volume.go:834
-#: cmd/incus/storage_volume.go:1043 cmd/incus/storage_volume.go:1158
-#: cmd/incus/storage_volume.go:1305 cmd/incus/storage_volume.go:1389
-#: cmd/incus/storage_volume.go:1596 cmd/incus/storage_volume.go:1677
-#: cmd/incus/storage_volume.go:1745 cmd/incus/storage_volume.go:1889
-#: cmd/incus/storage_volume.go:1971 cmd/incus/storage_volume.go:2014
-#: cmd/incus/storage_volume.go:2063 cmd/incus/storage_volume.go:2162
-#: cmd/incus/storage_volume.go:2235 cmd/incus/storage_volume.go:2241
-#: cmd/incus/storage_volume.go:2349 cmd/incus/storage_volume.go:2420
-#: cmd/incus/storage_volume.go:2484 cmd/incus/storage_volume.go:2568
-#: cmd/incus/storage_volume.go:2722 cmd/incus/version.go:22
-#: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
-#: cmd/incus/warning.go:304 cmd/incus/warning.go:358
+#: cmd/incus/storage_bucket.go:32 cmd/incus/storage_bucket.go:90
+#: cmd/incus/storage_bucket.go:190 cmd/incus/storage_bucket.go:251
+#: cmd/incus/storage_bucket.go:384 cmd/incus/storage_bucket.go:460
+#: cmd/incus/storage_bucket.go:537 cmd/incus/storage_bucket.go:631
+#: cmd/incus/storage_bucket.go:700 cmd/incus/storage_bucket.go:734
+#: cmd/incus/storage_bucket.go:775 cmd/incus/storage_bucket.go:854
+#: cmd/incus/storage_bucket.go:932 cmd/incus/storage_bucket.go:996
+#: cmd/incus/storage_bucket.go:1131 cmd/incus/storage_bucket.go:1203
+#: cmd/incus/storage_volume.go:44 cmd/incus/storage_volume.go:162
+#: cmd/incus/storage_volume.go:237 cmd/incus/storage_volume.go:328
+#: cmd/incus/storage_volume.go:531 cmd/incus/storage_volume.go:610
+#: cmd/incus/storage_volume.go:671 cmd/incus/storage_volume.go:753
+#: cmd/incus/storage_volume.go:834 cmd/incus/storage_volume.go:1043
+#: cmd/incus/storage_volume.go:1158 cmd/incus/storage_volume.go:1305
+#: cmd/incus/storage_volume.go:1389 cmd/incus/storage_volume.go:1596
+#: cmd/incus/storage_volume.go:1677 cmd/incus/storage_volume.go:1745
+#: cmd/incus/storage_volume.go:1889 cmd/incus/storage_volume.go:1971
+#: cmd/incus/storage_volume.go:2014 cmd/incus/storage_volume.go:2063
+#: cmd/incus/storage_volume.go:2162 cmd/incus/storage_volume.go:2235
+#: cmd/incus/storage_volume.go:2241 cmd/incus/storage_volume.go:2349
+#: cmd/incus/storage_volume.go:2420 cmd/incus/storage_volume.go:2484
+#: cmd/incus/storage_volume.go:2568 cmd/incus/storage_volume.go:2722
+#: cmd/incus/version.go:22 cmd/incus/warning.go:29 cmd/incus/warning.go:72
+#: cmd/incus/warning.go:263 cmd/incus/warning.go:304 cmd/incus/warning.go:358
 msgid "Description"
 msgstr ""
 
@@ -2343,12 +2350,12 @@ msgstr ""
 msgid "Edit project configurations as YAML"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:242 cmd/incus/storage_bucket.go:243
+#: cmd/incus/storage_bucket.go:250 cmd/incus/storage_bucket.go:251
 #, fuzzy
 msgid "Edit storage bucket configurations as YAML"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/storage_bucket.go:987 cmd/incus/storage_bucket.go:988
+#: cmd/incus/storage_bucket.go:995 cmd/incus/storage_bucket.go:996
 msgid "Edit storage bucket key as YAML"
 msgstr ""
 
@@ -2426,7 +2433,7 @@ msgstr ""
 #: cmd/incus/network_peer.go:462 cmd/incus/network_zone.go:408
 #: cmd/incus/network_zone.go:1002 cmd/incus/profile.go:856
 #: cmd/incus/project.go:634 cmd/incus/storage.go:726
-#: cmd/incus/storage_bucket.go:596 cmd/incus/storage_volume.go:1822
+#: cmd/incus/storage_bucket.go:604 cmd/incus/storage_volume.go:1822
 #: cmd/incus/storage_volume.go:1860
 #, c-format
 msgid "Error setting properties: %v"
@@ -2447,7 +2454,7 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:464 cmd/incus/network_peer.go:456
 #: cmd/incus/network_zone.go:402 cmd/incus/network_zone.go:996
 #: cmd/incus/profile.go:850 cmd/incus/project.go:628 cmd/incus/storage.go:720
-#: cmd/incus/storage_bucket.go:590 cmd/incus/storage_volume.go:1816
+#: cmd/incus/storage_bucket.go:598 cmd/incus/storage_volume.go:1816
 #: cmd/incus/storage_volume.go:1854
 #, c-format
 msgid "Error unsetting property: %v"
@@ -2572,9 +2579,24 @@ msgstr "Creazione del container in corso"
 msgid "Export instances as backup tarballs."
 msgstr "Creazione del container in corso"
 
+#: cmd/incus/storage_bucket.go:1202
+#, fuzzy
+msgid "Export storage bucket"
+msgstr "Creazione del container in corso"
+
+#: cmd/incus/storage_bucket.go:1203
+#, fuzzy
+msgid "Export storage buckets as tarball."
+msgstr "Creazione del container in corso"
+
 #: cmd/incus/storage_volume.go:2571
 msgid "Export the volume without its snapshots"
 msgstr ""
+
+#: cmd/incus/storage_bucket.go:1317
+#, fuzzy, c-format
+msgid "Exporting backup of storage bucket %s"
+msgstr "Creazione del container in corso"
 
 #: cmd/incus/export.go:151 cmd/incus/storage_volume.go:2688
 #, fuzzy, c-format
@@ -2782,6 +2804,11 @@ msgstr ""
 msgid "Failed to create alias %s: %w"
 msgstr "Accetta certificato"
 
+#: cmd/incus/storage_bucket.go:1257
+#, fuzzy, c-format
+msgid "Failed to create backup: %v"
+msgstr "Accetta certificato"
+
 #: cmd/incus/remote.go:263
 #, fuzzy, c-format
 msgid "Failed to create certificate: %w"
@@ -2795,6 +2822,11 @@ msgstr "Accetta certificato"
 #: cmd/incus/move.go:236
 #, fuzzy, c-format
 msgid "Failed to delete original instance after copying it: %w"
+msgstr "Accetta certificato"
+
+#: cmd/incus/storage_bucket.go:1331
+#, fuzzy, c-format
+msgid "Failed to fetch storage bucket backup: %w"
 msgstr "Accetta certificato"
 
 #: cmd/incus/storage_volume.go:2702
@@ -3009,7 +3041,7 @@ msgstr ""
 #: cmd/incus/network_zone.go:691 cmd/incus/operation.go:109
 #: cmd/incus/profile.go:617 cmd/incus/project.go:412 cmd/incus/project.go:804
 #: cmd/incus/remote.go:664 cmd/incus/snapshot.go:255 cmd/incus/storage.go:587
-#: cmd/incus/storage_bucket.go:453 cmd/incus/storage_bucket.go:768
+#: cmd/incus/storage_bucket.go:461 cmd/incus/storage_bucket.go:776
 #: cmd/incus/storage_volume.go:1405 cmd/incus/storage_volume.go:2256
 #: cmd/incus/warning.go:94
 msgid "Format (csv|json|table|yaml|compact)"
@@ -3123,7 +3155,7 @@ msgstr ""
 msgid "Get the key as a project property"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:379
+#: cmd/incus/storage_bucket.go:387
 #, fuzzy
 msgid "Get the key as a storage bucket property"
 msgstr "Il nome del container è: %s"
@@ -3194,7 +3226,7 @@ msgstr ""
 msgid "Get values for project configuration keys"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:375 cmd/incus/storage_bucket.go:376
+#: cmd/incus/storage_bucket.go:383 cmd/incus/storage_bucket.go:384
 #, fuzzy
 msgid "Get values for storage bucket configuration keys"
 msgstr "Il nome del container è: %s"
@@ -3307,7 +3339,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:396
+#: cmd/incus/main.go:401
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -3422,7 +3454,7 @@ msgstr "Creazione del container in corso"
 msgid "Include less common commands"
 msgstr ""
 
-#: cmd/incus/manpage.go:49
+#: cmd/incus/manpage.go:53
 msgid "Incus - Command line client"
 msgstr ""
 
@@ -3480,7 +3512,8 @@ msgstr ""
 msgid "Invalid IP address or DNS name"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/export.go:113 cmd/incus/storage_volume.go:2656
+#: cmd/incus/export.go:113 cmd/incus/storage_bucket.go:1290
+#: cmd/incus/storage_volume.go:2656
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
 msgstr "Proprietà errata: %s"
@@ -3500,7 +3533,8 @@ msgstr "Proprietà errata: %s"
 msgid "Invalid arguments"
 msgstr "Proprietà errata: %s"
 
-#: cmd/incus/export.go:118 cmd/incus/storage_volume.go:2661
+#: cmd/incus/export.go:118 cmd/incus/storage_bucket.go:1295
+#: cmd/incus/storage_volume.go:2661
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
 msgstr ""
@@ -3579,7 +3613,7 @@ msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr ""
 
-#: cmd/incus/main.go:492
+#: cmd/incus/main.go:497
 #, fuzzy
 msgid "Invalid number of arguments"
 msgstr "numero errato di argomenti del sottocomando"
@@ -3642,7 +3676,7 @@ msgstr ""
 
 #: cmd/incus/list.go:598 cmd/incus/network.go:1059
 #: cmd/incus/network_forward.go:150 cmd/incus/network_load_balancer.go:153
-#: cmd/incus/operation.go:178 cmd/incus/storage_bucket.go:510
+#: cmd/incus/operation.go:178 cmd/incus/storage_bucket.go:518
 #: cmd/incus/storage_volume.go:1501 cmd/incus/warning.go:221
 msgid "LOCATION"
 msgstr ""
@@ -3915,11 +3949,11 @@ msgstr ""
 msgid "List projects"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:765 cmd/incus/storage_bucket.go:767
+#: cmd/incus/storage_bucket.go:773 cmd/incus/storage_bucket.go:775
 msgid "List storage bucket keys"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:450 cmd/incus/storage_bucket.go:452
+#: cmd/incus/storage_bucket.go:458 cmd/incus/storage_bucket.go:460
 #, fuzzy
 msgid "List storage buckets"
 msgstr "Creazione del container in corso"
@@ -4282,21 +4316,21 @@ msgstr ""
 msgid "Manage projects"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:725
+#: cmd/incus/storage_bucket.go:733
 #, fuzzy
 msgid "Manage storage bucket keys"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:726
+#: cmd/incus/storage_bucket.go:734
 msgid "Manage storage bucket keys."
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:27
+#: cmd/incus/storage_bucket.go:31
 #, fuzzy
 msgid "Manage storage buckets"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:28
+#: cmd/incus/storage_bucket.go:32
 #, fuzzy
 msgid "Manage storage buckets."
 msgstr "Creazione del container in corso"
@@ -4408,12 +4442,12 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:110 cmd/incus/storage_bucket.go:210
-#: cmd/incus/storage_bucket.go:286 cmd/incus/storage_bucket.go:405
-#: cmd/incus/storage_bucket.go:562 cmd/incus/storage_bucket.go:654
-#: cmd/incus/storage_bucket.go:796 cmd/incus/storage_bucket.go:877
-#: cmd/incus/storage_bucket.go:952 cmd/incus/storage_bucket.go:1031
-#: cmd/incus/storage_bucket.go:1154
+#: cmd/incus/storage_bucket.go:118 cmd/incus/storage_bucket.go:218
+#: cmd/incus/storage_bucket.go:294 cmd/incus/storage_bucket.go:413
+#: cmd/incus/storage_bucket.go:570 cmd/incus/storage_bucket.go:662
+#: cmd/incus/storage_bucket.go:804 cmd/incus/storage_bucket.go:885
+#: cmd/incus/storage_bucket.go:960 cmd/incus/storage_bucket.go:1039
+#: cmd/incus/storage_bucket.go:1162 cmd/incus/storage_bucket.go:1238
 #, fuzzy
 msgid "Missing bucket name"
 msgstr "Il nome del container è: %s"
@@ -4445,8 +4479,8 @@ msgstr "Il nome del container è: %s"
 msgid "Missing instance name"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/storage_bucket.go:881 cmd/incus/storage_bucket.go:956
-#: cmd/incus/storage_bucket.go:1035 cmd/incus/storage_bucket.go:1158
+#: cmd/incus/storage_bucket.go:889 cmd/incus/storage_bucket.go:964
+#: cmd/incus/storage_bucket.go:1043 cmd/incus/storage_bucket.go:1166
 #, fuzzy
 msgid "Missing key name"
 msgstr "Il nome del container è: %s"
@@ -4536,21 +4570,22 @@ msgstr "Il nome del container è: %s"
 
 #: cmd/incus/storage.go:193 cmd/incus/storage.go:263 cmd/incus/storage.go:369
 #: cmd/incus/storage.go:439 cmd/incus/storage.go:694 cmd/incus/storage.go:792
-#: cmd/incus/storage_bucket.go:106 cmd/incus/storage_bucket.go:206
-#: cmd/incus/storage_bucket.go:282 cmd/incus/storage_bucket.go:401
-#: cmd/incus/storage_bucket.go:476 cmd/incus/storage_bucket.go:558
-#: cmd/incus/storage_bucket.go:650 cmd/incus/storage_bucket.go:792
-#: cmd/incus/storage_bucket.go:873 cmd/incus/storage_bucket.go:948
-#: cmd/incus/storage_bucket.go:1027 cmd/incus/storage_bucket.go:1150
-#: cmd/incus/storage_volume.go:186 cmd/incus/storage_volume.go:261
-#: cmd/incus/storage_volume.go:557 cmd/incus/storage_volume.go:634
-#: cmd/incus/storage_volume.go:695 cmd/incus/storage_volume.go:777
-#: cmd/incus/storage_volume.go:879 cmd/incus/storage_volume.go:1080
-#: cmd/incus/storage_volume.go:1428 cmd/incus/storage_volume.go:1702
-#: cmd/incus/storage_volume.go:1782 cmd/incus/storage_volume.go:1925
-#: cmd/incus/storage_volume.go:2089 cmd/incus/storage_volume.go:2186
-#: cmd/incus/storage_volume.go:2279 cmd/incus/storage_volume.go:2375
-#: cmd/incus/storage_volume.go:2444 cmd/incus/storage_volume.go:2518
+#: cmd/incus/storage_bucket.go:114 cmd/incus/storage_bucket.go:214
+#: cmd/incus/storage_bucket.go:290 cmd/incus/storage_bucket.go:409
+#: cmd/incus/storage_bucket.go:484 cmd/incus/storage_bucket.go:566
+#: cmd/incus/storage_bucket.go:658 cmd/incus/storage_bucket.go:800
+#: cmd/incus/storage_bucket.go:881 cmd/incus/storage_bucket.go:956
+#: cmd/incus/storage_bucket.go:1035 cmd/incus/storage_bucket.go:1158
+#: cmd/incus/storage_bucket.go:1233 cmd/incus/storage_volume.go:186
+#: cmd/incus/storage_volume.go:261 cmd/incus/storage_volume.go:557
+#: cmd/incus/storage_volume.go:634 cmd/incus/storage_volume.go:695
+#: cmd/incus/storage_volume.go:777 cmd/incus/storage_volume.go:879
+#: cmd/incus/storage_volume.go:1080 cmd/incus/storage_volume.go:1428
+#: cmd/incus/storage_volume.go:1702 cmd/incus/storage_volume.go:1782
+#: cmd/incus/storage_volume.go:1925 cmd/incus/storage_volume.go:2089
+#: cmd/incus/storage_volume.go:2186 cmd/incus/storage_volume.go:2279
+#: cmd/incus/storage_volume.go:2375 cmd/incus/storage_volume.go:2444
+#: cmd/incus/storage_volume.go:2518
 msgid "Missing pool name"
 msgstr ""
 
@@ -4693,8 +4728,8 @@ msgstr ""
 #: cmd/incus/network_acl.go:146 cmd/incus/network_peer.go:138
 #: cmd/incus/network_zone.go:137 cmd/incus/network_zone.go:740
 #: cmd/incus/profile.go:657 cmd/incus/project.go:498 cmd/incus/remote.go:721
-#: cmd/incus/storage.go:637 cmd/incus/storage_bucket.go:505
-#: cmd/incus/storage_bucket.go:825 cmd/incus/storage_volume.go:1493
+#: cmd/incus/storage.go:637 cmd/incus/storage_bucket.go:513
+#: cmd/incus/storage_bucket.go:833 cmd/incus/storage_volume.go:1493
 msgid "NAME"
 msgstr ""
 
@@ -5125,7 +5160,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:357
+#: cmd/incus/main.go:362
 #, fuzzy, c-format
 msgid "Password for %s: "
 msgstr "Password amministratore per %s: "
@@ -5209,7 +5244,7 @@ msgstr ""
 #: cmd/incus/network_peer.go:610 cmd/incus/network_zone.go:551
 #: cmd/incus/network_zone.go:1143 cmd/incus/profile.go:519
 #: cmd/incus/project.go:316 cmd/incus/storage.go:310
-#: cmd/incus/storage_bucket.go:343 cmd/incus/storage_bucket.go:1092
+#: cmd/incus/storage_bucket.go:351 cmd/incus/storage_bucket.go:1100
 #: cmd/incus/storage_volume.go:977 cmd/incus/storage_volume.go:1009
 msgid "Press enter to open the editor again or ctrl+c to abort change"
 msgstr ""
@@ -5491,7 +5526,7 @@ msgstr ""
 msgid "RESTRICTED"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:827
+#: cmd/incus/storage_bucket.go:835
 msgid "ROLE"
 msgstr ""
 
@@ -5823,7 +5858,7 @@ msgstr "Il nome del container è: %s"
 msgid "Revoke cluster member join token"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/storage_bucket.go:850
+#: cmd/incus/storage_bucket.go:858
 msgid "Role (admin or read-only)"
 msgstr ""
 
@@ -5921,11 +5956,11 @@ msgstr ""
 msgid "Scanning for unknown volumes..."
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:852
+#: cmd/incus/storage_bucket.go:860
 msgid "Secret key (auto-generated if empty)"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:908
+#: cmd/incus/storage_bucket.go:916
 #, fuzzy, c-format
 msgid "Secret key: %s"
 msgstr "Aggiornamento automatico: %s"
@@ -6124,12 +6159,12 @@ msgid ""
 "    incus project set [<remote>:]<project> <key> <value>"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:528
+#: cmd/incus/storage_bucket.go:536
 #, fuzzy
 msgid "Set storage bucket configuration keys"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/storage_bucket.go:529
+#: cmd/incus/storage_bucket.go:537
 msgid ""
 "Set storage bucket configuration keys\n"
 "\n"
@@ -6224,7 +6259,7 @@ msgstr ""
 msgid "Set the key as a project property"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:536
+#: cmd/incus/storage_bucket.go:544
 #, fuzzy
 msgid "Set the key as a storage bucket property"
 msgstr "Creazione del container in corso"
@@ -6366,12 +6401,12 @@ msgstr ""
 msgid "Show project options"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:622 cmd/incus/storage_bucket.go:623
+#: cmd/incus/storage_bucket.go:630 cmd/incus/storage_bucket.go:631
 #, fuzzy
 msgid "Show storage bucket configurations"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/storage_bucket.go:1122 cmd/incus/storage_bucket.go:1123
+#: cmd/incus/storage_bucket.go:1130 cmd/incus/storage_bucket.go:1131
 #, fuzzy
 msgid "Show storage bucket key configurations"
 msgstr "Il nome del container è: %s"
@@ -6534,24 +6569,28 @@ msgstr "errore di processamento degli alias %s\n"
 msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:160
+#: cmd/incus/storage_bucket.go:168
 #, c-format
 msgid "Storage bucket %s created"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:227
+#: cmd/incus/storage_bucket.go:235
 #, c-format
 msgid "Storage bucket %s deleted"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:906
+#: cmd/incus/storage_bucket.go:914
 #, c-format
 msgid "Storage bucket key %s added"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:972
+#: cmd/incus/storage_bucket.go:980
 #, c-format
 msgid "Storage bucket key %s removed"
+msgstr ""
+
+#: cmd/incus/storage_bucket.go:1209
+msgid "Storage bucket key used for exporting the storage bucket"
 msgstr ""
 
 #: cmd/incus/admin_init_auto.go:51
@@ -6876,7 +6915,7 @@ msgstr "Il nome del container è: %s"
 msgid "The property %q does not exist on the project %q: %v"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/storage_bucket.go:425
+#: cmd/incus/storage_bucket.go:433
 #, fuzzy, c-format
 msgid "The property %q does not exist on the storage bucket %q: %v"
 msgstr "Il nome del container è: %s"
@@ -6955,7 +6994,7 @@ msgstr ""
 msgid "There is no \"image name\".  Did you want an alias?"
 msgstr ""
 
-#: cmd/incus/main.go:290
+#: cmd/incus/main.go:295
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -7002,7 +7041,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:401
+#: cmd/incus/main.go:406
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
 "Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
@@ -7262,7 +7301,7 @@ msgstr ""
 msgid "Unset project configuration keys"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:691 cmd/incus/storage_bucket.go:692
+#: cmd/incus/storage_bucket.go:699 cmd/incus/storage_bucket.go:700
 #, fuzzy
 msgid "Unset storage bucket configuration keys"
 msgstr "Il nome del container è: %s"
@@ -7318,7 +7357,7 @@ msgstr ""
 msgid "Unset the key as a project property"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:695
+#: cmd/incus/storage_bucket.go:703
 #, fuzzy
 msgid "Unset the key as a storage bucket property"
 msgstr "Il nome del container è: %s"
@@ -8094,7 +8133,7 @@ msgid "[<remote>:]<operation>"
 msgstr "Creazione del container in corso"
 
 #: cmd/incus/storage.go:166 cmd/incus/storage.go:217 cmd/incus/storage.go:411
-#: cmd/incus/storage.go:758 cmd/incus/storage_bucket.go:448
+#: cmd/incus/storage.go:758 cmd/incus/storage_bucket.go:456
 #, fuzzy
 msgid "[<remote>:]<pool>"
 msgstr "Creazione del container in corso"
@@ -8104,25 +8143,26 @@ msgstr "Creazione del container in corso"
 msgid "[<remote>:]<pool> <backup file> [<volume name>]"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:179 cmd/incus/storage_bucket.go:241
-#: cmd/incus/storage_bucket.go:621 cmd/incus/storage_bucket.go:763
+#: cmd/incus/storage_bucket.go:187 cmd/incus/storage_bucket.go:249
+#: cmd/incus/storage_bucket.go:629 cmd/incus/storage_bucket.go:771
+#: cmd/incus/storage_bucket.go:1201
 #, fuzzy
 msgid "[<remote>:]<pool> <bucket>"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:374 cmd/incus/storage_bucket.go:690
-#: cmd/incus/storage_bucket.go:844 cmd/incus/storage_bucket.go:922
-#: cmd/incus/storage_bucket.go:986 cmd/incus/storage_bucket.go:1121
+#: cmd/incus/storage_bucket.go:382 cmd/incus/storage_bucket.go:698
+#: cmd/incus/storage_bucket.go:852 cmd/incus/storage_bucket.go:930
+#: cmd/incus/storage_bucket.go:994 cmd/incus/storage_bucket.go:1129
 #, fuzzy
 msgid "[<remote>:]<pool> <bucket> <key>"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:527
+#: cmd/incus/storage_bucket.go:535
 #, fuzzy
 msgid "[<remote>:]<pool> <bucket> <key>=<value>..."
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:80
+#: cmd/incus/storage_bucket.go:88
 #, fuzzy
 msgid "[<remote>:]<pool> <bucket> [key=value...]"
 msgstr "Creazione del container in corso"
@@ -8635,26 +8675,32 @@ msgid ""
 "Restore the snapshot."
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:244
+#: cmd/incus/storage_bucket.go:1205
+msgid ""
+"incus storage bucket default b1\n"
+"    Download a backup tarball of the b1 storage bucket."
+msgstr ""
+
+#: cmd/incus/storage_bucket.go:252
 msgid ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml\n"
 "    Update a storage bucket using the content of bucket.yaml."
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:989
+#: cmd/incus/storage_bucket.go:997
 msgid ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
 "    Update a storage bucket key using the content of key.yaml."
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:1124
+#: cmd/incus/storage_bucket.go:1132
 msgid ""
 "incus storage bucket key show default data foo\n"
 "    Will show the properties of a bucket key called \"foo\" for a bucket "
 "called \"data\" in the \"default\" pool."
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:624
+#: cmd/incus/storage_bucket.go:632
 msgid ""
 "incus storage bucket show default data\n"
 "    Will show the properties of a bucket called \"data\" in the \"default\" "

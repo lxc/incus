@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/lxc/incus/client"
+	incus "github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/auth/oidc"
@@ -110,6 +110,9 @@ var api10 = []APIEndpoint{
 	storagePoolBucketCmd,
 	storagePoolBucketKeysCmd,
 	storagePoolBucketKeyCmd,
+	storagePoolBucketBackupsCmd,
+	storagePoolBucketBackupCmd,
+	storagePoolBucketBackupsExportCmd,
 	storagePoolVolumesCmd,
 	storagePoolVolumeSnapshotsTypeCmd,
 	storagePoolVolumeSnapshotTypeCmd,

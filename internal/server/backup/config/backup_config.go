@@ -13,4 +13,5 @@ type Config struct {
 	Volume          *api.StorageVolume           `yaml:"volume,omitempty"`
 	VolumeSnapshots []*api.StorageVolumeSnapshot `yaml:"volume_snapshots,omitempty"`
 	Bucket          *api.StorageBucket           `yaml:"bucket,omitempty"`
+	BucketKeys      []*api.StorageBucketKey      `yaml:"bucket_keys,omitempty"`
 }

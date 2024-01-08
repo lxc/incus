@@ -5937,6 +5937,31 @@ func (b *backend) createStorageStructure(path string) error {
 	return nil
 }
 
+// GenerateBucketBackupConfig returns the backup config entry for this bucket.
+func (b *backend) GenerateBucketBackupConfig(projectName string, bucketName string, op *operations.Operation) (*backupConfig.Config, error) {
+	bucket, err := BucketDBGet(b, projectName, bucketName, true)
+	if err != nil {
+		return nil, err
+	}
+
+	dbBucketKeys, err := BucketKeysDBGet(b, bucket.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var bucketKeys []*api.StorageBucketKey
+	for _, key := range dbBucketKeys {
+		bucketKeys = append(bucketKeys, &key.StorageBucketKey)
+	}
+
+	config := &backupConfig.Config{
+		Bucket:     &bucket.StorageBucket,
+		BucketKeys: bucketKeys,
+	}
+
+	return config, nil
+}
+
 // GenerateCustomVolumeBackupConfig returns the backup config entry for this volume.
 func (b *backend) GenerateCustomVolumeBackupConfig(projectName string, volName string, snapshots bool, op *operations.Operation) (*backupConfig.Config, error) {
 	vol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
@@ -6991,5 +7016,50 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 	b.state.Events.SendLifecycle(srcBackup.Project, lifecycle.StorageVolumeCreated.Event(vol, string(vol.Type()), srcBackup.Project, op, eventCtx))
 
 	revert.Success()
+	return nil
+}
+
+func (b *backend) BackupBucket(projectName string, bucketName string, keyName string, tarWriter *instancewriter.InstanceTarWriter, op *operations.Operation) error {
+	l := b.logger.AddContext(logger.Ctx{"project": projectName, "bucket": bucketName})
+	l.Debug("BackupBucket started")
+	defer l.Debug("BackupBucket finished")
+
+	err := b.isStatusReady()
+	if err != nil {
+		return err
+	}
+
+	if !b.Driver().Info().Buckets {
+		return fmt.Errorf("Storage pool does not support buckets")
+	}
+
+	memberSpecific := !b.Driver().Info().Remote // Member specific if storage pool isn't remote.
+
+	var bucket *db.StorageBucket
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		bucket, err = tx.GetStoragePoolBucket(ctx, b.id, projectName, memberSpecific, bucketName)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	var key *db.StorageBucketKey
+	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		key, err = tx.GetStoragePoolBucketKey(ctx, bucket.ID, keyName)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	endpoint := b.state.Endpoints.StorageBucketsAddress()
+	transferManager := s3.NewTransferManager(endpoint, key.AccessKey, key.SecretKey)
+
+	err = transferManager.DownloadAllFiles(bucket.Name, tarWriter)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

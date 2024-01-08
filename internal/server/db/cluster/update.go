@@ -107,6 +107,27 @@ var updates = map[int]schema.Update{
 	68: updateFromV67,
 	69: updateFromV68,
 	70: updateFromV69,
+	71: updateFromV70,
+}
+
+func updateFromV70(ctx context.Context, tx *sql.Tx) error {
+	q := `
+CREATE TABLE "storage_buckets_backups" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    storage_bucket_id INTEGER NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    creation_date DATETIME,
+    expiry_date DATETIME,
+    FOREIGN KEY (storage_bucket_id) REFERENCES "storage_buckets" (id) ON DELETE CASCADE,
+    UNIQUE (storage_bucket_id, name)
+);
+`
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed adding storage bucket backup table: %w", err)
+	}
+
+	return nil
 }
 
 // updateFromV69 adds description column to certificate.

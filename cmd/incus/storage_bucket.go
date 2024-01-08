@@ -3,13 +3,17 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
+	"path"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	incus "github.com/lxc/incus/client"
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/api"
@@ -62,6 +66,10 @@ func (c *cmdStorageBucket) Command() *cobra.Command {
 	// Key.
 	storageBucketKeyCmd := cmdStorageBucketKey{global: c.global, storageBucket: c}
 	cmd.AddCommand(storageBucketKeyCmd.Command())
+
+	// Export.
+	storageBucketExportCmd := cmdStorageBucketExport{global: c.global, storageBucket: c}
+	cmd.AddCommand(storageBucketExportCmd.Command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -1176,6 +1184,154 @@ func (c *cmdStorageBucketKeyShow) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("%s", data)
+
+	return nil
+}
+
+type cmdStorageBucketExport struct {
+	global        *cmdGlobal
+	storageBucket *cmdStorageBucket
+
+	flagStorageBucketKeyName string
+	flagCompressionAlgorithm string
+}
+
+func (c *cmdStorageBucketExport) Command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = usage("export", i18n.G("[<remote>:]<pool> <bucket>"))
+	cmd.Short = i18n.G("Export storage bucket")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`Export storage buckets as tarball.`))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus storage bucket default b1
+    Download a backup tarball of the b1 storage bucket.`))
+
+	cmd.Flags().StringVar(&c.flagStorageBucketKeyName, "key", "admin", i18n.G("Storage bucket key used for exporting the storage bucket")+"``")
+	cmd.Flags().StringVar(&c.flagCompressionAlgorithm, "compression", "", i18n.G("Define a compression algorithm: for backup or none")+"``")
+	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+
+	cmd.RunE = c.Run
+
+	return cmd
+}
+
+func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
+	// Quick checks.
+	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	if exit {
+		return err
+	}
+
+	// Parse remote.
+	resources, err := c.global.ParseServers(args[0])
+	if err != nil {
+		return err
+	}
+
+	pool := resources[0]
+	if pool.name == "" {
+		return fmt.Errorf(i18n.G("Missing pool name"))
+	}
+
+	bucketName := args[1]
+	if bucketName == "" {
+		return fmt.Errorf(i18n.G("Missing bucket name"))
+	}
+
+	client := pool.server
+
+	// If a target was specified, use the bucket on the given member.
+	if c.storageBucket.flagTarget != "" {
+		client = client.UseTarget(c.storageBucket.flagTarget)
+	}
+
+	req := api.StorageBucketBackupsPost{
+		Name:                 "",
+		KeyName:              c.flagStorageBucketKeyName,
+		ExpiresAt:            time.Now().Add(23 * time.Hour),
+		CompressionAlgorithm: c.flagCompressionAlgorithm,
+	}
+
+	op, err := client.CreateStoragePoolBucketBackup(pool.name, bucketName, req)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to create backup: %v"), err)
+	}
+
+	// Watch the background operation
+	progress := cli.ProgressRenderer{
+		Format: i18n.G("Backing up storage bucket %s"),
+		Quiet:  c.global.flagQuiet,
+	}
+
+	_, err = op.AddHandler(progress.UpdateOp)
+	if err != nil {
+		progress.Done("")
+		return err
+	}
+
+	// Wait until backup is done
+	err = cli.CancelableWait(op, &progress)
+	if err != nil {
+		progress.Done("")
+		return err
+	}
+
+	progress.Done("")
+
+	err = op.Wait()
+	if err != nil {
+		return err
+	}
+
+	// Get name of backup
+	utStr := op.Get().Resources["backups"][0]
+	u, err := url.Parse(utStr)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Invalid URL %q: %w"), utStr, err)
+	}
+
+	backupName, err := url.PathUnescape(path.Base(u.EscapedPath()))
+	if err != nil {
+		return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), u.EscapedPath(), err)
+	}
+
+	defer func() {
+		// Delete backup after we're done
+		op, err := client.DeleteStoragePoolBucketBackup(pool.name, bucketName, backupName)
+		if err == nil {
+			_ = op.Wait()
+		}
+	}()
+
+	targetName := fmt.Sprintf("%s.tar.gz", bucketName)
+
+	target, err := os.Create(targetName)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = target.Close() }()
+
+	// Prepare the download request
+	progress = cli.ProgressRenderer{
+		Format: i18n.G("Exporting backup of storage bucket %s"),
+		Quiet:  c.global.flagForceLocal,
+	}
+
+	backupFileRequest := incus.BackupFileRequest{
+		BackupFile:      io.WriteSeeker(target),
+		ProgressHandler: progress.UpdateProgress,
+	}
+
+	// Export tarball
+	_, err = client.GetStoragePoolBucketBackupFile(pool.name, bucketName, backupName, &backupFileRequest)
+	if err != nil {
+		_ = os.Remove(targetName)
+		progress.Done("")
+		return fmt.Errorf(i18n.G("Failed to fetch storage bucket backup: %w"), err)
+	}
+
+	progress.Done(i18n.G("Backup exported successfully!"))
 
 	return nil
 }
