@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -209,6 +210,26 @@ func clusterGet(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	// Sort the member config.
+	sort.Slice(memberConfig, func(i, j int) bool {
+		left := memberConfig[i]
+		right := memberConfig[j]
+
+		if left.Entity != right.Entity {
+			return left.Entity < right.Entity
+		}
+
+		if left.Name != right.Name {
+			return left.Name < right.Name
+		}
+
+		if left.Key != right.Key {
+			return left.Key < right.Key
+		}
+
+		return left.Description < right.Description
+	})
 
 	cluster := api.Cluster{
 		ServerName:   serverName,
