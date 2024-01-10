@@ -8,11 +8,11 @@ import (
 
 // Entry is a single idmap entry (line).
 type Entry struct {
-	IsUID    bool
-	IsGID    bool
-	HostID   int64 // id as seen on the host - i.e. 100000
-	NSID     int64 // id as seen in the ns - i.e. 0
-	MapRange int64
+	IsUID    bool  `json:"Isuid"`
+	IsGID    bool  `json:"Isgid"`
+	HostID   int64 `json:"Hostid"` // id as seen on the host - i.e. 100000
+	NSID     int64 `json:"Nsid"`   // id as seen in the ns - i.e. 0
+	MapRange int64 `json:"Maprange"`
 }
 
 // ToLXCString converts an Entry into its LXC representation.
