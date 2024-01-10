@@ -1374,8 +1374,12 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	// Check that the name isn't already in use.
-	_, err = s.DB.Cluster.GetStoragePoolNodeVolumeID(targetProjectName, req.Name, volumeType, targetPoolID)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Check that the name isn't already in use.
+		_, err = tx.GetStoragePoolNodeVolumeID(ctx, targetProjectName, req.Name, volumeType, targetPoolID)
+
+		return err
+	})
 	if !response.IsNotFoundError(err) {
 		if err != nil {
 			return response.InternalError(err)

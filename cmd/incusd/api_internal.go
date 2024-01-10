@@ -730,8 +730,10 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 			return fmt.Errorf(`The type %q of the storage volume is not identical to the instance's type %q`, dbVolume.Type, backupConf.Volume.Type)
 		}
 
-		// Remove the storage volume db entry for the instance since force was specified.
-		err := s.DB.Cluster.RemoveStoragePoolVolume(projectName, backupConf.Container.Name, instanceDBVolType, pool.ID())
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			// Remove the storage volume db entry for the instance since force was specified.
+			return tx.RemoveStoragePoolVolume(ctx, projectName, backupConf.Container.Name, instanceDBVolType, pool.ID())
+		})
 		if err != nil {
 			return err
 		}
@@ -836,7 +838,9 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 		}
 
 		if dbVolume != nil {
-			err := s.DB.Cluster.RemoveStoragePoolVolume(projectName, snapInstName, instanceDBVolType, pool.ID())
+			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.RemoveStoragePoolVolume(ctx, projectName, snapInstName, instanceDBVolType, pool.ID())
+			})
 			if err != nil {
 				return err
 			}

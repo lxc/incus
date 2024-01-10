@@ -283,17 +283,16 @@ func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDesc
 		return err
 	}
 
-	// Create the database entry for the storage volume.
-	if snapshot {
-		err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create the database entry for the storage volume.
+		if snapshot {
 			_, err = tx.CreateStorageVolumeSnapshot(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), creationDate, expiryDate)
+		} else {
+			_, err = tx.CreateStoragePoolVolume(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), volDBContentType, creationDate)
+		}
 
-			return err
-		})
-	} else {
-		_, err = p.state.DB.Cluster.CreateStoragePoolVolume(projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), volDBContentType, creationDate)
-	}
-
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Error inserting volume %q for project %q in pool %q of type %q into database %q", volumeName, projectName, pool.Name(), volumeType, err)
 	}
@@ -314,7 +313,9 @@ func VolumeDBDelete(pool Pool, projectName string, volumeName string, volumeType
 		return err
 	}
 
-	err = p.state.DB.Cluster.RemoveStoragePoolVolume(projectName, volumeName, volDBType, pool.ID())
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.RemoveStoragePoolVolume(ctx, projectName, volumeName, volDBType, pool.ID())
+	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return fmt.Errorf("Error deleting storage volume from database: %w", err)
 	}
@@ -334,7 +335,13 @@ func VolumeDBSnapshotsGet(pool Pool, projectName string, volume string, volumeTy
 		return nil, err
 	}
 
-	snapshots, err := p.state.DB.Cluster.GetLocalStoragePoolVolumeSnapshotsWithType(projectName, volume, volDBType, pool.ID())
+	var snapshots []db.StorageVolumeArgs
+
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		snapshots, err = tx.GetLocalStoragePoolVolumeSnapshotsWithType(ctx, projectName, volume, volDBType, pool.ID())
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -180,7 +180,11 @@ func (suite *containerTestSuite) TestContainer_LoadFromDB() {
 	pool, err := storagePools.LoadByName(state, poolName)
 	suite.Req.Nil(err)
 
-	_, err = state.DB.Cluster.CreateStoragePoolVolume(c.Project().Name, c.Name(), "", db.StoragePoolVolumeContentTypeFS, pool.ID(), nil, db.StoragePoolVolumeContentTypeFS, time.Now())
+	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err = tx.CreateStoragePoolVolume(ctx, c.Project().Name, c.Name(), "", db.StoragePoolVolumeContentTypeFS, pool.ID(), nil, db.StoragePoolVolumeContentTypeFS, time.Now())
+
+		return err
+	})
 	suite.Req.Nil(err)
 
 	// Load the container and trigger initLXC()

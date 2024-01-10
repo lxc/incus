@@ -1730,7 +1730,9 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 	// Update last idmap.
 	poolVolumePut.Config["volatile.idmap.last"] = jsonIdmap
 
-	err = d.state.DB.Cluster.UpdateStoragePoolVolume(projectName, volumeName, volumeType, d.pool.ID(), poolVolumePut.Description, poolVolumePut.Config)
+	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.UpdateStoragePoolVolume(ctx, projectName, volumeName, volumeType, d.pool.ID(), poolVolumePut.Description, poolVolumePut.Config)
+	})
 	if err != nil {
 		return err
 	}
