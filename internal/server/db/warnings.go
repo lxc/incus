@@ -22,18 +22,8 @@ INSERT INTO warnings (node_id, project_id, entity_type_code, entity_id, uuid, ty
 `)
 
 // UpsertWarningLocalNode creates or updates a warning for the local member. Returns error if no local member name.
-func (c *Cluster) UpsertWarningLocalNode(projectName string, entityTypeCode int, entityID int, typeCode warningtype.Type, message string) error {
-	var err error
-	var localName string
-
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		localName, err = tx.GetLocalNodeName(ctx)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (c *ClusterTx) UpsertWarningLocalNode(ctx context.Context, projectName string, entityTypeCode int, entityID int, typeCode warningtype.Type, message string) error {
+	localName, err := c.GetLocalNodeName(ctx)
 	if err != nil {
 		return fmt.Errorf("Failed getting local member name: %w", err)
 	}
@@ -42,13 +32,13 @@ func (c *Cluster) UpsertWarningLocalNode(projectName string, entityTypeCode int,
 		return fmt.Errorf("Local member name not available")
 	}
 
-	return c.UpsertWarning(localName, projectName, entityTypeCode, entityID, typeCode, message)
+	return c.UpsertWarning(ctx, localName, projectName, entityTypeCode, entityID, typeCode, message)
 }
 
 // UpsertWarning creates or updates a warning.
-func (c *Cluster) UpsertWarning(nodeName string, projectName string, entityTypeCode int, entityID int, typeCode warningtype.Type, message string) error {
+func (c *ClusterTx) UpsertWarning(ctx context.Context, nodeName string, projectName string, entityTypeCode int, entityID int, typeCode warningtype.Type, message string) error {
 	// Validate
-	_, err := c.GetURIFromEntity(entityTypeCode, entityID)
+	_, err := c.GetURIFromEntity(ctx, entityTypeCode, entityID)
 	if err != nil {
 		return fmt.Errorf("Failed to get URI for entity ID %d with entity type code %d: %w", entityID, entityTypeCode, err)
 	}
@@ -60,58 +50,51 @@ func (c *Cluster) UpsertWarning(nodeName string, projectName string, entityTypeC
 
 	now := time.Now().UTC()
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		filter := cluster.WarningFilter{
-			TypeCode:       &typeCode,
-			Node:           &nodeName,
-			Project:        &projectName,
-			EntityTypeCode: &entityTypeCode,
-			EntityID:       &entityID,
+	filter := cluster.WarningFilter{
+		TypeCode:       &typeCode,
+		Node:           &nodeName,
+		Project:        &projectName,
+		EntityTypeCode: &entityTypeCode,
+		EntityID:       &entityID,
+	}
+
+	warnings, err := cluster.GetWarnings(ctx, c.tx, filter)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve warnings: %w", err)
+	}
+
+	if len(warnings) > 1 {
+		// This shouldn't happen
+		return fmt.Errorf("More than one warnings (%d) match the criteria: typeCode: %d, nodeName: %q, projectName: %q, entityTypeCode: %d, entityID: %d", len(warnings), typeCode, nodeName, projectName, entityTypeCode, entityID)
+	} else if len(warnings) == 1 {
+		// If there is a historical warning that was previously automatically resolved and the same
+		// warning has now reoccurred then set the status back to warningtype.StatusNew so it shows as
+		// a current active warning.
+		newStatus := warnings[0].Status
+		if newStatus == warningtype.StatusResolved {
+			newStatus = warningtype.StatusNew
 		}
 
-		warnings, err := cluster.GetWarnings(ctx, tx.tx, filter)
-		if err != nil {
-			return fmt.Errorf("Failed to retrieve warnings: %w", err)
+		err = c.UpdateWarningState(warnings[0].UUID, message, newStatus)
+	} else {
+		warning := cluster.Warning{
+			Node:           nodeName,
+			Project:        projectName,
+			EntityTypeCode: entityTypeCode,
+			EntityID:       entityID,
+			UUID:           uuid.New().String(),
+			TypeCode:       typeCode,
+			Status:         warningtype.StatusNew,
+			FirstSeenDate:  now,
+			LastSeenDate:   now,
+			UpdatedDate:    time.Time{}.UTC(),
+			LastMessage:    message,
+			Count:          1,
 		}
 
-		if len(warnings) > 1 {
-			// This shouldn't happen
-			return fmt.Errorf("More than one warnings (%d) match the criteria: typeCode: %d, nodeName: %q, projectName: %q, entityTypeCode: %d, entityID: %d", len(warnings), typeCode, nodeName, projectName, entityTypeCode, entityID)
-		} else if len(warnings) == 1 {
-			// If there is a historical warning that was previously automatically resolved and the same
-			// warning has now reoccurred then set the status back to warningtype.StatusNew so it shows as
-			// a current active warning.
-			newStatus := warnings[0].Status
-			if newStatus == warningtype.StatusResolved {
-				newStatus = warningtype.StatusNew
-			}
+		_, err = c.createWarning(ctx, warning)
+	}
 
-			err = tx.UpdateWarningState(warnings[0].UUID, message, newStatus)
-		} else {
-			warning := cluster.Warning{
-				Node:           nodeName,
-				Project:        projectName,
-				EntityTypeCode: entityTypeCode,
-				EntityID:       entityID,
-				UUID:           uuid.New().String(),
-				TypeCode:       typeCode,
-				Status:         warningtype.StatusNew,
-				FirstSeenDate:  now,
-				LastSeenDate:   now,
-				UpdatedDate:    time.Time{}.UTC(),
-				LastMessage:    message,
-				Count:          1,
-			}
-
-			_, err = tx.createWarning(ctx, warning)
-		}
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
 	if err != nil {
 		return err
 	}

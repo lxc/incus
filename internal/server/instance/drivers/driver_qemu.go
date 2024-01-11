@@ -1365,8 +1365,10 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			d.logger.Warn("Unable to use virtio-fs for config drive, using 9p as a fallback", logger.Ctx{"err": errUnsupported})
 
 			if errUnsupported == device.ErrMissingVirtiofsd {
-				// Create a warning if virtiofsd is missing.
-				_ = d.state.DB.Cluster.UpsertWarning(d.node, d.project.Name, dbCluster.TypeInstance, d.ID(), warningtype.MissingVirtiofsd, "Using 9p as a fallback")
+				_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					// Create a warning if virtiofsd is missing.
+					return tx.UpsertWarning(ctx, d.node, d.project.Name, dbCluster.TypeInstance, d.ID(), warningtype.MissingVirtiofsd, "Using 9p as a fallback")
+				})
 			} else {
 				// Resolve previous warning.
 				_ = warnings.ResolveWarningsByNodeAndProjectAndType(d.state.DB.Cluster, d.node, d.project.Name, warningtype.MissingVirtiofsd)

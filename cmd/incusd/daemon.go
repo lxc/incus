@@ -1532,13 +1532,17 @@ func (d *Daemon) init() error {
 
 	close(d.setupChan)
 
-	// Create warnings that have been collected
-	for _, w := range dbWarnings {
-		err := d.db.Cluster.UpsertWarningLocalNode("", -1, -1, warningtype.Type(w.TypeCode), w.LastMessage)
-		if err != nil {
-			logger.Warn("Failed to create warning", logger.Ctx{"err": err})
+	_ = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create warnings that have been collected
+		for _, w := range dbWarnings {
+			err := tx.UpsertWarningLocalNode(ctx, "", -1, -1, warningtype.Type(w.TypeCode), w.LastMessage)
+			if err != nil {
+				logger.Warn("Failed to create warning", logger.Ctx{"err": err})
+			}
 		}
-	}
+
+		return nil
+	})
 
 	// Resolve warnings older than the daemon start time
 	err = warnings.ResolveWarningsByLocalNodeOlderThan(d.db.Cluster, d.startTime)
@@ -2195,7 +2199,9 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 			logger.Warn("Time skew detected between leader and local", logger.Ctx{"leaderTime": hbData.Time, "localTime": now})
 
 			if d.db.Cluster != nil {
-				err := d.db.Cluster.UpsertWarningLocalNode("", -1, -1, warningtype.ClusterTimeSkew, fmt.Sprintf("leaderTime: %s, localTime: %s", hbData.Time, now))
+				err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.UpsertWarningLocalNode(ctx, "", -1, -1, warningtype.ClusterTimeSkew, fmt.Sprintf("leaderTime: %s, localTime: %s", hbData.Time, now))
+				})
 				if err != nil {
 					logger.Warn("Failed to create cluster time skew warning", logger.Ctx{"err": err})
 				}

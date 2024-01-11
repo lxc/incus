@@ -185,7 +185,9 @@ func internalCreateWarning(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Invalid entity type"))
 	}
 
-	err = d.State().DB.Cluster.UpsertWarning(req.Location, req.Project, req.EntityTypeCode, req.EntityID, warningtype.Type(req.TypeCode), req.Message)
+	err = d.State().DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.UpsertWarning(ctx, req.Location, req.Project, req.EntityTypeCode, req.EntityID, warningtype.Type(req.TypeCode), req.Message)
+	})
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed to create warning: %w", err))
 	}
