@@ -173,18 +173,20 @@ func (m *Set) ValidRanges() ([]*Range, error) {
 func (m *Set) AddSafe(i Entry) error {
 	result := []Entry{}
 	added := false
+
 	for _, e := range m.Entries {
+		// Check if the existing entry intersects with the new one.
 		if !e.Intersects(i) {
 			result = append(result, e)
 			continue
 		}
 
+		// Fail when the same hostid(s) are used in multiple entries.
 		if e.HostIDsIntersect(i) {
 			return ErrHostIDIsSubID
 		}
 
-		added = true
-
+		// Split the lower part of the entry (ids from begining of existing entry to start of new entry).
 		lower := Entry{
 			IsUID:    e.IsUID,
 			IsGID:    e.IsGID,
@@ -193,6 +195,7 @@ func (m *Set) AddSafe(i Entry) error {
 			MapRange: i.NSID - e.NSID,
 		}
 
+		// Split the upper part of the entry (ids from new entry to end of existing entry).
 		upper := Entry{
 			IsUID:    e.IsUID,
 			IsGID:    e.IsGID,
@@ -201,16 +204,28 @@ func (m *Set) AddSafe(i Entry) error {
 			MapRange: e.MapRange - i.MapRange - lower.MapRange,
 		}
 
+		// If the new entry doesn't completely cover the lower part of
+		// the existing entry, then add that to the set.
 		if lower.MapRange > 0 {
 			result = append(result, lower)
 		}
 
-		result = append(result, i)
+		// Add the new entry in the middle.
+		if !added {
+			// With an entry matching both uid and gid, more than one
+			// intersection is possible, keep track of it to only put it in the set once.
+			added = true
+			result = append(result, i)
+		}
+
+		// If the new entry doesn't completely cover the upper part of
+		// the existing entry, then add that to the set.
 		if upper.MapRange > 0 {
 			result = append(result, upper)
 		}
 	}
 
+	// If no intersection was found, just add the new entry to the set.
 	if !added {
 		result = append(result, i)
 	}

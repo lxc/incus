@@ -442,13 +442,11 @@ func (suite *containerTestSuite) TestContainer_findIdmap_raw() {
 		suite.Req.Equal(int64(1000), map1.Entries[i].MapRange, "incorrect maprange")
 	}
 
-	for _, i := range []int{1, 4} {
-		suite.Req.Equal(int64(1000), map1.Entries[i].HostID, "hostids don't match")
-		suite.Req.Equal(int64(1000), map1.Entries[i].NSID, "invalid nsid")
-		suite.Req.Equal(int64(1), map1.Entries[i].MapRange, "incorrect maprange")
-	}
+	suite.Req.Equal(int64(1000), map1.Entries[1].HostID, "hostids don't match")
+	suite.Req.Equal(int64(1000), map1.Entries[1].NSID, "invalid nsid")
+	suite.Req.Equal(int64(1), map1.Entries[1].MapRange, "incorrect maprange")
 
-	for _, i := range []int{2, 5} {
+	for _, i := range []int{2, 4} {
 		suite.Req.Equal(host.HostID+1001, map1.Entries[i].HostID, "hostids don't match")
 		suite.Req.Equal(int64(1001), map1.Entries[i].NSID, "invalid nsid")
 		suite.Req.Equal(host.MapRange-1000-1, map1.Entries[i].MapRange, "incorrect maprange")
