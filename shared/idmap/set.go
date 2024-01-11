@@ -186,7 +186,7 @@ func (m *Set) AddSafe(i Entry) error {
 			return ErrHostIDIsSubID
 		}
 
-		// Split the lower part of the entry (ids from begining of existing entry to start of new entry).
+		// Split the lower part of the entry (ids from beginning of existing entry to start of new entry).
 		lower := Entry{
 			IsUID:    e.IsUID,
 			IsGID:    e.IsGID,
