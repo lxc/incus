@@ -20,7 +20,7 @@ import (
 func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info *api.NetworkPeersPost) (int64, bool, error) {
 	var err error
 	var localPeerID int64
-	var targetPeerNetworkID int64 = int64(-1) // -1 means no mutual peering exists.
+	var targetPeerNetworkID int64 = -1 // -1 means no mutual peering exists.
 
 	// Insert a new Network pending peer record.
 	result, err := c.tx.ExecContext(ctx, `
@@ -74,7 +74,7 @@ func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info
 		LIMIT 1
 		`
 
-	var targetPeerID int64 = int64(-1)
+	var targetPeerID int64 = -1
 
 	err = c.tx.QueryRowContext(ctx, q, info.TargetProject, info.TargetNetwork, networkID, localPeerID).Scan(&targetPeerID, &targetPeerNetworkID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -170,7 +170,7 @@ func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerNam
 	`
 
 	var err error
-	var peerID int64 = int64(-1)
+	var peerID int64 = -1
 	var peer api.NetworkPeer
 	var targetPeerNetworkName string
 	var targetPeerNetworkProject string
@@ -286,7 +286,7 @@ func (c *ClusterTx) GetNetworkPeers(ctx context.Context, networkID int64) (map[i
 	peers := make(map[int64]*api.NetworkPeer)
 
 	err = query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
-		var peerID int64 = int64(-1)
+		var peerID int64 = -1
 		var peer api.NetworkPeer
 		var targetPeerNetworkName string
 		var targetPeerNetworkProject string
@@ -330,7 +330,7 @@ func (c *ClusterTx) GetNetworkPeerNames(ctx context.Context, networkID int64) (m
 	peers := make(map[int64]string)
 
 	err := query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
-		var peerID int64 = int64(-1)
+		var peerID int64 = -1
 		var peerName string
 
 		err := scan(&peerID, &peerName)
@@ -435,7 +435,7 @@ func (c *Cluster) GetNetworkPeersTargetNetworkIDs(projectName string, networkTyp
 		return query.Scan(ctx, tx.Tx(), q, func(scan func(dest ...any) error) error {
 			var peerName string
 			var networkName string
-			var targetNetworkID int64 = int64(-1)
+			var targetNetworkID int64 = -1
 
 			err := scan(&peerName, &networkName, &targetNetworkID)
 			if err != nil {
