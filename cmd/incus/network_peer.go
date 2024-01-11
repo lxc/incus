@@ -226,7 +226,7 @@ func (c *cmdNetworkPeerCreate) Command() *cobra.Command {
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network peer create default peer1 web/default
     Create a new peering between network "default" in the current project and network "default" in the "web" project
 
-incus network peer create default default peer2 ovn-ic --type=remote
+incus network peer create default peer2 ovn-ic --type=remote
     Create a new peering between network "default" in the current project and other remote networks through the "ovn-ic" integration
 `))
 
