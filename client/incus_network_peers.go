@@ -66,6 +66,10 @@ func (r *ProtocolIncus) CreateNetworkPeer(networkName string, peer api.NetworkPe
 		return fmt.Errorf(`The server is missing the required "network_peer" API extension`)
 	}
 
+	if peer.Type != "" && peer.Type != "local" && !r.HasExtension("network_integrations") {
+		return fmt.Errorf(`The server is missing the required "network_integrations" API extension`)
+	}
+
 	// Send the request.
 	_, _, err := r.query("POST", fmt.Sprintf("/networks/%s/peers", url.PathEscape(networkName)), peer, "")
 	if err != nil {
