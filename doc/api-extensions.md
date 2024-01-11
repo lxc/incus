@@ -2300,3 +2300,8 @@ The new configuration keys are `network.ovn.ca_cert`, `network.ovn.client_cert` 
 ## `certificate_description`
 
 Adds a `description` field to certificate.
+
+## `disk_io_bus_virtio_blk`
+
+Adds a new `virtio-blk` value for `io.bus` on `disk` devices which allows
+for the attached disk to be connected to the `virtio-blk` bus.
