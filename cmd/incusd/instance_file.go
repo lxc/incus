@@ -352,6 +352,11 @@ func instanceFileHead(s *state.State, inst instance.Instance, path string, r *ht
 		"X-Incus-type":     fileType,
 	}
 
+	if fileType == "file" {
+		headers["Content-Type"] = "application/octet-stream"
+		headers["Content-Length"] = fmt.Sprintf("%d", stat.Size())
+	}
+
 	// Return an empty body (per RFC for HEAD).
 	return response.ManualResponse(func(w http.ResponseWriter) error {
 		// Set the headers.
