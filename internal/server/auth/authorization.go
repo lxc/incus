@@ -72,6 +72,10 @@ type Authorizer interface {
 	AddNetworkZone(ctx context.Context, projectName string, networkZoneName string) error
 	DeleteNetworkZone(ctx context.Context, projectName string, networkZoneName string) error
 
+	AddNetworkIntegration(ctx context.Context, networkIntegrationName string) error
+	DeleteNetworkIntegration(ctx context.Context, networkIntegrationName string) error
+	RenameNetworkIntegration(ctx context.Context, oldNetworkIntegrationName string, newNetworkIntegrationName string) error
+
 	AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error
 	DeleteNetworkACL(ctx context.Context, projectName string, networkACLName string) error
 	RenameNetworkACL(ctx context.Context, projectName string, oldNetworkACLName string, newNetworkACLName string) error

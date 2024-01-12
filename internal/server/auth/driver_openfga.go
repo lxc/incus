@@ -698,6 +698,53 @@ func (f *fga) DeleteNetworkZone(ctx context.Context, projectName string, network
 	return f.updateTuples(ctx, nil, deletions)
 }
 
+// AddNetworkIntegration is a no-op.
+func (f *fga) AddNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(networkIntegrationName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkIntegration is a no-op.
+func (f *fga) DeleteNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(networkIntegrationName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameNetworkIntegration is a no-op.
+func (f *fga) RenameNetworkIntegration(ctx context.Context, oldNetworkIntegrationName string, newNetworkIntegrationName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(newNetworkIntegrationName).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(oldNetworkIntegrationName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
 // AddNetworkACL is a no-op.
 func (f *fga) AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
 	writes := []client.ClientTupleKey{

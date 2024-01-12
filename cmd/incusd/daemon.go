@@ -300,7 +300,7 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 		// Expansion function to deal with project inheritance.
 		expandProject := func(projectName string) string {
 			// Object types that aren't part of projects.
-			if slices.Contains([]auth.ObjectType{auth.ObjectTypeUser, auth.ObjectTypeServer, auth.ObjectTypeCertificate, auth.ObjectTypeStoragePool}, objectType) {
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeUser, auth.ObjectTypeServer, auth.ObjectTypeCertificate, auth.ObjectTypeStoragePool, auth.ObjectTypeNetworkIntegration}, objectType) {
 				return projectName
 			}
 

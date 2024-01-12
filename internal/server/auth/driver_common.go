@@ -234,6 +234,21 @@ func (c *commonAuthorizer) DeleteNetworkZone(ctx context.Context, projectName st
 	return nil
 }
 
+// AddNetworkIntegration is a no-op.
+func (c *commonAuthorizer) AddNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
+	return nil
+}
+
+// DeleteNetworkIntegration is a no-op.
+func (c *commonAuthorizer) DeleteNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
+	return nil
+}
+
+// RenameNetworkIntegration is a no-op.
+func (c *commonAuthorizer) RenameNetworkIntegration(ctx context.Context, oldNetworkIntegrationName string, newNetworkIntegrationName string) error {
+	return nil
+}
+
 // AddNetworkACL is a no-op.
 func (c *commonAuthorizer) AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
 	return nil

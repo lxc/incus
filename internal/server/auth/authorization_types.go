@@ -18,17 +18,18 @@ const (
 	EntitlementCanViewPrivilegedEvents             Entitlement = "can_view_privileged_events"
 
 	// Project entitlements.
-	EntitlementCanCreateImages         Entitlement = "can_create_images"
-	EntitlementCanCreateImageAliases   Entitlement = "can_create_image_aliases"
-	EntitlementCanCreateInstances      Entitlement = "can_create_instances"
-	EntitlementCanCreateNetworks       Entitlement = "can_create_networks"
-	EntitlementCanCreateNetworkACLs    Entitlement = "can_create_network_acls"
-	EntitlementCanCreateNetworkZones   Entitlement = "can_create_network_zones"
-	EntitlementCanCreateProfiles       Entitlement = "can_create_profiles"
-	EntitlementCanCreateStorageVolumes Entitlement = "can_create_storage_volumes"
-	EntitlementCanCreateStorageBuckets Entitlement = "can_create_storage_buckets"
-	EntitlementCanViewOperations       Entitlement = "can_view_operations"
-	EntitlementCanViewEvents           Entitlement = "can_view_events"
+	EntitlementCanCreateImages              Entitlement = "can_create_images"
+	EntitlementCanCreateImageAliases        Entitlement = "can_create_image_aliases"
+	EntitlementCanCreateInstances           Entitlement = "can_create_instances"
+	EntitlementCanCreateNetworks            Entitlement = "can_create_networks"
+	EntitlementCanCreateNetworkACLs         Entitlement = "can_create_network_acls"
+	EntitlementCanCreateNetworkIntegrations Entitlement = "can_create_network_integrations"
+	EntitlementCanCreateNetworkZones        Entitlement = "can_create_network_zones"
+	EntitlementCanCreateProfiles            Entitlement = "can_create_profiles"
+	EntitlementCanCreateStorageVolumes      Entitlement = "can_create_storage_volumes"
+	EntitlementCanCreateStorageBuckets      Entitlement = "can_create_storage_buckets"
+	EntitlementCanViewOperations            Entitlement = "can_view_operations"
+	EntitlementCanViewEvents                Entitlement = "can_view_events"
 
 	// Instance entitlements.
 	EntitlementCanUpdateState   Entitlement = "can_update_state"
@@ -75,6 +76,9 @@ const (
 
 	// ObjectTypeNetworkACL represents a network ACL.
 	ObjectTypeNetworkACL ObjectType = "network_acl"
+
+	// ObjectTypeNetworkIntegration represents a network integration.
+	ObjectTypeNetworkIntegration ObjectType = "network_integration"
 
 	// ObjectTypeNetworkZone represents a network zone.
 	ObjectTypeNetworkZone ObjectType = "network_zone"
