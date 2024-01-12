@@ -1383,9 +1383,9 @@ func (m *Method) signature(buf *file.Buffer, isInterface bool) error {
 
 				switch refMapping.Type {
 				case ReferenceTable:
-					args += fmt.Sprintf("%sID int64, %s map[%s]%s", m.entity, lex.Minuscule(lex.Plural(m.ref)), refMapping.Identifier().Type.Name, m.ref)
+					args += fmt.Sprintf("%sID int64, %s map[%s]%s", lex.Minuscule(lex.Camel(m.entity)), lex.Minuscule(lex.Plural(m.ref)), refMapping.Identifier().Type.Name, m.ref)
 				case MapTable:
-					args += fmt.Sprintf("%sID int64, %s map[string]string", m.entity, lex.Minuscule(lex.Plural(m.ref)))
+					args += fmt.Sprintf("%sID int64, %s map[string]string", lex.Minuscule(lex.Camel(m.entity)), lex.Minuscule(lex.Plural(m.ref)))
 				}
 			}
 		case "DeleteOne":
