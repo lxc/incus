@@ -17,7 +17,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/dskit/backoff"
 	"github.com/sirupsen/logrus"
 
 	"github.com/lxc/incus/shared/api"
@@ -33,17 +32,16 @@ const (
 )
 
 type config struct {
-	backoffConfig backoff.Config
-	batchSize     int
-	batchWait     time.Duration
-	caCert        string
-	username      string
-	password      string
-	labels        []string
-	logLevel      string
-	timeout       time.Duration
-	types         []string
-	url           *url.URL
+	batchSize int
+	batchWait time.Duration
+	caCert    string
+	username  string
+	password  string
+	labels    []string
+	logLevel  string
+	timeout   time.Duration
+	types     []string
+	url       *url.URL
 }
 
 type entry struct {
@@ -66,11 +64,6 @@ type Client struct {
 func NewClient(ctx context.Context, url *url.URL, username string, password string, caCert string, labels []string, logLevel string, types []string) *Client {
 	client := Client{
 		cfg: config{
-			backoffConfig: backoff.Config{
-				MinBackoff: 500 * time.Millisecond,
-				MaxBackoff: 5 * time.Minute,
-				MaxRetries: 10,
-			},
 			batchSize: 10 * 1024,
 			batchWait: 1 * time.Second,
 			caCert:    caCert,
@@ -168,11 +161,10 @@ func (c *Client) sendBatch(batch *batch) {
 		return
 	}
 
-	backoff := backoff.New(c.ctx, c.cfg.backoffConfig)
-
 	var status int
 
-	for backoff.Ongoing() {
+	for i := 0; i < 30; i++ {
+		// Try to send the message.
 		status, err = c.send(c.ctx, buf)
 		if err == nil {
 			return
@@ -180,10 +172,11 @@ func (c *Client) sendBatch(batch *batch) {
 
 		// Only retry 429s, 500s and connection-level errors.
 		if status > 0 && status != 429 && status/100 != 5 {
-			break
+			return
 		}
 
-		backoff.Wait()
+		// Retry every 10s.
+		time.Sleep(10 * time.Second)
 	}
 }
 
