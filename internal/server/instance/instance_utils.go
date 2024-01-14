@@ -279,8 +279,20 @@ func AllowedUnprivilegedOnlyMap(rawIdmap string) error {
 
 // LoadByID loads an instance by ID.
 func LoadByID(s *state.State, id int) (Instance, error) {
-	// Get the DB record
-	project, name, err := s.DB.Cluster.GetInstanceProjectAndName(id)
+	var project string
+	var name string
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get the DB record
+		project, name, err = tx.GetInstanceProjectAndName(ctx, id)
+		if err != nil {
+			return fmt.Errorf("Failed getting instance project and name: %w", err)
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -372,16 +384,18 @@ func LoadNodeAll(s *state.State, instanceType instancetype.Type) ([]Instance, er
 		filter.Node = &s.ServerName
 	}
 
-	err = s.DB.Cluster.InstanceList(context.TODO(), func(dbInst db.InstanceArgs, p api.Project) error {
-		inst, err := Load(s, dbInst, p)
-		if err != nil {
-			return fmt.Errorf("Failed loading instance %q in project %q: %w", dbInst.Name, dbInst.Project, err)
-		}
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
+			inst, err := Load(s, dbInst, p)
+			if err != nil {
+				return fmt.Errorf("Failed loading instance %q in project %q: %w", dbInst.Name, dbInst.Project, err)
+			}
 
-		instances = append(instances, inst)
+			instances = append(instances, inst)
 
-		return nil
-	}, filter)
+			return nil
+		}, filter)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -462,8 +476,14 @@ func DeviceNextInterfaceHWAddr() (string, error) {
 
 // BackupLoadByName load an instance backup from the database.
 func BackupLoadByName(s *state.State, project, name string) (*backup.InstanceBackup, error) {
+	var args db.InstanceBackup
+
 	// Get the backup database record
-	args, err := s.DB.Cluster.GetInstanceBackup(project, name)
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		args, err = tx.GetInstanceBackup(ctx, project, name)
+		return err
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Load backup from database: %w", err)
 	}
@@ -711,7 +731,11 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 	}
 
 	if args.Profiles == nil {
-		args.Profiles, err = s.DB.Cluster.GetProfiles(args.Project, []string{"default"})
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			args.Profiles, err = tx.GetProfiles(ctx, args.Project, []string{"default"})
+
+			return err
+		})
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("Failed to get default profile for new instance")
 		}
@@ -777,8 +801,14 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 		return nil, nil, nil, fmt.Errorf("Requested architecture isn't supported by this host")
 	}
 
-	// Validate profiles.
-	profiles, err := s.DB.Cluster.GetProfileNames(args.Project)
+	var profiles []string
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Validate profiles.
+		profiles, err = tx.GetProfileNames(ctx, args.Project)
+
+		return err
+	})
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -964,7 +994,11 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 		return nil, nil, nil, err
 	}
 
-	revert.Add(func() { _ = s.DB.Cluster.DeleteInstance(dbInst.Project, dbInst.Name) })
+	revert.Add(func() {
+		_ = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.DeleteInstance(ctx, dbInst.Project, dbInst.Name)
+		})
+	})
 	inst, cleanup, err := Create(s, args, *p)
 	if err != nil {
 		logger.Error("Failed initialising instance", logger.Ctx{"project": args.Project, "instance": args.Name, "type": args.Type, "err": err})
@@ -1003,7 +1037,14 @@ func NextSnapshotName(s *state.State, inst Instance, defaultPattern string) (str
 	if count > 1 {
 		return "", fmt.Errorf("Snapshot pattern may contain '%%d' only once")
 	} else if count == 1 {
-		i := s.DB.Cluster.GetNextInstanceSnapshotIndex(inst.Project().Name, inst.Name(), pattern)
+		var i int
+
+		_ = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			i = tx.GetNextInstanceSnapshotIndex(ctx, inst.Project().Name, inst.Name(), pattern)
+
+			return nil
+		})
+
 		return strings.Replace(pattern, "%d", strconv.Itoa(i), 1), nil
 	}
 
@@ -1025,7 +1066,14 @@ func NextSnapshotName(s *state.State, inst Instance, defaultPattern string) (str
 	// Append '-0', '-1', etc. if the actual pattern/snapshot name already exists
 	if snapshotExists {
 		pattern = fmt.Sprintf("%s-%%d", pattern)
-		i := s.DB.Cluster.GetNextInstanceSnapshotIndex(inst.Project().Name, inst.Name(), pattern)
+
+		var i int
+
+		_ = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			i = tx.GetNextInstanceSnapshotIndex(ctx, inst.Project().Name, inst.Name(), pattern)
+
+			return nil
+		})
 		return strings.Replace(pattern, "%d", strconv.Itoa(i), 1), nil
 	}
 
@@ -1168,7 +1216,15 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 		devices[ent.GetName()] = props
 	}
 
-	profiles, err := s.DB.Cluster.GetProfiles(inst.Project().Name, snap.Profiles)
+	var profiles []api.Profile
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		profiles, err = tx.GetProfiles(ctx, inst.Project().Name, snap.Profiles)
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

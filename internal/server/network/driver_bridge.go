@@ -1000,7 +1000,9 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		if subnetSize > 64 {
 			n.logger.Warn("IPv6 networks with a prefix larger than 64 aren't properly supported by dnsmasq")
 
-			err = n.state.DB.Cluster.UpsertWarningLocalNode(n.project, dbCluster.TypeNetwork, int(n.id), warningtype.LargerIPv6PrefixThanSupported, "")
+			err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.UpsertWarningLocalNode(ctx, n.project, dbCluster.TypeNetwork, int(n.id), warningtype.LargerIPv6PrefixThanSupported, "")
+			})
 			if err != nil {
 				n.logger.Warn("Failed to create warning", logger.Ctx{"err": err})
 			}
@@ -1332,7 +1334,9 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		} else {
 			n.logger.Warn("Skipping AppArmor for dnsmasq due to raw.dnsmasq being set", logger.Ctx{"name": n.name})
 
-			err = n.state.DB.Cluster.UpsertWarningLocalNode(n.project, dbCluster.TypeNetwork, int(n.id), warningtype.AppArmorDisabledDueToRawDnsmasq, "")
+			err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.UpsertWarningLocalNode(ctx, n.project, dbCluster.TypeNetwork, int(n.id), warningtype.AppArmorDisabledDueToRawDnsmasq, "")
+			})
 			if err != nil {
 				n.logger.Warn("Failed to create warning", logger.Ctx{"err": err})
 			}
@@ -1864,52 +1868,54 @@ func (n *bridge) bridgeNetworkExternalSubnets(bridgeProjectNetworks map[string][
 func (n *bridge) bridgedNICExternalRoutes(bridgeProjectNetworks map[string][]*api.Network) ([]externalSubnetUsage, error) {
 	externalRoutes := make([]externalSubnetUsage, 0)
 
-	err := n.state.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-		// Get the instance's effective network project name.
-		instNetworkProject := project.NetworkProjectFromRecord(&p)
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// Get the instance's effective network project name.
+			instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-		if instNetworkProject != api.ProjectDefaultName {
-			return nil // Managed bridge networks can only exist in default project.
-		}
-
-		devices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
-
-		// Iterate through each of the instance's devices, looking for bridged NICs that are linked to
-		// networks specified.
-		for devName, devConfig := range devices {
-			if devConfig["type"] != "nic" {
-				continue
+			if instNetworkProject != api.ProjectDefaultName {
+				return nil // Managed bridge networks can only exist in default project.
 			}
 
-			// Check whether the NIC device references one of the networks supplied.
-			if !NICUsesNetwork(devConfig, bridgeProjectNetworks[instNetworkProject]...) {
-				continue
-			}
+			devices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
 
-			// For bridged NICs that are connected to networks specified, check if they have any
-			// routes or external routes configured, and if so add them to the list to return.
-			for _, key := range []string{"ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external"} {
-				for _, cidr := range util.SplitNTrimSpace(devConfig[key], ",", -1, true) {
-					_, ipNet, _ := net.ParseCIDR(cidr)
-					if ipNet == nil {
-						// Skip if NIC device doesn't have a valid route.
-						continue
+			// Iterate through each of the instance's devices, looking for bridged NICs that are linked to
+			// networks specified.
+			for devName, devConfig := range devices {
+				if devConfig["type"] != "nic" {
+					continue
+				}
+
+				// Check whether the NIC device references one of the networks supplied.
+				if !NICUsesNetwork(devConfig, bridgeProjectNetworks[instNetworkProject]...) {
+					continue
+				}
+
+				// For bridged NICs that are connected to networks specified, check if they have any
+				// routes or external routes configured, and if so add them to the list to return.
+				for _, key := range []string{"ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external"} {
+					for _, cidr := range util.SplitNTrimSpace(devConfig[key], ",", -1, true) {
+						_, ipNet, _ := net.ParseCIDR(cidr)
+						if ipNet == nil {
+							// Skip if NIC device doesn't have a valid route.
+							continue
+						}
+
+						externalRoutes = append(externalRoutes, externalSubnetUsage{
+							subnet:          *ipNet,
+							networkProject:  instNetworkProject,
+							networkName:     devConfig["network"],
+							instanceProject: inst.Project,
+							instanceName:    inst.Name,
+							instanceDevice:  devName,
+							usageType:       subnetUsageInstance,
+						})
 					}
-
-					externalRoutes = append(externalRoutes, externalSubnetUsage{
-						subnet:          *ipNet,
-						networkProject:  instNetworkProject,
-						networkName:     devConfig["network"],
-						instanceProject: inst.Project,
-						instanceName:    inst.Name,
-						instanceDevice:  devName,
-						usageType:       subnetUsageInstance,
-					})
 				}
 			}
-		}
 
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, err
@@ -1968,35 +1974,37 @@ func (n *bridge) getExternalSubnetInUse() ([]externalSubnetUsage, error) {
 	externalSubnets = append(externalSubnets, bridgeNetworkExternalSubnets...)
 	externalSubnets = append(externalSubnets, bridgedNICExternalRoutes...)
 
-	// Detect if there are any conflicting proxy devices on all instances with the to be created network forward
-	err = n.state.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-		devices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Detect if there are any conflicting proxy devices on all instances with the to be created network forward
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			devices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
 
-		for devName, devConfig := range devices {
-			if devConfig["type"] != "proxy" {
-				continue
+			for devName, devConfig := range devices {
+				if devConfig["type"] != "proxy" {
+					continue
+				}
+
+				proxyListenAddr, err := ProxyParseAddr(devConfig["listen"])
+				if err != nil {
+					return err
+				}
+
+				proxySubnet, err := ParseIPToNet(proxyListenAddr.Address)
+				if err != nil {
+					continue // If proxy listen isn't a valid IP it can't conflict.
+				}
+
+				externalSubnets = append(externalSubnets, externalSubnetUsage{
+					usageType:       subnetUsageProxy,
+					subnet:          *proxySubnet,
+					instanceProject: inst.Project,
+					instanceName:    inst.Name,
+					instanceDevice:  devName,
+				})
 			}
 
-			proxyListenAddr, err := ProxyParseAddr(devConfig["listen"])
-			if err != nil {
-				return err
-			}
-
-			proxySubnet, err := ParseIPToNet(proxyListenAddr.Address)
-			if err != nil {
-				continue // If proxy listen isn't a valid IP it can't conflict.
-			}
-
-			externalSubnets = append(externalSubnets, externalSubnetUsage{
-				usageType:       subnetUsageProxy,
-				subnet:          *proxySubnet,
-				instanceProject: inst.Project,
-				instanceName:    inst.Name,
-				instanceDevice:  devName,
-			})
-		}
-
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, err
@@ -2032,8 +2040,12 @@ func (n *bridge) getExternalSubnetInUse() ([]externalSubnetUsage, error) {
 func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType request.ClientType) error {
 	memberSpecific := true // bridge supports per-member forwards.
 
-	// Check if there is an existing forward using the same listen address.
-	_, _, err := n.state.DB.Cluster.GetNetworkForward(context.TODO(), n.ID(), memberSpecific, forward.ListenAddress)
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Check if there is an existing forward using the same listen address.
+		_, _, err := tx.GetNetworkForward(ctx, n.ID(), memberSpecific, forward.ListenAddress)
+
+		return err
+	})
 	if err == nil {
 		return api.StatusErrorf(http.StatusConflict, "A forward for that listen address already exists")
 	}
@@ -2075,14 +2087,22 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 	revert := revert.New()
 	defer revert.Fail()
 
-	// Create forward DB record.
-	forwardID, err := n.state.DB.Cluster.CreateNetworkForward(n.ID(), memberSpecific, &forward)
+	var forwardID int64
+
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create forward DB record.
+		forwardID, err = tx.CreateNetworkForward(ctx, n.ID(), memberSpecific, &forward)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
 
 	revert.Add(func() {
-		_ = n.state.DB.Cluster.DeleteNetworkForward(n.ID(), forwardID)
+		_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
+		})
 		_ = n.forwardSetupFirewall()
 		_ = n.forwardBGPSetupPrefixes()
 	})
@@ -2107,7 +2127,13 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 		// forward's listener. Without hairpin mode on the target of the forward will not be able to
 		// connect to the listener.
 		if brNetfilterEnabled {
-			listenAddresses, err := n.state.DB.Cluster.GetNetworkForwardListenAddresses(n.ID(), true)
+			var listenAddresses map[int64]string
+
+			err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				listenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, n.ID(), true)
+
+				return err
+			})
 			if err != nil {
 				return fmt.Errorf("Failed loading network forwards: %w", err)
 			}
@@ -2115,42 +2141,45 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 			// If we are the first forward on this bridge, enable hairpin mode on active NIC ports.
 			if len(listenAddresses) <= 1 {
 				filter := dbCluster.InstanceFilter{Node: &n.state.ServerName}
-				err = n.state.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-					// Get the instance's effective network project name.
-					instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-					if instNetworkProject != api.ProjectDefaultName {
-						return nil // Managed bridge networks can only exist in default project.
-					}
+				err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+						// Get the instance's effective network project name.
+						instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-					devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
-
-					// Iterate through each of the instance's devices, looking for bridged NICs
-					// that are linked to this network.
-					for devName, devConfig := range devices {
-						if devConfig["type"] != "nic" {
-							continue
+						if instNetworkProject != api.ProjectDefaultName {
+							return nil // Managed bridge networks can only exist in default project.
 						}
 
-						// Check whether the NIC device references our network..
-						if !NICUsesNetwork(devConfig, &api.Network{Name: n.Name()}) {
-							continue
-						}
+						devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
 
-						hostName := inst.Config[fmt.Sprintf("volatile.%s.host_name", devName)]
-						if InterfaceExists(hostName) {
-							link := &ip.Link{Name: hostName}
-							err = link.BridgeLinkSetHairpin(true)
-							if err != nil {
-								return fmt.Errorf("Error enabling hairpin mode on bridge port %q: %w", link.Name, err)
+						// Iterate through each of the instance's devices, looking for bridged NICs
+						// that are linked to this network.
+						for devName, devConfig := range devices {
+							if devConfig["type"] != "nic" {
+								continue
 							}
 
-							n.logger.Debug("Enabled hairpin mode on NIC bridge port", logger.Ctx{"inst": inst.Name, "project": inst.Project, "device": devName, "dev": link.Name})
-						}
-					}
+							// Check whether the NIC device references our network..
+							if !NICUsesNetwork(devConfig, &api.Network{Name: n.Name()}) {
+								continue
+							}
 
-					return nil
-				}, filter)
+							hostName := inst.Config[fmt.Sprintf("volatile.%s.host_name", devName)]
+							if InterfaceExists(hostName) {
+								link := &ip.Link{Name: hostName}
+								err = link.BridgeLinkSetHairpin(true)
+								if err != nil {
+									return fmt.Errorf("Error enabling hairpin mode on bridge port %q: %w", link.Name, err)
+								}
+
+								n.logger.Debug("Enabled hairpin mode on NIC bridge port", logger.Ctx{"inst": inst.Name, "project": inst.Project, "device": devName, "dev": link.Name})
+							}
+						}
+
+						return nil
+					}, filter)
+				})
 				if err != nil {
 					return err
 				}
@@ -2171,7 +2200,17 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 // ForwardUpdate updates a network forward.
 func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, clientType request.ClientType) error {
 	memberSpecific := true // bridge supports per-member forwards.
-	curForwardID, curForward, err := n.state.DB.Cluster.GetNetworkForward(context.TODO(), n.ID(), memberSpecific, listenAddress)
+
+	var curForwardID int64
+	var curForward *api.NetworkForward
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		curForwardID, curForward, err = tx.GetNetworkForward(ctx, n.ID(), memberSpecific, listenAddress)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -2203,13 +2242,17 @@ func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, 
 	revert := revert.New()
 	defer revert.Fail()
 
-	err = n.state.DB.Cluster.UpdateNetworkForward(n.ID(), curForwardID, &newForward.NetworkForwardPut)
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.UpdateNetworkForward(ctx, n.ID(), curForwardID, &newForward.NetworkForwardPut)
+	})
 	if err != nil {
 		return err
 	}
 
 	revert.Add(func() {
-		_ = n.state.DB.Cluster.UpdateNetworkForward(n.ID(), curForwardID, &curForward.NetworkForwardPut)
+		_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.UpdateNetworkForward(ctx, n.ID(), curForwardID, &curForward.NetworkForwardPut)
+		})
 		_ = n.forwardSetupFirewall()
 		_ = n.forwardBGPSetupPrefixes()
 	})
@@ -2226,7 +2269,16 @@ func (n *bridge) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, 
 // ForwardDelete deletes a network forward.
 func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientType) error {
 	memberSpecific := true // bridge supports per-member forwards.
-	forwardID, forward, err := n.state.DB.Cluster.GetNetworkForward(context.TODO(), n.ID(), memberSpecific, listenAddress)
+	var forwardID int64
+	var forward *api.NetworkForward
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		forwardID, forward, err = tx.GetNetworkForward(ctx, n.ID(), memberSpecific, listenAddress)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -2234,7 +2286,9 @@ func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientTy
 	revert := revert.New()
 	defer revert.Fail()
 
-	err = n.state.DB.Cluster.DeleteNetworkForward(n.ID(), forwardID)
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
+	})
 	if err != nil {
 		return err
 	}
@@ -2245,7 +2299,12 @@ func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientTy
 			ListenAddress:     forward.ListenAddress,
 		}
 
-		_, _ = n.state.DB.Cluster.CreateNetworkForward(n.ID(), memberSpecific, &newForward)
+		_ = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_, _ = tx.CreateNetworkForward(ctx, n.ID(), memberSpecific, &newForward)
+
+			return nil
+		})
+
 		_ = n.forwardSetupFirewall()
 		_ = n.forwardBGPSetupPrefixes()
 	})
@@ -2268,7 +2327,16 @@ func (n *bridge) ForwardDelete(listenAddress string, clientType request.ClientTy
 // forwardSetupFirewall applies all network address forwards defined for this network and this member.
 func (n *bridge) forwardSetupFirewall() error {
 	memberSpecific := true // Get all forwards for this cluster member.
-	forwards, err := n.state.DB.Cluster.GetNetworkForwards(context.TODO(), n.ID(), memberSpecific)
+
+	var forwards map[int64]*api.NetworkForward
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		forwards, err = tx.GetNetworkForwards(ctx, n.ID(), memberSpecific)
+
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Failed loading network forwards: %w", err)
 	}
@@ -2307,7 +2375,9 @@ func (n *bridge) forwardSetupFirewall() error {
 				brNetfilterWarning = true
 				msg := fmt.Sprintf("IPv%d bridge netfilter not enabled. Instances using the bridge will not be able to connect to the forward listen IPs", ipVersion)
 				n.logger.Warn(msg, logger.Ctx{"err": err})
-				err = n.state.DB.Cluster.UpsertWarningLocalNode(n.project, dbCluster.TypeNetwork, int(n.id), warningtype.ProxyBridgeNetfilterNotEnabled, fmt.Sprintf("%s: %v", msg, err))
+				err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.UpsertWarningLocalNode(ctx, n.project, dbCluster.TypeNetwork, int(n.id), warningtype.ProxyBridgeNetfilterNotEnabled, fmt.Sprintf("%s: %v", msg, err))
+				})
 				if err != nil {
 					n.logger.Warn("Failed to create warning", logger.Ctx{"err": err})
 				}

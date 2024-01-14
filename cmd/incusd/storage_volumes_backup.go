@@ -190,7 +190,15 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 
-	poolID, _, _, err := s.DB.Cluster.GetStoragePool(poolName)
+	var poolID int64
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
+
+		return err
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -203,7 +211,12 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 
 	recursion := localUtil.IsRecursionRequest(r)
 
-	volumeBackups, err := s.DB.Cluster.GetStoragePoolVolumeBackups(projectName, volumeName, poolID)
+	var volumeBackups []db.StoragePoolVolumeBackup
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		volumeBackups, err = tx.GetStoragePoolVolumeBackups(ctx, projectName, volumeName, poolID)
+		return err
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -321,7 +334,15 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 		return resp
 	}
 
-	poolID, _, _, err := s.DB.Cluster.GetStoragePool(poolName)
+	var poolID int64
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
+
+		return err
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -366,8 +387,13 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 	}
 
 	if req.Name == "" {
+		var backups []string
+
 		// come up with a name.
-		backups, err := s.DB.Cluster.GetStoragePoolVolumeBackupsNames(projectName, volumeName, poolID)
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			backups, err = tx.GetStoragePoolVolumeBackupsNames(ctx, projectName, volumeName, poolID)
+			return err
+		})
 		if err != nil {
 			return response.BadRequest(err)
 		}

@@ -145,7 +145,15 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 
 	recursion := localUtil.IsRecursionRequest(r)
 
-	poolNames, err := s.DB.Cluster.GetStoragePoolNames()
+	var poolNames []string
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		poolNames, err = tx.GetStoragePoolNames(ctx)
+
+		return err
+	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return response.SmartError(err)
 	}
@@ -291,7 +299,15 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 			return response.BadRequest(err)
 		}
 
-		poolID, err := s.DB.Cluster.GetStoragePoolID(req.Name)
+		var poolID int64
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			poolID, err = tx.GetStoragePoolID(ctx, req.Name)
+
+			return err
+		})
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -332,8 +348,16 @@ func storagePoolsPost(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	// Load existing pool if exists, if not don't fail.
-	_, pool, _, err := s.DB.Cluster.GetStoragePoolInAnyState(req.Name)
+	var pool *api.StoragePool
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Load existing pool if exists, if not don't fail.
+		_, pool, _, err = tx.GetStoragePoolInAnyState(ctx, req.Name)
+
+		return err
+	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return response.InternalError(err)
 	}

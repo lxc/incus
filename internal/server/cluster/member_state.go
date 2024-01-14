@@ -76,7 +76,15 @@ func MemberState(ctx context.Context, s *state.State, memberName string) (*api.C
 
 	// Get storage pool states.
 	stateCreated := db.StoragePoolCreated
-	pools, poolMembers, err := s.DB.Cluster.GetStoragePools(ctx, &stateCreated)
+
+	var pools map[int64]api.StoragePool
+	var poolMembers map[int64]map[int64]db.StoragePoolNode
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		pools, poolMembers, err = tx.GetStoragePools(ctx, &stateCreated)
+
+		return err
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed loading storage pools: %w", err)
 	}

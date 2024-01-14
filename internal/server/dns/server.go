@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"context"
 	"sync"
 
 	"github.com/miekg/dns"
@@ -162,8 +163,16 @@ func (s *Server) updateTSIG() error {
 		return nil
 	}
 
-	// Get all the secrets.
-	secrets, err := s.db.GetNetworkZoneKeys()
+	var secrets map[string]string
+
+	err := s.db.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Get all the secrets.
+		secrets, err = tx.GetNetworkZoneKeys(ctx)
+
+		return err
+	})
 	if err != nil {
 		return err
 	}

@@ -257,7 +257,15 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 		// Expansion function to deal with partial fingerprints.
 		expandFingerprint := func(projectName string, fingerprint string) string {
 			if objectType == auth.ObjectTypeImage {
-				_, imgInfo, err := d.db.Cluster.GetImage(fingerprint, dbCluster.ImageFilter{Project: &projectName})
+				var imgInfo *api.Image
+
+				err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					var err error
+
+					_, imgInfo, err = tx.GetImage(ctx, fingerprint, dbCluster.ImageFilter{Project: &projectName})
+
+					return err
+				})
 				if err != nil {
 					return fingerprint
 				}
@@ -1514,21 +1522,27 @@ func (d *Daemon) init() error {
 		updateCertificateCache(d)
 	}
 
-	// Remove volatile.last_state.ready key as we don't know if the instances are ready.
-	err = d.db.Cluster.DeleteReadyStateFromLocalInstances()
+	err = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Remove volatile.last_state.ready key as we don't know if the instances are ready.
+		return tx.DeleteReadyStateFromLocalInstances(ctx)
+	})
 	if err != nil {
 		return fmt.Errorf("Failed deleting volatile.last_state.ready: %w", err)
 	}
 
 	close(d.setupChan)
 
-	// Create warnings that have been collected
-	for _, w := range dbWarnings {
-		err := d.db.Cluster.UpsertWarningLocalNode("", -1, -1, warningtype.Type(w.TypeCode), w.LastMessage)
-		if err != nil {
-			logger.Warn("Failed to create warning", logger.Ctx{"err": err})
+	_ = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create warnings that have been collected
+		for _, w := range dbWarnings {
+			err := tx.UpsertWarningLocalNode(ctx, "", -1, -1, warningtype.Type(w.TypeCode), w.LastMessage)
+			if err != nil {
+				logger.Warn("Failed to create warning", logger.Ctx{"err": err})
+			}
 		}
-	}
+
+		return nil
+	})
 
 	// Resolve warnings older than the daemon start time
 	err = warnings.ResolveWarningsByLocalNodeOlderThan(d.db.Cluster, d.startTime)
@@ -1719,7 +1733,16 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 
 			// Unmount storage pools after instances stopped.
 			logger.Info("Stopping storage pools")
-			pools, err := s.DB.Cluster.GetStoragePoolNames()
+
+			var pools []string
+
+			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+
+				pools, err = tx.GetStoragePoolNames(ctx)
+
+				return err
+			})
 			if err != nil && !response.IsNotFoundError(err) {
 				logger.Error("Failed to get storage pools", logger.Ctx{"err": err})
 			}
@@ -2176,7 +2199,9 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, r *http.Request, isLead
 			logger.Warn("Time skew detected between leader and local", logger.Ctx{"leaderTime": hbData.Time, "localTime": now})
 
 			if d.db.Cluster != nil {
-				err := d.db.Cluster.UpsertWarningLocalNode("", -1, -1, warningtype.ClusterTimeSkew, fmt.Sprintf("leaderTime: %s, localTime: %s", hbData.Time, now))
+				err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.UpsertWarningLocalNode(ctx, "", -1, -1, warningtype.ClusterTimeSkew, fmt.Sprintf("leaderTime: %s, localTime: %s", hbData.Time, now))
+				})
 				if err != nil {
 					logger.Warn("Failed to create cluster time skew warning", logger.Ctx{"err": err})
 				}

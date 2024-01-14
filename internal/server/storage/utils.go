@@ -283,13 +283,16 @@ func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDesc
 		return err
 	}
 
-	// Create the database entry for the storage volume.
-	if snapshot {
-		_, err = p.state.DB.Cluster.CreateStorageVolumeSnapshot(projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), creationDate, expiryDate)
-	} else {
-		_, err = p.state.DB.Cluster.CreateStoragePoolVolume(projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), volDBContentType, creationDate)
-	}
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create the database entry for the storage volume.
+		if snapshot {
+			_, err = tx.CreateStorageVolumeSnapshot(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), creationDate, expiryDate)
+		} else {
+			_, err = tx.CreateStoragePoolVolume(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), volDBContentType, creationDate)
+		}
 
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("Error inserting volume %q for project %q in pool %q of type %q into database %q", volumeName, projectName, pool.Name(), volumeType, err)
 	}
@@ -310,7 +313,9 @@ func VolumeDBDelete(pool Pool, projectName string, volumeName string, volumeType
 		return err
 	}
 
-	err = p.state.DB.Cluster.RemoveStoragePoolVolume(projectName, volumeName, volDBType, pool.ID())
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.RemoveStoragePoolVolume(ctx, projectName, volumeName, volDBType, pool.ID())
+	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return fmt.Errorf("Error deleting storage volume from database: %w", err)
 	}
@@ -330,7 +335,13 @@ func VolumeDBSnapshotsGet(pool Pool, projectName string, volume string, volumeTy
 		return nil, err
 	}
 
-	snapshots, err := p.state.DB.Cluster.GetLocalStoragePoolVolumeSnapshotsWithType(projectName, volume, volDBType, pool.ID())
+	var snapshots []db.StorageVolumeArgs
+
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		snapshots, err = tx.GetLocalStoragePoolVolumeSnapshotsWithType(ctx, projectName, volume, volDBType, pool.ID())
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -403,8 +414,14 @@ func BucketDBCreate(ctx context.Context, pool Pool, projectName string, memberSp
 		return -1, err
 	}
 
-	// Create the database entry for the storage bucket.
-	bucketID, err := p.state.DB.Cluster.CreateStoragePoolBucket(ctx, p.ID(), projectName, memberSpecific, *bucket)
+	var bucketID int64
+
+	err = p.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create the database entry for the storage bucket.
+		bucketID, err = tx.CreateStoragePoolBucket(ctx, p.ID(), projectName, memberSpecific, *bucket)
+
+		return err
+	})
 	if err != nil {
 		return -1, fmt.Errorf("Failed inserting storage bucket %q for project %q in pool %q into database: %w", bucket.Name, projectName, pool.Name(), err)
 	}
@@ -419,7 +436,9 @@ func BucketDBDelete(ctx context.Context, pool Pool, bucketID int64) error {
 		return fmt.Errorf("Pool is not a backend")
 	}
 
-	err := p.state.DB.Cluster.DeleteStoragePoolBucket(ctx, p.ID(), bucketID)
+	err := p.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.DeleteStoragePoolBucket(ctx, p.ID(), bucketID)
+	})
 	if err != nil && !response.IsNotFoundError(err) {
 		return fmt.Errorf("Failed deleting storage bucket from database: %w", err)
 	}
@@ -846,59 +865,61 @@ func VolumeUsedByInstanceDevices(s *state.State, poolName string, projectName st
 		return err
 	}
 
-	return s.DB.Cluster.InstanceList(context.TODO(), func(inst db.InstanceArgs, p api.Project) error {
-		// If the volume has a specific cluster member which is different than the instance then skip as
-		// instance cannot be using this volume.
-		if vol.Location != "" && inst.Node != vol.Location {
-			return nil
-		}
-
-		instStorageProject := project.StorageVolumeProjectFromRecord(&p, volumeType)
-		if err != nil {
-			return err
-		}
-
-		// Check instance's storage project is the same as the volume's project.
-		// If not then the volume names mentioned in the instance's config cannot be referring to volumes
-		// in the volume's project we are trying to match, and this instance cannot possibly be using it.
-		if projectName != instStorageProject {
-			return nil
-		}
-
-		// Use local devices for usage check by if expandDevices is false (but don't modify instance).
-		devices := inst.Devices
-
-		// Expand devices for usage check if expandDevices is true.
-		if expandDevices {
-			devices = db.ExpandInstanceDevices(devices.Clone(), inst.Profiles)
-		}
-
-		var usedByDevices []string
-
-		// Iterate through each of the instance's devices, looking for disks in the same pool as volume.
-		// Then try and match the volume name against the instance device's "source" property.
-		for devName, dev := range devices {
-			if dev["type"] != "disk" {
-				continue
+	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// If the volume has a specific cluster member which is different than the instance then skip as
+			// instance cannot be using this volume.
+			if vol.Location != "" && inst.Node != vol.Location {
+				return nil
 			}
 
-			if dev["pool"] != poolName {
-				continue
-			}
-
-			if dev["source"] == vol.Name {
-				usedByDevices = append(usedByDevices, devName)
-			}
-		}
-
-		if len(usedByDevices) > 0 {
-			err = instanceFunc(inst, p, usedByDevices)
+			instStorageProject := project.StorageVolumeProjectFromRecord(&p, volumeType)
 			if err != nil {
 				return err
 			}
-		}
 
-		return nil
+			// Check instance's storage project is the same as the volume's project.
+			// If not then the volume names mentioned in the instance's config cannot be referring to volumes
+			// in the volume's project we are trying to match, and this instance cannot possibly be using it.
+			if projectName != instStorageProject {
+				return nil
+			}
+
+			// Use local devices for usage check by if expandDevices is false (but don't modify instance).
+			devices := inst.Devices
+
+			// Expand devices for usage check if expandDevices is true.
+			if expandDevices {
+				devices = db.ExpandInstanceDevices(devices.Clone(), inst.Profiles)
+			}
+
+			var usedByDevices []string
+
+			// Iterate through each of the instance's devices, looking for disks in the same pool as volume.
+			// Then try and match the volume name against the instance device's "source" property.
+			for devName, dev := range devices {
+				if dev["type"] != "disk" {
+					continue
+				}
+
+				if dev["pool"] != poolName {
+					continue
+				}
+
+				if dev["source"] == vol.Name {
+					usedByDevices = append(usedByDevices, devName)
+				}
+			}
+
+			if len(usedByDevices) > 0 {
+				err = instanceFunc(inst, p, usedByDevices)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
 	})
 }
 

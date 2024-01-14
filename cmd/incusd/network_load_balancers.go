@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/lxc/incus/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
+	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network"
 	"github.com/lxc/incus/internal/server/project"
@@ -160,7 +162,13 @@ func networkLoadBalancersGet(d *Daemon, r *http.Request) response.Response {
 	memberSpecific := false // Get load balancers for all cluster members.
 
 	if localUtil.IsRecursionRequest(r) {
-		records, err := s.DB.Cluster.GetNetworkLoadBalancers(r.Context(), n.ID(), memberSpecific)
+		var records map[int64]*api.NetworkLoadBalancer
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			records, err = tx.GetNetworkLoadBalancers(ctx, n.ID(), memberSpecific)
+
+			return err
+		})
 		if err != nil {
 			return response.SmartError(fmt.Errorf("Failed loading network load balancers: %w", err))
 		}
@@ -173,7 +181,13 @@ func networkLoadBalancersGet(d *Daemon, r *http.Request) response.Response {
 		return response.SyncResponse(true, loadBalancers)
 	}
 
-	listenAddresses, err := s.DB.Cluster.GetNetworkLoadBalancerListenAddresses(n.ID(), memberSpecific)
+	var listenAddresses map[int64]string
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		listenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), memberSpecific)
+
+		return err
+	})
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network load balancers: %w", err))
 	}
@@ -426,7 +440,13 @@ func networkLoadBalancerGet(d *Daemon, r *http.Request) response.Response {
 	targetMember := request.QueryParam(r, "target")
 	memberSpecific := targetMember != ""
 
-	_, loadBalancer, err := s.DB.Cluster.GetNetworkLoadBalancer(r.Context(), n.ID(), memberSpecific, listenAddress)
+	var loadBalancer *api.NetworkLoadBalancer
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, loadBalancer, err = tx.GetNetworkLoadBalancer(ctx, n.ID(), memberSpecific, listenAddress)
+
+		return err
+	})
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -551,7 +571,13 @@ func networkLoadBalancerPut(d *Daemon, r *http.Request) response.Response {
 	memberSpecific := targetMember != ""
 
 	if r.Method == http.MethodPatch {
-		_, loadBalancer, err := s.DB.Cluster.GetNetworkLoadBalancer(r.Context(), n.ID(), memberSpecific, listenAddress)
+		var loadBalancer *api.NetworkLoadBalancer
+
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_, loadBalancer, err = tx.GetNetworkLoadBalancer(ctx, n.ID(), memberSpecific, listenAddress)
+
+			return err
+		})
 		if err != nil {
 			return response.SmartError(err)
 		}

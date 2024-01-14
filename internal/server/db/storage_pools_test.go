@@ -25,27 +25,31 @@ func TestGetStoragePoolsLocalConfigs(t *testing.T) {
 	cluster, cleanup := db.NewTestCluster(t)
 	defer cleanup()
 
-	// Create a storage pool named "local" (like the default clustering one), then delete it and create another one.
-	_, err := cluster.CreateStoragePool("local", "", "dir", map[string]string{
-		"rsync.bwlimit": "1",
-		"source":        "/foo/bar",
-	})
-	require.NoError(t, err)
+	_ = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Create a storage pool named "local" (like the default clustering one), then delete it and create another one.
+		_, err := tx.CreateStoragePool(ctx, "local", "", "dir", map[string]string{
+			"rsync.bwlimit": "1",
+			"source":        "/foo/bar",
+		})
+		require.NoError(t, err)
 
-	_, err = cluster.RemoveStoragePool("local")
-	require.NoError(t, err)
+		_, err = tx.RemoveStoragePool(ctx, "local")
+		require.NoError(t, err)
 
-	_, err = cluster.CreateStoragePool("BTRFS", "", "dir", map[string]string{
-		"rsync.bwlimit": "1",
-		"source":        "/egg/baz",
+		_, err = tx.CreateStoragePool(ctx, "BTRFS", "", "dir", map[string]string{
+			"rsync.bwlimit": "1",
+			"source":        "/egg/baz",
+		})
+		require.NoError(t, err)
+
+		return nil
 	})
-	require.NoError(t, err)
 
 	// Check that the config map returned by StoragePoolsConfigs actually
 	// contains the value of the "BTRFS" storage pool.
 	var config map[string]map[string]string
 
-	err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 		config, err = tx.GetStoragePoolsLocalConfig(ctx)
 		return err
@@ -172,11 +176,23 @@ func TestStoragePoolVolume_Ceph(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	poolID, err := cluster.CreateStoragePool("p1", "", "ceph", nil)
-	require.NoError(t, err)
+	var poolID int64
+
+	_ = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		poolID, err = tx.CreateStoragePool(ctx, "p1", "", "ceph", nil)
+		require.NoError(t, err)
+
+		return nil
+	})
 
 	config := map[string]string{"k": "v"}
-	volumeID, err := cluster.CreateStoragePoolVolume("default", "v1", "", 1, poolID, config, db.StoragePoolVolumeContentTypeFS, time.Now())
+	var volumeID int64
+
+	_ = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		volumeID, err = tx.CreateStoragePoolVolume(ctx, "default", "v1", "", 1, poolID, config, db.StoragePoolVolumeContentTypeFS, time.Now())
+
+		return err
+	})
 	require.NoError(t, err)
 
 	getStoragePoolVolume := func(volumeProjectName string, volumeName string, volumeType int, poolID int64) (*db.StorageVolume, error) {
@@ -202,21 +218,27 @@ func TestStoragePoolVolume_Ceph(t *testing.T) {
 
 	// Update the volume
 	config["k"] = "v2"
-	err = cluster.UpdateStoragePoolVolume("default", "v1", 1, poolID, "volume 1", config)
+	err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.UpdateStoragePoolVolume(ctx, "default", "v1", 1, poolID, "volume 1", config)
+	})
 	require.NoError(t, err)
 	volume, err := getStoragePoolVolume("default", "v1", 1, poolID)
 	require.NoError(t, err)
 	assert.Equal(t, "volume 1", volume.Description)
 	assert.Equal(t, config, volume.Config)
 
-	err = cluster.RenameStoragePoolVolume("default", "v1", "v1-new", 1, poolID)
+	err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.RenameStoragePoolVolume(ctx, "default", "v1", "v1-new", 1, poolID)
+	})
 	require.NoError(t, err)
 	volume, err = getStoragePoolVolume("default", "v1-new", 1, poolID)
 	require.NoError(t, err)
 	assert.NotNil(t, volume)
 
 	// Delete the volume
-	err = cluster.RemoveStoragePoolVolume("default", "v1-new", 1, poolID)
+	err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.RemoveStoragePoolVolume(ctx, "default", "v1-new", 1, poolID)
+	})
 	require.NoError(t, err)
 	volume, err = getStoragePoolVolume("default", "v1-new", 1, poolID)
 	assert.True(t, response.IsNotFoundError(err))
@@ -228,26 +250,36 @@ func TestCreateStoragePoolVolume_Snapshot(t *testing.T) {
 	cluster, cleanup := db.NewTestCluster(t)
 	defer cleanup()
 
-	poolID, err := cluster.CreateStoragePool("p1", "", "dir", nil)
-	require.NoError(t, err)
+	var poolID int64
+	var poolID1 int64
 
-	poolID1, err := cluster.CreateStoragePool("p2", "", "dir", nil)
-	require.NoError(t, err)
+	_ = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
 
-	config := map[string]string{"k": "v"}
-	_, err = cluster.CreateStoragePoolVolume("default", "v1", "", 1, poolID, config, db.StoragePoolVolumeContentTypeFS, time.Now())
-	require.NoError(t, err)
+		poolID, err = tx.CreateStoragePool(ctx, "p1", "", "dir", nil)
+		require.NoError(t, err)
 
-	_, err = cluster.CreateStoragePoolVolume("default", "v1", "", 1, poolID1, config, db.StoragePoolVolumeContentTypeFS, time.Now())
-	require.NoError(t, err)
+		poolID1, err = tx.CreateStoragePool(ctx, "p2", "", "dir", nil)
+		require.NoError(t, err)
 
-	config = map[string]string{"k": "v"}
-	_, err = cluster.CreateStorageVolumeSnapshot("default", "v1/snap0", "", 1, poolID, config, time.Now(), time.Time{})
-	require.NoError(t, err)
+		config := map[string]string{"k": "v"}
 
-	n := cluster.GetNextStorageVolumeSnapshotIndex("p1", "v1", 1, "snap%d")
-	assert.Equal(t, n, 1)
+		_, err = tx.CreateStoragePoolVolume(ctx, "default", "v1", "", 1, poolID, config, db.StoragePoolVolumeContentTypeFS, time.Now())
+		require.NoError(t, err)
 
-	n = cluster.GetNextStorageVolumeSnapshotIndex("p2", "v1", 1, "snap%d")
-	assert.Equal(t, n, 0)
+		_, err = tx.CreateStoragePoolVolume(ctx, "default", "v1", "", 1, poolID1, config, db.StoragePoolVolumeContentTypeFS, time.Now())
+		require.NoError(t, err)
+
+		config = map[string]string{"k": "v"}
+		_, err = tx.CreateStorageVolumeSnapshot(ctx, "default", "v1/snap0", "", 1, poolID, config, time.Now(), time.Time{})
+		require.NoError(t, err)
+
+		n := tx.GetNextStorageVolumeSnapshotIndex(ctx, "p1", "v1", 1, "snap%d")
+		assert.Equal(t, n, 1)
+
+		n = tx.GetNextStorageVolumeSnapshotIndex(ctx, "p2", "v1", 1, "snap%d")
+		assert.Equal(t, n, 0)
+
+		return nil
+	})
 }

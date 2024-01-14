@@ -285,7 +285,7 @@ func (c *ClusterTx) GetStoragePoolLocalBucketByAccessKey(ctx context.Context, ac
 // CreateStoragePoolBucket creates a new Storage Bucket.
 // If memberSpecific is true, then the storage bucket is associated to the current member, rather than being
 // associated to all members.
-func (c *Cluster) CreateStoragePoolBucket(ctx context.Context, poolID int64, projectName string, memberSpecific bool, info api.StorageBucketsPost) (int64, error) {
+func (c *ClusterTx) CreateStoragePoolBucket(ctx context.Context, poolID int64, projectName string, memberSpecific bool, info api.StorageBucketsPost) (int64, error) {
 	var err error
 	var bucketID int64
 	var nodeID any
@@ -294,36 +294,29 @@ func (c *Cluster) CreateStoragePoolBucket(ctx context.Context, poolID int64, pro
 		nodeID = c.nodeID
 	}
 
-	err = c.Transaction(ctx, func(ctx context.Context, tx *ClusterTx) error {
-		// Insert a new Storage Bucket record.
-		result, err := tx.tx.Exec(`
+	// Insert a new Storage Bucket record.
+	result, err := c.tx.ExecContext(ctx, `
 		INSERT INTO storage_buckets
 		(storage_pool_id, node_id, name, description, project_id)
 		VALUES (?, ?, ?, ?, (SELECT id FROM projects WHERE name = ?))
 		`, poolID, nodeID, info.Name, info.Description, projectName)
-		if err != nil {
-			var dqliteErr dqliteDriver.Error
-			// Detect SQLITE_CONSTRAINT_UNIQUE (2067) errors.
-			if errors.As(err, &dqliteErr) && dqliteErr.Code == 2067 {
-				return api.StatusErrorf(http.StatusConflict, "A bucket for that name already exists")
-			}
-
-			return err
+	if err != nil {
+		var dqliteErr dqliteDriver.Error
+		// Detect SQLITE_CONSTRAINT_UNIQUE (2067) errors.
+		if errors.As(err, &dqliteErr) && dqliteErr.Code == 2067 {
+			return -1, api.StatusErrorf(http.StatusConflict, "A bucket for that name already exists")
 		}
 
-		bucketID, err = result.LastInsertId()
-		if err != nil {
-			return err
-		}
+		return -1, err
+	}
 
-		// Save config.
-		err = storageBucketPoolConfigAdd(tx.tx, bucketID, info.Config)
-		if err != nil {
-			return err
-		}
+	bucketID, err = result.LastInsertId()
+	if err != nil {
+		return -1, err
+	}
 
-		return nil
-	})
+	// Save config.
+	err = storageBucketPoolConfigAdd(c.tx, bucketID, info.Config)
 	if err != nil {
 		return -1, err
 	}
@@ -359,65 +352,61 @@ func storageBucketPoolConfigAdd(tx *sql.Tx, bucketID int64, config map[string]st
 }
 
 // UpdateStoragePoolBucket updates an existing Storage Bucket.
-func (c *Cluster) UpdateStoragePoolBucket(ctx context.Context, poolID int64, bucketID int64, info *api.StorageBucketPut) error {
-	return c.Transaction(ctx, func(ctx context.Context, tx *ClusterTx) error {
-		// Update existing Storage Bucket record.
-		res, err := tx.tx.Exec(`
+func (c *ClusterTx) UpdateStoragePoolBucket(ctx context.Context, poolID int64, bucketID int64, info *api.StorageBucketPut) error {
+	// Update existing Storage Bucket record.
+	res, err := c.tx.ExecContext(ctx, `
 		UPDATE storage_buckets
 		SET description = ?
 		WHERE storage_pool_id = ? and id = ?
 		`, info.Description, poolID, bucketID)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-		if rowsAffected <= 0 {
-			return api.StatusErrorf(http.StatusNotFound, "Storage bucket not found")
-		}
+	if rowsAffected <= 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Storage bucket not found")
+	}
 
-		// Save config.
-		_, err = tx.tx.Exec("DELETE FROM storage_buckets_config WHERE storage_bucket_id=?", bucketID)
-		if err != nil {
-			return err
-		}
+	// Save config.
+	_, err = c.tx.ExecContext(ctx, "DELETE FROM storage_buckets_config WHERE storage_bucket_id=?", bucketID)
+	if err != nil {
+		return err
+	}
 
-		err = storageBucketPoolConfigAdd(tx.tx, bucketID, info.Config)
-		if err != nil {
-			return err
-		}
+	err = storageBucketPoolConfigAdd(c.tx, bucketID, info.Config)
+	if err != nil {
+		return err
+	}
 
-		return nil
-	})
+	return nil
 }
 
 // DeleteStoragePoolBucket deletes an existing Storage Bucket.
-func (c *Cluster) DeleteStoragePoolBucket(ctx context.Context, poolID int64, bucketID int64) error {
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Delete existing Storage Bucket record.
-		res, err := tx.tx.Exec(`
+func (c *ClusterTx) DeleteStoragePoolBucket(ctx context.Context, poolID int64, bucketID int64) error {
+	// Delete existing Storage Bucket record.
+	res, err := c.tx.ExecContext(ctx, `
 			DELETE FROM storage_buckets
 			WHERE storage_pool_id = ? and id = ?
 		`, poolID, bucketID)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-		if rowsAffected <= 0 {
-			return api.StatusErrorf(http.StatusNotFound, "Storage bucket not found")
-		}
+	if rowsAffected <= 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Storage bucket not found")
+	}
 
-		return nil
-	})
+	return nil
 }
 
 // StorageBucketKeyFilter used for filtering storage bucket keys with GetStoragePoolBucketKeys().
@@ -518,42 +507,35 @@ func (c *ClusterTx) GetStoragePoolBucketKey(ctx context.Context, bucketID int64,
 }
 
 // CreateStoragePoolBucketKey creates a new Storage Bucket Key.
-func (c *Cluster) CreateStoragePoolBucketKey(ctx context.Context, bucketID int64, info api.StorageBucketKeysPost) (int64, error) {
+func (c *ClusterTx) CreateStoragePoolBucketKey(ctx context.Context, bucketID int64, info api.StorageBucketKeysPost) (int64, error) {
 	var err error
 	var bucketKeyID int64
 
-	err = c.Transaction(ctx, func(ctx context.Context, tx *ClusterTx) error {
-		// Check there isn't another bucket with the same access key on the local server.
-		bucket, err := tx.GetStoragePoolLocalBucketByAccessKey(ctx, info.AccessKey)
-		if err != nil && !api.StatusErrorCheck(err, http.StatusNotFound) {
-			return err
-		} else if bucket != nil {
-			return api.StatusErrorf(http.StatusConflict, "A bucket key using that access key already exists on this server")
-		}
+	// Check there isn't another bucket with the same access key on the local server.
+	bucket, err := c.GetStoragePoolLocalBucketByAccessKey(ctx, info.AccessKey)
+	if err != nil && !api.StatusErrorCheck(err, http.StatusNotFound) {
+		return -1, err
+	} else if bucket != nil {
+		return -1, api.StatusErrorf(http.StatusConflict, "A bucket key using that access key already exists on this server")
+	}
 
-		// Insert a new Storage Bucket Key record.
-		result, err := tx.tx.Exec(`
+	// Insert a new Storage Bucket Key record.
+	result, err := c.tx.ExecContext(ctx, `
 		INSERT INTO storage_buckets_keys
 		(storage_bucket_id, name, description, role, access_key, secret_key)
 		VALUES (?, ?, ?, ?, ?, ?)
 		`, bucketID, info.Name, info.Description, info.Role, info.AccessKey, info.SecretKey)
-		if err != nil {
-			var dqliteErr dqliteDriver.Error
-			// Detect SQLITE_CONSTRAINT_UNIQUE (2067) errors.
-			if errors.As(err, &dqliteErr) && dqliteErr.Code == 2067 {
-				return api.StatusErrorf(http.StatusConflict, "A bucket key for that name already exists")
-			}
-
-			return err
+	if err != nil {
+		var dqliteErr dqliteDriver.Error
+		// Detect SQLITE_CONSTRAINT_UNIQUE (2067) errors.
+		if errors.As(err, &dqliteErr) && dqliteErr.Code == 2067 {
+			return -1, api.StatusErrorf(http.StatusConflict, "A bucket key for that name already exists")
 		}
 
-		bucketKeyID, err = result.LastInsertId()
-		if err != nil {
-			return err
-		}
+		return -1, err
+	}
 
-		return nil
-	})
+	bucketKeyID, err = result.LastInsertId()
 	if err != nil {
 		return -1, err
 	}
@@ -562,60 +544,56 @@ func (c *Cluster) CreateStoragePoolBucketKey(ctx context.Context, bucketID int64
 }
 
 // UpdateStoragePoolBucketKey updates an existing Storage Bucket Key.
-func (c *Cluster) UpdateStoragePoolBucketKey(ctx context.Context, bucketID int64, bucketKeyID int64, info *api.StorageBucketKeyPut) error {
-	return c.Transaction(ctx, func(ctx context.Context, tx *ClusterTx) error {
-		// Check there isn't another bucket with the same access key on the local server.
-		bucket, err := tx.GetStoragePoolLocalBucketByAccessKey(ctx, info.AccessKey)
-		if err != nil && !api.StatusErrorCheck(err, http.StatusNotFound) {
-			return err
-		} else if bucket != nil && bucket.ID != bucketID {
-			return api.StatusErrorf(http.StatusConflict, "A bucket key using that access key already exists on this server")
-		}
+func (c *ClusterTx) UpdateStoragePoolBucketKey(ctx context.Context, bucketID int64, bucketKeyID int64, info *api.StorageBucketKeyPut) error {
+	// Check there isn't another bucket with the same access key on the local server.
+	bucket, err := c.GetStoragePoolLocalBucketByAccessKey(ctx, info.AccessKey)
+	if err != nil && !api.StatusErrorCheck(err, http.StatusNotFound) {
+		return err
+	} else if bucket != nil && bucket.ID != bucketID {
+		return api.StatusErrorf(http.StatusConflict, "A bucket key using that access key already exists on this server")
+	}
 
-		// Update existing Storage Bucket Key record.
-		res, err := tx.tx.Exec(`
+	// Update existing Storage Bucket Key record.
+	res, err := c.tx.ExecContext(ctx, `
 		UPDATE storage_buckets_keys
 		SET description = ?, role = ?, access_key = ?, secret_key = ?
 		WHERE storage_bucket_id = ? and id = ?
 		`, info.Description, info.Role, info.AccessKey, info.SecretKey, bucketID, bucketKeyID)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-		if rowsAffected <= 0 {
-			return api.StatusErrorf(http.StatusNotFound, "Storage bucket key not found")
-		}
+	if rowsAffected <= 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Storage bucket key not found")
+	}
 
-		return nil
-	})
+	return nil
 }
 
 // DeleteStoragePoolBucketKey deletes an existing Storage Bucket Key.
-func (c *Cluster) DeleteStoragePoolBucketKey(ctx context.Context, bucketID int64, keyID int64) error {
-	return c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Delete existing Storage Bucket record.
-		res, err := tx.tx.Exec(`
+func (c *ClusterTx) DeleteStoragePoolBucketKey(ctx context.Context, bucketID int64, keyID int64) error {
+	// Delete existing Storage Bucket record.
+	res, err := c.tx.ExecContext(ctx, `
 			DELETE FROM storage_buckets_keys
 			WHERE storage_bucket_id = ? and id = ?
 		`, bucketID, keyID)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-		if rowsAffected <= 0 {
-			return api.StatusErrorf(http.StatusNotFound, "Storage bucket key not found")
-		}
+	if rowsAffected <= 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Storage bucket key not found")
+	}
 
-		return nil
-	})
+	return nil
 }

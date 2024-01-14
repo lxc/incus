@@ -17,7 +17,7 @@ import (
 
 // CreateStorageVolumeSnapshot creates a new storage volume snapshot attached to a given
 // storage pool.
-func (c *Cluster) CreateStorageVolumeSnapshot(projectName string, volumeName string, volumeDescription string, volumeType int, poolID int64, volumeConfig map[string]string, creationDate time.Time, expiryDate time.Time) (int64, error) {
+func (c *ClusterTx) CreateStorageVolumeSnapshot(ctx context.Context, projectName string, volumeName string, volumeDescription string, volumeType int, poolID int64, volumeConfig map[string]string, creationDate time.Time, expiryDate time.Time) (int64, error) {
 	var volumeID int64
 
 	var snapshotName string
@@ -25,85 +25,74 @@ func (c *Cluster) CreateStorageVolumeSnapshot(projectName string, volumeName str
 	volumeName = parts[0]
 	snapshotName = parts[1]
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Figure out the volume ID of the parent.
-		parentID, err := tx.storagePoolVolumeGetTypeID(ctx, projectName, volumeName, volumeType, poolID, c.nodeID)
-		if err != nil {
-			return fmt.Errorf("Failed finding parent volume record for snapshot: %w", err)
-		}
-
-		_, err = tx.tx.Exec("UPDATE sqlite_sequence SET seq = seq + 1 WHERE name = 'storage_volumes'")
-		if err != nil {
-			return fmt.Errorf("Failed incrementing storage volumes sequence: %w", err)
-		}
-
-		row := tx.tx.QueryRowContext(ctx, "SELECT seq FROM sqlite_sequence WHERE name = 'storage_volumes' LIMIT 1")
-		err = row.Scan(&volumeID)
-		if err != nil {
-			return fmt.Errorf("Failed getting storage volumes sequence: %w", err)
-		}
-
-		_, err = tx.tx.Exec("INSERT INTO storage_volumes_snapshots (id, storage_volume_id, name, description, creation_date, expiry_date) VALUES (?, ?, ?, ?, ?, ?)", volumeID, parentID, snapshotName, volumeDescription, creationDate, expiryDate)
-		if err != nil {
-			return fmt.Errorf("Failed creating volume snapshot record: %w", err)
-		}
-
-		err = storageVolumeConfigAdd(tx.tx, volumeID, volumeConfig, true)
-		if err != nil {
-			return fmt.Errorf("Failed inserting storage volume snapshot record configuration: %w", err)
-		}
-
-		return nil
-	})
+	// Figure out the volume ID of the parent.
+	parentID, err := c.storagePoolVolumeGetTypeID(ctx, projectName, volumeName, volumeType, poolID, c.nodeID)
 	if err != nil {
-		volumeID = -1
+		return -1, fmt.Errorf("Failed finding parent volume record for snapshot: %w", err)
 	}
 
-	return volumeID, err
+	_, err = c.tx.ExecContext(ctx, "UPDATE sqlite_sequence SET seq = seq + 1 WHERE name = 'storage_volumes'")
+	if err != nil {
+		return -1, fmt.Errorf("Failed incrementing storage volumes sequence: %w", err)
+	}
+
+	row := c.tx.QueryRowContext(ctx, "SELECT seq FROM sqlite_sequence WHERE name = 'storage_volumes' LIMIT 1")
+	err = row.Scan(&volumeID)
+	if err != nil {
+		return -1, fmt.Errorf("Failed getting storage volumes sequence: %w", err)
+	}
+
+	_, err = c.tx.ExecContext(ctx, "INSERT INTO storage_volumes_snapshots (id, storage_volume_id, name, description, creation_date, expiry_date) VALUES (?, ?, ?, ?, ?, ?)", volumeID, parentID, snapshotName, volumeDescription, creationDate, expiryDate)
+	if err != nil {
+		return -1, fmt.Errorf("Failed creating volume snapshot record: %w", err)
+	}
+
+	err = storageVolumeConfigAdd(c.tx, volumeID, volumeConfig, true)
+	if err != nil {
+		return -1, fmt.Errorf("Failed inserting storage volume snapshot record configuration: %w", err)
+	}
+
+	return volumeID, nil
 }
 
 // UpdateStorageVolumeSnapshot updates the storage volume snapshot attached to a given storage pool.
-func (c *Cluster) UpdateStorageVolumeSnapshot(projectName string, volumeName string, volumeType int, poolID int64, volumeDescription string, volumeConfig map[string]string, expiryDate time.Time) error {
+func (c *ClusterTx) UpdateStorageVolumeSnapshot(ctx context.Context, projectName string, volumeName string, volumeType int, poolID int64, volumeDescription string, volumeConfig map[string]string, expiryDate time.Time) error {
 	var err error
 
 	if !strings.Contains(volumeName, internalInstance.SnapshotDelimiter) {
 		return fmt.Errorf("Volume is not a snapshot")
 	}
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		volume, err := tx.GetStoragePoolVolume(ctx, poolID, projectName, volumeType, volumeName, true)
-		if err != nil {
-			return err
-		}
+	volume, err := c.GetStoragePoolVolume(ctx, poolID, projectName, volumeType, volumeName, true)
+	if err != nil {
+		return err
+	}
 
-		err = storageVolumeConfigClear(tx.tx, volume.ID, true)
-		if err != nil {
-			return err
-		}
+	err = storageVolumeConfigClear(c.tx, volume.ID, true)
+	if err != nil {
+		return err
+	}
 
-		err = storageVolumeConfigAdd(tx.tx, volume.ID, volumeConfig, true)
-		if err != nil {
-			return err
-		}
+	err = storageVolumeConfigAdd(c.tx, volume.ID, volumeConfig, true)
+	if err != nil {
+		return err
+	}
 
-		err = storageVolumeDescriptionUpdate(tx.tx, volume.ID, volumeDescription, true)
-		if err != nil {
-			return err
-		}
+	err = storageVolumeDescriptionUpdate(c.tx, volume.ID, volumeDescription, true)
+	if err != nil {
+		return err
+	}
 
-		err = storageVolumeSnapshotExpiryDateUpdate(tx.tx, volume.ID, expiryDate)
-		if err != nil {
-			return err
-		}
+	err = storageVolumeSnapshotExpiryDateUpdate(c.tx, volume.ID, expiryDate)
+	if err != nil {
+		return err
+	}
 
-		return nil
-	})
-
-	return err
+	return nil
 }
 
 // GetStorageVolumeSnapshotWithID returns the volume snapshot with the given ID.
-func (c *Cluster) GetStorageVolumeSnapshotWithID(snapshotID int) (StorageVolumeArgs, error) {
+func (c *ClusterTx) GetStorageVolumeSnapshotWithID(ctx context.Context, snapshotID int) (StorageVolumeArgs, error) {
 	args := StorageVolumeArgs{}
 	q := `
 SELECT
@@ -121,9 +110,7 @@ WHERE volumes.id=?
 	arg1 := []any{snapshotID}
 	outfmt := []any{&args.ID, &args.Name, &args.CreationDate, &args.PoolName, &args.Type, &args.ProjectName}
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return dbQueryRowScan(ctx, tx, q, arg1, outfmt)
-	})
+	err := dbQueryRowScan(ctx, c, q, arg1, outfmt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return args, api.StatusErrorf(http.StatusNotFound, "Storage pool volume snapshot not found")
@@ -142,16 +129,14 @@ WHERE volumes.id=?
 }
 
 // GetStorageVolumeSnapshotExpiry gets the expiry date of a storage volume snapshot.
-func (c *Cluster) GetStorageVolumeSnapshotExpiry(volumeID int64) (time.Time, error) {
+func (c *ClusterTx) GetStorageVolumeSnapshotExpiry(ctx context.Context, volumeID int64) (time.Time, error) {
 	var expiry time.Time
 
 	query := "SELECT expiry_date FROM storage_volumes_snapshots WHERE id=?"
 	inargs := []any{volumeID}
 	outargs := []any{&expiry}
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return dbQueryRowScan(ctx, tx, query, inargs, outargs)
-	})
+	err := dbQueryRowScan(ctx, c, query, inargs, outargs)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return expiry, api.StatusErrorf(http.StatusNotFound, "Storage pool volume snapshot not found")

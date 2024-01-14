@@ -1,9 +1,11 @@
 package network
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
+	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 )
@@ -40,7 +42,17 @@ func LoadByType(driverType string) (Type, error) {
 
 // LoadByName loads an instantiated network from the database by project and name.
 func LoadByName(s *state.State, projectName string, name string) (Network, error) {
-	id, netInfo, netNodes, err := s.DB.Cluster.GetNetworkInAnyState(projectName, name)
+	var id int64
+	var netInfo *api.Network
+	var netNodes map[int64]db.NetworkNode
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		id, netInfo, netNodes, err = tx.GetNetworkInAnyState(ctx, projectName, name)
+
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

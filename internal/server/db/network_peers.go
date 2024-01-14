@@ -17,40 +17,39 @@ import (
 // If there is a mutual peering on the target network side the both peer entries are upated to link to each other's
 // repspective network ID.
 // Returns the local peer ID and true if a mutual peering has been created.
-func (c *Cluster) CreateNetworkPeer(networkID int64, info *api.NetworkPeersPost) (int64, bool, error) {
+func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info *api.NetworkPeersPost) (int64, bool, error) {
 	var err error
 	var localPeerID int64
 	var targetPeerNetworkID int64 = int64(-1) // -1 means no mutual peering exists.
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Insert a new Network pending peer record.
-		result, err := tx.tx.Exec(`
+	// Insert a new Network pending peer record.
+	result, err := c.tx.ExecContext(ctx, `
 		INSERT INTO networks_peers
 		(network_id, name, description, target_network_project, target_network_name)
 		VALUES (?, ?, ?, ?, ?)
 		`, networkID, info.Name, info.Description, info.TargetProject, info.TargetNetwork)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return -1, false, err
+	}
 
-		localPeerID, err = result.LastInsertId()
-		if err != nil {
-			return err
-		}
+	localPeerID, err = result.LastInsertId()
+	if err != nil {
+		return -1, false, err
+	}
 
-		// Save config.
-		err = networkPeerConfigAdd(tx.tx, localPeerID, info.Config)
-		if err != nil {
-			return err
-		}
+	// Save config.
+	err = networkPeerConfigAdd(c.tx, localPeerID, info.Config)
+	if err != nil {
+		return -1, false, err
+	}
 
-		// Check if we are creating a mutual peering of an existing peer and if so then update both sides
-		// with the respective network IDs. This query looks up our network peer's network name and project
-		// name and then checks if there are any unlinked (target_network_id IS NULL) peers that have
-		// matching target network and project names for the network this peer belongs to. If so then it
-		// returns the target peer's ID and network ID. This can then be used to update both our local peer
-		// and the target peer itself with the respective network IDs of each side.
-		q := `
+	// Check if we are creating a mutual peering of an existing peer and if so then update both sides
+	// with the respective network IDs. This query looks up our network peer's network name and project
+	// name and then checks if there are any unlinked (target_network_id IS NULL) peers that have
+	// matching target network and project names for the network this peer belongs to. If so then it
+	// returns the target peer's ID and network ID. This can then be used to update both our local peer
+	// and the target peer itself with the respective network IDs of each side.
+	q := `
 		SELECT
 			target_peer.id,
 			target_peer.network_id
@@ -75,46 +74,40 @@ func (c *Cluster) CreateNetworkPeer(networkID int64, info *api.NetworkPeersPost)
 		LIMIT 1
 		`
 
-		var targetPeerID int64 = int64(-1)
+	var targetPeerID int64 = int64(-1)
 
-		err = tx.tx.QueryRowContext(ctx, q, info.TargetProject, info.TargetNetwork, networkID, localPeerID).Scan(&targetPeerID, &targetPeerNetworkID)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("Failed looking up mutual peering: %w", err)
-		} else if err == nil {
-			peerNetworkMap := map[int64]struct {
-				localNetworkID      int64
-				targetPeerNetworkID int64
-			}{
-				localPeerID: {
-					localNetworkID:      networkID,
-					targetPeerNetworkID: targetPeerNetworkID,
-				},
-				targetPeerID: {
-					localNetworkID:      targetPeerNetworkID,
-					targetPeerNetworkID: networkID,
-				},
-			}
+	err = c.tx.QueryRowContext(ctx, q, info.TargetProject, info.TargetNetwork, networkID, localPeerID).Scan(&targetPeerID, &targetPeerNetworkID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return -1, false, fmt.Errorf("Failed looking up mutual peering: %w", err)
+	} else if err == nil {
+		peerNetworkMap := map[int64]struct {
+			localNetworkID      int64
+			targetPeerNetworkID int64
+		}{
+			localPeerID: {
+				localNetworkID:      networkID,
+				targetPeerNetworkID: targetPeerNetworkID,
+			},
+			targetPeerID: {
+				localNetworkID:      targetPeerNetworkID,
+				targetPeerNetworkID: networkID,
+			},
+		}
 
-			// A mutual peering has been found, update both sides with their respective network IDs
-			// and clear the joining target project and network names.
-			for peerID, peerMap := range peerNetworkMap {
-				_, err := tx.tx.Exec(`
+		// A mutual peering has been found, update both sides with their respective network IDs
+		// and clear the joining target project and network names.
+		for peerID, peerMap := range peerNetworkMap {
+			_, err := c.tx.ExecContext(ctx, `
 				UPDATE networks_peers SET
 					target_network_id = ?,
 					target_network_project = NULL,
 					target_network_name = NULL
 				WHERE networks_peers.network_id = ? AND networks_peers.id = ?
 				`, peerMap.targetPeerNetworkID, peerMap.localNetworkID, peerID)
-				if err != nil {
-					return fmt.Errorf("Failed updating mutual peering: %w", err)
-				}
+			if err != nil {
+				return -1, false, fmt.Errorf("Failed updating mutual peering: %w", err)
 			}
 		}
-
-		return nil
-	})
-	if err != nil {
-		return -1, false, err
 	}
 
 	return localPeerID, targetPeerNetworkID > -1, err
@@ -148,7 +141,7 @@ func networkPeerConfigAdd(tx *sql.Tx, peerID int64, config map[string]string) er
 }
 
 // GetNetworkPeer returns the Network Peer ID and info for the given network ID and peer name.
-func (c *Cluster) GetNetworkPeer(networkID int64, peerName string) (int64, *api.NetworkPeer, error) {
+func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerName string) (int64, *api.NetworkPeer, error) {
 	// This query loads the specified local peer as well as trying to ascertain whether there is a mutual
 	// target peer, and if so what are it's project and network names. This is used to populate the
 	// TargetProject, TargetNetwork fields and indicates the Status is api.NetworkStatusCreated if available.
@@ -182,23 +175,16 @@ func (c *Cluster) GetNetworkPeer(networkID int64, peerName string) (int64, *api.
 	var targetPeerNetworkName string
 	var targetPeerNetworkProject string
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		err = tx.tx.QueryRowContext(ctx, q, networkID, peerName).Scan(&peerID, &peer.Name, &peer.Description, &peer.TargetProject, &peer.TargetNetwork, &targetPeerNetworkName, &targetPeerNetworkProject)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return api.StatusErrorf(http.StatusNotFound, "Network peer not found")
-			}
-
-			return err
+	err = c.tx.QueryRowContext(ctx, q, networkID, peerName).Scan(&peerID, &peer.Name, &peer.Description, &peer.TargetProject, &peer.TargetNetwork, &targetPeerNetworkName, &targetPeerNetworkProject)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return -1, nil, api.StatusErrorf(http.StatusNotFound, "Network peer not found")
 		}
 
-		err = networkPeerConfig(ctx, tx, peerID, &peer)
-		if err != nil {
-			return err
-		}
+		return -1, nil, err
+	}
 
-		return nil
-	})
+	err = networkPeerConfig(ctx, c, peerID, &peer)
 	if err != nil {
 		return -1, nil, err
 	}
@@ -269,7 +255,7 @@ func networkPeerConfig(ctx context.Context, tx *ClusterTx, peerID int64, peer *a
 }
 
 // GetNetworkPeers returns map of Network Peers for the given network ID keyed on Peer ID.
-func (c *Cluster) GetNetworkPeers(networkID int64) (map[int64]*api.NetworkPeer, error) {
+func (c *ClusterTx) GetNetworkPeers(ctx context.Context, networkID int64) (map[int64]*api.NetworkPeer, error) {
 	// This query loads the local peers for the network as well as trying to ascertain whether there is a
 	// mutual target peer, and if so what are it's project and network names. This is used to populate the
 	// TargetProject, TargetNetwork fields and indicates the Status is api.NetworkStatusCreated if available.
@@ -299,47 +285,40 @@ func (c *Cluster) GetNetworkPeers(networkID int64) (map[int64]*api.NetworkPeer, 
 	var err error
 	peers := make(map[int64]*api.NetworkPeer)
 
-	err = c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		err = query.Scan(ctx, tx.Tx(), q, func(scan func(dest ...any) error) error {
-			var peerID int64 = int64(-1)
-			var peer api.NetworkPeer
-			var targetPeerNetworkName string
-			var targetPeerNetworkProject string
+	err = query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
+		var peerID int64 = int64(-1)
+		var peer api.NetworkPeer
+		var targetPeerNetworkName string
+		var targetPeerNetworkProject string
 
-			err := scan(&peerID, &peer.Name, &peer.Description, &peer.TargetProject, &peer.TargetNetwork, &targetPeerNetworkName, &targetPeerNetworkProject)
-			if err != nil {
-				return err
-			}
-
-			networkPeerPopulatePeerInfo(&peer, targetPeerNetworkProject, targetPeerNetworkName)
-
-			peers[peerID] = &peer
-
-			return nil
-		}, networkID)
+		err := scan(&peerID, &peer.Name, &peer.Description, &peer.TargetProject, &peer.TargetNetwork, &targetPeerNetworkName, &targetPeerNetworkProject)
 		if err != nil {
 			return err
 		}
 
-		// Populate config.
-		for peerID := range peers {
-			err = networkPeerConfig(ctx, tx, peerID, peers[peerID])
-			if err != nil {
-				return err
-			}
-		}
+		networkPeerPopulatePeerInfo(&peer, targetPeerNetworkProject, targetPeerNetworkName)
+
+		peers[peerID] = &peer
 
 		return nil
-	})
+	}, networkID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Populate config.
+	for peerID := range peers {
+		err = networkPeerConfig(ctx, c, peerID, peers[peerID])
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return peers, nil
 }
 
 // GetNetworkPeerNames returns map of Network Peer names for the given network ID keyed on Peer ID.
-func (c *Cluster) GetNetworkPeerNames(networkID int64) (map[int64]string, error) {
+func (c *ClusterTx) GetNetworkPeerNames(ctx context.Context, networkID int64) (map[int64]string, error) {
 	q := `
 	SELECT
 		id,
@@ -350,21 +329,19 @@ func (c *Cluster) GetNetworkPeerNames(networkID int64) (map[int64]string, error)
 
 	peers := make(map[int64]string)
 
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		return query.Scan(ctx, tx.Tx(), q, func(scan func(dest ...any) error) error {
-			var peerID int64 = int64(-1)
-			var peerName string
+	err := query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
+		var peerID int64 = int64(-1)
+		var peerName string
 
-			err := scan(&peerID, &peerName)
-			if err != nil {
-				return err
-			}
+		err := scan(&peerID, &peerName)
+		if err != nil {
+			return err
+		}
 
-			peers[peerID] = peerName
+		peers[peerID] = peerName
 
-			return nil
-		}, networkID)
-	})
+		return nil
+	}, networkID)
 	if err != nil {
 		return nil, err
 	}
@@ -373,40 +350,33 @@ func (c *Cluster) GetNetworkPeerNames(networkID int64) (map[int64]string, error)
 }
 
 // UpdateNetworkPeer updates an existing Network Peer.
-func (c *Cluster) UpdateNetworkPeer(networkID int64, peerID int64, info *api.NetworkPeerPut) error {
-	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *ClusterTx) error {
-		// Update existing Network peer record.
-		res, err := tx.tx.Exec(`
+func (c *ClusterTx) UpdateNetworkPeer(ctx context.Context, networkID int64, peerID int64, info *api.NetworkPeerPut) error {
+	// Update existing Network peer record.
+	res, err := c.tx.ExecContext(ctx, `
 		UPDATE networks_peers
 		SET description = ?
 		WHERE network_id = ? and id = ?
 		`, info.Description, networkID, peerID)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 
-		if rowsAffected <= 0 {
-			return api.StatusErrorf(http.StatusNotFound, "Network peer not found")
-		}
+	if rowsAffected <= 0 {
+		return api.StatusErrorf(http.StatusNotFound, "Network peer not found")
+	}
 
-		// Save config.
-		_, err = tx.tx.Exec("DELETE FROM networks_peers_config WHERE network_peer_id=?", peerID)
-		if err != nil {
-			return err
-		}
+	// Save config.
+	_, err = c.tx.ExecContext(ctx, "DELETE FROM networks_peers_config WHERE network_peer_id=?", peerID)
+	if err != nil {
+		return err
+	}
 
-		err = networkPeerConfigAdd(tx.tx, peerID, info.Config)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	err = networkPeerConfigAdd(c.tx, peerID, info.Config)
 	if err != nil {
 		return err
 	}
