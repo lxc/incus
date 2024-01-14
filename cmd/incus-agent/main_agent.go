@@ -111,16 +111,19 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	reconfigureNetworkInterfaces()
 
 	// Load the kernel driver.
-	logger.Info("Loading vsock module")
-	err = linux.LoadModule("vsock")
-	if err != nil {
-		return fmt.Errorf("Unable to load the vsock kernel module: %w", err)
-	}
+	if !util.PathExists("/dev/vsock") {
+		logger.Info("Loading vsock module")
 
-	// Wait for vsock device to appear.
-	for i := 0; i < 5; i++ {
-		if !util.PathExists("/dev/vsock") {
-			time.Sleep(1 * time.Second)
+		err = linux.LoadModule("vsock")
+		if err != nil {
+			return fmt.Errorf("Unable to load the vsock kernel module: %w", err)
+		}
+
+		// Wait for vsock device to appear.
+		for i := 0; i < 5; i++ {
+			if !util.PathExists("/dev/vsock") {
+				time.Sleep(1 * time.Second)
+			}
 		}
 	}
 
