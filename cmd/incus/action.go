@@ -57,6 +57,28 @@ func (c *cmdPause) Command() *cobra.Command {
 	return cmd
 }
 
+// Resume.
+type cmdResume struct {
+	global *cmdGlobal
+	action *cmdAction
+}
+
+// Command returns a cobra.Command object representing the "resume" command.
+// It is used to resume (or unfreeze) one or more instances specified by the user.
+func (c *cmdResume) Command() *cobra.Command {
+	cmdAction := cmdAction{global: c.global}
+	c.action = &cmdAction
+
+	cmd := c.action.Command("resume")
+	cmd.Use = usage("resume", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
+	cmd.Short = i18n.G("Resume instances")
+	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		`Resume instances`))
+	cmd.Aliases = []string{"unfreeze"}
+
+	return cmd
+}
+
 // Restart.
 type cmdRestart struct {
 	global *cmdGlobal
@@ -153,9 +175,11 @@ func (c *cmdAction) doActionAll(action string, resource remoteResource) error {
 		return err
 	}
 
-	// Pause is called freeze.
+	// Pause is called freeze, resume is called unfreeze.
 	if action == "pause" {
 		action = "freeze"
+	} else if action == "resume" {
+		action = "unfreeze"
 	}
 
 	// Only store state if asked to.
