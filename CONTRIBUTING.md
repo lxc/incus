@@ -34,7 +34,7 @@ Separate commits should be used for:
 - Documentation (`doc: Update XYZ` for files in `doc/`)
 - API structure (`shared/api: Add XYZ` for changes to `shared/api/`)
 - Go client package (`client: Add XYZ` for changes to `client/`)
-- CLI (`lxc/<command>: Change XYZ` for changes to `lxc/`)
+- CLI (`cmd/<command>: Change XYZ` for changes to `cmd/`)
 - Scripts (`scripts: Update bash completion for XYZ` for changes to `scripts/`)
 - Incus daemon (`incus/<package>: Add support for XYZ` for changes to `incus/`)
 - Tests (`tests: Add test for XYZ` for changes to `tests/`)
@@ -42,7 +42,7 @@ Separate commits should be used for:
 The same kind of pattern extends to the other tools in the Incus code tree
 and depending on complexity, things may be split into even smaller chunks.
 
-When updating strings in the CLI tool (`lxc/`), you may need a commit to update the templates:
+When updating strings in the CLI tool (`cmd/`), you may need a commit to update the templates:
 
     make i18n
     git commit -a -s -m "i18n: Update translation templates" po/
