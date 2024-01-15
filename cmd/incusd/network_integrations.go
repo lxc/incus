@@ -141,10 +141,19 @@ func networkIntegrationsGet(d *Daemon, r *http.Request) response.Response {
 			if !recursion {
 				resultString = append(resultString, api.NewURL().Path(version.APIVersion, "network-integrations", integration.Name).String())
 			} else {
+				// Get the integration.
 				result, err := integration.ToAPI(r.Context(), tx.Tx())
 				if err != nil {
 					return err
 				}
+
+				// Add UsedBy field.
+				usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, integration.Name)
+				if err != nil {
+					return err
+				}
+
+				result.UsedBy = usedBy
 
 				resultMap = append(resultMap, *result)
 			}
@@ -280,7 +289,17 @@ func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
 
 	// Delete the DB record.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		err := dbCluster.DeleteNetworkIntegration(ctx, tx.Tx(), integrationName)
+		// Get UsedBy for the integration.
+		usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, integrationName)
+		if err != nil {
+			return err
+		}
+
+		if len(usedBy) > 0 {
+			return fmt.Errorf("Network integration is currently in use")
+		}
+
+		err = dbCluster.DeleteNetworkIntegration(ctx, tx.Tx(), integrationName)
 		if err != nil {
 			return err
 		}
@@ -350,6 +369,7 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 	var info *api.NetworkIntegration
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get the integration.
 		dbRecord, err := dbCluster.GetNetworkIntegration(ctx, tx.Tx(), integrationName)
 		if err != nil {
 			return err
@@ -359,6 +379,14 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return err
 		}
+
+		// Add UsedBy field.
+		usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, info.Name)
+		if err != nil {
+			return err
+		}
+
+		info.UsedBy = usedBy
 
 		return nil
 	})
