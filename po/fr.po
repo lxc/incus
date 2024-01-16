@@ -8052,9 +8052,8 @@ msgid "You must specify a source instance name"
 msgstr "vous devez spécifier un nom de conteneur source"
 
 #: cmd/incus/rebuild.go:120
-#, fuzzy
 msgid "You need to specify an image name or use --empty"
-msgstr "vous devez spécifier un nom de conteneur source"
+msgstr "vous devez spécifier un nom d'image ou utilisez --empty"
 
 #: cmd/incus/storage_volume.go:751
 #, fuzzy
@@ -8075,13 +8074,12 @@ msgstr ""
 #: cmd/incus/cluster.go:119 cmd/incus/cluster.go:864
 #: cmd/incus/cluster_group.go:379 cmd/incus/config_trust.go:398
 #: cmd/incus/config_trust.go:583 cmd/incus/monitor.go:31
-#: cmd/incus/network.go:1001 cmd/incus/network_acl.go:90
+#: cmd/incus/network_acl.go:90 cmd/incus/network.go:1001
 #: cmd/incus/network_zone.go:81 cmd/incus/operation.go:104
 #: cmd/incus/profile.go:610 cmd/incus/project.go:407 cmd/incus/storage.go:582
 #: cmd/incus/version.go:20 cmd/incus/warning.go:69
-#, fuzzy
 msgid "[<remote>:]"
-msgstr "Serveur distant : %s"
+msgstr "[<serveur distant>:]"
 
 #: cmd/incus/import.go:25
 #, fuzzy
@@ -8100,78 +8098,38 @@ msgstr ""
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
 #: cmd/incus/config_trust.go:168
-#, fuzzy
 msgid "[<remote>:] <cert>"
-msgstr ""
-"Supprimer des conteneurs ou des instantanés.\n"
-"\n"
-"lxc delete [<remote>:]<container>[/<snapshot>] [<remote>:][<container>[/"
-"<snapshot>]...]\n"
-"\n"
-"Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
-"(configuration, instantanés, …)."
+msgstr "[<serveur distant>:] <certificat>"
 
 #: cmd/incus/cluster.go:602 cmd/incus/config_trust.go:731
-#, fuzzy
 msgid "[<remote>:] <name>"
-msgstr ""
-"Supprimer des conteneurs ou des instantanés.\n"
-"\n"
-"lxc delete [<remote>:]<container>[/<snapshot>] [<remote>:][<container>[/"
-"<snapshot>]...]\n"
-"\n"
-"Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
-"(configuration, instantanés, …)."
+msgstr "[<serveur distant>:] <nom>"
 
 #: cmd/incus/image.go:1018 cmd/incus/list.go:46
-#, fuzzy
 msgid "[<remote>:] [<filter>...]"
-msgstr ""
-"Change l'état d'un ou plusieurs conteneurs à %s.\n"
-"\n"
-"lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
+msgstr "[<serveur distant>:] [<filtre>...]"
 
 #: cmd/incus/image_alias.go:149
-#, fuzzy
 msgid "[<remote>:] [<filters>...]"
-msgstr ""
-"Supprimer des conteneurs ou des instantanés.\n"
-"\n"
-"lxc delete [<remote>:]<container>[/<snapshot>] [<remote>:][<container>[/"
-"<snapshot>]...]\n"
-"\n"
-"Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
-"(configuration, instantanés, …)."
+msgstr "[<serveur distant>:] [<filtres>...]"
 
 #: cmd/incus/network_acl.go:162 cmd/incus/network_acl.go:215
 #: cmd/incus/network_acl.go:519 cmd/incus/network_acl.go:698
-#, fuzzy
 msgid "[<remote>:]<ACL>"
-msgstr "Serveur distant : %s"
+msgstr "[<serveur distant>:]<liste de contrôle d'accès>"
 
 #: cmd/incus/network_acl.go:763 cmd/incus/network_acl.go:884
-#, fuzzy
 msgid "[<remote>:]<ACL> <direction> <key>=<value>..."
 msgstr ""
-"Change l'état d'un ou plusieurs conteneurs à %s.\n"
-"\n"
-"lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
+"[<serveur distant>:]<liste de contrôle d'accès> <direction> <clé=valeur>..."
 
 #: cmd/incus/network_acl.go:263 cmd/incus/network_acl.go:489
-#, fuzzy
 msgid "[<remote>:]<ACL> <key>"
-msgstr ""
-"Change l'état d'un ou plusieurs conteneurs à %s.\n"
-"\n"
-"lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
+msgstr "[<serveur distant>:] <liste de contrôle d'accès> <clé>"
 
 #: cmd/incus/network_acl.go:409
-#, fuzzy
 msgid "[<remote>:]<ACL> <key>=<value>..."
-msgstr ""
-"Change l'état d'un ou plusieurs conteneurs à %s.\n"
-"\n"
-"lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
+msgstr "[<serveur distant>:]<liste de contrôle d'accès> <clé>=<valeur>"
 
 #: cmd/incus/network_acl.go:649
 #, fuzzy
@@ -9749,7 +9707,7 @@ msgstr "sshfs monté %q sur %q"
 
 #: cmd/incus/file.go:1030
 msgid "sshfs not found. Try SSH SFTP mode using the --listen flag"
-msgstr ""
+msgstr "sshfs non trouvé. Essayez SSH SFTP mode via le fanion --listen"
 
 #: cmd/incus/storage.go:472
 msgid "total space"
