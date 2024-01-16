@@ -42,6 +42,7 @@ Type                | Service               | Status
 Tests               | GitHub                | [![Build Status](https://github.com/lxc/incus/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/lxc/incus/actions?query=event%3Apush+branch%3Amain)
 Go documentation    | Godoc                 | [![GoDoc](https://godoc.org/github.com/lxc/incus/client?status.svg)](https://godoc.org/github.com/lxc/incus/client)
 Static analysis     | GoReport              | [![Go Report Card](https://goreportcard.com/badge/github.com/lxc/incus)](https://goreportcard.com/report/github.com/lxc/incus)
+Translations        | Weblate               | [![Translation status](https://hosted.weblate.org/widget/incus/svg-badge.svg)](https://hosted.weblate.org/projects/incus/)
 
 ## Security
 
