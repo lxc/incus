@@ -132,6 +132,7 @@ var ovmfSecurebootFirmwares = []ovmfFirmware{
 }
 
 var ovmfCSMFirmwares = []ovmfFirmware{
+	{code: "seabios.bin", vars: "seabios.bin"},
 	{code: "OVMF_CODE.4MB.CSM.fd", vars: "OVMF_VARS.4MB.CSM.fd"},
 	{code: "OVMF_CODE.2MB.CSM.fd", vars: "OVMF_VARS.2MB.CSM.fd"},
 	{code: "OVMF_CODE.CSM.fd", vars: "OVMF_VARS.CSM.fd"},
