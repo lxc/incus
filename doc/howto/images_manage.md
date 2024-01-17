@@ -68,14 +68,15 @@ To edit the full image properties, including the top-level properties, enter the
     incus image edit <image_ID>
 
 ## Delete an image
-To delete an image on a server, enter the following command:
+
+To delete a local copy of an image, enter the following command:
 
     incus image delete <image_ID>
 
 Deleting an image won't affect running instances that are already using it, but it will remove the image locally.
 
 After deletion, if the image was downloaded from a remote server, it will be removed from local cache and downloaded again on next use.
-However, if the image was manually created (not cached), the image will be deleted from Incus server.
+However, if the image was manually created (not cached), the image will be deleted.
 
 ## Configure image aliases
 
