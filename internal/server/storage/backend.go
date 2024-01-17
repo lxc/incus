@@ -18,7 +18,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/minio/madmin-go/v3"
+	"github.com/minio/madmin-go"
 	"github.com/minio/minio-go/v7"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
