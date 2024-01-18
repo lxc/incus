@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-15 22:31+0100\n"
-"PO-Revision-Date: 2024-01-18 09:20+0000\n"
-"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
+"PO-Revision-Date: 2024-01-19 10:00+0000\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -7109,7 +7109,7 @@ msgstr "--target-project と --target は同時に指定できません"
 
 #: cmd/incus/admin_init_interactive.go:735
 msgid "The LVM thin provisioning tools couldn't be found on the system"
-msgstr ""
+msgstr "システム上に LVM のシン・プロビジョニング用のツールが見つかりません"
 
 #: cmd/incus/admin_init_interactive.go:723
 msgid ""
@@ -7124,6 +7124,16 @@ msgid ""
 "and make sure that your user can see and run the \"thin_check\" command "
 "before running \"init\" again."
 msgstr ""
+"LVM のシンプロビジョニング用のツールが見つかりません。\n"
+"シンプロビジョニングを使わないで LVM "
+"を使うことはできますが、オーバープロビジョニングが無効になります。\n"
+"そして、スペースに対する要件が増加し、イメージ、インスタンス、スナップショッ"
+"トの作成時間が増加します。\n"
+"\n"
+"シンプロビジョニングを使いたい場合は、すぐに中止して、Linuxディストリビューシ"
+"ョンからツールをインストールし、\n"
+"再度 \"init\" を実行する前に、\"thin_check\" "
+"コマンドが実行できることを確認してください。"
 
 #: cmd/incus/admin_cluster.go:45
 msgid ""
@@ -7133,6 +7143,12 @@ msgid ""
 "\n"
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
+"\"cluster\" "
+"サブコマンドは、サーバーの内部データにアクセスする必要があります。\n"
+"そのため、\"incus\" コマンドではなく、実際には \"incusd\" "
+"バイナリーの一部です。\n"
+"\n"
+"\"incusd cluster\" から呼び出すことができます。"
 
 #: cmd/incus/console.go:377
 #, fuzzy
@@ -7158,11 +7174,11 @@ msgstr "direction 引数は次のいずれかでなければなりません: ing
 
 #: cmd/incus/admin_recover.go:200
 msgid "The following unknown storage pools have been found:"
-msgstr ""
+msgstr "次の未知のストレージプールが見つかりました:"
 
 #: cmd/incus/admin_recover.go:207
 msgid "The following unknown volumes have been found:"
-msgstr ""
+msgstr "次の未知のボリュームが見つかりました:"
 
 #: cmd/incus/delete.go:104
 msgid "The instance is currently running, stop it first or pass --force"
@@ -7182,12 +7198,12 @@ msgstr "起動しようとしたインスタンスに接続されているネッ
 
 #: cmd/incus/config.go:620
 msgid "The is no config key to set on an instance snapshot."
-msgstr ""
+msgstr "インスタンスのスナップショットに設定する設定キーはありません。"
 
 #: cmd/incus/cluster.go:348
 #, c-format
 msgid "The key %q does not exist on cluster member %q"
-msgstr "設定 %q はクラスタメンバー %q には存在しません"
+msgstr "設定 %q はクラスターメンバー %q には存在しません"
 
 #: cmd/incus/utils.go:349
 #, fuzzy, c-format
@@ -7285,7 +7301,8 @@ msgstr "設定 %q はクラスタメンバー %q には存在しません"
 #, c-format
 msgid ""
 "The property %q does not exist on the storage pool volume snapshot %s/%s: %v"
-msgstr ""
+msgstr "プロパティ %q が、ストレージプールボリュームのスナップショット %s/%s "
+"に存在しません: %v"
 
 #: cmd/incus/utils_properties.go:100
 #, fuzzy, c-format
@@ -7294,7 +7311,7 @@ msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
 #: cmd/incus/admin_recover.go:151
 msgid "The recovery process will be scanning the following storage pools:"
-msgstr ""
+msgstr "リカバリープロセスは次のストレージプールをスキャンします:"
 
 #: cmd/incus/admin_init_auto.go:26
 #, c-format
@@ -7425,9 +7442,8 @@ msgstr ""
 #: cmd/incus/config.go:770 cmd/incus/copy.go:130 cmd/incus/info.go:336
 #: cmd/incus/network.go:913 cmd/incus/storage.go:445
 msgid "To use --target, the destination remote must be a cluster"
-msgstr ""
-"--target オプションは、コピー先のリモートサーバがクラスタに属していなければな"
-"りません"
+msgstr "--target オプションは、コピー先のリモートサーバがクラスターに属していなければ"
+"なりません"
 
 #: cmd/incus/file.go:370
 msgid "Too many links"
