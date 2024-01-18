@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-15 22:31+0100\n"
 "PO-Revision-Date: 2024-01-18 09:20+0000\n"
-"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
+"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -5425,7 +5425,7 @@ msgstr "インクリメンタルコピーを実行します"
 
 #: cmd/incus/admin_recover.go:219
 msgid "Please create those missing entries and then hit ENTER:"
-msgstr "不足しているエントリーを作成してから ENTER を推してください:"
+msgstr "不足しているエントリーを作成してから ENTER を押してください:"
 
 #: cmd/incus/remote.go:188
 msgid "Please provide an alternate server address (empty to abort):"
