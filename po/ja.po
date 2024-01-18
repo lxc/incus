@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-15 22:31+0100\n"
-"PO-Revision-Date: 2024-01-18 03:52+0000\n"
+"PO-Revision-Date: 2024-01-18 05:57+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -2240,7 +2240,7 @@ msgstr "新しいストレージプールのの設定をしますか?"
 
 #: cmd/incus/admin_init_interactive.go:729
 msgid "Do you want to continue without thin provisioning?"
-msgstr ""
+msgstr "Thin provisioning なしで続けますか?"
 
 #: cmd/incus/cluster.go:526
 msgid "Don't require user confirmation for using --force"
@@ -2261,7 +2261,7 @@ msgstr "ドライバ: %v (%v)"
 
 #: cmd/incus/admin_init.go:57
 msgid "Dump YAML config to stdout"
-msgstr ""
+msgstr "YAML 形式で設定を stdout に出力します"
 
 #: cmd/incus/network_zone.go:742
 msgid "ENTRIES"
@@ -2274,7 +2274,7 @@ msgstr "EPHEMERAL"
 #: cmd/incus/admin_recover.go:153
 #, c-format
 msgid "EXISTING: %q (backend=%q, source=%q)"
-msgstr ""
+msgstr "既存: %q (バックエンド=%q, ソース=%q)"
 
 #: cmd/incus/cluster.go:952 cmd/incus/config_trust.go:669
 msgid "EXPIRES AT"
@@ -2294,7 +2294,7 @@ msgstr ""
 
 #: cmd/incus/cluster_group.go:265 cmd/incus/cluster_group.go:266
 msgid "Edit a cluster group"
-msgstr "クラスタグループを編集します"
+msgstr "クラスターグループを編集します"
 
 #: cmd/incus/cluster.go:688 cmd/incus/cluster.go:689
 msgid "Edit cluster member configurations as YAML"
@@ -2424,24 +2424,24 @@ msgid "Ephemeral instance"
 msgstr "Ephemeral インスタンス"
 
 #: cmd/incus/admin_init.go:179 cmd/incus/admin_init_interactive.go:200
-#, fuzzy, c-format
+#, c-format
 msgid "Error connecting to existing cluster member %q: %v"
-msgstr "設定 %q はクラスタメンバー %q には存在しません"
+msgstr "既存のクラスターメンバー %q への接続でエラーが発生しました: %v"
 
 #: cmd/incus/utils_properties.go:206
-#, fuzzy, c-format
+#, c-format
 msgid "Error creating decoder: %v"
-msgstr "イメージの取得中: %s"
+msgstr "デコーダーの作成でエラーが発生しました: %v"
 
 #: cmd/incus/utils_properties.go:211
-#, fuzzy, c-format
+#, c-format
 msgid "Error decoding data: %v"
-msgstr "イメージの取得中: %s"
+msgstr "デコーディングデータのエラー: %v"
 
 #: cmd/incus/publish.go:233
-#, fuzzy, c-format
+#, c-format
 msgid "Error retrieving aliases: %w"
-msgstr "イメージの取得中: %s"
+msgstr "エイリアスの取得に失敗しました: %w"
 
 #: cmd/incus/cluster.go:414 cmd/incus/config.go:609 cmd/incus/config.go:641
 #: cmd/incus/network.go:1318 cmd/incus/network_acl.go:466
@@ -2451,19 +2451,19 @@ msgstr "イメージの取得中: %s"
 #: cmd/incus/project.go:633 cmd/incus/storage.go:726
 #: cmd/incus/storage_bucket.go:596 cmd/incus/storage_volume.go:1822
 #: cmd/incus/storage_volume.go:1860
-#, fuzzy, c-format
+#, c-format
 msgid "Error setting properties: %v"
-msgstr "イメージの取得中: %s"
+msgstr "プロパティの設定でエラーが発生しました: %v"
 
 #: cmd/incus/console_windows.go:27
-#, fuzzy, c-format
+#, c-format
 msgid "Error setting term size %s"
-msgstr "イメージの取得中: %s"
+msgstr "ターミナルサイズの設定でエラーが発生しました: %s"
 
 #: cmd/incus/config.go:603 cmd/incus/config.go:635
-#, fuzzy, c-format
+#, c-format
 msgid "Error unsetting properties: %v"
-msgstr "イメージのプロパティを削除します"
+msgstr "プロパティの削除でエラーが発生しました: %v"
 
 #: cmd/incus/cluster.go:408 cmd/incus/network.go:1312
 #: cmd/incus/network_acl.go:460 cmd/incus/network_forward.go:462
@@ -2474,7 +2474,7 @@ msgstr "イメージのプロパティを削除します"
 #: cmd/incus/storage_volume.go:1854
 #, c-format
 msgid "Error unsetting property: %v"
-msgstr ""
+msgstr "プロパティの設定解除エラー: %v"
 
 #: cmd/incus/config_template.go:204
 #, c-format
@@ -2496,7 +2496,7 @@ msgstr "Listenするイベントタイプ"
 
 #: cmd/incus/admin_sql.go:28
 msgid "Execute a SQL query against the local or global database"
-msgstr ""
+msgstr "ローカルまたはグローバルのデータベースに対して SQL クエリーを実行します"
 
 #: cmd/incus/admin_sql.go:29
 msgid ""
@@ -2529,6 +2529,33 @@ msgid ""
 "  This command targets the global database and works in both local\n"
 "  and cluster mode."
 msgstr ""
+"ローカルまたはグローバルのデータベースに対して SQL クエリーを実行します\n"
+"\n"
+"  ローカルデータベースは、コマンドの対象となるクラスターメンバー特有であり、"
+"（メンバーのネットワークアドレスのような）メンバー固有のデータを含みます。\n"
+"\n"
+"  グローバルデータベースは、クラスター内のすべてのメンバーで共通であり、（プ"
+"ロファイルやコンテナなどのような）クラスター固有のデータを含みます。\n"
+"\n"
+"  クラスターに属さないサーバーで実行している場合、同じことが当てはまります。"
+"そのインスタンスは、実際は単独メンバーのクラスターです。\n"
+"\n"
+"  <query> が特別な値 \"-\" である場合、クエリーを標準入力から読み取ります。\n"
+"\n"
+"  <query> が特別な値 \".dump\" である場合、コマンドは対象のデータベースの "
+"SQL テキストダンプを返します。\n"
+"\n"
+"  <query> が特別な値 \".schema\" である場合、コマンドは対象のデータベースの "
+"SQL テキストスキーマを返します。\n"
+"\n"
+"  この内部コマンドは、主にデバッグや障害からの復旧時に役立ちます。開発チーム"
+"は、データの不整合を修正するためのデータベースクエリーとしてホットフィックス"
+"をユーザーに提供する場合があります。\n"
+"\n"
+"  This command targets the global database and works in both local\n"
+"  and cluster mode.\n"
+"  このコマンドは、グローバルデータベースを対象にしており、ローカルモードおよ"
+"びクラスターモードの両方で動作します。"
 
 #: cmd/incus/exec.go:40
 msgid "Execute commands in instances"
@@ -2564,7 +2591,7 @@ msgstr ""
 #: cmd/incus/utils_properties.go:95
 #, c-format
 msgid "Expected a struct, got a %v"
-msgstr ""
+msgstr "構造体を期待しましたが、%v が返されました"
 
 #: cmd/incus/info.go:630 cmd/incus/info.go:681 cmd/incus/snapshot.go:324
 #: cmd/incus/storage_volume.go:1306 cmd/incus/storage_volume.go:1356
@@ -2771,7 +2798,7 @@ msgstr "サーバー証明書ファイル %q のクローズに失敗しまし�
 #: cmd/incus/admin_waitready.go:76
 #, c-format
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
-msgstr ""
+msgstr "デーモンが利用可能かどうかのチェックに失敗しました (試行 %d): %v"
 
 #: cmd/incus/export.go:188
 #, fuzzy, c-format
@@ -2791,7 +2818,7 @@ msgstr "クラスタメンバへの接続に失敗しました: %w"
 #: cmd/incus/move.go:269 cmd/incus/move.go:345
 #, c-format
 msgid "Failed to connect to cluster member: %w"
-msgstr "クラスタメンバへの接続に失敗しました: %w"
+msgstr "クラスターメンバへの接続に失敗しました: %w"
 
 #: cmd/incus/admin_init.go:105
 #, fuzzy, c-format
@@ -3136,7 +3163,7 @@ msgstr "クラスターグループを作成します"
 
 #: cmd/incus/network_acl.go:267
 msgid "Get the key as a network ACL property"
-msgstr ""
+msgstr "key をネットワーク ACL プロパティとして取得します"
 
 #: cmd/incus/network_forward.go:330
 #, fuzzy
@@ -3155,7 +3182,7 @@ msgstr "ネットワークピアの設定を行います"
 
 #: cmd/incus/network.go:796
 msgid "Get the key as a network property"
-msgstr ""
+msgstr "key をネットワークプロパティとして取得します"
 
 #: cmd/incus/network_zone.go:213
 #, fuzzy
@@ -3169,11 +3196,11 @@ msgstr "ネットワークゾーンレコードエントリを削除します"
 
 #: cmd/incus/profile.go:557
 msgid "Get the key as a profile property"
-msgstr ""
+msgstr "key をプロファイルプロパティとして取得します"
 
 #: cmd/incus/project.go:353
 msgid "Get the key as a project property"
-msgstr ""
+msgstr "key をプロジェクトプロパティとして取得します"
 
 #: cmd/incus/storage_bucket.go:379
 #, fuzzy
@@ -3192,7 +3219,7 @@ msgstr "新しいストレージボリュームをプロファイルに追加し
 
 #: cmd/incus/config.go:384
 msgid "Get the key as an instance property"
-msgstr ""
+msgstr "key をインスタンスプロパティとして取得します"
 
 #: cmd/incus/cluster.go:305
 msgid "Get values for cluster member configuration keys"
@@ -3345,7 +3372,7 @@ msgstr "ISSUE DATE"
 
 #: cmd/incus/rebuild.go:32
 msgid "If an instance is running, stop it and then rebuild it"
-msgstr ""
+msgstr "インスタンスが実行中の場合、停止してからリビルドしてください"
 
 #: cmd/incus/publish.go:41
 #, fuzzy
@@ -3457,15 +3484,15 @@ msgstr "インスタンスのバックアップをインポートします"
 
 #: cmd/incus/storage_volume.go:2786
 msgid "Import type needs to be \"backup\" or \"iso\""
-msgstr ""
+msgstr "インポートするタイプは \"backup\" もしくは \"iso\" である必要があります"
 
 #: cmd/incus/storage_volume.go:2729
 msgid "Import type, backup or iso (default \"backup\")"
-msgstr ""
+msgstr "インポートするタイプ。backup もしくは iso (デフォルト \\\"backup\\\")"
 
 #: cmd/incus/storage_volume.go:2791
 msgid "Importing ISO images requires a volume name to be set"
-msgstr ""
+msgstr "ISO イメージをインポートするには、ボリューム名を設定する必要があります"
 
 #: cmd/incus/storage_volume.go:2795
 #, c-format
@@ -3563,7 +3590,7 @@ msgstr "不正な引数 %q"
 #: cmd/incus/export.go:118 cmd/incus/storage_volume.go:2661
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
-msgstr ""
+msgstr "パス %q に不正なバックアップ名のセグメントがあります: %w"
 
 #: cmd/incus/utils_properties.go:47
 #, fuzzy, c-format
@@ -3681,7 +3708,7 @@ msgstr "IsSM: %s (%s)"
 
 #: cmd/incus/admin_init_interactive.go:169
 msgid "Joining an existing cluster requires root privileges"
-msgstr ""
+msgstr "既存のクラスターに加わるには root 権限が必要です"
 
 #: cmd/incus/image.go:156
 msgid "Keep the image up to date after initial copy"
@@ -3752,11 +3779,11 @@ msgstr "有効なクラスターへの join トークンをすべて一覧表示
 
 #: cmd/incus/cluster_group.go:381 cmd/incus/cluster_group.go:382
 msgid "List all the cluster groups"
-msgstr "クラスタグループをすべて一覧表示します"
+msgstr "クラスターグループをすべて一覧表示します"
 
 #: cmd/incus/cluster.go:121 cmd/incus/cluster.go:122
 msgid "List all the cluster members"
-msgstr "クラスタのメンバをすべて一覧表示します"
+msgstr "クラスターのメンバをすべて一覧表示します"
 
 #: cmd/incus/warning.go:95
 msgid "List all warnings"
@@ -3981,13 +4008,13 @@ msgstr ""
 "Fast モードのカラムレイアウト: nsacPt\n"
 "\n"
 "== フィルタ ==\n"
-"単一の \"web\" のようなキーワードを指定すると、名前が \"web\" ではじまるイン"
-"スタンスが一覧表示されます。\n"
+"単一の \"web\" のようなキーワードを指定すると、名前が \"web\" "
+"ではじまるインスタンスが一覧表示されます。\n"
 "インスタンス名の正規表現 (例: .*web.*01$)。\n"
 "設定項目を参照するキーと値のペア。これらの場合、名前空間は最短の一意な識別子"
 "に短縮できます。\n"
-"短縮形のキーを使ったキーと値のペア。複数の値は ',' で区切らなければなりませ"
-"ん。使用できる表現は:\n"
+"短縮形のキーを使ったキーと値のペア。複数の値は ',' "
+"で区切らなければなりません。使用できる表現は:\n"
 "  - type={instance type}\n"
 "  - status={instance current lifecycle status}\n"
 "  - architecture={instance architecture}\n"
@@ -3996,17 +4023,17 @@ msgstr ""
 "  - ipv6={ip or CIDR}\n"
 "\n"
 "例:\n"
-"  - \"user.blah=abc\" は \"blah\" という user プロパティが \"abc\" に設定され"
-"ているインスタンスをすべて一覧表示します\n"
+"  - \"user.blah=abc\" は \"blah\" という user プロパティが \"abc\" "
+"に設定されているインスタンスをすべて一覧表示します\n"
 "  - \"u.blah=abc\" は上記と同じ意味になります\n"
 "  - \"security.privileged=true\" は特権インスタンスをすべて一覧表示します\n"
 "  - \"s.privileged=true\" は上記と同じ意味になります\n"
 "  - \"type=container\" コンテナインスタンスをすべて表示します\n"
-"  - \"type=container status=running\" 実行中のコンテナインスタンスをすべて表"
-"示します\n"
+"  - \"type=container status=running\" "
+"実行中のコンテナインスタンスをすべて表示します\n"
 "\n"
-"設定項目もしくは値とマッチする正規表現 (例:volatile.eth0.hwaddr=00:16:3e:."
-"*)。\n"
+"設定項目もしくは値とマッチする正規表現 (例:volatile.eth0."
+"hwaddr=00:16:3e:.*)。\n"
 "\n"
 "複数のフィルタを指定した場合は、指定したフィルタが順に追加され、\n"
 "すべてのフィルタを満たすインスタンスが選択されます。\n"
@@ -4040,15 +4067,15 @@ msgstr ""
 "  S - スナップショットの数\n"
 "  t - タイプ (persistent か ephemeral)\n"
 "  u - CPU 消費量 (秒)\n"
-"  L - インスタンスのロケーション (クラスタメンバー名)\n"
+"  L - インスタンスのロケーション (クラスターメンバー名)\n"
 "  f - ベースとなるイメージのフィンガープリント (短い形式)\n"
 "  F - ベースとなるイメージのフィンガープリント (長い形式)\n"
 "\n"
 "\"[config:|devices:]key[:name][:maxWidth]\" のように指定するカスタムカラム:\n"
 "  KEY: 表示する (拡張された) 設定キー。[config:|devices:] が省略された場合は "
 "config が指定されたものとします\n"
-"  NAME: カラムのヘッダに表示する名前。指定しない場合、もしくは空の場合のデ"
-"フォルトはキー。\n"
+"  NAME: カラムのヘッダに表示する名前。指定しない場合、もしくは空の場合のデフ"
+"ォルトはキー。\n"
 "\n"
 "  MAXWIDTH: カラムの最大幅 (結果がこれより長い場合は切り詰められます)\n"
 "  デフォルトは -1 (制限なし)。0 はカラムのヘッダサイズに制限します。"
