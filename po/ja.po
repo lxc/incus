@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-15 22:31+0100\n"
-"PO-Revision-Date: 2024-01-18 05:57+0000\n"
+"PO-Revision-Date: 2024-01-18 09:15+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -4301,19 +4301,19 @@ msgstr "ログ:"
 #: cmd/incus/file.go:1192
 #, c-format
 msgid "Login with username %q and password %q"
-msgstr ""
+msgstr "ユーザー名 %q とパスワード %q でログイン"
 
 #: cmd/incus/file.go:1194
 msgid "Login without username and password"
-msgstr ""
+msgstr "ユーザー名、パスワードを使用せずにログイン"
 
 #: cmd/incus/admin_cluster.go:25
 msgid "Low level administration tools for inspecting and recovering clusters."
-msgstr ""
+msgstr "クラスターの検査と回復のための低レベルの管理ツール"
 
 #: cmd/incus/admin_cluster.go:24
 msgid "Low-level cluster administration commands"
-msgstr ""
+msgstr "低レベルのクラスター管理コマンド"
 
 #: cmd/incus/network.go:977
 msgid "Lower device"
@@ -4393,15 +4393,15 @@ msgstr "ネットワークを管理し、インスタンスをネットワーク
 
 #: cmd/incus/cluster_group.go:29 cmd/incus/cluster_group.go:30
 msgid "Manage cluster groups"
-msgstr "クラスタグループを管理します"
+msgstr "クラスターグループを管理します"
 
 #: cmd/incus/cluster.go:28 cmd/incus/cluster.go:29
 msgid "Manage cluster members"
-msgstr "クラスタのメンバを管理します"
+msgstr "クラスターのメンバを管理します"
 
 #: cmd/incus/cluster_role.go:22 cmd/incus/cluster_role.go:23
 msgid "Manage cluster roles"
-msgstr "クラスタロールを管理します"
+msgstr "クラスターロールを管理します"
 
 #: cmd/incus/alias.go:22 cmd/incus/alias.go:23
 msgid "Manage command aliases"
@@ -4649,7 +4649,7 @@ msgstr "マイグレーションが失敗しました: %w"
 
 #: cmd/incus/admin_init.go:55
 msgid "Minimal configuration (non-interactive)"
-msgstr ""
+msgstr "最小限の設定を行う (非インタラクティブ)"
 
 #: cmd/incus/monitor.go:52
 msgid ""
@@ -4658,7 +4658,7 @@ msgstr "ログメッセージの最小レベル（pretty フォーマット使�
 
 #: cmd/incus/admin_init_interactive.go:681
 msgid "Minimum size is 1GiB"
-msgstr ""
+msgstr "最小サイズは 1GiB です"
 
 #: cmd/incus/storage_bucket.go:110 cmd/incus/storage_bucket.go:210
 #: cmd/incus/storage_bucket.go:286 cmd/incus/storage_bucket.go:405
@@ -4960,7 +4960,7 @@ msgstr "NAME"
 
 #: cmd/incus/network_allocations.go:27
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: cmd/incus/project.go:503
 msgid "NETWORK ZONES"
@@ -4973,7 +4973,7 @@ msgstr "NETWORKS"
 #: cmd/incus/admin_recover.go:157
 #, c-format
 msgid "NEW: %q (backend=%q, source=%q)"
-msgstr ""
+msgstr "新規: %q (バックエンド=%q, ソース=%q)"
 
 #: cmd/incus/info.go:408
 msgid "NIC:"
@@ -5016,7 +5016,7 @@ msgstr "名前"
 
 #: cmd/incus/admin_init_interactive.go:631
 msgid "Name of the CEPHfs volume:"
-msgstr ""
+msgstr "CEPHfs ボリューム名:"
 
 #: cmd/incus/admin_init_interactive.go:613
 #, fuzzy
@@ -5031,19 +5031,19 @@ msgstr "このリモートで使うプロジェクト名:"
 #: cmd/incus/admin_init_interactive.go:607
 #: cmd/incus/admin_init_interactive.go:699
 msgid "Name of the existing CEPH cluster"
-msgstr ""
+msgstr "既存の CEPH クラスター名"
 
 #: cmd/incus/admin_init_interactive.go:625
 msgid "Name of the existing CEPHfs cluster"
-msgstr ""
+msgstr "既存の CEPHfs クラスター名"
 
 #: cmd/incus/admin_init_interactive.go:705
 msgid "Name of the existing OSD storage pool"
-msgstr ""
+msgstr "既存の OSD ストレージプール名"
 
 #: cmd/incus/admin_init_interactive.go:309
 msgid "Name of the existing bridge or host interface:"
-msgstr ""
+msgstr "既存のブリッジ名、もしくはホストインターフェース名"
 
 #: cmd/incus/admin_init_interactive.go:516
 #, fuzzy
@@ -5062,7 +5062,7 @@ msgstr "ストレージバケットを削除します"
 #: cmd/incus/admin_init_interactive.go:554
 #, c-format
 msgid "Name of the storage backend to use (%s)"
-msgstr ""
+msgstr "使用するストレージバックエンド名 (%s)"
 
 #: cmd/incus/admin_recover.go:99
 #, fuzzy
@@ -5205,7 +5205,7 @@ msgstr "指定するデバイスに適用する新しいキー/値"
 #: cmd/incus/admin_init_interactive.go:493
 #, c-format
 msgid "No %s storage backends available"
-msgstr ""
+msgstr "利用可能なストレージバックエンド %s がありません"
 
 #: cmd/incus/config_trust.go:790
 #, c-format
@@ -5240,7 +5240,7 @@ msgstr "マッチするルールが見つかりません"
 
 #: cmd/incus/admin_init_interactive.go:490
 msgid "No storage backends available"
-msgstr ""
+msgstr "利用可能なストレージバックエンドがありません"
 
 #: cmd/incus/storage_volume.go:372 cmd/incus/storage_volume.go:1633
 msgid "No storage pool for source volume specified"
@@ -5252,11 +5252,12 @@ msgstr "コピー先のボリュームに対するストレージプールが指
 
 #: cmd/incus/utils.go:413
 msgid "No text editor found, please set the EDITOR environment variable"
-msgstr ""
+msgstr "テキストエディターが見つかりません。環境変数 EDITOR を設定してください"
 
 #: cmd/incus/admin_recover.go:222
 msgid "No unknown storage pools or volumes found. Nothing to do."
-msgstr ""
+msgstr "未知のストレージプールやボリュームが見つかりません。実行することがありません"
+"。"
 
 #: cmd/incus/config_device.go:130 cmd/incus/config_device.go:404
 #, c-format
@@ -5273,10 +5274,12 @@ msgid ""
 "None of --storage-pool, --storage-create-device or --storage-create-loop may "
 "be used with the 'dir' backend"
 msgstr ""
+"--storage-pool, --storage-create-device, --storage-create-loop のいずれも、"
+"'dir' バックエンドでは使えません"
 
 #: cmd/incus/admin_init_interactive.go:619
 msgid "Number of placement groups"
-msgstr ""
+msgstr "配置するグループの数"
 
 #: cmd/incus/network.go:984
 msgid "OVN:"
@@ -5313,7 +5316,8 @@ msgstr "管理対象のネットワークのみ変更できます"
 #: cmd/incus/admin_init_auto.go:35
 msgid ""
 "Only one of --storage-create-device or --storage-create-loop can be specified"
-msgstr ""
+msgstr "指定できるのは、--storage-create-device もしくは --storage-create-loop "
+"のいずれか一方のみです"
 
 #: cmd/incus/operation.go:87
 #, c-format
@@ -5409,7 +5413,7 @@ msgstr "エイリアス %s は存在しません"
 
 #: cmd/incus/admin_init_interactive.go:642
 msgid "Path to the existing block device:"
-msgstr ""
+msgstr "既存のブロックデバイスのパス:"
 
 #: cmd/incus/action.go:52 cmd/incus/action.go:53
 msgid "Pause instances"
@@ -5421,7 +5425,7 @@ msgstr "インクリメンタルコピーを実行します"
 
 #: cmd/incus/admin_recover.go:219
 msgid "Please create those missing entries and then hit ENTER:"
-msgstr ""
+msgstr "不足しているエントリーを作成してから ENTER を推してください:"
 
 #: cmd/incus/remote.go:188
 msgid "Please provide an alternate server address (empty to abort):"
