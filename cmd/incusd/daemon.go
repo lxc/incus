@@ -1264,6 +1264,8 @@ func (d *Daemon) init() error {
 		return err
 	}
 
+	d.events.SetLocalLocation(d.serverName)
+
 	// Mount the storage pools.
 	logger.Infof("Initializing storage pools")
 	err = storageStartup(d.State(), false)
@@ -1319,6 +1321,8 @@ func (d *Daemon) init() error {
 	if err != nil {
 		return err
 	}
+
+	d.events.SetLocalLocation(d.serverName)
 
 	// Get daemon configuration.
 	bgpAddress := d.localConfig.BGPAddress()
