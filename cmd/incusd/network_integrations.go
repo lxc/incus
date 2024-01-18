@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/shared/validate"
 )
 
 var networkIntegrationsCmd = APIEndpoint{
@@ -206,6 +208,12 @@ func networkIntegrationsPost(d *Daemon, r *http.Request) response.Response {
 
 	// Parse the request into a record.
 	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	// Validate the config.
+	err = networkIntegrationValidate(req.Type, false, nil, req.Config)
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -467,6 +475,7 @@ func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 	// Get the existing network integration.
 	var dbRecord *dbCluster.NetworkIntegration
 	var info *api.NetworkIntegration
+	var usedBy []string
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbRecord, err = dbCluster.GetNetworkIntegration(ctx, tx.Tx(), integrationName)
@@ -475,6 +484,11 @@ func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 		}
 
 		info, err = dbRecord.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		usedBy, err = tx.GetNetworkPeersURLByIntegration(ctx, integrationName)
 		if err != nil {
 			return err
 		}
@@ -512,6 +526,12 @@ func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 		if req.Description == "" {
 			req.Description = info.Description
 		}
+	}
+
+	// Validate the resulting config.
+	err = networkIntegrationValidate(info.Type, len(usedBy) > 0, info.Config, req.Config)
+	if err != nil {
+		return response.BadRequest(err)
 	}
 
 	// Update the database record.
@@ -608,4 +628,92 @@ func networkIntegrationPost(d *Daemon, r *http.Request) response.Response {
 	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.NetworkIntegrationDeleted.Event(req.Name, request.CreateRequestor(r), logger.Ctx{"old_name": integrationName}))
 
 	return response.EmptySyncResponse
+}
+
+// networkIntegrationValidate validates the configuration keys/values for network integration.
+func networkIntegrationValidate(integrationType string, inUse bool, oldConfig map[string]string, config map[string]string) error {
+	if integrationType != "ovn" {
+		return fmt.Errorf("Invalid integration type %q", integrationType)
+	}
+
+	configKeys := map[string]func(value string) error{
+		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.northbound_connection)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  shortdesc: OVN northbound inter-connection connection string
+		"ovn.northbound_connection": validate.IsAny,
+
+		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.southbound_connection)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  shortdesc: OVN southbound inter-connection connection string
+		"ovn.southbound_connection": validate.IsAny,
+
+		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.ca_cert)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  shortdesc: OVN SSL certificate authority for the inter-connection database
+		"ovn.ca_cert": validate.Optional(validate.IsAny),
+
+		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.client_cert)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  shortdesc: OVN SSL client certificate
+		"ovn.client_cert": validate.Optional(validate.IsAny),
+
+		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.client_key)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  shortdesc: OVN SSL client key
+		"ovn.client_key": validate.Optional(validate.IsAny),
+
+		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.transit.pattern)
+		// Specify a Pongo2 template string that represents the transit switch name.
+		// This template gets access to the project name (`projectName`), integration name (`integrationName`) and network name (`networkName`).
+		//
+		// ---
+		//  type: string
+		//  defaultdesc: `ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}`
+		//  shortdesc: Template for the transit switch name
+		"ovn.transit.pattern": validate.IsAny,
+	}
+
+	for k, v := range config {
+		// User keys are free for all.
+
+		// gendoc:generate(entity=network_integration, group=common, key=user.*)
+		// User keys can be used in search.
+		// ---
+		//  type: string
+		//  shortdesc: Free form user key/value storage
+		if strings.HasPrefix(k, "user.") {
+			continue
+		}
+
+		validator, ok := configKeys[k]
+		if !ok {
+			return fmt.Errorf("Invalid network integration configuration key %q", k)
+		}
+
+		err := validator(v)
+		if err != nil {
+			return fmt.Errorf("Invalid network integration configuration key %q value", k)
+		}
+	}
+
+	if oldConfig != nil && oldConfig["ovn.transit.pattern"] != config["ovn.transit.pattern"] && inUse {
+		return fmt.Errorf("The OVN transit switch pattern cannot be changed while the integration is in use")
+	}
+
+	return nil
 }
