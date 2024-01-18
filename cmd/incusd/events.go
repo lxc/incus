@@ -100,22 +100,11 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 
 	l := logger.AddContext(logger.Ctx{"remote": r.RemoteAddr})
 
-	// Upgrade the connection to websocket
-	conn, err := ws.Upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		l.Warn("Failed upgrading event connection", logger.Ctx{"err": err})
-		return nil
-	}
-
-	defer func() { _ = conn.Close() }() // Ensure listener below ends when this function ends.
-
-	s.Events.SetLocalLocation(s.ServerName)
-
 	var excludeLocations []string
 	// Get the current local serverName and store it for the events.
 	// We do that now to avoid issues with changes to the name and to limit
 	// the number of DB access to just one per connection.
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		if isClusterNotification(r) {
 			ctx := r.Context()
 
@@ -154,8 +143,17 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		}
 	}
 
-	listenerConnection := events.NewWebsocketListenerConnection(conn)
+	// Upgrade the connection to websocket as late as possible.
+	// This is because the client will assume it's getting events as soon as the upgrade is performed.
+	conn, err := ws.Upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		l.Warn("Failed upgrading event connection", logger.Ctx{"err": err})
+		return nil
+	}
 
+	defer func() { _ = conn.Close() }() // Ensure listener below ends when this function ends.
+
+	listenerConnection := events.NewWebsocketListenerConnection(conn)
 	listener, err := s.Events.AddListener(projectName, allProjects, projectPermissionFunc, listenerConnection, types, excludeSources, recvFunc, excludeLocations)
 	if err != nil {
 		l.Warn("Failed to add event listener", logger.Ctx{"err": err})
