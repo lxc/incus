@@ -391,6 +391,8 @@ func clusterPutBootstrap(d *Daemon, r *http.Request, req api.ClusterPut) respons
 		d.serverClustered = true
 		d.globalConfigMu.Unlock()
 
+		d.events.SetLocalLocation(d.serverName)
+
 		// Refresh the state.
 		s = d.State()
 
@@ -604,16 +606,21 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		defer revert.Fail()
 
 		// Update server name.
+		oldServerName := d.serverName
 		d.globalConfigMu.Lock()
 		d.serverName = req.ServerName
 		d.serverClustered = true
 		d.globalConfigMu.Unlock()
 		revert.Add(func() {
 			d.globalConfigMu.Lock()
-			d.serverName = ""
+			d.serverName = oldServerName
 			d.serverClustered = false
 			d.globalConfigMu.Unlock()
+
+			d.events.SetLocalLocation(d.serverName)
 		})
+
+		d.events.SetLocalLocation(d.serverName)
 
 		err = clusterInitMember(localClient, client, req.MemberConfig)
 		if err != nil {
@@ -1913,6 +1920,8 @@ func clusterNodePost(d *Daemon, r *http.Request) response.Response {
 	d.globalConfigMu.Lock()
 	d.serverName = req.ServerName
 	d.globalConfigMu.Unlock()
+
+	d.events.SetLocalLocation(d.serverName)
 
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterMemberRenamed.Event(req.ServerName, requestor, logger.Ctx{"old_name": memberName}))
