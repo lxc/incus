@@ -762,22 +762,32 @@ func (d *Daemon) Init() error {
 	return nil
 }
 
-func (d *Daemon) setupLoki(URL string, cert string, key string, caCert string, labels []string, logLevel string, types []string) error {
+func (d *Daemon) setupLoki(URL string, cert string, key string, caCert string, instanceName string, logLevel string, labels []string, types []string) error {
+	// Stop any existing loki client.
 	if d.lokiClient != nil {
 		d.lokiClient.Stop()
 	}
 
+	// Check basic requirements for starting a new client.
 	if URL == "" || logLevel == "" || len(types) == 0 {
 		return nil
 	}
 
+	// Validate the URL.
 	u, err := url.Parse(URL)
 	if err != nil {
 		return err
 	}
 
-	d.lokiClient = loki.NewClient(d.shutdownCtx, u, cert, key, caCert, labels, logLevel, types)
+	// Figure out the instance name.
+	if instanceName == "" {
+		instanceName = d.serverName
+	}
 
+	// Start a new client.
+	d.lokiClient = loki.NewClient(d.shutdownCtx, u, cert, key, caCert, instanceName, logLevel, labels, types)
+
+	// Attach the new client to the log handler.
 	d.internalListener.AddHandler("loki", d.lokiClient.HandleEvent)
 
 	return nil
@@ -1337,7 +1347,7 @@ func (d *Daemon) init() error {
 	d.proxy = proxy.FromConfig(d.globalConfig.ProxyHTTPS(), d.globalConfig.ProxyHTTP(), d.globalConfig.ProxyIgnoreHosts())
 
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
-	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes := d.globalConfig.LokiServer()
+	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiInstance, lokiLoglevel, lokiLabels, lokiTypes := d.globalConfig.LokiServer()
 	oidcIssuer, oidcClientID, oidcAudience := d.globalConfig.OIDCServer()
 	syslogSocketEnabled := d.localConfig.SyslogSocket()
 	openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openFGAAuthorizationModelID := d.globalConfig.OpenFGA()
@@ -1348,7 +1358,7 @@ func (d *Daemon) init() error {
 
 	// Setup Loki logger.
 	if lokiURL != "" {
-		err = d.setupLoki(lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiLabels, lokiLoglevel, lokiTypes)
+		err = d.setupLoki(lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiInstance, lokiLoglevel, lokiLabels, lokiTypes)
 		if err != nil {
 			return err
 		}
