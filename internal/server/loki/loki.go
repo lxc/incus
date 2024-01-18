@@ -61,7 +61,7 @@ type Client struct {
 }
 
 // NewClient returns a Client.
-func NewClient(ctx context.Context, url *url.URL, username string, password string, caCert string, instance string, logLevel string, labels []string, types []string) *Client {
+func NewClient(ctx context.Context, u *url.URL, username string, password string, caCert string, instance string, logLevel string, labels []string, types []string) *Client {
 	client := Client{
 		cfg: config{
 			batchSize: 10 * 1024,
@@ -74,7 +74,7 @@ func NewClient(ctx context.Context, url *url.URL, username string, password stri
 			logLevel:  logLevel,
 			timeout:   10 * time.Second,
 			types:     types,
-			url:       url,
+			url:       u,
 		},
 		client:  &http.Client{},
 		ctx:     ctx,
