@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-15 22:31+0100\n"
-"PO-Revision-Date: 2024-01-18 09:15+0000\n"
+"PO-Revision-Date: 2024-01-18 09:20+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -5442,16 +5442,16 @@ msgstr "'y', 'n', フィンガープリントのどれかを入力してくだ�
 
 #: cmd/incus/admin_recover.go:101
 msgid "Pool name cannot be empty"
-msgstr ""
+msgstr "プール名を空白にすることはできません"
 
 #: cmd/incus/admin_init_interactive.go:800
 msgid "Port to bind to"
-msgstr ""
+msgstr "バインドするポート"
 
 #: cmd/incus/admin_init.go:60
 #, c-format
 msgid "Port to bind to (default: %d)"
-msgstr ""
+msgstr "バインドするポート (デフォルト: %d)"
 
 #: cmd/incus/info.go:213
 #, c-format
@@ -5464,7 +5464,7 @@ msgstr "ポート:"
 
 #: cmd/incus/admin_init.go:56
 msgid "Pre-seed mode, expects YAML config from stdin"
-msgstr ""
+msgstr "Pre-seed モード。標準入力から YAML で設定を入力します"
 
 #: cmd/incus/file.go:1078
 msgid "Press ctrl+c to finish"
@@ -5652,6 +5652,18 @@ msgid ""
 "    Returns the snapshot expiration period for a virtual machine \"data\" in "
 "pool \"default\"."
 msgstr ""
+"カスタムでない場合、ストレージボリュームのタイプを指定します。\n"
+"サポートしているタイプは、custom, image, container, virtual-machine です。\n"
+"\n"
+"タイプが custom, container, virtual-machine "
+"のいずれかの場合、スナップショットの名前を追加します。\n"
+"\n"
+"incus storage volume get default data size\n"
+"    プール \"default\" 内のカスタムボリューム \"data\" のサイズを返します。\n"
+"\n"
+"incus storage volume get default virtual-machine/data snapshots.expiry\n"
+"    プール \"default\" 内の仮想マシン \"data\" "
+"のスナップショットの有効期限を返します。"
 
 #: cmd/incus/storage_volume.go:1891
 #, fuzzy
@@ -5724,7 +5736,7 @@ msgstr "クライアント %s の証明書追加トークン: %s"
 
 #: cmd/incus/remote_unix.go:42
 msgid "Proxy timeout (exits when no connections)"
-msgstr ""
+msgstr "プロキシータイムアウト (接続がない場合終了)"
 
 #: cmd/incus/remote.go:111
 msgid "Public image server"
@@ -5776,7 +5788,7 @@ msgstr "RESOURCE"
 
 #: cmd/incus/config_trust.go:439
 msgid "RESTRICTED"
-msgstr ""
+msgstr "RESTRICTED"
 
 #: cmd/incus/storage_bucket.go:827
 msgid "ROLE"
@@ -5804,7 +5816,7 @@ msgstr "インスタンスを一覧表示します"
 #: cmd/incus/admin_recover.go:28
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage pools"
-msgstr ""
+msgstr "既存または未知のストレージプールから失われたインスタンスを復旧させます"
 
 #: cmd/incus/admin_recover.go:29
 msgid ""
@@ -5818,6 +5830,14 @@ msgid ""
 "  pools but are not in the database. It will then offer to recreate these "
 "database records."
 msgstr ""
+"既存または未知のストレージプールから失われたインスタンスを復旧させます\n"
+"\n"
+"  このコマンドは主に障害からの復旧に使われます。未知のストレージについて質問"
+"し、既存のストレージプールを参照しながら、ストレージへのアクセスを試みます。"
+"\n"
+"  そして、プール上に存在しているがデータベースには存在しないインスタンスやボ"
+"リュームを特定します。\n"
+"  そして、データベースレコードの再作成を提案します。"
 
 #: cmd/incus/file.go:246 cmd/incus/file.go:464
 msgid "Recursively transfer files"
@@ -5888,11 +5908,11 @@ msgstr "%s を消去しますか (yes/no): "
 
 #: cmd/incus/cluster_group.go:456
 msgid "Remove a cluster member from a cluster group"
-msgstr "クラスタグループからメンバを削除します"
+msgstr "クラスターグループからメンバを削除します"
 
 #: cmd/incus/cluster.go:520 cmd/incus/cluster.go:521
 msgid "Remove a member from the cluster"
-msgstr "クラスタからメンバを削除します"
+msgstr "クラスターからメンバを削除します"
 
 #: cmd/incus/network_zone.go:1284
 msgid "Remove a network zone record entry"
@@ -5949,7 +5969,7 @@ msgstr "リモートサーバを削除します"
 
 #: cmd/incus/cluster_role.go:105 cmd/incus/cluster_role.go:106
 msgid "Remove roles from a cluster member"
-msgstr "クラスタメンバからロールを削除します"
+msgstr "クラスターメンバからロールを削除します"
 
 #: cmd/incus/network_acl.go:885 cmd/incus/network_acl.go:886
 msgid "Remove rules from an ACL"
@@ -5966,11 +5986,11 @@ msgstr "信頼済みクライアントを削除します"
 
 #: cmd/incus/cluster_group.go:528 cmd/incus/cluster_group.go:529
 msgid "Rename a cluster group"
-msgstr "クラスタグループの名前を変更します"
+msgstr "クラスターグループの名前を変更します"
 
 #: cmd/incus/cluster.go:470 cmd/incus/cluster.go:471
 msgid "Rename a cluster member"
-msgstr "クラスタメンバの名前を変更します"
+msgstr "クラスターメンバの名前を変更します"
 
 #: cmd/incus/alias.go:159 cmd/incus/alias.go:160 cmd/incus/image_alias.go:254
 #: cmd/incus/image_alias.go:255
@@ -6120,19 +6140,19 @@ msgstr "ロール（admin または read-only）"
 #: cmd/incus/admin_sql.go:147
 #, c-format
 msgid "Rows affected: %d"
-msgstr ""
+msgstr "影響を受ける行: %d"
 
 #: cmd/incus/remote_unix.go:36
 msgid "Run a local API proxy"
-msgstr ""
+msgstr "ローカルの API プロキシーを実行します"
 
 #: cmd/incus/remote_unix.go:37
 msgid "Run a local API proxy for the remote"
-msgstr ""
+msgstr "リモート接続用のローカルの API プロキシーを実行します"
 
 #: cmd/incus/network_allocations.go:58
 msgid "Run again a specific project"
-msgstr ""
+msgstr "特定のプロジェクトを再実行します"
 
 #: cmd/incus/action.go:143
 msgid "Run against all instances"
@@ -6166,7 +6186,7 @@ msgstr "SR-IOV 情報:"
 #: cmd/incus/file.go:1189
 #, c-format
 msgid "SSH SFTP listening on %v"
-msgstr ""
+msgstr "SSH SFTP は %v でリッスンしています"
 
 #: cmd/incus/file.go:1206
 #, c-format
@@ -6209,7 +6229,7 @@ msgstr "STP"
 
 #: cmd/incus/admin_recover.go:169
 msgid "Scanning for unknown volumes..."
-msgstr ""
+msgstr "未知のボリュームをスキャンしています..."
 
 #: cmd/incus/storage_bucket.go:852
 msgid "Secret key (auto-generated if empty)"
@@ -6547,7 +6567,7 @@ msgstr "クラスターグループを作成します"
 
 #: cmd/incus/network_acl.go:417
 msgid "Set the key as a network ACL property"
-msgstr ""
+msgstr "ネットワーク ACL プロパティとして設定します"
 
 #: cmd/incus/network_forward.go:404
 #, fuzzy
@@ -6566,7 +6586,7 @@ msgstr "ネットワークピアの設定を行います"
 
 #: cmd/incus/network.go:1251
 msgid "Set the key as a network property"
-msgstr ""
+msgstr "ネットワークプロパティとして設定します"
 
 #: cmd/incus/network_zone.go:360
 #, fuzzy
@@ -6580,11 +6600,11 @@ msgstr "ネットワークゾーンレコードエントリを削除します"
 
 #: cmd/incus/profile.go:809
 msgid "Set the key as a profile property"
-msgstr ""
+msgstr "プロファイルプロパティとして設定します"
 
 #: cmd/incus/project.go:586
 msgid "Set the key as a project property"
-msgstr ""
+msgstr "プロジェクトプロパティとして設定します"
 
 #: cmd/incus/storage_bucket.go:536
 #, fuzzy
@@ -6603,7 +6623,7 @@ msgstr "新しいストレージボリュームをプロファイルに追加し
 
 #: cmd/incus/config.go:518
 msgid "Set the key as an instance property"
-msgstr ""
+msgstr "インスタンスプロパティとして設定します"
 
 #: cmd/incus/file.go:969
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
@@ -6612,11 +6632,11 @@ msgstr ""
 
 #: cmd/incus/admin_init.go:62
 msgid "Setup device based storage using DEVICE"
-msgstr ""
+msgstr "DEVICE を使ってストレージベースのデバイスをセットアップします"
 
 #: cmd/incus/admin_init.go:63
 msgid "Setup loop based storage with SIZE in GiB"
-msgstr ""
+msgstr "サイズ GiB で loop ベースのストレージをセットアップします"
 
 #: cmd/incus/main.go:100
 msgid "Show all debug messages"
@@ -6628,7 +6648,7 @@ msgstr "詳細な情報を出力します"
 
 #: cmd/incus/cluster_group.go:576 cmd/incus/cluster_group.go:577
 msgid "Show cluster group configurations"
-msgstr "クラスタグループの設定を表示します"
+msgstr "クラスターグループの設定を表示します"
 
 #: cmd/incus/config_template.go:298 cmd/incus/config_template.go:299
 msgid "Show content of instance file templates"
@@ -6636,7 +6656,7 @@ msgstr "インスタンスのファイルテンプレートの内容を表示し
 
 #: cmd/incus/cluster.go:205 cmd/incus/cluster.go:206
 msgid "Show details of a cluster member"
-msgstr "クラスタメンバの詳細を表示します"
+msgstr "クラスターメンバの詳細を表示します"
 
 #: cmd/incus/operation.go:193 cmd/incus/operation.go:194
 msgid "Show details on a background operation"
@@ -6791,7 +6811,7 @@ msgstr "警告を表示します"
 
 #: cmd/incus/admin_init_interactive.go:670
 msgid "Size in GiB of the new loop device"
-msgstr ""
+msgstr "新しい loop デバイスのサイズ (GiB)"
 
 #: cmd/incus/image.go:946
 #, fuzzy, c-format
@@ -6829,7 +6849,8 @@ msgstr "一部のインスタンスで %s が失敗しました"
 msgid ""
 "Source of the storage pool (block device, volume group, dataset, path, ... "
 "as applicable):"
-msgstr ""
+msgstr "ストレージプールのソース "
+"(適用できるブロックデバイス、ボリュームグループ、データセット、パス...)"
 
 #: cmd/incus/image.go:989
 msgid "Source:"
@@ -6846,7 +6867,7 @@ msgstr "%s を起動中"
 
 #: cmd/incus/admin_recover.go:239
 msgid "Starting recovery..."
-msgstr ""
+msgstr "リカバリーを開始します..."
 
 #: cmd/incus/info.go:554
 msgid "State"
@@ -6885,7 +6906,7 @@ msgstr "インスタンスの停止に失敗しました: %s"
 
 #: cmd/incus/admin_init.go:61
 msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
-msgstr ""
+msgstr "使用するストレージバックエンド (btrfs, dir, lvm, zfs, デフォルト: dir)"
 
 #: cmd/incus/storage_bucket.go:160
 #, c-format
@@ -6909,7 +6930,7 @@ msgstr "ストレージバケットの鍵 %s を削除しました"
 
 #: cmd/incus/admin_init_auto.go:51
 msgid "Storage has already been configured"
-msgstr ""
+msgstr "ストレージはすでに設定されています"
 
 #: cmd/incus/admin_recover.go:106
 #, fuzzy, c-format
@@ -7035,7 +7056,7 @@ msgstr "ターゲットのパスはディレクトリでなければなりませ
 
 #: cmd/incus/admin_shutdown.go:29
 msgid "Tell the daemon to shutdown all instances and exit"
-msgstr ""
+msgstr "すべてのインスタンスをシャットダウンして終了するようにデーモンに指示します"
 
 #: cmd/incus/admin_shutdown.go:30
 msgid ""
@@ -7047,6 +7068,14 @@ msgid ""
 "  This can take quite a while as instances can take a long time to\n"
 "  shutdown, especially if a non-standard timeout was configured for them."
 msgstr ""
+"すべてのインスタンスをシャットダウンして終了するようにデーモンに指示します\n"
+"\n"
+"  デーモンに、すべてのインスタンスの完全なシャットダウンを開始し、\n"
+"  続けて自身をシャットダウンして終了するように指示します。\n"
+"\n"
+"  特に、インスタンスに標準的なタイムアウトが設定されている場合、\n"
+"  インスタンスのシャットダウンには長い時間がかかる可能性があるため、かなり時"
+"間がかかることがあります"
 
 #: cmd/incus/admin_init_interactive.go:531
 #, fuzzy, c-format
