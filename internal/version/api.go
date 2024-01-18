@@ -317,6 +317,7 @@ var APIExtensions = []string{
 	"projects_restricted_intercept",
 	"metrics_authentication",
 	"images_target_project",
+	"images_all_projects",
 	"cluster_migration_inconsistent_copy",
 	"cluster_ovn_chassis",
 	"container_syscall_intercept_sched_setscheduler",
