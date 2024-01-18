@@ -3694,7 +3694,7 @@
             "uid": "${DS_LOKI}"
           },
           "editorMode": "builder",
-          "expr": "{app=\"incus\", type=\"lifecycle\"}",
+          "expr": "{app=\"incus\", type=\"lifecycle\", instance=\"$job\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -3731,7 +3731,7 @@
             "uid": "${DS_LOKI}"
           },
           "editorMode": "builder",
-          "expr": "{app=\"incus\", type=\"logging\"}",
+          "expr": "{app=\"incus\", type=\"logging\", instance=\"$job\"}",
           "queryType": "range",
           "refId": "A"
         }
