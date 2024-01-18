@@ -62,21 +62,6 @@ const (
 	ObjectTypeStorageVolume ObjectType = "storage_volume"
 )
 
-// Permission is a type representation of general permission levels in Incus. Used with TLS and RBAC drivers.
-type Permission string
-
-const (
-	PermissionAdmin                Permission = "admin"
-	PermissionView                 Permission = "view"
-	PermissionManageProjects       Permission = "manage-projects"
-	PermissionManageInstances      Permission = "manage-containers"
-	PermissionManageImages         Permission = "manage-images"
-	PermissionManageNetworks       Permission = "manage-networks"
-	PermissionManageProfiles       Permission = "manage-profiles"
-	PermissionManageStorageVolumes Permission = "manage-storage-volumes"
-	PermissionOperateInstances     Permission = "operate-containers"
-)
-
 const (
 	relationServer  = "server"
 	relationProject = "project"
