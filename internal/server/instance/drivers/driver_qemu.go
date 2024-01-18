@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
+	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -84,6 +85,11 @@ import (
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/util"
 )
+
+// incus-agent files
+//
+//go:embed agent-loader/*
+var incusAgentLoader embed.FS
 
 // QEMUDefaultCPUCores defines the default number of cores a VM will get if no limit specified.
 const QEMUDefaultCPUCores = 1
@@ -2680,24 +2686,12 @@ func (d *qemu) generateConfigShare() error {
 	// Systemd unit for incus-agent. It ensures the incus-agent is copied from the shared filesystem before it is
 	// started. The service is triggered dynamically via udev rules when certain virtio-ports are detected,
 	// rather than being enabled at boot.
-	agentServiceUnit := `[Unit]
-Description=Incus - agent
-Documentation=https://linuxcontainers.org/incus/docs/main/
-Before=multi-user.target cloud-init.target cloud-init.service cloud-init-local.service
-DefaultDependencies=no
+	agentFile, err := incusAgentLoader.ReadFile("agent-loader/systemd/incus-agent.service")
+	if err != nil {
+		return err
+	}
 
-[Service]
-Type=notify
-WorkingDirectory=-/run/incus_agent
-ExecStartPre=/lib/systemd/incus-agent-setup
-ExecStart=/run/incus_agent/incus-agent
-Restart=on-failure
-RestartSec=5s
-StartLimitInterval=60
-StartLimitBurst=10
-`
-
-	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent.service"), []byte(agentServiceUnit), 0400)
+	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent.service"), agentFile, 0400)
 	if err != nil {
 		return err
 	}
@@ -2705,45 +2699,12 @@ StartLimitBurst=10
 	// Setup script for incus-agent that is executed by the incus-agent systemd unit before incus-agent is started.
 	// The script sets up a temporary mount point, copies data from the mount (including incus-agent binary),
 	// and then unmounts it. It also ensures appropriate permissions for the Incus agent's runtime directory.
-	agentSetupScript := `#!/bin/sh
-set -eu
-PREFIX="/run/incus_agent"
+	agentFile, err = incusAgentLoader.ReadFile("agent-loader/incus-agent-setup")
+	if err != nil {
+		return err
+	}
 
-# Functions.
-mount_virtiofs() {
-    mount -t virtiofs config "${PREFIX}/.mnt" -o ro >/dev/null 2>&1
-}
-
-mount_9p() {
-    modprobe 9pnet_virtio >/dev/null 2>&1 || true
-    mount -t 9p config "${PREFIX}/.mnt" -o ro,access=0,trans=virtio,size=1048576 >/dev/null 2>&1
-}
-
-fail() {
-    umount -l "${PREFIX}" >/dev/null 2>&1 || true
-    rmdir "${PREFIX}" >/dev/null 2>&1 || true
-    echo "${1}"
-    exit 1
-}
-
-# Setup the mount target.
-umount -l "${PREFIX}" >/dev/null 2>&1 || true
-mkdir -p "${PREFIX}"
-mount -t tmpfs tmpfs "${PREFIX}" -o mode=0700,nodev,nosuid,noatime,size=25M
-mkdir -p "${PREFIX}/.mnt"
-
-# Try virtiofs first.
-mount_virtiofs || mount_9p || fail "Couldn't mount virtiofs or 9p, failing."
-
-# Copy the data.
-cp -Ra --no-preserve=ownership "${PREFIX}/.mnt/"* "${PREFIX}"
-
-# Unmount the temporary mount.
-umount "${PREFIX}/.mnt"
-rmdir "${PREFIX}/.mnt"
-`
-
-	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent-setup"), []byte(agentSetupScript), 0500)
+	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent-setup"), agentFile, 0500)
 	if err != nil {
 		return err
 	}
@@ -2754,44 +2715,23 @@ rmdir "${PREFIX}/.mnt"
 	}
 
 	// Udev rules to start the incus-agent.service when QEMU serial devices (symlinks in virtio-ports) appear.
-	agentRules := `SYMLINK=="virtio-ports/org.linuxcontainers.incus", TAG+="systemd", ENV{SYSTEMD_WANTS}+="incus-agent.service"\n`
-	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-incus-agent.rules"), []byte(agentRules), 0400)
+	agentFile, err = incusAgentLoader.ReadFile("agent-loader/systemd/incus-agent.rules")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-incus-agent.rules"), agentFile, 0400)
 	if err != nil {
 		return err
 	}
 
 	// Install script for manual installs.
-	configShareInstall := `#!/bin/sh
-if [ ! -e "systemd" ] || [ ! -e "incus-agent" ]; then
-    echo "This script must be run from within the 9p mount"
-    exit 1
-fi
+	agentFile, err = incusAgentLoader.ReadFile("agent-loader/install.sh")
+	if err != nil {
+		return err
+	}
 
-if [ ! -e "/lib/systemd/system" ]; then
-    echo "This script only works on systemd systems"
-    exit 1
-fi
-
-# Cleanup former units.
-rm -f /lib/systemd/system/incus-agent-9p.service \
-    /lib/systemd/system/incus-agent-virtiofs.service \
-    /etc/systemd/system/multi-user.target.wants/incus-agent-9p.service \
-    /etc/systemd/system/multi-user.target.wants/incus-agent-virtiofs.service \
-    /etc/systemd/system/multi-user.target.wants/incus-agent.service
-
-# Install the units.
-cp udev/99-incus-agent.rules /lib/udev/rules.d/
-cp systemd/incus-agent.service /lib/systemd/system/
-cp systemd/incus-agent-setup /lib/systemd/
-systemctl daemon-reload
-systemctl enable incus-agent.service
-
-echo ""
-echo "Incus agent has been installed, reboot to confirm setup."
-echo "To start it now, unmount this filesystem and run: systemctl start incus-agent"
-`
-
-	err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), []byte(configShareInstall), 0700)
+	err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), agentFile, 0700)
 	if err != nil {
 		return err
 	}
