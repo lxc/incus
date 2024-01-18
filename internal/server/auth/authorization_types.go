@@ -46,19 +46,46 @@ const (
 type ObjectType string
 
 const (
-	ObjectTypeUser          ObjectType = "user"
-	ObjectTypeServer        ObjectType = "server"
-	ObjectTypeCertificate   ObjectType = "certificate"
-	ObjectTypeStoragePool   ObjectType = "storage_pool"
-	ObjectTypeProject       ObjectType = "project"
-	ObjectTypeImage         ObjectType = "image"
-	ObjectTypeImageAlias    ObjectType = "image_alias"
-	ObjectTypeInstance      ObjectType = "instance"
-	ObjectTypeNetwork       ObjectType = "network"
-	ObjectTypeNetworkACL    ObjectType = "network_acl"
-	ObjectTypeNetworkZone   ObjectType = "network_zone"
-	ObjectTypeProfile       ObjectType = "profile"
+	// ObjectTypeUser represents a user.
+	ObjectTypeUser ObjectType = "user"
+
+	// ObjectTypeServer represents a server.
+	ObjectTypeServer ObjectType = "server"
+
+	// ObjectTypeCertificate represents a certificate.
+	ObjectTypeCertificate ObjectType = "certificate"
+
+	// ObjectTypeStoragePool represents a storage pool.
+	ObjectTypeStoragePool ObjectType = "storage_pool"
+
+	// ObjectTypeProject represents a project.
+	ObjectTypeProject ObjectType = "project"
+
+	// ObjectTypeImage represents an image.
+	ObjectTypeImage ObjectType = "image"
+
+	// ObjectTypeImageAlias represents an image alias.
+	ObjectTypeImageAlias ObjectType = "image_alias"
+
+	// ObjectTypeInstance represents an instance.
+	ObjectTypeInstance ObjectType = "instance"
+
+	// ObjectTypeNetwork represents a network.
+	ObjectTypeNetwork ObjectType = "network"
+
+	// ObjectTypeNetworkACL represents a network ACL.
+	ObjectTypeNetworkACL ObjectType = "network_acl"
+
+	// ObjectTypeNetworkZone represents a network zone.
+	ObjectTypeNetworkZone ObjectType = "network_zone"
+
+	// ObjectTypeProfile represents a profile.
+	ObjectTypeProfile ObjectType = "profile"
+
+	// ObjectTypeStorageBucket represents a storage bucket.
 	ObjectTypeStorageBucket ObjectType = "storage_bucket"
+
+	// ObjectTypeStorageVolume represents a storage volume.
 	ObjectTypeStorageVolume ObjectType = "storage_volume"
 )
 
