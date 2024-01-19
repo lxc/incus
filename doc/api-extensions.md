@@ -2305,3 +2305,9 @@ Adds a `description` field to certificate.
 
 Adds a new `virtio-blk` value for `io.bus` on `disk` devices which allows
 for the attached disk to be connected to the `virtio-blk` bus.
+
+## `loki_config_instance`
+
+Adds a new `loki.instance` server configuration key to customize the `instance` field in Loki events.
+This can be used to expose the name of the cluster rather than the individual system name sending
+the event as that's usually already covered by the `location` field.

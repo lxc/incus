@@ -389,6 +389,7 @@ var APIExtensions = []string{
 	"ovn_ssl_config",
 	"certificate_description",
 	"disk_io_bus_virtio_blk",
+	"loki_config_instance",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

@@ -1746,6 +1746,15 @@
 						}
 					},
 					{
+						"loki.instance": {
+							"defaultdesc": "Local server host name or cluster member name",
+							"longdesc": "This allows replacing the default instance value (server host name) by a more relevant value like a cluster identifier.",
+							"scope": "global",
+							"shortdesc": "Name to use as the instance field in Loki events.",
+							"type": "string"
+						}
+					},
+					{
 						"loki.labels": {
 							"longdesc": "Specify a comma-separated list of values that should be used as labels for a Loki log entry.",
 							"scope": "global",

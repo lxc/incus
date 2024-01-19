@@ -1592,6 +1592,14 @@ Specify the protocol, name or IP and port. For example `https://loki.example.com
 
 ```
 
+```{config:option} loki.instance server-loki
+:defaultdesc: "Local server host name or cluster member name"
+:scope: "global"
+:shortdesc: "Name to use as the instance field in Loki events."
+:type: "string"
+This allows replacing the default instance value (server host name) by a more relevant value like a cluster identifier.
+```
+
 ```{config:option} loki.labels server-loki
 :scope: "global"
 :shortdesc: "Labels for a Loki log entry"
