@@ -2311,3 +2311,10 @@ for the attached disk to be connected to the `virtio-blk` bus.
 Adds a new `loki.instance` server configuration key to customize the `instance` field in Loki events.
 This can be used to expose the name of the cluster rather than the individual system name sending
 the event as that's usually already covered by the `location` field.
+
+## `instance_create_start`
+
+Adds a new `start` field to the `POST /1.0/instances` API which when set
+to `true` will have the instance automatically start upon creation.
+
+In this scenario, the creation and startup is part of a single background operation.
