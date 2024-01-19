@@ -612,8 +612,9 @@ func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			_, dUID, dGID := internalIO.GetOwnerMode(finfo)
 			if c.file.flagUID == -1 || c.file.flagGID == -1 {
+				_, dUID, dGID := internalIO.GetOwnerMode(finfo)
+
 				if c.file.flagUID == -1 {
 					uid = dUID
 				}
