@@ -1,3 +1,4 @@
+jobs: 2
 matrix:
 - name: Markdown files
   aspell:
