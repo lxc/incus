@@ -117,6 +117,31 @@ test_filemanip() {
     incus delete idmap --force
   fi
 
+  # Test incus file create.
+
+  # Create a new empty file.
+  incus file create filemanip/tmp/create-test
+  [ -z "$(incus exec filemanip --project=test -- cat /tmp/create-test)" ]
+
+  # This fails because the parent directory doesn't exist.
+  ! incus file create filemanip/tmp/create-test-dir/foo || false
+
+  # Create foo along with the parent directory.
+  incus file create --create-dirs filemanip/tmp/create-test-dir/foo
+  [ -z "$(incus exec filemanip --project=test -- cat /tmp/create-test-dir/foo)" ]
+
+  # Create directory using --type flag.
+  incus file create --type=directory filemanip/tmp/create-test-dir/sub-dir
+  incus exec filemanip --project=test -- test -d /tmp/create-test-dir/sub-dir
+
+  # Create directory using trailing "/".
+  incus file create filemanip/tmp/create-test-dir/sub-dir-1/
+  incus exec filemanip --project=test -- test -d /tmp/create-test-dir/sub-dir-1
+
+  # Create symlink.
+  incus file create --type=symlink filemanip/tmp/create-symlink foo
+  [ "$(incus exec filemanip --project=test -- readlink /tmp/create-symlink)" = "foo" ]
+
   # Test SFTP functionality.
   cmd=$(unset -f incus; command -v incus)
   $cmd file mount filemanip --listen=127.0.0.1:2022 --no-auth &
