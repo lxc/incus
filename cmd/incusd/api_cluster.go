@@ -629,18 +629,13 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		// Get all defined storage pools and networks, so they can be compared to the ones in the cluster.
 		pools := []api.StoragePool{}
-		var poolNames []string
-
-		s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			poolNames, err = tx.GetStoragePoolNames(ctx)
-
-			return err
-		})
-		if err != nil && !response.IsNotFoundError(err) {
-			return err
-		}
 
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			poolNames, err := tx.GetStoragePoolNames(ctx)
+			if err != nil && !response.IsNotFoundError(err) {
+				return err
+			}
+
 			for _, name := range poolNames {
 				_, pool, _, err := tx.GetStoragePoolInAnyState(ctx, name)
 				if err != nil {
