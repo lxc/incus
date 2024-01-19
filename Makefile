@@ -312,7 +312,7 @@ endif
 	flake8 test/deps/import-busybox
 	shellcheck --shell sh test/*.sh test/includes/*.sh test/suites/*.sh test/backends/*.sh test/lint/*.sh
 	shellcheck test/extras/*.sh
-	run-parts --exit-on-error --regex '.sh' test/lint
+	run-parts --verbose --exit-on-error --regex '.sh' test/lint
 
 .PHONY: staticcheck
 staticcheck:
