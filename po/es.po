@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-01-15 22:31+0100\n"
+"POT-Creation-Date: 2024-01-19 22:59-0500\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -975,7 +975,7 @@ msgstr ""
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 
-#: cmd/incus/create.go:348 cmd/incus/rebuild.go:131
+#: cmd/incus/create.go:357 cmd/incus/rebuild.go:131
 msgid "Asked for a VM but image is of type container"
 msgstr ""
 
@@ -1082,7 +1082,7 @@ msgstr ""
 msgid "Bad key/value pair: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:138 cmd/incus/create.go:213 cmd/incus/move.go:358
+#: cmd/incus/copy.go:138 cmd/incus/create.go:221 cmd/incus/move.go:358
 #: cmd/incus/project.go:129
 #, fuzzy, c-format
 msgid "Bad key=value pair: %q"
@@ -1262,7 +1262,7 @@ msgstr ""
 msgid "Can't use an image with --empty"
 msgstr ""
 
-#: cmd/incus/create.go:317
+#: cmd/incus/create.go:326
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -1785,12 +1785,12 @@ msgstr ""
 msgid "Created: %s"
 msgstr "Creado: %s"
 
-#: cmd/incus/create.go:159
+#: cmd/incus/create.go:166
 #, c-format
 msgid "Creating %s"
 msgstr "Creando %s"
 
-#: cmd/incus/create.go:157
+#: cmd/incus/create.go:164
 #, fuzzy
 msgid "Creating the instance"
 msgstr "Creando el contenedor"
@@ -2169,7 +2169,7 @@ msgstr ""
 msgid "Device: %s"
 msgstr "Dispositivo: %s"
 
-#: cmd/incus/create.go:408
+#: cmd/incus/create.go:417
 msgid "Didn't get any affected image, instance or snapshot from server"
 msgstr ""
 
@@ -2690,17 +2690,17 @@ msgstr ""
 msgid "Failed import request: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/create.go:172
+#: cmd/incus/create.go:180
 #, fuzzy, c-format
 msgid "Failed loading network %q: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/create.go:296
+#: cmd/incus/create.go:305
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
 
-#: cmd/incus/create.go:223
+#: cmd/incus/create.go:231
 #, fuzzy, c-format
 msgid "Failed loading storage pool %q: %w"
 msgstr "Acepta certificado"
@@ -3464,7 +3464,7 @@ msgstr ""
 msgid "Instance name is mandatory"
 msgstr "Nombre del contenedor es obligatorio"
 
-#: cmd/incus/create.go:419
+#: cmd/incus/create.go:428
 #, fuzzy, c-format
 msgid "Instance name is: %s"
 msgstr "Nombre del contenedor es: %s"
@@ -3671,6 +3671,16 @@ msgstr ""
 #: cmd/incus/image.go:968
 msgid "Last used: never"
 msgstr ""
+
+#: cmd/incus/create.go:160
+#, fuzzy, c-format
+msgid "Launching %s"
+msgstr "Creando %s"
+
+#: cmd/incus/create.go:158
+#, fuzzy
+msgid "Launching the instance"
+msgstr "Creando el contenedor"
 
 #: cmd/incus/info.go:221
 #, fuzzy, c-format
@@ -5819,7 +5829,7 @@ msgstr "Aliases:"
 msgid "Retrieve the instance's console log"
 msgstr ""
 
-#: cmd/incus/create.go:362
+#: cmd/incus/create.go:371
 #, c-format
 msgid "Retrieving image: %s"
 msgstr ""
@@ -6499,7 +6509,7 @@ msgstr ""
 msgid "Start instances"
 msgstr ""
 
-#: cmd/incus/launch.go:78
+#: cmd/incus/launch.go:83
 #, c-format
 msgid "Starting %s"
 msgstr ""
@@ -6803,7 +6813,7 @@ msgid ""
 "restarted"
 msgstr ""
 
-#: cmd/incus/create.go:440
+#: cmd/incus/create.go:449
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
@@ -7004,11 +7014,11 @@ msgstr ""
 msgid "Timestamps:"
 msgstr ""
 
-#: cmd/incus/create.go:442
+#: cmd/incus/create.go:451
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
-#: cmd/incus/create.go:441
+#: cmd/incus/create.go:450
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
@@ -7087,7 +7097,7 @@ msgstr ""
 msgid "Trust token for %s: "
 msgstr "Contraseña admin para %s: "
 
-#: cmd/incus/action.go:311 cmd/incus/launch.go:110
+#: cmd/incus/action.go:311 cmd/incus/launch.go:115
 #, c-format
 msgid "Try `incus info --show-log %s` for more info"
 msgstr ""

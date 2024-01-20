@@ -2390,6 +2390,11 @@ definitions:
                 x-go-name: Restore
             source:
                 $ref: '#/definitions/InstanceSource'
+            start:
+                description: Whether to start the instance after creation
+                example: true
+                type: boolean
+                x-go-name: Start
             stateful:
                 description: Whether the instance currently has saved state on disk
                 example: false

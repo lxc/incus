@@ -54,9 +54,14 @@ func (c *cmdLaunch) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Call the matching code from init
-	d, name, err := c.init.create(conf, args)
+	d, name, err := c.init.create(conf, args, true)
 	if err != nil {
 		return err
+	}
+
+	// Check if the instance was started by the server.
+	if d.HasExtension("instance_create_start") {
+		return nil
 	}
 
 	// Get the remote

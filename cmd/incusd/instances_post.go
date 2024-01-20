@@ -122,7 +122,13 @@ func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []
 			return err
 		}
 
-		return instanceCreateFromImage(s, r, img, args, op)
+		// Actually create the instance.
+		err = instanceCreateFromImage(s, r, img, args, op)
+		if err != nil {
+			return err
+		}
+
+		return instanceCreateFinish(s, req, args)
 	}
 
 	resources := map[string][]api.URL{}
@@ -173,8 +179,13 @@ func createFromNone(s *state.State, r *http.Request, projectName string, profile
 	}
 
 	run := func(op *operations.Operation) error {
+		// Actually create the instance.
 		_, err := instanceCreateAsEmpty(s, args)
-		return err
+		if err != nil {
+			return err
+		}
+
+		return instanceCreateFinish(s, req, args)
 	}
 
 	resources := map[string][]api.URL{}
@@ -377,7 +388,8 @@ func createFromMigration(s *state.State, r *http.Request, projectName string, pr
 
 		instOp.Done(nil) // Complete operation that was created earlier, to release lock.
 		runRevert.Success()
-		return nil
+
+		return instanceCreateFinish(s, req, args)
 	}
 
 	resources := map[string][]api.URL{}
@@ -535,6 +547,7 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 	}
 
 	run := func(op *operations.Operation) error {
+		// Actually create the instance.
 		_, err := instanceCreateAsCopy(s, instanceCreateAsCopyOpts{
 			sourceInstance:       source,
 			targetInstance:       args,
@@ -547,7 +560,7 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 			return err
 		}
 
-		return nil
+		return instanceCreateFinish(s, req, args)
 	}
 
 	resources := map[string][]api.URL{}
@@ -634,8 +647,9 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	}
 
 	// Check project permissions.
+	var req api.InstancesPost
 	err = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-		req := api.InstancesPost{
+		req = api.InstancesPost{
 			InstancePut: bInfo.Config.Container.InstancePut,
 			Name:        bInfo.Name,
 			Source:      api.InstanceSource{}, // Only relevant for "copy" or "migration", but may not be nil.
@@ -759,7 +773,8 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		}
 
 		runRevert.Success()
-		return nil
+
+		return instanceCreateFinish(s, &req, db.InstanceArgs{Name: bInfo.Name, Project: bInfo.Project})
 	}
 
 	resources := map[string][]api.URL{}
@@ -1314,4 +1329,18 @@ func clusterCopyContainerInternal(s *state.State, r *http.Request, source instan
 
 	// Run the migration
 	return createFromMigration(s, nil, projectName, profiles, req)
+}
+
+func instanceCreateFinish(s *state.State, req *api.InstancesPost, args db.InstanceArgs) error {
+	if req == nil || !req.Start {
+		return nil
+	}
+
+	// Start the instance.
+	inst, err := instance.LoadByProjectAndName(s, args.Project, args.Name)
+	if err != nil {
+		return fmt.Errorf("Failed to load the instance: %w", err)
+	}
+
+	return inst.Start(false)
 }

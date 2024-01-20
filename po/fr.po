@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-01-15 22:31+0100\n"
+"POT-Creation-Date: 2024-01-19 22:59-0500\n"
 "PO-Revision-Date: 2022-03-10 15:06+0000\n"
 "Last-Translator: Wivik <seb+weblate@zedas.fr>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/linux-containers/"
@@ -1021,7 +1021,7 @@ msgstr "Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non]:
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "Aucun n'a pu être trouvé, la socket SPICE peut être trouvé à:"
 
-#: cmd/incus/create.go:348 cmd/incus/rebuild.go:131
+#: cmd/incus/create.go:357 cmd/incus/rebuild.go:131
 msgid "Asked for a VM but image is of type container"
 msgstr "Machine virtuelle a été demandé mais l'image est de type conteneur"
 
@@ -1139,7 +1139,7 @@ msgstr ""
 msgid "Bad key/value pair: %s"
 msgstr "Mauvaise paire clé/valeur: %s"
 
-#: cmd/incus/copy.go:138 cmd/incus/create.go:213 cmd/incus/move.go:358
+#: cmd/incus/copy.go:138 cmd/incus/create.go:221 cmd/incus/move.go:358
 #: cmd/incus/project.go:129
 #, fuzzy, c-format
 msgid "Bad key=value pair: %q"
@@ -1322,7 +1322,7 @@ msgstr "Impossible d'utiliser --minimal et --preseed ensemble"
 msgid "Can't use an image with --empty"
 msgstr "Impossible d'utiliser une image avec --empty"
 
-#: cmd/incus/create.go:317
+#: cmd/incus/create.go:326
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -1898,12 +1898,12 @@ msgstr "L'arrêt du conteneur a échoué !"
 msgid "Created: %s"
 msgstr "Créé : %s"
 
-#: cmd/incus/create.go:159
+#: cmd/incus/create.go:166
 #, c-format
 msgid "Creating %s"
 msgstr "Création de %s"
 
-#: cmd/incus/create.go:157
+#: cmd/incus/create.go:164
 #, fuzzy
 msgid "Creating the instance"
 msgstr "Création du conteneur"
@@ -2293,7 +2293,7 @@ msgstr ""
 msgid "Device: %s"
 msgstr "Serveur distant : %s"
 
-#: cmd/incus/create.go:408
+#: cmd/incus/create.go:417
 #, fuzzy
 msgid "Didn't get any affected image, instance or snapshot from server"
 msgstr "pas d'image, conteneur ou instantané affecté sur ce serveur"
@@ -2849,17 +2849,17 @@ msgstr ""
 msgid "Failed import request: %w"
 msgstr "Échec lors de la génération de 'lxc.%s.1': %v"
 
-#: cmd/incus/create.go:172
+#: cmd/incus/create.go:180
 #, fuzzy, c-format
 msgid "Failed loading network %q: %w"
 msgstr "Échec lors de la génération de 'lxc.%s.1': %v"
 
-#: cmd/incus/create.go:296
+#: cmd/incus/create.go:305
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr ""
 
-#: cmd/incus/create.go:223
+#: cmd/incus/create.go:231
 #, fuzzy, c-format
 msgid "Failed loading storage pool %q: %w"
 msgstr "Échec lors de la génération de 'lxc.%s.1': %v"
@@ -3647,7 +3647,7 @@ msgstr ""
 msgid "Instance name is mandatory"
 msgstr "Le nom du conteneur est obligatoire"
 
-#: cmd/incus/create.go:419
+#: cmd/incus/create.go:428
 #, fuzzy, c-format
 msgid "Instance name is: %s"
 msgstr "Le nom du conteneur est : %s"
@@ -3857,6 +3857,16 @@ msgstr "Dernière utilisation : %s"
 #: cmd/incus/image.go:968
 msgid "Last used: never"
 msgstr "Dernière utilisation : jamais"
+
+#: cmd/incus/create.go:160
+#, fuzzy, c-format
+msgid "Launching %s"
+msgstr "Création de %s"
+
+#: cmd/incus/create.go:158
+#, fuzzy
+msgid "Launching the instance"
+msgstr "Création du conteneur"
 
 #: cmd/incus/info.go:221
 #, fuzzy, c-format
@@ -6164,7 +6174,7 @@ msgstr "Création du conteneur"
 msgid "Retrieve the instance's console log"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
 
-#: cmd/incus/create.go:362
+#: cmd/incus/create.go:371
 #, c-format
 msgid "Retrieving image: %s"
 msgstr "Récupération de l'image : %s"
@@ -6879,7 +6889,7 @@ msgstr "Source :"
 msgid "Start instances"
 msgstr "Création du conteneur"
 
-#: cmd/incus/launch.go:78
+#: cmd/incus/launch.go:83
 #, c-format
 msgid "Starting %s"
 msgstr "Démarrage de %s"
@@ -7197,7 +7207,7 @@ msgstr ""
 "Le conteneur est en cours d'exécution. Utiliser --force pour qu'il soit "
 "arrêté et redémarré."
 
-#: cmd/incus/create.go:440
+#: cmd/incus/create.go:449
 #, fuzzy
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
@@ -7402,12 +7412,12 @@ msgstr "Temps d'attente du conteneur avant de le tuer"
 msgid "Timestamps:"
 msgstr "Horodatage :"
 
-#: cmd/incus/create.go:442
+#: cmd/incus/create.go:451
 #, fuzzy
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr "Pour attacher un réseau à un conteneur, utiliser : lxc network attach"
 
-#: cmd/incus/create.go:441
+#: cmd/incus/create.go:450
 #, fuzzy
 msgid "To create a new network, use: incus network create"
 msgstr "Pour créer un réseau, utiliser : lxc network create"
@@ -7489,7 +7499,7 @@ msgstr ""
 msgid "Trust token for %s: "
 msgstr "Mot de passe administrateur pour %s : "
 
-#: cmd/incus/action.go:311 cmd/incus/launch.go:110
+#: cmd/incus/action.go:311 cmd/incus/launch.go:115
 #, fuzzy, c-format
 msgid "Try `incus info --show-log %s` for more info"
 msgstr "Essayer `lxc info --show-log %s` pour plus d'informations"
@@ -8074,7 +8084,7 @@ msgstr ""
 #: cmd/incus/cluster.go:119 cmd/incus/cluster.go:864
 #: cmd/incus/cluster_group.go:379 cmd/incus/config_trust.go:398
 #: cmd/incus/config_trust.go:583 cmd/incus/monitor.go:31
-#: cmd/incus/network_acl.go:90 cmd/incus/network.go:1001
+#: cmd/incus/network.go:1001 cmd/incus/network_acl.go:90
 #: cmd/incus/network_zone.go:81 cmd/incus/operation.go:104
 #: cmd/incus/profile.go:610 cmd/incus/project.go:407 cmd/incus/storage.go:582
 #: cmd/incus/version.go:20 cmd/incus/warning.go:69
