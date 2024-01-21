@@ -169,13 +169,23 @@ To install the feature branch of Incus, run:
 
 ```{group-tab} Windows
 
-The Incus client on Windows is provided as a [Chocolatey](https://community.chocolatey.org/packages/incus) package.
-To install it:
+The Incus client on Windows is provided as a [Chocolatey](https://community.chocolatey.org/packages/incus) and [Winget](https://github.com/microsoft/winget-cli) package.
+To install it using Chocolatey or Winget, follow the instructions below:
+
+**Chocolatey**
 
 1. Install Chocolatey by following the [installation instructions](https://docs.chocolatey.org/en-us/choco/setup).
 1. Install the Incus client:
 
         choco install incus
+
+**Winget**
+
+1. Install Winget by following the [installation instructions](https://learn.microsoft.com/en-us/windows/package-manager/winget/#install-winget)
+1. Install the Incus client:
+
+        winget install LinuxContainers.Incus
+
 ```
 
 ````
