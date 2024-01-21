@@ -305,6 +305,7 @@ vSwitch
 VXLAN
 WebSocket
 WebSockets
+Winget
 XFS
 XHR
 YAML
