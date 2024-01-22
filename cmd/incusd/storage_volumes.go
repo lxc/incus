@@ -684,7 +684,7 @@ func storagePoolVolumesTypePost(d *Daemon, r *http.Request) response.Response {
 	serverName := s.ServerName
 	var nodeAddress string
 
-	if s.ServerClustered && target != "" && !req.Source.Refresh && (req.Source.Location != "" && serverName != req.Source.Location) {
+	if s.ServerClustered && target != "" && (req.Source.Location != "" && serverName != req.Source.Location) {
 		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			nodeInfo, err := tx.GetNodeByName(ctx, req.Source.Location)
 			if err != nil {
