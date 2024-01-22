@@ -629,6 +629,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		// Get all defined storage pools and networks, so they can be compared to the ones in the cluster.
 		pools := []api.StoragePool{}
+		networks := []api.InitNetworksProjectPost{}
 
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			poolNames, err := tx.GetStoragePoolNames(ctx)
@@ -645,17 +646,9 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 				pools = append(pools, *pool)
 			}
 
-			return nil
-		})
-		if err != nil {
-			return err
-		}
+			// Get a list of projects for networks.
+			var projects []dbCluster.Project
 
-		// Get a list of projects for networks.
-		var projects []dbCluster.Project
-		networks := []api.InitNetworksProjectPost{}
-
-		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			projects, err = dbCluster.GetProjects(ctx, tx.Tx())
 			if err != nil {
 				return fmt.Errorf("Failed to load projects for networks: %w", err)
@@ -2791,66 +2784,54 @@ type internalClusterPostHandoverRequest struct {
 }
 
 func clusterCheckStoragePoolsMatch(cluster *db.Cluster, reqPools []api.StoragePool) error {
-	var err error
-	var poolNames []string
+	return cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		poolNames, err := tx.GetCreatedStoragePoolNames(ctx)
+		if err != nil && !response.IsNotFoundError(err) {
+			return err
+		}
 
-	err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		poolNames, err = tx.GetCreatedStoragePoolNames(ctx)
+		for _, name := range poolNames {
+			found := false
+			for _, reqPool := range reqPools {
+				if reqPool.Name != name {
+					continue
+				}
 
-		return err
-	})
-	if err != nil && !response.IsNotFoundError(err) {
-		return err
-	}
+				found = true
 
-	for _, name := range poolNames {
-		found := false
-		for _, reqPool := range reqPools {
-			if reqPool.Name != name {
-				continue
-			}
+				var pool *api.StoragePool
 
-			found = true
-
-			var pool *api.StoragePool
-
-			err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 				_, pool, _, err = tx.GetStoragePoolInAnyState(ctx, name)
+				if err != nil {
+					return err
+				}
 
-				return err
-			})
-			if err != nil {
-				return err
+				if pool.Driver != reqPool.Driver {
+					return fmt.Errorf("Mismatching driver for storage pool %s", name)
+				}
+				// Exclude the keys which are node-specific.
+				exclude := db.NodeSpecificStorageConfig
+				err = localUtil.CompareConfigs(pool.Config, reqPool.Config, exclude)
+				if err != nil {
+					return fmt.Errorf("Mismatching config for storage pool %s: %w", name, err)
+				}
+
+				break
 			}
 
-			if pool.Driver != reqPool.Driver {
-				return fmt.Errorf("Mismatching driver for storage pool %s", name)
+			if !found {
+				return fmt.Errorf("Missing storage pool %s", name)
 			}
-			// Exclude the keys which are node-specific.
-			exclude := db.NodeSpecificStorageConfig
-			err = localUtil.CompareConfigs(pool.Config, reqPool.Config, exclude)
-			if err != nil {
-				return fmt.Errorf("Mismatching config for storage pool %s: %w", name, err)
-			}
-
-			break
 		}
 
-		if !found {
-			return fmt.Errorf("Missing storage pool %s", name)
-		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func clusterCheckNetworksMatch(cluster *db.Cluster, reqNetworks []api.InitNetworksProjectPost) error {
-	var err error
-
-	// Get a list of projects for networks.
-	var networkProjectNames []string
-
-	err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		networkProjectNames, err = dbCluster.GetProjectNames(ctx, tx.Tx())
+	return cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get a list of projects for networks.
+		networkProjectNames, err := dbCluster.GetProjectNames(ctx, tx.Tx())
 		if err != nil {
 			return fmt.Errorf("Failed to load projects for networks: %w", err)
 		}
@@ -2898,11 +2879,6 @@ func clusterCheckNetworksMatch(cluster *db.Cluster, reqNetworks []api.InitNetwor
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Used as low-level recovering helper.
@@ -3181,7 +3157,7 @@ func internalClusterHeal(d *Daemon, r *http.Request) response.Response {
 }
 
 func evacuateClusterSetState(s *state.State, name string, state int) error {
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the node.
 		node, err := tx.GetNodeByName(ctx, name)
 		if err != nil {
@@ -3211,11 +3187,6 @@ func evacuateClusterSetState(s *state.State, name string, state int) error {
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // evacuateHostShutdownDefaultTimeout default timeout (in seconds) for waiting for clean shutdown to complete.
