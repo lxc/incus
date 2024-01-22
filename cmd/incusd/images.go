@@ -435,30 +435,26 @@ func imgPostRemoteInfo(s *state.State, r *http.Request, req api.ImagesPost, op *
 		return nil, err
 	}
 
-	var id int
-
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var id int
+
 		id, info, err = tx.GetImage(ctx, info.Fingerprint, dbCluster.ImageFilter{Project: &project})
+		if err != nil {
+			return err
+		}
 
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
+		// Allow overriding or adding properties
+		for k, v := range req.Properties {
+			info.Properties[k] = v
+		}
 
-	// Allow overriding or adding properties
-	for k, v := range req.Properties {
-		info.Properties[k] = v
-	}
+		// Get profile IDs
+		if req.Profiles == nil {
+			req.Profiles = []string{api.ProjectDefaultName}
+		}
 
-	// Get profile IDs
-	if req.Profiles == nil {
-		req.Profiles = []string{api.ProjectDefaultName}
-	}
+		profileIds := make([]int64, len(req.Profiles))
 
-	profileIds := make([]int64, len(req.Profiles))
-
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		for i, profile := range req.Profiles {
 			profileID, _, err := tx.GetProfile(ctx, project, profile)
 			if response.IsNotFoundError(err) {
@@ -470,20 +466,18 @@ func imgPostRemoteInfo(s *state.State, r *http.Request, req api.ImagesPost, op *
 			profileIds[i] = profileID
 		}
 
+		// Update the DB record if needed
+		if req.Public || req.AutoUpdate || req.Filename != "" || len(req.Properties) > 0 || len(req.Profiles) > 0 {
+			err := tx.UpdateImage(ctx, id, req.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, project, profileIds)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	// Update the DB record if needed
-	if req.Public || req.AutoUpdate || req.Filename != "" || len(req.Properties) > 0 || len(req.Profiles) > 0 {
-		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.UpdateImage(ctx, id, req.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, project, profileIds)
-		})
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return info, nil
@@ -550,29 +544,30 @@ func imgPostURLInfo(s *state.State, r *http.Request, req api.ImagesPost, op *ope
 		return nil, err
 	}
 
-	var id int
-
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		id, info, err = tx.GetImage(ctx, info.Fingerprint, dbCluster.ImageFilter{Project: &project})
+		var id int
 
-		return err
+		id, info, err = tx.GetImage(ctx, info.Fingerprint, dbCluster.ImageFilter{Project: &project})
+		if err != nil {
+			return err
+		}
+
+		// Allow overriding or adding properties
+		for k, v := range req.Properties {
+			info.Properties[k] = v
+		}
+
+		if req.Public || req.AutoUpdate || req.Filename != "" || len(req.Properties) > 0 {
+			err := tx.UpdateImage(ctx, id, req.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, "", nil)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	// Allow overriding or adding properties
-	for k, v := range req.Properties {
-		info.Properties[k] = v
-	}
-
-	if req.Public || req.AutoUpdate || req.Filename != "" || len(req.Properties) > 0 {
-		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.UpdateImage(ctx, id, req.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, "", nil)
-		})
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return info, nil
@@ -1808,15 +1803,18 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 				}
 			}
 
-			for _, ID := range deleteIDs {
-				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			_ = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				for _, ID := range deleteIDs {
 					// Remove the database entry for the image after distributing to cluster members.
-					return tx.DeleteImage(ctx, ID)
-				})
-				if err != nil {
-					logger.Error("Error deleting old image from database", logger.Ctx{"err": err, "fingerprint": fingerprint, "ID": ID})
+					err := tx.DeleteImage(ctx, ID)
+					if err != nil {
+						logger.Error("Error deleting old image from database", logger.Ctx{"err": err, "fingerprint": fingerprint, "ID": ID})
+					}
 				}
-			}
+
+				return nil
+			})
+
 		}
 	}
 
@@ -2072,23 +2070,19 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 		}
 	}
 
+	var poolNames []string
+
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 		_, source, err = tx.GetImageSource(ctx, id)
-		return err
-	})
-	if err != nil {
-		logger.Error("Error getting source image", logger.Ctx{"err": err, "fingerprint": fingerprint})
-		return nil, err
-	}
+		if err != nil {
+			logger.Error("Error getting source image", logger.Ctx{"err": err, "fingerprint": fingerprint})
+			return err
+		}
 
-	var poolIDs []int64
-	var poolNames []string
-
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the IDs of all storage pools on which a storage volume
 		// for the requested image currently exists.
-		poolIDs, err = tx.GetPoolsWithImage(ctx, fingerprint)
+		poolIDs, err := tx.GetPoolsWithImage(ctx, fingerprint)
 		if err != nil {
 			logger.Error("Error getting image pools", logger.Ctx{"err": err, "fingerprint": fingerprint})
 			return err
@@ -2654,21 +2648,24 @@ func imageDelete(d *Daemon, r *http.Request) response.Response {
 				// physically delete it just yet, but just to remove the
 				// relevant database entry.
 				referenced, err = tx.ImageIsReferencedByOtherProjects(ctx, projectName, imgInfo.Fingerprint)
+				if err != nil {
+					return err
+				}
 
-				return err
+				if referenced {
+					err = tx.DeleteImage(ctx, imgID)
+					if err != nil {
+						return fmt.Errorf("Error deleting image info from the database: %w", err)
+					}
+				}
+
+				return nil
 			})
 			if err != nil {
 				return err
 			}
 
 			if referenced {
-				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					return tx.DeleteImage(ctx, imgID)
-				})
-				if err != nil {
-					return fmt.Errorf("Error deleting image info from the database: %w", err)
-				}
-
 				return nil
 			}
 
@@ -3070,20 +3067,13 @@ func imagePut(d *Daemon, r *http.Request) response.Response {
 			profileIds[i] = profileID
 		}
 
-		return nil
+		return tx.UpdateImage(ctx, id, info.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, req.Properties, projectName, profileIds)
 	})
 	if err != nil {
 		if response.IsNotFoundError(err) {
 			return response.BadRequest(err)
 		}
 
-		return response.SmartError(err)
-	}
-
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.UpdateImage(ctx, id, info.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, req.Properties, projectName, profileIds)
-	})
-	if err != nil {
 		return response.SmartError(err)
 	}
 
@@ -4537,6 +4527,7 @@ func imageSyncBetweenNodes(s *state.State, r *http.Request, project string, fing
 	defer logger.Info("Syncing image to members finished", logger.Ctx{"fingerprint": fingerprint, "project": project})
 
 	var desiredSyncNodeCount int64
+	var syncNodeAddresses []string
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		desiredSyncNodeCount = s.GlobalConfig.ImagesMinimalReplica()
@@ -4551,22 +4542,18 @@ func imageSyncBetweenNodes(s *state.State, r *http.Request, project string, fing
 			desiredSyncNodeCount = int64(nodesCount)
 		}
 
+		var err error
+
+		// Check how many nodes already have this image
+		syncNodeAddresses, err = tx.GetNodesWithImage(ctx, fingerprint)
+		if err != nil {
+			return fmt.Errorf("Failed to get nodes for the image synchronization: %w", err)
+		}
+
 		return nil
 	})
 	if err != nil {
 		return err
-	}
-
-	var syncNodeAddresses []string
-
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Check how many nodes already have this image
-		syncNodeAddresses, err = tx.GetNodesWithImage(ctx, fingerprint)
-
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Failed to get nodes for the image synchronization: %w", err)
 	}
 
 	// If none of the nodes have the image, there's nothing to sync.
