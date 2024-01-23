@@ -2592,10 +2592,26 @@ func (d *qemu) generateConfigShare() error {
 	}
 
 	// Add the VM agent.
-	agentSrcPath, err := exec.LookPath("incus-agent")
-	if err != nil {
-		d.logger.Warn("incus-agent not found, skipping its inclusion in the VM config drive", logger.Ctx{"err": err})
-	} else {
+	agentSrcPath, _ := exec.LookPath("incus-agent")
+	if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
+		// Install incus-agent script (loads from agent share).
+		agentFile, err := incusAgentLoader.ReadFile("agent-loader/incus-agent")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "incus-agent"), agentFile, 0700)
+		if err != nil {
+			return err
+		}
+
+		// Legacy support.
+		_ = os.Remove(filepath.Join(configDrivePath, "lxd-agent"))
+		err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
+		if err != nil {
+			return err
+		}
+	} else if agentSrcPath != "" {
 		// Install agent into config drive dir if found.
 		agentSrcPath, err = filepath.EvalSymlinks(agentSrcPath)
 		if err != nil {
@@ -2655,6 +2671,8 @@ func (d *qemu) generateConfigShare() error {
 		if err != nil {
 			return err
 		}
+	} else {
+		d.logger.Warn("incus-agent not found, skipping its inclusion in the VM config drive", logger.Ctx{"err": err})
 	}
 
 	agentCert, agentKey, clientCert, _, err := d.generateAgentCert()
@@ -3163,6 +3181,24 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	}
 
 	cfg = append(cfg, qemuDriveConfig(&driveConfig9pOpts)...)
+
+	// Pass in the agents if INCUS_AGENT_PATH is set.
+	if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
+		devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)
+		driveConfig9pOpts := qemuDriveConfigOpts{
+			dev: qemuDevOpts{
+				busName:       bus.name,
+				devBus:        devBus,
+				devAddr:       devAddr,
+				multifunction: multi,
+			},
+			name:     "agent",
+			protocol: "9p",
+			path:     os.Getenv("INCUS_AGENT_PATH"),
+		}
+
+		cfg = append(cfg, qemuDriveConfig(&driveConfig9pOpts)...)
+	}
 
 	// If user has requested AMD SEV, check if supported and add to QEMU config.
 	if util.IsTrue(d.expandedConfig["security.sev"]) {
