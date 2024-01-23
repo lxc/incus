@@ -134,6 +134,14 @@ func (c *cmdAliasList) Run(cmd *cobra.Command, args []string) error {
 		data = append(data, []string{k, v})
 	}
 
+	// Apply default entries.
+	for k, v := range defaultAliases {
+		_, ok := conf.Aliases[k]
+		if !ok {
+			data = append(data, []string{k, v})
+		}
+	}
+
 	sort.Sort(cli.SortColumnsNaturally(data))
 
 	header := []string{
