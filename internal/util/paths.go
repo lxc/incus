@@ -5,19 +5,6 @@ import (
 	"path/filepath"
 )
 
-// VarPath returns the provided path elements joined by a slash and
-// appended to the end of $INCUS_DIR, which defaults to /var/lib/incus.
-func VarPath(path ...string) string {
-	varDir := os.Getenv("INCUS_DIR")
-	if varDir == "" {
-		varDir = "/var/lib/incus"
-	}
-
-	items := []string{varDir}
-	items = append(items, path...)
-	return filepath.Join(items...)
-}
-
 // CachePath returns the directory that Incus should its cache under. If INCUS_DIR is
 // set, this path is $INCUS_DIR/cache, otherwise it is /var/cache/incus.
 func CachePath(path ...string) string {
@@ -42,6 +29,19 @@ func LogPath(path ...string) string {
 	}
 
 	items := []string{logDir}
+	items = append(items, path...)
+	return filepath.Join(items...)
+}
+
+// VarPath returns the provided path elements joined by a slash and
+// appended to the end of $INCUS_DIR, which defaults to /var/lib/incus.
+func VarPath(path ...string) string {
+	varDir := os.Getenv("INCUS_DIR")
+	if varDir == "" {
+		varDir = "/var/lib/incus"
+	}
+
+	items := []string{varDir}
 	items = append(items, path...)
 	return filepath.Join(items...)
 }
