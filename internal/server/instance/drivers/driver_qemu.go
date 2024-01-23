@@ -3435,7 +3435,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	cfg = qemuRawCfgOverride(cfg, d.expandedConfig)
 	// Write the config file to disk.
 	sb := qemuStringifyCfg(cfg...)
-	configPath := filepath.Join(d.LogPath(), "qemu.conf")
+	configPath := filepath.Join(d.RunPath(), "qemu.conf")
 	return configPath, monHooks, os.WriteFile(configPath, []byte(sb.String()), 0640)
 }
 
