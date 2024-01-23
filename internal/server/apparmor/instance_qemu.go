@@ -72,6 +72,11 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   deny /sys/module/apparmor/parameters/enabled r,
   deny /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
+{{if .agentPath -}}
+  {{ .agentPath }}/ r,
+  {{ .agentPath }}/* r,
+{{- end }}
+
 {{if .libraryPath -}}
   # Entries from LD_LIBRARY_PATH
 {{range $index, $element := .libraryPath}}
