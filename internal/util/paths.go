@@ -33,6 +33,20 @@ func LogPath(path ...string) string {
 	return filepath.Join(items...)
 }
 
+// RunPath returns the directory that Incus should put runtime data under.
+// If INCUS_DIR is set, this path is $INCUS_DIR/run, otherwise it is /run/incus.
+func RunPath(path ...string) string {
+	varDir := os.Getenv("INCUS_DIR")
+	runDir := "/run/incus"
+	if varDir != "" {
+		runDir = filepath.Join(varDir, "run")
+	}
+
+	items := []string{runDir}
+	items = append(items, path...)
+	return filepath.Join(items...)
+}
+
 // VarPath returns the provided path elements joined by a slash and
 // appended to the end of $INCUS_DIR, which defaults to /var/lib/incus.
 func VarPath(path ...string) string {
