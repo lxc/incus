@@ -41,7 +41,7 @@ func (s *targetSystemd) Start() error {
 }
 
 func (s *targetSystemd) Connect() (incus.InstanceServer, error) {
-	return incus.ConnectIncusUnix("/var/lib/incus/unix.socket", nil)
+	return incus.ConnectIncusUnix("/var/lib/incus/unix.socket", &incus.ConnectionArgs{SkipGetServer: true})
 }
 
 func (s *targetSystemd) Paths() (*DaemonPaths, error) {

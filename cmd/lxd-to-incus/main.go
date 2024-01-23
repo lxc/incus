@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/client"
-	lxdAPI "github.com/canonical/lxd/shared/api"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
@@ -17,7 +15,7 @@ import (
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
-	incusAPI "github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"
 )
@@ -82,7 +80,7 @@ func (c *cmdMigrate) Command() *cobra.Command {
 
 func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	var err error
-	var srcClient lxd.InstanceServer
+	var srcClient incus.InstanceServer
 	var targetClient incus.InstanceServer
 
 	// Confirm that we're root.
@@ -208,7 +206,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	rewriteCommands := [][]string{}
 
 	if !c.flagClusterMember {
-		var storagePools []lxdAPI.StoragePool
+		var storagePools []api.StoragePool
 		if !clustered {
 			storagePools, err = srcClient.GetStoragePools()
 			if err != nil {
@@ -288,7 +286,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed to get source server info: %w", err)
 		}
 
-		ovnNB, ok := srcServerInfo.Config["network.ovn.northbound_connection"].(string)
+		ovnNB, ok := srcServerInfo.Config["network.ovn.northbound_connection"]
 		if !ok && util.PathExists("/run/ovn/ovnnb_db.sock") {
 			ovnNB = "unix:/run/ovn/ovnnb_db.sock"
 		}
@@ -406,7 +404,7 @@ Instead this tool will be providing specific commands for each of the servers.
 			fmt.Printf("==> Stopping all workloads on server %q\n", member.ServerName)
 			_, _ = logFile.WriteString(fmt.Sprintf("Stopping instances on server %qn\n", member.ServerName))
 
-			op, err := srcClient.UpdateClusterMemberState(member.ServerName, lxdAPI.ClusterMemberStatePost{Action: "evacuate", Mode: "stop"})
+			op, err := srcClient.UpdateClusterMemberState(member.ServerName, api.ClusterMemberStatePost{Action: "evacuate", Mode: "stop"})
 			if err != nil {
 				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 				return fmt.Errorf("Failed to stop workloads %q: %w", member.ServerName, err)
@@ -751,7 +749,7 @@ Instead this tool will be providing specific commands for each of the servers.
 			fmt.Printf("==> Restoring workloads on server %q\n", member.ServerName)
 			_, _ = logFile.WriteString(fmt.Sprintf("Restoring workloads on %q\n", member.ServerName))
 
-			op, err := targetClient.UpdateClusterMemberState(member.ServerName, incusAPI.ClusterMemberStatePost{Action: "restore"})
+			op, err := targetClient.UpdateClusterMemberState(member.ServerName, api.ClusterMemberStatePost{Action: "restore"})
 			if err != nil {
 				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 				return fmt.Errorf("Failed to restore %q: %w", member.ServerName, err)

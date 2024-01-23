@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/canonical/lxd/client"
+	"github.com/lxc/incus/client"
 )
 
 type Source interface {
@@ -9,7 +9,7 @@ type Source interface {
 	Stop() error
 	Start() error
 	Purge() error
-	Connect() (lxd.InstanceServer, error)
+	Connect() (incus.InstanceServer, error)
 	Paths() (*DaemonPaths, error)
 	Name() string
 }

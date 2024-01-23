@@ -41,7 +41,7 @@ func (s *targetOpenRC) Start() error {
 }
 
 func (s *targetOpenRC) Connect() (incus.InstanceServer, error) {
-	return incus.ConnectIncusUnix("/var/lib/incus/unix.socket", nil)
+	return incus.ConnectIncusUnix("/var/lib/incus/unix.socket", &incus.ConnectionArgs{SkipGetServer: true})
 }
 
 func (s *targetOpenRC) Paths() (*DaemonPaths, error) {

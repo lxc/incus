@@ -1,8 +1,7 @@
 package main
 
 import (
-	"github.com/canonical/lxd/client"
-
+	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"
 )
@@ -41,8 +40,8 @@ func (s *srcDeb) Purge() error {
 	return err
 }
 
-func (s *srcDeb) Connect() (lxd.InstanceServer, error) {
-	return lxd.ConnectLXDUnix("/var/lib/lxd/unix.socket", nil)
+func (s *srcDeb) Connect() (incus.InstanceServer, error) {
+	return incus.ConnectIncusUnix("/var/lib/lxd/unix.socket", &incus.ConnectionArgs{SkipGetServer: true})
 }
 
 func (s *srcDeb) Paths() (*DaemonPaths, error) {
