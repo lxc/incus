@@ -29,6 +29,7 @@ Name                            | Description
 
 Name                            | Description
 :---                            | :----
+`INCUS_AGENT_PATH`              | Path to the directory including the `incus-agent` builds
 `INCUS_CLUSTER_UPDATE`          | Script to call on a cluster update
 `INCUS_DEVMONITOR_DIR`          | Path to be monitored by the device monitor. This is primarily for testing
 `INCUS_DOCUMENTATION`           | Path to the documentation to serve through the web server
