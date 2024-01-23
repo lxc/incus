@@ -49,6 +49,7 @@ func (s *OS) initDirs() error {
 		{filepath.Join(s.VarDir, "images"), 0700},
 		{s.LogDir, 0700},
 		{filepath.Join(s.VarDir, "networks"), 0711},
+		{s.RunDir, 0700},
 		{filepath.Join(s.VarDir, "security"), 0700},
 		{filepath.Join(s.VarDir, "security", "apparmor"), 0700},
 		{filepath.Join(s.VarDir, "security", "apparmor", "cache"), 0700},
