@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -156,6 +157,51 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed to connect to the source: %w", err)
 		}
 
+		// Look for API incompatibility (bool in /1.0 config).
+		resp, _, err := srcClient.RawQuery("GET", "/1.0", nil, "")
+		if err != nil {
+			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			return fmt.Errorf("Failed to get source server info: %w", err)
+		}
+
+		type lxdServer struct {
+			Config map[string]any `json:"config"`
+		}
+
+		s := lxdServer{}
+
+		err = json.Unmarshal(resp.Metadata, &s)
+		if err != nil {
+			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			return fmt.Errorf("Failed to parse source server config: %w", err)
+		}
+
+		badEntries := []string{}
+		for k, v := range s.Config {
+			_, ok := v.(string)
+			if !ok {
+				badEntries = append(badEntries, k)
+			}
+		}
+
+		if len(badEntries) > 0 {
+			fmt.Println("")
+			fmt.Println("The source server (LXD) has the following configuration keys that are incompatible with Incus:")
+
+			for _, k := range badEntries {
+				fmt.Printf(" - %s\n", k)
+			}
+
+			fmt.Println("")
+			fmt.Println("The present migration tool cannot properly connect to the LXD server with those configuration keys present.")
+			fmt.Println("Please unset those configuration keys through the `lxc config unset` command and retry `lxd-to-incus`.")
+			fmt.Println("")
+
+			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: Bad config keys: %v\n", badEntries))
+			return fmt.Errorf("Unable to interact with the source server")
+		}
+
+		// Get the source server info.
 		srcServerInfo, _, err := srcClient.GetServer()
 		if err != nil {
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
