@@ -2285,7 +2285,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	}
 
 	// Generate the LXC config
-	configPath := filepath.Join(d.LogPath(), "lxc.conf")
+	configPath := filepath.Join(d.RunPath(), "lxc.conf")
 	err = cc.SaveConfigFile(configPath)
 	if err != nil {
 		_ = os.Remove(configPath)
@@ -6985,7 +6985,7 @@ func (d *lxc) Console(protocol string) (*os.File, chan error, error) {
 		"forkconsole",
 		project.Instance(d.Project().Name, d.Name()),
 		d.state.OS.LxcPath,
-		filepath.Join(d.LogPath(), "lxc.conf"),
+		filepath.Join(d.RunPath(), "lxc.conf"),
 		"tty=0",
 		"escape=-1"}
 
@@ -7063,7 +7063,7 @@ func (d *lxc) ConsoleLog(opts liblxc.ConsoleLogOptions) (string, error) {
 // Exec executes a command inside the instance.
 func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, stderr *os.File) (instance.Cmd, error) {
 	// Generate the LXC config if missing.
-	configPath := filepath.Join(d.LogPath(), "lxc.conf")
+	configPath := filepath.Join(d.RunPath(), "lxc.conf")
 	if !util.PathExists(configPath) {
 		cc, err := d.initLXC(true)
 		if err != nil {
@@ -7100,7 +7100,7 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		"forkexec",
 		cname,
 		d.state.OS.LxcPath,
-		filepath.Join(d.LogPath(), "lxc.conf"),
+		filepath.Join(d.RunPath(), "lxc.conf"),
 		req.Cwd,
 		fmt.Sprintf("%d", req.User),
 		fmt.Sprintf("%d", req.Group),
@@ -7592,7 +7592,7 @@ func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID i
 
 func (d *lxc) insertMountLXC(source, target, fstype string, flags int) error {
 	cname := project.Instance(d.Project().Name, d.Name())
-	configPath := filepath.Join(d.LogPath(), "lxc.conf")
+	configPath := filepath.Join(d.RunPath(), "lxc.conf")
 	if fstype == "" {
 		fstype = "none"
 	}
@@ -7688,7 +7688,7 @@ func (d *lxc) removeMount(mount string) error {
 	}
 
 	if d.state.OS.LXCFeatures["mount_injection_file"] {
-		configPath := filepath.Join(d.LogPath(), "lxc.conf")
+		configPath := filepath.Join(d.RunPath(), "lxc.conf")
 		cname := project.Instance(d.Project().Name, d.Name())
 
 		if !strings.HasPrefix(mount, "/") {
