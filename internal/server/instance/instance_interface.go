@@ -150,6 +150,7 @@ type Instance interface {
 	LogFilePath() string
 	ConsoleBufferLogPath() string
 	LogPath() string
+	RunPath() string
 	DevicesPath() string
 
 	// Storage.

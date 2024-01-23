@@ -386,6 +386,12 @@ func (d *common) LogPath() string {
 	return internalUtil.LogPath(name)
 }
 
+// RunPath returns the instance's runtime path.
+func (d *common) RunPath() string {
+	name := project.Instance(d.project.Name, d.name)
+	return internalUtil.RunPath(name)
+}
+
 // Path returns the instance's path.
 func (d *common) Path() string {
 	return storagePools.InstancePath(d.dbType, d.project.Name, d.name, d.isSnapshot)
