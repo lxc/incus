@@ -749,11 +749,12 @@ func TestQemuConfigTemplates(t *testing.T) {
 			expected string
 		}{{
 			qemuDriveConfigOpts{
+				name:     "config",
 				dev:      qemuDevOpts{"pci", "qemu_pcie0", "00.5", false},
 				path:     "/var/9p",
 				protocol: "9p",
 			},
-			`# Config drive (9p)
+			`# Shared config drive (9p)
 			[fsdev "qemu_config"]
 			fsdriver = "local"
 			security_model = "none"
@@ -768,11 +769,12 @@ func TestQemuConfigTemplates(t *testing.T) {
 			fsdev = "qemu_config"`,
 		}, {
 			qemuDriveConfigOpts{
+				name:     "config",
 				dev:      qemuDevOpts{"pcie", "qemu_pcie1", "10.2", true},
 				path:     "/dev/virtio-fs",
 				protocol: "virtio-fs",
 			},
-			`# Config drive (virtio-fs)
+			`# Shared config drive (virtio-fs)
 			[chardev "qemu_config"]
 			backend = "socket"
 			path = "/dev/virtio-fs"
@@ -786,11 +788,12 @@ func TestQemuConfigTemplates(t *testing.T) {
 			chardev = "qemu_config"`,
 		}, {
 			qemuDriveConfigOpts{
+				name:     "config",
 				dev:      qemuDevOpts{"ccw", "qemu_pcie0", "00.0", false},
 				path:     "/var/virtio-fs",
 				protocol: "virtio-fs",
 			},
-			`# Config drive (virtio-fs)
+			`# Shared config drive (virtio-fs)
 			[chardev "qemu_config"]
 			backend = "socket"
 			path = "/var/virtio-fs"
@@ -801,11 +804,12 @@ func TestQemuConfigTemplates(t *testing.T) {
 			chardev = "qemu_config"`,
 		}, {
 			qemuDriveConfigOpts{
+				name:     "config",
 				dev:      qemuDevOpts{"ccw", "qemu_pcie0", "00.0", true},
 				path:     "/dev/9p",
 				protocol: "9p",
 			},
-			`# Config drive (9p)
+			`# Shared config drive (9p)
 			[fsdev "qemu_config"]
 			fsdriver = "local"
 			security_model = "none"

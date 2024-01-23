@@ -3157,6 +3157,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 			devAddr:       devAddr,
 			multifunction: multi,
 		},
+		name:     "config",
 		protocol: "9p",
 		path:     d.configDriveMountPath(),
 	}
@@ -3195,6 +3196,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 				devAddr:       devAddr,
 				multifunction: multi,
 			},
+			name:     "config",
 			protocol: "virtio-fs",
 			path:     configSockPath,
 		}
