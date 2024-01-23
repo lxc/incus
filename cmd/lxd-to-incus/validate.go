@@ -11,8 +11,8 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-var minLXDVersion = &version.DottedVersion{4, 0, 0}
-var maxLXDVersion = &version.DottedVersion{5, 20, 0}
+var minLXDVersion = &version.DottedVersion{Major: 4, Minor: 0, Patch: 0}
+var maxLXDVersion = &version.DottedVersion{Major: 5, Minor: 20, Patch: 0}
 
 func (c *cmdMigrate) validate(source source, target target) error {
 	srcClient, err := source.connect()
