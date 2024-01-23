@@ -1010,6 +1010,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 	// Wipe any existing log for this instance name.
 	if clearLogDir {
 		_ = os.RemoveAll(inst.LogPath())
+		_ = os.RemoveAll(inst.RunPath())
 	}
 
 	cleanup = revert.Clone().Fail
