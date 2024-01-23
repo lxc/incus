@@ -68,6 +68,7 @@ type cmdMigrate struct {
 	flagIgnoreVersionCheck bool
 }
 
+// Command generates the command definition.
 func (c *cmdMigrate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "lxd-to-incus"
@@ -79,6 +80,7 @@ func (c *cmdMigrate) Command() *cobra.Command {
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	var err error
 	var srcClient incus.InstanceServer
