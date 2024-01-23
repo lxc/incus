@@ -288,22 +288,22 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		rbdRenamed := []string{}
 		for _, pool := range storagePools {
 			if pool.Driver == "ceph" {
-				cluster, ok := pool.Config["ceph.cluster_name"]
+				cephCluster, ok := pool.Config["ceph.cluster_name"]
 				if !ok {
-					cluster = "ceph"
+					cephCluster = "ceph"
 				}
 
-				client, ok := pool.Config["ceph.user.name"]
+				cephUser, ok := pool.Config["ceph.user.name"]
 				if !ok {
-					client = "admin"
+					cephUser = "admin"
 				}
 
-				rbdPool, ok := pool.Config["ceph.osd.pool_name"]
+				cephPool, ok := pool.Config["ceph.osd.pool_name"]
 				if !ok {
-					rbdPool = pool.Name
+					cephPool = pool.Name
 				}
 
-				renameCmd := []string{"rbd", "rename", "--cluster", cluster, "--name", fmt.Sprintf("client.%s", client), fmt.Sprintf("%s/lxd_%s", rbdPool, rbdPool), fmt.Sprintf("%s/incus_%s", rbdPool, rbdPool)}
+				renameCmd := []string{"rbd", "rename", "--cluster", cephCluster, "--name", fmt.Sprintf("client.%s", cephUser), fmt.Sprintf("%s/lxd_%s", cephPool, cephPool), fmt.Sprintf("%s/incus_%s", cephPool, cephPool)}
 				if !util.ValueInSlice(pool.Name, rbdRenamed) {
 					rewriteCommands = append(rewriteCommands, renameCmd)
 					rbdRenamed = append(rbdRenamed, pool.Name)
