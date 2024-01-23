@@ -548,7 +548,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 		fmt.Println("")
 		fmt.Printf("WARNING: %s was detected to be a mountpoint.\n", sourcePaths.daemon)
 		fmt.Printf("The migration logic has moved this mount to the new target path at %s.\n", targetPaths.daemon)
-		fmt.Printf("However it is your responsability to modify your system settings to ensure this mount will be properly restored on reboot.\n")
+		fmt.Printf("However it is your responsibility to modify your system settings to ensure this mount will be properly restored on reboot.\n")
 		fmt.Println("")
 	} else {
 		_, _ = logFile.WriteString("Moving data over\n")
