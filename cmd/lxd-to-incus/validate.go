@@ -14,13 +14,13 @@ import (
 var minLXDVersion = &version.DottedVersion{4, 0, 0}
 var maxLXDVersion = &version.DottedVersion{5, 20, 0}
 
-func (c *cmdMigrate) validate(source Source, target Target) error {
-	srcClient, err := source.Connect()
+func (c *cmdMigrate) validate(source source, target target) error {
+	srcClient, err := source.connect()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to source: %v", err)
 	}
 
-	targetClient, err := target.Connect()
+	targetClient, err := target.connect()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to target: %v", err)
 	}
@@ -371,32 +371,32 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 	}
 
 	// Storage validation.
-	targetPaths, err := target.Paths()
+	targetPaths, err := target.paths()
 	if err != nil {
 		return fmt.Errorf("Failed to get target paths: %w", err)
 	}
 
-	sourcePaths, err := source.Paths()
+	sourcePaths, err := source.paths()
 	if err != nil {
 		return fmt.Errorf("Failed to get source paths: %w", err)
 	}
 
-	fi, err := os.Lstat(sourcePaths.Daemon)
+	fi, err := os.Lstat(sourcePaths.daemon)
 	if err != nil {
 		return err
 	}
 
 	if fi.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("The source path %q is a symlink. Incus does not support its daemon directory being a symlink, please switch to a bind-mount.", sourcePaths.Daemon)
+		return fmt.Errorf("The source path %q is a symlink. Incus does not support its daemon directory being a symlink, please switch to a bind-mount.", sourcePaths.daemon)
 	}
 
-	if linux.IsMountPoint(targetPaths.Daemon) {
-		return fmt.Errorf("The target path %q is a mountpoint. This isn't currently supported as the target path needs to be deleted during the migration.", targetPaths.Daemon)
+	if linux.IsMountPoint(targetPaths.daemon) {
+		return fmt.Errorf("The target path %q is a mountpoint. This isn't currently supported as the target path needs to be deleted during the migration.", targetPaths.daemon)
 	}
 
-	srcFilesystem, _ := linux.DetectFilesystem(sourcePaths.Daemon)
-	targetFilesystem, _ := linux.DetectFilesystem(targetPaths.Daemon)
-	if srcFilesystem == "btrfs" && targetFilesystem != "btrfs" && !linux.IsMountPoint(sourcePaths.Daemon) {
+	srcFilesystem, _ := linux.DetectFilesystem(sourcePaths.daemon)
+	targetFilesystem, _ := linux.DetectFilesystem(targetPaths.daemon)
+	if srcFilesystem == "btrfs" && targetFilesystem != "btrfs" && !linux.IsMountPoint(sourcePaths.daemon) {
 		return fmt.Errorf("Source daemon running on btrfs but being moved to non-btrfs target")
 	}
 
