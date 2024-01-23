@@ -16,11 +16,7 @@ func (s *targetOpenRC) present() bool {
 	}
 
 	_, err := subprocess.RunCommand("rc-service", "--exists", "incus")
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 func (s *targetOpenRC) stop() error {

@@ -16,11 +16,7 @@ func (s *targetSystemd) present() bool {
 	}
 
 	_, err := subprocess.RunCommand("systemctl", "list-unit-files", "incus.service")
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 func (s *targetSystemd) stop() error {

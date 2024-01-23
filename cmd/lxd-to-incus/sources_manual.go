@@ -12,11 +12,7 @@ import (
 type srcManual struct{}
 
 func (s *srcManual) present() bool {
-	if !util.PathExists("/var/lib/lxd") {
-		return false
-	}
-
-	return true
+	return util.PathExists("/var/lib/lxd")
 }
 
 func (s *srcManual) name() string {
