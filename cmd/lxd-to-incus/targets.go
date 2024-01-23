@@ -4,13 +4,13 @@ import (
 	"github.com/lxc/incus/client"
 )
 
-type Target interface {
-	Present() bool
-	Stop() error
-	Start() error
-	Connect() (incus.InstanceServer, error)
-	Paths() (*DaemonPaths, error)
-	Name() string
+type target interface {
+	present() bool
+	stop() error
+	start() error
+	connect() (incus.InstanceServer, error)
+	paths() (*daemonPaths, error)
+	name() string
 }
 
-var targets = []Target{&targetSystemd{}, &targetOpenRC{}}
+var targets = []target{&targetSystemd{}, &targetOpenRC{}}

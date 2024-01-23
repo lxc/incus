@@ -1,7 +1,7 @@
 package main
 
-type DaemonPaths struct {
-	Daemon string
-	Logs   string
-	Cache  string
+type daemonPaths struct {
+	daemon string
+	logs   string
+	cache  string
 }

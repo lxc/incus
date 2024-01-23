@@ -8,7 +8,7 @@ import (
 
 type srcDeb struct{}
 
-func (s *srcDeb) Present() bool {
+func (s *srcDeb) present() bool {
 	// Validate that the Debian package is installed.
 	if !util.PathExists("/var/lib/dpkg/info/lxd.list") {
 		return false
@@ -21,33 +21,33 @@ func (s *srcDeb) Present() bool {
 	return true
 }
 
-func (s *srcDeb) Name() string {
+func (s *srcDeb) name() string {
 	return ".deb package"
 }
 
-func (s *srcDeb) Stop() error {
+func (s *srcDeb) stop() error {
 	_, err := subprocess.RunCommand("systemctl", "stop", "lxd-containers.service", "lxd.service", "lxd.socket")
 	return err
 }
 
-func (s *srcDeb) Start() error {
+func (s *srcDeb) start() error {
 	_, err := subprocess.RunCommand("systemctl", "start", "lxd.socket", "lxd-containers.service")
 	return err
 }
 
-func (s *srcDeb) Purge() error {
+func (s *srcDeb) purge() error {
 	_, err := subprocess.RunCommand("apt-get", "remove", "--yes", "--purge", "lxd", "lxd-client")
 	return err
 }
 
-func (s *srcDeb) Connect() (incus.InstanceServer, error) {
+func (s *srcDeb) connect() (incus.InstanceServer, error) {
 	return incus.ConnectIncusUnix("/var/lib/lxd/unix.socket", &incus.ConnectionArgs{SkipGetServer: true})
 }
 
-func (s *srcDeb) Paths() (*DaemonPaths, error) {
-	return &DaemonPaths{
-		Daemon: "/var/lib/lxd",
-		Logs:   "/var/log/lxd",
-		Cache:  "/var/cache/lxd",
+func (s *srcDeb) paths() (*daemonPaths, error) {
+	return &daemonPaths{
+		daemon: "/var/lib/lxd",
+		logs:   "/var/log/lxd",
+		cache:  "/var/cache/lxd",
 	}, nil
 }

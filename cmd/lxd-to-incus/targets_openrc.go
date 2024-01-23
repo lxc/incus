@@ -10,25 +10,21 @@ import (
 
 type targetOpenRC struct{}
 
-func (s *targetOpenRC) Present() bool {
+func (s *targetOpenRC) present() bool {
 	if !util.PathExists("/var/lib/incus/") {
 		return false
 	}
 
 	_, err := subprocess.RunCommand("rc-service", "--exists", "incus")
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
-func (s *targetOpenRC) Stop() error {
+func (s *targetOpenRC) stop() error {
 	_, err := subprocess.RunCommand("rc-service", "incus", "stop")
 	return err
 }
 
-func (s *targetOpenRC) Start() error {
+func (s *targetOpenRC) start() error {
 	_, err := subprocess.RunCommand("rc-service", "incus", "start")
 	if err != nil {
 		return err
@@ -40,18 +36,18 @@ func (s *targetOpenRC) Start() error {
 	return nil
 }
 
-func (s *targetOpenRC) Connect() (incus.InstanceServer, error) {
+func (s *targetOpenRC) connect() (incus.InstanceServer, error) {
 	return incus.ConnectIncusUnix("/var/lib/incus/unix.socket", &incus.ConnectionArgs{SkipGetServer: true})
 }
 
-func (s *targetOpenRC) Paths() (*DaemonPaths, error) {
-	return &DaemonPaths{
-		Daemon: "/var/lib/incus",
-		Logs:   "/var/log/incus",
-		Cache:  "/var/cache/incus",
+func (s *targetOpenRC) paths() (*daemonPaths, error) {
+	return &daemonPaths{
+		daemon: "/var/lib/incus",
+		logs:   "/var/log/incus",
+		cache:  "/var/cache/incus",
 	}, nil
 }
 
-func (s *targetOpenRC) Name() string {
+func (s *targetOpenRC) name() string {
 	return "openrc"
 }

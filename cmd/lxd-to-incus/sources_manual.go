@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -10,20 +11,16 @@ import (
 
 type srcManual struct{}
 
-func (s *srcManual) Present() bool {
-	if !util.PathExists("/var/lib/lxd") {
-		return false
-	}
-
-	return true
+func (s *srcManual) present() bool {
+	return util.PathExists("/var/lib/lxd")
 }
 
-func (s *srcManual) Name() string {
+func (s *srcManual) name() string {
 	return "manual installation"
 }
 
-func (s *srcManual) Stop() error {
-	d, err := s.Connect()
+func (s *srcManual) stop() error {
+	d, err := s.connect()
 	if err != nil {
 		return err
 	}
@@ -34,7 +31,11 @@ func (s *srcManual) Stop() error {
 	}
 
 	// Request shutdown, this shouldn't return until daemon has stopped so use a large request timeout.
-	httpTransport := httpClient.Transport.(*http.Transport)
+	httpTransport, ok := httpClient.Transport.(*http.Transport)
+	if !ok {
+		return fmt.Errorf("Bad transport type")
+	}
+
 	httpTransport.ResponseHeaderTimeout = 3600 * time.Second
 	_, _, err = d.RawQuery("PUT", "/internal/shutdown", nil, "")
 	if err != nil {
@@ -44,22 +45,22 @@ func (s *srcManual) Stop() error {
 	return nil
 }
 
-func (s *srcManual) Start() error {
+func (s *srcManual) start() error {
 	return nil
 }
 
-func (s *srcManual) Purge() error {
+func (s *srcManual) purge() error {
 	return nil
 }
 
-func (s *srcManual) Connect() (incus.InstanceServer, error) {
+func (s *srcManual) connect() (incus.InstanceServer, error) {
 	return incus.ConnectIncusUnix("/var/lib/lxd/unix.socket", &incus.ConnectionArgs{SkipGetServer: true})
 }
 
-func (s *srcManual) Paths() (*DaemonPaths, error) {
-	return &DaemonPaths{
-		Daemon: "/var/lib/lxd",
-		Logs:   "/var/log/lxd",
-		Cache:  "/var/cache/lxd",
+func (s *srcManual) paths() (*daemonPaths, error) {
+	return &daemonPaths{
+		daemon: "/var/lib/lxd",
+		logs:   "/var/log/lxd",
+		cache:  "/var/cache/lxd",
 	}, nil
 }
