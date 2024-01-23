@@ -71,7 +71,7 @@ func lz4Uncompress(zfilename string) error {
 	}
 
 	if n != 4 {
-		return fmt.Errorf("Read only %n bytes from %q: %w", n, zfilename)
+		return fmt.Errorf("Read only %d bytes from %q", n, zfilename)
 	}
 
 	// Check the file magic, and return now if it's not an lz4 file.

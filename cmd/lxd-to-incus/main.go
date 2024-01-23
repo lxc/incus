@@ -2,14 +2,13 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/canonical/lxd/client"
-	lxdAPI "github.com/canonical/lxd/shared/api"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
@@ -17,7 +16,7 @@ import (
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
-	incusAPI "github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/util"
 )
@@ -82,7 +81,7 @@ func (c *cmdMigrate) Command() *cobra.Command {
 
 func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	var err error
-	var srcClient lxd.InstanceServer
+	var srcClient incus.InstanceServer
 	var targetClient incus.InstanceServer
 
 	// Confirm that we're root.
@@ -158,6 +157,51 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed to connect to the source: %w", err)
 		}
 
+		// Look for API incompatibility (bool in /1.0 config).
+		resp, _, err := srcClient.RawQuery("GET", "/1.0", nil, "")
+		if err != nil {
+			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			return fmt.Errorf("Failed to get source server info: %w", err)
+		}
+
+		type lxdServer struct {
+			Config map[string]any `json:"config"`
+		}
+
+		s := lxdServer{}
+
+		err = json.Unmarshal(resp.Metadata, &s)
+		if err != nil {
+			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			return fmt.Errorf("Failed to parse source server config: %w", err)
+		}
+
+		badEntries := []string{}
+		for k, v := range s.Config {
+			_, ok := v.(string)
+			if !ok {
+				badEntries = append(badEntries, k)
+			}
+		}
+
+		if len(badEntries) > 0 {
+			fmt.Println("")
+			fmt.Println("The source server (LXD) has the following configuration keys that are incompatible with Incus:")
+
+			for _, k := range badEntries {
+				fmt.Printf(" - %s\n", k)
+			}
+
+			fmt.Println("")
+			fmt.Println("The present migration tool cannot properly connect to the LXD server with those configuration keys present.")
+			fmt.Println("Please unset those configuration keys through the `lxc config unset` command and retry `lxd-to-incus`.")
+			fmt.Println("")
+
+			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: Bad config keys: %v\n", badEntries))
+			return fmt.Errorf("Unable to interact with the source server")
+		}
+
+		// Get the source server info.
 		srcServerInfo, _, err := srcClient.GetServer()
 		if err != nil {
 			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
@@ -208,7 +252,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 	rewriteCommands := [][]string{}
 
 	if !c.flagClusterMember {
-		var storagePools []lxdAPI.StoragePool
+		var storagePools []api.StoragePool
 		if !clustered {
 			storagePools, err = srcClient.GetStoragePools()
 			if err != nil {
@@ -288,7 +332,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			return fmt.Errorf("Failed to get source server info: %w", err)
 		}
 
-		ovnNB, ok := srcServerInfo.Config["network.ovn.northbound_connection"].(string)
+		ovnNB, ok := srcServerInfo.Config["network.ovn.northbound_connection"]
 		if !ok && util.PathExists("/run/ovn/ovnnb_db.sock") {
 			ovnNB = "unix:/run/ovn/ovnnb_db.sock"
 		}
@@ -343,8 +387,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			fmt.Println(`
 The migration is now ready to proceed.
 At this point, the source server and all its instances will be stopped.
-Instances will come back online once the migration is complete.
-`)
+Instances will come back online once the migration is complete.`)
 
 			ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
 			if err != nil {
@@ -371,8 +414,7 @@ Manual action will be needed on each of the server prior to Incus being function
 It will then convert the current server over to Incus and then wait for the other servers to be converted.
 
 Do not attempt to manually run this tool on any of the other servers in the cluster.
-Instead this tool will be providing specific commands for each of the servers.
-`)
+Instead this tool will be providing specific commands for each of the servers.`)
 
 			ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
 			if err != nil {
@@ -406,7 +448,7 @@ Instead this tool will be providing specific commands for each of the servers.
 			fmt.Printf("==> Stopping all workloads on server %q\n", member.ServerName)
 			_, _ = logFile.WriteString(fmt.Sprintf("Stopping instances on server %qn\n", member.ServerName))
 
-			op, err := srcClient.UpdateClusterMemberState(member.ServerName, lxdAPI.ClusterMemberStatePost{Action: "evacuate", Mode: "stop"})
+			op, err := srcClient.UpdateClusterMemberState(member.ServerName, api.ClusterMemberStatePost{Action: "evacuate", Mode: "stop"})
 			if err != nil {
 				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 				return fmt.Errorf("Failed to stop workloads %q: %w", member.ServerName, err)
@@ -649,7 +691,8 @@ Instead this tool will be providing specific commands for each of the servers.
 		if !c.flagClusterMember {
 			_, _ = logFile.WriteString("Waiting for user to run command on other cluster members\n")
 
-			fmt.Println("=> Waiting for other cluster servers\n")
+			fmt.Println("=> Waiting for other cluster servers")
+			fmt.Println("")
 			fmt.Printf("Please run `lxd-to-incus --cluster-member` on all other servers in the cluster\n\n")
 			for {
 				ok, err := c.global.asker.AskBool("The command has been started on all other servers? [default=no]: ", "no")
@@ -751,7 +794,7 @@ Instead this tool will be providing specific commands for each of the servers.
 			fmt.Printf("==> Restoring workloads on server %q\n", member.ServerName)
 			_, _ = logFile.WriteString(fmt.Sprintf("Restoring workloads on %q\n", member.ServerName))
 
-			op, err := targetClient.UpdateClusterMemberState(member.ServerName, incusAPI.ClusterMemberStatePost{Action: "restore"})
+			op, err := targetClient.UpdateClusterMemberState(member.ServerName, api.ClusterMemberStatePost{Action: "restore"})
 			if err != nil {
 				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 				return fmt.Errorf("Failed to restore %q: %w", member.ServerName, err)

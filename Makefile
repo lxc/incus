@@ -37,7 +37,6 @@ endif
 	CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" $(GO) install -v -tags "$(TAG_SQLITE3)" $(DEBUG) ./...
 	CGO_ENABLED=0 $(GO) install -v -tags netgo ./cmd/incus-migrate
 	CGO_ENABLED=0 $(GO) install -v -tags agent,netgo ./cmd/incus-agent
-	cd cmd/lxd-to-incus && CC="$(CC)" CGO_LDFLAGS_ALLOW="$(CGO_LDFLAGS_ALLOW)" $(GO) install -v ./
 	@echo "Incus built successfully"
 
 .PHONY: client
@@ -99,10 +98,6 @@ endif
 	$(GO) get github.com/openfga/go-sdk@v0.3.1-go1.20
 	$(GO) mod tidy --go=1.20
 	$(GO) get toolchain@none
-
-	cd cmd/lxd-to-incus && $(GO) get -t -v -d -u ./...
-	cd cmd/lxd-to-incus && $(GO) get github.com/canonical/lxd@lxd-5.19
-	cd cmd/lxd-to-incus && $(GO) mod tidy --go=1.20
 
 	cd test/mini-oidc && $(GO) get -t -v -d -u ./...
 	cd test/mini-oidc && $(GO) mod tidy --go=1.20
@@ -253,7 +248,6 @@ dist: doc
 
 	# Download dependencies
 	(cd $(TMP)/incus-$(VERSION) ; $(GO) mod vendor)
-	(cd $(TMP)/incus-$(VERSION)/cmd/lxd-to-incus ; $(GO) mod vendor)
 
 	# Download the cowsql libraries
 	git clone --depth=1 https://github.com/cowsql/cowsql $(TMP)/incus-$(VERSION)/vendor/cowsql

@@ -4,8 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/canonical/lxd/client"
-
+	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared/util"
 )
 
@@ -53,8 +52,8 @@ func (s *srcManual) Purge() error {
 	return nil
 }
 
-func (s *srcManual) Connect() (lxd.InstanceServer, error) {
-	return lxd.ConnectLXDUnix("/var/lib/lxd/unix.socket", nil)
+func (s *srcManual) Connect() (incus.InstanceServer, error) {
+	return incus.ConnectIncusUnix("/var/lib/lxd/unix.socket", &incus.ConnectionArgs{SkipGetServer: true})
 }
 
 func (s *srcManual) Paths() (*DaemonPaths, error) {

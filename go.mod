@@ -29,7 +29,7 @@ require (
 	github.com/mdlayher/ndp v1.0.1
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/mdlayher/vsock v1.2.1
-	github.com/miekg/dns v1.1.57
+	github.com/miekg/dns v1.1.58
 	github.com/minio/madmin-go v1.7.5
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/mitchellh/mapstructure v1.5.0
@@ -37,6 +37,7 @@ require (
 	github.com/openfga/go-sdk v0.3.1-go1.20
 	github.com/osrg/gobgp/v3 v3.22.0
 	github.com/ovn-org/libovsdb v0.6.1-0.20230912124059-239822fe891a
+	github.com/pierrec/lz4/v4 v4.1.21
 	github.com/pkg/sftp v1.13.6
 	github.com/pkg/xattr v0.4.9
 	github.com/robfig/cron/v3 v3.0.1
@@ -133,12 +134,12 @@ require (
 	go.opentelemetry.io/otel/metric v1.22.0 // indirect
 	go.opentelemetry.io/otel/trace v1.22.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
+	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
 	google.golang.org/grpc v1.60.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect

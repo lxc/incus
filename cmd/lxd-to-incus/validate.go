@@ -5,11 +5,9 @@ import (
 	"os"
 	"os/exec"
 
-	lxdAPI "github.com/canonical/lxd/shared/api"
-
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/version"
-	incusAPI "github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/util"
 )
 
@@ -84,7 +82,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 		}
 
 		// Check if any instance is persent.
-		names, err = srcClient.GetInstanceNames(lxdAPI.InstanceTypeAny)
+		names, err = srcClient.GetInstanceNames(api.InstanceTypeAny)
 		if err != nil {
 			return false, err
 		}
@@ -151,7 +149,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 		}
 
 		// Check if any instance is present.
-		names, err = targetClient.GetInstanceNames(incusAPI.InstanceTypeAny)
+		names, err = targetClient.GetInstanceNames(api.InstanceTypeAny)
 		if err != nil {
 			return false, err
 		}
@@ -297,9 +295,9 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 	for _, project := range projects {
 		c := srcClient.UseProject(project.Name)
 
-		instances, err := c.GetInstances(lxdAPI.InstanceTypeAny)
+		instances, err := c.GetInstances(api.InstanceTypeAny)
 		if err != nil {
-			fmt.Errorf("Couldn't list instances in project %q: %w", err)
+			return fmt.Errorf("Couldn't list instances in project %q: %w", project.Name, err)
 		}
 
 		for _, inst := range instances {
@@ -322,7 +320,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 
 		profiles, err := c.GetProfiles()
 		if err != nil {
-			fmt.Errorf("Couldn't list profiles in project %q: %w", err)
+			return fmt.Errorf("Couldn't list profiles in project %q: %w", project.Name, err)
 		}
 
 		for _, profile := range profiles {
