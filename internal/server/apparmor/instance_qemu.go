@@ -63,6 +63,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 
   # Instance specific paths
   {{ .logPath }}/** rwk,
+  {{ .runPath }}/** rwk,
   {{ .path }}/** rwk,
   {{ .devicesPath }}/** rwk,
 
