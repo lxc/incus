@@ -216,7 +216,6 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"name":           InstanceProfileName(inst),
 			"path":           path,
 			"raw":            rawContent,
-			"userns":         sysOS.RunningInUserNS,
 			"ovmfPath":       ovmfPath,
 		})
 		if err != nil {
