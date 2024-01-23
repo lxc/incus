@@ -85,7 +85,9 @@ func main() {
 		`Command line client for Incus
 
 All of Incus's features can be driven through the various commands below.
-For help with any of those, simply call them with --help.`))
+For help with any of those, simply call them with --help.
+
+Custom commands can be defined through aliases, use "incus alias" to control those.`))
 	app.SilenceUsage = true
 	app.SilenceErrors = true
 	app.CompletionOptions = cobra.CompletionOptions{HiddenDefaultCmd: true}
@@ -329,7 +331,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 	var configDir string
 	if os.Getenv("INCUS_CONF") != "" {
 		configDir = os.Getenv("INCUS_CONF")
-	} else if os.Getenv("HOME") != "" {
+	} else if os.Getenv("HOME") != "" && util.PathExists(os.Getenv("HOME")) {
 		configDir = path.Join(os.Getenv("HOME"), ".config", "incus")
 	} else {
 		user, err := user.Current()
@@ -337,7 +339,14 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		configDir = path.Join(user.HomeDir, ".config", "incus")
+		if util.PathExists(user.HomeDir) {
+			configDir = path.Join(user.HomeDir, ".config", "incus")
+		}
+	}
+
+	// If no homedir could be found, treat as if --force-local was passed.
+	if configDir == "" {
+		c.flagForceLocal = true
 	}
 
 	c.confPath = os.ExpandEnv(path.Join(configDir, "config.yml"))
