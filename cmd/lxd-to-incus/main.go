@@ -467,7 +467,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	_, _ = logFile.WriteString("Stopping the source server\n")
 	err = source.stop()
 	if err != nil {
-		fmt.Errorf("Failed to stop the source server: %w", err)
+		return fmt.Errorf("Failed to stop the source server: %w", err)
 	}
 
 	// Stop target.
@@ -475,7 +475,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	_, _ = logFile.WriteString("Stopping the target server\n")
 	err = target.stop()
 	if err != nil {
-		fmt.Errorf("Failed to stop the target server: %w", err)
+		return fmt.Errorf("Failed to stop the target server: %w", err)
 	}
 
 	// Unmount potential mount points.
@@ -809,10 +809,11 @@ Instead this tool will be providing specific commands for each of the servers.`)
 	}
 
 	completeFile, err := os.Create(filepath.Join(targetPaths.daemon, ".migrated-from-lxd"))
-	defer completeFile.Close()
 	if err != nil {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
 	}
+
+	defer completeFile.Close()
 
 	// Confirm uninstall.
 	if !c.flagYes {
