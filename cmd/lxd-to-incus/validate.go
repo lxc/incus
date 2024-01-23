@@ -297,7 +297,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 
 		instances, err := c.GetInstances(api.InstanceTypeAny)
 		if err != nil {
-			fmt.Errorf("Couldn't list instances in project %q: %w", err)
+			return fmt.Errorf("Couldn't list instances in project %q: %w", project.Name, err)
 		}
 
 		for _, inst := range instances {
@@ -320,7 +320,7 @@ func (c *cmdMigrate) validate(source Source, target Target) error {
 
 		profiles, err := c.GetProfiles()
 		if err != nil {
-			fmt.Errorf("Couldn't list profiles in project %q: %w", err)
+			return fmt.Errorf("Couldn't list profiles in project %q: %w", project.Name, err)
 		}
 
 		for _, profile := range profiles {

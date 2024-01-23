@@ -387,8 +387,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 			fmt.Println(`
 The migration is now ready to proceed.
 At this point, the source server and all its instances will be stopped.
-Instances will come back online once the migration is complete.
-`)
+Instances will come back online once the migration is complete.`)
 
 			ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
 			if err != nil {
@@ -415,8 +414,7 @@ Manual action will be needed on each of the server prior to Incus being function
 It will then convert the current server over to Incus and then wait for the other servers to be converted.
 
 Do not attempt to manually run this tool on any of the other servers in the cluster.
-Instead this tool will be providing specific commands for each of the servers.
-`)
+Instead this tool will be providing specific commands for each of the servers.`)
 
 			ok, err := c.global.asker.AskBool("Proceed with the migration? [default=no]: ", "no")
 			if err != nil {
@@ -693,7 +691,8 @@ Instead this tool will be providing specific commands for each of the servers.
 		if !c.flagClusterMember {
 			_, _ = logFile.WriteString("Waiting for user to run command on other cluster members\n")
 
-			fmt.Println("=> Waiting for other cluster servers\n")
+			fmt.Println("=> Waiting for other cluster servers")
+			fmt.Println("")
 			fmt.Printf("Please run `lxd-to-incus --cluster-member` on all other servers in the cluster\n\n")
 			for {
 				ok, err := c.global.asker.AskBool("The command has been started on all other servers? [default=no]: ", "no")
