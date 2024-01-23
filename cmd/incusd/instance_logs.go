@@ -94,7 +94,6 @@ var instanceExecOutputsCmd = APIEndpoint{
 //	            type: string
 //	          example: |-
 //	            [
-//	              "/1.0/instances/foo/logs/lxc.conf",
 //	              "/1.0/instances/foo/logs/lxc.log"
 //	            ]
 //	  "403":
@@ -670,9 +669,7 @@ func validLogFileName(fname string) bool {
 	 * to deal with any escaping or whatever.
 	 */
 	return fname == "lxc.log" ||
-		fname == "lxc.conf" ||
 		fname == "qemu.log" ||
-		fname == "qemu.conf" ||
 		strings.HasPrefix(fname, "migration_") ||
 		strings.HasPrefix(fname, "snapshot_")
 }
