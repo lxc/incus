@@ -1017,7 +1017,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		// System requirement errors are handled during policy generation instead of here
 		ok, err := seccomp.InstanceNeedsIntercept(d.state, d)
 		if err == nil && ok {
-			err = lxcSetConfigItem(cc, "lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", internalUtil.VarPath("seccomp.socket")))
+			err = lxcSetConfigItem(cc, "lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", internalUtil.RunPath("seccomp.socket")))
 			if err != nil {
 				return nil, err
 			}

@@ -2403,7 +2403,7 @@ func lxcSupportSeccompNotify(state *state.State) error {
 		return fmt.Errorf("Failed to load seccomp notify test container")
 	}
 
-	err = c.SetConfigItem("lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", internalUtil.VarPath("seccomp.socket")))
+	err = c.SetConfigItem("lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", internalUtil.RunPath("seccomp.socket")))
 	if err != nil {
 		return fmt.Errorf("LXC doesn't support notify proxy: %w", err)
 	}
