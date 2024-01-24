@@ -3,17 +3,13 @@ PREFIX="/run/incus_agent"
 mkdir -p "${PREFIX}/.mnt"
 
 # Functions.
-mount_virtiofs() {
-    mount -t virtiofs agent "${PREFIX}/.mnt" -o ro >/dev/null 2>&1
-}
-
 mount_9p() {
     modprobe 9pnet_virtio >/dev/null 2>&1 || true
     mount -t 9p agent "${PREFIX}/.mnt" -o ro,access=0,trans=virtio,size=1048576 >/dev/null 2>&1
 }
 
 # Mount the agent share.
-mount_virtiofs || mount_9p || fail "Couldn't mount virtiofs or 9p, failing."
+mount_9p || fail "Couldn't mount 9p, failing."
 
 # Transfer the agent binary.
 rm -f "${PREFIX}/incus-agent"
