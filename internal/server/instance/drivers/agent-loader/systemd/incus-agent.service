@@ -1,0 +1,15 @@
+[Unit]
+Description=Incus - agent
+Documentation=https://linuxcontainers.org/incus/docs/main/
+Before=multi-user.target cloud-init.target cloud-init.service cloud-init-local.service
+DefaultDependencies=no
+
+[Service]
+Type=notify
+WorkingDirectory=-/run/incus_agent
+ExecStartPre=/lib/systemd/incus-agent-setup
+ExecStart=/run/incus_agent/incus-agent
+Restart=on-failure
+RestartSec=5s
+StartLimitInterval=60
+StartLimitBurst=10

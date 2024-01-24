@@ -1,0 +1,23 @@
+#!/bin/sh
+PREFIX="/run/incus_agent"
+mkdir -p "${PREFIX}/.mnt"
+
+# Functions.
+mount_9p() {
+    modprobe 9pnet_virtio >/dev/null 2>&1 || true
+    mount -t 9p agent "${PREFIX}/.mnt" -o ro,access=0,trans=virtio,size=1048576 >/dev/null 2>&1
+}
+
+# Mount the agent share.
+mount_9p || fail "Couldn't mount 9p, failing."
+
+# Transfer the agent binary.
+rm -f "${PREFIX}/incus-agent"
+cp -a --no-preserve=ownership  "${PREFIX}/.mnt/incus-agent.linux.$(uname -m)" "${PREFIX}/incus-agent"
+
+# Unmount the temporary mount.
+umount "${PREFIX}/.mnt"
+rmdir "${PREFIX}/.mnt"
+
+# Re-exec the agent.
+exec "${PREFIX}/incus-agent" "$@"

@@ -43,3 +43,22 @@ On top of those, the following optional binaries may also be made available:
 - `incus-migrate`
 - `lxc-to-incus`
 - `lxd-to-incus` (should be kept to root only)
+
+## Incus agent binaries
+
+There are two ways to provide the `incus-agent` binary.
+
+### Single agent setup
+
+The simplest way is to have `incus-agent` be available in the `PATH` of `incusd`.
+
+In this scenario the agent should be a static build of `incus-agent` for the primary architecture of the system.
+
+### Multiple agent setup
+
+Alternatively, it's possible to provide multiple builds of the `incus-agent` binary, offering support for multiple architectures or operating systems.
+
+To do that, the `INCUS_AGENT_PATH` environment variable should be set for the `incusd` process and point to a path that includes the `incus-agent` builds.
+
+Those builds should be named after the operating system name and architecture.
+For example `incus-agent.linux.x86_64`, `incus-agent.linux.i686` or `incus-agent.linux.aarch64`.

@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
+	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -50,7 +51,6 @@ import (
 	"github.com/lxc/incus/internal/server/cgroup"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/db/warningtype"
 	"github.com/lxc/incus/internal/server/device"
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/device/nictype"
@@ -72,7 +72,6 @@ import (
 	pongoTemplate "github.com/lxc/incus/internal/server/template"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	localvsock "github.com/lxc/incus/internal/server/vsock"
-	"github.com/lxc/incus/internal/server/warnings"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
@@ -84,6 +83,11 @@ import (
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/util"
 )
+
+// incus-agent files
+//
+//go:embed agent-loader/*
+var incusAgentLoader embed.FS
 
 // QEMUDefaultCPUCores defines the default number of cores a VM will get if no limit specified.
 const QEMUDefaultCPUCores = 1
@@ -578,14 +582,6 @@ func (d *qemu) configDriveMountPath() string {
 // configDriveMountPathClear attempts to unmount the config drive bind mount and remove the directory.
 func (d *qemu) configDriveMountPathClear() error {
 	return device.DiskMountClear(d.configDriveMountPath())
-}
-
-// configVirtiofsdPaths returns the path for the socket and PID file to use with config drive virtiofsd process.
-func (d *qemu) configVirtiofsdPaths() (string, string) {
-	sockPath := filepath.Join(d.RunPath(), "virtio-fs.config.sock")
-	pidPath := filepath.Join(d.RunPath(), "virtiofsd.pid")
-
-	return sockPath, pidPath
 }
 
 // pidWait waits for the QEMU process to exit. Does this in a way that doesn't require the process to be a
@@ -1359,39 +1355,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		err = fmt.Errorf("Failed mounting device mount path %q for config drive: %w", configMntPath, err)
 		op.Done(err)
 		return err
-	}
-
-	// Setup virtiofsd for the config drive mount path.
-	// This is used by the agent in preference to 9p (due to its improved performance) and in scenarios
-	// where 9p isn't available in the VM guest OS.
-	configSockPath, configPIDPath := d.configVirtiofsdPaths()
-	revertFunc, unixListener, err := device.DiskVMVirtiofsdStart(d.state.OS.ExecPath, d, configSockPath, configPIDPath, "", configMntPath, nil)
-	if err != nil {
-		var errUnsupported device.UnsupportedError
-		if errors.As(err, &errUnsupported) {
-			d.logger.Warn("Unable to use virtio-fs for config drive, using 9p as a fallback", logger.Ctx{"err": errUnsupported})
-
-			if errUnsupported == device.ErrMissingVirtiofsd {
-				_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					// Create a warning if virtiofsd is missing.
-					return tx.UpsertWarning(ctx, d.node, d.project.Name, dbCluster.TypeInstance, d.ID(), warningtype.MissingVirtiofsd, "Using 9p as a fallback")
-				})
-			} else {
-				// Resolve previous warning.
-				_ = warnings.ResolveWarningsByNodeAndProjectAndType(d.state.DB.Cluster, d.node, d.project.Name, warningtype.MissingVirtiofsd)
-			}
-		} else {
-			// Resolve previous warning.
-			_ = warnings.ResolveWarningsByNodeAndProjectAndType(d.state.DB.Cluster, d.node, d.project.Name, warningtype.MissingVirtiofsd)
-			err = fmt.Errorf("Failed to setup virtiofsd for config drive: %w", err)
-			op.Done(err)
-			return err
-		}
-	} else {
-		revert.Add(revertFunc)
-
-		// Request the unix listener is closed after QEMU has connected on startup.
-		defer func() { _ = unixListener.Close() }()
 	}
 
 	// Get qemu configuration and check qemu is installed.
@@ -2586,10 +2549,26 @@ func (d *qemu) generateConfigShare() error {
 	}
 
 	// Add the VM agent.
-	agentSrcPath, err := exec.LookPath("incus-agent")
-	if err != nil {
-		d.logger.Warn("incus-agent not found, skipping its inclusion in the VM config drive", logger.Ctx{"err": err})
-	} else {
+	agentSrcPath, _ := exec.LookPath("incus-agent")
+	if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
+		// Install incus-agent script (loads from agent share).
+		agentFile, err := incusAgentLoader.ReadFile("agent-loader/incus-agent")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "incus-agent"), agentFile, 0700)
+		if err != nil {
+			return err
+		}
+
+		// Legacy support.
+		_ = os.Remove(filepath.Join(configDrivePath, "lxd-agent"))
+		err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
+		if err != nil {
+			return err
+		}
+	} else if agentSrcPath != "" {
 		// Install agent into config drive dir if found.
 		agentSrcPath, err = filepath.EvalSymlinks(agentSrcPath)
 		if err != nil {
@@ -2649,6 +2628,8 @@ func (d *qemu) generateConfigShare() error {
 		if err != nil {
 			return err
 		}
+	} else {
+		d.logger.Warn("incus-agent not found, skipping its inclusion in the VM config drive", logger.Ctx{"err": err})
 	}
 
 	agentCert, agentKey, clientCert, _, err := d.generateAgentCert()
@@ -2680,24 +2661,12 @@ func (d *qemu) generateConfigShare() error {
 	// Systemd unit for incus-agent. It ensures the incus-agent is copied from the shared filesystem before it is
 	// started. The service is triggered dynamically via udev rules when certain virtio-ports are detected,
 	// rather than being enabled at boot.
-	agentServiceUnit := `[Unit]
-Description=Incus - agent
-Documentation=https://linuxcontainers.org/incus/docs/main/
-Before=multi-user.target cloud-init.target cloud-init.service cloud-init-local.service
-DefaultDependencies=no
+	agentFile, err := incusAgentLoader.ReadFile("agent-loader/systemd/incus-agent.service")
+	if err != nil {
+		return err
+	}
 
-[Service]
-Type=notify
-WorkingDirectory=-/run/incus_agent
-ExecStartPre=/lib/systemd/incus-agent-setup
-ExecStart=/run/incus_agent/incus-agent
-Restart=on-failure
-RestartSec=5s
-StartLimitInterval=60
-StartLimitBurst=10
-`
-
-	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent.service"), []byte(agentServiceUnit), 0400)
+	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent.service"), agentFile, 0400)
 	if err != nil {
 		return err
 	}
@@ -2705,45 +2674,12 @@ StartLimitBurst=10
 	// Setup script for incus-agent that is executed by the incus-agent systemd unit before incus-agent is started.
 	// The script sets up a temporary mount point, copies data from the mount (including incus-agent binary),
 	// and then unmounts it. It also ensures appropriate permissions for the Incus agent's runtime directory.
-	agentSetupScript := `#!/bin/sh
-set -eu
-PREFIX="/run/incus_agent"
+	agentFile, err = incusAgentLoader.ReadFile("agent-loader/incus-agent-setup")
+	if err != nil {
+		return err
+	}
 
-# Functions.
-mount_virtiofs() {
-    mount -t virtiofs config "${PREFIX}/.mnt" -o ro >/dev/null 2>&1
-}
-
-mount_9p() {
-    modprobe 9pnet_virtio >/dev/null 2>&1 || true
-    mount -t 9p config "${PREFIX}/.mnt" -o ro,access=0,trans=virtio,size=1048576 >/dev/null 2>&1
-}
-
-fail() {
-    umount -l "${PREFIX}" >/dev/null 2>&1 || true
-    rmdir "${PREFIX}" >/dev/null 2>&1 || true
-    echo "${1}"
-    exit 1
-}
-
-# Setup the mount target.
-umount -l "${PREFIX}" >/dev/null 2>&1 || true
-mkdir -p "${PREFIX}"
-mount -t tmpfs tmpfs "${PREFIX}" -o mode=0700,nodev,nosuid,noatime,size=25M
-mkdir -p "${PREFIX}/.mnt"
-
-# Try virtiofs first.
-mount_virtiofs || mount_9p || fail "Couldn't mount virtiofs or 9p, failing."
-
-# Copy the data.
-cp -Ra --no-preserve=ownership "${PREFIX}/.mnt/"* "${PREFIX}"
-
-# Unmount the temporary mount.
-umount "${PREFIX}/.mnt"
-rmdir "${PREFIX}/.mnt"
-`
-
-	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent-setup"), []byte(agentSetupScript), 0500)
+	err = os.WriteFile(filepath.Join(configDrivePath, "systemd", "incus-agent-setup"), agentFile, 0500)
 	if err != nil {
 		return err
 	}
@@ -2754,44 +2690,23 @@ rmdir "${PREFIX}/.mnt"
 	}
 
 	// Udev rules to start the incus-agent.service when QEMU serial devices (symlinks in virtio-ports) appear.
-	agentRules := `SYMLINK=="virtio-ports/org.linuxcontainers.incus", TAG+="systemd", ENV{SYSTEMD_WANTS}+="incus-agent.service"\n`
-	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-incus-agent.rules"), []byte(agentRules), 0400)
+	agentFile, err = incusAgentLoader.ReadFile("agent-loader/systemd/incus-agent.rules")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filepath.Join(configDrivePath, "udev", "99-incus-agent.rules"), agentFile, 0400)
 	if err != nil {
 		return err
 	}
 
 	// Install script for manual installs.
-	configShareInstall := `#!/bin/sh
-if [ ! -e "systemd" ] || [ ! -e "incus-agent" ]; then
-    echo "This script must be run from within the 9p mount"
-    exit 1
-fi
+	agentFile, err = incusAgentLoader.ReadFile("agent-loader/install.sh")
+	if err != nil {
+		return err
+	}
 
-if [ ! -e "/lib/systemd/system" ]; then
-    echo "This script only works on systemd systems"
-    exit 1
-fi
-
-# Cleanup former units.
-rm -f /lib/systemd/system/incus-agent-9p.service \
-    /lib/systemd/system/incus-agent-virtiofs.service \
-    /etc/systemd/system/multi-user.target.wants/incus-agent-9p.service \
-    /etc/systemd/system/multi-user.target.wants/incus-agent-virtiofs.service \
-    /etc/systemd/system/multi-user.target.wants/incus-agent.service
-
-# Install the units.
-cp udev/99-incus-agent.rules /lib/udev/rules.d/
-cp systemd/incus-agent.service /lib/systemd/system/
-cp systemd/incus-agent-setup /lib/systemd/
-systemctl daemon-reload
-systemctl enable incus-agent.service
-
-echo ""
-echo "Incus agent has been installed, reboot to confirm setup."
-echo "To start it now, unmount this filesystem and run: systemctl start incus-agent"
-`
-
-	err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), []byte(configShareInstall), 0700)
+	err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), agentFile, 0700)
 	if err != nil {
 		return err
 	}
@@ -3217,11 +3132,30 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 			devAddr:       devAddr,
 			multifunction: multi,
 		},
+		name:     "config",
 		protocol: "9p",
 		path:     d.configDriveMountPath(),
 	}
 
 	cfg = append(cfg, qemuDriveConfig(&driveConfig9pOpts)...)
+
+	// Pass in the agents if INCUS_AGENT_PATH is set.
+	if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
+		devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)
+		driveConfig9pOpts := qemuDriveConfigOpts{
+			dev: qemuDevOpts{
+				busName:       bus.name,
+				devBus:        devBus,
+				devAddr:       devAddr,
+				multifunction: multi,
+			},
+			name:     "agent",
+			protocol: "9p",
+			path:     os.Getenv("INCUS_AGENT_PATH"),
+		}
+
+		cfg = append(cfg, qemuDriveConfig(&driveConfig9pOpts)...)
+	}
 
 	// If user has requested AMD SEV, check if supported and add to QEMU config.
 	if util.IsTrue(d.expandedConfig["security.sev"]) {
@@ -3240,26 +3174,6 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 
 			cfg = append(cfg, qemuSEV(sevOpts)...)
 		}
-	}
-
-	// If virtiofsd is running for the config directory then export the config drive via virtio-fs.
-	// This is used by the agent in preference to 9p (due to its improved performance) and in scenarios
-	// where 9p isn't available in the VM guest OS.
-	configSockPath, _ := d.configVirtiofsdPaths()
-	if util.PathExists(configSockPath) {
-		devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)
-		driveConfigVirtioOpts := qemuDriveConfigOpts{
-			dev: qemuDevOpts{
-				busName:       bus.name,
-				devBus:        devBus,
-				devAddr:       devAddr,
-				multifunction: multi,
-			},
-			protocol: "virtio-fs",
-			path:     configSockPath,
-		}
-
-		cfg = append(cfg, qemuDriveConfig(&driveConfigVirtioOpts)...)
 	}
 
 	if util.IsTrue(d.expandedConfig["security.csm"]) {
@@ -5867,14 +5781,8 @@ func (d *qemu) cleanup() {
 // cleanupDevices performs any needed device cleanup steps when instance is stopped.
 // Must be called before root volume is unmounted.
 func (d *qemu) cleanupDevices() {
-	// Clear up the config drive virtiofsd process.
-	err := device.DiskVMVirtiofsdStop(d.configVirtiofsdPaths())
-	if err != nil {
-		d.logger.Warn("Failed cleaning up config drive virtiofsd", logger.Ctx{"err": err})
-	}
-
 	// Clear up the config drive mount.
-	err = d.configDriveMountPathClear()
+	err := d.configDriveMountPathClear()
 	if err != nil {
 		d.logger.Warn("Failed cleaning up config drive mount", logger.Ctx{"err": err})
 	}

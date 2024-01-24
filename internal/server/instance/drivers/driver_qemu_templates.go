@@ -694,6 +694,7 @@ func qemuHostDrive(opts *qemuHostDriveOpts) []cfgSection {
 }
 
 type qemuDriveConfigOpts struct {
+	name     string
 	dev      qemuDevOpts
 	protocol string
 	path     string
@@ -703,10 +704,10 @@ func qemuDriveConfig(opts *qemuDriveConfigOpts) []cfgSection {
 	return qemuHostDrive(&qemuHostDriveOpts{
 		dev: opts.dev,
 		// Devices use "qemu_" prefix indicating that this is a internally named device.
-		name:          "qemu_config",
+		name:          fmt.Sprintf("qemu_%s", opts.name),
 		nameSuffix:    "-drive",
-		comment:       fmt.Sprintf("Config drive (%s)", opts.protocol),
-		mountTag:      "config",
+		comment:       fmt.Sprintf("Shared %s drive (%s)", opts.name, opts.protocol),
+		mountTag:      opts.name,
 		protocol:      opts.protocol,
 		fsdriver:      "local",
 		readonly:      true,

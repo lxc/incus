@@ -1,0 +1,32 @@
+#!/bin/sh
+set -eu
+PREFIX="/run/incus_agent"
+
+# Functions.
+mount_9p() {
+    modprobe 9pnet_virtio >/dev/null 2>&1 || true
+    mount -t 9p config "${PREFIX}/.mnt" -o ro,access=0,trans=virtio,size=1048576 >/dev/null 2>&1
+}
+
+fail() {
+    umount -l "${PREFIX}" >/dev/null 2>&1 || true
+    rmdir "${PREFIX}" >/dev/null 2>&1 || true
+    echo "${1}"
+    exit 1
+}
+
+# Setup the mount target.
+umount -l "${PREFIX}" >/dev/null 2>&1 || true
+mkdir -p "${PREFIX}"
+mount -t tmpfs tmpfs "${PREFIX}" -o mode=0700,nodev,nosuid,noatime,size=25M
+mkdir -p "${PREFIX}/.mnt"
+
+# Try virtiofs first.
+mount_9p || fail "Couldn't mount 9p, failing."
+
+# Copy the data.
+cp -Ra --no-preserve=ownership "${PREFIX}/.mnt/"* "${PREFIX}"
+
+# Unmount the temporary mount.
+umount "${PREFIX}/.mnt"
+rmdir "${PREFIX}/.mnt"

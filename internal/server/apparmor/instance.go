@@ -200,6 +200,14 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			return "", err
 		}
 
+		agentPath := ""
+		if os.Getenv("INCUS_AGENT_PATH") != "" {
+			agentPath, err = filepath.EvalSymlinks(os.Getenv("INCUS_AGENT_PATH"))
+			if err != nil {
+				return "", err
+			}
+		}
+
 		execPath := localUtil.GetExecPath()
 		execPathFull, err := filepath.EvalSymlinks(execPath)
 		if err == nil {
@@ -216,8 +224,8 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"name":           InstanceProfileName(inst),
 			"path":           path,
 			"raw":            rawContent,
-			"userns":         sysOS.RunningInUserNS,
 			"ovmfPath":       ovmfPath,
+			"agentPath":      agentPath,
 		})
 		if err != nil {
 			return "", err
