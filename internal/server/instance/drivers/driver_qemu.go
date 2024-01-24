@@ -4970,27 +4970,26 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 			// Rename all the instance snapshot database entries.
 			results, err = tx.GetInstanceSnapshotsNames(ctx, d.project.Name, oldName)
 			if err != nil {
-				return fmt.Errorf("Failed getting instance snapshot names: %w", err)
+				d.logger.Error("Failed to get instance snapshots", ctxMap)
+				return fmt.Errorf("Failed to get instance snapshots: Failed getting instance snapshot names: %w", err)
+			}
+
+			for _, sname := range results {
+				// Rename the snapshot.
+				oldSnapName := strings.SplitN(sname, internalInstance.SnapshotDelimiter, 2)[1]
+				baseSnapName := filepath.Base(sname)
+
+				err := dbCluster.RenameInstanceSnapshot(ctx, tx.Tx(), d.project.Name, oldName, oldSnapName, baseSnapName)
+				if err != nil {
+					d.logger.Error("Failed renaming snapshot", ctxMap)
+					return err
+				}
 			}
 
 			return nil
 		})
 		if err != nil {
-			d.logger.Error("Failed to get instance snapshots", ctxMap)
-			return fmt.Errorf("Failed to get instance snapshots: %w", err)
-		}
-
-		for _, sname := range results {
-			// Rename the snapshot.
-			oldSnapName := strings.SplitN(sname, internalInstance.SnapshotDelimiter, 2)[1]
-			baseSnapName := filepath.Base(sname)
-			err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return dbCluster.RenameInstanceSnapshot(ctx, tx.Tx(), d.project.Name, oldName, oldSnapName, baseSnapName)
-			})
-			if err != nil {
-				d.logger.Error("Failed renaming snapshot", ctxMap)
-				return err
-			}
+			return err
 		}
 	}
 
