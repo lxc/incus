@@ -8,12 +8,11 @@ After going through these steps, you will have a general idea of how to use Incu
 
 ## Install and initialize Incus
 
-Currently the easiest way to install Incus is to use the Debian or Ubuntu packages provided by [Zabbly](https://zabbly.com).
-There are two repositories available, one for the current stable release and one for daily (untested) builds.
+1. Install the Incus package
 
-Installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
+   Incus is available on most common Linux distributions.
 
-If you prefer a different installation method, see {ref}`installing`.
+   For detailed distribution-specific instructions, refer to {ref}`installing`.
 
 1. Allow your user to control Incus
 
@@ -29,16 +28,21 @@ If you prefer a different installation method, see {ref}`installing`.
 
    The `newgrp` step is needed in any terminal that interacts with Incus until you restart your user session.
 
-1. Initialize Incus with:
-
-       incus admin init --minimal
-
-   This will create a minimal setup with default options.
-   If you want to tune the initialization options, see {ref}`initialize` for more information.
+1. Initialize Incus
 
    ```{note}
    If you are migrating from an existing LXD installation, skip this step and refer to {ref}`server-migrate-lxd` instead.
    ```
+
+   Incus requires some initial setup for networking and storage. This can be done interactively through:
+
+       incus admin init
+
+   Or a basic automated configuration can be applied with just:
+
+       incus admin init --minimal
+
+   If you want to tune the initialization options, see {ref}`initialize` for more information.
 
 ## Launch and inspect instances
 

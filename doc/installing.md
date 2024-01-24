@@ -32,33 +32,50 @@ Packages are available for a number of Linux distributions, either in their main
 
 ````{tabs}
 
-```{group-tab} Debian and Ubuntu
-Currently the easiest way to install Incus is to use the Debian or Ubuntu packages provided by [Zabbly](https://zabbly.com).
+```{group-tab} Arch Linux
+Incus and all of its dependencies are available in Arch Linux's main repository as `incus`.
 
-There are two repositories available, one for the current stable release and one for daily (untested) builds.
+Install Incus with:
 
-Installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
+    pacman -S incus
 
-1. Allow your user to control Incus
+Please report packaging issues [here](https://gitlab.archlinux.org/archlinux/packaging/packages/incus).
+```
 
-   Access to Incus in the packages above is controlled through two groups:
+```{group-tab} Debian
+There are two options currently available to Debian users.
 
-   - `incus` allows basic user access, no configuration and all actions restricted to a per-user project.
-   - `incus-admin` allows full control over Incus.
+1. Native `incus` package
 
-   To control Incus without having to run all commands as root, you can add yourself to the `incus-admin` group:
+    A native `incus` package is currently available in the Debian testing and unstable repositories.
+    This package will be featured in the upcoming Debian 13 (`trixie`) release.
 
-       sudo adduser YOUR-USERNAME incus-admin
-       newgrp incus-admin
+    On such systems, just running `apt install incus` will get Incus installed.
 
-   The `newgrp` step is needed in any terminal that interacts with Incus until you restart your user session.
+1. Zabbly package repository
 
-1. Initialize Incus with:
+    [Zabbly](https://zabbly.com) provides up to date and supported Incus packages for Debian stable releases (11 and 12).
+    Those packages contain everything needed to use all Incus features.
 
-       incus admin init --minimal
+    Up to date installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
+```
 
-   This will create a minimal setup with default options.
-   If you want to tune the initialization options, see {ref}`initialize` for more information.
+```{group-tab} Fedora
+RPM packages of Incus and its dependencies are not yet available via official Fedora repositories but via the [`ganto/lxc4`](https://copr.fedorainfracloud.org/coprs/ganto/lxc4/) Community Project (COPR) repository.
+
+Install the COPR plugin for `dnf` and then enable the COPR repository:
+
+    dnf install 'dnf-command(copr)'
+    dnf copr enable ganto/lxc4
+
+Install Incus with:
+
+    dnf install incus
+
+For the additional setup steps see [Getting started with Incus on Fedora](https://github.com/ganto/copr-lxc4/wiki/Getting-Started-with-Incus-on-Fedora).
+
+Note that this is not an official project of Incus nor Fedora.
+Please report packaging issues [here](https://github.com/ganto/copr-lxc4/issues).
 ```
 
 ```{group-tab} Gentoo
@@ -88,18 +105,6 @@ Start the daemon:
 
 - **`openrc`**: `rc-service incus start`
 - **`systemd`**: `systemctl start incus`
-
-Initialize Incus, needs to be done once after a new installation:
-
-    incus admin init
-
-or
-
-    incus admin init --minimal
-
-which will just use default settings without prompting for choices. See {ref}`initialize` for more information.
-
-Log in to your user and start using Incus through `incus` command.
 ```
 
 ```{group-tab} NixOS
@@ -120,32 +125,22 @@ Finally, you can add users to the `incus-admin` group to provide non-root access
 For any NixOS specific issues, please [file an issue](https://github.com/NixOS/nixpkgs/issues/new/choose) in the package repository.
 ```
 
-```{group-tab} Fedora
-RPM packages of Incus and its dependencies are not yet available via official Fedora repositories but via the [`ganto/lxc4`](https://copr.fedorainfracloud.org/coprs/ganto/lxc4/) Community Project (COPR) repository.
+```{group-tab} Ubuntu
+There are two options currently available to Ubuntu users.
 
-Install the COPR plugin for `dnf` and then enable the COPR repository:
+1. Native `incus` package
 
-    dnf install 'dnf-command(copr)'
-    dnf copr enable ganto/lxc4
+    A native `incus` package is currently available in the Ubuntu development repository.
+    This package will be featured in the upcoming Ubuntu 24.04 (noble) release.
 
-Install Incus with:
+    On such systems, just running `apt install incus` will get Incus installed.
 
-    dnf install incus
+1. Zabbly package repository
 
-For the additional setup steps see [Getting started with Incus on Fedora](https://github.com/ganto/copr-lxc4/wiki/Getting-Started-with-Incus-on-Fedora).
+    [Zabbly](https://zabbly.com) provides up to date and supported Incus packages for Ubuntu LTS releases (20.04 and 22.04).
+    Those packages contain everything needed to use all Incus features.
 
-Note that this is not an official project of Incus nor Fedora.
-Please report packaging issues [here](https://github.com/ganto/copr-lxc4/issues).
-```
-
-```{group-tab} Arch Linux
-Incus and all of its dependencies are available in Arch Linux's main repository as `incus`.
-
-Install Incus with:
-
-    pacman -S incus
-
-Please report packaging issues [here](https://gitlab.archlinux.org/archlinux/packaging/packages/incus).
+    Up to date installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
 ```
 
 ````
