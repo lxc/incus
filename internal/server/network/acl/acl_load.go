@@ -105,6 +105,9 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 		return nil
 	}
 
+	var profiles []cluster.Profile
+	profileDevices := map[string]map[string]cluster.Device{}
+
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Find networks using the ACLs. Cheapest to do.
 		networkNames, err := tx.GetCreatedNetworkNamesByProject(ctx, aclProjectName)
@@ -135,16 +138,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 			}
 		}
 
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	// Look for profiles. Next cheapest to do.
-	var profiles []cluster.Profile
-	profileDevices := map[string]map[string]cluster.Device{}
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Look for profiles. Next cheapest to do.
 		profiles, err = cluster.GetProfiles(ctx, tx.Tx())
 		if err != nil {
 			return err
