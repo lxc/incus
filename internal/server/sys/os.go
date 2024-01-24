@@ -43,6 +43,7 @@ type OS struct {
 	// Directories
 	CacheDir string // Cache directory (e.g. /var/cache/incus/).
 	LogDir   string // Log directory (e.g. /var/log/incus/).
+	RunDir   string // Runtime directory (e.g. /run/incus/).
 	VarDir   string // Data directory (e.g. /var/lib/incus/).
 
 	// Daemon environment
@@ -101,9 +102,10 @@ type OS struct {
 // DefaultOS returns a fresh uninitialized OS instance with default values.
 func DefaultOS() *OS {
 	newOS := &OS{
-		VarDir:   internalUtil.VarPath(),
 		CacheDir: internalUtil.CachePath(),
 		LogDir:   internalUtil.LogPath(),
+		RunDir:   internalUtil.RunPath(),
+		VarDir:   internalUtil.VarPath(),
 	}
 
 	newOS.InotifyWatch.Fd = -1

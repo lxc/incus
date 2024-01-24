@@ -9055,7 +9055,6 @@ paths:
                                 description: List of endpoints
                                 example: |-
                                     [
-                                      "/1.0/instances/foo/logs/lxc.conf",
                                       "/1.0/instances/foo/logs/lxc.log"
                                     ]
                                 items:

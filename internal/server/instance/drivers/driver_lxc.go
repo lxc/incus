@@ -1017,7 +1017,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		// System requirement errors are handled during policy generation instead of here
 		ok, err := seccomp.InstanceNeedsIntercept(d.state, d)
 		if err == nil && ok {
-			err = lxcSetConfigItem(cc, "lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", internalUtil.VarPath("seccomp.socket")))
+			err = lxcSetConfigItem(cc, "lxc.seccomp.notify.proxy", fmt.Sprintf("unix:%s", internalUtil.RunPath("seccomp.socket")))
 			if err != nil {
 				return nil, err
 			}
@@ -2052,6 +2052,11 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		return "", nil, err
 	}
 
+	err = os.MkdirAll(d.RunPath(), 0700)
+	if err != nil {
+		return "", nil, err
+	}
+
 	err = os.MkdirAll(d.DevicesPath(), 0711)
 	if err != nil {
 		return "", nil, err
@@ -2285,7 +2290,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	}
 
 	// Generate the LXC config
-	configPath := filepath.Join(d.LogPath(), "lxc.conf")
+	configPath := filepath.Join(d.RunPath(), "lxc.conf")
 	err = cc.SaveConfigFile(configPath)
 	if err != nil {
 		_ = os.Remove(configPath)
@@ -3962,6 +3967,16 @@ func (d *lxc) Rename(newName string, applyTemplateTrigger bool) error {
 		}
 	}
 
+	// Rename the runtime path.
+	newFullName = project.Instance(d.Project().Name, d.Name())
+	_ = os.RemoveAll(internalUtil.RunPath(newFullName))
+	if util.PathExists(d.RunPath()) {
+		err := os.Rename(d.RunPath(), internalUtil.RunPath(newFullName))
+		if err != nil {
+			d.logger.Error("Failed renaming instance", ctxMap)
+			return fmt.Errorf("Failed renaming instance: %w", err)
+		}
+	}
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -6709,13 +6724,13 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 	defer spawnUnlock()
 
 	// Create any missing directories in case the instance has never been started before.
-	err = os.MkdirAll(d.LogPath(), 0700)
+	err = os.MkdirAll(d.RunPath(), 0700)
 	if err != nil {
 		return nil, err
 	}
 
 	// Trickery to handle paths > 108 chars.
-	dirFile, err := os.Open(d.LogPath())
+	dirFile, err := os.Open(d.RunPath())
 	if err != nil {
 		return nil, err
 	}
@@ -6728,7 +6743,7 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 	}
 
 	// Attempt to connect on existing socket.
-	forkfilePath := filepath.Join(d.LogPath(), "forkfile.sock")
+	forkfilePath := filepath.Join(d.RunPath(), "forkfile.sock")
 	forkfileConn, err := net.DialUnix("unix", nil, forkfileAddr)
 	if err == nil {
 		// Found an existing server.
@@ -6871,7 +6886,7 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 		}
 
 		// Write PID file.
-		pidFile := filepath.Join(d.LogPath(), "forkfile.pid")
+		pidFile := filepath.Join(d.RunPath(), "forkfile.pid")
 		err = os.WriteFile(pidFile, []byte(fmt.Sprintf("%d\n", forkfile.Process.Pid)), 0600)
 		if err != nil {
 			chReady <- fmt.Errorf("Failed to write forkfile PID: %w", err)
@@ -6951,7 +6966,7 @@ func (d *lxc) stopForkfile(force bool) {
 		unlock()
 	}()
 
-	content, err := os.ReadFile(filepath.Join(d.LogPath(), "forkfile.pid"))
+	content, err := os.ReadFile(filepath.Join(d.RunPath(), "forkfile.pid"))
 	if err != nil {
 		return
 	}
@@ -6985,7 +7000,7 @@ func (d *lxc) Console(protocol string) (*os.File, chan error, error) {
 		"forkconsole",
 		project.Instance(d.Project().Name, d.Name()),
 		d.state.OS.LxcPath,
-		filepath.Join(d.LogPath(), "lxc.conf"),
+		filepath.Join(d.RunPath(), "lxc.conf"),
 		"tty=0",
 		"escape=-1"}
 
@@ -7063,7 +7078,7 @@ func (d *lxc) ConsoleLog(opts liblxc.ConsoleLogOptions) (string, error) {
 // Exec executes a command inside the instance.
 func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, stderr *os.File) (instance.Cmd, error) {
 	// Generate the LXC config if missing.
-	configPath := filepath.Join(d.LogPath(), "lxc.conf")
+	configPath := filepath.Join(d.RunPath(), "lxc.conf")
 	if !util.PathExists(configPath) {
 		cc, err := d.initLXC(true)
 		if err != nil {
@@ -7100,7 +7115,7 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		"forkexec",
 		cname,
 		d.state.OS.LxcPath,
-		filepath.Join(d.LogPath(), "lxc.conf"),
+		filepath.Join(d.RunPath(), "lxc.conf"),
 		req.Cwd,
 		fmt.Sprintf("%d", req.User),
 		fmt.Sprintf("%d", req.Group),
@@ -7592,7 +7607,7 @@ func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID i
 
 func (d *lxc) insertMountLXC(source, target, fstype string, flags int) error {
 	cname := project.Instance(d.Project().Name, d.Name())
-	configPath := filepath.Join(d.LogPath(), "lxc.conf")
+	configPath := filepath.Join(d.RunPath(), "lxc.conf")
 	if fstype == "" {
 		fstype = "none"
 	}
@@ -7688,7 +7703,7 @@ func (d *lxc) removeMount(mount string) error {
 	}
 
 	if d.state.OS.LXCFeatures["mount_injection_file"] {
-		configPath := filepath.Join(d.LogPath(), "lxc.conf")
+		configPath := filepath.Join(d.RunPath(), "lxc.conf")
 		cname := project.Instance(d.Project().Name, d.Name())
 
 		if !strings.HasPrefix(mount, "/") {

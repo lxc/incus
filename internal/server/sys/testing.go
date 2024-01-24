@@ -29,6 +29,7 @@ func NewTestOS(t *testing.T) (*OS, func()) {
 		VarDir:   dir,
 		CacheDir: filepath.Join(dir, "cache"),
 		LogDir:   filepath.Join(dir, "log"),
+		RunDir:   filepath.Join(dir, "run"),
 	}
 
 	_, err = os.Init()

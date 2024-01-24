@@ -1521,7 +1521,7 @@ func (d *Daemon) init() error {
 
 		// Setup seccomp handler
 		if d.os.SeccompListener {
-			seccompServer, err := seccomp.NewSeccompServer(d.State(), internalUtil.VarPath("seccomp.socket"), func(pid int32, state *state.State) (seccomp.Instance, error) {
+			seccompServer, err := seccomp.NewSeccompServer(d.State(), internalUtil.RunPath("seccomp.socket"), func(pid int32, state *state.State) (seccomp.Instance, error) {
 				return findContainerForPid(pid, state)
 			})
 			if err != nil {
@@ -1529,7 +1529,7 @@ func (d *Daemon) init() error {
 			}
 
 			d.seccomp = seccompServer
-			logger.Info("Started seccomp handler", logger.Ctx{"path": internalUtil.VarPath("seccomp.socket")})
+			logger.Info("Started seccomp handler", logger.Ctx{"path": internalUtil.RunPath("seccomp.socket")})
 		}
 
 		// Read the trusted certificates

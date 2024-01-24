@@ -582,8 +582,8 @@ func (d *qemu) configDriveMountPathClear() error {
 
 // configVirtiofsdPaths returns the path for the socket and PID file to use with config drive virtiofsd process.
 func (d *qemu) configVirtiofsdPaths() (string, string) {
-	sockPath := filepath.Join(d.LogPath(), "virtio-fs.config.sock")
-	pidPath := filepath.Join(d.LogPath(), "virtiofsd.pid")
+	sockPath := filepath.Join(d.RunPath(), "virtio-fs.config.sock")
+	pidPath := filepath.Join(d.RunPath(), "virtiofsd.pid")
 
 	return sockPath, pidPath
 }
@@ -1221,6 +1221,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Create all needed paths.
 	err = os.MkdirAll(d.LogPath(), 0700)
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
+	err = os.MkdirAll(d.RunPath(), 0700)
 	if err != nil {
 		op.Done(err)
 		return err
@@ -2546,7 +2552,7 @@ func (d *qemu) deviceDetachNIC(deviceName string) error {
 }
 
 func (d *qemu) monitorPath() string {
-	return filepath.Join(d.LogPath(), "qemu.monitor")
+	return filepath.Join(d.RunPath(), "qemu.monitor")
 }
 
 func (d *qemu) nvramPath() string {
@@ -2554,11 +2560,11 @@ func (d *qemu) nvramPath() string {
 }
 
 func (d *qemu) consolePath() string {
-	return filepath.Join(d.LogPath(), "qemu.console")
+	return filepath.Join(d.RunPath(), "qemu.console")
 }
 
 func (d *qemu) spicePath() string {
-	return filepath.Join(d.LogPath(), "qemu.spice")
+	return filepath.Join(d.RunPath(), "qemu.spice")
 }
 
 func (d *qemu) spiceCmdlineConfig() string {
@@ -3435,7 +3441,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	cfg = qemuRawCfgOverride(cfg, d.expandedConfig)
 	// Write the config file to disk.
 	sb := qemuStringifyCfg(cfg...)
-	configPath := filepath.Join(d.LogPath(), "qemu.conf")
+	configPath := filepath.Join(d.RunPath(), "qemu.conf")
 	return configPath, monHooks, os.WriteFile(configPath, []byte(sb.String()), 0640)
 }
 
@@ -4589,7 +4595,7 @@ func (d *qemu) addVmgenDeviceConfig(cfg *[]cfgSection, guid string) error {
 
 // pidFilePath returns the path where the qemu process should write its PID.
 func (d *qemu) pidFilePath() string {
-	return filepath.Join(d.LogPath(), "qemu.pid")
+	return filepath.Join(d.RunPath(), "qemu.pid")
 }
 
 // pid gets the PID of the running qemu process. Returns 0 if PID file or process not found, and -1 if err non-nil.
@@ -5094,6 +5100,17 @@ func (d *qemu) Rename(newName string, applyTemplateTrigger bool) error {
 	_ = os.RemoveAll(internalUtil.LogPath(newFullName))
 	if util.PathExists(d.LogPath()) {
 		err := os.Rename(d.LogPath(), internalUtil.LogPath(newFullName))
+		if err != nil {
+			d.logger.Error("Failed renaming instance", ctxMap)
+			return err
+		}
+	}
+
+	// Rename the runtime path.
+	newFullName = project.Instance(d.Project().Name, d.Name())
+	_ = os.RemoveAll(internalUtil.RunPath(newFullName))
+	if util.PathExists(d.RunPath()) {
+		err := os.Rename(d.RunPath(), internalUtil.RunPath(newFullName))
 		if err != nil {
 			d.logger.Error("Failed renaming instance", ctxMap)
 			return err

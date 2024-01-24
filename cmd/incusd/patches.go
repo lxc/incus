@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/db/query"
+	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/network"
 	"github.com/lxc/incus/internal/server/node"
@@ -81,6 +82,7 @@ var patches = []patch{
 	{name: "snapshots_rename", stage: patchPreDaemonStorage, run: patchSnapshotsRename},
 	{name: "storage_zfs_unset_invalid_block_settings", stage: patchPostDaemonStorage, run: patchStorageZfsUnsetInvalidBlockSettings},
 	{name: "storage_zfs_unset_invalid_block_settings_v2", stage: patchPostDaemonStorage, run: patchStorageZfsUnsetInvalidBlockSettingsV2},
+	{name: "runtime_directory", stage: patchPostDaemonStorage, run: patchRuntimeDirectory},
 }
 
 type patch struct {
@@ -1179,6 +1181,62 @@ func patchStorageZfsUnsetInvalidBlockSettingsV2(_ string, d *Daemon) error {
 			})
 			if err != nil {
 				return fmt.Errorf("Failed updating volume %q in project %q on pool %q: %w", vol.Name, vol.Project, poolIDNameMap[pool], err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func patchRuntimeDirectory(name string, d *Daemon) error {
+	s := d.State()
+
+	// Get the list of local instances.
+	instances, err := instance.LoadNodeAll(s, instancetype.Any)
+	if err != nil {
+		return fmt.Errorf("Failed loading local instances: %w", err)
+	}
+
+	for _, inst := range instances {
+		if !util.PathExists(inst.LogPath()) {
+			continue
+		}
+
+		err = os.MkdirAll(inst.RunPath(), 0700)
+		if err != nil && !os.IsExist(err) {
+			return fmt.Errorf("Failed to create runtime directory for %q in project %q: %w", inst.Name(), inst.Project(), err)
+		}
+
+		files, err := os.ReadDir(inst.LogPath())
+		if err != nil {
+			return fmt.Errorf("Failed to list log files for %q in project %q: %w", inst.Name(), inst.Project(), err)
+		}
+
+		for _, fi := range files {
+			name := fi.Name()
+
+			// Keep actual log files where they are.
+			if strings.HasSuffix(name, ".log") || strings.HasSuffix(name, ".log.old") || strings.HasSuffix(name, ".gz") {
+				continue
+			}
+
+			info, err := fi.Info()
+			if err != nil {
+				return fmt.Errorf("Failed getting file info on %q for instance %q in project %q: %w", name, inst.Name(), inst.Project(), err)
+			}
+
+			if info.Mode().IsRegular() {
+				// Relocate the file.
+				_, err := subprocess.RunCommand("mv", filepath.Join(inst.LogPath(), name), inst.RunPath())
+				if err != nil {
+					return fmt.Errorf("Failed to relocate runtime file %q for instance %q in project %q: %w", name, inst.Name(), inst.Project(), err)
+				}
+			} else {
+				// For pipes and sockets, we need to use a symlink to avoid breaking the listener.
+				err := os.Symlink(filepath.Join(inst.LogPath(), name), filepath.Join(inst.RunPath(), name))
+				if err != nil {
+					return fmt.Errorf("Failed to symlink runtime file %q for instance %q in project %q: %w", name, inst.Name(), inst.Project(), err)
+				}
 			}
 		}
 	}
