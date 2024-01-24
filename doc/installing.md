@@ -143,6 +143,23 @@ There are two options currently available to Ubuntu users.
     Up to date installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
 ```
 
+```{group-tab} Void Linux
+Incus and all of its dependencies are available in Void Linux's repository as `incus`.
+
+Install Incus with:
+
+    xbps-install incus incus-client
+
+Then enable and start the services with:
+
+    ln -s /etc/sv/incus /var/service
+    ln -s /etc/sv/incus-user /var/service
+    sv up incus
+    sv up incus-user
+
+Please report packaging issues [here](https://github.com/void-linux/void-packages/issues).
+```
+
 ````
 
 ### Other operating systems
