@@ -51,7 +51,6 @@ import (
 	"github.com/lxc/incus/internal/server/cgroup"
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/db/warningtype"
 	"github.com/lxc/incus/internal/server/device"
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/device/nictype"
@@ -73,7 +72,6 @@ import (
 	pongoTemplate "github.com/lxc/incus/internal/server/template"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	localvsock "github.com/lxc/incus/internal/server/vsock"
-	"github.com/lxc/incus/internal/server/warnings"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
@@ -584,14 +582,6 @@ func (d *qemu) configDriveMountPath() string {
 // configDriveMountPathClear attempts to unmount the config drive bind mount and remove the directory.
 func (d *qemu) configDriveMountPathClear() error {
 	return device.DiskMountClear(d.configDriveMountPath())
-}
-
-// configVirtiofsdPaths returns the path for the socket and PID file to use with config drive virtiofsd process.
-func (d *qemu) configVirtiofsdPaths() (string, string) {
-	sockPath := filepath.Join(d.RunPath(), "virtio-fs.config.sock")
-	pidPath := filepath.Join(d.RunPath(), "virtiofsd.pid")
-
-	return sockPath, pidPath
 }
 
 // pidWait waits for the QEMU process to exit. Does this in a way that doesn't require the process to be a
@@ -1365,39 +1355,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		err = fmt.Errorf("Failed mounting device mount path %q for config drive: %w", configMntPath, err)
 		op.Done(err)
 		return err
-	}
-
-	// Setup virtiofsd for the config drive mount path.
-	// This is used by the agent in preference to 9p (due to its improved performance) and in scenarios
-	// where 9p isn't available in the VM guest OS.
-	configSockPath, configPIDPath := d.configVirtiofsdPaths()
-	revertFunc, unixListener, err := device.DiskVMVirtiofsdStart(d.state.OS.ExecPath, d, configSockPath, configPIDPath, "", configMntPath, nil)
-	if err != nil {
-		var errUnsupported device.UnsupportedError
-		if errors.As(err, &errUnsupported) {
-			d.logger.Warn("Unable to use virtio-fs for config drive, using 9p as a fallback", logger.Ctx{"err": errUnsupported})
-
-			if errUnsupported == device.ErrMissingVirtiofsd {
-				_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					// Create a warning if virtiofsd is missing.
-					return tx.UpsertWarning(ctx, d.node, d.project.Name, dbCluster.TypeInstance, d.ID(), warningtype.MissingVirtiofsd, "Using 9p as a fallback")
-				})
-			} else {
-				// Resolve previous warning.
-				_ = warnings.ResolveWarningsByNodeAndProjectAndType(d.state.DB.Cluster, d.node, d.project.Name, warningtype.MissingVirtiofsd)
-			}
-		} else {
-			// Resolve previous warning.
-			_ = warnings.ResolveWarningsByNodeAndProjectAndType(d.state.DB.Cluster, d.node, d.project.Name, warningtype.MissingVirtiofsd)
-			err = fmt.Errorf("Failed to setup virtiofsd for config drive: %w", err)
-			op.Done(err)
-			return err
-		}
-	} else {
-		revert.Add(revertFunc)
-
-		// Request the unix listener is closed after QEMU has connected on startup.
-		defer func() { _ = unixListener.Close() }()
 	}
 
 	// Get qemu configuration and check qemu is installed.
@@ -3217,27 +3174,6 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 
 			cfg = append(cfg, qemuSEV(sevOpts)...)
 		}
-	}
-
-	// If virtiofsd is running for the config directory then export the config drive via virtio-fs.
-	// This is used by the agent in preference to 9p (due to its improved performance) and in scenarios
-	// where 9p isn't available in the VM guest OS.
-	configSockPath, _ := d.configVirtiofsdPaths()
-	if util.PathExists(configSockPath) {
-		devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)
-		driveConfigVirtioOpts := qemuDriveConfigOpts{
-			dev: qemuDevOpts{
-				busName:       bus.name,
-				devBus:        devBus,
-				devAddr:       devAddr,
-				multifunction: multi,
-			},
-			name:     "config",
-			protocol: "virtio-fs",
-			path:     configSockPath,
-		}
-
-		cfg = append(cfg, qemuDriveConfig(&driveConfigVirtioOpts)...)
 	}
 
 	if util.IsTrue(d.expandedConfig["security.csm"]) {
@@ -5845,14 +5781,8 @@ func (d *qemu) cleanup() {
 // cleanupDevices performs any needed device cleanup steps when instance is stopped.
 // Must be called before root volume is unmounted.
 func (d *qemu) cleanupDevices() {
-	// Clear up the config drive virtiofsd process.
-	err := device.DiskVMVirtiofsdStop(d.configVirtiofsdPaths())
-	if err != nil {
-		d.logger.Warn("Failed cleaning up config drive virtiofsd", logger.Ctx{"err": err})
-	}
-
 	// Clear up the config drive mount.
-	err = d.configDriveMountPathClear()
+	err := d.configDriveMountPathClear()
 	if err != nil {
 		d.logger.Warn("Failed cleaning up config drive mount", logger.Ctx{"err": err})
 	}
