@@ -42,34 +42,32 @@ func (d *zone) GetRecords() ([]api.NetworkZoneRecord, error) {
 	s := d.state
 
 	var names []string
+	records := []api.NetworkZoneRecord{}
+	var record *api.NetworkZoneRecord
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		// Get the record names.
 		names, err = tx.GetNetworkZoneRecordNames(ctx, d.id)
+		if err != nil {
+			return err
+		}
 
-		return err
+		// Load all the records.
+		for _, name := range names {
+			_, record, err = tx.GetNetworkZoneRecord(ctx, d.id, name)
+			if err != nil {
+				return err
+			}
+
+			records = append(records, *record)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	// Load all the records.
-	records := []api.NetworkZoneRecord{}
-	var record *api.NetworkZoneRecord
-
-	for _, name := range names {
-		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			_, record, err = tx.GetNetworkZoneRecord(ctx, d.id, name)
-
-			return err
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		records = append(records, *record)
 	}
 
 	return records, nil

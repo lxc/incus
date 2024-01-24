@@ -692,19 +692,15 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var poolID int64
+	var dbVolume *db.StorageVolume
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		poolID, err = tx.GetStoragePoolID(ctx, poolName)
+		if err != nil {
+			return err
+		}
 
-		return err
-	})
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	// Check if destination volume exists.
-	var dbVolume *db.StorageVolume
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Check if destination volume exists.
 		dbVolume, err = tx.GetStoragePoolVolume(ctx, poolID, projectName, db.StoragePoolVolumeTypeCustom, req.Name, true)
 		if err != nil && !response.IsNotFoundError(err) {
 			return err
@@ -1152,29 +1148,29 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if srcPool.Driver().Info().Name == "ceph" {
-				var srcPoolID int64
-
-				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					// Load source volume.
-					srcPoolID, err = tx.GetStoragePoolID(ctx, srcPoolName)
-
-					return err
-				})
-				if err != nil {
-					return response.SmartError(err)
-				}
-
 				var dbVolume *db.StorageVolume
+				var volumeNotFound bool
+				var targetIsSet bool
 
 				err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+					// Load source volume.
+					srcPoolID, err := tx.GetStoragePoolID(ctx, srcPoolName)
+					if err != nil {
+						return err
+					}
+
 					dbVolume, err = tx.GetStoragePoolVolume(ctx, srcPoolID, projectName, db.StoragePoolVolumeTypeCustom, volumeName, true)
-					return err
+					if err != nil {
+						// Check if the user provided an incorrect target query parameter and return a helpful error message.
+						_, volumeNotFound = api.StatusErrorMatch(err, http.StatusNotFound)
+						targetIsSet = r.URL.Query().Get("target") != ""
+
+						return err
+					}
+
+					return nil
 				})
 				if err != nil {
-					// Check if the user provided an incorrect target query parameter and return a helpful error message.
-					_, volumeNotFound := api.StatusErrorMatch(err, http.StatusNotFound)
-					targetIsSet := r.URL.Query().Get("target") != ""
-
 					if s.ServerClustered && targetIsSet && volumeNotFound {
 						return response.NotFound(fmt.Errorf("Storage volume not found on this cluster member"))
 					}
@@ -1312,28 +1308,29 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Volume is used by Incus itself and cannot be renamed"))
 	}
 
-	var srcPoolID int64
+	var dbVolume *db.StorageVolume
+	var volumeNotFound bool
+	var targetIsSet bool
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Load source volume.
-		srcPoolID, err = tx.GetStoragePoolID(ctx, srcPoolName)
+		srcPoolID, err := tx.GetStoragePoolID(ctx, srcPoolName)
+		if err != nil {
+			return err
+		}
 
-		return err
-	})
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	var dbVolume *db.StorageVolume
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbVolume, err = tx.GetStoragePoolVolume(ctx, srcPoolID, projectName, volumeType, volumeName, true)
-		return err
+		if err != nil {
+			// Check if the user provided an incorrect target query parameter and return a helpful error message.
+			_, volumeNotFound = api.StatusErrorMatch(err, http.StatusNotFound)
+			targetIsSet = r.URL.Query().Get("target") != ""
+
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
-		// Check if the user provided an incorrect target query parameter and return a helpful error message.
-		_, volumeNotFound := api.StatusErrorMatch(err, http.StatusNotFound)
-		targetIsSet := r.URL.Query().Get("target") != ""
-
 		if s.ServerClustered && targetIsSet && volumeNotFound {
 			return response.NotFound(fmt.Errorf("Storage volume not found on this cluster member"))
 		}
@@ -1718,21 +1715,16 @@ func storagePoolVolumeGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	var poolID int64
+	var dbVolume *db.StorageVolume
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the ID of the storage pool the storage volume is supposed to be attached to.
-		poolID, err = tx.GetStoragePoolID(ctx, poolName)
+		poolID, err := tx.GetStoragePoolID(ctx, poolName)
+		if err != nil {
+			return err
+		}
 
-		return err
-	})
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	// Get the storage volume.
-	var dbVolume *db.StorageVolume
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get the storage volume.
 		dbVolume, err = tx.GetStoragePoolVolume(ctx, poolID, volumeProjectName, volumeType, volumeName, true)
 		return err
 	})

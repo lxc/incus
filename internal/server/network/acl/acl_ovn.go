@@ -758,33 +758,34 @@ func OVNApplyNetworkBaselineRules(client *ovn.NB, switchName ovn.OVNSwitch, rout
 // from the database.
 func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB, aclProjectName string, ignoreUsageType any, ignoreUsageNicName string, keepACLs ...string) error {
 	var aclNameIDs map[string]int64
+	var aclNames []string
+	var projectID int64
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		// Get map of ACL names to DB IDs (used for generating OVN port group names).
 		aclNameIDs, err = tx.GetNetworkACLIDsByNames(ctx, aclProjectName)
+		if err != nil {
+			return fmt.Errorf("Failed getting network ACL IDs for security ACL port group removal: %w", err)
+		}
 
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Failed getting network ACL IDs for security ACL port group removal: %w", err)
-	}
+		// Convert aclNameIDs to aclNames slice for use with UsedBy.
+		aclNames = make([]string, 0, len(aclNameIDs))
+		for aclName := range aclNameIDs {
+			aclNames = append(aclNames, aclName)
+		}
 
-	// Convert aclNameIDs to aclNames slice for use with UsedBy.
-	aclNames := make([]string, 0, len(aclNameIDs))
-	for aclName := range aclNameIDs {
-		aclNames = append(aclNames, aclName)
-	}
-
-	// Get project ID.
-	var projectID int64
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get project ID.
 		projectID, err = cluster.GetProjectID(ctx, tx.Tx(), aclProjectName)
-		return err
+		if err != nil {
+			return fmt.Errorf("Failed getting project ID for project %q: %w", aclProjectName, err)
+		}
+
+		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("Failed getting project ID for project %q: %w", aclProjectName, err)
+		return err
 	}
 
 	// Get list of OVN port groups associated to this project.

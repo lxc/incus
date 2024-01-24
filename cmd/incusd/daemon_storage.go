@@ -155,19 +155,16 @@ func daemonStorageValidate(s *state.State, target string) error {
 	}
 
 	var poolID int64
+	var snapshots []db.StorageVolumeArgs
 
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Validate pool exists.
 		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
+		if err != nil {
+			return fmt.Errorf("Unable to load storage pool %q: %w", poolName, err)
+		}
 
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Unable to load storage pool %q: %w", poolName, err)
-	}
-
-	// Confirm volume exists.
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Confirm volume exists.
 		dbVol, err := tx.GetStoragePoolVolume(ctx, poolID, api.ProjectDefaultName, db.StoragePoolVolumeTypeCustom, volumeName, true)
 		if err != nil {
 			return fmt.Errorf("Failed loading storage volume %q in %q project: %w", target, api.ProjectDefaultName, err)
@@ -177,21 +174,15 @@ func daemonStorageValidate(s *state.State, target string) error {
 			return fmt.Errorf("Storage volume %q in %q project is not filesystem content type", target, api.ProjectDefaultName)
 		}
 
+		snapshots, err = tx.GetLocalStoragePoolVolumeSnapshotsWithType(ctx, api.ProjectDefaultName, volumeName, db.StoragePoolVolumeTypeCustom, poolID)
+		if err != nil {
+			return fmt.Errorf("Unable to load storage volume snapshots %q in %q project: %w", target, api.ProjectDefaultName, err)
+		}
+
 		return nil
 	})
 	if err != nil {
 		return err
-	}
-
-	var snapshots []db.StorageVolumeArgs
-
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		snapshots, err = tx.GetLocalStoragePoolVolumeSnapshotsWithType(ctx, api.ProjectDefaultName, volumeName, db.StoragePoolVolumeTypeCustom, poolID)
-
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("Unable to load storage volume snapshots %q in %q project: %w", target, api.ProjectDefaultName, err)
 	}
 
 	if len(snapshots) != 0 {

@@ -2764,25 +2764,23 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 		memberSpecific := false // OVN doesn't support per-member forwards.
 
 		var forwardListenAddresses map[int64]string
-
-		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			forwardListenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, n.ID(), memberSpecific)
-
-			return err
-		})
-		if err != nil {
-			return fmt.Errorf("Failed loading network forwards: %w", err)
-		}
-
 		var loadBalancerListenAddresses map[int64]string
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			loadBalancerListenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), memberSpecific)
+			forwardListenAddresses, err = tx.GetNetworkForwardListenAddresses(ctx, n.ID(), memberSpecific)
+			if err != nil {
+				return fmt.Errorf("Failed loading network forwards: %w", err)
+			}
 
-			return err
+			loadBalancerListenAddresses, err = tx.GetNetworkLoadBalancerListenAddresses(ctx, n.ID(), memberSpecific)
+			if err != nil {
+				return fmt.Errorf("Failed loading network forwards: %w", err)
+			}
+
+			return nil
 		})
 		if err != nil {
-			return fmt.Errorf("Failed loading network forwards: %w", err)
+			return err
 		}
 
 		loadBalancers := make([]networkOVN.OVNLoadBalancer, 0, len(forwardListenAddresses)+len(loadBalancerListenAddresses))
@@ -4627,30 +4625,29 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 
 		// Load the project to get uplink network restrictions.
 		var p *api.Project
-		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			project, err := dbCluster.GetProject(ctx, tx.Tx(), n.project)
-			if err != nil {
-				return err
-			}
-
-			p, err = project.ToAPI(ctx, tx.Tx())
-
-			return err
-		})
-		if err != nil {
-			return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
-		}
-
 		var uplink *api.Network
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			project, err := dbCluster.GetProject(ctx, tx.Tx(), n.project)
+			if err != nil {
+				return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
+			}
+
+			p, err = project.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
+			}
+
 			// Get uplink routes.
 			_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.config["network"])
+			if err != nil {
+				return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
+			}
 
-			return err
+			return nil
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
+			return err
 		}
 
 		uplinkRoutes, err := n.uplinkRoutes(uplink)
@@ -4983,30 +4980,29 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 
 		// Load the project to get uplink network restrictions.
 		var p *api.Project
-		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			project, err := dbCluster.GetProject(ctx, tx.Tx(), n.project)
-			if err != nil {
-				return err
-			}
-
-			p, err = project.ToAPI(ctx, tx.Tx())
-
-			return err
-		})
-		if err != nil {
-			return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
-		}
-
 		var uplink *api.Network
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			project, err := dbCluster.GetProject(ctx, tx.Tx(), n.project)
+			if err != nil {
+				return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
+			}
+
+			p, err = project.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
+			}
+
 			// Get uplink routes.
 			_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.config["network"])
+			if err != nil {
+				return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
+			}
 
-			return err
+			return nil
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
+			return err
 		}
 
 		uplinkRoutes, err := n.uplinkRoutes(uplink)

@@ -97,14 +97,10 @@ func (d *zone) usedBy(firstOnly bool) ([]string, error) {
 
 		// Find networks using the zone.
 		networkNames, err = tx.GetCreatedNetworkNamesByProject(ctx, d.projectName)
+		if err != nil && !response.IsNotFoundError(err) {
+			return fmt.Errorf("Failed loading networks for project %q: %w", d.projectName, err)
+		}
 
-		return err
-	})
-	if err != nil && !response.IsNotFoundError(err) {
-		return nil, fmt.Errorf("Failed loading networks for project %q: %w", d.projectName, err)
-	}
-
-	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		for _, networkName := range networkNames {
 			_, network, _, err := tx.GetNetworkInAnyState(ctx, d.projectName, networkName)
 			if err != nil {
