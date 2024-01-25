@@ -213,6 +213,7 @@ func instancesStart(s *state.State, instances []instance.Instance) {
 		// Get the instance config.
 		config := inst.ExpandedConfig()
 		autoStartDelay := config["boot.autostart.delay"]
+		shutdownAction := config["boot.host_shutdown_action"]
 
 		instLogger := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 
@@ -220,7 +221,16 @@ func instancesStart(s *state.State, instances []instance.Instance) {
 		var attempt = 0
 		for {
 			attempt++
-			err := inst.Start(false)
+
+			var err error
+			if shutdownAction == "stateful-stop" {
+				// Attempt to restore state.
+				err = inst.Start(true)
+			} else {
+				// Normal startup.
+				err = inst.Start(false)
+			}
+
 			if err != nil {
 				if api.StatusErrorCheck(err, http.StatusServiceUnavailable) {
 					break // Don't log or retry instances that are not ready to start yet.
@@ -379,12 +389,25 @@ func instancesShutdown(s *state.State, instances []instance.Instance) {
 					timeoutSeconds, _ = strconv.Atoi(value)
 				}
 
-				err := inst.Shutdown(time.Second * time.Duration(timeoutSeconds))
-				if err != nil {
-					logger.Warn("Failed shutting down instance, forcefully stopping", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
-					err = inst.Stop(false)
+				action := inst.ExpandedConfig()["boot.host_shutdown_action"]
+				if action == "stateful-stop" {
+					err := inst.Stop(true)
+					if err != nil {
+						logger.Warn("Failed statefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+					}
+				} else if action == "force-stop" {
+					err := inst.Stop(false)
 					if err != nil {
 						logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+					}
+				} else {
+					err := inst.Shutdown(time.Second * time.Duration(timeoutSeconds))
+					if err != nil {
+						logger.Warn("Failed shutting down instance, forcefully stopping", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+						err = inst.Stop(false)
+						if err != nil {
+							logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+						}
 					}
 				}
 
