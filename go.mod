@@ -15,7 +15,7 @@ require (
 	github.com/go-acme/lego/v4 v4.14.2
 	github.com/go-logr/logr v1.4.1
 	github.com/google/gopacket v1.1.19
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.1
 	github.com/gosexy/gettext v0.0.0-20160830220431-74466a0a0c4a
@@ -25,7 +25,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/lxc/go-lxc v0.0.0-20230926171149-ccae595aa49e
 	github.com/mattn/go-colorable v0.1.13
-	github.com/mattn/go-sqlite3 v1.14.19
+	github.com/mattn/go-sqlite3 v1.14.20
 	github.com/mdlayher/ndp v1.0.1
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/mdlayher/vsock v1.2.1
@@ -47,7 +47,7 @@ require (
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/zitadel/oidc/v2 v2.12.0
-	go.starlark.net v0.0.0-20231121155337-90ade8b19d09
+	go.starlark.net v0.0.0-20240123142251-f86470692795
 	golang.org/x/crypto v0.18.0
 	golang.org/x/oauth2 v0.16.0
 	golang.org/x/sync v0.6.0
@@ -139,8 +139,8 @@ require (
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
-	google.golang.org/grpc v1.60.1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe // indirect
+	google.golang.org/grpc v1.61.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
