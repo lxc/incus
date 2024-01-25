@@ -122,6 +122,7 @@ type ovmfFirmware struct {
 var ovmfGenericFirmwares = []ovmfFirmware{
 	{code: "OVMF_CODE.4MB.fd", vars: "OVMF_VARS.4MB.fd"},
 	{code: "OVMF_CODE_4M.fd", vars: "OVMF_VARS_4M.fd"},
+	{code: "OVMF_CODE.4m.fd", vars: "OVMF_VARS.4m.fd"},
 	{code: "OVMF_CODE.2MB.fd", vars: "OVMF_VARS.2MB.fd"},
 	{code: "OVMF_CODE.fd", vars: "OVMF_VARS.fd"},
 	{code: "OVMF_CODE.fd", vars: "qemu.nvram"},
@@ -138,8 +139,10 @@ var ovmfSecurebootFirmwares = []ovmfFirmware{
 var ovmfCSMFirmwares = []ovmfFirmware{
 	{code: "seabios.bin", vars: "seabios.bin"},
 	{code: "OVMF_CODE.4MB.CSM.fd", vars: "OVMF_VARS.4MB.CSM.fd"},
+	{code: "OVMF_CODE.csm.4m.fd", vars: "OVMF_VARS.4m.fd"},
 	{code: "OVMF_CODE.2MB.CSM.fd", vars: "OVMF_VARS.2MB.CSM.fd"},
 	{code: "OVMF_CODE.CSM.fd", vars: "OVMF_VARS.CSM.fd"},
+	{code: "OVMF_CODE.csm.fd", vars: "OVMF_VARS.fd"},
 }
 
 // qemuSparseUSBPorts is the amount of sparse USB ports for VMs.
