@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-23 10:25-0500\n"
-"PO-Revision-Date: 2022-03-10 15:06+0000\n"
-"Last-Translator: Krombel <krombel@krombel.de>\n"
-"Language-Team: German <https://hosted.weblate.org/projects/linux-containers/"
-"lxd/de/>\n"
+"PO-Revision-Date: 2024-01-25 23:01+0000\n"
+"Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
+"org>\n"
+"Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.12-dev\n"
+"X-Generator: Weblate 5.4-dev\n"
 
 #: cmd/incus/storage_bucket.go:254 cmd/incus/storage_bucket.go:999
 #, fuzzy
@@ -1180,9 +1180,9 @@ msgid "COUNT"
 msgstr ""
 
 #: cmd/incus/info.go:354
-#, fuzzy, c-format
+#, c-format
 msgid "CPU (%s):"
-msgstr " Prozessorauslastung:"
+msgstr "Prozessorauslastung (%s):"
 
 #: cmd/incus/list.go:572
 msgid "CPU USAGE"
@@ -1193,9 +1193,8 @@ msgid "CPU usage (in seconds)"
 msgstr ""
 
 #: cmd/incus/info.go:521
-#, fuzzy
 msgid "CPU usage:"
-msgstr " Prozessorauslastung:"
+msgstr "Prozessorauslastung:"
 
 #: cmd/incus/info.go:357
 #, c-format
