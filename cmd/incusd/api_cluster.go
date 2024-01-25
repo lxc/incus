@@ -55,7 +55,7 @@ import (
 	"github.com/lxc/incus/shared/validate"
 )
 
-type evacuateStopFunc func(inst instance.Instance) error
+type evacuateStopFunc func(inst instance.Instance, action string) error
 type evacuateMigrateFunc func(s *state.State, r *http.Request, inst instance.Instance, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error
 
 type evacuateOpts struct {
@@ -3018,25 +3018,39 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if req.Action == "evacuate" {
-		stopFunc := func(inst instance.Instance) error {
+		stopFunc := func(inst instance.Instance, action string) error {
 			l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 
-			// Get the shutdown timeout for the instance.
-			timeout := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
-			val, err := strconv.Atoi(timeout)
-			if err != nil {
-				val = evacuateHostShutdownDefaultTimeout
-			}
-
-			// Start with a clean shutdown.
-			err = inst.Shutdown(time.Duration(val) * time.Second)
-			if err != nil {
-				l.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"err": err})
-
-				// Fallback to forced stop.
+			if action == "force-stop" {
+				// Handle forced shutdown.
 				err = inst.Stop(false)
 				if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
-					return fmt.Errorf("Failed to stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+					return fmt.Errorf("Failed to force stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+				}
+			} else if action == "stateful-stop" {
+				// Handle stateful stop.
+				err = inst.Stop(true)
+				if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
+					return fmt.Errorf("Failed to stateful stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+				}
+			} else {
+				// Get the shutdown timeout for the instance.
+				timeout := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
+				val, err := strconv.Atoi(timeout)
+				if err != nil {
+					val = evacuateHostShutdownDefaultTimeout
+				}
+
+				// Start with a clean shutdown.
+				err = inst.Shutdown(time.Duration(val) * time.Second)
+				if err != nil {
+					l.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"err": err})
+
+					// Fallback to forced stop.
+					err = inst.Stop(false)
+					if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
+						return fmt.Errorf("Failed to stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+					}
 				}
 			}
 
@@ -3302,17 +3316,19 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 
 		// Stop the instance if needed.
 		isRunning := inst.IsRunning()
-		if opts.stopInstance != nil && isRunning && action == "stop" {
+		if opts.stopInstance != nil && isRunning && action != "live-migrate" {
 			metadata["evacuation_progress"] = fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)
 			_ = opts.op.UpdateMetadata(metadata)
 
-			err := opts.stopInstance(inst)
+			err := opts.stopInstance(inst, action)
 			if err != nil {
 				return err
 			}
 
-			// Done with this instance.
-			continue
+			if action != "migrate" {
+				// Done with this instance.
+				continue
+			}
 		}
 
 		// Get candidate cluster members to move instances to.
@@ -3444,7 +3460,14 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 			metadata["evacuation_progress"] = fmt.Sprintf("Starting %q in project %q", inst.Name(), inst.Project().Name)
 			_ = op.UpdateMetadata(metadata)
 
-			err = inst.Start(false)
+			// If configured for stateful stop, try restoring its state.
+			action := inst.CanMigrate()
+			if action == "stateful-stop" {
+				err = inst.Start(true)
+			} else {
+				err = inst.Start(false)
+			}
+
 			if err != nil {
 				return fmt.Errorf("Failed to start instance %q: %w", inst.Name(), err)
 			}
