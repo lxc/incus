@@ -2425,13 +2425,7 @@ func (d *lxc) Start(stateful bool) error {
 	}
 
 	// If stateful, restore now.
-	if stateful {
-		if !d.stateful {
-			err = fmt.Errorf("Instance has no existing state to restore")
-			op.Done(err)
-			return err
-		}
-
+	if stateful && d.stateful {
 		d.logger.Info("Restoring stateful checkpoint")
 
 		criuMigrationArgs := instance.CriuMigrationArgs{

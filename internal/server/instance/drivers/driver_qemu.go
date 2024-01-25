@@ -1438,13 +1438,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// If stateful, restore now.
 	if stateful {
-		if !d.stateful {
-			err = fmt.Errorf("Instance has no existing state to restore")
-			op.Done(err)
-			return err
+		if d.stateful {
+			qemuCmd = append(qemuCmd, "-incoming", "defer")
+		} else {
+			// No state to restore, just start as normal.
+			stateful = false
 		}
-
-		qemuCmd = append(qemuCmd, "-incoming", "defer")
 	} else if d.stateful {
 		// Stateless start requested but state is present, delete it.
 		err := os.Remove(d.StatePath())
