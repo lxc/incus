@@ -3293,25 +3293,16 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": inst.Name()})
 
 		// Check if migratable.
-		migrate, live := inst.CanMigrate()
+		action := inst.CanMigrate()
 
 		// Apply overrides.
-		if opts.mode != "" {
-			if opts.mode == "stop" {
-				migrate = false
-				live = false
-			} else if opts.mode == "migrate" {
-				migrate = true
-				live = false
-			} else if opts.mode == "live-migrate" {
-				migrate = true
-				live = true
-			}
+		if opts.mode != "" && opts.mode != "auto" {
+			action = opts.mode
 		}
 
 		// Stop the instance if needed.
 		isRunning := inst.IsRunning()
-		if opts.stopInstance != nil && isRunning && !(migrate && live) {
+		if opts.stopInstance != nil && isRunning && action == "stop" {
 			metadata["evacuation_progress"] = fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)
 			_ = opts.op.UpdateMetadata(metadata)
 
@@ -3319,10 +3310,8 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 			if err != nil {
 				return err
 			}
-		}
 
-		// If not migratable, the instance is just stopped.
-		if !migrate {
+			// Done with this instance.
 			continue
 		}
 
@@ -3364,7 +3353,7 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		}
 
 		start := isRunning || instanceShouldAutoStart(inst)
-		err = opts.migrateInstance(opts.s, opts.r, inst, targetMemberInfo, live, start, metadata, opts.op)
+		err = opts.migrateInstance(opts.s, opts.r, inst, targetMemberInfo, action == "live-migrate", start, metadata, opts.op)
 		if err != nil {
 			return err
 		}
@@ -3465,8 +3454,8 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 		for _, inst := range instances {
 			l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 
-			// Check if live-migratable.
-			_, live := inst.CanMigrate()
+			// Check the action.
+			live := inst.CanMigrate() == "live-migrate"
 
 			metadata["evacuation_progress"] = fmt.Sprintf("Migrating %q in project %q from %q", inst.Name(), inst.Project().Name, inst.Location())
 			_ = op.UpdateMetadata(metadata)
