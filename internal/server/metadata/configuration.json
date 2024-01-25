@@ -51,6 +51,15 @@
 						}
 					},
 					{
+						"boot.host_shutdown_action": {
+							"defaultdesc": "stop",
+							"liveupdate": "yes",
+							"longdesc": "Action to take on host shut down",
+							"shortdesc": "What action to take on the instance when the host is shut down",
+							"type": "integer"
+						}
+					},
+					{
 						"boot.host_shutdown_timeout": {
 							"defaultdesc": "30",
 							"liveupdate": "yes",
@@ -194,7 +203,7 @@
 						"cluster.evacuate": {
 							"defaultdesc": "`auto`",
 							"liveupdate": "no",
-							"longdesc": "The `cluster.evacuate` provides control over how instances are handled when a cluster member is being\nevacuated.\n\nAvailable Modes:\n  - `auto` *(default)*: The system will automatically decide the best evacuation method based on the\n     instance's type and configured devices:\n    + If any device is not suitable for migration, the instance will not be migrated (only stopped).\n    + Live migration will be used only for virtual machines with the `migration.stateful` setting\n      enabled and for which all its devices can be migrated as well.\n  - `live-migrate`: Instances are live-migrated to another node. This means the instance remains running\n     and operational during the migration process, ensuring minimal disruption.\n  - `migrate`: In this mode, instances are migrated to another node in the cluster. The migration\n     process will not be live, meaning there will be a brief downtime for the instance during the\n     migration.\n  -  `stop`: Instances are not migrated. Instead, they are stopped on the current node.\n\nSee {ref}`cluster-evacuate` for more information.",
+							"longdesc": "The `cluster.evacuate` provides control over how instances are handled when a cluster member is being\nevacuated.\n\nAvailable Modes:\n  - `auto` *(default)*: The system will automatically decide the best evacuation method based on the\n     instance's type and configured devices:\n    + If any device is not suitable for migration, the instance will not be migrated (only stopped).\n    + Live migration will be used only for virtual machines with the `migration.stateful` setting\n      enabled and for which all its devices can be migrated as well.\n  - `live-migrate`: Instances are live-migrated to another server. This means the instance remains running\n     and operational during the migration process, ensuring minimal disruption.\n  - `migrate`: In this mode, instances are migrated to another server in the cluster. The migration\n     process will not be live, meaning there will be a brief downtime for the instance during the\n     migration.\n  -  `stop`: Instances are not migrated. Instead, they are stopped on the current server.\n  -  `stateful-stop`: Instances are not migrated. Instead, they are stopped on the current server\n     but with their runtime state (memory) stored on disk for resuming on restore.\n  -  `force-stop`: Instances are not migrated. Instead, they are forcefully stopped.\n\nSee {ref}`cluster-evacuate` for more information.",
 							"shortdesc": "What to do when evacuating the instance",
 							"type": "string"
 						}

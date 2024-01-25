@@ -914,10 +914,8 @@ func (d *common) warningsDelete() error {
 	return nil
 }
 
-// canMigrate determines if the given instance can be migrated and whether the migration
-// can be live. In "auto" mode, the function checks each attached device of the instance
-// to ensure they are all migratable.
-func (d *common) canMigrate(inst instance.Instance) (bool, bool) {
+// canMigrate determines if the given instance can be migrated and what kind of migration to attempt.
+func (d *common) canMigrate(inst instance.Instance) string {
 	// Check policy for the instance.
 	config := d.ExpandedConfig()
 	val, ok := config["cluster.evacuate"]
@@ -925,16 +923,9 @@ func (d *common) canMigrate(inst instance.Instance) (bool, bool) {
 		val = "auto"
 	}
 
-	if val == "migrate" {
-		return true, false
-	}
-
-	if val == "live-migrate" {
-		return true, true
-	}
-
-	if val == "stop" {
-		return false, false
+	// If not using auto, just return the migration type.
+	if val != "auto" {
+		return val
 	}
 
 	// Look at attached devices.
@@ -944,23 +935,22 @@ func (d *common) canMigrate(inst instance.Instance) (bool, bool) {
 		dev, err := device.New(inst, d.state, deviceName, rawConfig, volatileGet, volatileSet)
 		if err != nil {
 			logger.Warn("Instance will not be migrated due to a device error", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "device": dev.Name(), "err": err})
-			return false, false
+			return "stop"
 		}
 
 		if !dev.CanMigrate() {
 			logger.Warn("Instance will not be migrated because its device cannot be migrated", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "device": dev.Name()})
-			return false, false
+			return "stop"
 		}
 	}
 
 	// Check if set up for live migration.
 	// Limit automatic live-migration to virtual machines for now.
-	live := false
-	if inst.Type() == instancetype.VM {
-		live = util.IsTrue(config["migration.stateful"])
+	if inst.Type() == instancetype.VM && util.IsTrue(config["migration.stateful"]) {
+		return "live-migrate"
 	}
 
-	return true, live
+	return "migrate"
 }
 
 // recordLastState records last power and used time into local config and database config.

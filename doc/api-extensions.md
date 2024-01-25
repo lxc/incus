@@ -2318,3 +2318,15 @@ Adds a new `start` field to the `POST /1.0/instances` API which when set
 to `true` will have the instance automatically start upon creation.
 
 In this scenario, the creation and startup is part of a single background operation.
+
+## `clustering_evacuation_stop_options`
+
+This introduces new options for the `cluster.evacuate` option:
+
+* `stateful-stop` has the instance store its state to disk to be resume on restore.
+* `force-stop` has the instance immediately stopped without waiting for it to shut down.
+
+## `boot_host_shutdown_action`
+
+This introduces a new `boot.host_shutdown_action` instance configuration key which can be used to override the default `stop` behavior on system shutdown.
+It supports the value `stop`, `stateful-stop` and `force-stop`.

@@ -828,6 +828,7 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 	}
 
 	if util.ValueInSlice(key, []string{
+		"boot.host_shutdown_action",
 		"boot.host_shutdown_timeout",
 		"linux.kernel_modules",
 		"raw.apparmor",
@@ -847,6 +848,7 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 // Return true if a low-level VM option is forbidden.
 func isVMLowLevelOptionForbidden(key string) bool {
 	return util.ValueInSlice(key, []string{
+		"boot.host_shutdown_action",
 		"boot.host_shutdown_timeout",
 		"limits.memory.hugepages",
 		"raw.idmap",

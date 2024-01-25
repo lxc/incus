@@ -90,6 +90,7 @@ _have incus && {
 
     container_keys="boot.autostart boot.autostart.delay \
       boot.autostart.priority boot.stop.priority \
+      boot.host_shutdown_action \
       boot.host_shutdown_timeout environment. \
       limits.cpu limits.cpu.allowance limits.cpu.priority \
       limits.disk.priority limits.memory limits.memory.enforce \

@@ -63,6 +63,15 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: What order to shut down the instances in
 	"boot.stop.priority": validate.Optional(validate.IsInt64),
 
+	// gendoc:generate(entity=instance, group=boot, key=boot.host_shutdown_action)
+	// Action to take on host shut down
+	// ---
+	//  type: integer
+	//  defaultdesc: stop
+	//  liveupdate: yes
+	//  shortdesc: What action to take on the instance when the host is shut down
+	"boot.host_shutdown_action": validate.Optional(validate.IsOneOf("stop", "force-stop", "stateful-stop")),
+
 	// gendoc:generate(entity=instance, group=boot, key=boot.host_shutdown_timeout)
 	// Number of seconds to wait for the instance to shut down before it is force-stopped.
 	// ---
@@ -139,12 +148,15 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//     + If any device is not suitable for migration, the instance will not be migrated (only stopped).
 	//     + Live migration will be used only for virtual machines with the `migration.stateful` setting
 	//       enabled and for which all its devices can be migrated as well.
-	//   - `live-migrate`: Instances are live-migrated to another node. This means the instance remains running
+	//   - `live-migrate`: Instances are live-migrated to another server. This means the instance remains running
 	//      and operational during the migration process, ensuring minimal disruption.
-	//   - `migrate`: In this mode, instances are migrated to another node in the cluster. The migration
+	//   - `migrate`: In this mode, instances are migrated to another server in the cluster. The migration
 	//      process will not be live, meaning there will be a brief downtime for the instance during the
 	//      migration.
-	//   -  `stop`: Instances are not migrated. Instead, they are stopped on the current node.
+	//   -  `stop`: Instances are not migrated. Instead, they are stopped on the current server.
+	//   -  `stateful-stop`: Instances are not migrated. Instead, they are stopped on the current server
+	//      but with their runtime state (memory) stored on disk for resuming on restore.
+	//   -  `force-stop`: Instances are not migrated. Instead, they are forcefully stopped.
 	//
 	// See {ref}`cluster-evacuate` for more information.
 	// ---
@@ -152,7 +164,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  defaultdesc: `auto`
 	//  liveupdate: no
 	//  shortdesc: What to do when evacuating the instance
-	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "stop")),
+	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "stop", "stateful-stop", "force-stop")),
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu)
 	// A number or a specific range of CPUs to expose to the instance.

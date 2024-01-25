@@ -391,6 +391,8 @@ var APIExtensions = []string{
 	"disk_io_bus_virtio_blk",
 	"loki_config_instance",
 	"instance_create_start",
+	"clustering_evacuation_stop_options",
+	"boot_host_shutdown_action",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

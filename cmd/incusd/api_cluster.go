@@ -55,7 +55,7 @@ import (
 	"github.com/lxc/incus/shared/validate"
 )
 
-type evacuateStopFunc func(inst instance.Instance) error
+type evacuateStopFunc func(inst instance.Instance, action string) error
 type evacuateMigrateFunc func(s *state.State, r *http.Request, inst instance.Instance, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, metadata map[string]any, op *operations.Operation) error
 
 type evacuateOpts struct {
@@ -2994,39 +2994,63 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 
 	s := d.State()
 
-	// Forward request
+	// Forward request.
 	resp := forwardedResponseToNode(s, r, name)
 	if resp != nil {
 		return resp
 	}
 
-	// Parse the request
+	// Parse the request.
 	req := api.ClusterMemberStatePost{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
 	}
 
+	// Validate the overrides.
+	if req.Action == "evacuate" && req.Mode != "" {
+		// Use the validator from the instance logic.
+		validator := internalInstance.InstanceConfigKeysAny["cluster.evacuate"]
+		err = validator(req.Mode)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+	}
+
 	if req.Action == "evacuate" {
-		stopFunc := func(inst instance.Instance) error {
+		stopFunc := func(inst instance.Instance, action string) error {
 			l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 
-			// Get the shutdown timeout for the instance.
-			timeout := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
-			val, err := strconv.Atoi(timeout)
-			if err != nil {
-				val = evacuateHostShutdownDefaultTimeout
-			}
-
-			// Start with a clean shutdown.
-			err = inst.Shutdown(time.Duration(val) * time.Second)
-			if err != nil {
-				l.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"err": err})
-
-				// Fallback to forced stop.
+			if action == "force-stop" {
+				// Handle forced shutdown.
 				err = inst.Stop(false)
 				if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
-					return fmt.Errorf("Failed to stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+					return fmt.Errorf("Failed to force stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+				}
+			} else if action == "stateful-stop" {
+				// Handle stateful stop.
+				err = inst.Stop(true)
+				if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
+					return fmt.Errorf("Failed to stateful stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+				}
+			} else {
+				// Get the shutdown timeout for the instance.
+				timeout := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
+				val, err := strconv.Atoi(timeout)
+				if err != nil {
+					val = evacuateHostShutdownDefaultTimeout
+				}
+
+				// Start with a clean shutdown.
+				err = inst.Shutdown(time.Duration(val) * time.Second)
+				if err != nil {
+					l.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"err": err})
+
+					// Fallback to forced stop.
+					err = inst.Stop(false)
+					if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
+						return fmt.Errorf("Failed to stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+					}
 				}
 			}
 
@@ -3283,37 +3307,28 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": inst.Name()})
 
 		// Check if migratable.
-		migrate, live := inst.CanMigrate()
+		action := inst.CanMigrate()
 
 		// Apply overrides.
-		if opts.mode != "" {
-			if opts.mode == "stop" {
-				migrate = false
-				live = false
-			} else if opts.mode == "migrate" {
-				migrate = true
-				live = false
-			} else if opts.mode == "live-migrate" {
-				migrate = true
-				live = true
-			}
+		if opts.mode != "" && opts.mode != "auto" {
+			action = opts.mode
 		}
 
 		// Stop the instance if needed.
 		isRunning := inst.IsRunning()
-		if opts.stopInstance != nil && isRunning && !(migrate && live) {
+		if opts.stopInstance != nil && isRunning && action != "live-migrate" {
 			metadata["evacuation_progress"] = fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)
 			_ = opts.op.UpdateMetadata(metadata)
 
-			err := opts.stopInstance(inst)
+			err := opts.stopInstance(inst, action)
 			if err != nil {
 				return err
 			}
-		}
 
-		// If not migratable, the instance is just stopped.
-		if !migrate {
-			continue
+			if action != "migrate" {
+				// Done with this instance.
+				continue
+			}
 		}
 
 		// Get candidate cluster members to move instances to.
@@ -3354,7 +3369,7 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		}
 
 		start := isRunning || instanceShouldAutoStart(inst)
-		err = opts.migrateInstance(opts.s, opts.r, inst, targetMemberInfo, live, start, metadata, opts.op)
+		err = opts.migrateInstance(opts.s, opts.r, inst, targetMemberInfo, action == "live-migrate", start, metadata, opts.op)
 		if err != nil {
 			return err
 		}
@@ -3445,7 +3460,14 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 			metadata["evacuation_progress"] = fmt.Sprintf("Starting %q in project %q", inst.Name(), inst.Project().Name)
 			_ = op.UpdateMetadata(metadata)
 
-			err = inst.Start(false)
+			// If configured for stateful stop, try restoring its state.
+			action := inst.CanMigrate()
+			if action == "stateful-stop" {
+				err = inst.Start(true)
+			} else {
+				err = inst.Start(false)
+			}
+
 			if err != nil {
 				return fmt.Errorf("Failed to start instance %q: %w", inst.Name(), err)
 			}
@@ -3455,8 +3477,8 @@ func restoreClusterMember(d *Daemon, r *http.Request) response.Response {
 		for _, inst := range instances {
 			l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 
-			// Check if live-migratable.
-			_, live := inst.CanMigrate()
+			// Check the action.
+			live := inst.CanMigrate() == "live-migrate"
 
 			metadata["evacuation_progress"] = fmt.Sprintf("Migrating %q in project %q from %q", inst.Name(), inst.Project().Name, inst.Location())
 			_ = op.UpdateMetadata(metadata)
