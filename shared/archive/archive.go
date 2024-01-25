@@ -233,11 +233,11 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 					continue
 				}
 
-				if !strings.Contains(line, "failed to create block device") {
+				if strings.Contains(line, "failed to create block device") {
 					continue
 				}
 
-				if !strings.Contains(line, "failed to create character device") {
+				if strings.Contains(line, "failed to create character device") {
 					continue
 				}
 
