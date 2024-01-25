@@ -157,7 +157,7 @@ type Instance interface {
 	StoragePool() (string, error)
 
 	// Migration.
-	CanMigrate() (bool, bool)
+	CanMigrate() string
 	MigrateSend(args MigrateSendArgs) error
 	MigrateReceive(args MigrateReceiveArgs) error
 

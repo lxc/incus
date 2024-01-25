@@ -8038,7 +8038,7 @@ func (d *lxc) IsRunning() bool {
 }
 
 // CanMigrate returns whether the instance can be migrated.
-func (d *lxc) CanMigrate() (bool, bool) {
+func (d *lxc) CanMigrate() string {
 	return d.canMigrate(d)
 }
 

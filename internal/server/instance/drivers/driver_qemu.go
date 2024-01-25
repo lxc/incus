@@ -7657,7 +7657,7 @@ func (d *qemu) IsFrozen() bool {
 }
 
 // CanMigrate returns whether the instance can be migrated.
-func (d *qemu) CanMigrate() (bool, bool) {
+func (d *qemu) CanMigrate() string {
 	return d.canMigrate(d)
 }
 
