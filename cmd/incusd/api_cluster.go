@@ -2994,17 +2994,27 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 
 	s := d.State()
 
-	// Forward request
+	// Forward request.
 	resp := forwardedResponseToNode(s, r, name)
 	if resp != nil {
 		return resp
 	}
 
-	// Parse the request
+	// Parse the request.
 	req := api.ClusterMemberStatePost{}
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return response.BadRequest(err)
+	}
+
+	// Validate the overrides.
+	if req.Action == "evacuate" && req.Mode != "" {
+		// Use the validator from the instance logic.
+		validator := internalInstance.InstanceConfigKeysAny["cluster.evacuate"]
+		err = validator(req.Mode)
+		if err != nil {
+			return response.BadRequest(err)
+		}
 	}
 
 	if req.Action == "evacuate" {
