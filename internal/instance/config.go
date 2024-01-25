@@ -139,12 +139,12 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//     + If any device is not suitable for migration, the instance will not be migrated (only stopped).
 	//     + Live migration will be used only for virtual machines with the `migration.stateful` setting
 	//       enabled and for which all its devices can be migrated as well.
-	//   - `live-migrate`: Instances are live-migrated to another node. This means the instance remains running
+	//   - `live-migrate`: Instances are live-migrated to another server. This means the instance remains running
 	//      and operational during the migration process, ensuring minimal disruption.
-	//   - `migrate`: In this mode, instances are migrated to another node in the cluster. The migration
+	//   - `migrate`: In this mode, instances are migrated to another server in the cluster. The migration
 	//      process will not be live, meaning there will be a brief downtime for the instance during the
 	//      migration.
-	//   -  `stop`: Instances are not migrated. Instead, they are stopped on the current node.
+	//   -  `stop`: Instances are not migrated. Instead, they are stopped on the current server.
 	//
 	// See {ref}`cluster-evacuate` for more information.
 	// ---
