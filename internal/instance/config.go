@@ -145,6 +145,9 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//      process will not be live, meaning there will be a brief downtime for the instance during the
 	//      migration.
 	//   -  `stop`: Instances are not migrated. Instead, they are stopped on the current server.
+	//   -  `stateful-stop`: Instances are not migrated. Instead, they are stopped on the current server
+	//      but with their runtime state (memory) stored on disk for resuming on restore.
+	//   -  `force-stop`: Instances are not migrated. Instead, they are forcefully stopped.
 	//
 	// See {ref}`cluster-evacuate` for more information.
 	// ---
@@ -152,7 +155,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  defaultdesc: `auto`
 	//  liveupdate: no
 	//  shortdesc: What to do when evacuating the instance
-	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "stop")),
+	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "stop", "stateful-stop", "force-stop")),
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu)
 	// A number or a specific range of CPUs to expose to the instance.
