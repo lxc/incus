@@ -51,6 +51,15 @@
 						}
 					},
 					{
+						"boot.host_shutdown_action": {
+							"defaultdesc": "stop",
+							"liveupdate": "yes",
+							"longdesc": "Action to take on host shut down",
+							"shortdesc": "What action to take on the instance when the host is shut down",
+							"type": "integer"
+						}
+					},
+					{
 						"boot.host_shutdown_timeout": {
 							"defaultdesc": "30",
 							"liveupdate": "yes",

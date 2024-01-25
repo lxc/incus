@@ -40,6 +40,14 @@ The number of seconds to wait after the instance started before starting the nex
 The instance with the highest value is started first.
 ```
 
+```{config:option} boot.host_shutdown_action instance-boot
+:defaultdesc: "stop"
+:liveupdate: "yes"
+:shortdesc: "What action to take on the instance when the host is shut down"
+:type: "integer"
+Action to take on host shut down
+```
+
 ```{config:option} boot.host_shutdown_timeout instance-boot
 :defaultdesc: "30"
 :liveupdate: "yes"
