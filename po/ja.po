@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-23 10:25-0500\n"
 "PO-Revision-Date: 2024-01-26 15:03+0000\n"
-"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -8045,7 +8045,7 @@ msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:76
 msgid "Would you like a YAML \"init\" preseed to be printed?"
-msgstr ""
+msgstr "YAML 形式の初期設定値を表示しますか?"
 
 #: cmd/incus/admin_init_interactive.go:827
 msgid "Would you like stale cached images to be updated automatically?"
