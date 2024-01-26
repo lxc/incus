@@ -234,6 +234,11 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 		action = "freeze"
 	}
 
+	// Resume is called unfreeze
+	if action == "resume" {
+		action = "unfreeze"
+	}
+
 	// Only store state if asked to
 	if action == "stop" && c.flagStateful {
 		state = true
