@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-23 10:25-0500\n"
-"PO-Revision-Date: 2024-01-19 10:00+0000\n"
-"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
+"PO-Revision-Date: 2024-01-26 15:03+0000\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -3031,7 +3031,7 @@ msgstr "特定の待避アクションを強制します"
 
 #: cmd/incus/file.go:140
 msgid "Force creating files or directories"
-msgstr ""
+msgstr "強制的にファイルまたはディレクトリーを作成します"
 
 #: cmd/incus/cluster.go:1183
 msgid "Force evacuation without user confirmation"
@@ -7083,7 +7083,7 @@ msgstr "デフォルトのリモートを切り替えます"
 
 #: cmd/incus/file.go:163
 msgid "Symlink target path can only be used for type \"symlink\""
-msgstr ""
+msgstr "シンボリックリンクのターゲットパスは \"symlink\" タイプにのみ使えます"
 
 #: cmd/incus/alias.go:149
 msgid "TARGET"
@@ -7431,7 +7431,7 @@ msgstr "指定したデバイスはネットワークとマッチしません"
 
 #: cmd/incus/file.go:144
 msgid "The type to create (file, symlink, or directory)"
-msgstr ""
+msgstr "作成するタイプ（file, symlink, directory）"
 
 #: cmd/incus/publish.go:83
 msgid "There is no \"image name\".  Did you want an alias?"
@@ -7957,7 +7957,7 @@ msgstr "WWN: %s"
 
 #: cmd/incus/admin_waitready.go:26
 msgid "Wait for the daemon to be ready to process requests"
-msgstr ""
+msgstr "デーモンがプロセスのリクエストを処理する準備ができるのを待ちます"
 
 #: cmd/incus/admin_waitready.go:27
 msgid ""
@@ -7968,6 +7968,12 @@ msgid ""
 "  is done with early start tasks like re-starting previously started\n"
 "  containers."
 msgstr ""
+"デーモンがプロセスのリクエストを処理する準備ができるのを待ちます\n"
+"\n"
+"  このコマンドは、デーモンが REST API 経由で処理できるようになり、\n"
+"  前に起動していたコンテナの再起動といったような初期の起動タスクが終了するま"
+"で\n"
+"  ブロックします。"
 
 #: cmd/incus/query.go:42
 msgid "Wait for the operation to complete"
@@ -7984,26 +7990,33 @@ msgid ""
 "in theory attack their parent container and gain more privileges than\n"
 "they otherwise would."
 msgstr ""
+"非特権コンテナ内での実行を検出しました。これにより、手動でホストを構成\n"
+"しない限り、コンテナに割り当てる uid と gid が不足します。\n"
+"\n"
+"この問題を回避するには、コンテナ自身への割当を再利用できます。再利用す\n"
+"ると理論的には、そうしない場合に比べて、親コンテナを攻撃してより多くの\n"
+"特権を得られる可能性があるため、安全性は若干低くなります。"
 
 #: cmd/incus/admin_init_interactive.go:150
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr ""
+msgstr "このサーバーにアクセスするためには、どの IP アドレス、または DNS "
+"名を使用する必要がありますか?"
 
 #: cmd/incus/admin_init_interactive.go:364
 msgid "What IPv4 address should be used?"
-msgstr ""
+msgstr "どの IPv4 アドレスを使いますか?"
 
 #: cmd/incus/admin_init_interactive.go:385
 msgid "What IPv6 address should be used?"
-msgstr ""
+msgstr "どの IPv6 アドレスを使いますか?"
 
 #: cmd/incus/admin_init_interactive.go:116
 msgid "What member name should be used to identify this server in the cluster?"
-msgstr ""
+msgstr "クラスター内のこのサーバーを識別するのに使うメンバー名は何ですか?"
 
 #: cmd/incus/admin_init_interactive.go:345
 msgid "What should the new bridge be called?"
-msgstr ""
+msgstr "新しいブリッジは何という名前にしますか?"
 
 #: cmd/incus/export.go:40
 msgid "Whether or not to only backup the instance (without snapshots)"
@@ -8026,10 +8039,13 @@ msgid ""
 "Wipe the instance root disk and re-initialize. The original image is used to "
 "re-initialize the instance if a different image or --empty is not specified."
 msgstr ""
+"インスタンスのroot disk上でデータをすべて削除し、再初期化します。"
+"異なるイメージや --empty "
+"が指定されていない場合は、インスタンスの再初期化には元のイメージを使います。"
 
 #: cmd/incus/admin_init_interactive.go:76
 msgid "Would you like a YAML \"init\" preseed to be printed?"
-msgstr ""
+msgstr "YAML 形式の初期設定値を表示しますか?"
 
 #: cmd/incus/admin_init_interactive.go:827
 msgid "Would you like stale cached images to be updated automatically?"
