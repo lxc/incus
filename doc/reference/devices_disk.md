@@ -67,6 +67,16 @@ VM `cloud-init`
 
       incus config device add <instance_name> <device_name> disk source=cloud-init:config
 
+VM `agent`
+: You can generate an `agent` configuration ISO which will contain the agent binary, configuration files and installation scripts.
+  This is required for environments where `9p` isn't supported and where an alternative way to load the agent is required.
+
+  This source type is applicable only to VMs.
+
+  To add such a device, use the following command:
+
+      incus config device add <instance_name> <device_name> disk source=agent:config
+
 (devices-disk-initial-config)=
 ## Initial volume configuration for instance root disk devices
 
