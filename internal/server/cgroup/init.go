@@ -112,9 +112,6 @@ const (
 	// MemorySwappiness resource control.
 	MemorySwappiness
 
-	// NetPrio resource control.
-	NetPrio
-
 	// Pids resource control.
 	Pids
 )
@@ -218,9 +215,6 @@ func (info *Info) SupportsVersion(resource Resource) (Backend, bool) {
 		}
 
 		return Unavailable, false
-	case NetPrio:
-		val, ok := cgControllers["net_prio"]
-		return val, ok
 	case Pids:
 		val, ok := cgControllers["pids"]
 		if ok {
@@ -310,13 +304,6 @@ func (info *Info) Warnings() []cluster.Warning {
 		})
 	}
 
-	if !info.Supports(NetPrio, nil) {
-		warnings = append(warnings, cluster.Warning{
-			TypeCode:    warningtype.MissingCGroupNetworkPriorityController,
-			LastMessage: "per-instance network priority will be ignored. Please use per-device limits.priority instead",
-		})
-	}
-
 	if !info.Supports(Pids, nil) {
 		warnings = append(warnings, cluster.Warning{
 			TypeCode:    warningtype.MissingCGroupPidsController,
@@ -378,8 +365,7 @@ func Init() {
 		}
 
 		// Parse V2 controllers.
-		path := fields[2]
-		hybridPath := filepath.Join(cgPath, "unified", path, "cgroup.controllers")
+		hybridPath := filepath.Join(cgPath, "unified", "cgroup.controllers")
 		dedicatedPath := ""
 
 		controllers, err := os.Open(hybridPath)
@@ -389,7 +375,7 @@ func Init() {
 				return
 			}
 
-			dedicatedPath = filepath.Join(cgPath, path, "cgroup.controllers")
+			dedicatedPath = filepath.Join(cgPath, "cgroup.controllers")
 			controllers, err = os.Open(dedicatedPath)
 			if err != nil && !os.IsNotExist(err) {
 				logger.Errorf("Unable to load cgroup.controllers")
