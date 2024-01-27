@@ -22,7 +22,7 @@ The following optional features also require extra kernel options:
 
 * Namespaces (`user` and `cgroup`)
 * AppArmor (including Ubuntu patch for mount mediation)
-* Control Groups (`blkio`, `cpuset`, `devices`, `memory`, `pids` and `net_prio`)
+* Control Groups (`blkio`, `cpuset`, `devices`, `memory` and `pids`)
 * CRIU (exact details to be found with CRIU upstream)
 
 As well as any other kernel feature required by the LXC version in use.
