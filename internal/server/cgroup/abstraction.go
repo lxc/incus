@@ -747,21 +747,6 @@ func (cg *CGroup) SetCPUCfsLimit(limitPeriod int64, limitQuota int64) error {
 	return ErrUnknownVersion
 }
 
-// SetNetIfPrio sets the priority for the process.
-func (cg *CGroup) SetNetIfPrio(limit string) error {
-	version := cgControllers["net_prio"]
-	switch version {
-	case Unavailable:
-		return ErrControllerMissing
-	case V1:
-		return cg.rw.Set(version, "net_prio", "net_prio.ifpriomap", limit)
-	case V2:
-		return ErrControllerMissing
-	}
-
-	return ErrUnknownVersion
-}
-
 // SetHugepagesLimit applies a limit to the number of processes.
 func (cg *CGroup) SetHugepagesLimit(pageType string, limit int64) error {
 	version := cgControllers["hugetlb"]

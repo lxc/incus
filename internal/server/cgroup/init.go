@@ -112,9 +112,6 @@ const (
 	// MemorySwappiness resource control.
 	MemorySwappiness
 
-	// NetPrio resource control.
-	NetPrio
-
 	// Pids resource control.
 	Pids
 )
@@ -218,9 +215,6 @@ func (info *Info) SupportsVersion(resource Resource) (Backend, bool) {
 		}
 
 		return Unavailable, false
-	case NetPrio:
-		val, ok := cgControllers["net_prio"]
-		return val, ok
 	case Pids:
 		val, ok := cgControllers["pids"]
 		if ok {
@@ -307,13 +301,6 @@ func (info *Info) Warnings() []cluster.Warning {
 		warnings = append(warnings, cluster.Warning{
 			TypeCode:    warningtype.MissingCGroupMemoryController,
 			LastMessage: "memory limits will be ignored",
-		})
-	}
-
-	if !info.Supports(NetPrio, nil) {
-		warnings = append(warnings, cluster.Warning{
-			TypeCode:    warningtype.MissingCGroupNetworkPriorityController,
-			LastMessage: "per-instance network priority will be ignored. Please use per-device limits.priority instead",
 		})
 	}
 
