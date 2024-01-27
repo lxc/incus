@@ -26,8 +26,8 @@ const (
 	MissingCGroupHugetlbController
 	// MissingCGroupMemoryController represents the missing GCgroup memory controller warning.
 	MissingCGroupMemoryController
-	// MissingCGroupNetworkPriorityController represents the missing GCgroup network priority controller warning.
-	MissingCGroupNetworkPriorityController
+	// Spacer where MissingCGroupNetworkPriorityController used to be.
+	_
 	// MissingCGroupPidsController represents the missing GCgroup pids controller warning.
 	MissingCGroupPidsController
 	// MissingCGroupMemorySwapAccounting represents the missing GCgroup memory swap accounting warning.
@@ -70,7 +70,6 @@ var TypeNames = map[Type]string{
 	MissingCGroupFreezerController:         "Couldn't find the CGroup freezer controller",
 	MissingCGroupHugetlbController:         "Couldn't find the CGroup hugetlb controller",
 	MissingCGroupMemoryController:          "Couldn't find the CGroup memory controller",
-	MissingCGroupNetworkPriorityController: "Couldn't find the CGroup network priority controller",
 	MissingCGroupPidsController:            "Couldn't find the CGroup pids controller",
 	MissingCGroupMemorySwapAccounting:      "Couldn't find the CGroup memory swap accounting",
 	ClusterTimeSkew:                        "Time skew detected between leader and local",
@@ -109,8 +108,6 @@ func (t Type) Severity() Severity {
 	case MissingCGroupHugetlbController:
 		return SeverityLow
 	case MissingCGroupMemoryController:
-		return SeverityLow
-	case MissingCGroupNetworkPriorityController:
 		return SeverityLow
 	case MissingCGroupPidsController:
 		return SeverityLow
