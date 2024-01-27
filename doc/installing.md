@@ -105,6 +105,8 @@ Start the daemon:
 
 - **`openrc`**: `rc-service incus start`
 - **`systemd`**: `systemctl start incus`
+
+Continue in the [Gentoo Wiki](https://wiki.gentoo.org/wiki/Incus).
 ```
 
 ```{group-tab} NixOS
