@@ -25,7 +25,8 @@ mkdir -p "${PREFIX}/.mnt"
 mount_9p || fail "Couldn't mount 9p, failing."
 
 # Copy the data.
-cp -Ra --no-preserve=ownership "${PREFIX}/.mnt/"* "${PREFIX}"
+cp -Ra "${PREFIX}/.mnt/"* "${PREFIX}"
+chown -R root:root "${PREFIX}"
 
 # Unmount the temporary mount.
 umount "${PREFIX}/.mnt"

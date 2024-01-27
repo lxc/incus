@@ -13,7 +13,8 @@ mount_9p || fail "Couldn't mount 9p, failing."
 
 # Transfer the agent binary.
 rm -f "${PREFIX}/incus-agent"
-cp -a --no-preserve=ownership  "${PREFIX}/.mnt/incus-agent.linux.$(uname -m)" "${PREFIX}/incus-agent"
+cp -a "${PREFIX}/.mnt/incus-agent.linux.$(uname -m)" "${PREFIX}/incus-agent"
+chown root:root "${PREFIX}/incus-agent"
 
 # Unmount the temporary mount.
 umount "${PREFIX}/.mnt"
