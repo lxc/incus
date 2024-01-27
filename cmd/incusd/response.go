@@ -45,7 +45,7 @@ func forwardedResponseIfTargetIsRemote(s *state.State, r *http.Request) response
 // the container with the given name. If the container is local, nothing gets
 // done and nil is returned.
 func forwardedResponseIfInstanceIsRemote(s *state.State, r *http.Request, project, name string, instanceType instancetype.Type) (response.Response, error) {
-	client, err := cluster.ConnectIfInstanceIsRemote(s.DB.Cluster, project, name, s.Endpoints.NetworkCert(), s.ServerCert(), r, instanceType)
+	client, err := cluster.ConnectIfInstanceIsRemote(s, project, name, r, instanceType)
 	if err != nil {
 		return nil, err
 	}

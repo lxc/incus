@@ -610,14 +610,14 @@ test_backup_rename() {
   ensure_import_testimage
   ensure_has_localhost_remote "${INCUS_ADDR}"
 
-  if ! incus query -X POST /1.0/instances/c1/backups/backupmissing -d '{\"name\": \"backupnewname\"}' --wait 2>&1 | grep -q "Error: Instance not found" ; then
+  if ! incus query -X POST /1.0/instances/c1/backups/backupmissing -d '{\"name\": \"backupnewname\"}' --wait 2>&1 | grep -q "Error: Instance backup not found" ; then
     echo "invalid rename response for missing container"
     false
   fi
 
   incus init testimage c1
 
-  if ! incus query -X POST /1.0/instances/c1/backups/backupmissing -d '{\"name\": \"backupnewname\"}' --wait 2>&1 | grep -q "Error: Load backup from database: Instance backup not found" ; then
+  if ! incus query -X POST /1.0/instances/c1/backups/backupmissing -d '{\"name\": \"backupnewname\"}' --wait 2>&1 | grep -q "Error: Instance backup not found" ; then
     echo "invalid rename response for missing backup"
     false
   fi

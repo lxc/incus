@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/miekg/dns"
@@ -14,9 +15,14 @@ import (
 
 type dnsHandler struct {
 	server *Server
+	mu     sync.Mutex
 }
 
 func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	// Don't allow concurent queries.
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	// Check if we're ready to serve queries.
 	if d.server.zoneRetriever == nil {
 		m := new(dns.Msg)

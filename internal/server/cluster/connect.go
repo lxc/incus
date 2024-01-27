@@ -80,9 +80,14 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 // ConnectIfInstanceIsRemote figures out the address of the cluster member which is running the instance with the
 // given name in the specified project. If it's not the local member will connect to it and return the connected
 // client (configured with the specified project), otherwise it will just return nil.
-func ConnectIfInstanceIsRemote(cluster *db.Cluster, projectName string, instName string, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request, instanceType instancetype.Type) (incus.InstanceServer, error) {
+func ConnectIfInstanceIsRemote(s *state.State, projectName string, instName string, r *http.Request, instanceType instancetype.Type) (incus.InstanceServer, error) {
+	// No need to connect if not clustered.
+	if !s.ServerClustered {
+		return nil, nil
+	}
+
 	var address string // Cluster member address.
-	err := cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 		address, err = tx.GetNodeAddressOfInstance(ctx, projectName, instName, instanceType)
 		return err
@@ -95,7 +100,7 @@ func ConnectIfInstanceIsRemote(cluster *db.Cluster, projectName string, instName
 		return nil, nil // The instance is running on this local member, no need to connect.
 	}
 
-	client, err := Connect(address, networkCert, serverCert, r, false)
+	client, err := Connect(address, s.Endpoints.NetworkCert(), s.ServerCert(), r, false)
 	if err != nil {
 		return nil, err
 	}
