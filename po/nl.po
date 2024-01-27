@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-23 10:25-0500\n"
-"PO-Revision-Date: 2024-01-25 23:01+0000\n"
+"PO-Revision-Date: 2024-01-27 21:01+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
 "org>\n"
 "Language-Team: Dutch <https://hosted.weblate.org/projects/incus/cli/nl/>\n"
@@ -676,15 +676,15 @@ msgstr "--refresh kan alleen worden gebruikt bij geïnstantieerden (instances)"
 #: cmd/incus/config.go:157 cmd/incus/config.go:418 cmd/incus/config.go:583
 #: cmd/incus/config.go:790 cmd/incus/info.go:451
 msgid "--target cannot be used with instances"
-msgstr ""
+msgstr "--target kan niet gebruikt worden met: instances"
 
 #: cmd/incus/alias.go:220
 msgid "<alias>"
-msgstr ""
+msgstr "<alias>"
 
 #: cmd/incus/alias.go:59
 msgid "<alias> <target>"
-msgstr ""
+msgstr "<alias> <target>"
 
 #: cmd/incus/admin_sql.go:27
 msgid "<local|global> <query>"
@@ -730,15 +730,15 @@ msgstr ""
 
 #: cmd/incus/config_trust.go:119
 msgid "A client name must be provided"
-msgstr ""
+msgstr "Een client naam moet worden meegegeven"
 
 #: cmd/incus/cluster.go:826
 msgid "A cluster member name must be provided"
-msgstr ""
+msgstr "Een clusterlid (cluster member) naam (name) moet worden meegegeven"
 
 #: cmd/incus/network_allocations.go:25
 msgid "ADDRESS"
-msgstr ""
+msgstr "ADRES"
 
 #: cmd/incus/alias.go:148 cmd/incus/image.go:1055 cmd/incus/image_alias.go:234
 msgid "ALIAS"
@@ -746,7 +746,7 @@ msgstr "ALIAS"
 
 #: cmd/incus/image.go:1056
 msgid "ALIASES"
-msgstr ""
+msgstr "ALIASSEN"
 
 #: cmd/incus/cluster.go:186 cmd/incus/image.go:1061 cmd/incus/list.go:554
 msgid "ARCHITECTURE"
@@ -754,45 +754,46 @@ msgstr "ARCHITECTUUR"
 
 #: cmd/incus/remote.go:724
 msgid "AUTH TYPE"
-msgstr ""
+msgstr "AUTHENTICATIE TYPE"
 
 #: cmd/incus/remote.go:107
 msgid "Accept certificate"
-msgstr ""
+msgstr "Accepteer certificaat"
 
 #: cmd/incus/storage_bucket.go:851
 msgid "Access key (auto-generated if empty)"
-msgstr ""
+msgstr "Toegangssleutel (automatisch gegenereerd wanneer leeg gegeven)"
 
 #: cmd/incus/storage_bucket.go:907
 #, c-format
 msgid "Access key: %s"
-msgstr ""
+msgstr "Toegangssleutel: %s"
 
 #: cmd/incus/config.go:383
 msgid "Access the expanded configuration"
-msgstr ""
+msgstr "Toegang tot de geëxpandeerde configuratie"
 
 #: cmd/incus/warning.go:262 cmd/incus/warning.go:263
 msgid "Acknowledge warning"
-msgstr ""
+msgstr "Bevestig de waarschuwing"
 
 #: cmd/incus/query.go:77
 #, c-format
 msgid "Action %q isn't supported by this tool"
-msgstr ""
+msgstr "Actie %q is niet ondersteund door dit programma"
 
 #: cmd/incus/query.go:44
 msgid "Action (defaults to GET)"
-msgstr ""
+msgstr "Actie (standaard is: GET)"
 
 #: cmd/incus/cluster_group.go:631
 msgid "Add a cluster member to a cluster group"
 msgstr ""
+"Voeg een clusterlid (cluster member) toe aan de clustergroep (cluster group)"
 
 #: cmd/incus/network_zone.go:1238
 msgid "Add a network zone record entry"
-msgstr ""
+msgstr "Voeg een netwerk (network) zone record toe"
 
 #: cmd/incus/network_load_balancer.go:746
 msgid "Add backend to a load balancer"
@@ -804,7 +805,7 @@ msgstr ""
 
 #: cmd/incus/network_zone.go:1239
 msgid "Add entries to a network zone record"
-msgstr ""
+msgstr "Voeg een items toe aan een netwerk (network) zone record"
 
 #: cmd/incus/config_device.go:77 cmd/incus/config_device.go:78
 msgid "Add instance devices"
@@ -812,15 +813,15 @@ msgstr ""
 
 #: cmd/incus/cluster_group.go:630
 msgid "Add member to group"
-msgstr ""
+msgstr "Voeg een lid (member) toe aan een group (group)"
 
 #: cmd/incus/alias.go:60 cmd/incus/alias.go:61
 msgid "Add new aliases"
-msgstr ""
+msgstr "Voeg nieuwe aliassen toe"
 
 #: cmd/incus/remote.go:96
 msgid "Add new remote servers"
-msgstr ""
+msgstr "Voeg nieuwe remote servers toe"
 
 #: cmd/incus/remote.go:97
 msgid ""
@@ -833,10 +834,18 @@ msgid ""
 "  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path --"
 "protocol=simplestreams\n"
 msgstr ""
+"Voeg nieuwe remote servers toe\n"
+"\n"
+"URL voor remote resources moeten in de vorm HTTPS zijn (https://).\n"
+"\n"
+"Basis authenticatie kan gebruikt worden in combinatie met het \"simplestreams"
+"\" protocol:\n"
+"  incus remote add gekozen-naam https://GEBRUIKERSNAAM:PASWOORD@example.com/"
+"een/zeker/pad --protocol=simplestreams\n"
 
 #: cmd/incus/config_trust.go:89
 msgid "Add new trusted client"
-msgstr ""
+msgstr "Voeg een vertrouwde cliënt (client) toe"
 
 #: cmd/incus/config_trust.go:169
 msgid "Add new trusted client certificate"
@@ -861,33 +870,37 @@ msgstr ""
 
 #: cmd/incus/network_forward.go:743 cmd/incus/network_forward.go:744
 msgid "Add ports to a forward"
-msgstr ""
+msgstr "Voeg poorten (ports) toe aan een doorstuurregel (forward)"
 
 #: cmd/incus/network_load_balancer.go:910
 #: cmd/incus/network_load_balancer.go:911
 msgid "Add ports to a load balancer"
-msgstr ""
+msgstr "Voeg poorten (ports) toe aan een werkverdeler (load balancer)"
 
 #: cmd/incus/profile.go:103 cmd/incus/profile.go:104
 msgid "Add profiles to instances"
-msgstr ""
+msgstr "Voeg profielen (profiles) toe aan instanties (instances)"
 
 #: cmd/incus/cluster_role.go:49 cmd/incus/cluster_role.go:50
 msgid "Add roles to a cluster member"
-msgstr ""
+msgstr "Voeg rollen (roles) toe aan een clusterlid (cluster member)"
 
 #: cmd/incus/network_acl.go:764 cmd/incus/network_acl.go:765
 msgid "Add rules to an ACL"
 msgstr ""
+"Voeg regels (rules) toe aan een toegangscontrole lijst (Access Control List "
+"(ACL))"
 
 #: cmd/incus/admin_recover.go:128
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
+"Aanvullende opslag (storage) poel (pool) configuratie (configuration) "
+"eigenschappen (SLEUTEL=WAARDE, laat leeg wanneer klaar):"
 
 #: cmd/incus/admin_init.go:59
 msgid "Address to bind to (default: none)"
-msgstr ""
+msgstr "Adres (Address) om aan te verbinden (bind) (standaard: geen)"
 
 #: cmd/incus/admin_init_interactive.go:787
 msgid "Address to bind to (not including port)"
@@ -896,109 +909,117 @@ msgstr ""
 #: cmd/incus/info.go:201
 #, c-format
 msgid "Address: %s"
-msgstr ""
+msgstr "Adres: %s"
 
 #: cmd/incus/storage_bucket.go:163
 #, c-format
 msgid "Admin access key: %s"
-msgstr ""
+msgstr "Beheer (Admin) toegangssleutel: %s"
 
 #: cmd/incus/storage_bucket.go:164
 #, c-format
 msgid "Admin secret key: %s"
-msgstr ""
+msgstr "Beheer (Admin) geheime toegangssleutel (secret key): %s"
 
 #: cmd/incus/alias.go:86 cmd/incus/alias.go:199
 #, c-format
 msgid "Alias %s already exists"
-msgstr ""
+msgstr "Alias %s bestaat al"
 
 #: cmd/incus/alias.go:193 cmd/incus/alias.go:248
 #, c-format
 msgid "Alias %s doesn't exist"
-msgstr ""
+msgstr "Alias %s bestaat niet"
 
 #: cmd/incus/image_alias.go:84 cmd/incus/image_alias.go:131
 #: cmd/incus/image_alias.go:279
 msgid "Alias name missing"
-msgstr ""
+msgstr "Alias naam (name) mist"
 
 #: cmd/incus/image.go:992
 #, c-format
 msgid "Alias: %s"
-msgstr ""
+msgstr "Alias: %s"
 
 #: cmd/incus/publish.go:242
 #, c-format
 msgid "Aliases already exists: %s"
-msgstr ""
+msgstr "Aliassen bestaan al: %s"
 
 #: cmd/incus/image.go:976
 msgid "Aliases:"
-msgstr ""
+msgstr "Aliassen:"
 
 #: cmd/incus/admin_init_interactive.go:222
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr ""
+"Alle huidige gegevens gaan verloren bij het lid worden (joining) van een "
+"cluster, doorgaan?"
 
 #: cmd/incus/storage_volume.go:1388 cmd/incus/storage_volume.go:2240
 msgid "All projects"
-msgstr ""
+msgstr "Alle projecten"
 
 #: cmd/incus/remote.go:187
 msgid "All server addresses are unavailable"
-msgstr ""
+msgstr "Alle server adressen zijn onbeschikbaar"
 
 #: cmd/incus/config_trust.go:180
 msgid "Alternative certificate name"
-msgstr ""
+msgstr "Alternatieve certificaat naam"
 
 #: cmd/incus/image.go:947 cmd/incus/info.go:476
 #, c-format
 msgid "Architecture: %s"
-msgstr ""
+msgstr "Architectuur: %s"
 
 #: cmd/incus/info.go:127
 #, c-format
 msgid "Architecture: %v"
-msgstr ""
+msgstr "Architectuur: %v"
 
 #: cmd/incus/admin_init_interactive.go:158
 msgid "Are you joining an existing cluster?"
-msgstr ""
+msgstr "Wilt u lid worden (joining) van een bestaand cluster?"
 
 #: cmd/incus/cluster.go:1208
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
-msgstr ""
+msgstr "Weet je zeker dat je %s wilt clusteren met %q ? (yes/no) "
 
 #: cmd/incus/console.go:378
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
+"Beide konden niet worden gevonden, de directe SPICE plug (raw SPICE socket) "
+"kan hier gevonden worden:"
 
 #: cmd/incus/create.go:357 cmd/incus/rebuild.go:131
 msgid "Asked for a VM but image is of type container"
 msgstr ""
+"Gevraagd naar een virtueel machine (VM), maar het bestand (image) is van het "
+"type: container"
 
 #: cmd/incus/cluster_group.go:83 cmd/incus/cluster_group.go:84
 msgid "Assign sets of groups to cluster members"
-msgstr ""
+msgstr "Wijs collecties van groepen toe aan clusterleden (cluster members)"
 
 #: cmd/incus/profile.go:166 cmd/incus/profile.go:167
 msgid "Assign sets of profiles to instances"
 msgstr ""
+"Wijs collecties van profielen (set of profiles) toe aan instanties "
+"(instances)"
 
 #: cmd/incus/network.go:134
 msgid "Attach network interfaces to instances"
-msgstr ""
+msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
 
 #: cmd/incus/network.go:231 cmd/incus/network.go:232
 msgid "Attach network interfaces to profiles"
-msgstr ""
+msgstr "Toekennen van netwerk (network) interfaces aan profielen (profiles)"
 
 #: cmd/incus/network.go:135
 msgid "Attach new network interfaces to instances"
-msgstr ""
+msgstr "Toekennen van nieuwe netwerk interfaces aan instanties (instances)"
 
 #: cmd/incus/storage_volume.go:161 cmd/incus/storage_volume.go:162
 msgid "Attach new storage volumes to instances"
@@ -1049,30 +1070,30 @@ msgstr ""
 
 #: cmd/incus/list.go:560 cmd/incus/list.go:561
 msgid "BASE IMAGE"
-msgstr ""
+msgstr "BASIS IMAGEBESTAND"
 
 #: cmd/incus/export.go:85
 #, c-format
 msgid "Backing up instance: %s"
-msgstr ""
+msgstr "Backup aan het maken van instantie (instance): %s"
 
 #: cmd/incus/storage_volume.go:2628
 #, c-format
 msgid "Backing up storage volume: %s"
-msgstr ""
+msgstr "Backup aan het maken van opslagvolume (storage volume): %s"
 
 #: cmd/incus/export.go:191 cmd/incus/storage_volume.go:2705
 msgid "Backup exported successfully!"
-msgstr ""
+msgstr "Backup is geëxporteerd met succes!"
 
 #: cmd/incus/info.go:644 cmd/incus/storage_volume.go:1319
 msgid "Backups:"
-msgstr ""
+msgstr "Backups:"
 
 #: cmd/incus/utils.go:99
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
-msgstr ""
+msgstr "Ongeldige device override syntax, verwacht: <device>,<key>=<value>: %s"
 
 #: cmd/incus/network.go:365 cmd/incus/network_acl.go:381
 #: cmd/incus/network_forward.go:283 cmd/incus/network_load_balancer.go:286
@@ -1080,119 +1101,121 @@ msgstr ""
 #: cmd/incus/network_zone.go:921 cmd/incus/storage_bucket.go:135
 #, c-format
 msgid "Bad key/value pair: %s"
-msgstr ""
+msgstr "Ongeldig sleutel/waarde paar: %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:221 cmd/incus/move.go:358
 #: cmd/incus/project.go:129
 #, c-format
 msgid "Bad key=value pair: %q"
-msgstr ""
+msgstr "Ongeldig sleutel=waarde paar: %q"
 
 #: cmd/incus/publish.go:179 cmd/incus/storage.go:129
 #: cmd/incus/storage_volume.go:575
 #, c-format
 msgid "Bad key=value pair: %s"
-msgstr ""
+msgstr "Ongeldig sleutel=waarde paar: %s"
 
 #: cmd/incus/image.go:758
 #, c-format
 msgid "Bad property: %s"
-msgstr ""
+msgstr "Ongeldig eigenschap: %s"
 
 #: cmd/incus/network.go:951
 msgid "Bond:"
-msgstr ""
+msgstr "Samenvoeging (Bond):"
 
 #: cmd/incus/action.go:169 cmd/incus/action.go:348
 msgid "Both --all and instance name given"
-msgstr ""
+msgstr "Beide --all en instantie naam (instance name) zijn gegeven"
 
 #: cmd/incus/info.go:128
 #, c-format
 msgid "Brand: %v"
-msgstr ""
+msgstr "Merk (Brand): %v"
 
 #: cmd/incus/network.go:964
 msgid "Bridge:"
-msgstr ""
+msgstr "Brug (Bridge):"
 
 #: cmd/incus/info.go:567 cmd/incus/network.go:943
 msgid "Bytes received"
-msgstr ""
+msgstr "Bytes ontvangen (received)"
 
 #: cmd/incus/info.go:568 cmd/incus/network.go:944
 msgid "Bytes sent"
-msgstr ""
+msgstr "Bytes verzonden"
 
 #: cmd/incus/operation.go:175
 msgid "CANCELABLE"
-msgstr ""
+msgstr "ONDERBREEKBAAR"
 
 #: cmd/incus/config_trust.go:434
 msgid "COMMON NAME"
-msgstr ""
+msgstr "GEWONE NAAM"
 
 #: cmd/incus/storage_volume.go:1495
 msgid "CONTENT-TYPE"
-msgstr ""
+msgstr "INHOUDSTYPE"
 
 #: cmd/incus/warning.go:210
 msgid "COUNT"
-msgstr ""
+msgstr "SOM"
 
 #: cmd/incus/info.go:354
 #, c-format
 msgid "CPU (%s):"
-msgstr ""
+msgstr "CPU (%s):"
 
 #: cmd/incus/list.go:572
 msgid "CPU USAGE"
-msgstr ""
+msgstr "CPU GEBRUIK"
 
 #: cmd/incus/info.go:517
 msgid "CPU usage (in seconds)"
-msgstr ""
+msgstr "CPU gebruik (in seconde)"
 
 #: cmd/incus/info.go:521
 msgid "CPU usage:"
-msgstr ""
+msgstr "CPU gebruik:"
 
 #: cmd/incus/info.go:357
 #, c-format
 msgid "CPUs (%s):"
-msgstr ""
+msgstr "CPU's (%s):"
 
 #: cmd/incus/operation.go:176
 msgid "CREATED"
-msgstr ""
+msgstr "GECREËERD"
 
 #: cmd/incus/list.go:556
 msgid "CREATED AT"
-msgstr ""
+msgstr "GECREËERD OM"
 
 #: cmd/incus/info.go:130
 #, c-format
 msgid "CUDA Version: %v"
-msgstr ""
+msgstr "CUDA Versie: %v"
 
 #: cmd/incus/image.go:985
 #, c-format
 msgid "Cached: %s"
-msgstr ""
+msgstr "Cached: %s"
 
 #: cmd/incus/info.go:307
 msgid "Caches:"
-msgstr ""
+msgstr "Caches:"
 
 #: cmd/incus/admin_init_interactive.go:143
 #: cmd/incus/admin_init_interactive.go:812
 #, c-format
 msgid "Can't bind address %q: %w"
-msgstr ""
+msgstr "Kan niet binden (bind) aan adres (address) %q: %w"
 
 #: cmd/incus/move.go:116
 msgid "Can't override configuration or profiles in local rename"
 msgstr ""
+"Niet mogelijk om geforceerd (override) de configuratie of de profielen in "
+"een lokaal (local) herbenaming (rename) uit te voeren"
 
 #: cmd/incus/image.go:210
 msgid "Can't provide a name for the target image"
