@@ -365,8 +365,7 @@ func Init() {
 		}
 
 		// Parse V2 controllers.
-		path := fields[2]
-		hybridPath := filepath.Join(cgPath, "unified", path, "cgroup.controllers")
+		hybridPath := filepath.Join(cgPath, "unified", "cgroup.controllers")
 		dedicatedPath := ""
 
 		controllers, err := os.Open(hybridPath)
@@ -376,7 +375,7 @@ func Init() {
 				return
 			}
 
-			dedicatedPath = filepath.Join(cgPath, path, "cgroup.controllers")
+			dedicatedPath = filepath.Join(cgPath, "cgroup.controllers")
 			controllers, err = os.Open(dedicatedPath)
 			if err != nil && !os.IsNotExist(err) {
 				logger.Errorf("Unable to load cgroup.controllers")
