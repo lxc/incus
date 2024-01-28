@@ -273,8 +273,19 @@ func (c *Client) HandleEvent(event api.Event) {
 			context["requester-username"] = lifecycleEvent.Requestor.Username
 		}
 
+		// Get a sorted list of context keys.
+		keys := make([]string, 0, len(context))
+
+		for k := range context {
+			keys = append(keys, k)
+		}
+
+		sort.Strings(keys)
+
 		// Add key-value pairs as labels but don't override any labels.
-		for k, v := range context {
+		for _, k := range keys {
+			v := context[k]
+
 			if util.ValueInSlice(k, c.cfg.labels) {
 				_, ok := entry.labels[k]
 				if !ok {
