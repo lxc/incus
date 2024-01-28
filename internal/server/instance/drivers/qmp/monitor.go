@@ -28,6 +28,9 @@ var EventVMShutdown = "SHUTDOWN"
 // EventVMShutdownReasonDisconnect is used as the reason when the shutdown event is triggered by a QMP disconnect.
 var EventVMShutdownReasonDisconnect = "disconnect"
 
+// EventDiskEjected is used to indicate that a disk device was ejected by the guest.
+var EventDiskEjected = "DEVICE_TRAY_MOVED"
+
 // Monitor represents a QMP monitor.
 type Monitor struct {
 	path string
@@ -102,6 +105,17 @@ func (m *Monitor) start() error {
 			case <-m.chDisconnect:
 				return
 			case e, more := <-chEvents:
+				// Handle media ejection.
+				if e.Event == EventDiskEjected {
+					id, ok := e.Data["id"].(string)
+					if ok {
+						err = m.Eject(id)
+						if err != nil {
+							logger.Warnf("Unable to eject media %q: %v", id, err)
+						}
+					}
+				}
+
 				// Deliver non-empty events to the event handler.
 				if m.eventHandler != nil && e.Event != "" {
 					if e.Event == EventVMShutdown {
