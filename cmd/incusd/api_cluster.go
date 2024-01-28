@@ -3316,13 +3316,15 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 
 		// Stop the instance if needed.
 		isRunning := inst.IsRunning()
-		if opts.stopInstance != nil && isRunning && action != "live-migrate" {
-			metadata["evacuation_progress"] = fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)
-			_ = opts.op.UpdateMetadata(metadata)
+		if action != "live-migrate" {
+			if opts.stopInstance != nil && isRunning {
+				metadata["evacuation_progress"] = fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)
+				_ = opts.op.UpdateMetadata(metadata)
 
-			err := opts.stopInstance(inst, action)
-			if err != nil {
-				return err
+				err := opts.stopInstance(inst, action)
+				if err != nil {
+					return err
+				}
 			}
 
 			if action != "migrate" {
