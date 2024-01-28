@@ -17,6 +17,7 @@ import (
 	internalInstance "github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/internal/rsync"
 	"github.com/lxc/incus/internal/server/cgroup"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
@@ -40,6 +41,9 @@ import (
 
 // Special disk "source" value used for generating a VM cloud-init config ISO.
 const diskSourceCloudInit = "cloud-init:config"
+
+// Special disk "source" value used for generating a VM agent ISO.
+const diskSourceAgent = "agent:config"
 
 // DiskVirtiofsdSockMountOpt indicates the mount option prefix used to provide the virtiofsd socket path to
 // the QEMU driver.
@@ -150,6 +154,10 @@ func (d *disk) sourceIsLocalPath(source string) bool {
 	}
 
 	if source == diskSourceCloudInit {
+		return false
+	}
+
+	if source == diskSourceAgent {
 		return false
 	}
 
@@ -451,8 +459,8 @@ func (d *disk) validateEnvironmentSourcePath() error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *disk) validateEnvironment() error {
-	if d.inst.Type() != instancetype.VM && d.config["source"] == diskSourceCloudInit {
-		return fmt.Errorf("disks with source=%s are only supported by virtual machines", diskSourceCloudInit)
+	if d.inst.Type() != instancetype.VM && util.ValueInSlice(d.config["source"], []string{diskSourceCloudInit, diskSourceAgent}) {
+		return fmt.Errorf("disks with source=%s are only supported by virtual machines", d.config["source"])
 	}
 
 	err := d.validateEnvironmentSourcePath()
@@ -784,6 +792,35 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			},
 		}
 
+		return &runConf, nil
+	} else if d.config["source"] == diskSourceAgent {
+		// This is a special virtual disk source that can be attached to a VM to provide agent binary and config.
+		isoPath, err := d.generateVMAgentDrive()
+		if err != nil {
+			return nil, err
+		}
+
+		// Open file handle to isoPath source.
+		f, err := os.OpenFile(isoPath, unix.O_PATH|unix.O_CLOEXEC, 0)
+		if err != nil {
+			return nil, fmt.Errorf("Failed opening source path %q: %w", isoPath, err)
+		}
+
+		revert.Add(func() { _ = f.Close() })
+		runConf.PostHooks = append(runConf.PostHooks, f.Close)
+		runConf.Revert = func() { _ = f.Close() } // Close file on VM start failure.
+
+		// Encode the file descriptor and original isoPath into the DevPath field.
+		runConf.Mounts = []deviceConfig.MountEntryItem{
+			{
+				DevPath: fmt.Sprintf("%s:%d:%s", DiskFileDescriptorMountPrefix, f.Fd(), isoPath),
+				DevName: d.name,
+				FSType:  "iso9660",
+				Opts:    opts,
+			},
+		}
+
+		revert.Success()
 		return &runConf, nil
 	} else if d.config["source"] == diskSourceCloudInit {
 		// This is a special virtual disk source that can be attached to a VM to provide cloud-init config.
@@ -2165,10 +2202,69 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 	return devices, nil
 }
 
+// generateVMAgent generates an ISO containing the VM agent binary and config.
+// Returns the path to the ISO.
+func (d *disk) generateVMAgentDrive() (string, error) {
+	scratchDir := filepath.Join(d.inst.DevicesPath(), linux.PathNameEncode(d.name))
+	defer func() { _ = os.RemoveAll(scratchDir) }()
+
+	// Check we have the mkisofs tool available.
+	mkisofsPath, err := exec.LookPath("mkisofs")
+	if err != nil {
+		return "", err
+	}
+
+	// Create agent drive dir.
+	err = os.MkdirAll(scratchDir, 0100)
+	if err != nil {
+		return "", err
+	}
+
+	// Copy the instance config data over.
+	configPath := filepath.Join(d.inst.Path(), "config")
+	_, err = rsync.LocalCopy(configPath, scratchDir, "", false)
+	if err != nil {
+		return "", err
+	}
+
+	// Include the most likely agent.
+	if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
+		agentInstallPath := filepath.Join(scratchDir, "incus-agent")
+
+		os.Remove(agentInstallPath)
+
+		err = internalUtil.FileCopy(filepath.Join(os.Getenv("INCUS_AGENT_PATH"), fmt.Sprintf("incus-agent.linux.%s", d.state.OS.Uname.Machine)), agentInstallPath)
+		if err != nil {
+			return "", err
+		}
+
+		err = os.Chmod(agentInstallPath, 0500)
+		if err != nil {
+			return "", err
+		}
+
+		err = os.Chown(agentInstallPath, 0, 0)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Finally convert the agent drive dir into an ISO file. The incus-agent label is important
+	// as this is what incus-agent-loader uses to detect the drive.
+	isoPath := filepath.Join(d.inst.Path(), "agent.iso")
+	_, err = subprocess.RunCommand(mkisofsPath, "-joliet", "-rock", "-input-charset", "utf8", "-output-charset", "utf8", "-volid", "incus-agent", "-o", isoPath, scratchDir)
+	if err != nil {
+		return "", err
+	}
+
+	return isoPath, nil
+}
+
 // generateVMConfigDrive generates an ISO containing the cloud init config for a VM.
 // Returns the path to the ISO.
 func (d *disk) generateVMConfigDrive() (string, error) {
 	scratchDir := filepath.Join(d.inst.DevicesPath(), linux.PathNameEncode(d.name))
+	defer func() { _ = os.RemoveAll(scratchDir) }()
 
 	// Check we have the mkisofs tool available.
 	mkisofsPath, err := exec.LookPath("mkisofs")
@@ -2245,9 +2341,6 @@ local-hostname: %s
 	if err != nil {
 		return "", err
 	}
-
-	// Remove the config drive folder.
-	_ = os.RemoveAll(scratchDir)
 
 	return isoPath, nil
 }

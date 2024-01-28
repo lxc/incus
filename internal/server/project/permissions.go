@@ -609,6 +609,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					return nil
 				}
 
+				// Always allow the agent config drive.
+				if device["path"] == "" && device["source"] == "agent:config" {
+					return nil
+				}
+
 				switch restrictionValue {
 				case "block":
 					return fmt.Errorf("Disk devices are forbidden")

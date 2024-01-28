@@ -2330,3 +2330,7 @@ This introduces new options for the `cluster.evacuate` option:
 
 This introduces a new `boot.host_shutdown_action` instance configuration key which can be used to override the default `stop` behavior on system shutdown.
 It supports the value `stop`, `stateful-stop` and `force-stop`.
+
+## `agent_config_drive`
+
+This introduces a new `agent:config` disk `source` which can be used to expose an ISO to the VM guest containing the agent and its configuration.
