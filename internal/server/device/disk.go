@@ -2169,6 +2169,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 // Returns the path to the ISO.
 func (d *disk) generateVMConfigDrive() (string, error) {
 	scratchDir := filepath.Join(d.inst.DevicesPath(), linux.PathNameEncode(d.name))
+	defer func() { _ = os.RemoveAll(scratchDir) }()
 
 	// Check we have the mkisofs tool available.
 	mkisofsPath, err := exec.LookPath("mkisofs")
@@ -2245,9 +2246,6 @@ local-hostname: %s
 	if err != nil {
 		return "", err
 	}
-
-	// Remove the config drive folder.
-	_ = os.RemoveAll(scratchDir)
 
 	return isoPath, nil
 }
