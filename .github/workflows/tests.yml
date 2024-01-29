@@ -273,7 +273,7 @@ jobs:
             exit 1
           fi
 
-          sudo snap install microceph --edge
+          sudo snap install microceph --channel=quincy/stable
           sudo apt-get install --no-install-recommends -y ceph-common
           sudo microceph cluster bootstrap
           sudo microceph.ceph config set global osd_pool_default_size 1
