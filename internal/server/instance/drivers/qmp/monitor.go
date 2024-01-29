@@ -109,10 +109,12 @@ func (m *Monitor) start() error {
 				if e.Event == EventDiskEjected {
 					id, ok := e.Data["id"].(string)
 					if ok {
-						err = m.Eject(id)
-						if err != nil {
-							logger.Warnf("Unable to eject media %q: %v", id, err)
-						}
+						go func() {
+							err = m.Eject(id)
+							if err != nil {
+								logger.Warnf("Unable to eject media %q: %v", id, err)
+							}
+						}()
 					}
 				}
 
