@@ -111,6 +111,9 @@ type Pool interface {
 	DeleteBucketKey(projectName string, bucketName string, keyName string, op *operations.Operation) error
 	ActivateBucket(projectName string, bucketName string, op *operations.Operation) (*miniod.Process, error)
 	GetBucketURL(bucketName string) *url.URL
+	GenerateBucketBackupConfig(projectName string, bucketName string, op *operations.Operation) (*backupConfig.Config, error)
+	BackupBucket(projectName string, bucketName string, tarWriter *instancewriter.InstanceTarWriter, op *operations.Operation) error
+	CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error
 
 	// Custom volumes.
 	CreateCustomVolume(projectName string, volName string, desc string, config map[string]string, contentType drivers.ContentType, op *operations.Operation) error

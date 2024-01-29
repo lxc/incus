@@ -446,6 +446,32 @@ func BucketDBDelete(ctx context.Context, pool Pool, bucketID int64) error {
 	return nil
 }
 
+// BucketKeysDBGet loads the keys for a bucket from the database.
+func BucketKeysDBGet(pool Pool, bucketID int64) ([]*db.StorageBucketKey, error) {
+	p, ok := pool.(*backend)
+	if !ok {
+		return nil, fmt.Errorf("Pool is not a backend")
+	}
+
+	var err error
+	var keys []*db.StorageBucketKey
+
+	// Get the storage bucket keys.
+	err = p.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		keys, err = tx.GetStoragePoolBucketKeys(ctx, bucketID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return keys, nil
+}
+
 // poolAndVolumeCommonRules returns a map of pool and volume config common rules common to all drivers.
 // When vol argument is nil function returns pool specific rules.
 func poolAndVolumeCommonRules(vol *drivers.Volume) map[string]func(string) error {
