@@ -121,6 +121,11 @@ func StorageVolumeProjectFromRecord(p *api.Project, volumeType int) string {
 	return api.ProjectDefaultName
 }
 
+// StorageBucket adds the "<project>_prefix" to the storage bucket name. Even if the project name is "default".
+func StorageBucket(projectName string, storageBucketName string) string {
+	return fmt.Sprintf("%s%s%s", projectName, separator, storageBucketName)
+}
+
 // StorageBucketProject returns the effective project name to use to for the bucket based on the requested project.
 // If the project specified has the "features.storage.buckets" flag enabled then the project name is returned,
 // otherwise the default project name is returned.
