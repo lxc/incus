@@ -237,11 +237,12 @@ jobs:
           # reclaim some space
           sudo apt-get clean
 
-          mkdir -p "$(go env GOPATH)/bin"
-          curl -sSfL https://dl.min.io/server/minio/release/linux-amd64/minio --output "$(go env GOPATH)/bin/minio"
-          chmod +x "$(go env GOPATH)/bin/minio"
+          # Download minio.
+          curl -sSfL https://dl.min.io/server/minio/release/linux-amd64/archive/minio_20240116160738.0.0_amd64.deb --output /tmp/minio.deb
+          sudo apt-get install /tmp/minio.deb --yes
 
           # Download latest release of openfga server.
+          mkdir -p "$(go env GOPATH)/bin/"
           curl -sSfL https://api.github.com/repos/openfga/openfga/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -sSfL {} -o openfga.tar.gz
           tar -xzf openfga.tar.gz -C "$(go env GOPATH)/bin/"
 
