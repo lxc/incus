@@ -110,7 +110,7 @@ func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info
 		}
 	}
 
-	return localPeerID, targetPeerNetworkID > -1, err
+	return localPeerID, targetPeerNetworkID > -1, nil
 }
 
 // networkPeerConfigAdd inserts Network peer config keys.
