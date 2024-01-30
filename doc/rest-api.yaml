@@ -3310,6 +3310,7 @@ definitions:
         properties:
             chassis:
                 description: OVN network chassis name
+                example: server01
                 type: string
                 x-go-name: Chassis
         type: object
