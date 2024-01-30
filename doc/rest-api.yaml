@@ -3313,6 +3313,11 @@ definitions:
                 example: server01
                 type: string
                 x-go-name: Chassis
+            logical_router:
+                description: OVN logical router name
+                example: incus-net1-lr
+                type: string
+                x-go-name: LogicalRouter
         type: object
         x-go-package: github.com/lxc/incus/shared/api
     NetworkStateVLAN:
