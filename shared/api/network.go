@@ -314,5 +314,6 @@ type NetworkStateVLAN struct {
 // API extension: network_state_ovn.
 type NetworkStateOVN struct {
 	// OVN network chassis name
+	// Example: server01
 	Chassis string `json:"chassis" yaml:"chassis"`
 }
