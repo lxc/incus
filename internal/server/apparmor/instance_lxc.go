@@ -504,11 +504,12 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   mount options=(rw,unbindable) -> **,
   mount options=(rw,runbindable) -> **,
 
-  # Allow all bind-mounts
-  mount options=(rw,bind) / -> /**,
-  mount options=(rw,bind) /** -> /**,
-  mount options=(rw,rbind) / -> /**,
-  mount options=(rw,rbind) /** -> /**,
+  # Allow all bind-mounts.
+  mount options=(rw,bind) -> /**,
+  mount options=(rw,rbind) -> /**,
+
+  # Allow all move-mounts.
+  mount options=(rw,move) -> /**,
 
   # Allow common combinations of bind/remount
   # NOTE: AppArmor bug effectively turns those into wildcards mount allow
