@@ -394,6 +394,7 @@ var APIExtensions = []string{
 	"clustering_evacuation_stop_options",
 	"boot_host_shutdown_action",
 	"agent_config_drive",
+	"network_state_ovn_lr",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
