@@ -2208,10 +2208,15 @@ func (d *disk) generateVMAgentDrive() (string, error) {
 	scratchDir := filepath.Join(d.inst.DevicesPath(), linux.PathNameEncode(d.name))
 	defer func() { _ = os.RemoveAll(scratchDir) }()
 
-	// Check we have the mkisofs tool available.
-	mkisofsPath, err := exec.LookPath("mkisofs")
+	// Check we have the mkisofs or genisoimage tool available.
+	var mkisofsPath string
+	var err error
+	mkisofsPath, err = exec.LookPath("mkisofs")
 	if err != nil {
-		return "", err
+		mkisofsPath, err = exec.LookPath("genisoimage")
+		if err != nil {
+			return "", fmt.Errorf("Neither mkisofs nor genisoimage could be found in $PATH")
+		}
 	}
 
 	// Create agent drive dir.
