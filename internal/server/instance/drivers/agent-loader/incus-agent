@@ -1,5 +1,11 @@
 #!/bin/sh
 PREFIX="/run/incus_agent"
+
+# Legacy handling
+if [ ! -e "${PREFIX}" ] && [ -d "/run/lxd_agent" ]; then
+    ln -s "/run/lxd_agent" "${PREFIX}"
+fi
+
 mkdir -p "${PREFIX}/.mnt"
 
 # Functions.
