@@ -643,7 +643,8 @@ var schema = `{
           "id",
           "bridge"
         ]
-      ]
+      ],
+      "isRoot": true
     },
     "Flow_Table": {
       "columns": {
@@ -1575,7 +1576,8 @@ var schema = `{
             "max": 1
           }
         }
-      }
+      },
+      "isRoot": true
     },
     "Port": {
       "columns": {
@@ -1849,7 +1851,8 @@ var schema = `{
         "type": {
           "type": "string"
         }
-      }
+      },
+      "isRoot": true
     },
     "Queue": {
       "columns": {
@@ -1888,7 +1891,8 @@ var schema = `{
             "max": "unlimited"
           }
         }
-      }
+      },
+      "isRoot": true
     },
     "SSL": {
       "columns": {

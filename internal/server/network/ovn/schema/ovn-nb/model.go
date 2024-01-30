@@ -200,7 +200,8 @@ var schema = `{
         [
           "name"
         ]
-      ]
+      ],
+      "isRoot": true
     },
     "BFD": {
       "columns": {
@@ -287,7 +288,8 @@ var schema = `{
           "logical_port",
           "dst_ip"
         ]
-      ]
+      ],
+      "isRoot": true
     },
     "Connection": {
       "columns": {
@@ -395,7 +397,8 @@ var schema = `{
         [
           "name"
         ]
-      ]
+      ],
+      "isRoot": true
     },
     "DHCP_Options": {
       "columns": {
@@ -426,7 +429,8 @@ var schema = `{
             "max": "unlimited"
           }
         }
-      }
+      },
+      "isRoot": true
     },
     "DNS": {
       "columns": {
@@ -454,7 +458,8 @@ var schema = `{
             "max": "unlimited"
           }
         }
-      }
+      },
+      "isRoot": true
     },
     "Forwarding_Group": {
       "columns": {
@@ -602,7 +607,8 @@ var schema = `{
         [
           "name"
         ]
-      ]
+      ],
+      "isRoot": true
     },
     "Load_Balancer": {
       "columns": {
@@ -705,7 +711,8 @@ var schema = `{
             "max": "unlimited"
           }
         }
-      }
+      },
+      "isRoot": true
     },
     "Load_Balancer_Group": {
       "columns": {
@@ -728,7 +735,8 @@ var schema = `{
         [
           "name"
         ]
-      ]
+      ],
+      "isRoot": true
     },
     "Load_Balancer_Health_Check": {
       "columns": {
@@ -875,7 +883,8 @@ var schema = `{
             "max": "unlimited"
           }
         }
-      }
+      },
+      "isRoot": true
     },
     "Logical_Router_Policy": {
       "columns": {
@@ -1248,7 +1257,8 @@ var schema = `{
             "max": "unlimited"
           }
         }
-      }
+      },
+      "isRoot": true
     },
     "Logical_Switch_Port": {
       "columns": {
@@ -1454,7 +1464,8 @@ var schema = `{
         [
           "name"
         ]
-      ]
+      ],
+      "isRoot": true
     },
     "Meter_Band": {
       "columns": {
@@ -1660,7 +1671,8 @@ var schema = `{
             "max": 1
           }
         }
-      }
+      },
+      "isRoot": true
     },
     "Port_Group": {
       "columns": {
@@ -1706,7 +1718,8 @@ var schema = `{
         [
           "name"
         ]
-      ]
+      ],
+      "isRoot": true
     },
     "QoS": {
       "columns": {
