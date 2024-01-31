@@ -314,5 +314,12 @@ type NetworkStateVLAN struct {
 // API extension: network_state_ovn.
 type NetworkStateOVN struct {
 	// OVN network chassis name
+	// Example: server01
 	Chassis string `json:"chassis" yaml:"chassis"`
+
+	// OVN logical router name
+	// Example: incus-net1-lr
+	//
+	// API extension: network_state_ovn_lr
+	LogicalRouter string `json:"logical_router" yaml:"logical_router"`
 }

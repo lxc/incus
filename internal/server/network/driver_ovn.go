@@ -166,7 +166,10 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		Mtu:       mtu,
 		State:     "up",
 		Type:      "broadcast",
-		OVN:       &api.NetworkStateOVN{Chassis: chassis},
+		OVN: &api.NetworkStateOVN{
+			Chassis:       chassis,
+			LogicalRouter: string(n.getRouterName()),
+		},
 	}, nil
 }
 

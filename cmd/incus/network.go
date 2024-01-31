@@ -983,6 +983,9 @@ func (c *cmdNetworkInfo) Run(cmd *cobra.Command, args []string) error {
 		fmt.Println("")
 		fmt.Println(i18n.G("OVN:"))
 		fmt.Printf("  %s: %s\n", i18n.G("Chassis"), state.OVN.Chassis)
+		if client.HasExtension("network_state_ovn_lr") {
+			fmt.Printf("  %s: %s\n", i18n.G("Logical router"), state.OVN.LogicalRouter)
+		}
 	}
 
 	return nil

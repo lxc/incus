@@ -2334,3 +2334,9 @@ It supports the value `stop`, `stateful-stop` and `force-stop`.
 ## `agent_config_drive`
 
 This introduces a new `agent:config` disk `source` which can be used to expose an ISO to the VM guest containing the agent and its configuration.
+
+## `network_state_ovn_lr`
+
+Adds a new `LogicalRouter` field to the `NetworkStateOVN` struct which is part of the `GET /1.0/networks/NAME/state` API.
+
+This is used to get the OVN logical router name.
