@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-30 15:38-0500\n"
-"PO-Revision-Date: 2024-01-26 15:03+0000\n"
+"PO-Revision-Date: 2024-02-02 10:01+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -2580,7 +2580,6 @@ msgid "Execute commands in instances"
 msgstr "インスタンス内でコマンドを実行します"
 
 #: cmd/incus/exec.go:41
-#, fuzzy
 msgid ""
 "Execute commands in instances\n"
 "\n"
@@ -2601,10 +2600,11 @@ msgstr ""
 "シェル環境が必要なら、シェルを実行し、引数でシェルコマンドを渡す必要がありま"
 "す。例えば:\n"
 "\n"
-"  lxc exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
+"  incus exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
 "\n"
-"デフォルトのモードは non-interactive です。もし標準入出力が両方ともターミナル"
-"の場合は interactive モードが選択されます (標準エラー出力は無視されます)。"
+"デフォルトのモードは non-interactive です。"
+"もし標準入出力が両方ともターミナルの場合は interactive モードが選択されます "
+"(標準エラー出力は無視されます)。"
 
 #: cmd/incus/utils_properties.go:95
 #, c-format
@@ -2745,7 +2745,7 @@ msgid "Failed generating SSH host key: %w"
 msgstr "SSH ホスト鍵の生成に失敗しました: %w"
 
 #: cmd/incus/admin_init_interactive.go:468
-#, fuzzy, c-format
+#, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "証明書の作成に失敗しました: %w"
 
@@ -8054,7 +8054,7 @@ msgstr "YAML 形式の初期設定値を表示しますか?"
 
 #: cmd/incus/admin_init_interactive.go:827
 msgid "Would you like stale cached images to be updated automatically?"
-msgstr ""
+msgstr "キャッシュされた古いイメージを自動的に更新しますか?"
 
 #: cmd/incus/admin_init_interactive.go:773
 #, fuzzy
@@ -8063,54 +8063,54 @@ msgstr "この LXD サーバはネットワークから利用できません"
 
 #: cmd/incus/admin_recover.go:230
 msgid "Would you like those to be recovered?"
-msgstr ""
+msgstr "それらを回復しますか?"
 
 #: cmd/incus/admin_init_interactive.go:376
 msgid "Would you like to NAT IPv4 traffic on your bridge?"
-msgstr ""
+msgstr "ブリッジ上で IPv4 トラフィックを NAT しますか?"
 
 #: cmd/incus/admin_init_interactive.go:397
 msgid "Would you like to NAT IPv6 traffic on your bridge?"
-msgstr ""
+msgstr "ブリッジ上で IPv6 トラフィックを NAT しますか?"
 
 #: cmd/incus/admin_recover.go:160
 msgid "Would you like to continue with scanning for lost volumes?"
-msgstr ""
+msgstr "失われたボリュームのスキャンを続行しますか?"
 
 #: cmd/incus/admin_init_interactive.go:570
 #, c-format
 msgid "Would you like to create a new btrfs subvolume under %s?"
-msgstr ""
+msgstr "%s に新しい btrfs のサブボリュームを作成しますか?"
 
 #: cmd/incus/admin_init_interactive.go:295
 msgid "Would you like to create a new local network bridge?"
-msgstr ""
+msgstr "新しいローカルネットワークブリッジを作成しますか?"
 
 #: cmd/incus/admin_init_interactive.go:586
 msgid "Would you like to create a new zfs dataset under rpool/incus?"
-msgstr ""
+msgstr "rpool/incus に新しい zfs データセットを作成しますか?"
 
 #: cmd/incus/admin_init_interactive.go:761
 msgid "Would you like to have your containers share their parent's allocation?"
-msgstr ""
+msgstr "コンテナの親の割当をコンテナに共有させますか?"
 
 #: cmd/incus/admin_recover.go:77
 msgid "Would you like to recover another storage pool?"
-msgstr ""
+msgstr "他のストレージプールを回復しますか?"
 
 #: cmd/incus/admin_init_interactive.go:302
 msgid "Would you like to use an existing bridge or host interface?"
-msgstr ""
+msgstr "既存のブリッジかホストのインターフェースを使用しますか?"
 
 #: cmd/incus/admin_init_interactive.go:636
 msgid ""
 "Would you like to use an existing empty block device (e.g. a disk or "
 "partition)?"
-msgstr ""
+msgstr "既存の空のブロックデバイス（ディスクやパーティションなど）を使用しますか?"
 
 #: cmd/incus/admin_init_interactive.go:106
 msgid "Would you like to use clustering?"
-msgstr ""
+msgstr "クラスタリングを使用しますか?"
 
 #: cmd/incus/network.go:1062 cmd/incus/operation.go:157
 #: cmd/incus/project.go:457 cmd/incus/project.go:462 cmd/incus/project.go:467
@@ -8121,7 +8121,7 @@ msgstr "YES"
 
 #: cmd/incus/admin_recover.go:214
 msgid "You are currently missing the following:"
-msgstr ""
+msgstr "現在、次のものが不足しています:"
 
 #: cmd/incus/exec.go:93
 msgid "You can't pass -t and -T at the same time"
@@ -8941,6 +8941,11 @@ msgid ""
 "incus file create --type=symlink foo/bar baz\n"
 "\t   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
+"incus file create foo/bar\n"
+"\t   インスタンス foo 内に /bar ファイルを作成します。\n"
+"incus file create --type=symlink foo/bar baz\n"
+"\t   インスタンス foo 内に、ターゲットが baz であるシンボリックリンク /bar "
+"を作成します。"
 
 #: cmd/incus/file.go:1154
 #, fuzzy
@@ -9116,6 +9121,12 @@ msgid ""
 "incus network create bar network=baz --type ovn\n"
 "    Create a new OVN network called bar using baz as its uplink network"
 msgstr ""
+"incus network create foo\n"
+"    foo という名前の新しいネットワークを作成します\n"
+"\n"
+"incus network create bar network=baz --type ovn\n"
+"    上流ネットワークに baz を使用する、bar という名前の新しい OVN "
+"ネットワークを作成します"
 
 #: cmd/incus/operation.go:196
 #, fuzzy
