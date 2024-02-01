@@ -1681,7 +1681,7 @@ func (d *ceph) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 	return nil
 }
 
-// UnmountVolume simulates unmounting a volume snapshot.
+// UnmountVolumeSnapshot simulates unmounting a volume snapshot.
 func (d *ceph) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
 	unlock, err := snapVol.MountLock()
 	if err != nil {
