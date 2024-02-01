@@ -102,6 +102,16 @@ test_storage_volume_snapshots() {
   incus storage volume delete "${storage_pool}" "vol1"
   incus storage volume delete "${storage_pool}" "vol1-snap0"
 
+  # Check snapshot restore of type block volumes.
+  incus storage volume create "${storage_pool}" "vol1" --type block
+  incus storage volume snapshot create "${storage_pool}" "vol1" "snap0"
+  incus storage volume snapshot restore "${storage_pool}" "vol1" "snap0"
+  incus storage volume delete "${storage_pool}" "vol1"
+
+  # Check filesystem specific config keys cannot be applied on type block volumes.
+  ! incus storage volume create "${storage_pool}" "vol1" --type block block.filesystem=btrfs || false
+  ! incus storage volume create "${storage_pool}" "vol1" --type block block.mount_options=xyz || false
+
   # Check snapshot copy (mode pull).
   incus launch testimage "c1"
   incus storage volume create "${storage_pool}" "vol1"
