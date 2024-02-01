@@ -319,7 +319,18 @@ func (d *lvm) commonVolumeRules() map[string]func(value string) error {
 
 // ValidateVolume validates the supplied volume config.
 func (d *lvm) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
-	err := d.validateVolume(vol, d.commonVolumeRules(), removeUnknownKeys)
+	commonRules := d.commonVolumeRules()
+
+	// Disallow block.* settings for regular custom block volumes. These settings only make sense
+	// when using custom filesystem volumes. Incus will create the filesystem
+	// for these volumes, and use the mount options. When attaching a regular block volume to a VM,
+	// these are not mounted by Incus and therefore don't need these config keys.
+	if vol.IsVMBlock() || vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeBlock {
+		delete(commonRules, "block.filesystem")
+		delete(commonRules, "block.mount_options")
+	}
+
+	err := d.validateVolume(vol, commonRules, removeUnknownKeys)
 	if err != nil {
 		return err
 	}
