@@ -6,40 +6,40 @@ _have incus && {
       local state=$1
       local keys=$2
       local project
-      project=$(incus project list -f csv | sed -n 's/^\([^(]\+\) (current),.*/\1/ p')
+      project=$(\incus project list -f csv | \sed -n 's/^\([^(]\+\) (current),.*/\1/ p')
       project=${project:-"default"}
 
-      local cmd="incus list --format=csv --columns=ns --project $project"
-      [ -n "$state" ] && cmd="$cmd | grep -E ',$state$'"
+      local cmd="\incus list --format=csv --columns=ns --project $project"
+      [ -n "$state" ] && cmd="$cmd | \grep -E ',$state$'"
 
       COMPREPLY=( $( compgen -W \
-        "$( eval $cmd | cut -d, -f1 ) $keys" "$cur" )
+        "$( eval $cmd | \cut -d, -f1 ) $keys" "$cur" )
       )
     }
 
     _incus_images()
     {
-      COMPREPLY=( $( compgen -W "$( incus image list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( \incus image list --format=csv | \cut -d, -f1 )" "$cur" ) )
     }
 
     _incus_remotes()
     {
-      COMPREPLY=( $( compgen -W "$( incus remote list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( \incus remote list --format=csv | \cut -d, -f1 )" "$cur" ) )
     }
 
     _incus_profiles()
     {
-      COMPREPLY=( $( compgen -W "$( incus profile list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( \incus profile list --format=csv | \cut -d, -f1 )" "$cur" ) )
     }
 
     _incus_projects()
     {
-      COMPREPLY=( $( compgen -W "$( incus project list --format=csv | sed 's/,.\+//; s/ (current)$//' )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( \incus project list --format=csv | \sed 's/,.\+//; s/ (current)$//' )" "$cur" ) )
     }
 
     _incus_networks()
     {
-      COMPREPLY=( $( compgen -W "$( incus network list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( \incus network list --format=csv | \cut -d, -f1 )" "$cur" ) )
     }
 
     _incus_restore_snapshots()
@@ -48,17 +48,17 @@ _have incus && {
 
       local query="/1.0/instances/$name/snapshots"
 
-      COMPREPLY=( $( compgen -W "$( incus query $query | sed -nr "s \s*\"$query/+(\w*)\",* \1 p" )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( \incus query $query | \sed -nr "s \s*\"$query/+(\w*)\",* \1 p" )" "$cur" ) )
     }
 
     _incus_storage_pools()
     {
-      COMPREPLY=( $( compgen -W "$( incus storage list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( \incus storage list --format=csv | \cut -d, -f1 )" "$cur" ) )
     }
 
     _incus_storage_volumes()
     {
-      COMPREPLY=( $( compgen -W "$( incus storage volume list --format=csv | cut -d, -f1 )" "$cur" ) )
+      COMPREPLY=( $( compgen -W "$( \incus storage volume list --format=csv | \cut -d, -f1 )" "$cur" ) )
     }
 
     COMPREPLY=()
