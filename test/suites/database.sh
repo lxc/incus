@@ -81,9 +81,19 @@ test_database_no_disk_space(){
     ! incus config set c "user.propX" - < "${DATA}" || false
     ! incus config set c "user.propY" - < "${DATA}" || false
 
-    # Removing the big file makes the database happy again.
+    # Removing the big file eventually makes the database happy again.
     rm "${BIG_FILE}"
-    incus config set c "user.propZ" - < "${DATA}"
+
+    succeeded=no
+    for i in $(seq 10); do
+        if incus config set c "user.propZ" - < "${DATA}"; then
+            succeeded=yes
+            break
+        fi
+        sleep 1
+    done
+    [ "${succeeded}" = "yes" ] || false
+
     incus delete -f c
   )
 
