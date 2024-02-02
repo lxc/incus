@@ -87,8 +87,8 @@ type Certificate struct {
 }
 
 // Writable converts a full Certificate struct into a CertificatePut struct (filters read-only fields).
-func (cert *Certificate) Writable() CertificatePut {
-	return cert.CertificatePut
+func (c *Certificate) Writable() CertificatePut {
+	return c.CertificatePut
 }
 
 // URL returns the URL for the certificate.
