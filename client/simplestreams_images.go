@@ -24,6 +24,11 @@ func (r *ProtocolSimpleStreams) GetImages() ([]api.Image, error) {
 	return r.ssClient.ListImages()
 }
 
+// GetImagesAllProjects returns a list of available images as Image structs.
+func (r *ProtocolSimpleStreams) GetImagesAllProjects() ([]api.Image, error) {
+	return r.GetImages()
+}
+
 // GetImageFingerprints returns a list of available image fingerprints.
 func (r *ProtocolSimpleStreams) GetImageFingerprints() ([]string, error) {
 	// Get all the images from simplestreams

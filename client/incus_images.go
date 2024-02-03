@@ -34,6 +34,26 @@ func (r *ProtocolIncus) GetImages() ([]api.Image, error) {
 	return images, nil
 }
 
+// GetImagesAllProjects returns a list of images across all projects as Image structs.
+func (r *ProtocolIncus) GetImagesAllProjects() ([]api.Image, error) {
+	images := []api.Image{}
+
+	v := url.Values{}
+	v.Set("recursion", "1")
+	v.Set("all-projects", "true")
+
+	if !r.HasExtension("images_all_projects") {
+		return nil, fmt.Errorf("The server is missing the required \"images_all_projects\" API extension")
+	}
+
+	_, err := r.queryStruct("GET", fmt.Sprintf("/images?%s", v.Encode()), nil, "", &images)
+	if err != nil {
+		return nil, err
+	}
+
+	return images, nil
+}
+
 // GetImagesWithFilter returns a filtered list of available images as Image structs.
 func (r *ProtocolIncus) GetImagesWithFilter(filters []string) ([]api.Image, error) {
 	if !r.HasExtension("api_filtering") {
