@@ -61,6 +61,14 @@ func (c *cmdLaunch) Run(cmd *cobra.Command, args []string) error {
 
 	// Check if the instance was started by the server.
 	if d.HasExtension("instance_create_start") {
+		// Handle console attach
+		if c.flagConsole != "" {
+			console := cmdConsole{}
+			console.global = c.global
+			console.flagType = c.flagConsole
+			return console.Console(d, name)
+		}
+
 		return nil
 	}
 
