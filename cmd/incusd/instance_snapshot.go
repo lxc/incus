@@ -257,7 +257,7 @@ func instanceSnapshotsPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Invalid instance name"))
 	}
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := cluster.GetProject(context.Background(), tx.Tx(), projectName)
 		if err != nil {
 			return err
@@ -732,7 +732,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 
 	fullName := parentName + internalInstance.SnapshotDelimiter + newName
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check that the name isn't already in use
 		id, _ := tx.GetInstanceSnapshotID(ctx, snapInst.Project().Name, parentName, newName)
 		if id > 0 {

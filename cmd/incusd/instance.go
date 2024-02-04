@@ -85,13 +85,13 @@ func instanceImageTransfer(s *state.State, r *http.Request, projectName string, 
 	return nil
 }
 
-func ensureImageIsLocallyAvailable(s *state.State, r *http.Request, img *api.Image, projectName string, instanceType instancetype.Type) error {
+func ensureImageIsLocallyAvailable(ctx context.Context, s *state.State, r *http.Request, img *api.Image, projectName string, instanceType instancetype.Type) error {
 	// Check if the image is available locally or it's on another member.
 	// Ensure we are the only ones operating on this image. Otherwise another instance created at the same
 	// time may also arrive at the conclusion that the image doesn't exist on this cluster member and then
 	// think it needs to download the image and store the record in the database as well, which will lead to
 	// duplicate record errors.
-	unlock, err := imageOperationLock(img.Fingerprint)
+	unlock, err := imageOperationLock(ctx, img.Fingerprint)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func ensureImageIsLocallyAvailable(s *state.State, r *http.Request, img *api.Ima
 
 	var memberAddress string
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		memberAddress, err = tx.LocateImage(ctx, img.Fingerprint)
 
 		return err
@@ -116,7 +116,7 @@ func ensureImageIsLocallyAvailable(s *state.State, r *http.Request, img *api.Ima
 			return fmt.Errorf("Failed transferring image %q from %q: %w", img.Fingerprint, memberAddress, err)
 		}
 
-		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			// As the image record already exists in the project, just add the node ID to the image.
 			return tx.AddImageToLocalNode(ctx, projectName, img.Fingerprint)
 		})
@@ -129,7 +129,7 @@ func ensureImageIsLocallyAvailable(s *state.State, r *http.Request, img *api.Ima
 }
 
 // instanceCreateFromImage creates an instance from a rootfs image.
-func instanceCreateFromImage(s *state.State, r *http.Request, img *api.Image, args db.InstanceArgs, op *operations.Operation) error {
+func instanceCreateFromImage(ctx context.Context, s *state.State, r *http.Request, img *api.Image, args db.InstanceArgs, op *operations.Operation) error {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -162,7 +162,7 @@ func instanceCreateFromImage(s *state.State, r *http.Request, img *api.Image, ar
 	revert.Add(cleanup)
 	defer instOp.Done(nil)
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		err = tx.UpdateImageLastUseDate(ctx, args.Project, img.Fingerprint, time.Now().UTC())
 		if err != nil {
 			return fmt.Errorf("Error updating image last use date: %w", err)
@@ -195,7 +195,7 @@ func instanceCreateFromImage(s *state.State, r *http.Request, img *api.Image, ar
 	return nil
 }
 
-func instanceRebuildFromImage(s *state.State, r *http.Request, inst instance.Instance, img *api.Image, op *operations.Operation) error {
+func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, img *api.Image, op *operations.Operation) error {
 	// Validate the type of the image matches the type of the instance.
 	imgType, err := instancetype.New(img.Type)
 	if err != nil {
@@ -206,7 +206,7 @@ func instanceRebuildFromImage(s *state.State, r *http.Request, inst instance.Ins
 		return fmt.Errorf("Requested image's type %q doesn't match instance type %q", imgType, inst.Type())
 	}
 
-	err = ensureImageIsLocallyAvailable(s, r, img, inst.Project().Name, inst.Type())
+	err = ensureImageIsLocallyAvailable(ctx, s, r, img, inst.Project().Name, inst.Type())
 	if err != nil {
 		return err
 	}
