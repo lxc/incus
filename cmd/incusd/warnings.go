@@ -171,7 +171,7 @@ func warningsGet(d *Daemon, r *http.Request) response.Response {
 	projectName := request.QueryParam(r, "project")
 
 	var warnings []api.Warning
-	err = d.State().DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = d.State().DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		filters := []cluster.WarningFilter{}
 		if projectName != "" {
 			filter := cluster.WarningFilter{Project: &projectName}
@@ -269,7 +269,7 @@ func warningGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var resp api.Warning
-	err = d.State().DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = d.State().DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbWarning, err := cluster.GetWarning(ctx, tx.Tx(), id)
 		if err != nil {
 			return err
@@ -375,7 +375,7 @@ func warningPut(d *Daemon, r *http.Request) response.Response {
 		return response.Forbidden(fmt.Errorf(`Status may only be set to "acknowledge" or "new"`))
 	}
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		err := tx.UpdateWarningStatus(id, status)
 		if err != nil {
 			return err
@@ -418,7 +418,7 @@ func warningDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		err := cluster.DeleteWarning(ctx, tx.Tx(), id)
 		if err != nil {
 			return err
@@ -469,7 +469,7 @@ func pruneResolvedWarningsTask(d *Daemon) (task.Func, task.Schedule) {
 }
 
 func pruneResolvedWarnings(ctx context.Context, s *state.State) error {
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		// Retrieve warnings by resolved status.
 		statusResolved := warningtype.StatusResolved
 		filter := cluster.WarningFilter{
