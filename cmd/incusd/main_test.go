@@ -74,7 +74,7 @@ func (suite *daemonTestSuite) SetupTest() {
 
 	// Create the database entry for the storage pool.
 	poolDescription := fmt.Sprintf("%s storage pool", daemonTestSuiteDefaultStoragePool)
-	_, err = dbStoragePoolCreateAndUpdateCache(suite.d.State(), daemonTestSuiteDefaultStoragePool, poolDescription, "mock", poolConfig)
+	_, err = dbStoragePoolCreateAndUpdateCache(context.Background(), suite.d.State(), daemonTestSuiteDefaultStoragePool, poolDescription, "mock", poolConfig)
 	if err != nil {
 		suite.T().Errorf("failed to create default storage pool: %v", err)
 	}

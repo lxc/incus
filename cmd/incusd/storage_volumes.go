@@ -695,7 +695,7 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 	var poolID int64
 	var dbVolume *db.StorageVolume
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		poolID, err = tx.GetStoragePoolID(ctx, poolName)
 		if err != nil {
 			return err
@@ -1276,7 +1276,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		targetPoolName = srcPoolName
 	}
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		targetPoolID, err = tx.GetStoragePoolID(ctx, targetPoolName)
 
 		return err
@@ -1285,7 +1285,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check that the name isn't already in use.
 		_, err = tx.GetStoragePoolNodeVolumeID(ctx, targetProjectName, req.Name, volumeType, targetPoolID)
 
@@ -1313,7 +1313,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	var volumeNotFound bool
 	var targetIsSet bool
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Load source volume.
 		srcPoolID, err := tx.GetStoragePoolID(ctx, srcPoolName)
 		if err != nil {
@@ -1550,7 +1550,7 @@ func storagePoolVolumeTypePostRename(s *state.State, r *http.Request, poolName s
 	defer revert.Fail()
 
 	// Update devices using the volume in instances and profiles.
-	err = storagePoolVolumeUpdateUsers(s, projectName, pool.Name(), vol, pool.Name(), &newVol)
+	err = storagePoolVolumeUpdateUsers(r.Context(), s, projectName, pool.Name(), vol, pool.Name(), &newVol)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1591,13 +1591,13 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 		defer revert.Fail()
 
 		// Update devices using the volume in instances and profiles.
-		err = storagePoolVolumeUpdateUsers(s, requestProjectName, pool.Name(), vol, newPool.Name(), &newVol)
+		err = storagePoolVolumeUpdateUsers(context.TODO(), s, requestProjectName, pool.Name(), vol, newPool.Name(), &newVol)
 		if err != nil {
 			return err
 		}
 
 		revert.Add(func() {
-			_ = storagePoolVolumeUpdateUsers(s, projectName, newPool.Name(), &newVol, pool.Name(), vol)
+			_ = storagePoolVolumeUpdateUsers(context.TODO(), s, projectName, newPool.Name(), &newVol, pool.Name(), vol)
 		})
 
 		// Provide empty description and nil config to instruct CreateCustomVolumeFromCopy to copy it
@@ -1718,7 +1718,7 @@ func storagePoolVolumeGet(d *Daemon, r *http.Request) response.Response {
 
 	var dbVolume *db.StorageVolume
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the ID of the storage pool the storage volume is supposed to be attached to.
 		poolID, err := tx.GetStoragePoolID(ctx, poolName)
 		if err != nil {
@@ -2355,7 +2355,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		"snapshots": bInfo.Snapshots,
 	})
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check storage pool exists.
 		_, _, _, err = tx.GetStoragePoolInAnyState(ctx, bInfo.Pool)
 
@@ -2371,7 +2371,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 
 		var profile *api.Profile
 
-		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Otherwise try and restore to the project's default profile pool.
 			_, profile, err = tx.GetProfile(ctx, bInfo.Project, "default")
 

@@ -171,7 +171,7 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	if req.Name == "" {
 		var i int
 
-		_ = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_ = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			i = tx.GetNextStorageVolumeSnapshotIndex(ctx, poolName, volumeName, volumeType, "snap%d")
 
 			return nil
@@ -396,7 +396,7 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 	var poolID int64
 	var volumes []db.StorageVolumeArgs
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		// Retrieve ID of the storage pool (and check if the storage pool exists).
@@ -705,7 +705,7 @@ func storagePoolVolumeSnapshotTypeGet(d *Daemon, r *http.Request) response.Respo
 	var dbVolume *db.StorageVolume
 	var expiry time.Time
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the snapshot.
 		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
 		if err != nil {
@@ -835,7 +835,7 @@ func storagePoolVolumeSnapshotTypePut(d *Daemon, r *http.Request) response.Respo
 	var dbVolume *db.StorageVolume
 	var expiry time.Time
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the snapshot.
 		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
 		if err != nil {
@@ -970,7 +970,7 @@ func storagePoolVolumeSnapshotTypePatch(d *Daemon, r *http.Request) response.Res
 	var dbVolume *db.StorageVolume
 	var expiry time.Time
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the snapshot.
 		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
 		if err != nil {
@@ -1422,7 +1422,7 @@ func autoCreateCustomVolumeSnapshots(ctx context.Context, s *state.State, volume
 			return err // Stop if context is cancelled.
 		}
 
-		snapshotName, err := volumeDetermineNextSnapshotName(s, v, "snap%d")
+		snapshotName, err := volumeDetermineNextSnapshotName(ctx, s, v, "snap%d")
 		if err != nil {
 			return fmt.Errorf("Error retrieving next snapshot name for volume %q (project %q, pool %q): %w", v.Name, v.ProjectName, v.PoolName, err)
 		}
@@ -1446,7 +1446,7 @@ func autoCreateCustomVolumeSnapshots(ctx context.Context, s *state.State, volume
 	return nil
 }
 
-func volumeDetermineNextSnapshotName(s *state.State, volume db.StorageVolumeArgs, defaultPattern string) (string, error) {
+func volumeDetermineNextSnapshotName(ctx context.Context, s *state.State, volume db.StorageVolumeArgs, defaultPattern string) (string, error) {
 	var err error
 
 	pattern, ok := volume.Config["snapshots.pattern"]
@@ -1467,7 +1467,7 @@ func volumeDetermineNextSnapshotName(s *state.State, volume db.StorageVolumeArgs
 	} else if count == 1 {
 		var i int
 
-		_ = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_ = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			i = tx.GetNextStorageVolumeSnapshotIndex(ctx, volume.PoolName, volume.Name, db.StoragePoolVolumeTypeCustom, pattern)
 
 			return nil
@@ -1482,7 +1482,7 @@ func volumeDetermineNextSnapshotName(s *state.State, volume db.StorageVolumeArgs
 	var projects []string
 	var pools []string
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		projects, err = dbCluster.GetProjectNames(ctx, tx.Tx())
 		if err != nil {
 			return err
@@ -1502,7 +1502,7 @@ func volumeDetermineNextSnapshotName(s *state.State, volume db.StorageVolumeArgs
 	for _, pool := range pools {
 		var poolID int64
 
-		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			poolID, err = tx.GetStoragePoolID(ctx, pool)
 			if err != nil {
 				return err
@@ -1536,7 +1536,7 @@ func volumeDetermineNextSnapshotName(s *state.State, volume db.StorageVolumeArgs
 	if snapshotExists {
 		var i int
 
-		_ = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_ = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			i = tx.GetNextStorageVolumeSnapshotIndex(ctx, volume.PoolName, volume.Name, db.StoragePoolVolumeTypeCustom, pattern)
 
 			return nil

@@ -14,8 +14,8 @@ import (
 )
 
 // storagePoolDBCreate creates a storage pool DB entry and returns the created Pool ID.
-func storagePoolDBCreate(s *state.State, poolName string, poolDescription string, driver string, config map[string]string) (int64, error) {
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+func storagePoolDBCreate(ctx context.Context, s *state.State, poolName string, poolDescription string, driver string, config map[string]string) (int64, error) {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check that the storage pool does not already exist.
 		_, err := tx.GetStoragePoolID(ctx, poolName)
 
@@ -36,7 +36,7 @@ func storagePoolDBCreate(s *state.State, poolName string, poolDescription string
 	}
 
 	// Create the database entry for the storage pool.
-	id, err := dbStoragePoolCreateAndUpdateCache(s, poolName, poolDescription, driver, config)
+	id, err := dbStoragePoolCreateAndUpdateCache(ctx, s, poolName, poolDescription, driver, config)
 	if err != nil {
 		return -1, fmt.Errorf("Error inserting %s into database: %w", poolName, err)
 	}
@@ -65,9 +65,9 @@ func storagePoolValidate(s *state.State, poolName string, driverName string, con
 	return nil
 }
 
-func storagePoolCreateGlobal(state *state.State, req api.StoragePoolsPost, clientType request.ClientType) error {
+func storagePoolCreateGlobal(ctx context.Context, state *state.State, req api.StoragePoolsPost, clientType request.ClientType) error {
 	// Create the database entry.
-	id, err := storagePoolDBCreate(state, req.Name, req.Description, req.Driver, req.Config)
+	id, err := storagePoolDBCreate(ctx, state, req.Name, req.Description, req.Driver, req.Config)
 	if err != nil {
 		return err
 	}
@@ -79,9 +79,9 @@ func storagePoolCreateGlobal(state *state.State, req api.StoragePoolsPost, clien
 	revert := revert.New()
 	defer revert.Fail()
 
-	revert.Add(func() { _ = dbStoragePoolDeleteAndUpdateCache(state, req.Name) })
+	revert.Add(func() { _ = dbStoragePoolDeleteAndUpdateCache(context.Background(), state, req.Name) })
 
-	_, err = storagePoolCreateLocal(state, id, req, clientType)
+	_, err = storagePoolCreateLocal(ctx, state, id, req, clientType)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func storagePoolCreateGlobal(state *state.State, req api.StoragePoolsPost, clien
 
 // This performs local pool setup and updates DB record if config was changed during pool setup.
 // Returns resulting config.
-func storagePoolCreateLocal(state *state.State, poolID int64, req api.StoragePoolsPost, clientType request.ClientType) (map[string]string, error) {
+func storagePoolCreateLocal(ctx context.Context, state *state.State, poolID int64, req api.StoragePoolsPost, clientType request.ClientType) (map[string]string, error) {
 	// Setup revert.
 	revert := revert.New()
 	defer revert.Fail()
@@ -129,7 +129,7 @@ func storagePoolCreateLocal(state *state.State, poolID int64, req api.StoragePoo
 	// see if something like this has happened.
 	configDiff, _ := storagePools.ConfigDiff(req.Config, pool.Driver().Config())
 	if len(configDiff) > 0 {
-		err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err = state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			// Update the database entry for the storage pool.
 			return tx.UpdateStoragePool(ctx, req.Name, req.Description, pool.Driver().Config())
 		})
@@ -139,7 +139,7 @@ func storagePoolCreateLocal(state *state.State, poolID int64, req api.StoragePoo
 	}
 
 	// Set storage pool node to storagePoolCreated.
-	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.StoragePoolNodeCreated(poolID)
 	})
 	if err != nil {
@@ -153,10 +153,10 @@ func storagePoolCreateLocal(state *state.State, poolID int64, req api.StoragePoo
 }
 
 // Helper around the low-level DB API, which also updates the driver names cache.
-func dbStoragePoolCreateAndUpdateCache(s *state.State, poolName string, poolDescription string, poolDriver string, poolConfig map[string]string) (int64, error) {
+func dbStoragePoolCreateAndUpdateCache(ctx context.Context, s *state.State, poolName string, poolDescription string, poolDriver string, poolConfig map[string]string) (int64, error) {
 	var id int64
 
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		id, err = tx.CreateStoragePool(ctx, poolName, poolDescription, poolDriver, poolConfig)
@@ -168,15 +168,15 @@ func dbStoragePoolCreateAndUpdateCache(s *state.State, poolName string, poolDesc
 	}
 
 	// Update the storage drivers cache in api_1.0.go.
-	storagePoolDriversCacheUpdate(s)
+	storagePoolDriversCacheUpdate(ctx, s)
 
 	return id, nil
 }
 
 // Helper around the low-level DB API, which also updates the driver names
 // cache.
-func dbStoragePoolDeleteAndUpdateCache(s *state.State, poolName string) error {
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+func dbStoragePoolDeleteAndUpdateCache(ctx context.Context, s *state.State, poolName string) error {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		_, err := tx.RemoveStoragePool(ctx, poolName)
 
 		return err
@@ -186,7 +186,7 @@ func dbStoragePoolDeleteAndUpdateCache(s *state.State, poolName string) error {
 	}
 
 	// Update the storage drivers cache in api_1.0.go.
-	storagePoolDriversCacheUpdate(s)
+	storagePoolDriversCacheUpdate(ctx, s)
 
 	return err
 }

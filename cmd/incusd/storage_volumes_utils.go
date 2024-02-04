@@ -16,7 +16,7 @@ import (
 
 var supportedVolumeTypes = []int{db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM, db.StoragePoolVolumeTypeCustom, db.StoragePoolVolumeTypeImage}
 
-func storagePoolVolumeUpdateUsers(s *state.State, projectName string, oldPoolName string, oldVol *api.StorageVolume, newPoolName string, newVol *api.StorageVolume) error {
+func storagePoolVolumeUpdateUsers(ctx context.Context, s *state.State, projectName string, oldPoolName string, oldVol *api.StorageVolume, newPoolName string, newVol *api.StorageVolume) error {
 	// Update all instances that are using the volume with a local (non-expanded) device.
 	err := storagePools.VolumeUsedByInstanceDevices(s, oldPoolName, projectName, oldVol, false, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
 		inst, err := instance.Load(s, dbInst, project)
@@ -69,7 +69,7 @@ func storagePoolVolumeUpdateUsers(s *state.State, projectName string, oldPoolNam
 		pUpdate.Config = profile.Config
 		pUpdate.Description = profile.Description
 		pUpdate.Devices = profile.Devices
-		err = doProfileUpdate(s, p, profile.Name, profileID, &profile, pUpdate)
+		err = doProfileUpdate(ctx, s, p, profile.Name, profileID, &profile, pUpdate)
 		if err != nil {
 			return err
 		}
@@ -134,10 +134,10 @@ func storagePoolVolumeUsedByGet(s *state.State, requestProjectName string, poolN
 	return volumeUsedBy, nil
 }
 
-func storagePoolVolumeBackupLoadByName(s *state.State, projectName, poolName, backupName string) (*backup.VolumeBackup, error) {
+func storagePoolVolumeBackupLoadByName(ctx context.Context, s *state.State, projectName, poolName, backupName string) (*backup.VolumeBackup, error) {
 	var b db.StoragePoolVolumeBackup
 
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 		b, err = tx.GetStoragePoolVolumeBackup(ctx, projectName, poolName, backupName)
 		return err
