@@ -186,7 +186,7 @@ func internalCreateWarning(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Invalid entity type"))
 	}
 
-	err = d.State().DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = d.State().DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.UpsertWarning(ctx, req.Location, req.Project, req.EntityTypeCode, req.EntityID, warningtype.Type(req.TypeCode), req.Message)
 	})
 	if err != nil {
@@ -571,7 +571,7 @@ func internalSQLExec(tx *sql.Tx, query string, result *internalSQL.SQLResult) er
 
 // internalImportFromBackup creates instance, storage pool and volume DB records from an instance's backup file.
 // It expects the instance volume to be mounted so that the backup.yaml file is readable.
-func internalImportFromBackup(s *state.State, projectName string, instName string, allowNameOverride bool) error {
+func internalImportFromBackup(ctx context.Context, s *state.State, projectName string, instName string, allowNameOverride bool) error {
 	if instName == "" {
 		return fmt.Errorf("The name of the instance is required")
 	}
@@ -661,7 +661,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 	pool, err := storagePools.LoadByName(s, instancePoolName)
 	if response.IsNotFoundError(err) {
 		// Create the storage pool db entry if it doesn't exist.
-		_, err = storagePoolDBCreate(s, instancePoolName, "", backupConf.Pool.Driver, backupConf.Pool.Config)
+		_, err = storagePoolDBCreate(ctx, s, instancePoolName, "", backupConf.Pool.Driver, backupConf.Pool.Config)
 		if err != nil {
 			return fmt.Errorf("Create storage pool database entry: %w", err)
 		}
@@ -690,7 +690,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 
 	// Check if a storage volume entry for the instance already exists.
 	var dbVolume *db.StorageVolume
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		dbVolume, err = tx.GetStoragePoolVolume(ctx, pool.ID(), projectName, instanceDBVolType, backupConf.Container.Name, true)
 		if err != nil && !response.IsNotFoundError(err) {
 			return err
@@ -706,7 +706,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 		return fmt.Errorf(`Storage volume for instance %q already exists in the database`, backupConf.Container.Name)
 	}
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check if an entry for the instance already exists in the db.
 		_, err := tx.GetInstanceID(ctx, projectName, backupConf.Container.Name)
 
@@ -726,7 +726,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 
 	var profiles []api.Profile
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		profiles, err = tx.GetProfiles(ctx, projectName, backupConf.Container.Profiles)
 
 		return err
@@ -780,7 +780,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 	for _, snap := range existingSnapshots {
 		snapInstName := fmt.Sprintf("%s%s%s", backupConf.Container.Name, internalInstance.SnapshotDelimiter, snap.Name)
 
-		snapErr := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		snapErr := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			// Check if an entry for the snapshot already exists in the db.
 			_, err := tx.GetInstanceSnapshotID(ctx, projectName, backupConf.Container.Name, snap.Name)
 
@@ -796,7 +796,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 
 		// Check if a storage volume entry for the snapshot already exists.
 		var dbVolume *db.StorageVolume
-		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			dbVolume, err = tx.GetStoragePoolVolume(ctx, pool.ID(), projectName, instanceDBVolType, snapInstName, true)
 			if err != nil && !response.IsNotFoundError(err) {
 				return err
@@ -814,7 +814,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 		}
 
 		if snapErr == nil {
-			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 				return tx.DeleteInstance(ctx, projectName, snapInstName)
 			})
 			if err != nil {
@@ -823,7 +823,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 		}
 
 		if dbVolume != nil {
-			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 				return tx.RemoveStoragePoolVolume(ctx, projectName, snapInstName, instanceDBVolType, pool.ID())
 			})
 			if err != nil {
@@ -838,7 +838,7 @@ func internalImportFromBackup(s *state.State, projectName string, instName strin
 			return err
 		}
 
-		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			profiles, err = tx.GetProfiles(ctx, projectName, snap.Profiles)
 
 			return err
