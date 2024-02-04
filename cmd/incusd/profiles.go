@@ -158,7 +158,7 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var result any
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		filter := dbCluster.ProfileFilter{
 			Project: &p.Name,
 		}
@@ -295,7 +295,7 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Update DB entry.
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		devices, err := dbCluster.APIToDevices(req.Devices)
 		if err != nil {
 			return err
@@ -400,7 +400,7 @@ func profileGet(d *Daemon, r *http.Request) response.Response {
 
 	var resp *api.Profile
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		profile, err := dbCluster.GetProfile(ctx, tx.Tx(), p.Name, name)
 		if err != nil {
 			return fmt.Errorf("Fetch profile: %w", err)
@@ -484,14 +484,14 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 			return response.BadRequest(err)
 		}
 
-		err = doProfileUpdateCluster(s, p.Name, name, old)
+		err = doProfileUpdateCluster(r.Context(), s, p.Name, name, old)
 		return response.SmartError(err)
 	}
 
 	var id int64
 	var profile *api.Profile
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		current, err := dbCluster.GetProfile(ctx, tx.Tx(), p.Name, name)
 		if err != nil {
 			return fmt.Errorf("Failed to retrieve profile %q: %w", name, err)
@@ -523,7 +523,7 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	err = doProfileUpdate(s, *p, name, id, profile, req)
+	err = doProfileUpdate(r.Context(), s, *p, name, id, profile, req)
 
 	if err == nil && !isClusterNotification(r) {
 		// Notify all other nodes. If a node is down, it will be ignored.
@@ -596,7 +596,7 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 	var id int64
 	var profile *api.Profile
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		current, err := dbCluster.GetProfile(ctx, tx.Tx(), p.Name, name)
 		if err != nil {
 			return fmt.Errorf("Failed to retrieve profile=%q: %w", name, err)
@@ -675,7 +675,7 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(p.Name, lifecycle.ProfileUpdated.Event(name, p.Name, requestor, nil))
 
-	return response.SmartError(doProfileUpdate(s, *p, name, id, profile, req))
+	return response.SmartError(doProfileUpdate(r.Context(), s, *p, name, id, profile, req))
 }
 
 // swagger:operation POST /1.0/profiles/{name} profiles profile_post
@@ -746,7 +746,7 @@ func profilePost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Invalid profile name %q", req.Name))
 	}
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check that the name isn't already in use.
 		_, err = dbCluster.GetProfile(ctx, tx.Tx(), p.Name, req.Name)
 		if err == nil {
@@ -812,7 +812,7 @@ func profileDelete(d *Daemon, r *http.Request) response.Response {
 		return response.Forbidden(errors.New(`The "default" profile cannot be deleted`))
 	}
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		profile, err := dbCluster.GetProfile(ctx, tx.Tx(), p.Name, name)
 		if err != nil {
 			return err
