@@ -260,7 +260,7 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 			if objectType == auth.ObjectTypeImage {
 				var imgInfo *api.Image
 
-				err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 					var err error
 
 					_, imgInfo, err = tx.GetImage(ctx, fingerprint, dbCluster.ImageFilter{Project: &projectName})

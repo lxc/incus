@@ -22,7 +22,7 @@ func daemonStorageVolumesUnmount(s *state.State) error {
 	var storageBackups string
 	var storageImages string
 
-	err := s.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
+	err := s.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodeConfig, err := node.ConfigLoad(ctx, tx)
 		if err != nil {
 			return err
@@ -78,7 +78,7 @@ func daemonStorageVolumesUnmount(s *state.State) error {
 func daemonStorageMount(s *state.State) error {
 	var storageBackups string
 	var storageImages string
-	err := s.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
+	err := s.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodeConfig, err := node.ConfigLoad(ctx, tx)
 		if err != nil {
 			return err
@@ -157,7 +157,7 @@ func daemonStorageValidate(s *state.State, target string) error {
 	var poolID int64
 	var snapshots []db.StorageVolumeArgs
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Validate pool exists.
 		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
 		if err != nil {
