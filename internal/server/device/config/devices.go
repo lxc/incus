@@ -80,6 +80,10 @@ func NewDevices(nativeSet map[string]map[string]string) Devices {
 	for devName, devConfig := range nativeSet {
 		newDev := Device{}
 		for k, v := range devConfig {
+			if v == "" {
+				continue
+			}
+
 			newDev[k] = v
 		}
 
