@@ -320,4 +320,22 @@ type ImageMetadataTemplate struct {
 	// Key/value properties to pass to the template
 	// Example: {"foo": "bar"}
 	Properties map[string]string `json:"properties" yaml:"properties"`
+
+	// The file owner uid.
+	// Example: 1000
+	//
+	// API extension: image_template_permissions
+	UID string `json:"uid,omitempty" yaml:"uid,omitempty"`
+
+	// The file owner gid.
+	// Example: 1000
+	//
+	// API extension: image_template_permissions
+	GID string `json:"gid,omitempty" yaml:"gid,omitempty"`
+
+	// The file permissions.
+	// Example: 644
+	//
+	// API extension: image_template_permissions
+	Mode string `json:"mode,omitempty" yaml:"mode,omitempty"`
 }
