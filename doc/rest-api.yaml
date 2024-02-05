@@ -900,6 +900,16 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: CreateOnly
+            gid:
+                description: The file owner gid.
+                example: "1000"
+                type: string
+                x-go-name: GID
+            mode:
+                description: The file permissions.
+                example: "644"
+                type: string
+                x-go-name: Mode
             properties:
                 additionalProperties:
                     type: string
@@ -913,6 +923,11 @@ definitions:
                 example: pongo2-template
                 type: string
                 x-go-name: Template
+            uid:
+                description: The file owner uid.
+                example: "1000"
+                type: string
+                x-go-name: UID
             when:
                 description: When to trigger the template (create, copy or start)
                 example: create
