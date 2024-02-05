@@ -395,6 +395,7 @@ var APIExtensions = []string{
 	"boot_host_shutdown_action",
 	"agent_config_drive",
 	"network_state_ovn_lr",
+	"image_template_permissions",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
