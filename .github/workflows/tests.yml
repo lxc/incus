@@ -214,7 +214,6 @@ jobs:
           sudo apt-get update
 
           sudo snap remove lxd --purge
-          sudo snap remove core20 --purge || true
           sudo apt-get autopurge moby-containerd docker uidmap -y
           sudo ip link delete docker0
           sudo nft flush ruleset
