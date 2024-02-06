@@ -87,6 +87,14 @@ templates:
       - create
     template: interfaces.tpl
     create_only: true
+  /home/foo/setup.sh:
+    when:
+      - create
+    template: setup.sh.tpl
+    create_only: true
+    uid: 1000
+    gid: 1000
+    mode: 755
 ```
 
 The `when` key can be one or more of:
@@ -100,6 +108,8 @@ The `template` key points to the template file in the `templates/` directory.
 You can pass user-defined template properties to the template file through the `properties` key.
 
 Set the `create_only` key if you want Incus to create the file if it doesn't exist, but not overwrite an existing file.
+
+The `uid`, `gid` and `mode` keys can be used to control the file ownership and permissions.
 
 #### Template files
 

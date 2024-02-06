@@ -2340,3 +2340,7 @@ This introduces a new `agent:config` disk `source` which can be used to expose a
 Adds a new `LogicalRouter` field to the `NetworkStateOVN` struct which is part of the `GET /1.0/networks/NAME/state` API.
 
 This is used to get the OVN logical router name.
+
+## `image_template_permissions`
+
+This adds `uid`, `gid` and `mode` fields to the image metadata template entries.
