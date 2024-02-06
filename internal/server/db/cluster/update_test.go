@@ -515,10 +515,10 @@ INSERT INTO instances VALUES (1, 1, 'eoan', 2, 0, 0, ?, 0, ?, NULL, 1, ?)
 		require.NoError(t, err)
 
 		// Insert an instance snapshot.
-		expiry_date := time.Date(2019, 8, 14, 11, 9, 0, 0, time.UTC)
+		expiryDate := time.Date(2019, 8, 14, 11, 9, 0, 0, time.UTC)
 		_, err = db.Exec(`
 INSERT INTO instances VALUES (2, 1, 'eoan/snap', 2, 1, 0, ?, 0, ?, 'Eoan Ermine Snapshot', 1, ?)
-`, time.Now(), time.Now(), expiry_date)
+`, time.Now(), time.Now(), expiryDate)
 		require.NoError(t, err)
 		_, err = db.Exec("INSERT INTO instances_config VALUES (2, 2, 'key', 'value1')")
 		require.NoError(t, err)
