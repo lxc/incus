@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"gopkg.in/yaml.v2"
 
@@ -52,6 +54,43 @@ func templatesApply(path string) ([]string, error) {
 					return fmt.Errorf("Failed to create template file: %w", err)
 				}
 			} else {
+				// UID and GID
+				fileUID := int64(0)
+				fileGID := int64(0)
+
+				if tpl.UID != "" {
+					id, err := strconv.ParseInt(tpl.UID, 10, 64)
+					if err != nil {
+						return fmt.Errorf("Bad file UID %q for %q: %w", tpl.UID, tplPath, err)
+					}
+
+					fileUID = id
+				}
+
+				if tpl.GID != "" {
+					id, err := strconv.ParseInt(tpl.GID, 10, 64)
+					if err != nil {
+						return fmt.Errorf("Bad file GID %q for %q: %w", tpl.GID, tplPath, err)
+					}
+
+					fileGID = id
+				}
+
+				// Mode
+				fileMode := fs.FileMode(0644)
+				if tpl.Mode != "" {
+					if len(tpl.Mode) == 3 {
+						tpl.Mode = fmt.Sprintf("0%s", tpl.Mode)
+					}
+
+					mode, err := strconv.ParseInt(tpl.Mode, 0, 0)
+					if err != nil {
+						return fmt.Errorf("Bad mode %q for %q: %w", tpl.Mode, tplPath, err)
+					}
+
+					fileMode = os.FileMode(mode) & os.ModePerm
+				}
+
 				// Create the directories leading to the file.
 				err := os.MkdirAll(filepath.Dir(tplPath), 0755)
 				if err != nil {
@@ -64,8 +103,14 @@ func templatesApply(path string) ([]string, error) {
 					return err
 				}
 
+				// Fix ownership.
+				err = w.Chown(int(fileUID), int(fileGID))
+				if err != nil {
+					return err
+				}
+
 				// Fix mode.
-				err = w.Chmod(0644)
+				err = w.Chmod(fileMode)
 				if err != nil {
 					return err
 				}
