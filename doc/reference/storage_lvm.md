@@ -34,6 +34,28 @@ Therefore, this option should only be chosen if the use case requires it.
 
 For environments with a high instance turnover (for example, continuous integration) you should tweak the backup `retain_min` and `retain_days` settings in `/etc/lvm/lvm.conf` to avoid slowdowns when interacting with Incus.
 
+(storage-lvmcluster)=
+## `lvmcluster` driver in Incus
+
+A second `lvmcluster` driver is available for use within clusters.
+
+This relies on the `lvmlockd` and `sanlock` daemons to provide distributed locking over a shared disk or set of disks.
+
+It allows using a remote shared block device like a `FiberChannel LUN`, `NVMEoF/NVMEoTCP` disk or `iSCSI` drive as the backing for a LVM storage pool.
+
+```{note}
+Thin provisioning is incompatible with clustered LVM, so expect higher disk usage.
+```
+
+To use this with Incus, you must:
+
+- Have a shared block device available on all your cluster members
+- Install the relevant packages for `lvm`, `lvmlockd` and `sanlock`
+- Enable `lvmlockd` by setting `use_lvmlockd = 1` in your `/etc/lvm/lvm.conf`
+- Set a unique (within your cluster) `host_id` value in `/etc/lvm/lvmlocal.conf`
+- Ensure that both `lvmlockd` and `sanlock` daemons are running
+- Create a shared VG and confirm it is accessible on all servers
+
 ## Configuration options
 
 The following configuration options are available for storage pools that use the `lvm` driver and for storage volumes in these pools.
@@ -41,18 +63,18 @@ The following configuration options are available for storage pools that use the
 (storage-lvm-pool-config)=
 ### Storage pool configuration
 
-Key                          | Type   | Default                                               | Description
-:--                          | :---   | :------                                               | :----------
-`lvm.thinpool_name`          | string | `IncusThinPool`                                       | Thin pool where volumes are created
-`lvm.thinpool_metadata_size` | string | `0` (auto)                                            | The size of the thin pool metadata volume (the default is to let LVM calculate an appropriate size)
-`lvm.use_thinpool`           | bool   | `true`                                                | Whether the storage pool uses a thin pool for logical volumes
-`lvm.vg.force_reuse`         | bool   | `false`                                               | Force using an existing non-empty volume group
-`lvm.vg_name`                | string | name of the pool                                      | Name of the volume group to create
-`rsync.bwlimit`              | string | `0` (no limit)                                        | The upper limit to be placed on the socket I/O when `rsync` must be used to transfer storage entities
-`rsync.compression`          | bool   | `true`                                                | Whether to use compression while migrating storage pools
-`size`                       | string | auto (20% of free disk space, >= 5 GiB and <= 30 GiB) | Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool)
-`source`                     | string | -                                                     | Path to an existing block device, loop file or LVM volume group
-`source.wipe`                | bool   | `false`                                               | Wipe the block device specified in `source` prior to creating the storage pool
+Key                          | Type   | Driver       | Default                                               | Description
+:--                          | :---   | :-----       | :------                                               | :----------
+`lvm.thinpool_name`          | string | `lvm`        | `IncusThinPool`                                       | Thin pool where volumes are created
+`lvm.thinpool_metadata_size` | string | `lvm`        |`0` (auto)                                             | The size of the thin pool metadata volume (the default is to let LVM calculate an appropriate size)
+`lvm.use_thinpool`           | bool   | `lvm`        | `true`                                                | Whether the storage pool uses a thin pool for logical volumes
+`lvm.vg.force_reuse`         | bool   | `lvm`        | `false`                                               | Force using an existing non-empty volume group
+`lvm.vg_name`                | string | all          | name of the pool                                      | Name of the volume group to create
+`rsync.bwlimit`              | string | all          | `0` (no limit)                                        | The upper limit to be placed on the socket I/O when `rsync` must be used to transfer storage entities
+`rsync.compression`          | bool   | all          | `true`                                                | Whether to use compression while migrating storage pools
+`size`                       | string | `lvm`        | auto (20% of free disk space, >= 5 GiB and <= 30 GiB) | Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool)
+`source`                     | string | all          | -                                                     | Path to an existing block device, loop file or LVM volume group
+`source.wipe`                | bool   | `lvm`        | `false`                                               | Wipe the block device specified in `source` prior to creating the storage pool
 
 {{volume_configuration}}
 

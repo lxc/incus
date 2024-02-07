@@ -19,6 +19,7 @@ The following storage drivers are supported:
 - [Directory - `dir`](storage-dir)
 - [Btrfs - `btrfs`](storage-btrfs)
 - [LVM - `lvm`](storage-lvm)
+- [LVM Cluster - `lvmcluster`](storage-lvmcluster)
 - [ZFS - `zfs`](storage-zfs)
 - [Ceph RBD - `ceph`](storage-ceph)
 - [CephFS - `cephfs`](storage-cephfs)
@@ -35,12 +36,12 @@ See the following how-to guides for additional information:
 Where the Incus data is stored depends on the configuration and the selected storage driver.
 Depending on the storage driver that is used, Incus can either share the file system with its host or keep its data separate.
 
-Storage location         | Directory | Btrfs    | LVM      | ZFS      | Ceph (all) |
-:---                     | :-:       | :-:      | :-:      | :-:      | :-:        |
-Shared with the host     | &#x2713;  | &#x2713; | -        | &#x2713; | -          |
-Dedicated disk/partition | -         | &#x2713; | &#x2713; | &#x2713; | -          |
-Loop disk                | -         | &#x2713; | &#x2713; | &#x2713; | -          |
-Remote storage           | -         | -        | -        | -        | &#x2713;   |
+Storage location         | Directory | Btrfs    | LVM (all) | ZFS      | Ceph (all) |
+:---                     | :-:       | :-:      | :-:       | :-:      | :-:        |
+Shared with the host     | &#x2713;  | &#x2713; | -         | &#x2713; | -          |
+Dedicated disk/partition | -         | &#x2713; | &#x2713;  | &#x2713; | -          |
+Loop disk                | -         | &#x2713; | &#x2713;  | &#x2713; | -          |
+Remote storage           | -         | -        | &#x2713;  | -        | &#x2713;   |
 
 #### Shared with the host
 
@@ -69,7 +70,7 @@ You can increase their size though; see {ref}`storage-resize-pool`.
 
 #### Remote storage
 
-The `ceph`, `cephfs` and `cephobject` drivers store the data in a completely independent Ceph storage cluster that must be set up separately.
+The `ceph`, `cephfs`, `cephobject` and `lvmcluster` drivers store the data in a completely independent Ceph storage cluster that must be set up separately.
 
 (storage-default-pool)=
 ### Default storage pool

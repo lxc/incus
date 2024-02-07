@@ -32,7 +32,7 @@ To add a custom storage volume on a cluster member, add the `--target` flag:
 
 ```{note}
 For most storage drivers, custom storage volumes are not replicated across the cluster and exist only on the member for which they were created.
-This behavior is different for Ceph-based storage pools (`ceph` and `cephfs`), where volumes are available from any cluster member.
+This behavior is different for Ceph-based storage pools (`ceph` and `cephfs`) and clustered LVM (`lvmcluster`), where volumes are available from any cluster member.
 ```
 
 To create a custom storage volume of type `iso`, use the `import` command instead of the `create` command:
