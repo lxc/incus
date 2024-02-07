@@ -810,6 +810,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 		}
 	}
 
+	// Writing completion stamp file.
 	completeFile, err := os.Create(filepath.Join(targetPaths.daemon, ".migrated-from-lxd"))
 	if err != nil {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
