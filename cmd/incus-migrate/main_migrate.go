@@ -486,7 +486,11 @@ func (c *cmdMigrate) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		cancel()
-		os.Exit(1)
+
+		// The following nolint directive ignores the "deep-exit" rule of the revive linter.
+		// We should be exiting cleanly by passing the above context into each invoked method and checking for
+		// cancellation. Unfortunately our client methods do not accept a context argument.
+		os.Exit(1) //nolint:revive
 	}()
 
 	if clientFingerprint != "" {
