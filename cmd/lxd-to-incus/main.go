@@ -678,6 +678,22 @@ Instead this tool will be providing specific commands for each of the servers.`)
 		}
 	}
 
+	// Cleanup the cache.
+	cacheEntries, err := os.ReadDir(targetPaths.cache)
+	if err == nil {
+		for _, entry := range cacheEntries {
+			if !entry.IsDir() {
+				continue
+			}
+
+			err := os.RemoveAll(filepath.Join(targetPaths.cache, entry.Name()))
+			if err != nil {
+				_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+				return fmt.Errorf("Failed to clear cache file %q: %w", filepath.Join(targetPaths.cache, entry.Name()), err)
+			}
+		}
+	}
+
 	// Start target.
 	fmt.Println("=> Starting the target server")
 	_, _ = logFile.WriteString("Starting the target server\n")
@@ -810,6 +826,7 @@ Instead this tool will be providing specific commands for each of the servers.`)
 		}
 	}
 
+	// Writing completion stamp file.
 	completeFile, err := os.Create(filepath.Join(targetPaths.daemon, ".migrated-from-lxd"))
 	if err != nil {
 		_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
