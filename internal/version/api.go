@@ -398,6 +398,7 @@ var APIExtensions = []string{
 	"network_state_ovn_lr",
 	"image_template_permissions",
 	"storage_bucket_backup",
+	"storage_lvm_cluster",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

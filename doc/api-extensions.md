@@ -2363,3 +2363,9 @@ This includes the following new endpoints (see [RESTful API](rest-api.md) for de
 * `DELETE /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
 
 * `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>/export`
+
+## `storage_lvm_cluster`
+
+This adds a new `lvmcluster` storage driver which makes use of LVM shared VG through `lvmlockd`.
+
+With this, it's possible to have a single shared LVM pool across multiple servers so long as they all see the same backing device(s).
