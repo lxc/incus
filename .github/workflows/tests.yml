@@ -172,8 +172,15 @@ jobs:
 
       - name: Reclaim some space
         run: |
-          # This was inspired from https://github.com/easimon/maximize-build-space
           set -eux
+
+          sudo snap remove lxd --purge
+          # Purge older snap revisions that are disabled/superseded by newer revisions of the same snap
+          snap list --all | while read -r name _ rev _ _ notes _; do
+            [ "${notes}" = "disabled" ] && snap remove "${name}" --revision "${rev}" --purge
+          done || true
+
+          # This was inspired from https://github.com/easimon/maximize-build-space
           df -h /
           # dotnet
           sudo rm -rf /usr/share/dotnet
@@ -213,11 +220,6 @@ jobs:
           sudo add-apt-repository ppa:cowsql/stable -y --no-update
           sudo apt-get update
 
-          sudo snap remove lxd --purge
-          # Purge older snap revisions that are disabled/superseded by newer revisions of the same snap
-          snap list --all | while read -r name _ rev _ _ notes _; do
-            [ "${notes}" = "disabled" ] && snap remove "${name}" --revision "${rev}" --purge
-          done || true
           sudo apt-get autopurge moby-containerd docker uidmap -y
           sudo ip link delete docker0
           sudo nft flush ruleset
