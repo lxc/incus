@@ -962,9 +962,16 @@ func (d *Daemon) init() error {
 
 	if d.os.LXCFeatures["devpts_fd"] && canUseNativeTerminals() {
 		d.os.NativeTerminals = true
-		logger.Info(" - safe native terminal allocation : yes")
+		logger.Info(" - safe native terminal allocation: yes")
 	} else {
-		logger.Info(" - safe native terminal allocation : no")
+		logger.Info(" - safe native terminal allocation: no")
+	}
+
+	d.os.UnprivBinfmt = canUseBinfmt()
+	if d.os.UnprivBinfmt {
+		logger.Info(" - unprivileged binfmt_misc: yes")
+	} else {
+		logger.Info(" - unprivileged binfmt_misc: no")
 	}
 
 	/*

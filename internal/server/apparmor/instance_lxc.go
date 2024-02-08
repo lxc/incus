@@ -33,7 +33,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 
   # Handle binfmt
   mount fstype=binfmt_misc -> /proc/sys/fs/binfmt_misc/,
+{{- if not .kernel_binfmt }}
   deny /proc/sys/fs/binfmt_misc/{,**} rwklx,
+{{- end }}
 
   # Handle cgroupfs
   mount options=(ro,nosuid,nodev,noexec,remount,strictatime) -> /sys/fs/cgroup/,

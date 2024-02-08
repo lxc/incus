@@ -74,20 +74,20 @@ type OS struct {
 	CGInfo cgroup.Info
 
 	// Kernel features
-	CloseRange              bool
-	CoreScheduling          bool
-	IdmappedMounts          bool
-	NetnsGetifaddrs         bool
-	PidFdSetns              bool
-	SeccompListener         bool
-	SeccompListenerContinue bool
-	UeventInjection         bool
-	VFS3Fscaps              bool
-
-	ContainerCoreScheduling bool
-	NativeTerminals         bool
-	PidFds                  bool
-	SeccompListenerAddfd    bool
+	CloseRange              bool // CloseRange indicates support for the close_range syscall.
+	ContainerCoreScheduling bool // ContainerCoreScheduling indicates LXC and kernel support for core scheduling.
+	CoreScheduling          bool // CoreScheduling indicates support for core scheduling syscalls.
+	IdmappedMounts          bool // IdmappedMounts indicates kernel support for VFS idmap.
+	NativeTerminals         bool // NativeTerminals indicates support for TIOGPTPEER ioctl.
+	NetnsGetifaddrs         bool // NetnsGetifaddrs indicates support for NETLINK_GET_STRICT_CHK.
+	PidFds                  bool // PidFds indicates support for PID fds.
+	PidFdSetns              bool // PidFdSetns indicates support for setns through PID fds.
+	SeccompListenerAddfd    bool // SeccompListenerAddfd indicates support for passing new FD to process through seccomp notify.
+	SeccompListener         bool // SeccompListener indicates support for seccomp notify.
+	SeccompListenerContinue bool // SeccompListenerContinue indicates support continuing syscalls path for process through seccomp notify.
+	UeventInjection         bool // UeventInjection indicates support for injecting uevents to a specific netns.
+	UnprivBinfmt            bool // UnprivBinfmt indicates support for mounting binfmt_misc inside of a user namespace.
+	VFS3Fscaps              bool // VFS3FScaps indicates support for v3 filesystem capacbilities.
 
 	// LXC features
 	LXCFeatures map[string]bool

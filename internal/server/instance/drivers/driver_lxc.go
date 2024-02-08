@@ -796,7 +796,6 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	bindMounts := []string{
 		"/dev/fuse",
 		"/dev/net/tun",
-		"/proc/sys/fs/binfmt_misc",
 		"/sys/firmware/efi/efivars",
 		"/sys/fs/fuse/connections",
 		"/sys/fs/pstore",
@@ -804,6 +803,11 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		"/sys/kernel/debug",
 		"/sys/kernel/security",
 		"/sys/kernel/tracing",
+	}
+
+	// Handle unprivileged binfmt_misc.
+	if d.IsPrivileged() || !d.state.OS.UnprivBinfmt {
+		bindMounts = append(bindMounts, "/proc/sys/fs/binfmt_misc")
 	}
 
 	// Pass in /dev/zfs to the container if delegation is supported on the system.
