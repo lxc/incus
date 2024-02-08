@@ -94,13 +94,11 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -d -u ./...
-	$(GO) get github.com/mdlayher/socket@v0.4.1
-	$(GO) get github.com/openfga/go-sdk@v0.3.1-go1.20
-	$(GO) mod tidy --go=1.20
+	$(GO) mod tidy --go=1.21
 	$(GO) get toolchain@none
 
 	cd test/mini-oidc && $(GO) get -t -v -d -u ./...
-	cd test/mini-oidc && $(GO) mod tidy --go=1.20
+	cd test/mini-oidc && $(GO) mod tidy --go=1.21
 	@echo "Dependencies updated"
 
 .PHONY: update-ovsdb
