@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-30 15:38-0500\n"
-"PO-Revision-Date: 2024-01-27 21:01+0000\n"
-"Last-Translator: smCloudInTheSky <sylvain.maret@hotmail.fr>\n"
+"PO-Revision-Date: 2024-02-08 13:27+0000\n"
+"Last-Translator: Corabel Bertolini <Corabel.Bertolini@freemailonline.us>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -300,23 +300,25 @@ msgstr ""
 "### Ceci est une représentation yaml des redirections réseau.\n"
 "### Toute ligne commençant par un '# sera ignorée.\n"
 "###\n"
-"### Une redirection réseau est constitué d'un ensemble d'éléments de "
-"configuration.\n"
-"###\n"
-"### Un exemple resemblerait à :\n"
+"### Une redirection réseau est constituée d'une adresse réseau cible par "
+"défaut et, optionnellement, \n"
+"###d'un ensemble de redirection de ports réseau pour une adresse réseau "
+"donnée. \n"
+"### En utilisant le format ipv4, un exemple pourrait correspondre à :\n"
 "### listen_address: 192.0.2.1\n"
 "### config:\n"
 "###   target_address: 198.51.100.2\n"
-"### description: test desc\n"
+"### description: description de l'exemple\n"
 "### ports:\n"
-"### - description: port forward\n"
+"### - description: redirection de port\n"
 "###   protocol: tcp\n"
 "###   listen_port: 80,81,8080-8090\n"
 "###   target_address: 198.51.100.3\n"
 "###   target_port: 80,81,8080-8090\n"
 "### location: server01\n"
 "###\n"
-"### Notez que seule la configuration peut être modifiée."
+"### Notez que l'adresse d'écoute (listen_address) et l'origine (location) ne "
+"peuvent pas être modifiées."
 
 #: cmd/incus/network_load_balancer.go:536
 msgid ""
@@ -602,9 +604,9 @@ msgid "%s is not a directory"
 msgstr "%s n'est pas un répertoire"
 
 #: cmd/incus/file.go:991
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' isn't a supported file type"
-msgstr "'%s' n'est pas un format de fichier pris en charge."
+msgstr "'%s' n'est pas un format de fichier pris en charge"
 
 #: cmd/incus/cluster_group.go:136 cmd/incus/profile.go:226
 msgid "(none)"
@@ -652,9 +654,8 @@ msgid "--instance-only can't be passed when the source is a snapshot"
 msgstr "--instance-only ne peut être utilisé lorsque la source est un snapshot"
 
 #: cmd/incus/admin_init_auto.go:41
-#, fuzzy
 msgid "--network-port can't be used without --network-address"
-msgstr "--network-port ne peut pas être utilisé avec --network-address"
+msgstr "--network-port ne peut pas être utilisé sans --network-address"
 
 #: cmd/incus/copy.go:89
 msgid "--no-profiles cannot be used with --refresh"
@@ -674,12 +675,10 @@ msgid "--target cannot be used with instances"
 msgstr "--target ne peut pas être utilisé avec des instances"
 
 #: cmd/incus/alias.go:220
-#, fuzzy
 msgid "<alias>"
-msgstr "Alias :"
+msgstr "<alias>"
 
 #: cmd/incus/alias.go:59
-#, fuzzy
 msgid "<alias> <target>"
 msgstr "<alias> <cible>"
 
@@ -692,28 +691,24 @@ msgid "<old alias> <new alias>"
 msgstr "<ancien alias> <nouvel alias>"
 
 #: cmd/incus/remote.go:812 cmd/incus/remote.go:868
-#, fuzzy
 msgid "<remote>"
-msgstr "<serveur distant>"
+msgstr "<serveur_distant>"
 
 #: cmd/incus/remote.go:906
-#, fuzzy
 msgid "<remote> <URL>"
-msgstr "<serveur distant> <URL>"
+msgstr "<serveur_distant> <URL>"
 
 #: cmd/incus/remote.go:741
 msgid "<remote> <new-name>"
 msgstr "<serveur distant> <nouveau nom>"
 
 #: cmd/incus/remote_unix.go:35
-#, fuzzy
 msgid "<remote>: <path>"
-msgstr "<serveur distant>: <chemin>"
+msgstr "<serveur_distant>: <chemin>"
 
 #: cmd/incus/file.go:645
-#, fuzzy
 msgid "<source path>... [<remote>:]<instance>/<path>"
-msgstr "<chemin source>... [<serveur distant>:]<instance>/<chemin>"
+msgstr "<chemin_source>... [<serveur_distant>:]<instance>/<chemin>"
 
 #: cmd/incus/image.go:651
 msgid ""
@@ -736,9 +731,8 @@ msgid "A client name must be provided"
 msgstr "Un nom de client doit être fournit"
 
 #: cmd/incus/cluster.go:826
-#, fuzzy
 msgid "A cluster member name must be provided"
-msgstr "Vous devez fournir le nom d'un conteneur pour : "
+msgstr "Vous devez fournir le nom d'un membre appartenant à un cluster"
 
 #: cmd/incus/network_allocations.go:25
 msgid "ADDRESS"
@@ -749,7 +743,6 @@ msgid "ALIAS"
 msgstr "ALIAS"
 
 #: cmd/incus/image.go:1056
-#, fuzzy
 msgid "ALIASES"
 msgstr "ALIAS"
 
@@ -773,12 +766,12 @@ msgstr "Clé d'accès (auto-généré si vide)"
 #: cmd/incus/storage_bucket.go:907
 #, fuzzy, c-format
 msgid "Access key: %s"
-msgstr "Clé d'accès : %s"
+msgstr "Clef d'accès: %s"
 
 #: cmd/incus/config.go:383
 #, fuzzy
 msgid "Access the expanded configuration"
-msgstr "Afficher la configuration étendue"
+msgstr "Afficher la configuration avancée"
 
 #: cmd/incus/warning.go:262 cmd/incus/warning.go:263
 msgid "Acknowledge warning"
@@ -794,14 +787,12 @@ msgid "Action (defaults to GET)"
 msgstr "Action (GET par défaut)"
 
 #: cmd/incus/cluster_group.go:631
-#, fuzzy
 msgid "Add a cluster member to a cluster group"
-msgstr "Ajoutez un membre au cluster"
+msgstr "Ajoutez un membre d'un cluster à un groupe de cluster"
 
 #: cmd/incus/network_zone.go:1238
-#, fuzzy
 msgid "Add a network zone record entry"
-msgstr "Ajoutez une entrée de la zone d'enregistrement réseau"
+msgstr "Ajoutez un enregistrement d'une zone réseau"
 
 #: cmd/incus/network_load_balancer.go:746
 msgid "Add backend to a load balancer"
@@ -846,22 +837,22 @@ msgid ""
 msgstr ""
 "Ajouter de nouveaux serveurs distants\n"
 "\n"
-"L'URL des ressources distantes doit être HTTPS (https://).\n"
+"L'URL pour accéder à des ressources distantes doit utiliser le protocole "
+"HTTPS (https://).\n"
 "\n"
-"L'authentification de base peut être utilisée lorsqu'elle est combinée avec "
-"le protocole « simplestreams » :\n"
-"  lxc remote add un-nom https://UTILISATEUR:MOTDEPASSE@exemple.com/un/chemin "
-"--protocol=simplestreams\n"
+"L'identification HTTP Basic (RFC 26176) peut être utilisée si ellle est "
+"combinée avec le protocole « simplestreams » :\n"
+"...incus remote add ressource_distante_identifiant "
+"https://UTILISATEUR:MOTDEPASSE@exemple.com/complement/de/chemin --protocol="
+"simplestreams\n"
 
 #: cmd/incus/config_trust.go:89
-#, fuzzy
 msgid "Add new trusted client"
 msgstr "Ajouter de nouveaux clients de confiance"
 
 #: cmd/incus/config_trust.go:169
-#, fuzzy
 msgid "Add new trusted client certificate"
-msgstr "Ajouter de nouveaux certificat client de confiance"
+msgstr "Ajouter de nouveaux certificat pour des clients de confiance"
 
 #: cmd/incus/config_trust.go:170
 msgid ""
@@ -901,17 +892,15 @@ msgstr "Ajoutez des ports à l'équilibreur de charge"
 #: cmd/incus/profile.go:103 cmd/incus/profile.go:104
 #, fuzzy
 msgid "Add profiles to instances"
-msgstr "Ajoutez des profiles aux instances"
+msgstr "Ajoutez des profiles pour des instances"
 
 #: cmd/incus/cluster_role.go:49 cmd/incus/cluster_role.go:50
-#, fuzzy
 msgid "Add roles to a cluster member"
-msgstr "Ajoutez des roles à un membre du cluster"
+msgstr "Ajoutez des roles à un membre d'un cluster"
 
 #: cmd/incus/network_acl.go:764 cmd/incus/network_acl.go:765
-#, fuzzy
 msgid "Add rules to an ACL"
-msgstr "Ajoutez des règles à une liste de contrôle d'accès"
+msgstr "Ajoutez des règles à une liste de contrôle d'accès (ACL)"
 
 #: cmd/incus/admin_recover.go:128
 msgid ""
@@ -929,19 +918,19 @@ msgid "Address to bind to (not including port)"
 msgstr "Adresses à associé à (sans inclure les ports)"
 
 #: cmd/incus/info.go:201
-#, fuzzy, c-format
+#, c-format
 msgid "Address: %s"
-msgstr "Expire : %s"
+msgstr "Addresse : %s"
 
 #: cmd/incus/storage_bucket.go:163
-#, fuzzy, c-format
+#, c-format
 msgid "Admin access key: %s"
-msgstr "Clé d'accès administrateur : %s"
+msgstr "Clef d'accès administrateur : %s"
 
 #: cmd/incus/storage_bucket.go:164
-#, fuzzy, c-format
+#, c-format
 msgid "Admin secret key: %s"
-msgstr "Clé d'accès administrateur : %s"
+msgstr "Clef d'accès secrète administrateur : %s"
 
 #: cmd/incus/alias.go:86 cmd/incus/alias.go:199
 #, fuzzy, c-format
@@ -959,12 +948,12 @@ msgid "Alias name missing"
 msgstr "Nom d'alias manquant"
 
 #: cmd/incus/image.go:992
-#, fuzzy, c-format
+#, c-format
 msgid "Alias: %s"
-msgstr "Alias : %s"
+msgstr "Alias : %s"
 
 #: cmd/incus/publish.go:242
-#, fuzzy, c-format
+#, c-format
 msgid "Aliases already exists: %s"
 msgstr "L'alias %s existe déjà"
 
@@ -979,7 +968,6 @@ msgstr ""
 "vous continuer ?"
 
 #: cmd/incus/storage_volume.go:1388 cmd/incus/storage_volume.go:2240
-#, fuzzy
 msgid "All projects"
 msgstr "Tous les projets"
 
@@ -988,7 +976,6 @@ msgid "All server addresses are unavailable"
 msgstr "Toutes les adresses serveurs sont indisponibles"
 
 #: cmd/incus/config_trust.go:180
-#, fuzzy
 msgid "Alternative certificate name"
 msgstr "Nom alternatif du certificat"
 
@@ -998,9 +985,9 @@ msgid "Architecture: %s"
 msgstr "Architecture : %s"
 
 #: cmd/incus/info.go:127
-#, fuzzy, c-format
+#, c-format
 msgid "Architecture: %v"
-msgstr "Architecture : %v"
+msgstr "Architecture : %v"
 
 #: cmd/incus/admin_init_interactive.go:158
 msgid "Are you joining an existing cluster?"
@@ -1021,19 +1008,17 @@ msgid "Asked for a VM but image is of type container"
 msgstr "Machine virtuelle a été demandé mais l'image est de type conteneur"
 
 #: cmd/incus/cluster_group.go:83 cmd/incus/cluster_group.go:84
-#, fuzzy
 msgid "Assign sets of groups to cluster members"
-msgstr "Atribuer des ensemble de groupes aux membres du cluster"
+msgstr "Attribuer des ensemble de groupes aux membres du cluster"
 
 #: cmd/incus/profile.go:166 cmd/incus/profile.go:167
 #, fuzzy
 msgid "Assign sets of profiles to instances"
-msgstr "Attribuer un ensemble de profiles aux instances"
+msgstr "Attribuer un ensemble de profiles à des instances"
 
 #: cmd/incus/network.go:134
-#, fuzzy
 msgid "Attach network interfaces to instances"
-msgstr "Attacher des interfaces réseaux aux instances"
+msgstr "Attribuer des interfaces réseaux à des instances"
 
 #: cmd/incus/network.go:231 cmd/incus/network.go:232
 msgid "Attach network interfaces to profiles"
@@ -1046,7 +1031,7 @@ msgstr "Attacher de nouvelles interfaces aux instances"
 #: cmd/incus/storage_volume.go:161 cmd/incus/storage_volume.go:162
 #, fuzzy
 msgid "Attach new storage volumes to instances"
-msgstr "Attacher de nouveaux volumes de stockage aux instances"
+msgstr "Attribuer de nouveaux volumes de stockage à des instances"
 
 #: cmd/incus/storage_volume.go:236 cmd/incus/storage_volume.go:237
 msgid "Attach new storage volumes to profiles"
@@ -1055,7 +1040,7 @@ msgstr "Attacher de nouveaux volumes de stockage aux profiles"
 #: cmd/incus/console.go:35
 #, fuzzy
 msgid "Attach to instance consoles"
-msgstr "Attacher aux consoles de l'instance"
+msgstr "Associer à des consoles d'instance"
 
 #: cmd/incus/console.go:36
 msgid ""
@@ -1095,28 +1080,26 @@ msgid "Automatic (non-interactive) mode"
 msgstr "Mode automatique (non-interactif)"
 
 #: cmd/incus/remote.go:142
-#, fuzzy
 msgid "Available projects:"
-msgstr "Projets disponible:"
+msgstr "Projets disponibles :"
 
 #: cmd/incus/list.go:560 cmd/incus/list.go:561
 msgid "BASE IMAGE"
 msgstr "Image de base"
 
 #: cmd/incus/export.go:85
-#, fuzzy, c-format
+#, c-format
 msgid "Backing up instance: %s"
-msgstr "Sauvegarder l'instance: %s"
+msgstr "Sauvegarder l'instance : %s"
 
 #: cmd/incus/storage_volume.go:2628
-#, fuzzy, c-format
+#, c-format
 msgid "Backing up storage volume: %s"
-msgstr "Sauvegarder le volume de stockage: %s"
+msgstr "Sauvegarder le volume de stockage : %s"
 
 #: cmd/incus/export.go:191 cmd/incus/storage_volume.go:2705
-#, fuzzy
 msgid "Backup exported successfully!"
-msgstr "Image copiée avec succès !"
+msgstr "Export de la sauvegarde réussie !"
 
 #: cmd/incus/info.go:644 cmd/incus/storage_volume.go:1319
 msgid "Backups:"
@@ -1139,9 +1122,9 @@ msgstr "Mauvaise paire clé/valeur: %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:221 cmd/incus/move.go:358
 #: cmd/incus/project.go:129
-#, fuzzy, c-format
+#, c-format
 msgid "Bad key=value pair: %q"
-msgstr "Mauvaise paire clé=valeur: %q"
+msgstr "Mauvaise association clef=valeur: %q"
 
 #: cmd/incus/publish.go:179 cmd/incus/storage.go:129
 #: cmd/incus/storage_volume.go:575
@@ -1165,7 +1148,7 @@ msgstr "À la fois--all et le nom d'instance on été donné"
 #: cmd/incus/info.go:128
 #, fuzzy, c-format
 msgid "Brand: %v"
-msgstr "Marque : %v"
+msgstr "Marque : %v"
 
 #: cmd/incus/network.go:964
 msgid "Bridge:"
@@ -1196,9 +1179,9 @@ msgid "COUNT"
 msgstr "NOMBRE"
 
 #: cmd/incus/info.go:354
-#, fuzzy, c-format
+#, c-format
 msgid "CPU (%s):"
-msgstr "CPU (%s):"
+msgstr "CPU (%s) :"
 
 #: cmd/incus/list.go:572
 msgid "CPU USAGE"
@@ -1218,7 +1201,6 @@ msgid "CPUs (%s):"
 msgstr "CPUs (%s):"
 
 #: cmd/incus/operation.go:176
-#, fuzzy
 msgid "CREATED"
 msgstr "CRÉÉ"
 
@@ -1227,19 +1209,19 @@ msgid "CREATED AT"
 msgstr "CRÉÉ À"
 
 #: cmd/incus/info.go:130
-#, fuzzy, c-format
+#, c-format
 msgid "CUDA Version: %v"
-msgstr "Version CUDA: %v"
+msgstr "Version CUDA : %v"
 
 #: cmd/incus/image.go:985
 #, fuzzy, c-format
 msgid "Cached: %s"
-msgstr "Cachée: %s"
+msgstr "Mem. cache : %s"
 
 #: cmd/incus/info.go:307
 #, fuzzy
 msgid "Caches:"
-msgstr "Caches:"
+msgstr "Caches mémoire:"
 
 #: cmd/incus/admin_init_interactive.go:143
 #: cmd/incus/admin_init_interactive.go:812
@@ -1260,7 +1242,7 @@ msgstr "Impossible de fournir un nom à l'image cible"
 #: cmd/incus/file.go:520
 #, fuzzy
 msgid "Can't pull a directory without --recursive"
-msgstr "impossible de récupérer un répertoire sans --recursive"
+msgstr "Impossible de récupérer un répertoire sans --recursive"
 
 #: cmd/incus/utils.go:212 cmd/incus/utils.go:232
 #, c-format
@@ -1270,7 +1252,7 @@ msgstr "Impossible de lire depuis stdin : %w"
 #: cmd/incus/remote.go:847
 #, fuzzy
 msgid "Can't remove the default remote"
-msgstr "impossible de supprimer le serveur distant par défaut"
+msgstr "Impossible de supprimer le serveur distant par défaut"
 
 #: cmd/incus/list.go:586
 msgid "Can't specify --fast with --columns"
@@ -1292,13 +1274,13 @@ msgstr "Impossible de spécifier la colonne L en dehors d'une grappe"
 #: cmd/incus/file.go:722
 #, fuzzy
 msgid "Can't supply uid/gid/mode in recursive mode"
-msgstr "impossible de spécifier uid/gid/mode en mode récursif"
+msgstr "Impossible de spécifier uid/gid/mode dans le mode récursif"
 
 #: cmd/incus/config.go:649
-#, fuzzy, c-format
+#, c-format
 msgid "Can't unset key '%s', it's not currently set"
 msgstr ""
-"Impossible de désaffecter la clé '%s', elle n'est pas définie actuellement."
+"Impossible de désaffecter la clef '%s', elle n'est pas définie actuellement."
 
 #: cmd/incus/admin_init.go:72
 msgid "Can't use --auto and --preseed together"
@@ -1363,7 +1345,7 @@ msgstr "Cartes : %s (%s)"
 #: cmd/incus/config_trust.go:783
 #, fuzzy, c-format
 msgid "Certificate add token for %s deleted"
-msgstr "jeton d'ajout du certificat pour %s supprimé"
+msgstr "Jeton d'ajout du certificat pour %s supprimé"
 
 #: cmd/incus/remote.go:225
 #, c-format
@@ -1402,37 +1384,37 @@ msgstr "Choisir %s:"
 #: cmd/incus/config_trust.go:146
 #, fuzzy, c-format
 msgid "Client %s certificate add token:"
-msgstr "Jeton de certificat d'ajout du client %s"
+msgstr "Jeton de certificat d'ajout pour le client %s  :"
 
 #: cmd/incus/remote.go:597
 #, fuzzy
 msgid "Client certificate now trusted by server:"
-msgstr "Certificat client approuvé sur le serveur : "
+msgstr "Certificat client approuvé par le serveur :"
 
 #: cmd/incus/version.go:37
 #, fuzzy, c-format
 msgid "Client version: %s\n"
-msgstr "Version du client : %s\n"
+msgstr "Version du client : %s\n"
 
 #: cmd/incus/cluster_group.go:196
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster group %s created"
 msgstr "Grappe de serveur %s créé"
 
 #: cmd/incus/cluster_group.go:249
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster group %s deleted"
-msgstr "Grappe de serveur %s supprimé"
+msgstr "Grappe de serveur %s supprimée"
 
 #: cmd/incus/cluster_group.go:491
 #, fuzzy, c-format
 msgid "Cluster group %s isn't currently applied to %s"
-msgstr "Grappe de serveur %s n'est pas appliqués à %s"
+msgstr "Grappe de serveur %s n'est pas actuellement associée à %s"
 
 #: cmd/incus/cluster_group.go:560
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster group %s renamed to %s"
-msgstr "Grappe de cluster %s renommé %s"
+msgstr "Grappe de cluster %s renommée en %s"
 
 #: cmd/incus/cluster.go:1026
 #, c-format
@@ -1447,17 +1429,17 @@ msgstr "Membre de grappe de serveur %s ajouté aux groupes %s"
 #: cmd/incus/cluster_group.go:676
 #, fuzzy, c-format
 msgid "Cluster member %s added to group %s"
-msgstr "Membre de grappe de server %s ajouté au groupe %s"
+msgstr "Membre de la grappe de serveur %s ajouté au groupe %s"
 
 #: cmd/incus/cluster_group.go:665
 #, fuzzy, c-format
 msgid "Cluster member %s is already in group %s"
-msgstr "Membre de grappe de serveur %s est déjà dans le groupe %s"
+msgstr "Le membre de la grappe de serveur %s est déjà dans le groupe %s"
 
 #: cmd/incus/cluster_group.go:511
 #, fuzzy, c-format
 msgid "Cluster member %s removed from group %s"
-msgstr "Membre de grappe de serveur %s retiré du groupe %s"
+msgstr "Le membre de la grappe de serveur %s est supprimé du groupe %s"
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:385 cmd/incus/config.go:517
 #: cmd/incus/config.go:723 cmd/incus/config.go:854 cmd/incus/copy.go:60
@@ -1524,34 +1506,34 @@ msgid ""
 msgstr ""
 "Ceci est le client en ligne de commande de Incus\n"
 "\n"
-"Toutes les fonctionnalités de Incus peuvent être utilisées à l'aide des "
-"commandes ci-dessous.\n"
-"Pour de l'aide avec l'une des commandes, simplement les utiliser avec --help."
+"Toutes les fonctionnalités de Incus peuvent être utilisées à partir des "
+"divers commandes ci-dessous.\n"
+"Pour accéder à l'aide de n'importe laquelle de ces commandes, tapez "
+"simplement à leur suite --help.\n"
+"\n"
+"Des commandes personnelles peuvent être ajoutée à travers des alias. Pour "
+"les générer, utiliser la commande \"incus alias\"."
 
 #: cmd/incus/publish.go:39
-#, fuzzy
 msgid "Compression algorithm to use (`none` for uncompressed)"
-msgstr "Définir un algorithme de compression (`aucun` pour ne pas compresser)"
+msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
 
 #: cmd/incus/export.go:43
-#, fuzzy
 msgid "Compression algorithm to use (none for uncompressed)"
-msgstr "Définir un algorithme de compression (`aucun` pour ne pas compresser)"
+msgstr "Algorithme de compression à utiliser (`none` pour ne pas compresser)"
 
 #: cmd/incus/copy.go:52 cmd/incus/create.go:50
 #, fuzzy
 msgid "Config key/value to apply to the new instance"
-msgstr "Clé/valeur de configuration à appliquer à la nouvelle instance"
+msgstr "Configuration clef/valeur à associer à la nouvelle instance"
 
 #: cmd/incus/project.go:95
-#, fuzzy
 msgid "Config key/value to apply to the new project"
-msgstr "Clé/valeur de configuration à appliquer au nouveau projet"
+msgstr "Configuration clef/valeur à associer au nouveau projet"
 
 #: cmd/incus/move.go:57
-#, fuzzy
 msgid "Config key/value to apply to the target instance"
-msgstr "Clé/valeur de configuration à appliquer à l'instance cible"
+msgstr "Configuration clef/valeur à associer pour l'instance cible"
 
 #: cmd/incus/admin_recover.go:131
 msgid "Config option should be in the format KEY=VALUE"
@@ -1593,9 +1575,9 @@ msgid "Content type, block or filesystem"
 msgstr "Type de contenu, bloc ou système de fichier"
 
 #: cmd/incus/storage_volume.go:1259
-#, fuzzy, c-format
+#, c-format
 msgid "Content type: %s"
-msgstr "Type de contenu : %s"
+msgstr "Type de contenu : %s"
 
 #: cmd/incus/info.go:117
 #, c-format
@@ -1629,7 +1611,7 @@ msgstr ""
 #: cmd/incus/copy.go:39
 #, fuzzy
 msgid "Copy instances within or in between servers"
-msgstr "Copiez l'instance dans ou entre les serveurs"
+msgstr "Copie d'instances à travers ou entre serveurs"
 
 #: cmd/incus/copy.go:40
 msgid ""
@@ -1672,17 +1654,17 @@ msgstr "Copier les profiles"
 #: cmd/incus/storage_volume.go:327 cmd/incus/storage_volume.go:328
 #, fuzzy
 msgid "Copy storage volumes"
-msgstr "Copie de l'image : %s"
+msgstr "Copie des volumes des stockage"
 
 #: cmd/incus/copy.go:57
 #, fuzzy
 msgid "Copy the instance without its snapshots"
-msgstr "Copiez le conteneur sans ses instantanés"
+msgstr "Copiez l'instance sans ses instantanés"
 
 #: cmd/incus/storage_volume.go:334
 #, fuzzy
 msgid "Copy the volume without its snapshots"
-msgstr "Copiez le conteneur sans ses instantanés"
+msgstr "Copiez le volume sans ses instantanés"
 
 #: cmd/incus/copy.go:61 cmd/incus/image.go:160 cmd/incus/move.go:66
 #: cmd/incus/profile.go:252 cmd/incus/storage_volume.go:335
@@ -1692,7 +1674,7 @@ msgstr "Copie dans un projet différent de la source"
 #: cmd/incus/image.go:158
 #, fuzzy
 msgid "Copy virtual machine images"
-msgstr "Copie de l'image : %s"
+msgstr "Copie d'image de machines virtuelle : %s"
 
 #: cmd/incus/image.go:266
 #, c-format
@@ -1702,7 +1684,7 @@ msgstr "Copie de l'image : %s"
 #: cmd/incus/storage_volume.go:434
 #, fuzzy, c-format
 msgid "Copying the storage volume: %s"
-msgstr "Copie de l'image : %s"
+msgstr "Copie du stockage de volume : %s"
 
 #: cmd/incus/info.go:315
 #, c-format
@@ -1710,9 +1692,8 @@ msgid "Core %d"
 msgstr "Coeur %d"
 
 #: cmd/incus/info.go:313
-#, fuzzy
 msgid "Cores:"
-msgstr "erreur : %v"
+msgstr "Cœurs : %v"
 
 #: cmd/incus/remote.go:489
 #, c-format
@@ -1726,12 +1707,12 @@ msgstr "Impossible de créer le dossier de stockage des certificats serveurs"
 #: cmd/incus/cluster.go:1090
 #, fuzzy, c-format
 msgid "Could not find certificate file path: %s"
-msgstr "Impossible d'assainir le chemin %s"
+msgstr "Impossible de trouver le chemin du fichier de certificat %s"
 
 #: cmd/incus/cluster.go:1094
 #, fuzzy, c-format
 msgid "Could not find certificate key file path: %s"
-msgstr "Impossible d'assainir le chemin %s"
+msgstr "Impossible de trouver le chemin du fichier de la clef du certificat %s"
 
 #: cmd/incus/cluster.go:1099
 #, c-format
@@ -1747,8 +1728,8 @@ msgstr "Impossible de lire le fichier clé de certificat: %s avec l'erreur: %v"
 #, fuzzy, c-format
 msgid "Could not write new remote certificate for remote '%s' with error: %v"
 msgstr ""
-"Impossible d'écrire un nouveau certificat distant pour le serveur distant "
-"'%s' avec erreur: %v"
+"Impossible d'écrire un nouveau certificat pour le serveur distant '%s' suite "
+"à l'erreur: %v"
 
 #: cmd/incus/remote.go:484
 #, c-format
@@ -1769,28 +1750,26 @@ msgid "Create a cluster group"
 msgstr "Créer un groupe de serveurs"
 
 #: cmd/incus/admin_init_interactive.go:599
-#, fuzzy, c-format
+#, c-format
 msgid "Create a new %s pool?"
-msgstr "Copie de l'image : %s"
+msgstr "Créer un nouvel agrégat de stockage %s ?"
 
 #: cmd/incus/create.go:60
-#, fuzzy
 msgid "Create a virtual machine"
-msgstr "Copie de l'image : %s"
+msgstr "Créer une nouvelle machine virtuelle"
 
 #: cmd/incus/image_alias.go:59 cmd/incus/image_alias.go:60
 msgid "Create aliases for existing images"
 msgstr "Crée des alias pour les images existantes"
 
 #: cmd/incus/create.go:59
-#, fuzzy
 msgid "Create an empty instance"
-msgstr "Création du conteneur"
+msgstr "Créer une instance vide"
 
 #: cmd/incus/launch.go:23 cmd/incus/launch.go:24
 #, fuzzy
 msgid "Create and start instances from images"
-msgstr "Création du conteneur"
+msgstr "Créer et démarrer des instances à partir d'images"
 
 #: cmd/incus/file.go:139 cmd/incus/file.go:434 cmd/incus/file.go:654
 msgid "Create any directories necessary"
@@ -1799,7 +1778,7 @@ msgstr "Créer tous les répertoires nécessaires"
 #: cmd/incus/file.go:130 cmd/incus/file.go:131
 #, fuzzy
 msgid "Create files and directories in instances"
-msgstr "Créer tous répertoires nécessaires"
+msgstr "Créer des fichiers et répertoires dans les instances"
 
 #: cmd/incus/export.go:80
 #, c-format
@@ -1809,7 +1788,7 @@ msgstr "Créer une sauvegarde de l'instance : %w"
 #: cmd/incus/snapshot.go:75
 #, fuzzy
 msgid "Create instance snapshot"
-msgstr "Copiez le conteneur sans ses instantanés"
+msgstr "Créer un instantané d'instance"
 
 #: cmd/incus/snapshot.go:76
 #, fuzzy
@@ -1819,31 +1798,34 @@ msgid ""
 "When --stateful is used, attempt to checkpoint the instance's\n"
 "running state, including process memory state, TCP connections, ..."
 msgstr ""
-"Créer un instantané en lecture seule d'un conteneur.\n"
+"Créer un instantané d'une instance.\n"
 "\n"
 "lxc snapshot [<remote>:]<container> <snapshot name> [--stateful]\n"
 "\n"
-"Crée un instantanté du conteneur (y compris — de manière optionnelle —\n"
-"l'état de la mémoire du conteneur).  Si --stateful est utilisé, LXD\n"
-"tente de créer un point d'arrêt de l'état d'exécution du conteneur,\n"
-"incluant l'état de la mémoire, les connexions TCP, etc. afin qu'il\n"
-"puisse être restauré (via lxc restore) ultérieurement (bien que\n"
-"certaines choses, les connexions TCP ayant expirées après que la\n"
-"fenêtre de temps se soit écoulée par exemple, ne puissent être\n"
+"Créer un instantané du conteneur (y compris — de manière optionnelle —\n"
+"l'état de la mémoire du conteneur).  \n"
+"Si --stateful est utilisé, une tentative de création d'un point d'arrêt \n"
+"de l'état d'exécution actuelle de l'instance sera réalisée. \n"
+"Elle inclue notamment l'état de la mémoire, les connexions TCP, etc.\n"
+"Celle-ci doit permettre une restauration ultérieure de l'instance vers cette "
+"état (via lxc restore). \n"
+"Celle-ci n'est pas garantie (par exemple, les connexions TCP ayant expirées "
+"après que la\n"
+"fenêtre de temps se soit écoulée ne pourront probablement pas être "
 "restaurées avec succès).\n"
 "\n"
-"Exemple :\n"
+"Exemple :\n"
 "    lxc snapshot u1 snap0"
 
 #: cmd/incus/create.go:41 cmd/incus/create.go:42
 #, fuzzy
 msgid "Create instances from images"
-msgstr "Création du conteneur"
+msgstr "Création d'instances à partir d'images"
 
 #: cmd/incus/storage_bucket.go:845 cmd/incus/storage_bucket.go:846
 #, fuzzy
 msgid "Create key for a storage bucket"
-msgstr "Copie de l'image : %s"
+msgstr "Création d'une clef pour un stockage de type bucket"
 
 #: cmd/incus/storage_bucket.go:81 cmd/incus/storage_bucket.go:82
 #, fuzzy
