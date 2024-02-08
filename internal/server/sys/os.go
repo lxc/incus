@@ -86,6 +86,7 @@ type OS struct {
 	SeccompListener         bool // SeccompListener indicates support for seccomp notify.
 	SeccompListenerContinue bool // SeccompListenerContinue indicates support continuing syscalls path for process through seccomp notify.
 	UeventInjection         bool // UeventInjection indicates support for injecting uevents to a specific netns.
+	UnprivBinfmt            bool // UnprivBinfmt indicates support for mounting binfmt_misc inside of a user namespace.
 	VFS3Fscaps              bool // VFS3FScaps indicates support for v3 filesystem capacbilities.
 
 	// LXC features
