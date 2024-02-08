@@ -190,6 +190,13 @@ jobs:
           sudo rm -rf /opt/ghc
           df -h /
 
+      - name: Remove docker
+        run: |
+          set -eux
+          sudo apt-get autopurge -y moby-containerd docker uidmap
+          sudo ip link delete docker0
+          sudo nft flush ruleset
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -219,10 +226,6 @@ jobs:
           sudo add-apt-repository ppa:ubuntu-lxc/daily -y --no-update
           sudo add-apt-repository ppa:cowsql/stable -y --no-update
           sudo apt-get update
-
-          sudo apt-get autopurge moby-containerd docker uidmap -y
-          sudo ip link delete docker0
-          sudo nft flush ruleset
 
           sudo systemctl mask lxc.service
           sudo systemctl mask lxc-net.service
