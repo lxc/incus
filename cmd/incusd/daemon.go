@@ -967,6 +967,13 @@ func (d *Daemon) init() error {
 		logger.Info(" - safe native terminal allocation: no")
 	}
 
+	d.os.UnprivBinfmt = canUseBinfmt()
+	if d.os.UnprivBinfmt {
+		logger.Info(" - unprivileged binfmt_misc: yes")
+	} else {
+		logger.Info(" - unprivileged binfmt_misc: no")
+	}
+
 	/*
 	 * During daemon startup we're the only thread that touches VFS3Fscaps
 	 * so we don't need to bother with atomic.StoreInt32() when touching
