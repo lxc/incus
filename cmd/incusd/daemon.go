@@ -962,9 +962,9 @@ func (d *Daemon) init() error {
 
 	if d.os.LXCFeatures["devpts_fd"] && canUseNativeTerminals() {
 		d.os.NativeTerminals = true
-		logger.Info(" - safe native terminal allocation : yes")
+		logger.Info(" - safe native terminal allocation: yes")
 	} else {
-		logger.Info(" - safe native terminal allocation : no")
+		logger.Info(" - safe native terminal allocation: no")
 	}
 
 	/*
