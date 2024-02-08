@@ -41,6 +41,7 @@ __ro_after_init bool netnsid_aware = false;
 __ro_after_init bool pidfd_aware = false;
 __ro_after_init bool pidfd_setns_aware = false;
 __ro_after_init bool uevent_aware = false;
+__ro_after_init bool binfmt_aware = false;
 __ro_after_init int seccomp_notify_aware = 0;
 __ro_after_init char errbuf[4096];
 
@@ -524,6 +525,100 @@ static void is_core_scheduling_aware(void)
 	core_scheduling_aware = true;
 }
 
+static void is_binfmt_aware(void)
+{
+	int ret;
+	pid_t pid;
+	int fd = EBADF;
+
+	pid = fork();
+	if (pid < 0) {
+		(void)sprintf(errbuf, "%s", "Failed to spawn subprocess");
+		return;
+	}
+
+	if (pid == 0) {
+		// Create namespaces
+		ret = unshare(CLONE_NEWNS|CLONE_NEWUSER);
+		if (ret < 0) {
+			(void)sprintf(errbuf, "%s", "Failed to unshare network and user namespace");
+			_exit(EXIT_FAILURE);
+		}
+
+		// Setup uid_map
+		fd = openat(AT_FDCWD, "/proc/self/uid_map", O_WRONLY);
+		if (ret < 0) {
+			(void)sprintf(errbuf, "%s", "Failed to open uid_map");
+			_exit(EXIT_FAILURE);
+		}
+
+		if (write(fd, "0 0 1", 5) != 5) {
+			(void)sprintf(errbuf, "%s", "Failed to write uid_map");
+			_exit(EXIT_FAILURE);
+		}
+
+		if (close(fd) < 0) {
+			(void)sprintf(errbuf, "%s", "Failed to close uid_map");
+			_exit(EXIT_FAILURE);
+		}
+
+		// Setup setgroups
+		fd = openat(AT_FDCWD, "/proc/self/setgroups", O_WRONLY);
+		if (ret < 0) {
+			(void)sprintf(errbuf, "%s", "Failed to open setgroups");
+			_exit(EXIT_FAILURE);
+		}
+
+		if (write(fd, "deny", 4) != 4) {
+			(void)sprintf(errbuf, "%s", "Failed to write setgroups");
+			_exit(EXIT_FAILURE);
+		}
+
+		if (close(fd) < 0) {
+			(void)sprintf(errbuf, "%s", "Failed to close setgroups");
+			_exit(EXIT_FAILURE);
+		}
+
+		// Setup gid_map
+		fd = openat(AT_FDCWD, "/proc/self/gid_map", O_WRONLY);
+		if (ret < 0) {
+			(void)sprintf(errbuf, "%s", "Failed to open gid_map");
+			_exit(EXIT_FAILURE);
+		}
+
+		if (write(fd, "0 0 1", 5) != 5) {
+			(void)sprintf(errbuf, "%s", "Failed to write gid_map");
+			_exit(EXIT_FAILURE);
+		}
+
+		if (close(fd) < 0) {
+			(void)sprintf(errbuf, "%s", "Failed to close gid_map");
+			_exit(EXIT_FAILURE);
+		}
+
+		// Re-mount / private
+		ret = mount("none", "/", NULL, MS_REC|MS_PRIVATE, NULL);
+		if (ret < 0) {
+			(void)sprintf(errbuf, "%s", "Failed to mount remount /");
+			_exit(EXIT_FAILURE);
+		}
+
+		// Attempt mounting binfmt_misc
+		ret = mount("binfmt", "/", "binfmt_misc", 0, NULL);
+		if (ret < 0) {
+			_exit(EXIT_FAILURE);
+		}
+
+		_exit(EXIT_SUCCESS);
+	}
+
+	ret = wait_for_pid(pid);
+	if (ret)
+		return;
+
+	binfmt_aware = true;
+}
+
 void checkfeature(void)
 {
 	__do_close int hostnetns_fd = -EBADF, newnetns_fd = -EBADF, pidfd = -EBADF;
@@ -542,6 +637,7 @@ void checkfeature(void)
 	if (setns(hostnetns_fd, CLONE_NEWNET) < 0)
 		(void)sprintf(errbuf, "%s", "Failed to attach to host network namespace");
 
+	is_binfmt_aware();
 }
 
 static bool is_empty_string(char *s)
@@ -633,4 +729,8 @@ func canUsePidFdSetns() bool {
 
 func canUseCoreScheduling() bool {
 	return bool(C.core_scheduling_aware)
+}
+
+func canUseBinfmt() bool {
+	return bool(C.binfmt_aware)
 }
