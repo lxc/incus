@@ -8,6 +8,42 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func (g *cmdGlobal) cmpImages(toComplete string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	var remote string
+
+	if strings.Contains(toComplete, ":") {
+		remote = strings.Split(toComplete, ":")[0]
+	} else {
+		remote = g.conf.DefaultRemote
+	}
+
+	remoteServer, _ := g.conf.GetImageServer(remote)
+
+	images, _ := remoteServer.GetImages()
+
+	for _, image := range images {
+		for _, alias := range image.Aliases {
+			var name string
+
+			if remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
+				name = alias.Name
+			} else {
+				name = fmt.Sprintf("%s:%s", remote, alias.Name)
+			}
+
+			results = append(results, name)
+		}
+	}
+
+	if !strings.Contains(toComplete, ":") {
+		remotes, _ := g.cmpRemotes(true)
+		results = append(results, remotes...)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpInstances(toComplete string) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 
@@ -23,7 +59,7 @@ func (g *cmdGlobal) cmpInstances(toComplete string) ([]string, cobra.ShellCompDi
 		for _, instance := range instances {
 			var name string
 
-			if resource.remote == g.conf.DefaultRemote {
+			if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
 				name = instance
 			} else {
 				name = fmt.Sprintf("%s:%s", resource.remote, instance)
@@ -34,7 +70,7 @@ func (g *cmdGlobal) cmpInstances(toComplete string) ([]string, cobra.ShellCompDi
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, _ := g.cmpRemotes()
+		remotes, _ := g.cmpRemotes(false)
 		results = append(results, remotes...)
 	}
 
@@ -57,7 +93,7 @@ func (g *cmdGlobal) cmpNetworks(toComplete string) ([]string, cobra.ShellCompDir
 		for _, network := range networks {
 			var name string
 
-			if resource.remote == g.conf.DefaultRemote {
+			if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
 				name = network.Name
 			} else {
 				name = fmt.Sprintf("%s:%s", resource.remote, network.Name)
@@ -68,7 +104,7 @@ func (g *cmdGlobal) cmpNetworks(toComplete string) ([]string, cobra.ShellCompDir
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, _ := g.cmpRemotes()
+		remotes, _ := g.cmpRemotes(false)
 		results = append(results, remotes...)
 	}
 
@@ -167,7 +203,7 @@ func (g *cmdGlobal) cmpProfiles(toComplete string) ([]string, cobra.ShellCompDir
 		for _, profile := range profiles {
 			var name string
 
-			if resource.remote == g.conf.DefaultRemote {
+			if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
 				name = profile
 			} else {
 				name = fmt.Sprintf("%s:%s", resource.remote, profile)
@@ -178,18 +214,18 @@ func (g *cmdGlobal) cmpProfiles(toComplete string) ([]string, cobra.ShellCompDir
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, _ := g.cmpRemotes()
+		remotes, _ := g.cmpRemotes(false)
 		results = append(results, remotes...)
 	}
 
 	return results, cobra.ShellCompDirectiveNoFileComp
 }
 
-func (g *cmdGlobal) cmpRemotes() ([]string, cobra.ShellCompDirective) {
+func (g *cmdGlobal) cmpRemotes(includeAll bool) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 
 	for remoteName, rc := range g.conf.Remotes {
-		if rc.Protocol != "incus" && rc.Protocol != "" {
+		if !includeAll && rc.Protocol != "incus" && rc.Protocol != "" {
 			continue
 		}
 
