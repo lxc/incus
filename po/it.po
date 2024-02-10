@@ -8,16 +8,15 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-01-30 15:38-0500\n"
-"PO-Revision-Date: 2022-03-10 15:07+0000\n"
-"Last-Translator: Luigi Operoso <brokenpip3@gmail.com>\n"
-"Language-Team: Italian <https://hosted.weblate.org/projects/linux-containers/"
-"lxd/it/>\n"
+"PO-Revision-Date: 2024-02-09 19:02+0000\n"
+"Last-Translator: Alberto Donato <alberto.donato@gmail.com>\n"
+"Language-Team: Italian <https://hosted.weblate.org/projects/incus/cli/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.12-dev\n"
+"X-Generator: Weblate 5.4-dev\n"
 
 #: cmd/incus/storage_bucket.go:254 cmd/incus/storage_bucket.go:999
 #, fuzzy
@@ -612,12 +611,12 @@ msgstr ""
 #: cmd/incus/info.go:288
 #, c-format
 msgid "- Partition %d"
-msgstr ""
+msgstr "- Partizione %d"
 
 #: cmd/incus/info.go:197
 #, c-format
 msgid "- Port %d (%s)"
-msgstr ""
+msgstr "- Porta %d (%s)"
 
 #: cmd/incus/action.go:248
 msgid "--console can't be used while forcing instance shutdown"
