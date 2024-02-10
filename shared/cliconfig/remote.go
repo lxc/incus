@@ -1,6 +1,8 @@
 package cliconfig
 
 import (
+	"crypto/ecdsa"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -12,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/zitadel/oidc/v2/pkg/oidc"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/shared/api"
@@ -304,22 +307,47 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 		// Golang has deprecated all methods relating to PEM encryption due to a vulnerability.
 		// However, the weakness does not make PEM unsafe for our purposes as it pertains to password protection on the
 		// key file (client.key is only readable to the user in any case), so we'll ignore deprecation.
-		if x509.IsEncryptedPEMBlock(pemKey) { //nolint:staticcheck
+		isEncrypted := x509.IsEncryptedPEMBlock(pemKey) //nolint:staticcheck
+		isSSH := pemKey.Type == "OPENSSH PRIVATE KEY"
+		if isEncrypted || isSSH {
 			if c.PromptPassword == nil {
 				return nil, fmt.Errorf("Private key is password protected and no helper was configured")
 			}
 
-			password, err := c.PromptPassword("client.crt")
+			password, err := c.PromptPassword("client.key")
 			if err != nil {
 				return nil, err
 			}
 
-			derKey, err := x509.DecryptPEMBlock(pemKey, []byte(password)) //nolint:staticcheck
-			if err != nil {
-				return nil, err
-			}
+			if isSSH {
+				sshKey, err := ssh.ParseRawPrivateKeyWithPassphrase(content, []byte(password))
+				if err != nil {
+					return nil, err
+				}
 
-			content = pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: derKey})
+				ecdsaKey, _ := (sshKey).(*ecdsa.PrivateKey)
+				rsaKey, _ := (sshKey).(*rsa.PrivateKey)
+				if ecdsaKey != nil {
+					derKey, err := x509.MarshalECPrivateKey(ecdsaKey)
+					if err != nil {
+						return nil, err
+					}
+
+					content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
+				} else if rsaKey != nil {
+					derKey := x509.MarshalPKCS1PrivateKey(rsaKey)
+					content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
+				} else {
+					return nil, fmt.Errorf("Unsupported key type: %T", sshKey)
+				}
+			} else {
+				derKey, err := x509.DecryptPEMBlock(pemKey, []byte(password)) //nolint:staticcheck
+				if err != nil {
+					return nil, err
+				}
+
+				content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
+			}
 		}
 
 		args.TLSClientKey = string(content)
