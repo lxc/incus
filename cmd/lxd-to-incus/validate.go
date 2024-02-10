@@ -127,70 +127,70 @@ func (c *cmdMigrate) validate(source source, target target) error {
 	}
 
 	// Validate target empty.
-	targetCheckEmpty := func() (bool, error) {
+	targetCheckEmpty := func() (bool, string, error) {
 		// Check if more than one project.
 		names, err := targetClient.GetProjectNames()
 		if err != nil {
-			return false, err
+			return false, "", err
 		}
 
 		if len(names) > 1 {
-			return false, nil
+			return false, "projects", nil
 		}
 
 		// Check if more than one profile.
 		names, err = targetClient.GetProfileNames()
 		if err != nil {
-			return false, err
+			return false, "", err
 		}
 
 		if len(names) > 1 {
-			return false, nil
+			return false, "profiles", nil
 		}
 
 		// Check if any instance is present.
 		names, err = targetClient.GetInstanceNames(api.InstanceTypeAny)
 		if err != nil {
-			return false, err
+			return false, "", err
 		}
 
 		if len(names) > 0 {
-			return false, nil
+			return false, "instances", nil
 		}
 
 		// Check if any storage pool is present.
 		names, err = targetClient.GetStoragePoolNames()
 		if err != nil {
-			return false, err
+			return false, "", err
 		}
 
 		if len(names) > 0 {
-			return false, nil
+			return false, "storage pools", nil
 		}
 
 		// Check if any network is present.
 		networks, err := targetClient.GetNetworks()
 		if err != nil {
-			return false, err
+			return false, "", err
 		}
 
 		for _, network := range networks {
 			if network.Managed {
-				return false, nil
+				return false, "networks", nil
 			}
 		}
 
-		return true, nil
+		return true, "", nil
 	}
 
 	fmt.Println("=> Checking that the target server is empty")
-	isEmpty, err = targetCheckEmpty()
+	isEmpty, found, err := targetCheckEmpty()
 	if err != nil {
 		return fmt.Errorf("Failed to check target server: %w", err)
 	}
 
 	if !isEmpty {
-		return fmt.Errorf("Target server isn't empty, can't proceed with migration.")
+		return fmt.Errorf("Target server isn't empty (%s found), can't proceed with migration.", found)
 	}
 
 	// Validate configuration.
