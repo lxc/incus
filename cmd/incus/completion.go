@@ -8,6 +8,42 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func (g *cmdGlobal) cmpImages(toComplete string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	var remote string
+
+	if strings.Contains(toComplete, ":") {
+		remote = strings.Split(toComplete, ":")[0]
+	} else {
+		remote = g.conf.DefaultRemote
+	}
+
+	remoteServer, _ := g.conf.GetImageServer(remote)
+
+	images, _ := remoteServer.GetImages()
+
+	for _, image := range images {
+		for _, alias := range image.Aliases {
+			var name string
+
+			if remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
+				name = alias.Name
+			} else {
+				name = fmt.Sprintf("%s:%s", remote, alias.Name)
+			}
+
+			results = append(results, name)
+		}
+	}
+
+	if !strings.Contains(toComplete, ":") {
+		remotes, _ := g.cmpRemotes(true)
+		results = append(results, remotes...)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpInstances(toComplete string) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 
