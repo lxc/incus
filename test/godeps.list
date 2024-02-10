@@ -16,5 +16,6 @@ github.com/pkg/sftp
 github.com/zitadel/oidc/v2/pkg/client/rp
 github.com/zitadel/oidc/v2/pkg/http
 github.com/zitadel/oidc/v2/pkg/oidc
+golang.org/x/crypto/ssh
 golang.org/x/oauth2
 gopkg.in/yaml.v2

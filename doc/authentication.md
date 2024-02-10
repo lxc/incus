@@ -109,6 +109,28 @@ If the server certificate is valid and signed by the CA, then the connection con
 
 Note that the generated certificates are not automatically trusted. You must still add them to the server in one of the ways described in {ref}`authentication-trusted-clients`.
 
+### Encrypting local keys
+
+The `incus` client also supports encrypted client keys. Keys generated via the methods above can be encrypted with a password, using:
+
+```
+ssh-keygen -p -o -f .config/incus/client.key
+```
+
+```{note}
+Unless you enable [`keepalive` mode](remote-keepalive), then every single call to Incus will cause the prompt which may get a bit annoying:
+
+    $ incus list remote-host:
+    Password for client.key:
+    +------+-------+------+------+------+-----------+
+    | NAME | STATE | IPV4 | IPV6 | TYPE | SNAPSHOTS |
+    +------+-------+------+------+------+-----------+
+```
+
+```{note}
+While the `incus` command line supports encrypted keys, tools such as [Ansible's connection plugin](https://docs.ansible.com/ansible/latest/collections/community/general/incus_connection.html) do not.
+```
+
 (authentication-openid)=
 ## OpenID Connect authentication
 

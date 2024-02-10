@@ -75,3 +75,25 @@ remotes:
     protocol: incus
     public: false
 ```
+
+(remote-keepalive)=
+## Enabling `keepalive`
+
+For those frequently interacting with a particular remote, it's possible to enable a new `keepalive` mode.
+
+When enabled, Incus will maintain a connection with the target server for up to the configured timeout.
+This can significantly reduce the latency when running many `incus` commands.
+
+To enable, edit your `config.yml` (typically in `~/.config/incus`) and change your remote to look like:
+
+```
+  my-remote:
+    addr: https://192.0.2.5:8443
+    auth_type: tls
+    project: default
+    protocol: incus
+    public: false
+    keepalive: 30
+```
+
+In this example, a timeout of 30 seconds will be used.
