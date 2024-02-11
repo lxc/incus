@@ -1901,6 +1901,10 @@ client authentication.
 
 Adds ability to copy image to a project different from the source.
 
+## `images_all_projects`
+
+This adds support for listing images across all projects through the `all-projects` parameter on the `GET /1.0/images`API.
+
 ## `cluster_migration_inconsistent_copy`
 
 Adds `allow_inconsistent` field to `POST /1.0/instances/<name>`. Set to `true` to allow inconsistent copying between cluster

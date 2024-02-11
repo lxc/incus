@@ -689,6 +689,11 @@ definitions:
                     type: string
                 type: array
                 x-go-name: Profiles
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
             properties:
                 additionalProperties:
                     type: string
@@ -7304,6 +7309,10 @@ paths:
                   in: query
                   name: filter
                   type: string
+                - description: Retrieve images from all projects
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -8055,6 +8064,10 @@ paths:
                   in: query
                   name: filter
                   type: string
+                - description: Retrieve images from all projects
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -8143,6 +8156,10 @@ paths:
                   in: query
                   name: filter
                   type: string
+                - description: Retrieve images from all projects
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -8191,6 +8208,11 @@ paths:
                   in: query
                   name: filter
                   type: string
+                - description: Retrieve images from all projects
+                  example: default
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:

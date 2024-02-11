@@ -179,6 +179,12 @@ type Image struct {
 	// When the image was added to this server
 	// Example: 2021-03-24T14:18:15.115036787-04:00
 	UploadedAt time.Time `json:"uploaded_at" yaml:"uploaded_at"`
+
+	// Project name
+	// Example: project1
+	//
+	// API extension: images_all_projects
+	Project string `json:"project" yaml:"project"`
 }
 
 // Writable converts a full Image struct into a ImagePut struct (filters read-only fields).
