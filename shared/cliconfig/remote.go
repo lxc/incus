@@ -325,16 +325,16 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 					return nil, err
 				}
 
-				ecdsaKey, _ := (sshKey).(*ecdsa.PrivateKey)
-				rsaKey, _ := (sshKey).(*rsa.PrivateKey)
-				if ecdsaKey != nil {
+				ecdsaKey, okEcdsa := (sshKey).(*ecdsa.PrivateKey)
+				rsaKey, okRsa := (sshKey).(*rsa.PrivateKey)
+				if okEcdsa {
 					derKey, err := x509.MarshalECPrivateKey(ecdsaKey)
 					if err != nil {
 						return nil, err
 					}
 
 					content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
-				} else if rsaKey != nil {
+				} else if okRsa {
 					derKey := x509.MarshalPKCS1PrivateKey(rsaKey)
 					content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
 				} else {
