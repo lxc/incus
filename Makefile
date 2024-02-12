@@ -94,6 +94,7 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -d -u ./...
+	$(GO) get github.com/cenkalti/rpc2@v1.0.1
 	$(GO) mod tidy --go=1.21
 	$(GO) get toolchain@none
 
