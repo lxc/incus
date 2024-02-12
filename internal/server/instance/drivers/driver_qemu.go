@@ -2763,6 +2763,26 @@ func (d *qemu) generateConfigShare() error {
 		return err
 	}
 
+	// Add the NIC config.
+	if util.IsTrue(d.expandedConfig["agent.nic_config"]) {
+		sortedDevices := d.expandedDevices.Sorted()
+		for _, entry := range sortedDevices {
+			if entry.Config["type"] != "nic" {
+				continue // Only keep NIC devices.
+			}
+
+			dev, err := d.FillNetworkDevice(entry.Name, entry.Config)
+			if err != nil {
+				return err
+			}
+
+			err = d.writeNICDevConfig(dev["mtu"], entry.Name, dev["name"], dev["hwaddr"])
+			if err != nil {
+				return fmt.Errorf("Failed writing NIC config for device %q: %w", entry.Name, err)
+			}
+		}
+	}
+
 	// Writing the connection info the config drive allows the agent to start /dev/incus very
 	// early. This is important for systemd services which want or require /dev/incus/sock.
 	connInfo, err := d.getAgentConnectionInfo()
@@ -3965,7 +3985,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]string, bootIn
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	var devName, nicName, devHwaddr, pciSlotName, pciIOMMUGroup, vDPADevName, vhostVDPAPath, maxVQP, mtu, name string
+	var devName, nicName, devHwaddr, pciSlotName, pciIOMMUGroup, vDPADevName, vhostVDPAPath, maxVQP string
 	for _, nicItem := range nicConfig {
 		if nicItem.Key == "devName" {
 			devName = nicItem.Value
@@ -3983,17 +4003,6 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]string, bootIn
 			vhostVDPAPath = nicItem.Value
 		} else if nicItem.Key == "maxVQP" {
 			maxVQP = nicItem.Value
-		} else if nicItem.Key == "mtu" {
-			mtu = nicItem.Value
-		} else if nicItem.Key == "name" {
-			name = nicItem.Value
-		}
-	}
-
-	if util.IsTrue(d.expandedConfig["agent.nic_config"]) {
-		err := d.writeNICDevConfig(mtu, devName, name, devHwaddr)
-		if err != nil {
-			return nil, fmt.Errorf("Failed writing NIC config for device %q: %w", devName, err)
 		}
 	}
 
