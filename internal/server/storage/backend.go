@@ -4563,13 +4563,7 @@ func (b *backend) CreateCustomVolume(projectName string, volName string, desc st
 
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, volName)
-
-	// Validate config.
 	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, config)
-	err = b.driver.ValidateVolume(vol, false)
-	if err != nil {
-		return err
-	}
 
 	storagePoolSupported := false
 	for _, supportedType := range b.Driver().Info().VolumeTypes {
