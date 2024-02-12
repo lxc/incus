@@ -15,6 +15,11 @@ cp systemd/incus-agent.service /lib/systemd/system/
 cp systemd/incus-agent-setup /lib/systemd/
 systemctl daemon-reload
 
+# SELinux handling.
+if getenforce >/dev/null 2>&1; then
+    semanage fcontext -a -t bin_t /var/run/incus_agent/incus-agent
+fi
+
 echo ""
 echo "Incus agent has been installed, reboot to confirm setup."
 echo "To start it now, unmount this filesystem and run: systemctl start incus-agent"

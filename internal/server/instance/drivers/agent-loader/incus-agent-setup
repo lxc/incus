@@ -57,4 +57,7 @@ if [ ! -e "${PREFIX}/incus-agent" ] && [ -e "${PREFIX}/lxd-agent" ]; then
     ln -s lxd-agent "${PREFIX}"/incus-agent
 fi
 
+# Attempt to restore SELinux labels.
+restorecon -R "${PREFIX}" >/dev/null 2>&1 || true
+
 exit 0
