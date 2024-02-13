@@ -101,6 +101,14 @@ func (c *cmdConfigEdit) Command() *cobra.Command {
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
 
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
 	return cmd
 }
 
@@ -385,6 +393,18 @@ func (c *cmdConfigGet) Command() *cobra.Command {
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
 
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return c.global.cmpInstanceAllKeys()
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
 	return cmd
 }
 
@@ -517,6 +537,18 @@ incus config set core.https_address=[::]:8443
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as an instance property"))
 	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return c.global.cmpInstanceAllKeys()
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
 
 	return cmd
 }
@@ -854,6 +886,18 @@ func (c *cmdConfigUnset) Command() *cobra.Command {
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as an instance property"))
 	cmd.RunE = c.Run
+
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return c.global.cmpInstanceAllKeys()
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
 
 	return cmd
 }
