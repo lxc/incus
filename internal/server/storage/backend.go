@@ -5354,7 +5354,7 @@ func (b *backend) UpdateCustomVolume(projectName string, volName string, newDesc
 
 		// Check that the volume's block.filesystem property isn't being changed.
 		if changedConfig["block.filesystem"] != "" {
-			return fmt.Errorf("Custom volume 'block.filesystem' property cannot be changed")
+			return fmt.Errorf(`Custom volume "block.filesystem" property cannot be changed`)
 		}
 
 		// Check for config changing that is not allowed when running instances are using it.
