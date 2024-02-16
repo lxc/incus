@@ -687,7 +687,22 @@ func (b *backend) CreateInstance(inst instance.Instance, op *operations.Operatio
 		return err
 	}
 
-	err = b.driver.CreateVolume(vol, nil, op)
+	var filler *drivers.VolumeFiller
+	if inst.Type() == instancetype.Container {
+		filler = &drivers.VolumeFiller{
+			Fill: func(vol drivers.Volume, rootBlockPath string, allowUnsafeResize bool) (int64, error) {
+				// Create an empty rootfs.
+				err := os.Mkdir(filepath.Join(vol.MountPath(), "rootfs"), 0755)
+				if err != nil && !os.IsExist(err) {
+					return 0, err
+				}
+
+				return 0, nil
+			},
+		}
+	}
+
+	err = b.driver.CreateVolume(vol, filler, op)
 	if err != nil {
 		return err
 	}
