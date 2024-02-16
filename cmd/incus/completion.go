@@ -47,7 +47,7 @@ func (g *cmdGlobal) cmpImages(toComplete string) ([]string, cobra.ShellCompDirec
 
 func (g *cmdGlobal) cmpInstanceAllKeys() ([]string, cobra.ShellCompDirective) {
 	keys := []string{}
-	for k, _ := range instance.InstanceConfigKeysAny {
+	for k := range instance.InstanceConfigKeysAny {
 		keys = append(keys, k)
 	}
 

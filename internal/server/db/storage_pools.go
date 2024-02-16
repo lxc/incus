@@ -885,6 +885,7 @@ var NodeSpecificStorageConfig = []string{
 	"zfs.pool_name",
 	"lvm.thinpool_name",
 	"lvm.vg_name",
+	"lvm.vg.force_reuse",
 }
 
 // IsRemoteStorage return whether a given pool is backed by remote storage.
