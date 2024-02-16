@@ -109,3 +109,10 @@ The easiest fix for this problem is to stop the VPN client and unmount the `net_
 
 If you need to keep the VPN client running, mount the `net_cls` cgroup1 in another location and reconfigure your VPN client accordingly.
 See [this Discourse post](https://discuss.linuxcontainers.org/t/help-help-help-cgroup2-related-issue-on-ubuntu-jammy-with-mullvad-and-privateinternetaccess-vpn/14705/18) for instructions for Mullvad VPN.
+
+## What is this `incusbr0-mtu` device?
+
+When setting the `bridge.mtu` option on an Incus managed bridge network, Incus will create a dummy network interface named `BRIDGE-mtu`. <!-- wokeignore:rule=dummy -->
+That interface will never be used to carry traffic but it has the requested MTU set to it and is bridged into the network bridge.
+
+This has the effect of forcing the bridge to adopt that MTU and avoids issues where the bridge's configured MTU would change as interfaces get added to it.
