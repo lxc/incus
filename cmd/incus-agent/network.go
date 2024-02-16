@@ -10,6 +10,7 @@ import (
 
 	"github.com/lxc/incus/internal/revert"
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/server/ip"
 	"github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/logger"
@@ -71,6 +72,9 @@ func reconfigureNetworkInterfaces() {
 		logger.Error("Could not read network interface configuration directory", logger.Ctx{"err": err})
 		return
 	}
+
+	// Attempt to load the virtio_net driver in case it's not be loaded yet.
+	_ = linux.LoadModule("virtio_net")
 
 	// nicData is a map of MAC address to NICConfig.
 	nicData := make(map[string]deviceConfig.NICConfig, len(nicDirEntries))
