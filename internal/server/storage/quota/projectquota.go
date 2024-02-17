@@ -12,6 +12,7 @@ package quota
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <errno.h>
 
 #ifndef FS_XFLAG_PROJINHERIT
 struct fsxattr {
@@ -80,6 +81,9 @@ int quota_set(char *dev_path, uint32_t id, uint64_t hard_bytes) {
 	fs_disk_quota_t xfsquota;
 
 	if (quotactl(QCMD(Q_GETQUOTA, PRJQUOTA), dev_path, id, (caddr_t)&quota) < 0) {
+		if (hard_bytes == 0 && errno == ENOENT)
+			return 0;
+
 		return -1;
 	}
 
