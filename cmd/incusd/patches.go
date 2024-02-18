@@ -1291,8 +1291,8 @@ func patchLvmForceReuseKey(name string, d *Daemon) error {
 		// Add the config entry for each node.
 		for _, nodeID := range nodeIDs {
 			_, err := tx.Exec(`
-INSERT INTO storage_pools_config(storage_pool_id, node_id, 'lvm.vg.force_reuse', value)
-  VALUES(?, ?, ?, ?)
+INSERT INTO storage_pools_config(storage_pool_id, node_id, key, value)
+  VALUES(?, ?, 'lvm.vg.force_reuse', ?)
 `, poolID, nodeID, value)
 			if err != nil {
 				return fmt.Errorf("Failed to create new config: %w", err)
