@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/revert"
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/linux"
 	"github.com/lxc/incus/internal/server/ip"
 	"github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/logger"
