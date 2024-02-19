@@ -1201,6 +1201,7 @@ type cmdStorageBucketExport struct {
 	flagCompressionAlgorithm string
 }
 
+// Command generates the command definition.
 func (c *cmdStorageBucketExport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("export", i18n.G("[<remote>:]<pool> <bucket> [<path>]"))
@@ -1219,6 +1220,7 @@ func (c *cmdStorageBucketExport) Command() *cobra.Command {
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 2, 3)
@@ -1350,6 +1352,7 @@ type cmdStorageBucketImport struct {
 	storageBucket *cmdStorageBucket
 }
 
+// Command generates the command definition.
 func (c *cmdStorageBucketImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("import", i18n.G("[<remote>:]<pool> <backup file> [<bucket>]"))
@@ -1365,6 +1368,7 @@ func (c *cmdStorageBucketImport) Command() *cobra.Command {
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdStorageBucketImport) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
