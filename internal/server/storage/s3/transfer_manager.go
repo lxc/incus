@@ -95,6 +95,7 @@ func (t TransferManager) DownloadAllFiles(bucketName string, tarWriter *instance
 	return nil
 }
 
+// UploadAllFiles uploads all the provided files to the bucket.
 func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker) error {
 	logger.Debugf("Uploading all files to bucket %s", bucketName)
 	logger.Debugf("Endpoint: %s", t.getEndpoint())
