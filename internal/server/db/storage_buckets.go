@@ -597,3 +597,40 @@ func (c *ClusterTx) DeleteStoragePoolBucketKey(ctx context.Context, bucketID int
 
 	return nil
 }
+
+// GetStoragePoolBucketWithID returns the volume with the given ID.
+func (c *ClusterTx) GetStoragePoolBucketWithID(ctx context.Context, bucketID int) (StorageBucket, error) {
+	var response StorageBucket
+
+	stmt := `
+SELECT
+	projects.name as project,
+	storage_pools.name,
+	storage_buckets.id,
+	storage_buckets.storage_pool_id,
+	storage_buckets.name,
+	storage_buckets.description,
+	IFNULL(nodes.name, "") as location
+FROM storage_buckets
+JOIN projects ON projects.id = storage_buckets.project_id
+JOIN storage_pools ON storage_pools.id = storage_buckets.storage_pool_id
+LEFT JOIN nodes ON nodes.id = storage_buckets.node_id
+WHERE storage_buckets.id = ?
+`
+
+	err := c.tx.QueryRowContext(ctx, stmt, bucketID).Scan(&response.Project, &response.PoolName, &response.ID, &response.PoolID, &response.Name, &response.Description, &response.Location)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return StorageBucket{}, api.StatusErrorf(http.StatusNotFound, "Storage pool bucket not found")
+		}
+
+		return StorageBucket{}, err
+	}
+
+	response.Config, err = c.storageVolumeConfigGet(ctx, response.ID, false)
+	if err != nil {
+		return StorageBucket{}, err
+	}
+
+	return response, nil
+}
