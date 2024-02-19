@@ -164,7 +164,7 @@ jobs:
           # optimize ext4 FSes for performance, not reliability
           for fs in $(findmnt --noheading --type ext4 --list --uniq | awk '{print $1}'); do
             # nombcache and data=writeback cannot be changed on remount
-            sudo mount -o remount,noatime,barrier=0,commit=6000 "${fs}"
+            sudo mount -o remount,noatime,barrier=0,commit=6000 "${fs}" || true
           done
 
           # disable dpkg from calling sync()
