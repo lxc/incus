@@ -84,8 +84,8 @@ func (b *BucketBackup) Rename(newName string) error {
 	newParentName, _, _ := api.GetParentAndSnapshotName(newName)
 	newParentBackupsPath := internalUtil.VarPath("backups", "buckets", b.poolName, project.StorageBucket(b.projectName, newParentName))
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create the new backup path if doesn't exist.
 	if !util.PathExists(newParentBackupsPath) {
@@ -101,7 +101,7 @@ func (b *BucketBackup) Rename(newName string) error {
 		return err
 	}
 
-	revert.Add(func() { _ = os.Rename(newBackupPath, oldBackupPath) })
+	reverter.Add(func() { _ = os.Rename(newBackupPath, oldBackupPath) })
 
 	// Check if we can remove the old parent directory.
 	empty, _ := internalUtil.PathIsEmpty(oldParentBackupsPath)
@@ -120,7 +120,7 @@ func (b *BucketBackup) Rename(newName string) error {
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

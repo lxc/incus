@@ -333,13 +333,13 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 		length := len(base)
 		max := 0
 
-		for _, backup := range backups {
+		for _, entry := range backups {
 			// Ignore backups not containing base.
-			if !strings.HasPrefix(backup, base) {
+			if !strings.HasPrefix(entry, base) {
 				continue
 			}
 
-			substr := backup[length:]
+			substr := entry[length:]
 			var num int
 			count, err := fmt.Sscanf(substr, "%d", &num)
 			if err != nil || count != 1 {
@@ -361,7 +361,7 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 
 	fullName := bucketName + internalInstance.SnapshotDelimiter + req.Name
 
-	backup := func(op *operations.Operation) error {
+	do := func(op *operations.Operation) error {
 		args := db.StoragePoolBucketBackup{
 			Name:         fullName,
 			BucketID:     bucket.ID,
@@ -383,7 +383,7 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 	resources["storage_buckets"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "buckets", bucketName)}
 	resources["backups"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "buckets", bucketName, "backups", req.Name)}
 
-	op, err := operations.OperationCreate(s, request.ProjectParam(r), operations.OperationClassTask, operationtype.BucketBackupCreate, resources, nil, backup, nil, nil, r)
+	op, err := operations.OperationCreate(s, request.ProjectParam(r), operations.OperationClassTask, operationtype.BucketBackupCreate, resources, nil, do, nil, nil, r)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -475,12 +475,12 @@ func storagePoolBucketBackupGet(d *Daemon, r *http.Request) response.Response {
 
 	fullName := bucketName + internalInstance.SnapshotDelimiter + backupName
 
-	backup, err := storagePoolBucketBackupLoadByName(s, projectName, poolName, fullName)
+	entry, err := storagePoolBucketBackupLoadByName(s, projectName, poolName, fullName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	return response.SyncResponse(true, backup.Render())
+	return response.SyncResponse(true, entry.Render())
 }
 
 // swagger:operation POST /1.0/storage-pools/{poolName}/buckets/{bucketName}/backups/{backupName} storage storage_pool_buckets_backup_post
@@ -570,7 +570,7 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 
 	oldName := bucketName + internalInstance.SnapshotDelimiter + backupName
 
-	backup, err := storagePoolBucketBackupLoadByName(s, projectName, poolName, oldName)
+	entry, err := storagePoolBucketBackupLoadByName(s, projectName, poolName, oldName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -578,7 +578,7 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 	newName := bucketName + internalInstance.SnapshotDelimiter + req.Name
 
 	rename := func(op *operations.Operation) error {
-		err := backup.Rename(newName)
+		err := entry.Rename(newName)
 		if err != nil {
 			return err
 		}
@@ -670,13 +670,13 @@ func storagePoolBucketBackupDelete(d *Daemon, r *http.Request) response.Response
 
 	fullName := bucketName + internalInstance.SnapshotDelimiter + backupName
 
-	backup, err := storagePoolBucketBackupLoadByName(s, projectName, poolName, fullName)
+	entry, err := storagePoolBucketBackupLoadByName(s, projectName, poolName, fullName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	remove := func(op *operations.Operation) error {
-		err := backup.Delete()
+		err := entry.Delete()
 		if err != nil {
 			return err
 		}
@@ -799,7 +799,7 @@ func storagePoolBucketBackupLoadByName(s *state.State, projectName, poolName, ba
 	}
 
 	bucketName := strings.Split(backupName, "/")[0]
-	backup := backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, b.Name, b.CreationDate, b.ExpiryDate)
+	entry := backup.NewBucketBackup(s, projectName, poolName, bucketName, b.ID, b.Name, b.CreationDate, b.ExpiryDate)
 
-	return backup, nil
+	return entry, nil
 }

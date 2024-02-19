@@ -646,8 +646,8 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 	l.Debug("Bucket backup started")
 	defer l.Debug("Bucket backup finished")
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	pool, err := storagePools.LoadByName(s, poolName)
 	if err != nil {
@@ -666,7 +666,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 		return fmt.Errorf("Failed creating backup record: %w", err)
 	}
 
-	revert.Add(func() {
+	reverter.Add(func() {
 		_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.DeleteStoragePoolBucketBackup(ctx, args.Name)
 		})
@@ -700,7 +700,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 			return err
 		}
 
-		revert.Add(func() { _ = os.Remove(backupsPath) })
+		reverter.Add(func() { _ = os.Remove(backupsPath) })
 	}
 
 	target := internalUtil.VarPath("backups", "buckets", pool.Name(), project.StorageBucket(projectName, backupRow.Name))
@@ -713,7 +713,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 	}
 
 	defer func() { _ = tarFileWriter.Close() }()
-	revert.Add(func() { _ = os.Remove(target) })
+	reverter.Add(func() { _ = os.Remove(target) })
 
 	// Create the tarball.
 	tarPipeReader, tarPipeWriter := io.Pipe()
@@ -782,7 +782,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 		return fmt.Errorf("Error closing tar file: %w", err)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 

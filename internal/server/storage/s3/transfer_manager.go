@@ -148,12 +148,12 @@ func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker
 
 func (t TransferManager) getMinioClient() (*minio.Client, error) {
 	bucketLookup := minio.BucketLookupPath
-	credentials := credentials.NewStaticV4(t.accessKey, t.secretKey, "")
+	creds := credentials.NewStaticV4(t.accessKey, t.secretKey, "")
 
 	if t.isSecureEndpoint() {
 		return minio.New(t.getEndpoint(), &minio.Options{
 			BucketLookup: bucketLookup,
-			Creds:        credentials,
+			Creds:        creds,
 			Secure:       true,
 			Transport:    getTransport(),
 		})
@@ -161,7 +161,7 @@ func (t TransferManager) getMinioClient() (*minio.Client, error) {
 
 	return minio.New(t.getEndpoint(), &minio.Options{
 		BucketLookup: bucketLookup,
-		Creds:        credentials,
+		Creds:        creds,
 		Secure:       false,
 	})
 }
