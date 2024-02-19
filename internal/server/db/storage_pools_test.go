@@ -16,7 +16,8 @@ import (
 
 func init() {
 	db.StorageRemoteDriverNames = func() []string {
-		return []string{"ceph", "cephfs"}
+		// Tests only use ceph.
+		return []string{"ceph"}
 	}
 }
 

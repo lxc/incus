@@ -965,13 +965,18 @@ func (c *ClusterTx) NodeIsEmpty(ctx context.Context, id int64) (string, error) {
 	}
 
 	// Check if the node has any custom volumes.
+	drivers := make([]string, len(StorageRemoteDriverNames()))
+	for i, entry := range StorageRemoteDriverNames() {
+		drivers[i] = fmt.Sprintf("'%s'", entry)
+	}
+
 	sql = `
 SELECT storage_volumes.name
   FROM storage_volumes
   JOIN storage_pools ON storage_volumes.storage_pool_id=storage_pools.id
-  WHERE storage_volumes.node_id=? AND storage_volumes.type=? AND storage_pools.driver NOT IN ('ceph', 'cephfs')
+  WHERE storage_volumes.node_id=? AND storage_volumes.type=? AND storage_pools.driver NOT IN (%s)
 `
-	volumes, err := query.SelectStrings(ctx, c.tx, sql, id, StoragePoolVolumeTypeCustom)
+	volumes, err := query.SelectStrings(ctx, c.tx, fmt.Sprintf(sql, strings.Join(drivers, ", ")), id, StoragePoolVolumeTypeCustom)
 	if err != nil {
 		return "", fmt.Errorf("Failed to get custom volumes for node %d: %w", id, err)
 	}

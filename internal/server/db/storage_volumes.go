@@ -909,7 +909,7 @@ func (c *ClusterTx) GetStorageVolumeURIs(ctx context.Context, project string) ([
 }
 
 // UpdateStorageVolumeNode changes the name of a storage volume and the cluster member hosting it.
-// It's meant to be used when moving a storage volume backed by ceph from one cluster node to another.
+// It's meant to be used when moving a storage volume backed by a remote storage pool from one cluster node to another.
 func (c *ClusterTx) UpdateStorageVolumeNode(ctx context.Context, projectName string, oldName string, newName string, newMemberName string, poolID int64, volumeType int) error {
 	volume, err := c.GetStoragePoolVolume(ctx, poolID, projectName, volumeType, oldName, false)
 	if err != nil {
