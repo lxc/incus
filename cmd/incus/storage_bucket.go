@@ -1242,11 +1242,11 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Missing bucket name"))
 	}
 
-	client := pool.server
+	s := pool.server
 
 	// If a target was specified, use the bucket on the given member.
 	if c.storageBucket.flagTarget != "" {
-		client = client.UseTarget(c.storageBucket.flagTarget)
+		s = s.UseTarget(c.storageBucket.flagTarget)
 	}
 
 	req := api.StorageBucketBackupsPost{
@@ -1255,7 +1255,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 		CompressionAlgorithm: c.flagCompressionAlgorithm,
 	}
 
-	op, err := client.CreateStoragePoolBucketBackup(pool.name, bucketName, req)
+	op, err := s.CreateStoragePoolBucketBackup(pool.name, bucketName, req)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to create backup: %v"), err)
 	}
@@ -1300,7 +1300,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 
 	defer func() {
 		// Delete backup after we're done
-		op, err := client.DeleteStoragePoolBucketBackup(pool.name, bucketName, backupName)
+		op, err := s.DeleteStoragePoolBucketBackup(pool.name, bucketName, backupName)
 		if err == nil {
 			_ = op.Wait()
 		}
@@ -1332,7 +1332,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Export tarball
-	_, err = client.GetStoragePoolBucketBackupFile(pool.name, bucketName, backupName, &backupFileRequest)
+	_, err = s.GetStoragePoolBucketBackupFile(pool.name, bucketName, backupName, &backupFileRequest)
 	if err != nil {
 		_ = os.Remove(targetName)
 		progress.Done("")
