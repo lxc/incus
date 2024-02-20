@@ -873,17 +873,17 @@ func instancePostClusteringMigrate(s *state.State, r *http.Request, srcPool stor
 	return run, nil
 }
 
-// instancePostClusteringMigrateWithCeph handles moving a ceph instance from a source member that is offline.
+// instancePostClusteringMigrateRemoteStorage handles moving an instance from a source member that is offline.
 // This function must be run on the target cluster member to move the instance to.
-func instancePostClusteringMigrateWithCeph(s *state.State, r *http.Request, srcPool storagePools.Pool, srcInst instance.Instance, newInstName string, newMember db.NodeInfo, stateful bool) (func(op *operations.Operation) error, error) {
-	// Sense checks to avoid unexpected behaviour.
-	if srcPool.Driver().Info().Name != "ceph" {
-		return nil, fmt.Errorf("Source instance's storage pool is not of type ceph")
+func instancePostClusteringMigrateRemoteStorage(s *state.State, r *http.Request, srcPool storagePools.Pool, srcInst instance.Instance, newInstName string, newMember db.NodeInfo, stateful bool) (func(op *operations.Operation) error, error) {
+	// Quick checks to avoid unexpected behaviour.
+	if !srcPool.Driver().Info().Remote {
+		return nil, fmt.Errorf("Source instance's storage pool is not remote")
 	}
 
 	// Check this function is only run on the target member.
 	if s.ServerName != newMember.Name {
-		return nil, fmt.Errorf("Ceph instance move when source member is offline must be run on target member")
+		return nil, fmt.Errorf("Remote instance move when source member is offline must be run on target member")
 	}
 
 	// Check we can convert the instance to the volume types needed.
@@ -967,15 +967,15 @@ func migrateInstance(s *state.State, r *http.Request, inst instance.Instance, ta
 		return err
 	}
 
-	// Check if we are migrating a ceph-based instance.
+	// Check if we are migrating a remote instance.
 	srcPool, err := storagePools.LoadByInstance(s, inst)
 	if err != nil {
 		return fmt.Errorf("Failed loading instance storage pool: %w", err)
 	}
 
-	// Only use instancePostClusteringMigrateWithCeph when source member is offline.
-	if srcMember.IsOffline(s.GlobalConfig.OfflineThreshold()) && srcPool.Driver().Info().Name == "ceph" {
-		f, err := instancePostClusteringMigrateWithCeph(s, r, srcPool, inst, req.Name, newMember, req.Live)
+	// Only use instancePostClusteringMigrateRemoteStorage when source member is offline.
+	if srcMember.IsOffline(s.GlobalConfig.OfflineThreshold()) && srcPool.Driver().Info().Remote {
+		f, err := instancePostClusteringMigrateRemoteStorage(s, r, srcPool, inst, req.Name, newMember, req.Live)
 		if err != nil {
 			return err
 		}
