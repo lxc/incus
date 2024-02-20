@@ -38,7 +38,7 @@ func instanceCreateAsEmpty(s *state.State, args db.InstanceArgs) (instance.Insta
 	defer revert.Fail()
 
 	// Create the instance record.
-	inst, instOp, cleanup, err := instance.CreateInternal(s, args, true)
+	inst, instOp, cleanup, err := instance.CreateInternal(s, args, true, true)
 	if err != nil {
 		return nil, fmt.Errorf("Failed creating instance record: %w", err)
 	}
@@ -154,7 +154,7 @@ func instanceCreateFromImage(s *state.State, r *http.Request, img *api.Image, ar
 	args.BaseImage = img.Fingerprint
 
 	// Create the instance.
-	inst, instOp, cleanup, err := instance.CreateInternal(s, args, true)
+	inst, instOp, cleanup, err := instance.CreateInternal(s, args, true, true)
 	if err != nil {
 		return fmt.Errorf("Failed creating instance record: %w", err)
 	}
@@ -259,7 +259,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 	// If we are not in refresh mode, then create a new instance as we are in copy mode.
 	if !opts.refresh {
 		// Create the instance.
-		inst, instOp, cleanup, err = instance.CreateInternal(s, opts.targetInstance, true)
+		inst, instOp, cleanup, err = instance.CreateInternal(s, opts.targetInstance, true, false)
 		if err != nil {
 			return nil, fmt.Errorf("Failed creating instance record: %w", err)
 		}
@@ -394,7 +394,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			}
 
 			// Create the snapshots.
-			_, snapInstOp, cleanup, err := instance.CreateInternal(s, snapInstArgs, true)
+			_, snapInstOp, cleanup, err := instance.CreateInternal(s, snapInstArgs, true, false)
 			if err != nil {
 				return nil, fmt.Errorf("Failed creating instance snapshot record %q: %w", newSnapName, err)
 			}

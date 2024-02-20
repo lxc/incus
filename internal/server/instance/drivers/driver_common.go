@@ -711,7 +711,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 	}
 
 	// Create the snapshot.
-	snap, snapInstOp, cleanup, err := instance.CreateInternal(d.state, args, true)
+	snap, snapInstOp, cleanup, err := instance.CreateInternal(d.state, args, true, true)
 	if err != nil {
 		return fmt.Errorf("Failed creating instance snapshot record %q: %w", name, err)
 	}
@@ -852,6 +852,11 @@ func (d *common) validateStartup(stateful bool, statusCode api.StatusCode) error
 
 	if !storagePools.IsAvailable(rootDiskConf["pool"]) {
 		return api.StatusErrorf(http.StatusServiceUnavailable, "Storage pool %q unavailable on this server", rootDiskConf["pool"])
+	}
+
+	// Validate architecture.
+	if !util.ValueInSlice(d.architecture, d.state.OS.Architectures) {
+		return fmt.Errorf("Requested architecture isn't supported by this host")
 	}
 
 	// Must happen before creating operation Start lock to avoid the status check returning Stopped due to the
