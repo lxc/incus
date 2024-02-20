@@ -325,7 +325,7 @@ func createFromMigration(s *state.State, r *http.Request, projectName string, pr
 		// Note: At this stage we do not yet know if snapshots are going to be received and so we cannot
 		// create their DB records. This will be done if needed in the migrationSink.Do() function called
 		// as part of the operation below.
-		inst, instOp, cleanup, err = instance.CreateInternal(s, args, true)
+		inst, instOp, cleanup, err = instance.CreateInternal(s, args, true, false)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed creating instance record: %w", err))
 		}
