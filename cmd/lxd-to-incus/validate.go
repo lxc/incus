@@ -277,6 +277,7 @@ func (c *cmdMigrate) validate(source source, target target) error {
 	}
 
 	deprecatedInstanceConfigs := []string{
+		"boot.debug_edk2",
 		"limits.network.priority",
 		"security.devlxd",
 		"security.devlxd.images",

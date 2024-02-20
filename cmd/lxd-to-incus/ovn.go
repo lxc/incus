@@ -16,7 +16,8 @@ func ovsConvert() ([][]string, error) {
 
 	output, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external-ids:ovn-bridge-mappings")
 	if err != nil {
-		return nil, err
+		// Assume that being unable to read the key means it's not set.
+		return nil, nil
 	}
 
 	oldValue := strings.TrimSpace(strings.Replace(output, "\"", "", -1))
@@ -57,7 +58,14 @@ func ovnBackup(nbDB string, sbDB string, target string) error {
 		return err
 	}
 
-	err = subprocess.RunCommandWithFds(context.Background(), nil, nbStdout, "ovsdb-client", "dump", "-f", "csv", nbDB, "OVN_Northbound")
+	args := []string{"dump", "-f", "csv", nbDB, "OVN_Northbound"}
+	if strings.Contains(nbDB, "ssl:") {
+		args = append(args, "-c", "/etc/ovn/cert_host")
+		args = append(args, "-p", "/etc/ovn/key_host")
+		args = append(args, "-C", "/etc/ovn/ovn-central.crt")
+	}
+
+	err = subprocess.RunCommandWithFds(context.Background(), nil, nbStdout, "ovsdb-client", args...)
 	if err != nil {
 		return err
 	}
@@ -75,7 +83,14 @@ func ovnBackup(nbDB string, sbDB string, target string) error {
 		return err
 	}
 
-	err = subprocess.RunCommandWithFds(context.Background(), nil, sbStdout, "ovsdb-client", "dump", "-f", "csv", sbDB, "OVN_Southbound")
+	args = []string{"dump", "-f", "csv", sbDB, "OVN_Southbound"}
+	if strings.Contains(sbDB, "ssl:") {
+		args = append(args, "-c", "/etc/ovn/cert_host")
+		args = append(args, "-p", "/etc/ovn/key_host")
+		args = append(args, "-C", "/etc/ovn/ovn-central.crt")
+	}
+
+	err = subprocess.RunCommandWithFds(context.Background(), nil, sbStdout, "ovsdb-client", args...)
 	if err != nil {
 		return err
 	}
@@ -87,7 +102,14 @@ func ovnConvert(nbDB string, sbDB string) ([][]string, error) {
 	commands := [][]string{}
 
 	// Patch the Northbound records.
-	output, err := subprocess.RunCommand("ovsdb-client", "dump", "-f", "csv", nbDB, "OVN_Northbound")
+	args := []string{"dump", "-f", "csv", nbDB, "OVN_Northbound"}
+	if strings.Contains(sbDB, "ssl:") {
+		args = append(args, "-c", "/etc/ovn/cert_host")
+		args = append(args, "-p", "/etc/ovn/key_host")
+		args = append(args, "-C", "/etc/ovn/ovn-central.crt")
+	}
+
+	output, err := subprocess.RunCommand("ovsdb-client", args...)
 	if err != nil {
 		return nil, err
 	}
@@ -106,14 +128,29 @@ func ovnConvert(nbDB string, sbDB string) ([][]string, error) {
 				}
 
 				if needsFixing {
-					commands = append(commands, []string{"ovn-nbctl", "--db", nbDB, "set", table, record["_uuid"], fmt.Sprintf("%s=%s", k, newValue)})
+					cmd := []string{"ovn-nbctl", "--db", nbDB}
+					if strings.Contains(nbDB, "ssl:") {
+						cmd = append(cmd, "-c", "/etc/ovn/cert_host")
+						cmd = append(cmd, "-p", "/etc/ovn/key_host")
+						cmd = append(cmd, "-C", "/etc/ovn/ovn-central.crt")
+					}
+
+					cmd = append(cmd, []string{"set", table, record["_uuid"], fmt.Sprintf("%s=%s", k, newValue)}...)
+					commands = append(commands, cmd)
 				}
 			}
 		}
 	}
 
 	// Patch the Southbound records.
-	output, err = subprocess.RunCommand("ovsdb-client", "dump", "-f", "csv", sbDB, "OVN_Southbound")
+	args = []string{"dump", "-f", "csv", sbDB, "OVN_Southbound"}
+	if strings.Contains(sbDB, "ssl:") {
+		args = append(args, "-c", "/etc/ovn/cert_host")
+		args = append(args, "-p", "/etc/ovn/key_host")
+		args = append(args, "-C", "/etc/ovn/ovn-central.crt")
+	}
+
+	output, err = subprocess.RunCommand("ovsdb-client", args...)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +169,15 @@ func ovnConvert(nbDB string, sbDB string) ([][]string, error) {
 				}
 
 				if needsFixing {
-					commands = append(commands, []string{"ovn-sbctl", "--db", sbDB, "set", table, record["_uuid"], fmt.Sprintf("%s=%s", k, newValue)})
+					cmd := []string{"ovn-sbctl", "--db", sbDB}
+					if strings.Contains(sbDB, "ssl:") {
+						cmd = append(cmd, "-c", "/etc/ovn/cert_host")
+						cmd = append(cmd, "-p", "/etc/ovn/key_host")
+						cmd = append(cmd, "-C", "/etc/ovn/ovn-central.crt")
+					}
+
+					cmd = append(cmd, []string{"set", table, record["_uuid"], fmt.Sprintf("%s=%s", k, newValue)}...)
+					commands = append(commands, cmd)
 				}
 			}
 		}
@@ -151,6 +196,10 @@ func ovnCheckValue(table string, k string, v string) (bool, string, error) {
 	}
 
 	if table == "Chassis" && k == "other_config" {
+		return false, "", nil
+	}
+
+	if table == "Chassis" && k == "external_ids" {
 		return false, "", nil
 	}
 
