@@ -130,57 +130,56 @@ func (c *ClusterTx) UpdateStoragePoolAfterNodeJoin(poolID, nodeID int64) error {
 	return nil
 }
 
-// UpdateCephStoragePoolAfterNodeJoin updates internal state to reflect that nodeID is
-// joining a cluster where poolID is a ceph pool.
-func (c *ClusterTx) UpdateCephStoragePoolAfterNodeJoin(ctx context.Context, poolID int64, nodeID int64) error {
-	// Get the IDs of the other nodes (they should be all linked to
-	// the pool).
+// UpdateRemoteStoragePoolAfterNodeJoin updates internal state to reflect that nodeID is
+// joining a cluster where poolID is a remote pool.
+func (c *ClusterTx) UpdateRemoteStoragePoolAfterNodeJoin(ctx context.Context, poolID int64, nodeID int64) error {
+	// Get the IDs of the other servers (they should be all linked to the pool).
 	stmt := "SELECT node_id FROM storage_pools_nodes WHERE storage_pool_id=?"
 	nodeIDs, err := query.SelectIntegers(ctx, c.tx, stmt, poolID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch IDs of nodes with ceph pool: %w", err)
+		return fmt.Errorf("Failed to fetch IDs of servers with remote pool: %w", err)
 	}
 
 	if len(nodeIDs) == 0 {
-		return fmt.Errorf("ceph pool is not linked to any node")
+		return fmt.Errorf("Remote pool is not linked to any server")
 	}
 
 	otherNodeID := nodeIDs[0]
 
-	// Create entries of all the ceph volumes for the new node.
+	// Create entries of all the volumes for the new server.
 	_, err = c.tx.Exec(`
 INSERT INTO storage_volumes(name, storage_pool_id, node_id, type, description, project_id)
   SELECT name, storage_pool_id, ?, type, description, 1
     FROM storage_volumes WHERE storage_pool_id=? AND node_id=?
 `, nodeID, poolID, otherNodeID)
 	if err != nil {
-		return fmt.Errorf("failed to create node ceph volumes: %w", err)
+		return fmt.Errorf("Failed to create volumes: %w", err)
 	}
 
-	// Create entries of all the ceph volumes configs for the new node.
+	// Create entries of all the volumes configs for the new server.
 	stmt = `
 SELECT id FROM storage_volumes WHERE storage_pool_id=? AND node_id=?
   ORDER BY name, type
 `
 	volumeIDs, err := query.SelectIntegers(ctx, c.tx, stmt, poolID, nodeID)
 	if err != nil {
-		return fmt.Errorf("failed to get joining node's ceph volume IDs: %w", err)
+		return fmt.Errorf("Failed to get joining server's volume IDs: %w", err)
 	}
 
 	otherVolumeIDs, err := query.SelectIntegers(ctx, c.tx, stmt, poolID, otherNodeID)
 	if err != nil {
-		return fmt.Errorf("failed to get other node's ceph volume IDs: %w", err)
+		return fmt.Errorf("Failed to get other server's volume IDs: %w", err)
 	}
 
 	if len(volumeIDs) != len(otherVolumeIDs) { // Quick check.
-		return fmt.Errorf("not all ceph volumes were copied")
+		return fmt.Errorf("Not all remote volumes were copied")
 	}
 
 	for i, otherVolumeID := range otherVolumeIDs {
 		volumeID := volumeIDs[i]
 		config, err := query.SelectConfig(ctx, c.tx, "storage_volumes_config", "storage_volume_id=?", otherVolumeID)
 		if err != nil {
-			return fmt.Errorf("failed to get storage volume config: %w", err)
+			return fmt.Errorf("Failed to get storage volume config: %w", err)
 		}
 
 		for key, value := range config {
@@ -188,7 +187,7 @@ SELECT id FROM storage_volumes WHERE storage_pool_id=? AND node_id=?
 INSERT INTO storage_volumes_config(storage_volume_id, key, value) VALUES(?, ?, ?)
 `, volumeID, key, value)
 			if err != nil {
-				return fmt.Errorf("failed to copy volume config: %w", err)
+				return fmt.Errorf("Failed to copy volume config: %w", err)
 			}
 		}
 

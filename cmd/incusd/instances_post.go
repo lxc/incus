@@ -442,7 +442,7 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 		serverName := s.ServerName
 
 		if serverName != source.Location() {
-			// Check if we are copying from a ceph-based container.
+			// Check if we are copying from a remote storage instance.
 			_, rootDevice, _ := internalInstance.GetRootDiskDevice(source.ExpandedDevices().CloneNative())
 			sourcePoolName := rootDevice["pool"]
 
@@ -468,7 +468,7 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 				return response.SmartError(err)
 			}
 
-			if pool.Driver != "ceph" {
+			if !util.ValueInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
 				// Redirect to migration
 				return clusterCopyContainerInternal(s, r, source, projectName, profiles, req)
 			}

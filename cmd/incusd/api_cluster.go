@@ -3131,7 +3131,7 @@ func internalClusterHeal(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		// Nothing to do as the instance's pool is not CEPH.
+		// Nothing to do as the instance's pool is on remote storage.
 		if !pool.Driver().Info().Remote {
 			return nil
 		}

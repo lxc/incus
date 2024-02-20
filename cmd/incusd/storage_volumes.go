@@ -1147,7 +1147,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 				return response.SmartError(err)
 			}
 
-			if srcPool.Driver().Info().Name == "ceph" {
+			if srcPool.Driver().Info().Remote {
 				var dbVolume *db.StorageVolume
 				var volumeNotFound bool
 				var targetIsSet bool

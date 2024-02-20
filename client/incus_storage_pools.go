@@ -67,10 +67,6 @@ func (r *ProtocolIncus) CreateStoragePool(pool api.StoragePoolsPost) error {
 		return fmt.Errorf("The server is missing the required \"storage\" API extension")
 	}
 
-	if pool.Driver == "ceph" && !r.HasExtension("storage_driver_ceph") {
-		return fmt.Errorf("The server is missing the required \"storage_driver_ceph\" API extension")
-	}
-
 	// Send the request
 	_, _, err := r.query("POST", "/storage-pools", pool, "")
 	if err != nil {
