@@ -114,7 +114,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	// If the target node is offline, we return an error.
 	//
 	// If the source node is offline and the instance is backed by
-	// ceph, we'll just assume that the instance is not running
+	// a remote storage pool, we'll just assume that the instance is not running
 	// and it's safe to move it.
 	//
 	// TODO: add some sort of "force" flag to the API, to signal
@@ -156,15 +156,14 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	//
 	// 2. The "?target=<member>" parameter was set and the node running the
 	//    instance is online. In this case we want to forward the request to
-	//    that node, which might do things like unmapping the RBD volume for
-	//    ceph instances.
+	//    that node so it can perform any needed local action.
 	//
 	// 3. The "?target=<member>" parameter was set but the node running the
 	//    instance is offline. We don't want to forward to the request to
 	//    that node and we don't want to load the instance here (since
 	//    it's not a local instance): we'll be able to handle the request
-	//    at all only if the instance is backed by ceph. We'll check for
-	//    that just below.
+	//    at all only if the instance is backed by a remote storage
+	//    pool. We'll check for that just below.
 	//
 	// Cases 1. and 2. are the ones for which the conditional will be true
 	// and we'll either forward the request or load the instance.
@@ -630,7 +629,7 @@ func instancePostMigration(s *state.State, inst instance.Instance, newName strin
 	return nil
 }
 
-// Move a non-ceph container to another cluster node.
+// Move a local instance to another cluster node.
 func instancePostClusteringMigrate(s *state.State, r *http.Request, srcPool storagePools.Pool, srcInst instance.Instance, newInstName string, srcMember db.NodeInfo, newMember db.NodeInfo, stateful bool, allowInconsistent bool) (func(op *operations.Operation) error, error) {
 	srcMemberOffline := srcMember.IsOffline(s.GlobalConfig.OfflineThreshold())
 
