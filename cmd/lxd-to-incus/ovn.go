@@ -16,7 +16,8 @@ func ovsConvert() ([][]string, error) {
 
 	output, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external-ids:ovn-bridge-mappings")
 	if err != nil {
-		return nil, err
+		// Assume that being unable to read the key means it's not set.
+		return nil, nil
 	}
 
 	oldValue := strings.TrimSpace(strings.Replace(output, "\"", "", -1))
