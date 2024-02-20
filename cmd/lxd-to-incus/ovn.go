@@ -199,6 +199,10 @@ func ovnCheckValue(table string, k string, v string) (bool, string, error) {
 		return false, "", nil
 	}
 
+	if table == "Chassis" && k == "external_ids" {
+		return false, "", nil
+	}
+
 	if table == "Logical_Flow" && k == "actions" {
 		return false, "", nil
 	}
