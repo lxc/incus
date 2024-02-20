@@ -1201,6 +1201,7 @@ type cmdStorageBucketExport struct {
 	flagCompressionAlgorithm string
 }
 
+// Command generates the command definition.
 func (c *cmdStorageBucketExport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("export", i18n.G("[<remote>:]<pool> <bucket> [<path>]"))
@@ -1219,6 +1220,7 @@ func (c *cmdStorageBucketExport) Command() *cobra.Command {
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 2, 3)
@@ -1242,11 +1244,11 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Missing bucket name"))
 	}
 
-	client := pool.server
+	s := pool.server
 
 	// If a target was specified, use the bucket on the given member.
 	if c.storageBucket.flagTarget != "" {
-		client = client.UseTarget(c.storageBucket.flagTarget)
+		s = s.UseTarget(c.storageBucket.flagTarget)
 	}
 
 	req := api.StorageBucketBackupsPost{
@@ -1255,7 +1257,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 		CompressionAlgorithm: c.flagCompressionAlgorithm,
 	}
 
-	op, err := client.CreateStoragePoolBucketBackup(pool.name, bucketName, req)
+	op, err := s.CreateStoragePoolBucketBackup(pool.name, bucketName, req)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to create backup: %v"), err)
 	}
@@ -1300,7 +1302,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 
 	defer func() {
 		// Delete backup after we're done
-		op, err := client.DeleteStoragePoolBucketBackup(pool.name, bucketName, backupName)
+		op, err := s.DeleteStoragePoolBucketBackup(pool.name, bucketName, backupName)
 		if err == nil {
 			_ = op.Wait()
 		}
@@ -1332,7 +1334,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Export tarball
-	_, err = client.GetStoragePoolBucketBackupFile(pool.name, bucketName, backupName, &backupFileRequest)
+	_, err = s.GetStoragePoolBucketBackupFile(pool.name, bucketName, backupName, &backupFileRequest)
 	if err != nil {
 		_ = os.Remove(targetName)
 		progress.Done("")
@@ -1350,6 +1352,7 @@ type cmdStorageBucketImport struct {
 	storageBucket *cmdStorageBucket
 }
 
+// Command generates the command definition.
 func (c *cmdStorageBucketImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("import", i18n.G("[<remote>:]<pool> <backup file> [<bucket>]"))
@@ -1365,6 +1368,7 @@ func (c *cmdStorageBucketImport) Command() *cobra.Command {
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdStorageBucketImport) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 

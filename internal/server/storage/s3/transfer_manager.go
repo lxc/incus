@@ -95,6 +95,7 @@ func (t TransferManager) DownloadAllFiles(bucketName string, tarWriter *instance
 	return nil
 }
 
+// UploadAllFiles uploads all the provided files to the bucket.
 func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker) error {
 	logger.Debugf("Uploading all files to bucket %s", bucketName)
 	logger.Debugf("Endpoint: %s", t.getEndpoint())
@@ -114,7 +115,7 @@ func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker
 	}
 
 	defer func() { _ = os.RemoveAll(mountPath) }()
-	logger.Debugf("Created temp mounth path %s", mountPath)
+	logger.Debugf("Created temp mount path %s", mountPath)
 
 	tr, cancelFunc, err := backup.TarReader(srcData, nil, mountPath)
 	if err != nil {
@@ -148,12 +149,12 @@ func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker
 
 func (t TransferManager) getMinioClient() (*minio.Client, error) {
 	bucketLookup := minio.BucketLookupPath
-	credentials := credentials.NewStaticV4(t.accessKey, t.secretKey, "")
+	creds := credentials.NewStaticV4(t.accessKey, t.secretKey, "")
 
 	if t.isSecureEndpoint() {
 		return minio.New(t.getEndpoint(), &minio.Options{
 			BucketLookup: bucketLookup,
-			Creds:        credentials,
+			Creds:        creds,
 			Secure:       true,
 			Transport:    getTransport(),
 		})
@@ -161,7 +162,7 @@ func (t TransferManager) getMinioClient() (*minio.Client, error) {
 
 	return minio.New(t.getEndpoint(), &minio.Options{
 		BucketLookup: bucketLookup,
-		Creds:        credentials,
+		Creds:        creds,
 		Secure:       false,
 	})
 }

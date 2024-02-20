@@ -708,8 +708,7 @@ FROM storage_buckets_backups`
 	return backups, nil
 }
 
-// RenameVolumeBackup renames a volume backup from the given current name
-// to the new one.
+// RenameBucketBackup renames a bucket backup from the given current name to the new one.
 func (c *ClusterTx) RenameBucketBackup(ctx context.Context, oldName, newName string) error {
 	str := "UPDATE storage_buckets_backups SET name = ? WHERE name = ?"
 	stmt, err := c.tx.Prepare(str)

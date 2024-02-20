@@ -1174,8 +1174,8 @@ func storagePoolBucketKeyPut(d *Daemon, r *http.Request) response.Response {
 }
 
 func createStoragePoolBucketFromBackup(s *state.State, r *http.Request, requestProjectName string, projectName string, data io.Reader, pool string, bucketName string) response.Response {
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Create temporary file to store uploaded backup data.
 	backupFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_", backup.WorkingDirPrefix))
@@ -1184,7 +1184,7 @@ func createStoragePoolBucketFromBackup(s *state.State, r *http.Request, requestP
 	}
 
 	defer func() { _ = os.Remove(backupFile.Name()) }()
-	revert.Add(func() { _ = backupFile.Close() })
+	reverter.Add(func() { _ = backupFile.Close() })
 
 	// Stream uploaded backup data into temporary file.
 	_, err = io.Copy(backupFile, data)
@@ -1224,7 +1224,7 @@ func createStoragePoolBucketFromBackup(s *state.State, r *http.Request, requestP
 		"pool":    bInfo.Pool,
 	})
 
-	runRevert := revert.Clone()
+	runRevert := reverter.Clone()
 
 	run := func(op *operations.Operation) error {
 		defer func() { _ = backupFile.Close() }()
@@ -1252,6 +1252,6 @@ func createStoragePoolBucketFromBackup(s *state.State, r *http.Request, requestP
 		return response.InternalError(err)
 	}
 
-	revert.Success()
+	reverter.Success()
 	return operations.OperationResponse(op)
 }

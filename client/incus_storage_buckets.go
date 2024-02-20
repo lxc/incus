@@ -257,7 +257,7 @@ func (r *ProtocolIncus) CreateStoragePoolBucketBackup(poolName string, bucketNam
 	return op, nil
 }
 
-// DeleteStorageBucketBackup deletes an existing storage bucket backup.
+// DeleteStoragePoolBucketBackup deletes an existing storage bucket backup.
 func (r *ProtocolIncus) DeleteStoragePoolBucketBackup(pool string, bucketName string, name string) (Operation, error) {
 	err := r.CheckExtension("storage_bucket_backup")
 	if err != nil {
@@ -337,6 +337,7 @@ func (r *ProtocolIncus) GetStoragePoolBucketBackupFile(pool string, bucketName s
 	return &resp, nil
 }
 
+// CreateStoragePoolBucketFromBackup creates a new storage bucket from a backup.
 func (r *ProtocolIncus) CreateStoragePoolBucketFromBackup(pool string, args StoragePoolBucketBackupArgs) (Operation, error) {
 	if !r.HasExtension("storage_bucket_backup") {
 		return nil, fmt.Errorf(`The server is missing the required "custom_volume_backup" API extension`)

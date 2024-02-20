@@ -7203,8 +7203,8 @@ func (b *backend) CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadS
 		return fmt.Errorf("Storage pool does not support buckets")
 	}
 
-	revert := revert.New()
-	defer revert.Fail()
+	reverter := revert.New()
+	defer reverter.Fail()
 
 	bucketRequest := api.StorageBucketsPost{
 		Name:             srcBackup.Name,
@@ -7217,7 +7217,7 @@ func (b *backend) CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadS
 		return err
 	}
 
-	revert.Add(func() { _ = b.DeleteBucket(srcBackup.Project, bucketRequest.Name, op) })
+	reverter.Add(func() { _ = b.DeleteBucket(srcBackup.Project, bucketRequest.Name, op) })
 
 	// Upload all keys from the backup.
 	for _, bucketKey := range srcBackup.Config.BucketKeys {
@@ -7245,7 +7245,7 @@ func (b *backend) CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadS
 		return err
 	}
 
-	revert.Success()
+	reverter.Success()
 	return nil
 }
 
