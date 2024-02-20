@@ -18,5 +18,6 @@ var sources = []source{
 	&srcSnap{},
 	&srcDeb{},
 	&srcCOPR{},
+	&srcXbps{},
 	&srcManual{},
 }
