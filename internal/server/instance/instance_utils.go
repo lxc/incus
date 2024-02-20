@@ -715,7 +715,7 @@ func ValidName(instanceName string, isSnapshot bool) error {
 // Returns the created instance, along with a "create" operation lock that needs to be marked as Done once the
 // instance is fully completed, and a revert fail function that can be used to undo this function if a subsequent
 // step fails.
-func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Instance, *operationlock.InstanceOperation, revert.Hook, error) {
+func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, checkArchitecture bool) (Instance, *operationlock.InstanceOperation, revert.Hook, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -797,7 +797,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool) (Ins
 		return nil, nil, nil, err
 	}
 
-	if !util.ValueInSlice(args.Architecture, s.OS.Architectures) {
+	if checkArchitecture && !util.ValueInSlice(args.Architecture, s.OS.Architectures) {
 		return nil, nil, nil, fmt.Errorf("Requested architecture isn't supported by this host")
 	}
 
