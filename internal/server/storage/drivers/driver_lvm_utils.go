@@ -778,14 +778,7 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	}
 
 	if !util.PathExists(volDevPath) {
-		var err error
-		if d.clustered && vol.volType == VolumeTypeVM {
-			// In the clustered case, use a shared activation to allow for live migration.
-			_, err = subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
-		} else {
-			_, err = subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
-		}
-
+		_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
 		if err != nil {
 			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
 		}
