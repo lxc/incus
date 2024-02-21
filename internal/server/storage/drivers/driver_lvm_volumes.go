@@ -160,6 +160,23 @@ func (d *lvm) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
 func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, volTargetArgs migration.VolumeTargetArgs, preFiller *VolumeFiller, op *operations.Operation) error {
+	if d.clustered && volTargetArgs.ClusterMoveSourceName != "" {
+		err := vol.EnsureMountPath()
+		if err != nil {
+			return err
+		}
+
+		if vol.IsVMBlock() {
+			fsVol := vol.NewVMBlockFilesystemVolume()
+			err := d.CreateVolumeFromMigration(fsVol, conn, volTargetArgs, preFiller, op)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
 	return genericVFSCreateVolumeFromMigration(d, nil, vol, conn, volTargetArgs, preFiller, op)
 }
 
@@ -827,6 +844,10 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 
 // MigrateVolume sends a volume for migration.
 func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
+	if d.clustered && volSrcArgs.ClusterMove {
+		return nil // When performing a cluster member move don't do anything on the source member.
+	}
+
 	return genericVFSMigrateVolume(d, d.state, vol, conn, volSrcArgs, op)
 }
 

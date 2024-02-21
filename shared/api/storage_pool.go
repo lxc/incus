@@ -27,7 +27,7 @@ type StoragePoolsPost struct {
 	// Example: local
 	Name string `json:"name" yaml:"name"`
 
-	// Storage pool driver (btrfs, ceph, cephfs, dir, lvm or zfs)
+	// Storage pool driver (btrfs, ceph, cephfs, cephobject, dir, lvm, lvmcluster or zfs)
 	// Example: zfs
 	Driver string `json:"driver" yaml:"driver"`
 }
@@ -44,7 +44,7 @@ type StoragePool struct {
 	// Example: local
 	Name string `json:"name" yaml:"name"`
 
-	// Storage pool driver (btrfs, ceph, cephfs, dir, lvm or zfs)
+	// Storage pool driver (btrfs, ceph, cephfs, cephobject, dir, lvm, lvmcluster or zfs)
 	// Example: zfs
 	Driver string `json:"driver" yaml:"driver"`
 

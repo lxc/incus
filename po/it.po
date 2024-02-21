@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-02-16 18:06+0100\n"
+"POT-Creation-Date: 2024-02-20 16:24-0500\n"
 "PO-Revision-Date: 2024-02-09 19:02+0000\n"
 "Last-Translator: Alberto Donato <alberto.donato@gmail.com>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/incus/cli/it/>\n"
@@ -559,12 +559,12 @@ msgstr ""
 msgid "%d (id: %d, online: %v, NUMA node: %v)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:644
+#: cmd/incus/admin_init_interactive.go:650
 #, fuzzy, c-format
 msgid "%q is not a block device"
 msgstr "%s non è una directory"
 
-#: cmd/incus/admin_init_interactive.go:781
+#: cmd/incus/admin_init_interactive.go:787
 #, fuzzy, c-format
 msgid "%q is not an IP address"
 msgstr "%s non è una directory"
@@ -884,7 +884,7 @@ msgstr ""
 msgid "Address to bind to (default: none)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:787
+#: cmd/incus/admin_init_interactive.go:793
 msgid "Address to bind to (not including port)"
 msgstr ""
 
@@ -1053,7 +1053,7 @@ msgstr ""
 msgid "Backing up instance: %s"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:1265
+#: cmd/incus/storage_bucket.go:1267
 #, fuzzy, c-format
 msgid "Backing up storage bucket %s"
 msgstr "Creazione del container in corso"
@@ -1063,7 +1063,7 @@ msgstr "Creazione del container in corso"
 msgid "Backing up storage volume: %s"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/export.go:191 cmd/incus/storage_bucket.go:1342
+#: cmd/incus/export.go:191 cmd/incus/storage_bucket.go:1344
 #: cmd/incus/storage_volume.go:2705
 msgid "Backup exported successfully!"
 msgstr ""
@@ -1189,7 +1189,7 @@ msgid "Caches:"
 msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:143
-#: cmd/incus/admin_init_interactive.go:812
+#: cmd/incus/admin_init_interactive.go:818
 #, c-format
 msgid "Can't bind address %q: %w"
 msgstr ""
@@ -1417,7 +1417,7 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:708 cmd/incus/storage_bucket.go:783
 #: cmd/incus/storage_bucket.go:863 cmd/incus/storage_bucket.go:941
 #: cmd/incus/storage_bucket.go:1006 cmd/incus/storage_bucket.go:1142
-#: cmd/incus/storage_bucket.go:1215 cmd/incus/storage_bucket.go:1362
+#: cmd/incus/storage_bucket.go:1216 cmd/incus/storage_bucket.go:1365
 #: cmd/incus/storage_volume.go:332 cmd/incus/storage_volume.go:534
 #: cmd/incus/storage_volume.go:613 cmd/incus/storage_volume.go:843
 #: cmd/incus/storage_volume.go:1057 cmd/incus/storage_volume.go:1170
@@ -1655,7 +1655,7 @@ msgstr "Certificato del client salvato dal server: "
 msgid "Couldn't find a matching entry"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:656
+#: cmd/incus/admin_init_interactive.go:662
 #, c-format
 msgid "Couldn't statfs %s: %w"
 msgstr ""
@@ -1853,7 +1853,7 @@ msgstr ""
 msgid "Default VLAN ID"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:1214 cmd/incus/storage_volume.go:2574
+#: cmd/incus/storage_bucket.go:1215 cmd/incus/storage_volume.go:2574
 msgid "Define a compression algorithm: for backup or none"
 msgstr ""
 
@@ -2086,8 +2086,8 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:706 cmd/incus/storage_bucket.go:740
 #: cmd/incus/storage_bucket.go:781 cmd/incus/storage_bucket.go:860
 #: cmd/incus/storage_bucket.go:938 cmd/incus/storage_bucket.go:1002
-#: cmd/incus/storage_bucket.go:1137 cmd/incus/storage_bucket.go:1208
-#: cmd/incus/storage_bucket.go:1357 cmd/incus/storage_volume.go:44
+#: cmd/incus/storage_bucket.go:1137 cmd/incus/storage_bucket.go:1209
+#: cmd/incus/storage_bucket.go:1360 cmd/incus/storage_volume.go:44
 #: cmd/incus/storage_volume.go:162 cmd/incus/storage_volume.go:237
 #: cmd/incus/storage_volume.go:328 cmd/incus/storage_volume.go:531
 #: cmd/incus/storage_volume.go:610 cmd/incus/storage_volume.go:671
@@ -2246,7 +2246,7 @@ msgstr ""
 msgid "Do you want to configure a new storage pool?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:729
+#: cmd/incus/admin_init_interactive.go:735
 msgid "Do you want to continue without thin provisioning?"
 msgstr ""
 
@@ -2597,12 +2597,12 @@ msgstr "Creazione del container in corso"
 msgid "Export instances as backup tarballs."
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:1207
+#: cmd/incus/storage_bucket.go:1208
 #, fuzzy
 msgid "Export storage bucket"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:1208
+#: cmd/incus/storage_bucket.go:1209
 #, fuzzy
 msgid "Export storage buckets as tarball."
 msgstr "Creazione del container in corso"
@@ -2611,7 +2611,7 @@ msgstr "Creazione del container in corso"
 msgid "Export the volume without its snapshots"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:1325
+#: cmd/incus/storage_bucket.go:1327
 #, fuzzy, c-format
 msgid "Exporting backup of storage bucket %s"
 msgstr "Creazione del container in corso"
@@ -2822,7 +2822,7 @@ msgstr ""
 msgid "Failed to create alias %s: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/storage_bucket.go:1260
+#: cmd/incus/storage_bucket.go:1262
 #, fuzzy, c-format
 msgid "Failed to create backup: %v"
 msgstr "Accetta certificato"
@@ -2842,7 +2842,7 @@ msgstr "Accetta certificato"
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/storage_bucket.go:1339
+#: cmd/incus/storage_bucket.go:1341
 #, fuzzy, c-format
 msgid "Failed to fetch storage bucket backup: %w"
 msgstr "Accetta certificato"
@@ -3430,7 +3430,7 @@ msgstr ""
 msgid "Import backups of instances including their snapshots."
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:1357
+#: cmd/incus/storage_bucket.go:1360
 #, fuzzy
 msgid "Import backups of storage buckets."
 msgstr "Creazione del container in corso"
@@ -3455,7 +3455,7 @@ msgstr ""
 msgid "Import instance backups"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:1356
+#: cmd/incus/storage_bucket.go:1359
 #, fuzzy
 msgid "Import storage bucket"
 msgstr "Creazione del container in corso"
@@ -3472,7 +3472,7 @@ msgstr ""
 msgid "Importing ISO images requires a volume name to be set"
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:1411
+#: cmd/incus/storage_bucket.go:1415
 #, fuzzy, c-format
 msgid "Importing bucket: %s"
 msgstr "Creazione del container in corso"
@@ -3549,7 +3549,7 @@ msgstr ""
 msgid "Invalid IP address or DNS name"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/export.go:113 cmd/incus/storage_bucket.go:1293
+#: cmd/incus/export.go:113 cmd/incus/storage_bucket.go:1295
 #: cmd/incus/storage_volume.go:2656
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
@@ -3570,7 +3570,7 @@ msgstr "Proprietà errata: %s"
 msgid "Invalid arguments"
 msgstr "Proprietà errata: %s"
 
-#: cmd/incus/export.go:118 cmd/incus/storage_bucket.go:1298
+#: cmd/incus/export.go:118 cmd/incus/storage_bucket.go:1300
 #: cmd/incus/storage_volume.go:2661
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
@@ -4495,7 +4495,7 @@ msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:681
+#: cmd/incus/admin_init_interactive.go:687
 msgid "Minimum size is 1GiB"
 msgstr ""
 
@@ -4504,7 +4504,7 @@ msgstr ""
 #: cmd/incus/storage_bucket.go:576 cmd/incus/storage_bucket.go:668
 #: cmd/incus/storage_bucket.go:810 cmd/incus/storage_bucket.go:891
 #: cmd/incus/storage_bucket.go:966 cmd/incus/storage_bucket.go:1045
-#: cmd/incus/storage_bucket.go:1168 cmd/incus/storage_bucket.go:1242
+#: cmd/incus/storage_bucket.go:1168 cmd/incus/storage_bucket.go:1244
 #, fuzzy
 msgid "Missing bucket name"
 msgstr "Il nome del container è: %s"
@@ -4633,7 +4633,7 @@ msgstr "Il nome del container è: %s"
 #: cmd/incus/storage_bucket.go:664 cmd/incus/storage_bucket.go:806
 #: cmd/incus/storage_bucket.go:887 cmd/incus/storage_bucket.go:962
 #: cmd/incus/storage_bucket.go:1041 cmd/incus/storage_bucket.go:1164
-#: cmd/incus/storage_bucket.go:1237 cmd/incus/storage_volume.go:186
+#: cmd/incus/storage_bucket.go:1239 cmd/incus/storage_volume.go:186
 #: cmd/incus/storage_volume.go:261 cmd/incus/storage_volume.go:557
 #: cmd/incus/storage_volume.go:634 cmd/incus/storage_volume.go:695
 #: cmd/incus/storage_volume.go:777 cmd/incus/storage_volume.go:879
@@ -4855,13 +4855,13 @@ msgstr ""
 msgid "Name of the OSD storage pool"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:712
+#: cmd/incus/admin_init_interactive.go:718
 #, c-format
 msgid "Name of the existing %s pool or dataset:"
 msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:607
-#: cmd/incus/admin_init_interactive.go:699
+#: cmd/incus/admin_init_interactive.go:705
 msgid "Name of the existing CEPH cluster"
 msgstr ""
 
@@ -4869,7 +4869,7 @@ msgstr ""
 msgid "Name of the existing CEPHfs cluster"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:705
+#: cmd/incus/admin_init_interactive.go:711
 msgid "Name of the existing OSD storage pool"
 msgstr ""
 
@@ -4883,6 +4883,10 @@ msgstr ""
 
 #: cmd/incus/remote.go:147
 msgid "Name of the project to use for this remote:"
+msgstr ""
+
+#: cmd/incus/admin_init_interactive.go:637
+msgid "Name of the shared LVM volume group:"
 msgstr ""
 
 #: cmd/incus/admin_recover.go:116
@@ -5233,7 +5237,7 @@ msgstr "Password amministratore per %s: "
 msgid "Path %s doesn't exist"
 msgstr "il remote %s non esiste"
 
-#: cmd/incus/admin_init_interactive.go:642
+#: cmd/incus/admin_init_interactive.go:648
 msgid "Path to the existing block device:"
 msgstr ""
 
@@ -5267,7 +5271,7 @@ msgstr ""
 msgid "Pool name cannot be empty"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:800
+#: cmd/incus/admin_init_interactive.go:806
 msgid "Port to bind to"
 msgstr ""
 
@@ -6544,7 +6548,7 @@ msgstr ""
 msgid "Show warning"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:670
+#: cmd/incus/admin_init_interactive.go:676
 msgid "Size in GiB of the new loop device"
 msgstr ""
 
@@ -6839,11 +6843,11 @@ msgstr ""
 msgid "The --target-project flag can't be used with --target"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:735
+#: cmd/incus/admin_init_interactive.go:741
 msgid "The LVM thin provisioning tools couldn't be found on the system"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:723
+#: cmd/incus/admin_init_interactive.go:729
 msgid ""
 "The LVM thin provisioning tools couldn't be found.\n"
 "LVM can still be used without thin provisioning but this will disable over-"
@@ -7584,7 +7588,7 @@ msgstr ""
 msgid "Wait for the operation to complete"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:752
+#: cmd/incus/admin_init_interactive.go:758
 msgid ""
 "We detected that you are running inside an unprivileged container.\n"
 "This means that unless you manually configured your host otherwise,\n"
@@ -7640,11 +7644,11 @@ msgstr ""
 msgid "Would you like a YAML \"init\" preseed to be printed?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:827
+#: cmd/incus/admin_init_interactive.go:833
 msgid "Would you like stale cached images to be updated automatically?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:773
+#: cmd/incus/admin_init_interactive.go:779
 #, fuzzy
 msgid "Would you like the server to be available over the network?"
 msgstr "Import da directory non disponibile su questa piattaforma"
@@ -7678,7 +7682,7 @@ msgstr ""
 msgid "Would you like to create a new zfs dataset under rpool/incus?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:761
+#: cmd/incus/admin_init_interactive.go:767
 msgid "Would you like to have your containers share their parent's allocation?"
 msgstr ""
 
@@ -7690,7 +7694,7 @@ msgstr ""
 msgid "Would you like to use an existing bridge or host interface?"
 msgstr ""
 
-#: cmd/incus/admin_init_interactive.go:636
+#: cmd/incus/admin_init_interactive.go:642
 msgid ""
 "Would you like to use an existing empty block device (e.g. a disk or "
 "partition)?"
@@ -8222,7 +8226,7 @@ msgstr "Creazione del container in corso"
 msgid "[<remote>:]<pool>"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:1355
+#: cmd/incus/storage_bucket.go:1358
 #, fuzzy
 msgid "[<remote>:]<pool> <backup file> [<bucket>]"
 msgstr "Creazione del container in corso"
@@ -8250,7 +8254,7 @@ msgstr "Creazione del container in corso"
 msgid "[<remote>:]<pool> <bucket> <key>=<value>..."
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/storage_bucket.go:1206
+#: cmd/incus/storage_bucket.go:1207
 #, fuzzy
 msgid "[<remote>:]<pool> <bucket> [<path>]"
 msgstr "Creazione del container in corso"
@@ -8776,7 +8780,7 @@ msgid ""
 "Restore the snapshot."
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:1210
+#: cmd/incus/storage_bucket.go:1211
 msgid ""
 "incus storage bucket default b1\n"
 "    Download a backup tarball of the b1 storage bucket."
@@ -8794,7 +8798,7 @@ msgid ""
 "    Update a storage bucket key using the content of key.yaml."
 msgstr ""
 
-#: cmd/incus/storage_bucket.go:1359
+#: cmd/incus/storage_bucket.go:1362
 msgid ""
 "incus storage bucket import default backup0.tar.gz\n"
 "\t\tCreate a new storage bucket using backup0.tar.gz as the source."
@@ -8890,6 +8894,10 @@ msgstr ""
 #: cmd/incus/image.go:1190 cmd/incus/snapshot.go:220
 msgid "yes"
 msgstr "si"
+
+#, fuzzy
+#~ msgid "Path to the shared block device:"
+#~ msgstr "%s non è una directory"
 
 #, fuzzy
 #~ msgid "You must specify a destination instance name when using --target"

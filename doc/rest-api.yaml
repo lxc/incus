@@ -5668,7 +5668,7 @@ definitions:
                 type: string
                 x-go-name: Description
             driver:
-                description: Storage pool driver (btrfs, ceph, cephfs, dir, lvm or zfs)
+                description: Storage pool driver (btrfs, ceph, cephfs, cephobject, dir, lvm, lvmcluster or zfs)
                 example: zfs
                 type: string
                 x-go-name: Driver
@@ -5825,7 +5825,7 @@ definitions:
                 type: string
                 x-go-name: Description
             driver:
-                description: Storage pool driver (btrfs, ceph, cephfs, dir, lvm or zfs)
+                description: Storage pool driver (btrfs, ceph, cephfs, cephobject, dir, lvm, lvmcluster or zfs)
                 example: zfs
                 type: string
                 x-go-name: Driver

@@ -632,6 +632,12 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 				if err != nil {
 					return err
 				}
+			} else if pool.Driver == "lvmcluster" {
+				// Ask for the volume group
+				pool.Config["source"], err = c.global.asker.AskString(i18n.G("Name of the shared LVM volume group:")+" ", "", nil)
+				if err != nil {
+					return err
+				}
 			} else {
 				useEmptyBlockDev, err := c.global.asker.AskBool(i18n.G("Would you like to use an existing empty block device (e.g. a disk or partition)?")+" (yes/no) [default=no]: ", "no")
 				if err != nil {

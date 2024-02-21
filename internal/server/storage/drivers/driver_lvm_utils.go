@@ -41,6 +41,11 @@ const lvmThinpoolDefaultName = "IncusThinPool"
 
 // usesThinpool indicates whether the config specifies to use a thin pool or not.
 func (d *lvm) usesThinpool() bool {
+	// No thin pool on clustered LVM.
+	if d.clustered {
+		return false
+	}
+
 	// Default is to use a thinpool.
 	return util.IsTrueOrEmpty(d.config["lvm.use_thinpool"])
 }
@@ -773,7 +778,14 @@ func (d *lvm) activateVolume(vol Volume) (bool, error) {
 	}
 
 	if !util.PathExists(volDevPath) {
-		_, err := subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
+		var err error
+		if d.clustered && vol.volType == VolumeTypeVM {
+			// In the clustered case, use a shared activation to allow for live migration.
+			_, err = subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+		} else {
+			_, err = subprocess.RunCommand("lvchange", "--activate", "y", "--ignoreactivationskip", volDevPath)
+		}
+
 		if err != nil {
 			return false, fmt.Errorf("Failed to activate LVM logical volume %q: %w", volDevPath, err)
 		}
