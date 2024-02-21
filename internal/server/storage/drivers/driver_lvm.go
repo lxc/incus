@@ -92,8 +92,8 @@ func (d *lvm) load() error {
 	return nil
 }
 
-func (d *lvm) init(s *state.State, name string, config map[string]string, logger logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) {
-	d.common.init(s, name, config, logger, volIDFunc, commonRules)
+func (d *lvm) init(s *state.State, name string, config map[string]string, log logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) {
+	d.common.init(s, name, config, log, volIDFunc, commonRules)
 
 	if d.clustered && d.config != nil {
 		d.config["lvm.vg_name"] = d.config["source"]
