@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -166,11 +167,34 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			return err
 		}
 
-		if vol.IsVMBlock() {
-			fsVol := vol.NewVMBlockFilesystemVolume()
-			err := d.CreateVolumeFromMigration(fsVol, conn, volTargetArgs, preFiller, op)
+		// Mark the volume for shared locking during live migration.
+		if vol.volType == VolumeTypeVM {
+			volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.Name())
+			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
 			if err != nil {
 				return err
+			}
+
+			go func(volDevPath string) {
+				// Attempt to re-lock as host-exclusive as soon as possible.
+				// This will only happen once the migration on the source system is fully over.
+				// Re-try every 10s until success as we can't predict how long a migration may take (from a few seconds to hours).
+				for {
+					_, err := subprocess.RunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
+					if err == nil {
+						break
+					}
+
+					time.Sleep(10*time.Second)
+				}
+			}(volDevPath)
+
+			if vol.IsVMBlock() {
+				fsVol := vol.NewVMBlockFilesystemVolume()
+				err := d.CreateVolumeFromMigration(fsVol, conn, volTargetArgs, preFiller, op)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -845,6 +869,26 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 // MigrateVolume sends a volume for migration.
 func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
 	if d.clustered && volSrcArgs.ClusterMove {
+		// Mark the volume for shared locking during live migration.
+		if vol.volType == VolumeTypeVM {
+			// Block volume.
+			volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.Name())
+			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+			if err != nil {
+				return err
+			}
+
+			// Filesystem volume.
+			if vol.IsVMBlock() {
+				fsVol := vol.NewVMBlockFilesystemVolume()
+				volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], fsVol.volType, fsVol.contentType, fsVol.Name())
+				_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 		return nil // When performing a cluster member move don't do anything on the source member.
 	}
 
