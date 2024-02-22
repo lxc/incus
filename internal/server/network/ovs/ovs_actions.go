@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
 	ovsdbModel "github.com/ovn-org/libovsdb/model"
@@ -15,6 +16,7 @@ import (
 	"github.com/lxc/incus/internal/server/ip"
 	ovsSwitch "github.com/lxc/incus/internal/server/network/ovs/schema/ovs"
 	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/shared/util"
 )
 
 // ovnBridgeMappingMutex locks access to read/write external-ids:ovn-bridge-mappings.
@@ -47,7 +49,7 @@ func (o *VSwitch) BridgeExists(bridgeName string) (bool, error) {
 func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.HardwareAddr, mtu uint32) error {
 	ctx := context.TODO()
 
-	// Interface
+	// Create interface.
 	iface := ovsSwitch.Interface{
 		UUID: "interface",
 		Name: bridgeName,
@@ -63,7 +65,7 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 		return err
 	}
 
-	// Port
+	// Create port.
 	port := ovsSwitch.Port{
 		UUID:       "port",
 		Name:       bridgeName,
@@ -75,7 +77,7 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 		return err
 	}
 
-	// Bridge
+	// Create bridge.
 	bridge := ovsSwitch.Bridge{
 		UUID:  "bridge",
 		Name:  bridgeName,
@@ -103,7 +105,7 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 		}
 	}
 
-	// Switch entry
+	// Create switch entry.
 	ovsRow := ovsSwitch.OpenvSwitch{
 		UUID: o.rootUUID,
 	}
@@ -131,7 +133,16 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 		return err
 	}
 
-	return nil
+	// Wait for kernel interface to appear.
+	for i := 0; i < 50; i++ {
+		time.Sleep(100 * time.Millisecond)
+
+		if util.PathExists(fmt.Sprintf("/sys/class/net/%s", bridgeName)) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Bridge interface failed to appear")
 }
 
 // BridgeDelete deletes a bridge.
