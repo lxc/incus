@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 
 	"gopkg.in/yaml.v2"
@@ -59,13 +58,25 @@ func (p *Process) hasApparmor() bool {
 
 // GetPid returns the pid for the given process object.
 func (p *Process) GetPid() (int64, error) {
-	pr, _ := os.FindProcess(int(p.PID))
-	err := pr.Signal(syscall.Signal(0))
-	if err == nil {
-		return p.PID, nil
+	pr, err := os.FindProcess(int(p.PID))
+	if err != nil {
+		if err == os.ErrProcessDone {
+			return 0, ErrNotRunning
+		}
+
+		return 0, err
 	}
 
-	return 0, ErrNotRunning
+	err = pr.Signal(syscall.Signal(0))
+	if err != nil {
+		if err == os.ErrProcessDone {
+			return 0, ErrNotRunning
+		}
+
+		return 0, err
+	}
+
+	return p.PID, nil
 }
 
 // SetApparmor allows setting the AppArmor profile.
@@ -81,10 +92,21 @@ func (p *Process) SetCreds(uid uint32, gid uint32) {
 
 // Stop will stop the given process object.
 func (p *Process) Stop() error {
-	pr, _ := os.FindProcess(int(p.PID))
+	pr, err := os.FindProcess(int(p.PID))
+	if err != nil {
+		if err == os.ErrProcessDone {
+			if p.hasMonitor {
+				<-p.chExit
+			}
+
+			return ErrNotRunning
+		}
+
+		return err
+	}
 
 	// Check if process exists.
-	err := pr.Signal(syscall.Signal(0))
+	err = pr.Signal(syscall.Signal(0))
 	if err == nil {
 		err = pr.Kill()
 		if err == nil {
@@ -97,7 +119,7 @@ func (p *Process) Stop() error {
 	}
 
 	// Check if either the existence check or the kill resulted in an already finished error.
-	if strings.Contains(err.Error(), "process already finished") {
+	if err == os.ErrProcessDone {
 		if p.hasMonitor {
 			<-p.chExit
 		}
@@ -212,8 +234,16 @@ func (p *Process) Restart(ctx context.Context) error {
 
 // Reload sends the SIGHUP signal to the given process object.
 func (p *Process) Reload() error {
-	pr, _ := os.FindProcess(int(p.PID))
-	err := pr.Signal(syscall.Signal(0))
+	pr, err := os.FindProcess(int(p.PID))
+	if err != nil {
+		if err == os.ErrProcessDone {
+			return ErrNotRunning
+		}
+
+		return fmt.Errorf("Could not reload process: %w", err)
+	}
+
+	err = pr.Signal(syscall.Signal(0))
 	if err == nil {
 		err = pr.Signal(syscall.SIGHUP)
 		if err != nil {
@@ -221,7 +251,7 @@ func (p *Process) Reload() error {
 		}
 
 		return nil
-	} else if strings.Contains(err.Error(), "process already finished") {
+	} else if err == os.ErrProcessDone {
 		return ErrNotRunning
 	}
 
@@ -245,8 +275,16 @@ func (p *Process) Save(path string) error {
 
 // Signal will send a signal to the given process object given a signal value.
 func (p *Process) Signal(signal int64) error {
-	pr, _ := os.FindProcess(int(p.PID))
-	err := pr.Signal(syscall.Signal(0))
+	pr, err := os.FindProcess(int(p.PID))
+	if err != nil {
+		if err == os.ErrProcessDone {
+			return ErrNotRunning
+		}
+
+		return err
+	}
+
+	err = pr.Signal(syscall.Signal(0))
 	if err == nil {
 		err = pr.Signal(syscall.Signal(signal))
 		if err != nil {
@@ -254,7 +292,7 @@ func (p *Process) Signal(signal int64) error {
 		}
 
 		return nil
-	} else if strings.Contains(err.Error(), "process already finished") {
+	} else if err == os.ErrProcessDone {
 		return ErrNotRunning
 	}
 

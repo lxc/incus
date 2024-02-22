@@ -185,7 +185,7 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 						break
 					}
 
-					time.Sleep(10*time.Second)
+					time.Sleep(10 * time.Second)
 				}
 			}(volDevPath)
 
