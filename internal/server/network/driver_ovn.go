@@ -4735,11 +4735,35 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			_ = n.forwardBGPSetupPrefixes()
 		})
 
-		vips := n.forwardFlattenVIPs(net.ParseIP(forward.ListenAddress), net.ParseIP(forward.Config["target_address"]), portMaps)
+		vip := net.ParseIP(forward.Config["target_address"])
+		vips := n.forwardFlattenVIPs(net.ParseIP(forward.ListenAddress), vip, portMaps)
 
 		err = ovnnb.LoadBalancerApply(n.getLoadBalancerName(forward.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
 		if err != nil {
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
+		}
+
+		// Add internal static route to the network forward (helps with OVN IC).
+		var nexthop net.IP
+		if vip.To4() == nil {
+			routerV6, _, err := n.parseRouterIntPortIPv6Net()
+			if err == nil {
+				nexthop = routerV6
+			}
+		} else {
+			routerV4, _, err := n.parseRouterIntPortIPv4Net()
+			if err == nil {
+				nexthop = routerV4
+			}
+		}
+
+		if nexthop != nil {
+			err = ovnnb.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: IPToNet(vip)})
+			if err != nil {
+				return err
+			}
+
+			revert.Add(func() { _ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), IPToNet(vip)) })
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
@@ -4894,11 +4918,17 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
 
+		// Delete the network forward itself.
 		err = ovnnb.LoadBalancerDelete(n.getLoadBalancerName(forward.ListenAddress))
 		if err != nil {
 			return fmt.Errorf("Failed deleting OVN load balancer: %w", err)
 		}
 
+		// Delete static route to network forward if present.
+		vip := IPToNet(net.ParseIP(forward.ListenAddress))
+		_ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), vip)
+
+		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
 		})
@@ -5085,11 +5115,35 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			_ = n.loadBalancerBGPSetupPrefixes()
 		})
 
-		vips := n.loadBalancerFlattenVIPs(net.ParseIP(loadBalancer.ListenAddress), portMaps)
+		vip := net.ParseIP(loadBalancer.ListenAddress)
+		vips := n.loadBalancerFlattenVIPs(vip, portMaps)
 
 		err = ovnnb.LoadBalancerApply(n.getLoadBalancerName(loadBalancer.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
 		if err != nil {
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
+		}
+
+		// Add internal static route to the load-balancer (helps with OVN IC).
+		var nexthop net.IP
+		if vip.To4() == nil {
+			routerV6, _, err := n.parseRouterIntPortIPv6Net()
+			if err == nil {
+				nexthop = routerV6
+			}
+		} else {
+			routerV4, _, err := n.parseRouterIntPortIPv4Net()
+			if err == nil {
+				nexthop = routerV4
+			}
+		}
+
+		if nexthop != nil {
+			err = ovnnb.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: IPToNet(vip)})
+			if err != nil {
+				return err
+			}
+
+			revert.Add(func() { _ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), IPToNet(vip)) })
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
@@ -5245,11 +5299,17 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
 
+		// Delete the load balancer itself.
 		err = ovnnb.LoadBalancerDelete(n.getLoadBalancerName(forward.ListenAddress))
 		if err != nil {
 			return fmt.Errorf("Failed deleting OVN load balancer: %w", err)
 		}
 
+		// Delete static route to load-balancer if present.
+		vip := IPToNet(net.ParseIP(forward.ListenAddress))
+		_ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), vip)
+
+		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.DeleteNetworkLoadBalancer(ctx, n.ID(), loadBalancerID)
 		})
