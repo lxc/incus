@@ -494,6 +494,11 @@ func poolAndVolumeCommonRules(vol *drivers.Volume) map[string]func(string) error
 		rules["security.unmapped"] = validate.Optional(validate.IsBool)
 	}
 
+	// security.shared is only relevant for custom block volumes.
+	if (vol == nil) || (vol != nil && vol.Type() == drivers.VolumeTypeCustom && vol.ContentType() == drivers.ContentTypeBlock) {
+		rules["security.shared"] = validate.Optional(validate.IsBool)
+	}
+
 	return rules
 }
 

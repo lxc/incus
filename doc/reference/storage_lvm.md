@@ -89,6 +89,7 @@ Key                   | Type   | Condition                                      
 `lvm.stripes.size`    | string |                                                   | same as `volume.lvm.stripes.size`              | Size of stripes to use (at least 4096 bytes and multiple of 512 bytes)
 `security.shifted`    | bool   | custom volume                                     | same as `volume.security.shifted` or `false`   | {{enable_ID_shifting}}
 `security.unmapped`   | bool   | custom volume                                     | same as `volume.security.unmapped` or `false`  | Disable ID mapping for the volume
+`security.shared`     | bool   | custom block volume                               | same as `volume.security.shared` or `false`    | Enable sharing the volume across multiple instances
 `size`                | string |                                                   | same as `volume.size`                          | Size/quota of the storage volume
 `snapshots.expiry`    | string | custom volume                                     | same as `volume.snapshots.expiry`              | {{snapshot_expiry_format}}
 `snapshots.pattern`   | string | custom volume                                     | same as `volume.snapshots.pattern` or `snap%d` | {{snapshot_pattern_format}} [^*]

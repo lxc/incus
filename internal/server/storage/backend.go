@@ -5381,6 +5381,39 @@ func (b *backend) UpdateCustomVolume(projectName string, volName string, newDesc
 			}
 		}
 
+		sharedVolume, ok := changedConfig["security.shared"]
+		if ok && util.IsFalseOrEmpty(sharedVolume) {
+			var usedByProfileDevices []api.Profile
+
+			err = VolumeUsedByProfileDevices(b.state, b.name, projectName, &curVol.StorageVolume, func(profileID int64, profile api.Profile, project api.Project, usedByDevices []string) error {
+				usedByProfileDevices = append(usedByProfileDevices, profile)
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			if len(usedByProfileDevices) > 0 {
+				return fmt.Errorf("Cannot un-share custom storage block volume if attached to profile")
+			}
+
+			var usedByInstanceDevices []string
+
+			err = VolumeUsedByInstanceDevices(b.state, b.name, projectName, &curVol.StorageVolume, true, func(inst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+				usedByInstanceDevices = append(usedByInstanceDevices, inst.Name)
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			if len(usedByInstanceDevices) > 1 {
+				return fmt.Errorf("Cannot un-share custom storage block volume if attached to more than one instance")
+			}
+		}
+
 		curVol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, curVol.Config)
 		if !userOnly {
 			err = b.driver.UpdateVolume(curVol, changedConfig)

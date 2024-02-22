@@ -125,6 +125,11 @@ func (d *common) fillVolumeConfig(vol *Volume, excludedKeys ...string) error {
 			continue
 		}
 
+		// security.shared is only relevant for custom block volumes.
+		if (vol.Type() != VolumeTypeCustom || vol.ContentType() != ContentTypeBlock) && (volKey == "security.shared") {
+			continue
+		}
+
 		if vol.config[volKey] == "" {
 			vol.config[volKey] = d.config[k]
 		}
