@@ -816,6 +816,36 @@ Comma-separated list of the last used IP addresses of the network device.
 The original MTU that was used when moving a physical device into an instance.
 ```
 
+```{config:option} volatile.<name>.last_state.pci.driver instance-volatile
+:shortdesc: "PCI original host driver"
+:type: "string"
+The original host driver for the PCI device.
+```
+
+```{config:option} volatile.<name>.last_state.pci.parent instance-volatile
+:shortdesc: "PCI parent host device"
+:type: "string"
+The parent host device used when allocating a PCI device to an instance.
+```
+
+```{config:option} volatile.<name>.last_state.pci.slot.name instance-volatile
+:shortdesc: "PCI parent slot name"
+:type: "string"
+The parent host device PCI slot name.
+```
+
+```{config:option} volatile.<name>.last_state.usb.bus instance-volatile
+:shortdesc: "USB bus address"
+:type: "string"
+The original USB bus address.
+```
+
+```{config:option} volatile.<name>.last_state.usb.device instance-volatile
+:shortdesc: "USB device identifier"
+:type: "string"
+The original USB device identifier.
+```
+
 ```{config:option} volatile.<name>.last_state.vdpa.name instance-volatile
 :shortdesc: "VDPA device name"
 :type: "string"
@@ -834,6 +864,12 @@ The original MAC used when moving a VF into an instance.
 The ID used when moving a VF into an instance.
 ```
 
+```{config:option} volatile.<name>.last_state.vf.parent instance-volatile
+:shortdesc: "SR-IOV parent host device"
+:type: "string"
+The parent host device used when allocating a VF into an instance.
+```
+
 ```{config:option} volatile.<name>.last_state.vf.spoofcheck instance-volatile
 :shortdesc: "SR-IOV virtual function original spoof check setting"
 :type: "string"
@@ -844,6 +880,24 @@ The original spoof check setting used when moving a VF into an instance.
 :shortdesc: "SR-IOV virtual function original VLAN"
 :type: "string"
 The original VLAN used when moving a VF into an instance.
+```
+
+```{config:option} volatile.<name>.mig.uuid instance-volatile
+:shortdesc: "MIG instance UUID"
+:type: "string"
+The NVIDIA MIG instance UUID.
+```
+
+```{config:option} volatile.<name>.name instance-volatile
+:shortdesc: "Network interface name inside of the instance"
+:type: "string"
+The network interface name inside of the instance when no `name` property is set on the device itself.
+```
+
+```{config:option} volatile.<name>.vgpu.uuid instance-volatile
+:shortdesc: "virtual GPU instance UUID"
+:type: "string"
+The NVIDIA virtual GPU instance UUID.
 ```
 
 ```{config:option} volatile.apply_nvram instance-volatile
@@ -902,6 +956,12 @@ The cluster member that the instance lived on before evacuation.
 
 ```{config:option} volatile.last_state.power instance-volatile
 :shortdesc: "Instance state as of last host shutdown"
+:type: "string"
+
+```
+
+```{config:option} volatile.last_state.ready instance-volatile
+:shortdesc: "Instance marked itself as ready"
 :type: "string"
 
 ```
