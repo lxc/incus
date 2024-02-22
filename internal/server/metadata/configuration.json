@@ -874,6 +874,41 @@
 						}
 					},
 					{
+						"volatile.\u003cname\u003e.last_state.pci.driver": {
+							"longdesc": "The original host driver for the PCI device.",
+							"shortdesc": "PCI original host driver",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.pci.parent": {
+							"longdesc": "The parent host device used when allocating a PCI device to an instance.",
+							"shortdesc": "PCI parent host device",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.pci.slot.name": {
+							"longdesc": "The parent host device PCI slot name.",
+							"shortdesc": "PCI parent slot name",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.usb.bus": {
+							"longdesc": "The original USB bus address.",
+							"shortdesc": "USB bus address",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.usb.device": {
+							"longdesc": "The original USB device identifier.",
+							"shortdesc": "USB device identifier",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.\u003cname\u003e.last_state.vdpa.name": {
 							"longdesc": "The VDPA device name used when moving a VDPA device file descriptor into an instance.",
 							"shortdesc": "VDPA device name",
@@ -895,6 +930,13 @@
 						}
 					},
 					{
+						"volatile.\u003cname\u003e.last_state.vf.parent": {
+							"longdesc": "The parent host device used when allocating a VF into an instance.",
+							"shortdesc": "SR-IOV parent host device",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.\u003cname\u003e.last_state.vf.spoofcheck": {
 							"longdesc": "The original spoof check setting used when moving a VF into an instance.",
 							"shortdesc": "SR-IOV virtual function original spoof check setting",
@@ -905,6 +947,27 @@
 						"volatile.\u003cname\u003e.last_state.vf.vlan": {
 							"longdesc": "The original VLAN used when moving a VF into an instance.",
 							"shortdesc": "SR-IOV virtual function original VLAN",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.mig.uuid": {
+							"longdesc": "The NVIDIA MIG instance UUID.",
+							"shortdesc": "MIG instance UUID",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.name": {
+							"longdesc": "The network interface name inside of the instance when no `name` property is set on the device itself.",
+							"shortdesc": "Network interface name inside of the instance",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.vgpu.uuid": {
+							"longdesc": "The NVIDIA virtual GPU instance UUID.",
+							"shortdesc": "virtual GPU instance UUID",
 							"type": "string"
 						}
 					},
@@ -975,6 +1038,13 @@
 						"volatile.last_state.power": {
 							"longdesc": "",
 							"shortdesc": "Instance state as of last host shutdown",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.last_state.ready": {
+							"longdesc": "",
+							"shortdesc": "Instance marked itself as ready",
 							"type": "string"
 						}
 					},
