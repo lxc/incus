@@ -807,12 +807,16 @@ func (d *qemu) ovmfPath() string {
 func (d *qemu) killQemuProcess(pid int) error {
 	proc, err := os.FindProcess(pid)
 	if err != nil {
+		if err == os.ErrProcessDone {
+			return nil
+		}
+
 		return err
 	}
 
 	err = proc.Kill()
 	if err != nil {
-		if strings.Contains(err.Error(), "process already finished") {
+		if err == os.ErrProcessDone {
 			return nil
 		}
 
