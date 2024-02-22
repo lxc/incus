@@ -3,11 +3,11 @@ module github.com/lxc/incus/test/mini-oidc
 go 1.21
 
 require (
-	github.com/go-chi/chi/v5 v5.0.11
+	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/google/uuid v1.6.0
-	github.com/zitadel/oidc/v3 v3.11.1
-	golang.org/x/exp v0.0.0-20240205201215-2c58cdc269a3
+	github.com/zitadel/oidc/v3 v3.11.2
+	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
 	golang.org/x/text v0.14.0
 )
 
