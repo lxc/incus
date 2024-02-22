@@ -1051,7 +1051,7 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 			lastIdenticalSnapshot := snapshots[len(snapshots)-1]
 			_, lastIdenticalSnapshotOnlyName, _ := api.GetParentAndSnapshotName(lastIdenticalSnapshot.Name())
 
-			err = d.RestoreVolume(vol, lastIdenticalSnapshotOnlyName, op)
+			err = d.restoreVolume(vol, lastIdenticalSnapshotOnlyName, true, op)
 			if err != nil {
 				return err
 			}
@@ -3213,6 +3213,10 @@ func (d *zfs) VolumeSnapshots(vol Volume, op *operations.Operation) ([]string, e
 
 // RestoreVolume restores a volume from a snapshot.
 func (d *zfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Operation) error {
+	return d.restoreVolume(vol, snapshotName, false, op)
+}
+
+func (d *zfs) restoreVolume(vol Volume, snapshotName string, migration bool, op *operations.Operation) error {
 	// Get the list of snapshots.
 	entries, err := d.getDatasets(d.dataset(vol, false), "snapshot")
 	if err != nil {
@@ -3294,9 +3298,9 @@ func (d *zfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 	}
 
 	// For VM images, restore the associated filesystem dataset too.
-	if vol.IsVMBlock() {
+	if !migration && vol.IsVMBlock() {
 		fsVol := vol.NewVMBlockFilesystemVolume()
-		err := d.RestoreVolume(fsVol, snapshotName, op)
+		err := d.restoreVolume(fsVol, snapshotName, migration, op)
 		if err != nil {
 			return err
 		}
