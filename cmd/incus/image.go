@@ -1134,11 +1134,6 @@ func (c *cmdImageList) parseColumns() ([]imageColumn, error) {
 	columnList := strings.Split(c.flagColumns, ",")
 
 	columns := []imageColumn{}
-	// Add project column if --all-projects flag specified and
-	// no --c was passed
-	if c.flagAllProjects && c.flagColumns == defaultImagesColumns {
-		c.flagColumns = defaultImagesColumnsAllProjects
-	}
 
 	for _, columnEntry := range columnList {
 		if columnEntry == "" {
@@ -1319,6 +1314,11 @@ func (c *cmdImageList) Run(cmd *cobra.Command, args []string) error {
 	exit, err := c.global.CheckArgs(cmd, args, 0, -1)
 	if exit {
 		return err
+	}
+
+	// Add project column if --all-projects flag specified and no -c was passed.
+	if c.flagAllProjects && c.flagColumns == defaultImagesColumns {
+		c.flagColumns = defaultImagesColumnsAllProjects
 	}
 
 	// Parse remote
