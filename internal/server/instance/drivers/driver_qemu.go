@@ -1051,6 +1051,21 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 		return fmt.Errorf("Secure boot can't be enabled while CSM is turned on. Please set security.secureboot=false on the instance")
 	}
 
+	// Ensure an agent drive is present if the image requires it.
+	if util.IsTrue(d.localConfig["image.requirements.cdrom_agent"]) {
+		found := false
+		for _, dev := range d.expandedDevices {
+			if dev["type"] == "disk" && dev["source"] == "agent:config" {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return fmt.Errorf("This virtual machine image requires an agent:config disk be added")
+		}
+	}
+
 	// The "size.state" of the instance root disk device must be larger than the instance memory.
 	// Otherwise, there will not be enough disk space to write the instance state to disk during any subsequent stops.
 	// (Only check when migration.stateful is true, otherwise the memory won't be dumped when this instance stops).
