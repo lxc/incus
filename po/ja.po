@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-02-20 16:24-0500\n"
-"PO-Revision-Date: 2024-02-02 10:01+0000\n"
-"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
+"PO-Revision-Date: 2024-02-23 02:38+0000\n"
+"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.4-dev\n"
+"X-Generator: Weblate 5.5-dev\n"
 
 #: cmd/incus/storage_bucket.go:268 cmd/incus/storage_bucket.go:1013
 msgid ""
@@ -1057,9 +1057,9 @@ msgid "Backing up instance: %s"
 msgstr "インスタンスのバックアップ中: %s"
 
 #: cmd/incus/storage_bucket.go:1267
-#, fuzzy, c-format
+#, c-format
 msgid "Backing up storage bucket %s"
-msgstr "ストレージボリュームのバックアップ中: %s"
+msgstr "ストレージバケット %s のバックアップを行います"
 
 #: cmd/incus/storage_volume.go:2628
 #, c-format
@@ -1457,7 +1457,6 @@ msgid "Command line client for Incus"
 msgstr "incus のコマンドラインクライアント"
 
 #: cmd/incus/main.go:84
-#, fuzzy
 msgid ""
 "Command line client for Incus\n"
 "\n"
@@ -1470,7 +1469,10 @@ msgstr ""
 "incus のコマンドラインクライアント\n"
 "\n"
 "incus の機能のすべてが、以下の色々なコマンドから操作できます。\n"
-"コマンドのヘルプは、--help をコマンドに付けて実行するだけです。"
+"コマンドのヘルプは、--help をコマンドに付けて実行するだけです。\n"
+"\n"
+"カスタムコマンドをエイリアスを使って定義でき、それらを制御するには \"incus "
+"alias\" を使います。"
 
 #: cmd/incus/publish.go:39
 msgid "Compression algorithm to use (`none` for uncompressed)"
@@ -1723,9 +1725,8 @@ msgid "Create any directories necessary"
 msgstr "必要なディレクトリをすべて作成します"
 
 #: cmd/incus/file.go:130 cmd/incus/file.go:131
-#, fuzzy
 msgid "Create files and directories in instances"
-msgstr "必要なディレクトリをすべて作成します"
+msgstr "インスタンス内にファイル、もしくはディレクトリーを作成します"
 
 #: cmd/incus/export.go:80
 #, c-format
@@ -1825,9 +1826,9 @@ msgid "Creating %s"
 msgstr "%s を作成中"
 
 #: cmd/incus/file.go:269
-#, fuzzy, c-format
+#, c-format
 msgid "Creating %s: %%s"
-msgstr "%s を作成中"
+msgstr "%s: %%s を作成中"
 
 #: cmd/incus/create.go:172
 msgid "Creating the instance"
@@ -2248,9 +2249,8 @@ msgid "Disks:"
 msgstr "ディスク:"
 
 #: cmd/incus/image.go:1102
-#, fuzzy
 msgid "Display images from all projects"
-msgstr "すべてのプロジェクトのインスタンスを表示します"
+msgstr "すべてのプロジェクトのイメージを表示します"
 
 #: cmd/incus/list.go:135
 msgid "Display instances from all projects"
@@ -2665,14 +2665,12 @@ msgid "Export instances as backup tarballs."
 msgstr "インスタンスを tarball 形式のバックアップとしてエクスポートします。"
 
 #: cmd/incus/storage_bucket.go:1208
-#, fuzzy
 msgid "Export storage bucket"
-msgstr "ストレージバケットを一覧表示します"
+msgstr "ストレージバケットをエクスポートします"
 
 #: cmd/incus/storage_bucket.go:1209
-#, fuzzy
 msgid "Export storage buckets as tarball."
-msgstr "インスタンスを tarball 形式のバックアップとしてエクスポートします。"
+msgstr "ストレージバケットを tarball 形式でエクスポートします。"
 
 #: cmd/incus/storage_volume.go:2571
 msgid "Export the volume without its snapshots"
@@ -2680,9 +2678,9 @@ msgstr ""
 "ボリュームをエクスポートします (スナップショットはエクスポートしません)"
 
 #: cmd/incus/storage_bucket.go:1327
-#, fuzzy, c-format
+#, c-format
 msgid "Exporting backup of storage bucket %s"
-msgstr "新たにカスタムストレージバケットを作成します"
+msgstr "ストレージバケット %s のバックアップをエクスポートします"
 
 #: cmd/incus/export.go:151 cmd/incus/storage_volume.go:2688
 #, c-format
@@ -2742,9 +2740,9 @@ msgid "Failed connecting to instance SFTP: %w"
 msgstr "インスタンスの SFTP への接続に失敗しました: %w"
 
 #: cmd/incus/admin_waitready.go:61
-#, fuzzy, c-format
+#, c-format
 msgid "Failed connecting to the daemon (attempt %d): %v"
-msgstr "クライアント %q に対する SFTP インスタンスの接続に失敗しました: %v"
+msgstr "デーモンへの接続に失敗しました（試行回数 %d）: %v"
 
 #: cmd/incus/config_trust.go:142
 #, c-format
@@ -2752,19 +2750,19 @@ msgid "Failed converting token operation to certificate add token: %w"
 msgstr "証明書追加トークンのトークン変換操作に失敗しました: %w"
 
 #: cmd/incus/cluster.go:842
-#, fuzzy, c-format
+#, c-format
 msgid "Failed converting token operation to join token: %w"
-msgstr "証明書追加トークンのトークン変換操作に失敗しました: %w"
+msgstr "join トークンのトークン変換操作に失敗しました: %w"
 
 #: cmd/incus/delete.go:149
-#, fuzzy, c-format
+#, c-format
 msgid "Failed deleting instance %q in project %q: %w"
-msgstr "新しいインスタンス名が取得できません"
+msgstr "インスタンス %q （プロジェクト %q 内）の削除に失敗しました: %w"
 
 #: cmd/incus/storage_volume.go:511
-#, fuzzy, c-format
+#, c-format
 msgid "Failed deleting source volume after copy: %w"
-msgstr "コピー元のボリューム名を指定する必要があります"
+msgstr "コピー後のソースボリュームの削除に失敗しました: %w"
 
 #: cmd/incus/file.go:1359
 #, c-format
@@ -2777,9 +2775,9 @@ msgid "Failed generating trust certificate: %w"
 msgstr "証明書の作成に失敗しました: %w"
 
 #: cmd/incus/admin_recover.go:60
-#, fuzzy, c-format
+#, c-format
 msgid "Failed getting existing storage pools: %w"
-msgstr "ピアのステータスの取得に失敗しました: %w"
+msgstr "既存のストレージプールの取得に失敗しました: %w"
 
 #: cmd/incus/network_peer.go:303
 #, c-format
@@ -2787,14 +2785,14 @@ msgid "Failed getting peer's status: %w"
 msgstr "ピアのステータスの取得に失敗しました: %w"
 
 #: cmd/incus/admin_recover.go:250
-#, fuzzy, c-format
+#, c-format
 msgid "Failed import request: %w"
-msgstr "%q の作成に失敗しました: %w"
+msgstr "インポート要求が失敗しました: %w"
 
 #: cmd/incus/create.go:188
-#, fuzzy, c-format
+#, c-format
 msgid "Failed loading network %q: %w"
-msgstr "%q の作成に失敗しました: %w"
+msgstr "ネットワーク %q の取得に失敗しました: %w"
 
 #: cmd/incus/create.go:313
 #, c-format
@@ -2802,9 +2800,9 @@ msgid "Failed loading profile %q for device override: %w"
 msgstr "デバイス上書きのためのプロファイル %q のロードに失敗しました: %w"
 
 #: cmd/incus/create.go:239
-#, fuzzy, c-format
+#, c-format
 msgid "Failed loading storage pool %q: %w"
-msgstr "%q の作成に失敗しました: %w"
+msgstr "ストレージプール %q の取得に失敗しました: %w"
 
 #: cmd/incus/file.go:1364
 #, c-format
@@ -2812,9 +2810,9 @@ msgid "Failed parsing SSH host key: %w"
 msgstr "SSH ホスト鍵の読み取りに失敗しました: %w"
 
 #: cmd/incus/admin_recover.go:196
-#, fuzzy, c-format
+#, c-format
 msgid "Failed parsing validation response: %w"
-msgstr "SSH ホスト鍵の読み取りに失敗しました: %w"
+msgstr "バリデーションレスポンスの読み取りに失敗しました: %w"
 
 #: cmd/incus/console.go:356
 #, c-format
@@ -2836,9 +2834,9 @@ msgid "Failed to add remote"
 msgstr "リモートの追加に失敗しました"
 
 #: cmd/incus/admin_init_interactive.go:478
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to add server cert to cluster: %w"
-msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
+msgstr "サーバー証明書のクラスターへの追加に失敗しました: %w"
 
 #: cmd/incus/admin_waitready.go:76
 #, c-format
@@ -2846,9 +2844,9 @@ msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr "デーモンが利用可能かどうかのチェックに失敗しました (試行 %d): %v"
 
 #: cmd/incus/export.go:188
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to close export file: %w"
-msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
+msgstr "エクスポートするファイルのクローズに失敗しました: %w"
 
 #: cmd/incus/remote.go:248
 #, c-format
@@ -2856,9 +2854,9 @@ msgid "Failed to close server cert file %q: %w"
 msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
 
 #: cmd/incus/cluster.go:667 cmd/incus/cluster.go:672
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to configure cluster: %w"
-msgstr "クラスタメンバへの接続に失敗しました: %w"
+msgstr "クラスターの設定に失敗しました: %w"
 
 #: cmd/incus/move.go:269 cmd/incus/move.go:345
 #, c-format
@@ -2866,19 +2864,19 @@ msgid "Failed to connect to cluster member: %w"
 msgstr "クラスターメンバへの接続に失敗しました: %w"
 
 #: cmd/incus/admin_init.go:105
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr "クラスタメンバへの接続に失敗しました: %w"
+msgstr "サーバー情報の取得のための接続に失敗しました: %w"
 
 #: cmd/incus/admin_init.go:100
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to connect to local daemon: %w"
-msgstr "クラスタメンバへの接続に失敗しました: %w"
+msgstr "ローカルデーモンへの接続に失敗しました: %w"
 
 #: cmd/incus/admin_init_interactive.go:463
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to connect to target cluster node %q: %w"
-msgstr "クラスタメンバへの接続に失敗しました: %w"
+msgstr "ターゲットのクラスターノード %q への接続に失敗しました: %w"
 
 #: cmd/incus/remote.go:238
 #, c-format
@@ -2901,14 +2899,14 @@ msgid "Failed to create certificate: %w"
 msgstr "証明書の作成に失敗しました: %w"
 
 #: cmd/incus/storage_volume.go:2623
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to create storage volume backup: %w"
-msgstr "エイリアス %s の作成に失敗しました: %w"
+msgstr "ストレージボリュームのバックアップ作成に失敗しました: %w"
 
 #: cmd/incus/move.go:236
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to delete original instance after copying it: %w"
-msgstr "新しいインスタンス名が取得できません"
+msgstr "移動元のインスタンスをコピーしたあとの削除に失敗しました: %w"
 
 #: cmd/incus/storage_bucket.go:1341
 #, fuzzy, c-format
@@ -2916,9 +2914,9 @@ msgid "Failed to fetch storage bucket backup: %w"
 msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
 
 #: cmd/incus/storage_volume.go:2702
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to fetch storage volume backup file: %w"
-msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
+msgstr "ストレージボリュームのバックアップファイルの取得に失敗しました: %w"
 
 #: cmd/incus/remote.go:270
 #, c-format
@@ -2926,9 +2924,9 @@ msgid "Failed to find project: %w"
 msgstr "プロジェクトが見つけられませんでした: %w"
 
 #: cmd/incus/admin_init.go:215 cmd/incus/admin_init.go:220
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to join cluster: %w"
-msgstr "クラスタメンバへの接続に失敗しました: %w"
+msgstr "クラスターへの join に失敗しました: %w"
 
 #: cmd/incus/file.go:1376
 #, c-format
@@ -2936,14 +2934,14 @@ msgid "Failed to listen for connection: %w"
 msgstr "コネクションのリッスンに失敗しました: %w"
 
 #: cmd/incus/admin_sql.go:116
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse dump response: %w"
-msgstr "エイリアス %s の削除に失敗しました: %w"
+msgstr "ダンプレスポンスの読み取りに失敗しました: %w"
 
 #: cmd/incus/cluster.go:1198
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse servers: %w"
-msgstr "サーバー証明書ファイル %q のクローズに失敗しました: %w"
+msgstr "サーバーの読み取りに失敗しました: %w"
 
 #: cmd/incus/admin_init_preseed.go:30
 #, fuzzy, c-format
@@ -4394,7 +4392,7 @@ msgstr "ログ:"
 
 #: cmd/incus/network.go:987
 msgid "Logical router"
-msgstr ""
+msgstr "論理ルーター"
 
 #: cmd/incus/file.go:1382
 #, c-format
