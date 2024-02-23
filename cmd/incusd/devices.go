@@ -37,6 +37,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -328,7 +329,7 @@ func fillFixedInstances(fixedInstances map[int64][]instance.Instance, inst insta
 	// If the `targetCpuPool` has been manually specified (explicit CPU IDs/ranges specified with `limits.cpu`)
 	if len(targetCpuPool) == targetCpuNum && !loadBalancing {
 		for _, nr := range targetCpuPool {
-			if !util.ValueInSlice(nr, effectiveCpus) {
+			if !slices.Contains(effectiveCpus, nr) {
 				continue
 			}
 
@@ -446,7 +447,7 @@ func deviceTaskBalance(s *state.State) {
 	isolatedCpusInt := resources.GetCPUIsolated()
 	effectiveCpusSlice := []string{}
 	for _, id := range effectiveCpusInt {
-		if util.ValueInSlice(id, isolatedCpusInt) {
+		if slices.Contains(isolatedCpusInt, id) {
 			continue
 		}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"slices"
 
 	"github.com/lxc/incus/internal/server/certificate"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -77,7 +78,7 @@ func (t *tls) CheckPermission(ctx context.Context, r *http.Request, object Objec
 
 	// Check project level permissions against the certificates project list.
 	projectName := object.Project()
-	if !util.ValueInSlice(projectName, projectNames) {
+	if !slices.Contains(projectNames, projectName) {
 		return api.StatusErrorf(http.StatusForbidden, "User does not have permission for project %q", projectName)
 	}
 
@@ -140,13 +141,13 @@ func (t *tls) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 	}
 
 	// Error if user does not have access to the project (unless we're getting projects, where we want to filter the results).
-	if !util.ValueInSlice(details.projectName, projectNames) && objectType != ObjectTypeProject {
+	if !slices.Contains(projectNames, details.projectName) && objectType != ObjectTypeProject {
 		return nil, api.StatusErrorf(http.StatusForbidden, "User does not have permissions for project %q", details.projectName)
 	}
 
 	// Filter objects by project.
 	return func(object Object) bool {
-		return util.ValueInSlice(object.Project(), projectNames)
+		return slices.Contains(projectNames, object.Project())
 	}, nil
 }
 

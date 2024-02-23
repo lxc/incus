@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/lxc/incus/internal/server/db"
@@ -13,7 +14,6 @@ import (
 	"github.com/lxc/incus/internal/server/storage/drivers"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 var earlyPatches = map[string]func(b *backend) error{
@@ -165,7 +165,7 @@ DELETE FROM storage_volumes WHERE id IN (
 // the corresponding project name as a prefix.
 func patchBucketNames(b *backend) error {
 	// Apply patch only for btrfs, dir, lvm, and zfs drivers.
-	if !util.ValueInSlice(b.driver.Info().Name, []string{"btrfs", "dir", "lvm", "zfs"}) {
+	if !slices.Contains([]string{"btrfs", "dir", "lvm", "zfs"}, b.driver.Info().Name) {
 		return nil
 	}
 

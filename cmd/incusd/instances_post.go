@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -468,7 +469,7 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 				return response.SmartError(err)
 			}
 
-			if !util.ValueInSlice(pool.Driver, db.StorageRemoteDriverNames()) {
+			if !slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
 				// Redirect to migration
 				return clusterCopyContainerInternal(s, r, source, projectName, profiles, req)
 			}
@@ -1032,7 +1033,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			for {
 				i++
 				req.Name = strings.ToLower(petname.Generate(2, "-"))
-				if !util.ValueInSlice(req.Name, names) {
+				if !slices.Contains(names, req.Name) {
 					break
 				}
 

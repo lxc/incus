@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,7 +13,6 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 // EventSource indicates the source of an event.
@@ -196,12 +196,12 @@ func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 			continue
 		}
 
-		if !util.ValueInSlice(event.Type, listener.messageTypes) {
+		if !slices.Contains(listener.messageTypes, event.Type) {
 			continue
 		}
 
 		// If the event doesn't come from this member and has been excluded by listener, don't deliver it.
-		if eventSource != EventSourceLocal && util.ValueInSlice(event.Location, listener.excludeLocations) {
+		if eventSource != EventSourceLocal && slices.Contains(listener.excludeLocations, event.Location) {
 			continue
 		}
 

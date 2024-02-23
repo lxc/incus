@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
-	"github.com/lxc/incus/shared/util"
 )
 
 type cmdClusterGroup struct {
@@ -487,7 +487,7 @@ func (c *cmdClusterGroupRemove) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if !util.ValueInSlice(args[1], member.Groups) {
+	if !slices.Contains(member.Groups, args[1]) {
 		return fmt.Errorf(i18n.G("Cluster group %s isn't currently applied to %s"), args[1], resource.name)
 	}
 
@@ -661,7 +661,7 @@ func (c *cmdClusterGroupAdd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if util.ValueInSlice(args[1], member.Groups) {
+	if slices.Contains(member.Groups, args[1]) {
 		return fmt.Errorf(i18n.G("Cluster member %s is already in group %s"), resource.name, args[1])
 	}
 

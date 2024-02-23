@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/internal/instance"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
 )
 
 type cmdSnapshot struct {
@@ -217,7 +217,7 @@ func (c *cmdSnapshotDelete) promptDelete(instName string, name string) error {
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !util.ValueInSlice(strings.ToLower(input), []string{i18n.G("yes")}) {
+	if !slices.Contains([]string{i18n.G("yes")}, strings.ToLower(input)) {
 		return fmt.Errorf(i18n.G("User aborted delete operation"))
 	}
 

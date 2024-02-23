@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -376,7 +377,7 @@ func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientTy
 			sendNetwork.Config = make(map[string]string)
 			for k, v := range applyNetwork.Config {
 				// Don't forward node specific keys (these will be merged in on recipient node).
-				if util.ValueInSlice(k, db.NodeSpecificNetworkConfig) {
+				if slices.Contains(db.NodeSpecificNetworkConfig, k) {
 					continue
 				}
 
@@ -431,7 +432,7 @@ func (n *common) configChanged(newNetwork api.NetworkPut) (bool, []string, api.N
 			dbUpdateNeeded = true
 
 			// Add non-user changed key to list of changed keys.
-			if !strings.HasPrefix(k, "user.") && !util.ValueInSlice(k, changedKeys) {
+			if !strings.HasPrefix(k, "user.") && !slices.Contains(changedKeys, k) {
 				changedKeys = append(changedKeys, k)
 			}
 		}
@@ -442,7 +443,7 @@ func (n *common) configChanged(newNetwork api.NetworkPut) (bool, []string, api.N
 			dbUpdateNeeded = true
 
 			// Add non-user changed key to list of changed keys.
-			if !strings.HasPrefix(k, "user.") && !util.ValueInSlice(k, changedKeys) {
+			if !strings.HasPrefix(k, "user.") && !slices.Contains(changedKeys, k) {
 				changedKeys = append(changedKeys, k)
 			}
 		}
@@ -686,7 +687,7 @@ func (n *common) bgpSetupPeers(oldConfig map[string]string) error {
 
 	// Remove old peers.
 	for _, peer := range oldPeers {
-		if util.ValueInSlice(peer, newPeers) {
+		if slices.Contains(newPeers, peer) {
 			continue
 		}
 
@@ -700,7 +701,7 @@ func (n *common) bgpSetupPeers(oldConfig map[string]string) error {
 
 	// Add new peers.
 	for _, peer := range newPeers {
-		if util.ValueInSlice(peer, oldPeers) {
+		if slices.Contains(oldPeers, peer) {
 			continue
 		}
 
@@ -780,7 +781,7 @@ func (n *common) bgpSetupPrefixes(oldConfig map[string]string) error {
 					return err
 				}
 			}
-		} else if !util.ValueInSlice(n.config[fmt.Sprintf("ipv%d.address", ipVersion)], []string{"", "none"}) {
+		} else if !slices.Contains([]string{"", "none"}, n.config[fmt.Sprintf("ipv%d.address", ipVersion)]) {
 			// If network has NAT disabled, then export the network's subnet if specified.
 			netAddress := n.config[fmt.Sprintf("ipv%d.address", ipVersion)]
 			_, subnet, err := net.ParseCIDR(netAddress)
@@ -808,7 +809,7 @@ func (n *common) bgpGetPeers(config map[string]string) []string {
 		}
 
 		fields := strings.Split(k, ".")
-		if !util.ValueInSlice(fields[2], peerNames) {
+		if !slices.Contains(peerNames, fields[2]) {
 			peerNames = append(peerNames, fields[2])
 		}
 	}
@@ -903,7 +904,7 @@ func (n *common) forwardValidate(listenAddress net.IP, forward *api.NetworkForwa
 	// Maps portSpecID to a portMap struct.
 	portMaps := make([]*forwardPortMap, 0, len(forward.Ports))
 	for portSpecID, portSpec := range forward.Ports {
-		if !util.ValueInSlice(portSpec.Protocol, validPortProcols) {
+		if !slices.Contains(validPortProcols, portSpec.Protocol) {
 			return nil, fmt.Errorf("Invalid port protocol in port specification %d, protocol must be one of: %s", portSpecID, strings.Join(validPortProcols, ", "))
 		}
 
@@ -1245,7 +1246,7 @@ func (n *common) loadBalancerValidate(listenAddress net.IP, forward *api.Network
 	// Check ports config.
 	portMaps := make([]*loadBalancerPortMap, 0, len(forward.Ports))
 	for portSpecID, portSpec := range forward.Ports {
-		if !util.ValueInSlice(portSpec.Protocol, validPortProcols) {
+		if !slices.Contains(validPortProcols, portSpec.Protocol) {
 			return nil, fmt.Errorf("Invalid port protocol in port specification %d, protocol must be one of: %s", portSpecID, strings.Join(validPortProcols, ", "))
 		}
 
@@ -1420,7 +1421,7 @@ func (n *common) peerValidate(peerName string, peer *api.NetworkPeerPut) error {
 		return err
 	}
 
-	if util.ValueInSlice(peerName, acl.ReservedNetworkSubects) {
+	if slices.Contains(acl.ReservedNetworkSubects, peerName) {
 		return fmt.Errorf("Name cannot be one of the reserved network subjects: %v", acl.ReservedNetworkSubects)
 	}
 

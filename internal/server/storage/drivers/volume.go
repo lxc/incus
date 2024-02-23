@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	internalInstance "github.com/lxc/incus/internal/instance"
@@ -366,13 +367,13 @@ func (v Volume) SnapshotsMatch(snapNames []string, op *operations.Operation) err
 	}
 
 	for _, snapName := range snapNames {
-		if !util.ValueInSlice(snapName, snapshots) {
+		if !slices.Contains(snapshots, snapName) {
 			return fmt.Errorf("Snapshot %q expected but not in storage", snapName)
 		}
 	}
 
 	for _, snapshot := range snapshots {
-		if !util.ValueInSlice(snapshot, snapNames) {
+		if !slices.Contains(snapNames, snapshot) {
 			return fmt.Errorf("Snapshot %q in storage but not expected", snapshot)
 		}
 	}

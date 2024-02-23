@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -67,7 +68,7 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 	// Special case restriction checks on volatile.* keys.
 	strip := false
 
-	if util.ValueInSlice(req.Source.Type, []string{"copy", "migration"}) {
+	if slices.Contains([]string{"copy", "migration"}, req.Source.Type) {
 		// Allow stripping volatile keys if dealing with a copy or migration.
 		strip = true
 	}
@@ -179,7 +180,7 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 
 	// Checker for safe volatile keys.
 	isSafeKey := func(key string) bool {
-		if util.ValueInSlice(key, []string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power"}) {
+		if slices.Contains([]string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power"}, key) {
 			return true
 		}
 
@@ -312,7 +313,7 @@ func checkRestrictionsAndAggregateLimits(tx *db.ClusterTx, info *projectInfo) er
 	aggregateKeys := []string{}
 	isRestricted := false
 	for key, value := range info.Project.Config {
-		if util.ValueInSlice(key, allAggregateLimits) {
+		if slices.Contains(allAggregateLimits, key) {
 			aggregateKeys = append(aggregateKeys, key)
 			continue
 		}
@@ -828,11 +829,11 @@ var allowableIntercept = []string{
 
 // Return true if a low-level container option is forbidden.
 func isContainerLowLevelOptionForbidden(key string) bool {
-	if strings.HasPrefix(key, "security.syscalls.intercept") && !util.ValueInSlice(key, allowableIntercept) {
+	if strings.HasPrefix(key, "security.syscalls.intercept") && !slices.Contains(allowableIntercept, key) {
 		return true
 	}
 
-	if util.ValueInSlice(key, []string{
+	if slices.Contains([]string{
 		"boot.host_shutdown_action",
 		"boot.host_shutdown_timeout",
 		"linux.kernel_modules",
@@ -843,7 +844,8 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 		"security.guestapi.images",
 		"security.idmap.base",
 		"security.idmap.size",
-	}) {
+	},
+		key) {
 		return true
 	}
 
@@ -852,13 +854,14 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 
 // Return true if a low-level VM option is forbidden.
 func isVMLowLevelOptionForbidden(key string) bool {
-	return util.ValueInSlice(key, []string{
+	return slices.Contains([]string{
 		"boot.host_shutdown_action",
 		"boot.host_shutdown_timeout",
 		"limits.memory.hugepages",
 		"raw.idmap",
 		"raw.qemu",
-	})
+	},
+		key)
 }
 
 // AllowInstanceUpdate returns an error if any project-specific limit or
@@ -1542,7 +1545,7 @@ func AllowClusterMember(p *api.Project, member *db.NodeInfo) error {
 
 	if util.IsTrue(p.Config["restricted"]) && len(clusterGroupsAllowed) > 0 {
 		for _, memberGroupName := range member.Groups {
-			if util.ValueInSlice(memberGroupName, clusterGroupsAllowed) {
+			if slices.Contains(clusterGroupsAllowed, memberGroupName) {
 				return nil
 			}
 		}
@@ -1562,7 +1565,7 @@ func AllowClusterGroup(p *api.Project, groupName string) error {
 		return nil
 	}
 
-	if len(clusterGroupsAllowed) > 0 && !util.ValueInSlice(groupName, clusterGroupsAllowed) {
+	if len(clusterGroupsAllowed) > 0 && !slices.Contains(clusterGroupsAllowed, groupName) {
 		return fmt.Errorf("Project isn't allowed to use this cluster group: %q", groupName)
 	}
 

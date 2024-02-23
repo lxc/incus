@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/lxc/incus/internal/server/metrics"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 // These mountpoints are excluded as they are irrelevant for metrics.
@@ -276,7 +276,7 @@ func getFilesystemMetrics(d *Daemon) ([]metrics.FilesystemMetrics, error) {
 		}
 
 		// Skip uninteresting mounts
-		if util.ValueInSlice(fields[2], defFSTypesExcluded) || defMountPointsExcluded.MatchString(fields[1]) {
+		if slices.Contains(defFSTypesExcluded, fields[2]) || defMountPointsExcluded.MatchString(fields[1]) {
 			continue
 		}
 

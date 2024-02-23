@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
 )
 
 // GetStoragePoolVolumesWithType return a list of all volumes of the given type.
@@ -452,7 +452,7 @@ func (c *ClusterTx) CreateStoragePoolVolume(ctx context.Context, projectName str
 
 	var result sql.Result
 
-	if util.ValueInSlice(driver, remoteDrivers) {
+	if slices.Contains(remoteDrivers, driver) {
 		result, err = c.tx.ExecContext(ctx, `
 INSERT INTO storage_volumes (storage_pool_id, type, name, description, project_id, content_type, creation_date)
  VALUES (?, ?, ?, ?, (SELECT id FROM projects WHERE name = ?), ?, ?)
@@ -653,7 +653,7 @@ func (c *ClusterTx) GetStorageVolumeNodes(ctx context.Context, poolID int64, pro
 		}
 
 		remoteDrivers := StorageRemoteDriverNames()
-		if util.ValueInSlice(driver, remoteDrivers) {
+		if slices.Contains(remoteDrivers, driver) {
 			return nil, ErrNoClusterMember
 		}
 	}

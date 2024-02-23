@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/netip"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -603,7 +604,7 @@ func networkClearHostVethLimits(d *deviceCommon) error {
 
 // networkValidGateway validates the gateway value.
 func networkValidGateway(value string) error {
-	if util.ValueInSlice(value, []string{"none", "auto"}) {
+	if slices.Contains([]string{"none", "auto"}, value) {
 		return nil
 	}
 

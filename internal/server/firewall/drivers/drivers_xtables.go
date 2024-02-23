@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -619,7 +620,7 @@ func (d Xtables) aclRuleCriteriaToArgs(networkName string, ipVersion uint, rule 
 	}
 
 	// Add protocol filters.
-	if util.ValueInSlice(rule.Protocol, []string{"tcp", "udp"}) {
+	if slices.Contains([]string{"tcp", "udp"}, rule.Protocol) {
 		args = append(args, "-p", rule.Protocol)
 
 		if rule.SourcePort != "" {
@@ -629,7 +630,7 @@ func (d Xtables) aclRuleCriteriaToArgs(networkName string, ipVersion uint, rule 
 		if rule.DestinationPort != "" {
 			args = append(args, d.aclRulePortToACLMatch("dports", util.SplitNTrimSpace(rule.DestinationPort, ",", -1, false)...)...)
 		}
-	} else if util.ValueInSlice(rule.Protocol, []string{"icmp4", "icmp6"}) {
+	} else if slices.Contains([]string{"icmp4", "icmp6"}, rule.Protocol) {
 		var icmpIPVersion uint
 		var protoName string
 		var extName string
@@ -1290,7 +1291,7 @@ func (d Xtables) iptablesClear(ipVersion uint, comments []string, fromTables ...
 	}
 
 	for _, fromTable := range fromTables {
-		if tables != nil && !util.ValueInSlice(fromTable, tables) {
+		if tables != nil && !slices.Contains(tables, fromTable) {
 			// If we successfully opened the tables file, and the requested table is not present,
 			// then skip trying to get a list of rules from that table.
 			continue

@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/internal/instancewriter"
@@ -501,7 +502,7 @@ func (d *common) ValidateBucketKey(keyName string, creds S3Credentials, roleName
 	}
 
 	validRoles := []string{"admin", "read-only"}
-	if !util.ValueInSlice(roleName, validRoles) {
+	if !slices.Contains(validRoles, roleName) {
 		return fmt.Errorf("Invalid key role")
 	}
 

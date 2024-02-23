@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -22,7 +23,6 @@ import (
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/termios"
 	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
 )
 
 type volumeColumn struct {
@@ -132,7 +132,7 @@ func (c *cmdStorageVolume) parseVolume(defaultType string, name string) (string,
 	fields := strings.SplitN(name, "/", 2)
 	if len(fields) == 1 {
 		return fields[0], defaultType
-	} else if len(fields) == 2 && !util.ValueInSlice(fields[0], []string{"custom", "image", "container", "virtual-machine"}) {
+	} else if len(fields) == 2 && !slices.Contains([]string{"custom", "image", "container", "virtual-machine"}, fields[0]) {
 		return name, defaultType
 	}
 
@@ -2782,7 +2782,7 @@ func (c *cmdStorageVolumeImport) Run(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		// Validate type flag
-		if !util.ValueInSlice(c.flagType, []string{"backup", "iso"}) {
+		if !slices.Contains([]string{"backup", "iso"}, c.flagType) {
 			return fmt.Errorf(i18n.G("Import type needs to be \"backup\" or \"iso\""))
 		}
 	}

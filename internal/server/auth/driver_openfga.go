@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"time"
 
-	"github.com/openfga/go-sdk"
+	openfga "github.com/openfga/go-sdk"
 	"github.com/openfga/go-sdk/client"
 	"github.com/openfga/go-sdk/credentials"
 
 	"github.com/lxc/incus/internal/server/certificate"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 func WriteOpenFGAAuthorizationModel(ctx context.Context, apiURL string, apiToken string, storeID string) (string, error) {
@@ -381,7 +381,7 @@ func (f *fga) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 	objects := resp.GetObjects()
 
 	return func(object Object) bool {
-		return util.ValueInSlice(object.String(), objects)
+		return slices.Contains(objects, object.String())
 	}, nil
 }
 
@@ -986,7 +986,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 		user := ObjectServer().String()
 
 		for _, localObject := range localObjects {
-			if !util.ValueInSlice(localObject.String(), remoteObjectStrs) {
+			if !slices.Contains(remoteObjectStrs, localObject.String()) {
 				if relation == relationProject {
 					user = ObjectProject(localObject.Project()).String()
 				}
@@ -1005,7 +1005,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 				return err
 			}
 
-			if !util.ValueInSlice(remoteObject, localObjects) {
+			if !slices.Contains(localObjects, remoteObject) {
 				if relation == relationProject {
 					user = ObjectProject(remoteObject.Project()).String()
 				}

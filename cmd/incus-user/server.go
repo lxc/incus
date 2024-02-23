@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/subprocess"
 	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
 )
 
 func serverIsConfigured(client incus.InstanceServer) (bool, error) {
@@ -26,7 +26,7 @@ func serverIsConfigured(client incus.InstanceServer) (bool, error) {
 		return false, fmt.Errorf("Failed to list networks: %w", err)
 	}
 
-	if !util.ValueInSlice("incusbr0", networks) {
+	if !slices.Contains(networks, "incusbr0") {
 		// Couldn't find incusbr0.
 		return false, nil
 	}
@@ -37,7 +37,7 @@ func serverIsConfigured(client incus.InstanceServer) (bool, error) {
 		return false, fmt.Errorf("Failed to list storage pools: %w", err)
 	}
 
-	if !util.ValueInSlice("default", pools) {
+	if !slices.Contains(pools, "default") {
 		// No storage pool found.
 		return false, nil
 	}
@@ -72,7 +72,7 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 		pool.Name = "default"
 
 		// Check if ZFS supported.
-		if util.ValueInSlice("zfs", availableBackends) {
+		if slices.Contains(availableBackends, "zfs") {
 			pool.Driver = "zfs"
 
 			// Check if zsys.
@@ -190,7 +190,7 @@ func serverSetupUser(uid uint32) error {
 		return fmt.Errorf("Unable to retrieve project list: %w", err)
 	}
 
-	if !util.ValueInSlice(projectName, projects) {
+	if !slices.Contains(projects, projectName) {
 		// Create the project.
 		err := client.CreateProject(api.ProjectsPost{
 			Name: projectName,

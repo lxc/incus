@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/lxc/incus/internal/i18n"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
-	"github.com/lxc/incus/shared/util"
 )
 
 type cmdProfile struct {
@@ -704,7 +704,7 @@ func (c *cmdProfileRemove) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if !util.ValueInSlice(args[1], inst.Profiles) {
+	if !slices.Contains(inst.Profiles, args[1]) {
 		return fmt.Errorf(i18n.G("Profile %s isn't currently applied to %s"), args[1], resource.name)
 	}
 

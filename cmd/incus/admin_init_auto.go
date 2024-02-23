@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/spf13/cobra"
 
@@ -18,11 +19,11 @@ import (
 
 func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Quick checks.
-	if c.flagStorageBackend != "" && !util.ValueInSlice(c.flagStorageBackend, []string{"dir", "btrfs", "lvm", "zfs"}) {
+	if c.flagStorageBackend != "" && !slices.Contains([]string{"dir", "btrfs", "lvm", "zfs"}, c.flagStorageBackend) {
 		return nil, fmt.Errorf(i18n.G("The requested backend '%s' isn't supported by init"), c.flagStorageBackend)
 	}
 
-	if c.flagStorageBackend != "" && !util.ValueInSlice(c.flagStorageBackend, linux.AvailableStorageDrivers(internalUtil.VarPath(), server.Environment.StorageSupportedDrivers, internalUtil.PoolTypeAny)) {
+	if c.flagStorageBackend != "" && !slices.Contains(linux.AvailableStorageDrivers(internalUtil.VarPath(), server.Environment.StorageSupportedDrivers, internalUtil.PoolTypeAny), c.flagStorageBackend) {
 		return nil, fmt.Errorf(i18n.G("The requested backend '%s' isn't available on your system (missing tools)"), c.flagStorageBackend)
 	}
 

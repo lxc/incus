@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -234,22 +235,22 @@ func lxcValidConfig(rawLxc string) error {
 
 			if !liblxc.RuntimeLiblxcVersionAtLeast(liblxc.Version(), 2, 1, 0) {
 				// lxc.network.X.ipv4 or lxc.network.X.ipv6
-				if len(fields) == 4 && util.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) {
+				if len(fields) == 4 && slices.Contains([]string{"ipv4", "ipv6"}, fields[3]) {
 					continue
 				}
 
 				// lxc.network.X.ipv4.gateway or lxc.network.X.ipv6.gateway
-				if len(fields) == 5 && util.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) && fields[4] == "gateway" {
+				if len(fields) == 5 && slices.Contains([]string{"ipv4", "ipv6"}, fields[3]) && fields[4] == "gateway" {
 					continue
 				}
 			} else {
 				// lxc.net.X.ipv4.address or lxc.net.X.ipv6.address
-				if len(fields) == 5 && util.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) && fields[4] == "address" {
+				if len(fields) == 5 && slices.Contains([]string{"ipv4", "ipv6"}, fields[3]) && fields[4] == "address" {
 					continue
 				}
 
 				// lxc.net.X.ipv4.gateway or lxc.net.X.ipv6.gateway
-				if len(fields) == 5 && util.ValueInSlice(fields[3], []string{"ipv4", "ipv6"}) && fields[4] == "gateway" {
+				if len(fields) == 5 && slices.Contains([]string{"ipv4", "ipv6"}, fields[3]) && fields[4] == "gateway" {
 					continue
 				}
 			}
@@ -568,7 +569,7 @@ func ResolveImage(ctx context.Context, tx *db.ClusterTx, projectName string, sou
 // A nil list indicates that we can't tell at this stage, typically for private images.
 func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx, projectName string, sourceInst *cluster.Instance, sourceImageRef string, req api.InstancesPost) ([]int, error) {
 	// Handle cases where the architecture is already provided.
-	if util.ValueInSlice(req.Source.Type, []string{"migration", "none"}) && req.Architecture != "" {
+	if slices.Contains([]string{"migration", "none"}, req.Source.Type) && req.Architecture != "" {
 		id, err := osarch.ArchitectureId(req.Architecture)
 		if err != nil {
 			return nil, err
@@ -618,7 +619,7 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 
 			var err error
 			var remote incus.ImageServer
-			if util.ValueInSlice(req.Source.Protocol, []string{"", "incus", "lxd"}) {
+			if slices.Contains([]string{"", "incus", "lxd"}, req.Source.Protocol) {
 				// Remote image server.
 				remote, err = incus.ConnectPublicIncus(req.Source.Server, &incus.ConnectionArgs{
 					TLSServerCert: req.Source.Certificate,
@@ -797,7 +798,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, chec
 		return nil, nil, nil, err
 	}
 
-	if checkArchitecture && !util.ValueInSlice(args.Architecture, s.OS.Architectures) {
+	if checkArchitecture && !slices.Contains(s.OS.Architectures, args.Architecture) {
 		return nil, nil, nil, fmt.Errorf("Requested architecture isn't supported by this host")
 	}
 
@@ -815,7 +816,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, chec
 
 	checkedProfiles := map[string]bool{}
 	for _, profile := range args.Profiles {
-		if !util.ValueInSlice(profile.Name, profiles) {
+		if !slices.Contains(profiles, profile.Name) {
 			return nil, nil, nil, fmt.Errorf("Requested profile %q doesn't exist", profile.Name)
 		}
 

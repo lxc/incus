@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -21,7 +22,6 @@ import (
 	"github.com/lxc/incus/shared/tcp"
 	localtls "github.com/lxc/incus/shared/tls"
 	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -733,7 +733,7 @@ func (r *ProtocolIncus) CopyInstance(source InstanceServer, instance api.Instanc
 			}
 		}
 
-		if util.ValueInSlice(args.Mode, []string{"push", "relay"}) {
+		if slices.Contains([]string{"push", "relay"}, args.Mode) {
 			if !r.HasExtension("container_push") {
 				return nil, fmt.Errorf("The target server is missing the required \"container_push\" API extension")
 			}
@@ -1753,7 +1753,7 @@ func (r *ProtocolIncus) CopyInstanceSnapshot(source InstanceServer, instanceName
 	// Process the copy arguments
 	if args != nil {
 		// Quick checks.
-		if util.ValueInSlice(args.Mode, []string{"push", "relay"}) {
+		if slices.Contains([]string{"push", "relay"}, args.Mode) {
 			if !r.HasExtension("container_push") {
 				return nil, fmt.Errorf("The target server is missing the required \"container_push\" API extension")
 			}

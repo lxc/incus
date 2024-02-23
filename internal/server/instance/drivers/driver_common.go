@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -822,7 +823,7 @@ func (d *common) getStartupSnapNameAndExpiry(inst instance.Instance) (string, *t
 	}
 
 	triggers := strings.Split(schedule, ", ")
-	if !util.ValueInSlice("@startup", triggers) {
+	if !slices.Contains(triggers, "@startup") {
 		return "", nil, nil
 	}
 
@@ -855,7 +856,7 @@ func (d *common) validateStartup(stateful bool, statusCode api.StatusCode) error
 	}
 
 	// Validate architecture.
-	if !util.ValueInSlice(d.architecture, d.state.OS.Architectures) {
+	if !slices.Contains(d.state.OS.Architectures, d.architecture) {
 		return fmt.Errorf("Requested architecture isn't supported by this host")
 	}
 
@@ -1049,7 +1050,7 @@ func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices d
 		"user.user-data",
 		"user.network-config",
 	} {
-		if util.ValueInSlice(key, changedConfig) {
+		if slices.Contains(changedConfig, key) {
 			return true
 		}
 	}
@@ -1084,13 +1085,13 @@ func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices d
 	newNames := getNICNames(d.expandedDevices)
 
 	for _, entry := range oldNames {
-		if !util.ValueInSlice(entry, newNames) {
+		if !slices.Contains(newNames, entry) {
 			return true
 		}
 	}
 
 	for _, entry := range newNames {
-		if !util.ValueInSlice(entry, oldNames) {
+		if !slices.Contains(oldNames, entry) {
 			return true
 		}
 	}
@@ -1137,7 +1138,7 @@ func (d *common) deviceLoad(inst instance.Instance, deviceName string, rawConfig
 	var err error
 
 	// Create copy of config and load some fields from volatile if device is nic or infiniband.
-	if util.ValueInSlice(rawConfig["type"], []string{"nic", "infiniband"}) {
+	if slices.Contains([]string{"nic", "infiniband"}, rawConfig["type"]) {
 		configCopy, err = inst.FillNetworkDevice(deviceName, rawConfig)
 		if err != nil {
 			return nil, err

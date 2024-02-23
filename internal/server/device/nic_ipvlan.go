@@ -3,6 +3,7 @@ package device
 import (
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/internal/revert"
@@ -115,7 +116,7 @@ func (d *nicIPVLAN) validateConfig(instConf instance.ConfigReader) error {
 		}
 
 		validModes := []string{ipvlanModeL3S, ipvlanModeL2}
-		if !util.ValueInSlice(value, validModes) {
+		if !slices.Contains(validModes, value) {
 			return fmt.Errorf("Must be one of: %v", strings.Join(validModes, ", "))
 		}
 

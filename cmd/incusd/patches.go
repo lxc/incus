@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -134,7 +135,7 @@ func patchesApply(d *Daemon, stage patchStage) error {
 			return fmt.Errorf("Patch %q has no stage set: %d", patch.name, patch.stage)
 		}
 
-		if util.ValueInSlice(patch.name, appliedPatches) {
+		if slices.Contains(appliedPatches, patch.name) {
 			continue
 		}
 

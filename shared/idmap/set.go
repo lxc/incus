@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 
 	"github.com/lxc/incus/shared/util"
@@ -240,7 +241,7 @@ func (m *Set) ToLXCString() []string {
 	var lines []string
 	for _, e := range m.Entries {
 		for _, l := range e.ToLXCString() {
-			if !util.ValueInSlice(l, lines) {
+			if !slices.Contains(lines, l) {
 				lines = append(lines, l)
 			}
 		}

@@ -4,9 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
-
-	"github.com/lxc/incus/shared/util"
 )
 
 // SupportsFilesystem checks whether a given filesystem is already supported
@@ -62,7 +61,7 @@ func HugepagesPath() (string, error) {
 	}
 
 	if len(matches) > 1 {
-		if util.ValueInSlice("/dev/hugepages", matches) {
+		if slices.Contains(matches, "/dev/hugepages") {
 			return "/dev/hugepages", nil
 		}
 

@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -158,7 +159,7 @@ func (d zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 
 	for _, dataset := range d.initialDatasets() {
 		properties := []string{"mountpoint=legacy"}
-		if util.ValueInSlice(dataset, []string{"virtual-machines", "deleted/virtual-machines"}) {
+		if slices.Contains([]string{"virtual-machines", "deleted/virtual-machines"}, dataset) {
 			properties = append(properties, "volmode=none")
 		}
 
@@ -391,7 +392,7 @@ func (d *zfs) Delete(op *operations.Operation) error {
 	for _, dataset := range datasets {
 		dataset = strings.TrimPrefix(dataset, "/")
 
-		if util.ValueInSlice(dataset, initialDatasets) {
+		if slices.Contains(initialDatasets, dataset) {
 			continue
 		}
 

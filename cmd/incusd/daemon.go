@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -293,7 +294,7 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 		// Expansion function to deal with project inheritance.
 		expandProject := func(projectName string) string {
 			// Object types that aren't part of projects.
-			if util.ValueInSlice(objectType, []auth.ObjectType{auth.ObjectTypeUser, auth.ObjectTypeServer, auth.ObjectTypeCertificate, auth.ObjectTypeStoragePool}) {
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeUser, auth.ObjectTypeServer, auth.ObjectTypeCertificate, auth.ObjectTypeStoragePool}, objectType) {
 				return projectName
 			}
 
@@ -329,9 +330,9 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 				projectName = project.StorageVolumeProjectFromRecord(p, dbVolType)
 			} else if objectType == auth.ObjectTypeNetworkZone {
 				projectName = project.NetworkZoneProjectFromRecord(p)
-			} else if util.ValueInSlice(objectType, []auth.ObjectType{auth.ObjectTypeImage, auth.ObjectTypeImageAlias}) {
+			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeImage, auth.ObjectTypeImageAlias}, objectType) {
 				projectName = project.ImageProjectFromRecord(p)
-			} else if util.ValueInSlice(objectType, []auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL}) {
+			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL}, objectType) {
 				projectName = project.NetworkProjectFromRecord(p)
 			}
 
@@ -555,7 +556,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		}
 
 		// Reject internal queries to remote, non-cluster, clients
-		if version == "internal" && !util.ValueInSlice(protocol, []string{"unix", "cluster"}) {
+		if version == "internal" && !slices.Contains([]string{"unix", "cluster"}, protocol) {
 			// Except for the initial cluster accept request (done over trusted TLS)
 			if !trusted || c.Path != "cluster/accept" || protocol != api.AuthenticationMethodTLS {
 				logger.Warn("Rejecting remote internal API request", logger.Ctx{"ip": r.RemoteAddr})
@@ -1078,7 +1079,7 @@ func (d *Daemon) init() error {
 
 	/* Setup dqlite */
 	clusterLogLevel := "ERROR"
-	if util.ValueInSlice("dqlite", trace) {
+	if slices.Contains(trace, "dqlite") {
 		clusterLogLevel = "TRACE"
 	}
 
@@ -1184,7 +1185,7 @@ func (d *Daemon) init() error {
 			driver.WithLogFunc(cluster.DqliteLog),
 		}
 
-		if util.ValueInSlice("database", trace) {
+		if slices.Contains(trace, "database") {
 			options = append(options, driver.WithTracing(dqliteClient.LogDebug))
 		}
 

@@ -3,6 +3,7 @@ package acl
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
@@ -83,7 +84,7 @@ func Exists(s *state.State, projectName string, name ...string) error {
 	checkedACLNames := make(map[string]struct{}, len(name))
 
 	for _, aclName := range name {
-		if !util.ValueInSlice(aclName, existingACLNames) {
+		if !slices.Contains(existingACLNames, aclName) {
 			return fmt.Errorf("Network ACL %q does not exist", aclName)
 		}
 
@@ -124,7 +125,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 			netACLNames := util.SplitNTrimSpace(network.Config["security.acls"], ",", -1, true)
 			matchedACLNames := []string{}
 			for _, netACLName := range netACLNames {
-				if util.ValueInSlice(netACLName, matchACLNames) {
+				if slices.Contains(matchACLNames, netACLName) {
 					matchedACLNames = append(matchedACLNames, netACLName)
 				}
 			}
@@ -209,7 +210,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 			for _, rule := range aclInfo.Ingress {
 				for _, subject := range util.SplitNTrimSpace(rule.Source, ",", -1, true) {
 					// Look for new matching ACLs, but ignore our own ACL reference in our own rules.
-					if util.ValueInSlice(subject, matchACLNames) && !util.ValueInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
+					if slices.Contains(matchACLNames, subject) && !slices.Contains(matchedACLNames, subject) && subject != aclInfo.Name {
 						matchedACLNames = append(matchedACLNames, subject)
 					}
 				}
@@ -219,7 +220,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 			for _, rule := range aclInfo.Egress {
 				for _, subject := range util.SplitNTrimSpace(rule.Destination, ",", -1, true) {
 					// Look for new matching ACLs, but ignore our own ACL reference in our own rules.
-					if util.ValueInSlice(subject, matchACLNames) && !util.ValueInSlice(subject, matchedACLNames) && subject != aclInfo.Name {
+					if slices.Contains(matchACLNames, subject) && !slices.Contains(matchedACLNames, subject) && subject != aclInfo.Name {
 						matchedACLNames = append(matchedACLNames, subject)
 					}
 				}
@@ -283,7 +284,7 @@ func isInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
 	}
 
 	for _, nicACLName := range util.SplitNTrimSpace(d["security.acls"], ",", -1, true) {
-		if util.ValueInSlice(nicACLName, matchACLNames) {
+		if slices.Contains(matchACLNames, nicACLName) {
 			matchedACLNames = append(matchedACLNames, nicACLName)
 		}
 	}
@@ -312,7 +313,7 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 				return fmt.Errorf("Failed to load network %q: %w", nicConfig["network"], err)
 			}
 
-			if util.ValueInSlice(network.Type, supportedNetTypes) {
+			if slices.Contains(supportedNetTypes, network.Type) {
 				_, found := aclNets[network.Name]
 				if !found {
 					aclNets[network.Name] = NetworkACLUsage{
@@ -325,7 +326,7 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 			}
 
 		case *api.Network:
-			if util.ValueInSlice(u.Type, supportedNetTypes) {
+			if slices.Contains(supportedNetTypes, u.Type) {
 				_, found := aclNets[u.Name]
 				if !found {
 					networkID, network, _, err := tx.GetNetworkInAnyState(ctx, aclProjectName, u.Name)

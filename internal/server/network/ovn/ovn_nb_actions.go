@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1544,7 +1545,7 @@ func (o *NB) ChassisGroupChassisDelete(haChassisGroupName OVNChassisGroup, chass
 		members := util.SplitNTrimSpace(lines[1], " ", -1, true)
 
 		// Remove chassis from group if exists.
-		if existingChassisGroup == string(haChassisGroupName) && util.ValueInSlice(chassisID, members) {
+		if existingChassisGroup == string(haChassisGroupName) && slices.Contains(members, chassisID) {
 			_, err := o.nbctl("ha-chassis-group-remove-chassis", string(haChassisGroupName), chassisID)
 			if err != nil {
 				return err
