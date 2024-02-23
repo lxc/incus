@@ -1041,6 +1041,16 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 		return fmt.Errorf("Stateful start requires migration.stateful to be set to true")
 	}
 
+	// Ensure secureboot is turned off for images that are not secureboot enabled.
+	if util.IsFalse(d.localConfig["image.requirements.secureboot"]) && util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
+		return fmt.Errorf("The image used by this instance is incompatible with secureboot. Please set security.secureboot=false on the instance")
+	}
+
+	// Ensure secureboot is turned off when CSM is on.
+	if util.IsTrue(d.expandedConfig["security.csm"]) && util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
+		return fmt.Errorf("Secure boot can't be enabled while CSM is turned on. Please set security.secureboot=false on the instance")
+	}
+
 	// The "size.state" of the instance root disk device must be larger than the instance memory.
 	// Otherwise, there will not be enough disk space to write the instance state to disk during any subsequent stops.
 	// (Only check when migration.stateful is true, otherwise the memory won't be dumped when this instance stops).
@@ -1107,16 +1117,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	err := d.validateStartup(stateful, d.statusCode())
 	if err != nil {
 		return err
-	}
-
-	// Ensure secureboot is turned off for images that are not secureboot enabled
-	if util.IsFalse(d.localConfig["image.requirements.secureboot"]) && util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
-		return fmt.Errorf("The image used by this instance is incompatible with secureboot. Please set security.secureboot=false on the instance")
-	}
-
-	// Ensure secureboot is turned off when CSM is on
-	if util.IsTrue(d.expandedConfig["security.csm"]) && util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
-		return fmt.Errorf("Secure boot can't be enabled while CSM is turned on. Please set security.secureboot=false on the instance")
 	}
 
 	// Setup a new operation if needed.
