@@ -5,11 +5,11 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared/util"
 )
 
 // CGroup represents the main cgroup abstraction.
@@ -675,11 +675,11 @@ func (cg *CGroup) SetBlkioWeight(limit int64) error {
 
 // SetBlkioLimit sets the specified read or write limit for a device.
 func (cg *CGroup) SetBlkioLimit(dev string, oType string, uType string, limit int64) error {
-	if !util.ValueInSlice(oType, []string{"read", "write"}) {
+	if !slices.Contains([]string{"read", "write"}, oType) {
 		return fmt.Errorf("Invalid I/O operation type: %s", oType)
 	}
 
-	if !util.ValueInSlice(uType, []string{"iops", "bps"}) {
+	if !slices.Contains([]string{"iops", "bps"}, uType) {
 		return fmt.Errorf("Invalid I/O limit type: %s", uType)
 	}
 

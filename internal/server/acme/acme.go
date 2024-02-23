@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/go-acme/lego/v4/acme"
@@ -35,7 +36,7 @@ const ClusterCertFilename = "cluster.crt.new"
 // certificateNeedsUpdate returns true if the domain doesn't match the certificate's DNS names
 // or it's valid for less than 30 days.
 func certificateNeedsUpdate(domain string, cert *x509.Certificate) bool {
-	return !util.ValueInSlice(domain, cert.DNSNames) || time.Now().After(cert.NotAfter.Add(-30*24*time.Hour))
+	return !slices.Contains(cert.DNSNames, domain) || time.Now().After(cert.NotAfter.Add(-30*24*time.Hour))
 }
 
 // UpdateCertificate updates the certificate.

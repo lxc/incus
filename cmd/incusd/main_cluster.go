@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/cowsql/go-cowsql/client"
@@ -25,7 +26,6 @@ import (
 	"github.com/lxc/incus/internal/server/sys"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/termios"
-	"github.com/lxc/incus/shared/util"
 )
 
 type cmdCluster struct {
@@ -434,7 +434,7 @@ Do you want to proceed? (yes/no): `)
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !util.ValueInSlice(strings.ToLower(input), []string{"yes"}) {
+	if !slices.Contains([]string{"yes"}, strings.ToLower(input)) {
 		return fmt.Errorf("Recover operation aborted")
 	}
 
@@ -498,7 +498,7 @@ Do you want to proceed? (yes/no): `)
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
-	if !util.ValueInSlice(strings.ToLower(input), []string{"yes"}) {
+	if !slices.Contains([]string{"yes"}, strings.ToLower(input)) {
 		return fmt.Errorf("Remove raft node operation aborted")
 	}
 

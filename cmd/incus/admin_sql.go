@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -15,7 +16,6 @@ import (
 	cli "github.com/lxc/incus/internal/cmd"
 	"github.com/lxc/incus/internal/i18n"
 	internalSQL "github.com/lxc/incus/internal/sql"
-	"github.com/lxc/incus/shared/util"
 )
 
 type cmdAdminSQL struct {
@@ -73,7 +73,7 @@ func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
 	database := args[0]
 	query := args[1]
 
-	if !util.ValueInSlice(database, []string{"local", "global"}) {
+	if !slices.Contains([]string{"local", "global"}, database) {
 		_ = cmd.Help()
 
 		return fmt.Errorf(i18n.G("Invalid database type"))

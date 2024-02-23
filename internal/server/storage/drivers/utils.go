@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -423,7 +424,7 @@ func filesystemTypeCanBeShrunk(fsType string) bool {
 		fsType = DefaultFilesystem
 	}
 
-	if util.ValueInSlice(fsType, []string{"ext4", "btrfs"}) {
+	if slices.Contains([]string{"ext4", "btrfs"}, fsType) {
 		return true
 	}
 

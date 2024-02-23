@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 
 	"github.com/lxc/incus/internal/migration"
 	backupConfig "github.com/lxc/incus/internal/server/backup/config"
@@ -11,7 +12,6 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
 )
 
 // Info represents the index frame sent if supported.
@@ -201,19 +201,19 @@ func MatchTypes(offer *migration.MigrationHeader, fallbackType migration.Migrati
 			// Find common features in both our type and offered type.
 			commonFeatures := []string{}
 			for _, ourFeature := range ourType.Features {
-				if util.ValueInSlice(ourFeature, offeredFeatures) {
+				if slices.Contains(offeredFeatures, ourFeature) {
 					commonFeatures = append(commonFeatures, ourFeature)
 				}
 			}
 
 			if offer.GetRefresh() {
 				// Optimized refresh with zfs only works if ZfsFeatureMigrationHeader is available.
-				if ourType.FSType == migration.MigrationFSType_ZFS && !util.ValueInSlice(migration.ZFSFeatureMigrationHeader, commonFeatures) {
+				if ourType.FSType == migration.MigrationFSType_ZFS && !slices.Contains(commonFeatures, migration.ZFSFeatureMigrationHeader) {
 					continue
 				}
 
 				// Optimized refresh with btrfs only works if BtrfsFeatureSubvolumeUUIDs is available.
-				if ourType.FSType == migration.MigrationFSType_BTRFS && !util.ValueInSlice(migration.BTRFSFeatureSubvolumeUUIDs, commonFeatures) {
+				if ourType.FSType == migration.MigrationFSType_BTRFS && !slices.Contains(commonFeatures, migration.BTRFSFeatureSubvolumeUUIDs) {
 					continue
 				}
 			}

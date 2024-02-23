@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 
 	"github.com/lxc/incus/internal/server/db"
@@ -144,7 +145,7 @@ func UsedBy(ctx context.Context, s *state.State, pool Pool, firstOnly bool, memb
 		for _, vol := range volumes {
 			var u *api.URL
 
-			if util.ValueInSlice(vol.Type, ignoreVolumeType) {
+			if slices.Contains(ignoreVolumeType, vol.Type) {
 				continue
 			}
 

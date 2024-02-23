@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/cancel"
-	"github.com/lxc/incus/shared/util"
 )
 
 // DevIncusServer represents an instance of an devIncus event server.
@@ -79,7 +79,7 @@ func (s *DevIncusServer) broadcast(instanceID int, event api.Event) error {
 	s.lock.Lock()
 	listeners := s.listeners
 	for _, listener := range listeners {
-		if !util.ValueInSlice(event.Type, listener.messageTypes) {
+		if !slices.Contains(listener.messageTypes, event.Type) {
 			continue
 		}
 

@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
 )
 
 // eventHubMinHosts is the minimum number of members that must have the event-hub role to trigger switching into
@@ -324,7 +324,7 @@ func EventsUpdateListeners(endpoints *endpoints.Endpoints, cluster *db.Cluster, 
 
 			// Indicate to any notifiers waiting for this member's address that it is connected.
 			for connected, notifyAddresses := range listenersNotify {
-				if util.ValueInSlice(m.Address, notifyAddresses) {
+				if slices.Contains(notifyAddresses, m.Address) {
 					close(connected)
 					delete(listenersNotify, connected)
 				}

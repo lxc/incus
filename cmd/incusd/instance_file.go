@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -24,7 +25,6 @@ import (
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
@@ -448,7 +448,7 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 	// Extract file ownership and mode from headers
 	uid, gid, mode, type_, write := api.ParseFileHeaders(r.Header)
 
-	if !util.ValueInSlice(write, []string{"overwrite", "append"}) {
+	if !slices.Contains([]string{"overwrite", "append"}, write) {
 		return response.BadRequest(fmt.Errorf("Bad file write mode: %s", write))
 	}
 

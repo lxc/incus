@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/internal/server/db/generate/lex"
@@ -153,7 +154,7 @@ func (m *Mapping) ColumnFields(exclude ...string) []*Field {
 	fields := []*Field{}
 
 	for _, field := range m.Fields {
-		if util.ValueInSlice(field.Name, exclude) {
+		if slices.Contains(exclude, field.Name) {
 			continue
 		}
 

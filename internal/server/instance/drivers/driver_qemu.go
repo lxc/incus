@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -421,7 +422,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	state := d.state
 
 	return func(event string, data map[string]any) {
-		if !util.ValueInSlice(event, []string{qmp.EventVMShutdown, qmp.EventAgentStarted}) {
+		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventAgentStarted}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -1919,7 +1920,7 @@ func (d *qemu) AgentCertificate() *x509.Certificate {
 }
 
 func (d *qemu) architectureSupportsUEFI(arch int) bool {
-	return util.ValueInSlice(arch, []int{osarch.ARCH_64BIT_INTEL_X86, osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN})
+	return slices.Contains([]int{osarch.ARCH_64BIT_INTEL_X86, osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN}, arch)
 }
 
 func (d *qemu) setupNvram() error {
@@ -2347,7 +2348,7 @@ func (d *qemu) deviceAttachNIC(deviceName string, configCopy map[string]string, 
 	qemuDev := make(map[string]string)
 
 	// PCIe and PCI require a port device name to hotplug the NIC into.
-	if util.ValueInSlice(qemuBus, []string{"pcie", "pci"}) {
+	if slices.Contains([]string{"pcie", "pci"}, qemuBus) {
 		pciDevID := qemuPCIDeviceIDStart
 
 		// Iterate through all the instance devices in the same sorted order as is used when allocating the
@@ -2494,7 +2495,7 @@ func (d *qemu) deviceDetachNIC(deviceName string) error {
 		return err
 	}
 
-	if util.ValueInSlice(qemuBus, []string{"pcie", "pci"}) {
+	if slices.Contains([]string{"pcie", "pci"}, qemuBus) {
 		// Wait until the device is actually removed (or we timeout waiting).
 		waitDuration := time.Duration(time.Second * time.Duration(10))
 		waitUntil := time.Now().Add(waitDuration)
@@ -2988,7 +2989,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 	}
 
 	// Allow disabling the UEFI firmware.
-	if util.ValueInSlice("-bios", rawOptions) || util.ValueInSlice("-kernel", rawOptions) {
+	if slices.Contains(rawOptions, "-bios") || slices.Contains(rawOptions, "-kernel") {
 		d.logger.Warn("Starting VM without default firmware (-bios or -kernel in raw.qemu)")
 	} else if d.architectureSupportsUEFI(d.architecture) {
 		// Open the UEFI NVRAM file and pass it via file descriptor to QEMU.
@@ -3226,7 +3227,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 
 	// Dynamic devices.
 	base := 0
-	if util.ValueInSlice("-kernel", rawOptions) {
+	if slices.Contains(rawOptions, "-kernel") {
 		base = 1
 	}
 
@@ -3260,7 +3261,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 				}
 
 				qemuDev := make(map[string]string)
-				if util.ValueInSlice(busName, []string{"nvme", "virtio-blk"}) {
+				if slices.Contains([]string{"nvme", "virtio-blk"}, busName) {
 					// Allocate a PCI(e) port and write it to the config file so QMP can "hotplug" the
 					// drive into it later.
 					devBus, devAddr, multi := bus.allocate(busFunctionGroupNone)
@@ -3295,7 +3296,7 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		// Add network device.
 		if len(runConf.NetworkInterface) > 0 {
 			qemuDev := make(map[string]string)
-			if util.ValueInSlice(bus.name, []string{"pcie", "pci"}) {
+			if slices.Contains([]string{"pcie", "pci"}, bus.name) {
 				// Allocate a PCI(e) port and write it to the config file so QMP can "hotplug" the
 				// NIC into it later.
 				devBus, devAddr, multi := bus.allocate(busFunctionGroupNone)
@@ -3531,7 +3532,7 @@ func (d *qemu) addRootDriveConfig(qemuDev map[string]string, mountInfo *storageP
 	if d.storagePool.Driver().Info().Remote {
 		vol := d.storagePool.GetVolume(storageDrivers.VolumeTypeVM, storageDrivers.ContentTypeBlock, project.Instance(d.project.Name, d.name), nil)
 
-		if util.ValueInSlice(d.storagePool.Driver().Info().Name, []string{"ceph", "cephfs"}) {
+		if slices.Contains([]string{"ceph", "cephfs"}, d.storagePool.Driver().Info().Name) {
 			config := d.storagePool.ToAPI().Config
 
 			userName := config["ceph.user.name"]
@@ -3567,7 +3568,7 @@ func (d *qemu) addDriveDirConfig(cfg *[]cfgSection, bus *qemuBus, fdFiles *[]*os
 		agentMount.Options = append(agentMount.Options, "trans=virtio,msize=33554432")
 	}
 
-	readonly := util.ValueInSlice("ro", driveConf.Opts)
+	readonly := slices.Contains(driveConf.Opts, "ro")
 
 	// Indicate to agent to mount this readonly. Note: This is purely to indicate to VM guest that this is
 	// readonly, it should *not* be used as a security measure, as the VM guest could remount it R/W.
@@ -3652,7 +3653,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 	info := DriverStatuses()[instancetype.VM].Info
 	minVer, _ := version.NewDottedVersion("5.13.0")
 	_, ioUring := info.Features["io_uring"]
-	if util.ValueInSlice(device.DiskIOUring, driveConf.Opts) && ioUring && d.state.OS.KernelVersion.Compare(minVer) >= 0 {
+	if slices.Contains(driveConf.Opts, device.DiskIOUring) && ioUring && d.state.OS.KernelVersion.Compare(minVer) >= 0 {
 		aioMode = "io_uring"
 	}
 
@@ -3724,7 +3725,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 				// Only warn about using writeback cache if the drive image is writable.
 				d.logger.Warn("Using writeback cache I/O", logger.Ctx{"device": driveConf.DevName, "devPath": srcDevPath, "fsType": fsType})
 			}
-		} else if !util.ValueInSlice(device.DiskDirectIO, driveConf.Opts) {
+		} else if !slices.Contains(driveConf.Opts, device.DiskDirectIO) {
 			// If drive config indicates we need to use unsafe I/O then use it.
 			d.logger.Warn("Using unsafe cache I/O", logger.Ctx{"device": driveConf.DevName, "devPath": srcDevPath})
 			aioMode = "threads"
@@ -3873,7 +3874,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 		}
 	}
 
-	readonly := util.ValueInSlice("ro", driveConf.Opts)
+	readonly := slices.Contains(driveConf.Opts, "ro")
 
 	if readonly {
 		blockDev["read-only"] = true
@@ -3901,7 +3902,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 		} else if media == "cdrom" {
 			qemuDev["driver"] = "scsi-cd"
 		}
-	} else if util.ValueInSlice(bus, []string{"nvme", "virtio-blk"}) {
+	} else if slices.Contains([]string{"nvme", "virtio-blk"}, bus) {
 		if qemuDev["bus"] == "" {
 			// Figure out a hotplug slot.
 			pciDevID := qemuPCIDeviceIDStart
@@ -4035,7 +4036,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]string, bootIn
 		vectors := 2*queueCount + 2
 		if vectors > 0 {
 			qemuDev["mq"] = "on"
-			if util.ValueInSlice(busName, []string{"pcie", "pci"}) {
+			if slices.Contains([]string{"pcie", "pci"}, busName) {
 				qemuDev["vectors"] = strconv.Itoa(vectors)
 			}
 		}
@@ -4109,7 +4110,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]string, bootIn
 				"vhost": vhostNetEnabled,
 			}
 
-			if util.ValueInSlice(busName, []string{"pcie", "pci"}) {
+			if slices.Contains([]string{"pcie", "pci"}, busName) {
 				qemuDev["driver"] = "virtio-net-pci"
 			} else if busName == "ccw" {
 				qemuDev["driver"] = "virtio-net-ccw"
@@ -4218,7 +4219,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]string, bootIn
 				"queues":  queues,
 			}
 
-			if util.ValueInSlice(busName, []string{"pcie", "pci"}) {
+			if slices.Contains([]string{"pcie", "pci"}, busName) {
 				qemuDev["driver"] = "virtio-net-pci"
 			} else if busName == "ccw" {
 				qemuDev["driver"] = "virtio-net-ccw"
@@ -4239,7 +4240,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]string, bootIn
 		}
 	} else if pciSlotName != "" {
 		// Detect physical passthrough device.
-		if util.ValueInSlice(busName, []string{"pcie", "pci"}) {
+		if slices.Contains([]string{"pcie", "pci"}, busName) {
 			qemuDev["driver"] = "vfio-pci"
 		} else if busName == "ccw" {
 			qemuDev["driver"] = "vfio-ccw"
@@ -5179,11 +5180,11 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 
 	checkedProfiles := []string{}
 	for _, profile := range args.Profiles {
-		if !util.ValueInSlice(profile.Name, profiles) {
+		if !slices.Contains(profiles, profile.Name) {
 			return fmt.Errorf("Requested profile '%s' doesn't exist", profile.Name)
 		}
 
-		if util.ValueInSlice(profile.Name, checkedProfiles) {
+		if slices.Contains(checkedProfiles, profile.Name) {
 			return fmt.Errorf("Duplicate profile found in request")
 		}
 
@@ -5276,7 +5277,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	changedConfig := []string{}
 	for key := range oldExpandedConfig {
 		if oldExpandedConfig[key] != d.expandedConfig[key] {
-			if !util.ValueInSlice(key, changedConfig) {
+			if !slices.Contains(changedConfig, key) {
 				changedConfig = append(changedConfig, key)
 			}
 		}
@@ -5284,7 +5285,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 
 	for key := range d.expandedConfig {
 		if oldExpandedConfig[key] != d.expandedConfig[key] {
-			if !util.ValueInSlice(key, changedConfig) {
+			if !slices.Contains(changedConfig, key) {
 				changedConfig = append(changedConfig, key)
 			}
 		}
@@ -5363,7 +5364,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	// If apparmor changed, re-validate the apparmor profile (even if not running).
-	if util.ValueInSlice("raw.apparmor", changedConfig) {
+	if slices.Contains(changedConfig, "raw.apparmor") {
 		qemuPath, _, err := d.qemuArchConfig(d.architecture)
 		if err != nil {
 			return err
@@ -5415,7 +5416,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				return d.architectureSupportsCPUHotplug()
 			}
 
-			if util.ValueInSlice(key, liveUpdateKeys) {
+			if slices.Contains(liveUpdateKeys, key) {
 				return true
 			}
 
@@ -5483,7 +5484,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 		}
 	}
 
-	if d.architectureSupportsUEFI(d.architecture) && (util.ValueInSlice("security.secureboot", changedConfig) || util.ValueInSlice("security.csm", changedConfig)) {
+	if d.architectureSupportsUEFI(d.architecture) && (slices.Contains(changedConfig, "security.secureboot") || slices.Contains(changedConfig, "security.csm")) {
 		// setupNvram() requires instance's config volume to be mounted.
 		// The easiest way to detect that is to check if instance is running.
 		// TODO: extend storage API to be able to check if volume is already mounted?
@@ -6376,7 +6377,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		// Ensure that only the requested snapshots are included in the migration index header.
 		volSourceArgs.Info.Config.VolumeSnapshots = make([]*api.StorageVolumeSnapshot, 0, len(volSourceArgs.Snapshots))
 		for i := range allSnapshots {
-			if util.ValueInSlice(allSnapshots[i].Name, volSourceArgs.Snapshots) {
+			if slices.Contains(volSourceArgs.Snapshots, allSnapshots[i].Name) {
 				volSourceArgs.Info.Config.VolumeSnapshots = append(volSourceArgs.Info.Config.VolumeSnapshots, allSnapshots[i])
 			}
 		}
@@ -7956,7 +7957,7 @@ func (d *qemu) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConf
 	}
 
 	// Fill in the MAC address.
-	if !util.ValueInSlice(nicType, []string{"physical", "ipvlan", "sriov"}) && m["hwaddr"] == "" {
+	if !slices.Contains([]string{"physical", "ipvlan", "sriov"}, nicType) && m["hwaddr"] == "" {
 		configKey := fmt.Sprintf("volatile.%s.hwaddr", name)
 		volatileHwaddr := d.localConfig[configKey]
 		if volatileHwaddr == "" {
@@ -8059,7 +8060,7 @@ func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
 							sockets[cpu.Socket] = []uint64{}
 						}
 
-						if !util.ValueInSlice(core.Core, sockets[cpu.Socket]) {
+						if !slices.Contains(sockets[cpu.Socket], core.Core) {
 							sockets[cpu.Socket] = append(sockets[cpu.Socket], core.Core)
 						}
 
@@ -8069,7 +8070,7 @@ func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
 							cores[core.Core] = []uint64{}
 						}
 
-						if !util.ValueInSlice(thread.Thread, cores[core.Core]) {
+						if !slices.Contains(cores[core.Core], thread.Thread) {
 							cores[core.Core] = append(cores[core.Core], thread.Thread)
 						}
 
@@ -8396,7 +8397,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		parts := strings.Split(string(cmdline), " ")
 
 		// Check if SME is enabled in the kernel command line.
-		if util.ValueInSlice("mem_encrypt=on", parts) {
+		if slices.Contains(parts, "mem_encrypt=on") {
 			features["sme"] = struct{}{}
 		}
 

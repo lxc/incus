@@ -2,10 +2,9 @@ package util
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
-
-	"github.com/lxc/incus/shared/util"
 )
 
 // CompareConfigs compares two config maps and returns an error if they differ.
@@ -16,7 +15,7 @@ func CompareConfigs(config1, config2 map[string]string, exclude []string) error 
 
 	delta := []string{}
 	for key, value := range config1 {
-		if util.ValueInSlice(key, exclude) {
+		if slices.Contains(exclude, key) {
 			continue
 		}
 
@@ -25,7 +24,7 @@ func CompareConfigs(config1, config2 map[string]string, exclude []string) error 
 		}
 	}
 	for key, value := range config2 {
-		if util.ValueInSlice(key, exclude) {
+		if slices.Contains(exclude, key) {
 			continue
 		}
 

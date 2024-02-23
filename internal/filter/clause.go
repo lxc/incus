@@ -3,9 +3,8 @@ package filter
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
-
-	"github.com/lxc/incus/shared/util"
 )
 
 // Clause is a single filter clause in a filter string.
@@ -101,7 +100,7 @@ func Parse(s string, op OperatorSet) (*ClauseSet, error) {
 		clause.PrevLogical = prevLogical
 		if index < len(parts) {
 			prevLogical = parts[index]
-			if !util.ValueInSlice(prevLogical, []string{op.And, op.Or}) {
+			if !slices.Contains([]string{op.And, op.Or}, prevLogical) {
 				return nil, fmt.Errorf("invalid clause composition")
 			}
 

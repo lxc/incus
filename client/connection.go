@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -337,7 +338,7 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 		eventListeners:     make(map[string][]*EventListener),
 	}
 
-	if util.ValueInSlice(args.AuthType, []string{api.AuthenticationMethodOIDC}) {
+	if slices.Contains([]string{api.AuthenticationMethodOIDC}, args.AuthType) {
 		server.RequireAuthenticated(true)
 	}
 

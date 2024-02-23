@@ -2,11 +2,10 @@ package config
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/lxc/incus/shared/util"
 )
 
 // Schema defines the available keys of a config Map, along with the types
@@ -101,7 +100,7 @@ func (v *Key) validate(value string) error {
 	switch v.Type {
 	case String:
 	case Bool:
-		if !util.ValueInSlice(strings.ToLower(value), booleans) {
+		if !slices.Contains(booleans, strings.ToLower(value)) {
 			return fmt.Errorf("invalid boolean")
 		}
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 
 	"github.com/gorilla/mux"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/lxc/incus/internal/server/response"
 	storagePools "github.com/lxc/incus/internal/server/storage"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
 )
 
 var storagePoolVolumeTypeStateCmd = APIEndpoint{
@@ -98,7 +98,7 @@ func storagePoolVolumeTypeStateGet(d *Daemon, r *http.Request) response.Response
 	}
 
 	// Check that the storage volume type is valid.
-	if !util.ValueInSlice(volumeType, []int{db.StoragePoolVolumeTypeCustom, db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM}) {
+	if !slices.Contains([]int{db.StoragePoolVolumeTypeCustom, db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM}, volumeType) {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 

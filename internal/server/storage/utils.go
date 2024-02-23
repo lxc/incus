@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -47,7 +48,7 @@ func ConfigDiff(oldConfig map[string]string, newConfig map[string]string) ([]str
 				userOnly = false
 			}
 
-			if !util.ValueInSlice(key, changedConfig) {
+			if !slices.Contains(changedConfig, key) {
 				changedConfig = append(changedConfig, key)
 			}
 		}
@@ -59,7 +60,7 @@ func ConfigDiff(oldConfig map[string]string, newConfig map[string]string) ([]str
 				userOnly = false
 			}
 
-			if !util.ValueInSlice(key, changedConfig) {
+			if !slices.Contains(changedConfig, key) {
 				changedConfig = append(changedConfig, key)
 			}
 		}

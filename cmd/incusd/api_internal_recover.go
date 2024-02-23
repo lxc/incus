@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	internalInstance "github.com/lxc/incus/internal/instance"
 	internalRecover "github.com/lxc/incus/internal/recover"
@@ -26,7 +27,6 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/util"
 )
 
 // Define API endpoints for recover actions.
@@ -116,7 +116,7 @@ func internalRecoverScan(s *state.State, userPools []api.StoragePoolsPost, valid
 	addDependencyError := func(err error) {
 		errStr := err.Error()
 
-		if !util.ValueInSlice(errStr, res.DependencyErrors) {
+		if !slices.Contains(res.DependencyErrors, errStr) {
 			res.DependencyErrors = append(res.DependencyErrors, errStr)
 		}
 	}

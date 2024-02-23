@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/internal/server/db"
@@ -212,7 +213,7 @@ func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isMa
 	}
 
 	// Don't allow access to unmanaged networks if only managed network access is allowed.
-	if util.ValueInSlice(reqProjectConfig["restricted.devices.nic"], []string{"managed", ""}) && !isManaged {
+	if slices.Contains([]string{"managed", ""}, reqProjectConfig["restricted.devices.nic"]) && !isManaged {
 		return false
 	}
 
@@ -223,7 +224,7 @@ func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isMa
 
 	// Check if reqquested network is in list of allowed networks.
 	allowedRestrictedNetworks := util.SplitNTrimSpace(reqProjectConfig["restricted.networks.access"], ",", -1, false)
-	return util.ValueInSlice(networkName, allowedRestrictedNetworks)
+	return slices.Contains(allowedRestrictedNetworks, networkName)
 }
 
 // ImageProjectFromRecord returns the project name to use for the image based on the supplied project.

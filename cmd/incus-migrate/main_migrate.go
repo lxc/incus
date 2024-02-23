@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 
@@ -174,7 +175,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 
 	i := 1
 
-	if util.ValueInSlice(api.AuthenticationMethodTLS, apiServer.AuthMethods) {
+	if slices.Contains(apiServer.AuthMethods, api.AuthenticationMethodTLS) {
 		fmt.Printf("%d) Use a certificate token\n", i)
 		availableAuthMethods = append(availableAuthMethods, authMethodTLSCertificateToken)
 		i++
@@ -185,7 +186,7 @@ func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
 		availableAuthMethods = append(availableAuthMethods, authMethodTLSTemporaryCertificate)
 	}
 
-	if len(apiServer.AuthMethods) > 1 || util.ValueInSlice(api.AuthenticationMethodTLS, apiServer.AuthMethods) {
+	if len(apiServer.AuthMethods) > 1 || slices.Contains(apiServer.AuthMethods, api.AuthenticationMethodTLS) {
 		authMethodInt, err := c.global.asker.AskInt("Please pick an authentication mechanism above: ", 1, int64(i), "", nil)
 		if err != nil {
 			return nil, "", err
@@ -300,7 +301,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 			return cmdMigrateData{}, err
 		}
 
-		if util.ValueInSlice(instanceName, instanceNames) {
+		if slices.Contains(instanceNames, instanceName) {
 			fmt.Printf("Instance %q already exists\n", instanceName)
 			continue
 		}
@@ -337,7 +338,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 	if config.InstanceArgs.Type == api.InstanceTypeVM {
 		architectureName, _ := osarch.ArchitectureGetLocal()
 
-		if util.ValueInSlice(architectureName, []string{"x86_64", "aarch64"}) {
+		if slices.Contains([]string{"x86_64", "aarch64"}, architectureName) {
 			hasSecureBoot, err := c.global.asker.AskBool("Does the VM support UEFI Secure Boot? [default=no]: ", "no")
 			if err != nil {
 				return cmdMigrateData{}, err
@@ -598,7 +599,7 @@ func (c *cmdMigrate) askProfiles(server incus.InstanceServer, config *cmdMigrate
 		profiles := strings.Split(s, " ")
 
 		for _, profile := range profiles {
-			if !util.ValueInSlice(profile, profileNames) {
+			if !slices.Contains(profileNames, profile) {
 				return fmt.Errorf("Unknown profile %q", profile)
 			}
 		}

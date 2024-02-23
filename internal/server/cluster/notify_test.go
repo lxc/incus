@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -19,7 +20,6 @@ import (
 	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/api"
 	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
 )
 
 // The returned notifier connects to all nodes.
@@ -65,7 +65,7 @@ func TestNewNotifier(t *testing.T) {
 	}
 	require.NoError(t, err)
 	for i := range addresses {
-		assert.True(t, util.ValueInSlice(f.Address(i+1), addresses))
+		assert.True(t, slices.Contains(addresses, f.Address(i+1)))
 	}
 }
 

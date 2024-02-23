@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -155,7 +156,7 @@ func (c *cmdFileCreate) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if !util.ValueInSlice(c.flagType, []string{"file", "symlink", "directory"}) {
+	if !slices.Contains([]string{"file", "symlink", "directory"}, c.flagType) {
 		return fmt.Errorf(i18n.G("Invalid type %q"), c.flagType)
 	}
 

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -31,7 +32,6 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -473,7 +473,7 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Basic parameter validation.
-	if !util.ValueInSlice(post.Type, []string{instance.ConsoleTypeConsole, instance.ConsoleTypeVGA}) {
+	if !slices.Contains([]string{instance.ConsoleTypeConsole, instance.ConsoleTypeVGA}, post.Type) {
 		return response.BadRequest(fmt.Errorf("Unknown console type %q", post.Type))
 	}
 

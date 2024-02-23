@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -110,7 +111,7 @@ func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) 
 			return "", err
 		}
 
-		if !util.ValueInSlice(v, sockets) {
+		if !slices.Contains(sockets, v) {
 			sockets = append(sockets, v)
 		}
 	}

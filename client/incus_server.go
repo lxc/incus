@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 
 	"github.com/gorilla/websocket"
 
 	"github.com/lxc/incus/shared/api"
 	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
 )
 
 // Server handling functions
@@ -64,7 +64,7 @@ func (r *ProtocolIncus) HasExtension(extension string) bool {
 		return true
 	}
 
-	return util.ValueInSlice(extension, r.server.APIExtensions)
+	return slices.Contains(r.server.APIExtensions, extension)
 }
 
 // CheckExtension checks if the server has the specified extension.
@@ -262,7 +262,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 
 		for _, storagePool := range config.Server.StoragePools {
 			// New storagePool.
-			if !util.ValueInSlice(storagePool.Name, storagePoolNames) {
+			if !slices.Contains(storagePoolNames, storagePool.Name) {
 				err := createStoragePool(storagePool)
 				if err != nil {
 					return err
@@ -376,7 +376,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 
 		for _, project := range config.Server.Projects {
 			// New project.
-			if !util.ValueInSlice(project.Name, projectNames) {
+			if !slices.Contains(projectNames, project.Name) {
 				err := createProject(project)
 				if err != nil {
 					return err
@@ -468,7 +468,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 
 		for _, profile := range config.Server.Profiles {
 			// New profile.
-			if !util.ValueInSlice(profile.Name, profileNames) {
+			if !slices.Contains(profileNames, profile.Name) {
 				err := createProfile(profile)
 				if err != nil {
 					return err

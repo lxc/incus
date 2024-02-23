@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -32,7 +33,6 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 var storagePoolVolumeSnapshotsTypeCmd = APIEndpoint{
@@ -384,7 +384,7 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 	}
 
 	// Check that the storage volume type is valid.
-	if !util.ValueInSlice(volumeType, supportedVolumeTypes) {
+	if !slices.Contains(supportedVolumeTypes, volumeType) {
 		return response.BadRequest(fmt.Errorf("Invalid storage volume type %q", volumeTypeName))
 	}
 

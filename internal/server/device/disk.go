@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -179,7 +180,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 	// These come from https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt
 	propagationTypes := []string{"", "private", "shared", "slave", "unbindable", "rshared", "rslave", "runbindable", "rprivate"}
 	validatePropagation := func(input string) error {
-		if !util.ValueInSlice(d.config["bind"], propagationTypes) {
+		if !slices.Contains(propagationTypes, d.config["bind"]) {
 			return fmt.Errorf("Invalid propagation value. Must be one of: %s", strings.Join(propagationTypes, ", "))
 		}
 
@@ -517,7 +518,7 @@ func (d *disk) validateEnvironmentSourcePath() error {
 
 // validateEnvironment checks the runtime environment for correctness.
 func (d *disk) validateEnvironment() error {
-	if d.inst.Type() != instancetype.VM && util.ValueInSlice(d.config["source"], []string{diskSourceCloudInit, diskSourceAgent}) {
+	if d.inst.Type() != instancetype.VM && slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
 		return fmt.Errorf("disks with source=%s are only supported by virtual machines", d.config["source"])
 	}
 
@@ -1996,14 +1997,14 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 		for _, block := range blocks {
 			blockStr := ""
 
-			if util.ValueInSlice(block, validBlocks) {
+			if slices.Contains(validBlocks, block) {
 				// Straightforward entry (full block device)
 				blockStr = block
 			} else {
 				// Attempt to deal with a partition (guess its parent)
 				fields := strings.SplitN(block, ":", 2)
 				fields[1] = "0"
-				if util.ValueInSlice(fmt.Sprintf("%s:%s", fields[0], fields[1]), validBlocks) {
+				if slices.Contains(validBlocks, fmt.Sprintf("%s:%s", fields[0], fields[1])) {
 					blockStr = fmt.Sprintf("%s:%s", fields[0], fields[1])
 				}
 			}

@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 type metricsCacheEntry struct {
@@ -277,7 +277,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	for _, project := range projectsToFetch {
-		if util.ValueInSlice(*project.Project, updatedProjects) {
+		if slices.Contains(updatedProjects, *project.Project) {
 			continue
 		}
 
