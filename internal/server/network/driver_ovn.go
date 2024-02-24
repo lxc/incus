@@ -4736,8 +4736,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			_ = n.forwardBGPSetupPrefixes()
 		})
 
-		vip := net.ParseIP(forward.Config["target_address"])
-		vips := n.forwardFlattenVIPs(net.ParseIP(forward.ListenAddress), vip, portMaps)
+		vips := n.forwardFlattenVIPs(net.ParseIP(forward.ListenAddress), net.ParseIP(forward.Config["target_address"]), portMaps)
 
 		err = ovnnb.LoadBalancerApply(n.getLoadBalancerName(forward.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
 		if err != nil {
@@ -4746,7 +4745,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 
 		// Add internal static route to the network forward (helps with OVN IC).
 		var nexthop net.IP
-		if vip.To4() == nil {
+		if listenAddressNet.IP.To4() == nil {
 			routerV6, _, err := n.parseRouterIntPortIPv6Net()
 			if err == nil {
 				nexthop = routerV6
@@ -5120,8 +5119,7 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			_ = n.loadBalancerBGPSetupPrefixes()
 		})
 
-		vip := net.ParseIP(loadBalancer.ListenAddress)
-		vips := n.loadBalancerFlattenVIPs(vip, portMaps)
+		vips := n.loadBalancerFlattenVIPs(net.ParseIP(loadBalancer.ListenAddress), portMaps)
 
 		err = ovnnb.LoadBalancerApply(n.getLoadBalancerName(loadBalancer.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
 		if err != nil {
@@ -5130,7 +5128,7 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 
 		// Add internal static route to the load-balancer (helps with OVN IC).
 		var nexthop net.IP
-		if vip.To4() == nil {
+		if listenAddressNet.IP.To4() == nil {
 			routerV6, _, err := n.parseRouterIntPortIPv6Net()
 			if err == nil {
 				nexthop = routerV6
