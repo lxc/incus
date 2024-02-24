@@ -4759,12 +4759,12 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 		}
 
 		if nexthop != nil {
-			err = ovnnb.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: IPToNet(vip)})
+			err = ovnnb.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
 			if err != nil {
 				return err
 			}
 
-			revert.Add(func() { _ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), IPToNet(vip)) })
+			revert.Add(func() { _ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), *listenAddressNet) })
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
@@ -4926,8 +4926,12 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 		}
 
 		// Delete static route to network forward if present.
-		vip := IPToNet(net.ParseIP(forward.ListenAddress))
-		_ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), vip)
+		vip, err := ParseIPToNet(forward.ListenAddress)
+		if err != nil {
+			return err
+		}
+
+		_ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), *vip)
 
 		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -5139,12 +5143,12 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 		}
 
 		if nexthop != nil {
-			err = ovnnb.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: IPToNet(vip)})
+			err = ovnnb.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
 			if err != nil {
 				return err
 			}
 
-			revert.Add(func() { _ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), IPToNet(vip)) })
+			revert.Add(func() { _ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), *listenAddressNet) })
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
@@ -5307,8 +5311,12 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 		}
 
 		// Delete static route to load-balancer if present.
-		vip := IPToNet(net.ParseIP(forward.ListenAddress))
-		_ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), vip)
+		vip, err := ParseIPToNet(forward.ListenAddress)
+		if err != nil {
+			return err
+		}
+
+		_ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), *vip)
 
 		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
