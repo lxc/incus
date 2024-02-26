@@ -1180,10 +1180,15 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 			vxlan := &ip.Vxlan{
 				Link: ip.Link{Name: tunName},
+				Local: tunLocal,
 			}
 
-			if tunLocal != "" && tunRemote != "" {
-				vxlan.Local = tunLocal
+			if tunRemote != "" {
+				// Skip partial configs.
+				if tunLocal == "" {
+					continue
+				}
+
 				vxlan.Remote = tunRemote
 			} else {
 				if tunGroup == "" {
