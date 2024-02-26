@@ -871,6 +871,11 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 //	---
 //	produces:
 //	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: force
+//	    description: Delete project and related artifacts
+//	    type: boolean
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -888,6 +893,8 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	force := util.IsTrue(r.FormValue("force"))
+
 	// Quick checks.
 	if name == api.ProjectDefaultName {
 		return response.Forbidden(fmt.Errorf("The 'default' project cannot be deleted"))
@@ -900,13 +907,18 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Fetch project %q: %w", name, err)
 		}
 
-		empty, err := projectIsEmpty(ctx, project, tx)
-		if err != nil {
-			return err
-		}
+		if !force {
+			empty, err := projectIsEmpty(ctx, project, tx)
+			if err != nil {
+				return err
+			}
 
-		if !empty {
-			return fmt.Errorf("Only empty projects can be removed")
+			if !empty {
+				return fmt.Errorf("Only empty projects can be removed.")
+			}
+		} else {
+			// WIP: delete everything
+			logger.Errorf("WIP")
 		}
 
 		id, err = cluster.GetProjectID(ctx, tx.Tx(), name)
