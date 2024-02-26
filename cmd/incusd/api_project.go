@@ -865,6 +865,11 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 //	---
 //	produces:
 //	  - application/json
+//  parameters:
+//    - in: query
+//      name: force
+//      description: Delete project and related artifacts
+//      type: boolean
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -881,6 +886,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		return response.SmartError(err)
 	}
+	force := util.IsTrue(r.FormValue("force"))
 
 	// Quick checks.
 	if name == api.ProjectDefaultName {
@@ -894,13 +900,32 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Fetch project %q: %w", name, err)
 		}
 
-		empty, err := projectIsEmpty(ctx, project, tx)
-		if err != nil {
-			return err
-		}
+		if !force {
+			if empty, err := projectIsEmpty(ctx, project, tx); err != nil {
+				return err
+			} else if !empty {
+				return fmt.Errorf("Only empty projects can be removed. Specify force parameter to override.")
+			}
+		} else {  // delete artifacts
+			// All instances (always)
+			if err := projectDeleteInstances(ctx, project, tx); err != nil {
+				return err
+			}
 
-		if !empty {
-			return fmt.Errorf("Only empty projects can be removed")
+			// All profiles except for default (if features.profiles=true)
+			if err := projectDeleteProfiles(ctx, project, tx); err != nil {
+				return err
+			}
+
+			// Empty the default profile
+			// All images (if features.images=true)
+			// All networks (if features.networks=true)
+			// All network zones (if features.networks.zones=true)
+			// All network ACLs (if features.networks=true)
+			// All storage volumes (if features.storage.volumes=true)
+			// All storage buckets (if features.storage.buckets=true)
+
+
 		}
 
 		id, err = cluster.GetProjectID(ctx, tx.Tx(), name)
@@ -1541,3 +1566,93 @@ func projectValidateRestrictedSubnets(s *state.State, value string) error {
 
 	return nil
 }
+
+// Do I need to check the StatusCode and/or ExpandedConfig similar to "cmd/incus/delete.go"
+// Do I need to check if this a snapshot or of type container similar to "cmd/incusd/instance_delete.go"
+// Delete all project instances
+func projectDeleteInstances(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	instances, err := cluster.GetInstances(ctx, tx.Tx(), cluster.InstanceFilter{Project: &project.Name})
+	if err != nil {
+		return err
+	}
+
+	if len(instances) == 0 {
+		return nil
+	}
+
+	for _, instance := range instances {
+		if err := cluster.DeleteInstance(ctx, tx.Tx(), project.Name, instance.Name); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// is there any value in checking the UsedBy ?
+// Delete all project profiles
+func projectDeleteProfiles(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	profiles, err := cluster.GetProfiles(ctx, tx.Tx(), cluster.ProfileFilter{Project: &project.Name})
+	if err != nil {
+		return err
+	}
+
+	if len(profiles) > 0 {
+		// Consider the project empty if it is only used by the default profile.
+		if len(profiles) == 1 && profiles[0].Name == "default" {
+			return nil
+		}
+		for _, profile := range profiles {
+			if profile.Name == "default" {
+				continue
+			}
+			if err := cluster.DeleteProfile(ctx, tx.Tx(), project.Name, profile.Name) ; err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+/* WIP
+{
+	images, err := cluster.GetImages(ctx, tx.Tx(), cluster.ImageFilter{Project: &project.Name})
+	if err != nil {
+		return false, err
+	}
+
+	if len(images) > 0 {
+		return false, nil
+	}
+
+
+
+	volumes, err := tx.GetStorageVolumeURIs(ctx, project.Name)
+	if err != nil {
+		return false, err
+	}
+
+	if len(volumes) > 0 {
+		return false, nil
+	}
+
+	networks, err := tx.GetNetworkURIs(ctx, project.ID, project.Name)
+	if err != nil {
+		return false, err
+	}
+
+	if len(networks) > 0 {
+		return false, nil
+	}
+
+	acls, err := tx.GetNetworkACLURIs(ctx, project.ID, project.Name)
+	if err != nil {
+		return false, err
+	}
+
+	if len(acls) > 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+*/
