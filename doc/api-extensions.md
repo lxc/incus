@@ -2504,3 +2504,8 @@ This introduces a new API endpoint at `GET /1.0/instances/NAME/access` which exp
 ## `project_access`
 
 This introduces a new API endpoint at `GET /1.0/projects/NAME/access` which exposes who can interact with the project and what role they have.
+
+## `projects_force_delete`
+
+This extends `DELETE /1.0/projects` to allow `?force=true` which will
+delete everything inside of the project along with the project itself.

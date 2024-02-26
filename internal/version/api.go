@@ -423,6 +423,7 @@ var APIExtensions = []string{
 	"resources_load",
 	"instance_access",
 	"project_access",
+	"projects_force_delete",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
