@@ -838,6 +838,8 @@ func (c *ClusterTx) GetCustomVolumesInProject(ctx context.Context, project strin
 SELECT
 	storage_volumes.id,
 	storage_volumes.name,
+	storage_volumes.storage_pool_id,
+	storage_volumes.type,
 	storage_volumes.creation_date,
 	storage_pools.name,
 	IFNULL(storage_volumes.node_id, -1)
@@ -850,7 +852,7 @@ WHERE storage_volumes.type = ? AND projects.name = ?
 	volumes := []StorageVolumeArgs{}
 	err := query.Scan(ctx, c.tx, sql, func(scan func(dest ...any) error) error {
 		volume := StorageVolumeArgs{}
-		err := scan(&volume.ID, &volume.Name, &volume.CreationDate, &volume.PoolName, &volume.NodeID)
+		err := scan(&volume.ID, &volume.Name, &volume.PoolID, &volume.Type, &volume.CreationDate, &volume.PoolName, &volume.NodeID)
 		if err != nil {
 			return err
 		}
