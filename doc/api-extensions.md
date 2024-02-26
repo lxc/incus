@@ -2348,3 +2348,30 @@ This is used to get the OVN logical router name.
 ## `image_template_permissions`
 
 This adds `uid`, `gid` and `mode` fields to the image metadata template entries.
+
+## `storage_bucket_backup`
+
+Add storage bucket backup support.
+
+This includes the following new endpoints (see [RESTful API](rest-api.md) for details):
+
+* `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups`
+* `POST /1.0/storage-pools/<pool>/buckets/<bucket>/backups`
+
+* `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
+* `POST /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
+* `DELETE /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
+
+* `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>/export`
+
+## `storage_lvm_cluster`
+
+This adds a new `lvmcluster` storage driver which makes use of LVM shared VG through `lvmlockd`.
+
+With this, it's possible to have a single shared LVM pool across multiple servers so long as they all see the same backing device(s).
+
+## `shared_custom_block_volumes`
+
+This adds a new configuration key `security.shared` to custom block volumes.
+If unset or `false`, the custom block volume cannot be attached to multiple instances.
+This feature was added to prevent data loss which can happen when custom block volumes are attached to multiple instances at once.

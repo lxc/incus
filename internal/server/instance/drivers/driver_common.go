@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -711,7 +712,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 	}
 
 	// Create the snapshot.
-	snap, snapInstOp, cleanup, err := instance.CreateInternal(d.state, args, true)
+	snap, snapInstOp, cleanup, err := instance.CreateInternal(d.state, args, true, true)
 	if err != nil {
 		return fmt.Errorf("Failed creating instance snapshot record %q: %w", name, err)
 	}
@@ -822,7 +823,7 @@ func (d *common) getStartupSnapNameAndExpiry(inst instance.Instance) (string, *t
 	}
 
 	triggers := strings.Split(schedule, ", ")
-	if !util.ValueInSlice("@startup", triggers) {
+	if !slices.Contains(triggers, "@startup") {
 		return "", nil, nil
 	}
 
@@ -852,6 +853,11 @@ func (d *common) validateStartup(stateful bool, statusCode api.StatusCode) error
 
 	if !storagePools.IsAvailable(rootDiskConf["pool"]) {
 		return api.StatusErrorf(http.StatusServiceUnavailable, "Storage pool %q unavailable on this server", rootDiskConf["pool"])
+	}
+
+	// Validate architecture.
+	if !slices.Contains(d.state.OS.Architectures, d.architecture) {
+		return fmt.Errorf("Requested architecture isn't supported by this host")
 	}
 
 	// Must happen before creating operation Start lock to avoid the status check returning Stopped due to the
@@ -1044,7 +1050,7 @@ func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices d
 		"user.user-data",
 		"user.network-config",
 	} {
-		if util.ValueInSlice(key, changedConfig) {
+		if slices.Contains(changedConfig, key) {
 			return true
 		}
 	}
@@ -1079,13 +1085,13 @@ func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices d
 	newNames := getNICNames(d.expandedDevices)
 
 	for _, entry := range oldNames {
-		if !util.ValueInSlice(entry, newNames) {
+		if !slices.Contains(newNames, entry) {
 			return true
 		}
 	}
 
 	for _, entry := range newNames {
-		if !util.ValueInSlice(entry, oldNames) {
+		if !slices.Contains(oldNames, entry) {
 			return true
 		}
 	}
@@ -1132,7 +1138,7 @@ func (d *common) deviceLoad(inst instance.Instance, deviceName string, rawConfig
 	var err error
 
 	// Create copy of config and load some fields from volatile if device is nic or infiniband.
-	if util.ValueInSlice(rawConfig["type"], []string{"nic", "infiniband"}) {
+	if slices.Contains([]string{"nic", "infiniband"}, rawConfig["type"]) {
 		configCopy, err = inst.FillNetworkDevice(deviceName, rawConfig)
 		if err != nil {
 			return nil, err

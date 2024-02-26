@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,7 +19,6 @@ import (
 	"github.com/lxc/incus/shared/api"
 	config "github.com/lxc/incus/shared/cliconfig"
 	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
 )
 
 type column struct {
@@ -765,7 +765,7 @@ func (c *cmdList) IP4ColumnData(cInfo api.InstanceFull) string {
 			}
 
 			for _, addr := range net.Addresses {
-				if util.ValueInSlice(addr.Scope, []string{"link", "local"}) {
+				if slices.Contains([]string{"link", "local"}, addr.Scope) {
 					continue
 				}
 
@@ -791,7 +791,7 @@ func (c *cmdList) IP6ColumnData(cInfo api.InstanceFull) string {
 			}
 
 			for _, addr := range net.Addresses {
-				if util.ValueInSlice(addr.Scope, []string{"link", "local"}) {
+				if slices.Contains([]string{"link", "local"}, addr.Scope) {
 					continue
 				}
 

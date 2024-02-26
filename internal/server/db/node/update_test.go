@@ -3,6 +3,7 @@ package node_test
 import (
 	"context"
 	"database/sql"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/lxc/incus/internal/server/db/node"
 	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/shared/util"
 )
 
 func TestUpdateFromV38_RaftNodes(t *testing.T) {
@@ -60,7 +60,7 @@ func TestUpdateFromV36_DropTables(t *testing.T) {
 	}
 
 	for _, name := range deleted {
-		assert.False(t, util.ValueInSlice(name, current))
+		assert.False(t, slices.Contains(current, name))
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -713,7 +714,7 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 			return fmt.Errorf("Persist profile changes: %w", err)
 		}
 
-		if util.ValueInSlice("features.profiles", configChanged) {
+		if slices.Contains(configChanged, "features.profiles") {
 			if util.IsTrue(req.Config["features.profiles"]) {
 				err = projectCreateDefaultProfile(tx, project.Name)
 				if err != nil {
@@ -728,7 +729,7 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 			}
 		}
 
-		if util.ValueInSlice("features.images", configChanged) && util.IsFalse(req.Config["features.images"]) && util.IsTrue(req.Config["features.profiles"]) {
+		if slices.Contains(configChanged, "features.images") && util.IsFalse(req.Config["features.images"]) && util.IsTrue(req.Config["features.profiles"]) {
 			err = cluster.InitProjectWithoutImages(ctx, tx.Tx(), project.Name)
 			if err != nil {
 				return err
@@ -1471,7 +1472,7 @@ func projectValidateName(name string) error {
 		return fmt.Errorf("Reserved project name")
 	}
 
-	if util.ValueInSlice(name, []string{".", ".."}) {
+	if slices.Contains([]string{".", ".."}, name) {
 		return fmt.Errorf("Invalid project name %q", name)
 	}
 

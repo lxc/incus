@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/internal/instancewriter"
@@ -122,6 +123,11 @@ func (d *common) fillVolumeConfig(vol *Volume, excludedKeys ...string) error {
 
 		// security.shifted and security.unmapped are only relevant for custom filesystem volumes.
 		if (vol.Type() != VolumeTypeCustom || vol.ContentType() != ContentTypeFS) && (volKey == "security.shifted" || volKey == "security.unmapped") {
+			continue
+		}
+
+		// security.shared is only relevant for custom block volumes.
+		if (vol.Type() != VolumeTypeCustom || vol.ContentType() != ContentTypeBlock) && (volKey == "security.shared") {
 			continue
 		}
 
@@ -496,7 +502,7 @@ func (d *common) ValidateBucketKey(keyName string, creds S3Credentials, roleName
 	}
 
 	validRoles := []string{"admin", "read-only"}
-	if !util.ValueInSlice(roleName, validRoles) {
+	if !slices.Contains(validRoles, roleName) {
 		return fmt.Errorf("Invalid key role")
 	}
 

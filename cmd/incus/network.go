@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/termios"
 	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
 )
 
 type cmdNetwork struct {
@@ -1053,7 +1053,7 @@ func (c *cmdNetworkList) Run(cmd *cobra.Command, args []string) error {
 
 	data := [][]string{}
 	for _, network := range networks {
-		if util.ValueInSlice(network.Type, []string{"loopback", "unknown"}) {
+		if slices.Contains([]string{"loopback", "unknown"}, network.Type) {
 			continue
 		}
 

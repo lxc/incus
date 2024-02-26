@@ -268,15 +268,23 @@ func (c *cmdMigrate) validate(source source, target target) error {
 			if err != nil {
 				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "ceph", pool.Name))
 			}
-		} else if pool.Driver == "lvm" {
+		} else if pool.Driver == "lvm" || pool.Driver == "lvmcluster" {
 			_, err = exec.LookPath("lvm")
 			if err != nil {
 				errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "lvm", pool.Name))
+			}
+
+			if pool.Driver == "lvmcluster" {
+				_, err = exec.LookPath("lvmlockctl")
+				if err != nil {
+					errors = append(errors, fmt.Errorf("Required command %q is missing for storage pool %q", "lvmlockctl", pool.Name))
+				}
 			}
 		}
 	}
 
 	deprecatedInstanceConfigs := []string{
+		"boot.debug_edk2",
 		"limits.network.priority",
 		"security.devlxd",
 		"security.devlxd.images",

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
 )
 
 var sysClassDrm = "/sys/class/drm"
@@ -478,7 +478,7 @@ func GetGPU() (*api.ResourcesGPU, error) {
 				card.PCIAddress = pciAddr
 
 				// Skip devices we already know about
-				if util.ValueInSlice(card.PCIAddress, pciKnown) {
+				if slices.Contains(pciKnown, card.PCIAddress) {
 					continue
 				}
 
@@ -526,7 +526,7 @@ func GetGPU() (*api.ResourcesGPU, error) {
 			devicePath := filepath.Join(sysBusPci, entryName)
 
 			// Skip devices we already know about
-			if util.ValueInSlice(entryName, pciKnown) {
+			if slices.Contains(pciKnown, entryName) {
 				continue
 			}
 

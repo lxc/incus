@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -306,7 +307,7 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 				}
 
 				renameCmd := []string{"rbd", "rename", "--cluster", cephCluster, "--name", fmt.Sprintf("client.%s", cephUser), fmt.Sprintf("%s/lxd_%s", cephPool, cephPool), fmt.Sprintf("%s/incus_%s", cephPool, cephPool)}
-				if !util.ValueInSlice(pool.Name, rbdRenamed) {
+				if !slices.Contains(rbdRenamed, pool.Name) {
 					rewriteCommands = append(rewriteCommands, renameCmd)
 					rbdRenamed = append(rbdRenamed, pool.Name)
 				}

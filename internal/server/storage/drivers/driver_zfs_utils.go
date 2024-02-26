@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -339,7 +340,7 @@ func (d *zfs) sendDataset(dataset string, parent string, volSrcArgs *migration.V
 		}
 	}
 
-	if util.ValueInSlice("compress", volSrcArgs.MigrationType.Features) {
+	if slices.Contains(volSrcArgs.MigrationType.Features, "compress") {
 		args = append(args, "-c")
 		args = append(args, "-L")
 	}

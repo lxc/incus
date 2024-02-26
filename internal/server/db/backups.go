@@ -38,6 +38,16 @@ type StoragePoolVolumeBackup struct {
 	CompressionAlgorithm string
 }
 
+// StoragePoolBucketBackup is a value object holding all db-related details about a storage bucket backup.
+type StoragePoolBucketBackup struct {
+	ID                   int
+	BucketID             int64
+	Name                 string
+	CreationDate         time.Time
+	ExpiryDate           time.Time
+	CompressionAlgorithm string
+}
+
 // Returns the ID of the instance backup with the given name.
 func (c *ClusterTx) getInstanceBackupID(ctx context.Context, name string) (int, error) {
 	q := "SELECT id FROM instances_backups WHERE name=?"
@@ -532,6 +542,186 @@ func (c *ClusterTx) RenameVolumeBackup(ctx context.Context, oldName, newName str
 		"Calling SQL Query",
 		logger.Ctx{
 			"query":   "UPDATE storage_volumes_backups SET name = ? WHERE name = ?",
+			"oldName": oldName,
+			"newName": newName})
+	_, err = stmt.Exec(newName, oldName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetStoragePoolBucketBackupsName returns the names of all backups of the storage bucket with the given name.
+func (c *ClusterTx) GetStoragePoolBucketBackupsName(ctx context.Context, projectName string, bucketName string) ([]string, error) {
+	var result []string
+
+	q := `SELECT storage_buckets_backups.name FROM storage_buckets_backups
+JOIN storage_buckets ON storage_buckets_backups.storage_bucket_id=storage_buckets.id
+JOIN projects ON projects.id=storage_buckets.project_id
+WHERE projects.name=? AND storage_buckets.name=?
+ORDER BY storage_buckets_backups.id`
+	inargs := []any{projectName, bucketName}
+	outfmt := []any{bucketName}
+
+	dbResults, err := queryScan(ctx, c, q, inargs, outfmt)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range dbResults {
+		result = append(result, r[0].(string))
+	}
+
+	return result, nil
+}
+
+// CreateStoragePoolBucketBackup creates a new storage bucket backup.
+func (c *ClusterTx) CreateStoragePoolBucketBackup(ctx context.Context, args StoragePoolBucketBackup) error {
+	_, err := c.getStoragePoolBucketBackupID(ctx, args.Name)
+	if err == nil {
+		return ErrAlreadyDefined
+	}
+
+	str := "INSERT INTO storage_buckets_backups (storage_bucket_id, name, creation_date, expiry_date) VALUES (?, ?, ?, ?)"
+	stmt, err := c.tx.Prepare(str)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = stmt.Close() }()
+	result, err := stmt.Exec(args.BucketID, args.Name,
+		args.CreationDate.Unix(), args.ExpiryDate.Unix())
+	if err != nil {
+		return err
+	}
+
+	_, err = result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("Error inserting %q into database", args.Name)
+	}
+
+	return nil
+}
+
+// Returns the ID of the storage bucket backup with the given name.
+func (c *ClusterTx) getStoragePoolBucketBackupID(ctx context.Context, name string) (int, error) {
+	q := "SELECT id FROM storage_buckets_backups WHERE name=?"
+	id := -1
+	arg1 := []any{name}
+	arg2 := []any{&id}
+
+	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
+	if err == sql.ErrNoRows {
+		return -1, api.StatusErrorf(http.StatusNotFound, "Storage volume backup not found")
+	}
+
+	return id, err
+}
+
+// DeleteStoragePoolBucketBackup removes the storage bucket backup with the given name from the database.
+func (c *ClusterTx) DeleteStoragePoolBucketBackup(ctx context.Context, name string) error {
+	id, err := c.getStoragePoolBucketBackupID(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.tx.ExecContext(ctx, "DELETE FROM storage_buckets_backups WHERE id=?", id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetStoragePoolBucketBackup returns the bucket backup with the given name.
+func (c *ClusterTx) GetStoragePoolBucketBackup(ctx context.Context, projectName string, poolName string, backupName string) (StoragePoolBucketBackup, error) {
+	args := StoragePoolBucketBackup{}
+	q := `
+SELECT
+	backups.id,
+	backups.storage_bucket_id,
+	backups.name,
+	backups.creation_date,
+	backups.expiry_date
+FROM storage_buckets_backups AS backups
+JOIN storage_buckets ON storage_buckets.id=backups.storage_bucket_id
+JOIN projects ON projects.id=storage_buckets.project_id
+WHERE projects.name=? AND backups.name=?
+`
+	arg1 := []any{projectName, backupName}
+	outfmt := []any{&args.ID, &args.BucketID, &args.Name, &args.CreationDate, &args.ExpiryDate}
+
+	err := dbQueryRowScan(ctx, c, q, arg1, outfmt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return args, api.StatusErrorf(http.StatusNotFound, "Storage bucket backup not found")
+		}
+
+		return args, err
+	}
+
+	return args, nil
+}
+
+// GetExpiredStorageBucketBackups returns a list of expired storage bucket backups.
+func (c *ClusterTx) GetExpiredStorageBucketBackups(ctx context.Context) ([]StoragePoolBucketBackup, error) {
+	var backups []StoragePoolBucketBackup
+
+	q := `
+SELECT
+	storage_buckets_backups.id,
+	storage_buckets_backups.name,
+	storage_buckets_backups.expiry_date,
+	storage_buckets_backups.storage_bucket_id
+FROM storage_buckets_backups`
+
+	err := query.Scan(ctx, c.Tx(), q, func(scan func(dest ...any) error) error {
+		var b StoragePoolBucketBackup
+		var expiryTime sql.NullTime
+
+		err := scan(&b.ID, &b.Name, &expiryTime, &b.BucketID)
+		if err != nil {
+			return err
+		}
+
+		b.ExpiryDate = expiryTime.Time // Convert nulls to zero.
+
+		// Since zero time causes some issues due to timezones, we check the
+		// unix timestamp instead of IsZero().
+		if b.ExpiryDate.Unix() <= 0 {
+			// Backup doesn't expire
+			return nil
+		}
+
+		// Backup has expired
+		if time.Now().Unix()-b.ExpiryDate.Unix() >= 0 {
+			backups = append(backups, b)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return backups, nil
+}
+
+// RenameBucketBackup renames a bucket backup from the given current name to the new one.
+func (c *ClusterTx) RenameBucketBackup(ctx context.Context, oldName, newName string) error {
+	str := "UPDATE storage_buckets_backups SET name = ? WHERE name = ?"
+	stmt, err := c.tx.Prepare(str)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = stmt.Close() }()
+
+	logger.Debug(
+		"Calling SQL Query",
+		logger.Ctx{
+			"query":   "UPDATE storage_buckets_backups SET name = ? WHERE name = ?",
 			"oldName": oldName,
 			"newName": newName})
 	_, err = stmt.Exec(newName, oldName)

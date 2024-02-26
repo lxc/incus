@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
 )
 
 var sysDevicesCPU = "/sys/devices/system/cpu"
@@ -441,7 +441,7 @@ func GetCPU() (*api.ResourcesCPU, error) {
 			}
 		}
 		thread.ID = threadNumber
-		thread.Isolated = util.ValueInSlice(threadNumber, isolated)
+		thread.Isolated = slices.Contains(isolated, threadNumber)
 		thread.Thread = uint64(len(resCore.Threads))
 
 		// NUMA node

@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -18,7 +19,6 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/util"
 )
 
 // ClusterRole represents the role of a member in a cluster.
@@ -680,7 +680,7 @@ func (c *ClusterTx) UpdateNodeClusterGroups(ctx context.Context, id int64, group
 
 	// Check if node already belongs to the given groups.
 	for _, newGroup := range groups {
-		if util.ValueInSlice(newGroup, oldGroups) {
+		if slices.Contains(oldGroups, newGroup) {
 			// Node already belongs to this group.
 			skipGroups = append(skipGroups, newGroup)
 			continue
@@ -694,7 +694,7 @@ func (c *ClusterTx) UpdateNodeClusterGroups(ctx context.Context, id int64, group
 	}
 
 	for _, oldGroup := range oldGroups {
-		if util.ValueInSlice(oldGroup, skipGroups) {
+		if slices.Contains(skipGroups, oldGroup) {
 			continue
 		}
 
@@ -965,13 +965,18 @@ func (c *ClusterTx) NodeIsEmpty(ctx context.Context, id int64) (string, error) {
 	}
 
 	// Check if the node has any custom volumes.
+	drivers := make([]string, len(StorageRemoteDriverNames()))
+	for i, entry := range StorageRemoteDriverNames() {
+		drivers[i] = fmt.Sprintf("'%s'", entry)
+	}
+
 	sql = `
 SELECT storage_volumes.name
   FROM storage_volumes
   JOIN storage_pools ON storage_volumes.storage_pool_id=storage_pools.id
-  WHERE storage_volumes.node_id=? AND storage_volumes.type=? AND storage_pools.driver NOT IN ('ceph', 'cephfs')
+  WHERE storage_volumes.node_id=? AND storage_volumes.type=? AND storage_pools.driver NOT IN (%s)
 `
-	volumes, err := query.SelectStrings(ctx, c.tx, sql, id, StoragePoolVolumeTypeCustom)
+	volumes, err := query.SelectStrings(ctx, c.tx, fmt.Sprintf(sql, strings.Join(drivers, ", ")), id, StoragePoolVolumeTypeCustom)
 	if err != nil {
 		return "", fmt.Errorf("Failed to get custom volumes for node %d: %w", id, err)
 	}
@@ -1064,12 +1069,12 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 		}
 
 		// Skip group-only members if targeted cluster group doesn't match.
-		if member.Config["scheduler.instance"] == "group" && !util.ValueInSlice(targetClusterGroup, member.Groups) {
+		if member.Config["scheduler.instance"] == "group" && !slices.Contains(member.Groups, targetClusterGroup) {
 			continue
 		}
 
 		// Skip if a group is requested and member isn't part of it.
-		if targetClusterGroup != "" && !util.ValueInSlice(targetClusterGroup, member.Groups) {
+		if targetClusterGroup != "" && !slices.Contains(member.Groups, targetClusterGroup) {
 			continue
 		}
 
@@ -1077,7 +1082,7 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 		if allowedClusterGroups != nil {
 			found := false
 			for _, allowedClusterGroup := range allowedClusterGroups {
-				if util.ValueInSlice(allowedClusterGroup, member.Groups) {
+				if slices.Contains(member.Groups, allowedClusterGroup) {
 					found = true
 					break
 				}
@@ -1098,7 +1103,7 @@ func (c *ClusterTx) GetCandidateMembers(ctx context.Context, allMembers []NodeIn
 
 			supportedArchitectures := append([]int{member.Architecture}, personalities...)
 			for _, supportedArchitecture := range supportedArchitectures {
-				if util.ValueInSlice(supportedArchitecture, targetArchitectures) {
+				if slices.Contains(targetArchitectures, supportedArchitecture) {
 					candidateMembers = append(candidateMembers, member)
 					break
 				}

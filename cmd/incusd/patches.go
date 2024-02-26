@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -83,6 +84,7 @@ var patches = []patch{
 	{name: "storage_zfs_unset_invalid_block_settings", stage: patchPostDaemonStorage, run: patchStorageZfsUnsetInvalidBlockSettings},
 	{name: "storage_zfs_unset_invalid_block_settings_v2", stage: patchPostDaemonStorage, run: patchStorageZfsUnsetInvalidBlockSettingsV2},
 	{name: "runtime_directory", stage: patchPostDaemonStorage, run: patchRuntimeDirectory},
+	{name: "lvm_node_force_reuse", stage: patchPostDaemonStorage, run: patchLvmForceReuseKey},
 }
 
 type patch struct {
@@ -133,7 +135,7 @@ func patchesApply(d *Daemon, stage patchStage) error {
 			return fmt.Errorf("Patch %q has no stage set: %d", patch.name, patch.stage)
 		}
 
-		if util.ValueInSlice(patch.name, appliedPatches) {
+		if slices.Contains(appliedPatches, patch.name) {
 			continue
 		}
 
@@ -1241,6 +1243,70 @@ func patchRuntimeDirectory(name string, d *Daemon) error {
 		}
 	}
 
+	return nil
+}
+
+// The lvm.vg.force_reuse config key is node-specific and need to be linked to nodes.
+func patchLvmForceReuseKey(name string, d *Daemon) error {
+	revert := revert.New()
+	defer revert.Fail()
+
+	// Setup a transaction.
+	tx, err := d.db.Cluster.Begin()
+	if err != nil {
+		return fmt.Errorf("Failed to begin transaction: %w", err)
+	}
+
+	revert.Add(func() { _ = tx.Rollback() })
+
+	// Fetch the IDs of all existing nodes.
+	nodeIDs, err := query.SelectIntegers(context.TODO(), tx, "SELECT id FROM nodes")
+	if err != nil {
+		return fmt.Errorf("Failed to get IDs of current nodes: %w", err)
+	}
+
+	// Fetch the IDs of all existing lvm pools.
+	poolIDs, err := query.SelectIntegers(context.TODO(), tx, "SELECT id FROM storage_pools WHERE driver='lvm'")
+	if err != nil {
+		return fmt.Errorf("Failed to get IDs of current LVM pools: %w", err)
+	}
+
+	for _, poolID := range poolIDs {
+		// Fetch the config for this LVM pool and check if it has the lvm.vg.force_reuse key.
+		config, err := query.SelectConfig(context.TODO(), tx, "storage_pools_config", "storage_pool_id=? AND node_id IS NULL", poolID)
+		if err != nil {
+			return fmt.Errorf("Failed to fetch of lvm pool config: %w", err)
+		}
+
+		value, ok := config["lvm.vg.force_reuse"]
+		if !ok {
+			continue
+		}
+
+		// Delete the current key.
+		_, err = tx.Exec("DELETE FROM storage_pools_config WHERE key='lvm.vg.force_reuse' AND storage_pool_id=? AND node_id IS NULL", poolID)
+		if err != nil {
+			return fmt.Errorf("Failed to delete old config: %w", err)
+		}
+
+		// Add the config entry for each node.
+		for _, nodeID := range nodeIDs {
+			_, err := tx.Exec(`
+INSERT INTO storage_pools_config(storage_pool_id, node_id, key, value)
+  VALUES(?, ?, 'lvm.vg.force_reuse', ?)
+`, poolID, nodeID, value)
+			if err != nil {
+				return fmt.Errorf("Failed to create new config: %w", err)
+			}
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("Failed to commit transaction: %w", err)
+	}
+
+	revert.Success()
 	return nil
 }
 

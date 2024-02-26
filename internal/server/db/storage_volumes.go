@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/lxc/incus/internal/server/db/query"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
 )
 
 // GetStoragePoolVolumesWithType return a list of all volumes of the given type.
@@ -452,7 +452,7 @@ func (c *ClusterTx) CreateStoragePoolVolume(ctx context.Context, projectName str
 
 	var result sql.Result
 
-	if util.ValueInSlice(driver, remoteDrivers) {
+	if slices.Contains(remoteDrivers, driver) {
 		result, err = c.tx.ExecContext(ctx, `
 INSERT INTO storage_volumes (storage_pool_id, type, name, description, project_id, content_type, creation_date)
  VALUES (?, ?, ?, ?, (SELECT id FROM projects WHERE name = ?), ?, ?)
@@ -653,7 +653,7 @@ func (c *ClusterTx) GetStorageVolumeNodes(ctx context.Context, poolID int64, pro
 		}
 
 		remoteDrivers := StorageRemoteDriverNames()
-		if util.ValueInSlice(driver, remoteDrivers) {
+		if slices.Contains(remoteDrivers, driver) {
 			return nil, ErrNoClusterMember
 		}
 	}
@@ -909,7 +909,7 @@ func (c *ClusterTx) GetStorageVolumeURIs(ctx context.Context, project string) ([
 }
 
 // UpdateStorageVolumeNode changes the name of a storage volume and the cluster member hosting it.
-// It's meant to be used when moving a storage volume backed by ceph from one cluster node to another.
+// It's meant to be used when moving a storage volume backed by a remote storage pool from one cluster node to another.
 func (c *ClusterTx) UpdateStorageVolumeNode(ctx context.Context, projectName string, oldName string, newName string, newMemberName string, poolID int64, volumeType int) error {
 	volume, err := c.GetStoragePoolVolume(ctx, poolID, projectName, volumeType, oldName, false)
 	if err != nil {

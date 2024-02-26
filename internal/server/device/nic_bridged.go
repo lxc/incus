@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -119,7 +120,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 			}
 
 			parentAddress := netConfig["ipv4.address"]
-			if util.ValueInSlice(parentAddress, []string{"", "none"}) {
+			if slices.Contains([]string{"", "none"}, parentAddress) {
 				return nil
 			}
 
@@ -154,7 +155,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 			}
 
 			parentAddress := netConfig["ipv6.address"]
-			if util.ValueInSlice(parentAddress, []string{"", "none"}) {
+			if slices.Contains([]string{"", "none"}, parentAddress) {
 				return nil
 			}
 
@@ -175,7 +176,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
 
 		// When we know the parent network is managed, we can validate the NIC's VLAN settings based on
 		// on the bridge driver type.
-		if util.ValueInSlice(netConfig["bridge.driver"], []string{"", "native"}) {
+		if slices.Contains([]string{"", "native"}, netConfig["bridge.driver"]) {
 			// Check VLAN 0 isn't set when using a native Linux managed bridge, as not supported.
 			if d.config["vlan"] == "0" {
 				return fmt.Errorf("VLAN ID 0 is not allowed for native Linux bridges")
@@ -1664,14 +1665,14 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 
 		// Add any valid-state neighbour IP entries first.
 		for _, neighIP := range neighIPs {
-			if util.ValueInSlice(string(neighIP.State), validStates) {
+			if slices.Contains(validStates, string(neighIP.State)) {
 				ipStore(neighIP.Addr)
 			}
 		}
 
 		// Add any non-failed-state entries.
 		for _, neighIP := range neighIPs {
-			if neighIP.State != ip.NeighbourIPStateFailed && !util.ValueInSlice(string(neighIP.State), validStates) {
+			if neighIP.State != ip.NeighbourIPStateFailed && !slices.Contains(validStates, string(neighIP.State)) {
 				ipStore(neighIP.Addr)
 			}
 		}

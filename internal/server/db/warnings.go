@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,7 +14,6 @@ import (
 	"github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/db/warningtype"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
 )
 
 var warningCreate = cluster.RegisterStmt(`
@@ -176,7 +176,7 @@ func (c *ClusterTx) createWarning(ctx context.Context, object cluster.Warning) (
 			return -1, fmt.Errorf("Failed to get project names: %w", err)
 		}
 
-		if !util.ValueInSlice(object.Project, projects) {
+		if !slices.Contains(projects, object.Project) {
 			return -1, fmt.Errorf("Unknown project %q", object.Project)
 		}
 

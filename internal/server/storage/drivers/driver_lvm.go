@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/lxc/incus/internal/revert"
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
 	"github.com/lxc/incus/internal/server/operations"
+	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
@@ -29,6 +31,8 @@ var lvmVersion string
 
 type lvm struct {
 	common
+
+	clustered bool
 }
 
 func (d *lvm) load() error {
@@ -47,7 +51,12 @@ func (d *lvm) load() error {
 	}
 
 	// Validate the required binaries.
-	for _, tool := range []string{"lvm"} {
+	tools := []string{"lvm"}
+	if d.clustered {
+		tools = append(tools, []string{"lvmlockctl", "sanlock"}...)
+	}
+
+	for _, tool := range tools {
 		_, err := exec.LookPath(tool)
 		if err != nil {
 			return fmt.Errorf("Required tool %q is missing", tool)
@@ -84,10 +93,28 @@ func (d *lvm) load() error {
 	return nil
 }
 
+func (d *lvm) init(s *state.State, name string, config map[string]string, log logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) {
+	d.common.init(s, name, config, log, volIDFunc, commonRules)
+
+	if d.clustered && d.config != nil {
+		d.config["lvm.vg_name"] = d.config["source"]
+	}
+}
+
+// isRemote returns true indicating this driver uses remote storage.
+func (d *lvm) isRemote() bool {
+	return d.clustered
+}
+
 // Info returns info about the driver and its environment.
 func (d *lvm) Info() Info {
+	name := "lvm"
+	if d.clustered {
+		name = "lvmcluster"
+	}
+
 	return Info{
-		Name:                         "lvm",
+		Name:                         name,
 		Version:                      lvmVersion,
 		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
 		OptimizedImages:              d.usesThinpool(), // Only thinpool pools support optimized images.
@@ -134,6 +161,10 @@ func (d *lvm) Create() error {
 	var usingLoopFile bool
 
 	if d.config["source"] == "" || d.config["source"] == defaultSource {
+		if d.clustered {
+			return fmt.Errorf("Clustered LVM only supports pre-existing shared VGs")
+		}
+
 		usingLoopFile = true
 
 		// We are using an internal loopback file.
@@ -197,6 +228,10 @@ func (d *lvm) Create() error {
 			return fmt.Errorf("A volume group already exists called %q", d.config["lvm.vg_name"])
 		}
 	} else if filepath.IsAbs(d.config["source"]) {
+		if d.clustered {
+			return fmt.Errorf("Clustered LVM only supports pre-existing shared VGs")
+		}
+
 		// We are using an existing physical device.
 		srcPath := d.config["source"]
 
@@ -316,7 +351,7 @@ func (d *lvm) Create() error {
 			}
 
 			// Check the tags on the volume group to check it is not already being used.
-			if util.ValueInSlice(lvmVgPoolMarker, vgTags) {
+			if slices.Contains(vgTags, lvmVgPoolMarker) {
 				return fmt.Errorf("Volume group %q is already used by Incus", d.config["lvm.vg_name"])
 			}
 		}
@@ -462,7 +497,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 			d.logger.Debug("Volume group removed", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
 		} else {
 			// Otherwise just remove the lvmVgPoolMarker tag to indicate Incus no longer uses this VG.
-			if util.ValueInSlice(lvmVgPoolMarker, vgTags) {
+			if slices.Contains(vgTags, lvmVgPoolMarker) {
 				_, err = subprocess.TryRunCommand("vgchange", "--deltag", lvmVgPoolMarker, d.config["lvm.vg_name"])
 				if err != nil {
 					return fmt.Errorf("Failed to remove marker tag on volume group for the lvm storage pool: %w", err)
@@ -507,12 +542,15 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 func (d *lvm) Validate(config map[string]string) error {
 	rules := map[string]func(value string) error{
-		"size":                       validate.Optional(validate.IsSize),
-		"lvm.vg_name":                validate.IsAny,
-		"lvm.thinpool_name":          validate.IsAny,
-		"lvm.thinpool_metadata_size": validate.Optional(validate.IsSize),
-		"lvm.use_thinpool":           validate.Optional(validate.IsBool),
-		"lvm.vg.force_reuse":         validate.Optional(validate.IsBool),
+		"lvm.vg_name": validate.IsAny,
+	}
+
+	if !d.clustered {
+		rules["size"] = validate.Optional(validate.IsSize)
+		rules["lvm.thinpool_name"] = validate.IsAny
+		rules["lvm.thinpool_metadata_size"] = validate.Optional(validate.IsSize)
+		rules["lvm.use_thinpool"] = validate.Optional(validate.IsBool)
+		rules["lvm.vg.force_reuse"] = validate.Optional(validate.IsBool)
 	}
 
 	err := d.validatePool(config, rules, d.commonVolumeRules())
@@ -642,6 +680,14 @@ func (d *lvm) Mount() (bool, error) {
 
 	revert := revert.New()
 	defer revert.Fail()
+
+	// If clustered LVM, start lock manager.
+	if d.clustered {
+		_, err := subprocess.RunCommand("vgchange", "--lockstart")
+		if err != nil {
+			return false, fmt.Errorf("Error starting lock manager: %w", err)
+		}
+	}
 
 	// Open the loop file if the source points to a non-block device file.
 	// This ensures that auto clear isn't enabled on the loop file.

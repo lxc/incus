@@ -41,6 +41,11 @@ const lvmThinpoolDefaultName = "IncusThinPool"
 
 // usesThinpool indicates whether the config specifies to use a thin pool or not.
 func (d *lvm) usesThinpool() bool {
+	// No thin pool on clustered LVM.
+	if d.clustered {
+		return false
+	}
+
 	// Default is to use a thinpool.
 	return util.IsTrueOrEmpty(d.config["lvm.use_thinpool"])
 }

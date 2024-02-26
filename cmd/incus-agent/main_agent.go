@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -62,7 +63,7 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Sync the hostname.
-	if util.PathExists("/proc/sys/kernel/hostname") && util.ValueInSlice("/etc/hostname", files) {
+	if util.PathExists("/proc/sys/kernel/hostname") && slices.Contains(files, "/etc/hostname") {
 		// Open the two files.
 		src, err := os.Open("/etc/hostname")
 		if err != nil {
@@ -89,7 +90,7 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Run cloud-init.
-	if util.PathExists("/etc/cloud") && util.ValueInSlice("/var/lib/cloud/seed/nocloud-net/meta-data", files) {
+	if util.PathExists("/etc/cloud") && slices.Contains(files, "/var/lib/cloud/seed/nocloud-net/meta-data") {
 		logger.Info("Seeding cloud-init")
 
 		cloudInitPath := "/run/cloud-init"

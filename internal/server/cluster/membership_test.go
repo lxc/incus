@@ -27,6 +27,13 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
+func init() {
+	db.StorageRemoteDriverNames = func() []string {
+		// Tests only use ceph.
+		return []string{"ceph"}
+	}
+}
+
 func TestBootstrap_UnmetPreconditions(t *testing.T) {
 	cases := []struct {
 		setup func(*membershipFixtures)

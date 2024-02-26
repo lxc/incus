@@ -5473,6 +5473,58 @@ definitions:
                 x-go-name: S3URL
         type: object
         x-go-package: github.com/lxc/incus/shared/api
+    StorageBucketBackup:
+        description: StorageBucketBackup represents the fields available for a new storage bucket backup
+        properties:
+            compression_algorithm:
+                description: What compression algorithm to use
+                example: gzip
+                type: string
+                x-go-name: CompressionAlgorithm
+            expires_at:
+                description: When the backup expires (gets auto-deleted)
+                example: "2021-03-23T17:38:37.753398689-04:00"
+                format: date-time
+                type: string
+                x-go-name: ExpiresAt
+            name:
+                description: Backup name
+                example: backup0
+                type: string
+                x-go-name: Name
+        type: object
+        x-go-package: github.com/lxc/incus/shared/api
+    StorageBucketBackupPost:
+        description: StorageBucketBackupPost represents the fields available for the renaming of a bucket backup
+        properties:
+            name:
+                description: New backup name
+                example: backup1
+                type: string
+                x-go-name: Name
+        type: object
+        x-go-package: github.com/lxc/incus/shared/api
+    StorageBucketBackupsPost:
+        description: StorageBucketBackupsPost represents the fields available for a new storage bucket backup
+        properties:
+            compression_algorithm:
+                description: What compression algorithm to use
+                example: gzip
+                type: string
+                x-go-name: CompressionAlgorithm
+            expires_at:
+                description: When the backup expires (gets auto-deleted)
+                example: "2021-03-23T17:38:37.753398689-04:00"
+                format: date-time
+                type: string
+                x-go-name: ExpiresAt
+            name:
+                description: Backup name
+                example: backup0
+                type: string
+                x-go-name: Name
+        type: object
+        x-go-package: github.com/lxc/incus/shared/api
     StorageBucketKey:
         description: StorageBucketKey represents the fields of a storage pool bucket key
         properties:
@@ -5616,7 +5668,7 @@ definitions:
                 type: string
                 x-go-name: Description
             driver:
-                description: Storage pool driver (btrfs, ceph, cephfs, dir, lvm or zfs)
+                description: Storage pool driver (btrfs, ceph, cephfs, cephobject, dir, lvm, lvmcluster or zfs)
                 example: zfs
                 type: string
                 x-go-name: Driver
@@ -5773,7 +5825,7 @@ definitions:
                 type: string
                 x-go-name: Description
             driver:
-                description: Storage pool driver (btrfs, ceph, cephfs, dir, lvm or zfs)
+                description: Storage pool driver (btrfs, ceph, cephfs, cephobject, dir, lvm, lvmcluster or zfs)
                 example: zfs
                 type: string
                 x-go-name: Driver
@@ -13568,6 +13620,281 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Get the storage pool bucket
+            tags:
+                - storage
+    /1.0/storage-pools/{poolName}/buckets/{bucketName}/backups:
+        get:
+            description: Returns a list of storage bucket backups (URLs).
+            operationId: storage_pool_buckets_backups_get
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of endpoints
+                                example: |-
+                                    [
+                                      "/1.0/storage-pools/local/buckets/foo/backups/backup0",
+                                      "/1.0/storage-pools/local/buckets/foo/backups/backup1"
+                                    ]
+                                items:
+                                    type: string
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage bucket backups
+            tags:
+                - storage
+        post:
+            consumes:
+                - application/json
+            description: Creates a new storage bucket backup.
+            operationId: storage_pool_buckets_backups_post
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+                - description: Storage bucket backup
+                  in: body
+                  name: bucket
+                  required: true
+                  schema:
+                    $ref: '#/definitions/StoragePoolBucketBackupsPost'
+            produces:
+                - application/json
+            responses:
+                "202":
+                    $ref: '#/responses/Operation'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Create a storage bucket backup
+            tags:
+                - storage
+    /1.0/storage-pools/{poolName}/buckets/{bucketName}/backups/{backupName}:
+        delete:
+            consumes:
+                - application/json
+            description: Deletes a new storage bucket backup.
+            operationId: storage_pool_buckets_backup_delete
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "202":
+                    $ref: '#/responses/Operation'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Delete a storage bucket backup
+            tags:
+                - storage
+        get:
+            description: Gets a specific storage bucket backup.
+            operationId: storage_pool_buckets_backup_get
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Storage bucket backup
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/StoragePoolBucketBackup'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage bucket backup
+            tags:
+                - storage
+        post:
+            consumes:
+                - application/json
+            description: Renames a storage bucket backup.
+            operationId: storage_pool_buckets_backup_post
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+                - description: Storage bucket backup
+                  in: body
+                  name: bucket rename
+                  required: true
+                  schema:
+                    $ref: '#/definitions/StorageBucketBackupPost'
+            produces:
+                - application/json
+            responses:
+                "202":
+                    $ref: '#/responses/Operation'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Rename a storage bucket backup
+            tags:
+                - storage
+    /1.0/storage-pools/{poolName}/buckets/{bucketName}/backups/{backupName}/export:
+        get:
+            description: Download the raw backup file from the server.
+            operationId: storage_pool_buckets_backup_export_get
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/octet-stream
+            responses:
+                "200":
+                    description: Raw backup data
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the raw backup file
+            tags:
+                - storage
+    /1.0/storage-pools/{poolName}/buckets/{bucketName}/backups?recursion=1:
+        get:
+            description: Returns a list of storage bucket backups (structs).
+            operationId: storage_pool_buckets_backups_get_recursion1
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of storage bucket backups
+                                items:
+                                    $ref: '#/definitions/StoragePoolBucketBackup'
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage bucket backups
             tags:
                 - storage
     /1.0/storage-pools/{poolName}/buckets/{bucketName}/keys:

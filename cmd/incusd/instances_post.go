@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -325,7 +326,7 @@ func createFromMigration(s *state.State, r *http.Request, projectName string, pr
 		// Note: At this stage we do not yet know if snapshots are going to be received and so we cannot
 		// create their DB records. This will be done if needed in the migrationSink.Do() function called
 		// as part of the operation below.
-		inst, instOp, cleanup, err = instance.CreateInternal(s, args, true)
+		inst, instOp, cleanup, err = instance.CreateInternal(s, args, true, false)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed creating instance record: %w", err))
 		}
@@ -442,7 +443,7 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 		serverName := s.ServerName
 
 		if serverName != source.Location() {
-			// Check if we are copying from a ceph-based container.
+			// Check if we are copying from a remote storage instance.
 			_, rootDevice, _ := internalInstance.GetRootDiskDevice(source.ExpandedDevices().CloneNative())
 			sourcePoolName := rootDevice["pool"]
 
@@ -468,7 +469,7 @@ func createFromCopy(s *state.State, r *http.Request, projectName string, profile
 				return response.SmartError(err)
 			}
 
-			if pool.Driver != "ceph" {
+			if !slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
 				// Redirect to migration
 				return clusterCopyContainerInternal(s, r, source, projectName, profiles, req)
 			}
@@ -1032,7 +1033,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			for {
 				i++
 				req.Name = strings.ToLower(petname.Generate(2, "-"))
-				if !util.ValueInSlice(req.Name, names) {
+				if !slices.Contains(names, req.Name) {
 					break
 				}
 
@@ -1076,8 +1077,6 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				return err
 			}
-
-			return nil
 		}
 
 		if !clusterNotification {
@@ -1248,15 +1247,13 @@ func instanceFindStoragePool(s *state.State, projectName string, req *api.Instan
 }
 
 func clusterCopyContainerInternal(s *state.State, r *http.Request, source instance.Instance, projectName string, profiles []api.Profile, req *api.InstancesPost) response.Response {
-	name := req.Source.Source
-
 	// Locate the source of the container
 	var nodeAddress string
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		// Load source node.
-		nodeAddress, err = tx.GetNodeAddressOfInstance(ctx, projectName, name, source.Type())
+		nodeAddress, err = tx.GetNodeAddressOfInstance(ctx, source.Project().Name, source.Name(), source.Type())
 		if err != nil {
 			return fmt.Errorf("Failed to get address of instance's member: %w", err)
 		}

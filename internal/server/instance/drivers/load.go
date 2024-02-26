@@ -3,6 +3,7 @@ package drivers
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
 	internalInstance "github.com/lxc/incus/internal/instance"
@@ -18,7 +19,6 @@ import (
 	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 // Instance driver definitions.
@@ -87,7 +87,7 @@ func validDevices(state *state.State, p api.Project, instanceType instancetype.T
 	checkDevices := func(devices deviceConfig.Devices, expanded bool) error {
 		// Check each device individually using the device package.
 		for deviceName, deviceConfig := range devices {
-			if expanded && util.ValueInSlice(deviceName, checkedDevices) {
+			if expanded && slices.Contains(checkedDevices, deviceName) {
 				continue // Don't check the device twice if present in both local and expanded.
 			}
 

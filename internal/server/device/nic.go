@@ -2,11 +2,11 @@ package device
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/network/acl"
-	"github.com/lxc/incus/shared/util"
 	"github.com/lxc/incus/shared/validate"
 )
 
@@ -116,7 +116,7 @@ func nicCheckNamesUnique(instConf instance.ConfigReader) error {
 			continue
 		}
 
-		if util.ValueInSlice(devConfig["name"], seenNICNames) {
+		if slices.Contains(seenNICNames, devConfig["name"]) {
 			return fmt.Errorf("Duplicate NIC name detected %q", devConfig["name"])
 		}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"slices"
 	"strconv"
 
 	"github.com/lxc/incus/internal/revert"
@@ -291,7 +292,7 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 	revert := revert.New()
 	defer revert.Fail()
 
-	hostNameChanged := util.ValueInSlice("vlan", changedKeys) || util.ValueInSlice("parent", changedKeys)
+	hostNameChanged := slices.Contains(changedKeys, "vlan") || slices.Contains(changedKeys, "parent")
 
 	// We only need to check in the database once, not on every clustered node.
 	if clientType == request.ClientTypeNormal {

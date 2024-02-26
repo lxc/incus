@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	internalInstance "github.com/lxc/incus/internal/instance"
 	internalRecover "github.com/lxc/incus/internal/recover"
@@ -26,7 +27,6 @@ import (
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/util"
 )
 
 // Define API endpoints for recover actions.
@@ -116,7 +116,7 @@ func internalRecoverScan(s *state.State, userPools []api.StoragePoolsPost, valid
 	addDependencyError := func(err error) {
 		errStr := err.Error()
 
-		if !util.ValueInSlice(errStr, res.DependencyErrors) {
+		if !slices.Contains(res.DependencyErrors, errStr) {
 			res.DependencyErrors = append(res.DependencyErrors, errStr)
 		}
 	}
@@ -512,7 +512,7 @@ func internalRecoverImportInstance(s *state.State, pool storagePools.Pool, proje
 		return nil, nil, fmt.Errorf("Invalid instance type")
 	}
 
-	inst, instOp, cleanup, err := instance.CreateInternal(s, *dbInst, false)
+	inst, instOp, cleanup, err := instance.CreateInternal(s, *dbInst, false, true)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed creating instance record: %w", err)
 	}
@@ -563,7 +563,7 @@ func internalRecoverImportInstanceSnapshot(s *state.State, pool storagePools.Poo
 		Name:         poolVol.Container.Name + internalInstance.SnapshotDelimiter + snap.Name,
 		Profiles:     profiles,
 		Stateful:     snap.Stateful,
-	}, false)
+	}, false, true)
 	if err != nil {
 		return nil, fmt.Errorf("Failed creating instance snapshot record %q: %w", snap.Name, err)
 	}

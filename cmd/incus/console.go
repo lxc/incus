@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strconv"
 	"sync"
 
@@ -104,7 +105,7 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate flags.
-	if !util.ValueInSlice(c.flagType, []string{"console", "vga"}) {
+	if !slices.Contains([]string{"console", "vga"}, c.flagType) {
 		return fmt.Errorf(i18n.G("Unknown output type %q"), c.flagType)
 	}
 

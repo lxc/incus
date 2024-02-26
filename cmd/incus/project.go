@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -838,7 +839,7 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 	for k, v := range projectState.Resources {
 		limit := i18n.G("UNLIMITED")
 		if v.Limit >= 0 {
-			if util.ValueInSlice(k, byteLimits) {
+			if slices.Contains(byteLimits, k) {
 				limit = units.GetByteSizeStringIEC(v.Limit, 2)
 			} else {
 				limit = fmt.Sprintf("%d", v.Limit)
@@ -846,7 +847,7 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		usage := ""
-		if util.ValueInSlice(k, byteLimits) {
+		if slices.Contains(byteLimits, k) {
 			usage = units.GetByteSizeStringIEC(v.Usage, 2)
 		} else {
 			usage = fmt.Sprintf("%d", v.Usage)

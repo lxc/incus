@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -127,7 +128,7 @@ func (c *cmdAdminInit) askClustering(config *api.InitPreseed, d incus.InstanceSe
 			address := internalUtil.CanonicalNetworkAddress(value, ports.HTTPSDefaultPort)
 
 			host, _, _ := net.SplitHostPort(address)
-			if util.ValueInSlice(host, []string{"", "[::]", "0.0.0.0"}) {
+			if slices.Contains([]string{"", "[::]", "0.0.0.0"}, host) {
 				return fmt.Errorf(i18n.G("Invalid IP address or DNS name"))
 			}
 
@@ -362,7 +363,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 
 		// IPv4
 		net.Config["ipv4.address"], err = c.global.asker.AskString(i18n.G("What IPv4 address should be used?")+" (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
-			if util.ValueInSlice(value, []string{"auto", "none"}) {
+			if slices.Contains([]string{"auto", "none"}, value) {
 				return nil
 			}
 
@@ -372,7 +373,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 			return err
 		}
 
-		if !util.ValueInSlice(net.Config["ipv4.address"], []string{"auto", "none"}) {
+		if !slices.Contains([]string{"auto", "none"}, net.Config["ipv4.address"]) {
 			netIPv4UseNAT, err := c.global.asker.AskBool(i18n.G("Would you like to NAT IPv4 traffic on your bridge?")+" [default=yes]: ", "yes")
 			if err != nil {
 				return err
@@ -383,7 +384,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 
 		// IPv6
 		net.Config["ipv6.address"], err = c.global.asker.AskString(i18n.G("What IPv6 address should be used?")+" (CIDR subnet notation, “auto” or “none”) [default=auto]: ", "auto", func(value string) error {
-			if util.ValueInSlice(value, []string{"auto", "none"}) {
+			if slices.Contains([]string{"auto", "none"}, value) {
 				return nil
 			}
 
@@ -393,7 +394,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 			return err
 		}
 
-		if !util.ValueInSlice(net.Config["ipv6.address"], []string{"auto", "none"}) {
+		if !slices.Contains([]string{"auto", "none"}, net.Config["ipv6.address"]) {
 			netIPv6UseNAT, err := c.global.asker.AskBool(i18n.G("Would you like to NAT IPv6 traffic on your bridge?")+" [default=yes]: ", "yes")
 			if err != nil {
 				return err
@@ -499,11 +500,11 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 	}
 
 	defaultStorage := "dir"
-	if backingFs == "btrfs" && util.ValueInSlice("btrfs", availableBackends) {
+	if backingFs == "btrfs" && slices.Contains(availableBackends, "btrfs") {
 		defaultStorage = "btrfs"
-	} else if util.ValueInSlice("zfs", availableBackends) {
+	} else if slices.Contains(availableBackends, "zfs") {
 		defaultStorage = "zfs"
-	} else if util.ValueInSlice("btrfs", availableBackends) {
+	} else if slices.Contains(availableBackends, "btrfs") {
 		defaultStorage = "btrfs"
 	}
 
@@ -544,7 +545,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		if len(availableBackends) > 1 {
 			defaultBackend := defaultStorage
 			if poolType == internalUtil.PoolTypeRemote {
-				if util.ValueInSlice("ceph", availableBackends) {
+				if slices.Contains(availableBackends, "ceph") {
 					defaultBackend = "ceph"
 				} else {
 					defaultBackend = availableBackends[0] // Default to first remote driver.
@@ -629,6 +630,12 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 				// Ask for the name of the cluster
 				pool.Config["source"], err = c.global.asker.AskString(i18n.G("Name of the CEPHfs volume:")+" ", "", nil)
+				if err != nil {
+					return err
+				}
+			} else if pool.Driver == "lvmcluster" {
+				// Ask for the volume group
+				pool.Config["source"], err = c.global.asker.AskString(i18n.G("Name of the shared LVM volume group:")+" ", "", nil)
 				if err != nil {
 					return err
 				}

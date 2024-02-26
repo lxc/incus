@@ -312,6 +312,11 @@ func pruneExpiredBackupsTask(d *Daemon) (task.Func, task.Schedule) {
 				return fmt.Errorf("Failed pruning expired storage volume backups: %w", err)
 			}
 
+			err = pruneExpiredStorageBucketBackups(ctx, s)
+			if err != nil {
+				return fmt.Errorf("Failed pruning expired storage bucket backups: %w", err)
+			}
+
 			return nil
 		}
 
@@ -627,6 +632,230 @@ func pruneExpiredStorageVolumeBackups(ctx context.Context, s *state.State) error
 	// The deletion is done outside of the transaction to avoid any unnecessary IO while inside of
 	// the transaction.
 	for _, b := range volumeBackups {
+		err := b.Delete()
+		if err != nil {
+			return fmt.Errorf("Error deleting storage volume backup %q: %w", b.Name(), err)
+		}
+	}
+
+	return nil
+}
+
+func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, projectName string, poolName string, bucketName string) error {
+	l := logger.AddContext(logger.Ctx{"project": projectName, "storage_bucket": bucketName, "name": args.Name})
+	l.Debug("Bucket backup started")
+	defer l.Debug("Bucket backup finished")
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	pool, err := storagePools.LoadByName(s, poolName)
+	if err != nil {
+		return fmt.Errorf("Failed loading storage pool %q: %w", poolName, err)
+	}
+
+	// Create the database entry
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.CreateStoragePoolBucketBackup(ctx, args)
+	})
+	if err != nil {
+		if err == db.ErrAlreadyDefined {
+			return fmt.Errorf("Backup %q already exists", args.Name)
+		}
+
+		return fmt.Errorf("Failed creating backup record: %w", err)
+	}
+
+	reverter.Add(func() {
+		_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.DeleteStoragePoolBucketBackup(ctx, args.Name)
+		})
+	})
+
+	var backupRow db.StoragePoolBucketBackup
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		backupRow, err = tx.GetStoragePoolBucketBackup(ctx, projectName, poolName, args.Name)
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("Failed getting backup record: %w", err)
+	}
+
+	// Detect compression method
+	var compress string
+
+	backupRow.CompressionAlgorithm = args.CompressionAlgorithm
+
+	if backupRow.CompressionAlgorithm != "" {
+		compress = backupRow.CompressionAlgorithm
+	} else {
+		compress = s.GlobalConfig.BackupsCompressionAlgorithm()
+	}
+
+	// Create the target path if needed.
+	backupsPath := internalUtil.VarPath("backups", "buckets", pool.Name(), project.StorageBucket(projectName, bucketName))
+	if !util.PathExists(backupsPath) {
+		err := os.MkdirAll(backupsPath, 0700)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() { _ = os.Remove(backupsPath) })
+	}
+
+	target := internalUtil.VarPath("backups", "buckets", pool.Name(), project.StorageBucket(projectName, backupRow.Name))
+
+	// Setup the tarball writer.
+	l.Debug("Opening backup tarball for writing", logger.Ctx{"path": target})
+	tarFileWriter, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("Error opening backup tarball for writing %q: %w", target, err)
+	}
+
+	defer func() { _ = tarFileWriter.Close() }()
+	reverter.Add(func() { _ = os.Remove(target) })
+
+	// Create the tarball.
+	tarPipeReader, tarPipeWriter := io.Pipe()
+	defer func() { _ = tarPipeWriter.Close() }() // Ensure that go routine below always ends.
+	tarWriter := instancewriter.NewInstanceTarWriter(tarPipeWriter, nil)
+
+	// Setup tar writer go routine, with optional compression.
+	tarWriterRes := make(chan error)
+	var compressErr error
+
+	go func(resCh chan<- error) {
+		l.Debug("Started backup tarball writer")
+		defer l.Debug("Finished backup tarball writer")
+		if compress != "none" {
+			compressErr = compressFile(compress, tarPipeReader, tarFileWriter)
+
+			// If a compression error occurred, close the tarPipeWriter to end the export.
+			if compressErr != nil {
+				_ = tarPipeWriter.Close()
+			}
+		} else {
+			_, err = io.Copy(tarFileWriter, tarPipeReader)
+		}
+
+		resCh <- err
+	}(tarWriterRes)
+
+	// Write index file.
+	l.Debug("Adding backup index file")
+	err = bucketBackupWriteIndex(s, projectName, bucketName, pool, tarWriter)
+
+	// Check compression errors.
+	if compressErr != nil {
+		return compressErr
+	}
+
+	// Check backupWriteIndex for errors.
+	if err != nil {
+		return fmt.Errorf("Error writing backup index file: %w", err)
+	}
+
+	err = pool.BackupBucket(projectName, bucketName, tarWriter, nil)
+	if err != nil {
+		return fmt.Errorf("Backup create: %w", err)
+	}
+
+	// Close off the tarball file.
+	err = tarWriter.Close()
+	if err != nil {
+		return fmt.Errorf("Error closing tarball writer: %w", err)
+	}
+
+	// Close off the tarball pipe writer (this will end the go routine above).
+	err = tarPipeWriter.Close()
+	if err != nil {
+		return fmt.Errorf("Error closing tarball pipe writer: %w", err)
+	}
+
+	err = <-tarWriterRes
+	if err != nil {
+		return fmt.Errorf("Error writing tarball: %w", err)
+	}
+
+	err = tarFileWriter.Close()
+	if err != nil {
+		return fmt.Errorf("Error closing tar file: %w", err)
+	}
+
+	reverter.Success()
+	return nil
+}
+
+// bucketBackupWriteIndex generates an index.yaml file and then writes it to the root of the backup tarball.
+func bucketBackupWriteIndex(s *state.State, projectName string, bucketName string, pool storagePools.Pool, tarWriter *instancewriter.InstanceTarWriter) error {
+	config, err := pool.GenerateBucketBackupConfig(projectName, bucketName, nil)
+	if err != nil {
+		return fmt.Errorf("Failed generating storage backup config: %w", err)
+	}
+
+	indexInfo := backup.Info{
+		Name:    config.Bucket.Name,
+		Pool:    pool.Name(),
+		Backend: pool.Driver().Info().Name,
+		Type:    backup.TypeBucket,
+		Config:  config,
+	}
+
+	// Convert to YAML.
+	indexData, err := yaml.Marshal(indexInfo)
+	if err != nil {
+		return err
+	}
+
+	r := bytes.NewReader(indexData)
+
+	indexFileInfo := instancewriter.FileInfo{
+		FileName:    "backup/index.yaml",
+		FileSize:    int64(len(indexData)),
+		FileMode:    0644,
+		FileModTime: time.Now(),
+	}
+
+	// Write to tarball.
+	err = tarWriter.WriteFileFromReader(r, &indexFileInfo)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func pruneExpiredStorageBucketBackups(ctx context.Context, s *state.State) error {
+	var bucketBackups []*backup.BucketBackup
+
+	// Get the list of expired backups.
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		backups, err := tx.GetExpiredStorageBucketBackups(ctx)
+		if err != nil {
+			return fmt.Errorf("Unable to retrieve the list of expired storage bucket backups: %w", err)
+		}
+
+		for _, b := range backups {
+			bucket, err := tx.GetStoragePoolBucketWithID(ctx, int(b.BucketID))
+			if err != nil {
+				logger.Warn("Failed getting storage pool of backup", logger.Ctx{"backup": b.Name, "err": err})
+				continue
+			}
+
+			bucketBackup := backup.NewBucketBackup(s, bucket.Project, bucket.PoolName, bucket.Name, b.ID, b.Name, b.CreationDate, b.ExpiryDate)
+
+			bucketBackups = append(bucketBackups, bucketBackup)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// The deletion is done outside of the transaction to avoid any unnecessary IO while inside of
+	// the transaction.
+	for _, b := range bucketBackups {
 		err := b.Delete()
 		if err != nil {
 			return fmt.Errorf("Error deleting storage volume backup %q: %w", b.Name(), err)

@@ -4,21 +4,28 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"sort"
 
 	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/auth"
+	"github.com/lxc/incus/internal/server/backup"
 	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/internal/server/db/operationtype"
 	"github.com/lxc/incus/internal/server/lifecycle"
+	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
+	"github.com/lxc/incus/internal/server/state"
 	storagePools "github.com/lxc/incus/internal/server/storage"
 	localUtil "github.com/lxc/incus/internal/server/util"
+	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -385,6 +392,10 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	if r.Header.Get("Content-Type") == "application/octet-stream" {
+		return createStoragePoolBucketFromBackup(s, r, request.ProjectParam(r), bucketProjectName, r.Body, poolName, r.Header.Get("X-Incus-name"))
 	}
 
 	// Parse the request into a record.
@@ -1160,4 +1171,87 @@ func storagePoolBucketKeyPut(d *Daemon, r *http.Request) response.Response {
 	s.Events.SendLifecycle(bucketProjectName, lifecycle.StorageBucketKeyUpdated.Event(pool, bucketProjectName, pool.Name(), bucketName, request.CreateRequestor(r), nil))
 
 	return response.EmptySyncResponse
+}
+
+func createStoragePoolBucketFromBackup(s *state.State, r *http.Request, requestProjectName string, projectName string, data io.Reader, pool string, bucketName string) response.Response {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Create temporary file to store uploaded backup data.
+	backupFile, err := os.CreateTemp(internalUtil.VarPath("backups"), fmt.Sprintf("%s_", backup.WorkingDirPrefix))
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	defer func() { _ = os.Remove(backupFile.Name()) }()
+	reverter.Add(func() { _ = backupFile.Close() })
+
+	// Stream uploaded backup data into temporary file.
+	_, err = io.Copy(backupFile, data)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	// Parse the backup information.
+	_, err = backupFile.Seek(0, io.SeekStart)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	logger.Debug("Reading backup file info")
+	bInfo, err := backup.GetInfo(backupFile, s.OS, backupFile.Name())
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	bInfo.Project = projectName
+
+	// Override pool.
+	if pool != "" {
+		bInfo.Pool = pool
+	}
+
+	// Override bucket name.
+	if bucketName != "" {
+		bInfo.Name = bucketName
+	}
+
+	logger.Debug("Backup file info loaded", logger.Ctx{
+		"type":    bInfo.Type,
+		"name":    bInfo.Name,
+		"project": bInfo.Project,
+		"backend": bInfo.Backend,
+		"pool":    bInfo.Pool,
+	})
+
+	runRevert := reverter.Clone()
+
+	run := func(op *operations.Operation) error {
+		defer func() { _ = backupFile.Close() }()
+		defer runRevert.Fail()
+
+		pool, err := storagePools.LoadByName(s, bInfo.Pool)
+		if err != nil {
+			return err
+		}
+
+		err = pool.CreateBucketFromBackup(*bInfo, backupFile, nil)
+		if err != nil {
+			return fmt.Errorf("Create storage bucket from backup: %w", err)
+		}
+
+		runRevert.Success()
+		return nil
+	}
+
+	resources := map[string][]api.URL{}
+	resources["storage_buckets"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", bInfo.Pool, "buckets", string(bInfo.Type), bInfo.Name)}
+
+	op, err := operations.OperationCreate(s, requestProjectName, operations.OperationClassTask, operationtype.BucketBackupRestore, resources, nil, run, nil, nil, r)
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	reverter.Success()
+	return operations.OperationResponse(op)
 }

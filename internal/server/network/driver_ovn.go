@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,7 +16,7 @@ import (
 	"github.com/mdlayher/netx/eui64"
 	ovsClient "github.com/ovn-org/libovsdb/client"
 
-	incus "github.com/lxc/incus/client"
+	"github.com/lxc/incus/client"
 	"github.com/lxc/incus/internal/iprange"
 	"github.com/lxc/incus/internal/revert"
 	"github.com/lxc/incus/internal/server/cluster"
@@ -227,7 +228,7 @@ func (n *ovn) projectRestrictedSubnets(p *api.Project, uplinkNetworkName string)
 // validateExternalSubnet checks the supplied ipNet is allowed within the uplink routes and project
 // restricted subnets. If projectRestrictedSubnets is nil, then it is not checked as this indicates project has
 // no restrictions. Whereas if uplinkRoutes is nil/empty then this will always return an error.
-func (n *ovn) validateExternalSubnet(uplinkRoutes []*net.IPNet, projectRestrictedSubnets []*net.IPNet, ipNet *net.IPNet) error {
+func (n *ovn) validateExternalSubnet(uplink *api.Network, projectRestrictedSubnets []*net.IPNet, ipNet *net.IPNet) error {
 	// Check that the IP network is within the project's restricted subnets if restricted.
 	if projectRestrictedSubnets != nil {
 		foundMatch := false
@@ -243,20 +244,50 @@ func (n *ovn) validateExternalSubnet(uplinkRoutes []*net.IPNet, projectRestricte
 		}
 	}
 
-	// Check that the IP network is within the uplink network's routes.
-	foundMatch := false
+	// Check if the IP network is within the uplink network's routes.
+	uplinkRoutes, err := n.uplinkRoutes(uplink)
+	if err != nil {
+		return err
+	}
+
 	for _, uplinkRoute := range uplinkRoutes {
 		if SubnetContains(uplinkRoute, ipNet) {
-			foundMatch = true
-			break
+			return nil
 		}
 	}
 
-	if !foundMatch {
-		return api.StatusErrorf(http.StatusBadRequest, "Uplink network doesn't contain %q in its routes", ipNet.String())
+	// Load uplink network details.
+	uplinkIPv4CIDR := uplink.Config["ipv4.address"]
+	if uplinkIPv4CIDR == "" {
+		uplinkIPv4CIDR = uplink.Config["ipv4.gateway"]
 	}
 
-	return nil
+	uplinkIPv6CIDR := uplink.Config["ipv6.address"]
+	if uplinkIPv6CIDR == "" {
+		uplinkIPv6CIDR = uplink.Config["ipv6.gateway"]
+	}
+
+	uplinkIPv4, uplinkIPv4Net, _ := net.ParseCIDR(uplinkIPv4CIDR)
+	uplinkIPv6, uplinkIPv6Net, _ := net.ParseCIDR(uplinkIPv6CIDR)
+
+	// Check if the IP network is within the uplink network.
+	if uplinkIPv4Net != nil && SubnetContains(uplinkIPv4Net, ipNet) {
+		if ipNet.Contains(uplinkIPv4) {
+			return api.StatusErrorf(http.StatusBadRequest, "Requested subnet %q would mask the uplink gateway", ipNet.String())
+		}
+
+		return nil
+	}
+
+	if uplinkIPv6Net != nil && SubnetContains(uplinkIPv6Net, ipNet) {
+		if ipNet.Contains(uplinkIPv6) {
+			return api.StatusErrorf(http.StatusBadRequest, "Requested subnet %q would mask the uplink gateway", ipNet.String())
+		}
+
+		return nil
+	}
+
+	return api.StatusErrorf(http.StatusBadRequest, "Uplink network doesn't contain %q in its routes", ipNet.String())
 }
 
 // getExternalSubnetInUse returns information about usage of external subnets by networks and NICs connected to,
@@ -407,11 +438,6 @@ func (n *ovn) Validate(config map[string]string) error {
 		return fmt.Errorf("Failed to load uplink network %q: %w", uplinkNetworkName, err)
 	}
 
-	uplinkRoutes, err := n.uplinkRoutes(uplink)
-	if err != nil {
-		return err
-	}
-
 	// Get project restricted routes.
 	projectRestrictedSubnets, err := n.projectRestrictedSubnets(p, uplinkNetworkName)
 	if err != nil {
@@ -481,7 +507,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		for _, externalSubnet := range externalSubnets {
 			// Check the external subnet is allowed within both the uplink's external routes and any
 			// project restricted subnets.
-			err = n.validateExternalSubnet(uplinkRoutes, projectRestrictedSubnets, externalSubnet)
+			err = n.validateExternalSubnet(uplink, projectRestrictedSubnets, externalSubnet)
 			if err != nil {
 				return err
 			}
@@ -513,7 +539,7 @@ func (n *ovn) Validate(config map[string]string) error {
 		for _, externalSNATSubnet := range externalSNATSubnets {
 			// Check the external subnet is allowed within both the uplink's external routes and any
 			// project restricted subnets.
-			err = n.validateExternalSubnet(uplinkRoutes, projectRestrictedSubnets, externalSNATSubnet)
+			err = n.validateExternalSubnet(uplink, projectRestrictedSubnets, externalSNATSubnet)
 			if err != nil {
 				return err
 			}
@@ -1841,7 +1867,7 @@ func (n *ovn) allowedUplinkNetworks(p *api.Project) ([]string, error) {
 	allowedRestrictedUplinks := util.SplitNTrimSpace(p.Config["restricted.networks.uplinks"], ",", -1, false)
 
 	for _, allowedRestrictedUplink := range allowedRestrictedUplinks {
-		if util.ValueInSlice(allowedRestrictedUplink, uplinkNetworkNames) {
+		if slices.Contains(uplinkNetworkNames, allowedRestrictedUplink) {
 			allowedUplinkNetworkNames = append(allowedUplinkNetworkNames, allowedRestrictedUplink)
 		}
 	}
@@ -1859,7 +1885,7 @@ func (n *ovn) validateUplinkNetwork(p *api.Project, uplinkNetworkName string) (s
 	}
 
 	if uplinkNetworkName != "" {
-		if !util.ValueInSlice(uplinkNetworkName, allowedUplinkNetworks) {
+		if !slices.Contains(allowedUplinkNetworks, uplinkNetworkName) {
 			return "", fmt.Errorf(`Option "network" value %q is not one of the allowed uplink networks in project`, uplinkNetworkName)
 		}
 
@@ -2537,7 +2563,7 @@ func (n *ovn) logicalRouterPolicySetup(ovnnb *networkOVN.NB, excludePeers ...int
 	// This prevents source address spoofing of peer connection routes from the external network, which in
 	// turn allows us to use the peer connection's address set for referencing traffic from the peer in ACL.
 	err := n.forPeers(func(targetOVNNet *ovn) error {
-		if util.ValueInSlice(targetOVNNet.ID(), excludePeers) {
+		if slices.Contains(excludePeers, targetOVNNet.ID()) {
 			return nil // Don't setup rules for this peer network connection.
 		}
 
@@ -3024,7 +3050,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	})
 
 	// Stop network before new config applied if uplink network is changing.
-	if util.ValueInSlice("network", changedKeys) {
+	if slices.Contains(changedKeys, "network") {
 		err = n.Stop()
 		if err != nil {
 			return err
@@ -3053,14 +3079,14 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		newACLs := util.SplitNTrimSpace(newNetwork.Config["security.acls"], ",", -1, true)
 		removedACLs := []string{}
 		for _, oldACL := range oldACLs {
-			if !util.ValueInSlice(oldACL, newACLs) {
+			if !slices.Contains(newACLs, oldACL) {
 				removedACLs = append(removedACLs, oldACL)
 			}
 		}
 
 		addedACLs := []string{}
 		for _, newACL := range newACLs {
-			if !util.ValueInSlice(newACL, oldACLs) {
+			if !slices.Contains(oldACLs, newACL) {
 				addedACLs = append(addedACLs, newACL)
 			}
 		}
@@ -3069,7 +3095,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		defaultRuleKeys := []string{"security.acls.default.ingress.action", "security.acls.default.egress.action", "security.acls.default.ingress.logged", "security.acls.default.egress.logged"}
 		changedDefaultRuleKeys := []string{}
 		for _, k := range defaultRuleKeys {
-			if util.ValueInSlice(k, changedKeys) {
+			if slices.Contains(changedKeys, k) {
 				changedDefaultRuleKeys = append(changedDefaultRuleKeys, k)
 			}
 		}
@@ -3120,7 +3146,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 			if aclConfigChanged {
 				// Check whether we need to add any of the new ACLs to the NIC.
 				for _, addedACL := range addedACLs {
-					if util.ValueInSlice(addedACL, nicACLs) {
+					if slices.Contains(nicACLs, addedACL) {
 						continue // NIC already has this ACL applied directly, so no need to add.
 					}
 
@@ -3137,7 +3163,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 				// Check whether we need to remove any of the removed ACLs from the NIC.
 				for _, removedACL := range removedACLs {
-					if util.ValueInSlice(removedACL, nicACLs) {
+					if slices.Contains(nicACLs, removedACL) {
 						continue // NIC still has this ACL applied directly, so don't remove.
 					}
 
@@ -3230,7 +3256,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		// Remove any old unused subnet addresses from the internal switch's address set.
 		rebuildPeers := false
 		for _, key := range []string{"ipv4.address", "ipv6.address"} {
-			if util.ValueInSlice(key, changedKeys) {
+			if slices.Contains(changedKeys, key) {
 				rebuildPeers = true
 				_, oldRouterIntPortIPNet, _ := net.ParseCIDR(oldNetwork.Config[key])
 				if oldRouterIntPortIPNet != nil {
@@ -3264,7 +3290,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	}
 
 	// If uplink network is changing, start network after config applied.
-	if util.ValueInSlice("network", changedKeys) {
+	if slices.Contains(changedKeys, "network") {
 		err = n.Start()
 		if err != nil {
 			return err
@@ -3334,13 +3360,8 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 		return fmt.Errorf("Failed to load uplink network %q: %w", n.config["network"], err)
 	}
 
-	uplinkRoutes, err := n.uplinkRoutes(uplink)
-	if err != nil {
-		return err
-	}
-
 	// Check port's external routes are suffciently small when using l2proxy ingress mode on uplink.
-	if util.ValueInSlice(uplink.Config["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+	if slices.Contains([]string{"l2proxy", ""}, uplink.Config["ovn.ingress_mode"]) {
 		for _, portExternalRoute := range portExternalRoutes {
 			rOnes, rBits := portExternalRoute.Mask.Size()
 			if rBits > 32 && rOnes < 122 {
@@ -3384,7 +3405,7 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 	for _, portExternalRoute := range portExternalRoutes {
 		// Check the external port route is allowed within both the uplink's external routes and any
 		// project restricted subnets.
-		err = n.validateExternalSubnet(uplinkRoutes, projectRestrictedSubnets, portExternalRoute)
+		err = n.validateExternalSubnet(uplink, projectRestrictedSubnets, portExternalRoute)
 		if err != nil {
 			return err
 		}
@@ -3746,7 +3767,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	}
 
 	// Publish NIC's IPs on uplink network if NAT is disabled and using l2proxy ingress mode on uplink.
-	if util.ValueInSlice(opts.UplinkConfig["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+	if slices.Contains([]string{"l2proxy", ""}, opts.UplinkConfig["ovn.ingress_mode"]) {
 		for _, k := range []string{"ipv4.nat", "ipv6.nat"} {
 			if util.IsTrue(n.config[k]) {
 				continue
@@ -3826,7 +3847,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		// knowledge this is the only way to get the OVN router to respond to ARP/NDP requests for IPs that
 		// it doesn't actually have). However we have to add each IP in the external route individually as
 		// DNAT doesn't support whole subnets.
-		if util.ValueInSlice(opts.UplinkConfig["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+		if slices.Contains([]string{"l2proxy", ""}, opts.UplinkConfig["ovn.ingress_mode"]) {
 			err = SubnetIterate(externalRoute, func(ip net.IP) error {
 				err = ovnnb.LogicalRouterDNATSNATAdd(n.getRouterName(), ip, ip, true, true)
 				if err != nil {
@@ -3918,7 +3939,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	nicACLNames := util.SplitNTrimSpace(opts.DeviceConfig["security.acls"], ",", -1, true)
 
 	for _, aclName := range netACLNames {
-		if !util.ValueInSlice(aclName, nicACLNames) {
+		if !slices.Contains(nicACLNames, aclName) {
 			nicACLNames = append(nicACLNames, aclName)
 		}
 	}
@@ -3981,7 +4002,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		for _, aclName := range securityACLsRemove {
 			// Don't remove ACLs that are in the add ACLs list (there are possibly added from
 			// the network assigned ACLs).
-			if util.ValueInSlice(aclName, nicACLNames) {
+			if slices.Contains(nicACLNames, aclName) {
 				continue
 			}
 
@@ -4159,7 +4180,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		removeRoutes = append(removeRoutes, *externalRoute)
 
 		// Remove the DNAT rules when using l2proxy ingress mode on uplink.
-		if util.ValueInSlice(uplink.Config["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+		if slices.Contains([]string{"l2proxy", ""}, uplink.Config["ovn.ingress_mode"]) {
 			err = SubnetIterate(externalRoute, func(ip net.IP) error {
 				removeNATIPs = append(removeNATIPs, ip)
 
@@ -4456,7 +4477,7 @@ func (n *ovn) uplinkHasIngressRoutedAnycastIPv6(uplink *api.Network) bool {
 func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]string, changedKeys []string) error {
 	// Detect changes that need to be applied to the network.
 	for _, k := range []string{"dns.nameservers"} {
-		if util.ValueInSlice(k, changedKeys) {
+		if slices.Contains(changedKeys, k) {
 			n.logger.Debug("Applying changes from uplink network", logger.Ctx{"uplink": uplinkName})
 
 			// Re-setup logical network in order to apply uplink changes.
@@ -4470,7 +4491,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 	}
 
 	// Add or remove the instance NIC l2proxy DNAT_AND_SNAT rules if uplink's ovn.ingress_mode has changed.
-	if util.ValueInSlice("ovn.ingress_mode", changedKeys) {
+	if slices.Contains(changedKeys, "ovn.ingress_mode") {
 		n.logger.Debug("Applying ingress mode changes from uplink network to instance NICs", logger.Ctx{"uplink": uplinkName})
 
 		ovnnb, err := networkOVN.NewNB(n.state)
@@ -4478,7 +4499,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
 
-		if util.ValueInSlice(uplinkConfig["ovn.ingress_mode"], []string{"l2proxy", ""}) {
+		if slices.Contains([]string{"l2proxy", ""}, uplinkConfig["ovn.ingress_mode"]) {
 			// Get list of active switch ports (avoids repeated querying of OVN NB).
 			activePorts, err := ovnnb.LogicalSwitchPorts(n.getIntSwitchName())
 			if err != nil {
@@ -4653,11 +4674,6 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			return err
 		}
 
-		uplinkRoutes, err := n.uplinkRoutes(uplink)
-		if err != nil {
-			return err
-		}
-
 		// Get project restricted routes.
 		projectRestrictedSubnets, err := n.projectRestrictedSubnets(p, n.config["network"])
 		if err != nil {
@@ -4671,7 +4687,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 
 		// Check the listen address subnet is allowed within both the uplink's external routes and any
 		// project restricted subnets.
-		err = n.validateExternalSubnet(uplinkRoutes, projectRestrictedSubnets, listenAddressNet)
+		err = n.validateExternalSubnet(uplink, projectRestrictedSubnets, listenAddressNet)
 		if err != nil {
 			return err
 		}
@@ -4725,6 +4741,29 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 		err = ovnnb.LoadBalancerApply(n.getLoadBalancerName(forward.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
 		if err != nil {
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
+		}
+
+		// Add internal static route to the network forward (helps with OVN IC).
+		var nexthop net.IP
+		if listenAddressNet.IP.To4() == nil {
+			routerV6, _, err := n.parseRouterIntPortIPv6Net()
+			if err == nil {
+				nexthop = routerV6
+			}
+		} else {
+			routerV4, _, err := n.parseRouterIntPortIPv4Net()
+			if err == nil {
+				nexthop = routerV4
+			}
+		}
+
+		if nexthop != nil {
+			err = ovnnb.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
+			if err != nil {
+				return err
+			}
+
+			revert.Add(func() { _ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), *listenAddressNet) })
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
@@ -4879,11 +4918,21 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
 
+		// Delete the network forward itself.
 		err = ovnnb.LoadBalancerDelete(n.getLoadBalancerName(forward.ListenAddress))
 		if err != nil {
 			return fmt.Errorf("Failed deleting OVN load balancer: %w", err)
 		}
 
+		// Delete static route to network forward if present.
+		vip, err := ParseIPToNet(forward.ListenAddress)
+		if err != nil {
+			return err
+		}
+
+		_ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), *vip)
+
+		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
 		})
@@ -5008,11 +5057,6 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			return err
 		}
 
-		uplinkRoutes, err := n.uplinkRoutes(uplink)
-		if err != nil {
-			return err
-		}
-
 		// Get project restricted routes.
 		projectRestrictedSubnets, err := n.projectRestrictedSubnets(p, n.config["network"])
 		if err != nil {
@@ -5026,7 +5070,7 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 
 		// Check the listen address subnet is allowed within both the uplink's external routes and any
 		// project restricted subnets.
-		err = n.validateExternalSubnet(uplinkRoutes, projectRestrictedSubnets, listenAddressNet)
+		err = n.validateExternalSubnet(uplink, projectRestrictedSubnets, listenAddressNet)
 		if err != nil {
 			return err
 		}
@@ -5080,6 +5124,29 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 		err = ovnnb.LoadBalancerApply(n.getLoadBalancerName(loadBalancer.ListenAddress), []networkOVN.OVNRouter{n.getRouterName()}, []networkOVN.OVNSwitch{n.getIntSwitchName()}, vips...)
 		if err != nil {
 			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
+		}
+
+		// Add internal static route to the load-balancer (helps with OVN IC).
+		var nexthop net.IP
+		if listenAddressNet.IP.To4() == nil {
+			routerV6, _, err := n.parseRouterIntPortIPv6Net()
+			if err == nil {
+				nexthop = routerV6
+			}
+		} else {
+			routerV4, _, err := n.parseRouterIntPortIPv4Net()
+			if err == nil {
+				nexthop = routerV4
+			}
+		}
+
+		if nexthop != nil {
+			err = ovnnb.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
+			if err != nil {
+				return err
+			}
+
+			revert.Add(func() { _ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), *listenAddressNet) })
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
@@ -5235,11 +5302,21 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 			return fmt.Errorf("Failed to get OVN client: %w", err)
 		}
 
+		// Delete the load balancer itself.
 		err = ovnnb.LoadBalancerDelete(n.getLoadBalancerName(forward.ListenAddress))
 		if err != nil {
 			return fmt.Errorf("Failed deleting OVN load balancer: %w", err)
 		}
 
+		// Delete static route to load-balancer if present.
+		vip, err := ParseIPToNet(forward.ListenAddress)
+		if err != nil {
+			return err
+		}
+
+		_ = ovnnb.LogicalRouterRouteDelete(n.getRouterName(), *vip)
+
+		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.DeleteNetworkLoadBalancer(ctx, n.ID(), loadBalancerID)
 		})

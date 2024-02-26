@@ -3,13 +3,13 @@ package zone
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/miekg/dns"
 
 	"github.com/lxc/incus/internal/server/cluster/request"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
 )
 
 func (d *zone) AddRecord(req api.NetworkZoneRecordsPost) error {
@@ -180,7 +180,7 @@ func (d *zone) validateEntries(info api.NetworkZoneRecordPut) error {
 		}
 
 		entryID := entry.Type + "/" + entry.Value
-		if util.ValueInSlice(entryID, uniqueEntries) {
+		if slices.Contains(uniqueEntries, entryID) {
 			return fmt.Errorf("Duplicate record for type %q and value %q", entry.Type, entry.Value)
 		}
 

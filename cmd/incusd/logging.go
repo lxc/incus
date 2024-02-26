@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/lxc/incus/internal/server/task"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 // This task function expires logs when executed. It's started by the Daemon
@@ -113,7 +113,7 @@ func expireLogs(ctx context.Context, state *state.State) error {
 		}
 
 		// Check if the instance still exists.
-		if util.ValueInSlice(fi.Name(), names) {
+		if slices.Contains(names, fi.Name()) {
 			instDirEntries, err := os.ReadDir(internalUtil.LogPath(fi.Name()))
 			if err != nil {
 				return err

@@ -7,6 +7,7 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
+	"slices"
 
 	"github.com/spf13/cobra"
 
@@ -415,7 +416,7 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
 				flush = true
 			}
 
-			if !util.ValueInSlice(cmd.Name(), []string{"admin", "create", "launch"}) && (cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
+			if !slices.Contains([]string{"admin", "create", "launch"}, cmd.Name()) && (cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
 				fmt.Fprintf(os.Stderr, i18n.G(`To start your first container, try: incus launch images:ubuntu/22.04
 Or for a virtual machine: incus launch images:ubuntu/22.04 --vm`)+"\n")
 				flush = true

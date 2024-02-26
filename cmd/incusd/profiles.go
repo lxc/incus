@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -30,7 +31,6 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 var profilesCmd = APIEndpoint{
@@ -279,7 +279,7 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Profile names may not contain slashes"))
 	}
 
-	if util.ValueInSlice(req.Name, []string{".", ".."}) {
+	if slices.Contains([]string{".", ".."}, req.Name) {
 		return response.BadRequest(fmt.Errorf("Invalid profile name %q", req.Name))
 	}
 
@@ -742,7 +742,7 @@ func profilePost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Profile names may not contain slashes"))
 	}
 
-	if util.ValueInSlice(req.Name, []string{".", ".."}) {
+	if slices.Contains([]string{".", ".."}, req.Name) {
 		return response.BadRequest(fmt.Errorf("Invalid profile name %q", req.Name))
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/internal/server/auth"
@@ -79,7 +80,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 	if len(types) == 1 && types[0] == "" {
 		types = []string{}
 		for _, entry := range eventTypes {
-			if !canViewPrivilegedEvents && util.ValueInSlice(entry, privilegedEventTypes) {
+			if !canViewPrivilegedEvents && slices.Contains(privilegedEventTypes, entry) {
 				continue
 			}
 
@@ -89,12 +90,12 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 
 	// Validate event types.
 	for _, entry := range types {
-		if !util.ValueInSlice(entry, eventTypes) {
+		if !slices.Contains(eventTypes, entry) {
 			return api.StatusErrorf(http.StatusBadRequest, "%q isn't a supported event type", entry)
 		}
 	}
 
-	if util.ValueInSlice(api.EventTypeLogging, types) && !canViewPrivilegedEvents {
+	if slices.Contains(types, api.EventTypeLogging) && !canViewPrivilegedEvents {
 		return api.StatusErrorf(http.StatusForbidden, "Forbidden")
 	}
 

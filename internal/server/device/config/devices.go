@@ -80,6 +80,10 @@ func NewDevices(nativeSet map[string]map[string]string) Devices {
 	for devName, devConfig := range nativeSet {
 		newDev := Device{}
 		for k, v := range devConfig {
+			if v == "" {
+				continue
+			}
+
 			newDev[k] = v
 		}
 
@@ -133,7 +137,7 @@ func (list Devices) Contains(k string, d Device) bool {
 // Update returns the difference between two device sets (removed, added, updated devices) and a list of all
 // changed keys across all devices. Accepts a function to return which keys can be live updated, which prevents
 // them being removed and re-added if the device supports live updates of certain keys.
-func (list Devices) Update(newlist Devices, updateFields func(Device, Device) []string) (map[string]Device, map[string]Device, map[string]Device, []string) {
+func (list Devices) Update(newlist Devices, updateFields func(Device, Device) []string) (Devices, Devices, Devices, []string) {
 	rmlist := map[string]Device{}
 	addlist := map[string]Device{}
 	updatelist := map[string]Device{}

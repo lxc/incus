@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -783,7 +784,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 				// Check if expected snapshot.
 				if strings.Contains(entry, "@snapshot-") {
 					name := strings.Split(entry, "@snapshot-")[1]
-					if util.ValueInSlice(name, snapshots) {
+					if slices.Contains(snapshots, name) {
 						continue
 					}
 				}
@@ -892,7 +893,7 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 	// 2) Snapshots shouldn't be copied (--instance-only flag)
 	volumeOnly := len(volTargetArgs.Snapshots) == 0
 
-	if util.ValueInSlice(migration.ZFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
+	if slices.Contains(volTargetArgs.MigrationType.Features, migration.ZFSFeatureMigrationHeader) {
 		// The source will send all of its snapshots with their respective GUID.
 		buf, err := io.ReadAll(conn)
 		if err != nil {
@@ -906,7 +907,7 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 	}
 
 	// If we're refreshing, send back all snapshots of the target.
-	if volTargetArgs.Refresh && util.ValueInSlice(migration.ZFSFeatureMigrationHeader, volTargetArgs.MigrationType.Features) {
+	if volTargetArgs.Refresh && slices.Contains(volTargetArgs.MigrationType.Features, migration.ZFSFeatureMigrationHeader) {
 		snapshots, err := vol.Snapshots(op)
 		if err != nil {
 			return fmt.Errorf("Failed getting volume snapshots: %w", err)
@@ -1051,7 +1052,7 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 			lastIdenticalSnapshot := snapshots[len(snapshots)-1]
 			_, lastIdenticalSnapshotOnlyName, _ := api.GetParentAndSnapshotName(lastIdenticalSnapshot.Name())
 
-			err = d.RestoreVolume(vol, lastIdenticalSnapshotOnlyName, op)
+			err = d.restoreVolume(vol, lastIdenticalSnapshotOnlyName, true, op)
 			if err != nil {
 				return err
 			}
@@ -2393,7 +2394,7 @@ func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *loc
 	var srcMigrationHeader *ZFSMetaDataHeader
 
 	// The target will validate the GUIDs and if successful proceed with the refresh.
-	if util.ValueInSlice(migration.ZFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
+	if slices.Contains(volSrcArgs.MigrationType.Features, migration.ZFSFeatureMigrationHeader) {
 		snapshots, err := d.VolumeSnapshots(vol, op)
 		if err != nil {
 			return err
@@ -2423,14 +2424,14 @@ func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *loc
 	}
 
 	// If we haven't negotiated zvol support, ensure volume is not a zvol.
-	if !util.ValueInSlice(migration.ZFSFeatureZvolFilesystems, volSrcArgs.MigrationType.Features) && d.isBlockBacked(vol) {
+	if !slices.Contains(volSrcArgs.MigrationType.Features, migration.ZFSFeatureZvolFilesystems) && d.isBlockBacked(vol) {
 		return fmt.Errorf("Filesystem zvol detected in source but target does not support receiving zvols")
 	}
 
 	incrementalStream := true
 	var migrationHeader ZFSMetaDataHeader
 
-	if volSrcArgs.Refresh && util.ValueInSlice(migration.ZFSFeatureMigrationHeader, volSrcArgs.MigrationType.Features) {
+	if volSrcArgs.Refresh && slices.Contains(volSrcArgs.MigrationType.Features, migration.ZFSFeatureMigrationHeader) {
 		buf, err := io.ReadAll(conn)
 		if err != nil {
 			return fmt.Errorf("Failed reading ZFS migration header: %w", err)
@@ -3213,6 +3214,10 @@ func (d *zfs) VolumeSnapshots(vol Volume, op *operations.Operation) ([]string, e
 
 // RestoreVolume restores a volume from a snapshot.
 func (d *zfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Operation) error {
+	return d.restoreVolume(vol, snapshotName, false, op)
+}
+
+func (d *zfs) restoreVolume(vol Volume, snapshotName string, migration bool, op *operations.Operation) error {
 	// Get the list of snapshots.
 	entries, err := d.getDatasets(d.dataset(vol, false), "snapshot")
 	if err != nil {
@@ -3294,9 +3299,9 @@ func (d *zfs) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 	}
 
 	// For VM images, restore the associated filesystem dataset too.
-	if vol.IsVMBlock() {
+	if !migration && vol.IsVMBlock() {
 		fsVol := vol.NewVMBlockFilesystemVolume()
-		err := d.RestoreVolume(fsVol, snapshotName, op)
+		err := d.restoreVolume(fsVol, snapshotName, migration, op)
 		if err != nil {
 			return err
 		}

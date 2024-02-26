@@ -4,12 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
 	"golang.org/x/term"
-
-	"github.com/lxc/incus/shared/util"
 )
 
 // Asker holds a reader for reading input into CLI questions.
@@ -29,9 +28,9 @@ func (a *Asker) AskBool(question string, defaultAnswer string) (bool, error) {
 			return false, err
 		}
 
-		if util.ValueInSlice(strings.ToLower(answer), []string{"yes", "y"}) {
+		if slices.Contains([]string{"yes", "y"}, strings.ToLower(answer)) {
 			return true, nil
-		} else if util.ValueInSlice(strings.ToLower(answer), []string{"no", "n"}) {
+		} else if slices.Contains([]string{"no", "n"}, strings.ToLower(answer)) {
 			return false, nil
 		}
 
@@ -47,7 +46,7 @@ func (a *Asker) AskChoice(question string, choices []string, defaultAnswer strin
 			return "", err
 		}
 
-		if util.ValueInSlice(answer, choices) {
+		if slices.Contains(choices, answer) {
 			return answer, nil
 		}
 

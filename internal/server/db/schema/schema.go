@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
 	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/shared/util"
 )
 
 // Schema captures the schema of a database in terms of a series of ordered
@@ -302,7 +302,7 @@ func queryCurrentVersion(ctx context.Context, tx *sql.Tx) (int, error) {
 	}
 
 	// Fix bad upgrade code between 30 and 32
-	hasVersion := func(v int) bool { return util.ValueInSlice(v, versions) }
+	hasVersion := func(v int) bool { return slices.Contains(versions, v) }
 	if hasVersion(30) && hasVersion(32) && !hasVersion(31) {
 		err = insertSchemaVersion(tx, 31)
 		if err != nil {

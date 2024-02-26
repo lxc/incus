@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/lxc/incus/shared/ioprogress"
 	"github.com/lxc/incus/shared/logger"
 	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
 )
 
 // Debug controls additional debugging in rsync output.
@@ -416,18 +416,18 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 
 func rsyncFeatureArgs(features []string) []string {
 	args := []string{}
-	if util.ValueInSlice("xattrs", features) {
+	if slices.Contains(features, "xattrs") {
 		args = append(args, "--xattrs")
 		if AtLeast("3.1.3") {
 			args = append(args, "--filter=-x security.selinux")
 		}
 	}
 
-	if util.ValueInSlice("delete", features) {
+	if slices.Contains(features, "delete") {
 		args = append(args, "--delete")
 	}
 
-	if util.ValueInSlice("compress", features) {
+	if slices.Contains(features, "compress") {
 		args = append(args, "--compress")
 		args = append(args, "--compress-level=2")
 	}

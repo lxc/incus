@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 	"text/template"
@@ -616,7 +617,7 @@ func (d Nftables) removeChains(families []string, chainSuffix string, chains ...
 	foundChains := make(map[string]nftGenericItem)
 	for _, family := range families {
 		for _, item := range ruleset {
-			if item.ItemType == "chain" && item.Family == family && item.Table == nftablesNamespace && util.ValueInSlice(item.Name, fullChains) {
+			if item.ItemType == "chain" && item.Family == family && item.Table == nftablesNamespace && slices.Contains(fullChains, item.Name) {
 				foundChains[item.Name] = item
 			}
 		}
@@ -809,7 +810,7 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 	}
 
 	// Add protocol filters.
-	if util.ValueInSlice(rule.Protocol, []string{"tcp", "udp"}) {
+	if slices.Contains([]string{"tcp", "udp"}, rule.Protocol) {
 		args = append(args, "meta", "l4proto", rule.Protocol)
 
 		if rule.SourcePort != "" {
@@ -819,7 +820,7 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 		if rule.DestinationPort != "" {
 			args = append(args, d.aclRulePortToACLMatch("dport", util.SplitNTrimSpace(rule.DestinationPort, ",", -1, false)...)...)
 		}
-	} else if util.ValueInSlice(rule.Protocol, []string{"icmp4", "icmp6"}) {
+	} else if slices.Contains([]string{"icmp4", "icmp6"}, rule.Protocol) {
 		var icmpIPVersion uint
 		var protoName string
 

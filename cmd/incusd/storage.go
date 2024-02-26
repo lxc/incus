@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -20,7 +21,6 @@ import (
 	"github.com/lxc/incus/internal/version"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
 )
 
 // Simple cache used to store the activated drivers on this server.
@@ -199,7 +199,7 @@ func storagePoolDriversCacheUpdate(s *state.State) {
 			Remote:  entry.Remote,
 		})
 
-		if util.ValueInSlice(entry.Name, drivers) {
+		if slices.Contains(drivers, entry.Name) {
 			usedDrivers[entry.Name] = entry.Version
 		}
 	}

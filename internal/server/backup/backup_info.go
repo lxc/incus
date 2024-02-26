@@ -26,6 +26,9 @@ const TypeVM = Type("virtual-machine")
 // TypeCustom defines the backup type value for a custom volume.
 const TypeCustom = Type("custom")
 
+// TypeBucket defines the backup type value for a storage bucket.
+const TypeBucket = Type("bucket")
+
 const backupIndexPath = "backup/index.yaml"
 
 // InstanceTypeToBackupType converts instance type to backup type.
