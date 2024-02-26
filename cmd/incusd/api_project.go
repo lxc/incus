@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
+	instancehelpers "github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/db/operationtype"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network"
@@ -901,7 +902,8 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if !force {
-			if empty, err := projectIsEmpty(ctx, project, tx); err != nil {
+			empty, err := projectIsEmpty(ctx, project, tx)
+			if err != nil {
 				return err
 			} else if !empty {
 				return fmt.Errorf("Only empty projects can be removed. Specify force parameter to override.")
@@ -912,14 +914,29 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			// All profiles except for default (if features.profiles=true)
-			if err := projectDeleteProfiles(ctx, project, tx); err != nil {
+			// All profiles except for default
+			err = projectDeleteProfiles(ctx, project, tx)
+			if err != nil {
 				return err
 			}
 
 			// Empty the default profile
-			// All images (if features.images=true)
-			// All networks (if features.networks=true)
+			err = projectEmptyDefaultProfile(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+			// All images
+			err = projectDeleteImages(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+			// All networks
+			err = projectDeleteNetworks(ctx, project, tx)
+			if err != nil {
+				return err
+			}
 			// All network zones (if features.networks.zones=true)
 			// All network ACLs (if features.networks=true)
 			// All storage volumes (if features.storage.volumes=true)
@@ -1567,10 +1584,10 @@ func projectValidateRestrictedSubnets(s *state.State, value string) error {
 	return nil
 }
 
-// Do I need to check the StatusCode and/or ExpandedConfig similar to "cmd/incus/delete.go"
-// Do I need to check if this a snapshot or of type container similar to "cmd/incusd/instance_delete.go"
 // Delete all project instances
-func projectDeleteInstances(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+// Load the instance, stop if needed. Then call inst.Delete(true) to have it and all its snapshots properly deleted.
+func projectDeleteInstances(s *state.State, ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	// GetInstances should only return instances, so their snapshots should delete with them
 	instances, err := cluster.GetInstances(ctx, tx.Tx(), cluster.InstanceFilter{Project: &project.Name})
 	if err != nil {
 		return err
@@ -1581,33 +1598,100 @@ func projectDeleteInstances(ctx context.Context, project *cluster.Project, tx *d
 	}
 
 	for _, instance := range instances {
-		if err := cluster.DeleteInstance(ctx, tx.Tx(), project.Name, instance.Name); err != nil {
+		inst, err := instancehelpers.LoadByProjectAndName(s, project.Name, instance.Name)
+		if inst.IsRunning() {
+			err := inst.Stop(true)
+			if err != nil {
+				return err
+			}
+		}
+		err = inst.Delete(true)
+		if err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// is there any value in checking the UsedBy ?
-// Delete all project profiles
+// Delete all project profiles other than default
+// All instances for this project should be deleted prior to calling this func
 func projectDeleteProfiles(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
 	profiles, err := cluster.GetProfiles(ctx, tx.Tx(), cluster.ProfileFilter{Project: &project.Name})
 	if err != nil {
 		return err
 	}
 
-	if len(profiles) > 0 {
-		// Consider the project empty if it is only used by the default profile.
-		if len(profiles) == 1 && profiles[0].Name == "default" {
-			return nil
+	if len(profiles) == 1 {
+		return nil
+	}
+
+	for _, profile := range profiles {
+		if profile.Name == "default" {
+			continue
 		}
-		for _, profile := range profiles {
-			if profile.Name == "default" {
-				continue
-			}
-			if err := cluster.DeleteProfile(ctx, tx.Tx(), project.Name, profile.Name) ; err != nil {
-				return err
-			}
+		err := cluster.DeleteProfile(ctx, tx.Tx(), project.Name, profile.Name)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+
+// Empty the default profile i.e. remove references to it
+func projectEmptyDefaultProfile(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	defaultProfileID, err := cluster.GetProfileID(ctx, tx.Tx(), project.Name, "default")
+	if err != nil {
+		return err
+	}
+
+	err = tx.RemoveReferencesToProfile(ctx, defaultProfileID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+// Delete all project images
+func projectDeleteImages(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	fingerprints, err := tx.GetImagesFingerprints(ctx, project.Name, false)
+	if err != nil {
+		return err
+	}
+
+	if len(fingerprints) == 0 {
+		return nil
+	}
+
+	// Remove the database entry for the images
+	for _, fingerprint := range fingerprints {
+		id, _, err := tx.GetImage(ctx, fingerprint, cluster.ImageFilter{})
+		if err != nil {
+			return err
+		}
+		tx.DeleteImage(ctx, id)
+	}
+	return nil
+
+}
+
+// Delete all project networks
+func projectDeleteNetworks(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	networks, err := tx.GetNetworkURIs(ctx, project.ID, project.Name)
+	if err != nil {
+		return err
+	}
+
+	if len(networks) == 0 {
+		return nil
+	}
+
+	for _, network := range networks {
+		err = tx.DeleteNetwork(ctx, project.Name, network)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -1632,15 +1716,6 @@ func projectDeleteProfiles(ctx context.Context, project *cluster.Project, tx *db
 	}
 
 	if len(volumes) > 0 {
-		return false, nil
-	}
-
-	networks, err := tx.GetNetworkURIs(ctx, project.ID, project.Name)
-	if err != nil {
-		return false, err
-	}
-
-	if len(networks) > 0 {
 		return false, nil
 	}
 
