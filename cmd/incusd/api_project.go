@@ -1652,7 +1652,6 @@ func projectDeleteProfiles(ctx context.Context, project *cluster.Project, tx *db
 		err := cluster.DeleteProfile(ctx, tx.Tx(), project.Name, profile.Name)
 		if err != nil {
 			return err
-<<<<<<< HEAD
 		}
 	}
 	return nil
@@ -1674,7 +1673,6 @@ func projectEmptyDefaultProfile(ctx context.Context, project *cluster.Project, t
 	return nil
 }
 
-
 // Delete all project images
 func projectDeleteImages(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
 	fingerprints, err := tx.GetImagesFingerprints(ctx, project.Name, false)
@@ -1682,68 +1680,6 @@ func projectDeleteImages(ctx context.Context, project *cluster.Project, tx *db.C
 		return err
 	}
 
-	if len(fingerprints) == 0 {
-		return nil
-	}
-
-	// Remove the database entry for the images
-	for _, fingerprint := range fingerprints {
-		id, _, err := tx.GetImage(ctx, fingerprint, cluster.ImageFilter{})
-		if err != nil {
-			return err
-		}
-		tx.DeleteImage(ctx, id)
-	}
-	return nil
-
-}
-
-// Delete all project networks
-func projectDeleteNetworks(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
-	networks, err := tx.GetNetworkURIs(ctx, project.ID, project.Name)
-	if err != nil {
-		return err
-	}
-
-	if len(networks) == 0 {
-		return nil
-	}
-
-	for _, network := range networks {
-		err = tx.DeleteNetwork(ctx, project.Name, network)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-
-// Empty the default profile i.e. remove references to it
-func projectEmptyDefaultProfile(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
-	defaultProfileID, err := cluster.GetProfileID(ctx, tx.Tx(), project.Name, "default")
-	if err != nil {
-		return err
-	}
-
-	err = tx.RemoveReferencesToProfile(ctx, defaultProfileID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-
-// Delete all project images
-func projectDeleteImages(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
-	fingerprints, err := tx.GetImagesFingerprints(ctx, project.Name, false)
-	if err != nil {
-		return err
-	}
-
-<<<<<<< HEAD
-=======
 	if len(fingerprints) == 0 {
 		return nil
 	}
