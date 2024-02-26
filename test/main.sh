@@ -169,9 +169,7 @@ run_test() {
 
   if [ "${skip}" = false ]; then
     # Run test.
-    echo "::group::${TEST_CURRENT}"
     ${TEST_CURRENT}
-    echo "::endgroup::"
 
     # Check whether test was skipped due to unmet requirements, and if so check if the test is required and fail.
     if [ -n "${TEST_UNMET_REQUIREMENT}" ]; then
