@@ -1122,30 +1122,31 @@ func (o *NB) LogicalSwitchPortIPs(portName OVNSwitchPort) ([]net.IP, error) {
 		Name: string(portName),
 	}
 
-	err := o.client.Get(ctx, &lsp)
+	err := o.get(ctx, &lsp)
 	if err != nil {
-		if err == ovsClient.ErrNotFound {
-			// Don't fail on missing port.
-			return []net.IP{}, nil
-		}
-
 		return nil, err
 	}
 
-	addresses := lsp.Addresses
-	if lsp.DynamicAddresses != nil {
-		addresses = append(addresses, strings.Split(*lsp.DynamicAddresses, " ")...)
-	}
-
-	ips := make([]net.IP, 0)
-	for _, address := range addresses {
-		ip := net.ParseIP(address)
-		if ip != nil {
-			ips = append(ips, ip)
+	addresses := []net.IP{}
+	for _, address := range lsp.Addresses {
+		for _, entry := range strings.Split(address, " ") {
+			ip := net.ParseIP(entry)
+			if ip != nil {
+				addresses = append(addresses, ip)
+			}
 		}
 	}
 
-	return ips, nil
+	if lsp.DynamicAddresses != nil {
+		for _, entry := range strings.Split(*lsp.DynamicAddresses, " ") {
+			ip := net.ParseIP(entry)
+			if ip != nil {
+				addresses = append(addresses, ip)
+			}
+		}
+	}
+
+	return addresses, nil
 }
 
 // LogicalSwitchPortDynamicIPs returns a list of dynamc IPs for a switch port.
@@ -1156,7 +1157,7 @@ func (o *NB) LogicalSwitchPortDynamicIPs(portName OVNSwitchPort) ([]net.IP, erro
 		Name: string(portName),
 	}
 
-	err := o.client.Get(ctx, lsp)
+	err := o.get(ctx, lsp)
 	if err != nil {
 		return []net.IP{}, err
 	}
@@ -1457,7 +1458,7 @@ func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisI
 		Name: string(haChassisGroupName),
 	}
 
-	err := o.client.Get(ctx, &haGroup)
+	err := o.get(ctx, &haGroup)
 	if err != nil {
 		return err
 	}
@@ -1467,7 +1468,7 @@ func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisI
 
 	for _, entry := range haGroup.HaChassis {
 		chassis := ovnNB.HAChassis{UUID: entry}
-		err = o.client.Get(ctx, &chassis)
+		err = o.get(ctx, &chassis)
 		if err != nil {
 			return err
 		}
@@ -1566,7 +1567,7 @@ func (o *NB) PortGroupInfo(portGroupName OVNPortGroup) (OVNPortGroupUUID, bool, 
 		Name: string(portGroupName),
 	}
 
-	err := o.client.Get(ctx, pg)
+	err := o.get(ctx, pg)
 	if err != nil {
 		if err == ovsClient.ErrNotFound {
 			return "", false, nil

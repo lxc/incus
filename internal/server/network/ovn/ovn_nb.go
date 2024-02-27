@@ -7,11 +7,13 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
+	"reflect"
 	"runtime"
 	"strings"
 
 	"github.com/go-logr/logr"
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
+	ovsdbModel "github.com/ovn-org/libovsdb/model"
 
 	"github.com/lxc/incus/internal/linux"
 	ovnNB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-nb"
@@ -46,6 +48,14 @@ func NewNB(s *state.State) (*NB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Add some missing indexes.
+	dbSchema.SetIndexes(map[string][]ovsdbModel.ClientIndex{
+		"Logical_Router": {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
+		"Logical_Switch": {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
+		"Logical_Switch_Port": {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
+	})
+
 
 	discard := logr.Discard()
 
@@ -208,6 +218,52 @@ func NewNB(s *state.State) (*NB, error) {
 	})
 
 	return client, nil
+}
+
+// get is used to perform a libovsdb Get call while also makes use of the custom defined index.
+// For some reason the main Get() function only uses the built-in indices rather than considering the user provided ones.
+// This is apparently by design but makes it much more annoying to fetch records from some tables.
+func (o *NB) get(ctx context.Context, m ovsdbModel.Model) error {
+	var collection any
+
+	// Check if one of the broken types.
+	switch m.(type) {
+	case *ovnNB.LogicalRouter:
+		s := []ovnNB.LogicalRouter{}
+		collection = &s
+	case *ovnNB.LogicalSwitch:
+		s := []ovnNB.LogicalSwitch{}
+		collection = &s
+	case *ovnNB.LogicalSwitchPort:
+		s := []ovnNB.LogicalSwitchPort{}
+		collection = &s
+	default:
+		// Fallback to normal Get.
+		return o.client.Get(ctx, m)
+	}
+
+	// Check and assign the resulting value.
+	err := o.client.Where(m).List(ctx, collection)
+	if err != nil {
+		return err
+	}
+
+	rVal := reflect.ValueOf(collection)
+	if rVal.Kind() != reflect.Pointer {
+		return fmt.Errorf("Bad collection type")
+	}
+
+	rVal = rVal.Elem()
+	if rVal.Kind() != reflect.Slice {
+		return fmt.Errorf("Bad collection type")
+	}
+
+	if rVal.Len() != 1 {
+		return ovsdbClient.ErrNotFound
+	}
+
+	reflect.ValueOf(m).Elem().Set(rVal.Index(0))
+	return nil
 }
 
 // nbctl executes ovn-nbctl with arguments to connect to wrapper's northbound database.
