@@ -1124,28 +1124,29 @@ func (o *NB) LogicalSwitchPortIPs(portName OVNSwitchPort) ([]net.IP, error) {
 
 	err := o.get(ctx, &lsp)
 	if err != nil {
-		if err == ovsClient.ErrNotFound {
-			// Don't fail on missing port.
-			return []net.IP{}, nil
-		}
-
 		return nil, err
 	}
 
-	addresses := lsp.Addresses
-	if lsp.DynamicAddresses != nil {
-		addresses = append(addresses, strings.Split(*lsp.DynamicAddresses, " ")...)
-	}
-
-	ips := make([]net.IP, 0)
-	for _, address := range addresses {
-		ip := net.ParseIP(address)
-		if ip != nil {
-			ips = append(ips, ip)
+	addresses := []net.IP{}
+	for _, address := range lsp.Addresses {
+		for _, entry := range strings.Split(address, " ") {
+			ip := net.ParseIP(entry)
+			if ip != nil {
+				addresses = append(addresses, ip)
+			}
 		}
 	}
 
-	return ips, nil
+	if lsp.DynamicAddresses != nil {
+		for _, entry := range strings.Split(*lsp.DynamicAddresses, " ") {
+			ip := net.ParseIP(entry)
+			if ip != nil {
+				addresses = append(addresses, ip)
+			}
+		}
+	}
+
+	return addresses, nil
 }
 
 // LogicalSwitchPortDynamicIPs returns a list of dynamc IPs for a switch port.
