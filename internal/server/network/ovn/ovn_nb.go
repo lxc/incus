@@ -51,11 +51,10 @@ func NewNB(s *state.State) (*NB, error) {
 
 	// Add some missing indexes.
 	dbSchema.SetIndexes(map[string][]ovsdbModel.ClientIndex{
-		"Logical_Router": {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
-		"Logical_Switch": {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
+		"Logical_Router":      {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
+		"Logical_Switch":      {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
 		"Logical_Switch_Port": {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
 	})
-
 
 	discard := logr.Discard()
 
