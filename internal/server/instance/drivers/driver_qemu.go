@@ -7399,6 +7399,9 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 	// websockets for control and for capturing output to a file on the server.
 	req.WaitForWS = true
 
+	// Similarly, output recording is performed on the host rather than in the guest, so clear that bit from the request.
+	req.RecordOutput = false
+
 	op, err := agent.ExecInstance("", req, &args)
 	if err != nil {
 		return nil, err
