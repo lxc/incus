@@ -240,7 +240,7 @@ func (c *cmdNetworkAttachProfile) Command() *cobra.Command {
 		}
 
 		if len(args) == 1 {
-			return c.global.cmpProfiles(args[0])
+			return c.global.cmpProfiles(args[0], false)
 		}
 
 		return nil, cobra.ShellCompDirectiveNoFileComp

@@ -60,6 +60,14 @@ Mode defaults to non-interactive, interactive mode is selected if both stdin AND
 	cmd.Flags().Uint32Var(&c.flagGroup, "group", 0, i18n.G("Group ID to run the command as (default 0)")+"``")
 	cmd.Flags().StringVar(&c.flagCwd, "cwd", "", i18n.G("Directory to run the command in (default /root)")+"``")
 
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
 	return cmd
 }
 

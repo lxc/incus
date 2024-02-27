@@ -54,6 +54,23 @@ func (g *cmdGlobal) cmpInstanceAllKeys() ([]string, cobra.ShellCompDirective) {
 	return keys, cobra.ShellCompDirectiveNoFileComp
 }
 
+func (g *cmdGlobal) cmpInstanceSnapshots(instanceName string) ([]string, cobra.ShellCompDirective) {
+	resources, err := g.ParseServers(instanceName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	snapshots, err := client.GetInstanceSnapshotNames(instanceName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return snapshots, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpInstances(toComplete string) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 
@@ -200,7 +217,29 @@ func (g *cmdGlobal) cmpNetworkProfiles(networkName string) ([]string, cobra.Shel
 	return results, cobra.ShellCompDirectiveError
 }
 
-func (g *cmdGlobal) cmpProfiles(toComplete string) ([]string, cobra.ShellCompDirective) {
+func (g *cmdGlobal) cmpProfileConfigs(profileName string) ([]string, cobra.ShellCompDirective) {
+	resources, err := g.ParseServers(profileName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	profile, _, err := client.GetProfile(resource.name)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var configs []string
+	for c := range profile.Config {
+		configs = append(configs, c)
+	}
+
+	return configs, cobra.ShellCompDirectiveNoFileComp
+}
+
+func (g *cmdGlobal) cmpProfiles(toComplete string, includeRemotes bool) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 
 	resources, _ := g.ParseServers(toComplete)
@@ -223,7 +262,7 @@ func (g *cmdGlobal) cmpProfiles(toComplete string) ([]string, cobra.ShellCompDir
 		}
 	}
 
-	if !strings.Contains(toComplete, ":") {
+	if includeRemotes && !strings.Contains(toComplete, ":") {
 		remotes, _ := g.cmpRemotes(false)
 		results = append(results, remotes...)
 	}

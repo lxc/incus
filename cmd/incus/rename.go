@@ -22,6 +22,14 @@ func (c *cmdRename) Command() *cobra.Command {
 		`Rename instances`))
 	cmd.RunE = c.Run
 
+	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
 	return cmd
 }
 
