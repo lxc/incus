@@ -3854,9 +3854,11 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 			} else {
 				// Use host cache, with neither O_DSYNC nor O_DIRECT semantics if filesystem
 				// doesn't support Direct I/O.
-				_, err := os.OpenFile(srcDevPath, unix.O_DIRECT|unix.O_RDONLY, 0)
+				f, err := os.OpenFile(srcDevPath, unix.O_DIRECT|unix.O_RDONLY, 0)
 				if err != nil {
 					cacheMode = "writeback"
+				} else {
+					_ = f.Close() // Don't leak FD.
 				}
 			}
 
