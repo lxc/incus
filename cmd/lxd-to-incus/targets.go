@@ -13,4 +13,8 @@ type target interface {
 	name() string
 }
 
-var targets = []target{&targetSystemd{}, &targetOpenRC{}, &targetXbps{}}
+var targets = []target{
+	&targetSystemd{},
+	&targetOpenRC{},
+	&targetXbps{},
+}
