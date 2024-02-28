@@ -371,6 +371,14 @@ jobs:
           GOARCH=amd64 go build -o bin/incus-migrate.x86_64 ./cmd/incus-migrate
           GOARCH=arm64 go build -o bin/incus-migrate.aarch64 ./cmd/incus-migrate
 
+      - name: Build static lxd-to-incus
+        if: runner.os == 'Linux'
+        env:
+          CGO_ENABLED: 0
+        run: |
+          GOARCH=amd64 go build -o bin/lxd-to-incus.x86_64 ./cmd/lxd-to-incus
+          GOARCH=arm64 go build -o bin/lxd-to-incus.aarch64 ./cmd/lxd-to-incus
+
       - name: Unit tests (client)
         env:
           CGO_ENABLED: 0

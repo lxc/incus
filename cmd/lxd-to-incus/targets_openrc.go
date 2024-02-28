@@ -8,7 +8,9 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-type targetOpenRC struct{}
+type targetOpenRC struct {
+	service string
+}
 
 func (s *targetOpenRC) present() bool {
 	if !util.PathExists("/var/lib/incus/") {
@@ -16,16 +18,34 @@ func (s *targetOpenRC) present() bool {
 	}
 
 	_, err := subprocess.RunCommand("rc-service", "--exists", "incus")
-	return err == nil
+	if err == nil {
+		s.service = "incus"
+		return true
+	}
+
+	_, err = subprocess.RunCommand("rc-service", "--exists", "incusd")
+	if err == nil {
+		s.service = "incusd"
+		return true
+	}
+
+	return false
 }
 
 func (s *targetOpenRC) stop() error {
-	_, err := subprocess.RunCommand("rc-service", "incus", "stop")
-	return err
+	_, err := subprocess.RunCommand("rc-service", s.service, "stop")
+	if err != nil {
+		return err
+	}
+
+	// Wait for the service to fully stop.
+	time.Sleep(5 * time.Second)
+
+	return nil
 }
 
 func (s *targetOpenRC) start() error {
-	_, err := subprocess.RunCommand("rc-service", "incus", "start")
+	_, err := subprocess.RunCommand("rc-service", s.service, "start")
 	if err != nil {
 		return err
 	}
