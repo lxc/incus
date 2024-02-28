@@ -19,5 +19,6 @@ var sources = []source{
 	&srcDeb{},
 	&srcCOPR{},
 	&srcXbps{},
+	&srcAPK{},
 	&srcManual{},
 }
