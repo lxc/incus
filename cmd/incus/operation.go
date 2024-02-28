@@ -157,7 +157,7 @@ func (c *cmdOperationList) Run(cmd *cobra.Command, args []string) error {
 			cancelable = i18n.G("YES")
 		}
 
-		entry := []string{op.ID, strings.ToUpper(op.Class), op.Description, strings.ToUpper(op.Status), cancelable, op.CreatedAt.UTC().Format("2006/01/02 15:04 UTC")}
+		entry := []string{op.ID, strings.ToUpper(op.Class), op.Description, strings.ToUpper(op.Status), cancelable, op.CreatedAt.Local().Format(dateLayout)}
 		if resource.server.IsClustered() {
 			entry = append(entry, op.Location)
 		}

@@ -904,20 +904,16 @@ func (c *cmdList) ProfilesColumnData(cInfo api.InstanceFull) string {
 }
 
 func (c *cmdList) CreatedColumnData(cInfo api.InstanceFull) string {
-	layout := "2006/01/02 15:04 UTC"
-
 	if !cInfo.CreatedAt.IsZero() {
-		return cInfo.CreatedAt.UTC().Format(layout)
+		return cInfo.CreatedAt.Local().Format(dateLayout)
 	}
 
 	return ""
 }
 
 func (c *cmdList) LastUsedColumnData(cInfo api.InstanceFull) string {
-	layout := "2006/01/02 15:04 UTC"
-
 	if !cInfo.LastUsedAt.IsZero() {
-		return cInfo.LastUsedAt.UTC().Format(layout)
+		return cInfo.LastUsedAt.Local().Format(dateLayout)
 	}
 
 	return ""

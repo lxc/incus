@@ -311,8 +311,6 @@ func (c *cmdSnapshotList) listSnapshots(d incus.InstanceServer, name string) err
 		return err
 	}
 
-	const layout = "2006/01/02 15:04 MST"
-
 	// List snapshots
 	snapData := [][]string{}
 	for _, snap := range snapshots {
@@ -322,13 +320,13 @@ func (c *cmdSnapshotList) listSnapshots(d incus.InstanceServer, name string) err
 		row = append(row, fields[len(fields)-1])
 
 		if !snap.CreatedAt.IsZero() {
-			row = append(row, snap.CreatedAt.Local().Format(layout))
+			row = append(row, snap.CreatedAt.Local().Format(dateLayout))
 		} else {
 			row = append(row, " ")
 		}
 
 		if !snap.ExpiresAt.IsZero() {
-			row = append(row, snap.ExpiresAt.Local().Format(layout))
+			row = append(row, snap.ExpiresAt.Local().Format(dateLayout))
 		} else {
 			row = append(row, " ")
 		}
