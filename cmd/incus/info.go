@@ -491,11 +491,11 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 		fmt.Printf(i18n.G("PID: %d")+"\n", inst.State.Pid)
 	}
 
-	if inst.CreatedAt.Unix() != 0 {
+	if !inst.CreatedAt.IsZero() {
 		fmt.Printf(i18n.G("Created: %s")+"\n", inst.CreatedAt.Local().Format(layout))
 	}
 
-	if inst.LastUsedAt.Unix() != 0 {
+	if !inst.LastUsedAt.IsZero() {
 		fmt.Printf(i18n.G("Last Used: %s")+"\n", inst.LastUsedAt.Local().Format(layout))
 	}
 
@@ -610,13 +610,13 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 			fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
 			row = append(row, fields[len(fields)-1])
 
-			if snap.CreatedAt.Unix() != 0 {
+			if !snap.CreatedAt.IsZero() {
 				row = append(row, snap.CreatedAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
 			}
 
-			if snap.ExpiresAt.Unix() != 0 {
+			if !snap.ExpiresAt.IsZero() {
 				row = append(row, snap.ExpiresAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
@@ -655,13 +655,13 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 			var row []string
 			row = append(row, backup.Name)
 
-			if backup.CreatedAt.Unix() != 0 {
+			if !backup.CreatedAt.IsZero() {
 				row = append(row, backup.CreatedAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
 			}
 
-			if backup.ExpiresAt.Unix() != 0 {
+			if !backup.ExpiresAt.IsZero() {
 				row = append(row, backup.ExpiresAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")

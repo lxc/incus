@@ -644,7 +644,7 @@ func (c *cmdConfigTrustListTokens) Run(cmd *cobra.Command, args []string) error 
 		var expiresAt string
 
 		// Only show the expiry date if available, otherwise show an empty string.
-		if joinToken.ExpiresAt.Unix() > 0 {
+		if !joinToken.ExpiresAt.IsZero() {
 			expiresAt = joinToken.ExpiresAt.Format("2006/01/02 15:04 MST")
 		}
 

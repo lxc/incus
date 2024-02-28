@@ -1269,7 +1269,7 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if vol.CreatedAt.Unix() != 0 {
+	if !vol.CreatedAt.IsZero() {
 		fmt.Printf(i18n.G("Created: %s")+"\n", vol.CreatedAt.Local().Format(layout))
 	}
 
@@ -1322,13 +1322,13 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 			var row []string
 			row = append(row, backup.Name)
 
-			if backup.CreatedAt.Unix() != 0 {
+			if !backup.CreatedAt.IsZero() {
 				row = append(row, backup.CreatedAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
 			}
 
-			if backup.ExpiresAt.Unix() != 0 {
+			if !backup.ExpiresAt.IsZero() {
 				row = append(row, backup.ExpiresAt.Local().Format(layout))
 			} else {
 				row = append(row, " ")
@@ -2308,13 +2308,13 @@ func (c *cmdStorageVolumeSnapshotList) listSnapshots(d incus.InstanceServer, poo
 		fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
 		row = append(row, fields[len(fields)-1])
 
-		if snap.CreatedAt.Unix() != 0 {
+		if !snap.CreatedAt.IsZero() {
 			row = append(row, snap.CreatedAt.Local().Format(layout))
 		} else {
 			row = append(row, " ")
 		}
 
-		if snap.ExpiresAt != nil && snap.ExpiresAt.Unix() != 0 {
+		if snap.ExpiresAt != nil && !snap.ExpiresAt.IsZero() {
 			row = append(row, snap.ExpiresAt.Local().Format(layout))
 		} else {
 			row = append(row, " ")

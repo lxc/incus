@@ -321,13 +321,13 @@ func (c *cmdSnapshotList) listSnapshots(d incus.InstanceServer, name string) err
 		fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
 		row = append(row, fields[len(fields)-1])
 
-		if snap.CreatedAt.Unix() != 0 {
+		if !snap.CreatedAt.IsZero() {
 			row = append(row, snap.CreatedAt.Local().Format(layout))
 		} else {
 			row = append(row, " ")
 		}
 
-		if snap.ExpiresAt.Unix() != 0 {
+		if !snap.ExpiresAt.IsZero() {
 			row = append(row, snap.ExpiresAt.Local().Format(layout))
 		} else {
 			row = append(row, " ")
