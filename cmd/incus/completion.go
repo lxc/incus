@@ -283,3 +283,13 @@ func (g *cmdGlobal) cmpRemotes(includeAll bool) ([]string, cobra.ShellCompDirect
 
 	return results, cobra.ShellCompDirectiveNoSpace
 }
+
+func (g *cmdGlobal) cmpRemoteNames() ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+
+	for remoteName := range g.conf.Remotes {
+		results = append(results, remoteName)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
