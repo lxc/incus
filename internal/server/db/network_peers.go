@@ -20,7 +20,7 @@ import (
 func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info *api.NetworkPeersPost) (int64, bool, error) {
 	var err error
 	var localPeerID int64
-	var targetPeerNetworkID int64 = int64(-1) // -1 means no mutual peering exists.
+	var targetPeerNetworkID int64 = -1 // -1 means no mutual peering exists.
 
 	// Insert a new Network pending peer record.
 	result, err := c.tx.ExecContext(ctx, `
@@ -74,7 +74,7 @@ func (c *ClusterTx) CreateNetworkPeer(ctx context.Context, networkID int64, info
 		LIMIT 1
 		`
 
-	var targetPeerID int64 = int64(-1)
+	var targetPeerID int64 = -1
 
 	err = c.tx.QueryRowContext(ctx, q, info.TargetProject, info.TargetNetwork, networkID, localPeerID).Scan(&targetPeerID, &targetPeerNetworkID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -143,7 +143,7 @@ func networkPeerConfigAdd(tx *sql.Tx, peerID int64, config map[string]string) er
 // GetNetworkPeer returns the Network Peer ID and info for the given network ID and peer name.
 func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerName string) (int64, *api.NetworkPeer, error) {
 	// This query loads the specified local peer as well as trying to ascertain whether there is a mutual
-	// target peer, and if so what are it's project and network names. This is used to populate the
+	// target peer, and if so what are its project and network names. This is used to populate the
 	// TargetProject, TargetNetwork fields and indicates the Status is api.NetworkStatusCreated if available.
 	// If the peer is not mutually configured, then the local target_network_project and target_network_name
 	// fields will be used to populate TargetProject and TargetNetwork and the Status will be set to
@@ -170,7 +170,7 @@ func (c *ClusterTx) GetNetworkPeer(ctx context.Context, networkID int64, peerNam
 	`
 
 	var err error
-	var peerID int64 = int64(-1)
+	var peerID int64 = -1
 	var peer api.NetworkPeer
 	var targetPeerNetworkName string
 	var targetPeerNetworkProject string
@@ -257,7 +257,7 @@ func networkPeerConfig(ctx context.Context, tx *ClusterTx, peerID int64, peer *a
 // GetNetworkPeers returns map of Network Peers for the given network ID keyed on Peer ID.
 func (c *ClusterTx) GetNetworkPeers(ctx context.Context, networkID int64) (map[int64]*api.NetworkPeer, error) {
 	// This query loads the local peers for the network as well as trying to ascertain whether there is a
-	// mutual target peer, and if so what are it's project and network names. This is used to populate the
+	// mutual target peer, and if so what are its project and network names. This is used to populate the
 	// TargetProject, TargetNetwork fields and indicates the Status is api.NetworkStatusCreated if available.
 	// If the peer is not mutually configured, then the local target_network_project and target_network_name
 	// fields will be used to populate TargetProject and TargetNetwork and the Status will be set to
@@ -286,7 +286,7 @@ func (c *ClusterTx) GetNetworkPeers(ctx context.Context, networkID int64) (map[i
 	peers := make(map[int64]*api.NetworkPeer)
 
 	err = query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
-		var peerID int64 = int64(-1)
+		var peerID int64 = -1
 		var peer api.NetworkPeer
 		var targetPeerNetworkName string
 		var targetPeerNetworkProject string
@@ -330,7 +330,7 @@ func (c *ClusterTx) GetNetworkPeerNames(ctx context.Context, networkID int64) (m
 	peers := make(map[int64]string)
 
 	err := query.Scan(ctx, c.tx, q, func(scan func(dest ...any) error) error {
-		var peerID int64 = int64(-1)
+		var peerID int64 = -1
 		var peerName string
 
 		err := scan(&peerID, &peerName)
@@ -435,7 +435,7 @@ func (c *Cluster) GetNetworkPeersTargetNetworkIDs(projectName string, networkTyp
 		return query.Scan(ctx, tx.Tx(), q, func(scan func(dest ...any) error) error {
 			var peerName string
 			var networkName string
-			var targetNetworkID int64 = int64(-1)
+			var targetNetworkID int64 = -1
 
 			err := scan(&peerName, &networkName, &targetNetworkID)
 			if err != nil {
