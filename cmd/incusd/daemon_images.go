@@ -521,10 +521,16 @@ func ImageDownload(r *http.Request, s *state.State, op *operations.Operation, ar
 		info.Fingerprint = fp
 		info.Size = size
 		info.Architecture = imageMeta.Architecture
-		info.CreatedAt = time.Unix(imageMeta.CreationDate, 0)
-		info.ExpiresAt = time.Unix(imageMeta.ExpiryDate, 0)
 		info.Properties = imageMeta.Properties
 		info.Type = imageType
+
+		if imageMeta.CreationDate > 0 {
+			info.CreatedAt = time.Unix(imageMeta.CreationDate, 0)
+		}
+
+		if imageMeta.ExpiryDate > 0 {
+			info.ExpiresAt = time.Unix(imageMeta.ExpiryDate, 0)
+		}
 
 		err = f.Close()
 		if err != nil {

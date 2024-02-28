@@ -934,7 +934,7 @@ func (c *cmdClusterListTokens) Run(cmd *cobra.Command, args []string) error {
 		displayTokens = append(displayTokens, displayToken{
 			ServerName: joinToken.ServerName,
 			Token:      joinToken.String(),
-			ExpiresAt:  joinToken.ExpiresAt.Format("2006/01/02 15:04 MST"),
+			ExpiresAt:  joinToken.ExpiresAt.Local().Format(dateLayout),
 		})
 	}
 

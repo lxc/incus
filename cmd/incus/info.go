@@ -465,8 +465,6 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 		return err
 	}
 
-	const layout = "2006/01/02 15:04 MST"
-
 	fmt.Printf(i18n.G("Name: %s")+"\n", inst.Name)
 
 	fmt.Printf(i18n.G("Status: %s")+"\n", strings.ToUpper(inst.Status))
@@ -491,12 +489,12 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 		fmt.Printf(i18n.G("PID: %d")+"\n", inst.State.Pid)
 	}
 
-	if inst.CreatedAt.Unix() != 0 {
-		fmt.Printf(i18n.G("Created: %s")+"\n", inst.CreatedAt.Local().Format(layout))
+	if !inst.CreatedAt.IsZero() {
+		fmt.Printf(i18n.G("Created: %s")+"\n", inst.CreatedAt.Local().Format(dateLayout))
 	}
 
-	if inst.LastUsedAt.Unix() != 0 {
-		fmt.Printf(i18n.G("Last Used: %s")+"\n", inst.LastUsedAt.Local().Format(layout))
+	if !inst.LastUsedAt.IsZero() {
+		fmt.Printf(i18n.G("Last Used: %s")+"\n", inst.LastUsedAt.Local().Format(dateLayout))
 	}
 
 	if inst.State.Pid != 0 {
@@ -610,14 +608,14 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 			fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
 			row = append(row, fields[len(fields)-1])
 
-			if snap.CreatedAt.Unix() != 0 {
-				row = append(row, snap.CreatedAt.Local().Format(layout))
+			if !snap.CreatedAt.IsZero() {
+				row = append(row, snap.CreatedAt.Local().Format(dateLayout))
 			} else {
 				row = append(row, " ")
 			}
 
-			if snap.ExpiresAt.Unix() != 0 {
-				row = append(row, snap.ExpiresAt.Local().Format(layout))
+			if !snap.ExpiresAt.IsZero() {
+				row = append(row, snap.ExpiresAt.Local().Format(dateLayout))
 			} else {
 				row = append(row, " ")
 			}
@@ -655,14 +653,14 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 			var row []string
 			row = append(row, backup.Name)
 
-			if backup.CreatedAt.Unix() != 0 {
-				row = append(row, backup.CreatedAt.Local().Format(layout))
+			if !backup.CreatedAt.IsZero() {
+				row = append(row, backup.CreatedAt.Local().Format(dateLayout))
 			} else {
 				row = append(row, " ")
 			}
 
-			if backup.ExpiresAt.Unix() != 0 {
-				row = append(row, backup.ExpiresAt.Local().Format(layout))
+			if !backup.ExpiresAt.IsZero() {
+				row = append(row, backup.ExpiresAt.Local().Format(dateLayout))
 			} else {
 				row = append(row, " ")
 			}

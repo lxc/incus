@@ -1239,8 +1239,6 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Render the overview.
-	const layout = "2006/01/02 15:04 MST"
-
 	fmt.Printf(i18n.G("Name: %s")+"\n", vol.Name)
 	if vol.Description != "" {
 		fmt.Printf(i18n.G("Description: %s")+"\n", vol.Description)
@@ -1269,8 +1267,8 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if vol.CreatedAt.Unix() != 0 {
-		fmt.Printf(i18n.G("Created: %s")+"\n", vol.CreatedAt.Local().Format(layout))
+	if !vol.CreatedAt.IsZero() {
+		fmt.Printf(i18n.G("Created: %s")+"\n", vol.CreatedAt.Local().Format(dateLayout))
 	}
 
 	// List snapshots
@@ -1290,7 +1288,7 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 			row = append(row, snap.Description)
 
 			if snap.ExpiresAt != nil {
-				row = append(row, snap.ExpiresAt.Local().Format(layout))
+				row = append(row, snap.ExpiresAt.Local().Format(dateLayout))
 			} else {
 				row = append(row, " ")
 			}
@@ -1322,14 +1320,14 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 			var row []string
 			row = append(row, backup.Name)
 
-			if backup.CreatedAt.Unix() != 0 {
-				row = append(row, backup.CreatedAt.Local().Format(layout))
+			if !backup.CreatedAt.IsZero() {
+				row = append(row, backup.CreatedAt.Local().Format(dateLayout))
 			} else {
 				row = append(row, " ")
 			}
 
-			if backup.ExpiresAt.Unix() != 0 {
-				row = append(row, backup.ExpiresAt.Local().Format(layout))
+			if !backup.ExpiresAt.IsZero() {
+				row = append(row, backup.ExpiresAt.Local().Format(dateLayout))
 			} else {
 				row = append(row, " ")
 			}
@@ -2297,8 +2295,6 @@ func (c *cmdStorageVolumeSnapshotList) listSnapshots(d incus.InstanceServer, poo
 		return err
 	}
 
-	const layout = "2006/01/02 15:04 MST"
-
 	// List snapshots
 	snapData := [][]string{}
 
@@ -2308,14 +2304,14 @@ func (c *cmdStorageVolumeSnapshotList) listSnapshots(d incus.InstanceServer, poo
 		fields := strings.Split(snap.Name, instance.SnapshotDelimiter)
 		row = append(row, fields[len(fields)-1])
 
-		if snap.CreatedAt.Unix() != 0 {
-			row = append(row, snap.CreatedAt.Local().Format(layout))
+		if !snap.CreatedAt.IsZero() {
+			row = append(row, snap.CreatedAt.Local().Format(dateLayout))
 		} else {
 			row = append(row, " ")
 		}
 
-		if snap.ExpiresAt != nil && snap.ExpiresAt.Unix() != 0 {
-			row = append(row, snap.ExpiresAt.Local().Format(layout))
+		if snap.ExpiresAt != nil && !snap.ExpiresAt.IsZero() {
+			row = append(row, snap.ExpiresAt.Local().Format(dateLayout))
 		} else {
 			row = append(row, " ")
 		}

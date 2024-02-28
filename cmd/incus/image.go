@@ -1001,21 +1001,20 @@ func (c *cmdImageInfo) Run(cmd *cobra.Command, args []string) error {
 	fmt.Printf(i18n.G("Public: %s")+"\n", public)
 	fmt.Printf(i18n.G("Timestamps:") + "\n")
 
-	const layout = "2006/01/02 15:04 UTC"
-	if info.CreatedAt.Unix() != 0 {
-		fmt.Printf("    "+i18n.G("Created: %s")+"\n", info.CreatedAt.UTC().Format(layout))
+	if !info.CreatedAt.IsZero() {
+		fmt.Printf("    "+i18n.G("Created: %s")+"\n", info.CreatedAt.Local().Format(dateLayout))
 	}
 
-	fmt.Printf("    "+i18n.G("Uploaded: %s")+"\n", info.UploadedAt.UTC().Format(layout))
+	fmt.Printf("    "+i18n.G("Uploaded: %s")+"\n", info.UploadedAt.Local().Format(dateLayout))
 
-	if info.ExpiresAt.Unix() != 0 {
-		fmt.Printf("    "+i18n.G("Expires: %s")+"\n", info.ExpiresAt.UTC().Format(layout))
+	if !info.ExpiresAt.IsZero() {
+		fmt.Printf("    "+i18n.G("Expires: %s")+"\n", info.ExpiresAt.Local().Format(dateLayout))
 	} else {
 		fmt.Printf("    " + i18n.G("Expires: never") + "\n")
 	}
 
-	if info.LastUsedAt.Unix() != 0 {
-		fmt.Printf("    "+i18n.G("Last used: %s")+"\n", info.LastUsedAt.UTC().Format(layout))
+	if !info.LastUsedAt.IsZero() {
+		fmt.Printf("    "+i18n.G("Last used: %s")+"\n", info.LastUsedAt.Local().Format(dateLayout))
 	} else {
 		fmt.Printf("    " + i18n.G("Last used: never") + "\n")
 	}
@@ -1213,7 +1212,7 @@ func (c *cmdImageList) typeColumnData(image api.Image) string {
 }
 
 func (c *cmdImageList) uploadDateColumnData(image api.Image) string {
-	return image.UploadedAt.UTC().Format("Jan 2, 2006 at 3:04pm (MST)")
+	return image.UploadedAt.Local().Format(dateLayout)
 }
 
 func (c *cmdImageList) shortestAlias(list []api.ImageAlias) string {

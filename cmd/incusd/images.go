@@ -740,12 +740,14 @@ func getImgPostInfo(s *state.State, r *http.Request, builddir string, project st
 	}
 
 	info.Architecture = imageMeta.Architecture
-	info.CreatedAt = time.Unix(imageMeta.CreationDate, 0)
+	if imageMeta.CreationDate > 0 {
+		info.CreatedAt = time.Unix(imageMeta.CreationDate, 0)
+	}
 
 	expiresAt, ok := metadata["expires_at"]
 	if ok {
 		info.ExpiresAt = expiresAt.(time.Time)
-	} else {
+	} else if imageMeta.ExpiryDate > 0 {
 		info.ExpiresAt = time.Unix(imageMeta.ExpiryDate, 0)
 	}
 
