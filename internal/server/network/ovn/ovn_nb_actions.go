@@ -2283,3 +2283,20 @@ func (o *NB) GetHardwareAddress(ovnRouterPort OVNRouterPort) (string, error) {
 
 	return strings.TrimSpace(hwaddr), nil
 }
+
+// GetName returns the OVN AZ name.
+func (o *NB) GetName(ctx context.Context) (string, error) {
+	// Get the global configuration.
+	nbGlobal := []ovnNB.NBGlobal{}
+	err := o.client.List(ctx, &nbGlobal)
+	if err != nil {
+		return "", err
+	}
+
+	// Check that we got a result.
+	if len(nbGlobal) != 1 {
+		return "", ovsClient.ErrNotFound
+	}
+
+	return nbGlobal[0].Name, nil
+}

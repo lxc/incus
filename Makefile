@@ -116,8 +116,12 @@ update-ovsdb:
 	mkdir internal/server/network/ovn/schema
 	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-nb.ovsschema -o internal/server/network/ovn/schema/ovn-nb.json
 	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-sb.ovsschema -o internal/server/network/ovn/schema/ovn-sb.json
+	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-ic-nb.ovsschema -o internal/server/network/ovn/schema/ovn-ic-nb.json
+	curl -s https://raw.githubusercontent.com/ovn-org/ovn/v$(OVN_MINVER)/ovn-ic-sb.ovsschema -o internal/server/network/ovn/schema/ovn-ic-sb.json
 	modelgen -o internal/server/network/ovn/schema/ovn-nb internal/server/network/ovn/schema/ovn-nb.json
 	modelgen -o internal/server/network/ovn/schema/ovn-sb internal/server/network/ovn/schema/ovn-sb.json
+	modelgen -o internal/server/network/ovn/schema/ovn-ic-nb internal/server/network/ovn/schema/ovn-ic-nb.json
+	modelgen -o internal/server/network/ovn/schema/ovn-ic-sb internal/server/network/ovn/schema/ovn-ic-sb.json
 	rm internal/server/network/ovn/schema/*.json
 
 .PHONY: update-protobuf
