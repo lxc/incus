@@ -85,6 +85,12 @@ func (d *gpuSRIOV) Start() (*deviceConfig.RunConfig, error) {
 	runConf := deviceConfig.RunConfig{}
 	saveData := make(map[string]string)
 
+	// Make sure that vfio-pci is loaded.
+	err = linux.LoadModule("vfio-pci")
+	if err != nil {
+		return nil, fmt.Errorf("Error loading %q module: %w", "vfio-pci", err)
+	}
+
 	// Get global SR-IOV lock to prevent concurent allocations of the VF.
 	sriovMu.Lock()
 	defer sriovMu.Unlock()
@@ -98,12 +104,6 @@ func (d *gpuSRIOV) Start() (*deviceConfig.RunConfig, error) {
 	var parentPCIAddress string
 	var pciParentDev pcidev.Device
 	vfID := -1
-
-	// Make sure that vfio-pci is loaded.
-	err = linux.LoadModule("vfio-pci")
-	if err != nil {
-		return nil, fmt.Errorf("Error loading %q module: %w", "vfio-pci", err)
-	}
 
 	// Since there might be multiple GPUs, we iterate through them and get the first free
 	// virtual function.
