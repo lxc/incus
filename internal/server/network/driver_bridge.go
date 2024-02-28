@@ -1179,7 +1179,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			}
 
 			vxlan := &ip.Vxlan{
-				Link: ip.Link{Name: tunName},
+				Link:  ip.Link{Name: tunName},
 				Local: tunLocal,
 			}
 
