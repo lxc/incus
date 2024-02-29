@@ -480,6 +480,11 @@ func deviceTaskBalance(s *state.State) {
 	for _, cpu := range cpusTopology.Sockets {
 		for _, core := range cpu.Cores {
 			for _, thread := range core.Threads {
+				// Skip any isolated CPU thread.
+				if slices.Contains(isolatedCpusInt, thread.ID) {
+					continue
+				}
+
 				numaNodeToCPU[int64(thread.NUMANode)] = append(numaNodeToCPU[int64(thread.NUMANode)], thread.ID)
 			}
 		}
