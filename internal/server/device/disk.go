@@ -1193,10 +1193,6 @@ func (d *disk) postStart() error {
 
 // Update applies configuration changes to a started device.
 func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
-	if d.inst.Type() == instancetype.VM && !internalInstance.IsRootDiskDevice(d.config) {
-		return fmt.Errorf("Non-root disks not supported for VMs")
-	}
-
 	if internalInstance.IsRootDiskDevice(d.config) {
 		// Make sure we have a valid root disk device (and only one).
 		expandedDevices := d.inst.ExpandedDevices()
@@ -1253,15 +1249,41 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 	}
 
-	// Only apply IO limits if instance is container and is running.
-	if isRunning && d.inst.Type() == instancetype.Container {
+	// Only apply IO limits if instance is running.
+	if isRunning {
 		runConf := deviceConfig.RunConfig{}
-		err := d.generateLimits(&runConf)
-		if err != nil {
-			return err
+
+		if d.inst.Type() == instancetype.Container {
+			err := d.generateLimits(&runConf)
+			if err != nil {
+				return err
+			}
 		}
 
-		err = d.inst.DeviceEventHandler(&runConf)
+		if d.inst.Type() == instancetype.VM {
+			// Parse the limits into usable values.
+			readBps, readIops, writeBps, writeIops, err := d.parseLimit(d.config)
+			if err != nil {
+				return err
+			}
+
+			// Apply the limits to a minimal mount entry.
+			diskLimits := &deviceConfig.DiskLimits{
+				ReadBytes:  readBps,
+				ReadIOps:   readIops,
+				WriteBytes: writeBps,
+				WriteIOps:  writeIops,
+			}
+
+			runConf.Mounts = []deviceConfig.MountEntryItem{
+				{
+					DevName: d.name,
+					Limits:  diskLimits,
+				},
+			}
+		}
+
+		err := d.inst.DeviceEventHandler(&runConf)
 		if err != nil {
 			return err
 		}
