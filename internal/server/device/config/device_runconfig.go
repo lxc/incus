@@ -21,14 +21,15 @@ type RunConfigItem struct {
 
 // MountEntryItem represents a single mount entry item.
 type MountEntryItem struct {
-	DevName    string   // The internal name for the device.
-	DevPath    string   // Describes the block special device or remote filesystem to be mounted.
-	TargetPath string   // Describes the mount point (target) for the filesystem.
-	FSType     string   // Describes the type of the filesystem.
-	Opts       []string // Describes the mount options associated with the filesystem.
-	Freq       int      // Used by dump(8) to determine which filesystems need to be dumped. Defaults to zero (don't dump) if not present.
-	PassNo     int      // Used by fsck(8) to determine the order in which filesystem checks are done at boot time. Defaults to zero (don't fsck) if not present.
-	OwnerShift string   // Ownership shifting mode, use constants MountOwnerShiftNone, MountOwnerShiftStatic or MountOwnerShiftDynamic.
+	DevName    string      // The internal name for the device.
+	DevPath    string      // Describes the block special device or remote filesystem to be mounted.
+	TargetPath string      // Describes the mount point (target) for the filesystem.
+	FSType     string      // Describes the type of the filesystem.
+	Opts       []string    // Describes the mount options associated with the filesystem.
+	Freq       int         // Used by dump(8) to determine which filesystems need to be dumped. Defaults to zero (don't dump) if not present.
+	PassNo     int         // Used by fsck(8) to determine the order in which filesystem checks are done at boot time. Defaults to zero (don't fsck) if not present.
+	OwnerShift string      // Ownership shifting mode, use constants MountOwnerShiftNone, MountOwnerShiftStatic or MountOwnerShiftDynamic.
+	Limits     *DiskLimits // Disk limits.
 }
 
 // RootFSEntryItem represents the root filesystem options for an Instance.
@@ -41,6 +42,14 @@ type RootFSEntryItem struct {
 type USBDeviceItem struct {
 	DeviceName     string
 	HostDevicePath string
+}
+
+// DiskLimits represents a set of I/O disk limits.
+type DiskLimits struct {
+	ReadBytes  int64
+	ReadIOps   int64
+	WriteBytes int64
+	WriteIOps  int64
 }
 
 // RunConfig represents run-time config used for device setup/cleanup.
