@@ -475,7 +475,7 @@ func storagePoolBucketBackupGet(d *Daemon, r *http.Request) response.Response {
 
 	fullName := bucketName + internalInstance.SnapshotDelimiter + backupName
 
-	entry, err := storagePoolBucketBackupLoadByName(s, projectName, poolName, fullName)
+	entry, err := storagePoolBucketBackupLoadByName(r.Context(), s, projectName, poolName, fullName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -570,7 +570,7 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 
 	oldName := bucketName + internalInstance.SnapshotDelimiter + backupName
 
-	entry, err := storagePoolBucketBackupLoadByName(s, projectName, poolName, oldName)
+	entry, err := storagePoolBucketBackupLoadByName(r.Context(), s, projectName, poolName, oldName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -670,7 +670,7 @@ func storagePoolBucketBackupDelete(d *Daemon, r *http.Request) response.Response
 
 	fullName := bucketName + internalInstance.SnapshotDelimiter + backupName
 
-	entry, err := storagePoolBucketBackupLoadByName(s, projectName, poolName, fullName)
+	entry, err := storagePoolBucketBackupLoadByName(r.Context(), s, projectName, poolName, fullName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -786,10 +786,10 @@ func storagePoolBucketBackupExportGet(d *Daemon, r *http.Request) response.Respo
 	return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
 }
 
-func storagePoolBucketBackupLoadByName(s *state.State, projectName, poolName, backupName string) (*backup.BucketBackup, error) {
+func storagePoolBucketBackupLoadByName(ctx context.Context, s *state.State, projectName, poolName, backupName string) (*backup.BucketBackup, error) {
 	var b db.StoragePoolBucketBackup
 
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 		b, err = tx.GetStoragePoolBucketBackup(ctx, projectName, poolName, backupName)
 		return err

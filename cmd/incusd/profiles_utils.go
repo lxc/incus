@@ -15,9 +15,9 @@ import (
 	"github.com/lxc/incus/shared/api"
 )
 
-func doProfileUpdate(s *state.State, p api.Project, profileName string, id int64, profile *api.Profile, req api.ProfilePut) error {
+func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profileName string, id int64, profile *api.Profile, req api.ProfilePut) error {
 	// Check project limits.
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		return project.AllowProfileUpdate(tx, p.Name, profileName, req)
 	})
 	if err != nil {
@@ -37,7 +37,7 @@ func doProfileUpdate(s *state.State, p api.Project, profileName string, id int64
 		return err
 	}
 
-	insts, projects, err := getProfileInstancesInfo(s.DB.Cluster, p.Name, profileName)
+	insts, projects, err := getProfileInstancesInfo(ctx, s.DB.Cluster, p.Name, profileName)
 	if err != nil {
 		return fmt.Errorf("Failed to query instances associated with profile %q: %w", profileName, err)
 	}
@@ -55,7 +55,7 @@ func doProfileUpdate(s *state.State, p api.Project, profileName string, id int64
 				continue
 			}
 
-			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 				// Check what profile the device comes from by working backwards along the profiles list.
 				for i := len(inst.Profiles) - 1; i >= 0; i-- {
 					_, profile, err := tx.GetProfile(ctx, p.Name, inst.Profiles[i].Name)
@@ -86,7 +86,7 @@ func doProfileUpdate(s *state.State, p api.Project, profileName string, id int64
 	}
 
 	// Update the database.
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		devices, err := cluster.APIToDevices(req.Devices)
 		if err != nil {
 			return err
@@ -140,7 +140,7 @@ func doProfileUpdate(s *state.State, p api.Project, profileName string, id int64
 			continue // This instance does not belong to this member, skip.
 		}
 
-		err := doProfileUpdateInstance(s, inst, *projects[inst.Project])
+		err := doProfileUpdateInstance(ctx, s, inst, *projects[inst.Project])
 		if err != nil {
 			failures[&inst] = err
 		}
@@ -160,8 +160,8 @@ func doProfileUpdate(s *state.State, p api.Project, profileName string, id int64
 
 // Like doProfileUpdate but does not update the database, since it was already
 // updated by doProfileUpdate itself, called on the notifying node.
-func doProfileUpdateCluster(s *state.State, projectName string, profileName string, old api.ProfilePut) error {
-	insts, projects, err := getProfileInstancesInfo(s.DB.Cluster, projectName, profileName)
+func doProfileUpdateCluster(ctx context.Context, s *state.State, projectName string, profileName string, old api.ProfilePut) error {
+	insts, projects, err := getProfileInstancesInfo(ctx, s.DB.Cluster, projectName, profileName)
 	if err != nil {
 		return fmt.Errorf("Failed to query instances associated with profile %q: %w", profileName, err)
 	}
@@ -185,7 +185,7 @@ func doProfileUpdateCluster(s *state.State, projectName string, profileName stri
 			}
 		}
 
-		err := doProfileUpdateInstance(s, inst, *projects[inst.Project])
+		err := doProfileUpdateInstance(ctx, s, inst, *projects[inst.Project])
 		if err != nil {
 			failures[&inst] = err
 		}
@@ -204,7 +204,7 @@ func doProfileUpdateCluster(s *state.State, projectName string, profileName stri
 }
 
 // Profile update of a single instance.
-func doProfileUpdateInstance(s *state.State, args db.InstanceArgs, p api.Project) error {
+func doProfileUpdateInstance(ctx context.Context, s *state.State, args db.InstanceArgs, p api.Project) error {
 	profileNames := make([]string, 0, len(args.Profiles))
 
 	for _, profile := range args.Profiles {
@@ -213,7 +213,7 @@ func doProfileUpdateInstance(s *state.State, args db.InstanceArgs, p api.Project
 
 	var profiles []api.Profile
 
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		profiles, err = tx.GetProfiles(ctx, args.Project, profileNames)
@@ -245,11 +245,11 @@ func doProfileUpdateInstance(s *state.State, args db.InstanceArgs, p api.Project
 }
 
 // Query the db for information about instances associated with the given profile.
-func getProfileInstancesInfo(dbCluster *db.Cluster, projectName string, profileName string) (map[int]db.InstanceArgs, map[string]*api.Project, error) {
+func getProfileInstancesInfo(ctx context.Context, dbCluster *db.Cluster, projectName string, profileName string) (map[int]db.InstanceArgs, map[string]*api.Project, error) {
 	var projectInstNames map[string][]string
 
 	// Query the db for information about instances associated with the given profile.
-	err := dbCluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := dbCluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		projectInstNames, err = tx.GetInstancesWithProfile(ctx, projectName, profileName)
@@ -263,7 +263,7 @@ func getProfileInstancesInfo(dbCluster *db.Cluster, projectName string, profileN
 	var instances map[int]db.InstanceArgs
 	projects := make(map[string]*api.Project)
 
-	err = dbCluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = dbCluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var dbInstances []cluster.Instance
 
 		for instProject, instNames := range projectInstNames {

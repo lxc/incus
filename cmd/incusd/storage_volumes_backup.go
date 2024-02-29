@@ -192,7 +192,7 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 
 	var poolID int64
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
@@ -336,7 +336,7 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 
 	var poolID int64
 
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
@@ -564,7 +564,7 @@ func storagePoolVolumeTypeCustomBackupGet(d *Daemon, r *http.Request) response.R
 
 	fullName := volumeName + internalInstance.SnapshotDelimiter + backupName
 
-	backup, err := storagePoolVolumeBackupLoadByName(s, projectName, poolName, fullName)
+	backup, err := storagePoolVolumeBackupLoadByName(r.Context(), s, projectName, poolName, fullName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -675,7 +675,7 @@ func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.
 
 	oldName := volumeName + internalInstance.SnapshotDelimiter + backupName
 
-	backup, err := storagePoolVolumeBackupLoadByName(s, projectName, poolName, oldName)
+	backup, err := storagePoolVolumeBackupLoadByName(r.Context(), s, projectName, poolName, oldName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -791,7 +791,7 @@ func storagePoolVolumeTypeCustomBackupDelete(d *Daemon, r *http.Request) respons
 
 	fullName := volumeName + internalInstance.SnapshotDelimiter + backupName
 
-	backup, err := storagePoolVolumeBackupLoadByName(s, projectName, poolName, fullName)
+	backup, err := storagePoolVolumeBackupLoadByName(r.Context(), s, projectName, poolName, fullName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -902,7 +902,7 @@ func storagePoolVolumeTypeCustomBackupExportGet(d *Daemon, r *http.Request) resp
 	fullName := volumeName + internalInstance.SnapshotDelimiter + backupName
 
 	// Ensure the volume exists
-	_, err = storagePoolVolumeBackupLoadByName(s, projectName, poolName, fullName)
+	_, err = storagePoolVolumeBackupLoadByName(r.Context(), s, projectName, poolName, fullName)
 	if err != nil {
 		return response.SmartError(err)
 	}

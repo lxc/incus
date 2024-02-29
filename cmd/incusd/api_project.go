@@ -148,7 +148,7 @@ func projectsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var result any
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		projects, err := cluster.GetProjects(ctx, tx.Tx())
 		if err != nil {
 			return err
@@ -312,7 +312,7 @@ func projectsPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var id int64
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		id, err = cluster.CreateProject(ctx, tx.Tx(), cluster.Project{Description: project.Description, Name: project.Name})
 		if err != nil {
 			return fmt.Errorf("Failed adding database record: %w", err)
@@ -324,7 +324,7 @@ func projectsPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if util.IsTrue(project.Config["features.profiles"]) {
-			err = projectCreateDefaultProfile(tx, project.Name)
+			err = projectCreateDefaultProfile(ctx, tx, project.Name)
 			if err != nil {
 				return err
 			}
@@ -356,14 +356,14 @@ func projectsPost(d *Daemon, r *http.Request) response.Response {
 }
 
 // Create the default profile of a project.
-func projectCreateDefaultProfile(tx *db.ClusterTx, project string) error {
+func projectCreateDefaultProfile(ctx context.Context, tx *db.ClusterTx, project string) error {
 	// Create a default profile
 	profile := cluster.Profile{}
 	profile.Project = project
 	profile.Name = api.ProjectDefaultName
 	profile.Description = fmt.Sprintf("Default Incus profile for project %s", project)
 
-	_, err := cluster.CreateProfile(context.TODO(), tx.Tx(), profile)
+	_, err := cluster.CreateProfile(ctx, tx.Tx(), profile)
 	if err != nil {
 		return fmt.Errorf("Add default profile to database: %w", err)
 	}
@@ -415,7 +415,7 @@ func projectGet(d *Daemon, r *http.Request) response.Response {
 
 	// Get the database entry
 	var project *api.Project
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := cluster.GetProject(ctx, tx.Tx(), name)
 		if err != nil {
 			return err
@@ -480,7 +480,7 @@ func projectPut(d *Daemon, r *http.Request) response.Response {
 
 	// Get the current data
 	var project *api.Project
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := cluster.GetProject(ctx, tx.Tx(), name)
 		if err != nil {
 			return err
@@ -524,7 +524,7 @@ func projectPut(d *Daemon, r *http.Request) response.Response {
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(project.Name, lifecycle.ProjectUpdated.Event(project.Name, requestor, nil))
 
-	return projectChange(s, project, req)
+	return projectChange(r.Context(), s, project, req)
 }
 
 // swagger:operation PATCH /1.0/projects/{name} projects project_patch
@@ -566,7 +566,7 @@ func projectPatch(d *Daemon, r *http.Request) response.Response {
 
 	// Get the current data
 	var project *api.Project
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := cluster.GetProject(ctx, tx.Tx(), name)
 		if err != nil {
 			return err
@@ -640,11 +640,11 @@ func projectPatch(d *Daemon, r *http.Request) response.Response {
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(project.Name, lifecycle.ProjectUpdated.Event(project.Name, requestor, nil))
 
-	return projectChange(s, project, req)
+	return projectChange(r.Context(), s, project, req)
 }
 
 // Common logic between PUT and PATCH.
-func projectChange(s *state.State, project *api.Project, req api.ProjectPut) response.Response {
+func projectChange(ctx context.Context, s *state.State, project *api.Project, req api.ProjectPut) response.Response {
 	// Make a list of config keys that have changed.
 	configChanged := []string{}
 	for key := range project.Config {
@@ -703,7 +703,7 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 	}
 
 	// Update the database entry.
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		err := projecthelpers.AllowProjectUpdate(tx, project.Name, req.Config, configChanged)
 		if err != nil {
 			return err
@@ -716,7 +716,7 @@ func projectChange(s *state.State, project *api.Project, req api.ProjectPut) res
 
 		if slices.Contains(configChanged, "features.profiles") {
 			if util.IsTrue(req.Config["features.profiles"]) {
-				err = projectCreateDefaultProfile(tx, project.Name)
+				err = projectCreateDefaultProfile(ctx, tx, project.Name)
 				if err != nil {
 					return err
 				}
@@ -888,7 +888,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var id int64
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		project, err := cluster.GetProject(ctx, tx.Tx(), name)
 		if err != nil {
 			return fmt.Errorf("Fetch project %q: %w", name, err)
@@ -972,7 +972,7 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 	state := api.ProjectState{}
 
 	// Get current limits and usage.
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		result, err := projecthelpers.GetCurrentAllocations(ctx, tx, name)
 		if err != nil {
 			return err

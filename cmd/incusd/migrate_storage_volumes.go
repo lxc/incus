@@ -70,7 +70,7 @@ func newStorageMigrationSource(volumeOnly bool, pushTarget *api.StorageVolumePos
 func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, poolName string, volName string, migrateOp *operations.Operation) error {
 	l := logger.AddContext(logger.Ctx{"project": projectName, "pool": poolName, "volume": volName, "push": s.pushOperationURL != ""})
 
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
+	ctx, cancel := context.WithTimeout(state.ShutdownCtx, time.Second*10)
 	defer cancel()
 
 	l.Info("Waiting for migration connections on source")
@@ -176,7 +176,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 		}
 	}
 
-	fsConn, err := s.conns[api.SecretNameFilesystem].WebsocketIO(context.TODO())
+	fsConn, err := s.conns[api.SecretNameFilesystem].WebsocketIO(state.ShutdownCtx)
 	if err != nil {
 		return err
 	}
@@ -243,7 +243,7 @@ func newStorageMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 func (c *migrationSink) DoStorage(state *state.State, projectName string, poolName string, req *api.StorageVolumesPost, op *operations.Operation) error {
 	l := logger.AddContext(logger.Ctx{"project": projectName, "pool": poolName, "volume": req.Name, "push": c.push})
 
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
+	ctx, cancel := context.WithTimeout(state.ShutdownCtx, time.Second*10)
 	defer cancel()
 
 	l.Info("Waiting for migration connections on target")
@@ -425,7 +425,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 				Refresh:       c.refresh,
 			}
 
-			fsConn, err := c.conns[api.SecretNameFilesystem].WebsocketIO(context.TODO())
+			fsConn, err := c.conns[api.SecretNameFilesystem].WebsocketIO(state.ShutdownCtx)
 			if err != nil {
 				fsTransfer <- err
 				return
