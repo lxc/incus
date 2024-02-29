@@ -622,6 +622,7 @@ type cmdRemoteGenerateCertificate struct {
 	remote *cmdRemote
 }
 
+// Command generates the command definition.
 func (c *cmdRemoteGenerateCertificate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("generate-certificate")
@@ -634,6 +635,7 @@ func (c *cmdRemoteGenerateCertificate) Command() *cobra.Command {
 	return cmd
 }
 
+// Run runs the actual command logic.
 func (c *cmdRemoteGenerateCertificate) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
