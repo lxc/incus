@@ -574,19 +574,24 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 					return response.Forbidden(fmt.Errorf("No matching certificate add operation found"))
 				}
 
-				tokenReq, ok := joinOp.Metadata["request"].(api.CertificatesPost)
-				if !ok {
-					return response.InternalError(fmt.Errorf("Bad certificate add operation data"))
-				}
-
 				// Create a new request from the token data as the user isn't allowed to override anything.
-				req = api.CertificatesPost{
-					CertificatePut: api.CertificatePut{
-						Name:       tokenReq.Name,
-						Type:       tokenReq.Type,
-						Restricted: tokenReq.Restricted,
-						Projects:   tokenReq.Projects,
-					},
+				req = api.CertificatesPost{}
+				switch tokenReq := joinOp.Metadata["request"].(type) {
+				case api.CertificatesPost:
+					req.Name = tokenReq.Name
+					req.Type = tokenReq.Type
+					req.Restricted = tokenReq.Restricted
+					req.Projects = tokenReq.Projects
+				case map[string]any:
+					req.Name = tokenReq["name"].(string)
+					req.Type = tokenReq["type"].(string)
+					req.Restricted = tokenReq["restricted"].(bool)
+					for _, project := range tokenReq["projects"].([]any) {
+						req.Projects = append(req.Projects, project.(string))
+					}
+
+				default:
+					return response.InternalError(fmt.Errorf("Bad certificate add operation data"))
 				}
 			} else {
 				return response.Forbidden(nil)
