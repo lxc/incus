@@ -1960,14 +1960,8 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 			continue
 		}
 
-		// Apply max limit
-		if dev["limits.max"] != "" {
-			dev["limits.read"] = dev["limits.max"]
-			dev["limits.write"] = dev["limits.max"]
-		}
-
 		// Parse the user input
-		readBps, readIops, writeBps, writeIops, err := d.parseDiskLimit(dev["limits.read"], dev["limits.write"])
+		readBps, readIops, writeBps, writeIops, err := d.parseLimit(dev)
 		if err != nil {
 			return nil, err
 		}
@@ -2076,7 +2070,18 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 	return result, nil
 }
 
-func (d *disk) parseDiskLimit(readSpeed string, writeSpeed string) (int64, int64, int64, int64, error) {
+// parseLimit parses the disk configuration for its I/O limits and returns the I/O bytes/iops limits.
+func (d *disk) parseLimit(dev deviceConfig.Device) (int64, int64, int64, int64, error) {
+	readSpeed := dev["limits.read"]
+	writeSpeed := dev["limits.write"]
+
+	// Apply max limit.
+	if dev["limits.max"] != "" {
+		readSpeed = dev["limits.max"]
+		writeSpeed = dev["limits.max"]
+	}
+
+	// parseValue parses a single value to either a B/s limit or iops limit.
 	parseValue := func(value string) (int64, int64, error) {
 		var err error
 
@@ -2102,11 +2107,13 @@ func (d *disk) parseDiskLimit(readSpeed string, writeSpeed string) (int64, int64
 		return bps, iops, nil
 	}
 
+	// Process reads.
 	readBps, readIops, err := parseValue(readSpeed)
 	if err != nil {
 		return -1, -1, -1, -1, err
 	}
 
+	// Process writes.
 	writeBps, writeIops, err := parseValue(writeSpeed)
 	if err != nil {
 		return -1, -1, -1, -1, err
