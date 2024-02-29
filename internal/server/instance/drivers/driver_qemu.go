@@ -3992,6 +3992,13 @@ func (d *qemu) addDriveConfig(qemuDev map[string]string, bootIndexes map[string]
 			return fmt.Errorf("Failed adding block device for disk device %q: %w", driveConf.DevName, err)
 		}
 
+		if driveConf.Limits != nil {
+			err = m.SetBlockThrottle(qemuDev["id"], int(driveConf.Limits.ReadBytes), int(driveConf.Limits.WriteBytes), int(driveConf.Limits.ReadIOps), int(driveConf.Limits.WriteIOps))
+			if err != nil {
+				return fmt.Errorf("Failed applying limits for disk device %q: %w", driveConf.DevName, err)
+			}
+		}
+
 		revert.Success()
 		return nil
 	}
@@ -7712,47 +7719,67 @@ func (d *qemu) LockExclusive() (*operationlock.InstanceOperation, error) {
 
 // DeviceEventHandler handles events occurring on the instance's devices.
 func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
-	if !d.IsRunning() {
+	if !d.IsRunning() || runConf == nil {
 		return nil
 	}
 
-	if runConf == nil || len(runConf.Uevents) == 0 {
-		return nil
+	// Handle uevents.
+	for _, uevent := range runConf.Uevents {
+		for _, event := range uevent {
+			fields := strings.SplitN(event, "=", 2)
+
+			if fields[0] != "ACTION" {
+				continue
+			}
+
+			switch fields[1] {
+			case "add":
+				for _, usbDev := range runConf.USBDevice {
+					// This ensures that the device is actually removed from QEMU before adding it again.
+					// In most cases the device will already be removed, but it is possible that the
+					// device still exists in QEMU before trying to add it again.
+					// If a USB device is physically detached from a running VM while the server
+					// itself is stopped, QEMU in theory will not delete the device.
+					err := d.deviceDetachUSB(usbDev)
+					if err != nil {
+						return err
+					}
+
+					err = d.deviceAttachUSB(usbDev)
+					if err != nil {
+						return err
+					}
+				}
+			case "remove":
+				for _, usbDev := range runConf.USBDevice {
+					err := d.deviceDetachUSB(usbDev)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
 	}
 
-	// Uevents will contain 1 entry at most, therefore we don't need to iterate through it.
-	for _, event := range runConf.Uevents[0] {
-		fields := strings.SplitN(event, "=", 2)
-
-		if fields[0] != "ACTION" {
+	// Handle disk reconfiguration.
+	for _, mount := range runConf.Mounts {
+		if mount.Limits == nil {
 			continue
 		}
 
-		switch fields[1] {
-		case "add":
-			for _, usbDev := range runConf.USBDevice {
-				// This ensures that the device is actually removed from QEMU before adding it again.
-				// In most cases the device will already be removed, but it is possible that the
-				// device still exists in QEMU before trying to add it again.
-				// If a USB device is physically detached from a running VM while the server
-				// itself is stopped, QEMU in theory will not delete the device.
-				err := d.deviceDetachUSB(usbDev)
-				if err != nil {
-					return err
-				}
+		// Get the QMP monitor.
+		m, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, d.getMonitorEventHandler())
+		if err != nil {
+			return err
+		}
 
-				err = d.deviceAttachUSB(usbDev)
-				if err != nil {
-					return err
-				}
-			}
-		case "remove":
-			for _, usbDev := range runConf.USBDevice {
-				err := d.deviceDetachUSB(usbDev)
-				if err != nil {
-					return err
-				}
-			}
+		// Figure out the QEMU device ID.
+		devID := fmt.Sprintf("%s%s", qemuDeviceIDPrefix, linux.PathNameEncode(mount.DevName))
+
+		// Apply the limits.
+		err = m.SetBlockThrottle(devID, int(mount.Limits.ReadBytes), int(mount.Limits.WriteBytes), int(mount.Limits.ReadIOps), int(mount.Limits.WriteIOps))
+		if err != nil {
+			return fmt.Errorf("Failed applying limits for disk device %q: %w", mount.DevName, err)
 		}
 	}
 
