@@ -71,6 +71,8 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   deny @{PROC}/@{pid}/cgroup r,
   deny /sys/module/apparmor/parameters/enabled r,
   deny /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  deny /etc/gss/mech.d/ r,
+  deny /etc/ssl/openssl.cnf r,
 
 {{if .agentPath -}}
   {{ .agentPath }}/ r,
