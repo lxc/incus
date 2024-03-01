@@ -138,10 +138,8 @@ func (o *VSwitch) CreateBridge(ctx context.Context, bridgeName string, mayExist 
 	return fmt.Errorf("Bridge interface failed to appear")
 }
 
-// BridgeDelete deletes a bridge.
-func (o *VSwitch) BridgeDelete(bridgeName string) error {
-	ctx := context.TODO()
-
+// DeleteBridge deletes a bridge.
+func (o *VSwitch) DeleteBridge(ctx context.Context, bridgeName string) error {
 	bridge := ovsSwitch.Bridge{
 		Name: bridgeName,
 	}
