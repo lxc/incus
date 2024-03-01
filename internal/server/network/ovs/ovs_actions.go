@@ -353,10 +353,8 @@ func (o *VSwitch) OVNEncapIP() (net.IP, error) {
 	return encapIP, nil
 }
 
-// OVNBridgeMappings gets the current OVN bridge mappings.
-func (o *VSwitch) OVNBridgeMappings(bridgeName string) ([]string, error) {
-	ctx := context.TODO()
-
+// GetOVNBridgeMappings gets the current OVN bridge mappings.
+func (o *VSwitch) GetOVNBridgeMappings(ctx context.Context, bridgeName string) ([]string, error) {
 	vSwitch := &ovsSwitch.OpenvSwitch{
 		UUID: o.rootUUID,
 	}
@@ -379,7 +377,7 @@ func (o *VSwitch) OVNBridgeMappingAdd(bridgeName string, providerName string) er
 	ovnBridgeMappingMutex.Lock()
 	defer ovnBridgeMappingMutex.Unlock()
 
-	mappings, err := o.OVNBridgeMappings(bridgeName)
+	mappings, err := o.GetOVNBridgeMappings(context.TODO(), bridgeName)
 	if err != nil {
 		return err
 	}
@@ -407,7 +405,7 @@ func (o *VSwitch) OVNBridgeMappingDelete(bridgeName string, providerName string)
 	ovnBridgeMappingMutex.Lock()
 	defer ovnBridgeMappingMutex.Unlock()
 
-	mappings, err := o.OVNBridgeMappings(bridgeName)
+	mappings, err := o.GetOVNBridgeMappings(context.TODO(), bridgeName)
 	if err != nil {
 		return err
 	}
