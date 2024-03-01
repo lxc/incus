@@ -631,7 +631,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	chassisID, err := vswitch.ChassisID()
+	chassisID, err := vswitch.GetChassisID(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("Failed getting OVS Chassis ID: %w", err)
 	}
@@ -1166,7 +1166,7 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort, up
 		return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	err = vswitch.BridgePortAdd(integrationBridge, hostName, true)
+	err = vswitch.CreateBridgePort(context.TODO(), integrationBridge, hostName, true)
 	if err != nil {
 		return nil, err
 	}
