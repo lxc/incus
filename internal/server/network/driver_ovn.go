@@ -150,7 +150,7 @@ func (n *ovn) State() (*api.NetworkState, error) {
 		return nil, err
 	}
 
-	chassis, err := ovnsb.GetLogicalRouterPortActiveChassisHostname(n.getRouterExtPortName())
+	chassis, err := ovnsb.GetLogicalRouterPortActiveChassisHostname(context.TODO(), n.getRouterExtPortName())
 	if err != nil {
 		return nil, err
 	}
@@ -1359,13 +1359,13 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	err = vswitch.BridgeAdd(vars.ovsBridge, true, nil, 0)
+	err = vswitch.CreateBridge(context.TODO(), vars.ovsBridge, true, nil, 0)
 	if err != nil {
 		return fmt.Errorf("Failed to create uplink OVS bridge %q: %w", vars.ovsBridge, err)
 	}
 
 	// Connect OVS end veth interface to OVS bridge.
-	err = vswitch.BridgePortAdd(vars.ovsBridge, vars.ovsEnd, true)
+	err = vswitch.CreateBridgePort(context.TODO(), vars.ovsBridge, vars.ovsEnd, true)
 	if err != nil {
 		return fmt.Errorf("Failed to connect uplink veth interface %q to uplink OVS bridge %q: %w", vars.ovsEnd, vars.ovsBridge, err)
 	}
@@ -1475,8 +1475,10 @@ func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	isOVSBridge, _ := vswitch.BridgeExists(uplinkHostName)
-	if isOVSBridge {
+	_, err = vswitch.GetBridge(context.TODO(), uplinkHostName)
+	if err != nil && err != ovs.ErrNotFound {
+		return err
+	} else if err == nil {
 		return n.startUplinkPortBridgeOVS(uplinkNet, uplinkHostName)
 	}
 
@@ -1503,13 +1505,13 @@ func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 	}
 
 	// Create uplink OVS bridge if needed.
-	err = vswitch.BridgeAdd(vars.ovsBridge, true, nil, 0)
+	err = vswitch.CreateBridge(context.TODO(), vars.ovsBridge, true, nil, 0)
 	if err != nil {
 		return fmt.Errorf("Failed to create uplink OVS bridge %q: %w", vars.ovsBridge, err)
 	}
 
 	// Connect OVS end veth interface to OVS bridge.
-	err = vswitch.BridgePortAdd(vars.ovsBridge, uplinkHostName, true)
+	err = vswitch.CreateBridgePort(context.TODO(), vars.ovsBridge, uplinkHostName, true)
 	if err != nil {
 		return fmt.Errorf("Failed to connect uplink interface %q to uplink OVS bridge %q: %w", uplinkHostName, vars.ovsBridge, err)
 	}
@@ -1632,7 +1634,7 @@ func (n *ovn) deleteUplinkPortBridgeNative(uplinkNet Network) error {
 				return err
 			}
 
-			err = vswitch.BridgeDelete(vars.ovsBridge)
+			err = vswitch.DeleteBridge(context.TODO(), vars.ovsBridge)
 			if err != nil {
 				return err
 			}
@@ -1702,8 +1704,10 @@ func (n *ovn) deleteUplinkPortPhysical(uplinkNet Network) error {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	isOVSBridge, _ := vswitch.BridgeExists(uplinkHostName)
-	if isOVSBridge {
+	_, err = vswitch.GetBridge(context.TODO(), uplinkHostName)
+	if err != nil && err != ovs.ErrNotFound {
+		return err
+	} else if err == nil {
 		return n.deleteUplinkPortBridgeOVS(uplinkNet, uplinkHostName)
 	}
 
@@ -1727,7 +1731,7 @@ func (n *ovn) deleteUplinkPortPhysical(uplinkNet Network) error {
 				return err
 			}
 
-			err = vswitch.BridgeDelete(vars.ovsBridge)
+			err = vswitch.DeleteBridge(context.TODO(), vars.ovsBridge)
 			if err != nil {
 				return err
 			}
@@ -2632,7 +2636,7 @@ func (n *ovn) addChassisGroupEntry() error {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	chassisID, err := vswitch.ChassisID()
+	chassisID, err := vswitch.GetChassisID(context.TODO())
 	if err != nil {
 		return fmt.Errorf("Failed getting OVS Chassis ID: %w", err)
 	}
@@ -2678,7 +2682,7 @@ func (n *ovn) addChassisGroupEntry() error {
 		}
 	}
 
-	err = ovnnb.ChassisGroupChassisAdd(chassisGroupName, chassisID, priority)
+	err = ovnnb.SetChassisGroupPriority(context.TODO(), chassisGroupName, chassisID, priority)
 	if err != nil {
 		return fmt.Errorf("Failed adding OVS chassis %q with priority %d to chassis group %q: %w", chassisID, priority, chassisGroupName, err)
 	}
@@ -2701,7 +2705,7 @@ func (n *ovn) deleteChassisGroupEntry() error {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	chassisID, err := vswitch.ChassisID()
+	chassisID, err := vswitch.GetChassisID(context.TODO())
 	if err != nil {
 		return fmt.Errorf("Failed getting OVS Chassis ID: %w", err)
 	}
