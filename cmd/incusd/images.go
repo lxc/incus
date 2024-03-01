@@ -4545,14 +4545,14 @@ func autoSyncImages(ctx context.Context, s *state.State) error {
 
 	for fingerprint, projects := range imageProjectInfo {
 		ch := make(chan error)
-		go func() {
-			err := imageSyncBetweenNodes(ctx, s, nil, projects[0], fingerprint)
+		go func(projectName string, fingerprint string) {
+			err := imageSyncBetweenNodes(ctx, s, nil, projectName, fingerprint)
 			if err != nil {
 				logger.Error("Failed to synchronize images", logger.Ctx{"err": err, "fingerprint": fingerprint})
 			}
 
 			ch <- nil
-		}()
+		}(projects[0], fingerprint)
 
 		select {
 		case <-ctx.Done():
