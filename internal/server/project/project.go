@@ -80,11 +80,6 @@ func StorageVolumeProject(c *db.Cluster, projectName string, volumeType int) (st
 		return api.ProjectDefaultName, nil
 	}
 
-	// Non-custom volumes always use the project specified. Optimisation to avoid loading project record.
-	if volumeType != db.StoragePoolVolumeTypeCustom {
-		return projectName, nil
-	}
-
 	var project *api.Project
 	err := c.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProject, err := cluster.GetProject(ctx, tx.Tx(), projectName)
