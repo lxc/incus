@@ -40,10 +40,8 @@ func (o *VSwitch) GetBridge(ctx context.Context, bridgeName string) (*ovsSwitch.
 	return bridge, nil
 }
 
-// BridgeAdd adds a new bridge.
-func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.HardwareAddr, mtu uint32) error {
-	ctx := context.TODO()
-
+// CreateBridge adds a new bridge.
+func (o *VSwitch) CreateBridge(ctx context.Context, bridgeName string, mayExist bool, hwaddr net.HardwareAddr, mtu uint32) error {
 	// Create interface.
 	iface := ovsSwitch.Interface{
 		UUID: "interface",
