@@ -1636,23 +1636,10 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// onStop hook isn't triggered prematurely (as this function's reverter will clean up on failure to start).
 	monitor.SetOnDisconnectEvent(false)
 
-	// Get the list of PIDs from the VM.
-	pids, err := monitor.GetCPUs()
-	if err != nil {
-		op.Done(err)
-		return err
-	}
-
-	err = d.setCoreSched(pids)
-	if err != nil {
-		err = fmt.Errorf("Failed to allocate new core scheduling domain for vCPU threads: %w", err)
-		op.Done(err)
-		return err
-	}
-
 	// Apply CPU pinning.
 	if cpuInfo.vcpus == nil {
 		if d.architectureSupportsCPUHotplug() && cpuInfo.cores > 1 {
+			// Hotplug the CPUs.
 			err := d.setCPUs(cpuInfo.cores)
 			if err != nil {
 				err = fmt.Errorf("Failed to add CPUs: %w", err)
@@ -1661,6 +1648,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			}
 		}
 	} else {
+		// Get the list of PIDs from the VM.
+		pids, err := monitor.GetCPUs()
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
 		// Confirm nothing weird is going on.
 		if len(cpuInfo.vcpus) != len(pids) {
 			err = fmt.Errorf("QEMU has less vCPUs than configured")
@@ -1668,6 +1662,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			return err
 		}
 
+		// Apply the CPU pins.
 		for i, pid := range pids {
 			set := unix.CPUSet{}
 			set.Set(int(cpuInfo.vcpus[uint64(i)]))
@@ -1678,6 +1673,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 				op.Done(err)
 				return err
 			}
+		}
+
+		// Create a core scheduling group.
+		err = d.setCoreSched(pids)
+		if err != nil {
+			err = fmt.Errorf("Failed to allocate new core scheduling domain for vCPU threads: %w", err)
+			op.Done(err)
+			return err
 		}
 	}
 
@@ -5480,6 +5483,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 					return fmt.Errorf("Cannot change CPU pinning when VM is running")
 				}
 
+				// Hotplug the CPUs.
 				err = d.setCPUs(limit)
 				if err != nil {
 					return fmt.Errorf("Failed updating cpu limit: %w", err)
@@ -8753,9 +8757,19 @@ func (d *qemu) setCPUs(count int) error {
 				d.logger.Warn("Failed to add CPU device", logger.Ctx{"err": err})
 			})
 		}
+
+		// QEMU doesn't immediately remove the thread from the vCPU list.
+		// Wait a second to allow the thread to fully exit and disappear from the vCPU list.
+		time.Sleep(time.Second)
 	}
 
 	revert.Success()
+
+	// Run post-hotplug tasks.
+	err = d.postCPUHotplug(monitor)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -8765,4 +8779,70 @@ func (d *qemu) architectureSupportsCPUHotplug() bool {
 	info := DriverStatuses()[instancetype.VM].Info
 	_, found := info.Features["cpu_hotplug"]
 	return found
+}
+
+func (d *qemu) postCPUHotplug(monitor *qmp.Monitor) error {
+	// Get the vCPU PID list.
+	pids, err := monitor.GetCPUs()
+	if err != nil {
+		return err
+	}
+
+	// Handle NUMA node restrictions.
+	if d.expandedConfig["limits.cpu.nodes"] != "" {
+		// Parse the NUMA restriction.
+		numaNodeSet, err := resources.ParseNumaNodeSet(d.expandedConfig["limits.cpu.nodes"])
+		if err != nil {
+			return err
+		}
+
+		// Get the CPU topology.
+		cpusTopology, err := resources.GetCPU()
+		if err != nil {
+			return err
+		}
+
+		// Get the isolated CPU ids.
+		isolatedCpusInt := resources.GetCPUIsolated()
+
+		// Build a map of NUMA node to CPU threads.
+		numaNodeToCPU := make(map[int64][]int64)
+		for _, cpu := range cpusTopology.Sockets {
+			for _, core := range cpu.Cores {
+				for _, thread := range core.Threads {
+					// Skip any isolated CPU thread.
+					if slices.Contains(isolatedCpusInt, thread.ID) {
+						continue
+					}
+
+					numaNodeToCPU[int64(thread.NUMANode)] = append(numaNodeToCPU[int64(thread.NUMANode)], thread.ID)
+				}
+			}
+		}
+
+		// Figure out the list of CPU threads for the NUMA node(s).
+		set := unix.CPUSet{}
+		for _, numaNode := range numaNodeSet {
+			for _, id := range numaNodeToCPU[numaNode] {
+				set.Set(int(id))
+			}
+		}
+
+		// Apply the restriction.
+		for _, pid := range pids {
+			// Apply the pin.
+			err := unix.SchedSetaffinity(pid, &set)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Create a core scheduling group.
+	err = d.setCoreSched(pids)
+	if err != nil {
+		return fmt.Errorf("Failed to allocate new core scheduling domain for vCPU threads: %w", err)
+	}
+
+	return nil
 }
