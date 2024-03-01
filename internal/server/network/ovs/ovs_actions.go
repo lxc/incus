@@ -313,10 +313,8 @@ func (o *VSwitch) InterfaceAssociatedOVNSwitchPort(interfaceName string) (string
 	return strings.TrimSpace(ovnSwitchPort), nil
 }
 
-// ChassisID returns the local chassis ID.
-func (o *VSwitch) ChassisID() (string, error) {
-	ctx := context.TODO()
-
+// GetChassisID returns the local chassis ID.
+func (o *VSwitch) GetChassisID(ctx context.Context) (string, error) {
 	vSwitch := &ovsSwitch.OpenvSwitch{
 		UUID: o.rootUUID,
 	}
