@@ -243,13 +243,13 @@ func clusterGet(d *Daemon, r *http.Request) response.Response {
 
 // Fetch information about all node-specific configuration keys set on the
 // storage pools and networks of this cluster.
-func clusterGetMemberConfig(ctx context.Context, cluster *db.Cluster) ([]api.ClusterMemberConfigKey, error) {
+func clusterGetMemberConfig(ctx context.Context, clusterDB *db.Cluster) ([]api.ClusterMemberConfigKey, error) {
 	var pools map[string]map[string]string
 	var networks map[string]map[string]string
 
 	keys := []api.ClusterMemberConfigKey{}
 
-	err := cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+	err := clusterDB.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		pools, err = tx.GetStoragePoolsLocalConfig(ctx)
@@ -2784,8 +2784,8 @@ type internalClusterPostHandoverRequest struct {
 	Address string `json:"address" yaml:"address"`
 }
 
-func clusterCheckStoragePoolsMatch(ctx context.Context, cluster *db.Cluster, reqPools []api.StoragePool) error {
-	return cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+func clusterCheckStoragePoolsMatch(ctx context.Context, clusterDB *db.Cluster, reqPools []api.StoragePool) error {
+	return clusterDB.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		poolNames, err := tx.GetCreatedStoragePoolNames(ctx)
 		if err != nil && !response.IsNotFoundError(err) {
 			return err
@@ -2829,8 +2829,8 @@ func clusterCheckStoragePoolsMatch(ctx context.Context, cluster *db.Cluster, req
 	})
 }
 
-func clusterCheckNetworksMatch(ctx context.Context, cluster *db.Cluster, reqNetworks []api.InitNetworksProjectPost) error {
-	return cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+func clusterCheckNetworksMatch(ctx context.Context, clusterDB *db.Cluster, reqNetworks []api.InitNetworksProjectPost) error {
+	return clusterDB.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get a list of projects for networks.
 		networkProjectNames, err := dbCluster.GetProjectNames(ctx, tx.Tx())
 		if err != nil {

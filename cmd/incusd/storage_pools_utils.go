@@ -65,9 +65,9 @@ func storagePoolValidate(s *state.State, poolName string, driverName string, con
 	return nil
 }
 
-func storagePoolCreateGlobal(ctx context.Context, state *state.State, req api.StoragePoolsPost, clientType request.ClientType) error {
+func storagePoolCreateGlobal(ctx context.Context, s *state.State, req api.StoragePoolsPost, clientType request.ClientType) error {
 	// Create the database entry.
-	id, err := storagePoolDBCreate(ctx, state, req.Name, req.Description, req.Driver, req.Config)
+	id, err := storagePoolDBCreate(ctx, s, req.Name, req.Description, req.Driver, req.Config)
 	if err != nil {
 		return err
 	}
@@ -79,9 +79,9 @@ func storagePoolCreateGlobal(ctx context.Context, state *state.State, req api.St
 	revert := revert.New()
 	defer revert.Fail()
 
-	revert.Add(func() { _ = dbStoragePoolDeleteAndUpdateCache(context.Background(), state, req.Name) })
+	revert.Add(func() { _ = dbStoragePoolDeleteAndUpdateCache(context.Background(), s, req.Name) })
 
-	_, err = storagePoolCreateLocal(ctx, state, id, req, clientType)
+	_, err = storagePoolCreateLocal(ctx, s, id, req, clientType)
 	if err != nil {
 		return err
 	}
@@ -92,13 +92,13 @@ func storagePoolCreateGlobal(ctx context.Context, state *state.State, req api.St
 
 // This performs local pool setup and updates DB record if config was changed during pool setup.
 // Returns resulting config.
-func storagePoolCreateLocal(ctx context.Context, state *state.State, poolID int64, req api.StoragePoolsPost, clientType request.ClientType) (map[string]string, error) {
+func storagePoolCreateLocal(ctx context.Context, s *state.State, poolID int64, req api.StoragePoolsPost, clientType request.ClientType) (map[string]string, error) {
 	// Setup revert.
 	revert := revert.New()
 	defer revert.Fail()
 
 	// Load pool record.
-	pool, err := storagePools.LoadByName(state, req.Name)
+	pool, err := storagePools.LoadByName(s, req.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func storagePoolCreateLocal(ctx context.Context, state *state.State, poolID int6
 	// see if something like this has happened.
 	configDiff, _ := storagePools.ConfigDiff(req.Config, pool.Driver().Config())
 	if len(configDiff) > 0 {
-		err = state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			// Update the database entry for the storage pool.
 			return tx.UpdateStoragePool(ctx, req.Name, req.Description, pool.Driver().Config())
 		})
@@ -139,7 +139,7 @@ func storagePoolCreateLocal(ctx context.Context, state *state.State, poolID int6
 	}
 
 	// Set storage pool node to storagePoolCreated.
-	err = state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.StoragePoolNodeCreated(poolID)
 	})
 	if err != nil {
