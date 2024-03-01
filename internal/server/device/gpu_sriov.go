@@ -2,6 +2,7 @@ package device
 
 import (
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/lxc/incus/internal/linux"
@@ -123,11 +124,22 @@ func (d *gpuSRIOV) getVF() (string, int, error) {
 		return "", -1, err
 	}
 
+	// If NUMA restricted, build up a list of nodes.
+	var numaNodeSet []int64
+	if d.inst.ExpandedConfig()["limits.cpu.nodes"] != "" {
+		// Parse the NUMA restriction.
+		numaNodeSet, err = resources.ParseNumaNodeSet(d.inst.ExpandedConfig()["limits.cpu.nodes"])
+		if err != nil {
+			return "", -1, err
+		}
+	}
+
 	// Locate a suitable VF from the least loaded suitable card.
 	var pciAddress string
 	var vfID int
 	var cardTotal int
 	var cardAvailable int
+	cardNUMA := -1
 
 	for _, gpu := range gpus.Cards {
 		// Skip any cards that are not selected.
@@ -154,15 +166,27 @@ func (d *gpuSRIOV) getVF() (string, int, error) {
 			continue
 		}
 
-		// Check if current card is less busy.
-		if (float64(len(vfs)) / float64(gpu.SRIOV.CurrentVFs)) <= (float64(cardAvailable) / float64(cardTotal)) {
+		// If NUMA node restrictions are in place, prioritize NUMA placement.
+		if numaNodeSet != nil && !slices.Contains(numaNodeSet, int64(cardNUMA)) && slices.Contains(numaNodeSet, int64(gpu.NUMANode)) {
+			pciAddress = gpu.PCIAddress
+			vfID = vfs[0]
+			cardAvailable = len(vfs)
+			cardTotal = int(gpu.SRIOV.CurrentVFs)
+			cardNUMA = int(gpu.NUMANode)
+
 			continue
 		}
 
-		pciAddress = gpu.PCIAddress
-		vfID = vfs[0]
-		cardAvailable = len(vfs)
-		cardTotal = int(gpu.SRIOV.CurrentVFs)
+		// Prioritize less busy cards.
+		if (float64(len(vfs)) / float64(gpu.SRIOV.CurrentVFs)) > (float64(cardAvailable) / float64(cardTotal)) {
+			pciAddress = gpu.PCIAddress
+			vfID = vfs[0]
+			cardAvailable = len(vfs)
+			cardTotal = int(gpu.SRIOV.CurrentVFs)
+			cardNUMA = int(gpu.NUMANode)
+
+			continue
+		}
 	}
 
 	// Check if any physical GPU was found to match.
