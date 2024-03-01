@@ -28,21 +28,16 @@ func (o *VSwitch) Installed() bool {
 	return err == nil
 }
 
-// BridgeExists returns true if the bridge exists.
-func (o *VSwitch) BridgeExists(bridgeName string) (bool, error) {
-	ctx := context.TODO()
+// GetBridge returns a bridge entry.
+func (o *VSwitch) GetBridge(ctx context.Context, bridgeName string) (*ovsSwitch.Bridge, error) {
 	bridge := &ovsSwitch.Bridge{Name: bridgeName}
 
 	err := o.client.Get(ctx, bridge)
 	if err != nil {
-		if err == ovsdbClient.ErrNotFound {
-			return false, nil
-		}
-
-		return false, err
+		return nil, err
 	}
 
-	return true, nil
+	return bridge, nil
 }
 
 // BridgeAdd adds a new bridge.
