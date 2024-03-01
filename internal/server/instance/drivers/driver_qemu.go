@@ -3438,6 +3438,17 @@ func (d *qemu) addCPUMemoryConfig(cfg *[]cfgSection, cpuInfo *cpuTopology) error
 		cpuOpts.cpuSockets = 1
 		cpuOpts.cpuThreads = 1
 		hostNodes = []uint64{0}
+
+		// Handle NUMA restrictions.
+		if d.expandedConfig["limits.cpu.nodes"] != "" {
+			// Parse the NUMA restriction.
+			numaNodeSet, err := resources.ParseNumaNodeSet(d.expandedConfig["limits.cpu.nodes"])
+			if err != nil {
+				return err
+			}
+
+			cpuOpts.memoryHostNodes = numaNodeSet
+		}
 	} else {
 		cpuPinning = true
 
