@@ -175,10 +175,8 @@ func (o *VSwitch) DeleteBridge(ctx context.Context, bridgeName string) error {
 	return nil
 }
 
-// BridgePortAdd adds a port to the bridge (if already attached does nothing).
-func (o *VSwitch) BridgePortAdd(bridgeName string, portName string, mayExist bool) error {
-	ctx := context.TODO()
-
+// CreateBridgePort adds a port to the bridge.
+func (o *VSwitch) CreateBridgePort(ctx context.Context, bridgeName string, portName string, mayExist bool) error {
 	// Get the bridge.
 	bridge := ovsSwitch.Bridge{
 		Name: bridgeName,
