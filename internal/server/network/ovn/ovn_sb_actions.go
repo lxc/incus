@@ -8,9 +8,7 @@ import (
 )
 
 // GetLogicalRouterPortActiveChassisHostname gets the hostname of the chassis managing the logical router port.
-func (o *SB) GetLogicalRouterPortActiveChassisHostname(ovnRouterPort OVNRouterPort) (string, error) {
-	ctx := context.TODO()
-
+func (o *SB) GetLogicalRouterPortActiveChassisHostname(ctx context.Context, ovnRouterPort OVNRouterPort) (string, error) {
 	// Look for the port binding.
 	pb := &ovnSB.PortBinding{
 		LogicalPort: fmt.Sprintf("cr-%s", ovnRouterPort),
