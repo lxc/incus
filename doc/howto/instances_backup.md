@@ -78,7 +78,7 @@ Other changes to the configuration are silently ignored.
 
 To delete a snapshot, use the following command:
 
-    incus delete <instance_name>/<snapshot_name>
+    incus snapshot delete <instance_name> <snapshot_name>
 
 ### Schedule instance snapshots
 
