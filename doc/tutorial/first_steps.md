@@ -315,6 +315,6 @@ You can create a snapshot of your instance, which makes it easy to restore the i
 
 1. Delete the snapshot:
 
-       incus delete first/clean
+       incus snapshot delete first clean
 
 See {ref}`instances-snapshots` for more information.
