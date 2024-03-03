@@ -1,6 +1,7 @@
 package network
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -69,7 +70,7 @@ func AttachInterface(bridgeName string, devName string) error {
 			return fmt.Errorf("Failed to connect to OVS: %w", err)
 		}
 
-		err = vswitch.BridgePortAdd(bridgeName, devName, true)
+		err = vswitch.CreateBridgePort(context.TODO(), bridgeName, devName, true)
 		if err != nil {
 			return err
 		}

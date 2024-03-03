@@ -28,27 +28,20 @@ func (o *VSwitch) Installed() bool {
 	return err == nil
 }
 
-// BridgeExists returns true if the bridge exists.
-func (o *VSwitch) BridgeExists(bridgeName string) (bool, error) {
-	ctx := context.TODO()
+// GetBridge returns a bridge entry.
+func (o *VSwitch) GetBridge(ctx context.Context, bridgeName string) (*ovsSwitch.Bridge, error) {
 	bridge := &ovsSwitch.Bridge{Name: bridgeName}
 
 	err := o.client.Get(ctx, bridge)
 	if err != nil {
-		if err == ovsdbClient.ErrNotFound {
-			return false, nil
-		}
-
-		return false, err
+		return nil, err
 	}
 
-	return true, nil
+	return bridge, nil
 }
 
-// BridgeAdd adds a new bridge.
-func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.HardwareAddr, mtu uint32) error {
-	ctx := context.TODO()
-
+// CreateBridge adds a new bridge.
+func (o *VSwitch) CreateBridge(ctx context.Context, bridgeName string, mayExist bool, hwaddr net.HardwareAddr, mtu uint32) error {
 	// Create interface.
 	iface := ovsSwitch.Interface{
 		UUID: "interface",
@@ -145,10 +138,8 @@ func (o *VSwitch) BridgeAdd(bridgeName string, mayExist bool, hwaddr net.Hardwar
 	return fmt.Errorf("Bridge interface failed to appear")
 }
 
-// BridgeDelete deletes a bridge.
-func (o *VSwitch) BridgeDelete(bridgeName string) error {
-	ctx := context.TODO()
-
+// DeleteBridge deletes a bridge.
+func (o *VSwitch) DeleteBridge(ctx context.Context, bridgeName string) error {
 	bridge := ovsSwitch.Bridge{
 		Name: bridgeName,
 	}
@@ -184,10 +175,8 @@ func (o *VSwitch) BridgeDelete(bridgeName string) error {
 	return nil
 }
 
-// BridgePortAdd adds a port to the bridge (if already attached does nothing).
-func (o *VSwitch) BridgePortAdd(bridgeName string, portName string, mayExist bool) error {
-	ctx := context.TODO()
-
+// CreateBridgePort adds a port to the bridge.
+func (o *VSwitch) CreateBridgePort(ctx context.Context, bridgeName string, portName string, mayExist bool) error {
 	// Get the bridge.
 	bridge := ovsSwitch.Bridge{
 		Name: bridgeName,
@@ -324,10 +313,8 @@ func (o *VSwitch) InterfaceAssociatedOVNSwitchPort(interfaceName string) (string
 	return strings.TrimSpace(ovnSwitchPort), nil
 }
 
-// ChassisID returns the local chassis ID.
-func (o *VSwitch) ChassisID() (string, error) {
-	ctx := context.TODO()
-
+// GetChassisID returns the local chassis ID.
+func (o *VSwitch) GetChassisID(ctx context.Context) (string, error) {
 	vSwitch := &ovsSwitch.OpenvSwitch{
 		UUID: o.rootUUID,
 	}
@@ -366,10 +353,8 @@ func (o *VSwitch) OVNEncapIP() (net.IP, error) {
 	return encapIP, nil
 }
 
-// OVNBridgeMappings gets the current OVN bridge mappings.
-func (o *VSwitch) OVNBridgeMappings(bridgeName string) ([]string, error) {
-	ctx := context.TODO()
-
+// GetOVNBridgeMappings gets the current OVN bridge mappings.
+func (o *VSwitch) GetOVNBridgeMappings(ctx context.Context, bridgeName string) ([]string, error) {
 	vSwitch := &ovsSwitch.OpenvSwitch{
 		UUID: o.rootUUID,
 	}
@@ -392,7 +377,7 @@ func (o *VSwitch) OVNBridgeMappingAdd(bridgeName string, providerName string) er
 	ovnBridgeMappingMutex.Lock()
 	defer ovnBridgeMappingMutex.Unlock()
 
-	mappings, err := o.OVNBridgeMappings(bridgeName)
+	mappings, err := o.GetOVNBridgeMappings(context.TODO(), bridgeName)
 	if err != nil {
 		return err
 	}
@@ -420,7 +405,7 @@ func (o *VSwitch) OVNBridgeMappingDelete(bridgeName string, providerName string)
 	ovnBridgeMappingMutex.Lock()
 	defer ovnBridgeMappingMutex.Unlock()
 
-	mappings, err := o.OVNBridgeMappings(bridgeName)
+	mappings, err := o.GetOVNBridgeMappings(context.TODO(), bridgeName)
 	if err != nil {
 		return err
 	}

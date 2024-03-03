@@ -1448,9 +1448,8 @@ func (o *NB) ChassisGroupDelete(haChassisGroupName OVNChassisGroup) error {
 	return nil
 }
 
-// ChassisGroupChassisAdd adds a chassis ID to an HA chassis group with the specified priority.
-func (o *NB) ChassisGroupChassisAdd(haChassisGroupName OVNChassisGroup, chassisID string, priority uint) error {
-	ctx := context.TODO()
+// SetChassisGroupPriority sets a given priority for the chassis ID in the chassis group..
+func (o *NB) SetChassisGroupPriority(ctx context.Context, haChassisGroupName OVNChassisGroup, chassisID string, priority uint) error {
 	operations := []ovsdb.Operation{}
 
 	// Get the chassis group.

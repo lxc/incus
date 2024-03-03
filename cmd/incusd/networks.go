@@ -899,8 +899,8 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 			return api.Network{}, fmt.Errorf("Failed to connect to OVS: %w", err)
 		}
 
-		exists, _ := vswitch.BridgeExists(apiNet.Name)
-		if exists {
+		_, err = vswitch.GetBridge(context.TODO(), apiNet.Name)
+		if err == nil {
 			apiNet.Type = "bridge"
 		} else {
 			apiNet.Type = "unknown"
