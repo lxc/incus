@@ -52,9 +52,8 @@ To authenticate a client using a trust token, complete the following steps:
 
 1. On the server, enter the following command:
 
-       incus config trust add
+       incus config trust add <client_name>
 
-   Enter the name of the client that you want to add.
    The command generates and prints a token that can be used to add the client certificate.
 1. On the client, add the server with the following command:
 
