@@ -808,14 +808,12 @@ func clusterCopyCustomVolumeInternal(s *state.State, r *http.Request, sourceAddr
 }
 
 func doCustomVolumeRefresh(s *state.State, r *http.Request, requestProjectName string, projectName string, poolName string, req *api.StorageVolumesPost) response.Response {
-	var run func(op *operations.Operation) error
-
 	pool, err := storagePools.LoadByName(s, poolName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	run = func(op *operations.Operation) error {
+	run := func(op *operations.Operation) error {
 		revert := revert.New()
 		defer revert.Fail()
 
