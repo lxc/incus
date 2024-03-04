@@ -852,6 +852,14 @@ func doVolumeCreateOrCopy(s *state.State, r *http.Request, requestProjectName st
 		return response.SmartError(err)
 	}
 
+	var srcProjectName string
+	if req.Source.Project != "" {
+		srcProjectName, err = project.StorageVolumeProject(s.DB.Cluster, req.Source.Project, db.StoragePoolVolumeTypeCustom)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	volumeDBContentType, err := storagePools.VolumeContentTypeNameToContentType(req.ContentType)
 	if err != nil {
 		return response.SmartError(err)
@@ -870,7 +878,7 @@ func doVolumeCreateOrCopy(s *state.State, r *http.Request, requestProjectName st
 			return pool.CreateCustomVolume(projectName, req.Name, req.Description, req.Config, contentType, op)
 		}
 
-		return pool.CreateCustomVolumeFromCopy(projectName, req.Source.Project, req.Name, req.Description, req.Config, req.Source.Pool, req.Source.Name, !req.Source.VolumeOnly, op)
+		return pool.CreateCustomVolumeFromCopy(projectName, srcProjectName, req.Name, req.Description, req.Config, req.Source.Pool, req.Source.Name, !req.Source.VolumeOnly, op)
 	}
 
 	// If no source name supplied then this a volume create operation.
