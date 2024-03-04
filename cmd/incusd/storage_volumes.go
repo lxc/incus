@@ -839,8 +839,6 @@ func doCustomVolumeRefresh(s *state.State, r *http.Request, requestProjectName s
 }
 
 func doVolumeCreateOrCopy(s *state.State, r *http.Request, requestProjectName string, projectName string, poolName string, req *api.StorageVolumesPost) response.Response {
-	var run func(op *operations.Operation) error
-
 	pool, err := storagePools.LoadByName(s, poolName)
 	if err != nil {
 		return response.SmartError(err)
@@ -856,7 +854,7 @@ func doVolumeCreateOrCopy(s *state.State, r *http.Request, requestProjectName st
 		return response.SmartError(err)
 	}
 
-	run = func(op *operations.Operation) error {
+	run := func(op *operations.Operation) error {
 		if req.Source.Name == "" {
 			// Use an empty operation for this sync response to pass the requestor
 			op := &operations.Operation{}
