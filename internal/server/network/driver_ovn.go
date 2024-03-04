@@ -2063,7 +2063,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Create chassis group.
-	err = ovnnb.ChassisGroupAdd(n.getChassisGroupName(), update)
+	err = ovnnb.CreateChassisGroup(context.TODO(), n.getChassisGroupName(), update)
 	if err != nil {
 		return err
 	}
@@ -2101,7 +2101,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	if len(extRouterIPs) > 0 {
-		err = ovnnb.LogicalSwitchAdd(n.getExtSwitchName(), update)
+		err = ovnnb.CreateLogicalSwitch(context.TODO(), n.getExtSwitchName(), update)
 		if err != nil {
 			return fmt.Errorf("Failed adding external switch: %w", err)
 		}
@@ -2111,19 +2111,13 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		// Create external router port.
-		err = ovnnb.CreateLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterExtPortName(), routerMAC, bridgeMTU, extRouterIPs, update)
+		err = ovnnb.CreateLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterExtPortName(), routerMAC, bridgeMTU, extRouterIPs, n.getChassisGroupName(), update)
 		if err != nil {
 			return fmt.Errorf("Failed adding external router port: %w", err)
 		}
 
 		if !update {
 			revert.Add(func() { _ = ovnnb.LogicalRouterPortDelete(n.getRouterExtPortName()) })
-		}
-
-		// Associate external router port to chassis group.
-		err = ovnnb.LogicalRouterPortLinkChassisGroup(n.getRouterExtPortName(), n.getChassisGroupName())
-		if err != nil {
-			return fmt.Errorf("Failed linking external router port to chassis group: %w", err)
 		}
 
 		// Create external switch port and link to router port.
@@ -2304,7 +2298,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Create internal logical switch if not updating.
-	err = ovnnb.LogicalSwitchAdd(n.getIntSwitchName(), update)
+	err = ovnnb.CreateLogicalSwitch(context.TODO(), n.getIntSwitchName(), update)
 	if err != nil {
 		return fmt.Errorf("Failed adding internal switch: %w", err)
 	}
@@ -2345,7 +2339,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Create internal router port.
-	err = ovnnb.CreateLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName(), routerMAC, bridgeMTU, intRouterIPs, update)
+	err = ovnnb.CreateLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName(), routerMAC, bridgeMTU, intRouterIPs, "", update)
 	if err != nil {
 		return fmt.Errorf("Failed adding internal router port: %w", err)
 	}
