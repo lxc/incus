@@ -349,7 +349,7 @@ func (o *NB) LogicalRouterRouteDelete(routerName OVNRouter, prefixes ...net.IPNe
 }
 
 // CreateLogicalRouterPort adds a named logical router port to a logical router.
-func (o *NB) CreateLogicalRouterPort(ctx context.Context, routerName OVNRouter, portName OVNRouterPort, mac net.HardwareAddr, gatewayMTU uint32, ipAddr []*net.IPNet, mayExist bool) error {
+func (o *NB) CreateLogicalRouterPort(ctx context.Context, routerName OVNRouter, portName OVNRouterPort, mac net.HardwareAddr, gatewayMTU uint32, ipAddr []*net.IPNet, haChassisGroupName OVNChassisGroup, mayExist bool) error {
 	// Prepare the addresses.
 	networks := make([]string, 0, len(ipAddr))
 
@@ -376,6 +376,18 @@ func (o *NB) CreateLogicalRouterPort(ctx context.Context, routerName OVNRouter, 
 	// Apply the configuration.
 	logicalRouterPort.MAC = mac.String()
 	logicalRouterPort.Networks = networks
+	if haChassisGroupName != "" {
+		haChassisGroup := ovnNB.HAChassisGroup{
+			Name: string(haChassisGroupName),
+		}
+
+		err = o.get(ctx, &haChassisGroup)
+		if err != nil {
+			return err
+		}
+
+		logicalRouterPort.HaChassisGroup = &haChassisGroup.UUID
+	}
 
 	if gatewayMTU > 0 {
 		if logicalRouterPort.Options == nil {
@@ -510,27 +522,6 @@ func (o *NB) LogicalRouterPortSetIPv6Advertisements(portName OVNRouterPort, opts
 func (o *NB) LogicalRouterPortDeleteIPv6Advertisements(portName OVNRouterPort) error {
 	// Delete IPv6 Router Advertisements.
 	_, err := o.nbctl("clear", "logical_router_port", string(portName), "ipv6_ra_configs")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// LogicalRouterPortLinkChassisGroup links a logical router port to a HA chassis group.
-func (o *NB) LogicalRouterPortLinkChassisGroup(portName OVNRouterPort, haChassisGroupName OVNChassisGroup) error {
-	chassisGroupID, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid", "find", "ha_chassis_group", fmt.Sprintf("name=%s", haChassisGroupName))
-	if err != nil {
-		return err
-	}
-
-	chassisGroupID = strings.TrimSpace(chassisGroupID)
-
-	if chassisGroupID == "" {
-		return fmt.Errorf("Chassis group not found")
-	}
-
-	_, err = o.nbctl("set", "logical_router_port", string(portName), fmt.Sprintf("ha_chassis_group=%s", chassisGroupID))
 	if err != nil {
 		return err
 	}
