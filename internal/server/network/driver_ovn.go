@@ -2111,7 +2111,7 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		// Create external router port.
-		err = ovnnb.LogicalRouterPortAdd(n.getRouterName(), n.getRouterExtPortName(), routerMAC, bridgeMTU, extRouterIPs, update)
+		err = ovnnb.CreateLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterExtPortName(), routerMAC, bridgeMTU, extRouterIPs, update)
 		if err != nil {
 			return fmt.Errorf("Failed adding external router port: %w", err)
 		}
@@ -2345,7 +2345,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Create internal router port.
-	err = ovnnb.LogicalRouterPortAdd(n.getRouterName(), n.getRouterIntPortName(), routerMAC, bridgeMTU, intRouterIPs, update)
+	err = ovnnb.CreateLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName(), routerMAC, bridgeMTU, intRouterIPs, update)
 	if err != nil {
 		return fmt.Errorf("Failed adding internal router port: %w", err)
 	}

@@ -348,41 +348,85 @@ func (o *NB) LogicalRouterRouteDelete(routerName OVNRouter, prefixes ...net.IPNe
 	return nil
 }
 
-// LogicalRouterPortAdd adds a named logical router port to a logical router.
-func (o *NB) LogicalRouterPortAdd(routerName OVNRouter, portName OVNRouterPort, mac net.HardwareAddr, gatewayMTU uint32, ipAddr []*net.IPNet, mayExist bool) error {
-	if mayExist {
-		// Check if it exists and update addresses.
-		_, err := o.nbctl("list", "Logical_Router_Port", string(portName))
-		if err == nil {
-			// Router port exists.
-			ips := make([]string, 0, len(ipAddr))
-			for _, ip := range ipAddr {
-				ips = append(ips, ip.String())
-			}
+// CreateLogicalRouterPort adds a named logical router port to a logical router.
+func (o *NB) CreateLogicalRouterPort(ctx context.Context, routerName OVNRouter, portName OVNRouterPort, mac net.HardwareAddr, gatewayMTU uint32, ipAddr []*net.IPNet, mayExist bool) error {
+	// Prepare the addresses.
+	networks := make([]string, 0, len(ipAddr))
 
-			_, err := o.nbctl("set", "Logical_Router_Port", string(portName),
-				fmt.Sprintf(`networks="%s"`, strings.Join(ips, `","`)),
-				fmt.Sprintf(`mac="%s"`, mac.String()),
-				fmt.Sprintf("options:gateway_mtu=%d", gatewayMTU),
-			)
-			if err != nil {
-				return err
-			}
+	for _, addr := range ipAddr {
+		networks = append(networks, addr.String())
+	}
 
-			return nil
+	// Prepare the new router port entry.
+	logicalRouterPort := ovnNB.LogicalRouterPort{
+		Name: string(portName),
+		UUID: "lrp",
+	}
+
+	// Check if the entry already exists.
+	err := o.get(ctx, &logicalRouterPort)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	if logicalRouterPort.UUID != "lrp" && !mayExist {
+		return ErrExists
+	}
+
+	// Apply the configuration.
+	logicalRouterPort.MAC = mac.String()
+	logicalRouterPort.Networks = networks
+
+	if gatewayMTU > 0 {
+		if logicalRouterPort.Options == nil {
+			logicalRouterPort.Options = map[string]string{}
 		}
+
+		logicalRouterPort.Options["gateway_mtu"] = fmt.Sprintf("%d", gatewayMTU)
 	}
 
-	args := []string{"lrp-add", string(routerName), string(portName), mac.String()}
-	for _, ipNet := range ipAddr {
-		args = append(args, ipNet.String())
+	operations := []ovsdb.Operation{}
+	if logicalRouterPort.UUID != "lrp" {
+		// If it already exists, update it.
+		updateOps, err := o.client.Where(&logicalRouterPort).Update(&logicalRouterPort)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	} else {
+		// Else, create it.
+		createOps, err := o.client.Create(&logicalRouterPort)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+
+		// And connect it to the router.
+		logicalRouter := ovnNB.LogicalRouter{
+			Name: string(routerName),
+		}
+
+		updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+			Field:   &logicalRouter.Ports,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{logicalRouterPort.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
 	}
 
-	args = append(args, "--", "set", "Logical_Router_Port", string(portName),
-		fmt.Sprintf(`options:gateway_mtu=%d`, gatewayMTU),
-	)
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
 
-	_, err := o.nbctl(args...)
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
