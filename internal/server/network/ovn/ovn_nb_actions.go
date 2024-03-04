@@ -495,6 +495,20 @@ func (o *NB) LogicalRouterPortLinkChassisGroup(portName OVNRouterPort, haChassis
 	return nil
 }
 
+// GetLogicalSwitch gets the OVN database record for the switch.
+func (o *NB) GetLogicalSwitch(ctx context.Context, switchName OVNSwitch) (*ovnNB.LogicalSwitch, error) {
+	logicalSwitch := &ovnNB.LogicalSwitch{
+		Name: string(switchName),
+	}
+
+	err := o.get(ctx, logicalSwitch)
+	if err != nil {
+		return nil, err
+	}
+
+	return logicalSwitch, nil
+}
+
 // LogicalSwitchAdd adds a named logical switch.
 // If mayExist is true, then an existing resource of the same name is not treated as an error.
 func (o *NB) LogicalSwitchAdd(switchName OVNSwitch, mayExist bool) error {
