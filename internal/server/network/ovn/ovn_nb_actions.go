@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1463,7 +1462,7 @@ func (o *NB) ChassisGroupDelete(haChassisGroupName OVNChassisGroup) error {
 }
 
 // SetChassisGroupPriority sets a given priority for the chassis ID in the chassis group..
-func (o *NB) SetChassisGroupPriority(ctx context.Context, haChassisGroupName OVNChassisGroup, chassisID string, priority uint) error {
+func (o *NB) SetChassisGroupPriority(ctx context.Context, haChassisGroupName OVNChassisGroup, chassisID string, priority int) error {
 	operations := []ovsdb.Operation{}
 
 	// Get the chassis group.
@@ -1493,6 +1492,11 @@ func (o *NB) SetChassisGroupPriority(ctx context.Context, haChassisGroupName OVN
 	}
 
 	if haChassis.UUID == "" {
+		// If asked to remove, then we're done.
+		if priority < 0 {
+			return nil
+		}
+
 		// No entry found, add a new one.
 		haChassis = ovnNB.HAChassis{
 			UUID:        "chassis",
@@ -1518,7 +1522,27 @@ func (o *NB) SetChassisGroupPriority(ctx context.Context, haChassisGroupName OVN
 		}
 
 		operations = append(operations, updateOps...)
-	} else if haChassis.Priority != int(priority) {
+	} else if priority < 0 {
+		// Proceed with removing the entry.
+		deleteOps, err := o.client.Where(&haChassis).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+
+		// And removing it from the group.
+		updateOps, err := o.client.Where(&haGroup).Mutate(&haGroup, ovsModel.Mutation{
+			Field:   &haGroup.HaChassis,
+			Mutator: ovsdb.MutateOperationDelete,
+			Value:   []string{haChassis.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	} else if haChassis.Priority != priority {
 		// Found but wrong priority, correct it.
 		haChassis.Priority = int(priority)
 		updateOps, err := o.client.Where(&haChassis).Update(&haChassis)
@@ -1530,44 +1554,16 @@ func (o *NB) SetChassisGroupPriority(ctx context.Context, haChassisGroupName OVN
 	}
 
 	// Apply the changes.
-	if len(operations) > 0 {
-		resp, err := o.client.Transact(ctx, operations...)
-		if err != nil {
-			return err
-		}
-
-		_, err = ovsdb.CheckOperationResults(resp, operations)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// ChassisGroupChassisDelete deletes a chassis ID from an HA chassis group.
-func (o *NB) ChassisGroupChassisDelete(haChassisGroupName OVNChassisGroup, chassisID string) error {
-	// Check if chassis group exists. ovn-nbctl doesn't provide an "--if-exists" option for this.
-	output, err := o.nbctl("--no-headings", "--data=bare", "--colum=name,ha_chassis", "find", "ha_chassis_group", fmt.Sprintf("name=%s", string(haChassisGroupName)))
+	resp, err := o.client.Transact(ctx, operations...)
 	if err != nil {
 		return err
 	}
 
-	lines := util.SplitNTrimSpace(output, "\n", -1, true)
-	if len(lines) > 1 {
-		existingChassisGroup := lines[0]
-		members := util.SplitNTrimSpace(lines[1], " ", -1, true)
-
-		// Remove chassis from group if exists.
-		if existingChassisGroup == string(haChassisGroupName) && slices.Contains(members, chassisID) {
-			_, err := o.nbctl("ha-chassis-group-remove-chassis", string(haChassisGroupName), chassisID)
-			if err != nil {
-				return err
-			}
-		}
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
-	// Nothing to do if chassis group doesn't exist.
 	return nil
 }
 

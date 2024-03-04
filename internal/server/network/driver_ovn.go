@@ -2674,9 +2674,9 @@ func (n *ovn) addChassisGroupEntry() error {
 
 	// Generate a random priority from the seed for each node until we find a match for our node ID.
 	// In this way the chassis priority for this node will be set to a per-node stable random value.
-	var priority uint
+	var priority int
 	for _, memberID := range memberIDs {
-		priority = uint(r.Intn(ovnChassisPriorityMax + 1))
+		priority = r.Intn(ovnChassisPriorityMax + 1)
 		if memberID == ourMemberID {
 			break
 		}
@@ -2710,7 +2710,7 @@ func (n *ovn) deleteChassisGroupEntry() error {
 		return fmt.Errorf("Failed getting OVS Chassis ID: %w", err)
 	}
 
-	err = ovnnb.ChassisGroupChassisDelete(n.getChassisGroupName(), chassisID)
+	err = ovnnb.SetChassisGroupPriority(context.TODO(), n.getChassisGroupName(), chassisID, -1)
 	if err != nil {
 		return fmt.Errorf("Failed deleting OVS chassis %q from chassis group %q: %w", chassisID, n.getChassisGroupName(), err)
 	}
