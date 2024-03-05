@@ -543,17 +543,40 @@ func (o *NB) GetLogicalSwitch(ctx context.Context, switchName OVNSwitch) (*ovnNB
 	return logicalSwitch, nil
 }
 
-// LogicalSwitchAdd adds a named logical switch.
+// CreateLogicalSwitch adds a named logical switch.
 // If mayExist is true, then an existing resource of the same name is not treated as an error.
-func (o *NB) LogicalSwitchAdd(switchName OVNSwitch, mayExist bool) error {
-	args := []string{}
-
-	if mayExist {
-		args = append(args, "--may-exist")
+func (o *NB) CreateLogicalSwitch(ctx context.Context, switchName OVNSwitch, mayExist bool) error {
+	logicalSwitch := ovnNB.LogicalSwitch{
+		Name: string(switchName),
 	}
 
-	args = append(args, "ls-add", string(switchName))
-	_, err := o.nbctl(args...)
+	// Check if already exists.
+	err := o.get(ctx, &logicalSwitch)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	if logicalSwitch.UUID != "" {
+		if mayExist {
+			return nil
+		}
+
+		return ErrExists
+	}
+
+	// Create the record.
+	operations, err := o.client.Create(&logicalSwitch)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
