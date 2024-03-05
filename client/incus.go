@@ -221,7 +221,7 @@ func incusParseResponse(resp *http.Response) (*api.Response, string, error) {
 
 	// Handle errors
 	if response.Type == api.ErrorResponse {
-		return nil, "", api.StatusErrorf(resp.StatusCode, response.Error)
+		return &response, "", api.StatusErrorf(resp.StatusCode, response.Error)
 	}
 
 	return &response, etag, nil
