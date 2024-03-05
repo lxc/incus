@@ -1471,9 +1471,56 @@ func (o *NB) logicalSwitchPortDeleteAppendArgs(args []string, portName OVNSwitch
 	return args
 }
 
-// LogicalSwitchPortDelete deletes a named logical switch port.
-func (o *NB) LogicalSwitchPortDelete(portName OVNSwitchPort) error {
-	_, err := o.nbctl(o.logicalSwitchPortDeleteAppendArgs(nil, portName)...)
+// DeleteLogicalSwitchPort deletes a named logical switch port.
+func (o *NB) DeleteLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, portName OVNSwitchPort) error {
+	operations := []ovsdb.Operation{}
+
+	// Get the logical switch port.
+	logicalSwitchPort := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, &logicalSwitchPort)
+	if err != nil {
+		// Logical switch port is already gone.
+		if err == ErrNotFound {
+			return nil
+		}
+
+		return err
+	}
+
+	// Remove the port from the switch.
+	logicalSwitch := ovnNB.LogicalSwitch{
+		Name: string(switchName),
+	}
+
+	updateOps, err := o.client.Where(&logicalSwitch).Mutate(&logicalSwitch, ovsModel.Mutation{
+		Field:   &logicalSwitch.Ports,
+		Mutator: ovsdb.MutateOperationDelete,
+		Value:   []string{logicalSwitchPort.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Delete the port itself.
+	deleteOps, err := o.client.Where(&logicalSwitchPort).Delete()
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
