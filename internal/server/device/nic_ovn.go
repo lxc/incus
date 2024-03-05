@@ -636,14 +636,9 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("Failed getting OVS Chassis ID: %w", err)
 	}
 
-	ovnClient, err := ovn.NewNB(d.state)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to get OVN client: %w", err)
-	}
-
 	// Add post start hook for setting logical switch port chassis once instance has been started.
 	runConf.PostHooks = append(runConf.PostHooks, func() error {
-		err := ovnClient.LogicalSwitchPortOptionsSet(logicalPortName, map[string]string{"requested-chassis": chassisID})
+		err := d.state.OVNNB.LogicalSwitchPortOptionsSet(logicalPortName, map[string]string{"requested-chassis": chassisID})
 		if err != nil {
 			return fmt.Errorf("Failed setting logical switch port chassis ID: %w", err)
 		}
@@ -788,12 +783,7 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 
 		if len(removedACLs) > 0 {
-			client, err := ovn.NewNB(d.state)
-			if err != nil {
-				return fmt.Errorf("Failed to get OVN client: %w", err)
-			}
-
-			err = acl.OVNPortGroupDeleteIfUnused(d.state, d.logger, client, d.network.Project(), d.inst, d.name, newACLs...)
+			err := acl.OVNPortGroupDeleteIfUnused(d.state, d.logger, d.state.OVNNB, d.network.Project(), d.inst, d.name, newACLs...)
 			if err != nil {
 				return fmt.Errorf("Failed removing unused OVN port groups: %w", err)
 			}
@@ -996,12 +986,7 @@ func (d *nicOVN) Remove() error {
 	// Check for port groups that will become unused (and need deleting) as this NIC is deleted.
 	securityACLs := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
 	if len(securityACLs) > 0 {
-		client, err := ovn.NewNB(d.state)
-		if err != nil {
-			return fmt.Errorf("Failed to get OVN client: %w", err)
-		}
-
-		err = acl.OVNPortGroupDeleteIfUnused(d.state, d.logger, client, d.network.Project(), d.inst, d.name)
+		err := acl.OVNPortGroupDeleteIfUnused(d.state, d.logger, d.state.OVNNB, d.network.Project(), d.inst, d.name)
 		if err != nil {
 			return fmt.Errorf("Failed removing unused OVN port groups: %w", err)
 		}
