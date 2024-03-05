@@ -2112,17 +2112,21 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		if !update {
-			revert.Add(func() { _ = n.state.OVNNB.LogicalRouterPortDelete(n.getRouterExtPortName()) })
+			revert.Add(func() {
+				_ = n.state.OVNNB.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterExtPortName())
+			})
 		}
 
 		// Create external switch port and link to router port.
-		err = n.state.OVNNB.LogicalSwitchPortAdd(n.getExtSwitchName(), n.getExtSwitchRouterPortName(), nil, update)
+		err = n.state.OVNNB.CreateLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchRouterPortName(), nil, update)
 		if err != nil {
 			return fmt.Errorf("Failed adding external switch router port: %w", err)
 		}
 
 		if !update {
-			revert.Add(func() { _ = n.state.OVNNB.LogicalSwitchPortDelete(n.getExtSwitchRouterPortName()) })
+			revert.Add(func() {
+				_ = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchRouterPortName())
+			})
 		}
 
 		err = n.state.OVNNB.LogicalSwitchPortLinkRouter(n.getExtSwitchRouterPortName(), n.getRouterExtPortName())
@@ -2131,13 +2135,15 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		// Create external switch port and link to external provider network.
-		err = n.state.OVNNB.LogicalSwitchPortAdd(n.getExtSwitchName(), n.getExtSwitchProviderPortName(), nil, update)
+		err = n.state.OVNNB.CreateLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchProviderPortName(), nil, update)
 		if err != nil {
 			return fmt.Errorf("Failed adding external switch provider port: %w", err)
 		}
 
 		if !update {
-			revert.Add(func() { _ = n.state.OVNNB.LogicalSwitchPortDelete(n.getExtSwitchProviderPortName()) })
+			revert.Add(func() {
+				_ = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchProviderPortName())
+			})
 		}
 
 		err = n.state.OVNNB.LogicalSwitchPortLinkProviderNetwork(n.getExtSwitchProviderPortName(), uplinkNet.extSwitchProviderName)
@@ -2340,7 +2346,9 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	if !update {
-		revert.Add(func() { _ = n.state.OVNNB.LogicalRouterPortDelete(n.getRouterIntPortName()) })
+		revert.Add(func() {
+			_ = n.state.OVNNB.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName())
+		})
 	}
 
 	// Configure DHCP option sets.
@@ -2459,13 +2467,15 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Create internal switch port and link to router port.
-	err = n.state.OVNNB.LogicalSwitchPortAdd(n.getIntSwitchName(), n.getIntSwitchRouterPortName(), nil, update)
+	err = n.state.OVNNB.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), n.getIntSwitchRouterPortName(), nil, update)
 	if err != nil {
 		return fmt.Errorf("Failed adding internal switch router port: %w", err)
 	}
 
 	if !update {
-		revert.Add(func() { _ = n.state.OVNNB.LogicalSwitchPortDelete(n.getIntSwitchRouterPortName()) })
+		revert.Add(func() {
+			_ = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), n.getIntSwitchRouterPortName())
+		})
 	}
 
 	err = n.state.OVNNB.LogicalSwitchPortLinkRouter(n.getIntSwitchRouterPortName(), n.getRouterIntPortName())
@@ -2722,27 +2732,27 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 			return err
 		}
 
-		err = n.state.OVNNB.LogicalRouterPortDelete(n.getRouterExtPortName())
+		err = n.state.OVNNB.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterExtPortName())
 		if err != nil {
 			return err
 		}
 
-		err = n.state.OVNNB.LogicalRouterPortDelete(n.getRouterIntPortName())
+		err = n.state.OVNNB.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName())
 		if err != nil {
 			return err
 		}
 
-		err = n.state.OVNNB.LogicalSwitchPortDelete(n.getExtSwitchRouterPortName())
+		err = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchRouterPortName())
 		if err != nil {
 			return err
 		}
 
-		err = n.state.OVNNB.LogicalSwitchPortDelete(n.getExtSwitchProviderPortName())
+		err = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchProviderPortName())
 		if err != nil {
 			return err
 		}
 
-		err = n.state.OVNNB.LogicalSwitchPortDelete(n.getIntSwitchRouterPortName())
+		err = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), n.getIntSwitchRouterPortName())
 		if err != nil {
 			return err
 		}
@@ -3634,7 +3644,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	// to configure the port as needed. This is required in case the OVN northbound database was unavailable
 	// when the instance NIC was stopped and was unable to remove the port on last stop, which would otherwise
 	// prevent future NIC starts.
-	err = n.state.OVNNB.LogicalSwitchPortAdd(n.getIntSwitchName(), instancePortName, &networkOVN.OVNSwitchPortOpts{
+	err = n.state.OVNNB.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName, &networkOVN.OVNSwitchPortOpts{
 		DHCPv4OptsID: dhcpV4ID,
 		DHCPv6OptsID: dhcpv6ID,
 		MAC:          mac,
@@ -3647,7 +3657,9 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		return "", nil, err
 	}
 
-	revert.Add(func() { _ = n.state.OVNNB.LogicalSwitchPortDelete(instancePortName) })
+	revert.Add(func() {
+		_ = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName)
+	})
 
 	// Add DNS records for port's IPs, and retrieve the IP addresses used.
 	var dnsIPv4, dnsIPv6 net.IP
