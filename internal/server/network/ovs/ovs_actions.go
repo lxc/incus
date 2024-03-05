@@ -368,6 +368,7 @@ func (o *VSwitch) GetInterfaceAssociatedOVNSwitchPort(ctx context.Context, inter
 
 // GetChassisID returns the local chassis ID.
 func (o *VSwitch) GetChassisID(ctx context.Context) (string, error) {
+	// Get the root switch.
 	vSwitch := &ovsSwitch.OpenvSwitch{
 		UUID: o.rootUUID,
 	}
@@ -377,8 +378,8 @@ func (o *VSwitch) GetChassisID(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	val := vSwitch.ExternalIDs["system-id"]
-	return val, nil
+	// Return the system-id.
+	return vSwitch.ExternalIDs["system-id"], nil
 }
 
 // OVNEncapIP returns the enscapsulation IP used for OVN underlay tunnels.
