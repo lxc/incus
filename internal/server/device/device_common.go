@@ -27,7 +27,7 @@ type deviceCommon struct {
 // It also needs to be provided with volatile get and set functions for the device to allow
 // persistent data to be accessed. This is implemented as part of deviceCommon so that the majority
 // of devices don't need to implement it and can just embed deviceCommon.
-func (d *deviceCommon) init(inst instance.Instance, state *state.State, name string, conf deviceConfig.Device, volatileGet VolatileGetter, volatileSet VolatileSetter) {
+func (d *deviceCommon) init(inst instance.Instance, s *state.State, name string, conf deviceConfig.Device, volatileGet VolatileGetter, volatileSet VolatileSetter) error {
 	logCtx := logger.Ctx{"driver": conf["type"], "device": name}
 	if inst != nil {
 		logCtx["project"] = inst.Project().Name
@@ -38,9 +38,11 @@ func (d *deviceCommon) init(inst instance.Instance, state *state.State, name str
 	d.inst = inst
 	d.name = name
 	d.config = conf
-	d.state = state
+	d.state = s
 	d.volatileGet = volatileGet
 	d.volatileSet = volatileSet
+
+	return nil
 }
 
 // Name returns the name of the device.

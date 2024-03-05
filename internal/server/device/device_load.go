@@ -100,7 +100,10 @@ func load(inst instance.Instance, state *state.State, projectName string, name s
 	}
 
 	// Setup the device's internal variables.
-	dev.init(inst, state, name, conf, volatileGet, volatileSet)
+	err = dev.init(inst, state, name, conf, volatileGet, volatileSet)
+	if err != nil {
+		return nil, fmt.Errorf("Failed loading device %q: %w", name, err)
+	}
 
 	return dev, nil
 }
