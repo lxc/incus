@@ -350,14 +350,20 @@ func (o *VSwitch) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitc
 	return nil
 }
 
-// InterfaceAssociatedOVNSwitchPort returns the OVN switch port associated to the interface.
-func (o *VSwitch) InterfaceAssociatedOVNSwitchPort(interfaceName string) (string, error) {
-	ovnSwitchPort, err := subprocess.RunCommand("ovs-vsctl", "get", "interface", interfaceName, "external_ids:iface-id")
+// GetInterfaceAssociatedOVNSwitchPort returns the OVN switch port associated to the interface.
+func (o *VSwitch) GetInterfaceAssociatedOVNSwitchPort(ctx context.Context, interfaceName string) (string, error) {
+	// Get the OVS interface.
+	ovsInterface := ovsSwitch.Interface{
+		Name: interfaceName,
+	}
+
+	err := o.client.Get(ctx, &ovsInterface)
 	if err != nil {
 		return "", err
 	}
 
-	return strings.TrimSpace(ovnSwitchPort), nil
+	// Return the iface-id.
+	return ovsInterface.ExternalIDs["iface-id"], nil
 }
 
 // GetChassisID returns the local chassis ID.
