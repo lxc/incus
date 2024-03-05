@@ -1127,23 +1127,35 @@ func (o *NB) LogicalSwitchPortUUID(portName OVNSwitchPort) (OVNSwitchPortUUID, e
 	return "", nil
 }
 
-// LogicalSwitchPortAdd adds a named logical switch port to a logical switch, and sets options if provided.
+// CreateLogicalSwitchPort adds a named logical switch port to a logical switch, and sets options if provided.
 // If mayExist is true, then an existing resource of the same name is not treated as an error.
-func (o *NB) LogicalSwitchPortAdd(switchName OVNSwitch, portName OVNSwitchPort, opts *OVNSwitchPortOpts, mayExist bool) error {
-	args := []string{}
-
-	if mayExist {
-		args = append(args, "--may-exist")
+func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, portName OVNSwitchPort, opts *OVNSwitchPortOpts, mayExist bool) error {
+	// Prepare the new switch port entry.
+	logicalSwitchPort := ovnNB.LogicalSwitchPort{
+		Name:        string(portName),
+		UUID:        "lsp",
+		ExternalIDs: map[string]string{},
 	}
 
-	// Add switch port.
-	args = append(args, "lsp-add", string(switchName), string(portName))
+	// Check if the entry already exists.
+	err := o.get(ctx, &logicalSwitchPort)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	if logicalSwitchPort.UUID != "lsp" && !mayExist {
+		return ErrExists
+	}
 
 	// Set switch port options if supplied.
 	if opts != nil {
 		// Created nested VLAN port if requested.
 		if opts.Parent != "" {
-			args = append(args, string(opts.Parent), fmt.Sprintf("%d", opts.VLAN))
+			parentName := string(opts.Parent)
+			tag := int(opts.VLAN)
+
+			logicalSwitchPort.ParentName = &parentName
+			logicalSwitchPort.Tag = &tag
 		}
 
 		ipStr := make([]string, 0, len(opts.IPs))
@@ -1160,24 +1172,68 @@ func (o *NB) LogicalSwitchPortAdd(switchName OVNSwitch, portName OVNSwitchPort, 
 			addresses = "dynamic"
 		}
 
-		args = append(args, "--", "lsp-set-addresses", string(portName), addresses)
+		logicalSwitchPort.Addresses = []string{addresses}
 
 		if opts.DHCPv4OptsID != "" {
-			args = append(args, "--", "lsp-set-dhcpv4-options", string(portName), string(opts.DHCPv4OptsID))
+			dhcp4opts := string(opts.DHCPv4OptsID)
+			logicalSwitchPort.Dhcpv4Options = &dhcp4opts
 		}
 
 		if opts.DHCPv6OptsID != "" {
-			args = append(args, "--", "lsp-set-dhcpv6-options", string(portName), string(opts.DHCPv6OptsID))
+			dhcp6opts := string(opts.DHCPv6OptsID)
+			logicalSwitchPort.Dhcpv6Options = &dhcp6opts
 		}
 
 		if opts.Location != "" {
-			args = append(args, "--", "set", "logical_switch_port", string(portName), fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusLocation, opts.Location))
+			logicalSwitchPort.ExternalIDs[ovnExtIDIncusLocation] = opts.Location
 		}
 	}
 
-	args = append(args, "--", "set", "logical_switch_port", string(portName), fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName))
+	logicalSwitchPort.ExternalIDs[ovnExtIDIncusSwitch] = string(switchName)
 
-	_, err := o.nbctl(args...)
+	// Apply the changes.
+	operations := []ovsdb.Operation{}
+	if logicalSwitchPort.UUID != "lsp" {
+		// If it already exists, update it.
+		updateOps, err := o.client.Where(&logicalSwitchPort).Update(&logicalSwitchPort)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	} else {
+		// Else, create it.
+		createOps, err := o.client.Create(&logicalSwitchPort)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+
+		// And connect it to the switch.
+		logicalSwitch := ovnNB.LogicalSwitch{
+			Name: string(switchName),
+		}
+
+		updateOps, err := o.client.Where(&logicalSwitch).Mutate(&logicalSwitch, ovsModel.Mutation{
+			Field:   &logicalSwitch.Ports,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{logicalSwitchPort.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
