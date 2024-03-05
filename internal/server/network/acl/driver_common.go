@@ -581,6 +581,7 @@ func (d *common) validatePorts(ports []string) error {
 
 // Update applies the supplied config to the ACL.
 func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType) error {
+	// Validate the configuration.
 	err := d.validateConfig(config)
 	if err != nil {
 		return err
@@ -645,6 +646,11 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 	// If there are affected OVN networks, then apply the changes, but only if the request type is normal.
 	// This way we won't apply the same changes multiple times for each cluster member.
 	if len(aclOVNNets) > 0 && clientType == request.ClientTypeNormal {
+		// Check that OVN is available.
+		if d.state.OVNNB == nil {
+			return fmt.Errorf("OVN isn't currently available")
+		}
+
 		var aclNameIDs map[string]int64
 
 		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
