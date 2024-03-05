@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/internal/server/firewall"
 	"github.com/lxc/incus/internal/server/fsmonitor"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/internal/server/network/ovn"
 	"github.com/lxc/incus/internal/server/node"
 	"github.com/lxc/incus/internal/server/sys"
 	localtls "github.com/lxc/incus/shared/tls"
@@ -80,4 +81,8 @@ type State struct {
 
 	// Authorizer.
 	Authorizer auth.Authorizer
+
+	// OVN.
+	OVNNB *ovn.NB
+	OVNSB *ovn.SB
 }

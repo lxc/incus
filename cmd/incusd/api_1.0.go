@@ -827,25 +827,20 @@ func doApi10PreNotifyTriggers(d *Daemon, clusterChanged map[string]string, newCl
 func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]string, nodeConfig *node.Config, clusterConfig *clusterConfig.Config) error {
 	s := d.State()
 
+	acmeChanged := false
 	bgpChanged := false
 	dnsChanged := false
 	lokiChanged := false
-	acmeDomainChanged := false
-	acmeCAURLChanged := false
 	oidcChanged := false
-	syslogSocketChanged := false
 	openFGAChanged := false
+	ovnChanged := false
+	syslogChanged := false
 
 	for key := range clusterChanged {
 		switch key {
-		case "core.https_trusted_proxy":
-			s.Endpoints.NetworkUpdateTrustedProxy(clusterChanged[key])
-		case "core.proxy_http":
-			fallthrough
-		case "core.proxy_https":
-			fallthrough
-		case "core.proxy_ignore_hosts":
-			daemonConfigSetProxy(d, clusterConfig)
+		case "acme.ca_url", "acme.domain":
+			acmeChanged = true
+
 		case "cluster.images_minimal_replica":
 			err := autoSyncImages(s.ShutdownCtx, s)
 			if err != nil {
@@ -855,37 +850,30 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		case "cluster.offline_threshold":
 			d.gateway.HeartbeatOfflineThreshold = clusterConfig.OfflineThreshold()
 			d.taskClusterHeartbeat.Reset()
-		case "images.auto_update_interval":
-			fallthrough
-		case "images.remote_cache_expiry":
+
+		case "core.bgp_asn":
+			bgpChanged = true
+
+		case "core.https_trusted_proxy":
+			s.Endpoints.NetworkUpdateTrustedProxy(clusterChanged[key])
+
+		case "core.proxy_http", "core.proxy_https", "core.proxy_ignore_hosts":
+			daemonConfigSetProxy(d, clusterConfig)
+
+		case "images.auto_update_interval", "images.remote_cache_expiry":
 			if !s.OS.MockMode {
 				d.taskPruneImages.Reset()
 			}
 
-		case "core.bgp_asn":
-			bgpChanged = true
-		case "loki.api.url":
-			fallthrough
-		case "loki.auth.username":
-			fallthrough
-		case "loki.auth.password":
-			fallthrough
-		case "loki.api.ca_cert":
-			fallthrough
-		case "loki.instance":
-			fallthrough
-		case "loki.labels":
-			fallthrough
-		case "loki.loglevel":
-			fallthrough
-		case "loki.types":
+		case "loki.api.url", "loki.auth.username", "loki.auth.password", "loki.api.ca_cert", "loki.instance", "loki.labels", "loki.loglevel", "loki.types":
 			lokiChanged = true
-		case "acme.ca_url":
-			acmeCAURLChanged = true
-		case "acme.domain":
-			acmeDomainChanged = true
+
+		case "network.ovn.northbound_connection", "network.ovn.ca_cert", "network.ovn.client_cert", "network.ovn.client_key":
+			ovnChanged = true
+
 		case "oidc.issuer", "oidc.client.id", "oidc.audience":
 			oidcChanged = true
+
 		case "openfga.api.url", "openfga.api.token", "openfga.store.id", "openfga.store.model_id":
 			openFGAChanged = true
 		}
@@ -893,14 +881,14 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 	for key := range nodeChanged {
 		switch key {
-		case "core.bgp_address":
-			fallthrough
-		case "core.bgp_routerid":
+		case "core.bgp_address", "core.bgp_routerid":
 			bgpChanged = true
+
 		case "core.dns_address":
 			dnsChanged = true
+
 		case "core.syslog_socket":
-			syslogSocketChanged = true
+			syslogChanged = true
 		}
 	}
 
@@ -908,7 +896,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	// correlated with others, and need to be processed first (for example
 	// core.https_address need to be processed before
 	// cluster.https_address).
-
 	value, ok := nodeChanged["core.https_address"]
 	if ok {
 		err := s.Endpoints.NetworkUpdateAddress(value)
@@ -969,6 +956,14 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		}
 	}
 
+	// Apply larger changes.
+	if acmeChanged {
+		err := autoRenewCertificate(s.ShutdownCtx, d, true)
+		if err != nil {
+			return err
+		}
+	}
+
 	if bgpChanged {
 		address := nodeConfig.BGPAddress()
 		asn := clusterConfig.BGPASN()
@@ -1002,22 +997,6 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		}
 	}
 
-	if acmeCAURLChanged || acmeDomainChanged {
-		err := autoRenewCertificate(s.ShutdownCtx, d, acmeCAURLChanged)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Compile and load the instance placement scriptlet.
-	value, ok = clusterChanged["instances.placement.scriptlet"]
-	if ok {
-		err := scriptletLoad.InstancePlacementSet(value)
-		if err != nil {
-			return fmt.Errorf("Failed saving instance placement scriptlet: %w", err)
-		}
-	}
-
 	if oidcChanged {
 		oidcIssuer, oidcClientID, oidcAudience := clusterConfig.OIDCServer()
 
@@ -1032,18 +1011,34 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		}
 	}
 
-	if syslogSocketChanged {
+	if openFGAChanged {
+		openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaAuthorizationModelID := d.globalConfig.OpenFGA()
+		err := d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaAuthorizationModelID)
+		if err != nil {
+			return err
+		}
+	}
+
+	if ovnChanged {
+		err := d.setupOVN()
+		if err != nil {
+			return err
+		}
+	}
+
+	if syslogChanged {
 		err := d.setupSyslogSocket(nodeConfig.SyslogSocket())
 		if err != nil {
 			return err
 		}
 	}
 
-	if openFGAChanged {
-		openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaAuthorizationModelID := d.globalConfig.OpenFGA()
-		err := d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaAuthorizationModelID)
+	// Compile and load the instance placement scriptlet.
+	value, ok = clusterChanged["instances.placement.scriptlet"]
+	if ok {
+		err := scriptletLoad.InstancePlacementSet(value)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed saving instance placement scriptlet: %w", err)
 		}
 	}
 

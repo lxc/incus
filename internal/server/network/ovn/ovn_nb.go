@@ -17,7 +17,6 @@ import (
 
 	"github.com/lxc/incus/internal/linux"
 	ovnNB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-nb"
-	"github.com/lxc/incus/internal/server/state"
 	"github.com/lxc/incus/shared/subprocess"
 )
 
@@ -33,10 +32,13 @@ type NB struct {
 	sslClientKey  string
 }
 
+var nb *NB
+
 // NewNB initialises new OVN client for Northbound operations.
-func NewNB(s *state.State) (*NB, error) {
-	// Get database connection string.
-	dbAddr := s.GlobalConfig.NetworkOVNNorthboundConnection()
+func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*NB, error) {
+	if nb != nil {
+		return nb, nil
+	}
 
 	// Create the NB struct.
 	client := &NB{
@@ -65,49 +67,6 @@ func NewNB(s *state.State) (*NB, error) {
 
 	// Handle SSL.
 	if strings.Contains(dbAddr, "ssl:") {
-		// Get the OVN SSL keys from the daemon config.
-		sslCACert, sslClientCert, sslClientKey := s.GlobalConfig.NetworkOVNSSL()
-
-		// Fallback to filesystem keys.
-		if sslCACert == "" {
-			content, err := os.ReadFile("/etc/ovn/ovn-central.crt")
-			if err != nil {
-				if os.IsNotExist(err) {
-					return nil, fmt.Errorf("OVN configured to use SSL but no SSL CA certificate defined")
-				}
-
-				return nil, err
-			}
-
-			sslCACert = string(content)
-		}
-
-		if sslClientCert == "" {
-			content, err := os.ReadFile("/etc/ovn/cert_host")
-			if err != nil {
-				if os.IsNotExist(err) {
-					return nil, fmt.Errorf("OVN configured to use SSL but no SSL client certificate defined")
-				}
-
-				return nil, err
-			}
-
-			sslClientCert = string(content)
-		}
-
-		if sslClientKey == "" {
-			content, err := os.ReadFile("/etc/ovn/key_host")
-			if err != nil {
-				if os.IsNotExist(err) {
-					return nil, fmt.Errorf("OVN configured to use SSL but no SSL client key defined")
-				}
-
-				return nil, err
-			}
-
-			sslClientKey = string(content)
-		}
-
 		// Validation.
 		if sslClientCert == "" {
 			return nil, fmt.Errorf("OVN is configured to use SSL but no client certificate was found")
@@ -216,6 +175,7 @@ func NewNB(s *state.State) (*NB, error) {
 		ovn.Close()
 	})
 
+	nb = client
 	return client, nil
 }
 

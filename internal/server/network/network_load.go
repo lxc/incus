@@ -35,7 +35,10 @@ func LoadByType(driverType string) (Type, error) {
 	}
 
 	n := driverFunc()
-	n.init(nil, -1, "", &api.Network{Type: driverType}, nil)
+	err := n.init(nil, -1, "", &api.Network{Type: driverType}, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return n, nil
 }
@@ -63,7 +66,10 @@ func LoadByName(s *state.State, projectName string, name string) (Network, error
 	}
 
 	n := driverFunc()
-	n.init(s, id, projectName, netInfo, netNodes)
+	err = n.init(s, id, projectName, netInfo, netNodes)
+	if err != nil {
+		return nil, err
+	}
 
 	return n, nil
 }

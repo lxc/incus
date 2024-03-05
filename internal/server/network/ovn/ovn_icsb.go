@@ -14,7 +14,6 @@ import (
 	ovsdbModel "github.com/ovn-org/libovsdb/model"
 
 	ovnICSB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-ic-nb"
-	"github.com/lxc/incus/internal/server/state"
 )
 
 // ICSB client.
@@ -24,7 +23,7 @@ type ICSB struct {
 }
 
 // NewICSB initialises new OVN client for Southbound IC operations.
-func NewICSB(s *state.State, dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*ICSB, error) {
+func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*ICSB, error) {
 	// Create the SB struct.
 	client := &ICSB{}
 

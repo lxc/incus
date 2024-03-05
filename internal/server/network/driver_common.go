@@ -95,18 +95,20 @@ type common struct {
 }
 
 // init initialise internal variables.
-func (n *common) init(state *state.State, id int64, projectName string, netInfo *api.Network, netNodes map[int64]db.NetworkNode) {
+func (n *common) init(s *state.State, id int64, projectName string, netInfo *api.Network, netNodes map[int64]db.NetworkNode) error {
 	n.logger = logger.AddContext(logger.Ctx{"project": projectName, "driver": netInfo.Type, "network": netInfo.Name})
 	n.id = id
 	n.project = projectName
 	n.name = netInfo.Name
 	n.netType = netInfo.Type
 	n.config = netInfo.Config
-	n.state = state
+	n.state = s
 	n.description = netInfo.Description
 	n.status = netInfo.Status
 	n.managed = netInfo.Managed
 	n.nodes = netNodes
+
+	return nil
 }
 
 // FillConfig fills requested config with any default values, by default this is a no-op.

@@ -76,7 +76,7 @@ type device interface {
 	Device
 
 	// init stores the Instance, daemon State and Config into device and performs any setup.
-	init(instance.Instance, *state.State, string, deviceConfig.Device, VolatileGetter, VolatileSetter)
+	init(instance.Instance, *state.State, string, deviceConfig.Device, VolatileGetter, VolatileSetter) error
 
 	// validateConfig checks Config stored by init() is valid for the instance type.
 	validateConfig(instance.ConfigReader) error
