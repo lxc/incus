@@ -31,6 +31,7 @@ import (
 	networkOVN "github.com/lxc/incus/internal/server/network/ovn"
 	"github.com/lxc/incus/internal/server/network/ovs"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/state"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	internalUtil "github.com/lxc/incus/internal/util"
 	"github.com/lxc/incus/shared/api"
@@ -89,6 +90,15 @@ type OVNInstanceNICStopOpts struct {
 // ovn represents an OVN network.
 type ovn struct {
 	common
+}
+
+func (n *ovn) init(s *state.State, id int64, projectName string, netInfo *api.Network, netNodes map[int64]db.NetworkNode) error {
+	// Check that OVN is available.
+	if s != nil && s.OVNNB == nil {
+		return fmt.Errorf("OVN isn't currently available")
+	}
+
+	return n.common.init(s, id, projectName, netInfo, netNodes)
 }
 
 // DBType returns the network type DB ID.
