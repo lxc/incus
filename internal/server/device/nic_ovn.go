@@ -28,6 +28,7 @@ import (
 	"github.com/lxc/incus/internal/server/network/ovs"
 	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/resources"
+	"github.com/lxc/incus/internal/server/state"
 	localUtil "github.com/lxc/incus/internal/server/util"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -378,6 +379,15 @@ func (d *nicOVN) validateEnvironment() error {
 	}
 
 	return nil
+}
+
+func (d *nicOVN) init(inst instance.Instance, s *state.State, name string, conf deviceConfig.Device, volatileGet VolatileGetter, volatileSet VolatileSetter) error {
+	// Check that OVN is available.
+	if s.OVNNB == nil {
+		return fmt.Errorf("OVN isn't currently available")
+	}
+
+	return d.deviceCommon.init(inst, s, name, conf, volatileGet, volatileSet)
 }
 
 // Start is run when the device is added to a running instance or instance is starting up.
