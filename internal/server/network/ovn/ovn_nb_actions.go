@@ -446,9 +446,56 @@ func (o *NB) CreateLogicalRouterPort(ctx context.Context, routerName OVNRouter, 
 	return nil
 }
 
-// LogicalRouterPortDelete deletes a named logical router port from a logical router.
-func (o *NB) LogicalRouterPortDelete(portName OVNRouterPort) error {
-	_, err := o.nbctl("--if-exists", "lrp-del", string(portName))
+// DeleteLogicalRouterPort deletes a named logical router port from a logical router.
+func (o *NB) DeleteLogicalRouterPort(ctx context.Context, routerName OVNRouter, portName OVNRouterPort) error {
+	operations := []ovsdb.Operation{}
+
+	// Get the logical router port.
+	logicalRouterPort := ovnNB.LogicalRouterPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, &logicalRouterPort)
+	if err != nil {
+		// Logical router port is already gone.
+		if err == ErrNotFound {
+			return nil
+		}
+
+		return err
+	}
+
+	// Remove the port from the router.
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
+	}
+
+	updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+		Field:   &logicalRouter.Ports,
+		Mutator: ovsdb.MutateOperationDelete,
+		Value:   []string{logicalRouterPort.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Delete the port itself.
+	deleteOps, err := o.client.Where(&logicalRouterPort).Delete()
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
