@@ -63,7 +63,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 	apiExtensions := version.APIExtensionsCount()
 
 	backupDone := false
-	hook := (func(ctx context.Context, version int, tx *sql.Tx) error {
+	hook := func(ctx context.Context, version int, tx *sql.Tx) error {
 		// Check if this is a fresh instance.
 		isUpdate, err := schema.DoesSchemaTableExist(ctx, tx)
 		if err != nil {
@@ -112,7 +112,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 		}
 
 		return nil
-	})
+	}
 
 	check := func(ctx context.Context, current int, tx *sql.Tx) error {
 		// If we're bootstrapping a fresh schema, skip any check, since
