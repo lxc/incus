@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"os"
 	"runtime"
 	"strings"
 
@@ -14,8 +13,6 @@ import (
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
 
 	ovnSB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-sb"
-	"github.com/lxc/incus/internal/server/network/ovs"
-	"github.com/lxc/incus/internal/server/state"
 )
 
 // SB client.
@@ -25,18 +22,7 @@ type SB struct {
 }
 
 // NewSB initialises new OVN client for Southbound operations.
-func NewSB(s *state.State) (*SB, error) {
-	// Get the database connection string.
-	vswitch, err := ovs.NewVSwitch()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
-	}
-
-	dbAddr, err := vswitch.OVNSouthboundDBRemoteAddress()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to get OVN southbound connection string: %w", err)
-	}
-
+func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*SB, error) {
 	// Prepare the OVSDB client.
 	dbSchema, err := ovnSB.FullDatabaseModel()
 	if err != nil {
@@ -52,49 +38,6 @@ func NewSB(s *state.State) (*SB, error) {
 
 	// Handle SSL.
 	if strings.Contains(dbAddr, "ssl:") {
-		// Get the OVN SSL keys from the daemon config.
-		sslCACert, sslClientCert, sslClientKey := s.GlobalConfig.NetworkOVNSSL()
-
-		// Fallback to filesystem keys.
-		if sslCACert == "" {
-			content, err := os.ReadFile("/etc/ovn/ovn-central.crt")
-			if err != nil {
-				if os.IsNotExist(err) {
-					return nil, fmt.Errorf("OVN configured to use SSL but no SSL CA certificate defined")
-				}
-
-				return nil, err
-			}
-
-			sslCACert = string(content)
-		}
-
-		if sslClientCert == "" {
-			content, err := os.ReadFile("/etc/ovn/cert_host")
-			if err != nil {
-				if os.IsNotExist(err) {
-					return nil, fmt.Errorf("OVN configured to use SSL but no SSL client certificate defined")
-				}
-
-				return nil, err
-			}
-
-			sslClientCert = string(content)
-		}
-
-		if sslClientKey == "" {
-			content, err := os.ReadFile("/etc/ovn/key_host")
-			if err != nil {
-				if os.IsNotExist(err) {
-					return nil, fmt.Errorf("OVN configured to use SSL but no SSL client key defined")
-				}
-
-				return nil, err
-			}
-
-			sslClientKey = string(content)
-		}
-
 		// Validation.
 		if sslClientCert == "" {
 			return nil, fmt.Errorf("OVN is configured to use SSL but no client certificate was found")
