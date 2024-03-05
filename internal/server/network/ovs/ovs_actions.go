@@ -250,9 +250,56 @@ func (o *VSwitch) CreateBridgePort(ctx context.Context, bridgeName string, portN
 	return nil
 }
 
-// BridgePortDelete deletes a port from the bridge (if already detached does nothing).
-func (o *VSwitch) BridgePortDelete(bridgeName string, portName string) error {
-	_, err := subprocess.RunCommand("ovs-vsctl", "--if-exists", "del-port", bridgeName, portName)
+// DeleteBridgePort deletes a port from the bridge (if already detached does nothing).
+func (o *VSwitch) DeleteBridgePort(ctx context.Context, bridgeName string, portName string) error {
+	operations := []ovsdb.Operation{}
+
+	// Get the bridge port.
+	bridgePort := ovsSwitch.Port{
+		Name: string(portName),
+	}
+
+	err := o.client.Get(ctx, &bridgePort)
+	if err != nil {
+		// Logical switch port is already gone.
+		if err == ErrNotFound {
+			return nil
+		}
+
+		return err
+	}
+
+	// Remove the port from the bridge.
+	bridge := ovsSwitch.Bridge{
+		Name: string(bridgeName),
+	}
+
+	updateOps, err := o.client.Where(&bridge).Mutate(&bridge, ovsdbModel.Mutation{
+		Field:   &bridge.Ports,
+		Mutator: ovsdb.MutateOperationDelete,
+		Value:   []string{bridgePort.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Delete the port itself.
+	deleteOps, err := o.client.Where(&bridgePort).Delete()
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
