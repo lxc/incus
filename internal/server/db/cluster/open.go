@@ -67,7 +67,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 		// Check if this is a fresh instance.
 		isUpdate, err := schema.DoesSchemaTableExist(ctx, tx)
 		if err != nil {
-			return fmt.Errorf("failed to check if schema table exists: %w", err)
+			return fmt.Errorf("Failed to check if schema table exists: %w", err)
 		}
 
 		if !isUpdate {
@@ -78,12 +78,12 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 		clustered := true
 		n, err := selectUnclusteredNodesCount(ctx, tx)
 		if err != nil {
-			return fmt.Errorf("failed to fetch unclustered nodes count: %w", err)
+			return fmt.Errorf("Failed to fetch standalone member count: %w", err)
 		}
 
 		if n > 1 {
-			// This should never happen, since we only add nodes with valid addresses..
-			return fmt.Errorf("found more than one unclustered nodes")
+			// This should never happen, since we only add cluster members with valid addresses.
+			return fmt.Errorf("Found more than one cluster member with a standalone address (0.0.0.0)")
 		} else if n == 1 {
 			clustered = false
 		}
@@ -99,7 +99,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 				filepath.Join(dir, "global.bak"),
 			)
 			if err != nil {
-				return fmt.Errorf("failed to backup global database: %w", err)
+				return fmt.Errorf("Failed to backup global database: %w", err)
 			}
 
 			backupDone = true
@@ -124,12 +124,12 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 		// Check if we're clustered
 		n, err := selectUnclusteredNodesCount(ctx, tx)
 		if err != nil {
-			return fmt.Errorf("failed to fetch unclustered nodes count: %w", err)
+			return fmt.Errorf("Failed to fetch standalone member count: %w", err)
 		}
 
 		if n > 1 {
 			// This should never happen, since we only add nodes with valid addresses.
-			return fmt.Errorf("found more than one unclustered nodes")
+			return fmt.Errorf("Found more than one cluster member with a standalone address (0.0.0.0)")
 		} else if n == 1 {
 			address = "0.0.0.0" // We're not clustered
 		}
@@ -137,7 +137,7 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 		// Update the schema and api_extension columns of ourselves.
 		err = updateNodeVersion(tx, address, apiExtensions)
 		if err != nil {
-			return fmt.Errorf("failed to update node version info: %w", err)
+			return fmt.Errorf("Failed to update cluster member version info: %w", err)
 		}
 
 		err = checkClusterIsUpgradable(ctx, tx, [2]int{len(updates), apiExtensions})
@@ -270,12 +270,12 @@ func checkClusterIsUpgradable(ctx context.Context, tx *sql.Tx, target [2]int) er
 			// and presumeably is waiting for other nodes
 			// to upgrade. Let's error out and shutdown
 			// since we need a greater version.
-			return fmt.Errorf("this node's version is behind, please upgrade")
+			return fmt.Errorf("This cluster member's version is behind, please upgrade")
 		default:
-			panic("unexpected return value from compareVersions")
+			panic("Unexpected return value from compareVersions")
 		}
 	}
 	return nil
 }
 
-var errSomeNodesAreBehind = fmt.Errorf("some nodes are behind this node's version")
+var errSomeNodesAreBehind = fmt.Errorf("Some cluster members are behind this cluster member's version")
