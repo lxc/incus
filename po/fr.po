@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-02-28 17:27-0500\n"
-"PO-Revision-Date: 2024-03-04 14:01+0000\n"
+"PO-Revision-Date: 2024-03-05 15:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
@@ -1439,19 +1439,19 @@ msgid "Cluster member %s added to cluster groups %s"
 msgstr "Membre de cluster %s ajouté aux groupes %s"
 
 #: cmd/incus/cluster_group.go:676
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster member %s added to group %s"
-msgstr "Membre de la grappe de serveur %s ajouté au groupe %s"
+msgstr "Membre du cluster %s ajouté au groupe %s"
 
 #: cmd/incus/cluster_group.go:665
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster member %s is already in group %s"
-msgstr "Le membre de la grappe de serveur %s est déjà dans le groupe %s"
+msgstr "Le membre du cluster %s est déjà dans le groupe %s"
 
 #: cmd/incus/cluster_group.go:511
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster member %s removed from group %s"
-msgstr "Le membre de la grappe de serveur %s est supprimé du groupe %s"
+msgstr "Le membre du cluster %s est supprimé du groupe %s"
 
 #: cmd/incus/config.go:101 cmd/incus/config.go:393 cmd/incus/config.go:537
 #: cmd/incus/config.go:755 cmd/incus/config.go:886 cmd/incus/copy.go:60
@@ -1490,11 +1490,11 @@ msgstr "Le membre de la grappe de serveur %s est supprimé du groupe %s"
 #: cmd/incus/storage_volume.go:2418 cmd/incus/storage_volume.go:2491
 #: cmd/incus/storage_volume.go:2571 cmd/incus/storage_volume.go:2723
 msgid "Cluster member name"
-msgstr "Membre de la grappe de serveur"
+msgstr "Nom du membre du cluster"
 
 #: cmd/incus/cluster.go:676
 msgid "Clustering enabled"
-msgstr "Activation de la grappe"
+msgstr "Clustering activé"
 
 #: cmd/incus/config_trust.go:421 cmd/incus/image.go:1099 cmd/incus/list.go:132
 #: cmd/incus/storage_volume.go:1385 cmd/incus/storage_volume.go:2237
@@ -2553,7 +2553,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:604
 msgid "Enable clustering on a single non-clustered server"
-msgstr "Activer la mise en grappe sur un seul serveur non mis en grappe"
+msgstr "Activer la mise en cluster sur un seul serveur non mis en cluster"
 
 #: cmd/incus/cluster.go:605
 msgid ""
@@ -2568,16 +2568,18 @@ msgid ""
 "value\n"
 "  for the address if not yet set."
 msgstr ""
-"Activer la mise en grappe sur un seul serveur non mis en grappe\n"
+"Activer la mise en cluster sur un serveur ne faisant pas déjà partie d'un "
+"cluster\n"
 "\n"
-"  Cette commande transforme un serveur non mis en grappe en premier membre\n"
-"  d'une nouvelle grappe, qui aura le nom donné.\n"
+"  Cette commande transforme un serveur ne faisant pas déjà partie d'un "
+"cluster en\n"
+"  premier membre d'un nouveau cluster, qui aura le nom donné.\n"
 "\n"
-"  Il faut que le serveur soit déjà disponible sur le réseau. Vous pouvez "
+"  Il faut que le serveur soit déjà disponible sur le réseau. Vous pouvez le "
 "vérifier\n"
 "  en exécutant \"incus config get core. https_address', et éventuellement "
 "définir une valeur\n"
-"  pour l'adresse si elle n'est pas encore réglée."
+"  pour l'adresse si elle n'est pas encore paramétrée."
 
 #: cmd/incus/network_zone.go:1241
 msgid "Entry TTL"
@@ -2595,7 +2597,7 @@ msgstr "Conteneur éphémère"
 #: cmd/incus/admin_init.go:179 cmd/incus/admin_init_interactive.go:201
 #, c-format
 msgid "Error connecting to existing cluster member %q: %v"
-msgstr "Erreur lors de la connexion à un membre existant de la grappe %q: %v"
+msgstr "Erreur de connexion à un membre existant du cluster %q : %v"
 
 #: cmd/incus/utils_properties.go:206
 #, c-format
@@ -2665,7 +2667,7 @@ msgstr ""
 #: cmd/incus/cluster.go:1234
 #, c-format
 msgid "Evacuating cluster member: %s"
-msgstr "Évacuation de membre de la grappe : %s"
+msgstr "Évacuation du membre du cluster : %s"
 
 #: cmd/incus/monitor.go:51
 msgid "Event type to listen for"
@@ -2708,20 +2710,20 @@ msgid ""
 msgstr ""
 "Exécuter une requête SQL contre la base de données locale ou globale\n"
 "\n"
-"La base de données locale est spécifique au membre de la grappe que vous "
+"La base de données locale est spécifique au membre du cluster que vous "
 "ciblez\n"
-"avec la commande et contiens des données spécifiques aux membres (comme les "
+"avec la commande et contient des données spécifiques aux membres (comme les "
 "adresses réseaux\n"
 "des membres).\n"
 "\n"
-"La base de données globale est commune de tous les membres de la grappe, et "
+"La base de données globale est commune de tous les membres du cluster, et "
 "contient\n"
-"des données spécifiques à la grappe (tels que les profils, les conteneurs, "
+"des données spécifiques au cluster (tels que les profils, les conteneurs, "
 "etc.).\n"
 "\n"
-"Si vous utilisez un serveur qui n'est pas dans une grappe, la même chose "
+"Si vous utilisez un serveur qui n'est pas dans un cluster, la même chose "
 "s'applique, car\n"
-"l'instance est effectivement le seul membre de la grappe.\n"
+"l'instance est effectivement le seul membre du cluster.\n"
 "\n"
 "Si la requête est la valeur spéciale \"-\", alors la requête est lue de\n"
 "entrée standard.\n"
@@ -2743,7 +2745,7 @@ msgstr ""
 "\n"
 "Cette commande cible la base de données globale et travaille à la fois en "
 "mode local\n"
-"et grappe."
+"et cluster."
 
 #: cmd/incus/exec.go:40
 msgid "Execute commands in instances"
@@ -3274,7 +3276,7 @@ msgid "Force using the local unix socket"
 msgstr "Forcer l'utilisation de la socket unix locale"
 
 #: cmd/incus/cluster.go:534
-#, c-format, fuzzy
+#, c-format
 msgid ""
 "Forcefully removing a server from the cluster should only be done as a last\n"
 "resort.\n"
@@ -3296,7 +3298,7 @@ msgid ""
 "\n"
 "Are you really sure you want to force removing %s? (yes/no): "
 msgstr ""
-"La suppression forcée d'un serveur de la grappe ne doit être effectuée\n"
+"La suppression forcée d'un serveur du cluster ne doit être effectuée\n"
 "qu'en dernier recours.\n"
 "\n"
 "Le serveur supprimé ne sera plus fonctionnel après cette action et "
@@ -3310,10 +3312,10 @@ msgstr ""
 "volume\n"
 "de stockage affecté vers un autre serveur avant que le serveur ne soit "
 "supprimé\n"
-"de la grappe.\n"
+"du cluster.\n"
 "\n"
 "L'option --force ne doit être utilisée que si le serveur est définitivement\n"
-"hors-service, a été réinstallé ou n'est pas censé réintégrer la grappe.\n"
+"hors-service, a été réinstallé ou n'est pas censé réintégrer le cluster.\n"
 "\n"
 "Êtes-vous vraiment sûr de vouloir forcer la suppression de %s ? (oui/non) : "
 
@@ -3411,7 +3413,7 @@ msgstr "Obtenir les informations opérationnelles des réseaux"
 
 #: cmd/incus/cluster.go:309
 msgid "Get the key as a cluster property"
-msgstr "Obtenir la clé en tant que propriété de la grappe"
+msgstr "Obtenir la clé en tant que propriété du cluster"
 
 #: cmd/incus/network_acl.go:267
 msgid "Get the key as a network ACL property"
@@ -4018,9 +4020,8 @@ msgid "IsSM: %s (%s)"
 msgstr "Créé : %s"
 
 #: cmd/incus/admin_init_interactive.go:170
-#, fuzzy
 msgid "Joining an existing cluster requires root privileges"
-msgstr "Rejoindre une grappe existante nécessite d'être root"
+msgstr "Rejoindre un cluster existant nécessite d'être root"
 
 #: cmd/incus/image.go:156
 msgid "Keep the image up to date after initial copy"
