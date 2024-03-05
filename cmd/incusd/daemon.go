@@ -52,6 +52,8 @@ import (
 	instanceDrivers "github.com/lxc/incus/internal/server/instance/drivers"
 	"github.com/lxc/incus/internal/server/instance/instancetype"
 	"github.com/lxc/incus/internal/server/loki"
+	"github.com/lxc/incus/internal/server/network/ovn"
+	"github.com/lxc/incus/internal/server/network/ovs"
 	networkZone "github.com/lxc/incus/internal/server/network/zone"
 	"github.com/lxc/incus/internal/server/node"
 	"github.com/lxc/incus/internal/server/project"
@@ -161,6 +163,10 @@ type Daemon struct {
 
 	// Syslog listener cancel function.
 	syslogSocketCancel context.CancelFunc
+
+	// OVN clients.
+	ovnnb *ovn.NB
+	ovnsb *ovn.SB
 }
 
 // DaemonConfig holds configuration values for Daemon.
@@ -501,6 +507,8 @@ func (d *Daemon) State() *state.State {
 		ServerClustered:        d.serverClustered,
 		StartTime:              d.startTime,
 		Authorizer:             d.authorizer,
+		OVNNB:                  d.ovnnb,
+		OVNSB:                  d.ovnsb,
 	}
 }
 
@@ -1412,6 +1420,9 @@ func (d *Daemon) init() error {
 
 		logger.Info("Started BGP server")
 	}
+
+	// Attempt to setup OVN clients.
+	_ = d.setupOVN()
 
 	// Setup DNS listener.
 	d.dns = dns.NewServer(d.db.Cluster, func(name string, full bool) (*dns.Zone, error) {
@@ -2424,4 +2435,68 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 	}
 
 	wg.Wait()
+}
+
+func (d *Daemon) setupOVN() error {
+	// Clear any existing clients.
+	d.ovnnb = nil
+	d.ovnsb = nil
+
+	// Connect to OpenVswitch.
+	vswitch, err := ovs.NewVSwitch()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	// Get the OVN southbound address.
+	ovnSBAddr, err := vswitch.OVNSouthboundDBRemoteAddress()
+	if err != nil {
+		return fmt.Errorf("Failed to get OVN southbound connection string: %w", err)
+	}
+
+	// Get the OVN northbound address.
+	ovnNBAddr := d.globalConfig.NetworkOVNNorthboundConnection()
+
+	// Get the SSL certificates if needed.
+	sslCACert, sslClientCert, sslClientKey := d.globalConfig.NetworkOVNSSL()
+
+	// Fallback to filesystem keys.
+	if sslCACert == "" {
+		content, err := os.ReadFile("/etc/ovn/ovn-central.crt")
+		if err == nil {
+			sslCACert = string(content)
+		}
+	}
+
+	if sslClientCert == "" {
+		content, err := os.ReadFile("/etc/ovn/cert_host")
+		if err == nil {
+			sslClientCert = string(content)
+		}
+	}
+
+	if sslClientKey == "" {
+		content, err := os.ReadFile("/etc/ovn/key_host")
+		if err == nil {
+			sslClientKey = string(content)
+		}
+	}
+
+	// Get OVN northbound client.
+	ovnnb, err := ovn.NewNB(ovnNBAddr, sslCACert, sslClientCert, sslClientKey)
+	if err != nil {
+		return err
+	}
+
+	// Get OVN southbound client.
+	ovnsb, err := ovn.NewSB(ovnSBAddr, sslCACert, sslClientCert, sslClientKey)
+	if err != nil {
+		return err
+	}
+
+	// Set the clients.
+	d.ovnnb = ovnnb
+	d.ovnsb = ovnsb
+
+	return nil
 }

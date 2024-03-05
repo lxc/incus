@@ -833,6 +833,7 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	lokiChanged := false
 	oidcChanged := false
 	openFGAChanged := false
+	ovnChanged := false
 	syslogChanged := false
 
 	for key := range clusterChanged {
@@ -866,6 +867,9 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 		case "loki.api.url", "loki.auth.username", "loki.auth.password", "loki.api.ca_cert", "loki.instance", "loki.labels", "loki.loglevel", "loki.types":
 			lokiChanged = true
+
+		case "network.ovn.northbound_connection", "network.ovn.ca_cert", "network.ovn.client_cert", "network.ovn.client_key":
+			ovnChanged = true
 
 		case "oidc.issuer", "oidc.client.id", "oidc.audience":
 			oidcChanged = true
@@ -1010,6 +1014,13 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	if openFGAChanged {
 		openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaAuthorizationModelID := d.globalConfig.OpenFGA()
 		err := d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaAuthorizationModelID)
+		if err != nil {
+			return err
+		}
+	}
+
+	if ovnChanged {
+		err := d.setupOVN()
 		if err != nil {
 			return err
 		}
