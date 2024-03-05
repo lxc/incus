@@ -2449,7 +2449,7 @@ func (d *Daemon) setupOVN() error {
 	}
 
 	// Get the OVN southbound address.
-	ovnSBAddr, err := vswitch.OVNSouthboundDBRemoteAddress()
+	ovnSBAddr, err := vswitch.GetOVNSouthboundDBRemoteAddress(d.shutdownCtx)
 	if err != nil {
 		return fmt.Errorf("Failed to get OVN southbound connection string: %w", err)
 	}

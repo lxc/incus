@@ -93,7 +93,7 @@ func DetachInterface(bridgeName string, devName string) error {
 			return fmt.Errorf("Failed to connect to OVS: %w", err)
 		}
 
-		err = vswitch.BridgePortDelete(bridgeName, devName)
+		err = vswitch.DeleteBridgePort(context.TODO(), bridgeName, devName)
 		if err != nil {
 			return err
 		}
