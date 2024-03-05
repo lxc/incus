@@ -484,17 +484,18 @@ func (o *VSwitch) HardwareOffloadingEnabled() bool {
 	return offload == "true"
 }
 
-// OVNSouthboundDBRemoteAddress gets the address of the southbound ovn database.
-func (o *VSwitch) OVNSouthboundDBRemoteAddress() (string, error) {
-	result, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-remote")
+// GetOVNSouthboundDBRemoteAddress gets the address of the southbound ovn database.
+func (o *VSwitch) GetOVNSouthboundDBRemoteAddress(ctx context.Context) (string, error) {
+	vSwitch := &ovsSwitch.OpenvSwitch{
+		UUID: o.rootUUID,
+	}
+
+	err := o.client.Get(ctx, vSwitch)
 	if err != nil {
 		return "", err
 	}
 
-	addr, err := unquote(strings.TrimSuffix(result, "\n"))
-	if err != nil {
-		return "", err
-	}
+	val := vSwitch.ExternalIDs["ovn-remote"]
 
-	return addr, nil
+	return val, nil
 }
