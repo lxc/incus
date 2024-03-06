@@ -152,7 +152,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 
 	volSourceArgs := &localMigration.VolumeSourceArgs{
 		IndexHeaderVersion: respHeader.GetIndexHeaderVersion(), // Enable index header frame if supported.
-		Name:               volName,
+		Name:               srcConfig.Volume.Name,
 		MigrationType:      migrationTypes[0],
 		Snapshots:          offerHeader.SnapshotNames,
 		TrackProgress:      true,
