@@ -2,8 +2,10 @@ package network
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"math/big"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flosch/pongo2"
 	"github.com/mdlayher/netx/eui64"
 	ovsClient "github.com/ovn-org/libovsdb/client"
 
@@ -5334,23 +5337,289 @@ func (n *ovn) Leases(projectName string, clientType request.ClientType) ([]api.N
 	return leases, nil
 }
 
+// localPeerCreate creates a network peering with another local network.
+func (n *ovn) localPeerCreate(peer api.NetworkPeersPost) error {
+	ctx := context.TODO()
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Get the peer DB record.
+	var peerInfo *api.NetworkPeer
+	err := n.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		// Load peering to get mutual peering info.
+		_, peerInfo, err = tx.GetNetworkPeer(ctx, n.ID(), peer.Name)
+
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	// Validate the peer.
+	if peerInfo.Status != api.NetworkStatusCreated {
+		return fmt.Errorf("Only peerings in %q state can be setup", api.NetworkStatusCreated)
+	}
+
+	// Apply router security policies.
+	// Should have been done during network setup, but ensure its done here anyway.
+	err = n.logicalRouterPolicySetup(n.state.OVNNB)
+	if err != nil {
+		return fmt.Errorf("Failed applying local router security policy: %w", err)
+	}
+
+	activeLocalNICPorts, err := n.state.OVNNB.LogicalSwitchPorts(n.getIntSwitchName())
+	if err != nil {
+		return fmt.Errorf("Failed getting active NIC ports: %w", err)
+	}
+
+	var localNICRoutes []net.IPNet
+
+	// Get routes on instance NICs connected to local network to be added as routes to target network.
+	err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
+		instancePortName := n.getInstanceDevicePortName(inst.Config["volatile.uuid"], nicName)
+		_, found := activeLocalNICPorts[instancePortName]
+		if !found {
+			return nil // Don't add config for instance NICs that aren't started.
+		}
+
+		localNICRoutes = append(localNICRoutes, n.instanceNICGetRoutes(nicConfig)...)
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("Failed getting instance NIC routes on local network: %w", err)
+	}
+
+	targetNet, err := LoadByName(n.state, peer.TargetProject, peer.TargetNetwork)
+	if err != nil {
+		return fmt.Errorf("Failed loading target network: %w", err)
+	}
+
+	targetOVNNet, ok := targetNet.(*ovn)
+	if !ok {
+		return fmt.Errorf("Target network is not ovn interface type")
+	}
+
+	opts, err := n.peerGetLocalOpts(localNICRoutes)
+	if err != nil {
+		return err
+	}
+
+	// Ensure local subnets and all active NIC routes are present in internal switch's address set.
+	err = n.state.OVNNB.AddressSetAdd(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), opts.TargetRouterRoutes...)
+	if err != nil {
+		return fmt.Errorf("Failed adding active NIC routes to switch address set: %w", err)
+	}
+
+	err = n.peerSetup(n.state.OVNNB, targetOVNNet, *opts)
+	if err != nil {
+		return err
+	}
+
+	reverter.Success()
+	return nil
+}
+
+// remotePeerCreate creates a network peering with an OVN-IC.
+func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
+	ctx := context.TODO()
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Load the integration.
+	var integration *api.NetworkIntegration
+	err := n.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		entry, err := dbCluster.GetNetworkIntegration(ctx, tx.Tx(), peer.TargetIntegration)
+		if err != nil {
+			return err
+		}
+
+		integration, err = entry.ToAPI(ctx, tx.Tx())
+
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("Failed to load network integration %q: %w", peer.TargetIntegration, err)
+	}
+
+	// Get ICNB.
+	icnb, err := networkOVN.NewICNB(integration.Config["ovn.northbound_connection"], integration.Config["ovn.ca_cert"], integration.Config["ovn.client_cert"], integration.Config["ovn.client_key"])
+	if err != nil {
+		return err
+	}
+
+	// Get ICSB.
+	icsb, err := networkOVN.NewICSB(integration.Config["ovn.southbound_connection"], integration.Config["ovn.ca_cert"], integration.Config["ovn.client_cert"], integration.Config["ovn.client_key"])
+	if err != nil {
+		return err
+	}
+
+	// Get the OVN AZ name.
+	azName, err := n.state.OVNNB.GetName(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Get the list of interconnect gateways.
+	gateways, err := icsb.GetGateways(ctx, azName)
+	if err != nil {
+		return err
+	}
+
+	if len(gateways) == 0 {
+		return fmt.Errorf("No chassis gateways available for interconnect")
+	}
+
+	// Determine the transit switch name.
+	pattern := integration.Config["ovn.transit.pattern"]
+	if pattern == "" {
+		pattern = "ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}"
+	}
+
+	tsNameRendered, err := internalUtil.RenderTemplate(pattern, pongo2.Context{
+		"projectName":     n.project,
+		"networkName":     n.name,
+		"integrationName": integration.Name,
+	})
+	if err != nil {
+		return err
+	}
+
+	tsName := networkOVN.OVNSwitch(tsNameRendered)
+
+	// Determine the chassis group name.
+	cgName := networkOVN.OVNChassisGroup(tsName)
+
+	// Create the chassis group.
+	err = n.state.OVNNB.CreateChassisGroup(ctx, cgName, false)
+	if err != nil {
+		return err
+	}
+
+	reverter.Add(func() { _ = n.state.OVNNB.DeleteChassisGroup(ctx, cgName) })
+
+	// Assign some priorities.
+	for i, gateway := range gateways {
+		err = n.state.OVNNB.SetChassisGroupPriority(ctx, cgName, gateway, 10+i)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Create the transit switch if it doesn't exist already.
+	err = icnb.CreateTransitSwitch(ctx, string(tsName), true)
+	if err != nil {
+		return err
+	}
+
+	// Check that the switch appeared on the local OVN.
+	found := false
+	for i := 0; i < 10; i++ {
+		// Try to get the switch.
+		logicalSwitch, err := n.state.OVNNB.GetLogicalSwitch(ctx, tsName)
+		if err != nil && err != networkOVN.ErrNotFound {
+			return err
+		}
+
+		if logicalSwitch != nil {
+			found = true
+			break
+		}
+
+		time.Sleep(time.Second)
+	}
+
+	if !found {
+		return fmt.Errorf("New transit switch didn't appear within 10s")
+	}
+
+	// Get router MAC address.
+	routerMAC, err := n.getRouterMAC()
+	if err != nil {
+		return err
+	}
+
+	// Get bridge MTU.
+	bridgeMTU := int(n.getBridgeMTU())
+	if bridgeMTU == 0 {
+		bridgeMTU = 1500
+	}
+
+	// EUI64 for IPv6.
+	ipv6, err := eui64.ParseMAC(net.ParseIP("fd80::"), routerMAC)
+	if err != nil {
+		return err
+	}
+
+	ipv6Net := net.IPNet{IP: ipv6, Mask: net.CIDRMask(64, 128)}
+
+	// Random IPv4.
+	buf := make([]byte, 4)
+	binary.LittleEndian.PutUint32(buf, rand.Uint32())
+	buf[0] = 169
+	buf[1] = 254
+	ipv4 := net.IP(buf)
+	ipv4Net := net.IPNet{IP: ipv4, Mask: net.CIDRMask(16, 32)}
+
+	// Determine logical router port name.
+	lrpName := networkOVN.OVNRouterPort(tsName)
+
+	// Create the logical router port.
+	err = n.state.OVNNB.CreateLogicalRouterPort(ctx, n.getRouterName(), lrpName, routerMAC, uint32(bridgeMTU), []*net.IPNet{&ipv4Net, &ipv6Net}, cgName, false)
+	if err != nil {
+		return err
+	}
+
+	reverter.Add(func() { _ = n.state.OVNNB.DeleteLogicalRouterPort(ctx, n.getRouterName(), lrpName) })
+
+	// Create the logical switch port.
+	lspOpts := &networkOVN.OVNSwitchPortOpts{RouterPort: lrpName}
+	err = n.state.OVNNB.CreateLogicalSwitchPort(ctx, tsName, networkOVN.OVNSwitchPort(fmt.Sprintf("%s-%s", tsName, azName)), lspOpts, false)
+	if err != nil {
+		return err
+	}
+
+	reverter.Add(func() {
+		_ = n.state.OVNNB.DeleteLogicalSwitchPort(ctx, tsName, networkOVN.OVNSwitchPort(fmt.Sprintf("%s-%s", tsName, azName)))
+	})
+
+	reverter.Success()
+	return nil
+}
+
 // PeerCreate creates a network peering.
 func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 	revert := revert.New()
 	defer revert.Fail()
 
+	// Default type is local.
+	if peer.Type == "" {
+		peer.Type = "local"
+	}
+
 	// Perform create-time validation.
+	if peer.Type == "local" {
+		// Default to network's project if target project not specified.
+		if peer.TargetProject == "" {
+			peer.TargetProject = n.Project()
+		}
 
-	// Default to network's project if target project not specified.
-	if peer.TargetProject == "" {
-		peer.TargetProject = n.Project()
+		// Target network name is required.
+		if peer.TargetNetwork == "" {
+			return api.StatusErrorf(http.StatusBadRequest, "Target network is required")
+		}
+	} else if peer.Type == "remote" {
+		// Target integration name is required.
+		if peer.TargetIntegration == "" {
+			return api.StatusErrorf(http.StatusBadRequest, "Target integration is required")
+		}
 	}
 
-	// Target network name is required.
-	if peer.TargetNetwork == "" {
-		return api.StatusErrorf(http.StatusBadRequest, "Target network is required")
-	}
-
+	// Look for an existing entry.
 	var peers map[int64]*api.NetworkPeer
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -5371,7 +5640,7 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 			return api.StatusErrorf(http.StatusConflict, "A peer for that name already exists")
 		}
 
-		if peer.TargetProject == existingPeer.TargetProject && peer.TargetNetwork == existingPeer.TargetNetwork {
+		if peer.Type == "local" && peer.TargetProject == existingPeer.TargetProject && peer.TargetNetwork == existingPeer.TargetNetwork {
 			return api.StatusErrorf(http.StatusConflict, "A peer for that target network already exists")
 		}
 	}
@@ -5398,75 +5667,14 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 		_ = n.state.DB.Cluster.DeleteNetworkPeer(n.ID(), peerID)
 	})
 
-	if mutualExists {
-		var peerInfo *api.NetworkPeer
-
-		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			// Load peering to get mutual peering info.
-			_, peerInfo, err = tx.GetNetworkPeer(ctx, n.ID(), peer.Name)
-
-			return err
-		})
+	// Apply the OVN configuration.
+	if peer.Type == "local" && mutualExists {
+		err := n.localPeerCreate(peer)
 		if err != nil {
 			return err
 		}
-
-		if peerInfo.Status != api.NetworkStatusCreated {
-			return fmt.Errorf("Only peerings in %q state can be setup", api.NetworkStatusCreated)
-		}
-
-		// Apply router security policies.
-		// Should have been done during network setup, but ensure its done here anyway.
-		err = n.logicalRouterPolicySetup(n.state.OVNNB)
-		if err != nil {
-			return fmt.Errorf("Failed applying local router security policy: %w", err)
-		}
-
-		activeLocalNICPorts, err := n.state.OVNNB.LogicalSwitchPorts(n.getIntSwitchName())
-		if err != nil {
-			return fmt.Errorf("Failed getting active NIC ports: %w", err)
-		}
-
-		var localNICRoutes []net.IPNet
-
-		// Get routes on instance NICs connected to local network to be added as routes to target network.
-		err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
-			instancePortName := n.getInstanceDevicePortName(inst.Config["volatile.uuid"], nicName)
-			_, found := activeLocalNICPorts[instancePortName]
-			if !found {
-				return nil // Don't add config for instance NICs that aren't started.
-			}
-
-			localNICRoutes = append(localNICRoutes, n.instanceNICGetRoutes(nicConfig)...)
-
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("Failed getting instance NIC routes on local network: %w", err)
-		}
-
-		targetNet, err := LoadByName(n.state, peer.TargetProject, peer.TargetNetwork)
-		if err != nil {
-			return fmt.Errorf("Failed loading target network: %w", err)
-		}
-
-		targetOVNNet, ok := targetNet.(*ovn)
-		if !ok {
-			return fmt.Errorf("Target network is not ovn interface type")
-		}
-
-		opts, err := n.peerGetLocalOpts(localNICRoutes)
-		if err != nil {
-			return err
-		}
-
-		// Ensure local subnets and all active NIC routes are present in internal switch's address set.
-		err = n.state.OVNNB.AddressSetAdd(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), opts.TargetRouterRoutes...)
-		if err != nil {
-			return fmt.Errorf("Failed adding active NIC routes to switch address set: %w", err)
-		}
-
-		err = n.peerSetup(n.state.OVNNB, targetOVNNet, *opts)
+	} else if peer.Type == "remote" {
+		err := n.remotePeerCreate(peer)
 		if err != nil {
 			return err
 		}
@@ -5662,6 +5870,132 @@ func (n *ovn) PeerUpdate(peerName string, req api.NetworkPeerPut) error {
 	return nil
 }
 
+// localPeerDelete deletes a network peering with another local network.
+func (n *ovn) localPeerDelete(peer *api.NetworkPeer) error {
+	targetNet, err := LoadByName(n.state, peer.TargetProject, peer.TargetNetwork)
+	if err != nil {
+		return fmt.Errorf("Failed loading target network: %w", err)
+	}
+
+	targetOVNNet, ok := targetNet.(*ovn)
+	if !ok {
+		return fmt.Errorf("Target network is not ovn interface type")
+	}
+
+	opts := networkOVN.OVNRouterPeering{
+		LocalRouter:      n.getRouterName(),
+		LocalRouterPort:  n.getLogicalRouterPeerPortName(targetOVNNet.ID()),
+		TargetRouter:     targetOVNNet.getRouterName(),
+		TargetRouterPort: targetOVNNet.getLogicalRouterPeerPortName(n.ID()),
+	}
+
+	err = n.state.OVNNB.LogicalRouterPeeringDelete(opts)
+	if err != nil {
+		return fmt.Errorf("Failed deleting OVN network peering: %w", err)
+	}
+
+	err = n.logicalRouterPolicySetup(n.state.OVNNB, targetOVNNet.ID())
+	if err != nil {
+		return fmt.Errorf("Failed applying local router security policy: %w", err)
+	}
+
+	err = targetOVNNet.logicalRouterPolicySetup(n.state.OVNNB, n.ID())
+	if err != nil {
+		return fmt.Errorf("Failed applying target router security policy: %w", err)
+	}
+
+	return nil
+}
+
+// remotePeerDelete deletes a network peering with an OVN-IC.
+func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
+	ctx := context.TODO()
+
+	// Load the integration.
+	var integration *api.NetworkIntegration
+	err := n.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		entry, err := dbCluster.GetNetworkIntegration(ctx, tx.Tx(), peer.TargetIntegration)
+		if err != nil {
+			return err
+		}
+
+		integration, err = entry.ToAPI(ctx, tx.Tx())
+
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("Failed to load network integration %q: %w", peer.TargetIntegration, err)
+	}
+
+	// Get ICNB.
+	icnb, err := networkOVN.NewICNB(integration.Config["ovn.northbound_connection"], integration.Config["ovn.ca_cert"], integration.Config["ovn.client_cert"], integration.Config["ovn.client_key"])
+	if err != nil {
+		return err
+	}
+
+	// Get the OVN AZ name.
+	azName, err := n.state.OVNNB.GetName(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Determine the transit switch name.
+	pattern := integration.Config["ovn.transit.pattern"]
+	if pattern == "" {
+		pattern = "ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}"
+	}
+
+	tsNameRendered, err := internalUtil.RenderTemplate(pattern, pongo2.Context{
+		"projectName":     n.project,
+		"networkName":     n.name,
+		"integrationName": integration.Name,
+	})
+	if err != nil {
+		return err
+	}
+
+	tsName := networkOVN.OVNSwitch(tsNameRendered)
+
+	// Delete logical switch port
+	err = n.state.OVNNB.DeleteLogicalSwitchPort(ctx, tsName, networkOVN.OVNSwitchPort(fmt.Sprintf("%s-%s", tsName, azName)))
+	if err != nil {
+		return err
+	}
+
+	// Determine logical router port name.
+	lrpName := networkOVN.OVNRouterPort(tsName)
+
+	// Delete logical router port
+	err = n.state.OVNNB.DeleteLogicalRouterPort(ctx, n.getRouterName(), lrpName)
+	if err != nil {
+		return err
+	}
+
+	// Determine the chassis group name.
+	cgName := networkOVN.OVNChassisGroup(tsName)
+
+	// Delete chassis group.
+	err = n.state.OVNNB.DeleteChassisGroup(ctx, cgName)
+	if err != nil && err != networkOVN.ErrNotManaged {
+		return err
+	}
+
+	// Delete transit switch if empty
+	icSwitch, err := n.state.OVNNB.GetLogicalSwitch(ctx, tsName)
+	if err != nil {
+		return err
+	}
+
+	if len(icSwitch.Ports) == 0 {
+		err = icnb.DeleteTransitSwitch(ctx, string(tsName), false)
+		if err != nil && err != networkOVN.ErrNotManaged {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // PeerDelete deletes a network peering.
 func (n *ovn) PeerDelete(peerName string) error {
 	var peerID int64
@@ -5688,36 +6022,16 @@ func (n *ovn) PeerDelete(peerName string) error {
 	}
 
 	if peer.Status == api.NetworkStatusCreated {
-		targetNet, err := LoadByName(n.state, peer.TargetProject, peer.TargetNetwork)
-		if err != nil {
-			return fmt.Errorf("Failed loading target network: %w", err)
-		}
-
-		targetOVNNet, ok := targetNet.(*ovn)
-		if !ok {
-			return fmt.Errorf("Target network is not ovn interface type")
-		}
-
-		opts := networkOVN.OVNRouterPeering{
-			LocalRouter:      n.getRouterName(),
-			LocalRouterPort:  n.getLogicalRouterPeerPortName(targetOVNNet.ID()),
-			TargetRouter:     targetOVNNet.getRouterName(),
-			TargetRouterPort: targetOVNNet.getLogicalRouterPeerPortName(n.ID()),
-		}
-
-		err = n.state.OVNNB.LogicalRouterPeeringDelete(opts)
-		if err != nil {
-			return fmt.Errorf("Failed deleting OVN network peering: %w", err)
-		}
-
-		err = n.logicalRouterPolicySetup(n.state.OVNNB, targetOVNNet.ID())
-		if err != nil {
-			return fmt.Errorf("Failed applying local router security policy: %w", err)
-		}
-
-		err = targetOVNNet.logicalRouterPolicySetup(n.state.OVNNB, n.ID())
-		if err != nil {
-			return fmt.Errorf("Failed applying target router security policy: %w", err)
+		if peer.Type == "local" {
+			err := n.localPeerDelete(peer)
+			if err != nil {
+				return err
+			}
+		} else if peer.Type == "remote" {
+			err := n.remotePeerDelete(peer)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
