@@ -348,6 +348,20 @@ func (o *NB) LogicalRouterRouteDelete(routerName OVNRouter, prefixes ...net.IPNe
 	return nil
 }
 
+// GetLogicalRouterPort gets the OVN database record for the logical router port.
+func (o *NB) GetLogicalRouterPort(ctx context.Context, portName OVNRouterPort) (*ovnNB.LogicalRouterPort, error) {
+	logicalRouterPort := &ovnNB.LogicalRouterPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, logicalRouterPort)
+	if err != nil {
+		return nil, err
+	}
+
+	return logicalRouterPort, nil
+}
+
 // CreateLogicalRouterPort adds a named logical router port to a logical router.
 func (o *NB) CreateLogicalRouterPort(ctx context.Context, routerName OVNRouter, portName OVNRouterPort, mac net.HardwareAddr, gatewayMTU uint32, ipAddr []*net.IPNet, haChassisGroupName OVNChassisGroup, mayExist bool) error {
 	// Prepare the addresses.
