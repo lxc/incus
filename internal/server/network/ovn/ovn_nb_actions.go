@@ -1694,20 +1694,37 @@ func (o *NB) CreateChassisGroup(ctx context.Context, haChassisGroupName OVNChass
 	return nil
 }
 
-// ChassisGroupDelete deletes an HA chassis group.
-func (o *NB) ChassisGroupDelete(haChassisGroupName OVNChassisGroup) error {
-	// ovn-nbctl doesn't provide an "--if-exists" option for removing chassis groups.
-	existing, err := o.nbctl("--no-headings", "--data=bare", "--colum=name", "find", "ha_chassis_group", fmt.Sprintf("name=%s", string(haChassisGroupName)))
+// DeleteChassisGroup deletes an HA chassis group.
+func (o *NB) DeleteChassisGroup(ctx context.Context, haChassisGroupName OVNChassisGroup) error {
+	// Get the current chassis group.
+	haChassisGroup := ovnNB.HAChassisGroup{
+		Name: string(haChassisGroupName),
+	}
+
+	err := o.client.Get(ctx, &haChassisGroup)
+	if err != nil {
+		// Already gone.
+		if err == ErrNotFound {
+			return nil
+		}
+
+		return err
+	}
+
+	// Delete the chassis group.
+	deleteOps, err := o.client.Where(&haChassisGroup).Delete()
 	if err != nil {
 		return err
 	}
 
-	// Remove chassis group if exists.
-	if strings.TrimSpace(existing) != "" {
-		_, err := o.nbctl("ha-chassis-group-del", string(haChassisGroupName))
-		if err != nil {
-			return err
-		}
+	resp, err := o.client.Transact(ctx, deleteOps...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, deleteOps)
+	if err != nil {
+		return err
 	}
 
 	return nil
