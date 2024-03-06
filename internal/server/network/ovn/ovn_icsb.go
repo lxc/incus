@@ -13,7 +13,7 @@ import (
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
 	ovsdbModel "github.com/ovn-org/libovsdb/model"
 
-	ovnICSB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-ic-nb"
+	ovnICSB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-ic-sb"
 )
 
 // ICSB client.
