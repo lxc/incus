@@ -124,7 +124,7 @@ type OVNSwitchPortOpts struct {
 	Parent       OVNSwitchPort      // Optional, if set a nested port is created.
 	VLAN         uint16             // Optional, use with Parent to request a specific VLAN for nested port.
 	Location     string             // Optional, use to indicate the name of the server this port is bound to.
-	RouterPort   string             // Optional, the name of the associated logical router port.
+	RouterPort   OVNRouterPort      // Optional, the name of the associated logical router port.
 }
 
 // OVNACLRule represents an ACL rule that can be added to a logical switch or port group.
@@ -1223,7 +1223,7 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 		if opts.RouterPort != "" {
 			logicalSwitchPort.Type = "router"
 			logicalSwitchPort.Addresses = []string{"router"}
-			logicalSwitchPort.Options = map[string]string{"router-port": opts.RouterPort}
+			logicalSwitchPort.Options = map[string]string{"router-port": string(opts.RouterPort)}
 		} else {
 			ipStr := make([]string, 0, len(opts.IPs))
 			for _, ip := range opts.IPs {
