@@ -862,7 +862,7 @@ func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
 
 	var ovsExternalOVNPort string
 	if d.config["nested"] == "" {
-		ovsExternalOVNPort, err = vswitch.InterfaceAssociatedOVNSwitchPort(d.config["host_name"])
+		ovsExternalOVNPort, err = vswitch.GetInterfaceAssociatedOVNSwitchPort(context.TODO(), d.config["host_name"])
 		if err != nil {
 			d.logger.Warn("Could not find OVN Switch port associated to OVS interface", logger.Ctx{"interface": d.config["host_name"]})
 		}
@@ -884,7 +884,7 @@ func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
 		integrationBridge := d.state.GlobalConfig.NetworkOVNIntegrationBridge()
 
 		// Detach host-side end of veth pair from OVS integration bridge.
-		err = vswitch.BridgePortDelete(integrationBridge, integrationBridgeNICName)
+		err = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, integrationBridgeNICName)
 		if err != nil {
 			// Don't fail here as we want the postStop hook to run to clean up the local veth pair.
 			d.logger.Error("Failed detaching interface from OVS integration bridge", logger.Ctx{"interface": integrationBridgeNICName, "bridge": integrationBridge, "err": err})
@@ -1166,7 +1166,7 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort, up
 		return nil, err
 	}
 
-	revert.Add(func() { _ = vswitch.BridgePortDelete(integrationBridge, hostName) })
+	revert.Add(func() { _ = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, hostName) })
 
 	// Link OVS port to OVN logical port.
 	err = vswitch.InterfaceAssociateOVNSwitchPort(hostName, string(ovnPortName))

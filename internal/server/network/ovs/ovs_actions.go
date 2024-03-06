@@ -250,9 +250,56 @@ func (o *VSwitch) CreateBridgePort(ctx context.Context, bridgeName string, portN
 	return nil
 }
 
-// BridgePortDelete deletes a port from the bridge (if already detached does nothing).
-func (o *VSwitch) BridgePortDelete(bridgeName string, portName string) error {
-	_, err := subprocess.RunCommand("ovs-vsctl", "--if-exists", "del-port", bridgeName, portName)
+// DeleteBridgePort deletes a port from the bridge (if already detached does nothing).
+func (o *VSwitch) DeleteBridgePort(ctx context.Context, bridgeName string, portName string) error {
+	operations := []ovsdb.Operation{}
+
+	// Get the bridge port.
+	bridgePort := ovsSwitch.Port{
+		Name: string(portName),
+	}
+
+	err := o.client.Get(ctx, &bridgePort)
+	if err != nil {
+		// Logical switch port is already gone.
+		if err == ErrNotFound {
+			return nil
+		}
+
+		return err
+	}
+
+	// Remove the port from the bridge.
+	bridge := ovsSwitch.Bridge{
+		Name: string(bridgeName),
+	}
+
+	updateOps, err := o.client.Where(&bridge).Mutate(&bridge, ovsdbModel.Mutation{
+		Field:   &bridge.Ports,
+		Mutator: ovsdb.MutateOperationDelete,
+		Value:   []string{bridgePort.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Delete the port itself.
+	deleteOps, err := o.client.Where(&bridgePort).Delete()
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -303,18 +350,25 @@ func (o *VSwitch) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitc
 	return nil
 }
 
-// InterfaceAssociatedOVNSwitchPort returns the OVN switch port associated to the interface.
-func (o *VSwitch) InterfaceAssociatedOVNSwitchPort(interfaceName string) (string, error) {
-	ovnSwitchPort, err := subprocess.RunCommand("ovs-vsctl", "get", "interface", interfaceName, "external_ids:iface-id")
+// GetInterfaceAssociatedOVNSwitchPort returns the OVN switch port associated to the interface.
+func (o *VSwitch) GetInterfaceAssociatedOVNSwitchPort(ctx context.Context, interfaceName string) (string, error) {
+	// Get the OVS interface.
+	ovsInterface := ovsSwitch.Interface{
+		Name: interfaceName,
+	}
+
+	err := o.client.Get(ctx, &ovsInterface)
 	if err != nil {
 		return "", err
 	}
 
-	return strings.TrimSpace(ovnSwitchPort), nil
+	// Return the iface-id.
+	return ovsInterface.ExternalIDs["iface-id"], nil
 }
 
 // GetChassisID returns the local chassis ID.
 func (o *VSwitch) GetChassisID(ctx context.Context) (string, error) {
+	// Get the root switch.
 	vSwitch := &ovsSwitch.OpenvSwitch{
 		UUID: o.rootUUID,
 	}
@@ -324,8 +378,8 @@ func (o *VSwitch) GetChassisID(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	val := vSwitch.ExternalIDs["system-id"]
-	return val, nil
+	// Return the system-id.
+	return vSwitch.ExternalIDs["system-id"], nil
 }
 
 // OVNEncapIP returns the enscapsulation IP used for OVN underlay tunnels.
@@ -484,17 +538,18 @@ func (o *VSwitch) HardwareOffloadingEnabled() bool {
 	return offload == "true"
 }
 
-// OVNSouthboundDBRemoteAddress gets the address of the southbound ovn database.
-func (o *VSwitch) OVNSouthboundDBRemoteAddress() (string, error) {
-	result, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-remote")
+// GetOVNSouthboundDBRemoteAddress gets the address of the southbound ovn database.
+func (o *VSwitch) GetOVNSouthboundDBRemoteAddress(ctx context.Context) (string, error) {
+	vSwitch := &ovsSwitch.OpenvSwitch{
+		UUID: o.rootUUID,
+	}
+
+	err := o.client.Get(ctx, vSwitch)
 	if err != nil {
 		return "", err
 	}
 
-	addr, err := unquote(strings.TrimSuffix(result, "\n"))
-	if err != nil {
-		return "", err
-	}
+	val := vSwitch.ExternalIDs["ovn-remote"]
 
-	return addr, nil
+	return val, nil
 }
