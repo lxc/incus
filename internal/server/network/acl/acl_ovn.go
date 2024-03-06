@@ -1082,12 +1082,12 @@ func ovnParseLogEntry(input string, prefix string) string {
 	}
 
 	// Get the protocol.
-	severityFields := strings.Split(aclEntry["severity"], " ")
-	if len(severityFields) != 2 {
+	directionFields := strings.Split(aclEntry["direction"], " ")
+	if len(directionFields) != 2 {
 		return ""
 	}
 
-	protocol := severityFields[1]
+	protocol := directionFields[1]
 
 	// Get the source and destination addresses.
 	srcAddr, ok := aclEntry["nw_src"]
