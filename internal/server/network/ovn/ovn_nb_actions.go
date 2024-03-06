@@ -124,6 +124,7 @@ type OVNSwitchPortOpts struct {
 	Parent       OVNSwitchPort      // Optional, if set a nested port is created.
 	VLAN         uint16             // Optional, use with Parent to request a specific VLAN for nested port.
 	Location     string             // Optional, use to indicate the name of the server this port is bound to.
+	RouterPort   string             // Optional, the name of the associated logical router port.
 }
 
 // OVNACLRule represents an ACL rule that can be added to a logical switch or port group.
@@ -1219,21 +1220,27 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 			logicalSwitchPort.Tag = &tag
 		}
 
-		ipStr := make([]string, 0, len(opts.IPs))
-		for _, ip := range opts.IPs {
-			ipStr = append(ipStr, ip.String())
-		}
-
-		var addresses string
-		if opts.MAC != nil && len(ipStr) > 0 {
-			addresses = fmt.Sprintf("%s %s", opts.MAC.String(), strings.Join(ipStr, " "))
-		} else if opts.MAC != nil && len(ipStr) <= 0 {
-			addresses = fmt.Sprintf("%s %s", opts.MAC.String(), "dynamic")
+		if opts.RouterPort != "" {
+			logicalSwitchPort.Type = "router"
+			logicalSwitchPort.Addresses = []string{"router"}
+			logicalSwitchPort.Options = map[string]string{"router-port": opts.RouterPort}
 		} else {
-			addresses = "dynamic"
-		}
+			ipStr := make([]string, 0, len(opts.IPs))
+			for _, ip := range opts.IPs {
+				ipStr = append(ipStr, ip.String())
+			}
 
-		logicalSwitchPort.Addresses = []string{addresses}
+			var addresses string
+			if opts.MAC != nil && len(ipStr) > 0 {
+				addresses = fmt.Sprintf("%s %s", opts.MAC.String(), strings.Join(ipStr, " "))
+			} else if opts.MAC != nil && len(ipStr) <= 0 {
+				addresses = fmt.Sprintf("%s %s", opts.MAC.String(), "dynamic")
+			} else {
+				addresses = "dynamic"
+			}
+
+			logicalSwitchPort.Addresses = []string{addresses}
+		}
 
 		if opts.DHCPv4OptsID != "" {
 			dhcp4opts := string(opts.DHCPv4OptsID)
