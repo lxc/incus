@@ -500,7 +500,7 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 	defer func() { _ = unixFile.Close() }()
 
 	// Start the virtiofsd process in non-daemon mode.
-	args := []string{"--fd=3", "-o", fmt.Sprintf("source=%s", sharePath)}
+	args := []string{"--fd=3", "--cache=never", "-o", fmt.Sprintf("source=%s", sharePath)}
 	proc, err := subprocess.NewProcess(cmd, args, logPath, logPath)
 	if err != nil {
 		return nil, nil, err
