@@ -2064,7 +2064,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	if !update {
-		revert.Add(func() { _ = n.state.OVNNB.ChassisGroupDelete(n.getChassisGroupName()) })
+		revert.Add(func() { _ = n.state.OVNNB.DeleteChassisGroup(context.TODO(), n.getChassisGroupName()) })
 	}
 
 	// Create logical router.
@@ -2758,7 +2758,7 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 		}
 
 		// Must be done after logical router removal.
-		err = n.state.OVNNB.ChassisGroupDelete(n.getChassisGroupName())
+		err = n.state.OVNNB.DeleteChassisGroup(context.TODO(), n.getChassisGroupName())
 		if err != nil {
 			return err
 		}

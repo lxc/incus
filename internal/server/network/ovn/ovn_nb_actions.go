@@ -124,7 +124,7 @@ type OVNSwitchPortOpts struct {
 	Parent       OVNSwitchPort      // Optional, if set a nested port is created.
 	VLAN         uint16             // Optional, use with Parent to request a specific VLAN for nested port.
 	Location     string             // Optional, use to indicate the name of the server this port is bound to.
-	RouterPort   string             // Optional, the name of the associated logical router port.
+	RouterPort   OVNRouterPort      // Optional, the name of the associated logical router port.
 }
 
 // OVNACLRule represents an ACL rule that can be added to a logical switch or port group.
@@ -1223,7 +1223,7 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 		if opts.RouterPort != "" {
 			logicalSwitchPort.Type = "router"
 			logicalSwitchPort.Addresses = []string{"router"}
-			logicalSwitchPort.Options = map[string]string{"router-port": opts.RouterPort}
+			logicalSwitchPort.Options = map[string]string{"router-port": string(opts.RouterPort)}
 		} else {
 			ipStr := make([]string, 0, len(opts.IPs))
 			for _, ip := range opts.IPs {
@@ -1694,20 +1694,37 @@ func (o *NB) CreateChassisGroup(ctx context.Context, haChassisGroupName OVNChass
 	return nil
 }
 
-// ChassisGroupDelete deletes an HA chassis group.
-func (o *NB) ChassisGroupDelete(haChassisGroupName OVNChassisGroup) error {
-	// ovn-nbctl doesn't provide an "--if-exists" option for removing chassis groups.
-	existing, err := o.nbctl("--no-headings", "--data=bare", "--colum=name", "find", "ha_chassis_group", fmt.Sprintf("name=%s", string(haChassisGroupName)))
+// DeleteChassisGroup deletes an HA chassis group.
+func (o *NB) DeleteChassisGroup(ctx context.Context, haChassisGroupName OVNChassisGroup) error {
+	// Get the current chassis group.
+	haChassisGroup := ovnNB.HAChassisGroup{
+		Name: string(haChassisGroupName),
+	}
+
+	err := o.client.Get(ctx, &haChassisGroup)
+	if err != nil {
+		// Already gone.
+		if err == ErrNotFound {
+			return nil
+		}
+
+		return err
+	}
+
+	// Delete the chassis group.
+	deleteOps, err := o.client.Where(&haChassisGroup).Delete()
 	if err != nil {
 		return err
 	}
 
-	// Remove chassis group if exists.
-	if strings.TrimSpace(existing) != "" {
-		_, err := o.nbctl("ha-chassis-group-del", string(haChassisGroupName))
-		if err != nil {
-			return err
-		}
+	resp, err := o.client.Transact(ctx, deleteOps...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, deleteOps)
+	if err != nil {
+		return err
 	}
 
 	return nil
