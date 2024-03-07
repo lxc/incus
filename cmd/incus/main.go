@@ -500,6 +500,51 @@ func (c *cmdGlobal) ParseServers(remotes ...string) ([]remoteResource, error) {
 	return resources, nil
 }
 
+type remoteImageResource struct {
+	remote string
+	server incus.ImageServer
+	name   string
+}
+
+func (c *cmdGlobal) ParseImageServers(remotes ...string) ([]remoteImageResource, error) {
+	servers := map[string]incus.ImageServer{}
+	resources := []remoteImageResource{}
+
+	for _, remote := range remotes {
+		// Parse the remote
+		remoteName, name, err := c.conf.ParseRemote(remote)
+		if err != nil {
+			return nil, err
+		}
+
+		// Setup the struct
+		resource := remoteImageResource{
+			remote: remoteName,
+			name:   name,
+		}
+
+		// Look at our cache
+		_, ok := servers[remoteName]
+		if ok {
+			resource.server = servers[remoteName]
+			resources = append(resources, resource)
+			continue
+		}
+
+		// New connection
+		d, err := c.conf.GetImageServer(remoteName)
+		if err != nil {
+			return nil, err
+		}
+
+		resource.server = d
+		servers[remoteName] = d
+		resources = append(resources, resource)
+	}
+
+	return resources, nil
+}
+
 func (c *cmdGlobal) CheckArgs(cmd *cobra.Command, args []string, minArgs int, maxArgs int) (bool, error) {
 	if len(args) < minArgs || (maxArgs != -1 && len(args) > maxArgs) {
 		_ = cmd.Help()
