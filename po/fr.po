@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-02-28 17:27-0500\n"
-"PO-Revision-Date: 2024-03-05 15:01+0000\n"
+"PO-Revision-Date: 2024-03-07 15:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
@@ -75,7 +75,6 @@ msgstr ""
 "###   zfs.pool_name: default"
 
 #: cmd/incus/storage_volume.go:850
-#, fuzzy
 msgid ""
 "### This is a YAML representation of a storage volume.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -10010,7 +10009,8 @@ msgstr "sshfs monté %q sur %q"
 
 #: cmd/incus/file.go:1221
 msgid "sshfs not found. Try SSH SFTP mode using the --listen flag"
-msgstr "sshfs non trouvé. Essayez SSH SFTP mode via le fanion --listen"
+msgstr ""
+"sshfs non trouvé. Essayez le mode SSH SFTP en utilisant l'option --listen"
 
 #: cmd/incus/storage.go:472
 msgid "total space"
