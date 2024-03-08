@@ -161,6 +161,13 @@ func (r *syncResponse) Render(w http.ResponseWriter) error {
 	status := api.Success
 	if !r.success {
 		status = api.Failure
+
+		// If the metadata is an error, consider the response a SmartError
+		// to propagate the data and preserve the status code.
+		err, ok := r.metadata.(error)
+		if ok {
+			return SmartError(err).Render(w)
+		}
 	}
 
 	if r.headers != nil {
