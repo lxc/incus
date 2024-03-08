@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/lxc/incus/internal/server/events"
 	"github.com/lxc/incus/internal/server/response"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/subprocess"
 	"github.com/lxc/incus/shared/ws"
 )
 
@@ -144,8 +142,7 @@ func eventsProcess(event api.Event) {
 	// Attempt to perform the mount.
 	mntSource := fmt.Sprintf("incus_%s", e.Name)
 
-	_ = os.MkdirAll(e.Config["path"], 0755)
-	_, err = subprocess.RunCommand("mount", "-t", "virtiofs", mntSource, e.Config["path"])
+	err = tryMountShared(mntSource, e.Config["path"], "virtiofs", nil)
 	if err != nil {
 		logger.Infof("Failed to mount hotplug %q (Type: %q) to %q", mntSource, "virtiofs", e.Config["path"])
 		return
