@@ -37,6 +37,17 @@ type cmdStorageVolume struct {
 	flagDestinationTarget string
 }
 
+func parseVolume(defaultType string, name string) (string, string) {
+	fields := strings.SplitN(name, "/", 2)
+	if len(fields) == 1 {
+		return fields[0], defaultType
+	} else if len(fields) == 2 && !slices.Contains([]string{"custom", "image", "container", "virtual-machine"}, fields[0]) {
+		return name, defaultType
+	}
+
+	return fields[1], fields[0]
+}
+
 func (c *cmdStorageVolume) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("volume")
@@ -128,17 +139,6 @@ Unless specified through a prefix, all volume operations affect "custom" (user c
 	return cmd
 }
 
-func (c *cmdStorageVolume) parseVolume(defaultType string, name string) (string, string) {
-	fields := strings.SplitN(name, "/", 2)
-	if len(fields) == 1 {
-		return fields[0], defaultType
-	} else if len(fields) == 2 && !slices.Contains([]string{"custom", "image", "container", "virtual-machine"}, fields[0]) {
-		return name, defaultType
-	}
-
-	return fields[1], fields[0]
-}
-
 func (c *cmdStorageVolume) parseVolumeWithPool(name string) (string, string) {
 	fields := strings.SplitN(name, "/", 2)
 	if len(fields) == 1 {
@@ -201,7 +201,7 @@ func (c *cmdStorageVolumeAttach) Run(cmd *cobra.Command, args []string) error {
 		devPath = args[4]
 	}
 
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 	if volType != "custom" {
 		return fmt.Errorf(i18n.G("Only \"custom\" volumes can be attached to instances"))
 	}
@@ -276,7 +276,7 @@ func (c *cmdStorageVolumeAttachProfile) Run(cmd *cobra.Command, args []string) e
 		devPath = args[4]
 	}
 
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 	if volType != "custom" {
 		return fmt.Errorf(i18n.G("Only \"custom\" volumes can be attached to instances"))
 	}
@@ -560,7 +560,7 @@ func (c *cmdStorageVolumeCreate) Run(cmd *cobra.Command, args []string) error {
 	client := resource.server
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	// Create the storage volume entry
 	vol := api.StorageVolumesPost{}
@@ -637,7 +637,7 @@ func (c *cmdStorageVolumeDelete) Run(cmd *cobra.Command, args []string) error {
 	client := resource.server
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	// If a target was specified, delete the volume on the given member.
 	if c.storage.flagTarget != "" {
@@ -882,7 +882,7 @@ func (c *cmdStorageVolumeEdit) Run(cmd *cobra.Command, args []string) error {
 	client := resource.server
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	isSnapshot := false
 	fields := strings.Split(volName, "/")
@@ -1083,7 +1083,7 @@ func (c *cmdStorageVolumeGet) Run(cmd *cobra.Command, args []string) error {
 	client := resource.server
 
 	// Parse input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	isSnapshot := false
 	fields := strings.Split(volName, "/")
@@ -1195,7 +1195,7 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 	client := resource.server
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	isSnapshot := false
 	fields := strings.Split(volName, "/")
@@ -1703,7 +1703,7 @@ func (c *cmdStorageVolumeRename) Run(cmd *cobra.Command, args []string) error {
 	client := resource.server
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	// Create the storage volume entry
 	vol := api.StorageVolumePost{}
@@ -1789,7 +1789,7 @@ func (c *cmdStorageVolumeSet) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse the input.
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	isSnapshot := false
 	fields := strings.Split(volName, "/")
@@ -1926,7 +1926,7 @@ func (c *cmdStorageVolumeShow) Run(cmd *cobra.Command, args []string) error {
 	client := resource.server
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	// If a target member was specified, get the volume with the matching
 	// name on that member, if any.
@@ -2095,7 +2095,7 @@ func (c *cmdStorageVolumeSnapshotCreate) Run(cmd *cobra.Command, args []string) 
 	}
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 	if volType != "custom" {
 		return fmt.Errorf(i18n.G("Only \"custom\" volumes can be snapshotted"))
 	}
@@ -2187,7 +2187,7 @@ func (c *cmdStorageVolumeSnapshotDelete) Run(cmd *cobra.Command, args []string) 
 	client := resource.server
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	// If a target was specified, delete the volume on the given member.
 	if c.storage.flagTarget != "" {
@@ -2278,7 +2278,7 @@ func (c *cmdStorageVolumeSnapshotList) Run(cmd *cobra.Command, args []string) er
 	}
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	// Check if the requested storage volume actually exists
 	_, _, err = resource.server.GetStoragePoolVolume(resource.name, volType, volName)
@@ -2374,7 +2374,7 @@ func (c *cmdStorageVolumeSnapshotRename) Run(cmd *cobra.Command, args []string) 
 	client := resource.server
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	// Create the storage volume entry
 	vol := api.StorageVolumeSnapshotPost{
@@ -2517,7 +2517,7 @@ func (c *cmdStorageVolumeSnapshotShow) Run(cmd *cobra.Command, args []string) er
 	client := resource.server
 
 	// Parse the input
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 
 	fields := strings.Split(volName, "/")
 	if len(fields) != 2 {
@@ -2601,7 +2601,7 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 
 	volumeOnly := c.flagVolumeOnly
 
-	volName, volType := c.storageVolume.parseVolume("custom", args[1])
+	volName, volType := parseVolume("custom", args[1])
 	if volType != "custom" {
 		return fmt.Errorf(i18n.G("Only \"custom\" volumes can be exported"))
 	}
