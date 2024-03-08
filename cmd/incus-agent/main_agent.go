@@ -278,54 +278,73 @@ func (c *cmdAgent) mountHostShares() {
 	}
 
 	for _, mount := range agentMounts {
-		// Convert relative mounts to absolute from / otherwise dir creation fails or mount fails.
-		if !strings.HasPrefix(mount.Target, "/") {
-			mount.Target = fmt.Sprintf("/%s", mount.Target)
-		}
-
-		if !util.PathExists(mount.Target) {
-			err := os.MkdirAll(mount.Target, 0755)
-			if err != nil {
-				logger.Errorf("Failed to create mount target %q", mount.Target)
-				continue // Don't try to mount if mount point can't be created.
-			}
-		} else if linux.IsMountPoint(mount.Target) {
-			// Already mounted.
+		if !slices.Contains([]string{"9p", "virtiofs"}, mount.FSType) {
+			logger.Infof("Unsupported mount fstype %q", mount.FSType)
 			continue
 		}
 
-		if mount.FSType == "9p" {
-			// Before mounting with 9p, try virtio-fs and use 9p as the fallback.
-			args := []string{"-t", "virtiofs", mount.Source, mount.Target}
-
-			for _, opt := range mount.Options {
-				// Ignore the transport and msize mount option as they are specific to 9p.
-				if strings.HasPrefix(opt, "trans=") || strings.HasPrefix(opt, "msize=") {
-					continue
-				}
-
-				args = append(args, "-o", opt)
-			}
-
-			_, err = subprocess.RunCommand("mount", args...)
-			if err == nil {
-				logger.Infof("Mounted %q (Type: %q, Options: %v) to %q", mount.Source, "virtiofs", mount.Options, mount.Target)
-				continue
-			}
-		}
-
-		args := []string{"-t", mount.FSType, mount.Source, mount.Target}
-
-		for _, opt := range mount.Options {
-			args = append(args, "-o", opt)
-		}
-
-		_, err = subprocess.RunCommand("mount", args...)
+		err = tryMountShared(mount.Source, mount.Target, mount.FSType, mount.Options)
 		if err != nil {
-			logger.Errorf("Failed mount %q (Type: %q, Options: %v) to %q: %v", mount.Source, mount.FSType, mount.Options, mount.Target, err)
+			logger.Infof("Failed to mount %q (Type: %q, Options: %v) to %q: %v", mount.Source, "virtiofs", mount.Options, mount.Target, err)
 			continue
 		}
 
 		logger.Infof("Mounted %q (Type: %q, Options: %v) to %q", mount.Source, mount.FSType, mount.Options, mount.Target)
 	}
+}
+
+func tryMountShared(src string, dst string, fstype string, opts []string) error {
+	// Convert relative mounts to absolute from / otherwise dir creation fails or mount fails.
+	if !strings.HasPrefix(dst, "/") {
+		dst = fmt.Sprintf("/%s", dst)
+	}
+
+	// Check mount path.
+	if !util.PathExists(dst) {
+		// Create the mount path.
+		err := os.MkdirAll(dst, 0755)
+		if err != nil {
+			return fmt.Errorf("Failed to create mount target %q", dst)
+		}
+	} else if linux.IsMountPoint(dst) {
+		// Already mounted.
+		return nil
+	}
+
+	// Prepare the arguments.
+	sharedArgs := []string{}
+	p9Args := []string{}
+
+	for _, opt := range opts {
+		// transport and msize mount option are specific to 9p.
+		if strings.HasPrefix(opt, "trans=") || strings.HasPrefix(opt, "msize=") {
+			p9Args = append(p9Args, "-o", opt)
+			continue
+		}
+
+		sharedArgs = append(sharedArgs, "-o", opt)
+	}
+
+	// Always try virtiofs first.
+	args := []string{"-t", "virtiofs", src, dst}
+	args = append(args, sharedArgs...)
+
+	_, err := subprocess.RunCommand("mount", args...)
+	if err == nil {
+		return nil
+	} else if fstype == "virtiofs" {
+		return err
+	}
+
+	// Then fallback to 9p.
+	args = []string{"-t", "9p", src, dst}
+	args = append(args, sharedArgs...)
+	args = append(args, p9Args...)
+
+	_, err = subprocess.RunCommand("mount", args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
