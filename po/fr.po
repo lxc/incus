@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-02-28 17:27-0500\n"
-"PO-Revision-Date: 2024-03-07 15:01+0000\n"
+"PO-Revision-Date: 2024-03-08 16:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
@@ -755,7 +755,6 @@ msgid "ARCHITECTURE"
 msgstr "ARCHITECTURE"
 
 #: cmd/incus/remote.go:774
-#, fuzzy
 msgid "AUTH TYPE"
 msgstr "TYPE D'AUTHENTIFICATION"
 
@@ -768,14 +767,13 @@ msgid "Access key (auto-generated if empty)"
 msgstr "Clé d'accès (auto-généré si vide)"
 
 #: cmd/incus/storage_bucket.go:921
-#, fuzzy, c-format
+#, c-format
 msgid "Access key: %s"
-msgstr "Clef d'accès: %s"
+msgstr "Clé d'accès: %s"
 
 #: cmd/incus/config.go:391
-#, fuzzy
 msgid "Access the expanded configuration"
-msgstr "Afficher la configuration avancée"
+msgstr "Accéder à la configuration étendue"
 
 #: cmd/incus/warning.go:262 cmd/incus/warning.go:263
 msgid "Acknowledge warning"
@@ -819,16 +817,14 @@ msgid "Add member to group"
 msgstr "Ajoutez des membres à un groupe"
 
 #: cmd/incus/alias.go:60 cmd/incus/alias.go:61
-#, fuzzy
 msgid "Add new aliases"
-msgstr "Ajoutez de nouveaux alias"
+msgstr "Ajouter de nouveaux alias"
 
 #: cmd/incus/remote.go:101
 msgid "Add new remote servers"
 msgstr "Ajouter de nouveaux serveurs distants"
 
 #: cmd/incus/remote.go:102
-#, fuzzy
 msgid ""
 "Add new remote servers\n"
 "\n"
@@ -844,10 +840,11 @@ msgstr ""
 "L'URL pour accéder à des ressources distantes doit utiliser le protocole "
 "HTTPS (https://).\n"
 "\n"
-"L'identification HTTP Basic (RFC 26176) peut être utilisée si ellle est "
+"L'authentification HTTP Basic (RFC 26176) peut être utilisée si elle est "
 "combinée avec le protocole « simplestreams » :\n"
-"...incus remote add ressource_distante_identifiant https://UTILISATEUR:"
-"MOTDEPASSE@exemple.com/complement/de/chemin --protocol=simplestreams\n"
+"  incus remote add ressource_distante_identifiant "
+"https://UTILISATEUR:MOTDEPASSE@exemple.com/complement/de/chemin --protocol="
+"simplestreams\n"
 
 #: cmd/incus/config_trust.go:90
 msgid "Add new trusted client"
@@ -893,9 +890,8 @@ msgid "Add ports to a load balancer"
 msgstr "Ajoutez des ports à l'équilibreur de charge"
 
 #: cmd/incus/profile.go:103 cmd/incus/profile.go:104
-#, fuzzy
 msgid "Add profiles to instances"
-msgstr "Ajoutez des profiles pour des instances"
+msgstr "Ajouter des profils aux instances"
 
 #: cmd/incus/cluster_role.go:50 cmd/incus/cluster_role.go:51
 msgid "Add roles to a cluster member"
@@ -936,7 +932,7 @@ msgid "Admin secret key: %s"
 msgstr "Clef d'accès secrète administrateur : %s"
 
 #: cmd/incus/alias.go:86 cmd/incus/alias.go:199
-#, fuzzy, c-format
+#, c-format
 msgid "Alias %s already exists"
 msgstr "L'alias %s existe déjà"
 
@@ -1041,9 +1037,8 @@ msgid "Attach new storage volumes to profiles"
 msgstr "Attacher de nouveaux volumes de stockage aux profiles"
 
 #: cmd/incus/console.go:36
-#, fuzzy
 msgid "Attach to instance consoles"
-msgstr "Associer à des consoles d'instance"
+msgstr "Connexion aux consoles de l'instance"
 
 #: cmd/incus/console.go:37
 msgid ""
@@ -1155,7 +1150,7 @@ msgid "Both --all and instance name given"
 msgstr "À la fois--all et le nom d'instance on été donné"
 
 #: cmd/incus/info.go:136
-#, fuzzy, c-format
+#, c-format
 msgid "Brand: %v"
 msgstr "Marque : %v"
 
@@ -1223,9 +1218,9 @@ msgid "CUDA Version: %v"
 msgstr "Version CUDA : %v"
 
 #: cmd/incus/image.go:1036
-#, fuzzy, c-format
+#, c-format
 msgid "Cached: %s"
-msgstr "Mem. cache : %s"
+msgstr "En cache : %s"
 
 #: cmd/incus/info.go:315
 #, fuzzy
@@ -1249,7 +1244,6 @@ msgid "Can't provide a name for the target image"
 msgstr "Impossible de fournir un nom à l'image cible"
 
 #: cmd/incus/file.go:521
-#, fuzzy
 msgid "Can't pull a directory without --recursive"
 msgstr "Impossible de récupérer un répertoire sans --recursive"
 
@@ -1259,7 +1253,6 @@ msgid "Can't read from stdin: %w"
 msgstr "Impossible de lire depuis stdin : %w"
 
 #: cmd/incus/remote.go:913
-#, fuzzy
 msgid "Can't remove the default remote"
 msgstr "Impossible de supprimer le serveur distant par défaut"
 
@@ -1283,7 +1276,6 @@ msgstr ""
 "d'un cluster"
 
 #: cmd/incus/file.go:723
-#, fuzzy
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr "Impossible de spécifier uid/gid/mode dans le mode récursif"
 
@@ -1354,7 +1346,7 @@ msgid "Card: %s (%s)"
 msgstr "Cartes : %s (%s)"
 
 #: cmd/incus/config_trust.go:782
-#, fuzzy, c-format
+#, c-format
 msgid "Certificate add token for %s deleted"
 msgstr "Jeton d'ajout du certificat pour %s supprimé"
 
@@ -1393,17 +1385,16 @@ msgid "Choose %s:"
 msgstr "Choisir %s:"
 
 #: cmd/incus/config_trust.go:147
-#, fuzzy, c-format
+#, c-format
 msgid "Client %s certificate add token:"
-msgstr "Jeton de certificat d'ajout pour le client %s  :"
+msgstr "Jeton d'ajout du certificat pour le client %s  :"
 
 #: cmd/incus/remote.go:602
-#, fuzzy
 msgid "Client certificate now trusted by server:"
 msgstr "Certificat client approuvé par le serveur :"
 
 #: cmd/incus/version.go:37
-#, fuzzy, c-format
+#, c-format
 msgid "Client version: %s\n"
 msgstr "Version du client : %s\n"
 
@@ -1506,7 +1497,6 @@ msgid "Command line client for Incus"
 msgstr "Client en ligne de commande pour Incus"
 
 #: cmd/incus/main.go:85
-#, fuzzy
 msgid ""
 "Command line client for Incus\n"
 "\n"
@@ -1520,11 +1510,11 @@ msgstr ""
 "\n"
 "Toutes les fonctionnalités de Incus peuvent être utilisées à partir des "
 "divers commandes ci-dessous.\n"
-"Pour accéder à l'aide de n'importe laquelle de ces commandes, tapez "
-"simplement à leur suite --help.\n"
+"Pour accéder à l'aide de n'importe laquelle de ces commandes, appelez-les "
+"avec --help.\n"
 "\n"
-"Des commandes personnelles peuvent être ajoutée à travers des alias. Pour "
-"les générer, utiliser la commande \"incus alias\"."
+"Des commandes personnalisées peuvent être définies par le biais d'alias, "
+"utilisez \"incus alias\" pour les gérer."
 
 #: cmd/incus/publish.go:39
 msgid "Compression algorithm to use (`none` for uncompressed)"
@@ -1621,9 +1611,8 @@ msgstr ""
 "Cela nécessite que la source soit un alias et d'être publique."
 
 #: cmd/incus/copy.go:39
-#, fuzzy
 msgid "Copy instances within or in between servers"
-msgstr "Copie d'instances à travers ou entre serveurs"
+msgstr "Copier des instances au sein d'un même serveur ou entre serveurs"
 
 #: cmd/incus/copy.go:40
 msgid ""
@@ -1664,19 +1653,16 @@ msgid "Copy profiles"
 msgstr "Copier les profiles"
 
 #: cmd/incus/storage_volume.go:327 cmd/incus/storage_volume.go:328
-#, fuzzy
 msgid "Copy storage volumes"
-msgstr "Copie des volumes des stockage"
+msgstr "Copier des volumes de stockage"
 
 #: cmd/incus/copy.go:57
-#, fuzzy
 msgid "Copy the instance without its snapshots"
-msgstr "Copiez l'instance sans ses instantanés"
+msgstr "Copier l'instance sans ses instantanés"
 
 #: cmd/incus/storage_volume.go:334
-#, fuzzy
 msgid "Copy the volume without its snapshots"
-msgstr "Copiez le volume sans ses instantanés"
+msgstr "Copier le volume sans ses instantanés"
 
 #: cmd/incus/copy.go:61 cmd/incus/image.go:160 cmd/incus/move.go:66
 #: cmd/incus/profile.go:272 cmd/incus/storage_volume.go:335
@@ -1684,9 +1670,8 @@ msgid "Copy to a project different from the source"
 msgstr "Copie dans un projet différent de la source"
 
 #: cmd/incus/image.go:158
-#, fuzzy
 msgid "Copy virtual machine images"
-msgstr "Copie d'image de machines virtuelle : %s"
+msgstr "Copier des images de machines virtuelles"
 
 #: cmd/incus/image.go:278
 #, c-format
@@ -1694,9 +1679,9 @@ msgid "Copying the image: %s"
 msgstr "Copie de l'image : %s"
 
 #: cmd/incus/storage_volume.go:434
-#, fuzzy, c-format
+#, c-format
 msgid "Copying the storage volume: %s"
-msgstr "Copie du stockage de volume : %s"
+msgstr "Copie du volume de stockage : %s"
 
 #: cmd/incus/info.go:323
 #, c-format
@@ -1717,14 +1702,14 @@ msgid "Could not create server cert dir"
 msgstr "Impossible de créer le dossier de stockage des certificats serveurs"
 
 #: cmd/incus/cluster.go:1091
-#, fuzzy, c-format
+#, c-format
 msgid "Could not find certificate file path: %s"
-msgstr "Impossible de trouver le chemin du fichier de certificat %s"
+msgstr "Impossible d'accéder au certificat : %s"
 
 #: cmd/incus/cluster.go:1095
-#, fuzzy, c-format
+#, c-format
 msgid "Could not find certificate key file path: %s"
-msgstr "Impossible de trouver le chemin du fichier de la clef du certificat %s"
+msgstr "Impossible d'accéder à la clé de certificat %s"
 
 #: cmd/incus/cluster.go:1100
 #, c-format
@@ -9988,7 +9973,7 @@ msgstr "non"
 
 #: cmd/incus/remote.go:459
 msgid "ok (y/n/[fingerprint])?"
-msgstr ""
+msgstr "ok (o/n/[empreinte]) ?"
 
 #: cmd/incus/config.go:55
 msgid "please use `incus profile`"
