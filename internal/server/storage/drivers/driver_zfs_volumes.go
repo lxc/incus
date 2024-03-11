@@ -1286,39 +1286,61 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 			sender = exec.Command("zfs", args...)
 		}
 
-		var senderErrBuf bytes.Buffer
-		var receiverErrBuf bytes.Buffer
-
 		// Configure the pipes.
-		sender.Stderr = &senderErrBuf
 		receiver.Stdin, _ = sender.StdoutPipe()
 		receiver.Stdout = os.Stdout
-		receiver.Stderr = &receiverErrBuf
+
+		var recvStderr bytes.Buffer
+		receiver.Stderr = &recvStderr
+
+		var sendStderr bytes.Buffer
+		sender.Stderr = &sendStderr
 
 		// Run the transfer.
 		err := receiver.Start()
 		if err != nil {
-			return fmt.Errorf("Failed to receive stream: %w", err)
+			return fmt.Errorf("Failed starting ZFS receive: %w", err)
 		}
 
-		err = sender.Run()
+		err = sender.Start()
 		if err != nil {
-			// This removes any newlines in the error message.
-			msg := strings.ReplaceAll(senderErrBuf.String(), "\n", " ")
-
-			return fmt.Errorf("Failed to send stream %q: %s: %w", sender.String(), msg, err)
+			_ = receiver.Process.Kill()
+			return fmt.Errorf("Failed starting ZFS send: %w", err)
 		}
+
+		senderErr := make(chan error)
+		go func() {
+			err := sender.Wait()
+			if err != nil {
+				_ = receiver.Process.Kill()
+
+				// This removes any newlines in the error message.
+				msg := strings.ReplaceAll(strings.TrimSpace(sendStderr.String()), "\n", " ")
+
+				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, msg)
+				return
+			}
+
+			senderErr <- nil
+		}()
 
 		err = receiver.Wait()
 		if err != nil {
+			_ = sender.Process.Kill()
+
 			// This removes any newlines in the error message.
-			msg := strings.ReplaceAll(receiverErrBuf.String(), "\n", " ")
+			msg := strings.ReplaceAll(strings.TrimSpace(recvStderr.String()), "\n", " ")
 
 			if strings.Contains(msg, "does not match incremental source") {
 				return ErrSnapshotDoesNotMatchIncrementalSource
 			}
 
-			return fmt.Errorf("Failed to wait for receiver: %s: %w", msg, err)
+			return fmt.Errorf("Failed ZFS receive: %w (%s)", err, msg)
+		}
+
+		err = <-senderErr
+		if err != nil {
+			return err
 		}
 
 		return nil
