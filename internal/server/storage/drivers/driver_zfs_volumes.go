@@ -750,7 +750,11 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 			err := sender.Wait()
 			if err != nil {
 				_ = receiver.Process.Kill()
-				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, sendStderr.String())
+
+				// This removes any newlines in the error message.
+				msg := strings.ReplaceAll(strings.TrimSpace(sendStderr.String()), "\n", " ")
+
+				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, msg)
 				return
 			}
 
@@ -760,7 +764,11 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 		err = receiver.Wait()
 		if err != nil {
 			_ = sender.Process.Kill()
-			return fmt.Errorf("Failed ZFS receive: %w (%s)", err, recvStderr.String())
+
+			// This removes any newlines in the error message.
+			msg := strings.ReplaceAll(strings.TrimSpace(recvStderr.String()), "\n", " ")
+
+			return fmt.Errorf("Failed ZFS receive: %w (%s)", err, msg)
 		}
 
 		err = <-senderErr
