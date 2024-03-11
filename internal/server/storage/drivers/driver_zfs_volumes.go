@@ -746,7 +746,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 		senderErr := make(chan error)
 		go func() {
-			err = sender.Wait()
+			err := sender.Wait()
 			if err != nil {
 				_ = receiver.Process.Kill()
 				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, sendStderr.String())
