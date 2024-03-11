@@ -119,11 +119,6 @@ func (t *tls) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 		return allowFunc(true), nil
 	}
 
-	if details.isAllProjectsRequest {
-		// Only admins (users with non-restricted certs) can use the all-projects parameter.
-		return nil, api.StatusErrorf(http.StatusForbidden, "Certificate is restricted")
-	}
-
 	// Check server level object types
 	switch objectType {
 	case ObjectTypeServer:
@@ -141,7 +136,7 @@ func (t *tls) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 	}
 
 	// Error if user does not have access to the project (unless we're getting projects, where we want to filter the results).
-	if !slices.Contains(projectNames, details.projectName) && objectType != ObjectTypeProject {
+	if !details.isAllProjectsRequest && !slices.Contains(projectNames, details.projectName) && objectType != ObjectTypeProject {
 		return nil, api.StatusErrorf(http.StatusForbidden, "User does not have permissions for project %q", details.projectName)
 	}
 
