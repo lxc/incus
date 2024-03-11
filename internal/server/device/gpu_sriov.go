@@ -178,7 +178,7 @@ func (d *gpuSRIOV) getVF() (string, int, error) {
 		}
 
 		// Prioritize less busy cards.
-		if (float64(len(vfs)) / float64(gpu.SRIOV.CurrentVFs)) > (float64(cardAvailable) / float64(cardTotal)) {
+		if pciAddress == "" || (float64(len(vfs))/float64(gpu.SRIOV.CurrentVFs)) > (float64(cardAvailable)/float64(cardTotal)) {
 			pciAddress = gpu.PCIAddress
 			vfID = vfs[0]
 			cardAvailable = len(vfs)
