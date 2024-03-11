@@ -6941,13 +6941,13 @@ func (b *backend) BackupCustomVolume(projectName string, volName string, tarWrit
 	l.Debug("BackupCustomVolume started")
 	defer l.Debug("BackupCustomVolume finished")
 
-	// Get the volume name on storage.
-	volStorageName := project.StorageVolume(projectName, volName)
-
 	volume, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
 	if err != nil {
 		return err
 	}
+
+	// Get the volume name on storage.
+	volStorageName := project.StorageVolume(projectName, volume.Name)
 
 	contentDBType, err := VolumeContentTypeNameToContentType(volume.ContentType)
 	if err != nil {
