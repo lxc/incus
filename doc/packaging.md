@@ -62,3 +62,20 @@ To do that, the `INCUS_AGENT_PATH` environment variable should be set for the `i
 
 Those builds should be named after the operating system name and architecture.
 For example `incus-agent.linux.x86_64`, `incus-agent.linux.i686` or `incus-agent.linux.aarch64`.
+
+## Documentation
+### Web documentation
+Incus can serve its own documentation when the network listener is enabled (`core.https_address`).
+
+For that to work, the documentation provided in the release tarball
+should be shipped as part of the package and its path be passed to Incus
+through the `INCUS_DOCUMENTATION` environment variable.
+
+### Manual pages
+While we don't specifically write full `manpage` entries for Incus, it is possible to generate those from the CLI.
+
+Running `incus manpage --all --format=man /target/path` will generate a separate page for each command/sub-command.
+
+This is effectively the same as what's otherwise made available through `--help`,
+so unless a distribution packaging policy requires all binaries have `manpages`,
+it's usually best to rely on `--help` and `help` sub-commands.
