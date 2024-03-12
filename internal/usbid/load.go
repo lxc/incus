@@ -30,7 +30,12 @@ var (
 
 // Load reads the USB database from disk.
 func Load() {
-	usbids, err := os.Open("/usr/share/misc/usb.ids")
+	usbidFile := os.Getenv("INCUS_USBIDS_PATH")
+	if usbidFile == "" {
+		usbidFile = "/usr/share/misc/usb.ids"
+	}
+
+	usbids, err := os.Open(usbidFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			log.Printf("usbid: failed to load: %s", err)
