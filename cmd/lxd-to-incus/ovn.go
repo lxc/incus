@@ -215,6 +215,10 @@ func ovnCheckValue(table string, k string, v string) (bool, string, error) {
 		return false, "", nil
 	}
 
+	if (table == "Logical_Switch_Port" || table == "Port_Binding") && k == "options" && (v == "{network_name=lxdbr0}" || v == "{network_name=lxdbr1}") {
+		return false, "", nil
+	}
+
 	newValue := strings.Replace(v, "lxd-net", "incus-net", -1)
 	newValue = strings.Replace(newValue, "lxd_acl", "incus_acl", -1)
 	newValue = strings.Replace(newValue, "lxd_location", "incus_location", -1)
