@@ -464,6 +464,15 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		}
 	}
 
+	// Check for JWT token in the request.
+	jwtOk, _, cert := localUtil.CheckJwtToken(r, trustedCerts[certificate.TypeClient])
+	if jwtOk {
+		trusted, username := localUtil.CheckTrustState(*cert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
+		if trusted {
+			return true, username, api.AuthenticationMethodTLS, nil
+		}
+	}
+
 	// Reject unauthorized.
 	return false, "", "", nil
 }
