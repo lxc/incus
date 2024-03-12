@@ -76,6 +76,11 @@ func (t *tls) CheckPermission(ctx context.Context, r *http.Request, object Objec
 		return api.StatusErrorf(http.StatusForbidden, "Certificate is restricted")
 	}
 
+	// Don't allow project modifications.
+	if object.Type() == ObjectTypeProject && entitlement == EntitlementCanEdit {
+		return api.StatusErrorf(http.StatusForbidden, "Certificate is restricted")
+	}
+
 	// Check project level permissions against the certificates project list.
 	projectName := object.Project()
 	if !slices.Contains(projectNames, projectName) {
