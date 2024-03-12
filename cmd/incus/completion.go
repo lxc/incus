@@ -39,7 +39,7 @@ func (g *cmdGlobal) cmpImages(toComplete string) ([]string, cobra.ShellCompDirec
 	}
 
 	if !strings.Contains(toComplete, ":") {
-		remotes, directives := g.cmpRemotes(false)
+		remotes, directives := g.cmpRemotes(true)
 		results = append(results, remotes...)
 		cmpDirectives |= directives
 	}
