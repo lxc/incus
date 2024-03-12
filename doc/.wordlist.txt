@@ -99,6 +99,7 @@ hotplug
 hotplugged
 hotplugging
 HTTPS
+hwdata
 ICMP
 idmap
 idmapped
