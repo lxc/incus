@@ -16,7 +16,7 @@ cp systemd/incus-agent-setup /lib/systemd/
 systemctl daemon-reload
 
 # SELinux handling.
-if getenforce >/dev/null 2>&1; then
+if getenforce >/dev/null 2>&1 && type semanage >/dev/null 2>&1; then
     semanage fcontext -a -t bin_t /var/run/incus_agent/incus-agent
 fi
 
