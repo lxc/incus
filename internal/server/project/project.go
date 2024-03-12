@@ -233,7 +233,7 @@ func NetworkAllowed(reqProjectConfig map[string]string, networkName string, isMa
 func ImageProjectFromRecord(p *api.Project) string {
 	// Images only use the project specified if the project has the features.images feature enabled,
 	// otherwise the default project for profiles is used.
-	if util.IsTrue(p.Config["features.image"]) {
+	if util.IsTrue(p.Config["features.images"]) {
 		return p.Name
 	}
 
