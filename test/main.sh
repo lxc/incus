@@ -207,6 +207,7 @@ if [ "${1:-"all"}" != "cluster" ]; then
     run_test test_remote_url "remote url handling"
     run_test test_remote_admin "remote administration"
     run_test test_remote_usage "remote usage"
+    run_test test_tls_jwt "JWT authentication"
 fi
 
 if [ "${1:-"all"}" != "standalone" ]; then

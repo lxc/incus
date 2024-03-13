@@ -301,6 +301,7 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 	if auth == "" {
 		return false, "", nil
 	}
+
 	parts := strings.Split(auth, " ")
 	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
 		return false, "", nil
