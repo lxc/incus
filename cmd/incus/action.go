@@ -107,9 +107,7 @@ func (c *cmdRestart) Command() *cobra.Command {
 	cmd.Use = usage("restart", i18n.G("[<remote>:]<instance> [[<remote>:]<instance>...]"))
 	cmd.Short = i18n.G("Restart instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Restart instances
-
-The opposite of "incus pause" is "incus start".`))
+		`Restart instances`))
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
