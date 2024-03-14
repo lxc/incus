@@ -35,6 +35,14 @@ func NewClient(url string, httpClient http.Client, useragent string) *SimpleStre
 	}
 }
 
+// NewLocalClient returns a simplestreams client for a local filesystem path.
+func NewLocalClient(path string) *SimpleStreams {
+	return &SimpleStreams{
+		url:            path,
+		cachedProducts: map[string]*Products{},
+	}
+}
+
 // SimpleStreams represents a simplestream client.
 type SimpleStreams struct {
 	http      *http.Client
@@ -88,13 +96,27 @@ func (s *SimpleStreams) cachedDownload(path string) ([]byte, error) {
 	fields := strings.Split(path, "/")
 	fileName := fields[len(fields)-1]
 
-	// Attempt to get from the cache
+	// Handle local filesystem reads (bypass cache).
+	if s.http == nil {
+		body, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(body) == 0 {
+			return nil, fmt.Errorf("Empty index file %q", path)
+		}
+
+		return body, nil
+	}
+
+	// Attempt to get from the cache.
 	cachedBody, expired := s.readCache(fileName)
 	if cachedBody != nil && !expired {
 		return cachedBody, nil
 	}
 
-	// Download from the source
+	// Download from the remote URL.
 	uri, err := url.JoinPath(s.url, path)
 	if err != nil {
 		return nil, err
