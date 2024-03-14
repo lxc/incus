@@ -9,6 +9,74 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func (g *cmdGlobal) cmpClusterGroupNames(toComplete string) ([]string, cobra.ShellCompDirective) {
+	var results []string
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(toComplete)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	cluster, _, err := resource.server.GetCluster()
+	if err != nil || !cluster.Enabled {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	results, err = resource.server.GetClusterGroupNames()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return results, cmpDirectives
+}
+
+func (g *cmdGlobal) cmpClusterGroups(toComplete string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(toComplete)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	cluster, _, err := resource.server.GetCluster()
+	if err != nil || !cluster.Enabled {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	groups, err := resource.server.GetClusterGroupNames()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	for _, group := range groups {
+		var name string
+
+		if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
+			name = group
+		} else {
+			name = fmt.Sprintf("%s:%s", resource.remote, name)
+		}
+
+		results = append(results, name)
+	}
+
+	if !strings.Contains(toComplete, ":") {
+		remotes, directives := g.cmpRemotes(false)
+		results = append(results, remotes...)
+		cmpDirectives |= directives
+	}
+
+	return results, cmpDirectives
+}
+
 func (g *cmdGlobal) cmpClusterMemberConfigs(memberName string) ([]string, cobra.ShellCompDirective) {
 	// Parse remote
 	resources, err := g.ParseServers(memberName)
