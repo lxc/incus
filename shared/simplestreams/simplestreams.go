@@ -18,10 +18,6 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-var urlDefaultOS = map[string]string{
-	"https://cloud-images.ubuntu.com": "ubuntu",
-}
-
 // DownloadableFile represents a file with its URL, hash and size.
 type DownloadableFile struct {
 	Path   string
@@ -213,20 +209,7 @@ func (s *SimpleStreams) applyAliases(images []api.Image) ([]api.Image, []extende
 	// Sort the images so we tag the preferred ones
 	sort.Sort(sortedImages(images))
 
-	// Look for the default OS
-	defaultOS := ""
-	for k, v := range urlDefaultOS {
-		if strings.HasPrefix(s.url, k) {
-			defaultOS = v
-			break
-		}
-	}
-
 	addAlias := func(imageType string, architecture string, name string, fingerprint string) *api.ImageAlias {
-		if defaultOS != "" {
-			name = strings.TrimPrefix(name, fmt.Sprintf("%s/", defaultOS))
-		}
-
 		for _, entry := range aliasesList {
 			if entry.Name == name && entry.Type == imageType && entry.Architecture == architecture {
 				return nil
