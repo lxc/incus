@@ -105,6 +105,29 @@ func (g *cmdGlobal) cmpClusterMemberConfigs(memberName string) ([]string, cobra.
 	return results, cobra.ShellCompDirectiveNoFileComp
 }
 
+func (g *cmdGlobal) cmpClusterMemberRoles(memberName string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.ParseServers(memberName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	cluster, _, err := client.GetCluster()
+	if err != nil || !cluster.Enabled {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	member, _, err := client.GetClusterMember(memberName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return member.Roles, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpClusterMembers(toComplete string) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
