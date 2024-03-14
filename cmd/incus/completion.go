@@ -217,6 +217,53 @@ func (g *cmdGlobal) cmpInstanceAllKeys() ([]string, cobra.ShellCompDirective) {
 	return keys, cobra.ShellCompDirectiveNoFileComp
 }
 
+func (g *cmdGlobal) cmpInstanceConfigTemplates(instanceName string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.ParseServers(instanceName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	var instanceNameOnly = instanceName
+	if strings.Contains(instanceName, ":") {
+		instanceNameOnly = strings.Split(instanceName, ":")[1]
+	}
+
+	results, err := client.GetInstanceTemplateFiles(instanceNameOnly)
+	if err != nil {
+		cobra.CompDebug(fmt.Sprintf("%v", err), true)
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
+func (g *cmdGlobal) cmpInstanceDeviceNames(instanceName string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.ParseServers(instanceName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	instanceNameOnly, _, err := client.GetInstance(instanceName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var results []string
+	for k := range instanceNameOnly.Devices {
+		results = append(results, k)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpInstanceSnapshots(instanceName string) ([]string, cobra.ShellCompDirective) {
 	resources, err := g.ParseServers(instanceName)
 	if err != nil || len(resources) == 0 {
@@ -421,6 +468,29 @@ func (g *cmdGlobal) cmpProfileConfigs(profileName string) ([]string, cobra.Shell
 	}
 
 	return configs, cobra.ShellCompDirectiveNoFileComp
+}
+
+func (g *cmdGlobal) cmpProfileDeviceNames(instanceName string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.ParseServers(instanceName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	profile, _, err := client.GetProfile(resource.name)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var results []string
+	for k := range profile.Devices {
+		results = append(results, k)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
 }
 
 func (g *cmdGlobal) cmpProfileNamesFromRemote(toComplete string) ([]string, cobra.ShellCompDirective) {
