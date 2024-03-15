@@ -10,6 +10,6 @@ Manage images <howto/images_manage>
 Copy and import images <howto/images_copy>
 Create images <howto/images_create>
 Associate profiles <howto/images_profiles>
-reference/remote_image_servers
 reference/image_format
+reference/image_servers
 ```
