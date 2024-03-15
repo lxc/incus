@@ -32,3 +32,16 @@ Incus servers
 
   For security reasons, you should restrict the access to the remote API and configure an authentication method to control access.
   See {ref}`server-expose` and {ref}`authentication` for more information.
+
+(image-server-tooling)=
+## Tooling to manage a simplestreams server
+Incus includes a tool called `incus-simplestreams` which can be used to manage a file system tree using the Simple streams format.
+
+It supports importing either a container (`squashfs`) or virtual-machine (`qcow2`) image
+with `incus-simplestreams add`, list all images available as well as their fingerprints
+with `incus-simplestreams list` and remove images from the server with `incus-simplestreams remove`.
+
+That file system tree must then be placed on a regular web server which supports HTTPS with a valid certificate.
+
+When importing an image that doesn't come with an Incus metadata tarball, the `incus-simplestreams generate-metadata` command
+can be used to generate a new basic metadata tarball from a few questions.
