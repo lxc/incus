@@ -18,10 +18,6 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-var urlDefaultOS = map[string]string{
-	"https://cloud-images.ubuntu.com": "ubuntu",
-}
-
 // DownloadableFile represents a file with its URL, hash and size.
 type DownloadableFile struct {
 	Path   string
@@ -36,6 +32,14 @@ func NewClient(url string, httpClient http.Client, useragent string) *SimpleStre
 		url:            url,
 		cachedProducts: map[string]*Products{},
 		useragent:      useragent,
+	}
+}
+
+// NewLocalClient returns a simplestreams client for a local filesystem path.
+func NewLocalClient(path string) *SimpleStreams {
+	return &SimpleStreams{
+		url:            path,
+		cachedProducts: map[string]*Products{},
 	}
 }
 
@@ -92,13 +96,27 @@ func (s *SimpleStreams) cachedDownload(path string) ([]byte, error) {
 	fields := strings.Split(path, "/")
 	fileName := fields[len(fields)-1]
 
-	// Attempt to get from the cache
+	// Handle local filesystem reads (bypass cache).
+	if s.http == nil {
+		body, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(body) == 0 {
+			return nil, fmt.Errorf("Empty index file %q", path)
+		}
+
+		return body, nil
+	}
+
+	// Attempt to get from the cache.
 	cachedBody, expired := s.readCache(fileName)
 	if cachedBody != nil && !expired {
 		return cachedBody, nil
 	}
 
-	// Download from the source
+	// Download from the remote URL.
 	uri, err := url.JoinPath(s.url, path)
 	if err != nil {
 		return nil, err
@@ -213,20 +231,7 @@ func (s *SimpleStreams) applyAliases(images []api.Image) ([]api.Image, []extende
 	// Sort the images so we tag the preferred ones
 	sort.Sort(sortedImages(images))
 
-	// Look for the default OS
-	defaultOS := ""
-	for k, v := range urlDefaultOS {
-		if strings.HasPrefix(s.url, k) {
-			defaultOS = v
-			break
-		}
-	}
-
 	addAlias := func(imageType string, architecture string, name string, fingerprint string) *api.ImageAlias {
-		if defaultOS != "" {
-			name = strings.TrimPrefix(name, fmt.Sprintf("%s/", defaultOS))
-		}
-
 		for _, entry := range aliasesList {
 			if entry.Name == name && entry.Type == imageType && entry.Architecture == architecture {
 				return nil
