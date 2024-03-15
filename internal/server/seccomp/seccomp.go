@@ -264,7 +264,8 @@ static inline int bpf(int cmd, union bpf_attr *attr, size_t size)
 static int handle_bpf_syscall(pid_t pid_target, int notify_fd, int mem_fd,
 			      int tgid, struct seccomp_notify_proxy_msg *msg,
 			      struct seccomp_notif *req, struct seccomp_notif_resp *resp,
-			      int *bpf_cmd, int *bpf_prog_type, int *bpf_attach_type)
+			      int *bpf_cmd, int *bpf_prog_type, int *bpf_attach_type,
+			      unsigned int flags)
 {
 	__do_close int pidfd = -EBADF, bpf_target_fd = -EBADF, bpf_attach_fd = -EBADF,
 		       bpf_prog_fd = -EBADF;
@@ -307,7 +308,10 @@ static int handle_bpf_syscall(pid_t pid_target, int notify_fd, int mem_fd,
 
 	*bpf_prog_type = attr.prog_type;
 
-	pidfd = incus_pidfd_open(tgid, 0);
+	if (flags & PIDFD_THREAD)
+		pidfd = incus_pidfd_open(pid_target, PIDFD_THREAD);
+	else
+		pidfd = incus_pidfd_open(tgid, 0);
 	if (pidfd < 0)
 		return -errno;
 
@@ -383,7 +387,7 @@ static int handle_bpf_syscall(pid_t pid_target, int notify_fd, int mem_fd,
 		if (bpf_attach_fd < 0)
 			return -errno;
 
-		if (tgid != pid_target) {
+		if (!(flags & PIDFD_THREAD) && tgid != pid_target) {
 			// Make sure that the file descriptor table is shared
 			// so we can be sure that we're talking about the same
 			// open files.
@@ -416,7 +420,7 @@ static int handle_bpf_syscall(pid_t pid_target, int notify_fd, int mem_fd,
 		if (bpf_attach_fd < 0)
 			return -errno;
 
-		if (tgid != pid_target) {
+		if (!(flags & PIDFD_THREAD) && tgid != pid_target) {
 			// Make sure that the file descriptor table is shared
 			// so we can be sure that we're talking about the same
 			// open files.
@@ -2259,7 +2263,8 @@ func (s *Server) HandleBpfSyscall(c Instance, siov *Iovec) int {
 	}
 
 	defer logger.Debug("Handling bpf syscall", ctx)
-	var bpfCmd, bpfProgType, bpfAttachType C.int
+	var bpfCmd, bpfProgType, bpfAttachType, tgid C.int
+	var flags C.uint
 
 	if util.IsFalseOrEmpty(c.ExpandedConfig()["security.syscalls.intercept.bpf.devices"]) {
 		ctx["syscall_continue"] = "true"
@@ -2268,12 +2273,17 @@ func (s *Server) HandleBpfSyscall(c Instance, siov *Iovec) int {
 		return 0
 	}
 
-	tgid, err := FindTGID(siov.procFd)
-	if err != nil || tgid == -1 {
-		ctx["syscall_continue"] = "true"
-		ctx["syscall_handler_reason"] = "Could not find thread group leader ID"
-		C.seccomp_notify_update_response(siov.resp, 0, C.uint32_t(seccompUserNotifFlagContinue))
-		return 0
+	if s.s.OS.PidFdsThread {
+		flags |= C.PIDFD_THREAD
+		tgid = -1
+	} else {
+		tgid, err := FindTGID(siov.procFd)
+		if err != nil || tgid == -1 {
+			ctx["syscall_continue"] = "true"
+			ctx["syscall_handler_reason"] = "Could not find thread group leader ID"
+			C.seccomp_notify_update_response(siov.resp, 0, C.uint32_t(seccompUserNotifFlagContinue))
+			return 0
+		}
 	}
 
 	// Locking to a thread shouldn't be necessary but it still makes me
@@ -2289,7 +2299,7 @@ func (s *Server) HandleBpfSyscall(c Instance, siov *Iovec) int {
 		siov.resp,
 		&bpfCmd,
 		&bpfProgType,
-		&bpfAttachType)
+		&bpfAttachType, flags)
 	runtime.UnlockOSThread()
 	ctx["bpf_cmd"] = fmt.Sprintf("%d", bpfCmd)
 	ctx["bpf_prog_type"] = fmt.Sprintf("%d", bpfProgType)

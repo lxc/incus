@@ -915,12 +915,19 @@ func (d *Daemon) init() error {
 
 	if canUsePidFds() && d.os.LXCFeatures["pidfd"] {
 		d.os.PidFds = true
+		d.os.PidFdsThread = canUseThreadPidFds()
 	}
 
 	if d.os.PidFds {
 		logger.Info(" - pidfds: yes")
 	} else {
 		logger.Info(" - pidfds: no")
+	}
+
+	if d.os.PidFdsThread {
+		logger.Info(" - pidfds for threads: yes")
+	} else {
+		logger.Info(" - pidfds for threads: no")
 	}
 
 	if canUseCoreScheduling() {
