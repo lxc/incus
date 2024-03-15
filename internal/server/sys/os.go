@@ -81,6 +81,7 @@ type OS struct {
 	NativeTerminals         bool // NativeTerminals indicates support for TIOGPTPEER ioctl.
 	NetnsGetifaddrs         bool // NetnsGetifaddrs indicates support for NETLINK_GET_STRICT_CHK.
 	PidFds                  bool // PidFds indicates support for PID fds.
+	PidFdsThread            bool // PidFds indicates support for thread PID fds.
 	PidFdSetns              bool // PidFdSetns indicates support for setns through PID fds.
 	SeccompListenerAddfd    bool // SeccompListenerAddfd indicates support for passing new FD to process through seccomp notify.
 	SeccompListener         bool // SeccompListener indicates support for seccomp notify.

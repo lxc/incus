@@ -18,6 +18,10 @@
 #include "memory_utils.h"
 #include "syscall_numbers.h"
 
+#ifndef PIDFD_THREAD
+#define PIDFD_THREAD O_EXCL
+#endif
+
 static inline int incus_pidfd_open(pid_t pid, unsigned int flags)
 {
 	return syscall(__NR_pidfd_open, pid, flags);

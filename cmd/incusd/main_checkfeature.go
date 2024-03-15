@@ -39,6 +39,7 @@ __ro_after_init bool close_range_aware = false;
 __ro_after_init bool tiocgptpeer_aware = false;
 __ro_after_init bool netnsid_aware = false;
 __ro_after_init bool pidfd_aware = false;
+__ro_after_init bool pidfd_thread_aware = false;
 __ro_after_init bool pidfd_setns_aware = false;
 __ro_after_init bool uevent_aware = false;
 __ro_after_init bool binfmt_aware = false;
@@ -419,7 +420,7 @@ static void is_seccomp_notify_aware(void)
 
 static int is_pidfd_aware(void)
 {
-	__do_close int pidfd = -EBADF;
+	__do_close int pidfd = -EBADF, pidfd_thread = -EBADF;
 	int ret;
 
 	pidfd = incus_pidfd_open(getpid(), 0);
@@ -441,6 +442,10 @@ static int is_pidfd_aware(void)
 	ret = incus_pidfd_send_signal(pidfd, 0, NULL, 0);
 	if (ret)
 		return -errno;
+
+	pidfd_thread = incus_pidfd_open(getpid(), PIDFD_THREAD);
+	if (pidfd_thread >= 0)
+		pidfd_thread_aware = true;
 
 	pidfd_aware = true;
 	return move_fd(pidfd);
@@ -705,6 +710,10 @@ func canUseSeccompListenerAddfd() bool {
 
 func canUsePidFds() bool {
 	return bool(C.pidfd_aware)
+}
+
+func canUseThreadPidFds() bool {
+	return bool(C.pidfd_thread_aware)
 }
 
 // We're only using this during daemon startup to give an indication whether
