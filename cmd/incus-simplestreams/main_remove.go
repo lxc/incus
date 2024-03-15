@@ -65,55 +65,41 @@ func (c *cmdRemove) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		for kVersion, version := range product.Versions {
-			// Find the incus.tar.xz and figure out what to delete.
-			var deleteDisk bool
-			var deleteSquashfs bool
-			var metadataPath string
-
-			for _, item := range version.Items {
-				if item.FileType != "incus.tar.xz" {
-					continue
-				}
-
-				metadataPath = item.Path
-
-				if item.CombinedSha256DiskKvmImg == image.Fingerprint {
-					deleteDisk = true
-					break
-				}
-
-				if item.CombinedSha256SquashFs == image.Fingerprint {
-					deleteSquashfs = true
-					break
-				}
+			// Get the metadata entry.
+			metaEntry, ok := version.Items["incus.tar.xz"]
+			if !ok {
+				// Image isn't using our normal structure.
+				continue
 			}
 
-			// Delete the entry and associated files.
-			for kItem, item := range version.Items {
-				if deleteDisk && item.FileType == "disk-kvm.img" {
-					err = os.Remove(item.Path)
-					if err != nil && !os.IsNotExist(err) {
-						return err
-					}
-
-					delete(version.Items, kItem)
-					break
+			if metaEntry.CombinedSha256DiskKvmImg == image.Fingerprint {
+				// Deleting a VM image.
+				err = os.Remove(version.Items["disk-kvm.img"].Path)
+				if err != nil && !os.IsNotExist(err) {
+					return err
 				}
 
-				if deleteSquashfs && item.FileType == "squashfs" {
-					err = os.Remove(item.Path)
-					if err != nil && !os.IsNotExist(err) {
-						return err
-					}
-
-					delete(version.Items, kItem)
-					break
+				delete(version.Items, "disk-kvm.img")
+				metaEntry.CombinedSha256DiskKvmImg = ""
+			} else if metaEntry.CombinedSha256SquashFs == image.Fingerprint {
+				// Deleting a container image.
+				err = os.Remove(version.Items["squashfs"].Path)
+				if err != nil && !os.IsNotExist(err) {
+					return err
 				}
+
+				delete(version.Items, "squashfs")
+				metaEntry.CombinedSha256SquashFs = ""
+			} else {
+				continue
 			}
+
+			// Update the metadata entry.
+			version.Items["incus.tar.xz"] = metaEntry
 
 			// Delete the version if it's now empty.
 			if len(version.Items) == 1 {
-				err = os.Remove(metadataPath)
+				err = os.Remove(metaEntry.Path)
 				if err != nil && !os.IsNotExist(err) {
 					return err
 				}
