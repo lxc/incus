@@ -4,7 +4,7 @@ Remote servers are a concept in the Incus command-line client.
 By default, the command-line client interacts with the local Incus daemon, but you can add other servers or clusters to interact with.
 
 One use case for remote servers is to distribute images that can be used to create instances on local servers.
-See {ref}`remote-image-servers` for more information.
+See {ref}`image-servers` for more information.
 
 You can also add a full Incus server as a remote server to your client.
 In this case, you can interact with the remote server in the same way as with your local daemon.

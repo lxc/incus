@@ -28,7 +28,7 @@ Rebooting the instance does not re-trigger the actions.
 
 To use `cloud-init`, you must base your instance on an image that has `cloud-init` installed:
 
-* All images from the `ubuntu` and `ubuntu-daily` {ref}`image servers <remote-image-servers>` have `cloud-init` support.
+* All images from the `ubuntu` and `ubuntu-daily` {ref}`image servers <image-servers>` have `cloud-init` support.
 * Images from the [`images` remote](https://images.linuxcontainers.org/) have `cloud-init`-enabled variants, which are usually bigger in size than the default variant.
   The cloud variants use the `/cloud` suffix, for example, `images:ubuntu/22.04/cloud`.
 
