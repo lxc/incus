@@ -36,7 +36,7 @@ There are several ways of obtaining such image files:
 
 - Exporting an existing image (see {ref}`images-manage-export`)
 - Building your own image using `distrobuilder` (see {ref}`images-create-build`)
-- Downloading image files from a {ref}`remote image server <remote-image-servers>` (note that it is usually easier to {ref}`use the remote image <images-remote>` directly instead of downloading it to a file and importing it)
+- Downloading image files from a {ref}`remote image server <image-servers>` (note that it is usually easier to {ref}`use the remote image <images-remote>` directly instead of downloading it to a file and importing it)
 
 ### Import from the local file system
 
