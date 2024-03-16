@@ -2432,6 +2432,85 @@ definitions:
         title: InstancesPut represents the fields available for a mass update.
         type: object
         x-go-package: github.com/lxc/incus/shared/api
+    MetadataConfig:
+        additionalProperties:
+            additionalProperties:
+                $ref: '#/definitions/MetadataConfigGroup'
+            type: object
+        description: MetadataConfig repreents metadata about configuration keys
+        type: object
+        x-go-package: github.com/lxc/incus/shared/api
+    MetadataConfigEntityName:
+        description: |-
+            MetadataConfigEntityName represents a main API object type
+            Example: instance
+        type: string
+        x-go-package: github.com/lxc/incus/shared/api
+    MetadataConfigGroup:
+        description: MetadataConfigGroup represents a group of config keys
+        properties:
+            keys:
+                items:
+                    additionalProperties:
+                        $ref: '#/definitions/MetadataConfigKey'
+                    type: object
+                type: array
+                x-go-name: Keys
+        type: object
+        x-go-package: github.com/lxc/incus/shared/api
+    MetadataConfigGroupName:
+        description: |-
+            MetadataConfigGroupName represents the name of a group of config keys
+            Example: volatile
+        type: string
+        x-go-package: github.com/lxc/incus/shared/api
+    MetadataConfigKey:
+        description: MetadataConfigKey describe a configuration key
+        properties:
+            condition:
+                description: Condition specifies the condition that must be met for the option to be taken into account
+                example: container
+                type: string
+                x-go-name: Condition
+            defaultdesc:
+                description: DefaultDesc specify default value for configuration
+                example: '"`DHCP on eth0`"'
+                type: string
+                x-go-name: Default
+            liveupdate:
+                description: LiveUpdate specifies whether the server must be restarted for the option to be updated
+                example: '"no"'
+                type: string
+                x-go-name: LiveUpdate
+            longdesc:
+                description: LongDesc provides long description for the option
+                example: '"Specify the kernel modules as a comma-separated list."'
+                type: string
+                x-go-name: LongDescription
+            scope:
+                description: Scope defines if option apply to cluster or to the local server
+                example: global
+                type: string
+                x-go-name: Scope
+            shortdesc:
+                description: ShortDesc provides short description for the configuration
+                example: '"Kernel modules to load before starting the instance"'
+                type: string
+                x-go-name: Description
+            type:
+                description: Type specifies the type of the option
+                example: string
+                type: string
+                x-go-name: Type
+        type: object
+        x-go-package: github.com/lxc/incus/shared/api
+    MetadataConfiguration:
+        description: MetadataConfiguration represents a server's exposed configuration metadata
+        properties:
+            configs:
+                $ref: '#/definitions/MetadataConfig'
+        type: object
+        x-go-package: github.com/lxc/incus/shared/api
     Network:
         description: Network represents a network
         properties:
