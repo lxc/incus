@@ -183,6 +183,9 @@ type InstanceServer interface {
 	RenameImageAlias(name string, alias api.ImageAliasesEntryPost) (err error)
 	DeleteImageAlias(name string) (err error)
 
+	// Configuration metadata functions
+	GetMetadataConfiguration() (meta *api.MetadataConfiguration, err error)
+
 	// Network functions ("network" API extension)
 	GetNetworkNames() (names []string, err error)
 	GetNetworks() (networks []api.Network, err error)
