@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	deviceConfig "github.com/lxc/incus/internal/server/device/config"
@@ -21,8 +22,16 @@ const usbDevPath = "/sys/bus/usb/devices"
 // This function is not defined against the usb struct type so that it can be used in event
 // callbacks without needing to keep a reference to the usb device struct.
 func usbIsOurDevice(config deviceConfig.Device, usb *USBEvent) bool {
+	var busNum int64 = 0
+	var devNum int64 = 0
+
+	if config["bus"] != "" && config["device"] != "" {
+		busNum, _ = strconv.ParseInt(config["bus"], 10, 64)
+		devNum, _ = strconv.ParseInt(config["device"], 10, 64)
+	}
+
 	// Check if event matches criteria for this device, if not return.
-	if (config["vendorid"] != "" && config["vendorid"] != usb.Vendor) || (config["productid"] != "" && config["productid"] != usb.Product) {
+	if (config["vendorid"] != "" && config["vendorid"] != usb.Vendor) || (config["productid"] != "" && config["productid"] != usb.Product) || (config["bus"] != "" && busNum != int64(usb.BusNum)) || (config["device"] != "" && devNum != int64(usb.DevNum)) {
 		return false
 	}
 
@@ -56,6 +65,8 @@ func (d *usb) validateConfig(instConf instance.ConfigReader) error {
 		"gid":       unixValidUserID,
 		"mode":      unixValidOctalFileMode,
 		"required":  validate.Optional(validate.IsBool),
+		"bus":       validate.Optional(validate.IsInt64),
+		"device":    validate.Optional(validate.IsInt64),
 	}
 
 	err := d.config.Validate(rules)
