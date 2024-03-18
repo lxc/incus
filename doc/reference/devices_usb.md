@@ -28,3 +28,6 @@ Key         | Type      | Default           | Description
 `required`  | bool      | `false`           | Whether this device is required to start the instance (the default is `false`, and all devices can be hotplugged)
 `uid`       | int       | `0`               | Only for containers: UID of the device owner in the instance
 `vendorid`  | string    | -                 | The vendor ID of the USB device
+`serial`    | string    | -                 | The serial number of the USB device
+`busnum`    | int       | -                 | The bus number of which the USB device is attached
+`devnum`    | int       | -                 | The device number of the USB device
