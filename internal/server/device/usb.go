@@ -22,7 +22,11 @@ const usbDevPath = "/sys/bus/usb/devices"
 // callbacks without needing to keep a reference to the usb device struct.
 func usbIsOurDevice(config deviceConfig.Device, usb *USBEvent) bool {
 	// Check if event matches criteria for this device, if not return.
-	if (config["vendorid"] != "" && config["vendorid"] != usb.Vendor) || (config["productid"] != "" && config["productid"] != usb.Product) {
+	if (config["vendorid"] != "" && config["vendorid"] != usb.Vendor) ||
+		(config["productid"] != "" && config["productid"] != usb.Product) ||
+		(config["serial"] != "" && config["serial"] != usb.Serial) ||
+		(config["busnum"] != "" && config["busnum"] != fmt.Sprintf("%d", usb.BusNum)) ||
+		(config["devnum"] != "" && config["devnum"] != fmt.Sprintf("%d", usb.DevNum)) {
 		return false
 	}
 
@@ -52,10 +56,13 @@ func (d *usb) validateConfig(instConf instance.ConfigReader) error {
 	rules := map[string]func(string) error{
 		"vendorid":  validate.Optional(validate.IsDeviceID),
 		"productid": validate.Optional(validate.IsDeviceID),
+		"serial":    validate.Optional(validate.IsAny),
 		"uid":       unixValidUserID,
 		"gid":       unixValidUserID,
 		"mode":      unixValidOctalFileMode,
 		"required":  validate.Optional(validate.IsBool),
+		"busnum":    validate.Optional(validate.IsUint32),
+		"devnum":    validate.Optional(validate.IsUint32),
 	}
 
 	err := d.config.Validate(rules)
@@ -265,6 +272,7 @@ func (d *usb) loadUsb() ([]USBEvent, error) {
 			"add",
 			values["idVendor"],
 			values["idProduct"],
+			values["serial"],
 			parts[0],
 			parts[1],
 			values["busnum"],
@@ -291,6 +299,7 @@ func (d *usb) loadRawValues(p string) (map[string]string, error) {
 	values := map[string]string{
 		"idVendor":  "",
 		"idProduct": "",
+		"serial":    "",
 		"dev":       "",
 		"busnum":    "",
 		"devnum":    "",

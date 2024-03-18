@@ -181,6 +181,11 @@ func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.U
 					continue
 				}
 
+				serial, ok := props["SERIAL"]
+				if !ok {
+					continue
+				}
+
 				major, ok := props["MAJOR"]
 				if !ok {
 					continue
@@ -218,6 +223,7 @@ func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.U
 					 */
 					zeroPad(parts[0], 4),
 					zeroPad(parts[1], 4),
+					serial,
 					major,
 					minor,
 					busnum,
