@@ -2387,3 +2387,8 @@ The `JWT` must have the certificate's fingerprint as its `Subject` and must be s
 ## `oidc_claim`
 
 This introduces a new `oidc.claim` server configuration key which can be used to specify what OpenID Connect claim to use as the username.
+
+## `device_usb_serial`
+
+This adds a new configuration key `serial` for device type `usb`.
+Feature has been added, to make it possible to distinguish between devices with identical `vendorid` and `productid`.
