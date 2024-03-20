@@ -2375,3 +2375,11 @@ With this, it's possible to have a single shared LVM pool across multiple server
 This adds a new configuration key `security.shared` to custom block volumes.
 If unset or `false`, the custom block volume cannot be attached to multiple instances.
 This feature was added to prevent data loss which can happen when custom block volumes are attached to multiple instances at once.
+
+## `auth_tls_jwt`
+
+This adds the ability to use a signed `JSON Web Token` (`JWT`) instead of using the TLS client certificate directly.
+
+In this scenario, the client derives a `JWT` from their own TLS client certificate providing it as a `bearer` token through the `Authorization` HTTP header.
+
+The `JWT` must have the certificate's fingerprint as its `Subject` and must be signed by the client's private key.

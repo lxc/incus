@@ -58,6 +58,18 @@ The workflow to authenticate with the server is similar to that of SSH, where an
 It is possible to restrict a TLS client's access to Incus via {ref}`authorization-tls`.
 To revoke trust to a client, remove its certificate from the server with [`incus config trust remove <fingerprint>`](incus_config_trust_remove.md).
 
+(authentication-tls-jwt)=
+#### Using `JSON Web Token` (`JWT`) to perform TLS authentication
+
+As an alternative to directly using the client's TLS certificate for
+authentication, Incus also supports the user derive a `bearer` token and
+use it through the HTTP `Authorization` header.
+
+To do this, the user must generate a signed `JWT` which has its
+`Subject` field set to the full fingerprint of their client certificate,
+it must have valid `NotBefore` and `NotAfter` fields and be signed by
+the client certificate's private key.
+
 (authentication-add-certs)=
 #### Adding trusted certificates to the server
 

@@ -3,8 +3,10 @@ package util
 import (
 	"bytes"
 	"context"
+	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -16,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/lxc/incus/internal/ports"
 	"github.com/lxc/incus/shared/api"
 	"github.com/lxc/incus/shared/logger"
@@ -287,4 +290,69 @@ func IsJSONRequest(r *http.Request) bool {
 	}
 
 	return false
+}
+
+// CheckJwtToken checks whether the given request has JWT token that is valid and
+// signed with client certificate from the trusted certificates.
+// Returns whether or not the token is valid, the fingerprint of the certificate and the certificate.
+func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (bool, string, *x509.Certificate) {
+	// Check if the request has a JWT token
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return false, "", nil
+	}
+
+	parts := strings.Split(auth, " ")
+	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		return false, "", nil
+	}
+
+	tokenString := parts[1]
+
+	// Parse the token
+	jwtParser := jwt.NewParser()
+
+	requestToken, requestTokenParts, err := jwtParser.ParseUnverified(tokenString, &jwt.RegisteredClaims{})
+	if err != nil {
+		return false, "", nil
+	}
+
+	requestTokenClaims, ok := requestToken.Claims.(*jwt.RegisteredClaims)
+	if !ok {
+		return false, "", nil // JWT claims type invalid
+	}
+
+	// Check if the token is valid
+	if time.Now().Before(requestTokenClaims.NotBefore.Time) || time.Now().After(requestTokenClaims.ExpiresAt.Time) {
+		return false, "", nil // token not yet valid or expired
+	}
+
+	// Find the certificate by token subject
+	requestTokenCert, ok := trustedCerts[requestTokenClaims.Subject]
+	if !ok {
+		return false, "", nil // certificate not found
+	}
+
+	requestTokenCertPublicKey, ok := requestTokenCert.PublicKey.(*rsa.PublicKey)
+	if !ok {
+		return false, "", nil // certificate public key invalid
+	}
+
+	// Verify the token signature
+	requestTokenSigningString, err := requestToken.SigningString()
+	if err != nil {
+		return false, "", nil // could not generate signing string
+	}
+
+	requestTokenSignature, err := base64.RawURLEncoding.DecodeString(requestTokenParts[2])
+	if err != nil {
+		return false, "", nil // could not decode JWT signature
+	}
+
+	err = requestToken.Method.Verify(requestTokenSigningString, requestTokenSignature, requestTokenCertPublicKey)
+	if err != nil {
+		return false, "", nil // signature verification failed
+	}
+
+	return true, requestTokenClaims.Subject, &requestTokenCert
 }

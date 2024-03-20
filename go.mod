@@ -14,6 +14,7 @@ require (
 	github.com/fvbommel/sortorder v1.1.0
 	github.com/go-acme/lego/v4 v4.16.1
 	github.com/go-logr/logr v1.4.1
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/gopacket v1.1.19
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
