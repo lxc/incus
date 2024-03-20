@@ -22,6 +22,8 @@ When a device is passed to the instance, it vanishes from the host.
 
 Key         | Type      | Default           | Description
 :--         | :--       | :--               | :--
+`bus`       | string    | -                 | The bus number of the USB device
+`device`    | string    | -                 | The device number of the USB device
 `gid`       | int       | `0`               | Only for containers: GID of the device owner in the instance
 `mode`      | int       | `0660`            | Only for containers: Mode of the device in the instance
 `productid` | string    | -                 | The product ID of the USB device
