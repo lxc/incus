@@ -32,8 +32,6 @@ That means that whether the directory also contains the data of your instances d
 
 ```{important}
 If your Incus server uses any external storage (for example, LVM volume groups, ZFS zpools, or any other resource that isn't directly self-contained to Incus), you must back this up separately.
-
-See {ref}`howto-storage-backup-volume` for instructions.
 ```
 
 To back up your data, create a tarball of `/var/lib/incus`.
