@@ -20,6 +20,17 @@ func (c *Config) HasClientCertificate() bool {
 	return true
 }
 
+// HasRemoteClientCertificate will return true if a remote-specific client certificate is present.
+func (c *Config) HasRemoteClientCertificate(name string) bool {
+	certf := c.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", name))
+	keyf := c.ConfigPath("clientcerts", fmt.Sprintf("%s.key", name))
+	if !util.PathExists(certf) || !util.PathExists(keyf) {
+		return false
+	}
+
+	return true
+}
+
 // GenerateClientCertificate will generate the needed client.crt and client.key if needed.
 func (c *Config) GenerateClientCertificate() error {
 	if c.HasClientCertificate() {
