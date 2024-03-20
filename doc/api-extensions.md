@@ -2383,3 +2383,7 @@ This adds the ability to use a signed `JSON Web Token` (`JWT`) instead of using 
 In this scenario, the client derives a `JWT` from their own TLS client certificate providing it as a `bearer` token through the `Authorization` HTTP header.
 
 The `JWT` must have the certificate's fingerprint as its `Subject` and must be signed by the client's private key.
+
+## `oidc_claim`
+
+This introduces a new `oidc.claim` server configuration key which can be used to specify what OpenID Connect claim to use as the username.

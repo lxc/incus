@@ -401,6 +401,7 @@ var APIExtensions = []string{
 	"storage_lvm_cluster",
 	"shared_custom_block_volumes",
 	"auth_tls_jwt",
+	"oidc_claim",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
