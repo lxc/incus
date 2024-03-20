@@ -1787,6 +1787,13 @@ Specify the volume using the syntax `POOL/VOLUME`.
 This value is required by some providers.
 ```
 
+```{config:option} oidc.claim server-oidc
+:scope: "global"
+:shortdesc: "OpenID Connect claim to use as the username"
+:type: "string"
+
+```
+
 ```{config:option} oidc.client.id server-oidc
 :scope: "global"
 :shortdesc: "OpenID Connect client ID"
