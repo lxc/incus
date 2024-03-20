@@ -1,5 +1,9 @@
 package api
 
+import (
+	"fmt"
+)
+
 // MetadataConfiguration represents a server's exposed configuration metadata
 //
 // swagger:model
@@ -9,6 +13,32 @@ type MetadataConfiguration struct {
 	// Metadata about configuration keys.
 	// Example: {'configs': {'instance': {...}}}
 	Config MetadataConfig `json:"configs" yaml:"configs"`
+}
+
+// GetKeys provides an easy way to interact with MetadataConfiguration.
+func (m *MetadataConfiguration) GetKeys(entity string, group string) (map[string]MetadataConfigKey, error) {
+	keys := map[string]MetadataConfigKey{}
+
+	// Get the entity.
+	configEntity, ok := m.Config[MetadataConfigEntityName(entity)]
+	if !ok {
+		return nil, fmt.Errorf("Requested configuration entity %q doesn't exist", entity)
+	}
+
+	// Get the group.
+	configGroup, ok := configEntity[MetadataConfigGroupName(group)]
+	if !ok {
+		return nil, fmt.Errorf("Requested configuration group %q doesn't exist", group)
+	}
+
+	// Go over the keys.
+	for _, k := range configGroup.Keys {
+		for name, entry := range k {
+			keys[name] = entry
+		}
+	}
+
+	return keys, nil
 }
 
 // MetadataConfig repreents metadata about configuration keys
