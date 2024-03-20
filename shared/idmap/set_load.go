@@ -190,7 +190,20 @@ func NewSetFromSystem(rootfs string, username string) (*Set, error) {
 	// Parse the shadow uidmap.
 	entries, err := getFromShadow("/etc/subuid", username)
 	if err != nil {
-		return nil, err
+		if err != ErrNoUserMap {
+			return nil, err
+		}
+
+		// Try using the uid instead.
+		u, err := user.Lookup(username)
+		if err != nil {
+			return nil, ErrNoUserMap
+		}
+
+		entries, err = getFromShadow("/etc/subuid", u.Uid)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for _, entry := range entries {
@@ -201,7 +214,20 @@ func NewSetFromSystem(rootfs string, username string) (*Set, error) {
 	// Parse the shadow gidmap.
 	entries, err = getFromShadow("/etc/subgid", username)
 	if err != nil {
-		return nil, err
+		if err != ErrNoUserMap {
+			return nil, err
+		}
+
+		// Try using the uid instead.
+		u, err := user.Lookup(username)
+		if err != nil {
+			return nil, ErrNoUserMap
+		}
+
+		entries, err = getFromShadow("/etc/subgid", u.Uid)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for _, entry := range entries {
