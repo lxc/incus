@@ -62,7 +62,7 @@ func (g *cmdGlobal) cmpClusterGroups(toComplete string) ([]string, cobra.ShellCo
 		if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
 			name = group
 		} else {
-			name = fmt.Sprintf("%s:%s", resource.remote, name)
+			name = fmt.Sprintf("%s:%s", resource.remote, group)
 		}
 
 		results = append(results, name)
@@ -331,6 +331,78 @@ func (g *cmdGlobal) cmpInstanceNamesFromRemote(toComplete string) ([]string, cob
 	}
 
 	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
+func (g *cmdGlobal) cmpNetworkACLConfigs(aclName string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.ParseServers(aclName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	acl, _, err := client.GetNetworkACL(resource.name)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var results []string
+	for k := range acl.Config {
+		results = append(results, k)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
+func (g *cmdGlobal) cmpNetworkACLs(toComplete string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(toComplete)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	acls, err := resource.server.GetNetworkACLNames()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	for _, acl := range acls {
+		var name string
+
+		if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
+			name = acl
+		} else {
+			name = fmt.Sprintf("%s:%s", resource.remote, acl)
+		}
+
+		results = append(results, name)
+	}
+
+	if !strings.Contains(toComplete, ":") {
+		remotes, directives := g.cmpRemotes(false)
+		results = append(results, remotes...)
+		cmpDirectives |= directives
+	}
+
+	return results, cmpDirectives
+}
+
+func (g *cmdGlobal) cmpNetworkACLRuleProperties() ([]string, cobra.ShellCompDirective) {
+	var results []string
+
+	allowedKeys := networkACLRuleJSONStructFieldMap()
+	for key := range allowedKeys {
+		results = append(results, fmt.Sprintf("%s=", key))
+	}
+
+	return results, cobra.ShellCompDirectiveNoSpace
 }
 
 func (g *cmdGlobal) cmpNetworks(toComplete string) ([]string, cobra.ShellCompDirective) {
