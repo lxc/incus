@@ -1380,7 +1380,7 @@ func (d *Daemon) init() error {
 
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
 	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiInstance, lokiLoglevel, lokiLabels, lokiTypes := d.globalConfig.LokiServer()
-	oidcIssuer, oidcClientID, oidcAudience := d.globalConfig.OIDCServer()
+	oidcIssuer, oidcClientID, oidcAudience, oidcClaim := d.globalConfig.OIDCServer()
 	syslogSocketEnabled := d.localConfig.SyslogSocket()
 	openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openFGAAuthorizationModelID := d.globalConfig.OpenFGA()
 	instancePlacementScriptlet := d.globalConfig.InstancesPlacementScriptlet()
@@ -1406,7 +1406,7 @@ func (d *Daemon) init() error {
 
 	// Setup OIDC authentication.
 	if oidcIssuer != "" && oidcClientID != "" {
-		d.oidcVerifier, err = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcAudience)
+		d.oidcVerifier, err = oidc.NewVerifier(oidcIssuer, oidcClientID, oidcAudience, oidcClaim)
 		if err != nil {
 			return err
 		}
