@@ -58,6 +58,9 @@ To configure a global remote, create or edit a `config.yml` file that is located
 Certificates for the remotes must be stored in the `servercerts` directory in the same location (for example, `/etc/incus/servercerts/`).
 They must match the remote name (for example, `foo.crt`).
 
+It's also possible to provide per-remote client certificates by placing them in the `clientcerts` directory.
+The similarly must match the remote name (for example, `foo.crt` and `foo.key`).
+
 See the following example configuration:
 
 ```

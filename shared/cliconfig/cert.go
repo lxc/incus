@@ -20,6 +20,17 @@ func (c *Config) HasClientCertificate() bool {
 	return true
 }
 
+// HasRemoteClientCertificate will return true if a remote-specific client certificate is present.
+func (c *Config) HasRemoteClientCertificate(name string) bool {
+	certf := c.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", name))
+	keyf := c.ConfigPath("clientcerts", fmt.Sprintf("%s.key", name))
+	if !util.PathExists(certf) || !util.PathExists(keyf) {
+		return false
+	}
+
+	return true
+}
+
 // GenerateClientCertificate will generate the needed client.crt and client.key if needed.
 func (c *Config) GenerateClientCertificate() error {
 	if c.HasClientCertificate() {
@@ -32,29 +43,75 @@ func (c *Config) GenerateClientCertificate() error {
 	return localtls.FindOrGenCert(certf, keyf, true, false)
 }
 
-// CopyGlobalCert will copy global (system-wide) certificate to the user config path.
+// CopyGlobalCert will copy global (system-wide) certificates to the user config path.
 func (c *Config) CopyGlobalCert(src string, dst string) error {
+	copyFile := func(oldPath string, newPath string) error {
+		sourceFile, err := os.Open(oldPath)
+		if err != nil {
+			return err
+		}
+
+		defer sourceFile.Close()
+
+		// Create new file.
+		newFile, err := os.Create(newPath)
+		if err != nil {
+			return err
+		}
+
+		defer newFile.Close()
+
+		_, err = io.Copy(newFile, sourceFile)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	// Server certificate.
 	oldPath := c.GlobalConfigPath("servercerts", fmt.Sprintf("%s.crt", src))
-	newPath := c.ConfigPath("servercerts", fmt.Sprintf("%s.crt", dst))
-	sourceFile, err := os.Open(oldPath)
-	if err != nil {
-		return err
+	if util.PathExists(oldPath) {
+		newPath := c.ConfigPath("servercerts", fmt.Sprintf("%s.crt", dst))
+
+		err := copyFile(oldPath, newPath)
+		if err != nil {
+			return err
+		}
 	}
 
-	defer func() { _ = sourceFile.Close() }()
+	// Client certificate.
+	oldPath = c.GlobalConfigPath("clientcerts", fmt.Sprintf("%s.crt", src))
+	if util.PathExists(oldPath) {
+		newPath := c.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", dst))
 
-	// Create new file
-	newFile, err := os.Create(newPath)
-	if err != nil {
-		return err
+		err := copyFile(oldPath, newPath)
+		if err != nil {
+			return err
+		}
 	}
 
-	defer func() { _ = newFile.Close() }()
+	// Client key.
+	oldPath = c.GlobalConfigPath("clientcerts", fmt.Sprintf("%s.key", src))
+	if util.PathExists(oldPath) {
+		newPath := c.ConfigPath("clientcerts", fmt.Sprintf("%s.key", dst))
 
-	_, err = io.Copy(newFile, sourceFile)
-	if err != nil {
-		return err
+		err := copyFile(oldPath, newPath)
+		if err != nil {
+			return err
+		}
 	}
 
-	return newFile.Close()
+	// Client CA.
+	oldPath = c.GlobalConfigPath("clientcerts", fmt.Sprintf("%s.ca", src))
+	if util.PathExists(oldPath) {
+		newPath := c.ConfigPath("clientcerts", fmt.Sprintf("%s.ca", dst))
+
+		err := copyFile(oldPath, newPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

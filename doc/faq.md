@@ -69,6 +69,7 @@ Various configuration files are stored in that directory, for example:
 - `client.crt`: client certificate (generated on demand)
 - `client.key`: client key (generated on demand)
 - `config.yml`: configuration file (info about `remotes`, `aliases`, etc.)
+- `clientcerts/`: directory with per-remote client certificates
 - `servercerts/`: directory with server certificates belonging to `remotes`
 
 ## Why can I not ping my Incus instance from another host?

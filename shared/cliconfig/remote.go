@@ -277,9 +277,23 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 		return &args, nil
 	}
 
+	// Certificate paths.
+	var pathClientCertificate string
+	var pathClientKey string
+	var pathClientCA string
+	if c.HasRemoteClientCertificate(name) {
+		pathClientCertificate = c.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", name))
+		pathClientKey = c.ConfigPath("clientcerts", fmt.Sprintf("%s.key", name))
+		pathClientCA = c.ConfigPath("clientcerts", fmt.Sprintf("%s.ca", name))
+	} else {
+		pathClientCertificate = c.ConfigPath("client.crt")
+		pathClientKey = c.ConfigPath("client.key")
+		pathClientCA = c.ConfigPath("client.ca")
+	}
+
 	// Client certificate
-	if util.PathExists(c.ConfigPath("client.crt")) {
-		content, err := os.ReadFile(c.ConfigPath("client.crt"))
+	if util.PathExists(pathClientCertificate) {
+		content, err := os.ReadFile(pathClientCertificate)
 		if err != nil {
 			return nil, err
 		}
@@ -288,8 +302,8 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	}
 
 	// Client CA
-	if util.PathExists(c.ConfigPath("client.ca")) {
-		content, err := os.ReadFile(c.ConfigPath("client.ca"))
+	if util.PathExists(pathClientCA) {
+		content, err := os.ReadFile(pathClientCA)
 		if err != nil {
 			return nil, err
 		}
@@ -298,8 +312,8 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	}
 
 	// Client key
-	if util.PathExists(c.ConfigPath("client.key")) {
-		content, err := os.ReadFile(c.ConfigPath("client.key"))
+	if util.PathExists(pathClientKey) {
+		content, err := os.ReadFile(pathClientKey)
 		if err != nil {
 			return nil, err
 		}
@@ -315,7 +329,7 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 				return nil, fmt.Errorf("Private key is password protected and no helper was configured")
 			}
 
-			password, err := c.PromptPassword("client.key")
+			password, err := c.PromptPassword(pathClientKey)
 			if err != nil {
 				return nil, err
 			}
