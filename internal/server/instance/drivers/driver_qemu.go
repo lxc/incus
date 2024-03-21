@@ -1067,44 +1067,47 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 		}
 	}
 
-	// The "size.state" of the instance root disk device must be larger than the instance memory.
+	return nil
+}
+
+func (d *qemu) checkStateStorage() error {
+	// For some operations, the "size.state" of the instance root disk device must be larger than the instance memory.
 	// Otherwise, there will not be enough disk space to write the instance state to disk during any subsequent stops.
 	// (Only check when migration.stateful is true, otherwise the memory won't be dumped when this instance stops).
-	if util.IsTrue(d.expandedConfig["migration.stateful"]) {
-		_, rootDiskDevice, err := d.getRootDiskDevice()
-		if err != nil {
-			return err
-		}
 
-		// Don't access d.storagePool directly since it isn't populated at this stage.
-		pool, err := d.getStoragePool()
-		if err != nil {
-			return err
-		}
+	_, rootDiskDevice, err := d.getRootDiskDevice()
+	if err != nil {
+		return err
+	}
 
-		stateDiskSizeStr := pool.Driver().Info().DefaultVMBlockFilesystemSize
-		if rootDiskDevice["size.state"] != "" {
-			stateDiskSizeStr = rootDiskDevice["size.state"]
-		}
+	// Don't access d.storagePool directly since it isn't populated at this stage.
+	pool, err := d.getStoragePool()
+	if err != nil {
+		return err
+	}
 
-		stateDiskSize, err := units.ParseByteSizeString(stateDiskSizeStr)
-		if err != nil {
-			return err
-		}
+	stateDiskSizeStr := pool.Driver().Info().DefaultVMBlockFilesystemSize
+	if rootDiskDevice["size.state"] != "" {
+		stateDiskSizeStr = rootDiskDevice["size.state"]
+	}
 
-		memoryLimitStr := QEMUDefaultMemSize
-		if d.expandedConfig["limits.memory"] != "" {
-			memoryLimitStr = d.expandedConfig["limits.memory"]
-		}
+	stateDiskSize, err := units.ParseByteSizeString(stateDiskSizeStr)
+	if err != nil {
+		return err
+	}
 
-		memoryLimit, err := units.ParseByteSizeString(memoryLimitStr)
-		if err != nil {
-			return err
-		}
+	memoryLimitStr := QEMUDefaultMemSize
+	if d.expandedConfig["limits.memory"] != "" {
+		memoryLimitStr = d.expandedConfig["limits.memory"]
+	}
 
-		if stateDiskSize < memoryLimit {
-			return fmt.Errorf("Stateful start requires that the instance limits.memory is less than size.state on the root disk device")
-		}
+	memoryLimit, err := units.ParseByteSizeString(memoryLimitStr)
+	if err != nil {
+		return err
+	}
+
+	if stateDiskSize < memoryLimit {
+		return fmt.Errorf("Stateful stop and snapshots require that the instance limits.memory is less than size.state on the root disk device")
 	}
 
 	return nil
@@ -4622,8 +4625,17 @@ func (d *qemu) Stop(stateful bool) error {
 	}
 
 	// Check for stateful.
-	if stateful && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
-		return fmt.Errorf("Stateful stop requires migration.stateful to be set to true")
+	if stateful {
+		// Confirm the instance has stateful migration enabled.
+		if util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
+			return fmt.Errorf("Stateful stop requires migration.stateful to be set to true")
+		}
+
+		// Confirm the instance has sufficient reserved state space.
+		err := d.checkStateStorage()
+		if err != nil {
+			return err
+		}
 	}
 
 	// Setup a new operation.
@@ -4782,6 +4794,12 @@ func (d *qemu) snapshot(name string, expiry time.Time, stateful bool) error {
 		// Confirm the instance has stateful migration enabled.
 		if util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
 			return fmt.Errorf("Stateful snapshot requires migration.stateful to be set to true")
+		}
+
+		// Confirm the instance has sufficient reserved state space.
+		err = d.checkStateStorage()
+		if err != nil {
+			return err
 		}
 
 		// Quick checks.
