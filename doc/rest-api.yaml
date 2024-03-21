@@ -5156,6 +5156,11 @@ definitions:
                 example: "2221"
                 type: string
                 x-go-name: ProductID
+            serial:
+                description: USB serial number
+                example: DAE005fp
+                type: string
+                x-go-name: Serial
             speed:
                 description: Transfer speed (Mbit/s)
                 example: 12
