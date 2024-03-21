@@ -373,6 +373,83 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		rewriteStatements = append(rewriteStatements, "UPDATE projects SET description='Default Incus project' WHERE description='Default LXD project';")
 	}
 
+	// Mangle database schema to be compatible.
+	if !c.flagClusterMember {
+		srcServerInfo, _, err := srcClient.GetServer()
+		if err != nil {
+			_, _ = logFile.WriteString(fmt.Sprintf("ERROR: %v\n", err))
+			return fmt.Errorf("Failed to get source server info: %w", err)
+		}
+
+		srcVersion, err := version.Parse(srcServerInfo.Environment.ServerVersion)
+		if err != nil {
+			return fmt.Errorf("Couldn't parse source server version: %w", err)
+		}
+
+		lxdVersionAuth := &version.DottedVersion{Major: 5, Minor: 21, Patch: 0}
+		if srcVersion.Compare(lxdVersionAuth) >= 0 {
+			// Re-create the certificate tables.
+			rewriteStatements = append(rewriteStatements, `CREATE TABLE certificates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    fingerprint TEXT NOT NULL,
+    type INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    certificate TEXT NOT NULL,
+    restricted INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (fingerprint)
+);
+CREATE TABLE "certificates_projects" (
+    certificate_id INTEGER NOT NULL,
+    project_id INTEGER NOT NULL,
+    FOREIGN KEY (certificate_id) REFERENCES certificates (id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE,
+    UNIQUE (certificate_id, project_id)
+);`)
+
+			// Revert the schema version.
+			rewriteStatements = append(rewriteStatements, `DELETE FROM schema WHERE version < 73;
+UPDATE schema SET version=69 WHERE version=73;`)
+
+			// Convert back the entries.
+			rewriteStatements = append(rewriteStatements, `INSERT INTO certificates (id, fingerprint, type, name, certificate, restricted) SELECT id, identifier, 1, name, json_extract(metadata, "$.cert"), 1 FROM identities WHERE type=1;
+INSERT INTO certificates (id, fingerprint, type, name, certificate, restricted) SELECT id, identifier, 1, name, json_extract(metadata, "$.cert"), 0 FROM identities WHERE type=2;
+INSERT INTO certificates (id, fingerprint, type, name, certificate, restricted) SELECT id, identifier, 2, name, json_extract(metadata, "$.cert"), 0 FROM identities WHERE type=3;
+INSERT INTO certificates (id, fingerprint, type, name, certificate, restricted) SELECT id, identifier, 3, name, json_extract(metadata, "$.cert"), 1 FROM identities WHERE type=4;
+INSERT INTO certificates_projects (certificate_id, project_id) SELECT identity_id, project_id FROM identities_projects;`)
+
+			// Drop the other tables.
+			rewriteStatements = append(rewriteStatements, `DROP TRIGGER on_auth_group_delete;
+DROP TRIGGER on_cluster_group_delete;
+DROP TRIGGER on_identity_delete;
+DROP TRIGGER on_identity_provider_group_delete;
+DROP TRIGGER on_image_alias_delete;
+DROP TRIGGER on_image_delete;
+DROP TRIGGER on_instance_backup_delete;
+DROP TRIGGER on_instance_delete;
+DROP TRIGGER on_instance_snaphot_delete;
+DROP TRIGGER on_network_acl_delete;
+DROP TRIGGER on_network_delete;
+DROP TRIGGER on_network_zone_delete;
+DROP TRIGGER on_node_delete;
+DROP TRIGGER on_operation_delete;
+DROP TRIGGER on_profile_delete;
+DROP TRIGGER on_project_delete;
+DROP TRIGGER on_storage_bucket_delete;
+DROP TRIGGER on_storage_pool_delete;
+DROP TRIGGER on_storage_volume_backup_delete;
+DROP TRIGGER on_storage_volume_delete;
+DROP TRIGGER on_storage_volume_snapshot_delete;
+DROP TRIGGER on_warning_delete;
+DROP TABLE identities_projects;
+DROP TABLE auth_groups_permissions;
+DROP TABLE auth_groups_identity_provider_groups;
+DROP TABLE identities_auth_groups;
+DROP TABLE identity_provider_groups;
+DROP TABLE identities;
+DROP TABLE auth_groups;`)
+		}
+	}
+
 	// Log rewrite actions.
 	_, _ = logFile.WriteString("Rewrite SQL statements:\n")
 	for _, entry := range rewriteStatements {
