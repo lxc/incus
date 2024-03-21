@@ -126,11 +126,59 @@ func (d *gpuSRIOV) getVF() (string, int, error) {
 
 	// If NUMA restricted, build up a list of nodes.
 	var numaNodeSet []int64
+	var numaNodeSetFallback []int64
 	if d.inst.ExpandedConfig()["limits.cpu.nodes"] != "" {
 		// Parse the NUMA restriction.
 		numaNodeSet, err = resources.ParseNumaNodeSet(d.inst.ExpandedConfig()["limits.cpu.nodes"])
 		if err != nil {
 			return "", -1, err
+		}
+
+		// List all the CPUs.
+		cpus, err := resources.GetCPU()
+		if err != nil {
+			return "", -1, err
+		}
+
+		// Get list of socket IDs from the list of NUMA nodes.
+		numaSockets := make([]uint64, 0, len(cpus.Sockets))
+
+		for _, cpuSocket := range cpus.Sockets {
+			if slices.Contains(numaSockets, cpuSocket.Socket) {
+				continue
+			}
+
+			for _, cpuCore := range cpuSocket.Cores {
+				found := false
+				for _, cpuThread := range cpuCore.Threads {
+					if slices.Contains(numaNodeSet, int64(cpuThread.NUMANode)) {
+						numaSockets = append(numaSockets, cpuSocket.Socket)
+						found = true
+						break
+					}
+				}
+
+				if found {
+					break
+				}
+			}
+		}
+
+		// Get the list of NUMA nodes from the socket list.
+		numaNodeSetFallback = []int64{}
+
+		for _, cpuSocket := range cpus.Sockets {
+			if !slices.Contains(numaSockets, cpuSocket.Socket) {
+				continue
+			}
+
+			for _, cpuCore := range cpuSocket.Cores {
+				for _, cpuThread := range cpuCore.Threads {
+					if !slices.Contains(numaNodeSetFallback, int64(cpuThread.NUMANode)) {
+						numaNodeSetFallback = append(numaNodeSetFallback, int64(cpuThread.NUMANode))
+					}
+				}
+			}
 		}
 	}
 
@@ -168,6 +216,17 @@ func (d *gpuSRIOV) getVF() (string, int, error) {
 
 		// If NUMA node restrictions are in place, prioritize NUMA placement.
 		if numaNodeSet != nil && !slices.Contains(numaNodeSet, int64(cardNUMA)) && slices.Contains(numaNodeSet, int64(gpu.NUMANode)) {
+			pciAddress = gpu.PCIAddress
+			vfID = vfs[0]
+			cardAvailable = len(vfs)
+			cardTotal = int(gpu.SRIOV.CurrentVFs)
+			cardNUMA = int(gpu.NUMANode)
+
+			continue
+		}
+
+		// If NUMA node restrictions are in place, continue with fallback set.
+		if numaNodeSetFallback != nil && !slices.Contains(numaNodeSet, int64(cardNUMA)) && !slices.Contains(numaNodeSetFallback, int64(cardNUMA)) && slices.Contains(numaNodeSetFallback, int64(gpu.NUMANode)) {
 			pciAddress = gpu.PCIAddress
 			vfID = vfs[0]
 			cardAvailable = len(vfs)
