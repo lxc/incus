@@ -45,13 +45,23 @@ func (c *Config) GenerateClientCertificate() error {
 
 // CopyGlobalCert will copy global (system-wide) certificates to the user config path.
 func (c *Config) CopyGlobalCert(src string, dst string) error {
-	copyFile := func(oldPath string, newPath string) error {
+	copyFile := func(oldPath string, newPath string, mode os.FileMode) error {
 		sourceFile, err := os.Open(oldPath)
 		if err != nil {
 			return err
 		}
 
 		defer sourceFile.Close()
+
+		// Get the mode from the source file if not specified.
+		if mode == 0 {
+			fInfo, err := sourceFile.Stat()
+			if err != nil {
+				return err
+			}
+
+			mode = fInfo.Mode()
+		}
 
 		// Create new file.
 		newFile, err := os.Create(newPath)
@@ -61,6 +71,13 @@ func (c *Config) CopyGlobalCert(src string, dst string) error {
 
 		defer newFile.Close()
 
+		// Apply the file mode.
+		err = newFile.Chmod(mode)
+		if err != nil {
+			return err
+		}
+
+		// Copy the content.
 		_, err = io.Copy(newFile, sourceFile)
 		if err != nil {
 			return err
@@ -74,7 +91,7 @@ func (c *Config) CopyGlobalCert(src string, dst string) error {
 	if util.PathExists(oldPath) {
 		newPath := c.ConfigPath("servercerts", fmt.Sprintf("%s.crt", dst))
 
-		err := copyFile(oldPath, newPath)
+		err := copyFile(oldPath, newPath, 0)
 		if err != nil {
 			return err
 		}
@@ -85,7 +102,7 @@ func (c *Config) CopyGlobalCert(src string, dst string) error {
 	if util.PathExists(oldPath) {
 		newPath := c.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", dst))
 
-		err := copyFile(oldPath, newPath)
+		err := copyFile(oldPath, newPath, 0)
 		if err != nil {
 			return err
 		}
@@ -96,7 +113,7 @@ func (c *Config) CopyGlobalCert(src string, dst string) error {
 	if util.PathExists(oldPath) {
 		newPath := c.ConfigPath("clientcerts", fmt.Sprintf("%s.key", dst))
 
-		err := copyFile(oldPath, newPath)
+		err := copyFile(oldPath, newPath, 0600)
 		if err != nil {
 			return err
 		}
@@ -107,7 +124,7 @@ func (c *Config) CopyGlobalCert(src string, dst string) error {
 	if util.PathExists(oldPath) {
 		newPath := c.ConfigPath("clientcerts", fmt.Sprintf("%s.ca", dst))
 
-		err := copyFile(oldPath, newPath)
+		err := copyFile(oldPath, newPath, 0)
 		if err != nil {
 			return err
 		}
