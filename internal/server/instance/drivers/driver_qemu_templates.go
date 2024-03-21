@@ -425,6 +425,7 @@ type qemuNumaEntry struct {
 type qemuCPUOpts struct {
 	architecture        string
 	cpuCount            int
+	cpuRequested        int
 	cpuSockets          int
 	cpuCores            int
 	cpuThreads          int
@@ -489,6 +490,8 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfgSection {
 		max := 64
 		if int(cpu.Total) < max {
 			max = int(cpu.Total)
+		} else if opts.cpuRequested > max {
+			max = opts.cpuRequested
 		} else if opts.cpuCount > max {
 			max = opts.cpuCount
 		}
