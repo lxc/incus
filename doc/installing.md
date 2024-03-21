@@ -43,7 +43,7 @@ Please report packaging issues [here](https://gitlab.archlinux.org/archlinux/pac
 ```
 
 ```{group-tab} Debian
-There are two options currently available to Debian users.
+There are three options currently available to Debian users.
 
 1. Native `incus` package
 
@@ -51,6 +51,14 @@ There are two options currently available to Debian users.
     This package will be featured in the upcoming Debian 13 (`trixie`) release.
 
     On such systems, just running `apt install incus` will get Incus installed.
+
+1. Native `incus` backported package
+
+   A native `incus` backported package is currently available for Debian 12 (`bookworm`) users.
+
+   On such systems, just running `apt install incus/bookworm-backports` will get Incus installed.
+
+   ****NOTE:**** Users of backported packages should not file bugs in the Debian Bug Tracker, instead please reach out [through our forum](https://discuss.linuxcontainers.org) or directly to the Debian packager.
 
 1. Zabbly package repository
 
