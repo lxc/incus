@@ -107,6 +107,14 @@ In this scenario, use the following command to create an empty VM:
 
     incus init iso-vm --empty --vm
 
+```{note}
+Depending on the needs of the operating system being installed, you may want to allocate more CPU, memory or storage to the virtual machine.
+
+For example, for 2 CPUs, 4 GiB of memory and 50 GiB of storage, you can do:
+
+    incus init iso-vm --empty --vm -c limits.cpu=2 -c limits.memory=4GiB -d root,size=50GiB
+```
+
 The second step is to import an ISO image that can later be attached to the VM as a storage volume:
 
     incus storage volume import <pool> <path-to-image.iso> iso-volume --type=iso

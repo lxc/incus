@@ -15,6 +15,7 @@ ASN
 AXFR
 backend
 backends
+backported
 balancer
 balancers
 benchmarking
