@@ -1963,6 +1963,14 @@
 						}
 					},
 					{
+						"oidc.claim": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OpenID Connect claim to use as the username",
+							"type": "string"
+						}
+					},
+					{
 						"oidc.client.id": {
 							"longdesc": "",
 							"scope": "global",
