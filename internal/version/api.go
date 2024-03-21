@@ -402,6 +402,7 @@ var APIExtensions = []string{
 	"shared_custom_block_volumes",
 	"auth_tls_jwt",
 	"oidc_claim",
+	"device_usb_serial",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

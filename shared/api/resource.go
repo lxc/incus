@@ -835,6 +835,12 @@ type ResourcesUSBDevice struct {
 	// Example: 3
 	DeviceAddress uint64 `json:"device_address" yaml:"device_address"`
 
+	// USB serial number
+	// Example: DAE005fp
+	//
+	// API extension: device_usb_serial.
+	Serial string `json:"serial" yaml:"serial"`
+
 	// List of USB interfaces
 	Interfaces []ResourcesUSBDeviceInterface `json:"interfaces" yaml:"interfaces"`
 

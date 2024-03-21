@@ -19,6 +19,7 @@ type USBEvent struct {
 
 	Vendor  string
 	Product string
+	Serial  string
 
 	Path        string
 	Major       uint32
@@ -97,7 +98,7 @@ func USBRunHandlers(state *state.State, event *USBEvent) {
 }
 
 // USBNewEvent instantiates a new USBEvent struct.
-func USBNewEvent(action string, vendor string, product string, major string, minor string, busnum string, devnum string, devname string, ueventParts []string, ueventLen int) (USBEvent, error) {
+func USBNewEvent(action string, vendor string, product string, serial string, major string, minor string, busnum string, devnum string, devname string, ueventParts []string, ueventLen int) (USBEvent, error) {
 	majorInt, err := strconv.ParseUint(major, 10, 32)
 	if err != nil {
 		return USBEvent{}, err
@@ -131,6 +132,7 @@ func USBNewEvent(action string, vendor string, product string, major string, min
 		action,
 		vendor,
 		product,
+		serial,
 		path,
 		uint32(majorInt),
 		uint32(minorInt),
