@@ -120,8 +120,15 @@ func (t *tls) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 		return nil, err
 	}
 
-	if isNotRestricted || (certType == certificate.TypeMetrics && entitlement == EntitlementCanViewMetrics) {
+	if isNotRestricted {
 		return allowFunc(true), nil
+	}
+
+	// Handle project-restricted metrics access.
+	if certType == certificate.TypeMetrics && entitlement == EntitlementCanViewMetrics {
+		return func(o Object) bool {
+			return slices.Contains(projectNames, o.Project())
+		}, nil
 	}
 
 	// Check server level object types
