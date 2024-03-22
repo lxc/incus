@@ -505,10 +505,14 @@ func deviceTaskBalance(s *state.State) {
 		conf := c.ExpandedConfig()
 		cpuNodes := conf["limits.cpu.nodes"]
 		if cpuNodes != "" {
+			if cpuNodes == "balanced" {
+				cpuNodes = conf["volatile.cpu.nodes"]
+			}
+
 			numaNodeSet, err := resources.ParseNumaNodeSet(cpuNodes)
 			if err != nil {
 				logger.Error("Error parsing numa node set", logger.Ctx{"numaNodes": cpuNodes, "err": err})
-				return
+				continue
 			}
 
 			for _, numaNode := range numaNodeSet {

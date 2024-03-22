@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,6 +30,7 @@ import (
 	"github.com/lxc/incus/internal/server/locking"
 	"github.com/lxc/incus/internal/server/operations"
 	"github.com/lxc/incus/internal/server/project"
+	"github.com/lxc/incus/internal/server/resources"
 	"github.com/lxc/incus/internal/server/state"
 	storagePools "github.com/lxc/incus/internal/server/storage"
 	internalUtil "github.com/lxc/incus/internal/util"
@@ -46,6 +48,9 @@ var ErrExecCommandNotExecutable = api.StatusErrorf(http.StatusBadRequest, "Comma
 
 // ErrInstanceIsStopped indicates that the instance is stopped.
 var ErrInstanceIsStopped error = api.StatusErrorf(http.StatusBadRequest, "The instance is already stopped")
+
+// muNUMA is used to serialize NUMA node selection.
+var muNUMA sync.Mutex
 
 // deviceManager is an interface that allows managing device lifecycle.
 type deviceManager interface {
@@ -1441,4 +1446,80 @@ func (d *common) deleteSnapshots(deleteFunc func(snapInst instance.Instance) err
 	}
 
 	return nil
+}
+
+// setNUMANode looks at all other instances and picks the least used NUMA node.
+func (d *common) setNUMANode() error {
+	muNUMA.Lock()
+	defer muNUMA.Unlock()
+
+	// Get the CPU information.
+	cpu, err := resources.GetCPU()
+	if err != nil {
+		return err
+	}
+
+	// Get a list of NUMA nodes.
+	nodes := []uint64{}
+	for _, cpuSocket := range cpu.Sockets {
+		for _, cpuCore := range cpuSocket.Cores {
+			for _, cpuThread := range cpuCore.Threads {
+				if !slices.Contains(nodes, cpuThread.NUMANode) {
+					nodes = append(nodes, cpuThread.NUMANode)
+				}
+			}
+		}
+	}
+
+	// Shortcut on single-node systems.
+	if len(nodes) == 1 {
+		return d.VolatileSet(map[string]string{"volatile.cpu.nodes": fmt.Sprintf("%d", nodes[0])})
+	}
+
+	// Get all local instances.
+	insts, err := instance.LoadNodeAll(d.state, instancetype.Any)
+	if err != nil {
+		return err
+	}
+
+	// Record current NUMA assignment (number of instance).
+	numaUsage := map[int64]int{}
+	for _, inst := range insts {
+		conf := inst.ExpandedConfig()
+
+		// Ignore ourselves.
+		if inst.ID() == d.id {
+			continue
+		}
+
+		// Ignore instances without any NUMA pinning.
+		if conf["limits.cpu.nodes"] == "" {
+			continue
+		}
+
+		// Parse the used NUMA nodes.
+		nodes := conf["limits.cpu.nodes"]
+		if nodes == "balanced" {
+			nodes = conf["volatile.cpu.nodes"]
+		}
+
+		numaNodeSet, err := resources.ParseNumaNodeSet(nodes)
+		if err != nil {
+			continue
+		}
+
+		for _, numaNode := range numaNodeSet {
+			numaUsage[numaNode]++
+		}
+	}
+
+	// Pick least used node.
+	var node uint64
+	for _, numaNode := range nodes {
+		if numaUsage[int64(numaNode)] < numaUsage[int64(node)] {
+			node = numaNode
+		}
+	}
+
+	return d.VolatileSet(map[string]string{"volatile.cpu.nodes": fmt.Sprintf("%d", node)})
 }

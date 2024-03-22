@@ -179,13 +179,14 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu.nodes)
 	// A comma-separated list of NUMA node IDs or ranges to place the instance CPUs on.
+	// Alternatively, the value `balanced` may be used to have Incus pick the least busy NUMA node on startup.
 	//
 	// See {ref}`instance-options-limits-cpu-container` for more information.
 	// ---
 	//  type: string
 	//  liveupdate: yes
 	//  shortdesc: Which NUMA nodes to place the instance CPUs on
-	"limits.cpu.nodes": validate.Optional(validate.IsValidCPUSet),
+	"limits.cpu.nodes": validate.Optional(validate.Or(validate.IsValidCPUSet, validate.IsOneOf("balanced"))),
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.disk.priority)
 	// Controls how much priority to give to the instance's I/O requests when under load.
@@ -340,6 +341,13 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  type: string
 	//  shortdesc: `instance-id` (UUID) exposed to `cloud-init`
 	"volatile.cloud-init.instance-id": validate.Optional(validate.IsUUID),
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.cpu.nodes)
+	// The NUMA node that was selected for the instance.
+	// ---
+	//  type: string
+	//  shortdesc: Instance NUMA node
+	"volatile.cpu.nodes": validate.Optional(validate.IsValidCPUSet),
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.evacuate.origin)
 	// The cluster member that the instance lived on before evacuation.

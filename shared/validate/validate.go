@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -18,20 +19,11 @@ import (
 
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
-// stringInSlice checks whether the supplied string is present in the supplied slice.
-func stringInSlice(key string, list []string) bool {
-	for _, entry := range list {
-		if entry == key {
-			return true
-		}
-	}
-	return false
-}
-
-// Required returns function that runs one or more validators, all must pass without error.
-func Required(validators ...func(value string) error) func(value string) error {
+// And returns a function that runs one or more validators, all must pass without error.
+func And(validators ...func(value string) error) func(value string) error {
 	return func(value string) error {
 		for _, validator := range validators {
 			err := validator(value)
@@ -42,6 +34,25 @@ func Required(validators ...func(value string) error) func(value string) error {
 
 		return nil
 	}
+}
+
+// Or returns a function that runs one or more validators, at least one must pass without error.
+func Or(validators ...func(value string) error) func(value string) error {
+	return func(value string) error {
+		for _, validator := range validators {
+			err := validator(value)
+			if err == nil {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("%q isn't a valid value", value)
+	}
+}
+
+// Required returns a function that runs one or more validators, all must pass without error.
+func Required(validators ...func(value string) error) func(value string) error {
+	return And(validators...)
 }
 
 // Optional wraps Required() function to make it return nil if value is empty string.
@@ -85,41 +96,9 @@ func IsUint32(value string) error {
 	return nil
 }
 
-// ParseUint32Range parses a uint32 range in the form "number" or "start-end".
-// Returns the start number and the size of the range.
-func ParseUint32Range(value string) (uint32, uint32, error) {
-	rangeParts := strings.SplitN(value, "-", 2)
-	rangeLen := len(rangeParts)
-	if rangeLen != 1 && rangeLen != 2 {
-		return 0, 0, fmt.Errorf("Range must contain a single number or start and end numbers")
-	}
-
-	startNum, err := strconv.ParseUint(rangeParts[0], 10, 32)
-	if err != nil {
-		return 0, 0, fmt.Errorf("Invalid number %q", value)
-	}
-
-	var rangeSize uint32 = 1
-
-	if rangeLen == 2 {
-		endNum, err := strconv.ParseUint(rangeParts[1], 10, 32)
-		if err != nil {
-			return 0, 0, fmt.Errorf("Invalid end number %q", value)
-		}
-
-		if startNum >= endNum {
-			return 0, 0, fmt.Errorf("Start number %d must be lower than end number %d", startNum, endNum)
-		}
-
-		rangeSize += uint32(endNum) - uint32(startNum)
-	}
-
-	return uint32(startNum), rangeSize, nil
-}
-
 // IsUint32Range validates whether the string is a uint32 range in the form "number" or "start-end".
 func IsUint32Range(value string) error {
-	_, _, err := ParseUint32Range(value)
+	_, _, err := util.ParseUint32Range(value)
 	return err
 }
 
@@ -155,7 +134,7 @@ func IsPriority(value string) error {
 
 // IsBool validates if string can be understood as a bool.
 func IsBool(value string) error {
-	if !stringInSlice(strings.ToLower(value), []string{"true", "false", "yes", "no", "1", "0", "on", "off"}) {
+	if !slices.Contains([]string{"true", "false", "yes", "no", "1", "0", "on", "off"}, strings.ToLower(value)) {
 		return fmt.Errorf("Invalid value for a boolean %q", value)
 	}
 
@@ -165,7 +144,7 @@ func IsBool(value string) error {
 // IsOneOf checks whether the string is present in the supplied slice of strings.
 func IsOneOf(valid ...string) func(value string) error {
 	return func(value string) error {
-		if !stringInSlice(value, valid) {
+		if !slices.Contains(valid, value) {
 			return fmt.Errorf("Invalid value %q (not one of %s)", value, valid)
 		}
 
@@ -641,7 +620,7 @@ func IsListenAddress(allowDNS bool, allowWildcard bool, requirePort bool) func(v
 		}
 
 		// Validate wildcard.
-		if stringInSlice(host, []string{"", "::", "[::]", "0.0.0.0"}) {
+		if slices.Contains([]string{"", "::", "[::]", "0.0.0.0"}, host) {
 			if !allowWildcard {
 				return fmt.Errorf("Wildcard addresses aren't allowed")
 			}

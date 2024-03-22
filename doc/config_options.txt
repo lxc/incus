@@ -334,6 +334,7 @@ See {ref}`instance-options-limits-cpu-container` for more information.
 :shortdesc: "Which NUMA nodes to place the instance CPUs on"
 :type: "string"
 A comma-separated list of NUMA node IDs or ranges to place the instance CPUs on.
+Alternatively, the value `balanced` may be used to have Incus pick the least busy NUMA node on startup.
 
 See {ref}`instance-options-limits-cpu-container` for more information.
 ```
@@ -922,6 +923,12 @@ The hash of the image that the instance was created from (empty if the instance 
 :shortdesc: "`instance-id` (UUID) exposed to `cloud-init`"
 :type: "string"
 
+```
+
+```{config:option} volatile.cpu.nodes instance-volatile
+:shortdesc: "Instance NUMA node"
+:type: "string"
+The NUMA node that was selected for the instance.
 ```
 
 ```{config:option} volatile.evacuate.origin instance-volatile

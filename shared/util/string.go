@@ -1,8 +1,42 @@
 package util
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 )
+
+// ParseUint32Range parses a uint32 range in the form "number" or "start-end".
+// Returns the start number and the size of the range.
+func ParseUint32Range(value string) (uint32, uint32, error) {
+	rangeParts := strings.SplitN(value, "-", 2)
+	rangeLen := len(rangeParts)
+	if rangeLen != 1 && rangeLen != 2 {
+		return 0, 0, fmt.Errorf("Range must contain a single number or start and end numbers")
+	}
+
+	startNum, err := strconv.ParseUint(rangeParts[0], 10, 32)
+	if err != nil {
+		return 0, 0, fmt.Errorf("Invalid number %q", value)
+	}
+
+	var rangeSize uint32 = 1
+
+	if rangeLen == 2 {
+		endNum, err := strconv.ParseUint(rangeParts[1], 10, 32)
+		if err != nil {
+			return 0, 0, fmt.Errorf("Invalid end number %q", value)
+		}
+
+		if startNum >= endNum {
+			return 0, 0, fmt.Errorf("Start number %d must be lower than end number %d", startNum, endNum)
+		}
+
+		rangeSize += uint32(endNum) - uint32(startNum)
+	}
+
+	return uint32(startNum), rangeSize, nil
+}
 
 // SplitNTrimSpace returns result of strings.SplitN() and then strings.TrimSpace() on each element.
 // Accepts nilIfEmpty argument which if true, will return nil slice if s is empty (after trimming space).

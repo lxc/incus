@@ -2392,3 +2392,11 @@ This introduces a new `oidc.claim` server configuration key which can be used to
 
 This adds a new configuration key `serial` for device type `usb`.
 Feature has been added, to make it possible to distinguish between devices with identical `vendorid` and `productid`.
+
+## `numa_cpu_balanced`
+
+This adds `balanced` as a new value for `limits.cpu.nodes`.
+
+When set to `balanced`, Incus will attempt to select the least busy NUMA
+node at startup time for the instance, trying to keep the load spread
+across NUMA nodes on the system.

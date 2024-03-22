@@ -153,9 +153,6 @@ All this allows for very high performance operations in the guest as the guest s
   It is used to calculate the scheduler priority for the instance, relative to any other instance that is using the same CPU or CPUs.
   For example, to limit the CPU usage of the container to one CPU when under load, set `limits.cpu.allowance` to `100%`.
 
-`limits.cpu.nodes` can be used to restrict the CPUs that the instance can use to a specific set of NUMA nodes.
-To specify which NUMA nodes to use, set `limits.cpu.nodes` to either a set of NUMA node IDs (for example, `0,1`) or a set of NUMA node ranges (for example, `0-1,2-4`).
-
 `limits.cpu.priority` is another factor that is used to compute the scheduler priority score when a number of instances sharing a set of CPUs have the same percentage of CPU assigned to them.
 
 (instance-options-limits-hugepages)=

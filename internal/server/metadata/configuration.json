@@ -359,7 +359,7 @@
 					{
 						"limits.cpu.nodes": {
 							"liveupdate": "yes",
-							"longdesc": "A comma-separated list of NUMA node IDs or ranges to place the instance CPUs on.\n\nSee {ref}`instance-options-limits-cpu-container` for more information.",
+							"longdesc": "A comma-separated list of NUMA node IDs or ranges to place the instance CPUs on.\nAlternatively, the value `balanced` may be used to have Incus pick the least busy NUMA node on startup.\n\nSee {ref}`instance-options-limits-cpu-container` for more information.",
 							"shortdesc": "Which NUMA nodes to place the instance CPUs on",
 							"type": "string"
 						}
@@ -996,6 +996,13 @@
 						"volatile.cloud_init.instance-id": {
 							"longdesc": "",
 							"shortdesc": "`instance-id` (UUID) exposed to `cloud-init`",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.cpu.nodes": {
+							"longdesc": "The NUMA node that was selected for the instance.",
+							"shortdesc": "Instance NUMA node",
 							"type": "string"
 						}
 					},

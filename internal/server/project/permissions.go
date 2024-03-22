@@ -19,7 +19,6 @@ import (
 	"github.com/lxc/incus/shared/idmap"
 	"github.com/lxc/incus/shared/units"
 	"github.com/lxc/incus/shared/util"
-	"github.com/lxc/incus/shared/validate"
 )
 
 // AllowInstanceCreation returns an error if any project-specific limit or
@@ -413,7 +412,7 @@ func parseHostIDMapRange(isUID bool, isGID bool, listValue string) ([]idmap.Entr
 	var idmaps []idmap.Entry
 
 	for _, listItem := range util.SplitNTrimSpace(listValue, ",", -1, true) {
-		rangeStart, rangeSize, err := validate.ParseUint32Range(listItem)
+		rangeStart, rangeSize, err := util.ParseUint32Range(listItem)
 		if err != nil {
 			return nil, err
 		}

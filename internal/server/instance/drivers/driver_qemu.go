@@ -1153,6 +1153,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	defer op.Done(err)
 
+	// Assign a NUMA node if needed.
+	if d.expandedConfig["limits.cpu.nodes"] == "balanced" {
+		err := d.setNUMANode()
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+	}
+
 	// Ensure the correct vhost_vsock kernel module is loaded before establishing the vsock.
 	err = linux.LoadModule("vhost_vsock")
 	if err != nil {
@@ -3446,9 +3455,14 @@ func (d *qemu) addCPUMemoryConfig(cfg *[]cfgSection, cpuInfo *cpuTopology) error
 		hostNodes = []uint64{0}
 
 		// Handle NUMA restrictions.
-		if d.expandedConfig["limits.cpu.nodes"] != "" {
+		numaNodes := d.expandedConfig["limits.cpu.nodes"]
+		if numaNodes != "" {
+			if numaNodes == "balanced" {
+				numaNodes = d.expandedConfig["volatile.cpu.nodes"]
+			}
+
 			// Parse the NUMA restriction.
-			numaNodeSet, err := resources.ParseNumaNodeSet(d.expandedConfig["limits.cpu.nodes"])
+			numaNodeSet, err := resources.ParseNumaNodeSet(numaNodes)
 			if err != nil {
 				return err
 			}
@@ -8821,9 +8835,14 @@ func (d *qemu) postCPUHotplug(monitor *qmp.Monitor) error {
 	}
 
 	// Handle NUMA node restrictions.
-	if d.expandedConfig["limits.cpu.nodes"] != "" {
+	numaNodes := d.expandedConfig["limits.cpu.nodes"]
+	if numaNodes != "" {
+		if numaNodes == "balanced" {
+			numaNodes = d.expandedConfig["volatile.cpu.nodes"]
+		}
+
 		// Parse the NUMA restriction.
-		numaNodeSet, err := resources.ParseNumaNodeSet(d.expandedConfig["limits.cpu.nodes"])
+		numaNodeSet, err := resources.ParseNumaNodeSet(numaNodes)
 		if err != nil {
 			return err
 		}
