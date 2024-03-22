@@ -3433,6 +3433,9 @@ func (d *qemu) addCPUMemoryConfig(cfg *[]cfgSection, cpuInfo *cpuTopology) error
 		if d.architectureSupportsCPUHotplug() {
 			cpuOpts.cpuCount = 1
 			cpuOpts.cpuCores = 1
+
+			// Expose the total requested by the user already so the hotplug limit can be set higher if needed.
+			cpuOpts.cpuRequested = cpuInfo.cores
 		} else {
 			cpuOpts.cpuCount = cpuInfo.cores
 			cpuOpts.cpuCores = cpuInfo.cores
