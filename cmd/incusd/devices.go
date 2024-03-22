@@ -508,7 +508,7 @@ func deviceTaskBalance(s *state.State) {
 			numaNodeSet, err := resources.ParseNumaNodeSet(cpuNodes)
 			if err != nil {
 				logger.Error("Error parsing numa node set", logger.Ctx{"numaNodes": cpuNodes, "err": err})
-				return
+				continue
 			}
 
 			for _, numaNode := range numaNodeSet {
