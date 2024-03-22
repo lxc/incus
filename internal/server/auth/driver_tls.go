@@ -171,7 +171,13 @@ func (t *tls) certificateDetails(fingerprint string) (certificate.Type, bool, []
 	metricCerts := certs[certificate.TypeMetrics]
 	_, ok = metricCerts[fingerprint]
 	if ok {
-		return certificate.TypeMetrics, false, nil, nil
+		projectNames, ok := projects[fingerprint]
+		if !ok {
+			// Certificate is not restricted.
+			return certificate.TypeClient, true, nil, nil
+		}
+
+		return certificate.TypeMetrics, false, projectNames, nil
 	}
 
 	// If we're in a CA environment, it's possible for a certificate to be trusted despite not being present in the trust store.
