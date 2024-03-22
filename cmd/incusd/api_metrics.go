@@ -301,10 +301,10 @@ func getFilteredMetrics(s *state.State, r *http.Request, compress bool, metricSe
 	if err != nil && !api.StatusErrorCheck(err, http.StatusForbidden) {
 		return response.SmartError(err)
 	} else if err != nil {
-		// This is counterintuitive. We are unauthorized to get a permission checker for viewing instances because a metric type certificate
-		// can't view instances. However, in order to get to this point we must already have auth.EntitlementCanViewMetrics. So we can view
-		// the metrics but we can't do any filtering, so just return the metrics.
-		return response.SyncResponsePlain(true, compress, metricSet.String())
+		userHasPermission, err = s.Authorizer.GetPermissionChecker(r.Context(), r, auth.EntitlementCanViewMetrics, auth.ObjectTypeInstance)
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	metricSet.FilterSamples(userHasPermission)
