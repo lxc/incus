@@ -403,6 +403,7 @@ var APIExtensions = []string{
 	"auth_tls_jwt",
 	"oidc_claim",
 	"device_usb_serial",
+	"numa_cpu_balanced",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
