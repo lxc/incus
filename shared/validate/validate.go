@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -19,16 +20,6 @@ import (
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/units"
 )
-
-// stringInSlice checks whether the supplied string is present in the supplied slice.
-func stringInSlice(key string, list []string) bool {
-	for _, entry := range list {
-		if entry == key {
-			return true
-		}
-	}
-	return false
-}
 
 // Required returns function that runs one or more validators, all must pass without error.
 func Required(validators ...func(value string) error) func(value string) error {
@@ -155,7 +146,7 @@ func IsPriority(value string) error {
 
 // IsBool validates if string can be understood as a bool.
 func IsBool(value string) error {
-	if !stringInSlice(strings.ToLower(value), []string{"true", "false", "yes", "no", "1", "0", "on", "off"}) {
+	if !slices.Contains([]string{"true", "false", "yes", "no", "1", "0", "on", "off"}, strings.ToLower(value)) {
 		return fmt.Errorf("Invalid value for a boolean %q", value)
 	}
 
@@ -165,7 +156,7 @@ func IsBool(value string) error {
 // IsOneOf checks whether the string is present in the supplied slice of strings.
 func IsOneOf(valid ...string) func(value string) error {
 	return func(value string) error {
-		if !stringInSlice(value, valid) {
+		if !slices.Contains(valid, value) {
 			return fmt.Errorf("Invalid value %q (not one of %s)", value, valid)
 		}
 
@@ -641,7 +632,7 @@ func IsListenAddress(allowDNS bool, allowWildcard bool, requirePort bool) func(v
 		}
 
 		// Validate wildcard.
-		if stringInSlice(host, []string{"", "::", "[::]", "0.0.0.0"}) {
+		if slices.Contains([]string{"", "::", "[::]", "0.0.0.0"}, host) {
 			if !allowWildcard {
 				return fmt.Errorf("Wildcard addresses aren't allowed")
 			}
