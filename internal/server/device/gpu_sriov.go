@@ -127,9 +127,15 @@ func (d *gpuSRIOV) getVF() (string, int, error) {
 	// If NUMA restricted, build up a list of nodes.
 	var numaNodeSet []int64
 	var numaNodeSetFallback []int64
-	if d.inst.ExpandedConfig()["limits.cpu.nodes"] != "" {
+
+	numaNodes := d.inst.ExpandedConfig()["limits.cpu.nodes"]
+	if numaNodes != "" {
+		if numaNodes == "balanced" {
+			numaNodes = d.inst.ExpandedConfig()["volatile.cpu.nodes"]
+		}
+
 		// Parse the NUMA restriction.
-		numaNodeSet, err = resources.ParseNumaNodeSet(d.inst.ExpandedConfig()["limits.cpu.nodes"])
+		numaNodeSet, err = resources.ParseNumaNodeSet(numaNodes)
 		if err != nil {
 			return "", -1, err
 		}
