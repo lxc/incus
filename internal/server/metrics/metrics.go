@@ -30,12 +30,16 @@ func (m *MetricSet) FilterSamples(permissionChecker func(object auth.Object) boo
 		for _, s := range samples {
 			projectName := s.Labels["project"]
 			instanceName := s.Labels["name"]
+
 			if projectName == "" || instanceName == "" {
+				if permissionChecker(auth.ObjectServer()) {
+					allowedSamples = append(allowedSamples, s)
+				}
+
 				continue
 			}
 
-			hasPermission := permissionChecker(auth.ObjectInstance(projectName, instanceName))
-			if hasPermission {
+			if permissionChecker(auth.ObjectInstance(projectName, instanceName)) {
 				allowedSamples = append(allowedSamples, s)
 			}
 		}
