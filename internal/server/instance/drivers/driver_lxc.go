@@ -1922,6 +1922,14 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
+	// Assign a NUMA node if needed.
+	if d.expandedConfig["limits.cpu.nodes"] == "balanced" {
+		err := d.setNUMANode()
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
 	// Check if idmap needs changing.
 	if !d.IsPrivileged() {
 		nextMap, err := d.NextIdmap()
