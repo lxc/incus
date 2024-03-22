@@ -940,10 +940,8 @@ func (d *common) canMigrate(inst instance.Instance) string {
 	}
 
 	// Look at attached devices.
-	volatileGet := func() map[string]string { return map[string]string{} }
-	volatileSet := func(_ map[string]string) error { return nil }
-	for deviceName, rawConfig := range d.ExpandedDevices() {
-		dev, err := device.New(inst, d.state, deviceName, rawConfig, volatileGet, volatileSet)
+	for _, entry := range d.ExpandedDevices().Sorted() {
+		dev, err := d.deviceLoad(inst, entry.Name, entry.Config)
 		if err != nil {
 			logger.Warn("Instance will not be migrated due to a device error", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "device": dev.Name(), "err": err})
 			return "stop"
