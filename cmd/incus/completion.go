@@ -405,6 +405,69 @@ func (g *cmdGlobal) cmpNetworkACLRuleProperties() ([]string, cobra.ShellCompDire
 	return results, cobra.ShellCompDirectiveNoSpace
 }
 
+func (g *cmdGlobal) cmpNetworkForwardConfigs(networkName string, listenAddress string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.ParseServers(networkName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	forward, _, err := client.GetNetworkForward(networkName, listenAddress)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var results []string
+	for k := range forward.Config {
+		results = append(results, k)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
+func (g *cmdGlobal) cmpNetworkForwards(networkName string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(networkName)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	results, err := resource.server.GetNetworkForwardAddresses(networkName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return results, cmpDirectives
+}
+
+func (g *cmdGlobal) cmpNetworkLoadBalancers(networkName string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(networkName)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	results, err := resource.server.GetNetworkForwardAddresses(networkName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return results, cmpDirectives
+}
+
 func (g *cmdGlobal) cmpNetworks(toComplete string) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
@@ -414,7 +477,7 @@ func (g *cmdGlobal) cmpNetworks(toComplete string) ([]string, cobra.ShellCompDir
 	if len(resources) > 0 {
 		resource := resources[0]
 
-		networks, err := resource.server.GetNetworks()
+		networks, err := resource.server.GetNetworkNames()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -423,9 +486,9 @@ func (g *cmdGlobal) cmpNetworks(toComplete string) ([]string, cobra.ShellCompDir
 			var name string
 
 			if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
-				name = network.Name
+				name = network
 			} else {
-				name = fmt.Sprintf("%s:%s", resource.remote, network.Name)
+				name = fmt.Sprintf("%s:%s", resource.remote, network)
 			}
 
 			results = append(results, name)
