@@ -21,8 +21,8 @@ import (
 	"github.com/lxc/incus/shared/units"
 )
 
-// Required returns function that runs one or more validators, all must pass without error.
-func Required(validators ...func(value string) error) func(value string) error {
+// And returns a function that runs one or more validators, all must pass without error.
+func And(validators ...func(value string) error) func(value string) error {
 	return func(value string) error {
 		for _, validator := range validators {
 			err := validator(value)
@@ -33,6 +33,25 @@ func Required(validators ...func(value string) error) func(value string) error {
 
 		return nil
 	}
+}
+
+// Or returns a function that runs one or more validators, at least one must pass without error.
+func Or(validators ...func(value string) error) func(value string) error {
+	return func(value string) error {
+		for _, validator := range validators {
+			err := validator(value)
+			if err == nil {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("%q isn't a valid value", value)
+	}
+}
+
+// Required returns a function that runs one or more validators, all must pass without error.
+func Required(validators ...func(value string) error) func(value string) error {
+	return And(validators...)
 }
 
 // Optional wraps Required() function to make it return nil if value is empty string.
