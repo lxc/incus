@@ -1,7 +1,7 @@
 (images-remote)=
 # How to use remote images
 
-The [`incus`](incus.md) CLI command is pre-configured with several remote image servers.
+The [`incus`](incus.md) CLI command can support several image servers and comes pre-configured with our own.
 See {ref}`image-servers` for an overview.
 
 ## List configured remotes

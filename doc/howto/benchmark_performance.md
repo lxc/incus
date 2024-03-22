@@ -14,7 +14,7 @@ If you run this tool repeatedly with different configurations, you can compare t
 If the `incus-benchmark` tool isn't provided with your installation, you can build it from source.
 Make sure that you have `go` (see {ref}`requirements-go`) installed and install the tool with the following command:
 
-    go install github.com/lxc/incus/incus-benchmark@latest
+    go install github.com/lxc/incus/cmd/incus-benchmark@latest
 
 ## Run the tool
 
