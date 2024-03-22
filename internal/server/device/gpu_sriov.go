@@ -220,26 +220,39 @@ func (d *gpuSRIOV) getVF() (string, int, error) {
 			continue
 		}
 
-		// If NUMA node restrictions are in place, prioritize NUMA placement.
-		if numaNodeSet != nil && !slices.Contains(numaNodeSet, int64(cardNUMA)) && slices.Contains(numaNodeSet, int64(gpu.NUMANode)) {
-			pciAddress = gpu.PCIAddress
-			vfID = vfs[0]
-			cardAvailable = len(vfs)
-			cardTotal = int(gpu.SRIOV.CurrentVFs)
-			cardNUMA = int(gpu.NUMANode)
+		// Handle NUMA.
+		if numaNodeSet != nil {
+			// Switch to current card if it matches our main NUMA node and existing card doesn't.
+			if !slices.Contains(numaNodeSet, int64(cardNUMA)) && slices.Contains(numaNodeSet, int64(gpu.NUMANode)) {
+				pciAddress = gpu.PCIAddress
+				vfID = vfs[0]
+				cardAvailable = len(vfs)
+				cardTotal = int(gpu.SRIOV.CurrentVFs)
+				cardNUMA = int(gpu.NUMANode)
 
-			continue
-		}
+				continue
+			}
 
-		// If NUMA node restrictions are in place, continue with fallback set.
-		if numaNodeSetFallback != nil && !slices.Contains(numaNodeSet, int64(cardNUMA)) && !slices.Contains(numaNodeSetFallback, int64(cardNUMA)) && slices.Contains(numaNodeSetFallback, int64(gpu.NUMANode)) {
-			pciAddress = gpu.PCIAddress
-			vfID = vfs[0]
-			cardAvailable = len(vfs)
-			cardTotal = int(gpu.SRIOV.CurrentVFs)
-			cardNUMA = int(gpu.NUMANode)
+			// Skip current card if we already have a card matching our main NUMA node and this card doesn't.
+			if slices.Contains(numaNodeSet, int64(cardNUMA)) && !slices.Contains(numaNodeSet, int64(gpu.NUMANode)) {
+				continue
+			}
 
-			continue
+			// Switch to current card if it matches a fallback NUMA node and existing card doesn't.
+			if !slices.Contains(numaNodeSetFallback, int64(cardNUMA)) && slices.Contains(numaNodeSetFallback, int64(gpu.NUMANode)) {
+				pciAddress = gpu.PCIAddress
+				vfID = vfs[0]
+				cardAvailable = len(vfs)
+				cardTotal = int(gpu.SRIOV.CurrentVFs)
+				cardNUMA = int(gpu.NUMANode)
+
+				continue
+			}
+
+			// Skip current card if we already have a card matching a fallback NUMA node and this card isn't on the main or fallback node.
+			if slices.Contains(numaNodeSetFallback, int64(cardNUMA)) && !slices.Contains(numaNodeSetFallback, int64(gpu.NUMANode)) && !slices.Contains(numaNodeSet, int64(gpu.NUMANode)) {
+				continue
+			}
 		}
 
 		// Prioritize less busy cards.
