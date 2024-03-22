@@ -19,6 +19,7 @@ import (
 
 	"github.com/lxc/incus/shared/osarch"
 	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/shared/util"
 )
 
 // And returns a function that runs one or more validators, all must pass without error.
@@ -95,41 +96,9 @@ func IsUint32(value string) error {
 	return nil
 }
 
-// ParseUint32Range parses a uint32 range in the form "number" or "start-end".
-// Returns the start number and the size of the range.
-func ParseUint32Range(value string) (uint32, uint32, error) {
-	rangeParts := strings.SplitN(value, "-", 2)
-	rangeLen := len(rangeParts)
-	if rangeLen != 1 && rangeLen != 2 {
-		return 0, 0, fmt.Errorf("Range must contain a single number or start and end numbers")
-	}
-
-	startNum, err := strconv.ParseUint(rangeParts[0], 10, 32)
-	if err != nil {
-		return 0, 0, fmt.Errorf("Invalid number %q", value)
-	}
-
-	var rangeSize uint32 = 1
-
-	if rangeLen == 2 {
-		endNum, err := strconv.ParseUint(rangeParts[1], 10, 32)
-		if err != nil {
-			return 0, 0, fmt.Errorf("Invalid end number %q", value)
-		}
-
-		if startNum >= endNum {
-			return 0, 0, fmt.Errorf("Start number %d must be lower than end number %d", startNum, endNum)
-		}
-
-		rangeSize += uint32(endNum) - uint32(startNum)
-	}
-
-	return uint32(startNum), rangeSize, nil
-}
-
 // IsUint32Range validates whether the string is a uint32 range in the form "number" or "start-end".
 func IsUint32Range(value string) error {
-	_, _, err := ParseUint32Range(value)
+	_, _, err := util.ParseUint32Range(value)
 	return err
 }
 
