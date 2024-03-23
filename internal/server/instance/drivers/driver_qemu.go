@@ -1910,7 +1910,8 @@ func (d *qemu) advertiseVsockAddress() error {
 		return fmt.Errorf("Failed getting agent client handle: %w", err)
 	}
 
-	agent, err := incus.ConnectIncusHTTP(nil, client)
+	agentArgs := &incus.ConnectionArgs{SkipGetServer: true}
+	agent, err := incus.ConnectIncusHTTP(agentArgs, client)
 	if err != nil {
 		return fmt.Errorf("Failed connecting to the agent: %w", err)
 	}
@@ -8262,7 +8263,8 @@ func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) 
 		return err
 	}
 
-	agent, err := incus.ConnectIncusHTTP(nil, client)
+	agentArgs := &incus.ConnectionArgs{SkipGetServer: true}
+	agent, err := incus.ConnectIncusHTTP(agentArgs, client)
 	if err != nil {
 		d.logger.Error("Failed to connect to the agent", logger.Ctx{"err": err})
 		return fmt.Errorf("Failed to connect to the agent")
@@ -8567,7 +8569,8 @@ func (d *qemu) getAgentMetrics() (*metrics.MetricSet, error) {
 		return nil, err
 	}
 
-	agent, err := incus.ConnectIncusHTTP(nil, client)
+	agentArgs := &incus.ConnectionArgs{SkipGetServer: true}
+	agent, err := incus.ConnectIncusHTTP(agentArgs, client)
 	if err != nil {
 		d.logger.Error("Failed to connect to the agent", logger.Ctx{"project": d.Project().Name, "instance": d.Name(), "err": err})
 		return nil, fmt.Errorf("Failed to connect to the agent")
