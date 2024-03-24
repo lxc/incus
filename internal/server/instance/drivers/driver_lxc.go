@@ -2626,6 +2626,21 @@ func (d *lxc) onStart(_ map[string]string) error {
 	return nil
 }
 
+// validateStartup checks any constraints that would prevent start up from succeeding under normal circumstances.
+func (d *lxc) validateStartup(stateful bool, statusCode api.StatusCode) error {
+	err := d.common.validateStartup(stateful, statusCode)
+	if err != nil {
+		return err
+	}
+
+	// Ensure nesting is turned on for images that require nesting.
+	if util.IsTrue(d.localConfig["image.requirements.nesting"]) && util.IsFalseOrEmpty(d.expandedConfig["security.nesting"]) {
+		return fmt.Errorf("The image used by this instance requires nesting. Please set security.nesting=true on the instance")
+	}
+
+	return nil
+}
+
 // Stop functions.
 func (d *lxc) Stop(stateful bool) error {
 	d.logger.Debug("Stop started", logger.Ctx{"stateful": stateful})

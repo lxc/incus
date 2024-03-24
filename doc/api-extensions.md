@@ -2400,3 +2400,7 @@ This adds `balanced` as a new value for `limits.cpu.nodes`.
 When set to `balanced`, Incus will attempt to select the least busy NUMA
 node at startup time for the instance, trying to keep the load spread
 across NUMA nodes on the system.
+
+## `image_restriction_nesting`
+
+This extension adds a new image restriction, `requirements.nesting` which when `true` indicates that an image cannot be run without nesting.
