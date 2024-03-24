@@ -6339,7 +6339,7 @@ func (b *backend) CheckInstanceBackupFileSnapshots(backupConf *backupConfig.Conf
 
 	if len(backupConf.Snapshots) != len(driverSnapshots) {
 		if !deleteMissing {
-			return nil, fmt.Errorf("Snapshot count in backup config and storage device are different: %w", ErrBackupSnapshotsMismatch)
+			return nil, fmt.Errorf("Snapshot count in backup config (%d) and storage device (%d) are different: %w", len(backupConf.Snapshots), len(driverSnapshots), ErrBackupSnapshotsMismatch)
 		}
 	}
 
