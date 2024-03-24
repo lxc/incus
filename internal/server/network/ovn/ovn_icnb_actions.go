@@ -62,7 +62,7 @@ func (o *ICNB) DeleteTransitSwitch(ctx context.Context, name string, force bool)
 
 	err := o.client.Get(ctx, &transitSwitch)
 	if err != nil {
-		// Already exists.
+		// Already deleted.
 		if err == ErrNotFound {
 			return nil
 		}
