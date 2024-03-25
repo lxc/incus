@@ -339,12 +339,22 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 		architectureName, _ := osarch.ArchitectureGetLocal()
 
 		if slices.Contains([]string{"x86_64", "aarch64"}, architectureName) {
-			hasSecureBoot, err := c.global.asker.AskBool("Does the VM support UEFI Secure Boot? [default=no]: ", "no")
+			hasUEFI, err := c.global.asker.AskBool("Does the VM support UEFI booting? [default=yes]: ", "yes")
 			if err != nil {
 				return cmdMigrateData{}, err
 			}
 
-			if !hasSecureBoot {
+			if hasUEFI {
+				hasSecureBoot, err := c.global.asker.AskBool("Does the VM support UEFI Secure Boot? [default=yes]: ", "yes")
+				if err != nil {
+					return cmdMigrateData{}, err
+				}
+
+				if !hasSecureBoot {
+					config.InstanceArgs.Config["security.secureboot"] = "false"
+				}
+			} else {
+				config.InstanceArgs.Config["security.csm"] = "true"
 				config.InstanceArgs.Config["security.secureboot"] = "false"
 			}
 		}
