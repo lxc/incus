@@ -1381,7 +1381,6 @@
 					},
 					{
 						"restricted.networks.uplinks": {
-							"defaultdesc": "`block`",
 							"longdesc": "Specify a comma-delimited list of network names that can be used as uplink for networks in this project.",
 							"shortdesc": "Which network names can be used as uplink in this project",
 							"type": "string"

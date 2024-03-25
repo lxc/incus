@@ -1275,7 +1275,6 @@ Use the form `<uplink>:<subnet>`.
 ```
 
 ```{config:option} restricted.networks.uplinks project-restricted
-:defaultdesc: "`block`"
 :shortdesc: "Which network names can be used as uplink in this project"
 :type: "string"
 Specify a comma-delimited list of network names that can be used as uplink for networks in this project.
