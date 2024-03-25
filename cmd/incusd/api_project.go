@@ -1071,6 +1071,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  type: string
 		//  shortdesc: Compression algorithm to use for backups
 		"backups.compression_algorithm": validate.IsCompressionAlgorithm,
+
 		// gendoc:generate(entity=project, group=features, key=features.profiles)
 		//
 		// ---
@@ -1079,6 +1080,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  initialvaluedesc: `true`
 		//  shortdesc: Whether to use a separate set of profiles for the project
 		"features.profiles": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=project, group=features, key=features.images)
 		// This setting applies to both images and image aliases.
 		// ---
@@ -1087,6 +1089,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  initialvaluedesc: `true`
 		//  shortdesc: Whether to use a separate set of images for the project
 		"features.images": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=project, group=features, key=features.storage.volumes)
 		//
 		// ---
@@ -1095,6 +1098,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  initialvaluedesc: `true`
 		//  shortdesc: Whether to use a separate set of storage volumes for the project
 		"features.storage.volumes": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=project, group=features, key=features.storage.buckets)
 		//
 		// ---
@@ -1103,6 +1107,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  initialvaluedesc: `true`
 		//  shortdesc: Whether to use a separate set of storage buckets for the project
 		"features.storage.buckets": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=project, group=features, key=features.networks)
 		//
 		// ---
@@ -1111,6 +1116,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  initialvaluedesc: `false`
 		//  shortdesc: Whether to use a separate set of networks for the project
 		"features.networks": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=project, group=features, key=features.networks.zones)
 		//
 		// ---
@@ -1119,12 +1125,14 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  initialvaluedesc: `false`
 		//  shortdesc: Whether to use a separate set of network zones for the project
 		"features.networks.zones": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=project, group=specific, key=images.auto_update_cached)
 		//
 		// ---
 		//  type: bool
 		//  shortdesc: Whether to automatically update cached images in the project
 		"images.auto_update_cached": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=project, group=specific, key=images.auto_update_interval)
 		// Specify the interval in hours.
 		// To disable looking for updates to cached images, set this option to `0`.
@@ -1132,72 +1140,84 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  type: integer
 		//  shortdesc: Interval at which to look for updates to cached images
 		"images.auto_update_interval": validate.Optional(validate.IsInt64),
+
 		// gendoc:generate(entity=project, group=specific, key=images.compression_algorithm)
 		// Possible values are `bzip2`, `gzip`, `lzma`, `xz`, or `none`.
 		// ---
 		//  type: string
 		//  shortdesc: Compression algorithm to use for new images in the project
 		"images.compression_algorithm": validate.IsCompressionAlgorithm,
+
 		// gendoc:generate(entity=project, group=specific, key=images.default_architecture)
 		//
 		// ---
 		//  type: string
 		//  shortdesc: Default architecture to use in a mixed-architecture cluster
 		"images.default_architecture": validate.Optional(validate.IsArchitecture),
+
 		// gendoc:generate(entity=project, group=specific, key=images.remote_cache_expiry)
 		// Specify the number of days after which the unused cached image expires.
 		// ---
 		//  type: integer
 		//  shortdesc: When an unused cached remote image is flushed in the project
 		"images.remote_cache_expiry": validate.Optional(validate.IsInt64),
+
 		// gendoc:generate(entity=project, group=limits, key=limits.instances)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: Maximum number of instances that can be created in the project
 		"limits.instances": validate.Optional(validate.IsUint32),
+
 		// gendoc:generate(entity=project, group=limits, key=limits.containers)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: Maximum number of containers that can be created in the project
 		"limits.containers": validate.Optional(validate.IsUint32),
+
 		// gendoc:generate(entity=project, group=limits, key=limits.virtual-machines)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: Maximum number of VMs that can be created in the project
 		"limits.virtual-machines": validate.Optional(validate.IsUint32),
+
 		// gendoc:generate(entity=project, group=limits, key=limits.memory)
 		// The value is the maximum value for the sum of the individual {config:option}`instance-resource-limits:limits.memory` configurations set on the instances of the project.
 		// ---
 		//  type: string
 		//  shortdesc: Usage limit for the host's memory for the project
 		"limits.memory": validate.Optional(validate.IsSize),
+
 		// gendoc:generate(entity=project, group=limits, key=limits.processes)
 		// This value is the maximum value for the sum of the individual {config:option}`instance-resource-limits:limits.processes` configurations set on the instances of the project.
 		// ---
 		//  type: integer
 		//  shortdesc: Maximum number of processes within the project
 		"limits.processes": validate.Optional(validate.IsUint32),
+
 		// gendoc:generate(entity=project, group=limits, key=limits.cpu)
 		// This value is the maximum value for the sum of the individual {config:option}`instance-resource-limits:limits.cpu` configurations set on the instances of the project.
 		// ---
 		//  type: integer
 		//  shortdesc: Maximum number of CPUs to use in the project
 		"limits.cpu": validate.Optional(validate.IsUint32),
+
 		// gendoc:generate(entity=project, group=limits, key=limits.disk)
 		// This value is the maximum value of the aggregate disk space used by all instance volumes, custom volumes, and images of the project.
 		// ---
 		//  type: string
 		//  shortdesc: Maximum disk space used by the project
 		"limits.disk": validate.Optional(validate.IsSize),
+
 		// gendoc:generate(entity=project, group=limits, key=limits.networks)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: Maximum number of networks that the project can have
 		"limits.networks": validate.Optional(validate.IsUint32),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted)
 		// This option must be enabled to allow the `restricted.*` keys to take effect.
 		// To temporarily remove the restrictions, you can disable this option instead of clearing the related keys.
@@ -1206,6 +1226,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `false`
 		//  shortdesc: Whether to block access to security-sensitive features
 		"restricted": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.backups)
 		// Possible values are `allow` or `block`.
 		// ---
@@ -1213,12 +1234,14 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent creating instance or volume backups
 		"restricted.backups": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.cluster.groups)
 		// If specified, this option prevents targeting cluster groups other than the provided ones.
 		// ---
 		//  type: string
 		//  shortdesc: Cluster groups that can be targeted
 		"restricted.cluster.groups": validate.Optional(validate.IsListOf(validate.IsAny)),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.cluster.target)
 		// Possible values are `allow` or `block`.
 		// When set to `allow`, this option allows targeting of cluster members (either directly or via a group) when creating or moving instances.
@@ -1227,6 +1250,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent targeting of cluster members
 		"restricted.cluster.target": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.containers.interception)
 		// Possible values are `allow`, `block`, or `full`.
 		// When set to `allow`, interception options that are usually safe are allowed.
@@ -1236,6 +1260,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using system call interception options
 		"restricted.containers.interception": validate.Optional(validate.IsOneOf("allow", "block", "full")),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.containers.nesting)
 		// Possible values are `allow` or `block`.
 		// When set to `allow`, {config:option}`instance-security:security.nesting` can be set to `true` for an instance.
@@ -1244,6 +1269,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent running nested Incus
 		"restricted.containers.nesting": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.containers.lowlevel)
 		// Possible values are `allow` or `block`.
 		// When set to `allow`, low-level container options like {config:option}`instance-raw:raw.lxc`, {config:option}`instance-raw:raw.idmap`, `volatile.*`, etc. can be used.
@@ -1252,6 +1278,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using low-level container options
 		"restricted.containers.lowlevel": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.containers.privilege)
 		// Possible values are `unprivileged`, `isolated`, and `allow`.
 		//
@@ -1263,6 +1290,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `unprivileged`
 		//  shortdesc: Which settings for privileged containers to prevent
 		"restricted.containers.privilege": validate.Optional(validate.IsOneOf("allow", "unprivileged", "isolated")),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.virtual-machines.lowlevel)
 		// Possible values are `allow` or `block`.
 		// When set to `allow`, low-level VM options like {config:option}`instance-raw:raw.qemu`, `volatile.*`, etc. can be used.
@@ -1271,6 +1299,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using low-level VM options
 		"restricted.virtual-machines.lowlevel": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.unix-char)
 		// Possible values are `allow` or `block`.
 		// ---
@@ -1278,6 +1307,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using devices of type `unix-char`
 		"restricted.devices.unix-char": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.unix-block)
 		// Possible values are `allow` or `block`.
 		// ---
@@ -1285,6 +1315,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using devices of type `unix-block`
 		"restricted.devices.unix-block": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.unix-hotplug)
 		// Possible values are `allow` or `block`.
 		// ---
@@ -1292,6 +1323,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using devices of type `unix-hotplug`
 		"restricted.devices.unix-hotplug": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.infiniband)
 		// Possible values are `allow` or `block`.
 		// ---
@@ -1299,6 +1331,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using devices of type `infiniband`
 		"restricted.devices.infiniband": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.gpu)
 		// Possible values are `allow` or `block`.
 		// ---
@@ -1306,6 +1339,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using devices of type `gpu`
 		"restricted.devices.gpu": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.usb)
 		// Possible values are `allow` or `block`.
 		// ---
@@ -1313,6 +1347,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using devices of type `usb`
 		"restricted.devices.usb": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.pci)
 		// Possible values are `allow` or `block`.
 		// ---
@@ -1320,6 +1355,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using devices of type `pci`
 		"restricted.devices.pci": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.proxy)
 		// Possible values are `allow` or `block`.
 		// ---
@@ -1327,6 +1363,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent using devices of type `proxy`
 		"restricted.devices.proxy": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.nic)
 		// Possible values are `allow`, `block`, or `managed`.
 		//
@@ -1338,6 +1375,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `managed`
 		//  shortdesc: Which network devices can be used
 		"restricted.devices.nic": isEitherAllowOrBlockOrManaged,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.disk)
 		// Possible values are `allow`, `block`, or `managed`.
 		//
@@ -1349,6 +1387,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `managed`
 		//  shortdesc: Which disk devices can be used
 		"restricted.devices.disk": isEitherAllowOrBlockOrManaged,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.disk.paths)
 		// If {config:option}`project-restricted:restricted.devices.disk` is set to `allow`, this option controls which `source` can be used for `disk` devices.
 		// Specify a comma-separated list of path prefixes that restrict the `source` setting.
@@ -1357,18 +1396,21 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  type: string
 		//  shortdesc: Which `source` can be used for `disk` devices
 		"restricted.devices.disk.paths": validate.Optional(validate.IsListOf(validate.IsAbsFilePath)),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.idmap.uid)
 		// This option specifies the host UID ranges that are allowed in the instance's {config:option}`instance-raw:raw.idmap` setting.
 		// ---
 		//  type: string
 		//  shortdesc: Which host UID ranges are allowed in `raw.idmap`
 		"restricted.idmap.uid": validate.Optional(validate.IsListOf(validate.IsUint32Range)),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.idmap.gid)
 		// This option specifies the host GID ranges that are allowed in the instance's {config:option}`instance-raw:raw.idmap` setting.
 		// ---
 		//  type: string
 		//  shortdesc: Which host GID ranges are allowed in `raw.idmap`
 		"restricted.idmap.gid": validate.Optional(validate.IsListOf(validate.IsUint32Range)),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.access)
 		// Specify a comma-delimited list of network names that are allowed for use in this project.
 		// If this option is not set, all networks are accessible.
@@ -1378,13 +1420,14 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  type: string
 		//  shortdesc: Which network names are allowed for use in this project
 		"restricted.networks.access": validate.Optional(validate.IsListOf(validate.IsAny)),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.uplinks)
 		// Specify a comma-delimited list of network names that can be used as uplink for networks in this project.
 		// ---
 		//  type: string
-		//  defaultdesc: `block`
 		//  shortdesc: Which network names can be used as uplink in this project
 		"restricted.networks.uplinks": validate.Optional(validate.IsListOf(validate.IsAny)),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.subnets)
 		// Specify a comma-delimited list of network subnets from the uplink networks that are allocated for use in this project.
 		// Use the form `<uplink>:<subnet>`.
@@ -1395,6 +1438,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		"restricted.networks.subnets": validate.Optional(func(value string) error {
 			return projectValidateRestrictedSubnets(s, value)
 		}),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.zones)
 		// Specify a comma-delimited list of network zones that can be used (or something under them) in this project.
 		// ---
@@ -1402,6 +1446,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Which network zones can be used in this project
 		"restricted.networks.zones": validate.IsListOf(validate.IsAny),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.snapshots)
 		//
 		// ---
