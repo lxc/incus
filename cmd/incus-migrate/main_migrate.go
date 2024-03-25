@@ -113,6 +113,19 @@ func (c *cmdMigrateData) Render() string {
 }
 
 func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
+	// Detect local server.
+	local, err := c.connectLocal()
+	if err == nil {
+		useLocal, err := c.global.asker.AskBool("The local Incus server is the target [default=yes]: ", "yes")
+		if err != nil {
+			return nil, "", err
+		}
+
+		if useLocal {
+			return local, "", nil
+		}
+	}
+
 	// Server address
 	serverURL, err := c.global.asker.AskString("Please provide Incus server URL: ", "", nil)
 	if err != nil {
@@ -339,12 +352,22 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 		architectureName, _ := osarch.ArchitectureGetLocal()
 
 		if slices.Contains([]string{"x86_64", "aarch64"}, architectureName) {
-			hasSecureBoot, err := c.global.asker.AskBool("Does the VM support UEFI Secure Boot? [default=no]: ", "no")
+			hasUEFI, err := c.global.asker.AskBool("Does the VM support UEFI booting? [default=yes]: ", "yes")
 			if err != nil {
 				return cmdMigrateData{}, err
 			}
 
-			if !hasSecureBoot {
+			if hasUEFI {
+				hasSecureBoot, err := c.global.asker.AskBool("Does the VM support UEFI Secure Boot? [default=yes]: ", "yes")
+				if err != nil {
+					return cmdMigrateData{}, err
+				}
+
+				if !hasSecureBoot {
+					config.InstanceArgs.Config["security.secureboot"] = "false"
+				}
+			} else {
+				config.InstanceArgs.Config["security.csm"] = "true"
 				config.InstanceArgs.Config["security.secureboot"] = "false"
 			}
 		}
