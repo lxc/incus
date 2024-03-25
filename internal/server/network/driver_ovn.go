@@ -5430,9 +5430,30 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 
+	// Load the project.
+	var p *api.Project
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		project, err := dbCluster.GetProject(ctx, tx.Tx(), n.project)
+		if err != nil {
+			return err
+		}
+
+		p, err = project.ToAPI(ctx, tx.Tx())
+
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
+	}
+
+	// Validate restrictions.
+	if !project.NetworkIntegrationAllowed(p.Config, peer.TargetIntegration) {
+		return api.StatusErrorf(http.StatusForbidden, "Project isn't allowed to use this network integration")
+	}
+
 	// Load the integration.
 	var integration *api.NetworkIntegration
-	err := n.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+	err = n.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		entry, err := dbCluster.GetNetworkIntegration(ctx, tx.Tx(), peer.TargetIntegration)
 		if err != nil {
 			return err
