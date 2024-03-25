@@ -52,13 +52,26 @@ func (c *cmdAdminInit) RunAuto(cmd *cobra.Command, args []string, d incus.Instan
 		return nil, fmt.Errorf(i18n.G("Storage has already been configured"))
 	}
 
-	// Defaults
-	if c.flagStorageBackend == "" {
-		c.flagStorageBackend = "dir"
+	// Detect the backing filesystem.
+	backingFs, err := linux.DetectFilesystem(internalUtil.VarPath())
+	if err != nil {
+		backingFs = "dir"
 	}
 
+	// Get the possible local storage drivers.
+	storageDrivers := linux.AvailableStorageDrivers(internalUtil.VarPath(), server.Environment.StorageSupportedDrivers, internalUtil.PoolTypeLocal)
+
+	// Defaults
 	if c.flagNetworkPort == -1 {
 		c.flagNetworkPort = ports.HTTPSDefaultPort
+	}
+
+	if c.flagStorageBackend == "" && c.flagStoragePool == "" && backingFs == "btrfs" && slices.Contains(storageDrivers, "btrfs") {
+		// Use btrfs subvol if running on btrfs.
+		c.flagStoragePool = internalUtil.VarPath("storage-pools", "default")
+		c.flagStorageBackend = "btrfs"
+	} else if c.flagStorageBackend == "" {
+		c.flagStorageBackend = "dir"
 	}
 
 	// Fill in the node configuration
