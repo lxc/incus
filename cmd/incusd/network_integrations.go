@@ -14,6 +14,7 @@ import (
 	"github.com/lxc/incus/internal/server/db"
 	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
 	"github.com/lxc/incus/internal/server/lifecycle"
+	"github.com/lxc/incus/internal/server/project"
 	"github.com/lxc/incus/internal/server/request"
 	"github.com/lxc/incus/internal/server/response"
 	localUtil "github.com/lxc/incus/internal/server/util"
@@ -127,6 +128,9 @@ func networkIntegrationsGet(d *Daemon, r *http.Request) response.Response {
 
 	recursion := localUtil.IsRecursionRequest(r)
 
+	// Network integrations aren't project aware, we only load the per-project data to apply name restrictions.
+	projectName := request.ProjectParam(r)
+
 	// Get list of Network integrations.
 	resultString := []string{}
 	resultMap := []api.NetworkIntegration{}
@@ -134,12 +138,29 @@ func networkIntegrationsGet(d *Daemon, r *http.Request) response.Response {
 	err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
+		// Load the project.
+		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+		if err != nil {
+			return fmt.Errorf("Failed to load network restrictions from project %q: %w", projectName, err)
+		}
+
+		p, err := dbProject.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed to load network restrictions from project %q: %w", projectName, err)
+		}
+
+		// Load the integrations.
 		integrations, err := dbCluster.GetNetworkIntegrations(ctx, tx.Tx())
 		if err != nil {
 			return err
 		}
 
 		for _, integration := range integrations {
+			// Filter for project restrictions.
+			if !project.NetworkIntegrationAllowed(p.Config, integration.Name) {
+				continue
+			}
+
 			if !recursion {
 				resultString = append(resultString, api.NewURL().Path(version.APIVersion, "network-integrations", integration.Name).String())
 			} else {
@@ -373,10 +394,29 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Network integrations aren't project aware, we only load the per-project data to apply name restrictions.
+	projectName := request.ProjectParam(r)
+
 	// Get the integration.
 	var info *api.NetworkIntegration
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Get the project.
+		dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+		if err != nil {
+			return fmt.Errorf("Failed to load network restrictions from project %q: %w", projectName, err)
+		}
+
+		p, err := dbProject.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed to load network restrictions from project %q: %w", projectName, err)
+		}
+
+		// Filter for project restrictions.
+		if !project.NetworkIntegrationAllowed(p.Config, integrationName) {
+			return nil
+		}
+
 		// Get the integration.
 		dbRecord, err := dbCluster.GetNetworkIntegration(ctx, tx.Tx(), integrationName)
 		if err != nil {
@@ -400,6 +440,10 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	if info == nil {
+		return response.NotFound(nil)
 	}
 
 	return response.SyncResponseETag(true, info, info.Writable())
