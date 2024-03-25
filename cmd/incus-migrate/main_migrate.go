@@ -314,7 +314,7 @@ func (c *cmdMigrate) RunInteractive(server incus.InstanceServer) (cmdMigrateData
 
 	// Provide source path
 	if config.InstanceArgs.Type == api.InstanceTypeVM {
-		question = "Please provide the path to a disk, partition, or image file: "
+		question = "Please provide the path to a disk, partition, or raw image file: "
 	} else {
 		question = "Please provide the path to a root filesystem: "
 	}
