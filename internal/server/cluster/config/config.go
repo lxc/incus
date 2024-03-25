@@ -239,8 +239,8 @@ func (c *Config) ClusterHealingThreshold() time.Duration {
 }
 
 // OpenFGA returns all OpenFGA settings need to interact with an OpenFGA server.
-func (c *Config) OpenFGA() (apiURL string, apiToken string, storeID string, authorizationModelID string) {
-	return c.m.GetString("openfga.api.url"), c.m.GetString("openfga.api.token"), c.m.GetString("openfga.store.id"), c.m.GetString("openfga.store.model_id")
+func (c *Config) OpenFGA() (apiURL string, apiToken string, storeID string) {
+	return c.m.GetString("openfga.api.url"), c.m.GetString("openfga.api.token"), c.m.GetString("openfga.store.id")
 }
 
 // Dump current configuration keys and their values. Keys with values matching
@@ -652,14 +652,6 @@ var ConfigSchema = config.Schema{
 	// scope: global
 	// shortdesc: ID of the OpenFGA permission store
 	"openfga.store.id": {},
-
-	// gendoc:generate(entity=server, group=openfga, key=openfga.store.model_id)
-	//
-	// ---
-	// type: string
-	// scope: global
-	// shortdesc: ID of the OpenFGA authorization model
-	"openfga.store.model_id": {},
 
 	// gendoc:generate(entity=server, group=oidc, key=oidc.client.id)
 	//
