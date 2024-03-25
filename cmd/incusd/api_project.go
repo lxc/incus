@@ -1425,7 +1425,6 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// Specify a comma-delimited list of network names that can be used as uplink for networks in this project.
 		// ---
 		//  type: string
-		//  defaultdesc: `block`
 		//  shortdesc: Which network names can be used as uplink in this project
 		"restricted.networks.uplinks": validate.Optional(validate.IsListOf(validate.IsAny)),
 
