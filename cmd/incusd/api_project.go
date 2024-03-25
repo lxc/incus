@@ -1421,6 +1421,13 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  shortdesc: Which network names are allowed for use in this project
 		"restricted.networks.access": validate.Optional(validate.IsListOf(validate.IsAny)),
 
+		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.integrations)
+		// Specify a comma-delimited list of network integrations that can be used by networks in this project.
+		// ---
+		//  type: string
+		//  shortdesc: Which network integrations can be used in this project
+		"restricted.networks.integrations": validate.IsListOf(validate.IsAny),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.uplinks)
 		// Specify a comma-delimited list of network names that can be used as uplink for networks in this project.
 		// ---
