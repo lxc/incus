@@ -108,6 +108,51 @@ var updates = map[int]schema.Update{
 	69: updateFromV68,
 	70: updateFromV69,
 	71: updateFromV70,
+	72: updateFromV71,
+	73: updateFromV72,
+}
+
+// updateFromV72 removes the openfga.store.model_id server config key.
+func updateFromV72(ctx context.Context, tx *sql.Tx) error {
+	q := `DELETE FROM config WHERE key='openfga.store.model_id';`
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed adding network integration support: %w", err)
+	}
+
+	return nil
+}
+
+// updateFromV71 adds network integration support.
+func updateFromV71(ctx context.Context, tx *sql.Tx) error {
+	q := `
+CREATE TABLE networks_integrations (
+	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	name TEXT NOT NULL,
+	description TEXT NOT NULL,
+	type INTEGER NOT NULL,
+	UNIQUE (name)
+);
+
+CREATE TABLE networks_integrations_config (
+	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	network_integration_id INTEGER NOT NULL,
+	key TEXT NOT NULL,
+	value TEXT NOT NULL,
+	UNIQUE (network_integration_id, key),
+	FOREIGN KEY (network_integration_id) REFERENCES networks_integrations (id) ON DELETE CASCADE
+);
+
+ALTER TABLE networks_peers ADD COLUMN type INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE networks_peers ADD COLUMN target_network_integration_id INTEGER DEFAULT NULL REFERENCES networks_integrations (id) ON DELETE CASCADE;
+CREATE UNIQUE INDEX networks_peers_unique_network_id_target_network_integration_id ON "networks_peers" (network_id, target_network_integration_id);
+`
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed adding network integration support: %w", err)
+	}
+
+	return nil
 }
 
 func updateFromV70(ctx context.Context, tx *sql.Tx) error {

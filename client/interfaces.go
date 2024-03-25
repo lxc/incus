@@ -249,6 +249,15 @@ type InstanceServer interface {
 	UpdateNetworkZoneRecord(zone string, name string, record api.NetworkZoneRecordPut, ETag string) (err error)
 	DeleteNetworkZoneRecord(zone string, name string) (err error)
 
+	// Network integrations functions ("network_integrations" API extension)
+	GetNetworkIntegrationNames() (names []string, err error)
+	GetNetworkIntegrations() (integrations []api.NetworkIntegration, err error)
+	GetNetworkIntegration(name string) (integration *api.NetworkIntegration, ETag string, err error)
+	CreateNetworkIntegration(integration api.NetworkIntegrationsPost) (err error)
+	UpdateNetworkIntegration(name string, integration api.NetworkIntegrationPut, ETag string) (err error)
+	RenameNetworkIntegration(name string, integration api.NetworkIntegrationPost) (err error)
+	DeleteNetworkIntegration(name string) (err error)
+
 	// Operation functions
 	GetOperationUUIDs() (uuids []string, err error)
 	GetOperations() (operations []api.Operation, err error)

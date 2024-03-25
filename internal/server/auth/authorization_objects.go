@@ -106,20 +106,21 @@ type objectValidator struct {
 }
 
 var objectValidators = map[ObjectType]objectValidator{
-	ObjectTypeUser:          {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
-	ObjectTypeServer:        {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
-	ObjectTypeCertificate:   {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
-	ObjectTypeStoragePool:   {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
-	ObjectTypeProject:       {minIdentifierElements: 0, maxIdentifierElements: 0, requireProject: true},
-	ObjectTypeImage:         {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
-	ObjectTypeImageAlias:    {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
-	ObjectTypeInstance:      {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
-	ObjectTypeNetwork:       {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
-	ObjectTypeNetworkACL:    {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
-	ObjectTypeNetworkZone:   {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
-	ObjectTypeProfile:       {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
-	ObjectTypeStorageBucket: {minIdentifierElements: 2, maxIdentifierElements: 3, requireProject: true},
-	ObjectTypeStorageVolume: {minIdentifierElements: 3, maxIdentifierElements: 4, requireProject: true},
+	ObjectTypeUser:               {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeServer:             {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeCertificate:        {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeStoragePool:        {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeProject:            {minIdentifierElements: 0, maxIdentifierElements: 0, requireProject: true},
+	ObjectTypeImage:              {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeImageAlias:         {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeInstance:           {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeNetwork:            {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeNetworkACL:         {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeNetworkIntegration: {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeNetworkZone:        {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeProfile:            {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
+	ObjectTypeStorageBucket:      {minIdentifierElements: 2, maxIdentifierElements: 3, requireProject: true},
+	ObjectTypeStorageVolume:      {minIdentifierElements: 3, maxIdentifierElements: 4, requireProject: true},
 }
 
 // NewObject returns an Object of the given type. The passed in arguments must be in the correct
@@ -299,6 +300,12 @@ func ObjectNetwork(projectName string, networkName string) Object {
 // ObjectNetworkACL represents a network ACL.
 func ObjectNetworkACL(projectName string, networkACLName string) Object {
 	object, _ := NewObject(ObjectTypeNetworkACL, projectName, networkACLName)
+	return object
+}
+
+// ObjectNetworkIntegration represents a network integration.
+func ObjectNetworkIntegration(networkIntegrationName string) Object {
+	object, _ := NewObject(ObjectTypeNetworkIntegration, networkIntegrationName)
 	return object
 }
 

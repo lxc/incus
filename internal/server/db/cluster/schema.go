@@ -259,6 +259,21 @@ CREATE TABLE "networks_forwards_config" (
 	UNIQUE (network_forward_id, key),
 	FOREIGN KEY (network_forward_id) REFERENCES "networks_forwards" (id) ON DELETE CASCADE
 );
+CREATE TABLE networks_integrations (
+	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	name TEXT NOT NULL,
+	description TEXT NOT NULL,
+	type INTEGER NOT NULL,
+	UNIQUE (name)
+);
+CREATE TABLE networks_integrations_config (
+	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	network_integration_id INTEGER NOT NULL,
+	key TEXT NOT NULL,
+	value TEXT NOT NULL,
+	UNIQUE (network_integration_id, key),
+	FOREIGN KEY (network_integration_id) REFERENCES networks_integrations (id) ON DELETE CASCADE
+);
 CREATE TABLE "networks_load_balancers" (
 	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	network_id INTEGER NOT NULL,
@@ -296,6 +311,8 @@ CREATE TABLE "networks_peers" (
 	target_network_project TEXT NULL,
 	target_network_name TEXT NULL,
 	target_network_id INTEGER NULL,
+    type INTEGER NOT NULL DEFAULT 0,
+    target_network_integration_id INTEGER DEFAULT NULL REFERENCES networks_integrations (id) ON DELETE CASCADE,
 	UNIQUE (network_id, name),
 	UNIQUE (network_id, target_network_project, target_network_name),
 	UNIQUE (network_id, target_network_id),
@@ -309,6 +326,7 @@ CREATE TABLE "networks_peers_config" (
 	UNIQUE (network_peer_id, key),
 	FOREIGN KEY (network_peer_id) REFERENCES "networks_peers" (id) ON DELETE CASCADE
 );
+CREATE UNIQUE INDEX networks_peers_unique_network_id_target_network_integration_id ON "networks_peers" (network_id, target_network_integration_id);
 CREATE UNIQUE INDEX networks_unique_network_id_node_id_key ON "networks_config" (network_id, IFNULL(node_id, -1), key);
 CREATE TABLE "networks_zones" (
 	id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -631,5 +649,5 @@ CREATE TABLE "warnings" (
 );
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
-INSERT INTO schema (version, updated_at) VALUES (71, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (73, strftime("%s"))
 `

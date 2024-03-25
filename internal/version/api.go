@@ -405,6 +405,7 @@ var APIExtensions = []string{
 	"device_usb_serial",
 	"numa_cpu_balanced",
 	"image_restriction_nesting",
+	"network_integrations",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

@@ -2404,3 +2404,29 @@ across NUMA nodes on the system.
 ## `image_restriction_nesting`
 
 This extension adds a new image restriction, `requirements.nesting` which when `true` indicates that an image cannot be run without nesting.
+
+## `network_integrations`
+
+Adds the concept of network integrations and initial support for OVN Interconnection.
+
+New API:
+
+* `/1.0/network-integrations` (GET, POST)
+* `/1.0/network-integrations/NAME` (GET, PUT, PATCH, DELETE, POST)
+
+Each integration is made of:
+
+* name
+* description
+* type (only `ovn` for now)
+* configuration
+   * `ovn.northbound_connection` (database connection string for the OVN Interconnection database)
+   * `ovn.ca_cert` (optional, SSL CA certificate for the OVN Interconnection database)
+   * `ovn.client_cert` (optional, SSL client certificate to connect to the OVN Interconnection database)
+   * `ovn.client_key` (optional, SSL client key to connect to the OVN Interconnection database)
+   * `ovn.transit.pattern` (Pongo2 template to generate the transit switch name)
+
+Those integrations attach to network peers through some new fields:
+
+* `type` (`local` for current behavior, `remote` for integrations)
+* `target_integration` (reference to the integration)

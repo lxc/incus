@@ -18,54 +18,13 @@ import (
 	"github.com/lxc/incus/shared/logger"
 )
 
-func WriteOpenFGAAuthorizationModel(ctx context.Context, apiURL string, apiToken string, storeID string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	u, err := url.Parse(apiURL)
-	if err != nil {
-		return "", fmt.Errorf("Failed parsing URL: %w", err)
-	}
-
-	conf := client.ClientConfiguration{
-		ApiScheme: u.Scheme,
-		ApiHost:   u.Host,
-		StoreId:   storeID,
-		Credentials: &credentials.Credentials{
-			Method: credentials.CredentialsMethodApiToken,
-			Config: &credentials.Config{
-				ApiToken: apiToken,
-			},
-		},
-	}
-
-	fgaClient, err := client.NewSdkClient(&conf)
-	if err != nil {
-		return "", fmt.Errorf("Failed to create OpenFGA client: %w", err)
-	}
-
-	var builtinAuthorizationModel client.ClientWriteAuthorizationModelRequest
-	err = json.Unmarshal([]byte(authModel), &builtinAuthorizationModel)
-	if err != nil {
-		return "", fmt.Errorf("Failed to unmarshal built in authorization model: %w", err)
-	}
-
-	data, err := fgaClient.WriteAuthorizationModel(ctx).Body(builtinAuthorizationModel).Execute()
-	if err != nil {
-		return "", err
-	}
-
-	return data.GetAuthorizationModelId(), nil
-}
-
 type fga struct {
 	commonAuthorizer
 	tls *tls
 
-	apiURL      string
-	apiToken    string
-	storeID     string
-	authModelID string
+	apiURL   string
+	apiToken string
+	storeID  string
 
 	online         bool
 	shutdownCtx    context.Context
@@ -107,16 +66,6 @@ func (f *fga) configure(opts Opts) error {
 	f.storeID, ok = val.(string)
 	if !ok {
 		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "openfga.store.id", val)
-	}
-
-	val, ok = opts.config["openfga.store.model_id"]
-	if !ok || val == nil {
-		return fmt.Errorf("Missing OpenFGA authorization model ID")
-	}
-
-	f.authModelID, ok = val.(string)
-	if !ok {
-		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "openfga.store.model_id", val)
 	}
 
 	return nil
@@ -166,6 +115,7 @@ func (f *fga) load(ctx context.Context, certificateCache *certificate.Cache, opt
 		first := true
 
 		for {
+			// Attempt a connection.
 			err := f.connect(ctx, certificateCache, opts)
 			if err == nil {
 				if !first {
@@ -176,6 +126,7 @@ func (f *fga) load(ctx context.Context, certificateCache *certificate.Cache, opt
 				return
 			}
 
+			// Handle re-tries.
 			if first {
 				logger.Warn("Unable to connect to the OpenFGA server, will retry every 30s", logger.Ctx{"err": err})
 				first = false
@@ -208,52 +159,69 @@ func (f *fga) connect(ctx context.Context, certificateCache *certificate.Cache, 
 		return err
 	}
 
-	// Compare existing model with built-in model
-	readModelResponse, err := f.client.ReadAuthorizationModel(ctx).Options(client.ClientReadAuthorizationModelOptions{
-		AuthorizationModelId: openfga.PtrString(f.authModelID),
-	}).Body(client.ClientReadAuthorizationModelRequest{}).Execute()
+	// Load current authorization model.
+	readModelResponse, err := f.client.ReadLatestAuthorizationModel(ctx).Execute()
 	if err != nil {
 		return fmt.Errorf("Failed to read pre-existing OpenFGA model: %w", err)
-	} else if readModelResponse.AuthorizationModel == nil {
-		return fmt.Errorf("Pre-existing authorization model is missing")
 	}
 
-	if readModelResponse.AuthorizationModel.SchemaVersion != builtinAuthorizationModel.SchemaVersion {
-		return fmt.Errorf("Existing OpenFGA model has schema version %q, but our model has version %q", readModelResponse.AuthorizationModel.SchemaVersion, builtinAuthorizationModel.SchemaVersion)
-	}
+	// Check if we need to upload a new model.
+	upload := readModelResponse.AuthorizationModel == nil
 
-	// Clear condition field from older servers.
-	for _, entry := range readModelResponse.AuthorizationModel.TypeDefinitions {
-		if entry.Metadata == nil || entry.Metadata.Relations == nil {
-			continue
+	if !upload {
+		// Make sure we're not dealing with different schemas.
+		if readModelResponse.AuthorizationModel.SchemaVersion != builtinAuthorizationModel.SchemaVersion {
+			return fmt.Errorf("Existing OpenFGA model has schema version %q, but our model has version %q", readModelResponse.AuthorizationModel.SchemaVersion, builtinAuthorizationModel.SchemaVersion)
 		}
 
-		for _, relation := range *entry.Metadata.Relations {
-			if relation.DirectlyRelatedUserTypes == nil {
+		// Clear condition field from older servers.
+		for _, entry := range readModelResponse.AuthorizationModel.TypeDefinitions {
+			if entry.Metadata == nil || entry.Metadata.Relations == nil {
 				continue
 			}
 
-			for i, reference := range *relation.DirectlyRelatedUserTypes {
-				if reference.Condition != nil && *reference.Condition == "" {
-					rel := *relation.DirectlyRelatedUserTypes
-					rel[i].Condition = nil
+			for _, relation := range *entry.Metadata.Relations {
+				if relation.DirectlyRelatedUserTypes == nil {
+					continue
+				}
+
+				for i, reference := range *relation.DirectlyRelatedUserTypes {
+					if reference.Condition != nil && *reference.Condition == "" {
+						rel := *relation.DirectlyRelatedUserTypes
+						rel[i].Condition = nil
+					}
 				}
 			}
 		}
+
+		// Serialize the models to JSON.
+		existingTypeDefinitions, err := json.Marshal(readModelResponse.AuthorizationModel.TypeDefinitions)
+		if err != nil {
+			return fmt.Errorf("Failed to compare OpenFGA model type definitions: %w", err)
+		}
+
+		builtinTypeDefinitions, err := json.Marshal(builtinAuthorizationModel.TypeDefinitions)
+		if err != nil {
+			return fmt.Errorf("Failed to compare OpenFGA model type definitions: %w", err)
+		}
+
+		// Compare them.
+		if string(existingTypeDefinitions) != string(builtinTypeDefinitions) {
+			logger.Info("The OpenFGA model has changed, uploading new model")
+			upload = true
+		}
 	}
 
-	existingTypeDefinitions, err := json.Marshal(readModelResponse.AuthorizationModel.TypeDefinitions)
-	if err != nil {
-		return fmt.Errorf("Failed to compare OpenFGA model type definitions: %w", err)
-	}
+	if upload {
+		err = json.Unmarshal([]byte(authModel), &builtinAuthorizationModel)
+		if err != nil {
+			return fmt.Errorf("Failed to unmarshal built in authorization model: %w", err)
+		}
 
-	builtinTypeDefinitions, err := json.Marshal(builtinAuthorizationModel.TypeDefinitions)
-	if err != nil {
-		return fmt.Errorf("Failed to compare OpenFGA model type definitions: %w", err)
-	}
-
-	if string(existingTypeDefinitions) != string(builtinTypeDefinitions) {
-		return fmt.Errorf("Existing OpenFGA model does not equal new model")
+		_, err := f.client.WriteAuthorizationModel(ctx).Body(builtinAuthorizationModel).Execute()
+		if err != nil {
+			return fmt.Errorf("Failed to write the authorization model: %w", err)
+		}
 	}
 
 	if opts.resourcesFunc != nil {
@@ -315,10 +283,6 @@ func (f *fga) CheckPermission(ctx context.Context, r *http.Request, object Objec
 	logCtx["protocol"] = details.protocol
 
 	objectUser := ObjectUser(username)
-	options := client.ClientCheckOptions{
-		AuthorizationModelId: openfga.PtrString(f.authModelID),
-	}
-
 	body := client.ClientCheckRequest{
 		User:     objectUser.String(),
 		Relation: string(entitlement),
@@ -326,7 +290,7 @@ func (f *fga) CheckPermission(ctx context.Context, r *http.Request, object Objec
 	}
 
 	f.logger.Debug("Checking OpenFGA relation", logCtx)
-	resp, err := f.client.Check(ctx).Options(options).Body(body).Execute()
+	resp, err := f.client.Check(ctx).Body(body).Execute()
 	if err != nil {
 		return fmt.Errorf("Failed to check OpenFGA relation: %w", err)
 	}
@@ -364,12 +328,8 @@ func (f *fga) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 	logCtx["username"] = username
 	logCtx["protocol"] = details.protocol
 
-	options := client.ClientListObjectsOptions{
-		AuthorizationModelId: openfga.PtrString(f.authModelID),
-	}
-
 	f.logger.Debug("Listing related objects for user", logCtx)
-	resp, err := f.client.ListObjects(ctx).Options(options).Body(client.ClientListObjectsRequest{
+	resp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
 		User:     ObjectUser(username).String(),
 		Relation: string(entitlement),
 		Type:     string(objectType),
@@ -698,6 +658,53 @@ func (f *fga) DeleteNetworkZone(ctx context.Context, projectName string, network
 	return f.updateTuples(ctx, nil, deletions)
 }
 
+// AddNetworkIntegration is a no-op.
+func (f *fga) AddNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(networkIntegrationName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkIntegration is a no-op.
+func (f *fga) DeleteNetworkIntegration(ctx context.Context, networkIntegrationName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(networkIntegrationName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
+// RenameNetworkIntegration is a no-op.
+func (f *fga) RenameNetworkIntegration(ctx context.Context, oldNetworkIntegrationName string, newNetworkIntegrationName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(newNetworkIntegrationName).String(),
+		},
+	}
+
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkIntegration(oldNetworkIntegrationName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, deletions)
+}
+
 // AddNetworkACL is a no-op.
 func (f *fga) AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
 	writes := []client.ClientTupleKey{
@@ -879,7 +886,6 @@ func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, 
 	defer cancel()
 
 	opts := client.ClientWriteOptions{
-		AuthorizationModelId: openfga.PtrString(f.authModelID),
 		Transaction: &client.TransactionOptions{
 			Disable:             true,
 			MaxParallelRequests: 5,
@@ -922,10 +928,6 @@ func (f *fga) updateTuples(ctx context.Context, writes []client.ClientTupleKey, 
 }
 
 func (f *fga) projectObjects(ctx context.Context, projectName string) ([]string, error) {
-	options := client.ClientListObjectsOptions{
-		AuthorizationModelId: openfga.PtrString(f.authModelID),
-	}
-
 	objectTypes := []ObjectType{
 		ObjectTypeInstance,
 		ObjectTypeImage,
@@ -941,7 +943,7 @@ func (f *fga) projectObjects(ctx context.Context, projectName string) ([]string,
 	var allObjects []string
 	projectObjectString := ObjectProject(projectName).String()
 	for _, objectType := range objectTypes {
-		resp, err := f.client.ListObjects(ctx).Options(options).Body(client.ClientListObjectsRequest{
+		resp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
 			User:     projectObjectString,
 			Relation: relationProject,
 			Type:     string(objectType),
@@ -961,7 +963,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	var deletions []client.ClientTupleKeyWithoutCondition
 
 	// Check if the type-bound public access is set.
-	resp, err := f.client.Check(ctx).Options(client.ClientCheckOptions{AuthorizationModelId: openfga.PtrString(f.authModelID)}).Body(client.ClientCheckRequest{
+	resp, err := f.client.Check(ctx).Body(client.ClientCheckRequest{
 		User:     "user:*",
 		Relation: relationUser,
 		Object:   ObjectServer().String(),
@@ -1022,8 +1024,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	}
 
 	// List the certificates we have added to OpenFGA already.
-	options := client.ClientListObjectsOptions{AuthorizationModelId: openfga.PtrString(f.authModelID)}
-	certificatesResp, err := f.client.ListObjects(ctx).Options(options).Body(client.ClientListObjectsRequest{
+	certificatesResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
 		User:     ObjectServer().String(),
 		Relation: relationServer,
 		Type:     string(ObjectTypeCertificate),
@@ -1039,7 +1040,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	}
 
 	// List the storage pools we have added to OpenFGA already.
-	storagePoolsResp, err := f.client.ListObjects(ctx).Options(options).Body(client.ClientListObjectsRequest{
+	storagePoolsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
 		User:     ObjectServer().String(),
 		Relation: relationServer,
 		Type:     string(ObjectTypeStoragePool),
@@ -1055,7 +1056,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	}
 
 	// List the projects we have added to OpenFGA already.
-	projectsResp, err := f.client.ListObjects(ctx).Options(options).Body(client.ClientListObjectsRequest{
+	projectsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
 		User:     ObjectServer().String(),
 		Relation: relationServer,
 		Type:     string(ObjectTypeProject),

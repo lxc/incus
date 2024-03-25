@@ -1079,6 +1079,71 @@
 				]
 			}
 		},
+		"network_integration": {
+			"common": {
+				"keys": [
+					{
+						"user.*": {
+							"longdesc": "User keys can be used in search.",
+							"shortdesc": "Free form user key/value storage",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"ovn": {
+				"keys": [
+					{
+						"ovn.ca_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL certificate authority for the inter-connection database",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.client_cert": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL client certificate",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.client_key": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN SSL client key",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.northbound_connection": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN northbound inter-connection connection string",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.southbound_connection": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "OVN southbound inter-connection connection string",
+							"type": "string"
+						}
+					},
+					{
+						"ovn.transit.pattern": {
+							"defaultdesc": "`ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}`",
+							"longdesc": "Specify a Pongo2 template string that represents the transit switch name.\nThis template gets access to the project name (`projectName`), integration name (`integrationName`) and network name (`networkName`).\n",
+							"shortdesc": "Template for the transit switch name",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"project": {
 			"features": {
 				"keys": [
@@ -1368,6 +1433,13 @@
 						"restricted.networks.access": {
 							"longdesc": "Specify a comma-delimited list of network names that are allowed for use in this project.\nIf this option is not set, all networks are accessible.\n\nNote that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.",
 							"shortdesc": "Which network names are allowed for use in this project",
+							"type": "string"
+						}
+					},
+					{
+						"restricted.networks.integrations": {
+							"longdesc": "Specify a comma-delimited list of network integrations that can be used by networks in this project.",
+							"shortdesc": "Which network integrations can be used in this project",
 							"type": "string"
 						}
 					},
@@ -2017,14 +2089,6 @@
 							"longdesc": "",
 							"scope": "global",
 							"shortdesc": "ID of the OpenFGA permission store",
-							"type": "string"
-						}
-					},
-					{
-						"openfga.store.model_id": {
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "ID of the OpenFGA authorization model",
 							"type": "string"
 						}
 					}

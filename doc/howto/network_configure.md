@@ -18,6 +18,7 @@ See the following documentation:
 
 - {doc}`/howto/network_acls`
 - {doc}`/howto/network_forwards`
+- {doc}`/howto/network_integrations`
 - {doc}`/howto/network_load_balancers`
 - {doc}`/howto/network_zones`
 - {doc}`/howto/network_ovn_peers` (OVN only)

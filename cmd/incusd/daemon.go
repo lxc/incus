@@ -300,7 +300,7 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 		// Expansion function to deal with project inheritance.
 		expandProject := func(projectName string) string {
 			// Object types that aren't part of projects.
-			if slices.Contains([]auth.ObjectType{auth.ObjectTypeUser, auth.ObjectTypeServer, auth.ObjectTypeCertificate, auth.ObjectTypeStoragePool}, objectType) {
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeUser, auth.ObjectTypeServer, auth.ObjectTypeCertificate, auth.ObjectTypeStoragePool, auth.ObjectTypeNetworkIntegration}, objectType) {
 				return projectName
 			}
 
@@ -1382,7 +1382,7 @@ func (d *Daemon) init() error {
 	lokiURL, lokiUsername, lokiPassword, lokiCACert, lokiInstance, lokiLoglevel, lokiLabels, lokiTypes := d.globalConfig.LokiServer()
 	oidcIssuer, oidcClientID, oidcAudience, oidcClaim := d.globalConfig.OIDCServer()
 	syslogSocketEnabled := d.localConfig.SyslogSocket()
-	openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openFGAAuthorizationModelID := d.globalConfig.OpenFGA()
+	openfgaAPIURL, openfgaAPIToken, openfgaStoreID := d.globalConfig.OpenFGA()
 	instancePlacementScriptlet := d.globalConfig.InstancesPlacementScriptlet()
 
 	d.endpoints.NetworkUpdateTrustedProxy(d.globalConfig.HTTPSTrustedProxy())
@@ -1414,15 +1414,9 @@ func (d *Daemon) init() error {
 
 	// Setup OpenFGA authorization.
 	if openfgaAPIURL != "" && openfgaStoreID != "" && openfgaAPIToken != "" {
-		if openFGAAuthorizationModelID == "" {
-			// We should never be missing the model ID at start up if we have other connection details (this means
-			// something went wrong the last time we tried to set it up).
-			logger.Warn("OpenFGA authorization driver is misconfigured, skipping...")
-		} else {
-			err = d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openFGAAuthorizationModelID)
-			if err != nil {
-				return fmt.Errorf("Failed to configure OpenFGA: %w", err)
-			}
+		err = d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID)
+		if err != nil {
+			return fmt.Errorf("Failed to configure OpenFGA: %w", err)
 		}
 	}
 
@@ -1882,7 +1876,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 }
 
 // Setup OpenFGA.
-func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, authorizationModelID string) error {
+func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) error {
 	var err error
 
 	if d.authorizer != nil {
@@ -1892,7 +1886,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, au
 		}
 	}
 
-	if apiURL == "" || apiToken == "" || storeID == "" || authorizationModelID == "" {
+	if apiURL == "" || apiToken == "" || storeID == "" {
 		// Reset to default authorizer.
 		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
 		if err != nil {
@@ -1903,10 +1897,9 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, au
 	}
 
 	config := map[string]any{
-		"openfga.api.url":        apiURL,
-		"openfga.api.token":      apiToken,
-		"openfga.store.id":       storeID,
-		"openfga.store.model_id": authorizationModelID,
+		"openfga.api.url":   apiURL,
+		"openfga.api.token": apiToken,
+		"openfga.store.id":  storeID,
 	}
 
 	revert := revert.New()

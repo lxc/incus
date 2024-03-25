@@ -86,6 +86,8 @@ var api10 = []APIEndpoint{
 	networkAllocationsCmd,
 	networkForwardCmd,
 	networkForwardsCmd,
+	networkIntegrationCmd,
+	networkIntegrationsCmd,
 	networkLoadBalancerCmd,
 	networkLoadBalancersCmd,
 	networkPeerCmd,
@@ -730,11 +732,6 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 		}
 	})
 
-	err = doApi10PreNotifyTriggers(d, clusterChanged, newClusterConfig)
-	if err != nil {
-		return response.InternalError(fmt.Errorf("Failed to run pre-notify triggers for cluster config update: %w", err))
-	}
-
 	// Notify the other nodes about changes
 	notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
 	if err != nil {
@@ -778,50 +775,6 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ConfigUpdated.Event(request.CreateRequestor(r), nil))
 
 	return response.EmptySyncResponse
-}
-
-func doApi10PreNotifyTriggers(d *Daemon, clusterChanged map[string]string, newClusterConfig *clusterConfig.Config) error {
-	openFGAChanged := false
-	for key := range clusterChanged {
-		switch key {
-		case "openfga.api.url", "openfga.api.token", "openfga.store.id":
-			openFGAChanged = true
-		}
-	}
-
-	if openFGAChanged {
-		apiURL, apiToken, storeID, modelID := newClusterConfig.OpenFGA()
-
-		// Write authorization model only if the modelID has not already been set and we have all other connection information.
-		if modelID == "" && apiURL != "" && apiToken != "" && storeID != "" {
-			var err error
-			modelID, err = auth.WriteOpenFGAAuthorizationModel(d.shutdownCtx, apiURL, apiToken, storeID)
-			if err != nil {
-				return fmt.Errorf("Failed to write OpenFGA authorization model: %w", err)
-			}
-
-			err = d.db.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-				clusterConfig, err := clusterConfig.Load(ctx, tx)
-				if err != nil {
-					return fmt.Errorf("Failed to load cluster config: %w", err)
-				}
-
-				_, err = clusterConfig.Patch(map[string]string{"openfga.store.model_id": modelID})
-				if err != nil {
-					return err
-				}
-
-				*newClusterConfig = *clusterConfig
-				clusterChanged["openfga.store.model_id"] = modelID
-				return err
-			})
-			if err != nil {
-				return fmt.Errorf("Failed to write OpenFGA authorization model ID to database")
-			}
-		}
-	}
-
-	return nil
 }
 
 func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]string, nodeConfig *node.Config, clusterConfig *clusterConfig.Config) error {
@@ -874,7 +827,7 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		case "oidc.issuer", "oidc.client.id", "oidc.audience":
 			oidcChanged = true
 
-		case "openfga.api.url", "openfga.api.token", "openfga.store.id", "openfga.store.model_id":
+		case "openfga.api.url", "openfga.api.token", "openfga.store.id":
 			openFGAChanged = true
 		}
 	}
@@ -1012,8 +965,8 @@ func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	}
 
 	if openFGAChanged {
-		openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaAuthorizationModelID := d.globalConfig.OpenFGA()
-		err := d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaAuthorizationModelID)
+		openfgaAPIURL, openfgaAPIToken, openfgaStoreID := d.globalConfig.OpenFGA()
+		err := d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID)
 		if err != nil {
 			return err
 		}

@@ -14,11 +14,23 @@ type NetworkPeersPost struct {
 
 	// Name of the target project
 	// Example: project1
-	TargetProject string `json:"target_project" yaml:"target_project"`
+	TargetProject string `json:"target_project,omitempty" yaml:"target_project,omitempty"`
 
 	// Name of the target network
 	// Example: network1
-	TargetNetwork string `json:"target_network" yaml:"target_network"`
+	TargetNetwork string `json:"target_network,omitempty" yaml:"target_network,omitempty"`
+
+	// Type of peer
+	// Example: local
+	//
+	// API extension: network_integrations.
+	Type string `json:"type" yaml:"type"`
+
+	// Name of the target integration
+	// Example: ovn-ic1
+	//
+	// API extension: network_integrations.
+	TargetIntegration string `json:"target_integration,omitempty" yaml:"target_integration,omitempty"`
 }
 
 // NetworkPeerPut represents the modifiable fields of a network peering
@@ -52,12 +64,12 @@ type NetworkPeer struct {
 	// Name of the target project
 	// Read only: true
 	// Example: project1
-	TargetProject string `json:"target_project" yaml:"target_project"`
+	TargetProject string `json:"target_project,omitempty" yaml:"target_project,omitempty"`
 
 	// Name of the target network
 	// Read only: true
 	// Example: network1
-	TargetNetwork string `json:"target_network" yaml:"target_network"`
+	TargetNetwork string `json:"target_network,omitempty" yaml:"target_network,omitempty"`
 
 	// The state of the peering
 	// Read only: true
@@ -68,6 +80,18 @@ type NetworkPeer struct {
 	// Read only: true
 	// Example: ["/1.0/network-acls/test", "/1.0/network-acls/foo"]
 	UsedBy []string `json:"used_by" yaml:"used_by"`
+
+	// Type of peer
+	// Example: local
+	//
+	// API extension: network_integrations.
+	Type string `json:"type" yaml:"type"`
+
+	// Name of the target integration
+	// Example: ovn-ic1
+	//
+	// API extension: network_integrations.
+	TargetIntegration string `json:"target_integration,omitempty" yaml:"target_integration,omitempty"`
 }
 
 // Etag returns the values used for etag generation.
