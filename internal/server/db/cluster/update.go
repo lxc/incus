@@ -109,6 +109,18 @@ var updates = map[int]schema.Update{
 	70: updateFromV69,
 	71: updateFromV70,
 	72: updateFromV71,
+	73: updateFromV72,
+}
+
+// updateFromV72 removes the openfga.store.model_id server config key.
+func updateFromV72(ctx context.Context, tx *sql.Tx) error {
+	q := `DELETE FROM config WHERE key='openfga.store.model_id';`
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed adding network integration support: %w", err)
+	}
+
+	return nil
 }
 
 // updateFromV71 adds network integration support.
