@@ -993,6 +993,60 @@ It is globally unique across all servers and projects.
 ```
 
 <!-- config group instance-volatile end -->
+<!-- config group network_integration-common start -->
+```{config:option} user.* network_integration-common
+:shortdesc: "Free form user key/value storage"
+:type: "string"
+User keys can be used in search.
+```
+
+<!-- config group network_integration-common end -->
+<!-- config group network_integration-ovn start -->
+```{config:option} ovn.ca_cert network_integration-ovn
+:scope: "global"
+:shortdesc: "OVN SSL certificate authority for the inter-connection database"
+:type: "string"
+
+```
+
+```{config:option} ovn.client_cert network_integration-ovn
+:scope: "global"
+:shortdesc: "OVN SSL client certificate"
+:type: "string"
+
+```
+
+```{config:option} ovn.client_key network_integration-ovn
+:scope: "global"
+:shortdesc: "OVN SSL client key"
+:type: "string"
+
+```
+
+```{config:option} ovn.northbound_connection network_integration-ovn
+:scope: "global"
+:shortdesc: "OVN northbound inter-connection connection string"
+:type: "string"
+
+```
+
+```{config:option} ovn.southbound_connection network_integration-ovn
+:scope: "global"
+:shortdesc: "OVN southbound inter-connection connection string"
+:type: "string"
+
+```
+
+```{config:option} ovn.transit.pattern network_integration-ovn
+:defaultdesc: "`ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}`"
+:shortdesc: "Template for the transit switch name"
+:type: "string"
+Specify a Pongo2 template string that represents the transit switch name.
+This template gets access to the project name (`projectName`), integration name (`integrationName`) and network name (`networkName`).
+
+```
+
+<!-- config group network_integration-ovn end -->
 <!-- config group project-features start -->
 ```{config:option} features.images project-features
 :defaultdesc: "`false`"
@@ -1264,6 +1318,12 @@ Specify a comma-delimited list of network names that are allowed for use in this
 If this option is not set, all networks are accessible.
 
 Note that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.
+```
+
+```{config:option} restricted.networks.integrations project-restricted
+:shortdesc: "Which network integrations can be used in this project"
+:type: "string"
+Specify a comma-delimited list of network integrations that can be used by networks in this project.
 ```
 
 ```{config:option} restricted.networks.subnets project-restricted
@@ -1833,13 +1893,6 @@ This value is required by some providers.
 ```{config:option} openfga.store.id server-openfga
 :scope: "global"
 :shortdesc: "ID of the OpenFGA permission store"
-:type: "string"
-
-```
-
-```{config:option} openfga.store.model_id server-openfga
-:scope: "global"
-:shortdesc: "ID of the OpenFGA authorization model"
 :type: "string"
 
 ```
