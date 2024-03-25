@@ -143,6 +143,13 @@ func transferRootfs(ctx context.Context, dst incus.InstanceServer, op incus.Oper
 	return nil
 }
 
+func (m *cmdMigrate) connectLocal() (incus.InstanceServer, error) {
+	args := incus.ConnectionArgs{}
+	args.UserAgent = fmt.Sprintf("LXC-MIGRATE %s", version.Version)
+
+	return incus.ConnectIncusUnix("", &args)
+}
+
 func (m *cmdMigrate) connectTarget(url string, certPath string, keyPath string, authType string, token string) (incus.InstanceServer, string, error) {
 	args := incus.ConnectionArgs{
 		AuthType: authType,

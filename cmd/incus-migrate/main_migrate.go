@@ -113,6 +113,19 @@ func (c *cmdMigrateData) Render() string {
 }
 
 func (c *cmdMigrate) askServer() (incus.InstanceServer, string, error) {
+	// Detect local server.
+	local, err := c.connectLocal()
+	if err == nil {
+		useLocal, err := c.global.asker.AskBool("The local Incus server is the target [default=yes]: ", "yes")
+		if err != nil {
+			return nil, "", err
+		}
+
+		if useLocal {
+			return local, "", nil
+		}
+	}
+
 	// Server address
 	serverURL, err := c.global.asker.AskString("Please provide Incus server URL: ", "", nil)
 	if err != nil {
