@@ -8,6 +8,8 @@ Depending on how the host's networking is configured, this might limit the avail
 Therefore, Incus allows creating peer routing relationships between two OVN networks.
 Using this method, traffic between the two networks can go directly from one OVN network to the other and thus stays within the OVN subsystem, rather than transiting through the uplink network.
 
+Additionally, with network integrations, it's possible to peer two OVN networks even when they're running on different clusters.
+
 ## Create a routing relationship between networks
 
 To add a peer routing relationship between two networks, you must create a network peering for both networks.
@@ -27,6 +29,10 @@ You can also create peer routing relationships between OVN networks in different
     incus network peer create <network1> <peering_name> <project2/network2> [configuration_options] --project=<project1>
     incus network peer create <network2> <peering_name> <project1/network1> [configuration_options] --project=<project2>
 
+For remote peering through a network integration:
+
+    incus network peer create <network1> <peering_name> <integration name> [configuration_options] --type=remote
+
 ```{important}
 If the project or the network name is incorrect, the command will not return any error indicating that the respective project/network does not exist, and the routing relationship will remain in pending state.
 This behavior prevents users in a different project from discovering whether a project and network exists.
@@ -36,14 +42,15 @@ This behavior prevents users in a different project from discovering whether a p
 
 Peer routing relationships have the following properties:
 
-Property         | Type       | Required | Description
-:--              | :--        | :--      | :--
-`name`           | string     | yes      | Name of the network peering on the local network
-`description`    | string     | no       | Description of the network peering
-`config`         | string set | no       | Configuration options as key/value pairs (only `user.*` custom keys supported)
-`target_project` | string     | yes      | Which project the target network exists in (required at create time)
-`target_network` | string     | yes      | Which network to create a peering with (required at create time)
-`status`         | string     | --       | Status indicating if pending or created (mutual peering exists with the target network)
+Property             | Type       | Required | Description
+:--                  | :--        | :--      | :--
+`name`               | string     | yes      | Name of the network peering on the local network
+`description`        | string     | no       | Description of the network peering
+`config`             | string set | no       | Configuration options as key/value pairs (only `user.*` custom keys supported)
+`target_integration` | string     | no       | Name of the integration (required at create time for remote peers)
+`target_project`     | string     | yes      | Which project the target network exists in (required at create time for local peers)
+`target_network`     | string     | yes      | Which network to create a peering with (required at create time for local peers)
+`status`             | string     | --       | Status indicating if pending or created (mutual peering exists with the target network)
 
 ## List routing relationships
 
