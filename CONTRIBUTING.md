@@ -35,7 +35,6 @@ Separate commits should be used for:
 - API structure (`shared/api: Add XYZ` for changes to `shared/api/`)
 - Go client package (`client: Add XYZ` for changes to `client/`)
 - CLI (`cmd/<command>: Change XYZ` for changes to `cmd/`)
-- Scripts (`scripts: Update bash completion for XYZ` for changes to `scripts/`)
 - Incus daemon (`incus/<package>: Add support for XYZ` for changes to `incus/`)
 - Tests (`tests: Add test for XYZ` for changes to `tests/`)
 
