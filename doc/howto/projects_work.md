@@ -81,7 +81,7 @@ Therefore, the project does not have access to the default profile (which is par
 :input: incus launch images:ubuntu/22.04 my-instance
 
 Creating my-instance
-Error: Failed instance creation: Failed creating instance record: Failed initialising instance: Failed getting root disk: No root device could be found
+Error: Failed instance creation: Failed creating instance record: Failed initializing instance: Failed getting root disk: No root device could be found
 ```
 
 To fix this, you can copy the contents of the `default` project's default profile into the current project's default profile.
