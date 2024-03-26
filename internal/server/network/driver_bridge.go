@@ -193,6 +193,7 @@ func (n *bridge) Validate(config map[string]string) error {
 					if err != nil {
 						return fmt.Errorf("Invalid VLAN ID %q: %w", entryParts[2], err)
 					}
+
 					if vlanID < 1 || vlanID > 4094 {
 						return fmt.Errorf("Invalid VLAN ID %q", entryParts[2])
 					}
@@ -779,6 +780,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 					if ok {
 						iface, err = net.InterfaceByName(entry)
 					}
+
 					if !ok || err != nil {
 						return fmt.Errorf("failed to create external interface %q", entry)
 					}
@@ -793,6 +795,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 					if err != nil {
 						return fmt.Errorf("failed to get link info for external interface %q", entry)
 					}
+
 					if linkInfo.Info.Kind != "vlan" || linkInfo.Link != ifParent || linkInfo.Info.Data.Id != vlanID || !(linkInfo.Master == "" || linkInfo.Master == n.name) {
 						return fmt.Errorf("external interface %q already in use", entry)
 					}
