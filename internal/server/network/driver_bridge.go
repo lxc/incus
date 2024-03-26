@@ -167,9 +167,36 @@ func (n *bridge) Validate(config map[string]string) error {
 		"bridge.external_interfaces": validate.Optional(func(value string) error {
 			for _, entry := range strings.Split(value, ",") {
 				entry = strings.TrimSpace(entry)
+
+				// Test for extended configuration of external interface.
+				entryParts := strings.Split(entry, "/")
+				if len(entryParts) == 3 {
+					// The first part is the interface name.
+					entry = strings.TrimSpace(entryParts[0])
+				}
+
 				err := validate.IsInterfaceName(entry)
 				if err != nil {
 					return fmt.Errorf("Invalid interface name %q: %w", entry, err)
+				}
+
+				if len(entryParts) == 3 {
+					// Check if the parent interface is valid.
+					parent := strings.TrimSpace(entryParts[1])
+					err := validate.IsInterfaceName(parent)
+					if err != nil {
+						return fmt.Errorf("Invalid interface name %q: %w", parent, err)
+					}
+
+					// Check if the VLAN ID is valid.
+					vlanID, err := strconv.Atoi(entryParts[2])
+					if err != nil {
+						return fmt.Errorf("Invalid VLAN ID %q: %w", entryParts[2], err)
+					}
+
+					if vlanID < 1 || vlanID > 4094 {
+						return fmt.Errorf("Invalid VLAN ID %q", entryParts[2])
+					}
 				}
 			}
 
@@ -423,6 +450,25 @@ func (n *bridge) Delete(clientType request.ClientType) error {
 		err := n.Stop()
 		if err != nil {
 			return err
+		}
+	}
+
+	// Clean up extended external interfaces.
+	if n.config["bridge.external_interfaces"] != "" {
+		for _, entry := range strings.Split(n.config["bridge.external_interfaces"], ",") {
+			entry = strings.TrimSpace(entry)
+			entryParts := strings.Split(entry, "/")
+
+			if len(entryParts) == 3 {
+				ifName := strings.TrimSpace(entryParts[0])
+				_, err := net.InterfaceByName(ifName)
+				if err == nil {
+					err = InterfaceRemove(ifName)
+					if err != nil {
+						return err
+					}
+				}
+			}
 		}
 	}
 
@@ -711,10 +757,49 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	if n.config["bridge.external_interfaces"] != "" {
 		for _, entry := range strings.Split(n.config["bridge.external_interfaces"], ",") {
 			entry = strings.TrimSpace(entry)
+
+			// Test for extended configuration of external interface.
+			entryParts := strings.Split(entry, "/")
+			ifParent := ""
+			vlanID := 0
+
+			if len(entryParts) == 3 && n.config["bridge.driver"] == "native" {
+				vlanID, err = strconv.Atoi(entryParts[2])
+				if err != nil || vlanID < 1 || vlanID > 4094 {
+					vlanID = 0
+					n.logger.Warn("Ignoring invalid VLAN ID", logger.Ctx{"interface": entry, "vlanID": entryParts[2]})
+				} else {
+					entry = strings.TrimSpace(entryParts[0])
+					ifParent = strings.TrimSpace(entryParts[1])
+				}
+			}
+
 			iface, err := net.InterfaceByName(entry)
 			if err != nil {
-				n.logger.Warn("Skipping attaching missing external interface", logger.Ctx{"interface": entry})
-				continue
+				if vlanID == 0 {
+					n.logger.Warn("Skipping attaching missing external interface", logger.Ctx{"interface": entry})
+					continue
+				}
+
+				// If the interface doesn't exist and VLAN ID was provided, create the missing interface.
+				ok, err := VLANInterfaceCreate(ifParent, entry, strconv.Itoa(vlanID), false)
+				if ok {
+					iface, err = net.InterfaceByName(entry)
+				}
+
+				if !ok || err != nil {
+					return fmt.Errorf("Failed to create external interface %q", entry)
+				}
+			} else if vlanID > 0 {
+				// If the interface exists and VLAN ID was provided, ensure it has the same parent and VLAN ID and is not attached to a different network.
+				linkInfo, err := ip.GetLinkInfoByName(entry)
+				if err != nil {
+					return fmt.Errorf("Failed to get link info for external interface %q", entry)
+				}
+
+				if linkInfo.Info.Kind != "vlan" || linkInfo.Link != ifParent || linkInfo.Info.Data.ID != vlanID || !(linkInfo.Master == "" || linkInfo.Master == n.name) {
+					return fmt.Errorf("External interface %q already in use", entry)
+				}
 			}
 
 			unused := true
@@ -1580,10 +1665,28 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 					continue
 				}
 
-				if !slices.Contains(devices, dev) && InterfaceExists(dev) {
-					err = DetachInterface(n.name, dev)
+				// Test for extended configuration of external interface.
+				ifName := dev
+				devParts := strings.Split(dev, "/")
+				if len(devParts) == 3 {
+					ifName = strings.TrimSpace(devParts[0])
+				}
+
+				if !slices.Contains(devices, dev) && InterfaceExists(ifName) {
+					err = DetachInterface(n.name, ifName)
 					if err != nil {
 						return err
+					}
+
+					// Remove the interface if it exists (and we created it).
+					if len(devParts) == 3 {
+						_, err := net.InterfaceByName(ifName)
+						if err == nil {
+							err = InterfaceRemove(ifName)
+							if err != nil {
+								return err
+							}
+						}
 					}
 				}
 			}
