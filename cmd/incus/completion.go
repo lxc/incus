@@ -468,6 +468,50 @@ func (g *cmdGlobal) cmpNetworkLoadBalancers(networkName string) ([]string, cobra
 	return results, cmpDirectives
 }
 
+func (g *cmdGlobal) cmpNetworkPeerConfigs(networkName string, peerName string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(networkName)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	peer, _, err := resource.server.GetNetworkPeer(resource.name, peerName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	for k := range peer.Config {
+		results = append(results, k)
+	}
+
+	return results, cmpDirectives
+}
+
+func (g *cmdGlobal) cmpNetworkPeers(networkName string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(networkName)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	results, err := resource.server.GetNetworkPeerNames(networkName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return results, cmpDirectives
+}
+
 func (g *cmdGlobal) cmpNetworks(toComplete string) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
@@ -581,6 +625,109 @@ func (g *cmdGlobal) cmpNetworkProfiles(networkName string) ([]string, cobra.Shel
 	}
 
 	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
+func (g *cmdGlobal) cmpNetworkZoneConfigs(zoneName string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.ParseServers(zoneName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	zone, _, err := client.GetNetworkZone(zoneName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	var results []string
+	for k := range zone.Config {
+		results = append(results, k)
+	}
+
+	return results, cobra.ShellCompDirectiveNoFileComp
+}
+
+func (g *cmdGlobal) cmpNetworkZoneRecordConfigs(zoneName string, recordName string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(zoneName)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	peer, _, err := resource.server.GetNetworkZoneRecord(resource.name, recordName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	for k := range peer.Config {
+		results = append(results, k)
+	}
+
+	return results, cmpDirectives
+}
+
+func (g *cmdGlobal) cmpNetworkZoneRecords(zoneName string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(zoneName)
+
+	if len(resources) <= 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+
+	results, err := resource.server.GetNetworkZoneRecordNames(zoneName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return results, cmpDirectives
+}
+
+func (g *cmdGlobal) cmpNetworkZones(toComplete string) ([]string, cobra.ShellCompDirective) {
+	results := []string{}
+	cmpDirectives := cobra.ShellCompDirectiveNoFileComp
+
+	resources, _ := g.ParseServers(toComplete)
+
+	if len(resources) > 0 {
+		resource := resources[0]
+
+		zones, err := resource.server.GetNetworkZoneNames()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+
+		for _, project := range zones {
+			var name string
+
+			if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
+				name = project
+			} else {
+				name = fmt.Sprintf("%s:%s", resource.remote, project)
+			}
+
+			results = append(results, name)
+		}
+	}
+
+	if !strings.Contains(toComplete, ":") {
+		remotes, directives := g.cmpRemotes(false)
+		results = append(results, remotes...)
+		cmpDirectives |= directives
+	}
+
+	return results, cmpDirectives
 }
 
 func (g *cmdGlobal) cmpProfileConfigs(profileName string) ([]string, cobra.ShellCompDirective) {
