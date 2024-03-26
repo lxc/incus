@@ -4,15 +4,34 @@ if [ ! -e "systemd" ] || [ ! -e "incus-agent" ]; then
     exit 1
 fi
 
-if [ ! -e "/lib/systemd/system" ]; then
+# Find target path.
+TARGET=""
+for alternative in /usr/lib /lib /etc; do
+    [ -w "${alternative}/systemd" ] || continue
+    [ -w "${alternative}/udev" ] || continue
+
+    TARGET="${alternative}"
+    break
+done
+
+if [ "${TARGET}" = "" ]; then
     echo "This script only works on systemd systems"
     exit 1
 fi
 
+echo "Installing agent into ${TARGET}"
+
 # Install the units.
-cp udev/99-incus-agent.rules /lib/udev/rules.d/
-cp systemd/incus-agent.service /lib/systemd/system/
-cp systemd/incus-agent-setup /lib/systemd/
+cp udev/99-incus-agent.rules "${TARGET}/udev/rules.d/"
+cp systemd/incus-agent.service "${TARGET}/systemd/system/"
+cp systemd/incus-agent-setup "${TARGET}/systemd/"
+
+# Replacing the variables.
+sed -i "s#TARGET#${TARGET}#g" "${TARGET}/udev/rules.d/99-incus-agent.rules"
+sed -i "s#TARGET#${TARGET}#g" "${TARGET}/systemd/system/incus-agent.service"
+sed -i "s#TARGET#${TARGET}#g" "${TARGET}/systemd/incus-agent-setup"
+
+# Make sure systemd is aware of them.
 systemctl daemon-reload
 
 # SELinux handling.
