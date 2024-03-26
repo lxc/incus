@@ -9,16 +9,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/zitadel/oidc/v2/pkg/client"
-	"github.com/zitadel/oidc/v2/pkg/client/rp"
-	httphelper "github.com/zitadel/oidc/v2/pkg/http"
-	"github.com/zitadel/oidc/v2/pkg/oidc"
-	"github.com/zitadel/oidc/v2/pkg/op"
+	"github.com/zitadel/oidc/v3/pkg/client"
+	"github.com/zitadel/oidc/v3/pkg/client/rp"
+	httphelper "github.com/zitadel/oidc/v3/pkg/http"
+	"github.com/zitadel/oidc/v3/pkg/oidc"
+	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
 // Verifier holds all information needed to verify an access token offline.
 type Verifier struct {
-	accessTokenVerifier op.AccessTokenVerifier
+	accessTokenVerifier *op.AccessTokenVerifier
 
 	clientID  string
 	issuer    string
@@ -92,7 +92,7 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		}
 
 		// Attempt the refresh.
-		tokens, err := rp.RefreshAccessToken(provider, cookie.Value, "", "")
+		tokens, err := rp.RefreshTokens[*oidc.IDTokenClaims](context.TODO(), provider, cookie.Value, "", "")
 		if err != nil {
 			return "", &AuthError{err}
 		}
@@ -285,7 +285,7 @@ func (o *Verifier) getProvider(r *http.Request) (rp.RelyingParty, error) {
 
 	oidcScopes := []string{oidc.ScopeOpenID, oidc.ScopeOfflineAccess}
 
-	provider, err := rp.NewRelyingPartyOIDC(o.issuer, o.clientID, "", fmt.Sprintf("https://%s/oidc/callback", r.Host), oidcScopes, options...)
+	provider, err := rp.NewRelyingPartyOIDC(context.TODO(), o.issuer, o.clientID, "", fmt.Sprintf("https://%s/oidc/callback", r.Host), oidcScopes, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -294,8 +294,8 @@ func (o *Verifier) getProvider(r *http.Request) (rp.RelyingParty, error) {
 }
 
 // getAccessTokenVerifier calls the OIDC discovery endpoint in order to get the issuer's remote keys which are needed to create an access token verifier.
-func getAccessTokenVerifier(issuer string) (op.AccessTokenVerifier, error) {
-	discoveryConfig, err := client.Discover(issuer, http.DefaultClient)
+func getAccessTokenVerifier(issuer string) (*op.AccessTokenVerifier, error) {
+	discoveryConfig, err := client.Discover(context.TODO(), issuer, http.DefaultClient)
 	if err != nil {
 		return nil, fmt.Errorf("Failed calling OIDC discovery endpoint: %w", err)
 	}
