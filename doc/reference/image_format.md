@@ -151,14 +151,16 @@ The image identifier for such images is the SHA-256 of the tarball.
 (image-format-split)=
 ### Split tarballs
 
-A split image consists of two separate tarballs.
-One tarball contains the metadata and optionally the template files (usually `*.tar.xz`), and the other contains the root file system (usually `*.squashfs` for containers or `*.qcow2` for virtual machines).
+A split image consists of two files.
+The first is a tarball containing the metadata and optionally the template files (usually `*.tar.xz`).
+The second can be a tarball, `squashfs` or `qcow2` image containing the actual instance data.
 
-For containers, the root file system tarball can be SquashFS-formatted.
-For virtual machines, the `rootfs.img` file always uses the `qcow2` format.
-It can optionally be compressed using `qcow2`'s native compression.
+For containers, the second file is most commonly a SquashFS-formatted file system tree, though it can also be a tarball of the same tree.
+For virtual machines, the second file is always a `qcow2` formatted disk image.
+
+Tarballs can be externally compressed (`.tar.xz`, `.tar.gz`, ...) whereas `squashfs` and `qcow2` can be internally compressed through their respective native compression options.
 
 This format is designed to allow for easy image building from existing non-Incus rootfs tarballs that are already available.
 You should also use this format if you want to create images that can be consumed by both Incus and other tools.
 
-The image identifier for such images is the SHA-256 of the concatenation of the metadata and root file system tarball (in that order).
+The image identifier for such images is the SHA-256 of the concatenation of the metadata and data files (in that order).
