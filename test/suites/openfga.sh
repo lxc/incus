@@ -29,6 +29,9 @@ test_openfga() {
   incus config set openfga.api.token "$(fga_token)"
   incus config set openfga.store.id "${OPENFGA_STORE_ID}"
 
+  # Wait for initial connection to OpenFGA.
+  sleep 1s
+
   echo "==> Checking permissions for unknown user..."
   user_is_not_server_admin
   user_is_not_server_operator

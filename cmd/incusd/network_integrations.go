@@ -170,6 +170,12 @@ func networkIntegrationsGet(d *Daemon, r *http.Request) response.Response {
 					return err
 				}
 
+				// Check if the user should see the configuration.
+				err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectNetworkIntegration(result.Name), auth.EntitlementCanEdit)
+				if err != nil {
+					result.Config = map[string]string{}
+				}
+
 				// Add UsedBy field.
 				usedBy, err := tx.GetNetworkPeersURLByIntegration(ctx, integration.Name)
 				if err != nil {
@@ -426,6 +432,12 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 		info, err = dbRecord.ToAPI(ctx, tx.Tx())
 		if err != nil {
 			return err
+		}
+
+		// Check if the user should see the configuration.
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectNetworkIntegration(info.Name), auth.EntitlementCanEdit)
+		if err != nil {
+			info.Config = map[string]string{}
 		}
 
 		// Add UsedBy field.
