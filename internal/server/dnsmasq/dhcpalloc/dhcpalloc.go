@@ -88,7 +88,7 @@ type Network interface {
 	DHCPv6Ranges() []iprange.Range
 }
 
-// Options to initialise the allocator with.
+// Options to initialize the allocator with.
 type Options struct {
 	ProjectName string
 	HostName    string
@@ -332,7 +332,7 @@ func (t *Transaction) getDHCPFreeIPv6(usedIPs map[[16]byte]dnsmasq.DHCPAllocatio
 	return nil, fmt.Errorf("No available IP could not be found")
 }
 
-// AllocateTask initialises a new locked Transaction for a specific host and executes the supplied function on it.
+// AllocateTask initializes a new locked Transaction for a specific host and executes the supplied function on it.
 // The lock on the dnsmasq config is released when the function returns.
 func AllocateTask(opts *Options, f func(*Transaction) error) error {
 	l := logger.AddContext(logger.Ctx{"driver": opts.Network.Type(), "network": opts.Network.Name(), "project": opts.ProjectName, "host": opts.HostName})

@@ -908,7 +908,7 @@ func (c *cmdNetworkACLRule) parseConfigToRule(config map[string]string) (*api.Ne
 	// Use reflect to get struct field indices in NetworkACLRule for json tags.
 	allowedKeys := networkACLRuleJSONStructFieldMap()
 
-	// Initialise new rule.
+	// Initialize new rule.
 	rule := api.NetworkACLRule{}
 	ruleValue := reflect.ValueOf(&rule).Elem()
 

@@ -109,7 +109,7 @@ func storageStartup(s *state.State, forceCheck bool) error {
 		}
 	}
 
-	// For any remaining storage pools that were not successfully initialised, we now start a go routine to
+	// For any remaining storage pools that were not successfully initialized, we now start a go routine to
 	// periodically try to initialize them again in the background.
 	if len(initPools) > 0 {
 		go func() {

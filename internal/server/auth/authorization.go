@@ -137,7 +137,7 @@ func WithResourcesFunc(f func() (*Resources, error)) func(*Opts) {
 	}
 }
 
-// LoadAuthorizer instantiates, configures, and initialises an Authorizer.
+// LoadAuthorizer instantiates, configures, and initializes an Authorizer.
 func LoadAuthorizer(ctx context.Context, driver string, logger logger.Logger, certificateCache *certificate.Cache, options ...func(opts *Opts)) (Authorizer, error) {
 	opts := &Opts{}
 	for _, o := range options {

@@ -902,7 +902,7 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 
 		// If the driver returned a post hook, run it now.
 		if volPostHook != nil {
-			// Initialise new volume containing root disk config supplied in instance.
+			// Initialize new volume containing root disk config supplied in instance.
 			err = volPostHook(vol)
 			if err != nil {
 				return err

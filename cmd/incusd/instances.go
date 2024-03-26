@@ -340,7 +340,7 @@ func instancesOnDisk(s *state.State) ([]instance.Instance, error) {
 			}
 
 			if inst == nil {
-				// Initialise dbArgs with a very basic config.
+				// Initialize dbArgs with a very basic config.
 				// This will not be sufficient to stop an instance cleanly.
 				instDBArgs := &db.InstanceArgs{
 					Type:    instanceType,

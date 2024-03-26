@@ -21,7 +21,7 @@ type ICNB struct {
 	cookie ovsdbClient.MonitorCookie
 }
 
-// NewICNB initialises new OVN client for Northbound IC operations.
+// NewICNB initializes new OVN client for Northbound IC operations.
 func NewICNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*ICNB, error) {
 	// Create the NB struct.
 	client := &ICNB{}

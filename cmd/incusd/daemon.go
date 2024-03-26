@@ -1315,7 +1315,7 @@ func (d *Daemon) init() error {
 		return err
 	}
 
-	// Apply all patches that need to be run before daemon storage is initialised.
+	// Apply all patches that need to be run before daemon storage is initialized.
 	err = patchesApply(d, patchPreDaemonStorage)
 	if err != nil {
 		return err
@@ -1334,7 +1334,7 @@ func (d *Daemon) init() error {
 		return err
 	}
 
-	// Apply all patches that need to be run after daemon storage is initialised.
+	// Apply all patches that need to be run after daemon storage is initialized.
 	err = patchesApply(d, patchPostDaemonStorage)
 	if err != nil {
 		return err
@@ -1511,7 +1511,7 @@ func (d *Daemon) init() error {
 		}
 	}
 
-	// Apply all patches that need to be run after networks are initialised.
+	// Apply all patches that need to be run after networks are initialized.
 	err = patchesApply(d, patchPostNetworks)
 	if err != nil {
 		return err
@@ -1538,7 +1538,7 @@ func (d *Daemon) init() error {
 			return err
 		}
 
-		// Must occur after d.devmonitor has been initialised.
+		// Must occur after d.devmonitor has been initialized.
 		instances, err = instance.LoadNodeAll(d.State(), instancetype.Any)
 		if err != nil {
 			return fmt.Errorf("Failed loading local instances: %w", err)

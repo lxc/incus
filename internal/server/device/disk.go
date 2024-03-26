@@ -546,7 +546,7 @@ func (d *disk) UpdatableFields(oldDevice Type) []string {
 	return []string{"limits.max", "limits.read", "limits.write", "size", "size.state"}
 }
 
-// Register calls mount for the disk volume (which should already be mounted) to reinitialise the reference counter
+// Register calls mount for the disk volume (which should already be mounted) to reinitialize the reference counter
 // for volumes attached to running instances on daemon restart.
 func (d *disk) Register() error {
 	d.logger.Debug("Initialising mounted disk ref counter")
@@ -557,7 +557,7 @@ func (d *disk) Register() error {
 			return err
 		}
 
-		// Try to mount the volume that should already be mounted to reinitialise the ref counter.
+		// Try to mount the volume that should already be mounted to reinitialize the ref counter.
 		_, err = pool.MountInstance(d.inst, nil)
 		if err != nil {
 			return err
@@ -568,7 +568,7 @@ func (d *disk) Register() error {
 			return err
 		}
 
-		// Try to mount the volume that should already be mounted to reinitialise the ref counter.
+		// Try to mount the volume that should already be mounted to reinitialize the ref counter.
 		_, err = d.pool.MountCustomVolume(storageProjectName, d.config["source"], nil)
 		if err != nil {
 			return err

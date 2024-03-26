@@ -959,7 +959,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 	})
 }
 
-// clusterInitMember initialises storage pools and networks on this member. We pass two client instances, one
+// clusterInitMember initializes storage pools and networks on this member. We pass two client instances, one
 // connected to ourselves (the joining member) and one connected to the target cluster member to join.
 func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memberConfig []api.ClusterMemberConfigKey) error {
 	data := api.InitLocalPreseed{}

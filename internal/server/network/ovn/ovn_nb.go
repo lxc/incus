@@ -34,7 +34,7 @@ type NB struct {
 
 var nb *NB
 
-// NewNB initialises new OVN client for Northbound operations.
+// NewNB initializes new OVN client for Northbound operations.
 func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*NB, error) {
 	if nb != nil {
 		return nb, nil

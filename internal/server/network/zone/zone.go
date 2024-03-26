@@ -34,7 +34,7 @@ type zone struct {
 	info        *api.NetworkZone
 }
 
-// init initialise internal variables.
+// init initialize internal variables.
 func (d *zone) init(state *state.State, id int64, projectName string, info *api.NetworkZone) {
 	if info == nil {
 		d.info = &api.NetworkZone{}
@@ -250,7 +250,7 @@ func (d *zone) Update(config *api.NetworkZonePut, clientType request.ClientType)
 			return err
 		}
 
-		// Apply changes internally and reinitialise.
+		// Apply changes internally and reinitialize.
 		d.info.NetworkZonePut = *config
 		d.init(d.state, d.id, d.projectName, d.info)
 

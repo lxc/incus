@@ -759,7 +759,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 	}
 
-	// Initialise a new firewall option set.
+	// Initialize a new firewall option set.
 	fwOpts := firewallDrivers.Opts{}
 
 	if n.hasIPv4Firewall() {

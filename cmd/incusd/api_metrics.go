@@ -234,7 +234,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 					// Add the metrics.
 					newMetricsLock.Lock()
 
-					// Initialise metrics set for project if needed.
+					// Initialize metrics set for project if needed.
 					if newMetrics[projectName] == nil {
 						newMetrics[projectName] = metrics.NewMetricSet(nil)
 					}

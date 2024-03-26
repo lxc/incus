@@ -94,7 +94,7 @@ type common struct {
 	nodes       map[int64]db.NetworkNode
 }
 
-// init initialise internal variables.
+// init initialize internal variables.
 func (n *common) init(s *state.State, id int64, projectName string, netInfo *api.Network, netNodes map[int64]db.NetworkNode) error {
 	n.logger = logger.AddContext(logger.Ctx{"project": projectName, "driver": netInfo.Type, "network": netInfo.Name})
 	n.id = id
@@ -477,7 +477,7 @@ func (n *common) rename(newName string) error {
 		return err
 	}
 
-	// Reinitialise internal name variable and logger context with new name.
+	// Reinitialize internal name variable and logger context with new name.
 	n.name = newName
 
 	return nil

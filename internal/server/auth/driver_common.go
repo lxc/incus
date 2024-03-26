@@ -18,7 +18,7 @@ type commonAuthorizer struct {
 
 func (c *commonAuthorizer) init(driverName string, l logger.Logger) error {
 	if l == nil {
-		return fmt.Errorf("Cannot initialise authorizer: nil logger provided")
+		return fmt.Errorf("Cannot initialize authorizer: nil logger provided")
 	}
 
 	l = l.AddContext(logger.Ctx{"driver": driverName})

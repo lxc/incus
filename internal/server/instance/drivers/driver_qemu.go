@@ -223,7 +223,7 @@ func qemuInstantiate(s *state.State, args db.InstanceArgs, expandedDevices devic
 	return d
 }
 
-// qemuCreate creates a new storage volume record and returns an initialised Instance.
+// qemuCreate creates a new storage volume record and returns an initialized Instance.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
 func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project) (instance.Instance, revert.Hook, error) {
 	revert := revert.New()
@@ -373,7 +373,7 @@ type qemu struct {
 
 	// Cached handles.
 	// Do not use these variables directly, instead use their associated get functions so they
-	// will be initialised on demand.
+	// will be initialized on demand.
 	architectureName string
 
 	// Stateful migration streams.
@@ -7066,7 +7066,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		args.Disconnect()
 	}()
 
-	// Start filesystem transfer routine and initialise a channel that is closed when the routine finishes.
+	// Start filesystem transfer routine and initialize a channel that is closed when the routine finishes.
 	fsTransferDone := make(chan struct{})
 	g.Go(func() error {
 		defer close(fsTransferDone)
@@ -7498,7 +7498,7 @@ func (d *qemu) Render(options ...func(response any) error) (any, any, error) {
 			LastUsedAt:      d.lastUsedDate,
 			Name:            strings.SplitN(d.name, "/", 2)[1],
 			Stateful:        d.stateful,
-			Size:            -1, // Default to uninitialised/error state (0 means no CoW usage).
+			Size:            -1, // Default to uninitialized/error state (0 means no CoW usage).
 		}
 
 		snapState.Architecture = d.architectureName

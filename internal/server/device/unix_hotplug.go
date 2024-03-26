@@ -204,7 +204,7 @@ func (d *unixHotplug) loadUnixDevice() *udev.Device {
 
 	err := e.AddMatchIsInitialized()
 	if err != nil {
-		logger.Warn("Failed to add initialised property to device", logger.Ctx{"err": err})
+		logger.Warn("Failed to add initialized property to device", logger.Ctx{"err": err})
 	}
 
 	devices, _ := e.Devices()

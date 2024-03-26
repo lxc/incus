@@ -982,7 +982,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 			req.Profiles = []string{"default"}
 		}
 
-		// Initialise the profile info list (even if an empty list is provided so this isn't left as nil).
+		// Initialize the profile info list (even if an empty list is provided so this isn't left as nil).
 		// This way instances can still be created without any profiles by providing a non-nil empty list.
 		profiles = make([]api.Profile, 0, len(req.Profiles))
 

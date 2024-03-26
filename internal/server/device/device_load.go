@@ -10,7 +10,7 @@ import (
 	"github.com/lxc/incus/shared/validate"
 )
 
-// newByType returns a new unitialised device based of the type indicated by the project and device config.
+// newByType returns a new unitialized device based of the type indicated by the project and device config.
 func newByType(state *state.State, projectName string, conf deviceConfig.Device) (device, error) {
 	if conf["type"] == "" {
 		return nil, fmt.Errorf("Missing device type in config")
@@ -91,7 +91,7 @@ func newByType(state *state.State, projectName string, conf deviceConfig.Device)
 	return dev, nil
 }
 
-// load instantiates a device and initialises its internal state. It does not validate the config supplied.
+// load instantiates a device and initializes its internal state. It does not validate the config supplied.
 func load(inst instance.Instance, state *state.State, projectName string, name string, conf deviceConfig.Device, volatileGet VolatileGetter, volatileSet VolatileSetter) (device, error) {
 	// Warning: When validating a profile, inst is expected to be provided as nil.
 	dev, err := newByType(state, projectName, conf)
