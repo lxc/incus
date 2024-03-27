@@ -5498,7 +5498,7 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 	// Determine the transit switch name.
 	pattern := integration.Config["ovn.transit.pattern"]
 	if pattern == "" {
-		pattern = "ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}"
+		pattern = "ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkName }}"
 	}
 
 	tsNameRendered, err := internalUtil.RenderTemplate(pattern, pongo2.Context{
@@ -5963,7 +5963,7 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 	// Determine the transit switch name.
 	pattern := integration.Config["ovn.transit.pattern"]
 	if pattern == "" {
-		pattern = "ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}"
+		pattern = "ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkName }}"
 	}
 
 	tsNameRendered, err := internalUtil.RenderTemplate(pattern, pongo2.Context{

@@ -197,9 +197,9 @@ The following functions are available to the scriptlet (in addition to those pro
 - `log_info(*messages)`: Add a log entry to Incus' log at `info` level. `messages` is one or more message arguments.
 - `log_warn(*messages)`: Add a log entry to Incus' log at `warn` level. `messages` is one or more message arguments.
 - `log_error(*messages)`: Add a log entry to Incus' log at `error` level. `messages` is one or more message arguments.
-- `set_cluster_member_target(member_name)`: Set the cluster member where the instance should be created. `member_name` is the name of the cluster member the instance should be created on. If this function is not called, then Incus will use its built-in instance placement logic.
-- `get_cluster_member_state(member_name)`: Get the cluster member's state. Returns an object with the cluster member's state in the form of [`api.ClusterMemberState`](https://pkg.go.dev/github.com/lxc/incus/shared/api#ClusterMemberState). `member_name` is the name of the cluster member to get the state for.
+- `set_target(member_name)`: Set the cluster member where the instance should be created. `member_name` is the name of the cluster member the instance should be created on. If this function is not called, then Incus will use its built-in instance placement logic.
 - `get_cluster_member_resources(member_name)`: Get information about resources on the cluster member. Returns an object with the resource information in the form of [`api.Resources`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Resources). `member_name` is the name of the cluster member to get the resource information for.
+- `get_cluster_member_state(member_name)`: Get the cluster member's state. Returns an object with the cluster member's state in the form of [`api.ClusterMemberState`](https://pkg.go.dev/github.com/lxc/incus/shared/api#ClusterMemberState). `member_name` is the name of the cluster member to get the state for.
 - `get_instance_resources()`: Get information about the resources the instance will require. Returns an object with the resource information in the form of [`scriptlet.InstanceResources`](https://pkg.go.dev/github.com/lxc/incus/shared/api/scriptlet/#InstanceResources).
 
 ```{note}

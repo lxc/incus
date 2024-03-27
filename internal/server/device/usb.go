@@ -308,6 +308,10 @@ func (d *usb) loadRawValues(p string) (map[string]string, error) {
 	for k := range values {
 		v, err := os.ReadFile(path.Join(p, k))
 		if err != nil {
+			if k == "serial" && os.IsNotExist(err) {
+				continue
+			}
+
 			return nil, err
 		}
 
