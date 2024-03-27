@@ -4,15 +4,15 @@ if [ ! -e "systemd" ] || [ ! -e "incus-agent" ]; then
     exit 1
 fi
 
-if [ ! -e "/lib/systemd/system" ]; then
+if [ ! -e "/etc/systemd/system" ]; then
     echo "This script only works on systemd systems"
     exit 1
 fi
 
 # Install the units.
-cp udev/99-incus-agent.rules /lib/udev/rules.d/
-cp systemd/incus-agent.service /lib/systemd/system/
-cp systemd/incus-agent-setup /lib/systemd/
+cp udev/99-incus-agent.rules /etc/udev/rules.d/
+cp systemd/incus-agent.service /etc/systemd/system/
+cp systemd/incus-agent-setup /etc/systemd/
 systemctl daemon-reload
 
 # SELinux handling.
