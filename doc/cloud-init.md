@@ -210,17 +210,13 @@ To configure a specific network interface with a static IPv4 address and also us
 ```yaml
 config:
   cloud-init.network-config: |
-    version: 1
-    config:
-      - type: physical
-        name: eth1
-        subnets:
-          - type: static
-            ipv4: true
-            address: 10.10.101.20
-            netmask: 255.255.255.0
-            gateway: 10.10.101.1
-            control: auto
-      - type: nameserver
-        address: 10.10.10.254
+    version: 2
+    ethernets:
+      eth1:
+        addresses:
+          - 10.10.101.20/24
+        gateway4: 10.10.101.1
+        nameservers:
+          addresses:
+            - 10.10.10.254
 ```
