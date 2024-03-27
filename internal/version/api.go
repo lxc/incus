@@ -123,6 +123,7 @@ var APIExtensions = []string{
 	"storage_api_volume_snapshots",
 	"storage_unmapped",
 	"projects",
+	"projects_force_delete",
 	"network_vxlan_ttl",
 	"container_incremental_copy",
 	"usb_optional_vendorid",

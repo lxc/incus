@@ -704,6 +704,13 @@ Add a new project API, supporting creation, update and deletion of projects.
 Projects can hold containers, profiles or images at this point and let
 you get a separate view of your Incus resources by switching to it.
 
+## `projects_force_delete`
+
+This allows force deletion of projects and related artifacts.
+
+This will remove any instances, volumes and buckets, profiles and networks
+(starting with acls, zones, peering before networks themselves).
+
 ## `network_vxlan_ttl`
 
 This adds a new `tunnel.NAME.ttl` network configuration option which

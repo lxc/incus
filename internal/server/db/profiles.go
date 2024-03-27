@@ -146,6 +146,20 @@ DELETE FROM profiles_devices_config WHERE profile_device_id NOT IN (SELECT id FR
 	return err
 }
 
+// RemoveReferencesToProfile will remove references for profile id.
+func (c *ClusterTx) RemoveReferencesToProfile(ctx context.Context, profileID int64) error {
+	stmt := `
+DELETE FROM profiles_config WHERE profile_id = %d;
+DELETE FROM profiles_devices_config WHERE profile_device_id IN (SELECT id FROM profiles_devices WHERE profile_id = %d) ;
+DELETE FROM profiles_devices WHERE profile_id = %d;
+`
+
+	newStmt := fmt.Sprintf(stmt, profileID, profileID, profileID)
+	_, err := c.tx.ExecContext(ctx, newStmt)
+
+	return err
+}
+
 // ExpandInstanceConfig expands the given instance config with the config
 // values of the given profiles.
 func ExpandInstanceConfig(config map[string]string, profiles []api.Profile) map[string]string {

@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/internal/server/auth"
 	"github.com/lxc/incus/internal/server/db"
 	"github.com/lxc/incus/internal/server/db/cluster"
+	instancehelpers "github.com/lxc/incus/internal/server/instance"
 	"github.com/lxc/incus/internal/server/db/operationtype"
 	"github.com/lxc/incus/internal/server/lifecycle"
 	"github.com/lxc/incus/internal/server/network"
@@ -865,6 +866,11 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 //	---
 //	produces:
 //	  - application/json
+//  parameters:
+//    - in: query
+//      name: force
+//      description: Delete project and related artifacts
+//      type: boolean
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -881,6 +887,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		return response.SmartError(err)
 	}
+	force := util.IsTrue(r.FormValue("force"))
 
 	// Quick checks.
 	if name == api.ProjectDefaultName {
@@ -894,13 +901,68 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Fetch project %q: %w", name, err)
 		}
 
-		empty, err := projectIsEmpty(ctx, project, tx)
-		if err != nil {
-			return err
-		}
+		if !force {
+			empty, err := projectIsEmpty(ctx, project, tx)
+			if err != nil {
+				return err
+			} else if !empty {
+				return fmt.Errorf("Only empty projects can be removed. Specify force parameter to override.")
+			}
+		} else {  // delete artifacts
+			// All instances (always)
+			if err := projectDeleteInstances(s, ctx, project, tx); err != nil {
+				return err
+			}
 
-		if !empty {
-			return fmt.Errorf("Only empty projects can be removed")
+			// All profiles except for default
+			err = projectDeleteProfiles(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+			// Empty the default profile
+			err = projectEmptyDefaultProfile(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+			// All images
+			err = projectDeleteImages(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+			// All networks
+			err = projectDeleteNetworks(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+			// All network zones (if features.networks.zones=true)
+			err = projectDeleteNetworkZones(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+			// All network ACLs (if features.networks=true)
+			err = projectDeleteNetworkACLs(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+			// All storage volumes (if features.storage.volumes=true)
+			err = projectDeleteStorageVolumes(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+			// All storage buckets (if features.storage.buckets=true)
+			err = projectDeleteStorageBuckets(ctx, project, tx)
+			if err != nil {
+				return err
+			}
+
+
 		}
 
 		id, err = cluster.GetProjectID(ctx, tx.Tx(), name)
@@ -1591,5 +1653,198 @@ func projectValidateRestrictedSubnets(s *state.State, value string) error {
 		}
 	}
 
+	return nil
+}
+
+// Delete all project instances
+// Load the instance, stop if needed. Then call inst.Delete(true) to have it and all its snapshots properly deleted.
+func projectDeleteInstances(s *state.State, ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	// GetInstances should only return instances, so their snapshots should delete with them
+	instances, err := cluster.GetInstances(ctx, tx.Tx(), cluster.InstanceFilter{Project: &project.Name})
+	if err != nil {
+		return err
+	}
+
+	if len(instances) == 0 {
+		return nil
+	}
+
+	for _, instance := range instances {
+		inst, err := instancehelpers.LoadByProjectAndName(s, project.Name, instance.Name)
+		if inst.IsRunning() {
+			err := inst.Stop(true)
+			if err != nil {
+				return err
+			}
+		}
+		err = inst.Delete(true)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Delete all project profiles other than default
+// All instances for this project should be deleted prior to calling this func
+func projectDeleteProfiles(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	profiles, err := cluster.GetProfiles(ctx, tx.Tx(), cluster.ProfileFilter{Project: &project.Name})
+	if err != nil {
+		return err
+	}
+
+	if len(profiles) == 1 {
+		return nil
+	}
+
+	for _, profile := range profiles {
+		if profile.Name == "default" {
+			continue
+		}
+		err := cluster.DeleteProfile(ctx, tx.Tx(), project.Name, profile.Name)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+
+// Empty the default profile i.e. remove references to it
+func projectEmptyDefaultProfile(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	defaultProfileID, err := cluster.GetProfileID(ctx, tx.Tx(), project.Name, "default")
+	if err != nil {
+		return err
+	}
+
+	err = tx.RemoveReferencesToProfile(ctx, defaultProfileID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Delete all project images
+func projectDeleteImages(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	fingerprints, err := tx.GetImagesFingerprints(ctx, project.Name, false)
+	if err != nil {
+		return err
+	}
+
+	if len(fingerprints) == 0 {
+		return nil
+	}
+
+	// Remove the database entry for the images
+	for _, fingerprint := range fingerprints {
+		id, _, err := tx.GetImage(ctx, fingerprint, cluster.ImageFilter{})
+		if err != nil {
+			return err
+		}
+		tx.DeleteImage(ctx, id)
+	}
+	return nil
+
+}
+
+// Delete all project networks
+func projectDeleteNetworks(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	networks, err := tx.GetNetworkURIs(ctx, project.ID, project.Name)
+	if err != nil {
+		return err
+	}
+
+	if len(networks) == 0 {
+		return nil
+	}
+
+	for _, network := range networks {
+		err = tx.DeleteNetwork(ctx, project.Name, network)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Delete all project network zones. Should cascade delete config, records and records_config
+func projectDeleteNetworkZones(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	networkZones, err := tx.GetNetworkZonesByProject(ctx, project.Name)
+	if err != nil {
+		return err
+	}
+
+	if len(networkZones) == 0 {
+		return nil
+	}
+
+	for _, networkZone := range networkZones {
+		id, _, err := tx.GetNetworkZoneByProject(ctx, project.Name, networkZone)
+		err = tx.DeleteNetworkZone(ctx, id)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Delete all project network ACLs
+func projectDeleteNetworkACLs(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	acls, err := tx.GetNetworkACLURIs(ctx, project.ID, project.Name)
+	if err != nil {
+		return err
+	}
+
+	if len(acls) == 0 {
+		return nil
+	}
+
+	for _, name := range acls {
+		id, _, err := tx.GetNetworkACL(ctx, project.Name, name)
+		err = tx.DeleteNetworkACL(ctx, id)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}	
+
+// Delete all project storage volumes
+func projectDeleteStorageVolumes(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	volumes, err := tx.GetCustomVolumesInProject(ctx, project.Name)
+	if err != nil {
+		return err
+	}
+
+	if len(volumes) == 0 {
+		return nil
+	}
+
+	for _, volume := range volumes {
+		err = tx.RemoveStoragePoolVolume(ctx, project.Name, volume.Name, volume.Type, volume.PoolID)
+	}
+	return nil
+}
+
+// Delete all project storage buckets
+func projectDeleteStorageBuckets(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (error) {
+	filters := []db.StorageBucketFilter{{
+		Project: &project.Name,
+	}}
+
+	buckets, err := tx.GetStoragePoolBuckets(ctx, true, filters...)
+	if err != nil {
+		return err
+	}
+
+	if len(buckets) == 0 {
+		return nil
+	}
+
+	for _, bucket := range buckets {
+		err = tx.DeleteStoragePoolBucket(ctx, bucket.PoolID, bucket.ID)
+	}
 	return nil
 }
