@@ -168,7 +168,7 @@ func (d *lvm) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 		}
 
 		// Mark the volume for shared locking during live migration.
-		if vol.volType == VolumeTypeVM {
+		if vol.volType == VolumeTypeVM || vol.IsCustomBlock() {
 			volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.Name())
 			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
 			if err != nil {
@@ -870,7 +870,7 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *migration.VolumeSourceArgs, op *operations.Operation) error {
 	if d.clustered && volSrcArgs.ClusterMove {
 		// Mark the volume for shared locking during live migration.
-		if vol.volType == VolumeTypeVM {
+		if vol.volType == VolumeTypeVM || vol.IsCustomBlock() {
 			// Block volume.
 			volDevPath := d.lvmDevPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.Name())
 			_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volDevPath)
