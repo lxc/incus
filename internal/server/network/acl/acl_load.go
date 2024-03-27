@@ -15,7 +15,7 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-// LoadByName loads and initialises a Network ACL from the database by project and name.
+// LoadByName loads and initializes a Network ACL from the database by project and name.
 func LoadByName(s *state.State, projectName string, name string) (NetworkACL, error) {
 	var id int64
 	var aclInfo *api.NetworkACL

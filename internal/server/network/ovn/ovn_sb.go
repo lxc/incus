@@ -21,7 +21,7 @@ type SB struct {
 	cookie ovsdbClient.MonitorCookie
 }
 
-// NewSB initialises new OVN client for Southbound operations.
+// NewSB initializes new OVN client for Southbound operations.
 func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*SB, error) {
 	// Prepare the OVSDB client.
 	dbSchema, err := ovnSB.FullDatabaseModel()

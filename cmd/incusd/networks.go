@@ -1495,7 +1495,7 @@ func networkStartup(s *state.State) error {
 		return fmt.Errorf("Failed to load projects: %w", err)
 	}
 
-	// Build a list of networks to initialise, keyed by project and network name.
+	// Build a list of networks to initialize, keyed by project and network name.
 	const networkPriorityStandalone = 0 // Start networks not dependent on any other network first.
 	const networkPriorityPhysical = 1   // Start networks dependent on physical interfaces second.
 	const networkPriorityLogical = 2    // Start networks dependent logical networks third.
@@ -1630,7 +1630,7 @@ func networkStartup(s *state.State) error {
 		remainingNetworks += len(networks)
 	}
 
-	// For any remaining networks that were not successfully initialised, we now start a go routine to
+	// For any remaining networks that were not successfully initialized, we now start a go routine to
 	// periodically try to initialize them again in the background.
 	if remainingNetworks > 0 {
 		go func() {

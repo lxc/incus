@@ -75,7 +75,7 @@ func MaybeUpdate(state *state.State) error {
 	}
 
 	if state.DB.Cluster == nil {
-		return fmt.Errorf("Failed checking cluster update, state not initialised yet")
+		return fmt.Errorf("Failed checking cluster update, state not initialized yet")
 	}
 
 	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {

@@ -225,7 +225,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 	return dbWarnings, nil
 }
 
-// InitStorage initialises the storage layer after it has been mounted.
+// InitStorage initializes the storage layer after it has been mounted.
 func (s *OS) InitStorage() error {
 	return s.initStorageDirs()
 }

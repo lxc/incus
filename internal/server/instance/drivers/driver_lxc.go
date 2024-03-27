@@ -435,7 +435,7 @@ type lxc struct {
 
 	// Cached handles.
 	// Do not use these variables directly, instead use their associated get functions so they
-	// will be initialised on demand.
+	// will be initialized on demand.
 	c *liblxc.Container // Use d.initLXC() instead of accessing this directly.
 
 	cConfig  bool
@@ -3268,7 +3268,7 @@ func (d *lxc) Render(options ...func(response any) error) (any, any, error) {
 			LastUsedAt:      d.lastUsedDate,
 			Name:            strings.SplitN(d.name, "/", 2)[1],
 			Stateful:        d.stateful,
-			Size:            -1, // Default to uninitialised/error state (0 means no CoW usage).
+			Size:            -1, // Default to uninitialized/error state (0 means no CoW usage).
 		}
 
 		snapState.Architecture = architectureName
@@ -6045,7 +6045,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		args.Disconnect()
 	}()
 
-	// Start filesystem transfer routine and initialise a channel that is closed when the routine finishes.
+	// Start filesystem transfer routine and initialize a channel that is closed when the routine finishes.
 	fsTransferDone := make(chan struct{})
 	g.Go(func() error {
 		defer close(fsTransferDone)
@@ -6211,7 +6211,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		return nil
 	})
 
-	// Start live state transfer routine (if required) and initialise a channel that is closed when the
+	// Start live state transfer routine (if required) and initialize a channel that is closed when the
 	// routine finishes. It is never closed if the routine is not started.
 	stateTransferDone := make(chan struct{})
 	if args.Live {

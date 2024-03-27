@@ -87,7 +87,7 @@ type common struct {
 
 	// Cached handles.
 	// Do not use these variables directly, instead use their associated get functions so they
-	// will be initialised on demand.
+	// will be initialized on demand.
 	storagePool storagePools.Pool
 
 	// volatileSetPersistDisable indicates whether the VolatileSet function should persist changes to the DB.

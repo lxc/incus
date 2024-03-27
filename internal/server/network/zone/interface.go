@@ -10,7 +10,7 @@ import (
 
 // NetworkZone represents a Network zone.
 type NetworkZone interface {
-	// Initialise.
+	// Initialize.
 	init(state *state.State, id int64, projectName string, zoneInfo *api.NetworkZone)
 
 	// Info.

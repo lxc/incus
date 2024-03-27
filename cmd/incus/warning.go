@@ -193,7 +193,7 @@ func (c *cmdWarningList) severityColumnData(warning api.Warning) string {
 	return strings.ToUpper(warning.Severity)
 }
 
-func (c *cmdWarningList) statusColumnData(warning api.Warning) string {
+func (c *cmdWarningList) stateColumnData(warning api.Warning) string {
 	return strings.ToUpper(warning.Status)
 }
 
@@ -212,7 +212,7 @@ func (c *cmdWarningList) parseColumns(clustered bool) ([]warningColumn, error) {
 		'l': {i18n.G("LAST SEEN"), c.lastSeenColumnData},
 		'p': {i18n.G("PROJECT"), c.projectColumnData},
 		's': {i18n.G("SEVERITY"), c.severityColumnData},
-		'S': {i18n.G("STATUS"), c.statusColumnData},
+		'S': {i18n.G("STATE"), c.stateColumnData},
 		't': {i18n.G("TYPE"), c.typeColumnData},
 		'u': {i18n.G("UUID"), c.uuidColumnData},
 	}

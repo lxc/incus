@@ -50,7 +50,7 @@ type APIHeartbeatVersion struct {
 	APIExtensions int
 }
 
-// NewAPIHearbeat returns initialised APIHeartbeat.
+// NewAPIHearbeat returns initialized APIHeartbeat.
 func NewAPIHearbeat(cluster *db.Cluster) *APIHeartbeat {
 	return &APIHeartbeat{
 		cluster: cluster,
@@ -451,7 +451,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 		}
 	}
 
-	// Initialise slice to indicate to HeartbeatNodeHook that its being called from leader.
+	// Initialize slice to indicate to HeartbeatNodeHook that its being called from leader.
 	unavailableMembers := make([]string, 0)
 
 	err = query.Retry(ctx, func(ctx context.Context) error {

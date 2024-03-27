@@ -171,7 +171,7 @@ func (c *cmdOperationList) Run(cmd *cobra.Command, args []string) error {
 		i18n.G("ID"),
 		i18n.G("TYPE"),
 		i18n.G("DESCRIPTION"),
-		i18n.G("STATUS"),
+		i18n.G("STATE"),
 		i18n.G("CANCELABLE"),
 		i18n.G("CREATED")}
 	if resource.server.IsClustered() {

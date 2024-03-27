@@ -18,7 +18,7 @@ type VSwitch struct {
 	rootUUID string
 }
 
-// NewVSwitch initialises a new vSwitch client..
+// NewVSwitch initializes a new vSwitch client..
 func NewVSwitch() (*VSwitch, error) {
 	// Prepare the OVSDB client.
 	dbSchema, err := ovsSwitch.FullDatabaseModel()

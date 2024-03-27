@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-03-25 12:06-0400\n"
+"POT-Creation-Date: 2024-03-26 22:04-0400\n"
 "PO-Revision-Date: 2024-02-24 03:02+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -365,7 +365,7 @@ msgstr ""
 "###\n"
 "### Note that the listen_address and location cannot be changed."
 
-#: cmd/incus/network_peer.go:554
+#: cmd/incus/network_peer.go:641
 msgid ""
 "### This is a YAML representation of the network peer.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -395,7 +395,7 @@ msgstr ""
 "### Note that the name, target_project, target_network and status fields "
 "cannot be changed."
 
-#: cmd/incus/network_zone.go:1065
+#: cmd/incus/network_zone.go:1229
 msgid ""
 "### This is a YAML representation of the network zone record.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -419,7 +419,7 @@ msgstr ""
 "### config:\n"
 "###  user.foo: bah\n"
 
-#: cmd/incus/network_zone.go:472
+#: cmd/incus/network_zone.go:537
 msgid ""
 "### This is a YAML representation of the network zone.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -745,7 +745,7 @@ msgstr "ALIAS"
 msgid "ALIASES"
 msgstr "ALIASES"
 
-#: cmd/incus/cluster.go:195 cmd/incus/image.go:1120 cmd/incus/list.go:562
+#: cmd/incus/cluster.go:195 cmd/incus/image.go:1120 cmd/incus/list.go:570
 msgid "ARCHITECTURE"
 msgstr "ARCHITECTURE"
 
@@ -787,7 +787,7 @@ msgstr "使用するHTTPのメソッド (デフォルト: GET)"
 msgid "Add a cluster member to a cluster group"
 msgstr "クラスターメンバーをクラスターグループに追加します"
 
-#: cmd/incus/network_zone.go:1238
+#: cmd/incus/network_zone.go:1414
 msgid "Add a network zone record entry"
 msgstr "ネットワークゾーンレコードのエントリを追加します"
 
@@ -799,7 +799,7 @@ msgstr "ロードバランサーにバックエンドを追加します"
 msgid "Add backends to a load balancer"
 msgstr "ロードバランサーにバックエンドを追加します"
 
-#: cmd/incus/network_zone.go:1239
+#: cmd/incus/network_zone.go:1415
 msgid "Add entries to a network zone record"
 msgstr "ネットワークゾーンレコードにエントリを追加します"
 
@@ -1065,7 +1065,7 @@ msgstr "自動（非インタラクティブ）モード"
 msgid "Available projects:"
 msgstr "利用可能なプロジェクト:"
 
-#: cmd/incus/list.go:568 cmd/incus/list.go:569
+#: cmd/incus/list.go:576 cmd/incus/list.go:577
 msgid "BASE IMAGE"
 msgstr "BASE IMAGE"
 
@@ -1102,8 +1102,8 @@ msgstr ""
 
 #: cmd/incus/network.go:369 cmd/incus/network_acl.go:425
 #: cmd/incus/network_forward.go:303 cmd/incus/network_load_balancer.go:306
-#: cmd/incus/network_peer.go:303 cmd/incus/network_zone.go:323
-#: cmd/incus/network_zone.go:921 cmd/incus/storage_bucket.go:149
+#: cmd/incus/network_peer.go:331 cmd/incus/network_zone.go:360
+#: cmd/incus/network_zone.go:1043 cmd/incus/storage_bucket.go:149
 #, c-format
 msgid "Bad key/value pair: %s"
 msgstr "不適切なキー/値のペア: %s"
@@ -1171,7 +1171,7 @@ msgstr "COUNT"
 msgid "CPU (%s):"
 msgstr "CPU (%s):"
 
-#: cmd/incus/list.go:580
+#: cmd/incus/list.go:588
 msgid "CPU USAGE"
 msgstr "CPU USAGE"
 
@@ -1192,7 +1192,7 @@ msgstr "CPUs (%s):"
 msgid "CREATED"
 msgstr "CREATED"
 
-#: cmd/incus/list.go:564
+#: cmd/incus/list.go:572
 msgid "CREATED AT"
 msgstr "CREATED AT"
 
@@ -1238,7 +1238,7 @@ msgstr "標準入力から読み込めません: %w"
 msgid "Can't remove the default remote"
 msgstr "デフォルトのリモートは削除できません"
 
-#: cmd/incus/list.go:594
+#: cmd/incus/list.go:602
 msgid "Can't specify --fast with --columns"
 msgstr "--fast と --columns は同時に指定できません"
 
@@ -1250,7 +1250,7 @@ msgstr "--project と --all-project は同時に指定できません"
 msgid "Can't specify a different remote for rename"
 msgstr "リネームの場合は異なるリモートを指定できません"
 
-#: cmd/incus/list.go:610 cmd/incus/storage_volume.go:1647
+#: cmd/incus/list.go:618 cmd/incus/storage_volume.go:1647
 #: cmd/incus/warning.go:225
 msgid "Can't specify column L when not clustered"
 msgstr "クラスターでない場合はカラムとして L は指定できません"
@@ -1526,8 +1526,8 @@ msgstr "設定は KEY=VALUE のフォーマットである必要があります"
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:692
 #: cmd/incus/network_forward.go:711 cmd/incus/network_integration.go:288
-#: cmd/incus/network_load_balancer.go:681 cmd/incus/network_peer.go:639
-#: cmd/incus/network_zone.go:550 cmd/incus/network_zone.go:1142
+#: cmd/incus/network_load_balancer.go:681 cmd/incus/network_peer.go:726
+#: cmd/incus/network_zone.go:615 cmd/incus/network_zone.go:1306
 #: cmd/incus/profile.go:574 cmd/incus/project.go:340 cmd/incus/storage.go:333
 #: cmd/incus/storage_bucket.go:356 cmd/incus/storage_bucket.go:1105
 #: cmd/incus/storage_volume.go:1084 cmd/incus/storage_volume.go:1116
@@ -1709,7 +1709,7 @@ msgstr "リモート '%s' に対する新しいリモート証明書がエラー
 msgid "Could not write server cert file %q: %w"
 msgstr "サーバ証明書ファイル %q を書き込めません: %w"
 
-#: cmd/incus/network_zone.go:1326
+#: cmd/incus/network_zone.go:1526
 msgid "Couldn't find a matching entry"
 msgstr "一致するエントリを見つけられませんでした"
 
@@ -1810,15 +1810,15 @@ msgstr "新たにネットワークフォワードを作成します"
 msgid "Create new network load balancers"
 msgstr "新たにネットワークロードバランサーを作成します"
 
-#: cmd/incus/network_peer.go:224 cmd/incus/network_peer.go:225
+#: cmd/incus/network_peer.go:244 cmd/incus/network_peer.go:245
 msgid "Create new network peering"
 msgstr "新たにネットワークピアリングを作成します"
 
-#: cmd/incus/network_zone.go:868 cmd/incus/network_zone.go:869
+#: cmd/incus/network_zone.go:978 cmd/incus/network_zone.go:979
 msgid "Create new network zone record"
 msgstr "新たにネットワークゾーンレコードを作成します"
 
-#: cmd/incus/network_zone.go:269 cmd/incus/network_zone.go:270
+#: cmd/incus/network_zone.go:298 cmd/incus/network_zone.go:299
 msgid "Create new network zones"
 msgstr "新たにネットワークゾーンを作成します"
 
@@ -1873,18 +1873,18 @@ msgstr "DEFAULT TARGET ADDRESS"
 
 #: cmd/incus/cluster.go:197 cmd/incus/cluster_group.go:482
 #: cmd/incus/config_trust.go:435 cmd/incus/image.go:1121
-#: cmd/incus/image_alias.go:237 cmd/incus/list.go:565 cmd/incus/network.go:1092
+#: cmd/incus/image_alias.go:237 cmd/incus/list.go:573 cmd/incus/network.go:1092
 #: cmd/incus/network_acl.go:155 cmd/incus/network_forward.go:152
 #: cmd/incus/network_integration.go:434 cmd/incus/network_load_balancer.go:156
-#: cmd/incus/network_peer.go:147 cmd/incus/network_zone.go:138
-#: cmd/incus/network_zone.go:741 cmd/incus/operation.go:173
+#: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:146
+#: cmd/incus/network_zone.go:822 cmd/incus/operation.go:173
 #: cmd/incus/profile.go:735 cmd/incus/project.go:550 cmd/incus/storage.go:697
 #: cmd/incus/storage_bucket.go:520 cmd/incus/storage_bucket.go:840
 #: cmd/incus/storage_volume.go:1636
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
-#: cmd/incus/list.go:566
+#: cmd/incus/list.go:574
 msgid "DISK USAGE"
 msgstr "DISK USAGE"
 
@@ -1973,15 +1973,15 @@ msgstr "ネットワークピアリングを削除します"
 msgid "Delete network load balancers"
 msgstr "ネットワークロードバランサーを削除します"
 
-#: cmd/incus/network_peer.go:671 cmd/incus/network_peer.go:672
+#: cmd/incus/network_peer.go:758 cmd/incus/network_peer.go:759
 msgid "Delete network peerings"
 msgstr "ネットワークピアリングを削除します"
 
-#: cmd/incus/network_zone.go:1174 cmd/incus/network_zone.go:1175
+#: cmd/incus/network_zone.go:1338 cmd/incus/network_zone.go:1339
 msgid "Delete network zone record"
 msgstr "ネットワークゾーンレコードを削除します"
 
-#: cmd/incus/network_zone.go:582 cmd/incus/network_zone.go:583
+#: cmd/incus/network_zone.go:647 cmd/incus/network_zone.go:648
 msgid "Delete network zones"
 msgstr "ネットワークゾーンを削除します"
 
@@ -2104,21 +2104,21 @@ msgstr "警告を削除します"
 #: cmd/incus/network_load_balancer.go:976
 #: cmd/incus/network_load_balancer.go:991
 #: cmd/incus/network_load_balancer.go:1064 cmd/incus/network_peer.go:28
-#: cmd/incus/network_peer.go:81 cmd/incus/network_peer.go:166
-#: cmd/incus/network_peer.go:225 cmd/incus/network_peer.go:360
-#: cmd/incus/network_peer.go:428 cmd/incus/network_peer.go:517
-#: cmd/incus/network_peer.go:547 cmd/incus/network_peer.go:672
+#: cmd/incus/network_peer.go:81 cmd/incus/network_peer.go:174
+#: cmd/incus/network_peer.go:245 cmd/incus/network_peer.go:388
+#: cmd/incus/network_peer.go:473 cmd/incus/network_peer.go:575
+#: cmd/incus/network_peer.go:622 cmd/incus/network_peer.go:759
 #: cmd/incus/network_zone.go:27 cmd/incus/network_zone.go:84
-#: cmd/incus/network_zone.go:155 cmd/incus/network_zone.go:210
-#: cmd/incus/network_zone.go:270 cmd/incus/network_zone.go:353
-#: cmd/incus/network_zone.go:433 cmd/incus/network_zone.go:464
-#: cmd/incus/network_zone.go:583 cmd/incus/network_zone.go:631
-#: cmd/incus/network_zone.go:688 cmd/incus/network_zone.go:758
-#: cmd/incus/network_zone.go:810 cmd/incus/network_zone.go:869
-#: cmd/incus/network_zone.go:951 cmd/incus/network_zone.go:1027
-#: cmd/incus/network_zone.go:1057 cmd/incus/network_zone.go:1175
-#: cmd/incus/network_zone.go:1224 cmd/incus/network_zone.go:1239
-#: cmd/incus/network_zone.go:1285 cmd/incus/operation.go:24
+#: cmd/incus/network_zone.go:163 cmd/incus/network_zone.go:226
+#: cmd/incus/network_zone.go:299 cmd/incus/network_zone.go:390
+#: cmd/incus/network_zone.go:478 cmd/incus/network_zone.go:521
+#: cmd/incus/network_zone.go:648 cmd/incus/network_zone.go:704
+#: cmd/incus/network_zone.go:761 cmd/incus/network_zone.go:839
+#: cmd/incus/network_zone.go:903 cmd/incus/network_zone.go:979
+#: cmd/incus/network_zone.go:1073 cmd/incus/network_zone.go:1162
+#: cmd/incus/network_zone.go:1209 cmd/incus/network_zone.go:1339
+#: cmd/incus/network_zone.go:1400 cmd/incus/network_zone.go:1415
+#: cmd/incus/network_zone.go:1473 cmd/incus/operation.go:24
 #: cmd/incus/operation.go:57 cmd/incus/operation.go:107
 #: cmd/incus/operation.go:194 cmd/incus/profile.go:29 cmd/incus/profile.go:104
 #: cmd/incus/profile.go:179 cmd/incus/profile.go:270 cmd/incus/profile.go:352
@@ -2332,11 +2332,11 @@ msgstr "ドライバ: %v (%v)"
 msgid "Dump YAML config to stdout"
 msgstr "YAML 形式で設定を stdout に出力します"
 
-#: cmd/incus/network_zone.go:742
+#: cmd/incus/network_zone.go:823
 msgid "ENTRIES"
 msgstr "ENTRIES"
 
-#: cmd/incus/list.go:874
+#: cmd/incus/list.go:882
 msgid "EPHEMERAL"
 msgstr "EPHEMERAL"
 
@@ -2411,15 +2411,15 @@ msgstr "ネットワークピア設定をYAMLで編集します"
 msgid "Edit network load balancer configurations as YAML"
 msgstr "ネットワークロードバランサー設定をYAMLで編集します"
 
-#: cmd/incus/network_peer.go:546 cmd/incus/network_peer.go:547
+#: cmd/incus/network_peer.go:621 cmd/incus/network_peer.go:622
 msgid "Edit network peer configurations as YAML"
 msgstr "ネットワークピア設定をYAMLで編集します"
 
-#: cmd/incus/network_zone.go:463 cmd/incus/network_zone.go:464
+#: cmd/incus/network_zone.go:520 cmd/incus/network_zone.go:521
 msgid "Edit network zone configurations as YAML"
 msgstr "ネットワークゾーン設定をYAMLで編集します"
 
-#: cmd/incus/network_zone.go:1056 cmd/incus/network_zone.go:1057
+#: cmd/incus/network_zone.go:1208 cmd/incus/network_zone.go:1209
 msgid "Edit network zone record configurations as YAML"
 msgstr "ネットワークゾーンレコードをYAMLで編集します"
 
@@ -2451,7 +2451,7 @@ msgstr "ストレージボリュームの設定をYAMLで編集します"
 msgid "Edit trust configurations as YAML"
 msgstr "信頼済みクライアント設定をYAMLで編集します"
 
-#: cmd/incus/config_trust.go:447 cmd/incus/image.go:1139 cmd/incus/list.go:622
+#: cmd/incus/config_trust.go:447 cmd/incus/image.go:1139 cmd/incus/list.go:630
 #: cmd/incus/storage_volume.go:1664 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
@@ -2485,7 +2485,7 @@ msgstr ""
 "  これは 'incus config get core.https_address' コマンドでチェックできます。\n"
 "  まだ使用可能でない場合は、アドレスを設定することもできます。"
 
-#: cmd/incus/network_zone.go:1241
+#: cmd/incus/network_zone.go:1417
 msgid "Entry TTL"
 msgstr "TTLを指定します"
 
@@ -2520,8 +2520,8 @@ msgstr "エイリアスの取得に失敗しました: %w"
 #: cmd/incus/cluster.go:459 cmd/incus/config.go:641 cmd/incus/config.go:673
 #: cmd/incus/network.go:1325 cmd/incus/network_acl.go:518
 #: cmd/incus/network_forward.go:516 cmd/incus/network_integration.go:563
-#: cmd/incus/network_load_balancer.go:502 cmd/incus/network_peer.go:492
-#: cmd/incus/network_zone.go:408 cmd/incus/network_zone.go:1002
+#: cmd/incus/network_load_balancer.go:502 cmd/incus/network_peer.go:550
+#: cmd/incus/network_zone.go:453 cmd/incus/network_zone.go:1137
 #: cmd/incus/profile.go:966 cmd/incus/project.go:696 cmd/incus/storage.go:786
 #: cmd/incus/storage_bucket.go:610 cmd/incus/storage_volume.go:2002
 #: cmd/incus/storage_volume.go:2040
@@ -2542,8 +2542,8 @@ msgstr "プロパティの削除でエラーが発生しました: %v"
 #: cmd/incus/cluster.go:453 cmd/incus/network.go:1319
 #: cmd/incus/network_acl.go:512 cmd/incus/network_forward.go:510
 #: cmd/incus/network_integration.go:557 cmd/incus/network_load_balancer.go:496
-#: cmd/incus/network_peer.go:486 cmd/incus/network_zone.go:402
-#: cmd/incus/network_zone.go:996 cmd/incus/profile.go:960
+#: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:447
+#: cmd/incus/network_zone.go:1131 cmd/incus/profile.go:960
 #: cmd/incus/project.go:690 cmd/incus/storage.go:780
 #: cmd/incus/storage_bucket.go:604 cmd/incus/storage_volume.go:1996
 #: cmd/incus/storage_volume.go:2034
@@ -2824,7 +2824,7 @@ msgstr "証明書の作成に失敗しました: %w"
 msgid "Failed getting existing storage pools: %w"
 msgstr "既存のストレージプールの取得に失敗しました: %w"
 
-#: cmd/incus/network_peer.go:333
+#: cmd/incus/network_peer.go:361
 #, c-format
 msgid "Failed getting peer's status: %w"
 msgstr "ピアのステータスの取得に失敗しました: %w"
@@ -3051,7 +3051,7 @@ msgid ""
 "Failed to retrieve current server network configuration for project %q: %w"
 msgstr "サーバー証明書 %q の書き込みに失敗しました: %w"
 
-#: cmd/incus/admin_init_auto.go:116
+#: cmd/incus/admin_init_auto.go:129
 #, fuzzy, c-format
 msgid "Failed to retrieve list of networks: %w"
 msgstr "エイリアス %s の削除に失敗しました: %w"
@@ -3096,7 +3096,7 @@ msgid "Fetch instance backup file: %w"
 msgstr "インスタンスのバックアップをエクスポートします"
 
 #: cmd/incus/network.go:1050 cmd/incus/network_acl.go:131
-#: cmd/incus/network_zone.go:114 cmd/incus/operation.go:137
+#: cmd/incus/network_zone.go:122 cmd/incus/operation.go:137
 msgid "Filtering isn't supported yet"
 msgstr "情報表示のフィルタリングはまだサポートされていません"
 
@@ -3184,7 +3184,7 @@ msgstr ""
 #: cmd/incus/network_acl.go:96 cmd/incus/network_allocations.go:57
 #: cmd/incus/network_forward.go:88 cmd/incus/network_integration.go:388
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
-#: cmd/incus/network_zone.go:87 cmd/incus/network_zone.go:691
+#: cmd/incus/network_zone.go:87 cmd/incus/network_zone.go:764
 #: cmd/incus/operation.go:109 cmd/incus/profile.go:686 cmd/incus/project.go:450
 #: cmd/incus/project.go:895 cmd/incus/remote.go:716 cmd/incus/snapshot.go:271
 #: cmd/incus/storage.go:631 cmd/incus/storage_bucket.go:467
@@ -3287,7 +3287,7 @@ msgstr "ネットワークピアの設定を行います"
 msgid "Get the key as a network load balancer property"
 msgstr "ネットワークロードバランサーのポートを管理します"
 
-#: cmd/incus/network_peer.go:363
+#: cmd/incus/network_peer.go:391
 #, fuzzy
 msgid "Get the key as a network peer property"
 msgstr "ネットワークピアの設定を行います"
@@ -3296,12 +3296,12 @@ msgstr "ネットワークピアの設定を行います"
 msgid "Get the key as a network property"
 msgstr "key をネットワークプロパティとして取得します"
 
-#: cmd/incus/network_zone.go:213
+#: cmd/incus/network_zone.go:229
 #, fuzzy
 msgid "Get the key as a network zone property"
 msgstr "新たにネットワークゾーンレコードを作成します"
 
-#: cmd/incus/network_zone.go:813
+#: cmd/incus/network_zone.go:906
 #, fuzzy
 msgid "Get the key as a network zone record property"
 msgstr "ネットワークゾーンレコードエントリを削除します"
@@ -3367,15 +3367,15 @@ msgstr "ネットワークピアの設定値を取得します"
 msgid "Get values for network load balancer configuration keys"
 msgstr "ネットワークロードバランサーの設定値を取得します"
 
-#: cmd/incus/network_peer.go:359 cmd/incus/network_peer.go:360
+#: cmd/incus/network_peer.go:387 cmd/incus/network_peer.go:388
 msgid "Get values for network peer configuration keys"
 msgstr "ネットワークピアの設定値を取得します"
 
-#: cmd/incus/network_zone.go:209 cmd/incus/network_zone.go:210
+#: cmd/incus/network_zone.go:225 cmd/incus/network_zone.go:226
 msgid "Get values for network zone configuration keys"
 msgstr "ネットワークゾーンの設定値を取得します"
 
-#: cmd/incus/network_zone.go:809 cmd/incus/network_zone.go:810
+#: cmd/incus/network_zone.go:902 cmd/incus/network_zone.go:903
 msgid "Get values for network zone record configuration keys"
 msgstr "ネットワークゾーンレコードの設定値を取得します"
 
@@ -3475,11 +3475,11 @@ msgstr "IP アドレス"
 msgid "IP addresses:"
 msgstr "IP アドレス:"
 
-#: cmd/incus/list.go:560 cmd/incus/network.go:1090
+#: cmd/incus/list.go:568 cmd/incus/network.go:1090
 msgid "IPV4"
 msgstr "IPV4"
 
-#: cmd/incus/list.go:561 cmd/incus/network.go:1091
+#: cmd/incus/list.go:569 cmd/incus/network.go:1091
 msgid "IPV6"
 msgstr "IPV6"
 
@@ -3741,12 +3741,12 @@ msgstr "不正な証明書です"
 msgid "Invalid cluster join token: %w"
 msgstr "メンバ %s の join トークン:"
 
-#: cmd/incus/list.go:656
+#: cmd/incus/list.go:664
 #, c-format
 msgid "Invalid config key '%s' in '%s'"
 msgstr "'%s' は正しくない設定項目 (key) です (%s 中の)"
 
-#: cmd/incus/list.go:649
+#: cmd/incus/list.go:657
 #, c-format
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
@@ -3787,19 +3787,19 @@ msgstr "メンバ %s の join トークン:"
 msgid "Invalid key=value configuration: %s"
 msgstr "不適切な キー=値 の設定: %s"
 
-#: cmd/incus/list.go:677
+#: cmd/incus/list.go:685
 #, c-format
 msgid "Invalid max width (must -1, 0 or a positive integer) '%s' in '%s'"
 msgstr ""
 "'%s' は最大幅の値として不正です (-1 もしくは 0 もしくは正の整数でなくてはなり"
 "ません) ('%s' 中の)"
 
-#: cmd/incus/list.go:673
+#: cmd/incus/list.go:681
 #, c-format
 msgid "Invalid max width (must be an integer) '%s' in '%s'"
 msgstr "'%s' は最大幅の値として不正です (整数でなくてはなりません) ('%s' 中の)"
 
-#: cmd/incus/list.go:663
+#: cmd/incus/list.go:671
 #, c-format
 msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
@@ -3815,7 +3815,7 @@ msgstr "引数の数が不正です"
 msgid "Invalid path %s"
 msgstr "不正なパス %s"
 
-#: cmd/incus/network_peer.go:248
+#: cmd/incus/network_peer.go:276
 #, fuzzy
 msgid "Invalid peer type"
 msgstr "不正な送り先 %s"
@@ -3863,7 +3863,7 @@ msgstr "最初にコピーした後も常にイメージを最新の状態に保
 msgid "LAST SEEN"
 msgstr "LAST SEEN"
 
-#: cmd/incus/list.go:570
+#: cmd/incus/list.go:578
 msgid "LAST USED AT"
 msgstr "LAST USED AT"
 
@@ -3875,7 +3875,7 @@ msgstr "LIMIT"
 msgid "LISTEN ADDRESS"
 msgstr "LISTEN ADDRESS"
 
-#: cmd/incus/list.go:606 cmd/incus/network.go:1174
+#: cmd/incus/list.go:614 cmd/incus/network.go:1174
 #: cmd/incus/network_forward.go:158 cmd/incus/network_load_balancer.go:161
 #: cmd/incus/operation.go:178 cmd/incus/storage_bucket.go:524
 #: cmd/incus/storage_volume.go:1643 cmd/incus/warning.go:221
@@ -3968,7 +3968,7 @@ msgstr "利用可能なネットワークピアを一覧表示します"
 msgid "List available network zone"
 msgstr "利用可能なネットワークゾーンを一覧表示します"
 
-#: cmd/incus/network_zone.go:687 cmd/incus/network_zone.go:688
+#: cmd/incus/network_zone.go:760 cmd/incus/network_zone.go:761
 msgid "List available network zone records"
 msgstr "利用可能なネットワークゾーンレコードを一覧表示します"
 
@@ -4515,11 +4515,11 @@ msgstr "MANAGED"
 msgid "MEMBERS"
 msgstr "MEMBERS"
 
-#: cmd/incus/list.go:571
+#: cmd/incus/list.go:579
 msgid "MEMORY USAGE"
 msgstr "MEMORY USAGE"
 
-#: cmd/incus/list.go:572
+#: cmd/incus/list.go:580
 #, c-format
 msgid "MEMORY USAGE%"
 msgstr "MEMORY USAGE%"
@@ -4685,11 +4685,11 @@ msgstr "ネットワークロードバランサーを管理します"
 msgid "Manage network peerings"
 msgstr "ネットワークピアリングを管理します"
 
-#: cmd/incus/network_zone.go:1223 cmd/incus/network_zone.go:1224
+#: cmd/incus/network_zone.go:1399 cmd/incus/network_zone.go:1400
 msgid "Manage network zone record entries"
 msgstr "ネットワークゾーンレコードのエントリを管理します"
 
-#: cmd/incus/network_zone.go:630 cmd/incus/network_zone.go:631
+#: cmd/incus/network_zone.go:703 cmd/incus/network_zone.go:704
 msgid "Manage network zone records"
 msgstr "ネットワークゾーンレコードを管理します"
 
@@ -4932,30 +4932,30 @@ msgstr "ネットワークゾーン名を指定する必要があります"
 #: cmd/incus/network_load_balancer.go:838
 #: cmd/incus/network_load_balancer.go:914
 #: cmd/incus/network_load_balancer.go:1027
-#: cmd/incus/network_load_balancer.go:1101 cmd/incus/network_peer.go:110
-#: cmd/incus/network_peer.go:188 cmd/incus/network_peer.go:260
-#: cmd/incus/network_peer.go:384 cmd/incus/network_peer.go:455
-#: cmd/incus/network_peer.go:585 cmd/incus/network_peer.go:694
+#: cmd/incus/network_load_balancer.go:1101 cmd/incus/network_peer.go:118
+#: cmd/incus/network_peer.go:208 cmd/incus/network_peer.go:288
+#: cmd/incus/network_peer.go:429 cmd/incus/network_peer.go:513
+#: cmd/incus/network_peer.go:672 cmd/incus/network_peer.go:793
 msgid "Missing network name"
 msgstr "ネットワーク名を指定する必要があります"
 
-#: cmd/incus/network_zone.go:177 cmd/incus/network_zone.go:233
-#: cmd/incus/network_zone.go:293 cmd/incus/network_zone.go:381
-#: cmd/incus/network_zone.go:502 cmd/incus/network_zone.go:605
-#: cmd/incus/network_zone.go:711 cmd/incus/network_zone.go:779
-#: cmd/incus/network_zone.go:891 cmd/incus/network_zone.go:975
-#: cmd/incus/network_zone.go:1196 cmd/incus/network_zone.go:1261
-#: cmd/incus/network_zone.go:1306
+#: cmd/incus/network_zone.go:193 cmd/incus/network_zone.go:262
+#: cmd/incus/network_zone.go:330 cmd/incus/network_zone.go:426
+#: cmd/incus/network_zone.go:567 cmd/incus/network_zone.go:678
+#: cmd/incus/network_zone.go:792 cmd/incus/network_zone.go:872
+#: cmd/incus/network_zone.go:1013 cmd/incus/network_zone.go:1110
+#: cmd/incus/network_zone.go:1372 cmd/incus/network_zone.go:1449
+#: cmd/incus/network_zone.go:1506
 msgid "Missing network zone name"
 msgstr "ネットワークゾーン名を指定する必要があります"
 
-#: cmd/incus/network_zone.go:832 cmd/incus/network_zone.go:1094
+#: cmd/incus/network_zone.go:942 cmd/incus/network_zone.go:1258
 msgid "Missing network zone record name"
 msgstr "ネットワークゾーンレコード名を指定する必要があります"
 
-#: cmd/incus/network_peer.go:192 cmd/incus/network_peer.go:264
-#: cmd/incus/network_peer.go:388 cmd/incus/network_peer.go:459
-#: cmd/incus/network_peer.go:589 cmd/incus/network_peer.go:698
+#: cmd/incus/network_peer.go:212 cmd/incus/network_peer.go:292
+#: cmd/incus/network_peer.go:433 cmd/incus/network_peer.go:517
+#: cmd/incus/network_peer.go:676 cmd/incus/network_peer.go:797
 msgid "Missing peer name"
 msgstr "ピア名を指定する必要があります"
 
@@ -5013,7 +5013,7 @@ msgstr "ストレージプール名を指定する必要があります"
 msgid "Missing target directory"
 msgstr "コピー先のディレクトリを指定する必要があります"
 
-#: cmd/incus/network_peer.go:268
+#: cmd/incus/network_peer.go:296
 #, fuzzy
 msgid "Missing target network or integration"
 msgstr "作成するネットワーク名を指定する必要があります"
@@ -5133,10 +5133,10 @@ msgstr "インスタンス名を指定する必要があります: "
 
 #: cmd/incus/cluster.go:192 cmd/incus/cluster.go:1055
 #: cmd/incus/cluster_group.go:481 cmd/incus/config_trust.go:431
-#: cmd/incus/config_trust.go:666 cmd/incus/list.go:573
+#: cmd/incus/config_trust.go:666 cmd/incus/list.go:581
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:154
-#: cmd/incus/network_integration.go:433 cmd/incus/network_peer.go:146
-#: cmd/incus/network_zone.go:137 cmd/incus/network_zone.go:740
+#: cmd/incus/network_integration.go:433 cmd/incus/network_peer.go:154
+#: cmd/incus/network_zone.go:145 cmd/incus/network_zone.go:821
 #: cmd/incus/profile.go:734 cmd/incus/project.go:543 cmd/incus/remote.go:773
 #: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:519
 #: cmd/incus/storage_bucket.go:839 cmd/incus/storage_volume.go:1635
@@ -5305,12 +5305,12 @@ msgstr "ネットワーク ACL %s を削除しました"
 msgid "Network ACL %s renamed to %s"
 msgstr "ネットワーク ACL 名 %s を %s に変更しました"
 
-#: cmd/incus/network_zone.go:335
+#: cmd/incus/network_zone.go:372
 #, c-format
 msgid "Network Zone %s created"
 msgstr "ネットワークゾーン %s を作成しました"
 
-#: cmd/incus/network_zone.go:615
+#: cmd/incus/network_zone.go:688
 #, c-format
 msgid "Network Zone %s deleted"
 msgstr "ネットワークゾーン %s を削除しました"
@@ -5354,22 +5354,22 @@ msgstr "ネットワークロードバランサー %s を削除しました"
 msgid "Network name"
 msgstr "ネットワーク名:"
 
-#: cmd/incus/network_peer.go:337
+#: cmd/incus/network_peer.go:365
 #, c-format
 msgid "Network peer %s created"
 msgstr "ネットワークピア %s を作成しました"
 
-#: cmd/incus/network_peer.go:710
+#: cmd/incus/network_peer.go:809
 #, c-format
 msgid "Network peer %s deleted"
 msgstr "ネットワークピア %s を削除しました"
 
-#: cmd/incus/network_peer.go:341
+#: cmd/incus/network_peer.go:369
 #, c-format
 msgid "Network peer %s is in unexpected state %q"
 msgstr "ネットワークピア %s は想定外のステータスです %q"
 
-#: cmd/incus/network_peer.go:339
+#: cmd/incus/network_peer.go:367
 #, c-format
 msgid ""
 "Network peer %s pending (please complete mutual peering on peer network)"
@@ -5385,12 +5385,12 @@ msgstr "ネットワークタイプ:"
 msgid "Network usage:"
 msgstr "ネットワーク使用状況:"
 
-#: cmd/incus/network_zone.go:933
+#: cmd/incus/network_zone.go:1055
 #, c-format
 msgid "Network zone record %s created"
 msgstr "ネットワークゾーンレコード %s を作成しました"
 
-#: cmd/incus/network_zone.go:1206
+#: cmd/incus/network_zone.go:1382
 #, c-format
 msgid "Network zone record %s deleted"
 msgstr "ネットワークゾーンレコード %s を削除しました"
@@ -5548,11 +5548,11 @@ msgstr "ターミナルモードを上書きします (auto, interactive, non-in
 msgid "PCI address: %v"
 msgstr "PCI アドレス: %v"
 
-#: cmd/incus/network_peer.go:148
+#: cmd/incus/network_peer.go:156
 msgid "PEER"
 msgstr "PEER"
 
-#: cmd/incus/list.go:575
+#: cmd/incus/list.go:583
 msgid "PID"
 msgstr "PID"
 
@@ -5565,15 +5565,15 @@ msgstr "PID: %d"
 msgid "PORTS"
 msgstr "PORTS"
 
-#: cmd/incus/list.go:574
+#: cmd/incus/list.go:582
 msgid "PROCESSES"
 msgstr "PROCESSES"
 
-#: cmd/incus/list.go:576 cmd/incus/project.go:545
+#: cmd/incus/list.go:584 cmd/incus/project.go:545
 msgid "PROFILES"
 msgstr "PROFILES"
 
-#: cmd/incus/image.go:1122 cmd/incus/list.go:567
+#: cmd/incus/image.go:1122 cmd/incus/list.go:575
 #: cmd/incus/storage_volume.go:1654 cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr "PROJECT"
@@ -5683,8 +5683,8 @@ msgstr "終了するには ctrl+c を押してください"
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
 #: cmd/incus/network.go:763 cmd/incus/network_acl.go:693
 #: cmd/incus/network_forward.go:712 cmd/incus/network_integration.go:289
-#: cmd/incus/network_load_balancer.go:682 cmd/incus/network_peer.go:640
-#: cmd/incus/network_zone.go:551 cmd/incus/network_zone.go:1143
+#: cmd/incus/network_load_balancer.go:682 cmd/incus/network_peer.go:727
+#: cmd/incus/network_zone.go:616 cmd/incus/network_zone.go:1307
 #: cmd/incus/profile.go:575 cmd/incus/project.go:341 cmd/incus/storage.go:334
 #: cmd/incus/storage_bucket.go:357 cmd/incus/storage_bucket.go:1106
 #: cmd/incus/storage_volume.go:1085 cmd/incus/storage_volume.go:1117
@@ -6121,7 +6121,7 @@ msgstr "クラスターグループからメンバを削除します"
 msgid "Remove a member from the cluster"
 msgstr "クラスターからメンバを削除します"
 
-#: cmd/incus/network_zone.go:1284
+#: cmd/incus/network_zone.go:1472
 msgid "Remove a network zone record entry"
 msgstr "ネットワークゾーンレコードエントリを削除します"
 
@@ -6145,7 +6145,7 @@ msgstr "ロードバランサーからバックエンドを削除します"
 msgid "Remove backends from a load balancer"
 msgstr "ロードバランサーからバックエンドを削除します"
 
-#: cmd/incus/network_zone.go:1285
+#: cmd/incus/network_zone.go:1473
 msgid "Remove entries from a network zone record"
 msgstr "ネットワークゾーンレコードからエントリを削除します"
 
@@ -6372,7 +6372,7 @@ msgstr "SEVERITY"
 msgid "SIZE"
 msgstr "SIZE"
 
-#: cmd/incus/list.go:577
+#: cmd/incus/list.go:585
 msgid "SNAPSHOTS"
 msgstr "SNAPSHOTS"
 
@@ -6399,8 +6399,9 @@ msgstr "SSH クライアントが %q に接続されました"
 msgid "SSH client disconnected %q"
 msgstr "SSH クライアントが切断されました %q"
 
-#: cmd/incus/cluster.go:198 cmd/incus/list.go:578 cmd/incus/network.go:1094
-#: cmd/incus/network_peer.go:150 cmd/incus/storage.go:699
+#: cmd/incus/cluster.go:198 cmd/incus/list.go:586 cmd/incus/network.go:1094
+#: cmd/incus/network_peer.go:158 cmd/incus/operation.go:174
+#: cmd/incus/storage.go:699 cmd/incus/warning.go:215
 msgid "STATE"
 msgstr "STATE"
 
@@ -6408,15 +6409,11 @@ msgstr "STATE"
 msgid "STATIC"
 msgstr "STATIC"
 
-#: cmd/incus/operation.go:174 cmd/incus/warning.go:215
-msgid "STATUS"
-msgstr "STATUS"
-
 #: cmd/incus/project.go:547
 msgid "STORAGE BUCKETS"
 msgstr "STORAGE BUCKETS"
 
-#: cmd/incus/list.go:563
+#: cmd/incus/list.go:571
 msgid "STORAGE POOL"
 msgstr "STORAGE POOL"
 
@@ -6634,11 +6631,11 @@ msgstr ""
 "後方互換性のため、単一の設定を行う場合は次の形式でも設定できます:\n"
 "    lxc network set [<remote>:]<network> <listen_address> <key> <value>"
 
-#: cmd/incus/network_peer.go:427
+#: cmd/incus/network_peer.go:472
 msgid "Set network peer keys"
 msgstr "ネットワークピアの設定を行います"
 
-#: cmd/incus/network_peer.go:428
+#: cmd/incus/network_peer.go:473
 #, fuzzy
 msgid ""
 "Set network peer keys\n"
@@ -6652,11 +6649,11 @@ msgstr ""
 "後方互換性のため、単一の設定を行う場合は次の形式でも設定できます:\n"
 "    lxc network set [<remote>:]<network> <peer_name> <key> <value>"
 
-#: cmd/incus/network_zone.go:352
+#: cmd/incus/network_zone.go:389
 msgid "Set network zone configuration keys"
 msgstr "ネットワークゾーンの設定を行います"
 
-#: cmd/incus/network_zone.go:353
+#: cmd/incus/network_zone.go:390
 #, fuzzy
 msgid ""
 "Set network zone configuration keys\n"
@@ -6670,7 +6667,7 @@ msgstr ""
 "後方互換性のため、単一の設定を行う場合は次の形式でも設定できます:\n"
 "    lxc network set [<remote>:]<Zone> <key> <value>"
 
-#: cmd/incus/network_zone.go:950 cmd/incus/network_zone.go:951
+#: cmd/incus/network_zone.go:1072 cmd/incus/network_zone.go:1073
 msgid "Set network zone record configuration keys"
 msgstr "ネットワークゾーンレコードの設定を行います"
 
@@ -6820,7 +6817,7 @@ msgstr "ネットワークピアの設定を行います"
 msgid "Set the key as a network load balancer property"
 msgstr "ネットワークロードバランサーの設定を行います"
 
-#: cmd/incus/network_peer.go:435
+#: cmd/incus/network_peer.go:480
 #, fuzzy
 msgid "Set the key as a network peer property"
 msgstr "ネットワークピアの設定を行います"
@@ -6829,12 +6826,12 @@ msgstr "ネットワークピアの設定を行います"
 msgid "Set the key as a network property"
 msgstr "ネットワークプロパティとして設定します"
 
-#: cmd/incus/network_zone.go:360
+#: cmd/incus/network_zone.go:397
 #, fuzzy
 msgid "Set the key as a network zone property"
 msgstr "新たにネットワークゾーンレコードを作成します"
 
-#: cmd/incus/network_zone.go:956
+#: cmd/incus/network_zone.go:1078
 #, fuzzy
 msgid "Set the key as a network zone record property"
 msgstr "ネットワークゾーンレコードエントリを削除します"
@@ -6966,19 +6963,19 @@ msgstr "ネットワークの設定を表示します"
 msgid "Show network load balancer configurations"
 msgstr "ネットワークロードバランサーの設定を表示します"
 
-#: cmd/incus/network_peer.go:165 cmd/incus/network_peer.go:166
+#: cmd/incus/network_peer.go:173 cmd/incus/network_peer.go:174
 msgid "Show network peer configurations"
 msgstr "ネットワークピアの設定を表示します"
 
-#: cmd/incus/network_zone.go:154 cmd/incus/network_zone.go:155
+#: cmd/incus/network_zone.go:162 cmd/incus/network_zone.go:163
 msgid "Show network zone configurations"
 msgstr "ネットワークゾーンの設定を表示します"
 
-#: cmd/incus/network_zone.go:757
+#: cmd/incus/network_zone.go:838
 msgid "Show network zone record configuration"
 msgstr "ネットワークゾーンレコードの設定を表示します"
 
-#: cmd/incus/network_zone.go:758
+#: cmd/incus/network_zone.go:839
 msgid "Show network zone record configurations"
 msgstr "ネットワークゾーンレコードの設定を表示します"
 
@@ -7285,9 +7282,9 @@ msgid "TOKEN"
 msgstr "TOKEN"
 
 #: cmd/incus/config_trust.go:432 cmd/incus/image.go:1129
-#: cmd/incus/image_alias.go:236 cmd/incus/list.go:579 cmd/incus/network.go:1088
+#: cmd/incus/image_alias.go:236 cmd/incus/list.go:587 cmd/incus/network.go:1088
 #: cmd/incus/network.go:1170 cmd/incus/network_allocations.go:26
-#: cmd/incus/network_integration.go:435 cmd/incus/network_peer.go:149
+#: cmd/incus/network_integration.go:435 cmd/incus/network_peer.go:157
 #: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1634
 #: cmd/incus/warning.go:216
 msgid "TYPE"
@@ -7515,17 +7512,17 @@ msgstr "設定 %q はクラスタメンバー %q には存在しません"
 msgid "The property %q does not exist on the network integration %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/network_peer.go:401
+#: cmd/incus/network_peer.go:446
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network peer %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/network_zone.go:245
+#: cmd/incus/network_zone.go:274
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network zone %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/network_zone.go:844
+#: cmd/incus/network_zone.go:954
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network zone record %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
@@ -7797,7 +7794,7 @@ msgstr ""
 "確立する接続のタイプ: シリアルコンソールの場合は 'console'、SPICE でのグラ"
 "フィカル出力の場合は 'vga'"
 
-#: cmd/incus/network_peer.go:235
+#: cmd/incus/network_peer.go:255
 msgid "Type of peer (local or remote)"
 msgstr ""
 
@@ -7830,7 +7827,7 @@ msgstr "USAGE"
 
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:156
 #: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:436
-#: cmd/incus/network_zone.go:139 cmd/incus/profile.go:736
+#: cmd/incus/network_zone.go:147 cmd/incus/profile.go:736
 #: cmd/incus/project.go:551 cmd/incus/storage.go:698
 #: cmd/incus/storage_volume.go:1638
 msgid "USED BY"
@@ -7869,7 +7866,7 @@ msgstr "未知の証明書タイプ %q"
 msgid "Unknown channel type for client %q: %s"
 msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 
-#: cmd/incus/config_trust.go:455 cmd/incus/image.go:1147 cmd/incus/list.go:637
+#: cmd/incus/config_trust.go:455 cmd/incus/image.go:1147 cmd/incus/list.go:645
 #: cmd/incus/storage_volume.go:1672 cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
@@ -7944,19 +7941,19 @@ msgstr "ネットワークロードバランサーの設定を削除します"
 msgid "Unset network load balancer keys"
 msgstr "ネットワークロードバランサーの設定を削除します"
 
-#: cmd/incus/network_peer.go:516
+#: cmd/incus/network_peer.go:574
 msgid "Unset network peer configuration keys"
 msgstr "ネットワークピアの設定を削除します"
 
-#: cmd/incus/network_peer.go:517
+#: cmd/incus/network_peer.go:575
 msgid "Unset network peer keys"
 msgstr "ネットワークピアの設定を削除します"
 
-#: cmd/incus/network_zone.go:432 cmd/incus/network_zone.go:433
+#: cmd/incus/network_zone.go:477 cmd/incus/network_zone.go:478
 msgid "Unset network zone configuration keys"
 msgstr "ネットワークゾーンの設定を削除します"
 
-#: cmd/incus/network_zone.go:1026 cmd/incus/network_zone.go:1027
+#: cmd/incus/network_zone.go:1161 cmd/incus/network_zone.go:1162
 msgid "Unset network zone record configuration keys"
 msgstr "ネットワークゾーンレコードの設定を削除します"
 
@@ -8003,7 +8000,7 @@ msgstr "ネットワークピアの設定を削除します"
 msgid "Unset the key as a network load balancer property"
 msgstr "ネットワークロードバランサーの設定を削除します"
 
-#: cmd/incus/network_peer.go:520
+#: cmd/incus/network_peer.go:578
 #, fuzzy
 msgid "Unset the key as a network peer property"
 msgstr "ネットワークピアの設定を削除します"
@@ -8013,12 +8010,12 @@ msgstr "ネットワークピアの設定を削除します"
 msgid "Unset the key as a network property"
 msgstr "ネットワークピアの設定を削除します"
 
-#: cmd/incus/network_zone.go:436
+#: cmd/incus/network_zone.go:481
 #, fuzzy
 msgid "Unset the key as a network zone property"
 msgstr "新たにネットワークゾーンレコードを作成します"
 
-#: cmd/incus/network_zone.go:1030
+#: cmd/incus/network_zone.go:1165
 #, fuzzy
 msgid "Unset the key as a network zone record property"
 msgstr "ネットワークゾーンレコードエントリを削除します"
@@ -8427,20 +8424,20 @@ msgstr "[<remote>:]<ACL> [key=value...]"
 msgid "[<remote>:]<API path>"
 msgstr "[<remote>:]<API path>"
 
-#: cmd/incus/network_zone.go:153 cmd/incus/network_zone.go:462
-#: cmd/incus/network_zone.go:580
+#: cmd/incus/network_zone.go:161 cmd/incus/network_zone.go:519
+#: cmd/incus/network_zone.go:645
 msgid "[<remote>:]<Zone>"
 msgstr "[<remote>:]<Zone>"
 
-#: cmd/incus/network_zone.go:208 cmd/incus/network_zone.go:431
+#: cmd/incus/network_zone.go:224 cmd/incus/network_zone.go:476
 msgid "[<remote>:]<Zone> <key>"
 msgstr "[<remote>:]<Zone> <key>"
 
-#: cmd/incus/network_zone.go:351
+#: cmd/incus/network_zone.go:388
 msgid "[<remote>:]<Zone> <key>=<value>..."
 msgstr "[<remote>:]<Zone> <key>=<value>..."
 
-#: cmd/incus/network_zone.go:268
+#: cmd/incus/network_zone.go:297
 msgid "[<remote>:]<Zone> [key=value...]"
 msgstr "[<remote>:]<Zone> [key=value...]"
 
@@ -8751,15 +8748,15 @@ msgstr "[<remote>:]<network> <listen_address> [key=value...]"
 msgid "[<remote>:]<network> <new-name>"
 msgstr "[<remote>:]<network> <new-name>"
 
-#: cmd/incus/network_peer.go:164
+#: cmd/incus/network_peer.go:172
 msgid "[<remote>:]<network> <peer name>"
 msgstr "[<remote>:]<network> <peer name>"
 
-#: cmd/incus/network_peer.go:545 cmd/incus/network_peer.go:669
+#: cmd/incus/network_peer.go:620 cmd/incus/network_peer.go:756
 msgid "[<remote>:]<network> <peer_name>"
 msgstr "[<remote>:]<network> <peer_name>"
 
-#: cmd/incus/network_peer.go:223
+#: cmd/incus/network_peer.go:243
 #, fuzzy
 msgid ""
 "[<remote>:]<network> <peer_name> <[target project/]<target network or "
@@ -8768,11 +8765,11 @@ msgstr ""
 "[<remote>:]<network> <peer_name> <[target project/]target_network> "
 "[key=value...]"
 
-#: cmd/incus/network_peer.go:358 cmd/incus/network_peer.go:515
+#: cmd/incus/network_peer.go:386 cmd/incus/network_peer.go:573
 msgid "[<remote>:]<network> <peer_name> <key>"
 msgstr "[<remote>:]<network> <peer_name> <key>"
 
-#: cmd/incus/network_peer.go:426
+#: cmd/incus/network_peer.go:471
 msgid "[<remote>:]<network> <peer_name> <key>=<value>..."
 msgstr "[<remote>:]<network> <peer_name> <key>=<value>..."
 
@@ -8982,28 +8979,28 @@ msgstr "[<remote>:]<source>[/<snapshot>] [[<remote>:]<destination>]"
 msgid "[<remote>:]<warning-uuid>"
 msgstr "[<remote>:]<warning-uuid>"
 
-#: cmd/incus/network_zone.go:685
+#: cmd/incus/network_zone.go:758
 msgid "[<remote>:]<zone>"
 msgstr "[<remote>:]<zone>"
 
-#: cmd/incus/network_zone.go:756 cmd/incus/network_zone.go:1055
-#: cmd/incus/network_zone.go:1172
+#: cmd/incus/network_zone.go:837 cmd/incus/network_zone.go:1207
+#: cmd/incus/network_zone.go:1336
 msgid "[<remote>:]<zone> <record>"
 msgstr "[<remote>:]<zone> <record>"
 
-#: cmd/incus/network_zone.go:808 cmd/incus/network_zone.go:1025
+#: cmd/incus/network_zone.go:901 cmd/incus/network_zone.go:1160
 msgid "[<remote>:]<zone> <record> <key>"
 msgstr "[<remote>:]<zone> <record> <key>"
 
-#: cmd/incus/network_zone.go:949
+#: cmd/incus/network_zone.go:1071
 msgid "[<remote>:]<zone> <record> <key>=<value>..."
 msgstr "[<remote>:]<zone> <record> <key>=<value>..."
 
-#: cmd/incus/network_zone.go:1237 cmd/incus/network_zone.go:1283
+#: cmd/incus/network_zone.go:1413 cmd/incus/network_zone.go:1471
 msgid "[<remote>:]<zone> <record> <type> <value>"
 msgstr "[<remote>:]<zone> <record> <type> <value>"
 
-#: cmd/incus/network_zone.go:867
+#: cmd/incus/network_zone.go:977
 msgid "[<remote>:]<zone> <record> [key=value...]"
 msgstr "[<remote>:]<zone> <record> [key=value...]"
 
@@ -9381,7 +9378,7 @@ msgstr ""
 "lxc storage edit [<remote>:]<pool> < pool.yaml\n"
 "    pool.yaml の内容でストレージプールを更新します。"
 
-#: cmd/incus/network_peer.go:226
+#: cmd/incus/network_peer.go:246
 msgid ""
 "incus network peer create default peer1 web/default\n"
 "    Create a new peering between network \"default\" in the current project "
@@ -9635,6 +9632,9 @@ msgstr "y"
 #: cmd/incus/image.go:1184 cmd/incus/snapshot.go:236
 msgid "yes"
 msgstr "yes"
+
+#~ msgid "STATUS"
+#~ msgstr "STATUS"
 
 #~ msgid "[<remote>:]<cluster member>"
 #~ msgstr "[<remote>:]<cluster member>"

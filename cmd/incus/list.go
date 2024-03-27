@@ -508,6 +508,14 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Support for alternative filter names.
+	for i, filter := range filters {
+		fields := strings.SplitN(filter, "=", 2)
+		if len(fields) == 2 && fields[0] == "state" {
+			filters[i] = fmt.Sprintf("status=%s", fields[1])
+		}
+	}
+
 	if needsData && d.HasExtension("container_full") {
 		// Using the GetInstancesFull shortcut
 		var instances []api.InstanceFull
@@ -1007,6 +1015,7 @@ func (c *cmdList) matchByIPV4(cInfo *api.Instance, cState *api.InstanceState, qu
 func (c *cmdList) mapShorthandFilters() {
 	c.shorthandFilters = map[string]func(*api.Instance, *api.InstanceState, string) bool{
 		"type":         c.matchByType,
+		"state":        c.matchByStatus,
 		"status":       c.matchByStatus,
 		"architecture": c.matchByArchitecture,
 		"location":     c.matchByLocation,

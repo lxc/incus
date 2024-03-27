@@ -1002,8 +1002,8 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, chec
 	})
 	inst, cleanup, err := Create(s, args, *p)
 	if err != nil {
-		logger.Error("Failed initialising instance", logger.Ctx{"project": args.Project, "instance": args.Name, "type": args.Type, "err": err})
-		return nil, nil, nil, fmt.Errorf("Failed initialising instance: %w", err)
+		logger.Error("Failed initializing instance", logger.Ctx{"project": args.Project, "instance": args.Name, "type": args.Type, "err": err})
+		return nil, nil, nil, fmt.Errorf("Failed initializing instance: %w", err)
 	}
 
 	revert.Add(cleanup)

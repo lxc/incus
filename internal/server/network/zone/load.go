@@ -13,7 +13,7 @@ import (
 	"github.com/lxc/incus/shared/util"
 )
 
-// LoadByName loads and initialises a Network zone from the database by name.
+// LoadByName loads and initializes a Network zone from the database by name.
 func LoadByName(s *state.State, name string) (NetworkZone, error) {
 	var id int64
 	var projectName string
@@ -36,7 +36,7 @@ func LoadByName(s *state.State, name string) (NetworkZone, error) {
 	return zone, nil
 }
 
-// LoadByNameAndProject loads and initialises a Network zone from the database by project and name.
+// LoadByNameAndProject loads and initializes a Network zone from the database by project and name.
 func LoadByNameAndProject(s *state.State, projectName string, name string) (NetworkZone, error) {
 	var id int64
 	var zoneInfo *api.NetworkZone

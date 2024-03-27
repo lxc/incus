@@ -138,7 +138,7 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 					return response.BadRequest(fmt.Errorf("Storage pool recovery not supported when clustered"))
 				}
 
-				// If pool doesn't exist in DB, initialise a temporary pool with the supplied info.
+				// If pool doesn't exist in DB, initialize a temporary pool with the supplied info.
 				poolInfo := api.StoragePool{
 					Name:           p.Name,
 					Driver:         p.Driver,
@@ -148,7 +148,7 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 
 				pool, err = storagePools.NewTemporary(s, &poolInfo)
 				if err != nil {
-					return response.SmartError(fmt.Errorf("Failed to initialise unknown pool %q: %w", p.Name, err))
+					return response.SmartError(fmt.Errorf("Failed to initialize unknown pool %q: %w", p.Name, err))
 				}
 
 				// Populate configuration with default values.
@@ -452,8 +452,8 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 
 				revert.Add(cleanup)
 
-				// Reinitialise the instance's root disk quota even if no size specified (allows the storage driver the
-				// opportunity to reinitialise the quota based on the new storage volume's DB ID).
+				// Reinitialize the instance's root disk quota even if no size specified (allows the storage driver the
+				// opportunity to reinitialize the quota based on the new storage volume's DB ID).
 				_, rootConfig, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 				if err == nil {
 					err = pool.SetInstanceQuota(inst, rootConfig["size"], rootConfig["size.state"], nil)

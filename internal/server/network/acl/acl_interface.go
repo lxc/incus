@@ -8,7 +8,7 @@ import (
 
 // NetworkACL represents a Network ACL.
 type NetworkACL interface {
-	// Initialise.
+	// Initialize.
 	init(state *state.State, id int64, projectName string, aclInfo *api.NetworkACL)
 
 	// Info.

@@ -64,7 +64,7 @@ test_container_local_cross_pool_handling() {
 
         originalPool=$(incus profile device get default root pool)
 
-        # Check volatile.apply_template is initialised during create.
+        # Check volatile.apply_template is initialized during create.
         incus config get c1 volatile.apply_template | grep create
         incus copy c1 c2 -s "incustest-$(basename "${INCUS_DIR}")-${driver}1"
 

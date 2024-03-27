@@ -59,7 +59,7 @@ type common struct {
 	info        *api.NetworkACL
 }
 
-// init initialise internal variables.
+// init initialize internal variables.
 func (d *common) init(state *state.State, id int64, projectName string, info *api.NetworkACL) {
 	if info == nil {
 		d.info = &api.NetworkACL{}
@@ -602,7 +602,7 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 			return err
 		}
 
-		// Apply changes internally and reinitialise.
+		// Apply changes internally and reinitialize.
 		d.info.NetworkACLPut = *config
 		d.init(d.state, d.id, d.projectName, d.info)
 

@@ -919,7 +919,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 		push = true
 	}
 
-	// Initialise migrationArgs, don't set the Storage property yet, this is done in DoStorage,
+	// Initialize migrationArgs, don't set the Storage property yet, this is done in DoStorage,
 	// to avoid this function relying on the legacy storage layer.
 	migrationArgs := migrationSinkArgs{
 		URL: req.Source.Operation,
