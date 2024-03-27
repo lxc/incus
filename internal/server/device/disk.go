@@ -456,6 +456,25 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		}
 	}
 
+	// Restrict disks allowed when live-migratable.
+	if instConf.Type() == instancetype.VM && util.IsTrue(instConf.ExpandedConfig()["migration.stateful"]) {
+		if d.config["path"] != "" && d.config["path"] != "/" {
+			return fmt.Errorf("Shared filesystem are incompatible with migration.stateful=true")
+		}
+
+		if d.config["pool"] == "" {
+			return fmt.Errorf("Only Incus-managed disks are allowed with migration.stateful=true")
+		}
+
+		if d.config["io.bus"] == "nvme" {
+			return fmt.Errorf("NVME disks aren't supported with migration.stateful=true")
+		}
+
+		if d.config["path"] != "/" && d.pool != nil && !d.pool.Driver().Info().Remote {
+			return fmt.Errorf("Only additional disks coming from a shared storage pool are supported with migration.stateful=true")
+		}
+	}
+
 	return nil
 }
 
