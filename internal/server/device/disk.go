@@ -121,18 +121,7 @@ func (d *disk) sourceIsCeph() bool {
 
 // CanHotPlug returns whether the device can be managed whilst the instance is running.
 func (d *disk) CanHotPlug() bool {
-	// Containers support hot-plugging all disk types.
-	if d.inst.Type() == instancetype.Container {
-		return true
-	}
-
-	// Only VirtioFS works with path hotplug.
-	// As migration.stateful turns off VirtioFS, this also turns off hotplugging of paths.
-	if util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
-		return false
-	}
-
-	// Block disks can be hot-plugged into VMs.
+	// All disks can be hot-plugged.
 	return true
 }
 
