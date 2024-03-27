@@ -6687,6 +6687,17 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 		defer revert.Fail() // Run the revert fail before the earlier defers.
 
 		d.logger.Debug("Setup temporary migration storage snapshot")
+	} else {
+		// Still set some options for shared storage.
+		capabilities := map[string]bool{
+			// Automatically throttle down the guest to speed up convergence of RAM migration.
+			"auto-converge": true,
+		}
+
+		err = monitor.MigrateSetCapabilities(capabilities)
+		if err != nil {
+			return fmt.Errorf("Failed setting migration capabilities: %w", err)
+		}
 	}
 
 	// Perform storage transfer while instance is still running.
