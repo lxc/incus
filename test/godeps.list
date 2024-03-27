@@ -13,9 +13,9 @@ github.com/lxc/incus/shared/units
 github.com/lxc/incus/shared/util
 github.com/lxc/incus/shared/ws
 github.com/pkg/sftp
-github.com/zitadel/oidc/v2/pkg/client/rp
-github.com/zitadel/oidc/v2/pkg/http
-github.com/zitadel/oidc/v2/pkg/oidc
+github.com/zitadel/oidc/v3/pkg/client/rp
+github.com/zitadel/oidc/v3/pkg/http
+github.com/zitadel/oidc/v3/pkg/oidc
 golang.org/x/crypto/ssh
 golang.org/x/oauth2
 gopkg.in/yaml.v2

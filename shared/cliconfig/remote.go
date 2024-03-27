@@ -14,7 +14,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zitadel/oidc/v2/pkg/oidc"
+	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/lxc/incus/client"

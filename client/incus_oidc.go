@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/zitadel/oidc/v2/pkg/client/rp"
-	httphelper "github.com/zitadel/oidc/v2/pkg/http"
-	"github.com/zitadel/oidc/v2/pkg/oidc"
+	"github.com/zitadel/oidc/v3/pkg/client/rp"
+	httphelper "github.com/zitadel/oidc/v3/pkg/http"
+	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"golang.org/x/oauth2"
 )
 
@@ -157,7 +157,7 @@ func (o *oidcClient) getProvider(issuer string, clientID string) (rp.RelyingPart
 		rp.WithHTTPClient(o.httpClient),
 	}
 
-	provider, err := rp.NewRelyingPartyOIDC(issuer, clientID, "", "", oidcScopes, options...)
+	provider, err := rp.NewRelyingPartyOIDC(context.TODO(), issuer, clientID, "", "", oidcScopes, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (o *oidcClient) refresh(issuer string, clientID string) error {
 		return errRefreshAccessToken
 	}
 
-	oauthTokens, err := rp.RefreshAccessToken(provider, o.tokens.RefreshToken, "", "")
+	oauthTokens, err := rp.RefreshTokens[*oidc.IDTokenClaims](context.TODO(), provider, o.tokens.RefreshToken, "", "")
 	if err != nil {
 		return errRefreshAccessToken
 	}
@@ -213,7 +213,7 @@ func (o *oidcClient) authenticate(issuer string, clientID string, audience strin
 
 	o.oidcTransport.deviceAuthorizationEndpoint = provider.GetDeviceAuthorizationEndpoint()
 
-	resp, err := rp.DeviceAuthorization(oidcScopes, provider)
+	resp, err := rp.DeviceAuthorization(context.TODO(), oidcScopes, provider, nil)
 	if err != nil {
 		return err
 	}
