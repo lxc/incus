@@ -31,6 +31,15 @@ To use `cloud-init`, you must base your instance on an image that has `cloud-ini
 Images from the [`images` remote](https://images.linuxcontainers.org/) have `cloud-init`-enabled variants, which are usually bigger in size than the default variant.
 The cloud variants use the `/cloud` suffix, for example, `images:ubuntu/22.04/cloud`.
 
+## `cloud-init` and virtual machines
+
+For `cloud-init` to work inside of a virtual machine, you need to either have a functional `incus-agent` in the VM or need to provide the `cloud-init` data through a special extra disk.
+All images coming from the `images:` remote will have the agent already setup and so are good to go from the start.
+
+For instances that do not have the `incus-agent`, you can pass in the extra `cloud-init` disk with:
+
+    incus config device add INSTANCE cloud-init disk source=cloud-init:config
+
 ## Configuration options
 
 Incus supports two different sets of configuration options for configuring `cloud-init`: `cloud-init.*` and `user.*`.
