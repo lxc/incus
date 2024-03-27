@@ -387,7 +387,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 					return fmt.Errorf("Failed checking if custom volume is exclusively attached to another instance: %w", err)
 				}
 
-				if remoteInstance != nil {
+				if remoteInstance != nil && remoteInstance.ID != instConf.ID() {
 					return fmt.Errorf("Custom volume is already attached to an instance on a different node")
 				}
 
