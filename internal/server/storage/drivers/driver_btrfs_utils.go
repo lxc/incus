@@ -603,13 +603,22 @@ func (d *btrfs) loadOptimizedBackupHeader(r io.ReadSeeker, mountPath string) (*B
 }
 
 // receiveSubVolume receives a subvolume from an io.Reader into the receivePath and returns the path to the received subvolume.
-func (d *btrfs) receiveSubVolume(r io.Reader, receivePath string) (string, error) {
+func (d *btrfs) receiveSubVolume(r io.Reader, receivePath string, tracker *ioprogress.ProgressTracker) (string, error) {
 	files, err := os.ReadDir(receivePath)
 	if err != nil {
 		return "", fmt.Errorf("Failed listing contents of %q: %w", receivePath, err)
 	}
 
-	err = subprocess.RunCommandWithFds(context.TODO(), r, nil, "btrfs", "receive", "-e", receivePath)
+	// Setup progress tracker.
+	var stdin io.Reader = r
+	if tracker != nil {
+		stdin = &ioprogress.ProgressReader{
+			Reader:  r,
+			Tracker: tracker,
+		}
+	}
+
+	err = subprocess.RunCommandWithFds(context.TODO(), stdin, nil, "btrfs", "receive", "-e", receivePath)
 	if err != nil {
 		return "", err
 	}
