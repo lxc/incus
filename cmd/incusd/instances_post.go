@@ -296,7 +296,12 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 	// Early check for refresh and cluster same name move to check instance exists.
 	if req.Source.Refresh || (clusterMoveSourceName != "" && clusterMoveSourceName == req.Name) {
-		inst, err = instance.LoadByProjectAndName(s, projectName, req.Name)
+		sourceProject := projectName
+		if req.Source.Project != "" {
+			sourceProject = req.Source.Project
+		}
+
+		inst, err = instance.LoadByProjectAndName(s, sourceProject, req.Name)
 		if err != nil {
 			if response.IsNotFoundError(err) {
 				if clusterMoveSourceName != "" {
@@ -306,6 +311,13 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 				req.Source.Refresh = false
 			} else {
+				return response.SmartError(err)
+			}
+		}
+
+		if sourceProject != projectName {
+			inst, err = instance.UpdateProject(s, inst, projectName)
+			if err != nil {
 				return response.SmartError(err)
 			}
 		}
