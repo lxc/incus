@@ -249,7 +249,7 @@ func (r *ProtocolIncus) CreateStoragePoolBucketBackup(poolName string, bucketNam
 		return nil, err
 	}
 
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("/storage-pools/%s/buckets/%s/backups", url.PathEscape(poolName), url.PathEscape(bucketName)), backup, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("/storage-pools/%s/buckets/%s/backups", url.PathEscape(poolName), url.PathEscape(bucketName)), backup, "")
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func (r *ProtocolIncus) DeleteStoragePoolBucketBackup(pool string, bucketName st
 		return nil, err
 	}
 
-	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("/storage-pools/%s/buckets/%s/backups/%s", url.PathEscape(pool), url.PathEscape(bucketName), url.PathEscape(name)), nil, "", true)
+	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("/storage-pools/%s/buckets/%s/backups/%s", url.PathEscape(pool), url.PathEscape(bucketName), url.PathEscape(name)), nil, "")
 	if err != nil {
 		return nil, err
 	}
