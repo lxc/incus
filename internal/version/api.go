@@ -406,6 +406,7 @@ var APIExtensions = []string{
 	"numa_cpu_balanced",
 	"image_restriction_nesting",
 	"network_integrations",
+	"instance_memory_swap_bytes",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
