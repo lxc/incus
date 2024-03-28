@@ -836,6 +836,7 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 		"boot.host_shutdown_action",
 		"boot.host_shutdown_timeout",
 		"linux.kernel_modules",
+		"limits.memory.swap",
 		"raw.apparmor",
 		"raw.idmap",
 		"raw.lxc",

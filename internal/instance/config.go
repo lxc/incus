@@ -506,14 +506,16 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"limits.memory.enforce": validate.Optional(validate.IsOneOf("soft", "hard")),
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.swap)
-	//
+	// When set to `true` or `false`, it controls whether the container is likely to get some of
+	// its memory swapped by the kernel. Alternatively, it can be set to a bytes value which will
+	// then allow the container to make use of additional memory through swap.
 	// ---
-	//  type: bool
+	//  type: string
 	//  defaultdesc: `true`
 	//  liveupdate: yes
 	//  condition: container
-	//  shortdesc: Whether to encourage/discourage swapping less used pages for this instance
-	"limits.memory.swap": validate.Optional(validate.IsBool),
+	//  shortdesc: Control swap usage by the instance
+	"limits.memory.swap": validate.Optional(validate.Or(validate.IsBool, validate.IsSize)),
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.swap.priority)
 	// Specify an integer between 0 and 10.

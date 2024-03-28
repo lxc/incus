@@ -453,9 +453,9 @@
 							"condition": "container",
 							"defaultdesc": "`true`",
 							"liveupdate": "yes",
-							"longdesc": "",
-							"shortdesc": "Whether to encourage/discourage swapping less used pages for this instance",
-							"type": "bool"
+							"longdesc": "When set to `true` or `false`, it controls whether the container is likely to get some of\nits memory swapped by the kernel. Alternatively, it can be set to a bytes value which will\nthen allow the container to make use of additional memory through swap.",
+							"shortdesc": "Control swap usage by the instance",
+							"type": "string"
 						}
 					},
 					{
