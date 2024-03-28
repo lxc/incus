@@ -68,7 +68,7 @@ func TestCreatePendingNetwork(t *testing.T) {
 	_, err = tx.NetworkNodeConfigs(context.Background(), networkID)
 	require.EqualError(t, err, "Network not defined on nodes: none")
 
-	config = map[string]string{"bridge.external_interfaces": "egg"}
+	config = map[string]string{"bridge.external_interfaces": "egg,if1/eth0/1001"}
 	err = tx.CreatePendingNetwork(context.Background(), "none", api.ProjectDefaultName, "network1", db.NetworkTypeBridge, config)
 	require.NoError(t, err)
 
@@ -78,7 +78,7 @@ func TestCreatePendingNetwork(t *testing.T) {
 	assert.Len(t, configs, 3)
 	assert.Equal(t, map[string]string{"bridge.external_interfaces": "foo"}, configs["buzz"])
 	assert.Equal(t, map[string]string{"bridge.external_interfaces": "bar"}, configs["rusp"])
-	assert.Equal(t, map[string]string{"bridge.external_interfaces": "egg"}, configs["none"])
+	assert.Equal(t, map[string]string{"bridge.external_interfaces": "egg,if1/eth0/1001"}, configs["none"])
 }
 
 // If an entry for the given network and node already exists, an error is

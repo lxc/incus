@@ -1227,6 +1227,52 @@ test_clustering_network() {
   ! nsenter -n -t "${INCUS_PID1}" -- ip link show "${net}" || false # Check bridge is removed.
   ! nsenter -n -t "${INCUS_PID2}" -- ip link show "${net}" || false # Check bridge is removed.
 
+  # Check creating native bridge network with external interface using the extended format.
+  ifp="${bridge}p"
+  if1="${bridge}i1"
+  vlan="2345"
+
+  nsenter -n -t "${INCUS_PID1}" -- ip link add "${ifp}" type dummy # Create dummy parent interface.
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" bridge.external_interfaces="${if1}/${ifp}/${vlan}" --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --target node2
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" bridge.driver=native # Check create succeeds.
+
+  nsenter -n -t "${INCUS_PID1}" -- ip link show "${if1}" # Check external interface was created on node 1.
+  ! nsenter -n -t "${INCUS_PID2}" -- ip link show "${if1}" || false # Check external interface does not exist on node 2.
+
+  # Check updating the network
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${net}" ipv6.dhcp.stateful=true
+
+  # Check creating external interface with extended format fails if already in use.
+  net2="${bridge}x2"
+  if2="${bridge}i2"
+
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net2}" bridge.external_interfaces="${if2}/${ifp}/${vlan}" --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net2}" --target node2
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net2}" bridge.driver=native || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net2}" | grep status: | grep -q Errored # Check has errored status.
+
+  # Delete failed network.
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net2}"
+
+  # Check adding second network with the same external interface.
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net2}" bridge.external_interfaces="${if1}/${ifp}/${vlan}" --target node1
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net2}" --target node2
+  ! INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net2}" bridge.driver=native || false
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net2}" | grep status: | grep -q Errored # Check has errored status.
+
+  # Delete failed network.
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net2}"
+
+  # Cleanup external interface with extended format test.
+  INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}"
+
+  # Check that the external interface was deleted
+  ! nsenter -n -t "${INCUS_PID1}" -- ip link show "${if1}" || false # Check external interface does not exist on node 1.
+
+  # Delete dummy parent interface.
+  nsenter -n -t "${INCUS_PID1}" -- ip link delete "${ifp}" # Delete the dummy parent interface.
+
   INCUS_DIR="${INCUS_ONE_DIR}" incus project delete foo
 
   INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown

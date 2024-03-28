@@ -680,6 +680,13 @@ func (c *ClusterTx) GetNetworkWithInterface(ctx context.Context, devName string)
 		for _, entry := range strings.Split(r[2].(string), ",") {
 			entry = strings.TrimSpace(entry)
 
+			// Test for extended configuration of external interface.
+			entryParts := strings.Split(entry, "/")
+			if len(entryParts) == 3 {
+				// The first part is the interface name.
+				entry = strings.TrimSpace(entryParts[0])
+			}
+
 			if entry == devName {
 				id = r[0].(int64)
 				name = r[1].(string)
