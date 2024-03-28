@@ -70,7 +70,8 @@ You can increase their size though; see {ref}`storage-resize-pool`.
 
 #### Remote storage
 
-The `ceph`, `cephfs`, `cephobject` and `lvmcluster` drivers store the data in a completely independent Ceph storage cluster that must be set up separately.
+The `ceph`, `cephfs` and `cephobject` drivers store the data in a completely independent Ceph storage cluster that must be set up separately.
+The `lvmcluster` driver relies on a shared block device being available to all cluster members and on a pre-existing `lvmlockd` setup.
 
 (storage-default-pool)=
 ### Default storage pool
