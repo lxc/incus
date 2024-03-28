@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/go-logr/logr"
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
 
@@ -31,7 +33,7 @@ func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 
 	discard := logr.Discard()
 
-	options := []ovsdbClient.Option{ovsdbClient.WithLogger(&discard)}
+	options := []ovsdbClient.Option{ovsdbClient.WithLogger(&discard), ovsdbClient.WithReconnect(5*time.Second, &backoff.ZeroBackOff{})}
 	for _, entry := range strings.Split(dbAddr, ",") {
 		options = append(options, ovsdbClient.WithEndpoint(entry))
 	}
