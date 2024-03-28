@@ -1117,8 +1117,7 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 	}
 
 	// Send the request
-	useEventListener := r.CheckExtension("operation_wait") != nil
-	op, _, err := r.queryOperation("POST", uri, exec, "", useEventListener)
+	op, _, err := r.queryOperation("POST", uri, exec, "", false)
 	if err != nil {
 		return nil, err
 	}
@@ -2436,8 +2435,7 @@ func (r *ProtocolIncus) ConsoleInstance(instanceName string, console api.Instanc
 	}
 
 	// Send the request
-	useEventListener := r.CheckExtension("operation_wait") != nil
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/console", path, url.PathEscape(instanceName)), console, "", useEventListener)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/console", path, url.PathEscape(instanceName)), console, "", false)
 	if err != nil {
 		return nil, err
 	}
