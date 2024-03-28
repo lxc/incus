@@ -1155,25 +1155,13 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 					return nil, err
 				}
 			} else {
-				if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) {
-					err = cg.SetMemoryLimit(valueInt)
-					if err != nil {
-						return nil, err
-					}
+				err = cg.SetMemoryLimit(valueInt)
+				if err != nil {
+					return nil, err
+				}
 
-					if util.IsFalse(memorySwap) {
-						err = cg.SetMemorySwapLimit(0)
-						if err != nil {
-							return nil, err
-						}
-					} else {
-						err = cg.SetMemorySwapLimit(valueInt)
-						if err != nil {
-							return nil, err
-						}
-					}
-				} else {
-					err = cg.SetMemoryLimit(valueInt)
+				if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) {
+					err = cg.SetMemorySwapLimit(0)
 					if err != nil {
 						return nil, err
 					}
@@ -4624,28 +4612,14 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						return err
 					}
 				} else {
-					if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) {
-						err = cg.SetMemoryLimit(memoryInt)
-						if err != nil {
-							revertMemory()
-							return err
-						}
+					err = cg.SetMemoryLimit(memoryInt)
+					if err != nil {
+						revertMemory()
+						return err
+					}
 
-						if util.IsFalse(memorySwap) {
-							err = cg.SetMemorySwapLimit(0)
-							if err != nil {
-								revertMemory()
-								return err
-							}
-						} else {
-							err = cg.SetMemorySwapLimit(memoryInt)
-							if err != nil {
-								revertMemory()
-								return err
-							}
-						}
-					} else {
-						err = cg.SetMemoryLimit(memoryInt)
+					if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) {
+						err = cg.SetMemorySwapLimit(0)
 						if err != nil {
 							revertMemory()
 							return err
@@ -4666,7 +4640,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 				// Configure the swappiness
 				if key == "limits.memory.swap" || key == "limits.memory.swap.priority" {
-					memorySwap := d.expandedConfig["limits.memory.swap"]
 					memorySwapPriority := d.expandedConfig["limits.memory.swap.priority"]
 					if util.IsFalse(memorySwap) {
 						err = cg.SetMemorySwappiness(0)
