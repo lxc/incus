@@ -295,7 +295,7 @@ func IsJSONRequest(r *http.Request) bool {
 // signed with client certificate from the trusted certificates.
 // Returns whether or not the token is valid, the fingerprint of the certificate and the certificate.
 func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (bool, string, *x509.Certificate) {
-	// Check if the request has a JWT token
+	// Check if the request has a JWT token.
 	auth := r.Header.Get("Authorization")
 	if auth == "" {
 		return false, "", nil
@@ -306,47 +306,63 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 		return false, "", nil
 	}
 
-	tokenString := parts[1]
-
-	// Parse the token
+	// Get a new JWT parser.
 	jwtParser := jwt.NewParser()
 
-	requestToken, requestTokenParts, err := jwtParser.ParseUnverified(tokenString, &jwt.RegisteredClaims{})
+	// Parse the token.
+	token, tokenParts, err := jwtParser.ParseUnverified(parts[1], &jwt.RegisteredClaims{})
 	if err != nil {
 		return false, "", nil
 	}
 
-	requestTokenClaims, ok := requestToken.Claims.(*jwt.RegisteredClaims)
+	if len(tokenParts) < 2 {
+		return false, "", nil
+	}
+
+	// Check if the token is valid.
+	notBefore, err := token.Claims.GetNotBefore()
+	if err != nil {
+		return false, "", nil
+	}
+
+	expiresAt, err := token.Claims.GetExpirationTime()
+	if err != nil {
+		return false, "", nil
+	}
+
+	if time.Now().Before(notBefore.Time) || time.Now().After(expiresAt.Time) {
+		return false, "", nil
+	}
+
+	// Find the certificate by the token subject.
+	subject, err := token.Claims.GetSubject()
+	if err != nil {
+		return false, "", nil
+	}
+
+	tokenCert, ok := trustedCerts[subject]
 	if !ok {
-		return false, "", nil // JWT claims type invalid
+		// No matching certificate.
+		return false, "", nil
 	}
 
-	// Check if the token is valid
-	if time.Now().Before(requestTokenClaims.NotBefore.Time) || time.Now().After(requestTokenClaims.ExpiresAt.Time) {
-		return false, "", nil // token not yet valid or expired
-	}
-
-	// Find the certificate by token subject
-	requestTokenCert, ok := trustedCerts[requestTokenClaims.Subject]
-	if !ok {
-		return false, "", nil // certificate not found
-	}
-
-	// Verify the token signature
-	requestTokenSigningString, err := requestToken.SigningString()
+	// Get the token signing string.
+	tokenSigningString, err := token.SigningString()
 	if err != nil {
-		return false, "", nil // could not generate signing string
+		return false, "", nil
 	}
 
-	requestTokenSignature, err := base64.RawURLEncoding.DecodeString(requestTokenParts[2])
+	// Extract the token's signature.
+	tokenSignature, err := base64.RawURLEncoding.DecodeString(tokenParts[2])
 	if err != nil {
-		return false, "", nil // could not decode JWT signature
+		return false, "", nil
 	}
 
-	err = requestToken.Method.Verify(requestTokenSigningString, requestTokenSignature, requestTokenCert.PublicKey)
+	// Validate that the token was signed by the certificate.
+	err = token.Method.Verify(tokenSigningString, tokenSignature, tokenCert.PublicKey)
 	if err != nil {
-		return false, "", nil // signature verification failed
+		return false, "", nil
 	}
 
-	return true, requestTokenClaims.Subject, &requestTokenCert
+	return true, subject, &tokenCert
 }
