@@ -435,6 +435,19 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		return false, "", "", fmt.Errorf("Bad/missing TLS on network query")
 	}
 
+	// Load the certificates.
+	trustCACertificates := d.globalConfig.TrustCACertificates()
+
+	// Check for JWT token signed by a TLS certificate.
+	jwtOk, _, cert := localUtil.CheckJwtToken(r, trustedCerts[certificate.TypeClient])
+	if jwtOk {
+		trusted, username := localUtil.CheckTrustState(*cert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
+		if trusted {
+			return true, username, api.AuthenticationMethodTLS, nil
+		}
+	}
+
+	// Check for JWT token signed by an OpenID Connect provider.
 	if d.oidcVerifier != nil && d.oidcVerifier.IsRequest(r) {
 		userName, err := d.oidcVerifier.Auth(d.shutdownCtx, w, r)
 		if err != nil {
@@ -444,10 +457,7 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		return true, userName, api.AuthenticationMethodOIDC, nil
 	}
 
-	// Validate normal TLS access.
-	trustCACertificates := d.globalConfig.TrustCACertificates()
-
-	// Validate metrics certificates.
+	// Validate metrics TLS certificates.
 	if r.URL.Path == "/1.0/metrics" {
 		for _, i := range r.TLS.PeerCertificates {
 			trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
@@ -457,17 +467,9 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		}
 	}
 
+	// Validate regular TLS certificates.
 	for _, i := range r.TLS.PeerCertificates {
 		trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
-		if trusted {
-			return true, username, api.AuthenticationMethodTLS, nil
-		}
-	}
-
-	// Check for JWT token in the request.
-	jwtOk, _, cert := localUtil.CheckJwtToken(r, trustedCerts[certificate.TypeClient])
-	if jwtOk {
-		trusted, username := localUtil.CheckTrustState(*cert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
 			return true, username, api.AuthenticationMethodTLS, nil
 		}
