@@ -3,7 +3,6 @@ package util
 import (
 	"bytes"
 	"context"
-	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
@@ -333,11 +332,6 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 		return false, "", nil // certificate not found
 	}
 
-	requestTokenCertPublicKey, ok := requestTokenCert.PublicKey.(*rsa.PublicKey)
-	if !ok {
-		return false, "", nil // certificate public key invalid
-	}
-
 	// Verify the token signature
 	requestTokenSigningString, err := requestToken.SigningString()
 	if err != nil {
@@ -349,7 +343,7 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 		return false, "", nil // could not decode JWT signature
 	}
 
-	err = requestToken.Method.Verify(requestTokenSigningString, requestTokenSignature, requestTokenCertPublicKey)
+	err = requestToken.Method.Verify(requestTokenSigningString, requestTokenSignature, requestTokenCert.PublicKey)
 	if err != nil {
 		return false, "", nil // signature verification failed
 	}
