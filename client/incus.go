@@ -366,8 +366,13 @@ func (r *ProtocolIncus) queryStruct(method string, path string, data any, ETag s
 // It sets up an early event listener, performs the query, processes the response, and manages the lifecycle of the event listener.
 func (r *ProtocolIncus) queryOperation(method string, path string, data any, ETag string) (Operation, string, error) {
 	// Attempt to setup an early event listener
+	skipListener := false
 	listener, err := r.GetEvents()
 	if err != nil {
+		if api.StatusErrorCheck(err, http.StatusForbidden) {
+			skipListener = true
+		}
+
 		listener = nil
 	}
 
@@ -393,10 +398,11 @@ func (r *ProtocolIncus) queryOperation(method string, path string, data any, ETa
 
 	// Setup an Operation wrapper
 	op := operation{
-		Operation: *respOperation,
-		r:         r,
-		listener:  listener,
-		chActive:  make(chan bool),
+		Operation:    *respOperation,
+		r:            r,
+		listener:     listener,
+		skipListener: skipListener,
+		chActive:     make(chan bool),
 	}
 
 	// Log the data
