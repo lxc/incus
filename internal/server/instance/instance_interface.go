@@ -62,6 +62,8 @@ type ConfigReader interface {
 	Project() api.Project
 	Type() instancetype.Type
 	Architecture() int
+	ID() int
+
 	ExpandedConfig() map[string]string
 	ExpandedDevices() deviceConfig.Devices
 	LocalConfig() map[string]string
@@ -127,7 +129,6 @@ type Instance interface {
 	OnHook(hookName string, args map[string]string) error
 
 	// Properties.
-	ID() int
 	Location() string
 	Name() string
 	CloudInitID() string
