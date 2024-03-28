@@ -439,9 +439,11 @@ If this option is set to `false`, regular system memory is used.
 :condition: "container"
 :defaultdesc: "`true`"
 :liveupdate: "yes"
-:shortdesc: "Whether to encourage/discourage swapping less used pages for this instance"
-:type: "bool"
-
+:shortdesc: "Control swap usage by the instance"
+:type: "string"
+When set to `true` or `false`, it controls whether the container is likely to get some of
+its memory swapped by the kernel. Alternatively, it can be set to a bytes value which will
+then allow the container to make use of additional memory through swap.
 ```
 
 ```{config:option} limits.memory.swap.priority instance-resource-limits
