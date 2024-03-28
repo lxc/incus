@@ -162,15 +162,11 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf(i18n.G("The --storage flag can't be used with --target"))
 			}
 
-			if c.flagTargetProject != "" {
-				return fmt.Errorf(i18n.G("The --target-project flag can't be used with --target"))
-			}
-
 			if c.flagMode != moveDefaultMode {
 				return fmt.Errorf(i18n.G("The --mode flag can't be used with --target"))
 			}
 
-			return moveClusterInstance(conf, sourceResource, destResource, c.flagTarget, c.global.flagQuiet, stateful)
+			return moveClusterInstance(conf, sourceResource, destResource, c.flagTarget, c.flagTargetProject, c.global.flagQuiet, stateful)
 		}
 
 		dest, err := conf.GetInstanceServer(destRemote)
@@ -252,7 +248,7 @@ func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
 }
 
 // Move an instance using special POST /instances/<name>?target=<member> API.
-func moveClusterInstance(conf *config.Config, sourceResource string, destResource string, target string, quiet bool, stateful bool) error {
+func moveClusterInstance(conf *config.Config, sourceResource string, destResource string, target string, targetProject string, quiet bool, stateful bool) error {
 	// Parse the source.
 	sourceRemote, sourceName, err := conf.ParseRemote(sourceResource)
 	if err != nil {
@@ -292,6 +288,7 @@ func moveClusterInstance(conf *config.Config, sourceResource string, destResourc
 		Name:      destName,
 		Migration: true,
 		Live:      stateful,
+		Project:   targetProject,
 	}
 
 	op, err := source.MigrateInstance(sourceName, req)
