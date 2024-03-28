@@ -435,15 +435,26 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		return false, "", "", fmt.Errorf("Bad/missing TLS on network query")
 	}
 
-	if d.oidcVerifier != nil && d.oidcVerifier.IsRequest(r) {
-		userName, err := d.oidcVerifier.Auth(d.shutdownCtx, w, r)
-		if err == nil {
-			return true, userName, api.AuthenticationMethodOIDC, nil
+	// Validate normal TLS access.
+	trustCACertificates := d.globalConfig.TrustCACertificates()
+
+	// Check for JWT token in the request.
+	jwtOk, _, cert := localUtil.CheckJwtToken(r, trustedCerts[certificate.TypeClient])
+	if jwtOk {
+		trusted, username := localUtil.CheckTrustState(*cert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
+		if trusted {
+			return true, username, api.AuthenticationMethodTLS, nil
 		}
 	}
 
-	// Validate normal TLS access.
-	trustCACertificates := d.globalConfig.TrustCACertificates()
+	if d.oidcVerifier != nil && d.oidcVerifier.IsRequest(r) {
+		userName, err := d.oidcVerifier.Auth(d.shutdownCtx, w, r)
+		if err != nil {
+			return false, "", "", err
+		}
+
+		return true, userName, api.AuthenticationMethodOIDC, nil
+	}
 
 	// Validate metrics certificates.
 	if r.URL.Path == "/1.0/metrics" {
@@ -457,15 +468,6 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 
 	for _, i := range r.TLS.PeerCertificates {
 		trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
-		if trusted {
-			return true, username, api.AuthenticationMethodTLS, nil
-		}
-	}
-
-	// Check for JWT token in the request.
-	jwtOk, _, cert := localUtil.CheckJwtToken(r, trustedCerts[certificate.TypeClient])
-	if jwtOk {
-		trusted, username := localUtil.CheckTrustState(*cert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
 			return true, username, api.AuthenticationMethodTLS, nil
 		}
