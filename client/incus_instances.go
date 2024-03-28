@@ -193,7 +193,7 @@ func (r *ProtocolIncus) UpdateInstances(state api.InstancesPut, ETag string) (Op
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s?%s", path, v.Encode()), state, ETag, true)
+	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s?%s", path, v.Encode()), state, ETag)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (r *ProtocolIncus) rebuildInstance(instanceName string, instance api.Instan
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/rebuild", path, url.PathEscape(instanceName)), instance, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/rebuild", path, url.PathEscape(instanceName)), instance, "")
 	if err != nil {
 		return nil, err
 	}
@@ -523,7 +523,7 @@ func (r *ProtocolIncus) CreateInstanceFromBackup(args InstanceBackupArgs) (Opera
 
 	if args.PoolName == "" && args.Name == "" {
 		// Send the request
-		op, _, err := r.queryOperation("POST", path, args.BackupFile, "", true)
+		op, _, err := r.queryOperation("POST", path, args.BackupFile, "")
 		if err != nil {
 			return nil, err
 		}
@@ -604,7 +604,7 @@ func (r *ProtocolIncus) CreateInstance(instance api.InstancesPost) (Operation, e
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", path, instance, "", true)
+	op, _, err := r.queryOperation("POST", path, instance, "")
 	if err != nil {
 		return nil, err
 	}
@@ -943,7 +943,7 @@ func (r *ProtocolIncus) UpdateInstance(name string, instance api.InstancePut, ET
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s/%s", path, url.PathEscape(name)), instance, ETag, true)
+	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s/%s", path, url.PathEscape(name)), instance, ETag)
 	if err != nil {
 		return nil, err
 	}
@@ -964,7 +964,7 @@ func (r *ProtocolIncus) RenameInstance(name string, instance api.InstancePost) (
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s", path, url.PathEscape(name)), instance, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s", path, url.PathEscape(name)), instance, "")
 	if err != nil {
 		return nil, err
 	}
@@ -1060,7 +1060,7 @@ func (r *ProtocolIncus) MigrateInstance(name string, instance api.InstancePost) 
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s", path, url.PathEscape(name)), instance, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s", path, url.PathEscape(name)), instance, "")
 	if err != nil {
 		return nil, err
 	}
@@ -1076,7 +1076,7 @@ func (r *ProtocolIncus) DeleteInstance(name string) (Operation, error) {
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("%s/%s", path, url.PathEscape(name)), nil, "", true)
+	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("%s/%s", path, url.PathEscape(name)), nil, "")
 	if err != nil {
 		return nil, err
 	}
@@ -1117,8 +1117,7 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 	}
 
 	// Send the request
-	useEventListener := r.CheckExtension("operation_wait") != nil
-	op, _, err := r.queryOperation("POST", uri, exec, "", useEventListener)
+	op, _, err := r.queryOperation("POST", uri, exec, "")
 	if err != nil {
 		return nil, err
 	}
@@ -1712,7 +1711,7 @@ func (r *ProtocolIncus) CreateInstanceSnapshot(instanceName string, snapshot api
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/snapshots", path, url.PathEscape(instanceName)), snapshot, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/snapshots", path, url.PathEscape(instanceName)), snapshot, "")
 	if err != nil {
 		return nil, err
 	}
@@ -1959,7 +1958,7 @@ func (r *ProtocolIncus) RenameInstanceSnapshot(instanceName string, name string,
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/snapshots/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), instance, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/snapshots/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), instance, "")
 	if err != nil {
 		return nil, err
 	}
@@ -2035,7 +2034,7 @@ func (r *ProtocolIncus) MigrateInstanceSnapshot(instanceName string, name string
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/snapshots/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), instance, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/snapshots/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), instance, "")
 	if err != nil {
 		return nil, err
 	}
@@ -2051,7 +2050,7 @@ func (r *ProtocolIncus) DeleteInstanceSnapshot(instanceName string, name string)
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("%s/%s/snapshots/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), nil, "", true)
+	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("%s/%s/snapshots/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), nil, "")
 	if err != nil {
 		return nil, err
 	}
@@ -2071,7 +2070,7 @@ func (r *ProtocolIncus) UpdateInstanceSnapshot(instanceName string, name string,
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s/%s/snapshots/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), instance, ETag, true)
+	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s/%s/snapshots/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), instance, ETag)
 	if err != nil {
 		return nil, err
 	}
@@ -2113,7 +2112,7 @@ func (r *ProtocolIncus) UpdateInstanceState(name string, state api.InstanceState
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s/%s/state", path, url.PathEscape(name)), state, ETag, true)
+	op, _, err := r.queryOperation("PUT", fmt.Sprintf("%s/%s/state", path, url.PathEscape(name)), state, ETag)
 	if err != nil {
 		return nil, err
 	}
@@ -2436,8 +2435,7 @@ func (r *ProtocolIncus) ConsoleInstance(instanceName string, console api.Instanc
 	}
 
 	// Send the request
-	useEventListener := r.CheckExtension("operation_wait") != nil
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/console", path, url.PathEscape(instanceName)), console, "", useEventListener)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/console", path, url.PathEscape(instanceName)), console, "")
 	if err != nil {
 		return nil, err
 	}
@@ -2525,7 +2523,7 @@ func (r *ProtocolIncus) ConsoleInstanceDynamic(instanceName string, console api.
 	}
 
 	// Send the request.
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/console", path, url.PathEscape(instanceName)), console, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/console", path, url.PathEscape(instanceName)), console, "")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -2731,7 +2729,7 @@ func (r *ProtocolIncus) CreateInstanceBackup(instanceName string, backup api.Ins
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/backups", path, url.PathEscape(instanceName)), backup, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/backups", path, url.PathEscape(instanceName)), backup, "")
 	if err != nil {
 		return nil, err
 	}
@@ -2751,7 +2749,7 @@ func (r *ProtocolIncus) RenameInstanceBackup(instanceName string, name string, b
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/backups/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), backup, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("%s/%s/backups/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), backup, "")
 	if err != nil {
 		return nil, err
 	}
@@ -2771,7 +2769,7 @@ func (r *ProtocolIncus) DeleteInstanceBackup(instanceName string, name string) (
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("%s/%s/backups/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), nil, "", true)
+	op, _, err := r.queryOperation("DELETE", fmt.Sprintf("%s/%s/backups/%s", path, url.PathEscape(instanceName), url.PathEscape(name)), nil, "")
 	if err != nil {
 		return nil, err
 	}
