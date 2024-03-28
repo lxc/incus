@@ -631,13 +631,18 @@ func (c *ClusterTx) InstancesToInstanceArgs(ctx context.Context, fillProfiles bo
 	return instanceArgs, nil
 }
 
-// UpdateInstanceNode changes the name of an instance and the cluster member hosting it.
+// UpdateInstanceNode changes the name or project of an instance and the cluster member hosting it.
 // It's meant to be used when moving a non-running instance backed by remote storage from one cluster node to another.
-func (c *ClusterTx) UpdateInstanceNode(ctx context.Context, project string, oldName string, newName string, newMemberName string, poolID int64, volumeType int) error {
+func (c *ClusterTx) UpdateInstanceNode(ctx context.Context, projectName string, newProjectName string, oldName string, newName string, newMemberName string, poolID int64, volumeType int) error {
 	// Update the name of the instance and its snapshots, and the member ID they are associated with.
-	instanceID, err := cluster.GetInstanceID(ctx, c.tx, project, oldName)
+	instanceID, err := cluster.GetInstanceID(ctx, c.tx, projectName, oldName)
 	if err != nil {
 		return fmt.Errorf("Failed to get instance's ID: %w", err)
+	}
+
+	newProject, err := cluster.GetProject(ctx, c.tx, newProjectName)
+	if err != nil {
+		return fmt.Errorf("Failed to get project: %w", err)
 	}
 
 	member, err := c.GetNodeByName(ctx, newMemberName)
@@ -645,8 +650,8 @@ func (c *ClusterTx) UpdateInstanceNode(ctx context.Context, project string, oldN
 		return fmt.Errorf("Failed to get new member %q info: %w", newMemberName, err)
 	}
 
-	stmt := "UPDATE instances SET node_id=?, name=? WHERE id=?"
-	result, err := c.tx.Exec(stmt, member.ID, newName, instanceID)
+	stmt := "UPDATE instances SET node_id=?, name=?, project_id=? WHERE id=?"
+	result, err := c.tx.Exec(stmt, member.ID, newName, newProject.ID, instanceID)
 	if err != nil {
 		return fmt.Errorf("Failed to update instance's name and member ID: %w", err)
 	}
