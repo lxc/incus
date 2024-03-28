@@ -115,7 +115,7 @@ func (r *ProtocolIncus) RenameProject(name string, project api.ProjectPost) (Ope
 	}
 
 	// Send the request
-	op, _, err := r.queryOperation("POST", fmt.Sprintf("/projects/%s", url.PathEscape(name)), project, "", true)
+	op, _, err := r.queryOperation("POST", fmt.Sprintf("/projects/%s", url.PathEscape(name)), project, "")
 	if err != nil {
 		return nil, err
 	}
