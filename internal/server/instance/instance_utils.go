@@ -375,6 +375,48 @@ func LoadByProjectAndName(s *state.State, projectName string, instanceName strin
 	return inst, nil
 }
 
+// UpdateProject updates project for instance.
+func UpdateProject(s *state.State, inst Instance, projectName string) (Instance, error) {
+	// Get the DB record
+	var args db.InstanceArgs
+	var p *api.Project
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		proj, err := cluster.GetProject(ctx, tx.Tx(), projectName)
+		if err != nil {
+			return err
+		}
+
+		p, err = proj.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		dbInst, err := LoadInstanceDatabaseObject(ctx, tx, inst.Project().Name, inst.Name())
+		if err != nil {
+			return err
+		}
+
+		instArgs, err := tx.InstancesToInstanceArgs(ctx, true, *dbInst)
+		if err != nil {
+			return err
+		}
+
+		args = instArgs[dbInst.ID]
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	newInst, err := Load(s, args, *p)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to load instance: %w", err)
+	}
+
+	return newInst, nil
+}
+
 // LoadNodeAll loads all instances on this server.
 func LoadNodeAll(s *state.State, instanceType instancetype.Type) ([]Instance, error) {
 	var err error
