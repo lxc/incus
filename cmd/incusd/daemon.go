@@ -437,11 +437,9 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 
 	if d.oidcVerifier != nil && d.oidcVerifier.IsRequest(r) {
 		userName, err := d.oidcVerifier.Auth(d.shutdownCtx, w, r)
-		if err != nil {
-			return false, "", "", err
+		if err == nil {
+			return true, userName, api.AuthenticationMethodOIDC, nil
 		}
-
-		return true, userName, api.AuthenticationMethodOIDC, nil
 	}
 
 	// Validate normal TLS access.
