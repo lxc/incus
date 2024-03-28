@@ -1161,9 +1161,22 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 				}
 
 				if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) {
-					err = cg.SetMemorySwapLimit(0)
-					if err != nil {
-						return nil, err
+					if util.IsTrueOrEmpty(memorySwap) || util.IsFalse(memorySwap) {
+						err = cg.SetMemorySwapLimit(0)
+						if err != nil {
+							return nil, err
+						}
+					} else {
+						// Additional memory as swap.
+						swapInt, err := units.ParseByteSizeString(memorySwap)
+						if err != nil {
+							return nil, err
+						}
+
+						err = cg.SetMemorySwapLimit(swapInt)
+						if err != nil {
+							return nil, err
+						}
 					}
 				}
 
@@ -4619,10 +4632,25 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 					}
 
 					if d.state.OS.CGInfo.Supports(cgroup.MemorySwap, cg) {
-						err = cg.SetMemorySwapLimit(0)
-						if err != nil {
-							revertMemory()
-							return err
+						if util.IsTrueOrEmpty(memorySwap) || util.IsFalse(memorySwap) {
+							err = cg.SetMemorySwapLimit(0)
+							if err != nil {
+								revertMemory()
+								return err
+							}
+						} else {
+							// Additional memory as swap.
+							swapInt, err := units.ParseByteSizeString(memorySwap)
+							if err != nil {
+								revertMemory()
+								return err
+							}
+
+							err = cg.SetMemorySwapLimit(swapInt)
+							if err != nil {
+								revertMemory()
+								return err
+							}
 						}
 					}
 
