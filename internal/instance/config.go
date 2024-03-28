@@ -342,6 +342,14 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: `instance-id` (UUID) exposed to `cloud-init`
 	"volatile.cloud-init.instance-id": validate.Optional(validate.IsUUID),
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.cluster.group)
+	// The cluster group(s) that the instance was restricted to at creation time.
+	// This is used during re-scheduling events like an evacuation to keep the instance within the requested set.
+	// ---
+	//  type: string
+	//  shortdesc: The original cluster group for the instance
+	"volatile.cluster.group": validate.IsAny,
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.cpu.nodes)
 	// The NUMA node that was selected for the instance.
 	// ---
