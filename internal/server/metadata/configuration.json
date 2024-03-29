@@ -1000,6 +1000,13 @@
 						}
 					},
 					{
+						"volatile.cluster.group": {
+							"longdesc": "The cluster group(s) that the instance was restricted to at creation time.\nThis is used during re-scheduling events like an evacuation to keep the instance within the requested set.",
+							"shortdesc": "The original cluster group for the instance",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.cpu.nodes": {
 							"longdesc": "The NUMA node that was selected for the instance.",
 							"shortdesc": "Instance NUMA node",
