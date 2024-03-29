@@ -2432,4 +2432,5 @@ Those integrations attach to network peers through some new fields:
 * `target_integration` (reference to the integration)
 
 ## `instance_memory_swap_bytes`
+
 This extends `limits.memory.swap` to allow for a total limit in bytes.
