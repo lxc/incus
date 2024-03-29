@@ -4618,7 +4618,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 				// Set the new values
 				if memoryEnforce == "soft" {
-					// Set new limit
+					// Set new limit.
 					err = cg.SetMemorySoftLimit(memoryInt)
 					if err != nil {
 						revertMemory()
@@ -4654,11 +4654,13 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						}
 					}
 
-					// Set soft limit to value 10% less than hard limit
-					err = cg.SetMemorySoftLimit(int64(float64(memoryInt) * 0.9))
-					if err != nil {
-						revertMemory()
-						return err
+					// Set soft limit to value 10% less than hard limit.
+					if memoryInt > 0 {
+						err = cg.SetMemorySoftLimit(int64(float64(memoryInt) * 0.9))
+						if err != nil {
+							revertMemory()
+							return err
+						}
 					}
 				}
 
