@@ -604,8 +604,8 @@ func copyDevice(inputPath string, outputPath string) error {
 	cmd := []string{
 		"nice", "-n19", // Run dd with low priority to reduce CPU impact on other processes.
 		"dd", fmt.Sprintf("if=%s", inputPath), fmt.Sprintf("of=%s", outputPath),
-		"bs=16M",       // Use large buffer to reduce syscalls and speed up copy.
-		"conv=nocreat", // Don't create output file if missing (expect caller to have created output file).
+		"bs=16M",              // Use large buffer to reduce syscalls and speed up copy.
+		"conv=nocreat,sparse", // Don't create output file if missing (expect caller to have created output file), also attempt to make a sparse file.
 	}
 
 	// Check for Direct I/O support.
