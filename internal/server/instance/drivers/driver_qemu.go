@@ -6284,7 +6284,7 @@ func (d *qemu) Export(w io.Writer, properties map[string]string, expiration time
 		_ = from.Close()
 	}
 
-	to, err := os.OpenFile(fPath, unix.O_DIRECT|unix.O_CREAT, 0)
+	to, err := os.OpenFile(fPath, unix.O_DIRECT|unix.O_CREAT, 0600)
 	if err == nil {
 		cmd = append(cmd, "-t", "none")
 		_ = to.Close()
