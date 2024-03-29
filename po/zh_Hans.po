@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-03-26 22:04-0400\n"
+"POT-Creation-Date: 2024-03-30 00:35+0100\n"
 "PO-Revision-Date: 2022-03-10 15:07+0000\n"
 "Last-Translator: 0x0916 <w@laoqinren.net>\n"
 "Language-Team: Chinese (Simplified) <https://hosted.weblate.org/projects/"
@@ -1061,7 +1061,7 @@ msgstr ""
 msgid "Bad key/value pair: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:150 cmd/incus/create.go:229 cmd/incus/move.go:370
+#: cmd/incus/copy.go:150 cmd/incus/create.go:229 cmd/incus/move.go:367
 #: cmd/incus/network_integration.go:124 cmd/incus/project.go:138
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -2754,7 +2754,7 @@ msgstr ""
 msgid "Failed to configure cluster: %w"
 msgstr ""
 
-#: cmd/incus/move.go:281 cmd/incus/move.go:357
+#: cmd/incus/move.go:277 cmd/incus/move.go:354
 #, c-format
 msgid "Failed to connect to cluster member: %w"
 msgstr ""
@@ -2799,7 +2799,7 @@ msgstr ""
 msgid "Failed to create storage volume backup: %w"
 msgstr ""
 
-#: cmd/incus/move.go:248
+#: cmd/incus/move.go:244
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr ""
@@ -4409,12 +4409,12 @@ msgstr ""
 msgid "Memory:"
 msgstr ""
 
-#: cmd/incus/move.go:299 cmd/incus/move.go:412
+#: cmd/incus/move.go:296 cmd/incus/move.go:409
 #, c-format
 msgid "Migration API failure: %w"
 msgstr ""
 
-#: cmd/incus/move.go:324 cmd/incus/move.go:417
+#: cmd/incus/move.go:321 cmd/incus/move.go:414
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr ""
@@ -6731,11 +6731,11 @@ msgstr ""
 msgid "The --instance-only flag can't be used with --target"
 msgstr ""
 
-#: cmd/incus/move.go:196 cmd/incus/move.go:217
+#: cmd/incus/move.go:192 cmd/incus/move.go:213
 msgid "The --mode flag can't be used with --storage or --target-project"
 msgstr ""
 
-#: cmd/incus/move.go:170
+#: cmd/incus/move.go:166
 msgid "The --mode flag can't be used with --target"
 msgstr ""
 
@@ -6745,10 +6745,6 @@ msgstr ""
 
 #: cmd/incus/move.go:162
 msgid "The --storage flag can't be used with --target"
-msgstr ""
-
-#: cmd/incus/move.go:166
-msgid "The --target-project flag can't be used with --target"
 msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:742
@@ -6783,7 +6779,7 @@ msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
 
-#: cmd/incus/move.go:182
+#: cmd/incus/move.go:178
 msgid "The destination server is not clustered"
 msgstr ""
 
@@ -6968,7 +6964,7 @@ msgstr ""
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
 
-#: cmd/incus/move.go:286
+#: cmd/incus/move.go:282
 msgid "The source server is not clustered"
 msgstr ""
 
@@ -7092,7 +7088,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:350 cmd/incus/move.go:304
+#: cmd/incus/copy.go:350 cmd/incus/move.go:301
 #, c-format
 msgid "Transferring instance: %s"
 msgstr ""
@@ -7632,7 +7628,7 @@ msgstr ""
 msgid "You must specify a destination instance name"
 msgstr ""
 
-#: cmd/incus/copy.go:96 cmd/incus/move.go:270 cmd/incus/move.go:346
+#: cmd/incus/copy.go:96 cmd/incus/move.go:266 cmd/incus/move.go:343
 msgid "You must specify a source instance name"
 msgstr ""
 

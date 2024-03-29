@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-03-26 22:04-0400\n"
+"POT-Creation-Date: 2024-03-30 00:35+0100\n"
 "PO-Revision-Date: 2024-01-30 13:01+0000\n"
 "Last-Translator: Paulo Coghi <paulo@coghi.com.br>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -1116,7 +1116,7 @@ msgstr "Erro de sintaxe, esperado <dispositivo>,<chave>=<valor>: %s"
 msgid "Bad key/value pair: %s"
 msgstr "par de chave/valor inválido %s"
 
-#: cmd/incus/copy.go:150 cmd/incus/create.go:229 cmd/incus/move.go:370
+#: cmd/incus/copy.go:150 cmd/incus/create.go:229 cmd/incus/move.go:367
 #: cmd/incus/network_integration.go:124 cmd/incus/project.go:138
 #, fuzzy, c-format
 msgid "Bad key=value pair: %q"
@@ -2885,7 +2885,7 @@ msgstr "Aceitar certificado"
 msgid "Failed to configure cluster: %w"
 msgstr "Nome de membro do cluster"
 
-#: cmd/incus/move.go:281 cmd/incus/move.go:357
+#: cmd/incus/move.go:277 cmd/incus/move.go:354
 #, fuzzy, c-format
 msgid "Failed to connect to cluster member: %w"
 msgstr "Nome de membro do cluster"
@@ -2930,7 +2930,7 @@ msgstr "Aceitar certificado"
 msgid "Failed to create storage volume backup: %w"
 msgstr "Aceitar certificado"
 
-#: cmd/incus/move.go:248
+#: cmd/incus/move.go:244
 #, fuzzy, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "Aceitar certificado"
@@ -4611,12 +4611,12 @@ msgstr ""
 msgid "Memory:"
 msgstr ""
 
-#: cmd/incus/move.go:299 cmd/incus/move.go:412
+#: cmd/incus/move.go:296 cmd/incus/move.go:409
 #, c-format
 msgid "Migration API failure: %w"
 msgstr ""
 
-#: cmd/incus/move.go:324 cmd/incus/move.go:417
+#: cmd/incus/move.go:321 cmd/incus/move.go:414
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr ""
@@ -7033,12 +7033,12 @@ msgstr "Alias %s já existe"
 msgid "The --instance-only flag can't be used with --target"
 msgstr ""
 
-#: cmd/incus/move.go:196 cmd/incus/move.go:217
+#: cmd/incus/move.go:192 cmd/incus/move.go:213
 #, fuzzy
 msgid "The --mode flag can't be used with --storage or --target-project"
 msgstr "--refresh só pode ser usado com containers"
 
-#: cmd/incus/move.go:170
+#: cmd/incus/move.go:166
 msgid "The --mode flag can't be used with --target"
 msgstr ""
 
@@ -7049,11 +7049,6 @@ msgstr ""
 #: cmd/incus/move.go:162
 #, fuzzy
 msgid "The --storage flag can't be used with --target"
-msgstr "--refresh só pode ser usado com containers"
-
-#: cmd/incus/move.go:166
-#, fuzzy
-msgid "The --target-project flag can't be used with --target"
 msgstr "--refresh só pode ser usado com containers"
 
 #: cmd/incus/admin_init_interactive.go:742
@@ -7088,7 +7083,7 @@ msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
 
-#: cmd/incus/move.go:182
+#: cmd/incus/move.go:178
 msgid "The destination server is not clustered"
 msgstr ""
 
@@ -7273,7 +7268,7 @@ msgstr ""
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
 
-#: cmd/incus/move.go:286
+#: cmd/incus/move.go:282
 msgid "The source server is not clustered"
 msgstr ""
 
@@ -7398,7 +7393,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:350 cmd/incus/move.go:304
+#: cmd/incus/copy.go:350 cmd/incus/move.go:301
 #, fuzzy, c-format
 msgid "Transferring instance: %s"
 msgstr "Editar arquivos no container"
@@ -7970,7 +7965,7 @@ msgstr ""
 msgid "You must specify a destination instance name"
 msgstr ""
 
-#: cmd/incus/copy.go:96 cmd/incus/move.go:270 cmd/incus/move.go:346
+#: cmd/incus/copy.go:96 cmd/incus/move.go:266 cmd/incus/move.go:343
 msgid "You must specify a source instance name"
 msgstr ""
 
@@ -9108,6 +9103,10 @@ msgstr ""
 #: cmd/incus/image.go:1184 cmd/incus/snapshot.go:236
 msgid "yes"
 msgstr "sim"
+
+#, fuzzy
+#~ msgid "The --target-project flag can't be used with --target"
+#~ msgstr "--refresh só pode ser usado com containers"
 
 #, fuzzy
 #~ msgid "Path to the shared block device:"
