@@ -661,50 +661,6 @@ func networkFillType(network *api.Network, netType NetworkType) {
 	}
 }
 
-// GetNetworkWithInterface returns the network associated with the interface with the given name.
-func (c *ClusterTx) GetNetworkWithInterface(ctx context.Context, devName string) (int64, *api.Network, error) {
-	id := int64(-1)
-	name := ""
-	value := ""
-
-	q := "SELECT networks.id, networks.name, networks_config.value FROM networks LEFT JOIN networks_config ON networks.id=networks_config.network_id WHERE networks_config.key=\"bridge.external_interfaces\" AND networks_config.node_id=?"
-	arg1 := []any{c.nodeID}
-	arg2 := []any{id, name, value}
-
-	result, err := queryScan(ctx, c, q, arg1, arg2)
-	if err != nil {
-		return -1, nil, err
-	}
-
-	for _, r := range result {
-		for _, entry := range strings.Split(r[2].(string), ",") {
-			entry = strings.TrimSpace(entry)
-
-			if entry == devName {
-				id = r[0].(int64)
-				name = r[1].(string)
-			}
-		}
-	}
-
-	if id == -1 {
-		return -1, nil, fmt.Errorf("No network found for interface: %s", devName)
-	}
-
-	network := api.Network{
-		Name:    name,
-		Managed: true,
-		Type:    "bridge",
-	}
-
-	err = c.getNetworkConfig(ctx, c, id, &network)
-	if err != nil {
-		return -1, nil, err
-	}
-
-	return id, &network, nil
-}
-
 // getNetworkConfig populates the config map of the Network with the given ID.
 func (c *ClusterTx) getNetworkConfig(ctx context.Context, tx *ClusterTx, networkID int64, network *api.Network) error {
 	q := `
