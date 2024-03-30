@@ -319,6 +319,16 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 		return false, "", nil
 	}
 
+	// Make sure this isn't an OIDC JWT.
+	issuer, err := token.Claims.GetIssuer()
+	if err != nil {
+		return false, "", nil
+	}
+
+	if issuer != "" {
+		return false, "", nil
+	}
+
 	// Check if the token is valid.
 	notBefore, err := token.Claims.GetNotBefore()
 	if err != nil {
