@@ -330,7 +330,7 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 		return false, "", nil
 	}
 
-	if time.Now().Before(notBefore.Time) || time.Now().After(expiresAt.Time) {
+	if (notBefore != nil && time.Now().Before(notBefore.Time)) || (expiresAt != nil && time.Now().After(expiresAt.Time)) {
 		return false, "", nil
 	}
 
