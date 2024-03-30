@@ -623,10 +623,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 					}
 
 				case "allow":
-					var allowed bool
-					allowed, _ = CheckRestrictedDevicesDiskPaths(project.Config, device["source"])
-					if !allowed {
-						return fmt.Errorf("Disk source path %q not allowed", device["source"])
+					if device["pool"] == "" {
+						allowed, _ := CheckRestrictedDevicesDiskPaths(project.Config, device["source"])
+						if !allowed {
+							return fmt.Errorf("Disk source path %q not allowed", device["source"])
+						}
 					}
 				}
 
