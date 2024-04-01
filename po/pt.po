@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-03-26 22:04-0400\n"
+"POT-Creation-Date: 2024-03-31 22:12-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -15,6 +15,18 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: cmd/incus/info.go:395
+msgid "  Chassis:"
+msgstr ""
+
+#: cmd/incus/info.go:431
+msgid "  Firmware:"
+msgstr ""
+
+#: cmd/incus/info.go:413
+msgid "  Motherboard:"
+msgstr ""
 
 #: cmd/incus/storage_bucket.go:268 cmd/incus/storage_bucket.go:1013
 msgid ""
@@ -431,7 +443,7 @@ msgid "--refresh can only be used with instances"
 msgstr ""
 
 #: cmd/incus/config.go:165 cmd/incus/config.go:438 cmd/incus/config.go:615
-#: cmd/incus/config.go:822 cmd/incus/info.go:459
+#: cmd/incus/config.go:822 cmd/incus/info.go:543
 msgid "--target cannot be used with instances"
 msgstr ""
 
@@ -714,7 +726,7 @@ msgstr ""
 msgid "Alternative certificate name"
 msgstr ""
 
-#: cmd/incus/image.go:999 cmd/incus/info.go:482
+#: cmd/incus/image.go:999 cmd/incus/info.go:566
 #, c-format
 msgid "Architecture: %s"
 msgstr ""
@@ -832,7 +844,7 @@ msgstr ""
 msgid "Backup exported successfully!"
 msgstr ""
 
-#: cmd/incus/info.go:650 cmd/incus/storage_volume.go:1453
+#: cmd/incus/info.go:734 cmd/incus/storage_volume.go:1453
 msgid "Backups:"
 msgstr ""
 
@@ -883,11 +895,11 @@ msgstr ""
 msgid "Bridge:"
 msgstr ""
 
-#: cmd/incus/info.go:573 cmd/incus/network.go:947
+#: cmd/incus/info.go:657 cmd/incus/network.go:947
 msgid "Bytes received"
 msgstr ""
 
-#: cmd/incus/info.go:574 cmd/incus/network.go:948
+#: cmd/incus/info.go:658 cmd/incus/network.go:948
 msgid "Bytes sent"
 msgstr ""
 
@@ -907,7 +919,7 @@ msgstr ""
 msgid "COUNT"
 msgstr ""
 
-#: cmd/incus/info.go:362
+#: cmd/incus/info.go:446
 #, c-format
 msgid "CPU (%s):"
 msgstr ""
@@ -916,15 +928,15 @@ msgstr ""
 msgid "CPU USAGE"
 msgstr ""
 
-#: cmd/incus/info.go:523
+#: cmd/incus/info.go:607
 msgid "CPU usage (in seconds)"
 msgstr ""
 
-#: cmd/incus/info.go:527
+#: cmd/incus/info.go:611
 msgid "CPU usage:"
 msgstr ""
 
-#: cmd/incus/info.go:365
+#: cmd/incus/info.go:449
 #, c-format
 msgid "CPUs (%s):"
 msgstr ""
@@ -1048,7 +1060,7 @@ msgstr ""
 msgid "Cannot set key: %s"
 msgstr ""
 
-#: cmd/incus/info.go:409 cmd/incus/info.go:421
+#: cmd/incus/info.go:493 cmd/incus/info.go:505
 #, c-format
 msgid "Card %d:"
 msgstr ""
@@ -1545,7 +1557,7 @@ msgstr ""
 msgid "Create the instance with no profiles applied"
 msgstr ""
 
-#: cmd/incus/image.go:1005 cmd/incus/info.go:493
+#: cmd/incus/image.go:1005 cmd/incus/info.go:577
 #: cmd/incus/storage_volume.go:1407
 #, c-format
 msgid "Created: %s"
@@ -1607,6 +1619,11 @@ msgstr ""
 #: cmd/incus/admin_shutdown.go:83
 #, c-format
 msgid "Daemon still running after %ds timeout"
+msgstr ""
+
+#: cmd/incus/info.go:441
+#, c-format
+msgid "Date: %s"
 msgstr ""
 
 #: cmd/incus/network.go:972
@@ -1965,20 +1982,20 @@ msgstr ""
 msgid "Disable stdin (reads from /dev/null)"
 msgstr ""
 
-#: cmd/incus/info.go:433
+#: cmd/incus/info.go:517
 #, c-format
 msgid "Disk %d:"
 msgstr ""
 
-#: cmd/incus/info.go:516
+#: cmd/incus/info.go:600
 msgid "Disk usage:"
 msgstr ""
 
-#: cmd/incus/info.go:428
+#: cmd/incus/info.go:512
 msgid "Disk:"
 msgstr ""
 
-#: cmd/incus/info.go:431
+#: cmd/incus/info.go:515
 msgid "Disks:"
 msgstr ""
 
@@ -2311,7 +2328,7 @@ msgstr ""
 msgid "Expected a struct, got a %v"
 msgstr ""
 
-#: cmd/incus/info.go:636 cmd/incus/info.go:687 cmd/incus/snapshot.go:346
+#: cmd/incus/info.go:720 cmd/incus/info.go:771 cmd/incus/snapshot.go:346
 #: cmd/incus/storage_volume.go:1440 cmd/incus/storage_volume.go:1490
 #: cmd/incus/storage_volume.go:2575
 msgid "Expires at"
@@ -2725,6 +2742,11 @@ msgstr ""
 msgid "Failed validation request: %w"
 msgstr ""
 
+#: cmd/incus/info.go:375
+#, c-format
+msgid "Family: %v"
+msgstr ""
+
 #: cmd/incus/list.go:134
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr ""
@@ -2834,8 +2856,8 @@ msgstr ""
 msgid "Found alias %q references an argument outside the given number"
 msgstr ""
 
-#: cmd/incus/info.go:376 cmd/incus/info.go:387 cmd/incus/info.go:392
-#: cmd/incus/info.go:398
+#: cmd/incus/info.go:460 cmd/incus/info.go:471 cmd/incus/info.go:476
+#: cmd/incus/info.go:482
 #, c-format
 msgid "Free: %v"
 msgstr ""
@@ -2854,11 +2876,11 @@ msgstr ""
 msgid "GLOBAL"
 msgstr ""
 
-#: cmd/incus/info.go:404
+#: cmd/incus/info.go:488
 msgid "GPU:"
 msgstr ""
 
-#: cmd/incus/info.go:407
+#: cmd/incus/info.go:491
 msgid "GPUs:"
 msgstr ""
 
@@ -3028,11 +3050,11 @@ msgstr ""
 msgid "HOSTNAME"
 msgstr ""
 
-#: cmd/incus/info.go:562
+#: cmd/incus/info.go:646
 msgid "Host interface"
 msgstr ""
 
-#: cmd/incus/info.go:375 cmd/incus/info.go:386
+#: cmd/incus/info.go:459 cmd/incus/info.go:470
 msgid "Hugepages:\n"
 msgstr ""
 
@@ -3078,7 +3100,7 @@ msgstr ""
 msgid "IP ADDRESS"
 msgstr ""
 
-#: cmd/incus/info.go:578
+#: cmd/incus/info.go:662
 msgid "IP addresses"
 msgstr ""
 
@@ -3248,7 +3270,7 @@ msgstr ""
 msgid "Input data"
 msgstr ""
 
-#: cmd/incus/info.go:688
+#: cmd/incus/info.go:772
 msgid "Instance Only"
 msgstr ""
 
@@ -3467,7 +3489,7 @@ msgstr ""
 msgid "LOCATION"
 msgstr ""
 
-#: cmd/incus/info.go:497
+#: cmd/incus/info.go:581
 #, c-format
 msgid "Last Used: %s"
 msgstr ""
@@ -3854,7 +3876,7 @@ msgstr ""
 msgid "List, show and delete background operations"
 msgstr ""
 
-#: cmd/incus/info.go:485 cmd/incus/storage_volume.go:1396
+#: cmd/incus/info.go:569 cmd/incus/storage_volume.go:1396
 #, c-format
 msgid "Location: %s"
 msgstr ""
@@ -3863,7 +3885,7 @@ msgstr ""
 msgid "Log level filtering can only be used with pretty formatting"
 msgstr ""
 
-#: cmd/incus/info.go:716
+#: cmd/incus/info.go:800
 msgid "Log:"
 msgstr ""
 
@@ -3900,7 +3922,7 @@ msgstr ""
 msgid "MAC ADDRESS"
 msgstr ""
 
-#: cmd/incus/info.go:566
+#: cmd/incus/info.go:650
 msgid "MAC address"
 msgstr ""
 
@@ -3943,7 +3965,7 @@ msgstr ""
 msgid "MII state"
 msgstr ""
 
-#: cmd/incus/info.go:570
+#: cmd/incus/info.go:654
 msgid "MTU"
 msgstr ""
 
@@ -4181,19 +4203,19 @@ msgstr ""
 msgid "Member %s renamed to %s"
 msgstr ""
 
-#: cmd/incus/info.go:534
+#: cmd/incus/info.go:618
 msgid "Memory (current)"
 msgstr ""
 
-#: cmd/incus/info.go:538
+#: cmd/incus/info.go:622
 msgid "Memory (peak)"
 msgstr ""
 
-#: cmd/incus/info.go:550
+#: cmd/incus/info.go:634
 msgid "Memory usage:"
 msgstr ""
 
-#: cmd/incus/info.go:373
+#: cmd/incus/info.go:457
 msgid "Memory:"
 msgstr ""
 
@@ -4520,11 +4542,11 @@ msgstr ""
 msgid "NEW: %q (backend=%q, source=%q)"
 msgstr ""
 
-#: cmd/incus/info.go:416
+#: cmd/incus/info.go:500
 msgid "NIC:"
 msgstr ""
 
-#: cmd/incus/info.go:419
+#: cmd/incus/info.go:503
 msgid "NICs:"
 msgstr ""
 
@@ -4540,7 +4562,7 @@ msgstr ""
 msgid "NUMA node: %v"
 msgstr ""
 
-#: cmd/incus/info.go:382
+#: cmd/incus/info.go:466
 msgid "NUMA nodes:\n"
 msgstr ""
 
@@ -4553,7 +4575,7 @@ msgstr ""
 msgid "NVRM Version: %v"
 msgstr ""
 
-#: cmd/incus/info.go:634 cmd/incus/info.go:685 cmd/incus/snapshot.go:344
+#: cmd/incus/info.go:718 cmd/incus/info.go:769 cmd/incus/snapshot.go:344
 #: cmd/incus/storage_volume.go:1438 cmd/incus/storage_volume.go:1488
 #: cmd/incus/storage_volume.go:2573
 msgid "Name"
@@ -4615,7 +4637,7 @@ msgstr ""
 msgid "Name of the storage pool:"
 msgstr ""
 
-#: cmd/incus/info.go:468 cmd/incus/network.go:929
+#: cmd/incus/info.go:552 cmd/incus/network.go:929
 #: cmd/incus/storage_volume.go:1378
 #, c-format
 msgid "Name: %s"
@@ -4735,7 +4757,7 @@ msgstr ""
 msgid "Network type"
 msgstr ""
 
-#: cmd/incus/info.go:591 cmd/incus/network.go:946
+#: cmd/incus/info.go:675 cmd/incus/network.go:946
 msgid "Network usage:"
 msgstr ""
 
@@ -4821,7 +4843,7 @@ msgstr ""
 msgid "No value found in %q"
 msgstr ""
 
-#: cmd/incus/info.go:384
+#: cmd/incus/info.go:468
 #, c-format
 msgid "Node %d:\n"
 msgstr ""
@@ -4878,7 +4900,7 @@ msgstr ""
 msgid "Operation %s deleted"
 msgstr ""
 
-#: cmd/incus/info.go:689 cmd/incus/storage_volume.go:1492
+#: cmd/incus/info.go:773 cmd/incus/storage_volume.go:1492
 msgid "Optimized Storage"
 msgstr ""
 
@@ -4903,7 +4925,7 @@ msgstr ""
 msgid "PID"
 msgstr ""
 
-#: cmd/incus/info.go:489
+#: cmd/incus/info.go:573
 #, c-format
 msgid "PID: %d"
 msgstr ""
@@ -4937,11 +4959,11 @@ msgstr ""
 msgid "PUBLIC"
 msgstr ""
 
-#: cmd/incus/info.go:575 cmd/incus/network.go:949
+#: cmd/incus/info.go:659 cmd/incus/network.go:949
 msgid "Packets received"
 msgstr ""
 
-#: cmd/incus/info.go:576 cmd/incus/network.go:950
+#: cmd/incus/info.go:660 cmd/incus/network.go:950
 msgid "Packets sent"
 msgstr ""
 
@@ -5052,7 +5074,7 @@ msgstr ""
 msgid "Print version number"
 msgstr ""
 
-#: cmd/incus/info.go:503
+#: cmd/incus/info.go:587
 #, c-format
 msgid "Processes: %d"
 msgstr ""
@@ -5060,6 +5082,16 @@ msgstr ""
 #: cmd/incus/main_aliases.go:202 cmd/incus/main_aliases.go:209
 #, c-format
 msgid "Processing aliases failed: %s"
+msgstr ""
+
+#: cmd/incus/info.go:419
+#, c-format
+msgid "Product: %s"
+msgstr ""
+
+#: cmd/incus/info.go:371
+#, c-format
+msgid "Product: %v"
 msgstr ""
 
 #: cmd/incus/info.go:105 cmd/incus/info.go:191
@@ -5569,7 +5601,7 @@ msgstr ""
 msgid "Require user confirmation"
 msgstr ""
 
-#: cmd/incus/info.go:501
+#: cmd/incus/info.go:585
 msgid "Resources:"
 msgstr ""
 
@@ -5663,6 +5695,11 @@ msgstr ""
 msgid "SIZE"
 msgstr ""
 
+#: cmd/incus/info.go:383
+#, c-format
+msgid "SKU: %v"
+msgstr ""
+
 #: cmd/incus/list.go:585
 msgid "SNAPSHOTS"
 msgstr ""
@@ -5731,6 +5768,16 @@ msgstr ""
 
 #: cmd/incus/query.go:33 cmd/incus/query.go:34
 msgid "Send a raw query to the server"
+msgstr ""
+
+#: cmd/incus/info.go:409 cmd/incus/info.go:423
+#, c-format
+msgid "Serial: %s"
+msgstr ""
+
+#: cmd/incus/info.go:387
+#, c-format
+msgid "Serial: %v"
 msgstr ""
 
 #: cmd/incus/remote.go:115
@@ -6269,11 +6316,11 @@ msgstr ""
 msgid "Snapshots are read-only and can't have their configuration changed"
 msgstr ""
 
-#: cmd/incus/info.go:603 cmd/incus/storage_volume.go:1417
+#: cmd/incus/info.go:687 cmd/incus/storage_volume.go:1417
 msgid "Snapshots:"
 msgstr ""
 
-#: cmd/incus/info.go:367
+#: cmd/incus/info.go:451
 #, c-format
 msgid "Socket %d:"
 msgstr ""
@@ -6306,7 +6353,7 @@ msgstr ""
 msgid "Starting recovery..."
 msgstr ""
 
-#: cmd/incus/info.go:560
+#: cmd/incus/info.go:644
 msgid "State"
 msgstr ""
 
@@ -6315,11 +6362,11 @@ msgstr ""
 msgid "State: %s"
 msgstr ""
 
-#: cmd/incus/info.go:637 cmd/incus/snapshot.go:347
+#: cmd/incus/info.go:721 cmd/incus/snapshot.go:347
 msgid "Stateful"
 msgstr ""
 
-#: cmd/incus/info.go:470
+#: cmd/incus/info.go:554
 #, c-format
 msgid "Status: %s"
 msgstr ""
@@ -6445,11 +6492,11 @@ msgstr ""
 msgid "Supported ports: %s"
 msgstr ""
 
-#: cmd/incus/info.go:542
+#: cmd/incus/info.go:626
 msgid "Swap (current)"
 msgstr ""
 
-#: cmd/incus/info.go:546
+#: cmd/incus/info.go:630
 msgid "Swap (peak)"
 msgstr ""
 
@@ -6463,6 +6510,10 @@ msgstr ""
 
 #: cmd/incus/file.go:164
 msgid "Symlink target path can only be used for type \"symlink\""
+msgstr ""
+
+#: cmd/incus/info.go:361
+msgid "System:"
 msgstr ""
 
 #: cmd/incus/alias.go:149
@@ -6482,7 +6533,7 @@ msgstr ""
 msgid "TYPE"
 msgstr ""
 
-#: cmd/incus/info.go:635 cmd/incus/info.go:686 cmd/incus/snapshot.go:345
+#: cmd/incus/info.go:719 cmd/incus/info.go:770 cmd/incus/snapshot.go:345
 #: cmd/incus/storage_volume.go:1489 cmd/incus/storage_volume.go:2574
 msgid "Taken at"
 msgstr ""
@@ -6844,8 +6895,8 @@ msgstr ""
 msgid "Total: %s"
 msgstr ""
 
-#: cmd/incus/info.go:378 cmd/incus/info.go:389 cmd/incus/info.go:394
-#: cmd/incus/info.go:400
+#: cmd/incus/info.go:462 cmd/incus/info.go:473 cmd/incus/info.go:478
+#: cmd/incus/info.go:484
 #, c-format
 msgid "Total: %v"
 msgstr ""
@@ -6899,7 +6950,7 @@ msgstr ""
 msgid "Try `incus info --show-log %s` for more info"
 msgstr ""
 
-#: cmd/incus/info.go:559
+#: cmd/incus/info.go:643
 msgid "Type"
 msgstr ""
 
@@ -6917,13 +6968,14 @@ msgstr ""
 msgid "Type of peer (local or remote)"
 msgstr ""
 
-#: cmd/incus/image.go:1000 cmd/incus/info.go:281 cmd/incus/info.go:479
-#: cmd/incus/network.go:933 cmd/incus/storage_volume.go:1387
+#: cmd/incus/image.go:1000 cmd/incus/info.go:281 cmd/incus/info.go:391
+#: cmd/incus/info.go:401 cmd/incus/info.go:563 cmd/incus/network.go:933
+#: cmd/incus/storage_volume.go:1387
 #, c-format
 msgid "Type: %s"
 msgstr ""
 
-#: cmd/incus/info.go:477
+#: cmd/incus/info.go:561
 #, c-format
 msgid "Type: %s (ephemeral)"
 msgstr ""
@@ -6956,7 +7008,7 @@ msgstr ""
 msgid "UUID"
 msgstr ""
 
-#: cmd/incus/info.go:140
+#: cmd/incus/info.go:140 cmd/incus/info.go:363
 #, c-format
 msgid "UUID: %v"
 msgstr ""
@@ -7154,7 +7206,7 @@ msgstr ""
 msgid "Unset the key as an instance property"
 msgstr ""
 
-#: cmd/incus/info.go:708
+#: cmd/incus/info.go:792
 #, c-format
 msgid "Unsupported instance type: %s"
 msgstr ""
@@ -7200,8 +7252,8 @@ msgstr ""
 msgid "Use with help or --help to view sub-commands"
 msgstr ""
 
-#: cmd/incus/info.go:377 cmd/incus/info.go:388 cmd/incus/info.go:393
-#: cmd/incus/info.go:399
+#: cmd/incus/info.go:461 cmd/incus/info.go:472 cmd/incus/info.go:477
+#: cmd/incus/info.go:483
 #, c-format
 msgid "Used: %v"
 msgstr ""
@@ -7240,7 +7292,12 @@ msgstr ""
 msgid "VLAN:"
 msgstr ""
 
-#: cmd/incus/info.go:307
+#: cmd/incus/info.go:397 cmd/incus/info.go:415 cmd/incus/info.go:433
+#, c-format
+msgid "Vendor: %s"
+msgstr ""
+
+#: cmd/incus/info.go:307 cmd/incus/info.go:367
 #, c-format
 msgid "Vendor: %v"
 msgstr ""
@@ -7253,6 +7310,16 @@ msgstr ""
 #: cmd/incus/info.go:246
 #, c-format
 msgid "Verb: %s (%s)"
+msgstr ""
+
+#: cmd/incus/info.go:405 cmd/incus/info.go:427 cmd/incus/info.go:437
+#, c-format
+msgid "Version: %s"
+msgstr ""
+
+#: cmd/incus/info.go:379
+#, c-format
+msgid "Version: %v"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:1491
