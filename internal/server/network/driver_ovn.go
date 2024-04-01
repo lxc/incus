@@ -2698,7 +2698,7 @@ func (n *ovn) deleteChassisGroupEntry() error {
 	}
 
 	err = n.state.OVNNB.SetChassisGroupPriority(context.TODO(), n.getChassisGroupName(), chassisID, -1)
-	if err != nil {
+	if err != nil && err != ovs.ErrNotFound {
 		return fmt.Errorf("Failed deleting OVS chassis %q from chassis group %q: %w", chassisID, n.getChassisGroupName(), err)
 	}
 
