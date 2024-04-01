@@ -337,6 +337,18 @@ func (c *cmdInfo) renderCPU(cpu api.ResourcesCPUSocket, prefix string) {
 	}
 }
 
+func (c *cmdInfo) renderUSB(usb api.ResourcesUSBDevice, prefix string) {
+	fmt.Printf(prefix+i18n.G("Vendor: %v")+"\n", usb.Vendor)
+	fmt.Printf(prefix+i18n.G("Vendor ID: %v")+"\n", usb.VendorID)
+	fmt.Printf(prefix+i18n.G("Product: %v")+"\n", usb.Product)
+	fmt.Printf(prefix+i18n.G("Product ID: %v")+"\n", usb.ProductID)
+	fmt.Printf(prefix+i18n.G("Bus Address: %v")+"\n", usb.BusAddress)
+	fmt.Printf(prefix+i18n.G("Device Address: %v")+"\n", usb.DeviceAddress)
+	if len(usb.Serial) > 0 {
+		fmt.Printf(prefix+i18n.G("Serial Number: %v")+"\n", usb.Serial)
+	}
+}
+
 func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 	// Targeting
 	if c.flagTarget != "" {
@@ -519,6 +531,17 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 			}
 		}
 
+		// USB
+		if len(resources.USB.Devices) == 1 {
+			fmt.Printf("\n" + i18n.G("USB device:") + "\n")
+			c.renderUSB(resources.USB.Devices[0], "  ")
+		} else if len(resources.USB.Devices) > 1 {
+			fmt.Printf("\n" + i18n.G("USB devices:") + "\n")
+			for id, usb := range resources.USB.Devices {
+				fmt.Printf("  "+i18n.G("Device %d:")+"\n", id)
+				c.renderUSB(usb, "    ")
+			}
+		}
 		return nil
 	}
 
