@@ -919,8 +919,10 @@ func (r *ProtocolIncus) GetStoragePoolVolumeBackupFile(pool string, volName stri
 	// Build the URL
 	uri := fmt.Sprintf("%s/1.0/storage-pools/%s/volumes/custom/%s/backups/%s/export", r.httpBaseURL.String(), url.PathEscape(pool), url.PathEscape(volName), url.PathEscape(name))
 
-	if r.project != "" {
-		uri += fmt.Sprintf("?project=%s", url.QueryEscape(r.project))
+	// Add project/target
+	uri, err := r.setQueryAttributes(uri)
+	if err != nil {
+		return nil, err
 	}
 
 	// Prepare the download request
