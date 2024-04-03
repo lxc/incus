@@ -223,7 +223,7 @@ You can also find native builds of the Incus client on [GitHub](https://github.c
 
 Follow these instructions if you want to build and install Incus from the source code.
 
-We recommend having the latest versions of `liblxc` (>= 4.0.0 required)
+We recommend having the latest versions of `liblxc` (>= 5.0.0 required)
 available for Incus development. Additionally, Incus requires a modern Golang (see {ref}`requirements-go`)
 version to work.
 

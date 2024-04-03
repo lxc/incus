@@ -29,7 +29,7 @@ As well as any other kernel feature required by the LXC version in use.
 
 ## LXC
 
-Incus requires LXC 4.0.0 or higher with the following build options:
+Incus requires LXC 5.0.0 or higher with the following build options:
 
 * `apparmor` (if using Incus' AppArmor support)
 * `seccomp`
