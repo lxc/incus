@@ -415,6 +415,7 @@ UPDATE schema SET version=69 WHERE version=73;`)
 INSERT INTO certificates (id, fingerprint, type, name, certificate, restricted) SELECT id, identifier, 1, name, json_extract(metadata, "$.cert"), 0 FROM identities WHERE type=2;
 INSERT INTO certificates (id, fingerprint, type, name, certificate, restricted) SELECT id, identifier, 2, name, json_extract(metadata, "$.cert"), 0 FROM identities WHERE type=3;
 INSERT INTO certificates (id, fingerprint, type, name, certificate, restricted) SELECT id, identifier, 3, name, json_extract(metadata, "$.cert"), 1 FROM identities WHERE type=4;
+INSERT INTO certificates (id, fingerprint, type, name, certificate, restricted) SELECT id, identifier, 3, name, json_extract(metadata, "$.cert"), 0 FROM identities WHERE type=6;
 INSERT INTO certificates_projects (certificate_id, project_id) SELECT identity_id, project_id FROM identities_projects;`)
 
 			// Drop the other tables.
