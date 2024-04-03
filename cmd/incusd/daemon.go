@@ -523,17 +523,6 @@ func (d *Daemon) State() *state.State {
 	}
 }
 
-// UnixSocket returns the full path to the unix.socket file that this daemon is
-// listening on. Used by tests.
-func (d *Daemon) UnixSocket() string {
-	path := os.Getenv("INCUS_SOCKET")
-	if path != "" {
-		return path
-	}
-
-	return filepath.Join(d.os.VarDir, "unix.socket")
-}
-
 func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 	var uri string
 	if c.Path == "" {
@@ -831,7 +820,7 @@ func (d *Daemon) init() error {
 	d.internalListener = events.NewInternalListener(d.shutdownCtx, d.events)
 
 	// Lets check if there's an existing daemon running
-	err = endpoints.CheckAlreadyRunning(d.UnixSocket())
+	err = endpoints.CheckAlreadyRunning(d.os.GetUnixSocket())
 	if err != nil {
 		return err
 	}
@@ -1160,7 +1149,7 @@ func (d *Daemon) init() error {
 	/* Setup the web server */
 	config := &endpoints.Config{
 		Dir:                  d.os.VarDir,
-		UnixSocket:           d.UnixSocket(),
+		UnixSocket:           d.os.GetUnixSocket(),
 		Cert:                 networkCert,
 		RestServer:           restServer(d),
 		DevIncusServer:       devIncusServer(d),
