@@ -59,10 +59,10 @@ func TestCluster_Get(t *testing.T) {
 	daemon, cleanup := newTestDaemon(t)
 	defer cleanup()
 
-	client, err := incus.ConnectIncusUnix(daemon.UnixSocket(), nil)
+	c, err := incus.ConnectIncusUnix(daemon.os.GetUnixSocket(), nil)
 	require.NoError(t, err)
 
-	cluster, _, err := client.GetCluster()
+	cluster, _, err := c.GetCluster()
 	require.NoError(t, err)
 	assert.Equal(t, "", cluster.ServerName)
 	assert.False(t, cluster.Enabled)
@@ -145,7 +145,7 @@ func (f *clusterFixture) ClientUnix(daemon *Daemon) incus.InstanceServer {
 	client, ok := f.clients[daemon]
 	if !ok {
 		var err error
-		client, err = incus.ConnectIncusUnix(daemon.UnixSocket(), nil)
+		client, err = incus.ConnectIncusUnix(daemon.os.GetUnixSocket(), nil)
 		require.NoError(f.t, err)
 	}
 

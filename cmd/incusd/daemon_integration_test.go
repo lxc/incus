@@ -17,14 +17,14 @@ import (
 func TestIntegration_UnixSocket(t *testing.T) {
 	daemon, cleanup := newTestDaemon(t)
 	defer cleanup()
-	client, err := incus.ConnectIncusUnix(daemon.UnixSocket(), nil)
+	c, err := incus.ConnectIncusUnix(daemon.os.GetUnixSocket(), nil)
 	require.NoError(t, err)
 
-	server, _, err := client.GetServer()
+	server, _, err := c.GetServer()
 	require.NoError(t, err)
 	assert.Equal(t, "trusted", server.Auth)
 	assert.False(t, server.Environment.ServerClustered)
-	assert.False(t, client.IsClustered())
+	assert.False(t, c.IsClustered())
 }
 
 // Create a new daemon for testing.
