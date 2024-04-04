@@ -763,7 +763,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			ifParent := ""
 			vlanID := 0
 
-			if len(entryParts) == 3 && n.config["bridge.driver"] == "native" {
+			if len(entryParts) == 3 {
 				vlanID, err = strconv.Atoi(entryParts[2])
 				if err != nil || vlanID < 1 || vlanID > 4094 {
 					vlanID = 0

@@ -111,7 +111,9 @@ Key                                  | Type      | Condition             | Defau
 `user.*`                             | string    | -                     | -                         | User-provided free-form key/value pairs
 
 ```{note}
-The `bridge.external_interfaces` option supports extended format for the external interfaces when using the `native` driver. The extended format is `<interfaceName>/<parentInterfaceName>/<vlanId>`. When the external interface is added to the list with the extended format, the system will automatically create the interface upon the network's creation and subsequently delete it when the network is terminated. The system verifies that the <interfaceName> does not already exist. If the interface name is in use with a different parent or VLAN ID, or if the creation of the interface is unsuccessful, the system will revert with an error message.
+The `bridge.external_interfaces` option supports an extended format allowing the creation of missing VLAN interfaces.
+The extended format is `<interfaceName>/<parentInterfaceName>/<vlanId>`.
+When the external interface is added to the list with the extended format, the system will automatically create the interface upon the network's creation and subsequently delete it when the network is terminated. The system verifies that the <interfaceName> does not already exist. If the interface name is in use with a different parent or VLAN ID, or if the creation of the interface is unsuccessful, the system will revert with an error message.
 ```
 
 (network-bridge-features)=
