@@ -4,14 +4,16 @@
 
 Incus maintains different release branches in parallel:
 
-- Long term support (LTS) releases: upcoming
+- Long term support (LTS) releases: 6.0
 - Feature releases: Incus 0.x
 
 <!-- Include end release -->
 
-The upcoming LTS release will be Incus 6.0, which will supported until June 2029 and will get frequent bugfix and security updates, but won't receive any feature additions.
+The Incus 6.0 LTS release will be supported until June 2029.
+The first 2 years of support will include bug and security fixes as well as minor usability improvements.
+The remaining 3 years of support (following Incus 7.0 LTS' release) will only feature security updates.
 
-Feature releases will be pushed out about every quarter and contain new features as well as bugfixes.
+Feature releases are pushed out about monthly and contain new features as well as bugfixes.
 The normal support length for those releases is until the next release comes out.
 Some Linux distributions might offer longer support for particular feature releases that they decided to ship.
 
