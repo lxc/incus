@@ -1077,7 +1077,11 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 				return err
 			}
 
-			wrapper := localMigration.ProgressWriter(op, "fs_progress", snapVol.Name())
+			// Setup progress tracking.
+			var wrapper *ioprogress.ProgressTracker
+			if volTargetArgs.TrackProgress {
+				wrapper = localMigration.ProgressTracker(op, "fs_progress", snapVol.Name())
+			}
 
 			err = d.receiveDataset(snapVol, conn, wrapper)
 			if err != nil {
@@ -1097,8 +1101,13 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 		})
 	}
 
+	// Setup progress tracking.
+	var wrapper *ioprogress.ProgressTracker
+	if volTargetArgs.TrackProgress {
+		wrapper = localMigration.ProgressTracker(op, "fs_progress", vol.name)
+	}
+
 	// Transfer the main volume.
-	wrapper := localMigration.ProgressWriter(op, "fs_progress", vol.name)
 	err = d.receiveDataset(vol, conn, wrapper)
 	if err != nil {
 		return fmt.Errorf("Failed receiving volume %q: %w", vol.Name(), err)

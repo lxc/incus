@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -386,56 +387,25 @@ func (d *zfs) sendDataset(dataset string, parent string, volSrcArgs *migration.V
 	return nil
 }
 
-func (d *zfs) receiveDataset(vol Volume, conn io.ReadWriteCloser, writeWrapper func(io.WriteCloser) io.WriteCloser) error {
+func (d *zfs) receiveDataset(vol Volume, r io.Reader, tracker *ioprogress.ProgressTracker) error {
 	// Assemble zfs receive command.
-	cmd := exec.Command("zfs", "receive", "-x", "mountpoint", "-F", "-u", d.dataset(vol, false))
+	args := []string{"receive", "-x", "mountpoint", "-F", "-u", d.dataset(vol, false)}
 	if vol.ContentType() == ContentTypeBlock || d.isBlockBacked(vol) {
-		cmd = exec.Command("zfs", "receive", "-F", "-u", d.dataset(vol, false))
+		args = []string{"receive", "-F", "-u", d.dataset(vol, false)}
 	}
 
-	// Prepare stdin/stderr.
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return err
-	}
-
-	// Forward input through stdin.
-	chCopyConn := make(chan error, 1)
-	go func() {
-		_, err = io.Copy(stdin, conn)
-		_ = stdin.Close()
-		chCopyConn <- err
-	}()
-
-	// Run the command.
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-
-	// Read any error.
-	output, _ := io.ReadAll(stderr)
-
-	// Handle errors.
-	errs := []error{}
-	chCopyConnErr := <-chCopyConn
-
-	err = cmd.Wait()
-	if err != nil {
-		errs = append(errs, err)
-
-		if chCopyConnErr != nil {
-			errs = append(errs, chCopyConnErr)
+	// Setup progress tracker.
+	var stdin = r
+	if tracker != nil {
+		stdin = &ioprogress.ProgressReader{
+			Reader:  r,
+			Tracker: tracker,
 		}
 	}
 
-	if len(errs) > 0 {
-		return fmt.Errorf("Problem with zfs receive: (%v) %s", errs, string(output))
+	err := subprocess.RunCommandWithFds(context.TODO(), stdin, nil, "zfs", args...)
+	if err != nil {
+		return err
 	}
 
 	return nil
