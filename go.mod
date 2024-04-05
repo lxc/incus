@@ -1,4 +1,4 @@
-module github.com/lxc/incus
+module github.com/lxc/incus/v6
 
 go 1.21
 
