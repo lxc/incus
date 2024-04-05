@@ -14,6 +14,8 @@ require (
 	github.com/flosch/pongo2 v0.0.0-20200913210552-0d938eb266f3
 	github.com/fvbommel/sortorder v1.1.0
 	github.com/go-acme/lego/v4 v4.16.1
+	github.com/go-chi/chi/v5 v5.0.12
+	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/go-logr/logr v1.4.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/gopacket v1.1.19
@@ -51,6 +53,7 @@ require (
 	github.com/zitadel/oidc/v3 v3.19.0
 	go.starlark.net v0.0.0-20240329153429-e6e8e7ce1b7a
 	golang.org/x/crypto v0.22.0
+	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0
 	golang.org/x/oauth2 v0.19.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.19.0
@@ -76,8 +79,6 @@ require (
 	github.com/eapache/channels v1.1.0 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/go-chi/chi/v5 v5.0.12 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -138,7 +139,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.25.0 // indirect
 	go.opentelemetry.io/otel/trace v1.25.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/tools v0.20.0 // indirect
