@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // ErrDeviceIsUSB is returned when dealing with a USB device.

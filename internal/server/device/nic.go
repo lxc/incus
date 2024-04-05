@@ -5,9 +5,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/network/acl"
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/network/acl"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // nicValidationRules returns config validation rules for nic devices.

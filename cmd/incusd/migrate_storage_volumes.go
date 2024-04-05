@@ -11,15 +11,15 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/lxc/incus/internal/migration"
-	localMigration "github.com/lxc/incus/internal/server/migration"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/state"
-	storagePools "github.com/lxc/incus/internal/server/storage"
-	storageDrivers "github.com/lxc/incus/internal/server/storage/drivers"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/migration"
+	localMigration "github.com/lxc/incus/v6/internal/server/migration"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/state"
+	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 func newStorageMigrationSource(volumeOnly bool, pushTarget *api.StorageVolumePostTarget) (*migrationSourceWs, error) {

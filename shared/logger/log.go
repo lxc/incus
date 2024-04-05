@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	lWriter "github.com/sirupsen/logrus/hooks/writer"
 
-	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/v6/shared/termios"
 )
 
 // Setup a basic empty logger on init.

@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/shared/api"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/shared/api"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // Server handling functions

@@ -3,12 +3,12 @@ package network
 import (
 	"net"
 
-	"github.com/lxc/incus/internal/iprange"
-	"github.com/lxc/incus/internal/server/cluster"
-	"github.com/lxc/incus/internal/server/cluster/request"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/state"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/iprange"
+	"github.com/lxc/incus/v6/internal/server/cluster"
+	"github.com/lxc/incus/v6/internal/server/cluster/request"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // Type represents a network driver type.

@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Image handling functions

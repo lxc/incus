@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/db/generate/lex"
+	"github.com/lxc/incus/v6/internal/server/db/generate/lex"
 )
 
 // Packages returns the AST packages in which to search for structs.

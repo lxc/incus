@@ -9,8 +9,8 @@ import (
 
 	"github.com/pierrec/lz4/v4"
 
-	internalIO "github.com/lxc/incus/internal/io"
-	internalUtil "github.com/lxc/incus/internal/util"
+	internalIO "github.com/lxc/incus/v6/internal/io"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
 )
 
 // Uncompress the raft snapshot files in the given database directory.

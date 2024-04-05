@@ -11,7 +11,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/internal/i18n"
+	"github.com/lxc/incus/v6/internal/i18n"
 )
 
 func (c *cmdConsole) getTERM() (string, bool) {

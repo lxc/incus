@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/migration"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/migration"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 func transferRootfs(dst incus.InstanceServer, op incus.Operation, rootfs string, rsyncArgs string) error {

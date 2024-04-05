@@ -166,7 +166,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var errNoDevice = fmt.Errorf("Couldn't find backing device for mountpoint")

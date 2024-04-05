@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/lxc/incus/internal/server/sys"
-	"github.com/lxc/incus/shared/archive"
+	"github.com/lxc/incus/v6/internal/server/sys"
+	"github.com/lxc/incus/v6/shared/archive"
 )
 
 // TarReader rewinds backup file handle r and returns new tar reader and process cleanup function.

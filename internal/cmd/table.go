@@ -9,7 +9,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/internal/i18n"
+	"github.com/lxc/incus/v6/internal/i18n"
 )
 
 // Table list format.

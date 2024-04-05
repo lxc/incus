@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared/proxy"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/shared/proxy"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // tlsHTTPClient creates an HTTP client with a specified Transport Layer Security (TLS) configuration.

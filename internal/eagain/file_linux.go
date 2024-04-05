@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/internal/linux"
+	"github.com/lxc/incus/v6/internal/linux"
 )
 
 // Reader represents an io.Reader that handles EAGAIN.

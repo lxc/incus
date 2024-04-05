@@ -14,7 +14,7 @@ import (
 	"github.com/go-logr/logr"
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
 
-	ovnSB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-sb"
+	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
 )
 
 // SB client.

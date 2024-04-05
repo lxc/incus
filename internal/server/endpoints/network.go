@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/server/endpoints/listeners"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/logger"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/ports"
+	"github.com/lxc/incus/v6/internal/server/endpoints/listeners"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/logger"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // NetworkPublicKey returns the public key of the TLS certificate used by the

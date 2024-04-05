@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	cli "github.com/lxc/incus/internal/cmd"
+	cli "github.com/lxc/incus/v6/internal/cmd"
 )
 
 type cmdManpage struct {

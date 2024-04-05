@@ -3,7 +3,7 @@ package drivers
 import (
 	"context"
 
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // driver is the extended internal interface.

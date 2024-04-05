@@ -6,7 +6,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/lxc/incus/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 // GetAppliedPatches returns the names of all patches currently applied on this node.

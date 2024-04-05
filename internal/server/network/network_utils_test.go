@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/lxc/incus/internal/iprange"
+	"github.com/lxc/incus/v6/internal/iprange"
 )
 
 func Example_parseIPRange() {

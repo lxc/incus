@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 func TestDotPrefixMatch(t *testing.T) {

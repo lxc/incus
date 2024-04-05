@@ -13,12 +13,12 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/internal/cmd"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/archive"
-	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/simplestreams"
+	cli "github.com/lxc/incus/v6/internal/cmd"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/archive"
+	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/simplestreams"
 )
 
 type cmdAdd struct {

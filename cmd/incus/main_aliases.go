@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/internal/i18n"
-	config "github.com/lxc/incus/shared/cliconfig"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/i18n"
+	config "github.com/lxc/incus/v6/shared/cliconfig"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var numberedArgRegex = regexp.MustCompile(`@ARG(\d+)@`)

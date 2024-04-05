@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // CreateNetworkForward creates a new Network Forward.

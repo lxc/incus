@@ -9,13 +9,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/shared/api"
-	config "github.com/lxc/incus/shared/cliconfig"
-	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/i18n"
+	"github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/shared/api"
+	config "github.com/lxc/incus/v6/shared/cliconfig"
+	"github.com/lxc/incus/v6/shared/termios"
 )
 
 // Date layout to be used throughout the client.

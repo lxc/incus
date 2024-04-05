@@ -5,17 +5,17 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/lxc/incus/internal/instancewriter"
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/backup"
-	backupConfig "github.com/lxc/incus/internal/server/backup/config"
-	"github.com/lxc/incus/internal/server/cluster/request"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/migration"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/storage/drivers"
-	"github.com/lxc/incus/internal/server/storage/s3/miniod"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/instancewriter"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/server/backup"
+	backupConfig "github.com/lxc/incus/v6/internal/server/backup/config"
+	"github.com/lxc/incus/v6/internal/server/cluster/request"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/migration"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/storage/drivers"
+	"github.com/lxc/incus/v6/internal/server/storage/s3/miniod"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // VolumeUsage contains the used and total size of a volume.

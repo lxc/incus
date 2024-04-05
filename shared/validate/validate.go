@@ -17,9 +17,9 @@ import (
 	"github.com/robfig/cron/v3"
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // And returns a function that runs one or more validators, all must pass without error.

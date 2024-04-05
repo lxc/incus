@@ -3,8 +3,8 @@ package db
 import (
 	"fmt"
 
-	"github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/db/node"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	"github.com/lxc/incus/v6/internal/server/db/node"
 )
 
 // UpdateSchema updates the schema.go file of the cluster and node databases.

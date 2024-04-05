@@ -11,10 +11,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/migration"
-	"github.com/lxc/incus/internal/rsync"
-	"github.com/lxc/incus/shared/ws"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/migration"
+	"github.com/lxc/incus/v6/internal/rsync"
+	"github.com/lxc/incus/v6/shared/ws"
 )
 
 // Send an rsync stream of a path over a websocket.

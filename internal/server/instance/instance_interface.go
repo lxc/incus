@@ -12,16 +12,16 @@ import (
 	"github.com/pkg/sftp"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/lxc/incus/internal/server/backup"
-	"github.com/lxc/incus/internal/server/cgroup"
-	"github.com/lxc/incus/internal/server/db"
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/internal/server/instance/operationlock"
-	"github.com/lxc/incus/internal/server/metrics"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/idmap"
+	"github.com/lxc/incus/v6/internal/server/backup"
+	"github.com/lxc/incus/v6/internal/server/cgroup"
+	"github.com/lxc/incus/v6/internal/server/db"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/internal/server/instance/operationlock"
+	"github.com/lxc/incus/v6/internal/server/metrics"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/idmap"
 )
 
 // HookStart hook used when instance has started.

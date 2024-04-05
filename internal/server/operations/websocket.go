@@ -6,8 +6,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/shared/ws"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/shared/ws"
 )
 
 type operationWebSocket struct {

@@ -3,7 +3,7 @@ package ip
 import (
 	"strings"
 
-	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
 // Route represents arguments for route manipulation.

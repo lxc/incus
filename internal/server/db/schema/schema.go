@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 // Schema captures the schema of a database in terms of a series of ordered

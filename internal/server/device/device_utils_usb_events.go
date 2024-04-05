@@ -7,10 +7,10 @@ import (
 	"strings"
 	"sync"
 
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/state"
-	"github.com/lxc/incus/shared/logger"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // USBEvent represents the properties of a USB device uevent.

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/shared/api"
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // CreateStorageVolumeSnapshot creates a new storage volume snapshot attached to a given

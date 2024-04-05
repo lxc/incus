@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // LoadCert reads the server certificate from the given var dir.

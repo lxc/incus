@@ -9,7 +9,7 @@ import (
 
 	"github.com/mdlayher/vsock"
 
-	localtls "github.com/lxc/incus/shared/tls"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // Dial connects to a remote vsock.

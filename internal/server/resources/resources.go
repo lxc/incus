@@ -3,7 +3,7 @@ package resources
 import (
 	"fmt"
 
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // GetResources returns a filled api.Resources struct ready for use by Incus.

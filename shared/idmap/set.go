@@ -7,7 +7,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // ErrHostIDIsSubID indicates that an expected host ID is part of a subid range.

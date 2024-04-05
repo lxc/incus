@@ -10,8 +10,8 @@ import (
 
 	in "k8s.io/utils/inotify"
 
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var inotifyLoaded bool

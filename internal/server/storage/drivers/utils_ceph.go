@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // CephGetRBDImageName returns the RBD image name as it is used in ceph.

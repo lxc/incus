@@ -10,17 +10,17 @@ import (
 
 	"github.com/gorilla/mux"
 
-	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
-	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/request"
-	"github.com/lxc/incus/internal/server/response"
-	storagePools "github.com/lxc/incus/internal/server/storage"
-	"github.com/lxc/incus/internal/server/storage/s3"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
+	clusterConfig "github.com/lxc/incus/v6/internal/server/cluster/config"
+	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/request"
+	"github.com/lxc/incus/v6/internal/server/response"
+	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	"github.com/lxc/incus/v6/internal/server/storage/s3"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // swagger:operation GET / server api_get

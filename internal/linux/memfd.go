@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/internal/revert"
+	"github.com/lxc/incus/v6/internal/revert"
 )
 
 // CreateMemfd creates a new memfd for the provided byte slice.

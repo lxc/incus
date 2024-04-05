@@ -1,7 +1,7 @@
 package recover
 
 import (
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // ValidatePost is used to initiate a recovery validation scan.

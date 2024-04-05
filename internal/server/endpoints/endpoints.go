@@ -9,11 +9,11 @@ import (
 
 	tomb "gopkg.in/tomb.v2"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/server/endpoints/listeners"
-	"github.com/lxc/incus/internal/server/util"
-	"github.com/lxc/incus/shared/logger"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/endpoints/listeners"
+	"github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/shared/logger"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // Config holds various configuration values that affect endpoints initialization.

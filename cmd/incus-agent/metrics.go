@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/server/metrics"
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/metrics"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // These mountpoints are excluded as they are irrelevant for metrics.

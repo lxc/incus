@@ -5,7 +5,7 @@ package db
 import (
 	"context"
 
-	"github.com/lxc/incus/internal/server/db/cluster"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
 )
 
 // GetProject returns the project with the given key.

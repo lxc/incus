@@ -634,7 +634,7 @@ import (
 	"github.com/spf13/cobra"
 
 	// Used by cgo
-	_ "github.com/lxc/incus/shared/cgo"
+	_ "github.com/lxc/incus/v6/shared/cgo"
 )
 
 type cmdForkmount struct {

@@ -6,13 +6,13 @@ import (
 	dqlite "github.com/cowsql/go-cowsql"
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/internal/rsync"
-	"github.com/lxc/incus/internal/server/daemon"
-	"github.com/lxc/incus/internal/server/events"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/rsync"
+	"github.com/lxc/incus/v6/internal/server/daemon"
+	"github.com/lxc/incus/v6/internal/server/events"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 type cmdGlobal struct {

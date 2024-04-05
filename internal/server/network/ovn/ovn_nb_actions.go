@@ -12,9 +12,9 @@ import (
 	ovsModel "github.com/ovn-org/libovsdb/model"
 	"github.com/ovn-org/libovsdb/ovsdb"
 
-	"github.com/lxc/incus/internal/iprange"
-	ovnNB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-nb"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/iprange"
+	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // OVNRouter OVN router name.

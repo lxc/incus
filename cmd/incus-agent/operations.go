@@ -12,11 +12,11 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/internal/jmap"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/response"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/jmap"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/response"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 var operationCmd = APIEndpoint{

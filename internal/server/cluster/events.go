@@ -6,14 +6,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/endpoints"
-	"github.com/lxc/incus/internal/server/events"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/endpoints"
+	"github.com/lxc/incus/v6/internal/server/events"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // eventHubMinHosts is the minimum number of members that must have the event-hub role to trigger switching into

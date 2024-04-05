@@ -13,10 +13,10 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
-	"github.com/lxc/incus/internal/instancewriter"
-	"github.com/lxc/incus/internal/server/backup"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/internal/instancewriter"
+	"github.com/lxc/incus/v6/internal/server/backup"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // TransferManager represents a transfer manager.

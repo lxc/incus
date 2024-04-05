@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	internalUtil "github.com/lxc/incus/internal/util"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
 )
 
 // Parse runs the Go parser against the given package directory.

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/lxc/incus/internal/instance"
+	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/spf13/cobra"
 )
 

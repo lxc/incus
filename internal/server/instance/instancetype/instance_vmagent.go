@@ -1,7 +1,7 @@
 package instancetype
 
 import (
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 )
 
 // VMAgentMount defines mounts to perform inside VM via agent.

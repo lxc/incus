@@ -51,7 +51,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	_ "github.com/lxc/incus/shared/cgo" // Used by cgo
+	_ "github.com/lxc/incus/v6/shared/cgo" // Used by cgo
 )
 
 const ABSTRACT_UNIX_SOCK_LEN int = C.ABSTRACT_UNIX_SOCK_LEN

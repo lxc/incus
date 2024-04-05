@@ -9,11 +9,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/server/config"
-	"github.com/lxc/incus/internal/server/db"
-	scriptletLoad "github.com/lxc/incus/internal/server/scriptlet/load"
-	"github.com/lxc/incus/shared/validate"
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/server/config"
+	"github.com/lxc/incus/v6/internal/server/db"
+	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // Config holds cluster-wide configuration values.

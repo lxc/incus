@@ -13,9 +13,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/linux"
-	internalUtil "github.com/lxc/incus/internal/util"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/linux"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
 )
 
 var mu sync.RWMutex
