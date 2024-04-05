@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // GetNetworkForwardAddresses returns a list of network forward listen addresses.

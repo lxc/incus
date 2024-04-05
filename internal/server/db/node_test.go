@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/db/operationtype"
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	"github.com/lxc/incus/v6/internal/server/db/operationtype"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/osarch"
 )
 
 // Add a new raft node.

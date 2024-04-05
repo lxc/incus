@@ -11,17 +11,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/revert"
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/state"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/revert"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 const lvmVgPoolMarker = "incus_pool" // Indicator tag used to mark volume groups as in use.

@@ -13,9 +13,9 @@ import (
 	bgpServer "github.com/osrg/gobgp/v3/pkg/server"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/ports"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // Server represents a BGP server instance.

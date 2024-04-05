@@ -5,7 +5,7 @@ import (
 
 	"github.com/cowsql/go-cowsql/client"
 
-	"github.com/lxc/incus/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/db"
 )
 
 // DetermineRaftNode figures out what raft node ID and address we have, if any.

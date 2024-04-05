@@ -12,8 +12,8 @@ import (
 	"github.com/cowsql/go-cowsql/driver"
 	"github.com/mattn/go-sqlite3"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 const maxRetries = 250

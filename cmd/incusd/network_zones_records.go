@@ -7,16 +7,16 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/internal/server/auth"
-	clusterRequest "github.com/lxc/incus/internal/server/cluster/request"
-	"github.com/lxc/incus/internal/server/lifecycle"
-	"github.com/lxc/incus/internal/server/network/zone"
-	"github.com/lxc/incus/internal/server/project"
-	"github.com/lxc/incus/internal/server/request"
-	"github.com/lxc/incus/internal/server/response"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/server/auth"
+	clusterRequest "github.com/lxc/incus/v6/internal/server/cluster/request"
+	"github.com/lxc/incus/v6/internal/server/lifecycle"
+	"github.com/lxc/incus/v6/internal/server/network/zone"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/request"
+	"github.com/lxc/incus/v6/internal/server/response"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 var networkZoneRecordsCmd = APIEndpoint{

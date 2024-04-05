@@ -17,17 +17,17 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/ports"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/subprocess"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/i18n"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/ports"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 func (c *cmdAdminInit) RunInteractive(cmd *cobra.Command, args []string, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {

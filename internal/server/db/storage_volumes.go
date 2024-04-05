@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // GetStoragePoolVolumesWithType return a list of all volumes of the given type.

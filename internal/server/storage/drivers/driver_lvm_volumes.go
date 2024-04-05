@@ -12,18 +12,18 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/internal/instancewriter"
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/rsync"
-	"github.com/lxc/incus/internal/server/backup"
-	"github.com/lxc/incus/internal/server/migration"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/internal/instancewriter"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/rsync"
+	"github.com/lxc/incus/v6/internal/server/backup"
+	"github.com/lxc/incus/v6/internal/server/migration"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied filler function.

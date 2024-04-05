@@ -13,17 +13,17 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 
-	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/lifecycle"
-	"github.com/lxc/incus/internal/server/request"
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/internal/server/state"
-	storagePools "github.com/lxc/incus/internal/server/storage"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/lifecycle"
+	"github.com/lxc/incus/v6/internal/server/request"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/internal/server/state"
+	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // swagger:operation GET /1.0/instances/{name}/metadata instances instance_metadata_get

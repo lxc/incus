@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	internalIO "github.com/lxc/incus/internal/io"
-	"github.com/lxc/incus/shared/util"
+	internalIO "github.com/lxc/incus/v6/internal/io"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // FileMove tries to move a file by using os.Rename,

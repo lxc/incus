@@ -15,14 +15,14 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/migration"
-	"github.com/lxc/incus/internal/ports"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/ws"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/migration"
+	"github.com/lxc/incus/v6/internal/ports"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/ws"
 )
 
 func transferRootfs(ctx context.Context, dst incus.InstanceServer, op incus.Operation, rootfs string, rsyncArgs string, instanceType api.InstanceType) error {

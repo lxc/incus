@@ -5,7 +5,7 @@ package state
 import (
 	"context"
 
-	"github.com/lxc/incus/internal/server/events"
+	"github.com/lxc/incus/v6/internal/server/events"
 )
 
 // State here is just an empty shim to statisfy dependencies.

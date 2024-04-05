@@ -9,16 +9,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/server/auth"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/db/cluster"
-	deviceconfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/idmap"
-	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/server/auth"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	deviceconfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/idmap"
+	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // AllowInstanceCreation returns an error if any project-specific limit or

@@ -13,9 +13,9 @@ import (
 	"github.com/openfga/go-sdk/client"
 	"github.com/openfga/go-sdk/credentials"
 
-	"github.com/lxc/incus/internal/server/certificate"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/server/certificate"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 type fga struct {

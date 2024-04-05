@@ -18,15 +18,15 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/client"
-	cli "github.com/lxc/incus/internal/cmd"
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/osarch"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/client"
+	cli "github.com/lxc/incus/v6/internal/cmd"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/osarch"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdMigrate struct {

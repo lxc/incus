@@ -3,8 +3,8 @@ package bgp
 import (
 	"github.com/osrg/gobgp/v3/pkg/log"
 
-	"github.com/lxc/incus/internal/server/daemon"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/server/daemon"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 type logWrapper struct {

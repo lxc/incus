@@ -3,8 +3,8 @@ package acl
 import (
 	"fmt"
 
-	"github.com/lxc/incus/shared/util"
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // ValidName checks the ACL name is valid.

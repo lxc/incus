@@ -7,9 +7,9 @@ import (
 	_ "net/http/pprof" // pprof magic
 	"time"
 
-	"github.com/lxc/incus/internal/ports"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/ports"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 func pprofCreateServer() *http.Server {

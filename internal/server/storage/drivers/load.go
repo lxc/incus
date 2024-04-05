@@ -1,8 +1,8 @@
 package drivers
 
 import (
-	"github.com/lxc/incus/internal/server/state"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 var drivers = map[string]func() driver{

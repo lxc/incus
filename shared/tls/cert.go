@@ -26,9 +26,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/proxy"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/proxy"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // KeyPairAndCA returns a CertInfo object with a reference to the key pair and

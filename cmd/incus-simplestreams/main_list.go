@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cli "github.com/lxc/incus/internal/cmd"
-	"github.com/lxc/incus/shared/simplestreams"
+	cli "github.com/lxc/incus/v6/internal/cmd"
+	"github.com/lxc/incus/v6/shared/simplestreams"
 )
 
 type cmdList struct {

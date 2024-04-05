@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/cancel"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/cancel"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // EventHandler called when the connection receives an event from the client.

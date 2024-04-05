@@ -1,9 +1,9 @@
 package lifecycle
 
 import (
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // StorageVolumeSnapshotAction represents a lifecycle event action for storage volume snapshots.

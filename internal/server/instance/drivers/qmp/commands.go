@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // FdsetFdInfo contains information about a file descriptor that belongs to an FD set.

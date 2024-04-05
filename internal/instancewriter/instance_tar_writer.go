@@ -11,9 +11,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/shared/idmap"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/shared/idmap"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // InstanceTarWriter provides a TarWriter implementation that handles ID shifting and hardlink tracking.

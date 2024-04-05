@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/server/endpoints/listeners"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/logger"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/internal/ports"
+	"github.com/lxc/incus/v6/internal/server/endpoints/listeners"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/logger"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 func storageBucketsCreateListener(address string, cert *localtls.CertInfo) (net.Listener, error) {

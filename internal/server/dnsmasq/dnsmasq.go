@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/server/project"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/project"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 const staticAllocationDeviceSeparator = "."

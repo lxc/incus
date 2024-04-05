@@ -6,7 +6,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/lxc/incus/internal/server/certificate"
+	"github.com/lxc/incus/v6/internal/server/certificate"
 )
 
 // CertificateGenerated is an interface of generated methods for Certificate.

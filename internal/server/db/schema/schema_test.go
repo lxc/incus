@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/internal/server/db/schema"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/server/db/schema"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // WriteTempFile creates a temp file with the specified content.

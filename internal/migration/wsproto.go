@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
-	internalIO "github.com/lxc/incus/internal/io"
+	internalIO "github.com/lxc/incus/v6/internal/io"
 )
 
 // ProtoRecv gets a protobuf message from a websocket.

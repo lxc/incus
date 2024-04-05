@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/lxc/incus/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 // Update the schema and api_extensions columns of the row in the nodes table

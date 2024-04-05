@@ -20,16 +20,16 @@ import (
 	dqlite "github.com/cowsql/go-cowsql"
 	client "github.com/cowsql/go-cowsql/client"
 
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/certificate"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/internal/server/state"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/tcp"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/server/certificate"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/internal/server/state"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/tcp"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // NewGateway creates a new Gateway for managing access to the dqlite cluster.

@@ -6,12 +6,12 @@ import (
 	"path"
 	"strings"
 
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/util"
-	"github.com/lxc/incus/shared/validate"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // usbDevPath is the path where USB devices can be enumerated.

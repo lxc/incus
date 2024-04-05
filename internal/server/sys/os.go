@@ -11,15 +11,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/server/cgroup"
-	"github.com/lxc/incus/internal/server/db/cluster"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/idmap"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/cgroup"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/idmap"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/osarch"
 )
 
 // InotifyTargetInfo records the inotify information associated with a given

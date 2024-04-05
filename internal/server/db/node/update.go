@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/internal/server/db/schema"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/server/db/schema"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Schema for the local database.

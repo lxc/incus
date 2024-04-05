@@ -8,15 +8,15 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/internal/server/auth"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/internal/server/project"
-	"github.com/lxc/incus/internal/server/request"
-	"github.com/lxc/incus/internal/server/response"
-	storagePools "github.com/lxc/incus/internal/server/storage"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/server/auth"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/request"
+	"github.com/lxc/incus/v6/internal/server/response"
+	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 var storagePoolVolumeTypeStateCmd = APIEndpoint{

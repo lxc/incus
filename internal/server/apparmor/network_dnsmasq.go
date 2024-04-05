@@ -5,8 +5,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/lxc/incus/internal/server/sys"
-	internalUtil "github.com/lxc/incus/internal/util"
+	"github.com/lxc/incus/v6/internal/server/sys"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
 )
 
 var dnsmasqProfileTpl = template.Must(template.New("dnsmasqProfile").Parse(`#include <tunables/global>

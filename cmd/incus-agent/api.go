@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/lxc/incus/internal/server/response"
+	"github.com/lxc/incus/v6/internal/server/response"
 )
 
 // APIEndpoint represents a URL in our API.

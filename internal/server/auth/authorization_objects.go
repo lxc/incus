@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/internal/version"
+	"github.com/lxc/incus/v6/internal/version"
 )
 
 // Object is a string alias that represents an authorization object. These are formatted strings that

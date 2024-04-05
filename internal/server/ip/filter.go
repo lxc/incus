@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
 // Action represents an action in filter.

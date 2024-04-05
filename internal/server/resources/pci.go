@@ -10,7 +10,7 @@ import (
 	"github.com/jaypipes/pcidb"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // GetPCI returns a filled api.ResourcesPCI struct ready for use by Incus.

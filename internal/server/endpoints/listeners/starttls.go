@@ -7,8 +7,8 @@ import (
 	"net"
 	"sync"
 
-	"github.com/lxc/incus/internal/server/util"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/internal/server/util"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // StarttlsListener is a variation of the standard tls.Listener that supports

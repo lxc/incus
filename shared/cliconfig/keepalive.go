@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 func (c *Config) handleKeepAlive(remote Remote, name string, args *incus.ConnectionArgs) (incus.InstanceServer, error) {

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/internal/server/db/schema"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/osarch"
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/server/db/schema"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/osarch"
 )
 
 // Schema for the cluster database.

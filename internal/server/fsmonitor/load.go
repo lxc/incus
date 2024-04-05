@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/server/fsmonitor/drivers"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/fsmonitor/drivers"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // New creates a new FSMonitor instance.

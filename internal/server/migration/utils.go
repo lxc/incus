@@ -3,7 +3,7 @@ package migration
 import (
 	"fmt"
 
-	"github.com/lxc/incus/internal/migration"
+	"github.com/lxc/incus/v6/internal/migration"
 )
 
 // IndexHeaderVersion version of the index header to be sent/recv.

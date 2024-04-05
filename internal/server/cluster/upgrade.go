@@ -10,12 +10,12 @@ import (
 
 	"github.com/cowsql/go-cowsql/client"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/state"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/subprocess"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // NotifyUpgradeCompleted sends a notification to all other nodes in the

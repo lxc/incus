@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // IsUserConfig returns true if the config key is a user configuration.

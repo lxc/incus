@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // deviceJoinPath joins together prefix and text delimited by a "." for device path generation.

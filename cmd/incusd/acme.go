@@ -7,16 +7,16 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/internal/server/acme"
-	"github.com/lxc/incus/internal/server/cluster"
-	"github.com/lxc/incus/internal/server/db/operationtype"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/internal/server/task"
-	"github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/internal/server/acme"
+	"github.com/lxc/incus/v6/internal/server/cluster"
+	"github.com/lxc/incus/v6/internal/server/db/operationtype"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/internal/server/task"
+	"github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 var apiACME = []APIEndpoint{

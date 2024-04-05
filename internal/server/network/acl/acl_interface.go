@@ -1,9 +1,9 @@
 package acl
 
 import (
-	"github.com/lxc/incus/internal/server/cluster/request"
-	"github.com/lxc/incus/internal/server/state"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/server/cluster/request"
+	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // NetworkACL represents a Network ACL.

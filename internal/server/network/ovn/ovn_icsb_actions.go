@@ -3,7 +3,7 @@ package ovn
 import (
 	"context"
 
-	ovnICSB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-ic-sb"
+	ovnICSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-ic-sb"
 )
 
 // GetGateways returns a slice of gateways for the specified availability zone.

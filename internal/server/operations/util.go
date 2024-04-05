@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/v6/shared/units"
 )
 
 func parseMetadata(metadata any) (map[string]any, error) {

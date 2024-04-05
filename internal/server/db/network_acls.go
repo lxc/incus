@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // GetNetworkACLs returns the names of existing Network ACLs.

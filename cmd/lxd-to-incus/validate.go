@@ -5,10 +5,10 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var minLXDVersion = &version.DottedVersion{Major: 4, Minor: 0, Patch: 0}

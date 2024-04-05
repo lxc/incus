@@ -13,11 +13,11 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/tcp"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/ws"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/tcp"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/ws"
 )
 
 // setupWebsocketDialer uses a certificate to parse and configure a websocket.Dialer.

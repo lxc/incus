@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/db/generate/file"
-	"github.com/lxc/incus/internal/server/db/generate/lex"
+	"github.com/lxc/incus/v6/internal/server/db/generate/file"
+	"github.com/lxc/incus/v6/internal/server/db/generate/lex"
 )
 
 // Stmt generates a particular database query statement.

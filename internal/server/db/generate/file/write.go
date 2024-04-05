@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/db/generate/lex"
+	"github.com/lxc/incus/v6/internal/server/db/generate/lex"
 )
 
 // Reset an auto-generated source file, writing a new empty file header.

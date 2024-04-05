@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var stateCmd = APIEndpoint{

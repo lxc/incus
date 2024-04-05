@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/server/util"
-	internalUtil "github.com/lxc/incus/internal/util"
+	"github.com/lxc/incus/v6/internal/ports"
+	"github.com/lxc/incus/v6/internal/server/util"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
 )
 
 // The connection returned by the dialer is paired with the one returned by the

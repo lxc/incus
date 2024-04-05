@@ -16,12 +16,12 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/internal/cmd"
-	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/termios"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
+	cli "github.com/lxc/incus/v6/internal/cmd"
+	"github.com/lxc/incus/v6/internal/i18n"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/termios"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdConfigTrust struct {

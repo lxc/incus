@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/cancel"
-	"github.com/lxc/incus/shared/ioprogress"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/cancel"
+	"github.com/lxc/incus/v6/shared/ioprogress"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/units"
 )
 
 // Storage volumes handling function

@@ -467,21 +467,21 @@ import (
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/netutils"
-	"github.com/lxc/incus/internal/server/cgroup"
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/project"
-	"github.com/lxc/incus/internal/server/state"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/api"
-	_ "github.com/lxc/incus/shared/cgo" // Used by cgo
-	"github.com/lxc/incus/shared/idmap"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/netutils"
+	"github.com/lxc/incus/v6/internal/server/cgroup"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/state"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/api"
+	_ "github.com/lxc/incus/v6/shared/cgo" // Used by cgo
+	"github.com/lxc/incus/v6/shared/idmap"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 const incusSeccompNotifyMknod = C.INCUS_SECCOMP_NOTIFY_MKNOD

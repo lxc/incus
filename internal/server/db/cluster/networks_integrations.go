@@ -6,7 +6,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // Code generation directives.

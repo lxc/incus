@@ -5,7 +5,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // Mirror takes a websocket and replicates all read/write to a ReadWriteCloser.

@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/i18n"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/i18n"
 )
 
 // CancelableWait waits for an operation and cancel it on SIGINT/SIGTERM.

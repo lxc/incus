@@ -19,16 +19,16 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/lxc/incus/client"
-	cli "github.com/lxc/incus/internal/cmd"
-	"github.com/lxc/incus/internal/i18n"
-	internalIO "github.com/lxc/incus/internal/io"
-	"github.com/lxc/incus/shared/ioprogress"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/termios"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/client"
+	cli "github.com/lxc/incus/v6/internal/cmd"
+	"github.com/lxc/incus/v6/internal/i18n"
+	internalIO "github.com/lxc/incus/v6/internal/io"
+	"github.com/lxc/incus/v6/shared/ioprogress"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/termios"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 const (

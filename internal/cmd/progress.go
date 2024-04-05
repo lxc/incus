@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/ioprogress"
-	"github.com/lxc/incus/shared/termios"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/ioprogress"
+	"github.com/lxc/incus/v6/shared/termios"
 )
 
 // ProgressRenderer tracks the progress information.

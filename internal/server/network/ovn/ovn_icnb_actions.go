@@ -6,7 +6,7 @@ import (
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
 	"github.com/ovn-org/libovsdb/ovsdb"
 
-	ovnICNB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-ic-nb"
+	ovnICNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-ic-nb"
 )
 
 // CreateTransitSwitch creates a new managed transit switch.

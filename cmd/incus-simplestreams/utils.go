@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/lxc/incus/shared/simplestreams"
+	"github.com/lxc/incus/v6/shared/simplestreams"
 )
 
 func writeIndex(products *simplestreams.Products) error {

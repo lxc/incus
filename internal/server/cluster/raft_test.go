@@ -9,9 +9,9 @@ import (
 	"github.com/cowsql/go-cowsql/client"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/util"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/util"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // Set the cluster.https_address config key to the given address, and insert the

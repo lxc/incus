@@ -1,8 +1,8 @@
 package cluster
 
 import (
-	"github.com/lxc/incus/internal/server/db"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/internal/server/db"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // IsLeader returns true if this node is the leader.

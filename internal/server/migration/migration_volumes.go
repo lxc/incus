@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/lxc/incus/internal/migration"
-	backupConfig "github.com/lxc/incus/internal/server/backup/config"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/ioprogress"
-	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/v6/internal/migration"
+	backupConfig "github.com/lxc/incus/v6/internal/server/backup/config"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/ioprogress"
+	"github.com/lxc/incus/v6/shared/units"
 )
 
 // Info represents the index frame sent if supported.

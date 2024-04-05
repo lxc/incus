@@ -11,18 +11,18 @@ import (
 
 	"github.com/gorilla/mux"
 
-	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/jmap"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/db/cluster"
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/instance"
-	projecthelpers "github.com/lxc/incus/internal/server/project"
-	"github.com/lxc/incus/internal/server/request"
-	"github.com/lxc/incus/internal/server/response"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/osarch"
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/jmap"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	projecthelpers "github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/request"
+	"github.com/lxc/incus/v6/internal/server/response"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/osarch"
 )
 
 // swagger:operation PATCH /1.0/instances/{name} instances instance_patch

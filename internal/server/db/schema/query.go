@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // DoesSchemaTableExist return whether the schema table is present in the

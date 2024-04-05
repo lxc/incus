@@ -13,7 +13,7 @@ import (
 	"github.com/jaypipes/pcidb"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 var sysClassNet = "/sys/class/net"

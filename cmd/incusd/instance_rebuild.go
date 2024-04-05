@@ -9,17 +9,17 @@ import (
 
 	"github.com/gorilla/mux"
 
-	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/server/db"
-	dbCluster "github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/db/operationtype"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/request"
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
+	"github.com/lxc/incus/v6/internal/server/db/operationtype"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/request"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // swagger:operation POST /1.0/instances/{name}/rebuild instances instance_rebuild_post

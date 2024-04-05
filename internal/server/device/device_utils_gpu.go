@@ -3,7 +3,7 @@ package device
 import (
 	"strings"
 
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // gpuValidMigUUID validates Nvidia MIG (Multi Instance GPU) UUID with or without "MIG-" prefix.

@@ -3,8 +3,8 @@
 package linux
 
 import (
-	"github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // AvailableStorageDrivers returns a list of storage drivers that are available.

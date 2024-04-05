@@ -7,11 +7,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/client"
-	cli "github.com/lxc/incus/internal/cmd"
-	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/client"
+	cli "github.com/lxc/incus/v6/internal/cmd"
+	"github.com/lxc/incus/v6/internal/i18n"
+	"github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 type cmdPublish struct {

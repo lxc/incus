@@ -18,15 +18,15 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
-	internalIO "github.com/lxc/incus/internal/io"
-	"github.com/lxc/incus/internal/server/locking"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/state"
-	storageDrivers "github.com/lxc/incus/internal/server/storage/drivers"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/cancel"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
+	internalIO "github.com/lxc/incus/v6/internal/io"
+	"github.com/lxc/incus/v6/internal/server/locking"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/state"
+	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/cancel"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // minioHost is the host address that the local MinIO processes will listen on.

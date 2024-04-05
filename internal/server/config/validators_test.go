@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/lxc/incus/internal/server/config"
+	"github.com/lxc/incus/v6/internal/server/config"
 )
 
 func TestAvailableExecutable(t *testing.T) {

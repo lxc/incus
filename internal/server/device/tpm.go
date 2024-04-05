@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/revert"
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/revert"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 type tpm struct {

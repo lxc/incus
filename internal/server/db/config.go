@@ -5,7 +5,7 @@ package db
 import (
 	"context"
 
-	"github.com/lxc/incus/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/server/db/query"
 )
 
 // Config fetches all server-level config keys.
