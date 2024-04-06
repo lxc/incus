@@ -21,7 +21,6 @@ import (
 
 	"github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/instance"
-	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/migration"
 	"github.com/lxc/incus/v6/internal/revert"
 	"github.com/lxc/incus/v6/internal/server/backup"
@@ -306,8 +305,8 @@ func LoadInstanceDatabaseObject(ctx context.Context, tx *db.ClusterTx, project, 
 	var container *cluster.Instance
 	var err error
 
-	if strings.Contains(name, internalInstance.SnapshotDelimiter) {
-		parts := strings.SplitN(name, internalInstance.SnapshotDelimiter, 2)
+	if strings.Contains(name, instance.SnapshotDelimiter) {
+		parts := strings.SplitN(name, instance.SnapshotDelimiter, 2)
 		instanceName := parts[0]
 		snapshotName := parts[1]
 
@@ -697,8 +696,8 @@ func ValidName(instanceName string, isSnapshot bool) error {
 			return fmt.Errorf("Invalid instance snapshot name: Cannot contain space or / characters")
 		}
 	} else {
-		if strings.Contains(instanceName, internalInstance.SnapshotDelimiter) {
-			return fmt.Errorf("The character %q is reserved for snapshots", internalInstance.SnapshotDelimiter)
+		if strings.Contains(instanceName, instance.SnapshotDelimiter) {
+			return fmt.Errorf("The character %q is reserved for snapshots", instance.SnapshotDelimiter)
 		}
 
 		err := validate.IsHostname(instanceName)
@@ -863,7 +862,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, chec
 		}
 
 		if args.Snapshot {
-			parts := strings.SplitN(args.Name, internalInstance.SnapshotDelimiter, 2)
+			parts := strings.SplitN(args.Name, instance.SnapshotDelimiter, 2)
 			instanceName := parts[0]
 			snapshotName := parts[1]
 			instance, err := cluster.GetInstance(ctx, tx.Tx(), args.Project, instanceName)
@@ -985,7 +984,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, clearLogDir bool, chec
 	if err != nil {
 		if err == db.ErrAlreadyDefined {
 			thing := "Instance"
-			if internalInstance.IsSnapshot(args.Name) {
+			if instance.IsSnapshot(args.Name) {
 				thing = "Snapshot"
 			}
 
@@ -1238,7 +1237,7 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 		Snapshot:     true,
 		Devices:      devices,
 		Ephemeral:    snap.GetEphemeral(),
-		Name:         inst.Name() + internalInstance.SnapshotDelimiter + snap.GetName(),
+		Name:         inst.Name() + instance.SnapshotDelimiter + snap.GetName(),
 		Profiles:     profiles,
 		Stateful:     snap.GetStateful(),
 		Project:      inst.Project().Name,
