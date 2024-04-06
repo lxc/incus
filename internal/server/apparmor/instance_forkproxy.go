@@ -8,12 +8,12 @@ import (
 	"strings"
 	"text/template"
 
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/project"
-	"github.com/lxc/incus/internal/server/sys"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	internalUtil "github.com/lxc/incus/internal/util"
-	util "github.com/lxc/incus/shared/util"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/sys"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Internal copy of the device interface.

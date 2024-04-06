@@ -3,9 +3,9 @@ package main
 import (
 	"time"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type targetXbps struct{}

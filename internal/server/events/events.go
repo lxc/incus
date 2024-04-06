@@ -9,10 +9,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/lxc/incus/internal/server/auth"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/cancel"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/server/auth"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/cancel"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // EventSource indicates the source of an event.

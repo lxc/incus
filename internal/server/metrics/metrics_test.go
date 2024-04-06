@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/internal/server/auth"
+	"github.com/lxc/incus/v6/internal/server/auth"
 )
 
 func TestMetricSet_FilterSamples(t *testing.T) {

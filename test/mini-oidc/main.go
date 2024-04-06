@@ -12,7 +12,7 @@ import (
 
 	"github.com/zitadel/oidc/v3/pkg/op"
 
-	"github.com/lxc/incus/test/mini-oidc/storage"
+	"github.com/lxc/incus/v6/test/mini-oidc/storage"
 )
 
 func init() {

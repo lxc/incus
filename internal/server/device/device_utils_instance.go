@@ -1,7 +1,7 @@
 package device
 
 import (
-	"github.com/lxc/incus/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 )
 
 // instanceSupported is a helper function to check instance type is supported for validation.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	ovnSB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-sb"
+	ovnSB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-sb"
 )
 
 // GetLogicalRouterPortActiveChassisHostname gets the hostname of the chassis managing the logical router port.

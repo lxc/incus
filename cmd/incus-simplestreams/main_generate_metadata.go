@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/internal/cmd"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/osarch"
+	cli "github.com/lxc/incus/v6/internal/cmd"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/osarch"
 )
 
 type cmdGenerateMetadata struct {

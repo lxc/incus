@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lxc/incus/internal/server/db"
-	firewallDrivers "github.com/lxc/incus/internal/server/firewall/drivers"
-	"github.com/lxc/incus/internal/server/state"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/server/db"
+	firewallDrivers "github.com/lxc/incus/v6/internal/server/firewall/drivers"
+	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // FirewallApplyACLRules applies ACL rules to network firewall.

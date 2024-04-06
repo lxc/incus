@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/osarch"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/osarch"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // DownloadableFile represents a file with its URL, hash and size.

@@ -7,15 +7,15 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/internal/server/project"
-	"github.com/lxc/incus/internal/server/state"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/state"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // InstancePath returns the directory of an instance or snapshot.

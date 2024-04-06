@@ -1,10 +1,10 @@
 package device
 
 import (
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/state"
-	"github.com/lxc/incus/shared/api"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // VolatileSetter is a function that accepts one or more key/value strings to save into the

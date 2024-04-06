@@ -10,9 +10,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/sys"
-	internalUtil "github.com/lxc/incus/internal/util"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/server/sys"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
 )
 
 var rsyncProfileTpl = template.Must(template.New("rsyncProfile").Parse(`#include <tunables/global>

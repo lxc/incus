@@ -18,16 +18,16 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/internal/jmap"
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/server/db/operationtype"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/response"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
-	"github.com/lxc/incus/shared/ws"
+	"github.com/lxc/incus/v6/internal/jmap"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/db/operationtype"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/response"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/ws"
 )
 
 const execWSControl = -1

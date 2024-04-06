@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // NewFileReadWriter returns a CGroup instance using the filesystem as its backend.

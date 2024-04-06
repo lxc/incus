@@ -10,12 +10,12 @@ import (
 
 	"github.com/syndtr/gocapability/capability"
 
-	"github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/db/warningtype"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	"github.com/lxc/incus/v6/internal/server/db/warningtype"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Initialize AppArmor-specific attributes.

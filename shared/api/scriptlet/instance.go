@@ -1,7 +1,7 @@
 package scriptlet
 
 import (
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // InstancePlacementReasonNew is when a new instance request is received.

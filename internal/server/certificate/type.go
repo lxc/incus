@@ -3,7 +3,7 @@ package certificate
 import (
 	"fmt"
 
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // Type indicates the type of the certificate.

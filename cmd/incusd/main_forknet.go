@@ -127,11 +127,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/internal/netutils"
-	"github.com/lxc/incus/internal/server/ip"
-	_ "github.com/lxc/incus/shared/cgo" // Used by cgo
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/netutils"
+	"github.com/lxc/incus/v6/internal/server/ip"
+	_ "github.com/lxc/incus/v6/shared/cgo" // Used by cgo
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdForknet struct {

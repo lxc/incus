@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
 // Addr represents arguments for address protocol manipulation.

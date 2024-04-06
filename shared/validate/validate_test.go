@@ -3,7 +3,7 @@ package validate_test
 import (
 	"fmt"
 
-	"github.com/lxc/incus/shared/validate"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 func ExampleIsNetworkMAC() {

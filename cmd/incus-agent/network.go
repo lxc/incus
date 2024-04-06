@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/revert"
-	deviceConfig "github.com/lxc/incus/internal/server/device/config"
-	"github.com/lxc/incus/internal/server/ip"
-	"github.com/lxc/incus/internal/server/util"
-	"github.com/lxc/incus/shared/logger"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/revert"
+	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
+	"github.com/lxc/incus/v6/internal/server/ip"
+	"github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/shared/logger"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // A variation of the standard tls.Listener that supports atomically swapping

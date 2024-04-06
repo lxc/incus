@@ -12,7 +12,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 var fanotifyLoaded bool

@@ -13,12 +13,12 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/lxc/incus/internal/linux"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/ioprogress"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/v6/internal/linux"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/ioprogress"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
 // Debug controls additional debugging in rsync output.

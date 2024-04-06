@@ -6,11 +6,11 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/db"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/ports"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/server/db"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // ZoneRetriever is a function which fetches a DNS zone.

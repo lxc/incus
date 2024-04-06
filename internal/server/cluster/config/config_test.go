@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	clusterConfig "github.com/lxc/incus/internal/server/cluster/config"
-	"github.com/lxc/incus/internal/server/db"
+	clusterConfig "github.com/lxc/incus/v6/internal/server/cluster/config"
+	"github.com/lxc/incus/v6/internal/server/db"
 )
 
 // The server configuration is initially empty.

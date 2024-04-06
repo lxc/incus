@@ -8,14 +8,14 @@ import (
 	"slices"
 	"strings"
 
-	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/locking"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/refcount"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/server/locking"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/refcount"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // tmpVolSuffix Suffix to use for any temporary volumes created by Incus.

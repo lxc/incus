@@ -3,8 +3,8 @@ package project_test
 import (
 	"fmt"
 
-	"github.com/lxc/incus/internal/server/project"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 func ExampleInstance() {

@@ -10,13 +10,13 @@ import (
 
 	driver "github.com/cowsql/go-cowsql/driver"
 
-	"github.com/lxc/incus/internal/server/db/query"
-	"github.com/lxc/incus/internal/server/db/schema"
-	daemonUtil "github.com/lxc/incus/internal/server/util"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/server/db/schema"
+	daemonUtil "github.com/lxc/incus/v6/internal/server/util"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/osarch"
 )
 
 // Open the cluster database object.

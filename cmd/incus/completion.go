@@ -5,8 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/lxc/incus/internal/instance"
 	"github.com/spf13/cobra"
+
+	"github.com/lxc/incus/v6/internal/instance"
 )
 
 func (g *cmdGlobal) cmpClusterGroupNames(toComplete string) ([]string, cobra.ShellCompDirective) {

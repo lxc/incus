@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // A new key pair is generated if none exists and saved to the appropriate files.

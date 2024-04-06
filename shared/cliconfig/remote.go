@@ -17,9 +17,9 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Remote holds details for communication with a remote daemon.

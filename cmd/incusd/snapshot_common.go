@@ -8,8 +8,8 @@ import (
 
 	"github.com/robfig/cron/v3"
 
-	localUtil "github.com/lxc/incus/internal/server/util"
-	"github.com/lxc/incus/shared/util"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // SnapshotScheduleAliases contains the mapping of scheduling aliases to cron syntax

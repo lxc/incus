@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/cancel"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/cancel"
 )
 
 // DevIncusServer represents an instance of an devIncus event server.

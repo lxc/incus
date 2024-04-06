@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/util"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var checkedKeys = []string{

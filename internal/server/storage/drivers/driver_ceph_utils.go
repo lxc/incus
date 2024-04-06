@@ -15,15 +15,15 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/response"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/ioprogress"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/units"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/response"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/ioprogress"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // cephBlockVolSuffix suffix used for block content type volumes.

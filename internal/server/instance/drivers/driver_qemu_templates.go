@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/resources"
-	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/v6/internal/server/resources"
+	"github.com/lxc/incus/v6/shared/osarch"
 )
 
 type cfgEntry struct {

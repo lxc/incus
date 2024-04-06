@@ -5,13 +5,13 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/lxc/incus/internal/server/backup"
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/state"
-	storagePools "github.com/lxc/incus/internal/server/storage"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/server/backup"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/state"
+	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 var supportedVolumeTypes = []int{db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM, db.StoragePoolVolumeTypeCustom, db.StoragePoolVolumeTypeImage}

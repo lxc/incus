@@ -12,11 +12,11 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
-	cli "github.com/lxc/incus/internal/cmd"
-	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/termios"
-	"github.com/lxc/incus/shared/util"
+	cli "github.com/lxc/incus/v6/internal/cmd"
+	"github.com/lxc/incus/v6/internal/i18n"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/termios"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdCluster struct {

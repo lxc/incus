@@ -7,15 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxc/incus/internal/server/db/operationtype"
-	"github.com/lxc/incus/internal/server/instance"
-	"github.com/lxc/incus/internal/server/instance/instancetype"
-	"github.com/lxc/incus/internal/server/operations"
-	"github.com/lxc/incus/internal/server/project"
-	"github.com/lxc/incus/internal/server/state"
-	"github.com/lxc/incus/internal/server/task"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/server/db/operationtype"
+	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/internal/server/state"
+	"github.com/lxc/incus/v6/internal/server/task"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // This task function expires logs when executed. It's started by the Daemon

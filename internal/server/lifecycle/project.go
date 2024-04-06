@@ -1,8 +1,8 @@
 package lifecycle
 
 import (
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // ProjectAction represents a lifecycle event action for projects.

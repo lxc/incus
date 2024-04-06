@@ -10,16 +10,16 @@ import (
 
 	"github.com/mdlayher/vsock"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/linux"
-	"github.com/lxc/incus/internal/ports"
-	"github.com/lxc/incus/internal/server/response"
-	localvsock "github.com/lxc/incus/internal/server/vsock"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
-	agentAPI "github.com/lxc/incus/shared/api/agent"
-	"github.com/lxc/incus/shared/logger"
-	localtls "github.com/lxc/incus/shared/tls"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/linux"
+	"github.com/lxc/incus/v6/internal/ports"
+	"github.com/lxc/incus/v6/internal/server/response"
+	localvsock "github.com/lxc/incus/v6/internal/server/vsock"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
+	agentAPI "github.com/lxc/incus/v6/shared/api/agent"
+	"github.com/lxc/incus/v6/shared/logger"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 var api10Cmd = APIEndpoint{

@@ -12,13 +12,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/server/daemon"
-	"github.com/lxc/incus/internal/server/device/config"
-	localUtil "github.com/lxc/incus/internal/server/util"
-	"github.com/lxc/incus/shared/api/guest"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/server/daemon"
+	"github.com/lxc/incus/v6/internal/server/device/config"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/shared/api/guest"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // DevIncusServer creates an http.Server capable of handling requests against the

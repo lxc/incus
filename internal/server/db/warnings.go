@@ -11,9 +11,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/lxc/incus/internal/server/db/cluster"
-	"github.com/lxc/incus/internal/server/db/warningtype"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/internal/server/db/cluster"
+	"github.com/lxc/incus/v6/internal/server/db/warningtype"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 var warningCreate = cluster.RegisterStmt(`

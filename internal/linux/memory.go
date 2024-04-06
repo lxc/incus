@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/v6/shared/units"
 )
 
 // DeviceTotalMemory returns the total amount of memory on the system (in bytes).

@@ -6,8 +6,8 @@ import (
 	"database/sql"
 	"time"
 
-	internalInstance "github.com/lxc/incus/internal/instance"
-	"github.com/lxc/incus/internal/server/instance/instancetype"
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 )
 
 // Code generation directives.

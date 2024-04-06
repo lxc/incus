@@ -1,7 +1,7 @@
 package cluster
 
 import (
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 //go:generate -command mapper incus-generate db mapper -t cluster_groups.mapper.go

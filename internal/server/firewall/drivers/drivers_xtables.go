@@ -12,11 +12,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/project"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/subprocess"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/server/project"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // iptablesChainNICFilterPrefix chain prefix used for NIC specific filtering rules.

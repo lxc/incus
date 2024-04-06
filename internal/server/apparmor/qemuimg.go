@@ -10,8 +10,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/lxc/incus/internal/server/sys"
-	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/v6/internal/server/sys"
+	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
 var qemuImgProfileTpl = template.Must(template.New("qemuImgProfile").Parse(`#include <tunables/global>

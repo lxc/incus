@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
-	internalUtil "github.com/lxc/incus/internal/util"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
 )
 
 type cmdForkZFS struct {

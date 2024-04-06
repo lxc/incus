@@ -12,7 +12,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Process struct. Has ability to set runtime arguments.

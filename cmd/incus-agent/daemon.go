@@ -3,7 +3,7 @@ package main
 import (
 	"sync"
 
-	"github.com/lxc/incus/internal/server/events"
+	"github.com/lxc/incus/v6/internal/server/events"
 )
 
 // A Daemon can respond to requests from a shared client.

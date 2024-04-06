@@ -3,10 +3,10 @@ package drivers
 import (
 	"fmt"
 
-	"github.com/lxc/incus/internal/revert"
-	"github.com/lxc/incus/internal/server/storage/quota"
-	"github.com/lxc/incus/shared/logger"
-	"github.com/lxc/incus/shared/units"
+	"github.com/lxc/incus/v6/internal/revert"
+	"github.com/lxc/incus/v6/internal/server/storage/quota"
+	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/units"
 )
 
 // withoutGetVolID returns a copy of this struct but with a volIDFunc which will cause quotas to be skipped.

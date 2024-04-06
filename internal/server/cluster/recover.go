@@ -10,8 +10,8 @@ import (
 	dqlite "github.com/cowsql/go-cowsql"
 	client "github.com/cowsql/go-cowsql/client"
 
-	"github.com/lxc/incus/internal/server/db"
-	"github.com/lxc/incus/internal/server/node"
+	"github.com/lxc/incus/v6/internal/server/db"
+	"github.com/lxc/incus/v6/internal/server/node"
 )
 
 // ListDatabaseNodes returns a list of database node names.

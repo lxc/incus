@@ -16,15 +16,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lxc/incus/client"
-	cli "github.com/lxc/incus/internal/cmd"
-	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/internal/ports"
-	internalUtil "github.com/lxc/incus/internal/util"
-	"github.com/lxc/incus/shared/api"
-	config "github.com/lxc/incus/shared/cliconfig"
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
+	"github.com/lxc/incus/v6/client"
+	cli "github.com/lxc/incus/v6/internal/cmd"
+	"github.com/lxc/incus/v6/internal/i18n"
+	"github.com/lxc/incus/v6/internal/ports"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
+	"github.com/lxc/incus/v6/shared/api"
+	config "github.com/lxc/incus/v6/shared/cliconfig"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdRemote struct {

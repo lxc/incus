@@ -8,7 +8,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	"github.com/lxc/incus/shared/osarch"
+	"github.com/lxc/incus/v6/shared/osarch"
 )
 
 // UserAgent contains a string suitable as a user-agent.

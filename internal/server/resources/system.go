@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
 var sysClassDMIID = "/sys/class/dmi/id"

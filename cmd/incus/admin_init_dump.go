@@ -7,9 +7,9 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/i18n"
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/i18n"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {

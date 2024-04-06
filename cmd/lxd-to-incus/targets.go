@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/lxc/incus/client"
+	"github.com/lxc/incus/v6/client"
 )
 
 type target interface {

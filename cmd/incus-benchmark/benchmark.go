@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lxc/incus/client"
-	"github.com/lxc/incus/internal/version"
-	"github.com/lxc/incus/shared/api"
-	config "github.com/lxc/incus/shared/cliconfig"
+	"github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/internal/version"
+	"github.com/lxc/incus/v6/shared/api"
+	config "github.com/lxc/incus/v6/shared/cliconfig"
 )
 
 const userConfigKey = "user.incus-benchmark"

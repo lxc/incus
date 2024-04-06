@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/lxc/incus/shared/api"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 // Device represents an instance device.

@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	localtls "github.com/lxc/incus/shared/tls"
-	"github.com/lxc/incus/shared/util"
+	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // HasClientCertificate will return true if a client certificate has already been generated.

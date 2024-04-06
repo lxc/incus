@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/lxc/incus/internal/server/certificate"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/internal/server/certificate"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 const (

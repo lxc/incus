@@ -17,9 +17,9 @@ import (
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
 	ovsdbModel "github.com/ovn-org/libovsdb/model"
 
-	"github.com/lxc/incus/internal/linux"
-	ovnNB "github.com/lxc/incus/internal/server/network/ovn/schema/ovn-nb"
-	"github.com/lxc/incus/shared/subprocess"
+	"github.com/lxc/incus/v6/internal/linux"
+	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
+	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
 // NB client.

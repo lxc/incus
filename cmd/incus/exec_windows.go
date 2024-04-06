@@ -10,8 +10,8 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/sys/windows"
 
-	"github.com/lxc/incus/shared/api"
-	"github.com/lxc/incus/shared/logger"
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // Windows doesn't process ANSI sequences natively, so we wrap
