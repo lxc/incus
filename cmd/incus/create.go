@@ -419,11 +419,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 
 	instances, ok := opInfo.Resources["instances"]
 	if !ok || len(instances) == 0 {
-		// Try using the older "containers" field
-		instances, ok = opInfo.Resources["containers"]
-		if !ok || len(instances) == 0 {
-			return nil, "", fmt.Errorf(i18n.G("Didn't get any affected image, instance or snapshot from server"))
-		}
+		return nil, "", fmt.Errorf(i18n.G("Didn't get name of new instance from the server"))
 	}
 
 	if len(instances) == 1 && name == "" {
