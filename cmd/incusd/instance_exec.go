@@ -694,10 +694,6 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 		resources := map[string][]api.URL{}
 		resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", ws.instance.Name())}
 
-		if ws.instance.Type() == instancetype.Container {
-			resources["containers"] = resources["instances"]
-		}
-
 		op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.CommandExec, resources, ws.Metadata(), ws.Do, nil, ws.Connect, r)
 		if err != nil {
 			return response.InternalError(err)

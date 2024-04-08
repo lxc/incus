@@ -135,10 +135,6 @@ func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", req.Name)}
 
-	if dbType == instancetype.Container {
-		resources["containers"] = resources["instances"]
-	}
-
 	op, err := operations.OperationCreate(s, p.Name, operations.OperationClassTask, operationtype.InstanceCreate, resources, nil, run, nil, nil, r)
 	if err != nil {
 		return response.InternalError(err)
@@ -191,10 +187,6 @@ func createFromNone(s *state.State, r *http.Request, projectName string, profile
 
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", req.Name)}
-
-	if dbType == instancetype.Container {
-		resources["containers"] = resources["instances"]
-	}
 
 	op, err := operations.OperationCreate(s, projectName, operations.OperationClassTask, operationtype.InstanceCreate, resources, nil, run, nil, nil, r)
 	if err != nil {
@@ -396,10 +388,6 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", req.Name)}
 
-	if dbType == instancetype.Container {
-		resources["containers"] = resources["instances"]
-	}
-
 	var op *operations.Operation
 	if push {
 		op, err = operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.InstanceCreate, resources, sink.Metadata(), run, nil, sink.Connect, r)
@@ -566,10 +554,6 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", req.Name), *api.NewURL().Path(version.APIVersion, "instances", req.Source.Source)}
-
-	if dbType == instancetype.Container {
-		resources["containers"] = resources["instances"]
-	}
 
 	op, err := operations.OperationCreate(s, targetProject, operations.OperationClassTask, operationtype.InstanceCreate, resources, nil, run, nil, nil, r)
 	if err != nil {
