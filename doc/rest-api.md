@@ -72,7 +72,7 @@ The operation metadata structure looks like:
     "status": "Running",                                    // String version of the operation's status
     "status_code": 103,                                     // Integer version of the operation's status (use this rather than status)
     "resources": {                                          // Dictionary of resource types (container, snapshots, images) and affected resources
-      "containers": [
+      "instances": [
         "/1.0/instances/test"
       ]
     },
