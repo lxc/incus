@@ -17,14 +17,6 @@ func TestURLToEntityType(t *testing.T) {
 		expectedErr        error
 	}{
 		{
-			name:               "containers",
-			rawURL:             "/1.0/containers/my-container?project=my-project",
-			expectedEntityType: TypeContainer,
-			expectedProject:    "my-project",
-			expectedPathArgs:   []string{"my-container"},
-			expectedErr:        nil,
-		},
-		{
 			name:               "images",
 			rawURL:             "/1.0/images/fwirnoaiwnerfoiawnef",
 			expectedEntityType: TypeImage,
