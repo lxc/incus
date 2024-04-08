@@ -1248,26 +1248,6 @@ func (d *Daemon) init() error {
 
 	d.gateway.Cluster = d.db.Cluster
 
-	// This logic used to belong to patchUpdateFromV10, but has been moved
-	// here because it needs database access.
-	if util.PathExists(internalUtil.VarPath("lxc")) {
-		err := os.Rename(internalUtil.VarPath("lxc"), internalUtil.VarPath("containers"))
-		if err != nil {
-			return err
-		}
-
-		logger.Debug("Restarting all the containers following directory rename")
-
-		s := d.State()
-		instances, err := instance.LoadNodeAll(s, instancetype.Container)
-		if err != nil {
-			return fmt.Errorf("Failed loading containers to restart: %w", err)
-		}
-
-		instancesShutdown(s, instances)
-		instancesStart(s, instances)
-	}
-
 	// Setup the user-agent.
 	if d.serverClustered {
 		version.UserAgentFeatures([]string{"cluster"})
