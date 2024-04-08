@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-03 13:39-0400\n"
+"POT-Creation-Date: 2024-04-08 16:13-0400\n"
 "PO-Revision-Date: 2024-02-24 03:02+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -2282,8 +2282,9 @@ msgstr "プロファイルのデバイスは個々のインスタンスでは取
 msgid "Device: %s"
 msgstr "デバイス: %s"
 
-#: cmd/incus/create.go:425
-msgid "Didn't get any affected image, instance or snapshot from server"
+#: cmd/incus/create.go:422
+#, fuzzy
+msgid "Didn't get name of new instance from the server"
 msgstr ""
 "サーバから変更されたイメージ、インスタンス、スナップショットを取得できません"
 "でした"
@@ -3715,7 +3716,7 @@ msgstr "クライアント %q に対するインスタンスが切断されま�
 msgid "Instance name is mandatory"
 msgstr "インスタンス名を指定する必要があります"
 
-#: cmd/incus/create.go:436
+#: cmd/incus/create.go:432
 #, c-format
 msgid "Instance name is: %s"
 msgstr "インスタンス名: %s"
@@ -7498,7 +7499,7 @@ msgstr ""
 "インスタンスは現在実行中です。停止して、再起動するために --force を使用してく"
 "ださい"
 
-#: cmd/incus/create.go:457
+#: cmd/incus/create.go:453
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr "起動しようとしたインスタンスに接続されているネットワークがありません。"
 
@@ -7730,14 +7731,14 @@ msgstr "インスタンスがクリーンにシャットダウンするまで待
 msgid "Timestamps:"
 msgstr "タイムスタンプ:"
 
-#: cmd/incus/create.go:459
+#: cmd/incus/create.go:455
 #, fuzzy
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 "インスタンスにネットワークを接続するには、lxc network attach を使用してくださ"
 "い"
 
-#: cmd/incus/create.go:458
+#: cmd/incus/create.go:454
 #, fuzzy
 msgid "To create a new network, use: incus network create"
 msgstr ""

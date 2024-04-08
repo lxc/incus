@@ -3820,8 +3820,6 @@ definitions:
                     type: array
                 description: Affected resourcs
                 example:
-                    containers:
-                        - /1.0/containers/foo
                     instances:
                         - /1.0/instances/foo
                 type: object

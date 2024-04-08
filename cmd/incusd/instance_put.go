@@ -17,7 +17,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	"github.com/lxc/incus/v6/internal/server/instance"
-	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	projecthelpers "github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
@@ -190,10 +189,6 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name)}
-
-	if inst.Type() == instancetype.Container {
-		resources["containers"] = resources["instances"]
-	}
 
 	op, err := operations.OperationCreate(s, projectName, operations.OperationClassTask, opType, resources, nil, do, nil, nil, r)
 	if err != nil {
