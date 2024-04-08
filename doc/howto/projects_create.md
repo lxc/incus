@@ -8,12 +8,16 @@ However, note that it is not possible to modify the features that are enabled fo
 
 To create a project, use the [`incus project create`](incus_project_create.md) command.
 
+For example, to create a project called `my-project`, enter the following command:
+
+    incus project create my-project
+
 You can specify configuration options by using the `--config` flag.
 See {ref}`ref-projects` for the available configuration options.
 
-For example, to create a project called `my-project` that isolates instances, but allows access to the default project's images and profiles, enter the following command:
+For example, to create a project called `my-project-shared-images` that isolates instances but allows access to the default project's images, enter the following command:
 
-    incus project create my-project --config features.images=false --config features.profiles=false
+    incus project create my-project-shared-images --config features.images=false
 
 To create a project called `my-restricted-project` that blocks access to security-sensitive features (for example, container nesting) but allows backups, enter the following command:
 
