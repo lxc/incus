@@ -16,7 +16,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
 	"github.com/lxc/incus/v6/internal/server/instance"
-	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/project"
@@ -340,11 +339,6 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name)}
-
-	if inst.Type() == instancetype.Container {
-		resources["containers"] = resources["instances"]
-	}
-
 	resources["backups"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name, "backups", req.Name)}
 
 	op, err := operations.OperationCreate(s, projectName, operations.OperationClassTask,
@@ -533,9 +527,6 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name)}
-	if instanceType == instancetype.Container {
-		resources["containers"] = resources["instances"]
-	}
 
 	op, err := operations.OperationCreate(s, projectName, operations.OperationClassTask,
 		operationtype.BackupRename, resources, nil, rename, nil, nil, r)
@@ -622,9 +613,6 @@ func instanceBackupDelete(d *Daemon, r *http.Request) response.Response {
 
 	resources := map[string][]api.URL{}
 	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", name)}
-	if instanceType == instancetype.Container {
-		resources["containers"] = resources["instances"]
-	}
 
 	op, err := operations.OperationCreate(s, projectName, operations.OperationClassTask,
 		operationtype.BackupRemove, resources, nil, remove, nil, nil, r)
