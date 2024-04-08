@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-03 13:39-0400\n"
+"POT-Creation-Date: 2024-04-08 16:13-0400\n"
 "PO-Revision-Date: 2024-01-30 13:01+0000\n"
 "Last-Translator: Paulo Coghi <paulo@coghi.com.br>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -2299,8 +2299,8 @@ msgstr ""
 msgid "Device: %s"
 msgstr "Em cache: %s"
 
-#: cmd/incus/create.go:425
-msgid "Didn't get any affected image, instance or snapshot from server"
+#: cmd/incus/create.go:422
+msgid "Didn't get name of new instance from the server"
 msgstr ""
 
 #: cmd/incus/image.go:712
@@ -3678,7 +3678,7 @@ msgstr ""
 msgid "Instance name is mandatory"
 msgstr ""
 
-#: cmd/incus/create.go:436
+#: cmd/incus/create.go:432
 #, c-format
 msgid "Instance name is: %s"
 msgstr ""
@@ -7173,7 +7173,7 @@ msgid ""
 "restarted"
 msgstr ""
 
-#: cmd/incus/create.go:457
+#: cmd/incus/create.go:453
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
@@ -7379,11 +7379,11 @@ msgstr ""
 msgid "Timestamps:"
 msgstr ""
 
-#: cmd/incus/create.go:459
+#: cmd/incus/create.go:455
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
-#: cmd/incus/create.go:458
+#: cmd/incus/create.go:454
 msgid "To create a new network, use: incus network create"
 msgstr ""
 

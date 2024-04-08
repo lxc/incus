@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-03 13:39-0400\n"
+"POT-Creation-Date: 2024-04-08 16:13-0400\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -2266,9 +2266,10 @@ msgstr ""
 msgid "Device: %s"
 msgstr "Dispositivo: %s"
 
-#: cmd/incus/create.go:425
-msgid "Didn't get any affected image, instance or snapshot from server"
-msgstr ""
+#: cmd/incus/create.go:422
+#, fuzzy
+msgid "Didn't get name of new instance from the server"
+msgstr "Perfil para aplicar al nuevo contenedor"
 
 #: cmd/incus/image.go:712
 msgid "Directory import is not available on this platform"
@@ -3636,7 +3637,7 @@ msgstr ""
 msgid "Instance name is mandatory"
 msgstr "Nombre del contenedor es obligatorio"
 
-#: cmd/incus/create.go:436
+#: cmd/incus/create.go:432
 #, fuzzy, c-format
 msgid "Instance name is: %s"
 msgstr "Nombre del contenedor es: %s"
@@ -7094,7 +7095,7 @@ msgid ""
 "restarted"
 msgstr ""
 
-#: cmd/incus/create.go:457
+#: cmd/incus/create.go:453
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
@@ -7300,11 +7301,11 @@ msgstr ""
 msgid "Timestamps:"
 msgstr ""
 
-#: cmd/incus/create.go:459
+#: cmd/incus/create.go:455
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 
-#: cmd/incus/create.go:458
+#: cmd/incus/create.go:454
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
@@ -9193,10 +9194,6 @@ msgstr ""
 #, fuzzy
 #~ msgid "Path to the shared block device:"
 #~ msgstr "%s no es un directorio"
-
-#, fuzzy
-#~ msgid "Failed to get the new instance name"
-#~ msgstr "Perfil para aplicar al nuevo contenedor"
 
 #, fuzzy
 #~ msgid ""

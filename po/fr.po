@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-03 13:39-0400\n"
+"POT-Creation-Date: 2024-04-08 16:13-0400\n"
 "PO-Revision-Date: 2024-03-08 16:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -2379,9 +2379,9 @@ msgstr ""
 msgid "Device: %s"
 msgstr "Serveur distant : %s"
 
-#: cmd/incus/create.go:425
+#: cmd/incus/create.go:422
 #, fuzzy
-msgid "Didn't get any affected image, instance or snapshot from server"
+msgid "Didn't get name of new instance from the server"
 msgstr "pas d'image, conteneur ou instantané affecté sur ce serveur"
 
 #: cmd/incus/image.go:712
@@ -3918,7 +3918,7 @@ msgstr "Instance déconnectée pour le client %q"
 msgid "Instance name is mandatory"
 msgstr "Le nom du conteneur est obligatoire"
 
-#: cmd/incus/create.go:436
+#: cmd/incus/create.go:432
 #, fuzzy, c-format
 msgid "Instance name is: %s"
 msgstr "Le nom du conteneur est : %s"
@@ -7594,7 +7594,7 @@ msgstr ""
 "Le conteneur est en cours d'exécution. Utiliser --force pour qu'il soit "
 "arrêté et redémarré."
 
-#: cmd/incus/create.go:457
+#: cmd/incus/create.go:453
 #, fuzzy
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
@@ -7807,12 +7807,12 @@ msgstr "Temps d'attente du conteneur avant de le tuer"
 msgid "Timestamps:"
 msgstr "Horodatage :"
 
-#: cmd/incus/create.go:459
+#: cmd/incus/create.go:455
 #, fuzzy
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr "Pour attacher un réseau à un conteneur, utiliser : lxc network attach"
 
-#: cmd/incus/create.go:458
+#: cmd/incus/create.go:454
 #, fuzzy
 msgid "To create a new network, use: incus network create"
 msgstr "Pour créer un réseau, utiliser : lxc network create"
