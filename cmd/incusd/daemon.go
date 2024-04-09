@@ -1611,9 +1611,7 @@ func (d *Daemon) init() error {
 	d.tasks.Start(d.shutdownCtx)
 
 	// Restore instances
-	if !d.db.Cluster.LocalNodeIsEvacuated() {
-		instancesStart(d.State(), instances)
-	}
+	instancesStart(d.State(), instances)
 
 	// Re-balance in case things changed while the daemon was down
 	deviceTaskBalance(d.State())
