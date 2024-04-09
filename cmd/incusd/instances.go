@@ -192,11 +192,19 @@ func instanceShouldAutoStart(inst instance.Instance) bool {
 }
 
 func instancesStart(s *state.State, instances []instance.Instance) {
+	// Check if the cluster is currently evacuated.
+	if s.DB.Cluster.LocalNodeIsEvacuated() {
+		return
+	}
+
+	// Acquire startup lock.
 	instancesStartMu.Lock()
 	defer instancesStartMu.Unlock()
 
+	// Sort based on instance boot priority.
 	sort.Sort(instanceAutostartList(instances))
 
+	// Let's make up to 3 attempts to start instances.
 	maxAttempts := 3
 
 	// Start the instances
