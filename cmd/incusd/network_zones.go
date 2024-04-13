@@ -21,6 +21,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var networkZonesCmd = APIEndpoint{
@@ -56,6 +57,11 @@ var networkZoneCmd = APIEndpoint{
 //      description: Project name
 //      type: string
 //      example: default
+//    - in: query
+//      name: all-projects
+//      description: Retrieve network zones from all projects
+//      type: boolean
+//      example: true
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -105,6 +111,11 @@ var networkZoneCmd = APIEndpoint{
 //	    description: Project name
 //	    type: string
 //	    example: default
+//	  - in: query
+//	    name: all-projects
+//	    description: Retrieve network zones from all projects
+//	    type: boolean
+//	    example: true
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -143,11 +154,32 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 
 	recursion := localUtil.IsRecursionRequest(r)
 
-	var zoneNames []string
+	// var zoneNames []string
+	var zoneNamesMap map[string]string
+	allProjects := util.IsTrue(request.QueryParam(r, "all-projects"))
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get list of Network zones.
-		zoneNames, err = tx.GetNetworkZonesByProject(ctx, projectName)
+		if allProjects {
+			zoneNamesMap, err = tx.GetNetworkZones(ctx)
+
+			if err != nil {
+				return err
+			}
+		} else {
+			zoneNames, err := tx.GetNetworkZonesByProject(ctx, projectName)
+			if err != nil {
+				return err
+			}
+
+			if len(zoneNames) == 0 {
+				return fmt.Errorf("No zones found for project: %s", projectName)
+			}
+
+			zoneNamesMap = map[string]string{
+				zoneNames[0]: projectName,
+			}
+		}
 
 		return err
 	})
@@ -162,7 +194,7 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 
 	resultString := []string{}
 	resultMap := []api.NetworkZone{}
-	for _, zoneName := range zoneNames {
+	for zoneName, projectName := range zoneNamesMap {
 		if !userHasPermission(auth.ObjectNetworkZone(projectName, zoneName)) {
 			continue
 		}
@@ -177,6 +209,7 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 
 			netzoneInfo := netzone.Info()
 			netzoneInfo.UsedBy, _ = netzone.UsedBy() // Ignore errors in UsedBy, will return nil.
+			netzoneInfo.Project = projectName
 
 			resultMap = append(resultMap, *netzoneInfo)
 		}
