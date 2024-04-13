@@ -408,6 +408,7 @@ var APIExtensions = []string{
 	"network_integrations",
 	"instance_memory_swap_bytes",
 	"network_bridge_external_create",
+	"network_zones_all_projects",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
