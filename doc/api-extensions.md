@@ -1846,6 +1846,10 @@ This adds:
 * `PATCH /1.0/network-zones/ZONE/records/RECORD`
 * `DELETE /1.0/network-zones/ZONE/records/RECORD`
 
+## `network_zones_all_projects`
+
+This adds support for listing network zones across all projects through the `all-projects` parameter on the `GET /1.0/network-zones`API.
+
 ## `storage_zfs_reserve_space`
 
 Adds ability to set the `reservation`/`refreservation` ZFS property along with `quota`/`refquota`.
