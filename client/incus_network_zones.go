@@ -42,6 +42,23 @@ func (r *ProtocolIncus) GetNetworkZones() ([]api.NetworkZone, error) {
 	return zones, nil
 }
 
+// GetNetworkZonesAllProjects returns a list of network zones across all projects as NetworkZone structs.
+func (r *ProtocolIncus) GetNetworkZonesAllProjects() ([]api.NetworkZone, error) {
+	err := r.CheckExtension("network_zones_all_projects")
+	if err != nil {
+		return nil, fmt.Errorf(`The server is missing the required "network_zones_all_projects" API extension`)
+	}
+
+	zones := []api.NetworkZone{}
+	uri := "/network-zones?all-projects=true&recursion=1"
+	_, err = r.queryStruct("GET", uri, nil, "", &zones)
+	if err != nil {
+		return nil, err
+	}
+
+	return zones, nil
+}
+
 // GetNetworkZone returns a Network zone entry for the provided name.
 func (r *ProtocolIncus) GetNetworkZone(name string) (*api.NetworkZone, string, error) {
 	if !r.HasExtension("network_dns") {
