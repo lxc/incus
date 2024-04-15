@@ -32,6 +32,21 @@ Packages are available for a number of Linux distributions, either in their main
 
 ````{tabs}
 
+```{group-tab} Alpine
+Incus and all of its dependencies are available in Alpine Linux's community repository as `incus`.
+
+Install Incus with:
+
+    apk add incus incus-client
+
+Then enable and start the service:
+
+    rc-update add incusd
+    rc-service incusd start
+
+Please report packaging issues [here](https://gitlab.alpinelinux.org/alpine/aports/-/issues).
+```
+
 ```{group-tab} Arch Linux
 Incus and all of its dependencies are available in Arch Linux's main repository as `incus`.
 
