@@ -44,6 +44,12 @@ type NetworkZone struct {
 	// Read only: true
 	// Example: ["/1.0/networks/foo", "/1.0/networks/bar"]
 	UsedBy []string `json:"used_by" yaml:"used_by"` // Resources that use the zone.
+
+	// Project name
+	// Example: project1
+	//
+	// API extension: network_zones_all_projects
+	Project string `json:"project" yaml:"project"`
 }
 
 // Writable converts a full NetworkZone struct into a NetworkZonePut struct (filters read-only fields).
