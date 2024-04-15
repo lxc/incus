@@ -229,33 +229,6 @@ version to work.
 
 ````{tabs}
 
-```{group-tab} Debian and Ubuntu
-Install the build and required runtime dependencies with:
-
-    sudo apt update
-    sudo apt install acl attr autoconf automake dnsmasq-base git golang-go libacl1-dev libcap-dev liblxc1 liblxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
-
-There are a few storage drivers for Incus besides the default `dir` driver.
-Installing these tools adds a bit to initramfs and may slow down your
-host boot, but are needed if you'd like to use a particular driver:
-
-    sudo apt install btrfs-progs
-    sudo apt install ceph-common
-    sudo apt install lvm2 thin-provisioning-tools
-    sudo apt install zfsutils-linux
-
-To run the test suite, you'll also need:
-
-    sudo apt install busybox-static curl gettext jq sqlite3 socat bind9-dnsutils
-
-****NOTE:**** If you use the `liblxc-dev` package and get compile time errors when building the `go-lxc` module,
-ensure that the value for `LXC_DEVEL` is `0` for your `liblxc` build. To check that, look at `/usr/include/lxc/version.h`.
-If the `LXC_DEVEL` value is `1`, replace it with `0` to work around the problem. It's a packaging bug, and
-we are aware of it for Ubuntu 22.04/22.10. Ubuntu 23.04/23.10 does not have this problem.
-
-```
-
-
 ```{group-tab} Alpine Linux
 You can get the development resources required to build Incus on your Alpine Linux via the following command:
 
@@ -281,6 +254,32 @@ Also, due to a [`gettext` issue](https://github.com/gosexy/gettext/issues/1), yo
 
     export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/lib -lintl"
     export CGO_CPPFLAGS="-I/usr/include"
+```
+
+```{group-tab} Debian and Ubuntu
+Install the build and required runtime dependencies with:
+
+    sudo apt update
+    sudo apt install acl attr autoconf automake dnsmasq-base git golang-go libacl1-dev libcap-dev liblxc1 liblxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
+
+There are a few storage drivers for Incus besides the default `dir` driver.
+Installing these tools adds a bit to initramfs and may slow down your
+host boot, but are needed if you'd like to use a particular driver:
+
+    sudo apt install btrfs-progs
+    sudo apt install ceph-common
+    sudo apt install lvm2 thin-provisioning-tools
+    sudo apt install zfsutils-linux
+
+To run the test suite, you'll also need:
+
+    sudo apt install busybox-static curl gettext jq sqlite3 socat bind9-dnsutils
+
+****NOTE:**** If you use the `liblxc-dev` package and get compile time errors when building the `go-lxc` module,
+ensure that the value for `LXC_DEVEL` is `0` for your `liblxc` build. To check that, look at `/usr/include/lxc/version.h`.
+If the `LXC_DEVEL` value is `1`, replace it with `0` to work around the problem. It's a packaging bug, and
+we are aware of it for Ubuntu 22.04/22.10. Ubuntu 23.04/23.10 does not have this problem.
+
 ```
 
 ````
