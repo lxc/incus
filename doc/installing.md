@@ -282,6 +282,25 @@ we are aware of it for Ubuntu 22.04/22.10. Ubuntu 23.04/23.10 does not have this
 
 ```
 
+```{group-tab} OpenSUSE
+You can get the development resources required to build Incus on your OpenSUSE Tumbleweed system via the following command:
+
+    sudo zypper install autoconf automake git go libacl-devel libcap-devel liblxc1 liblxc-devel sqlite3-devel libtool libudev-devel liblz4-devel libuv-devel make pkg-config tcl
+
+In addition, for normal operation, you'll also likely need
+
+    sudo zypper install dnsmasq squashfs xz rsync tar attr acl qemu qemu-img qemu-spice qemu-hw-display-virtio-gpu-pci iptables ebtables nftables
+
+As OpenSUSE stores QEMU firmware files using an unusual filename and location, you will need to create some symlinks for them:
+
+    sudo mkdir /usr/share/OVMF
+    sudo ln -s /usr/share/qemu/ovmf-x86_64-4m-code.bin /usr/share/OVMF/OVMF_CODE.4MB.fd
+    sudo ln -s /usr/share/qemu/ovmf-x86_64-4m-vars.bin /usr/share/OVMF/OVMF_VARS.4MB.fd
+    sudo ln -s /usr/share/qemu/ovmf-x86_64-ms-4m-vars.bin /usr/share/OVMF/OVMF_VARS.4MB.ms.fd
+    sudo ln -s /usr/share/qemu/ovmf-x86_64-ms-4m-code.bin /usr/share/OVMF/OVMF_CODE.4MB.ms.fd
+```
+
+
 ````
 
 ### From source: Build the latest version
