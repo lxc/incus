@@ -42,6 +42,10 @@ test_network_zone() {
   # Create zone in project.
   incus network zone create incus-foo.example.net --project foo
 
+  # Check all-projects column
+  incus network zone list --all-projects -fcsv | grep -q default,incus.example.net || false
+  incus network zone list --all-projects -fcsv | grep -q foo,incus-foo.example.net || false
+
   # Check associating a network to a missing zone isn't allowed.
   ! incus network set "${netName}" dns.zone.forward missing || false
   ! incus network set "${netName}" dns.zone.reverse.ipv4 missing || false
