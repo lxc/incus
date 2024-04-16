@@ -1180,10 +1180,12 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 					}
 				}
 
-				// Set soft limit to value 10% less than hard limit
-				err = cg.SetMemorySoftLimit(int64(float64(valueInt) * 0.9))
-				if err != nil {
-					return nil, err
+				// If on CGroup1, set soft limit to value 10% less than hard limit.
+				if slices.Contains([]cgroup.Layout{cgroup.CgroupsLegacy, cgroup.CgroupsHybrid}, d.state.OS.CGInfo.Layout) {
+					err = cg.SetMemorySoftLimit(int64(float64(valueInt) * 0.9))
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
@@ -4654,8 +4656,8 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						}
 					}
 
-					// Set soft limit to value 10% less than hard limit.
-					if memoryInt > 0 {
+					// If on Cgroup1, set soft limit to value 10% less than hard limit.
+					if memoryInt > 0 && slices.Contains([]cgroup.Layout{cgroup.CgroupsLegacy, cgroup.CgroupsHybrid}, d.state.OS.CGInfo.Layout) {
 						err = cg.SetMemorySoftLimit(int64(float64(memoryInt) * 0.9))
 						if err != nil {
 							revertMemory()
