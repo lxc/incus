@@ -47,7 +47,7 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader) error {
 		"boot.priority",
 	}
 
-	// Check that if network proeperty is set that conflicting keys are not present.
+	// Check that if network property is set that conflicting keys are not present.
 	if d.config["network"] != "" {
 		requiredFields = append(requiredFields, "network")
 
@@ -173,14 +173,18 @@ func (d *nicSRIOV) Start() (*deviceConfig.RunConfig, error) {
 		}
 	}
 
+	// Save new volatile keys.
 	err = d.volatileSet(saveData)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get MAC from VF if not specified.
+	// Get all volatile keys.
+	volatile := d.volatileGet()
+
+	// Apply stable MAC address.
 	if d.config["hwaddr"] == "" {
-		d.config["hwaddr"] = saveData["last_state.hwaddr"]
+		d.config["hwaddr"] = volatile["hwaddr"]
 	}
 
 	runConf := deviceConfig.RunConfig{}
