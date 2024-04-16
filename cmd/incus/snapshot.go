@@ -206,7 +206,7 @@ func (c *cmdSnapshotDelete) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse remote
-	resources, err := c.global.ParseServers(args...)
+	resources, err := c.global.ParseServers(args[0])
 	if err != nil {
 		return err
 	}
