@@ -49,6 +49,8 @@ func findAlias(aliases map[string]string, origArgs []string) ([]string, []string
 }
 
 func expandAlias(conf *config.Config, args []string) ([]string, bool, error) {
+	var completion = false
+	var completionFrament string
 	var newArgs []string
 	var origArgs []string
 
@@ -61,6 +63,13 @@ func expandAlias(conf *config.Config, args []string) ([]string, bool, error) {
 	}
 
 	origArgs = append([]string{args[0]}, args[len(newArgs)+1:]...)
+
+	// strip out completion subcommand and fragment from end
+	if len(origArgs) >= 3 && origArgs[1] == "__complete" {
+		completion = true
+		completionFrament = origArgs[len(origArgs)-1]
+		origArgs = append(origArgs[:1], origArgs[2:len(origArgs)-1]...)
+	}
 
 	aliasKey, aliasValue, foundAlias := findAlias(conf.Aliases, origArgs)
 	if !foundAlias {
@@ -116,7 +125,13 @@ func expandAlias(conf *config.Config, args []string) ([]string, bool, error) {
 	for _, aliasArg := range aliasValue {
 		// Only replace all @ARGS@ when it is not part of another string
 		if aliasArg == "@ARGS@" {
-			newArgs = append(newArgs, atArgs...)
+			// if completing we want to stop on @ARGS@ and append the completion below
+			if completion {
+				break
+			} else {
+				newArgs = append(newArgs, atArgs...)
+			}
+
 			hasReplacedArgsVar = true
 			continue
 		}
@@ -141,6 +156,12 @@ func expandAlias(conf *config.Config, args []string) ([]string, bool, error) {
 		}
 
 		newArgs = append(newArgs, aliasArg)
+	}
+
+	// add back in completion if it was stripped before
+	if completion {
+		newArgs = append([]string{newArgs[0], "__complete"}, newArgs[1:]...)
+		newArgs = append(newArgs, completionFrament)
 	}
 
 	// Add the rest of the arguments only if @ARGS@ wasn't used.
