@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/lxc/incus/v6/internal/server/ip"
 	ovsSwitch "github.com/lxc/incus/v6/internal/server/network/ovs/schema/ovs"
-	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -353,32 +353,130 @@ func (o *VSwitch) UpdateBridgePortVLANs(ctx context.Context, portName string, mo
 	return nil
 }
 
-// InterfaceAssociateOVNSwitchPort removes any existing switch ports associated to the specified ovnSwitchPortName
+// AssociateInterfaceOVNSwitchPort removes any existing switch ports associated to the specified ovnSwitchPortName
 // and then associates the specified interfaceName to the OVN switch port.
-func (o *VSwitch) InterfaceAssociateOVNSwitchPort(interfaceName string, ovnSwitchPortName string) error {
-	// Clear existing ports that were formerly associated to ovnSwitchPortName.
-	existingPorts, err := subprocess.RunCommand("ovs-vsctl", "--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "interface", fmt.Sprintf("external-ids:iface-id=%s", string(ovnSwitchPortName)))
+func (o *VSwitch) AssociateInterfaceOVNSwitchPort(ctx context.Context, interfaceName string, ovnSwitchPortName string) error {
+	// Get the interfaces.
+	interfaceList := []ovsSwitch.Interface{}
+
+	err := o.client.WhereCache(func(iface *ovsSwitch.Interface) bool {
+		return iface.ExternalIDs["iface-id"] == string(ovnSwitchPortName)
+	}).List(ctx, &interfaceList)
 	if err != nil {
 		return err
 	}
 
-	existingPorts = strings.TrimSpace(existingPorts)
-	if existingPorts != "" {
-		for _, port := range strings.Split(existingPorts, "\n") {
-			_, err = subprocess.RunCommand("ovs-vsctl", "del-port", port)
-			if err != nil {
-				return err
-			}
+	// Delete the matching ports.
+	for _, iface := range interfaceList {
+		// Get the port.
+		portList := []ovsSwitch.Port{}
 
-			// Atempt to remove port, but don't fail if doesn't exist or can't be removed, at least
-			// the switch association has been successfully removed, so the new port being added next
-			// won't fail to work properly.
-			link := &ip.Link{Name: port}
-			_ = link.Delete()
+		err := o.client.WhereCache(func(port *ovsSwitch.Port) bool {
+			return slices.Contains(port.Interfaces, iface.UUID)
+		}).List(ctx, &portList)
+		if err != nil {
+			return err
 		}
+
+		if len(portList) != 1 {
+			return fmt.Errorf("Failed to find port for interface %q", iface.Name)
+		}
+
+		port := portList[0]
+
+		// Get the bridge.
+		bridgeList := []ovsSwitch.Bridge{}
+
+		err = o.client.WhereCache(func(bridge *ovsSwitch.Bridge) bool {
+			return slices.Contains(bridge.Ports, port.UUID)
+		}).List(ctx, &bridgeList)
+		if err != nil {
+			return err
+		}
+
+		if len(bridgeList) != 1 {
+			return fmt.Errorf("Failed to find bridge for port %q", portList[0].Name)
+		}
+
+		bridge := bridgeList[0]
+
+		// Update the records.
+		var operations []ovsdb.Operation
+
+		// Delete the bridge port.
+		updateOps, err := o.client.Where(&bridge).Mutate(&bridge, ovsdbModel.Mutation{
+			Field:   &bridge.Ports,
+			Mutator: ovsdb.MutateOperationDelete,
+			Value:   []string{port.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+
+		// Delete the port.
+		deleteOps, err := o.client.Where(&port).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+
+		// Delete the interface.
+		deleteOps, err = o.client.Where(&iface).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+
+		// Apply the changes.
+		resp, err := o.client.Transact(ctx, operations...)
+		if err != nil {
+			return err
+		}
+
+		_, err = ovsdb.CheckOperationResults(resp, operations)
+		if err != nil {
+			return err
+		}
+
+		// Atempt to remove port, but don't fail if doesn't exist or can't be removed, at least
+		// the switch association has been successfully removed, so the new port being added next
+		// won't fail to work properly.
+		link := &ip.Link{Name: iface.Name}
+		_ = link.Delete()
 	}
 
-	_, err = subprocess.RunCommand("ovs-vsctl", "set", "interface", interfaceName, fmt.Sprintf("external_ids:iface-id=%s", string(ovnSwitchPortName)))
+	// Get the new interface.
+	ovsInterface := &ovsSwitch.Interface{
+		Name: interfaceName,
+	}
+
+	err = o.client.Get(ctx, ovsInterface)
+	if err != nil {
+		return err
+	}
+
+	// Update the record.
+	if ovsInterface.ExternalIDs == nil {
+		ovsInterface.ExternalIDs = map[string]string{}
+	}
+
+	ovsInterface.ExternalIDs["iface-id"] = string(ovnSwitchPortName)
+
+	operations, err := o.client.Where(ovsInterface).Update(ovsInterface)
+	if err != nil {
+		return err
+	}
+
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
