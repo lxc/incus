@@ -788,22 +788,24 @@ func (d *Daemon) setupLoki(URL string, cert string, key string, caCert string, i
 		return err
 	}
 
-	// Figure out the instance name.
-	if instanceName == "" {
-		if d.serverClustered {
-			instanceName = d.serverName
-		} else {
-			hostname, err := os.Hostname()
-			if err != nil {
-				return err
-			}
+	// Handle standalone systems.
+	var location string
+	if !d.serverClustered {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return err
+		}
 
+		location = hostname
+		if instanceName == "" {
 			instanceName = hostname
 		}
+	} else if instanceName == "" {
+		instanceName = d.serverName
 	}
 
 	// Start a new client.
-	d.lokiClient = loki.NewClient(d.shutdownCtx, u, cert, key, caCert, instanceName, logLevel, labels, types)
+	d.lokiClient = loki.NewClient(d.shutdownCtx, u, cert, key, caCert, instanceName, location, logLevel, labels, types)
 
 	// Attach the new client to the log handler.
 	d.internalListener.AddHandler("loki", d.lokiClient.HandleEvent)
