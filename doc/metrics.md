@@ -245,7 +245,7 @@ After editing the configuration, restart Prometheus (for example, `systemctl res
 ## Set up a Grafana dashboard
 
 To visualize the metrics data, set up [Grafana](https://grafana.com/).
-Incus provides a [Grafana dashboard](https://grafana.com/grafana/dashboards/19727-incus/) that is configured to display the Incus metrics scraped by Prometheus.
+Incus provides a [Grafana dashboard](https://grafana.com/grafana/dashboards/19727-incus/) that is configured to display the Incus metrics scraped by Prometheus and log entries from Loki.
 
 ```{note}
 The dashboard requires Grafana 8.4 or later.
@@ -258,7 +258,7 @@ See the Grafana documentation for instructions on installing and signing in:
 
 Complete the following steps to import the [Incus dashboard](https://grafana.com/grafana/dashboards/19727-incus/):
 
-1. Configure Prometheus as the data source:
+1. Configure Prometheus as a data source:
 
    1. Go to {guilabel}`Configuration` > {guilabel}`Data sources`.
    1. Click {guilabel}`Add data source`.
@@ -269,10 +269,18 @@ Complete the following steps to import the [Incus dashboard](https://grafana.com
 
       ![Select Prometheus as the data source](images/grafana_select_prometheus.png)
 
-   1. In the {guilabel}`URL` field, enter `http://localhost:9090/`.
+   1. In the {guilabel}`URL` field, enter `http://localhost:9090/` if running Prometheus locally.
 
       ![Enter Prometheus URL](images/grafana_configure_datasource.png)
 
+   1. Keep the default configuration for the other fields and click {guilabel}`Save & test`.
+
+1. Configure Loki as a data source:
+
+   1. Go to {guilabel}`Configuration` > {guilabel}`Data sources`.
+   1. Click {guilabel}`Add data source`.
+   1. Select {guilabel}`Loki`.
+   1. In the {guilabel}`URL` field, enter `http://localhost:3100/` if running Loki locally.
    1. Keep the default configuration for the other fields and click {guilabel}`Save & test`.
 
 1. Import the Incus dashboard:
@@ -287,7 +295,7 @@ Complete the following steps to import the [Incus dashboard](https://grafana.com
       ![Enter the Incus dashboard ID](images/grafana_dashboard_id.png)
 
    1. Click {guilabel}`Load`.
-   1. In the {guilabel}`Incus` drop-down menu, select the Prometheus data source that you configured.
+   1. In the {guilabel}`Incus` drop-down menu, select the Prometheus and Loki data sources that you configured.
 
       ![Select the Prometheus data source](images/grafana_dashboard_select_datasource.png)
 
@@ -301,3 +309,8 @@ You can select the project and filter by instances.
 At the bottom of the page, you can see data for each instance.
 
 ![Instance data in the Incus Grafana dashboard](images/grafana_instances.png)
+
+```{note}
+For proper operation of the Loki part of the dashboard, you need to ensure that the `instance` field matches the Prometheus job name.
+You can change the `instance` field through the `loki.instance` configuration key.
+```
