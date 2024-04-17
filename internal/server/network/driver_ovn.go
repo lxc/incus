@@ -716,7 +716,7 @@ func (n *ovn) getUnderlayInfo() (uint32, net.IP, error) {
 		return 0, nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	encapIP, err := vswitch.OVNEncapIP()
+	encapIP, err := vswitch.GetOVNEncapIP(context.TODO())
 	if err != nil {
 		return 0, nil, fmt.Errorf("Failed getting OVN enscapsulation IP from OVS: %w", err)
 	}
@@ -1374,7 +1374,7 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 	}
 
 	// Associate OVS bridge to logical OVN provider.
-	err = vswitch.OVNBridgeMappingAdd(vars.ovsBridge, uplinkNet.Name())
+	err = vswitch.AddOVNBridgeMapping(context.TODO(), vars.ovsBridge, uplinkNet.Name())
 	if err != nil {
 		return fmt.Errorf("Failed to associate uplink OVS bridge %q to OVN provider %q: %w", vars.ovsBridge, uplinkNet.Name(), err)
 	}
@@ -1398,7 +1398,7 @@ func (n *ovn) startUplinkPortBridgeOVS(uplinkNet Network, bridgeDevice string) e
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	err = vswitch.OVNBridgeMappingAdd(bridgeDevice, uplinkNet.Name())
+	err = vswitch.AddOVNBridgeMapping(context.TODO(), bridgeDevice, uplinkNet.Name())
 	if err != nil {
 		return fmt.Errorf("Failed to associate uplink OVS bridge %q to OVN provider %q: %w", bridgeDevice, uplinkNet.Name(), err)
 	}
@@ -1520,7 +1520,7 @@ func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 	}
 
 	// Associate OVS bridge to logical OVN provider.
-	err = vswitch.OVNBridgeMappingAdd(vars.ovsBridge, uplinkNet.Name())
+	err = vswitch.AddOVNBridgeMapping(context.TODO(), vars.ovsBridge, uplinkNet.Name())
 	if err != nil {
 		return fmt.Errorf("Failed to associate uplink OVS bridge %q to OVN provider %q: %w", vars.ovsBridge, uplinkNet.Name(), err)
 	}
@@ -1632,7 +1632,7 @@ func (n *ovn) deleteUplinkPortBridgeNative(uplinkNet Network) error {
 				return fmt.Errorf("Failed to connect to OVS: %w", err)
 			}
 
-			err = vswitch.OVNBridgeMappingDelete(vars.ovsBridge, uplinkNet.Name())
+			err = vswitch.RemoveOVNBridgeMapping(context.TODO(), vars.ovsBridge, uplinkNet.Name())
 			if err != nil {
 				return err
 			}
@@ -1682,7 +1682,7 @@ func (n *ovn) deleteUplinkPortBridgeOVS(uplinkNet Network, ovsBridge string) err
 			return fmt.Errorf("Failed to connect to OVS: %w", err)
 		}
 
-		err = vswitch.OVNBridgeMappingDelete(ovsBridge, uplinkNet.Name())
+		err = vswitch.RemoveOVNBridgeMapping(context.TODO(), ovsBridge, uplinkNet.Name())
 		if err != nil {
 			return err
 		}
@@ -1729,7 +1729,7 @@ func (n *ovn) deleteUplinkPortPhysical(uplinkNet Network) error {
 		if !uplinkUsed {
 			releaseIF = true
 
-			err = vswitch.OVNBridgeMappingDelete(vars.ovsBridge, uplinkNet.Name())
+			err = vswitch.RemoveOVNBridgeMapping(context.TODO(), vars.ovsBridge, uplinkNet.Name())
 			if err != nil {
 				return err
 			}

@@ -383,7 +383,7 @@ func SRIOVFindFreeVFAndRepresentor(state *state.State, ovsBridgeName string) (st
 	}
 
 	// Get all ports on the integration bridge.
-	ports, err := vswitch.BridgePortList(ovsBridgeName)
+	ports, err := vswitch.GetBridgePorts(context.TODO(), ovsBridgeName)
 	if err != nil {
 		return "", "", "", -1, fmt.Errorf("Failed to get port list: %w", err)
 	}
