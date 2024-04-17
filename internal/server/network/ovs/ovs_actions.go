@@ -486,41 +486,56 @@ func (o *VSwitch) AddOVNBridgeMapping(ctx context.Context, bridgeName string, pr
 	return nil
 }
 
-// OVNBridgeMappingDelete deletes an OVN bridge mapping between a bridge and the logical provider name.
-func (o *VSwitch) OVNBridgeMappingDelete(bridgeName string, providerName string) error {
+// RemoveOVNBridgeMapping deletes an OVN bridge mapping between a bridge and the logical provider name.
+func (o *VSwitch) RemoveOVNBridgeMapping(ctx context.Context, bridgeName string, providerName string) error {
+	// Prevent concurrent changes.
 	ovnBridgeMappingMutex.Lock()
 	defer ovnBridgeMappingMutex.Unlock()
 
-	mappings, err := o.GetOVNBridgeMappings(context.TODO(), bridgeName)
+	// Get the root switch.
+	vSwitch := &ovsSwitch.OpenvSwitch{
+		UUID: o.rootUUID,
+	}
+
+	err := o.client.Get(ctx, vSwitch)
 	if err != nil {
 		return err
 	}
 
-	changed := false
-	newMappings := make([]string, 0, len(mappings))
-	matchMapping := fmt.Sprintf("%s:%s", providerName, bridgeName)
+	// Get the current bridge mappings.
+	val := vSwitch.ExternalIDs["ovn-bridge-mappings"]
+	mappings := strings.SplitN(val, ",", -1)
+	newMappings := []string{}
+
+	// Remove the mapping from the list.
+	currentMapping := fmt.Sprintf("%s:%s", providerName, bridgeName)
 	for _, mapping := range mappings {
-		if mapping != matchMapping {
-			newMappings = append(newMappings, mapping)
-		} else {
-			changed = true
+		if mapping == currentMapping {
+			continue
 		}
+
+		newMappings = append(newMappings, mapping)
 	}
 
-	if changed {
-		if len(newMappings) < 1 {
-			// Remove mapping key in the database.
-			_, err = subprocess.RunCommand("ovs-vsctl", "remove", "open_vswitch", ".", "external-ids", "ovn-bridge-mappings")
-			if err != nil {
-				return err
-			}
-		} else {
-			// Set updated mapping string back into the database.
-			_, err = subprocess.RunCommand("ovs-vsctl", "set", "open_vswitch", ".", fmt.Sprintf("external-ids:ovn-bridge-mappings=%s", strings.Join(newMappings, ",")))
-			if err != nil {
-				return err
-			}
-		}
+	// If no more mappings, remove the key completely.
+	if len(newMappings) == 0 {
+		delete(vSwitch.ExternalIDs, "ovn-bridge-mappings")
+	}
+
+	// Update the record.
+	operations, err := o.client.Where(vSwitch).Update(vSwitch)
+	if err != nil {
+		return err
+	}
+
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
