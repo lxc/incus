@@ -54,7 +54,6 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
   This command targets the global database and works in both local
   and cluster mode.`))
 	cmd.RunE = c.Run
-	cmd.Hidden = true
 
 	return cmd
 }
