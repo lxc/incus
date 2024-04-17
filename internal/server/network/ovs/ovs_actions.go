@@ -382,26 +382,22 @@ func (o *VSwitch) GetChassisID(ctx context.Context) (string, error) {
 	return vSwitch.ExternalIDs["system-id"], nil
 }
 
-// OVNEncapIP returns the enscapsulation IP used for OVN underlay tunnels.
-func (o *VSwitch) OVNEncapIP() (net.IP, error) {
-	// ovs-vsctl's get command doesn't support its --format flag, so we always get the output quoted.
-	// However ovs-vsctl's find and list commands don't support retrieving a single column's map field.
-	// And ovs-vsctl's JSON output is unfriendly towards statically typed languages as it mixes data types
-	// in a slice. So stick with "get" command and use Go's strconv.Unquote to return the actual values.
-	encapIPStr, err := subprocess.RunCommand("ovs-vsctl", "get", "open_vswitch", ".", "external_ids:ovn-encap-ip")
+// GetOVNEncapIP returns the enscapsulation IP used for OVN underlay tunnels.
+func (o *VSwitch) GetOVNEncapIP(ctx context.Context) (net.IP, error) {
+	// Get the root switch.
+	vSwitch := &ovsSwitch.OpenvSwitch{
+		UUID: o.rootUUID,
+	}
+
+	err := o.client.Get(ctx, vSwitch)
 	if err != nil {
 		return nil, err
 	}
 
-	encapIPStr = strings.TrimSpace(encapIPStr)
-	encapIPStr, err = unquote(encapIPStr)
-	if err != nil {
-		return nil, fmt.Errorf("Failed unquoting: %w", err)
-	}
-
-	encapIP := net.ParseIP(encapIPStr)
+	// Return the system-id.
+	encapIP := net.ParseIP(vSwitch.ExternalIDs["ovn-encap-ip"])
 	if encapIP == nil {
-		return nil, fmt.Errorf("Invalid ovn-encap-ip address")
+		return nil, fmt.Errorf("Invalid ovn-encap-ip address %q", vSwitch.ExternalIDs["ovn-encap-ip"])
 	}
 
 	return encapIP, nil
