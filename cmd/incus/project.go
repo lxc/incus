@@ -93,6 +93,11 @@ func (c *cmdProjectCreate) Command() *cobra.Command {
 	cmd.Short = i18n.G("Create projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create projects`))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus project create p1
+
+incus project create p1 < config.yaml
+    Create a project with configuration from config.yaml`))
+
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new project")+"``")
 
 	cmd.RunE = c.Run
@@ -109,10 +114,25 @@ func (c *cmdProjectCreate) Command() *cobra.Command {
 }
 
 func (c *cmdProjectCreate) Run(cmd *cobra.Command, args []string) error {
+	var stdinData api.ProjectPut
+
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
 	if exit {
 		return err
+	}
+
+	// If stdin isn't a terminal, read text from it
+	if !termios.IsTerminal(getStdinFd()) {
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+
+		err = yaml.Unmarshal(contents, &stdinData)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Parse remote
@@ -130,15 +150,18 @@ func (c *cmdProjectCreate) Run(cmd *cobra.Command, args []string) error {
 	// Create the project
 	project := api.ProjectsPost{}
 	project.Name = resource.name
+	project.ProjectPut = stdinData
 
-	project.Config = map[string]string{}
-	for _, entry := range c.flagConfig {
-		key, value, found := strings.Cut(entry, "=")
-		if !found {
-			return fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
+	if project.Config == nil {
+		project.Config = map[string]string{}
+		for _, entry := range c.flagConfig {
+			key, value, found := strings.Cut(entry, "=")
+			if !found {
+				return fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
+			}
+
+			project.Config[key] = value
 		}
-
-		project.Config[key] = value
 	}
 
 	err = resource.server.CreateProject(project)
