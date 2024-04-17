@@ -541,24 +541,34 @@ func (o *VSwitch) RemoveOVNBridgeMapping(ctx context.Context, bridgeName string,
 	return nil
 }
 
-// BridgePortList returns a list of ports that are connected to the bridge.
-func (o *VSwitch) BridgePortList(bridgeName string) ([]string, error) {
-	// Clear existing ports that were formerly associated to ovnSwitchPortName.
-	portString, err := subprocess.RunCommand("ovs-vsctl", "list-ports", bridgeName)
+// GetBridgePorts returns a list of ports that are connected to the bridge.
+func (o *VSwitch) GetBridgePorts(ctx context.Context, bridgeName string) ([]string, error) {
+	// Get the bridge.
+	bridge := &ovsSwitch.Bridge{
+		Name: bridgeName,
+	}
+
+	err := o.client.Get(ctx, bridge)
 	if err != nil {
 		return nil, err
 	}
 
-	ports := []string{}
-
-	portString = strings.TrimSpace(portString)
-	if portString != "" {
-		for _, port := range strings.Split(portString, "\n") {
-			ports = append(ports, strings.TrimSpace(port))
+	// Get the ports.
+	portNames := make([]string, 0, len(bridge.Ports))
+	for _, portUUID := range bridge.Ports {
+		port := &ovsSwitch.Port{
+			UUID: portUUID,
 		}
+
+		err = o.client.Get(ctx, port)
+		if err != nil {
+			return nil, err
+		}
+
+		portNames = append(portNames, port.Name)
 	}
 
-	return ports, nil
+	return portNames, nil
 }
 
 // GetHardwareOffload returns true if hardware offloading is enabled.
