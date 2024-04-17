@@ -405,6 +405,7 @@ func (o *VSwitch) GetOVNEncapIP(ctx context.Context) (net.IP, error) {
 
 // GetOVNBridgeMappings gets the current OVN bridge mappings.
 func (o *VSwitch) GetOVNBridgeMappings(ctx context.Context, bridgeName string) ([]string, error) {
+	// Get the root switch.
 	vSwitch := &ovsSwitch.OpenvSwitch{
 		UUID: o.rootUUID,
 	}
@@ -414,6 +415,7 @@ func (o *VSwitch) GetOVNBridgeMappings(ctx context.Context, bridgeName string) (
 		return nil, err
 	}
 
+	// Return the bridge mappings.
 	val := vSwitch.ExternalIDs["ovn-bridge-mappings"]
 	if val == "" {
 		return []string{}, nil
