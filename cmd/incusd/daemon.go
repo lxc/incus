@@ -790,7 +790,16 @@ func (d *Daemon) setupLoki(URL string, cert string, key string, caCert string, i
 
 	// Figure out the instance name.
 	if instanceName == "" {
-		instanceName = d.serverName
+		if d.serverClustered {
+			instanceName = d.serverName
+		} else {
+			hostname, err := os.Hostname()
+			if err != nil {
+				return err
+			}
+
+			instanceName = hostname
+		}
 	}
 
 	// Start a new client.
