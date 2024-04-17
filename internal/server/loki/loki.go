@@ -33,15 +33,17 @@ const (
 type config struct {
 	batchSize int
 	batchWait time.Duration
-	caCert    string
-	username  string
-	password  string
-	labels    []string
-	instance  string
-	logLevel  string
-	timeout   time.Duration
-	types     []string
-	url       *url.URL
+
+	caCert   string
+	username string
+	password string
+	labels   []string
+	instance string
+	logLevel string
+	types    []string
+
+	timeout time.Duration
+	url     *url.URL
 }
 
 type entry struct {
