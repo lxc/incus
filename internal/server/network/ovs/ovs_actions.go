@@ -307,9 +307,45 @@ func (o *VSwitch) DeleteBridgePort(ctx context.Context, bridgeName string, portN
 	return nil
 }
 
-// BridgePortSet sets port options.
-func (o *VSwitch) BridgePortSet(portName string, options ...string) error {
-	_, err := subprocess.RunCommand("ovs-vsctl", append([]string{"set", "port", portName}, options...)...)
+// UpdateBridgePortVLANs sets the VLAN mode and VLAN IDs on the port.
+func (o *VSwitch) UpdateBridgePortVLANs(ctx context.Context, portName string, mode string, tag int, trunks []int) error {
+	// Get the port.
+	port := &ovsSwitch.Port{
+		Name: portName,
+	}
+
+	err := o.client.Get(ctx, port)
+	if err != nil {
+		return err
+	}
+
+	// Set the options.
+	if mode != "" {
+		port.VLANMode = &portName
+	} else {
+		port.VLANMode = nil
+	}
+
+	if tag > 0 {
+		port.Tag = &tag
+	} else {
+		port.Tag = nil
+	}
+
+	port.Trunks = trunks
+
+	// Update the record.
+	operations, err := o.client.Where(port).Update(port)
+	if err != nil {
+		return err
+	}
+
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
