@@ -424,16 +424,33 @@ func (o *VSwitch) GetOVNBridgeMappings(ctx context.Context, bridgeName string) (
 	return strings.SplitN(val, ",", -1), nil
 }
 
-// OVNBridgeMappingAdd appends an OVN bridge mapping between a bridge and the logical provider name.
-func (o *VSwitch) OVNBridgeMappingAdd(bridgeName string, providerName string) error {
+// AddOVNBridgeMapping appends an OVN bridge mapping between a bridge and the logical provider name.
+func (o *VSwitch) AddOVNBridgeMapping(ctx context.Context, bridgeName string, providerName string) error {
+	// Prevent concurrent changes.
 	ovnBridgeMappingMutex.Lock()
 	defer ovnBridgeMappingMutex.Unlock()
 
-	mappings, err := o.GetOVNBridgeMappings(context.TODO(), bridgeName)
+	// Get the root switch.
+	vSwitch := &ovsSwitch.OpenvSwitch{
+		UUID: o.rootUUID,
+	}
+
+	err := o.client.Get(ctx, vSwitch)
 	if err != nil {
 		return err
 	}
 
+	// Get the current bridge mappings.
+	val := vSwitch.ExternalIDs["ovn-bridge-mappings"]
+
+	var mappings []string
+	if val != "" {
+		mappings = strings.SplitN(val, ",", -1)
+	} else {
+		mappings = []string{}
+	}
+
+	// Check if the mapping is already present.
 	newMapping := fmt.Sprintf("%s:%s", providerName, bridgeName)
 	for _, mapping := range mappings {
 		if mapping == newMapping {
@@ -441,10 +458,27 @@ func (o *VSwitch) OVNBridgeMappingAdd(bridgeName string, providerName string) er
 		}
 	}
 
+	// Add the new mapping.
 	mappings = append(mappings, newMapping)
 
-	// Set new mapping string back into the database.
-	_, err = subprocess.RunCommand("ovs-vsctl", "set", "open_vswitch", ".", fmt.Sprintf("external-ids:ovn-bridge-mappings=%s", strings.Join(mappings, ",")))
+	if vSwitch.ExternalIDs == nil {
+		vSwitch.ExternalIDs = map[string]string{}
+	}
+
+	vSwitch.ExternalIDs["ovn-bridge-mappings"] = strings.Join(mappings, ",")
+
+	// Update the record.
+	operations, err := o.client.Where(vSwitch).Update(vSwitch)
+	if err != nil {
+		return err
+	}
+
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
