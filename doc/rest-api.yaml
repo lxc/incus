@@ -3569,6 +3569,11 @@ definitions:
                 example: example.net
                 type: string
                 x-go-name: Name
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
             used_by:
                 description: List of URLs of objects using this network zone
                 example:
@@ -10959,6 +10964,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve network zones from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -11418,6 +11428,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve network zones from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
