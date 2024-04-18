@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-17 18:33+0200\n"
+"POT-Creation-Date: 2024-04-18 10:59+0200\n"
 "PO-Revision-Date: 2024-02-09 19:02+0000\n"
 "Last-Translator: Alberto Donato <alberto.donato@gmail.com>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/incus/cli/it/>\n"
@@ -744,7 +744,7 @@ msgstr ""
 msgid "<target>"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:141
+#: cmd/incus/admin_sql.go:140
 #, c-format
 msgid "=> Query %d:"
 msgstr ""
@@ -1749,12 +1749,12 @@ msgstr "Creazione del container in corso"
 msgid "Create instance backup: %w"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/snapshot.go:75
+#: cmd/incus/snapshot.go:77
 #, fuzzy
 msgid "Create instance snapshot"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/snapshot.go:76
+#: cmd/incus/snapshot.go:78
 msgid ""
 "Create instance snapshots\n"
 "\n"
@@ -1944,7 +1944,7 @@ msgstr ""
 msgid "Delete instance file templates"
 msgstr ""
 
-#: cmd/incus/snapshot.go:182 cmd/incus/snapshot.go:183
+#: cmd/incus/snapshot.go:202 cmd/incus/snapshot.go:203
 #, fuzzy
 msgid "Delete instance snapshots"
 msgstr "Creazione del container in corso"
@@ -2140,10 +2140,10 @@ msgstr ""
 #: cmd/incus/remote.go:38 cmd/incus/remote.go:102 cmd/incus/remote.go:630
 #: cmd/incus/remote.go:676 cmd/incus/remote.go:712 cmd/incus/remote.go:796
 #: cmd/incus/remote.go:875 cmd/incus/remote.go:938 cmd/incus/remote.go:984
-#: cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21 cmd/incus/snapshot.go:29
-#: cmd/incus/snapshot.go:76 cmd/incus/snapshot.go:183 cmd/incus/snapshot.go:268
-#: cmd/incus/snapshot.go:365 cmd/incus/snapshot.go:426
-#: cmd/incus/snapshot.go:508 cmd/incus/storage.go:32 cmd/incus/storage.go:95
+#: cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21 cmd/incus/snapshot.go:31
+#: cmd/incus/snapshot.go:78 cmd/incus/snapshot.go:203 cmd/incus/snapshot.go:288
+#: cmd/incus/snapshot.go:385 cmd/incus/snapshot.go:446
+#: cmd/incus/snapshot.go:528 cmd/incus/storage.go:32 cmd/incus/storage.go:95
 #: cmd/incus/storage.go:177 cmd/incus/storage.go:235 cmd/incus/storage.go:367
 #: cmd/incus/storage.go:449 cmd/incus/storage.go:629 cmd/incus/storage.go:716
 #: cmd/incus/storage.go:820 cmd/incus/storage.go:914
@@ -2641,7 +2641,7 @@ msgstr ""
 msgid "Expected a struct, got a %v"
 msgstr ""
 
-#: cmd/incus/info.go:743 cmd/incus/info.go:794 cmd/incus/snapshot.go:346
+#: cmd/incus/info.go:743 cmd/incus/info.go:794 cmd/incus/snapshot.go:366
 #: cmd/incus/storage_volume.go:1440 cmd/incus/storage_volume.go:1490
 #: cmd/incus/storage_volume.go:2575
 msgid "Expires at"
@@ -2951,7 +2951,7 @@ msgstr "Il nome del container è: %s"
 msgid "Failed to listen for connection: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/admin_sql.go:116
+#: cmd/incus/admin_sql.go:115
 #, fuzzy, c-format
 msgid "Failed to parse dump response: %w"
 msgstr "Accetta certificato"
@@ -2966,7 +2966,7 @@ msgstr "Accetta certificato"
 msgid "Failed to parse the preseed: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/admin_init_preseed.go:22 cmd/incus/admin_sql.go:86
+#: cmd/incus/admin_init_preseed.go:22 cmd/incus/admin_sql.go:85
 #, fuzzy, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "Impossible leggere da stdin: %s"
@@ -2991,7 +2991,7 @@ msgstr "Accetta certificato"
 msgid "Failed to render the config: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/admin_sql.go:110
+#: cmd/incus/admin_sql.go:109
 #, fuzzy, c-format
 msgid "Failed to request dump: %w"
 msgstr "Accetta certificato"
@@ -3151,7 +3151,7 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:87 cmd/incus/network_zone.go:764
 #: cmd/incus/operation.go:109 cmd/incus/profile.go:706 cmd/incus/project.go:473
-#: cmd/incus/project.go:918 cmd/incus/remote.go:716 cmd/incus/snapshot.go:271
+#: cmd/incus/project.go:918 cmd/incus/remote.go:716 cmd/incus/snapshot.go:291
 #: cmd/incus/storage.go:631 cmd/incus/storage_bucket.go:467
 #: cmd/incus/storage_bucket.go:782 cmd/incus/storage_volume.go:1539
 #: cmd/incus/storage_volume.go:2492 cmd/incus/warning.go:94
@@ -3461,7 +3461,7 @@ msgstr ""
 msgid "If the image alias already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/snapshot.go:87 cmd/incus/storage_volume.go:2275
+#: cmd/incus/snapshot.go:91 cmd/incus/storage_volume.go:2275
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
@@ -3471,7 +3471,7 @@ msgid ""
 "run: incus admin init"
 msgstr ""
 
-#: cmd/incus/snapshot.go:86
+#: cmd/incus/snapshot.go:90
 msgid "Ignore any configured auto-expiry for the instance"
 msgstr ""
 
@@ -3704,7 +3704,7 @@ msgstr ""
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:79
+#: cmd/incus/admin_sql.go:78
 msgid "Invalid database type"
 msgstr ""
 
@@ -3718,7 +3718,7 @@ msgstr "Il nome del container è: %s"
 msgid "Invalid format: %s"
 msgstr "Proprietà errata: %s"
 
-#: cmd/incus/snapshot.go:129
+#: cmd/incus/snapshot.go:147
 #, fuzzy, c-format
 msgid "Invalid instance name: %s"
 msgstr "Il nome del container è: %s"
@@ -3997,7 +3997,7 @@ msgstr "Creazione del container in corso"
 msgid "List instance file templates"
 msgstr ""
 
-#: cmd/incus/snapshot.go:267 cmd/incus/snapshot.go:268
+#: cmd/incus/snapshot.go:287 cmd/incus/snapshot.go:288
 #, fuzzy
 msgid "List instance snapshots"
 msgstr "Creazione del container in corso"
@@ -4421,7 +4421,7 @@ msgstr ""
 msgid "Manage instance metadata files"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/snapshot.go:28 cmd/incus/snapshot.go:29
+#: cmd/incus/snapshot.go:30 cmd/incus/snapshot.go:31
 #, fuzzy
 msgid "Manage instance snapshots"
 msgstr "Creazione del container in corso"
@@ -4790,7 +4790,7 @@ msgstr ""
 msgid "Missing project name"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/admin_sql.go:70
+#: cmd/incus/admin_sql.go:69
 #, fuzzy
 msgid "Missing required arguments"
 msgstr "Il nome del container è: %s"
@@ -4972,7 +4972,7 @@ msgstr ""
 msgid "NVRM Version: %v"
 msgstr ""
 
-#: cmd/incus/info.go:741 cmd/incus/info.go:792 cmd/incus/snapshot.go:344
+#: cmd/incus/info.go:741 cmd/incus/info.go:792 cmd/incus/snapshot.go:364
 #: cmd/incus/storage_volume.go:1438 cmd/incus/storage_volume.go:1488
 #: cmd/incus/storage_volume.go:2573
 msgid "Name"
@@ -5932,7 +5932,7 @@ msgstr "Il nome del container è: %s"
 msgid "Remove rules from an ACL"
 msgstr ""
 
-#: cmd/incus/snapshot.go:232
+#: cmd/incus/snapshot.go:252
 #, c-format
 msgid "Remove snapshot %s from %s (yes/no): "
 msgstr ""
@@ -5954,7 +5954,7 @@ msgstr ""
 msgid "Rename aliases"
 msgstr ""
 
-#: cmd/incus/snapshot.go:364 cmd/incus/snapshot.go:365
+#: cmd/incus/snapshot.go:384 cmd/incus/snapshot.go:385
 #, fuzzy
 msgid "Rename instance snapshots"
 msgstr "Creazione del container in corso"
@@ -6017,7 +6017,7 @@ msgstr ""
 msgid "Request a join token for adding a cluster member"
 msgstr ""
 
-#: cmd/incus/delete.go:37 cmd/incus/snapshot.go:186
+#: cmd/incus/delete.go:37 cmd/incus/snapshot.go:206
 msgid "Require user confirmation"
 msgstr ""
 
@@ -6035,14 +6035,14 @@ msgstr "Creazione del container in corso"
 msgid "Restore cluster member"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/snapshot.go:426
+#: cmd/incus/snapshot.go:446
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
 "If --stateful is passed, then the running state will be restored too."
 msgstr ""
 
-#: cmd/incus/snapshot.go:425
+#: cmd/incus/snapshot.go:445
 #, fuzzy
 msgid "Restore instance snapshots"
 msgstr "Creazione del container in corso"
@@ -6088,7 +6088,7 @@ msgstr "Il nome del container è: %s"
 msgid "Role (admin or read-only)"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:147
+#: cmd/incus/admin_sql.go:146
 #, c-format
 msgid "Rows affected: %d"
 msgstr ""
@@ -6612,7 +6612,7 @@ msgstr ""
 msgid "Show instance or server information"
 msgstr ""
 
-#: cmd/incus/snapshot.go:507 cmd/incus/snapshot.go:508
+#: cmd/incus/snapshot.go:527 cmd/incus/snapshot.go:528
 #, fuzzy
 msgid "Show instance snapshot configuration"
 msgstr "Il nome del container è: %s"
@@ -6819,7 +6819,7 @@ msgstr "Aggiornamento automatico: %s"
 msgid "State: %s"
 msgstr "Aggiornamento automatico: %s"
 
-#: cmd/incus/info.go:744 cmd/incus/snapshot.go:347
+#: cmd/incus/info.go:744 cmd/incus/snapshot.go:367
 msgid "Stateful"
 msgstr ""
 
@@ -6991,7 +6991,7 @@ msgstr ""
 msgid "TYPE"
 msgstr ""
 
-#: cmd/incus/info.go:742 cmd/incus/info.go:793 cmd/incus/snapshot.go:345
+#: cmd/incus/info.go:742 cmd/incus/info.go:793 cmd/incus/snapshot.go:365
 #: cmd/incus/storage_volume.go:1489 cmd/incus/storage_volume.go:2574
 #, fuzzy
 msgid "Taken at"
@@ -7729,7 +7729,7 @@ msgstr ""
 msgid "User aborted configuration"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/cluster.go:625 cmd/incus/delete.go:53 cmd/incus/snapshot.go:237
+#: cmd/incus/cluster.go:625 cmd/incus/delete.go:53 cmd/incus/snapshot.go:257
 msgid "User aborted delete operation"
 msgstr ""
 
@@ -7853,13 +7853,13 @@ msgstr ""
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 
-#: cmd/incus/snapshot.go:437
+#: cmd/incus/snapshot.go:457
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
 msgstr ""
 
-#: cmd/incus/snapshot.go:85
+#: cmd/incus/snapshot.go:89
 msgid "Whether or not to snapshot the instance's running state"
 msgstr ""
 
@@ -8150,7 +8150,7 @@ msgstr "Creazione del container in corso"
 #: cmd/incus/config_device.go:320 cmd/incus/config_device.go:752
 #: cmd/incus/config_metadata.go:52 cmd/incus/config_metadata.go:185
 #: cmd/incus/config_template.go:269 cmd/incus/console.go:35
-#: cmd/incus/snapshot.go:266
+#: cmd/incus/snapshot.go:286
 #, fuzzy
 msgid "[<remote>:]<instance>"
 msgstr "Creazione del container in corso"
@@ -8185,7 +8185,7 @@ msgstr "Creazione del container in corso"
 msgid "[<remote>:]<instance> <name>..."
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/snapshot.go:363
+#: cmd/incus/snapshot.go:383
 #, fuzzy
 msgid "[<remote>:]<instance> <old snapshot name> <new snapshot name>"
 msgstr "Creazione del container in corso"
@@ -8200,12 +8200,12 @@ msgstr "Creazione del container in corso"
 msgid "[<remote>:]<instance> <profiles>"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/snapshot.go:180 cmd/incus/snapshot.go:424
+#: cmd/incus/snapshot.go:200 cmd/incus/snapshot.go:444
 #, fuzzy
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/snapshot.go:506
+#: cmd/incus/snapshot.go:526
 #, fuzzy
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr "Creazione del container in corso"
@@ -8221,7 +8221,7 @@ msgstr "Creazione del container in corso"
 msgid "[<remote>:]<instance> [<remote>:][<instance>]"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/snapshot.go:74
+#: cmd/incus/snapshot.go:76
 #, fuzzy
 msgid "[<remote>:]<instance> [<snapshot name>]"
 msgstr "Creazione del container in corso"
@@ -9051,13 +9051,17 @@ msgid ""
 "    Delete local instance \"c1\"."
 msgstr ""
 
-#: cmd/incus/snapshot.go:81
+#: cmd/incus/snapshot.go:83
 msgid ""
 "incus snapshot create u1 snap0\n"
-"    Create a snapshot of \"u1\" called \"snap0\"."
+"\tCreate a snapshot of \"u1\" called \"snap0\".\n"
+"\n"
+"incus snapshot create u1 snap0 < config.yaml\n"
+"\tCreate a snapshot of \"u1\" called \"snap0\" with the configuration from "
+"\"config.yaml\"."
 msgstr ""
 
-#: cmd/incus/snapshot.go:430
+#: cmd/incus/snapshot.go:450
 msgid ""
 "incus snapshot create u1 snap0\n"
 "Create the snapshot.\n"
@@ -9177,7 +9181,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:624 cmd/incus/config_trust.go:493
 #: cmd/incus/delete.go:52 cmd/incus/image.go:979 cmd/incus/image.go:984
-#: cmd/incus/image.go:1184 cmd/incus/snapshot.go:236
+#: cmd/incus/image.go:1184 cmd/incus/snapshot.go:256
 msgid "yes"
 msgstr "si"
 

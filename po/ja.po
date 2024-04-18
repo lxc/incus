@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-17 18:33+0200\n"
+"POT-Creation-Date: 2024-04-18 10:59+0200\n"
 "PO-Revision-Date: 2024-02-24 03:02+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -733,7 +733,7 @@ msgstr ""
 msgid "<target>"
 msgstr "<target>"
 
-#: cmd/incus/admin_sql.go:141
+#: cmd/incus/admin_sql.go:140
 #, c-format
 msgid "=> Query %d:"
 msgstr "=> クエリ %d:"
@@ -1779,11 +1779,11 @@ msgstr "インスタンス内にファイル、もしくはディレクトリー
 msgid "Create instance backup: %w"
 msgstr "インスタンスのバックアップを作成します: %w"
 
-#: cmd/incus/snapshot.go:75
+#: cmd/incus/snapshot.go:77
 msgid "Create instance snapshot"
 msgstr "インスタンスのスナップショットを作成します"
 
-#: cmd/incus/snapshot.go:76
+#: cmd/incus/snapshot.go:78
 msgid ""
 "Create instance snapshots\n"
 "\n"
@@ -1971,7 +1971,7 @@ msgstr "イメージを削除します"
 msgid "Delete instance file templates"
 msgstr "インスタンスのファイルテンプレートを削除します"
 
-#: cmd/incus/snapshot.go:182 cmd/incus/snapshot.go:183
+#: cmd/incus/snapshot.go:202 cmd/incus/snapshot.go:203
 msgid "Delete instance snapshots"
 msgstr "インスタンスのスナップショットを削除します"
 
@@ -2161,10 +2161,10 @@ msgstr "警告を削除します"
 #: cmd/incus/remote.go:38 cmd/incus/remote.go:102 cmd/incus/remote.go:630
 #: cmd/incus/remote.go:676 cmd/incus/remote.go:712 cmd/incus/remote.go:796
 #: cmd/incus/remote.go:875 cmd/incus/remote.go:938 cmd/incus/remote.go:984
-#: cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21 cmd/incus/snapshot.go:29
-#: cmd/incus/snapshot.go:76 cmd/incus/snapshot.go:183 cmd/incus/snapshot.go:268
-#: cmd/incus/snapshot.go:365 cmd/incus/snapshot.go:426
-#: cmd/incus/snapshot.go:508 cmd/incus/storage.go:32 cmd/incus/storage.go:95
+#: cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21 cmd/incus/snapshot.go:31
+#: cmd/incus/snapshot.go:78 cmd/incus/snapshot.go:203 cmd/incus/snapshot.go:288
+#: cmd/incus/snapshot.go:385 cmd/incus/snapshot.go:446
+#: cmd/incus/snapshot.go:528 cmd/incus/storage.go:32 cmd/incus/storage.go:95
 #: cmd/incus/storage.go:177 cmd/incus/storage.go:235 cmd/incus/storage.go:367
 #: cmd/incus/storage.go:449 cmd/incus/storage.go:629 cmd/incus/storage.go:716
 #: cmd/incus/storage.go:820 cmd/incus/storage.go:914
@@ -2707,7 +2707,7 @@ msgstr ""
 msgid "Expected a struct, got a %v"
 msgstr "構造体を期待しましたが、%v が返されました"
 
-#: cmd/incus/info.go:743 cmd/incus/info.go:794 cmd/incus/snapshot.go:346
+#: cmd/incus/info.go:743 cmd/incus/info.go:794 cmd/incus/snapshot.go:366
 #: cmd/incus/storage_volume.go:1440 cmd/incus/storage_volume.go:1490
 #: cmd/incus/storage_volume.go:2575
 msgid "Expires at"
@@ -3017,7 +3017,7 @@ msgstr "クラスターへの join に失敗しました: %w"
 msgid "Failed to listen for connection: %w"
 msgstr "コネクションのリッスンに失敗しました: %w"
 
-#: cmd/incus/admin_sql.go:116
+#: cmd/incus/admin_sql.go:115
 #, c-format
 msgid "Failed to parse dump response: %w"
 msgstr "ダンプレスポンスの読み取りに失敗しました: %w"
@@ -3032,7 +3032,7 @@ msgstr "サーバーの読み取りに失敗しました: %w"
 msgid "Failed to parse the preseed: %w"
 msgstr "%q の作成に失敗しました: %w"
 
-#: cmd/incus/admin_init_preseed.go:22 cmd/incus/admin_sql.go:86
+#: cmd/incus/admin_init_preseed.go:22 cmd/incus/admin_sql.go:85
 #, fuzzy, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "標準入力から読み込めません: %w"
@@ -3057,7 +3057,7 @@ msgstr "証明書の作成に失敗しました: %w"
 msgid "Failed to render the config: %w"
 msgstr "%q の作成に失敗しました: %w"
 
-#: cmd/incus/admin_sql.go:110
+#: cmd/incus/admin_sql.go:109
 #, fuzzy, c-format
 msgid "Failed to request dump: %w"
 msgstr "%q の作成に失敗しました: %w"
@@ -3230,7 +3230,7 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:87 cmd/incus/network_zone.go:764
 #: cmd/incus/operation.go:109 cmd/incus/profile.go:706 cmd/incus/project.go:473
-#: cmd/incus/project.go:918 cmd/incus/remote.go:716 cmd/incus/snapshot.go:271
+#: cmd/incus/project.go:918 cmd/incus/remote.go:716 cmd/incus/snapshot.go:291
 #: cmd/incus/storage.go:631 cmd/incus/storage_bucket.go:467
 #: cmd/incus/storage_bucket.go:782 cmd/incus/storage_volume.go:1539
 #: cmd/incus/storage_volume.go:2492 cmd/incus/warning.go:94
@@ -3542,7 +3542,7 @@ msgstr ""
 "存在するスナップショット名の場合は既存のスナップショットを削除したあとに新し"
 "いスナップショットを作成します"
 
-#: cmd/incus/snapshot.go:87 cmd/incus/storage_volume.go:2275
+#: cmd/incus/snapshot.go:91 cmd/incus/storage_volume.go:2275
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 "存在するスナップショット名の場合は既存のスナップショットを削除したあとに新し"
@@ -3555,7 +3555,7 @@ msgid ""
 "run: incus admin init"
 msgstr "初めてこのマシンで LXD を使う場合、lxd init と実行する必要があります"
 
-#: cmd/incus/snapshot.go:86
+#: cmd/incus/snapshot.go:90
 msgid "Ignore any configured auto-expiry for the instance"
 msgstr "設定されている自動でのインスタンスの有効期限設定を無視します"
 
@@ -3796,7 +3796,7 @@ msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 "不正な設定項目のカラムフォーマットです (フィールド数が多すぎます): '%s'"
 
-#: cmd/incus/admin_sql.go:79
+#: cmd/incus/admin_sql.go:78
 #, fuzzy
 msgid "Invalid database type"
 msgstr "不正な送り先 %s"
@@ -3811,7 +3811,7 @@ msgstr "不正なインスタンス名: %s"
 msgid "Invalid format: %s"
 msgstr "不正なフォーマット %s"
 
-#: cmd/incus/snapshot.go:129
+#: cmd/incus/snapshot.go:147
 #, c-format
 msgid "Invalid instance name: %s"
 msgstr "不正なインスタンス名: %s"
@@ -4112,7 +4112,7 @@ msgstr "インスタンスのデバイスを一覧表示します"
 msgid "List instance file templates"
 msgstr "インスタンスのファイルテンプレートを一覧表示します"
 
-#: cmd/incus/snapshot.go:267 cmd/incus/snapshot.go:268
+#: cmd/incus/snapshot.go:287 cmd/incus/snapshot.go:288
 #, fuzzy
 msgid "List instance snapshots"
 msgstr "インスタンスのスナップショットを作成します"
@@ -4685,7 +4685,7 @@ msgstr "インスタンスのファイルテンプレートを管理します"
 msgid "Manage instance metadata files"
 msgstr "インスタンスのメタデータファイルを管理します"
 
-#: cmd/incus/snapshot.go:28 cmd/incus/snapshot.go:29
+#: cmd/incus/snapshot.go:30 cmd/incus/snapshot.go:31
 #, fuzzy
 msgid "Manage instance snapshots"
 msgstr "インスタンスのスナップショットを作成します"
@@ -5036,7 +5036,7 @@ msgstr "プロファイル名を指定する必要があります"
 msgid "Missing project name"
 msgstr "プロジェクト名を指定する必要があります"
 
-#: cmd/incus/admin_sql.go:70
+#: cmd/incus/admin_sql.go:69
 #, fuzzy
 msgid "Missing required arguments"
 msgstr "プロファイル名を指定する必要があります"
@@ -5237,7 +5237,7 @@ msgstr "NVIDIA 情報:"
 msgid "NVRM Version: %v"
 msgstr "NVRM バージョン: %v"
 
-#: cmd/incus/info.go:741 cmd/incus/info.go:792 cmd/incus/snapshot.go:344
+#: cmd/incus/info.go:741 cmd/incus/info.go:792 cmd/incus/snapshot.go:364
 #: cmd/incus/storage_volume.go:1438 cmd/incus/storage_volume.go:1488
 #: cmd/incus/storage_volume.go:2573
 msgid "Name"
@@ -6241,7 +6241,7 @@ msgstr "クラスターメンバからロールを削除します"
 msgid "Remove rules from an ACL"
 msgstr "ACL からルールを削除します"
 
-#: cmd/incus/snapshot.go:232
+#: cmd/incus/snapshot.go:252
 #, fuzzy, c-format
 msgid "Remove snapshot %s from %s (yes/no): "
 msgstr "%s を消去しますか (yes/no): "
@@ -6263,7 +6263,7 @@ msgstr "クラスターメンバの名前を変更します"
 msgid "Rename aliases"
 msgstr "エイリアスの名前を変更します"
 
-#: cmd/incus/snapshot.go:364 cmd/incus/snapshot.go:365
+#: cmd/incus/snapshot.go:384 cmd/incus/snapshot.go:385
 #, fuzzy
 msgid "Rename instance snapshots"
 msgstr "インスタンスまたはインスタンスのスナップショットの名前を変更します"
@@ -6326,7 +6326,7 @@ msgstr "レンダー: %s (%s)"
 msgid "Request a join token for adding a cluster member"
 msgstr "クラスターメンバーに join するためのトークンを要求します"
 
-#: cmd/incus/delete.go:37 cmd/incus/snapshot.go:186
+#: cmd/incus/delete.go:37 cmd/incus/snapshot.go:206
 msgid "Require user confirmation"
 msgstr "ユーザの確認を要求する"
 
@@ -6342,7 +6342,7 @@ msgstr "インスタンスを再起動します"
 msgid "Restore cluster member"
 msgstr "クラスターメンバーをリストアします"
 
-#: cmd/incus/snapshot.go:426
+#: cmd/incus/snapshot.go:446
 #, fuzzy
 msgid ""
 "Restore instance from snapshots\n"
@@ -6353,7 +6353,7 @@ msgstr ""
 "\n"
 "--stateful オプションを指定すると、インスタンスの実行状態もリストアします。"
 
-#: cmd/incus/snapshot.go:425
+#: cmd/incus/snapshot.go:445
 #, fuzzy
 msgid "Restore instance snapshots"
 msgstr "スナップショットからインスタンスをリストアします"
@@ -6397,7 +6397,7 @@ msgstr "クラスターメンバーに join するためのトークンを失効
 msgid "Role (admin or read-only)"
 msgstr "ロール（admin または read-only）"
 
-#: cmd/incus/admin_sql.go:147
+#: cmd/incus/admin_sql.go:146
 #, c-format
 msgid "Rows affected: %d"
 msgstr "影響を受ける行: %d"
@@ -7003,7 +7003,7 @@ msgstr "インスタンスもしくはサーバの設定を表示します"
 msgid "Show instance or server information"
 msgstr "インスタンスもしくはサーバの情報を表示します"
 
-#: cmd/incus/snapshot.go:507 cmd/incus/snapshot.go:508
+#: cmd/incus/snapshot.go:527 cmd/incus/snapshot.go:528
 #, fuzzy
 msgid "Show instance snapshot configuration"
 msgstr "インスタンスもしくはサーバの設定を表示します"
@@ -7201,7 +7201,7 @@ msgstr "状態"
 msgid "State: %s"
 msgstr "状態: %s"
 
-#: cmd/incus/info.go:744 cmd/incus/snapshot.go:347
+#: cmd/incus/info.go:744 cmd/incus/snapshot.go:367
 msgid "Stateful"
 msgstr "ステートフル"
 
@@ -7373,7 +7373,7 @@ msgstr "TOKEN"
 msgid "TYPE"
 msgstr "TYPE"
 
-#: cmd/incus/info.go:742 cmd/incus/info.go:793 cmd/incus/snapshot.go:345
+#: cmd/incus/info.go:742 cmd/incus/info.go:793 cmd/incus/snapshot.go:365
 #: cmd/incus/storage_volume.go:1489 cmd/incus/storage_volume.go:2574
 msgid "Taken at"
 msgstr "取得日時"
@@ -8175,7 +8175,7 @@ msgstr "コマンドを実行する際のユーザ ID (UID) (デフォルト 0)"
 msgid "User aborted configuration"
 msgstr "ユーザが削除操作を中断しました"
 
-#: cmd/incus/cluster.go:625 cmd/incus/delete.go:53 cmd/incus/snapshot.go:237
+#: cmd/incus/cluster.go:625 cmd/incus/delete.go:53 cmd/incus/snapshot.go:257
 msgid "User aborted delete operation"
 msgstr "ユーザが削除操作を中断しました"
 
@@ -8315,7 +8315,7 @@ msgstr "新しいブリッジは何という名前にしますか?"
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr "スナップショットを含めずにインスタンスのみをバックアップするかどうか"
 
-#: cmd/incus/snapshot.go:437
+#: cmd/incus/snapshot.go:457
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
@@ -8323,7 +8323,7 @@ msgstr ""
 "スナップショットからインスタンスの稼動状態をリストアするかどうか (取得可能な"
 "場合)"
 
-#: cmd/incus/snapshot.go:85
+#: cmd/incus/snapshot.go:89
 msgid "Whether or not to snapshot the instance's running state"
 msgstr "インスタンスの稼動状態のスナップショットを取得するかどうか"
 
@@ -8586,7 +8586,7 @@ msgstr "[<remote>:]<image> [[<remote>:]<image>...]"
 #: cmd/incus/config_device.go:320 cmd/incus/config_device.go:752
 #: cmd/incus/config_metadata.go:52 cmd/incus/config_metadata.go:185
 #: cmd/incus/config_template.go:269 cmd/incus/console.go:35
-#: cmd/incus/snapshot.go:266
+#: cmd/incus/snapshot.go:286
 msgid "[<remote>:]<instance>"
 msgstr "[<remote>:]<instance>"
 
@@ -8615,7 +8615,7 @@ msgstr "[<remote>:]<instance> <name>..."
 msgid "[<remote>:]<instance> <name>..."
 msgstr "[<remote>:]<instance> <name>..."
 
-#: cmd/incus/snapshot.go:363
+#: cmd/incus/snapshot.go:383
 #, fuzzy
 msgid "[<remote>:]<instance> <old snapshot name> <new snapshot name>"
 msgstr ""
@@ -8630,12 +8630,12 @@ msgstr "[<remote>:]<instance> <profile>"
 msgid "[<remote>:]<instance> <profiles>"
 msgstr "[<remote>:]<instance> <profiles>"
 
-#: cmd/incus/snapshot.go:180 cmd/incus/snapshot.go:424
+#: cmd/incus/snapshot.go:200 cmd/incus/snapshot.go:444
 #, fuzzy
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr "[<remote>:]<instance> [<snapshot name>]"
 
-#: cmd/incus/snapshot.go:506
+#: cmd/incus/snapshot.go:526
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr "[<remote>:]<instance> <snapshot>"
 
@@ -8649,7 +8649,7 @@ msgstr "[<remote>:]<instance> <template>"
 msgid "[<remote>:]<instance> [<remote>:][<instance>]"
 msgstr "[<remote>:]<instance> [[<remote>:]<instance>...]"
 
-#: cmd/incus/snapshot.go:74
+#: cmd/incus/snapshot.go:76
 msgid "[<remote>:]<instance> [<snapshot name>]"
 msgstr "[<remote>:]<instance> [<snapshot name>]"
 
@@ -9576,16 +9576,22 @@ msgstr ""
 "lxc query -X DELETE --wait /1.0/instances/c1\n"
 "    ローカルのインスタンス \"c1\" を削除します。"
 
-#: cmd/incus/snapshot.go:81
+#: cmd/incus/snapshot.go:83
 #, fuzzy
 msgid ""
 "incus snapshot create u1 snap0\n"
-"    Create a snapshot of \"u1\" called \"snap0\"."
+"\tCreate a snapshot of \"u1\" called \"snap0\".\n"
+"\n"
+"incus snapshot create u1 snap0 < config.yaml\n"
+"\tCreate a snapshot of \"u1\" called \"snap0\" with the configuration from "
+"\"config.yaml\"."
 msgstr ""
-"lxc snapshot u1 snap0\n"
-"    \"u1\" のスナップショットを \"snap0\" という名前で作成します。"
+"lxc init ubuntu:22.04 u1\n"
+"\n"
+"lxc init ubuntu:22.04 u1 < config.yaml\n"
+"    config.yaml の設定を使ってインスタンスを作成します"
 
-#: cmd/incus/snapshot.go:430
+#: cmd/incus/snapshot.go:450
 #, fuzzy
 msgid ""
 "incus snapshot create u1 snap0\n"
@@ -9738,9 +9744,17 @@ msgstr "y"
 
 #: cmd/incus/cluster.go:624 cmd/incus/config_trust.go:493
 #: cmd/incus/delete.go:52 cmd/incus/image.go:979 cmd/incus/image.go:984
-#: cmd/incus/image.go:1184 cmd/incus/snapshot.go:236
+#: cmd/incus/image.go:1184 cmd/incus/snapshot.go:256
 msgid "yes"
 msgstr "yes"
+
+#, fuzzy
+#~ msgid ""
+#~ "incus snapshot create u1 snap0\n"
+#~ "    Create a snapshot of \"u1\" called \"snap0\"."
+#~ msgstr ""
+#~ "lxc snapshot u1 snap0\n"
+#~ "    \"u1\" のスナップショットを \"snap0\" という名前で作成します。"
 
 #, fuzzy
 #~ msgid "The source server is not clustered"
