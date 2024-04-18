@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"slices"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/termios"
 )
 
 type cmdSnapshot struct {
@@ -78,9 +80,11 @@ func (c *cmdSnapshotCreate) Command() *cobra.Command {
 
 When --stateful is used, attempt to checkpoint the instance's
 running state, including process memory state, TCP connections, ...`))
-	cmd.Example = cli.FormatSection("", i18n.G(
-		`incus snapshot create u1 snap0
-    Create a snapshot of "u1" called "snap0".`))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus snapshot create u1 snap0
+	Create a snapshot of "u1" called "snap0".
+
+incus snapshot create u1 snap0 < config.yaml
+	Create a snapshot of "u1" called "snap0" with the configuration from "config.yaml".`))
 
 	cmd.Flags().BoolVar(&c.flagStateful, "stateful", false, i18n.G("Whether or not to snapshot the instance's running state"))
 	cmd.Flags().BoolVar(&c.flagNoExpiry, "no-expiry", false, i18n.G("Ignore any configured auto-expiry for the instance"))
@@ -100,12 +104,26 @@ running state, including process memory state, TCP connections, ...`))
 }
 
 func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
+	var stdinData api.InstanceSnapshotPut
 	conf := c.global.conf
 
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 1, 2)
 	if exit {
 		return err
+	}
+
+	// If stdin isn't a terminal, read text from it
+	if !termios.IsTerminal(getStdinFd()) {
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+
+		err = yaml.Unmarshal(contents, &stdinData)
+		if err != nil {
+			return err
+		}
 	}
 
 	var snapname string
@@ -157,6 +175,8 @@ func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
 
 	if c.flagNoExpiry {
 		req.ExpiresAt = &time.Time{}
+	} else if !stdinData.ExpiresAt.IsZero() {
+		req.ExpiresAt = &stdinData.ExpiresAt
 	}
 
 	op, err := d.CreateInstanceSnapshot(name, req)
