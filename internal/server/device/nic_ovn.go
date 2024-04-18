@@ -433,7 +433,12 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 			}
 
-			if !vswitch.HardwareOffloadingEnabled() {
+			offload, err := vswitch.GetHardwareOffload(context.TODO())
+			if err != nil {
+				return nil, err
+			}
+
+			if !offload {
 				return nil, fmt.Errorf("SR-IOV acceleration requires hardware offloading be enabled in OVS")
 			}
 
@@ -484,7 +489,12 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 			}
 
-			if !vswitch.HardwareOffloadingEnabled() {
+			offload, err := vswitch.GetHardwareOffload(context.TODO())
+			if err != nil {
+				return nil, err
+			}
+
+			if !offload {
 				return nil, fmt.Errorf("SR-IOV acceleration requires hardware offloading be enabled in OVS")
 			}
 
@@ -1169,7 +1179,7 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort, up
 	revert.Add(func() { _ = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, hostName) })
 
 	// Link OVS port to OVN logical port.
-	err = vswitch.InterfaceAssociateOVNSwitchPort(hostName, string(ovnPortName))
+	err = vswitch.AssociateInterfaceOVNSwitchPort(context.TODO(), hostName, string(ovnPortName))
 	if err != nil {
 		return nil, err
 	}
