@@ -182,21 +182,6 @@ type OVNRouterPeering struct {
 	TargetRouterRoutes  []net.IPNet
 }
 
-// LogicalRouterAdd adds a named logical router.
-func (o *NB) LogicalRouterAdd(routerName OVNRouter, mayExist bool) error {
-	args := []string{}
-
-	if mayExist {
-		args = append(args, "--may-exist")
-	}
-
-	_, err := o.nbctl(append(args, "lr-add", string(routerName))...)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 // CreateLogicalRouter adds a named logical router.
 // If mayExist is true, then an existing resource of the same name is not treated as an error.
