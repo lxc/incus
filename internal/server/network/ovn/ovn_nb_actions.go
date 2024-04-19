@@ -182,7 +182,6 @@ type OVNRouterPeering struct {
 	TargetRouterRoutes  []net.IPNet
 }
 
-
 // CreateLogicalRouter adds a named logical router.
 // If mayExist is true, then an existing resource of the same name is not treated as an error.
 func (o *NB) CreateLogicalRouter(ctx context.Context, routerName OVNRouter, mayExist bool) error {
