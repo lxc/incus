@@ -763,6 +763,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 
 					// Open block file (use O_CREATE to support drivers that use image files).
 					to, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+					customWrapper := &SparseFileWrapper{W: to}
 					if err != nil {
 						return fmt.Errorf("Error opening file for writing %q: %w", targetPath, err)
 					}
@@ -786,7 +787,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 					}
 
 					d.Logger().Debug(logMsg, logger.Ctx{"source": srcFile, "target": targetPath})
-					_, err = io.Copy(to, tr)
+					_, err = io.Copy(customWrapper, tr)
 					if err != nil {
 						return err
 					}
