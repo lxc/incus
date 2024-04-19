@@ -2071,7 +2071,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Create logical router.
-	err = n.state.OVNNB.LogicalRouterAdd(n.getRouterName(), update)
+	err = n.state.OVNNB.CreateLogicalRouter(context.TODO(), n.getRouterName(), update)
 	if err != nil {
 		return fmt.Errorf("Failed adding router: %w", err)
 	}

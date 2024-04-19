@@ -182,15 +182,41 @@ type OVNRouterPeering struct {
 	TargetRouterRoutes  []net.IPNet
 }
 
-// LogicalRouterAdd adds a named logical router.
-func (o *NB) LogicalRouterAdd(routerName OVNRouter, mayExist bool) error {
-	args := []string{}
 
-	if mayExist {
-		args = append(args, "--may-exist")
+// CreateLogicalRouter adds a named logical router.
+// If mayExist is true, then an existing resource of the same name is not treated as an error.
+func (o *NB) CreateLogicalRouter(ctx context.Context, routerName OVNRouter, mayExist bool) error {
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
 	}
 
-	_, err := o.nbctl(append(args, "lr-add", string(routerName))...)
+	// Check if already exists.
+	err := o.get(ctx, &logicalRouter)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	if logicalRouter.UUID != "" {
+		if mayExist {
+			return nil
+		}
+
+		return ErrExists
+	}
+
+	// Create the record.
+	operations, err := o.client.Create(&logicalRouter)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
