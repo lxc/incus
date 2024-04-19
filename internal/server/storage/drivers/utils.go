@@ -25,6 +25,11 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+// SparseFileWrapper for creating Sparse Files.
+type SparseFileWrapper struct {
+	W *os.File
+}
+
 // MinBlockBoundary minimum block boundary size to use.
 const MinBlockBoundary = 8192
 
@@ -879,4 +884,40 @@ func wipeBlockHeaders(path string) error {
 // IsContentBlock returns true if the content type is either block or iso.
 func IsContentBlock(contentType ContentType) bool {
 	return contentType == ContentTypeBlock || contentType == ContentTypeISO
+}
+
+// Creates sparse files by skipping null bytes when writing to disk.
+func (sfw *SparseFileWrapper) Write(p []byte) (n int, err error) {
+	originalLength := len(p)
+	start := 0
+
+	for start < len(p) {
+		end := start
+		if p[start] == 0 {
+			for end < len(p) && p[end] == 0 {
+				end++
+			}
+
+			_, err := sfw.W.Seek(int64(end-start), io.SeekCurrent)
+			if err != nil {
+				return start, err
+			}
+
+			start = end
+		} else {
+			// Write non-zero bytes
+			for end < len(p) && p[end] != 0 {
+				end++
+			}
+
+			written, err := sfw.W.Write(p[start:end])
+			if err != nil {
+				return start + written, err
+			}
+
+			start = end
+		}
+	}
+
+	return originalLength, nil
 }
