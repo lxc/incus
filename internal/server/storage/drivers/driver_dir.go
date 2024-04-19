@@ -18,6 +18,10 @@ type dir struct {
 	common
 }
 
+type SparseFileWrapper struct {
+    W *os.File
+}
+
 // load is used to run one-time action per-driver rather than per-pool.
 func (d *dir) load() error {
 	// Register the patches.
