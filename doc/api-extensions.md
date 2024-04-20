@@ -2460,3 +2460,7 @@ containers to another system.
 ## `profiles_all_projects`
 
 This adds support for listing profiles across all projects through the `all-projects` parameter on the `GET /1.0/profiles`API.
+
+## `instances_scriptlet_get_instances`
+
+This allows the instance scriptlet to fetch a list of instances given an optional Project or Location filter.
