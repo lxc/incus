@@ -754,13 +754,49 @@ func (cg *CGroup) SetHugepagesLimit(pageType string, limit int64) error {
 	case Unavailable:
 		return ErrControllerMissing
 	case V1:
-		return cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.limit_in_bytes", pageType), fmt.Sprintf("%d", limit))
-	case V2:
-		if limit == -1 {
-			return cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.max", pageType), "max")
+		// Apply the overall limit.
+		err := cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.limit_in_bytes", pageType), fmt.Sprintf("%d", limit))
+		if err != nil {
+			return err
 		}
 
-		return cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.max", pageType), fmt.Sprintf("%d", limit))
+		// Apply the reserved limit.
+		err = cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.rsvd.limit_in_bytes", pageType), fmt.Sprintf("%d", limit))
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+
+		return nil
+	case V2:
+		if limit == -1 {
+			// Apply the overall limit.
+			err := cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.max", pageType), "max")
+			if err != nil {
+				return err
+			}
+
+			// Apply the reserved limit.
+			err = cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.rsvd.max", pageType), "max")
+			if err != nil && !os.IsNotExist(err) {
+				return err
+			}
+
+			return nil
+		}
+
+		// Apply the overall limit.
+		err := cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.max", pageType), fmt.Sprintf("%d", limit))
+		if err != nil {
+			return err
+		}
+
+		// Apply the reserved limit.
+		err = cg.rw.Set(version, "hugetlb", fmt.Sprintf("hugetlb.%s.rsvd.max", pageType), fmt.Sprintf("%d", limit))
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+
+		return nil
 	}
 
 	return ErrUnknownVersion
