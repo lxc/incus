@@ -9,12 +9,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/minio/madmin-go"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/state"
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
+	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/cancel"
 	"github.com/lxc/incus/v6/shared/logger"
@@ -63,13 +64,29 @@ func (p *Process) AdminUser() string {
 }
 
 // AdminClient returns admin client for the minio process.
-func (p *Process) AdminClient() (*madmin.AdminClient, error) {
-	adminClient, err := madmin.New(p.url.Host, p.username, p.password, false)
+func (p *Process) AdminClient() (*AdminClient, error) {
+	binaryName := "mc"
+	_, err := exec.LookPath(binaryName)
 	if err != nil {
-		return nil, err
+		binaryName = "mcli"
+		_, err = exec.LookPath(binaryName)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return adminClient, nil
+	client := &AdminClient{
+		p,
+		strings.Replace(p.bucketName, ".", "_", -1),
+		binaryName,
+		internalUtil.VarPath(""),
+	}
+
+	if !client.isMinIOClient() {
+		return nil, fmt.Errorf("'%s' binary is not MinIO client", binaryName)
+	}
+
+	return client, nil
 }
 
 // S3Client returns S3 client for the minio process.
@@ -137,7 +154,7 @@ func (p *Process) WaitReady(ctx context.Context) error {
 	}
 
 	for {
-		_, err = adminClient.GetConfig(ctx)
+		err := adminClient.AddAlias(ctx)
 		if err == nil {
 			return nil
 		}
@@ -313,6 +330,17 @@ func EnsureRunning(s *state.State, bucketVol storageDrivers.Volume) (*Process, e
 		miniosMu.Lock()
 		delete(minios, bucketName)
 		miniosMu.Unlock()
+
+		client, err := minioProc.AdminClient()
+		if err != nil {
+			l.Error("Error creating MinIO client", logger.Ctx{"err": err})
+			return
+		}
+
+		err = client.RemoveAlias(context.TODO())
+		if err != nil {
+			l.Error("Error with removing alias", logger.Ctx{"err": err})
+		}
 	}()
 
 	// Wait up to 10s for service to become ready. Pass the minioProc.cancel as parent context so that if the
@@ -323,6 +351,16 @@ func EnsureRunning(s *state.State, bucketVol storageDrivers.Volume) (*Process, e
 	err = minioProc.WaitReady(waitReadyCtx)
 	if err != nil {
 		return nil, fmt.Errorf("Failed connecting to bucket: %w", err)
+	}
+
+	client, err := minioProc.AdminClient()
+	if err != nil {
+		return nil, fmt.Errorf("Error creating MinIO client: %w", err)
+	}
+
+	err = client.AddAlias(context.TODO())
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
 	}
 
 	l.Debug("MinIO bucket ready")
