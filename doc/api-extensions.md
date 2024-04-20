@@ -2464,3 +2464,7 @@ This adds support for listing profiles across all projects through the `all-proj
 ## `instances_scriptlet_get_instances`
 
 This allows the instance scriptlet to fetch a list of instances given an optional Project or Location filter.
+
+## `instances_scriptlet_get_cluster_members`
+
+This allows the instance scriptlet to fetch a list of cluster members given an optional cluster group.
