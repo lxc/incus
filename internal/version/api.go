@@ -413,6 +413,7 @@ var APIExtensions = []string{
 	"container_migration_stateful",
 	"profiles_all_projects",
 	"instances_scriptlet_get_instances",
+	"instances_scriptlet_get_cluster_members",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
