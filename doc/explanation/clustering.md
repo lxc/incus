@@ -201,6 +201,7 @@ The following functions are available to the scriptlet (in addition to those pro
 - `get_cluster_member_resources(member_name)`: Get information about resources on the cluster member. Returns an object with the resource information in the form of [`api.Resources`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Resources). `member_name` is the name of the cluster member to get the resource information for.
 - `get_cluster_member_state(member_name)`: Get the cluster member's state. Returns an object with the cluster member's state in the form of [`api.ClusterMemberState`](https://pkg.go.dev/github.com/lxc/incus/shared/api#ClusterMemberState). `member_name` is the name of the cluster member to get the state for.
 - `get_instance_resources()`: Get information about the resources the instance will require. Returns an object with the resource information in the form of [`scriptlet.InstanceResources`](https://pkg.go.dev/github.com/lxc/incus/shared/api/scriptlet/#InstanceResources).
+- `get_instances(location, project)`: Get a list of instances based on project and/or location filters. Returns the list of instances in the form of [`[]api.Instance`](https://pkg.go.dev/github.com/lxc/incus/shared/api#Instance).
 
 ```{note}
 Field names in the object types are equivalent to the JSON field names in the associated Go types.
