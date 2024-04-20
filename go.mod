@@ -34,7 +34,6 @@ require (
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/mdlayher/vsock v1.2.1
 	github.com/miekg/dns v1.1.58
-	github.com/minio/madmin-go v1.7.5
 	github.com/minio/minio-go/v7 v7.0.69
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -81,7 +80,6 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/google/renameio v1.0.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -92,7 +90,6 @@ require (
 	github.com/klauspost/compress v1.17.7 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/kr/fs v0.1.0 // indirect
-	github.com/lufia/plan9stats v0.0.0-20240226150601-1dcf7310316a // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
@@ -105,10 +102,8 @@ require (
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/muhlemmer/httpforwarded v0.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.0 // indirect
-	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/prometheus/client_golang v1.19.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.52.2 // indirect
@@ -119,20 +114,13 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
-	github.com/secure-io/sio-go v0.3.1 // indirect
-	github.com/shirou/gopsutil/v3 v3.24.3 // indirect
-	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.18.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tinylib/msgp v1.1.9 // indirect
-	github.com/tklauser/go-sysconf v0.3.13 // indirect
-	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
-	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zitadel/logging v0.6.0 // indirect
 	github.com/zitadel/schema v1.3.0 // indirect
 	go.opentelemetry.io/otel v1.25.0 // indirect
