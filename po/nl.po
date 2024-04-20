@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-18 17:10-0400\n"
+"POT-Creation-Date: 2024-04-20 14:44-0400\n"
 "PO-Revision-Date: 2024-01-27 21:01+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
 "org>\n"
@@ -54,7 +54,7 @@ msgstr ""
 "### config:\n"
 "###   size: \"61203283968\""
 
-#: cmd/incus/storage.go:255
+#: cmd/incus/storage.go:279
 msgid ""
 "### This is a YAML representation of a storage pool.\n"
 "### Any line starting with a '#' will be ignored.\n"
@@ -416,7 +416,7 @@ msgstr ""
 "(target_project), bestemming netwerk (target_network) en de status velden "
 "(status fielsds) niet kunnen worden aangepast."
 
-#: cmd/incus/network_zone.go:1248
+#: cmd/incus/network_zone.go:1247
 msgid ""
 "### This is a YAML representation of the network zone record.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -442,7 +442,7 @@ msgstr ""
 "### config:\n"
 "###  user.foo: bah\n"
 
-#: cmd/incus/network_zone.go:556
+#: cmd/incus/network_zone.go:555
 msgid ""
 "### This is a YAML representation of the network zone.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -825,7 +825,7 @@ msgid "Add a cluster member to a cluster group"
 msgstr ""
 "Voeg een clusterlid (cluster member) toe aan de clustergroep (cluster group)"
 
-#: cmd/incus/network_zone.go:1433
+#: cmd/incus/network_zone.go:1432
 msgid "Add a network zone record entry"
 msgstr "Voeg een netwerk (network) zone record toe"
 
@@ -837,7 +837,7 @@ msgstr ""
 msgid "Add backends to a load balancer"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1434
+#: cmd/incus/network_zone.go:1433
 msgid "Add entries to a network zone record"
 msgstr "Voeg een items toe aan een netwerk (network) zone record"
 
@@ -1137,8 +1137,8 @@ msgstr "Ongeldige device override syntax, verwacht: <device>,<key>=<value>: %s"
 
 #: cmd/incus/network.go:369 cmd/incus/network_acl.go:425
 #: cmd/incus/network_forward.go:303 cmd/incus/network_load_balancer.go:306
-#: cmd/incus/network_peer.go:331 cmd/incus/network_zone.go:379
-#: cmd/incus/network_zone.go:1062 cmd/incus/storage_bucket.go:149
+#: cmd/incus/network_peer.go:331 cmd/incus/network_zone.go:378
+#: cmd/incus/network_zone.go:1061 cmd/incus/storage_bucket.go:149
 #, c-format
 msgid "Bad key/value pair: %s"
 msgstr "Ongeldig sleutel/waarde paar: %s"
@@ -1149,7 +1149,7 @@ msgstr "Ongeldig sleutel/waarde paar: %s"
 msgid "Bad key=value pair: %q"
 msgstr "Ongeldig sleutel=waarde paar: %q"
 
-#: cmd/incus/publish.go:191 cmd/incus/storage.go:137
+#: cmd/incus/publish.go:191 cmd/incus/storage.go:158
 #: cmd/incus/storage_volume.go:627
 #, c-format
 msgid "Bad key=value pair: %s"
@@ -1471,9 +1471,9 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:805
 #: cmd/incus/network_load_balancer.go:881
 #: cmd/incus/network_load_balancer.go:994
-#: cmd/incus/network_load_balancer.go:1068 cmd/incus/storage.go:98
-#: cmd/incus/storage.go:370 cmd/incus/storage.go:453 cmd/incus/storage.go:722
-#: cmd/incus/storage.go:824 cmd/incus/storage.go:917
+#: cmd/incus/network_load_balancer.go:1068 cmd/incus/storage.go:103
+#: cmd/incus/storage.go:394 cmd/incus/storage.go:477 cmd/incus/storage.go:746
+#: cmd/incus/storage.go:848 cmd/incus/storage.go:941
 #: cmd/incus/storage_bucket.go:98 cmd/incus/storage_bucket.go:198
 #: cmd/incus/storage_bucket.go:261 cmd/incus/storage_bucket.go:392
 #: cmd/incus/storage_bucket.go:549 cmd/incus/storage_bucket.go:642
@@ -1552,8 +1552,8 @@ msgstr ""
 #: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:692
 #: cmd/incus/network_forward.go:711 cmd/incus/network_integration.go:288
 #: cmd/incus/network_load_balancer.go:681 cmd/incus/network_peer.go:726
-#: cmd/incus/network_zone.go:634 cmd/incus/network_zone.go:1325
-#: cmd/incus/profile.go:594 cmd/incus/project.go:363 cmd/incus/storage.go:333
+#: cmd/incus/network_zone.go:633 cmd/incus/network_zone.go:1324
+#: cmd/incus/profile.go:594 cmd/incus/project.go:363 cmd/incus/storage.go:357
 #: cmd/incus/storage_bucket.go:356 cmd/incus/storage_bucket.go:1105
 #: cmd/incus/storage_volume.go:1084 cmd/incus/storage_volume.go:1116
 #, c-format
@@ -1718,7 +1718,7 @@ msgstr ""
 msgid "Could not write server cert file %q: %w"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1545
+#: cmd/incus/network_zone.go:1544
 msgid "Couldn't find a matching entry"
 msgstr ""
 
@@ -1819,11 +1819,11 @@ msgstr ""
 msgid "Create new network peering"
 msgstr ""
 
-#: cmd/incus/network_zone.go:997 cmd/incus/network_zone.go:998
+#: cmd/incus/network_zone.go:996 cmd/incus/network_zone.go:997
 msgid "Create new network zone record"
 msgstr ""
 
-#: cmd/incus/network_zone.go:317 cmd/incus/network_zone.go:318
+#: cmd/incus/network_zone.go:316 cmd/incus/network_zone.go:317
 msgid "Create new network zones"
 msgstr ""
 
@@ -1881,9 +1881,9 @@ msgstr ""
 #: cmd/incus/image_alias.go:237 cmd/incus/list.go:573 cmd/incus/network.go:1092
 #: cmd/incus/network_acl.go:155 cmd/incus/network_forward.go:152
 #: cmd/incus/network_integration.go:434 cmd/incus/network_load_balancer.go:156
-#: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:161
-#: cmd/incus/network_zone.go:841 cmd/incus/operation.go:173
-#: cmd/incus/profile.go:755 cmd/incus/project.go:573 cmd/incus/storage.go:697
+#: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:160
+#: cmd/incus/network_zone.go:840 cmd/incus/operation.go:173
+#: cmd/incus/profile.go:755 cmd/incus/project.go:573 cmd/incus/storage.go:721
 #: cmd/incus/storage_bucket.go:520 cmd/incus/storage_bucket.go:840
 #: cmd/incus/storage_volume.go:1636
 msgid "DESCRIPTION"
@@ -1893,7 +1893,7 @@ msgstr ""
 msgid "DISK USAGE"
 msgstr ""
 
-#: cmd/incus/storage.go:690
+#: cmd/incus/storage.go:714
 msgid "DRIVER"
 msgstr ""
 
@@ -1986,11 +1986,11 @@ msgstr ""
 msgid "Delete network peerings"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1357 cmd/incus/network_zone.go:1358
+#: cmd/incus/network_zone.go:1356 cmd/incus/network_zone.go:1357
 msgid "Delete network zone record"
 msgstr ""
 
-#: cmd/incus/network_zone.go:666 cmd/incus/network_zone.go:667
+#: cmd/incus/network_zone.go:665 cmd/incus/network_zone.go:666
 msgid "Delete network zones"
 msgstr ""
 
@@ -2010,7 +2010,7 @@ msgstr ""
 msgid "Delete storage buckets"
 msgstr ""
 
-#: cmd/incus/storage.go:176 cmd/incus/storage.go:177
+#: cmd/incus/storage.go:200 cmd/incus/storage.go:201
 msgid "Delete storage pools"
 msgstr ""
 
@@ -2118,16 +2118,16 @@ msgstr ""
 #: cmd/incus/network_peer.go:473 cmd/incus/network_peer.go:575
 #: cmd/incus/network_peer.go:622 cmd/incus/network_peer.go:759
 #: cmd/incus/network_zone.go:27 cmd/incus/network_zone.go:85
-#: cmd/incus/network_zone.go:182 cmd/incus/network_zone.go:245
-#: cmd/incus/network_zone.go:318 cmd/incus/network_zone.go:409
-#: cmd/incus/network_zone.go:497 cmd/incus/network_zone.go:540
-#: cmd/incus/network_zone.go:667 cmd/incus/network_zone.go:723
-#: cmd/incus/network_zone.go:780 cmd/incus/network_zone.go:858
-#: cmd/incus/network_zone.go:922 cmd/incus/network_zone.go:998
-#: cmd/incus/network_zone.go:1092 cmd/incus/network_zone.go:1181
-#: cmd/incus/network_zone.go:1228 cmd/incus/network_zone.go:1358
-#: cmd/incus/network_zone.go:1419 cmd/incus/network_zone.go:1434
-#: cmd/incus/network_zone.go:1492 cmd/incus/operation.go:24
+#: cmd/incus/network_zone.go:181 cmd/incus/network_zone.go:244
+#: cmd/incus/network_zone.go:317 cmd/incus/network_zone.go:408
+#: cmd/incus/network_zone.go:496 cmd/incus/network_zone.go:539
+#: cmd/incus/network_zone.go:666 cmd/incus/network_zone.go:722
+#: cmd/incus/network_zone.go:779 cmd/incus/network_zone.go:857
+#: cmd/incus/network_zone.go:921 cmd/incus/network_zone.go:997
+#: cmd/incus/network_zone.go:1091 cmd/incus/network_zone.go:1180
+#: cmd/incus/network_zone.go:1227 cmd/incus/network_zone.go:1357
+#: cmd/incus/network_zone.go:1418 cmd/incus/network_zone.go:1433
+#: cmd/incus/network_zone.go:1491 cmd/incus/operation.go:24
 #: cmd/incus/operation.go:57 cmd/incus/operation.go:107
 #: cmd/incus/operation.go:194 cmd/incus/profile.go:29 cmd/incus/profile.go:104
 #: cmd/incus/profile.go:179 cmd/incus/profile.go:270 cmd/incus/profile.go:352
@@ -2146,9 +2146,9 @@ msgstr ""
 #: cmd/incus/snapshot.go:78 cmd/incus/snapshot.go:203 cmd/incus/snapshot.go:288
 #: cmd/incus/snapshot.go:385 cmd/incus/snapshot.go:446
 #: cmd/incus/snapshot.go:528 cmd/incus/storage.go:32 cmd/incus/storage.go:95
-#: cmd/incus/storage.go:177 cmd/incus/storage.go:235 cmd/incus/storage.go:367
-#: cmd/incus/storage.go:449 cmd/incus/storage.go:629 cmd/incus/storage.go:716
-#: cmd/incus/storage.go:820 cmd/incus/storage.go:914
+#: cmd/incus/storage.go:201 cmd/incus/storage.go:259 cmd/incus/storage.go:391
+#: cmd/incus/storage.go:473 cmd/incus/storage.go:653 cmd/incus/storage.go:740
+#: cmd/incus/storage.go:844 cmd/incus/storage.go:938
 #: cmd/incus/storage_bucket.go:34 cmd/incus/storage_bucket.go:96
 #: cmd/incus/storage_bucket.go:196 cmd/incus/storage_bucket.go:257
 #: cmd/incus/storage_bucket.go:390 cmd/incus/storage_bucket.go:466
@@ -2349,7 +2349,7 @@ msgstr ""
 msgid "Dump YAML config to stdout"
 msgstr ""
 
-#: cmd/incus/network_zone.go:842
+#: cmd/incus/network_zone.go:841
 msgid "ENTRIES"
 msgstr ""
 
@@ -2429,11 +2429,11 @@ msgstr ""
 msgid "Edit network peer configurations as YAML"
 msgstr ""
 
-#: cmd/incus/network_zone.go:539 cmd/incus/network_zone.go:540
+#: cmd/incus/network_zone.go:538 cmd/incus/network_zone.go:539
 msgid "Edit network zone configurations as YAML"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1227 cmd/incus/network_zone.go:1228
+#: cmd/incus/network_zone.go:1226 cmd/incus/network_zone.go:1227
 msgid "Edit network zone record configurations as YAML"
 msgstr ""
 
@@ -2453,7 +2453,7 @@ msgstr ""
 msgid "Edit storage bucket key as YAML"
 msgstr ""
 
-#: cmd/incus/storage.go:234 cmd/incus/storage.go:235
+#: cmd/incus/storage.go:258 cmd/incus/storage.go:259
 msgid "Edit storage pool configurations as YAML"
 msgstr ""
 
@@ -2489,7 +2489,7 @@ msgid ""
 "  for the address if not yet set."
 msgstr ""
 
-#: cmd/incus/network_zone.go:1436
+#: cmd/incus/network_zone.go:1435
 msgid "Entry TTL"
 msgstr ""
 
@@ -2525,8 +2525,8 @@ msgstr ""
 #: cmd/incus/network.go:1325 cmd/incus/network_acl.go:518
 #: cmd/incus/network_forward.go:516 cmd/incus/network_integration.go:563
 #: cmd/incus/network_load_balancer.go:502 cmd/incus/network_peer.go:550
-#: cmd/incus/network_zone.go:472 cmd/incus/network_zone.go:1156
-#: cmd/incus/profile.go:986 cmd/incus/project.go:719 cmd/incus/storage.go:786
+#: cmd/incus/network_zone.go:471 cmd/incus/network_zone.go:1155
+#: cmd/incus/profile.go:986 cmd/incus/project.go:719 cmd/incus/storage.go:810
 #: cmd/incus/storage_bucket.go:610 cmd/incus/storage_volume.go:2002
 #: cmd/incus/storage_volume.go:2040
 #, c-format
@@ -2546,9 +2546,9 @@ msgstr ""
 #: cmd/incus/cluster.go:453 cmd/incus/network.go:1319
 #: cmd/incus/network_acl.go:512 cmd/incus/network_forward.go:510
 #: cmd/incus/network_integration.go:557 cmd/incus/network_load_balancer.go:496
-#: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:466
-#: cmd/incus/network_zone.go:1150 cmd/incus/profile.go:980
-#: cmd/incus/project.go:713 cmd/incus/storage.go:780
+#: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:465
+#: cmd/incus/network_zone.go:1149 cmd/incus/profile.go:980
+#: cmd/incus/project.go:713 cmd/incus/storage.go:804
 #: cmd/incus/storage_bucket.go:604 cmd/incus/storage_volume.go:1996
 #: cmd/incus/storage_volume.go:2034
 #, c-format
@@ -3135,10 +3135,10 @@ msgstr ""
 #: cmd/incus/network_acl.go:96 cmd/incus/network_allocations.go:57
 #: cmd/incus/network_forward.go:88 cmd/incus/network_integration.go:388
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
-#: cmd/incus/network_zone.go:88 cmd/incus/network_zone.go:783
+#: cmd/incus/network_zone.go:88 cmd/incus/network_zone.go:782
 #: cmd/incus/operation.go:109 cmd/incus/profile.go:706 cmd/incus/project.go:473
 #: cmd/incus/project.go:918 cmd/incus/remote.go:716 cmd/incus/snapshot.go:291
-#: cmd/incus/storage.go:631 cmd/incus/storage_bucket.go:467
+#: cmd/incus/storage.go:655 cmd/incus/storage_bucket.go:467
 #: cmd/incus/storage_bucket.go:782 cmd/incus/storage_volume.go:1539
 #: cmd/incus/storage_volume.go:2492 cmd/incus/warning.go:94
 msgid "Format (csv|json|table|yaml|compact)"
@@ -3243,11 +3243,11 @@ msgstr ""
 msgid "Get the key as a network property"
 msgstr ""
 
-#: cmd/incus/network_zone.go:248
+#: cmd/incus/network_zone.go:247
 msgid "Get the key as a network zone property"
 msgstr ""
 
-#: cmd/incus/network_zone.go:925
+#: cmd/incus/network_zone.go:924
 msgid "Get the key as a network zone record property"
 msgstr ""
 
@@ -3263,7 +3263,7 @@ msgstr ""
 msgid "Get the key as a storage bucket property"
 msgstr ""
 
-#: cmd/incus/storage.go:371
+#: cmd/incus/storage.go:395
 msgid "Get the key as a storage property"
 msgstr ""
 
@@ -3312,11 +3312,11 @@ msgstr ""
 msgid "Get values for network peer configuration keys"
 msgstr ""
 
-#: cmd/incus/network_zone.go:244 cmd/incus/network_zone.go:245
+#: cmd/incus/network_zone.go:243 cmd/incus/network_zone.go:244
 msgid "Get values for network zone configuration keys"
 msgstr ""
 
-#: cmd/incus/network_zone.go:921 cmd/incus/network_zone.go:922
+#: cmd/incus/network_zone.go:920 cmd/incus/network_zone.go:921
 msgid "Get values for network zone record configuration keys"
 msgstr ""
 
@@ -3332,7 +3332,7 @@ msgstr ""
 msgid "Get values for storage bucket configuration keys"
 msgstr ""
 
-#: cmd/incus/storage.go:366 cmd/incus/storage.go:367
+#: cmd/incus/storage.go:390 cmd/incus/storage.go:391
 msgid "Get values for storage pool configuration keys"
 msgstr ""
 
@@ -3881,7 +3881,7 @@ msgstr ""
 msgid "List available network zone"
 msgstr ""
 
-#: cmd/incus/network_zone.go:779 cmd/incus/network_zone.go:780
+#: cmd/incus/network_zone.go:778 cmd/incus/network_zone.go:779
 msgid "List available network zone records"
 msgstr ""
 
@@ -3893,7 +3893,7 @@ msgstr ""
 msgid "List available networks"
 msgstr ""
 
-#: cmd/incus/storage.go:628 cmd/incus/storage.go:629
+#: cmd/incus/storage.go:652 cmd/incus/storage.go:653
 msgid "List available storage pools"
 msgstr ""
 
@@ -4406,11 +4406,11 @@ msgstr ""
 msgid "Manage network peerings"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1418 cmd/incus/network_zone.go:1419
+#: cmd/incus/network_zone.go:1417 cmd/incus/network_zone.go:1418
 msgid "Manage network zone record entries"
 msgstr ""
 
-#: cmd/incus/network_zone.go:722 cmd/incus/network_zone.go:723
+#: cmd/incus/network_zone.go:721 cmd/incus/network_zone.go:722
 msgid "Manage network zone records"
 msgstr ""
 
@@ -4655,17 +4655,17 @@ msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
 msgid "Missing network name"
 msgstr ""
 
-#: cmd/incus/network_zone.go:212 cmd/incus/network_zone.go:281
-#: cmd/incus/network_zone.go:349 cmd/incus/network_zone.go:445
-#: cmd/incus/network_zone.go:586 cmd/incus/network_zone.go:697
-#: cmd/incus/network_zone.go:811 cmd/incus/network_zone.go:891
-#: cmd/incus/network_zone.go:1032 cmd/incus/network_zone.go:1129
-#: cmd/incus/network_zone.go:1391 cmd/incus/network_zone.go:1468
-#: cmd/incus/network_zone.go:1525
+#: cmd/incus/network_zone.go:211 cmd/incus/network_zone.go:280
+#: cmd/incus/network_zone.go:348 cmd/incus/network_zone.go:444
+#: cmd/incus/network_zone.go:585 cmd/incus/network_zone.go:696
+#: cmd/incus/network_zone.go:810 cmd/incus/network_zone.go:890
+#: cmd/incus/network_zone.go:1031 cmd/incus/network_zone.go:1128
+#: cmd/incus/network_zone.go:1390 cmd/incus/network_zone.go:1467
+#: cmd/incus/network_zone.go:1524
 msgid "Missing network zone name"
 msgstr ""
 
-#: cmd/incus/network_zone.go:961 cmd/incus/network_zone.go:1277
+#: cmd/incus/network_zone.go:960 cmd/incus/network_zone.go:1276
 msgid "Missing network zone record name"
 msgstr ""
 
@@ -4675,8 +4675,8 @@ msgstr ""
 msgid "Missing peer name"
 msgstr ""
 
-#: cmd/incus/storage.go:209 cmd/incus/storage.go:287 cmd/incus/storage.go:405
-#: cmd/incus/storage.go:483 cmd/incus/storage.go:754 cmd/incus/storage.go:860
+#: cmd/incus/storage.go:233 cmd/incus/storage.go:311 cmd/incus/storage.go:429
+#: cmd/incus/storage.go:507 cmd/incus/storage.go:778 cmd/incus/storage.go:884
 #: cmd/incus/storage_bucket.go:120 cmd/incus/storage_bucket.go:220
 #: cmd/incus/storage_bucket.go:296 cmd/incus/storage_bucket.go:415
 #: cmd/incus/storage_bucket.go:490 cmd/incus/storage_bucket.go:572
@@ -4828,9 +4828,9 @@ msgstr ""
 #: cmd/incus/config_trust.go:666 cmd/incus/list.go:581
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:154
 #: cmd/incus/network_integration.go:433 cmd/incus/network_peer.go:154
-#: cmd/incus/network_zone.go:160 cmd/incus/network_zone.go:840
+#: cmd/incus/network_zone.go:159 cmd/incus/network_zone.go:839
 #: cmd/incus/profile.go:754 cmd/incus/project.go:566 cmd/incus/remote.go:773
-#: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:519
+#: cmd/incus/storage.go:713 cmd/incus/storage_bucket.go:519
 #: cmd/incus/storage_bucket.go:839 cmd/incus/storage_volume.go:1635
 msgid "NAME"
 msgstr ""
@@ -4993,12 +4993,12 @@ msgstr ""
 msgid "Network ACL %s renamed to %s"
 msgstr ""
 
-#: cmd/incus/network_zone.go:391
+#: cmd/incus/network_zone.go:390
 #, c-format
 msgid "Network Zone %s created"
 msgstr ""
 
-#: cmd/incus/network_zone.go:707
+#: cmd/incus/network_zone.go:706
 #, c-format
 msgid "Network Zone %s deleted"
 msgstr ""
@@ -5071,12 +5071,12 @@ msgstr ""
 msgid "Network usage:"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1074
+#: cmd/incus/network_zone.go:1073
 #, c-format
 msgid "Network zone record %s created"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1401
+#: cmd/incus/network_zone.go:1400
 #, c-format
 msgid "Network zone record %s deleted"
 msgstr ""
@@ -5252,7 +5252,7 @@ msgstr ""
 msgid "PROFILES"
 msgstr ""
 
-#: cmd/incus/image.go:1122 cmd/incus/list.go:575 cmd/incus/network_zone.go:166
+#: cmd/incus/image.go:1122 cmd/incus/list.go:575 cmd/incus/network_zone.go:165
 #: cmd/incus/storage_volume.go:1654 cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr ""
@@ -5361,8 +5361,8 @@ msgstr ""
 #: cmd/incus/network.go:763 cmd/incus/network_acl.go:693
 #: cmd/incus/network_forward.go:712 cmd/incus/network_integration.go:289
 #: cmd/incus/network_load_balancer.go:682 cmd/incus/network_peer.go:727
-#: cmd/incus/network_zone.go:635 cmd/incus/network_zone.go:1326
-#: cmd/incus/profile.go:595 cmd/incus/project.go:364 cmd/incus/storage.go:334
+#: cmd/incus/network_zone.go:634 cmd/incus/network_zone.go:1325
+#: cmd/incus/profile.go:595 cmd/incus/project.go:364 cmd/incus/storage.go:358
 #: cmd/incus/storage_bucket.go:357 cmd/incus/storage_bucket.go:1106
 #: cmd/incus/storage_volume.go:1085 cmd/incus/storage_volume.go:1117
 msgid "Press enter to open the editor again or ctrl+c to abort change"
@@ -5770,7 +5770,7 @@ msgstr ""
 msgid "Remove a member from the cluster"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1491
+#: cmd/incus/network_zone.go:1490
 msgid "Remove a network zone record entry"
 msgstr ""
 
@@ -5794,7 +5794,7 @@ msgstr ""
 msgid "Remove backends from a load balancer"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1492
+#: cmd/incus/network_zone.go:1491
 msgid "Remove entries from a network zone record"
 msgstr ""
 
@@ -6020,7 +6020,7 @@ msgstr ""
 msgid "SNAPSHOTS"
 msgstr ""
 
-#: cmd/incus/storage.go:694
+#: cmd/incus/storage.go:718
 msgid "SOURCE"
 msgstr ""
 
@@ -6045,7 +6045,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:198 cmd/incus/list.go:586 cmd/incus/network.go:1094
 #: cmd/incus/network_peer.go:158 cmd/incus/operation.go:174
-#: cmd/incus/storage.go:699 cmd/incus/warning.go:215
+#: cmd/incus/storage.go:723 cmd/incus/warning.go:215
 msgid "STATE"
 msgstr ""
 
@@ -6259,11 +6259,11 @@ msgid ""
 "    incus network set [<remote>:]<network> <peer_name> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:408
+#: cmd/incus/network_zone.go:407
 msgid "Set network zone configuration keys"
 msgstr ""
 
-#: cmd/incus/network_zone.go:409
+#: cmd/incus/network_zone.go:408
 msgid ""
 "Set network zone configuration keys\n"
 "\n"
@@ -6272,7 +6272,7 @@ msgid ""
 "    incus network set [<remote>:]<Zone> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1091 cmd/incus/network_zone.go:1092
+#: cmd/incus/network_zone.go:1090 cmd/incus/network_zone.go:1091
 msgid "Set network zone record configuration keys"
 msgstr ""
 
@@ -6315,11 +6315,11 @@ msgid ""
 "    incus storage bucket set [<remote>:]<pool> <bucket> <key> <value>"
 msgstr ""
 
-#: cmd/incus/storage.go:715
+#: cmd/incus/storage.go:739
 msgid "Set storage pool configuration keys"
 msgstr ""
 
-#: cmd/incus/storage.go:716
+#: cmd/incus/storage.go:740
 msgid ""
 "Set storage pool configuration keys\n"
 "\n"
@@ -6399,11 +6399,11 @@ msgstr ""
 msgid "Set the key as a network property"
 msgstr ""
 
-#: cmd/incus/network_zone.go:416
+#: cmd/incus/network_zone.go:415
 msgid "Set the key as a network zone property"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1097
+#: cmd/incus/network_zone.go:1096
 msgid "Set the key as a network zone record property"
 msgstr ""
 
@@ -6419,7 +6419,7 @@ msgstr ""
 msgid "Set the key as a storage bucket property"
 msgstr ""
 
-#: cmd/incus/storage.go:723
+#: cmd/incus/storage.go:747
 msgid "Set the key as a storage property"
 msgstr ""
 
@@ -6533,15 +6533,15 @@ msgstr ""
 msgid "Show network peer configurations"
 msgstr ""
 
-#: cmd/incus/network_zone.go:181 cmd/incus/network_zone.go:182
+#: cmd/incus/network_zone.go:180 cmd/incus/network_zone.go:181
 msgid "Show network zone configurations"
 msgstr ""
 
-#: cmd/incus/network_zone.go:857
+#: cmd/incus/network_zone.go:856
 msgid "Show network zone record configuration"
 msgstr ""
 
-#: cmd/incus/network_zone.go:858
+#: cmd/incus/network_zone.go:857
 msgid "Show network zone record configurations"
 msgstr ""
 
@@ -6561,7 +6561,7 @@ msgstr ""
 msgid "Show storage bucket key configurations"
 msgstr ""
 
-#: cmd/incus/storage.go:819 cmd/incus/storage.go:820
+#: cmd/incus/storage.go:843 cmd/incus/storage.go:844
 msgid "Show storage pool configurations and resources"
 msgstr ""
 
@@ -6590,11 +6590,11 @@ msgstr ""
 msgid "Show the resources available to the server"
 msgstr ""
 
-#: cmd/incus/storage.go:823
+#: cmd/incus/storage.go:847
 msgid "Show the resources available to the storage pool"
 msgstr ""
 
-#: cmd/incus/storage.go:452
+#: cmd/incus/storage.go:476
 msgid "Show the used and free space in bytes"
 msgstr ""
 
@@ -6610,7 +6610,7 @@ msgstr ""
 msgid "Show useful information about images"
 msgstr ""
 
-#: cmd/incus/storage.go:448 cmd/incus/storage.go:449
+#: cmd/incus/storage.go:472 cmd/incus/storage.go:473
 msgid "Show useful information about storage pools"
 msgstr ""
 
@@ -6750,17 +6750,17 @@ msgstr ""
 msgid "Storage pool %q of type %q"
 msgstr ""
 
-#: cmd/incus/storage.go:159
+#: cmd/incus/storage.go:183
 #, c-format
 msgid "Storage pool %s created"
 msgstr ""
 
-#: cmd/incus/storage.go:219
+#: cmd/incus/storage.go:243
 #, c-format
 msgid "Storage pool %s deleted"
 msgstr ""
 
-#: cmd/incus/storage.go:157
+#: cmd/incus/storage.go:181
 #, c-format
 msgid "Storage pool %s pending on member %s"
 msgstr ""
@@ -7025,12 +7025,12 @@ msgstr ""
 msgid "The property %q does not exist on the network peer %q: %v"
 msgstr ""
 
-#: cmd/incus/network_zone.go:293
+#: cmd/incus/network_zone.go:292
 #, c-format
 msgid "The property %q does not exist on the network zone %q: %v"
 msgstr ""
 
-#: cmd/incus/network_zone.go:973
+#: cmd/incus/network_zone.go:972
 #, c-format
 msgid "The property %q does not exist on the network zone record %q: %v"
 msgstr ""
@@ -7050,7 +7050,7 @@ msgstr ""
 msgid "The property %q does not exist on the storage bucket %q: %v"
 msgstr ""
 
-#: cmd/incus/storage.go:423
+#: cmd/incus/storage.go:447
 #, c-format
 msgid "The property %q does not exist on the storage pool %q: %v"
 msgstr ""
@@ -7178,7 +7178,7 @@ msgstr ""
 
 #: cmd/incus/config.go:301 cmd/incus/config.go:494 cmd/incus/config.go:702
 #: cmd/incus/config.go:802 cmd/incus/copy.go:142 cmd/incus/info.go:356
-#: cmd/incus/network.go:917 cmd/incus/storage.go:489
+#: cmd/incus/network.go:917 cmd/incus/storage.go:513
 msgid "To use --target, the destination remote must be a cluster"
 msgstr ""
 
@@ -7302,8 +7302,8 @@ msgstr ""
 
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:156
 #: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:436
-#: cmd/incus/network_zone.go:162 cmd/incus/profile.go:756
-#: cmd/incus/project.go:574 cmd/incus/storage.go:698
+#: cmd/incus/network_zone.go:161 cmd/incus/profile.go:756
+#: cmd/incus/project.go:574 cmd/incus/storage.go:722
 #: cmd/incus/storage_volume.go:1638
 msgid "USED BY"
 msgstr ""
@@ -7422,11 +7422,11 @@ msgstr ""
 msgid "Unset network peer keys"
 msgstr ""
 
-#: cmd/incus/network_zone.go:496 cmd/incus/network_zone.go:497
+#: cmd/incus/network_zone.go:495 cmd/incus/network_zone.go:496
 msgid "Unset network zone configuration keys"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1180 cmd/incus/network_zone.go:1181
+#: cmd/incus/network_zone.go:1179 cmd/incus/network_zone.go:1180
 msgid "Unset network zone record configuration keys"
 msgstr ""
 
@@ -7442,7 +7442,7 @@ msgstr ""
 msgid "Unset storage bucket configuration keys"
 msgstr ""
 
-#: cmd/incus/storage.go:913 cmd/incus/storage.go:914
+#: cmd/incus/storage.go:937 cmd/incus/storage.go:938
 msgid "Unset storage pool configuration keys"
 msgstr ""
 
@@ -7478,11 +7478,11 @@ msgstr ""
 msgid "Unset the key as a network property"
 msgstr ""
 
-#: cmd/incus/network_zone.go:500
+#: cmd/incus/network_zone.go:499
 msgid "Unset the key as a network zone property"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1184
+#: cmd/incus/network_zone.go:1183
 msgid "Unset the key as a network zone record property"
 msgstr ""
 
@@ -7498,7 +7498,7 @@ msgstr ""
 msgid "Unset the key as a storage bucket property"
 msgstr ""
 
-#: cmd/incus/storage.go:918
+#: cmd/incus/storage.go:942
 msgid "Unset the key as a storage property"
 msgstr ""
 
@@ -7818,7 +7818,7 @@ msgstr ""
 #: cmd/incus/network.go:1008 cmd/incus/network_acl.go:90
 #: cmd/incus/network_integration.go:383 cmd/incus/network_zone.go:82
 #: cmd/incus/operation.go:104 cmd/incus/profile.go:699 cmd/incus/project.go:468
-#: cmd/incus/storage.go:626 cmd/incus/version.go:20 cmd/incus/warning.go:69
+#: cmd/incus/storage.go:650 cmd/incus/version.go:20 cmd/incus/warning.go:69
 msgid "[<remote>:]"
 msgstr ""
 
@@ -7875,20 +7875,20 @@ msgstr ""
 msgid "[<remote>:]<API path>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:180 cmd/incus/network_zone.go:538
-#: cmd/incus/network_zone.go:664
+#: cmd/incus/network_zone.go:179 cmd/incus/network_zone.go:537
+#: cmd/incus/network_zone.go:663
 msgid "[<remote>:]<Zone>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:243 cmd/incus/network_zone.go:495
+#: cmd/incus/network_zone.go:242 cmd/incus/network_zone.go:494
 msgid "[<remote>:]<Zone> <key>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:407
+#: cmd/incus/network_zone.go:406
 msgid "[<remote>:]<Zone> <key>=<value>..."
 msgstr ""
 
-#: cmd/incus/network_zone.go:316
+#: cmd/incus/network_zone.go:315
 msgid "[<remote>:]<Zone> [key=value...]"
 msgstr ""
 
@@ -8216,8 +8216,8 @@ msgstr ""
 msgid "[<remote>:]<operation>"
 msgstr ""
 
-#: cmd/incus/storage.go:174 cmd/incus/storage.go:233 cmd/incus/storage.go:447
-#: cmd/incus/storage.go:818 cmd/incus/storage_bucket.go:462
+#: cmd/incus/storage.go:198 cmd/incus/storage.go:257 cmd/incus/storage.go:471
+#: cmd/incus/storage.go:842 cmd/incus/storage_bucket.go:462
 msgid "[<remote>:]<pool>"
 msgstr ""
 
@@ -8256,11 +8256,11 @@ msgstr ""
 msgid "[<remote>:]<pool> <driver> [key=value...]"
 msgstr ""
 
-#: cmd/incus/storage.go:365 cmd/incus/storage.go:912
+#: cmd/incus/storage.go:389 cmd/incus/storage.go:936
 msgid "[<remote>:]<pool> <key>"
 msgstr ""
 
-#: cmd/incus/storage.go:714
+#: cmd/incus/storage.go:738
 msgid "[<remote>:]<pool> <key> <value>"
 msgstr ""
 
@@ -8396,28 +8396,28 @@ msgstr ""
 msgid "[<remote>:]<warning-uuid>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:777
+#: cmd/incus/network_zone.go:776
 msgid "[<remote>:]<zone>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:856 cmd/incus/network_zone.go:1226
-#: cmd/incus/network_zone.go:1355
+#: cmd/incus/network_zone.go:855 cmd/incus/network_zone.go:1225
+#: cmd/incus/network_zone.go:1354
 msgid "[<remote>:]<zone> <record>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:920 cmd/incus/network_zone.go:1179
+#: cmd/incus/network_zone.go:919 cmd/incus/network_zone.go:1178
 msgid "[<remote>:]<zone> <record> <key>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1090
+#: cmd/incus/network_zone.go:1089
 msgid "[<remote>:]<zone> <record> <key>=<value>..."
 msgstr ""
 
-#: cmd/incus/network_zone.go:1432 cmd/incus/network_zone.go:1490
+#: cmd/incus/network_zone.go:1431 cmd/incus/network_zone.go:1489
 msgid "[<remote>:]<zone> <record> <type> <value>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:996
+#: cmd/incus/network_zone.go:995
 msgid "[<remote>:]<zone> <record> [key=value...]"
 msgstr ""
 
@@ -8449,7 +8449,7 @@ msgstr ""
 msgid "current"
 msgstr ""
 
-#: cmd/incus/storage.go:515
+#: cmd/incus/storage.go:539
 msgid "description"
 msgstr ""
 
@@ -8457,7 +8457,7 @@ msgstr ""
 msgid "disabled"
 msgstr ""
 
-#: cmd/incus/storage.go:514
+#: cmd/incus/storage.go:538
 msgid "driver"
 msgstr ""
 
@@ -8535,6 +8535,15 @@ msgid ""
 "\n"
 "incus create images:ubuntu/22.04 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml"
+msgstr ""
+
+#: cmd/incus/storage.go:97
+msgid ""
+"incus create storage s1 dir\n"
+"\n"
+"incus create storage s1 dir < config.yaml\n"
+"    Create a storage pool using the content of config.yaml.\n"
+"\t"
 msgstr ""
 
 #: cmd/incus/export.go:34
@@ -8798,7 +8807,7 @@ msgid ""
 "pool."
 msgstr ""
 
-#: cmd/incus/storage.go:237
+#: cmd/incus/storage.go:261
 msgid ""
 "incus storage edit [<remote>:]<pool> < pool.yaml\n"
 "    Update a storage pool using the content of pool.yaml."
@@ -8810,7 +8819,7 @@ msgid ""
 "\t\tCreate a new custom volume using backup0.tar.gz as the source."
 msgstr ""
 
-#: cmd/incus/storage.go:512
+#: cmd/incus/storage.go:536
 msgid "info"
 msgstr ""
 
@@ -8818,7 +8827,7 @@ msgstr ""
 msgid "n"
 msgstr ""
 
-#: cmd/incus/storage.go:513
+#: cmd/incus/storage.go:537
 msgid "name"
 msgstr ""
 
@@ -8835,7 +8844,7 @@ msgstr ""
 msgid "please use `incus profile`"
 msgstr ""
 
-#: cmd/incus/storage.go:517
+#: cmd/incus/storage.go:541
 msgid "space used"
 msgstr ""
 
@@ -8852,7 +8861,7 @@ msgstr ""
 msgid "sshfs not found. Try SSH SFTP mode using the --listen flag"
 msgstr ""
 
-#: cmd/incus/storage.go:516
+#: cmd/incus/storage.go:540
 msgid "total space"
 msgstr ""
 
@@ -8860,7 +8869,7 @@ msgstr ""
 msgid "unreachable"
 msgstr ""
 
-#: cmd/incus/storage.go:511
+#: cmd/incus/storage.go:535
 msgid "used by"
 msgstr ""
 
