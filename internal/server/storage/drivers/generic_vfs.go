@@ -786,7 +786,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 					}
 
 					d.Logger().Debug(logMsg, logger.Ctx{"source": srcFile, "target": targetPath})
-					_, err = io.Copy(to, tr)
+					_, err = io.Copy(NewSparseFileWrapper(to), tr)
 					if err != nil {
 						return err
 					}
