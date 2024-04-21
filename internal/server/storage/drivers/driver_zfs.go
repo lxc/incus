@@ -25,6 +25,15 @@ import (
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
+const zfsDefaultVdevType = "stripe"
+
+var zfsSupportedVdevTypes = []string{
+	zfsDefaultVdevType,
+	"mirror",
+	"raidz1",
+	"raidz2",
+}
+
 var zfsVersion string
 var zfsLoaded bool
 var zfsDirectIO bool
@@ -191,8 +200,21 @@ func (d zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 
 // FillConfig populates the storage pool's configuration file with the default values.
 func (d *zfs) FillConfig() error {
+	vdevType, devices := d.parseSource()
+	if !slices.Contains(zfsSupportedVdevTypes, vdevType) {
+		return fmt.Errorf("Unsupported ZFS vdev type %q. Supported types are %v", vdevType, zfsSupportedVdevTypes)
+	}
+
 	loopPath := loopFilePath(d.name)
-	if d.config["source"] == "" || d.config["source"] == loopPath {
+	if len(devices) == 1 && !filepath.IsAbs(devices[0]) {
+		// Handle an existing zpool.
+		if d.config["zfs.pool_name"] == "" {
+			d.config["zfs.pool_name"] = devices[0]
+		}
+
+		// Unset size property since it's irrelevant.
+		d.config["size"] = ""
+	} else if len(devices) == 0 || (len(devices) == 1 && devices[0] == loopPath) {
 		// Create a loop based pool.
 		d.config["source"] = loopPath
 
@@ -210,18 +232,12 @@ func (d *zfs) FillConfig() error {
 
 			d.config["size"] = fmt.Sprintf("%dGiB", defaultSize)
 		}
-	} else if filepath.IsAbs(d.config["source"]) {
+	} else if sliceAny(devices, func(device string) bool { return !linux.IsBlockdevPath(device) }) {
+		return fmt.Errorf("Custom loop file locations are not supported")
+	} else {
 		// Set default pool_name.
 		if d.config["zfs.pool_name"] == "" {
 			d.config["zfs.pool_name"] = d.name
-		}
-
-		// Unset size property since it's irrelevant.
-		d.config["size"] = ""
-	} else {
-		// Handle an existing zpool.
-		if d.config["zfs.pool_name"] == "" {
-			d.config["zfs.pool_name"] = d.config["source"]
 		}
 
 		// Unset size property since it's irrelevant.
@@ -242,83 +258,11 @@ func (d *zfs) Create() error {
 		return err
 	}
 
+	vdevType, devices := d.parseSource()
 	loopPath := loopFilePath(d.name)
-	if d.config["source"] == "" || d.config["source"] == loopPath {
+	if len(devices) == 1 && !filepath.IsAbs(devices[0]) {
 		// Validate pool_name.
-		if strings.Contains(d.config["zfs.pool_name"], "/") {
-			return fmt.Errorf("zfs.pool_name can't point to a dataset when source isn't set")
-		}
-
-		// Create the loop file itself.
-		size, err := units.ParseByteSizeString(d.config["size"])
-		if err != nil {
-			return err
-		}
-
-		err = ensureSparseFile(loopPath, size)
-		if err != nil {
-			return err
-		}
-
-		// Create the zpool.
-		_, err = subprocess.RunCommand("zpool", "create", "-m", "none", "-O", "compression=on", d.config["zfs.pool_name"], loopPath)
-		if err != nil {
-			return err
-		}
-
-		// Apply auto-trim if supported.
-		if zfsTrim {
-			_, err := subprocess.RunCommand("zpool", "set", "autotrim=on", d.config["zfs.pool_name"])
-			if err != nil {
-				return err
-			}
-		}
-	} else if filepath.IsAbs(d.config["source"]) {
-		// Handle existing block devices.
-		if !linux.IsBlockdevPath(d.config["source"]) {
-			return fmt.Errorf("Custom loop file locations are not supported")
-		}
-
-		// Validate pool_name.
-		if strings.Contains(d.config["zfs.pool_name"], "/") {
-			return fmt.Errorf("zfs.pool_name can't point to a dataset when source isn't set")
-		}
-
-		// Wipe if requested.
-		if util.IsTrue(d.config["source.wipe"]) {
-			err := wipeBlockHeaders(d.config["source"])
-			if err != nil {
-				return fmt.Errorf("Failed to wipe headers from disk %q: %w", d.config["source"], err)
-			}
-
-			d.config["source.wipe"] = ""
-
-			// Create the zpool.
-			_, err = subprocess.RunCommand("zpool", "create", "-f", "-m", "none", "-O", "compression=on", d.config["zfs.pool_name"], d.config["source"])
-			if err != nil {
-				return err
-			}
-		} else {
-			// Create the zpool.
-			_, err := subprocess.RunCommand("zpool", "create", "-m", "none", "-O", "compression=on", d.config["zfs.pool_name"], d.config["source"])
-			if err != nil {
-				return err
-			}
-		}
-
-		// Apply auto-trim if supported.
-		if zfsTrim {
-			_, err := subprocess.RunCommand("zpool", "set", "autotrim=on", d.config["zfs.pool_name"])
-			if err != nil {
-				return err
-			}
-		}
-
-		// We don't need to keep the original source path around for import.
-		d.config["source"] = d.config["zfs.pool_name"]
-	} else {
-		// Validate pool_name.
-		if d.config["zfs.pool_name"] != d.config["source"] {
+		if d.config["zfs.pool_name"] != devices[0] {
 			return fmt.Errorf("The source must match zfs.pool_name if specified")
 		}
 
@@ -352,6 +296,88 @@ func (d *zfs) Create() error {
 		if len(datasets) > 0 {
 			return fmt.Errorf(`Provided ZFS pool (or dataset) isn't empty, run "sudo zfs list -r %s" to see existing entries`, d.config["zfs.pool_name"])
 		}
+	} else if len(devices) == 1 && devices[0] == loopPath {
+		// Validate pool_name.
+		if strings.Contains(d.config["zfs.pool_name"], "/") {
+			return fmt.Errorf("zfs.pool_name can't point to a dataset when source isn't set")
+		}
+
+		// Create the loop file itself.
+		size, err := units.ParseByteSizeString(d.config["size"])
+		if err != nil {
+			return err
+		}
+
+		err = ensureSparseFile(loopPath, size)
+		if err != nil {
+			return err
+		}
+
+		// Create the zpool.
+		createArgs := []string{"create", "-m", "none", "-O", "compression=on", d.config["zfs.pool_name"]}
+		// "zpool create" doesn't have an explicit type for "stripe" vdev type
+		if vdevType != zfsDefaultVdevType {
+			createArgs = append(createArgs, vdevType)
+		}
+
+		createArgs = append(createArgs, loopPath)
+		_, err = subprocess.RunCommand("zpool", createArgs...)
+		if err != nil {
+			return err
+		}
+
+		// Apply auto-trim if supported.
+		if zfsTrim {
+			_, err := subprocess.RunCommand("zpool", "set", "autotrim=on", d.config["zfs.pool_name"])
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		// At this moment, we have assurance from FillConfig that all devices are existing block devices
+		// Validate pool_name.
+		if strings.Contains(d.config["zfs.pool_name"], "/") {
+			return fmt.Errorf("zfs.pool_name can't point to a dataset when source isn't set")
+		}
+
+		var createArgs []string
+		// Wipe if requested.
+		if util.IsTrue(d.config["source.wipe"]) {
+			for _, device := range devices {
+				err := wipeBlockHeaders(device)
+				if err != nil {
+					return fmt.Errorf("Failed to wipe headers from disk %q: %w", device, err)
+				}
+			}
+
+			d.config["source.wipe"] = ""
+			createArgs = []string{"create", "-f", "-m", "none", "-O", "compression=on", d.config["zfs.pool_name"]}
+		} else {
+			createArgs = []string{"create", "-m", "none", "-O", "compression=on", d.config["zfs.pool_name"]}
+		}
+
+		// Create the zpool.
+		// "zpool create" doesn't have an explicit type for "stripe" vdev type
+		if vdevType != zfsDefaultVdevType {
+			createArgs = append(createArgs, vdevType)
+		}
+
+		createArgs = append(createArgs, devices...)
+		_, err = subprocess.RunCommand("zpool", createArgs...)
+		if err != nil {
+			return err
+		}
+
+		// Apply auto-trim if supported.
+		if zfsTrim {
+			_, err := subprocess.RunCommand("zpool", "set", "autotrim=on", d.config["zfs.pool_name"])
+			if err != nil {
+				return err
+			}
+		}
+
+		// We don't need to keep the original source path around for import.
+		d.config["source"] = d.config["zfs.pool_name"]
 	}
 
 	// Setup revert in case of problems
@@ -462,7 +488,8 @@ func (d *zfs) Update(changedConfig map[string]string) error {
 		// Figure out loop path
 		loopPath := loopFilePath(d.name)
 
-		if d.config["source"] != loopPath {
+		_, devices := d.parseSource()
+		if len(devices) != 1 || devices[0] != loopPath {
 			return fmt.Errorf("Cannot resize non-loopback pools")
 		}
 
@@ -712,4 +739,21 @@ func (d *zfs) patchDropBlockVolumeFilesystemExtension() error {
 	}
 
 	return nil
+}
+
+// Returns vdev type and block device(s) from source config.
+func (d *zfs) parseSource() (string, []string) {
+	sourceParts := strings.Split(d.config["source"], "=")
+	vdevType := zfsDefaultVdevType
+	devices := sourceParts[0]
+	if len(sourceParts) > 1 {
+		vdevType = sourceParts[0]
+		devices = sourceParts[1]
+	}
+
+	if len(devices) == 0 {
+		return vdevType, make([]string, 0)
+	}
+
+	return vdevType, strings.Split(devices, ",")
 }
