@@ -241,6 +241,11 @@ jobs:
           curl -sSfL https://dl.min.io/server/minio/release/linux-amd64/archive/minio_20240116160738.0.0_amd64.deb --output /tmp/minio.deb
           sudo apt-get install /tmp/minio.deb --yes
 
+          # Download MinIO client
+          curl -sSfL https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2024-01-16T16-06-34Z --output /tmp/mc
+          sudo mv /tmp/mc /usr/local/bin/
+          sudo chmod +x /usr/local/bin/mc
+
           # Download latest release of openfga server.
           mkdir -p "$(go env GOPATH)/bin/"
           curl -sSfL https://api.github.com/repos/openfga/openfga/releases/latest | jq -r '.assets | .[] | .browser_download_url | select(. | test("_linux_amd64.tar.gz$"))' | xargs -I {} curl -sSfL {} -o openfga.tar.gz
