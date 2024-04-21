@@ -455,10 +455,12 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 
 		// CPU
 		if len(resources.CPU.Sockets) == 1 {
-			fmt.Printf("\n"+i18n.G("CPU (%s):")+"\n", resources.CPU.Architecture)
+			fmt.Printf("\n" + i18n.G("CPU:") + "\n")
+			fmt.Printf("  "+i18n.G("Architecture: %s")+"\n", resources.CPU.Architecture)
 			c.renderCPU(resources.CPU.Sockets[0], "  ")
 		} else if len(resources.CPU.Sockets) > 1 {
-			fmt.Printf(i18n.G("CPUs (%s):")+"\n", resources.CPU.Architecture)
+			fmt.Printf(i18n.G("CPUs:") + "\n")
+			fmt.Printf("  "+i18n.G("Architecture: %s")+"\n", resources.CPU.Architecture)
 			for _, cpu := range resources.CPU.Sockets {
 				fmt.Printf("  "+i18n.G("Socket %d:")+"\n", cpu.Socket)
 				c.renderCPU(cpu, "    ")
