@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-21 11:19+0100\n"
+"POT-Creation-Date: 2024-04-22 09:14+0200\n"
 "PO-Revision-Date: 2024-01-25 23:01+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
 "org>\n"
@@ -128,7 +128,7 @@ msgstr ""
 "### Zum Beispiel:\n"
 "###  description: Mein eigenes Abbild\n"
 
-#: cmd/incus/cluster_group.go:399
+#: cmd/incus/cluster_group.go:420
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the cluster group.\n"
@@ -843,7 +843,7 @@ msgstr ""
 msgid "Action (defaults to GET)"
 msgstr "Aktion (Standard: GET)"
 
-#: cmd/incus/cluster_group.go:703
+#: cmd/incus/cluster_group.go:724
 #, fuzzy
 msgid "Add a cluster member to a cluster group"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
@@ -870,7 +870,7 @@ msgstr ""
 msgid "Add instance devices"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/cluster_group.go:702
+#: cmd/incus/cluster_group.go:723
 msgid "Add member to group"
 msgstr ""
 
@@ -1442,22 +1442,22 @@ msgstr "Gespeichertes Nutzerzertifikat auf dem Server: "
 msgid "Client version: %s\n"
 msgstr ""
 
-#: cmd/incus/cluster_group.go:216
+#: cmd/incus/cluster_group.go:237
 #, fuzzy, c-format
 msgid "Cluster group %s created"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/cluster_group.go:277
+#: cmd/incus/cluster_group.go:298
 #, fuzzy, c-format
 msgid "Cluster group %s deleted"
 msgstr "Profil %s gelöscht\n"
 
-#: cmd/incus/cluster_group.go:547
+#: cmd/incus/cluster_group.go:568
 #, fuzzy, c-format
 msgid "Cluster group %s isn't currently applied to %s"
 msgstr "Profil %s wurde auf %s angewandt\n"
 
-#: cmd/incus/cluster_group.go:624
+#: cmd/incus/cluster_group.go:645
 #, fuzzy, c-format
 msgid "Cluster group %s renamed to %s"
 msgstr "Profil %s wurde auf %s angewandt\n"
@@ -1472,17 +1472,17 @@ msgstr ""
 msgid "Cluster member %s added to cluster groups %s"
 msgstr ""
 
-#: cmd/incus/cluster_group.go:760
+#: cmd/incus/cluster_group.go:781
 #, fuzzy, c-format
 msgid "Cluster member %s added to group %s"
 msgstr "Gerät %s wurde von %s entfernt\n"
 
-#: cmd/incus/cluster_group.go:749
+#: cmd/incus/cluster_group.go:770
 #, fuzzy, c-format
 msgid "Cluster member %s is already in group %s"
 msgstr "Gerät %s wurde von %s entfernt\n"
 
-#: cmd/incus/cluster_group.go:567
+#: cmd/incus/cluster_group.go:588
 #, fuzzy, c-format
 msgid "Cluster member %s removed from group %s"
 msgstr "Gerät %s wurde von %s entfernt\n"
@@ -1583,7 +1583,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Config option should be in the format KEY=VALUE"
 msgstr ""
 
-#: cmd/incus/cluster.go:859 cmd/incus/cluster_group.go:375
+#: cmd/incus/cluster.go:859 cmd/incus/cluster_group.go:396
 #: cmd/incus/config.go:276 cmd/incus/config.go:351
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:692
@@ -1938,7 +1938,7 @@ msgstr ""
 msgid "DEFAULT TARGET ADDRESS"
 msgstr ""
 
-#: cmd/incus/cluster.go:197 cmd/incus/cluster_group.go:482
+#: cmd/incus/cluster.go:197 cmd/incus/cluster_group.go:503
 #: cmd/incus/config_trust.go:435 cmd/incus/image.go:1121
 #: cmd/incus/image_alias.go:237 cmd/incus/list.go:573 cmd/incus/network.go:1092
 #: cmd/incus/network_acl.go:155 cmd/incus/network_forward.go:152
@@ -1990,7 +1990,7 @@ msgstr ""
 msgid "Delete a background operation (will attempt to cancel)"
 msgstr ""
 
-#: cmd/incus/cluster_group.go:233 cmd/incus/cluster_group.go:234
+#: cmd/incus/cluster_group.go:254 cmd/incus/cluster_group.go:255
 msgid "Delete a cluster group"
 msgstr ""
 
@@ -2114,10 +2114,10 @@ msgstr ""
 #: cmd/incus/cluster.go:963 cmd/incus/cluster.go:1073 cmd/incus/cluster.go:1161
 #: cmd/incus/cluster.go:1285 cmd/incus/cluster.go:1314
 #: cmd/incus/cluster_group.go:30 cmd/incus/cluster_group.go:84
-#: cmd/incus/cluster_group.go:169 cmd/incus/cluster_group.go:234
-#: cmd/incus/cluster_group.go:294 cmd/incus/cluster_group.go:418
-#: cmd/incus/cluster_group.go:500 cmd/incus/cluster_group.go:585
-#: cmd/incus/cluster_group.go:641 cmd/incus/cluster_group.go:703
+#: cmd/incus/cluster_group.go:169 cmd/incus/cluster_group.go:255
+#: cmd/incus/cluster_group.go:315 cmd/incus/cluster_group.go:439
+#: cmd/incus/cluster_group.go:521 cmd/incus/cluster_group.go:606
+#: cmd/incus/cluster_group.go:662 cmd/incus/cluster_group.go:724
 #: cmd/incus/cluster_role.go:24 cmd/incus/cluster_role.go:51
 #: cmd/incus/cluster_role.go:115 cmd/incus/config.go:32 cmd/incus/config.go:95
 #: cmd/incus/config.go:388 cmd/incus/config.go:525 cmd/incus/config.go:751
@@ -2471,7 +2471,7 @@ msgid ""
 "(interrupt two more times to force)"
 msgstr ""
 
-#: cmd/incus/cluster_group.go:293 cmd/incus/cluster_group.go:294
+#: cmd/incus/cluster_group.go:314 cmd/incus/cluster_group.go:315
 msgid "Edit a cluster group"
 msgstr ""
 
@@ -3257,7 +3257,7 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/alias.go:113 cmd/incus/cluster.go:125 cmd/incus/cluster.go:964
-#: cmd/incus/cluster_group.go:420 cmd/incus/config_template.go:273
+#: cmd/incus/cluster_group.go:441 cmd/incus/config_template.go:273
 #: cmd/incus/config_trust.go:422 cmd/incus/config_trust.go:586
 #: cmd/incus/image.go:1100 cmd/incus/image_alias.go:157 cmd/incus/list.go:133
 #: cmd/incus/network.go:1015 cmd/incus/network.go:1114
@@ -4020,7 +4020,7 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 msgid "List all active cluster member join tokens"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/cluster_group.go:417 cmd/incus/cluster_group.go:418
+#: cmd/incus/cluster_group.go:438 cmd/incus/cluster_group.go:439
 #, fuzzy
 msgid "List all the cluster groups"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
@@ -4458,7 +4458,7 @@ msgstr ""
 msgid "MANAGED"
 msgstr ""
 
-#: cmd/incus/cluster_group.go:483
+#: cmd/incus/cluster_group.go:504
 msgid "MEMBERS"
 msgstr ""
 
@@ -4810,15 +4810,15 @@ msgstr "Fehlende Zusammenfassung."
 msgid "Missing certificate fingerprint"
 msgstr "Fingerabdruck des Zertifikats: % x\n"
 
-#: cmd/incus/cluster_group.go:202 cmd/incus/cluster_group.go:267
-#: cmd/incus/cluster_group.go:327 cmd/incus/cluster_group.go:674
+#: cmd/incus/cluster_group.go:222 cmd/incus/cluster_group.go:288
+#: cmd/incus/cluster_group.go:348 cmd/incus/cluster_group.go:695
 #, fuzzy
 msgid "Missing cluster group name"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
 #: cmd/incus/cluster.go:811 cmd/incus/cluster.go:1351
-#: cmd/incus/cluster_group.go:128 cmd/incus/cluster_group.go:537
-#: cmd/incus/cluster_group.go:739 cmd/incus/cluster_role.go:82
+#: cmd/incus/cluster_group.go:128 cmd/incus/cluster_group.go:558
+#: cmd/incus/cluster_group.go:760 cmd/incus/cluster_role.go:82
 #: cmd/incus/cluster_role.go:150
 #, fuzzy
 msgid "Missing cluster member name"
@@ -5093,7 +5093,7 @@ msgid "Must supply instance name for: "
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
 #: cmd/incus/cluster.go:192 cmd/incus/cluster.go:1055
-#: cmd/incus/cluster_group.go:481 cmd/incus/config_trust.go:431
+#: cmd/incus/cluster_group.go:502 cmd/incus/config_trust.go:431
 #: cmd/incus/config_trust.go:666 cmd/incus/list.go:581
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:154
 #: cmd/incus/network_integration.go:433 cmd/incus/network_peer.go:154
@@ -5635,7 +5635,7 @@ msgstr ""
 msgid "Press ctrl+c to finish"
 msgstr ""
 
-#: cmd/incus/cluster.go:860 cmd/incus/cluster_group.go:376
+#: cmd/incus/cluster.go:860 cmd/incus/cluster_group.go:397
 #: cmd/incus/config.go:277 cmd/incus/config.go:352
 #: cmd/incus/config_metadata.go:155 cmd/incus/config_template.go:237
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
@@ -6055,7 +6055,7 @@ msgstr ""
 msgid "Remove %s (yes/no): "
 msgstr ""
 
-#: cmd/incus/cluster_group.go:500
+#: cmd/incus/cluster_group.go:521
 #, fuzzy
 msgid "Remove a cluster member from a cluster group"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
@@ -6102,7 +6102,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Remove instance devices"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/cluster_group.go:499
+#: cmd/incus/cluster_group.go:520
 msgid "Remove member from group"
 msgstr ""
 
@@ -6145,7 +6145,7 @@ msgstr "Herunterfahren des Containers erzwingen."
 msgid "Remove trusted client"
 msgstr ""
 
-#: cmd/incus/cluster_group.go:584 cmd/incus/cluster_group.go:585
+#: cmd/incus/cluster_group.go:605 cmd/incus/cluster_group.go:606
 msgid "Rename a cluster group"
 msgstr ""
 
@@ -6440,7 +6440,7 @@ msgstr ""
 "Der Server vertraut uns nicht nachdem er unser Zertifikat hinzugefügt hat"
 
 #: cmd/incus/cluster.go:167 cmd/incus/cluster.go:1006 cmd/incus/cluster.go:1109
-#: cmd/incus/cluster.go:1217 cmd/incus/cluster_group.go:463
+#: cmd/incus/cluster.go:1217 cmd/incus/cluster_group.go:484
 msgid "Server isn't part of a cluster"
 msgstr ""
 
@@ -6805,7 +6805,7 @@ msgstr ""
 msgid "Show all information messages"
 msgstr ""
 
-#: cmd/incus/cluster_group.go:640 cmd/incus/cluster_group.go:641
+#: cmd/incus/cluster_group.go:661 cmd/incus/cluster_group.go:662
 #, fuzzy
 msgid "Show cluster group configurations"
 msgstr "Profil %s erstellt\n"
@@ -8264,7 +8264,7 @@ msgstr ""
 "lxd %s <Name>\n"
 
 #: cmd/incus/cluster.go:120 cmd/incus/cluster.go:961
-#: cmd/incus/cluster_group.go:415 cmd/incus/config_trust.go:397
+#: cmd/incus/cluster_group.go:436 cmd/incus/config_trust.go:397
 #: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1008 cmd/incus/network_acl.go:90
 #: cmd/incus/network_integration.go:383 cmd/incus/network_zone.go:82
@@ -8455,8 +8455,8 @@ msgstr ""
 "Entfernt einen Container (oder Sicherungspunkt) und alle dazugehörigen\n"
 "Daten (Konfiguration, Sicherungspunkte, ...).\n"
 
-#: cmd/incus/cluster_group.go:167 cmd/incus/cluster_group.go:231
-#: cmd/incus/cluster_group.go:292 cmd/incus/cluster_group.go:639
+#: cmd/incus/cluster_group.go:167 cmd/incus/cluster_group.go:252
+#: cmd/incus/cluster_group.go:313 cmd/incus/cluster_group.go:660
 #, fuzzy
 msgid "[<remote>:]<group>"
 msgstr ""
@@ -8464,7 +8464,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/cluster_group.go:582
+#: cmd/incus/cluster_group.go:603
 #, fuzzy
 msgid "[<remote>:]<group> <new-name>"
 msgstr ""
@@ -8761,8 +8761,8 @@ msgstr ""
 "Entfernt einen Container (oder Sicherungspunkt) und alle dazugehörigen\n"
 "Daten (Konfiguration, Sicherungspunkte, ...).\n"
 
-#: cmd/incus/cluster_group.go:81 cmd/incus/cluster_group.go:498
-#: cmd/incus/cluster_group.go:701
+#: cmd/incus/cluster_group.go:81 cmd/incus/cluster_group.go:519
+#: cmd/incus/cluster_group.go:722
 #, fuzzy
 msgid "[<remote>:]<member> <group>"
 msgstr ""
@@ -9576,6 +9576,14 @@ msgid ""
 "\n"
 "incus cluster group assign foo default\n"
 "    Reset \"foo\" to only using the \"default\" cluster group."
+msgstr ""
+
+#: cmd/incus/cluster_group.go:172
+msgid ""
+"incus cluster group create g1\n"
+"\n"
+"incus cluster group create g1 < config.yaml\n"
+"\tCreate a cluster group with configuration from config.yaml"
 msgstr ""
 
 #: cmd/incus/config_device.go:82
