@@ -169,6 +169,11 @@ func (c *cmdClusterGroupCreate) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create a cluster group`))
 
+	cmd.Example = cli.FormatSection("", i18n.G(`incus cluster group create g1
+
+incus cluster group create g1 < config.yaml
+	Create a cluster group with configuration from config.yaml`))
+
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -184,10 +189,25 @@ func (c *cmdClusterGroupCreate) Command() *cobra.Command {
 
 // It creates new cluster group after performing checks, parsing arguments, and making the server call for creation.
 func (c *cmdClusterGroupCreate) Run(cmd *cobra.Command, args []string) error {
+	var stdinData api.ClusterGroupPut
+
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 1, 1)
 	if exit {
 		return err
+	}
+
+	// If stdin isn't a terminal, read text from it
+	if !termios.IsTerminal(getStdinFd()) {
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+
+		err = yaml.Unmarshal(contents, &stdinData)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Parse remote
@@ -204,7 +224,8 @@ func (c *cmdClusterGroupCreate) Run(cmd *cobra.Command, args []string) error {
 
 	// Create the cluster group
 	group := api.ClusterGroupsPost{
-		Name: resource.name,
+		Name:            resource.name,
+		ClusterGroupPut: stdinData,
 	}
 
 	err = resource.server.CreateClusterGroup(group)
