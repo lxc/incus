@@ -2442,3 +2442,7 @@ This extends `limits.memory.swap` to allow for a total limit in bytes.
 ## `network_bridge_external_create`
 
 This adds the ability for `bridge.external_interfaces` to create a parent interface using a `interface/parent/vlan` syntax.
+
+## `storage_zfs_vdev`
+
+This adds support for `mirror`, `raidz1` and `raidz2` ZFS `vdev` types by extending storage `source` configuration.

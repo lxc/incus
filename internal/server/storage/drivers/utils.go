@@ -926,3 +926,14 @@ func (sfw *SparseFileWrapper) Write(p []byte) (n int, err error) {
 
 	return originalLength, nil
 }
+
+// sliceAny returns true when any element in a slice satisfy a predicate.
+func sliceAny[T any](slice []T, predicate func(T) bool) bool {
+	for _, element := range slice {
+		if predicate(element) {
+			return true
+		}
+	}
+
+	return false
+}
