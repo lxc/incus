@@ -663,30 +663,39 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 		// Network usage and IP info
 		networkInfo := ""
 		if inst.State.Network != nil {
-			for netName, net := range inst.State.Network {
+			network := inst.State.Network
+
+			netNames := make([]string, 0, len(network))
+			for netName := range network {
+				netNames = append(netNames, netName)
+			}
+
+			sort.Strings(netNames)
+
+			for _, netName := range netNames {
 				networkInfo += fmt.Sprintf("    %s:\n", netName)
-				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Type"), net.Type)
-				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("State"), strings.ToUpper(net.State))
-				if net.HostName != "" {
-					networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Host interface"), net.HostName)
+				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Type"), network[netName].Type)
+				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("State"), strings.ToUpper(network[netName].State))
+				if network[netName].HostName != "" {
+					networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Host interface"), network[netName].HostName)
 				}
 
-				if net.Hwaddr != "" {
-					networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("MAC address"), net.Hwaddr)
+				if network[netName].Hwaddr != "" {
+					networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("MAC address"), network[netName].Hwaddr)
 				}
 
-				if net.Mtu != 0 {
-					networkInfo += fmt.Sprintf("      %s: %d\n", i18n.G("MTU"), net.Mtu)
+				if network[netName].Mtu != 0 {
+					networkInfo += fmt.Sprintf("      %s: %d\n", i18n.G("MTU"), network[netName].Mtu)
 				}
 
-				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Bytes received"), units.GetByteSizeString(net.Counters.BytesReceived, 2))
-				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Bytes sent"), units.GetByteSizeString(net.Counters.BytesSent, 2))
-				networkInfo += fmt.Sprintf("      %s: %d\n", i18n.G("Packets received"), net.Counters.PacketsReceived)
-				networkInfo += fmt.Sprintf("      %s: %d\n", i18n.G("Packets sent"), net.Counters.PacketsSent)
+				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Bytes received"), units.GetByteSizeString(network[netName].Counters.BytesReceived, 2))
+				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Bytes sent"), units.GetByteSizeString(network[netName].Counters.BytesSent, 2))
+				networkInfo += fmt.Sprintf("      %s: %d\n", i18n.G("Packets received"), network[netName].Counters.PacketsReceived)
+				networkInfo += fmt.Sprintf("      %s: %d\n", i18n.G("Packets sent"), network[netName].Counters.PacketsSent)
 
 				networkInfo += fmt.Sprintf("      %s:\n", i18n.G("IP addresses"))
 
-				for _, addr := range net.Addresses {
+				for _, addr := range network[netName].Addresses {
 					if addr.Family == "inet" {
 						networkInfo += fmt.Sprintf("        %s:  %s/%s (%s)\n", addr.Family, addr.Address, addr.Netmask, addr.Scope)
 					} else {
