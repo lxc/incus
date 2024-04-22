@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-21 11:19+0100\n"
+"POT-Creation-Date: 2024-04-22 09:14+0200\n"
 "PO-Revision-Date: 2024-02-24 03:02+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -119,7 +119,7 @@ msgstr ""
 "###\n"
 "### Note that the fingerprint is shown but cannot be changed"
 
-#: cmd/incus/cluster_group.go:399
+#: cmd/incus/cluster_group.go:420
 msgid ""
 "### This is a YAML representation of the cluster group.\n"
 "### Any line starting with a '# will be ignored."
@@ -801,7 +801,7 @@ msgstr "%q はこのツールではサポートされていません"
 msgid "Action (defaults to GET)"
 msgstr "使用するHTTPのメソッド (デフォルト: GET)"
 
-#: cmd/incus/cluster_group.go:703
+#: cmd/incus/cluster_group.go:724
 msgid "Add a cluster member to a cluster group"
 msgstr "クラスターメンバーをクラスターグループに追加します"
 
@@ -825,7 +825,7 @@ msgstr "ネットワークゾーンレコードにエントリを追加します
 msgid "Add instance devices"
 msgstr "インスタンスにデバイスを追加します"
 
-#: cmd/incus/cluster_group.go:702
+#: cmd/incus/cluster_group.go:723
 msgid "Add member to group"
 msgstr "メンバーをグループに追加します"
 
@@ -1399,22 +1399,22 @@ msgstr "クライアント証明書がサーバに信頼されました:"
 msgid "Client version: %s\n"
 msgstr "クライアントバージョン: %s\n"
 
-#: cmd/incus/cluster_group.go:216
+#: cmd/incus/cluster_group.go:237
 #, c-format
 msgid "Cluster group %s created"
 msgstr "クラスターグループ %s を作成しました"
 
-#: cmd/incus/cluster_group.go:277
+#: cmd/incus/cluster_group.go:298
 #, c-format
 msgid "Cluster group %s deleted"
 msgstr "クラスターグループ %s が削除されました"
 
-#: cmd/incus/cluster_group.go:547
+#: cmd/incus/cluster_group.go:568
 #, c-format
 msgid "Cluster group %s isn't currently applied to %s"
 msgstr "クラスターグループ %s は現在 %s に適用されていません"
 
-#: cmd/incus/cluster_group.go:624
+#: cmd/incus/cluster_group.go:645
 #, c-format
 msgid "Cluster group %s renamed to %s"
 msgstr "クラスターグループ名 %s を %s に変更しました"
@@ -1429,17 +1429,17 @@ msgstr "%s:%s のクラスターに join するためのトークンが削除さ
 msgid "Cluster member %s added to cluster groups %s"
 msgstr "クラスターメンバー %s がクラスターグループ %s に追加されました"
 
-#: cmd/incus/cluster_group.go:760
+#: cmd/incus/cluster_group.go:781
 #, c-format
 msgid "Cluster member %s added to group %s"
 msgstr "クラスターメンバー %s がグループ %s に追加されました"
 
-#: cmd/incus/cluster_group.go:749
+#: cmd/incus/cluster_group.go:770
 #, c-format
 msgid "Cluster member %s is already in group %s"
 msgstr "クラスターメンバー %s はグループ %s にすでに存在します"
 
-#: cmd/incus/cluster_group.go:567
+#: cmd/incus/cluster_group.go:588
 #, c-format
 msgid "Cluster member %s removed from group %s"
 msgstr "クラスターメンバー %s がグループ %s から削除されました"
@@ -1544,7 +1544,7 @@ msgstr "移動先のインスタンスに適用するキー/値の設定"
 msgid "Config option should be in the format KEY=VALUE"
 msgstr "設定は KEY=VALUE のフォーマットである必要があります"
 
-#: cmd/incus/cluster.go:859 cmd/incus/cluster_group.go:375
+#: cmd/incus/cluster.go:859 cmd/incus/cluster_group.go:396
 #: cmd/incus/config.go:276 cmd/incus/config.go:351
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:692
@@ -1894,7 +1894,7 @@ msgstr "現在の VF 数: %d"
 msgid "DEFAULT TARGET ADDRESS"
 msgstr "DEFAULT TARGET ADDRESS"
 
-#: cmd/incus/cluster.go:197 cmd/incus/cluster_group.go:482
+#: cmd/incus/cluster.go:197 cmd/incus/cluster_group.go:503
 #: cmd/incus/config_trust.go:435 cmd/incus/image.go:1121
 #: cmd/incus/image_alias.go:237 cmd/incus/list.go:573 cmd/incus/network.go:1092
 #: cmd/incus/network_acl.go:155 cmd/incus/network_forward.go:152
@@ -1947,7 +1947,7 @@ msgstr "圧縮アルゴリズムを指定します: backup or none"
 msgid "Delete a background operation (will attempt to cancel)"
 msgstr "バックグラウンドの操作を削除します（キャンセルを試みます）"
 
-#: cmd/incus/cluster_group.go:233 cmd/incus/cluster_group.go:234
+#: cmd/incus/cluster_group.go:254 cmd/incus/cluster_group.go:255
 msgid "Delete a cluster group"
 msgstr "クラスターグループを削除します"
 
@@ -2059,10 +2059,10 @@ msgstr "警告を削除します"
 #: cmd/incus/cluster.go:963 cmd/incus/cluster.go:1073 cmd/incus/cluster.go:1161
 #: cmd/incus/cluster.go:1285 cmd/incus/cluster.go:1314
 #: cmd/incus/cluster_group.go:30 cmd/incus/cluster_group.go:84
-#: cmd/incus/cluster_group.go:169 cmd/incus/cluster_group.go:234
-#: cmd/incus/cluster_group.go:294 cmd/incus/cluster_group.go:418
-#: cmd/incus/cluster_group.go:500 cmd/incus/cluster_group.go:585
-#: cmd/incus/cluster_group.go:641 cmd/incus/cluster_group.go:703
+#: cmd/incus/cluster_group.go:169 cmd/incus/cluster_group.go:255
+#: cmd/incus/cluster_group.go:315 cmd/incus/cluster_group.go:439
+#: cmd/incus/cluster_group.go:521 cmd/incus/cluster_group.go:606
+#: cmd/incus/cluster_group.go:662 cmd/incus/cluster_group.go:724
 #: cmd/incus/cluster_role.go:24 cmd/incus/cluster_role.go:51
 #: cmd/incus/cluster_role.go:115 cmd/incus/config.go:32 cmd/incus/config.go:95
 #: cmd/incus/config.go:388 cmd/incus/config.go:525 cmd/incus/config.go:751
@@ -2405,7 +2405,7 @@ msgstr ""
 "ファイル転送のサーバ側の初期処理はキャンセルできません（強制的に中断するには"
 "あと2回行ってください）"
 
-#: cmd/incus/cluster_group.go:293 cmd/incus/cluster_group.go:294
+#: cmd/incus/cluster_group.go:314 cmd/incus/cluster_group.go:315
 msgid "Edit a cluster group"
 msgstr "クラスターグループを編集します"
 
@@ -3226,7 +3226,7 @@ msgstr ""
 "本当に強制的に %s を削除してもよろしいですか? (yes/no): "
 
 #: cmd/incus/alias.go:113 cmd/incus/cluster.go:125 cmd/incus/cluster.go:964
-#: cmd/incus/cluster_group.go:420 cmd/incus/config_template.go:273
+#: cmd/incus/cluster_group.go:441 cmd/incus/config_template.go:273
 #: cmd/incus/config_trust.go:422 cmd/incus/config_trust.go:586
 #: cmd/incus/image.go:1100 cmd/incus/image_alias.go:157 cmd/incus/list.go:133
 #: cmd/incus/network.go:1015 cmd/incus/network.go:1114
@@ -3981,7 +3981,7 @@ msgstr "有効な証明書追加トークンをすべて一覧表示します"
 msgid "List all active cluster member join tokens"
 msgstr "有効なクラスターへの join トークンをすべて一覧表示します"
 
-#: cmd/incus/cluster_group.go:417 cmd/incus/cluster_group.go:418
+#: cmd/incus/cluster_group.go:438 cmd/incus/cluster_group.go:439
 msgid "List all the cluster groups"
 msgstr "クラスターグループをすべて一覧表示します"
 
@@ -4560,7 +4560,7 @@ msgstr "MAD: %s (%s)"
 msgid "MANAGED"
 msgstr "MANAGED"
 
-#: cmd/incus/cluster_group.go:483
+#: cmd/incus/cluster_group.go:504
 msgid "MEMBERS"
 msgstr "MEMBERS"
 
@@ -4897,14 +4897,14 @@ msgstr "バケット名を指定する必要があります"
 msgid "Missing certificate fingerprint"
 msgstr "証明書のフィンガープリントがありません"
 
-#: cmd/incus/cluster_group.go:202 cmd/incus/cluster_group.go:267
-#: cmd/incus/cluster_group.go:327 cmd/incus/cluster_group.go:674
+#: cmd/incus/cluster_group.go:222 cmd/incus/cluster_group.go:288
+#: cmd/incus/cluster_group.go:348 cmd/incus/cluster_group.go:695
 msgid "Missing cluster group name"
 msgstr "クラスターグループ名がありません"
 
 #: cmd/incus/cluster.go:811 cmd/incus/cluster.go:1351
-#: cmd/incus/cluster_group.go:128 cmd/incus/cluster_group.go:537
-#: cmd/incus/cluster_group.go:739 cmd/incus/cluster_role.go:82
+#: cmd/incus/cluster_group.go:128 cmd/incus/cluster_group.go:558
+#: cmd/incus/cluster_group.go:760 cmd/incus/cluster_role.go:82
 #: cmd/incus/cluster_role.go:150
 msgid "Missing cluster member name"
 msgstr "クラスターメンバー名がありません"
@@ -5181,7 +5181,7 @@ msgid "Must supply instance name for: "
 msgstr "インスタンス名を指定する必要があります: "
 
 #: cmd/incus/cluster.go:192 cmd/incus/cluster.go:1055
-#: cmd/incus/cluster_group.go:481 cmd/incus/config_trust.go:431
+#: cmd/incus/cluster_group.go:502 cmd/incus/config_trust.go:431
 #: cmd/incus/config_trust.go:666 cmd/incus/list.go:581
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:154
 #: cmd/incus/network_integration.go:433 cmd/incus/network_peer.go:154
@@ -5726,7 +5726,7 @@ msgstr "Pre-seed モード。標準入力から YAML で設定を入力します
 msgid "Press ctrl+c to finish"
 msgstr "終了するには ctrl+c を押してください"
 
-#: cmd/incus/cluster.go:860 cmd/incus/cluster_group.go:376
+#: cmd/incus/cluster.go:860 cmd/incus/cluster_group.go:397
 #: cmd/incus/config.go:277 cmd/incus/config.go:352
 #: cmd/incus/config_metadata.go:155 cmd/incus/config_template.go:237
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
@@ -6177,7 +6177,7 @@ msgstr "リムーバブルディスク: %v"
 msgid "Remove %s (yes/no): "
 msgstr "%s を消去しますか (yes/no): "
 
-#: cmd/incus/cluster_group.go:500
+#: cmd/incus/cluster_group.go:521
 msgid "Remove a cluster member from a cluster group"
 msgstr "クラスターグループからメンバを削除します"
 
@@ -6217,7 +6217,7 @@ msgstr "ネットワークゾーンレコードからエントリを削除しま
 msgid "Remove instance devices"
 msgstr "インスタンスのデバイスを削除します"
 
-#: cmd/incus/cluster_group.go:499
+#: cmd/incus/cluster_group.go:520
 msgid "Remove member from group"
 msgstr "グループからメンバーを削除します"
 
@@ -6255,7 +6255,7 @@ msgstr "%s を消去しますか (yes/no): "
 msgid "Remove trusted client"
 msgstr "信頼済みクライアントを削除します"
 
-#: cmd/incus/cluster_group.go:584 cmd/incus/cluster_group.go:585
+#: cmd/incus/cluster_group.go:605 cmd/incus/cluster_group.go:606
 msgid "Rename a cluster group"
 msgstr "クラスターグループの名前を変更します"
 
@@ -6541,7 +6541,7 @@ msgid "Server doesn't trust us after authentication"
 msgstr "認証後、サーバが我々を信用していません"
 
 #: cmd/incus/cluster.go:167 cmd/incus/cluster.go:1006 cmd/incus/cluster.go:1109
-#: cmd/incus/cluster.go:1217 cmd/incus/cluster_group.go:463
+#: cmd/incus/cluster.go:1217 cmd/incus/cluster_group.go:484
 #, fuzzy
 msgid "Server isn't part of a cluster"
 msgstr "LXD サーバはクラスタの一部ではありません"
@@ -6968,7 +6968,7 @@ msgstr "デバッグメッセージをすべて表示します"
 msgid "Show all information messages"
 msgstr "詳細な情報を出力します"
 
-#: cmd/incus/cluster_group.go:640 cmd/incus/cluster_group.go:641
+#: cmd/incus/cluster_group.go:661 cmd/incus/cluster_group.go:662
 msgid "Show cluster group configurations"
 msgstr "クラスターグループの設定を表示します"
 
@@ -8449,7 +8449,7 @@ msgid "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 msgstr "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 
 #: cmd/incus/cluster.go:120 cmd/incus/cluster.go:961
-#: cmd/incus/cluster_group.go:415 cmd/incus/config_trust.go:397
+#: cmd/incus/cluster_group.go:436 cmd/incus/config_trust.go:397
 #: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1008 cmd/incus/network_acl.go:90
 #: cmd/incus/network_integration.go:383 cmd/incus/network_zone.go:82
@@ -8546,12 +8546,12 @@ msgstr "[<remote>:]<alias> <new-name>"
 msgid "[<remote>:]<fingerprint>"
 msgstr "[<remote>:]<fingerprint>"
 
-#: cmd/incus/cluster_group.go:167 cmd/incus/cluster_group.go:231
-#: cmd/incus/cluster_group.go:292 cmd/incus/cluster_group.go:639
+#: cmd/incus/cluster_group.go:167 cmd/incus/cluster_group.go:252
+#: cmd/incus/cluster_group.go:313 cmd/incus/cluster_group.go:660
 msgid "[<remote>:]<group>"
 msgstr "[<remote>:]<group>"
 
-#: cmd/incus/cluster_group.go:582
+#: cmd/incus/cluster_group.go:603
 msgid "[<remote>:]<group> <new-name>"
 msgstr "[<remote>:]<group> <new-name>"
 
@@ -8704,8 +8704,8 @@ msgstr "[<remote>:]<instance>[/<snapshot>] [<remote>:] [flags] [key=value...]"
 msgid "[<remote>:]<member>"
 msgstr "[<remote>:]<member>"
 
-#: cmd/incus/cluster_group.go:81 cmd/incus/cluster_group.go:498
-#: cmd/incus/cluster_group.go:701
+#: cmd/incus/cluster_group.go:81 cmd/incus/cluster_group.go:519
+#: cmd/incus/cluster_group.go:722
 msgid "[<remote>:]<member> <group>"
 msgstr "[<remote>:]<member> <group>"
 
@@ -9191,6 +9191,19 @@ msgstr ""
 "\n"
 "lxc cluster group assign foo default\n"
 "    \"foo\" を \"default\" クラスタグループのみ使用するように再設定します。"
+
+#: cmd/incus/cluster_group.go:172
+#, fuzzy
+msgid ""
+"incus cluster group create g1\n"
+"\n"
+"incus cluster group create g1 < config.yaml\n"
+"\tCreate a cluster group with configuration from config.yaml"
+msgstr ""
+"lxc init ubuntu:22.04 u1\n"
+"\n"
+"lxc init ubuntu:22.04 u1 < config.yaml\n"
+"    config.yaml の設定を使ってインスタンスを作成します"
 
 #: cmd/incus/config_device.go:82
 #, fuzzy
