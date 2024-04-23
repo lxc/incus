@@ -2393,6 +2393,11 @@ func (d *lxc) detachInterfaceRename(netns string, ifName string, hostName string
 
 // Start starts the instance.
 func (d *lxc) Start(stateful bool) error {
+	// Check that migration.stateful is set for stateful actions.
+	if stateful && util.IsFalse(d.expandedConfig["migration.stateful"]) {
+		return fmt.Errorf("Stateful start requires that the instance migration.stateful be set to true")
+	}
+
 	unlock, err := d.updateBackupFileLock(context.Background())
 	if err != nil {
 		return err
@@ -2648,6 +2653,11 @@ func (d *lxc) validateStartup(stateful bool, statusCode api.StatusCode) error {
 func (d *lxc) Stop(stateful bool) error {
 	d.logger.Debug("Stop started", logger.Ctx{"stateful": stateful})
 	defer d.logger.Debug("Stop finished", logger.Ctx{"stateful": stateful})
+
+	// Check that migration.stateful is set for stateful actions.
+	if stateful && util.IsFalse(d.expandedConfig["migration.stateful"]) {
+		return fmt.Errorf("Stateful stop requires the instance to have migration.stateful be set to true")
+	}
 
 	// Must be run prior to creating the operation lock.
 	if !d.IsRunning() {
@@ -3417,6 +3427,12 @@ func (d *lxc) RenderState(hostInterfaces []net.Interface) (*api.InstanceState, e
 
 // snapshot creates a snapshot of the instance.
 func (d *lxc) snapshot(name string, expiry time.Time, stateful bool) error {
+
+	// Check that migration.stateful is set for stateful actions.
+	if stateful && util.IsFalse(d.expandedConfig["migration.stateful"]) {
+		return fmt.Errorf("Stateful snapshots require that the instance has migration.stateful be set to true")
+	}
+
 	// Deal with state.
 	if stateful {
 		// Quick checks.
