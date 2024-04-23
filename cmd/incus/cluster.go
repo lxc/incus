@@ -19,6 +19,11 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+type clusterColumn struct {
+	Name string
+	Data func(api.ClusterMember) string
+}
+
 type cmdCluster struct {
 	global *cmdGlobal
 }
@@ -112,7 +117,9 @@ type cmdClusterList struct {
 	global  *cmdGlobal
 	cluster *cmdCluster
 
-	flagFormat string
+	flagColumns     string
+	flagFormat      string
+	flagAllProjects bool
 }
 
 func (c *cmdClusterList) Command() *cobra.Command {
@@ -121,8 +128,28 @@ func (c *cmdClusterList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List all the cluster members")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List all the cluster members`))
+		`List all the cluster members
+
+	The -c option takes a (optionally comma-separated) list of arguments
+	that control which image attributes to output when displaying in table
+	or csv format.
+
+	Default column layout is: nurafdsm
+
+	Column shorthand chars:
+
+    n - Server name
+    u - URL
+    r - Roles
+    a - Architecture
+    f - Failure Domain
+    d - Description
+    s - Status
+    m - Message`))
+
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultClusterColumns, i18n.G("Columns")+"``")
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Display clusters from all projects"))
 
 	cmd.RunE = c.Run
 
@@ -137,11 +164,89 @@ func (c *cmdClusterList) Command() *cobra.Command {
 	return cmd
 }
 
+const defaultClusterColumns = "nurafdsm"
+
+func (c *cmdClusterList) parseColumns() ([]clusterColumn, error) {
+	columnsShorthandMap := map[rune]clusterColumn{
+		'n': {i18n.G("NAME"), c.serverColumnData},
+		'u': {i18n.G("URL"), c.urlColumnData},
+		'r': {i18n.G("ROLES"), c.rolesColumnData},
+		'a': {i18n.G("ARCHITECTURE"), c.architectureColumnData},
+		'f': {i18n.G("FAILURE DOMAIN"), c.failureDomainColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+		's': {i18n.G("STATUS"), c.statusColumnData},
+		'm': {i18n.G("MESSAGE"), c.messageColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+
+	columns := []clusterColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdClusterList) serverColumnData(cluster api.ClusterMember) string {
+	return cluster.ServerName
+}
+
+func (c *cmdClusterList) urlColumnData(cluster api.ClusterMember) string {
+	return cluster.URL
+}
+
+func (c *cmdClusterList) rolesColumnData(cluster api.ClusterMember) string {
+	roles := cluster.Roles
+	rolesDelimiter := "\n"
+	if c.flagFormat == "csv" {
+		rolesDelimiter = ","
+	}
+
+	return strings.Join(roles, rolesDelimiter)
+}
+
+func (c *cmdClusterList) architectureColumnData(cluster api.ClusterMember) string {
+	return cluster.Architecture
+}
+
+func (c *cmdClusterList) failureDomainColumnData(cluster api.ClusterMember) string {
+	return cluster.FailureDomain
+}
+
+func (c *cmdClusterList) descriptionColumnData(cluster api.ClusterMember) string {
+	return cluster.Description
+}
+
+func (c *cmdClusterList) statusColumnData(cluster api.ClusterMember) string {
+	return strings.ToUpper(cluster.Status)
+}
+
+func (c *cmdClusterList) messageColumnData(cluster api.ClusterMember) string {
+	return cluster.Message
+}
+
 func (c *cmdClusterList) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 0, 1)
 	if exit {
 		return err
+	}
+
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return fmt.Errorf(i18n.G("Can't specify --project with --all-projects"))
 	}
 
 	// Parse remote
@@ -173,30 +278,28 @@ func (c *cmdClusterList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Process the columns
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
 	// Render the table
 	data := [][]string{}
 	for _, member := range members {
-		roles := member.ClusterMemberPut.Roles
-		rolesDelimiter := "\n"
-		if c.flagFormat == "csv" {
-			rolesDelimiter = ","
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(member))
 		}
 
-		line := []string{member.ServerName, member.URL, strings.Join(roles, rolesDelimiter), member.Architecture, member.FailureDomain, member.Description, strings.ToUpper(member.Status), member.Message}
 		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("URL"),
-		i18n.G("ROLES"),
-		i18n.G("ARCHITECTURE"),
-		i18n.G("FAILURE DOMAIN"),
-		i18n.G("DESCRIPTION"),
-		i18n.G("STATE"),
-		i18n.G("MESSAGE"),
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, members)
