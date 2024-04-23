@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-22 09:14+0200\n"
+"POT-Creation-Date: 2024-04-23 12:51+0200\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -241,7 +241,7 @@ msgstr ""
 "###     template: template.tpl\n"
 "###     properties: {}"
 
-#: cmd/incus/network_acl.go:602
+#: cmd/incus/network_acl.go:606
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network ACL.\n"
@@ -909,7 +909,7 @@ msgstr ""
 msgid "Add roles to a cluster member"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_acl.go:853 cmd/incus/network_acl.go:854
+#: cmd/incus/network_acl.go:857 cmd/incus/network_acl.go:858
 msgid "Add rules to an ACL"
 msgstr ""
 
@@ -1107,7 +1107,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Backup exported successfully!"
 msgstr ""
 
-#: cmd/incus/info.go:759 cmd/incus/storage_volume.go:1453
+#: cmd/incus/info.go:768 cmd/incus/storage_volume.go:1453
 msgid "Backups:"
 msgstr ""
 
@@ -1116,7 +1116,7 @@ msgstr ""
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
 
-#: cmd/incus/network.go:369 cmd/incus/network_acl.go:425
+#: cmd/incus/network.go:369 cmd/incus/network_acl.go:429
 #: cmd/incus/network_forward.go:303 cmd/incus/network_load_balancer.go:306
 #: cmd/incus/network_peer.go:331 cmd/incus/network_zone.go:378
 #: cmd/incus/network_zone.go:1061 cmd/incus/storage_bucket.go:149
@@ -1164,11 +1164,11 @@ msgstr ""
 msgid "Bus Address: %v"
 msgstr "Expira: %s"
 
-#: cmd/incus/info.go:682 cmd/incus/network.go:947
+#: cmd/incus/info.go:691 cmd/incus/network.go:947
 msgid "Bytes received"
 msgstr "Bytes recibidos"
 
-#: cmd/incus/info.go:683 cmd/incus/network.go:948
+#: cmd/incus/info.go:692 cmd/incus/network.go:948
 msgid "Bytes sent"
 msgstr "Bytes enviados"
 
@@ -1326,7 +1326,7 @@ msgstr ""
 msgid "Cannot set --volume-only when copying a snapshot"
 msgstr ""
 
-#: cmd/incus/network_acl.go:923
+#: cmd/incus/network_acl.go:927
 #, c-format
 msgid "Cannot set key: %s"
 msgstr ""
@@ -1536,7 +1536,7 @@ msgstr ""
 #: cmd/incus/cluster.go:859 cmd/incus/cluster_group.go:396
 #: cmd/incus/config.go:276 cmd/incus/config.go:351
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
-#: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:692
+#: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:696
 #: cmd/incus/network_forward.go:711 cmd/incus/network_integration.go:288
 #: cmd/incus/network_load_balancer.go:681 cmd/incus/network_peer.go:726
 #: cmd/incus/network_zone.go:633 cmd/incus/network_zone.go:1324
@@ -1963,7 +1963,7 @@ msgstr "Eliminar imágenes"
 msgid "Delete key from a storage bucket"
 msgstr ""
 
-#: cmd/incus/network_acl.go:781 cmd/incus/network_acl.go:782
+#: cmd/incus/network_acl.go:785 cmd/incus/network_acl.go:786
 msgid "Delete network ACLs"
 msgstr ""
 
@@ -2088,10 +2088,10 @@ msgstr ""
 #: cmd/incus/network_acl.go:28 cmd/incus/network_acl.go:93
 #: cmd/incus/network_acl.go:172 cmd/incus/network_acl.go:233
 #: cmd/incus/network_acl.go:289 cmd/incus/network_acl.go:362
-#: cmd/incus/network_acl.go:455 cmd/incus/network_acl.go:543
-#: cmd/incus/network_acl.go:586 cmd/incus/network_acl.go:725
-#: cmd/incus/network_acl.go:782 cmd/incus/network_acl.go:839
-#: cmd/incus/network_acl.go:854 cmd/incus/network_acl.go:991
+#: cmd/incus/network_acl.go:459 cmd/incus/network_acl.go:547
+#: cmd/incus/network_acl.go:590 cmd/incus/network_acl.go:729
+#: cmd/incus/network_acl.go:786 cmd/incus/network_acl.go:843
+#: cmd/incus/network_acl.go:858 cmd/incus/network_acl.go:995
 #: cmd/incus/network_allocations.go:51 cmd/incus/network_forward.go:28
 #: cmd/incus/network_forward.go:85 cmd/incus/network_forward.go:174
 #: cmd/incus/network_forward.go:250 cmd/incus/network_forward.go:348
@@ -2415,7 +2415,7 @@ msgstr ""
 msgid "Edit instance or server configurations as YAML"
 msgstr ""
 
-#: cmd/incus/network_acl.go:585 cmd/incus/network_acl.go:586
+#: cmd/incus/network_acl.go:589 cmd/incus/network_acl.go:590
 msgid "Edit network ACL configurations as YAML"
 msgstr ""
 
@@ -2539,7 +2539,7 @@ msgid "Error retrieving aliases: %w"
 msgstr ""
 
 #: cmd/incus/cluster.go:459 cmd/incus/config.go:641 cmd/incus/config.go:673
-#: cmd/incus/network.go:1325 cmd/incus/network_acl.go:518
+#: cmd/incus/network.go:1325 cmd/incus/network_acl.go:522
 #: cmd/incus/network_forward.go:516 cmd/incus/network_integration.go:563
 #: cmd/incus/network_load_balancer.go:502 cmd/incus/network_peer.go:550
 #: cmd/incus/network_zone.go:471 cmd/incus/network_zone.go:1155
@@ -2561,7 +2561,7 @@ msgid "Error unsetting properties: %v"
 msgstr "Error actualizando el archivo de plantilla: %s"
 
 #: cmd/incus/cluster.go:453 cmd/incus/network.go:1319
-#: cmd/incus/network_acl.go:512 cmd/incus/network_forward.go:510
+#: cmd/incus/network_acl.go:516 cmd/incus/network_forward.go:510
 #: cmd/incus/network_integration.go:557 cmd/incus/network_load_balancer.go:496
 #: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:465
 #: cmd/incus/network_zone.go:1149 cmd/incus/profile.go:980
@@ -2651,7 +2651,7 @@ msgstr ""
 msgid "Expected a struct, got a %v"
 msgstr ""
 
-#: cmd/incus/info.go:745 cmd/incus/info.go:796 cmd/incus/snapshot.go:366
+#: cmd/incus/info.go:754 cmd/incus/info.go:805 cmd/incus/snapshot.go:366
 #: cmd/incus/storage_volume.go:1440 cmd/incus/storage_volume.go:1490
 #: cmd/incus/storage_volume.go:2575
 #, fuzzy
@@ -3395,7 +3395,7 @@ msgstr ""
 msgid "HOSTNAME"
 msgstr ""
 
-#: cmd/incus/info.go:671
+#: cmd/incus/info.go:680
 #, fuzzy
 msgid "Host interface"
 msgstr "Aliases:"
@@ -3446,7 +3446,7 @@ msgstr ""
 msgid "IP ADDRESS"
 msgstr ""
 
-#: cmd/incus/info.go:687
+#: cmd/incus/info.go:696
 #, fuzzy
 msgid "IP addresses"
 msgstr "Expira: %s"
@@ -3622,7 +3622,7 @@ msgstr ""
 msgid "Input data"
 msgstr ""
 
-#: cmd/incus/info.go:797
+#: cmd/incus/info.go:806
 #, fuzzy
 msgid "Instance Only"
 msgstr "Nombre del contenedor es: %s"
@@ -4258,7 +4258,7 @@ msgstr ""
 msgid "Log level filtering can only be used with pretty formatting"
 msgstr ""
 
-#: cmd/incus/info.go:825
+#: cmd/incus/info.go:834
 msgid "Log:"
 msgstr "Registro:"
 
@@ -4295,7 +4295,7 @@ msgstr ""
 msgid "MAC ADDRESS"
 msgstr ""
 
-#: cmd/incus/info.go:675
+#: cmd/incus/info.go:684
 #, fuzzy
 msgid "MAC address"
 msgstr "Expira: %s"
@@ -4339,7 +4339,7 @@ msgstr ""
 msgid "MII state"
 msgstr ""
 
-#: cmd/incus/info.go:679
+#: cmd/incus/info.go:688
 msgid "MTU"
 msgstr ""
 
@@ -4436,7 +4436,7 @@ msgstr ""
 msgid "Manage instance snapshots"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_acl.go:838 cmd/incus/network_acl.go:839
+#: cmd/incus/network_acl.go:842 cmd/incus/network_acl.go:843
 msgid "Manage network ACL rules"
 msgstr ""
 
@@ -4701,10 +4701,10 @@ msgid "Missing name"
 msgstr ""
 
 #: cmd/incus/network_acl.go:202 cmd/incus/network_acl.go:262
-#: cmd/incus/network_acl.go:325 cmd/incus/network_acl.go:393
-#: cmd/incus/network_acl.go:491 cmd/incus/network_acl.go:644
-#: cmd/incus/network_acl.go:755 cmd/incus/network_acl.go:812
-#: cmd/incus/network_acl.go:948 cmd/incus/network_acl.go:1031
+#: cmd/incus/network_acl.go:325 cmd/incus/network_acl.go:397
+#: cmd/incus/network_acl.go:495 cmd/incus/network_acl.go:648
+#: cmd/incus/network_acl.go:759 cmd/incus/network_acl.go:816
+#: cmd/incus/network_acl.go:952 cmd/incus/network_acl.go:1035
 #, fuzzy
 msgid "Missing network ACL name"
 msgstr "Nombre del contenedor es: %s"
@@ -4908,7 +4908,7 @@ msgstr ""
 msgid "Multiple ports match. Use --force to remove them all"
 msgstr ""
 
-#: cmd/incus/network_acl.go:1086
+#: cmd/incus/network_acl.go:1090
 msgid "Multiple rules match. Use --force to remove them all"
 msgstr ""
 
@@ -4982,7 +4982,7 @@ msgstr ""
 msgid "NVRM Version: %v"
 msgstr ""
 
-#: cmd/incus/info.go:743 cmd/incus/info.go:794 cmd/incus/snapshot.go:364
+#: cmd/incus/info.go:752 cmd/incus/info.go:803 cmd/incus/snapshot.go:364
 #: cmd/incus/storage_volume.go:1438 cmd/incus/storage_volume.go:1488
 #: cmd/incus/storage_volume.go:2573
 msgid "Name"
@@ -5075,17 +5075,17 @@ msgstr ""
 msgid "Network %s renamed to %s"
 msgstr ""
 
-#: cmd/incus/network_acl.go:437
+#: cmd/incus/network_acl.go:441
 #, fuzzy, c-format
 msgid "Network ACL %s created"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_acl.go:822
+#: cmd/incus/network_acl.go:826
 #, fuzzy, c-format
 msgid "Network ACL %s deleted"
 msgstr "Perfil %s eliminado"
 
-#: cmd/incus/network_acl.go:765
+#: cmd/incus/network_acl.go:769
 #, fuzzy, c-format
 msgid "Network ACL %s renamed to %s"
 msgstr "Perfil %s renombrado a %s"
@@ -5164,7 +5164,7 @@ msgstr ""
 msgid "Network type"
 msgstr ""
 
-#: cmd/incus/info.go:700 cmd/incus/network.go:946
+#: cmd/incus/info.go:709 cmd/incus/network.go:946
 msgid "Network usage:"
 msgstr ""
 
@@ -5221,7 +5221,7 @@ msgstr ""
 msgid "No matching port(s) found"
 msgstr ""
 
-#: cmd/incus/network_acl.go:1097
+#: cmd/incus/network_acl.go:1101
 msgid "No matching rule(s) found"
 msgstr ""
 
@@ -5307,7 +5307,7 @@ msgstr ""
 msgid "Operation %s deleted"
 msgstr ""
 
-#: cmd/incus/info.go:798 cmd/incus/storage_volume.go:1492
+#: cmd/incus/info.go:807 cmd/incus/storage_volume.go:1492
 msgid "Optimized Storage"
 msgstr ""
 
@@ -5366,11 +5366,11 @@ msgstr ""
 msgid "PUBLIC"
 msgstr ""
 
-#: cmd/incus/info.go:684 cmd/incus/network.go:949
+#: cmd/incus/info.go:693 cmd/incus/network.go:949
 msgid "Packets received"
 msgstr ""
 
-#: cmd/incus/info.go:685 cmd/incus/network.go:950
+#: cmd/incus/info.go:694 cmd/incus/network.go:950
 msgid "Packets sent"
 msgstr ""
 
@@ -5456,7 +5456,7 @@ msgstr ""
 #: cmd/incus/config.go:277 cmd/incus/config.go:352
 #: cmd/incus/config_metadata.go:155 cmd/incus/config_template.go:237
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
-#: cmd/incus/network.go:763 cmd/incus/network_acl.go:693
+#: cmd/incus/network.go:763 cmd/incus/network_acl.go:697
 #: cmd/incus/network_forward.go:712 cmd/incus/network_integration.go:289
 #: cmd/incus/network_load_balancer.go:682 cmd/incus/network_peer.go:727
 #: cmd/incus/network_zone.go:634 cmd/incus/network_zone.go:1325
@@ -5888,7 +5888,7 @@ msgstr ""
 msgid "Remove all ports that match"
 msgstr ""
 
-#: cmd/incus/network_acl.go:992
+#: cmd/incus/network_acl.go:996
 msgid "Remove all rules that match"
 msgstr ""
 
@@ -5937,7 +5937,7 @@ msgstr ""
 msgid "Remove roles from a cluster member"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_acl.go:990 cmd/incus/network_acl.go:991
+#: cmd/incus/network_acl.go:994 cmd/incus/network_acl.go:995
 msgid "Remove rules from an ACL"
 msgstr ""
 
@@ -5973,7 +5973,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Rename instances"
 msgstr "Aliases:"
 
-#: cmd/incus/network_acl.go:724 cmd/incus/network_acl.go:725
+#: cmd/incus/network_acl.go:728 cmd/incus/network_acl.go:729
 msgid "Rename network ACLs"
 msgstr ""
 
@@ -6300,11 +6300,11 @@ msgid ""
 "    incus config set [<remote>:][<instance>] <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_acl.go:454
+#: cmd/incus/network_acl.go:458
 msgid "Set network ACL configuration keys"
 msgstr ""
 
-#: cmd/incus/network_acl.go:455
+#: cmd/incus/network_acl.go:459
 msgid ""
 "Set network ACL configuration keys\n"
 "\n"
@@ -6501,7 +6501,7 @@ msgstr ""
 msgid "Set the key as a cluster property"
 msgstr ""
 
-#: cmd/incus/network_acl.go:461
+#: cmd/incus/network_acl.go:465
 msgid "Set the key as a network ACL property"
 msgstr ""
 
@@ -6784,7 +6784,7 @@ msgstr ""
 msgid "Snapshots are read-only and can't have their configuration changed"
 msgstr ""
 
-#: cmd/incus/info.go:712 cmd/incus/storage_volume.go:1417
+#: cmd/incus/info.go:721 cmd/incus/storage_volume.go:1417
 msgid "Snapshots:"
 msgstr ""
 
@@ -6821,7 +6821,7 @@ msgstr ""
 msgid "Starting recovery..."
 msgstr ""
 
-#: cmd/incus/info.go:669
+#: cmd/incus/info.go:678
 #, fuzzy
 msgid "State"
 msgstr "Auto actualización: %s"
@@ -6831,7 +6831,7 @@ msgstr "Auto actualización: %s"
 msgid "State: %s"
 msgstr "Auto actualización: %s"
 
-#: cmd/incus/info.go:746 cmd/incus/snapshot.go:367
+#: cmd/incus/info.go:755 cmd/incus/snapshot.go:367
 msgid "Stateful"
 msgstr ""
 
@@ -7003,7 +7003,7 @@ msgstr ""
 msgid "TYPE"
 msgstr ""
 
-#: cmd/incus/info.go:744 cmd/incus/info.go:795 cmd/incus/snapshot.go:365
+#: cmd/incus/info.go:753 cmd/incus/info.go:804 cmd/incus/snapshot.go:365
 #: cmd/incus/storage_volume.go:1489 cmd/incus/storage_volume.go:2574
 msgid "Taken at"
 msgstr ""
@@ -7077,7 +7077,7 @@ msgstr ""
 msgid "The device already exists"
 msgstr ""
 
-#: cmd/incus/network_acl.go:981 cmd/incus/network_acl.go:1119
+#: cmd/incus/network_acl.go:985 cmd/incus/network_acl.go:1123
 msgid "The direction argument must be one of: ingress, egress"
 msgstr ""
 
@@ -7393,7 +7393,7 @@ msgstr "Contraseña admin para %s: "
 msgid "Try `incus info --show-log %s` for more info"
 msgstr ""
 
-#: cmd/incus/info.go:668
+#: cmd/incus/info.go:677
 #, fuzzy
 msgid "Type"
 msgstr "Expira: %s"
@@ -7506,7 +7506,7 @@ msgstr ""
 msgid "Unknown file type '%s'"
 msgstr ""
 
-#: cmd/incus/network_acl.go:918 cmd/incus/network_acl.go:1053
+#: cmd/incus/network_acl.go:922 cmd/incus/network_acl.go:1057
 #, c-format
 msgid "Unknown key: %s"
 msgstr ""
@@ -7537,7 +7537,7 @@ msgstr ""
 msgid "Unset instance or server configuration keys"
 msgstr ""
 
-#: cmd/incus/network_acl.go:542 cmd/incus/network_acl.go:543
+#: cmd/incus/network_acl.go:546 cmd/incus/network_acl.go:547
 msgid "Unset network ACL configuration keys"
 msgstr ""
 
@@ -7615,7 +7615,7 @@ msgstr ""
 msgid "Unset the key as a cluster property"
 msgstr ""
 
-#: cmd/incus/network_acl.go:546
+#: cmd/incus/network_acl.go:550
 msgid "Unset the key as a network ACL property"
 msgstr ""
 
@@ -7679,7 +7679,7 @@ msgstr ""
 msgid "Unset the key as an instance property"
 msgstr ""
 
-#: cmd/incus/info.go:817
+#: cmd/incus/info.go:826
 #, c-format
 msgid "Unsupported instance type: %s"
 msgstr ""
@@ -8028,27 +8028,27 @@ msgid "[<remote>:] [<filters>...]"
 msgstr "No se puede proveer el nombre del container a la lista"
 
 #: cmd/incus/network_acl.go:170 cmd/incus/network_acl.go:231
-#: cmd/incus/network_acl.go:584 cmd/incus/network_acl.go:779
+#: cmd/incus/network_acl.go:588 cmd/incus/network_acl.go:783
 #, fuzzy
 msgid "[<remote>:]<ACL>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_acl.go:852 cmd/incus/network_acl.go:989
+#: cmd/incus/network_acl.go:856 cmd/incus/network_acl.go:993
 #, fuzzy
 msgid "[<remote>:]<ACL> <direction> <key>=<value>..."
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_acl.go:287 cmd/incus/network_acl.go:541
+#: cmd/incus/network_acl.go:287 cmd/incus/network_acl.go:545
 #, fuzzy
 msgid "[<remote>:]<ACL> <key>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_acl.go:453
+#: cmd/incus/network_acl.go:457
 #, fuzzy
 msgid "[<remote>:]<ACL> <key>=<value>..."
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_acl.go:722
+#: cmd/incus/network_acl.go:726
 #, fuzzy
 msgid "[<remote>:]<ACL> <new-name>"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -8984,6 +8984,14 @@ msgid ""
 "\n"
 "incus move <instance>/<old snapshot name> <instance>/<new snapshot name>\n"
 "    Rename a snapshot."
+msgstr ""
+
+#: cmd/incus/network_acl.go:363
+msgid ""
+"incus network acl create a1\n"
+"\n"
+"incus network acl create a1 < config.yaml\n"
+"    Create network acl with configuration from config.yaml"
 msgstr ""
 
 #: cmd/incus/network.go:322

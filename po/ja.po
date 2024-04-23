@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-22 09:14+0200\n"
+"POT-Creation-Date: 2024-04-23 12:51+0200\n"
 "PO-Revision-Date: 2024-02-24 03:02+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -225,7 +225,7 @@ msgstr ""
 "###     template: template.tpl\n"
 "###     properties: {}"
 
-#: cmd/incus/network_acl.go:602
+#: cmd/incus/network_acl.go:606
 msgid ""
 "### This is a YAML representation of the network ACL.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -907,7 +907,7 @@ msgstr "インスタンスにプロファイルを追加します"
 msgid "Add roles to a cluster member"
 msgstr "クラスターメンバーにロールを追加します"
 
-#: cmd/incus/network_acl.go:853 cmd/incus/network_acl.go:854
+#: cmd/incus/network_acl.go:857 cmd/incus/network_acl.go:858
 msgid "Add rules to an ACL"
 msgstr "ACLにルールを追加します"
 
@@ -1108,7 +1108,7 @@ msgstr "ストレージボリュームのバックアップ中: %s"
 msgid "Backup exported successfully!"
 msgstr "バックアップのエクスポートが成功しました!"
 
-#: cmd/incus/info.go:759 cmd/incus/storage_volume.go:1453
+#: cmd/incus/info.go:768 cmd/incus/storage_volume.go:1453
 msgid "Backups:"
 msgstr "バックアップ:"
 
@@ -1119,7 +1119,7 @@ msgstr ""
 "デバイスを上書きする際の書式が不適切です。次のような形式で指定してください "
 "<device>,<key>=<value>: %s"
 
-#: cmd/incus/network.go:369 cmd/incus/network_acl.go:425
+#: cmd/incus/network.go:369 cmd/incus/network_acl.go:429
 #: cmd/incus/network_forward.go:303 cmd/incus/network_load_balancer.go:306
 #: cmd/incus/network_peer.go:331 cmd/incus/network_zone.go:378
 #: cmd/incus/network_zone.go:1061 cmd/incus/storage_bucket.go:149
@@ -1166,11 +1166,11 @@ msgstr "ブリッジ:"
 msgid "Bus Address: %v"
 msgstr "アドレス: %s"
 
-#: cmd/incus/info.go:682 cmd/incus/network.go:947
+#: cmd/incus/info.go:691 cmd/incus/network.go:947
 msgid "Bytes received"
 msgstr "受信バイト数"
 
-#: cmd/incus/info.go:683 cmd/incus/network.go:948
+#: cmd/incus/info.go:692 cmd/incus/network.go:948
 msgid "Bytes sent"
 msgstr "送信バイト数"
 
@@ -1331,7 +1331,7 @@ msgstr ""
 msgid "Cannot set --volume-only when copying a snapshot"
 msgstr "スナップショットをコピーするときに --volume-only は指定できません"
 
-#: cmd/incus/network_acl.go:923
+#: cmd/incus/network_acl.go:927
 #, c-format
 msgid "Cannot set key: %s"
 msgstr "設定キーを設定できません: %s"
@@ -1547,7 +1547,7 @@ msgstr "設定は KEY=VALUE のフォーマットである必要があります"
 #: cmd/incus/cluster.go:859 cmd/incus/cluster_group.go:396
 #: cmd/incus/config.go:276 cmd/incus/config.go:351
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
-#: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:692
+#: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:696
 #: cmd/incus/network_forward.go:711 cmd/incus/network_integration.go:288
 #: cmd/incus/network_load_balancer.go:681 cmd/incus/network_peer.go:726
 #: cmd/incus/network_zone.go:633 cmd/incus/network_zone.go:1324
@@ -1983,7 +1983,7 @@ msgstr "インスタンスを削除します"
 msgid "Delete key from a storage bucket"
 msgstr "ストレージバケットからキーを削除します"
 
-#: cmd/incus/network_acl.go:781 cmd/incus/network_acl.go:782
+#: cmd/incus/network_acl.go:785 cmd/incus/network_acl.go:786
 msgid "Delete network ACLs"
 msgstr "ネットワーク ACL を削除します"
 
@@ -2103,10 +2103,10 @@ msgstr "警告を削除します"
 #: cmd/incus/network_acl.go:28 cmd/incus/network_acl.go:93
 #: cmd/incus/network_acl.go:172 cmd/incus/network_acl.go:233
 #: cmd/incus/network_acl.go:289 cmd/incus/network_acl.go:362
-#: cmd/incus/network_acl.go:455 cmd/incus/network_acl.go:543
-#: cmd/incus/network_acl.go:586 cmd/incus/network_acl.go:725
-#: cmd/incus/network_acl.go:782 cmd/incus/network_acl.go:839
-#: cmd/incus/network_acl.go:854 cmd/incus/network_acl.go:991
+#: cmd/incus/network_acl.go:459 cmd/incus/network_acl.go:547
+#: cmd/incus/network_acl.go:590 cmd/incus/network_acl.go:729
+#: cmd/incus/network_acl.go:786 cmd/incus/network_acl.go:843
+#: cmd/incus/network_acl.go:858 cmd/incus/network_acl.go:995
 #: cmd/incus/network_allocations.go:51 cmd/incus/network_forward.go:28
 #: cmd/incus/network_forward.go:85 cmd/incus/network_forward.go:174
 #: cmd/incus/network_forward.go:250 cmd/incus/network_forward.go:348
@@ -2433,7 +2433,7 @@ msgstr "インスタンスのメタデータファイルを編集します"
 msgid "Edit instance or server configurations as YAML"
 msgstr "インスタンスもしくはサーバの設定をYAMLファイルで編集します"
 
-#: cmd/incus/network_acl.go:585 cmd/incus/network_acl.go:586
+#: cmd/incus/network_acl.go:589 cmd/incus/network_acl.go:590
 msgid "Edit network ACL configurations as YAML"
 msgstr "ネットワーク ACL をYAMLで編集します"
 
@@ -2562,7 +2562,7 @@ msgid "Error retrieving aliases: %w"
 msgstr "エイリアスの取得に失敗しました: %w"
 
 #: cmd/incus/cluster.go:459 cmd/incus/config.go:641 cmd/incus/config.go:673
-#: cmd/incus/network.go:1325 cmd/incus/network_acl.go:518
+#: cmd/incus/network.go:1325 cmd/incus/network_acl.go:522
 #: cmd/incus/network_forward.go:516 cmd/incus/network_integration.go:563
 #: cmd/incus/network_load_balancer.go:502 cmd/incus/network_peer.go:550
 #: cmd/incus/network_zone.go:471 cmd/incus/network_zone.go:1155
@@ -2584,7 +2584,7 @@ msgid "Error unsetting properties: %v"
 msgstr "プロパティの削除でエラーが発生しました: %v"
 
 #: cmd/incus/cluster.go:453 cmd/incus/network.go:1319
-#: cmd/incus/network_acl.go:512 cmd/incus/network_forward.go:510
+#: cmd/incus/network_acl.go:516 cmd/incus/network_forward.go:510
 #: cmd/incus/network_integration.go:557 cmd/incus/network_load_balancer.go:496
 #: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:465
 #: cmd/incus/network_zone.go:1149 cmd/incus/profile.go:980
@@ -2712,7 +2712,7 @@ msgstr ""
 msgid "Expected a struct, got a %v"
 msgstr "構造体を期待しましたが、%v が返されました"
 
-#: cmd/incus/info.go:745 cmd/incus/info.go:796 cmd/incus/snapshot.go:366
+#: cmd/incus/info.go:754 cmd/incus/info.go:805 cmd/incus/snapshot.go:366
 #: cmd/incus/storage_volume.go:1440 cmd/incus/storage_volume.go:1490
 #: cmd/incus/storage_volume.go:2575
 msgid "Expires at"
@@ -3466,7 +3466,7 @@ msgstr "MAC ADDRESS"
 msgid "HOSTNAME"
 msgstr "HOSTNAME"
 
-#: cmd/incus/info.go:671
+#: cmd/incus/info.go:680
 msgid "Host interface"
 msgstr "ホストインターフェース"
 
@@ -3516,7 +3516,7 @@ msgstr "IMAGES"
 msgid "IP ADDRESS"
 msgstr "IP ADDRESS"
 
-#: cmd/incus/info.go:687
+#: cmd/incus/info.go:696
 msgid "IP addresses"
 msgstr "IP アドレス"
 
@@ -3704,7 +3704,7 @@ msgstr "Infiniband:"
 msgid "Input data"
 msgstr "入力するデータ"
 
-#: cmd/incus/info.go:797
+#: cmd/incus/info.go:806
 msgid "Instance Only"
 msgstr "インスタンスのみ"
 
@@ -4505,7 +4505,7 @@ msgstr "ロケーション: %s"
 msgid "Log level filtering can only be used with pretty formatting"
 msgstr "ログレベルのフィルタリングは pretty フォーマットでのみ使えます"
 
-#: cmd/incus/info.go:825
+#: cmd/incus/info.go:834
 msgid "Log:"
 msgstr "ログ:"
 
@@ -4542,7 +4542,7 @@ msgstr "Lower devices"
 msgid "MAC ADDRESS"
 msgstr "MAC ADDRESS"
 
-#: cmd/incus/info.go:675
+#: cmd/incus/info.go:684
 msgid "MAC address"
 msgstr "MAC アドレス"
 
@@ -4585,7 +4585,7 @@ msgstr "MII 監視頻度"
 msgid "MII state"
 msgstr "MII 状態"
 
-#: cmd/incus/info.go:679
+#: cmd/incus/info.go:688
 msgid "MTU"
 msgstr "MTU"
 
@@ -4695,7 +4695,7 @@ msgstr "インスタンスのメタデータファイルを管理します"
 msgid "Manage instance snapshots"
 msgstr "インスタンスのスナップショットを作成します"
 
-#: cmd/incus/network_acl.go:838 cmd/incus/network_acl.go:839
+#: cmd/incus/network_acl.go:842 cmd/incus/network_acl.go:843
 msgid "Manage network ACL rules"
 msgstr "ネットワーク ACL ルールを管理します"
 
@@ -4947,10 +4947,10 @@ msgid "Missing name"
 msgstr "名前を指定する必要があります"
 
 #: cmd/incus/network_acl.go:202 cmd/incus/network_acl.go:262
-#: cmd/incus/network_acl.go:325 cmd/incus/network_acl.go:393
-#: cmd/incus/network_acl.go:491 cmd/incus/network_acl.go:644
-#: cmd/incus/network_acl.go:755 cmd/incus/network_acl.go:812
-#: cmd/incus/network_acl.go:948 cmd/incus/network_acl.go:1031
+#: cmd/incus/network_acl.go:325 cmd/incus/network_acl.go:397
+#: cmd/incus/network_acl.go:495 cmd/incus/network_acl.go:648
+#: cmd/incus/network_acl.go:759 cmd/incus/network_acl.go:816
+#: cmd/incus/network_acl.go:952 cmd/incus/network_acl.go:1035
 msgid "Missing network ACL name"
 msgstr "ネットワーク ACL 名を指定する必要があります"
 
@@ -5167,7 +5167,7 @@ msgid "Multiple ports match. Use --force to remove them all"
 msgstr ""
 "複数のポートにマッチしました。すべて削除するには --force を指定してください"
 
-#: cmd/incus/network_acl.go:1086
+#: cmd/incus/network_acl.go:1090
 msgid "Multiple rules match. Use --force to remove them all"
 msgstr ""
 "複数のルールにマッチしました。すべて削除するには --force を指定してください"
@@ -5242,7 +5242,7 @@ msgstr "NVIDIA 情報:"
 msgid "NVRM Version: %v"
 msgstr "NVRM バージョン: %v"
 
-#: cmd/incus/info.go:743 cmd/incus/info.go:794 cmd/incus/snapshot.go:364
+#: cmd/incus/info.go:752 cmd/incus/info.go:803 cmd/incus/snapshot.go:364
 #: cmd/incus/storage_volume.go:1438 cmd/incus/storage_volume.go:1488
 #: cmd/incus/storage_volume.go:2573
 msgid "Name"
@@ -5339,17 +5339,17 @@ msgstr "ネットワーク %s はメンバ %s 上でペンディング状態で�
 msgid "Network %s renamed to %s"
 msgstr "ネットワーク名 %s を %s に変更しました"
 
-#: cmd/incus/network_acl.go:437
+#: cmd/incus/network_acl.go:441
 #, c-format
 msgid "Network ACL %s created"
 msgstr "ネットワーク ACL %s を作成しました"
 
-#: cmd/incus/network_acl.go:822
+#: cmd/incus/network_acl.go:826
 #, c-format
 msgid "Network ACL %s deleted"
 msgstr "ネットワーク ACL %s を削除しました"
 
-#: cmd/incus/network_acl.go:765
+#: cmd/incus/network_acl.go:769
 #, c-format
 msgid "Network ACL %s renamed to %s"
 msgstr "ネットワーク ACL 名 %s を %s に変更しました"
@@ -5430,7 +5430,7 @@ msgstr ""
 msgid "Network type"
 msgstr "ネットワークタイプ:"
 
-#: cmd/incus/info.go:700 cmd/incus/network.go:946
+#: cmd/incus/info.go:709 cmd/incus/network.go:946
 msgid "Network usage:"
 msgstr "ネットワーク使用状況:"
 
@@ -5488,7 +5488,7 @@ msgstr "マッチするバックエンドが見つかりません"
 msgid "No matching port(s) found"
 msgstr "マッチするポートが見つかりません"
 
-#: cmd/incus/network_acl.go:1097
+#: cmd/incus/network_acl.go:1101
 msgid "No matching rule(s) found"
 msgstr "マッチするルールが見つかりません"
 
@@ -5580,7 +5580,7 @@ msgstr ""
 msgid "Operation %s deleted"
 msgstr "バックグラウンド操作 %s を削除しました"
 
-#: cmd/incus/info.go:798 cmd/incus/storage_volume.go:1492
+#: cmd/incus/info.go:807 cmd/incus/storage_volume.go:1492
 msgid "Optimized Storage"
 msgstr "最適化されたストレージ"
 
@@ -5640,11 +5640,11 @@ msgstr "PROTOCOL"
 msgid "PUBLIC"
 msgstr "PUBLIC"
 
-#: cmd/incus/info.go:684 cmd/incus/network.go:949
+#: cmd/incus/info.go:693 cmd/incus/network.go:949
 msgid "Packets received"
 msgstr "受信パケット"
 
-#: cmd/incus/info.go:685 cmd/incus/network.go:950
+#: cmd/incus/info.go:694 cmd/incus/network.go:950
 msgid "Packets sent"
 msgstr "送信パケット"
 
@@ -5730,7 +5730,7 @@ msgstr "終了するには ctrl+c を押してください"
 #: cmd/incus/config.go:277 cmd/incus/config.go:352
 #: cmd/incus/config_metadata.go:155 cmd/incus/config_template.go:237
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
-#: cmd/incus/network.go:763 cmd/incus/network_acl.go:693
+#: cmd/incus/network.go:763 cmd/incus/network_acl.go:697
 #: cmd/incus/network_forward.go:712 cmd/incus/network_integration.go:289
 #: cmd/incus/network_load_balancer.go:682 cmd/incus/network_peer.go:727
 #: cmd/incus/network_zone.go:634 cmd/incus/network_zone.go:1325
@@ -6197,7 +6197,7 @@ msgstr "エイリアスを削除します"
 msgid "Remove all ports that match"
 msgstr "マッチするポートをすべて削除します"
 
-#: cmd/incus/network_acl.go:992
+#: cmd/incus/network_acl.go:996
 msgid "Remove all rules that match"
 msgstr "マッチするルールをすべて削除します"
 
@@ -6242,7 +6242,7 @@ msgstr "リモートサーバを削除します"
 msgid "Remove roles from a cluster member"
 msgstr "クラスターメンバからロールを削除します"
 
-#: cmd/incus/network_acl.go:990 cmd/incus/network_acl.go:991
+#: cmd/incus/network_acl.go:994 cmd/incus/network_acl.go:995
 msgid "Remove rules from an ACL"
 msgstr "ACL からルールを削除します"
 
@@ -6278,7 +6278,7 @@ msgstr "インスタンスまたはインスタンスのスナップショット
 msgid "Rename instances"
 msgstr "インスタンスを再起動します"
 
-#: cmd/incus/network_acl.go:724 cmd/incus/network_acl.go:725
+#: cmd/incus/network_acl.go:728 cmd/incus/network_acl.go:729
 msgid "Rename network ACLs"
 msgstr "ネットワーク ACL 名を変更します"
 
@@ -6623,11 +6623,11 @@ msgstr ""
 "後方互換性のため、単一の設定を行う場合は次の形式でも設定できます:\n"
 "    lxc config set [<remote>:][<instance>] <key> <value>"
 
-#: cmd/incus/network_acl.go:454
+#: cmd/incus/network_acl.go:458
 msgid "Set network ACL configuration keys"
 msgstr "ネットワーク ACL の設定項目を設定します"
 
-#: cmd/incus/network_acl.go:455
+#: cmd/incus/network_acl.go:459
 #, fuzzy
 msgid ""
 "Set network ACL configuration keys\n"
@@ -6882,7 +6882,7 @@ msgstr "プッシュ時にファイルのuidを設定します"
 msgid "Set the key as a cluster property"
 msgstr "クラスターグループを作成します"
 
-#: cmd/incus/network_acl.go:461
+#: cmd/incus/network_acl.go:465
 msgid "Set the key as a network ACL property"
 msgstr "ネットワーク ACL プロパティとして設定します"
 
@@ -7158,7 +7158,7 @@ msgstr "ストレージボリュームのスナップショットを取得しま
 msgid "Snapshots are read-only and can't have their configuration changed"
 msgstr "スナップショットは読み取り専用です。設定を変更することはできません"
 
-#: cmd/incus/info.go:712 cmd/incus/storage_volume.go:1417
+#: cmd/incus/info.go:721 cmd/incus/storage_volume.go:1417
 msgid "Snapshots:"
 msgstr "スナップショット:"
 
@@ -7197,7 +7197,7 @@ msgstr "%s を起動中"
 msgid "Starting recovery..."
 msgstr "リカバリーを開始します..."
 
-#: cmd/incus/info.go:669
+#: cmd/incus/info.go:678
 msgid "State"
 msgstr "状態"
 
@@ -7206,7 +7206,7 @@ msgstr "状態"
 msgid "State: %s"
 msgstr "状態: %s"
 
-#: cmd/incus/info.go:746 cmd/incus/snapshot.go:367
+#: cmd/incus/info.go:755 cmd/incus/snapshot.go:367
 msgid "Stateful"
 msgstr "ステートフル"
 
@@ -7378,7 +7378,7 @@ msgstr "TOKEN"
 msgid "TYPE"
 msgstr "TYPE"
 
-#: cmd/incus/info.go:744 cmd/incus/info.go:795 cmd/incus/snapshot.go:365
+#: cmd/incus/info.go:753 cmd/incus/info.go:804 cmd/incus/snapshot.go:365
 #: cmd/incus/storage_volume.go:1489 cmd/incus/storage_volume.go:2574
 msgid "Taken at"
 msgstr "取得日時"
@@ -7480,7 +7480,7 @@ msgstr ""
 msgid "The device already exists"
 msgstr "デバイスはすでに存在します"
 
-#: cmd/incus/network_acl.go:981 cmd/incus/network_acl.go:1119
+#: cmd/incus/network_acl.go:985 cmd/incus/network_acl.go:1123
 msgid "The direction argument must be one of: ingress, egress"
 msgstr "direction 引数は次のいずれかでなければなりません: ingress, egress"
 
@@ -7835,7 +7835,7 @@ msgstr "%s:%s のクラスターに join するためのトークンが削除さ
 msgid "Try `incus info --show-log %s` for more info"
 msgstr "更に情報を得るために `lxc info --show-log %s` を実行してみてください"
 
-#: cmd/incus/info.go:668
+#: cmd/incus/info.go:677
 msgid "Type"
 msgstr "タイプ"
 
@@ -7950,7 +7950,7 @@ msgstr "未知のコンソールタイプ %q"
 msgid "Unknown file type '%s'"
 msgstr "未知のファイルタイプ '%s'"
 
-#: cmd/incus/network_acl.go:918 cmd/incus/network_acl.go:1053
+#: cmd/incus/network_acl.go:922 cmd/incus/network_acl.go:1057
 #, c-format
 msgid "Unknown key: %s"
 msgstr "未知の設定: %s"
@@ -7980,7 +7980,7 @@ msgstr "イメージのプロパティを削除します"
 msgid "Unset instance or server configuration keys"
 msgstr "インスタンスもしくはサーバの設定を削除します"
 
-#: cmd/incus/network_acl.go:542 cmd/incus/network_acl.go:543
+#: cmd/incus/network_acl.go:546 cmd/incus/network_acl.go:547
 msgid "Unset network ACL configuration keys"
 msgstr "ネットワーク ACL の設定を削除します"
 
@@ -8049,7 +8049,7 @@ msgstr "ストレージボリュームの設定を削除します"
 msgid "Unset the key as a cluster property"
 msgstr "クラスタープロパティの設定を削除します"
 
-#: cmd/incus/network_acl.go:546
+#: cmd/incus/network_acl.go:550
 msgid "Unset the key as a network ACL property"
 msgstr "ネットワーク ACL プロパティの設定を削除します"
 
@@ -8115,7 +8115,7 @@ msgstr "新しいストレージボリュームをプロファイルに追加し
 msgid "Unset the key as an instance property"
 msgstr "インスタンスプロパティの設定を削除します"
 
-#: cmd/incus/info.go:817
+#: cmd/incus/info.go:826
 #, c-format
 msgid "Unsupported instance type: %s"
 msgstr "サポートされていないインスタンスタイプです: %s"
@@ -8484,23 +8484,23 @@ msgid "[<remote>:] [<filters>...]"
 msgstr "[<remote>:] [<filters>...]"
 
 #: cmd/incus/network_acl.go:170 cmd/incus/network_acl.go:231
-#: cmd/incus/network_acl.go:584 cmd/incus/network_acl.go:779
+#: cmd/incus/network_acl.go:588 cmd/incus/network_acl.go:783
 msgid "[<remote>:]<ACL>"
 msgstr "[<remote>:]<ACL>"
 
-#: cmd/incus/network_acl.go:852 cmd/incus/network_acl.go:989
+#: cmd/incus/network_acl.go:856 cmd/incus/network_acl.go:993
 msgid "[<remote>:]<ACL> <direction> <key>=<value>..."
 msgstr "[<remote>:]<ACL> <direction> <key>=<value>..."
 
-#: cmd/incus/network_acl.go:287 cmd/incus/network_acl.go:541
+#: cmd/incus/network_acl.go:287 cmd/incus/network_acl.go:545
 msgid "[<remote>:]<ACL> <key>"
 msgstr "[<remote>:]<ACL> <key>"
 
-#: cmd/incus/network_acl.go:453
+#: cmd/incus/network_acl.go:457
 msgid "[<remote>:]<ACL> <key>=<value>..."
 msgstr "[<remote>:]<ACL> <key>=<value>..."
 
-#: cmd/incus/network_acl.go:722
+#: cmd/incus/network_acl.go:726
 msgid "[<remote>:]<ACL> <new-name>"
 msgstr "[<remote>:]<ACL> <new-name>"
 
@@ -9464,6 +9464,19 @@ msgstr ""
 "\n"
 "lxc move <instance>/<old snapshot name> <instance>/<new snapshot name>\n"
 "    スナップショットをリネームします。"
+
+#: cmd/incus/network_acl.go:363
+#, fuzzy
+msgid ""
+"incus network acl create a1\n"
+"\n"
+"incus network acl create a1 < config.yaml\n"
+"    Create network acl with configuration from config.yaml"
+msgstr ""
+"lxc init ubuntu:22.04 u1\n"
+"\n"
+"lxc init ubuntu:22.04 u1 < config.yaml\n"
+"    config.yaml の設定を使ってインスタンスを作成します"
 
 #: cmd/incus/network.go:322
 msgid ""
