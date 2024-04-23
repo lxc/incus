@@ -239,6 +239,15 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 		return nil
 	},
 
+	// gendoc:generate(entity=instance, group=migration, key=migration.stateful)
+	// Enabling this option prevents the use of some features that are incompatible with it.
+	// ---
+	//  type: bool
+	//  defaultdesc: `false`
+	//  liveupdate: no
+	//  shortdesc: Whether to allow for stateful stop/start and snapshots
+	"migration.stateful": validate.Optional(validate.IsBool),
+
 	// Caller is responsible for full validation of any raw.* value.
 
 	// gendoc:generate(entity=instance, group=raw, key=raw.apparmor)
@@ -897,16 +906,6 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  condition: virtual machine
 	//  shortdesc: Whether to back the instance using huge pages
 	"limits.memory.hugepages": validate.Optional(validate.IsBool),
-
-	// gendoc:generate(entity=instance, group=migration, key=migration.stateful)
-	// Enabling this option prevents the use of some features that are incompatible with it.
-	// ---
-	//  type: bool
-	//  defaultdesc: `false`
-	//  liveupdate: no
-	//  condition: virtual machine
-	//  shortdesc: Whether to allow for stateful stop/start and snapshots
-	"migration.stateful": validate.Optional(validate.IsBool),
 
 	// Caller is responsible for full validation of any raw.* value.
 
