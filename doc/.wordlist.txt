@@ -199,6 +199,7 @@ pre
 preseed
 proxied
 proxying
+Podman
 PTS
 qdisc
 QEMU
