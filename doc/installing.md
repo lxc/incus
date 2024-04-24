@@ -83,6 +83,10 @@ There are three options currently available to Debian users.
     Up to date installation instructions may be found here: [`https://github.com/zabbly/incus`](https://github.com/zabbly/incus)
 ```
 
+```{group-tab} Docker
+Docker/Podman images of Incus, based on the Zabbly package repository, are available with instructions here: [`ghcr.io/cmspam/incus-docker`](https://ghcr.io/cmspam/incus-docker)
+```
+
 ```{group-tab} Fedora
 RPM packages of Incus and its dependencies are not yet available via official Fedora repositories but via the [`ganto/lxc4`](https://copr.fedorainfracloud.org/coprs/ganto/lxc4/) Community Project (COPR) repository.
 
