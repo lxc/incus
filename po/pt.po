@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-24 13:37+0200\n"
+"POT-Creation-Date: 2024-04-24 15:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -1666,7 +1666,7 @@ msgstr ""
 msgid "Delete images"
 msgstr ""
 
-#: cmd/incus/config_template.go:116 cmd/incus/config_template.go:117
+#: cmd/incus/config_template.go:133 cmd/incus/config_template.go:134
 msgid "Delete instance file templates"
 msgstr ""
 
@@ -1772,8 +1772,8 @@ msgstr ""
 #: cmd/incus/config_device.go:843 cmd/incus/config_metadata.go:26
 #: cmd/incus/config_metadata.go:54 cmd/incus/config_metadata.go:187
 #: cmd/incus/config_template.go:26 cmd/incus/config_template.go:66
-#: cmd/incus/config_template.go:117 cmd/incus/config_template.go:171
-#: cmd/incus/config_template.go:271 cmd/incus/config_template.go:339
+#: cmd/incus/config_template.go:134 cmd/incus/config_template.go:188
+#: cmd/incus/config_template.go:288 cmd/incus/config_template.go:356
 #: cmd/incus/config_trust.go:36 cmd/incus/config_trust.go:91
 #: cmd/incus/config_trust.go:171 cmd/incus/config_trust.go:275
 #: cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:584
@@ -2109,7 +2109,7 @@ msgstr ""
 msgid "Edit image properties"
 msgstr ""
 
-#: cmd/incus/config_template.go:170 cmd/incus/config_template.go:171
+#: cmd/incus/config_template.go:187 cmd/incus/config_template.go:188
 msgid "Edit instance file templates"
 msgstr ""
 
@@ -2272,7 +2272,7 @@ msgstr ""
 msgid "Error unsetting property: %v"
 msgstr ""
 
-#: cmd/incus/config_template.go:236
+#: cmd/incus/config_template.go:253
 #, c-format
 msgid "Error updating template file: %s"
 msgstr ""
@@ -2419,7 +2419,7 @@ msgstr ""
 msgid "FAILURE DOMAIN"
 msgstr ""
 
-#: cmd/incus/config_template.go:322
+#: cmd/incus/config_template.go:339
 msgid "FILENAME"
 msgstr ""
 
@@ -2845,7 +2845,7 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/alias.go:113 cmd/incus/cluster.go:125 cmd/incus/cluster.go:964
-#: cmd/incus/cluster_group.go:441 cmd/incus/config_template.go:273
+#: cmd/incus/cluster_group.go:441 cmd/incus/config_template.go:290
 #: cmd/incus/config_trust.go:422 cmd/incus/config_trust.go:586
 #: cmd/incus/image.go:1100 cmd/incus/image_alias.go:157 cmd/incus/list.go:133
 #: cmd/incus/network.go:1015 cmd/incus/network.go:1114
@@ -3663,7 +3663,7 @@ msgstr ""
 msgid "List instance devices"
 msgstr ""
 
-#: cmd/incus/config_template.go:270 cmd/incus/config_template.go:271
+#: cmd/incus/config_template.go:287 cmd/incus/config_template.go:288
 msgid "List instance file templates"
 msgstr ""
 
@@ -4290,9 +4290,9 @@ msgid "Missing cluster member name"
 msgstr ""
 
 #: cmd/incus/config_metadata.go:110 cmd/incus/config_metadata.go:219
-#: cmd/incus/config_template.go:98 cmd/incus/config_template.go:153
-#: cmd/incus/config_template.go:207 cmd/incus/config_template.go:304
-#: cmd/incus/config_template.go:375 cmd/incus/profile.go:140
+#: cmd/incus/config_template.go:115 cmd/incus/config_template.go:170
+#: cmd/incus/config_template.go:224 cmd/incus/config_template.go:321
+#: cmd/incus/config_template.go:392 cmd/incus/profile.go:140
 #: cmd/incus/profile.go:221 cmd/incus/profile.go:807 cmd/incus/rebuild.go:59
 msgid "Missing instance name"
 msgstr ""
@@ -5068,7 +5068,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:860 cmd/incus/cluster_group.go:397
 #: cmd/incus/config.go:277 cmd/incus/config.go:352
-#: cmd/incus/config_metadata.go:155 cmd/incus/config_template.go:237
+#: cmd/incus/config_metadata.go:155 cmd/incus/config_template.go:254
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
 #: cmd/incus/network.go:763 cmd/incus/network_acl.go:697
 #: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:289
@@ -6164,7 +6164,7 @@ msgstr ""
 msgid "Show cluster group configurations"
 msgstr ""
 
-#: cmd/incus/config_template.go:338 cmd/incus/config_template.go:339
+#: cmd/incus/config_template.go:355 cmd/incus/config_template.go:356
 msgid "Show content of instance file templates"
 msgstr ""
 
@@ -7660,7 +7660,7 @@ msgstr ""
 
 #: cmd/incus/config_device.go:320 cmd/incus/config_device.go:752
 #: cmd/incus/config_metadata.go:52 cmd/incus/config_metadata.go:185
-#: cmd/incus/config_template.go:269 cmd/incus/console.go:35
+#: cmd/incus/config_template.go:286 cmd/incus/console.go:35
 #: cmd/incus/snapshot.go:286
 msgid "[<remote>:]<instance>"
 msgstr ""
@@ -7709,8 +7709,8 @@ msgstr ""
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr ""
 
-#: cmd/incus/config_template.go:64 cmd/incus/config_template.go:114
-#: cmd/incus/config_template.go:169 cmd/incus/config_template.go:337
+#: cmd/incus/config_template.go:64 cmd/incus/config_template.go:131
+#: cmd/incus/config_template.go:186 cmd/incus/config_template.go:354
 msgid "[<remote>:]<instance> <template>"
 msgstr ""
 
@@ -8243,6 +8243,14 @@ msgid ""
 "\n"
 "incus config set core.https_address=[::]:8443\n"
 "    Will have the server listen on IPv4 and IPv6 port 8443."
+msgstr ""
+
+#: cmd/incus/config_template.go:68
+msgid ""
+"incus config template create u1 t1\n"
+"\n"
+"incus config template create u1 t1 < config.tpl\n"
+"    Create template t1 for instance u1 from config.tpl"
 msgstr ""
 
 #: cmd/incus/create.go:43
