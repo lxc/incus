@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-23 12:51+0200\n"
+"POT-Creation-Date: 2024-04-24 13:37+0200\n"
 "PO-Revision-Date: 2022-03-10 15:06+0000\n"
 "Last-Translator: Александр Киль <shorrey@gmail.com>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/linux-containers/"
@@ -289,7 +289,7 @@ msgstr ""
 "###\n"
 "### Обратите внимание, что только конфигурация может быть изменена."
 
-#: cmd/incus/network_forward.go:611
+#: cmd/incus/network_forward.go:616
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network forward.\n"
@@ -913,7 +913,7 @@ msgid ""
 "trust store.\n"
 msgstr ""
 
-#: cmd/incus/network_forward.go:832 cmd/incus/network_forward.go:833
+#: cmd/incus/network_forward.go:837 cmd/incus/network_forward.go:838
 msgid "Add ports to a forward"
 msgstr ""
 
@@ -1142,7 +1142,7 @@ msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
 
 #: cmd/incus/network.go:369 cmd/incus/network_acl.go:429
-#: cmd/incus/network_forward.go:303 cmd/incus/network_load_balancer.go:306
+#: cmd/incus/network_forward.go:308 cmd/incus/network_load_balancer.go:306
 #: cmd/incus/network_peer.go:331 cmd/incus/network_zone.go:378
 #: cmd/incus/network_zone.go:1061 cmd/incus/storage_bucket.go:149
 #, c-format
@@ -1465,9 +1465,9 @@ msgstr ""
 #: cmd/incus/network.go:328 cmd/incus/network.go:799 cmd/incus/network.go:880
 #: cmd/incus/network.go:1257 cmd/incus/network.go:1350
 #: cmd/incus/network.go:1422 cmd/incus/network_forward.go:177
-#: cmd/incus/network_forward.go:253 cmd/incus/network_forward.go:441
-#: cmd/incus/network_forward.go:593 cmd/incus/network_forward.go:747
-#: cmd/incus/network_forward.go:836 cmd/incus/network_forward.go:918
+#: cmd/incus/network_forward.go:258 cmd/incus/network_forward.go:446
+#: cmd/incus/network_forward.go:598 cmd/incus/network_forward.go:752
+#: cmd/incus/network_forward.go:841 cmd/incus/network_forward.go:923
 #: cmd/incus/network_load_balancer.go:180
 #: cmd/incus/network_load_balancer.go:256
 #: cmd/incus/network_load_balancer.go:427
@@ -1555,7 +1555,7 @@ msgstr ""
 #: cmd/incus/config.go:276 cmd/incus/config.go:351
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:696
-#: cmd/incus/network_forward.go:711 cmd/incus/network_integration.go:288
+#: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:288
 #: cmd/incus/network_load_balancer.go:681 cmd/incus/network_peer.go:726
 #: cmd/incus/network_zone.go:633 cmd/incus/network_zone.go:1324
 #: cmd/incus/profile.go:594 cmd/incus/project.go:363 cmd/incus/storage.go:357
@@ -1997,7 +1997,7 @@ msgstr "Копирование образа: %s"
 msgid "Delete network ACLs"
 msgstr ""
 
-#: cmd/incus/network_forward.go:743 cmd/incus/network_forward.go:744
+#: cmd/incus/network_forward.go:748 cmd/incus/network_forward.go:749
 msgid "Delete network forwards"
 msgstr ""
 
@@ -2125,11 +2125,11 @@ msgstr ""
 #: cmd/incus/network_acl.go:858 cmd/incus/network_acl.go:995
 #: cmd/incus/network_allocations.go:51 cmd/incus/network_forward.go:28
 #: cmd/incus/network_forward.go:85 cmd/incus/network_forward.go:174
-#: cmd/incus/network_forward.go:250 cmd/incus/network_forward.go:348
-#: cmd/incus/network_forward.go:433 cmd/incus/network_forward.go:543
-#: cmd/incus/network_forward.go:590 cmd/incus/network_forward.go:744
-#: cmd/incus/network_forward.go:818 cmd/incus/network_forward.go:833
-#: cmd/incus/network_forward.go:914 cmd/incus/network_integration.go:28
+#: cmd/incus/network_forward.go:250 cmd/incus/network_forward.go:353
+#: cmd/incus/network_forward.go:438 cmd/incus/network_forward.go:548
+#: cmd/incus/network_forward.go:595 cmd/incus/network_forward.go:749
+#: cmd/incus/network_forward.go:823 cmd/incus/network_forward.go:838
+#: cmd/incus/network_forward.go:919 cmd/incus/network_integration.go:28
 #: cmd/incus/network_integration.go:85 cmd/incus/network_integration.go:154
 #: cmd/incus/network_integration.go:206 cmd/incus/network_integration.go:323
 #: cmd/incus/network_integration.go:386 cmd/incus/network_integration.go:454
@@ -2457,7 +2457,7 @@ msgstr ""
 msgid "Edit network configurations as YAML"
 msgstr ""
 
-#: cmd/incus/network_forward.go:589 cmd/incus/network_forward.go:590
+#: cmd/incus/network_forward.go:594 cmd/incus/network_forward.go:595
 msgid "Edit network forward configurations as YAML"
 msgstr ""
 
@@ -2574,7 +2574,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:459 cmd/incus/config.go:641 cmd/incus/config.go:673
 #: cmd/incus/network.go:1325 cmd/incus/network_acl.go:522
-#: cmd/incus/network_forward.go:516 cmd/incus/network_integration.go:563
+#: cmd/incus/network_forward.go:521 cmd/incus/network_integration.go:563
 #: cmd/incus/network_load_balancer.go:502 cmd/incus/network_peer.go:550
 #: cmd/incus/network_zone.go:471 cmd/incus/network_zone.go:1155
 #: cmd/incus/profile.go:986 cmd/incus/project.go:719 cmd/incus/storage.go:810
@@ -2595,7 +2595,7 @@ msgid "Error unsetting properties: %v"
 msgstr "Копирование образа: %s"
 
 #: cmd/incus/cluster.go:453 cmd/incus/network.go:1319
-#: cmd/incus/network_acl.go:516 cmd/incus/network_forward.go:510
+#: cmd/incus/network_acl.go:516 cmd/incus/network_forward.go:515
 #: cmd/incus/network_integration.go:557 cmd/incus/network_load_balancer.go:496
 #: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:465
 #: cmd/incus/network_zone.go:1149 cmd/incus/profile.go:980
@@ -3285,7 +3285,7 @@ msgstr ""
 msgid "Get the key as a network ACL property"
 msgstr ""
 
-#: cmd/incus/network_forward.go:350
+#: cmd/incus/network_forward.go:355
 #, fuzzy
 msgid "Get the key as a network forward property"
 msgstr "Копирование образа: %s"
@@ -3367,7 +3367,7 @@ msgstr ""
 msgid "Get values for network configuration keys"
 msgstr ""
 
-#: cmd/incus/network_forward.go:347 cmd/incus/network_forward.go:348
+#: cmd/incus/network_forward.go:352 cmd/incus/network_forward.go:353
 #, fuzzy
 msgid "Get values for network forward configuration keys"
 msgstr "Копирование образа: %s"
@@ -4495,7 +4495,7 @@ msgstr "Копирование образа: %s"
 msgid "Manage network ACLs"
 msgstr ""
 
-#: cmd/incus/network_forward.go:817 cmd/incus/network_forward.go:818
+#: cmd/incus/network_forward.go:822 cmd/incus/network_forward.go:823
 #, fuzzy
 msgid "Manage network forward ports"
 msgstr "Копирование образа: %s"
@@ -4733,10 +4733,10 @@ msgstr "Имя контейнера: %s"
 msgid "Missing key name"
 msgstr "Имя контейнера: %s"
 
-#: cmd/incus/network_forward.go:214 cmd/incus/network_forward.go:278
-#: cmd/incus/network_forward.go:393 cmd/incus/network_forward.go:478
-#: cmd/incus/network_forward.go:653 cmd/incus/network_forward.go:784
-#: cmd/incus/network_forward.go:877 cmd/incus/network_forward.go:959
+#: cmd/incus/network_forward.go:214 cmd/incus/network_forward.go:283
+#: cmd/incus/network_forward.go:398 cmd/incus/network_forward.go:483
+#: cmd/incus/network_forward.go:658 cmd/incus/network_forward.go:789
+#: cmd/incus/network_forward.go:882 cmd/incus/network_forward.go:964
 #: cmd/incus/network_load_balancer.go:217
 #: cmd/incus/network_load_balancer.go:281
 #: cmd/incus/network_load_balancer.go:379
@@ -4780,10 +4780,10 @@ msgstr "Имя контейнера: %s"
 #: cmd/incus/network.go:835 cmd/incus/network.go:911 cmd/incus/network.go:1145
 #: cmd/incus/network.go:1223 cmd/incus/network.go:1289
 #: cmd/incus/network.go:1381 cmd/incus/network_forward.go:122
-#: cmd/incus/network_forward.go:210 cmd/incus/network_forward.go:274
-#: cmd/incus/network_forward.go:389 cmd/incus/network_forward.go:474
-#: cmd/incus/network_forward.go:649 cmd/incus/network_forward.go:780
-#: cmd/incus/network_forward.go:873 cmd/incus/network_forward.go:955
+#: cmd/incus/network_forward.go:210 cmd/incus/network_forward.go:279
+#: cmd/incus/network_forward.go:394 cmd/incus/network_forward.go:479
+#: cmd/incus/network_forward.go:654 cmd/incus/network_forward.go:785
+#: cmd/incus/network_forward.go:878 cmd/incus/network_forward.go:960
 #: cmd/incus/network_load_balancer.go:127
 #: cmd/incus/network_load_balancer.go:213
 #: cmd/incus/network_load_balancer.go:277
@@ -4963,7 +4963,7 @@ msgstr ""
 msgid "Moving the storage volume: %s"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_forward.go:1003 cmd/incus/network_load_balancer.go:1149
+#: cmd/incus/network_forward.go:1008 cmd/incus/network_load_balancer.go:1149
 msgid "Multiple ports match. Use --force to remove them all"
 msgstr ""
 
@@ -5163,12 +5163,12 @@ msgstr " Использование сети:"
 msgid "Network Zone %s deleted"
 msgstr " Использование сети:"
 
-#: cmd/incus/network_forward.go:330
+#: cmd/incus/network_forward.go:335
 #, fuzzy, c-format
 msgid "Network forward %s created"
 msgstr " Использование сети:"
 
-#: cmd/incus/network_forward.go:801
+#: cmd/incus/network_forward.go:806
 #, fuzzy, c-format
 msgid "Network forward %s deleted"
 msgstr " Использование сети:"
@@ -5283,7 +5283,7 @@ msgstr "Копирование образа: %s"
 msgid "No matching backend found"
 msgstr ""
 
-#: cmd/incus/network_forward.go:1014 cmd/incus/network_load_balancer.go:1160
+#: cmd/incus/network_forward.go:1019 cmd/incus/network_load_balancer.go:1160
 msgid "No matching port(s) found"
 msgstr ""
 
@@ -5523,7 +5523,7 @@ msgstr ""
 #: cmd/incus/config_metadata.go:155 cmd/incus/config_template.go:237
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
 #: cmd/incus/network.go:763 cmd/incus/network_acl.go:697
-#: cmd/incus/network_forward.go:712 cmd/incus/network_integration.go:289
+#: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:289
 #: cmd/incus/network_load_balancer.go:682 cmd/incus/network_peer.go:727
 #: cmd/incus/network_zone.go:634 cmd/incus/network_zone.go:1325
 #: cmd/incus/profile.go:595 cmd/incus/project.go:364 cmd/incus/storage.go:358
@@ -5948,7 +5948,7 @@ msgstr "Копирование образа: %s"
 msgid "Remove aliases"
 msgstr ""
 
-#: cmd/incus/network_forward.go:915 cmd/incus/network_load_balancer.go:1065
+#: cmd/incus/network_forward.go:920 cmd/incus/network_load_balancer.go:1065
 msgid "Remove all ports that match"
 msgstr ""
 
@@ -5979,7 +5979,7 @@ msgstr "Невозможно добавить имя контейнера в с�
 msgid "Remove member from group"
 msgstr ""
 
-#: cmd/incus/network_forward.go:913 cmd/incus/network_forward.go:914
+#: cmd/incus/network_forward.go:918 cmd/incus/network_forward.go:919
 msgid "Remove ports from a forward"
 msgstr ""
 
@@ -6393,12 +6393,12 @@ msgid ""
 "    incus network set [<remote>:]<network> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_forward.go:432
+#: cmd/incus/network_forward.go:437
 #, fuzzy
 msgid "Set network forward keys"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_forward.go:433
+#: cmd/incus/network_forward.go:438
 msgid ""
 "Set network forward keys\n"
 "\n"
@@ -6572,7 +6572,7 @@ msgstr ""
 msgid "Set the key as a network ACL property"
 msgstr ""
 
-#: cmd/incus/network_forward.go:440
+#: cmd/incus/network_forward.go:445
 #, fuzzy
 msgid "Set the key as a network forward property"
 msgstr "Копирование образа: %s"
@@ -7234,7 +7234,7 @@ msgstr "Копирование образа: %s"
 msgid "The property %q does not exist on the network ACL %q: %v"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_forward.go:406
+#: cmd/incus/network_forward.go:411
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network forward %q: %v"
 msgstr "Копирование образа: %s"
@@ -7624,12 +7624,12 @@ msgstr ""
 msgid "Unset network configuration keys"
 msgstr ""
 
-#: cmd/incus/network_forward.go:542
+#: cmd/incus/network_forward.go:547
 #, fuzzy
 msgid "Unset network forward configuration keys"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_forward.go:543
+#: cmd/incus/network_forward.go:548
 #, fuzzy
 msgid "Unset network forward keys"
 msgstr "Копирование образа: %s"
@@ -7698,7 +7698,7 @@ msgstr ""
 msgid "Unset the key as a network ACL property"
 msgstr ""
 
-#: cmd/incus/network_forward.go:546
+#: cmd/incus/network_forward.go:551
 #, fuzzy
 msgid "Unset the key as a network forward property"
 msgstr "Копирование образа: %s"
@@ -8681,8 +8681,8 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/network_forward.go:172 cmd/incus/network_forward.go:588
-#: cmd/incus/network_forward.go:741 cmd/incus/network_load_balancer.go:175
+#: cmd/incus/network_forward.go:172 cmd/incus/network_forward.go:593
+#: cmd/incus/network_forward.go:746 cmd/incus/network_load_balancer.go:175
 #: cmd/incus/network_load_balancer.go:557
 #: cmd/incus/network_load_balancer.go:711
 #, fuzzy
@@ -8710,7 +8710,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/network_forward.go:346 cmd/incus/network_forward.go:541
+#: cmd/incus/network_forward.go:351 cmd/incus/network_forward.go:546
 #: cmd/incus/network_load_balancer.go:349
 #: cmd/incus/network_load_balancer.go:527
 #, fuzzy
@@ -8720,7 +8720,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/network_forward.go:431 cmd/incus/network_load_balancer.go:417
+#: cmd/incus/network_forward.go:436 cmd/incus/network_load_balancer.go:417
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> <key>=<value>..."
 msgstr ""
@@ -8738,13 +8738,13 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/network_forward.go:831
+#: cmd/incus/network_forward.go:836
 msgid ""
 "[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> "
 "<target_address> [<target_port(s)>]"
 msgstr ""
 
-#: cmd/incus/network_forward.go:912 cmd/incus/network_load_balancer.go:1062
+#: cmd/incus/network_forward.go:917 cmd/incus/network_load_balancer.go:1062
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"
 msgstr ""
@@ -9528,6 +9528,14 @@ msgid ""
 "\n"
 "incus network create bar network=baz --type ovn\n"
 "    Create a new OVN network called bar using baz as its uplink network"
+msgstr ""
+
+#: cmd/incus/network_forward.go:251
+msgid ""
+"incus network forward create n1 127.0.0.1\n"
+"\n"
+"incus network forward create n1 127.0.0.1 < config.yaml\n"
+"    Create a new network forward for network n1 from config.yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:208
