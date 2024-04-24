@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-24 15:45+0200\n"
+"POT-Creation-Date: 2024-04-24 18:27+0200\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -323,7 +323,7 @@ msgstr ""
 "###   source: /home/chb/mnt/lxd_test/default.img\n"
 "###   zfs.pool_name: default"
 
-#: cmd/incus/network_integration.go:218
+#: cmd/incus/network_integration.go:242
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network integration.\n"
@@ -1125,7 +1125,7 @@ msgid "Bad key/value pair: %s"
 msgstr ""
 
 #: cmd/incus/copy.go:150 cmd/incus/create.go:229 cmd/incus/move.go:302
-#: cmd/incus/network_integration.go:124 cmd/incus/project.go:160
+#: cmd/incus/network_integration.go:145 cmd/incus/project.go:160
 #, fuzzy, c-format
 msgid "Bad key=value pair: %q"
 msgstr "Nombre del contenedor es: %s"
@@ -1515,7 +1515,7 @@ msgstr ""
 msgid "Config key/value to apply to the new instance"
 msgstr "Perfil para aplicar al nuevo contenedor"
 
-#: cmd/incus/network_integration.go:88
+#: cmd/incus/network_integration.go:92
 #, fuzzy
 msgid "Config key/value to apply to the new network integration"
 msgstr "Perfil para aplicar al nuevo contenedor"
@@ -1537,7 +1537,7 @@ msgstr ""
 #: cmd/incus/config.go:276 cmd/incus/config.go:351
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:696
-#: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:288
+#: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:312
 #: cmd/incus/network_load_balancer.go:681 cmd/incus/network_peer.go:726
 #: cmd/incus/network_zone.go:633 cmd/incus/network_zone.go:1324
 #: cmd/incus/profile.go:594 cmd/incus/project.go:363 cmd/incus/storage.go:357
@@ -1877,7 +1877,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:435 cmd/incus/image.go:1121
 #: cmd/incus/image_alias.go:237 cmd/incus/list.go:573 cmd/incus/network.go:1092
 #: cmd/incus/network_acl.go:155 cmd/incus/network_forward.go:152
-#: cmd/incus/network_integration.go:434 cmd/incus/network_load_balancer.go:156
+#: cmd/incus/network_integration.go:458 cmd/incus/network_load_balancer.go:156
 #: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:160
 #: cmd/incus/network_zone.go:840 cmd/incus/operation.go:173
 #: cmd/incus/profile.go:755 cmd/incus/project.go:573 cmd/incus/storage.go:721
@@ -1971,7 +1971,7 @@ msgstr ""
 msgid "Delete network forwards"
 msgstr ""
 
-#: cmd/incus/network_integration.go:153 cmd/incus/network_integration.go:154
+#: cmd/incus/network_integration.go:177 cmd/incus/network_integration.go:178
 #, fuzzy
 msgid "Delete network integrations"
 msgstr "Perfil %s creado"
@@ -2099,11 +2099,11 @@ msgstr ""
 #: cmd/incus/network_forward.go:595 cmd/incus/network_forward.go:749
 #: cmd/incus/network_forward.go:823 cmd/incus/network_forward.go:838
 #: cmd/incus/network_forward.go:919 cmd/incus/network_integration.go:28
-#: cmd/incus/network_integration.go:85 cmd/incus/network_integration.go:154
-#: cmd/incus/network_integration.go:206 cmd/incus/network_integration.go:323
-#: cmd/incus/network_integration.go:386 cmd/incus/network_integration.go:454
-#: cmd/incus/network_integration.go:508 cmd/incus/network_integration.go:589
-#: cmd/incus/network_integration.go:622 cmd/incus/network_load_balancer.go:29
+#: cmd/incus/network_integration.go:85 cmd/incus/network_integration.go:178
+#: cmd/incus/network_integration.go:230 cmd/incus/network_integration.go:347
+#: cmd/incus/network_integration.go:410 cmd/incus/network_integration.go:478
+#: cmd/incus/network_integration.go:532 cmd/incus/network_integration.go:613
+#: cmd/incus/network_integration.go:646 cmd/incus/network_load_balancer.go:29
 #: cmd/incus/network_load_balancer.go:90 cmd/incus/network_load_balancer.go:177
 #: cmd/incus/network_load_balancer.go:253
 #: cmd/incus/network_load_balancer.go:351
@@ -2427,7 +2427,7 @@ msgstr ""
 msgid "Edit network forward configurations as YAML"
 msgstr ""
 
-#: cmd/incus/network_integration.go:205 cmd/incus/network_integration.go:206
+#: cmd/incus/network_integration.go:229 cmd/incus/network_integration.go:230
 #, fuzzy
 msgid "Edit network integration configurations as YAML"
 msgstr "Perfil %s creado"
@@ -2540,7 +2540,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:459 cmd/incus/config.go:641 cmd/incus/config.go:673
 #: cmd/incus/network.go:1325 cmd/incus/network_acl.go:522
-#: cmd/incus/network_forward.go:521 cmd/incus/network_integration.go:563
+#: cmd/incus/network_forward.go:521 cmd/incus/network_integration.go:587
 #: cmd/incus/network_load_balancer.go:502 cmd/incus/network_peer.go:550
 #: cmd/incus/network_zone.go:471 cmd/incus/network_zone.go:1155
 #: cmd/incus/profile.go:986 cmd/incus/project.go:719 cmd/incus/storage.go:810
@@ -2562,7 +2562,7 @@ msgstr "Error actualizando el archivo de plantilla: %s"
 
 #: cmd/incus/cluster.go:453 cmd/incus/network.go:1319
 #: cmd/incus/network_acl.go:516 cmd/incus/network_forward.go:515
-#: cmd/incus/network_integration.go:557 cmd/incus/network_load_balancer.go:496
+#: cmd/incus/network_integration.go:581 cmd/incus/network_load_balancer.go:496
 #: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:465
 #: cmd/incus/network_zone.go:1149 cmd/incus/profile.go:980
 #: cmd/incus/project.go:713 cmd/incus/storage.go:804
@@ -3157,7 +3157,7 @@ msgstr ""
 #: cmd/incus/image.go:1100 cmd/incus/image_alias.go:157 cmd/incus/list.go:133
 #: cmd/incus/network.go:1015 cmd/incus/network.go:1114
 #: cmd/incus/network_acl.go:96 cmd/incus/network_allocations.go:57
-#: cmd/incus/network_forward.go:88 cmd/incus/network_integration.go:388
+#: cmd/incus/network_forward.go:88 cmd/incus/network_integration.go:412
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:88 cmd/incus/network_zone.go:782
 #: cmd/incus/operation.go:109 cmd/incus/profile.go:706 cmd/incus/project.go:473
@@ -3251,7 +3251,7 @@ msgstr ""
 msgid "Get the key as a network forward property"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_integration.go:327
+#: cmd/incus/network_integration.go:351
 #, fuzzy
 msgid "Get the key as a network integration property"
 msgstr "Perfil %s creado"
@@ -3331,7 +3331,7 @@ msgstr ""
 msgid "Get values for network forward configuration keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_integration.go:322 cmd/incus/network_integration.go:323
+#: cmd/incus/network_integration.go:346 cmd/incus/network_integration.go:347
 #, fuzzy
 msgid "Get values for network integration configuration keys"
 msgstr "Perfil %s creado"
@@ -4108,7 +4108,7 @@ msgstr ""
 msgid "List network allocations in use"
 msgstr ""
 
-#: cmd/incus/network_integration.go:385 cmd/incus/network_integration.go:386
+#: cmd/incus/network_integration.go:409 cmd/incus/network_integration.go:410
 #, fuzzy
 msgid "List network integrations"
 msgstr "Perfil %s creado"
@@ -4709,10 +4709,10 @@ msgstr ""
 msgid "Missing network ACL name"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/network_integration.go:112 cmd/incus/network_integration.go:179
-#: cmd/incus/network_integration.go:242 cmd/incus/network_integration.go:348
-#: cmd/incus/network_integration.go:479 cmd/incus/network_integration.go:536
-#: cmd/incus/network_integration.go:647
+#: cmd/incus/network_integration.go:131 cmd/incus/network_integration.go:203
+#: cmd/incus/network_integration.go:266 cmd/incus/network_integration.go:372
+#: cmd/incus/network_integration.go:503 cmd/incus/network_integration.go:560
+#: cmd/incus/network_integration.go:671
 #, fuzzy
 msgid "Missing network integration name"
 msgstr "Nombre del contenedor es: %s"
@@ -4924,7 +4924,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:502 cmd/incus/config_trust.go:431
 #: cmd/incus/config_trust.go:666 cmd/incus/list.go:581
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:154
-#: cmd/incus/network_integration.go:433 cmd/incus/network_peer.go:154
+#: cmd/incus/network_integration.go:457 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:159 cmd/incus/network_zone.go:839
 #: cmd/incus/profile.go:754 cmd/incus/project.go:566 cmd/incus/remote.go:773
 #: cmd/incus/storage.go:713 cmd/incus/storage_bucket.go:519
@@ -5110,17 +5110,17 @@ msgstr "Perfil %s creado"
 msgid "Network forward %s deleted"
 msgstr "Perfil %s eliminado"
 
-#: cmd/incus/network_integration.go:136
+#: cmd/incus/network_integration.go:160
 #, fuzzy, c-format
 msgid "Network integration %s created"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_integration.go:189
+#: cmd/incus/network_integration.go:213
 #, fuzzy, c-format
 msgid "Network integration %s deleted"
 msgstr "Perfil %s eliminado"
 
-#: cmd/incus/network_integration.go:489
+#: cmd/incus/network_integration.go:513
 #, fuzzy, c-format
 msgid "Network integration %s renamed to %s"
 msgstr "Perfil %s renombrado a %s"
@@ -5457,7 +5457,7 @@ msgstr ""
 #: cmd/incus/config_metadata.go:155 cmd/incus/config_template.go:254
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
 #: cmd/incus/network.go:763 cmd/incus/network_acl.go:697
-#: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:289
+#: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:313
 #: cmd/incus/network_load_balancer.go:682 cmd/incus/network_peer.go:727
 #: cmd/incus/network_zone.go:634 cmd/incus/network_zone.go:1325
 #: cmd/incus/profile.go:595 cmd/incus/project.go:364 cmd/incus/storage.go:358
@@ -5977,7 +5977,7 @@ msgstr "Aliases:"
 msgid "Rename network ACLs"
 msgstr ""
 
-#: cmd/incus/network_integration.go:453 cmd/incus/network_integration.go:454
+#: cmd/incus/network_integration.go:477 cmd/incus/network_integration.go:478
 #, fuzzy
 msgid "Rename network integrations"
 msgstr "Perfil %s creado"
@@ -6340,12 +6340,12 @@ msgid ""
 "    incus network set [<remote>:]<network> <listen_address> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_integration.go:507
+#: cmd/incus/network_integration.go:531
 #, fuzzy
 msgid "Set network integration configuration keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_integration.go:508
+#: cmd/incus/network_integration.go:532
 msgid ""
 "Set network integration configuration keys\n"
 "\n"
@@ -6510,7 +6510,7 @@ msgstr ""
 msgid "Set the key as a network forward property"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_integration.go:515
+#: cmd/incus/network_integration.go:539
 #, fuzzy
 msgid "Set the key as a network integration property"
 msgstr "Perfil %s creado"
@@ -6655,7 +6655,7 @@ msgstr ""
 msgid "Show network forward configurations"
 msgstr ""
 
-#: cmd/incus/network_integration.go:621 cmd/incus/network_integration.go:622
+#: cmd/incus/network_integration.go:645 cmd/incus/network_integration.go:646
 #, fuzzy
 msgid "Show network integration options"
 msgstr "Perfil %s creado"
@@ -6997,7 +6997,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:432 cmd/incus/image.go:1129
 #: cmd/incus/image_alias.go:236 cmd/incus/list.go:587 cmd/incus/network.go:1088
 #: cmd/incus/network.go:1170 cmd/incus/network_allocations.go:26
-#: cmd/incus/network_integration.go:435 cmd/incus/network_peer.go:157
+#: cmd/incus/network_integration.go:459 cmd/incus/network_peer.go:157
 #: cmd/incus/operation.go:172 cmd/incus/storage_volume.go:1634
 #: cmd/incus/warning.go:216
 msgid "TYPE"
@@ -7161,7 +7161,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "The property %q does not exist on the network forward %q: %v"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_integration.go:361
+#: cmd/incus/network_integration.go:385
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network integration %q: %v"
 msgstr "Nombre del Miembro del Cluster"
@@ -7450,7 +7450,7 @@ msgid "USB devices:"
 msgstr ""
 
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:156
-#: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:436
+#: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:460
 #: cmd/incus/network_zone.go:161 cmd/incus/profile.go:756
 #: cmd/incus/project.go:574 cmd/incus/storage.go:722
 #: cmd/incus/storage_volume.go:1638
@@ -7555,7 +7555,7 @@ msgstr "Perfil %s creado"
 msgid "Unset network forward keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_integration.go:588 cmd/incus/network_integration.go:589
+#: cmd/incus/network_integration.go:612 cmd/incus/network_integration.go:613
 #, fuzzy
 msgid "Unset network integration configuration keys"
 msgstr "Perfil %s creado"
@@ -7624,7 +7624,7 @@ msgstr ""
 msgid "Unset the key as a network forward property"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_integration.go:593
+#: cmd/incus/network_integration.go:617
 #, fuzzy
 msgid "Unset the key as a network integration property"
 msgstr "Perfil %s creado"
@@ -7990,7 +7990,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 #: cmd/incus/cluster_group.go:436 cmd/incus/config_trust.go:397
 #: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1008 cmd/incus/network_acl.go:90
-#: cmd/incus/network_integration.go:383 cmd/incus/network_zone.go:82
+#: cmd/incus/network_integration.go:407 cmd/incus/network_zone.go:82
 #: cmd/incus/operation.go:104 cmd/incus/profile.go:699 cmd/incus/project.go:468
 #: cmd/incus/storage.go:650 cmd/incus/version.go:20 cmd/incus/warning.go:69
 #, fuzzy
@@ -8319,23 +8319,23 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "[<remote>:]<name>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_integration.go:151 cmd/incus/network_integration.go:204
-#: cmd/incus/network_integration.go:620
+#: cmd/incus/network_integration.go:175 cmd/incus/network_integration.go:228
+#: cmd/incus/network_integration.go:644
 #, fuzzy
 msgid "[<remote>:]<network integration>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_integration.go:321 cmd/incus/network_integration.go:587
+#: cmd/incus/network_integration.go:345 cmd/incus/network_integration.go:611
 #, fuzzy
 msgid "[<remote>:]<network integration> <key>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_integration.go:506
+#: cmd/incus/network_integration.go:530
 #, fuzzy
 msgid "[<remote>:]<network integration> <key>=<value>..."
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_integration.go:451
+#: cmd/incus/network_integration.go:475
 #, fuzzy
 msgid "[<remote>:]<network integration> <new-name>"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -9019,7 +9019,16 @@ msgid ""
 "    Create a new network forward for network n1 from config.yaml"
 msgstr ""
 
-#: cmd/incus/network_integration.go:208
+#: cmd/incus/network_integration.go:87
+msgid ""
+"incus network integration create o1 ovn\n"
+"\n"
+"incus network integration create o1 ovn < config.yaml\n"
+"    Create network integration o1 of type ovn with configuration from config."
+"yaml"
+msgstr ""
+
+#: cmd/incus/network_integration.go:232
 msgid ""
 "incus network integration edit <network integration> < network-integration."
 "yaml\n"
