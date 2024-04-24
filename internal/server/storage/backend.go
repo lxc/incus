@@ -20,7 +20,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/minio/madmin-go"
 	"github.com/minio/minio-go/v7"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
@@ -4085,14 +4084,7 @@ func (b *backend) recoverMinIOKeys(projectName string, bucketName string, op *op
 	defer ctxCancel()
 
 	// Export IAM data (response is ZIP file).
-	iamReader, err := adminClient.ExportIAM(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	defer iamReader.Close()
-
-	iamBytes, err := io.ReadAll(iamReader)
+	iamBytes, err := adminClient.ExportIAM(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -4104,7 +4096,7 @@ func (b *backend) recoverMinIOKeys(projectName string, bucketName string, op *op
 
 	// We are interesed only in a json file that contains service accounts.
 	// Find that file and extract service accounts.
-	svcAccounts := map[string]madmin.Credentials{}
+	svcAccounts := map[string]miniod.AddServiceAccountResp{}
 	for _, file := range iamZipReader.File {
 		if file.Name != "iam-assets/svcaccts.json" {
 			continue
@@ -4139,7 +4131,12 @@ func (b *backend) recoverMinIOKeys(projectName string, bucketName string, op *op
 			return nil, err
 		}
 
-		bucketRole, err := s3.BucketPolicyRole(bucketName, svcAccountInfo.Policy)
+		jsonBytes, err := json.Marshal(svcAccountInfo.Policy)
+		if err != nil {
+			return nil, err
+		}
+
+		bucketRole, err := s3.BucketPolicyRole(bucketName, string(jsonBytes))
 		if err != nil {
 			return nil, err
 		}
@@ -4228,12 +4225,7 @@ func (b *backend) CreateBucketKey(projectName string, bucketName string, key api
 			return nil, err
 		}
 
-		adminCreds, err := adminClient.AddServiceAccount(ctx, madmin.AddServiceAccountReq{
-			TargetUser: minioProc.AdminUser(),
-			Policy:     bucketPolicy,
-			AccessKey:  key.AccessKey,
-			SecretKey:  key.SecretKey,
-		})
+		adminCreds, err := adminClient.AddServiceAccount(ctx, minioProc.AdminUser(), key.AccessKey, key.SecretKey, bucketPolicy)
 		if err != nil {
 			return nil, err
 		}
@@ -4374,12 +4366,7 @@ func (b *backend) UpdateBucketKey(projectName string, bucketName string, keyName
 		// Delete service account if exists (this allows changing the access key).
 		_ = adminClient.DeleteServiceAccount(ctx, curBucketKey.AccessKey)
 
-		newCreds, err := adminClient.AddServiceAccount(ctx, madmin.AddServiceAccountReq{
-			TargetUser: minioProc.AdminUser(),
-			Policy:     bucketPolicy,
-			AccessKey:  creds.AccessKey,
-			SecretKey:  creds.SecretKey,
-		})
+		newCreds, err := adminClient.AddServiceAccount(ctx, minioProc.AdminUser(), creds.AccessKey, creds.SecretKey, bucketPolicy)
 		if err != nil {
 			return err
 		}
@@ -4389,10 +4376,7 @@ func (b *backend) UpdateBucketKey(projectName string, bucketName string, keyName
 			// service account but a secret key is, *both* the AccessKey and the SecreyKey are randomly
 			// generated, even though it should only have been the AccessKey.
 			// So detect this and update the SecretKey back to what it should have been.
-			err := adminClient.UpdateServiceAccount(ctx, newCreds.AccessKey, madmin.UpdateServiceAccountReq{
-				NewSecretKey: creds.SecretKey,
-				NewPolicy:    bucketPolicy, // Ensure policy is also applied.
-			})
+			err := adminClient.UpdateServiceAccount(ctx, newCreds.AccessKey, creds.SecretKey, bucketPolicy)
 			if err != nil {
 				return err
 			}
