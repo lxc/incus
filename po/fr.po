@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-24 23:00+0100\n"
+"POT-Creation-Date: 2024-04-25 07:03+0100\n"
 "PO-Revision-Date: 2024-03-08 16:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -542,7 +542,7 @@ msgstr ""
 "###\n"
 "### Notez que le nom est affiché mais ne peut être modifié"
 
-#: cmd/incus/project.go:281
+#: cmd/incus/project.go:286
 msgid ""
 "### This is a YAML representation of the project.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -1157,7 +1157,7 @@ msgid "Bad key/value pair: %s"
 msgstr "Mauvaise paire clé/valeur: %s"
 
 #: cmd/incus/copy.go:150 cmd/incus/create.go:229 cmd/incus/move.go:302
-#: cmd/incus/network_integration.go:145 cmd/incus/project.go:160
+#: cmd/incus/network_integration.go:145 cmd/incus/project.go:165
 #, c-format
 msgid "Bad key=value pair: %q"
 msgstr "Mauvaise association clef=valeur: %q"
@@ -1523,7 +1523,7 @@ msgid "Clustering enabled"
 msgstr "Clustering activé"
 
 #: cmd/incus/cluster.go:150 cmd/incus/config_trust.go:421
-#: cmd/incus/image.go:1099 cmd/incus/list.go:132
+#: cmd/incus/image.go:1099 cmd/incus/list.go:132 cmd/incus/project.go:496
 #: cmd/incus/storage_volume.go:1521 cmd/incus/storage_volume.go:2475
 #: cmd/incus/warning.go:93
 msgid "Columns"
@@ -1571,7 +1571,7 @@ msgstr "Configuration clef/valeur à associer à la nouvelle instance"
 msgid "Config key/value to apply to the new network integration"
 msgstr "Configuration clef/valeur à associer à la nouvelle instance"
 
-#: cmd/incus/project.go:101
+#: cmd/incus/project.go:106
 msgid "Config key/value to apply to the new project"
 msgstr "Configuration clef/valeur à associer au nouveau projet"
 
@@ -1590,7 +1590,7 @@ msgstr "L'option de configuration doit être dans le format CLÉ=VALEUR"
 #: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:312
 #: cmd/incus/network_load_balancer.go:681 cmd/incus/network_peer.go:726
 #: cmd/incus/network_zone.go:633 cmd/incus/network_zone.go:1324
-#: cmd/incus/profile.go:594 cmd/incus/project.go:363 cmd/incus/storage.go:357
+#: cmd/incus/profile.go:594 cmd/incus/project.go:368 cmd/incus/storage.go:357
 #: cmd/incus/storage_bucket.go:356 cmd/incus/storage_bucket.go:1105
 #: cmd/incus/storage_volume.go:1084 cmd/incus/storage_volume.go:1116
 #, c-format
@@ -1926,7 +1926,7 @@ msgstr "Créer de nouveaux réseaux"
 msgid "Create profiles"
 msgstr "Créé : %s"
 
-#: cmd/incus/project.go:93 cmd/incus/project.go:94
+#: cmd/incus/project.go:98 cmd/incus/project.go:99
 #, fuzzy
 msgid "Create projects"
 msgstr "Créé : %s"
@@ -1978,7 +1978,7 @@ msgstr "ADRESSE CIBLE PAR DÉFAUT"
 #: cmd/incus/network_integration.go:458 cmd/incus/network_load_balancer.go:156
 #: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:160
 #: cmd/incus/network_zone.go:840 cmd/incus/operation.go:173
-#: cmd/incus/profile.go:755 cmd/incus/project.go:573 cmd/incus/storage.go:721
+#: cmd/incus/profile.go:755 cmd/incus/project.go:524 cmd/incus/storage.go:721
 #: cmd/incus/storage_bucket.go:520 cmd/incus/storage_bucket.go:840
 #: cmd/incus/storage_volume.go:1636
 msgid "DESCRIPTION"
@@ -2110,7 +2110,7 @@ msgstr "Supprime les réseaux"
 msgid "Delete profiles"
 msgstr "Supprime les profiles"
 
-#: cmd/incus/project.go:189 cmd/incus/project.go:190
+#: cmd/incus/project.go:194 cmd/incus/project.go:195
 #, fuzzy
 msgid "Delete projects"
 msgstr "Récupération de l'image : %s"
@@ -2248,10 +2248,10 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/profile.go:434 cmd/incus/profile.go:492 cmd/incus/profile.go:628
 #: cmd/incus/profile.go:702 cmd/incus/profile.go:771 cmd/incus/profile.go:859
 #: cmd/incus/profile.go:919 cmd/incus/profile.go:1008 cmd/incus/profile.go:1072
-#: cmd/incus/project.go:30 cmd/incus/project.go:94 cmd/incus/project.go:190
-#: cmd/incus/project.go:261 cmd/incus/project.go:397 cmd/incus/project.go:471
-#: cmd/incus/project.go:591 cmd/incus/project.go:656 cmd/incus/project.go:744
-#: cmd/incus/project.go:788 cmd/incus/project.go:849 cmd/incus/project.go:916
+#: cmd/incus/project.go:35 cmd/incus/project.go:99 cmd/incus/project.go:195
+#: cmd/incus/project.go:266 cmd/incus/project.go:402 cmd/incus/project.go:477
+#: cmd/incus/project.go:692 cmd/incus/project.go:757 cmd/incus/project.go:845
+#: cmd/incus/project.go:889 cmd/incus/project.go:950 cmd/incus/project.go:1017
 #: cmd/incus/publish.go:32 cmd/incus/query.go:34 cmd/incus/rebuild.go:27
 #: cmd/incus/remote.go:38 cmd/incus/remote.go:102 cmd/incus/remote.go:630
 #: cmd/incus/remote.go:676 cmd/incus/remote.go:712 cmd/incus/remote.go:796
@@ -2590,7 +2590,7 @@ msgstr "Clé de configuration invalide"
 msgid "Edit profile configurations as YAML"
 msgstr "Modifier les configurations de profil au format YAML"
 
-#: cmd/incus/project.go:260 cmd/incus/project.go:261
+#: cmd/incus/project.go:265 cmd/incus/project.go:266
 #, fuzzy
 msgid "Edit project configurations as YAML"
 msgstr "Clé de configuration invalide"
@@ -2618,7 +2618,7 @@ msgid "Edit trust configurations as YAML"
 msgstr "Clé de configuration invalide"
 
 #: cmd/incus/cluster.go:187 cmd/incus/config_trust.go:447
-#: cmd/incus/image.go:1139 cmd/incus/list.go:630
+#: cmd/incus/image.go:1139 cmd/incus/list.go:630 cmd/incus/project.go:534
 #: cmd/incus/storage_volume.go:1664 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
@@ -2693,7 +2693,7 @@ msgstr "Erreur lors de la récupération des alias : %w"
 #: cmd/incus/network_forward.go:521 cmd/incus/network_integration.go:587
 #: cmd/incus/network_load_balancer.go:502 cmd/incus/network_peer.go:550
 #: cmd/incus/network_zone.go:471 cmd/incus/network_zone.go:1155
-#: cmd/incus/profile.go:986 cmd/incus/project.go:719 cmd/incus/storage.go:810
+#: cmd/incus/profile.go:986 cmd/incus/project.go:820 cmd/incus/storage.go:810
 #: cmd/incus/storage_bucket.go:610 cmd/incus/storage_volume.go:2002
 #: cmd/incus/storage_volume.go:2040
 #, c-format
@@ -2715,7 +2715,7 @@ msgstr "Erreur lors du déparamétrage des propriétés: %v"
 #: cmd/incus/network_integration.go:581 cmd/incus/network_load_balancer.go:496
 #: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:465
 #: cmd/incus/network_zone.go:1149 cmd/incus/profile.go:980
-#: cmd/incus/project.go:713 cmd/incus/storage.go:804
+#: cmd/incus/project.go:814 cmd/incus/storage.go:804
 #: cmd/incus/storage_bucket.go:604 cmd/incus/storage_volume.go:1996
 #: cmd/incus/storage_volume.go:2034
 #, c-format
@@ -3409,8 +3409,8 @@ msgstr ""
 #: cmd/incus/network_forward.go:88 cmd/incus/network_integration.go:412
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:88 cmd/incus/network_zone.go:782
-#: cmd/incus/operation.go:109 cmd/incus/profile.go:706 cmd/incus/project.go:473
-#: cmd/incus/project.go:918 cmd/incus/remote.go:716 cmd/incus/snapshot.go:291
+#: cmd/incus/operation.go:109 cmd/incus/profile.go:706 cmd/incus/project.go:498
+#: cmd/incus/project.go:1019 cmd/incus/remote.go:716 cmd/incus/snapshot.go:291
 #: cmd/incus/storage.go:655 cmd/incus/storage_bucket.go:467
 #: cmd/incus/storage_bucket.go:782 cmd/incus/storage_volume.go:1539
 #: cmd/incus/storage_volume.go:2492 cmd/incus/warning.go:94
@@ -3479,7 +3479,7 @@ msgstr "Ajouter de nouveaux certificat pour des clients de confiance"
 msgid "Generating a client certificate. This may take a minute..."
 msgstr "Génération d'un certificat client. Ceci peut prendre une minute…"
 
-#: cmd/incus/project.go:915 cmd/incus/project.go:916
+#: cmd/incus/project.go:1016 cmd/incus/project.go:1017
 msgid "Get a summary of resource allocations"
 msgstr "Obtenir un résumé de l'allocation des ressources"
 
@@ -3538,7 +3538,7 @@ msgstr "Clé de configuration invalide"
 msgid "Get the key as a profile property"
 msgstr "Obtenir la clé en tant que propriété du profil"
 
-#: cmd/incus/project.go:401
+#: cmd/incus/project.go:406
 msgid "Get the key as a project property"
 msgstr "Obtenir la clé en tant que propriété du projet"
 
@@ -3622,7 +3622,7 @@ msgstr "Clé de configuration invalide"
 msgid "Get values for profile configuration keys"
 msgstr "Clé de configuration invalide"
 
-#: cmd/incus/project.go:396 cmd/incus/project.go:397
+#: cmd/incus/project.go:401 cmd/incus/project.go:402
 #, fuzzy
 msgid "Get values for project configuration keys"
 msgstr "Clé de configuration invalide"
@@ -3705,7 +3705,7 @@ msgstr "Pid : %d"
 msgid "ID: %s"
 msgstr "ID : %s"
 
-#: cmd/incus/project.go:567
+#: cmd/incus/project.go:518
 msgid "IMAGES"
 msgstr "IMAGES"
 
@@ -4133,7 +4133,7 @@ msgstr "DERNIÈRE UTILISATION À"
 msgid "LAST USED AT"
 msgstr "DERNIÈRE UTILISATION À"
 
-#: cmd/incus/project.go:985
+#: cmd/incus/project.go:1086
 msgid "LIMIT"
 msgstr "LIMITE"
 
@@ -4511,8 +4511,29 @@ msgstr "Forcer le conteneur à s'arrêter"
 msgid "List profiles"
 msgstr ""
 
-#: cmd/incus/project.go:470 cmd/incus/project.go:471
+#: cmd/incus/project.go:476
 msgid "List projects"
+msgstr ""
+
+#: cmd/incus/project.go:477
+msgid ""
+"List projects\n"
+"\n"
+"\t\tThe -c option takes a (optionally comma-separated) list of arguments\n"
+"\t\tthat control which image attributes to output when displaying in table\n"
+"\t\tor csv format.\n"
+"\t\tDefault column layout is: nipvbwzdu\n"
+"\t\tColumn shorthand chars:\n"
+"\n"
+"\t\tn - Project Name\n"
+"\t\ti - Images\n"
+"\t\tp - Profiles\n"
+"\t\tv - Storage Volumes\n"
+"\t\tb - Storage Buckets\n"
+"\t\tw - Networks\n"
+"\t\tz - Network Zones\n"
+"\t\td - Description\n"
+"\t\tu - Used By"
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:779 cmd/incus/storage_bucket.go:781
@@ -4899,7 +4920,7 @@ msgstr "Nom du réseau"
 msgid "Manage profiles"
 msgstr ""
 
-#: cmd/incus/project.go:29 cmd/incus/project.go:30
+#: cmd/incus/project.go:34 cmd/incus/project.go:35
 #, fuzzy
 msgid "Manage projects"
 msgstr "Rendre l'image publique"
@@ -5203,9 +5224,9 @@ msgstr "Nom de l'ensemble de stockage"
 msgid "Missing profile name"
 msgstr ""
 
-#: cmd/incus/project.go:147 cmd/incus/project.go:227 cmd/incus/project.go:317
-#: cmd/incus/project.go:434 cmd/incus/project.go:623 cmd/incus/project.go:692
-#: cmd/incus/project.go:820 cmd/incus/project.go:949
+#: cmd/incus/project.go:152 cmd/incus/project.go:232 cmd/incus/project.go:322
+#: cmd/incus/project.go:439 cmd/incus/project.go:724 cmd/incus/project.go:793
+#: cmd/incus/project.go:921 cmd/incus/project.go:1050
 #, fuzzy
 msgid "Missing project name"
 msgstr "Nom de l'ensemble de stockage"
@@ -5345,7 +5366,7 @@ msgstr "Vous devez fournir le nom d'un conteneur pour : "
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:154
 #: cmd/incus/network_integration.go:457 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:159 cmd/incus/network_zone.go:839
-#: cmd/incus/profile.go:754 cmd/incus/project.go:566 cmd/incus/remote.go:773
+#: cmd/incus/profile.go:754 cmd/incus/project.go:517 cmd/incus/remote.go:773
 #: cmd/incus/storage.go:713 cmd/incus/storage_bucket.go:519
 #: cmd/incus/storage_bucket.go:839 cmd/incus/storage_volume.go:1635
 msgid "NAME"
@@ -5355,11 +5376,11 @@ msgstr "NOM"
 msgid "NAT"
 msgstr ""
 
-#: cmd/incus/project.go:572
+#: cmd/incus/project.go:523
 msgid "NETWORK ZONES"
 msgstr ""
 
-#: cmd/incus/project.go:571
+#: cmd/incus/project.go:522
 msgid "NETWORKS"
 msgstr ""
 
@@ -5377,8 +5398,8 @@ msgid "NICs:"
 msgstr ""
 
 #: cmd/incus/network.go:1064 cmd/incus/operation.go:155
-#: cmd/incus/project.go:524 cmd/incus/project.go:529 cmd/incus/project.go:534
-#: cmd/incus/project.go:539 cmd/incus/project.go:544 cmd/incus/project.go:549
+#: cmd/incus/project.go:555 cmd/incus/project.go:564 cmd/incus/project.go:573
+#: cmd/incus/project.go:582 cmd/incus/project.go:591 cmd/incus/project.go:600
 #: cmd/incus/remote.go:733 cmd/incus/remote.go:738 cmd/incus/remote.go:743
 msgid "NO"
 msgstr "NON"
@@ -5784,7 +5805,7 @@ msgstr ""
 msgid "PROCESSES"
 msgstr ""
 
-#: cmd/incus/list.go:584 cmd/incus/project.go:568
+#: cmd/incus/list.go:584 cmd/incus/project.go:519
 msgid "PROFILES"
 msgstr "PROFILS"
 
@@ -5901,7 +5922,7 @@ msgstr ""
 #: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:313
 #: cmd/incus/network_load_balancer.go:682 cmd/incus/network_peer.go:727
 #: cmd/incus/network_zone.go:634 cmd/incus/network_zone.go:1325
-#: cmd/incus/profile.go:595 cmd/incus/project.go:364 cmd/incus/storage.go:358
+#: cmd/incus/profile.go:595 cmd/incus/project.go:369 cmd/incus/storage.go:358
 #: cmd/incus/storage_bucket.go:357 cmd/incus/storage_bucket.go:1106
 #: cmd/incus/storage_volume.go:1085 cmd/incus/storage_volume.go:1117
 #, fuzzy
@@ -6014,17 +6035,17 @@ msgstr "Profils : %s"
 msgid "Profiles: "
 msgstr "Profils : %s"
 
-#: cmd/incus/project.go:173
+#: cmd/incus/project.go:178
 #, fuzzy, c-format
 msgid "Project %s created"
 msgstr "Profil %s créé"
 
-#: cmd/incus/project.go:237
+#: cmd/incus/project.go:242
 #, fuzzy, c-format
 msgid "Project %s deleted"
 msgstr "Profil %s supprimé"
 
-#: cmd/incus/project.go:638
+#: cmd/incus/project.go:739
 #, fuzzy, c-format
 msgid "Project %s renamed to %s"
 msgstr "Profil %s ajouté à %s"
@@ -6197,7 +6218,7 @@ msgstr ""
 msgid "Query virtual machine images"
 msgstr ""
 
-#: cmd/incus/project.go:984
+#: cmd/incus/project.go:1085
 #, fuzzy
 msgid "RESOURCE"
 msgstr "SOURCE"
@@ -6277,7 +6298,7 @@ msgstr "Récupération de l'image : %s"
 msgid "Remote %s already exists"
 msgstr "le serveur distant %s existe déjà"
 
-#: cmd/incus/project.go:883 cmd/incus/remote.go:824 cmd/incus/remote.go:903
+#: cmd/incus/project.go:984 cmd/incus/remote.go:824 cmd/incus/remote.go:903
 #: cmd/incus/remote.go:966 cmd/incus/remote.go:1012
 #, fuzzy, c-format
 msgid "Remote %s doesn't exist"
@@ -6448,7 +6469,7 @@ msgstr ""
 msgid "Rename profiles"
 msgstr ""
 
-#: cmd/incus/project.go:590 cmd/incus/project.go:591
+#: cmd/incus/project.go:691 cmd/incus/project.go:692
 #, fuzzy
 msgid "Rename projects"
 msgstr "Créé : %s"
@@ -6656,7 +6677,7 @@ msgstr "STATIQUE"
 msgid "STATUS"
 msgstr "ÉTAT"
 
-#: cmd/incus/project.go:570
+#: cmd/incus/project.go:521
 #, fuzzy
 msgid "STORAGE BUCKETS"
 msgstr "ENSEMBLE DE STOCKAGE"
@@ -6665,7 +6686,7 @@ msgstr "ENSEMBLE DE STOCKAGE"
 msgid "STORAGE POOL"
 msgstr "ENSEMBLE DE STOCKAGE"
 
-#: cmd/incus/project.go:569
+#: cmd/incus/project.go:520
 #, fuzzy
 msgid "STORAGE VOLUMES"
 msgstr "ENSEMBLE DE STOCKAGE"
@@ -6908,12 +6929,12 @@ msgid ""
 "    incus profile set [<remote>:]<profile> <key> <value>"
 msgstr ""
 
-#: cmd/incus/project.go:655
+#: cmd/incus/project.go:756
 #, fuzzy
 msgid "Set project configuration keys"
 msgstr "Clé de configuration invalide"
 
-#: cmd/incus/project.go:656
+#: cmd/incus/project.go:757
 msgid ""
 "Set project configuration keys\n"
 "\n"
@@ -7042,7 +7063,7 @@ msgstr "Clé de configuration invalide"
 msgid "Set the key as a profile property"
 msgstr ""
 
-#: cmd/incus/project.go:663
+#: cmd/incus/project.go:764
 msgid "Set the key as a project property"
 msgstr ""
 
@@ -7202,7 +7223,7 @@ msgstr "Afficher la configuration étendue"
 msgid "Show profile configurations"
 msgstr "Afficher la configuration étendue"
 
-#: cmd/incus/project.go:787 cmd/incus/project.go:788
+#: cmd/incus/project.go:888 cmd/incus/project.go:889
 #, fuzzy
 msgid "Show project options"
 msgstr "Afficher la configuration étendue"
@@ -7496,7 +7517,7 @@ msgstr "Swap (courant)"
 msgid "Swap (peak)"
 msgstr "Swap (pointe)"
 
-#: cmd/incus/project.go:848 cmd/incus/project.go:849
+#: cmd/incus/project.go:949 cmd/incus/project.go:950
 #, fuzzy
 msgid "Switch the current project"
 msgstr "impossible de supprimer le serveur distant par défaut"
@@ -7724,7 +7745,7 @@ msgstr "Vous devez fournir le nom d'un conteneur pour : "
 msgid "The property %q does not exist on the profile %q: %v"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
 
-#: cmd/incus/project.go:447
+#: cmd/incus/project.go:452
 #, fuzzy, c-format
 msgid "The property %q does not exist on the project %q: %v"
 msgstr "Vous devez fournir le nom d'un conteneur pour : "
@@ -7971,7 +7992,7 @@ msgstr "Expire : %s"
 msgid "Type: %s (ephemeral)"
 msgstr "Type : éphémère"
 
-#: cmd/incus/project.go:962
+#: cmd/incus/project.go:1063
 msgid "UNLIMITED"
 msgstr ""
 
@@ -7983,7 +8004,7 @@ msgstr "DATE DE PUBLICATION"
 msgid "URL"
 msgstr "URL"
 
-#: cmd/incus/project.go:986 cmd/incus/storage_volume.go:1639
+#: cmd/incus/project.go:1087 cmd/incus/storage_volume.go:1639
 msgid "USAGE"
 msgstr ""
 
@@ -8000,7 +8021,7 @@ msgstr "Création du conteneur"
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:156
 #: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:460
 #: cmd/incus/network_zone.go:161 cmd/incus/profile.go:756
-#: cmd/incus/project.go:574 cmd/incus/storage.go:722
+#: cmd/incus/project.go:525 cmd/incus/storage.go:722
 #: cmd/incus/storage_volume.go:1638
 msgid "USED BY"
 msgstr "UTILISÉ PAR"
@@ -8040,7 +8061,7 @@ msgid "Unknown channel type for client %q: %s"
 msgstr ""
 
 #: cmd/incus/cluster.go:193 cmd/incus/config_trust.go:455
-#: cmd/incus/image.go:1147 cmd/incus/list.go:645
+#: cmd/incus/image.go:1147 cmd/incus/list.go:645 cmd/incus/project.go:540
 #: cmd/incus/storage_volume.go:1672 cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
@@ -8150,7 +8171,7 @@ msgstr "Clé de configuration invalide"
 msgid "Unset profile configuration keys"
 msgstr "Clé de configuration invalide"
 
-#: cmd/incus/project.go:743 cmd/incus/project.go:744
+#: cmd/incus/project.go:844 cmd/incus/project.go:845
 #, fuzzy
 msgid "Unset project configuration keys"
 msgstr "Clé de configuration invalide"
@@ -8217,7 +8238,7 @@ msgstr "Clé de configuration invalide"
 msgid "Unset the key as a profile property"
 msgstr ""
 
-#: cmd/incus/project.go:748
+#: cmd/incus/project.go:849
 msgid "Unset the key as a project property"
 msgstr ""
 
@@ -8514,8 +8535,8 @@ msgid "Would you like to use clustering?"
 msgstr ""
 
 #: cmd/incus/network.go:1066 cmd/incus/operation.go:157
-#: cmd/incus/project.go:526 cmd/incus/project.go:531 cmd/incus/project.go:536
-#: cmd/incus/project.go:541 cmd/incus/project.go:546 cmd/incus/project.go:551
+#: cmd/incus/project.go:557 cmd/incus/project.go:566 cmd/incus/project.go:575
+#: cmd/incus/project.go:584 cmd/incus/project.go:593 cmd/incus/project.go:602
 #: cmd/incus/remote.go:735 cmd/incus/remote.go:740 cmd/incus/remote.go:745
 msgid "YES"
 msgstr "OUI"
@@ -8568,7 +8589,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1008 cmd/incus/network_acl.go:90
 #: cmd/incus/network_integration.go:407 cmd/incus/network_zone.go:82
-#: cmd/incus/operation.go:104 cmd/incus/profile.go:699 cmd/incus/project.go:468
+#: cmd/incus/operation.go:104 cmd/incus/profile.go:699 cmd/incus/project.go:474
 #: cmd/incus/storage.go:650 cmd/incus/version.go:20 cmd/incus/warning.go:69
 msgid "[<remote>:]"
 msgstr "[<serveur distant>:]"
@@ -9723,8 +9744,8 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/project.go:92 cmd/incus/project.go:187 cmd/incus/project.go:259
-#: cmd/incus/project.go:786 cmd/incus/project.go:847 cmd/incus/project.go:914
+#: cmd/incus/project.go:97 cmd/incus/project.go:192 cmd/incus/project.go:264
+#: cmd/incus/project.go:887 cmd/incus/project.go:948 cmd/incus/project.go:1015
 #, fuzzy
 msgid "[<remote>:]<project>"
 msgstr ""
@@ -9732,7 +9753,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/project.go:395 cmd/incus/project.go:742
+#: cmd/incus/project.go:400 cmd/incus/project.go:843
 #, fuzzy
 msgid "[<remote>:]<project> <key>"
 msgstr ""
@@ -9740,7 +9761,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/project.go:654
+#: cmd/incus/project.go:755
 #, fuzzy
 msgid "[<remote>:]<project> <key>=<value>..."
 msgstr ""
@@ -9748,7 +9769,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/project.go:588
+#: cmd/incus/project.go:689
 #, fuzzy
 msgid "[<remote>:]<project> <new-name>"
 msgstr ""
@@ -9889,7 +9910,7 @@ msgstr ""
 "Détruit les conteneurs ou les instantanés ainsi que toute donnée associée "
 "(configuration, instantanés, …)."
 
-#: cmd/incus/project.go:556 cmd/incus/remote.go:764
+#: cmd/incus/project.go:661 cmd/incus/remote.go:764
 #, fuzzy
 msgid "current"
 msgstr "Swap (courant)"
@@ -10238,7 +10259,7 @@ msgid ""
 "    Update a profile using the content of profile.yaml"
 msgstr ""
 
-#: cmd/incus/project.go:96
+#: cmd/incus/project.go:101
 msgid ""
 "incus project create p1\n"
 "\n"
@@ -10246,7 +10267,7 @@ msgid ""
 "    Create a project with configuration from config.yaml"
 msgstr ""
 
-#: cmd/incus/project.go:263
+#: cmd/incus/project.go:268
 msgid ""
 "incus project edit <project> < project.yaml\n"
 "    Update a project using the content of project.yaml"
