@@ -2446,3 +2446,13 @@ This adds the ability for `bridge.external_interfaces` to create a parent interf
 ## `storage_zfs_vdev`
 
 This adds support for `mirror`, `raidz1` and `raidz2` ZFS `vdev` types by extending storage `source` configuration.
+
+## `container_migration_stateful`
+
+A `migration.stateful` configuration key was introduced.
+
+It's a Boolean flag set to true whenever the container is in a stateful mode
+during the start, stop, and snapshot functions.
+
+This makes it less likely for users to run into CRIU errors when copying
+containers to another system.
