@@ -19,6 +19,11 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+type projectColumn struct {
+	Name string
+	Data func(api.Project) string
+}
+
 type cmdProject struct {
 	global *cmdGlobal
 }
@@ -460,7 +465,8 @@ type cmdProjectList struct {
 	global  *cmdGlobal
 	project *cmdProject
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
 }
 
 func (c *cmdProjectList) Command() *cobra.Command {
@@ -469,7 +475,26 @@ func (c *cmdProjectList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List projects`))
+		`List projects
+
+		The -c option takes a (optionally comma-separated) list of arguments
+		that control which image attributes to output when displaying in table
+		or csv format.
+		Default column layout is: nipvbwzdu
+		Column shorthand chars:
+
+		n - Project Name
+		i - Images
+		p - Profiles
+		v - Storage Volumes
+		b - Storage Buckets
+		w - Networks
+		z - Network Zones
+		d - Description
+		u - Used By`))
+
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultProjectColumns, i18n.G("Columns")+"``")
+
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
 
 	cmd.RunE = c.Run
@@ -483,6 +508,109 @@ func (c *cmdProjectList) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultProjectColumns = "nipvbwzdu"
+
+func (c *cmdProjectList) parseColumns() ([]projectColumn, error) {
+	columnsShorthandMap := map[rune]projectColumn{
+		'n': {i18n.G("NAME"), c.projectNameColumnData},
+		'i': {i18n.G("IMAGES"), c.imagesColumnData},
+		'p': {i18n.G("PROFILES"), c.profilesColumnData},
+		'v': {i18n.G("STORAGE VOLUMES"), c.storageVolumesColumnData},
+		'b': {i18n.G("STORAGE BUCKETS"), c.storageBucketsColumnData},
+		'w': {i18n.G("NETWORKS"), c.networksColumnData},
+		'z': {i18n.G("NETWORK ZONES"), c.networkZonesColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+		'u': {i18n.G("USED BY"), c.usedByColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+
+	columns := []projectColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdProjectList) projectNameColumnData(project api.Project) string {
+	return project.Name
+}
+
+func (c *cmdProjectList) imagesColumnData(project api.Project) string {
+	images := i18n.G("NO")
+	if util.IsTrue(project.Config["features.images"]) {
+		images = i18n.G("YES")
+	}
+
+	return images
+}
+
+func (c *cmdProjectList) profilesColumnData(project api.Project) string {
+	profiles := i18n.G("NO")
+	if util.IsTrue(project.Config["features.profiles"]) {
+		profiles = i18n.G("YES")
+	}
+
+	return profiles
+}
+
+func (c *cmdProjectList) storageVolumesColumnData(project api.Project) string {
+	storageVolumes := i18n.G("NO")
+	if util.IsTrue(project.Config["features.storage.volumes"]) {
+		storageVolumes = i18n.G("YES")
+	}
+
+	return storageVolumes
+}
+
+func (c *cmdProjectList) storageBucketsColumnData(project api.Project) string {
+	storageBuckets := i18n.G("NO")
+	if util.IsTrue(project.Config["features.storage.buckets"]) {
+		storageBuckets = i18n.G("YES")
+	}
+
+	return storageBuckets
+}
+
+func (c *cmdProjectList) networksColumnData(project api.Project) string {
+	networks := i18n.G("NO")
+	if util.IsTrue(project.Config["features.networks"]) {
+		networks = i18n.G("YES")
+	}
+
+	return networks
+}
+
+func (c *cmdProjectList) networkZonesColumnData(project api.Project) string {
+	networkZones := i18n.G("NO")
+	if util.IsTrue(project.Config["features.networks.zones"]) {
+		networkZones = i18n.G("YES")
+	}
+
+	return networkZones
+}
+
+func (c *cmdProjectList) descriptionColumnData(project api.Project) string {
+	return project.Description
+}
+
+func (c *cmdProjectList) usedByColumnData(project api.Project) string {
+	return fmt.Sprintf("%d", len(project.UsedBy))
 }
 
 func (c *cmdProjectList) Run(cmd *cobra.Command, args []string) error {
@@ -519,59 +647,32 @@ func (c *cmdProjectList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
 	data := [][]string{}
 	for _, project := range projects {
-		images := i18n.G("NO")
-		if util.IsTrue(project.Config["features.images"]) {
-			images = i18n.G("YES")
+		line := []string{}
+		for _, column := range columns {
+			if column.Name == "NAME" {
+				if project.Name == info.Project {
+					project.Name = fmt.Sprintf("%s (%s)", project.Name, i18n.G("current"))
+				}
+			}
+
+			line = append(line, column.Data(project))
 		}
 
-		profiles := i18n.G("NO")
-		if util.IsTrue(project.Config["features.profiles"]) {
-			profiles = i18n.G("YES")
-		}
-
-		storageVolumes := i18n.G("NO")
-		if util.IsTrue(project.Config["features.storage.volumes"]) {
-			storageVolumes = i18n.G("YES")
-		}
-
-		storageBuckets := i18n.G("NO")
-		if util.IsTrue(project.Config["features.storage.buckets"]) {
-			storageBuckets = i18n.G("YES")
-		}
-
-		networks := i18n.G("NO")
-		if util.IsTrue(project.Config["features.networks"]) {
-			networks = i18n.G("YES")
-		}
-
-		networkZones := i18n.G("NO")
-		if util.IsTrue(project.Config["features.networks.zones"]) {
-			networkZones = i18n.G("YES")
-		}
-
-		name := project.Name
-		if name == info.Project {
-			name = fmt.Sprintf("%s (%s)", name, i18n.G("current"))
-		}
-
-		strUsedBy := fmt.Sprintf("%d", len(project.UsedBy))
-		data = append(data, []string{name, images, profiles, storageVolumes, storageBuckets, networks, networkZones, project.Description, strUsedBy})
+		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("IMAGES"),
-		i18n.G("PROFILES"),
-		i18n.G("STORAGE VOLUMES"),
-		i18n.G("STORAGE BUCKETS"),
-		i18n.G("NETWORKS"),
-		i18n.G("NETWORK ZONES"),
-		i18n.G("DESCRIPTION"),
-		i18n.G("USED BY"),
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, projects)
