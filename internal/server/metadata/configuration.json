@@ -177,7 +177,6 @@
 					},
 					{
 						"migration.stateful": {
-							"condition": "virtual machine",
 							"defaultdesc": "`false`",
 							"liveupdate": "no",
 							"longdesc": "Enabling this option prevents the use of some features that are incompatible with it.",

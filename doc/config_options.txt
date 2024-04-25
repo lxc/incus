@@ -150,7 +150,6 @@ Using incremental memory transfer of the instance's memory can reduce downtime.
 ```
 
 ```{config:option} migration.stateful instance-migration
-:condition: "virtual machine"
 :defaultdesc: "`false`"
 :liveupdate: "no"
 :shortdesc: "Whether to allow for stateful stop/start and snapshots"
