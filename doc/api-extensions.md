@@ -2468,3 +2468,7 @@ This allows the instance scriptlet to fetch a list of instances given an optiona
 ## `instances_scriptlet_get_cluster_members`
 
 This allows the instance scriptlet to fetch a list of cluster members given an optional cluster group.
+
+## `network_acl_stateless`
+
+This adds support for stateless rules in network ACLs.
