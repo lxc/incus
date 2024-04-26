@@ -132,9 +132,11 @@ var ovmfGenericFirmwares = []ovmfFirmware{
 var ovmfSecurebootFirmwares = []ovmfFirmware{
 	{code: "OVMF_CODE.4MB.fd", vars: "OVMF_VARS.4MB.ms.fd"},
 	{code: "OVMF_CODE_4M.ms.fd", vars: "OVMF_VARS_4M.ms.fd"},
+	{code: "OVMF_CODE_4M.secboot.fd", vars: "OVMF_VARS_4M.secboot.fd"},
 	{code: "OVMF_CODE.secboot.4m.fd", vars: "OVMF_VARS.4m.fd"},
-	{code: "OVMF_CODE.2MB.fd", vars: "OVMF_VARS.2MB.ms.fd"},
+	{code: "OVMF_CODE.secboot.fd", vars: "OVMF_VARS.secboot.fd"},
 	{code: "OVMF_CODE.secboot.fd", vars: "OVMF_VARS.fd"},
+	{code: "OVMF_CODE.2MB.fd", vars: "OVMF_VARS.2MB.ms.fd"},
 	{code: "OVMF_CODE.fd", vars: "OVMF_VARS.ms.fd"},
 	{code: "OVMF_CODE.fd", vars: "qemu.nvram"},
 }
