@@ -440,7 +440,10 @@ func ovnRuleCriteriaToOVNACLRule(direction string, rule *api.NetworkACLRule, por
 	// Populate Action and Priority based on rule's Action.
 	switch rule.Action {
 	case "allow":
-		portGroupRule.Action = "allow-related" // TODO add stateless support.
+		portGroupRule.Action = "allow-related"
+		portGroupRule.Priority = ovnACLPriorityPortGroupAllow
+	case "allow-stateless":
+		portGroupRule.Action = "allow-stateless"
 		portGroupRule.Priority = ovnACLPriorityPortGroupAllow
 	case "reject":
 		portGroupRule.Action = "reject"
