@@ -48,7 +48,7 @@ var ruleSubjectInternalAliases = []string{ruleSubjectInternal, "#internal"}
 var ruleSubjectExternalAliases = []string{ruleSubjectExternal, "#external"}
 
 // ValidActions defines valid actions for rules.
-var ValidActions = []string{"allow", "drop", "reject"}
+var ValidActions = []string{"allow", "allow-stateless", "drop", "reject"}
 
 // common represents a Network ACL.
 type common struct {
