@@ -148,7 +148,7 @@ func ConnectIncusHTTPWithContext(ctx context.Context, args *ConnectionArgs, clie
 //
 // If the path argument is empty, then $INCUS_SOCKET will be used, if
 // unset $INCUS_DIR/unix.socket will be used and if that one isn't set
-// either, then the path will default to /var/lib/incus/unix.socket.
+// either, then the path will default to /var/lib/incus/unix.socket or /run/incus/unix.socket.
 func ConnectIncusUnix(path string, args *ConnectionArgs) (InstanceServer, error) {
 	return ConnectIncusUnixWithContext(context.Background(), path, args)
 }
@@ -157,7 +157,7 @@ func ConnectIncusUnix(path string, args *ConnectionArgs) (InstanceServer, error)
 //
 // If the path argument is empty, then $INCUS_SOCKET will be used, if
 // unset $INCUS_DIR/unix.socket will be used and if that one isn't set
-// either, then the path will default to /var/lib/incus/unix.socket.
+// either, then the path will default to /var/lib/incus/unix.socket or /run/incus/unix.socket.
 func ConnectIncusUnixWithContext(ctx context.Context, path string, args *ConnectionArgs) (InstanceServer, error) {
 	logger.Debug("Connecting to a local Incus over a Unix socket")
 
@@ -180,7 +180,12 @@ func ConnectIncusUnixWithContext(ctx context.Context, path string, args *Connect
 		if path == "" {
 			incusDir := os.Getenv("INCUS_DIR")
 			if incusDir == "" {
-				incusDir = "/var/lib/incus"
+				_, err := os.Lstat("/run/incus/unix.socket")
+				if err == nil {
+					incusDir = "/run/incus"
+				} else {
+					incusDir = "/var/lib/incus"
+				}
 			}
 
 			path = filepath.Join(incusDir, "unix.socket")
