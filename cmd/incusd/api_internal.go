@@ -732,7 +732,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("Failed loading profiles for instance: %w", err)
+		return fmt.Errorf("Failed loading profiles (%v) for instance: %w", strings.Join(backupConf.Container.Profiles, ", "), err)
 	}
 
 	// Add root device if needed.
@@ -844,7 +844,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 			return err
 		})
 		if err != nil {
-			return fmt.Errorf("Failed loading profiles for instance snapshot %q: %w", snapInstName, err)
+			return fmt.Errorf("Failed loading profiles (%v) for instance snapshot %q: %w", strings.Join(snap.Profiles, ", "), snapInstName, err)
 		}
 
 		// Add root device if needed.
