@@ -760,6 +760,18 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 		volumeConfig = srcBackup.Config.Volume.Config
 	}
 
+	// Get instance root size information.
+	if srcBackup.Config != nil && srcBackup.Config.Container != nil {
+		_, rootConfig, err := internalInstance.GetRootDiskDevice(srcBackup.Config.Container.ExpandedDevices)
+		if err == nil && rootConfig["size"] != "" {
+			if volumeConfig == nil {
+				volumeConfig = map[string]string{}
+			}
+
+			volumeConfig["size"] = rootConfig["size"]
+		}
+	}
+
 	vol := b.GetVolume(volType, contentType, volStorageName, volumeConfig)
 
 	importRevert := revert.New()
@@ -793,6 +805,11 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 		importRevert.Add(func() {
 			_ = b.removeInstanceSnapshotSymlinkIfUnused(instanceType, srcBackup.Project, srcBackup.Name)
 		})
+	}
+
+	// Make sure the size isn't part of the instance volume after initial creation.
+	if volumeConfig != nil {
+		delete(volumeConfig, "size")
 	}
 
 	// Update information in the backup.yaml file.
