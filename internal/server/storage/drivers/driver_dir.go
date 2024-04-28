@@ -77,7 +77,8 @@ func (d *dir) Create() error {
 
 	// Check that if within INCUS_DIR, we're at our expected spot.
 	cleanSource := filepath.Clean(sourcePath)
-	if strings.HasPrefix(cleanSource, internalUtil.VarPath()) && cleanSource != GetPoolMountPath(d.name) {
+	varPath := strings.TrimRight(internalUtil.VarPath(), "/") + "/"
+	if (cleanSource == internalUtil.VarPath() || strings.HasPrefix(cleanSource, varPath)) && cleanSource != GetPoolMountPath(d.name) {
 		return fmt.Errorf("Source path '%s' is within the Incus directory", cleanSource)
 	}
 
