@@ -374,7 +374,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   deny /proc/sys/net?*{,/**} wklx,
 
   # Block dangerous paths under /sys
-  deny /sys/[^fdck]*{,/**} wklx,
+  deny /sys/[^fdc]*{,/**} wklx,
   deny /sys/c[^l]*{,/**} wklx,
   deny /sys/cl[^a]*{,/**} wklx,
   deny /sys/cla[^s]*{,/**} wklx,
@@ -404,7 +404,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   deny /sys/devices/virtual?*{,/**} wklx,
   deny /sys/devices?*{,/**} wklx,
   deny /sys/f[^s]*{,/**} wklx,
-  deny /sys/fs/[^cb]*{,/**} wklx,
+  deny /sys/fs/[^bc]*{,/**} wklx,
   deny /sys/fs/b[^p]*{,/**} wklx,
   deny /sys/fs/bp[^f]*{,/**} wklx,
   deny /sys/fs/bpf?*{,/**} wklx,
