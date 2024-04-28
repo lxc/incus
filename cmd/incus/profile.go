@@ -18,6 +18,11 @@ import (
 	"github.com/lxc/incus/v6/shared/termios"
 )
 
+type profileColumn struct {
+	Name string
+	Data func(api.Profile) string
+}
+
 type cmdProfile struct {
 	global *cmdGlobal
 }
@@ -689,9 +694,10 @@ func (c *cmdProfileGet) Run(cmd *cobra.Command, args []string) error {
 
 // List.
 type cmdProfileList struct {
-	global     *cmdGlobal
-	profile    *cmdProfile
-	flagFormat string
+	global      *cmdGlobal
+	profile     *cmdProfile
+	flagFormat  string
+	flagColumns string
 }
 
 func (c *cmdProfileList) Command() *cobra.Command {
@@ -700,7 +706,20 @@ func (c *cmdProfileList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List profiles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List profiles`))
+		`List profiles
+
+The -c option takes a (optionally comma-separated) list of arguments
+that control which image attributes to output when displaying in table
+or csv format.
+
+Default column layout is: ndu
+
+Column shorthand chars:
+n - Profile Name
+d - Description
+u - Used By`))
+
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultProfileColumns, i18n.G("Columns")+"``")
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
@@ -714,6 +733,49 @@ func (c *cmdProfileList) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultProfileColumns = "ndu"
+
+func (c *cmdProfileList) parseColumns() ([]profileColumn, error) {
+	columnsShorthandMap := map[rune]profileColumn{
+		'n': {i18n.G("NAME"), c.profileNameColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+		'u': {i18n.G("USED BY"), c.usedByColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+
+	columns := []profileColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdProfileList) profileNameColumnData(profile api.Profile) string {
+	return profile.Name
+}
+
+func (c *cmdProfileList) descriptionColumnData(profile api.Profile) string {
+	return profile.Description
+}
+
+func (c *cmdProfileList) usedByColumnData(profile api.Profile) string {
+	return fmt.Sprintf("%d", len(profile.UsedBy))
 }
 
 func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
@@ -742,18 +804,27 @@ func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
 	data := [][]string{}
 	for _, profile := range profiles {
-		strUsedBy := fmt.Sprintf("%d", len(profile.UsedBy))
-		data = append(data, []string{profile.Name, profile.Description, strUsedBy})
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(profile))
+		}
+
+		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("DESCRIPTION"),
-		i18n.G("USED BY")}
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
+	}
 
 	return cli.RenderTable(c.flagFormat, header, data, profiles)
 }
