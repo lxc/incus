@@ -123,6 +123,12 @@ func (c *cmdStorageCreate) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Require a proper driver name.
+	if strings.Contains(args[1], "=") {
+		_ = cmd.Help()
+		return fmt.Errorf(i18n.G("Invalid number of arguments"))
+	}
+
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
 		contents, err := io.ReadAll(os.Stdin)
