@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -1248,6 +1249,11 @@ func (c *cmdStorageVolumeGet) Run(cmd *cobra.Command, args []string) error {
 	// Get the storage volume entry
 	resp, _, err := client.GetStoragePoolVolume(resource.name, volType, volName)
 	if err != nil {
+		// Give more context on missing volumes.
+		if api.StatusErrorCheck(err, http.StatusNotFound) {
+			return fmt.Errorf("Storage pool volume \"%s/%s\" not found", volType, volName)
+		}
+
 		return err
 	}
 
@@ -1355,6 +1361,11 @@ func (c *cmdStorageVolumeInfo) Run(cmd *cobra.Command, args []string) error {
 	// Get the data.
 	vol, _, err := client.GetStoragePoolVolume(resource.name, volType, volName)
 	if err != nil {
+		// Give more context on missing volumes.
+		if api.StatusErrorCheck(err, http.StatusNotFound) {
+			return fmt.Errorf("Storage pool volume \"%s/%s\" not found", volType, volName)
+		}
+
 		return err
 	}
 
@@ -2022,6 +2033,11 @@ func (c *cmdStorageVolumeSet) Run(cmd *cobra.Command, args []string) error {
 	// Get the storage volume entry.
 	vol, etag, err := client.GetStoragePoolVolume(resource.name, volType, volName)
 	if err != nil {
+		// Give more context on missing volumes.
+		if api.StatusErrorCheck(err, http.StatusNotFound) {
+			return fmt.Errorf("Storage pool volume \"%s/%s\" not found", volType, volName)
+		}
+
 		return err
 	}
 
@@ -2131,6 +2147,11 @@ func (c *cmdStorageVolumeShow) Run(cmd *cobra.Command, args []string) error {
 	// Get the storage volume entry
 	vol, _, err := client.GetStoragePoolVolume(resource.name, volType, volName)
 	if err != nil {
+		// Give more context on missing volumes.
+		if api.StatusErrorCheck(err, http.StatusNotFound) {
+			return fmt.Errorf("Storage pool volume \"%s/%s\" not found", volType, volName)
+		}
+
 		return err
 	}
 
