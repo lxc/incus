@@ -477,21 +477,21 @@ func (c *cmdProjectList) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List projects
 
-		The -c option takes a (optionally comma-separated) list of arguments
-		that control which image attributes to output when displaying in table
-		or csv format.
-		Default column layout is: nipvbwzdu
-		Column shorthand chars:
+The -c option takes a (optionally comma-separated) list of arguments
+that control which image attributes to output when displaying in table
+or csv format.
+Default column layout is: nipvbwzdu
+Column shorthand chars:
 
-		n - Project Name
-		i - Images
-		p - Profiles
-		v - Storage Volumes
-		b - Storage Buckets
-		w - Networks
-		z - Network Zones
-		d - Description
-		u - Used By`))
+n - Project Name
+i - Images
+p - Profiles
+v - Storage Volumes
+b - Storage Buckets
+w - Networks
+z - Network Zones
+d - Description
+u - Used By`))
 
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultProjectColumns, i18n.G("Columns")+"``")
 
