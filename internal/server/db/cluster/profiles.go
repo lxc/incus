@@ -70,6 +70,7 @@ func (p *Profile) ToAPI(ctx context.Context, tx *sql.Tx) (*api.Profile, error) {
 			Config:      config,
 			Devices:     DevicesToAPI(devices),
 		},
+		Project: p.Project,
 	}
 
 	return profile, nil
