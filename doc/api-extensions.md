@@ -2456,3 +2456,7 @@ during the start, stop, and snapshot functions.
 
 This makes it less likely for users to run into CRIU errors when copying
 containers to another system.
+
+## `profiles_all_projects`
+
+This adds support for listing profiles across all projects through the `all-projects` parameter on the `GET /1.0/profiles`API.
