@@ -694,10 +694,11 @@ func (c *cmdProfileGet) Run(cmd *cobra.Command, args []string) error {
 
 // List.
 type cmdProfileList struct {
-	global      *cmdGlobal
-	profile     *cmdProfile
-	flagFormat  string
-	flagColumns string
+	global          *cmdGlobal
+	profile         *cmdProfile
+	flagFormat      string
+	flagColumns     string
+	flagAllProjects bool
 }
 
 func (c *cmdProfileList) Command() *cobra.Command {
@@ -719,10 +720,10 @@ n - Profile Name
 d - Description
 u - Used By`))
 
-	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultProfileColumns, i18n.G("Columns")+"``")
-
 	cmd.RunE = c.Run
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultProfileColumns, i18n.G("Columns")+"``")
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Display profiles from all projects"))
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -736,16 +737,24 @@ u - Used By`))
 }
 
 const defaultProfileColumns = "ndu"
+const defaultProfileColumnsAllProjects = "endu"
 
 func (c *cmdProfileList) parseColumns() ([]profileColumn, error) {
 	columnsShorthandMap := map[rune]profileColumn{
 		'n': {i18n.G("NAME"), c.profileNameColumnData},
+		'e': {i18n.G("PROJECT"), c.projectNameColumnData},
 		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
 		'u': {i18n.G("USED BY"), c.usedByColumnData},
 	}
 
-	columnList := strings.Split(c.flagColumns, ",")
+	// Add project column if --all-projects flag specified and no custom column was passed.
+	if c.flagAllProjects {
+		if c.flagColumns == defaultProfileColumns {
+			c.flagColumns = defaultProfileColumnsAllProjects
+		}
+	}
 
+	columnList := strings.Split(c.flagColumns, ",")
 	columns := []profileColumn{}
 
 	for _, columnEntry := range columnList {
@@ -774,6 +783,10 @@ func (c *cmdProfileList) descriptionColumnData(profile api.Profile) string {
 	return profile.Description
 }
 
+func (c *cmdProfileList) projectNameColumnData(profile api.Profile) string {
+	return profile.Project
+}
+
 func (c *cmdProfileList) usedByColumnData(profile api.Profile) string {
 	return fmt.Sprintf("%d", len(profile.UsedBy))
 }
@@ -783,6 +796,10 @@ func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
 	exit, err := c.global.CheckArgs(cmd, args, 0, 1)
 	if exit {
 		return err
+	}
+
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return fmt.Errorf(i18n.G("Can't specify --project with --all-projects"))
 	}
 
 	// Parse remote
@@ -799,9 +816,17 @@ func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
 	resource := resources[0]
 
 	// List profiles
-	profiles, err := resource.server.GetProfiles()
-	if err != nil {
-		return err
+	var profiles []api.Profile
+	if c.flagAllProjects {
+		profiles, err = resource.server.GetProfilesAllProjects()
+		if err != nil {
+			return err
+		}
+	} else {
+		profiles, err = resource.server.GetProfiles()
+		if err != nil {
+			return err
+		}
 	}
 
 	columns, err := c.parseColumns()

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-04-29 13:31-0400\n"
+"POT-Creation-Date: 2024-04-29 14:30-0400\n"
 "PO-Revision-Date: 2024-01-27 21:01+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
 "org>\n"
@@ -1283,7 +1283,7 @@ msgstr ""
 msgid "Can't specify --fast with --columns"
 msgstr ""
 
-#: cmd/incus/cluster.go:249 cmd/incus/list.go:467
+#: cmd/incus/cluster.go:249 cmd/incus/list.go:467 cmd/incus/profile.go:802
 msgid "Can't specify --project with --all-projects"
 msgstr ""
 
@@ -1498,7 +1498,7 @@ msgid "Clustering enabled"
 msgstr ""
 
 #: cmd/incus/cluster.go:150 cmd/incus/config_trust.go:421
-#: cmd/incus/image.go:1099 cmd/incus/list.go:132 cmd/incus/profile.go:722
+#: cmd/incus/image.go:1099 cmd/incus/list.go:132 cmd/incus/profile.go:724
 #: cmd/incus/project.go:496 cmd/incus/storage_volume.go:1521
 #: cmd/incus/storage_volume.go:2475 cmd/incus/warning.go:93
 msgid "Columns"
@@ -1884,7 +1884,7 @@ msgstr ""
 #: cmd/incus/network_integration.go:458 cmd/incus/network_load_balancer.go:156
 #: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:160
 #: cmd/incus/network_zone.go:844 cmd/incus/operation.go:173
-#: cmd/incus/profile.go:743 cmd/incus/project.go:524 cmd/incus/storage.go:727
+#: cmd/incus/profile.go:746 cmd/incus/project.go:524 cmd/incus/storage.go:727
 #: cmd/incus/storage_bucket.go:520 cmd/incus/storage_bucket.go:840
 #: cmd/incus/storage_volume.go:1636
 msgid "DESCRIPTION"
@@ -2134,23 +2134,23 @@ msgstr ""
 #: cmd/incus/operation.go:194 cmd/incus/profile.go:34 cmd/incus/profile.go:109
 #: cmd/incus/profile.go:184 cmd/incus/profile.go:275 cmd/incus/profile.go:357
 #: cmd/incus/profile.go:439 cmd/incus/profile.go:497 cmd/incus/profile.go:633
-#: cmd/incus/profile.go:708 cmd/incus/profile.go:841 cmd/incus/profile.go:929
-#: cmd/incus/profile.go:989 cmd/incus/profile.go:1078 cmd/incus/profile.go:1142
-#: cmd/incus/project.go:35 cmd/incus/project.go:99 cmd/incus/project.go:195
-#: cmd/incus/project.go:266 cmd/incus/project.go:402 cmd/incus/project.go:477
-#: cmd/incus/project.go:692 cmd/incus/project.go:757 cmd/incus/project.go:845
-#: cmd/incus/project.go:889 cmd/incus/project.go:950 cmd/incus/project.go:1017
-#: cmd/incus/publish.go:32 cmd/incus/query.go:34 cmd/incus/rebuild.go:27
-#: cmd/incus/remote.go:38 cmd/incus/remote.go:102 cmd/incus/remote.go:630
-#: cmd/incus/remote.go:676 cmd/incus/remote.go:712 cmd/incus/remote.go:796
-#: cmd/incus/remote.go:875 cmd/incus/remote.go:938 cmd/incus/remote.go:984
-#: cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21 cmd/incus/snapshot.go:31
-#: cmd/incus/snapshot.go:78 cmd/incus/snapshot.go:203 cmd/incus/snapshot.go:288
-#: cmd/incus/snapshot.go:385 cmd/incus/snapshot.go:446
-#: cmd/incus/snapshot.go:528 cmd/incus/storage.go:32 cmd/incus/storage.go:95
-#: cmd/incus/storage.go:207 cmd/incus/storage.go:265 cmd/incus/storage.go:397
-#: cmd/incus/storage.go:479 cmd/incus/storage.go:659 cmd/incus/storage.go:746
-#: cmd/incus/storage.go:850 cmd/incus/storage.go:944
+#: cmd/incus/profile.go:709 cmd/incus/profile.go:867 cmd/incus/profile.go:955
+#: cmd/incus/profile.go:1015 cmd/incus/profile.go:1104
+#: cmd/incus/profile.go:1168 cmd/incus/project.go:35 cmd/incus/project.go:99
+#: cmd/incus/project.go:195 cmd/incus/project.go:266 cmd/incus/project.go:402
+#: cmd/incus/project.go:477 cmd/incus/project.go:692 cmd/incus/project.go:757
+#: cmd/incus/project.go:845 cmd/incus/project.go:889 cmd/incus/project.go:950
+#: cmd/incus/project.go:1017 cmd/incus/publish.go:32 cmd/incus/query.go:34
+#: cmd/incus/rebuild.go:27 cmd/incus/remote.go:38 cmd/incus/remote.go:102
+#: cmd/incus/remote.go:630 cmd/incus/remote.go:676 cmd/incus/remote.go:712
+#: cmd/incus/remote.go:796 cmd/incus/remote.go:875 cmd/incus/remote.go:938
+#: cmd/incus/remote.go:984 cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21
+#: cmd/incus/snapshot.go:31 cmd/incus/snapshot.go:78 cmd/incus/snapshot.go:203
+#: cmd/incus/snapshot.go:288 cmd/incus/snapshot.go:385
+#: cmd/incus/snapshot.go:446 cmd/incus/snapshot.go:528 cmd/incus/storage.go:32
+#: cmd/incus/storage.go:95 cmd/incus/storage.go:207 cmd/incus/storage.go:265
+#: cmd/incus/storage.go:397 cmd/incus/storage.go:479 cmd/incus/storage.go:659
+#: cmd/incus/storage.go:746 cmd/incus/storage.go:850 cmd/incus/storage.go:944
 #: cmd/incus/storage_bucket.go:34 cmd/incus/storage_bucket.go:96
 #: cmd/incus/storage_bucket.go:196 cmd/incus/storage_bucket.go:257
 #: cmd/incus/storage_bucket.go:390 cmd/incus/storage_bucket.go:466
@@ -2318,6 +2318,10 @@ msgstr ""
 msgid "Display network zones from all projects"
 msgstr ""
 
+#: cmd/incus/profile.go:726
+msgid "Display profiles from all projects"
+msgstr ""
+
 #: cmd/incus/admin_init_interactive.go:416
 msgid "Do you want to configure a new local storage pool?"
 msgstr ""
@@ -2472,7 +2476,7 @@ msgid "Edit trust configurations as YAML"
 msgstr ""
 
 #: cmd/incus/cluster.go:187 cmd/incus/config_trust.go:447
-#: cmd/incus/image.go:1139 cmd/incus/list.go:630 cmd/incus/profile.go:753
+#: cmd/incus/image.go:1139 cmd/incus/list.go:630 cmd/incus/profile.go:762
 #: cmd/incus/project.go:534 cmd/incus/storage_volume.go:1664
 #: cmd/incus/warning.go:236
 #, c-format
@@ -2534,7 +2538,7 @@ msgstr ""
 #: cmd/incus/network_forward.go:521 cmd/incus/network_integration.go:587
 #: cmd/incus/network_load_balancer.go:507 cmd/incus/network_peer.go:550
 #: cmd/incus/network_zone.go:475 cmd/incus/network_zone.go:1159
-#: cmd/incus/profile.go:1056 cmd/incus/project.go:820 cmd/incus/storage.go:816
+#: cmd/incus/profile.go:1082 cmd/incus/project.go:820 cmd/incus/storage.go:816
 #: cmd/incus/storage_bucket.go:610 cmd/incus/storage_volume.go:2002
 #: cmd/incus/storage_volume.go:2040
 #, c-format
@@ -2555,7 +2559,7 @@ msgstr ""
 #: cmd/incus/network_acl.go:516 cmd/incus/network_forward.go:515
 #: cmd/incus/network_integration.go:581 cmd/incus/network_load_balancer.go:501
 #: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:469
-#: cmd/incus/network_zone.go:1153 cmd/incus/profile.go:1050
+#: cmd/incus/network_zone.go:1153 cmd/incus/profile.go:1076
 #: cmd/incus/project.go:814 cmd/incus/storage.go:810
 #: cmd/incus/storage_bucket.go:604 cmd/incus/storage_volume.go:1996
 #: cmd/incus/storage_volume.go:2034
@@ -4090,11 +4094,11 @@ msgstr ""
 msgid "List operations from all projects"
 msgstr ""
 
-#: cmd/incus/profile.go:707
+#: cmd/incus/profile.go:708
 msgid "List profiles"
 msgstr ""
 
-#: cmd/incus/profile.go:708
+#: cmd/incus/profile.go:709
 msgid ""
 "List profiles\n"
 "\n"
@@ -4647,7 +4651,7 @@ msgstr ""
 #: cmd/incus/config_template.go:115 cmd/incus/config_template.go:170
 #: cmd/incus/config_template.go:224 cmd/incus/config_template.go:321
 #: cmd/incus/config_template.go:392 cmd/incus/profile.go:145
-#: cmd/incus/profile.go:226 cmd/incus/profile.go:877 cmd/incus/rebuild.go:59
+#: cmd/incus/profile.go:226 cmd/incus/profile.go:903 cmd/incus/rebuild.go:59
 msgid "Missing instance name"
 msgstr ""
 
@@ -4764,8 +4768,8 @@ msgid "Missing pool name"
 msgstr ""
 
 #: cmd/incus/profile.go:408 cmd/incus/profile.go:471 cmd/incus/profile.go:553
-#: cmd/incus/profile.go:671 cmd/incus/profile.go:961 cmd/incus/profile.go:1029
-#: cmd/incus/profile.go:1110
+#: cmd/incus/profile.go:671 cmd/incus/profile.go:987 cmd/incus/profile.go:1055
+#: cmd/incus/profile.go:1136
 msgid "Missing profile name"
 msgstr ""
 
@@ -4896,7 +4900,7 @@ msgstr ""
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:154
 #: cmd/incus/network_integration.go:457 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:159 cmd/incus/network_zone.go:843
-#: cmd/incus/profile.go:742 cmd/incus/project.go:517 cmd/incus/remote.go:773
+#: cmd/incus/profile.go:744 cmd/incus/project.go:517 cmd/incus/remote.go:773
 #: cmd/incus/storage.go:719 cmd/incus/storage_bucket.go:519
 #: cmd/incus/storage_bucket.go:839 cmd/incus/storage_volume.go:1635
 msgid "NAME"
@@ -5320,7 +5324,8 @@ msgid "PROFILES"
 msgstr ""
 
 #: cmd/incus/image.go:1122 cmd/incus/list.go:575 cmd/incus/network_zone.go:165
-#: cmd/incus/storage_volume.go:1654 cmd/incus/warning.go:213
+#: cmd/incus/profile.go:745 cmd/incus/storage_volume.go:1654
+#: cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr ""
 
@@ -5496,17 +5501,17 @@ msgstr ""
 msgid "Profile %s deleted"
 msgstr ""
 
-#: cmd/incus/profile.go:887
+#: cmd/incus/profile.go:913
 #, c-format
 msgid "Profile %s isn't currently applied to %s"
 msgstr ""
 
-#: cmd/incus/profile.go:912
+#: cmd/incus/profile.go:938
 #, c-format
 msgid "Profile %s removed from %s"
 msgstr ""
 
-#: cmd/incus/profile.go:971
+#: cmd/incus/profile.go:997
 #, c-format
 msgid "Profile %s renamed to %s"
 msgstr ""
@@ -5882,7 +5887,7 @@ msgstr ""
 msgid "Remove ports from a load balancer"
 msgstr ""
 
-#: cmd/incus/profile.go:840 cmd/incus/profile.go:841
+#: cmd/incus/profile.go:866 cmd/incus/profile.go:867
 msgid "Remove profiles from instances"
 msgstr ""
 
@@ -5941,7 +5946,7 @@ msgstr "Toekennen van netwerk interfaces aan instanties (instances)"
 msgid "Rename networks"
 msgstr ""
 
-#: cmd/incus/profile.go:928 cmd/incus/profile.go:929
+#: cmd/incus/profile.go:954 cmd/incus/profile.go:955
 msgid "Rename profiles"
 msgstr ""
 
@@ -6347,11 +6352,11 @@ msgstr ""
 msgid "Set network zone record configuration keys"
 msgstr ""
 
-#: cmd/incus/profile.go:988
+#: cmd/incus/profile.go:1014
 msgid "Set profile configuration keys"
 msgstr ""
 
-#: cmd/incus/profile.go:989
+#: cmd/incus/profile.go:1015
 msgid ""
 "Set profile configuration keys\n"
 "\n"
@@ -6478,7 +6483,7 @@ msgstr ""
 msgid "Set the key as a network zone record property"
 msgstr ""
 
-#: cmd/incus/profile.go:996
+#: cmd/incus/profile.go:1022
 msgid "Set the key as a profile property"
 msgstr ""
 
@@ -6616,7 +6621,7 @@ msgstr ""
 msgid "Show network zone record configurations"
 msgstr ""
 
-#: cmd/incus/profile.go:1077 cmd/incus/profile.go:1078
+#: cmd/incus/profile.go:1103 cmd/incus/profile.go:1104
 msgid "Show profile configurations"
 msgstr ""
 
@@ -7373,7 +7378,7 @@ msgstr ""
 
 #: cmd/incus/network.go:1093 cmd/incus/network_acl.go:156
 #: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:460
-#: cmd/incus/network_zone.go:161 cmd/incus/profile.go:744
+#: cmd/incus/network_zone.go:161 cmd/incus/profile.go:747
 #: cmd/incus/project.go:525 cmd/incus/storage.go:728
 #: cmd/incus/storage_volume.go:1638
 msgid "USED BY"
@@ -7412,7 +7417,7 @@ msgid "Unknown channel type for client %q: %s"
 msgstr ""
 
 #: cmd/incus/cluster.go:193 cmd/incus/config_trust.go:455
-#: cmd/incus/image.go:1147 cmd/incus/list.go:645 cmd/incus/profile.go:759
+#: cmd/incus/image.go:1147 cmd/incus/list.go:645 cmd/incus/profile.go:768
 #: cmd/incus/project.go:540 cmd/incus/storage_volume.go:1672
 #: cmd/incus/warning.go:244
 #, c-format
@@ -7503,7 +7508,7 @@ msgstr ""
 msgid "Unset network zone record configuration keys"
 msgstr ""
 
-#: cmd/incus/profile.go:1141 cmd/incus/profile.go:1142
+#: cmd/incus/profile.go:1167 cmd/incus/profile.go:1168
 msgid "Unset profile configuration keys"
 msgstr ""
 
@@ -7559,7 +7564,7 @@ msgstr ""
 msgid "Unset the key as a network zone record property"
 msgstr ""
 
-#: cmd/incus/profile.go:1146
+#: cmd/incus/profile.go:1172
 msgid "Unset the key as a profile property"
 msgstr ""
 
@@ -7890,7 +7895,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1008 cmd/incus/network_acl.go:90
 #: cmd/incus/network_integration.go:407 cmd/incus/network_zone.go:82
-#: cmd/incus/operation.go:104 cmd/incus/profile.go:705 cmd/incus/project.go:474
+#: cmd/incus/operation.go:104 cmd/incus/profile.go:706 cmd/incus/project.go:474
 #: cmd/incus/storage.go:656 cmd/incus/version.go:20 cmd/incus/warning.go:69
 msgid "[<remote>:]"
 msgstr ""
@@ -8058,7 +8063,7 @@ msgstr ""
 msgid "[<remote>:]<instance> <old snapshot name> <new snapshot name>"
 msgstr ""
 
-#: cmd/incus/profile.go:107 cmd/incus/profile.go:839
+#: cmd/incus/profile.go:107 cmd/incus/profile.go:865
 msgid "[<remote>:]<instance> <profile>"
 msgstr ""
 
@@ -8408,7 +8413,7 @@ msgstr ""
 
 #: cmd/incus/config_device.go:322 cmd/incus/config_device.go:754
 #: cmd/incus/profile.go:355 cmd/incus/profile.go:436 cmd/incus/profile.go:495
-#: cmd/incus/profile.go:1076
+#: cmd/incus/profile.go:1102
 msgid "[<remote>:]<profile>"
 msgstr ""
 
@@ -8424,11 +8429,11 @@ msgstr ""
 msgid "[<remote>:]<profile> <device> <type> [key=value...]"
 msgstr ""
 
-#: cmd/incus/profile.go:631 cmd/incus/profile.go:1140
+#: cmd/incus/profile.go:631 cmd/incus/profile.go:1166
 msgid "[<remote>:]<profile> <key>"
 msgstr ""
 
-#: cmd/incus/profile.go:987
+#: cmd/incus/profile.go:1013
 msgid "[<remote>:]<profile> <key><value>..."
 msgstr ""
 
@@ -8436,7 +8441,7 @@ msgstr ""
 msgid "[<remote>:]<profile> <name>..."
 msgstr ""
 
-#: cmd/incus/profile.go:926
+#: cmd/incus/profile.go:952
 msgid "[<remote>:]<profile> <new-name>"
 msgstr ""
 

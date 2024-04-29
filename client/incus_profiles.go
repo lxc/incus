@@ -36,6 +36,23 @@ func (r *ProtocolIncus) GetProfiles() ([]api.Profile, error) {
 	return profiles, nil
 }
 
+// GetProfilesAllProjects returns a list of profiles across all projects as Profile structs.
+func (r *ProtocolIncus) GetProfilesAllProjects() ([]api.Profile, error) {
+	err := r.CheckExtension("profiles_all_projects")
+	if err != nil {
+		return nil, fmt.Errorf(`The server is missing the required "profiles_all_projects" API extension`)
+	}
+
+	profiles := []api.Profile{}
+	uri := "/profiles?all-projects=true&recursion=1"
+	_, err = r.queryStruct("GET", uri, nil, "", &profiles)
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
+}
+
 // GetProfile returns a Profile entry for the provided name.
 func (r *ProtocolIncus) GetProfile(name string) (*api.Profile, string, error) {
 	profile := api.Profile{}

@@ -270,6 +270,7 @@ type InstanceServer interface {
 	DeleteOperation(uuid string) (err error)
 
 	// Profile functions
+	GetProfilesAllProjects() (profiles []api.Profile, err error)
 	GetProfileNames() (names []string, err error)
 	GetProfiles() (profiles []api.Profile, err error)
 	GetProfile(name string) (profile *api.Profile, ETag string, err error)

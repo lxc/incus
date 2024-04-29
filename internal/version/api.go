@@ -411,6 +411,7 @@ var APIExtensions = []string{
 	"network_zones_all_projects",
 	"storage_zfs_vdev",
 	"container_migration_stateful",
+	"profiles_all_projects",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
