@@ -1646,6 +1646,42 @@
 							"shortdesc": "Threshold when an unresponsive member is considered offline",
 							"type": "integer"
 						}
+					},
+					{
+						"cluster.rebalance.batch": {
+							"defaultdesc": "`5`",
+							"longdesc": "Maximum number of instances to move during one re-balancing run TODO: adjust the default to not be fixed",
+							"scope": "global",
+							"shortdesc": "Number of database voter members",
+							"type": "stromg"
+						}
+					},
+					{
+						"cluster.rebalance.cooldown": {
+							"defaultdesc": "`1H`",
+							"longdesc": "Amount of time during which an instance will not be moved again",
+							"scope": "global",
+							"shortdesc": "Number of database voter members",
+							"type": "string"
+						}
+					},
+					{
+						"cluster.rebalance.frequency": {
+							"defaultdesc": "`3`",
+							"longdesc": "This is how often we want to rebalance things TODO: make this more descriptive, update the validator",
+							"scope": "global",
+							"shortdesc": "Number of database voter members",
+							"type": "integer"
+						}
+					},
+					{
+						"cluster.rebalance.threshold": {
+							"defaultdesc": "`3`",
+							"longdesc": "Load difference beteween most and least busy server needed to trigger a migration TODO: add a validator",
+							"scope": "global",
+							"shortdesc": "Number of database voter members",
+							"type": "integer"
+						}
 					}
 				]
 			},

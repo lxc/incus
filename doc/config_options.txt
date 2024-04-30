@@ -1509,6 +1509,38 @@ This must be an odd number >= `3`.
 Specify the number of seconds after which an unresponsive member is considered offline.
 ```
 
+```{config:option} cluster.rebalance.batch server-cluster
+:defaultdesc: "`5`"
+:scope: "global"
+:shortdesc: "Number of database voter members"
+:type: "stromg"
+Maximum number of instances to move during one re-balancing run TODO: adjust the default to not be fixed
+```
+
+```{config:option} cluster.rebalance.cooldown server-cluster
+:defaultdesc: "`1H`"
+:scope: "global"
+:shortdesc: "Number of database voter members"
+:type: "string"
+Amount of time during which an instance will not be moved again
+```
+
+```{config:option} cluster.rebalance.frequency server-cluster
+:defaultdesc: "`3`"
+:scope: "global"
+:shortdesc: "Number of database voter members"
+:type: "integer"
+This is how often we want to rebalance things TODO: make this more descriptive, update the validator
+```
+
+```{config:option} cluster.rebalance.threshold server-cluster
+:defaultdesc: "`3`"
+:scope: "global"
+:shortdesc: "Number of database voter members"
+:type: "integer"
+Load difference beteween most and least busy server needed to trigger a migration TODO: add a validator
+```
+
 <!-- config group server-cluster end -->
 <!-- config group server-core start -->
 ```{config:option} core.bgp_address server-core

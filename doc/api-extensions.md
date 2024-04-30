@@ -2460,3 +2460,7 @@ containers to another system.
 ## `profiles_all_projects`
 
 This adds support for listing profiles across all projects through the `all-projects` parameter on the `GET /1.0/profiles`API.
+
+## `cluster_rebalance`
+
+This adds the ability to automatically livemigrate instances across a cluster to automatically balance the load.

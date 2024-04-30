@@ -375,6 +375,42 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Number of database voter members
 	"cluster.max_voters": {Type: config.Int64, Default: "3", Validator: maxVotersValidator},
 
+	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.frequency)
+	// This is how often we want to rebalance things TODO: make this more descriptive, update the validator
+	// ---
+	//  type: integer
+	//  scope: global
+	//  defaultdesc: `3`
+	//  shortdesc: Number of database voter members
+	"cluster.rebalance.frequency": {Type: config.Int64, Default: "3"},
+
+	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.threshold)
+	// Load difference beteween most and least busy server needed to trigger a migration TODO: add a validator
+	// ---
+	//  type: integer
+	//  scope: global
+	//  defaultdesc: `3`
+	//  shortdesc: Number of database voter members
+	"cluster.rebalance.threshold": {Type: config.Int64, Default: "20"},
+
+	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.cooldown)
+	// Amount of time during which an instance will not be moved again 
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: `1H`
+	//  shortdesc: Number of database voter members
+	"cluster.rebalance.cooldown": {Type: config.String, Default: "1H"},
+
+	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.batch)
+	// Maximum number of instances to move during one re-balancing run TODO: adjust the default to not be fixed
+	// ---
+	//  type: stromg
+	//  scope: global
+	//  defaultdesc: `5`
+	//  shortdesc: Number of database voter members
+	"cluster.rebalance.batch": {Type: config.Int64, Default: "5"},
+
 	// gendoc:generate(entity=server, group=cluster, key=cluster.max_standby)
 	// Specify the maximum number of cluster members that are assigned the database stand-by role.
 	// This must be a number between `0` and `5`.

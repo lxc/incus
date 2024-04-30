@@ -412,6 +412,7 @@ var APIExtensions = []string{
 	"storage_zfs_vdev",
 	"container_migration_stateful",
 	"profiles_all_projects",
+	"cluster_rebalance",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
