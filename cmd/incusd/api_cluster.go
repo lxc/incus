@@ -4573,3 +4573,72 @@ func autoHealCluster(ctx context.Context, s *state.State, offlineMembers []db.No
 
 	return nil
 }
+
+func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
+	f := func(ctx context.Context){
+		s := d.State()
+		rebalanceThreshold := s.GlobalConfig.ClusterRebalanceThreshold()
+		if(rebalanceThreshold == 0){
+			return // Skip rebalancing if it's disabled
+		}
+
+		leader, err := d.gateway.LeaderAddress()
+		if err != nil {
+			if errors.Is(err, cluster.ErrNodeIsNotClustered) {
+				return // Skip rebalancing if not clustered.
+			}
+
+			logger.Error("Failed to get leader cluster member address", logger.Ctx{"err": err})
+			return
+		}
+
+		if s.LocalConfig.ClusterAddress() != leader {
+			return // Skip rebalancing if not cluster leader.
+		}
+
+		fmt.Println("TRYIN TO RUN AUTO CLUSTER REBALANCE")
+
+		// retrieve all of the servers by get resources
+
+		// find the per server score (based on cpu / memory / load)
+
+		// split the servers by CPU architecture
+
+		// find the most and least busy for each, check the threshold
+		// we can exit early if none of them meet it
+
+		// for each server we are trying to rebalance, look through all instances and determine which can be migrated
+
+		// MAYBE: migrate instances in order from highest to least score impact (reduce migration)
+
+		// for our list of instances to migrate, make sure to call the scheduler to verify that it's possible
+
+		opRun := func(op *operations.Operation) error{
+			err := autoClusterRebalance(ctx, s)
+			if err != nil {
+				logger.Error("Failed rebalancing cluster instances", logger.Ctx{"err": err})
+				return err
+			}
+
+			return nil
+		}
+
+		err = op.Start()
+		if err != nil {
+			logger.Error("Failed starting auto cluster rebalancing operation", logger.Ctx{"err": err})
+			return
+		}
+
+		err = op.Wait(ctx)
+		if err != nil {
+			logger.Error("Failed auto cluster rebalancing", logger.Ctx{"err": err})
+			return
+		}
+
+	}
+}
+
+func autoClusterRebalance(ctx context.Context, s *state.State) error{
+
+	return nil
+}

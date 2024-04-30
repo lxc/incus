@@ -105,6 +105,7 @@ type Daemon struct {
 	// Indexes of tasks that need to be reset when their execution interval changes
 	taskPruneImages      *task.Task
 	taskClusterHeartbeat *task.Task
+	taskClusterRebalance *task.Task
 
 	// Stores startup time of daemon
 	startTime time.Time
@@ -1645,6 +1646,9 @@ func (d *Daemon) startClusterTasks() {
 
 	// Heartbeats
 	d.taskClusterHeartbeat = d.clusterTasks.Add(cluster.HeartbeatTask(d.gateway))
+
+	// Auto-rebalance instances across cluster 
+	d.clusterTasks.Add(autoClusterRebalance(d))
 
 	// Auto-sync images across the cluster (hourly)
 	d.clusterTasks.Add(autoSyncImagesTask(d))
