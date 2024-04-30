@@ -223,9 +223,34 @@ func (o *NB) CreateLogicalRouter(ctx context.Context, routerName OVNRouter, mayE
 	return nil
 }
 
-// LogicalRouterDelete deletes a named logical router.
-func (o *NB) LogicalRouterDelete(routerName OVNRouter) error {
-	_, err := o.nbctl("--if-exists", "lr-del", string(routerName))
+// DeleteLogicalRouter deletes a named logical router.
+func (o *NB) DeleteLogicalRouter(ctx context.Context, routerName OVNRouter) error {
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
+	}
+
+	err := o.get(ctx, &logicalRouter)
+	if err != nil {
+		// Logical router is already gone.
+		if err == ErrNotFound {
+			return nil
+		}
+
+		return err
+	}
+
+	operations, err := o.client.Where(&logicalRouter).Delete()
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
