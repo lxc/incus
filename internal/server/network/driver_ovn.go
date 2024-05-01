@@ -2077,7 +2077,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	if !update {
-		revert.Add(func() { _ = n.state.OVNNB.LogicalRouterDelete(n.getRouterName()) })
+		revert.Add(func() { _ = n.state.OVNNB.DeleteLogicalRouter(context.TODO(), n.getRouterName()) })
 	}
 
 	// Configure logical router.
@@ -2174,7 +2174,7 @@ func (n *ovn) setup(update bool) error {
 				}
 			}
 
-			err = n.state.OVNNB.LogicalRouterSNATAdd(n.getRouterName(), routerIntPortIPv4Net, snatIP, update)
+			err = n.state.OVNNB.CreateLogicalRouterSNAT(context.TODO(), n.getRouterName(), routerIntPortIPv4Net, snatIP, update)
 			if err != nil {
 				return fmt.Errorf("Failed adding router IPv4 SNAT rule: %w", err)
 			}
@@ -2190,7 +2190,7 @@ func (n *ovn) setup(update bool) error {
 				}
 			}
 
-			err = n.state.OVNNB.LogicalRouterSNATAdd(n.getRouterName(), routerIntPortIPv6Net, snatIP, update)
+			err = n.state.OVNNB.CreateLogicalRouterSNAT(context.TODO(), n.getRouterName(), routerIntPortIPv6Net, snatIP, update)
 			if err != nil {
 				return fmt.Errorf("Failed adding router IPv6 SNAT rule: %w", err)
 			}
@@ -2715,7 +2715,7 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	}
 
 	if clientType == request.ClientTypeNormal {
-		err = n.state.OVNNB.LogicalRouterDelete(n.getRouterName())
+		err = n.state.OVNNB.DeleteLogicalRouter(context.TODO(), n.getRouterName())
 		if err != nil {
 			return err
 		}
