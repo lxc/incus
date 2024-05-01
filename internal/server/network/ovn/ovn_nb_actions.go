@@ -258,15 +258,76 @@ func (o *NB) DeleteLogicalRouter(ctx context.Context, routerName OVNRouter) erro
 	return nil
 }
 
-// LogicalRouterSNATAdd adds an SNAT rule to a logical router to translate packets from intNet to extIP.
-func (o *NB) LogicalRouterSNATAdd(routerName OVNRouter, intNet *net.IPNet, extIP net.IP, mayExist bool) error {
-	args := []string{}
-
-	if mayExist {
-		args = append(args, "--if-exists", "lr-nat-del", string(routerName), "snat", extIP.String(), "--")
+// CreateLogicalRouterSNAT adds an SNAT rule to a logical router to translate packets from intNet to extIP.
+func (o *NB) CreateLogicalRouterSNAT(ctx context.Context, routerName OVNRouter, intNet *net.IPNet, extIP net.IP, mayExist bool) error {
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
 	}
 
-	_, err := o.nbctl(append(args, "lr-nat-add", string(routerName), "snat", extIP.String(), intNet.String())...)
+	// Make sure logical router exists.
+	err := o.get(ctx, &logicalRouter)
+	if err != nil {
+		return err
+	}
+
+	// Check if the rule already exists.
+	for _, natUUID := range logicalRouter.Nat {
+		natRule := ovnNB.NAT{
+			UUID: natUUID,
+		}
+
+		err = o.get(ctx, &natRule)
+		if err != nil {
+			return err
+		}
+
+		// Check if matching our new rule.
+		if natRule.LogicalIP == intNet.String() && natRule.ExternalIP == extIP.String() {
+			if mayExist {
+				return nil
+			}
+
+			return ErrExists
+		}
+	}
+
+	// Create the record.
+	natRule := ovnNB.NAT{
+		UUID:       "nat",
+		LogicalIP:  intNet.String(),
+		ExternalIP: extIP.String(),
+		Options:    map[string]string{"stateless": "false"},
+		Type:       "snat",
+	}
+
+	operations := []ovsdb.Operation{}
+
+	createOps, err := o.client.Create(&natRule)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, createOps...)
+
+	// Add it to the router.
+	updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+		Field:   &logicalRouter.Nat,
+		Mutator: ovsdb.MutateOperationInsert,
+		Value:   []string{natRule.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
