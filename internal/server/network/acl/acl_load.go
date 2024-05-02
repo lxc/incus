@@ -197,8 +197,8 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 		return err
 	}
 
-	for _, aclName := range aclNames {
-		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		for _, aclName := range aclNames {
 			_, aclInfo, err := tx.GetNetworkACL(ctx, aclProjectName, aclName)
 			if err != nil {
 				return err
@@ -233,35 +233,30 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 					return err
 				}
 			}
+		}
 
-			// Find instances using the ACLs. Most expensive to do.
-			err = tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
-				// Get the instance's effective network project name.
-				instNetworkProject := project.NetworkProjectFromRecord(&p)
+		// Find instances using the ACLs. Most expensive to do.
+		err = tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			// Get the instance's effective network project name.
+			instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-				// Skip instances who's effective network project doesn't match this Network ACL's project.
-				if instNetworkProject != aclProjectName {
-					return nil
-				}
+			// Skip instances who's effective network project doesn't match this Network ACL's project.
+			if instNetworkProject != aclProjectName {
+				return nil
+			}
 
-				devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
+			devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
 
-				// Iterate through each of the instance's devices, looking for NICs that are using any of the ACLs.
-				for devName, devConfig := range devices {
-					matchedACLNames := isInUseByDevice(devConfig, matchACLNames...)
-					if len(matchedACLNames) > 0 {
-						// Call usageFunc with a list of matched ACLs and info about the instance NIC.
-						err := usageFunc(ctx, tx, matchedACLNames, inst, devName, devConfig)
-						if err != nil {
-							return err
-						}
+			// Iterate through each of the instance's devices, looking for NICs that are using any of the ACLs.
+			for devName, devConfig := range devices {
+				matchedACLNames := isInUseByDevice(devConfig, matchACLNames...)
+				if len(matchedACLNames) > 0 {
+					// Call usageFunc with a list of matched ACLs and info about the instance NIC.
+					err := usageFunc(ctx, tx, matchedACLNames, inst, devName, devConfig)
+					if err != nil {
+						return err
 					}
 				}
-
-				return nil
-			})
-			if err != nil {
-				return err
 			}
 
 			return nil
@@ -269,6 +264,11 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 		if err != nil {
 			return err
 		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
