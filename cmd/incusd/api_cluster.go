@@ -4599,12 +4599,21 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 		logger.Info("TRYIN TO RUN AUTO CLUSTER REBALANCE")
 		// fmt.Println("TRYIN TO RUN AUTO CLUSTER REBALANCE")
 
+		// set of all possible architectures, added to during the loop
+		
+
 		// gets all cluster members
-		var members []db.NodeInfo
+		var onlineMembers []db.NodeInfo
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-			members, err = tx.GetNodes(ctx)
+			members, err := tx.GetNodes(ctx)
 			if err != nil {
 				return fmt.Errorf("Failed getting cluster members: %w", err)
+			}
+
+			// get all online members
+			onlineMembers, err = tx.GetCandidateMembers(ctx, members, nil, "", nil, s.GlobalConfig.OfflineThreshold())
+			if err != nil {
+				return fmt.Errorf("Failed getting online cluster members: %w", err)
 			}
 
 			return nil
@@ -4614,14 +4623,38 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 			return
 		}
 
-		// loop through all members and try to get resources
-		for _, member := range members {
+
+
+		// sophie's idea
+
+		// get a set of all architectures 
+		// for each architecture get all the servers
+		// loop through servers, only store the max / min score + server corresponding with those
+
+		// then look at those two servers, determine instances to migrate, and migrate that shi
+		
+
+		// {server: serverScore} or maybe server -> resources
+
+		// loop through each architecture, loop through corresponding list to
+		// determine the highest / lowest server score (using sever -> score map)
+
+		// for each arch check if there is at least 2 servers
+
+		// determine if we want to automigrate. if so, go through all instances and determine which can be migrated
+		// loop through this list and migrate until we are balanced
+
+		// loop through all members and to get the architectures, map them to the server
+		architectureMap := make(map[string][]db.NodeInfo)
+
+		// maps the nodeinfo ID to the resources
+		resourcesMap := make(map[int64]*api.Resources)
+
+
+		for _, member := range onlineMembers {
 			// logger.Ctx("getting info for member %s", member.Address.str)
 			logger.Info("getting info for member", logger.Ctx{"address": member.Address})
 
-			// if member == nil {
-			// 	return starlark.String("Invalid member name"), nil
-			// }
 	
 			client, err := cluster.Connect(member.Address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
 			if err != nil {
@@ -4635,15 +4668,37 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 				// return nil, err
 			}
 			
-			// memberState, _, err = client.GetClusterMemberState(memberName)
-			// if err != nil {
-			// 	return nil, err
-			// }
 			logger.Info("finished getting resources for this member")
-			logger.Info("resources for member", logger.Ctx{"cpu": resources.CPU, "memory": resources.Memory, "gpu": resources.GPU, "network": resources.Network, "storage": resources.Storage, "usb": resources.USB, "pci": resources.PCI, "system": resources.System})
-			// logger.Info("cpu %s, memory %s, gpu %s, network %s, storage %s, net %s, storage %s, usb %s, pci %s, system %s", resources.CPU, resources.Memory, resources.GPU, resources.Network, resources.Storage, resources.Net, resources.Storage, resources.USB, resources.PCI, resources.System)
-
 			
+			architecture := resources.CPU.Architecture
+
+			// add the architecture to the map
+			architectureMap[architecture] = append(architectureMap[architecture], member)
+
+			// add the resources to the map
+			resourcesMap[member.ID] = resources
+
+			// logger.Info("resources for member", logger.Ctx{"cpu": resources.CPU.Architecture, "memory": resources.Memory, "gpu": resources.GPU, "network": resources.Network, "storage": resources.Storage, "usb": resources.USB, "pci": resources.PCI, "system": resources.System})
+			// logger.Info("cpu %s, memory %s, gpu %s, network %s, storage %s, net %s, storage %s, usb %s, pci %s, system %s", resources.CPU, resources.Memory, resources.GPU, resources.Network, resources.Storage, resources.Net, resources.Storage, resources.USB, resources.PCI, resources.System)
+		}
+
+		// for each architecture loop through the servers and determine the max / min score
+
+		for architecture, servers := range architectureMap {
+			// logger.Info("architecture %s", architecture)
+			logger.Info("architecture", logger.Ctx{"architecture": architecture})
+
+			// get the resources for each server
+			for _, server := range servers {
+				resources := resourcesMap[server.ID]
+
+				logger.Info("resources for server", logger.Ctx{"cpu": resources.CPU.Architecture, "memory": resources.Memory, "gpu": resources.GPU, "network": resources.Network, "storage": resources.Storage, "usb": resources.USB, "pci": resources.PCI, "system": resources.System})
+
+
+				// determine score
+				// score := 
+
+			}
 		}
 
 
