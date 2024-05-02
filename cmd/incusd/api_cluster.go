@@ -4596,9 +4596,62 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 			return // Skip rebalancing if not cluster leader.
 		}
 
-		fmt.Println("TRYIN TO RUN AUTO CLUSTER REBALANCE")
+		logger.Info("TRYIN TO RUN AUTO CLUSTER REBALANCE")
+		// fmt.Println("TRYIN TO RUN AUTO CLUSTER REBALANCE")
+
+		// gets all cluster members
+		var members []db.NodeInfo
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			members, err = tx.GetNodes(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed getting cluster members: %w", err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			logger.Error("Failed getting cluster instances", logger.Ctx{"err": err})
+			return
+		}
+
+		// loop through all members and try to get resources
+		for _, member := range members {
+			// logger.Ctx("getting info for member %s", member.Address.str)
+			logger.Info("getting info for member", logger.Ctx{"address": member.Address})
+
+			// if member == nil {
+			// 	return starlark.String("Invalid member name"), nil
+			// }
+	
+			client, err := cluster.Connect(member.Address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
+			if err != nil {
+				logger.Error("Failed to connect to cluster member", logger.Ctx{"err": err})
+				// return nil, err
+			}
+
+			resources, err := client.GetServerResources()
+			if err != nil {
+				logger.Error("Failed to get resources for cluster member", logger.Ctx{"err": err})
+				// return nil, err
+			}
+			
+			// memberState, _, err = client.GetClusterMemberState(memberName)
+			// if err != nil {
+			// 	return nil, err
+			// }
+			logger.Info("finished getting resources for this member")
+			logger.Info("resources for member", logger.Ctx{"cpu": resources.CPU, "memory": resources.Memory, "gpu": resources.GPU, "network": resources.Network, "storage": resources.Storage, "usb": resources.USB, "pci": resources.PCI, "system": resources.System})
+			// logger.Info("cpu %s, memory %s, gpu %s, network %s, storage %s, net %s, storage %s, usb %s, pci %s, system %s", resources.CPU, resources.Memory, resources.GPU, resources.Network, resources.Storage, resources.Net, resources.Storage, resources.USB, resources.PCI, resources.System)
+
+			
+		}
+
 
 		// retrieve all of the servers by get resources
+		// resources, err := GetResources()
+		// if err != nil {
+		// 	logger.Error("Failed to get server resources")
+		// }
 
 		// find the per server score (based on cpu / memory / load)
 
