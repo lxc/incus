@@ -4619,23 +4619,25 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 				logger.Error("Failed rebalancing cluster instances", logger.Ctx{"err": err})
 				return err
 			}
-
+			
 			return nil
 		}
-
+		op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.ClusterRebalance, nil, nil, opRun, nil, nil, nil)
+		
 		err = op.Start()
 		if err != nil {
 			logger.Error("Failed starting auto cluster rebalancing operation", logger.Ctx{"err": err})
-			return
+			//return err
 		}
 
 		err = op.Wait(ctx)
 		if err != nil {
 			logger.Error("Failed auto cluster rebalancing", logger.Ctx{"err": err})
-			return
+			//return err
 		}
 
 	}
+	return f,task.Every(time.Minute)
 }
 
 func autoClusterRebalance(ctx context.Context, s *state.State) error{

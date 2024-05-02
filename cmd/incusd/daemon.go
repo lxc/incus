@@ -1648,7 +1648,7 @@ func (d *Daemon) startClusterTasks() {
 	d.taskClusterHeartbeat = d.clusterTasks.Add(cluster.HeartbeatTask(d.gateway))
 
 	// Auto-rebalance instances across cluster 
-	d.clusterTasks.Add(autoClusterRebalance(d))
+	d.clusterTasks.Add(autoClusterRebalanceTask(d))
 
 	// Auto-sync images across the cluster (hourly)
 	d.clusterTasks.Add(autoSyncImagesTask(d))

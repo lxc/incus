@@ -56,7 +56,7 @@ func (c *Config) BGPASN() int64 {
 
 // ClusterRebalanceThreshold returns the relevant setting
 func (c *Config) ClusterRebalanceThreshold() int64 {
-	return c.m.GetString("cluster.rebalance.threshold");
+	return c.m.GetInt64("cluster.rebalance.threshold");
 }
 
 // HTTPSAllowedHeaders returns the relevant CORS setting.

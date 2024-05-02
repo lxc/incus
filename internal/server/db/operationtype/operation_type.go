@@ -79,6 +79,7 @@ const (
 	BucketBackupRemove
 	BucketBackupRename
 	BucketBackupRestore
+	ClusterRebalance
 )
 
 // Description return a human-readable description of the operation type.
@@ -210,6 +211,8 @@ func (t Type) Description() string {
 		return "Renaming bucket backup"
 	case BucketBackupRestore:
 		return "Restoring bucket backup"
+	case ClusterRebalance:
+		return "Rebalancing cluster"
 	default:
 		return "Executing operation"
 	}
