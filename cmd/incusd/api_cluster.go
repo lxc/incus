@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -4697,6 +4698,18 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 			// logger.Info("architecture %s", architecture)
 			logger.Info("architecture", logger.Ctx{"architecture": architecture})
 
+			// check if there are no servers
+			if len(servers) < 2 {
+				logger.Info("not enough servers for this architecture", logger.Ctx{"architecture": architecture})
+				continue
+			}
+
+			maxScore := -1.0
+			minScore := math.MaxFloat64
+
+			maxServer := servers[0]
+			minServer := servers[0]
+
 			// get the resources for each server
 			for _, server := range servers {
 				resources := resourcesMap[server.ID]
@@ -4730,7 +4743,20 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 				logger.Info("server stats", logger.Ctx{"avgLoad": avgLoad, "memoryUsage": memoryUsage, "cpuUsage": cpuUsage, "score": score})
 
+				// determine max / min score
+				if score > maxScore {
+					maxScore = score
+					maxServer = server
+				}
+
+				if score < minScore {
+					minScore = score
+					minServer = server
+				}
 			}
+
+			// print out for this architecture, what is the max score, min score, and the servers
+			logger.Info("architecture stats", logger.Ctx{"architecture": architecture, "maxScore": maxScore, "minScore": minScore, "maxServer": maxServer, "minServer": minServer})
 		}
 
 
