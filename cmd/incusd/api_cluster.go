@@ -4631,7 +4631,7 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 		// for each architecture get all the servers
 		// loop through servers, only store the max / min score + server corresponding with those
 
-		// then look at those two servers, determine instances to migrate, and migrate that shi
+		// then look at those two servers, determine instances to migrate, and migrate
 		
 
 		// {server: serverScore} or maybe server -> resources
@@ -4649,6 +4649,7 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 		// maps the nodeinfo ID to the resources
 		resourcesMap := make(map[int64]*api.Resources)
+		memberStateMap := make(map[int64]*api.ClusterMemberState)
 
 
 		for _, member := range onlineMembers {
@@ -4667,6 +4668,15 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 				logger.Error("Failed to get resources for cluster member", logger.Ctx{"err": err})
 				// return nil, err
 			}
+			resourcesMap[member.ID] = resources
+
+			memberState, _, err := client.GetClusterMemberState(member.Name)
+			if err != nil {
+				logger.Error("Failed to get cluster member state", logger.Ctx{"err": err})
+				// return nil, err
+			}
+			memberStateMap[member.ID] = memberState
+
 			
 			logger.Info("finished getting resources for this member")
 			
@@ -4676,7 +4686,6 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 			architectureMap[architecture] = append(architectureMap[architecture], member)
 
 			// add the resources to the map
-			resourcesMap[member.ID] = resources
 
 			// logger.Info("resources for member", logger.Ctx{"cpu": resources.CPU.Architecture, "memory": resources.Memory, "gpu": resources.GPU, "network": resources.Network, "storage": resources.Storage, "usb": resources.USB, "pci": resources.PCI, "system": resources.System})
 			// logger.Info("cpu %s, memory %s, gpu %s, network %s, storage %s, net %s, storage %s, usb %s, pci %s, system %s", resources.CPU, resources.Memory, resources.GPU, resources.Network, resources.Storage, resources.Net, resources.Storage, resources.USB, resources.PCI, resources.System)
@@ -4694,9 +4703,32 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 				logger.Info("resources for server", logger.Ctx{"cpu": resources.CPU.Architecture, "memory": resources.Memory, "gpu": resources.GPU, "network": resources.Network, "storage": resources.Storage, "usb": resources.USB, "pci": resources.PCI, "system": resources.System})
 
+				// use ResourcesMemoryNode
 
+				// get the member state from the cluster member name
+				// memberState, etag, err := cluster.GetClusterMemberState(server.Name)
+				memberState := memberStateMap[server.ID]
+
+				// gets average load over 3 timeframes (1 min, 5 min, 15 min)
+				avgLoad := memberState.SysInfo.LoadAverages
+
+
+				memoryUsage := float64(memberState.SysInfo.TotalRAM - memberState.SysInfo.FreeRAM) / float64(memberState.SysInfo.TotalRAM)
+
+				// determine CPU usage by processes / num cores
+				numProcess := memberState.SysInfo.Processes
+				numCores := 0
+
+				for _, cpu := range resources.CPU.Sockets {
+					// add the length of cpu.cores
+					numCores += len(cpu.Cores)
+				}
+
+				cpuUsage := float64(numProcess) / float64(numCores)
 				// determine score
-				// score := 
+				score := avgLoad[1] + memoryUsage + cpuUsage
+
+				logger.Info("server stats", logger.Ctx{"avgLoad": avgLoad, "memoryUsage": memoryUsage, "cpuUsage": cpuUsage, "score": score})
 
 			}
 		}
