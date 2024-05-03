@@ -2157,7 +2157,7 @@ func (n *ovn) setup(update bool) error {
 		// Remove any existing SNAT rules on update. As currently these are only defined from the network
 		// config rather than from any instance NIC config, so we can re-create the active config below.
 		if update {
-			err = n.state.OVNNB.LogicalRouterSNATDeleteAll(n.getRouterName())
+			err = n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "snat", true)
 			if err != nil {
 				return fmt.Errorf("Failed removing existing router SNAT rules: %w", err)
 			}
@@ -3763,7 +3763,9 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				return "", nil, err
 			}
 
-			revert.Add(func() { _ = n.state.OVNNB.LogicalRouterDNATSNATDelete(n.getRouterName(), ip) })
+			revert.Add(func() {
+				_ = n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, ip)
+			})
 		}
 	}
 
@@ -3827,7 +3829,9 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 					return err
 				}
 
-				revert.Add(func() { _ = n.state.OVNNB.LogicalRouterDNATSNATDelete(n.getRouterName(), ip) })
+				revert.Add(func() {
+					_ = n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, ip)
+				})
 
 				return nil
 			})
@@ -4184,7 +4188,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 	}
 
 	if len(removeNATIPs) > 0 {
-		err = n.state.OVNNB.LogicalRouterDNATSNATDelete(n.getRouterName(), removeNATIPs...)
+		err = n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, removeNATIPs...)
 		if err != nil {
 			return err
 		}
@@ -4518,7 +4522,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 		} else {
 			// Remove all DNAT_AND_SNAT rules if not using l2proxy ingress mode, as currently we only
 			// use DNAT_AND_SNAT rules for this feature so it is safe to do.
-			err := n.state.OVNNB.LogicalRouterDNATSNATDeleteAll(n.getRouterName())
+			err := n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", true)
 			if err != nil {
 				return fmt.Errorf("Failed deleting instance NIC ingress mode l2proxy rules: %w", err)
 			}
