@@ -660,32 +660,31 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		isContainerOrProfile := instType == instancetype.Container || instType == instancetype.Any
 		isVMOrProfile := instType == instancetype.VM || instType == instancetype.Any
 
-		// Check if unrestricted low-level options are available. For profiles we require that low-level
-		// features for both containers and VMs are enabled as we don't know which instance the profile
-		// will be used on.
-		allowUnrestrictedLowLevel := (instType == instancetype.Any && allowContainerLowLevel && allowVMLowLevel) ||
-			(instType == instancetype.Container && allowContainerLowLevel) ||
-			(instType == instancetype.VM && allowVMLowLevel)
-
 		for key, value := range config {
-			if !allowUnrestrictedLowLevel {
-				if key == "raw.idmap" {
-					// If the low-level raw.idmap is used check whether the raw.idmap host IDs
-					// are allowed based on the project's allowed ID map Host UIDs and GIDs.
-					idmaps, err := idmap.NewSetFromIncusIDMap(value)
-					if err != nil {
-						return err
-					}
-
-					for i, entry := range idmaps.Entries {
-						if !entry.HostIDsCoveredBy(allowedIDMapHostUIDs, allowedIDMapHostGIDs) {
-							return fmt.Errorf(`Use of low-level "raw.idmap" element %d on %s %q of project %q is forbidden`, i, entityTypeLabel, entityName, project.Name)
-						}
-					}
-				} else if (isContainerOrProfile && isContainerLowLevelOptionForbidden(key)) || (isVMOrProfile && isVMLowLevelOptionForbidden(key)) {
-					// Otherwise check if the key is a forbidden low-level one.
-					return fmt.Errorf("Use of low-level config %q on %s %q of project %q is forbidden", key, entityTypeLabel, entityName, project.Name)
+			if ((isContainerOrProfile && !allowContainerLowLevel) || (isVMOrProfile && !allowVMLowLevel)) && key == "raw.idmap" {
+				// If the low-level raw.idmap is used check whether the raw.idmap host IDs
+				// are allowed based on the project's allowed ID map Host UIDs and GIDs.
+				idmaps, err := idmap.NewSetFromIncusIDMap(value)
+				if err != nil {
+					return err
 				}
+
+				for i, entry := range idmaps.Entries {
+					if !entry.HostIDsCoveredBy(allowedIDMapHostUIDs, allowedIDMapHostGIDs) {
+						return fmt.Errorf(`Use of low-level "raw.idmap" element %d on %s %q of project %q is forbidden`, i, entityTypeLabel, entityName, project.Name)
+					}
+				}
+
+				// Skip the other checks.
+				continue
+			}
+
+			if isContainerOrProfile && !allowContainerLowLevel && isContainerLowLevelOptionForbidden(key) {
+				return fmt.Errorf("Use of low-level config %q on %s %q of project %q is forbidden", key, entityTypeLabel, entityName, project.Name)
+			}
+
+			if isVMOrProfile && !allowVMLowLevel && isVMLowLevelOptionForbidden(key) {
+				return fmt.Errorf("Use of low-level config %q on %s %q of project %q is forbidden", key, entityTypeLabel, entityName, project.Name)
 			}
 
 			var checker func(value string) error
