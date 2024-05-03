@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-05-03 20:08+0200\n"
+"POT-Creation-Date: 2024-05-03 20:52-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -225,7 +225,7 @@ msgid ""
 "### Note that the listen_address and location cannot be changed."
 msgstr ""
 
-#: cmd/incus/network_peer.go:641
+#: cmd/incus/network_peer.go:644
 msgid ""
 "### This is a YAML representation of the network peer.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -860,7 +860,7 @@ msgstr ""
 
 #: cmd/incus/network.go:369 cmd/incus/network_acl.go:429
 #: cmd/incus/network_forward.go:308 cmd/incus/network_load_balancer.go:311
-#: cmd/incus/network_peer.go:331 cmd/incus/network_zone.go:382
+#: cmd/incus/network_peer.go:334 cmd/incus/network_zone.go:382
 #: cmd/incus/network_zone.go:1065 cmd/incus/storage_bucket.go:154
 #, c-format
 msgid "Bad key/value pair: %s"
@@ -1271,7 +1271,7 @@ msgstr ""
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:483 cmd/incus/network.go:762 cmd/incus/network_acl.go:696
 #: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:312
-#: cmd/incus/network_load_balancer.go:686 cmd/incus/network_peer.go:726
+#: cmd/incus/network_load_balancer.go:686 cmd/incus/network_peer.go:729
 #: cmd/incus/network_zone.go:637 cmd/incus/network_zone.go:1328
 #: cmd/incus/profile.go:599 cmd/incus/project.go:368 cmd/incus/storage.go:363
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1110
@@ -1700,7 +1700,7 @@ msgstr ""
 msgid "Delete network load balancers"
 msgstr ""
 
-#: cmd/incus/network_peer.go:758 cmd/incus/network_peer.go:759
+#: cmd/incus/network_peer.go:761 cmd/incus/network_peer.go:762
 msgid "Delete network peerings"
 msgstr ""
 
@@ -1833,9 +1833,9 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:996
 #: cmd/incus/network_load_balancer.go:1069 cmd/incus/network_peer.go:28
 #: cmd/incus/network_peer.go:81 cmd/incus/network_peer.go:174
-#: cmd/incus/network_peer.go:245 cmd/incus/network_peer.go:388
-#: cmd/incus/network_peer.go:473 cmd/incus/network_peer.go:575
-#: cmd/incus/network_peer.go:622 cmd/incus/network_peer.go:759
+#: cmd/incus/network_peer.go:245 cmd/incus/network_peer.go:391
+#: cmd/incus/network_peer.go:476 cmd/incus/network_peer.go:578
+#: cmd/incus/network_peer.go:625 cmd/incus/network_peer.go:762
 #: cmd/incus/network_zone.go:27 cmd/incus/network_zone.go:85
 #: cmd/incus/network_zone.go:181 cmd/incus/network_zone.go:244
 #: cmd/incus/network_zone.go:317 cmd/incus/network_zone.go:412
@@ -2152,7 +2152,7 @@ msgstr ""
 msgid "Edit network load balancer configurations as YAML"
 msgstr ""
 
-#: cmd/incus/network_peer.go:621 cmd/incus/network_peer.go:622
+#: cmd/incus/network_peer.go:624 cmd/incus/network_peer.go:625
 msgid "Edit network peer configurations as YAML"
 msgstr ""
 
@@ -2253,7 +2253,7 @@ msgstr ""
 #: cmd/incus/cluster.go:562 cmd/incus/config.go:641 cmd/incus/config.go:673
 #: cmd/incus/network.go:1325 cmd/incus/network_acl.go:522
 #: cmd/incus/network_forward.go:521 cmd/incus/network_integration.go:587
-#: cmd/incus/network_load_balancer.go:507 cmd/incus/network_peer.go:550
+#: cmd/incus/network_load_balancer.go:507 cmd/incus/network_peer.go:553
 #: cmd/incus/network_zone.go:475 cmd/incus/network_zone.go:1159
 #: cmd/incus/profile.go:1082 cmd/incus/project.go:820 cmd/incus/storage.go:816
 #: cmd/incus/storage_bucket.go:615 cmd/incus/storage_volume.go:2013
@@ -2275,7 +2275,7 @@ msgstr ""
 #: cmd/incus/cluster.go:556 cmd/incus/network.go:1319
 #: cmd/incus/network_acl.go:516 cmd/incus/network_forward.go:515
 #: cmd/incus/network_integration.go:581 cmd/incus/network_load_balancer.go:501
-#: cmd/incus/network_peer.go:544 cmd/incus/network_zone.go:469
+#: cmd/incus/network_peer.go:547 cmd/incus/network_zone.go:469
 #: cmd/incus/network_zone.go:1153 cmd/incus/profile.go:1076
 #: cmd/incus/project.go:814 cmd/incus/storage.go:810
 #: cmd/incus/storage_bucket.go:609 cmd/incus/storage_volume.go:2007
@@ -2514,7 +2514,7 @@ msgstr ""
 msgid "Failed getting existing storage pools: %w"
 msgstr ""
 
-#: cmd/incus/network_peer.go:361
+#: cmd/incus/network_peer.go:364
 #, c-format
 msgid "Failed getting peer's status: %w"
 msgstr ""
@@ -2962,7 +2962,7 @@ msgstr ""
 msgid "Get the key as a network load balancer property"
 msgstr ""
 
-#: cmd/incus/network_peer.go:391
+#: cmd/incus/network_peer.go:394
 msgid "Get the key as a network peer property"
 msgstr ""
 
@@ -3035,7 +3035,7 @@ msgstr ""
 msgid "Get values for network load balancer configuration keys"
 msgstr ""
 
-#: cmd/incus/network_peer.go:387 cmd/incus/network_peer.go:388
+#: cmd/incus/network_peer.go:390 cmd/incus/network_peer.go:391
 msgid "Get values for network peer configuration keys"
 msgstr ""
 
@@ -3457,7 +3457,7 @@ msgstr ""
 msgid "Invalid path %s"
 msgstr ""
 
-#: cmd/incus/network_peer.go:276
+#: cmd/incus/network_peer.go:279
 msgid "Invalid peer type"
 msgstr ""
 
@@ -4432,9 +4432,9 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:919
 #: cmd/incus/network_load_balancer.go:1032
 #: cmd/incus/network_load_balancer.go:1106 cmd/incus/network_peer.go:118
-#: cmd/incus/network_peer.go:208 cmd/incus/network_peer.go:288
-#: cmd/incus/network_peer.go:429 cmd/incus/network_peer.go:513
-#: cmd/incus/network_peer.go:672 cmd/incus/network_peer.go:793
+#: cmd/incus/network_peer.go:208 cmd/incus/network_peer.go:291
+#: cmd/incus/network_peer.go:432 cmd/incus/network_peer.go:516
+#: cmd/incus/network_peer.go:675 cmd/incus/network_peer.go:796
 msgid "Missing network name"
 msgstr ""
 
@@ -4452,9 +4452,9 @@ msgstr ""
 msgid "Missing network zone record name"
 msgstr ""
 
-#: cmd/incus/network_peer.go:212 cmd/incus/network_peer.go:292
-#: cmd/incus/network_peer.go:433 cmd/incus/network_peer.go:517
-#: cmd/incus/network_peer.go:676 cmd/incus/network_peer.go:797
+#: cmd/incus/network_peer.go:212 cmd/incus/network_peer.go:295
+#: cmd/incus/network_peer.go:436 cmd/incus/network_peer.go:520
+#: cmd/incus/network_peer.go:679 cmd/incus/network_peer.go:800
 msgid "Missing peer name"
 msgstr ""
 
@@ -4511,7 +4511,7 @@ msgstr ""
 msgid "Missing target directory"
 msgstr ""
 
-#: cmd/incus/network_peer.go:296
+#: cmd/incus/network_peer.go:299
 msgid "Missing target network or integration"
 msgstr ""
 
@@ -4825,22 +4825,22 @@ msgstr ""
 msgid "Network name"
 msgstr ""
 
-#: cmd/incus/network_peer.go:365
+#: cmd/incus/network_peer.go:368
 #, c-format
 msgid "Network peer %s created"
 msgstr ""
 
-#: cmd/incus/network_peer.go:809
+#: cmd/incus/network_peer.go:812
 #, c-format
 msgid "Network peer %s deleted"
 msgstr ""
 
-#: cmd/incus/network_peer.go:369
+#: cmd/incus/network_peer.go:372
 #, c-format
 msgid "Network peer %s is in unexpected state %q"
 msgstr ""
 
-#: cmd/incus/network_peer.go:367
+#: cmd/incus/network_peer.go:370
 #, c-format
 msgid ""
 "Network peer %s pending (please complete mutual peering on peer network)"
@@ -5144,7 +5144,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
 #: cmd/incus/network.go:763 cmd/incus/network_acl.go:697
 #: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:313
-#: cmd/incus/network_load_balancer.go:687 cmd/incus/network_peer.go:727
+#: cmd/incus/network_load_balancer.go:687 cmd/incus/network_peer.go:730
 #: cmd/incus/network_zone.go:638 cmd/incus/network_zone.go:1329
 #: cmd/incus/profile.go:600 cmd/incus/project.go:369 cmd/incus/storage.go:364
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1111
@@ -6032,11 +6032,11 @@ msgid ""
 "    incus network set [<remote>:]<network> <listen_address> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_peer.go:472
+#: cmd/incus/network_peer.go:475
 msgid "Set network peer keys"
 msgstr ""
 
-#: cmd/incus/network_peer.go:473
+#: cmd/incus/network_peer.go:476
 msgid ""
 "Set network peer keys\n"
 "\n"
@@ -6176,7 +6176,7 @@ msgstr ""
 msgid "Set the key as a network load balancer property"
 msgstr ""
 
-#: cmd/incus/network_peer.go:480
+#: cmd/incus/network_peer.go:483
 msgid "Set the key as a network peer property"
 msgstr ""
 
@@ -6804,7 +6804,7 @@ msgstr ""
 msgid "The property %q does not exist on the network integration %q: %v"
 msgstr ""
 
-#: cmd/incus/network_peer.go:446
+#: cmd/incus/network_peer.go:449
 #, c-format
 msgid "The property %q does not exist on the network peer %q: %v"
 msgstr ""
@@ -7044,7 +7044,7 @@ msgid ""
 "SPICE graphical output"
 msgstr ""
 
-#: cmd/incus/network_peer.go:255
+#: cmd/incus/network_peer.go:258
 msgid "Type of peer (local or remote)"
 msgstr ""
 
@@ -7200,11 +7200,11 @@ msgstr ""
 msgid "Unset network load balancer keys"
 msgstr ""
 
-#: cmd/incus/network_peer.go:574
+#: cmd/incus/network_peer.go:577
 msgid "Unset network peer configuration keys"
 msgstr ""
 
-#: cmd/incus/network_peer.go:575
+#: cmd/incus/network_peer.go:578
 msgid "Unset network peer keys"
 msgstr ""
 
@@ -7256,7 +7256,7 @@ msgstr ""
 msgid "Unset the key as a network load balancer property"
 msgstr ""
 
-#: cmd/incus/network_peer.go:578
+#: cmd/incus/network_peer.go:581
 msgid "Unset the key as a network peer property"
 msgstr ""
 
@@ -7968,7 +7968,7 @@ msgstr ""
 msgid "[<remote>:]<network> <peer name>"
 msgstr ""
 
-#: cmd/incus/network_peer.go:620 cmd/incus/network_peer.go:756
+#: cmd/incus/network_peer.go:623 cmd/incus/network_peer.go:759
 msgid "[<remote>:]<network> <peer_name>"
 msgstr ""
 
@@ -7978,11 +7978,11 @@ msgid ""
 "integration> [key=value...]"
 msgstr ""
 
-#: cmd/incus/network_peer.go:386 cmd/incus/network_peer.go:573
+#: cmd/incus/network_peer.go:389 cmd/incus/network_peer.go:576
 msgid "[<remote>:]<network> <peer_name> <key>"
 msgstr ""
 
-#: cmd/incus/network_peer.go:471
+#: cmd/incus/network_peer.go:474
 msgid "[<remote>:]<network> <peer_name> <key>=<value>..."
 msgstr ""
 
@@ -8521,6 +8521,11 @@ msgid ""
 "incus network peer create default peer2 ovn-ic --type=remote\n"
 "    Create a new peering between network \"default\" in the current project "
 "and other remote networks through the \"ovn-ic\" integration\n"
+"\n"
+"incus network peer create default peer3 web/default < config.yaml\n"
+"\tCreate a new peering between network default in the current project and "
+"network default in the web project using the configuration\n"
+"\tin the file config.yaml"
 msgstr ""
 
 #: cmd/incus/network_zone.go:318
