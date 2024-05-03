@@ -27,7 +27,7 @@ func DetectCompressionFile(f io.Reader) ([]string, string, []string, error) {
 	// bz2 - 2 bytes, 'BZ' signature/magic number
 	// gz - 2 bytes, 0x1f 0x8b
 	// lzma - 6 bytes, { [0x000, 0xE0], '7', 'z', 'X', 'Z', 0x00 } -
-	// xy - 6 bytes,  header format { 0xFD, '7', 'z', 'X', 'Z', 0x00 }
+	// xz - 6 bytes,  header format { 0xFD, '7', 'z', 'X', 'Z', 0x00 }
 	// tar - 263 bytes, trying to get ustar from 257 - 262
 	header := make([]byte, 263)
 	_, err := f.Read(header)
