@@ -4598,9 +4598,6 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 		}
 
 		logger.Info("TRYIN TO RUN AUTO CLUSTER REBALANCE")
-		// fmt.Println("TRYIN TO RUN AUTO CLUSTER REBALANCE")
-
-		// set of all possible architectures, added to during the loop
 		
 
 		// gets all cluster members
@@ -4757,7 +4754,67 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 			// print out for this architecture, what is the max score, min score, and the servers
 			logger.Info("architecture stats", logger.Ctx{"architecture": architecture, "maxScore": maxScore, "minScore": minScore, "maxServer": maxServer, "minServer": minServer})
+			
+			// check if the score diff is greater than the threshold
+			// if maxScore - minScore >= 0 {
+			if maxScore - minScore >= float64(rebalanceThreshold) {
+
+				logger.Info("need to rebalance this architecture", logger.Ctx{"architecture": architecture})
+				
+				// get all instances from our maxscore server
+				var dbInstances []dbCluster.Instance
+				err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+					dbInstances, err = dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Node: &maxServer.Name})
+					if err != nil {
+						
+						return fmt.Errorf("Failed to get instances: %w", err)
+					}
+			
+					return nil
+				})
+				if err != nil {
+					logger.Error("Failed to get instances", logger.Ctx{"err": err})
+					return
+				}
+			
+				// instances on the maxscore server than can be migrated
+				var instances []instance.Instance
+			
+				for _, dbInst := range dbInstances {
+					inst, err := instance.LoadByProjectAndName(s, dbInst.Project, dbInst.Name)
+					if err != nil {
+						logger.Error("Failed to load instance", logger.Ctx{"err": err})
+						return
+					}
+					logger.Info("current instance", logger.Ctx{"instance": inst})
+
+					logger.Info("current instance name", logger.Ctx{"instance": inst.Name()})
+
+					instanceInfo := inst.Info()
+
+					logger.Info("instance info", logger.Ctx{"instance": instanceInfo})
+
+					logger.Info("instance state", logger.Ctx{"state": inst.State()})
+					
+					// check if the instance can be live migrated
+					live := inst.CanMigrate() == "live-migrate"
+					if live {
+						instances = append(instances, inst)
+						// instances[i] = inst
+					}
+				}
+
+				
+			}
+		
 		}
+
+		// use migrateFunc from clusterNodeStatePost in api_cluster.go
+
+
+
+		// get all instances from our maxscore server
+
 
 
 		// retrieve all of the servers by get resources
