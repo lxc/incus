@@ -623,6 +623,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		d.events.SetLocalLocation(d.serverName)
 
+		// Create all storage pools and networks.
 		err = clusterInitMember(localClient, client, req.MemberConfig)
 		if err != nil {
 			return fmt.Errorf("Failed to initialize member: %w", err)
@@ -765,13 +766,8 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			return err
 		}
 
-		// Start clustering tasks.
-		d.startClusterTasks()
-		revert.Add(func() { d.stopClusterTasks() })
-
-		// Handle optional service integration on cluster join
+		// Add the new node to the default cluster group.
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			// Add the new node to the default cluster group.
 			err := tx.AddNodeToClusterGroup(ctx, "default", req.ServerName)
 			if err != nil {
 				return fmt.Errorf("Failed to add new member to the default cluster group: %w", err)
@@ -783,6 +779,11 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			return err
 		}
 
+		// Start clustering tasks.
+		d.startClusterTasks()
+		revert.Add(func() { d.stopClusterTasks() })
+
+		// Load the configuration.
 		var nodeConfig *node.Config
 		err = s.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
 			var err error
@@ -1042,6 +1043,11 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 		for _, network := range networks {
 			// Skip unmanaged or pending networks.
 			if !network.Managed || network.Status != api.NetworkStatusCreated {
+				continue
+			}
+
+			// OVN networks don't need local creation.
+			if network.Type == "ovn" {
 				continue
 			}
 
@@ -2422,13 +2428,13 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 	d.clusterMembershipMutex.Lock()
 	defer d.clusterMembershipMutex.Unlock()
 
-	// Check that the pools and networks provided by the joining node have
-	// configs that match the cluster ones.
+	// Make sure we have all the expected storage pools.
 	err = clusterCheckStoragePoolsMatch(r.Context(), s.DB.Cluster, req.StoragePools)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
+	// Make sure we have all the expected networks.
 	err = clusterCheckNetworksMatch(r.Context(), s.DB.Cluster, req.Networks)
 	if err != nil {
 		return response.SmartError(err)
@@ -2844,19 +2850,24 @@ func clusterCheckNetworksMatch(ctx context.Context, clusterDB *db.Cluster, reqNe
 			}
 
 			for _, networkName := range networkNames {
-				found := false
+				_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
+				if err != nil {
+					return err
+				}
 
+				// OVN networks don't need local creation.
+				if network.Type == "ovn" {
+					continue
+				}
+
+				// Check that the network is present locally.
+				found := false
 				for _, reqNetwork := range reqNetworks {
 					if reqNetwork.Name != networkName || reqNetwork.Project != networkProjectName {
 						continue
 					}
 
 					found = true
-
-					_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
-					if err != nil {
-						return err
-					}
 
 					if reqNetwork.Type != network.Type {
 						return fmt.Errorf("Mismatching type for network %q in project %q", networkName, networkProjectName)

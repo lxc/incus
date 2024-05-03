@@ -524,7 +524,8 @@ func Join(state *state.State, gateway *Gateway, networkCert *localtls.CertInfo, 
 			for name, id := range network {
 				config, ok := networks[name]
 				if !ok {
-					return fmt.Errorf("Joining member has no config for network %s", name)
+					// Not all networks are present as virtual networks (OVN) don't need entries.
+					continue
 				}
 
 				err := tx.NetworkNodeJoin(id, node.ID)
