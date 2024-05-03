@@ -1046,6 +1046,11 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 				continue
 			}
 
+			// OVN networks don't need local creation.
+			if network.Type == "ovn" {
+				continue
+			}
+
 			post := api.InitNetworksProjectPost{
 				NetworksPost: api.NetworksPost{
 					NetworkPut: network.NetworkPut,
@@ -2845,19 +2850,24 @@ func clusterCheckNetworksMatch(ctx context.Context, clusterDB *db.Cluster, reqNe
 			}
 
 			for _, networkName := range networkNames {
-				found := false
+				_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
+				if err != nil {
+					return err
+				}
 
+				// OVN networks don't need local creation.
+				if network.Type == "ovn" {
+					continue
+				}
+
+				// Check that the network is present locally.
+				found := false
 				for _, reqNetwork := range reqNetworks {
 					if reqNetwork.Name != networkName || reqNetwork.Project != networkProjectName {
 						continue
 					}
 
 					found = true
-
-					_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
-					if err != nil {
-						return err
-					}
 
 					if reqNetwork.Type != network.Type {
 						return fmt.Errorf("Mismatching type for network %q in project %q", networkName, networkProjectName)
