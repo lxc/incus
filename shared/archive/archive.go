@@ -142,11 +142,14 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 	if strings.HasPrefix(extension, ".tar") {
 		command = "tar"
 		// We can't create char/block devices in unpriv containers so avoid extracting them.
+		args = append(args, "--anchored")
 		args = append(args, "--wildcards")
 		args = append(args, "--exclude=dev/*")
+		args = append(args, "--exclude=/dev/*")
 		args = append(args, "--exclude=./dev/*")
 		args = append(args, "--exclude=rootfs/dev/*")
-		args = append(args, "--exclude=rootfs/./dev/*")
+		args = append(args, "--exclude=/rootfs/dev/*")
+		args = append(args, "--exclude=./rootfs/dev/*")
 
 		args = append(args, "--restrict", "--force-local")
 		args = append(args, "-C", path, "--numeric-owner", "--xattrs-include=*")
