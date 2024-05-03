@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -1520,4 +1522,19 @@ func (d *common) setNUMANode() error {
 	}
 
 	return d.VolatileSet(map[string]string{"volatile.cpu.nodes": fmt.Sprintf("%d", node)})
+}
+
+// Gets the process starting time.
+func (d *common) processStartedAt(pid int) (time.Time, error) {
+	file, err := os.Stat(fmt.Sprintf("/proc/%d", pid))
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	linuxInfo, ok := file.Sys().(*syscall.Stat_t)
+	if !ok {
+		return time.Time{}, fmt.Errorf("Bad stat type")
+	}
+
+	return time.Unix(linuxInfo.Ctim.Sec, linuxInfo.Ctim.Nsec), nil
 }

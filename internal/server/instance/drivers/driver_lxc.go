@@ -3406,11 +3406,18 @@ func (d *lxc) renderState(statusCode api.StatusCode, hostInterfaces []net.Interf
 	processesState, _ := d.processesState(pid)
 
 	if d.isRunningStatusCode(statusCode) {
+		var err error
+
 		status.CPU = d.cpuState()
 		status.Memory = d.memoryState()
 		status.Network = d.networkState(hostInterfaces)
 		status.Pid = int64(pid)
 		status.Processes = processesState
+
+		status.StartedAt, err = d.processStartedAt(d.InitPID())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	status.Disk = d.diskState()
