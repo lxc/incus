@@ -607,6 +607,10 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, remote config.Remote, nam
 	}
 
 	if inst.State.Pid != 0 {
+		if !inst.State.StartedAt.IsZero() {
+			fmt.Printf(i18n.G("Started: %s")+"\n", inst.State.StartedAt.Local().Format(dateLayout))
+		}
+
 		fmt.Println("\n" + i18n.G("Resources:"))
 		// Processes
 		fmt.Printf("  "+i18n.G("Processes: %d")+"\n", inst.State.Processes)

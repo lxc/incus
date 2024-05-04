@@ -1,5 +1,9 @@
 package api
 
+import (
+	"time"
+)
+
 // InstanceStatePut represents the modifiable fields of an instance's state.
 //
 // swagger:model
@@ -56,6 +60,11 @@ type InstanceState struct {
 
 	// CPU usage information
 	CPU InstanceStateCPU `json:"cpu" yaml:"cpu"`
+
+	// The time that the instance started at
+	//
+	// API extension: instance_state_started_at.
+	StartedAt time.Time `json:"started_at" yaml:"started_at"`
 }
 
 // InstanceStateDisk represents the disk information section of an instance's state.

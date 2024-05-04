@@ -7771,6 +7771,11 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 		d.logger.Warn("Error getting disk usage", logger.Ctx{"err": err})
 	}
 
+	status.StartedAt, err = d.processStartedAt(d.InitPID())
+	if err != nil {
+		return status, err
+	}
+
 	return status, nil
 }
 
