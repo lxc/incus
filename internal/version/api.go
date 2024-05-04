@@ -414,6 +414,7 @@ var APIExtensions = []string{
 	"profiles_all_projects",
 	"instances_scriptlet_get_instances",
 	"instances_scriptlet_get_cluster_members",
+	"instances_scriptlet_get_project",
 	"network_acl_stateless",
 	"instance_state_started_at",
 }
