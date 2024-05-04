@@ -4239,6 +4239,13 @@ definitions:
                 format: uint64
                 type: integer
                 x-go-name: Die
+            flags:
+                description: List of CPU flags
+                example: []
+                items:
+                    type: string
+                type: array
+                x-go-name: Flags
             frequency:
                 description: Current frequency
                 example: 3500
