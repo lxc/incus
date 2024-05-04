@@ -2509,3 +2509,7 @@ This introduces a new API endpoint at `GET /1.0/projects/NAME/access` which expo
 
 This extends `DELETE /1.0/projects` to allow `?force=true` which will
 delete everything inside of the project along with the project itself.
+
+## `resources_cpu_flags`
+
+This exposes the CPU flags/extensions in our resources API to check the CPU features.
