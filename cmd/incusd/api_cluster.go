@@ -4720,25 +4720,26 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 				memberState := memberStateMap[server.ID]
 
 				// gets average load over 3 timeframes (1 min, 5 min, 15 min)
-				avgLoad := memberState.SysInfo.LoadAverages
+				// avgLoad := memberState.SysInfo.LoadAverages
 
-
+				// percent memory usage
 				memoryUsage := float64(memberState.SysInfo.TotalRAM - memberState.SysInfo.FreeRAM) / float64(memberState.SysInfo.TotalRAM)
 
 				// determine CPU usage by processes / num cores
-				numProcess := memberState.SysInfo.Processes
-				numCores := 0
+				// numProcess := memberState.SysInfo.Processes
+				// numCores := 0
 
-				for _, cpu := range resources.CPU.Sockets {
-					// add the length of cpu.cores
-					numCores += len(cpu.Cores)
-				}
+				// for _, cpu := range resources.CPU.Sockets {
+				// 	// add the length of cpu.cores
+				// 	numCores += len(cpu.Cores)
+				// }
 
-				cpuUsage := float64(numProcess) / float64(numCores)
+				// cpuUsage := float64(numProcess) / float64(numCores)
 				// determine score
-				score := avgLoad[1] + memoryUsage + cpuUsage
+				// score := avgLoad[1] + memoryUsage + cpuUsage
+				score := memoryUsage
 
-				logger.Info("server stats", logger.Ctx{"avgLoad": avgLoad, "memoryUsage": memoryUsage, "cpuUsage": cpuUsage, "score": score})
+				// logger.Info("server stats", logger.Ctx{"avgLoad": avgLoad, "memoryUsage": memoryUsage, "cpuUsage": cpuUsage, "score": score})
 
 				// determine max / min score
 				if score > maxScore {
@@ -4757,6 +4758,7 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 			
 			// check if the score diff is greater than the threshold
 			// if maxScore - minScore >= 0 {
+			
 			if maxScore - minScore >= float64(rebalanceThreshold) {
 
 				logger.Info("need to rebalance this architecture", logger.Ctx{"architecture": architecture})
@@ -4804,66 +4806,53 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 					}
 				}
 
+				var instancesToMigrate []instance.Instance
+
+				// logic here for selecting instances to migrate
+
+				opRun := func(op *operations.Operation) error{
+					err := autoClusterRebalance(ctx, s, instancesToMigrate, &maxServer, &minServer, op)
+					if err != nil {
+						logger.Error("Failed rebalancing cluster instances", logger.Ctx{"err": err})
+						return err
+					}
+					
+					return nil
+				}
+				op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.ClusterRebalance, nil, nil, opRun, nil, nil, nil)
+				
+				err = op.Start()
+				if err != nil {
+					logger.Error("Failed starting auto cluster rebalancing operation", logger.Ctx{"err": err})
+					//return err
+				}
+		
+				err = op.Wait(ctx)
+				if err != nil {
+					logger.Error("Failed auto cluster rebalancing", logger.Ctx{"err": err})
+					//return err
+				}
 				
 			}
 		
-		}
-
-		// use migrateFunc from clusterNodeStatePost in api_cluster.go
-
-
-
-		// get all instances from our maxscore server
-
-
-
-		// retrieve all of the servers by get resources
-		// resources, err := GetResources()
-		// if err != nil {
-		// 	logger.Error("Failed to get server resources")
-		// }
-
-		// find the per server score (based on cpu / memory / load)
-
-		// split the servers by CPU architecture
-
-		// find the most and least busy for each, check the threshold
-		// we can exit early if none of them meet it
-
-		// for each server we are trying to rebalance, look through all instances and determine which can be migrated
-
-		// MAYBE: migrate instances in order from highest to least score impact (reduce migration)
-
-		// for our list of instances to migrate, make sure to call the scheduler to verify that it's possible
-
-		opRun := func(op *operations.Operation) error{
-			err := autoClusterRebalance(ctx, s)
-			if err != nil {
-				logger.Error("Failed rebalancing cluster instances", logger.Ctx{"err": err})
-				return err
-			}
-			
-			return nil
-		}
-		op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.ClusterRebalance, nil, nil, opRun, nil, nil, nil)
-		
-		err = op.Start()
-		if err != nil {
-			logger.Error("Failed starting auto cluster rebalancing operation", logger.Ctx{"err": err})
-			//return err
-		}
-
-		err = op.Wait(ctx)
-		if err != nil {
-			logger.Error("Failed auto cluster rebalancing", logger.Ctx{"err": err})
-			//return err
 		}
 
 	}
 	return f,task.Every(time.Minute)
 }
 
-func autoClusterRebalance(ctx context.Context, s *state.State) error{
+func autoClusterRebalance(ctx context.Context, s *state.State, instancesToMigrate []instance.Instance, maxServer *db.NodeInfo, minServer *db.NodeInfo, op *operations.Operation) error{
+	for _, inst := range instancesToMigrate{
+		req := api.InstancePost{
+			Migration: true,
+			Live: true,
+		}
 
+
+		err := migrateInstance(ctx, s, inst, req, maxServer, minServer, op)
+		if err != nil {
+			return fmt.Errorf("Failed to migrate instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+		}
+	}
 	return nil
 }
