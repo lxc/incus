@@ -54,10 +54,9 @@ If these are incompatible, Incus does not start the instance.
 
 The following requirements are supported:
 
-Key                                         | Type      | Default      | Description
-:--                                         | :---      | :------      | :----------
-`requirements.cdrom_agent`                  | bool      | -            | If set to `true`, indicates that the VM requires an `agent:config` disk be added.
-`requirements.cgroup`                       | string    | -            | If set to `v1`, indicates that the image requires the host to run cgroup v1.
-`requirements.nesting`                      | bool      | -            | If set to `true`, indicates that the image cannot work without nesting enabled.
-`requirements.privileged`                   | bool      | -            | If set to `false`, indicates that the image cannot work as a privileged container.
-`requirements.secureboot`                   | bool      | -            | If set to `false`, indicates that the image cannot boot under secure boot.
+% Include content from [config_options.txt](config_options.txt)
+```{include} config_options.txt
+    :start-after: <!-- config group requirements start -->
+    :end-before: <!-- config group requirements end -->
+```
+
