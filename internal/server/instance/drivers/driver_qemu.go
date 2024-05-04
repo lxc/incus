@@ -40,7 +40,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
 
-	"github.com/lxc/incus/v6/client"
+	incus "github.com/lxc/incus/v6/client"
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/instancewriter"
 	"github.com/lxc/incus/v6/internal/jmap"
@@ -1046,6 +1046,12 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 		return fmt.Errorf("Stateful start requires migration.stateful to be set to true")
 	}
 
+	// gendoc:generate(entity=image, group=requirements, key=secureboot)
+	//
+	// ---
+	//  key: secureboot
+	//  type: bool
+	//  shortdesc: If set to `false`, indicates that the image cannot boot under secure boot.
 	// Ensure secureboot is turned off for images that are not secureboot enabled.
 	if util.IsFalse(d.localConfig["image.requirements.secureboot"]) && util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
 		return fmt.Errorf("The image used by this instance is incompatible with secureboot. Please set security.secureboot=false on the instance")
@@ -1056,6 +1062,12 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 		return fmt.Errorf("Secure boot can't be enabled while CSM is turned on. Please set security.secureboot=false on the instance")
 	}
 
+	// gendoc:generate(entity=image, group=requirements, key=cdrom_agent)
+	//
+	// ---
+	//  key: cdrom_agent
+	//  type: bool
+	//  shortdesc: If set to `true`, indicates that the VM requires an `agent:config` disk be added.
 	// Ensure an agent drive is present if the image requires it.
 	if util.IsTrue(d.localConfig["image.requirements.cdrom_agent"]) {
 		found := false
