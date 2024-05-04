@@ -415,6 +415,7 @@ var APIExtensions = []string{
 	"instances_scriptlet_get_instances",
 	"instances_scriptlet_get_cluster_members",
 	"network_acl_stateless",
+	"instance_state_started_at",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
