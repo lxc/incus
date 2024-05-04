@@ -21,6 +21,52 @@
 				]
 			}
 		},
+		"image": {
+			"requirements": {
+				"keys": [
+					{
+						"cdrom_agent": {
+							"key": "cdrom_agent",
+							"longdesc": "",
+							"shortdesc": "If set to `true`, indicates that the VM requires an `agent:config` disk be added.",
+							"type": "bool"
+						}
+					},
+					{
+						"cgroup": {
+							"key": "cgroup",
+							"longdesc": "",
+							"shortdesc": "If set to `v1`, indicates that the image requires the host to run cgroup v1.",
+							"type": "string"
+						}
+					},
+					{
+						"nesting": {
+							"key": "nesting",
+							"longdesc": "",
+							"shortdesc": "If set to `true`, indicates that the image cannot work without nesting enabled.",
+							"type": "bool"
+						}
+					},
+					{
+						"privileged": {
+							"key": "privileged",
+							"longdesc": "",
+							"shortdesc": "If set to `false`, indicates that the image cannot work as a privileged container.",
+							"type": "bool"
+						}
+					},
+					{
+						"secureboot": {
+							"key": "secureboot",
+							"longdesc": "",
+							"shortdesc": "If set to `false`, indicates that the image cannot boot under secure boot.",
+							"type": "bool"
+						}
+					}
+				]
+			}
+		},
 		"instance": {
 			"boot": {
 				"keys": [
