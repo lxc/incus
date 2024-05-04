@@ -16,6 +16,43 @@ User keys can be used in search.
 ```
 
 <!-- config group cluster-cluster end -->
+<!-- config group image-requirements start -->
+```{config:option} cdrom_agent image-requirements
+:key: "cdrom_agent"
+:shortdesc: "If set to `true`, indicates that the VM requires an `agent:config` disk be added."
+:type: "bool"
+
+```
+
+```{config:option} cgroup image-requirements
+:key: "cgroup"
+:shortdesc: "If set to `v1`, indicates that the image requires the host to run cgroup v1."
+:type: "string"
+
+```
+
+```{config:option} nesting image-requirements
+:key: "nesting"
+:shortdesc: "If set to `true`, indicates that the image cannot work without nesting enabled."
+:type: "bool"
+
+```
+
+```{config:option} privileged image-requirements
+:key: "privileged"
+:shortdesc: "If set to `false`, indicates that the image cannot work as a privileged container."
+:type: "bool"
+
+```
+
+```{config:option} secureboot image-requirements
+:key: "secureboot"
+:shortdesc: "If set to `false`, indicates that the image cannot boot under secure boot."
+:type: "bool"
+
+```
+
+<!-- config group image-requirements end -->
 <!-- config group instance-boot start -->
 ```{config:option} boot.autostart instance-boot
 :liveupdate: "no"
