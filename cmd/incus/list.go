@@ -107,6 +107,7 @@ Pre-defined column shorthand chars:
   S - Number of snapshots
   t - Type (persistent or ephemeral)
   u - CPU usage (in seconds)
+  U - Started date
   L - Location of the instance (e.g. its cluster member)
   f - Base Image Fingerprint (short)
   F - Base Image Fingerprint (long)
@@ -586,6 +587,7 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 		's': {i18n.G("STATE"), c.statusColumnData, false, false},
 		't': {i18n.G("TYPE"), c.typeColumnData, false, false},
 		'u': {i18n.G("CPU USAGE"), c.cpuUsageSecondsColumnData, true, false},
+		'U': {i18n.G("STARTED AT"), c.startedColumnData, true, false},
 	}
 
 	// Add project column if --all-projects flag specified and
@@ -922,6 +924,14 @@ func (c *cmdList) ProfilesColumnData(cInfo api.InstanceFull) string {
 func (c *cmdList) CreatedColumnData(cInfo api.InstanceFull) string {
 	if !cInfo.CreatedAt.IsZero() {
 		return cInfo.CreatedAt.Local().Format(dateLayout)
+	}
+
+	return ""
+}
+
+func (c *cmdList) startedColumnData(cInfo api.InstanceFull) string {
+	if cInfo.State != nil && !cInfo.State.StartedAt.IsZero() {
+		return cInfo.State.StartedAt.Local().Format(dateLayout)
 	}
 
 	return ""

@@ -2123,6 +2123,14 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: Processes
+            started_at:
+                description: |-
+                    The time that the instance started at
+
+                    API extension: instance_state_started_at.
+                format: date-time
+                type: string
+                x-go-name: StartedAt
             status:
                 description: Current status (Running, Stopped, Frozen or Error)
                 example: Running
