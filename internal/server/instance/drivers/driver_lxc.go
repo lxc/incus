@@ -1979,11 +1979,23 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		return "", nil, fmt.Errorf("Load go-lxc struct: %w", err)
 	}
 
+	// gendoc:generate(entity=image, group=requirements, key=cgroup)
+	//
+	// ---
+	//  key: cgroup
+	//  type: string
+	//  shortdesc: If set to `v1`, indicates that the image requires the host to run cgroup v1.
 	// Ensure cgroup v1 configuration is set appropriately with the image using systemd
 	if d.localConfig["image.requirements.cgroup"] == "v1" && !util.PathExists("/sys/fs/cgroup/systemd") {
 		return "", nil, fmt.Errorf("The image used by this instance requires a CGroupV1 host system")
 	}
 
+	// gendoc:generate(entity=image, group=requirements, key=privileged)
+	//
+	// ---
+	//  key: privileged
+	//  type: bool
+	//  shortdesc: If set to `false`, indicates that the image cannot work as a privileged container.
 	// Ensure privileged is turned off for images that cannot work privileged
 	if util.IsFalse(d.localConfig["image.requirements.privileged"]) && util.IsTrue(d.expandedConfig["security.privileged"]) {
 		return "", nil, fmt.Errorf("The image used by this instance is incompatible with privileged containers. Please unset security.privileged on the instance")
@@ -2641,6 +2653,12 @@ func (d *lxc) validateStartup(stateful bool, statusCode api.StatusCode) error {
 		return err
 	}
 
+	// gendoc:generate(entity=image, group=requirements, key=nesting)
+	//
+	// ---
+	// 	key: nesting
+	//  type: bool
+	//  shortdesc: If set to `true`, indicates that the image cannot work without nesting enabled.
 	// Ensure nesting is turned on for images that require nesting.
 	if util.IsTrue(d.localConfig["image.requirements.nesting"]) && util.IsFalseOrEmpty(d.expandedConfig["security.nesting"]) {
 		return fmt.Errorf("The image used by this instance requires nesting. Please set security.nesting=true on the instance")
