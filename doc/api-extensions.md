@@ -2472,3 +2472,7 @@ This allows the instance scriptlet to fetch a list of cluster members given an o
 ## `network_acl_stateless`
 
 This adds support for stateless rules in network ACLs.
+
+## `instance_state_started_at`
+
+This adds a `started_at` timestamp to the instance state API.
