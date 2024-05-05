@@ -57,6 +57,12 @@ var projectStateCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: projectStateGet, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanView, "name")},
 }
 
+var projectAccessCmd = APIEndpoint{
+	Path: "projects/{name}/access",
+
+	Get: APIEndpointAction{Handler: projectAccess, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanEdit, "name")},
+}
+
 // swagger:operation GET /1.0/projects projects projects_get
 //
 //  Get the projects
@@ -1592,4 +1598,64 @@ func projectValidateRestrictedSubnets(s *state.State, value string) error {
 	}
 
 	return nil
+}
+
+// swagger:operation GET /1.0/projects/{name}/access projects project_access
+//
+//	Get who has access to a project
+//
+//	Gets the access information for the project.
+//
+//	---
+//	produces:
+//	  - application/json
+//	responses:
+//	  "200":
+//	    description: Access
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          $ref: "#/definitions/Access"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func projectAccess(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Quick checks.
+	err = projectValidateName(name)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	// get the access struct
+	access, err := s.Authorizer.GetProjectAccess(context.TODO(), name)
+
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	return response.SyncResponse(true, access)
 }
