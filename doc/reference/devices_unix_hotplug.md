@@ -15,11 +15,8 @@ The implementation depends on `systemd-udev` to be run on the host.
 
 `unix-hotplug` devices have the following device options:
 
-Key         | Type      | Default           | Description
-:--         | :--       | :--               | :--
-`gid`       | int       | `0`               | GID of the device owner in the instance
-`mode`      | int       | `0660`            | Mode of the device in the instance
-`productid` | string    | -                 | The product ID of the Unix device
-`required`  | bool      | `false`           | Whether this device is required to start the instance (the default is `false`, and all devices can be hotplugged)
-`uid`       | int       | `0`               | UID of the device owner in the instance
-`vendorid`  | string    | -                 | The vendor ID of the Unix device
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-unix-hotplug start -->
+    :end-before: <!-- config group devices-unix-hotplug end -->
+```
