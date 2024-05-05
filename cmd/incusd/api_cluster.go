@@ -55,6 +55,7 @@ import (
 	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
+	"github.com/lxc/incus/v6/shared/units"
 )
 
 type evacuateStopFunc func(inst instance.Instance, action string) error
@@ -4597,10 +4598,7 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 			return // Skip rebalancing if not cluster leader.
 		}
 
-		logger.Info("TRYIN TO RUN AUTO CLUSTER REBALANCE")
-		
-
-		// gets all cluster members
+		// get all online members
 		var onlineMembers []db.NodeInfo
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			members, err := tx.GetNodes(ctx)
@@ -4608,7 +4606,6 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 				return fmt.Errorf("Failed getting cluster members: %w", err)
 			}
 
-			// get all online members
 			onlineMembers, err = tx.GetCandidateMembers(ctx, members, nil, "", nil, s.GlobalConfig.OfflineThreshold())
 			if err != nil {
 				return fmt.Errorf("Failed getting online cluster members: %w", err)
@@ -4617,82 +4614,52 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 			return nil
 		})
 		if err != nil {
-			logger.Error("Failed getting cluster instances", logger.Ctx{"err": err})
+			logger.Error("Failed getting cluster members", logger.Ctx{"err": err})
 			return
 		}
 
-
-
-		// sophie's idea
-
-		// get a set of all architectures 
-		// for each architecture get all the servers
-		// loop through servers, only store the max / min score + server corresponding with those
-
-		// then look at those two servers, determine instances to migrate, and migrate
-		
-
-		// {server: serverScore} or maybe server -> resources
-
-		// loop through each architecture, loop through corresponding list to
-		// determine the highest / lowest server score (using sever -> score map)
-
-		// for each arch check if there is at least 2 servers
-
-		// determine if we want to automigrate. if so, go through all instances and determine which can be migrated
-		// loop through this list and migrate until we are balanced
-
-		// loop through all members and to get the architectures, map them to the server
+		// map each architecture to the member that have it
 		architectureMap := make(map[string][]db.NodeInfo)
 
 		// maps the nodeinfo ID to the resources
 		resourcesMap := make(map[int64]*api.Resources)
+
+		// maps the nodeinfo ID to the member state
 		memberStateMap := make(map[int64]*api.ClusterMemberState)
 
-
 		for _, member := range onlineMembers {
-			// logger.Ctx("getting info for member %s", member.Address.str)
 			logger.Info("getting info for member", logger.Ctx{"address": member.Address})
-
 	
 			client, err := cluster.Connect(member.Address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
 			if err != nil {
 				logger.Error("Failed to connect to cluster member", logger.Ctx{"err": err})
-				// return nil, err
+				return
 			}
 
 			resources, err := client.GetServerResources()
 			if err != nil {
 				logger.Error("Failed to get resources for cluster member", logger.Ctx{"err": err})
-				// return nil, err
+				return
 			}
 			resourcesMap[member.ID] = resources
 
 			memberState, _, err := client.GetClusterMemberState(member.Name)
 			if err != nil {
 				logger.Error("Failed to get cluster member state", logger.Ctx{"err": err})
-				// return nil, err
+				return
 			}
 			memberStateMap[member.ID] = memberState
 
-			
 			logger.Info("finished getting resources for this member")
 			
 			architecture := resources.CPU.Architecture
 
 			// add the architecture to the map
 			architectureMap[architecture] = append(architectureMap[architecture], member)
-
-			// add the resources to the map
-
-			// logger.Info("resources for member", logger.Ctx{"cpu": resources.CPU.Architecture, "memory": resources.Memory, "gpu": resources.GPU, "network": resources.Network, "storage": resources.Storage, "usb": resources.USB, "pci": resources.PCI, "system": resources.System})
-			// logger.Info("cpu %s, memory %s, gpu %s, network %s, storage %s, net %s, storage %s, usb %s, pci %s, system %s", resources.CPU, resources.Memory, resources.GPU, resources.Network, resources.Storage, resources.Net, resources.Storage, resources.USB, resources.PCI, resources.System)
 		}
 
-		// for each architecture loop through the servers and determine the max / min score
-
+		// migrate instances from max to min server per architecture
 		for architecture, servers := range architectureMap {
-			// logger.Info("architecture %s", architecture)
 			logger.Info("architecture", logger.Ctx{"architecture": architecture})
 
 			// check if there are no servers
@@ -4713,35 +4680,14 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 				logger.Info("resources for server", logger.Ctx{"cpu": resources.CPU.Architecture, "memory": resources.Memory, "gpu": resources.GPU, "network": resources.Network, "storage": resources.Storage, "usb": resources.USB, "pci": resources.PCI, "system": resources.System})
 
-				// use ResourcesMemoryNode
-
-				// get the member state from the cluster member name
-				// memberState, etag, err := cluster.GetClusterMemberState(server.Name)
 				memberState := memberStateMap[server.ID]
-
-				// gets average load over 3 timeframes (1 min, 5 min, 15 min)
-				// avgLoad := memberState.SysInfo.LoadAverages
 
 				// percent memory usage
 				memoryUsage := float64(memberState.SysInfo.TotalRAM - memberState.SysInfo.FreeRAM) / float64(memberState.SysInfo.TotalRAM)
 
-				// determine CPU usage by processes / num cores
-				// numProcess := memberState.SysInfo.Processes
-				// numCores := 0
-
-				// for _, cpu := range resources.CPU.Sockets {
-				// 	// add the length of cpu.cores
-				// 	numCores += len(cpu.Cores)
-				// }
-
-				// cpuUsage := float64(numProcess) / float64(numCores)
-				// determine score
-				// score := avgLoad[1] + memoryUsage + cpuUsage
 				score := memoryUsage
 
-				// logger.Info("server stats", logger.Ctx{"avgLoad": avgLoad, "memoryUsage": memoryUsage, "cpuUsage": cpuUsage, "score": score})
-
-				// determine max / min score
+				// update max / min score
 				if score > maxScore {
 					maxScore = score
 					maxServer = server
@@ -4753,14 +4699,9 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 				}
 			}
 
-			// print out for this architecture, what is the max score, min score, and the servers
 			logger.Info("architecture stats", logger.Ctx{"architecture": architecture, "maxScore": maxScore, "minScore": minScore, "maxServer": maxServer, "minServer": minServer})
 			
-			// check if the score diff is greater than the threshold
-			// if maxScore - minScore >= 0 {
-			
 			if maxScore - minScore >= float64(rebalanceThreshold) {
-
 				logger.Info("need to rebalance this architecture", logger.Ctx{"architecture": architecture})
 				
 				// get all instances from our maxscore server
@@ -4779,9 +4720,8 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 					return
 				}
 			
-				// instances on the maxscore server than can be migrated
+				// filter for instances that can be live migrated
 				var instances []instance.Instance
-			
 				for _, dbInst := range dbInstances {
 					inst, err := instance.LoadByProjectAndName(s, dbInst.Project, dbInst.Name)
 					if err != nil {
@@ -4792,23 +4732,50 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 					logger.Info("current instance name", logger.Ctx{"instance": inst.Name()})
 
-					instanceInfo := inst.Info()
-
-					logger.Info("instance info", logger.Ctx{"instance": instanceInfo})
-
-					logger.Info("instance state", logger.Ctx{"state": inst.State()})
-					
 					// check if the instance can be live migrated
 					live := inst.CanMigrate() == "live-migrate"
 					if live {
 						instances = append(instances, inst)
-						// instances[i] = inst
 					}
 				}
 
+				// set a target score to determine how much we should move
+				targetScore := (maxScore + minScore) / 2
+
+				// get the difference from the min server score
+				deltaScore := targetScore - minScore
+				
+				maxServerMemberState := memberStateMap[maxServer.ID]
+				minServerMemberState := memberStateMap[minServer.ID]
+
+				// translate deltascore to memory per server
+				maxServerMemoryToMigrate := deltaScore * float64(maxServerMemberState.SysInfo.TotalRAM)
+				minServerMemoryToMigrate := deltaScore * float64(minServerMemberState.SysInfo.TotalRAM)
+				
+				// migrate instances to reach the minimum between them
+				memoryToMigrate := math.Min(maxServerMemoryToMigrate, minServerMemoryToMigrate)
+
 				var instancesToMigrate []instance.Instance
 
-				// logic here for selecting instances to migrate
+				// select instances to migrate until we reach the desired memory
+				for _, inst := range instances {
+					memory_limits, err := units.ParseByteSizeString(inst.ExpandedConfig()["limits.memory"])
+					if err != nil {
+						logger.Error("Failed to parse memory limits", logger.Ctx{"err": err})
+						return
+					}
+
+					logger.Info("instance memory limits", logger.Ctx{"memory_limits": memory_limits})
+
+					// append instance to instancesToMigrate
+					instancesToMigrate = append(instancesToMigrate, inst)
+					memoryToMigrate -= float64(memory_limits)
+
+					// check if we have reached the memory limit
+					if memoryToMigrate <= 0 {
+						break
+					}
+				}
 
 				opRun := func(op *operations.Operation) error{
 					err := autoClusterRebalance(ctx, s, instancesToMigrate, &maxServer, &minServer, op)
@@ -4824,13 +4791,13 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 				err = op.Start()
 				if err != nil {
 					logger.Error("Failed starting auto cluster rebalancing operation", logger.Ctx{"err": err})
-					//return err
+					return
 				}
 		
 				err = op.Wait(ctx)
 				if err != nil {
 					logger.Error("Failed auto cluster rebalancing", logger.Ctx{"err": err})
-					//return err
+					return
 				}
 				
 			}
