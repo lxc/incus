@@ -260,3 +260,60 @@ func (t *tls) GetInstanceAccess(ctx context.Context, projectName string, instanc
 
 	return &access, nil
 }
+
+// GetProjectAccess returns the list of entities who have access to the project.
+func (t *tls) GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error) {
+	var access api.Access
+
+	certificates, projects := t.certificates.GetCertificatesAndProjects()
+
+	clientCerts := certificates[certificate.TypeClient]
+
+	for fingerprint := range clientCerts {
+		certificateProjects := projects[fingerprint]
+
+		if certificateProjects == nil {
+			access = append(access, api.AccessEntry{
+				Identifier: fingerprint,
+				Role:       "admin",
+				Provider:   "tls",
+			})
+		}
+
+		for _, project := range certificateProjects {
+			if project == projectName {
+				access = append(access, api.AccessEntry{
+					Identifier: fingerprint,
+					Role:       "operator",
+					Provider:   "tls",
+				})
+				break
+			}
+		}
+	}
+
+	for fingerprint := range projects {
+		certificateProjects := projects[fingerprint]
+
+		if certificateProjects == nil {
+			access = append(access, api.AccessEntry{
+				Identifier: fingerprint,
+				Role:       "view",
+				Provider:   "tls",
+			})
+		}
+
+		for _, project := range certificateProjects {
+			if project == projectName {
+				access = append(access, api.AccessEntry{
+					Identifier: fingerprint,
+					Role:       "view",
+					Provider:   "tls",
+				})
+				break
+			}
+		}
+	}
+
+	return &access, nil
+}
