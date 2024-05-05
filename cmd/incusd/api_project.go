@@ -57,6 +57,12 @@ var projectStateCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: projectStateGet, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanView, "name")},
 }
 
+var projectAccessCmd = APIEndpoint{
+	Path: "projects/{name}/access",
+
+	Get: APIEndpointAction{Handler: projectAccess, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanEdit, "name")},
+}
+
 // swagger:operation GET /1.0/projects projects projects_get
 //
 //  Get the projects
@@ -1592,4 +1598,28 @@ func projectValidateRestrictedSubnets(s *state.State, value string) error {
 	}
 
 	return nil
+}
+
+func projectAccess(d *Daemon, r *http.Request) response.Response {
+	s := d.State()
+
+	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Quick checks.
+	err = projectValidateName(name)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	// get the access struct
+	access, err := s.Authorizer.GetProjectAccess(context.TODO(), name)
+
+	if err != nil {
+		return response.InternalError(err)
+	}
+
+	return response.SyncResponse(true, access)
 }
