@@ -53,9 +53,9 @@ import (
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/osarch"
 	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
-	"github.com/lxc/incus/v6/shared/units"
 )
 
 type evacuateStopFunc func(inst instance.Instance, action string) error
@@ -4577,10 +4577,10 @@ func autoHealCluster(ctx context.Context, s *state.State, offlineMembers []db.No
 }
 
 func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
-	f := func(ctx context.Context){
+	f := func(ctx context.Context) {
 		s := d.State()
 		rebalanceThreshold := s.GlobalConfig.ClusterRebalanceThreshold()
-		if(rebalanceThreshold == 0){
+		if rebalanceThreshold == 0 {
 			return // Skip rebalancing if it's disabled
 		}
 
@@ -4628,30 +4628,28 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 		memberStateMap := make(map[int64]*api.ClusterMemberState)
 
 		for _, member := range onlineMembers {
-			logger.Info("getting info for member", logger.Ctx{"address": member.Address})
-	
-			client, err := cluster.Connect(member.Address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
+			clusterMember, err := cluster.Connect(member.Address, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
 			if err != nil {
 				logger.Error("Failed to connect to cluster member", logger.Ctx{"err": err})
 				return
 			}
 
-			resources, err := client.GetServerResources()
+			resources, err := clusterMember.GetServerResources()
 			if err != nil {
 				logger.Error("Failed to get resources for cluster member", logger.Ctx{"err": err})
 				return
 			}
+			
 			resourcesMap[member.ID] = resources
 
-			memberState, _, err := client.GetClusterMemberState(member.Name)
+			memberState, _, err := clusterMember.GetClusterMemberState(member.Name)
 			if err != nil {
 				logger.Error("Failed to get cluster member state", logger.Ctx{"err": err})
 				return
 			}
+
 			memberStateMap[member.ID] = memberState
 
-			logger.Info("finished getting resources for this member")
-			
 			architecture := resources.CPU.Architecture
 
 			// add the architecture to the map
@@ -4660,11 +4658,8 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 		// migrate instances from max to min server per architecture
 		for architecture, servers := range architectureMap {
-			logger.Info("architecture", logger.Ctx{"architecture": architecture})
-
 			// check if there are no servers
 			if len(servers) < 2 {
-				logger.Info("not enough servers for this architecture", logger.Ctx{"architecture": architecture})
 				continue
 			}
 
@@ -4676,14 +4671,10 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 			// get the resources for each server
 			for _, server := range servers {
-				resources := resourcesMap[server.ID]
-
-				logger.Info("resources for server", logger.Ctx{"cpu": resources.CPU.Architecture, "memory": resources.Memory, "gpu": resources.GPU, "network": resources.Network, "storage": resources.Storage, "usb": resources.USB, "pci": resources.PCI, "system": resources.System})
-
 				memberState := memberStateMap[server.ID]
 
 				// percent memory usage
-				memoryUsage := float64(memberState.SysInfo.TotalRAM - memberState.SysInfo.FreeRAM) / float64(memberState.SysInfo.TotalRAM)
+				memoryUsage := float64(memberState.SysInfo.TotalRAM-memberState.SysInfo.FreeRAM) / float64(memberState.SysInfo.TotalRAM)
 
 				score := memoryUsage
 
@@ -4699,27 +4690,24 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 				}
 			}
 
-			logger.Info("architecture stats", logger.Ctx{"architecture": architecture, "maxScore": maxScore, "minScore": minScore, "maxServer": maxServer, "minServer": minServer})
-			
-			if maxScore - minScore >= float64(rebalanceThreshold) {
-				logger.Info("need to rebalance this architecture", logger.Ctx{"architecture": architecture})
-				
+			if maxScore-minScore >= float64(rebalanceThreshold) {
+				logger.Info("Rebalancing for Architecture", logger.Ctx{"architecture": architecture})
+
 				// get all instances from our maxscore server
 				var dbInstances []dbCluster.Instance
 				err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 					dbInstances, err = dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Node: &maxServer.Name})
 					if err != nil {
-						
 						return fmt.Errorf("Failed to get instances: %w", err)
 					}
-			
+
 					return nil
 				})
 				if err != nil {
 					logger.Error("Failed to get instances", logger.Ctx{"err": err})
 					return
 				}
-			
+
 				// filter for instances that can be live migrated
 				var instances []instance.Instance
 				for _, dbInst := range dbInstances {
@@ -4728,9 +4716,6 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 						logger.Error("Failed to load instance", logger.Ctx{"err": err})
 						return
 					}
-					logger.Info("current instance", logger.Ctx{"instance": inst})
-
-					logger.Info("current instance name", logger.Ctx{"instance": inst.Name()})
 
 					// check if the instance can be live migrated
 					live := inst.CanMigrate() == "live-migrate"
@@ -4744,14 +4729,14 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 				// get the difference from the min server score
 				deltaScore := targetScore - minScore
-				
+
 				maxServerMemberState := memberStateMap[maxServer.ID]
 				minServerMemberState := memberStateMap[minServer.ID]
 
 				// translate deltascore to memory per server
 				maxServerMemoryToMigrate := deltaScore * float64(maxServerMemberState.SysInfo.TotalRAM)
 				minServerMemoryToMigrate := deltaScore * float64(minServerMemberState.SysInfo.TotalRAM)
-				
+
 				// migrate instances to reach the minimum between them
 				memoryToMigrate := math.Min(maxServerMemoryToMigrate, minServerMemoryToMigrate)
 
@@ -4759,17 +4744,15 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 				// select instances to migrate until we reach the desired memory
 				for _, inst := range instances {
-					memory_limits, err := units.ParseByteSizeString(inst.ExpandedConfig()["limits.memory"])
+					memoryLimits, err := units.ParseByteSizeString(inst.ExpandedConfig()["limits.memory"])
 					if err != nil {
 						logger.Error("Failed to parse memory limits", logger.Ctx{"err": err})
 						return
 					}
 
-					logger.Info("instance memory limits", logger.Ctx{"memory_limits": memory_limits})
-
 					// append instance to instancesToMigrate
 					instancesToMigrate = append(instancesToMigrate, inst)
-					memoryToMigrate -= float64(memory_limits)
+					memoryToMigrate -= float64(memoryLimits)
 
 					// check if we have reached the memory limit
 					if memoryToMigrate <= 0 {
@@ -4777,44 +4760,47 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 					}
 				}
 
-				opRun := func(op *operations.Operation) error{
+				logger.Info("Number of instances to migrate", logger.Ctx{"count": len(instancesToMigrate)})
+
+				opRun := func(op *operations.Operation) error {
 					err := autoClusterRebalance(ctx, s, instancesToMigrate, &maxServer, &minServer, op)
 					if err != nil {
 						logger.Error("Failed rebalancing cluster instances", logger.Ctx{"err": err})
 						return err
 					}
-					
+
 					return nil
 				}
-				op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.ClusterRebalance, nil, nil, opRun, nil, nil, nil)
 				
+				op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.ClusterRebalance, nil, nil, opRun, nil, nil, nil)
+				if err != nil {
+					logger.Error("Failed creating auto cluster rebalancing operation", logger.Ctx{"err": err})
+					return
+				}
+
 				err = op.Start()
 				if err != nil {
 					logger.Error("Failed starting auto cluster rebalancing operation", logger.Ctx{"err": err})
 					return
 				}
-		
+
 				err = op.Wait(ctx)
 				if err != nil {
 					logger.Error("Failed auto cluster rebalancing", logger.Ctx{"err": err})
 					return
 				}
-				
 			}
-		
 		}
-
 	}
-	return f,task.Every(time.Minute)
+	return f, task.Every(time.Minute)
 }
 
-func autoClusterRebalance(ctx context.Context, s *state.State, instancesToMigrate []instance.Instance, maxServer *db.NodeInfo, minServer *db.NodeInfo, op *operations.Operation) error{
-	for _, inst := range instancesToMigrate{
+func autoClusterRebalance(ctx context.Context, s *state.State, instancesToMigrate []instance.Instance, maxServer *db.NodeInfo, minServer *db.NodeInfo, op *operations.Operation) error {
+	for _, inst := range instancesToMigrate {
 		req := api.InstancePost{
 			Migration: true,
-			Live: true,
+			Live:      true,
 		}
-
 
 		err := migrateInstance(ctx, s, inst, req, maxServer, minServer, op)
 		if err != nil {

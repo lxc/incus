@@ -54,9 +54,9 @@ func (c *Config) BGPASN() int64 {
 	return c.m.GetInt64("core.bgp_asn")
 }
 
-// ClusterRebalanceThreshold returns the relevant setting
+// ClusterRebalanceThreshold returns the relevant setting.
 func (c *Config) ClusterRebalanceThreshold() int64 {
-	return c.m.GetInt64("cluster.rebalance.threshold");
+	return c.m.GetInt64("cluster.rebalance.threshold")
 }
 
 // HTTPSAllowedHeaders returns the relevant CORS setting.
@@ -399,7 +399,7 @@ var ConfigSchema = config.Schema{
 	"cluster.rebalance.threshold": {Type: config.Int64, Default: "20"},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.cooldown)
-	// Amount of time during which an instance will not be moved again 
+	// Amount of time during which an instance will not be moved again
 	// ---
 	//  type: string
 	//  scope: global
