@@ -93,6 +93,7 @@ type Authorizer interface {
 	DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error
 
 	GetInstanceAccess(ctx context.Context, projectName string, instanceName string) (*api.Access, error)
+	GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error)
 }
 
 // Opts is used as part of the LoadAuthorizer function so that only the relevant configuration fields are passed into a
