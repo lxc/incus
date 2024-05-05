@@ -195,3 +195,59 @@ func (t *tls) certificateDetails(fingerprint string) (certificate.Type, bool, []
 
 	return -1, false, nil, api.StatusErrorf(http.StatusForbidden, "Client certificate not found")
 }
+
+func (t *tls) GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error) {
+	var access api.Access
+
+	certificates, projects := t.certificates.GetCertificatesAndProjects()
+
+	clientCerts := certificates[certificate.TypeClient]
+
+	for fingerprint, _ := range clientCerts {
+		certificateProjects := projects[fingerprint]
+
+		if certificateProjects == nil {
+			access = append(access, api.AccessEntry{
+				Identifier: fingerprint,
+				Role:       "admin",
+				Provider:   "tls",
+			})
+		}
+
+		for _, project := range certificateProjects {
+			if project == projectName {
+				access = append(access, api.AccessEntry{
+					Identifier: fingerprint,
+					Role:       "operator",
+					Provider:   "tls",
+				})
+				break
+			}
+		}
+	}
+
+	for fingerprint, _ := range projects {
+		certificateProjects := projects[fingerprint]
+
+		if certificateProjects == nil {
+			access = append(access, api.AccessEntry{
+				Identifier: fingerprint,
+				Role:       "view",
+				Provider:   "tls",
+			})
+		}
+
+		for _, project := range certificateProjects {
+			if project == projectName {
+				access = append(access, api.AccessEntry{
+					Identifier: fingerprint,
+					Role:       "view",
+					Provider:   "tls",
+				})
+				break
+			}
+		}
+	}
+
+	return &access, nil
+}

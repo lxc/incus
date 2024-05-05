@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"github.com/lxc/incus/v6/shared/api"
 	"net/http"
 
 	"github.com/lxc/incus/v6/internal/server/certificate"
@@ -90,6 +91,8 @@ type Authorizer interface {
 
 	AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error
 	DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error
+
+	GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error)
 }
 
 // Opts is used as part of the LoadAuthorizer function so that only the relevant configuration fields are passed into a

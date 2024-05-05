@@ -1108,3 +1108,33 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	// Perform any necessary writes and deletions against the OpenFGA server.
 	return f.updateTuples(ctx, writes, deletions)
 }
+
+func (f *fga) GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error) {
+	var access api.Access
+
+	projectObject := ObjectProject(projectName).String()
+
+	relations := []string{"admin", "operator", "viewer"}
+
+	for _, relation := range relations {
+		resp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
+			User:     projectObject,
+			Relation: relation,
+			Type:     string(ObjectTypeUser),
+		}).Execute()
+
+		if err != nil {
+			return nil, fmt.Errorf("Failed to list objects with relation %q: %w", relation, err)
+		}
+
+		for _, obj := range resp.GetObjects() {
+			access = append(access, api.AccessEntry{
+				Identifier: obj,
+				Role:       relation,
+				Provider:   "openfga",
+			})
+		}
+	}
+
+	return &access, nil
+}
