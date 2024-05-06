@@ -2492,3 +2492,7 @@ This adds support for listing network ACLs across all projects through the `all-
 ## `storage_buckets_all_projects`
 
 This adds support for listing storage buckets across all projects through the `all-projects` parameter on the `GET /1.0/storage-pools/POOL/buckets`API.
+
+## `resources_load
+
+Add a new Load section to the resources API.
