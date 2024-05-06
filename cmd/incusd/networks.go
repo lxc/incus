@@ -91,6 +91,11 @@ var networkStateCmd = APIEndpoint{
 //      description: Project name
 //      type: string
 //      example: default
+//    - in: query
+//      name: all-projects
+//      description: Retrieve networks from all projects
+//      type: boolean
+//      example: true
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -140,6 +145,11 @@ var networkStateCmd = APIEndpoint{
 //	    description: Project name
 //	    type: string
 //	    example: default
+//	  - in: query
+//	    name: all-projects
+//	    description: Retrieve networks from all projects
+//	    type: boolean
+//	    example: true
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -177,17 +187,32 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	recursion := localUtil.IsRecursionRequest(r)
+	allProjects := util.IsTrue(r.FormValue("all-projects"))
 
-	var networkNames []string
+	var networkNames map[string][]string
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Get list of managed networks (that may or may not have network interfaces on the host).
-		networkNames, err = tx.GetNetworks(ctx, projectName)
+		if allProjects {
+			// Get list of managed networks from all projects.
+			networkNames, err = tx.GetNetworksAllProjects(ctx)
+			if err != nil {
+				return err
+			}
+		} else {
+			// Get list of managed networks (that may or may not have network interfaces on the host).
+			networks, err := tx.GetNetworks(ctx, projectName)
+			if err != nil {
+				return err
+			}
 
-		return err
+			networkNames = map[string][]string{}
+			networkNames[projectName] = networks
+		}
+
+		return nil
 	})
 	if err != nil {
-		return response.InternalError(err)
+		return response.SmartError(err)
 	}
 
 	// Get list of actual network interfaces on the host as well if the effective project is Default.
@@ -204,8 +229,8 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			// Append to the list of networks if a managed network of same name doesn't exist.
-			if !slices.Contains(networkNames, iface.Name) {
-				networkNames = append(networkNames, iface.Name)
+			if !slices.Contains(networkNames[projectName], iface.Name) {
+				networkNames[projectName] = append(networkNames[projectName], iface.Name)
 			}
 		}
 	}
@@ -217,20 +242,22 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 
 	resultString := []string{}
 	resultMap := []api.Network{}
-	for _, networkName := range networkNames {
-		if !userHasPermission(auth.ObjectNetwork(projectName, networkName)) {
-			continue
-		}
-
-		if !recursion {
-			resultString = append(resultString, fmt.Sprintf("/%s/networks/%s", version.APIVersion, networkName))
-		} else {
-			net, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProject.Config, networkName)
-			if err != nil {
+	for projectName, networks := range networkNames {
+		for _, networkName := range networks {
+			if !userHasPermission(auth.ObjectNetwork(projectName, networkName)) {
 				continue
 			}
 
-			resultMap = append(resultMap, net)
+			if !recursion {
+				resultString = append(resultString, fmt.Sprintf("/%s/networks/%s", version.APIVersion, networkName))
+			} else {
+				net, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProject.Config, networkName)
+				if err != nil {
+					continue
+				}
+
+				resultMap = append(resultMap, net)
+			}
 		}
 	}
 
@@ -862,6 +889,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 	apiNet.Name = networkName
 	apiNet.UsedBy = []string{}
 	apiNet.Config = map[string]string{}
+	apiNet.Project = projectName
 
 	// Set the device type as needed.
 	if n != nil {
