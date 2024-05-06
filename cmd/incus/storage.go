@@ -25,6 +25,11 @@ type cmdStorage struct {
 	flagTarget string
 }
 
+type storageColumn struct {
+	Name string
+	Data func(api.StoragePool) string
+}
+
 func (c *cmdStorage) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = usage("storage")
@@ -648,7 +653,8 @@ type cmdStorageList struct {
 	global  *cmdGlobal
 	storage *cmdStorage
 
-	flagFormat string
+	flagFormat  string
+	flagColumns string
 }
 
 func (c *cmdStorageList) Command() *cobra.Command {
@@ -657,7 +663,29 @@ func (c *cmdStorageList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available storage pools")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List available storage pools`))
+		`List available storage pools
+
+Default column layout: nDSdus
+
+== Columns ==
+The -c option takes a comma separated list of arguments that control
+which instance attributes to output when displaying in table or csv
+format.
+
+Column arguments are either pre-defined shorthand chars (see below),
+or (extended) config keys.
+
+Commas between consecutive shorthand chars are optional.
+
+Pre-defined column shorthand chars:
+  n - Name
+  D - Driver
+  d - Description
+  S - Source
+  u - used by
+  s - state`))
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultStorageColumns, i18n.G("Columns")+"``")
+
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
 
 	cmd.RunE = c.Run
@@ -671,6 +699,64 @@ func (c *cmdStorageList) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultStorageColumns = "nDdus"
+
+func (c *cmdStorageList) parseColumns() ([]storageColumn, error) {
+	columnsShorthandMap := map[rune]storageColumn{
+		'n': {i18n.G("NAME"), c.storageNameColumnData},
+		'D': {i18n.G("DRIVER"), c.driverColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+		'S': {i18n.G("SOURCE"), c.sourceColumnData},
+		'u': {i18n.G("USED BY"), c.usedByColumnData},
+		's': {i18n.G("STATE"), c.stateColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+
+	columns := []storageColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdStorageList) storageNameColumnData(storage api.StoragePool) string {
+	return storage.Name
+}
+
+func (c *cmdStorageList) driverColumnData(storage api.StoragePool) string {
+	return storage.Driver
+}
+
+func (c *cmdStorageList) descriptionColumnData(storage api.StoragePool) string {
+	return storage.Description
+}
+
+func (c *cmdStorageList) sourceColumnData(storage api.StoragePool) string {
+	return storage.Config["source"]
+}
+
+func (c *cmdStorageList) usedByColumnData(storage api.StoragePool) string {
+	return fmt.Sprintf("%d", len(storage.UsedBy))
+}
+
+func (c *cmdStorageList) stateColumnData(storage api.StoragePool) string {
+	return strings.ToUpper(storage.Status)
 }
 
 func (c *cmdStorageList) Run(cmd *cobra.Command, args []string) error {
@@ -699,34 +785,28 @@ func (c *cmdStorageList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
 	data := [][]string{}
 	for _, pool := range pools {
-		usedby := strconv.Itoa(len(pool.UsedBy))
-		details := []string{pool.Name, pool.Driver}
-		if !resource.server.IsClustered() {
-			details = append(details, pool.Config["source"])
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(pool))
 		}
 
-		details = append(details, pool.Description)
-		details = append(details, usedby)
-		details = append(details, strings.ToUpper(pool.Status))
-		data = append(data, details)
+		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("DRIVER"),
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
-
-	if !resource.server.IsClustered() {
-		header = append(header, i18n.G("SOURCE"))
-	}
-
-	header = append(header, i18n.G("DESCRIPTION"))
-	header = append(header, i18n.G("USED BY"))
-	header = append(header, i18n.G("STATE"))
 
 	return cli.RenderTable(c.flagFormat, header, data, pools)
 }
