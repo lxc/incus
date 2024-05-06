@@ -251,12 +251,12 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 			if !recursion {
 				resultString = append(resultString, fmt.Sprintf("/%s/networks/%s", version.APIVersion, networkName))
 			} else {
-				net, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProject.Config, networkName)
+				netInfo, err := doNetworkGet(s, r, s.ServerClustered, projectName, reqProject.Config, networkName)
 				if err != nil {
 					continue
 				}
 
-				resultMap = append(resultMap, net)
+				resultMap = append(resultMap, netInfo)
 			}
 		}
 	}
