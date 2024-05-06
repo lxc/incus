@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var networkACLsCmd = APIEndpoint{
@@ -65,6 +66,11 @@ var networkACLLogCmd = APIEndpoint{
 //      description: Project name
 //      type: string
 //      example: default
+//    - in: query
+//      name: all-projects
+//      description: Retrieve network ACLs from all projects
+//      type: boolean
+//      example: true
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -114,6 +120,11 @@ var networkACLLogCmd = APIEndpoint{
 //	    description: Project name
 //	    type: string
 //	    example: default
+//	  - in: query
+//	    name: all-projects
+//	    description: Retrieve network ACLs from all projects
+//	    type: boolean
+//	    example: true
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -151,14 +162,29 @@ func networkACLsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	recursion := localUtil.IsRecursionRequest(r)
+	allProjects := util.IsTrue(r.FormValue("all-projects"))
 
-	var aclNames []string
+	var aclNames map[string][]string
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		// Get list of Network ACLs.
-		aclNames, err = tx.GetNetworkACLs(ctx, projectName)
+		if allProjects {
+			// Get list of Network ACLs across all projects.
+			aclNames, err = tx.GetNetworkACLsAllProjects(ctx)
+			if err != nil {
+				return err
+			}
+		} else {
+			// Get list of Network ACLs.
+			acls, err := tx.GetNetworkACLs(ctx, projectName)
+			if err != nil {
+				return err
+			}
+
+			aclNames = map[string][]string{}
+			aclNames[projectName] = acls
+		}
 
 		return err
 	})
@@ -173,23 +199,25 @@ func networkACLsGet(d *Daemon, r *http.Request) response.Response {
 
 	resultString := []string{}
 	resultMap := []api.NetworkACL{}
-	for _, aclName := range aclNames {
-		if !userHasPermission(auth.ObjectNetworkACL(projectName, aclName)) {
-			continue
-		}
-
-		if !recursion {
-			resultString = append(resultString, fmt.Sprintf("/%s/network-acls/%s", version.APIVersion, aclName))
-		} else {
-			netACL, err := acl.LoadByName(s, projectName, aclName)
-			if err != nil {
+	for projectName, acls := range aclNames {
+		for _, aclName := range acls {
+			if !userHasPermission(auth.ObjectNetworkACL(projectName, aclName)) {
 				continue
 			}
 
-			netACLInfo := netACL.Info()
-			netACLInfo.UsedBy, _ = netACL.UsedBy() // Ignore errors in UsedBy, will return nil.
+			if !recursion {
+				resultString = append(resultString, fmt.Sprintf("/%s/network-acls/%s", version.APIVersion, aclName))
+			} else {
+				netACL, err := acl.LoadByName(s, projectName, aclName)
+				if err != nil {
+					continue
+				}
 
-			resultMap = append(resultMap, *netACLInfo)
+				netACLInfo := netACL.Info()
+				netACLInfo.UsedBy, _ = netACL.UsedBy() // Ignore errors in UsedBy, will return nil.
+
+				resultMap = append(resultMap, *netACLInfo)
+			}
 		}
 	}
 

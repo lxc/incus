@@ -2560,6 +2560,11 @@ definitions:
                 readOnly: true
                 type: string
                 x-go-name: Name
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
             status:
                 description: The state of the network (for managed network in clusters)
                 example: Created
@@ -2616,6 +2621,11 @@ definitions:
                 example: bar
                 type: string
                 x-go-name: Name
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
             used_by:
                 description: List of URLs of objects using this profile
                 example:
@@ -4128,6 +4138,8 @@ definitions:
                 $ref: '#/definitions/ResourcesCPU'
             gpu:
                 $ref: '#/definitions/ResourcesGPU'
+            load:
+                $ref: '#/definitions/ResourcesLoad'
             memory:
                 $ref: '#/definitions/ResourcesMemory'
             network:
@@ -4523,6 +4535,31 @@ definitions:
                     $ref: '#/definitions/ResourcesGPUCard'
                 type: array
                 x-go-name: VFs
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    ResourcesLoad:
+        description: ResourcesLoad represents system load information
+        properties:
+            Average1Min:
+                description: Load average in the past minute
+                example: 0.69
+                format: double
+                type: number
+            Average5Min:
+                description: Load average in the past 5 minutes
+                example: 1.1
+                format: double
+                type: number
+            Average10Min:
+                description: Load average in the past 10 minutes
+                example: 1.29
+                format: double
+                type: number
+            Processes:
+                description: The number of active processes
+                example: 1234
+                format: int64
+                type: integer
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     ResourcesMemory:
@@ -5680,6 +5717,11 @@ definitions:
                 example: foo
                 type: string
                 x-go-name: Name
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
             s3_url:
                 description: Bucket S3 URL
                 example: https://127.0.0.1:8080/foo
@@ -10391,6 +10433,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve network ACLs from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -10652,6 +10699,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve network ACLs from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -11489,6 +11541,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve networks from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -12598,6 +12655,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve networks from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -13983,6 +14045,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve storage pool buckets from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -14539,6 +14606,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve storage pool buckets from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:

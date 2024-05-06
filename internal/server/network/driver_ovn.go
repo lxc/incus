@@ -2174,7 +2174,7 @@ func (n *ovn) setup(update bool) error {
 				}
 			}
 
-			err = n.state.OVNNB.CreateLogicalRouterSNAT(context.TODO(), n.getRouterName(), routerIntPortIPv4Net, snatIP, update)
+			err = n.state.OVNNB.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "snat", routerIntPortIPv4Net, snatIP, nil, false, update)
 			if err != nil {
 				return fmt.Errorf("Failed adding router IPv4 SNAT rule: %w", err)
 			}
@@ -2190,7 +2190,7 @@ func (n *ovn) setup(update bool) error {
 				}
 			}
 
-			err = n.state.OVNNB.CreateLogicalRouterSNAT(context.TODO(), n.getRouterName(), routerIntPortIPv6Net, snatIP, update)
+			err = n.state.OVNNB.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "snat", routerIntPortIPv6Net, snatIP, nil, false, update)
 			if err != nil {
 				return fmt.Errorf("Failed adding router IPv6 SNAT rule: %w", err)
 			}
@@ -3758,7 +3758,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				continue // No qualifying target IP from DNS records.
 			}
 
-			err = n.state.OVNNB.LogicalRouterDNATSNATAdd(n.getRouterName(), ip, ip, true, true)
+			err = n.state.OVNNB.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", nil, ip, ip, true, true)
 			if err != nil {
 				return "", nil, err
 			}
@@ -3824,7 +3824,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		// DNAT doesn't support whole subnets.
 		if slices.Contains([]string{"l2proxy", ""}, opts.UplinkConfig["ovn.ingress_mode"]) {
 			err = SubnetIterate(externalRoute, func(ip net.IP) error {
-				err = n.state.OVNNB.LogicalRouterDNATSNATAdd(n.getRouterName(), ip, ip, true, true)
+				err = n.state.OVNNB.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", nil, ip, ip, true, true)
 				if err != nil {
 					return err
 				}

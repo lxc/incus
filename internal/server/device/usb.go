@@ -54,15 +54,72 @@ func (d *usb) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	rules := map[string]func(string) error{
-		"vendorid":  validate.Optional(validate.IsDeviceID),
+		// gendoc:generate(entity=devices, group=usb, key=vendorid)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: The vendor ID of the USB device
+		"vendorid": validate.Optional(validate.IsDeviceID),
+
+		// gendoc:generate(entity=devices, group=usb, key=productid)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: The product ID of the USB device
 		"productid": validate.Optional(validate.IsDeviceID),
-		"serial":    validate.Optional(validate.IsAny),
-		"uid":       unixValidUserID,
-		"gid":       unixValidUserID,
-		"mode":      unixValidOctalFileMode,
-		"required":  validate.Optional(validate.IsBool),
-		"busnum":    validate.Optional(validate.IsUint32),
-		"devnum":    validate.Optional(validate.IsUint32),
+
+		// gendoc:generate(entity=devices, group=usb, key=serial)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: The serial number of the USB device
+		"serial": validate.Optional(validate.IsAny),
+
+		// gendoc:generate(entity=devices, group=usb, key=uid)
+		//
+		// ---
+		//  type: int
+		//  defaultdesc: `0`
+		//  shortdesc: Only for containers: UID of the device owner in the instance
+		"uid": unixValidUserID,
+
+		// gendoc:generate(entity=devices, group=usb, key=gid)
+		//
+		// ---
+		//  type: int
+		//  defaultdesc: `0`
+		//  shortdesc: Only for containers: GID of the device owner in the instance
+		"gid": unixValidUserID,
+
+		// gendoc:generate(entity=devices, group=usb, key=mode)
+		//
+		// ---
+		//  type: int
+		//  defaultdesc: `0660`
+		//  shortdesc: Only for containers: Mode of the device in the instance
+		"mode": unixValidOctalFileMode,
+
+		// gendoc:generate(entity=devices, group=usb, key=required)
+		//
+		// ---
+		//  type: bool
+		//  defaultdesc: `false`
+		//  shortdesc: Whether this device is required to start the instance (the default is `false`, and all devices can be hotplugged)
+		"required": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=devices, group=usb, key=busnum)
+		//
+		// ---
+		//  type: int
+		//  shortdesc: The bus number of which the USB device is attached
+		"busnum": validate.Optional(validate.IsUint32),
+
+		// gendoc:generate(entity=devices, group=usb, key=devnum)
+		//
+		// ---
+		//  type: int
+		//  shortdesc: The device number of the USB device
+		"devnum": validate.Optional(validate.IsUint32),
 	}
 
 	err := d.config.Validate(rules)

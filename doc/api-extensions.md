@@ -2476,6 +2476,10 @@ This allows the instance scriptlet to fetch a list of instances given an optiona
 
 This allows the instance scriptlet to fetch a list of cluster members given an optional cluster group.
 
+## `instances_scriptlet_get_project`
+
+This allows the instance scriptlet to fetch a project given name of a project.
+
 ## `network_acl_stateless`
 
 This adds support for stateless rules in network ACLs.
@@ -2483,3 +2487,19 @@ This adds support for stateless rules in network ACLs.
 ## `instance_state_started_at`
 
 This adds a `started_at` timestamp to the instance state API.
+
+## `networks_all_projects`
+
+This adds support for listing networks across all projects through the `all-projects` parameter on the `GET /1.0/networks`API.
+
+## `network_acls_all_projects`
+
+This adds support for listing network ACLs across all projects through the `all-projects` parameter on the `GET /1.0/network-acls`API.
+
+## `storage_buckets_all_projects`
+
+This adds support for listing storage buckets across all projects through the `all-projects` parameter on the `GET /1.0/storage-pools/POOL/buckets`API.
+
+## `resources_load
+
+Add a new Load section to the resources API.

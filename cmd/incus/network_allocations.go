@@ -73,7 +73,17 @@ func (c *cmdNetworkListAllocations) Run(cmd *cobra.Command, args []string) error
 
 	resource := resources[0]
 	server := resource.server.UseProject(c.flagProject)
-	addresses, err := server.GetNetworkAllocations(c.flagAllProjects)
+
+	if c.flagAllProjects {
+		addresses, err := server.GetNetworkAllocationsAllProjects()
+		if err != nil {
+			return err
+		}
+
+		return c.pretty(addresses)
+	}
+
+	addresses, err := server.GetNetworkAllocations()
 	if err != nil {
 		return err
 	}

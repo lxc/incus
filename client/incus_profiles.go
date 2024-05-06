@@ -44,8 +44,7 @@ func (r *ProtocolIncus) GetProfilesAllProjects() ([]api.Profile, error) {
 	}
 
 	profiles := []api.Profile{}
-	uri := "/profiles?all-projects=true&recursion=1"
-	_, err = r.queryStruct("GET", uri, nil, "", &profiles)
+	_, err = r.queryStruct("GET", "/profiles?recursion=1&all-projects=true", nil, "", &profiles)
 	if err != nil {
 		return nil, err
 	}

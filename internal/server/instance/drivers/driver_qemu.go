@@ -7761,19 +7761,19 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 				}
 			}
 		}
+
+		status.Pid = int64(pid)
+		status.StartedAt, err = d.processStartedAt(d.InitPID())
+		if err != nil {
+			return status, err
+		}
 	}
 
-	status.Pid = int64(pid)
 	status.Status = statusCode.String()
 	status.StatusCode = statusCode
 	status.Disk, err = d.diskState()
 	if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
 		d.logger.Warn("Error getting disk usage", logger.Ctx{"err": err})
-	}
-
-	status.StartedAt, err = d.processStartedAt(d.InitPID())
-	if err != nil {
-		return status, err
 	}
 
 	return status, nil

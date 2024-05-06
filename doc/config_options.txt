@@ -16,6 +16,164 @@ User keys can be used in search.
 ```
 
 <!-- config group cluster-cluster end -->
+<!-- config group devices-unix-char-block start -->
+```{config:option} gid devices-unix-char-block
+:default: "0"
+:shortdesc: "GID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} major devices-unix-char-block
+:default: "device on host"
+:shortdesc: "Device major number"
+:type: "int"
+
+```
+
+```{config:option} minor devices-unix-char-block
+:default: "device on host"
+:shortdesc: "Device minor number"
+:type: "int"
+
+```
+
+```{config:option} mode devices-unix-char-block
+:default: "0660"
+:shortdesc: "Mode of the device in the instance"
+:type: "int"
+
+```
+
+```{config:option} path devices-unix-char-block
+:shortdesc: "Path inside the instance (one of `source` and `path` must be set)"
+:type: "string"
+
+```
+
+```{config:option} required devices-unix-char-block
+:default: "true"
+:shortdesc: "Whether this device is required to start the instance"
+:type: "bool"
+
+```
+
+```{config:option} source devices-unix-char-block
+:shortdesc: "Path on the host (one of `source` and `path` must be set)"
+:type: "string"
+
+```
+
+```{config:option} uid devices-unix-char-block
+:default: "0"
+:shortdesc: "UID of the device owner in the instance"
+:type: "int"
+
+```
+
+<!-- config group devices-unix-char-block end -->
+<!-- config group devices-unix-hotplug start -->
+```{config:option} gid devices-unix-hotplug
+:default: "0"
+:shortdesc: "GID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} mode devices-unix-hotplug
+:default: "0660"
+:shortdesc: "Mode of the device in the instance"
+:type: "int"
+
+```
+
+```{config:option} productid devices-unix-hotplug
+:shortdesc: "The product ID of the USB device"
+:type: "string"
+
+```
+
+```{config:option} required devices-unix-hotplug
+:default: "true"
+:shortdesc: "Whether this device is required to start the instance"
+:type: "bool"
+
+```
+
+```{config:option} uid devices-unix-hotplug
+:default: "0"
+:shortdesc: "UID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} vendorid devices-unix-hotplug
+:shortdesc: "The vendor ID of the USB device"
+:type: "string"
+
+```
+
+<!-- config group devices-unix-hotplug end -->
+<!-- config group devices-usb start -->
+```{config:option} busnum devices-usb
+:shortdesc: "The bus number of which the USB device is attached"
+:type: "int"
+
+```
+
+```{config:option} devnum devices-usb
+:shortdesc: "The device number of the USB device"
+:type: "int"
+
+```
+
+```{config:option} gid devices-usb
+:defaultdesc: "`0`"
+:shortdesc: "Only for containers: GID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} mode devices-usb
+:defaultdesc: "`0660`"
+:shortdesc: "Only for containers: Mode of the device in the instance"
+:type: "int"
+
+```
+
+```{config:option} productid devices-usb
+:shortdesc: "The product ID of the USB device"
+:type: "string"
+
+```
+
+```{config:option} required devices-usb
+:defaultdesc: "`false`"
+:shortdesc: "Whether this device is required to start the instance (the default is `false`, and all devices can be hotplugged)"
+:type: "bool"
+
+```
+
+```{config:option} serial devices-usb
+:shortdesc: "The serial number of the USB device"
+:type: "string"
+
+```
+
+```{config:option} uid devices-usb
+:defaultdesc: "`0`"
+:shortdesc: "Only for containers: UID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} vendorid devices-usb
+:shortdesc: "The vendor ID of the USB device"
+:type: "string"
+
+```
+
+<!-- config group devices-usb end -->
 <!-- config group image-requirements start -->
 ```{config:option} requirements.cdrom_agent image-requirements
 :shortdesc: "If set to `true`, indicates that the VM requires an `agent:config` disk be added."
@@ -1033,6 +1191,92 @@ It is globally unique across all servers and projects.
 ```
 
 <!-- config group instance-volatile end -->
+<!-- config group kernel-limits start -->
+```{config:option} limits.kernel.as kernel-limits
+:resource: "`RLIMIT_AS`"
+:shortdesc: "Maximum size of the process's virtual memory"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.core kernel-limits
+:resource: "`RLIMIT_CORE`"
+:shortdesc: "Maximum size of the process's core dump file"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.cpu kernel-limits
+:resource: "`RLIMIT_CPU`"
+:shortdesc: "Limit in seconds on the amount of CPU time the process can consume"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.data kernel-limits
+:resource: "`RLIMIT_DATA`"
+:shortdesc: "Maximum size of the process's data segment"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.fsize kernel-limits
+:resource: "`RLIMIT_FSIZE`"
+:shortdesc: "Maximum size of files the process may create"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.locks kernel-limits
+:resource: "`RLIMIT_LOCKS`"
+:shortdesc: "Limit on the number of file locks that this process may establish"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.memlock kernel-limits
+:resource: "`RLIMIT_MEMLOCK`"
+:shortdesc: "Limit on the number of bytes of memory that the process may lock in RAM"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.nice kernel-limits
+:resource: "`RLIMIT_NICE`"
+:shortdesc: "Maximum value to which the process's nice value can be raised"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.nofile kernel-limits
+:resource: "`RLIMIT_NOFILE`"
+:shortdesc: "Maximum number of open files for the process"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.nproc kernel-limits
+:resource: "`RLIMIT_NPROC`"
+:shortdesc: "Maximum number of processes that can be created for the user of the calling process"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.rtprio kernel-limits
+:resource: "`RLIMIT_RTPRIO`"
+:shortdesc: "Maximum value on the real-time-priority that may be set for this process"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.sigpending kernel-limits
+:resource: "`RLIMIT_SIGPENDING`"
+:shortdesc: "Limit on the number of bytes of memory that the process may lock in RAM"
+:type: "string"
+
+```
+
+<!-- config group kernel-limits end -->
 <!-- config group network_integration-common start -->
 ```{config:option} user.* network_integration-common
 :shortdesc: "Free form user key/value storage"
@@ -1087,6 +1331,44 @@ This template gets access to the project name (`projectName`), integration name 
 ```
 
 <!-- config group network_integration-ovn end -->
+<!-- config group network_zone-common start -->
+```{config:option} dns.nameservers network_zone-common
+:required: "no"
+:shortdesc: "Comma-separated list of DNS server FQDNs (for NS records)"
+:type: "string set"
+
+```
+
+```{config:option} network.nat network_zone-common
+:defaultdesc: "`true`"
+:required: "no"
+:shortdesc: "Whether to generate records for NAT-ed subnets"
+:type: "bool"
+
+```
+
+```{config:option} peers.NAME.address network_zone-common
+:required: "no"
+:shortdesc: "IP address of a DNS server"
+:type: "string"
+
+```
+
+```{config:option} peers.NAME.key network_zone-common
+:required: "no"
+:shortdesc: "TSIG key for the server"
+:type: "string"
+
+```
+
+```{config:option} user.* network_zone-common
+:required: "no"
+:shortdesc: "User-provided free-form key/value pairs"
+:type: "string"
+
+```
+
+<!-- config group network_zone-common end -->
 <!-- config group project-features start -->
 ```{config:option} features.images project-features
 :defaultdesc: "`false`"

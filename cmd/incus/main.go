@@ -257,6 +257,10 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	versionCmd := cmdVersion{global: &globalCmd}
 	app.AddCommand(versionCmd.Command())
 
+	// top sub-command
+	topCmd := cmdTop{global: &globalCmd}
+	app.AddCommand(topCmd.Command())
+
 	// warning sub-command
 	warningCmd := cmdWarning{global: &globalCmd}
 	app.AddCommand(warningCmd.Command())

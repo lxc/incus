@@ -59,6 +59,12 @@ type StorageBucket struct {
 	//
 	// API extension: storage_buckets
 	Location string `json:"location" yaml:"location"`
+
+	// Project name
+	// Example: project1
+	//
+	// API extension: storage_buckets_all_projects
+	Project string `json:"project" yaml:"project"`
 }
 
 // Etag returns the values used for etag generation.

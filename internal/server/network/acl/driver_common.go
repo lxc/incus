@@ -113,6 +113,7 @@ func (d *common) Info() *api.NetworkACL {
 	info.Egress = append(make([]api.NetworkACLRule, 0, len(d.info.Egress)), d.info.Egress...)
 	info.Config = localUtil.CopyConfig(d.info.Config)
 	info.UsedBy = nil // To indicate its not populated (use Usedby() function to populate).
+	info.Project = d.projectName
 
 	return &info
 }

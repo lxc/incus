@@ -101,6 +101,12 @@ type Network struct {
 	//
 	// API extension: clustering
 	Locations []string `json:"locations" yaml:"locations"`
+
+	// Project name
+	// Example: project1
+	//
+	// API extension: networks_all_projects
+	Project string `json:"project" yaml:"project"`
 }
 
 // Writable converts a full Network struct into a NetworkPut struct (filters read-only fields).

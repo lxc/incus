@@ -21,6 +21,195 @@
 				]
 			}
 		},
+		"devices": {
+			"unix-char-block": {
+				"keys": [
+					{
+						"gid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "GID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"major": {
+							"default": "device on host",
+							"longdesc": "",
+							"shortdesc": "Device major number",
+							"type": "int"
+						}
+					},
+					{
+						"minor": {
+							"default": "device on host",
+							"longdesc": "",
+							"shortdesc": "Device minor number",
+							"type": "int"
+						}
+					},
+					{
+						"mode": {
+							"default": "0660",
+							"longdesc": "",
+							"shortdesc": "Mode of the device in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"path": {
+							"longdesc": "",
+							"shortdesc": "Path inside the instance (one of `source` and `path` must be set)",
+							"type": "string"
+						}
+					},
+					{
+						"required": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether this device is required to start the instance",
+							"type": "bool"
+						}
+					},
+					{
+						"source": {
+							"longdesc": "",
+							"shortdesc": "Path on the host (one of `source` and `path` must be set)",
+							"type": "string"
+						}
+					},
+					{
+						"uid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "UID of the device owner in the instance",
+							"type": "int"
+						}
+					}
+				]
+			},
+			"unix-hotplug": {
+				"keys": [
+					{
+						"gid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "GID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"mode": {
+							"default": "0660",
+							"longdesc": "",
+							"shortdesc": "Mode of the device in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"shortdesc": "The product ID of the USB device",
+							"type": "string"
+						}
+					},
+					{
+						"required": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether this device is required to start the instance",
+							"type": "bool"
+						}
+					},
+					{
+						"uid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "UID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"shortdesc": "The vendor ID of the USB device",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"usb": {
+				"keys": [
+					{
+						"busnum": {
+							"longdesc": "",
+							"shortdesc": "The bus number of which the USB device is attached",
+							"type": "int"
+						}
+					},
+					{
+						"devnum": {
+							"longdesc": "",
+							"shortdesc": "The device number of the USB device",
+							"type": "int"
+						}
+					},
+					{
+						"gid": {
+							"defaultdesc": "`0`",
+							"longdesc": "",
+							"shortdesc": "Only for containers: GID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"mode": {
+							"defaultdesc": "`0660`",
+							"longdesc": "",
+							"shortdesc": "Only for containers: Mode of the device in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"shortdesc": "The product ID of the USB device",
+							"type": "string"
+						}
+					},
+					{
+						"required": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether this device is required to start the instance (the default is `false`, and all devices can be hotplugged)",
+							"type": "bool"
+						}
+					},
+					{
+						"serial": {
+							"longdesc": "",
+							"shortdesc": "The serial number of the USB device",
+							"type": "string"
+						}
+					},
+					{
+						"uid": {
+							"defaultdesc": "`0`",
+							"longdesc": "",
+							"shortdesc": "Only for containers: UID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"shortdesc": "The vendor ID of the USB device",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"image": {
 			"requirements": {
 				"keys": [
@@ -1126,6 +1315,108 @@
 				]
 			}
 		},
+		"kernel": {
+			"limits": {
+				"keys": [
+					{
+						"limits.kernel.as": {
+							"longdesc": "",
+							"resource": "`RLIMIT_AS`",
+							"shortdesc": "Maximum size of the process's virtual memory",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.core": {
+							"longdesc": "",
+							"resource": "`RLIMIT_CORE`",
+							"shortdesc": "Maximum size of the process's core dump file",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.cpu": {
+							"longdesc": "",
+							"resource": "`RLIMIT_CPU`",
+							"shortdesc": "Limit in seconds on the amount of CPU time the process can consume",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.data": {
+							"longdesc": "",
+							"resource": "`RLIMIT_DATA`",
+							"shortdesc": "Maximum size of the process's data segment",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.fsize": {
+							"longdesc": "",
+							"resource": "`RLIMIT_FSIZE`",
+							"shortdesc": "Maximum size of files the process may create",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.locks": {
+							"longdesc": "",
+							"resource": "`RLIMIT_LOCKS`",
+							"shortdesc": "Limit on the number of file locks that this process may establish",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.memlock": {
+							"longdesc": "",
+							"resource": "`RLIMIT_MEMLOCK`",
+							"shortdesc": "Limit on the number of bytes of memory that the process may lock in RAM",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.nice": {
+							"longdesc": "",
+							"resource": "`RLIMIT_NICE`",
+							"shortdesc": "Maximum value to which the process's nice value can be raised",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.nofile": {
+							"longdesc": "",
+							"resource": "`RLIMIT_NOFILE`",
+							"shortdesc": "Maximum number of open files for the process",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.nproc": {
+							"longdesc": "",
+							"resource": "`RLIMIT_NPROC`",
+							"shortdesc": "Maximum number of processes that can be created for the user of the calling process",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.rtprio": {
+							"longdesc": "",
+							"resource": "`RLIMIT_RTPRIO`",
+							"shortdesc": "Maximum value on the real-time-priority that may be set for this process",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.sigpending": {
+							"longdesc": "",
+							"resource": "`RLIMIT_SIGPENDING`",
+							"shortdesc": "Limit on the number of bytes of memory that the process may lock in RAM",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"network_integration": {
 			"common": {
 				"keys": [
@@ -1185,6 +1476,53 @@
 							"defaultdesc": "`ts-incus-{{ integrationName }}-{{ projectName }}-{{ networkname }}`",
 							"longdesc": "Specify a Pongo2 template string that represents the transit switch name.\nThis template gets access to the project name (`projectName`), integration name (`integrationName`) and network name (`networkName`).\n",
 							"shortdesc": "Template for the transit switch name",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"network_zone": {
+			"common": {
+				"keys": [
+					{
+						"dns.nameservers": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Comma-separated list of DNS server FQDNs (for NS records)",
+							"type": "string set"
+						}
+					},
+					{
+						"network.nat": {
+							"defaultdesc": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether to generate records for NAT-ed subnets",
+							"type": "bool"
+						}
+					},
+					{
+						"peers.NAME.address": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "IP address of a DNS server",
+							"type": "string"
+						}
+					},
+					{
+						"peers.NAME.key": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "TSIG key for the server",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "User-provided free-form key/value pairs",
 							"type": "string"
 						}
 					}

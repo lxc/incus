@@ -13,16 +13,11 @@ You can read from the device and write to it.
 
 `unix-block` devices have the following device options:
 
-Key         | Type      | Default           | Description
-:--         | :--       | :--               | :--
-`gid`       | int       | `0`               | GID of the device owner in the instance
-`major`     | int       | device on host    | Device major number
-`minor`     | int       | device on host    | Device minor number
-`mode`      | int       | `0660`            | Mode of the device in the instance
-`path`      | string    | -                 | Path inside the instance (one of `source` and `path` must be set)
-`required`  | bool      | `true`            | Whether this device is required to start the instance (see {ref}`devices-unix-block-hotplugging`)
-`source`    | string    | -                 | Path on the host (one of `source` and `path` must be set)
-`uid`       | int       | `0`               | UID of the device owner in the instance
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-unix-char-block start -->
+    :end-before: <!-- config group devices-unix-char-block end -->
+```
 
 (devices-unix-block-hotplugging)=
 ## Hotplugging
