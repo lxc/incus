@@ -21,6 +21,79 @@
 				]
 			}
 		},
+		"devices": {
+			"usb": {
+				"keys": [
+					{
+						"busnum": {
+							"longdesc": "",
+							"shortdesc": "The bus number of which the USB device is attached",
+							"type": "int"
+						}
+					},
+					{
+						"devnum": {
+							"longdesc": "",
+							"shortdesc": "The device number of the USB device",
+							"type": "int"
+						}
+					},
+					{
+						"gid": {
+							"defaultdesc": "`0`",
+							"longdesc": "",
+							"shortdesc": "Only for containers: GID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"mode": {
+							"defaultdesc": "`0660`",
+							"longdesc": "",
+							"shortdesc": "Only for containers: Mode of the device in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"shortdesc": "The product ID of the USB device",
+							"type": "string"
+						}
+					},
+					{
+						"required": {
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether this device is required to start the instance (the default is `false`, and all devices can be hotplugged)",
+							"type": "bool"
+						}
+					},
+					{
+						"serial": {
+							"longdesc": "",
+							"shortdesc": "The serial number of the USB device",
+							"type": "string"
+						}
+					},
+					{
+						"uid": {
+							"defaultdesc": "`0`",
+							"longdesc": "",
+							"shortdesc": "Only for containers: UID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"shortdesc": "The vendor ID of the USB device",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"image": {
 			"requirements": {
 				"keys": [

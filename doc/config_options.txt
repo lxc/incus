@@ -16,6 +16,66 @@ User keys can be used in search.
 ```
 
 <!-- config group cluster-cluster end -->
+<!-- config group devices-usb start -->
+```{config:option} busnum devices-usb
+:shortdesc: "The bus number of which the USB device is attached"
+:type: "int"
+
+```
+
+```{config:option} devnum devices-usb
+:shortdesc: "The device number of the USB device"
+:type: "int"
+
+```
+
+```{config:option} gid devices-usb
+:defaultdesc: "`0`"
+:shortdesc: "Only for containers: GID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} mode devices-usb
+:defaultdesc: "`0660`"
+:shortdesc: "Only for containers: Mode of the device in the instance"
+:type: "int"
+
+```
+
+```{config:option} productid devices-usb
+:shortdesc: "The product ID of the USB device"
+:type: "string"
+
+```
+
+```{config:option} required devices-usb
+:defaultdesc: "`false`"
+:shortdesc: "Whether this device is required to start the instance (the default is `false`, and all devices can be hotplugged)"
+:type: "bool"
+
+```
+
+```{config:option} serial devices-usb
+:shortdesc: "The serial number of the USB device"
+:type: "string"
+
+```
+
+```{config:option} uid devices-usb
+:defaultdesc: "`0`"
+:shortdesc: "Only for containers: UID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} vendorid devices-usb
+:shortdesc: "The vendor ID of the USB device"
+:type: "string"
+
+```
+
+<!-- config group devices-usb end -->
 <!-- config group image-requirements start -->
 ```{config:option} requirements.cdrom_agent image-requirements
 :shortdesc: "If set to `true`, indicates that the VM requires an `agent:config` disk be added."
