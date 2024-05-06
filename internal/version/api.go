@@ -418,6 +418,7 @@ var APIExtensions = []string{
 	"network_acl_stateless",
 	"instance_state_started_at",
 	"networks_all_projects",
+	"network_acls_all_projects",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
