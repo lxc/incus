@@ -165,7 +165,22 @@ func (d *zone) validateConfig(info *api.NetworkZonePut) error {
 	rules := map[string]func(value string) error{}
 
 	// Regular config keys.
+
+	// gendoc:generate(entity=network_zone, group=common, key=dns.nameservers)
+	//
+	// ---
+	//  type: string set
+	//  required: no
+	//  shortdesc: Comma-separated list of DNS server FQDNs (for NS records)
 	rules["dns.nameservers"] = validate.IsListOf(validate.IsAny)
+
+	// gendoc:generate(entity=network_zone, group=common, key=network.nat)
+	//
+	// ---
+	//  type: bool
+	//  required: no
+	//  defaultdesc: `true`
+	//  shortdesc: Whether to generate records for NAT-ed subnets
 	rules["network.nat"] = validate.Optional(validate.IsBool)
 
 	// Validate peer config.
@@ -185,12 +200,30 @@ func (d *zone) validateConfig(info *api.NetworkZonePut) error {
 		// Add the correct validation rule for the dynamic field based on last part of key.
 		switch peerKey {
 		case "address":
+			// gendoc:generate(entity=network_zone, group=common, key=peers.NAME.address)
+			//
+			// ---
+			//  type: string
+			//  required: no
+			//  shortdesc: IP address of a DNS server
 			rules[k] = validate.Optional(validate.IsNetworkAddress)
 		case "key":
+			// gendoc:generate(entity=network_zone, group=common, key=peers.NAME.key)
+			//
+			// ---
+			//  type: string
+			//  required: no
+			//  shortdesc: TSIG key for the server
 			rules[k] = validate.Optional(validate.IsAny)
 		}
 	}
 
+	// gendoc:generate(entity=network_zone, group=common, key=user.*)
+	//
+	// ---
+	//  type: string
+	//  required: no
+	//  shortdesc: User-provided free-form key/value pairs
 	err := d.validateConfigMap(info.Config, rules)
 	if err != nil {
 		return err
