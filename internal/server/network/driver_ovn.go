@@ -716,7 +716,7 @@ func (n *ovn) getUnderlayInfo() (uint32, net.IP, error) {
 		return 0, nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	encapIP, err := vswitch.OVNEncapIP()
+	encapIP, err := vswitch.GetOVNEncapIP(context.TODO())
 	if err != nil {
 		return 0, nil, fmt.Errorf("Failed getting OVN enscapsulation IP from OVS: %w", err)
 	}
@@ -1374,7 +1374,7 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 	}
 
 	// Associate OVS bridge to logical OVN provider.
-	err = vswitch.OVNBridgeMappingAdd(vars.ovsBridge, uplinkNet.Name())
+	err = vswitch.AddOVNBridgeMapping(context.TODO(), vars.ovsBridge, uplinkNet.Name())
 	if err != nil {
 		return fmt.Errorf("Failed to associate uplink OVS bridge %q to OVN provider %q: %w", vars.ovsBridge, uplinkNet.Name(), err)
 	}
@@ -1398,7 +1398,7 @@ func (n *ovn) startUplinkPortBridgeOVS(uplinkNet Network, bridgeDevice string) e
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	err = vswitch.OVNBridgeMappingAdd(bridgeDevice, uplinkNet.Name())
+	err = vswitch.AddOVNBridgeMapping(context.TODO(), bridgeDevice, uplinkNet.Name())
 	if err != nil {
 		return fmt.Errorf("Failed to associate uplink OVS bridge %q to OVN provider %q: %w", bridgeDevice, uplinkNet.Name(), err)
 	}
@@ -1520,7 +1520,7 @@ func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 	}
 
 	// Associate OVS bridge to logical OVN provider.
-	err = vswitch.OVNBridgeMappingAdd(vars.ovsBridge, uplinkNet.Name())
+	err = vswitch.AddOVNBridgeMapping(context.TODO(), vars.ovsBridge, uplinkNet.Name())
 	if err != nil {
 		return fmt.Errorf("Failed to associate uplink OVS bridge %q to OVN provider %q: %w", vars.ovsBridge, uplinkNet.Name(), err)
 	}
@@ -1632,7 +1632,7 @@ func (n *ovn) deleteUplinkPortBridgeNative(uplinkNet Network) error {
 				return fmt.Errorf("Failed to connect to OVS: %w", err)
 			}
 
-			err = vswitch.OVNBridgeMappingDelete(vars.ovsBridge, uplinkNet.Name())
+			err = vswitch.RemoveOVNBridgeMapping(context.TODO(), vars.ovsBridge, uplinkNet.Name())
 			if err != nil {
 				return err
 			}
@@ -1682,7 +1682,7 @@ func (n *ovn) deleteUplinkPortBridgeOVS(uplinkNet Network, ovsBridge string) err
 			return fmt.Errorf("Failed to connect to OVS: %w", err)
 		}
 
-		err = vswitch.OVNBridgeMappingDelete(ovsBridge, uplinkNet.Name())
+		err = vswitch.RemoveOVNBridgeMapping(context.TODO(), ovsBridge, uplinkNet.Name())
 		if err != nil {
 			return err
 		}
@@ -1729,7 +1729,7 @@ func (n *ovn) deleteUplinkPortPhysical(uplinkNet Network) error {
 		if !uplinkUsed {
 			releaseIF = true
 
-			err = vswitch.OVNBridgeMappingDelete(vars.ovsBridge, uplinkNet.Name())
+			err = vswitch.RemoveOVNBridgeMapping(context.TODO(), vars.ovsBridge, uplinkNet.Name())
 			if err != nil {
 				return err
 			}
@@ -2071,13 +2071,13 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Create logical router.
-	err = n.state.OVNNB.LogicalRouterAdd(n.getRouterName(), update)
+	err = n.state.OVNNB.CreateLogicalRouter(context.TODO(), n.getRouterName(), update)
 	if err != nil {
 		return fmt.Errorf("Failed adding router: %w", err)
 	}
 
 	if !update {
-		revert.Add(func() { _ = n.state.OVNNB.LogicalRouterDelete(n.getRouterName()) })
+		revert.Add(func() { _ = n.state.OVNNB.DeleteLogicalRouter(context.TODO(), n.getRouterName()) })
 	}
 
 	// Configure logical router.
@@ -2157,7 +2157,7 @@ func (n *ovn) setup(update bool) error {
 		// Remove any existing SNAT rules on update. As currently these are only defined from the network
 		// config rather than from any instance NIC config, so we can re-create the active config below.
 		if update {
-			err = n.state.OVNNB.LogicalRouterSNATDeleteAll(n.getRouterName())
+			err = n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "snat", true)
 			if err != nil {
 				return fmt.Errorf("Failed removing existing router SNAT rules: %w", err)
 			}
@@ -2174,7 +2174,7 @@ func (n *ovn) setup(update bool) error {
 				}
 			}
 
-			err = n.state.OVNNB.LogicalRouterSNATAdd(n.getRouterName(), routerIntPortIPv4Net, snatIP, update)
+			err = n.state.OVNNB.CreateLogicalRouterSNAT(context.TODO(), n.getRouterName(), routerIntPortIPv4Net, snatIP, update)
 			if err != nil {
 				return fmt.Errorf("Failed adding router IPv4 SNAT rule: %w", err)
 			}
@@ -2190,7 +2190,7 @@ func (n *ovn) setup(update bool) error {
 				}
 			}
 
-			err = n.state.OVNNB.LogicalRouterSNATAdd(n.getRouterName(), routerIntPortIPv6Net, snatIP, update)
+			err = n.state.OVNNB.CreateLogicalRouterSNAT(context.TODO(), n.getRouterName(), routerIntPortIPv6Net, snatIP, update)
 			if err != nil {
 				return fmt.Errorf("Failed adding router IPv6 SNAT rule: %w", err)
 			}
@@ -2715,7 +2715,7 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	}
 
 	if clientType == request.ClientTypeNormal {
-		err = n.state.OVNNB.LogicalRouterDelete(n.getRouterName())
+		err = n.state.OVNNB.DeleteLogicalRouter(context.TODO(), n.getRouterName())
 		if err != nil {
 			return err
 		}
@@ -3693,7 +3693,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		var dynamicIPs []net.IP
 
 		// Retry a few times in case port has not yet allocated dynamic IPs.
-		for i := 0; i < 5; i++ {
+		for i := 0; i < 10; i++ {
 			dynamicIPs, err = n.state.OVNNB.LogicalSwitchPortDynamicIPs(instancePortName)
 			if err == nil {
 				if len(dynamicIPs) > 0 {
@@ -3763,7 +3763,9 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				return "", nil, err
 			}
 
-			revert.Add(func() { _ = n.state.OVNNB.LogicalRouterDNATSNATDelete(n.getRouterName(), ip) })
+			revert.Add(func() {
+				_ = n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, ip)
+			})
 		}
 	}
 
@@ -3827,7 +3829,9 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 					return err
 				}
 
-				revert.Add(func() { _ = n.state.OVNNB.LogicalRouterDNATSNATDelete(n.getRouterName(), ip) })
+				revert.Add(func() {
+					_ = n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, ip)
+				})
 
 				return nil
 			})
@@ -4184,7 +4188,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 	}
 
 	if len(removeNATIPs) > 0 {
-		err = n.state.OVNNB.LogicalRouterDNATSNATDelete(n.getRouterName(), removeNATIPs...)
+		err = n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, removeNATIPs...)
 		if err != nil {
 			return err
 		}
@@ -4518,7 +4522,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 		} else {
 			// Remove all DNAT_AND_SNAT rules if not using l2proxy ingress mode, as currently we only
 			// use DNAT_AND_SNAT rules for this feature so it is safe to do.
-			err := n.state.OVNNB.LogicalRouterDNATSNATDeleteAll(n.getRouterName())
+			err := n.state.OVNNB.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", true)
 			if err != nil {
 				return fmt.Errorf("Failed deleting instance NIC ingress mode l2proxy rules: %w", err)
 			}

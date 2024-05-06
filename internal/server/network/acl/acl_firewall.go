@@ -17,6 +17,7 @@ func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName 
 	var dropRules []firewallDrivers.ACLRule
 	var rejectRules []firewallDrivers.ACLRule
 	var allowRules []firewallDrivers.ACLRule
+	var allowStatelessRules []firewallDrivers.ACLRule
 
 	// convertACLRules converts the ACL rules to Firewall ACL rules.
 	convertACLRules := func(direction string, logPrefix string, rules ...api.NetworkACLRule) error {
@@ -50,6 +51,8 @@ func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName 
 				rejectRules = append(rejectRules, firewallACLRule)
 			case rule.Action == "allow":
 				allowRules = append(allowRules, firewallACLRule)
+			case rule.Action == "allow-stateless": // TODO: add NOTRACK support
+				allowStatelessRules = append(allowStatelessRules, firewallACLRule)
 			default:
 				return fmt.Errorf("Unrecognised action %q", rule.Action)
 			}
@@ -90,6 +93,7 @@ func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName 
 	rules = append(rules, dropRules...)
 	rules = append(rules, rejectRules...)
 	rules = append(rules, allowRules...)
+	rules = append(rules, allowStatelessRules...)
 
 	// Add the automatic default ACL rule for the network.
 	egressAction, egressLogged := firewallACLDefaults(aclNet.Config, "egress")

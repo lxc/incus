@@ -1180,10 +1180,12 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 					}
 				}
 
-				// Set soft limit to value 10% less than hard limit
-				err = cg.SetMemorySoftLimit(int64(float64(valueInt) * 0.9))
-				if err != nil {
-					return nil, err
+				// If on CGroup1, set soft limit to value 10% less than hard limit.
+				if slices.Contains([]cgroup.Layout{cgroup.CgroupsLegacy, cgroup.CgroupsHybrid}, d.state.OS.CGInfo.Layout) {
+					err = cg.SetMemorySoftLimit(int64(float64(valueInt) * 0.9))
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
@@ -1977,11 +1979,23 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		return "", nil, fmt.Errorf("Load go-lxc struct: %w", err)
 	}
 
+	// gendoc:generate(entity=image, group=requirements, key=requirements.cgroup)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: If set to `v1`, indicates that the image requires the host to run cgroup v1.
+	//
 	// Ensure cgroup v1 configuration is set appropriately with the image using systemd
 	if d.localConfig["image.requirements.cgroup"] == "v1" && !util.PathExists("/sys/fs/cgroup/systemd") {
 		return "", nil, fmt.Errorf("The image used by this instance requires a CGroupV1 host system")
 	}
 
+	// gendoc:generate(entity=image, group=requirements, key=requirements.privileged)
+	//
+	// ---
+	//  type: bool
+	//  shortdesc: If set to `false`, indicates that the image cannot work as a privileged container.
+	//
 	// Ensure privileged is turned off for images that cannot work privileged
 	if util.IsFalse(d.localConfig["image.requirements.privileged"]) && util.IsTrue(d.expandedConfig["security.privileged"]) {
 		return "", nil, fmt.Errorf("The image used by this instance is incompatible with privileged containers. Please unset security.privileged on the instance")
@@ -2391,6 +2405,11 @@ func (d *lxc) detachInterfaceRename(netns string, ifName string, hostName string
 
 // Start starts the instance.
 func (d *lxc) Start(stateful bool) error {
+	// Check that migration.stateful is set for stateful actions.
+	if stateful && util.IsFalse(d.expandedConfig["migration.stateful"]) {
+		return fmt.Errorf("Stateful start requires that the instance migration.stateful be set to true")
+	}
+
 	unlock, err := d.updateBackupFileLock(context.Background())
 	if err != nil {
 		return err
@@ -2634,6 +2653,12 @@ func (d *lxc) validateStartup(stateful bool, statusCode api.StatusCode) error {
 		return err
 	}
 
+	// gendoc:generate(entity=image, group=requirements, key=requirements.nesting)
+	//
+	// ---
+	//  type: bool
+	//  shortdesc: If set to `true`, indicates that the image cannot work without nesting enabled.
+	//
 	// Ensure nesting is turned on for images that require nesting.
 	if util.IsTrue(d.localConfig["image.requirements.nesting"]) && util.IsFalseOrEmpty(d.expandedConfig["security.nesting"]) {
 		return fmt.Errorf("The image used by this instance requires nesting. Please set security.nesting=true on the instance")
@@ -2646,6 +2671,11 @@ func (d *lxc) validateStartup(stateful bool, statusCode api.StatusCode) error {
 func (d *lxc) Stop(stateful bool) error {
 	d.logger.Debug("Stop started", logger.Ctx{"stateful": stateful})
 	defer d.logger.Debug("Stop finished", logger.Ctx{"stateful": stateful})
+
+	// Check that migration.stateful is set for stateful actions.
+	if stateful && util.IsFalse(d.expandedConfig["migration.stateful"]) {
+		return fmt.Errorf("Stateful stop requires the instance to have migration.stateful be set to true")
+	}
 
 	// Must be run prior to creating the operation lock.
 	if !d.IsRunning() {
@@ -3394,11 +3424,18 @@ func (d *lxc) renderState(statusCode api.StatusCode, hostInterfaces []net.Interf
 	processesState, _ := d.processesState(pid)
 
 	if d.isRunningStatusCode(statusCode) {
+		var err error
+
 		status.CPU = d.cpuState()
 		status.Memory = d.memoryState()
 		status.Network = d.networkState(hostInterfaces)
 		status.Pid = int64(pid)
 		status.Processes = processesState
+
+		status.StartedAt, err = d.processStartedAt(d.InitPID())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	status.Disk = d.diskState()
@@ -3415,6 +3452,12 @@ func (d *lxc) RenderState(hostInterfaces []net.Interface) (*api.InstanceState, e
 
 // snapshot creates a snapshot of the instance.
 func (d *lxc) snapshot(name string, expiry time.Time, stateful bool) error {
+
+	// Check that migration.stateful is set for stateful actions.
+	if stateful && util.IsFalse(d.expandedConfig["migration.stateful"]) {
+		return fmt.Errorf("Stateful snapshots require that the instance has migration.stateful be set to true")
+	}
+
 	// Deal with state.
 	if stateful {
 		// Quick checks.
@@ -4654,8 +4697,8 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						}
 					}
 
-					// Set soft limit to value 10% less than hard limit.
-					if memoryInt > 0 {
+					// If on Cgroup1, set soft limit to value 10% less than hard limit.
+					if memoryInt > 0 && slices.Contains([]cgroup.Layout{cgroup.CgroupsLegacy, cgroup.CgroupsHybrid}, d.state.OS.CGInfo.Layout) {
 						err = cg.SetMemorySoftLimit(int64(float64(memoryInt) * 0.9))
 						if err != nil {
 							revertMemory()
@@ -7978,7 +8021,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 	}
 
 	// Fill in the MAC address.
-	if !slices.Contains([]string{"physical", "ipvlan", "sriov"}, nicType) && m["hwaddr"] == "" {
+	if !slices.Contains([]string{"physical", "ipvlan"}, nicType) && m["hwaddr"] == "" {
 		configKey := fmt.Sprintf("volatile.%s.hwaddr", name)
 		volatileHwaddr := d.localConfig[configKey]
 		if volatileHwaddr == "" {

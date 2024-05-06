@@ -22,6 +22,8 @@ func InstancePlacementCompile(src string) (*starlark.Program, error) {
 			"get_cluster_member_resources",
 			"get_cluster_member_state",
 			"get_instance_resources",
+			"get_instances",
+			"get_cluster_members",
 		},
 			name)
 	}

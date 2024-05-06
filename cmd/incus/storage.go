@@ -100,6 +100,11 @@ func (c *cmdStorageCreate) Command() *cobra.Command {
 	cmd.Short = i18n.G("Create storage pools")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create storage pools`))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus create storage s1 dir
+
+incus create storage s1 dir < config.yaml
+    Create a storage pool using the content of config.yaml.
+	`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
@@ -116,10 +121,31 @@ func (c *cmdStorageCreate) Command() *cobra.Command {
 }
 
 func (c *cmdStorageCreate) Run(cmd *cobra.Command, args []string) error {
+	var stdinData api.StoragePoolPut
+
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 2, -1)
 	if exit {
 		return err
+	}
+
+	// Require a proper driver name.
+	if strings.Contains(args[1], "=") {
+		_ = cmd.Help()
+		return fmt.Errorf(i18n.G("Invalid number of arguments"))
+	}
+
+	// If stdin isn't a terminal, read text from it
+	if !termios.IsTerminal(getStdinFd()) {
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+
+		err = yaml.Unmarshal(contents, &stdinData)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Parse remote
@@ -137,13 +163,17 @@ func (c *cmdStorageCreate) Run(cmd *cobra.Command, args []string) error {
 	pool.Config = map[string]string{}
 	pool.Driver = args[1]
 
-	for i := 2; i < len(args); i++ {
-		entry := strings.SplitN(args[i], "=", 2)
-		if len(entry) < 2 {
-			return fmt.Errorf(i18n.G("Bad key=value pair: %s"), entry)
-		}
+	if stdinData.Config == nil {
+		for i := 2; i < len(args); i++ {
+			entry := strings.SplitN(args[i], "=", 2)
+			if len(entry) < 2 {
+				return fmt.Errorf(i18n.G("Bad key=value pair: %s"), entry)
+			}
 
-		pool.Config[entry[0]] = entry[1]
+			pool.Config[entry[0]] = entry[1]
+		}
+	} else {
+		pool.Config = stdinData.Config
 	}
 
 	// If a target member was specified the API won't actually create the

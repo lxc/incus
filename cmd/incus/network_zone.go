@@ -73,7 +73,8 @@ type cmdNetworkZoneList struct {
 	global      *cmdGlobal
 	networkZone *cmdNetworkZone
 
-	flagFormat string
+	flagFormat      string
+	flagAllProjects bool
 }
 
 func (c *cmdNetworkZoneList) Command() *cobra.Command {
@@ -85,6 +86,7 @@ func (c *cmdNetworkZoneList) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Display network zones from all projects"))
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -122,9 +124,17 @@ func (c *cmdNetworkZoneList) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Filtering isn't supported yet"))
 	}
 
-	zones, err := resource.server.GetNetworkZones()
-	if err != nil {
-		return err
+	var zones []api.NetworkZone
+	if c.flagAllProjects {
+		zones, err = resource.server.GetNetworkZonesAllProjects()
+		if err != nil {
+			return err
+		}
+	} else {
+		zones, err = resource.server.GetNetworkZones()
+		if err != nil {
+			return err
+		}
 	}
 
 	data := [][]string{}
@@ -136,6 +146,10 @@ func (c *cmdNetworkZoneList) Run(cmd *cobra.Command, args []string) error {
 			strUsedBy,
 		}
 
+		if c.flagAllProjects {
+			details = append([]string{zone.Project}, details...)
+		}
+
 		data = append(data, details)
 	}
 
@@ -145,6 +159,10 @@ func (c *cmdNetworkZoneList) Run(cmd *cobra.Command, args []string) error {
 		i18n.G("NAME"),
 		i18n.G("DESCRIPTION"),
 		i18n.G("USED BY"),
+	}
+
+	if c.flagAllProjects {
+		header = append([]string{i18n.G("PROJECT")}, header...)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, zones)
@@ -297,6 +315,10 @@ func (c *cmdNetworkZoneCreate) Command() *cobra.Command {
 	cmd.Use = usage("create", i18n.G("[<remote>:]<Zone> [key=value...]"))
 	cmd.Short = i18n.G("Create new network zones")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network zones"))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus network zone create z1
+
+incus network zone create z1 < config.yaml
+    Create network zone z1 with configuration from config.yaml`))
 
 	cmd.RunE = c.Run
 

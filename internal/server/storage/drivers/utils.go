@@ -880,3 +880,60 @@ func wipeBlockHeaders(path string) error {
 func IsContentBlock(contentType ContentType) bool {
 	return contentType == ContentTypeBlock || contentType == ContentTypeISO
 }
+
+// NewSparseFileWrapper returns a SparseFileWrapper for the provided io.File.
+func NewSparseFileWrapper(w *os.File) *SparseFileWrapper {
+	return &SparseFileWrapper{w: w}
+}
+
+// SparseFileWrapper wraps os.File to create sparse Files.
+type SparseFileWrapper struct {
+	w *os.File
+}
+
+// Write performs the write but skips null bytes.
+func (sfw *SparseFileWrapper) Write(p []byte) (n int, err error) {
+	originalLength := len(p)
+	start := 0
+
+	for start < len(p) {
+		end := start
+		if p[start] == 0 {
+			for end < len(p) && p[end] == 0 {
+				end++
+			}
+
+			_, err := sfw.w.Seek(int64(end-start), io.SeekCurrent)
+			if err != nil {
+				return start, err
+			}
+
+			start = end
+		} else {
+			// Write non-zero bytes
+			for end < len(p) && p[end] != 0 {
+				end++
+			}
+
+			written, err := sfw.w.Write(p[start:end])
+			if err != nil {
+				return start + written, err
+			}
+
+			start = end
+		}
+	}
+
+	return originalLength, nil
+}
+
+// sliceAny returns true when any element in a slice satisfy a predicate.
+func sliceAny[T any](slice []T, predicate func(T) bool) bool {
+	for _, element := range slice {
+		if predicate(element) {
+			return true
+		}
+	}
+
+	return false
+}

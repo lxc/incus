@@ -182,15 +182,40 @@ type OVNRouterPeering struct {
 	TargetRouterRoutes  []net.IPNet
 }
 
-// LogicalRouterAdd adds a named logical router.
-func (o *NB) LogicalRouterAdd(routerName OVNRouter, mayExist bool) error {
-	args := []string{}
-
-	if mayExist {
-		args = append(args, "--may-exist")
+// CreateLogicalRouter adds a named logical router.
+// If mayExist is true, then an existing resource of the same name is not treated as an error.
+func (o *NB) CreateLogicalRouter(ctx context.Context, routerName OVNRouter, mayExist bool) error {
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
 	}
 
-	_, err := o.nbctl(append(args, "lr-add", string(routerName))...)
+	// Check if already exists.
+	err := o.get(ctx, &logicalRouter)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	if logicalRouter.UUID != "" {
+		if mayExist {
+			return nil
+		}
+
+		return ErrExists
+	}
+
+	// Create the record.
+	operations, err := o.client.Create(&logicalRouter)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -198,9 +223,34 @@ func (o *NB) LogicalRouterAdd(routerName OVNRouter, mayExist bool) error {
 	return nil
 }
 
-// LogicalRouterDelete deletes a named logical router.
-func (o *NB) LogicalRouterDelete(routerName OVNRouter) error {
-	_, err := o.nbctl("--if-exists", "lr-del", string(routerName))
+// DeleteLogicalRouter deletes a named logical router.
+func (o *NB) DeleteLogicalRouter(ctx context.Context, routerName OVNRouter) error {
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
+	}
+
+	err := o.get(ctx, &logicalRouter)
+	if err != nil {
+		// Logical router is already gone.
+		if err == ErrNotFound {
+			return nil
+		}
+
+		return err
+	}
+
+	operations, err := o.client.Where(&logicalRouter).Delete()
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -208,15 +258,76 @@ func (o *NB) LogicalRouterDelete(routerName OVNRouter) error {
 	return nil
 }
 
-// LogicalRouterSNATAdd adds an SNAT rule to a logical router to translate packets from intNet to extIP.
-func (o *NB) LogicalRouterSNATAdd(routerName OVNRouter, intNet *net.IPNet, extIP net.IP, mayExist bool) error {
-	args := []string{}
-
-	if mayExist {
-		args = append(args, "--if-exists", "lr-nat-del", string(routerName), "snat", extIP.String(), "--")
+// CreateLogicalRouterSNAT adds an SNAT rule to a logical router to translate packets from intNet to extIP.
+func (o *NB) CreateLogicalRouterSNAT(ctx context.Context, routerName OVNRouter, intNet *net.IPNet, extIP net.IP, mayExist bool) error {
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
 	}
 
-	_, err := o.nbctl(append(args, "lr-nat-add", string(routerName), "snat", extIP.String(), intNet.String())...)
+	// Make sure logical router exists.
+	err := o.get(ctx, &logicalRouter)
+	if err != nil {
+		return err
+	}
+
+	// Check if the rule already exists.
+	for _, natUUID := range logicalRouter.Nat {
+		natRule := ovnNB.NAT{
+			UUID: natUUID,
+		}
+
+		err = o.get(ctx, &natRule)
+		if err != nil {
+			return err
+		}
+
+		// Check if matching our new rule.
+		if natRule.LogicalIP == intNet.String() && natRule.ExternalIP == extIP.String() {
+			if mayExist {
+				return nil
+			}
+
+			return ErrExists
+		}
+	}
+
+	// Create the record.
+	natRule := ovnNB.NAT{
+		UUID:       "nat",
+		LogicalIP:  intNet.String(),
+		ExternalIP: extIP.String(),
+		Options:    map[string]string{"stateless": "false"},
+		Type:       "snat",
+	}
+
+	operations := []ovsdb.Operation{}
+
+	createOps, err := o.client.Create(&natRule)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, createOps...)
+
+	// Add it to the router.
+	updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+		Field:   &logicalRouter.Nat,
+		Mutator: ovsdb.MutateOperationInsert,
+		Value:   []string{natRule.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -224,19 +335,89 @@ func (o *NB) LogicalRouterSNATAdd(routerName OVNRouter, intNet *net.IPNet, extIP
 	return nil
 }
 
-// LogicalRouterDNATSNATDeleteAll deletes all DNAT_AND_SNAT rules from a logical router.
-func (o *NB) LogicalRouterDNATSNATDeleteAll(routerName OVNRouter) error {
-	_, err := o.nbctl("--if-exists", "lr-nat-del", string(routerName), "dnat_and_snat")
+// DeleteLogicalRouterNAT deletes all NAT rules of a particular type from a logical router.
+func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, natType string, all bool, extIPs ...net.IP) error {
+	// Quick checks.
+	if all && len(extIPs) != 0 {
+		return fmt.Errorf("Can't ask for all NAT rules to be deleted and specify specific addresses")
+	}
+
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
+	}
+
+	// Make sure logical router exists.
+	err := o.get(ctx, &logicalRouter)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
+	operations := []ovsdb.Operation{}
 
-// LogicalRouterSNATDeleteAll deletes all SNAT rules from a logical router.
-func (o *NB) LogicalRouterSNATDeleteAll(routerName OVNRouter) error {
-	_, err := o.nbctl("--if-exists", "lr-nat-del", string(routerName), "snat")
+	// Go through all rules.
+	for _, natUUID := range logicalRouter.Nat {
+		natRule := ovnNB.NAT{
+			UUID: natUUID,
+		}
+
+		err = o.get(ctx, &natRule)
+		if err != nil {
+			return err
+		}
+
+		// Check if rule is of the requested type.
+		if natRule.Type != natType {
+			continue
+		}
+
+		// Check if the address matches.
+		if !all {
+			found := false
+			for _, extIP := range extIPs {
+				if natRule.ExternalIP == extIP.String() {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				continue
+			}
+		}
+
+		// Delete the rule.
+		deleteOps, err := o.client.Where(&natRule).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+
+		// Delete the entry from the logical router.
+		deleteOps, err = o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+			Field:   &logicalRouter.Nat,
+			Mutator: ovsdb.MutateOperationDelete,
+			Value:   []string{natRule.UUID},
+		})
+
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+	}
+
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -265,26 +446,6 @@ func (o *NB) LogicalRouterDNATSNATAdd(routerName OVNRouter, extIP net.IP, intIP 
 	}
 
 	_, err := o.nbctl(append(args, "lr-nat-add", string(routerName), "dnat_and_snat", extIP.String(), intIP.String())...)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// LogicalRouterDNATSNATDelete deletes a DNAT_AND_SNAT rule from a logical router.
-func (o *NB) LogicalRouterDNATSNATDelete(routerName OVNRouter, extIPs ...net.IP) error {
-	args := []string{}
-
-	for _, extIP := range extIPs {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		args = append(args, "--if-exists", "lr-nat-del", string(routerName), "dnat_and_snat", extIP.String())
-	}
-
-	_, err := o.nbctl(args...)
 	if err != nil {
 		return err
 	}

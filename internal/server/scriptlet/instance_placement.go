@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
+	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	instanceDrivers "github.com/lxc/incus/v6/internal/server/instance/drivers"
 	"github.com/lxc/incus/v6/internal/server/resources"
 	scriptletLoad "github.com/lxc/incus/v6/internal/server/scriptlet/load"
@@ -242,6 +243,157 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		return rv, nil
 	}
 
+	getInstancesFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		var project string
+		var location string
+
+		err := starlark.UnpackArgs(b.Name(), args, kwargs, "project??", &project, "location??", &location)
+		if err != nil {
+			return nil, err
+		}
+
+		instanceList := []api.Instance{}
+
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			var objects []dbCluster.Instance
+
+			if project != "" || location != "" {
+				// Prepare a filter.
+				filter := dbCluster.InstanceFilter{}
+
+				if project != "" {
+					filter.Project = &project
+				}
+
+				if location != "" {
+					filter.Node = &location
+				}
+
+				// Get instances based on Project and/or Location filters.
+				objects, err = dbCluster.GetInstances(ctx, tx.Tx(), filter)
+				if err != nil {
+					return err
+				}
+			} else {
+				// Get all instances.
+				objects, err = dbCluster.GetInstances(ctx, tx.Tx())
+				if err != nil {
+					return err
+				}
+			}
+
+			// Convert the []Instances into []api.Instances.
+			for _, obj := range objects {
+				instance, err := obj.ToAPI(ctx, tx.Tx())
+				if err != nil {
+					return err
+				}
+
+				instanceList = append(instanceList, *instance)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		rv, err := StarlarkMarshal(instanceList)
+		if err != nil {
+			return nil, fmt.Errorf("Marshalling instance resources failed: %w", err)
+		}
+
+		return rv, nil
+	}
+
+	getClusterMembersFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		var group string
+		var allMembers []db.NodeInfo
+
+		err := starlark.UnpackArgs(b.Name(), args, kwargs, "group??", &group)
+		if err != nil {
+			return nil, err
+		}
+
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			allMembers, err = tx.GetNodes(ctx)
+			if err != nil {
+				return err
+			}
+
+			allMembers, err = tx.GetCandidateMembers(ctx, allMembers, nil, group, nil, s.GlobalConfig.OfflineThreshold())
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		var raftNodes []db.RaftNode
+		err = s.DB.Node.Transaction(ctx, func(ctx context.Context, tx *db.NodeTx) error {
+			raftNodes, err = tx.GetRaftNodes(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed loading RAFT nodes: %w", err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		allMembersInfo := make([]*api.ClusterMember, 0, len(allMembers))
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			failureDomains, err := tx.GetFailureDomainsNames(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed loading failure domains names: %w", err)
+			}
+
+			memberFailureDomains, err := tx.GetNodesFailureDomains(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed loading member failure domains: %w", err)
+			}
+
+			maxVersion, err := tx.GetNodeMaxVersion(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed getting max member version: %w", err)
+			}
+
+			args := db.NodeInfoArgs{
+				LeaderAddress:        leaderAddress,
+				FailureDomains:       failureDomains,
+				MemberFailureDomains: memberFailureDomains,
+				OfflineThreshold:     s.GlobalConfig.OfflineThreshold(),
+				MaxMemberVersion:     maxVersion,
+				RaftNodes:            raftNodes,
+			}
+
+			for i := range allMembers {
+				candidateMemberInfo, err := allMembers[i].ToAPI(ctx, tx, args)
+				if err != nil {
+					return err
+				}
+
+				allMembersInfo = append(allMembersInfo, candidateMemberInfo)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		rv, err := StarlarkMarshal(allMembersInfo)
+		if err != nil {
+			return nil, fmt.Errorf("Marshalling instance resources failed: %w", err)
+		}
+
+		return rv, nil
+	}
+
 	var err error
 	var raftNodes []db.RaftNode
 	err = s.DB.Node.Transaction(ctx, func(ctx context.Context, tx *db.NodeTx) error {
@@ -307,6 +459,8 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		"get_cluster_member_resources": starlark.NewBuiltin("get_cluster_member_resources", getClusterMemberResourcesFunc),
 		"get_cluster_member_state":     starlark.NewBuiltin("get_cluster_member_state", getClusterMemberStateFunc),
 		"get_instance_resources":       starlark.NewBuiltin("get_instance_resources", getInstanceResourcesFunc),
+		"get_instances":                starlark.NewBuiltin("get_instances", getInstancesFunc),
+		"get_cluster_members":          starlark.NewBuiltin("get_cluster_members", getClusterMembersFunc),
 	}
 
 	prog, thread, err := scriptletLoad.InstancePlacementProgram()

@@ -16,6 +16,38 @@ User keys can be used in search.
 ```
 
 <!-- config group cluster-cluster end -->
+<!-- config group image-requirements start -->
+```{config:option} requirements.cdrom_agent image-requirements
+:shortdesc: "If set to `true`, indicates that the VM requires an `agent:config` disk be added."
+:type: "bool"
+
+```
+
+```{config:option} requirements.cgroup image-requirements
+:shortdesc: "If set to `v1`, indicates that the image requires the host to run cgroup v1."
+:type: "string"
+
+```
+
+```{config:option} requirements.nesting image-requirements
+:shortdesc: "If set to `true`, indicates that the image cannot work without nesting enabled."
+:type: "bool"
+
+```
+
+```{config:option} requirements.privileged image-requirements
+:shortdesc: "If set to `false`, indicates that the image cannot work as a privileged container."
+:type: "bool"
+
+```
+
+```{config:option} requirements.secureboot image-requirements
+:shortdesc: "If set to `false`, indicates that the image cannot boot under secure boot."
+:type: "bool"
+
+```
+
+<!-- config group image-requirements end -->
 <!-- config group instance-boot start -->
 ```{config:option} boot.autostart instance-boot
 :liveupdate: "no"
@@ -150,7 +182,6 @@ Using incremental memory transfer of the instance's memory can reduce downtime.
 ```
 
 ```{config:option} migration.stateful instance-migration
-:condition: "virtual machine"
 :defaultdesc: "`false`"
 :liveupdate: "no"
 :shortdesc: "Whether to allow for stateful stop/start and snapshots"

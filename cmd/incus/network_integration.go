@@ -84,6 +84,10 @@ func (c *cmdNetworkIntegrationCreate) Command() *cobra.Command {
 	cmd.Short = i18n.G("Create network integrations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create network integrations`))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus network integration create o1 ovn
+
+incus network integration create o1 ovn < config.yaml
+    Create network integration o1 of type ovn with configuration from config.yaml`))
 
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new network integration")+"``")
 
@@ -94,10 +98,25 @@ func (c *cmdNetworkIntegrationCreate) Command() *cobra.Command {
 
 // Run actually performs the action.
 func (c *cmdNetworkIntegrationCreate) Run(cmd *cobra.Command, args []string) error {
+	var stdinData api.NetworkIntegrationPut
+
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
 	if exit {
 		return err
+	}
+
+	// If stdin isn't a terminal, read text from it
+	if !termios.IsTerminal(getStdinFd()) {
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+
+		err = yaml.Unmarshal(contents, &stdinData)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Parse remote
@@ -116,15 +135,20 @@ func (c *cmdNetworkIntegrationCreate) Run(cmd *cobra.Command, args []string) err
 	networkIntegration := api.NetworkIntegrationsPost{}
 	networkIntegration.Name = resource.name
 	networkIntegration.Type = args[1]
+	networkIntegration.Description = stdinData.Description
 
-	networkIntegration.Config = map[string]string{}
-	for _, entry := range c.flagConfig {
-		key, value, found := strings.Cut(entry, "=")
-		if !found {
-			return fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
+	if stdinData.Config == nil {
+		networkIntegration.Config = map[string]string{}
+		for _, entry := range c.flagConfig {
+			key, value, found := strings.Cut(entry, "=")
+			if !found {
+				return fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
+			}
+
+			networkIntegration.Config[key] = value
 		}
-
-		networkIntegration.Config[key] = value
+	} else {
+		networkIntegration.Config = stdinData.Config
 	}
 
 	err = resource.server.CreateNetworkIntegration(networkIntegration)

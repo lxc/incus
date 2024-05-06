@@ -65,6 +65,10 @@ func (c *cmdConfigTemplateCreate) Command() *cobra.Command {
 	cmd.Short = i18n.G("Create new instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create new instance file templates`))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus config template create u1 t1
+
+incus config template create u1 t1 < config.tpl
+    Create template t1 for instance u1 from config.tpl`))
 
 	cmd.RunE = c.Run
 
@@ -80,10 +84,23 @@ func (c *cmdConfigTemplateCreate) Command() *cobra.Command {
 }
 
 func (c *cmdConfigTemplateCreate) Run(cmd *cobra.Command, args []string) error {
+	var stdinData io.ReadSeeker
+
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
 	if exit {
 		return err
+	}
+
+	// If stdin isn't a terminal, read text from it
+	if !termios.IsTerminal(getStdinFd()) {
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+
+		// Reset the seek position
+		stdinData = bytes.NewReader(contents)
 	}
 
 	// Parse remote
@@ -99,7 +116,7 @@ func (c *cmdConfigTemplateCreate) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create instance file template
-	return resource.server.CreateInstanceTemplateFile(resource.name, args[1], nil)
+	return resource.server.CreateInstanceTemplateFile(resource.name, args[1], stdinData)
 }
 
 // Delete.

@@ -33,15 +33,18 @@ const (
 type config struct {
 	batchSize int
 	batchWait time.Duration
-	caCert    string
-	username  string
-	password  string
-	labels    []string
-	instance  string
-	logLevel  string
-	timeout   time.Duration
-	types     []string
-	url       *url.URL
+
+	caCert   string
+	username string
+	password string
+	labels   []string
+	instance string
+	logLevel string
+	types    []string
+	location string
+
+	timeout time.Duration
+	url     *url.URL
 }
 
 type entry struct {
@@ -61,7 +64,7 @@ type Client struct {
 }
 
 // NewClient returns a Client.
-func NewClient(ctx context.Context, u *url.URL, username string, password string, caCert string, instance string, logLevel string, labels []string, types []string) *Client {
+func NewClient(ctx context.Context, u *url.URL, username string, password string, caCert string, instance string, location string, logLevel string, labels []string, types []string) *Client {
 	client := Client{
 		cfg: config{
 			batchSize: 10 * 1024,
@@ -70,6 +73,7 @@ func NewClient(ctx context.Context, u *url.URL, username string, password string
 			username:  username,
 			password:  password,
 			instance:  instance,
+			location:  location,
 			labels:    labels,
 			logLevel:  logLevel,
 			timeout:   10 * time.Second,
@@ -228,11 +232,17 @@ func (c *Client) HandleEvent(event api.Event) {
 		return
 	}
 
+	// Support overriding the location field (used on standalone systems).
+	location := event.Location
+	if c.cfg.location != "" {
+		location = c.cfg.location
+	}
+
 	entry := entry{
 		labels: LabelSet{
 			"app":      "incus",
 			"type":     event.Type,
-			"location": event.Location,
+			"location": location,
 			"instance": c.cfg.instance,
 		},
 		Entry: Entry{

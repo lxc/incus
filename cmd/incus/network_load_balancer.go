@@ -251,6 +251,11 @@ func (c *cmdNetworkLoadBalancerCreate) Command() *cobra.Command {
 	cmd.Use = usage("create", i18n.G("[<remote>:]<network> <listen_address> [key=value...]"))
 	cmd.Short = i18n.G("Create new network load balancers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network load balancers"))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus network load-balancer create n1 127.0.0.1
+
+incus network load-balancer create n1 127.0.0.1 < config.yaml
+    Create network load-balancer for network n1 with configuration from config.yaml`))
+
 	cmd.RunE = c.Run
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")

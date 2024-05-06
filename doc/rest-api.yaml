@@ -2123,6 +2123,14 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: Processes
+            started_at:
+                description: |-
+                    The time that the instance started at
+
+                    API extension: instance_state_started_at.
+                format: date-time
+                type: string
+                x-go-name: StartedAt
             status:
                 description: Current status (Running, Stopped, Frozen or Error)
                 example: Running
@@ -3569,6 +3577,11 @@ definitions:
                 example: example.net
                 type: string
                 x-go-name: Name
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
             used_by:
                 description: List of URLs of objects using this network zone
                 example:
@@ -3879,6 +3892,11 @@ definitions:
                 readOnly: true
                 type: string
                 x-go-name: Name
+            project:
+                description: Project name
+                example: project1
+                type: string
+                x-go-name: Project
             used_by:
                 description: List of URLs of objects using this profile
                 example:
@@ -10959,6 +10977,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve network zones from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -11418,6 +11441,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve network zones from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -12909,6 +12937,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve profiles from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -13148,6 +13181,11 @@ paths:
                   in: query
                   name: project
                   type: string
+                - description: Retrieve profiles from all projects
+                  example: true
+                  in: query
+                  name: all-projects
+                  type: boolean
             produces:
                 - application/json
             responses:

@@ -1,9 +1,9 @@
 {
   "__inputs": [
     {
-      "name": "DS_INCUS",
-      "label": "Incus",
-      "description": "Prometheus instance for Incus",
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "Prometheus instance with Incus metrics",
       "type": "datasource",
       "pluginId": "prometheus",
       "pluginName": "Prometheus"
@@ -11,7 +11,7 @@
     {
       "name": "DS_LOKI",
       "label": "Loki",
-      "description": "Loki instance for Incus",
+      "description": "Loki instance with Incus entries",
       "type": "datasource",
       "pluginId": "loki",
       "pluginName": "Loki"
@@ -23,7 +23,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "9.3.2"
+      "version": "10.4.2"
     },
     {
       "type": "panel",
@@ -84,7 +84,7 @@
   "description": "Overview of Incus instances",
   "editable": false,
   "fiscalYearStartMonth": 0,
-  "gnetId": 19131,
+  "gnetId": 19727,
   "graphTooltip": 0,
   "id": null,
   "links": [
@@ -103,7 +103,7 @@
       "collapsed": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -119,7 +119,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -163,7 +163,6 @@
         "y": 1
       },
       "id": 350,
-      "links": [],
       "options": {
         "displayLabels": [],
         "legend": {
@@ -194,7 +193,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "topk(${top}, sum by (name) (increase(incus_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__range])))",
@@ -206,7 +205,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -225,7 +224,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -269,7 +268,6 @@
         "y": 1
       },
       "id": 364,
-      "links": [],
       "options": {
         "displayLabels": [],
         "legend": {
@@ -300,7 +298,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "topk(${top}, incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes)",
@@ -312,7 +310,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes) -\nsum(topk(${top}, incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes))",
@@ -330,7 +328,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -374,7 +372,6 @@
         "y": 1
       },
       "id": 351,
-      "links": [],
       "options": {
         "displayLabels": [],
         "legend": {
@@ -405,7 +402,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "topk(${top}, incus_filesystem_size_bytes{job=\"$job\",project=\"$project\",mountpoint=\"/\"} - incus_filesystem_avail_bytes)",
@@ -418,7 +415,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(incus_filesystem_size_bytes{job=\"$job\",project=\"$project\",mountpoint=\"/\"} - incus_filesystem_avail_bytes) - \nsum(topk(${top}, incus_filesystem_size_bytes{job=\"$job\",project=\"$project\",mountpoint=\"/\"} - incus_filesystem_avail_bytes))",
@@ -435,7 +432,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Total disk reads during the time interval",
       "fieldConfig": {
@@ -477,15 +474,17 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.4.2",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(increase(incus_disk_read_bytes_total{job=\"$job\",project=\"$project\"}[$__range]))",
@@ -502,7 +501,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Total disk writes during the time interval",
       "fieldConfig": {
@@ -544,15 +543,17 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.4.2",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(increase(incus_disk_written_bytes_total{job=\"$job\",project=\"$project\"}[$__range]))",
@@ -569,7 +570,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Total network RX traffic during the time interval",
       "fieldConfig": {
@@ -611,15 +612,17 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.4.2",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(increase(incus_network_receive_bytes_total{job=\"$job\",project=\"$project\"}[$__range]))*8",
@@ -636,7 +639,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Total network TX traffic during the time interval",
       "fieldConfig": {
@@ -678,15 +681,17 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.2",
+      "pluginVersion": "10.4.2",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(increase(incus_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__range]))*8",
@@ -703,7 +708,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -747,7 +752,6 @@
         "y": 9
       },
       "id": 417,
-      "links": [],
       "options": {
         "displayLabels": [],
         "legend": {
@@ -778,7 +782,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -791,7 +795,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -810,7 +814,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -854,7 +858,6 @@
         "y": 9
       },
       "id": 468,
-      "links": [],
       "options": {
         "displayLabels": [],
         "legend": {
@@ -885,7 +888,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -898,7 +901,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -917,7 +920,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -961,7 +964,6 @@
         "y": 9
       },
       "id": 469,
-      "links": [],
       "options": {
         "displayLabels": [],
         "legend": {
@@ -992,7 +994,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -1005,7 +1007,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -1024,7 +1026,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -1068,7 +1070,6 @@
         "y": 9
       },
       "id": 470,
-      "links": [],
       "options": {
         "displayLabels": [],
         "legend": {
@@ -1099,7 +1100,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -1112,7 +1113,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -1131,7 +1132,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "CPU usage overview for the whole project",
       "fieldConfig": {
@@ -1140,6 +1141,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1153,6 +1155,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
@@ -1223,7 +1226,6 @@
         "y": 15
       },
       "id": 328,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -1241,7 +1243,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "expr": "sum(rate(incus_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\"}[$__rate_interval])) by (mode) * 100",
           "hide": false,
@@ -1257,7 +1259,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Memory usage overview for the whole project",
       "fieldConfig": {
@@ -1266,6 +1268,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1279,6 +1282,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
@@ -1394,7 +1398,6 @@
         "y": 15
       },
       "id": 354,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -1412,7 +1415,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"})",
           "format": "time_series",
@@ -1426,7 +1429,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes)",
@@ -1441,7 +1444,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "expr": "sum(incus_memory_Cached_bytes{job=\"$job\",project=\"$project\"})",
           "format": "time_series",
@@ -1455,7 +1458,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "expr": "sum(incus_memory_MemFree_bytes{job=\"$job\",project=\"$project\"})",
           "format": "time_series",
@@ -1468,7 +1471,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "expr": "sum(incus_memory_Swap_bytes{job=\"$job\",project=\"$project\"})",
           "format": "time_series",
@@ -1486,7 +1489,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Number of running processes for the whole project",
       "fieldConfig": {
@@ -1495,6 +1498,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1508,6 +1512,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
@@ -1529,7 +1534,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -1561,7 +1567,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(incus_procs_total{job=\"$job\",project=\"$project\"})",
@@ -1577,7 +1583,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Disk space used for the whole project",
       "fieldConfig": {
@@ -1586,6 +1592,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1600,6 +1607,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
@@ -1622,7 +1630,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -1657,7 +1666,6 @@
         "y": 25
       },
       "id": 326,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -1675,7 +1683,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(incus_filesystem_size_bytes{mountpoint=\"/\",job=\"$job\",project=\"$project\"} - incus_filesystem_avail_bytes)",
@@ -1689,7 +1697,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(incus_filesystem_size_bytes{mountpoint=\"/\",job=\"$job\",project=\"$project\"})",
@@ -1709,7 +1717,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "The number of bytes read or written per second for the whole project",
       "fieldConfig": {
@@ -1718,6 +1726,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1731,6 +1740,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineStyle": {
               "fill": "solid"
@@ -1756,7 +1766,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -1791,7 +1802,6 @@
         "y": 34
       },
       "id": 338,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -1809,7 +1819,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_disk_written_bytes_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
@@ -1823,7 +1833,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_disk_read_bytes_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
@@ -1842,7 +1852,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "The number (after merges) of I/O requests completed per second for the whole project",
       "fieldConfig": {
@@ -1851,6 +1861,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1864,6 +1875,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
@@ -1886,7 +1898,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -1921,7 +1934,6 @@
         "y": 34
       },
       "id": 336,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -1939,7 +1951,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_disk_writes_completed_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
@@ -1952,7 +1964,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_disk_reads_completed_total{job=\"$job\",project=\"$project\"}[$__rate_interval]))",
@@ -1970,7 +1982,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Network traffic overview for the whole project",
       "fieldConfig": {
@@ -1979,6 +1991,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -1992,6 +2005,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
@@ -2013,7 +2027,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -2065,7 +2080,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8",
@@ -2079,7 +2094,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))*8",
@@ -2097,7 +2112,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Network traffic overview for the whole project",
       "fieldConfig": {
@@ -2106,6 +2121,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -2119,6 +2135,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
@@ -2140,7 +2157,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -2192,7 +2210,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -2207,7 +2225,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -2227,7 +2245,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "Network errors and drop overview for the whole project",
       "fieldConfig": {
@@ -2237,6 +2255,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -2250,6 +2269,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
@@ -2272,7 +2292,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -2312,7 +2333,6 @@
         "y": 49
       },
       "id": 366,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [
@@ -2332,7 +2352,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_network_receive_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
@@ -2346,7 +2366,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_network_transmit_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
@@ -2360,7 +2380,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_network_receive_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
@@ -2375,7 +2395,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
           "expr": "sum(rate(incus_network_transmit_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\"}[$__rate_interval]))",
@@ -2396,7 +2416,7 @@
       "collapsed": true,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_INCUS}"
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 1,
@@ -2409,7 +2429,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "description": "Basic CPU info",
           "fieldConfig": {
@@ -2516,7 +2536,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "sum(rate(incus_cpu_seconds_total{mode!=\"idle\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])) by (mode) * 100",
@@ -2533,7 +2553,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "description": "Basic memory usage",
           "fieldConfig": {
@@ -2685,7 +2705,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
@@ -2700,7 +2720,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "sum(incus_memory_MemTotal_bytes{job=\"$job\",project=\"$project\",name=\"$name\"} - incus_memory_MemFree_bytes - incus_memory_Cached_bytes)",
@@ -2715,7 +2735,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "sum(incus_memory_Cached_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
@@ -2730,7 +2750,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "sum(incus_memory_MemFree_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
@@ -2744,7 +2764,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "sum(incus_memory_Swap_bytes{job=\"$job\",project=\"$project\",name=\"$name\"})",
@@ -2763,7 +2783,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "description": "Number of running processes in the instance",
           "fieldConfig": {
@@ -2836,7 +2856,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "incus_procs_total{job=\"$job\",project=\"$project\",name=\"$name\"}",
@@ -2852,7 +2872,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "description": "Disk space used of all filesystems mounted",
           "fieldConfig": {
@@ -2933,7 +2953,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "100 - ((incus_filesystem_avail_bytes{job=\"$job\",project=\"$project\",name=\"$name\"} * 100) / incus_filesystem_size_bytes)",
@@ -2952,7 +2972,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "description": "The number of bytes read from or written to the device per second",
           "fieldConfig": {
@@ -3045,7 +3065,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_disk_written_bytes_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
@@ -3059,7 +3079,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_disk_read_bytes_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
@@ -3078,7 +3098,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "description": "The number (after merges) of I/O requests completed per second for the device",
           "fieldConfig": {
@@ -3171,7 +3191,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "expr": "rate(incus_disk_writes_completed_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "interval": "",
@@ -3183,7 +3203,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_disk_reads_completed_total{job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
@@ -3201,7 +3221,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "description": "Basic network info per interface",
           "fieldConfig": {
@@ -3294,7 +3314,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_network_transmit_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
@@ -3308,7 +3328,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_network_receive_bytes_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
@@ -3321,7 +3341,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_network_transmit_bytes_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
@@ -3335,7 +3355,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_network_receive_bytes_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])*8",
@@ -3354,7 +3374,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "fieldConfig": {
             "defaults": {
@@ -3448,7 +3468,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_network_transmit_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
@@ -3462,7 +3482,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_network_receive_packets_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
@@ -3476,7 +3496,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_network_transmit_packets_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
@@ -3491,7 +3511,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "exemplar": true,
               "expr": "rate(incus_network_receive_packets_total{device=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
@@ -3511,7 +3531,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_INCUS}"
+            "uid": "${DS_PROMETHEUS}"
           },
           "fieldConfig": {
             "defaults": {
@@ -3591,7 +3611,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "expr": "rate(incus_network_receive_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
@@ -3604,7 +3624,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "expr": "rate(incus_network_transmit_errs_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
@@ -3617,7 +3637,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "expr": "rate(incus_network_receive_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
@@ -3631,7 +3651,7 @@
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "${DS_INCUS}"
+                "uid": "${DS_PROMETHEUS}"
               },
               "expr": "rate(incus_network_transmit_drop_total{device!=\"lo\",job=\"$job\",project=\"$project\",name=\"$name\"}[$__rate_interval])",
               "format": "time_series",
@@ -3658,7 +3678,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 60
+        "y": 90
       },
       "id": 521,
       "panels": [],
@@ -3674,7 +3694,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 91
       },
       "id": 572,
       "options": {
@@ -3693,8 +3713,8 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "editorMode": "builder",
-          "expr": "{app=\"incus\", type=\"lifecycle\", instance=\"$job\"}",
+          "editorMode": "code",
+          "expr": "{app=\"incus\", type=\"lifecycle\", instance=\"$job\", project=~\"|$project\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -3711,7 +3731,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 98
       },
       "id": 573,
       "options": {
@@ -3730,8 +3750,8 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "editorMode": "builder",
-          "expr": "{app=\"incus\", type=\"logging\", instance=\"$job\"}",
+          "editorMode": "code",
+          "expr": "{app=\"incus\", type=\"logging\", instance=\"$job\", project=~\"|$project\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -3740,9 +3760,8 @@
       "type": "logs"
     }
   ],
-  "refresh": false,
-  "schemaVersion": 37,
-  "style": "dark",
+  "refresh": "",
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": [
@@ -3750,7 +3769,7 @@
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_INCUS}"
+          "uid": "${DS_PROMETHEUS}"
         },
         "definition": "label_values(incus_procs_total, job)",
         "hide": 0,
@@ -3776,7 +3795,7 @@
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_INCUS}"
+          "uid": "${DS_PROMETHEUS}"
         },
         "definition": "label_values(incus_procs_total{job=\"$job\"}, project)",
         "description": "Name of the project",
@@ -3804,7 +3823,7 @@
         "current": {},
         "datasource": {
           "type": "prometheus",
-          "uid": "${DS_INCUS}"
+          "uid": "${DS_PROMETHEUS}"
         },
         "definition": "label_values(incus_procs_total{job=\"$job\",project=\"$project\"}, name)",
         "description": "Name of the instance",
@@ -3896,6 +3915,6 @@
   "timezone": "",
   "title": "Incus",
   "uid": "bGY-LSB7k",
-  "version": 15,
+  "version": 4,
   "weekStart": ""
 }

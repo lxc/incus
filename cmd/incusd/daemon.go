@@ -788,13 +788,24 @@ func (d *Daemon) setupLoki(URL string, cert string, key string, caCert string, i
 		return err
 	}
 
-	// Figure out the instance name.
-	if instanceName == "" {
+	// Handle standalone systems.
+	var location string
+	if !d.serverClustered {
+		hostname, err := os.Hostname()
+		if err != nil {
+			return err
+		}
+
+		location = hostname
+		if instanceName == "" {
+			instanceName = hostname
+		}
+	} else if instanceName == "" {
 		instanceName = d.serverName
 	}
 
 	// Start a new client.
-	d.lokiClient = loki.NewClient(d.shutdownCtx, u, cert, key, caCert, instanceName, logLevel, labels, types)
+	d.lokiClient = loki.NewClient(d.shutdownCtx, u, cert, key, caCert, instanceName, location, logLevel, labels, types)
 
 	// Attach the new client to the log handler.
 	d.internalListener.AddHandler("loki", d.lokiClient.HandleEvent)
@@ -1451,10 +1462,13 @@ func (d *Daemon) init() error {
 	}
 
 	// Setup the networks.
-	logger.Infof("Initializing networks")
-	err = networkStartup(d.State())
-	if err != nil {
-		return err
+	if !d.db.Cluster.LocalNodeIsEvacuated() {
+		logger.Infof("Initializing networks")
+
+		err = networkStartup(d.State())
+		if err != nil {
+			return err
+		}
 	}
 
 	// Setup tertiary listeners that may use managed network addresses and must be started after networks.
