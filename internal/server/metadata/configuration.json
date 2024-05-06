@@ -1126,6 +1126,108 @@
 				]
 			}
 		},
+		"kernel": {
+			"limits": {
+				"keys": [
+					{
+						"limits.kernel.as": {
+							"longdesc": "",
+							"resource": "`RLIMIT_AS`",
+							"shortdesc": "Maximum size of the process's virtual memory",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.core": {
+							"longdesc": "",
+							"resource": "`RLIMIT_CORE`",
+							"shortdesc": "Maximum size of the process's core dump file",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.cpu": {
+							"longdesc": "",
+							"resource": "`RLIMIT_CPU`",
+							"shortdesc": "Limit in seconds on the amount of CPU time the process can consume",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.data": {
+							"longdesc": "",
+							"resource": "`RLIMIT_DATA`",
+							"shortdesc": "Maximum size of the process's data segment",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.fsize": {
+							"longdesc": "",
+							"resource": "`RLIMIT_FSIZE`",
+							"shortdesc": "Maximum size of files the process may create",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.locks": {
+							"longdesc": "",
+							"resource": "`RLIMIT_LOCKS`",
+							"shortdesc": "Limit on the number of file locks that this process may establish",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.memlock": {
+							"longdesc": "",
+							"resource": "`RLIMIT_MEMLOCK`",
+							"shortdesc": "Limit on the number of bytes of memory that the process may lock in RAM",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.nice": {
+							"longdesc": "",
+							"resource": "`RLIMIT_NICE`",
+							"shortdesc": "Maximum value to which the process's nice value can be raised",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.nofile": {
+							"longdesc": "",
+							"resource": "`RLIMIT_NOFILE`",
+							"shortdesc": "Maximum number of open files for the process",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.nproc": {
+							"longdesc": "",
+							"resource": "`RLIMIT_NPROC`",
+							"shortdesc": "Maximum number of processes that can be created for the user of the calling process",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.rtprio": {
+							"longdesc": "",
+							"resource": "`RLIMIT_RTPRIO`",
+							"shortdesc": "Maximum value on the real-time-priority that may be set for this process",
+							"type": "string"
+						}
+					},
+					{
+						"limits.kernel.sigpending": {
+							"longdesc": "",
+							"resource": "`RLIMIT_SIGPENDING`",
+							"shortdesc": "Limit on the number of bytes of memory that the process may lock in RAM",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"network_integration": {
 			"common": {
 				"keys": [

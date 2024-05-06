@@ -1033,6 +1033,92 @@ It is globally unique across all servers and projects.
 ```
 
 <!-- config group instance-volatile end -->
+<!-- config group kernel-limits start -->
+```{config:option} limits.kernel.as kernel-limits
+:resource: "`RLIMIT_AS`"
+:shortdesc: "Maximum size of the process's virtual memory"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.core kernel-limits
+:resource: "`RLIMIT_CORE`"
+:shortdesc: "Maximum size of the process's core dump file"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.cpu kernel-limits
+:resource: "`RLIMIT_CPU`"
+:shortdesc: "Limit in seconds on the amount of CPU time the process can consume"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.data kernel-limits
+:resource: "`RLIMIT_DATA`"
+:shortdesc: "Maximum size of the process's data segment"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.fsize kernel-limits
+:resource: "`RLIMIT_FSIZE`"
+:shortdesc: "Maximum size of files the process may create"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.locks kernel-limits
+:resource: "`RLIMIT_LOCKS`"
+:shortdesc: "Limit on the number of file locks that this process may establish"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.memlock kernel-limits
+:resource: "`RLIMIT_MEMLOCK`"
+:shortdesc: "Limit on the number of bytes of memory that the process may lock in RAM"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.nice kernel-limits
+:resource: "`RLIMIT_NICE`"
+:shortdesc: "Maximum value to which the process's nice value can be raised"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.nofile kernel-limits
+:resource: "`RLIMIT_NOFILE`"
+:shortdesc: "Maximum number of open files for the process"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.nproc kernel-limits
+:resource: "`RLIMIT_NPROC`"
+:shortdesc: "Maximum number of processes that can be created for the user of the calling process"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.rtprio kernel-limits
+:resource: "`RLIMIT_RTPRIO`"
+:shortdesc: "Maximum value on the real-time-priority that may be set for this process"
+:type: "string"
+
+```
+
+```{config:option} limits.kernel.sigpending kernel-limits
+:resource: "`RLIMIT_SIGPENDING`"
+:shortdesc: "Limit on the number of bytes of memory that the process may lock in RAM"
+:type: "string"
+
+```
+
+<!-- config group kernel-limits end -->
 <!-- config group network_integration-common start -->
 ```{config:option} user.* network_integration-common
 :shortdesc: "Free form user key/value storage"
