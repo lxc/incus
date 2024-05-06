@@ -1482,6 +1482,53 @@
 				]
 			}
 		},
+		"network_zone": {
+			"common": {
+				"keys": [
+					{
+						"dns.nameservers": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Comma-separated list of DNS server FQDNs (for NS records)",
+							"type": "string set"
+						}
+					},
+					{
+						"network.nat": {
+							"defaultdesc": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Whether to generate records for NAT-ed subnets",
+							"type": "bool"
+						}
+					},
+					{
+						"peers.NAME.address": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "IP address of a DNS server",
+							"type": "string"
+						}
+					},
+					{
+						"peers.NAME.key": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "TSIG key for the server",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"project": {
 			"features": {
 				"keys": [
