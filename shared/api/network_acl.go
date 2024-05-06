@@ -139,6 +139,12 @@ type NetworkACL struct {
 	// Read only: true
 	// Example: ["/1.0/instances/c1", "/1.0/instances/v1", "/1.0/networks/mybr0"]
 	UsedBy []string `json:"used_by" yaml:"used_by"` // Resources that use the ACL.
+
+	// Project name
+	// Example: project1
+	//
+	// API extension: network_acls_all_projects
+	Project string `json:"project" yaml:"project"` // Project the ACL belongs to.
 }
 
 // Writable converts a full NetworkACL struct into a NetworkACLPut struct (filters read-only fields).
