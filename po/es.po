@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-05-06 16:42-0400\n"
+"POT-Creation-Date: 2024-05-06 17:08-0400\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -1193,6 +1193,11 @@ msgstr ""
 msgid "COUNT"
 msgstr ""
 
+#: cmd/incus/top.go:283
+#, fuzzy
+msgid "CPU TIME(s)"
+msgstr "CPU (%s):"
+
 #: cmd/incus/list.go:589
 msgid "CPU USAGE"
 msgstr ""
@@ -1893,6 +1898,10 @@ msgstr ""
 msgid "DESCRIPTION"
 msgstr "DESCRIPCIÓN"
 
+#: cmd/incus/top.go:283
+msgid "DISK"
+msgstr ""
+
 #: cmd/incus/list.go:575
 msgid "DISK USAGE"
 msgstr ""
@@ -1926,6 +1935,10 @@ msgstr ""
 
 #: cmd/incus/storage_bucket.go:1267 cmd/incus/storage_volume.go:2885
 msgid "Define a compression algorithm: for backup or none"
+msgstr ""
+
+#: cmd/incus/top.go:295
+msgid "Delay:"
 msgstr ""
 
 #: cmd/incus/operation.go:56 cmd/incus/operation.go:57
@@ -2183,7 +2196,7 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2492 cmd/incus/storage_volume.go:2498
 #: cmd/incus/storage_volume.go:2616 cmd/incus/storage_volume.go:2703
 #: cmd/incus/storage_volume.go:2783 cmd/incus/storage_volume.go:2879
-#: cmd/incus/storage_volume.go:3045 cmd/incus/version.go:22
+#: cmd/incus/storage_volume.go:3045 cmd/incus/top.go:30 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:358
 msgid "Description"
@@ -2340,10 +2353,18 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Display profiles from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
 
+#: cmd/incus/top.go:29
+msgid "Display resource usage info per instance"
+msgstr ""
+
 #: cmd/incus/storage_bucket.go:475
 #, fuzzy
 msgid "Display storage pool buckets from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
+
+#: cmd/incus/top.go:30
+msgid "Displays CPU usage, memory usage, and disk usage per instance"
+msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:416
 msgid "Do you want to configure a new local storage pool?"
@@ -2529,6 +2550,16 @@ msgid ""
 "  that by running 'incus config get core.https_address', and possibly set a "
 "value\n"
 "  for the address if not yet set."
+msgstr ""
+
+#: cmd/incus/top.go:163
+msgid ""
+"Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
+"for disk):"
+msgstr ""
+
+#: cmd/incus/top.go:144
+msgid "Enter new delay in seconds:"
 msgstr ""
 
 #: cmd/incus/network_zone.go:1439
@@ -3467,6 +3498,10 @@ msgstr ""
 msgid "IMAGES"
 msgstr ""
 
+#: cmd/incus/top.go:283
+msgid "INSTANCE NAME"
+msgstr ""
+
 #: cmd/incus/network.go:1187
 msgid "IP ADDRESS"
 msgstr ""
@@ -3505,7 +3540,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:415
+#: cmd/incus/main.go:419
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -3759,6 +3794,10 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Invalid format: %s"
 msgstr "Nombre del contenedor es: %s"
 
+#: cmd/incus/top.go:155
+msgid "Invalid input, please enter a positive number"
+msgstr ""
+
 #: cmd/incus/snapshot.go:147
 #, fuzzy, c-format
 msgid "Invalid instance name: %s"
@@ -3795,7 +3834,7 @@ msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
 msgstr ""
 
-#: cmd/incus/main.go:511 cmd/incus/storage.go:134
+#: cmd/incus/main.go:515 cmd/incus/storage.go:134
 msgid "Invalid number of arguments"
 msgstr ""
 
@@ -3819,6 +3858,16 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2839
 #, fuzzy
 msgid "Invalid snapshot name"
+msgstr "Nombre del contenedor es: %s"
+
+#: cmd/incus/top.go:239
+#, fuzzy
+msgid "Invalid sorting type"
+msgstr "Nombre del contenedor es: %s"
+
+#: cmd/incus/top.go:184
+#, fuzzy
+msgid "Invalid sorting type provided"
 msgstr "Nombre del contenedor es: %s"
 
 #: cmd/incus/file.go:494
@@ -4440,6 +4489,10 @@ msgstr ""
 
 #: cmd/incus/cluster_group.go:504
 msgid "MEMBERS"
+msgstr ""
+
+#: cmd/incus/top.go:283
+msgid "MEMORY"
 msgstr ""
 
 #: cmd/incus/list.go:580
@@ -5504,7 +5557,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:376
+#: cmd/incus/main.go:380
 #, fuzzy, c-format
 msgid "Password for %s: "
 msgstr "Contraseña admin para %s:"
@@ -5572,6 +5625,18 @@ msgstr ""
 
 #: cmd/incus/admin_init.go:56
 msgid "Pre-seed mode, expects YAML config from stdin"
+msgstr ""
+
+#: cmd/incus/top.go:291
+msgid "Press 'd' + ENTER to change delay"
+msgstr ""
+
+#: cmd/incus/top.go:292
+msgid "Press 's' + ENTER to change sorting method"
+msgstr ""
+
+#: cmd/incus/top.go:293
+msgid "Press CTRL-C to exit"
 msgstr ""
 
 #: cmd/incus/file.go:1269
@@ -6765,7 +6830,7 @@ msgstr ""
 msgid "Show instance snapshot configuration"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/main.go:275 cmd/incus/main.go:276
+#: cmd/incus/main.go:279 cmd/incus/main.go:280
 msgid "Show less common commands"
 msgstr ""
 
@@ -6932,6 +6997,10 @@ msgstr ""
 #, fuzzy, c-format
 msgid "Some instances failed to %s"
 msgstr "Dispositivo %s añadido a %s"
+
+#: cmd/incus/top.go:296
+msgid "Sorting Method:"
+msgstr ""
 
 #: cmd/incus/admin_recover.go:121
 msgid ""
@@ -7410,7 +7479,7 @@ msgstr ""
 msgid "There is no \"image name\".  Did you want an alias?"
 msgstr ""
 
-#: cmd/incus/main.go:302
+#: cmd/incus/main.go:306
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -7457,7 +7526,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:420
+#: cmd/incus/main.go:424
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
 "Or for a virtual machine: incus launch images:ubuntu/22.04 --vm"
@@ -7843,6 +7912,11 @@ msgstr ""
 
 #: cmd/incus/profile.go:278
 msgid "Update the target profile from the source if it already exists"
+msgstr ""
+
+#: cmd/incus/top.go:120
+#, c-format
+msgid "Updated interval to %v"
 msgstr ""
 
 #: cmd/incus/image.go:1008
@@ -9426,10 +9500,6 @@ msgstr ""
 #: cmd/incus/image.go:1184 cmd/incus/snapshot.go:256
 msgid "yes"
 msgstr ""
-
-#, c-format
-#~ msgid "CPU (%s):"
-#~ msgstr "CPU (%s):"
 
 #, fuzzy
 #~ msgid "The --mode flag can't be used with --storage or --target-project"
