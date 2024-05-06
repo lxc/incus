@@ -22,6 +22,122 @@
 			}
 		},
 		"devices": {
+			"unix-char-block": {
+				"keys": [
+					{
+						"gid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "GID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"major": {
+							"default": "device on host",
+							"longdesc": "",
+							"shortdesc": "Device major number",
+							"type": "int"
+						}
+					},
+					{
+						"minor": {
+							"default": "device on host",
+							"longdesc": "",
+							"shortdesc": "Device minor number",
+							"type": "int"
+						}
+					},
+					{
+						"mode": {
+							"default": "0660",
+							"longdesc": "",
+							"shortdesc": "Mode of the device in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"path": {
+							"longdesc": "",
+							"shortdesc": "Path inside the instance (one of `source` and `path` must be set)",
+							"type": "string"
+						}
+					},
+					{
+						"required": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether this device is required to start the instance",
+							"type": "bool"
+						}
+					},
+					{
+						"source": {
+							"longdesc": "",
+							"shortdesc": "Path on the host (one of `source` and `path` must be set)",
+							"type": "string"
+						}
+					},
+					{
+						"uid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "UID of the device owner in the instance",
+							"type": "int"
+						}
+					}
+				]
+			},
+			"unix-hotplug": {
+				"keys": [
+					{
+						"gid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "GID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"mode": {
+							"default": "0660",
+							"longdesc": "",
+							"shortdesc": "Mode of the device in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"shortdesc": "The product ID of the USB device",
+							"type": "string"
+						}
+					},
+					{
+						"required": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether this device is required to start the instance",
+							"type": "bool"
+						}
+					},
+					{
+						"uid": {
+							"default": "0",
+							"longdesc": "",
+							"shortdesc": "UID of the device owner in the instance",
+							"type": "int"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"shortdesc": "The vendor ID of the USB device",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"usb": {
 				"keys": [
 					{

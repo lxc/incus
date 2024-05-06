@@ -16,6 +16,104 @@ User keys can be used in search.
 ```
 
 <!-- config group cluster-cluster end -->
+<!-- config group devices-unix-char-block start -->
+```{config:option} gid devices-unix-char-block
+:default: "0"
+:shortdesc: "GID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} major devices-unix-char-block
+:default: "device on host"
+:shortdesc: "Device major number"
+:type: "int"
+
+```
+
+```{config:option} minor devices-unix-char-block
+:default: "device on host"
+:shortdesc: "Device minor number"
+:type: "int"
+
+```
+
+```{config:option} mode devices-unix-char-block
+:default: "0660"
+:shortdesc: "Mode of the device in the instance"
+:type: "int"
+
+```
+
+```{config:option} path devices-unix-char-block
+:shortdesc: "Path inside the instance (one of `source` and `path` must be set)"
+:type: "string"
+
+```
+
+```{config:option} required devices-unix-char-block
+:default: "true"
+:shortdesc: "Whether this device is required to start the instance"
+:type: "bool"
+
+```
+
+```{config:option} source devices-unix-char-block
+:shortdesc: "Path on the host (one of `source` and `path` must be set)"
+:type: "string"
+
+```
+
+```{config:option} uid devices-unix-char-block
+:default: "0"
+:shortdesc: "UID of the device owner in the instance"
+:type: "int"
+
+```
+
+<!-- config group devices-unix-char-block end -->
+<!-- config group devices-unix-hotplug start -->
+```{config:option} gid devices-unix-hotplug
+:default: "0"
+:shortdesc: "GID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} mode devices-unix-hotplug
+:default: "0660"
+:shortdesc: "Mode of the device in the instance"
+:type: "int"
+
+```
+
+```{config:option} productid devices-unix-hotplug
+:shortdesc: "The product ID of the USB device"
+:type: "string"
+
+```
+
+```{config:option} required devices-unix-hotplug
+:default: "true"
+:shortdesc: "Whether this device is required to start the instance"
+:type: "bool"
+
+```
+
+```{config:option} uid devices-unix-hotplug
+:default: "0"
+:shortdesc: "UID of the device owner in the instance"
+:type: "int"
+
+```
+
+```{config:option} vendorid devices-unix-hotplug
+:shortdesc: "The vendor ID of the USB device"
+:type: "string"
+
+```
+
+<!-- config group devices-unix-hotplug end -->
 <!-- config group devices-usb start -->
 ```{config:option} busnum devices-usb
 :shortdesc: "The bus number of which the USB device is attached"
