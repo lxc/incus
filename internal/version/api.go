@@ -420,6 +420,7 @@ var APIExtensions = []string{
 	"networks_all_projects",
 	"network_acls_all_projects",
 	"storage_buckets_all_projects",
+	"resources_load",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
