@@ -453,6 +453,13 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 			fmt.Printf("      "+i18n.G("Date: %s")+"\n", resources.System.Firmware.Date)
 		}
 
+		// Load
+		fmt.Printf("\n" + i18n.G("Load:") + "\n")
+		if resources.Load.Processes > 0 {
+			fmt.Printf("  "+i18n.G("Processes: %d")+"\n", resources.Load.Processes)
+			fmt.Printf("  "+i18n.G("Average: %.2f %.2f %.2f")+"\n", resources.Load.Average1Min, resources.Load.Average5Min, resources.Load.Average10Min)
+		}
+
 		// CPU
 		if len(resources.CPU.Sockets) == 1 {
 			fmt.Printf("\n" + i18n.G("CPU:") + "\n")
