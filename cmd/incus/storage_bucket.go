@@ -459,7 +459,9 @@ func (c *cmdStorageBucketGet) Run(cmd *cobra.Command, args []string) error {
 type cmdStorageBucketList struct {
 	global        *cmdGlobal
 	storageBucket *cmdStorageBucket
-	flagFormat    string
+
+	flagFormat      string
+	flagAllProjects bool
 }
 
 func (c *cmdStorageBucketList) Command() *cobra.Command {
@@ -470,6 +472,7 @@ func (c *cmdStorageBucketList) Command() *cobra.Command {
 
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`List storage buckets`))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Display storage pool buckets from all projects"))
 
 	cmd.RunE = c.Run
 
@@ -497,9 +500,17 @@ func (c *cmdStorageBucketList) Run(cmd *cobra.Command, args []string) error {
 
 	client := resource.server
 
-	buckets, err := client.GetStoragePoolBuckets(resource.name)
-	if err != nil {
-		return err
+	var buckets []api.StorageBucket
+	if c.flagAllProjects {
+		buckets, err = client.GetStoragePoolBucketsAllProjects(resource.name)
+		if err != nil {
+			return err
+		}
+	} else {
+		buckets, err = client.GetStoragePoolBuckets(resource.name)
+		if err != nil {
+			return err
+		}
 	}
 
 	clustered := resource.server.IsClustered()
@@ -515,6 +526,10 @@ func (c *cmdStorageBucketList) Run(cmd *cobra.Command, args []string) error {
 			details = append(details, bucket.Location)
 		}
 
+		if c.flagAllProjects {
+			details = append([]string{bucket.Project}, details...)
+		}
+
 		data = append(data, details)
 	}
 
@@ -527,6 +542,10 @@ func (c *cmdStorageBucketList) Run(cmd *cobra.Command, args []string) error {
 
 	if clustered {
 		header = append(header, i18n.G("LOCATION"))
+	}
+
+	if c.flagAllProjects {
+		header = append([]string{i18n.G("PROJECT")}, header...)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, buckets)

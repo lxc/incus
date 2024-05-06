@@ -82,7 +82,8 @@ type cmdNetworkACLList struct {
 	global     *cmdGlobal
 	networkACL *cmdNetworkACL
 
-	flagFormat string
+	flagFormat      string
+	flagAllProjects bool
 }
 
 func (c *cmdNetworkACLList) Command() *cobra.Command {
@@ -94,6 +95,7 @@ func (c *cmdNetworkACLList) Command() *cobra.Command {
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
+	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("List network ACLs across all projects"))
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -131,9 +133,17 @@ func (c *cmdNetworkACLList) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Filtering isn't supported yet"))
 	}
 
-	acls, err := resource.server.GetNetworkACLs()
-	if err != nil {
-		return err
+	var acls []api.NetworkACL
+	if c.flagAllProjects {
+		acls, err = resource.server.GetNetworkACLsAllProjects()
+		if err != nil {
+			return err
+		}
+	} else {
+		acls, err = resource.server.GetNetworkACLs()
+		if err != nil {
+			return err
+		}
 	}
 
 	data := [][]string{}
@@ -145,6 +155,10 @@ func (c *cmdNetworkACLList) Run(cmd *cobra.Command, args []string) error {
 			strUsedBy,
 		}
 
+		if c.flagAllProjects {
+			details = append([]string{acl.Project}, details...)
+		}
+
 		data = append(data, details)
 	}
 
@@ -154,6 +168,10 @@ func (c *cmdNetworkACLList) Run(cmd *cobra.Command, args []string) error {
 		i18n.G("NAME"),
 		i18n.G("DESCRIPTION"),
 		i18n.G("USED BY"),
+	}
+
+	if c.flagAllProjects {
+		header = append([]string{i18n.G("PROJECT")}, header...)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, acls)

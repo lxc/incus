@@ -44,6 +44,21 @@ func (r *ProtocolIncus) GetNetworkACLs() ([]api.NetworkACL, error) {
 	return acls, nil
 }
 
+// GetNetworkACLsAllProjects returns all list of Network ACL structs across all projects.
+func (r *ProtocolIncus) GetNetworkACLsAllProjects() ([]api.NetworkACL, error) {
+	if !r.HasExtension("network_acls_all_projects") {
+		return nil, fmt.Errorf(`The server is missing the required "network_acls_all_projects" API extension`)
+	}
+
+	acls := []api.NetworkACL{}
+	_, err := r.queryStruct("GET", "/network-acls?recursion=1&all-projects=true", nil, "", &acls)
+	if err != nil {
+		return nil, err
+	}
+
+	return acls, nil
+}
+
 // GetNetworkACL returns a Network ACL entry for the provided name.
 func (r *ProtocolIncus) GetNetworkACL(name string) (*api.NetworkACL, string, error) {
 	if !r.HasExtension("network_acl") {
