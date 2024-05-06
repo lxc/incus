@@ -59,6 +59,16 @@ func (c *Config) ClusterRebalanceThreshold() int64 {
 	return c.m.GetInt64("cluster.rebalance.threshold")
 }
 
+// ClusterRebalanceThreshold returns the relevant setting.
+func (c *Config) ClusterRebalanceFrequency() int64 {
+	return c.m.GetInt64("cluster.rebalance.frequency")
+}
+
+// ClusterRebalanceThreshold returns the relevant setting.
+func (c *Config) ClusterRebalanceBatch() int64 {
+	return c.m.GetInt64("cluster.rebalance.batch")
+}
+
 // HTTPSAllowedHeaders returns the relevant CORS setting.
 func (c *Config) HTTPSAllowedHeaders() string {
 	return c.m.GetString("core.https_allowed_headers")

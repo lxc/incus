@@ -4577,6 +4577,7 @@ func autoHealCluster(ctx context.Context, s *state.State, offlineMembers []db.No
 }
 
 func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
+	s := d.State()
 	f := func(ctx context.Context) {
 		s := d.State()
 		rebalanceThreshold := s.GlobalConfig.ClusterRebalanceThreshold()
@@ -4739,6 +4740,9 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 
 				// migrate instances to reach the minimum between them
 				memoryToMigrate := math.Min(maxServerMemoryToMigrate, minServerMemoryToMigrate)
+				
+				// limits how many instances can be migrated in 1 sitting
+				batchLimit := s.GlobalConfig.ClusterRebalanceBatch()
 
 				var instancesToMigrate []instance.Instance
 
@@ -4753,9 +4757,9 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 					// append instance to instancesToMigrate
 					instancesToMigrate = append(instancesToMigrate, inst)
 					memoryToMigrate -= float64(memoryLimits)
-
+					batchLimit -= 1
 					// check if we have reached the memory limit
-					if memoryToMigrate <= 0 {
+					if memoryToMigrate <= 0  || batchLimit == 0{
 						break
 					}
 				}
@@ -4792,7 +4796,7 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 			}
 		}
 	}
-	return f, task.Every(time.Minute)
+	return f, task.Every(time.Duration(s.GlobalConfig.ClusterRebalanceFrequency()) * time.Minute)
 }
 
 func autoClusterRebalance(ctx context.Context, s *state.State, instancesToMigrate []instance.Instance, maxServer *db.NodeInfo, minServer *db.NodeInfo, op *operations.Operation) error {
