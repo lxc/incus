@@ -2480,3 +2480,7 @@ This adds support for stateless rules in network ACLs.
 ## `instance_state_started_at`
 
 This adds a `started_at` timestamp to the instance state API.
+
+## `networks_all_projects`
+
+This adds support for listing networks across all projects through the `all-projects` parameter on the `GET /1.0/networks`API.
