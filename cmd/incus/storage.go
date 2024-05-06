@@ -653,7 +653,8 @@ func (c *cmdStorageInfo) Run(cmd *cobra.Command, args []string) error {
 type cmdStorageList struct {
 	global  *cmdGlobal
 	storage *cmdStorage
-	flagFormat string
+
+	flagFormat  string
 	flagColumns string
 }
 
@@ -664,10 +665,10 @@ func (c *cmdStorageList) Command() *cobra.Command {
 	cmd.Short = i18n.G("List available storage pools")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List available storage pools
-		
-		Default column layout: nDSdus
 
-		== Columns ==
+Default column layout: nDSdus
+
+== Columns ==
 The -c option takes a comma separated list of arguments that control
 which instance attributes to output when displaying in table or csv
 format.
@@ -684,7 +685,7 @@ Pre-defined column shorthand chars:
   S - Source
   u - used by
   s - state`))
-    cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultStorageColumns, i18n.G("Columns")+"``")
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultStorageColumns, i18n.G("Columns")+"``")
 
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
 
@@ -701,13 +702,13 @@ Pre-defined column shorthand chars:
 	return cmd
 }
 
-const defaultStorageColumns = "nDSdus"
+const defaultStorageColumns = "nDdus"
 
 func (c *cmdStorageList) parseColumns() ([]storageColumn, error) {
 	columnsShorthandMap := map[rune]storageColumn{
 		'n': {i18n.G("NAME"), c.storageNameColumnData},
-		'd': {i18n.G("DRIVER"), c.driverColumnData},
-		'D': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+		'D': {i18n.G("DRIVER"), c.driverColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
 		'S': {i18n.G("SOURCE"), c.sourceColumnData},
 		'u': {i18n.G("USED BY"), c.usedByColumnData},
 		's': {i18n.G("STATE"), c.stateColumnData},
@@ -740,12 +741,7 @@ func (c *cmdStorageList) storageNameColumnData(storage api.StoragePool) string {
 }
 
 func (c *cmdStorageList) driverColumnData(storage api.StoragePool) string {
-	driver := i18n.G("NO")
-	if util.IsTrue(storage.Config["storage.Driver"]) {
-		driver = i18n.G("YES")
-	}
-
-	return driver
+	return storage.Driver
 }
 
 func (c *cmdStorageList) descriptionColumnData(storage api.StoragePool) string {
@@ -753,32 +749,16 @@ func (c *cmdStorageList) descriptionColumnData(storage api.StoragePool) string {
 }
 
 func (c *cmdStorageList) sourceColumnData(storage api.StoragePool) string {
-	source := i18n.G("NO")
-	if util.IsTrue(storage.Config["storage.Source"]) {
-		source = i18n.G("YES")
-	}
-
-	return source
+	return storage.Config["source"]
 }
 
 func (c *cmdStorageList) usedByColumnData(storage api.StoragePool) string {
-	usedBy := i18n.G("NO")
-	if util.IsTrue(storage.Config["storage.UsedBy"]) {
-		usedBy = i18n.G("YES")
-	}
-
-	return usedBy
+	return fmt.Sprintf("%d", len(storage.UsedBy))
 }
 
 func (c *cmdStorageList) stateColumnData(storage api.StoragePool) string {
-	state := i18n.G("NO")
-	if util.IsTrue(storage.Config["storage.State"]) {
-		state = i18n.G("YES")
-	}
-
-	return state
+	return strings.ToUpper(storage.Status)
 }
-
 
 func (c *cmdStorageList) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
@@ -806,7 +786,7 @@ func (c *cmdStorageList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	//parse column flags
+	// Parse column flags.
 	columns, err := c.parseColumns()
 	if err != nil {
 		return err
@@ -823,7 +803,6 @@ func (c *cmdStorageList) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
-
 
 	header := []string{}
 	for _, column := range columns {
