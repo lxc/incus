@@ -50,8 +50,7 @@ func (r *ProtocolIncus) GetNetworkZonesAllProjects() ([]api.NetworkZone, error) 
 	}
 
 	zones := []api.NetworkZone{}
-	uri := "/network-zones?all-projects=true&recursion=1"
-	_, err = r.queryStruct("GET", uri, nil, "", &zones)
+	_, err = r.queryStruct("GET", "/network-zones?recursion=1&all-projects=true", nil, "", &zones)
 	if err != nil {
 		return nil, err
 	}
