@@ -234,7 +234,8 @@ type InstanceServer interface {
 	DeleteNetworkACL(name string) (err error)
 
 	// Network allocations functions ("network_allocations" API extension)
-	GetNetworkAllocations(allProjects bool) (allocations []api.NetworkAllocations, err error)
+	GetNetworkAllocations() (allocations []api.NetworkAllocations, err error)
+	GetNetworkAllocationsAllProjects() (allocations []api.NetworkAllocations, err error)
 
 	// Network zone functions ("network_dns" API extension)
 	GetNetworkZonesAllProjects() (zones []api.NetworkZone, err error)
