@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -877,6 +878,11 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 func projectDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
+	force, err := strconv.Atoi(r.FormValue("force"))
+	if err != nil {
+		force = 0
+	}
+
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
 	if err != nil {
 		return response.SmartError(err)
@@ -894,21 +900,29 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Fetch project %q: %w", name, err)
 		}
 
-		empty, err := projectIsEmpty(ctx, project, tx)
-		if err != nil {
-			return err
+		if force==1 {
+			//testing: project force delete
+			fmt.Printf("FORCE DELETING PROJECT \n")
 		}
+		//default delete behavior, may change when force delete is implemented
+		if force==0 {
+			empty, err := projectIsEmpty(ctx, project, tx)
+			if err != nil {
+				return err
+			}
 
-		if !empty {
-			return fmt.Errorf("Only empty projects can be removed")
+			if !empty {
+				return fmt.Errorf("Only empty projects can be removed")
+			}
+
+			id, err = cluster.GetProjectID(ctx, tx.Tx(), name)
+			if err != nil {
+				return fmt.Errorf("Fetch project id %q: %w", name, err)
+			}
+
+			return cluster.DeleteProject(ctx, tx.Tx(), name)
 		}
-
-		id, err = cluster.GetProjectID(ctx, tx.Tx(), name)
-		if err != nil {
-			return fmt.Errorf("Fetch project id %q: %w", name, err)
-		}
-
-		return cluster.DeleteProject(ctx, tx.Tx(), name)
+		return err
 	})
 
 	if err != nil {

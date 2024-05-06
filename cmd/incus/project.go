@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -185,6 +186,7 @@ func (c *cmdProjectCreate) Run(cmd *cobra.Command, args []string) error {
 type cmdProjectDelete struct {
 	global  *cmdGlobal
 	project *cmdProject
+	flagForce bool
 }
 
 func (c *cmdProjectDelete) Command() *cobra.Command {
@@ -193,8 +195,9 @@ func (c *cmdProjectDelete) Command() *cobra.Command {
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete projects")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete projects`))
+		`Delete projects. Use flag -f to force delete a project.`))
 
+	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force delete the project and all its attributes."))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -206,6 +209,20 @@ func (c *cmdProjectDelete) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+func (c *cmdProjectDelete) promptConfirmation(name string) error {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf(i18n.G(`Careful, force removal may not be properly implemented.
+	This message is a placeholder. Are you really sure you want to force removing %s? (yes/no): `), name)
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSuffix(input, "\n")
+
+	if !slices.Contains([]string{i18n.G("yes")}, strings.ToLower(input)) {
+		return fmt.Errorf(i18n.G("User aborted delete operation"))
+	}
+
+	return nil
 }
 
 func (c *cmdProjectDelete) Run(cmd *cobra.Command, args []string) error {
@@ -228,12 +245,20 @@ func (c *cmdProjectDelete) Run(cmd *cobra.Command, args []string) error {
 
 	resource := resources[0]
 
+	// Prompt for confirmation if --force is used.
+	if c.flagForce {
+		err := c.promptConfirmation(resource.name)
+		if err != nil {
+			return err
+		}
+	}
+
 	if resource.name == "" {
 		return fmt.Errorf(i18n.G("Missing project name"))
 	}
 
-	// Delete the project
-	err = resource.server.DeleteProject(resource.name)
+	// Delete the project, server is unable to find the project here.
+	err = resource.server.DeleteProject(resource.name, c.flagForce)
 	if err != nil {
 		return err
 	}

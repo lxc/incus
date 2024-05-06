@@ -123,14 +123,20 @@ func (r *ProtocolIncus) RenameProject(name string, project api.ProjectPost) (Ope
 	return op, nil
 }
 
-// DeleteProject deletes a project.
-func (r *ProtocolIncus) DeleteProject(name string) error {
+// DeleteProject deletes a project gracefully or not,
+// depending on the force flag).
+func (r *ProtocolIncus) DeleteProject(name string, force bool) error {
 	if !r.HasExtension("projects") {
 		return fmt.Errorf("The server is missing the required \"projects\" API extension")
 	}
 
+	params := ""
+	if force {
+		params += "?force=1"
+	}
+
 	// Send the request
-	_, _, err := r.query("DELETE", fmt.Sprintf("/projects/%s", url.PathEscape(name)), nil, "")
+	_, _, err := r.query("DELETE", fmt.Sprintf("/projects/%s/%s", url.PathEscape(name), params), nil, "")
 	if err != nil {
 		return err
 	}
