@@ -2488,3 +2488,7 @@ This adds support for listing networks across all projects through the `all-proj
 ## `network_acls_all_projects`
 
 This adds support for listing network ACLs across all projects through the `all-projects` parameter on the `GET /1.0/network-acls`API.
+
+## `storage_buckets_all_projects`
+
+This adds support for listing storage buckets across all projects through the `all-projects` parameter on the `GET /1.0/storage-pools/POOL/buckets`API.
