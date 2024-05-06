@@ -17,7 +17,6 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/termios"
 	"github.com/lxc/incus/v6/shared/units"
-	//"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdStorage struct {

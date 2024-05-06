@@ -901,8 +901,11 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if force==1 {
-			//testing: project force delete
-			fmt.Printf("FORCE DELETING PROJECT \n")
+			//project force delete untested method
+			//todo: call the incus daemon and use it to DeleteInstance, DeleteProfile, UpdateProfile, etc.
+			//unsure how to access the UsedBy field via GetProject call. 
+			
+
 		}
 		//default delete behavior, may change when force delete is implemented
 		if force==0 {
