@@ -394,6 +394,41 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		return rv, nil
 	}
 
+	getProjectFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		var name string
+
+		err := starlark.UnpackArgs(b.Name(), args, kwargs, "name??", &name)
+		if err != nil {
+			return nil, err
+		}
+
+		var p *api.Project
+
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), name)
+			if err != nil {
+				return err
+			}
+
+			p, err = dbProject.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		rv, err := StarlarkMarshal(p)
+		if err != nil {
+			return nil, fmt.Errorf("Marshalling instance resources failed: %w", err)
+		}
+
+		return rv, nil
+	}
+
 	var err error
 	var raftNodes []db.RaftNode
 	err = s.DB.Node.Transaction(ctx, func(ctx context.Context, tx *db.NodeTx) error {
@@ -461,6 +496,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		"get_instance_resources":       starlark.NewBuiltin("get_instance_resources", getInstanceResourcesFunc),
 		"get_instances":                starlark.NewBuiltin("get_instances", getInstancesFunc),
 		"get_cluster_members":          starlark.NewBuiltin("get_cluster_members", getClusterMembersFunc),
+		"get_project":                  starlark.NewBuiltin("get_project", getProjectFunc),
 	}
 
 	prog, thread, err := scriptletLoad.InstancePlacementProgram()
