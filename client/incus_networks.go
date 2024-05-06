@@ -42,6 +42,21 @@ func (r *ProtocolIncus) GetNetworks() ([]api.Network, error) {
 	return networks, nil
 }
 
+// GetNetworksAllProjects gets all networks across all projects.
+func (r *ProtocolIncus) GetNetworksAllProjects() ([]api.Network, error) {
+	if !r.HasExtension("networks_all_projects") {
+		return nil, fmt.Errorf(`The server is missing the required "networks_all_projects" API extension`)
+	}
+
+	networks := []api.Network{}
+	_, err := r.queryStruct("GET", "/networks?recursion=1&all-projects=true", nil, "", &networks)
+	if err != nil {
+		return nil, err
+	}
+
+	return networks, nil
+}
+
 // GetNetwork returns a Network entry for the provided name.
 func (r *ProtocolIncus) GetNetwork(name string) (*api.Network, string, error) {
 	if !r.HasExtension("network") {
