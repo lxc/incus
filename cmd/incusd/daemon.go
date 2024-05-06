@@ -167,6 +167,9 @@ type Daemon struct {
 	// OVN clients.
 	ovnnb *ovn.NB
 	ovnsb *ovn.SB
+
+	// Cooldowns map
+	instanceMigrationCooldowns map[string]time.Time
 }
 
 // DaemonConfig holds configuration values for Daemon.
@@ -196,6 +199,7 @@ func newDaemon(config *DaemonConfig, os *sys.OS) *Daemon {
 		shutdownCtx:    shutdownCtx,
 		shutdownCancel: shutdownCancel,
 		shutdownDoneCh: make(chan error),
+		instanceMigrationCooldowns: make(map[string]time.Time),
 	}
 
 	d.serverCert = func() *localtls.CertInfo { return d.serverCertInt }

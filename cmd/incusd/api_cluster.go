@@ -4718,8 +4718,19 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 						return
 					}
 
-					// check if the instance can be live migrated
+					// check if the instance can be live migrated, instance name not in map, or cooldown has passed
+		
 					live := inst.CanMigrate() == "live-migrate"
+
+					// check if the name is in the map
+					_, exists := d.instanceMigrationCooldowns[inst.Name()]
+					if live && exists {
+						// check cooldown
+						if time.Now().Before(d.instanceMigrationCooldowns[inst.Name()]) {
+							live = false
+						}
+					}
+
 					if live {
 						instances = append(instances, inst)
 					}
@@ -4758,6 +4769,7 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 					instancesToMigrate = append(instancesToMigrate, inst)
 					memoryToMigrate -= float64(memoryLimits)
 					batchLimit -= 1
+
 					// check if we have reached the memory limit
 					if memoryToMigrate <= 0  || batchLimit == 0{
 						break
@@ -4767,7 +4779,7 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 				logger.Info("Number of instances to migrate", logger.Ctx{"count": len(instancesToMigrate)})
 
 				opRun := func(op *operations.Operation) error {
-					err := autoClusterRebalance(ctx, s, instancesToMigrate, &maxServer, &minServer, op)
+					err := autoClusterRebalance(ctx, d, s, instancesToMigrate, &maxServer, &minServer, op)
 					if err != nil {
 						logger.Error("Failed rebalancing cluster instances", logger.Ctx{"err": err})
 						return err
@@ -4799,7 +4811,7 @@ func autoClusterRebalanceTask(d *Daemon) (task.Func, task.Schedule) {
 	return f, task.Every(time.Duration(s.GlobalConfig.ClusterRebalanceFrequency()) * time.Minute)
 }
 
-func autoClusterRebalance(ctx context.Context, s *state.State, instancesToMigrate []instance.Instance, maxServer *db.NodeInfo, minServer *db.NodeInfo, op *operations.Operation) error {
+func autoClusterRebalance(ctx context.Context, d *Daemon, s *state.State, instancesToMigrate []instance.Instance, maxServer *db.NodeInfo, minServer *db.NodeInfo, op *operations.Operation) error {
 	for _, inst := range instancesToMigrate {
 		req := api.InstancePost{
 			Migration: true,
@@ -4810,6 +4822,13 @@ func autoClusterRebalance(ctx context.Context, s *state.State, instancesToMigrat
 		if err != nil {
 			return fmt.Errorf("Failed to migrate instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
 		}
+
+		// update the cooldown
+		cooldown, err := time.ParseDuration(s.GlobalConfig.ClusterRebalanceCooldown())
+		if err != nil {
+			return fmt.Errorf("Failed to parse cooldown duration: %w", err)
+		}
+		d.instanceMigrationCooldowns[inst.Name()] = time.Now().Add(time.Duration(cooldown))
 	}
 	return nil
 }

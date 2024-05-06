@@ -59,14 +59,19 @@ func (c *Config) ClusterRebalanceThreshold() int64 {
 	return c.m.GetInt64("cluster.rebalance.threshold")
 }
 
-// ClusterRebalanceThreshold returns the relevant setting.
+// ClusterRebalanceFrequency returns the relevant setting.
 func (c *Config) ClusterRebalanceFrequency() int64 {
 	return c.m.GetInt64("cluster.rebalance.frequency")
 }
 
-// ClusterRebalanceThreshold returns the relevant setting.
+// ClusterRebalanceBatch returns the relevant setting.
 func (c *Config) ClusterRebalanceBatch() int64 {
 	return c.m.GetInt64("cluster.rebalance.batch")
+}
+
+// ClusterRebalanceCooldown returns the relevant setting.
+func (c *Config) ClusterRebalanceCooldown() string {
+	return c.m.GetString("cluster.rebalance.cooldown")
 }
 
 // HTTPSAllowedHeaders returns the relevant CORS setting.
@@ -391,21 +396,21 @@ var ConfigSchema = config.Schema{
 	"cluster.max_voters": {Type: config.Int64, Default: "3", Validator: maxVotersValidator},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.frequency)
-	// This is how often we want to rebalance things TODO: make this more descriptive, update the validator
+	// This is how often we want to check if we want to rebalance our instances (in minutes)
 	// ---
 	//  type: integer
 	//  scope: global
 	//  defaultdesc: `3`
-	//  shortdesc: Number of database voter members
+	//  shortdesc: Frequency of checking rebalance threshold in minutes
 	"cluster.rebalance.frequency": {Type: config.Int64, Default: "3"},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.threshold)
-	// Load difference beteween most and least busy server needed to trigger a migration TODO: add a validator
+	// Load difference beteween most and least busy server needed to trigger a migration
 	// ---
 	//  type: integer
 	//  scope: global
 	//  defaultdesc: `3`
-	//  shortdesc: Number of database voter members
+	//  shortdesc: Minimum difference in load needed to trigger a migration
 	"cluster.rebalance.threshold": {Type: config.Int64, Default: "20"},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.cooldown)
@@ -414,16 +419,16 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  defaultdesc: `1H`
-	//  shortdesc: Number of database voter members
+	//  shortdesc: Amount of time per instance to wait before moving it again
 	"cluster.rebalance.cooldown": {Type: config.String, Default: "1H"},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.rebalance.batch)
-	// Maximum number of instances to move during one re-balancing run TODO: adjust the default to not be fixed
+	// Maximum number of instances to move during one re-balancing run
 	// ---
 	//  type: stromg
 	//  scope: global
 	//  defaultdesc: `5`
-	//  shortdesc: Number of database voter members
+	//  shortdesc: Max number of instances to move at once
 	"cluster.rebalance.batch": {Type: config.Int64, Default: "5"},
 
 	// gendoc:generate(entity=server, group=cluster, key=cluster.max_standby)
