@@ -29,6 +29,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var storagePoolBucketsCmd = APIEndpoint{
@@ -79,6 +80,11 @@ var storagePoolBucketKeyCmd = APIEndpoint{
 //      description: Project name
 //      type: string
 //      example: default
+//    - in: query
+//      name: all-projects
+//      description: Retrieve storage pool buckets from all projects
+//      type: boolean
+//      example: true
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -128,6 +134,11 @@ var storagePoolBucketKeyCmd = APIEndpoint{
 //	    description: Project name
 //	    type: string
 //	    example: default
+//	  - in: query
+//	    name: all-projects
+//	    description: Retrieve storage pool buckets from all projects
+//	    type: boolean
+//	    example: true
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -160,6 +171,8 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	requestProjectName := request.ProjectParam(r)
+	allProjects := util.IsTrue(r.FormValue("all-projects"))
+
 	bucketProjectName, err := project.StorageBucketProject(r.Context(), s.DB.Cluster, requestProjectName)
 	if err != nil {
 		return response.SmartError(err)
@@ -186,12 +199,16 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		poolID := pool.ID()
-		filters := []db.StorageBucketFilter{{
-			PoolID:  &poolID,
-			Project: &bucketProjectName,
-		}}
 
-		dbBuckets, err = tx.GetStoragePoolBuckets(ctx, memberSpecific, filters...)
+		filter := db.StorageBucketFilter{
+			PoolID: &poolID,
+		}
+
+		if !allProjects {
+			filter.Project = &bucketProjectName
+		}
+
+		dbBuckets, err = tx.GetStoragePoolBuckets(ctx, memberSpecific, filter)
 		if err != nil {
 			return fmt.Errorf("Failed loading storage buckets: %w", err)
 		}
