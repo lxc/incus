@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-05-06 16:42-0400\n"
+"POT-Creation-Date: 2024-05-06 17:08-0400\n"
 "PO-Revision-Date: 2024-02-24 03:02+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -1195,6 +1195,11 @@ msgstr "CONTENT-TYPE"
 msgid "COUNT"
 msgstr "COUNT"
 
+#: cmd/incus/top.go:283
+#, fuzzy
+msgid "CPU TIME(s)"
+msgstr "CPU (%s):"
+
 #: cmd/incus/list.go:589
 msgid "CPU USAGE"
 msgstr "CPU USAGE"
@@ -1914,6 +1919,10 @@ msgstr "DEFAULT TARGET ADDRESS"
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
+#: cmd/incus/top.go:283
+msgid "DISK"
+msgstr ""
+
 #: cmd/incus/list.go:575
 msgid "DISK USAGE"
 msgstr "DISK USAGE"
@@ -1949,6 +1958,11 @@ msgstr "デフォルト VLAN ID"
 #: cmd/incus/storage_bucket.go:1267 cmd/incus/storage_volume.go:2885
 msgid "Define a compression algorithm: for backup or none"
 msgstr "圧縮アルゴリズムを指定します: backup or none"
+
+#: cmd/incus/top.go:295
+#, fuzzy
+msgid "Delay:"
+msgstr "Down delay"
 
 #: cmd/incus/operation.go:56 cmd/incus/operation.go:57
 msgid "Delete a background operation (will attempt to cancel)"
@@ -2198,7 +2212,7 @@ msgstr "警告を削除します"
 #: cmd/incus/storage_volume.go:2492 cmd/incus/storage_volume.go:2498
 #: cmd/incus/storage_volume.go:2616 cmd/incus/storage_volume.go:2703
 #: cmd/incus/storage_volume.go:2783 cmd/incus/storage_volume.go:2879
-#: cmd/incus/storage_volume.go:3045 cmd/incus/version.go:22
+#: cmd/incus/storage_volume.go:3045 cmd/incus/top.go:30 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:358
 msgid "Description"
@@ -2357,10 +2371,18 @@ msgstr "すべてのプロジェクトのインスタンスを表示します"
 msgid "Display profiles from all projects"
 msgstr "すべてのプロジェクトのイメージを表示します"
 
+#: cmd/incus/top.go:29
+msgid "Display resource usage info per instance"
+msgstr ""
+
 #: cmd/incus/storage_bucket.go:475
 #, fuzzy
 msgid "Display storage pool buckets from all projects"
 msgstr "すべてのプロジェクトのインスタンスを表示します"
+
+#: cmd/incus/top.go:30
+msgid "Displays CPU usage, memory usage, and disk usage per instance"
+msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:416
 msgid "Do you want to configure a new local storage pool?"
@@ -2553,6 +2575,16 @@ msgstr ""
 "  ネットワークが使用可能になっている必要があります。\n"
 "  これは 'incus config get core.https_address' コマンドでチェックできます。\n"
 "  まだ使用可能でない場合は、アドレスを設定することもできます。"
+
+#: cmd/incus/top.go:163
+msgid ""
+"Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
+"for disk):"
+msgstr ""
+
+#: cmd/incus/top.go:144
+msgid "Enter new delay in seconds:"
+msgstr ""
 
 #: cmd/incus/network_zone.go:1439
 msgid "Entry TTL"
@@ -3537,6 +3569,10 @@ msgstr "ID: %s"
 msgid "IMAGES"
 msgstr "IMAGES"
 
+#: cmd/incus/top.go:283
+msgid "INSTANCE NAME"
+msgstr ""
+
 #: cmd/incus/network.go:1187
 msgid "IP ADDRESS"
 msgstr "IP ADDRESS"
@@ -3578,7 +3614,7 @@ msgstr ""
 "存在するスナップショット名の場合は既存のスナップショットを削除したあとに新し"
 "いスナップショットを作成します"
 
-#: cmd/incus/main.go:415
+#: cmd/incus/main.go:419
 #, fuzzy
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
@@ -3841,6 +3877,10 @@ msgstr "不正なインスタンス名: %s"
 msgid "Invalid format: %s"
 msgstr "不正なフォーマット %s"
 
+#: cmd/incus/top.go:155
+msgid "Invalid input, please enter a positive number"
+msgstr ""
+
 #: cmd/incus/snapshot.go:147
 #, c-format
 msgid "Invalid instance name: %s"
@@ -3880,7 +3920,7 @@ msgid ""
 msgstr ""
 "'%s' は不正な名前です。空文字列は maxWidth を指定しているときのみ指定できます"
 
-#: cmd/incus/main.go:511 cmd/incus/storage.go:134
+#: cmd/incus/main.go:515 cmd/incus/storage.go:134
 msgid "Invalid number of arguments"
 msgstr "引数の数が不正です"
 
@@ -3904,6 +3944,16 @@ msgstr "不正なプロトコル: %s"
 #: cmd/incus/storage_volume.go:2839
 msgid "Invalid snapshot name"
 msgstr "不正なスナップショット名"
+
+#: cmd/incus/top.go:239
+#, fuzzy
+msgid "Invalid sorting type"
+msgstr "不正な送り先 %s"
+
+#: cmd/incus/top.go:184
+#, fuzzy
+msgid "Invalid sorting type provided"
+msgstr "不正な送り先 %s"
 
 #: cmd/incus/file.go:494
 #, c-format
@@ -4762,6 +4812,11 @@ msgstr "MANAGED"
 #: cmd/incus/cluster_group.go:504
 msgid "MEMBERS"
 msgstr "MEMBERS"
+
+#: cmd/incus/top.go:283
+#, fuzzy
+msgid "MEMORY"
+msgstr "MEMORY USAGE"
 
 #: cmd/incus/list.go:580
 msgid "MEMORY USAGE"
@@ -5853,7 +5908,7 @@ msgstr "送信パケット"
 msgid "Partitions:"
 msgstr "パーティション:"
 
-#: cmd/incus/main.go:376
+#: cmd/incus/main.go:380
 #, c-format
 msgid "Password for %s: "
 msgstr "%s のパスワード: "
@@ -5922,6 +5977,18 @@ msgstr "ポート:"
 #: cmd/incus/admin_init.go:56
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr "Pre-seed モード。標準入力から YAML で設定を入力します"
+
+#: cmd/incus/top.go:291
+msgid "Press 'd' + ENTER to change delay"
+msgstr ""
+
+#: cmd/incus/top.go:292
+msgid "Press 's' + ENTER to change sorting method"
+msgstr ""
+
+#: cmd/incus/top.go:293
+msgid "Press CTRL-C to exit"
+msgstr ""
 
 #: cmd/incus/file.go:1269
 msgid "Press ctrl+c to finish"
@@ -7223,7 +7290,7 @@ msgstr "インスタンスもしくはサーバの情報を表示します"
 msgid "Show instance snapshot configuration"
 msgstr "インスタンスもしくはサーバの設定を表示します"
 
-#: cmd/incus/main.go:275 cmd/incus/main.go:276
+#: cmd/incus/main.go:279 cmd/incus/main.go:280
 msgid "Show less common commands"
 msgstr "全てのコマンドを表示します (主なコマンドだけではなく)"
 
@@ -7381,6 +7448,10 @@ msgstr "ソケット %d:"
 #, c-format
 msgid "Some instances failed to %s"
 msgstr "一部のインスタンスで %s が失敗しました"
+
+#: cmd/incus/top.go:296
+msgid "Sorting Method:"
+msgstr ""
 
 #: cmd/incus/admin_recover.go:121
 msgid ""
@@ -7905,7 +7976,7 @@ msgstr ""
 "publish 先にはイメージ名は指定できません。\"--alias\" オプションを使ってくだ"
 "さい。"
 
-#: cmd/incus/main.go:302
+#: cmd/incus/main.go:306
 #, fuzzy
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
@@ -7968,7 +8039,7 @@ msgstr ""
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "コンソールから切り離すには <ctrl>+a q を押します"
 
-#: cmd/incus/main.go:420
+#: cmd/incus/main.go:424
 #, fuzzy
 msgid ""
 "To start your first container, try: incus launch images:ubuntu/22.04\n"
@@ -8356,6 +8427,11 @@ msgstr ""
 #, fuzzy
 msgid "Update the target profile from the source if it already exists"
 msgstr "コピー元の全てのプロファイルがターゲットに存在しません"
+
+#: cmd/incus/top.go:120
+#, c-format
+msgid "Updated interval to %v"
+msgstr ""
 
 #: cmd/incus/image.go:1008
 #, c-format
@@ -10105,10 +10181,6 @@ msgstr "y"
 #: cmd/incus/image.go:1184 cmd/incus/snapshot.go:256
 msgid "yes"
 msgstr "yes"
-
-#, c-format
-#~ msgid "CPU (%s):"
-#~ msgstr "CPU (%s):"
 
 #, c-format
 #~ msgid "CPUs (%s):"
