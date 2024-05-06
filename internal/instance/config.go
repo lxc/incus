@@ -1268,9 +1268,130 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		return validate.IsAny, nil
 	}
 
-	if strings.HasPrefix(key, "limits.kernel.") &&
-		(len(key) > len("limits.kernel.")) {
-		return validate.IsAny, nil
+	if strings.HasPrefix(key, "limits.kernel.") {
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.as)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_AS`
+		//  shortdesc: Maximum size of the process's virtual memory
+		if strings.HasSuffix(key, ".as") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.core)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_CORE`
+		//  shortdesc: Maximum size of the process's core dump file
+		if strings.HasSuffix(key, ".core") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.cpu)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_CPU`
+		//  shortdesc: Limit in seconds on the amount of CPU time the process can consume
+		if strings.HasSuffix(key, ".cpu") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.data)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_DATA`
+		//  shortdesc: Maximum size of the process's data segment
+		if strings.HasSuffix(key, ".data") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.fsize)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_FSIZE`
+		//  shortdesc: Maximum size of files the process may create
+		if strings.HasSuffix(key, ".fsize") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.locks)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_LOCKS`
+		//  shortdesc: Limit on the number of file locks that this process may establish
+		if strings.HasSuffix(key, ".locks") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.memlock)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_MEMLOCK`
+		//  shortdesc: Limit on the number of bytes of memory that the process may lock in RAM
+		if strings.HasSuffix(key, ".memlock") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.nice)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_NICE`
+		//  shortdesc: Maximum value to which the process's nice value can be raised
+		if strings.HasSuffix(key, ".nice") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.nofile)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_NOFILE`
+		//  shortdesc: Maximum number of open files for the process
+		if strings.HasSuffix(key, ".nofile") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.nproc)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_NPROC`
+		//  shortdesc: Maximum number of processes that can be created for the user of the calling process
+		if strings.HasSuffix(key, ".nproc") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.rtprio)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_RTPRIO`
+		//  shortdesc: Maximum value on the real-time-priority that may be set for this process
+		if strings.HasSuffix(key, ".rtprio") {
+			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=kernel, group=limits, key=limits.kernel.sigpending)
+		//
+		// ---
+		//  type: string
+		//  resource: `RLIMIT_SIGPENDING`
+		//  shortdesc: Limit on the number of bytes of memory that the process may lock in RAM
+		if strings.HasSuffix(key, ".sigpending") {
+			return validate.IsAny, nil
+		}
+
+		if len(key) > len("limits.kernel.") {
+			return validate.IsAny, nil
+		}
 	}
 
 	if (instanceType == api.InstanceTypeAny || instanceType == api.InstanceTypeContainer) &&
