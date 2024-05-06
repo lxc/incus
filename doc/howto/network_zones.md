@@ -148,13 +148,11 @@ incus network zone edit <network_zone>
 
 The following configuration options are available for network zones:
 
-Key                 | Type       | Required | Default | Description
-:--                 | :--        | :--      | -       | :--
-`peers.NAME.address`| string     | no       | -       | IP address of a DNS server
-`peers.NAME.key`    | string     | no       | -       | TSIG key for the server
-`dns.nameservers`   | string set | no       | -       | Comma-separated list of DNS server FQDNs (for NS records)
-`network.nat`       | bool       | no       | `true`  | Whether to generate records for NAT-ed subnets
-`user.*`            | *          | no       | -       | User-provided free-form key/value pairs
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group network_zone-common start -->
+    :end-before: <!-- config group network_zone-common end -->
+```
 
 ```{note}
 When generating the TSIG key using `tsig-keygen`, the key name must follow the format `<zone_name>_<peer_name>.`.
