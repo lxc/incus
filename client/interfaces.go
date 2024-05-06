@@ -225,6 +225,7 @@ type InstanceServer interface {
 	// Network ACL functions ("network_acl" API extension)
 	GetNetworkACLNames() (names []string, err error)
 	GetNetworkACLs() (acls []api.NetworkACL, err error)
+	GetNetworkACLsAllProjects() (acls []api.NetworkACL, err error)
 	GetNetworkACL(name string) (acl *api.NetworkACL, ETag string, err error)
 	GetNetworkACLLogfile(name string) (log io.ReadCloser, err error)
 	CreateNetworkACL(acl api.NetworkACLsPost) (err error)
