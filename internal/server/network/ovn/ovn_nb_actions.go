@@ -258,8 +258,22 @@ func (o *NB) DeleteLogicalRouter(ctx context.Context, routerName OVNRouter) erro
 	return nil
 }
 
-// CreateLogicalRouterSNAT adds an SNAT rule to a logical router to translate packets from intNet to extIP.
-func (o *NB) CreateLogicalRouterSNAT(ctx context.Context, routerName OVNRouter, intNet *net.IPNet, extIP net.IP, mayExist bool) error {
+// CreateLogicalRouterNAT adds an SNAT or DNAT rule to a logical router to translate packets from intNet to extIP.
+func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, natType string, intNet *net.IPNet, extIP net.IP, intIP net.IP, stateless bool, mayExist bool) error {
+	// Prepare the addresses.
+	var logicalIP string
+	var externalIP string
+
+	if natType == "snat" {
+		logicalIP = intNet.String()
+		externalIP = extIP.String()
+	} else if natType == "dnat_and_snat" {
+		logicalIP = intIP.String()
+		externalIP = extIP.String()
+	} else {
+		return fmt.Errorf("Invalid NAT rule type %q", natType)
+	}
+
 	logicalRouter := ovnNB.LogicalRouter{
 		Name: string(routerName),
 	}
@@ -281,8 +295,13 @@ func (o *NB) CreateLogicalRouterSNAT(ctx context.Context, routerName OVNRouter, 
 			return err
 		}
 
+		// Check if rule is of the requested type.
+		if natRule.Type != natType {
+			continue
+		}
+
 		// Check if matching our new rule.
-		if natRule.LogicalIP == intNet.String() && natRule.ExternalIP == extIP.String() {
+		if natRule.LogicalIP == logicalIP && natRule.ExternalIP == externalIP {
 			if mayExist {
 				return nil
 			}
@@ -291,13 +310,12 @@ func (o *NB) CreateLogicalRouterSNAT(ctx context.Context, routerName OVNRouter, 
 		}
 	}
 
-	// Create the record.
 	natRule := ovnNB.NAT{
 		UUID:       "nat",
-		LogicalIP:  intNet.String(),
-		ExternalIP: extIP.String(),
-		Options:    map[string]string{"stateless": "false"},
-		Type:       "snat",
+		Options:    map[string]string{"stateless": fmt.Sprintf("%v", stateless)},
+		Type:       natType,
+		LogicalIP:  logicalIP,
+		ExternalIP: externalIP,
 	}
 
 	operations := []ovsdb.Operation{}
@@ -418,34 +436,6 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 	}
 
 	_, err = ovsdb.CheckOperationResults(resp, operations)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// LogicalRouterDNATSNATAdd adds a DNAT_AND_SNAT rule to a logical router to translate packets from extIP to intIP.
-func (o *NB) LogicalRouterDNATSNATAdd(routerName OVNRouter, extIP net.IP, intIP net.IP, stateless bool, mayExist bool) error {
-	if mayExist {
-		// There appears to be a bug in ovn-nbctl where running lr-nat-del as part of the same command as
-		// lr-nat-add doesn't take account the changes by lr-nat-del, and so you can end up with errors
-		// if a NAT entry already exists. So we run them as separate command invocations.
-		// There can be left over dnat_and_snat entries if an instance was stopped when the ovn-nb DB
-		// was not reachable.
-		_, err := o.nbctl("--if-exists", "lr-nat-del", string(routerName), "dnat_and_snat", extIP.String())
-		if err != nil {
-			return err
-		}
-	}
-
-	args := []string{}
-
-	if stateless {
-		args = append(args, "--stateless")
-	}
-
-	_, err := o.nbctl(append(args, "lr-nat-add", string(routerName), "dnat_and_snat", extIP.String(), intIP.String())...)
 	if err != nil {
 		return err
 	}
