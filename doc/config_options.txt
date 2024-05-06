@@ -1331,6 +1331,44 @@ This template gets access to the project name (`projectName`), integration name 
 ```
 
 <!-- config group network_integration-ovn end -->
+<!-- config group network_zone-common start -->
+```{config:option} dns.nameservers network_zone-common
+:required: "no"
+:shortdesc: "Comma-separated list of DNS server FQDNs (for NS records)"
+:type: "string set"
+
+```
+
+```{config:option} network.nat network_zone-common
+:defaultdesc: "`true`"
+:required: "no"
+:shortdesc: "Whether to generate records for NAT-ed subnets"
+:type: "bool"
+
+```
+
+```{config:option} peers.NAME.address network_zone-common
+:required: "no"
+:shortdesc: "IP address of a DNS server"
+:type: "string"
+
+```
+
+```{config:option} peers.NAME.key network_zone-common
+:required: "no"
+:shortdesc: "TSIG key for the server"
+:type: "string"
+
+```
+
+```{config:option} user.* network_zone-common
+:required: "no"
+:shortdesc: "User-provided free-form key/value pairs"
+:type: "string"
+
+```
+
+<!-- config group network_zone-common end -->
 <!-- config group project-features start -->
 ```{config:option} features.images project-features
 :defaultdesc: "`false`"
