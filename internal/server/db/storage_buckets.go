@@ -29,7 +29,6 @@ type StorageBucket struct {
 	api.StorageBucket
 
 	ID       int64
-	Project  string
 	PoolID   int64
 	PoolName string
 }
