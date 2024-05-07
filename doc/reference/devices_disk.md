@@ -99,25 +99,8 @@ Note that you cannot use initial volume configurations with custom volume option
 
 `disk` devices have the following device options:
 
-Key                 | Type      | Default       | Required  | Description
-:--                 | :--       | :--           | :--       | :--
-`boot.priority`     | integer   | -             | no        | Boot priority for VMs (higher value boots first)
-`ceph.cluster_name` | string    | `ceph`        | no        | The cluster name of the Ceph cluster (required for Ceph or CephFS sources)
-`ceph.user_name`    | string    | `admin`       | no        | The user name of the Ceph cluster (required for Ceph or CephFS sources)
-`initial.*`         | n/a       | -             | no        | {ref}`devices-disk-initial-config` that allows setting unique configurations independent of default storage pool settings
-`io.bus`            | string    | `virtio-scsi` | no        | Only for VMs: Override the bus for the device (`nvme`, `virtio-blk`, or `virtio-scsi`)
-`io.cache`          | string    | `none`        | no        | Only for VMs: Override the caching mode for the device (`none`, `writeback` or `unsafe`)
-`limits.max`        | string    | -             | no        | I/O limit in byte/s or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)
-`limits.read`       | string    | -             | no        | I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`
-`limits.write`      | string    | -             | no        | I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`
-`path`              | string    | -             | yes       | Path inside the instance where the disk will be mounted (only for containers)
-`pool`              | string    | -             | no        | The storage pool to which the disk device belongs (only applicable for storage volumes managed by Incus)
-`propagation`       | string    | -             | no        | Controls how a bind-mount is shared between the instance and the host (can be one of `private`, the default, or `shared`, `slave`, `unbindable`,  `rshared`, `rslave`, `runbindable`,  `rprivate`; see the Linux Kernel [shared subtree](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt) documentation for a full explanation) <!-- wokeignore:rule=slave -->
-`raw.mount.options` | string    | -             | no        | File system specific mount options
-`readonly`          | bool      | `false`       | no        | Controls whether to make the mount read-only
-`recursive`         | bool      | `false`       | no        | Controls whether to recursively mount the source path
-`required`          | bool      | `true`        | no        | Controls whether to fail if the source doesn't exist
-`shift`             | bool      | `false`       | no        | Sets up a shifting overlay to translate the source UID/GID to match the instance (only for containers)
-`size`              | string    | -             | no        | Disk size in bytes (various suffixes supported, see {ref}`instances-limit-units`) - only supported for the `rootfs` (`/`)
-`size.state`        | string    | -             | no        | Same as `size`, but applies to the file-system volume used for saving runtime state in VMs
-`source`            | string    | -             | yes       | Source of a file system or block device (see {ref}`devices-disk-types` for details)
+% Include content from [../config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-disk start -->
+    :end-before: <!-- config group devices-disk end -->
+```
