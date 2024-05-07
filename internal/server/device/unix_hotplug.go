@@ -50,7 +50,7 @@ func (d *unixHotplug) validateConfig(instConf instance.ConfigReader) error {
 		// ---
 		//  type: string
 		//  shortdesc: The vendor ID of the USB device
-		"vendorid":  validate.Optional(validate.IsDeviceID),
+		"vendorid": validate.Optional(validate.IsDeviceID),
 
 		// gendoc:generate(entity=devices, group=unix-hotplug, key=productid)
 		//
@@ -65,7 +65,7 @@ func (d *unixHotplug) validateConfig(instConf instance.ConfigReader) error {
 		//  type: int
 		//  default: 0
 		//  shortdesc: UID of the device owner in the instance
-		"uid":       unixValidUserID,
+		"uid": unixValidUserID,
 
 		// gendoc:generate(entity=devices, group=unix-hotplug, key=gid)
 		//
@@ -73,7 +73,7 @@ func (d *unixHotplug) validateConfig(instConf instance.ConfigReader) error {
 		//  type: int
 		//  default: 0
 		//  shortdesc: GID of the device owner in the instance
-		"gid":       unixValidUserID,
+		"gid": unixValidUserID,
 
 		// gendoc:generate(entity=devices, group=unix-hotplug, key=mode)
 		//
@@ -81,7 +81,7 @@ func (d *unixHotplug) validateConfig(instConf instance.ConfigReader) error {
 		//  type: int
 		//  default: 0660
 		//  shortdesc: Mode of the device in the instance
-		"mode":      unixValidOctalFileMode,
+		"mode": unixValidOctalFileMode,
 
 		// gendoc:generate(entity=devices, group=unix-hotplug, key=required)
 		//
@@ -89,7 +89,7 @@ func (d *unixHotplug) validateConfig(instConf instance.ConfigReader) error {
 		//  type: bool
 		//  default: true
 		//  shortdesc: Whether this device is required to start the instance
-		"required":  validate.Optional(validate.IsBool),
+		"required": validate.Optional(validate.IsBool),
 	}
 
 	err := d.config.Validate(rules)
