@@ -176,26 +176,166 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 	}
 
 	rules := map[string]func(string) error{
-		"required":          validate.Optional(validate.IsBool),
-		"optional":          validate.Optional(validate.IsBool), // "optional" is deprecated, replaced by "required".
-		"readonly":          validate.Optional(validate.IsBool),
-		"recursive":         validate.Optional(validate.IsBool),
-		"shift":             validate.Optional(validate.IsBool),
-		"source":            validate.IsAny,
-		"limits.read":       validate.IsAny,
-		"limits.write":      validate.IsAny,
-		"limits.max":        validate.IsAny,
-		"size":              validate.Optional(validate.IsSize),
-		"size.state":        validate.Optional(validate.IsSize),
-		"pool":              validate.IsAny,
-		"propagation":       validatePropagation,
+		// gendoc:generate(entity=devices, group=disk, key=required)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  required: no
+		//  shortdesc: Controls whether to fail if the source doesn't exist
+		"required": validate.Optional(validate.IsBool),
+		"optional": validate.Optional(validate.IsBool), // "optional" is deprecated, replaced by "required".
+
+		// gendoc:generate(entity=devices, group=disk, key=readonly)
+		//
+		// ---
+		//  type: bool
+		//  default: `false`
+		//  required: no
+		//  shortdesc: Controls whether to make the mount read-only
+		"readonly": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=devices, group=disk, key=recursive)
+		//
+		// ---
+		//  type: bool
+		//  default: `false`
+		//  required: no
+		//  shortdesc: Controls whether to recursively mount the source path
+		"recursive": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=devices, group=disk, key=shift)
+		//
+		// ---
+		//  type: bool
+		//  default: `false`
+		//  required: no
+		//  shortdesc: Sets up a shifting overlay to translate the source UID/GID to match the instance (only for containers)
+		"shift": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=devices, group=disk, key=source)
+		//
+		// ---
+		//  type: string
+		//  required: yes
+		//  shortdesc: Source of a file system or block device (see {ref}`devices-disk-types` for details)
+		"source": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=limits.read)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`
+		"limits.read": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=limits.write)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`
+		"limits.write": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=limits.max)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: I/O limit in byte/s or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)
+		"limits.max": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=size)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: Disk size in bytes (various suffixes supported, see {ref}`instances-limit-units`) - only supported for the `rootfs` (`/`)
+		"size": validate.Optional(validate.IsSize),
+
+		// gendoc:generate(entity=devices, group=disk, key=size.state)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: Same as `size`, but applies to the file-system volume used for saving runtime state in VMs
+		"size.state": validate.Optional(validate.IsSize),
+
+		// gendoc:generate(entity=devices, group=disk, key=pool)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: The storage pool to which the disk device belongs (only applicable for storage volumes managed by Incus)
+		"pool": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=propagation)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: Controls how a bind-mount is shared between the instance and the host (can be one of `private`, the default, or `shared`, `slave`, `unbindable`,  `rshared`, `rslave`, `runbindable`,  `rprivate`; see the Linux Kernel [shared subtree](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt) documentation for a full explanation)
+		"propagation": validatePropagation,
+
+		// gendoc:generate(entity=devices, group=disk, key=raw.mount.options)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: File system specific mount options
 		"raw.mount.options": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=ceph.cluster_name)
+		//
+		// ---
+		//  type: string
+		//  default: `ceph`
+		//  required: no
+		//  shortdesc: The cluster name of the Ceph cluster (required for Ceph or CephFS sources)
 		"ceph.cluster_name": validate.IsAny,
-		"ceph.user_name":    validate.IsAny,
-		"boot.priority":     validate.Optional(validate.IsUint32),
-		"path":              validate.IsAny,
-		"io.cache":          validate.Optional(validate.IsOneOf("none", "writeback", "unsafe")),
-		"io.bus":            validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi")),
+
+		// gendoc:generate(entity=devices, group=disk, key=ceph.user_name)
+		//
+		// ---
+		//  type: string
+		//  default: `admin`
+		//  required: no
+		//  shortdesc: The user name of the Ceph cluster (required for Ceph or CephFS sources)
+		"ceph.user_name": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=boot.priority)
+		//
+		// ---
+		//  type: integer
+		//  required: no
+		//  shortdesc: Boot priority for VMs (higher value boots first)
+		"boot.priority": validate.Optional(validate.IsUint32),
+
+		// gendoc:generate(entity=devices, group=disk, key=path)
+		//
+		// ---
+		//  type: string
+		//  required: yes
+		//  shortdesc: Path inside the instance where the disk will be mounted (only for containers)
+		"path": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=disk, key=io.cache)
+		//
+		// ---
+		//  type: string
+		//  default: `none`
+		//  required: no
+		//  shortdesc: Only for VMs: Override the caching mode for the device (`none`, `writeback` or `unsafe`)
+		"io.cache": validate.Optional(validate.IsOneOf("none", "writeback", "unsafe")),
+
+		// gendoc:generate(entity=devices, group=disk, key=io.bus)
+		//
+		// ---
+		//  type: string
+		//  default: `virtio-scsi`
+		//  required: no
+		//  shortdesc: Only for VMs: Override the bus for the device (`nvme`, `virtio-blk`, or `virtio-scsi`)
+		"io.bus": validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi")),
 	}
 
 	err := d.config.Validate(rules)
@@ -422,6 +562,13 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 			// storage driver. Currently initial configuration is only applicable to root disk devices.
 			initialConfig := make(map[string]string)
 			for k, v := range d.config {
+
+				// gendoc:generate(entity=devices, group=disk, key=initial.*)
+				//
+				// ---
+				//  type: string
+				//  required: no
+				//  shortdesc: Initial volume configuration for instance root disk devices
 				prefix, newKey, found := strings.Cut(k, "initial.")
 				if found && prefix == "" {
 					initialConfig[newKey] = v
