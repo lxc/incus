@@ -349,6 +349,17 @@ func (c *cmdInfo) renderUSB(usb api.ResourcesUSBDevice, prefix string) {
 	}
 }
 
+func (c *cmdInfo) renderPCI(pci api.ResourcesPCIDevice, prefix string) {
+	fmt.Printf(prefix+i18n.G("Address: %v")+"\n", pci.PCIAddress)
+	fmt.Printf(prefix+i18n.G("Vendor: %v")+"\n", pci.Vendor)
+	fmt.Printf(prefix+i18n.G("Vendor ID: %v")+"\n", pci.VendorID)
+	fmt.Printf(prefix+i18n.G("Product: %v")+"\n", pci.Product)
+	fmt.Printf(prefix+i18n.G("Product ID: %v")+"\n", pci.ProductID)
+	fmt.Printf(prefix+i18n.G("NUMA node: %v")+"\n", pci.NUMANode)
+	fmt.Printf(prefix+i18n.G("IOMMU group: %v")+"\n", pci.IOMMUGroup)
+	fmt.Printf(prefix+i18n.G("Driver: %v")+"\n", pci.Driver)
+}
+
 func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 	// Targeting
 	if c.flagTarget != "" {
@@ -551,6 +562,19 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 				c.renderUSB(usb, "    ")
 			}
 		}
+
+		// PCI
+		if len(resources.PCI.Devices) == 1 {
+			fmt.Printf("\n" + i18n.G("PCI device:") + "\n")
+			c.renderPCI(resources.PCI.Devices[0], "  ")
+		} else if len(resources.PCI.Devices) > 1 {
+			fmt.Printf("\n" + i18n.G("PCI devices:") + "\n")
+			for id, pci := range resources.PCI.Devices {
+				fmt.Printf("  "+i18n.G("Device %d:")+"\n", id)
+				c.renderPCI(pci, "    ")
+			}
+		}
+
 		return nil
 	}
 
