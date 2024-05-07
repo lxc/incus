@@ -172,12 +172,9 @@ func networkZonesGet(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			if len(zoneNames) == 0 {
-				return fmt.Errorf("No zones found for project: %s", projectName)
-			}
-
-			zoneNamesMap = map[string]string{
-				zoneNames[0]: projectName,
+			zoneNamesMap = map[string]string{}
+			for _, zone := range zoneNames {
+				zoneNamesMap[zone] = projectName
 			}
 		}
 
