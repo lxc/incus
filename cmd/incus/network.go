@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"slices"
 	"sort"
 	"strings"
 
@@ -23,6 +22,11 @@ type cmdNetwork struct {
 
 	flagTarget string
 	flagType   string
+}
+
+type networkColumn struct {
+	Name string
+	Data func(api.Network) string
 }
 
 func (c *cmdNetwork) Command() *cobra.Command {
@@ -1001,6 +1005,7 @@ type cmdNetworkList struct {
 	network *cmdNetwork
 
 	flagFormat      string
+	flagColumns     string
 	flagAllProjects bool
 }
 
@@ -1010,11 +1015,28 @@ func (c *cmdNetworkList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available networks")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List available networks`))
+		`List available networks
 
-	cmd.RunE = c.Run
+The -c option takes a (optionally comma-separated) list of arguments
+that control which image attributes to output when displaying in table
+or csv format.
+
+Default column layout is: ntm46dus
+Column shorthand chars:
+4 - IPv4 address
+6 - IPv6 address
+d - Description
+e - Project name
+m - Managed status
+n - Network Interface Name
+s - State
+t - Interface type
+u - Used by (count)`))
+
+	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultNetworkColumns, i18n.G("Columns")+"``")
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("List networks in all projects"))
+	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -1025,6 +1047,83 @@ func (c *cmdNetworkList) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+const defaultNetworkColumns = "ntm46dus"
+
+func (c *cmdNetworkList) parseColumns() ([]networkColumn, error) {
+	columnsShorthandMap := map[rune]networkColumn{
+		'e': {i18n.G("PROJECT"), c.projectColumnData},
+		'n': {i18n.G("NAME"), c.networkNameColumnData},
+		't': {i18n.G("TYPE"), c.typeColumnData},
+		'm': {i18n.G("MANAGED"), c.managedColumnData},
+		'4': {i18n.G("IPV4"), c.ipv4ColumnData},
+		'6': {i18n.G("IPV6"), c.ipv6ColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
+		'u': {i18n.G("USED BY"), c.usedByColumnData},
+		's': {i18n.G("STATE"), c.stateColumnData},
+	}
+
+	if c.flagColumns == defaultNetworkColumns && c.flagAllProjects {
+		c.flagColumns = "entm46dus"
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+
+	columns := []networkColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+func (c *cmdNetworkList) networkNameColumnData(network api.Network) string {
+	return network.Name
+}
+
+func (c *cmdNetworkList) typeColumnData(network api.Network) string {
+	return network.Type
+}
+
+func (c *cmdNetworkList) managedColumnData(network api.Network) string {
+	return fmt.Sprintf("%v", network.Managed)
+}
+
+func (c *cmdNetworkList) projectColumnData(network api.Network) string {
+	return network.Project
+}
+
+func (c *cmdNetworkList) ipv4ColumnData(network api.Network) string {
+	return network.Config["ipv4.address"]
+}
+
+func (c *cmdNetworkList) ipv6ColumnData(network api.Network) string {
+	return network.Config["ipv6.address"]
+}
+
+func (c *cmdNetworkList) descriptionColumnData(network api.Network) string {
+	return network.Description
+}
+
+func (c *cmdNetworkList) usedByColumnData(network api.Network) string {
+	return fmt.Sprintf("%d", len(network.UsedBy))
+}
+
+func (c *cmdNetworkList) stateColumnData(network api.Network) string {
+	return strings.ToUpper(network.Status)
 }
 
 func (c *cmdNetworkList) Run(cmd *cobra.Command, args []string) error {
@@ -1065,51 +1164,27 @@ func (c *cmdNetworkList) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
 	data := [][]string{}
 	for _, network := range networks {
-		if slices.Contains([]string{"loopback", "unknown"}, network.Type) {
-			continue
+		line := []string{}
+		for _, column := range columns {
+			line = append(line, column.Data(network))
 		}
 
-		strManaged := i18n.G("NO")
-		if network.Managed {
-			strManaged = i18n.G("YES")
-		}
-
-		strUsedBy := fmt.Sprintf("%d", len(network.UsedBy))
-		details := []string{
-			network.Name,
-			network.Type,
-			strManaged,
-			network.Config["ipv4.address"],
-			network.Config["ipv6.address"],
-			network.Description,
-			strUsedBy,
-			strings.ToUpper(network.Status),
-		}
-
-		if c.flagAllProjects {
-			details = append([]string{network.Project}, details...)
-		}
-
-		data = append(data, details)
+		data = append(data, line)
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
 
-	header := []string{
-		i18n.G("NAME"),
-		i18n.G("TYPE"),
-		i18n.G("MANAGED"),
-		i18n.G("IPV4"),
-		i18n.G("IPV6"),
-		i18n.G("DESCRIPTION"),
-		i18n.G("USED BY"),
-		i18n.G("STATE"),
-	}
-
-	if c.flagAllProjects {
-		header = append([]string{i18n.G("PROJECT")}, header...)
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
 	}
 
 	return cli.RenderTable(c.flagFormat, header, data, networks)
