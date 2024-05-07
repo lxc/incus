@@ -16,6 +16,156 @@ User keys can be used in search.
 ```
 
 <!-- config group cluster-cluster end -->
+<!-- config group devices-disk start -->
+```{config:option} boot.priority devices-disk
+:required: "no"
+:shortdesc: "Boot priority for VMs (higher value boots first)"
+:type: "integer"
+
+```
+
+```{config:option} ceph.cluster_name devices-disk
+:default: "`ceph`"
+:required: "no"
+:shortdesc: "The cluster name of the Ceph cluster (required for Ceph or CephFS sources)"
+:type: "string"
+
+```
+
+```{config:option} ceph.user_name devices-disk
+:default: "`admin`"
+:required: "no"
+:shortdesc: "The user name of the Ceph cluster (required for Ceph or CephFS sources)"
+:type: "string"
+
+```
+
+```{config:option} initial.* devices-disk
+:required: "no"
+:shortdesc: "Initial volume configuration for instance root disk devices"
+:type: "string"
+
+```
+
+```{config:option} io.bus devices-disk
+:default: "`virtio-scsi`"
+:required: "no"
+:shortdesc: "Only for VMs: Override the bus for the device (`nvme`, `virtio-blk`, or `virtio-scsi`)"
+:type: "string"
+
+```
+
+```{config:option} io.cache devices-disk
+:default: "`none`"
+:required: "no"
+:shortdesc: "Only for VMs: Override the caching mode for the device (`none`, `writeback` or `unsafe`)"
+:type: "string"
+
+```
+
+```{config:option} limits.max devices-disk
+:required: "no"
+:shortdesc: "I/O limit in byte/s or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)"
+:type: "string"
+
+```
+
+```{config:option} limits.read devices-disk
+:required: "no"
+:shortdesc: "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`"
+:type: "string"
+
+```
+
+```{config:option} limits.write devices-disk
+:required: "no"
+:shortdesc: "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`"
+:type: "string"
+
+```
+
+```{config:option} path devices-disk
+:required: "yes"
+:shortdesc: "Path inside the instance where the disk will be mounted (only for containers)"
+:type: "string"
+
+```
+
+```{config:option} pool devices-disk
+:required: "no"
+:shortdesc: "The storage pool to which the disk device belongs (only applicable for storage volumes managed by Incus)"
+:type: "string"
+
+```
+
+```{config:option} propagation devices-disk
+:required: "no"
+:shortdesc: "Controls how a bind-mount is shared between the instance and the host (can be one of `private`, the default, or `shared`, `slave`, `unbindable`,  `rshared`, `rslave`, `runbindable`,  `rprivate`; see the Linux Kernel [shared subtree](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt) documentation for a full explanation)"
+:type: "string"
+
+```
+
+```{config:option} raw.mount.options devices-disk
+:required: "no"
+:shortdesc: "File system specific mount options"
+:type: "string"
+
+```
+
+```{config:option} readonly devices-disk
+:default: "`false`"
+:required: "no"
+:shortdesc: "Controls whether to make the mount read-only"
+:type: "bool"
+
+```
+
+```{config:option} recursive devices-disk
+:default: "`false`"
+:required: "no"
+:shortdesc: "Controls whether to recursively mount the source path"
+:type: "bool"
+
+```
+
+```{config:option} required devices-disk
+:default: "`true`"
+:required: "no"
+:shortdesc: "Controls whether to fail if the source doesn't exist"
+:type: "bool"
+
+```
+
+```{config:option} shift devices-disk
+:default: "`false`"
+:required: "no"
+:shortdesc: "Sets up a shifting overlay to translate the source UID/GID to match the instance (only for containers)"
+:type: "bool"
+
+```
+
+```{config:option} size devices-disk
+:required: "no"
+:shortdesc: "Disk size in bytes (various suffixes supported, see {ref}`instances-limit-units`) - only supported for the `rootfs` (`/`)"
+:type: "string"
+
+```
+
+```{config:option} size.state devices-disk
+:required: "no"
+:shortdesc: "Same as `size`, but applies to the file-system volume used for saving runtime state in VMs"
+:type: "string"
+
+```
+
+```{config:option} source devices-disk
+:required: "yes"
+:shortdesc: "Source of a file system or block device (see {ref}`devices-disk-types` for details)"
+:type: "string"
+
+```
+
+<!-- config group devices-disk end -->
 <!-- config group devices-unix-char-block start -->
 ```{config:option} gid devices-unix-char-block
 :default: "0"

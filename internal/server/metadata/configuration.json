@@ -22,6 +22,178 @@
 			}
 		},
 		"devices": {
+			"disk": {
+				"keys": [
+					{
+						"boot.priority": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Boot priority for VMs (higher value boots first)",
+							"type": "integer"
+						}
+					},
+					{
+						"ceph.cluster_name": {
+							"default": "`ceph`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The cluster name of the Ceph cluster (required for Ceph or CephFS sources)",
+							"type": "string"
+						}
+					},
+					{
+						"ceph.user_name": {
+							"default": "`admin`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The user name of the Ceph cluster (required for Ceph or CephFS sources)",
+							"type": "string"
+						}
+					},
+					{
+						"initial.*": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Initial volume configuration for instance root disk devices",
+							"type": "string"
+						}
+					},
+					{
+						"io.bus": {
+							"default": "`virtio-scsi`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Only for VMs: Override the bus for the device (`nvme`, `virtio-blk`, or `virtio-scsi`)",
+							"type": "string"
+						}
+					},
+					{
+						"io.cache": {
+							"default": "`none`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Only for VMs: Override the caching mode for the device (`none`, `writeback` or `unsafe`)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "I/O limit in byte/s or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.read": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.write": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`",
+							"type": "string"
+						}
+					},
+					{
+						"path": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "Path inside the instance where the disk will be mounted (only for containers)",
+							"type": "string"
+						}
+					},
+					{
+						"pool": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The storage pool to which the disk device belongs (only applicable for storage volumes managed by Incus)",
+							"type": "string"
+						}
+					},
+					{
+						"propagation": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Controls how a bind-mount is shared between the instance and the host (can be one of `private`, the default, or `shared`, `slave`, `unbindable`,  `rshared`, `rslave`, `runbindable`,  `rprivate`; see the Linux Kernel [shared subtree](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt) documentation for a full explanation)",
+							"type": "string"
+						}
+					},
+					{
+						"raw.mount.options": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "File system specific mount options",
+							"type": "string"
+						}
+					},
+					{
+						"readonly": {
+							"default": "`false`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Controls whether to make the mount read-only",
+							"type": "bool"
+						}
+					},
+					{
+						"recursive": {
+							"default": "`false`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Controls whether to recursively mount the source path",
+							"type": "bool"
+						}
+					},
+					{
+						"required": {
+							"default": "`true`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Controls whether to fail if the source doesn't exist",
+							"type": "bool"
+						}
+					},
+					{
+						"shift": {
+							"default": "`false`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Sets up a shifting overlay to translate the source UID/GID to match the instance (only for containers)",
+							"type": "bool"
+						}
+					},
+					{
+						"size": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Disk size in bytes (various suffixes supported, see {ref}`instances-limit-units`) - only supported for the `rootfs` (`/`)",
+							"type": "string"
+						}
+					},
+					{
+						"size.state": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Same as `size`, but applies to the file-system volume used for saving runtime state in VMs",
+							"type": "string"
+						}
+					},
+					{
+						"source": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "Source of a file system or block device (see {ref}`devices-disk-types` for details)",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"unix-char-block": {
 				"keys": [
 					{
