@@ -1108,3 +1108,58 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	// Perform any necessary writes and deletions against the OpenFGA server.
 	return f.updateTuples(ctx, writes, deletions)
 }
+
+// GetInstanceAccess returns the list of entities who have access to the instance.
+func (f *fga) GetInstanceAccess(ctx context.Context, projectName string, instanceName string) (*api.Access, error) {
+	// Get all the entries from OpenFGA.
+	entries := map[string]string{}
+
+	userFilters := []openfga.UserTypeFilter{{Type: "user"}}
+	relations := []string{"admin", "operator", "user", "viewer"}
+	for _, relation := range relations {
+		resp, err := f.client.ListUsers(ctx).Body(client.ClientListUsersRequest{
+			Object: openfga.FgaObject{
+				Type: "instance",
+				Id:   fmt.Sprintf("%s/%s", projectName, instanceName),
+			},
+			Relation:    relation,
+			UserFilters: userFilters,
+		}).Execute()
+
+		if err != nil {
+			fgaAPIErr, ok := err.(openfga.FgaApiValidationError)
+			if !ok || fgaAPIErr.ResponseCode() != openfga.RELATION_NOT_FOUND {
+				fgaNotFoundErr, ok := err.(openfga.FgaApiNotFoundError)
+				if ok && fgaNotFoundErr.ResponseCode() == openfga.UNDEFINED_ENDPOINT {
+					return nil, fmt.Errorf("OpenFGA server doesn't support listing users")
+				}
+
+				return nil, fmt.Errorf("Failed to list objects with relation %q: %w: %T", relation, err, err)
+			}
+		}
+
+		for _, user := range resp.GetUsers() {
+			obj := user.GetObject()
+			if obj.Id == "" {
+				continue
+			}
+
+			_, ok := entries[obj.Id]
+			if !ok {
+				entries[obj.Id] = relation
+			}
+		}
+	}
+
+	// Convert to our access records.
+	access := api.Access{}
+	for user, relation := range entries {
+		access = append(access, api.AccessEntry{
+			Identifier: user,
+			Role:       relation,
+			Provider:   "openfga",
+		})
+	}
+
+	return &access, nil
+}
