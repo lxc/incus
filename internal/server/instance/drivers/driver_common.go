@@ -1536,5 +1536,5 @@ func (d *common) processStartedAt(pid int) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("Bad stat type")
 	}
 
-	return time.Unix(linuxInfo.Ctim.Sec, linuxInfo.Ctim.Nsec), nil
+	return time.Unix(int64(linuxInfo.Ctim.Sec), int64(linuxInfo.Ctim.Nsec)), nil
 }
