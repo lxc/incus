@@ -23,6 +23,8 @@ func DotGo(updates map[int]Update, name string) error {
 		return fmt.Errorf("failed to open schema.go for writing: %w", err)
 	}
 
+	defer db.Close()
+
 	schema := NewFromMap(updates)
 
 	_, err = schema.Ensure(db)
@@ -42,6 +44,8 @@ func DotGo(updates map[int]Update, name string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open Go file for writing: %w", err)
 	}
+
+	defer file.Close()
 
 	pkg := path.Base(path.Dir(filename))
 	_, err = file.Write([]byte(fmt.Sprintf(dotGoTemplate, pkg, dump)))
