@@ -319,7 +319,7 @@ func (o *VSwitch) UpdateBridgePortVLANs(ctx context.Context, portName string, mo
 
 	// Set the options.
 	if mode != "" {
-		port.VLANMode = &portName
+		port.VLANMode = &mode
 	} else {
 		port.VLANMode = nil
 	}
