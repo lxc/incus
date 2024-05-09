@@ -2496,3 +2496,7 @@ This adds support for listing storage buckets across all projects through the `a
 ## `resources_load`
 
 Add a new Load section to the resources API.
+
+## `instance_access`
+
+This introduces a new API endpoint at `GET /1.0/instances/NAME/access` which exposes who can interact with the instance and what role they have.
