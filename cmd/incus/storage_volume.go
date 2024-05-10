@@ -575,6 +575,10 @@ func (c *cmdStorageVolumeCreate) Command() *cobra.Command {
 	cmd.Short = i18n.G("Create new custom storage volumes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create new custom storage volumes`))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume create p1 v1
+
+incus storage volume create p1 v1 < config.yaml
+	Create storage volume v1 for pool p1 with configuration from config.yaml.`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().StringVar(&c.flagContentType, "type", "filesystem", i18n.G("Content type, block or filesystem")+"``")
@@ -612,15 +616,33 @@ func (c *cmdStorageVolumeCreate) Run(cmd *cobra.Command, args []string) error {
 
 	client := resource.server
 
+	var volumePut api.StorageVolumePut
+	if !termios.IsTerminal(getStdinFd()) {
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+
+		err = yaml.UnmarshalStrict(contents, &volumePut)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Parse the input
 	volName, volType := parseVolume("custom", args[1])
 
 	// Create the storage volume entry
-	vol := api.StorageVolumesPost{}
-	vol.Name = volName
-	vol.Type = volType
-	vol.ContentType = c.flagContentType
-	vol.Config = map[string]string{}
+	vol := api.StorageVolumesPost{
+		Name:             volName,
+		Type:             volType,
+		ContentType:      c.flagContentType,
+		StorageVolumePut: volumePut,
+	}
+
+	if volumePut.Config == nil {
+		vol.Config = map[string]string{}
+	}
 
 	for i := 2; i < len(args); i++ {
 		entry := strings.SplitN(args[i], "=", 2)
