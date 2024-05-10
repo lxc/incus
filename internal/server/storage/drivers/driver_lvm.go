@@ -803,7 +803,7 @@ func (d *lvm) GetResources() (*api.ResourcesStoragePool, error) {
 
 // roundVolumeBlockSizeBytes returns size rounded to the nearest multiple of the volume group extent size that is
 // equal to or larger than sizeBytes.
-func (d *lvm) roundVolumeBlockSizeBytes(sizeBytes int64) int64 {
+func (d *lvm) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) int64 {
 	// Get the volume group's physical extent size, and use that as minimum size.
 	vgExtentSize, _ := d.volumeGroupExtentSize(d.config["lvm.vg_name"])
 	if sizeBytes < vgExtentSize {

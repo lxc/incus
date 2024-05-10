@@ -525,7 +525,7 @@ func (d *common) DeleteBucketKey(bucket Volume, keyName string, op *operations.O
 
 // roundVolumeBlockSizeBytes returns size rounded to the nearest multiple of MinBlockBoundary bytes that is equal
 // to or larger than sizeBytes.
-func (d *common) roundVolumeBlockSizeBytes(sizeBytes int64) int64 {
+func (d *common) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) int64 {
 	// QEMU requires image files to be in traditional storage block boundaries.
 	// We use 8k here to ensure our images are compatible with all of our backend drivers.
 	if sizeBytes < MinBlockBoundary {
