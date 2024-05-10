@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-05-06 22:57-0400\n"
+"POT-Creation-Date: 2024-05-10 14:21+0200\n"
 "PO-Revision-Date: 2022-03-10 15:06+0000\n"
 "Last-Translator: Александр Киль <shorrey@gmail.com>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/linux-containers/"
@@ -421,7 +421,7 @@ msgstr ""
 "###\n"
 "### Обратите внимание, что имя отображается, но не может быть изменено"
 
-#: cmd/incus/network_zone.go:1251
+#: cmd/incus/network_zone.go:1255
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network zone record.\n"
@@ -840,7 +840,7 @@ msgstr ""
 msgid "Add a cluster member to a cluster group"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_zone.go:1436
+#: cmd/incus/network_zone.go:1440
 #, fuzzy
 msgid "Add a network zone record entry"
 msgstr "Копирование образа: %s"
@@ -853,7 +853,7 @@ msgstr ""
 msgid "Add backends to a load balancer"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1437
+#: cmd/incus/network_zone.go:1441
 msgid "Add entries to a network zone record"
 msgstr ""
 
@@ -1154,7 +1154,7 @@ msgstr ""
 #: cmd/incus/network.go:373 cmd/incus/network_acl.go:447
 #: cmd/incus/network_forward.go:308 cmd/incus/network_load_balancer.go:311
 #: cmd/incus/network_peer.go:334 cmd/incus/network_zone.go:382
-#: cmd/incus/network_zone.go:1065 cmd/incus/storage_bucket.go:154
+#: cmd/incus/network_zone.go:1069 cmd/incus/storage_bucket.go:154
 #, c-format
 msgid "Bad key/value pair: %s"
 msgstr ""
@@ -1574,7 +1574,7 @@ msgstr ""
 #: cmd/incus/image.go:483 cmd/incus/network.go:766 cmd/incus/network_acl.go:714
 #: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:312
 #: cmd/incus/network_load_balancer.go:686 cmd/incus/network_peer.go:729
-#: cmd/incus/network_zone.go:637 cmd/incus/network_zone.go:1328
+#: cmd/incus/network_zone.go:637 cmd/incus/network_zone.go:1332
 #: cmd/incus/profile.go:599 cmd/incus/project.go:368 cmd/incus/storage.go:368
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1157
 #: cmd/incus/storage_volume.go:1085 cmd/incus/storage_volume.go:1117
@@ -1742,7 +1742,7 @@ msgstr ""
 msgid "Could not write server cert file %q: %w"
 msgstr "Не удалось создать каталог сертификата сервера"
 
-#: cmd/incus/network_zone.go:1548
+#: cmd/incus/network_zone.go:1552
 msgid "Couldn't find a matching entry"
 msgstr ""
 
@@ -2041,7 +2041,7 @@ msgstr "Копирование образа: %s"
 msgid "Delete network peerings"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1360 cmd/incus/network_zone.go:1361
+#: cmd/incus/network_zone.go:1364 cmd/incus/network_zone.go:1365
 #, fuzzy
 msgid "Delete network zone record"
 msgstr "Копирование образа: %s"
@@ -2185,10 +2185,10 @@ msgstr ""
 #: cmd/incus/network_zone.go:670 cmd/incus/network_zone.go:726
 #: cmd/incus/network_zone.go:783 cmd/incus/network_zone.go:861
 #: cmd/incus/network_zone.go:925 cmd/incus/network_zone.go:1001
-#: cmd/incus/network_zone.go:1095 cmd/incus/network_zone.go:1184
-#: cmd/incus/network_zone.go:1231 cmd/incus/network_zone.go:1361
-#: cmd/incus/network_zone.go:1422 cmd/incus/network_zone.go:1437
-#: cmd/incus/network_zone.go:1495 cmd/incus/operation.go:24
+#: cmd/incus/network_zone.go:1099 cmd/incus/network_zone.go:1188
+#: cmd/incus/network_zone.go:1235 cmd/incus/network_zone.go:1365
+#: cmd/incus/network_zone.go:1426 cmd/incus/network_zone.go:1441
+#: cmd/incus/network_zone.go:1499 cmd/incus/operation.go:24
 #: cmd/incus/operation.go:57 cmd/incus/operation.go:107
 #: cmd/incus/operation.go:194 cmd/incus/profile.go:34 cmd/incus/profile.go:109
 #: cmd/incus/profile.go:184 cmd/incus/profile.go:275 cmd/incus/profile.go:357
@@ -2536,7 +2536,7 @@ msgstr "Копирование образа: %s"
 msgid "Edit network zone configurations as YAML"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_zone.go:1230 cmd/incus/network_zone.go:1231
+#: cmd/incus/network_zone.go:1234 cmd/incus/network_zone.go:1235
 #, fuzzy
 msgid "Edit network zone record configurations as YAML"
 msgstr "Копирование образа: %s"
@@ -2606,7 +2606,7 @@ msgstr ""
 msgid "Enter new delay in seconds:"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1439
+#: cmd/incus/network_zone.go:1443
 msgid "Entry TTL"
 msgstr ""
 
@@ -2642,7 +2642,7 @@ msgstr ""
 #: cmd/incus/network.go:1418 cmd/incus/network_acl.go:540
 #: cmd/incus/network_forward.go:521 cmd/incus/network_integration.go:587
 #: cmd/incus/network_load_balancer.go:507 cmd/incus/network_peer.go:553
-#: cmd/incus/network_zone.go:475 cmd/incus/network_zone.go:1159
+#: cmd/incus/network_zone.go:475 cmd/incus/network_zone.go:1163
 #: cmd/incus/profile.go:1082 cmd/incus/project.go:820 cmd/incus/storage.go:896
 #: cmd/incus/storage_bucket.go:634 cmd/incus/storage_volume.go:2013
 #: cmd/incus/storage_volume.go:2056
@@ -2664,7 +2664,7 @@ msgstr "Копирование образа: %s"
 #: cmd/incus/network_acl.go:534 cmd/incus/network_forward.go:515
 #: cmd/incus/network_integration.go:581 cmd/incus/network_load_balancer.go:501
 #: cmd/incus/network_peer.go:547 cmd/incus/network_zone.go:469
-#: cmd/incus/network_zone.go:1153 cmd/incus/profile.go:1076
+#: cmd/incus/network_zone.go:1157 cmd/incus/profile.go:1076
 #: cmd/incus/project.go:814 cmd/incus/storage.go:890
 #: cmd/incus/storage_bucket.go:628 cmd/incus/storage_volume.go:2007
 #: cmd/incus/storage_volume.go:2050
@@ -4745,7 +4745,7 @@ msgstr "Копирование образа: %s"
 msgid "Manage network peerings"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_zone.go:1421 cmd/incus/network_zone.go:1422
+#: cmd/incus/network_zone.go:1425 cmd/incus/network_zone.go:1426
 #, fuzzy
 msgid "Manage network zone record entries"
 msgstr "Копирование образа: %s"
@@ -5018,14 +5018,14 @@ msgstr ""
 #: cmd/incus/network_zone.go:352 cmd/incus/network_zone.go:448
 #: cmd/incus/network_zone.go:589 cmd/incus/network_zone.go:700
 #: cmd/incus/network_zone.go:814 cmd/incus/network_zone.go:894
-#: cmd/incus/network_zone.go:1035 cmd/incus/network_zone.go:1132
-#: cmd/incus/network_zone.go:1394 cmd/incus/network_zone.go:1471
-#: cmd/incus/network_zone.go:1528
+#: cmd/incus/network_zone.go:1039 cmd/incus/network_zone.go:1136
+#: cmd/incus/network_zone.go:1398 cmd/incus/network_zone.go:1475
+#: cmd/incus/network_zone.go:1532
 #, fuzzy
 msgid "Missing network zone name"
 msgstr "Имя контейнера: %s"
 
-#: cmd/incus/network_zone.go:964 cmd/incus/network_zone.go:1280
+#: cmd/incus/network_zone.go:964 cmd/incus/network_zone.go:1284
 #, fuzzy
 msgid "Missing network zone record name"
 msgstr "Имя контейнера: %s"
@@ -5447,12 +5447,12 @@ msgstr " Использование сети:"
 msgid "Network usage:"
 msgstr " Использование сети:"
 
-#: cmd/incus/network_zone.go:1077
+#: cmd/incus/network_zone.go:1081
 #, fuzzy, c-format
 msgid "Network zone record %s created"
 msgstr " Использование сети:"
 
-#: cmd/incus/network_zone.go:1404
+#: cmd/incus/network_zone.go:1408
 #, fuzzy, c-format
 msgid "Network zone record %s deleted"
 msgstr " Использование сети:"
@@ -5763,7 +5763,7 @@ msgstr ""
 #: cmd/incus/network.go:767 cmd/incus/network_acl.go:715
 #: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:313
 #: cmd/incus/network_load_balancer.go:687 cmd/incus/network_peer.go:730
-#: cmd/incus/network_zone.go:638 cmd/incus/network_zone.go:1329
+#: cmd/incus/network_zone.go:638 cmd/incus/network_zone.go:1333
 #: cmd/incus/profile.go:600 cmd/incus/project.go:369 cmd/incus/storage.go:369
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1158
 #: cmd/incus/storage_volume.go:1086 cmd/incus/storage_volume.go:1118
@@ -6177,7 +6177,7 @@ msgstr "Копирование образа: %s"
 msgid "Remove a member from the cluster"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1494
+#: cmd/incus/network_zone.go:1498
 #, fuzzy
 msgid "Remove a network zone record entry"
 msgstr "Копирование образа: %s"
@@ -6204,7 +6204,7 @@ msgstr "Копирование образа: %s"
 msgid "Remove backends from a load balancer"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_zone.go:1495
+#: cmd/incus/network_zone.go:1499
 msgid "Remove entries from a network zone record"
 msgstr ""
 
@@ -6711,7 +6711,7 @@ msgid ""
 "    incus network set [<remote>:]<Zone> <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_zone.go:1094 cmd/incus/network_zone.go:1095
+#: cmd/incus/network_zone.go:1098 cmd/incus/network_zone.go:1099
 #, fuzzy
 msgid "Set network zone record configuration keys"
 msgstr "Копирование образа: %s"
@@ -6848,7 +6848,7 @@ msgstr ""
 msgid "Set the key as a network zone property"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_zone.go:1100
+#: cmd/incus/network_zone.go:1104
 #, fuzzy
 msgid "Set the key as a network zone record property"
 msgstr "Копирование образа: %s"
@@ -7922,7 +7922,7 @@ msgstr "Копирование образа: %s"
 msgid "Unset network zone configuration keys"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_zone.go:1183 cmd/incus/network_zone.go:1184
+#: cmd/incus/network_zone.go:1187 cmd/incus/network_zone.go:1188
 #, fuzzy
 msgid "Unset network zone record configuration keys"
 msgstr "Копирование образа: %s"
@@ -7986,7 +7986,7 @@ msgstr "Копирование образа: %s"
 msgid "Unset the key as a network zone property"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/network_zone.go:1187
+#: cmd/incus/network_zone.go:1191
 #, fuzzy
 msgid "Unset the key as a network zone record property"
 msgstr "Копирование образа: %s"
@@ -9466,8 +9466,8 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/network_zone.go:859 cmd/incus/network_zone.go:1229
-#: cmd/incus/network_zone.go:1358
+#: cmd/incus/network_zone.go:859 cmd/incus/network_zone.go:1233
+#: cmd/incus/network_zone.go:1362
 #, fuzzy
 msgid "[<remote>:]<zone> <record>"
 msgstr ""
@@ -9475,7 +9475,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/network_zone.go:923 cmd/incus/network_zone.go:1182
+#: cmd/incus/network_zone.go:923 cmd/incus/network_zone.go:1186
 #, fuzzy
 msgid "[<remote>:]<zone> <record> <key>"
 msgstr ""
@@ -9483,7 +9483,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/network_zone.go:1093
+#: cmd/incus/network_zone.go:1097
 #, fuzzy
 msgid "[<remote>:]<zone> <record> <key>=<value>..."
 msgstr ""
@@ -9491,7 +9491,7 @@ msgstr ""
 "\n"
 "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
 
-#: cmd/incus/network_zone.go:1435 cmd/incus/network_zone.go:1493
+#: cmd/incus/network_zone.go:1439 cmd/incus/network_zone.go:1497
 #, fuzzy
 msgid "[<remote>:]<zone> <record> <type> <value>"
 msgstr ""
@@ -9858,6 +9858,14 @@ msgid ""
 "\n"
 "incus network zone create z1 < config.yaml\n"
 "    Create network zone z1 with configuration from config.yaml"
+msgstr ""
+
+#: cmd/incus/network_zone.go:1002
+msgid ""
+"incus network zone record create z1 r1\n"
+"\n"
+"incus network zone record create z1 r1 < config.yaml\n"
+"    Create record r1 for zone z1 with configuration from config.yaml"
 msgstr ""
 
 #: cmd/incus/operation.go:196
