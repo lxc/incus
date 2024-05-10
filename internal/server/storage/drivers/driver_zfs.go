@@ -758,3 +758,28 @@ func (d *zfs) parseSource() (string, []string) {
 
 	return vdevType, strings.Split(devices, ",")
 }
+
+// roundVolumeBlockSizeBytes returns sizeBytes rounded up to the next multiple
+// of `vol`'s "zfs.blocksize".
+func (d *zfs) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) int64 {
+	minBlockSize, err := units.ParseByteSizeString(vol.ExpandedConfig("zfs.blocksize"))
+
+	// minBlockSize will be 0 if zfs.blocksize=""
+	if minBlockSize <= 0 || err != nil {
+		// 16KiB is the default volblocksize
+		minBlockSize = 16 * 1024
+	}
+
+	if sizeBytes < minBlockSize {
+		sizeBytes = minBlockSize
+	}
+
+	roundedSizeBytes := int64(sizeBytes/minBlockSize) * minBlockSize
+
+	// Ensure the rounded size is at least the size specified in sizeBytes.
+	if roundedSizeBytes < sizeBytes {
+		roundedSizeBytes += minBlockSize
+	}
+
+	return roundedSizeBytes
+}
