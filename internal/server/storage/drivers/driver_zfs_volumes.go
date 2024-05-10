@@ -88,7 +88,7 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 				}
 
 				// Round to block boundary.
-				poolVolSizeBytes = d.roundVolumeBlockSizeBytes(poolVolSizeBytes)
+				poolVolSizeBytes = d.roundVolumeBlockSizeBytes(vol, poolVolSizeBytes)
 
 				// If the cached volume size is different than the pool volume size, then we can't use the
 				// deleted cached image volume and instead we will rename it to a random UUID so it can't
@@ -163,11 +163,6 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 			return err
 		}
 	} else {
-		sizeBytes, err := units.ParseByteSizeString(vol.ConfigSize())
-		if err != nil {
-			return err
-		}
-
 		var opts []string
 
 		if vol.contentType == ContentTypeFS {
@@ -210,6 +205,13 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 
 			opts = append(opts, fmt.Sprintf("volblocksize=%d", sizeBytes))
 		}
+
+		sizeBytes, err := units.ParseByteSizeString(vol.ConfigSize())
+		if err != nil {
+			return err
+		}
+
+		sizeBytes = d.roundVolumeBlockSizeBytes(vol, sizeBytes)
 
 		// Create the volume dataset.
 		err = d.createVolume(d.dataset(vol, false), sizeBytes, opts...)
@@ -1686,7 +1688,7 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 			return nil
 		}
 
-		sizeBytes = d.roundVolumeBlockSizeBytes(sizeBytes)
+		sizeBytes = d.roundVolumeBlockSizeBytes(vol, sizeBytes)
 
 		oldSizeBytesStr, err := d.getDatasetProperty(d.dataset(vol, false), "volsize")
 		if err != nil {

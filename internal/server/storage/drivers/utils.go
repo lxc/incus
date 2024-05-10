@@ -331,7 +331,7 @@ func ensureVolumeBlockFile(vol Volume, path string, sizeBytes int64, allowUnsafe
 	}
 
 	// Get rounded block size to avoid QEMU boundary issues.
-	sizeBytes = vol.driver.roundVolumeBlockSizeBytes(sizeBytes)
+	sizeBytes = vol.driver.roundVolumeBlockSizeBytes(vol, sizeBytes)
 
 	if util.PathExists(path) {
 		fi, err := os.Stat(path)
