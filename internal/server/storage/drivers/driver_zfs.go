@@ -770,16 +770,5 @@ func (d *zfs) roundVolumeBlockSizeBytes(vol Volume, sizeBytes int64) int64 {
 		minBlockSize = 16 * 1024
 	}
 
-	if sizeBytes < minBlockSize {
-		sizeBytes = minBlockSize
-	}
-
-	roundedSizeBytes := int64(sizeBytes/minBlockSize) * minBlockSize
-
-	// Ensure the rounded size is at least the size specified in sizeBytes.
-	if roundedSizeBytes < sizeBytes {
-		roundedSizeBytes += minBlockSize
-	}
-
-	return roundedSizeBytes
+	return roundAbove(minBlockSize, sizeBytes)
 }

@@ -937,3 +937,19 @@ func sliceAny[T any](slice []T, predicate func(T) bool) bool {
 
 	return false
 }
+
+// roundAbove returns the next multiple of `above` greater than `val`.
+func roundAbove(above, val int64) int64 {
+	if val < above {
+		val = above
+	}
+
+	rounded := int64(val/above) * above
+
+	// Ensure the rounded size is at least x.
+	if rounded < val {
+		rounded += above
+	}
+
+	return rounded
+}
