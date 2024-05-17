@@ -39,7 +39,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /sys/devices/**                           r,
   /sys/module/vhost/**                      r,
   /tmp/incus_sev_*                          r,
-  {{ .ovmfPath }}/**                        kr,
+{{- range $index, $element := .edk2Paths }}
+  {{ $element }}/**                         kr,
+{{- end }}
   /usr/share/qemu/**                        kr,
   /usr/share/seabios/**                     kr,
   owner @{PROC}/@{pid}/cpuset               r,
