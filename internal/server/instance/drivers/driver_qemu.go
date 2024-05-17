@@ -56,6 +56,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v6/internal/server/device/config"
 	"github.com/lxc/incus/v6/internal/server/device/nictype"
 	"github.com/lxc/incus/v6/internal/server/instance"
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/edk2"
 	"github.com/lxc/incus/v6/internal/server/instance/drivers/qmp"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/instance/operationlock"
@@ -113,42 +114,6 @@ const qemuBlockDevIDPrefix = "incus_"
 
 // qemuMigrationNBDExportName is the name of the disk device export by the migration NBD server.
 const qemuMigrationNBDExportName = "incus_root"
-
-// OVMF firmwares.
-type ovmfFirmware struct {
-	code string
-	vars string
-}
-
-var ovmfGenericFirmwares = []ovmfFirmware{
-	{code: "OVMF_CODE.4MB.fd", vars: "OVMF_VARS.4MB.fd"},
-	{code: "OVMF_CODE_4M.fd", vars: "OVMF_VARS_4M.fd"},
-	{code: "OVMF_CODE.4m.fd", vars: "OVMF_VARS.4m.fd"},
-	{code: "OVMF_CODE.2MB.fd", vars: "OVMF_VARS.2MB.fd"},
-	{code: "OVMF_CODE.fd", vars: "OVMF_VARS.fd"},
-	{code: "OVMF_CODE.fd", vars: "qemu.nvram"},
-}
-
-var ovmfSecurebootFirmwares = []ovmfFirmware{
-	{code: "OVMF_CODE.4MB.fd", vars: "OVMF_VARS.4MB.ms.fd"},
-	{code: "OVMF_CODE_4M.ms.fd", vars: "OVMF_VARS_4M.ms.fd"},
-	{code: "OVMF_CODE_4M.secboot.fd", vars: "OVMF_VARS_4M.secboot.fd"},
-	{code: "OVMF_CODE.secboot.4m.fd", vars: "OVMF_VARS.4m.fd"},
-	{code: "OVMF_CODE.secboot.fd", vars: "OVMF_VARS.secboot.fd"},
-	{code: "OVMF_CODE.secboot.fd", vars: "OVMF_VARS.fd"},
-	{code: "OVMF_CODE.2MB.fd", vars: "OVMF_VARS.2MB.ms.fd"},
-	{code: "OVMF_CODE.fd", vars: "OVMF_VARS.ms.fd"},
-	{code: "OVMF_CODE.fd", vars: "qemu.nvram"},
-}
-
-var ovmfCSMFirmwares = []ovmfFirmware{
-	{code: "seabios.bin", vars: "seabios.bin"},
-	{code: "OVMF_CODE.4MB.CSM.fd", vars: "OVMF_VARS.4MB.CSM.fd"},
-	{code: "OVMF_CODE.csm.4m.fd", vars: "OVMF_VARS.4m.fd"},
-	{code: "OVMF_CODE.2MB.CSM.fd", vars: "OVMF_VARS.2MB.CSM.fd"},
-	{code: "OVMF_CODE.CSM.fd", vars: "OVMF_VARS.CSM.fd"},
-	{code: "OVMF_CODE.csm.fd", vars: "OVMF_VARS.fd"},
-}
 
 // qemuSparseUSBPorts is the amount of sparse USB ports for VMs.
 // 4 are reserved, and the other 4 can be used for any USB device.
@@ -795,14 +760,6 @@ func (d *qemu) Rebuild(img *api.Image, op *operations.Operation) error {
 	return d.rebuildCommon(d, img, op)
 }
 
-func (d *qemu) ovmfPath() string {
-	if os.Getenv("INCUS_OVMF_PATH") != "" {
-		return os.Getenv("INCUS_OVMF_PATH")
-	}
-
-	return "/usr/share/OVMF"
-}
-
 // killQemuProcess kills specified process. Optimistically attempts to wait for the process to fully exit, but does
 // not return an error if the Wait call fails. This is because this function is used in scenarios where the daemon has
 // been restarted after the VM has been started and is no longer the parent of the QEMU process.
@@ -1291,7 +1248,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	// Copy OVMF settings firmware to nvram file if needed.
+	// Copy EDK2 settings firmware to nvram file if needed.
 	// This firmware file can be modified by the VM so it must be copied from the defaults.
 	if d.architectureSupportsUEFI(d.architecture) && (!util.PathExists(d.nvramPath()) || util.IsTrue(d.localConfig["volatile.apply_nvram"])) {
 		err = d.setupNvram()
@@ -1976,55 +1933,54 @@ func (d *qemu) setupNvram() error {
 	d.logger.Debug("Generating NVRAM")
 
 	// Cleanup existing variables.
-	for _, firmwares := range [][]ovmfFirmware{ovmfGenericFirmwares, ovmfSecurebootFirmwares, ovmfCSMFirmwares} {
-		for _, firmware := range firmwares {
-			err := os.Remove(filepath.Join(d.Path(), firmware.vars))
-			if err != nil && !os.IsNotExist(err) {
-				return err
-			}
+	for _, firmwarePair := range edk2.GetAchitectureFirmwarePairs(d.architecture) {
+		err := os.Remove(filepath.Join(d.Path(), filepath.Base(firmwarePair.Vars)))
+		if err != nil && !os.IsNotExist(err) {
+			return err
 		}
 	}
 
 	// Determine expected firmware.
-	firmwares := ovmfGenericFirmwares
+	var firmwares []edk2.FirmwarePair
 	if util.IsTrue(d.expandedConfig["security.csm"]) {
-		firmwares = ovmfCSMFirmwares
+		firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.CSM)
 	} else if util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
-		firmwares = ovmfSecurebootFirmwares
+		firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SECUREBOOT)
+	} else {
+		firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.GENERIC)
 	}
 
 	// Find the template file.
-	var ovmfVarsPath string
-	var ovmfVarsName string
+	var efiVarsPath string
+	var efiVarsName string
 	for _, firmware := range firmwares {
-		varsPath := filepath.Join(d.ovmfPath(), firmware.vars)
-		varsPath, err = filepath.EvalSymlinks(varsPath)
+		varsPath, err := filepath.EvalSymlinks(firmware.Vars)
 		if err != nil {
 			continue
 		}
 
 		if util.PathExists(varsPath) {
-			ovmfVarsPath = varsPath
-			ovmfVarsName = firmware.vars
+			efiVarsPath = varsPath
+			efiVarsName = filepath.Base(firmware.Vars)
 			break
 		}
 	}
 
-	if ovmfVarsPath == "" {
+	if efiVarsPath == "" {
 		return fmt.Errorf("Couldn't find one of the required UEFI firmware files: %+v", firmwares)
 	}
 
 	// Copy the template.
-	err = internalUtil.FileCopy(ovmfVarsPath, filepath.Join(d.Path(), ovmfVarsName))
+	err = internalUtil.FileCopy(efiVarsPath, filepath.Join(d.Path(), efiVarsName))
 	if err != nil {
 		return err
 	}
 
 	// Generate a symlink if needed.
-	// This is so qemu.nvram can always be assumed to be the OVMF vars file.
+	// This is so qemu.nvram can always be assumed to be the EDK2 vars file.
 	// The real file name is then used to determine what firmware must be selected.
 	if !util.PathExists(d.nvramPath()) {
-		err = os.Symlink(ovmfVarsName, d.nvramPath())
+		err = os.Symlink(efiVarsName, d.nvramPath())
 		if err != nil {
 			return err
 		}
@@ -3047,27 +3003,29 @@ func (d *qemu) generateQemuConfigFile(cpuInfo *cpuTopology, mountInfo *storagePo
 		}
 
 		// Determine expected firmware.
-		firmwares := ovmfGenericFirmwares
+		var firmwares []edk2.FirmwarePair
 		if util.IsTrue(d.expandedConfig["security.csm"]) {
-			firmwares = ovmfCSMFirmwares
+			firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.CSM)
 		} else if util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
-			firmwares = ovmfSecurebootFirmwares
+			firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SECUREBOOT)
+		} else {
+			firmwares = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.GENERIC)
 		}
 
-		var ovmfCode string
+		var efiCode string
 		for _, firmware := range firmwares {
-			if util.PathExists(filepath.Join(d.Path(), firmware.vars)) {
-				ovmfCode = firmware.code
+			if util.PathExists(filepath.Join(d.Path(), filepath.Base(firmware.Vars))) {
+				efiCode = firmware.Code
 				break
 			}
 		}
 
-		if ovmfCode == "" {
+		if efiCode == "" {
 			return "", nil, fmt.Errorf("Unable to locate matching firmware: %+v", firmwares)
 		}
 
 		driveFirmwareOpts := qemuDriveFirmwareOpts{
-			roPath:    filepath.Join(d.ovmfPath(), ovmfCode),
+			roPath:    efiCode,
 			nvramPath: fmt.Sprintf("/dev/fd/%d", d.addFileDescriptor(fdFiles, nvRAMFile)),
 		}
 
@@ -8471,19 +8429,19 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 
 	if d.architectureSupportsUEFI(hostArch) {
 		// Try to locate a UEFI firmware.
-		var ovmfPath string
-		for _, entry := range ovmfGenericFirmwares {
-			if util.PathExists(filepath.Join(d.ovmfPath(), entry.code)) {
-				ovmfPath = filepath.Join(d.ovmfPath(), entry.code)
+		var efiPath string
+		for _, firmwarePair := range edk2.GetArchitectureFirmwarePairsForUsage(hostArch, edk2.GENERIC) {
+			if util.PathExists(firmwarePair.Code) {
+				efiPath = firmwarePair.Code
 				break
 			}
 		}
 
-		if ovmfPath == "" {
+		if efiPath == "" {
 			return nil, fmt.Errorf("Unable to locate a UEFI firmware")
 		}
 
-		qemuArgs = append(qemuArgs, "-drive", fmt.Sprintf("if=pflash,format=raw,readonly=on,file=%s", ovmfPath))
+		qemuArgs = append(qemuArgs, "-drive", fmt.Sprintf("if=pflash,format=raw,readonly=on,file=%s", efiPath))
 	}
 
 	var stderr bytes.Buffer
