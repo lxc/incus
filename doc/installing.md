@@ -322,6 +322,10 @@ As OpenSUSE stores QEMU firmware files using an unusual filename and location, y
 
 ````
 
+```{note}
+On ARM64 CPUs you need to install AAVMF instead of OVMF for UEFI to work with virtual machines.
+```
+
 ### From source: Build the latest version
 
 These instructions for building from source are suitable for individual developers who want to build the latest version
