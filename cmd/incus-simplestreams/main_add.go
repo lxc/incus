@@ -23,6 +23,8 @@ import (
 
 type cmdAdd struct {
 	global *cmdGlobal
+
+	flagAlias string
 }
 
 // Command generates the command definition.
@@ -44,8 +46,13 @@ This command parses the metadata tarball to retrieve the following fields from i
 
 It then check computes the hash for the new image, confirm it's not
 already on the image server and finally adds it to the index.
+
+If no --alias is specified, it generates a default alias:
+	{os}/{release}/{variant}
 `)
 	cmd.RunE = c.Run
+
+	cmd.Flags().StringVarP(&c.flagAlias, "alias", "", "", "Alias"+"``")
 
 	return cmd
 }
@@ -275,13 +282,17 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 	if !ok {
 		// Create a new product.
 		product = simplestreams.Product{
-			Aliases:         fmt.Sprintf("%s/%s/%s", metadata.Properties["os"], metadata.Properties["release"], metadata.Properties["variant"]),
+			Aliases:         c.flagAlias,
 			Architecture:    metadata.Properties["architecture"],
 			OperatingSystem: metadata.Properties["os"],
 			Release:         metadata.Properties["release"],
 			ReleaseTitle:    metadata.Properties["release"],
 			Variant:         metadata.Properties["variant"],
 			Versions:        map[string]simplestreams.ProductVersion{},
+		}
+		if product.Aliases == "" {
+			// Generate a default alias
+			product.Aliases = fmt.Sprintf("%s/%s/%s", metadata.Properties["os"], metadata.Properties["release"], metadata.Properties["variant"])
 		}
 	}
 
