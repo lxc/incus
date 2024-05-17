@@ -5479,6 +5479,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			"limits.memory",
 			"security.agent.metrics",
 			"security.csm",
+			"security.protection.delete",
 			"security.guestapi",
 			"security.secureboot",
 		}
