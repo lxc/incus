@@ -13,6 +13,7 @@ import (
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -191,12 +192,19 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			return "", err
 		}
 
-		ovmfPath := "/usr/share/OVMF"
-		if os.Getenv("INCUS_OVMF_PATH") != "" {
-			ovmfPath = os.Getenv("INCUS_OVMF_PATH")
+		var efiPath string
+		switch arch, _ := osarch.ArchitectureGetLocalID(); arch {
+		case osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN:
+			efiPath = "/usr/share/AAVMF"
+		default:
+			efiPath = "/usr/share/OVMF"
 		}
 
-		ovmfPath, err = filepath.EvalSymlinks(ovmfPath)
+		if os.Getenv("INCUS_EFI_PATH") != "" {
+			efiPath = os.Getenv("INCUS_EFI_PATH")
+		}
+
+		efiPath, err = filepath.EvalSymlinks(efiPath)
 		if err != nil {
 			return "", err
 		}
@@ -225,7 +233,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"name":           InstanceProfileName(inst),
 			"path":           path,
 			"raw":            rawContent,
-			"ovmfPath":       ovmfPath,
+			"efiPath":        efiPath,
 			"agentPath":      agentPath,
 		})
 		if err != nil {
