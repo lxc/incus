@@ -319,17 +319,15 @@ In addition, for normal operation, you'll also likely need
 
     sudo zypper install dnsmasq squashfs xz rsync tar attr acl qemu qemu-img qemu-spice qemu-hw-display-virtio-gpu-pci iptables ebtables nftables
 
-As OpenSUSE stores QEMU firmware files using an unusual filename and location, you will need to create some symlinks for them:
-
-    sudo mkdir /usr/share/OVMF
-    sudo ln -s /usr/share/qemu/ovmf-x86_64-4m-code.bin /usr/share/OVMF/OVMF_CODE.4MB.fd
-    sudo ln -s /usr/share/qemu/ovmf-x86_64-4m-vars.bin /usr/share/OVMF/OVMF_VARS.4MB.fd
-    sudo ln -s /usr/share/qemu/ovmf-x86_64-ms-4m-vars.bin /usr/share/OVMF/OVMF_VARS.4MB.ms.fd
-    sudo ln -s /usr/share/qemu/ovmf-x86_64-ms-4m-code.bin /usr/share/OVMF/OVMF_CODE.4MB.ms.fd
 ```
 
 
 ````
+
+```{note}
+On ARM64 CPUs you need to install AAVMF instead of OVMF for UEFI to work with virtual machines.
+In some distributions this is done through a separate package.
+```
 
 ### From source: Build the latest version
 

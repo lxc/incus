@@ -1,4 +1,5 @@
 AAAA
+AAVMF
 ABI
 ACL
 ACLs
@@ -68,6 +69,7 @@ Ebit
 eBPF
 ECDHE
 ECDSA
+EDK
 EiB
 Eibit
 endian
