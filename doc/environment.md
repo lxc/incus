@@ -36,7 +36,7 @@ Name                            | Description
 `INCUS_EXEC_PATH`               | Full path to the Incus binary (used when forking subcommands)
 `INCUS_IDMAPPED_MOUNTS_DISABLE` | Disable idmapped mounts support (useful when testing traditional UID shifting)
 `INCUS_LXC_TEMPLATE_CONFIG`     | Path to the LXC template configuration directory
-`INCUS_OVMF_PATH`               | Path to an OVMF build including `OVMF_CODE.fd` and `OVMF_VARS.ms.fd`
+`INCUS_EDK2_PATH`               | Path to EDK2 firmware build including `*_CODE.fd` and `*_VARS.fd`
 `INCUS_SECURITY_APPARMOR`       | If set to `false`, forces AppArmor off
 `INCUS_UI`                      | Path to the web UI to serve through the web server
 `INCUS_USBIDS_PATH`             | Path to the hwdata `usb.ids` file
