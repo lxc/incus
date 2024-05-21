@@ -2120,6 +2120,23 @@ func (r *ProtocolIncus) UpdateInstanceState(name string, state api.InstanceState
 	return op, nil
 }
 
+// GetInstanceAccess returns an Access entry for the provided instance name.
+func (r *ProtocolIncus) GetInstanceAccess(name string) (api.Access, error) {
+	access := api.Access{}
+
+	if !r.HasExtension("instance_access") {
+		return nil, fmt.Errorf("The server is missing the required \"instance_access\" API extension")
+	}
+
+	// Fetch the raw value
+	_, err := r.queryStruct("GET", fmt.Sprintf("/instances/%s/access", url.PathEscape(name)), nil, "", &access)
+	if err != nil {
+		return nil, err
+	}
+
+	return access, nil
+}
+
 // GetInstanceLogfiles returns a list of logfiles for the instance.
 func (r *ProtocolIncus) GetInstanceLogfiles(name string) ([]string, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
