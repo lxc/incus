@@ -21,9 +21,10 @@ import (
 type cmdInfo struct {
 	global *cmdGlobal
 
-	flagShowLog   bool
-	flagResources bool
-	flagTarget    string
+	flagShowAccess bool
+	flagShowLog    bool
+	flagResources  bool
+	flagTarget     string
 }
 
 func (c *cmdInfo) Command() *cobra.Command {
@@ -40,6 +41,7 @@ incus info [<remote>:] [--resources]
     For server information.`))
 
 	cmd.RunE = c.Run
+	cmd.Flags().BoolVar(&c.flagShowAccess, "show-access", false, i18n.G("Show the instance's access list"))
 	cmd.Flags().BoolVar(&c.flagShowLog, "show-log", false, i18n.G("Show the instance's recent log entries"))
 	cmd.Flags().BoolVar(&c.flagResources, "resources", false, i18n.G("Show the resources available to the server"))
 	cmd.Flags().StringVar(&c.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -85,6 +87,22 @@ func (c *cmdInfo) Run(cmd *cobra.Command, args []string) error {
 
 	if cName == "" {
 		return c.remoteInfo(d)
+	}
+
+	if c.flagShowAccess {
+		access, err := d.GetInstanceAccess(cName)
+		if err != nil {
+			return err
+		}
+
+		data, err := yaml.Marshal(access)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%s", data)
+
+		return nil
 	}
 
 	return c.instanceInfo(d, conf.Remotes[remote], cName, c.flagShowLog)
