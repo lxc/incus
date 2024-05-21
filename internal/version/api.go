@@ -422,6 +422,7 @@ var APIExtensions = []string{
 	"storage_buckets_all_projects",
 	"resources_load",
 	"instance_access",
+	"project_access",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
