@@ -96,5 +96,4 @@ const (
 const (
 	relationServer  = "server"
 	relationProject = "project"
-	relationUser    = "user"
 )

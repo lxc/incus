@@ -965,7 +965,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	// Check if the type-bound public access is set.
 	resp, err := f.client.Check(ctx).Body(client.ClientCheckRequest{
 		User:     "user:*",
-		Relation: relationUser,
+		Relation: "viewer",
 		Object:   ObjectServer().String(),
 	}).Execute()
 	if err != nil {
@@ -976,7 +976,7 @@ func (f *fga) syncResources(ctx context.Context, resources Resources) error {
 	if !resp.GetAllowed() {
 		writes = append(writes, client.ClientTupleKey{
 			User:     "user:*",
-			Relation: relationUser,
+			Relation: "viewer",
 			Object:   ObjectServer().String(),
 		})
 	}
