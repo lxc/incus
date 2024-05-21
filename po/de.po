@@ -8,28 +8,28 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-05-13 12:19+0200\n"
-"PO-Revision-Date: 2024-01-25 23:01+0000\n"
-"Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
-"org>\n"
+"PO-Revision-Date: 2024-05-16 15:01+0000\n"
+"Last-Translator: Tobias Gerold <tobias@g3ro.eu>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.4-dev\n"
+"X-Generator: Weblate 5.6-dev\n"
 
 #: cmd/incus/info.go:418
 msgid "  Chassis:"
-msgstr ""
+msgstr "  Gehäuse:"
 
 #: cmd/incus/info.go:454
+#, fuzzy
 msgid "  Firmware:"
-msgstr ""
+msgstr "  Firmware:"
 
 #: cmd/incus/info.go:436
 msgid "  Motherboard:"
-msgstr ""
+msgstr "  Mainboard:"
 
 #: cmd/incus/storage_bucket.go:273 cmd/incus/storage_bucket.go:1065
 #, fuzzy
@@ -699,30 +699,25 @@ msgid "--project cannot be used with the query command"
 msgstr "--refresh kann nur mit Containern verwendet werden"
 
 #: cmd/incus/copy.go:178
-#, fuzzy
 msgid "--refresh can only be used with instances"
-msgstr "--refresh kann nur mit Containern verwendet werden"
+msgstr "--refresh kann nur mit Instanzen verwendet werden"
 
 #: cmd/incus/move.go:265
-#, fuzzy
 msgid "--target can only be used with clusters"
-msgstr "--refresh kann nur mit Containern verwendet werden"
+msgstr "--target kann nur mit Clustern verwendet werden"
 
 #: cmd/incus/config.go:165 cmd/incus/config.go:438 cmd/incus/config.go:615
 #: cmd/incus/config.go:822 cmd/incus/info.go:599
-#, fuzzy
 msgid "--target cannot be used with instances"
-msgstr "--refresh kann nur mit Containern verwendet werden"
+msgstr "--target kann nicht mit Instanzen verwendet werden"
 
 #: cmd/incus/alias.go:220
-#, fuzzy
 msgid "<alias>"
-msgstr "Aliasse:\n"
+msgstr "<Alias>"
 
 #: cmd/incus/alias.go:59
-#, fuzzy
 msgid "<alias> <target>"
-msgstr "Ungültiges Ziel %s"
+msgstr "<Alias> <Ziel>"
 
 #: cmd/incus/admin_sql.go:27
 msgid "<local|global> <query>"
@@ -730,7 +725,7 @@ msgstr ""
 
 #: cmd/incus/alias.go:165
 msgid "<old alias> <new alias>"
-msgstr ""
+msgstr "<alter Alias> <neuer Alias>"
 
 #: cmd/incus/remote.go:872 cmd/incus/remote.go:936
 msgid "<remote>"
@@ -769,7 +764,7 @@ msgstr ""
 
 #: cmd/incus/manpage.go:20
 msgid "<target>"
-msgstr ""
+msgstr "<Ziel>"
 
 #: cmd/incus/admin_sql.go:140
 #, c-format
@@ -777,13 +772,12 @@ msgid "=> Query %d:"
 msgstr ""
 
 #: cmd/incus/remote.go:650
-#, fuzzy
 msgid "A client certificate is already present"
-msgstr "Gespeichertes Nutzerzertifikat auf dem Server: "
+msgstr "Ein Client Zertifikat ist bereits erstellt worden."
 
 #: cmd/incus/config_trust.go:120
 msgid "A client name must be provided"
-msgstr ""
+msgstr "Ein Name für den Client muss angegeben werden"
 
 #: cmd/incus/cluster.go:1026
 #, fuzzy
@@ -792,7 +786,7 @@ msgstr "der Name des Ursprung Containers muss angegeben werden"
 
 #: cmd/incus/network_allocations.go:25
 msgid "ADDRESS"
-msgstr ""
+msgstr "ADRESSE"
 
 #: cmd/incus/alias.go:148 cmd/incus/image.go:1125 cmd/incus/image_alias.go:234
 msgid "ALIAS"
@@ -807,55 +801,56 @@ msgid "ARCHITECTURE"
 msgstr "ARCHITEKTUR"
 
 #: cmd/incus/remote.go:776
+#, fuzzy
 msgid "AUTH TYPE"
-msgstr ""
+msgstr "Authentifizierungstyp"
 
 #: cmd/incus/remote.go:112
 msgid "Accept certificate"
-msgstr "Akzeptiere Zertifikat"
+msgstr "Akzeptiere das Zertifikat"
 
 #: cmd/incus/storage_bucket.go:895
 msgid "Access key (auto-generated if empty)"
 msgstr ""
+"Zugangsschlüssel (wird automatisch generiert, wenn nichts angegeben wird)"
 
 #: cmd/incus/storage_bucket.go:973
-#, fuzzy, c-format
+#, c-format
 msgid "Access key: %s"
-msgstr "Profil %s erstellt\n"
+msgstr "Zugangsschlüssel: %s"
 
 #: cmd/incus/config.go:391
-#, fuzzy
 msgid "Access the expanded configuration"
-msgstr "Profil %s erstellt\n"
+msgstr "Zugriff auf erweiterte Konfiguration"
 
 #: cmd/incus/warning.go:262 cmd/incus/warning.go:263
+#, fuzzy
 msgid "Acknowledge warning"
-msgstr ""
+msgstr "Warnung gesehen"
 
 #: cmd/incus/query.go:77
-#, fuzzy, c-format
+#, c-format
 msgid "Action %q isn't supported by this tool"
-msgstr ""
-"Anzeigen von Informationen über entfernte Instanzen wird noch nicht "
-"unterstützt\n"
+msgstr "Aktion %q wird von diesem Programm nicht unterstützt"
 
 #: cmd/incus/query.go:44
 msgid "Action (defaults to GET)"
-msgstr "Aktion (Standard: GET)"
+msgstr "Aktion (Standard ist: GET)"
 
 #: cmd/incus/cluster_group.go:724
 #, fuzzy
 msgid "Add a cluster member to a cluster group"
-msgstr "der Name des Ursprung Containers muss angegeben werden"
+msgstr "Cluster Mitglied zu einer Cluster Gruppe hinzufügen:"
 
 #: cmd/incus/network_zone.go:1440
 #, fuzzy
 msgid "Add a network zone record entry"
-msgstr "Profil %s erstellt\n"
+msgstr "Füge einen Netzwerk Zonen Eintrag hinzu"
 
 #: cmd/incus/network_load_balancer.go:807
+#, fuzzy
 msgid "Add backend to a load balancer"
-msgstr ""
+msgstr "Füge spezielles Backend zum Load Balancer hinzu"
 
 #: cmd/incus/network_load_balancer.go:806
 msgid "Add backends to a load balancer"
@@ -866,18 +861,16 @@ msgid "Add entries to a network zone record"
 msgstr ""
 
 #: cmd/incus/config_device.go:77 cmd/incus/config_device.go:78
-#, fuzzy
 msgid "Add instance devices"
-msgstr "kann nicht zum selben Container Namen kopieren"
+msgstr "Füge Devices zu einer Instanz hinzu"
 
 #: cmd/incus/cluster_group.go:723
 msgid "Add member to group"
-msgstr ""
+msgstr "Mitglied zu einer Gruppe hinzufügen"
 
 #: cmd/incus/alias.go:60 cmd/incus/alias.go:61
-#, fuzzy
 msgid "Add new aliases"
-msgstr "Aliasse:\n"
+msgstr "Erstelle neue Aliasse"
 
 #: cmd/incus/remote.go:101
 msgid "Add new remote servers"
@@ -894,10 +887,19 @@ msgid ""
 "  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path --"
 "protocol=simplestreams\n"
 msgstr ""
+"Neuen entfernten Server hinzufügen\n"
+"\n"
+"Webadressen (URLs) für entfernte Server müssen mit HTTPS (https://) beginnen."
+"\n"
+"\n"
+"Die Basic Authentifizierungsmethode kann mit dem \"simplestreams\" Protokoll "
+"genutzt werden:\n"
+"  incus remote add name-ihrer-wahl https://LOGIN:PASSWORT@example.com/"
+"angegebener/pfad --protocol=simplestreams\n"
 
 #: cmd/incus/config_trust.go:90
 msgid "Add new trusted client"
-msgstr ""
+msgstr "Vertrauenswürdigen Client hinzufügen"
 
 #: cmd/incus/config_trust.go:170
 #, fuzzy
@@ -923,80 +925,80 @@ msgstr ""
 
 #: cmd/incus/network_forward.go:837 cmd/incus/network_forward.go:838
 msgid "Add ports to a forward"
-msgstr ""
+msgstr "Ports zu einem Network Forward hinzufügen"
 
 #: cmd/incus/network_load_balancer.go:995
 #: cmd/incus/network_load_balancer.go:996
 msgid "Add ports to a load balancer"
-msgstr ""
+msgstr "Ports zu einem Load Balancer hinzufügen"
 
 #: cmd/incus/profile.go:108 cmd/incus/profile.go:109
-#, fuzzy
 msgid "Add profiles to instances"
-msgstr "kann nicht zum selben Container Namen kopieren"
+msgstr "Profile zu Instanzen hinzufügen"
 
 #: cmd/incus/cluster_role.go:50 cmd/incus/cluster_role.go:51
-#, fuzzy
 msgid "Add roles to a cluster member"
-msgstr "der Name des Ursprung Containers muss angegeben werden"
+msgstr "Rollen einem Cluster Mitglied hinzufügen"
 
 #: cmd/incus/network_acl.go:875 cmd/incus/network_acl.go:876
-#, fuzzy
 msgid "Add rules to an ACL"
-msgstr "kann nicht zum selben Container Namen kopieren"
+msgstr "Regeln zu einer Zugangskontrollliste (ACL) hinzufügen"
 
 #: cmd/incus/admin_recover.go:128
+#, fuzzy
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
+"Zusätzliche Storage Pool Konfigurationsparameter hinzufügen (SCHLÜSSEL=WERT, "
+"leerlassen falls fertig):"
 
 #: cmd/incus/admin_init.go:59
 msgid "Address to bind to (default: none)"
-msgstr ""
+msgstr "IP-Adresse unter der der Server erreichbar sein soll (Standard: keine)"
 
 #: cmd/incus/admin_init_interactive.go:794
 msgid "Address to bind to (not including port)"
-msgstr ""
+msgstr "IP-Adresse unter der der Server erreichbar sein soll (ohne Port)"
 
 #: cmd/incus/info.go:209
 #, fuzzy, c-format
 msgid "Address: %s"
-msgstr "Profil %s erstellt\n"
+msgstr "Adresse: %s"
 
 #: cmd/incus/info.go:353
-#, fuzzy, c-format
+#, c-format
 msgid "Address: %v"
-msgstr "Profil %s erstellt\n"
+msgstr "Adresse: %v"
 
 #: cmd/incus/storage_bucket.go:182
-#, fuzzy, c-format
+#, c-format
 msgid "Admin access key: %s"
-msgstr "Profil %s erstellt\n"
+msgstr "Administrator Zugangsschlüssel: %s"
 
 #: cmd/incus/storage_bucket.go:183
-#, fuzzy, c-format
+#, c-format
 msgid "Admin secret key: %s"
-msgstr "Erstellt: %s"
+msgstr "Administrator Geheimer Schlüssel: %s"
 
 #: cmd/incus/alias.go:86 cmd/incus/alias.go:199
-#, fuzzy, c-format
+#, c-format
 msgid "Alias %s already exists"
-msgstr "entfernte Instanz %s existiert bereits"
+msgstr "Alias %s existiert bereits"
 
 #: cmd/incus/alias.go:193 cmd/incus/alias.go:248
-#, fuzzy, c-format
+#, c-format
 msgid "Alias %s doesn't exist"
-msgstr "entfernte Instanz %s existiert nicht"
+msgstr "Alias %s existiert nicht"
 
 #: cmd/incus/image_alias.go:84 cmd/incus/image_alias.go:131
 #: cmd/incus/image_alias.go:279
 msgid "Alias name missing"
-msgstr "Aliasname fehlt"
+msgstr "Aliasbezeichnung fehlt"
 
 #: cmd/incus/image.go:1043
-#, fuzzy, c-format
+#, c-format
 msgid "Alias: %s"
-msgstr "Aliasse:\n"
+msgstr "Alias: %s"
 
 #: cmd/incus/publish.go:254
 #, fuzzy, c-format
@@ -1011,99 +1013,111 @@ msgstr "Aliasse:\n"
 #: cmd/incus/admin_init_interactive.go:223
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr ""
+"Alle existierenden Dateien sind verloren, wenn sie dem Cluster beitreten, "
+"Vorgang fortsetzen?"
 
 #: cmd/incus/storage_volume.go:1555 cmd/incus/storage_volume.go:2519
-#, fuzzy
 msgid "All projects"
-msgstr "Fehlerhafte Profil URL %s"
+msgstr "Alle Projekte"
 
 #: cmd/incus/remote.go:192
 msgid "All server addresses are unavailable"
-msgstr ""
+msgstr "Alle Server Adressen sind nicht erreichbar"
 
 #: cmd/incus/config_trust.go:181
 #, fuzzy
 msgid "Alternative certificate name"
-msgstr "Akzeptiere Zertifikat"
+msgstr "Alternativer Zertifikatsbezeichnung"
 
 #: cmd/incus/image.go:999 cmd/incus/info.go:477 cmd/incus/info.go:481
 #: cmd/incus/info.go:622
-#, fuzzy, c-format
+#, c-format
 msgid "Architecture: %s"
-msgstr "Architektur: %s\n"
+msgstr "Architektur: %s"
 
 #: cmd/incus/info.go:135
-#, fuzzy, c-format
+#, c-format
 msgid "Architecture: %v"
-msgstr "Architektur: %s\n"
+msgstr "Architektur: %v"
 
 #: cmd/incus/admin_init_interactive.go:159
 msgid "Are you joining an existing cluster?"
-msgstr ""
+msgstr "Soll der Server einem bestehenden Cluster beitreten?"
 
 #: cmd/incus/cluster.go:1458
-#, c-format
+#, c-format, fuzzy
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
+"Sind Sie sicher, dass sie das Cluster Mitglied %q %s? (ja/nein) "
+"[default=nein]: "
 
 #: cmd/incus/console.go:379
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
+"Da keines der genannten Programme gefunden werden konnte, finden Sie hier "
+"den SPICE Socket zum manuellen verbinden:"
 
 #: cmd/incus/create.go:365 cmd/incus/rebuild.go:131
+#, fuzzy
 msgid "Asked for a VM but image is of type container"
 msgstr ""
+"Es soll eine Virtuelle Maschine (VM) genutzt werden, aber das angefragte "
+"Image ist vom Typ: Container"
 
 #: cmd/incus/cluster_group.go:83 cmd/incus/cluster_group.go:84
 #, fuzzy
 msgid "Assign sets of groups to cluster members"
-msgstr "kann nicht zum selben Container Namen kopieren"
+msgstr "Mehrere Gruppen zu Cluster Mitgliedern hinzufügen"
 
 #: cmd/incus/profile.go:183 cmd/incus/profile.go:184
-#, fuzzy
 msgid "Assign sets of profiles to instances"
-msgstr "kann nicht zum selben Container Namen kopieren"
+msgstr "Mehrere Profile zu Instanzen hinzufügen"
 
 #: cmd/incus/network.go:142
 #, fuzzy
 msgid "Attach network interfaces to instances"
-msgstr "Netzwerkschnittstellen an Container anbinden"
+msgstr "Netzwerkschnittstellen (network interfaces) zu Instanzen hinzufügen"
 
 #: cmd/incus/network.go:239 cmd/incus/network.go:240
 msgid "Attach network interfaces to profiles"
-msgstr ""
+msgstr "Netzwerkschnittstellen (network interfaces) zu Profilen hinzufügen"
 
 #: cmd/incus/network.go:143
 #, fuzzy
 msgid "Attach new network interfaces to instances"
-msgstr "Netzwerkschnittstellen an Container anbinden"
+msgstr "Netzwerkschnittstellen (network interfaces) zu Instanzen hinzufügen"
 
 #: cmd/incus/storage_volume.go:162 cmd/incus/storage_volume.go:163
 #, fuzzy
 msgid "Attach new storage volumes to instances"
-msgstr "Netzwerkschnittstellen an Container anbinden"
+msgstr "Storage Volumes zu Instanzen hinzufügen"
 
 #: cmd/incus/storage_volume.go:253 cmd/incus/storage_volume.go:254
 msgid "Attach new storage volumes to profiles"
-msgstr ""
+msgstr "Storage Volumes zu Profilen hinzufügen"
 
 #: cmd/incus/console.go:36
-#, fuzzy
 msgid "Attach to instance consoles"
-msgstr "Herunterfahren des Containers erzwingen."
+msgstr "Konsole der Instanz öffnen"
 
 #: cmd/incus/console.go:37
+#, fuzzy
 msgid ""
 "Attach to instance consoles\n"
 "\n"
 "This command allows you to interact with the boot console of an instance\n"
 "as well as retrieve past log entries from it."
 msgstr ""
+"Konsole der Instanz öffnen\n"
+"\n"
+"Dieser Befehl ermöglicht ihnen mit der boot Konsole einer Instanz zu "
+"interagieren,\n"
+"sowie bereits vorhandene Protokolleinträge (logs) einzusehen."
 
 #: cmd/incus/remote.go:556
 #, c-format
 msgid "Authentication type '%s' not supported by server"
-msgstr ""
+msgstr "Authentifizierungstyp '%s' wird nicht vom Server unterstützt"
 
 #: cmd/incus/info.go:228
 #, c-format
@@ -1111,8 +1125,9 @@ msgid "Auto negotiation: %v"
 msgstr ""
 
 #: cmd/incus/image.go:189
+#, fuzzy
 msgid "Auto update is only available in pull mode"
-msgstr ""
+msgstr "Die Option \"automatisches Update\" ist nur mit \"pull\" verfügbar"
 
 #: cmd/incus/image.go:1037
 #, c-format
@@ -1121,12 +1136,11 @@ msgstr "automatisches Update: %s"
 
 #: cmd/incus/admin_init.go:54
 msgid "Automatic (non-interactive) mode"
-msgstr ""
+msgstr "Automatischer Modus (nicht-interaktiv)"
 
 #: cmd/incus/remote.go:147
-#, fuzzy
 msgid "Available projects:"
-msgstr "Fehlerhafte Profil URL %s"
+msgstr "Verfügbare Projekte:"
 
 #: cmd/incus/info.go:471
 #, c-format
