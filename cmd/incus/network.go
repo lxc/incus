@@ -288,15 +288,27 @@ func (c *cmdNetworkAttachProfile) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Prepare the profile's device entry
-	device := map[string]string{
-		"type":    "nic",
-		"nictype": "macvlan",
-		"parent":  resource.name,
-	}
+	// Prepare the instance's device entry
+	var device map[string]string
+	if network.Managed && resource.server.HasExtension("instance_nic_network") {
+		// If network is managed, use the network property rather than nictype, so that the network's
+		// inherited properties are loaded into the NIC when started.
+		device = map[string]string{
+			"type":    "nic",
+			"network": network.Name,
+		}
+	} else {
+		// If network is unmanaged default to using a macvlan connected to the specified interface.
+		device = map[string]string{
+			"type":    "nic",
+			"nictype": "macvlan",
+			"parent":  resource.name,
+		}
 
-	if network.Type == "bridge" {
-		device["nictype"] = "bridged"
+		if network.Type == "bridge" {
+			// If the network type is an unmanaged bridge, use bridged NIC type.
+			device["nictype"] = "bridged"
+		}
 	}
 
 	if len(args) > 3 {
