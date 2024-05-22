@@ -510,14 +510,14 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   pivot_root,
 
   # Allow modifying mount propagation
-  mount options=(rw,slave) -> **,
-  mount options=(rw,rslave) -> **,
-  mount options=(rw,shared) -> **,
-  mount options=(rw,rshared) -> **,
-  mount options=(rw,private) -> **,
-  mount options=(rw,rprivate) -> **,
-  mount options=(rw,unbindable) -> **,
-  mount options=(rw,runbindable) -> **,
+  mount options=(rw,slave) -> /**,
+  mount options=(rw,rslave) -> /**,
+  mount options=(rw,shared) -> /**,
+  mount options=(rw,rshared) -> /**,
+  mount options=(rw,private) -> /**,
+  mount options=(rw,rprivate) -> /**,
+  mount options=(rw,unbindable) -> /**,
+  mount options=(rw,runbindable) -> /**,
 
   # Allow all bind-mounts.
   mount options=(rw,bind) -> /**,
