@@ -35,7 +35,7 @@ test_openfga() {
   echo "==> Checking permissions for unknown user..."
   user_is_not_server_admin
   user_is_not_server_operator
-  user_is_not_project_manager
+  user_is_not_project_admin
   user_is_not_project_operator
 
   # Give the user the `admin` entitlement on `server:incus`.
@@ -44,7 +44,7 @@ test_openfga() {
   echo "==> Checking permissions for server admin..."
   user_is_server_admin
   user_is_server_operator
-  user_is_project_manager
+  user_is_project_admin
   user_is_project_operator
 
   # Give the user the `operator` entitlement on `server:incus`.
@@ -54,27 +54,27 @@ test_openfga() {
   echo "==> Checking permissions for server operator..."
   user_is_not_server_admin
   user_is_server_operator
-  user_is_project_manager
+  user_is_not_project_admin
   user_is_project_operator
 
-  # Give the user the `manager` entitlement on `project:default`.
+  # Give the user the `admin` entitlement on `project:default`.
   fga tuple delete --store-id "${OPENFGA_STORE_ID}" user:user1 operator server:incus
-  fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 manager project:default
+  fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 admin project:default
 
-  echo "==> Checking permissions for project manager..."
+  echo "==> Checking permissions for project admin..."
   user_is_not_server_admin
   user_is_not_server_operator
-  user_is_project_manager
+  user_is_project_admin
   user_is_project_operator
 
   # Give the user the `operator` entitlement on `project:default`.
-  fga tuple delete --store-id "${OPENFGA_STORE_ID}" user:user1 manager project:default
+  fga tuple delete --store-id "${OPENFGA_STORE_ID}" user:user1 admin project:default
   fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 operator project:default
 
   echo "==> Checking permissions for project operator..."
   user_is_not_server_admin
   user_is_not_server_operator
-  user_is_not_project_manager
+  user_is_not_project_admin
   user_is_project_operator
 
   # Create an instance for testing the "instance -> user" relation.
@@ -90,7 +90,7 @@ test_openfga() {
   incus delete user-foo --force # Must clean this up now as subsequent tests assume a clean project.
   user_is_not_server_admin
   user_is_not_server_operator
-  user_is_not_project_manager
+  user_is_not_project_admin
   user_is_not_project_operator
 
   # Unset config keys.
@@ -168,18 +168,17 @@ user_is_server_operator() {
   # Should be able to see projects.
   incus project list oidc-openfga: -f csv | grep -Fq 'default'
 
-  # Should be able to create/edit/delete a project.
-  incus project create oidc-openfga:test-project
-  incus project show oidc-openfga:test-project | sed -e 's/description: ""/description: "Test Project"/' | incus project edit oidc-openfga:test-project
-  incus project delete oidc-openfga:test-project
+  # Should be able to create/edit/delete resources within a project.
+  incus init --empty oidc-openfga:foo
+  incus delete oidc-openfga:foo
 }
 
-user_is_project_manager() {
+user_is_project_admin() {
   incus project set oidc-openfga:default user.foo bar
   incus project unset oidc-openfga:default user.foo
 }
 
-user_is_not_project_manager() {
+user_is_not_project_admin() {
   ! incus project set oidc-openfga:default user.foo bar || false
   ! incus project unset oidc-openfga:default user.foo || false
 }
