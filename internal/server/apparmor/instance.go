@@ -155,6 +155,11 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 		return "", err
 	}
 
+	nosymfollowSupported, err := parserSupports(sysOS, "nosymfollow")
+	if err != nil {
+		return "", err
+	}
+
 	// Deref the extra binaries.
 	for i, entry := range extraBinaries {
 		fullPath, err := filepath.EvalSymlinks(entry)
@@ -169,17 +174,18 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 	var sb *strings.Builder = &strings.Builder{}
 	if inst.Type() == instancetype.Container {
 		err = lxcProfileTpl.Execute(sb, map[string]any{
-			"extra_binaries":   extraBinaries,
-			"feature_cgns":     sysOS.CGInfo.Namespacing,
-			"feature_cgroup2":  sysOS.CGInfo.Layout == cgroup.CgroupsUnified || sysOS.CGInfo.Layout == cgroup.CgroupsHybrid,
-			"feature_stacking": sysOS.AppArmorStacking && !sysOS.AppArmorStacked,
-			"feature_unix":     unixSupported,
-			"kernel_binfmt":    util.IsFalseOrEmpty(inst.ExpandedConfig()["security.privileged"]) && sysOS.UnprivBinfmt,
-			"name":             InstanceProfileName(inst),
-			"namespace":        InstanceNamespaceName(inst),
-			"nesting":          util.IsTrue(inst.ExpandedConfig()["security.nesting"]),
-			"raw":              rawContent,
-			"unprivileged":     util.IsFalseOrEmpty(inst.ExpandedConfig()["security.privileged"]) || sysOS.RunningInUserNS,
+			"extra_binaries":      extraBinaries,
+			"feature_cgns":        sysOS.CGInfo.Namespacing,
+			"feature_cgroup2":     sysOS.CGInfo.Layout == cgroup.CgroupsUnified || sysOS.CGInfo.Layout == cgroup.CgroupsHybrid,
+			"feature_nosymfollow": nosymfollowSupported,
+			"feature_stacking":    sysOS.AppArmorStacking && !sysOS.AppArmorStacked,
+			"feature_unix":        unixSupported,
+			"kernel_binfmt":       util.IsFalseOrEmpty(inst.ExpandedConfig()["security.privileged"]) && sysOS.UnprivBinfmt,
+			"name":                InstanceProfileName(inst),
+			"namespace":           InstanceNamespaceName(inst),
+			"nesting":             util.IsTrue(inst.ExpandedConfig()["security.nesting"]),
+			"raw":                 rawContent,
+			"unprivileged":        util.IsFalseOrEmpty(inst.ExpandedConfig()["security.privileged"]) || sysOS.RunningInUserNS,
 		})
 		if err != nil {
 			return "", err
