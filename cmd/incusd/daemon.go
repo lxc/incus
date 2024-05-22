@@ -1165,6 +1165,7 @@ func (d *Daemon) init() error {
 		RestServer:           restServer(d),
 		DevIncusServer:       devIncusServer(d),
 		LocalUnixSocketGroup: d.config.Group,
+		LocalUnixSocketLabel: "system_u:object_r:container_runtime_t:s0",
 		NetworkAddress:       localHTTPAddress,
 		ClusterAddress:       localClusterAddress,
 		DebugAddress:         debugAddress,
