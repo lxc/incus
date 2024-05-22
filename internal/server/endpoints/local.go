@@ -7,7 +7,7 @@ import (
 )
 
 // Create a new net.Listener bound to the unix socket of the local endpoint.
-func localCreateListener(path string, group string) (net.Listener, error) {
+func localCreateListener(path string, group string, label string) (net.Listener, error) {
 	err := CheckAlreadyRunning(path)
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func localCreateListener(path string, group string) (net.Listener, error) {
 		return nil, err
 	}
 
-	err = localSetAccess(path, group)
+	err = localSetAccess(path, group, label)
 	if err != nil {
 		_ = listener.Close()
 		return nil, err
@@ -35,13 +35,18 @@ func localCreateListener(path string, group string) (net.Listener, error) {
 // Change the file mode and ownership of the local endpoint unix socket file,
 // so access is granted only to the process user and to the given group (or the
 // process group if group is empty).
-func localSetAccess(path string, group string) error {
+func localSetAccess(path string, group string, label string) error {
 	err := socketUnixSetPermissions(path, 0660)
 	if err != nil {
 		return err
 	}
 
 	err = socketUnixSetOwnership(path, group)
+	if err != nil {
+		return err
+	}
+
+	err = socketUnixSetLabel(path, label)
 	if err != nil {
 		return err
 	}
