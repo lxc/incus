@@ -547,6 +547,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   mount options=(ro,remount,bind,noatime,nosuid,noexec,nodev),
   mount options=(ro,remount,bind,nosuid,noexec,strictatime),
   mount options=(ro,remount,nosuid,noexec,strictatime),
+{{- if .feature_nosymfollow }}
+  mount options=(ro,remount,bind,nosuid,noexec,nodev,nosymfollow),
+{{- end }}
 
   # Allow remounting things read-only
   mount options=(ro,remount) /,
