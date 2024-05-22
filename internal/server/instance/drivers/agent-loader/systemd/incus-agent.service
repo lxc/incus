@@ -7,7 +7,7 @@ DefaultDependencies=no
 [Service]
 Type=notify
 WorkingDirectory=-/run/incus_agent
-ExecStartPre=/lib/systemd/incus-agent-setup
+ExecStartPre=TARGET/systemd/incus-agent-setup
 ExecStart=/run/incus_agent/incus-agent
 Restart=on-failure
 RestartSec=5s
