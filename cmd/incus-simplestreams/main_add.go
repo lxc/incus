@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -23,6 +24,9 @@ import (
 
 type cmdAdd struct {
 	global *cmdGlobal
+
+	flagAliases        []string
+	flagNoDefaultAlias bool
 }
 
 // Command generates the command definition.
@@ -44,8 +48,14 @@ This command parses the metadata tarball to retrieve the following fields from i
 
 It then check computes the hash for the new image, confirm it's not
 already on the image server and finally adds it to the index.
+
+It generates a default alias: {os}/{release}/{variant},
+unless --no-default-alias is specified.
 `)
 	cmd.RunE = c.Run
+
+	cmd.Flags().StringArrayVar(&c.flagAliases, "alias", nil, "Add alias")
+	cmd.Flags().BoolVar(&c.flagNoDefaultAlias, "no-default-alias", false, "Do not add the default alias")
 
 	return cmd
 }
@@ -273,9 +283,20 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 	productName := fmt.Sprintf("%s:%s:%s:%s", metadata.Properties["os"], metadata.Properties["release"], metadata.Properties["variant"], metadata.Properties["architecture"])
 	product, ok := products.Products[productName]
 	if !ok {
+		var aliases []string
+		if !c.flagNoDefaultAlias {
+			// Generate a default alias
+			aliases = append(aliases, fmt.Sprintf("%s/%s/%s",
+				metadata.Properties["os"],
+				metadata.Properties["release"],
+				metadata.Properties["variant"]))
+		}
+
+		aliases = append(aliases, c.flagAliases...)
+
 		// Create a new product.
 		product = simplestreams.Product{
-			Aliases:         fmt.Sprintf("%s/%s/%s", metadata.Properties["os"], metadata.Properties["release"], metadata.Properties["variant"]),
+			Aliases:         strings.Join(aliases, ","),
 			Architecture:    metadata.Properties["architecture"],
 			OperatingSystem: metadata.Properties["os"],
 			Release:         metadata.Properties["release"],
