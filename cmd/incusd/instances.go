@@ -156,6 +156,13 @@ var instanceBackupExportCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: instanceBackupExportGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageBackups, "name")},
 }
 
+var instanceAccessCmd = APIEndpoint{
+	Name: "access",
+	Path: "instances/{name}/access",
+
+	Get: APIEndpointAction{Handler: instanceAccess, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+}
+
 type instanceAutostartList []instance.Instance
 
 func (slice instanceAutostartList) Len() int {

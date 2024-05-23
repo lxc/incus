@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/lxc/incus/v6/internal/server/certificate"
+	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 )
 
@@ -90,6 +91,9 @@ type Authorizer interface {
 
 	AddStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error
 	DeleteStorageBucket(ctx context.Context, projectName string, storagePoolName string, storageBucketName string, storageBucketLocation string) error
+
+	GetInstanceAccess(ctx context.Context, projectName string, instanceName string) (*api.Access, error)
+	GetProjectAccess(ctx context.Context, projectName string) (*api.Access, error)
 }
 
 // Opts is used as part of the LoadAuthorizer function so that only the relevant configuration fields are passed into a

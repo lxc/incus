@@ -1,4 +1,30 @@
 definitions:
+    Access:
+        items:
+            $ref: '#/definitions/AccessEntry'
+        title: Access represents everyone that may access a particular resource.
+        type: array
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    AccessEntry:
+        properties:
+            identifier:
+                description: Certificate fingerprint
+                example: 636b69519d27ae3b0e398cb7928043846ce1e3842f0ca7a589993dd913ab8cc9
+                type: string
+                x-go-name: Identifier
+            provider:
+                description: Which authorization method the certificate uses
+                example: tls, openfga
+                type: string
+                x-go-name: Provider
+            role:
+                description: The role associated with the certificate
+                example: admin, view, operator
+                type: string
+                x-go-name: Role
+        title: AccessEntry represents an entity having access to the resource.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
     Certificate:
         description: Certificate represents a certificate
         properties:
@@ -8846,6 +8872,47 @@ paths:
             summary: Update the instance
             tags:
                 - instances
+    /1.0/instances/{name}/access:
+        get:
+            description: Gets the access information for the instance.
+            operationId: instance_access
+            parameters:
+                - description: Project name
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Access
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/Access'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get who has access to an instnace
+            tags:
+                - instances
     /1.0/instances/{name}/backups:
         get:
             description: Returns a list of instance backups (URLs).
@@ -13480,6 +13547,42 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Update the project
+            tags:
+                - projects
+    /1.0/projects/{name}/access:
+        get:
+            description: Gets the access information for the project.
+            operationId: project_access
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Access
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/Access'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get who has access to a project
             tags:
                 - projects
     /1.0/projects/{name}/state:

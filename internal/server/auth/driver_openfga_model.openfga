@@ -10,7 +10,7 @@ type certificate
   relations
     define server: [server]
     define can_edit: [user, group#member] or admin from server
-    define can_view: user from server
+    define can_view: viewer from server
 
 type image
   relations
@@ -27,19 +27,19 @@ type image_alias
 type instance
   relations
     define project: [project]
-    define manager: [user, group#member]
-    define operator: [user, group#member] or manager
-    define user: [user, group#member] or operator
-    define viewer: [user, group#member] or operator
-    define can_edit: manager or operator from project
-    define can_view: user or viewer or viewer from project
-    define can_update_state: [user, group#member] or operator or operator from project
-    define can_manage_snapshots: [user, group#member] or operator or operator from project
-    define can_manage_backups: [user, group#member] or operator or operator from project
-    define can_connect_sftp: [user, group#member] or user or operator from project
-    define can_access_files: [user, group#member] or user or operator from project
-    define can_access_console: [user, group#member] or user or operator from project
-    define can_exec: [user, group#member] or user or operator from project
+    define admin: [user, group#member] or admin from project
+    define operator: [user, group#member] or admin or operator from project
+    define user: [user, group#member] or operator or user from project
+    define viewer: [user, group#member] or user or viewer from project
+    define can_edit: operator
+    define can_view: viewer
+    define can_update_state: [user, group#member] or operator
+    define can_manage_snapshots: [user, group#member] or operator
+    define can_manage_backups: [user, group#member] or operator
+    define can_connect_sftp: [user, group#member] or user
+    define can_access_files: [user, group#member] or user
+    define can_access_console: [user, group#member] or user
+    define can_exec: [user, group#member] or user
 
 type network
   relations
@@ -57,7 +57,7 @@ type network_integration
   relations
     define server: [server]
     define can_edit: [user, group#member] or admin from server
-    define can_view: user from server
+    define can_view: viewer from server
 
 type network_zone
   relations
@@ -74,20 +74,21 @@ type profile
 type project
   relations
     define server: [server]
-    define manager: [user, group#member] or operator from server
-    define operator: [user, group#member] or manager or operator from server
-    define viewer: [user, group#member] or operator
-    define can_edit: manager
+    define admin: [user, group#member] or admin from server
+    define operator: [user, group#member] or admin or operator from server
+    define user: [user, group#member] or operator or user from server
+    define viewer: [user, group#member] or user
+    define can_edit: admin
     define can_view: viewer
-    define can_create_images: [user, group#member] or operator or operator from server
-    define can_create_image_aliases: [user, group#member] or operator or operator from server
-    define can_create_instances: [user, group#member] or operator or operator from server
-    define can_create_networks: [user, group#member] or operator or operator from server
-    define can_create_network_acls: [user, group#member] or operator or operator from server
-    define can_create_network_zones: [user, group#member] or operator or operator from server
-    define can_create_profiles: [user, group#member] or operator or operator from server
-    define can_create_storage_volumes: [user, group#member] or operator or operator from server
-    define can_create_storage_buckets: [user, group#member] or operator or operator from server
+    define can_create_images: [user, group#member] or operator
+    define can_create_image_aliases: [user, group#member] or operator
+    define can_create_instances: [user, group#member] or operator
+    define can_create_networks: [user, group#member] or operator
+    define can_create_network_acls: [user, group#member] or operator
+    define can_create_network_zones: [user, group#member] or operator
+    define can_create_profiles: [user, group#member] or operator
+    define can_create_storage_volumes: [user, group#member] or operator
+    define can_create_storage_buckets: [user, group#member] or operator
     define can_view_operations: [user, group#member] or viewer
     define can_view_events: [user, group#member] or viewer
 
@@ -95,10 +96,10 @@ type server
   relations
     define admin: [user, group#member]
     define operator: [user, group#member] or admin
-    define viewer: [user, group#member] or operator
-    define user: [user:*]
+    define user: [user, group#member] or operator
+    define viewer: [user:*] or user
     define can_edit: admin
-    define can_view: user
+    define can_view: viewer
     define can_create_storage_pools: [user, group#member] or admin
     define can_create_projects: [user, group#member] or operator
     define can_view_resources: [user, group#member] or viewer
@@ -117,7 +118,7 @@ type storage_pool
   relations
     define server: [server]
     define can_edit: [user, group#member] or admin from server
-    define can_view: user from server
+    define can_view: viewer from server
 
 type storage_volume
   relations

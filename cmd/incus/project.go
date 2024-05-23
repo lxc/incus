@@ -1007,7 +1007,8 @@ type cmdProjectInfo struct {
 	global  *cmdGlobal
 	project *cmdProject
 
-	flagFormat string
+	flagShowAccess bool
+	flagFormat     string
 }
 
 func (c *cmdProjectInfo) Command() *cobra.Command {
@@ -1016,6 +1017,7 @@ func (c *cmdProjectInfo) Command() *cobra.Command {
 	cmd.Short = i18n.G("Get a summary of resource allocations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Get a summary of resource allocations`))
+	cmd.Flags().BoolVar(&c.flagShowAccess, "show-access", false, i18n.G("Show the instance's access list"))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", i18n.G("Format (csv|json|table|yaml|compact)")+"``")
 
 	cmd.RunE = c.Run
@@ -1048,6 +1050,20 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 
 	if resource.name == "" {
 		return fmt.Errorf(i18n.G("Missing project name"))
+	}
+
+	if c.flagShowAccess {
+		access, err := resource.server.GetProjectAccess(resource.name)
+		if err != nil {
+			return err
+		}
+
+		data, err := yaml.Marshal(access)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%s", data)
 	}
 
 	// Get the current allocations

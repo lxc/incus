@@ -154,6 +154,8 @@ type InstanceServer interface {
 	GetInstanceState(name string) (state *api.InstanceState, ETag string, err error)
 	UpdateInstanceState(name string, state api.InstanceStatePut, ETag string) (op Operation, err error)
 
+	GetInstanceAccess(name string) (access api.Access, err error)
+
 	GetInstanceLogfiles(name string) (logfiles []string, err error)
 	GetInstanceLogfile(name string, filename string) (content io.ReadCloser, err error)
 	DeleteInstanceLogfile(name string, filename string) (err error)
@@ -287,6 +289,7 @@ type InstanceServer interface {
 	GetProjects() (projects []api.Project, err error)
 	GetProject(name string) (project *api.Project, ETag string, err error)
 	GetProjectState(name string) (project *api.ProjectState, err error)
+	GetProjectAccess(name string) (access api.Access, err error)
 	CreateProject(project api.ProjectsPost) (err error)
 	UpdateProject(name string, project api.ProjectPut, ETag string) (err error)
 	RenameProject(name string, project api.ProjectPost) (op Operation, err error)

@@ -2493,6 +2493,14 @@ This adds support for listing network ACLs across all projects through the `all-
 
 This adds support for listing storage buckets across all projects through the `all-projects` parameter on the `GET /1.0/storage-pools/POOL/buckets`API.
 
-## `resources_load
+## `resources_load`
 
 Add a new Load section to the resources API.
+
+## `instance_access`
+
+This introduces a new API endpoint at `GET /1.0/instances/NAME/access` which exposes who can interact with the instance and what role they have.
+
+## `project_access`
+
+This introduces a new API endpoint at `GET /1.0/projects/NAME/access` which exposes who can interact with the project and what role they have.
