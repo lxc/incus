@@ -2313,6 +2313,11 @@ func (c *cmdStorageVolumeSnapshotCreate) Command() *cobra.Command {
 	cmd.Short = i18n.G("Snapshot storage volumes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Snapshot storage volumes`))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume snapshot create default v1 snap0
+       Create a snapshot of "v1" in pool "default" called "snap0".
+
+incus storage volume snapshot create default v1 snap0 < config.yaml
+       Create a snapshot of "v1" in pool "default" called "snap0" with the configuration from "config.yaml".`))
 
 	cmd.Flags().BoolVar(&c.flagNoExpiry, "no-expiry", false, i18n.G("Ignore any configured auto-expiry for the storage volume"))
 	cmd.Flags().BoolVar(&c.flagReuse, "reuse", false, i18n.G("If the snapshot name already exists, delete and create a new one"))
@@ -2335,10 +2340,25 @@ func (c *cmdStorageVolumeSnapshotCreate) Command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
+	var stdinData api.StorageVolumeSnapshotPut
+
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 2, 3)
 	if exit {
 		return err
+	}
+
+	// If stdin isn't a terminal, read text from it
+	if !termios.IsTerminal(getStdinFd()) {
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+
+		err = yaml.Unmarshal(contents, &stdinData)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Parse remote
@@ -2384,6 +2404,8 @@ func (c *cmdStorageVolumeSnapshotCreate) Run(cmd *cobra.Command, args []string) 
 
 	if c.flagNoExpiry {
 		req.ExpiresAt = &time.Time{}
+	} else if stdinData.ExpiresAt != nil && !stdinData.ExpiresAt.IsZero() {
+		req.ExpiresAt = stdinData.ExpiresAt
 	}
 
 	if c.flagReuse && snapname != "" {
