@@ -187,6 +187,15 @@ func parserSupports(sysOS *sys.OS, feature string) (bool, error) {
 		return ver.Compare(minVer) >= 0, nil
 	}
 
+	if feature == "nosymfollow" {
+		minVer, err := version.NewDottedVersion("4.0.0")
+		if err != nil {
+			return false, err
+		}
+
+		return ver.Compare(minVer) >= 0, nil
+	}
+
 	return false, nil
 }
 

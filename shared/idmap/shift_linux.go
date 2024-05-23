@@ -279,19 +279,78 @@ static int get_userns_fd_cb(void *data)
 
 static int get_userns_fd(void)
 {
-	int ret;
+	int userns_fd = -EBADF;
+	int file_fd = -EBADF;
 	pid_t pid;
 	char path[256];
 
+	// Create the namespace.
 	pid = do_clone(get_userns_fd_cb, NULL, CLONE_NEWUSER);
 	if (pid < 0)
-		return -errno;
+		goto err;
 
+	// Fetch a reference.
 	snprintf(path, sizeof(path), "/proc/%d/ns/user", pid);
-	ret = open(path, O_RDONLY | O_CLOEXEC);
+	userns_fd = open(path, O_RDONLY | O_CLOEXEC);
+	if (userns_fd < 0)
+		goto err_process;
+
+	// Setup uid_map
+	snprintf(path, sizeof(path), "/proc/%d/uid_map", pid);
+	file_fd = openat(AT_FDCWD, path, O_WRONLY);
+	if (file_fd < 0)
+		goto err_process;
+
+	if (write(file_fd, "0 0 1", 5) != 5)
+		goto err_process;
+
+	if (close(file_fd) < 0) {
+		file_fd = -EBADF;
+		goto err_process;
+	}
+
+	// Setup setgroups
+	snprintf(path, sizeof(path), "/proc/%d/setgroups", pid);
+	file_fd = openat(AT_FDCWD, path, O_WRONLY);
+	if (file_fd < 0)
+		goto err_process;
+
+	if (write(file_fd, "deny", 4) != 4)
+		goto err_process;
+
+	if (close(file_fd) < 0) {
+		file_fd = -EBADF;
+		goto err_process;
+	}
+
+	// Setup gid_map
+	snprintf(path, sizeof(path), "/proc/%d/gid_map", pid);
+	file_fd = openat(AT_FDCWD, path, O_WRONLY);
+	if (file_fd < 0)
+		goto err_process;
+
+	if (write(file_fd, "0 0 1", 5) != 5)
+		goto err_process;
+
+	if (close(file_fd) < 0) {
+		file_fd = -EBADF;
+		goto err_process;
+	}
+
+	// Kill the temporary process.
 	kill(pid, SIGKILL);
 	wait_for_pid(pid);
-	return ret;
+
+	return userns_fd;
+
+err_process:
+	kill(pid, SIGKILL);
+	wait_for_pid(pid);
+
+err:
+	close(userns_fd);
+	close(file_fd);
+	return -1;
 }
 
 static int create_detached_idmapped_mount(const char *path, const char *fstype)
@@ -335,6 +394,7 @@ static int create_detached_idmapped_mount(const char *path, const char *fstype)
 	if (ret < 0)
 		return -errno;
 
+	close(fd_userns);
 	return 0;
 }
 */

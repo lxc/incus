@@ -70,7 +70,7 @@ func TestEndpoints_LocalUnknownUnixGroup(t *testing.T) {
 	err := endpoints.Up(config)
 
 	assert.EqualError(
-		t, err, "local endpoint: cannot get group ID of 'xquibaz': group: unknown group xquibaz")
+		t, err, "Local endpoint: cannot get group ID of 'xquibaz': group: unknown group xquibaz")
 }
 
 // If another endpoint is already listening on the unix socket, an error is returned.
@@ -86,7 +86,7 @@ func TestEndpoints_LocalAlreadyRunning(t *testing.T) {
 	defer cleanup2()
 
 	err := endpoints2.Up(config2)
-	assert.EqualError(t, err, "local endpoint: Incus is already running")
+	assert.EqualError(t, err, "Local endpoint: Incus is already running")
 }
 
 // Create a UnixListener using a random and unique file name.

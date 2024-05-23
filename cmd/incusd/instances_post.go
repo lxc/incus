@@ -278,11 +278,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 	// Decide if this is an internal cluster move request.
 	var clusterMoveSourceName string
-	if r != nil && isClusterNotification(r) {
-		if req.Source.Source == "" {
-			return response.BadRequest(fmt.Errorf("Source instance name must be provided for cluster member move"))
-		}
-
+	if r != nil && isClusterNotification(r) && req.Source.Source != "" {
 		clusterMoveSourceName = req.Source.Source
 	}
 
