@@ -394,7 +394,6 @@ static int create_detached_idmapped_mount(const char *path, const char *fstype)
 	if (ret < 0)
 		return -errno;
 
-	close(fd_userns);
 	return 0;
 }
 */
