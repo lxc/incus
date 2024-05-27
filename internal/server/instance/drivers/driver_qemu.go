@@ -8411,7 +8411,7 @@ func (d *qemu) Info() instance.Info {
 
 	qemuPath, _, err := d.qemuArchConfig(hostArch)
 	if err != nil {
-		data.Error = fmt.Errorf("QEMU command not available for CPU architecture")
+		data.Error = fmt.Errorf("QEMU command not available: %v", err)
 		return data
 	}
 
