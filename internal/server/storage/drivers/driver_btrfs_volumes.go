@@ -1135,7 +1135,7 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 			return err
 		}
 
-		_, err = subprocess.RunCommand("btrfs", "qgroup", "limit", "none", "-e", qgroup, volPath)
+		_, err = subprocess.RunCommand("btrfs", "qgroup", "limit", "-e", "none", qgroup, volPath)
 		if err != nil {
 			return err
 		}
