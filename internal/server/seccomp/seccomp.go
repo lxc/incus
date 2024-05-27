@@ -1764,6 +1764,12 @@ func (s *Server) HandleSysinfoSyscall(c Instance, siov *Iovec) int {
 
 	instMetrics := Sysinfo{} // Architecture independent place to hold instance metrics.
 
+	// Handle i386 on x86_64.
+	instMetrics.Unit = 1
+	if c.Architecture() == osarch.ARCH_64BIT_INTEL_X86 && siov.req.data.arch == C.AUDIT_ARCH_I386 {
+		instMetrics.Unit = 4096
+	}
+
 	cg, err := cgroup.NewFileReadWriter(int(siov.msg.init_pid), liblxc.HasAPIExtension("cgroup2"))
 	if err != nil {
 		l.Warn("Failed loading cgroup", logger.Ctx{"err": err, "pid": siov.msg.init_pid})
@@ -1867,12 +1873,19 @@ func (s *Server) HandleSysinfoSyscall(c Instance, siov *Iovec) int {
 		instMetrics.Freeswap = instMetrics.Totalswap - uint64(swapUsage)
 	}
 
-	// Get writable pointer to buffer of sysinfo syscall result.
-	const sz = int(unsafe.Sizeof(info))
-	var b []byte = (*(*[sz]byte)(unsafe.Pointer(&info)))[:]
-
 	// Write instance metrics to native sysinfo struct.
-	instMetrics.ToNative(&info)
+	var b []byte
+	if c.Architecture() == osarch.ARCH_64BIT_INTEL_X86 && siov.req.data.arch == C.AUDIT_ARCH_I386 {
+		ret := instMetrics.ToNative32(info)
+
+		const sz = int(unsafe.Sizeof(ret))
+		b = (*(*[sz]byte)(unsafe.Pointer(&ret)))[:]
+	} else {
+		instMetrics.ToNative(&info)
+
+		const sz = int(unsafe.Sizeof(info))
+		b = (*(*[sz]byte)(unsafe.Pointer(&info)))[:]
+	}
 
 	// Write sysinfo response into buffer.
 	_, err = unix.Pwrite(siov.memFd, b, int64(siov.req.data.args[0]))
