@@ -39,6 +39,10 @@ Install Incus with:
 
     apk add incus incus-client
 
+If running virtual machines, also do:
+
+    apk add incus-vm
+
 Then enable and start the service:
 
     rc-update add incusd
@@ -66,12 +70,14 @@ There are three options currently available to Debian users.
     This package will be featured in the upcoming Debian 13 (`trixie`) release.
 
     On such systems, just running `apt install incus` will get Incus installed.
+    To run virtual machines, also run `apt install qemu-system`.
 
 1. Native `incus` backported package
 
    A native `incus` backported package is currently available for Debian 12 (`bookworm`) users.
 
    On such systems, just running `apt install incus/bookworm-backports` will get Incus installed.
+   To run virtual machines, also run `apt install qemu-system`.
 
    ****NOTE:**** Users of backported packages should not file bugs in the Debian Bug Tracker, instead please reach out [through our forum](https://discuss.linuxcontainers.org) or directly to the Debian packager.
 
@@ -111,6 +117,10 @@ Incus and all of its dependencies are available in Gentoo's main repository as [
 Install Incus with:
 
     emerge -av app-containers/incus
+
+To run virtual machines, also run:
+
+    emerge -av app-emulation/qemu
 
 Note: Installing LTS vs. feature-release will be explained later, when Incus upstream and Gentoo's repository has those releases available.
 
@@ -159,10 +169,9 @@ There are two options currently available to Ubuntu users.
 
 1. Native `incus` package
 
-    A native `incus` package is currently available in the Ubuntu development repository.
-    This package will be featured in the upcoming Ubuntu 24.04 (noble) release.
-
+    A native `incus` package is currently available in Ubuntu 24.04 LTS and later.
     On such systems, just running `apt install incus` will get Incus installed.
+    To run virtual machines, also run `apt install qemu-system`.
 
 1. Zabbly package repository
 
