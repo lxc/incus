@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -185,6 +186,8 @@ func (c *cmdProjectCreate) Run(cmd *cobra.Command, args []string) error {
 type cmdProjectDelete struct {
 	global  *cmdGlobal
 	project *cmdProject
+
+	flagForce bool
 }
 
 func (c *cmdProjectDelete) Command() *cobra.Command {
@@ -195,6 +198,7 @@ func (c *cmdProjectDelete) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Delete projects`))
 
+	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force delete the project and everything it contains."))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -206,6 +210,20 @@ func (c *cmdProjectDelete) Command() *cobra.Command {
 	}
 
 	return cmd
+}
+
+func (c *cmdProjectDelete) promptConfirmation(name string) error {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Printf(i18n.G("Remove %s and everything it contains (instances, images, volumes, networks, ...) (yes/no): "), name)
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSuffix(input, "\n")
+
+	if !slices.Contains([]string{i18n.G("yes")}, strings.ToLower(input)) {
+		return fmt.Errorf(i18n.G("User aborted delete operation"))
+	}
+
+	return nil
 }
 
 func (c *cmdProjectDelete) Run(cmd *cobra.Command, args []string) error {
@@ -232,10 +250,22 @@ func (c *cmdProjectDelete) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Missing project name"))
 	}
 
-	// Delete the project
-	err = resource.server.DeleteProject(resource.name)
-	if err != nil {
-		return err
+	// Delete the project, server is unable to find the project here.
+	if c.flagForce {
+		err := c.promptConfirmation(resource.name)
+		if err != nil {
+			return err
+		}
+
+		err = resource.server.DeleteProjectForce(resource.name)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = resource.server.DeleteProject(resource.name)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !c.global.flagQuiet {
