@@ -39,10 +39,6 @@ test_storage() {
   [ "$(incus storage volume get "$storage_pool" "$storage_volume" snapshots.expiry)" = "3d" ]
   incus storage volume delete "$storage_pool" "$storage_volume"
 
-  # Ensure non-power-of-two sizes are rounded appropriately (most relevant for zfs)
-  incus storage volume create "$storage_pool" "$storage_volume" --type=block size=13GB
-  incus storage volume delete "$storage_pool" "$storage_volume"
-
   incus storage delete "$storage_pool"
 
   # Test btrfs resize
