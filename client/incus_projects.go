@@ -154,3 +154,18 @@ func (r *ProtocolIncus) DeleteProject(name string) error {
 
 	return nil
 }
+
+// DeleteProjectForce deletes a project and everything inside of it.
+func (r *ProtocolIncus) DeleteProjectForce(name string) error {
+	if !r.HasExtension("projects_force_delete") {
+		return fmt.Errorf("The server is missing the required \"projects_force_delete\" API extension")
+	}
+
+	// Send the request
+	_, _, err := r.query("DELETE", fmt.Sprintf("/projects/%s?force=1", url.PathEscape(name)), nil, "")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
