@@ -294,6 +294,7 @@ type InstanceServer interface {
 	UpdateProject(name string, project api.ProjectPut, ETag string) (err error)
 	RenameProject(name string, project api.ProjectPost) (op Operation, err error)
 	DeleteProject(name string) (err error)
+	DeleteProjectForce(name string) (err error)
 
 	// Storage pool functions ("storage" API extension)
 	GetStoragePoolNames() (names []string, err error)
