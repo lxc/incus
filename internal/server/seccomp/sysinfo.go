@@ -10,4 +10,5 @@ type Sysinfo struct {
 	Totalswap uint64
 	Freeswap  uint64
 	Procs     uint16
+	Unit      uint32
 }
