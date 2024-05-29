@@ -1009,62 +1009,18 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 
 // Check if a project is empty.
 func projectIsEmpty(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (bool, error) {
-	instances, err := cluster.GetInstances(ctx, tx.Tx(), cluster.InstanceFilter{Project: &project.Name})
+	usedBy, err := projectUsedBy(ctx, tx, project)
 	if err != nil {
 		return false, err
 	}
 
-	if len(instances) > 0 {
-		return false, nil
-	}
-
-	images, err := cluster.GetImages(ctx, tx.Tx(), cluster.ImageFilter{Project: &project.Name})
-	if err != nil {
-		return false, err
-	}
-
-	if len(images) > 0 {
-		return false, nil
-	}
-
-	profiles, err := cluster.GetProfiles(ctx, tx.Tx(), cluster.ProfileFilter{Project: &project.Name})
-	if err != nil {
-		return false, err
-	}
-
-	if len(profiles) > 0 {
-		// Consider the project empty if it is only used by the default profile.
-		if len(profiles) == 1 && profiles[0].Name == "default" {
-			return true, nil
+	defaultProfile := api.NewURL().Path(version.APIVersion, "profiles", api.ProjectDefaultName).Project(project.Name).String()
+	for _, entry := range usedBy {
+		// Ignore the default profile.
+		if entry == defaultProfile {
+			continue
 		}
 
-		return false, nil
-	}
-
-	volumes, err := tx.GetStorageVolumeURIs(ctx, project.Name)
-	if err != nil {
-		return false, err
-	}
-
-	if len(volumes) > 0 {
-		return false, nil
-	}
-
-	networks, err := tx.GetNetworkURIs(ctx, project.ID, project.Name)
-	if err != nil {
-		return false, err
-	}
-
-	if len(networks) > 0 {
-		return false, nil
-	}
-
-	acls, err := tx.GetNetworkACLURIs(ctx, project.ID, project.Name)
-	if err != nil {
-		return false, err
-	}
-
-	if len(acls) > 0 {
 		return false, nil
 	}
 
