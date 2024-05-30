@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-05-28 18:48-0400\n"
+"POT-Creation-Date: 2024-05-30 15:15-0400\n"
 "PO-Revision-Date: 2024-05-16 15:01+0000\n"
 "Last-Translator: Tobias Gerold <tobias@g3ro.eu>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
@@ -1639,10 +1639,6 @@ msgstr ""
 #: cmd/incus/admin_waitready.go:54
 #, c-format
 msgid "Connecting to the daemon (attempt %d)"
-msgstr ""
-
-#: cmd/incus/console.go:140
-msgid "Console log:"
 msgstr ""
 
 #: cmd/incus/storage_volume.go:584
