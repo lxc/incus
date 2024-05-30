@@ -13420,6 +13420,11 @@ paths:
         delete:
             description: Removes the project.
             operationId: project_delete
+            parameters:
+                - description: Delete project and related artifacts
+                  in: query
+                  name: force
+                  type: boolean
             produces:
                 - application/json
             responses:

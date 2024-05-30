@@ -14,6 +14,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/jmap"
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -208,9 +209,9 @@ func projectUsedBy(ctx context.Context, tx *db.ClusterTx, project *cluster.Proje
 		return nil, err
 	}
 
-	profiles, err := cluster.GetProfiles(ctx, tx.Tx(), cluster.ProfileFilter{Project: &project.Name})
-	if err != nil {
-		return nil, err
+	for _, instance := range instances {
+		apiInstance := api.Instance{Name: instance.Name}
+		usedBy = append(usedBy, apiInstance.URL(version.APIVersion, project.Name).String())
 	}
 
 	images, err := cluster.GetImages(ctx, tx.Tx(), cluster.ImageFilter{Project: &project.Name})
@@ -218,24 +219,9 @@ func projectUsedBy(ctx context.Context, tx *db.ClusterTx, project *cluster.Proje
 		return nil, err
 	}
 
-	for _, instance := range instances {
-		apiInstance := api.Instance{Name: instance.Name}
-		usedBy = append(usedBy, apiInstance.URL(version.APIVersion, project.Name).String())
-	}
-
-	for _, profile := range profiles {
-		apiProfile := api.Profile{Name: profile.Name}
-		usedBy = append(usedBy, apiProfile.URL(version.APIVersion, project.Name).String())
-	}
-
 	for _, image := range images {
 		apiImage := api.Image{Fingerprint: image.Fingerprint}
 		usedBy = append(usedBy, apiImage.URL(version.APIVersion, project.Name).String())
-	}
-
-	volumes, err := tx.GetStorageVolumeURIs(ctx, project.Name)
-	if err != nil {
-		return nil, err
 	}
 
 	networks, err := tx.GetNetworkURIs(ctx, project.ID, project.Name)
@@ -243,14 +229,45 @@ func projectUsedBy(ctx context.Context, tx *db.ClusterTx, project *cluster.Proje
 		return nil, err
 	}
 
-	acls, err := tx.GetNetworkACLURIs(ctx, project.ID, project.Name)
+	usedBy = append(usedBy, networks...)
+
+	networkACLs, err := tx.GetNetworkACLURIs(ctx, project.ID, project.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	usedBy = append(usedBy, volumes...)
-	usedBy = append(usedBy, networks...)
-	usedBy = append(usedBy, acls...)
+	usedBy = append(usedBy, networkACLs...)
+
+	networkZones, err := tx.GetNetworkZoneURIs(ctx, project.ID, project.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	usedBy = append(usedBy, networkZones...)
+
+	profiles, err := cluster.GetProfiles(ctx, tx.Tx(), cluster.ProfileFilter{Project: &project.Name})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, profile := range profiles {
+		apiProfile := api.Profile{Name: profile.Name}
+		usedBy = append(usedBy, apiProfile.URL(version.APIVersion, project.Name).String())
+	}
+
+	storageBuckets, err := tx.GetStorageBucketURIs(ctx, project.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	usedBy = append(usedBy, storageBuckets...)
+
+	storageVolumes, err := tx.GetStorageVolumeURIs(ctx, project.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	usedBy = append(usedBy, storageVolumes...)
 
 	return usedBy, nil
 }
@@ -871,6 +888,11 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 //	---
 //	produces:
 //	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: force
+//	    description: Delete project and related artifacts
+//	    type: boolean
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -888,25 +910,35 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	force := util.IsTrue(r.FormValue("force"))
+
 	// Quick checks.
 	if name == api.ProjectDefaultName {
 		return response.Forbidden(fmt.Errorf("The 'default' project cannot be deleted"))
 	}
 
 	var id int64
+	var usedBy []string
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		project, err := cluster.GetProject(ctx, tx.Tx(), name)
 		if err != nil {
 			return fmt.Errorf("Fetch project %q: %w", name, err)
 		}
 
-		empty, err := projectIsEmpty(ctx, project, tx)
-		if err != nil {
-			return err
-		}
+		if !force {
+			empty, err := projectIsEmpty(ctx, project, tx)
+			if err != nil {
+				return err
+			}
 
-		if !empty {
-			return fmt.Errorf("Only empty projects can be removed")
+			if !empty {
+				return fmt.Errorf("Only empty projects can be removed.")
+			}
+		} else {
+			usedBy, err = projectUsedBy(ctx, tx, project)
+			if err != nil {
+				return err
+			}
 		}
 
 		id, err = cluster.GetProjectID(ctx, tx.Tx(), name)
@@ -914,9 +946,244 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Fetch project id %q: %w", name, err)
 		}
 
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Handle requests to empty the project.
+	if force {
+		// Parse used by list.
+		defaultProfile := api.NewURL().Path(version.APIVersion, "profiles", api.ProjectDefaultName).Project(name).String()
+		entries := map[string][]string{}
+		var count int
+
+		for _, u := range usedBy {
+			// Skip the default profile.
+			if u == defaultProfile {
+				continue
+			}
+
+			// Parse the URL.
+			uri, err := url.Parse(u)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			elements := strings.Split(uri.Path, "/")
+			if len(elements) < 4 {
+				return response.InternalError(fmt.Errorf("Bad usedBy entry: %s", u))
+			}
+
+			if elements[2] == "storage-pools" {
+				if elements[4] == "buckets" {
+					if entries["storage-buckets"] == nil {
+						entries["storage-buckets"] = []string{}
+					}
+
+					entry := fmt.Sprintf("%s/%s", elements[3], elements[5])
+					target := uri.Query().Get("target")
+					if target != "" {
+						entry = fmt.Sprintf("%s/%s", entry, target)
+					}
+
+					entries["storage-buckets"] = append(entries["storage-buckets"], entry)
+				} else if elements[4] == "volumes" {
+					if entries["storage-volumes"] == nil {
+						entries["storage-volumes"] = []string{}
+					}
+
+					entry := fmt.Sprintf("%s/%s", elements[3], elements[6])
+					target := uri.Query().Get("target")
+					if target != "" {
+						entry = fmt.Sprintf("%s/%s", entry, target)
+					}
+
+					entries["storage-volumes"] = append(entries["storage-volumes"], entry)
+				}
+			} else {
+				if entries[elements[2]] == nil {
+					entries[elements[2]] = []string{}
+				}
+
+				entries[elements[2]] = append(entries[elements[2]], elements[3])
+			}
+
+			count++
+		}
+
+		// Connect to the local server.
+		target, err := incus.ConnectIncusUnix(s.OS.GetUnixSocket(), nil)
+		if err != nil {
+			return response.InternalError(err)
+		}
+
+		target = target.UseProject(name)
+
+		// Delete instances.
+		for _, instName := range entries["instances"] {
+			// Get current instance state.
+			instState, _, err := target.GetInstance(instName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// If running, force stop it.
+			if instState.StatusCode != api.Stopped {
+				req := api.InstanceStatePut{
+					Action:  "stop",
+					Timeout: -1,
+					Force:   true,
+				}
+
+				op, err := target.UpdateInstanceState(instName, req, "")
+				if err != nil {
+					return response.InternalError(err)
+				}
+
+				err = op.Wait()
+				if err != nil {
+					return response.InternalError(err)
+				}
+			}
+
+			// Get the instance configuration.
+			inst, _, err := target.GetInstance(instName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Clear security.protection.delete if set.
+			if util.IsTrue(inst.ExpandedConfig["security.protection.delete"]) {
+				inst.Config["security.protection.delete"] = "false"
+				op, err := target.UpdateInstance(instName, inst.Writable(), "")
+				if err != nil {
+					return response.InternalError(err)
+				}
+
+				err = op.Wait()
+				if err != nil {
+					return response.InternalError(err)
+				}
+			}
+
+			// Delete the instance.
+			op, err := target.DeleteInstance(instName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			err = op.Wait()
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Done deleting the instance.
+			count--
+		}
+
+		// Delete profiles.
+		for _, profileName := range entries["profiles"] {
+			err := target.DeleteProfile(profileName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Done deleting the profile.
+			count--
+		}
+
+		// Delete images.
+		for _, imageFingerprint := range entries["images"] {
+			op, err := target.DeleteImage(imageFingerprint)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			err = op.Wait()
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Done deleting the image.
+			count--
+		}
+
+		// Delete networks.
+		for _, networkName := range entries["networks"] {
+			err := target.DeleteNetwork(networkName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Done deleting the network.
+			count--
+		}
+
+		// Delete network ACLs.
+		for _, networkACLName := range entries["network-acls"] {
+			err := target.DeleteNetworkACL(networkACLName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Done deleting the network ACL.
+			count--
+		}
+
+		// Delete network zones.
+		for _, networkZoneName := range entries["network-zones"] {
+			err := target.DeleteNetworkZone(networkZoneName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Done deleting the network zone.
+			count--
+		}
+
+		// Delete storage volumes.
+		for _, volume := range entries["storage-volumes"] {
+			fields := strings.Split(volume, "/")
+			if len(fields) == 3 {
+				target.UseTarget(fields[2])
+			}
+
+			err := target.DeleteStoragePoolVolume(fields[0], "custom", fields[1])
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Done deleting the storage volume.
+			count--
+		}
+
+		// Delete storage buckets.
+		for _, volume := range entries["storage-buckets"] {
+			fields := strings.Split(volume, "/")
+			if len(fields) == 3 {
+				target.UseTarget(fields[2])
+			}
+
+			err := target.DeleteStoragePoolBucket(fields[0], fields[1])
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			// Done deleting the storage volume.
+			count--
+		}
+
+		// Check if anything is left.
+		if count != 0 {
+			return response.BadRequest(fmt.Errorf("Project couldn't be automatically emptied"))
+		}
+	}
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return cluster.DeleteProject(ctx, tx.Tx(), name)
 	})
-
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -997,62 +1264,18 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 
 // Check if a project is empty.
 func projectIsEmpty(ctx context.Context, project *cluster.Project, tx *db.ClusterTx) (bool, error) {
-	instances, err := cluster.GetInstances(ctx, tx.Tx(), cluster.InstanceFilter{Project: &project.Name})
+	usedBy, err := projectUsedBy(ctx, tx, project)
 	if err != nil {
 		return false, err
 	}
 
-	if len(instances) > 0 {
-		return false, nil
-	}
-
-	images, err := cluster.GetImages(ctx, tx.Tx(), cluster.ImageFilter{Project: &project.Name})
-	if err != nil {
-		return false, err
-	}
-
-	if len(images) > 0 {
-		return false, nil
-	}
-
-	profiles, err := cluster.GetProfiles(ctx, tx.Tx(), cluster.ProfileFilter{Project: &project.Name})
-	if err != nil {
-		return false, err
-	}
-
-	if len(profiles) > 0 {
-		// Consider the project empty if it is only used by the default profile.
-		if len(profiles) == 1 && profiles[0].Name == "default" {
-			return true, nil
+	defaultProfile := api.NewURL().Path(version.APIVersion, "profiles", api.ProjectDefaultName).Project(project.Name).String()
+	for _, entry := range usedBy {
+		// Ignore the default profile.
+		if entry == defaultProfile {
+			continue
 		}
 
-		return false, nil
-	}
-
-	volumes, err := tx.GetStorageVolumeURIs(ctx, project.Name)
-	if err != nil {
-		return false, err
-	}
-
-	if len(volumes) > 0 {
-		return false, nil
-	}
-
-	networks, err := tx.GetNetworkURIs(ctx, project.ID, project.Name)
-	if err != nil {
-		return false, err
-	}
-
-	if len(networks) > 0 {
-		return false, nil
-	}
-
-	acls, err := tx.GetNetworkACLURIs(ctx, project.ID, project.Name)
-	if err != nil {
-		return false, err
-	}
-
-	if len(acls) > 0 {
 		return false, nil
 	}
 
