@@ -625,7 +625,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if errno == unix.ENODATA {
-			return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
+			return response.FileResponse(r, nil, nil)
 		}
 
 		return response.SmartError(err)
