@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/ws"
 )
 
@@ -596,8 +597,12 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 	c := inst.(instance.Container)
 	ent := response.FileResponseEntry{}
 	if !c.IsRunning() {
-		// Hand back the contents of the console ringbuffer logfile.
+		// Check if we have data we can return.
 		consoleBufferLogPath := c.ConsoleBufferLogPath()
+		if !util.PathExists(consoleBufferLogPath) {
+			return response.FileResponse(r, nil, nil)
+		}
+
 		ent.Path = consoleBufferLogPath
 		ent.Filename = consoleBufferLogPath
 		return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
