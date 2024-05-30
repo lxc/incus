@@ -132,12 +132,12 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		stuff, err := io.ReadAll(log)
+		content, err := io.ReadAll(log)
 		if err != nil {
 			return err
 		}
 
-		fmt.Printf("\n"+i18n.G("Console log:")+"\n\n%s\n", string(stuff))
+		fmt.Println(string(content))
 		return nil
 	}
 
