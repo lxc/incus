@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/db/query"
+	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 )
 
@@ -483,4 +484,21 @@ func (c *ClusterTx) DeleteNetworkZoneRecord(ctx context.Context, id int64) error
 	_, err := c.tx.ExecContext(ctx, "DELETE FROM networks_zones_records WHERE id=?", id)
 
 	return err
+}
+
+// GetNetworkZoneURIs returns the URIs for the network ACLs with the given project.
+func (c *ClusterTx) GetNetworkZoneURIs(ctx context.Context, projectID int, project string) ([]string, error) {
+	q := `SELECT networks_zones.name from networks_zones WHERE networks_zones.project_id = ?`
+
+	names, err := query.SelectStrings(ctx, c.tx, q, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to get URIs for network zone: %w", err)
+	}
+
+	uris := make([]string, len(names))
+	for i := range names {
+		uris[i] = api.NewURL().Path(version.APIVersion, "network-zones", names[i]).Project(project).String()
+	}
+
+	return uris, nil
 }
