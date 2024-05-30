@@ -208,9 +208,9 @@ func projectUsedBy(ctx context.Context, tx *db.ClusterTx, project *cluster.Proje
 		return nil, err
 	}
 
-	profiles, err := cluster.GetProfiles(ctx, tx.Tx(), cluster.ProfileFilter{Project: &project.Name})
-	if err != nil {
-		return nil, err
+	for _, instance := range instances {
+		apiInstance := api.Instance{Name: instance.Name}
+		usedBy = append(usedBy, apiInstance.URL(version.APIVersion, project.Name).String())
 	}
 
 	images, err := cluster.GetImages(ctx, tx.Tx(), cluster.ImageFilter{Project: &project.Name})
@@ -218,24 +218,9 @@ func projectUsedBy(ctx context.Context, tx *db.ClusterTx, project *cluster.Proje
 		return nil, err
 	}
 
-	for _, instance := range instances {
-		apiInstance := api.Instance{Name: instance.Name}
-		usedBy = append(usedBy, apiInstance.URL(version.APIVersion, project.Name).String())
-	}
-
-	for _, profile := range profiles {
-		apiProfile := api.Profile{Name: profile.Name}
-		usedBy = append(usedBy, apiProfile.URL(version.APIVersion, project.Name).String())
-	}
-
 	for _, image := range images {
 		apiImage := api.Image{Fingerprint: image.Fingerprint}
 		usedBy = append(usedBy, apiImage.URL(version.APIVersion, project.Name).String())
-	}
-
-	volumes, err := tx.GetStorageVolumeURIs(ctx, project.Name)
-	if err != nil {
-		return nil, err
 	}
 
 	networks, err := tx.GetNetworkURIs(ctx, project.ID, project.Name)
@@ -243,14 +228,45 @@ func projectUsedBy(ctx context.Context, tx *db.ClusterTx, project *cluster.Proje
 		return nil, err
 	}
 
-	acls, err := tx.GetNetworkACLURIs(ctx, project.ID, project.Name)
+	usedBy = append(usedBy, networks...)
+
+	networkACLs, err := tx.GetNetworkACLURIs(ctx, project.ID, project.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	usedBy = append(usedBy, volumes...)
-	usedBy = append(usedBy, networks...)
-	usedBy = append(usedBy, acls...)
+	usedBy = append(usedBy, networkACLs...)
+
+	networkZones, err := tx.GetNetworkZoneURIs(ctx, project.ID, project.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	usedBy = append(usedBy, networkZones...)
+
+	profiles, err := cluster.GetProfiles(ctx, tx.Tx(), cluster.ProfileFilter{Project: &project.Name})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, profile := range profiles {
+		apiProfile := api.Profile{Name: profile.Name}
+		usedBy = append(usedBy, apiProfile.URL(version.APIVersion, project.Name).String())
+	}
+
+	storageBuckets, err := tx.GetStorageBucketURIs(ctx, project.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	usedBy = append(usedBy, storageBuckets...)
+
+	storageVolumes, err := tx.GetStorageVolumeURIs(ctx, project.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	usedBy = append(usedBy, storageVolumes...)
 
 	return usedBy, nil
 }
