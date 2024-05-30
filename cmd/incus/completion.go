@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/v6/internal/instance"
+	"github.com/lxc/incus/v6/shared/api"
 )
 
 func (g *cmdGlobal) cmpClusterGroupNames(toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -291,10 +292,7 @@ func (g *cmdGlobal) cmpInstances(toComplete string) ([]string, cobra.ShellCompDi
 	if len(resources) > 0 {
 		resource := resources[0]
 
-		instances, _ := resource.server.GetInstanceNames("container")
-		vms, _ := resource.server.GetInstanceNames("virtual-machine")
-		instances = append(instances, vms...)
-
+		instances, _ := resource.server.GetInstanceNames(api.InstanceTypeAny)
 		for _, instance := range instances {
 			var name string
 
