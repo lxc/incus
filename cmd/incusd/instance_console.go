@@ -591,7 +591,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if inst.Type() != instancetype.Container {
-		return response.SmartError(fmt.Errorf("Instance is not container type"))
+		return response.SmartError(fmt.Errorf("Console backlog is only supported on containers"))
 	}
 
 	c := inst.(instance.Container)
