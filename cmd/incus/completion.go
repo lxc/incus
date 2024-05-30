@@ -293,13 +293,13 @@ func (g *cmdGlobal) cmpInstances(toComplete string) ([]string, cobra.ShellCompDi
 		resource := resources[0]
 
 		instances, _ := resource.server.GetInstanceNames(api.InstanceTypeAny)
-		for _, instance := range instances {
+		for _, instName := range instances {
 			var name string
 
 			if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
-				name = instance
+				name = instName
 			} else {
-				name = fmt.Sprintf("%s:%s", resource.remote, instance)
+				name = fmt.Sprintf("%s:%s", resource.remote, instName)
 			}
 
 			results = append(results, name)
@@ -332,13 +332,13 @@ func (g *cmdGlobal) cmpInstancesAndSnapshots(toComplete string) ([]string, cobra
 			}
 		} else {
 			instances, _ := resource.server.GetInstanceNames(api.InstanceTypeAny)
-			for _, instance := range instances {
+			for _, instName := range instances {
 				var name string
 
 				if resource.remote == g.conf.DefaultRemote && !strings.Contains(toComplete, g.conf.DefaultRemote) {
-					name = instance
+					name = instName
 				} else {
-					name = fmt.Sprintf("%s:%s", resource.remote, instance)
+					name = fmt.Sprintf("%s:%s", resource.remote, instName)
 				}
 
 				results = append(results, name)
