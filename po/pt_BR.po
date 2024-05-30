@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-05-28 18:48-0400\n"
+"POT-Creation-Date: 2024-05-30 15:15-0400\n"
 "PO-Revision-Date: 2024-01-30 13:01+0000\n"
 "Last-Translator: Paulo Coghi <paulo@coghi.com.br>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -1592,10 +1592,6 @@ msgstr ""
 #, c-format
 msgid "Connecting to the daemon (attempt %d)"
 msgstr ""
-
-#: cmd/incus/console.go:140
-msgid "Console log:"
-msgstr "Log de Console:"
 
 #: cmd/incus/storage_volume.go:584
 msgid "Content type, block or filesystem"
@@ -9614,6 +9610,9 @@ msgstr ""
 #: cmd/incus/image.go:1184 cmd/incus/project.go:222 cmd/incus/snapshot.go:256
 msgid "yes"
 msgstr "sim"
+
+#~ msgid "Console log:"
+#~ msgstr "Log de Console:"
 
 #, fuzzy
 #~ msgid "The --mode flag can't be used with --storage or --target-project"

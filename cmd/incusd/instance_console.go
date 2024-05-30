@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/ws"
 )
 
@@ -584,24 +585,24 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	if !liblxc.RuntimeLiblxcVersionAtLeast(liblxc.Version(), 3, 0, 0) {
-		return response.BadRequest(fmt.Errorf("Querying the console buffer requires liblxc >= 3.0"))
-	}
-
 	inst, err := instance.LoadByProjectAndName(s, projectName, name)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	if inst.Type() != instancetype.Container {
-		return response.SmartError(fmt.Errorf("Instance is not container type"))
+		return response.SmartError(fmt.Errorf("Console backlog is only supported on containers"))
 	}
 
 	c := inst.(instance.Container)
 	ent := response.FileResponseEntry{}
 	if !c.IsRunning() {
-		// Hand back the contents of the console ringbuffer logfile.
+		// Check if we have data we can return.
 		consoleBufferLogPath := c.ConsoleBufferLogPath()
+		if !util.PathExists(consoleBufferLogPath) {
+			return response.FileResponse(r, nil, nil)
+		}
+
 		ent.Path = consoleBufferLogPath
 		ent.Filename = consoleBufferLogPath
 		return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
@@ -624,7 +625,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		if errno == unix.ENODATA {
-			return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
+			return response.FileResponse(r, nil, nil)
 		}
 
 		return response.SmartError(err)
