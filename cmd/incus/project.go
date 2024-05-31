@@ -1094,6 +1094,7 @@ func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		fmt.Printf("%s", data)
+		return nil
 	}
 
 	// Get the current allocations
