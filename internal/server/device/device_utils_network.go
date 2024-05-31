@@ -778,10 +778,7 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 		// before being able to set a new VF MAC or disable spoofchecking. However some devices don't
 		// allow it so ignore failures.
 		link := &ip.Link{Name: vfParent}
-		err = link.SetVfAddress(volatile["last_state.vf.id"], "00:00:00:00:00:00")
-		if err != nil {
-			return vfPCIDev, 0, fmt.Errorf("Failed clearing MAC for VF %q: %w", volatile["last_state.vf.id"], err)
-		}
+		_ = link.SetVfAddress(volatile["last_state.vf.id"], "00:00:00:00:00:00")
 
 		if useSpoofCheck {
 			// Ensure spoof checking is disabled if not enabled in instance (only for real VF).
