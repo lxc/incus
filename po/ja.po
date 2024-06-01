@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-05-30 15:15-0400\n"
-"PO-Revision-Date: 2024-02-24 03:02+0000\n"
+"PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.5-dev\n"
+"X-Generator: Weblate 5.6-dev\n"
 
 #: cmd/incus/info.go:437
 #, fuzzy
@@ -25,11 +25,11 @@ msgstr "Chassis"
 
 #: cmd/incus/info.go:477
 msgid "  Firmware:"
-msgstr ""
+msgstr "  ファームウェア:"
 
 #: cmd/incus/info.go:457
 msgid "  Motherboard:"
-msgstr ""
+msgstr "  マザーボード:"
 
 #: cmd/incus/storage_bucket.go:273 cmd/incus/storage_bucket.go:1065
 msgid ""
@@ -1092,7 +1092,7 @@ msgstr "利用可能なプロジェクト:"
 #: cmd/incus/info.go:495
 #, c-format
 msgid "Average: %.2f %.2f %.2f"
-msgstr ""
+msgstr "平均: %.2f %.2f %.2f"
 
 #: cmd/incus/list.go:577 cmd/incus/list.go:578
 msgid "BASE IMAGE"
@@ -1219,7 +1219,7 @@ msgstr "CPU使用量:"
 
 #: cmd/incus/info.go:500
 msgid "CPU:"
-msgstr ""
+msgstr "CPU:"
 
 #: cmd/incus/info.go:504
 #, fuzzy
@@ -1922,7 +1922,7 @@ msgstr "DESCRIPTION"
 
 #: cmd/incus/top.go:283
 msgid "DISK"
-msgstr ""
+msgstr "ディスク"
 
 #: cmd/incus/list.go:575
 msgid "DISK USAGE"
@@ -2374,7 +2374,7 @@ msgstr "すべてのプロジェクトのイメージを表示します"
 
 #: cmd/incus/top.go:29
 msgid "Display resource usage info per instance"
-msgstr ""
+msgstr "インスタンスごとのリソース消費状況を表示する"
 
 #: cmd/incus/storage_bucket.go:475
 #, fuzzy
@@ -2383,7 +2383,7 @@ msgstr "すべてのプロジェクトのインスタンスを表示します"
 
 #: cmd/incus/top.go:30
 msgid "Displays CPU usage, memory usage, and disk usage per instance"
-msgstr ""
+msgstr "インスタンスごとのCPU、メモリー、ディスク消費状況を表示する"
 
 #: cmd/incus/admin_init_interactive.go:416
 msgid "Do you want to configure a new local storage pool?"
@@ -2586,11 +2586,11 @@ msgstr ""
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
-msgstr ""
+msgstr "ソートタイプを入力する（'a' はアルファベット、'c' CPU、'd' ディスク）"
 
 #: cmd/incus/top.go:144
 msgid "Enter new delay in seconds:"
-msgstr ""
+msgstr "更新間隔を秒単位で入力:"
 
 #: cmd/incus/network_zone.go:1443
 msgid "Entry TTL"
@@ -3227,7 +3227,7 @@ msgstr "強制的にファイルまたはディレクトリーを作成します
 
 #: cmd/incus/project.go:201
 msgid "Force delete the project and everything it contains."
-msgstr ""
+msgstr "プロジェクトとプロジェクトに含まれるすべてを強制的に削除します。"
 
 #: cmd/incus/cluster.go:1433
 msgid "Force evacuation without user confirmation"
@@ -3581,12 +3581,12 @@ msgstr "IMAGES"
 
 #: cmd/incus/top.go:283
 msgid "INSTANCE NAME"
-msgstr ""
+msgstr "インスタンス名"
 
 #: cmd/incus/info.go:377
 #, c-format
 msgid "IOMMU group: %v"
-msgstr ""
+msgstr "IOMMU グループ: %v"
 
 #: cmd/incus/network.go:1274
 msgid "IP ADDRESS"
@@ -3894,7 +3894,7 @@ msgstr "不正なフォーマット %s"
 
 #: cmd/incus/top.go:155
 msgid "Invalid input, please enter a positive number"
-msgstr ""
+msgstr "入力が無効です。正の値を入力してください"
 
 #: cmd/incus/snapshot.go:147
 #, c-format
