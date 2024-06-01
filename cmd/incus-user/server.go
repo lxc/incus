@@ -248,7 +248,7 @@ func serverSetupUser(uid uint32) error {
 	network.Config = map[string]string{}
 	network.Type = "bridge"
 	network.Name = networkName
-	network.Description = fmt.Sprintf("Network for user restricted project user-%s", projectName)
+	network.Description = fmt.Sprintf("Network for user restricted project %s", projectName)
 
 	err = client.CreateNetwork(network)
 	if err != nil {
