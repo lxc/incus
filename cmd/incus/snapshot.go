@@ -448,11 +448,8 @@ func (c *cmdSnapshotRestore) Command() *cobra.Command {
 
 If --stateful is passed, then the running state will be restored too.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`incus snapshot create u1 snap0
-Create the snapshot.
-
-incus snapshot restore u1 snap0
-Restore the snapshot.`))
+		`incus snapshot restore u1 snap0
+    Restore instance u1 to snapshot snap0`))
 
 	cmd.Flags().BoolVar(&c.flagStateful, "stateful", false, i18n.G("Whether or not to restore the instance's running state from snapshot (if available)"))
 
