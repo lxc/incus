@@ -176,7 +176,7 @@ func (c *cmdStorageBucketCreate) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Storage bucket %s created")+"\n", args[1])
+		fmt.Printf(i18n.G("Storage bucket %q created")+"\n", args[1])
 
 		if adminKey != nil {
 			fmt.Printf(i18n.G("Admin access key: %s")+"\n", adminKey.AccessKey)
@@ -243,7 +243,7 @@ func (c *cmdStorageBucketDelete) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Storage bucket %s deleted")+"\n", args[1])
+		fmt.Printf(i18n.G("Storage bucket %q deleted")+"\n", args[1])
 	}
 
 	return nil
@@ -969,7 +969,7 @@ func (c *cmdStorageBucketKeyCreate) RunAdd(cmd *cobra.Command, args []string) er
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Storage bucket key %s added")+"\n", key.Name)
+		fmt.Printf(i18n.G("Storage bucket key %q added")+"\n", key.Name)
 		fmt.Printf(i18n.G("Access key: %s")+"\n", key.AccessKey)
 		fmt.Printf(i18n.G("Secret key: %s")+"\n", key.SecretKey)
 	}
@@ -1035,7 +1035,7 @@ func (c *cmdStorageBucketKeyDelete) RunRemove(cmd *cobra.Command, args []string)
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Storage bucket key %s removed")+"\n", args[2])
+		fmt.Printf(i18n.G("Storage bucket key %q removed")+"\n", args[2])
 	}
 
 	return nil
@@ -1316,7 +1316,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 
 	// Watch the background operation
 	progress := cli.ProgressRenderer{
-		Format: i18n.G("Backing up storage bucket %s"),
+		Format: i18n.G("Backing up storage bucket: %s"),
 		Quiet:  c.global.flagQuiet,
 	}
 
@@ -1376,7 +1376,7 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 
 	// Prepare the download request
 	progress = cli.ProgressRenderer{
-		Format: i18n.G("Exporting backup of storage bucket %s"),
+		Format: i18n.G("Exporting backup of storage bucket: %s"),
 		Quiet:  c.global.flagForceLocal,
 	}
 
