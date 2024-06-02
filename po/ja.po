@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-05-30 15:15-0400\n"
+"POT-Creation-Date: 2024-06-02 16:00-0400\n"
 "PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -492,7 +492,7 @@ msgstr ""
 "###\n"
 "### Note that only the configuration can be changed."
 
-#: cmd/incus/profile.go:517
+#: cmd/incus/profile.go:518
 msgid ""
 "### This is a YAML representation of the profile.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -530,7 +530,7 @@ msgstr ""
 "###\n"
 "### Note that the name is shown but cannot be changed"
 
-#: cmd/incus/project.go:316
+#: cmd/incus/project.go:317
 msgid ""
 "### This is a YAML representation of the project.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -733,7 +733,7 @@ msgstr ""
 msgid "<target>"
 msgstr "<target>"
 
-#: cmd/incus/admin_sql.go:140
+#: cmd/incus/admin_sql.go:137
 #, c-format
 msgid "=> Query %d:"
 msgstr "=> クエリ %d:"
@@ -1104,8 +1104,8 @@ msgid "Backing up instance: %s"
 msgstr "インスタンスのバックアップ中: %s"
 
 #: cmd/incus/storage_bucket.go:1319
-#, c-format
-msgid "Backing up storage bucket %s"
+#, fuzzy, c-format
+msgid "Backing up storage bucket: %s"
 msgstr "ストレージバケット %s のバックアップを行います"
 
 #: cmd/incus/storage_volume.go:2995
@@ -1138,7 +1138,7 @@ msgid "Bad key/value pair: %s"
 msgstr "不適切なキー/値のペア: %s"
 
 #: cmd/incus/copy.go:150 cmd/incus/create.go:229 cmd/incus/move.go:302
-#: cmd/incus/network_integration.go:145 cmd/incus/project.go:166
+#: cmd/incus/network_integration.go:145 cmd/incus/project.go:167
 #, c-format
 msgid "Bad key=value pair: %q"
 msgstr "不適切な キー=値 のペア: %q"
@@ -1280,7 +1280,7 @@ msgstr "デフォルトのリモートは削除できません"
 msgid "Can't specify --fast with --columns"
 msgstr "--fast と --columns は同時に指定できません"
 
-#: cmd/incus/cluster.go:249 cmd/incus/list.go:468 cmd/incus/profile.go:802
+#: cmd/incus/cluster.go:249 cmd/incus/list.go:468 cmd/incus/profile.go:803
 msgid "Can't specify --project with --all-projects"
 msgstr "--project と --all-project は同時に指定できません"
 
@@ -1504,7 +1504,7 @@ msgstr "クラスタリングが有効になりました"
 
 #: cmd/incus/cluster.go:150 cmd/incus/config_trust.go:421
 #: cmd/incus/image.go:1099 cmd/incus/list.go:133 cmd/incus/network.go:1048
-#: cmd/incus/profile.go:724 cmd/incus/project.go:526 cmd/incus/storage.go:687
+#: cmd/incus/profile.go:725 cmd/incus/project.go:527 cmd/incus/storage.go:687
 #: cmd/incus/storage_volume.go:1554 cmd/incus/storage_volume.go:2540
 #: cmd/incus/warning.go:93
 msgid "Columns"
@@ -1549,7 +1549,7 @@ msgstr "新しいインスタンスに適用するキー/値の設定"
 msgid "Config key/value to apply to the new network integration"
 msgstr "新しいインスタンスに適用するキー/値の設定"
 
-#: cmd/incus/project.go:107
+#: cmd/incus/project.go:108
 msgid "Config key/value to apply to the new project"
 msgstr "新しいプロジェクトに適用するキー/値の設定"
 
@@ -1568,7 +1568,7 @@ msgstr "設定は KEY=VALUE のフォーマットである必要があります"
 #: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:312
 #: cmd/incus/network_load_balancer.go:686 cmd/incus/network_peer.go:729
 #: cmd/incus/network_zone.go:637 cmd/incus/network_zone.go:1332
-#: cmd/incus/profile.go:599 cmd/incus/project.go:398 cmd/incus/storage.go:368
+#: cmd/incus/profile.go:600 cmd/incus/project.go:399 cmd/incus/storage.go:368
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1157
 #: cmd/incus/storage_volume.go:1107 cmd/incus/storage_volume.go:1139
 #, c-format
@@ -1914,7 +1914,7 @@ msgstr "DEFAULT TARGET ADDRESS"
 #: cmd/incus/network_integration.go:458 cmd/incus/network_load_balancer.go:156
 #: cmd/incus/network_peer.go:155 cmd/incus/network_zone.go:160
 #: cmd/incus/network_zone.go:844 cmd/incus/operation.go:173
-#: cmd/incus/profile.go:746 cmd/incus/project.go:554 cmd/incus/storage.go:710
+#: cmd/incus/profile.go:747 cmd/incus/project.go:555 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:540 cmd/incus/storage_bucket.go:864
 #: cmd/incus/storage_volume.go:1669
 msgid "DESCRIPTION"
@@ -2039,11 +2039,11 @@ msgstr "ネットワークゾーンを削除します"
 msgid "Delete networks"
 msgstr "ネットワークを削除します"
 
-#: cmd/incus/profile.go:438 cmd/incus/profile.go:439
+#: cmd/incus/profile.go:439 cmd/incus/profile.go:440
 msgid "Delete profiles"
 msgstr "プロファイルを削除します"
 
-#: cmd/incus/project.go:197 cmd/incus/project.go:198
+#: cmd/incus/project.go:198 cmd/incus/project.go:199
 msgid "Delete projects"
 msgstr "プロジェクトを削除します"
 
@@ -2173,21 +2173,21 @@ msgstr "警告を削除します"
 #: cmd/incus/operation.go:57 cmd/incus/operation.go:107
 #: cmd/incus/operation.go:194 cmd/incus/profile.go:34 cmd/incus/profile.go:109
 #: cmd/incus/profile.go:184 cmd/incus/profile.go:275 cmd/incus/profile.go:357
-#: cmd/incus/profile.go:439 cmd/incus/profile.go:497 cmd/incus/profile.go:633
-#: cmd/incus/profile.go:709 cmd/incus/profile.go:867 cmd/incus/profile.go:955
-#: cmd/incus/profile.go:1015 cmd/incus/profile.go:1104
-#: cmd/incus/profile.go:1168 cmd/incus/project.go:36 cmd/incus/project.go:100
-#: cmd/incus/project.go:198 cmd/incus/project.go:296 cmd/incus/project.go:432
-#: cmd/incus/project.go:507 cmd/incus/project.go:722 cmd/incus/project.go:787
-#: cmd/incus/project.go:875 cmd/incus/project.go:919 cmd/incus/project.go:980
-#: cmd/incus/project.go:1048 cmd/incus/publish.go:32 cmd/incus/query.go:34
+#: cmd/incus/profile.go:440 cmd/incus/profile.go:498 cmd/incus/profile.go:634
+#: cmd/incus/profile.go:710 cmd/incus/profile.go:868 cmd/incus/profile.go:956
+#: cmd/incus/profile.go:1016 cmd/incus/profile.go:1105
+#: cmd/incus/profile.go:1169 cmd/incus/project.go:36 cmd/incus/project.go:100
+#: cmd/incus/project.go:199 cmd/incus/project.go:297 cmd/incus/project.go:433
+#: cmd/incus/project.go:508 cmd/incus/project.go:723 cmd/incus/project.go:788
+#: cmd/incus/project.go:876 cmd/incus/project.go:920 cmd/incus/project.go:981
+#: cmd/incus/project.go:1049 cmd/incus/publish.go:32 cmd/incus/query.go:34
 #: cmd/incus/rebuild.go:27 cmd/incus/remote.go:38 cmd/incus/remote.go:102
 #: cmd/incus/remote.go:630 cmd/incus/remote.go:676 cmd/incus/remote.go:712
 #: cmd/incus/remote.go:796 cmd/incus/remote.go:875 cmd/incus/remote.go:938
 #: cmd/incus/remote.go:984 cmd/incus/remote_unix.go:37 cmd/incus/rename.go:21
 #: cmd/incus/snapshot.go:31 cmd/incus/snapshot.go:78 cmd/incus/snapshot.go:203
 #: cmd/incus/snapshot.go:288 cmd/incus/snapshot.go:385
-#: cmd/incus/snapshot.go:446 cmd/incus/snapshot.go:528 cmd/incus/storage.go:37
+#: cmd/incus/snapshot.go:446 cmd/incus/snapshot.go:525 cmd/incus/storage.go:37
 #: cmd/incus/storage.go:100 cmd/incus/storage.go:212 cmd/incus/storage.go:270
 #: cmd/incus/storage.go:402 cmd/incus/storage.go:484 cmd/incus/storage.go:665
 #: cmd/incus/storage.go:826 cmd/incus/storage.go:930 cmd/incus/storage.go:1024
@@ -2316,7 +2316,7 @@ msgstr ""
 msgid "Directory import is not available on this platform"
 msgstr "このプラットフォーム上ではディレクトリのインポートは利用できません"
 
-#: cmd/incus/exec.go:61
+#: cmd/incus/exec.go:67
 msgid "Directory to run the command in (default /root)"
 msgstr "コマンドを実行するディレクトリ (デフォルト /root)"
 
@@ -2324,11 +2324,11 @@ msgstr "コマンドを実行するディレクトリ (デフォルト /root)"
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "SSH SFTP リスナーを使う際に認証を無効化します"
 
-#: cmd/incus/exec.go:57
+#: cmd/incus/exec.go:63
 msgid "Disable pseudo-terminal allocation"
 msgstr "擬似端末の割り当てを無効にします"
 
-#: cmd/incus/exec.go:58
+#: cmd/incus/exec.go:64
 msgid "Disable stdin (reads from /dev/null)"
 msgstr "標準入力を無効にします (/dev/null から読み込みます)"
 
@@ -2367,7 +2367,7 @@ msgstr "すべてのプロジェクトのインスタンスを表示します"
 msgid "Display network zones from all projects"
 msgstr "すべてのプロジェクトのインスタンスを表示します"
 
-#: cmd/incus/profile.go:726
+#: cmd/incus/profile.go:727
 #, fuzzy
 msgid "Display profiles from all projects"
 msgstr "すべてのプロジェクトのイメージを表示します"
@@ -2518,11 +2518,11 @@ msgstr "ネットワークゾーン設定をYAMLで編集します"
 msgid "Edit network zone record configurations as YAML"
 msgstr "ネットワークゾーンレコードをYAMLで編集します"
 
-#: cmd/incus/profile.go:496 cmd/incus/profile.go:497
+#: cmd/incus/profile.go:497 cmd/incus/profile.go:498
 msgid "Edit profile configurations as YAML"
 msgstr "プロファイル設定をYAMLで編集します"
 
-#: cmd/incus/project.go:295 cmd/incus/project.go:296
+#: cmd/incus/project.go:296 cmd/incus/project.go:297
 msgid "Edit project configurations as YAML"
 msgstr "プロジェクト設定をYAMLで編集します"
 
@@ -2548,7 +2548,7 @@ msgstr "信頼済みクライアント設定をYAMLで編集します"
 
 #: cmd/incus/cluster.go:187 cmd/incus/config_trust.go:447
 #: cmd/incus/image.go:1139 cmd/incus/list.go:632 cmd/incus/network.go:1089
-#: cmd/incus/profile.go:762 cmd/incus/project.go:564 cmd/incus/storage.go:722
+#: cmd/incus/profile.go:763 cmd/incus/project.go:565 cmd/incus/storage.go:722
 #: cmd/incus/storage_volume.go:1697 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
@@ -2596,7 +2596,7 @@ msgstr "更新間隔を秒単位で入力:"
 msgid "Entry TTL"
 msgstr "TTLを指定します"
 
-#: cmd/incus/exec.go:54
+#: cmd/incus/exec.go:60
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr "環境変数を設定します (例: HOME=/home/foo)"
 
@@ -2629,7 +2629,7 @@ msgstr "エイリアスの取得に失敗しました: %w"
 #: cmd/incus/network_forward.go:521 cmd/incus/network_integration.go:587
 #: cmd/incus/network_load_balancer.go:507 cmd/incus/network_peer.go:553
 #: cmd/incus/network_zone.go:475 cmd/incus/network_zone.go:1163
-#: cmd/incus/profile.go:1082 cmd/incus/project.go:850 cmd/incus/storage.go:896
+#: cmd/incus/profile.go:1083 cmd/incus/project.go:851 cmd/incus/storage.go:896
 #: cmd/incus/storage_bucket.go:634 cmd/incus/storage_volume.go:2035
 #: cmd/incus/storage_volume.go:2078
 #, c-format
@@ -2650,8 +2650,8 @@ msgstr "プロパティの削除でエラーが発生しました: %v"
 #: cmd/incus/network_acl.go:534 cmd/incus/network_forward.go:515
 #: cmd/incus/network_integration.go:581 cmd/incus/network_load_balancer.go:501
 #: cmd/incus/network_peer.go:547 cmd/incus/network_zone.go:469
-#: cmd/incus/network_zone.go:1157 cmd/incus/profile.go:1076
-#: cmd/incus/project.go:844 cmd/incus/storage.go:890
+#: cmd/incus/network_zone.go:1157 cmd/incus/profile.go:1077
+#: cmd/incus/project.go:845 cmd/incus/storage.go:890
 #: cmd/incus/storage_bucket.go:628 cmd/incus/storage_volume.go:2029
 #: cmd/incus/storage_volume.go:2072
 #, c-format
@@ -2682,6 +2682,7 @@ msgstr ""
 "ローカルまたはグローバルのデータベースに対して SQL クエリーを実行します"
 
 #: cmd/incus/admin_sql.go:29
+#, fuzzy
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -2707,10 +2708,7 @@ msgid ""
 "  This internal command is mostly useful for debugging and disaster\n"
 "  recovery. The development team will occasionally provide hotfixes to users "
 "as a\n"
-"  set of database queries to fix some data inconsistency.\n"
-"\n"
-"  This command targets the global database and works in both local\n"
-"  and cluster mode."
+"  set of database queries to fix some data inconsistency."
 msgstr ""
 "ローカルまたはグローバルのデータベースに対して SQL クエリーを実行します\n"
 "\n"
@@ -2830,8 +2828,8 @@ msgstr ""
 "ボリュームをエクスポートします (スナップショットはエクスポートしません)"
 
 #: cmd/incus/storage_bucket.go:1379
-#, c-format
-msgid "Exporting backup of storage bucket %s"
+#, fuzzy, c-format
+msgid "Exporting backup of storage bucket: %s"
 msgstr "ストレージバケット %s のバックアップをエクスポートします"
 
 #: cmd/incus/export.go:151 cmd/incus/storage_volume.go:3055
@@ -3085,7 +3083,7 @@ msgstr "クラスターへの join に失敗しました: %w"
 msgid "Failed to listen for connection: %w"
 msgstr "コネクションのリッスンに失敗しました: %w"
 
-#: cmd/incus/admin_sql.go:115
+#: cmd/incus/admin_sql.go:112
 #, c-format
 msgid "Failed to parse dump response: %w"
 msgstr "ダンプレスポンスの読み取りに失敗しました: %w"
@@ -3100,7 +3098,7 @@ msgstr "サーバーの読み取りに失敗しました: %w"
 msgid "Failed to parse the preseed: %w"
 msgstr "%q の作成に失敗しました: %w"
 
-#: cmd/incus/admin_init_preseed.go:22 cmd/incus/admin_sql.go:85
+#: cmd/incus/admin_init_preseed.go:22 cmd/incus/admin_sql.go:82
 #, fuzzy, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "標準入力から読み込めません: %w"
@@ -3125,7 +3123,7 @@ msgstr "証明書の作成に失敗しました: %w"
 msgid "Failed to render the config: %w"
 msgstr "%q の作成に失敗しました: %w"
 
-#: cmd/incus/admin_sql.go:109
+#: cmd/incus/admin_sql.go:106
 #, fuzzy, c-format
 msgid "Failed to request dump: %w"
 msgstr "%q の作成に失敗しました: %w"
@@ -3225,7 +3223,7 @@ msgstr "特定の待避アクションを強制します"
 msgid "Force creating files or directories"
 msgstr "強制的にファイルまたはディレクトリーを作成します"
 
-#: cmd/incus/project.go:201
+#: cmd/incus/project.go:202
 msgid "Force delete the project and everything it contains."
 msgstr "プロジェクトとプロジェクトに含まれるすべてを強制的に削除します。"
 
@@ -3233,7 +3231,7 @@ msgstr "プロジェクトとプロジェクトに含まれるすべてを強制
 msgid "Force evacuation without user confirmation"
 msgstr "ユーザーの確認なしで強制的に待避させます"
 
-#: cmd/incus/exec.go:56
+#: cmd/incus/exec.go:62
 msgid "Force pseudo-terminal allocation"
 msgstr "強制的に擬似端末を割り当てます"
 
@@ -3301,8 +3299,8 @@ msgstr ""
 #: cmd/incus/network_forward.go:88 cmd/incus/network_integration.go:412
 #: cmd/incus/network_load_balancer.go:93 cmd/incus/network_peer.go:84
 #: cmd/incus/network_zone.go:88 cmd/incus/network_zone.go:786
-#: cmd/incus/operation.go:109 cmd/incus/profile.go:725 cmd/incus/project.go:528
-#: cmd/incus/project.go:1051 cmd/incus/remote.go:716 cmd/incus/snapshot.go:291
+#: cmd/incus/operation.go:109 cmd/incus/profile.go:726 cmd/incus/project.go:529
+#: cmd/incus/project.go:1052 cmd/incus/remote.go:716 cmd/incus/snapshot.go:291
 #: cmd/incus/storage.go:689 cmd/incus/storage_bucket.go:474
 #: cmd/incus/storage_bucket.go:806 cmd/incus/storage_volume.go:1572
 #: cmd/incus/storage_volume.go:2557 cmd/incus/warning.go:94
@@ -3367,7 +3365,7 @@ msgstr "新たに信頼済みのクライアント証明書を追加します"
 msgid "Generating a client certificate. This may take a minute..."
 msgstr "クライアント証明書を生成します。1分ぐらいかかります..."
 
-#: cmd/incus/project.go:1047 cmd/incus/project.go:1048
+#: cmd/incus/project.go:1048 cmd/incus/project.go:1049
 msgid "Get a summary of resource allocations"
 msgstr "リソース割当の状況を表示します"
 
@@ -3422,11 +3420,11 @@ msgstr "新たにネットワークゾーンレコードを作成します"
 msgid "Get the key as a network zone record property"
 msgstr "ネットワークゾーンレコードエントリを削除します"
 
-#: cmd/incus/profile.go:638
+#: cmd/incus/profile.go:639
 msgid "Get the key as a profile property"
 msgstr "key をプロファイルプロパティとして取得します"
 
-#: cmd/incus/project.go:436
+#: cmd/incus/project.go:437
 msgid "Get the key as a project property"
 msgstr "key をプロジェクトプロパティとして取得します"
 
@@ -3495,11 +3493,11 @@ msgstr "ネットワークゾーンの設定値を取得します"
 msgid "Get values for network zone record configuration keys"
 msgstr "ネットワークゾーンレコードの設定値を取得します"
 
-#: cmd/incus/profile.go:632 cmd/incus/profile.go:633
+#: cmd/incus/profile.go:633 cmd/incus/profile.go:634
 msgid "Get values for profile configuration keys"
 msgstr "プロファイルの設定値を取得します"
 
-#: cmd/incus/project.go:431 cmd/incus/project.go:432
+#: cmd/incus/project.go:432 cmd/incus/project.go:433
 msgid "Get values for project configuration keys"
 msgstr "プロジェクトの設定値を取得します"
 
@@ -3520,7 +3518,7 @@ msgstr "ストレージボリュームの設定値を取得します"
 msgid "Given target %q does not match source volume location %q"
 msgstr "指定したコピー先 %q がコピー元のボリュームの場所 %q と一致しません"
 
-#: cmd/incus/exec.go:60
+#: cmd/incus/exec.go:66
 msgid "Group ID to run the command as (default 0)"
 msgstr "コマンドを実行する際のグループ ID (GID) (デフォルト 0)"
 
@@ -3575,7 +3573,7 @@ msgstr "ID: %d"
 msgid "ID: %s"
 msgstr "ID: %s"
 
-#: cmd/incus/project.go:548
+#: cmd/incus/project.go:549
 msgid "IMAGES"
 msgstr "IMAGES"
 
@@ -3877,7 +3875,7 @@ msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 "不正な設定項目のカラムフォーマットです (フィールド数が多すぎます): '%s'"
 
-#: cmd/incus/admin_sql.go:78
+#: cmd/incus/admin_sql.go:75
 #, fuzzy
 msgid "Invalid database type"
 msgstr "不正な送り先 %s"
@@ -4006,7 +4004,7 @@ msgstr "LAST SEEN"
 msgid "LAST USED AT"
 msgstr "LAST USED AT"
 
-#: cmd/incus/project.go:1132
+#: cmd/incus/project.go:1134
 msgid "LIMIT"
 msgstr "LIMIT"
 
@@ -4524,11 +4522,11 @@ msgstr "証明書の使用を制限するプロジェクトのリスト"
 msgid "List operations from all projects"
 msgstr "すべてのプロジェクトのインスタンスを表示します"
 
-#: cmd/incus/profile.go:708
+#: cmd/incus/profile.go:709
 msgid "List profiles"
 msgstr "プロファイルを一覧表示します"
 
-#: cmd/incus/profile.go:709
+#: cmd/incus/profile.go:710
 #, fuzzy
 msgid ""
 "List profiles\n"
@@ -4569,11 +4567,11 @@ msgstr ""
 "    u - アップロード日\n"
 "    t - タイプ"
 
-#: cmd/incus/project.go:506
+#: cmd/incus/project.go:507
 msgid "List projects"
 msgstr "プロジェクトを一覧表示します"
 
-#: cmd/incus/project.go:507
+#: cmd/incus/project.go:508
 #, fuzzy
 msgid ""
 "List projects\n"
@@ -5228,7 +5226,7 @@ msgstr "クラスターメンバー名がありません"
 #: cmd/incus/config_template.go:115 cmd/incus/config_template.go:170
 #: cmd/incus/config_template.go:224 cmd/incus/config_template.go:321
 #: cmd/incus/config_template.go:392 cmd/incus/profile.go:145
-#: cmd/incus/profile.go:226 cmd/incus/profile.go:903 cmd/incus/rebuild.go:59
+#: cmd/incus/profile.go:226 cmd/incus/profile.go:904 cmd/incus/rebuild.go:59
 msgid "Missing instance name"
 msgstr "インスタンス名を指定する必要があります"
 
@@ -5344,19 +5342,19 @@ msgstr "ピア名を指定する必要があります"
 msgid "Missing pool name"
 msgstr "ストレージプール名を指定する必要があります"
 
-#: cmd/incus/profile.go:408 cmd/incus/profile.go:471 cmd/incus/profile.go:553
-#: cmd/incus/profile.go:671 cmd/incus/profile.go:987 cmd/incus/profile.go:1055
-#: cmd/incus/profile.go:1136
+#: cmd/incus/profile.go:409 cmd/incus/profile.go:472 cmd/incus/profile.go:554
+#: cmd/incus/profile.go:672 cmd/incus/profile.go:988 cmd/incus/profile.go:1056
+#: cmd/incus/profile.go:1137
 msgid "Missing profile name"
 msgstr "プロファイル名を指定する必要があります"
 
-#: cmd/incus/project.go:153 cmd/incus/project.go:250 cmd/incus/project.go:352
-#: cmd/incus/project.go:469 cmd/incus/project.go:754 cmd/incus/project.go:823
-#: cmd/incus/project.go:951 cmd/incus/project.go:1082
+#: cmd/incus/project.go:154 cmd/incus/project.go:251 cmd/incus/project.go:353
+#: cmd/incus/project.go:470 cmd/incus/project.go:755 cmd/incus/project.go:824
+#: cmd/incus/project.go:952 cmd/incus/project.go:1083
 msgid "Missing project name"
 msgstr "プロジェクト名を指定する必要があります"
 
-#: cmd/incus/admin_sql.go:69
+#: cmd/incus/admin_sql.go:66
 #, fuzzy
 msgid "Missing required arguments"
 msgstr "プロファイル名を指定する必要があります"
@@ -5501,7 +5499,7 @@ msgstr "インスタンス名を指定する必要があります: "
 #: cmd/incus/network.go:1069 cmd/incus/network_acl.go:168
 #: cmd/incus/network_integration.go:457 cmd/incus/network_peer.go:154
 #: cmd/incus/network_zone.go:159 cmd/incus/network_zone.go:843
-#: cmd/incus/profile.go:744 cmd/incus/project.go:547 cmd/incus/remote.go:773
+#: cmd/incus/profile.go:745 cmd/incus/project.go:548 cmd/incus/remote.go:773
 #: cmd/incus/storage.go:708 cmd/incus/storage_bucket.go:539
 #: cmd/incus/storage_bucket.go:863 cmd/incus/storage_volume.go:1668
 msgid "NAME"
@@ -5511,11 +5509,11 @@ msgstr "NAME"
 msgid "NAT"
 msgstr "NAT"
 
-#: cmd/incus/project.go:553
+#: cmd/incus/project.go:554
 msgid "NETWORK ZONES"
 msgstr "NETWORK ZONES"
 
-#: cmd/incus/project.go:552
+#: cmd/incus/project.go:553
 msgid "NETWORKS"
 msgstr "NETWORKS"
 
@@ -5532,9 +5530,9 @@ msgstr "NIC:"
 msgid "NICs:"
 msgstr "NICs:"
 
-#: cmd/incus/operation.go:155 cmd/incus/project.go:585 cmd/incus/project.go:594
-#: cmd/incus/project.go:603 cmd/incus/project.go:612 cmd/incus/project.go:621
-#: cmd/incus/project.go:630 cmd/incus/remote.go:733 cmd/incus/remote.go:738
+#: cmd/incus/operation.go:155 cmd/incus/project.go:586 cmd/incus/project.go:595
+#: cmd/incus/project.go:604 cmd/incus/project.go:613 cmd/incus/project.go:622
+#: cmd/incus/project.go:631 cmd/incus/remote.go:733 cmd/incus/remote.go:738
 #: cmd/incus/remote.go:743
 msgid "NO"
 msgstr "NO"
@@ -5904,7 +5902,7 @@ msgstr "最適化されたストレージ"
 msgid "Override the source project"
 msgstr "プロジェクトを指定します"
 
-#: cmd/incus/exec.go:55
+#: cmd/incus/exec.go:61
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr "ターミナルモードを上書きします (auto, interactive, non-interactive)"
 
@@ -5944,13 +5942,13 @@ msgstr "PORTS"
 msgid "PROCESSES"
 msgstr "PROCESSES"
 
-#: cmd/incus/list.go:585 cmd/incus/project.go:549
+#: cmd/incus/list.go:585 cmd/incus/project.go:550
 msgid "PROFILES"
 msgstr "PROFILES"
 
 #: cmd/incus/image.go:1122 cmd/incus/list.go:576 cmd/incus/network.go:1068
 #: cmd/incus/network_acl.go:174 cmd/incus/network_zone.go:165
-#: cmd/incus/profile.go:745 cmd/incus/storage_bucket.go:548
+#: cmd/incus/profile.go:746 cmd/incus/storage_bucket.go:548
 #: cmd/incus/storage_volume.go:1687 cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr "PROJECT"
@@ -6074,7 +6072,7 @@ msgstr "終了するには ctrl+c を押してください"
 #: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:313
 #: cmd/incus/network_load_balancer.go:687 cmd/incus/network_peer.go:730
 #: cmd/incus/network_zone.go:638 cmd/incus/network_zone.go:1333
-#: cmd/incus/profile.go:600 cmd/incus/project.go:399 cmd/incus/storage.go:369
+#: cmd/incus/profile.go:601 cmd/incus/project.go:400 cmd/incus/storage.go:369
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1158
 #: cmd/incus/storage_volume.go:1108 cmd/incus/storage_volume.go:1140
 msgid "Press enter to open the editor again or ctrl+c to abort change"
@@ -6133,27 +6131,27 @@ msgstr "製品名: %v (%v)"
 msgid "Profile %s added to %s"
 msgstr "プロファイル %s が %s に追加されました"
 
-#: cmd/incus/profile.go:422
+#: cmd/incus/profile.go:423
 #, c-format
 msgid "Profile %s created"
 msgstr "プロファイル %s を作成しました"
 
-#: cmd/incus/profile.go:481
+#: cmd/incus/profile.go:482
 #, c-format
 msgid "Profile %s deleted"
 msgstr "プロファイル %s を削除しました"
 
-#: cmd/incus/profile.go:913
+#: cmd/incus/profile.go:914
 #, c-format
 msgid "Profile %s isn't currently applied to %s"
 msgstr "プロファイル %s は %s に適用されていません"
 
-#: cmd/incus/profile.go:938
+#: cmd/incus/profile.go:939
 #, c-format
 msgid "Profile %s removed from %s"
 msgstr "プロファイル %s が %s から削除されました"
 
-#: cmd/incus/profile.go:997
+#: cmd/incus/profile.go:998
 #, c-format
 msgid "Profile %s renamed to %s"
 msgstr "プロファイル名 %s を %s に変更しました"
@@ -6183,17 +6181,17 @@ msgstr "プロファイル:"
 msgid "Profiles: "
 msgstr "プロファイル: "
 
-#: cmd/incus/project.go:179
+#: cmd/incus/project.go:180
 #, c-format
 msgid "Project %s created"
 msgstr "プロジェクト %s を作成しました"
 
-#: cmd/incus/project.go:272
+#: cmd/incus/project.go:273
 #, c-format
 msgid "Project %s deleted"
 msgstr "プロジェクト %s を削除しました"
 
-#: cmd/incus/project.go:769
+#: cmd/incus/project.go:770
 #, c-format
 msgid "Project %s renamed to %s"
 msgstr "プロジェクト名 %s を %s に変更しました"
@@ -6393,7 +6391,7 @@ msgstr "query のパスは / で始める必要があります"
 msgid "Query virtual machine images"
 msgstr "仮想マシンイメージを対象にします"
 
-#: cmd/incus/project.go:1131
+#: cmd/incus/project.go:1133
 msgid "RESOURCE"
 msgstr "RESOURCE"
 
@@ -6477,7 +6475,7 @@ msgstr "イメージの更新中: %s"
 msgid "Remote %s already exists"
 msgstr "リモート %s は既に存在します"
 
-#: cmd/incus/project.go:1014 cmd/incus/remote.go:824 cmd/incus/remote.go:903
+#: cmd/incus/project.go:1015 cmd/incus/remote.go:824 cmd/incus/remote.go:903
 #: cmd/incus/remote.go:966 cmd/incus/remote.go:1012
 #, c-format
 msgid "Remote %s doesn't exist"
@@ -6517,7 +6515,7 @@ msgstr "リムーバブルディスク: %v"
 msgid "Remove %s (yes/no): "
 msgstr "%s を消去しますか (yes/no): "
 
-#: cmd/incus/project.go:218
+#: cmd/incus/project.go:219
 #, c-format
 msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
@@ -6577,7 +6575,7 @@ msgstr "フォワードからポートを削除します"
 msgid "Remove ports from a load balancer"
 msgstr "ロードバランサーからポートを削除します"
 
-#: cmd/incus/profile.go:866 cmd/incus/profile.go:867
+#: cmd/incus/profile.go:867 cmd/incus/profile.go:868
 msgid "Remove profiles from instances"
 msgstr "インスタンスからプロファイルを削除します"
 
@@ -6638,11 +6636,11 @@ msgstr "ネットワーク名を変更します"
 msgid "Rename networks"
 msgstr "ネットワーク名を変更します"
 
-#: cmd/incus/profile.go:954 cmd/incus/profile.go:955
+#: cmd/incus/profile.go:955 cmd/incus/profile.go:956
 msgid "Rename profiles"
 msgstr "プロファイル名を変更します"
 
-#: cmd/incus/project.go:721 cmd/incus/project.go:722
+#: cmd/incus/project.go:722 cmd/incus/project.go:723
 msgid "Rename projects"
 msgstr "プロジェクト名を変更します"
 
@@ -6749,7 +6747,7 @@ msgstr "クラスターメンバーに join するためのトークンを失効
 msgid "Role (admin or read-only)"
 msgstr "ロール（admin または read-only）"
 
-#: cmd/incus/admin_sql.go:146
+#: cmd/incus/admin_sql.go:143
 #, c-format
 msgid "Rows affected: %d"
 msgstr "影響を受ける行: %d"
@@ -6834,7 +6832,7 @@ msgstr "STATIC"
 msgid "STATUS"
 msgstr "STATUS"
 
-#: cmd/incus/project.go:551
+#: cmd/incus/project.go:552
 msgid "STORAGE BUCKETS"
 msgstr "STORAGE BUCKETS"
 
@@ -6842,7 +6840,7 @@ msgstr "STORAGE BUCKETS"
 msgid "STORAGE POOL"
 msgstr "STORAGE POOL"
 
-#: cmd/incus/project.go:550
+#: cmd/incus/project.go:551
 msgid "STORAGE VOLUMES"
 msgstr "STORAGE VOLUMES"
 
@@ -7111,11 +7109,11 @@ msgstr ""
 msgid "Set network zone record configuration keys"
 msgstr "ネットワークゾーンレコードの設定を行います"
 
-#: cmd/incus/profile.go:1014
+#: cmd/incus/profile.go:1015
 msgid "Set profile configuration keys"
 msgstr "プロファイルの設定項目を設定します"
 
-#: cmd/incus/profile.go:1015
+#: cmd/incus/profile.go:1016
 #, fuzzy
 msgid ""
 "Set profile configuration keys\n"
@@ -7129,11 +7127,11 @@ msgstr ""
 "後方互換性のため、単一の設定を行う場合は次の形式でも設定できます:\n"
 "    lxc profile set [<remote>:]<profile> <key> <value>"
 
-#: cmd/incus/project.go:786
+#: cmd/incus/project.go:787
 msgid "Set project configuration keys"
 msgstr "プロジェクトの設定項目を設定します"
 
-#: cmd/incus/project.go:787
+#: cmd/incus/project.go:788
 #, fuzzy
 msgid ""
 "Set project configuration keys\n"
@@ -7276,11 +7274,11 @@ msgstr "新たにネットワークゾーンレコードを作成します"
 msgid "Set the key as a network zone record property"
 msgstr "ネットワークゾーンレコードエントリを削除します"
 
-#: cmd/incus/profile.go:1022
+#: cmd/incus/profile.go:1023
 msgid "Set the key as a profile property"
 msgstr "プロファイルプロパティとして設定します"
 
-#: cmd/incus/project.go:794
+#: cmd/incus/project.go:795
 msgid "Set the key as a project property"
 msgstr "プロジェクトプロパティとして設定します"
 
@@ -7364,7 +7362,7 @@ msgstr "インスタンスもしくはサーバの設定を表示します"
 msgid "Show instance or server information"
 msgstr "インスタンスもしくはサーバの情報を表示します"
 
-#: cmd/incus/snapshot.go:527 cmd/incus/snapshot.go:528
+#: cmd/incus/snapshot.go:524 cmd/incus/snapshot.go:525
 #, fuzzy
 msgid "Show instance snapshot configuration"
 msgstr "インスタンスもしくはサーバの設定を表示します"
@@ -7419,11 +7417,11 @@ msgstr "ネットワークゾーンレコードの設定を表示します"
 msgid "Show network zone record configurations"
 msgstr "ネットワークゾーンレコードの設定を表示します"
 
-#: cmd/incus/profile.go:1103 cmd/incus/profile.go:1104
+#: cmd/incus/profile.go:1104 cmd/incus/profile.go:1105
 msgid "Show profile configurations"
 msgstr "プロファイルの設定を表示します"
 
-#: cmd/incus/project.go:918 cmd/incus/project.go:919
+#: cmd/incus/project.go:919 cmd/incus/project.go:920
 msgid "Show project options"
 msgstr "プロジェクトの設定を表示します"
 
@@ -7456,7 +7454,7 @@ msgstr "デフォルトのリモートを表示します"
 msgid "Show the expanded configuration"
 msgstr "拡張した設定を表示する"
 
-#: cmd/incus/info.go:44 cmd/incus/project.go:1050
+#: cmd/incus/info.go:44 cmd/incus/project.go:1051
 #, fuzzy
 msgid "Show the instance's access list"
 msgstr "インスタンスログの最後の 100 行を表示しますか?"
@@ -7608,23 +7606,23 @@ msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
 msgstr "使用するストレージバックエンド (btrfs, dir, lvm, zfs, デフォルト: dir)"
 
 #: cmd/incus/storage_bucket.go:179
-#, c-format
-msgid "Storage bucket %s created"
+#, fuzzy, c-format
+msgid "Storage bucket %q created"
 msgstr "ストレージバケット %s を作成しました"
 
 #: cmd/incus/storage_bucket.go:246
-#, c-format
-msgid "Storage bucket %s deleted"
+#, fuzzy, c-format
+msgid "Storage bucket %q deleted"
 msgstr "ストレージバケット %s を削除しました"
 
 #: cmd/incus/storage_bucket.go:972
-#, c-format
-msgid "Storage bucket key %s added"
+#, fuzzy, c-format
+msgid "Storage bucket key %q added"
 msgstr "ストレージバケットの鍵 %s を作成しました"
 
 #: cmd/incus/storage_bucket.go:1038
-#, c-format
-msgid "Storage bucket key %s removed"
+#, fuzzy, c-format
+msgid "Storage bucket key %q removed"
 msgstr "ストレージバケットの鍵 %s を削除しました"
 
 #: cmd/incus/admin_init_auto.go:52
@@ -7716,7 +7714,7 @@ msgstr "Swap (現在値)"
 msgid "Swap (peak)"
 msgstr "Swap (ピーク)"
 
-#: cmd/incus/project.go:979 cmd/incus/project.go:980
+#: cmd/incus/project.go:980 cmd/incus/project.go:981
 msgid "Switch the current project"
 msgstr "現在のプロジェクトを切り替えます"
 
@@ -7960,12 +7958,12 @@ msgstr "設定 %q はクラスタメンバー %q には存在しません"
 msgid "The property %q does not exist on the network zone record %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/profile.go:684
+#: cmd/incus/profile.go:685
 #, fuzzy, c-format
 msgid "The property %q does not exist on the profile %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
 
-#: cmd/incus/project.go:482
+#: cmd/incus/project.go:483
 #, fuzzy, c-format
 msgid "The property %q does not exist on the project %q: %v"
 msgstr "設定 %q はクラスタメンバー %q には存在しません"
@@ -8238,7 +8236,7 @@ msgstr "タイプ: %s"
 msgid "Type: %s (ephemeral)"
 msgstr "タイプ: %s (ephemeral)"
 
-#: cmd/incus/project.go:1109
+#: cmd/incus/project.go:1111
 msgid "UNLIMITED"
 msgstr "UNLIMITED"
 
@@ -8250,7 +8248,7 @@ msgstr "UPLOAD DATE"
 msgid "URL"
 msgstr "URL"
 
-#: cmd/incus/project.go:1133 cmd/incus/storage_volume.go:1672
+#: cmd/incus/project.go:1135 cmd/incus/storage_volume.go:1672
 msgid "USAGE"
 msgstr "USAGE"
 
@@ -8266,8 +8264,8 @@ msgstr "上位デバイス"
 
 #: cmd/incus/network.go:1075 cmd/incus/network_acl.go:170
 #: cmd/incus/network_allocations.go:24 cmd/incus/network_integration.go:460
-#: cmd/incus/network_zone.go:161 cmd/incus/profile.go:747
-#: cmd/incus/project.go:555 cmd/incus/storage.go:712
+#: cmd/incus/network_zone.go:161 cmd/incus/profile.go:748
+#: cmd/incus/project.go:556 cmd/incus/storage.go:712
 #: cmd/incus/storage_volume.go:1671
 msgid "USED BY"
 msgstr "USED BY"
@@ -8307,7 +8305,7 @@ msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 
 #: cmd/incus/cluster.go:193 cmd/incus/config_trust.go:455
 #: cmd/incus/image.go:1147 cmd/incus/list.go:647 cmd/incus/network.go:1095
-#: cmd/incus/profile.go:768 cmd/incus/project.go:570 cmd/incus/storage.go:728
+#: cmd/incus/profile.go:769 cmd/incus/project.go:571 cmd/incus/storage.go:728
 #: cmd/incus/storage_volume.go:1705 cmd/incus/warning.go:244
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
@@ -8398,11 +8396,11 @@ msgstr "ネットワークゾーンの設定を削除します"
 msgid "Unset network zone record configuration keys"
 msgstr "ネットワークゾーンレコードの設定を削除します"
 
-#: cmd/incus/profile.go:1167 cmd/incus/profile.go:1168
+#: cmd/incus/profile.go:1168 cmd/incus/profile.go:1169
 msgid "Unset profile configuration keys"
 msgstr "プロファイルの設定を削除します"
 
-#: cmd/incus/project.go:874 cmd/incus/project.go:875
+#: cmd/incus/project.go:875 cmd/incus/project.go:876
 msgid "Unset project configuration keys"
 msgstr "プロジェクトの設定を削除します"
 
@@ -8461,11 +8459,11 @@ msgstr "新たにネットワークゾーンレコードを作成します"
 msgid "Unset the key as a network zone record property"
 msgstr "ネットワークゾーンレコードエントリを削除します"
 
-#: cmd/incus/profile.go:1172
+#: cmd/incus/profile.go:1173
 msgid "Unset the key as a profile property"
 msgstr "プロファイルプロパティの設定を削除します"
 
-#: cmd/incus/project.go:879
+#: cmd/incus/project.go:880
 msgid "Unset the key as a project property"
 msgstr "プロジェクトプロパティの設定を削除します"
 
@@ -8549,7 +8547,7 @@ msgstr "サブコマンドを見るには help もしくは --help を使って�
 msgid "Used: %v"
 msgstr "使用済: %v"
 
-#: cmd/incus/exec.go:59
+#: cmd/incus/exec.go:65
 msgid "User ID to run the command as (default 0)"
 msgstr "コマンドを実行する際のユーザ ID (UID) (デフォルト 0)"
 
@@ -8558,7 +8556,7 @@ msgstr "コマンドを実行する際のユーザ ID (UID) (デフォルト 0)"
 msgid "User aborted configuration"
 msgstr "ユーザが削除操作を中断しました"
 
-#: cmd/incus/cluster.go:728 cmd/incus/delete.go:53 cmd/incus/project.go:223
+#: cmd/incus/cluster.go:728 cmd/incus/delete.go:53 cmd/incus/project.go:224
 #: cmd/incus/snapshot.go:257
 msgid "User aborted delete operation"
 msgstr "ユーザが削除操作を中断しました"
@@ -8700,7 +8698,7 @@ msgstr "新しいブリッジは何という名前にしますか?"
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr "スナップショットを含めずにインスタンスのみをバックアップするかどうか"
 
-#: cmd/incus/snapshot.go:457
+#: cmd/incus/snapshot.go:454
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
@@ -8786,9 +8784,9 @@ msgstr ""
 msgid "Would you like to use clustering?"
 msgstr "クラスタリングを使用しますか?"
 
-#: cmd/incus/operation.go:157 cmd/incus/project.go:587 cmd/incus/project.go:596
-#: cmd/incus/project.go:605 cmd/incus/project.go:614 cmd/incus/project.go:623
-#: cmd/incus/project.go:632 cmd/incus/remote.go:735 cmd/incus/remote.go:740
+#: cmd/incus/operation.go:157 cmd/incus/project.go:588 cmd/incus/project.go:597
+#: cmd/incus/project.go:606 cmd/incus/project.go:615 cmd/incus/project.go:624
+#: cmd/incus/project.go:633 cmd/incus/remote.go:735 cmd/incus/remote.go:740
 #: cmd/incus/remote.go:745
 msgid "YES"
 msgstr "YES"
@@ -8797,11 +8795,11 @@ msgstr "YES"
 msgid "You are currently missing the following:"
 msgstr "現在、次のものが不足しています:"
 
-#: cmd/incus/exec.go:101
+#: cmd/incus/exec.go:107
 msgid "You can't pass -t and -T at the same time"
 msgstr "-t と -T は同時に指定できません"
 
-#: cmd/incus/exec.go:105
+#: cmd/incus/exec.go:111
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "--mode と同時に -t または -T は指定できません"
 
@@ -8833,7 +8831,7 @@ msgstr "[<remote:>]<pool> <volume> <profile> [<device name>] [<path>]"
 #: cmd/incus/config_trust.go:582 cmd/incus/monitor.go:31
 #: cmd/incus/network.go:1026 cmd/incus/network_acl.go:91
 #: cmd/incus/network_integration.go:407 cmd/incus/network_zone.go:82
-#: cmd/incus/operation.go:104 cmd/incus/profile.go:706 cmd/incus/project.go:504
+#: cmd/incus/operation.go:104 cmd/incus/profile.go:707 cmd/incus/project.go:505
 #: cmd/incus/storage.go:662 cmd/incus/version.go:20 cmd/incus/warning.go:69
 msgid "[<remote>:]"
 msgstr "[<remote>:]"
@@ -9007,7 +9005,7 @@ msgstr ""
 "[<remote>:]<pool> <old name>[/<old snapshot name>] <new name>[/<new snapshot "
 "name>]"
 
-#: cmd/incus/profile.go:107 cmd/incus/profile.go:865
+#: cmd/incus/profile.go:107 cmd/incus/profile.go:866
 msgid "[<remote>:]<instance> <profile>"
 msgstr "[<remote>:]<instance> <profile>"
 
@@ -9020,7 +9018,7 @@ msgstr "[<remote>:]<instance> <profiles>"
 msgid "[<remote>:]<instance> <snapshot name>"
 msgstr "[<remote>:]<instance> [<snapshot name>]"
 
-#: cmd/incus/snapshot.go:526
+#: cmd/incus/snapshot.go:523
 msgid "[<remote>:]<instance> <snapshot>"
 msgstr "[<remote>:]<instance> <snapshot>"
 
@@ -9385,8 +9383,8 @@ msgid "[<remote>:]<pool>/<volume>[/<snapshot>] [<remote>:]<pool>/<volume>"
 msgstr "[<remote>:]<pool>/<volume>[/<snapshot>] [<remote>:]<pool>/<volume>"
 
 #: cmd/incus/config_device.go:322 cmd/incus/config_device.go:754
-#: cmd/incus/profile.go:355 cmd/incus/profile.go:436 cmd/incus/profile.go:495
-#: cmd/incus/profile.go:1102
+#: cmd/incus/profile.go:355 cmd/incus/profile.go:437 cmd/incus/profile.go:496
+#: cmd/incus/profile.go:1103
 msgid "[<remote>:]<profile>"
 msgstr "[<remote>:]<profile>"
 
@@ -9402,11 +9400,11 @@ msgstr "[<remote>:]<profile> <device> <key>=<value>..."
 msgid "[<remote>:]<profile> <device> <type> [key=value...]"
 msgstr "[<remote>:]<profile> <device> <type> [key=value...]"
 
-#: cmd/incus/profile.go:631 cmd/incus/profile.go:1166
+#: cmd/incus/profile.go:632 cmd/incus/profile.go:1167
 msgid "[<remote>:]<profile> <key>"
 msgstr "[<remote>:]<profile> <key>"
 
-#: cmd/incus/profile.go:1013
+#: cmd/incus/profile.go:1014
 msgid "[<remote>:]<profile> <key><value>..."
 msgstr "[<remote>:]<profile> <key><value>..."
 
@@ -9414,7 +9412,7 @@ msgstr "[<remote>:]<profile> <key><value>..."
 msgid "[<remote>:]<profile> <name>..."
 msgstr "[<remote>:]<profile> <name>..."
 
-#: cmd/incus/profile.go:952
+#: cmd/incus/profile.go:953
 msgid "[<remote>:]<profile> <new-name>"
 msgstr "[<remote>:]<profile> <new-name>"
 
@@ -9422,20 +9420,20 @@ msgstr "[<remote>:]<profile> <new-name>"
 msgid "[<remote>:]<profile> [<remote>:]<profile>"
 msgstr "[<remote>:]<profile> [<remote>:]<profile>"
 
-#: cmd/incus/project.go:98 cmd/incus/project.go:195 cmd/incus/project.go:294
-#: cmd/incus/project.go:917 cmd/incus/project.go:978 cmd/incus/project.go:1046
+#: cmd/incus/project.go:98 cmd/incus/project.go:196 cmd/incus/project.go:295
+#: cmd/incus/project.go:918 cmd/incus/project.go:979 cmd/incus/project.go:1047
 msgid "[<remote>:]<project>"
 msgstr "[<remote>:]<project>"
 
-#: cmd/incus/project.go:430 cmd/incus/project.go:873
+#: cmd/incus/project.go:431 cmd/incus/project.go:874
 msgid "[<remote>:]<project> <key>"
 msgstr "[<remote>:]<project> <key>"
 
-#: cmd/incus/project.go:785
+#: cmd/incus/project.go:786
 msgid "[<remote>:]<project> <key>=<value>..."
 msgstr "[<remote>:]<project> <key>=<value>..."
 
-#: cmd/incus/project.go:719
+#: cmd/incus/project.go:720
 msgid "[<remote>:]<project> <new-name>"
 msgstr "[<remote>:]<project> <new-name>"
 
@@ -9496,7 +9494,7 @@ msgstr "[<remote>] <IP|FQDN|URL|token>"
 msgid "[[<remote>:]<member>]"
 msgstr "[[<remote>:]<member>]"
 
-#: cmd/incus/project.go:691 cmd/incus/remote.go:764
+#: cmd/incus/project.go:692 cmd/incus/remote.go:764
 msgid "current"
 msgstr "現在値"
 
@@ -9669,6 +9667,15 @@ msgid ""
 msgstr ""
 "lxc storage edit [<remote>:]<pool> < pool.yaml\n"
 "    pool.yaml の内容でストレージプールを更新します。"
+
+#: cmd/incus/exec.go:52
+msgid ""
+"incus exec c1 bash\n"
+"\tRun the \"bash\" command in instance \"c1\"\n"
+"\n"
+"incus exec c1 -- ls -lh /\n"
+"\tRun the \"ls -lh /\" command in instance \"c1\""
+msgstr ""
 
 #: cmd/incus/export.go:34
 #, fuzzy
@@ -10015,9 +10022,10 @@ msgstr ""
 #, fuzzy
 msgid ""
 "incus profile create p1\n"
+"    Create a profile named p1\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Create profile with configuration from config.yaml"
+"    Create a profile named p1 with configuration from config.yaml"
 msgstr ""
 "lxc init ubuntu:22.04 u1\n"
 "\n"
@@ -10044,7 +10052,7 @@ msgstr ""
 "    some-pool 上の some-volume ボリュームをインスタンスの /opt にマウントしま"
 "す。"
 
-#: cmd/incus/profile.go:499
+#: cmd/incus/profile.go:500
 #, fuzzy
 msgid ""
 "incus profile edit <profile> < profile.yaml\n"
@@ -10057,16 +10065,17 @@ msgstr ""
 #, fuzzy
 msgid ""
 "incus project create p1\n"
+"    Create a project named p1\n"
 "\n"
 "incus project create p1 < config.yaml\n"
-"    Create a project with configuration from config.yaml"
+"    Create a project named p1 with configuration from config.yaml"
 msgstr ""
 "lxc init ubuntu:22.04 u1\n"
 "\n"
 "lxc init ubuntu:22.04 u1 < config.yaml\n"
 "    config.yaml の設定を使ってインスタンスを作成します"
 
-#: cmd/incus/project.go:298
+#: cmd/incus/project.go:299
 #, fuzzy
 msgid ""
 "incus project edit <project> < project.yaml\n"
@@ -10102,39 +10111,24 @@ msgstr ""
 #: cmd/incus/snapshot.go:450
 #, fuzzy
 msgid ""
-"incus snapshot create u1 snap0\n"
-"Create the snapshot.\n"
-"\n"
 "incus snapshot restore u1 snap0\n"
-"Restore the snapshot."
+"    Restore instance u1 to snapshot snap0"
 msgstr ""
 "lxc snapshot u1 snap0\n"
-"    スナップショットを作成します。\n"
-"\n"
-"lxc restore u1 snap0\n"
-"    スナップショットからリストアします。"
+"    \"u1\" のスナップショットを \"snap0\" という名前で作成します。"
 
 #: cmd/incus/storage_bucket.go:97
 #, fuzzy
 msgid ""
 "incus storage bucket create p1 b01\n"
-"\tCreate a new storage bucket name b01 in storage pool p1\n"
+"\tCreate a new storage bucket named b01 in storage pool p1\n"
 "\n"
 "incus storage bucket create p1 b01 < config.yaml\n"
-"\tCraete a new storage bucket name b01 in storage pool p1 using the content "
+"\tCreate a new storage bucket named b01 in storage pool p1 using the content "
 "of config.yaml"
 msgstr ""
 "lxc storage edit [<remote>:]<pool> < pool.yaml\n"
 "    pool.yaml の内容でストレージプールを更新します。"
-
-#: cmd/incus/storage_bucket.go:1263
-#, fuzzy
-msgid ""
-"incus storage bucket default b1\n"
-"    Download a backup tarball of the b1 storage bucket."
-msgstr ""
-"lxc export u1 backup0.tar.gz\n"
-"    u1 インスタンスのバックアップ tarball をダウンロードします。"
 
 #: cmd/incus/storage_bucket.go:263
 #, fuzzy
@@ -10153,6 +10147,15 @@ msgid ""
 msgstr ""
 "lxc storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
 "    key.yaml の内容でストレージバケットの鍵を更新します。"
+
+#: cmd/incus/storage_bucket.go:1263
+#, fuzzy
+msgid ""
+"incus storage bucket export default b1\n"
+"    Download a backup tarball of the b1 storage bucket from the default pool."
+msgstr ""
+"lxc export u1 backup0.tar.gz\n"
+"    u1 インスタンスのバックアップ tarball をダウンロードします。"
 
 #: cmd/incus/storage_bucket.go:1414
 #, fuzzy
@@ -10306,9 +10309,23 @@ msgstr "y"
 
 #: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:493
 #: cmd/incus/delete.go:52 cmd/incus/image.go:979 cmd/incus/image.go:984
-#: cmd/incus/image.go:1184 cmd/incus/project.go:222 cmd/incus/snapshot.go:256
+#: cmd/incus/image.go:1184 cmd/incus/project.go:223 cmd/incus/snapshot.go:256
 msgid "yes"
 msgstr "yes"
+
+#, fuzzy
+#~ msgid ""
+#~ "incus snapshot create u1 snap0\n"
+#~ "Create the snapshot.\n"
+#~ "\n"
+#~ "incus snapshot restore u1 snap0\n"
+#~ "Restore the snapshot."
+#~ msgstr ""
+#~ "lxc snapshot u1 snap0\n"
+#~ "    スナップショットを作成します。\n"
+#~ "\n"
+#~ "lxc restore u1 snap0\n"
+#~ "    スナップショットからリストアします。"
 
 #~ msgid "Console log:"
 #~ msgstr "コンソールログ:"
@@ -10316,14 +10333,6 @@ msgstr "yes"
 #, c-format
 #~ msgid "CPUs (%s):"
 #~ msgstr "CPUs (%s):"
-
-#, fuzzy
-#~ msgid ""
-#~ "incus snapshot create u1 snap0\n"
-#~ "    Create a snapshot of \"u1\" called \"snap0\"."
-#~ msgstr ""
-#~ "lxc snapshot u1 snap0\n"
-#~ "    \"u1\" のスナップショットを \"snap0\" という名前で作成します。"
 
 #, fuzzy
 #~ msgid "The source server is not clustered"
