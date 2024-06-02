@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-05-30 15:15-0400\n"
-"PO-Revision-Date: 2024-05-16 15:01+0000\n"
+"PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: Tobias Gerold <tobias@g3ro.eu>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
@@ -1065,13 +1065,12 @@ msgstr ""
 "Image ist vom Typ: Container"
 
 #: cmd/incus/cluster_group.go:83 cmd/incus/cluster_group.go:84
-#, fuzzy
 msgid "Assign sets of groups to cluster members"
-msgstr "Mehrere Gruppen zu Cluster Mitgliedern hinzufügen"
+msgstr "Einem Clustermitglied eine oder mehrere Gruppen zuweisen"
 
 #: cmd/incus/profile.go:183 cmd/incus/profile.go:184
 msgid "Assign sets of profiles to instances"
-msgstr "Mehrere Profile zu Instanzen hinzufügen"
+msgstr "Ein oder mehrere Profile einer Instanz zuweisen"
 
 #: cmd/incus/network.go:142
 #, fuzzy
@@ -2673,43 +2672,47 @@ msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
+"Stellen Sie eine Sortiermethode ein ('a' für Alphabetisch, 'c' für CPU/"
+"Prozessor, 'm' für Memory/RAM, 'd' für Festplatte (disk):"
 
 #: cmd/incus/top.go:144
 msgid "Enter new delay in seconds:"
-msgstr ""
+msgstr "Legen Sie eine Verzögerungszeit angegeben in Sekunden fest:"
 
 #: cmd/incus/network_zone.go:1443
+#, fuzzy
 msgid "Entry TTL"
-msgstr ""
+msgstr "Eingangs TTL"
 
 #: cmd/incus/exec.go:54
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr ""
+"Festzulegende Umgebungsvariable (Environment variable) (z.B. HOME=/home/foo)"
 
 #: cmd/incus/copy.go:55 cmd/incus/create.go:53
 #, fuzzy
 msgid "Ephemeral instance"
-msgstr "Flüchtiger Container"
+msgstr "Kurzlebiger Container"
 
 #: cmd/incus/admin_init.go:179 cmd/incus/admin_init_interactive.go:201
-#, fuzzy, c-format
+#, c-format
 msgid "Error connecting to existing cluster member %q: %v"
-msgstr "der Name des Ursprung Containers muss angegeben werden"
+msgstr "Fehler beim Verbinden mit bestehendem Clustermitglied %q: %v"
 
 #: cmd/incus/utils_properties.go:206
 #, c-format
 msgid "Error creating decoder: %v"
-msgstr ""
+msgstr "Fehler beim Erstellen des Decoders: %v"
 
 #: cmd/incus/utils_properties.go:211
 #, c-format
 msgid "Error decoding data: %v"
-msgstr ""
+msgstr "Fehler beim Dekodieren der Datei(en): %v"
 
 #: cmd/incus/publish.go:245
 #, c-format
 msgid "Error retrieving aliases: %w"
-msgstr ""
+msgstr "Fehler beim Abrufen des Aliase/Namen: %w"
 
 #: cmd/incus/cluster.go:562 cmd/incus/config.go:641 cmd/incus/config.go:673
 #: cmd/incus/network.go:1430 cmd/incus/network_acl.go:540
@@ -2721,17 +2724,17 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2078
 #, fuzzy, c-format
 msgid "Error setting properties: %v"
-msgstr "Fehler beim hinzufügen des Alias %s\n"
+msgstr "Fehler beim Festlegen der Parameter: %v"
 
 #: cmd/incus/console_windows.go:27
 #, fuzzy, c-format
 msgid "Error setting term size %s"
-msgstr "Fehler beim hinzufügen des Alias %s\n"
+msgstr "Fehler beim setzen der Größe des Terminals/der Konsole %s"
 
 #: cmd/incus/config.go:635 cmd/incus/config.go:667
-#, fuzzy, c-format
+#, c-format
 msgid "Error unsetting properties: %v"
-msgstr "Fehler beim hinzufügen des Alias %s\n"
+msgstr "Fehler beim Löschen der Parameter: %v"
 
 #: cmd/incus/cluster.go:556 cmd/incus/network.go:1424
 #: cmd/incus/network_acl.go:534 cmd/incus/network_forward.go:515
@@ -2743,36 +2746,33 @@ msgstr "Fehler beim hinzufügen des Alias %s\n"
 #: cmd/incus/storage_volume.go:2072
 #, c-format
 msgid "Error unsetting property: %v"
-msgstr ""
+msgstr "Fehler beim Löschen des Parameters: %v"
 
 #: cmd/incus/config_template.go:253
-#, fuzzy, c-format
+#, c-format
 msgid "Error updating template file: %s"
-msgstr "Fehler beim hinzufügen des Alias %s\n"
+msgstr "Fehler beim Aktualisieren der Template Datei: %s"
 
 #: cmd/incus/cluster.go:1387 cmd/incus/cluster.go:1388
 #, fuzzy
 msgid "Evacuate cluster member"
-msgstr ""
-"Löscht einen Container oder Container Sicherungspunkt.\n"
-"\n"
-"Entfernt einen Container (oder Sicherungspunkt) und alle dazugehörigen\n"
-"Daten (Konfiguration, Sicherungspunkte, ...).\n"
+msgstr "Evakuieren eines Clustermitglieds"
 
 #: cmd/incus/cluster.go:1483
 #, fuzzy, c-format
 msgid "Evacuating cluster member: %s"
-msgstr "der Name des Ursprung Containers muss angegeben werden"
+msgstr "Evakuieren der Clustermitglieder: %s"
 
 #: cmd/incus/monitor.go:51
 msgid "Event type to listen for"
-msgstr ""
+msgstr "Ereignistyp der beobachtet werden soll"
 
 #: cmd/incus/admin_sql.go:28
 msgid "Execute a SQL query against the local or global database"
-msgstr ""
+msgstr "Eine SQL Abfrage bei der lokalen oder globalen Datenbank durchführen"
 
 #: cmd/incus/admin_sql.go:29
+#, fuzzy
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -2803,10 +2803,43 @@ msgid ""
 "  This command targets the global database and works in both local\n"
 "  and cluster mode."
 msgstr ""
+"Eine SQL Abfrage bei der lokalen oder globalen Datenbank durchführen:\n"
+"\n"
+"  Die lokale Datebank existiert speziell für das Clustermitglied zu dem Sie "
+"den Befehl senden \n"
+"  und enthält Mitglieds-spezifische Daten (z.b. die Netzwerkadresse des "
+"Mitglieds). \n"
+"\n"
+"  Die globale Datenbank teilen sich alle Mitglieder eines Clusters \n"
+"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, usw.). "
+"\n"
+"\n"
+"  Wenn Sie einen Server ohne Cluster betreiben, gilt dasgleiche, \n"
+"  denn der Server ist dann praktisch ein Cluster mit nur einem Mitglied. \n"
+"\n"
+"  Wenn <query> dem Befehl \"-\" entspricht, dann wird \n"
+" die Abfrage vom Standard Input gelesen. \n"
+"\n"
+"  Wenn <query> dem Befehl \".dump\" entspricht, dann wird ein SQL Text\n"
+"  Auszug der angegebenen Datenbank angezeigt. \n"
+"\n"
+"  Wenn <query> dem Befehl \".schema\" entspricht, dann wird ein SQL\n"
+"  Text Schema der angegebenen Datenbank angezeigt. \n"
+"\n"
+"  Dieser interne Befehl ist hauptsächlich nützlich für die Fehlersuche "
+"(Debugging) \n"
+" und die Wiederherstellung nach einem schweren Fehler oder Absturz. \n"
+" Das Entwicklungsteam wird von Zeit zu Zeit hotfixes als Datenbankabfrage-"
+"Sets \n"
+" bereitstellen um Dateiunstimmigkeiten zu lösen. \n"
+"\n"
+"  Dieser Befehl greift standardmäßig auf die globale Datenbank zu (wenn "
+"nicht anders angegeben) \n"
+" und funktioniert sowohl lokal als auch im Cluster Modus."
 
 #: cmd/incus/exec.go:40
 msgid "Execute commands in instances"
-msgstr ""
+msgstr "Befehle in einer Instanz ausführen"
 
 #: cmd/incus/exec.go:41
 #, fuzzy
@@ -2823,9 +2856,21 @@ msgid ""
 "Mode defaults to non-interactive, interactive mode is selected if both stdin "
 "AND stdout are terminals (stderr is ignored)."
 msgstr ""
-"Führt den angegebenen Befehl in einem Container aus.\n"
+"Befehle in einer Instanz ausführen\n"
 "\n"
-"lxc exec <Container> [--env EDITOR=/usr/bin/vim]... <Befehl>\n"
+"Der jeweils angegebene Befehl wird standardmäßig direkt ausgeführt mithilfe "
+"des Befehls \"exec\"; es gibt also normalerweise keine Konsole (Shell) und "
+"Shell Parameter werden nicht erkannt.\n"
+"Wenn Sie stattdessen eine Konsole (Shell Umgebung) brauchen oder wollen, "
+"dann führen Sie den Shell Befehl als Teil des angegebenen Befehls aus und "
+"übergeben die restlichen Befehle als Shell Argumente, wie im folgenden "
+"Beispiel:\n"
+"\n"
+"  incus exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
+"\n"
+"Der Modus wird standardmäßig nicht-interaktiv ausgeführt, der interaktive "
+"Modus wird nur aktiviert, wenn sowohl \"stdin\" als auch \"stdout\" "
+"Terminals sind (stderr wird ignoriert)."
 
 #: cmd/incus/utils_properties.go:95
 #, c-format
@@ -2835,21 +2880,23 @@ msgstr ""
 #: cmd/incus/info.go:813 cmd/incus/info.go:864 cmd/incus/snapshot.go:366
 #: cmd/incus/storage_volume.go:1473 cmd/incus/storage_volume.go:1523
 #: cmd/incus/storage_volume.go:2640
+#, fuzzy
 msgid "Expires at"
-msgstr ""
+msgstr "Wird gelöscht am"
 
 #: cmd/incus/image.go:1011
-#, c-format
+#, c-format, fuzzy
 msgid "Expires: %s"
-msgstr ""
+msgstr "Wird gelöscht:"
 
 #: cmd/incus/image.go:1013
+#, fuzzy
 msgid "Expires: never"
-msgstr ""
+msgstr "Wird gelöscht: nie"
 
 #: cmd/incus/image.go:516
 msgid "Export and download images"
-msgstr ""
+msgstr "Images exportieren und herunterladen"
 
 #: cmd/incus/image.go:517
 msgid ""
@@ -2857,46 +2904,47 @@ msgid ""
 "\n"
 "The output target is optional and defaults to the working directory."
 msgstr ""
+"Images exportieren und herunterladen\n"
+"\n"
+"Die Angabe eines Ausgabeziels (target) ist optional und wenn nichts "
+"angegeben wird, wird die resultierende Datei im derzeit aktiven Ordner/Pfad "
+"gespeichert."
 
 #: cmd/incus/storage_volume.go:2922 cmd/incus/storage_volume.go:2923
-#, fuzzy
 msgid "Export custom storage volume"
-msgstr "Anhalten des Containers fehlgeschlagen!"
+msgstr "Storage Volume exportieren"
 
 #: cmd/incus/export.go:31
-#, fuzzy
 msgid "Export instance backups"
-msgstr "Herunterfahren des Containers erzwingen."
+msgstr "Backups einer Instanz exportieren"
 
 #: cmd/incus/export.go:32
 #, fuzzy
 msgid "Export instances as backup tarballs."
-msgstr "Herunterfahren des Containers erzwingen."
+msgstr "Instanzen als Backup Dateien (.tar) exportieren."
 
 #: cmd/incus/storage_bucket.go:1260
-#, fuzzy
 msgid "Export storage bucket"
-msgstr "Kein Zertifikat für diese Verbindung"
+msgstr "Storage Buckets exportieren"
 
 #: cmd/incus/storage_bucket.go:1261
 #, fuzzy
 msgid "Export storage buckets as tarball."
-msgstr "Herunterfahren des Containers erzwingen."
+msgstr "Storage Buckets als Dateien (.tar) exportieren."
 
 #: cmd/incus/storage_volume.go:2926
-#, fuzzy
 msgid "Export the volume without its snapshots"
-msgstr "Herunterfahren des Containers erzwingen."
+msgstr "Storage Volume ohne Snapshots exportieren"
 
 #: cmd/incus/storage_bucket.go:1379
 #, fuzzy, c-format
 msgid "Exporting backup of storage bucket %s"
-msgstr "Anhalten des Containers fehlgeschlagen!"
+msgstr "Backup des Storage Bucket %s wird exportiert"
 
 #: cmd/incus/export.go:151 cmd/incus/storage_volume.go:3055
 #, fuzzy, c-format
 msgid "Exporting the backup: %s"
-msgstr "Herunterfahren des Containers erzwingen."
+msgstr "Backup %s wird exportiert"
 
 #: cmd/incus/image.go:592
 #, c-format
@@ -2909,21 +2957,23 @@ msgstr ""
 
 #: cmd/incus/config_template.go:339
 msgid "FILENAME"
-msgstr ""
+msgstr "DATEINAME"
 
 #: cmd/incus/config_trust.go:434 cmd/incus/image.go:1123
 #: cmd/incus/image.go:1124 cmd/incus/image_alias.go:235
+#, fuzzy
 msgid "FINGERPRINT"
 msgstr "FINGERABDRUCK"
 
 #: cmd/incus/warning.go:211
+#, fuzzy
 msgid "FIRST SEEN"
-msgstr ""
+msgstr "ZUERST BEOBACHTET"
 
 #: cmd/incus/file.go:1404
-#, c-format
+#, c-format, fuzzy
 msgid "Failed SSH handshake with client %q: %v"
-msgstr ""
+msgstr "SSH handshake mit Client %q gescheitert: %v"
 
 #: cmd/incus/file.go:1427
 #, c-format
@@ -2933,7 +2983,7 @@ msgstr ""
 #: cmd/incus/utils.go:272
 #, fuzzy, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
-msgstr "kann nicht zum selben Container Namen kopieren"
+msgstr "Check ob Instanz existiert fehlgeschlagen \"%s:%s\": %w"
 
 #: cmd/incus/utils.go:264
 #, fuzzy, c-format
@@ -9872,6 +9922,13 @@ msgid ""
 "incus cluster group assign foo default\n"
 "    Reset \"foo\" to only using the \"default\" cluster group."
 msgstr ""
+"incus cluster group assign foo default,bar\n"
+"    Weist dem Clustermitglied \"foo\" die Gruppen \"default\" und \"bar\" zu."
+"\n"
+"\n"
+"incus cluster group assign foo default\n"
+"    Setzt die Gruppen des Clustermitglied zurück und weist nur die Gruppe "
+"\"default\" zu."
 
 #: cmd/incus/cluster_group.go:172
 msgid ""
@@ -10133,10 +10190,13 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/operation.go:196
+#, fuzzy
 msgid ""
 "incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a\n"
 "    Show details on that operation UUID"
 msgstr ""
+"incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a\n"
+"    Zeigt Details der genannten operation UUID"
 
 #: cmd/incus/profile.go:186
 msgid ""
@@ -10149,6 +10209,15 @@ msgid ""
 "incus profile assign foo ''\n"
 "    Remove all profile from \"foo\""
 msgstr ""
+"incus profile assign foo default,bar\n"
+"    Der Instanz \"foo\" die Profile \"default\" und \"bar\" zuweisen.\n"
+"\n"
+"incus profile assign foo default\n"
+"    Die Profile der Instanz \"foo\" zurücksetzen und nur das Profil \"default"
+"\" zuweisen.\n"
+"\n"
+"incus profile assign foo ''\n"
+"    Die Profile der Instanz \"foo\" zurücksetzen und kein Profil zuweisen."
 
 #: cmd/incus/profile.go:359
 msgid ""
@@ -10157,6 +10226,11 @@ msgid ""
 "incus profile create p1 < config.yaml\n"
 "    Create profile with configuration from config.yaml"
 msgstr ""
+"incus profile create p1\n"
+"\n"
+"incus profile create p1 < config.yaml\n"
+"    Erstellt ein Profil namens \"p1\" unter Nutzung der Konfigurationsdatei "
+"\"config.yaml\""
 
 #: cmd/incus/config_device.go:90
 msgid ""
@@ -10168,12 +10242,24 @@ msgid ""
 "pool source=some-volume path=/opt\n"
 "    Will mount the some-volume volume on some-pool onto /opt in the instance."
 msgstr ""
+"incus profile device add [<remote>:]profile1 <device-name> disk source=/"
+"share/c1 path=/opt\n"
+"    Mounted den Dateiordner \"/share/c1\" vom Host Computer in den Dateipfad "
+"\"/opt\" innerhalb der Instanz.\n"
+"\n"
+"incus profile device add [<remote>:]profile1 <device-name> disk pool=some-"
+"pool source=some-volume path=/opt\n"
+"   Mounted das Storage Volume \"some-volume\" im Storage pool \"some-pool\" "
+"in den Dateipfad \"/opt\" innerhalb der Instanz."
 
 #: cmd/incus/profile.go:499
 msgid ""
 "incus profile edit <profile> < profile.yaml\n"
 "    Update a profile using the content of profile.yaml"
 msgstr ""
+"incus profile edit <profile> < profile.yaml\n"
+"   Automatisches Editieren eines Profils mithilfe der Konfigurationsdatei "
+"\"profile.yaml\""
 
 #: cmd/incus/project.go:102
 msgid ""
@@ -10182,18 +10268,29 @@ msgid ""
 "incus project create p1 < config.yaml\n"
 "    Create a project with configuration from config.yaml"
 msgstr ""
+"incus project create p1\n"
+"   Erstellt ein Projekt namens \"p1\"\n"
+"\n"
+"incus project create p1 < config.yaml\n"
+"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei \"config."
+"yaml\""
 
 #: cmd/incus/project.go:298
 msgid ""
 "incus project edit <project> < project.yaml\n"
 "    Update a project using the content of project.yaml"
 msgstr ""
+"incus project edit <project> < project.yaml\n"
+"    Automatisches Editieren der Konfiguration eines Projekts mit der "
+"Konfigurationsdatei \"project.yaml\""
 
 #: cmd/incus/query.go:36
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Delete local instance \"c1\"."
 msgstr ""
+"incus query -X DELETE --wait /1.0/instances/c1\n"
+"    Löscht die lokale Instanz \"c1\"."
 
 #: cmd/incus/snapshot.go:83
 msgid ""
@@ -10204,8 +10301,15 @@ msgid ""
 "\tCreate a snapshot of \"u1\" called \"snap0\" with the configuration from "
 "\"config.yaml\"."
 msgstr ""
+"incus snapshot create u1 snap0\n"
+"\tErstellt einen snapshot \"snap0\" von der Instanz \"u1\".\n"
+"\n"
+"incus snapshot create u1 snap0 < config.yaml\n"
+"\tErstellt einen snapshot \"snap0\" von der Instanz \"u1\" mit der "
+"Konfigurationsdatei \"config.yaml\"."
 
 #: cmd/incus/snapshot.go:450
+#, fuzzy
 msgid ""
 "incus snapshot create u1 snap0\n"
 "Create the snapshot.\n"
@@ -10213,6 +10317,11 @@ msgid ""
 "incus snapshot restore u1 snap0\n"
 "Restore the snapshot."
 msgstr ""
+"incus snapshot create u1 snap0\n"
+"Erstellt einen snapshot \"snap0\" von der Instanz \"u1\".\n"
+"\n"
+"incus snapshot restore u1 snap0\n"
+"Stellt den Zustand vom snapshot \"snap0\" für die Instanz \"u1\" wieder her."
 
 #: cmd/incus/storage_bucket.go:97
 msgid ""
@@ -10223,30 +10332,48 @@ msgid ""
 "\tCraete a new storage bucket name b01 in storage pool p1 using the content "
 "of config.yaml"
 msgstr ""
+"incus storage bucket create p1 b01\n"
+"\tErstellt einen neuen storage bucket genannt \"b01\" im storage pool \"p1\""
+"\n"
+"\n"
+"incus storage bucket create p1 b01 < config.yaml\n"
+"\tErstellt einen neuen storage bucket genannt \"b01\" im storage pool \"p1\" "
+"unter Nutzung der Konfigurationsdatei \"config.yaml\""
 
 #: cmd/incus/storage_bucket.go:1263
 msgid ""
 "incus storage bucket default b1\n"
 "    Download a backup tarball of the b1 storage bucket."
 msgstr ""
+"incus storage bucket export default b1\n"
+"    Erstellen einer Sicherungsdatei (backup) vom storage bucket namens \"b1\""
+" im pool \"default\"."
 
 #: cmd/incus/storage_bucket.go:263
 msgid ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml\n"
 "    Update a storage bucket using the content of bucket.yaml."
 msgstr ""
+"incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml\n"
+"    Automatisches Editieren eines storage bucket mithilfe der "
+"Konfigurationsdetails aus der Datei \"bucket.yaml\"."
 
 #: cmd/incus/storage_bucket.go:1055
 msgid ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
 "    Update a storage bucket key using the content of key.yaml."
 msgstr ""
+"incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
+"    Automatisches Editieren eines storage bucket Schlüssels mithilfe der "
+"Konfigurationsdetails aus der Datei \"key.yaml\"."
 
 #: cmd/incus/storage_bucket.go:1414
 msgid ""
 "incus storage bucket import default backup0.tar.gz\n"
 "\t\tCreate a new storage bucket using backup0.tar.gz as the source."
 msgstr ""
+"incus storage bucket import default backup0.tar.gz\n"
+"\t\tErstellt einen neuen storage bucket aus der Datei \"backup0.tar.gz\"."
 
 #: cmd/incus/storage_bucket.go:885
 msgid ""
@@ -10257,6 +10384,14 @@ msgid ""
 "\tCreate a key called k1 for the bucket b01 in the pool p1 using the content "
 "of config.yaml."
 msgstr ""
+"incus storage bucket key create p1 b01 k1\n"
+"\tErzeugt einen Schlüssel genannt \"k1\" für einen storage bucket \"b01\" im "
+"pool \"p1\".\n"
+"\n"
+"incus storage bucket key create p1 b01 k1 < config.yaml\n"
+"\tErzeugt einen Schlüssel genannt \"k1\" für einen storage bucket \"b01\" im "
+"pool \"p1\" unter Nutzung der Konfigurationsdetails aus der Datei \"config."
+"yaml\"."
 
 #: cmd/incus/storage_bucket.go:1190
 msgid ""
@@ -10264,6 +10399,9 @@ msgid ""
 "    Will show the properties of a bucket key called \"foo\" for a bucket "
 "called \"data\" in the \"default\" pool."
 msgstr ""
+"incus storage bucket key show default data foo\n"
+"        Zeigt die Eigenschaften eines storage bucket Schlüssels genannt \"foo"
+"\" für einen storage bucket namens \"data\" im pool \"default\"."
 
 #: cmd/incus/storage_bucket.go:662
 msgid ""
@@ -10271,12 +10409,18 @@ msgid ""
 "    Will show the properties of a bucket called \"data\" in the \"default\" "
 "pool."
 msgstr ""
+"incus storage bucket show default data\n"
+"    Zeigt die Eigenschaften eines storage bucket namens \"data\" im pool "
+"\"default\"."
 
 #: cmd/incus/storage.go:272
 msgid ""
 "incus storage edit [<remote>:]<pool> < pool.yaml\n"
 "    Update a storage pool using the content of pool.yaml."
 msgstr ""
+"incus storage edit [<remote>:]<pool> < pool.yaml\n"
+"    Automatisches Editieren der Konfiguration des storage pool mit den "
+"Konfigurationsdetails aus der Datei \"pool.yaml\"."
 
 #: cmd/incus/storage_volume.go:578
 msgid ""
@@ -10285,12 +10429,20 @@ msgid ""
 "incus storage volume create p1 v1 < config.yaml\n"
 "\tCreate storage volume v1 for pool p1 with configuration from config.yaml."
 msgstr ""
+"incus storage volume create p1 v1\n"
+"\n"
+"incus storage volume create p1 v1 < config.yaml\n"
+"\tErstellt ein storage volume mit dem Namen \"v1\" im pool \"p1\" mit den "
+"Konfigurationsdetails aus der Datei \"config.yaml\"."
 
 #: cmd/incus/storage_volume.go:3091
 msgid ""
 "incus storage volume import default backup0.tar.gz\n"
 "\t\tCreate a new custom volume using backup0.tar.gz as the source."
 msgstr ""
+"incus storage volume import default backup0.tar.gz\n"
+"\t\tErstellt ein neues benutzerdefiniertes Volume aus der Datei \"backup0.tar"
+".gz\"."
 
 #: cmd/incus/storage_volume.go:2316
 msgid ""
@@ -10301,70 +10453,81 @@ msgid ""
 "       Create a snapshot of \"v1\" in pool \"default\" called \"snap0\" with "
 "the configuration from \"config.yaml\"."
 msgstr ""
+"incus storage volume snapshot create default v1 snap0\n"
+"       Erstellt einen Snapshot von \"v1\" im pool \"default\" mit dem Namen "
+"\"snap0\".\n"
+"\n"
+"incus storage volume snapshot create default v1 snap0 < config.yaml\n"
+"       Erstellt einen Snapshot von \"v1\" im pool \"default\" mit dem Namen "
+"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei \"config."
+"yaml\"."
 
 #: cmd/incus/storage.go:547
 msgid "info"
-msgstr ""
+msgstr "Info"
 
 #: cmd/incus/remote.go:467
 msgid "n"
-msgstr ""
+msgstr "n"
 
 #: cmd/incus/storage.go:548
 msgid "name"
-msgstr ""
+msgstr "Name"
 
 #: cmd/incus/config_trust.go:496 cmd/incus/image.go:977 cmd/incus/image.go:982
 #: cmd/incus/image.go:1187
 msgid "no"
-msgstr ""
+msgstr "nein"
 
 #: cmd/incus/remote.go:459
+#, fuzzy
 msgid "ok (y/n/[fingerprint])?"
-msgstr ""
+msgstr "ok (j/n/[fingerprint])?"
 
 #: cmd/incus/config.go:55
 msgid "please use `incus profile`"
-msgstr ""
+msgstr "bitte nutzen Sie ìncus profile`"
 
 #: cmd/incus/storage.go:552
 msgid "space used"
-msgstr ""
+msgstr "Speicherplatz in Benutzung"
 
 #: cmd/incus/file.go:1309
 msgid "sshfs has stopped"
-msgstr ""
+msgstr "sshfs wurde gestoppt"
 
 #: cmd/incus/file.go:1268
 #, c-format
 msgid "sshfs mounting %q on %q"
-msgstr ""
+msgstr "sshfs mounted %q auf %q"
 
 #: cmd/incus/file.go:1221
 msgid "sshfs not found. Try SSH SFTP mode using the --listen flag"
 msgstr ""
+"sshfs wurde nicht gefunden. Versuchen Sie stattdessen SSH SFTP mode mit dem "
+"\"--listen\"  Argument"
 
 #: cmd/incus/storage.go:551
 msgid "total space"
-msgstr ""
+msgstr "Gesamter Speicherplatz"
 
 #: cmd/incus/version.go:48
 msgid "unreachable"
-msgstr ""
+msgstr "nicht erreichbar"
 
 #: cmd/incus/storage.go:546
 msgid "used by"
-msgstr ""
+msgstr "wird benutzt von"
 
 #: cmd/incus/remote.go:469
 msgid "y"
-msgstr ""
+msgstr "j"
 
 #: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:493
 #: cmd/incus/delete.go:52 cmd/incus/image.go:979 cmd/incus/image.go:984
 #: cmd/incus/image.go:1184 cmd/incus/project.go:222 cmd/incus/snapshot.go:256
 msgid "yes"
-msgstr ""
+msgstr "ja"
 
 #, fuzzy
 #~ msgid "The --mode flag can't be used with --storage or --target-project"
