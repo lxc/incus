@@ -1261,8 +1261,8 @@ func (c *cmdStorageBucketExport) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Export storage buckets as tarball.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`incus storage bucket default b1
-    Download a backup tarball of the b1 storage bucket.`))
+		`incus storage bucket export default b1
+    Download a backup tarball of the b1 storage bucket from the default pool.`))
 
 	cmd.Flags().StringVar(&c.flagCompressionAlgorithm, "compression", "", i18n.G("Define a compression algorithm: for backup or none")+"``")
 	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
