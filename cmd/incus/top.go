@@ -30,8 +30,6 @@ func (c *cmdTop) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Displays CPU usage, memory usage, and disk usage per instance`))
 
-	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
-	cmd.Args = cobra.NoArgs
 	cmd.RunE = c.Run
 	return cmd
 }
