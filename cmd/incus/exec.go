@@ -55,7 +55,6 @@ Mode defaults to non-interactive, interactive mode is selected if both stdin AND
 incus exec c1 -- ls -lh /
 	Run the "ls -lh /" command in instance "c1"`))
 
-
 	cmd.RunE = c.Run
 	cmd.Flags().StringArrayVar(&c.flagEnvironment, "env", nil, i18n.G("Environment variable to set (e.g. HOME=/home/foo)")+"``")
 	cmd.Flags().StringVar(&c.flagMode, "mode", "auto", i18n.G("Override the terminal mode (auto, interactive or non-interactive)")+"``")
