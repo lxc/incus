@@ -19,7 +19,8 @@ import (
 )
 
 type cmdTop struct {
-	global *cmdGlobal
+	global  *cmdGlobal
+	targets []string
 
 	flagAllProjects bool
 }
@@ -72,6 +73,14 @@ func (c *cmdTop) Run(cmd *cobra.Command, args []string) error {
 
 	if !c.flagAllProjects {
 		d = d.UseProject(info.Project)
+	}
+
+	// If clustered, get a list of targets.
+	if d.IsClustered() {
+		c.targets, err = d.GetClusterMemberNames()
+		if err != nil {
+			return err
+		}
 	}
 
 	// These variables can be changed by the UI
@@ -270,12 +279,29 @@ func sortBySortingType(data []displayData, sortingType sortType) {
 }
 
 func (c *cmdTop) updateDisplay(d incus.InstanceServer, refreshInterval time.Duration, sortingType sortType) error {
-	rawLogs, err := d.GetMetrics()
-	if err != nil {
-		return err
+	var metrics []string
+
+	if c.targets == nil {
+		rawMetrics, err := d.GetMetrics()
+		if err != nil {
+			return err
+		}
+
+		metrics = []string{rawMetrics}
+	} else {
+		metrics = make([]string, 0, len(c.targets))
+
+		for _, target := range c.targets {
+			rawMetrics, err := d.UseTarget(target).GetMetrics()
+			if err != nil {
+				return err
+			}
+
+			metrics = append(metrics, rawMetrics)
+		}
 	}
 
-	metricSet, entries, err := parseMetricsFromString(rawLogs)
+	metricSet, entries, err := parseMetricsFromString(strings.Join(metrics, "\n"))
 	if err != nil {
 		return err
 	}
