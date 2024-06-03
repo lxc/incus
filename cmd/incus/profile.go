@@ -357,9 +357,10 @@ func (c *cmdProfileCreate) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create profiles`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus profile create p1
+    Create a profile named p1
 
 incus profile create p1 < config.yaml
-    Create profile with configuration from config.yaml`))
+    Create a profile named p1 with configuration from config.yaml`))
 
 	cmd.RunE = c.Run
 

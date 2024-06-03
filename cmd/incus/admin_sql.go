@@ -49,10 +49,7 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
 
   This internal command is mostly useful for debugging and disaster
   recovery. The development team will occasionally provide hotfixes to users as a
-  set of database queries to fix some data inconsistency.
-
-  This command targets the global database and works in both local
-  and cluster mode.`))
+  set of database queries to fix some data inconsistency.`))
 	cmd.RunE = c.Run
 
 	return cmd

@@ -100,9 +100,10 @@ func (c *cmdProjectCreate) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create projects`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus project create p1
+    Create a project named p1
 
 incus project create p1 < config.yaml
-    Create a project with configuration from config.yaml`))
+    Create a project named p1 with configuration from config.yaml`))
 
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new project")+"``")
 
