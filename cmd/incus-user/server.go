@@ -55,6 +55,8 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 	availableBackends := linux.AvailableStorageDrivers(internalUtil.VarPath(), info.Environment.StorageSupportedDrivers, internalUtil.PoolTypeLocal)
 
 	// Load the default profile.
+	var profileNeedsUpdate bool
+
 	profile, profileEtag, err := client.GetProfile("default")
 	if err != nil {
 		return fmt.Errorf("Failed to load default profile: %w", err)
@@ -97,6 +99,8 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 			"pool": "default",
 			"path": "/",
 		}
+
+		profileNeedsUpdate = true
 	}
 
 	// Look for networks.
@@ -131,12 +135,16 @@ func serverInitialConfiguration(client incus.InstanceServer) error {
 			"network": "incusbr0",
 			"name":    "eth0",
 		}
+
+		profileNeedsUpdate = true
 	}
 
 	// Update the default profile.
-	err = client.UpdateProfile("default", profile.Writable(), profileEtag)
-	if err != nil {
-		return fmt.Errorf("Failed to update default profile: %w", err)
+	if profileNeedsUpdate {
+		err = client.UpdateProfile("default", profile.Writable(), profileEtag)
+		if err != nil {
+			return fmt.Errorf("Failed to update default profile: %w", err)
+		}
 	}
 
 	return nil
