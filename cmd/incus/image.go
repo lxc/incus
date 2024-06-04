@@ -203,7 +203,7 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 	// Revert project for `sourceServer` which may have been overwritten
 	// by `--project` flag in `GetImageServer` method
 	remote := conf.Remotes[remoteName]
-	if remote.Protocol != "simplestream" && !remote.Public {
+	if remote.Protocol == "incus" && !remote.Public {
 		d, ok := sourceServer.(incus.InstanceServer)
 		if ok {
 			sourceServer = d.UseProject(remote.Project)
@@ -235,8 +235,8 @@ func (c *cmdImageCopy) Run(cmd *cobra.Command, args []string) error {
 	// Copy the image
 	var imgInfo *api.Image
 	var fp string
-	if conf.Remotes[remoteName].Protocol == "simplestreams" && !c.flagCopyAliases && len(c.flagAliases) == 0 {
-		// All simplestreams images are always public, so unless we
+	if conf.Remotes[remoteName].Protocol != "incus" && !c.flagCopyAliases && len(c.flagAliases) == 0 {
+		// All image servers outside of other Incus servers are always public, so unless we
 		// need the aliases list too or the real fingerprint, we can skip the otherwise very expensive
 		// alias resolution and image info retrieval step.
 		imgInfo = &api.Image{}

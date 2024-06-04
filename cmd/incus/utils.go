@@ -370,8 +370,8 @@ func getImgInfo(d incus.InstanceServer, conf *config.Config, imgRemote string, i
 		}
 	}
 
-	// Optimisation for simplestreams
-	if conf.Remotes[imgRemote].Protocol == "simplestreams" {
+	// Optimisation for public image servers.
+	if conf.Remotes[imgRemote].Protocol != "incus" {
 		imgInfo = &api.Image{}
 		imgInfo.Fingerprint = imageRef
 		imgInfo.Public = true
