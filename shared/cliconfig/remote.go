@@ -68,7 +68,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 	}
 
 	// Quick checks.
-	if remote.Public || remote.Protocol == "simplestreams" {
+	if remote.Public || remote.Protocol != "incus" {
 		return nil, fmt.Errorf("The remote isn't a private server")
 	}
 
@@ -273,7 +273,7 @@ func (c *Config) getConnectionArgs(name string) (*incus.ConnectionArgs, error) {
 	}
 
 	// Stop here if no client certificate involved
-	if remote.Protocol == "simplestreams" || slices.Contains([]string{api.AuthenticationMethodOIDC}, remote.AuthType) {
+	if remote.Protocol != "incus" || slices.Contains([]string{api.AuthenticationMethodOIDC}, remote.AuthType) {
 		return &args, nil
 	}
 
