@@ -752,7 +752,7 @@ func (c *cmdRemoteList) Run(cmd *cobra.Command, args []string) error {
 		if rc.AuthType == "" {
 			if strings.HasPrefix(rc.Addr, "unix:") {
 				rc.AuthType = "file access"
-			} else if rc.Protocol == "simplestreams" {
+			} else if rc.Protocol != "incus" {
 				rc.AuthType = "none"
 			} else {
 				rc.AuthType = api.AuthenticationMethodTLS

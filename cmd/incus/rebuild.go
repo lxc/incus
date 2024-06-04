@@ -126,7 +126,7 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 			return err
 		}
 
-		if conf.Remotes[iremote].Protocol != "simplestreams" {
+		if conf.Remotes[iremote].Protocol == "incus" {
 			if imgInfo.Type != "virtual-machine" && current.Type == "virtual-machine" {
 				return fmt.Errorf(i18n.G("Asked for a VM but image is of type container"))
 			}

@@ -360,7 +360,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 			return nil, "", err
 		}
 
-		if conf.Remotes[iremote].Protocol != "simplestreams" {
+		if conf.Remotes[iremote].Protocol == "incus" {
 			if imgInfo.Type != "virtual-machine" && c.flagVM {
 				return nil, "", fmt.Errorf(i18n.G("Asked for a VM but image is of type container"))
 			}
