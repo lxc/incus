@@ -19,7 +19,10 @@ import (
 )
 
 type cmdTop struct {
-	global *cmdGlobal
+	global  *cmdGlobal
+	targets []string
+
+	flagAllProjects bool
 }
 
 // Command is a method of the cmdTop structure that returns a new cobra Command for displaying resource usage per instance.
@@ -30,8 +33,8 @@ func (c *cmdTop) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Displays CPU usage, memory usage, and disk usage per instance`))
 
-	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
-	cmd.Args = cobra.NoArgs
+	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Display instances from all projects"))
+
 	cmd.RunE = c.Run
 	return cmd
 }
@@ -60,6 +63,24 @@ func (c *cmdTop) Run(cmd *cobra.Command, args []string) error {
 	d, err := conf.GetInstanceServer(remote)
 	if err != nil {
 		return err
+	}
+
+	// Get the current project.
+	info, err := d.GetConnectionInfo()
+	if err != nil {
+		return err
+	}
+
+	if !c.flagAllProjects {
+		d = d.UseProject(info.Project)
+	}
+
+	// If clustered, get a list of targets.
+	if d.IsClustered() {
+		c.targets, err = d.GetClusterMemberNames()
+		if err != nil {
+			return err
+		}
 	}
 
 	// These variables can be changed by the UI
@@ -199,13 +220,26 @@ const (
 )
 
 type displayData struct {
+	project      string
 	instanceName string
 	cpuUsage     float64
 	memoryUsage  float64
 	diskUsage    float64
 }
 
-func (dd *displayData) toStringArray() []string {
+func (dd *displayData) toStringArray(project bool) []string {
+	if project {
+		dataStringified := [5]string{
+			dd.project,
+			dd.instanceName,
+			fmt.Sprintf("%.2f", dd.cpuUsage),
+			units.GetByteSizeStringIEC(int64(dd.memoryUsage), 2),
+			units.GetByteSizeStringIEC(int64(dd.diskUsage), 2),
+		}
+
+		return dataStringified[:]
+	}
+
 	dataStringified := [4]string{
 		dd.instanceName,
 		fmt.Sprintf("%.2f", dd.cpuUsage),
@@ -219,6 +253,10 @@ func (dd *displayData) toStringArray() []string {
 func sortBySortingType(data []displayData, sortingType sortType) {
 	sortFuncs := map[sortType]func(i, j int) bool{
 		alphabetical: func(i, j int) bool {
+			if data[i].project != data[j].project {
+				return data[i].project < data[j].project
+			}
+
 			return data[i].instanceName < data[j].instanceName
 		},
 		cpuUsage: func(i, j int) bool {
@@ -241,46 +279,67 @@ func sortBySortingType(data []displayData, sortingType sortType) {
 }
 
 func (c *cmdTop) updateDisplay(d incus.InstanceServer, refreshInterval time.Duration, sortingType sortType) error {
-	rawLogs, err := d.GetMetrics()
+	var metrics []string
+
+	if c.targets == nil {
+		rawMetrics, err := d.GetMetrics()
+		if err != nil {
+			return err
+		}
+
+		metrics = []string{rawMetrics}
+	} else {
+		metrics = make([]string, 0, len(c.targets))
+
+		for _, target := range c.targets {
+			rawMetrics, err := d.UseTarget(target).GetMetrics()
+			if err != nil {
+				return err
+			}
+
+			metrics = append(metrics, rawMetrics)
+		}
+	}
+
+	metricSet, entries, err := parseMetricsFromString(strings.Join(metrics, "\n"))
 	if err != nil {
 		return err
 	}
 
-	metricSet, names, err := parseMetricsFromString(rawLogs)
-	if err != nil {
-		return err
-	}
+	data := []displayData{}
+	for projectName, names := range entries {
+		for _, currentName := range names {
+			cpuSeconds := metricSet.getMetricValue(cpuSecondsTotal, currentName)
 
-	namesLen := len(names)
-	data := make([]displayData, namesLen)
-	for i := 0; i < namesLen; i++ {
-		currentName := names[i]
+			memoryFree := metricSet.getMetricValue(memoryMemAvailableBytes, currentName)
+			memoryTotal := metricSet.getMetricValue(memoryMemTotalBytes, currentName)
 
-		cpuSeconds := metricSet.getMetricValue(cpuSecondsTotal, currentName)
+			diskTotal := metricSet.getMetricValue(filesystemSizeBytes, currentName)
+			diskFree := metricSet.getMetricValue(filesystemFreeBytes, currentName)
 
-		memoryFree := metricSet.getMetricValue(memoryMemAvailableBytes, currentName)
-		memoryTotal := metricSet.getMetricValue(memoryMemTotalBytes, currentName)
-
-		diskTotal := metricSet.getMetricValue(filesystemSizeBytes, currentName)
-		diskFree := metricSet.getMetricValue(filesystemFreeBytes, currentName)
-
-		data[i] = displayData{
-			instanceName: currentName,
-			cpuUsage:     cpuSeconds,
-			memoryUsage:  memoryTotal - memoryFree,
-			diskUsage:    diskTotal - diskFree,
+			data = append(data, displayData{
+				project:      projectName,
+				instanceName: currentName,
+				cpuUsage:     cpuSeconds,
+				memoryUsage:  memoryTotal - memoryFree,
+				diskUsage:    diskTotal - diskFree,
+			})
 		}
 	}
 
 	// Perform sort operation
 	sortBySortingType(data, sortingType)
 
-	dataFormatted := make([][]string, namesLen)
-	for i := 0; i < namesLen; i++ { // Convert the arrays to a string representation
-		dataFormatted[i] = data[i].toStringArray()
+	dataFormatted := make([][]string, len(data))
+	for i := 0; i < len(data); i++ { // Convert the arrays to a string representation
+		dataFormatted[i] = data[i].toStringArray(c.flagAllProjects)
 	}
 
 	headers := []string{i18n.G("INSTANCE NAME"), i18n.G("CPU TIME(s)"), i18n.G("MEMORY"), i18n.G("DISK")}
+
+	if c.flagAllProjects {
+		headers = append([]string{i18n.G("PROJECT")}, headers...)
+	}
 
 	fmt.Print("\033[H\033[2J") // Clear the terminal on each tick
 	err = cli.RenderTable("table", headers, dataFormatted, nil)
@@ -347,7 +406,7 @@ func (ms *metricSet) getMetricValue(metricType metricType, instanceName string) 
 }
 
 // ParseMetricsFromString parses OpenMetrics formatted logs from a string and converts them to a MetricSet.
-func parseMetricsFromString(input string) (*metricSet, []string, error) {
+func parseMetricsFromString(input string) (*metricSet, map[string][]string, error) {
 	scanner := bufio.NewScanner(strings.NewReader(input))
 	metricSet := &metricSet{
 		set:    make(map[metricType][]sample),
@@ -388,10 +447,17 @@ func parseMetricsFromString(input string) (*metricSet, []string, error) {
 		return nil, nil, err
 	}
 
-	names := []string{}
+	names := map[string][]string{}
 	if samples, exists := metricSet.set[memoryMemTotalBytes]; exists { // Use a known metric type to gather names
 		for _, sample := range samples {
-			names = append(names, sample.labels["name"])
+			projectName := sample.labels["project"]
+			instName := sample.labels["name"]
+
+			if names[projectName] == nil {
+				names[projectName] = []string{}
+			}
+
+			names[projectName] = append(names[projectName], instName)
 		}
 	}
 
