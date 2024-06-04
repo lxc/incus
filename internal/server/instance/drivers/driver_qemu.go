@@ -7973,10 +7973,10 @@ func (d *qemu) acquireVsockID(vsockID uint32) (*os.File, error) {
 	revert.Add(func() { _ = vsockF.Close() })
 
 	// The vsock Context ID cannot be supplied as type uint32.
-	vsockIDInt := int(vsockID)
+	vsockIDInt := uint64(vsockID)
 
-	// 0x4008AF60 = VHOST_VSOCK_SET_GUEST_CID = _IOW(VHOST_VIRTIO, 0x60, __u64)
-	_, _, errno := unix.Syscall(unix.SYS_IOCTL, vsockF.Fd(), 0x4008AF60, uintptr(unsafe.Pointer(&vsockIDInt)))
+	// Call the ioctl to set the context ID.
+	_, _, errno := unix.Syscall(unix.SYS_IOCTL, vsockF.Fd(), linux.IoctlVhostVsockSetGuestCid, uintptr(unsafe.Pointer(&vsockIDInt)))
 	if errno != 0 {
 		if !errors.Is(errno, unix.EADDRINUSE) {
 			return nil, fmt.Errorf("Failed ioctl syscall to vhost socket: %q", errno.Error())
