@@ -341,7 +341,22 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 		console := cmdConsole{}
 		console.global = c.global
 		console.flagType = c.flagConsole
-		return console.Console(d, name)
+
+		consoleErr := console.Console(d, name)
+		if consoleErr != nil {
+			// Check if still running.
+			state, _, err := d.GetInstanceState(name)
+			if err != nil {
+				return err
+			}
+
+			if state.StatusCode != api.Stopped {
+				return consoleErr
+			}
+
+			console.flagShowLog = true
+			return console.Console(d, name)
+		}
 	}
 
 	return nil
