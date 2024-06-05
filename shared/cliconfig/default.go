@@ -2,9 +2,10 @@ package cliconfig
 
 // LocalRemote is the default local remote (over the unix socket).
 var LocalRemote = Remote{
-	Addr:   "unix://",
-	Static: true,
-	Public: false,
+	Addr:     "unix://",
+	Static:   true,
+	Public:   false,
+	Protocol: "incus",
 }
 
 // ImagesRemote is the community image server (over simplestreams).
