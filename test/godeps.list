@@ -4,6 +4,7 @@ github.com/lxc/incus/v6/shared/api
 github.com/lxc/incus/v6/shared/cancel
 github.com/lxc/incus/v6/shared/ioprogress
 github.com/lxc/incus/v6/shared/logger
+github.com/lxc/incus/v6/shared/osarch
 github.com/lxc/incus/v6/shared/proxy
 github.com/lxc/incus/v6/shared/simplestreams
 github.com/lxc/incus/v6/shared/subprocess
