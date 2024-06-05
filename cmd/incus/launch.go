@@ -74,7 +74,22 @@ func (c *cmdLaunch) Run(cmd *cobra.Command, args []string) error {
 			console := cmdConsole{}
 			console.global = c.global
 			console.flagType = c.flagConsole
-			return console.Console(d, name)
+
+			consoleErr := console.console(d, name)
+			if consoleErr != nil {
+				// Check if still running.
+				state, _, err := d.GetInstanceState(name)
+				if err != nil {
+					return err
+				}
+
+				if state.StatusCode != api.Stopped {
+					return consoleErr
+				}
+
+				console.flagShowLog = true
+				return console.console(d, name)
+			}
 		}
 
 		return nil
@@ -138,7 +153,22 @@ func (c *cmdLaunch) Run(cmd *cobra.Command, args []string) error {
 		console := cmdConsole{}
 		console.global = c.global
 		console.flagType = c.flagConsole
-		return console.Console(d, name)
+
+		consoleErr := console.console(d, name)
+		if consoleErr != nil {
+			// Check if still running.
+			state, _, err := d.GetInstanceState(name)
+			if err != nil {
+				return err
+			}
+
+			if state.StatusCode != api.Stopped {
+				return consoleErr
+			}
+
+			console.flagShowLog = true
+			return console.console(d, name)
+		}
 	}
 
 	return nil

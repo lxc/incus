@@ -66,6 +66,14 @@ func LoadConfig(path string) (*Config, error) {
 		c.Remotes[k] = v
 	}
 
+	// Fill in defaults.
+	for k, r := range c.Remotes {
+		if r.Protocol == "" {
+			r.Protocol = "incus"
+			c.Remotes[k] = r
+		}
+	}
+
 	// If the environment specifies a remote this takes priority over what
 	// is defined in the configuration
 	envDefaultRemote := os.Getenv("INCUS_REMOTE")
@@ -73,17 +81,6 @@ func LoadConfig(path string) (*Config, error) {
 		c.DefaultRemote = envDefaultRemote
 	} else if c.DefaultRemote == "" {
 		c.DefaultRemote = DefaultConfig().DefaultRemote
-	}
-
-	// NOTE: Remove this once we only see a small fraction of non-simplestreams users
-	// Upgrade users to the "simplestreams" protocol
-	images, ok := c.Remotes["images"]
-	if ok && images.Protocol != ImagesRemote.Protocol && images.Addr == ImagesRemote.Addr {
-		c.Remotes["images"] = ImagesRemote
-		err = c.SaveConfig(path)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return c, nil
