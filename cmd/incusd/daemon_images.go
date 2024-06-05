@@ -80,7 +80,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	fp := alias
 
 	// Attempt to resolve the alias
-	if slices.Contains([]string{"incus", "lxd", "simplestreams"}, protocol) {
+	if slices.Contains([]string{"incus", "lxd", "oci", "simplestreams"}, protocol) {
 		clientArgs := &incus.ConnectionArgs{
 			TLSServerCert: args.Certificate,
 			UserAgent:     version.UserAgent,
@@ -100,7 +100,13 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			if ok {
 				remote = server.UseProject(args.SourceProjectName)
 			}
-		} else {
+		} else if protocol == "oci" {
+			// Setup OCI client
+			remote, err = incus.ConnectOCI(args.Server, clientArgs)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to connect to simple streams server %q: %w", args.Server, err)
+			}
+		} else if protocol == "simplestreams" {
 			// Setup simplestreams client
 			remote, err = incus.ConnectSimpleStreams(args.Server, clientArgs)
 			if err != nil {
@@ -345,7 +351,7 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		op.SetCanceler(canceler)
 	}
 
-	if slices.Contains([]string{"incus", "lxd", "simplestreams"}, protocol) {
+	if slices.Contains([]string{"incus", "lxd", "oci", "simplestreams"}, protocol) {
 		// Create the target files
 		dest, err := os.Create(destName)
 		if err != nil {
