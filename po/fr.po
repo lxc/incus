@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-06-02 16:00-0400\n"
+"POT-Creation-Date: 2024-06-05 16:35-0400\n"
 "PO-Revision-Date: 2024-03-08 16:01+0000\n"
 "Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -656,11 +656,11 @@ msgstr ""
 "--console ne peut être pas utilisée pendant que l'arrêt de l'instance est "
 "forcé"
 
-#: cmd/incus/action.go:415
+#: cmd/incus/action.go:430
 msgid "--console can't be used with --all"
 msgstr "--console ne peut être utilisé avec --all"
 
-#: cmd/incus/action.go:419
+#: cmd/incus/action.go:434
 msgid "--console only works with a single instance"
 msgstr "--console fonctionne seulement avec une instance seule"
 
@@ -1032,7 +1032,7 @@ msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 "Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
 
-#: cmd/incus/console.go:379
+#: cmd/incus/console.go:380
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "Aucun n'a pu être trouvé, la socket SPICE peut être trouvé à:"
 
@@ -1184,7 +1184,7 @@ msgstr "Mauvaise propriété: %s"
 msgid "Bond:"
 msgstr "Liaison:"
 
-#: cmd/incus/action.go:187 cmd/incus/action.go:371
+#: cmd/incus/action.go:187 cmd/incus/action.go:386
 msgid "Both --all and instance name given"
 msgstr "À la fois--all et le nom d'instance on été donné"
 
@@ -1226,7 +1226,7 @@ msgstr "Type de contenu"
 msgid "COUNT"
 msgstr "NOMBRE"
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 #, fuzzy
 msgid "CPU TIME(s)"
 msgstr "CPU (%s) :"
@@ -1993,7 +1993,7 @@ msgstr "ADRESSE CIBLE PAR DÉFAUT"
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "DISK"
 msgstr ""
 
@@ -2033,7 +2033,7 @@ msgstr "ID VLAN par défaut"
 msgid "Define a compression algorithm: for backup or none"
 msgstr "Définir un algorithme de compression : pour image ou aucun"
 
-#: cmd/incus/top.go:295
+#: cmd/incus/top.go:354
 msgid "Delay:"
 msgstr ""
 
@@ -2302,7 +2302,7 @@ msgstr "Récupération de l'image : %s"
 #: cmd/incus/storage_volume.go:2536 cmd/incus/storage_volume.go:2542
 #: cmd/incus/storage_volume.go:2660 cmd/incus/storage_volume.go:2747
 #: cmd/incus/storage_volume.go:2827 cmd/incus/storage_volume.go:2923
-#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:30 cmd/incus/version.go:22
+#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:33 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:358
 msgid "Description"
@@ -2407,7 +2407,7 @@ msgstr "pas d'image, conteneur ou instantané affecté sur ce serveur"
 msgid "Directory import is not available on this platform"
 msgstr "L'importation de répertoire n'est pas disponible sur cette plateforme"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:66
 msgid "Directory to run the command in (default /root)"
 msgstr "Dossier dans lequel exécuter la commande (/root par défaut)"
 
@@ -2416,11 +2416,11 @@ msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 "Désactivez l'authentification lorsque vous utilisez SSH SFTP en mode écoute"
 
-#: cmd/incus/exec.go:63
+#: cmd/incus/exec.go:62
 msgid "Disable pseudo-terminal allocation"
 msgstr "Désactiver l'allocation pseudo-terminal"
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:63
 msgid "Disable stdin (reads from /dev/null)"
 msgstr "Désactiver stdin (lecture à partir de /dev/null)"
 
@@ -2451,7 +2451,7 @@ msgstr "Forcer le conteneur à s'arrêter"
 msgid "Display images from all projects"
 msgstr "Forcer le conteneur à s'arrêter"
 
-#: cmd/incus/list.go:136
+#: cmd/incus/list.go:136 cmd/incus/top.go:36
 #, fuzzy
 msgid "Display instances from all projects"
 msgstr "Forcer le conteneur à s'arrêter"
@@ -2466,7 +2466,7 @@ msgstr "Forcer le conteneur à s'arrêter"
 msgid "Display profiles from all projects"
 msgstr "Forcer le conteneur à s'arrêter"
 
-#: cmd/incus/top.go:29
+#: cmd/incus/top.go:32
 msgid "Display resource usage info per instance"
 msgstr ""
 
@@ -2475,7 +2475,7 @@ msgstr ""
 msgid "Display storage pool buckets from all projects"
 msgstr "Forcer le conteneur à s'arrêter"
 
-#: cmd/incus/top.go:30
+#: cmd/incus/top.go:33
 msgid "Displays CPU usage, memory usage, and disk usage per instance"
 msgstr ""
 
@@ -2696,13 +2696,13 @@ msgstr ""
 "définir une valeur\n"
 "  pour l'adresse si elle n'est pas encore paramétrée."
 
-#: cmd/incus/top.go:163
+#: cmd/incus/top.go:184
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
 
-#: cmd/incus/top.go:144
+#: cmd/incus/top.go:165
 msgid "Enter new delay in seconds:"
 msgstr ""
 
@@ -2710,7 +2710,7 @@ msgstr ""
 msgid "Entry TTL"
 msgstr "Entrée TTL"
 
-#: cmd/incus/exec.go:60
+#: cmd/incus/exec.go:59
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr "Variable d'environnement (de la forme HOME=/home/foo) à positionner"
 
@@ -3111,7 +3111,7 @@ msgstr "Échec de l'analyse de la clé d'hôte SSH : %w"
 msgid "Failed parsing validation response: %w"
 msgstr "Échec de l'analyse de la réponse de validation : %w"
 
-#: cmd/incus/console.go:357
+#: cmd/incus/console.go:358
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "Échec de l'exécution de la commande : %w"
@@ -3387,7 +3387,7 @@ msgstr ""
 msgid "Force evacuation without user confirmation"
 msgstr "Requérir une confirmation de l'utilisateur"
 
-#: cmd/incus/exec.go:62
+#: cmd/incus/exec.go:61
 msgid "Force pseudo-terminal allocation"
 msgstr "Forcer l'allocation d'un pseudo-terminal"
 
@@ -3699,7 +3699,7 @@ msgid "Given target %q does not match source volume location %q"
 msgstr ""
 "La cible donnée %q ne correspond pas à l'emplacement du volume source %q"
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:65
 msgid "Group ID to run the command as (default 0)"
 msgstr ""
 "ID du groupe avec lequel la commande doit être exécutée (valeur par défaut : "
@@ -3762,7 +3762,7 @@ msgstr "ID : %s"
 msgid "IMAGES"
 msgstr "IMAGES"
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "INSTANCE NAME"
 msgstr ""
 
@@ -4091,7 +4091,7 @@ msgstr "Le nom du conteneur est : %s"
 msgid "Invalid format: %s"
 msgstr "Cible invalide %s"
 
-#: cmd/incus/top.go:155
+#: cmd/incus/top.go:176
 msgid "Invalid input, please enter a positive number"
 msgstr ""
 
@@ -4162,12 +4162,12 @@ msgstr "Cible invalide %s"
 msgid "Invalid snapshot name"
 msgstr "Le nom du conteneur est : %s"
 
-#: cmd/incus/top.go:239
+#: cmd/incus/top.go:277
 #, fuzzy
 msgid "Invalid sorting type"
 msgstr "Cible invalide %s"
 
-#: cmd/incus/top.go:184
+#: cmd/incus/top.go:205
 #, fuzzy
 msgid "Invalid sorting type provided"
 msgstr "Cible invalide %s"
@@ -4881,7 +4881,7 @@ msgstr "GÉRÉ"
 msgid "MEMBERS"
 msgstr ""
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "MEMORY"
 msgstr ""
 
@@ -5895,7 +5895,8 @@ msgstr ""
 "Seuls les volumes \"personnalisés\" peuvent être attachés aux conteneurs."
 
 #: cmd/incus/remote.go:339
-msgid "Only https URLs are supported for simplestreams"
+#, fuzzy
+msgid "Only https URLs are supported for oci and simplestreams"
 msgstr "Seules les URLs https sont supportées par simplestreams"
 
 #: cmd/incus/image.go:791
@@ -5933,7 +5934,7 @@ msgstr ""
 msgid "Override the source project"
 msgstr "impossible de supprimer le serveur distant par défaut"
 
-#: cmd/incus/exec.go:61
+#: cmd/incus/exec.go:60
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr "Surcharger le mode terminal (auto, interactif ou non-interactif)"
 
@@ -5980,7 +5981,8 @@ msgstr "PROFILS"
 #: cmd/incus/image.go:1122 cmd/incus/list.go:576 cmd/incus/network.go:1068
 #: cmd/incus/network_acl.go:174 cmd/incus/network_zone.go:165
 #: cmd/incus/profile.go:746 cmd/incus/storage_bucket.go:548
-#: cmd/incus/storage_volume.go:1687 cmd/incus/warning.go:213
+#: cmd/incus/storage_volume.go:1687 cmd/incus/top.go:341
+#: cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr ""
 
@@ -6080,15 +6082,15 @@ msgstr ""
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
 
-#: cmd/incus/top.go:291
+#: cmd/incus/top.go:350
 msgid "Press 'd' + ENTER to change delay"
 msgstr ""
 
-#: cmd/incus/top.go:292
+#: cmd/incus/top.go:351
 msgid "Press 's' + ENTER to change sorting method"
 msgstr ""
 
-#: cmd/incus/top.go:293
+#: cmd/incus/top.go:352
 msgid "Press CTRL-C to exit"
 msgstr ""
 
@@ -6942,7 +6944,7 @@ msgstr ""
 
 #: cmd/incus/remote.go:114
 #, fuzzy
-msgid "Server protocol (incus or simplestreams)"
+msgid "Server protocol (incus, oci or simplestreams)"
 msgstr "Protocole du serveur (lxd ou simplestreams)"
 
 #: cmd/incus/version.go:58
@@ -7532,12 +7534,12 @@ msgstr "Instantanés :"
 msgid "Socket %d:"
 msgstr ""
 
-#: cmd/incus/action.go:448
+#: cmd/incus/action.go:463
 #, c-format
 msgid "Some instances failed to %s"
 msgstr "Certaines instances n'ont pas réussi à %s"
 
-#: cmd/incus/top.go:296
+#: cmd/incus/top.go:355
 msgid "Sorting Method:"
 msgstr ""
 
@@ -7561,7 +7563,7 @@ msgstr "Création du conteneur"
 msgid "Started: %s"
 msgstr "État : %s"
 
-#: cmd/incus/launch.go:99
+#: cmd/incus/launch.go:114
 #, c-format
 msgid "Starting %s"
 msgstr "Démarrage de %s"
@@ -7794,7 +7796,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr "Le périphérique n'existe pas"
 
-#: cmd/incus/console.go:126
+#: cmd/incus/console.go:130
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
@@ -7825,7 +7827,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:378
+#: cmd/incus/console.go:379
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -8086,7 +8088,7 @@ msgstr "Pour attacher un réseau à un conteneur, utiliser : lxc network attach"
 msgid "To create a new network, use: incus network create"
 msgstr "Pour créer un réseau, utiliser : lxc network create"
 
-#: cmd/incus/console.go:210
+#: cmd/incus/console.go:217
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
@@ -8163,7 +8165,7 @@ msgstr ""
 msgid "Trust token for %s: "
 msgstr "Mot de passe administrateur pour %s : "
 
-#: cmd/incus/action.go:334 cmd/incus/launch.go:131
+#: cmd/incus/action.go:334 cmd/incus/launch.go:146
 #, fuzzy, c-format
 msgid "Try `incus info --show-log %s` for more info"
 msgstr "Essayer `lxc info --show-log %s` pour plus d'informations"
@@ -8276,7 +8278,7 @@ msgstr ""
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:159
+#: cmd/incus/console.go:160
 #, c-format
 msgid "Unknown console type %q"
 msgstr ""
@@ -8494,7 +8496,7 @@ msgstr ""
 msgid "Update the target profile from the source if it already exists"
 msgstr ""
 
-#: cmd/incus/top.go:120
+#: cmd/incus/top.go:141
 #, c-format
 msgid "Updated interval to %v"
 msgstr ""
@@ -8529,7 +8531,7 @@ msgstr ""
 msgid "Used: %v"
 msgstr "Publié : %s"
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:64
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
@@ -8761,11 +8763,11 @@ msgstr "OUI"
 msgid "You are currently missing the following:"
 msgstr ""
 
-#: cmd/incus/exec.go:107
+#: cmd/incus/exec.go:106
 msgid "You can't pass -t and -T at the same time"
 msgstr "Il est impossible de passer -t et -T simultanément"
 
-#: cmd/incus/exec.go:111
+#: cmd/incus/exec.go:110
 #, fuzzy
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "impossible de copier vers le même nom de conteneur"
@@ -10147,7 +10149,7 @@ msgstr ""
 msgid "enabled"
 msgstr "activé"
 
-#: cmd/incus/action.go:440
+#: cmd/incus/action.go:455
 #, c-format
 msgid "error: %v"
 msgstr "erreur : %v"

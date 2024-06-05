@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-06-02 16:00-0400\n"
+"POT-Creation-Date: 2024-06-05 16:35-0400\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -647,11 +647,11 @@ msgstr "- Puerto %d (%s)"
 msgid "--console can't be used while forcing instance shutdown"
 msgstr "--container-only no se puede pasar cuando la fuente es una instantánea"
 
-#: cmd/incus/action.go:415
+#: cmd/incus/action.go:430
 msgid "--console can't be used with --all"
 msgstr ""
 
-#: cmd/incus/action.go:419
+#: cmd/incus/action.go:434
 #, fuzzy
 msgid "--console only works with a single instance"
 msgstr "Perfil para aplicar al nuevo contenedor"
@@ -1012,7 +1012,7 @@ msgstr ""
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 
-#: cmd/incus/console.go:379
+#: cmd/incus/console.go:380
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 
@@ -1155,7 +1155,7 @@ msgstr "Propiedad mala: %s"
 msgid "Bond:"
 msgstr ""
 
-#: cmd/incus/action.go:187 cmd/incus/action.go:371
+#: cmd/incus/action.go:187 cmd/incus/action.go:386
 #, fuzzy
 msgid "Both --all and instance name given"
 msgstr "Ambas: todas y el nombre del contenedor dado"
@@ -1198,7 +1198,7 @@ msgstr ""
 msgid "COUNT"
 msgstr ""
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 #, fuzzy
 msgid "CPU TIME(s)"
 msgstr "CPU (%s):"
@@ -1899,7 +1899,7 @@ msgstr ""
 msgid "DESCRIPTION"
 msgstr "DESCRIPCIÓN"
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "DISK"
 msgstr ""
 
@@ -1938,7 +1938,7 @@ msgstr ""
 msgid "Define a compression algorithm: for backup or none"
 msgstr ""
 
-#: cmd/incus/top.go:295
+#: cmd/incus/top.go:354
 msgid "Delay:"
 msgstr ""
 
@@ -2197,7 +2197,7 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2536 cmd/incus/storage_volume.go:2542
 #: cmd/incus/storage_volume.go:2660 cmd/incus/storage_volume.go:2747
 #: cmd/incus/storage_volume.go:2827 cmd/incus/storage_volume.go:2923
-#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:30 cmd/incus/version.go:22
+#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:33 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:358
 msgid "Description"
@@ -2296,7 +2296,7 @@ msgstr "Perfil para aplicar al nuevo contenedor"
 msgid "Directory import is not available on this platform"
 msgstr "El directorio importado no está disponible en esta plataforma"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:66
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
@@ -2304,11 +2304,11 @@ msgstr ""
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 
-#: cmd/incus/exec.go:63
+#: cmd/incus/exec.go:62
 msgid "Disable pseudo-terminal allocation"
 msgstr ""
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:63
 msgid "Disable stdin (reads from /dev/null)"
 msgstr ""
 
@@ -2339,7 +2339,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Display images from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/list.go:136
+#: cmd/incus/list.go:136 cmd/incus/top.go:36
 #, fuzzy
 msgid "Display instances from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -2354,7 +2354,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Display profiles from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/top.go:29
+#: cmd/incus/top.go:32
 msgid "Display resource usage info per instance"
 msgstr ""
 
@@ -2363,7 +2363,7 @@ msgstr ""
 msgid "Display storage pool buckets from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/top.go:30
+#: cmd/incus/top.go:33
 msgid "Displays CPU usage, memory usage, and disk usage per instance"
 msgstr ""
 
@@ -2558,13 +2558,13 @@ msgid ""
 "  for the address if not yet set."
 msgstr ""
 
-#: cmd/incus/top.go:163
+#: cmd/incus/top.go:184
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
 
-#: cmd/incus/top.go:144
+#: cmd/incus/top.go:165
 msgid "Enter new delay in seconds:"
 msgstr ""
 
@@ -2572,7 +2572,7 @@ msgstr ""
 msgid "Entry TTL"
 msgstr ""
 
-#: cmd/incus/exec.go:60
+#: cmd/incus/exec.go:59
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr ""
 
@@ -2902,7 +2902,7 @@ msgstr "Acepta certificado"
 msgid "Failed parsing validation response: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/console.go:357
+#: cmd/incus/console.go:358
 #, fuzzy, c-format
 msgid "Failed starting command: %w"
 msgstr "Acepta certificado"
@@ -3169,7 +3169,7 @@ msgstr ""
 msgid "Force evacuation without user confirmation"
 msgstr ""
 
-#: cmd/incus/exec.go:62
+#: cmd/incus/exec.go:61
 msgid "Force pseudo-terminal allocation"
 msgstr ""
 
@@ -3446,7 +3446,7 @@ msgstr ""
 msgid "Given target %q does not match source volume location %q"
 msgstr ""
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:65
 msgid "Group ID to run the command as (default 0)"
 msgstr ""
 
@@ -3505,7 +3505,7 @@ msgstr ""
 msgid "IMAGES"
 msgstr ""
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "INSTANCE NAME"
 msgstr ""
 
@@ -3806,7 +3806,7 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Invalid format: %s"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/top.go:155
+#: cmd/incus/top.go:176
 msgid "Invalid input, please enter a positive number"
 msgstr ""
 
@@ -3872,12 +3872,12 @@ msgstr ""
 msgid "Invalid snapshot name"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/top.go:239
+#: cmd/incus/top.go:277
 #, fuzzy
 msgid "Invalid sorting type"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/top.go:184
+#: cmd/incus/top.go:205
 #, fuzzy
 msgid "Invalid sorting type provided"
 msgstr "Nombre del contenedor es: %s"
@@ -4524,7 +4524,7 @@ msgstr ""
 msgid "MEMBERS"
 msgstr ""
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "MEMORY"
 msgstr ""
 
@@ -5493,7 +5493,7 @@ msgid "Only \"custom\" volumes can be snapshotted"
 msgstr ""
 
 #: cmd/incus/remote.go:339
-msgid "Only https URLs are supported for simplestreams"
+msgid "Only https URLs are supported for oci and simplestreams"
 msgstr ""
 
 #: cmd/incus/image.go:791
@@ -5526,7 +5526,7 @@ msgstr ""
 msgid "Override the source project"
 msgstr ""
 
-#: cmd/incus/exec.go:61
+#: cmd/incus/exec.go:60
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr ""
 
@@ -5571,7 +5571,8 @@ msgstr ""
 #: cmd/incus/image.go:1122 cmd/incus/list.go:576 cmd/incus/network.go:1068
 #: cmd/incus/network_acl.go:174 cmd/incus/network_zone.go:165
 #: cmd/incus/profile.go:746 cmd/incus/storage_bucket.go:548
-#: cmd/incus/storage_volume.go:1687 cmd/incus/warning.go:213
+#: cmd/incus/storage_volume.go:1687 cmd/incus/top.go:341
+#: cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr ""
 
@@ -5669,15 +5670,15 @@ msgstr ""
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
 
-#: cmd/incus/top.go:291
+#: cmd/incus/top.go:350
 msgid "Press 'd' + ENTER to change delay"
 msgstr ""
 
-#: cmd/incus/top.go:292
+#: cmd/incus/top.go:351
 msgid "Press 's' + ENTER to change sorting method"
 msgstr ""
 
-#: cmd/incus/top.go:293
+#: cmd/incus/top.go:352
 msgid "Press CTRL-C to exit"
 msgstr ""
 
@@ -6488,7 +6489,7 @@ msgid "Server isn't part of a cluster"
 msgstr ""
 
 #: cmd/incus/remote.go:114
-msgid "Server protocol (incus or simplestreams)"
+msgid "Server protocol (incus, oci or simplestreams)"
 msgstr ""
 
 #: cmd/incus/version.go:58
@@ -7047,12 +7048,12 @@ msgstr ""
 msgid "Socket %d:"
 msgstr ""
 
-#: cmd/incus/action.go:448
+#: cmd/incus/action.go:463
 #, fuzzy, c-format
 msgid "Some instances failed to %s"
 msgstr "Dispositivo %s añadido a %s"
 
-#: cmd/incus/top.go:296
+#: cmd/incus/top.go:355
 msgid "Sorting Method:"
 msgstr ""
 
@@ -7075,7 +7076,7 @@ msgstr ""
 msgid "Started: %s"
 msgstr "Auto actualización: %s"
 
-#: cmd/incus/launch.go:99
+#: cmd/incus/launch.go:114
 #, c-format
 msgid "Starting %s"
 msgstr ""
@@ -7299,7 +7300,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr ""
 
-#: cmd/incus/console.go:126
+#: cmd/incus/console.go:130
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
@@ -7330,7 +7331,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:378
+#: cmd/incus/console.go:379
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -7576,7 +7577,7 @@ msgstr ""
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
-#: cmd/incus/console.go:210
+#: cmd/incus/console.go:217
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
@@ -7651,7 +7652,7 @@ msgstr ""
 msgid "Trust token for %s: "
 msgstr "Contraseña admin para %s: "
 
-#: cmd/incus/action.go:334 cmd/incus/launch.go:131
+#: cmd/incus/action.go:334 cmd/incus/launch.go:146
 #, c-format
 msgid "Try `incus info --show-log %s` for more info"
 msgstr ""
@@ -7761,7 +7762,7 @@ msgstr ""
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:159
+#: cmd/incus/console.go:160
 #, c-format
 msgid "Unknown console type %q"
 msgstr ""
@@ -7968,7 +7969,7 @@ msgstr ""
 msgid "Update the target profile from the source if it already exists"
 msgstr ""
 
-#: cmd/incus/top.go:120
+#: cmd/incus/top.go:141
 #, c-format
 msgid "Updated interval to %v"
 msgstr ""
@@ -8002,7 +8003,7 @@ msgstr ""
 msgid "Used: %v"
 msgstr ""
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:64
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
@@ -8228,11 +8229,11 @@ msgstr ""
 msgid "You are currently missing the following:"
 msgstr ""
 
-#: cmd/incus/exec.go:107
+#: cmd/incus/exec.go:106
 msgid "You can't pass -t and -T at the same time"
 msgstr ""
 
-#: cmd/incus/exec.go:111
+#: cmd/incus/exec.go:110
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr ""
 
@@ -9056,7 +9057,7 @@ msgstr ""
 msgid "enabled"
 msgstr ""
 
-#: cmd/incus/action.go:440
+#: cmd/incus/action.go:455
 #, c-format
 msgid "error: %v"
 msgstr ""
