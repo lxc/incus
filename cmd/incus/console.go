@@ -120,10 +120,10 @@ func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return c.Console(d, name)
+	return c.console(d, name)
 }
 
-func (c *cmdConsole) Console(d incus.InstanceServer, name string) error {
+func (c *cmdConsole) console(d incus.InstanceServer, name string) error {
 	// Show the current log if requested.
 	if c.flagShowLog {
 		if c.flagType != "console" {
@@ -152,7 +152,7 @@ func (c *cmdConsole) Console(d incus.InstanceServer, name string) error {
 
 	switch c.flagType {
 	case "console":
-		return c.console(d, name)
+		return c.text(d, name)
 	case "vga":
 		return c.vga(d, name)
 	}
@@ -160,7 +160,7 @@ func (c *cmdConsole) Console(d incus.InstanceServer, name string) error {
 	return fmt.Errorf(i18n.G("Unknown console type %q"), c.flagType)
 }
 
-func (c *cmdConsole) console(d incus.InstanceServer, name string) error {
+func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 	// Configure the terminal
 	cfd := int(os.Stdin.Fd())
 
