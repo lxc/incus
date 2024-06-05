@@ -66,6 +66,14 @@ func LoadConfig(path string) (*Config, error) {
 		c.Remotes[k] = v
 	}
 
+	// Fill in defaults.
+	for k, r := range c.Remotes {
+		if r.Protocol == "" {
+			r.Protocol = "incus"
+			c.Remotes[k] = r
+		}
+	}
+
 	// If the environment specifies a remote this takes priority over what
 	// is defined in the configuration
 	envDefaultRemote := os.Getenv("INCUS_REMOTE")
