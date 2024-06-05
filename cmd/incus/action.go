@@ -314,7 +314,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 		console := cmdConsole{}
 		console.global = c.global
 		console.flagType = c.flagConsole
-		return console.Console(d, name)
+		return console.console(d, name)
 	}
 
 	progress := cli.ProgressRenderer{
@@ -342,7 +342,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 		console.global = c.global
 		console.flagType = c.flagConsole
 
-		consoleErr := console.Console(d, name)
+		consoleErr := console.console(d, name)
 		if consoleErr != nil {
 			// Check if still running.
 			state, _, err := d.GetInstanceState(name)
@@ -355,7 +355,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 			}
 
 			console.flagShowLog = true
-			return console.Console(d, name)
+			return console.console(d, name)
 		}
 	}
 
