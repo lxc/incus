@@ -91,5 +91,11 @@ func (c *cmdForkstart) Run(cmd *cobra.Command, args []string) error {
 		_ = unix.Dup3(int(logFile.Fd()), 2, 0)
 	}
 
+	// Handle application containers.
+	execCmd := d.ConfigItem("lxc.execute.cmd")
+	if len(execCmd) > 0 && execCmd[0] != "" {
+		return d.StartExecute(nil)
+	}
+
 	return d.Start()
 }
