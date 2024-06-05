@@ -316,6 +316,40 @@ func ConnectSimpleStreams(url string, args *ConnectionArgs) (ImageServer, error)
 	return &server, nil
 }
 
+// ConnectOCI lets you connect to a remote OCI image registry over HTTPs.
+//
+// Unless the remote server is trusted by the system CA, the remote certificate must be provided (TLSServerCert).
+func ConnectOCI(uri string, args *ConnectionArgs) (ImageServer, error) {
+	logger.Debug("Connecting to a remote OCI server", logger.Ctx{"URL": uri})
+
+	// Cleanup URL
+	uri = strings.TrimSuffix(uri, "/")
+
+	// Use empty args if not specified
+	if args == nil {
+		args = &ConnectionArgs{}
+	}
+
+	// Initialize the client struct
+	server := ProtocolOCI{
+		httpHost:        uri,
+		httpUserAgent:   args.UserAgent,
+		httpCertificate: args.TLSServerCert,
+
+		cache: map[string]ociInfo{},
+	}
+
+	// Setup the HTTP client
+	httpClient, err := tlsHTTPClient(args.HTTPClient, args.TLSClientCert, args.TLSClientKey, args.TLSCA, args.TLSServerCert, args.InsecureSkipVerify, args.Proxy, args.TransportWrapper)
+	if err != nil {
+		return nil, err
+	}
+
+	server.http = httpClient
+
+	return &server, nil
+}
+
 // Internal function called by ConnectIncus and ConnectPublicIncus.
 func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (InstanceServer, error) {
 	// Use empty args if not specified
