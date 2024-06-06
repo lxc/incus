@@ -57,6 +57,14 @@ Would you like a YAML "incus admin init" preseed to be printed? (yes/no) [defaul
 After the initialization process finishes, your first cluster member should be up and available on your network.
 You can check this with [`incus cluster list`](incus_cluster_list.md).
 
+### Convert an existing server into bootstrap server
+
+If you are intending to convert an existing Incus server with instances into the bootstrap server for a new cluster, there is a slightly different procedure.
+
+Firstly, ensure the `core.https_address` (or `cluster.https_address`) is configured to a specific IP or DNS address using `incus config set core.https_address [IP_OR_DNS]:8443`. The default wildcard value cannot be used in clustered mode.
+
+Then you can run `incus cluster enable memberName` and continue with the steps below to join in additional cluster members.
+
 ### Join additional servers
 
 You can now join further servers to the cluster.
