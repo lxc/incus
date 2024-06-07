@@ -151,7 +151,7 @@ func (c *cmdForknet) Command() *cobra.Command {
 `
 	cmd.Hidden = true
 
-	// pull
+	// info
 	cmdInfo := &cobra.Command{}
 	cmdInfo.Use = "info <PID> <PidFd>"
 	cmdInfo.Args = cobra.ExactArgs(2)
