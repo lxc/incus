@@ -155,22 +155,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Go (stable)
+      - name: Install Go (${{ matrix.go }})
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
         if: matrix.go != 'tip'
 
+      - name: Install Go (stable)
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+        if: matrix.go == 'tip'
+
       - name: Install Go (tip)
         run: |
-          for i in $(seq 20); do
-              curl -sSfL https://storage.googleapis.com/go-build-snap/go/linux-amd64/$(git ls-remote https://github.com/golang/go.git HEAD | awk '{print $1;}').tar.gz -o gotip.tar.gz && break
-              sleep 30
-          done
-
-          mkdir -p ~/sdk/gotip
-          tar -C ~/sdk/gotip -xzf gotip.tar.gz
-          rm gotip.tar.gz
+          go install golang.org/dl/gotip@latest
+          gotip download
           ~/sdk/gotip/bin/go version
           echo "PATH=$HOME/go/bin:$HOME/sdk/gotip/bin/:$PATH" >> $GITHUB_ENV
         if: matrix.go == 'tip'
