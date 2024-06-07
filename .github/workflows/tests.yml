@@ -17,6 +17,13 @@ jobs:
   code-tests:
     name: Code
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        go:
+          - oldstable
+          - stable
+          - tip
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,23 +37,38 @@ jobs:
         uses: redhat-plumbers-in-action/differential-shellcheck@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.go == 'stable'
 
       - name: Upload artifact with ShellCheck defects in SARIF format
         uses: actions/upload-artifact@v4
         with:
           name: Differential ShellCheck SARIF
           path: ${{ steps.ShellCheck.outputs.sarif }}
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.go == 'stable'
 
-      - name: Install Go
+      - name: Install Go (${{ matrix.go }})
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21.x
+          go-version: ${{ matrix.go }}
+        if: matrix.go != 'tip'
+
+      - name: Install Go (stable)
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+        if: matrix.go == 'tip'
+
+      - name: Install Go (tip)
+        run: |
+          go install golang.org/dl/gotip@latest
+          gotip download
+          ~/sdk/gotip/bin/go version
+          echo "PATH=$HOME/go/bin:$HOME/sdk/gotip/bin/:$PATH" >> $GITHUB_ENV
+        if: matrix.go == 'tip'
 
       - name: Check compatible min Go version
         run: |
-          go mod tidy -go=1.21
+          go mod tidy
 
       - name: Install dependencies
         run: |
@@ -109,14 +131,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.21.x"]
-        suite: ["cluster", "standalone"]
-        backend: ["dir", "btrfs", "lvm", "zfs", "ceph", "random"]
+        go:
+          - stable
+        suite:
+          - cluster
+          - standalone
+        backend:
+          - dir
+          - btrfs
+          - lvm
+          - zfs
+          - ceph
+          - random
         include:
-          - go: stable
+          - go: oldstable
             suite: cluster
             backend: dir
-          - go: stable
+          - go: oldstable
             suite: standalone
             backend: dir
           - go: tip
@@ -332,7 +363,8 @@ jobs:
       fail-fast: false
       matrix:
         go:
-          - 1.21.x
+          - oldstable
+          - stable
         os:
           - ubuntu-latest
           - macos-latest
@@ -398,6 +430,7 @@ jobs:
         run: go test -v ./shared/...
 
       - name: Upload incus client artifacts
+        if: matrix.go == 'stable'
         uses: actions/upload-artifact@v4
         continue-on-error: true
         with:
@@ -414,7 +447,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21.x
+          go-version: stable
 
       - name: Install dependencies
         run: |
