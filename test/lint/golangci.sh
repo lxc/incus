@@ -2,8 +2,11 @@
 
 target_branch=""
 if [ -n "${GITHUB_BASE_REF:-}" ]; then
+  # Attempt to fetch the reference (Github uses a shallow clone).
+  git fetch -q origin "${GITHUB_BASE_REF}" || true
+
   # Target branch when scanning a Github pull request
-  target_branch="${GITHUB_BASE_REF}"
+  target_branch="origin/${GITHUB_BASE_REF}"
 elif [ -n "${GITHUB_BEFORE:-}" ]; then
   # Target branch when scanning a Github merge
   target_branch="${GITHUB_BEFORE}"
