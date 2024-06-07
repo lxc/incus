@@ -71,6 +71,27 @@ static void forkdonetdetach(char *file) {
 	// Jump back to Go for the rest
 }
 
+static void forkdonetdhcp() {
+	char *pidstr;
+	char path[PATH_MAX];
+
+	pidstr = getenv("LXC_PID");
+	if (!pidstr) {
+		fprintf(stderr, "No LXC_PID in environment\n");
+		_exit(1);
+	}
+
+	snprintf(path, sizeof(path), "/proc/%s/ns/net", pidstr);
+
+	// Attach to the network namespace.
+	if (dosetns_file(path, "net") < 0) {
+		fprintf(stderr, "Failed setns to container network namespace: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	// Jump back to Go for the rest
+}
+
 void forknet(void)
 {
 	char *command = NULL;
@@ -81,6 +102,11 @@ void forknet(void)
 	// Get the subcommand
 	command = advance_arg(false);
 	if (command == NULL || (strcmp(command, "--help") == 0 || strcmp(command, "--version") == 0 || strcmp(command, "-h") == 0)) {
+		return;
+	}
+
+	if (strcmp(command, "dhcp") == 0) {
+		forkdonetdhcp();
 		return;
 	}
 
@@ -123,8 +149,12 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/insomniacslk/dhcp/dhcpv4"
+	"github.com/insomniacslk/dhcp/dhcpv4/client4"
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/v6/internal/netutils"
@@ -165,6 +195,13 @@ func (c *cmdForknet) Command() *cobra.Command {
 	cmdDetach.RunE = c.RunDetach
 	cmd.AddCommand(cmdDetach)
 
+	// dhclient
+	cmdDHCP := &cobra.Command{}
+	cmdDHCP.Use = "dhcp <path>"
+	cmdDHCP.Args = cobra.ExactArgs(1)
+	cmdDHCP.RunE = c.RunDHCP
+	cmd.AddCommand(cmdDHCP)
+
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
 	cmd.Run = func(cmd *cobra.Command, args []string) { _ = cmd.Usage() }
@@ -184,6 +221,111 @@ func (c *cmdForknet) RunInfo(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("%s\n", buf)
+
+	return nil
+}
+
+// RunDHCP runs a one time DHCPv4 client and applies address, route and DNS configuration.
+func (c *cmdForknet) RunDHCP(cmd *cobra.Command, args []string) error {
+	var messages []*dhcpv4.DHCPv4
+	iface := "eth0"
+
+	link := &ip.Link{
+		Name: iface,
+	}
+
+	err := link.SetUp()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't bring up %q\n", iface)
+		return nil
+	}
+
+	// Try to get a lease.
+	client := client4.NewClient()
+	for i := 0; i < 10; i++ {
+		var err error
+
+		messages, err = client.Exchange(iface)
+		if err == nil {
+			break
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	// Parse the response.
+	var reply *dhcpv4.DHCPv4
+	for _, m := range messages {
+		if m.OpCode == dhcpv4.OpcodeBootReply && m.MessageType() == dhcpv4.MessageTypeOffer {
+			reply = m
+			break
+		}
+	}
+
+	if reply == nil {
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, couldn't get a lease on %q after 5s\n", iface)
+		return nil
+	}
+
+	if reply.YourIPAddr == nil || reply.YourIPAddr.Equal(net.IPv4zero) || reply.SubnetMask() == nil || len(reply.Router()) != 1 || len(reply.DNS()) < 1 {
+		fmt.Fprintf(os.Stderr, "Giving up on DHCP, lease for %q didn't contain required fields\n", iface)
+		return nil
+	}
+
+	// Turn into usable configuration.
+	netMask, _ := reply.SubnetMask().Size()
+
+	addr := &ip.Addr{
+		DevName: iface,
+		Address: fmt.Sprintf("%s/%d", reply.YourIPAddr, netMask),
+		Family:  ip.FamilyV4,
+	}
+
+	err = addr.Add()
+	if err != nil {
+		return err
+	}
+
+	route := &ip.Route{
+		DevName: iface,
+		Route:   "default",
+		Via:     reply.Router()[0].String(),
+		Family:  ip.FamilyV4,
+	}
+
+	err = route.Add()
+	if err != nil {
+		return err
+	}
+
+	// DNS configuration.
+	f, err := os.Create(filepath.Join(args[0], "resolv.conf"))
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	for _, nameserver := range reply.DNS() {
+		_, err = f.Write([]byte(fmt.Sprintf("nameserver %s\n", nameserver)))
+		if err != nil {
+			return err
+		}
+	}
+
+	if reply.DomainName() != "" {
+		_, err = f.Write([]byte(fmt.Sprintf("domain %s\n", reply.DomainName())))
+		if err != nil {
+			return err
+		}
+	}
+
+	if reply.DomainSearch() != nil && len(reply.DomainSearch().Labels) > 0 {
+		_, err = f.Write([]byte(fmt.Sprintf("search %s\n", strings.Join(reply.DomainSearch().Labels, ", "))))
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
