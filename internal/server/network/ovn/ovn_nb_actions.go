@@ -443,37 +443,115 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 	return nil
 }
 
-// LogicalRouterRouteAdd adds a static route to the logical router.
-func (o *NB) LogicalRouterRouteAdd(routerName OVNRouter, mayExist bool, routes ...OVNRouterRoute) error {
-	args := []string{}
-
-	for _, route := range routes {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		if mayExist {
-			args = append(args, "--may-exist")
-		}
-
-		args = append(args, "lr-route-add", string(routerName), route.Prefix.String())
-
-		if route.Discard {
-			args = append(args, "discard")
-		} else {
-			args = append(args, route.NextHop.String())
-		}
-
-		if route.Port != "" {
-			args = append(args, string(route.Port))
-		}
+// CreateLogicalRouterRoute adds a static route to the logical router.
+func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter, mayExist bool, routes ...OVNRouterRoute) error {
+	// Fetch the logical router.
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
 	}
 
-	if len(args) > 0 {
-		_, err := o.nbctl(args...)
+	err := o.get(ctx, &logicalRouter)
+	if err != nil {
+		return err
+	}
+
+	// Get the existing routes.
+	existingRoutes := make([]ovnNB.LogicalRouterStaticRoute, 0, len(logicalRouter.StaticRoutes))
+	for _, uuid := range logicalRouter.StaticRoutes {
+		route := ovnNB.LogicalRouterStaticRoute{
+			UUID: uuid,
+		}
+
+		err = o.get(ctx, &route)
 		if err != nil {
 			return err
 		}
+
+		existingRoutes = append(existingRoutes, route)
+	}
+
+	// Add the new routes.
+	operations := []ovsdb.Operation{}
+	for i, route := range routes {
+		// Check if already present.
+		for _, existing := range existingRoutes {
+			if existing.IPPrefix != route.Prefix.String() {
+				continue
+			}
+
+			if existing.Nexthop == "discard" && !route.Discard {
+				continue
+			}
+
+			if existing.Nexthop != route.NextHop.String() {
+				continue
+			}
+
+			if existing.OutputPort == nil {
+				if string(route.Port) != "" {
+					continue
+				}
+			} else if *existing.OutputPort != string(route.Port) {
+				continue
+			}
+
+			if mayExist {
+				continue
+			}
+
+			return ErrExists
+		}
+
+		// Create the new record.
+		staticRoute := ovnNB.LogicalRouterStaticRoute{
+			UUID:     fmt.Sprintf("route_%d", i),
+			IPPrefix: route.Prefix.String(),
+		}
+
+		if string(route.Port) != "" {
+			value := string(route.Port)
+			staticRoute.OutputPort = &value
+		}
+
+		if route.Discard {
+			staticRoute.Nexthop = "discard"
+		} else {
+			staticRoute.Nexthop = route.NextHop.String()
+		}
+
+		createOps, err := o.client.Create(&staticRoute)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+
+		// Add it to the router.
+		updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+			Field:   &logicalRouter.StaticRoutes,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{staticRoute.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
