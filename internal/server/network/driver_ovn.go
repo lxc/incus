@@ -2249,14 +2249,14 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		if len(deleteRoutes) > 0 {
-			err = n.state.OVNNB.LogicalRouterRouteDelete(n.getRouterName(), deleteRoutes...)
+			err = n.state.OVNNB.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), deleteRoutes...)
 			if err != nil {
 				return fmt.Errorf("Failed removing default routes: %w", err)
 			}
 		}
 
 		if len(defaultRoutes) > 0 {
-			err = n.state.OVNNB.LogicalRouterRouteAdd(n.getRouterName(), update, defaultRoutes...)
+			err = n.state.OVNNB.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), update, defaultRoutes...)
 			if err != nil {
 				return fmt.Errorf("Failed adding default routes: %w", err)
 			}
@@ -3843,7 +3843,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 	if len(routes) > 0 {
 		// Add routes to local router.
-		err = n.state.OVNNB.LogicalRouterRouteAdd(n.getRouterName(), true, routes...)
+		err = n.state.OVNNB.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), true, routes...)
 		if err != nil {
 			return "", nil, err
 		}
@@ -3853,7 +3853,9 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			routePrefixes = append(routePrefixes, route.Prefix)
 		}
 
-		revert.Add(func() { _ = n.state.OVNNB.LogicalRouterRouteDelete(n.getRouterName(), routePrefixes...) })
+		revert.Add(func() {
+			_ = n.state.OVNNB.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), routePrefixes...)
+		})
 
 		// Add routes to internal switch's address set for ACL usage.
 		err = n.state.OVNNB.AddressSetAdd(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes...)
@@ -3897,12 +3899,12 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				})
 			}
 
-			err = n.state.OVNNB.LogicalRouterRouteAdd(targetRouterName, true, targetRouterRoutes...)
+			err = n.state.OVNNB.CreateLogicalRouterRoute(context.TODO(), targetRouterName, true, targetRouterRoutes...)
 			if err != nil {
 				return fmt.Errorf("Failed adding static routes to peer network %q in project %q: %w", targetOVNNet.Name(), targetOVNNet.Project(), err)
 			}
 
-			revert.Add(func() { _ = n.state.OVNNB.LogicalRouterRouteDelete(targetRouterName, routePrefixes...) })
+			revert.Add(func() { _ = n.state.OVNNB.DeleteLogicalRouterRoute(context.TODO(), targetRouterName, routePrefixes...) })
 
 			return nil
 		})
@@ -4161,7 +4163,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 
 	if len(removeRoutes) > 0 {
 		// Delete routes from local router.
-		err = n.state.OVNNB.LogicalRouterRouteDelete(n.getRouterName(), removeRoutes...)
+		err = n.state.OVNNB.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), removeRoutes...)
 		if err != nil {
 			return err
 		}
@@ -4175,7 +4177,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		// Delete routes from peer routers.
 		err = n.forPeers(func(targetOVNNet *ovn) error {
 			targetRouterName := targetOVNNet.getRouterName()
-			err = n.state.OVNNB.LogicalRouterRouteDelete(targetRouterName, removeRoutes...)
+			err = n.state.OVNNB.DeleteLogicalRouterRoute(context.TODO(), targetRouterName, removeRoutes...)
 			if err != nil {
 				return fmt.Errorf("Failed deleting static routes from peer network %q in project %q: %w", targetOVNNet.Name(), targetOVNNet.Project(), err)
 			}
@@ -4710,12 +4712,14 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 		}
 
 		if nexthop != nil {
-			err = n.state.OVNNB.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
+			err = n.state.OVNNB.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
 			if err != nil {
 				return err
 			}
 
-			revert.Add(func() { _ = n.state.OVNNB.LogicalRouterRouteDelete(n.getRouterName(), *listenAddressNet) })
+			revert.Add(func() {
+				_ = n.state.OVNNB.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
+			})
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
@@ -4872,7 +4876,7 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 			return err
 		}
 
-		_ = n.state.OVNNB.LogicalRouterRouteDelete(n.getRouterName(), *vip)
+		_ = n.state.OVNNB.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *vip)
 
 		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -5078,12 +5082,14 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 		}
 
 		if nexthop != nil {
-			err = n.state.OVNNB.LogicalRouterRouteAdd(n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
+			err = n.state.OVNNB.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
 			if err != nil {
 				return err
 			}
 
-			revert.Add(func() { _ = n.state.OVNNB.LogicalRouterRouteDelete(n.getRouterName(), *listenAddressNet) })
+			revert.Add(func() {
+				_ = n.state.OVNNB.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
+			})
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
@@ -5241,7 +5247,7 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 			return err
 		}
 
-		_ = n.state.OVNNB.LogicalRouterRouteDelete(n.getRouterName(), *vip)
+		_ = n.state.OVNNB.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *vip)
 
 		// Delete the database records.
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
