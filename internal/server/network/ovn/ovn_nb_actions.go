@@ -874,17 +874,6 @@ func (o *NB) UpdateLogicalRouterPort(ctx context.Context, portName OVNRouterPort
 	return nil
 }
 
-// LogicalRouterPortDeleteIPv6Advertisements removes the IPv6 RA announcement settings from a router port.
-func (o *NB) LogicalRouterPortDeleteIPv6Advertisements(portName OVNRouterPort) error {
-	// Delete IPv6 Router Advertisements.
-	_, err := o.nbctl("clear", "logical_router_port", string(portName), "ipv6_ra_configs")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // GetLogicalSwitch gets the OVN database record for the switch.
 func (o *NB) GetLogicalSwitch(ctx context.Context, switchName OVNSwitch) (*ovnNB.LogicalSwitch, error) {
 	logicalSwitch := &ovnNB.LogicalSwitch{
