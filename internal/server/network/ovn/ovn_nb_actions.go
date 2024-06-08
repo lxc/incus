@@ -557,20 +557,90 @@ func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 	return nil
 }
 
-// LogicalRouterRouteDelete deletes a static route from the logical router.
-func (o *NB) LogicalRouterRouteDelete(routerName OVNRouter, prefixes ...net.IPNet) error {
-	args := []string{}
-
-	// Delete specific destination routes on router.
-	for _, prefix := range prefixes {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		args = append(args, "--if-exists", "lr-route-del", string(routerName), prefix.String())
+// DeleteLogicalRouterRoute deletes a static route from the logical router.
+func (o *NB) DeleteLogicalRouterRoute(ctx context.Context, routerName OVNRouter, prefixes ...net.IPNet) error {
+	// Fetch the logical router.
+	logicalRouter := ovnNB.LogicalRouter{
+		Name: string(routerName),
 	}
 
-	_, err := o.nbctl(args...)
+	err := o.get(ctx, &logicalRouter)
+	if err != nil {
+		return err
+	}
+
+	// Get the existing routes.
+	existingRoutes := make([]ovnNB.LogicalRouterStaticRoute, 0, len(logicalRouter.StaticRoutes))
+	for _, uuid := range logicalRouter.StaticRoutes {
+		route := ovnNB.LogicalRouterStaticRoute{
+			UUID: uuid,
+		}
+
+		err = o.client.Get(ctx, &route)
+		if err != nil {
+			return err
+		}
+
+		existingRoutes = append(existingRoutes, route)
+	}
+
+	// Delete the requested routes.
+	operations := []ovsdb.Operation{}
+	for _, prefix := range prefixes {
+		var route ovnNB.LogicalRouterStaticRoute
+
+		// Look for a matching entry.
+		for _, existing := range existingRoutes {
+			// Normal CIDR entry.
+			if existing.IPPrefix == prefix.String() {
+				route = existing
+				break
+			}
+
+			// IP-only entry.
+			ones, bits := prefix.Mask.Size()
+			if ones == bits && existing.IPPrefix == prefix.IP.String() {
+				route = existing
+				break
+			}
+		}
+
+		if route.UUID == "" {
+			continue
+		}
+
+		// Delete the entry.
+		deleteOps, err := o.client.Where(&route).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+
+		// Remove from the router.
+		updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+			Field:   &logicalRouter.StaticRoutes,
+			Mutator: ovsdb.MutateOperationDelete,
+			Value:   []string{route.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -1930,7 +2000,7 @@ func (o *NB) DeleteChassisGroup(ctx context.Context, haChassisGroupName OVNChass
 		Name: string(haChassisGroupName),
 	}
 
-	err := o.client.Get(ctx, &haChassisGroup)
+	err := o.get(ctx, &haChassisGroup)
 	if err != nil {
 		// Already gone.
 		if err == ErrNotFound {
