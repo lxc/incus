@@ -424,6 +424,7 @@ var APIExtensions = []string{
 	"instance_access",
 	"project_access",
 	"projects_force_delete",
+	"resources_cpu_flags",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

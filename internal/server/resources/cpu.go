@@ -235,6 +235,9 @@ func GetCPU() (*api.ResourcesCPU, error) {
 		return nil, fmt.Errorf("Failed to list %q: %w", sysDevicesCPU, err)
 	}
 
+	// CPU flags
+	var flagList []string
+
 	// Process all entries
 	cpu.Total = 0
 	for _, entry := range entries {
@@ -308,7 +311,7 @@ func GetCPU() (*api.ResourcesCPU, error) {
 					}
 
 					// Check if we already have the data and seek to next
-					if resSocket.Vendor != "" && resSocket.Name != "" {
+					if resSocket.Vendor != "" && resSocket.Name != "" && len(flagList) > 0 {
 						continue
 					}
 
@@ -329,6 +332,11 @@ func GetCPU() (*api.ResourcesCPU, error) {
 
 					if key == "cpu" {
 						resSocket.Name = value
+						continue
+					}
+
+					if key == "flags" {
+						flagList = strings.SplitN(value, " ", -1)
 						continue
 					}
 				}
@@ -404,6 +412,9 @@ func GetCPU() (*api.ResourcesCPU, error) {
 
 			// Die number
 			resCore.Die = uint64(cpuDie)
+
+			// flag List
+			resCore.Flags = flagList
 
 			// Frequency
 			if sysfsExists(filepath.Join(entryPath, "cpufreq", "scaling_cur_freq")) {
