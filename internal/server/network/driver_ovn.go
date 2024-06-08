@@ -2447,7 +2447,7 @@ func (n *ovn) setup(update bool) error {
 			recursiveDNSServer = uplinkNet.dnsIPv6[0] // OVN only supports 1 RA DNS server.
 		}
 
-		err = n.state.OVNNB.LogicalRouterPortSetIPv6Advertisements(n.getRouterIntPortName(), &networkOVN.OVNIPv6RAOpts{
+		err = n.state.OVNNB.UpdateLogicalRouterPort(context.TODO(), n.getRouterIntPortName(), &networkOVN.OVNIPv6RAOpts{
 			AddressMode:        adressMode,
 			SendPeriodic:       true,
 			DNSSearchList:      n.getDNSSearchList(),
@@ -2463,7 +2463,7 @@ func (n *ovn) setup(update bool) error {
 			return fmt.Errorf("Failed setting internal router port IPv6 advertisement settings: %w", err)
 		}
 	} else {
-		err = n.state.OVNNB.LogicalRouterPortDeleteIPv6Advertisements(n.getRouterIntPortName())
+		err = n.state.OVNNB.UpdateLogicalRouterPort(context.TODO(), n.getRouterIntPortName(), &networkOVN.OVNIPv6RAOpts{})
 		if err != nil {
 			return fmt.Errorf("Failed removing internal router port IPv6 advertisement settings: %w", err)
 		}
