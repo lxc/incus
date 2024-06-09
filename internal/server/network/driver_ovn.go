@@ -2105,7 +2105,7 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		if !update {
-			revert.Add(func() { _ = n.state.OVNNB.LogicalSwitchDelete(n.getExtSwitchName()) })
+			revert.Add(func() { _ = n.state.OVNNB.DeleteLogicalSwitch(context.TODO(), n.getExtSwitchName()) })
 		}
 
 		// Create external router port.
@@ -2308,7 +2308,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	if !update {
-		revert.Add(func() { _ = n.state.OVNNB.LogicalSwitchDelete(n.getIntSwitchName()) })
+		revert.Add(func() { _ = n.state.OVNNB.DeleteLogicalSwitch(context.TODO(), n.getIntSwitchName()) })
 	}
 
 	// Setup IP allocation config on logical switch.
@@ -2720,12 +2720,12 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 			return err
 		}
 
-		err = n.state.OVNNB.LogicalSwitchDelete(n.getExtSwitchName())
+		err = n.state.OVNNB.DeleteLogicalSwitch(context.TODO(), n.getExtSwitchName())
 		if err != nil {
 			return err
 		}
 
-		err = n.state.OVNNB.LogicalSwitchDelete(n.getIntSwitchName())
+		err = n.state.OVNNB.DeleteLogicalSwitch(context.TODO(), n.getIntSwitchName())
 		if err != nil {
 			return err
 		}

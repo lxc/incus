@@ -929,67 +929,94 @@ func (o *NB) CreateLogicalSwitch(ctx context.Context, switchName OVNSwitch, mayE
 	return nil
 }
 
-// LogicalSwitchDelete deletes a named logical switch.
-func (o *NB) LogicalSwitchDelete(switchName OVNSwitch) error {
-	args := []string{"--if-exists", "ls-del", string(switchName)}
+// DeleteLogicalSwitch deletes a named logical switch.
+func (o *NB) DeleteLogicalSwitch(ctx context.Context, switchName OVNSwitch) error {
+	ls := ovnNB.LogicalSwitch{
+		Name: string(switchName),
+	}
 
-	assocPortGroups, err := o.logicalSwitchFindAssociatedPortGroups(switchName)
+	// Check if the switch exists.
+	err := o.get(ctx, &ls)
 	if err != nil {
 		return err
 	}
 
-	for _, assocPortGroup := range assocPortGroups {
-		args = append(args, "--", "destroy", "port_group", string(assocPortGroup))
-	}
+	// Delete the switch itself.
+	operations := []ovsdb.Operation{}
 
-	_, err = o.nbctl(args...)
+	deleteOps, err := o.client.Where(&ls).Delete()
 	if err != nil {
 		return err
 	}
 
-	// Remove any existing DHCP options associated to switch.
-	deleteDHCPRecords, err := o.LogicalSwitchDHCPOptionsGet(switchName)
+	operations = append(operations, deleteOps...)
+
+	// Delete all associated port groups.
+	portGroups := []ovnNB.PortGroup{}
+	err = o.client.WhereCache(func(pg *ovnNB.PortGroup) bool {
+		return pg.ExternalIDs != nil && pg.ExternalIDs[ovnExtIDIncusSwitch] == string(switchName)
+	}).List(ctx, &portGroups)
 	if err != nil {
 		return err
 	}
 
-	if len(deleteDHCPRecords) > 0 {
-		deleteDHCPUUIDs := make([]OVNDHCPOptionsUUID, 0, len(deleteDHCPRecords))
-		for _, deleteDHCPRecord := range deleteDHCPRecords {
-			deleteDHCPUUIDs = append(deleteDHCPUUIDs, deleteDHCPRecord.UUID)
-		}
-
-		err = o.LogicalSwitchDHCPOptionsDelete(switchName, deleteDHCPUUIDs...)
+	for _, pg := range portGroups {
+		deleteOps, err := o.client.Where(&pg).Delete()
 		if err != nil {
 			return err
 		}
+
+		operations = append(operations, deleteOps...)
 	}
 
-	err = o.logicalSwitchDNSRecordsDelete(switchName)
+	// Delete all associated DHCP options.
+	dhcpOptions := []ovnNB.DHCPOptions{}
+	err = o.client.WhereCache(func(do *ovnNB.DHCPOptions) bool {
+		return do.ExternalIDs != nil && do.ExternalIDs[ovnExtIDIncusSwitch] == string(switchName)
+	}).List(ctx, &dhcpOptions)
+	if err != nil {
+		return err
+	}
+
+	for _, do := range dhcpOptions {
+		deleteOps, err := o.client.Where(&do).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+	}
+
+	// Delete all associated DNS records.
+	dnsRecords := []ovnNB.DNS{}
+	err = o.client.WhereCache(func(dr *ovnNB.DNS) bool {
+		return dr.ExternalIDs != nil && dr.ExternalIDs[ovnExtIDIncusSwitch] == string(switchName)
+	}).List(ctx, &dnsRecords)
+	if err != nil {
+		return err
+	}
+
+	for _, dr := range dnsRecords {
+		deleteOps, err := o.client.Where(&dr).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// logicalSwitchFindAssociatedPortGroups finds the port groups that are associated to the switch specified.
-func (o *NB) logicalSwitchFindAssociatedPortGroups(switchName OVNSwitch) ([]OVNPortGroup, error) {
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "port_group",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
-	portGroups := make([]OVNPortGroup, 0, len(lines))
-
-	for _, line := range lines {
-		portGroups = append(portGroups, OVNPortGroup(line))
-	}
-
-	return portGroups, nil
 }
 
 // logicalSwitchParseExcludeIPs parses the ips into OVN exclude_ips format.
@@ -1324,35 +1351,6 @@ func (o *NB) LogicalSwitchDHCPOptionsDelete(switchName OVNSwitch, uuids ...OVNDH
 	_, err := o.nbctl(args...)
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// logicalSwitchDNSRecordsDelete deletes any DNS records defined for a switch.
-func (o *NB) logicalSwitchDNSRecordsDelete(switchName OVNSwitch) error {
-	uuids, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid", "find", "dns",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-	)
-	if err != nil {
-		return err
-	}
-
-	args := []string{}
-
-	for _, uuid := range util.SplitNTrimSpace(strings.TrimSpace(uuids), "\n", -1, true) {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		args = append(args, "destroy", "dns", uuid)
-	}
-
-	if len(args) > 0 {
-		_, err = o.nbctl(args...)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
