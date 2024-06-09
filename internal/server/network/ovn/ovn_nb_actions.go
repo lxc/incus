@@ -1019,25 +1019,6 @@ func (o *NB) DeleteLogicalSwitch(ctx context.Context, switchName OVNSwitch) erro
 	return nil
 }
 
-// logicalSwitchFindAssociatedPortGroups finds the port groups that are associated to the switch specified.
-func (o *NB) logicalSwitchFindAssociatedPortGroups(switchName OVNSwitch) ([]OVNPortGroup, error) {
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "port_group",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
-	portGroups := make([]OVNPortGroup, 0, len(lines))
-
-	for _, line := range lines {
-		portGroups = append(portGroups, OVNPortGroup(line))
-	}
-
-	return portGroups, nil
-}
-
 // logicalSwitchParseExcludeIPs parses the ips into OVN exclude_ips format.
 func (o *NB) logicalSwitchParseExcludeIPs(ips []iprange.Range) ([]string, error) {
 	excludeIPs := make([]string, 0, len(ips))
