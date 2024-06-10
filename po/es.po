@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-06-02 16:00-0400\n"
+"POT-Creation-Date: 2024-06-10 16:04-0400\n"
 "PO-Revision-Date: 2023-06-16 20:55+0000\n"
 "Last-Translator: Francisco Serrador <fserrador@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/linux-containers/"
@@ -350,12 +350,22 @@ msgid ""
 "### config:\n"
 "###   target_address: 198.51.100.2\n"
 "### description: test desc\n"
+"### backends:\n"
+"### - name: backend1\n"
+"###   description: First backend server\n"
+"###   target_address: 192.0.3.1\n"
+"###   target_port: 80\n"
+"### - name: backend2\n"
+"###   description: Second backend server\n"
+"###   target_address: 192.0.3.2\n"
+"###   target_port: 80\n"
 "### ports:\n"
 "### - description: port forward\n"
 "###   protocol: tcp\n"
 "###   listen_port: 80,81,8080-8090\n"
-"###   target_address: 198.51.100.3\n"
-"###   target_port: 80,81,8080-8090\n"
+"###   target_backend:\n"
+"###    - backend1\n"
+"###    - backend2\n"
 "### location: server01\n"
 "###\n"
 "### Note that the listen_address and location cannot be changed."
@@ -647,11 +657,11 @@ msgstr "- Puerto %d (%s)"
 msgid "--console can't be used while forcing instance shutdown"
 msgstr "--container-only no se puede pasar cuando la fuente es una instantánea"
 
-#: cmd/incus/action.go:415
+#: cmd/incus/action.go:430
 msgid "--console can't be used with --all"
 msgstr ""
 
-#: cmd/incus/action.go:419
+#: cmd/incus/action.go:434
 #, fuzzy
 msgid "--console only works with a single instance"
 msgstr "Perfil para aplicar al nuevo contenedor"
@@ -824,11 +834,11 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Add a network zone record entry"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:807
+#: cmd/incus/network_load_balancer.go:817
 msgid "Add backend to a load balancer"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:806
+#: cmd/incus/network_load_balancer.go:816
 msgid "Add backends to a load balancer"
 msgstr ""
 
@@ -895,8 +905,8 @@ msgstr ""
 msgid "Add ports to a forward"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:995
-#: cmd/incus/network_load_balancer.go:996
+#: cmd/incus/network_load_balancer.go:1005
+#: cmd/incus/network_load_balancer.go:1006
 msgid "Add ports to a load balancer"
 msgstr ""
 
@@ -1012,7 +1022,7 @@ msgstr ""
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 
-#: cmd/incus/console.go:379
+#: cmd/incus/console.go:380
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 
@@ -1155,7 +1165,7 @@ msgstr "Propiedad mala: %s"
 msgid "Bond:"
 msgstr ""
 
-#: cmd/incus/action.go:187 cmd/incus/action.go:371
+#: cmd/incus/action.go:187 cmd/incus/action.go:386
 #, fuzzy
 msgid "Both --all and instance name given"
 msgstr "Ambas: todas y el nombre del contenedor dado"
@@ -1198,7 +1208,7 @@ msgstr ""
 msgid "COUNT"
 msgstr ""
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 #, fuzzy
 msgid "CPU TIME(s)"
 msgstr "CPU (%s):"
@@ -1465,11 +1475,11 @@ msgstr "Perfil %s eliminado de %s"
 #: cmd/incus/network_load_balancer.go:261
 #: cmd/incus/network_load_balancer.go:432
 #: cmd/incus/network_load_balancer.go:567
-#: cmd/incus/network_load_balancer.go:722
-#: cmd/incus/network_load_balancer.go:810
-#: cmd/incus/network_load_balancer.go:886
-#: cmd/incus/network_load_balancer.go:999
-#: cmd/incus/network_load_balancer.go:1073 cmd/incus/storage.go:108
+#: cmd/incus/network_load_balancer.go:732
+#: cmd/incus/network_load_balancer.go:820
+#: cmd/incus/network_load_balancer.go:896
+#: cmd/incus/network_load_balancer.go:1009
+#: cmd/incus/network_load_balancer.go:1083 cmd/incus/storage.go:108
 #: cmd/incus/storage.go:405 cmd/incus/storage.go:488 cmd/incus/storage.go:832
 #: cmd/incus/storage.go:934 cmd/incus/storage.go:1027
 #: cmd/incus/storage_bucket.go:103 cmd/incus/storage_bucket.go:203
@@ -1555,7 +1565,7 @@ msgstr ""
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:483 cmd/incus/network.go:778 cmd/incus/network_acl.go:714
 #: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:312
-#: cmd/incus/network_load_balancer.go:686 cmd/incus/network_peer.go:729
+#: cmd/incus/network_load_balancer.go:696 cmd/incus/network_peer.go:729
 #: cmd/incus/network_zone.go:637 cmd/incus/network_zone.go:1332
 #: cmd/incus/profile.go:600 cmd/incus/project.go:399 cmd/incus/storage.go:368
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1157
@@ -1899,7 +1909,7 @@ msgstr ""
 msgid "DESCRIPTION"
 msgstr "DESCRIPCIÓN"
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "DISK"
 msgstr ""
 
@@ -1938,7 +1948,7 @@ msgstr ""
 msgid "Define a compression algorithm: for backup or none"
 msgstr ""
 
-#: cmd/incus/top.go:295
+#: cmd/incus/top.go:354
 msgid "Delay:"
 msgstr ""
 
@@ -1997,8 +2007,8 @@ msgstr ""
 msgid "Delete network integrations"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:718
-#: cmd/incus/network_load_balancer.go:719
+#: cmd/incus/network_load_balancer.go:728
+#: cmd/incus/network_load_balancer.go:729
 #, fuzzy
 msgid "Delete network load balancers"
 msgstr "Perfil %s creado"
@@ -2132,13 +2142,13 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:424
 #: cmd/incus/network_load_balancer.go:534
 #: cmd/incus/network_load_balancer.go:564
-#: cmd/incus/network_load_balancer.go:719
-#: cmd/incus/network_load_balancer.go:792
-#: cmd/incus/network_load_balancer.go:807
-#: cmd/incus/network_load_balancer.go:883
-#: cmd/incus/network_load_balancer.go:981
-#: cmd/incus/network_load_balancer.go:996
-#: cmd/incus/network_load_balancer.go:1069 cmd/incus/network_peer.go:28
+#: cmd/incus/network_load_balancer.go:729
+#: cmd/incus/network_load_balancer.go:802
+#: cmd/incus/network_load_balancer.go:817
+#: cmd/incus/network_load_balancer.go:893
+#: cmd/incus/network_load_balancer.go:991
+#: cmd/incus/network_load_balancer.go:1006
+#: cmd/incus/network_load_balancer.go:1079 cmd/incus/network_peer.go:28
 #: cmd/incus/network_peer.go:81 cmd/incus/network_peer.go:174
 #: cmd/incus/network_peer.go:245 cmd/incus/network_peer.go:391
 #: cmd/incus/network_peer.go:476 cmd/incus/network_peer.go:578
@@ -2197,7 +2207,7 @@ msgstr ""
 #: cmd/incus/storage_volume.go:2536 cmd/incus/storage_volume.go:2542
 #: cmd/incus/storage_volume.go:2660 cmd/incus/storage_volume.go:2747
 #: cmd/incus/storage_volume.go:2827 cmd/incus/storage_volume.go:2923
-#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:30 cmd/incus/version.go:22
+#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:33 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:358
 msgid "Description"
@@ -2296,7 +2306,7 @@ msgstr "Perfil para aplicar al nuevo contenedor"
 msgid "Directory import is not available on this platform"
 msgstr "El directorio importado no está disponible en esta plataforma"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:66
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
@@ -2304,11 +2314,11 @@ msgstr ""
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 
-#: cmd/incus/exec.go:63
+#: cmd/incus/exec.go:62
 msgid "Disable pseudo-terminal allocation"
 msgstr ""
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:63
 msgid "Disable stdin (reads from /dev/null)"
 msgstr ""
 
@@ -2339,7 +2349,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Display images from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/list.go:136
+#: cmd/incus/list.go:136 cmd/incus/top.go:36
 #, fuzzy
 msgid "Display instances from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -2354,7 +2364,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Display profiles from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/top.go:29
+#: cmd/incus/top.go:32
 msgid "Display resource usage info per instance"
 msgstr ""
 
@@ -2363,7 +2373,7 @@ msgstr ""
 msgid "Display storage pool buckets from all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/top.go:30
+#: cmd/incus/top.go:33
 msgid "Displays CPU usage, memory usage, and disk usage per instance"
 msgstr ""
 
@@ -2558,13 +2568,13 @@ msgid ""
 "  for the address if not yet set."
 msgstr ""
 
-#: cmd/incus/top.go:163
+#: cmd/incus/top.go:184
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
 
-#: cmd/incus/top.go:144
+#: cmd/incus/top.go:165
 msgid "Enter new delay in seconds:"
 msgstr ""
 
@@ -2572,7 +2582,7 @@ msgstr ""
 msgid "Entry TTL"
 msgstr ""
 
-#: cmd/incus/exec.go:60
+#: cmd/incus/exec.go:59
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr ""
 
@@ -2902,7 +2912,7 @@ msgstr "Acepta certificado"
 msgid "Failed parsing validation response: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/console.go:357
+#: cmd/incus/console.go:358
 #, fuzzy, c-format
 msgid "Failed starting command: %w"
 msgstr "Acepta certificado"
@@ -3169,7 +3179,7 @@ msgstr ""
 msgid "Force evacuation without user confirmation"
 msgstr ""
 
-#: cmd/incus/exec.go:62
+#: cmd/incus/exec.go:61
 msgid "Force pseudo-terminal allocation"
 msgstr ""
 
@@ -3446,7 +3456,7 @@ msgstr ""
 msgid "Given target %q does not match source volume location %q"
 msgstr ""
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:65
 msgid "Group ID to run the command as (default 0)"
 msgstr ""
 
@@ -3505,7 +3515,7 @@ msgstr ""
 msgid "IMAGES"
 msgstr ""
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "INSTANCE NAME"
 msgstr ""
 
@@ -3806,7 +3816,7 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Invalid format: %s"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/top.go:155
+#: cmd/incus/top.go:176
 msgid "Invalid input, please enter a positive number"
 msgstr ""
 
@@ -3872,12 +3882,12 @@ msgstr ""
 msgid "Invalid snapshot name"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/top.go:239
+#: cmd/incus/top.go:277
 #, fuzzy
 msgid "Invalid sorting type"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/top.go:184
+#: cmd/incus/top.go:205
 #, fuzzy
 msgid "Invalid sorting type provided"
 msgstr "Nombre del contenedor es: %s"
@@ -4524,7 +4534,7 @@ msgstr ""
 msgid "MEMBERS"
 msgstr ""
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "MEMORY"
 msgstr ""
 
@@ -4667,14 +4677,14 @@ msgstr ""
 msgid "Manage network integrations"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/network_load_balancer.go:791
-#: cmd/incus/network_load_balancer.go:792
+#: cmd/incus/network_load_balancer.go:801
+#: cmd/incus/network_load_balancer.go:802
 #, fuzzy
 msgid "Manage network load balancer backends"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/network_load_balancer.go:980
-#: cmd/incus/network_load_balancer.go:981
+#: cmd/incus/network_load_balancer.go:990
+#: cmd/incus/network_load_balancer.go:991
 #, fuzzy
 msgid "Manage network load balancer ports"
 msgstr "Nombre del contenedor es: %s"
@@ -4893,12 +4903,12 @@ msgstr "Nombre del contenedor es: %s"
 #: cmd/incus/network_load_balancer.go:286
 #: cmd/incus/network_load_balancer.go:384
 #: cmd/incus/network_load_balancer.go:469
-#: cmd/incus/network_load_balancer.go:627
-#: cmd/incus/network_load_balancer.go:759
-#: cmd/incus/network_load_balancer.go:847
-#: cmd/incus/network_load_balancer.go:923
-#: cmd/incus/network_load_balancer.go:1036
-#: cmd/incus/network_load_balancer.go:1110
+#: cmd/incus/network_load_balancer.go:637
+#: cmd/incus/network_load_balancer.go:769
+#: cmd/incus/network_load_balancer.go:857
+#: cmd/incus/network_load_balancer.go:933
+#: cmd/incus/network_load_balancer.go:1046
+#: cmd/incus/network_load_balancer.go:1120
 #, fuzzy
 msgid "Missing listen address"
 msgstr "Nombre del contenedor es: %s"
@@ -4941,12 +4951,12 @@ msgstr "Nombre del contenedor es: %s"
 #: cmd/incus/network_load_balancer.go:282
 #: cmd/incus/network_load_balancer.go:380
 #: cmd/incus/network_load_balancer.go:465
-#: cmd/incus/network_load_balancer.go:623
-#: cmd/incus/network_load_balancer.go:755
-#: cmd/incus/network_load_balancer.go:843
-#: cmd/incus/network_load_balancer.go:919
-#: cmd/incus/network_load_balancer.go:1032
-#: cmd/incus/network_load_balancer.go:1106 cmd/incus/network_peer.go:118
+#: cmd/incus/network_load_balancer.go:633
+#: cmd/incus/network_load_balancer.go:765
+#: cmd/incus/network_load_balancer.go:853
+#: cmd/incus/network_load_balancer.go:929
+#: cmd/incus/network_load_balancer.go:1042
+#: cmd/incus/network_load_balancer.go:1116 cmd/incus/network_peer.go:118
 #: cmd/incus/network_peer.go:208 cmd/incus/network_peer.go:291
 #: cmd/incus/network_peer.go:432 cmd/incus/network_peer.go:516
 #: cmd/incus/network_peer.go:675 cmd/incus/network_peer.go:796
@@ -5114,7 +5124,7 @@ msgstr ""
 msgid "Moving the storage volume: %s"
 msgstr ""
 
-#: cmd/incus/network_forward.go:1008 cmd/incus/network_load_balancer.go:1154
+#: cmd/incus/network_forward.go:1008 cmd/incus/network_load_balancer.go:1164
 msgid "Multiple ports match. Use --force to remove them all"
 msgstr ""
 
@@ -5341,7 +5351,7 @@ msgstr "Perfil %s renombrado a %s"
 msgid "Network load balancer %s created"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_load_balancer.go:776
+#: cmd/incus/network_load_balancer.go:786
 #, fuzzy, c-format
 msgid "Network load balancer %s deleted"
 msgstr "Perfil %s eliminado"
@@ -5424,11 +5434,11 @@ msgstr ""
 msgid "No device found for this storage volume"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:954
+#: cmd/incus/network_load_balancer.go:964
 msgid "No matching backend found"
 msgstr ""
 
-#: cmd/incus/network_forward.go:1019 cmd/incus/network_load_balancer.go:1165
+#: cmd/incus/network_forward.go:1019 cmd/incus/network_load_balancer.go:1175
 msgid "No matching port(s) found"
 msgstr ""
 
@@ -5526,7 +5536,7 @@ msgstr ""
 msgid "Override the source project"
 msgstr ""
 
-#: cmd/incus/exec.go:61
+#: cmd/incus/exec.go:60
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr ""
 
@@ -5571,7 +5581,8 @@ msgstr ""
 #: cmd/incus/image.go:1122 cmd/incus/list.go:576 cmd/incus/network.go:1068
 #: cmd/incus/network_acl.go:174 cmd/incus/network_zone.go:165
 #: cmd/incus/profile.go:746 cmd/incus/storage_bucket.go:548
-#: cmd/incus/storage_volume.go:1687 cmd/incus/warning.go:213
+#: cmd/incus/storage_volume.go:1687 cmd/incus/top.go:341
+#: cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr ""
 
@@ -5669,15 +5680,15 @@ msgstr ""
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
 
-#: cmd/incus/top.go:291
+#: cmd/incus/top.go:350
 msgid "Press 'd' + ENTER to change delay"
 msgstr ""
 
-#: cmd/incus/top.go:292
+#: cmd/incus/top.go:351
 msgid "Press 's' + ENTER to change sorting method"
 msgstr ""
 
-#: cmd/incus/top.go:293
+#: cmd/incus/top.go:352
 msgid "Press CTRL-C to exit"
 msgstr ""
 
@@ -5691,7 +5702,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
 #: cmd/incus/network.go:779 cmd/incus/network_acl.go:715
 #: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:313
-#: cmd/incus/network_load_balancer.go:687 cmd/incus/network_peer.go:730
+#: cmd/incus/network_load_balancer.go:697 cmd/incus/network_peer.go:730
 #: cmd/incus/network_zone.go:638 cmd/incus/network_zone.go:1333
 #: cmd/incus/profile.go:601 cmd/incus/project.go:400 cmd/incus/storage.go:369
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1158
@@ -6124,7 +6135,7 @@ msgstr "Perfil %s creado"
 msgid "Remove aliases"
 msgstr ""
 
-#: cmd/incus/network_forward.go:920 cmd/incus/network_load_balancer.go:1070
+#: cmd/incus/network_forward.go:920 cmd/incus/network_load_balancer.go:1080
 msgid "Remove all ports that match"
 msgstr ""
 
@@ -6132,12 +6143,12 @@ msgstr ""
 msgid "Remove all rules that match"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:883
+#: cmd/incus/network_load_balancer.go:893
 #, fuzzy
 msgid "Remove backend from a load balancer"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_load_balancer.go:882
+#: cmd/incus/network_load_balancer.go:892
 #, fuzzy
 msgid "Remove backends from a load balancer"
 msgstr "Nombre del Miembro del Cluster"
@@ -6158,8 +6169,8 @@ msgstr ""
 msgid "Remove ports from a forward"
 msgstr ""
 
-#: cmd/incus/network_load_balancer.go:1068
-#: cmd/incus/network_load_balancer.go:1069
+#: cmd/incus/network_load_balancer.go:1078
+#: cmd/incus/network_load_balancer.go:1079
 #, fuzzy
 msgid "Remove ports from a load balancer"
 msgstr "Nombre del Miembro del Cluster"
@@ -7047,12 +7058,12 @@ msgstr ""
 msgid "Socket %d:"
 msgstr ""
 
-#: cmd/incus/action.go:448
+#: cmd/incus/action.go:463
 #, fuzzy, c-format
 msgid "Some instances failed to %s"
 msgstr "Dispositivo %s añadido a %s"
 
-#: cmd/incus/top.go:296
+#: cmd/incus/top.go:355
 msgid "Sorting Method:"
 msgstr ""
 
@@ -7075,7 +7086,7 @@ msgstr ""
 msgid "Started: %s"
 msgstr "Auto actualización: %s"
 
-#: cmd/incus/launch.go:99
+#: cmd/incus/launch.go:114
 #, c-format
 msgid "Starting %s"
 msgstr ""
@@ -7299,7 +7310,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr ""
 
-#: cmd/incus/console.go:126
+#: cmd/incus/console.go:130
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
@@ -7330,7 +7341,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:378
+#: cmd/incus/console.go:379
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -7576,7 +7587,7 @@ msgstr ""
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
-#: cmd/incus/console.go:210
+#: cmd/incus/console.go:217
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
@@ -7651,7 +7662,7 @@ msgstr ""
 msgid "Trust token for %s: "
 msgstr "Contraseña admin para %s: "
 
-#: cmd/incus/action.go:334 cmd/incus/launch.go:131
+#: cmd/incus/action.go:334 cmd/incus/launch.go:146
 #, c-format
 msgid "Try `incus info --show-log %s` for more info"
 msgstr ""
@@ -7761,7 +7772,7 @@ msgstr ""
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:159
+#: cmd/incus/console.go:160
 #, c-format
 msgid "Unknown console type %q"
 msgstr ""
@@ -7968,7 +7979,7 @@ msgstr ""
 msgid "Update the target profile from the source if it already exists"
 msgstr ""
 
-#: cmd/incus/top.go:120
+#: cmd/incus/top.go:141
 #, c-format
 msgid "Updated interval to %v"
 msgstr ""
@@ -8002,7 +8013,7 @@ msgstr ""
 msgid "Used: %v"
 msgstr ""
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:64
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
@@ -8228,11 +8239,11 @@ msgstr ""
 msgid "You are currently missing the following:"
 msgstr ""
 
-#: cmd/incus/exec.go:107
+#: cmd/incus/exec.go:106
 msgid "You can't pass -t and -T at the same time"
 msgstr ""
 
-#: cmd/incus/exec.go:111
+#: cmd/incus/exec.go:110
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr ""
 
@@ -8648,17 +8659,17 @@ msgstr "No se puede proveer el nombre del container a la lista"
 #: cmd/incus/network_forward.go:172 cmd/incus/network_forward.go:593
 #: cmd/incus/network_forward.go:746 cmd/incus/network_load_balancer.go:175
 #: cmd/incus/network_load_balancer.go:562
-#: cmd/incus/network_load_balancer.go:716
+#: cmd/incus/network_load_balancer.go:726
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_load_balancer.go:881
+#: cmd/incus/network_load_balancer.go:891
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> <backend_name>"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_load_balancer.go:805
+#: cmd/incus/network_load_balancer.go:815
 #, fuzzy
 msgid ""
 "[<remote>:]<network> <listen_address> <backend_name> <target_address> "
@@ -8677,7 +8688,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "[<remote>:]<network> <listen_address> <key>=<value>..."
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_load_balancer.go:994
+#: cmd/incus/network_load_balancer.go:1004
 #, fuzzy
 msgid ""
 "[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> "
@@ -8690,7 +8701,7 @@ msgid ""
 "<target_address> [<target_port(s)>]"
 msgstr ""
 
-#: cmd/incus/network_forward.go:917 cmd/incus/network_load_balancer.go:1067
+#: cmd/incus/network_forward.go:917 cmd/incus/network_load_balancer.go:1077
 #, fuzzy
 msgid "[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -9056,7 +9067,7 @@ msgstr ""
 msgid "enabled"
 msgstr ""
 
-#: cmd/incus/action.go:440
+#: cmd/incus/action.go:455
 #, c-format
 msgid "error: %v"
 msgstr ""
