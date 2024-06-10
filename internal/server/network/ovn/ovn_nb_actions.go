@@ -1590,10 +1590,8 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 	return nil
 }
 
-// LogicalSwitchPortIPs returns a list of IPs for a switch port.
-func (o *NB) LogicalSwitchPortIPs(portName OVNSwitchPort) ([]net.IP, error) {
-	ctx := context.TODO()
-
+// GetLogicalSwitchPortIPs returns a list of IPs for a switch port.
+func (o *NB) GetLogicalSwitchPortIPs(ctx context.Context, portName OVNSwitchPort) ([]net.IP, error) {
 	lsp := ovnNB.LogicalSwitchPort{
 		Name: string(portName),
 	}
@@ -1625,10 +1623,8 @@ func (o *NB) LogicalSwitchPortIPs(portName OVNSwitchPort) ([]net.IP, error) {
 	return addresses, nil
 }
 
-// LogicalSwitchPortDynamicIPs returns a list of dynamc IPs for a switch port.
-func (o *NB) LogicalSwitchPortDynamicIPs(portName OVNSwitchPort) ([]net.IP, error) {
-	ctx := context.TODO()
-
+// GetLogicalSwitchPortDynamicIPs returns a list of dynamc IPs for a switch port.
+func (o *NB) GetLogicalSwitchPortDynamicIPs(ctx context.Context, portName OVNSwitchPort) ([]net.IP, error) {
 	lsp := &ovnNB.LogicalSwitchPort{
 		Name: string(portName),
 	}
@@ -2117,11 +2113,9 @@ func (o *NB) SetChassisGroupPriority(ctx context.Context, haChassisGroupName OVN
 	return nil
 }
 
-// PortGroupInfo returns the port group UUID or empty string if port doesn't exist, and whether the port group has
+// GetPortGroupInfo returns the port group UUID or empty string if port doesn't exist, and whether the port group has
 // any ACL rules defined on it.
-func (o *NB) PortGroupInfo(portGroupName OVNPortGroup) (OVNPortGroupUUID, bool, error) {
-	ctx := context.TODO()
-
+func (o *NB) GetPortGroupInfo(ctx context.Context, portGroupName OVNPortGroup) (OVNPortGroupUUID, bool, error) {
 	pg := &ovnNB.PortGroup{
 		Name: string(portGroupName),
 	}
