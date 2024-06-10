@@ -1669,14 +1669,27 @@ func (o *NB) GetLogicalSwitchPortDynamicIPs(ctx context.Context, portName OVNSwi
 	return dynamicIPs, nil
 }
 
-// LogicalSwitchPortLocationGet returns the last set location of a logical switch port.
-func (o *NB) LogicalSwitchPortLocationGet(portName OVNSwitchPort) (string, error) {
-	location, err := o.nbctl("--if-exists", "get", "logical_switch_port", string(portName), fmt.Sprintf("external-ids:%s", ovnExtIDIncusLocation))
+// GetLogicalSwitchPortLocation returns the last set location of a logical switch port.
+func (o *NB) GetLogicalSwitchPortLocation(ctx context.Context, portName OVNSwitchPort) (string, error) {
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, &lsp)
 	if err != nil {
 		return "", err
 	}
 
-	return strings.TrimSpace(location), nil
+	if lsp.ExternalIDs == nil {
+		return "", ErrNotFound
+	}
+
+	val, ok := lsp.ExternalIDs[ovnExtIDIncusLocation]
+	if !ok {
+		return "", ErrNotFound
+	}
+
+	return val, nil
 }
 
 // LogicalSwitchPortOptionsSet sets the options for a logical switch port.
