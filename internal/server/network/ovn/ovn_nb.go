@@ -55,6 +55,7 @@ func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 
 	// Add some missing indexes.
 	dbSchema.SetIndexes(map[string][]ovsdbModel.ClientIndex{
+		"Load_Balancer":       {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
 		"Logical_Router":      {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
 		"Logical_Switch":      {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
 		"Logical_Switch_Port": {{Columns: []ovsdbModel.ColumnKey{{Column: "name"}}}},
@@ -189,6 +190,9 @@ func (o *NB) get(ctx context.Context, m ovsdbModel.Model) error {
 
 	// Check if one of the broken types.
 	switch m.(type) {
+	case *ovnNB.LoadBalancer:
+		s := []ovnNB.LoadBalancer{}
+		collection = &s
 	case *ovnNB.LogicalRouter:
 		s := []ovnNB.LogicalRouter{}
 		collection = &s
