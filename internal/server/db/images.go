@@ -23,6 +23,7 @@ var ImageSourceProtocol = map[int]string{
 	0: "incus",
 	1: "direct",
 	2: "simplestreams",
+	3: "oci",
 }
 
 // GetLocalImagesFingerprints returns the fingerprints of all local images.

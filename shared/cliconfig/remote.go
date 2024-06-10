@@ -189,6 +189,16 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 		return d, nil
 	}
 
+	// HTTPs (OCI)
+	if remote.Protocol == "oci" {
+		d, err := incus.ConnectOCI(remote.Addr, args)
+		if err != nil {
+			return nil, err
+		}
+
+		return d, nil
+	}
+
 	// HTTPs (public)
 	if remote.Public {
 		d, err := incus.ConnectPublicIncus(remote.Addr, args)
