@@ -1336,19 +1336,36 @@ func (o *NB) LogicalSwitchDHCPOptionsGet(switchName OVNSwitch) ([]OVNDHCPOptsSet
 	return dhcpOpts, nil
 }
 
-// LogicalSwitchDHCPOptionsDelete deletes the specified DHCP options defined for a switch.
-func (o *NB) LogicalSwitchDHCPOptionsDelete(switchName OVNSwitch, uuids ...OVNDHCPOptionsUUID) error {
-	args := []string{}
+// DeleteLogicalSwitchDHCPOption deletes the specified DHCP options defined for a switch.
+func (o *NB) DeleteLogicalSwitchDHCPOption(ctx context.Context, switchName OVNSwitch, uuids ...OVNDHCPOptionsUUID) error {
+	operations := []ovsdb.Operation{}
 
+	// Prepare deletion requests.
 	for _, uuid := range uuids {
-		if len(args) > 0 {
-			args = append(args, "--")
+		dhcpOption := ovnNB.DHCPOptions{
+			UUID: string(uuid),
 		}
 
-		args = append(args, "destroy", "dhcp_options", string(uuid))
+		deleteOps, err := o.client.Where(&dhcpOption).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
 	}
 
-	_, err := o.nbctl(args...)
+	// Check if there's anything to do.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
