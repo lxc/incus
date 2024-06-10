@@ -2715,58 +2715,37 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	}
 
 	if clientType == request.ClientTypeNormal {
+		// Delete the router and anything tied to it (router ports, static routes, policies, nat, ...).
 		err = n.state.OVNNB.DeleteLogicalRouter(context.TODO(), n.getRouterName())
 		if err != nil {
 			return err
 		}
 
+		// Delete the external logical switch and anything tied to it (ports, ...).
 		err = n.state.OVNNB.DeleteLogicalSwitch(context.TODO(), n.getExtSwitchName())
 		if err != nil {
 			return err
 		}
 
+		// Delete the internal logical switch and anything tied to it (ports, ...).
 		err = n.state.OVNNB.DeleteLogicalSwitch(context.TODO(), n.getIntSwitchName())
 		if err != nil {
 			return err
 		}
 
+		// Delete any related address sets.
 		err = n.state.OVNNB.AddressSetDelete(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
 		if err != nil {
 			return err
 		}
 
-		err = n.state.OVNNB.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterExtPortName())
-		if err != nil {
-			return err
-		}
-
-		err = n.state.OVNNB.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName())
-		if err != nil {
-			return err
-		}
-
-		err = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchRouterPortName())
-		if err != nil {
-			return err
-		}
-
-		err = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchProviderPortName())
-		if err != nil {
-			return err
-		}
-
-		err = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), n.getIntSwitchRouterPortName())
-		if err != nil {
-			return err
-		}
-
-		// Must be done after logical router removal.
+		// Delete the chassis group for the network.
 		err = n.state.OVNNB.DeleteChassisGroup(context.TODO(), n.getChassisGroupName())
 		if err != nil {
 			return err
 		}
 
-		// Check for port groups that will become unused (and need deleting) as this network is deleted.
+		// Clean up any now unused port group.
 		securityACLs := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, true)
 		if len(securityACLs) > 0 {
 			err = acl.OVNPortGroupDeleteIfUnused(n.state, n.logger, n.state.OVNNB, n.project, &api.Network{Name: n.name}, "")
