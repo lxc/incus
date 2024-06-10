@@ -1468,23 +1468,19 @@ func (o *NB) LogicalSwitchIPs(switchName OVNSwitch) (map[OVNSwitchPort][]net.IP,
 	return portIPs, nil
 }
 
-// LogicalSwitchPortUUID returns the logical switch port UUID or empty string if port doesn't exist.
-func (o *NB) LogicalSwitchPortUUID(portName OVNSwitchPort) (OVNSwitchPortUUID, error) {
-	portInfo, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid,name", "find", "logical_switch_port",
-		fmt.Sprintf("name=%s", string(portName)),
-	)
+// GetLogicalSwitchPortUUID returns the logical switch port UUID.
+func (o *NB) GetLogicalSwitchPortUUID(ctx context.Context, portName OVNSwitchPort) (OVNSwitchPortUUID, error) {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, &lsp)
 	if err != nil {
 		return "", err
 	}
 
-	portParts := util.SplitNTrimSpace(portInfo, ",", 2, false)
-	if len(portParts) == 2 {
-		if portParts[1] == string(portName) {
-			return OVNSwitchPortUUID(portParts[0]), nil
-		}
-	}
-
-	return "", nil
+	return OVNSwitchPortUUID(lsp.UUID), nil
 }
 
 // CreateLogicalSwitchPort adds a named logical switch port to a logical switch, and sets options if provided.
