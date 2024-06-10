@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2024-06-02 16:00-0400\n"
+"POT-Creation-Date: 2024-06-10 16:04-0400\n"
 "PO-Revision-Date: 2024-06-02 16:41+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -335,6 +335,7 @@ msgstr ""
 "### Note that the fingerprint is shown but cannot be changed"
 
 #: cmd/incus/network_load_balancer.go:585
+#, fuzzy
 msgid ""
 "### This is a YAML representation of the network load balancer.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -347,12 +348,22 @@ msgid ""
 "### config:\n"
 "###   target_address: 198.51.100.2\n"
 "### description: test desc\n"
+"### backends:\n"
+"### - name: backend1\n"
+"###   description: First backend server\n"
+"###   target_address: 192.0.3.1\n"
+"###   target_port: 80\n"
+"### - name: backend2\n"
+"###   description: Second backend server\n"
+"###   target_address: 192.0.3.2\n"
+"###   target_port: 80\n"
 "### ports:\n"
 "### - description: port forward\n"
 "###   protocol: tcp\n"
 "###   listen_port: 80,81,8080-8090\n"
-"###   target_address: 198.51.100.3\n"
-"###   target_port: 80,81,8080-8090\n"
+"###   target_backend:\n"
+"###    - backend1\n"
+"###    - backend2\n"
 "### location: server01\n"
 "###\n"
 "### Note that the listen_address and location cannot be changed."
@@ -641,11 +652,11 @@ msgstr "- ポート %d（%s）"
 msgid "--console can't be used while forcing instance shutdown"
 msgstr "インスタンスの強制シャットダウンの際は --console は使えません"
 
-#: cmd/incus/action.go:415
+#: cmd/incus/action.go:430
 msgid "--console can't be used with --all"
 msgstr "--console と --all は同時に指定できません"
 
-#: cmd/incus/action.go:419
+#: cmd/incus/action.go:434
 msgid "--console only works with a single instance"
 msgstr "--console は単一のインスタンスのときのみ指定できます"
 
@@ -809,11 +820,11 @@ msgstr "クラスターメンバーをクラスターグループに追加しま
 msgid "Add a network zone record entry"
 msgstr "ネットワークゾーンレコードのエントリを追加します"
 
-#: cmd/incus/network_load_balancer.go:807
+#: cmd/incus/network_load_balancer.go:817
 msgid "Add backend to a load balancer"
 msgstr "ロードバランサーにバックエンドを追加します"
 
-#: cmd/incus/network_load_balancer.go:806
+#: cmd/incus/network_load_balancer.go:816
 msgid "Add backends to a load balancer"
 msgstr "ロードバランサーにバックエンドを追加します"
 
@@ -894,8 +905,8 @@ msgstr ""
 msgid "Add ports to a forward"
 msgstr "フォワードにポートを追加します"
 
-#: cmd/incus/network_load_balancer.go:995
-#: cmd/incus/network_load_balancer.go:996
+#: cmd/incus/network_load_balancer.go:1005
+#: cmd/incus/network_load_balancer.go:1006
 msgid "Add ports to a load balancer"
 msgstr "ロードバランサーにポートを追加します"
 
@@ -1010,7 +1021,7 @@ msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 "本当に %s しますか? （対象: クラスターメンバー %q） (yes/no) [default=no]: "
 
-#: cmd/incus/console.go:379
+#: cmd/incus/console.go:380
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "どちらもみつかりませんでした。raw SPICE ソケットはこちらにあります:"
 
@@ -1158,7 +1169,7 @@ msgstr "不正なイメージプロパティ形式: %s"
 msgid "Bond:"
 msgstr "ボンディング:"
 
-#: cmd/incus/action.go:187 cmd/incus/action.go:371
+#: cmd/incus/action.go:187 cmd/incus/action.go:386
 msgid "Both --all and instance name given"
 msgstr "--all とインスタンス名を両方同時に指定することはできません"
 
@@ -1200,7 +1211,7 @@ msgstr "CONTENT-TYPE"
 msgid "COUNT"
 msgstr "COUNT"
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 #, fuzzy
 msgid "CPU TIME(s)"
 msgstr "CPU (%s):"
@@ -1472,11 +1483,11 @@ msgstr "クラスターメンバー %s がグループ %s から削除されま�
 #: cmd/incus/network_load_balancer.go:261
 #: cmd/incus/network_load_balancer.go:432
 #: cmd/incus/network_load_balancer.go:567
-#: cmd/incus/network_load_balancer.go:722
-#: cmd/incus/network_load_balancer.go:810
-#: cmd/incus/network_load_balancer.go:886
-#: cmd/incus/network_load_balancer.go:999
-#: cmd/incus/network_load_balancer.go:1073 cmd/incus/storage.go:108
+#: cmd/incus/network_load_balancer.go:732
+#: cmd/incus/network_load_balancer.go:820
+#: cmd/incus/network_load_balancer.go:896
+#: cmd/incus/network_load_balancer.go:1009
+#: cmd/incus/network_load_balancer.go:1083 cmd/incus/storage.go:108
 #: cmd/incus/storage.go:405 cmd/incus/storage.go:488 cmd/incus/storage.go:832
 #: cmd/incus/storage.go:934 cmd/incus/storage.go:1027
 #: cmd/incus/storage_bucket.go:103 cmd/incus/storage_bucket.go:203
@@ -1566,7 +1577,7 @@ msgstr "設定は KEY=VALUE のフォーマットである必要があります"
 #: cmd/incus/config_metadata.go:154 cmd/incus/config_trust.go:353
 #: cmd/incus/image.go:483 cmd/incus/network.go:778 cmd/incus/network_acl.go:714
 #: cmd/incus/network_forward.go:716 cmd/incus/network_integration.go:312
-#: cmd/incus/network_load_balancer.go:686 cmd/incus/network_peer.go:729
+#: cmd/incus/network_load_balancer.go:696 cmd/incus/network_peer.go:729
 #: cmd/incus/network_zone.go:637 cmd/incus/network_zone.go:1332
 #: cmd/incus/profile.go:600 cmd/incus/project.go:399 cmd/incus/storage.go:368
 #: cmd/incus/storage_bucket.go:361 cmd/incus/storage_bucket.go:1157
@@ -1920,7 +1931,7 @@ msgstr "DEFAULT TARGET ADDRESS"
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "DISK"
 msgstr "ディスク"
 
@@ -1960,7 +1971,7 @@ msgstr "デフォルト VLAN ID"
 msgid "Define a compression algorithm: for backup or none"
 msgstr "圧縮アルゴリズムを指定します: backup or none"
 
-#: cmd/incus/top.go:295
+#: cmd/incus/top.go:354
 #, fuzzy
 msgid "Delay:"
 msgstr "Down delay"
@@ -2018,8 +2029,8 @@ msgstr "ネットワークフォワードを削除します"
 msgid "Delete network integrations"
 msgstr "ネットワークピアリングを削除します"
 
-#: cmd/incus/network_load_balancer.go:718
-#: cmd/incus/network_load_balancer.go:719
+#: cmd/incus/network_load_balancer.go:728
+#: cmd/incus/network_load_balancer.go:729
 msgid "Delete network load balancers"
 msgstr "ネットワークロードバランサーを削除します"
 
@@ -2148,13 +2159,13 @@ msgstr "警告を削除します"
 #: cmd/incus/network_load_balancer.go:424
 #: cmd/incus/network_load_balancer.go:534
 #: cmd/incus/network_load_balancer.go:564
-#: cmd/incus/network_load_balancer.go:719
-#: cmd/incus/network_load_balancer.go:792
-#: cmd/incus/network_load_balancer.go:807
-#: cmd/incus/network_load_balancer.go:883
-#: cmd/incus/network_load_balancer.go:981
-#: cmd/incus/network_load_balancer.go:996
-#: cmd/incus/network_load_balancer.go:1069 cmd/incus/network_peer.go:28
+#: cmd/incus/network_load_balancer.go:729
+#: cmd/incus/network_load_balancer.go:802
+#: cmd/incus/network_load_balancer.go:817
+#: cmd/incus/network_load_balancer.go:893
+#: cmd/incus/network_load_balancer.go:991
+#: cmd/incus/network_load_balancer.go:1006
+#: cmd/incus/network_load_balancer.go:1079 cmd/incus/network_peer.go:28
 #: cmd/incus/network_peer.go:81 cmd/incus/network_peer.go:174
 #: cmd/incus/network_peer.go:245 cmd/incus/network_peer.go:391
 #: cmd/incus/network_peer.go:476 cmd/incus/network_peer.go:578
@@ -2213,7 +2224,7 @@ msgstr "警告を削除します"
 #: cmd/incus/storage_volume.go:2536 cmd/incus/storage_volume.go:2542
 #: cmd/incus/storage_volume.go:2660 cmd/incus/storage_volume.go:2747
 #: cmd/incus/storage_volume.go:2827 cmd/incus/storage_volume.go:2923
-#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:30 cmd/incus/version.go:22
+#: cmd/incus/storage_volume.go:3089 cmd/incus/top.go:33 cmd/incus/version.go:22
 #: cmd/incus/warning.go:29 cmd/incus/warning.go:72 cmd/incus/warning.go:263
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:358
 msgid "Description"
@@ -2316,7 +2327,7 @@ msgstr ""
 msgid "Directory import is not available on this platform"
 msgstr "このプラットフォーム上ではディレクトリのインポートは利用できません"
 
-#: cmd/incus/exec.go:67
+#: cmd/incus/exec.go:66
 msgid "Directory to run the command in (default /root)"
 msgstr "コマンドを実行するディレクトリ (デフォルト /root)"
 
@@ -2324,11 +2335,11 @@ msgstr "コマンドを実行するディレクトリ (デフォルト /root)"
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "SSH SFTP リスナーを使う際に認証を無効化します"
 
-#: cmd/incus/exec.go:63
+#: cmd/incus/exec.go:62
 msgid "Disable pseudo-terminal allocation"
 msgstr "擬似端末の割り当てを無効にします"
 
-#: cmd/incus/exec.go:64
+#: cmd/incus/exec.go:63
 msgid "Disable stdin (reads from /dev/null)"
 msgstr "標準入力を無効にします (/dev/null から読み込みます)"
 
@@ -2358,7 +2369,7 @@ msgstr "すべてのプロジェクトのインスタンスを表示します"
 msgid "Display images from all projects"
 msgstr "すべてのプロジェクトのイメージを表示します"
 
-#: cmd/incus/list.go:136
+#: cmd/incus/list.go:136 cmd/incus/top.go:36
 msgid "Display instances from all projects"
 msgstr "すべてのプロジェクトのインスタンスを表示します"
 
@@ -2372,7 +2383,7 @@ msgstr "すべてのプロジェクトのインスタンスを表示します"
 msgid "Display profiles from all projects"
 msgstr "すべてのプロジェクトのイメージを表示します"
 
-#: cmd/incus/top.go:29
+#: cmd/incus/top.go:32
 msgid "Display resource usage info per instance"
 msgstr "インスタンスごとのリソース消費状況を表示する"
 
@@ -2381,7 +2392,7 @@ msgstr "インスタンスごとのリソース消費状況を表示する"
 msgid "Display storage pool buckets from all projects"
 msgstr "すべてのプロジェクトのインスタンスを表示します"
 
-#: cmd/incus/top.go:30
+#: cmd/incus/top.go:33
 msgid "Displays CPU usage, memory usage, and disk usage per instance"
 msgstr "インスタンスごとのCPU、メモリー、ディスク消費状況を表示する"
 
@@ -2582,13 +2593,13 @@ msgstr ""
 "  これは 'incus config get core.https_address' コマンドでチェックできます。\n"
 "  まだ使用可能でない場合は、アドレスを設定することもできます。"
 
-#: cmd/incus/top.go:163
+#: cmd/incus/top.go:184
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr "ソートタイプを入力する（'a' はアルファベット、'c' CPU、'd' ディスク）"
 
-#: cmd/incus/top.go:144
+#: cmd/incus/top.go:165
 msgid "Enter new delay in seconds:"
 msgstr "更新間隔を秒単位で入力:"
 
@@ -2596,7 +2607,7 @@ msgstr "更新間隔を秒単位で入力:"
 msgid "Entry TTL"
 msgstr "TTLを指定します"
 
-#: cmd/incus/exec.go:60
+#: cmd/incus/exec.go:59
 msgid "Environment variable to set (e.g. HOME=/home/foo)"
 msgstr "環境変数を設定します (例: HOME=/home/foo)"
 
@@ -2964,7 +2975,7 @@ msgstr "SSH ホスト鍵の読み取りに失敗しました: %w"
 msgid "Failed parsing validation response: %w"
 msgstr "バリデーションレスポンスの読み取りに失敗しました: %w"
 
-#: cmd/incus/console.go:357
+#: cmd/incus/console.go:358
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "コマンドの実行に失敗しました: %w"
@@ -3231,7 +3242,7 @@ msgstr "プロジェクトとプロジェクトに含まれるすべてを強制
 msgid "Force evacuation without user confirmation"
 msgstr "ユーザーの確認なしで強制的に待避させます"
 
-#: cmd/incus/exec.go:62
+#: cmd/incus/exec.go:61
 msgid "Force pseudo-terminal allocation"
 msgstr "強制的に擬似端末を割り当てます"
 
@@ -3518,7 +3529,7 @@ msgstr "ストレージボリュームの設定値を取得します"
 msgid "Given target %q does not match source volume location %q"
 msgstr "指定したコピー先 %q がコピー元のボリュームの場所 %q と一致しません"
 
-#: cmd/incus/exec.go:66
+#: cmd/incus/exec.go:65
 msgid "Group ID to run the command as (default 0)"
 msgstr "コマンドを実行する際のグループ ID (GID) (デフォルト 0)"
 
@@ -3577,7 +3588,7 @@ msgstr "ID: %s"
 msgid "IMAGES"
 msgstr "IMAGES"
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 msgid "INSTANCE NAME"
 msgstr "インスタンス名"
 
@@ -3890,7 +3901,7 @@ msgstr "不正なインスタンス名: %s"
 msgid "Invalid format: %s"
 msgstr "不正なフォーマット %s"
 
-#: cmd/incus/top.go:155
+#: cmd/incus/top.go:176
 msgid "Invalid input, please enter a positive number"
 msgstr "入力が無効です。正の値を入力してください"
 
@@ -3958,12 +3969,12 @@ msgstr "不正なプロトコル: %s"
 msgid "Invalid snapshot name"
 msgstr "不正なスナップショット名"
 
-#: cmd/incus/top.go:239
+#: cmd/incus/top.go:277
 #, fuzzy
 msgid "Invalid sorting type"
 msgstr "不正な送り先 %s"
 
-#: cmd/incus/top.go:184
+#: cmd/incus/top.go:205
 #, fuzzy
 msgid "Invalid sorting type provided"
 msgstr "不正な送り先 %s"
@@ -4872,7 +4883,7 @@ msgstr "MANAGED"
 msgid "MEMBERS"
 msgstr "MEMBERS"
 
-#: cmd/incus/top.go:283
+#: cmd/incus/top.go:338
 #, fuzzy
 msgid "MEMORY"
 msgstr "MEMORY USAGE"
@@ -5029,13 +5040,13 @@ msgstr "ネットワークフォワードを管理します"
 msgid "Manage network integrations"
 msgstr "ネットワークピアリングを管理します"
 
-#: cmd/incus/network_load_balancer.go:791
-#: cmd/incus/network_load_balancer.go:792
+#: cmd/incus/network_load_balancer.go:801
+#: cmd/incus/network_load_balancer.go:802
 msgid "Manage network load balancer backends"
 msgstr "ネットワークロードバランサーのバックエンドを管理します"
 
-#: cmd/incus/network_load_balancer.go:980
-#: cmd/incus/network_load_balancer.go:981
+#: cmd/incus/network_load_balancer.go:990
+#: cmd/incus/network_load_balancer.go:991
 msgid "Manage network load balancer ports"
 msgstr "ネットワークロードバランサーのポートを管理します"
 
@@ -5243,12 +5254,12 @@ msgstr "鍵の名前を指定する必要があります"
 #: cmd/incus/network_load_balancer.go:286
 #: cmd/incus/network_load_balancer.go:384
 #: cmd/incus/network_load_balancer.go:469
-#: cmd/incus/network_load_balancer.go:627
-#: cmd/incus/network_load_balancer.go:759
-#: cmd/incus/network_load_balancer.go:847
-#: cmd/incus/network_load_balancer.go:923
-#: cmd/incus/network_load_balancer.go:1036
-#: cmd/incus/network_load_balancer.go:1110
+#: cmd/incus/network_load_balancer.go:637
+#: cmd/incus/network_load_balancer.go:769
+#: cmd/incus/network_load_balancer.go:857
+#: cmd/incus/network_load_balancer.go:933
+#: cmd/incus/network_load_balancer.go:1046
+#: cmd/incus/network_load_balancer.go:1120
 msgid "Missing listen address"
 msgstr "リッスンアドレスを指定する必要があります"
 
@@ -5289,12 +5300,12 @@ msgstr "ネットワークゾーン名を指定する必要があります"
 #: cmd/incus/network_load_balancer.go:282
 #: cmd/incus/network_load_balancer.go:380
 #: cmd/incus/network_load_balancer.go:465
-#: cmd/incus/network_load_balancer.go:623
-#: cmd/incus/network_load_balancer.go:755
-#: cmd/incus/network_load_balancer.go:843
-#: cmd/incus/network_load_balancer.go:919
-#: cmd/incus/network_load_balancer.go:1032
-#: cmd/incus/network_load_balancer.go:1106 cmd/incus/network_peer.go:118
+#: cmd/incus/network_load_balancer.go:633
+#: cmd/incus/network_load_balancer.go:765
+#: cmd/incus/network_load_balancer.go:853
+#: cmd/incus/network_load_balancer.go:929
+#: cmd/incus/network_load_balancer.go:1042
+#: cmd/incus/network_load_balancer.go:1116 cmd/incus/network_peer.go:118
 #: cmd/incus/network_peer.go:208 cmd/incus/network_peer.go:291
 #: cmd/incus/network_peer.go:432 cmd/incus/network_peer.go:516
 #: cmd/incus/network_peer.go:675 cmd/incus/network_peer.go:796
@@ -5475,7 +5486,7 @@ msgstr "コピー／移動元とは異なるプロジェクトに移動します
 msgid "Moving the storage volume: %s"
 msgstr "ストレージボリュームの移動中: %s"
 
-#: cmd/incus/network_forward.go:1008 cmd/incus/network_load_balancer.go:1154
+#: cmd/incus/network_forward.go:1008 cmd/incus/network_load_balancer.go:1164
 msgid "Multiple ports match. Use --force to remove them all"
 msgstr ""
 "複数のポートにマッチしました。すべて削除するには --force を指定してください"
@@ -5708,7 +5719,7 @@ msgstr "ネットワーク名 %s を %s に変更しました"
 msgid "Network load balancer %s created"
 msgstr "ネットワークロードバランサー %s を作成しました"
 
-#: cmd/incus/network_load_balancer.go:776
+#: cmd/incus/network_load_balancer.go:786
 #, c-format
 msgid "Network load balancer %s deleted"
 msgstr "ネットワークロードバランサー %s を削除しました"
@@ -5794,11 +5805,11 @@ msgstr "このネットワークに対するデバイスがありません"
 msgid "No device found for this storage volume"
 msgstr "このストレージボリュームに対するデバイスがありません"
 
-#: cmd/incus/network_load_balancer.go:954
+#: cmd/incus/network_load_balancer.go:964
 msgid "No matching backend found"
 msgstr "マッチするバックエンドが見つかりません"
 
-#: cmd/incus/network_forward.go:1019 cmd/incus/network_load_balancer.go:1165
+#: cmd/incus/network_forward.go:1019 cmd/incus/network_load_balancer.go:1175
 msgid "No matching port(s) found"
 msgstr "マッチするポートが見つかりません"
 
@@ -5902,7 +5913,7 @@ msgstr "最適化されたストレージ"
 msgid "Override the source project"
 msgstr "プロジェクトを指定します"
 
-#: cmd/incus/exec.go:61
+#: cmd/incus/exec.go:60
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr "ターミナルモードを上書きします (auto, interactive, non-interactive)"
 
@@ -5949,7 +5960,8 @@ msgstr "PROFILES"
 #: cmd/incus/image.go:1122 cmd/incus/list.go:576 cmd/incus/network.go:1068
 #: cmd/incus/network_acl.go:174 cmd/incus/network_zone.go:165
 #: cmd/incus/profile.go:746 cmd/incus/storage_bucket.go:548
-#: cmd/incus/storage_volume.go:1687 cmd/incus/warning.go:213
+#: cmd/incus/storage_volume.go:1687 cmd/incus/top.go:341
+#: cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr "PROJECT"
 
@@ -6048,15 +6060,15 @@ msgstr "ポート:"
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr "Pre-seed モード。標準入力から YAML で設定を入力します"
 
-#: cmd/incus/top.go:291
+#: cmd/incus/top.go:350
 msgid "Press 'd' + ENTER to change delay"
 msgstr ""
 
-#: cmd/incus/top.go:292
+#: cmd/incus/top.go:351
 msgid "Press 's' + ENTER to change sorting method"
 msgstr ""
 
-#: cmd/incus/top.go:293
+#: cmd/incus/top.go:352
 msgid "Press CTRL-C to exit"
 msgstr ""
 
@@ -6070,7 +6082,7 @@ msgstr "終了するには ctrl+c を押してください"
 #: cmd/incus/config_trust.go:354 cmd/incus/image.go:484
 #: cmd/incus/network.go:779 cmd/incus/network_acl.go:715
 #: cmd/incus/network_forward.go:717 cmd/incus/network_integration.go:313
-#: cmd/incus/network_load_balancer.go:687 cmd/incus/network_peer.go:730
+#: cmd/incus/network_load_balancer.go:697 cmd/incus/network_peer.go:730
 #: cmd/incus/network_zone.go:638 cmd/incus/network_zone.go:1333
 #: cmd/incus/profile.go:601 cmd/incus/project.go:400 cmd/incus/storage.go:369
 #: cmd/incus/storage_bucket.go:362 cmd/incus/storage_bucket.go:1158
@@ -6538,7 +6550,7 @@ msgstr "ネットワークゾーンレコードエントリを削除します"
 msgid "Remove aliases"
 msgstr "エイリアスを削除します"
 
-#: cmd/incus/network_forward.go:920 cmd/incus/network_load_balancer.go:1070
+#: cmd/incus/network_forward.go:920 cmd/incus/network_load_balancer.go:1080
 msgid "Remove all ports that match"
 msgstr "マッチするポートをすべて削除します"
 
@@ -6546,11 +6558,11 @@ msgstr "マッチするポートをすべて削除します"
 msgid "Remove all rules that match"
 msgstr "マッチするルールをすべて削除します"
 
-#: cmd/incus/network_load_balancer.go:883
+#: cmd/incus/network_load_balancer.go:893
 msgid "Remove backend from a load balancer"
 msgstr "ロードバランサーからバックエンドを削除します"
 
-#: cmd/incus/network_load_balancer.go:882
+#: cmd/incus/network_load_balancer.go:892
 msgid "Remove backends from a load balancer"
 msgstr "ロードバランサーからバックエンドを削除します"
 
@@ -6570,8 +6582,8 @@ msgstr "グループからメンバーを削除します"
 msgid "Remove ports from a forward"
 msgstr "フォワードからポートを削除します"
 
-#: cmd/incus/network_load_balancer.go:1068
-#: cmd/incus/network_load_balancer.go:1069
+#: cmd/incus/network_load_balancer.go:1078
+#: cmd/incus/network_load_balancer.go:1079
 msgid "Remove ports from a load balancer"
 msgstr "ロードバランサーからポートを削除します"
 
@@ -7527,12 +7539,12 @@ msgstr "スナップショット:"
 msgid "Socket %d:"
 msgstr "ソケット %d:"
 
-#: cmd/incus/action.go:448
+#: cmd/incus/action.go:463
 #, c-format
 msgid "Some instances failed to %s"
 msgstr "一部のインスタンスで %s が失敗しました"
 
-#: cmd/incus/top.go:296
+#: cmd/incus/top.go:355
 msgid "Sorting Method:"
 msgstr ""
 
@@ -7557,7 +7569,7 @@ msgstr "インスタンスを起動します"
 msgid "Started: %s"
 msgstr "状態: %s"
 
-#: cmd/incus/launch.go:99
+#: cmd/incus/launch.go:114
 #, c-format
 msgid "Starting %s"
 msgstr "%s を起動中"
@@ -7789,7 +7801,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr "デバイスはすでに存在します"
 
-#: cmd/incus/console.go:126
+#: cmd/incus/console.go:130
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "--show-log フラグは 'console' アウトプットタイプの時だけ使えます"
 
@@ -7836,7 +7848,7 @@ msgstr ""
 "\n"
 "\"incusd cluster\" から呼び出すことができます。"
 
-#: cmd/incus/console.go:378
+#: cmd/incus/console.go:379
 #, fuzzy
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
@@ -8118,7 +8130,7 @@ msgid "To create a new network, use: incus network create"
 msgstr ""
 "新しいネットワークを作成するには、lxc network create を使用してください"
 
-#: cmd/incus/console.go:210
+#: cmd/incus/console.go:217
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "コンソールから切り離すには <ctrl>+a q を押します"
 
@@ -8199,7 +8211,7 @@ msgstr "通信ポリシー"
 msgid "Trust token for %s: "
 msgstr "%s:%s のクラスターに join するためのトークンが削除されました"
 
-#: cmd/incus/action.go:334 cmd/incus/launch.go:131
+#: cmd/incus/action.go:334 cmd/incus/launch.go:146
 #, fuzzy, c-format
 msgid "Try `incus info --show-log %s` for more info"
 msgstr "更に情報を得るために `lxc info --show-log %s` を実行してみてください"
@@ -8311,7 +8323,7 @@ msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr "未知のカラム名の短縮形です '%c' ('%s' 中)"
 
-#: cmd/incus/console.go:159
+#: cmd/incus/console.go:160
 #, c-format
 msgid "Unknown console type %q"
 msgstr "未知のコンソールタイプ %q"
@@ -8511,7 +8523,7 @@ msgstr ""
 msgid "Update the target profile from the source if it already exists"
 msgstr "コピー元の全てのプロファイルがターゲットに存在しません"
 
-#: cmd/incus/top.go:120
+#: cmd/incus/top.go:141
 #, c-format
 msgid "Updated interval to %v"
 msgstr ""
@@ -8547,7 +8559,7 @@ msgstr "サブコマンドを見るには help もしくは --help を使って�
 msgid "Used: %v"
 msgstr "使用済: %v"
 
-#: cmd/incus/exec.go:65
+#: cmd/incus/exec.go:64
 msgid "User ID to run the command as (default 0)"
 msgstr "コマンドを実行する際のユーザ ID (UID) (デフォルト 0)"
 
@@ -8795,11 +8807,11 @@ msgstr "YES"
 msgid "You are currently missing the following:"
 msgstr "現在、次のものが不足しています:"
 
-#: cmd/incus/exec.go:107
+#: cmd/incus/exec.go:106
 msgid "You can't pass -t and -T at the same time"
 msgstr "-t と -T は同時に指定できません"
 
-#: cmd/incus/exec.go:111
+#: cmd/incus/exec.go:110
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "--mode と同時に -t または -T は指定できません"
 
@@ -9160,15 +9172,15 @@ msgstr "[<remote>:]<network> <key>=<value>..."
 #: cmd/incus/network_forward.go:172 cmd/incus/network_forward.go:593
 #: cmd/incus/network_forward.go:746 cmd/incus/network_load_balancer.go:175
 #: cmd/incus/network_load_balancer.go:562
-#: cmd/incus/network_load_balancer.go:716
+#: cmd/incus/network_load_balancer.go:726
 msgid "[<remote>:]<network> <listen_address>"
 msgstr "[<remote>:]<network> <listen_address>"
 
-#: cmd/incus/network_load_balancer.go:881
+#: cmd/incus/network_load_balancer.go:891
 msgid "[<remote>:]<network> <listen_address> <backend_name>"
 msgstr "[<remote>:]<network> <listen_address> <backend_name>"
 
-#: cmd/incus/network_load_balancer.go:805
+#: cmd/incus/network_load_balancer.go:815
 msgid ""
 "[<remote>:]<network> <listen_address> <backend_name> <target_address> "
 "[<target_port(s)>]"
@@ -9186,7 +9198,7 @@ msgstr "[<remote>:]<network> <listen_address> <key>"
 msgid "[<remote>:]<network> <listen_address> <key>=<value>..."
 msgstr "[<remote>:]<network> <listen_address> <key>=<value>..."
 
-#: cmd/incus/network_load_balancer.go:994
+#: cmd/incus/network_load_balancer.go:1004
 msgid ""
 "[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> "
 "<backend_name>[,<backend_name>...]"
@@ -9202,7 +9214,7 @@ msgstr ""
 "[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> "
 "<target_address> [<target_port(s)>]"
 
-#: cmd/incus/network_forward.go:917 cmd/incus/network_load_balancer.go:1067
+#: cmd/incus/network_forward.go:917 cmd/incus/network_load_balancer.go:1077
 msgid "[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"
 msgstr "[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"
 
@@ -9514,7 +9526,7 @@ msgstr "ドライバ"
 msgid "enabled"
 msgstr "有効"
 
-#: cmd/incus/action.go:440
+#: cmd/incus/action.go:455
 #, c-format
 msgid "error: %v"
 msgstr "エラー: %v"
