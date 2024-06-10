@@ -258,6 +258,20 @@ func (o *NB) DeleteLogicalRouter(ctx context.Context, routerName OVNRouter) erro
 	return nil
 }
 
+// GetLogicalRouter gets the OVN database record for the router.
+func (o *NB) GetLogicalRouter(ctx context.Context, routerName OVNRouter) (*ovnNB.LogicalRouter, error) {
+	logicalRouter := &ovnNB.LogicalRouter{
+		Name: string(routerName),
+	}
+
+	err := o.get(ctx, logicalRouter)
+	if err != nil {
+		return nil, err
+	}
+
+	return logicalRouter, nil
+}
+
 // CreateLogicalRouterNAT adds an SNAT or DNAT rule to a logical router to translate packets from intNet to extIP.
 func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, natType string, intNet *net.IPNet, extIP net.IP, intIP net.IP, stateless bool, mayExist bool) error {
 	// Prepare the addresses.
@@ -274,12 +288,8 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 		return fmt.Errorf("Invalid NAT rule type %q", natType)
 	}
 
-	logicalRouter := ovnNB.LogicalRouter{
-		Name: string(routerName),
-	}
-
-	// Make sure logical router exists.
-	err := o.get(ctx, &logicalRouter)
+	// Get the logical router.
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
 	if err != nil {
 		return err
 	}
@@ -328,8 +338,8 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 	operations = append(operations, createOps...)
 
 	// Add it to the router.
-	updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
-		Field:   &logicalRouter.Nat,
+	updateOps, err := o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
+		Field:   logicalRouter.Nat,
 		Mutator: ovsdb.MutateOperationInsert,
 		Value:   []string{natRule.UUID},
 	})
@@ -360,12 +370,8 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 		return fmt.Errorf("Can't ask for all NAT rules to be deleted and specify specific addresses")
 	}
 
-	logicalRouter := ovnNB.LogicalRouter{
-		Name: string(routerName),
-	}
-
-	// Make sure logical router exists.
-	err := o.get(ctx, &logicalRouter)
+	// Get the logical router.
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
 	if err != nil {
 		return err
 	}
@@ -412,8 +418,8 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 		operations = append(operations, deleteOps...)
 
 		// Delete the entry from the logical router.
-		deleteOps, err = o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
-			Field:   &logicalRouter.Nat,
+		deleteOps, err = o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
+			Field:   logicalRouter.Nat,
 			Mutator: ovsdb.MutateOperationDelete,
 			Value:   []string{natRule.UUID},
 		})
@@ -445,12 +451,8 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 
 // CreateLogicalRouterRoute adds a static route to the logical router.
 func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter, mayExist bool, routes ...OVNRouterRoute) error {
-	// Fetch the logical router.
-	logicalRouter := ovnNB.LogicalRouter{
-		Name: string(routerName),
-	}
-
-	err := o.get(ctx, &logicalRouter)
+	// Get the logical router.
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
 	if err != nil {
 		return err
 	}
@@ -527,8 +529,8 @@ func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 		operations = append(operations, createOps...)
 
 		// Add it to the router.
-		updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
-			Field:   &logicalRouter.StaticRoutes,
+		updateOps, err := o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
+			Field:   logicalRouter.StaticRoutes,
 			Mutator: ovsdb.MutateOperationInsert,
 			Value:   []string{staticRoute.UUID},
 		})
@@ -559,12 +561,8 @@ func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 
 // DeleteLogicalRouterRoute deletes a static route from the logical router.
 func (o *NB) DeleteLogicalRouterRoute(ctx context.Context, routerName OVNRouter, prefixes ...net.IPNet) error {
-	// Fetch the logical router.
-	logicalRouter := ovnNB.LogicalRouter{
-		Name: string(routerName),
-	}
-
-	err := o.get(ctx, &logicalRouter)
+	// Get the logical router.
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
 	if err != nil {
 		return err
 	}
@@ -618,8 +616,8 @@ func (o *NB) DeleteLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 		operations = append(operations, deleteOps...)
 
 		// Remove from the router.
-		updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
-			Field:   &logicalRouter.StaticRoutes,
+		updateOps, err := o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
+			Field:   logicalRouter.StaticRoutes,
 			Mutator: ovsdb.MutateOperationDelete,
 			Value:   []string{route.UUID},
 		})
