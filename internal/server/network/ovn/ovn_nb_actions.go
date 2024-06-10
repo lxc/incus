@@ -339,7 +339,7 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 
 	// Add it to the router.
 	updateOps, err := o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
-		Field:   logicalRouter.Nat,
+		Field:   &logicalRouter.Nat,
 		Mutator: ovsdb.MutateOperationInsert,
 		Value:   []string{natRule.UUID},
 	})
@@ -419,7 +419,7 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 
 		// Delete the entry from the logical router.
 		deleteOps, err = o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
-			Field:   logicalRouter.Nat,
+			Field:   &logicalRouter.Nat,
 			Mutator: ovsdb.MutateOperationDelete,
 			Value:   []string{natRule.UUID},
 		})
@@ -530,7 +530,7 @@ func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 
 		// Add it to the router.
 		updateOps, err := o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
-			Field:   logicalRouter.StaticRoutes,
+			Field:   &logicalRouter.StaticRoutes,
 			Mutator: ovsdb.MutateOperationInsert,
 			Value:   []string{staticRoute.UUID},
 		})
@@ -617,7 +617,7 @@ func (o *NB) DeleteLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 
 		// Remove from the router.
 		updateOps, err := o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
-			Field:   logicalRouter.StaticRoutes,
+			Field:   &logicalRouter.StaticRoutes,
 			Mutator: ovsdb.MutateOperationDelete,
 			Value:   []string{route.UUID},
 		})
@@ -2479,27 +2479,61 @@ func (o *NB) LoadBalancerApply(loadBalancerName OVNLoadBalancer, routers []OVNRo
 	return nil
 }
 
-// LoadBalancerDelete deletes the specified load balancer(s).
-func (o *NB) LoadBalancerDelete(loadBalancerNames ...OVNLoadBalancer) error {
-	var args []string
-
+// DeleteLoadBalancer deletes the specified load balancer(s).
+func (o *NB) DeleteLoadBalancer(ctx context.Context, loadBalancerNames ...OVNLoadBalancer) error {
+	operations := []ovsdb.Operation{}
 	for _, loadBalancerName := range loadBalancerNames {
-		if len(args) > 0 {
-			args = append(args, "--")
+		// Check for a TCP load-balancer.
+		lb := ovnNB.LoadBalancer{
+			Name: fmt.Sprintf("%s-tcp", loadBalancerName),
 		}
 
-		lbTCPName := fmt.Sprintf("%s-tcp", loadBalancerName)
-		lbUDPName := fmt.Sprintf("%s-udp", loadBalancerName)
+		err := o.get(ctx, &lb)
+		if err == nil {
+			// Delete the load balancer.
+			deleteOps, err := o.client.Where(&lb).Delete()
+			if err != nil {
+				return err
+			}
 
-		// Remove load balancers for loadBalancerName if they exist.
-		args = append(args, "--if-exists", "lb-del", lbTCPName, "--", "lb-del", lbUDPName)
-	}
-
-	if len(args) > 0 {
-		_, err := o.nbctl(args...)
-		if err != nil {
+			operations = append(operations, deleteOps...)
+		} else if err != ErrNotFound {
 			return err
 		}
+
+		// Check for a UDP load-balancer.
+		lb = ovnNB.LoadBalancer{
+			Name: fmt.Sprintf("%s-udp", loadBalancerName),
+		}
+
+		err = o.get(ctx, &lb)
+		if err == nil {
+			// Delete the load balancer.
+			deleteOps, err := o.client.Where(&lb).Delete()
+			if err != nil {
+				return err
+			}
+
+			operations = append(operations, deleteOps...)
+		} else if err != ErrNotFound {
+			return err
+		}
+	}
+
+	// Check if anything to delete.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
