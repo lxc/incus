@@ -2852,15 +2852,14 @@ func (o *NB) LogicalRouterPeeringDelete(opts OVNRouterPeering) error {
 	return nil
 }
 
-// GetHardwareAddress gets the hardware address of the logical router port.
-func (o *NB) GetHardwareAddress(ovnRouterPort OVNRouterPort) (string, error) {
-	nameFilter := fmt.Sprintf("name=%s", ovnRouterPort)
-	hwaddr, err := o.nbctl("--no-headings", "--data=bare", "--format=csv", "--columns=mac", "find", "Logical_Router_Port", nameFilter)
+// GetLogicalRouterPortHardwareAddress gets the hardware address of the logical router port.
+func (o *NB) GetLogicalRouterPortHardwareAddress(ctx context.Context, ovnRouterPort OVNRouterPort) (string, error) {
+	lrp, err := o.GetLogicalRouterPort(ctx, ovnRouterPort)
 	if err != nil {
 		return "", err
 	}
 
-	return strings.TrimSpace(hwaddr), nil
+	return lrp.MAC, nil
 }
 
 // GetName returns the OVN AZ name.
