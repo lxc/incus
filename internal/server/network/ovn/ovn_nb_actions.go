@@ -1319,35 +1319,28 @@ func (o *NB) LogicalSwitchDHCPv6OptionsSet(switchName OVNSwitch, uuid OVNDHCPOpt
 	return nil
 }
 
-// LogicalSwitchDHCPOptionsGet retrieves the existing DHCP options defined for a logical switch.
-func (o *NB) LogicalSwitchDHCPOptionsGet(switchName OVNSwitch) ([]OVNDHCPOptsSet, error) {
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid,cidr", "find", "dhcp_options",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-	)
+// GetLogicalSwitchDHCPOptions retrieves the existing DHCP options defined for a logical switch.
+func (o *NB) GetLogicalSwitchDHCPOptions(ctx context.Context, switchName OVNSwitch) ([]OVNDHCPOptsSet, error) {
+	// Get the matching DHCP options.
+	dhcpOptions := []ovnNB.DHCPOptions{}
+	err := o.client.WhereCache(func(do *ovnNB.DHCPOptions) bool {
+		return do.ExternalIDs != nil && do.ExternalIDs[ovnExtIDIncusSwitch] == string(switchName)
+	}).List(ctx, &dhcpOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	colCount := 2
 	dhcpOpts := []OVNDHCPOptsSet{}
-	output = strings.TrimSpace(output)
-	if output != "" {
-		for _, row := range strings.Split(output, "\n") {
-			rowParts := strings.SplitN(row, ",", colCount)
-			if len(rowParts) < colCount {
-				return nil, fmt.Errorf("Too few columns in output")
-			}
-
-			_, cidr, err := net.ParseCIDR(rowParts[1])
-			if err != nil {
-				return nil, err
-			}
-
-			dhcpOpts = append(dhcpOpts, OVNDHCPOptsSet{
-				UUID: OVNDHCPOptionsUUID(rowParts[0]),
-				CIDR: cidr,
-			})
+	for _, dhcpOption := range dhcpOptions {
+		_, cidr, err := net.ParseCIDR(dhcpOption.Cidr)
+		if err != nil {
+			return nil, err
 		}
+
+		dhcpOpts = append(dhcpOpts, OVNDHCPOptsSet{
+			UUID: OVNDHCPOptionsUUID(dhcpOption.UUID),
+			CIDR: cidr,
+		})
 	}
 
 	return dhcpOpts, nil
