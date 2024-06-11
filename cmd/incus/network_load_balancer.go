@@ -593,12 +593,22 @@ func (c *cmdNetworkLoadBalancerEdit) helpTemplate() string {
 ### config:
 ###   target_address: 198.51.100.2
 ### description: test desc
+### backends:
+### - name: backend1
+###   description: First backend server
+###   target_address: 192.0.3.1
+###   target_port: 80
+### - name: backend2
+###   description: Second backend server
+###   target_address: 192.0.3.2
+###   target_port: 80
 ### ports:
 ### - description: port forward
 ###   protocol: tcp
 ###   listen_port: 80,81,8080-8090
-###   target_address: 198.51.100.3
-###   target_port: 80,81,8080-8090
+###   target_backend:
+###    - backend1
+###    - backend2
 ### location: server01
 ###
 ### Note that the listen_address and location cannot be changed.`)
