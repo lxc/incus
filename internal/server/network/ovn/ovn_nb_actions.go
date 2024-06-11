@@ -1189,42 +1189,37 @@ func (o *NB) GetLogicalSwitchDHCPv4Revervations(ctx context.Context, switchName 
 	return excludeIPs, nil
 }
 
-// LogicalSwitchDHCPv4OptionsSet creates or updates a DHCPv4 option set associated with the specified switchName
+// UpdateLogicalSwitchDHCPv4Options creates or updates a DHCPv4 option set associated with the specified switchName
 // and subnet. If uuid is non-empty then the record that exists with that ID is updated, otherwise a new record
 // is created.
-func (o *NB) LogicalSwitchDHCPv4OptionsSet(switchName OVNSwitch, uuid OVNDHCPOptionsUUID, subnet *net.IPNet, opts *OVNDHCPv4Opts) error {
-	var err error
-
+func (o *NB) UpdateLogicalSwitchDHCPv4Options(ctx context.Context, switchName OVNSwitch, uuid OVNDHCPOptionsUUID, subnet *net.IPNet, opts *OVNDHCPv4Opts) error {
+	dhcpOption := ovnNB.DHCPOptions{}
 	if uuid != "" {
-		_, err = o.nbctl("set", "dhcp_option", string(uuid),
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-			fmt.Sprintf("cidr=%s", subnet.String()),
-		)
+		// Load the existing record.
+		dhcpOption.UUID = string(uuid)
+		err := o.get(ctx, &dhcpOption)
 		if err != nil {
 			return err
 		}
-	} else {
-		uuidRaw, err := o.nbctl("create", "dhcp_option",
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-			fmt.Sprintf("cidr=%s", subnet.String()),
-		)
-		if err != nil {
-			return err
-		}
-
-		uuid = OVNDHCPOptionsUUID(strings.TrimSpace(uuidRaw))
 	}
 
-	// We have to use dhcp-options-set-options rather than the command above as its the only way to allow the
-	// domain_name option to be properly escaped.
-	args := []string{"dhcp-options-set-options", string(uuid),
-		fmt.Sprintf("server_id=%s", opts.ServerID.String()),
-		fmt.Sprintf("server_mac=%s", opts.ServerMAC.String()),
-		fmt.Sprintf("lease_time=%d", opts.LeaseTime/time.Second),
+	if dhcpOption.ExternalIDs == nil {
+		dhcpOption.ExternalIDs = map[string]string{}
 	}
+
+	if dhcpOption.Options == nil {
+		dhcpOption.Options = map[string]string{}
+	}
+
+	dhcpOption.ExternalIDs[ovnExtIDIncusSwitch] = string(switchName)
+	dhcpOption.Cidr = subnet.String()
+
+	dhcpOption.Options["server_id"] = opts.ServerID.String()
+	dhcpOption.Options["server_mac"] = opts.ServerMAC.String()
+	dhcpOption.Options["lease_time"] = fmt.Sprintf("%d", opts.LeaseTime/time.Second)
 
 	if opts.Router != nil {
-		args = append(args, fmt.Sprintf("router=%s", opts.Router.String()))
+		dhcpOption.Options["router"] = opts.Router.String()
 	}
 
 	if opts.RecursiveDNSServer != nil {
@@ -1237,23 +1232,49 @@ func (o *NB) LogicalSwitchDHCPv4OptionsSet(switchName OVNSwitch, uuid OVNDHCPOpt
 			nsIPs = append(nsIPs, nsIP.String())
 		}
 
-		args = append(args, fmt.Sprintf("dns_server={%s}", strings.Join(nsIPs, ",")))
+		dhcpOption.Options["dns_server"] = fmt.Sprintf("{%s}", strings.Join(nsIPs, ","))
 	}
 
 	if opts.DomainName != "" {
 		// Special quoting to allow domain names.
-		args = append(args, fmt.Sprintf(`domain_name="%s"`, opts.DomainName))
+		dhcpOption.Options["domain_name"] = fmt.Sprintf(`"%s"`, opts.DomainName)
 	}
 
 	if opts.MTU > 0 {
-		args = append(args, fmt.Sprintf("mtu=%d", opts.MTU))
+		dhcpOption.Options["mtu"] = fmt.Sprintf("%d", opts.MTU)
 	}
 
 	if opts.Netmask != "" {
-		args = append(args, fmt.Sprintf("netmask=%s", opts.Netmask))
+		dhcpOption.Options["netmask"] = opts.Netmask
 	}
 
-	_, err = o.nbctl(args...)
+	// Prepare the changes.
+	operations := []ovsdb.Operation{}
+	if dhcpOption.UUID == "" {
+		// Create a new record.
+		createOps, err := o.client.Create(&dhcpOption)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+	} else {
+		// Update the record.
+		updateOps, err := o.client.Where(&dhcpOption).Update(&dhcpOption)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
