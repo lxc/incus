@@ -2312,7 +2312,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Setup IP allocation config on logical switch.
-	err = n.state.OVNNB.LogicalSwitchSetIPAllocation(n.getIntSwitchName(), &networkOVN.OVNIPAllocationOpts{
+	err = n.state.OVNNB.UpdateLogicalSwitchIPAllocation(context.TODO(), n.getIntSwitchName(), &networkOVN.OVNIPAllocationOpts{
 		PrefixIPv4:  routerIntPortIPv4Net,
 		PrefixIPv6:  routerIntPortIPv6Net,
 		ExcludeIPv4: dhcpReserveIPv4s,
@@ -2361,7 +2361,7 @@ func (n *ovn) setup(update bool) error {
 
 	if update {
 		// Find first existing DHCP options set for IPv4 and IPv6 and update them instead of adding sets.
-		existingOpts, err := n.state.OVNNB.LogicalSwitchDHCPOptionsGet(n.getIntSwitchName())
+		existingOpts, err := n.state.OVNNB.GetLogicalSwitchDHCPOptions(context.TODO(), n.getIntSwitchName())
 		if err != nil {
 			return fmt.Errorf("Failed getting existing DHCP settings for internal switch: %w", err)
 		}
@@ -2405,7 +2405,7 @@ func (n *ovn) setup(update bool) error {
 			dhcpV4Netmask = "255.255.255.255"
 		}
 
-		err = n.state.OVNNB.LogicalSwitchDHCPv4OptionsSet(n.getIntSwitchName(), dhcpv4UUID, dhcpV4Subnet, &networkOVN.OVNDHCPv4Opts{
+		err = n.state.OVNNB.UpdateLogicalSwitchDHCPv4Options(context.TODO(), n.getIntSwitchName(), dhcpv4UUID, dhcpV4Subnet, &networkOVN.OVNDHCPv4Opts{
 			ServerID:           routerIntPortIPv4,
 			ServerMAC:          routerMAC,
 			Router:             routerIntPortIPv4,
@@ -2422,7 +2422,7 @@ func (n *ovn) setup(update bool) error {
 
 	// Create DHCPv6 options for internal switch.
 	if dhcpV6Subnet != nil {
-		err = n.state.OVNNB.LogicalSwitchDHCPv6OptionsSet(n.getIntSwitchName(), dhcpv6UUID, dhcpV6Subnet, &networkOVN.OVNDHCPv6Opts{
+		err = n.state.OVNNB.UpdateLogicalSwitchDHCPv6Options(context.TODO(), n.getIntSwitchName(), dhcpv6UUID, dhcpV6Subnet, &networkOVN.OVNDHCPv6Opts{
 			ServerID:           routerMAC,
 			RecursiveDNSServer: uplinkNet.dnsIPv6,
 			DNSSearchList:      n.getDNSSearchList(),
@@ -3429,14 +3429,14 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devi
 	if deviceConfig["ipv4.address"] != "" {
 		ip := net.ParseIP(deviceConfig["ipv4.address"])
 		if ip != nil {
-			dhcpReservations, err := n.state.OVNNB.LogicalSwitchDHCPv4RevervationsGet(n.getIntSwitchName())
+			dhcpReservations, err := n.state.OVNNB.GetLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName())
 			if err != nil {
 				return fmt.Errorf("Failed getting DHCPv4 reservations: %w", err)
 			}
 
 			if !n.hasDHCPv4Reservation(dhcpReservations, ip) {
 				dhcpReservations = append(dhcpReservations, iprange.Range{Start: ip})
-				err = n.state.OVNNB.LogicalSwitchDHCPv4RevervationsSet(n.getIntSwitchName(), dhcpReservations)
+				err = n.state.OVNNB.UpdateLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName(), dhcpReservations)
 				if err != nil {
 					return fmt.Errorf("Failed adding DHCPv4 reservation for %q: %w", ip.String(), err)
 				}
@@ -3497,7 +3497,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	// Get existing DHCPv4 static reservations.
 	// This is used for both checking sticky DHCPv4 allocation availability and for ensuring static DHCP
 	// reservations exist.
-	dhcpReservations, err := n.state.OVNNB.LogicalSwitchDHCPv4RevervationsGet(n.getIntSwitchName())
+	dhcpReservations, err := n.state.OVNNB.GetLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName())
 	if err != nil {
 		return "", nil, fmt.Errorf("Failed getting DHCPv4 reservations: %w", err)
 	}
@@ -3508,7 +3508,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 	if dhcpv4Subnet != nil || dhcpv6Subnet != nil {
 		// Find existing DHCP options set for IPv4 and IPv6 and update them instead of adding sets.
-		existingOpts, err := n.state.OVNNB.LogicalSwitchDHCPOptionsGet(n.getIntSwitchName())
+		existingOpts, err := n.state.OVNNB.GetLogicalSwitchDHCPOptions(context.TODO(), n.getIntSwitchName())
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed getting existing DHCP settings for internal switch: %w", err)
 		}
@@ -3711,7 +3711,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	if opts.DeviceConfig["ipv4.address"] != "" && dnsIPv4 != nil {
 		if !n.hasDHCPv4Reservation(dhcpReservations, dnsIPv4) {
 			dhcpReservations = append(dhcpReservations, iprange.Range{Start: dnsIPv4})
-			err = n.state.OVNNB.LogicalSwitchDHCPv4RevervationsSet(n.getIntSwitchName(), dhcpReservations)
+			err = n.state.OVNNB.UpdateLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName(), dhcpReservations)
 			if err != nil {
 				return "", nil, fmt.Errorf("Failed adding DHCPv4 reservation for %q: %w", dnsIPv4.String(), err)
 			}
@@ -4199,7 +4199,7 @@ func (n *ovn) InstanceDevicePortRemove(instanceUUID string, deviceName string, d
 		if deviceConfig["ipv4.address"] != "" {
 			ip := net.ParseIP(deviceConfig["ipv4.address"])
 			if ip != nil {
-				dhcpReservations, err := n.state.OVNNB.LogicalSwitchDHCPv4RevervationsGet(n.getIntSwitchName())
+				dhcpReservations, err := n.state.OVNNB.GetLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName())
 				if err != nil {
 					return fmt.Errorf("Failed getting DHCPv4 reservations: %w", err)
 				}
@@ -4218,7 +4218,7 @@ func (n *ovn) InstanceDevicePortRemove(instanceUUID string, deviceName string, d
 				}
 
 				if found {
-					err = n.state.OVNNB.LogicalSwitchDHCPv4RevervationsSet(n.getIntSwitchName(), dhcpReservationsNew)
+					err = n.state.OVNNB.UpdateLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName(), dhcpReservationsNew)
 					if err != nil {
 						return fmt.Errorf("Failed removing DHCPv4 reservation for %q: %w", ip.String(), err)
 					}

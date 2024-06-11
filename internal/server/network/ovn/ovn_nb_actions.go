@@ -1037,21 +1037,29 @@ func (o *NB) logicalSwitchParseExcludeIPs(ips []iprange.Range) ([]string, error)
 	return excludeIPs, nil
 }
 
-// LogicalSwitchSetIPAllocation sets the IP allocation config on the logical switch.
-func (o *NB) LogicalSwitchSetIPAllocation(switchName OVNSwitch, opts *OVNIPAllocationOpts) error {
-	var removeOtherConfigKeys []string
-	args := []string{"set", "logical_switch", string(switchName)}
+// UpdateLogicalSwitchIPAllocation sets the IP allocation config on the logical switch.
+func (o *NB) UpdateLogicalSwitchIPAllocation(ctx context.Context, switchName OVNSwitch, opts *OVNIPAllocationOpts) error {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return err
+	}
+
+	// Update the configuration.
+	if logicalSwitch.OtherConfig == nil {
+		logicalSwitch.OtherConfig = map[string]string{}
+	}
 
 	if opts.PrefixIPv4 != nil {
-		args = append(args, fmt.Sprintf("other_config:subnet=%s", opts.PrefixIPv4.String()))
+		logicalSwitch.OtherConfig["subnet"] = opts.PrefixIPv4.String()
 	} else {
-		removeOtherConfigKeys = append(removeOtherConfigKeys, "subnet")
+		delete(logicalSwitch.OtherConfig, "subnet")
 	}
 
 	if opts.PrefixIPv6 != nil {
-		args = append(args, fmt.Sprintf("other_config:ipv6_prefix=%s", opts.PrefixIPv6.String()))
+		logicalSwitch.OtherConfig["ipv6_prefix"] = opts.PrefixIPv6.String()
 	} else {
-		removeOtherConfigKeys = append(removeOtherConfigKeys, "ipv6_prefix")
+		delete(logicalSwitch.OtherConfig, "ipv6_prefix")
 	}
 
 	if len(opts.ExcludeIPv4) > 0 {
@@ -1060,35 +1068,42 @@ func (o *NB) LogicalSwitchSetIPAllocation(switchName OVNSwitch, opts *OVNIPAlloc
 			return err
 		}
 
-		args = append(args, fmt.Sprintf("other_config:exclude_ips=%s", strings.Join(excludeIPs, " ")))
+		logicalSwitch.OtherConfig["exclude_ips"] = strings.Join(excludeIPs, " ")
 	} else {
-		removeOtherConfigKeys = append(removeOtherConfigKeys, "exclude_ips")
+		delete(logicalSwitch.OtherConfig, "exclude_ips")
 	}
 
-	// Clear any unused keys first.
-	if len(removeOtherConfigKeys) > 0 {
-		removeArgs := append([]string{"remove", "logical_switch", string(switchName), "other_config"}, removeOtherConfigKeys...)
-		_, err := o.nbctl(removeArgs...)
-		if err != nil {
-			return err
-		}
+	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch)
+	if err != nil {
+		return err
 	}
 
-	// Only run command if at least one setting is specified.
-	if len(args) > 3 {
-		_, err := o.nbctl(args...)
-		if err != nil {
-			return err
-		}
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// LogicalSwitchDHCPv4RevervationsSet sets the DHCPv4 IP reservations.
-func (o *NB) LogicalSwitchDHCPv4RevervationsSet(switchName OVNSwitch, reservedIPs []iprange.Range) error {
-	var removeOtherConfigKeys []string
-	args := []string{"set", "logical_switch", string(switchName)}
+// UpdateLogicalSwitchDHCPv4Revervations sets the DHCPv4 IP reservations.
+func (o *NB) UpdateLogicalSwitchDHCPv4Revervations(ctx context.Context, switchName OVNSwitch, reservedIPs []iprange.Range) error {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return err
+	}
+
+	// Update the configuration.
+	if logicalSwitch.OtherConfig == nil {
+		logicalSwitch.OtherConfig = map[string]string{}
+	}
 
 	if len(reservedIPs) > 0 {
 		excludeIPs, err := o.logicalSwitchParseExcludeIPs(reservedIPs)
@@ -1096,41 +1111,45 @@ func (o *NB) LogicalSwitchDHCPv4RevervationsSet(switchName OVNSwitch, reservedIP
 			return err
 		}
 
-		args = append(args, fmt.Sprintf("other_config:exclude_ips=%s", strings.Join(excludeIPs, " ")))
+		logicalSwitch.OtherConfig["exclude_ips"] = strings.Join(excludeIPs, " ")
 	} else {
-		removeOtherConfigKeys = append(removeOtherConfigKeys, "exclude_ips")
+		delete(logicalSwitch.OtherConfig, "exclude_ips")
 	}
 
-	// Clear any unused keys first.
-	if len(removeOtherConfigKeys) > 0 {
-		removeArgs := append([]string{"remove", "logical_switch", string(switchName), "other_config"}, removeOtherConfigKeys...)
-		_, err := o.nbctl(removeArgs...)
-		if err != nil {
-			return err
-		}
+	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch)
+	if err != nil {
+		return err
 	}
 
-	// Only run command if at least one setting is specified.
-	if len(args) > 3 {
-		_, err := o.nbctl(args...)
-		if err != nil {
-			return err
-		}
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// LogicalSwitchDHCPv4RevervationsGet gets the DHCPv4 IP reservations.
-func (o *NB) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]iprange.Range, error) {
-	excludeIPsRaw, err := o.nbctl("--if-exists", "get", "logical_switch", string(switchName), "other_config:exclude_ips")
+// GetLogicalSwitchDHCPv4Revervations gets the DHCPv4 IP reservations.
+func (o *NB) GetLogicalSwitchDHCPv4Revervations(ctx context.Context, switchName OVNSwitch) ([]iprange.Range, error) {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
 	if err != nil {
 		return nil, err
 	}
 
-	excludeIPsRaw = strings.TrimSpace(excludeIPsRaw)
+	// Get the list of excluded IPs.
+	if logicalSwitch.OtherConfig == nil {
+		return []iprange.Range{}, nil
+	}
 
 	// Check if no dynamic IPs set.
+	excludeIPsRaw := strings.TrimSpace(logicalSwitch.OtherConfig["exclude_ips"])
 	if excludeIPsRaw == "" || excludeIPsRaw == "[]" {
 		return []iprange.Range{}, nil
 	}
@@ -1170,42 +1189,37 @@ func (o *NB) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]iprange
 	return excludeIPs, nil
 }
 
-// LogicalSwitchDHCPv4OptionsSet creates or updates a DHCPv4 option set associated with the specified switchName
+// UpdateLogicalSwitchDHCPv4Options creates or updates a DHCPv4 option set associated with the specified switchName
 // and subnet. If uuid is non-empty then the record that exists with that ID is updated, otherwise a new record
 // is created.
-func (o *NB) LogicalSwitchDHCPv4OptionsSet(switchName OVNSwitch, uuid OVNDHCPOptionsUUID, subnet *net.IPNet, opts *OVNDHCPv4Opts) error {
-	var err error
-
+func (o *NB) UpdateLogicalSwitchDHCPv4Options(ctx context.Context, switchName OVNSwitch, uuid OVNDHCPOptionsUUID, subnet *net.IPNet, opts *OVNDHCPv4Opts) error {
+	dhcpOption := ovnNB.DHCPOptions{}
 	if uuid != "" {
-		_, err = o.nbctl("set", "dhcp_option", string(uuid),
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-			fmt.Sprintf("cidr=%s", subnet.String()),
-		)
+		// Load the existing record.
+		dhcpOption.UUID = string(uuid)
+		err := o.get(ctx, &dhcpOption)
 		if err != nil {
 			return err
 		}
-	} else {
-		uuidRaw, err := o.nbctl("create", "dhcp_option",
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-			fmt.Sprintf("cidr=%s", subnet.String()),
-		)
-		if err != nil {
-			return err
-		}
-
-		uuid = OVNDHCPOptionsUUID(strings.TrimSpace(uuidRaw))
 	}
 
-	// We have to use dhcp-options-set-options rather than the command above as its the only way to allow the
-	// domain_name option to be properly escaped.
-	args := []string{"dhcp-options-set-options", string(uuid),
-		fmt.Sprintf("server_id=%s", opts.ServerID.String()),
-		fmt.Sprintf("server_mac=%s", opts.ServerMAC.String()),
-		fmt.Sprintf("lease_time=%d", opts.LeaseTime/time.Second),
+	if dhcpOption.ExternalIDs == nil {
+		dhcpOption.ExternalIDs = map[string]string{}
 	}
+
+	if dhcpOption.Options == nil {
+		dhcpOption.Options = map[string]string{}
+	}
+
+	dhcpOption.ExternalIDs[ovnExtIDIncusSwitch] = string(switchName)
+	dhcpOption.Cidr = subnet.String()
+
+	dhcpOption.Options["server_id"] = opts.ServerID.String()
+	dhcpOption.Options["server_mac"] = opts.ServerMAC.String()
+	dhcpOption.Options["lease_time"] = fmt.Sprintf("%d", opts.LeaseTime/time.Second)
 
 	if opts.Router != nil {
-		args = append(args, fmt.Sprintf("router=%s", opts.Router.String()))
+		dhcpOption.Options["router"] = opts.Router.String()
 	}
 
 	if opts.RecursiveDNSServer != nil {
@@ -1218,23 +1232,49 @@ func (o *NB) LogicalSwitchDHCPv4OptionsSet(switchName OVNSwitch, uuid OVNDHCPOpt
 			nsIPs = append(nsIPs, nsIP.String())
 		}
 
-		args = append(args, fmt.Sprintf("dns_server={%s}", strings.Join(nsIPs, ",")))
+		dhcpOption.Options["dns_server"] = fmt.Sprintf("{%s}", strings.Join(nsIPs, ","))
 	}
 
 	if opts.DomainName != "" {
 		// Special quoting to allow domain names.
-		args = append(args, fmt.Sprintf(`domain_name="%s"`, opts.DomainName))
+		dhcpOption.Options["domain_name"] = fmt.Sprintf(`"%s"`, opts.DomainName)
 	}
 
 	if opts.MTU > 0 {
-		args = append(args, fmt.Sprintf("mtu=%d", opts.MTU))
+		dhcpOption.Options["mtu"] = fmt.Sprintf("%d", opts.MTU)
 	}
 
 	if opts.Netmask != "" {
-		args = append(args, fmt.Sprintf("netmask=%s", opts.Netmask))
+		dhcpOption.Options["netmask"] = opts.Netmask
 	}
 
-	_, err = o.nbctl(args...)
+	// Prepare the changes.
+	operations := []ovsdb.Operation{}
+	if dhcpOption.UUID == "" {
+		// Create a new record.
+		createOps, err := o.client.Create(&dhcpOption)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+	} else {
+		// Update the record.
+		updateOps, err := o.client.Where(&dhcpOption).Update(&dhcpOption)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -1242,41 +1282,35 @@ func (o *NB) LogicalSwitchDHCPv4OptionsSet(switchName OVNSwitch, uuid OVNDHCPOpt
 	return nil
 }
 
-// LogicalSwitchDHCPv6OptionsSet creates or updates a DHCPv6 option set associated with the specified switchName
+// UpdateLogicalSwitchDHCPv6Options creates or updates a DHCPv6 option set associated with the specified switchName
 // and subnet. If uuid is non-empty then the record that exists with that ID is updated, otherwise a new record
 // is created.
-func (o *NB) LogicalSwitchDHCPv6OptionsSet(switchName OVNSwitch, uuid OVNDHCPOptionsUUID, subnet *net.IPNet, opts *OVNDHCPv6Opts) error {
-	var err error
-
+func (o *NB) UpdateLogicalSwitchDHCPv6Options(ctx context.Context, switchName OVNSwitch, uuid OVNDHCPOptionsUUID, subnet *net.IPNet, opts *OVNDHCPv6Opts) error {
+	dhcpOption := ovnNB.DHCPOptions{}
 	if uuid != "" {
-		_, err = o.nbctl("set", "dhcp_option", string(uuid),
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-			fmt.Sprintf(`cidr="%s"`, subnet.String()), // Special quoting to allow IPv6 address.
-		)
+		// Load the existing record.
+		dhcpOption.UUID = string(uuid)
+		err := o.get(ctx, &dhcpOption)
 		if err != nil {
 			return err
 		}
-	} else {
-		uuidRaw, err := o.nbctl("create", "dhcp_option",
-			fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-			fmt.Sprintf(`cidr="%s"`, subnet.String()), // Special quoting to allow IPv6 address.
-		)
-		if err != nil {
-			return err
-		}
-
-		uuid = OVNDHCPOptionsUUID(strings.TrimSpace(uuidRaw))
 	}
 
-	// We have to use dhcp-options-set-options rather than the command above as its the only way to allow the
-	// domain_name option to be properly escaped.
-	args := []string{"dhcp-options-set-options", string(uuid),
-		fmt.Sprintf("server_id=%s", opts.ServerID.String()),
+	if dhcpOption.ExternalIDs == nil {
+		dhcpOption.ExternalIDs = map[string]string{}
 	}
+
+	if dhcpOption.Options == nil {
+		dhcpOption.Options = map[string]string{}
+	}
+
+	dhcpOption.ExternalIDs[ovnExtIDIncusSwitch] = string(switchName)
+	dhcpOption.Cidr = subnet.String()
+	dhcpOption.Options["server_id"] = opts.ServerID.String()
 
 	if len(opts.DNSSearchList) > 0 {
 		// Special quoting to allow domain names.
-		args = append(args, fmt.Sprintf(`domain_search="%s"`, strings.Join(opts.DNSSearchList, ",")))
+		dhcpOption.Options["domain_search"] = fmt.Sprintf(`"%s"`, strings.Join(opts.DNSSearchList, ","))
 	}
 
 	if opts.RecursiveDNSServer != nil {
@@ -1289,10 +1323,36 @@ func (o *NB) LogicalSwitchDHCPv6OptionsSet(switchName OVNSwitch, uuid OVNDHCPOpt
 			nsIPs = append(nsIPs, nsIP.String())
 		}
 
-		args = append(args, fmt.Sprintf("dns_server={%s}", strings.Join(nsIPs, ",")))
+		dhcpOption.Options["dns_server"] = fmt.Sprintf("{%s}", strings.Join(nsIPs, ","))
 	}
 
-	_, err = o.nbctl(args...)
+	// Prepare the changes.
+	operations := []ovsdb.Operation{}
+	if dhcpOption.UUID == "" {
+		// Create a new record.
+		createOps, err := o.client.Create(&dhcpOption)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+	} else {
+		// Update the record.
+		updateOps, err := o.client.Where(&dhcpOption).Update(&dhcpOption)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -1300,35 +1360,28 @@ func (o *NB) LogicalSwitchDHCPv6OptionsSet(switchName OVNSwitch, uuid OVNDHCPOpt
 	return nil
 }
 
-// LogicalSwitchDHCPOptionsGet retrieves the existing DHCP options defined for a logical switch.
-func (o *NB) LogicalSwitchDHCPOptionsGet(switchName OVNSwitch) ([]OVNDHCPOptsSet, error) {
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid,cidr", "find", "dhcp_options",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-	)
+// GetLogicalSwitchDHCPOptions retrieves the existing DHCP options defined for a logical switch.
+func (o *NB) GetLogicalSwitchDHCPOptions(ctx context.Context, switchName OVNSwitch) ([]OVNDHCPOptsSet, error) {
+	// Get the matching DHCP options.
+	dhcpOptions := []ovnNB.DHCPOptions{}
+	err := o.client.WhereCache(func(do *ovnNB.DHCPOptions) bool {
+		return do.ExternalIDs != nil && do.ExternalIDs[ovnExtIDIncusSwitch] == string(switchName)
+	}).List(ctx, &dhcpOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	colCount := 2
 	dhcpOpts := []OVNDHCPOptsSet{}
-	output = strings.TrimSpace(output)
-	if output != "" {
-		for _, row := range strings.Split(output, "\n") {
-			rowParts := strings.SplitN(row, ",", colCount)
-			if len(rowParts) < colCount {
-				return nil, fmt.Errorf("Too few columns in output")
-			}
-
-			_, cidr, err := net.ParseCIDR(rowParts[1])
-			if err != nil {
-				return nil, err
-			}
-
-			dhcpOpts = append(dhcpOpts, OVNDHCPOptsSet{
-				UUID: OVNDHCPOptionsUUID(rowParts[0]),
-				CIDR: cidr,
-			})
+	for _, dhcpOption := range dhcpOptions {
+		_, cidr, err := net.ParseCIDR(dhcpOption.Cidr)
+		if err != nil {
+			return nil, err
 		}
+
+		dhcpOpts = append(dhcpOpts, OVNDHCPOptsSet{
+			UUID: OVNDHCPOptionsUUID(dhcpOption.UUID),
+			CIDR: cidr,
+		})
 	}
 
 	return dhcpOpts, nil
