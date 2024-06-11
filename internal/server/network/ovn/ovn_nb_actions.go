@@ -1037,21 +1037,29 @@ func (o *NB) logicalSwitchParseExcludeIPs(ips []iprange.Range) ([]string, error)
 	return excludeIPs, nil
 }
 
-// LogicalSwitchSetIPAllocation sets the IP allocation config on the logical switch.
-func (o *NB) LogicalSwitchSetIPAllocation(switchName OVNSwitch, opts *OVNIPAllocationOpts) error {
-	var removeOtherConfigKeys []string
-	args := []string{"set", "logical_switch", string(switchName)}
+// UpdateLogicalSwitchIPAllocation sets the IP allocation config on the logical switch.
+func (o *NB) UpdateLogicalSwitchIPAllocation(ctx context.Context, switchName OVNSwitch, opts *OVNIPAllocationOpts) error {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return err
+	}
+
+	// Update the configuration.
+	if logicalSwitch.OtherConfig == nil {
+		logicalSwitch.OtherConfig = map[string]string{}
+	}
 
 	if opts.PrefixIPv4 != nil {
-		args = append(args, fmt.Sprintf("other_config:subnet=%s", opts.PrefixIPv4.String()))
+		logicalSwitch.OtherConfig["subnet"] = opts.PrefixIPv4.String()
 	} else {
-		removeOtherConfigKeys = append(removeOtherConfigKeys, "subnet")
+		delete(logicalSwitch.OtherConfig, "subnet")
 	}
 
 	if opts.PrefixIPv6 != nil {
-		args = append(args, fmt.Sprintf("other_config:ipv6_prefix=%s", opts.PrefixIPv6.String()))
+		logicalSwitch.OtherConfig["ipv6_prefix"] = opts.PrefixIPv6.String()
 	} else {
-		removeOtherConfigKeys = append(removeOtherConfigKeys, "ipv6_prefix")
+		delete(logicalSwitch.OtherConfig, "ipv6_prefix")
 	}
 
 	if len(opts.ExcludeIPv4) > 0 {
@@ -1060,26 +1068,25 @@ func (o *NB) LogicalSwitchSetIPAllocation(switchName OVNSwitch, opts *OVNIPAlloc
 			return err
 		}
 
-		args = append(args, fmt.Sprintf("other_config:exclude_ips=%s", strings.Join(excludeIPs, " ")))
+		logicalSwitch.OtherConfig["exclude_ips"] = strings.Join(excludeIPs, " ")
 	} else {
-		removeOtherConfigKeys = append(removeOtherConfigKeys, "exclude_ips")
+		delete(logicalSwitch.OtherConfig, "exclude_ips")
 	}
 
-	// Clear any unused keys first.
-	if len(removeOtherConfigKeys) > 0 {
-		removeArgs := append([]string{"remove", "logical_switch", string(switchName), "other_config"}, removeOtherConfigKeys...)
-		_, err := o.nbctl(removeArgs...)
-		if err != nil {
-			return err
-		}
+	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch)
+	if err != nil {
+		return err
 	}
 
-	// Only run command if at least one setting is specified.
-	if len(args) > 3 {
-		_, err := o.nbctl(args...)
-		if err != nil {
-			return err
-		}
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
