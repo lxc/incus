@@ -1135,16 +1135,21 @@ func (o *NB) UpdateLogicalSwitchDHCPv4Revervations(ctx context.Context, switchNa
 	return nil
 }
 
-// LogicalSwitchDHCPv4RevervationsGet gets the DHCPv4 IP reservations.
-func (o *NB) LogicalSwitchDHCPv4RevervationsGet(switchName OVNSwitch) ([]iprange.Range, error) {
-	excludeIPsRaw, err := o.nbctl("--if-exists", "get", "logical_switch", string(switchName), "other_config:exclude_ips")
+// GetLogicalSwitchDHCPv4Revervations gets the DHCPv4 IP reservations.
+func (o *NB) GetLogicalSwitchDHCPv4Revervations(ctx context.Context, switchName OVNSwitch) ([]iprange.Range, error) {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
 	if err != nil {
 		return nil, err
 	}
 
-	excludeIPsRaw = strings.TrimSpace(excludeIPsRaw)
+	// Get the list of excluded IPs.
+	if logicalSwitch.OtherConfig == nil {
+		return []iprange.Range{}, nil
+	}
 
 	// Check if no dynamic IPs set.
+	excludeIPsRaw := strings.TrimSpace(logicalSwitch.OtherConfig["exclude_ips"])
 	if excludeIPsRaw == "" || excludeIPsRaw == "[]" {
 		return []iprange.Range{}, nil
 	}
