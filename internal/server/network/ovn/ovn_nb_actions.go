@@ -258,6 +258,20 @@ func (o *NB) DeleteLogicalRouter(ctx context.Context, routerName OVNRouter) erro
 	return nil
 }
 
+// GetLogicalRouter gets the OVN database record for the router.
+func (o *NB) GetLogicalRouter(ctx context.Context, routerName OVNRouter) (*ovnNB.LogicalRouter, error) {
+	logicalRouter := &ovnNB.LogicalRouter{
+		Name: string(routerName),
+	}
+
+	err := o.get(ctx, logicalRouter)
+	if err != nil {
+		return nil, err
+	}
+
+	return logicalRouter, nil
+}
+
 // CreateLogicalRouterNAT adds an SNAT or DNAT rule to a logical router to translate packets from intNet to extIP.
 func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, natType string, intNet *net.IPNet, extIP net.IP, intIP net.IP, stateless bool, mayExist bool) error {
 	// Prepare the addresses.
@@ -274,12 +288,8 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 		return fmt.Errorf("Invalid NAT rule type %q", natType)
 	}
 
-	logicalRouter := ovnNB.LogicalRouter{
-		Name: string(routerName),
-	}
-
-	// Make sure logical router exists.
-	err := o.get(ctx, &logicalRouter)
+	// Get the logical router.
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
 	if err != nil {
 		return err
 	}
@@ -328,7 +338,7 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 	operations = append(operations, createOps...)
 
 	// Add it to the router.
-	updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+	updateOps, err := o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
 		Field:   &logicalRouter.Nat,
 		Mutator: ovsdb.MutateOperationInsert,
 		Value:   []string{natRule.UUID},
@@ -360,12 +370,8 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 		return fmt.Errorf("Can't ask for all NAT rules to be deleted and specify specific addresses")
 	}
 
-	logicalRouter := ovnNB.LogicalRouter{
-		Name: string(routerName),
-	}
-
-	// Make sure logical router exists.
-	err := o.get(ctx, &logicalRouter)
+	// Get the logical router.
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
 	if err != nil {
 		return err
 	}
@@ -412,7 +418,7 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 		operations = append(operations, deleteOps...)
 
 		// Delete the entry from the logical router.
-		deleteOps, err = o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+		deleteOps, err = o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
 			Field:   &logicalRouter.Nat,
 			Mutator: ovsdb.MutateOperationDelete,
 			Value:   []string{natRule.UUID},
@@ -445,12 +451,8 @@ func (o *NB) DeleteLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 
 // CreateLogicalRouterRoute adds a static route to the logical router.
 func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter, mayExist bool, routes ...OVNRouterRoute) error {
-	// Fetch the logical router.
-	logicalRouter := ovnNB.LogicalRouter{
-		Name: string(routerName),
-	}
-
-	err := o.get(ctx, &logicalRouter)
+	// Get the logical router.
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
 	if err != nil {
 		return err
 	}
@@ -527,7 +529,7 @@ func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 		operations = append(operations, createOps...)
 
 		// Add it to the router.
-		updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+		updateOps, err := o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
 			Field:   &logicalRouter.StaticRoutes,
 			Mutator: ovsdb.MutateOperationInsert,
 			Value:   []string{staticRoute.UUID},
@@ -559,12 +561,8 @@ func (o *NB) CreateLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 
 // DeleteLogicalRouterRoute deletes a static route from the logical router.
 func (o *NB) DeleteLogicalRouterRoute(ctx context.Context, routerName OVNRouter, prefixes ...net.IPNet) error {
-	// Fetch the logical router.
-	logicalRouter := ovnNB.LogicalRouter{
-		Name: string(routerName),
-	}
-
-	err := o.get(ctx, &logicalRouter)
+	// Get the logical router.
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
 	if err != nil {
 		return err
 	}
@@ -618,7 +616,7 @@ func (o *NB) DeleteLogicalRouterRoute(ctx context.Context, routerName OVNRouter,
 		operations = append(operations, deleteOps...)
 
 		// Remove from the router.
-		updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+		updateOps, err := o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
 			Field:   &logicalRouter.StaticRoutes,
 			Mutator: ovsdb.MutateOperationDelete,
 			Value:   []string{route.UUID},
@@ -1336,19 +1334,36 @@ func (o *NB) LogicalSwitchDHCPOptionsGet(switchName OVNSwitch) ([]OVNDHCPOptsSet
 	return dhcpOpts, nil
 }
 
-// LogicalSwitchDHCPOptionsDelete deletes the specified DHCP options defined for a switch.
-func (o *NB) LogicalSwitchDHCPOptionsDelete(switchName OVNSwitch, uuids ...OVNDHCPOptionsUUID) error {
-	args := []string{}
+// DeleteLogicalSwitchDHCPOption deletes the specified DHCP options defined for a switch.
+func (o *NB) DeleteLogicalSwitchDHCPOption(ctx context.Context, switchName OVNSwitch, uuids ...OVNDHCPOptionsUUID) error {
+	operations := []ovsdb.Operation{}
 
+	// Prepare deletion requests.
 	for _, uuid := range uuids {
-		if len(args) > 0 {
-			args = append(args, "--")
+		dhcpOption := ovnNB.DHCPOptions{
+			UUID: string(uuid),
 		}
 
-		args = append(args, "destroy", "dhcp_options", string(uuid))
+		deleteOps, err := o.client.Where(&dhcpOption).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
 	}
 
-	_, err := o.nbctl(args...)
+	// Check if there's anything to do.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -1451,23 +1466,19 @@ func (o *NB) LogicalSwitchIPs(switchName OVNSwitch) (map[OVNSwitchPort][]net.IP,
 	return portIPs, nil
 }
 
-// LogicalSwitchPortUUID returns the logical switch port UUID or empty string if port doesn't exist.
-func (o *NB) LogicalSwitchPortUUID(portName OVNSwitchPort) (OVNSwitchPortUUID, error) {
-	portInfo, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid,name", "find", "logical_switch_port",
-		fmt.Sprintf("name=%s", string(portName)),
-	)
+// GetLogicalSwitchPortUUID returns the logical switch port UUID.
+func (o *NB) GetLogicalSwitchPortUUID(ctx context.Context, portName OVNSwitchPort) (OVNSwitchPortUUID, error) {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, &lsp)
 	if err != nil {
 		return "", err
 	}
 
-	portParts := util.SplitNTrimSpace(portInfo, ",", 2, false)
-	if len(portParts) == 2 {
-		if portParts[1] == string(portName) {
-			return OVNSwitchPortUUID(portParts[0]), nil
-		}
-	}
-
-	return "", nil
+	return OVNSwitchPortUUID(lsp.UUID), nil
 }
 
 // CreateLogicalSwitchPort adds a named logical switch port to a logical switch, and sets options if provided.
@@ -1590,10 +1601,8 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 	return nil
 }
 
-// LogicalSwitchPortIPs returns a list of IPs for a switch port.
-func (o *NB) LogicalSwitchPortIPs(portName OVNSwitchPort) ([]net.IP, error) {
-	ctx := context.TODO()
-
+// GetLogicalSwitchPortIPs returns a list of IPs for a switch port.
+func (o *NB) GetLogicalSwitchPortIPs(ctx context.Context, portName OVNSwitchPort) ([]net.IP, error) {
 	lsp := ovnNB.LogicalSwitchPort{
 		Name: string(portName),
 	}
@@ -1625,10 +1634,8 @@ func (o *NB) LogicalSwitchPortIPs(portName OVNSwitchPort) ([]net.IP, error) {
 	return addresses, nil
 }
 
-// LogicalSwitchPortDynamicIPs returns a list of dynamc IPs for a switch port.
-func (o *NB) LogicalSwitchPortDynamicIPs(portName OVNSwitchPort) ([]net.IP, error) {
-	ctx := context.TODO()
-
+// GetLogicalSwitchPortDynamicIPs returns a list of dynamc IPs for a switch port.
+func (o *NB) GetLogicalSwitchPortDynamicIPs(ctx context.Context, portName OVNSwitchPort) ([]net.IP, error) {
 	lsp := &ovnNB.LogicalSwitchPort{
 		Name: string(portName),
 	}
@@ -1656,14 +1663,27 @@ func (o *NB) LogicalSwitchPortDynamicIPs(portName OVNSwitchPort) ([]net.IP, erro
 	return dynamicIPs, nil
 }
 
-// LogicalSwitchPortLocationGet returns the last set location of a logical switch port.
-func (o *NB) LogicalSwitchPortLocationGet(portName OVNSwitchPort) (string, error) {
-	location, err := o.nbctl("--if-exists", "get", "logical_switch_port", string(portName), fmt.Sprintf("external-ids:%s", ovnExtIDIncusLocation))
+// GetLogicalSwitchPortLocation returns the last set location of a logical switch port.
+func (o *NB) GetLogicalSwitchPortLocation(ctx context.Context, portName OVNSwitchPort) (string, error) {
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, &lsp)
 	if err != nil {
 		return "", err
 	}
 
-	return strings.TrimSpace(location), nil
+	if lsp.ExternalIDs == nil {
+		return "", ErrNotFound
+	}
+
+	val, ok := lsp.ExternalIDs[ovnExtIDIncusLocation]
+	if !ok {
+		return "", ErrNotFound
+	}
+
+	return val, nil
 }
 
 // LogicalSwitchPortOptionsSet sets the options for a logical switch port.
@@ -2117,11 +2137,9 @@ func (o *NB) SetChassisGroupPriority(ctx context.Context, haChassisGroupName OVN
 	return nil
 }
 
-// PortGroupInfo returns the port group UUID or empty string if port doesn't exist, and whether the port group has
+// GetPortGroupInfo returns the port group UUID or empty string if port doesn't exist, and whether the port group has
 // any ACL rules defined on it.
-func (o *NB) PortGroupInfo(portGroupName OVNPortGroup) (OVNPortGroupUUID, bool, error) {
-	ctx := context.TODO()
-
+func (o *NB) GetPortGroupInfo(ctx context.Context, portGroupName OVNPortGroup) (OVNPortGroupUUID, bool, error) {
 	pg := &ovnNB.PortGroup{
 		Name: string(portGroupName),
 	}
@@ -2461,27 +2479,61 @@ func (o *NB) LoadBalancerApply(loadBalancerName OVNLoadBalancer, routers []OVNRo
 	return nil
 }
 
-// LoadBalancerDelete deletes the specified load balancer(s).
-func (o *NB) LoadBalancerDelete(loadBalancerNames ...OVNLoadBalancer) error {
-	var args []string
-
+// DeleteLoadBalancer deletes the specified load balancer(s).
+func (o *NB) DeleteLoadBalancer(ctx context.Context, loadBalancerNames ...OVNLoadBalancer) error {
+	operations := []ovsdb.Operation{}
 	for _, loadBalancerName := range loadBalancerNames {
-		if len(args) > 0 {
-			args = append(args, "--")
+		// Check for a TCP load-balancer.
+		lb := ovnNB.LoadBalancer{
+			Name: fmt.Sprintf("%s-tcp", loadBalancerName),
 		}
 
-		lbTCPName := fmt.Sprintf("%s-tcp", loadBalancerName)
-		lbUDPName := fmt.Sprintf("%s-udp", loadBalancerName)
+		err := o.get(ctx, &lb)
+		if err == nil {
+			// Delete the load balancer.
+			deleteOps, err := o.client.Where(&lb).Delete()
+			if err != nil {
+				return err
+			}
 
-		// Remove load balancers for loadBalancerName if they exist.
-		args = append(args, "--if-exists", "lb-del", lbTCPName, "--", "lb-del", lbUDPName)
-	}
-
-	if len(args) > 0 {
-		_, err := o.nbctl(args...)
-		if err != nil {
+			operations = append(operations, deleteOps...)
+		} else if err != ErrNotFound {
 			return err
 		}
+
+		// Check for a UDP load-balancer.
+		lb = ovnNB.LoadBalancer{
+			Name: fmt.Sprintf("%s-udp", loadBalancerName),
+		}
+
+		err = o.get(ctx, &lb)
+		if err == nil {
+			// Delete the load balancer.
+			deleteOps, err := o.client.Where(&lb).Delete()
+			if err != nil {
+				return err
+			}
+
+			operations = append(operations, deleteOps...)
+		} else if err != ErrNotFound {
+			return err
+		}
+	}
+
+	// Check if anything to delete.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -2832,15 +2884,14 @@ func (o *NB) LogicalRouterPeeringDelete(opts OVNRouterPeering) error {
 	return nil
 }
 
-// GetHardwareAddress gets the hardware address of the logical router port.
-func (o *NB) GetHardwareAddress(ovnRouterPort OVNRouterPort) (string, error) {
-	nameFilter := fmt.Sprintf("name=%s", ovnRouterPort)
-	hwaddr, err := o.nbctl("--no-headings", "--data=bare", "--format=csv", "--columns=mac", "find", "Logical_Router_Port", nameFilter)
+// GetLogicalRouterPortHardwareAddress gets the hardware address of the logical router port.
+func (o *NB) GetLogicalRouterPortHardwareAddress(ctx context.Context, ovnRouterPort OVNRouterPort) (string, error) {
+	lrp, err := o.GetLogicalRouterPort(ctx, ovnRouterPort)
 	if err != nil {
 		return "", err
 	}
 
-	return strings.TrimSpace(hwaddr), nil
+	return lrp.MAC, nil
 }
 
 // GetName returns the OVN AZ name.

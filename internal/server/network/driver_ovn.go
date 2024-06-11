@@ -147,7 +147,7 @@ func (n *ovn) State() (*api.NetworkState, error) {
 
 	hwaddr, ok := n.config["bridge.hwaddr"]
 	if !ok {
-		hwaddr, err = n.state.OVNNB.GetHardwareAddress(n.getRouterExtPortName())
+		hwaddr, err = n.state.OVNNB.GetLogicalRouterPortHardwareAddress(context.TODO(), n.getRouterExtPortName())
 		if err != nil {
 			return nil, err
 		}
@@ -2390,7 +2390,7 @@ func (n *ovn) setup(update bool) error {
 		}
 
 		if len(deleteDHCPRecords) > 0 {
-			err = n.state.OVNNB.LogicalSwitchDHCPOptionsDelete(n.getIntSwitchName(), deleteDHCPRecords...)
+			err = n.state.OVNNB.DeleteLogicalSwitchDHCPOption(context.TODO(), n.getIntSwitchName(), deleteDHCPRecords...)
 			if err != nil {
 				return fmt.Errorf("Failed deleting existing DHCP settings for internal switch: %w", err)
 			}
@@ -2601,7 +2601,7 @@ func (n *ovn) logicalRouterPolicySetup(ovnnb *networkOVN.NB, excludePeers ...int
 func (n *ovn) ensureNetworkPortGroup(projectID int64) error {
 	// Create port group (if needed) for NICs to classify as internal.
 	intPortGroupName := acl.OVNIntSwitchPortGroupName(n.ID())
-	intPortGroupUUID, _, err := n.state.OVNNB.PortGroupInfo(intPortGroupName)
+	intPortGroupUUID, _, err := n.state.OVNNB.GetPortGroupInfo(context.TODO(), intPortGroupName)
 	if err != nil {
 		return fmt.Errorf("Failed getting port group UUID for network %q setup: %w", n.Name(), err)
 	}
@@ -2715,58 +2715,37 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	}
 
 	if clientType == request.ClientTypeNormal {
+		// Delete the router and anything tied to it (router ports, static routes, policies, nat, ...).
 		err = n.state.OVNNB.DeleteLogicalRouter(context.TODO(), n.getRouterName())
 		if err != nil {
 			return err
 		}
 
+		// Delete the external logical switch and anything tied to it (ports, ...).
 		err = n.state.OVNNB.DeleteLogicalSwitch(context.TODO(), n.getExtSwitchName())
 		if err != nil {
 			return err
 		}
 
+		// Delete the internal logical switch and anything tied to it (ports, ...).
 		err = n.state.OVNNB.DeleteLogicalSwitch(context.TODO(), n.getIntSwitchName())
 		if err != nil {
 			return err
 		}
 
+		// Delete any related address sets.
 		err = n.state.OVNNB.AddressSetDelete(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
 		if err != nil {
 			return err
 		}
 
-		err = n.state.OVNNB.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterExtPortName())
-		if err != nil {
-			return err
-		}
-
-		err = n.state.OVNNB.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName())
-		if err != nil {
-			return err
-		}
-
-		err = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchRouterPortName())
-		if err != nil {
-			return err
-		}
-
-		err = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchProviderPortName())
-		if err != nil {
-			return err
-		}
-
-		err = n.state.OVNNB.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), n.getIntSwitchRouterPortName())
-		if err != nil {
-			return err
-		}
-
-		// Must be done after logical router removal.
+		// Delete the chassis group for the network.
 		err = n.state.OVNNB.DeleteChassisGroup(context.TODO(), n.getChassisGroupName())
 		if err != nil {
 			return err
 		}
 
-		// Check for port groups that will become unused (and need deleting) as this network is deleted.
+		// Clean up any now unused port group.
 		securityACLs := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, true)
 		if len(securityACLs) > 0 {
 			err = acl.OVNPortGroupDeleteIfUnused(n.state, n.logger, n.state.OVNNB, n.project, &api.Network{Name: n.name}, "")
@@ -2807,7 +2786,7 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 			loadBalancers = append(loadBalancers, n.getLoadBalancerName(listenAddress))
 		}
 
-		err = n.state.OVNNB.LoadBalancerDelete(loadBalancers...)
+		err = n.state.OVNNB.DeleteLoadBalancer(context.TODO(), loadBalancers...)
 		if err != nil {
 			return fmt.Errorf("Failed deleting network forwards and load balancers: %w", err)
 		}
@@ -3694,7 +3673,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 		// Retry a few times in case port has not yet allocated dynamic IPs.
 		for i := 0; i < 10; i++ {
-			dynamicIPs, err = n.state.OVNNB.LogicalSwitchPortDynamicIPs(instancePortName)
+			dynamicIPs, err = n.state.OVNNB.GetLogicalSwitchPortDynamicIPs(context.TODO(), instancePortName)
 			if err == nil {
 				if len(dynamicIPs) > 0 {
 					break
@@ -3928,7 +3907,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	removeChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
 
 	// Get logical port UUID.
-	portUUID, err := n.state.OVNNB.LogicalSwitchPortUUID(instancePortName)
+	portUUID, err := n.state.OVNNB.GetLogicalSwitchPortUUID(context.TODO(), instancePortName)
 	if err != nil || portUUID == "" {
 		return "", nil, fmt.Errorf("Failed getting logical port UUID for security ACL removal: %w", err)
 	}
@@ -4060,7 +4039,7 @@ func (n *ovn) InstanceDevicePortIPs(instanceUUID string, deviceName string) ([]n
 
 	instancePortName := n.getInstanceDevicePortName(instanceUUID, deviceName)
 
-	devIPs, err := n.state.OVNNB.LogicalSwitchPortIPs(instancePortName)
+	devIPs, err := n.state.OVNNB.GetLogicalSwitchPortIPs(context.TODO(), instancePortName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get OVN switch port IPs: %w", err)
 	}
@@ -4082,7 +4061,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		source = "internal"
 	}
 
-	portLocation, err := n.state.OVNNB.LogicalSwitchPortLocationGet(instancePortName)
+	portLocation, err := n.state.OVNNB.GetLogicalSwitchPortLocation(context.TODO(), instancePortName)
 	if err != nil {
 		return fmt.Errorf("Failed getting instance switch port options: %w", err)
 	}
@@ -4686,7 +4665,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 				return tx.DeleteNetworkForward(ctx, n.ID(), forwardID)
 			})
 
-			_ = n.state.OVNNB.LoadBalancerDelete(n.getLoadBalancerName(forward.ListenAddress))
+			_ = n.state.OVNNB.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(forward.ListenAddress))
 			_ = n.forwardBGPSetupPrefixes()
 		})
 
@@ -4865,7 +4844,7 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 		}
 
 		// Delete the network forward itself.
-		err = n.state.OVNNB.LoadBalancerDelete(n.getLoadBalancerName(forward.ListenAddress))
+		err = n.state.OVNNB.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(forward.ListenAddress))
 		if err != nil {
 			return fmt.Errorf("Failed deleting OVN load balancer: %w", err)
 		}
@@ -5056,7 +5035,7 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 				return tx.DeleteNetworkLoadBalancer(ctx, n.ID(), loadBalancerID)
 			})
 
-			_ = n.state.OVNNB.LoadBalancerDelete(n.getLoadBalancerName(loadBalancer.ListenAddress))
+			_ = n.state.OVNNB.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(loadBalancer.ListenAddress))
 			_ = n.loadBalancerBGPSetupPrefixes()
 		})
 
@@ -5236,7 +5215,7 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 		}
 
 		// Delete the load balancer itself.
-		err = n.state.OVNNB.LoadBalancerDelete(n.getLoadBalancerName(forward.ListenAddress))
+		err = n.state.OVNNB.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(forward.ListenAddress))
 		if err != nil {
 			return fmt.Errorf("Failed deleting OVN load balancer: %w", err)
 		}

@@ -128,7 +128,7 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 		portGroupName := OVNACLPortGroupName(aclNameIDs[aclName])
 
 		// Check if port group exists and has ACLs.
-		portGroupUUID, portGroupHasACLs, err := client.PortGroupInfo(portGroupName)
+		portGroupUUID, portGroupHasACLs, err := client.GetPortGroupInfo(context.TODO(), portGroupName)
 		if err != nil {
 			return nil, fmt.Errorf("Failed getting port group UUID for security ACL %q setup: %w", aclName, err)
 		}
@@ -154,7 +154,7 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 			// Check each per-ACL-per-network port group exists.
 			for _, aclNet := range aclNets {
 				netPortGroupName := OVNACLNetworkPortGroupName(aclNameIDs[aclName], aclNet.ID)
-				netPortGroupUUID, _, err := client.PortGroupInfo(netPortGroupName)
+				netPortGroupUUID, _, err := client.GetPortGroupInfo(context.TODO(), netPortGroupName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed getting port group UUID for security ACL %q setup: %w", aclName, err)
 				}
@@ -215,7 +215,7 @@ func OVNEnsureACLs(s *state.State, l logger.Logger, client *ovn.NB, aclProjectNa
 		portGroupName := OVNACLPortGroupName(aclNameIDs[aclName])
 
 		// Check if port group exists.
-		portGroupUUID, _, err := client.PortGroupInfo(portGroupName)
+		portGroupUUID, _, err := client.GetPortGroupInfo(context.TODO(), portGroupName)
 		if err != nil {
 			return nil, fmt.Errorf("Failed getting port group UUID for security ACL %q setup: %w", aclName, err)
 		}
