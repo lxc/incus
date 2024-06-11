@@ -1092,10 +1092,18 @@ func (o *NB) UpdateLogicalSwitchIPAllocation(ctx context.Context, switchName OVN
 	return nil
 }
 
-// LogicalSwitchDHCPv4RevervationsSet sets the DHCPv4 IP reservations.
-func (o *NB) LogicalSwitchDHCPv4RevervationsSet(switchName OVNSwitch, reservedIPs []iprange.Range) error {
-	var removeOtherConfigKeys []string
-	args := []string{"set", "logical_switch", string(switchName)}
+// UpdateLogicalSwitchDHCPv4Revervations sets the DHCPv4 IP reservations.
+func (o *NB) UpdateLogicalSwitchDHCPv4Revervations(ctx context.Context, switchName OVNSwitch, reservedIPs []iprange.Range) error {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return err
+	}
+
+	// Update the configuration.
+	if logicalSwitch.OtherConfig == nil {
+		logicalSwitch.OtherConfig = map[string]string{}
+	}
 
 	if len(reservedIPs) > 0 {
 		excludeIPs, err := o.logicalSwitchParseExcludeIPs(reservedIPs)
@@ -1103,26 +1111,25 @@ func (o *NB) LogicalSwitchDHCPv4RevervationsSet(switchName OVNSwitch, reservedIP
 			return err
 		}
 
-		args = append(args, fmt.Sprintf("other_config:exclude_ips=%s", strings.Join(excludeIPs, " ")))
+		logicalSwitch.OtherConfig["exclude_ips"] = strings.Join(excludeIPs, " ")
 	} else {
-		removeOtherConfigKeys = append(removeOtherConfigKeys, "exclude_ips")
+		delete(logicalSwitch.OtherConfig, "exclude_ips")
 	}
 
-	// Clear any unused keys first.
-	if len(removeOtherConfigKeys) > 0 {
-		removeArgs := append([]string{"remove", "logical_switch", string(switchName), "other_config"}, removeOtherConfigKeys...)
-		_, err := o.nbctl(removeArgs...)
-		if err != nil {
-			return err
-		}
+	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch)
+	if err != nil {
+		return err
 	}
 
-	// Only run command if at least one setting is specified.
-	if len(args) > 3 {
-		_, err := o.nbctl(args...)
-		if err != nil {
-			return err
-		}
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
