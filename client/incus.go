@@ -245,10 +245,12 @@ func (r *ProtocolIncus) rawQuery(method string, url string, data any, ETag strin
 		switch data := data.(type) {
 		case io.Reader:
 			// Some data to be sent along with the request
-			req, err = http.NewRequestWithContext(r.ctx, method, url, data)
+			req, err = http.NewRequestWithContext(r.ctx, method, url, io.NopCloser(data))
 			if err != nil {
 				return nil, "", err
 			}
+
+			req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(data), nil }
 
 			// Set the encoding accordingly
 			req.Header.Set("Content-Type", "application/octet-stream")
@@ -266,6 +268,8 @@ func (r *ProtocolIncus) rawQuery(method string, url string, data any, ETag strin
 			if err != nil {
 				return nil, "", err
 			}
+
+			req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(bytes.NewReader(buf.Bytes())), nil }
 
 			// Set the encoding accordingly
 			req.Header.Set("Content-Type", "application/json")

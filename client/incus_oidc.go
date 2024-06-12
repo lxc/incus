@@ -114,6 +114,10 @@ func (o *oidcClient) do(req *http.Request) (*http.Response, error) {
 	clientID := resp.Header.Get("X-Incus-OIDC-clientid")
 	audience := resp.Header.Get("X-Incus-OIDC-audience")
 
+	if issuer == "" || clientID == "" {
+		return resp, nil
+	}
+
 	err = o.refresh(issuer, clientID)
 	if err != nil {
 		err = o.authenticate(issuer, clientID, audience)
@@ -124,6 +128,16 @@ func (o *oidcClient) do(req *http.Request) (*http.Response, error) {
 
 	// Set the new access token in the header.
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", o.tokens.AccessToken))
+
+	// Reset the request body.
+	if req.GetBody != nil {
+		body, err := req.GetBody()
+		if err != nil {
+			return nil, err
+		}
+
+		req.Body = body
+	}
 
 	resp, err = o.httpClient.Do(req)
 	if err != nil {
