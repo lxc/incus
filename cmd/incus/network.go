@@ -338,6 +338,9 @@ func (c *cmdNetworkCreate) Command() *cobra.Command {
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network create foo
     Create a new network called foo
 
+incus network create foo < config.yaml
+    Create a new network called foo using the content of config.yaml.
+
 incus network create bar network=baz --type ovn
     Create a new OVN network called bar using baz as its uplink network`))
 
@@ -358,10 +361,25 @@ incus network create bar network=baz --type ovn
 }
 
 func (c *cmdNetworkCreate) Run(cmd *cobra.Command, args []string) error {
+	var stdinData api.NetworkPut
+
 	// Quick checks.
 	exit, err := c.global.CheckArgs(cmd, args, 1, -1)
 	if exit {
 		return err
+	}
+
+	// If stdin isn't a terminal, read text from it
+	if !termios.IsTerminal(getStdinFd()) {
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return err
+		}
+
+		err = yaml.Unmarshal(contents, &stdinData)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Parse remote
@@ -374,10 +392,16 @@ func (c *cmdNetworkCreate) Run(cmd *cobra.Command, args []string) error {
 	client := resource.server
 
 	// Create the network
-	network := api.NetworksPost{}
+	network := api.NetworksPost{
+		NetworkPut: stdinData,
+	}
+
 	network.Name = resource.name
-	network.Config = map[string]string{}
 	network.Type = c.network.flagType
+
+	if network.Config == nil {
+		network.Config = map[string]string{}
+	}
 
 	for i := 1; i < len(args); i++ {
 		entry := strings.SplitN(args[i], "=", 2)

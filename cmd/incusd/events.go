@@ -42,6 +42,11 @@ func (r *eventsServe) String() string {
 	return "event handler"
 }
 
+// Code returns the HTTP code.
+func (r *eventsServe) Code() int {
+	return http.StatusOK
+}
+
 func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error {
 	// Detect project mode.
 	projectName := request.QueryParam(r, "project")

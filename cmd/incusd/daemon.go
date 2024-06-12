@@ -698,6 +698,11 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			resp = response.NotFound(fmt.Errorf("Method %q not found", r.Method))
 		}
 
+		// If sending out Forbidden, make sure we have OIDC headers.
+		if resp.Code() == http.StatusForbidden && d.oidcVerifier != nil {
+			_ = d.oidcVerifier.WriteHeaders(w)
+		}
+
 		// Handle errors
 		err = resp.Render(w)
 		if err != nil {

@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 	httphelper "github.com/zitadel/oidc/v3/pkg/http"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
@@ -114,6 +115,10 @@ func (o *oidcClient) do(req *http.Request) (*http.Response, error) {
 	clientID := resp.Header.Get("X-Incus-OIDC-clientid")
 	audience := resp.Header.Get("X-Incus-OIDC-audience")
 
+	if issuer == "" || clientID == "" {
+		return resp, nil
+	}
+
 	err = o.refresh(issuer, clientID)
 	if err != nil {
 		err = o.authenticate(issuer, clientID, audience)
@@ -125,12 +130,56 @@ func (o *oidcClient) do(req *http.Request) (*http.Response, error) {
 	// Set the new access token in the header.
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", o.tokens.AccessToken))
 
+	// Reset the request body.
+	if req.GetBody != nil {
+		body, err := req.GetBody()
+		if err != nil {
+			return nil, err
+		}
+
+		req.Body = body
+	}
+
 	resp, err = o.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	return resp, nil
+}
+
+// dial function executes a websocket request and handles OIDC authentication and refresh.
+func (o *oidcClient) dial(dialer websocket.Dialer, uri string, req *http.Request) (*websocket.Conn, *http.Response, error) {
+	conn, resp, err := dialer.Dial(uri, req.Header)
+	if err != nil && resp == nil {
+		return nil, nil, err
+	}
+
+	// Return immediately if the error is not HTTP status unauthorized.
+	if conn != nil && resp.StatusCode != http.StatusUnauthorized {
+		return conn, resp, nil
+	}
+
+	issuer := resp.Header.Get("X-Incus-OIDC-issuer")
+	clientID := resp.Header.Get("X-Incus-OIDC-clientid")
+	audience := resp.Header.Get("X-Incus-OIDC-audience")
+
+	if issuer == "" || clientID == "" {
+		return nil, resp, err
+	}
+
+	err = o.refresh(issuer, clientID)
+	if err != nil {
+		err = o.authenticate(issuer, clientID, audience)
+		if err != nil {
+			return nil, resp, err
+		}
+	}
+
+	// Set the new access token in the header.
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", o.tokens.AccessToken))
+
+	return dialer.Dial(uri, req.Header)
 }
 
 // getProvider initializes a new OpenID Connect Relying Party for a given issuer and clientID.

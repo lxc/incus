@@ -425,7 +425,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.CreatePendingNetwork(ctx, targetNode, projectName, req.Name, netType.DBType(), req.Config)
+			return tx.CreatePendingNetwork(ctx, targetNode, projectName, req.Name, req.Description, netType.DBType(), req.Config)
 		})
 		if err != nil {
 			if err == db.ErrAlreadyDefined {
@@ -471,7 +471,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 				for _, member := range members {
 					// Don't pass in any config, as these nodes don't have any node-specific
 					// config and we don't want to create duplicate global config.
-					err = tx.CreatePendingNetwork(ctx, member.Name, projectName, req.Name, netType.DBType(), nil)
+					err = tx.CreatePendingNetwork(ctx, member.Name, projectName, req.Name, req.Description, netType.DBType(), nil)
 					if err != nil && !errors.Is(err, db.ErrAlreadyDefined) {
 						return fmt.Errorf("Failed creating pending network for member %q: %w", member.Name, err)
 					}
@@ -488,6 +488,19 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return response.SmartError(err)
 		}
+
+		n, err := network.LoadByName(s, projectName, req.Name)
+		if err != nil {
+			return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
+		}
+
+		err = s.Authorizer.AddNetwork(r.Context(), projectName, req.Name)
+		if err != nil {
+			logger.Error("Failed to add network to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
+		}
+
+		requestor := request.CreateRequestor(r)
+		s.Events.SendLifecycle(projectName, lifecycle.NetworkCreated.Event(n, requestor, nil))
 
 		return resp
 	}

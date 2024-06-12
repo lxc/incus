@@ -29,6 +29,11 @@ func (r *sftpServe) String() string {
 	return "sftp handler"
 }
 
+// Code returns the HTTP code.
+func (r *sftpServe) Code() int {
+	return http.StatusOK
+}
+
 func (r *sftpServe) Render(w http.ResponseWriter) error {
 	// Upgrade to sftp.
 	if r.r.Header.Get("Upgrade") != "sftp" {
