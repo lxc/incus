@@ -33,6 +33,11 @@ func (r *eventsServe) String() string {
 	return "event handler"
 }
 
+// Code returns the HTTP code.
+func (r *eventsServe) Code() int {
+	return http.StatusOK
+}
+
 func eventsSocket(d *Daemon, r *http.Request, w http.ResponseWriter) error {
 	typeStr := r.FormValue("type")
 	if typeStr == "" {
