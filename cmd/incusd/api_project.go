@@ -368,7 +368,7 @@ func projectsPost(d *Daemon, r *http.Request) response.Response {
 
 	err = s.Authorizer.AddProject(r.Context(), id, project.Name)
 	if err != nil {
-		return response.SmartError(err)
+		logger.Error("Failed to add project to authorizer", logger.Ctx{"name": project.Name, "error": err})
 	}
 
 	requestor := request.CreateRequestor(r)
