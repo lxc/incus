@@ -425,7 +425,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.CreatePendingNetwork(ctx, targetNode, projectName, req.Name, netType.DBType(), req.Config)
+			return tx.CreatePendingNetwork(ctx, targetNode, projectName, req.Name, req.Description, netType.DBType(), req.Config)
 		})
 		if err != nil {
 			if err == db.ErrAlreadyDefined {
@@ -471,7 +471,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 				for _, member := range members {
 					// Don't pass in any config, as these nodes don't have any node-specific
 					// config and we don't want to create duplicate global config.
-					err = tx.CreatePendingNetwork(ctx, member.Name, projectName, req.Name, netType.DBType(), nil)
+					err = tx.CreatePendingNetwork(ctx, member.Name, projectName, req.Name, req.Description, netType.DBType(), nil)
 					if err != nil && !errors.Is(err, db.ErrAlreadyDefined) {
 						return fmt.Errorf("Failed creating pending network for member %q: %w", member.Name, err)
 					}
