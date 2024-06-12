@@ -1038,6 +1038,11 @@ func (r *operationWebSocket) String() string {
 	return md.ID
 }
 
+// Code returns the HTTP code.
+func (r *operationWebSocket) Code() int {
+	return http.StatusOK
+}
+
 // swagger:operation GET /1.0/operations/{id}/websocket?public operations operation_websocket_get_untrusted
 //
 //  Get the websocket stream

@@ -108,6 +108,11 @@ func (r *sftpServeResponse) String() string {
 	return "sftp handler"
 }
 
+// Code returns the HTTP code.
+func (r *sftpServeResponse) Code() int {
+	return http.StatusOK
+}
+
 func (r *sftpServeResponse) Render(w http.ResponseWriter) error {
 	defer func() { _ = r.instConn.Close() }()
 
