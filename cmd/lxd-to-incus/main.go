@@ -367,10 +367,15 @@ func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
 		}
 	}
 
-	// Mangle profiles and projects.
+	// General database updates.
 	if !c.flagClusterMember {
+		// Mangle profile and project descriptions.
 		rewriteStatements = append(rewriteStatements, "UPDATE profiles SET description='Default Incus profile' WHERE description='Default LXD profile';")
 		rewriteStatements = append(rewriteStatements, "UPDATE projects SET description='Default Incus project' WHERE description='Default LXD project';")
+
+		// Remove volatile.uuid key from storage volumes (not used by Incus).
+		rewriteStatements = append(rewriteStatements, "DELETE FROM storage_volumes_config WHERE key='volatile.uuid';")
+		rewriteStatements = append(rewriteStatements, "DELETE FROM storage_volumes_snapshots_config WHERE key='volatile.uuid';")
 	}
 
 	// Mangle database schema to be compatible.
