@@ -154,6 +154,17 @@ func (r *ProtocolIncus) DoHTTP(req *http.Request) (*http.Response, error) {
 	return r.http.Do(req)
 }
 
+// DoWebsocket performs a websocket connection, using OIDC authentication if set.
+func (r *ProtocolIncus) DoWebsocket(dialer websocket.Dialer, uri string, req *http.Request) (*websocket.Conn, *http.Response, error) {
+	r.addClientHeaders(req)
+
+	if r.oidcClient != nil {
+		return r.oidcClient.dial(dialer, uri, req)
+	}
+
+	return dialer.Dial(uri, req.Header)
+}
+
 // addClientHeaders sets headers from client settings.
 // User-Agent (if r.httpUserAgent is set).
 // X-Incus-authenticated (if r.requireAuthenticated is set).
@@ -436,10 +447,9 @@ func (r *ProtocolIncus) rawWebsocket(url string) (*websocket.Conn, error) {
 	// Create temporary http.Request using the http url, not the ws one, so that we can add the client headers
 	// for the websocket request.
 	req := &http.Request{URL: &r.httpBaseURL, Header: http.Header{}}
-	r.addClientHeaders(req)
 
 	// Establish the connection
-	conn, resp, err := dialer.Dial(url, req.Header)
+	conn, resp, err := r.DoWebsocket(dialer, url, req)
 	if err != nil {
 		if resp != nil {
 			_, _, err = incusParseResponse(resp)
