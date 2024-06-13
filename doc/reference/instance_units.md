@@ -1,11 +1,11 @@
 (instances-limit-units)=
-# Units for storage and network limits
+# Units for storage, memory and network limits
 
 Any value that represents bytes or bits can make use of a number of suffixes to make it easier to understand what a particular limit is.
 
 Both decimal and binary (kibi) units are supported, with the latter mostly making sense for storage limits.
 
-The full list of bit suffixes currently supported is:
+The full list of bit suffixes currently supported for network limits is:
 
 - bit (1)
 - kbit (1000)
@@ -21,7 +21,7 @@ The full list of bit suffixes currently supported is:
 - Pibit (1024^5)
 - Eibit (1024^6)
 
-The full list of byte suffixes currently supported is:
+The full list of byte suffixes currently supported for storage and memory limits is:
 
 - B or bytes (1)
 - kB (1000)
