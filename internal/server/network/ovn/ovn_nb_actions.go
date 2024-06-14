@@ -2238,28 +2238,55 @@ func (o *NB) GetPortGroupInfo(ctx context.Context, portGroupName OVNPortGroup) (
 	return OVNPortGroupUUID(pg.UUID), len(pg.ACLs) > 0, nil
 }
 
-// PortGroupAdd creates a new port group and optionally adds logical switch ports to the group.
-func (o *NB) PortGroupAdd(projectID int64, portGroupName OVNPortGroup, associatedPortGroup OVNPortGroup, associatedSwitch OVNSwitch, initialPortMembers ...OVNSwitchPort) error {
-	args := []string{"pg-add", string(portGroupName)}
+// CreatePortGroup creates a new port group and optionally adds logical switch ports to the group.
+func (o *NB) CreatePortGroup(ctx context.Context, projectID int64, portGroupName OVNPortGroup, associatedPortGroup OVNPortGroup, associatedSwitch OVNSwitch, initialPortMembers ...OVNSwitchPort) error {
+	// Resolve the initial members.
+	members := []string{}
 	for _, portName := range initialPortMembers {
-		args = append(args, string(portName))
+		lsp := ovnNB.LogicalSwitchPort{
+			Name: string(portName),
+		}
+
+		err := o.get(ctx, &lsp)
+		if err != nil {
+			return err
+		}
+
+		members = append(members, lsp.UUID)
 	}
 
-	args = append(args, "--", "set", "port_group", string(portGroupName),
-		fmt.Sprintf("external_ids:%s=%d", ovnExtIDIncusProjectID, projectID),
-	)
+	// Create the port group.
+	pg := ovnNB.PortGroup{
+		Name:  string(portGroupName),
+		Ports: members,
+		ExternalIDs: map[string]string{
+			ovnExtIDIncusProjectID: fmt.Sprintf("%d", projectID),
+		},
+	}
 
 	if associatedPortGroup != "" || associatedSwitch != "" {
 		if associatedPortGroup != "" {
-			args = append(args, fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusPortGroup, associatedPortGroup))
+			pg.ExternalIDs[ovnExtIDIncusPortGroup] = string(associatedPortGroup)
 		}
 
 		if associatedSwitch != "" {
-			args = append(args, fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, associatedSwitch))
+			pg.ExternalIDs[ovnExtIDIncusSwitch] = string(associatedSwitch)
 		}
 	}
 
-	_, err := o.nbctl(args...)
+	// Create the record.
+	operations, err := o.client.Create(&pg)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
