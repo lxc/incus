@@ -1463,28 +1463,28 @@ func (o *NB) logicalSwitchPortACLRules(ctx context.Context, portName OVNSwitchPo
 	return ruleUUIDs, nil
 }
 
-// LogicalSwitchPorts returns a map of logical switch ports (name and UUID) for a switch.
+// GetLogicalSwitchPorts returns a map of logical switch ports (name and UUID) for a switch.
 // Includes non-instance ports, such as the router port.
-func (o *NB) LogicalSwitchPorts(switchName OVNSwitch) (map[OVNSwitchPort]OVNSwitchPortUUID, error) {
-	output, err := o.nbctl("lsp-list", string(switchName))
+func (o *NB) GetLogicalSwitchPorts(ctx context.Context, switchName OVNSwitch) (map[OVNSwitchPort]OVNSwitchPortUUID, error) {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
-	ports := make(map[OVNSwitchPort]OVNSwitchPortUUID, len(lines))
-
-	for _, line := range lines {
-		// E.g. "c709c4a8-ef3f-4ffe-a45a-c75295eb2698 (incus-net3-instance-fc933d65-0900-46b0-b5f2-4d323342e755-eth0)"
-		fields := strings.Fields(line)
-
-		if len(fields) != 2 {
-			return nil, fmt.Errorf("Unrecognised switch port item output %q", line)
+	ports := make(map[OVNSwitchPort]OVNSwitchPortUUID, len(logicalSwitch.Ports))
+	for _, portUUID := range logicalSwitch.Ports {
+		// Get the logical switch port.
+		lsp := ovnNB.LogicalSwitchPort{
+			UUID: portUUID,
 		}
 
-		portUUID := OVNSwitchPortUUID(fields[0])
-		portName := OVNSwitchPort(strings.TrimPrefix(strings.TrimSuffix(fields[1], ")"), "("))
-		ports[portName] = portUUID
+		err := o.get(ctx, &lsp)
+		if err != nil {
+			return nil, err
+		}
+
+		ports[OVNSwitchPort(lsp.Name)] = OVNSwitchPortUUID(lsp.UUID)
 	}
 
 	return ports, nil
