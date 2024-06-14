@@ -2294,19 +2294,43 @@ func (o *NB) CreatePortGroup(ctx context.Context, projectID int64, portGroupName
 	return nil
 }
 
-// PortGroupDelete deletes port groups along with their ACL rules.
-func (o *NB) PortGroupDelete(portGroupNames ...OVNPortGroup) error {
-	args := make([]string, 0)
+// DeletePortGroup deletes port groups along with their ACL rules.
+func (o *NB) DeletePortGroup(ctx context.Context, portGroupNames ...OVNPortGroup) error {
+	operations := []ovsdb.Operation{}
 
 	for _, portGroupName := range portGroupNames {
-		if len(args) > 0 {
-			args = append(args, "--")
+		pg := ovnNB.PortGroup{
+			Name: string(portGroupName),
 		}
 
-		args = append(args, "--if-exists", "destroy", "port_group", string(portGroupName))
+		err := o.get(ctx, &pg)
+		if err != nil {
+			if err == ErrNotFound {
+				// Already gone.
+				continue
+			}
+		}
+
+		deleteOps, err := o.client.Where(&pg).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
 	}
 
-	_, err := o.nbctl(args...)
+	// Check if we have anything to do.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
