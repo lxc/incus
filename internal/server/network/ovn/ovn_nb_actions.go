@@ -1743,15 +1743,40 @@ func (o *NB) GetLogicalSwitchPortLocation(ctx context.Context, portName OVNSwitc
 	return val, nil
 }
 
-// LogicalSwitchPortOptionsSet sets the options for a logical switch port.
-func (o *NB) LogicalSwitchPortOptionsSet(portName OVNSwitchPort, options map[string]string) error {
-	args := []string{"lsp-set-options", string(portName)}
-
-	for key, value := range options {
-		args = append(args, fmt.Sprintf("%s=%s", key, value))
+// UpdateLogicalSwitchPortOptions sets the options for a logical switch port.
+func (o *NB) UpdateLogicalSwitchPortOptions(ctx context.Context, portName OVNSwitchPort, options map[string]string) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
 	}
 
-	_, err := o.nbctl(args...)
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	if lsp.Options == nil {
+		lsp.Options = map[string]string{}
+	}
+
+	for key, value := range options {
+		lsp.Options[key] = value
+	}
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
