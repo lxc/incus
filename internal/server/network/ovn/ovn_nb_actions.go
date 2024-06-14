@@ -1445,16 +1445,20 @@ func (o *NB) LogicalSwitchSetACLRules(switchName OVNSwitch, aclRules ...OVNACLRu
 }
 
 // logicalSwitchPortACLRules returns the ACL rule UUIDs belonging to a logical switch port.
-func (o *NB) logicalSwitchPortACLRules(portName OVNSwitchPort) ([]string, error) {
-	// Remove any existing rules assigned to the entity.
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid", "find", "acl",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitchPort, string(portName)),
-	)
+func (o *NB) logicalSwitchPortACLRules(ctx context.Context, portName OVNSwitchPort) ([]string, error) {
+	acls := []ovnNB.ACL{}
+
+	err := o.client.WhereCache(func(acl *ovnNB.ACL) bool {
+		return acl.ExternalIDs != nil && acl.ExternalIDs[ovnExtIDIncusSwitchPort] == string(portName)
+	}).List(ctx, &acls)
 	if err != nil {
 		return nil, err
 	}
 
-	ruleUUIDs := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
+	ruleUUIDs := []string{}
+	for _, acl := range acls {
+		ruleUUIDs = append(ruleUUIDs, acl.UUID)
+	}
 
 	return ruleUUIDs, nil
 }
@@ -1953,7 +1957,7 @@ func (o *NB) DeleteLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 // LogicalSwitchPortCleanup deletes the named logical switch port and its associated config.
 func (o *NB) LogicalSwitchPortCleanup(portName OVNSwitchPort, switchName OVNSwitch, switchPortGroupName OVNPortGroup, dnsUUID OVNDNSUUID) error {
 	// Remove any existing rules assigned to the entity.
-	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(portName)
+	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(context.TODO(), portName)
 	if err != nil {
 		return err
 	}
@@ -2387,7 +2391,7 @@ func (o *NB) aclRuleDeleteAppendArgs(args []string, entityTable string, entityNa
 // Any existing rules for that logical switch port in the port group are removed.
 func (o *NB) PortGroupPortSetACLRules(portGroupName OVNPortGroup, portName OVNSwitchPort, aclRules ...OVNACLRule) error {
 	// Remove any existing rules assigned to the entity.
-	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(portName)
+	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(context.TODO(), portName)
 	if err != nil {
 		return err
 	}
@@ -2413,7 +2417,7 @@ func (o *NB) PortGroupPortSetACLRules(portGroupName OVNPortGroup, portName OVNSw
 // PortGroupPortClearACLRules clears any rules assigned to the logical switch port in the specified port group.
 func (o *NB) PortGroupPortClearACLRules(portGroupName OVNPortGroup, portName OVNSwitchPort) error {
 	// Remove any existing rules assigned to the entity.
-	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(portName)
+	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(context.TODO(), portName)
 	if err != nil {
 		return err
 	}
