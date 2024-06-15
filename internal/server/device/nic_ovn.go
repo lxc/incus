@@ -658,7 +658,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 	// Add post start hook for setting logical switch port chassis once instance has been started.
 	runConf.PostHooks = append(runConf.PostHooks, func() error {
-		err := d.state.OVNNB.LogicalSwitchPortOptionsSet(logicalPortName, map[string]string{"requested-chassis": chassisID})
+		err := d.state.OVNNB.UpdateLogicalSwitchPortOptions(context.TODO(), logicalPortName, map[string]string{"requested-chassis": chassisID})
 		if err != nil {
 			return fmt.Errorf("Failed setting logical switch port chassis ID: %w", err)
 		}

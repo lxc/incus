@@ -2609,7 +2609,7 @@ func (n *ovn) ensureNetworkPortGroup(projectID int64) error {
 	if intPortGroupUUID == "" {
 		// Create internal port group and associate it with the logical switch, so that it will be
 		// removed when the logical switch is removed.
-		err = n.state.OVNNB.PortGroupAdd(projectID, intPortGroupName, "", n.getIntSwitchName())
+		err = n.state.OVNNB.CreatePortGroup(context.TODO(), projectID, intPortGroupName, "", n.getIntSwitchName())
 		if err != nil {
 			return fmt.Errorf("Failed creating port group %q for network %q setup: %w", intPortGroupName, n.Name(), err)
 		}
@@ -3081,7 +3081,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		removeChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
 
 		// Get list of active switch ports (avoids repeated querying of OVN NB).
-		activePorts, err := n.state.OVNNB.LogicalSwitchPorts(n.getIntSwitchName())
+		activePorts, err := n.state.OVNNB.GetLogicalSwitchPorts(context.TODO(), n.getIntSwitchName())
 		if err != nil {
 			return fmt.Errorf("Failed getting active ports: %w", err)
 		}
@@ -4439,7 +4439,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 
 		if slices.Contains([]string{"l2proxy", ""}, uplinkConfig["ovn.ingress_mode"]) {
 			// Get list of active switch ports (avoids repeated querying of OVN NB).
-			activePorts, err := n.state.OVNNB.LogicalSwitchPorts(n.getIntSwitchName())
+			activePorts, err := n.state.OVNNB.GetLogicalSwitchPorts(context.TODO(), n.getIntSwitchName())
 			if err != nil {
 				return fmt.Errorf("Failed getting active ports: %w", err)
 			}
@@ -5359,7 +5359,7 @@ func (n *ovn) localPeerCreate(peer api.NetworkPeersPost) error {
 		return fmt.Errorf("Failed applying local router security policy: %w", err)
 	}
 
-	activeLocalNICPorts, err := n.state.OVNNB.LogicalSwitchPorts(n.getIntSwitchName())
+	activeLocalNICPorts, err := n.state.OVNNB.GetLogicalSwitchPorts(context.TODO(), n.getIntSwitchName())
 	if err != nil {
 		return fmt.Errorf("Failed getting active NIC ports: %w", err)
 	}
@@ -5786,7 +5786,7 @@ func (n *ovn) peerSetup(ovnnb *networkOVN.NB, targetOVNNet *ovn, opts networkOVN
 	}
 
 	// Get list of active switch ports (avoids repeated querying of OVN NB).
-	activeTargetNICPorts, err := n.state.OVNNB.LogicalSwitchPorts(targetOVNNet.getIntSwitchName())
+	activeTargetNICPorts, err := n.state.OVNNB.GetLogicalSwitchPorts(context.TODO(), targetOVNNet.getIntSwitchName())
 	if err != nil {
 		return fmt.Errorf("Failed getting active NIC ports: %w", err)
 	}

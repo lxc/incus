@@ -1445,42 +1445,46 @@ func (o *NB) LogicalSwitchSetACLRules(switchName OVNSwitch, aclRules ...OVNACLRu
 }
 
 // logicalSwitchPortACLRules returns the ACL rule UUIDs belonging to a logical switch port.
-func (o *NB) logicalSwitchPortACLRules(portName OVNSwitchPort) ([]string, error) {
-	// Remove any existing rules assigned to the entity.
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid", "find", "acl",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitchPort, string(portName)),
-	)
+func (o *NB) logicalSwitchPortACLRules(ctx context.Context, portName OVNSwitchPort) ([]string, error) {
+	acls := []ovnNB.ACL{}
+
+	err := o.client.WhereCache(func(acl *ovnNB.ACL) bool {
+		return acl.ExternalIDs != nil && acl.ExternalIDs[ovnExtIDIncusSwitchPort] == string(portName)
+	}).List(ctx, &acls)
 	if err != nil {
 		return nil, err
 	}
 
-	ruleUUIDs := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
+	ruleUUIDs := []string{}
+	for _, acl := range acls {
+		ruleUUIDs = append(ruleUUIDs, acl.UUID)
+	}
 
 	return ruleUUIDs, nil
 }
 
-// LogicalSwitchPorts returns a map of logical switch ports (name and UUID) for a switch.
+// GetLogicalSwitchPorts returns a map of logical switch ports (name and UUID) for a switch.
 // Includes non-instance ports, such as the router port.
-func (o *NB) LogicalSwitchPorts(switchName OVNSwitch) (map[OVNSwitchPort]OVNSwitchPortUUID, error) {
-	output, err := o.nbctl("lsp-list", string(switchName))
+func (o *NB) GetLogicalSwitchPorts(ctx context.Context, switchName OVNSwitch) (map[OVNSwitchPort]OVNSwitchPortUUID, error) {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
-	ports := make(map[OVNSwitchPort]OVNSwitchPortUUID, len(lines))
-
-	for _, line := range lines {
-		// E.g. "c709c4a8-ef3f-4ffe-a45a-c75295eb2698 (incus-net3-instance-fc933d65-0900-46b0-b5f2-4d323342e755-eth0)"
-		fields := strings.Fields(line)
-
-		if len(fields) != 2 {
-			return nil, fmt.Errorf("Unrecognised switch port item output %q", line)
+	ports := make(map[OVNSwitchPort]OVNSwitchPortUUID, len(logicalSwitch.Ports))
+	for _, portUUID := range logicalSwitch.Ports {
+		// Get the logical switch port.
+		lsp := ovnNB.LogicalSwitchPort{
+			UUID: portUUID,
 		}
 
-		portUUID := OVNSwitchPortUUID(fields[0])
-		portName := OVNSwitchPort(strings.TrimPrefix(strings.TrimSuffix(fields[1], ")"), "("))
-		ports[portName] = portUUID
+		err := o.get(ctx, &lsp)
+		if err != nil {
+			return nil, err
+		}
+
+		ports[OVNSwitchPort(lsp.Name)] = OVNSwitchPortUUID(lsp.UUID)
 	}
 
 	return ports, nil
@@ -1739,15 +1743,40 @@ func (o *NB) GetLogicalSwitchPortLocation(ctx context.Context, portName OVNSwitc
 	return val, nil
 }
 
-// LogicalSwitchPortOptionsSet sets the options for a logical switch port.
-func (o *NB) LogicalSwitchPortOptionsSet(portName OVNSwitchPort, options map[string]string) error {
-	args := []string{"lsp-set-options", string(portName)}
-
-	for key, value := range options {
-		args = append(args, fmt.Sprintf("%s=%s", key, value))
+// UpdateLogicalSwitchPortOptions sets the options for a logical switch port.
+func (o *NB) UpdateLogicalSwitchPortOptions(ctx context.Context, portName OVNSwitchPort, options map[string]string) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
 	}
 
-	_, err := o.nbctl(args...)
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	if lsp.Options == nil {
+		lsp.Options = map[string]string{}
+	}
+
+	for key, value := range options {
+		lsp.Options[key] = value
+	}
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -1953,7 +1982,7 @@ func (o *NB) DeleteLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 // LogicalSwitchPortCleanup deletes the named logical switch port and its associated config.
 func (o *NB) LogicalSwitchPortCleanup(portName OVNSwitchPort, switchName OVNSwitch, switchPortGroupName OVNPortGroup, dnsUUID OVNDNSUUID) error {
 	// Remove any existing rules assigned to the entity.
-	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(portName)
+	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(context.TODO(), portName)
 	if err != nil {
 		return err
 	}
@@ -2209,28 +2238,55 @@ func (o *NB) GetPortGroupInfo(ctx context.Context, portGroupName OVNPortGroup) (
 	return OVNPortGroupUUID(pg.UUID), len(pg.ACLs) > 0, nil
 }
 
-// PortGroupAdd creates a new port group and optionally adds logical switch ports to the group.
-func (o *NB) PortGroupAdd(projectID int64, portGroupName OVNPortGroup, associatedPortGroup OVNPortGroup, associatedSwitch OVNSwitch, initialPortMembers ...OVNSwitchPort) error {
-	args := []string{"pg-add", string(portGroupName)}
+// CreatePortGroup creates a new port group and optionally adds logical switch ports to the group.
+func (o *NB) CreatePortGroup(ctx context.Context, projectID int64, portGroupName OVNPortGroup, associatedPortGroup OVNPortGroup, associatedSwitch OVNSwitch, initialPortMembers ...OVNSwitchPort) error {
+	// Resolve the initial members.
+	members := []string{}
 	for _, portName := range initialPortMembers {
-		args = append(args, string(portName))
+		lsp := ovnNB.LogicalSwitchPort{
+			Name: string(portName),
+		}
+
+		err := o.get(ctx, &lsp)
+		if err != nil {
+			return err
+		}
+
+		members = append(members, lsp.UUID)
 	}
 
-	args = append(args, "--", "set", "port_group", string(portGroupName),
-		fmt.Sprintf("external_ids:%s=%d", ovnExtIDIncusProjectID, projectID),
-	)
+	// Create the port group.
+	pg := ovnNB.PortGroup{
+		Name:  string(portGroupName),
+		Ports: members,
+		ExternalIDs: map[string]string{
+			ovnExtIDIncusProjectID: fmt.Sprintf("%d", projectID),
+		},
+	}
 
 	if associatedPortGroup != "" || associatedSwitch != "" {
 		if associatedPortGroup != "" {
-			args = append(args, fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusPortGroup, associatedPortGroup))
+			pg.ExternalIDs[ovnExtIDIncusPortGroup] = string(associatedPortGroup)
 		}
 
 		if associatedSwitch != "" {
-			args = append(args, fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, associatedSwitch))
+			pg.ExternalIDs[ovnExtIDIncusSwitch] = string(associatedSwitch)
 		}
 	}
 
-	_, err := o.nbctl(args...)
+	// Create the record.
+	operations, err := o.client.Create(&pg)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -2238,19 +2294,43 @@ func (o *NB) PortGroupAdd(projectID int64, portGroupName OVNPortGroup, associate
 	return nil
 }
 
-// PortGroupDelete deletes port groups along with their ACL rules.
-func (o *NB) PortGroupDelete(portGroupNames ...OVNPortGroup) error {
-	args := make([]string, 0)
+// DeletePortGroup deletes port groups along with their ACL rules.
+func (o *NB) DeletePortGroup(ctx context.Context, portGroupNames ...OVNPortGroup) error {
+	operations := []ovsdb.Operation{}
 
 	for _, portGroupName := range portGroupNames {
-		if len(args) > 0 {
-			args = append(args, "--")
+		pg := ovnNB.PortGroup{
+			Name: string(portGroupName),
 		}
 
-		args = append(args, "--if-exists", "destroy", "port_group", string(portGroupName))
+		err := o.get(ctx, &pg)
+		if err != nil {
+			if err == ErrNotFound {
+				// Already gone.
+				continue
+			}
+		}
+
+		deleteOps, err := o.client.Where(&pg).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
 	}
 
-	_, err := o.nbctl(args...)
+	// Check if we have anything to do.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -2387,7 +2467,7 @@ func (o *NB) aclRuleDeleteAppendArgs(args []string, entityTable string, entityNa
 // Any existing rules for that logical switch port in the port group are removed.
 func (o *NB) PortGroupPortSetACLRules(portGroupName OVNPortGroup, portName OVNSwitchPort, aclRules ...OVNACLRule) error {
 	// Remove any existing rules assigned to the entity.
-	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(portName)
+	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(context.TODO(), portName)
 	if err != nil {
 		return err
 	}
@@ -2413,7 +2493,7 @@ func (o *NB) PortGroupPortSetACLRules(portGroupName OVNPortGroup, portName OVNSw
 // PortGroupPortClearACLRules clears any rules assigned to the logical switch port in the specified port group.
 func (o *NB) PortGroupPortClearACLRules(portGroupName OVNPortGroup, portName OVNSwitchPort) error {
 	// Remove any existing rules assigned to the entity.
-	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(portName)
+	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(context.TODO(), portName)
 	if err != nil {
 		return err
 	}
