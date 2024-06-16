@@ -2323,17 +2323,19 @@ func (n *ovn) setup(update bool) error {
 
 	// Create internal switch address sets and add subnets to address set.
 	if update {
-		err = n.state.OVNNB.AddressSetAdd(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), intSubnets...)
+		err = n.state.OVNNB.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), intSubnets...)
 		if err != nil {
 			return fmt.Errorf("Failed adding internal subnet address set entries: %w", err)
 		}
 	} else {
-		err = n.state.OVNNB.AddressSetCreate(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), intSubnets...)
+		err = n.state.OVNNB.CreateAddressSet(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), intSubnets...)
 		if err != nil {
 			return fmt.Errorf("Failed creating internal subnet address set entries: %w", err)
 		}
 
-		revert.Add(func() { _ = n.state.OVNNB.AddressSetDelete(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID())) })
+		revert.Add(func() {
+			_ = n.state.OVNNB.DeleteAddressSet(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
+		})
 	}
 
 	// Apply router security policy.
@@ -2734,7 +2736,7 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 		}
 
 		// Delete any related address sets.
-		err = n.state.OVNNB.AddressSetDelete(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
+		err = n.state.OVNNB.DeleteAddressSet(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
 		if err != nil {
 			return err
 		}
@@ -3208,7 +3210,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		}
 
 		// Ensure all active NIC routes are present in internal switch's address set.
-		err = n.state.OVNNB.AddressSetAdd(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), localNICRoutes...)
+		err = n.state.OVNNB.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), localNICRoutes...)
 		if err != nil {
 			return fmt.Errorf("Failed adding active NIC routes to switch address set: %w", err)
 		}
@@ -3220,7 +3222,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 				rebuildPeers = true
 				_, oldRouterIntPortIPNet, _ := net.ParseCIDR(oldNetwork.Config[key])
 				if oldRouterIntPortIPNet != nil {
-					err = n.state.OVNNB.AddressSetRemove(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), *oldRouterIntPortIPNet)
+					err = n.state.OVNNB.UpdateAddressSetRemove(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), *oldRouterIntPortIPNet)
 					if err != nil {
 						return fmt.Errorf("Failed removing old network subnet %q from switch address set: %w", oldRouterIntPortIPNet.String(), err)
 					}
@@ -3837,13 +3839,13 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		})
 
 		// Add routes to internal switch's address set for ACL usage.
-		err = n.state.OVNNB.AddressSetAdd(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes...)
+		err = n.state.OVNNB.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes...)
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed adding switch address set entries: %w", err)
 		}
 
 		revert.Add(func() {
-			_ = n.state.OVNNB.AddressSetRemove(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes...)
+			_ = n.state.OVNNB.UpdateAddressSetRemove(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes...)
 		})
 
 		routerIntPortIPv4, _, err := n.parseRouterIntPortIPv4Net()
@@ -4148,7 +4150,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		}
 
 		// Delete routes from switch address set.
-		err = n.state.OVNNB.AddressSetRemove(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), removeRoutes...)
+		err = n.state.OVNNB.UpdateAddressSetRemove(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), removeRoutes...)
 		if err != nil {
 			return fmt.Errorf("Failed deleting switch address set entries: %w", err)
 		}
@@ -5398,7 +5400,7 @@ func (n *ovn) localPeerCreate(peer api.NetworkPeersPost) error {
 	}
 
 	// Ensure local subnets and all active NIC routes are present in internal switch's address set.
-	err = n.state.OVNNB.AddressSetAdd(acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), opts.TargetRouterRoutes...)
+	err = n.state.OVNNB.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), opts.TargetRouterRoutes...)
 	if err != nil {
 		return fmt.Errorf("Failed adding active NIC routes to switch address set: %w", err)
 	}
@@ -5808,7 +5810,7 @@ func (n *ovn) peerSetup(ovnnb *networkOVN.NB, targetOVNNet *ovn, opts networkOVN
 	}
 
 	// Ensure routes are added to target switch address sets.
-	err = n.state.OVNNB.AddressSetAdd(acl.OVNIntSwitchPortGroupAddressSetPrefix(targetOVNNet.ID()), opts.LocalRouterRoutes...)
+	err = n.state.OVNNB.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(targetOVNNet.ID()), opts.LocalRouterRoutes...)
 	if err != nil {
 		return fmt.Errorf("Failed adding target swith subnet address set entries: %w", err)
 	}
