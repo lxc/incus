@@ -2820,29 +2820,89 @@ func (o *NB) UpdateAddressSetAdd(ctx context.Context, addressSetPrefix OVNAddres
 	return nil
 }
 
-// AddressSetRemove removes the supplied addresses from the address set.
+// UpdateAddressSetRemove removes the supplied addresses from the address set.
 // The address set name used is "<addressSetPrefix>_ip<IP version>", e.g. "foo_ip4".
-func (o *NB) AddressSetRemove(addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
-	var args []string
-
-	for _, address := range addresses {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		var ipVersion uint = 4
-		if address.IP.To4() == nil {
-			ipVersion = 6
-		}
-
-		args = append(args, "--if-exists", "remove", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, ipVersion), "addresses", fmt.Sprintf(`"%s"`, address.String()))
+func (o *NB) UpdateAddressSetRemove(ctx context.Context, addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
+	// Get the address sets.
+	ipv4Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip4", addressSetPrefix),
 	}
 
-	if len(args) > 0 {
-		_, err := o.nbctl(args...)
-		if err != nil {
-			return err
+	err := o.get(ctx, &ipv4Set)
+	if err != nil {
+		return err
+	}
+
+	ipv6Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip6", addressSetPrefix),
+	}
+
+	err = o.get(ctx, &ipv6Set)
+	if err != nil {
+		return err
+	}
+
+	// Filter entries.
+	ipv4Addresses := []string{}
+	for _, entry := range ipv4Set.Addresses {
+		found := false
+		for _, address := range addresses {
+			if entry == address.String() {
+				found = true
+				break
+			}
 		}
+
+		if !found {
+			ipv4Addresses = append(ipv4Addresses, entry)
+		}
+	}
+
+	ipv4Set.Addresses = ipv4Addresses
+
+	ipv6Addresses := []string{}
+	for _, entry := range ipv6Set.Addresses {
+		found := false
+		for _, address := range addresses {
+			if entry == address.String() {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			ipv6Addresses = append(ipv6Addresses, entry)
+		}
+	}
+
+	ipv6Set.Addresses = ipv6Addresses
+
+	// Prepare the records.
+	operations := []ovsdb.Operation{}
+
+	updateOps, err := o.client.Where(&ipv4Set).Update(&ipv4Set)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	updateOps, err = o.client.Where(&ipv6Set).Update(&ipv6Set)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
