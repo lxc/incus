@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -2726,45 +2727,94 @@ func (o *NB) CreateAddressSet(ctx context.Context, addressSetPrefix OVNAddressSe
 	return nil
 }
 
-// AddressSetAdd adds the supplied addresses to the address sets, or creates a new address sets if needed.
+// UpdateAddressSetAdd adds the supplied addresses to the address sets.
+// If the set is missing, it will get automatically created.
 // The address set name used is "<addressSetPrefix>_ip<IP version>", e.g. "foo_ip4".
-func (o *NB) AddressSetAdd(addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
-	var args []string
-	ipVersions := make(map[uint]struct{})
-
-	for _, address := range addresses {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		var ipVersion uint = 4
-		if address.IP.To4() == nil {
-			ipVersion = 6
-		}
-
-		// Track IP versions seen so we can create address sets if needed.
-		ipVersions[ipVersion] = struct{}{}
-
-		args = append(args, "add", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, ipVersion), "addresses", fmt.Sprintf(`"%s"`, address.String()))
+func (o *NB) UpdateAddressSetAdd(ctx context.Context, addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
+	// Get the address sets.
+	ipv4Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip4", addressSetPrefix),
 	}
 
-	if len(args) > 0 {
-		// Optimistically assume all required address sets exist (they normally will).
-		_, err := o.nbctl(args...)
-		if err != nil {
-			// Try creating the address sets one at a time, but ignore errors here in case some of the
-			// address sets already exist. If there was a problem creating the address set it will be
-			// revealead when we run the original command again next.
-			for ipVersion := range ipVersions {
-				_, _ = o.nbctl("create", "address_set", fmt.Sprintf("name=%s_ip%d", addressSetPrefix, ipVersion))
-			}
+	err := o.get(ctx, &ipv4Set)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
 
-			// Try original command again.
-			_, err := o.nbctl(args...)
-			if err != nil {
-				return err
+	if ipv4Set.Addresses == nil {
+		ipv4Set.Addresses = []string{}
+	}
+
+	ipv6Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip6", addressSetPrefix),
+	}
+
+	err = o.get(ctx, &ipv6Set)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	if ipv6Set.Addresses == nil {
+		ipv6Set.Addresses = []string{}
+	}
+
+	// Add the addresses.
+	for _, address := range addresses {
+		if address.IP.To4() == nil {
+			if !slices.Contains(ipv6Set.Addresses, address.String()) {
+				ipv6Set.Addresses = append(ipv6Set.Addresses, address.String())
+			}
+		} else {
+			if !slices.Contains(ipv4Set.Addresses, address.String()) {
+				ipv4Set.Addresses = append(ipv4Set.Addresses, address.String())
 			}
 		}
+	}
+
+	// Prepare the records.
+	operations := []ovsdb.Operation{}
+
+	if ipv4Set.UUID == "" {
+		createOps, err := o.client.Create(&ipv4Set)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+	} else {
+		updateOps, err := o.client.Where(&ipv4Set).Update(&ipv4Set)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	if ipv6Set.UUID == "" {
+		createOps, err := o.client.Create(&ipv6Set)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+	} else {
+		updateOps, err := o.client.Where(&ipv6Set).Update(&ipv6Set)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
