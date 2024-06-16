@@ -793,7 +793,7 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 	}
 
 	// Get list of OVN port groups associated to this project.
-	portGroups, err := client.PortGroupListByProject(projectID)
+	portGroups, err := client.GetPortGroupsByProject(context.TODO(), projectID)
 	if err != nil {
 		return fmt.Errorf("Failed getting port groups for project %q: %w", aclProjectName, err)
 	}
