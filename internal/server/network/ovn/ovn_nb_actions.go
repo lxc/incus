@@ -2672,32 +2672,55 @@ func (o *NB) DeleteLoadBalancer(ctx context.Context, loadBalancerNames ...OVNLoa
 	return nil
 }
 
-// AddressSetCreate creates address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
+// CreateAddressSet creates address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
 // Populates them with the relevant addresses supplied.
-func (o *NB) AddressSetCreate(addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
-	args := []string{
-		"create", "address_set", fmt.Sprintf("name=%s_ip%d", addressSetPrefix, 4),
-		"--", "create", "address_set", fmt.Sprintf("name=%s_ip%d", addressSetPrefix, 6),
+func (o *NB) CreateAddressSet(ctx context.Context, addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
+	// Define the new address sets.
+	ipv4Set := ovnNB.AddressSet{
+		Name:      fmt.Sprintf("%s_ip4", addressSetPrefix),
+		Addresses: []string{},
 	}
 
+	ipv6Set := ovnNB.AddressSet{
+		Name:      fmt.Sprintf("%s_ip6", addressSetPrefix),
+		Addresses: []string{},
+	}
+
+	// Add addresses.
 	for _, address := range addresses {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		var ipVersion uint = 4
 		if address.IP.To4() == nil {
-			ipVersion = 6
+			ipv6Set.Addresses = append(ipv6Set.Addresses, address.String())
+		} else {
+			ipv4Set.Addresses = append(ipv4Set.Addresses, address.String())
 		}
-
-		args = append(args, "add", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, ipVersion), "addresses", fmt.Sprintf(`"%s"`, address.String()))
 	}
 
-	if len(args) > 0 {
-		_, err := o.nbctl(args...)
-		if err != nil {
-			return err
-		}
+	// Create the records.
+	operations := []ovsdb.Operation{}
+
+	createOps, err := o.client.Create(&ipv4Set)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, createOps...)
+
+	createOps, err = o.client.Create(&ipv6Set)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, createOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
