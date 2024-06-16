@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -2338,23 +2339,23 @@ func (o *NB) DeletePortGroup(ctx context.Context, portGroupNames ...OVNPortGroup
 	return nil
 }
 
-// PortGroupListByProject finds the port groups that are associated to the project ID.
-func (o *NB) PortGroupListByProject(projectID int64) ([]OVNPortGroup, error) {
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "port_group",
-		fmt.Sprintf("external_ids:%s=%d", ovnExtIDIncusProjectID, projectID),
-	)
+// GetPortGroupsByProject finds the port groups that are associated to the project ID.
+func (o *NB) GetPortGroupsByProject(ctx context.Context, projectID int64) ([]OVNPortGroup, error) {
+	portGroups := []ovnNB.PortGroup{}
+
+	err := o.client.WhereCache(func(pg *ovnNB.PortGroup) bool {
+		return pg.ExternalIDs != nil && pg.ExternalIDs[ovnExtIDIncusProjectID] == fmt.Sprintf("%d", projectID)
+	}).List(ctx, &portGroups)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
-	portGroups := make([]OVNPortGroup, 0, len(lines))
-
-	for _, line := range lines {
-		portGroups = append(portGroups, OVNPortGroup(line))
+	pgNames := make([]OVNPortGroup, 0, len(portGroups))
+	for _, portGroup := range portGroups {
+		pgNames = append(pgNames, OVNPortGroup(portGroup.Name))
 	}
 
-	return portGroups, nil
+	return pgNames, nil
 }
 
 // PortGroupMemberChange adds/removes logical switch ports (by UUID) to/from existing port groups.
@@ -2672,115 +2673,290 @@ func (o *NB) DeleteLoadBalancer(ctx context.Context, loadBalancerNames ...OVNLoa
 	return nil
 }
 
-// AddressSetCreate creates address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
+// CreateAddressSet creates address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
 // Populates them with the relevant addresses supplied.
-func (o *NB) AddressSetCreate(addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
-	args := []string{
-		"create", "address_set", fmt.Sprintf("name=%s_ip%d", addressSetPrefix, 4),
-		"--", "create", "address_set", fmt.Sprintf("name=%s_ip%d", addressSetPrefix, 6),
+func (o *NB) CreateAddressSet(ctx context.Context, addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
+	// Define the new address sets.
+	ipv4Set := ovnNB.AddressSet{
+		Name:      fmt.Sprintf("%s_ip4", addressSetPrefix),
+		Addresses: []string{},
 	}
 
+	ipv6Set := ovnNB.AddressSet{
+		Name:      fmt.Sprintf("%s_ip6", addressSetPrefix),
+		Addresses: []string{},
+	}
+
+	// Add addresses.
 	for _, address := range addresses {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		var ipVersion uint = 4
 		if address.IP.To4() == nil {
-			ipVersion = 6
+			ipv6Set.Addresses = append(ipv6Set.Addresses, address.String())
+		} else {
+			ipv4Set.Addresses = append(ipv4Set.Addresses, address.String())
 		}
-
-		args = append(args, "add", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, ipVersion), "addresses", fmt.Sprintf(`"%s"`, address.String()))
 	}
 
-	if len(args) > 0 {
-		_, err := o.nbctl(args...)
+	// Create the records.
+	operations := []ovsdb.Operation{}
+
+	createOps, err := o.client.Create(&ipv4Set)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, createOps...)
+
+	createOps, err = o.client.Create(&ipv6Set)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, createOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateAddressSetAdd adds the supplied addresses to the address sets.
+// If the set is missing, it will get automatically created.
+// The address set name used is "<addressSetPrefix>_ip<IP version>", e.g. "foo_ip4".
+func (o *NB) UpdateAddressSetAdd(ctx context.Context, addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
+	// Get the address sets.
+	ipv4Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip4", addressSetPrefix),
+	}
+
+	err := o.get(ctx, &ipv4Set)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	if ipv4Set.Addresses == nil {
+		ipv4Set.Addresses = []string{}
+	}
+
+	ipv6Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip6", addressSetPrefix),
+	}
+
+	err = o.get(ctx, &ipv6Set)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	if ipv6Set.Addresses == nil {
+		ipv6Set.Addresses = []string{}
+	}
+
+	// Add the addresses.
+	for _, address := range addresses {
+		if address.IP.To4() == nil {
+			if !slices.Contains(ipv6Set.Addresses, address.String()) {
+				ipv6Set.Addresses = append(ipv6Set.Addresses, address.String())
+			}
+		} else {
+			if !slices.Contains(ipv4Set.Addresses, address.String()) {
+				ipv4Set.Addresses = append(ipv4Set.Addresses, address.String())
+			}
+		}
+	}
+
+	// Prepare the records.
+	operations := []ovsdb.Operation{}
+
+	if ipv4Set.UUID == "" {
+		createOps, err := o.client.Create(&ipv4Set)
 		if err != nil {
 			return err
 		}
-	}
 
-	return nil
-}
-
-// AddressSetAdd adds the supplied addresses to the address sets, or creates a new address sets if needed.
-// The address set name used is "<addressSetPrefix>_ip<IP version>", e.g. "foo_ip4".
-func (o *NB) AddressSetAdd(addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
-	var args []string
-	ipVersions := make(map[uint]struct{})
-
-	for _, address := range addresses {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		var ipVersion uint = 4
-		if address.IP.To4() == nil {
-			ipVersion = 6
-		}
-
-		// Track IP versions seen so we can create address sets if needed.
-		ipVersions[ipVersion] = struct{}{}
-
-		args = append(args, "add", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, ipVersion), "addresses", fmt.Sprintf(`"%s"`, address.String()))
-	}
-
-	if len(args) > 0 {
-		// Optimistically assume all required address sets exist (they normally will).
-		_, err := o.nbctl(args...)
-		if err != nil {
-			// Try creating the address sets one at a time, but ignore errors here in case some of the
-			// address sets already exist. If there was a problem creating the address set it will be
-			// revealead when we run the original command again next.
-			for ipVersion := range ipVersions {
-				_, _ = o.nbctl("create", "address_set", fmt.Sprintf("name=%s_ip%d", addressSetPrefix, ipVersion))
-			}
-
-			// Try original command again.
-			_, err := o.nbctl(args...)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// AddressSetRemove removes the supplied addresses from the address set.
-// The address set name used is "<addressSetPrefix>_ip<IP version>", e.g. "foo_ip4".
-func (o *NB) AddressSetRemove(addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
-	var args []string
-
-	for _, address := range addresses {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
-
-		var ipVersion uint = 4
-		if address.IP.To4() == nil {
-			ipVersion = 6
-		}
-
-		args = append(args, "--if-exists", "remove", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, ipVersion), "addresses", fmt.Sprintf(`"%s"`, address.String()))
-	}
-
-	if len(args) > 0 {
-		_, err := o.nbctl(args...)
+		operations = append(operations, createOps...)
+	} else {
+		updateOps, err := o.client.Where(&ipv4Set).Update(&ipv4Set)
 		if err != nil {
 			return err
 		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	if ipv6Set.UUID == "" {
+		createOps, err := o.client.Create(&ipv6Set)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+	} else {
+		updateOps, err := o.client.Where(&ipv6Set).Update(&ipv6Set)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// AddressSetDelete deletes address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
-func (o *NB) AddressSetDelete(addressSetPrefix OVNAddressSet) error {
-	_, err := o.nbctl(
-		"--if-exists", "destroy", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, 4),
-		"--", "--if-exists", "destroy", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, 6),
-	)
+// UpdateAddressSetRemove removes the supplied addresses from the address set.
+// The address set name used is "<addressSetPrefix>_ip<IP version>", e.g. "foo_ip4".
+func (o *NB) UpdateAddressSetRemove(ctx context.Context, addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
+	// Get the address sets.
+	ipv4Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip4", addressSetPrefix),
+	}
+
+	err := o.get(ctx, &ipv4Set)
+	if err != nil {
+		return err
+	}
+
+	ipv6Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip6", addressSetPrefix),
+	}
+
+	err = o.get(ctx, &ipv6Set)
+	if err != nil {
+		return err
+	}
+
+	// Filter entries.
+	ipv4Addresses := []string{}
+	for _, entry := range ipv4Set.Addresses {
+		found := false
+		for _, address := range addresses {
+			if entry == address.String() {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			ipv4Addresses = append(ipv4Addresses, entry)
+		}
+	}
+
+	ipv4Set.Addresses = ipv4Addresses
+
+	ipv6Addresses := []string{}
+	for _, entry := range ipv6Set.Addresses {
+		found := false
+		for _, address := range addresses {
+			if entry == address.String() {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			ipv6Addresses = append(ipv6Addresses, entry)
+		}
+	}
+
+	ipv6Set.Addresses = ipv6Addresses
+
+	// Prepare the records.
+	operations := []ovsdb.Operation{}
+
+	updateOps, err := o.client.Where(&ipv4Set).Update(&ipv4Set)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	updateOps, err = o.client.Where(&ipv6Set).Update(&ipv6Set)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteAddressSet deletes address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
+func (o *NB) DeleteAddressSet(ctx context.Context, addressSetPrefix OVNAddressSet) error {
+	// Get the address sets.
+	ipv4Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip4", addressSetPrefix),
+	}
+
+	err := o.get(ctx, &ipv4Set)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	ipv6Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip6", addressSetPrefix),
+	}
+
+	err = o.get(ctx, &ipv6Set)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	// Delete the records.
+	operations := []ovsdb.Operation{}
+
+	if ipv4Set.UUID != "" {
+		deleteOps, err := o.client.Where(&ipv4Set).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+	}
+
+	if ipv6Set.UUID != "" {
+		deleteOps, err := o.client.Where(&ipv6Set).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
