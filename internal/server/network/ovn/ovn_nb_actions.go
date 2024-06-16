@@ -2338,23 +2338,23 @@ func (o *NB) DeletePortGroup(ctx context.Context, portGroupNames ...OVNPortGroup
 	return nil
 }
 
-// PortGroupListByProject finds the port groups that are associated to the project ID.
-func (o *NB) PortGroupListByProject(projectID int64) ([]OVNPortGroup, error) {
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=name", "find", "port_group",
-		fmt.Sprintf("external_ids:%s=%d", ovnExtIDIncusProjectID, projectID),
-	)
+// GetPortGroupsByProject finds the port groups that are associated to the project ID.
+func (o *NB) GetPortGroupsByProject(ctx context.Context, projectID int64) ([]OVNPortGroup, error) {
+	portGroups := []ovnNB.PortGroup{}
+
+	err := o.client.WhereCache(func(pg *ovnNB.PortGroup) bool {
+		return pg.ExternalIDs != nil && pg.ExternalIDs[ovnExtIDIncusProjectID] == fmt.Sprintf("%d", projectID)
+	}).List(ctx, &portGroups)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
-	portGroups := make([]OVNPortGroup, 0, len(lines))
-
-	for _, line := range lines {
-		portGroups = append(portGroups, OVNPortGroup(line))
+	pgNames := make([]OVNPortGroup, 0, len(portGroups))
+	for _, portGroup := range portGroups {
+		pgNames = append(pgNames, OVNPortGroup(portGroup.Name))
 	}
 
-	return portGroups, nil
+	return pgNames, nil
 }
 
 // PortGroupMemberChange adds/removes logical switch ports (by UUID) to/from existing port groups.
