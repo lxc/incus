@@ -2908,12 +2908,55 @@ func (o *NB) UpdateAddressSetRemove(ctx context.Context, addressSetPrefix OVNAdd
 	return nil
 }
 
-// AddressSetDelete deletes address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
-func (o *NB) AddressSetDelete(addressSetPrefix OVNAddressSet) error {
-	_, err := o.nbctl(
-		"--if-exists", "destroy", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, 4),
-		"--", "--if-exists", "destroy", "address_set", fmt.Sprintf("%s_ip%d", addressSetPrefix, 6),
-	)
+// DeleteAddressSet deletes address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
+func (o *NB) DeleteAddressSet(ctx context.Context, addressSetPrefix OVNAddressSet) error {
+	// Get the address sets.
+	ipv4Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip4", addressSetPrefix),
+	}
+
+	err := o.get(ctx, &ipv4Set)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	ipv6Set := ovnNB.AddressSet{
+		Name: fmt.Sprintf("%s_ip6", addressSetPrefix),
+	}
+
+	err = o.get(ctx, &ipv6Set)
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+
+	// Delete the records.
+	operations := []ovsdb.Operation{}
+
+	if ipv4Set.UUID != "" {
+		deleteOps, err := o.client.Where(&ipv4Set).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+	}
+
+	if ipv6Set.UUID != "" {
+		deleteOps, err := o.client.Where(&ipv6Set).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
