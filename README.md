@@ -1,4 +1,4 @@
-# Incus
+# Incus open source
 
 Incus is a modern, secure and powerful system container and virtual machine manager.
 
