@@ -1491,34 +1491,42 @@ func (o *NB) GetLogicalSwitchPorts(ctx context.Context, switchName OVNSwitch) (m
 	return ports, nil
 }
 
-// LogicalSwitchIPs returns a list of IPs associated to each port connected to switch.
-func (o *NB) LogicalSwitchIPs(switchName OVNSwitch) (map[OVNSwitchPort][]net.IP, error) {
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=name,addresses,dynamic_addresses", "find", "logical_switch_port",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-	)
+// GetLogicalSwitchIPs returns a list of IPs associated to each port connected to switch.
+func (o *NB) GetLogicalSwitchIPs(ctx context.Context, switchName OVNSwitch) (map[OVNSwitchPort][]net.IP, error) {
+	lsps := []ovnNB.LogicalSwitchPort{}
+
+	err := o.client.WhereCache(func(lsp *ovnNB.LogicalSwitchPort) bool {
+		return lsp.ExternalIDs != nil && lsp.ExternalIDs[ovnExtIDIncusSwitch] == string(switchName)
+	}).List(ctx, &lsps)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
-	portIPs := make(map[OVNSwitchPort][]net.IP, len(lines))
-
-	for _, line := range lines {
-		fields := util.SplitNTrimSpace(line, ",", -1, true)
-		portName := OVNSwitchPort(fields[0])
+	portIPs := make(map[OVNSwitchPort][]net.IP, len(lsps))
+	for _, lsp := range lsps {
 		var ips []net.IP
 
-		// Parse all IPs mentioned in addresses and dynamic_addresses fields.
-		for i := 1; i < len(fields); i++ {
-			for _, address := range util.SplitNTrimSpace(fields[i], " ", -1, true) {
-				ip := net.ParseIP(address)
+		// Extract all addresses from the Addresses field.
+		for _, address := range lsp.Addresses {
+			for _, entry := range util.SplitNTrimSpace(address, " ", -1, true) {
+				ip := net.ParseIP(entry)
 				if ip != nil {
 					ips = append(ips, ip)
 				}
 			}
 		}
 
-		portIPs[portName] = ips
+		// Extract all addresses from the DynamicAddresses field.
+		if lsp.DynamicAddresses != nil {
+			for _, entry := range util.SplitNTrimSpace(*lsp.DynamicAddresses, " ", -1, true) {
+				ip := net.ParseIP(entry)
+				if ip != nil {
+					ips = append(ips, ip)
+				}
+			}
+		}
+
+		portIPs[OVNSwitchPort(lsp.Name)] = ips
 	}
 
 	return portIPs, nil
