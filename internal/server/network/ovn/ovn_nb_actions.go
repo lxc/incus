@@ -2048,14 +2048,40 @@ func (o *NB) UpdateLogicalSwitchPortLinkRouter(ctx context.Context, switchPortNa
 	return nil
 }
 
-// LogicalSwitchPortLinkProviderNetwork links a logical switch port to a provider network.
-func (o *NB) LogicalSwitchPortLinkProviderNetwork(switchPortName OVNSwitchPort, extNetworkName string) error {
-	// Forward any unknown MAC frames down this port.
-	_, err := o.nbctl(
-		"lsp-set-addresses", string(switchPortName), "unknown", "--",
-		"lsp-set-type", string(switchPortName), "localnet", "--",
-		"lsp-set-options", string(switchPortName), fmt.Sprintf("network_name=%s", extNetworkName),
-	)
+// UpdateLogicalSwitchPortLinkProviderNetwork links a logical switch port to a provider network.
+func (o *NB) UpdateLogicalSwitchPortLinkProviderNetwork(ctx context.Context, switchPortName OVNSwitchPort, extNetworkName string) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(switchPortName),
+	}
+
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	// Update the fields.
+	lsp.Type = "localnet"
+	lsp.Addresses = []string{"unknown"}
+	if lsp.Options == nil {
+		lsp.Options = map[string]string{}
+	}
+
+	lsp.Options["network_name"] = extNetworkName
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
