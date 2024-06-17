@@ -2006,14 +2006,41 @@ func (o *NB) LogicalSwitchPortCleanup(portName OVNSwitchPort, switchName OVNSwit
 	return nil
 }
 
-// LogicalSwitchPortLinkRouter links a logical switch port to a logical router port.
-func (o *NB) LogicalSwitchPortLinkRouter(switchPortName OVNSwitchPort, routerPortName OVNRouterPort) error {
-	// Connect logical router port to switch.
-	_, err := o.nbctl(
-		"lsp-set-type", string(switchPortName), "router", "--",
-		"lsp-set-addresses", string(switchPortName), "router", "--",
-		"lsp-set-options", string(switchPortName), fmt.Sprintf("nat-addresses=%s", "router"), fmt.Sprintf("router-port=%s", string(routerPortName)),
-	)
+// UpdateLogicalSwitchPortLinkRouter links a logical switch port to a logical router port.
+func (o *NB) UpdateLogicalSwitchPortLinkRouter(ctx context.Context, switchPortName OVNSwitchPort, routerPortName OVNRouterPort) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(switchPortName),
+	}
+
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	// Update the fields.
+	lsp.Type = "router"
+	lsp.Addresses = []string{"router"}
+	if lsp.Options == nil {
+		lsp.Options = map[string]string{}
+	}
+
+	lsp.Options["nat-addresses"] = "router"
+	lsp.Options["router-port"] = string(routerPortName)
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
