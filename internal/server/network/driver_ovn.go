@@ -2132,7 +2132,7 @@ func (n *ovn) setup(update bool) error {
 			})
 		}
 
-		err = n.state.OVNNB.LogicalSwitchPortLinkRouter(n.getExtSwitchRouterPortName(), n.getRouterExtPortName())
+		err = n.state.OVNNB.UpdateLogicalSwitchPortLinkRouter(context.TODO(), n.getExtSwitchRouterPortName(), n.getRouterExtPortName())
 		if err != nil {
 			return fmt.Errorf("Failed linking external router port to external switch port: %w", err)
 		}
@@ -2149,7 +2149,7 @@ func (n *ovn) setup(update bool) error {
 			})
 		}
 
-		err = n.state.OVNNB.LogicalSwitchPortLinkProviderNetwork(n.getExtSwitchProviderPortName(), uplinkNet.extSwitchProviderName)
+		err = n.state.OVNNB.UpdateLogicalSwitchPortLinkProviderNetwork(context.TODO(), n.getExtSwitchProviderPortName(), uplinkNet.extSwitchProviderName)
 		if err != nil {
 			return fmt.Errorf("Failed linking external switch provider port to external provider network: %w", err)
 		}
@@ -2483,7 +2483,7 @@ func (n *ovn) setup(update bool) error {
 		})
 	}
 
-	err = n.state.OVNNB.LogicalSwitchPortLinkRouter(n.getIntSwitchRouterPortName(), n.getRouterIntPortName())
+	err = n.state.OVNNB.UpdateLogicalSwitchPortLinkRouter(context.TODO(), n.getIntSwitchRouterPortName(), n.getRouterIntPortName())
 	if err != nil {
 		return fmt.Errorf("Failed linking internal router port to internal switch port: %w", err)
 	}
@@ -3547,7 +3547,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 				// If the sticky IP isn't statically reserved, lets check its not used dynamically
 				// on any active port.
 				if !n.hasDHCPv4Reservation(dhcpReservations, dhcpV4StickyIP) {
-					existingPortIPs, err := n.state.OVNNB.LogicalSwitchIPs(n.getIntSwitchName())
+					existingPortIPs, err := n.state.OVNNB.GetLogicalSwitchIPs(context.TODO(), n.getIntSwitchName())
 					if err != nil {
 						return "", nil, fmt.Errorf("Failed getting existing switch port IPs: %w", err)
 					}
@@ -4093,7 +4093,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 	}
 
 	// Get DNS records.
-	dnsUUID, _, dnsIPs, err := n.state.OVNNB.LogicalSwitchPortGetDNS(instancePortName)
+	dnsUUID, _, dnsIPs, err := n.state.OVNNB.GetLogicalSwitchPortDNS(context.TODO(), instancePortName)
 	if err != nil {
 		return err
 	}
@@ -4190,7 +4190,7 @@ func (n *ovn) InstanceDevicePortRemove(instanceUUID string, deviceName string, d
 	defer revert.Fail()
 
 	// Get DNS records.
-	dnsUUID, _, _, err := n.state.OVNNB.LogicalSwitchPortGetDNS(instancePortName)
+	dnsUUID, _, _, err := n.state.OVNNB.GetLogicalSwitchPortDNS(context.TODO(), instancePortName)
 	if err != nil {
 		return err
 	}
