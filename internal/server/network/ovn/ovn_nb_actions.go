@@ -1491,34 +1491,42 @@ func (o *NB) GetLogicalSwitchPorts(ctx context.Context, switchName OVNSwitch) (m
 	return ports, nil
 }
 
-// LogicalSwitchIPs returns a list of IPs associated to each port connected to switch.
-func (o *NB) LogicalSwitchIPs(switchName OVNSwitch) (map[OVNSwitchPort][]net.IP, error) {
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=name,addresses,dynamic_addresses", "find", "logical_switch_port",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-	)
+// GetLogicalSwitchIPs returns a list of IPs associated to each port connected to switch.
+func (o *NB) GetLogicalSwitchIPs(ctx context.Context, switchName OVNSwitch) (map[OVNSwitchPort][]net.IP, error) {
+	lsps := []ovnNB.LogicalSwitchPort{}
+
+	err := o.client.WhereCache(func(lsp *ovnNB.LogicalSwitchPort) bool {
+		return lsp.ExternalIDs != nil && lsp.ExternalIDs[ovnExtIDIncusSwitch] == string(switchName)
+	}).List(ctx, &lsps)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
-	portIPs := make(map[OVNSwitchPort][]net.IP, len(lines))
-
-	for _, line := range lines {
-		fields := util.SplitNTrimSpace(line, ",", -1, true)
-		portName := OVNSwitchPort(fields[0])
+	portIPs := make(map[OVNSwitchPort][]net.IP, len(lsps))
+	for _, lsp := range lsps {
 		var ips []net.IP
 
-		// Parse all IPs mentioned in addresses and dynamic_addresses fields.
-		for i := 1; i < len(fields); i++ {
-			for _, address := range util.SplitNTrimSpace(fields[i], " ", -1, true) {
-				ip := net.ParseIP(address)
+		// Extract all addresses from the Addresses field.
+		for _, address := range lsp.Addresses {
+			for _, entry := range util.SplitNTrimSpace(address, " ", -1, true) {
+				ip := net.ParseIP(entry)
 				if ip != nil {
 					ips = append(ips, ip)
 				}
 			}
 		}
 
-		portIPs[portName] = ips
+		// Extract all addresses from the DynamicAddresses field.
+		if lsp.DynamicAddresses != nil {
+			for _, entry := range util.SplitNTrimSpace(*lsp.DynamicAddresses, " ", -1, true) {
+				ip := net.ParseIP(entry)
+				if ip != nil {
+					ips = append(ips, ip)
+				}
+			}
+		}
+
+		portIPs[OVNSwitchPort(lsp.Name)] = ips
 	}
 
 	return portIPs, nil
@@ -1846,38 +1854,40 @@ func (o *NB) LogicalSwitchPortSetDNS(switchName OVNSwitch, portName OVNSwitchPor
 	return OVNDNSUUID(dnsUUID), nil
 }
 
-// LogicalSwitchPortGetDNS returns the logical switch port DNS info (UUID, name and IPs).
-func (o *NB) LogicalSwitchPortGetDNS(portName OVNSwitchPort) (OVNDNSUUID, string, []net.IP, error) {
-	// Get UUID and DNS IPs for a switch port in the format: "<DNS UUID>,<DNS NAME>=<IP> <IP>"
-	output, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid,records", "find", "dns",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitchPort, portName),
-	)
+// GetLogicalSwitchPortDNS returns the logical switch port DNS info (UUID, name and IPs).
+func (o *NB) GetLogicalSwitchPortDNS(ctx context.Context, portName OVNSwitchPort) (OVNDNSUUID, string, []net.IP, error) {
+	dnsRecords := []ovnNB.DNS{}
+
+	err := o.client.WhereCache(func(dnsRecord *ovnNB.DNS) bool {
+		return dnsRecord.ExternalIDs != nil && dnsRecord.ExternalIDs[ovnExtIDIncusSwitchPort] == string(portName)
+	}).List(ctx, &dnsRecords)
 	if err != nil {
 		return "", "", nil, err
 	}
 
-	parts := strings.Split(strings.TrimSpace(output), ",")
-	dnsUUID := strings.TrimSpace(parts[0])
+	if len(dnsRecords) != 1 {
+		return "", "", nil, nil
+	}
 
-	var dnsName string
+	if len(dnsRecords[0].Records) > 1 {
+		return "", "", nil, fmt.Errorf("More than one DNS record found for logical switch port")
+	}
+
 	var ips []net.IP
+	var dnsName string
 
-	// Try and parse the DNS name and IPs.
-	if len(parts) > 1 {
-		dnsParts := strings.SplitN(strings.TrimSpace(parts[1]), "=", 2)
-		if len(dnsParts) == 2 {
-			dnsName = strings.TrimSpace(dnsParts[0])
-			ipParts := strings.Split(dnsParts[1], " ")
-			for _, ipPart := range ipParts {
-				ip := net.ParseIP(strings.TrimSpace(ipPart))
-				if ip != nil {
-					ips = append(ips, ip)
-				}
+	for key, value := range dnsRecords[0].Records {
+		dnsName = key
+
+		for _, ipPart := range strings.Split(value, " ") {
+			ip := net.ParseIP(strings.TrimSpace(ipPart))
+			if ip != nil {
+				ips = append(ips, ip)
 			}
 		}
 	}
 
-	return OVNDNSUUID(dnsUUID), dnsName, ips, nil
+	return OVNDNSUUID(dnsRecords[0].UUID), dnsName, ips, nil
 }
 
 // logicalSwitchPortDeleteDNSAppendArgs adds the command arguments to remove DNS records from a switch port.
@@ -2006,14 +2016,41 @@ func (o *NB) LogicalSwitchPortCleanup(portName OVNSwitchPort, switchName OVNSwit
 	return nil
 }
 
-// LogicalSwitchPortLinkRouter links a logical switch port to a logical router port.
-func (o *NB) LogicalSwitchPortLinkRouter(switchPortName OVNSwitchPort, routerPortName OVNRouterPort) error {
-	// Connect logical router port to switch.
-	_, err := o.nbctl(
-		"lsp-set-type", string(switchPortName), "router", "--",
-		"lsp-set-addresses", string(switchPortName), "router", "--",
-		"lsp-set-options", string(switchPortName), fmt.Sprintf("nat-addresses=%s", "router"), fmt.Sprintf("router-port=%s", string(routerPortName)),
-	)
+// UpdateLogicalSwitchPortLinkRouter links a logical switch port to a logical router port.
+func (o *NB) UpdateLogicalSwitchPortLinkRouter(ctx context.Context, switchPortName OVNSwitchPort, routerPortName OVNRouterPort) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(switchPortName),
+	}
+
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	// Update the fields.
+	lsp.Type = "router"
+	lsp.Addresses = []string{"router"}
+	if lsp.Options == nil {
+		lsp.Options = map[string]string{}
+	}
+
+	lsp.Options["nat-addresses"] = "router"
+	lsp.Options["router-port"] = string(routerPortName)
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
@@ -2021,14 +2058,40 @@ func (o *NB) LogicalSwitchPortLinkRouter(switchPortName OVNSwitchPort, routerPor
 	return nil
 }
 
-// LogicalSwitchPortLinkProviderNetwork links a logical switch port to a provider network.
-func (o *NB) LogicalSwitchPortLinkProviderNetwork(switchPortName OVNSwitchPort, extNetworkName string) error {
-	// Forward any unknown MAC frames down this port.
-	_, err := o.nbctl(
-		"lsp-set-addresses", string(switchPortName), "unknown", "--",
-		"lsp-set-type", string(switchPortName), "localnet", "--",
-		"lsp-set-options", string(switchPortName), fmt.Sprintf("network_name=%s", extNetworkName),
-	)
+// UpdateLogicalSwitchPortLinkProviderNetwork links a logical switch port to a provider network.
+func (o *NB) UpdateLogicalSwitchPortLinkProviderNetwork(ctx context.Context, switchPortName OVNSwitchPort, extNetworkName string) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(switchPortName),
+	}
+
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	// Update the fields.
+	lsp.Type = "localnet"
+	lsp.Addresses = []string{"unknown"}
+	if lsp.Options == nil {
+		lsp.Options = map[string]string{}
+	}
+
+	lsp.Options["network_name"] = extNetworkName
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
