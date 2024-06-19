@@ -3104,15 +3104,85 @@ func (o *NB) DeleteAddressSet(ctx context.Context, addressSetPrefix OVNAddressSe
 	return nil
 }
 
-// LogicalRouterPolicyApply removes any existing policies and applies the new policies to the specified router.
-func (o *NB) LogicalRouterPolicyApply(routerName OVNRouter, policies ...OVNRouterPolicy) error {
-	args := []string{"lr-policy-del", string(routerName)}
+// UpdateLogicalRouterPolicy removes any existing policies and applies the new policies to the specified router.
+func (o *NB) UpdateLogicalRouterPolicy(ctx context.Context, routerName OVNRouter, policies ...OVNRouterPolicy) error {
+	operations := []ovsdb.Operation{}
 
-	for _, policy := range policies {
-		args = append(args, "--", "lr-policy-add", string(routerName), fmt.Sprintf("%d", policy.Priority), policy.Match, policy.Action)
+	// Get the logical router.
+	lr, err := o.GetLogicalRouter(ctx, routerName)
+	if err != nil {
+		return err
 	}
 
-	_, err := o.nbctl(args...)
+	// Clear the existing policies.
+	for _, policyUUID := range lr.Policies {
+		// Delete the policy.
+		policy := ovnNB.LogicalRouterPolicy{
+			UUID: policyUUID,
+		}
+
+		deleteOps, err := o.client.Where(&policy).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+
+		// Remove from the logical router.
+		updateOps, err := o.client.Where(lr).Mutate(lr, ovsModel.Mutation{
+			Field:   &lr.Policies,
+			Mutator: ovsdb.MutateOperationDelete,
+			Value:   []string{policy.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Add the new policies.
+	for i, routerPolicy := range policies {
+		// Create the policy.
+		policy := ovnNB.LogicalRouterPolicy{
+			UUID:     fmt.Sprintf("policy%d", i),
+			Priority: routerPolicy.Priority,
+			Match:    routerPolicy.Match,
+			Action:   routerPolicy.Action,
+		}
+
+		createOps, err := o.client.Create(&policy)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+
+		// Add to the logical router.
+		updateOps, err := o.client.Where(lr).Mutate(lr, ovsModel.Mutation{
+			Field:   &lr.Policies,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{policy.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Check if anything changed.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
