@@ -1793,20 +1793,45 @@ func (o *NB) UpdateLogicalSwitchPortOptions(ctx context.Context, portName OVNSwi
 	return nil
 }
 
-// LogicalSwitchPortSetDNS sets up the switch port DNS records for the DNS name.
+// UpdateLogicalSwitchPortDNS sets up the switch port DNS records for the DNS name.
 // Returns the DNS record UUID, IPv4 and IPv6 addresses used for DNS records.
-func (o *NB) LogicalSwitchPortSetDNS(switchName OVNSwitch, portName OVNSwitchPort, dnsName string, dnsIPs []net.IP) (OVNDNSUUID, error) {
-	// Check if existing DNS record exists for switch port.
-	dnsUUID, err := o.nbctl("--format=csv", "--no-headings", "--data=bare", "--colum=_uuid", "find", "dns",
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitchPort, portName),
-	)
+func (o *NB) UpdateLogicalSwitchPortDNS(ctx context.Context, switchName OVNSwitch, portName OVNSwitchPort, dnsName string, dnsIPs []net.IP) (OVNDNSUUID, error) {
+	// Get the logical switch.
+	ls, err := o.GetLogicalSwitch(ctx, switchName)
 	if err != nil {
 		return "", err
 	}
 
-	cmdArgs := []string{
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitch, switchName),
-		fmt.Sprintf("external_ids:%s=%s", ovnExtIDIncusSwitchPort, portName),
+	// Check if existing DNS record exists for switch port.
+	dnsRecords := []ovnNB.DNS{}
+
+	err = o.client.WhereCache(func(dnsRecord *ovnNB.DNS) bool {
+		return dnsRecord.ExternalIDs != nil && dnsRecord.ExternalIDs[ovnExtIDIncusSwitchPort] == string(portName)
+	}).List(ctx, &dnsRecords)
+	if err != nil {
+		return "", err
+	}
+
+	var dnsRecord ovnNB.DNS
+	if len(dnsRecords) == 1 {
+		dnsRecord = dnsRecords[0]
+	} else if len(dnsRecords) == 0 {
+		dnsRecord = ovnNB.DNS{}
+	} else {
+		return "", fmt.Errorf("Found more than one matching DNS record")
+	}
+
+	// Make sure the external IDs are set.
+	if dnsRecord.ExternalIDs == nil {
+		dnsRecord.ExternalIDs = map[string]string{}
+	}
+
+	dnsRecord.ExternalIDs[ovnExtIDIncusSwitch] = string(switchName)
+	dnsRecord.ExternalIDs[ovnExtIDIncusSwitchPort] = string(portName)
+
+	// Add the records.
+	if dnsRecord.Records == nil {
+		dnsRecord.Records = map[string]string{}
 	}
 
 	// Only include DNS name record if IPs supplied.
@@ -1820,38 +1845,61 @@ func (o *NB) LogicalSwitchPortSetDNS(switchName OVNSwitch, portName OVNSwitchPor
 			dnsIPsStr.WriteString(dnsIP.String())
 		}
 
-		cmdArgs = append(cmdArgs, fmt.Sprintf(`records={"%s"="%s"}`, strings.ToLower(dnsName), dnsIPsStr.String()))
-	}
-
-	dnsUUID = strings.TrimSpace(dnsUUID)
-	if dnsUUID != "" {
-		// Clear any existing DNS name if no IPs supplied.
-		if len(dnsIPs) < 1 {
-			cmdArgs = append(cmdArgs, "--", "clear", "dns", string(dnsUUID), "records")
-		}
-
-		// Update existing record if exists.
-		_, err = o.nbctl(append([]string{"set", "dns", dnsUUID}, cmdArgs...)...)
-		if err != nil {
-			return "", err
-		}
+		dnsRecord.Records[strings.ToLower(dnsName)] = dnsIPsStr.String()
 	} else {
-		// Create new record if needed.
-		dnsUUID, err = o.nbctl(append([]string{"create", "dns"}, cmdArgs...)...)
+		// Clear any existing DNS name if no IPs supplied.
+		dnsRecord.Records = map[string]string{}
+	}
+
+	operations := []ovsdb.Operation{}
+	if dnsRecord.UUID == "" {
+		// Create a new record.
+		dnsRecord.UUID = "record"
+
+		createOps, err := o.client.Create(&dnsRecord)
 		if err != nil {
 			return "", err
 		}
 
-		dnsUUID = strings.TrimSpace(dnsUUID)
+		operations = append(operations, createOps...)
+
+		// Add it to the logical switch.
+		updateOps, err := o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
+			Field:   &ls.DNSRecords,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{dnsRecord.UUID},
+		})
+		if err != nil {
+			return "", err
+		}
+
+		operations = append(operations, updateOps...)
+	} else {
+		// Update the record.
+		updateOps, err := o.client.Where(&dnsRecord).Update(&dnsRecord)
+		if err != nil {
+			return "", err
+		}
+
+		operations = append(operations, updateOps...)
 	}
 
-	// Add DNS record to switch DNS records.
-	_, err = o.nbctl("add", "logical_switch", string(switchName), "dns_records", dnsUUID)
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
 	if err != nil {
 		return "", err
 	}
 
-	return OVNDNSUUID(dnsUUID), nil
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return "", err
+	}
+
+	if dnsRecord.UUID == "record" {
+		dnsRecord.UUID = resp[0].UUID.GoUUID
+	}
+
+	return OVNDNSUUID(dnsRecord.UUID), nil
 }
 
 // GetLogicalSwitchPortDNS returns the logical switch port DNS info (UUID, name and IPs).
