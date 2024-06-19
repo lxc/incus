@@ -2469,31 +2469,60 @@ func (o *NB) GetPortGroupsByProject(ctx context.Context, projectID int64) ([]OVN
 	return pgNames, nil
 }
 
-// PortGroupMemberChange adds/removes logical switch ports (by UUID) to/from existing port groups.
-func (o *NB) PortGroupMemberChange(addMembers map[OVNPortGroup][]OVNSwitchPortUUID, removeMembers map[OVNPortGroup][]OVNSwitchPortUUID) error {
-	args := []string{}
+// UpdatePortGroupMembers adds/removes logical switch ports (by UUID) to/from existing port groups.
+func (o *NB) UpdatePortGroupMembers(ctx context.Context, addMembers map[OVNPortGroup][]OVNSwitchPortUUID, removeMembers map[OVNPortGroup][]OVNSwitchPortUUID) error {
+	operations := []ovsdb.Operation{}
 
 	for portGroupName, portMemberUUIDs := range addMembers {
-		for _, portMemberUUID := range portMemberUUIDs {
-			if len(args) > 0 {
-				args = append(args, "--")
+		pg := ovnNB.PortGroup{
+			Name: string(portGroupName),
+		}
+
+		for _, portUUID := range portMemberUUIDs {
+			updateOps, err := o.client.Where(&pg).Mutate(&pg, ovsModel.Mutation{
+				Field:   &pg.Ports,
+				Mutator: ovsdb.MutateOperationInsert,
+				Value:   []string{string(portUUID)},
+			})
+			if err != nil {
+				return err
 			}
 
-			args = append(args, "add", "port_group", string(portGroupName), "ports", string(portMemberUUID))
+			operations = append(operations, updateOps...)
 		}
 	}
 
 	for portGroupName, portMemberUUIDs := range removeMembers {
-		for _, portMemberUUID := range portMemberUUIDs {
-			if len(args) > 0 {
-				args = append(args, "--")
+		pg := ovnNB.PortGroup{
+			Name: string(portGroupName),
+		}
+
+		for _, portUUID := range portMemberUUIDs {
+			updateOps, err := o.client.Where(&pg).Mutate(&pg, ovsModel.Mutation{
+				Field:   &pg.Ports,
+				Mutator: ovsdb.MutateOperationDelete,
+				Value:   []string{string(portUUID)},
+			})
+			if err != nil {
+				return err
 			}
 
-			args = append(args, "--if-exists", "remove", "port_group", string(portGroupName), "ports", string(portMemberUUID))
+			operations = append(operations, updateOps...)
 		}
 	}
 
-	_, err := o.nbctl(args...)
+	// Check if anything changed.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
