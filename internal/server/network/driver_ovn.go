@@ -2595,7 +2595,7 @@ func (n *ovn) logicalRouterPolicySetup(ovnnb *networkOVN.NB, excludePeers ...int
 		return err
 	}
 
-	return n.state.OVNNB.LogicalRouterPolicyApply(n.getRouterName(), policies...)
+	return n.state.OVNNB.UpdateLogicalRouterPolicy(context.TODO(), n.getRouterName(), policies...)
 }
 
 // ensureNetworkPortGroup ensures that the network level port group (used for classifying NICs connected to this
@@ -3195,7 +3195,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		// Apply add/remove changesets.
 		if len(addChangeSet) > 0 || len(removeChangeSet) > 0 {
 			n.logger.Debug("Applying ACL port group member change sets")
-			err = n.state.OVNNB.PortGroupMemberChange(addChangeSet, removeChangeSet)
+			err = n.state.OVNNB.UpdatePortGroupMembers(context.TODO(), addChangeSet, removeChangeSet)
 			if err != nil {
 				return fmt.Errorf("Failed applying OVN port group member change sets for instance NIC: %w", err)
 			}
@@ -3420,7 +3420,7 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devi
 	revert := revert.New()
 	defer revert.Fail()
 
-	dnsUUID, err := n.state.OVNNB.LogicalSwitchPortSetDNS(n.getIntSwitchName(), instancePortName, "", nil)
+	dnsUUID, err := n.state.OVNNB.UpdateLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), instancePortName, "", nil)
 	if err != nil {
 		return fmt.Errorf("Failed adding DNS record: %w", err)
 	}
@@ -3699,7 +3699,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	}
 
 	dnsName := fmt.Sprintf("%s.%s", opts.DNSName, n.getDomainName())
-	dnsUUID, err := n.state.OVNNB.LogicalSwitchPortSetDNS(n.getIntSwitchName(), instancePortName, dnsName, dnsIPs)
+	dnsUUID, err := n.state.OVNNB.UpdateLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), instancePortName, dnsName, dnsIPs)
 	if err != nil {
 		return "", nil, fmt.Errorf("Failed setting DNS for %q: %w", dnsName, err)
 	}
@@ -3982,7 +3982,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	// be populated even if no ACLs being applied, because the NIC port needs to be added to the network level
 	// port group.
 	n.logger.Debug("Applying instance NIC port group member change sets")
-	err = n.state.OVNNB.PortGroupMemberChange(addChangeSet, removeChangeSet)
+	err = n.state.OVNNB.UpdatePortGroupMembers(context.TODO(), addChangeSet, removeChangeSet)
 	if err != nil {
 		return "", nil, fmt.Errorf("Failed applying OVN port group member change sets for instance NIC: %w", err)
 	}
