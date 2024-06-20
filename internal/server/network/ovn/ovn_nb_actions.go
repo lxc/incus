@@ -3323,7 +3323,7 @@ func (o *NB) LogicalRouterPeeringApply(opts OVNRouterPeering) error {
 
 	// Remove peering router ports and static routes using ports from both routers.
 	// Run the delete step as a separate command to workaround a bug in OVN.
-	err := o.LogicalRouterPeeringDelete(opts)
+	err := o.DeleteLogicalRouterPeering(context.TODO(), opts)
 	if err != nil {
 		return err
 	}
@@ -3410,47 +3410,128 @@ func (o *NB) LogicalRouterPeeringApply(opts OVNRouterPeering) error {
 	return nil
 }
 
-// LogicalRouterPeeringDelete deletes a peering relationship between two logical routers.
+// DeleteLogicalRouterPeering deletes a peering relationship between two logical routers.
 // Requires LocalRouter, LocalRouterPort, TargetRouter and TargetRouterPort opts fields to be populated.
-func (o *NB) LogicalRouterPeeringDelete(opts OVNRouterPeering) error {
+func (o *NB) DeleteLogicalRouterPeering(ctx context.Context, opts OVNRouterPeering) error {
+	operations := []ovsdb.Operation{}
+
 	// Remove peering router ports and static routes using ports from both routers.
 	if opts.LocalRouter == "" || opts.TargetRouter == "" {
 		return fmt.Errorf("Router names not populated for both routers")
 	}
 
-	args := []string{
-		"--if-exists", "lrp-del", string(opts.LocalRouterPort), "--",
-		"--if-exists", "lrp-del", string(opts.TargetRouterPort),
-	}
-
-	// Remove static routes from both routers that use the respective peering router ports.
-	staticRoutes, err := o.GetLogicalRouterRoutes(context.TODO(), opts.LocalRouter)
-	if err != nil {
-		return fmt.Errorf("Failed getting static routes for local peer router %q: %w", opts.LocalRouter, err)
-	}
-
-	for _, staticRoute := range staticRoutes {
-		if staticRoute.Port == opts.LocalRouterPort {
-			args = append(args, "--", "lr-route-del", string(opts.LocalRouter), staticRoute.Prefix.String(), staticRoute.NextHop.String(), string(opts.LocalRouterPort))
+	deleteLogicalRouterPort := func(routerName OVNRouter, portName OVNRouterPort) error {
+		// Get the logical router port.
+		logicalRouterPort := ovnNB.LogicalRouterPort{
+			Name: string(portName),
 		}
-	}
 
-	staticRoutes, err = o.GetLogicalRouterRoutes(context.TODO(), opts.TargetRouter)
-	if err != nil {
-		return fmt.Errorf("Failed getting static routes for target peer router %q: %w", opts.TargetRouter, err)
-	}
+		err := o.get(ctx, &logicalRouterPort)
+		if err != nil {
+			if err == ErrNotFound {
+				// Logical router port is already gone.
+				return nil
+			}
 
-	for _, staticRoute := range staticRoutes {
-		if staticRoute.Port == opts.TargetRouterPort {
-			args = append(args, "--", "lr-route-del", string(opts.TargetRouter), staticRoute.Prefix.String(), staticRoute.NextHop.String(), string(opts.TargetRouterPort))
+			return err
 		}
-	}
 
-	if len(args) > 0 {
-		_, err := o.nbctl(args...)
+		// Get the logical router.
+		logicalRouter := ovnNB.LogicalRouter{
+			Name: string(routerName),
+		}
+
+		err = o.get(ctx, &logicalRouter)
 		if err != nil {
 			return err
 		}
+
+		// Remove the port from the router.
+		updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+			Field:   &logicalRouter.Ports,
+			Mutator: ovsdb.MutateOperationDelete,
+			Value:   []string{logicalRouterPort.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+
+		// Delete the port itself.
+		deleteOps, err := o.client.Where(&logicalRouterPort).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
+
+		// Remove any associated route entries.
+		for _, routeUUID := range logicalRouter.StaticRoutes {
+			// Get the static entry.
+			route := ovnNB.LogicalRouterStaticRoute{
+				UUID: routeUUID,
+			}
+
+			err = o.get(ctx, &route)
+			if err != nil {
+				return err
+			}
+
+			// Skip over anything that's not tied to the current port.
+			if route.OutputPort != nil || *route.OutputPort != string(portName) {
+				continue
+			}
+
+			// Remove the route from the router.
+			updateOps, err := o.client.Where(&logicalRouter).Mutate(&logicalRouter, ovsModel.Mutation{
+				Field:   &logicalRouter.StaticRoutes,
+				Mutator: ovsdb.MutateOperationDelete,
+				Value:   []string{route.UUID},
+			})
+			if err != nil {
+				return err
+			}
+
+			operations = append(operations, updateOps...)
+
+			// Delete the route itself.
+			deleteOps, err := o.client.Where(&route).Delete()
+			if err != nil {
+				return err
+			}
+
+			operations = append(operations, deleteOps...)
+		}
+
+		return nil
+	}
+
+	// Delete both source and target router ports.
+	err := deleteLogicalRouterPort(opts.LocalRouter, opts.LocalRouterPort)
+	if err != nil {
+		return err
+	}
+
+	err = deleteLogicalRouterPort(opts.TargetRouter, opts.TargetRouterPort)
+	if err != nil {
+		return err
+	}
+
+	// Check if anything changed.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
