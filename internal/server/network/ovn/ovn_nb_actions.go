@@ -3257,73 +3257,59 @@ func (o *NB) UpdateLogicalRouterPolicy(ctx context.Context, routerName OVNRouter
 	return nil
 }
 
-// LogicalRouterRoutes returns a list of static routes in the main route table of the logical router.
-func (o *NB) LogicalRouterRoutes(routerName OVNRouter) ([]OVNRouterRoute, error) {
-	output, err := o.nbctl("lr-route-list", string(routerName))
+// GetLogicalRouterRoutes returns a list of static routes in the main route table of the logical router.
+func (o *NB) GetLogicalRouterRoutes(ctx context.Context, routerName OVNRouter) ([]OVNRouterRoute, error) {
+	// Get the logical router.
+	lr, err := o.GetLogicalRouter(ctx, routerName)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := util.SplitNTrimSpace(strings.TrimSpace(output), "\n", -1, true)
-	routes := make([]OVNRouterRoute, 0)
-
-	mainTable := true // Assume output starts with main table (supports ovn versions without multiple tables).
-	for i, line := range lines {
-		if line == "IPv4 Routes" || line == "IPv6 Routes" {
-			continue // Ignore heading category lines.
+	// Get all the routes.
+	routes := []OVNRouterRoute{}
+	for _, routeUUID := range lr.StaticRoutes {
+		// Get the static entry.
+		route := ovnNB.LogicalRouterStaticRoute{
+			UUID: routeUUID,
 		}
 
-		// Keep track of which route table we are looking at.
-		if strings.HasPrefix(line, "Route Table") {
-			if line == "Route Table <main>:" {
-				mainTable = true
-			} else {
-				mainTable = false
-			}
+		err = o.get(ctx, &route)
+		if err != nil {
+			return nil, err
+		}
 
+		// Only use the main table.
+		if route.RouteTable != "" {
 			continue
 		}
 
-		if !mainTable {
-			continue // We don't currently consider routes in other route tables.
-		}
+		// Create the route entry.
+		var routerRoute OVNRouterRoute
 
-		// E.g. "10.97.31.0/24 10.97.31.1 dst-ip [optional-some-router-port-name]"
-		fields := strings.Fields(line)
-		fieldsLen := len(fields)
-
-		if fieldsLen <= 0 {
-			continue // Ignore empty lines.
-		} else if fieldsLen < 3 || fieldsLen > 4 {
-			return nil, fmt.Errorf("Unrecognised static route item output on line %d: %q", i, line)
-		}
-
-		var route OVNRouterRoute
-
-		// ovn-nbctl doesn't output single-host route prefixes in CIDR format, so do the conversion here.
-		ip := net.ParseIP(fields[0])
+		// Add CIDR if missing.
+		ip := net.ParseIP(route.IPPrefix)
 		if ip != nil {
 			subnetSize := 32
 			if ip.To4() == nil {
 				subnetSize = 128
 			}
 
-			fields[0] = fmt.Sprintf("%s/%d", ip.String(), subnetSize)
+			route.IPPrefix = fmt.Sprintf("%s/%d", ip.String(), subnetSize)
 		}
 
-		_, prefix, err := net.ParseCIDR(fields[0])
+		_, prefix, err := net.ParseCIDR(route.IPPrefix)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid static route prefix on line %d: %q", i, fields[0])
+			return nil, fmt.Errorf("Invalid static route prefix %q", route.IPPrefix)
 		}
 
-		route.Prefix = *prefix
-		route.NextHop = net.ParseIP(fields[1])
+		routerRoute.Prefix = *prefix
+		routerRoute.NextHop = net.ParseIP(route.Nexthop)
 
-		if fieldsLen > 3 {
-			route.Port = OVNRouterPort(fields[3])
+		if route.OutputPort != nil {
+			routerRoute.Port = OVNRouterPort(*route.OutputPort)
 		}
 
-		routes = append(routes, route)
+		routes = append(routes, routerRoute)
 	}
 
 	return routes, nil
@@ -3438,7 +3424,7 @@ func (o *NB) LogicalRouterPeeringDelete(opts OVNRouterPeering) error {
 	}
 
 	// Remove static routes from both routers that use the respective peering router ports.
-	staticRoutes, err := o.LogicalRouterRoutes(opts.LocalRouter)
+	staticRoutes, err := o.GetLogicalRouterRoutes(context.TODO(), opts.LocalRouter)
 	if err != nil {
 		return fmt.Errorf("Failed getting static routes for local peer router %q: %w", opts.LocalRouter, err)
 	}
@@ -3449,7 +3435,7 @@ func (o *NB) LogicalRouterPeeringDelete(opts OVNRouterPeering) error {
 		}
 	}
 
-	staticRoutes, err = o.LogicalRouterRoutes(opts.TargetRouter)
+	staticRoutes, err = o.GetLogicalRouterRoutes(context.TODO(), opts.TargetRouter)
 	if err != nil {
 		return fmt.Errorf("Failed getting static routes for target peer router %q: %w", opts.TargetRouter, err)
 	}
