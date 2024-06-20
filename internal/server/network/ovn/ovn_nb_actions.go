@@ -2651,14 +2651,12 @@ func (o *NB) PortGroupPortClearACLRules(portGroupName OVNPortGroup, portName OVN
 	return nil
 }
 
-// LoadBalancerApply creates a new load balancer (if doesn't exist) on the specified routers and switches.
+// CreateLoadBalancer creates a new load balancer (if doesn't exist) on the specified routers and switches.
 // Providing an empty set of vips will delete the load balancer.
-func (o *NB) LoadBalancerApply(loadBalancerName OVNLoadBalancer, routers []OVNRouter, switches []OVNSwitch, vips ...OVNLoadBalancerVIP) error {
+func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBalancer, routers []OVNRouter, switches []OVNSwitch, vips ...OVNLoadBalancerVIP) error {
 	lbTCPName := fmt.Sprintf("%s-tcp", loadBalancerName)
 	lbUDPName := fmt.Sprintf("%s-udp", loadBalancerName)
-
-	// Remove existing load balancers if they exist.
-	args := []string{"--if-exists", "lb-del", lbTCPName, "--", "lb-del", lbUDPName}
+	operations := []ovsdb.Operation{}
 
 	// ipToString wraps IPv6 addresses in square brackets.
 	ipToString := func(ip net.IP) string {
@@ -2669,8 +2667,38 @@ func (o *NB) LoadBalancerApply(loadBalancerName OVNLoadBalancer, routers []OVNRo
 		return ip.String()
 	}
 
-	// We have to use a separate load balancer for UDP rules so use this to keep track of whether we need it.
-	lbNames := make(map[string]struct{})
+	// Remove existing load balancers if they exist.
+	for _, name := range []string{lbTCPName, lbUDPName} {
+		lb := ovnNB.LoadBalancer{
+			Name: name,
+		}
+
+		err := o.get(ctx, &lb)
+		if err == nil {
+			// Delete the load balancer.
+			deleteOps, err := o.client.Where(&lb).Delete()
+			if err != nil {
+				return err
+			}
+
+			operations = append(operations, deleteOps...)
+		} else if err != ErrNotFound {
+			return err
+		}
+	}
+
+	// Define the new load-balancers.
+	lbtcp := &ovnNB.LoadBalancer{
+		UUID:     "lbtcp",
+		Name:     lbTCPName,
+		Protocol: &ovnNB.LoadBalancerProtocolTCP,
+	}
+
+	lbudp := &ovnNB.LoadBalancer{
+		UUID:     "lbudp",
+		Name:     lbUDPName,
+		Protocol: &ovnNB.LoadBalancerProtocolUDP,
+	}
 
 	// Build up the commands to add VIPs to the load balancer.
 	for _, r := range vips {
@@ -2682,70 +2710,109 @@ func (o *NB) LoadBalancerApply(loadBalancerName OVNLoadBalancer, routers []OVNRo
 			return fmt.Errorf("Missing VIP target(s)")
 		}
 
-		if r.Protocol == "udp" {
-			args = append(args, "--", "lb-add", lbUDPName)
-			lbNames[lbUDPName] = struct{}{} // Record that UDP load balancer is created.
-		} else {
-			args = append(args, "--", "lb-add", lbTCPName)
-			lbNames[lbTCPName] = struct{}{} // Record that TCP load balancer is created.
-		}
-
-		targetArgs := make([]string, 0, len(r.Targets))
-
-		for _, target := range r.Targets {
-			if (r.ListenPort > 0 && target.Port <= 0) || (target.Port > 0 && r.ListenPort <= 0) {
-				return fmt.Errorf("The listen and target ports must be specified together")
+		for _, lb := range []*ovnNB.LoadBalancer{lbtcp, lbudp} {
+			if r.Protocol != "" && r.Protocol != *lb.Protocol {
+				continue
 			}
 
+			if lb.Vips == nil {
+				lb.Vips = map[string]string{}
+			}
+
+			targetAddresses := []string{}
+			for _, target := range r.Targets {
+				if (r.ListenPort > 0 && target.Port <= 0) || (target.Port > 0 && r.ListenPort <= 0) {
+					return fmt.Errorf("The listen and target ports must be specified together")
+				}
+
+				// Determine the target address.
+				var targetAddress string
+				if r.ListenPort > 0 {
+					targetAddress = fmt.Sprintf("%s:%d", ipToString(target.Address), target.Port)
+				} else {
+					targetAddress = ipToString(target.Address)
+				}
+
+				targetAddresses = append(targetAddresses, targetAddress)
+			}
+
+			// Determine the listen address.
+			var listenAddress string
 			if r.ListenPort > 0 {
-				targetArgs = append(targetArgs, fmt.Sprintf("%s:%d", ipToString(target.Address), target.Port))
+				listenAddress = fmt.Sprintf("%s:%d", ipToString(r.ListenAddress), r.ListenPort)
 			} else {
-				targetArgs = append(targetArgs, ipToString(target.Address))
+				listenAddress = ipToString(r.ListenAddress)
 			}
-		}
 
-		if r.ListenPort > 0 {
-			args = append(args,
-				fmt.Sprintf("%s:%d", ipToString(r.ListenAddress), r.ListenPort),
-				strings.Join(targetArgs, ","),
-				r.Protocol,
-			)
-		} else {
-			args = append(args,
-				ipToString(r.ListenAddress),
-				strings.Join(targetArgs, ","),
-			)
+			lb.Vips[listenAddress] = strings.Join(targetAddresses, ",")
 		}
 	}
 
-	// If there are some VIP rules then associate the load balancer to the requested routers and switches.
-	if len(vips) > 0 {
-		for _, r := range routers {
-			_, found := lbNames[lbTCPName]
-			if found {
-				args = append(args, "--", "lr-lb-add", string(r), lbTCPName)
-			}
-
-			_, found = lbNames[lbUDPName]
-			if found {
-				args = append(args, "--", "lr-lb-add", string(r), lbUDPName)
-			}
+	// Create any used load-balancer.
+	for _, lb := range []*ovnNB.LoadBalancer{lbtcp, lbudp} {
+		if len(lb.Vips) == 0 {
+			continue
 		}
 
-		for _, s := range switches {
-			_, found := lbNames[lbTCPName]
-			if found {
-				args = append(args, "--", "ls-lb-add", string(s), lbTCPName)
+		// Create the record.
+		createOps, err := o.client.Create(lb)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+
+		// Add to the routers.
+		for _, lrName := range routers {
+			lr, err := o.GetLogicalRouter(ctx, lrName)
+			if err != nil {
+				return err
 			}
 
-			_, found = lbNames[lbUDPName]
-			if found {
-				args = append(args, "--", "ls-lb-add", string(s), lbUDPName)
+			updateOps, err := o.client.Where(lr).Mutate(lr, ovsModel.Mutation{
+				Field:   &lr.LoadBalancer,
+				Mutator: ovsdb.MutateOperationInsert,
+				Value:   []string{lb.UUID},
+			})
+			if err != nil {
+				return err
 			}
+
+			operations = append(operations, updateOps...)
+		}
+
+		// Add to the switches.
+		for _, lsName := range switches {
+			ls, err := o.GetLogicalSwitch(ctx, lsName)
+			if err != nil {
+				return err
+			}
+
+			updateOps, err := o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
+				Field:   &ls.LoadBalancer,
+				Mutator: ovsdb.MutateOperationInsert,
+				Value:   []string{lb.UUID},
+			})
+			if err != nil {
+				return err
+			}
+
+			operations = append(operations, updateOps...)
 		}
 	}
 
-	_, err := o.nbctl(args...)
+	// Check if anything to delete.
+	if len(operations) == 0 {
+		return nil
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
