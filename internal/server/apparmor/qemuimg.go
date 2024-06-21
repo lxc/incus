@@ -22,7 +22,11 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   capability dac_read_search,
   capability ipc_lock,
 
+  /proc/sys/vm/max_map_count r,
   /sys/devices/**/block/*/queue/max_segments  r,
+  /sys/devices/**/block/*/zoned  r,
+  /sys/devices/system/node r,
+  /sys/devices/system/node/** r,
 
 {{range $index, $element := .allowedCmdPaths}}
   {{$element}} mixr,
