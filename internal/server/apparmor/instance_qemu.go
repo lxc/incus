@@ -30,6 +30,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /etc/ceph/**                              r,
   /etc/machine-id                           r,
   /run/udev/data/*                          r,
+  /proc/sys/vm/max_map_count                r,
   /sys/bus/                                 r,
   /sys/bus/nd/devices/                      r,
   /sys/bus/usb/devices/                     r,
