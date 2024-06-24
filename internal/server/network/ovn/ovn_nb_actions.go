@@ -3315,28 +3315,35 @@ func (o *NB) GetLogicalRouterRoutes(ctx context.Context, routerName OVNRouter) (
 	return routes, nil
 }
 
-// LogicalRouterPeeringApply applies a peering relationship between two logical routers.
-func (o *NB) LogicalRouterPeeringApply(opts OVNRouterPeering) error {
+// CreateLogicalRouterPeering applies a peering relationship between two logical routers.
+func (o *NB) CreateLogicalRouterPeering(ctx context.Context, opts OVNRouterPeering) error {
+	operations := []ovsdb.Operation{}
+
 	if len(opts.LocalRouterPortIPs) <= 0 || len(opts.TargetRouterPortIPs) <= 0 {
 		return fmt.Errorf("IPs not populated for both router ports")
 	}
 
 	// Remove peering router ports and static routes using ports from both routers.
 	// Run the delete step as a separate command to workaround a bug in OVN.
-	err := o.DeleteLogicalRouterPeering(context.TODO(), opts)
+	err := o.DeleteLogicalRouterPeering(ctx, opts)
 	if err != nil {
 		return err
 	}
-
-	// Start fresh command set.
-	var args []string
 
 	// Will use the first IP from each family of the router port interfaces.
 	localRouterGatewayIPs := make(map[uint]net.IP, 0)
 	targetRouterGatewayIPs := make(map[uint]net.IP, 0)
 
-	// Setup local router port peered with target router port.
-	args = append(args, "--", "lrp-add", string(opts.LocalRouter), string(opts.LocalRouterPort), opts.LocalRouterPortMAC.String())
+	// Create the local router port.
+	localPeerName := string(opts.TargetRouterPort)
+	localLRP := ovnNB.LogicalRouterPort{
+		UUID:     "locallrp",
+		Name:     string(opts.LocalRouterPort),
+		MAC:      opts.LocalRouterPortMAC.String(),
+		Networks: []string{},
+		Peer:     &localPeerName,
+	}
+
 	for _, ipNet := range opts.LocalRouterPortIPs {
 		ipVersion := uint(4)
 		if ipNet.IP.To4() == nil {
@@ -3347,13 +3354,42 @@ func (o *NB) LogicalRouterPeeringApply(opts OVNRouterPeering) error {
 			localRouterGatewayIPs[ipVersion] = ipNet.IP
 		}
 
-		args = append(args, ipNet.String())
+		localLRP.Networks = append(localLRP.Networks, ipNet.String())
 	}
 
-	args = append(args, fmt.Sprintf("peer=%s", opts.TargetRouterPort))
+	createOps, err := o.client.Create(&localLRP)
+	if err != nil {
+		return err
+	}
 
-	// Setup target router port peered with local router port.
-	args = append(args, "--", "lrp-add", string(opts.TargetRouter), string(opts.TargetRouterPort), opts.TargetRouterPortMAC.String())
+	operations = append(operations, createOps...)
+
+	// And connect it to the router.
+	localRouter := ovnNB.LogicalRouter{
+		Name: string(opts.LocalRouter),
+	}
+
+	updateOps, err := o.client.Where(&localRouter).Mutate(&localRouter, ovsModel.Mutation{
+		Field:   &localRouter.Ports,
+		Mutator: ovsdb.MutateOperationInsert,
+		Value:   []string{localLRP.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
+
+	// Create the target router port.
+	targetPeerName := string(opts.LocalRouterPort)
+	targetLRP := ovnNB.LogicalRouterPort{
+		UUID:     "targetlrp",
+		Name:     string(opts.TargetRouterPort),
+		MAC:      opts.TargetRouterPortMAC.String(),
+		Networks: []string{},
+		Peer:     &targetPeerName,
+	}
+
 	for _, ipNet := range opts.TargetRouterPortIPs {
 		ipVersion := uint(4)
 		if ipNet.IP.To4() == nil {
@@ -3364,13 +3400,36 @@ func (o *NB) LogicalRouterPeeringApply(opts OVNRouterPeering) error {
 			targetRouterGatewayIPs[ipVersion] = ipNet.IP
 		}
 
-		args = append(args, ipNet.String())
+		targetLRP.Networks = append(targetLRP.Networks, ipNet.String())
 	}
 
-	args = append(args, fmt.Sprintf("peer=%s", opts.LocalRouterPort))
+	createOps, err = o.client.Create(&targetLRP)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, createOps...)
+
+	// And connect it to the router.
+	targetRouter := ovnNB.LogicalRouter{
+		Name: string(opts.TargetRouter),
+	}
+
+	updateOps, err = o.client.Where(&targetRouter).Mutate(&targetRouter, ovsModel.Mutation{
+		Field:   &targetRouter.Ports,
+		Mutator: ovsdb.MutateOperationInsert,
+		Value:   []string{targetLRP.UUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, updateOps...)
 
 	// Add routes using the first router gateway IP for each family for next hop address.
-	for _, route := range opts.LocalRouterRoutes {
+	localOutputPort := string(opts.LocalRouterPort)
+	for i, route := range opts.LocalRouterRoutes {
+		// Determine the nexthop.
 		ipVersion := uint(4)
 		if route.IP.To4() == nil {
 			ipVersion = 6
@@ -3382,10 +3441,37 @@ func (o *NB) LogicalRouterPeeringApply(opts OVNRouterPeering) error {
 			return fmt.Errorf("Missing target router port IPv%d address for local route %q nexthop address", ipVersion, route.String())
 		}
 
-		args = append(args, "--", "--may-exist", "lr-route-add", string(opts.LocalRouter), route.String(), nextHopIP.String(), string(opts.LocalRouterPort))
+		// Prepare the record.
+		route := ovnNB.LogicalRouterStaticRoute{
+			UUID:       fmt.Sprintf("local%d", i),
+			IPPrefix:   route.String(),
+			Nexthop:    nextHopIP.String(),
+			OutputPort: &localOutputPort,
+		}
+
+		createOps, err := o.client.Create(&route)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, createOps...)
+
+		// Add it to the router.
+		updateOps, err := o.client.Where(&localRouter).Mutate(&localRouter, ovsModel.Mutation{
+			Field:   &localRouter.StaticRoutes,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{route.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
 	}
 
-	for _, route := range opts.TargetRouterRoutes {
+	targetOutputPort := string(opts.TargetRouterPort)
+	for i, route := range opts.TargetRouterRoutes {
+		// Determine the nexthop.
 		ipVersion := uint(4)
 		if route.IP.To4() == nil {
 			ipVersion = 6
@@ -3397,14 +3483,43 @@ func (o *NB) LogicalRouterPeeringApply(opts OVNRouterPeering) error {
 			return fmt.Errorf("Missing local router port IPv%d address for target route %q nexthop address", ipVersion, route.String())
 		}
 
-		args = append(args, "--", "--may-exist", "lr-route-add", string(opts.TargetRouter), route.String(), nextHopIP.String(), string(opts.TargetRouterPort))
-	}
+		// Prepare the record.
+		route := ovnNB.LogicalRouterStaticRoute{
+			UUID:       fmt.Sprintf("target%d", i),
+			IPPrefix:   route.String(),
+			Nexthop:    nextHopIP.String(),
+			OutputPort: &targetOutputPort,
+		}
 
-	if len(args) > 0 {
-		_, err := o.nbctl(args...)
+		createOps, err := o.client.Create(&route)
 		if err != nil {
 			return err
 		}
+
+		operations = append(operations, createOps...)
+
+		// Add it to the router.
+		updateOps, err := o.client.Where(&targetRouter).Mutate(&targetRouter, ovsModel.Mutation{
+			Field:   &targetRouter.StaticRoutes,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{route.UUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
