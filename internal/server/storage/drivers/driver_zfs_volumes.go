@@ -220,8 +220,13 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		}
 
 		if vol.contentType == ContentTypeFS {
-			// Wait half a second to give udev a chance to kick in.
-			time.Sleep(500 * time.Millisecond)
+			// Wait up to 30 seconds for the device to appear.
+			ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
+			defer cancel()
+
+			if !tryExists(ctx, filepath.Join("/dev/zvol", d.dataset(vol, false))) {
+				return fmt.Errorf("Failed to activate created volume %q", vol.name)
+			}
 
 			zfsFilesystem := vol.ConfigBlockFilesystem()
 
@@ -2029,6 +2034,9 @@ func (d *zfs) activateVolume(vol Volume) (bool, error) {
 		return false, nil // Nothing to do for non-block or non-block backed volumes.
 	}
 
+	revert := revert.New()
+	defer revert.Fail()
+
 	dataset := d.dataset(vol, false)
 
 	// Check if already active.
@@ -2044,11 +2052,19 @@ func (d *zfs) activateVolume(vol Volume) (bool, error) {
 			return false, err
 		}
 
-		// Wait half a second to give udev a chance to kick in.
-		time.Sleep(500 * time.Millisecond)
+		revert.Add(func() { _ = d.setDatasetProperties(dataset, fmt.Sprintf("volmode=%s", current)) })
+
+		// Wait up to 30 seconds for the device to appear.
+		ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
+		defer cancel()
+
+		if !tryExists(ctx, filepath.Join("/dev/zvol", dataset)) {
+			return false, fmt.Errorf("Failed to activate volume %q", vol.name)
+		}
 
 		d.logger.Debug("Activated ZFS volume", logger.Ctx{"volName": vol.Name(), "dev": dataset})
 
+		revert.Success()
 		return true, nil
 	}
 
