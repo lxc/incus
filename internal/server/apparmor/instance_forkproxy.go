@@ -59,6 +59,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   /run/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
   /usr/lib/systemd/resolv.conf r,
 
+  # Allow /dev/shm access (for Wayland)
+  /dev/shm/** rwkl,
+
   # Needed for the fork sub-commands
   {{ .exePath }} mr,
   @{PROC}/@{pid}/cmdline r,
