@@ -5820,7 +5820,7 @@ func (n *ovn) peerSetup(ovnnb *networkOVN.NB, targetOVNNet *ovn, opts networkOVN
 		return fmt.Errorf("Failed applying target router security policy: %w", err)
 	}
 
-	err = n.state.OVNNB.LogicalRouterPeeringApply(opts)
+	err = n.state.OVNNB.CreateLogicalRouterPeering(context.TODO(), opts)
 	if err != nil {
 		return fmt.Errorf("Failed applying OVN network peering: %w", err)
 	}
