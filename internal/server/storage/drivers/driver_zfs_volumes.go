@@ -224,16 +224,12 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 			ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
 			defer cancel()
 
-			if !tryExists(ctx, filepath.Join("/dev/zvol", d.dataset(vol, false))) {
-				return fmt.Errorf("Failed to activate created volume %q", vol.name)
-			}
-
-			zfsFilesystem := vol.ConfigBlockFilesystem()
-
-			devPath, err := d.GetVolumeDiskPath(vol)
+			devPath, err := d.tryGetVolumeDiskPathFromDataset(ctx, d.dataset(vol, false))
 			if err != nil {
 				return err
 			}
+
+			zfsFilesystem := vol.ConfigBlockFilesystem()
 
 			_, err = makeFSType(devPath, zfsFilesystem, nil)
 			if err != nil {
@@ -1854,6 +1850,23 @@ func (d *zfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 	return nil
 }
 
+// tryGetVolumeDiskPathFromDataset attempts to find the path of the block device for the given dataset.
+// It keeps retrying every half a second until the context is canceled or expires.
+func (d *zfs) tryGetVolumeDiskPathFromDataset(ctx context.Context, dataset string) (string, error) {
+	for {
+		if ctx.Err() != nil {
+			return "", fmt.Errorf("Failed to locate zvol for %q: %w", dataset, ctx.Err())
+		}
+
+		diskPath, err := d.getVolumeDiskPathFromDataset(dataset)
+		if err == nil {
+			return diskPath, nil
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
 func (d *zfs) getVolumeDiskPathFromDataset(dataset string) (string, error) {
 	// Shortcut for udev.
 	if util.PathExists(filepath.Join("/dev/zvol", dataset)) {
@@ -2058,8 +2071,9 @@ func (d *zfs) activateVolume(vol Volume) (bool, error) {
 		ctx, cancel := context.WithTimeout(d.state.ShutdownCtx, 30*time.Second)
 		defer cancel()
 
-		if !tryExists(ctx, filepath.Join("/dev/zvol", dataset)) {
-			return false, fmt.Errorf("Failed to activate volume %q", vol.name)
+		_, err := d.tryGetVolumeDiskPathFromDataset(ctx, dataset)
+		if err != nil {
+			return false, fmt.Errorf("Failed to activate volume: %v", err)
 		}
 
 		d.logger.Debug("Activated ZFS volume", logger.Ctx{"volName": vol.Name(), "dev": dataset})
