@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2024-06-11 23:14-0400\n"
-"PO-Revision-Date: 2022-03-10 15:07+0000\n"
-"Last-Translator: 0x0916 <w@laoqinren.net>\n"
+"PO-Revision-Date: 2024-06-26 04:09+0000\n"
+"Last-Translator: Meng Zhuo <mengzhuo1203@gmail.com>\n"
 "Language-Team: Chinese (Simplified) <https://hosted.weblate.org/projects/"
-"linux-containers/lxd/zh_Hans/>\n"
+"incus/cli/zh_Hans/>\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 4.12-dev\n"
+"X-Generator: Weblate 5.6-rc\n"
 
 #: cmd/incus/info.go:437
 msgid "  Chassis:"
@@ -32,7 +32,6 @@ msgid "  Motherboard:"
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:273 cmd/incus/storage_bucket.go:1065
-#, fuzzy
 msgid ""
 "### This is a YAML representation of a storage bucket.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -49,14 +48,12 @@ msgstr ""
 "###\n"
 "### 存储卷由一组配置项组成.\n"
 "###比如:\n"
-"### name: vol1\n"
-"### type: custom\n"
+"### name: bucket1\n"
 "### used_by: []\n"
 "### config:\n"
 "###   size: \"61203283968\""
 
 #: cmd/incus/storage.go:290
-#, fuzzy
 msgid ""
 "### This is a YAML representation of a storage pool.\n"
 "### Any line starting with a '#' will be ignored.\n"
@@ -83,7 +80,7 @@ msgstr ""
 "### used_by: []\n"
 "### config:\n"
 "###   size: \"61203283968\"\n"
-"###   source: /home/chb/mnt/lxd_test/default.img\n"
+"###   source: default\n"
 "###   zfs.pool_name: default"
 
 #: cmd/incus/storage_volume.go:981
@@ -111,43 +108,26 @@ msgstr ""
 "###   size: \"61203283968\""
 
 #: cmd/incus/config_trust.go:284
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the certificate.\n"
 "### Any line starting with a '# will be ignored.\n"
 "###\n"
 "### Note that the fingerprint is shown but cannot be changed"
 msgstr ""
-"### 这是一个YAML格式的存储卷.\n"
+"### 这是一个YAML格式的证书.\n"
 "### 任何开头带有‘#’的字符串将会被忽略.\n"
 "###\n"
-"### 存储卷由一组配置项组成.\n"
-"###比如:\n"
-"### name: vol1\n"
-"### type: custom\n"
-"### used_by: []\n"
-"### config:\n"
-"###   size: \"61203283968\""
+"### 需注意不要更改下列显示的指纹"
 
 #: cmd/incus/cluster_group.go:420
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the cluster group.\n"
 "### Any line starting with a '# will be ignored."
 msgstr ""
-"### 这是一个YAML格式的存储卷.\n"
-"### 任何开头带有‘#’的字符串将会被忽略.\n"
-"###\n"
-"### 存储卷由一组配置项组成.\n"
-"###比如:\n"
-"### name: vol1\n"
-"### type: custom\n"
-"### used_by: []\n"
-"### config:\n"
-"###   size: \"61203283968\""
+"### 这是一个YAML格式的集群组.\n"
+"### 任何开头带有‘#’的字符串将会被忽略."
 
 #: cmd/incus/config.go:117
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the configuration.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -183,7 +163,7 @@ msgstr ""
 "###     type: disk\n"
 "### ephemeral: false\n"
 "###\n"
-"### Note that the name is shown but cannot be changed"
+"### 需要注意的是不要更改下列名字"
 
 #: cmd/incus/image.go:405
 msgid ""
@@ -248,7 +228,6 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/network_forward.go:616
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the network forward.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -271,42 +250,37 @@ msgid ""
 "###\n"
 "### Note that the listen_address and location cannot be changed."
 msgstr ""
-"### 这是一个YAML格式的配置\n"
+"### 这是一个YAML格式的网络转发配置\n"
 "### 任何开头带有‘#’的字符串将会被忽略.\n"
 "###\n"
-"### 以下是一个配置的例子:\n"
-"### name: instance1\n"
-"### profiles:\n"
-"### - default\n"
-"### config:\n"
-"###   volatile.eth0.hwaddr: 00:16:3e:e9:f8:7f\n"
-"### devices:\n"
-"###   homedir:\n"
-"###     path: /extra\n"
-"###     source: /home/user\n"
-"###     type: disk\n"
-"### ephemeral: false\n"
+"### 一个网络转发配置应包含一个默认目标地址和若干可选的转发监听地址\n"
 "###\n"
-"### Note that the name is shown but cannot be changed"
+"### 以下为网络转发的例子:\n"
+"### listen_address: 192.0.2.1\n"
+"### config:\n"
+"###   target_address: 198.51.100.2\n"
+"### description: test desc\n"
+"### ports:\n"
+"### - description: port forward\n"
+"###   protocol: tcp\n"
+"###   listen_port: 80,81,8080-8090\n"
+"###   target_address: 198.51.100.3\n"
+"###   target_port: 80,81,8080-8090\n"
+"### location: server01\n"
+"###\n"
+"### 需要注意不要更改 listen_address 和 location。"
 
 #: cmd/incus/network_integration.go:242
-#, fuzzy
 msgid ""
 "### This is a YAML representation of the network integration.\n"
 "### Any line starting with a '# will be ignored.\n"
 "###\n"
 "### Note that the name is shown but cannot be changed"
 msgstr ""
-"### 这是一个YAML格式的存储卷.\n"
+"### 这是一个YAML格式的网络集成配置.\n"
 "### 任何开头带有‘#’的字符串将会被忽略.\n"
 "###\n"
-"### 存储卷由一组配置项组成.\n"
-"###比如:\n"
-"### name: vol1\n"
-"### type: custom\n"
-"### used_by: []\n"
-"### config:\n"
-"###   size: \"61203283968\""
+"### 需注意不要更改下列的名字"
 
 #: cmd/incus/network_load_balancer.go:585
 #, fuzzy
@@ -566,19 +540,19 @@ msgid "%d (id: %d, online: %v, NUMA node: %v)"
 msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:651
-#, fuzzy, c-format
+#, c-format
 msgid "%q is not a block device"
-msgstr "%s 不是一个目录"
+msgstr "%q 不是一个块设备"
 
 #: cmd/incus/admin_init_interactive.go:788
-#, fuzzy, c-format
+#, c-format
 msgid "%q is not an IP address"
-msgstr "%s 不是一个目录"
+msgstr "%q 不是一个IP地址"
 
 #: cmd/incus/admin_recover.go:209
 #, c-format
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
-msgstr ""
+msgstr "%s %q 在池： %q 项目为： %q (包含 %d 快照)"
 
 #: cmd/incus/image.go:1158
 #, c-format
