@@ -1992,11 +1992,22 @@ func (o *NB) logicalSwitchPortDeleteDNSOperations(ctx context.Context, switchNam
 	return operations, nil
 }
 
-// LogicalSwitchPortDeleteDNS removes DNS records from a switch port.
+// DeleteLogicalSwitchPortDNS removes DNS records from a switch port.
 // If destroyEntry the DNS entry record itself is also removed, otherwise it is just cleared but left in place.
-func (o *NB) LogicalSwitchPortDeleteDNS(switchName OVNSwitch, dnsUUID OVNDNSUUID, destroyEntry bool) error {
+func (o *NB) DeleteLogicalSwitchPortDNS(ctx context.Context, switchName OVNSwitch, dnsUUID OVNDNSUUID, destroyEntry bool) error {
 	// Remove DNS record association from switch, and remove DNS record entry itself.
-	_, err := o.nbctl(o.logicalSwitchPortDeleteDNSAppendArgs(nil, switchName, dnsUUID, destroyEntry)...)
+	operations, err := o.logicalSwitchPortDeleteDNSOperations(ctx, switchName, dnsUUID, destroyEntry)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
