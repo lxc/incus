@@ -2758,16 +2758,23 @@ func (o *NB) aclRuleDeleteOperations(ctx context.Context, entityTable string, en
 	return operations, nil
 }
 
-// PortGroupPortSetACLRules applies a set of rules for the logical switch port in the specified port group.
+// UpdatePortGroupPortACLRules applies a set of rules for the logical switch port in the specified port group.
 // Any existing rules for that logical switch port in the port group are removed.
-func (o *NB) PortGroupPortSetACLRules(portGroupName OVNPortGroup, portName OVNSwitchPort, aclRules ...OVNACLRule) error {
+func (o *NB) UpdatePortGroupPortACLRules(ctx context.Context, portGroupName OVNPortGroup, portName OVNSwitchPort, aclRules ...OVNACLRule) error {
+	operations := []ovsdb.Operation{}
+
 	// Remove any existing rules assigned to the entity.
-	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(context.TODO(), portName)
+	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(ctx, portName)
 	if err != nil {
 		return err
 	}
 
-	args := o.aclRuleDeleteAppendArgs(nil, "port_group", string(portGroupName), removeACLRuleUUIDs)
+	deleteOps, err := o.aclRuleDeleteOperations(ctx, "port_group", string(portGroupName), removeACLRuleUUIDs)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
 
 	// Add new rules.
 	externalIDs := map[string]string{
@@ -2775,9 +2782,20 @@ func (o *NB) PortGroupPortSetACLRules(portGroupName OVNPortGroup, portName OVNSw
 		ovnExtIDIncusSwitchPort: string(portName),
 	}
 
-	args = o.aclRuleAddAppendArgs(args, "port_group", string(portGroupName), externalIDs, nil, aclRules...)
+	createOps, err := o.aclRuleAddOperations(ctx, "port_group", string(portGroupName), externalIDs, nil, aclRules...)
+	if err != nil {
+		return err
+	}
 
-	_, err = o.nbctl(args...)
+	operations = append(operations, createOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
