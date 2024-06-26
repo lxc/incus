@@ -2016,19 +2016,7 @@ func (o *NB) DeleteLogicalSwitchPortDNS(ctx context.Context, switchName OVNSwitc
 }
 
 // logicalSwitchPortDeleteAppendArgs adds the commands to delete the specified logical switch port.
-// Returns args with the commands added to it.
-func (o *NB) logicalSwitchPortDeleteAppendArgs(args []string, portName OVNSwitchPort) []string {
-	if len(args) > 0 {
-		args = append(args, "--")
-	}
-
-	args = append(args, "--if-exists", "lsp-del", string(portName))
-
-	return args
-}
-
-// DeleteLogicalSwitchPort deletes a named logical switch port.
-func (o *NB) DeleteLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, portName OVNSwitchPort) error {
+func (o *NB) logicalSwitchPortDeleteOperations(ctx context.Context, switchName OVNSwitch, portName OVNSwitchPort) ([]ovsdb.Operation, error) {
 	operations := []ovsdb.Operation{}
 
 	// Get the logical switch port.
@@ -2040,10 +2028,10 @@ func (o *NB) DeleteLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 	if err != nil {
 		// Logical switch port is already gone.
 		if err == ErrNotFound {
-			return nil
+			return nil, nil
 		}
 
-		return err
+		return nil, err
 	}
 
 	// Remove the port from the switch.
@@ -2057,7 +2045,7 @@ func (o *NB) DeleteLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 		Value:   []string{logicalSwitchPort.UUID},
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	operations = append(operations, updateOps...)
@@ -2065,10 +2053,21 @@ func (o *NB) DeleteLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 	// Delete the port itself.
 	deleteOps, err := o.client.Where(&logicalSwitchPort).Delete()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	operations = append(operations, deleteOps...)
+
+	return operations, nil
+}
+
+// DeleteLogicalSwitchPort deletes a named logical switch port.
+func (o *NB) DeleteLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, portName OVNSwitchPort) error {
+	// Get the delete operations.
+	operations, err := o.logicalSwitchPortDeleteOperations(ctx, switchName, portName)
+	if err != nil {
+		return err
+	}
 
 	// Apply the changes.
 	resp, err := o.client.Transact(ctx, operations...)
