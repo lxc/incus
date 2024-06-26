@@ -3143,7 +3143,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 				// If there are no ACLs being applied to the NIC (either from network or NIC) then
 				// we should remove the default rule from the NIC.
 				if len(newACLs) <= 0 && len(nicACLs) <= 0 {
-					err = n.state.OVNNB.PortGroupPortClearACLRules(acl.OVNIntSwitchPortGroupName(n.ID()), instancePortName)
+					err = n.state.OVNNB.ClearPortGroupPortACLRules(context.TODO(), acl.OVNIntSwitchPortGroupName(n.ID()), instancePortName)
 					if err != nil {
 						return fmt.Errorf("Failed clearing OVN default ACL rules for instance NIC: %w", err)
 					}
@@ -3425,7 +3425,9 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devi
 		return fmt.Errorf("Failed adding DNS record: %w", err)
 	}
 
-	revert.Add(func() { _ = n.state.OVNNB.LogicalSwitchPortDeleteDNS(n.getIntSwitchName(), dnsUUID, true) })
+	revert.Add(func() {
+		_ = n.state.OVNNB.DeleteLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), dnsUUID, true)
+	})
 
 	// If NIC has static IPv4 address then create a DHCPv4 reservation.
 	if deviceConfig["ipv4.address"] != "" {
@@ -3704,7 +3706,9 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		return "", nil, fmt.Errorf("Failed setting DNS for %q: %w", dnsName, err)
 	}
 
-	revert.Add(func() { _ = n.state.OVNNB.LogicalSwitchPortDeleteDNS(n.getIntSwitchName(), dnsUUID, false) })
+	revert.Add(func() {
+		_ = n.state.OVNNB.DeleteLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), dnsUUID, false)
+	})
 
 	// If NIC has static IPv4 address then ensure a DHCPv4 reservation exists.
 	// Do this at start time as well as add time in case an instance was copied (causing a duplicate address
@@ -4000,7 +4004,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 		n.logger.Debug("Set NIC default rule", logger.Ctx{"port": instancePortName, "ingressAction": ingressAction, "ingressLogged": ingressLogged, "egressAction": egressAction, "egressLogged": egressLogged})
 	} else {
-		err = n.state.OVNNB.PortGroupPortClearACLRules(acl.OVNIntSwitchPortGroupName(n.ID()), instancePortName)
+		err = n.state.OVNNB.ClearPortGroupPortACLRules(context.TODO(), acl.OVNIntSwitchPortGroupName(n.ID()), instancePortName)
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed clearing OVN default ACL rules for instance NIC: %w", err)
 		}
@@ -4099,7 +4103,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 	}
 
 	// Cleanup logical switch port and associated config.
-	err = n.state.OVNNB.LogicalSwitchPortCleanup(instancePortName, n.getIntSwitchName(), acl.OVNIntSwitchPortGroupName(n.ID()), dnsUUID)
+	err = n.state.OVNNB.CleanupLogicalSwitchPort(context.TODO(), instancePortName, n.getIntSwitchName(), acl.OVNIntSwitchPortGroupName(n.ID()), dnsUUID)
 	if err != nil {
 		return err
 	}
@@ -4228,7 +4232,7 @@ func (n *ovn) InstanceDevicePortRemove(instanceUUID string, deviceName string, d
 			}
 		}
 
-		err = n.state.OVNNB.LogicalSwitchPortDeleteDNS(n.getIntSwitchName(), dnsUUID, true)
+		err = n.state.OVNNB.DeleteLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), dnsUUID, true)
 		if err != nil {
 			return fmt.Errorf("Failed deleting DNS record: %w", err)
 		}
