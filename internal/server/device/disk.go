@@ -329,13 +329,23 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		"io.cache": validate.Optional(validate.IsOneOf("none", "writeback", "unsafe")),
 
 		// gendoc:generate(entity=devices, group=disk, key=io.bus)
+		// This controls what bus a disk device should be attached to.
 		//
+		// For block devices (disks), this is one of:
+		// - `nvme`
+		// - `virtio-blk`
+		// - `virtio-scsi` (default)
+		//
+		// For file systems (shared directories or custom volumes), this is one of:
+		// - `9p`
+		// - `auto` (default) (`virtiofs` + `9p`, just `9p` if `virtiofsd` is missing)
+		// - `virtiofs`
 		// ---
 		//  type: string
-		//  default: `virtio-scsi`
+		//  default: `virtio-scsi` for block, `auto` for file system
 		//  required: no
-		//  shortdesc: Only for VMs: Override the bus for the device (`nvme`, `virtio-blk`, or `virtio-scsi`)
-		"io.bus": validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi")),
+		//  shortdesc: Only for VMs: Override the bus for the device
+		"io.bus": validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi", "auto", "9p", "virtiofs")),
 	}
 
 	err := d.config.Validate(rules)
@@ -1102,8 +1112,6 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				},
 			}
 		} else {
-			var err error
-
 			// Default to block device or image file passthrough first.
 			mount := deviceConfig.MountEntryItem{
 				DevPath: d.config["source"],
@@ -1193,6 +1201,12 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			// directory sharing feature to mount the directory inside the VM, and as such we need to
 			// indicate to the VM the target path to mount to.
 			if internalUtil.IsDir(mount.DevPath) || d.sourceIsCephFs() {
+				// Confirm we're using filesystem options.
+				err := validate.Optional(validate.IsOneOf("auto", "9p", "virtiofs"))(d.config["io.bus"])
+				if err != nil {
+					return nil, err
+				}
+
 				if d.config["path"] == "" {
 					return nil, fmt.Errorf(`Missing mount "path" setting`)
 				}
@@ -1302,6 +1316,12 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					}
 				}
 			} else {
+				// Confirm we're dealing with block options.
+				err := validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi"))(d.config["io.bus"])
+				if err != nil {
+					return nil, err
+				}
+
 				f, err := d.localSourceOpen(mount.DevPath)
 				if err != nil {
 					return nil, err
