@@ -2083,25 +2083,48 @@ func (o *NB) DeleteLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 	return nil
 }
 
-// LogicalSwitchPortCleanup deletes the named logical switch port and its associated config.
-func (o *NB) LogicalSwitchPortCleanup(portName OVNSwitchPort, switchName OVNSwitch, switchPortGroupName OVNPortGroup, dnsUUID OVNDNSUUID) error {
+// CleanupLogicalSwitchPort deletes the named logical switch port and its associated config.
+func (o *NB) CleanupLogicalSwitchPort(ctx context.Context, portName OVNSwitchPort, switchName OVNSwitch, switchPortGroupName OVNPortGroup, dnsUUID OVNDNSUUID) error {
+	operations := []ovsdb.Operation{}
+
 	// Remove any existing rules assigned to the entity.
-	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(context.TODO(), portName)
+	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(ctx, portName)
 	if err != nil {
 		return err
 	}
 
-	args := o.aclRuleDeleteAppendArgs(nil, "port_group", string(switchPortGroupName), removeACLRuleUUIDs)
+	deleteOps, err := o.aclRuleDeleteOperations(ctx, "port_group", string(switchPortGroupName), removeACLRuleUUIDs)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
 
 	// Remove logical switch port.
-	args = o.logicalSwitchPortDeleteAppendArgs(args, portName)
+	deleteOps, err = o.logicalSwitchPortDeleteOperations(ctx, switchName, portName)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
 
 	// Remove DNS records.
 	if dnsUUID != "" {
-		args = o.logicalSwitchPortDeleteDNSAppendArgs(args, switchName, dnsUUID, false)
+		deleteOps, err := o.logicalSwitchPortDeleteDNSOperations(ctx, switchName, dnsUUID, false)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, deleteOps...)
 	}
 
-	_, err = o.nbctl(args...)
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
