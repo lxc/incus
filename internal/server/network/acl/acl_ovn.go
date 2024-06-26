@@ -403,7 +403,7 @@ func ovnApplyToPortGroup(l logger.Logger, client *ovn.NB, aclInfo *api.NetworkAC
 	}
 
 	// Clear all existing ACL rules from port group then add the new rules to the port group.
-	err = client.PortGroupSetACLRules(portGroupName, nil, portGroupRules...)
+	err = client.UpdatePortGroupACLRules(context.TODO(), portGroupName, nil, portGroupRules...)
 	if err != nil {
 		return fmt.Errorf("Failed applying ACL %q rules to port group %q: %w", aclInfo.Name, portGroupName, err)
 	}
@@ -419,7 +419,7 @@ func ovnApplyToPortGroup(l logger.Logger, client *ovn.NB, aclInfo *api.NetworkAC
 			fmt.Sprintf("@%s", ruleSubjectExternal): fmt.Sprintf(`"%s"`, OVNIntSwitchRouterPortName(aclNet.ID)),
 		}
 
-		err = client.PortGroupSetACLRules(netPortGroupName, matchReplace, networkRules...)
+		err = client.UpdatePortGroupACLRules(context.TODO(), netPortGroupName, matchReplace, networkRules...)
 		if err != nil {
 			return fmt.Errorf("Failed applying ACL %q rules to port group %q for network %q: %w", aclInfo.Name, netPortGroupName, aclNet.Name, err)
 		}
@@ -746,7 +746,7 @@ func OVNApplyNetworkBaselineRules(client *ovn.NB, switchName ovn.OVNSwitch, rout
 		)
 	}
 
-	err := client.LogicalSwitchSetACLRules(switchName, rules...)
+	err := client.UpdateLogicalSwitchACLRules(context.TODO(), switchName, rules...)
 	if err != nil {
 		return fmt.Errorf("Failed applying baseline ACL rules to logical switch %q: %w", switchName, err)
 	}
@@ -1024,7 +1024,7 @@ func OVNApplyInstanceNICDefaultRules(client *ovn.NB, switchPortGroup ovn.OVNPort
 		},
 	}
 
-	err := client.PortGroupPortSetACLRules(switchPortGroup, nicPortName, rules...)
+	err := client.UpdatePortGroupPortACLRules(context.TODO(), switchPortGroup, nicPortName, rules...)
 	if err != nil {
 		return fmt.Errorf("Failed applying instance NIC default ACL rules for port %q: %w", nicPortName, err)
 	}
