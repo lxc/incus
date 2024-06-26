@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"os"
 	"reflect"
 	"runtime"
 	"strings"
@@ -17,21 +16,13 @@ import (
 	ovsdbClient "github.com/ovn-org/libovsdb/client"
 	ovsdbModel "github.com/ovn-org/libovsdb/model"
 
-	"github.com/lxc/incus/v6/internal/linux"
 	ovnNB "github.com/lxc/incus/v6/internal/server/network/ovn/schema/ovn-nb"
-	"github.com/lxc/incus/v6/shared/subprocess"
 )
 
 // NB client.
 type NB struct {
 	client ovsdbClient.Client
 	cookie ovsdbClient.MonitorCookie
-
-	// For nbctl command calls.
-	dbAddr        string
-	sslCACert     string
-	sslClientCert string
-	sslClientKey  string
 }
 
 var nb *NB
@@ -43,9 +34,7 @@ func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 	}
 
 	// Create the NB struct.
-	client := &NB{
-		dbAddr: dbAddr,
-	}
+	client := &NB{}
 
 	// Prepare the OVSDB client.
 	dbSchema, err := ovnNB.FullDatabaseModel()
@@ -140,11 +129,6 @@ func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 
 		// Add the TLS config to the client.
 		options = append(options, ovsdbClient.WithTLSConfig(tlsConfig))
-
-		// Fill the fields need for the CLI calls.
-		client.sslCACert = sslCACert
-		client.sslClientCert = sslClientCert
-		client.sslClientKey = sslClientKey
 	}
 
 	// Connect to OVSDB.
@@ -229,50 +213,4 @@ func (o *NB) get(ctx context.Context, m ovsdbModel.Model) error {
 
 	reflect.ValueOf(m).Elem().Set(rVal.Index(0))
 	return nil
-}
-
-// nbctl executes ovn-nbctl with arguments to connect to wrapper's northbound database.
-func (o *NB) nbctl(extraArgs ...string) (string, error) {
-	// Figure out args.
-	args := []string{"--timeout=10", "--db", o.dbAddr}
-
-	// Handle SSL args.
-	files := []*os.File{}
-	if strings.Contains(o.dbAddr, "ssl:") {
-		// Handle client certificate.
-		clientCertFile, err := linux.CreateMemfd([]byte(o.sslClientCert))
-		if err != nil {
-			return "", err
-		}
-
-		defer clientCertFile.Close()
-		files = append(files, clientCertFile)
-
-		// Handle client key.
-		clientKeyFile, err := linux.CreateMemfd([]byte(o.sslClientKey))
-		if err != nil {
-			return "", err
-		}
-
-		defer clientKeyFile.Close()
-		files = append(files, clientKeyFile)
-
-		// Handle CA certificate.
-		caCertFile, err := linux.CreateMemfd([]byte(o.sslCACert))
-		if err != nil {
-			return "", err
-		}
-
-		defer caCertFile.Close()
-		files = append(files, caCertFile)
-
-		args = append(args,
-			"-c", "/proc/self/fd/3",
-			"-p", "/proc/self/fd/4",
-			"-C", "/proc/self/fd/5",
-		)
-	}
-
-	args = append(args, extraArgs...)
-	return subprocess.RunCommandInheritFds(context.Background(), files, "ovn-nbctl", args...)
 }
