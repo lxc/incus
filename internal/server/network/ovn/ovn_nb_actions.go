@@ -2627,19 +2627,53 @@ func (o *NB) UpdatePortGroupMembers(ctx context.Context, addMembers map[OVNPortG
 	return nil
 }
 
-// PortGroupSetACLRules applies a set of rules to the specified port group. Any existing rules are removed.
-func (o *NB) PortGroupSetACLRules(portGroupName OVNPortGroup, matchReplace map[string]string, aclRules ...OVNACLRule) error {
-	// Remove any existing rules assigned to the entity.
-	args := []string{"clear", "port_group", string(portGroupName), "acls"}
+// UpdatePortGroupACLRules applies a set of rules to the specified port group. Any existing rules are removed.
+func (o *NB) UpdatePortGroupACLRules(ctx context.Context, portGroupName OVNPortGroup, matchReplace map[string]string, aclRules ...OVNACLRule) error {
+	operations := []ovsdb.Operation{}
+
+	// Get the port group.
+	pg := ovnNB.PortGroup{
+		Name: string(portGroupName),
+	}
+
+	err := o.get(ctx, &pg)
+	if err != nil {
+		return err
+	}
+
+	// Remove any existing rules assigned to the port group.
+	for _, aclUUID := range pg.ACLs {
+		updateOps, err := o.client.Where(&pg).Mutate(&pg, ovsModel.Mutation{
+			Field:   &pg.ACLs,
+			Mutator: ovsdb.MutateOperationDelete,
+			Value:   []string{aclUUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
 
 	// Add new rules.
 	externalIDs := map[string]string{
 		ovnExtIDIncusPortGroup: string(portGroupName),
 	}
 
-	args = o.aclRuleAddAppendArgs(args, "port_group", string(portGroupName), externalIDs, matchReplace, aclRules...)
+	createOps, err := o.aclRuleAddOperations(ctx, "port_group", string(portGroupName), externalIDs, matchReplace, aclRules...)
+	if err != nil {
+		return err
+	}
 
-	_, err := o.nbctl(args...)
+	operations = append(operations, createOps...)
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
