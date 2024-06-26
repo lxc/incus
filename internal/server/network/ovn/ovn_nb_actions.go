@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -2618,44 +2617,83 @@ func (o *NB) PortGroupSetACLRules(portGroupName OVNPortGroup, matchReplace map[s
 	return nil
 }
 
-// aclRuleAddAppendArgs adds the commands to args that add the provided ACL rules to the specified OVN entity.
-// Returns args with the ACL rule add commands added to it.
-func (o *NB) aclRuleAddAppendArgs(args []string, entityTable string, entityName string, externalIDs map[string]string, matchReplace map[string]string, aclRules ...OVNACLRule) []string {
-	for i, rule := range aclRules {
-		if len(args) > 0 {
-			args = append(args, "--")
-		}
+// aclRuleAddOperations returns the operations to add the provided ACL rules to the specified OVN entity.
+func (o *NB) aclRuleAddOperations(ctx context.Context, entityTable string, entityName string, externalIDs map[string]string, matchReplace map[string]string, aclRules ...OVNACLRule) ([]ovsdb.Operation, error) {
+	operations := []ovsdb.Operation{}
 
+	for i, rule := range aclRules {
 		// Perform any replacements requested on the Match string.
 		for find, replace := range matchReplace {
 			rule.Match = strings.ReplaceAll(rule.Match, find, replace)
 		}
 
-		// Add command to create ACL rule.
-		args = append(args, fmt.Sprintf("--id=@id%d", i), "create", "acl",
-			fmt.Sprintf("action=%s", rule.Action),
-			fmt.Sprintf("direction=%s", rule.Direction),
-			fmt.Sprintf("priority=%d", rule.Priority),
-			fmt.Sprintf("match=%s", strconv.Quote(rule.Match)),
-		)
+		// Add new ACL.
+		acl := ovnNB.ACL{
+			UUID:        fmt.Sprintf("acl%d", i),
+			Action:      rule.Action,
+			Direction:   rule.Direction,
+			Priority:    rule.Priority,
+			Match:       rule.Match,
+			ExternalIDs: map[string]string{},
+		}
 
 		if rule.Log {
-			args = append(args, "log=true")
+			acl.Log = true
 
 			if rule.LogName != "" {
-				args = append(args, fmt.Sprintf("name=%s", rule.LogName))
+				logName := rule.LogName
+				acl.Name = &logName
 			}
 		}
 
 		for k, v := range externalIDs {
-			args = append(args, fmt.Sprintf("external_ids:%s=%s", k, v))
+			acl.ExternalIDs[k] = v
 		}
 
-		// Add command to assign ACL rule to entity.
-		args = append(args, "--", "add", entityTable, entityName, "acl", fmt.Sprintf("@id%d", i))
+		createOps, err := o.client.Create(&acl)
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, createOps...)
+
+		// Add ACL rule to entity.
+		if entityTable == "logical_switch" {
+			ls := ovnNB.LogicalSwitch{
+				Name: entityName,
+			}
+
+			updateOps, err := o.client.Where(&ls).Mutate(&ls, ovsModel.Mutation{
+				Field:   &ls.ACLs,
+				Mutator: ovsdb.MutateOperationInsert,
+				Value:   []string{acl.UUID},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			operations = append(operations, updateOps...)
+		} else if entityTable == "port_group" {
+			pg := ovnNB.PortGroup{
+				Name: entityName,
+			}
+
+			updateOps, err := o.client.Where(&pg).Mutate(&pg, ovsModel.Mutation{
+				Field:   &pg.ACLs,
+				Mutator: ovsdb.MutateOperationInsert,
+				Value:   []string{acl.UUID},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			operations = append(operations, updateOps...)
+		} else {
+			return nil, fmt.Errorf("Unsupported entity table %q", entityTable)
+		}
 	}
 
-	return args
+	return operations, nil
 }
 
 // aclRuleDeleteOperations returns the operations that delete the provided ACL rules from the specified OVN entity.
