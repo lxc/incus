@@ -1424,19 +1424,49 @@ func (o *NB) DeleteLogicalSwitchDHCPOption(ctx context.Context, switchName OVNSw
 	return nil
 }
 
-// LogicalSwitchSetACLRules applies a set of rules to the specified logical switch. Any existing rules are removed.
-func (o *NB) LogicalSwitchSetACLRules(switchName OVNSwitch, aclRules ...OVNACLRule) error {
+// UpdateLogicalSwitchACLRules applies a set of rules to the specified logical switch. Any existing rules are removed.
+func (o *NB) UpdateLogicalSwitchACLRules(ctx context.Context, switchName OVNSwitch, aclRules ...OVNACLRule) error {
+	operations := []ovsdb.Operation{}
+
+	// Get the logical switch.
+	ls, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return err
+	}
+
 	// Remove any existing rules assigned to the entity.
-	args := []string{"clear", "logical_switch", string(switchName), "acls"}
+	for _, aclUUID := range ls.ACLs {
+		updateOps, err := o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
+			Field:   &ls.ACLs,
+			Mutator: ovsdb.MutateOperationDelete,
+			Value:   []string{aclUUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	}
 
 	// Add new rules.
 	externalIDs := map[string]string{
 		ovnExtIDIncusSwitch: string(switchName),
 	}
 
-	args = o.aclRuleAddAppendArgs(args, "logical_switch", string(switchName), externalIDs, nil, aclRules...)
+	createOps, err := o.aclRuleAddOperations(ctx, "logical_switch", string(switchName), externalIDs, nil, aclRules...)
+	if err != nil {
+		return err
+	}
 
-	_, err := o.nbctl(args...)
+	operations = append(operations, createOps...)
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
 	if err != nil {
 		return err
 	}
