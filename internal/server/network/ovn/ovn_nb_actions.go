@@ -2658,18 +2658,66 @@ func (o *NB) aclRuleAddAppendArgs(args []string, entityTable string, entityName 
 	return args
 }
 
-// aclRuleDeleteAppendArgs adds the commands to args that delete the provided ACL rules from the specified OVN entity.
-// Returns args with the ACL rule delete commands added to it.
-func (o *NB) aclRuleDeleteAppendArgs(args []string, entityTable string, entityName string, aclRuleUUIDs []string) []string {
+// aclRuleDeleteOperations returns the operations that delete the provided ACL rules from the specified OVN entity.
+func (o *NB) aclRuleDeleteOperations(ctx context.Context, entityTable string, entityName string, aclRuleUUIDs []string) ([]ovsdb.Operation, error) {
+	operations := []ovsdb.Operation{}
+
 	for _, aclRuleUUID := range aclRuleUUIDs {
-		if len(args) > 0 {
-			args = append(args, "--")
+		// Get the ACL.
+		acl := ovnNB.ACL{
+			UUID: aclRuleUUID,
 		}
 
-		args = append(args, "remove", entityTable, string(entityName), "acl", aclRuleUUID)
+		err := o.get(ctx, &acl)
+		if err != nil {
+			return nil, err
+		}
+
+		// Delete the ACL.
+		deleteOps, err := o.client.Where(&acl).Delete()
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, deleteOps...)
+
+		// Remove ACL rule from entity.
+		if entityTable == "logical_switch" {
+			ls := ovnNB.LogicalSwitch{
+				Name: entityName,
+			}
+
+			updateOps, err := o.client.Where(&ls).Mutate(&ls, ovsModel.Mutation{
+				Field:   &ls.ACLs,
+				Mutator: ovsdb.MutateOperationDelete,
+				Value:   []string{acl.UUID},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			operations = append(operations, updateOps...)
+		} else if entityTable == "port_group" {
+			pg := ovnNB.PortGroup{
+				Name: entityName,
+			}
+
+			updateOps, err := o.client.Where(&pg).Mutate(&pg, ovsModel.Mutation{
+				Field:   &pg.ACLs,
+				Mutator: ovsdb.MutateOperationDelete,
+				Value:   []string{acl.UUID},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			operations = append(operations, updateOps...)
+		} else {
+			return nil, fmt.Errorf("Unsupported entity table %q", entityTable)
+		}
 	}
 
-	return args
+	return operations, nil
 }
 
 // PortGroupPortSetACLRules applies a set of rules for the logical switch port in the specified port group.
