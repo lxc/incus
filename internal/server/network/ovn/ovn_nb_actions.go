@@ -1938,23 +1938,58 @@ func (o *NB) GetLogicalSwitchPortDNS(ctx context.Context, portName OVNSwitchPort
 	return OVNDNSUUID(dnsRecords[0].UUID), dnsName, ips, nil
 }
 
-// logicalSwitchPortDeleteDNSAppendArgs adds the command arguments to remove DNS records from a switch port.
+// logicalSwitchPortDeleteDNSOperations returns a list of ovsdb operations to remove DNS records from a switch port.
 // If destroyEntry the DNS entry record itself is also removed, otherwise it is just cleared but left in place.
-// Returns args with the commands added to it.
-func (o *NB) logicalSwitchPortDeleteDNSAppendArgs(args []string, switchName OVNSwitch, dnsUUID OVNDNSUUID, destroyEntry bool) []string {
-	if len(args) > 0 {
-		args = append(args, "--")
+func (o *NB) logicalSwitchPortDeleteDNSOperations(ctx context.Context, switchName OVNSwitch, dnsUUID OVNDNSUUID, destroyEntry bool) ([]ovsdb.Operation, error) {
+	operations := []ovsdb.Operation{}
+
+	// Get the DNS entry.
+	dnsEntry := ovnNB.DNS{
+		UUID: string(dnsUUID),
 	}
 
-	args = append(args, "remove", "logical_switch", string(switchName), "dns_records", string(dnsUUID), "--")
+	err := o.get(ctx, &dnsEntry)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the logical switch.
+	ls, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Remove from the logical switch.
+	updateOps, err := o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
+		Field:   &ls.DNSRecords,
+		Mutator: ovsdb.MutateOperationDelete,
+		Value:   []string{dnsEntry.UUID},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	operations = append(operations, updateOps...)
 
 	if destroyEntry {
-		args = append(args, "destroy", "dns", string(dnsUUID))
+		deleteOps, err := o.client.Where(&dnsEntry).Delete()
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, deleteOps...)
 	} else {
-		args = append(args, "clear", "dns", string(dnsUUID), "records")
+		dnsEntry.Records = nil
+
+		updateOps, err := o.client.Where(&dnsEntry).Update(&dnsEntry)
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, updateOps...)
 	}
 
-	return args
+	return operations, nil
 }
 
 // LogicalSwitchPortDeleteDNS removes DNS records from a switch port.
