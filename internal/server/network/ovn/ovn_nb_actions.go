@@ -2785,21 +2785,28 @@ func (o *NB) PortGroupPortSetACLRules(portGroupName OVNPortGroup, portName OVNSw
 	return nil
 }
 
-// PortGroupPortClearACLRules clears any rules assigned to the logical switch port in the specified port group.
-func (o *NB) PortGroupPortClearACLRules(portGroupName OVNPortGroup, portName OVNSwitchPort) error {
+// ClearPortGroupPortACLRules clears any rules assigned to the logical switch port in the specified port group.
+func (o *NB) ClearPortGroupPortACLRules(ctx context.Context, portGroupName OVNPortGroup, portName OVNSwitchPort) error {
 	// Remove any existing rules assigned to the entity.
-	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(context.TODO(), portName)
+	removeACLRuleUUIDs, err := o.logicalSwitchPortACLRules(ctx, portName)
 	if err != nil {
 		return err
 	}
 
-	args := o.aclRuleDeleteAppendArgs(nil, "port_group", string(portGroupName), removeACLRuleUUIDs)
+	operations, err := o.aclRuleDeleteOperations(ctx, "port_group", string(portGroupName), removeACLRuleUUIDs)
+	if err != nil {
+		return err
+	}
 
-	if len(args) > 0 {
-		_, err = o.nbctl(args...)
-		if err != nil {
-			return err
-		}
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
 	}
 
 	return nil
