@@ -288,7 +288,8 @@ Also, due to a [`gettext` issue](https://github.com/gosexy/gettext/issues/1), yo
 Install the build and required runtime dependencies with:
 
     sudo apt update
-    sudo apt install acl attr autoconf automake dnsmasq-base git golang-go libacl1-dev libcap-dev liblxc1 liblxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
+    sudo apt install acl attr autoconf automake dnsmasq-base git golang-go libacl1-dev libcap-dev liblxc1 lxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
+
 
 There are a few storage drivers for Incus besides the default `dir` driver.
 Installing these tools adds a bit to initramfs and may slow down your
