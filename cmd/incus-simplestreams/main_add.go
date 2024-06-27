@@ -32,7 +32,7 @@ type cmdAdd struct {
 // Command generates the command definition.
 func (c *cmdAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "add <metadata tarball> <data file>"
+	cmd.Use = "add <metadata tarball> [<data file>]"
 	cmd.Short = "Add an image"
 	cmd.Long = cli.FormatSection("Description",
 		`Add an image to the server
@@ -51,6 +51,11 @@ already on the image server and finally adds it to the index.
 
 It generates a default alias: {os}/{release}/{variant},
 unless --no-default-alias is specified.
+
+If one argument is specified, it is assumed to be a unified image,
+with both the metadata and rootfs in a single tarball.
+
+Otherwise, it is a split image (separate files for metadata and rootfs).
 `)
 	cmd.RunE = c.Run
 
