@@ -48,19 +48,39 @@ User keys can be used in search.
 ```
 
 ```{config:option} io.bus devices-disk
-:default: "`virtio-scsi`"
+:default: "`virtio-scsi` for block, `auto` for file system"
 :required: "no"
-:shortdesc: "Only for VMs: Override the bus for the device (`nvme`, `virtio-blk`, or `virtio-scsi`)"
+:shortdesc: "Only for VMs: Override the bus for the device"
 :type: "string"
+This controls what bus a disk device should be attached to.
 
+For block devices (disks), this is one of:
+- `nvme`
+- `virtio-blk`
+- `virtio-scsi` (default)
+
+For file systems (shared directories or custom volumes), this is one of:
+- `9p`
+- `auto` (default) (`virtiofs` + `9p`, just `9p` if `virtiofsd` is missing)
+- `virtiofs`
 ```
 
 ```{config:option} io.cache devices-disk
 :default: "`none`"
 :required: "no"
-:shortdesc: "Only for VMs: Override the caching mode for the device (`none`, `writeback` or `unsafe`)"
+:shortdesc: "Only for VMs: Override the caching mode for the device"
 :type: "string"
+This controls what bus a disk device should be attached to.
 
+For block devices (disks), this is one of:
+- `none` (default)
+- `writeback`
+- `unsafe`
+
+For file systems (shared directories or custom volumes), this is one of:
+- `none` (default)
+- `metadata`
+- `unsafe`
 ```
 
 ```{config:option} limits.max devices-disk

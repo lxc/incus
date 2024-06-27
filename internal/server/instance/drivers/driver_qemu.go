@@ -3679,29 +3679,31 @@ func (d *qemu) addDriveDirConfig(cfg *[]cfgSection, bus *qemuBus, fdFiles *[]*os
 	}
 
 	// Add 9p share config.
-	devBus, devAddr, multi := bus.allocate(busFunctionGroup9p)
+	if slices.Contains(driveConf.Opts, "bus=auto") || slices.Contains(driveConf.Opts, "bus=9p") {
+		devBus, devAddr, multi := bus.allocate(busFunctionGroup9p)
 
-	fd, err := strconv.Atoi(driveConf.DevPath)
-	if err != nil {
-		return fmt.Errorf("Invalid file descriptor %q for drive %q: %w", driveConf.DevPath, driveConf.DevName, err)
+		fd, err := strconv.Atoi(driveConf.DevPath)
+		if err != nil {
+			return fmt.Errorf("Invalid file descriptor %q for drive %q: %w", driveConf.DevPath, driveConf.DevName, err)
+		}
+
+		proxyFD := d.addFileDescriptor(fdFiles, os.NewFile(uintptr(fd), driveConf.DevName))
+
+		driveDir9pOpts := qemuDriveDirOpts{
+			dev: qemuDevOpts{
+				busName:       bus.name,
+				devBus:        devBus,
+				devAddr:       devAddr,
+				multifunction: multi,
+			},
+			devName:  driveConf.DevName,
+			mountTag: mountTag,
+			proxyFD:  proxyFD, // Pass by file descriptor
+			readonly: readonly,
+			protocol: "9p",
+		}
+		*cfg = append(*cfg, qemuDriveDir(&driveDir9pOpts)...)
 	}
-
-	proxyFD := d.addFileDescriptor(fdFiles, os.NewFile(uintptr(fd), driveConf.DevName))
-
-	driveDir9pOpts := qemuDriveDirOpts{
-		dev: qemuDevOpts{
-			busName:       bus.name,
-			devBus:        devBus,
-			devAddr:       devAddr,
-			multifunction: multi,
-		},
-		devName:  driveConf.DevName,
-		mountTag: mountTag,
-		proxyFD:  proxyFD, // Pass by file descriptor
-		readonly: readonly,
-		protocol: "9p",
-	}
-	*cfg = append(*cfg, qemuDriveDir(&driveDir9pOpts)...)
 
 	return nil
 }

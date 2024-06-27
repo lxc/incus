@@ -2513,3 +2513,7 @@ delete everything inside of the project along with the project itself.
 ## `resources_cpu_flags`
 
 This exposes the CPU flags/extensions in our resources API to check the CPU features.
+
+## `disk_io_bus_cache_filesystem`
+
+This adds support for both `io.bus` and `io.cache` to disks that are backed by a file system.
