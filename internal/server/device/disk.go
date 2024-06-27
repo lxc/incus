@@ -1255,15 +1255,29 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					rawIDMaps.Entries = diskAddRootUserNSEntry(rawIDMaps.Entries, 65534)
 				}
 
+				busOption := d.config["io.bus"]
+				if busOption == "" {
+					busOption = "auto"
+				}
+
 				// Start virtiofsd for virtio-fs share. The agent prefers to use this over the
 				// virtfs-proxy-helper 9p share. The 9p share will only be used as a fallback.
 				err = func() error {
+					// Check if we should start virtiofsd.
+					if busOption != "auto" && busOption != "virtiofs" {
+						return nil
+					}
+
 					sockPath, pidPath := d.vmVirtiofsdPaths()
 					logPath := filepath.Join(d.inst.LogPath(), fmt.Sprintf("disk.%s.log", d.name))
 					_ = os.Remove(logPath) // Remove old log if needed.
 
 					revertFunc, unixListener, err := DiskVMVirtiofsdStart(d.state.OS.ExecPath, d.inst, sockPath, pidPath, logPath, mount.DevPath, rawIDMaps.Entries, d.config["io.cache"])
 					if err != nil {
+						if busOption == "virtiofs" {
+							return err
+						}
+
 						var errUnsupported UnsupportedError
 						if errors.As(err, &errUnsupported) {
 							d.logger.Warn("Unable to use virtio-fs for device, using 9p as a fallback", logger.Ctx{"err": errUnsupported})
@@ -1311,6 +1325,11 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					// Start virtfs-proxy-helper for 9p share (this will rewrite mount.DevPath with
 					// socket FD number so must come after starting virtiofsd).
 					err = func() error {
+						// Check if we should start 9p.
+						if busOption != "auto" && busOption != "9p" {
+							return nil
+						}
+
 						sockFile, cleanup, err := DiskVMVirtfsProxyStart(d.state.OS.ExecPath, d.vmVirtfsProxyHelperPaths(), mount.DevPath, rawIDMaps.Entries)
 						if err != nil {
 							return err
