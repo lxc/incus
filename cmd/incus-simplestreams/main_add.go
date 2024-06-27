@@ -32,7 +32,7 @@ type cmdAdd struct {
 // Command generates the command definition.
 func (c *cmdAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = "add <metadata tarball> <data file>"
+	cmd.Use = "add <metadata tarball> [<data file>]"
 	cmd.Short = "Add an image"
 	cmd.Long = cli.FormatSection("Description",
 		`Add an image to the server
@@ -51,6 +51,11 @@ already on the image server and finally adds it to the index.
 
 It generates a default alias: {os}/{release}/{variant},
 unless --no-default-alias is specified.
+
+If one argument is specified, it is assumed to be a unified image,
+with both the metadata and rootfs in a single tarball.
+
+Otherwise, it is a split image (separate files for metadata and rootfs).
 `)
 	cmd.RunE = c.Run
 
@@ -60,13 +65,100 @@ unless --no-default-alias is specified.
 	return cmd
 }
 
+// dataItem - holds information about the image data file.
+// used if different from the metadata file.
+type dataItem struct {
+	Path           string
+	FileType       string
+	Size           int64
+	Sha256         string
+	Extension      string
+	combinedSha256 string
+}
+
+// get information about the data file.
+// metaFile is used to compute the combined hash.
+func (t *dataItem) get(metaFile *os.File, dataPath string) error {
+	// Open the data.
+	dataFile, err := os.Open(dataPath)
+	if err != nil {
+		return err
+	}
+	t.Path = dataPath
+
+	defer dataFile.Close()
+
+	// Read the header.
+	_, t.Extension, _, err = archive.DetectCompressionFile(dataFile)
+	if err != nil {
+		return err
+	}
+
+	if t.Extension == ".squashfs" {
+		t.FileType = "squashfs"
+	} else if t.Extension == ".qcow2" {
+		t.FileType = "disk-kvm.img"
+	} else {
+		return fmt.Errorf("Unsupported data type %q", t.Extension)
+	}
+
+	// Get the size.
+	dataStat, err := dataFile.Stat()
+	if err != nil {
+		return err
+	}
+
+	t.Size = dataStat.Size()
+
+	// Get the sha256.
+	_, err = dataFile.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	hash256 := sha256.New()
+	_, err = io.Copy(hash256, dataFile)
+	if err != nil {
+		return err
+	}
+
+	t.Sha256 = fmt.Sprintf("%x", hash256.Sum(nil))
+
+	// Get the combined sha256.
+	_, err = metaFile.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	_, err = dataFile.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	hash256 = sha256.New()
+	_, err = io.Copy(hash256, metaFile)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(hash256, dataFile)
+	if err != nil {
+		return err
+	}
+
+	t.combinedSha256 = fmt.Sprintf("%x", hash256.Sum(nil))
+	return nil
+}
+
 // Run runs the actual command logic.
 func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	exit, err := c.global.CheckArgs(cmd, args, 2, 2)
+	exit, err := c.global.CheckArgs(cmd, args, 1, 2)
 	if exit {
 		return err
 	}
+
+	isUnifiedTarball := (len(args) == 1)
 
 	// Open the metadata.
 	metaFile, err := os.Open(args[0])
@@ -106,7 +198,6 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 
 	// Set the metadata paths.
 	metaPath := args[0]
-	metaTargetPath := fmt.Sprintf("images/%s.incus.tar.xz", metaSha256)
 
 	// Go through the tarball.
 	_, err = metaFile.Seek(0, 0)
@@ -171,79 +262,14 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Open the data.
-	dataFile, err := os.Open(args[1])
-	if err != nil {
-		return err
+	var data dataItem
+
+	if !isUnifiedTarball {
+		err := data.get(metaFile, args[1])
+		if err != nil {
+			return err
+		}
 	}
-
-	defer dataFile.Close()
-
-	// Read the header.
-	_, dataExtension, _, err := archive.DetectCompressionFile(dataFile)
-	if err != nil {
-		return err
-	}
-
-	var dataItemType string
-	if dataExtension == ".squashfs" {
-		dataItemType = "squashfs"
-	} else if dataExtension == ".qcow2" {
-		dataItemType = "disk-kvm.img"
-	} else {
-		return fmt.Errorf("Unsupported data type %q", dataExtension)
-	}
-
-	// Get the size.
-	dataStat, err := dataFile.Stat()
-	if err != nil {
-		return err
-	}
-
-	dataSize := dataStat.Size()
-
-	// Get the sha256.
-	_, err = dataFile.Seek(0, 0)
-	if err != nil {
-		return err
-	}
-
-	hash256 = sha256.New()
-	_, err = io.Copy(hash256, dataFile)
-	if err != nil {
-		return err
-	}
-
-	dataSha256 := fmt.Sprintf("%x", hash256.Sum(nil))
-
-	// Get the combined sha256.
-	_, err = metaFile.Seek(0, 0)
-	if err != nil {
-		return err
-	}
-
-	_, err = dataFile.Seek(0, 0)
-	if err != nil {
-		return err
-	}
-
-	hash256 = sha256.New()
-	_, err = io.Copy(hash256, metaFile)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(hash256, dataFile)
-	if err != nil {
-		return err
-	}
-
-	combinedSha256 := fmt.Sprintf("%x", hash256.Sum(nil))
-
-	// Set the data paths.
-	dataPath := args[1]
-	dataTargetPath := fmt.Sprintf("images/%s%s", metaSha256, dataExtension)
-
 	// Create the paths if missing.
 	err = os.MkdirAll("images", 0755)
 	if err != nil && !os.IsExist(err) {
@@ -306,6 +332,18 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	var fileType, fileKey, metaTargetPath string
+
+	if !isUnifiedTarball {
+		fileKey = "incus.tar.xz"
+		fileType = "incus.tar.xz"
+		metaTargetPath = fmt.Sprintf("images/%s.incus.tar.xz", metaSha256)
+	} else {
+		fileKey = "incus_combined.tar.gz"
+		fileType = "incus_combined.tar.gz"
+		metaTargetPath = fmt.Sprintf("images/%s.incus_combined.tar.gz", metaSha256)
+	}
+
 	// Check if a version already exists.
 	versionName := time.Unix(metadata.CreationDate, 0).Format("200601021504")
 	version, ok := product.Versions[versionName]
@@ -313,8 +351,8 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 		// Create a new version.
 		version = simplestreams.ProductVersion{
 			Items: map[string]simplestreams.ProductVersionItem{
-				"incus.tar.xz": {
-					FileType:   "incus.tar.xz",
+				fileKey: {
+					FileType:   fileType,
 					HashSha256: metaSha256,
 					Size:       metaSize,
 					Path:       metaTargetPath,
@@ -323,11 +361,11 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		// Check that we're dealing with the same metadata.
-		_, ok := version.Items["incus.tar.xz"]
+		_, ok := version.Items[fileKey]
 		if !ok {
-			// No incus.tar.xz found, add it.
-			version.Items["incus.tar.xz"] = simplestreams.ProductVersionItem{
-				FileType:   "incus.tar.xz",
+			// No fileKey found, add it.
+			version.Items[fileKey] = simplestreams.ProductVersionItem{
+				FileType:   fileType,
 				HashSha256: metaSha256,
 				Size:       metaSize,
 				Path:       metaTargetPath,
@@ -341,36 +379,39 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Check that the data file isn't already in.
-	_, ok = version.Items[dataItemType]
-	if ok {
-		return fmt.Errorf("Already have a %q file for this image", dataItemType)
+	if !isUnifiedTarball {
+		// Check that the data file isn't already in.
+		_, ok = version.Items[data.FileType]
+		if ok {
+			return fmt.Errorf("Already have a %q file for this image", data.FileType)
+		}
+
+		dataTargetPath := fmt.Sprintf("images/%s%s", metaSha256, data.Extension)
+
+		// Add the file entry.
+		version.Items[data.FileType] = simplestreams.ProductVersionItem{
+			FileType:   data.FileType,
+			HashSha256: data.Sha256,
+			Size:       data.Size,
+			Path:       dataTargetPath,
+		}
+
+		// Add the combined hash.
+		metaItem := version.Items["incus.tar.xz"]
+		if data.FileType == "squashfs" {
+			metaItem.CombinedSha256SquashFs = data.combinedSha256
+		} else if data.FileType == "disk-kvm.img" {
+			metaItem.CombinedSha256DiskKvmImg = data.combinedSha256
+		}
+
+		version.Items["incus.tar.xz"] = metaItem
+
+		// Copy the data file if missing.
+		err = internalUtil.FileCopy(data.Path, dataTargetPath)
+		if err != nil && !os.IsExist(err) {
+			return err
+		}
 	}
-
-	// Add the file entry.
-	version.Items[dataItemType] = simplestreams.ProductVersionItem{
-		FileType:   dataItemType,
-		HashSha256: dataSha256,
-		Size:       dataSize,
-		Path:       dataTargetPath,
-	}
-
-	// Add the combined hash.
-	metaItem := version.Items["incus.tar.xz"]
-	if dataItemType == "squashfs" {
-		metaItem.CombinedSha256SquashFs = combinedSha256
-	} else if dataItemType == "disk-kvm.img" {
-		metaItem.CombinedSha256DiskKvmImg = combinedSha256
-	}
-
-	version.Items["incus.tar.xz"] = metaItem
-
-	// Copy the data file if missing.
-	err = internalUtil.FileCopy(dataPath, dataTargetPath)
-	if err != nil && !os.IsExist(err) {
-		return err
-	}
-
 	// Update the version.
 	product.Versions[versionName] = version
 
