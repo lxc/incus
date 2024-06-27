@@ -320,13 +320,23 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		"path": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=io.cache)
+		// This controls what bus a disk device should be attached to.
 		//
+		// For block devices (disks), this is one of:
+		// - `none` (default)
+		// - `writeback`
+		// - `unsafe`
+		//
+		// For file systems (shared directories or custom volumes), this is one of:
+		// - `none` (default)
+		// - `metadata`
+		// - `unsafe`
 		// ---
 		//  type: string
 		//  default: `none`
 		//  required: no
-		//  shortdesc: Only for VMs: Override the caching mode for the device (`none`, `writeback` or `unsafe`)
-		"io.cache": validate.Optional(validate.IsOneOf("none", "writeback", "unsafe")),
+		//  shortdesc: Only for VMs: Override the caching mode for the device
+		"io.cache": validate.Optional(validate.IsOneOf("none", "metadata", "writeback", "unsafe")),
 
 		// gendoc:generate(entity=devices, group=disk, key=io.bus)
 		// This controls what bus a disk device should be attached to.
@@ -1207,6 +1217,11 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					return nil, err
 				}
 
+				err = validate.Optional(validate.IsOneOf("none", "metadata", "unsafe"))(d.config["io.cache"])
+				if err != nil {
+					return nil, err
+				}
+
 				if d.config["path"] == "" {
 					return nil, fmt.Errorf(`Missing mount "path" setting`)
 				}
@@ -1318,6 +1333,11 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			} else {
 				// Confirm we're dealing with block options.
 				err := validate.Optional(validate.IsOneOf("nvme", "virtio-blk", "virtio-scsi"))(d.config["io.bus"])
+				if err != nil {
+					return nil, err
+				}
+
+				err = validate.Optional(validate.IsOneOf("none", "writeback", "unsafe"))(d.config["io.cache"])
 				if err != nil {
 					return nil, err
 				}
