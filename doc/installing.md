@@ -288,7 +288,10 @@ Also, due to a [`gettext` issue](https://github.com/gosexy/gettext/issues/1), yo
 Install the build and required runtime dependencies with:
 
     sudo apt update
-    sudo apt install acl attr autoconf automake dnsmasq-base git golang-go libacl1-dev libcap-dev liblxc1 liblxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
+    sudo apt install acl attr autoconf automake dnsmasq-base git golang-go libacl1-dev libcap-dev liblxc1 lxc-dev libsqlite3-dev libtool libudev-dev liblz4-dev libuv1-dev make pkg-config rsync squashfs-tools tar tcl xz-utils ebtables
+
+****NOTE:**** The version of `golang-go` in your version of Debian or Ubuntu may not be sufficient to build Incus (see {ref}`requirements-go`).
+In such cases, you may need to install a newer Go version [from upstream](https://go.dev/doc/install).
 
 There are a few storage drivers for Incus besides the default `dir` driver.
 Installing these tools adds a bit to initramfs and may slow down your
