@@ -426,7 +426,7 @@ func DiskVMVirtfsProxyStop(pidPath string) error {
 // Returns UnsupportedError error if the host system or instance does not support virtiosfd, returns normal error
 // type if process cannot be started for other reasons.
 // Returns revert function and listener file handle on success.
-func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath string, pidPath string, logPath string, sharePath string, idmaps []idmap.Entry) (func(), net.Listener, error) {
+func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath string, pidPath string, logPath string, sharePath string, idmaps []idmap.Entry, cacheOption string) (func(), net.Listener, error) {
 	revert := revert.New()
 	defer revert.Fail()
 
@@ -499,8 +499,17 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 
 	defer func() { _ = unixFile.Close() }()
 
+	switch cacheOption {
+	case "metadata":
+		cacheOption = "metadata"
+	case "unsafe":
+		cacheOption = "always"
+	default:
+		cacheOption = "never"
+	}
+
 	// Start the virtiofsd process in non-daemon mode.
-	args := []string{"--fd=3", "--cache=never", "-o", fmt.Sprintf("source=%s", sharePath)}
+	args := []string{"--fd=3", fmt.Sprintf("--cache=%s", cacheOption), "-o", fmt.Sprintf("source=%s", sharePath)}
 	proc, err := subprocess.NewProcess(cmd, args, logPath, logPath)
 	if err != nil {
 		return nil, nil, err
