@@ -7,12 +7,14 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/cgroup"
+	"github.com/lxc/incus/v6/internal/server/instance/drivers/edk2"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/sys"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -197,14 +199,31 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			return "", err
 		}
 
-		ovmfPath := "/usr/share/OVMF"
-		if os.Getenv("INCUS_OVMF_PATH") != "" {
-			ovmfPath = os.Getenv("INCUS_OVMF_PATH")
-		}
+		var edk2Paths []string
 
-		ovmfPath, err = filepath.EvalSymlinks(ovmfPath)
-		if err != nil {
-			return "", err
+		edk2Path := edk2.GetenvEdk2Path()
+		if edk2Path != "" {
+			edk2Path, err := filepath.EvalSymlinks(edk2Path)
+			if err != nil {
+				return "", err
+			}
+
+			edk2Paths = append(edk2Paths, edk2Path)
+		} else {
+			arch, err := osarch.ArchitectureGetLocalID()
+
+			if err == nil {
+				for _, installation := range edk2.GetArchitectureInstallations(arch) {
+					if util.PathExists(installation.Path) {
+						edk2Path, err := filepath.EvalSymlinks(installation.Path)
+						if err != nil {
+							return "", err
+						}
+
+						edk2Paths = append(edk2Paths, edk2Path)
+					}
+				}
+			}
 		}
 
 		agentPath := ""
@@ -231,7 +250,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"name":           InstanceProfileName(inst),
 			"path":           path,
 			"raw":            rawContent,
-			"ovmfPath":       ovmfPath,
+			"edk2Paths":      edk2Paths,
 			"agentPath":      agentPath,
 		})
 		if err != nil {
