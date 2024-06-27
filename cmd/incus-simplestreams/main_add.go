@@ -66,7 +66,7 @@ Otherwise, it is a split image (separate files for metadata and rootfs).
 }
 
 // dataItem - holds information about the image data file.
-// used if different from the metadata file
+// used if different from the metadata file.
 type dataItem struct {
 	Path           string
 	FileType       string
@@ -77,7 +77,7 @@ type dataItem struct {
 }
 
 // get information about the data file.
-// metaFile is used to compute the combined hash
+// metaFile is used to compute the combined hash.
 func (t *dataItem) get(metaFile *os.File, dataPath string) error {
 	// Open the data.
 	dataFile, err := os.Open(dataPath)
