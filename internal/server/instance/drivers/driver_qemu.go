@@ -3637,7 +3637,7 @@ func (d *qemu) addDriveDirConfig(cfg *[]cfgSection, bus *qemuBus, fdFiles *[]*os
 	}
 
 	// Add 9p share config.
-	if slices.Contains(driveConf.Opts, "bus=auto") || slices.Contains(driveConf.Opts, "bus=9p") {
+	if !slices.Contains(driveConf.Opts, "bus=virtiofs") {
 		devBus, devAddr, multi := bus.allocate(busFunctionGroup9p)
 
 		fd, err := strconv.Atoi(driveConf.DevPath)
