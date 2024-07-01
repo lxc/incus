@@ -84,6 +84,7 @@ func (t *dataItem) get(metaFile *os.File, dataPath string) error {
 	if err != nil {
 		return err
 	}
+
 	t.Path = dataPath
 
 	defer dataFile.Close()
