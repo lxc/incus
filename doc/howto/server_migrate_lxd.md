@@ -3,7 +3,9 @@
 
 Incus includes a tool named `lxd-to-incus` which can be used to convert an existing LXD installation into an Incus one.
 
-For this to work properly, you should make sure to {doc}`install </installing>` the latest stable release of Incus but not initialize it.
+If you installed Incus from the Debian package sources, you need to install the `incus-tools` package, first.
+
+For the migration to work properly, you should make sure to {doc}`install </installing>` the latest stable release of Incus but not initialize it.
 Instead, make sure that both `incus info` and `lxc info` both work properly, then run `lxd-to-incus` to migrate your data.
 
 This process transfers the entire database and all storage from LXD to Incus, resulting in an identical setup after the migration.
