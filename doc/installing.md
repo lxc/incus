@@ -71,6 +71,7 @@ There are three options currently available to Debian users.
 
     On such systems, just running `apt install incus` will get Incus installed.
     To run virtual machines, also run `apt install qemu-system`.
+    If migrating from LXD, also run `apt install incus-tools` to get the `lxd-to-incus` command.
 
 1. Native `incus` backported package
 
@@ -78,6 +79,7 @@ There are three options currently available to Debian users.
 
    On such systems, just running `apt install incus/bookworm-backports` will get Incus installed.
    To run virtual machines, also run `apt install qemu-system`.
+   If migrating from LXD, also run `apt install incus-tools` to get the `lxd-to-incus` command.
 
    ****NOTE:**** Users of backported packages should not file bugs in the Debian Bug Tracker, instead please reach out [through our forum](https://discuss.linuxcontainers.org) or directly to the Debian packager.
 
@@ -172,6 +174,7 @@ There are two options currently available to Ubuntu users.
     A native `incus` package is currently available in Ubuntu 24.04 LTS and later.
     On such systems, just running `apt install incus` will get Incus installed.
     To run virtual machines, also run `apt install qemu-system`.
+    If migrating from LXD, also run `apt install incus-tools` to get the `lxd-to-incus` command.
 
 1. Zabbly package repository
 
