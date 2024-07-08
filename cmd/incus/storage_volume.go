@@ -2179,6 +2179,7 @@ func (c *cmdStorageVolumeShow) Run(cmd *cobra.Command, args []string) error {
 			if volType == "custom" {
 				return fmt.Errorf("Storage pool volume \"%s/%s\" not found. Try virtual-machine or container for type", volType, volName)
 			}
+
 			return fmt.Errorf("Storage pool volume \"%s/%s\" not found", volType, volName)
 		}
 
