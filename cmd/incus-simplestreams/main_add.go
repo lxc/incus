@@ -49,13 +49,12 @@ This command parses the metadata tarball to retrieve the following fields from i
 It then check computes the hash for the new image, confirm it's not
 already on the image server and finally adds it to the index.
 
-It generates a default alias: {os}/{release}/{variant},
-unless --no-default-alias is specified.
+Unless "--no-default-alias" is specified, it generates a default "{os}/{release}/{variant}" alias.
 
 If one argument is specified, it is assumed to be a unified image,
 with both the metadata and rootfs in a single tarball.
 
-Otherwise, it is a split image (separate files for metadata and rootfs).
+Otherwise, it is a split image (separate files for metadata and rootfs/disk).
 `)
 	cmd.RunE = c.Run
 
